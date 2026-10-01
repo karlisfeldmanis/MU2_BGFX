@@ -210,9 +210,12 @@ struct Body {
     Kin kin = Kin::DarkKnight;  // the player's class; meaningless on a monster
     HeroPoints points;          // likewise
     // What is in his hands, as indices into Tables::arms, or -1. A monster's weapon is part of
-    // its row and not an item: `monster_kinds` carries the damage band whole.
+    // its row and not an item: `monster_kinds` carries the damage band whole. `shield` is the
+    // LEFT hand's arm: a shield, or a Dark Knight's second weapon (`dual`), which the swing
+    // chain alternates and the skill gates read as the sword family it is.
     int32_t weapon = -1;
     int32_t shield = -1;
+    bool dual = false;
     int32_t level = 1;
     int32_t health = 0;
     int32_t maxHealth = 0;
@@ -249,6 +252,9 @@ struct Body {
     // The share of the weapon's band its wear takes, 0 to 0.5, and 1 broken (sim/wear.h). The
     // defence's cut is taken piece by piece inside `wornDefense`.
     float weaponCut = 0.0f;
+    // And the second weapon's plus and wear, while `dual`: the left hand's own band.
+    int32_t offhandBonus = 0;
+    float offhandCut = 0.0f;
     // What his pet does while its life lasts (sim::PetPower), read off slot 8 in rearm.
     PetPower pet;
 

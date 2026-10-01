@@ -83,6 +83,11 @@ struct Fighter {
     int defense = 0;
     int minimumDamage = 0;
     int maximumDamage = 0;
+    // A Dark Knight's second band, while he holds a weapon in each hand (Arms::dual), and 0
+    // for everybody else: WebZen's m_AttackDamageMinLeft/MaxLeft, strength and the left weapon,
+    // rolled apart from the right and added to it (1.00.93 ObjAttack.cpp:3346-3414).
+    int offhandMinimumDamage = 0;
+    int offhandMaximumDamage = 0;
     // 0.75 grants this from exactly one thing, the luck item option at 0.05 each, so it is 0
     // for every monster and for an unlucky character. It is a field rather than a constant
     // because the draw against it is conditional and the condition is load-bearing.
@@ -212,6 +217,12 @@ const ClassRow& rowOf(Kin kin);
 struct Arms {
     int weaponMinimumDamage = 0;
     int weaponMaximumDamage = 0;
+    // A Dark Knight's second weapon (sim::offHanded), with its plus and wear in.
+    bool dual = false;
+    // What both bands are taken at: 1 for a matched pair, kMixedPair for two kinds of weapon.
+    double dualRate = 1.0;
+    int offhandMinimumDamage = 0;
+    int offhandMaximumDamage = 0;
     int armourDefense = 0;  // a shield's, and later a suit's
     int shieldDefenseRate = 0;  // a worn shield's rate with its plus; never halved
     double setDefense = 0.0;    // a complete set's share of the final defence (sim::setDefense)
@@ -228,6 +239,12 @@ struct Arms {
     // The worn pet's, while its life lasts.
     PetPower pet;
 };
+
+// A knight's two weapons of different kinds -- a sword and an axe, a mace and a spear -- each
+// hit for 55%: OpenMU's double wield (Season 6, AttackableExtensions.cs:131 and
+// FixDamageCalcsPlugInBase's -0.45), kept for a mixed pair only. A matched pair hits for
+// WebZen's whole two bands. The split is the user's, 2026-10-01. INVENTION.
+constexpr double kMixedPair = 0.55;
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
             int* maxHealth);

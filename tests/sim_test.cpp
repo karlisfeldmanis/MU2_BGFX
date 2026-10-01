@@ -486,8 +486,36 @@ void testItems(const content::Tables& tables) {
     check(realm.moveItem(sim::kWeaponRight, sim::kWorn + 3), "taken off into the bag");
     checkEqual(realm.hero().weapon, -1, "and his hands are empty");
     check(realm.hero().stats.minimumDamage < minimumArmed, "and he hits for less");
-    check(!realm.moveItem(sim::kWorn + 3, sim::kWeaponLeft), "an axe does not go in the left hand");
+    // A knight's one-handed axe goes in either hand (sim::offHanded), alone in the left it is
+    // still what he swings.
+    check(realm.moveItem(sim::kWorn + 3, sim::kWeaponLeft), "a knight's axe goes in the left hand");
+    checkEqual(realm.hero().stats.minimumDamage, minimumArmed, "and swings from there");
+    check(!realm.hero().dual, "one weapon is not two");
+    check(realm.moveItem(sim::kWeaponLeft, sim::kWorn + 3), "and comes off again");
     check(realm.moveItem(sim::kWorn + 3, sim::kWeaponRight), "and back on, since 28 >= 21");
+    {
+        // Two axes: WebZen's bTwoHandWeapon, strength's band twice with a weapon on each.
+        sim::Realm duo;
+        check(duo.raise(&tables, 7, 138, 124), "a realm raises for two weapons");
+        const int32_t axeArm = tables.armNamed("Axe01"), swordArm = tables.armNamed("Sword01");
+        check(duo.equip(axeArm, -1, true), "one axe");
+        const int single = duo.hero().stats.minimumDamage;
+        check(duo.equip(axeArm, axeArm, true), "two axes, the second in the shield's place");
+        check(duo.hero().dual, "and he holds two");
+        checkEqual(duo.satchel()[sim::kWeaponLeft].item, axe, "the second in the left hand");
+        checkEqual(duo.hero().stats.offhandMinimumDamage, single,
+                   "a matched pair: the left band is the right's again");
+        check(duo.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "the second comes off");
+        check(!duo.hero().dual && duo.hero().stats.offhandMaximumDamage == 0,
+              "and the left band is gone");
+        check(duo.equip(axeArm, swordArm, true), "an axe and a sword");
+        checkEqual(duo.hero().stats.minimumDamage, int(double(single) * sim::kMixedPair),
+                   "a mixed pair: each hand at 55%");
+        check(!sim::offHanded(tables.items[size_t(axe)], sim::Kin::DarkWizard),
+              "only a knight holds a second weapon");
+        check(!sim::offHanded(tables.items[size_t(staff)], sim::Kin::DarkKnight),
+              "and never a staff");
+    }
     checkEqual(realm.hero().stats.minimumDamage, minimumArmed, "and he hits for what he did");
 
     const int staffAt = realm.give(staff);

@@ -290,6 +290,39 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
         if (row.attackSpeed > 0) rail(std::to_string(row.attackSpeed), Tone::White, "attack speed");
     }
+    // A knight's second weapon (sim::offHanded), and what it pairs to: the weapon in his other
+    // hand -- the left's partner is the right, anything else's is the right. Two of one kind hit
+    // whole, two kinds at sim::kMixedPair each, and neither hand holds the shield Defense asks.
+    if (weapon && sim::offHanded(row, who.kin)) {
+        static const char* const kKinds[4] = {"sword", "axe", "mace", "spear"};
+        const sim::Held& partner = &what == &bag[sim::kWeaponRight] ? bag[sim::kWeaponLeft]
+                                                                    : bag[sim::kWeaponRight];
+        const content::ItemRow* other =
+            partner.empty() || size_t(partner.item) >= tables.items.size()
+                ? nullptr
+                : &tables.items[size_t(partner.item)];
+        const int share = int(std::lround(sim::kMixedPair * 100.0));
+        const auto say = [&](const std::string& words, Tone tone) {
+            Row line;
+            line.free = words;
+            line.freeTone = tone;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        };
+        if (other && sim::offHanded(*other, who.kin) && other->group == row.group) {
+            say("Paired with a " + std::string(kKinds[row.group]) + ": 100% damage each hand",
+                Tone::Green);
+        } else if (other && sim::offHanded(*other, who.kin)) {
+            say("Paired with a " + std::string(kKinds[other->group]) + ": " +
+                    std::to_string(share) + "% damage each hand",
+                Tone::Red);
+        } else {
+            say("Two-weapon: with a second " + std::string(kKinds[row.group]) +
+                    " 100% damage, with another kind " + std::to_string(share) + "%",
+                Tone::White);
+        }
+        say("No Defense while holding two weapons", Tone::White);
+    }
     const bool worn = row.armour() || row.shield();
     const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) +
                                    (what.excellent != 0 ? sim::excellentDefense(row) : 0)

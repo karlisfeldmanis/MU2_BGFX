@@ -297,6 +297,17 @@ int placeOf(const content::ItemRow& row) {
     return -1;
 }
 
+bool offHanded(const content::ItemRow& row, Kin kin) {
+    return kin == Kin::DarkKnight && row.weapon() && !row.shield() && row.group < kGroupBows &&
+           !row.twoHanded();
+}
+
+bool placesIn(const content::ItemRow& row, Kin kin, int slot) {
+    const int place = placeOf(row);
+    if (place == slot) return true;
+    return slot == kWeaponLeft && place == kWeaponRight && offHanded(row, kin);
+}
+
 bool heals(const content::ItemRow& row) { return row.group == kGroupPotions && row.number <= 3; }
 bool restores(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number >= 4 && row.number <= 6;
@@ -444,7 +455,7 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
     if (!row) return false;
 
     if (wearable(to)) {
-        if (!baggable(from) || placeOf(*row) != to || !fits(tables, who, what) ||
+        if (!baggable(from) || !placesIn(*row, who.kin, to) || !fits(tables, who, what) ||
             handful(tables, bag, what, to)) {
             return false;
         }
@@ -466,7 +477,7 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
     if (wearable(from)) {
         // A swap run the other way: what comes up to take its place has to pass the gates the
         // thing coming down just left.
-        return placeOf(*other) == from && fits(tables, who, displaced) &&
+        return placesIn(*other, who.kin, from) && fits(tables, who, displaced) &&
                !handful(tables, bag, displaced, from);
     }
     // And the displaced thing has to fit into the space this one is leaving, or the window

@@ -245,6 +245,10 @@ int runHeadless(const core::Args& args, const char* assetDir) {
     {
         const sim::Fighter& stats = realm.hero().stats;
         const sim::HeroPoints& has = realm.hero().points;
+        if (stats.offhandMaximumDamage > 0) {
+            core::logf("hero: two weapons -- the left hand rolls %d to %d beside the right",
+                       stats.offhandMinimumDamage, stats.offhandMaximumDamage);
+        }
         core::logf("hero: level %d %s%s%s -- str %d agi %d vit %d, damage %d to %d, defence %d, "
                    "attack rate %.2f, defence rate %.2f, %d health, a swing every %d ms "
                    "(%d ticks)", realm.hero().level,

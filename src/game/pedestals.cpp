@@ -119,7 +119,8 @@ bool Pedestals::standing(int slot) const {
 const FigureBody* Pedestals::dressed(int slot, sim::Kin kin,
                                      const std::vector<Saved::Item>& items) {
     // The hands by Beast.Rearm's rule (sim/realm_items.cpp's rearm): the weapon is what swings,
-    // the right hand's first, and never ammunition; the shield is the left hand's when it is one.
+    // the right hand's first, and never ammunition; the shield is the left hand's when it is one,
+    // or a knight's second weapon.
     // The five armour pieces by the asset their rows name, as Play::redress wears them.
     std::string weapon, shield;
     std::vector<std::string> worn;
@@ -154,7 +155,8 @@ const FigureBody* Pedestals::dressed(int slot, sim::Kin kin,
         weapon = hand[weaponHand]->name;
         weaponShine = shineOf(*hand[weaponHand], handPlus[weaponHand], handExcellent[weaponHand]);
     }
-    if (hand[1] && hand[1]->shield()) {
+    // And a knight's second weapon, held in the left as the shield would be.
+    if (hand[1] && (hand[1]->shield() || (weaponHand == 0 && sim::offHanded(*hand[1], kin)))) {
         shield = hand[1]->name;
         shieldShine = shineOf(*hand[1], handPlus[1], handExcellent[1]);
     }

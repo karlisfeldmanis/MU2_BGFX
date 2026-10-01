@@ -32,7 +32,7 @@ Arms Realm::armsOf(const Body& one) const {
         arms.weaponMaximumDamage = held.maximumDamage;
         arms.armourDefense += held.defense;
     }
-    if (one.shield >= 0 && size_t(one.shield) < tables_->arms.size()) {
+    if (!one.dual && one.shield >= 0 && size_t(one.shield) < tables_->arms.size()) {
         arms.armourDefense += tables_->arms[size_t(one.shield)].defense;
     }
     // The player's defence is his worn pieces' since sprint 7 -- the shield among them, with its
@@ -47,6 +47,18 @@ Arms Realm::armsOf(const Body& one) const {
         // `DamageMin - (WORD)(DamageMin * percent)`. A broken weapon adds nothing.
         arms.weaponMinimumDamage -= int(float(arms.weaponMinimumDamage) * one.weaponCut);
         arms.weaponMaximumDamage -= int(float(arms.weaponMaximumDamage) * one.weaponCut);
+        // The second weapon's band, its plus and its wear, the same way round.
+        if (one.dual && one.shield >= 0 && size_t(one.shield) < tables_->arms.size()) {
+            const content::Arm& off = tables_->arms[size_t(one.shield)];
+            arms.dual = true;
+            const bool matched = one.weapon >= 0 && size_t(one.weapon) < tables_->arms.size() &&
+                                 tables_->arms[size_t(one.weapon)].group == off.group;
+            arms.dualRate = matched ? 1.0 : kMixedPair;
+            arms.offhandMinimumDamage = off.minimumDamage + one.offhandBonus;
+            arms.offhandMaximumDamage = off.maximumDamage + one.offhandBonus;
+            arms.offhandMinimumDamage -= int(float(arms.offhandMinimumDamage) * one.offhandCut);
+            arms.offhandMaximumDamage -= int(float(arms.offhandMaximumDamage) * one.offhandCut);
+        }
         arms.criticalChance = double(one.luckyWorn) * kLuckCritical + one.excel.runeCritical;
         arms.excel = one.excel;
         arms.staffRise = double(one.staffRise);
@@ -88,7 +100,10 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
             return false;
         }
         const content::Arm& arm = tables_->arms[size_t(index)];
-        if (arm.isShield() != wantShield) {
+        // A knight's second weapon is asked for in the shield's place (sim::offHanded).
+        const bool second = wantShield && !arm.isShield() && hero.kin == Kin::DarkKnight &&
+                            arm.group < kGroupBows && !arm.twoHanded();
+        if (arm.isShield() != wantShield && !second) {
             refusal_ = arm.label + " is " + (arm.isShield() ? "a shield" : "a weapon") +
                        " and was asked for as the other";
             return false;
@@ -127,7 +142,8 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
         const Held was = bag_.lift(hand);
         if (!was.empty()) give(was.item, -1, was.refinement, was.durability);
     }
-    for (int32_t index : {weapon, shield}) {
+    for (int asked = 0; asked < 2; ++asked) {
+        const int32_t index = asked == 0 ? weapon : shield;
         if (index < 0) continue;
         const int32_t item = tables_->itemNamed(tables_->arms[size_t(index)].name);
         if (item < 0) {
@@ -135,7 +151,8 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
             continue;
         }
         const content::ItemRow& row = tables_->items[size_t(item)];
-        const int hand = placeOf(row);
+        const int hand = asked == 1 && placesIn(row, hero.kin, kWeaponLeft) ? kWeaponLeft
+                                                                           : placeOf(row);
         if (hand >= 0) bag_.put(hand, Held{item, 0, int16_t(fullDurability(row, 0))});
     }
     // What the cradle gives beside a bow type: a full quiver in the other hand. OpenMU's
@@ -251,6 +268,18 @@ void Realm::rearm(Body& hero) {
     if (weaponSlot >= 0 && bag_[weaponSlot].excellent != 0) {
         hero.weaponBonus += excellentDamage(*rowAt(weaponSlot));
     }
+    // A Dark Knight's second weapon (sim::offHanded): WebZen's bTwoHandWeapon, a knight with a
+    // weapon below the bows in each hand (1.00.93 ObjAttack.cpp:3127-3136). The left hand's band
+    // takes its own plus, option and excellence, as gObjCalCharacter adds Left's apart
+    // (ObjCalCharacter.cpp:522-531).
+    hero.dual = weaponSlot == kWeaponRight && right->group < kGroupBows && swung(left) &&
+                offHanded(*left, hero.kin);
+    hero.offhandBonus = 0;
+    if (hero.dual) {
+        const Held& h = bag_[kWeaponLeft];
+        hero.offhandBonus = damageBonus(h.refinement) + optionValue(*left, h.option) +
+                            (h.excellent != 0 ? excellentDamage(*left) : 0);
+    }
     // What the excellent options come to: a weapon's from the hands, the defence family's from
     // the shield and the five armour slots. ExcellentOptions.cs, bit n being option n + 1.
     hero.excel = Excellence{};
@@ -318,7 +347,8 @@ void Realm::rearm(Body& hero) {
         return wearCut(h.durability, maximumDurability(r, h));
     };
     hero.weaponCut = weaponSlot >= 0 ? cutAt(weaponSlot) : 0.0f;
-    hero.shield = left && left->shield() ? tables_->armNamed(left->name) : -1;
+    hero.offhandCut = hero.dual ? cutAt(kWeaponLeft) : 0.0f;
+    hero.shield = left && (left->shield() || hero.dual) ? tables_->armNamed(left->name) : -1;
     hero.wornDefense = 0;
     hero.wornDefenseRate = 0;
     hero.shieldDefense = 0;

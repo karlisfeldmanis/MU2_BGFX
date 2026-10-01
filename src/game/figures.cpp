@@ -53,6 +53,11 @@ struct OnBack {
 };
 // A sword reared up over the shoulder, hilt clear of the head.
 constexpr OnBack kWeaponOnBack = {{70.0f, 90.0f, 0.0f}, {-0.20f, 0.40f, -0.05f}, false};
+// A knight's second weapon, leaning the other way so the two cross behind his head. MuMain
+// turns a left-hand weapon by a second matrix on top of the right's (RenderLinkObject's
+// `bRightHandItem == false`, 145/0/275 and 0,10,-30); this is the mirror of the sword's 20
+// degrees instead, judged on the figure. INVENTION.
+constexpr OnBack kOffhandOnBack = {{110.0f, 90.0f, 0.0f}, {-0.20f, 0.40f, -0.05f}, false};
 // A shield laid flat, pushed 14 MU units clear of the back: MU places one by a point inside
 // its mesh and the disc sinks into a plate cuirass until its rim disappears. Centred, so the
 // middle of the disc lands on the spine rather than the model's origin.
@@ -69,7 +74,8 @@ const OnBack& onBack(const HeldItem& item, bool leftHand) {
     if (item.kind == "quiver") return kQuiverOnBack;
     if (item.stance == "crossbow") return kCrossbowOnBack;
     if (item.stance == "bow") return kQuiverOnBack;
-    if (item.kind == "shield" || leftHand) return kShieldOnBack;
+    if (item.kind == "shield") return kShieldOnBack;
+    if (leftHand) return item.kind == "weapon" ? kOffhandOnBack : kShieldOnBack;
     return kWeaponOnBack;
 }
 

@@ -163,8 +163,9 @@ void Card::update(float width, float height, const sim::Body* hero, const Pointe
         now_.agility = hero->points.agility;
         now_.vitality = hero->points.vitality;
         now_.energy = hero->points.energy;
-        now_.minimum = hero->stats.minimumDamage;
-        now_.maximum = hero->stats.maximumDamage;
+        // Both hands' bands together while a knight holds two weapons: what one blow rolls.
+        now_.minimum = hero->stats.minimumDamage + hero->stats.offhandMinimumDamage;
+        now_.maximum = hero->stats.maximumDamage + hero->stats.offhandMaximumDamage;
         now_.attackRate = int(hero->stats.attackRate);
         now_.defense = hero->stats.defense;
         now_.defenseRate = int(hero->stats.defenseRate);

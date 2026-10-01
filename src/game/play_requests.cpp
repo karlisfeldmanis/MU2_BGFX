@@ -196,8 +196,14 @@ void Play::redress() {
         return ShineLook{};
     };
     dressedQuiver_ = quiverName();
+    // The left hand's own plus: two swords of one name are two items, each with its own.
+    const sim::Held& left = realm_.satchel()[sim::kWeaponLeft];
+    const ShineLook leftShine =
+        hero.dual && !left.empty() && size_t(left.item) < tables_.items.size()
+            ? shineOf(tables_.items[size_t(left.item)], left.refinement, left.excellent != 0)
+            : handShine(shield);
     const FigureBody* look = figures_->dress(kHeroDressName, bare_, weapon, shield, worn,
-                                             wornShine, handShine(weapon), handShine(shield),
+                                             wornShine, handShine(weapon), leftShine,
                                              dressedQuiver_);
     if (!look) return;
     Drawn& drawn = drawn_[0];

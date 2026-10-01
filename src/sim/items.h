@@ -112,6 +112,14 @@ int defenseBonus(bool shield, int refinement);
 // by MU's own hand rule (a bow is Weapon[1], a crossbow Weapon[0]; arrows beside the bow and
 // bolts beside the crossbow), a shield the left hand, armour its group less five.
 int placeOf(const content::ItemRow& row);
+// A Dark Knight's second weapon: a one-handed sword, axe, mace or spear may go in his LEFT hand
+// as well. MuMain's IsEquipable (an EQUIPMENT_WEAPON_RIGHT item into EQUIPMENT_WEAPON_LEFT,
+// knight and not TwoHand) and OpenMU Version075's either-hand slot type for a knight's one-wide
+// weapon; WebZen's gObjIsItemPut lets any hand item into either hand and leaves the class to
+// the client. The bow group and the staves stay where placeOf puts them.
+bool offHanded(const content::ItemRow& row, Kin kin);
+// Whether it may be worn in `slot`: where placeOf puts it, or the left hand by offHanded.
+bool placesIn(const content::ItemRow& row, Kin kin, int slot);
 // A pet's powers (sim::PetPower): the Guardian Angel 13/0 and the Imp 13/1. Nothing for any
 // other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);

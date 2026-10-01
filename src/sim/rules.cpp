@@ -45,6 +45,16 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
                           ? dice.nextInt(attacker.minimumDamage, attacker.maximumDamage + 1)
                           : attacker.minimumDamage;
     }
+    // 3a. The second weapon's band, rolled on its own and added: ObjAttack.cpp:3346-3414, where
+    // a critical or an excellent hit lays both hands at their top. Drawn only with a weapon in
+    // each hand, so a run without one draws what it always drew.
+    if (attacker.offhandMaximumDamage > 0) {
+        const int low = attacker.offhandMinimumDamage, high = attacker.offhandMaximumDamage;
+        blow.rolled += excellent  ? int(double(high) * 1.2)
+                       : critical ? high
+                       : high > low ? dice.nextInt(low, high + 1)
+                                    : low;
+    }
 
     // 4. Minus the defence, which cannot help the attacker.
     const int damage = blow.rolled - std::max(0, defender.defense);
@@ -200,6 +210,24 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                              (strength + agility) *
                                  double(row.maximumDamagePerStrengthAndAgility)) +
                          arms.weaponMaximumDamage;
+    // A knight's second weapon is a second band of the same shape: gObjCalCharacter gives the
+    // left hand strength's band as well as the right (ObjCalCharacter.cpp:386-389) and adds the
+    // left weapon to it, so two blades nearly double what one does -- WebZen's, where OpenMU
+    // 0.75 sums the two weapons over one strength band.
+    out->offhandMinimumDamage = 0;
+    out->offhandMaximumDamage = 0;
+    if (arms.dual) {
+        out->offhandMinimumDamage = out->minimumDamage - arms.weaponMinimumDamage +
+                                    arms.offhandMinimumDamage;
+        out->offhandMaximumDamage = out->maximumDamage - arms.weaponMaximumDamage +
+                                    arms.offhandMaximumDamage;
+        if (arms.dualRate != 1.0) {
+            out->minimumDamage = int(double(out->minimumDamage) * arms.dualRate);
+            out->maximumDamage = int(double(out->maximumDamage) * arms.dualRate);
+            out->offhandMinimumDamage = int(double(out->offhandMinimumDamage) * arms.dualRate);
+            out->offhandMaximumDamage = int(double(out->offhandMaximumDamage) * arms.dualRate);
+        }
+    }
     // Her archery band, which REPLACES the melee pair while a bow type is drawn: the two are
     // conditional on ArcheryAttackMode and MeleeAttackMode, one of which is always nought
     // (ClassFairyElf.cs:78-81, :87-93). Ammunition adds nothing in 0.75 -- AmmunitionDamageBonus
@@ -220,6 +248,12 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
         const int byLevel = excel.levelPieces * (level / 20);
         out->minimumDamage = int(double(out->minimumDamage + byLevel) * excel.damageRate);
         out->maximumDamage = int(double(out->maximumDamage + byLevel) * excel.damageRate);
+        if (arms.dual) {
+            out->offhandMinimumDamage =
+                int(double(out->offhandMinimumDamage + byLevel) * excel.damageRate);
+            out->offhandMaximumDamage =
+                int(double(out->offhandMaximumDamage + byLevel) * excel.damageRate);
+        }
     }
     // The wizard's band and his staff (ClassDarkWizard.cs:72-73, :81). Only his class file
     // relates energy to wizardry damage; a knight or an elf with a staff has no band to raise.
