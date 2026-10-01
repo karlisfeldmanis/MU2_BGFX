@@ -388,9 +388,6 @@ struct Body {
     // and who poisoned it. 0 for never.
     int64_t poisonUntil = 0, poisonNext = 0;
     int32_t poisonDamage = 0;
-    // How many monster poisons are on him at once (kPoisonStacksMost): each pulse bites that
-    // many times over. 1 from a fresh poisoning; read only while he is poisoned.
-    int32_t poisonStacks = 0;
     uint32_t poisonBy = 0;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for

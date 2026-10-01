@@ -58,17 +58,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         }
         // 0.75's poison, whose pulse is a share of what he has left (`poisonDamage` 0). One at a
         // time: a bite while one is on neither adds to it nor starts it again. It stacked for an
-        // afternoon (2026-09-30) and was taken out as too strong ("remove stacking poison").
-        // And stacked when one is on already (ours, kPoisonStacksMost): the clock starts again
-        // and the pulses keep their beat.
-        if (target.player && target.alive() && !attacker.player && poisons(attacker)) {
-            if (!poisoned(target)) {
-                target.poisonNext = tick_ + kPoisonFirst;
-                target.poisonDamage = 0;
-                target.poisonStacks = 1;
-            } else {
-                target.poisonStacks = std::min(target.poisonStacks + 1, kPoisonStacksMost);
-            }
+        // afternoon (2026-09-30) and was taken out as too strong ("remove stacking poison");
+        // that removal reached only this comment until 2026-10-01 ("poison damage from monsters
+        // seems to overpowered").
+        if (target.player && target.alive() && !attacker.player && poisons(attacker) &&
+            !poisoned(target)) {
+            target.poisonNext = tick_ + kPoisonFirst;
+            target.poisonDamage = 0;
             target.poisonUntil = tick_ + kHeroPoisonTicks;
             target.poisonBy = attacker.id;
         }
@@ -643,11 +639,9 @@ void Realm::poisonPulse(Body& beast) {
     Body* by = body(beast.poisonBy);
     if (by == nullptr) by = &beast;
     // A quarter of the wizard's blow on a monster; on him, 0.75's share of what is left.
-    // Times his stacks, when a monster's poison is what is on him.
     const int due = beast.poisonDamage > 0
                         ? beast.poisonDamage
-                        : std::max(1, int(float(beast.health) * kHeroPoisonShare)) *
-                              std::max(1, beast.player ? beast.poisonStacks : 1);
+                        : std::max(1, int(float(beast.health) * kHeroPoisonShare));
     // His shield's nine tenths first, as every blow and trap on him (Realm::strikeAt): the user,
     // 2026-10-01, "DS shield has absorb also poison damage, all damage". Monsters carry none.
     int wound = due;

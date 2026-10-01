@@ -3333,18 +3333,18 @@ void testWear(const content::Tables& tables) {
 
 // Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin, Sevina and the Messenger, the three shelves, Zienna's
 // counter, and the Guild Master answering with a line where MU opens a guild window.
-// A monster's poison stacks on him (ours, kPoisonStacksMost): among the Dungeon's Poison Bulls,
-// kept on his feet, the stacks climb past one and stop at the cap, and a pulse with more than one
-// on him bites more than the one 3% share of what he has left.
-void testPoisonStacks() {
-    std::printf("poison stacks\n");
+// A monster's poison on him is 0.75's, one at a time (the user, 2026-10-01: "poison damage from
+// monsters seems to overpowered"): a bite while one is on neither adds to it nor starts it
+// again, and every pulse takes one share of what he has left.
+void testPoisonOnce() {
+    std::printf("poison once\n");
     content::Tables dungeon;
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur";
     check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
     sim::Realm realm;
     check(realm.raise(&dungeon, 7, 119, 47, sim::Kin::DarkKnight, 40), "a knight among the bulls");
-    int most = 0, stackedPulses = 0, overShare = 0;
+    int pulses = 0, overShare = 0, restarted = 0;
     for (int tick = 0; tick < 6000 && realm.hero().alive(); ++tick) {
         if (realm.hero().health < realm.hero().maxHealth / 2) {
             sim::HeroRecord record = realm.record();
@@ -3352,23 +3352,21 @@ void testPoisonStacks() {
             realm.restore(record);
         }
         const int before = realm.hero().health;
-        const int stacks = realm.hero().poisonStacks;
-        const bool on = realm.hero().poisonUntil > realm.tick();
+        const int64_t until = realm.hero().poisonUntil;
+        const bool on = until > realm.tick();
         realm.step();
+        if (on && realm.hero().poisonUntil > until) ++restarted;
         for (const sim::Happening& one : realm.happenings()) {
             if (one.what != sim::What::Hit || one.whom != realm.hero().id || !one.poisoned) continue;
-            if (on && stacks > 1) {
-                ++stackedPulses;
-                if (one.a > std::max(1, int(float(before) * sim::kHeroPoisonShare))) ++overShare;
-            }
+            ++pulses;
+            if (one.a > std::max(1, int(float(before) * sim::kHeroPoisonShare))) ++overShare;
         }
-        if (realm.hero().poisonUntil > realm.tick()) most = std::max(most, realm.hero().poisonStacks);
     }
-    std::printf("  poison: %d stacks at the most, %d stacked pulses, %d over one share\n", most,
-                stackedPulses, overShare);
-    check(most > 1, "a second poisoning while one is on stacks");
-    check(most <= sim::kPoisonStacksMost, "and never past the cap");
-    check(stackedPulses > 0 && overShare > 0, "and a stacked pulse bites more than one share");
+    std::printf("  poison: %d pulses, %d over one share, %d restarted while on\n", pulses,
+                overShare, restarted);
+    check(pulses > 0, "the bulls poison him");
+    check(overShare == 0, "and a pulse never bites more than one share");
+    check(restarted == 0, "and a bite while one is on does not start it again");
 }
 
 // A skill pressed late in a cast and then walked away from is not thrown after the walk (the
@@ -5064,7 +5062,7 @@ int main() {
     testDungeonRunes(tables);
     testRunes(tables);
     testPets(tables);
-    testPoisonStacks();
+    testPoisonOnce();
     testWishDropsOnWalk(tables);
     testTravelQuestLock();
 
