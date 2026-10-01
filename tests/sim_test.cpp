@@ -5088,9 +5088,9 @@ void testLichPush() {
 
 // Evil Spirit (sim/items.h kSpiritChance): a knight with the rune in his shield among Lorencia's
 // monsters lets the spirits go only on a tick a monster missed him, at about the rune's share of
-// those misses, and each release strikes in three beats kSpiritEveryTicks apart, only what is
-// within kSpiritReach; and the wizard's spell lets the same go for its ninety mana with no
-// cooldown.
+// those misses; each release strikes, within kSpiritDelayTicks, about two in three of the monsters
+// within kSpiritReach (WebZen's SkillEvil), once each; and the wizard's spell lets the same go
+// for its ninety mana with no cooldown.
 void testEvilSpirit(const content::Tables& tables) {
     std::printf("evil spirit\n");
     const int shield = tables.itemNamed("Shield12");
@@ -5118,7 +5118,7 @@ void testEvilSpirit(const content::Tables& tables) {
         check(realm.give(shield, sim::kWeaponLeft, 0, -1, false, 0, 0, 1, powers) >= 0,
               "he wears the shield with the rune");
         checkEqual(realm.hero().excel.spirits, 1, "and it counts as one Evil Spirit");
-        int misses = 0, releases = 0, offMiss = 0, beats = 0, far = 0, offBeat = 0;
+        int misses = 0, releases = 0, offMiss = 0, blows = 0, late = 0, near = 0;
         std::vector<int64_t> released;
         uint32_t fighting = 0;
         for (int tick = 0; tick < 20000; ++tick) {
@@ -5141,34 +5141,32 @@ void testEvilSpirit(const content::Tables& tables) {
                     ++releases;
                     offMiss += missed ? 1 : 0;
                     released.push_back(realm.tick());
+                    for (const sim::Body& one : realm.bodies()) {
+                        const float dx = one.x - realm.hero().x, dy = one.y - realm.hero().y;
+                        near += one.monster() && one.alive() &&
+                                dx * dx + dy * dy < sim::kSpiritReach * sim::kSpiritReach;
+                    }
                 }
                 if ((h.what == sim::What::Hit || h.what == sim::What::Missed) &&
                     h.who == realm.hero().id && h.rune && h.thrown) {
-                    ++beats;
-                    const sim::Body* struck = realm.find(h.whom);
-                    if (struck) {
-                        const float dx = struck->x - realm.hero().x, dy = struck->y - realm.hero().y;
-                        far += dx * dx + dy * dy > sim::kSpiritReach * sim::kSpiritReach + 0.01f;
-                    }
-                    bool onBeat = false;
+                    ++blows;
+                    bool held = false;
                     for (int64_t at : released) {
-                        for (int k = 0; k < sim::kSpiritPulses; ++k) {
-                            onBeat |= realm.tick() ==
-                                      at + sim::kSpiritFirstTicks + k * sim::kSpiritEveryTicks;
-                        }
+                        held |= realm.tick() > at && realm.tick() <= at + sim::kSpiritDelayTicks;
                     }
-                    offBeat += onBeat ? 0 : 1;
+                    late += held ? 0 : 1;
                 }
             }
         }
-        std::printf("  %d misses on him, %d releases, %d spirit blows\n", misses, releases, beats);
+        std::printf("  %d misses on him, %d releases, %d near, %d spirit blows\n", misses,
+                    releases, near, blows);
         check(releases > 0 && offMiss == releases, "the spirits go only on a monster's miss");
         const double share = double(releases) / double(std::max(1, misses));
         check(share > 0.05 && share < sim::kSpiritChance + 0.03,
               "at about the rune's chance of his misses, fewer while one goes");
-        check(beats >= releases, "and they strike");
-        checkEqual(offBeat, 0, "only on their three beats");
-        checkEqual(far, 0, "and only what is within their reach");
+        const double struck = double(blows) / double(std::max(1, near));
+        check(struck > 0.5 && struck < 0.8, "about two in three of those near are struck, once");
+        checkEqual(late, 0, "each within its two seconds");
     }
     {
         sim::Realm realm;

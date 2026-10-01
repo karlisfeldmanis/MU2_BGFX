@@ -76,7 +76,7 @@ constexpr int32_t kPoison = 1;
 // sixty energy: a fire lit on the body's tile that burns twice.
 constexpr int32_t kFlame = 5;
 // `AT_SKILL_EVIL_SPIRIT`, off the Scroll of Evil Spirit (group 15 number 8) at two hundred and
-// twenty energy: spirits round him, striking three times. The shield's Evil Spirit rune lets the
+// twenty energy: spirits round him, striking most of what is within ten tiles once. The shield's Evil Spirit rune lets the
 // same go off a miss (sim/items.h kSpiritChance).
 constexpr int32_t kEvilSpirit = 9;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater

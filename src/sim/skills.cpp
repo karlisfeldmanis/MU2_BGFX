@@ -445,19 +445,20 @@ constexpr SkillRow kRows[kSkills] = {
     // 0.75's row: forty-five damage, ninety mana, two hundred and twenty energy, no element
     // (`Version075/SkillsInitializer.cs:51-52`), taught by the Scroll of Evil Spirit (Book09).
     // What it is is MU's: four spirits (eight joints, a wide and a thin each way) let go round
-    // the caster with SOUND_EVIL, wandering round him for 49 frames and striking all near each
-    // three times (ZzzCharacter.cpp:4585-4603, ZzzEffectJoint.cpp:3737-3765) -- the realm's
-    // `letSpiritsGo`, three beats on everything within sim::kSpiritReach of him. Its clip is
-    // SetPlayerMagic's two hands, as Flame's (ClassAttack.cpp:1357-1362).
+    // the caster with SOUND_EVIL, wandering round him for 49 frames (ZzzCharacter.cpp:4585-4603,
+    // ZzzEffectJoint.cpp:3737-3765). What they strike is WebZen's SkillEvil (ObjUseSkill.cpp:
+    // 2606-2645): each monster within ten tiles, two in three of them, once, within two seconds
+    // -- the realm's `letSpiritsGo`. Its clip is SetPlayerMagic's two hands, as Flame's
+    // (ClassAttack.cpp:1357-1362).
     //
     // **No cooldown**, a standard spell as Flame is (the user, 2026-10-01: "so he can use like
-    // normal spell without cooldown"). Aimed at a body within the spirits' own reach, so what he
-    // points at is always among what they strike; they go round him, not it. The shield's Evil
-    // Spirit rune lets the same spirits go off a miss (sim/items.h). The reach is ours.
-    {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 90, .reach = 4.0f,
+    // normal spell without cooldown"). Aimed at a body nine tiles off at most, with his other
+    // spells; the spirits go round him, not it. The shield's Evil Spirit rune lets the same go
+    // off a miss (sim/items.h).
+    {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 90, .reach = 9.0f,
      .force = 1.0f, .spread = Spread::One,
-     .tells = "Lets evil spirits loose around him, striking every monster within four tiles "
-              "three times.",
+     .tells = "Lets evil spirits loose around him, which strike most of the monsters within "
+              "ten tiles.",
      .clip = 147, .sound = "spell_evil", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 45, .clipOther = 148,
      .flies = 1000.0f},

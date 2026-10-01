@@ -254,8 +254,8 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
          false, Kin::DarkKnight, true},
         {Power::Spirits, "Evil Spirit",
-         "A blow that misses you has a 15% chance to release evil spirits around you, striking "
-         "every monster near you three times, raised by your energy",
+         "A blow that misses you has a 15% chance to release evil spirits around you, which "
+         "strike most of the monsters within ten tiles, raised by your energy",
          false, Kin::DarkKnight, true, true},
     };
     for (const PowerRow& row : kPowers) {

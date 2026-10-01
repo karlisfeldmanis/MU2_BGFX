@@ -179,8 +179,8 @@ Only seven Skeleton Archers spawn on Dungeon 1. Either keep the count at seven, 
   rune and new weapon ... shield with socket and rune which on miss has chance to cast evil
   spirits"), a socketed shield -- Serpent Shield (knight), Legendary Shield (wizard and elf) --
   and **Evil Spirit** for it: a shield's rune, every class's; a monster's blow that misses him has
-  a 15% chance to let MU's Evil Spirit go round him, three beats on everything within four tiles,
-  raised by his energy. The wizard can now also learn Evil Spirit as a spell (Scroll of Evil
+  a 15% chance to let MU's Evil Spirit go round him -- WebZen's SkillEvil: each monster within ten
+  tiles, two in three of them, struck once within two seconds -- raised by his energy. The wizard can now also learn Evil Spirit as a spell (Scroll of Evil
   Spirit, 220 energy, 90 mana, no cooldown).
 
   Devin's rune changed the same day from the Undying (+20% max health) to **Renewal**: 3% of max

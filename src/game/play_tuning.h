@@ -315,6 +315,8 @@ constexpr float kKnightEmberEveryFrames = 4.0f;
 // (ZzzCharacter.cpp:2295-2313); ours, a beam a hand for this long.
 inline constexpr const char* kDevilFigure = "Devil01";
 constexpr float kDevilBeamSeconds = 0.6f;
+// sEvil's length in the realm's ticks (3.34 s): Evil Spirit's sound plays out before another.
+constexpr int64_t kEvilSoundTicks = 66;
 // **Ours** (the user, 2026-10-01: "if monster has some special effects use minimal light
 // emiter", "like electricy our fire, it could be also weapon"): a faint light in the colour of
 // what a breed burns with, hung on the bone where that is -- its body's spine, or the grip of a

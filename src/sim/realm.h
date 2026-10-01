@@ -1028,20 +1028,20 @@ private:
         float force = 1.0f;
     };
     Echo echo_;
-    // Evil Spirit going round him, his spell's or his shield's rune's: the next beat's tick, how
-    // many are left, and the force. A handful, as the spell has no cooldown and its clip is
-    // shorter than its beats; a cast that finds no room lets nothing go.
-    struct Spirits {
+    // Evil Spirit's blows held, his spell's or his shield's rune's (WebZen's SkillEvil): each on
+    // one monster at its own tick, at the cast's force. Room for a crowd in ten tiles and a cast
+    // or two over it, as the spell has no cooldown; a blow that finds no room is not held.
+    struct SpiritBlow {
         int64_t at = 0;  // 0 for none
-        int left = 0;
+        uint32_t target = 0;
         float force = 1.0f;
         bool rune = false;  // his shield's, drawn in the rune's colour
     };
-    static constexpr int kSpiritsMost = 4;
-    Spirits spirits_[kSpiritsMost] = {};
+    static constexpr int kSpiritBlowsMost = 96;
+    SpiritBlow spiritBlows_[kSpiritBlowsMost] = {};
     bool spiritsGoing() const;
     bool letSpiritsGo(Body& hero, float force, bool rune);
-    void spiritPulse(Body& hero, const Spirits& beat);
+    void spiritStrike(Body& hero, const SpiritBlow& blow);
     // Flames burning on the ground (`SkillRow::burns`): where, when each strikes next and how
     // many strikes are left. A fixed handful -- one cast every five seconds and an echo lights
     // two -- and a fire that finds no room is not lit.

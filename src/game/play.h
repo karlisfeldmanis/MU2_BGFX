@@ -832,6 +832,8 @@ private:
     Arrows arrows_;
     Thunder thunder_;
     int64_t lastThunderTick_ = -1;  // the tick a channel's pulse last sounded on
+    // The tick Evil Spirit's sEvil last began on: it plays out before another begins.
+    int64_t lastEvilTick_ = -1000;
     Blink blink_;
     Ice ice_;
     TrapShow trapShow_;

@@ -10,9 +10,12 @@
 // ground. They are drawn subtracted (RENDER_TYPE_ALPHA_BLEND_MINUS): dark wisps, their light the
 // LifeTime over ten, so they fade over their last ten frames. JointSpirit01 is the sheet.
 //
-// Not built: the wide joint's MODEL_LASER head, a dark mesh drawn a frame at a time, and the
-// darkening each lays on the ground under it (AddTerrainLight). The strikes are the realm's
-// (`Realm::spiritPulse`): what they do to a monster is any spell's -- the number and a flinch.
+// Not built: the darkening each lays on the ground under it (AddTerrainLight), and the wide
+// joint's MODEL_LASER head -- Skill/Laser01.bmd, a dragon's skull under dragon02.OZJ, drawn
+// subtracted at 1.3 (ZzzEffect.cpp:1832-1839). Built and taken out on 2026-10-01: subtracted in
+// HDR its noisy sheet read as a dark scribble ("looks buged, was better before"). The strikes are
+// the realm's (`Realm::letSpiritsGo`): what they do to a monster is any spell's -- the number
+// and a flinch.
 #pragma once
 
 #include <cstdint>

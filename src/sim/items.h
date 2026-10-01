@@ -435,19 +435,20 @@ constexpr double kRenewalShare = 0.03;
 // **Evil Spirit**, the Pit's shield (the user, 2026-10-01: "shield with socket and rune which on
 // miss has chance to cast evil spirits"), every class's and in a shield alone: a monster's blow
 // that misses him has this chance to let MU's Evil Spirit go round him for nothing -- the
-// wizard's skill 9 (Version075 SkillsInitializer.cs:51-52: damage 45, no element). MuMain throws
-// four spirits that wander round the caster for 49 frames, each striking all within 150 units
-// whenever its LifeTime is a multiple of 15 -- frames 4, 19 and 34 (ZzzCharacter.cpp:4585-4603,
-// ZzzEffectJoint.cpp:3737-3765); here every monster within kSpiritReach tiles and in his sight
-// takes kSpiritPulses wizardry blows that far apart, his energy's band on top as every magic rune
-// takes it (kRuneEnergyLow). A miss while any is going rolls nothing. The wizard casts the same
-// spirits off the Scroll of Evil Spirit (sim/skills.cpp). Invention: the trigger, the reach and
-// the rune are ours, the spell and its beat MU's.
+// wizard's skill 9 (Version075 SkillsInitializer.cs:51-52: damage 45, no element), struck as
+// WebZen's server strikes it (CObjUseSkill::SkillEvil, 1.00.93 ObjUseSkill.cpp:2606-2645): every
+// monster within ten tiles of him (`gObjCalDistance < 10`, no wall asked) has two chances in three
+// (`rand()%3 < 2`) of one wizardry blow, each held a random 0-2000 ms
+// (gObjAddAttackProcMsgSendDelay) -- while MuMain's spirits wander round him for their 49 frames.
+// MuMain's own strikes off each spirit every fifteen frames (ZzzEffectJoint.cpp:3755-3760) are
+// built only without CSK_EVIL_SKILL and are the client's, not the server's rule. A knight's or an
+// elf's blow takes his energy's band, as every magic rune takes it (kRuneEnergyLow). A miss while
+// any is held rolls nothing. The wizard casts the same off the Scroll of Evil Spirit
+// (sim/skills.cpp). Invention: the rune and its trigger; the spell is WebZen's.
 constexpr double kSpiritChance = 0.15;
-constexpr int kSpiritPulses = 3;
-constexpr int64_t kSpiritFirstTicks = 3;   // MU's four frames, 0.16 s
-constexpr int64_t kSpiritEveryTicks = 12;  // MU's fifteen, 0.6 s
-constexpr float kSpiritReach = 4.0f;
+constexpr float kSpiritReach = 10.0f;      // `< 10`: a tile short of it
+constexpr double kSpiritOdds = 2.0 / 3.0;  // rand()%3 < 2
+constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty ticks a second
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
 // The Rune of Creation's row: 14, 22.

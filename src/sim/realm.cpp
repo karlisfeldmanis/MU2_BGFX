@@ -734,12 +734,12 @@ void Realm::step() {
         // same tick is too late to stop it -- which is the honest boundary and is where the
         // player's own hand is.
         if (hero.blowAt != 0 && tick_ >= hero.blowAt) land(hero);
-        // Evil Spirit, a beat at a time while it goes round him.
-        for (Spirits& one : spirits_) {
+        // Evil Spirit's held blows, each on its own tick.
+        for (SpiritBlow& one : spiritBlows_) {
             if (one.at == 0 || tick_ < one.at || !hero.alive()) continue;
-            const Spirits beat = one;
-            one.at = --one.left > 0 ? tick_ + kSpiritEveryTicks : 0;
-            spiritPulse(hero, beat);
+            const SpiritBlow blow = one;
+            one = SpiritBlow{};
+            spiritStrike(hero, blow);
         }
         // An Arcane Echo's second throw, let go as the first was, paying nothing.
         if (echo_.at != 0 && tick_ >= echo_.at) {
