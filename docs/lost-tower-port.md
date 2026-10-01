@@ -322,8 +322,10 @@ says 20) show the same hand raising every level, so **80 is the repack's**. MuMa
 beacon (Devias object type 100) only to a hero of level >= 50 (MG/DL/RF 33) (`MM/Engine/Object/ZzzObject.cpp:3446-3455`)
 -- a client cue that later servers asked 50 at gate 28, but no 0.75 evidence. **Settled: OM's 40/50.**
 
-MU2_BGFX today: `src/sim/gates.cpp:38-41` carries gate 28 sealed (`target -1`, level 40, "The Lost
-Tower"); exits 29-44 and enters 30-43 are absent. **Side finding:** `src/game/world/world.cpp:268-271`
+MU2_BGFX since 2026-10-01: `src/sim/gates.cpp` carries every row above, gate 28 unsealed to exit
+29, at OM's 40/50 and 15 out; the travel list has the seven LostTower rows (§2.3), each opened as
+its floor is reached (Decision 1). Walked headless at level 60 through all eight enter gates
+(each landed in its exit box), and refused at level 30 (gate 30) and 45 (gate 34). **Side finding:** `src/game/world/world.cpp:268-271`
 gives the beacon's two-thirds rule to `Kin::DarkKnight`; MuMain's `CLASS_DARK` is the **Magic
 Gladiator** (`MM/Core/Globals/_enum.h:3217-3220`: WIZARD, KNIGHT, ELF, DARK), so a 0.75 Dark Knight
 should see the beacon at 50 like everyone else.

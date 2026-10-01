@@ -18,6 +18,15 @@ constexpr TravelRow kRows[kTravels] = {
     {"Dungeon", 1, 30, 3000, 108, 247, -1, -1},
     {"Dungeon 2", 1, 40, 3500, 232, 126, -1, -1},
     {"Dungeon 3", 1, 50, 4000, 3, 84, 1, -1},
+    // `Gates.cs:51-57` (docs/lost-tower-port.md §2.3): LostTower lands in the safe hall, on spawn
+    // gate 42, facing nowhere; LostTower2-7 on each floor's arrival gate, 31-41, as those face.
+    {"Lost Tower", 4, 50, 5000, 208, 75, 0, 0},
+    {"Lost Tower 2", 4, 50, 5500, 242, 237, -1, -1},
+    {"Lost Tower 3", 4, 50, 6000, 86, 167, 1, -1},
+    {"Lost Tower 4", 4, 60, 6500, 87, 87, 1, -1},
+    {"Lost Tower 5", 4, 60, 7000, 129, 53, -1, -1},
+    {"Lost Tower 6", 4, 70, 7500, 53, 53, -1, -1},
+    {"Lost Tower 7", 4, 70, 8000, 8, 86, -1, -1},
 };
 
 // Where each class is born: the elf in Noria, the rest in Lorencia (game/roster.cpp's `home`).
@@ -82,7 +91,25 @@ void Realm::settleFound(uint32_t saved) {
     for (const content::Townsperson& one : tables_->folk) {
         if (questOf(one.number) >= 0) giver = true;
     }
-    if (!giver) found_ |= travelRowsOf(int32_t(tables_->map));
+    // Unless its floors are its own: a map split into floors with no quest chain over them -- the
+    // Lost Tower -- opens each floor's row as he stands on it (reachFloor), so the hall does not
+    // open the warp to the seventh floor (docs/lost-tower-port.md, Decision 1). The Dungeon's
+    // floors are the Golden Archer's chain's, and open with the map as before.
+    bool chained = false;
+    for (int i = 0; i < kTravels; ++i) {
+        if (((rows >> i) & 1u) != 0 && travelQuest(i) >= 0) chained = true;
+    }
+    byFloor_ = !giver && (rows & (rows - 1)) != 0 && !chained;
+    if (!giver && !byFloor_) found_ |= rows;
+    reachFloor();
+}
+
+void Realm::reachFloor() {
+    if (!byFloor_) return;
+    const int floor = travelFloor();
+    if (floor < 0 || ((found_ >> floor) & 1u) != 0) return;
+    found_ |= uint32_t(1) << floor;
+    core::logf("travel: %s opened", travelAt(floor).name);
 }
 
 int Realm::travelFloor() const {

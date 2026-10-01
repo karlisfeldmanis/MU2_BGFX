@@ -714,6 +714,8 @@ void Realm::step() {
     Body& hero = bodies_[0];
     sip();
     recover(hero);
+    // The floor he stands on, opened in the travel list when this map opens floor by floor.
+    reachFloor();
     // What has lain its minute goes, in the order it lies -- a fixed order, since the list is
     // only ever appended to and swapped out of by the tick's own events.
     for (size_t i = 0; i < lying_.size();) {

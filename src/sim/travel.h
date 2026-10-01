@@ -26,7 +26,7 @@ struct TravelRow {
     int8_t dx, dy;         // that gate's facing, as sim/gates.h stores one
 };
 
-inline constexpr int kTravels = 6;
+inline constexpr int kTravels = 13;
 const TravelRow& travelAt(int index);
 
 // Why a trip is refused, first reason first. `Here` is a town's row asked from inside that town:

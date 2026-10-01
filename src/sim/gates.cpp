@@ -24,6 +24,18 @@ constexpr ExitGate kExits[] = {
     {12, 1, {3, 16, 6, 17}, 1, -1},         // Dungeon 2, back up from Dungeon 3 by gate 11
     {14, 1, {29, 125, 30, 126}, -1, -1},    // Dungeon 3, down from Dungeon 2 by gate 13
     {16, 1, {5, 32, 7, 33}, -1, -1},        // Dungeon 2, back up from Dungeon 3 by gate 15
+    // The Lost Tower's, Gates.cs:138-145, and Devias's 44 (:130); docs/lost-tower-port.md §2.1.
+    // 42 is the spawn gate, the safe hall, with no direction (0); 29-41 are each floor's
+    // arrival. 1 West (-1,-1), 3 South (+1,-1), 5 East (+1,+1), 2 SouthWest (0,-1).
+    {42, 4, {203, 70, 213, 81}, 0, 0},      // the Lost Tower's hall: warp, death, Town Portal
+    {29, 4, {162, 2, 166, 3}, 1, 1},        // Lost Tower 1, from Devias
+    {31, 4, {241, 237, 244, 238}, -1, -1},  // Lost Tower 2, down from 1
+    {33, 4, {86, 166, 87, 168}, 1, -1},     // Lost Tower 3, down from 2
+    {35, 4, {87, 86, 88, 89}, 1, -1},       // Lost Tower 4, down from 3
+    {37, 4, {128, 53, 131, 54}, -1, -1},    // Lost Tower 5, down from 4
+    {39, 4, {52, 53, 55, 54}, -1, -1},      // Lost Tower 6, down from 5
+    {41, 4, {8, 85, 9, 87}, -1, -1},        // Lost Tower 7, down from 6
+    {44, 2, {2, 246, 3, 247}, 0, -1},       // Devias, out of the Lost Tower, under the beacon
 };
 
 // Gates.cs, CreateEnterGates: 23 on Lorencia's last rows, 25 on Noria's first, each two rows
@@ -35,10 +47,20 @@ constexpr EnterGate kEnters[] = {
     // Gates.cs:193-194. Lorencia's asks level 15; the way back asks nothing.
     {18, 0, {5, 38, 6, 41}, 15, 19},        // Lorencia to Devias
     {20, 2, {244, 34, 245, 37}, 0, 21},     // Devias to Lorencia
-    // Gates.cs:197, Devias's far corner under the Lost Tower's beacon, level 40, to exit gate
-    // 29. Sealed: the Lost Tower is not built, so its target is -1 and the realm refuses every
-    // step into it (Realm::throughGate). Ours, until there is a map behind it.
-    {28, 2, {2, 248, 3, 249}, 40, -1, "The Lost Tower"},  // Devias to the Lost Tower, sealed
+    // Gates.cs:197, Devias's far corner under the Lost Tower's beacon, level 40, to exit gate 29.
+    {28, 2, {2, 248, 3, 249}, 40, 29},      // Devias to the Lost Tower
+    // The Lost Tower's, Gates.cs:198-204 (docs/lost-tower-port.md §2.2): the door out asks 15,
+    // the first two stairs 40 and the last four 50 (OM's, not the repack's 80). Every stair goes
+    // down; no source has one back up. Each box sits in a wall niche with 2-3 open tiles, which
+    // throughGate's test of the walker's own tile handles. Floors are regions of one map, so
+    // 30-40 lead to the map they stand on, as the Dungeon's stairs do.
+    {43, 4, {162, 0, 166, 1}, 15, 44},      // Lost Tower 1 out to Devias
+    {30, 4, {190, 6, 191, 8}, 40, 31},      // Lost Tower 1 down to 2
+    {32, 4, {166, 163, 167, 166}, 40, 33},  // Lost Tower 2 down to 3
+    {34, 4, {132, 245, 135, 246}, 50, 35},  // Lost Tower 3 down to 4
+    {36, 4, {132, 135, 135, 136}, 50, 37},  // Lost Tower 4 down to 5
+    {38, 4, {131, 15, 132, 18}, 50, 39},    // Lost Tower 5 down to 6
+    {40, 4, {6, 5, 7, 8}, 50, 41},          // Lost Tower 6 down to 7
     // Gates.cs:185, Lorencia's stair down at DoungeonGate01, level 20, to the Dungeon's exit
     // gate 2. And the Dungeon's own, :186-192: the way out asks nothing, every stair between
     // its three floors asks level 20. Floors are regions of one map, so 5 to 15 lead to the

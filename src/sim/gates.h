@@ -8,9 +8,9 @@
 // - An EXIT gate is where he comes out: a box on the other map, a tile in it chosen at random
 //   (Player.WarpToAsync), and the way he faces there.
 //
-// Only Lorencia's and Noria's pair is here, the one walk this game has two maps for. mu.db's
-// `gates` table holds the spawn rows alone and no enter gates, so the rows are written out and
-// not cooked.
+// Every walk this game has maps for: Lorencia, Noria, Devias, the Dungeon and the Lost Tower.
+// mu.db's `gates` table holds the spawn rows alone and no enter gates, so the rows are written
+// out and not cooked.
 #pragma once
 
 #include <cstdint>

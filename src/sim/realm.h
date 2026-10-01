@@ -1055,6 +1055,7 @@ private:
     QuestProgress quests_[kQuests];
     int questing_ = -1;
     uint32_t found_ = 0;  // the travel rows he has opened (sim/travel.h)
+    bool byFloor_ = false;  // this map's rows open floor by floor (reachFloor)
     // On a map of several rows, which row's floor each tile is on (row-major, -1 for none): the
     // tiles walkable from that row's landing, flood-filled once as the map is raised.
     std::vector<int8_t> floors_;
@@ -1062,6 +1063,8 @@ private:
     // town's, and this map's when nobody here gives a quest (realm_travel.cpp).
     void discover(int32_t map);
     void settleFound(uint32_t saved);
+    // A floor-split map's row, opened as he stands on its floor (settleFound's byFloor_).
+    void reachFloor();
     // The walkers on their rounds, by body id: which stop, and when he leaves it.
     struct Stroller {
         uint32_t id = 0;
