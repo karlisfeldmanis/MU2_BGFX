@@ -2389,7 +2389,13 @@ def main() -> None:
                 # And how far each travelling action carries the body, which is the other
                 # number the built file cannot answer and for the opposite reason: the keys
                 # are resampled away, the stride is deliberately thrown away. See strides.
-                if (travelled := strides(rigged)):
+                #
+                # Unless the recipe says `walks_at_own_pace`: a body with no foot to pin has
+                # nothing to slide, and pacing it by a stride it never takes only speeds the
+                # clip up. With no travel the game plays the walk at MU's own rate, as the
+                # client does. The Larva's 0.25 m wriggle against 2.5 m/s of ground played
+                # at the 4x ceiling (the user, 2026-10-01: "larva still moves wird").
+                if not document.get("walks_at_own_pace") and (travelled := strides(rigged)):
                     entry["action_travel"] = travelled
 
             # A monster is one file like an object and is not one, so it is routed away here

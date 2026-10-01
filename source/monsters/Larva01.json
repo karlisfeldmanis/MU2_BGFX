@@ -11,6 +11,8 @@
   "monster_from": "ZzzCharacter.cpp:14107-14112, CreateMonster, case MONSTER_LARVA:\n\n    OpenMonsterModel(MONSTER_MODEL_LARVA);\n    c = CreateCharacter(Key, MODEL_LARVA, PositionX, PositionY);\n    wcscpy(c->ID, L\"유충\");\n    c->Object.Scale = 0.6f;\n\nNo weapon, no BlendMesh, no HiddenMesh, no Level. MODEL_LARVA's only other line is the bounding box (ZzzCharacter.cpp:11807).",
   "profile": "monster",
   "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6 (the research export in scratch carried action 0 alone). Keys: 12, 12, 6, 7, 7, 7, 21. Eleven bones: a grub's segmented spine and head, no legs.\n\nPlay speeds are OpenMonsterModel's defaults with one override, `case MONSTER_MODEL_LARVA: b->Actions[MONSTER01_WALK].PlaySpeed = 0.6f` (ZzzOpenData.cpp:2620), against the table's 0.34 -- a quick wriggle. 6 is not in the multiplier list. No BoneHead is set in its sound case.",
+  "walks_at_own_pace": true,
+  "walks_at_own_pace_from": "Ours, a departure from MU2's pacing and a return to MU's: the walk plays at OpenMonsterModel's 0.6 whatever the ground does, as the client plays it. The game paces a walk by its planted foot, or by the cook's stride when it finds none, and the grub has no foot and a stride of 0.42 m a cycle (0.25 m at 0.6) against 2.5 m/s of ground -- so the wriggle ran at the 4x ceiling, ten cycles a second where MU's is two and a half (the user, 2026-10-01: 'larva still moves wird'). With no action_travel in the index the clip keeps its own rate; a grub slides, and nothing on it shows the slide.",
   "sheets": {
     "snake": "larva_snake.png",
     "snake02": "larva_snake02.png"
