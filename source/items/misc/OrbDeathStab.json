@@ -21,7 +21,7 @@
     ],
     "classes_from": "CharacterClasses.DarkKnight. Every skill in this orb's family is a knight's; Prize.ReadBy refuses the other two whatever their level.",
     "requires": {
-      "level": 60,
+      "level": 120,
       "strength": 0,
       "agility": 0,
       "energy": 0,
@@ -35,9 +35,10 @@
     "name": "Death Stab",
     "tells": "The point driven through one body at speed. Nothing he has hits one thing harder.",
     "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things about the same blow. MU never prints a line like this at all; it is ours, as it is on the elf's orbs.",
-    "level_requirement": 60,
+    "level_requirement": 120,
     "energy_requirement": 0,
     "energy_from": "None. The knight's skills carry no energy requirement in 0.75 -- CreateSkill is called with mana and nothing else for all six (Version075/SkillsInitializer.cs:58-63) -- and gating them behind the stats that make them good would charge twice (docs/skills-dk.md SS3.3).",
-    "value": 90000
+    "value": 90000,
+    "level_from": "Ours: about twice the scroll's drop level, in MU's own order (the user's audit of 2026-10-02: 'currently chars can get end game scroll and orbs pretty fast, remember we have 100% exp rate'). At kExperienceRate 100 a character who never leaves Lorencia reaches level 60 in about a hundred kills and 120 in about sixteen hundred, so MU's own gates -- energy alone on a scroll, the drop level on an orb -- fell within minutes. The energy (or other stat) MU asks is kept beside it."
   }
 }

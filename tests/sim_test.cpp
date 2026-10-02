@@ -1063,7 +1063,8 @@ void testCastLock(const content::Tables& tables) {
                   tables.items[size_t(scroll)].teachesEnergy == 56,
               "the Scroll of Power Wave teaches skill 11 at fifty-six energy");
         sim::Realm reader;
-        check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 10), "a wizard raises");
+        // Eighteen: Power Wave's level since the ladder of 2026-10-02.
+        check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 18), "a wizard raises");
         sim::HeroRecord carrying = reader.record();
         const int bagged = sim::kWorn + 40;
         carrying.slots[bagged].item = scroll;
@@ -1694,8 +1695,23 @@ void testCastLock(const content::Tables& tables) {
                   tables.items[size_t(scroll)].teachesEnergy == 104,
               "the Scroll of Meteorite teaches skill 2 at a hundred and four energy");
         check(tables.action(183) != nullptr, "the tables carry the arm-up clip's length");
+        // The level comes first since the ladder of 2026-10-02: forty-one is refused with all
+        // the energy, forty-two reads it.
+        {
+            sim::Realm early;
+            check(early.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 41),
+                  "a wizard of forty-one raises");
+            sim::HeroRecord held = early.record();
+            held.slots[sim::kWorn + 40].item = scroll;
+            held.slots[sim::kWorn + 40].durability = 1;
+            held.points.energy = 200;
+            early.restore(held);
+            check(!early.useItem(sim::kWorn + 40),
+                  "and is refused the Scroll of Meteorite, which asks for level forty-two");
+            check(tables.items[size_t(scroll)].teachesLevel == 42, "as its row says");
+        }
         sim::Realm reader;
-        check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 10), "a wizard raises");
+        check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 42), "a wizard raises");
         sim::HeroRecord carrying = reader.record();
         const int bagged = sim::kWorn + 40;
         carrying.slots[bagged].item = scroll;
@@ -2511,8 +2527,9 @@ void testSkills(const content::Tables& tables) {
     // knight meets his skills in the order MU gave them to him. And the class is the item's too.
     {
         sim::Realm young;
-        check(young.raise(&tables, 3, 138, 124, sim::Kin::DarkKnight, 12),
-              "a knight of twelve raises in town");
+        // Twenty-four: Uppercut's level since the ladder of 2026-10-02, twice its drop level.
+        check(young.raise(&tables, 3, 138, 124, sim::Kin::DarkKnight, 24),
+              "a knight of twenty-four raises in town");
         young.earn(3000000);
         sim::Request talk;
         talk.kind = sim::Request::Kind::Talk;
@@ -2531,9 +2548,10 @@ void testSkills(const content::Tables& tables) {
         const int uppercut = young.buy(orbOf(sim::skill::kUppercut));
         const int slash = young.buy(orbOf(sim::skill::kSlash));
         check(uppercut >= 0 && slash >= 0, "he buys the orb he is ready for and one he is not");
-        check(young.useItem(uppercut), "twelve is enough for Uppercut, which asks for twelve");
+        check(young.useItem(uppercut),
+              "twenty-four is enough for Uppercut, which asks for twenty-four");
         check(young.knows(sim::skill::kUppercut), "and he has it");
-        check(!young.useItem(slash), "but Slash asks for fifty-two and he is twelve");
+        check(!young.useItem(slash), "but Slash asks for a hundred and four and he is twenty-four");
         check(!young.knows(sim::skill::kSlash), "so he has not learned it");
         check(!young.satchel()[slash].empty(), "and the orb is unspent, waiting for the level");
 
@@ -2626,7 +2644,8 @@ void testSkills(const content::Tables& tables) {
               "and it is cooked, teaching skill 16");
 
         sim::Realm mage;
-        check(mage.raise(&tables, 3, 138, 124, sim::Kin::DarkWizard, 6), "a wizard of six raises");
+        check(mage.raise(&tables, 3, 138, 124, sim::Kin::DarkWizard, 12),
+              "a wizard of twelve raises");
         mage.earn(3000000);
         sim::Request talk;
         talk.kind = sim::Request::Kind::Talk;
@@ -2636,7 +2655,7 @@ void testSkills(const content::Tables& tables) {
         check(mage.trading() == pasi, "walks to Pasi and is served");
         const int bought = mage.buy(scrollSlot);
         check(bought >= 0, "buys the scroll");
-        check(mage.useItem(bought), "and reads it at level six");
+        check(mage.useItem(bought), "and reads it at level twelve");
         check(mage.knows(sim::skill::kSoulBarrier), "so Soul Barrier is his");
 
         // Out of town, with nothing on his arm first: refused, as a knight's guard is.
