@@ -21,12 +21,35 @@
 // one (docs/pets.md).
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "gfx/renderer.h"
+
+namespace mu::game {
+// How far the Dinorant lifts its rider, metres: on a ground map MU sets him 30 over the terrain
+// (ZzzCharacter.cpp:6381-6390) and draws the dragon 30 under him (GOBoid.cpp:517-523).
+constexpr float kDinorantLift = 0.30f;
+
+// And how far to lift him again, metres, at `through` (0..1) of his run ride: the dragon's back
+// less his pelvis, key by key. MU plays one run ride, 36/37, on both mounts, and Uniria's leap
+// rises and falls with it key for key -- its Bip01 Spine at +6 -18 +8 +6 -18 +8 +7 MU units about
+// its mean, the rider's Bip01 Pelvis at +7 -18 +7 +6 -17 +8 +7 -- but the Dinorant's run is its
+// own, +16 -16 -3 +11 -19 -5 +17, down on keys 2 and 5 where his pelvis is up (measured off both
+// rigs and player.bmd's 36, 2026-10-02; the user: "bouncing with dyno is not perfectly synced").
+// Added to his seat it puts his pelvis on the dragon's back through the whole bound. **ours**.
+inline float dinorantBob(float through) {
+    constexpr float kDragonLessRider[7] = {9.4f, 1.3f, -10.4f, 5.0f, -2.6f, -12.6f, 10.1f};
+    const float key = std::fmod(std::max(0.0f, through), 1.0f) * 6.0f;
+    const int at = std::min(5, int(key));
+    const float t = key - float(at);
+    return (kDragonLessRider[at] * (1.0f - t) + kDragonLessRider[at + 1] * t) * 0.01f;
+}
+}  // namespace mu::game
 
 namespace mu::game {
 
@@ -53,6 +76,8 @@ private:
     const FigureBody* angelBody_ = nullptr;
     const FigureBody* impBody_ = nullptr;
     const FigureBody* horseBody_ = nullptr;
+    const FigureBody* dragonBody_ = nullptr;
+    const FigureBody* horseOf_ = nullptr;  // which of the two `horse_` stands as
     Figure angel_, imp_, horse_;
     bool horseUp_ = false;
     float horseIn_ = 0.0f;  // 0 gone, 1 there: the fade at a safe zone's edge

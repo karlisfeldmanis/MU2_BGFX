@@ -104,6 +104,16 @@ PetPower petPower(const content::ItemRow& row) {
         // gObjSpriteDamage wears it by damage x 1/10 / 10 (1.00.93 user.cpp:10615-10620).
         power.mount = true;
         power.wear = 0.1 / 10.0;
+    } else if (row.number == 3) {
+        // The Horn of Dinorant, **0.95d's and not 0.75's** (OpenMU Version095d/Items/Pets.cs:40):
+        // damage x1.15 and taken x0.9. WebZen's 1.00.93 takes 1 of the rider's life for each x1.15
+        // blow, as the Imp's 3 (ObjAttack.cpp:1293-1306), absorbs `90 - option` (:1314-1328), and
+        // wears it by damage/200 a hit taken (user.cpp:10623-10628, NEW_SKILL_FORSKYLAND).
+        power.mount = true;
+        power.dealt = 1.15;
+        power.taken = 0.9;
+        power.lifeCost = 1;
+        power.wear = 1.0 / 200.0;
     }
     return power;
 }
@@ -371,12 +381,12 @@ int placeOf(const content::ItemRow& row) {
         return kWeaponRight;
     }
     if (row.group >= kGroupShields && row.group <= kGroupBoots) return row.group - 5;
-    // The Guardian Angel, the Imp and the Horn of Uniria: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
+    // The Guardian Angel, the Imp and the Horns of Uniria and Dinorant: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
     // A ring in the right ring slot and a pendant as the amulet (ZzzInfomation.cpp:1085-1094);
     // placesIn lets a ring into the left one too.
     if (ring(row)) return kRingRight;
     if (pendant(row)) return kAmulet;
-    if (row.group == kGroupPets && row.number <= 2) return kPet;
+    if (row.group == kGroupPets && row.number <= 3) return kPet;
     return -1;
 }
 

@@ -62,6 +62,7 @@ void Pets::open(const Figures& figures) {
     angelBody_ = figures.body("Helper01");
     impBody_ = figures.body("Helper02");
     horseBody_ = figures.body("Rider01");
+    dragonBody_ = figures.body("Rider02");
 }
 
 float Pets::roll() {
@@ -126,23 +127,37 @@ void Pets::stepAngel(const float owner[3]) {
 void Pets::ride(float seconds, const Figure& hero, bool riding, int action) {
     // The Horn of Uniria's horse: GOBoid.cpp's MODEL_UNICON, on the rider's own spot and facing
     // (:515, :524) at scale 1.0 (:684-691). No bone joins them; the seat is in his ride clips.
-    if (shown_ != 2 || !horseBody_) {
+    // The Dinorant's dragon, Rider02, MODEL_PEGASUS, by the same code (docs/mount.md).
+    const FigureBody* mount = shown_ == 2 ? horseBody_ : shown_ == 3 ? dragonBody_ : nullptr;
+    if (!mount) {
         horseIn_ = 0.0f;
         horseUp_ = false;
         return;
     }
+    if (mount != horseOf_) {
+        horseOf_ = mount;
+        horseUp_ = false;
+    }
+    // The dragon's attack is its 4, Uniria's 3 (GOBoid.cpp:566-578); 0 and 2 are both's.
+    if (shown_ == 3 && action == 3) action = 4;
+    // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
+    float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
+    if (shown_ == 3) {
+        ground[1] -= kDinorantLift;
+        if (action == 2) ground[1] -= dinorantBob(hero.through());
+    }
     horseIn_ = std::clamp(horseIn_ + (riding ? seconds : -seconds) / kHorseFade, 0.0f, 1.0f);
     if (!horseUp_) {
-        horse_.stand(horseBody_, hero.position(), hero.yaw(), hero.scale());
+        horse_.stand(mount, ground, hero.yaw(), hero.scale());
         horseUp_ = true;
     }
     // Where it stands while it fades out at the zone's edge is where he stepped off it: the
     // rider walks on, the horse does not follow him in.
-    if (riding) horse_.place(hero.position(), hero.yaw(), false);
+    if (riding) horse_.place(ground, hero.yaw(), false);
     // Its clip off the rider's (GOBoid.cpp:525-595): 2 while he rides on, 3 while he swings,
     // 0 otherwise -- held where it is through anything else, as SetAction refuses the 6 this
     // four-action model lacks (ZzzAI.cpp:424).
-    const int clip = horseBody_->library ? horseBody_->library->find(action) : -1;
+    const int clip = mount->library ? mount->library->find(action) : -1;
     if (clip >= 0) horse_.play(clip, false, -1.0f);
     horse_.update(seconds);
     // And in step with him. MU runs the two on two clocks at one rate, and its run ride and the
@@ -223,7 +238,7 @@ void Pets::gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float
     } else if (shown_ == 0 && angelUp_) {
         figure = &angel_;
         fade = std::clamp(angelIn_ / kAngelFadeIn, 0.0f, 1.0f);
-    } else if (shown_ == 2 && horseUp_ && horseIn_ > 0.0f) {
+    } else if ((shown_ == 2 || shown_ == 3) && horseUp_ && horseIn_ > 0.0f) {
         figure = &horse_;
         fade = horseIn_;
     }

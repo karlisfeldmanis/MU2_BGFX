@@ -120,8 +120,8 @@ int placeOf(const content::ItemRow& row);
 bool offHanded(const content::ItemRow& row, Kin kin);
 // Whether it may be worn in `slot`: where placeOf puts it, or the left hand by offHanded.
 bool placesIn(const content::ItemRow& row, Kin kin, int slot);
-// A pet's powers (sim::PetPower): the Guardian Angel 13/0, the Imp 13/1 and the Horn of Uniria
-// 13/2. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
+// A pet's powers (sim::PetPower): the Guardian Angel 13/0, the Imp 13/1 and the Horns of Uniria
+// 13/2 and Dinorant 13/3. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);
 
 // ---- rings and pendants (docs/jewellery.md) ------------------------------------------------

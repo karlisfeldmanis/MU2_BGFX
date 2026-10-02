@@ -18,21 +18,23 @@
     "call": "this.CreatePet(3, SkillNumber.FireBreath, \"Horn of Dinorant\", 110, false, (Stats.IsDinorantEquipped, 1), (Stats.MovementSpeed, BasicMountMovementSpeed, Maximum), (Stats.MovementSpeedUnderwater, ...), (Stats.DamageReceiveDecrement, 0.9f, Multiplicate), (Stats.AttackDamageIncrease, 1.15f, Multiplicate))",
     "group": 13,
     "number": 3,
-    "drop_level": 110,
+    "drop_level": 160,
     "drops_from_monsters": false,
     "width": 1,
     "height": 1,
     "durability": 255,
     "slot": 8,
     "requires": {
-      "level": 110,
+      "level": 160,
       "strength": 0,
       "agility": 0,
       "energy": 0,
       "vitality": 0
     },
     "power_note": "Damage dealt x1.15 and taken x0.9 (OpenMU 0.95d); WebZen's 1.00.93 takes 1 of the rider's life for each x1.15 blow and absorbs 10% (ObjAttack.cpp:1293-1328). Carries Fire Breath, skill 49, the knight's (WebZen public.h:224). Wears by damage/200 a hit taken (user.cpp:10623-10628). Made from ten 255-Life Horns of Uniria and a Jewel of Chaos at 70% (MixSystem.cpp:2156-2240), never dropped.",
-    "classes_note": "All classes may ride it; its skill is the knight's."
+    "classes_note": "All classes may ride it; its skill is the knight's.",
+    "level_note": "160, the user's (2026-10-02, asked whether to keep OpenMU's 110). The drop level follows, as CreatePet sets both from one number, so the shop's dropLevel^3 + 100 is 4,096,100.",
+    "source_note": "Sold on Lumen's shelf, the user's pick: there is no Chaos Machine to make it in (docs/mount.md)."
   },
   "islands": [
     {

@@ -811,7 +811,23 @@ void Play::follow(float seconds) {
         const float dz = -std::sin(facing);
         one.yaw = std::atan2(dx, dz);
 
-        const float position[3] = {x, ground_->heightAt(x, z), z};
+        // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
+        float lift = 0.0f;
+        if (body->player && body->riding) {
+            const sim::Held& worn = realm_.satchel()[sim::kPet];
+            if (!worn.empty() && size_t(worn.item) < tables_.items.size() &&
+                tables_.items[size_t(worn.item)].number == 3) {
+                lift = kDinorantLift;
+                // On its run, his seat follows the dragon's back (dinorantBob).
+                const FigureBody* seatOn = one.figure.body();
+                const int riding = one.figure.clip();
+                if (seatOn && riding >= 0 &&
+                    (riding == seatOn->rideRunClip || riding == seatOn->rideRunArmedClip)) {
+                    lift += dinorantBob(one.figure.through());
+                }
+            }
+        }
+        const float position[3] = {x, ground_->heightAt(x, z) + lift, z};
         // The safe zone is a stance and not only a place: inside one MU carries the weapon on
         // the back and stands in the unarmed idle, and steps out of it with the weapon drawn.
         // `place` moves the weapon; the clip below is the other half of the same rule, and the

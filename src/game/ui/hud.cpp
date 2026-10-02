@@ -128,7 +128,7 @@ const char* buffArt(int32_t skill) {
 
 // The pets' cells, ours: each rendered from the pet's own model by pipeline/model_icons.py.
 const char* petArt(int pet) {
-    return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : "buff_uniria";
+    return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : pet == 2 ? "buff_uniria" : "buff_dinorant";
 }
 
 // The painted key labels: a dark cell on rows 164 to 177 under every box, the figure centred on
@@ -649,7 +649,10 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     if (one.pet >= 0) {
         // What the pet does while it has life, in MU's words (the item card's own lines,
         // sim::petPower), and its Life in the foot where a boon keeps its time.
-        sheet.name = one.pet == 0 ? "Guardian Angel" : one.pet == 1 ? "Imp" : "Horn of Uniria";
+        sheet.name = one.pet == 0   ? "Guardian Angel"
+                     : one.pet == 1 ? "Imp"
+                     : one.pet == 2 ? "Horn of Uniria"
+                                    : "Horn of Dinorant";
         sheet.nameTone = tip::Tone::White;
         sheet.base = "PET";
         content::ItemRow row;

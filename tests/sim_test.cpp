@@ -5730,6 +5730,27 @@ void testMount(const content::Tables& tables) {
     check(!town.hero().riding, "and in town he is on foot");
 }
 
+// The Horn of Dinorant (docs/mount.md, 0.95d's): ridden as Uniria is, and MU's powers with it.
+void testDinorant(const content::Tables& tables) {
+    std::printf("the Horn of Dinorant\n");
+    const int horn = tables.itemAt(13, 3);
+    check(horn >= 0, "the Horn of Dinorant is in the table");
+    if (horn < 0) return;
+    const content::ItemRow& row = tables.items[size_t(horn)];
+    checkEqual(sim::placeOf(row), int(sim::kPet), "it goes in the helper slot");
+    checkEqual(row.dropLevel, 160, "from level 160, the user's");
+    check(!row.dropsFromMonsters(), "and never dropped");
+    const sim::PetPower power = sim::petPower(row);
+    check(power.mount && power.dealt == 1.15 && power.taken == 0.9 && power.lifeCost == 1,
+          "ridden, x1.15 for 1 life a blow, x0.9 taken");
+    check(power.wear == 1.0 / 200.0, "and wears at damage/200");
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 160);
+    realm.give(horn, sim::kPet);
+    realm.step();
+    check(realm.hero().riding, "he rides it off a safe tile");
+}
+
 // A Thunder Lich's Lightning pushes him a tile straight away, slid as a pushed monster slides
 // (the user, 2026-10-01). Undying beside one in the Dungeon, standing still, until it strikes.
 void testLichPush() {
@@ -6029,6 +6050,7 @@ int main() {
     testJewellery(tables);
     testPets(tables);
     testMount(tables);
+    testDinorant(tables);
     testPoisonOnce();
     testWishDropsOnWalk(tables);
     testTravelQuestLock();

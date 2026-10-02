@@ -197,3 +197,13 @@ Version075 stops at 13/2, and the Dinorant is 0.95d's. Every rule below is marke
   the wings, cut by their own alpha) and `Helper04` the horn (44 triangles, `reddragont.png`),
   carrying the 13/3 row. Tiled, the wings on foliage, lit through as the Imp's. Built and synced,
   not indexed. Bench: `build/mu2 --model items/pets/Rider02/Rider02.glb --dist 5`.
+- **Step 2-3, ridden** (2026-10-02). The user's picks: sold on Lumen's shelf (cell 5, there being
+  no Chaos Machine), level 160 (drop level with it, so 4,096,100 Zen), MU's powers only.
+  `PetPower`: the ride, x1.15 dealt for 1 life a blow, x0.9 taken, wear damage/200. Drawn by
+  `game/pets.h` as Uniria's horse is, off Rider02: its attack is clip 4 where Uniria's is 3; the
+  rider sits `kDinorantLift` (MU's 30) over the ground and the dragon on it. The bounce: MU plays
+  one run ride on both mounts and Uniria's back rises and falls with it key for key, the
+  Dinorant's does not (+16 -16 -3 +11 -19 -5 +17 against his pelvis's +7 -18 +7 +6 -17 +8 +7),
+  so on the run his seat follows the dragon's back (`dinorantBob`, ours; the user: "bouncing with
+  dyno is not perfectly synced"). Buff cell `buff_dinorant`, the dragon on steel blue. sim_test
+  `testDinorant`. Not built: Fire Breath, its options, flight -- not chosen.
