@@ -3714,6 +3714,33 @@ void testTravelQuestLock() {
     const int dc = realm.hero().column() - sim::travelAt(first).column;
     const int dr = realm.hero().row() - sim::travelAt(first).row;
     check(dc * dc + dr * dr <= 64, "set down at its landing");
+
+    // But not from inside the town he is in (the user, 2026-10-02): Lorencia's own row is refused
+    // in its safe zone and taken from its field.
+    content::Tables lorencia;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur",
+                              lorencia, error), "Lorencia's tables load");
+    sim::Realm town;
+    check(town.raise(&lorencia, 7, 190, 110, sim::Kin::DarkKnight, 60), "a knight in Lorencia");
+    town.earn(1000000);
+    int home = -1;
+    for (int i = 0; i < sim::kTravels && home < 0; ++i) {
+        if (sim::travelAt(i).map == 0) home = i;
+    }
+    town.setHeroDown(sim::travelAt(home).column, sim::travelAt(home).row, 1, 0);
+    check(lorencia.grid.safe(town.hero().column(), town.hero().row()), "its landing is in town");
+    checkEqual(int(town.travelRefusal(home)), int(sim::TravelRefusal::Here),
+               "Lorencia is refused from inside Lorencia's safe zone");
+    int fc = -1, fr = -1;
+    for (int r = 20; r < 236 && fc < 0; ++r) {
+        for (int c = 20; c < 236 && fc < 0; ++c) {
+            if (!lorencia.grid.safe(c, r) && lorencia.grid.open(c, r)) fc = c, fr = r;
+        }
+    }
+    town.setHeroDown(fc, fr, 1, 0);
+    check(!lorencia.grid.safe(town.hero().column(), town.hero().row()), "he stands in the field");
+    checkEqual(int(town.travelRefusal(home)), int(sim::TravelRefusal::None),
+               "and Lorencia is taken from its field");
 }
 
 // The Lost Tower's way in (docs/lost-tower-quest.md, 2026-10-01): Devin's hand-in sends the hero

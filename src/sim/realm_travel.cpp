@@ -163,7 +163,13 @@ TravelRefusal Realm::travelRefusal(int index) const {
     const TravelRow& to = kRows[index];
     if (((found_ >> index) & 1u) == 0) return TravelRefusal::Unknown;
     // The map he is on is a trip too (the user, 2026-10-02: 'allow to travel to current map'):
-    // set down at its landing in place, as another of the Dungeon's floors is.
+    // set down at its landing in place, as another of the Dungeon's floors is. Not to a safe zone
+    // from inside it, where he already is (the user: 'dont allow to use fast travel to safezone
+    // to same map wher he already is'); the Lost Tower's floors from its hall still go.
+    const Body& standing = bodies_[0];
+    if (to.map == int32_t(tables_->map) && tables_->grid.safe(to.column, to.row) &&
+        tables_->grid.safe(standing.column(), standing.row()))
+        return TravelRefusal::Here;
     // Its link of the chain, taken at least once: under way, ready, resting or ever handed in --
     // or, on the Lost Tower, handed in at least once.
     if (const int q = travelQuest(index); q >= 0) {

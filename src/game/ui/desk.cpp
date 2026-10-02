@@ -371,11 +371,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (mapWanted) play.sound().play(play.sound().load("quest_page_turn", false));
     }
     scriptMap_ = false;
+    // The press that took him is the list's even as it shuts on it: on his own map no new world
+    // eats it, and it would walk him from the landing to where the button was.
+    bool travelPressed = false;
     if (travel_.up() && play.isOpen()) {
         const int go = travel_.update(play, pointer, window.width(), window.height());
         if (go >= 0 && play.travel(go)) {
             travel_.hide();
             click();
+            travelPressed = true;
         }
     }
     // Go Back!: clicked, it clicks, and the mode takes him back (app/modes/play_mode.cpp), where
@@ -639,7 +643,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
                     minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
-                    travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
+                    travelPressed || travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
                     (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
                     liftedQuick_ >= 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||

@@ -346,7 +346,12 @@ void Travel::rebuild(const Drawn& now) {
     for (const Hit& hit : hits_) {
         const Place& place = places_[size_t(hit.place)];
         const bool here = place.map == now.here;
-        const bool over = hit.place == now.hoverPlace;
+        // The gold one lifts only where a press takes him somewhere: not from its own safe zone.
+        bool open = place.map != now.here;
+        for (int row : place.rows) {
+            if (now.refusals[row] == uint8_t(sim::TravelRefusal::None)) open = true;
+        }
+        const bool over = hit.place == now.hoverPlace && open;
         Box b = hit.box;
         if (!hit.usable && !ruled) {
             ruled = true;
