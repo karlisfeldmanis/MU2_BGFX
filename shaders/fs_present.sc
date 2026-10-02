@@ -110,7 +110,12 @@ vec3 toSrgb(vec3 linearColour)
 // read five times.
 vec3 seen(vec2 uv, vec3 glow)
 {
-	return tonemap((texture2D(s_colour, uv).rgb + glow) * u_params.z);
+	// Finite first, as fs_bloom_down's taps are: a NaN or +inf texel is a black pixel
+	// through the tone curve, and a sharpen tap spreads it to its neighbours.
+	vec3 c = texture2D(s_colour, uv).rgb;
+	c = min(vec3(isnan(c.r) ? 0.0 : c.r, isnan(c.g) ? 0.0 : c.g, isnan(c.b) ? 0.0 : c.b),
+	        vec3_splat(65504.0));
+	return tonemap((c + glow) * u_params.z);
 }
 
 void main()

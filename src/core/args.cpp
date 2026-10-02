@@ -100,6 +100,7 @@ void printUsage() {
         "ring and the HUD stay at full size), upscaled by MetalFX\n"
         "  --no-metalfx              under --scale, stretch in the present instead of MetalFX\n"
         "  --graphics P              the Options page's preset: low, medium or high\n"
+        "  --no-ssao, --no-bloom, --no-reflections   the Graphics page's switches, off\n"
         "  --frames N                quit after N frames\n"
         "  --repeat N                measure N segments of --frames, loading the world once\n"
         "  --shot N                  write a PNG every N frames, and on the last\n"
@@ -263,6 +264,12 @@ Args parseArgs(int argc, char** argv) {
                 logError("--graphics is low, medium or high, got %s", v ? v : "");
                 a.valid = false;
             }
+        } else if (!std::strcmp(s, "--no-ssao")) {
+            a.ssao = false;
+        } else if (!std::strcmp(s, "--no-bloom")) {
+            a.bloom = false;
+        } else if (!std::strcmp(s, "--no-reflections")) {
+            a.reflections = false;
         } else if (!std::strcmp(s, "--no-metalfx")) {
             a.metalfx = false;
         } else if (!std::strcmp(s, "--cap")) {

@@ -12,7 +12,18 @@ $input v_texcoord0
 uniform vec4 u_bloom;       // x: threshold  y: knee  z: 1 on the first level  w: unused
 uniform vec4 u_bloomTexel;  // xy: one texel of the SOURCE level, in uv
 
-vec3 tap(vec2 uv) { return texture2D(s_colour, uv).rgb; }
+// A texel made finite before it is weighed. A highlight past half float's range is +inf in
+// the shade target, and bright() then divides it by itself: NaN, which this chain blurs out
+// into a black square a 32nd of the screen wide and more -- the black boxes by Devias's
+// guards with anti-aliasing off (the user, 2026-10-02). NaN to 0, infinity to the largest
+// half float; every ordinary value passes untouched.
+vec3 finite(vec3 c)
+{
+	c = vec3(isnan(c.r) ? 0.0 : c.r, isnan(c.g) ? 0.0 : c.g, isnan(c.b) ? 0.0 : c.b);
+	return min(c, vec3_splat(65504.0));
+}
+
+vec3 tap(vec2 uv) { return finite(texture2D(s_colour, uv).rgb); }
 
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 
