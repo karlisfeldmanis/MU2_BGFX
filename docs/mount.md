@@ -1,6 +1,6 @@
 # The first mount: the Horn of Uniria (13/2)
 
-Researched 2026-10-02. Steps 1 (the models) and 2 (the sim) done the same day; the horse is not drawn yet. The 0.75 mount: group 13 number 2, the third of the
+Researched 2026-10-02. Steps 1-3 (models, sim, riding) done the same day; the dust and the card are left. The 0.75 mount: group 13 number 2, the third of the
 helpers after the Guardian Angel and the Imp (`docs/pets.md`). Sources: OpenMU Version075,
 MuMain (a Season 6 fork, read for the client), WebZen GameServer 1.00.93's 0.97d base (outranks
 OpenMU on rules, `docs/webzen-audit.md`).
@@ -121,6 +121,19 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
   speed +21% over running"; the card says "Moving speed: ride outside town, faster than running".
   sim_test `testMount`: 20 ticks east of (200,160) cover 2.75 tiles on foot, 3.54 mounted.
   Nothing is drawn yet: he still walks and runs on foot, only faster (step 3).
+- **Step 3, ridden** (2026-10-02). `game/pets.h` draws Rider01 on his spot and facing at 1.0,
+  faded 0.25 s at a safe zone's edge (ours; MU cuts Alpha to 0), its clip GOBoid's off his: 2
+  riding on, 3 a weapon's swing, 0 otherwise. He rides on 13/14 and 36/37 (bare while slung,
+  armed while drawn), swings 54-59 by stance (dual Kris too, every blow on the right hand's 54:
+  MU has no paired ride swing), casts 156 as a wizard and 68 otherwise; an elf's arrow skill
+  takes the ride bow. The run ride plays at MU's 0.34 (actions.json cooked 0.3) and the horse's
+  clip takes his clip's place as a fraction each frame, so the bounces hold together (the user:
+  "char is not perfectly synced with mount bouncing"). **Ours**: a drawn bow or crossbow on the
+  horse holds the first key of its ride shot between shots, as MU's stop ride weapon laid the
+  bow flat through her thigh ("bow holding looks incorrect"). Checked in the arena against
+  Hounds: two-hand Slash, dual Cyclone, Berdysh Falling Slash, sword and shield Lunge, wizard
+  Fire Ball, elf bow Triple Shot and crossbow. Monsters on the neighbouring tiles stand inside
+  the horse's long body, as they would in MU. `--give NAME:1:H` wears a weapon in the off hand.
 
 ## Steps
 

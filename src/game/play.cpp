@@ -369,6 +369,15 @@ void Play::update(double seconds) {
                     caster->castClip = -1;
                     if (row && caster->figure.body() && caster->figure.body()->library) {
                         caster->castClip = caster->figure.body()->library->find(row->clip);
+                        // On a horse, MU's ride cast stands in: PLAYER_RIDE_SKILL 156 for a
+                        // spell (ZzzCharacter.cpp:1326-1328) and PLAYER_SKILL_RIDER 68 for a
+                        // knight's skill or an elf's buff (ClassAttack.cpp:1807). An arrow skill
+                        // takes the ride bow below, with the weapon's swing.
+                        if (happening.who == heroId && realm_.hero().riding && !row->arrows) {
+                            const int ridden = caster->figure.body()->library->find(
+                                realm_.hero().kin == sim::Kin::DarkWizard ? 156 : 68);
+                            if (ridden >= 0) caster->castClip = ridden;
+                        }
                     }
                     // A self-cast throws no blow, so there is no Hit coming to play the clip:
                     // it is played here instead, and the wave with it.
@@ -793,6 +802,15 @@ void Play::update(double seconds) {
                                 if (row->arrows > 0 && swinger->attackClip >= 0) {
                                     swinger->castClip = swinger->attackClip;
                                 }
+                                // And on a horse, the ride cast (156 a spell, 68 a skill), as
+                                // where the cast is announced; an arrow keeps the bow's swing,
+                                // which the ride swing below replaces.
+                                if (happening.who == realm_.hero().id && realm_.hero().riding &&
+                                    row->arrows == 0) {
+                                    const int ridden = swinger->figure.body()->library->find(
+                                        realm_.hero().kin == sim::Kin::DarkWizard ? 156 : 68);
+                                    if (ridden >= 0) swinger->castClip = ridden;
+                                }
                             }
                         }
                     }
@@ -817,16 +835,16 @@ void Play::update(double seconds) {
                                     ? swinger->attackClip2 : swinger->attackClip;
                         ++swinger->swordCount;
                     }
-                    // On a horse, MU's ride clips stand in (docs/mount.md): the weapon's ride
-                    // swing (ZzzCharacter.cpp:1112-1153), PLAYER_RIDE_SKILL 156 for a spell
-                    // (:1326-1328) and PLAYER_SKILL_RIDER 68 for a knight's skill or an elf's
-                    // buff (ClassAttack.cpp:1807). A clip the library lacks keeps the standing one.
+                    // On a horse, the weapon's ride swing stands in (docs/mount.md,
+                    // ZzzCharacter.cpp:1112-1153), and for an arrow skill too, which plays the
+                    // bow's swing; a spell's ride cast was chosen with castClip. A clip the
+                    // library lacks keeps the standing one.
+                    const bool arrowCast = cast && swinger->castClip == swinger->attackClip;
                     if (happening.who == realm_.hero().id && realm_.hero().riding &&
-                        swinger->figure.body() && swinger->figure.body()->library) {
+                        (!cast || arrowCast) && swinger->figure.body() &&
+                        swinger->figure.body()->library) {
                         const FigureBody* look = swinger->figure.body();
-                        const int ridden = look->library->find(
-                            !cast ? rideSlotFor(look->stance)
-                                  : realm_.hero().kin == sim::Kin::DarkWizard ? 156 : 68);
+                        const int ridden = look->library->find(rideSlotFor(look->stance));
                         if (ridden >= 0) swing = ridden;
                     }
                     if (pose && swing >= 0 && swinger->figure.body()) {

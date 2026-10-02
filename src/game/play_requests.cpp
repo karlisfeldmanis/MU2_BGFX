@@ -255,7 +255,7 @@ void Play::restore(const sim::HeroRecord& saved) {
 // --weapon, and asked of no requirement. Anything else is ignored.
 static void readExtras(const std::string& extras, int* plus, bool* luck, int* option,
                        uint8_t* excellent, bool* worn = nullptr, int* sockets = nullptr,
-                       uint8_t* powers = nullptr) {
+                       uint8_t* powers = nullptr, bool* offhand = nullptr) {
     int nextPower = 0;
     for (size_t i = 0; i < extras.size(); ++i) {
         const char c = extras[i];
@@ -266,6 +266,8 @@ static void readExtras(const std::string& extras, int* plus, bool* luck, int* op
             powers[nextPower++] = uint8_t(std::atoi(extras.c_str() + i + 1));
         }
         if ((c == 'W' || c == 'w') && worn) *worn = true;
+        // H: worn in the off hand -- a knight's second weapon, for a review run of the pair.
+        if ((c == 'H' || c == 'h') && worn && offhand) *worn = *offhand = true;
         if (c == '+') *plus = std::atoi(extras.c_str() + i + 1);
         if (c == 'L' || c == 'l') *luck = true;
         if ((c == 'O' || c == 'o') && i + 1 < extras.size()) *option = extras[i + 1] - '0';
@@ -297,8 +299,9 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
         bool worn = false;
         int sockets = 0;
         uint8_t powers[3] = {};
-        readExtras(extras, &plus, &luck, &option, &excellent, &worn, &sockets, powers);
-        const int into = worn ? sim::placeOf(row) : -1;
+        bool offhand = false;
+        readExtras(extras, &plus, &luck, &option, &excellent, &worn, &sockets, powers, &offhand);
+        const int into = offhand ? int(sim::kWeaponLeft) : worn ? sim::placeOf(row) : -1;
         // Whatever he wears there already goes into the bag first -- the arena's own sword.
         if (into >= 0 && !realm_.satchel()[into].empty()) {
             const sim::Held& on = realm_.satchel()[into];

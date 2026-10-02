@@ -891,8 +891,17 @@ void Play::follow(float seconds) {
         const bool riding = body->riding && look->rideRunClip >= 0 && look->rideIdleClip >= 0;
         const int rideRun = safe || look->rideRunArmedClip < 0 ? look->rideRunClip
                                                                : look->rideRunArmedClip;
-        const int rideIdle = safe || look->rideIdleArmedClip < 0 ? look->rideIdleClip
-                                                                 : look->rideIdleArmedClip;
+        int rideIdle = safe || look->rideIdleArmedClip < 0 ? look->rideIdleClip
+                                                           : look->rideIdleArmedClip;
+        // A bow drawn on a horse: MU's stop ride weapon is a blade's pose, the right hand
+        // forward, and the bow in her left lay flat through her thigh (the user: "bow holding
+        // looks incorrect"). MU has no ride stance for a bow, so **ours**: she holds the first
+        // key of her ride shot, 58 or 59, the bow raised at the ready.
+        const bool archer = look->stance == "bow" || look->stance == "crossbow";
+        const int readyBow = riding && archer && !safe && look->library
+                                 ? look->library->find(rideSlotFor(look->stance))
+                                 : -1;
+        if (readyBow >= 0) rideIdle = readyBow;
         const int walkHere = riding                                ? rideRun
                              : (body->running && look->runClip >= 0) ? look->runClip
                              : (safe && look->walkSafeClip >= 0)   ? look->walkSafeClip
@@ -1009,6 +1018,10 @@ void Play::follow(float seconds) {
         // 2026-10-02: "char is not perfectly synced with mount bouncing").
         constexpr float kRideRunRate = 0.34f / 0.3f;
         if (isRide(one.figure.clip())) one.clipRate = kRideRunRate;
+        if (readyBow >= 0 && one.figure.clip() == readyBow) {
+            one.figure.setClock(0.0f);
+            one.clipRate = 0.0f;
+        }
         if (isWalk(one.figure.clip()) && !isRide(one.figure.clip())) {
             const float metresPerTile = ground_->metresPerTile();
             const float gait = pace * metresPerTile / float(kTickSeconds);
