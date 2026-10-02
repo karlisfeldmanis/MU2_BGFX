@@ -19,6 +19,7 @@ constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 constexpr float kDepthMin = 1.5f, kDepthMax = 4.5f;
 constexpr float kSizeMin = 7.0f, kSizeMax = 11.0f;
 constexpr float kGrowth = 0.3f;
+constexpr float kFadeOut = 4.0f;  // seconds, when a cloud drifts towards ground
 constexpr float kDrift[2] = {0.5f, 0.22f};  // metres a second
 constexpr float kScatter = 0.12f;
 constexpr float kSpin = 0.045f;             // radians a second at most
@@ -30,8 +31,11 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // vissible': 0.038.
 constexpr float kAlpha = 0.038f;
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
+// The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
+// 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
+constexpr float kDungeonColour[3] = {0.33f, 0.31f, 0.29f};
 
-bool wanted(const std::string& world) { return world == "bloodcastle"; }
+bool wanted(const std::string& world) { return world == "bloodcastle" || world == "dungeon"; }
 
 }  // namespace
 
@@ -62,6 +66,7 @@ void VoidClouds::open(const std::string& assetDir, const std::string& world,
     std::nth_element(heights.begin(), heights.begin() + heights.size() / 2, heights.end());
     floor_ = heights[heights.size() / 2];
     ground_ = &ground;
+    for (int k = 0; k < 3; ++k) colour_[k] = world == "dungeon" ? kDungeonColour[k] : kColour[k];
     const std::string path = assetDir + "/effects/fire/smoke02.png";
     if (core::fileExists(path)) sheet_ = textures.load(path, content::TextureRole::Albedo);
     wisps_.assign(kWisps, Wisp());
@@ -83,13 +88,27 @@ bool VoidClouds::voidAt(float x, float z) const {
     return (ground_->attributesAt(c, r) & content::kNoGround) != 0;
 }
 
+// Only over complete darkness (the user, 2026-10-02: 'only on voids where is complete darknens
+// and no ground'): the sheet's middle and eight points round it, at most of its half width,
+// all on void, so no cloud lies over a floor or a wall's foot.
+bool VoidClouds::clearUnder(float x, float z, float half) const {
+    if (!voidAt(x, z)) return false;
+    const float r = half * 0.8f;
+    for (int k = 0; k < 8; ++k) {
+        const float a = 0.785398f * float(k);
+        if (!voidAt(x + std::cos(a) * r, z + std::sin(a) * r)) return false;
+    }
+    return true;
+}
+
 bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
     for (int attempt = 0; attempt < 8; ++attempt) {
         const float angle = 6.2831853f * unit();
         const float reach = kReach * std::sqrt(unit());
         const float x = near[0] + std::cos(angle) * reach;
         const float z = near[2] + std::sin(angle) * reach;
-        if (!voidAt(x, z)) continue;
+        const float size = kSizeMin + (kSizeMax - kSizeMin) * unit();
+        if (!clearUnder(x, z, size)) continue;
         wisp.at[0] = x;
         wisp.at[2] = z;
         wisp.at[1] = floor_ - (kDepthMin + (kDepthMax - kDepthMin) * unit());
@@ -97,7 +116,7 @@ bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
         wisp.drift[1] = kDrift[1] + (unit() - 0.5f) * 2.0f * kScatter;
         wisp.life = kLifeMin + (kLifeMax - kLifeMin) * unit();
         wisp.age = anyAge ? wisp.life * unit() : 0.0f;
-        wisp.size = kSizeMin + (kSizeMax - kSizeMin) * unit();
+        wisp.size = size;
         wisp.turn = 6.2831853f * unit();
         wisp.spin = (unit() - 0.5f) * 2.0f * kSpin;
         wisp.alive = true;
@@ -116,6 +135,10 @@ void VoidClouds::update(float seconds, const float near[3]) {
             wisp.turn += wisp.spin * seconds;
             const float dx = wisp.at[0] - near[0], dz = wisp.at[2] - near[2];
             if (wisp.age >= wisp.life || dx * dx + dz * dz > kLetGo * kLetGo) wisp.alive = false;
+            // Drifting towards ground: it fades out over its last few seconds there and then.
+            const float grown = wisp.size * (1.0f + kGrowth * wisp.age / wisp.life);
+            if (wisp.alive && !clearUnder(wisp.at[0], wisp.at[2], grown))
+                wisp.age = std::max(wisp.age, wisp.life - kFadeOut);
         }
         if (!wisp.alive) spawn(wisp, near, wisp.life == 0.0f);
     }
@@ -142,7 +165,7 @@ void VoidClouds::gather(gfx::Effects& effects) const {
             sprite.cornerUv[k][0] = uvs[k][0];
             sprite.cornerUv[k][1] = uvs[k][1];
         }
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = kColour[k];
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = colour_[k];
         sprite.colour[3] = alpha;
         sprite.sheet = sheet_;
         sprite.blend = gfx::Blend::Smoke;

@@ -21,7 +21,7 @@ namespace mu::game {
 
 class VoidClouds {
 public:
-    // Opens on the worlds that ask for it (Blood Castle) and takes smoke02; elsewhere it stays
+    // Opens on the worlds that ask for it (Blood Castle, the Dungeon) and takes smoke02; elsewhere it stays
     // closed. The layer's height is the walkable ground's middle height less its depth.
     void open(const std::string& assetDir, const std::string& world, const content::Ground& ground,
               content::Textures& textures);
@@ -43,12 +43,14 @@ private:
     };
     bool spawn(Wisp& wisp, const float near[3], bool anyAge);
     bool voidAt(float x, float z) const;
+    bool clearUnder(float x, float z, float half) const;
     float unit();
 
     const content::Ground* ground_ = nullptr;
     int size_ = 0;
     float metresPerTile_ = 1.0f;
     float floor_ = 0.0f;  // the walkable ground's median height, metres
+    float colour_[3] = {1.0f, 1.0f, 1.0f};
     std::vector<Wisp> wisps_;
     uint32_t seed_ = 0xC10D5u;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
