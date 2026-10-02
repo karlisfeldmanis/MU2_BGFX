@@ -1366,9 +1366,18 @@ void Play::update(double seconds) {
     flame_.update(float(seconds));
     // Each rocket's burst rings where it bursts: SOUND_XMAS_FIRECRACKER, and eExplosion.wav off
     // the blast born with it (fx/firework.h).
-    firework_.update(float(seconds), [&](const float* at) {
+    firework_.update(float(seconds), [&](const float* at, uint32_t tag) {
         emit(heard_.firework, at[0], at[2]);
         emit(heard_.explosion, at[0], at[2]);
+        // The first burst of a Firecracker's show lets its item fall, landing sound and all.
+        for (size_t i = 0; i < cracking_.size(); ++i) {
+            if (cracking_[i].tag != tag) continue;
+            const uint32_t drop = cracking_[i].drop;
+            cracking_.erase(cracking_.begin() + std::ptrdiff_t(i));
+            heldIds_.erase(std::remove(heldIds_.begin(), heldIds_.end(), drop), heldIds_.end());
+            landed(drop);
+            break;
+        }
     });
     spirits_.update(float(seconds), [&](uint32_t id, float* feet) {
         const Drawn* drawn = drawnOf(id);

@@ -42,10 +42,11 @@ class Firework {
 public:
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table, const content::Ground* ground);
-    // Thrown at `at`, world metres on the ground.
-    void launch(const float at[3]);
-    // Ages everything on MU's clock and calls `burst(at)` once for each rocket that bursts
-    // this frame, at the burst's own point -- where the sound belongs.
+    // Thrown at `at`, world metres on the ground. Its tag, which every rocket it sends up
+    // carries to its burst; 0 when four are already in the air and none is thrown.
+    uint32_t launch(const float at[3]);
+    // Ages everything on MU's clock and calls `burst(at, tag)` once for each rocket that bursts
+    // this frame, at the burst's own point -- where the sound belongs -- with its launch's tag.
     template <typename Burst>
     void update(float seconds, Burst burst);
     void gather(gfx::Effects& effects) const;
@@ -89,11 +90,13 @@ private:
 
     struct Launcher {
         bool alive = false;
+        uint32_t tag = 0;
         float at[3] = {};
         float left = 0.0f;  // frames
     };
     struct Rocket {
         bool alive = false;
+        uint32_t tag = 0;
         float at[3] = {};
         float width = 0.0f;   // units
         float light[3] = {};
@@ -156,6 +159,7 @@ private:
     Flash flashes_[kFlashes];
     float owed_ = 0.0f;     // part of a frame not yet stepped
     uint32_t dice_ = 0x2545f491u;
+    uint32_t nextTag_ = 1;
 };
 
 template <typename Burst>
@@ -184,6 +188,7 @@ void Firework::step(Burst& burst) {
                 if (rocket.alive) continue;
                 rocket = Rocket{};
                 rocket.alive = true;
+                rocket.tag = launcher.tag;
                 // `rand() % 200 - 100` units either way on the ground, at its height.
                 rocket.at[0] = launcher.at[0] + float(dice(200) - 100) * kUnit;
                 rocket.at[1] = launcher.at[1];
@@ -205,7 +210,7 @@ void Firework::step(Burst& burst) {
         fly(rocket, bursts);
         if (bursts) {
             pop(rocket);
-            burst(rocket.at);
+            burst(rocket.at, rocket.tag);
         }
     }
     // The burst's stars: one frame in five at the client's sixty is twelve a second, so on a

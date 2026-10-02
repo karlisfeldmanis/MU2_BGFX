@@ -37,15 +37,18 @@ bool Firework::open(const std::string& assetDir, content::Textures& textures,
     return all;
 }
 
-void Firework::launch(const float at[3]) {
+uint32_t Firework::launch(const float at[3]) {
     for (Launcher& launcher : launchers_) {
         if (launcher.alive) continue;
         launcher.alive = true;
+        launcher.tag = nextTag_++;
+        if (nextTag_ == 0) nextTag_ = 1;
         for (int k = 0; k < 3; ++k) launcher.at[k] = at[k];
         // LifeTime 31: its first frame is the 31 that sends the first rocket.
         launcher.left = 31.0f;
-        return;
+        return launcher.tag;
     }
+    return 0;
 }
 
 bool Firework::live() const {

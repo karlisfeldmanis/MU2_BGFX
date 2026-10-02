@@ -633,6 +633,7 @@ void Play::releaseDrops() {
     for (const HeldDrop& one : held_) {
         if (one.zen == 0) heldIds_.push_back(one.drop);
     }
+    for (const Cracking& one : cracking_) heldIds_.push_back(one.drop);
 }
 
 void Play::takeZen(int64_t zen) {

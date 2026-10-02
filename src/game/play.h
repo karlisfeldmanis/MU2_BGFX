@@ -839,6 +839,13 @@ private:
         int64_t zen = 0;  // nonzero: no drop, the kill's Zen, heard and shown as he takes it
     };
     std::vector<HeldDrop> held_;
+    // A Firecracker's item, held back until its firework's first rocket bursts (the user,
+    // 2026-10-02: "has to be synced with animation"): the drop and the firework's tag.
+    struct Cracking {
+        uint32_t drop = 0;
+        uint32_t tag = 0;
+    };
+    std::vector<Cracking> cracking_;
     std::vector<uint32_t> heldIds_;
     std::vector<uint32_t> settled_;
 
