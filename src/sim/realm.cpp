@@ -356,21 +356,35 @@ void Realm::accept() {
     Body& hero = bodies_[0];
     if (!hero.alive()) return;
 
-    // **A skill cannot be walked out of.** The user's rule, 2026-09-23: only the auto-attack is
-    // cancelled by a click to move; a skill, once thrown, plays to the end of its clip. Every
-    // order that would take a step -- the ground click, a thing on the floor, a townsperson --
-    // is dropped where it stands rather than held, so the click is spent and he does not set off
-    // the moment the clip ends. Attack and Stop are let through: neither moves him while
-    // `castUntil` is running (`press` returns on `tick_ < swingsAt`, which outlasts the clip),
-    // so retargeting mid-cast still works and the blow is thrown the tick he is free.
+    // **Every skill is walked out of**, Teleport alone excepted. The user, 2026-10-02: "any
+    // spell ahs to be cancelable but without sliding bug when animation is played and char
+    // moves" -- which ends the rule of 2026-09-23 that a skill, once thrown, plays to the end of
+    // its clip. The hold itself stays: it is what keeps him from turning and re-pathing on his
+    // own under the animation. A click that would take a step -- the ground, a thing on the
+    // floor, a townsperson, a seat -- breaks it instead: the blow not yet landed is dropped
+    // below as a swing's is, a channel stops pulsing, and the drawing cuts the clip the tick he
+    // walks (play_show.cpp), so no cast is ever drawn over a moving body. What a buff or a summon
+    // gave on the throw stays given; the cooldown and the mana are spent.
     //
-    // This is also where a click stopped costing the skill its damage: the `dropBlow` below
-    // threw away the cast's own unlanded blow, so a click during the clip cancelled the skill
-    // and kept nothing -- the same complaint as the swing's, one rule further on.
+    // Teleport's hold is its fade and settle, and a click there is dropped where it stands as
+    // every one was before, so he does not set off the moment it ends.
     if (casting() &&
         (pending_.kind == Request::Kind::WalkTo || pending_.kind == Request::Kind::Pick ||
          pending_.kind == Request::Kind::Talk || pending_.kind == Request::Kind::Perch)) {
-        pending_ = Request{};
+        if (!hero.castBreaks) {
+            pending_ = Request{};
+        } else {
+            hero.castUntil = tick_;
+            if (hero.channelSkill != skill::kNone) {
+                core::logf("cast: tick %lld, a click ends the channel", (long long)tick_);
+                hero.channelSkill = skill::kNone;
+                hero.channelEcho = false;
+                hero.channelUntil = tick_;
+                // The channel's own length stood on the swing clock; walked out of, he owes
+                // no more than one swing of his own.
+                hero.swingsAt = std::min(hero.swingsAt, tick_ + hero.swingTicks);
+            }
+        }
     }
 
     if (pending_.kind != Request::Kind::None) {

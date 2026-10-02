@@ -367,6 +367,9 @@ struct Body {
     float blowForce = 1.0f;    // a skill's multiplier, 1 for a swing
     int32_t blowSkill = 0;     // which skill it belongs to, 0 for a swing
     int64_t castUntil = 0;
+    // Whether a click to move may end that hold: every skill's but Teleport's, whose fade and
+    // settle are the move (the user, 2026-10-02: "any spell ahs to be cancelable").
+    bool castBreaks = false;
     int64_t boonUntil = 0;
     float boonDamageTaken = 1.0f;
     int32_t boonSkill = 0;
@@ -817,6 +820,9 @@ public:
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which
     // does not draw a destination marker for a walk that is not going to happen.
     bool casting() const { return tick_ < bodies_[0].castUntil; }
+    // A hold a click to move cannot end -- Teleport's. Every other cast is broken by the click
+    // (Realm::accept), so the pointer lets the walk through.
+    bool held() const { return casting() && !bodies_[0].castBreaks; }
     // What he was last told and is still doing: the drawing's flinch halts a walk and not a
     // chase, and reads which it is here.
     const Request& order() const { return order_; }

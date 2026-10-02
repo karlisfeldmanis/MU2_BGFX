@@ -161,6 +161,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.blinkColumn = column;
         hero.blinkRow = where;
         hero.swingsAt = hero.castUntil = hero.blinkAt + kBlinkSettleTicks;
+        hero.castBreaks = false;
         hero.aim = std::atan2(float(where) - hero.y, float(column) - hero.x);
         hero.walking = false;
         hero.route.clear();
@@ -286,7 +287,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // step. `press` reads this before it engages, so a quarry that shuffles round him does not
     // spin the body mid-swing.
     //
-    // **Not a thrown primary.** The wizard's Energy Ball is thrown over and over, and a lock on every
+    // **Not a primary.** The wizard's Energy Ball is thrown over and over, and a lock on every
     // clip would be a wizard who can never be walked away from a fight. Like a swing it is
     // cancelled by a click until it leaves his hand; after that it is in the air and lands.
     // A channel first, primary or not: Lightning has had no cooldown since 2026-09-30 and still
@@ -305,17 +306,20 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // (game/play.cpp), so the hold and the spin still end together; a skill with a cooldown
     // keeps the authored floor.
     //
-    // **And a thrown primary is walked out of, every class's**: the user, 2026-10-02 -- "if elf
-    // shoots multishot we can cancel it with click to move". Skillshot is the elf's Energy Ball,
-    // so the wizard's rule is now the test of whether it flies: a click drops the volley until
-    // it leaves the bow. Twisting Slash strikes at arm's length and keeps its hold.
+    // **And every primary is walked out of, every class's**: the user, 2026-10-02 -- "if elf
+    // shoots multishot we can cancel it with click to move", then "all primary skills with no
+    // cooldown can be canceled ... we dont want that character is moving in mid of casting aura".
+    // A click drops the blow until it lands or leaves his hand, Twisting Slash's spin included,
+    // which replaces the 2026-10-01 hold on it. What still holds him: a self-cast (an aura, a
+    // buff), a channel, and an attack skill with a cooldown.
     const int32_t held = row.wizardry || row.primary()
                              ? clip
                              : std::max(clip, authoredCastTicks(*tables_, row));
-    hero.castUntil = row.channelled()               ? tick_ + row.channelTicks
-                     : row.primary() && row.thrown() ? tick_
-                                                     : tick_ + held;
+    hero.castUntil = row.channelled() ? tick_ + row.channelTicks
+                     : row.primary()  ? tick_
+                                      : tick_ + held;
     hero.swingsAt = std::max(hero.swingsAt, hero.castUntil);
+    hero.castBreaks = true;
     if (row.channelled()) {
         hero.channelSkill = row.number;
         hero.channelFrom = tick_;

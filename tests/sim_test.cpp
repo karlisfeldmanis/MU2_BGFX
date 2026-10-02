@@ -739,17 +739,17 @@ void testLoot(const content::Tables& tables) {
 // drawing (a fall waits for its blow to be seen landing, so a killer that turns away on the
 // tick walks off while its victim is still standing), and a rule put there for the screen's
 // sake is exactly the kind that rots quietly.
-// A skill is not walked out of, and only the swing is (2026-09-23, the user's rule). While a
-// cast's clip runs the knight is locked where he stands, so the three orders that would take a
-// step -- the ground click, a thing on the floor, a townsperson -- are DROPPED rather than held:
-// the click is spent and he does not set off the moment the clip ends. Attack and Stop go
-// through, since neither moves him while `castUntil` runs.
+// Every skill is walked out of but Teleport (the user, 2026-10-02: "any spell ahs to be
+// cancelable but without sliding bug when animation is played and char moves"), which ended the
+// rule of 2026-09-23 that a skill plays to the end of its clip. The hold stays -- nothing but
+// the click moves him under a cast -- and the click breaks it: he walks on the tick, what the
+// throw gave stays given, and a blow not yet landed is dropped as a swing's is.
 //
-// Two halves, because the rule has two: the self-cast half is run with nothing to fight, so
-// nothing but the click can move him and "he did not move" means exactly that; the fighting half
-// checks what the click used to cost him, which was the skill's own unlanded blow.
+// Three halves: a self-cast run with nothing to fight, so nothing but the click can move him; a
+// spin thrown at a monster, for the blow the click drops; and Lightning, a channel, for the
+// pulses it stops.
 void testCastLock(const content::Tables& tables) {
-    std::printf("a skill is not walked out of\n");
+    std::printf("a skill is walked out of\n");
     sim::Realm realm;
     check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 60), "a realm raises for the lock");
     // A blade and a shield: Defense is a shield's skill, and it is thrown at himself, so this
@@ -770,58 +770,37 @@ void testCastLock(const content::Tables& tables) {
         }
     }
     check(thrown, "the guard is thrown");
-    check(realm.casting(), "and its clip is still running the tick after");
+    check(realm.casting() && !realm.held(), "and its clip holds him, a hold a click may break");
+
+    // Left alone for a few ticks, the hold keeps him where he stands.
+    const int stoodColumn = realm.hero().column(), stoodRow = realm.hero().row();
+    for (int tick = 0; tick < 3; ++tick) realm.step();
+    check(realm.casting() && !realm.hero().walking && realm.hero().column() == stoodColumn &&
+              realm.hero().row() == stoodRow,
+          "he stands under the clip while nothing tells him otherwise");
 
     // The click, mid-clip, at a tile ten away.
-    const int stoodColumn = realm.hero().column(), stoodRow = realm.hero().row();
     sim::Request walk;
     walk.kind = sim::Request::Kind::WalkTo;
     walk.column = stoodColumn + 10;
     walk.row = stoodRow;
     realm.ask(walk);
-    bool stillStanding = true;
-    int clipTicks = 0;
-    for (int tick = 0; tick < 200 && realm.casting(); ++tick) {
-        realm.step();
-        ++clipTicks;
-        stillStanding &= !realm.hero().walking && realm.hero().column() == stoodColumn &&
-                         realm.hero().row() == stoodRow;
-    }
-    check(clipTicks > 1, "the clip is long enough to be walked out of, if it could be");
-    check(stillStanding, "and he does not take a step of it");
+    realm.step();
+    check(!realm.casting() && realm.hero().walking, "and a click ends the clip and walks him");
+    check(realm.hero().boonUntil > realm.tick(), "with the guard he raised still on him");
 
-    // And the click was SPENT, not held: nothing is standing to send him anywhere afterwards.
-    bool stayedPut = true;
-    for (int tick = 0; tick < 60; ++tick) {
-        realm.step();
-        stayedPut &= !realm.hero().walking && realm.hero().column() == stoodColumn &&
-                     realm.hero().row() == stoodRow;
-    }
-    check(stayedPut, "and the click does not set him off once the clip ends");
-
-    // The same click, with no clip running, still walks him -- the gate closes on the cast and
-    // on nothing else.
-    realm.ask(walk);
-    bool walked = false;
-    for (int tick = 0; tick < 60 && !walked; ++tick) {
-        realm.step();
-        walked = realm.hero().walking;
-    }
-    check(walked, "the same click walks him when no skill is running");
-
-    // ---- and the blow the click used to throw away ------------------------------------------
+    // ---- and the blow the click drops ---------------------------------------------------------
     //
-    // `accept` drops the unlanded blow of whatever order it replaces -- that is how an attack is
-    // cancelled -- and until this rule the skill's blow went the same way, so a click during the
-    // clip cancelled the skill and kept nothing. Cyclone is thrown at a monster and settles half
-    // a clip in, which is after the click below.
+    // `accept` drops the unlanded blow of whatever order it replaces, a skill's as a swing's.
+    // Cyclone is thrown at a monster and settles half a clip in, which is after the click below.
     sim::Realm fight;
     check(fight.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 60), "a realm raises for the fight");
     check(fight.equip(tables.armNamed("Sword03"), -1, true), "with a one-handed sword, Cyclone's");
     check(fight.learn(sim::skill::kCyclone), "and the spin in his head");
-    bool cast = false, landed = false;
+    bool cast = false, landed = false, walkedOff = false;
+    int64_t castTick = -1;
     uint32_t fighting = 0;
-    for (int tick = 0; tick < 6000 && !landed; ++tick) {
+    for (int tick = 0; tick < 6000 && (castTick < 0 || fight.tick() < castTick + 40); ++tick) {
         const sim::Body& hero = fight.hero();
         if (hero.alive() && !cast) {
             uint32_t nearest = 0;
@@ -846,9 +825,11 @@ void testCastLock(const content::Tables& tables) {
             }
         }
         fight.step();
+        if (cast && castTick == fight.tick() - 1) walkedOff = fight.hero().walking;
         for (const sim::Happening& one : fight.happenings()) {
             if (one.what == sim::What::Cast && one.who == fight.hero().id && !cast) {
                 cast = true;
+                castTick = fight.tick();
                 // The click, on the tick the spin is thrown and before its blow settles.
                 sim::Request away;
                 away.kind = sim::Request::Kind::WalkTo;
@@ -861,7 +842,51 @@ void testCastLock(const content::Tables& tables) {
         }
     }
     check(cast, "the spin is thrown at something");
-    check(landed, "and its blow lands, though a click to move came in over the top of it");
+    check(walkedOff, "and the click walks him out of it on the next tick");
+    check(!landed, "and its blow, not landed yet, is dropped with it");
+
+    // ---- and a channel: Lightning stops pulsing ----------------------------------------------
+    sim::Realm wiz;
+    check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 12), "a wizard of twelve raises");
+    check(wiz.learn(sim::skill::kLightning), "who knows Lightning");
+    bool channelled = false, ended = false;
+    uint32_t quarry = 0;
+    for (int tick = 0; tick < 6000 && !channelled; ++tick) {
+        const sim::Body& hero = wiz.hero();
+        uint32_t nearest = 0;
+        float closest = 1e30f;
+        for (const sim::Body& one : wiz.bodies()) {
+            if (!one.monster() || !one.alive()) continue;
+            const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
+            if (off <= 30.0f && off < closest) {
+                closest = off;
+                nearest = one.id;
+            }
+        }
+        if (nearest != 0 && nearest != quarry) {
+            quarry = nearest;
+            sim::Request request;
+            request.kind = sim::Request::Kind::Attack;
+            request.target = nearest;
+            wiz.ask(request);
+        }
+        if (nearest != 0 && wiz.cooling(sim::skill::kLightning) == 0) {
+            wiz.invoke(sim::skill::kLightning, nearest);
+        }
+        wiz.step();
+        channelled = wiz.hero().channelSkill == sim::skill::kLightning;
+    }
+    check(channelled, "Lightning is channelled round him");
+    if (channelled) {
+        sim::Request away;
+        away.kind = sim::Request::Kind::WalkTo;
+        away.column = wiz.hero().column() + 8;
+        away.row = wiz.hero().row();
+        wiz.ask(away);
+        wiz.step();
+        ended = wiz.hero().channelSkill == 0 && !wiz.casting() && wiz.hero().walking;
+    }
+    check(ended, "and a click ends the channel and walks him");
 
     // ---- the quick slot: a wizard's right button (the user, 2026-09-28) ---------------------
     //

@@ -262,11 +262,11 @@ void Play::leftClick() {
     } else {
         return;
     }
-    // Not while a skill's clip is running: the realm refuses these three (Realm::accept -- only
-    // the auto-attack is cancelled by a click to move), and a marker planted on ground he is
-    // never going to walk to, plus the early tick under it, would be the drawing promising what
-    // the rules have already said no to. An Attack is let through, as it is there.
-    if (realm_.casting() && request.kind != sim::Request::Kind::Attack) return;
+    // Not while Teleport holds him: the realm refuses these there (Realm::accept -- every
+    // other cast is broken by the click), and a marker planted on ground he is never going to
+    // walk to, plus the early tick under it, would be the drawing promising what the rules have
+    // already said no to. An Attack is let through, as it is there.
+    if (realm_.held() && request.kind != sim::Request::Kind::Attack) return;
     // A flinch does NOT hold the click, and that is ours: MU refuses it in PLAYER_SHOCK
     // (ZzzInterface.cpp:3127), and the user turned that down on 2026-09-29 -- a click to move
     // while he is struck is a click to get out, and eating it read as the game not answering.
