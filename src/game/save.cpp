@@ -204,6 +204,15 @@ bool loadSave(const std::string& path, Saved& out) {
     return true;
 }
 
+// A ring saved with more sockets than a ring holds now (sim::mostSocketsOf) loses the rest and
+// what was set in them. A Rune of Creation's own power, in the first with no socket, stays.
+static void capSockets(const content::ItemRow& row, sim::Held& held) {
+    const int most = sim::mostSocketsOf(row);
+    if (held.sockets <= most) return;
+    held.sockets = uint8_t(most);
+    for (int i = most; i < 3; ++i) held.powers[i] = 0;
+}
+
 void resolveSave(const content::Tables& tables, Saved& saved) {
     int lost = 0;
     for (const Saved::Item& item : saved.items) {
@@ -222,6 +231,7 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         held.excellent = uint8_t(item.excellent);
         held.sockets = uint8_t(item.sockets);
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
+        capSockets(tables.items[size_t(row)], held);
     }
     for (int key = 0; key < 5; ++key) {
         saved.quick[key] = rowOf(tables, saved.quickGroup[key], saved.quickNumber[key]);
@@ -345,6 +355,7 @@ sim::Vault resolveVault(const content::Tables& tables, const Saved& saved) {
                        item.skill, item.luck, int8_t(item.option), uint8_t(item.excellent)};
         held.sockets = uint8_t(item.sockets);
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
+        capSockets(*r, held);
         vault.put(item.slot, held);
     }
     if (lost > 0) core::logError("save: %d vault item(s) could not be put back", lost);

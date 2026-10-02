@@ -485,6 +485,9 @@ inline bool takesSockets(const content::ItemRow& row) {
     return takesOptions(row) || jewellery(row);
 }
 constexpr int kMostSockets = 3;
+// A ring holds one socket at most (the user, 2026-10-02: "maximum amount of sockets for rings
+// is 1"); everything else kMostSockets. Every way in caps it here: a drop, a quest, a debug lay.
+inline int mostSocketsOf(const content::ItemRow& row) { return ring(row) ? 1 : kMostSockets; }
 // A drop's chance of a socket, drawn after luck and the option, and then of each further one
 // (the user, 2026-09-28: "item drop with +socket is rare"; 2026-10-01: "incerase drop rate for
 // armors,weapons with +socket" -- 0.5% and 25% were). invention.

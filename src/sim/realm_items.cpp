@@ -474,7 +474,7 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
         put.luck = luck && takesOptions(row);
         put.option = int8_t(std::clamp(option, 0, kMostOption));
         put.excellent = uint8_t(excellent & 63);
-        put.sockets = uint8_t(std::min<int>(sockets, kMostSockets));
+        put.sockets = uint8_t(std::min<int>(sockets, mostSocketsOf(row)));
         for (int i = 0; i < put.sockets && powers; ++i) put.powers[i] = powers[i];
         // Whole means whole with its fifteen, when it was asked for whole.
         if (put.excellent && durability == fullDurability(row, refinement) && wears(row)) {
@@ -955,7 +955,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         // Sockets: rare, and each further one rarer, a ring's and a pendant's too. invention.
         if (takesSockets(row) && runeDice_.nextBool(kSocketChance)) {
             one.what.sockets = 1;
-            while (one.what.sockets < kMostSockets && runeDice_.nextBool(kMoreSocketChance)) {
+            while (one.what.sockets < mostSocketsOf(row) && runeDice_.nextBool(kMoreSocketChance)) {
                 ++one.what.sockets;
             }
         }
@@ -1435,7 +1435,7 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
         one.what.luck = luck && takesOptions(row);
         one.what.option = int8_t(std::clamp(option, 0, kMostOption));
         one.what.excellent = uint8_t(excellent & 63);
-        one.what.sockets = uint8_t(std::min<int>(sockets, kMostSockets));
+        one.what.sockets = uint8_t(std::min<int>(sockets, mostSocketsOf(row)));
         if (one.what.excellent && wears(row)) one.what.durability = int16_t(maximumDurability(row, one.what));
     }
     std::tie(one.column, one.row) = clearing(hero.column(), hero.row());

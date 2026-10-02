@@ -4380,6 +4380,9 @@ void testRunes(const content::Tables& tables) {
             check(!sim::settable(tables, carried, held(ring, 1, 0), dk),
                   "but not Stormcall: it is a weapon's power");
             check(!sim::settable(tables, carried, held(pendant, 1, 0), dk), "in either");
+            checkEqual(sim::mostSocketsOf(tables.items[size_t(ring)]), 1, "a ring holds one socket");
+            checkEqual(sim::mostSocketsOf(tables.items[size_t(pendant)]), sim::kMostSockets,
+                       "a pendant three");
         }
     }
     // The Undying, every class's armour power: in armour or a shield by anyone, never a weapon;
@@ -4484,17 +4487,22 @@ void testRunes(const content::Tables& tables) {
         }
         const sim::QuestRow& pit = sim::questAt(5);
         for (int kin = 0; kin < 3; ++kin) {
-            int spirits = 0, shields = 0;
+            int spirits = 0, shields = 0, boots = 0;
             for (int i = 0; i < pit.paidCount; ++i) {
                 const sim::QuestItem& what = pit.paid[i];
                 if (!sim::questPays(what, kin, true)) continue;
                 if (what.power == uint8_t(sim::Power::Spirits)) ++spirits;
                 const int item = tables.itemNamed(what.item);
-                if (item >= 0 && sim::ring(tables.items[size_t(item)]) && what.sockets == 2) ++shields;
+                if (item >= 0 && sim::ring(tables.items[size_t(item)]) && what.sockets == 1) ++shields;
                 if (item >= 0 && tables.items[size_t(item)].shield()) shields += 100;
+                if (item >= 0 && tables.items[size_t(item)].group == sim::kGroupBoots &&
+                    what.sockets == 2) {
+                    ++boots;
+                }
             }
             checkEqual(spirits, 1, "the Pit's first clear pays every class Evil Spirit");
-            checkEqual(shields, 1, "and a ring with two sockets to set it in, and no shield");
+            checkEqual(shields, 1, "and a ring with one socket to set it in, and no shield");
+            checkEqual(boots, 1, "and boots with two sockets");
         }
     }
     // The Golden Archer's chain in order (Realm::questHere): the Catacombs first, the Halls and

@@ -419,10 +419,11 @@ QuestRow pit() {
     row.firstExperience = 400000;
     row.zen = 120000;
     // The user's: boots with a socket, and Frenzy for them; three Jewels of Bless and a Jewel of
-    // Soul on top, the chain's last. Each class's top set, about the Gorgon's level.
-    row.paid[0] = {.item = "BootMale02", .kin = knight, .sockets = 1, .firstOnly = true};  // Dragon
-    row.paid[1] = {.item = "BootMale04", .kin = wizard, .sockets = 1, .firstOnly = true};  // Legendary
-    row.paid[2] = {.item = "BootElf05", .kin = elf, .sockets = 1, .firstOnly = true};      // Guardian
+    // Soul on top, the chain's last. Each class's top set, about the Gorgon's level. Two sockets
+    // since 2026-10-02 ("give 2 sockets for boots. same for all classes").
+    row.paid[0] = {.item = "BootMale02", .kin = knight, .sockets = 2, .firstOnly = true};  // Dragon
+    row.paid[1] = {.item = "BootMale04", .kin = wizard, .sockets = 2, .firstOnly = true};  // Legendary
+    row.paid[2] = {.item = "BootElf05", .kin = elf, .sockets = 2, .firstOnly = true};      // Guardian
     row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
     row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
     row.paid[5] = {.item = "Jewel02"};              // Jewel of Soul
@@ -432,8 +433,9 @@ QuestRow pit() {
     // socket, which takes Evil Spirit alone (sim::settable). It was a socketed shield each, and
     // then the ring for the elf whose bow fills the shield's hand; the user settled it the same
     // day: "give ring with +1 sockets, and give only evil spirits rune", "everbody get the ring",
-    // "not shield". Two sockets since 2026-10-02: "ring of ice end of dungeon 3 needs 2 sockets".
-    row.paid[6] = {.item = "Ring01", .sockets = 2, .firstOnly = true};  // of Ice
+    // "not shield". One socket, a ring's most (sim::mostSocketsOf; the user, 2026-10-02: "keep
+    // only 1 socket for the rings"), after a day at two.
+    row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
     row.paid[7] = {.item = "Jewel22", .power = uint8_t(Power::Spirits), .firstOnly = true};
     row.paidCount = 8;
     return row;

@@ -52,5 +52,7 @@ item's. No luck: nothing in `CItem::Convert` reads it on a ring.
 - A ring's and a pendant's sockets take every armour rune -- Undying, Keen Eye, Bloodwell,
   Frenzy, Renewal and Evil Spirit -- by any class, and no weapon's (the user, 2026-10-02: "allow
   to put runes on jewels and pendants"). Jewellery drops roll sockets as weapons and armour do
-  (kSocketChance, kMoreSocketChance).
+  (kSocketChance, kMoreSocketChance), but a ring holds one socket at most, from anywhere (the
+  user, 2026-10-02: "maximum amount of sockets for rings is 1"; sim::mostSocketsOf). The Pit's
+  Ring of Ice is back to one socket, and its boots have two, every class's.
 - The knight's and the wizard's Pit shields have two sockets, for Frenzy and Evil Spirit.
