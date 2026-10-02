@@ -1,0 +1,88 @@
+{
+  "item": "Object04",
+  "mu_name": "Object04",
+  "mu_name_from": "Blood Castle's object slot 3, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128); World12/Object12 serves all seven castles (MapManager.cpp:1104-1107).",
+  "world": "bloodcastle",
+  "object_type": 3,
+  "placements": 2,
+  "profile": "world",
+  "sheets": {
+    "br001": "bc_br001.png",
+    "ses": "bc_ses.png"
+  },
+  "sheet_from": "Data/Object12/, from MuMain, decoded under a bc_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "br001": "flagstone",
+    "ses": "wrought_iron"
+  },
+  "why_this_one": "The bridge's parapet, a straight run of wall 3.5 m long. docs/blood-castle-port.md, Part B section 1.2.",
+  "material_note": "Read off the art: br001 the castle's blue-grey brick, flagstone; ses the grey iron of chains and fittings, wrought_iron; pant01 carved stone, rock, its orange frieze pant01_R added; bro01 mossy stone, rock; woodc01 dark weathered wood, timber; ng01 the angel-knights' blue-silver plate, plate_steel; skin_special_01 their faces and cloth, skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 151342.8,
+      "along": [
+        -300.0,
+        300.0
+      ],
+      "mu_uv": [
+        -0.001,
+        0.561,
+        1.001,
+        0.999
+      ],
+      "bake_uv": [
+        0.676,
+        0.843,
+        0.824,
+        0.908
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 24,
+      "area": 3833.9,
+      "along": [
+        121.0,
+        175.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.657,
+        0.657
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 24,
+      "area": 3833.9,
+      "along": [
+        -173.7,
+        -118.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.99,
+        0.99
+      ]
+    }
+  ]
+}

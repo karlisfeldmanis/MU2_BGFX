@@ -225,7 +225,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 37,
@@ -240,7 +241,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.38
+   "scale": 1.38,
+   "hidden": true
   },
   {
    "type": 11,
@@ -705,7 +707,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 37,
@@ -720,7 +723,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 18,
@@ -1365,7 +1369,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 37,
@@ -1380,7 +1385,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 19,
@@ -1545,7 +1551,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 5,
@@ -1590,7 +1597,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 0,
@@ -2010,7 +2018,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 4,
@@ -3030,7 +3039,8 @@
     0.0,
     0.0
    ],
-   "scale": 1.0
+   "scale": 1.0,
+   "hidden": true
   },
   {
    "type": 19,

@@ -55,6 +55,12 @@ namespace {
 // cook has hundreds of images and no core to spare, so each runs whole; cook_one's handful
 // of jobs gives each image most of the machine. Set in main before the pool starts.
 uint32_t g_stripThreads = 1;  // set in main: every core
+// Under --threads N: N is a budget, and a level takes its share of it -- N over the images being
+// cooked at that moment -- so a lone 1024-square left at the end of a cook_one gets all N cores
+// where it had one (the user, 2026-10-02: 'use 3 cores'), and N images at once still take one each.
+bool g_capped = false;
+uint32_t g_budget = 1;
+std::atomic<uint32_t> g_active{0};
 BX_ERROR_RESULT(kStripRefused, BX_MAKEFOURCC('M', 'U', 'S', 'R'));
 
 enum class Role { Albedo, Emissive, Normal, Orm };
@@ -378,7 +384,9 @@ Result cook(const Job& job, bx::AllocatorI* allocator) {
             // end are the same bytes as the whole encoded at once.
             const uint32_t blockRows = ph / 4;
             const uint32_t rowBytes = (pw / 4) * 16;
-            const uint32_t strips = std::max(1u, std::min(g_stripThreads, blockRows));
+            const uint32_t share =
+                g_capped ? std::max(1u, g_budget / std::max(1u, g_active.load())) : g_stripThreads;
+            const uint32_t strips = std::max(1u, std::min(share, blockRows));
             const uint32_t perStrip = (blockRows + strips - 1) / strips;
             std::atomic<bool> refused{false};
             auto strip = [&](uint32_t s, bx::AllocatorI* own) {
@@ -494,6 +502,8 @@ int main(int argc, char** argv) {
     // level -- N jobs each splitting its levels N ways ran N squared, and `--threads 3` took
     // seven and a half cores for six minutes (2026-09-30). Capped, every job keeps one core.
     g_stripThreads = capped ? 1 : threadCount;
+    g_capped = capped;
+    g_budget = threadCount;
 
     std::vector<Result> results(jobs.size());
     std::atomic<size_t> nextJob{0};
@@ -506,7 +516,9 @@ int main(int argc, char** argv) {
         for (;;) {
             const size_t index = nextJob.fetch_add(1);
             if (index >= jobs.size()) return;
+            ++g_active;
             results[index] = cook(jobs[index], &allocator);
+            --g_active;
             if (!results[index].ok) {
                 ++failures;
                 std::fprintf(stderr, "texcook: %s: %s\n", jobs[index].input.c_str(),

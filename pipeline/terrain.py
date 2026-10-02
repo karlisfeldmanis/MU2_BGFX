@@ -126,6 +126,11 @@ HIDDEN_BY_MAP = {
     # The Lost Tower's two (ZzzObject.cpp:4020-4028): 24 the Flame vent, 95 of them, and 25 the
     # Meteorite Trap's plate, 148, which the server's trap monster draws. docs/lost-tower-port.md.
     4: {24, 25},
+    # Blood Castle's (ZzzObject.cpp:86-165, 4185-4199): 36 the drawbridge, Object37, which MU
+    # hides once it has fallen and shows the deck and chains (types 9, 10) in its place -- the
+    # state the grid is opened to (OPEN_BY_MAP); and 37, Object38, which has no .bmd and is only
+    # the mist emitters. docs/blood-castle-port.md.
+    11: {36, 37},
 }
 
 #: What each world draws additively, by map number and placement type.
@@ -207,6 +212,14 @@ LAVA_SPILL_BY_MAP = {4: 256}
 #: opens them at run time; the gap's TileRock02 planks then show as ground, MU's lowered bridge.
 OPEN_BY_MAP = {11: [(13, 15, 15, 23, 0x04), (13, 70, 15, 75, 0x08), (13, 76, 15, 79, 0x04),
                     (11, 80, 25, 89, 0x04), (8, 80, 10, 83, 0x04)]}
+
+#: Where a map's own walk starts, for VOID_FILL: every tile MU leaves walkable that no walk from
+#: here reaches becomes NoGround, drawn as the void. Ours, marked. Blood Castle's grid is a strip
+#: at x 0-35 in a flat filler plain of 32 000 open tiles at 1.65 m, east and south of it, that no
+#: path reaches; MU's 4:3 camera never showed it, and at 16:9 pulled back it stood round the
+#: castle as a brick field where the user's MuMain shots have black (docs/blood-castle-port.md,
+#: Part B decision 1). From the safe court, after OPEN_BY_MAP, so the castle itself stays ground.
+VOID_FILL_BY_MAP = {11: (13, 8)}
 
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5
@@ -567,6 +580,25 @@ def main() -> None:
         flags = np.array(flags)
         flags[y1:y2 + 1, x1:x2 + 1] &= flags.dtype.type(~bits & 0xFFFF)
         print(f"  opened     {x1},{y1} to {x2},{y2}: bits 0x{bits:02x} cleared (OPEN_BY_MAP)")
+    if (seed := VOID_FILL_BY_MAP.get(number - 1)):
+        from collections import deque
+        flags = np.array(flags)
+        walk = (flags & (NO_MOVE | NO_GROUND)) == 0
+        reached = np.zeros(walk.shape, dtype=bool)
+        reached[seed[1], seed[0]] = True
+        queue = deque([(seed[1], seed[0])])
+        while queue:
+            y, x = queue.popleft()
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    ny, nx = y + dy, x + dx
+                    if 0 <= ny < SIZE and 0 <= nx < SIZE and walk[ny, nx] and not reached[ny, nx]:
+                        reached[ny, nx] = True
+                        queue.append((ny, nx))
+        filler = walk & ~reached
+        flags[filler] |= NO_GROUND
+        print(f"  void       {int(filler.sum())} open tiles no walk from {seed} reaches -> NoGround "
+              f"(VOID_FILL_BY_MAP)")
 
     lit = baked_light(world)
 
