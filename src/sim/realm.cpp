@@ -356,18 +356,19 @@ void Realm::accept() {
     Body& hero = bodies_[0];
     if (!hero.alive()) return;
 
-    // **Every skill is walked out of**, Teleport alone excepted. The user, 2026-10-02: "any
+    // **Every skill is walked out of**, Teleport and the auras excepted. The user, 2026-10-02: "any
     // spell ahs to be cancelable but without sliding bug when animation is played and char
     // moves" -- which ends the rule of 2026-09-23 that a skill, once thrown, plays to the end of
     // its clip. The hold itself stays: it is what keeps him from turning and re-pathing on his
     // own under the animation. A click that would take a step -- the ground, a thing on the
     // floor, a townsperson, a seat -- breaks it instead: the blow not yet landed is dropped
     // below as a swing's is, a channel stops pulsing, and the drawing cuts the clip the tick he
-    // walks (play_show.cpp), so no cast is ever drawn over a moving body. What a buff or a summon
-    // gave on the throw stays given; the cooldown and the mana are spent.
+    // walks (play_show.cpp), so no cast is ever drawn over a moving body.
     //
-    // Teleport's hold is its fade and settle, and a click there is dropped where it stands as
-    // every one was before, so he does not set off the moment it ends.
+    // Teleport's hold is its fade and settle, and a self-cast's -- a buff, Heal, a summon -- is
+    // its whole clip (the user, the same day: "dont allow to cancel any aura casts"): a click
+    // there is dropped where it stands as every one was before, so he does not set off the
+    // moment it ends.
     if (casting() &&
         (pending_.kind == Request::Kind::WalkTo || pending_.kind == Request::Kind::Pick ||
          pending_.kind == Request::Kind::Talk || pending_.kind == Request::Kind::Perch)) {

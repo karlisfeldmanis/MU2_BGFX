@@ -334,7 +334,10 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                      : row.primary()  ? tick_
                                       : tick_ + held;
     hero.swingsAt = std::max(hero.swingsAt, hero.castUntil);
-    hero.castBreaks = true;
+    // **But not an aura**: a self-cast -- a buff, Heal, a summon -- plays to its end and a click
+    // inside it is dropped, as Teleport's is (the user, 2026-10-02: "dont allow to cancel any
+    // aura casts, click to move not possibel").
+    hero.castBreaks = !row.onSelf();
     if (row.channelled()) {
         hero.channelSkill = row.number;
         hero.channelFrom = tick_;

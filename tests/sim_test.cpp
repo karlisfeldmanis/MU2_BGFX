@@ -739,13 +739,13 @@ void testLoot(const content::Tables& tables) {
 // drawing (a fall waits for its blow to be seen landing, so a killer that turns away on the
 // tick walks off while its victim is still standing), and a rule put there for the screen's
 // sake is exactly the kind that rots quietly.
-// Every skill is walked out of but Teleport (the user, 2026-10-02: "any spell ahs to be
-// cancelable but without sliding bug when animation is played and char moves"), which ended the
-// rule of 2026-09-23 that a skill plays to the end of its clip. The hold stays -- nothing but
-// the click moves him under a cast -- and the click breaks it: he walks on the tick, what the
-// throw gave stays given, and a blow not yet landed is dropped as a swing's is.
+// Every skill is walked out of but Teleport and the auras (the user, 2026-10-02: "any spell ahs
+// to be cancelable but without sliding bug when animation is played and char moves", then "dont
+// allow to cancel any aura casts"), which ended the rule of 2026-09-23 that a skill plays to the
+// end of its clip. The hold stays -- nothing but the click moves him under a cast -- and the
+// click breaks it: he walks on the tick, and a blow not yet landed is dropped as a swing's is.
 //
-// Three halves: a self-cast run with nothing to fight, so nothing but the click can move him; a
+// Three halves: a self-cast run with nothing to fight, whose click is dropped; a
 // spin thrown at a monster, for the blow the click drops; and Lightning, a channel, for the
 // pulses it stops.
 void testCastLock(const content::Tables& tables) {
@@ -770,7 +770,7 @@ void testCastLock(const content::Tables& tables) {
         }
     }
     check(thrown, "the guard is thrown");
-    check(realm.casting() && !realm.held(), "and its clip holds him, a hold a click may break");
+    check(realm.casting() && realm.held(), "and its clip holds him, a hold no click breaks");
 
     // Left alone for a few ticks, the hold keeps him where he stands.
     const int stoodColumn = realm.hero().column(), stoodRow = realm.hero().row();
@@ -786,8 +786,12 @@ void testCastLock(const content::Tables& tables) {
     walk.row = stoodRow;
     realm.ask(walk);
     realm.step();
-    check(!realm.casting() && realm.hero().walking, "and a click ends the clip and walks him");
-    check(realm.hero().boonUntil > realm.tick(), "with the guard he raised still on him");
+    check(realm.casting() && !realm.hero().walking && realm.hero().column() == stoodColumn,
+          "and a click inside an aura is dropped: he stands until the clip ends");
+    for (int tick = 0; tick < 200 && realm.casting(); ++tick) realm.step();
+    check(!realm.casting() && !realm.hero().walking,
+          "and does not set off on the dropped click when it does");
+    check(realm.hero().boonUntil > realm.tick(), "with the guard he raised on him");
 
     // ---- and the blow the click drops ---------------------------------------------------------
     //
