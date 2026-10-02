@@ -2019,7 +2019,16 @@ void Play::announce(const sim::Happening& happening) {
     }
 }
 
+// A shock takes the figure whatever it was doing, as MU's SetAction(PLAYER_SHOCK) does, so a
+// swing or a cast it lands on ends here. Left running, the swing's timer kept the figure past
+// the shock's own end, and 230 holds its last key: a Cursed Wizard caught mid-cast by his
+// neighbour's meteor stood frozen for most of a second (the user: "his animations become
+// laggy in LT2"). And a shock already playing is not begun again -- SetAction to the action
+// it is in changes nothing -- or every impact of a meteor shower restarts it, a stutter.
 void Play::shock(Drawn& one, int clip) {
+    one.swinging = 0.0f;
+    one.casting = 0.0f;
+    if (one.shocked > 0.0f && one.figure.clip() == clip) return;
     one.figure.play(clip, true);
     one.shocked = one.figure.length();
 }
