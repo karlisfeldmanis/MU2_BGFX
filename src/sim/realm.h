@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -899,6 +900,11 @@ public:
     // chase, and reads which it is here.
     const Request& order() const { return order_; }
     const content::Tables* tables() const { return tables_; }
+    // Sets or clears `bits` on a box of this realm's grid: Blood Castle's run opening its
+    // entrance, bridge and door (sim/event.h). Only on a map whose tables the realm copied at
+    // raise (kBloodCastleMap); anywhere else the cooked tables are shared and nothing changes.
+    // The router reads the grid live, so the next plan sees it.
+    bool changeGrid(int x1, int y1, int x2, int y2, uint16_t bits, bool set);
     const Router& router() const { return router_; }
     uint64_t draws() const { return dice_.draws(); }
     RealmCounts counts() const;
@@ -1109,6 +1115,10 @@ private:
              uint32_t whom = 0);
 
     const content::Tables* tables_ = nullptr;
+    // An event map's tables, copied at raise so its grid can change under the run and a raise
+    // again starts from the cooked words. Null elsewhere. On the heap, so `tables_` survives
+    // the realm being moved.
+    std::unique_ptr<content::Tables> own_;
     Random dice_{0};
     Router router_;
     std::vector<uint8_t> roads_;  // see setRoads

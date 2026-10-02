@@ -16,6 +16,16 @@ void Grid::clear() {
     words_.clear();
 }
 
+void Grid::change(int x1, int y1, int x2, int y2, uint16_t bits, bool set) {
+    for (int row = y1; row <= y2; ++row) {
+        for (int column = x1; column <= x2; ++column) {
+            if (!inside(column, row)) continue;
+            uint16_t& word = words_[size_t(row) * size_t(size_) + size_t(column)];
+            word = set ? uint16_t(word | bits) : uint16_t(word & ~bits);
+        }
+    }
+}
+
 size_t Grid::blocked() const {
     size_t count = 0;
     for (int row = 0; row < size_; ++row) {

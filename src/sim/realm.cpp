@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include "core/log.h"
+#include "sim/event.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::sim {
@@ -71,6 +72,11 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
                   int playerRow, Kin kin, int level) {
     tables_ = tables;
     if (!tables_ || tables_->grid.empty()) return false;
+    own_.reset();
+    if (tables_->map == kBloodCastleMap) {
+        own_ = std::make_unique<content::Tables>(*tables_);
+        tables_ = own_.get();
+    }
     dice_.seed(seed);
     // A stream of its own, off the same seed: see `wearDice_`.
     wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
@@ -1170,6 +1176,12 @@ std::string describe(const Happening& happening, const Realm& realm) {
             break;
     }
     return std::string(line);
+}
+
+bool Realm::changeGrid(int x1, int y1, int x2, int y2, uint16_t bits, bool set) {
+    if (!own_) return false;
+    own_->grid.change(x1, y1, x2, y2, bits, set);
+    return true;
 }
 
 }  // namespace mu::sim

@@ -17,6 +17,7 @@
 
 #include "content/tables.h"
 #include "sim/audit.h"
+#include "sim/event.h"
 #include "sim/items.h"
 #include "sim/random.h"
 #include "sim/realm_tuning.h"
@@ -7148,6 +7149,47 @@ void testFirecracker(const content::Tables& tables) {
                "never from a monster under 17");
 }
 
+// Blood Castle's grid changes under the run (sim/event.h): the realm copies the castle's tables at
+// raise, so opening the bridge and the door changes its grid and nobody else's, the router sees it
+// on the next plan, and a raise again starts closed. Lorencia's tables are shared and refuse.
+void testCastleGrid(const content::Tables& lorencia) {
+    std::printf("blood castle's live grid\n");
+    content::Tables castle;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/bloodcastle/bloodcastle.mur",
+                              castle, error),
+          "Blood Castle's tables load");
+    if (castle.grid.empty()) return;
+    const std::vector<uint16_t> cooked = castle.grid.words();
+    sim::Realm realm;
+    check(realm.raise(&castle, 3, 13, 8), "the castle's realm raises");
+    check(realm.tables() != &castle, "and keeps its own copy of the tables");
+    const auto reaches = [&](int column, int row) {
+        sim::Router router;
+        router.open(&realm.tables()->grid);
+        std::vector<sim::Step> route;
+        return router.plan(13, 8, column, row, content::kWallCharacter, route);
+    };
+    check(reaches(14, 40), "the road down to the bridge is open from the court");
+    check(!reaches(14, 85), "the courtyard is shut behind the raised bridge and the door");
+    const sim::GridBox& bridge = sim::kCastleBridge;
+    check(realm.changeGrid(bridge.x1, bridge.y1, bridge.x2, bridge.y2, bridge.bits, false),
+          "the bridge's gap is filled");
+    check(!reaches(14, 85), "the door still holds");
+    for (const sim::GridBox& box : sim::kCastleDoor) {
+        realm.changeGrid(box.x1, box.y1, box.x2, box.y2, box.bits, false);
+    }
+    check(reaches(14, 85), "with the door down the courtyard plans");
+    check(castle.grid.words() == cooked, "the cooked tables are untouched");
+    check(realm.raise(&castle, 3, 13, 8), "a raise again");
+    check(!reaches(14, 85), "starts with the castle closed");
+    sim::Realm town;
+    check(town.raise(&lorencia, 3, 138, 124), "Lorencia raises");
+    check(!town.changeGrid(138, 124, 138, 124, content::kNoMove, true),
+          "and its shared grid refuses a change");
+    check(town.tables() == &lorencia, "on the shared tables");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -7180,6 +7222,7 @@ int main() {
     testDeviasFolk();
     testTowerKeeper();
     testThroughWalls();
+    testCastleGrid(tables);
     testCharon();
     testChaosMachine();
     testRefine(tables);

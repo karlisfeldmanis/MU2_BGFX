@@ -56,6 +56,10 @@ public:
     // `words` is row-major [row][column], one MU attribute word a tile.
     void set(int size, std::vector<uint16_t> words);
     void clear();
+    // Sets or clears `bits` on every tile of the box, inclusive, the rest of each word kept:
+    // MU's AddTerrainAttributeRange (ZzzLodTerrain.cpp:280), WebZen's `|=` / `&= ~`
+    // (BloodCastle.cpp:2506-2625). Only the realm's own copy is changed (sim/event.h).
+    void change(int x1, int y1, int x2, int y2, uint16_t bits, bool set);
 
     bool empty() const { return words_.empty(); }
     int size() const { return size_; }
