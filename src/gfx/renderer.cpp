@@ -439,8 +439,13 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             // along each channel instead, and x is where the cross-fade's cycle is, y the
             // texel row of the weight map's flow band, z how far a copy is dragged in tiles.
             // y is -1 without one, and z is MU's slide.
+            //
+            // The slide wraps after 500 sheets, not MU's one: water_variety's turned copy
+            // (fs_ground `turned`) sees a slide of s as s * 0.57 * (0.8, 0.6) of its own sheet,
+            // whole only at 500 (228, 171), so a wrap at one jumped it by (0.456, 0.342) and the
+            // Lost Tower's whole lava shuddered every hundred seconds (the user, 2026-10-02).
             const float row = g.flowRow();
-            const float slide = std::fmod(elapsed_ * waterFlow_, 20.0f) * 0.05f;
+            const float slide = std::fmod(elapsed_ * waterFlow_, 20.0f * 500.0f) * 0.05f;
             const float cycle = std::fmod(elapsed_ * waterFlow_ / content::Ground::kFlowCycle, 1.0f);
             const float blend[4] = {cycle, row, row >= 0.0f ? content::Ground::kFlowReach : slide,
                                     float(part.layerCount)};
