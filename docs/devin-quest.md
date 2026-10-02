@@ -29,8 +29,8 @@ The card font has no em dash: "--" prints literally, as in Marlon's.
 2. "Take these. Your road goes on to the Lost Tower. Find Tersia in its hall. She will tell you the rest."
 
 (Until 2026-10-01: "Take these. You will need them for what comes next: the Lost Tower. But that is
-a story for another day." The recorded `devin_handin.wav` still says that; its `handin2` take
-needs reading again.)
+a story for another day." `devin_handin.wav` was read again on 2026-10-02 by recorded_with.py.txt,
+handin1 and handin2 at seed 11, the new page's beats 0.5, 0.7 and 0.5 s, joined 0.9 s apart.)
 
 **Resting:** "Rest now. By morning, the Queens will call the storms back."
 

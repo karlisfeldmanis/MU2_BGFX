@@ -151,9 +151,10 @@ new runes for the chain are the user's to choose (see below).
 
 ## Open
 
-- Voices: Tersia is voiced, `tersia_1` to `tersia_7` (tools/voice.py `VOICES["tersia"]`: Kokoro's bm_fable reading a frightened, exhausted line as the reference, cloned by Chatterbox low and slow, shaky, one faint echo; the user's picks).
-  second page** ("But that is a story for another day"); its `handin2` take needs reading again
-  (`source/voice/devin/recorded_with.py.txt`).
+- Voices: Tersia is voiced, `tersia_1` to `tersia_7` (tools/voice.py `VOICES["tersia"]`: Kokoro's
+  bm_fable reading a frightened, exhausted line as the reference, cloned by Chatterbox at 0.6,
+  shaky, one faint echo; the user's picks). Devin's hand-in was read again for Tersia on 2026-10-02
+  (docs/devin-quest.md).
 - Thompson's and Tersia's tiles are ours; move them on the user's word.
 - New runes for links 2-7 (proposed in chat 2026-10-01, not chosen).
 - Sevina's Scroll of the Emperor, which MuMain places in this tower.

@@ -15,8 +15,8 @@ LINES = {
  "offer5": [("Dress for the cold, and come back alive.", 0)],
  "underway": [("Not yet.", S), ("The storms still rage, and the Queens still live.", 0)],
  "handin1": [("The sky over Devias is clear again.", L), ("Thank you.", 0)],
- "handin2": [("Take these.", S), ("You will need them for what comes next: the Lost Tower.", XL),
-             ("But that is a story for another day.", 0)],
+ "handin2": [("Take these.", S), ("Your road goes on to the Lost Tower.", L),
+             ("Find Tersia in its hall.", S), ("She will tell you the rest.", 0)],
  "resting": [("Rest now.", L), ("By morning, the Queens will call the storms back.", 0)],
 }
 how = voice.VOICES["devin"]

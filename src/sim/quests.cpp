@@ -230,7 +230,7 @@ QuestRow devin() {
     // The way on (the user, 2026-10-01): the Lost Tower and its keeper, Tersia's chain.
     row.next = "Seek Tersia in the Lost Tower";
     // Read by hand, not by voice.py's main(): source/voice/devin/recorded_with.py.txt. The
-    // hand-in's second page still says the old words ("a story for another day") until re-read.
+    // hand-in was read again for Tersia on 2026-10-02, both paragraphs, the same way.
     row.voice = "devin";
     row.steps[0] = {QuestStepKind::Clear, 24, 40, "Worms"};
     row.steps[1] = {QuestStepKind::Clear, 22, 35, "Ice Monsters"};
