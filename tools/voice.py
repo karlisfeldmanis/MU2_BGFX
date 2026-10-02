@@ -152,41 +152,91 @@ def plain(word):
     return re.sub(r"[^a-z0-9]", "", word.lower())
 
 
-def widen(path, words, gap):
-    """Each sentence's end in a squeezed take held `gap` seconds, cut where the take was heard to
-    say the sentence's last word. Placed first by letter share, it cut Tersia's second offer
-    inside "poison" and after "plates" (the user, 2026-10-03: "little bit buggy audio")."""
+def pace(path, target, words, gap):
+    """A raw take's pauses set in one pass, written to `target`: each sentence's end held `gap`
+    seconds, cut where the take was heard to say the sentence's last word, every other pause held
+    to SQUEEZE's 0.3 s, the ends trimmed. Placed first by letter share, the gap cut Tersia's second
+    offer inside "poison" and after "plates"; and ffmpeg's silenceremove and the zeros put in after
+    it were hard splices, a click at each (the user, 2026-10-03: "buggy audio"). Every join here
+    fades out and in over FADE."""
     import difflib
     import numpy as np
     import soundfile as sf
+    x, sr = sf.read(str(path))
+    hop, fade = int(0.01 * sr), int(0.015 * sr)
+    level = np.array([np.sqrt(np.mean(x[j:j + hop] ** 2)) for j in range(0, len(x), hop)])
+    still = 20 * np.log10(level + 1e-9) < -45
+    spans, j = [], 0  # the take's quiet runs of 60 ms or more, in samples
+    while j < len(still):
+        if still[j]:
+            k = j
+            while k < len(still) and still[k]:
+                k += 1
+            if k - j >= 6 or j == 0 or k == len(still):
+                spans.append([j * hop, min(len(x), k * hop)])
+            j = k
+        else:
+            j += 1
+
+    cuts = []  # where each sentence ends, in samples
     said = [plain(w) for w in words.split()]
     ends = {i for i, w in enumerate(words.split()) if re.search(r"[.!?][\"']?$", w)}
     ends.discard(len(said) - 1)
-    if not ends:
-        return
-    x, sr = sf.read(str(path))
-    take = heard(path)
-    match = difflib.SequenceMatcher(None, said, [plain(w) for w, _, _ in take], autojunk=False)
-    at = {a + k: b + k for a, b, n in match.get_matching_blocks() for k in range(n)}
-    adds = []
-    for i in sorted(ends):
-        if i not in at or at[i] + 1 >= len(take):
-            print(f"voice: sentence end '{words.split()[i]}' not heard, left as read",
-                  file=sys.stderr)
+    if ends:
+        take = heard(path)
+        match = difflib.SequenceMatcher(None, said, [plain(w) for w, _, _ in take],
+                                        autojunk=False)
+        at = {a + k: b + k for a, b, n in match.get_matching_blocks() for k in range(n)}
+        for i in sorted(ends):
+            if i not in at or at[i] + 1 >= len(take):
+                print(f"voice: sentence end '{words.split()[i]}' not heard, left as read",
+                      file=sys.stderr)
+                continue
+            stop, start = take[at[i]][2], take[at[i] + 1][1]
+            # whisper's word edges are loose: the quietest 20 ms near them, not in a tail
+            lo, hi = int((stop - 0.1) * sr), int((start + 0.1) * sr)
+            cuts.append(min(range(max(0, lo), min(len(x) - 2 * hop, hi), hop),
+                            key=lambda q: np.square(x[q:q + 2 * hop]).mean(),
+                            default=int(stop * sr)) + hop)
+
+    # (keep from, keep to, silence after): the take as kept pieces with silence between
+    pieces, last = [], 0
+    for lo, hi in spans:
+        inside = [c for c in cuts if lo <= c <= hi]
+        if lo == 0:  # the lead-in: trimmed to 50 ms
+            last = max(0, hi - int(0.05 * sr))
             continue
-        stop, start = take[at[i]][2], take[at[i] + 1][1]
-        # whisper's word edges are loose: cut at the quietest 20 ms near them, not in a tail
-        a, b, hop = int((stop - 0.1) * sr), int((start + 0.1) * sr), int(0.02 * sr)
-        quiet = min(range(max(0, a), min(len(x) - hop, b), hop // 2),
-                    key=lambda j: np.square(x[j:j + hop]).mean(), default=int(stop * sr))
-        adds.append(((quiet + hop / 2) / sr, max(0.0, gap - (start - stop))))
-    out, last = [], 0
-    for t, add in sorted(adds):
-        i = int(t * sr)
-        out += [x[last:i], np.zeros(int(add * sr))]
-        last = i
-    out.append(x[last:])
-    sf.write(str(path), np.concatenate(out), sr)
+        if hi >= len(x):  # the tail: 150 ms of it kept, the polish pads the rest
+            pieces.append((last, min(len(x), lo + int(0.15 * sr)), 0))
+            last = None
+            break
+        hold = gap if inside else 0.3
+        have = (hi - lo) / sr
+        if have > hold:  # too long: keep its two edges, join them in the quiet
+            keep = int(hold / 2 * sr)
+            pieces.append((last, lo + keep, 0))
+            last = hi - keep
+        elif inside:  # a sentence's end too short: silence put in its quietest place
+            pieces.append((last, inside[0], int((hold - have) * sr)))
+            last = inside[0]
+        for c in inside:
+            cuts.remove(c)
+    for c in sorted(cuts):  # a sentence end read straight through, with no quiet run at all
+        if last is not None and c > last:
+            pieces.append((last, c, int(gap * sr)))
+            last = c
+    if last is not None:
+        pieces.append((last, len(x), 0))
+
+    ramp = np.linspace(0, 1, fade)
+    out = []
+    for lo, hi, rest in pieces:  # the take's own two ends faded too: its tail was a cut
+        y = x[lo:hi].copy()
+        if len(y) > 2 * fade:
+            y[:fade] *= ramp
+            y[-fade:] *= ramp[::-1]
+        out += [y, np.zeros(rest)]
+    sf.write(str(target), np.concatenate(out), sr)
 
 
 def main():
@@ -226,11 +276,9 @@ def main():
                 part = pathlib.Path(scratch) / f"{page}{i}.wav"
                 polish = how["polish"]
                 if "sentence_gap" in how:
-                    squeezed = pathlib.Path(scratch) / f"{page}{i}.squeezed.wav"
-                    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af",
-                                    SQUEEZE.rstrip(","), str(squeezed)], check=True)
-                    widen(squeezed, spoken(words), how["sentence_gap"])
-                    raw = squeezed
+                    paced = pathlib.Path(scratch) / f"{page}{i}.paced.wav"
+                    pace(raw, paced, spoken(words), how["sentence_gap"])
+                    raw = paced
                 else:
                     polish = SQUEEZE + polish
                 subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", polish,
