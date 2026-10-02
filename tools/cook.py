@@ -1944,11 +1944,8 @@ FOLK_VERSION075 = {
         # two tiles Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45). 0.75 has no
         # Blood Castle; until it is written he says the hero is not ready (the user, 2026-09-30).
         (233, "Messenger of Archangel", "", 217, 29, 4),
-        # Ours: Thompson the Merchant (231, MuMain's MODEL_DEVIAS_TRADER, Npc/DeviasTrader01.bmd),
-        # who sends the hero to the Lost Tower (docs/lost-tower-quest.md, the user's of
-        # 2026-10-01). No OpenMU version stands him; the tile is ours, on the west square. His
-        # figure stands from placements.json, as Sevina's.
-        (231, "Thompson the Merchant", "", 195, 39, 4),
+        # Thompson the Merchant (231) stood on the west square from 2026-10-01 until the user
+        # took him off the map, 2026-10-02.
     ],
     4: [  # Lost Tower: Version075/Maps/LostTower.cs:47-48, both in the safe hall. Baz is
         # named Storage01 here because the tower's own placements have no vault for him to

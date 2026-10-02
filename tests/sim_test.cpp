@@ -3715,10 +3715,10 @@ void testTowerKeeper() {
         }
         return -1;
     };
-    const int thompson = folkOf(devias, sim::kThompson), tersia = folkOf(tower, sim::kTersia);
-    check(thompson >= 0, "Thompson stands in Devias");
+    const int tersia = folkOf(tower, sim::kTersia);
+    checkEqual(folkOf(devias, sim::kThompson), -1, "Thompson is off the map (2026-10-02)");
     check(tersia >= 0, "Tersia stands in the Lost Tower");
-    if (thompson < 0 || tersia < 0) return;
+    if (tersia < 0) return;
     // Spoken to: a dialog opened, or a line said.
     const auto talkTo = [](sim::Realm& realm, int folk, bool* offered, bool* greeted) {
         sim::Request talk;
@@ -3736,12 +3736,7 @@ void testTowerKeeper() {
         }
     };
 
-    const content::Townsperson& t = devias.folk[size_t(thompson)];
-    sim::Realm town;
-    check(town.raise(&devias, 7, t.x, t.y + 2, sim::Kin::DarkKnight, 45), "a knight by Thompson");
     bool offered = false, greeted = false;
-    talkTo(town, thompson, &offered, &greeted);
-    check(greeted && !offered, "Thompson answers with a line");
 
     int hall = -1;
     for (int i = 0; i < sim::kTravels; ++i) {
@@ -3794,7 +3789,7 @@ void testDeviasFolk() {
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur";
     check(content::loadTables(path, devias, error), "Devias's tables load");
-    checkEqual(long(devias.folk.size()), 13L, "thirteen townsfolk stand in Devias (Thompson since 2026-10-01)");
+    checkEqual(long(devias.folk.size()), 12L, "twelve townsfolk stand in Devias (Thompson off since 2026-10-02)");
     int master = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kGuildMaster) master = int(i);

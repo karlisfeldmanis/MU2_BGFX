@@ -121,16 +121,6 @@
       "ours": "the class-change quest's giver, NPC 235, where OpenMU's 0.95d stands her (Version095d/Maps/Devias.cs:35); Version075 has no class change"
     },
     {
-      "model": "DeviasTrader01",
-      "who": "Thompson the Merchant",
-      "tile": [
-        195,
-        39
-      ],
-      "facing": 4,
-      "ours": "NPC 231, MuMain's MODEL_DEVIAS_TRADER, with lines about the Lost Tower he once supplied (docs/lost-tower-quest.md, 2026-10-01); no OpenMU version stands him, the tile is ours"
-    },
-    {
       "model": "BloodCastle02",
       "who": "Messenger of Archangel",
       "tile": [
