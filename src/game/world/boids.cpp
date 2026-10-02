@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 
+#include "content/grid.h"
 #include "core/files.h"
 #include "core/log.h"
 #include "game/sound.h"
@@ -58,6 +59,8 @@ std::string boidOf(const std::string& world) {
     if (world == "noria") return "Butterfly01";
     // The Dungeon's: MODEL_BAT01, as the Lost Tower's (GOBoid.cpp:1327-1328).
     if (world == "dungeon" || world == "losttower") return "Bat01";
+    // Every Blood Castle's: MODEL_CROW (GOBoid.cpp:1342-1345), cooked from Object12.
+    if (world == "bloodcastle") return "Crow01";
     return std::string();
 }
 
@@ -82,6 +85,15 @@ Airs airsOf(const std::string& world) {
         airs.call[0] = "boid_bat";
         airs.call[1] = nullptr;
     }
+    if (world == "bloodcastle") {
+        // The crow keeps the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1324) and caws
+        // SOUND_CROW alone, a frame in 128, over the court only.
+        airs.call[0] = "boid_crow";
+        airs.call[1] = nullptr;
+        airs.callEvery = 128.0f;
+        airs.callRolls = 1;
+        airs.callsOverSafe = true;
+    }
     return airs;
 }
 
@@ -92,6 +104,8 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     sound_ = sound;
     flight_.reset();
     flight_.setPace(airs_.speed);
+    flight_.setCalls(airs_.callEvery, airs_.callRolls);
+    crowEyes_ = model == "Crow01";
     flight_.setButterfly(model == "Butterfly01");
     flight_.setBat(model == "Bat01");
     scurry_.open(assetDir, world, crawlOf(world), textures, sound);
@@ -194,7 +208,10 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
     int called = 0;
     // A bat is the underground's own: the Dungeon is "indoors" on every tile (World::indoors),
     // and MU flies its bats there (GOBoid.cpp:1327). The roof rule is the birds'.
-    flight_.update(seconds, hero, walking, indoors && !flight_.isBat(), sky, calls, &called);
+    // Blood Castle is "underground" for its air (no wind, no leaves) but under the open night,
+    // and MU flies its crows over every tile of it.
+    flight_.update(seconds, hero, walking, indoors && !flight_.isBat() && !crowEyes_, sky, calls,
+                   &called);
 
     // What sounded. Placed at the bird, which is one of the few sounds the client loads with 3D
     // enabled. The height is kept: MU's SetPosition dropped it, and here it only moves the pan
@@ -202,6 +219,14 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
     if (sound_ != nullptr && airs_.calls) {
         for (int i = 0; i < called; ++i) {
             const int event = calls[i].which == 0 ? call1_ : call2_;
+            if (event >= 0 && airs_.callsOverSafe) {
+                const float perTile = std::max(ground.metresPerTile(), 0.001f);
+                const int c = int(std::floor(calls[i].at[0] / perTile));
+                const int r = int(std::floor(-calls[i].at[2] / perTile));
+                if (c < 0 || r < 0 || c >= ground.size() || r >= ground.size() ||
+                    (ground.attributesAt(c, r) & content::kSafeZone) == 0)
+                    continue;
+            }
             if (event >= 0) {
                 sound_->playAt(event, calls[i].at[0], calls[i].at[1], calls[i].at[2]);
             }
@@ -255,7 +280,30 @@ void Boids::glow(gfx::Effects& effects) {
     // Scale 1 on the butterfly, `Luminosity * (0.2, 0.4, 0.4)` with Luminosity rolled 0.64 to
     // 0.96 each frame MU draws -- a cyan firefly. Rolled 25 times a second here, as the
     // lanterns are, since a roll at the monitor's rate is a strobe.
-    if (!bgfx::isValid(glowSheet_) || !flight_.isButterfly()) return;
+    if (!bgfx::isValid(glowSheet_)) return;
+    if (crowEyes_) {
+        // MODEL_CROW's eyes (GOBoid.cpp:1573-1585): a BITMAP_LIGHT at bone 1, five units either
+        // side, Scale 0.1, (1, 0.2, 0) times (rand() % 32 + 128) * 0.01 -- the butterfly's roll
+        // carried onto 1.28-1.59.
+        static const float kEyes[2][3] = {{-0.05f, 0.0f, 0.0f}, {0.05f, 0.0f, 0.0f}};
+        for (int i = 0; i < Flight::kMaxBirds; ++i) {
+            if (!flight_.bird(i).live || !standing_[i]) continue;
+            const float luminosity = 1.28f + (glowLevel_[i] - 0.64f) / 0.32f * 0.31f;
+            for (const float* eye : kEyes) {
+                gfx::Sprite sprite;
+                if (!figures_[i].pointOn(1, eye, sprite.position)) continue;
+                sprite.halfWidth = sprite.halfHeight = 0.5f * 0.64f * 0.1f;
+                sprite.colour[0] = luminosity;
+                sprite.colour[1] = 0.2f * luminosity;
+                sprite.colour[2] = 0.0f;
+                sprite.sheet = glowSheet_;
+                sprite.blend = gfx::Blend::Additive;
+                effects.add(sprite);
+            }
+        }
+        return;
+    }
+    if (!flight_.isButterfly()) return;
     for (int i = 0; i < Flight::kMaxBirds; ++i) {
         const Flight::Bird& bird = flight_.bird(i);
         if (!bird.live) continue;

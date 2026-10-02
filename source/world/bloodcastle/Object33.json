@@ -1,0 +1,90 @@
+{
+  "item": "Object33",
+  "mu_name": "Object33",
+  "mu_name_from": "Blood Castle's object slot 32, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128); World12/Object12 serves all seven castles (MapManager.cpp:1104-1107).",
+  "world": "bloodcastle",
+  "object_type": 32,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "light_R": "bc_light_r.png"
+  },
+  "sheet_from": "Data/Object12/, from MuMain, decoded under a bc_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "light_R": "lamplight"
+  },
+  "why_this_one": "A blue light shaft falling through the dark, two in the court and four in the castle; light_R added. docs/blood-castle-port.md, Part B section 1.2.",
+  "material_note": "Read off the art: br001 the castle's blue-grey brick, flagstone; ses the grey iron of chains and fittings, wrought_iron; pant01 carved stone, rock, its orange frieze pant01_R added; bro01 mossy stone, rock; woodc01 dark weathered wood, timber; ng01 the angel-knights' blue-silver plate, plate_steel; skin_special_01 their faces and cloth, skin.",
+  "additive": [
+    "light_R"
+  ],
+  "additive_from": "A sheet named _R is drawn RENDER_BRIGHT, added (TextureScriptParsing, TextureScript.cpp:16-70).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 34468.7,
+      "along": [
+        -11.5,
+        133.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.497
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 34468.7,
+      "along": [
+        -183.9,
+        1.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.503,
+        0.497,
+        0.997
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 12719.7,
+      "along": [
+        -22.2,
+        45.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.497
+      ]
+    }
+  ]
+}

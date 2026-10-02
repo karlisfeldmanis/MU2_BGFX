@@ -93,6 +93,11 @@ struct Airs {
     // The two calls' sound events, rolled independently; a null one is never rolled for. The
     // bird's two, or the Dungeon bat's one (SOUND_BAT01).
     const char* call[2] = {"bird_1", "bird_2"};
+    // Blood Castle's crow: one roll a frame in 128, heard only while the tile under it is a
+    // safe zone, the castle's court (GOBoid.cpp:1495-1501). 0 / false keep the bird's.
+    float callEvery = 0.0f;
+    int callRolls = 0;
+    bool callsOverSafe = false;
 };
 
 // What a world flies, by the model name the cook knows it by, and how it flies. MU's own
@@ -142,6 +147,7 @@ private:
     std::unique_ptr<content::Mesh> mesh_;
     std::unique_ptr<ClipLibrary> library_;
     std::unique_ptr<FigureBody> body_;
+    bool crowEyes_ = false;  // Blood Castle's crows' two red eyes (glow())
     // One per bird, by the same index Flight keeps them in.
     Figure figures_[Flight::kMaxBirds];
     int paletteRows_[Flight::kMaxBirds] = {};

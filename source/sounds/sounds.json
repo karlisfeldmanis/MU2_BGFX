@@ -280,6 +280,13 @@
       "from": "SOUND_EXPLOTION01, Data\\\\Sound\\\\eExplosion.wav. Nothing on the meteor's path asks for it: CreateParticle's BITMAP_EXPLOTION arm plays it at the particle's birth, so creating the blast is what makes the noise.",
       "note": "Easy to miss reading the skill alone, which is two lines and mentions one sound. This is the second, and it arrives about a third of a second after it where the rock lands."
     },
+    "firework": {
+      "files": [
+        "christmas_fireworks01.wav"
+      ],
+      "from": "SOUND_XMAS_FIRECRACKER, which ZzzOpenData.cpp:4934 loads from Data\\Sound\\xmas\\Christmas_Fireworks01.wav. BITMAP_FIRECRACKER0002's birth plays it at the burst, `PlayBuffer(SOUND_XMAS_FIRECRACKER, o)` (ZzzEffect.cpp:2950): one bang for each of the five rockets a thrown Firecracker sends up (game/fx/firework.cpp).",
+      "note": "The burst's other sound is `explosion`: its BITMAP_EXPLOTION_MONO is born on the same line and rings eExplosion.wav as the meteor's does."
+    },
     "item_drop": {
       "files": [
         "pdropitem.wav"
@@ -1627,6 +1634,12 @@
       ],
       "from": "SOUND_RUN_DARK_HORSE_1..3, which ZzzOpenData loads from Data\\Sound\\pHorseStep1-3.wav (ZzzOpenData.cpp:4863); SetPlayerWalk plays one at random, `SOUND_RUN_DARK_HORSE_1 + rand() % 3`, for a Dark Lord on the Dark Horse off a safe tile (ZzzCharacter.cpp:764-767).",
       "note": "**Ours** on the Horn of Uniria: MuMain gives Uniria no run sound at all, and the user asked for the ride with sound (2026-10-02). Two hoofbeats a bound of the run ride, on the walk's own keys, the hero's alone as his steps are (Play::steps)."
+    },
+    "boid_crow": {
+      "files": [
+        "ecrow.wav"
+      ],
+      "from": "SOUND_CROW, Data\\Sound\\eCrow.wav. GOBoid.cpp plays it as PlayBuffer(SOUND_CROW, o) at the crow on rand_fps_check(128), and only while the tile under it is exactly TW_SAFEZONE (:1495-1501): the crows caw over Blood Castle's court."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

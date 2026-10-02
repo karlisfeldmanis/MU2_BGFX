@@ -106,6 +106,9 @@ public:
     // a height held over the floor rather than a dive, and one call at one frame in 256 rather
     // than the bird's two at 512 (:1490-1494). The flock is the bird's MoveBoidGroup.
     void setBat(bool on) { bat_ = on; }
+    // A bird's calls other than the bird's two rolls at one frame in 512: Blood Castle's crow
+    // rolls once at one in 128 (GOBoid.cpp:1495-1501). 0 keeps the bird's (or the bat's).
+    void setCalls(float every, int rolls) { callEvery_ = every; callRolls_ = rolls; }
     bool isBat() const { return bat_; }
 
     // The first flock arrives on the next step rather than 20 to 90 seconds in. One-shot: a
@@ -141,6 +144,8 @@ private:
     float pace_ = 1.0f;
     bool butterfly_ = false;
     bool bat_ = false;
+    float callEvery_ = 0.0f;
+    int callRolls_ = 0;
     // Seconds the bats' flock has left with him before it flies off. See Flight::update.
     float stay_ = 0.0f;
     float wait_ = 0.0f;

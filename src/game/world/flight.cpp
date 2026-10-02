@@ -170,8 +170,10 @@ void Flight::update(float seconds, const float hero[3], bool walking, bool indoo
         // when nearly overhead. The bird keeps the height it has been judged with.
         const float lift = bat_ ? 0.0f : dy;
         const bool near = dx * dx + lift * lift + dz * dz < kHeard * kHeard;
-        const float odds = factor / (bat_ ? 256.0f : kCallEvery);
-        for (int which = 0; which < (bat_ ? 1 : 2); ++which) {
+        const float every = callEvery_ > 0.0f ? callEvery_ : bat_ ? 256.0f : kCallEvery;
+        const int rolls = callRolls_ > 0 ? callRolls_ : bat_ ? 1 : 2;
+        const float odds = factor / every;
+        for (int which = 0; which < rolls; ++which) {
             const bool sounded = random01() < odds;
             if (!near || !sounded || calls == nullptr || callCount == nullptr) continue;
             if (*callCount >= kMostCalls) continue;
