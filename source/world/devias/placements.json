@@ -6,15 +6,17 @@
       "model": "Object48",
       "near": [230.79, 26.68],
       "at": [230.5, 27.0],
-      "was": [230.79, 26.68],
-      "why": "OURS: the tavern's laid table of grapes, goblet and bottles stood 0.3 m off the middle of its plank table (Object42 at 230.5, 27.0), at the edge of the short side; the user asked for the food more on the centre of the table (2026-10-02). Moved onto the table's own centre, height unchanged."
+      "height": 2.57,
+      "was": [230.79, 26.68, 2.845],
+      "why": "OURS: the tavern's laid table of grapes, goblet and bottles stood 0.3 m off the middle of its plank table (Object42 at 230.5, 27.0), at the edge of the short side; the user asked for the food more on the centre of the table (2026-10-02). Moved onto the table's own centre. And down onto it: MU stores the set at 2.845 m and the table at 1.70 m, 0.87 m tall, so the plate hung 0.27 m over the planks (the user, 2026-10-02: 'food is floating above table'); now at the top, 2.57."
     },
     {
       "model": "Object49",
       "near": [234.56, 26.56],
       "at": [234.5, 27.0],
-      "was": [234.56, 26.56],
-      "why": "OURS: the laid table with apples, the same story on the next plank table (Object42 at 234.5, 27.0), 0.44 m toward its end. Moved onto the table's centre, height unchanged."
+      "height": 2.57,
+      "was": [234.56, 26.56, 2.845],
+      "why": "OURS: the laid table with apples, the same story on the next plank table (Object42 at 234.5, 27.0), 0.44 m toward its end. Moved onto the table's centre, and down the same 0.27 m onto its top, 2.57."
     }
   ],
   "spawns": [
