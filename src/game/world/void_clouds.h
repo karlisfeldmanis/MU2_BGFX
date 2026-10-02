@@ -39,6 +39,8 @@ private:
         float age = 0.0f, life = 0.0f;
         float size = 1.0f;  // half width, metres
         float turn = 0.0f, spin = 0.0f;
+        float fade = 0.0f;     // 0 to 1, moving only gradually: in at birth, out when leaving
+        bool leaving = false;  // out of reach or over ground: fading out, never cut off
         bool alive = false;
     };
     bool spawn(Wisp& wisp, const float near[3], bool anyAge);

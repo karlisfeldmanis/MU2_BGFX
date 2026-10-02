@@ -24,6 +24,7 @@ constexpr float kDepthMin = 0.2f, kDepthMax = 1.5f;
 constexpr float kSizeMin = 9.0f, kSizeMax = 14.0f;
 constexpr float kGrowth = 0.3f;
 constexpr float kFadeOut = 8.0f;  // seconds, a cloud drifting towards ground or out of reach
+constexpr float kFadeIn = 6.0f;   // seconds, every cloud from nothing, the first ones too
 constexpr float kDrift[2] = {0.5f, 0.22f};  // metres a second
 constexpr float kScatter = 0.12f;
 constexpr float kSpin = 0.045f;             // radians a second at most
@@ -129,6 +130,8 @@ bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
         wisp.size = size;
         wisp.turn = 6.2831853f * unit();
         wisp.spin = (unit() - 0.5f) * 2.0f * kSpin;
+        wisp.fade = 0.0f;
+        wisp.leaving = false;
         wisp.alive = true;
         return true;
     }
@@ -144,13 +147,17 @@ void VoidClouds::update(float seconds, const float near[3]) {
             wisp.at[2] += wisp.drift[1] * seconds;
             wisp.turn += wisp.spin * seconds;
             const float dx = wisp.at[0] - near[0], dz = wisp.at[2] - near[2];
-            if (wisp.age >= wisp.life) wisp.alive = false;
-            if (wisp.alive && dx * dx + dz * dz > kLetGo * kLetGo)
-                wisp.age = std::max(wisp.age, wisp.life - kFadeOut);
-            // Drifting towards ground: it fades out over its last few seconds there and then.
+            // Out of reach or drifting towards ground: it starts to leave, and from wherever its
+            // fade stands goes down to nothing over kFadeOut -- no jump in its strength.
             const float grown = wisp.size * (1.0f + kGrowth * wisp.age / wisp.life);
-            if (wisp.alive && !clearUnder(wisp.at[0], wisp.at[2], grown))
-                wisp.age = std::max(wisp.age, wisp.life - kFadeOut);
+            if (dx * dx + dz * dz > kLetGo * kLetGo || !clearUnder(wisp.at[0], wisp.at[2], grown))
+                wisp.leaving = true;
+            if (wisp.leaving) {
+                wisp.fade -= seconds / kFadeOut;
+            } else {
+                wisp.fade = std::min(1.0f, wisp.fade + seconds / kFadeIn);
+            }
+            if (wisp.age >= wisp.life || (wisp.leaving && wisp.fade <= 0.0f)) wisp.alive = false;
         }
         if (!wisp.alive) spawn(wisp, near, wisp.life == 0.0f);
     }
@@ -163,7 +170,8 @@ void VoidClouds::gather(gfx::Effects& effects) const {
         const float t = wisp.age / wisp.life;
         // In and out on a squared sine, so neither end has an edge to it.
         const float rise = std::sin(3.14159265f * std::clamp(t, 0.0f, 1.0f));
-        const float alpha = kAlpha * rise * rise;
+        const float ease = wisp.fade * wisp.fade * (3.0f - 2.0f * wisp.fade);
+        const float alpha = kAlpha * rise * rise * ease;
         if (alpha <= 0.002f) continue;
         const float half = wisp.size * (1.0f + kGrowth * t);
         const float c = std::cos(wisp.turn) * half, s = std::sin(wisp.turn) * half;
