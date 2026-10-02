@@ -101,6 +101,9 @@ constexpr SkillRow kRows[kSkills] = {
     // a bar of two. Its mana is MU's: MuMain's own orb tooltip reads `Twisting Slash Skill
     // (Mana:22)` (docs/mu-scrolls-and-orbs.md §5).
     //
+    // **Learned at 50 and not 28, Rageful Blow at 80 and not 44** (the user, 2026-10-02: "lets
+    // increase lvl requirments"), with their multipliers raised the same day.
+    //
     // **No cooldown** (the user, 2026-10-01: "remove cooldown from twisting slash"), which makes
     // it a primary: paced by its spin alone, held on the key, its mana the only limit.
     //
@@ -110,7 +113,7 @@ constexpr SkillRow kRows[kSkills] = {
      Spread::Ring, 0, 1.0f,
      "A whirl of whatever he is holding, into everything within a tile. Every weapon can throw "
      "it; none throws it hard.",
-     65, "player_skill_sword4", true, arms::kEvery, 28},
+     65, "player_skill_sword4", true, arms::kEvery, 50},
     // Rageful Blow: **any weapon**, on the user's word of 2026-09-23. It was written for the
     // heavy hands -- MU's description is a "colossal area attack that unleashes shockwaves ... to
     // crush multiple opponents", which reads as something brought DOWN rather than drawn across --
@@ -126,7 +129,7 @@ constexpr SkillRow kRows[kSkills] = {
      0, 1.0f,
      "The weapon driven down into the ground, and what it breaks is the three tiles ahead of "
      "him.",
-     66, "rage_blow_1", true, arms::kEvery, 44},
+     66, "rage_blow_1", true, arms::kEvery, 80},
     // Death Stab: the spear's, and MU gates it on the hand too -- `SkillWarrior` refuses it with
     // a staff in the right hand (SkillCast.cpp:157) and the skill has been a spear's in every
     // version that hands it out. The hardest single blow in the table, and the point of carrying

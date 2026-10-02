@@ -480,11 +480,15 @@ come from three places:
 | Orb of Uppercut | 4 | Uppercut 21 | 12 | 12 | 2,500 |
 | Orb of Falling Slash | 5 | Falling Slash 19 | 13 | 13 | 3,000 |
 | Orb of Lunge | 6 | Lunge 20 | 20 | 20 | 8,000 |
-| Orb of Twisting Slash | **7** (0.95d's own) | Twisting Slash 41 | 28 | 28 | 15,000 |
+| Orb of Twisting Slash | **7** (0.95d's own) | Twisting Slash 41 | **50** | 50 | 50,000 |
 | Orb of Cyclone | 25 | Cyclone 22 | 36 | 36 | 25,000 |
-| Orb of Rageful Blow | **12** (Season 6's own) | Rageful Blow 42 | 44 | 44 | 40,000 |
+| Orb of Rageful Blow | **12** (Season 6's own) | Rageful Blow 42 | **80** | 80 | 150,000 |
 | Orb of Slash | 20 | Slash 23 | 52 | 52 | 60,000 |
 | Orb of Death Stab | **19** (Season 6's own) | Death Stab 43 | 60 | 60 | 90,000 |
+
+**Raised 2026-10-02** (the user: "lets increase lvl requirments"): Twisting Slash 28 to 50 and
+Rageful Blow 44 to 80, the day their multipliers went to 1.5 and 3.0 — so Rageful Blow, the hardest
+blow in the table, is now the last orb on the ladder, and the two are off §1.2's ladder by choice.
 
 The three past 0.75 are placed *between* the six rather than after them, because each is a key
 that keeps a family alive and a family should not wait until 60 to have three.

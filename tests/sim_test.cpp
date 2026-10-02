@@ -2206,9 +2206,10 @@ void testSkills(const content::Tables& tables) {
           "strength is force");
 
     sim::Realm realm;
-    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 60), "a realm raises for the keys");
+    // Level 80, the top of the orb ladder since Rageful Blow's orb moved there (2026-10-02).
+    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 80), "a realm raises for the keys");
     // A blade in his hand, because nothing is thrown bare-handed and `raise` dresses nobody:
-    // `given`, so a level-60 knight's strength is not what this is testing.
+    // `given`, so a level-80 knight's strength is not what this is testing.
     check(realm.equip(tables.armNamed("Sword03"), -1, true), "and a blade is put in his hand");
 
     // ---- and nothing in his head (docs/skills-dk.md §3.3) ------------------------------------
