@@ -1247,13 +1247,13 @@ void testCastLock(const content::Tables& tables) {
                   flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.0f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
-        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 4,
+        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 5,
               "and its row is past the elf's, so no save's learned bit moves");
         const sim::SkillRow& spirit = *sim::skillNumbered(sim::skill::kEvilSpirit);
         check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 90 &&
                   spirit.built && spirit.kin == sim::Kin::DarkWizard,
               "Evil Spirit is a no-cooldown spell of forty-five damage and ninety mana");
-        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 3,
+        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 4,
               "and its row is past Flame's");
         const int32_t evilScroll = tables.itemAt(15, 8);
         check(evilScroll >= 0 && tables.items[size_t(evilScroll)].teaches == sim::skill::kEvilSpirit &&
@@ -1271,7 +1271,7 @@ void testCastLock(const content::Tables& tables) {
                   hell.spread == sim::Spread::Ring && hell.reach == 4.0f && hell.clip == 154 &&
                   hell.kin == sim::Kin::DarkWizard,
               "Hellfire is a no-cooldown ring of a hundred and twenty damage and 160 mana");
-        check(sim::skillIndexOf(sim::skill::kHellfire) == sim::kSkills - 2,
+        check(sim::skillIndexOf(sim::skill::kHellfire) == sim::kSkills - 3,
               "and its row is past Evil Spirit's");
         const int32_t hellScroll = tables.itemAt(15, 9);
         check(hellScroll >= 0 && tables.items[size_t(hellScroll)].teaches == sim::skill::kHellfire &&
@@ -1340,8 +1340,8 @@ void testCastLock(const content::Tables& tables) {
               "Twister is a no-cooldown storm of thirty-five damage and sixty mana, striking "
               "three times");
         check(sim::skillElement(sim::skill::kTwister) == sim::Element::Wind, "and it is wind");
-        check(sim::skillIndexOf(sim::skill::kTwister) == sim::kSkills - 1 && sim::kSkills == 32,
-              "and its row is the table's last, the learned mask's thirty-second bit");
+        check(sim::skillIndexOf(sim::skill::kTwister) == sim::kSkills - 2,
+              "and its row is past Hellfire's, the learned mask's thirty-second bit");
         const int32_t twisterScroll = tables.itemAt(15, 7);
         check(twisterScroll >= 0 &&
                   tables.items[size_t(twisterScroll)].teaches == sim::skill::kTwister &&
@@ -1414,6 +1414,67 @@ void testCastLock(const content::Tables& tables) {
             check(thrice > 0, "as late as its third strike, four and a half tiles out");
             checkEqual(offBeat, 0, "every blow on a storm's beat, 11, 23 or 35 ticks in");
             checkEqual(offPath, 0, "and only within a tile and a half of where it has walked");
+        }
+
+        // Inferno: 0.95d's, struck as WebZen strikes it -- Hellfire's SkillHellFire, every
+        // monster within four tiles of him once, said once a cast for the ring.
+        const sim::SkillRow& inferno = *sim::skillNumbered(sim::skill::kInferno);
+        check(inferno.wizardry && inferno.primary() && inferno.damage == 100 &&
+                  inferno.mana == 200 && inferno.spread == sim::Spread::Ring &&
+                  inferno.reach == 4.0f && inferno.clip == 153 &&
+                  inferno.kin == sim::Kin::DarkWizard,
+              "Inferno is a no-cooldown ring of a hundred damage and two hundred mana");
+        check(sim::skillElement(sim::skill::kInferno) == sim::Element::Fire, "and it is fire");
+        check(sim::skillIndexOf(sim::skill::kInferno) == sim::kSkills - 1 && sim::kSkills == 33,
+              "and its row is the table's last, the learned mask's thirty-third bit");
+        const int32_t infernoScroll = tables.itemAt(15, 13);
+        check(infernoScroll >= 0 &&
+                  tables.items[size_t(infernoScroll)].teaches == sim::skill::kInferno &&
+                  tables.items[size_t(infernoScroll)].teachesEnergy == 578,
+              "the Scroll of Inferno teaches skill 14 at five hundred and seventy-eight energy");
+        {
+            sim::Realm burner;
+            check(burner.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 100),
+                  "a wizard raises for Inferno");
+            check(burner.learn(sim::skill::kInferno), "who knows Inferno");
+            check(burner.knows(sim::skill::kInferno) && burner.knows(sim::skill::kEnergyBall),
+                  "past the thirty-second bit, and his first spell still known");
+            int rings = 0, struck = 0, outside = 0, twice = 0;
+            uint32_t fighting = 0;
+            for (int tick = 0; tick < 4000 && burner.hero().alive(); ++tick) {
+                const uint32_t nearest = nearestTo(burner);
+                if (nearest != 0 && nearest != fighting) {
+                    fighting = nearest;
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    request.skill = sim::skill::kInferno;
+                    burner.ask(request);
+                }
+                burner.step();
+                uint32_t onThis[sim::kVictims] = {};
+                int seen = 0;
+                for (const sim::Happening& one : burner.happenings()) {
+                    if (one.who != burner.hero().id) continue;
+                    if (one.what == sim::What::Loosed && one.a == sim::skill::kInferno) ++rings;
+                    if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                    // The ring's blows are said as flown; his staff's, once his mana is out,
+                    // are not.
+                    if (!one.thrown) continue;
+                    const sim::Body* at = burner.find(one.whom);
+                    if (at == nullptr) continue;
+                    ++struck;
+                    for (int i = 0; i < seen; ++i) twice += onThis[i] == one.whom;
+                    if (seen < sim::kVictims) onThis[seen++] = one.whom;
+                    const float dx = at->x - burner.hero().x, dy = at->y - burner.hero().y;
+                    if (std::max(std::fabs(dx), std::fabs(dy)) > 4.0f) ++outside;
+                }
+            }
+            std::printf("  inferno: %d rings, %d blows\n", rings, struck);
+            check(rings > 3, "he casts it");
+            check(struck >= rings, "and every ring strikes");
+            checkEqual(outside, 0, "only within four tiles of him");
+            checkEqual(twice, 0, "and each body once a ring");
         }
 
         sim::Realm wiz;

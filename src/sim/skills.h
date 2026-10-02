@@ -85,6 +85,9 @@ constexpr int32_t kHellfire = 10;
 // `AT_SKILL_STORM`, off the Scroll of Twister (group 15 number 7, `Book08`) at a hundred and
 // eighty energy: a whirlwind sent walking out ahead of him, striking what it passes three times.
 constexpr int32_t kTwister = 8;
+// `AT_SKILL_INFERNO`, off the Scroll of Inferno (group 15 number 13, `Book14`) -- 0.95d's and
+// not 0.75's: eight blasts in a ring round him, striking every monster within four tiles once.
+constexpr int32_t kInferno = 14;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
 // Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
 // "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
@@ -374,13 +377,14 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit, Hellfire and Twister,
-// on the end past the elf's. **All thirty-two of the learned mask's bits**: the next row needs
-// the mask (and the save's) widened first. Also
-// the width of the save's learned mask and of a body's cooldown array --
-// and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
+// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit, Hellfire, Twister and
+// Inferno, on the end past the elf's. The learned mask is sixty-four bits since Inferno, the
+// thirty-third (`Body::learned`, and the save writes it whole); past sixty-four it needs widening
+// again, which the static_assert below says. Also the width of a body's cooldown array -- and
+// the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 32;
+constexpr int kSkills = 33;
+static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

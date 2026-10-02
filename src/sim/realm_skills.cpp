@@ -63,7 +63,7 @@ bool Realm::learn(int32_t skill) {
     const int index = skillIndexOf(skill);
     if (index < 0) return false;
     Body& hero = bodies_[0];
-    const uint32_t bit = uint32_t(1) << index;
+    const uint64_t bit = uint64_t(1) << index;
     if ((hero.learned & bit) != 0) return false;
     hero.learned |= bit;
     say(What::Learned, hero, skill);
@@ -73,7 +73,7 @@ bool Realm::learn(int32_t skill) {
 bool Realm::knows(int32_t skill) const {
     const int index = skillIndexOf(skill);
     if (index < 0) return false;
-    return (bodies_[0].learned & (uint32_t(1) << index)) != 0;
+    return (bodies_[0].learned & (uint64_t(1) << index)) != 0;
 }
 
 int64_t Realm::cooling(int32_t skill) const {
@@ -112,7 +112,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
 
     // Learned. In 0.75 this question was asked of his hands; here it is asked of what he has
     // read, which is the one place the design leaves the original on purpose.
-    if ((hero.learned & (uint32_t(1) << index)) == 0) return false;
+    if ((hero.learned & (uint64_t(1) << index)) == 0) return false;
     // And his class's. Learning already asks it -- an orb or a scroll refuses the wrong class --
     // so this is the same answer asked again where the skill is spent.
     if (row.kin != hero.kin) return false;
@@ -430,7 +430,7 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
 
 bool Realm::armed(const Body& hero, const SkillRow& row) const {
     const int index = skillIndexOf(row.number);
-    if (index < 0 || (hero.learned & (uint32_t(1) << index)) == 0) return false;
+    if (index < 0 || (hero.learned & (uint64_t(1) << index)) == 0) return false;
     if (row.kin != hero.kin || hero.mana < row.mana) return false;
     // A fan with nothing to loose falls back to the bow, which then says there are no arrows.
     if (row.arrows > 0 && !quivered(hero)) return false;

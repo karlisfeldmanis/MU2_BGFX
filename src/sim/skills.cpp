@@ -545,6 +545,28 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 147, .sound = "spell_storm", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 35, .clipOther = 148,
      .flies = 1000.0f, .burns = 3, .burnTiles = 1.5f, .walks = 0.125f},
+
+    // ---- Inferno 14, the wizard's, after Twister for the same reason ----------------------------
+    //
+    // **Not 0.75's**: 0.75 has no Inferno. Its row is 0.95d's -- a hundred damage, two hundred
+    // mana, fire, an area that strikes by itself (`Version095d/SkillsInitializer.cs:59`), and
+    // WebZen 1.00.93's skill 14 says the same (skill(Kor).txt) -- taught by the Scroll of Inferno
+    // (Book14, group 15 number 13). What it strikes is WebZen's: AT_SKILL_INFERNO is handed to
+    // the very SkillHellFire that Hellfire is (ObjUseSkill.cpp:880-883), so every monster within
+    // four tiles of him, once, his wizardry band -- Hellfire's `Spread::Ring` at `reach` 4.
+    //
+    // Its clip is MU's own PLAYER_SKILL_INFERNO at 0.6 (ClassAttack.cpp:1212-1221, ZzzCharacter.
+    // cpp:944): player.muc's 153, one before the enum's 154, as Hellfire's is (source/players/
+    // rig/actions.json; on the bench 2026-10-02 the low crouch with both arms driven out at the
+    // ground). Let go at half the clip, the let-go MU makes the ring of blasts and MODEL_SKILL_
+    // INFERNO in (ZzzCharacter.cpp:4574-4583). No cooldown, as Hellfire. Its ring and its
+    // eExplosion are game/fx/inferno.h.
+    {.number = skill::kInferno, .name = "Inferno", .mana = 200, .reach = 4.0f, .force = 1.0f,
+     .spread = Spread::Ring,
+     .tells = "A ring of fire bursts round him, striking every monster within four tiles.",
+     .clip = 153, .sound = "explosion", .built = true, .families = arms::kNone,
+     .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 100,
+     .flies = 1000.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

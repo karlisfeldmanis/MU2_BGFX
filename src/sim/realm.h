@@ -344,8 +344,8 @@ struct Body {
     // What he has learned, as a bit per row of the skill table and NOT per skill number: the
     // mask is six wide and the save writes it whole. Learned permanently -- a skill is not a
     // property of what is in his hands, which is 0.75's shape and is the one the design leaves
-    // on purpose.
-    uint32_t learned = 0;
+    // on purpose. Sixty-four wide since Inferno, the thirty-third row (2026-10-02).
+    uint64_t learned = 0;
     // When each learned skill may be thrown again, by the same index. The cooldown is the one
     // thing 0.75 has no equivalent of, so it lives beside the swing clock rather than through
     // it -- a cast pays BOTH, which is what stops haste outrunning the animation.
@@ -469,7 +469,7 @@ struct HeroRecord {
     int64_t money = 0;
     // What he has learned, by the skill table's own index. Saved because learning is permanent
     // in this design and is the one thing about a skill that is his rather than his weapon's.
-    uint32_t learned = 0;
+    uint64_t learned = 0;
     // How many ticks each skill had left to cool, by the same index, 0 for ready. Saved so a
     // restart is not a way round a wait (the user, 2026-09-28); the time away is not counted
     // against it, as it is not against the boon below.

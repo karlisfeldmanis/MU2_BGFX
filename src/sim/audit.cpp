@@ -108,7 +108,7 @@ void audit(const Realm& realm, Findings& findings) {
             const int index = skillIndexOf(happening.a);
             const Body* caster = realm.find(happening.who);
             if (index >= 0) {
-                if (caster && (caster->learned & (uint32_t(1) << index)) == 0) {
+                if (caster && (caster->learned & (uint64_t(1) << index)) == 0) {
                     ++findings.castUnlearned;
                     note(findings, "tick %lld: body %u cast skill %d without learning it",
                          (long long)realm.tick(), happening.who, happening.a);

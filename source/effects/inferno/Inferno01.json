@@ -1,0 +1,40 @@
+{
+  "item": "Inferno01",
+  "mu_name": "The ring of fire a wizard's Inferno lays round him",
+  "mu_name_from": "ZzzOpenData.cpp:4298, `gLoadData.AccessModel(MODEL_SKILL_INFERNO, L\"Data\\\\Skill\\\\\", L\"Inferno\", 1)` - Data/Skill/Inferno01.bmd.",
+  "kind": "inferno",
+  "why_this_one": "Inferno's one model, made with CreateInferno's eight bombs at the let-go (ZzzCharacter.cpp:4574-4583) at his position and angle, sub-type 0. game/fx/inferno.h draws it.",
+  "mesh": "Inferno01_00.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Inferno01.bmd, from MuMain's clean Data, --action=0 --key=N: two meshes, 548 triangles. ring3 (540) is a wall of fire from 56 to 385 units out and 12 to 245 up; ring4 (8) a square 800 units across, flat at 86 up.",
+  "poses": [
+    "Inferno01_00.obj",
+    "Inferno01_01.obj",
+    "Inferno01_02.obj",
+    "Inferno01_03.obj",
+    "Inferno01_04.obj",
+    "Inferno01_05.obj",
+    "Inferno01_06.obj",
+    "Inferno01_07.obj",
+    "Inferno01_08.obj"
+  ],
+  "poses_from": "Its action stepped at Velocity 0.5 keys a frame over a LifeTime of 15 reaches 7.5 keys, and BMD::Animation blends a key with the next, so keys 0 to 8. The animation is spin and nothing else: the square and the wall's rim turn +30 degrees a key and the wall's inner rows -45, at constant radius and height, so fx/inferno.h blends the keys as a turn.",
+  "parts": [
+    {
+      "group": "ring3",
+      "sheet": "ring3.png",
+      "blend": "additive",
+      "note": "Data/Skill/ring3.OZJ, 64 x 128, mean (34, 19, 14): dark fire, only ever added. BlendMesh -2 adds every mesh, at BlendMeshLight = LifeTime / 20 under its Light of 0.8 (ZzzEffect.cpp:1378-1388, MoveHandlers.cpp:2675)."
+    },
+    {
+      "group": "ring4",
+      "sheet": "ring4.png",
+      "blend": "additive",
+      "note": "Data/Skill/ring4.OZJ, 128 square, mean (58, 26, 21). The same blend and light."
+    }
+  ],
+  "scale": 0.9,
+  "scale_from": "`o->Scale = 0.9f` in the create arm.",
+  "frames": 15,
+  "frames_from": "`o->LifeTime = 15` for sub-type 0: six tenths of a second.",
+  "light_from": "`AddTerrainLight` at (-0.5, -0.5, -0.5) x Luminosity over five tiles for every sub-type under 4 but 2 - the ground darkened under the ring. Not ported: the renderer only adds."
+}

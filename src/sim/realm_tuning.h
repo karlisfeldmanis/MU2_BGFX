@@ -392,6 +392,7 @@ inline Element skillElement(int32_t number) {
         case skill::kFireBall:
         case skill::kFlame:
         case skill::kHellfire:
+        case skill::kInferno:
         case skill::kMeteorite: return Element::Fire;
         case skill::kIce: return Element::Ice;
         case skill::kPoison: return Element::Poison;

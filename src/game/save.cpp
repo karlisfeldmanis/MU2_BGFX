@@ -145,7 +145,7 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.mana = int(doc["mana"].numberOr(0));
     hero.money = int64_t(doc["zen"].numberOr(0.0));
     // Absent in a file written before there were skills, which reads as nought and is right.
-    hero.learned = uint32_t(doc["learned"].numberOr(0.0));
+    hero.learned = uint64_t(doc["learned"].numberOr(0.0));
     // The travel rows he has opened (sim/travel.h), absent in a file written before the list,
     // which reads as nought: the realm opens his birth town over it (Realm::settleFound).
     hero.found = uint32_t(doc["found"].numberOr(0.0));
@@ -262,7 +262,9 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
                  hero.points.energy);
     std::fprintf(f, "  \"health\": %d,\n  \"mana\": %d,\n  \"zen\": %lld,\n", hero.health,
                  hero.mana, static_cast<long long>(hero.money));
-    if (hero.learned != 0) std::fprintf(f, "  \"learned\": %u,\n", hero.learned);
+    if (hero.learned != 0) {
+        std::fprintf(f, "  \"learned\": %llu,\n", static_cast<unsigned long long>(hero.learned));
+    }
     if (hero.found != 0) std::fprintf(f, "  \"found\": %u,\n", hero.found);
     if (hero.boonSkill != 0 && hero.boonTicksLeft > 0) {
         std::fprintf(f,

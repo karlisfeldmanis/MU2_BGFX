@@ -229,7 +229,7 @@ struct Wearer {
     // with it, and an orb of something he knows is refused by `Realm::useItem` and not by
     // `movable`, because it can still be carried and sold. It is here because a card is drawn
     // from this struct and the one thing an orb's card must say is whether he has read it.
-    uint32_t learned = 0;
+    uint64_t learned = 0;
     // The shield in his hand's defence, plus and wear counted, for Defense's card
     // (`guardShare`).
     int shieldDefense = 0;

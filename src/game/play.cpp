@@ -700,6 +700,13 @@ void Play::update(double seconds) {
                         const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
                         const float way = float(happening.c) / 1000.0f;
                         storm_.cast(ground, std::cos(way), -std::sin(way));
+                    } else if (happening.a == sim::skill::kInferno) {
+                        // The ring at his feet, its blasts and sparks, and its eight bombs'
+                        // stones -- the meteor's (fx/inferno.h).
+                        const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
+                        inferno_.cast(ground, caster->yaw, [&](const float* at) {
+                            meteor_.stones(at[0], at[2], at[1], 2);
+                        });
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -1353,6 +1360,8 @@ void Play::update(double seconds) {
     storm_.update(
         float(seconds), [&](const float* from, const float* to) { thunder_.fork(from, to); },
         [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
+    // Inferno's ring and its sparks (fx/inferno.h).
+    inferno_.update(float(seconds));
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts
@@ -1547,8 +1556,8 @@ void Play::update(double seconds) {
             pets_.ride(float(seconds), hero->figure, realm_.hero().riding && realm_.hero().alive(),
                        action);
             // And its dust while it runs, rand_fps_check(2) at the horse +-32 on the ground
-            // (GOBoid.cpp:542-556): white in Devias, MU's BITMAP_SMOKE, and smoke02's brown
-            // everywhere else (fx/dust.h).
+            // (GOBoid.cpp:542-556): white BITMAP_SMOKE in Devias, the Bull Fighter's puff, and
+            // smoke02's brown everywhere else (fx/dust.h).
             if (galloping && realm_.hero().riding && ground_) {
                 const auto dustDice = [this]() {
                     dustSeed_ ^= dustSeed_ << 13;
@@ -1563,7 +1572,12 @@ void Play::update(double seconds) {
                     float at[3] = {feet[0] + float(int(dustDice() % 64) - 32) * 0.01f, feet[1],
                                    feet[2] + float(int(dustDice() % 64) - 32) * 0.01f};
                     at[1] = ground_->heightAt(at[0], at[2]);
-                    dust_.puff(at, hero->figure.yaw(), snowy_);
+                    if (snowy_) {
+                        at[1] += float(int(dustDice() % 32) - 16) * 0.01f;
+                        snort_.puff(at);
+                    } else {
+                        dust_.puff(at, hero->figure.yaw());
+                    }
                 }
             } else {
                 dustOwed_ = 0.0f;

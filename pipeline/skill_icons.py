@@ -108,6 +108,10 @@ SKILLS = {
     # tree and not 0.75, and here because the user asked for the wizard to have a guard the
     # knight's size (docs/skills-dw.md).
     16: ("Dark Wizard", "Soul Barrier"),
+    # And Inferno, cut on 2026-10-02 because the game now has it (the user: "now work on
+    # inferno"): 0.95d's (Version095d/SkillsInitializer.cs:59), off the Scroll of Inferno, group
+    # 15 number 13. Below 57 and not use-type 4, so the arithmetic above finds its cell.
+    14: ("Dark Wizard", "Inferno"),
 }
 
 

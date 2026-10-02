@@ -41,6 +41,7 @@
 #include "game/fx/fury.h"
 #include "game/fx/hellfire.h"
 #include "game/fx/storm.h"
+#include "game/fx/inferno.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -467,6 +468,8 @@ public:
     Hellfire& hellfire() { return hellfire_; }
     // The wizard's Twister: the whirlwind walked out ahead of him. fx/storm.h.
     Storm& storm() { return storm_; }
+    // The wizard's Inferno: the ring of blasts round him. fx/inferno.h.
+    Inferno& inferno() { return inferno_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -858,6 +861,7 @@ private:
     Fury fury_;
     Hellfire hellfire_;
     Storm storm_;
+    Inferno inferno_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;

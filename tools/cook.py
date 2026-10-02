@@ -2137,12 +2137,13 @@ def cook_tables(world, out_dir):
     # Twisting Slash's own spin (SkillCast.cpp:306-312), 13 keys at 0.24. And 66,
     # `PLAYER_ATTACK_SKILL_FURY_STRIKE`, Rageful Blow's own (ClassAttack.cpp:986), 11 keys at 0.38.
     # And 154, `PLAYER_SKILL_HELL`, Hellfire's own (ClassAttack.cpp:1202-1210), 18 keys at 0.5 --
-    # player.muc's 154, one before the enum's (source/players/rig/actions.json).
+    # player.muc's 154, one before the enum's (source/players/rig/actions.json). And 153,
+    # `PLAYER_SKILL_INFERNO`, Inferno's own (ClassAttack.cpp:1212-1221) at 0.6, one before too.
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     unassigned = {"183": 0.25}
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 147, 148, 154, 183, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 147, 148, 153, 154, 183, 187]:
         name = str(action)
         speed = speeds.get(name, unassigned.get(name))
         if name not in keys or speed is None:

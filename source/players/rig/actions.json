@@ -762,9 +762,10 @@
       "play_speed": 0.3
     },
     "153": {
-      "enum": "PLAYER_SKILL_FLASH",
-      "name": "Skill flash",
-      "play_speed": 0.4
+      "enum": "PLAYER_SKILL_INFERNO",
+      "name": "Skill inferno",
+      "play_speed": 0.6,
+      "label_note": "One late, as 154 is: MuMain's enum says 153 is PLAYER_SKILL_FLASH and 154 PLAYER_SKILL_INFERNO, but 154 is Hellfire's leap (see 154), so the enum's Inferno is here. On the bench (mu2 --figure DarkWizardBare --clip 153, 2026-10-02) it is a low wide crouch with both arms driven out at the ground, Inferno's ring bursting round him. 0.6 is PLAYER_SKILL_INFERNO's PlaySpeed (ZzzCharacter.cpp:944). 152 is not checked: one late, it would be PLAYER_SKILL_FLASH, an arm raised over his head in a crouch."
     },
     "154": {
       "enum": "PLAYER_SKILL_HELL",

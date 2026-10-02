@@ -1,0 +1,34 @@
+{
+  "item": "Book14",
+  "mu_name": "Scroll of Inferno",
+  "mu_name_from": "ZzzOpenData.cpp loads item group ITEM_ETC number i from Book{i+1:02}.bmd, so number 13 is Book14.bmd; MuMain's ZzzInfomation.cpp:435 has ITEM_SCROLL_OF_INFERNO teach AT_SKILL_INFERNO, and OpenMU's Version095d/Items/Scrolls.cs:32 names group 15 number 13 the Scroll of Inferno. 0.95d's and not 0.75's: 0.75 has no Inferno.",
+  "why_this_one": "The user, 2026-10-02: 'now work on inferno', after Hellfire and Twister. The wizard's last ring spell in 0.95d, Hellfire's rule at a lower damage and a higher price (sim/skills.cpp).",
+  "mesh": "Book01",
+  "mesh_note": "No geometry of its own. Book01.bmd through Book19.bmd are byte-identical in MuMain's Data/Item -- Book14.bmd's md5 is Book01's, addf8a7d -- so this names the one the pipeline has built, as Book02 through Book16 do.",
+  "stats": {
+    "note": "A scroll's row, in the shape of Book01's, at 0.95d's numbers.",
+    "from": "openmu/src/Persistence/Initialization/Version095d/Items/Scrolls.cs:32, CreateScroll(13, 14, \"Scroll of Inferno\", 88, 0, 578, 265000); WebZen 1.00.93's item(Kor).txt row 15/13 agrees on the drop level 88 and the price 265000.",
+    "group": 15,
+    "number": 13,
+    "drop_level": 88,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll (Version095d adds the Magic Gladiator, who is not in this game). Prize.ReadBy refuses the other two."
+  },
+  "skill": {
+    "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
+    "number": 14,
+    "name": "Inferno",
+    "tells": "A ring of fire bursts round him, striking every monster within four tiles.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the scroll's tooltip and the skill's card say the same thing.",
+    "level_requirement": 0,
+    "energy_requirement": 578,
+    "energy_from": "Version095d/SkillsInitializer.cs:59 and Scrolls.cs:32 both: 578. OpenMU's later FixItemRequirementsPlugIn writes 200 into the scroll's raw row, WebZen's figure, which its requirement formula scales; this project carries a scroll's requirement raw (docs/mu-scrolls-and-orbs.md SS4), so it takes the skill's own 578.",
+    "value": 265000
+  }
+}

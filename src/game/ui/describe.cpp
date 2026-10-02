@@ -650,7 +650,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // into the bit, and -1 (a row that teaches something this build has no skill for) reads
         // as not known, which is the safe way round -- it lets him try.
         const int index = sim::skillIndexOf(row.teaches);
-        const bool known = index >= 0 && (who.learned & (uint32_t(1) << index)) != 0;
+        const bool known = index >= 0 && (who.learned & (uint64_t(1) << index)) != 0;
         if (!row.teachesName.empty()) {
             teaches.rows.push_back(stat("Skill", row.teachesName, known ? Tone::Gray : Tone::Blue));
         }

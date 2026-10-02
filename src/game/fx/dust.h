@@ -13,11 +13,6 @@
 // frame Light = LifeTime / 32, Scale += 0.08, Position += Velocity, Velocity *= 0.9, and the
 // height held on the terrain at half the sprite's own. Drawn by EnableAlphaBlend3, which is the
 // soft `Dust` blend the Budge Dragon's smoke02 already goes through.
-//
-// Devias is MU's BITMAP_SMOKE, smoke01, white -- the Bull Fighter's snort, added at full and
-// rising. **Ours**: drawn here instead, the same faint haze on the ground as the brown dust,
-// off smoke01, so the snow a horse kicks up reads as the dust does (the user: "in devias it has
-// to be white").
 #pragma once
 
 #include <cstdint>
@@ -39,8 +34,7 @@ public:
     void shutdown();
 
     // One puff at `at` (world metres, on the ground), drifting back from a mount facing `yaw`.
-    // `snow` draws it off smoke01, white: Devias's (see below).
-    void puff(const float at[3], float yaw, bool snow = false);
+    void puff(const float at[3], float yaw);
 
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
@@ -52,12 +46,10 @@ private:
         float scale = 0.5f;
         float life = 32.0f;
         float spin = 0.0f;
-        bool snow = false;
     };
 
     const content::Ground* ground_ = nullptr;
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle snow_ = BGFX_INVALID_HANDLE;
     std::vector<Puff> puffs_;
     uint32_t dice_ = 0x6a09e667u;
     bool open_ = false;

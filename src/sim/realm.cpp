@@ -134,7 +134,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // no scroll for it. `restore` ORs a save's mask over this, so a wizard made before the spell
     // existed stands up knowing it too.
     if (hero.kin == Kin::DarkWizard) {
-        hero.learned |= uint32_t(1) << skillIndexOf(skill::kEnergyBall);
+        hero.learned |= uint64_t(1) << skillIndexOf(skill::kEnergyBall);
     }
     bodies_.push_back(std::move(hero));
     reswing(bodies_[0]);
