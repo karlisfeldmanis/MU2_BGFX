@@ -185,6 +185,18 @@ bool Window::pump() {
     glfwPollEvents();
     if (glfwWindowShouldClose(handle_)) return false;
 
+    // The blank cursor again, every frame he is over the window and it has the keys. GLFW puts
+    // a window's cursor up on a cursor-update event, which macOS sends when the pointer ENTERS;
+    // a fullscreen window opens under a pointer already inside it, before the app is active,
+    // so no enter ever came and the arrow stood over the game's own until it left the screen
+    // and came back (the user, 2026-10-02: "i see system cursor when launch game in
+    // fullscreen"). glfwSetCursor sets it only while the pointer is in the window, so this is
+    // one [NSCursor set] a frame and no tracking of its own.
+    if (blank_ && glfwGetWindowAttrib(handle_, GLFW_FOCUSED) &&
+        glfwGetWindowAttrib(handle_, GLFW_HOVERED)) {
+        glfwSetCursor(handle_, blank_);
+    }
+
     // Edges, taken here and cleared here: polled state would report one press for every frame
     // it lasts, which at 500 fps is fifty walk orders for one click.
     const int buttons[2] = {GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT};
