@@ -1,0 +1,61 @@
+{
+  "item": "Helper04",
+  "mu_name": "Horn of Dinorant",
+  "mu_name_from": "MODEL_HELPER+3, Data/Player/Helper04.bmd, its sheet RedDragonT.OZJ from Data/Item. ITEM_HORN_OF_DINORANT, group 13 number 3. The bag icon; the ridden dragon is Rider02.",
+  "profile": "weapon",
+  "profile_note": "A small held object seen in the bag: the weapon profile, as every misc item.",
+  "sheets": {
+    "RedDragonT": "reddragont.png"
+  },
+  "sheet_from": "Data/Item/RedDragonT.OZJ, 128x128, opaque: gold horn.",
+  "sheet_materials": {
+    "RedDragonT": "bone"
+  },
+  "sheet_materials_from": "A horn, painted gold. Judged from the sheet.",
+  "stats": {
+    "note": "The item's own row, from OpenMU's 0.95d initialiser: the Dinorant is not in 0.75 (Version075/Items/Pets.cs stops at 13/2). **After 0.75**, marked.",
+    "from": "openmu/src/Persistence/Initialization/Version095d/Items/Pets.cs:40 and CreatePet.",
+    "call": "this.CreatePet(3, SkillNumber.FireBreath, \"Horn of Dinorant\", 110, false, (Stats.IsDinorantEquipped, 1), (Stats.MovementSpeed, BasicMountMovementSpeed, Maximum), (Stats.MovementSpeedUnderwater, ...), (Stats.DamageReceiveDecrement, 0.9f, Multiplicate), (Stats.AttackDamageIncrease, 1.15f, Multiplicate))",
+    "group": 13,
+    "number": 3,
+    "drop_level": 110,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 255,
+    "slot": 8,
+    "requires": {
+      "level": 110,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "power_note": "Damage dealt x1.15 and taken x0.9 (OpenMU 0.95d); WebZen's 1.00.93 takes 1 of the rider's life for each x1.15 blow and absorbs 10% (ObjAttack.cpp:1293-1328). Carries Fire Breath, skill 49, the knight's (WebZen public.h:224). Wears by damage/200 a hit taken (user.cpp:10623-10628). Made from ten 255-Life Horns of Uniria and a Jewel of Chaos at 70% (MixSystem.cpp:2156-2240), never dropped.",
+    "classes_note": "All classes may ride it; its skill is the knight's."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 44,
+      "area": 1619.9,
+      "along": [
+        -38.3,
+        38.3
+      ],
+      "mu_uv": [
+        0.659,
+        0.046,
+        0.986,
+        1.0
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.69,
+        0.998
+      ]
+    }
+  ]
+}

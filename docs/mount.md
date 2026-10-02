@@ -164,3 +164,36 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
 4. **Dust** off the hooves (brown, white in Devias), the card and the buff cell.
 
 Test: `build/mu2 --world lorencia --play --level 30 --give Helper03:1:W`.
+
+# The second mount: the Horn of Dinorant (13/3)
+
+Started 2026-10-02 (the user: "lets work on next mount", "dyno"). **Not 0.75**: OpenMU's
+Version075 stops at 13/2, and the Dinorant is 0.95d's. Every rule below is marked from there.
+
+## What MU does
+
+- **Item** (OpenMU `Version095d/Items/Pets.cs:40`): 13/3, slot 8, level 110, Life 255, never
+  dropped. Damage dealt x1.15, taken x0.9, speed 15, `IsDinorantEquipped` (it flies), and the
+  Fire Breath skill. WebZen 1.00.93: each x1.15 blow costs the rider 1 HP; it absorbs 10%, 15%
+  with its option (ObjAttack.cpp:1293-1328); options max AG, +5 attack speed, absorb
+  (zzzitem.cpp:1225-1243); wears damage/200 a hit taken (user.cpp:10623-10628); not repaired.
+- **Made, not found**: ten 255-Life Horns of Uniria and a Jewel of Chaos in the Chaos Machine, 70%
+  (WebZen MixSystem.cpp:2156-2240). There is no Chaos Machine here yet.
+- **Fire Breath**, skill 49 ("Raid Shoot" in WebZen, AT_SKILL_RIDER in MuMain): the knight's,
+  carried by the item, not learned (zzzitem.cpp:1018-1022, user.cpp:3746); damage
+  `(200 + Energy/10) / 100` of his swing (ObjAttack.cpp:1392-1407). MuMain plays PLAYER_SKILL_RIDER
+  68 with a BITMAP_SHOTGUN effect and SOUND_SKILL_SWORD3 (ZzzCharacter.cpp:4406-4409).
+- **Drawn** (MuMain): `Skill/Rider02.bmd`, MODEL_PEGASUS, scale 0.9 then 1.0, Velocity 0.34. Eight
+  clips in ground/flying pairs: 0/1 idle, 2/3 moving, 4/5 attack, 6/7 the rider skill; the odd
+  ones in Tarkan, Icarus and the Maya scene. On a ground map the rider is lifted 30 off the
+  terrain (ZzzCharacter.cpp:6381-6390) and the dragon drawn 30 under him, on the ground
+  (GOBoid.cpp:517-523). Its tooltip: "Increase 15% of Damage", "Absorb 10% of Damage".
+- **Maps**: it may enter Icarus (wings or a Dinorant), not Atlans; none of ours rule it out.
+
+## Done
+
+- **Step 1, the models** (2026-10-02). `source/items/pets/Rider02` (MuExtract off MuMain's clean
+  Data: 73 bones, 922 triangles, 8 clips at 0.34; sheets `rdgon.png` 256², `rdgonw.png` 128x64
+  the wings, cut by their own alpha) and `Helper04` the horn (44 triangles, `reddragont.png`),
+  carrying the 13/3 row. Tiled, the wings on foliage, lit through as the Imp's. Built and synced,
+  not indexed. Bench: `build/mu2 --model items/pets/Rider02/Rider02.glb --dist 5`.
