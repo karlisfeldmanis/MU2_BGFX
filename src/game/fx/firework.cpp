@@ -115,16 +115,17 @@ void Firework::pop(const Rocket& rocket) {
     }
     // Sixty sparks flung every way at 12 units a frame (sub-type 27), and thirty thrown out
     // flat that fall, bounce and die (28).
+    const int flings = int(60 * kShare), falls = int(30 * kShare), sprinkles = int(60 * kShare);
     int flung = 0, fallen = 0;
     for (Mote& spark : sparks_) {
         if (spark.alive) continue;
-        if (flung == 60 && fallen == 30) break;
+        if (flung == flings && fallen == falls) break;
         spark = Mote{};
         spark.alive = true;
         for (int k = 0; k < 3; ++k) spark.at[k] = rocket.at[k];
         spark.light[0] = spark.light[1] = spark.light[2] = 1.0f;
         spark.scale = float(dice(20)) / 20.0f + 1.0f;
-        if (flung < 60) {
+        if (flung < flings) {
             float d[3] = {float(dice(16) - 8), float(dice(16) - 8), float(dice(16) - 8)};
             float length = std::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
             if (length < 1e-4f) {
@@ -147,7 +148,7 @@ void Firework::pop(const Rocket& rocket) {
     int specks = 0;
     for (Mote& speck : glitter_) {
         if (speck.alive) continue;
-        if (specks == 60) break;
+        if (specks == sprinkles) break;
         speck = Mote{};
         speck.alive = true;
         for (int k = 0; k < 3; ++k) {
@@ -210,7 +211,7 @@ void Firework::ribbon(gfx::Effects& effects, const Rocket& rocket) const {
                 sprite.cornerUv[k][0] = uv[k][0];
                 sprite.cornerUv[k][1] = uv[k][1];
             }
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = rocket.light[k];
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = rocket.light[k] * kRocketTone;
             sprite.sheet = shiny_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
@@ -221,12 +222,12 @@ void Firework::ribbon(gfx::Effects& effects, const Rocket& rocket) const {
 void Firework::gather(gfx::Effects& effects) const {
     // A billboard `pixels` of its sheet wide in MU's units, at `scale`.
     const auto board = [&](bgfx::TextureHandle sheet, const float at[3], float pixels, float scale,
-                           const float light[3], float spin = 0.0f) {
+                           const float light[3], float tone, float spin = 0.0f) {
         if (!bgfx::isValid(sheet)) return;
         gfx::Sprite sprite;
         for (int k = 0; k < 3; ++k) {
             sprite.position[k] = at[k];
-            sprite.colour[k] = light[k];
+            sprite.colour[k] = light[k] * tone;
         }
         sprite.halfWidth = sprite.halfHeight = pixels * scale * kUnit * 0.5f;
         sprite.spin = spin;
@@ -237,8 +238,8 @@ void Firework::gather(gfx::Effects& effects) const {
     for (const Rocket& rocket : rockets_) {
         if (!rocket.alive) continue;
         if (bgfx::isValid(shiny_)) ribbon(effects, rocket);
-        board(light_, rocket.at, 64.0f, 0.5f, rocket.light);
-        board(shock_, rocket.at, 128.0f, 0.15f, rocket.light);
+        board(light_, rocket.at, 64.0f, 0.5f * kHeadSize, rocket.light, kRocketTone);
+        board(shock_, rocket.at, 128.0f, 0.15f * kHeadSize, rocket.light, kRocketTone);
     }
     for (const Blast& blast : blasts_) {
         if (!blast.alive || !bgfx::isValid(blast_)) continue;
@@ -250,9 +251,9 @@ void Firework::gather(gfx::Effects& effects) const {
         gfx::Sprite sprite;
         for (int k = 0; k < 3; ++k) {
             sprite.position[k] = blast.at[k];
-            sprite.colour[k] = blast.light[k];
+            sprite.colour[k] = blast.light[k] * kBlastTone;
         }
-        sprite.halfWidth = sprite.halfHeight = 256.0f * 0.6f * kUnit * 0.5f;
+        sprite.halfWidth = sprite.halfHeight = 256.0f * 0.6f * kBlastSize * kUnit * 0.5f;
         sprite.u0 = float(frame % 4) * 0.25f + 0.005f;
         sprite.v0 = float(frame / 4) * 0.25f + 0.005f;
         sprite.u1 = sprite.u0 + 0.24f;
@@ -262,20 +263,25 @@ void Firework::gather(gfx::Effects& effects) const {
         effects.add(sprite);
     }
     for (const Flash& flash : flashes_) {
-        if (flash.alive) board(shock_, flash.at, 128.0f, flash.scale, flash.light);
+        if (flash.alive) board(shock_, flash.at, 128.0f, flash.scale * kFlashSize, flash.light, kFlashTone);
     }
     for (const Mote& spark : sparks_) {
-        if (spark.alive) board(spark_, spark.at, 32.0f, spark.scale, spark.light);
+        if (spark.alive) {
+            board(spark_, spark.at, 32.0f, spark.scale * kSparkSize, spark.light, kSparkTone);
+        }
     }
     for (const Mote& speck : glitter_) {
-        if (speck.alive && speck.shown) board(shiny_, speck.at, 16.0f, speck.scale, speck.light);
+        if (speck.alive && speck.shown) {
+            board(shiny_, speck.at, 16.0f, speck.scale * kGlitterSize, speck.light, kGlitterTone);
+        }
     }
     for (const Star& star : starList_) {
         if (!star.alive) continue;
         // The seven frames over its first eight, `(15 - LifeTime) / 8 * 7`, then the last held.
         const float age = 15.0f - star.left;
         const int frame = star.left > 7.0f ? std::min(6, int(age / 8.0f * 7.0f)) : 6;
-        board(stars_[frame], star.at, 256.0f, star.scale, star.light, star.spin * kDegrees);
+        board(stars_[frame], star.at, 256.0f, star.scale * kStarSize, star.light, kStarTone,
+              star.spin * kDegrees);
     }
 }
 

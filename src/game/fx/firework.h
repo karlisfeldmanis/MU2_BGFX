@@ -54,6 +54,27 @@ public:
 private:
     static constexpr float kFps = 25.0f;
     static constexpr float kUnit = 0.01f;  // metres in one of MU's units
+    // **Ours**: how much of MU's light each part keeps, and the shock ring's size. At MU's own
+    // the blast and the ring read as a white cloud over the burst in the HDR pass (the user,
+    // 2026-10-02, after the first look: "little bit to crazy..."). The shapes and the timing
+    // stay MU's.
+    static constexpr float kRocketTone = 0.8f;
+    static constexpr float kBlastTone = 0.2f;
+    static constexpr float kFlashTone = 0.35f;
+    static constexpr float kFlashSize = 0.4f;
+    static constexpr float kSparkTone = 0.7f;
+    static constexpr float kGlitterTone = 0.75f;
+    static constexpr float kStarTone = 0.45f;
+    static constexpr float kStarSize = 0.35f;
+    // And tiny sparkles (the user, the same day: "we need tiny sparkles"): every point of light
+    // well under MU's size, and the blast and the head's flare with them.
+    static constexpr float kSparkSize = 0.35f;
+    static constexpr float kGlitterSize = 0.5f;
+    static constexpr float kBlastSize = 0.5f;
+    static constexpr float kHeadSize = 0.5f;
+    // And how many of MU's sparks, specks and stars a burst throws: half (the user's second
+    // look, the same day). MU's 60 + 30 sparks, 60 specks and twelve stars a second.
+    static constexpr float kShare = 0.5f;
     static constexpr int kTails = 30;
     static constexpr int kLaunchers = 4;
     static constexpr int kRockets = kLaunchers * 5;
@@ -188,7 +209,7 @@ void Firework::step(Burst& burst) {
     // reference frame of 1/25 s, 0.48 of a star -- drawn as a chance.
     for (Blast& blast : blasts_) {
         if (!blast.alive) continue;
-        if (roll(0.0f, 1.0f) < 12.0f / kFps) {
+        if (roll(0.0f, 1.0f) < 12.0f * kShare / kFps) {
             for (Star& star : starList_) {
                 if (star.alive) continue;
                 star = Star{};
