@@ -984,6 +984,9 @@ private:
     bool nock(Body& hero);
     // Whether `nock` would find one, spending nothing: what Skillshot asks before it is cast.
     bool quivered(const Body& hero) const;
+    // Whether an attack order would only draw her empty bow: an archer with nothing to nock
+    // and no skill on the order she can throw instead. Refused before the fight begins.
+    bool arrowless(const Body& hero, const Request& order) const;
     // The plus of the quiver in the hand her bow leaves free, 0 when it holds none of hers.
     int quiverPlusOf(const Body& hero) const;
     // Skillshot let go: `arrows` lanes fanned round the body it was aimed at, an arrow into

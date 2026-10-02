@@ -52,6 +52,17 @@ void PlayMode::readSave(Context& ctx) {
             args.level = saved_.hero.level;
             args.weapon.clear();
             args.shield.clear();
+            // A way back he quit with is his again, with the seconds it had (the user,
+            // 2026-10-03: "after restart there is option to Go Back!"). One already in hand is
+            // this session's own, carried across a map change, and the newer.
+            if (ctx.goBack.world.empty() && !saved_.goBackWorld.empty() &&
+                saved_.goBackLeft > 0.0 && game::mapOf(saved_.goBackWorld) != nullptr) {
+                ctx.goBack.arm(saved_.goBackWorld, saved_.goBackColumn, saved_.goBackRow,
+                               saved_.goBackFacing);
+                ctx.goBack.left = std::min(saved_.goBackLeft, GoBack::kSeconds);
+                core::logf("go back: kept, %.0f s left, to %s %d,%d", ctx.goBack.left,
+                           saved_.goBackWorld.c_str(), saved_.goBackColumn, saved_.goBackRow);
+            }
         } else {
             core::logError("save: the hero is in %s and this run is %s; starting new here",
                            saved_.world.c_str(), args.world.c_str());
@@ -95,6 +106,13 @@ void PlayMode::keep(Context& ctx) {
     }
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);
+    if (ctx.goBack.open()) {
+        now.goBackWorld = ctx.goBack.world;
+        now.goBackColumn = ctx.goBack.column;
+        now.goBackRow = ctx.goBack.row;
+        now.goBackFacing = ctx.goBack.facing;
+        now.goBackLeft = ctx.goBack.left;
+    }
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
     game::writeVault(game::vaultPathBeside(savePath_), *world_.played().realm().tables(),
                      world_.played().realm().vault());
@@ -1480,10 +1498,11 @@ void PlayMode::goBack(Context& ctx, double seconds) {
 }
 
 void PlayMode::shutdown(Context& ctx) {
-    // Out of the game or back to the character screen: the way back is not kept. On to another
-    // world it comes along.
-    if (travelTo_.empty()) ctx.goBack.clear();
+    // Out of the game or back to the character screen: the way back goes into the save, which
+    // gives it back when he is played again, and out of the session. On to another world it
+    // comes along.
     keep(ctx);
+    if (travelTo_.empty()) ctx.goBack.clear();
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
     ctx.time.setScene("");
     ctx.time.setWet("");

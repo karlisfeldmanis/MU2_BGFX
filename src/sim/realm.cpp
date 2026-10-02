@@ -446,6 +446,14 @@ void Realm::accept() {
         }
         if (order_.kind == Request::Kind::WalkTo) {
             send(hero, order_.column, order_.row);
+        } else if (order_.kind == Request::Kind::Attack && arrowless(hero, order_)) {
+            // A bow with nothing to loose is not drawn at all: no walk in, no fight clock, no
+            // stance -- only MuMain's "no more arrows" (the user, 2026-10-03: "dont even go to
+            // combat stance ... but play error sound"). The swing's own nock stays the check
+            // for a quiver that runs dry mid-fight.
+            say(What::Arrowless, hero, hero.archer);
+            halt(hero);
+            order_ = Request{};
         } else if (order_.kind == Request::Kind::Stop) {
             halt(hero);
             order_ = Request{};

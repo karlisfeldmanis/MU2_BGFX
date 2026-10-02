@@ -223,6 +223,14 @@ int Realm::quiverPlusOf(const Body& hero) const {
                                                            : 0;
 }
 
+bool Realm::arrowless(const Body& hero, const Request& order) const {
+    if (hero.archer == 0 || quivered(hero)) return false;
+    // A skill she can throw at it still goes; a fan is arrows and `armed` refuses it dry, and
+    // one on herself is cast and then the bow is drawn anyway.
+    const SkillRow* row = order.skill != skill::kNone ? skillNumbered(order.skill) : nullptr;
+    return row == nullptr || row->onSelf() || !armed(hero, *row);
+}
+
 bool Realm::quivered(const Body& hero) const {
     if (hero.archer == 0) return false;
     const int hand = kWeaponLeft;

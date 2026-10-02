@@ -2252,6 +2252,32 @@ void testArchery(const content::Tables& tables) {
     check(flewAtAll > 0 && landedOnTime > 0, "and those land a flight after the let-go");
     check(arrowless == 1, "the empty quiver stops the attack with no more arrows");
     check(bag[sim::kWeaponLeft].empty(), "and leaves the hand empty");
+    // Dry, a new attack is refused as it is given: said once, no walk in, no fight clock.
+    {
+        for (int tick = 0; tick < 300; ++tick) realm.step();  // let the last fight run out
+        uint32_t nearest = 0;
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.monster() && one.alive()) nearest = one.id;
+        }
+        sim::Request request;
+        request.kind = sim::Request::Kind::Attack;
+        request.target = nearest;
+        realm.ask(request);
+        int refused = 0;
+        bool walked = false;
+        for (int tick = 0; tick < 5; ++tick) {
+            realm.step();
+            walked = walked || realm.hero().walking;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Arrowless) ++refused;
+                if (h.what == sim::What::Swung && h.who == realm.hero().id) ++refused;
+            }
+        }
+        check(nearest != 0 && refused == 1 && !walked,
+              "a dry bow's attack is refused at once, without a walk or a draw");
+        // The order is dropped, so "his attack" never holds the fight clock (monsters may).
+        check(realm.order().kind == sim::Request::Kind::None, "and the order is dropped");
+    }
     std::printf("  %d drawn, %d shots, %d from range, %d in the air, %d landed on time\n", drawn, loosed, far,
                 flewAtAll, landedOnTime);
 

@@ -225,6 +225,12 @@ bool loadSave(const std::string& path, Saved& out) {
         saved.quickGroup[key] = int(quick.at(key)["group"].numberOr(-1));
         saved.quickNumber[key] = int(quick.at(key)["number"].numberOr(-1));
     }
+    const core::Json& back = doc["go_back"];
+    saved.goBackWorld = back["world"].stringOr("");
+    saved.goBackColumn = int(back["column"].numberOr(-1));
+    saved.goBackRow = int(back["row"].numberOr(-1));
+    saved.goBackFacing = float(back["facing"].numberOr(0.0));
+    saved.goBackLeft = back["left"].numberOr(0.0);
     core::logf("save: loaded %s -- level %d, %llu experience, at %d,%d in %s", path.c_str(),
                hero.level, static_cast<unsigned long long>(hero.experience), hero.column,
                hero.row, saved.world.c_str());
@@ -393,7 +399,15 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     for (int key = 0; key < 6; ++key) {
         std::fprintf(f, "%s%d", key ? ", " : "", saved.bar[key]);
     }
-    std::fprintf(f, "]\n}\n");
+    std::fprintf(f, "]");
+    if (!saved.goBackWorld.empty() && saved.goBackLeft > 0.0) {
+        std::fprintf(f,
+                     ",\n  \"go_back\": {\"world\": \"%s\", \"column\": %d, \"row\": %d, "
+                     "\"facing\": %.4f, \"left\": %.1f}",
+                     saved.goBackWorld.c_str(), saved.goBackColumn, saved.goBackRow,
+                     double(saved.goBackFacing), saved.goBackLeft);
+    }
+    std::fprintf(f, "\n}\n");
     return finish(f, temporary, path);
 }
 

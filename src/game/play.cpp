@@ -569,6 +569,10 @@ void Play::update(double seconds) {
                 happening.who == realm_.hero().id && quiverName() != dressedQuiver_) {
                 redress();
             }
+            // Her bow refused for want of arrows: the window's refusal, as a click it would not take.
+            if (happening.what == sim::What::Arrowless && happening.who == realm_.hero().id) {
+                ui(Ui::Refused);
+            }
             if (happening.what == sim::What::Shoved) {
                 if (Drawn* pushed = drawnOf(happening.who);
                     pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {

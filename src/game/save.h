@@ -73,6 +73,14 @@ struct Saved {
     // Absent in a file from before the machine, and in one whose box was empty.
     std::vector<Item> machineItems;
     sim::Machine machine;
+
+    // Go Back!'s way back to the field (app/context.h GoBack), while it is open: the world and
+    // tile it returns to and the seconds of play it has left, which stand still while the game
+    // is shut. Empty `goBackWorld` for none; absent in a file from before it was kept.
+    std::string goBackWorld;
+    int goBackColumn = -1, goBackRow = -1;
+    float goBackFacing = 0.0f;
+    double goBackLeft = 0.0;
 };
 
 // Where the save lives when --save does not say: saves/hero.json in the client folder

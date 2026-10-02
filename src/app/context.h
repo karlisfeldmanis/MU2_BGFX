@@ -92,8 +92,9 @@ private:
 // and the five minutes he has to sell, buy and come back to it. Ours: 0.75 has nothing like it.
 //
 // The Application's and not a mode's, because a Tab trip shuts this world's mode and raises the
-// next one, and the way back has to come along. Dropped on the way to the character screen or
-// out of the game: a save does not keep it.
+// next one, and the way back has to come along. On the way to the character screen or out of
+// the game it is written into the save (game::Saved goBack*) and given back when he is played
+// again, its clock stood still while the game was shut.
 struct GoBack {
     static constexpr double kSeconds = 300.0;
     static constexpr double kClosedSeconds = 3.0;  // "Go Back! has closed", then nothing
