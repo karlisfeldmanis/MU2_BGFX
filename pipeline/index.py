@@ -185,6 +185,8 @@ EFFECTS = {
     # And the same shapes alone, as white masks cut out of those plates by slot_ghosts.py,
     # which is what the flat skin lays in an empty cell instead of the plate.
     "bag_ghost_pet": "interface/win_ghost_pet.png",
+    # Ours: MU has no mount slot, so pipeline/mount_ghost.py renders it off Uniria's horse.
+    "bag_ghost_mount": "interface/win_ghost_mount.png",
     "bag_ghost_helm": "interface/win_ghost_helm.png",
     "bag_ghost_wings": "interface/win_ghost_wings.png",
     "bag_ghost_weapon_left": "interface/win_ghost_weapon_left.png",

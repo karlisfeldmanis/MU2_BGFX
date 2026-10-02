@@ -109,7 +109,7 @@ enum class What : uint8_t {
                // there; changing the map is the game's.
     Barred,    // an enter gate he is too low for: a: its number, b: the level it asks.
                // MuMain's "Only characters over level %d can enter".
-    PetLost,   // his pet's life ran out and it is gone from slot 8 (Player.cs:1991-2001):
+    PetLost,   // his pet's or mount's life ran out and it is gone from its slot (Player.cs:1991-2001):
                // a: the item row
     Climbed,   // through an enter gate to another floor of this same map (the Dungeon's
                // stairs): a: the enter gate's number, b: the column he is put down on, c: the row
@@ -1143,7 +1143,7 @@ private:
     // The fraction of a point each worn slot has lost and not yet shown, beside the item it
     // was lost by: a piece moved out and back starts its fraction again, which is under a point.
     double wearCarry_[kWorn] = {};
-    int32_t wearItem_[kWorn] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    int32_t wearItem_[kWorn] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     int64_t money_ = 0;
     int trading_ = -1;
     std::vector<Sale> sold_;  // oldest first, at most kBuybacks

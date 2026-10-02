@@ -1617,7 +1617,8 @@ void Play::update(double seconds) {
     said_.erase(std::remove_if(said_.begin(), said_.end(),
                                [](const Said& one) { return one.age >= kSaidSeconds; }),
                 said_.end());
-    // And his pet, off slot 8 while it has life: the Angel flies, the Imp rides (game/pets.h).
+    // And his pet, off slot 8 while it has life: the Angel flies, the Imp rides (game/pets.h);
+    // and his mount, off its own slot.
     if (isOpen()) {
         if (Drawn* hero = drawnOf(realm_.hero().id)) {
             int pet = -1;
@@ -1627,6 +1628,12 @@ void Play::update(double seconds) {
                 if (row.group == sim::kGroupPets && worn.durability > 0) pet = row.number;
             }
             pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
+            int mount = -1;
+            const sim::Held& ridden = realm_.satchel()[sim::kMount];
+            if (!ridden.empty() && size_t(ridden.item) < tables_.items.size()) {
+                const content::ItemRow& row = tables_.items[size_t(ridden.item)];
+                if (row.group == sim::kGroupPets && ridden.durability > 0) mount = row.number;
+            }
             // GOBoid's clip for the horse off the rider's: a weapon's ride swing is 3, the run
             // ride 2, anything else 0 -- a spell's PLAYER_RIDE_SKILL included (GOBoid.cpp:525-595).
             const FigureBody* look = hero->figure.body();
@@ -1636,8 +1643,8 @@ void Play::update(double seconds) {
             const int action = hero->swinging > 0.0f && hero->castSkill == 0 ? 3
                                : galloping                                   ? 2
                                                                              : 0;
-            pets_.ride(float(seconds), hero->figure, realm_.hero().riding && realm_.hero().alive(),
-                       action);
+            pets_.ride(float(seconds), hero->figure, mount,
+                       realm_.hero().riding && realm_.hero().alive(), action);
             // And its dust while it runs, rand_fps_check(2) at the horse +-32 on the ground
             // (GOBoid.cpp:542-556): white in Devias, MU's BITMAP_SMOKE, and smoke02's brown
             // everywhere else (fx/dust.h).

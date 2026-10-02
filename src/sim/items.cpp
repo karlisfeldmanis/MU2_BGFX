@@ -407,12 +407,14 @@ int placeOf(const content::ItemRow& row) {
         return kWeaponRight;
     }
     if (row.group >= kGroupShields && row.group <= kGroupBoots) return row.group - 5;
-    // The Guardian Angel, the Imp and the Horns of Uniria and Dinorant: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
+    // The Guardian Angel and the Imp: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
+    // The Horns of Uniria and Dinorant are helpers there too; here they take the mount's slot.
     // A ring in the right ring slot and a pendant as the amulet (ZzzInfomation.cpp:1085-1094);
     // placesIn lets a ring into the left one too.
     if (ring(row)) return kRingRight;
     if (pendant(row)) return kAmulet;
-    if (row.group == kGroupPets && row.number <= 3) return kPet;
+    if (row.group == kGroupPets && (row.number == 2 || row.number == 3)) return kMount;
+    if (row.group == kGroupPets && row.number <= 1) return kPet;
     return -1;
 }
 

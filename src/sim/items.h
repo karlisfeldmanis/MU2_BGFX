@@ -39,10 +39,14 @@ enum : int {
     kAmulet = 9,
     kRingRight = 10,
     kRingLeft = 11,
-    kWorn = 12,  // MAX_EQUIPMENT, and the first bag slot
+    // The mount's own slot, past MU's twelve: there Uniria and Dinorant are helpers in slot 8
+    // and shut the pets out. Ours, the user's (2026-10-02, docs/mount.md): a pet and a mount
+    // together.
+    kMount = 12,
+    kWorn = 13,  // MU's MAX_EQUIPMENT and the mount, and the first bag slot
     kBagColumns = 8,
     kBagRows = 8,
-    kSlots = kWorn + kBagColumns * kBagRows,  // 76, MAX_MY_INVENTORY_INDEX
+    kSlots = kWorn + kBagColumns * kBagRows,  // 77, MAX_MY_INVENTORY_INDEX and the mount
 };
 
 // MU's item groups past the weapons (ArmorInitializerBase: `armor.Group = slot + 5`).

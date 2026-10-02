@@ -16,8 +16,23 @@ namespace mu::game {
 namespace {
 
 // Bumped when a field changes meaning. A file of another version is not read at all -- a
-// character half-understood is worse than a character started again, and the log says why.
-constexpr int kVersion = 1;
+// character half-understood is worse than a character started again, and the log says why --
+// save the ones this reads forward (kOldest up).
+// 2: the mount's slot (sim::kMount) came in as worn slot 12, so every bag slot is one further
+//    on, and a horn worn in slot 8 is the mount's.
+constexpr int kVersion = 2;
+constexpr int kOldest = 1;
+
+// A version 1 item's slot as version 2 has it.
+int mountedSlot(const Saved::Item& item) {
+    constexpr int kOldWorn = 12;
+    if (item.slot >= kOldWorn) return item.slot + 1;
+    if (item.slot == sim::kPet && item.group == sim::kGroupPets &&
+        (item.number == 2 || item.number == 3)) {
+        return sim::kMount;
+    }
+    return item.slot;
+}
 
 void writeItem(std::FILE* f, const content::Tables& tables, int32_t item) {
     const content::ItemRow& row = tables.items[size_t(item)];
@@ -119,7 +134,7 @@ bool loadSave(const std::string& path, Saved& out) {
         return false;
     }
     const int version = int(doc["version"].numberOr(0));
-    if (version != kVersion) {
+    if (version < kOldest || version > kVersion) {
         core::logError("save: %s is version %d and this reads %d; starting new", path.c_str(),
                        version, kVersion);
         return false;
@@ -182,6 +197,9 @@ bool loadSave(const std::string& path, Saved& out) {
 
     const core::Json& items = doc["items"];
     for (size_t i = 0; i < items.size(); ++i) saved.items.push_back(readItem(items.at(i)));
+    if (version < 2) {
+        for (Saved::Item& item : saved.items) item.slot = mountedSlot(item);
+    }
     // Absent in a file written before the bar could be arranged, which reads as four empty keys
     // and lets the first-free-key convenience fill them -- the behaviour that file was saved
     // under. No version bump for that reason.
@@ -328,7 +346,10 @@ bool loadVault(const std::string& path, Saved& saved) {
     saved.vaultItems.clear();
     if (!core::fileExists(path)) return false;
     const core::Json doc = core::parseJsonFile(path);
-    if (doc.isNull() || int(doc["version"].numberOr(0)) != kVersion) {
+    // The vault's cells are its own and did not move with the mount's slot, so a version 1
+    // vault reads as it is.
+    const int version = doc.isNull() ? 0 : int(doc["version"].numberOr(0));
+    if (version < kOldest || version > kVersion) {
         core::logError("save: %s is not a vault this reads; the vault starts empty", path.c_str());
         return false;
     }

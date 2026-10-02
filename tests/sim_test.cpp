@@ -5993,7 +5993,7 @@ void testPets(const content::Tables& tables) {
     check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
 }
 
-// The Horn of Uniria (docs/mount.md): the helper slot, no power but the ride, faster than the
+// The Horn of Uniria (docs/mount.md): the mount's slot, no power but the ride, faster than the
 // run off a safe tile and gone in town, worn by a hundredth of each hit taken.
 void testMount(const content::Tables& tables) {
     std::printf("the Horn of Uniria\n");
@@ -6001,7 +6001,7 @@ void testMount(const content::Tables& tables) {
     check(horn >= 0, "the Horn of Uniria is in the table");
     if (horn < 0) return;
     const content::ItemRow& row = tables.items[size_t(horn)];
-    checkEqual(sim::placeOf(row), int(sim::kPet), "it goes in the helper slot, with the pets");
+    checkEqual(sim::placeOf(row), int(sim::kMount), "it goes in the mount's slot, not the pets'");
     checkEqual(row.dropLevel, 25, "from level 25");
     const sim::PetPower power = sim::petPower(row);
     check(power.mount && power.taken == 1.0 && power.dealt == 1.0 && power.health == 0,
@@ -6014,7 +6014,7 @@ void testMount(const content::Tables& tables) {
     const auto walked = [&](bool mounted, bool* rode) {
         sim::Realm realm;
         realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
-        if (mounted) realm.give(horn, sim::kPet);
+        if (mounted) realm.give(horn, sim::kMount);
         sim::Request walk;
         walk.kind = sim::Request::Kind::WalkTo;
         walk.column = realm.hero().column() + 30;
@@ -6049,9 +6049,19 @@ void testMount(const content::Tables& tables) {
     check(safeColumn >= 0, "the town has a safe tile");
     sim::Realm town;
     town.raise(&tables, 5, safeColumn, safeRow, sim::Kin::DarkKnight, 40);
-    town.give(horn, sim::kPet);
+    town.give(horn, sim::kMount);
     town.step();
     check(!town.hero().riding, "and in town he is on foot");
+
+    // A pet and a mount at once, each in its own slot: the Angel's guard and the ride both.
+    sim::Realm both;
+    both.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+    const int angel = tables.itemAt(13, 0);
+    check(angel >= 0 && both.give(angel, sim::kPet) >= 0 && both.give(horn, sim::kMount) >= 0,
+          "the Angel and the horn are worn together");
+    both.step();
+    check(both.hero().riding && both.hero().pet.taken < 1.0,
+          "and he rides with the Angel's guard on him");
 }
 
 // The Horn of Dinorant (docs/mount.md, 0.95d's): ridden as Uniria is, and MU's powers with it.
@@ -6061,7 +6071,7 @@ void testDinorant(const content::Tables& tables) {
     check(horn >= 0, "the Horn of Dinorant is in the table");
     if (horn < 0) return;
     const content::ItemRow& row = tables.items[size_t(horn)];
-    checkEqual(sim::placeOf(row), int(sim::kPet), "it goes in the helper slot");
+    checkEqual(sim::placeOf(row), int(sim::kMount), "it goes in the mount's slot");
     checkEqual(row.dropLevel, 160, "from level 160, the user's");
     check(!row.dropsFromMonsters(), "and never dropped");
     const sim::PetPower power = sim::petPower(row);
@@ -6070,7 +6080,7 @@ void testDinorant(const content::Tables& tables) {
     check(power.wear == 1.0 / 200.0, "and wears at damage/200");
     sim::Realm realm;
     realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 160);
-    realm.give(horn, sim::kPet);
+    realm.give(horn, sim::kMount);
     realm.step();
     check(realm.hero().riding, "he rides it off a safe tile");
 }

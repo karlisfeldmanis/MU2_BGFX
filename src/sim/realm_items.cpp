@@ -429,9 +429,19 @@ void Realm::rearm(Body& hero) {
             hero.wornDefenseRate += rate - int(float(rate) * cut);
         }
     }
-    // The pet in slot 8, while it has life (ItemPowerUpFactory.cs:38-41).
-    const content::ItemRow* pet = rowAt(kPet);
-    hero.pet = pet && bag_[kPet].durability > 0 ? petPower(*pet) : PetPower{};
+    // The pet in slot 8 and the mount in its own, each while it has life (ItemPowerUpFactory.cs:
+    // 38-41): their prices and gifts multiply and add, and either one ridden puts him on it.
+    hero.pet = PetPower{};
+    for (int slot : {kPet, kMount}) {
+        const content::ItemRow* row = rowAt(slot);
+        if (!row || bag_[slot].durability <= 0) continue;
+        const PetPower one = petPower(*row);
+        hero.pet.taken *= one.taken;
+        hero.pet.dealt *= one.dealt;
+        hero.pet.health += one.health;
+        hero.pet.lifeCost += one.lifeCost;
+        hero.pet.mount = hero.pet.mount || one.mount;
+    }
     // Kinship lifts the price and keeps the gift (sim/items.h).
     if (hero.excel.kinship) {
         hero.pet.dealt = std::max(1.0, hero.pet.dealt);
@@ -1203,17 +1213,21 @@ void Realm::wearOnTaken(int took) {
     // damage BEFORE its own cut, since ObjAttack.cpp calls it ahead of gObjAngelSprite. Landing
     // a blow wears it not at all. At nought it is destroyed rather than left broken
     // (Player.cs:1991-2001), and its powers go with it.
-    const Held& pet = bag_[kPet];
-    if (pet.empty() || pet.durability <= 0) return;
-    const PetPower power = petPower(tables_->items[size_t(pet.item)]);
+    // The mount in its own slot wears the same way, off the same uncut damage.
     const double uncut = double(took) / bodies_[0].pet.taken;
-    wearDown(kPet, uncut * power.wear);
-    if (bag_[kPet].durability > 0) return;
-    const int32_t lost = bag_[kPet].item;
-    bag_.lift(kPet);
-    Body& hero = bodies_[0];
-    say(What::PetLost, hero, lost);
-    rearm(hero);
+    bool lostOne = false;
+    for (int slot : {kPet, kMount}) {
+        const Held& pet = bag_[slot];
+        if (pet.empty() || pet.durability <= 0) continue;
+        const PetPower power = petPower(tables_->items[size_t(pet.item)]);
+        wearDown(slot, uncut * power.wear);
+        if (bag_[slot].durability > 0) continue;
+        const int32_t lost = bag_[slot].item;
+        bag_.lift(slot);
+        say(What::PetLost, bodies_[0], lost);
+        lostOne = true;
+    }
+    if (lostOne) rearm(bodies_[0]);
 }
 
 void Realm::wearOnLanded(int defense) {

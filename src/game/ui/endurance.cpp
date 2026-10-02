@@ -25,10 +25,13 @@ constexpr float kIconShare = 0.74f;  // of the tile, the rest is frame and air
 // The slot's own silhouette, the one the bag draws in it (Bag.GhostFor), so the warning and the
 // equipment window name a piece with the same shape -- the user, 2026-09-24: MuMain's separate
 // newui_durable_* pictures were a second set of icons to learn. In the bag's warm ink, but bright:
-// there it is a hint behind a piece, here it is the mark. The pet (8) is not warned about.
+// there it is a hint behind a piece, here it is the mark. The pet (8) and the mount are not
+// warned about.
 constexpr uint32_t kShapeInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.88f);
 
-const char* artFor(int slot) { return slot == sim::kPet ? nullptr : ghostArt(slot); }
+const char* artFor(int slot) {
+    return slot == sim::kPet || slot == sim::kMount ? nullptr : ghostArt(slot);
+}
 
 // The four bands, as the canvas drew them: MU's yellow, orange, red-orange and red, calmed.
 uint32_t colourOf(sim::Worn band, float alpha = 1.0f) {

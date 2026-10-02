@@ -47,17 +47,24 @@ Box wornBox(int slot) {
         case sim::kRingRight: return at(1, 2, kNarrow, kNarrow);
         case sim::kPants: return at(2, 2, kWide, kShort);
         case sim::kRingLeft: return at(3, 2, kNarrow, kNarrow);
+        // The mount's, ours: the free narrow column beside the armour, opposite the amulet, and
+        // a short slot's height so the horse is not a speck (the user: "pets slot ghost icon is
+        // small").
+        case sim::kMount: return at(3, 1, kNarrow, kShort);
         default: return at(4, 2, kWide, kShort);  // boots
     }
 }
 
 // **The cell a slot is drawn as.** MU's worn slots are each a unit wider than their pitch, so
-// two neighbours share a border; drawn a unit narrower, two neighbours butt exactly and their
-// hairlines fall on the same line -- one rule between two flat cells, as in the grid below,
-// whose cells are the whole pitch with no gutter. Hit-testing keeps MU's boxes; only the paint
-// is cut.
+// two neighbours share a border; drawn a unit narrower, two neighbours butt exactly. The worn
+// slots are then drawn kWornGap apart, half off each side, so no two of them touch -- the user,
+// 2026-10-02: "ewuipent slots dont overlap, we need at least minimal gap". The grid below keeps
+// its cells the whole pitch with no gutter. Hit-testing keeps MU's boxes; only the paint is cut.
+constexpr float kWornGap = 3.0f;
 Box wellOf(const Box& slot, bool worn) {
-    return worn ? Box{slot.x, slot.y, slot.w - 1.0f, slot.h - 1.0f} : slot;
+    if (!worn) return slot;
+    const float half = kWornGap / 2.0f;
+    return Box{slot.x + half, slot.y + half, slot.w - 1.0f - kWornGap, slot.h - 1.0f - kWornGap};
 }
 
 // The ghost in an empty worn slot: MU's own silhouette, cut out of its plate by
@@ -66,6 +73,7 @@ Box wellOf(const Box& slot, bool worn) {
 const char* ghostFor(int slot) {
     switch (slot) {
         case sim::kPet: return "bag_ghost_pet";
+        case sim::kMount: return "bag_ghost_mount";
         case sim::kHelm: return "bag_ghost_helm";
         case sim::kWings: return "bag_ghost_wings";
         case sim::kWeaponRight: return "bag_ghost_weapon_left";
@@ -79,15 +87,17 @@ const char* ghostFor(int slot) {
     }
 }
 
-// Where a ghost stands in its cell: fitted to the cell less five units a side and stood down to
-// kGhostFill of that, at its own aspect, centred. Every ghost then has the same air round it
+// Where a ghost stands in its cell: fitted to the cell less kGhostAir of its shorter side (five
+// units on a 41-wide slot, two and a half on a ring's) and stood down to kGhostFill of that, at
+// its own aspect, centred. A flat five took half a ring's cell and left a speck. Every ghost then has the same air round it
 // whatever its shape, and none touches the cell's hairline. The fill is what it is because a
 // ghost drawn out to the cell's edge is a picture in the cell rather than a mark on it, and it
 // then stood taller than the piece the slot holds -- the user, 2026-09-23: *"icoons to large"*.
 constexpr float kGhostFill = 0.80f;
+constexpr float kGhostAir = 0.12f;
 
 Box ghostBox(const Box& cell, const gfx::Art& art) {
-    const Box room = cell.grown(-5.0f);
+    const Box room = cell.grown(-std::min(5.0f, kGhostAir * std::min(cell.w, cell.h)));
     const float s = std::min(room.w / art.width, room.h / art.height) * kGhostFill;
     const float w = art.width * s, h = art.height * s;
     return {room.x + (room.w - w) * 0.5f, room.y + (room.h - h) * 0.5f, w, h};

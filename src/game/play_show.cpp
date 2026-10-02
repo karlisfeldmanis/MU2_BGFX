@@ -831,7 +831,7 @@ void Play::follow(float seconds) {
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;
         if (body->player && body->riding) {
-            const sim::Held& worn = realm_.satchel()[sim::kPet];
+            const sim::Held& worn = realm_.satchel()[sim::kMount];
             if (!worn.empty() && size_t(worn.item) < tables_.items.size() &&
                 tables_.items[size_t(worn.item)].number == 3) {
                 lift = kDinorantLift;

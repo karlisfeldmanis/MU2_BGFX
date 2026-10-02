@@ -96,6 +96,14 @@ OpenMU on rules, `docs/webzen-audit.md`).
 
 ## Done
 
+- **The mount's own slot** (2026-10-02, ours; the user: "create new equipment slot, for
+  mounts"). `sim::kMount` is worn slot 12, so `kWorn` is 13 and the bag starts one further on.
+  Uniria and Dinorant go there (`placeOf`), the Angel and the Imp stay in slot 8, and a pet and
+  a mount are worn together: `rearm` multiplies their prices and gifts, `wearOnTaken` wears each,
+  the HUD shows both life bars and `Pets` draws both. In the bag it stands in the narrow column
+  right of the armour, 25x46. Its ghost is `win_ghost_mount.png`, Rider01 side on out of
+  `pipeline/mount_ghost.py` -- MU has no mount plate to cut one from. Save version 2: a version
+  1 file's bag slots move up one and a horn worn in slot 8 moves to the mount's slot.
 - **Step 1, the models** (2026-10-02). `source/items/pets/Rider01` is the ridden horse (MuExtract
   off MuMain's clean `Skill/Rider01.bmd`: 24 bones, 478 triangles, 4 clips, play speed 0.34) and
   `Helper03` the horn, the bag item and the drop (42 triangles, static, no rig). Sheets

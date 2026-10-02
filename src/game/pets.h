@@ -1,5 +1,6 @@
 // The worn pet, drawn: the Guardian Angel flying about the character and the Imp riding his
-// shoulder. Drawing only -- what a pet DOES is the realm's (sim::PetPower); this reads slot 8.
+// shoulder, and the mount under him. Drawing only -- what a pet DOES is the realm's
+// (sim::PetPower); this reads slot 8 and the mount's slot.
 //
 // **The Guardian Angel flies.** MuMain's GOBoid.cpp: CreateMount puts it at the owner +-256 on
 // the ground's two axes and 128-256 up (:67-126), and MoveMount (:605-660) steers it on every
@@ -56,13 +57,14 @@ namespace mu::game {
 class Pets {
 public:
     void open(const Figures& figures);
-    // `pet` is the row's number in group 13 -- 0 the Angel, 1 the Imp, 2 the Horn of Uniria --
-    // or -1 for none worn.
+    // `pet` is the row's number in group 13 -- 0 the Angel, 1 the Imp -- or -1 for none worn.
     // `hero` is his drawn figure, `alive` whether he stands.
     void update(float seconds, const Figure& hero, int pet, bool alive);
-    // And the horse, after `update`: drawn under him while `riding` (sim::Body::riding), gone in
-    // town; `action` is its own clip as GOBoid picks it off his -- 2 riding on, 3 a swing, 0.
-    void ride(float seconds, const Figure& hero, bool riding, int action);
+    // And the horse, after `update`: `mount` is the mount slot's row number in group 13 -- 2 the
+    // Horn of Uniria, 3 Dinorant -- or -1. Drawn under him while `riding` (sim::Body::riding),
+    // gone in town; `action` is its own clip as GOBoid picks it off his -- 2 riding on, 3 a
+    // swing, 0.
+    void ride(float seconds, const Figure& hero, int mount, bool riding, int action);
     // After the hero is posed this frame: the Imp takes his clavicle as it is now.
     void gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);
@@ -81,7 +83,8 @@ private:
     Figure angel_, imp_, horse_;
     bool horseUp_ = false;
     float horseIn_ = 0.0f;  // 0 gone, 1 there: the fade at a safe zone's edge
-    int shown_ = -1;
+    int shown_ = -1;    // the pet's number
+    int mounted_ = -1;  // the mount's
     bool angelUp_ = false;
     float angelIn_ = 0.0f;  // seconds since it appeared, for its fade in
     // Its flight in MU's own space and units -- x east, y north, z up, 100 to a metre -- so

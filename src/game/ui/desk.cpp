@@ -970,10 +970,14 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // The guard first and the Ale after it, whichever stands.
     Hud::Boon boons[Hud::kBoons];
     int standing = 0;
-    // His pet first, which stands as long as it has life: the Guardian Angel or the Imp in
-    // slot 8, its Life for the bar under it.
-    if (const sim::Held& pet = realm.satchel()[sim::kPet];
-        !pet.empty() && realm.tables() && size_t(pet.item) < realm.tables()->items.size()) {
+    // His pet first and his mount after it, which stand as long as they have life: the Guardian
+    // Angel or the Imp in slot 8, Uniria or Dinorant in the mount's, each its Life for the bar
+    // under it.
+    for (int slot : {sim::kPet, sim::kMount}) {
+        const sim::Held& pet = realm.satchel()[slot];
+        if (pet.empty() || !realm.tables() || size_t(pet.item) >= realm.tables()->items.size()) {
+            continue;
+        }
         const content::ItemRow& row = realm.tables()->items[size_t(pet.item)];
         const int most = sim::maximumDurability(row, pet);
         if (row.group == sim::kGroupPets && pet.durability > 0 && most > 0) {

@@ -124,11 +124,12 @@ void Pets::stepAngel(const float owner[3]) {
     if (at_[2] > owner[2] + 200.0f) direction_[2] -= 1.5f;
 }
 
-void Pets::ride(float seconds, const Figure& hero, bool riding, int action) {
+void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int action) {
+    mounted_ = worn;
     // The Horn of Uniria's horse: GOBoid.cpp's MODEL_UNICON, on the rider's own spot and facing
     // (:515, :524) at scale 1.0 (:684-691). No bone joins them; the seat is in his ride clips.
     // The Dinorant's dragon, Rider02, MODEL_PEGASUS, by the same code (docs/mount.md).
-    const FigureBody* mount = shown_ == 2 ? horseBody_ : shown_ == 3 ? dragonBody_ : nullptr;
+    const FigureBody* mount = mounted_ == 2 ? horseBody_ : mounted_ == 3 ? dragonBody_ : nullptr;
     if (!mount) {
         horseIn_ = 0.0f;
         horseUp_ = false;
@@ -139,10 +140,10 @@ void Pets::ride(float seconds, const Figure& hero, bool riding, int action) {
         horseUp_ = false;
     }
     // The dragon's attack is its 4, Uniria's 3 (GOBoid.cpp:566-578); 0 and 2 are both's.
-    if (shown_ == 3 && action == 3) action = 4;
+    if (mounted_ == 3 && action == 3) action = 4;
     // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
     float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
-    if (shown_ == 3) {
+    if (mounted_ == 3) {
         ground[1] -= kDinorantLift;
         if (action == 2) ground[1] -= dinorantBob(hero.through());
     }
@@ -223,32 +224,30 @@ void Pets::update(float seconds, const Figure& hero, int pet, bool alive) {
 
 void Pets::gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float>& scratch,
                   std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters) {
-    Figure* figure = nullptr;
-    float fade = 1.0f;
+    const auto draw = [&](Figure& figure, float fade) {
+        const int bones = figure.pose(scratch.data());
+        const int palette = bones > 0 ? renderer.addPalette(scratch.data(), bones) : -1;
+        const size_t from = out.size();
+        if (casters) figure.gather(palette, *casters);
+        figure.gather(palette, out);
+        for (size_t i = from; i < out.size(); ++i) out[i].fade = fade;
+    };
+    // The pet and the mount are two slots, so both may stand at once.
     if (shown_ == 1 && impBody_) {
         float bone[16];
-        if (clavicle_ < 0 || !hero.boneWorld(clavicle_, bone)) return;
-        // In the clavicle's own frame, moved along it by MU's offset.
-        float local[16];
-        content::placementTransform(0.0f, 0.0f, 0.0f, 1.0f, kImpOffset, local);
-        float parent[16];
-        core::mulMatrix(local, bone, parent);
-        imp_.mount(parent);
-        figure = &imp_;
+        if (clavicle_ >= 0 && hero.boneWorld(clavicle_, bone)) {
+            // In the clavicle's own frame, moved along it by MU's offset.
+            float local[16];
+            content::placementTransform(0.0f, 0.0f, 0.0f, 1.0f, kImpOffset, local);
+            float parent[16];
+            core::mulMatrix(local, bone, parent);
+            imp_.mount(parent);
+            draw(imp_, 1.0f);
+        }
     } else if (shown_ == 0 && angelUp_) {
-        figure = &angel_;
-        fade = std::clamp(angelIn_ / kAngelFadeIn, 0.0f, 1.0f);
-    } else if ((shown_ == 2 || shown_ == 3) && horseUp_ && horseIn_ > 0.0f) {
-        figure = &horse_;
-        fade = horseIn_;
+        draw(angel_, std::clamp(angelIn_ / kAngelFadeIn, 0.0f, 1.0f));
     }
-    if (!figure) return;
-    const int bones = figure->pose(scratch.data());
-    const int palette = bones > 0 ? renderer.addPalette(scratch.data(), bones) : -1;
-    const size_t from = out.size();
-    if (casters) figure->gather(palette, *casters);
-    figure->gather(palette, out);
-    for (size_t i = from; i < out.size(); ++i) out[i].fade = fade;
+    if ((mounted_ == 2 || mounted_ == 3) && horseUp_ && horseIn_ > 0.0f) draw(horse_, horseIn_);
 }
 
 }  // namespace mu::game
