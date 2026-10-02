@@ -98,6 +98,12 @@ PetPower petPower(const content::ItemRow& row) {
         power.dealt = 1.3;
         power.lifeCost = 3;
         power.wear = 0.2 / 10.0;
+    } else if (row.number == 2) {
+        // The Horn of Uniria: no damage, defence or absorb in OpenMU's 0.75 row or WebZen's base
+        // (its one combat rule, no hit stiffness, is against players, ObjAttack.cpp:2734-2739).
+        // gObjSpriteDamage wears it by damage x 1/10 / 10 (1.00.93 user.cpp:10615-10620).
+        power.mount = true;
+        power.wear = 0.1 / 10.0;
     }
     return power;
 }
@@ -366,12 +372,12 @@ int placeOf(const content::ItemRow& row) {
         return kWeaponRight;
     }
     if (row.group >= kGroupShields && row.group <= kGroupBoots) return row.group - 5;
-    // The Guardian Angel and the Imp: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
+    // The Guardian Angel, the Imp and the Horn of Uniria: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
     // A ring in the right ring slot and a pendant as the amulet (ZzzInfomation.cpp:1085-1094);
     // placesIn lets a ring into the left one too.
     if (ring(row)) return kRingRight;
     if (pendant(row)) return kAmulet;
-    if (row.group == kGroupPets && row.number <= 1) return kPet;
+    if (row.group == kGroupPets && row.number <= 2) return kPet;
     return -1;
 }
 

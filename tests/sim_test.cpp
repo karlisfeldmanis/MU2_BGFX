@@ -5398,6 +5398,67 @@ void testPets(const content::Tables& tables) {
     check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
 }
 
+// The Horn of Uniria (docs/mount.md): the helper slot, no power but the ride, faster than the
+// run off a safe tile and gone in town, worn by a hundredth of each hit taken.
+void testMount(const content::Tables& tables) {
+    std::printf("the Horn of Uniria\n");
+    const int horn = tables.itemAt(13, 2);
+    check(horn >= 0, "the Horn of Uniria is in the table");
+    if (horn < 0) return;
+    const content::ItemRow& row = tables.items[size_t(horn)];
+    checkEqual(sim::placeOf(row), int(sim::kPet), "it goes in the helper slot, with the pets");
+    checkEqual(row.dropLevel, 25, "from level 25");
+    const sim::PetPower power = sim::petPower(row);
+    check(power.mount && power.taken == 1.0 && power.dealt == 1.0 && power.health == 0,
+          "it is ridden and does nothing else");
+    check(power.wear == 0.01, "and wears at gObjSpriteDamage's damage/100");
+    checkEqual(int(sim::buyingPrice(row, 0, 1, false)), 15700, "dropLevel^3 + 100, to the hundred");
+    check(sim::kRideFactor > sim::kRunFactor, "the ride is faster than the run");
+
+    // Twenty ticks of the same walk east off the town, bare and mounted.
+    const auto walked = [&](bool mounted, bool* rode) {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        if (mounted) realm.give(horn, sim::kPet);
+        sim::Request walk;
+        walk.kind = sim::Request::Kind::WalkTo;
+        walk.column = realm.hero().column() + 30;
+        walk.row = realm.hero().row();
+        realm.ask(walk);
+        const float fromX = realm.hero().x, fromY = realm.hero().y;
+        *rode = false;
+        for (int tick = 0; tick < 20; ++tick) {
+            realm.step();
+            *rode |= realm.hero().riding;
+        }
+        const float dx = realm.hero().x - fromX, dy = realm.hero().y - fromY;
+        return std::sqrt(dx * dx + dy * dy);
+    };
+    bool bareRode = false, rode = false;
+    const float bare = walked(false, &bareRode), ridden = walked(true, &rode);
+    std::printf("  20 ticks: %.2f tiles on foot, %.2f mounted\n", bare, ridden);
+    check(!bareRode && rode, "he rides only with the horn worn");
+    check(ridden > bare * 1.1f, "and covers more ground on it");
+
+    // On a safe tile the horse is gone and he walks: the first safe tile of the grid.
+    int safeColumn = -1, safeRow = -1;
+    for (int r = 0; r < 256 && safeColumn < 0; ++r) {
+        for (int c = 0; c < 256; ++c) {
+            if (tables.grid.safe(c, r) && tables.grid.open(c, r)) {
+                safeColumn = c;
+                safeRow = r;
+                break;
+            }
+        }
+    }
+    check(safeColumn >= 0, "the town has a safe tile");
+    sim::Realm town;
+    town.raise(&tables, 5, safeColumn, safeRow, sim::Kin::DarkKnight, 40);
+    town.give(horn, sim::kPet);
+    town.step();
+    check(!town.hero().riding, "and in town he is on foot");
+}
+
 // A Thunder Lich's Lightning pushes him a tile straight away, slid as a pushed monster slides
 // (the user, 2026-10-01). Undying beside one in the Dungeon, standing still, until it strikes.
 void testLichPush() {
@@ -5696,6 +5757,7 @@ int main() {
     testRunes(tables);
     testJewellery(tables);
     testPets(tables);
+    testMount(tables);
     testPoisonOnce();
     testWishDropsOnWalk(tables);
     testTravelQuestLock();

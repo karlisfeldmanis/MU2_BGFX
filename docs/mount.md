@@ -1,6 +1,6 @@
 # The first mount: the Horn of Uniria (13/2)
 
-Researched 2026-10-02. Step 1 (the models) done the same day; nothing in the sim or the game yet. The 0.75 mount: group 13 number 2, the third of the
+Researched 2026-10-02. Steps 1 (the models) and 2 (the sim) done the same day; the horse is not drawn yet. The 0.75 mount: group 13 number 2, the third of the
 helpers after the Guardian Angel and the Imp (`docs/pets.md`). Sources: OpenMU Version075,
 MuMain (a Season 6 fork, read for the client), WebZen GameServer 1.00.93's 0.97d base (outranks
 OpenMU on rules, `docs/webzen-audit.md`).
@@ -20,7 +20,7 @@ OpenMU on rules, `docs/webzen-audit.md`).
   damage/100. Attacking does not wear it. At 0 it is deleted (`:10750-10763`). It can't be
   repaired: 13/0-3 cost 0 and are refused (`protocol.cpp:8570-8588`). OpenMU wears it by
   damage/100000, a thousand times slower. Our pets already follow WebZen (Angel 3/100, Imp 2/100).
-- **Price** (WebZen `zzzitem.cpp:2433-2439`, OpenMU the same): `dropLevel^3 + 100` = 15,725,
+- **Price** (WebZen `zzzitem.cpp:2433-2439`, OpenMU the same): `dropLevel^3 + 100` = 15,725, shown 15,700 (prices round to the hundred),
   a third back on sale.
 - Ten 255-Life horns + a Chaos make a Dinorant at 70% (WebZen `MixSystem.cpp:2156-2240`). That
   comes later.
@@ -89,7 +89,7 @@ OpenMU on rules, `docs/webzen-audit.md`).
 4. **Town: the horse goes, he walks.** MU's alpha-0 cut, closed with a short fade **ours**
    (`visible-mu-pops-get-closed`). *Open: fade or MU's cut.*
 5. **Wear damage/100 per hit taken**, WebZen, as the pets. Destroyed at 0, no repair.
-6. **Sold on Lumen's shelf** beside the pets, 15,725 **ours** (0.75 sells it nowhere), and in
+6. **Sold on Lumen's shelf** beside the pets, 15,700 **ours** (0.75 sells it nowhere), and in
    the jewel drop group from monster level 25.
 7. **Pet card**: type "Mount", "Moving speed" line (MuMain GT 68), `Life n / 255` in the foot; the
    buff strip shows its cell with Life as the bar, as the pets do.
@@ -110,6 +110,17 @@ OpenMU on rules, `docs/webzen-audit.md`).
   rearing; it is not the stance.
 
 Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
+
+- **Step 2, the sim** (2026-10-02). 13/2 goes in slot 8 (`placeOf`); `PetPower::mount` and wear
+  0.1/10, damage/100 a hit taken, through the pets' `wearOnTaken`, destroyed at 0. `Body::riding`
+  is set every tick in `Realm::advance`: a mount with life left, off a safe tile, walking or not,
+  in a fight or out. The step covers `strideFactor` ground (`kRideFactor` 17/12 riding,
+  `kRunFactor` running), read by the drawing's pace too so the two cannot part. On Lumen's shelf,
+  cell 4, at 15,700. Indexed and cooked (tables on all five worlds, figures). The buff cell is
+  `buff_uniria`, the rearing horse on a dusk violet (`pipeline/model_icons.py`), with "Movement
+  speed +21% over running"; the card says "Moving speed: ride outside town, faster than running".
+  sim_test `testMount`: 20 ticks east of (200,160) cover 2.75 tiles on foot, 3.54 mounted.
+  Nothing is drawn yet: he still walks and runs on foot, only faster (step 3).
 
 ## Steps
 

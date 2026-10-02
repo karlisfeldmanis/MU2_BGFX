@@ -127,7 +127,9 @@ const char* buffArt(int32_t skill) {
 }
 
 // The pets' cells, ours: each rendered from the pet's own model by pipeline/model_icons.py.
-const char* petArt(int pet) { return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : nullptr; }
+const char* petArt(int pet) {
+    return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : "buff_uniria";
+}
 
 // The painted key labels: a dark cell on rows 164 to 177 under every box, the figure centred on
 // the box. Measured off hud_base.png for this sprint; (15, 16, 17) is the cell's own dark.
@@ -647,8 +649,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     if (one.pet >= 0) {
         // What the pet does while it has life, in MU's words (the item card's own lines,
         // sim::petPower), and its Life in the foot where a boon keeps its time.
-        const bool angel = one.pet == 0;
-        sheet.name = angel ? "Guardian Angel" : "Imp";
+        sheet.name = one.pet == 0 ? "Guardian Angel" : one.pet == 1 ? "Imp" : "Horn of Uniria";
         sheet.nameTone = tip::Tone::White;
         sheet.base = "PET";
         content::ItemRow row;
@@ -680,6 +681,13 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
             what.rows.push_back(said("Life", "-" + std::to_string(power.lifeCost), tip::Tone::Red));
             what.rows.push_back(prose("for every blow you land; no bonus at " +
                                       std::to_string(power.lifeCost) + " Life or less"));
+        }
+        // The Horn of Uniria's ride (sim::kRideFactor): off a safe tile, in a fight or out.
+        if (power.mount) {
+            what.rows.push_back(said("Movement speed",
+                                     "+" + percent(double(sim::kRideFactor / sim::kRunFactor) - 1.0),
+                                     tip::Tone::Green));
+            what.rows.push_back(prose("over running, ridden outside town"));
         }
         what.rows.push_back(prose("loses Life as you take damage, and is gone at none"));
         sheet.sections.push_back(what);

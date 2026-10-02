@@ -30,12 +30,14 @@ constexpr int kPointsPerLevel = 5;
 //                   damage dealt x0.8 (ours, the user's, no server has it),
 //                   wears damage x 3/10 / 10 a hit taken
 //   Imp             damage dealt x1.3 for 3 of his own life a blow, wears damage x 2/10 / 10
+//   Horn of Uniria  nothing but the ride (kRideFactor), wears damage x 1/10 / 10 (docs/mount.md)
 struct PetPower {
     double taken = 1.0;  // on every blow he takes, after the floor and only above 1
     double dealt = 1.0;  // on every blow he lands, after the floor
     int health = 0;      // on his maximum, before the excellent armour's x1.04
     int lifeCost = 0;    // his own life, paid on every blow he lands that `dealt` lifts
     double wear = 0.0;   // the pet's life lost per point of damage he takes
+    bool mount = false;  // ridden: he rides off a safe tile (Body::riding)
 };
 
 struct Excellence {

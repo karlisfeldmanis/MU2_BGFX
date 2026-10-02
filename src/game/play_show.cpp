@@ -779,7 +779,7 @@ void Play::follow(float seconds) {
         // strode at full pace over half the ground, moonwalking.
         const float pace =
             body->speed * (body->chilledUntil > realm_.tick() ? sim::kChillFactor : 1.0f) *
-            (body->running ? sim::kRunFactor : 1.0f);
+            sim::strideFactor(*body);
         const float covered = one.groundSpeed * float(kTickSeconds) / metresPerTile;
         const bool jumped = covered > 2.0f;
         float through = jumped ? 1.0f : through_;

@@ -206,6 +206,15 @@ struct Happening {
 // gives 15 against the walk's 12 (ZzzCharacter.cpp:6337-6343), a quarter faster over the
 // ground, and the user found that 'little bit to fast'. **ours**: 14.
 constexpr float kRunFactor = 14.0f / 12.0f;
+// Riding the Horn of Uniria. MU's mount runs at CharacterMoveSpeed's 15 off a safe tile, at once
+// (ZzzCharacter.cpp:6320-6335; OpenMU's BasicMountMovementSpeed), which is our run's 14 plus a
+// notch, and the user, 2026-10-02: "mount has to be faster that runing". **ours**: 17, MU's own
+// number for the later mounts (OpenMU's HorseOrFenrirMovementSpeed). In a fight too: MU's rider
+// never walks (docs/mount.md).
+constexpr float kRideFactor = 17.0f / 12.0f;
+struct Body;
+// How much ground a walk covers against the breed's own pace: riding, running or neither.
+float strideFactor(const Body& one);
 // How long a fight holds him in it after the last thing that says he is in one: a monster
 // chasing or fighting him, an attack order, a blow or a cast in the air. **invention**, so a
 // pause between two blows does not flip him into the run and back.
@@ -305,6 +314,10 @@ struct Body {
     // fight lets go of him (kCombatTicks).
     bool running = false;
     int64_t combatUntil = 0;
+    // And whether he is on his horse this tick: a mount worn with life left (PetPower::mount),
+    // off a safe tile, walking or standing, in a fight or out. In town MU hides it and he walks
+    // (GOBoid.cpp:498-502, every ride branch gated `!c->SafeZone`).
+    bool riding = false;
 
     Temper temper = Temper::Asleep;
     uint32_t quarry = 0;  // an id, 0 for nobody

@@ -19,6 +19,10 @@
 
 namespace mu::sim {
 
+float strideFactor(const Body& one) {
+    return one.riding ? kRideFactor : one.running ? kRunFactor : 1.0f;
+}
+
 bool Realm::send(Body& one, int column, int row, bool byRoad) {
     // The tile he is standing on, asked for while he is between two tiles: a stop THERE. The
     // router has no route from a tile to itself, and this used to be a refusal, which left the
@@ -140,8 +144,9 @@ void Realm::advance(Body& one) {
             if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
             one.combatUntil = tick_ + kCombatTicks;
         }
-        one.running = one.walking && one.combatUntil <= tick_ &&
-                      !tables_->grid.safe(one.column(), one.row());
+        const bool safe = tables_->grid.safe(one.column(), one.row());
+        one.riding = one.pet.mount && !safe;
+        one.running = one.walking && one.combatUntil <= tick_ && !safe;
     }
     if (!one.walking) {
         turn(one);
@@ -159,9 +164,8 @@ void Realm::advance(Body& one) {
     // its route: a pulled route's points are the ends of long legs, and the log's Stepped
     // still means one tile.
     const int wasColumn = one.column(), wasRow = one.row();
-    // Iced, it covers half the ground a tick (`kChillFactor`); running, a quarter more.
-    float left = one.speed * (one.chilledUntil > tick_ ? kChillFactor : 1.0f) *
-                 (one.running ? kRunFactor : 1.0f);
+    // Iced, it covers half the ground a tick (`kChillFactor`); running or riding, more.
+    float left = one.speed * (one.chilledUntil > tick_ ? kChillFactor : 1.0f) * strideFactor(one);
     while (left > 0.0f && one.onStep < one.route.size()) {
         const Step& target = one.route[one.onStep];
         const float dx = float(target.column) - one.x;

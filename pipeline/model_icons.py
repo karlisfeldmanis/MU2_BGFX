@@ -1,5 +1,5 @@
 """The buff strip's cells that are ours, rendered from the thing's own model: buff_angel,
-buff_imp and buff_ale.
+buff_imp, buff_ale and buff_uniria.
 
     python3 pipeline/model_icons.py            renders through Blender (kept), then composes
 
@@ -38,6 +38,10 @@ PETS = {
     "angel": ("pets/Helper01", (25, 140, 140), (2, 22, 30), (215, 255, 240), 35.0),
     "imp": ("pets/Helper02", (240, 100, 30), (48, 4, 2), (255, 215, 130), 35.0),
     "ale": ("misc/Ale01", (225, 150, 35), (52, 22, 2), (255, 240, 180), 20.0),
+    # The Horn of Uniria's cell is the horse it calls, Rider01, in its rest pose, which rears.
+    # MU hangs no light on it (GOBoid.cpp RenderMount), so the ground is ours: a dusk violet no
+    # other cell uses, under a pale lilac glow that the white mane stands out of.
+    "uniria": ("pets/Rider01", (120, 85, 185), (18, 8, 42), (235, 225, 255), 35.0),
 }
 
 # Degrees, anticlockwise, for what stands too straight in its cell.
