@@ -4572,6 +4572,7 @@ void testDeviasFolk() {
             return int(why);
         }
         check(r.enterCastle(castle), "Enter takes him through");
+        r.step();  // through on the next tick, its Gated among that tick's happenings
         {
             for (const sim::Happening& one : r.happenings()) {
                 if (one.what == sim::What::Gated) {

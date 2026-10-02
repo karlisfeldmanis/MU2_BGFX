@@ -788,7 +788,8 @@ public:
     // The cloak in the bag the Messenger would take for `castle`, one of its level, or -1 -- or
     // with `castle` 0 any cloak, the first.
     int cloakSlot(int castle = 0) const;
-    // Enter: the cloak spent and the castle's gate passed (Gated), or false and nothing done.
+    // Enter: checked now, and at the next tick's start the cloak spent and the castle's gate
+    // passed (Gated); false and nothing done when he would refuse.
     bool enterCastle(int castle);
     // Farewell: his window shut, as walking away shuts it.
     void closeGate() { gating_ = -1; }
@@ -1278,6 +1279,9 @@ private:
     Vault vault_;
     int mixing_ = -1;
     int gating_ = -1;  // see gating()
+    // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
+    int castleOwed_ = 0;
+    void passCastle(int castle);
     Machine machine_;
     bool mixed_ = false;
     // The machine's own dice, off the realm's seed: a run that never mixes is not moved.

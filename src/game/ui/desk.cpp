@@ -260,7 +260,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             else play.closeQuest();
             click();
         } else if (result.enter) {
-            if (play.enterCastle(result.castle)) click();
+            const bool went = play.enterCastle(result.castle);
+            core::logf("event: Enter on Blood Castle %d -- %s", result.castle,
+                       went ? "through the gate" : "refused");
+            if (went) click();
             else refused();
         } else if (result.accept) {
             if (play.acceptQuest(quest)) play.closeQuest();

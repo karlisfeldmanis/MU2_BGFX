@@ -95,6 +95,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     bodies_.clear();
     happenings_.clear();
     happenings_.reserve(4096);
+    castleOwed_ = 0;
     // The ground: a minute of drops from a fast hunt is a few dozen; 512 is never reached.
     lying_.reserve(512);
     scratch_.reserve(512);
@@ -777,6 +778,11 @@ void Realm::approach(Body& hero, const Body& target, int radius, bool sight) {
 void Realm::step() {
     ++tick_;
     happenings_.clear();
+    if (castleOwed_ != 0) {
+        const int castle = castleOwed_;
+        castleOwed_ = 0;
+        passCastle(castle);
+    }
 
     // The order is fixed and is written down because it is the behaviour: the player walks and
     // swings, then every monster is roused, thinks and moves in index order, then the dead are

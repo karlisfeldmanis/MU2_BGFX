@@ -614,7 +614,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     // ---- the frame, the scrollbar and the answers -------------------------------------------
     canvas_.rect({0.0f, 0.0f, 1e5f, 1e5f}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.22f));
     controls::frame(canvas_, placed(x, y, {0.0f, 0.0f, kWide, kTall}, u), u,
-                    reading_ ? "Quest Journal" : "Quest");
+                    // The Messenger's page is an event's, not a quest's (the user, 2026-10-03:
+                    // 'call it Event, not quest').
+                    gate ? "Event" : reading_ ? "Quest Journal" : "Quest");
     const auto state = [&](int which, bool off) {
         const float t = lift_[which] * lift_[which] * (3.0f - 2.0f * lift_[which]);
         return controls::State{t, pressing_ == which && over_ == which, off};

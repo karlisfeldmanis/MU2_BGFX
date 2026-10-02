@@ -609,16 +609,25 @@ CastleRefusal Realm::castleRefusal(int castle) const {
     return CastleRefusal::None;
 }
 
+// Asked from the window, between ticks: checked now and passed at the next tick's start, inside
+// it, so its Gated is among that tick's happenings for the mode to read -- said out here, it was
+// cleared with the rest before anyone saw it, and he stood in Devias with the window shut.
 bool Realm::enterCastle(int castle) {
     if (gating_ < 0 || !serving(gating_)) return false;
-    Body& hero = bodies_[0];
     if (castleRefusal(castle) != CastleRefusal::None) return false;
+    castleOwed_ = castle;
+    gating_ = -1;
+    return true;
+}
+
+void Realm::passCastle(int castle) {
+    Body& hero = bodies_[0];
+    if (!hero.alive() || castleRefusal(castle) != CastleRefusal::None) return;
     const EnterGate* gate = enterGateNumbered(kCastleEnterGate);
-    if (gate == nullptr) return false;
+    if (gate == nullptr) return;
     // "You have come to Blood Castle %d" (lMsg 1171): the cloak is spent as he goes.
     bag_.lift(cloakSlot(castle));
-    gating_ = -1;
-    return passGate(hero, *gate);
+    passGate(hero, *gate);
 }
 
 }  // namespace mu::sim
