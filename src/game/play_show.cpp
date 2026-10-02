@@ -901,6 +901,18 @@ void Play::follow(float seconds) {
         // for it is what made the animation look instant. A click breaks the hold
         // (Realm::accept), and then the walk is his and the cast goes with it -- a channel's
         // or a buff's clip as well -- or it slides along the ground under him.
+        // Frozen by a Frost Arrow (Realm::callDown): held in the pose the arrow found it in,
+        // the clock stopped, until it thaws. The realm gives it no step and no swing for the
+        // freeze, but the drawing played on whatever it had -- a swing begun before the arrow
+        // landed, an idle rolling round -- and the user saw it "still doing attack". The swing
+        // is dropped rather than paused, so it does not finish its blow on the thaw.
+        if (!body->player && body->frozenUntil > realm_.tick()) {
+            one.swinging = 0.0f;
+            one.casting = 0.0f;
+            one.shocked = 0.0f;
+            one.clipRate = 0.0f;
+            continue;
+        }
         one.casting = std::max(0.0f, one.casting - seconds);
         if (one.swinging > 0.0f && body->walking &&
             (one.casting <= 0.0f || realm_.tick() >= body->castUntil)) {
