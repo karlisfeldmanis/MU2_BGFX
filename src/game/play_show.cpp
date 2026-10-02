@@ -975,17 +975,22 @@ void Play::follow(float seconds) {
                              (!body->player && body->walking && one.still < kCoasting);
         // A pose stands in for the idle and for nothing else, so the walk above still outranks
         // it: the realm takes the pose off as the walk starts, and this is the same rule for the
-        // frames in between. MU's PLAYER_SIT1 234 / female 236, PLAYER_HEALING1 238 / 239,
-        // PLAYER_POSE1 240 / 241, IsFemale deciding -- MU2's Poses.Clip. They loop, and that is
+        // frames in between. MU's PLAYER_SIT1 233 / female 235, PLAYER_HEALING1 237 / 238,
+        // PLAYER_POSE1 239 / 240, IsFemale deciding -- MU2's Poses.Clip. They loop, and that is
         // the whole of why a pose lasts.
+        // Those are player.bmd's own slots, one under index.json's labels (which follow
+        // Season 6's _enum.h): the file holds four 20-key sits at 233-236, then four 6-key
+        // clips -- healing, healing female, pose, pose female -- at 237-240, and the
+        // Halloween PLAYER_JACK_1 at 241. Off by one, the elf leaned by playing Jack and the
+        // knight by holding the female lean.
         int posed = -1;
         // A townsperson on his rounds sits too (realm_folk.cpp): the same clips, on the same rig.
         if ((body->player || body->warden >= 0) && body->pose != sim::Pose::Standing &&
             look->library) {
             const bool female = look->female;
-            const int action = body->pose == sim::Pose::Sitting   ? (female ? 236 : 234)
-                               : body->pose == sim::Pose::Hanging ? (female ? 239 : 238)
-                                                                  : (female ? 241 : 240);
+            const int action = body->pose == sim::Pose::Sitting   ? (female ? 235 : 233)
+                               : body->pose == sim::Pose::Hanging ? (female ? 238 : 237)
+                                                                  : (female ? 240 : 239);
             posed = look->library->find(action);
         }
         if (walking) {
