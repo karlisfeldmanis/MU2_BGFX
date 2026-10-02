@@ -280,9 +280,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
                      units.w * k, units.h * k};
         if (picture.valid()) {
             const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
-            canvas_.rect(to.grown(2.0f * k), gfx::rgba(0.0f, 0.0f, 0.0f, 0.28f));
-            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy},
-                           gfx::rgba(1.0f, 1.0f, 1.0f, 0.92f));
+            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy});
         } else {
             canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
         }

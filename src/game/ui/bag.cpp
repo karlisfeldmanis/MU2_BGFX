@@ -564,12 +564,9 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                      units.h * k};
         if (picture.valid()) {
             const float sx = picture.width / panel::kWidth, sy = picture.height / kStageTall;
-            // A shade under it and the thing itself a little transparent: what the hand is
-            // holding is between the window and the pointer, and at full strength it reads as
-            // something that has already been put down.
-            canvas_.rect(to.grown(2.0f * k), gfx::rgba(0.0f, 0.0f, 0.0f, 0.28f));
-            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy},
-                           gfx::rgba(1.0f, 1.0f, 1.0f, 0.92f));
+            // The picture alone, whole: the dark box once under it read as a background the
+            // thing was carried on (the user, 2026-10-02).
+            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy});
         } else {
             canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
         }

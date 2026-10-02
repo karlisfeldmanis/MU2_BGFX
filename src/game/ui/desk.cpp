@@ -1485,8 +1485,12 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
-    if (banking_) interface_.add(chest_.canvas());
+    // The window something is dragged out of goes over the other, so what rides the pointer is
+    // never under a window it is carried across -- a vault piece over the bag hid behind it.
+    const bool vaultOnTop = banking_ && chest_.dragging();
+    if (banking_ && !vaultOnTop) interface_.add(chest_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());
+    if (vaultOnTop) interface_.add(chest_.canvas());
     // The worn-gear warning hangs left of the windows and so never lies under one; over them,
     // because its hover line is the one part of it that can reach one.
     if (endurance_.showing()) interface_.add(endurance_.canvas());
