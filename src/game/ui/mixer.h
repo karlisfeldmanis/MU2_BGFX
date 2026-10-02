@@ -1,28 +1,29 @@
-// The Chaos Machine's window: the Goblin's eight by four, what the box makes, and Combine.
+// The Chaos Machine's window: the Goblin's eight by four, the service it is read as, and what that
+// service needs, risks and costs.
 //
-// MuMain's `CNewUIMixInventory` (NewUIMixInventory.cpp) on the bag's frame and at its scale, in
-// the column to its left as the vault is -- MU opens INTERFACE_MIXINVENTORY with the inventory.
-// From the top, as its RenderFrame lays it out:
+// MuMain's `CNewUIMixInventory` (NewUIMixInventory.cpp) on the bag's frame and at its scale, in the
+// column to its left as the vault is -- MU opens INTERFACE_MIXINVENTORY with the inventory. Phase
+// two (docs/chaos-machine.md, the user's "proposed version is perfect", 2026-10-02) keeps that
+// window and its box and lays the rest out in the parts the other windows already draw:
 //
-//   * the recipe the box is, yellow when it is ready and red when it is not ("Improper items
-//     for combination"), the success rate and the Zen asked, in MU's pale blue;
-//   * the grid, its CNewUIInventoryCtrl of 8 x 4;
-//   * "Assembly prediction:" and the likest recipe's source lines, each coloured as
-//     GetSourceName colours it -- red missing, pale blue optional or short, yellow met -- or,
-//     with nothing in the box, "Please put the items to combine";
-//   * Combine at the foot, and MU's CMixCheckMsgBoxLayout ("Do you want to combine your
-//     items?") as a second step on the same foot, Cancel and Combine.
+//   * a **service row** under the title, Options' setting row with its two chevrons, the service
+//     in gold: Combine, Remove Rune, Add Socket, Fuse Runes. A step turns the
+//     page as the quest journal turns one -- the old page fades and slides out, the new one in --
+//     with the journal's own page sound;
+//   * **Box**, the grid, drag or right-click either way;
+//   * **Recipe** (or **Sockets** for Remove Rune, a row a socket in its rune's rarity, the picked
+//     one in the travel list's gold), **Needs** with in-box / wanted counts in MuMain's
+//     GetSourceName colours, and **Chance**: the character card's meter, the share luck gives
+//     drawn faint where the thing is not lucky, and success and failure in words;
+//   * the **foot**: the vault's coin and the cost at the left, red when he is short, the button
+//     at the right, and MU's CMixCheckMsgBoxLayout as a second step on the same foot.
 //
-// After the mix: the answer in place of the recipe, MU's ChaosCombinationHasSucceeded or
-// HasFailed -- which MU prints in the system log this tree does not have -- and the box's
-// sparks for MU's fifty frames (RenderMixEffect), over whatever came back. Ours: the sparks are
-// drawn in the window's own ink, as MU's BITMAP_SHINY is not in the interface's art.
-//
-// Phase one of the machine (docs/chaos-machine.md): MU's window as it was. The window of our own
-// is the next step.
+// After a run the answer stands where the chance was, gold or red, with two seconds of sparks
+// over the box (RenderMixEffect); the button becomes Take out.
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "content/tables.h"
@@ -39,7 +40,9 @@ struct MixerRequests {
     int outside = -1;                // a drag let go outside the window, from this cell
     float outsideX = 0.0f, outsideY = 0.0f;
     int back = -1;                   // a right-click on a thing in the box: back to the bag
-    bool mix = false;                // Combine, confirmed
+    bool takeAll = false;            // Take out: everything in the box back to the bag
+    bool mix = false;                // the service, confirmed
+    bool turned = false;             // the service row stepped: the page's sound
     bool click = false;              // a button pressed that asks nothing of the realm
     bool close = false;
 };
@@ -48,13 +51,18 @@ class Mixer {
 public:
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
-    // `answer` is Play::mixAnswer; the rest is read off the realm and its judge.
+    // `answer` and `words` are Play::mixAnswer and mixWords.
     void update(float seconds, float width, float height, int column, const sim::Realm& realm,
-                int answer, const Pointer& pointer, Stage* stage, MixerRequests* out);
+                int answer, const std::string& words, const Pointer& pointer, Stage* stage,
+                MixerRequests* out);
 
     void useTipStage(Stage* stage) { tipStage_ = stage; }
     // Starts the sparks: the realm has just answered.
     void spark() { sparks_ = kSparkSeconds; }
+
+    // What a run asks of the realm: the service on the row and Remove Rune's socket.
+    sim::Service service() const { return sim::Service(service_); }
+    int socket() const { return socket_; }
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
@@ -71,18 +79,28 @@ public:
 private:
     // MU's m_iMixEffectTimer of 50, at its 25 frames a second.
     static constexpr float kSparkSeconds = 2.0f;
+    // The buttons and rows the pointer can be on.
+    enum Hit : int {
+        kNone = -1,
+        kRun = 0,      // the foot's button: the service, Take out, or the confirm's yes
+        kCancel = 1,   // the confirm's no
+        kPrev = 2,     // the service row's chevrons
+        kNext = 3,
+        kSocket0 = 4,  // Remove Rune's socket rows, 4 to 6
+    };
 
     struct Contents {
         uint32_t version = 0, bagVersion = 0;
         long long money = -1;
         int answer = -1;
+        int service = 0, socket = -1, turn = 0;
         int dragging = -1;
         int32_t incoming = -1;
         bool incomingTakes = false;
         float dragX = 0, dragY = 0;
         int hovered = -1;
         float pointerX = 0, pointerY = 0;
-        int button = -1, pressing = -1;
+        int over = -1, pressing = -1;
         bool confirming = false;
         bool closing = false, overClose = false;
         int spark = -1;
@@ -91,7 +109,11 @@ private:
         bool operator==(const Contents& o) const;
     };
     void rebuild(const sim::Realm& realm, Stage* stage);
-    int buttonAt(float ux, float uy) const;
+    int hitAt(float ux, float uy, const sim::Realm& realm) const;
+    // The page turn, as the quest journal's: -1 to 0 the old page going out, 0 to 1 the new
+    // one coming in, 1 at rest.
+    float turnAlpha() const;
+    float turnShift() const;  // in window units
 
     gfx::Canvas canvas_;
     gfx::Canvas tip_;
@@ -104,14 +126,20 @@ private:
     sim::Held incoming_;
     bool incomingTakes_ = false;
     int hovered_ = -1;
-    int button_ = -1;    // 0 Combine (or the confirm's Combine), 1 the confirm's Cancel
-    int pressing_ = -1;
+    int over_ = kNone;
+    int pressing_ = kNone;
     bool confirming_ = false;
     bool closing_ = false;
     bool overClose_ = false;
+    int service_ = 0;
+    int pending_ = -1;   // the service the page is turning to
+    int socket_ = -1;
+    float turn_ = 1.0f;
+    int turnDir_ = 1;
     float sparks_ = 0.0f;
     uint32_t sparkFrame_ = 0;
     int answer_ = -1;
+    std::string words_;
     std::vector<Standing> standing_;
     uint64_t rebuilds_ = 0;
 };

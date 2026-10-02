@@ -74,30 +74,61 @@ private:
 // MuMain's ChaosMachineMixType numbers, which are OpenMU's ItemCrafting.Number.
 enum class Recipe : int8_t { None = -1, ChaosWeapon = 1, PlusTen = 3, PlusEleven = 4 };
 
-// How far one of a recipe's source lines is met, as MixMgr's GetSourceName colours it: red
-// for missing, light blue for the optional or the short, yellow for done.
-enum class Met : uint8_t { No, Partly, Yes };
+// **The services** (the user, 2026-10-02, docs/chaos-machine.md "Phase two"): the Goblin's box
+// read four ways, picked on the window's service row. Combine is MU's machine; the other three
+// work the Runes of Creation and their sockets and are invention, all of them.
+//
+//   * **Remove Rune**: one thing with a rune set, one Chaos. The picked socket's rune comes back
+//     as a Rune of Creation and the socket is empty again; 100%, Zen by the rune's rarity.
+//   * **Add Socket**: one thing that takes sockets and has room for another, one Chaos, one
+//     Soul. 50%, 35%, 20% for the first, second and third; failure takes the jewels only.
+//   * **Fuse Runes**: three runes of one rarity below Legendary and one Chaos make one random
+//     rune of the next rarity, one his class may set; 100%.
+enum class Service : uint8_t { Combine = 0, RemoveRune = 1, AddSocket = 2, FuseRunes = 3 };
+constexpr int kServices = 4;
+const char* serviceName(Service service);  // the row: "Combine", "Remove Rune", ...
+const char* serviceVerb(Service service);  // the button: "Combine", "Remove", "Add Socket", "Fuse"
 
-constexpr int kMostSources = 4;
+constexpr int64_t kRemoveRuneZen[3] = {500000, 1000000, 1500000};  // Rare, Epic, Legendary
+constexpr int kAddSocketRate[3] = {50, 35, 20};                     // for the 1st, 2nd, 3rd
+constexpr int64_t kAddSocketZen = 1000000;
+constexpr int64_t kFuseZen = 500000;
+constexpr int kFuseCount = 3;
+
+// One line of what a service takes: how many are in the box and how many it wants. A `need` of
+// 0 is any number, each one raising the rate (the Chaos Weapon's Bless and Soul).
+struct Need {
+    std::string name;
+    int have = 0, need = 0;
+    bool met() const { return need == 0 ? true : have == need; }
+};
+constexpr int kMostNeeds = 4;
 
 struct Judged {
-    Recipe recipe = Recipe::None;   // what the box makes as it stands
-    Recipe nearest = Recipe::None;  // what it looks most like, for the window's prediction
-    int rate = 0;                   // percent, 0..100
-    int64_t zen = 0;                // what the Goblin charges
-    int target = -1;                // the +10/+11's thing, as a cell
-    int sources = 0;                // `nearest`'s lines
-    Met met[kMostSources] = {};
+    Service service = Service::Combine;
+    Recipe recipe = Recipe::None;   // Combine: what the box makes as it stands
+    Recipe nearest = Recipe::None;  // Combine: what it looks most like
+    bool ready = false;             // the button would run it
     bool empty = true;
+    int rate = 0;                   // percent, 0..100, luck counted
+    int luck = 0;                   // the share of `rate` luck gives, or would give: the meter's
+    bool lucky = false;             // whether the thing is lucky, so `luck` is in `rate`
+    int64_t zen = 0;
+    int target = -1;                // the thing worked on, as a cell
+    int socket = -1;                // Remove Rune: the socket it empties
+    std::string title;              // "+10 Item", "Remove Stormcall", "Improper items ..."
+    Need needs[kMostNeeds];
+    int needCount = 0;
+    std::string success, failure;   // what happens, in words; failure empty when it cannot fail
 };
 
-Judged judge(const content::Tables& tables, const Machine& box);
+// `socket` is Remove Rune's pick, -1 for the first with a rune; `kin` is whose class a fused rune
+// is drawn for.
+Judged judge(const content::Tables& tables, const Machine& box,
+             Service service = Service::Combine, int socket = -1, Kin kin = Kin::DarkKnight);
 
 // "Chaos Weapon", "+10 Item", "+11 Item": MuMain's recipe names.
 const char* recipeName(Recipe recipe);
-// A recipe's source lines as MixMgr prints them: "Jewel of Chaos 1", "Item +9 1" and on.
-int sourceCount(Recipe recipe);
-std::string sourceLine(Recipe recipe, int line);
 
 // What a thing is worth to the machine: MixMgr's EvaluateMixItemValue, OpenMU's
 // CalculateFinalOldBuyingPrice -- the three jewels at their old prices, the rest at what a

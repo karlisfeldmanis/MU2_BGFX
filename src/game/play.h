@@ -209,7 +209,7 @@ public:
     std::string quiverName() const;
     std::string dressedQuiver_;
     int mixAnswer_ = -1;
-    sim::Recipe mixRecipe_ = sim::Recipe::None;
+    std::string mixWords_;
     // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
     // `count` is a stack's size for a potion and ignored for anything else.
     // `extras` is `+N` for a plus, `L` for luck and `O` then a digit for the option: +3LO2.
@@ -242,13 +242,14 @@ public:
     bool putIn(int bagSlot, int cell);
     bool takeOut(int cell, int bagSlot);
     bool shuffle(int from, int to);
-    bool mix();
+    bool mix(sim::Service service, int socket);
     void closeMachine() { realm_.closeMachine(); }
     void restoreMachine(const sim::Machine& saved) { realm_.restoreMachine(saved); }
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.
     int mixAnswer() const { return realm_.mixing() >= 0 ? mixAnswer_ : -1; }
-    sim::Recipe mixRecipe() const { return mixRecipe_; }
+    // And what it was, in words: the service's success or failure line as it was judged.
+    const std::string& mixWords() const { return mixWords_; }
     // A quest giver's dialog (sim/quests.h): accept, hand in with a choice, walk away. The wall
     // clock a repeating quest waits on is handed to the realm each frame (Realm::setWallClock).
     bool acceptQuest(int quest);

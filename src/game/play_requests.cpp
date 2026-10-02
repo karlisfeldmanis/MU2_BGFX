@@ -516,9 +516,9 @@ bool Play::shuffle(int from, int to) {
     return moved;
 }
 
-bool Play::mix() {
-    const sim::Judged judged = realm_.judged();
-    if (!realm_.mix()) {
+bool Play::mix(sim::Service service, int socket) {
+    const sim::Judged judged = realm_.judged(service, socket);
+    if (!realm_.mix(service, socket)) {
         core::logf("window: mix refused (%s)", realm_.refusal().c_str());
         return false;
     }
@@ -526,7 +526,7 @@ bool Play::mix() {
     const auto& said = realm_.happenings();
     const bool made = !said.empty() && said.back().what == sim::What::Mixed && said.back().b == 1;
     mixAnswer_ = made ? 1 : 0;
-    mixRecipe_ = judged.recipe;
+    mixWords_ = made ? judged.success : judged.failure;
     sound_.play(heard_.mix);
     if (made) {
         if (const Drawn* hero = drawnOf(realm_.hero().id)) {

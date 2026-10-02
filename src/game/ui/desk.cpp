@@ -567,7 +567,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         mixer_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr,
                         fromBag && sim::baggable(bag_.dragged()) && !play.realm().mixed());
         mixer_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(),
-                      play.mixAnswer(), pointer, shelfStage_, &asked);
+                      play.mixAnswer(), play.mixWords(), pointer, shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
             if (play.shuffle(asked.moveFrom, asked.moveTo)) took();
             else refused();
@@ -583,10 +583,23 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             else refused();
         }
         if (asked.click) click();
+        // The service row stepped: the journal's and the map's page sound.
+        if (asked.turned) play.sound().play(play.sound().load("quest_page_turn", false));
+        // Take out: everything in the box back to the bag, as many right-clicks.
+        if (asked.takeAll) {
+            bool any = false, all = true;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                if (play.realm().machine()[cell].empty()) continue;
+                if (play.takeOut(cell, -1)) any = true;
+                else all = false;
+            }
+            if (any && all) took();
+            else refused();
+        }
         // CMixCheckMsgBoxLayout's OK: the click, and the realm's answer is heard by Play.
         if (asked.mix) {
             click();
-            if (play.mix()) mixer_.spark();
+            if (play.mix(mixer_.service(), mixer_.socket())) mixer_.spark();
             else refused();
         }
         if (asked.close) {

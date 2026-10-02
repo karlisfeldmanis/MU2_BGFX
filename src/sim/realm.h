@@ -118,8 +118,8 @@ enum class What : uint8_t {
                // trap's index in traps(), c: his health left. `who` is the hero.
     Spirits,   // his shield's Evil Spirit let go round him (sim/items.h kSpiritChance): a: the
                // ticks until its last pulse, whom: the monster whose miss let it go
-    Mixed,     // the Chaos Machine ran (sim/machine.h): a: the sim::Recipe, b: 1 made, 0 failed,
-               // c: the rate it ran at
+    Mixed,     // the Chaos Machine ran (sim/machine.h): a: the sim::Recipe for a Combine, else
+               // 100 + the sim::Service, b: 1 made, 0 failed, c: the rate it ran at
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -748,12 +748,11 @@ public:
     int takeOut(int cell, int bagSlot = -1);
     // Inside the box, from one cell to another.
     bool shuffle(int from, int to);
-    // What the box makes as it stands: sim::judge.
-    Judged judged() const;
-    // Runs it: refused, whole, when the box is no recipe, he has not the Zen or the bag could
-    // not take the answer (MuMain's "Combine items after organizing your inventory"). Pays,
-    // rolls off the machine's own dice, and says What::Mixed. The answer is left in the box.
-    bool mix();
+    // What the box is to a service as it stands: sim::judge, for his class.
+    Judged judged(Service service = Service::Combine, int socket = -1) const;
+    // Runs a service on the box: refused, whole, when it is not ready or he has not the Zen.
+    // Pays, rolls off the machine's own dice, and says What::Mixed. The answer is left in the box.
+    bool mix(Service service = Service::Combine, int socket = -1);
     // Whether the box holds the last mix's answer, untouched since.
     bool mixed() const { return mixed_; }
     // Laid on the realm from the save.

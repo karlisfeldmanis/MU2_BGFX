@@ -107,18 +107,18 @@ bool Realm::shuffle(int from, int to) {
     return true;
 }
 
-Judged Realm::judged() const {
+Judged Realm::judged(Service service, int socket) const {
     if (!tables_) return Judged{};
-    return judge(*tables_, machine_);
+    return judge(*tables_, machine_, service, socket, bodies_[0].kin);
 }
 
-bool Realm::mix() {
+bool Realm::mix(Service service, int socket) {
     if (!tables_ || !atMachine() || mixed_) return false;
     Body& hero = bodies_[0];
     if (!hero.alive()) return false;
-    const Judged j = judge(*tables_, machine_);
-    if (j.recipe == Recipe::None) {
-        refusal_ = "the box is no combination";
+    const Judged j = judge(*tables_, machine_, service, socket, hero.kin);
+    if (!j.ready) {
+        refusal_ = "the box is not ready for " + std::string(serviceName(service));
         return false;
     }
     int answers[3];
@@ -133,30 +133,38 @@ bool Realm::mix() {
             return false;
         }
     }
+    const int32_t rune = tables_->itemAt(kGroupPotions, 22);
+    if ((service == Service::RemoveRune || service == Service::FuseRunes) && rune < 0) {
+        refusal_ = "no Rune of Creation is in this world's tables";
+        return false;
+    }
     if (money_ < j.zen) {
         refusal_ = "not the Zen for it";
         return false;
     }
     money_ -= j.zen;
 
-    // Rand.NextRandomBool(successRate).
-    const bool made = mixDice_.nextInt(0, 100) < j.rate;
-    switch (j.recipe) {
-        case Recipe::PlusTen:
-        case Recipe::PlusEleven: {
-            // The thing is Reference 1: StaysAsIs and up one on success, Disappear on failure.
-            // The jewels Disappear either way.
-            const Held thing = machine_[j.target];
-            machine_.clear();
-            if (made) {
-                const content::ItemRow& row = tables_->items[size_t(thing.item)];
-                machine_.put(j.target, atPlus(row, thing, std::min(kMachineCap,
-                                                                   thing.refinement + 1)));
-            }
-            break;
+    // Rand.NextRandomBool(successRate). A sure thing draws nothing.
+    const bool made = j.rate >= 100 || mixDice_.nextInt(0, 100) < j.rate;
+    // Takes everything but the thing at `keep` out of the box: the jewels and the runes spent.
+    const auto spendAllBut = [&](int keep) {
+        for (int cell = 0; cell < kMachineCells; ++cell) {
+            if (cell != keep) machine_.lift(cell);
         }
-        case Recipe::ChaosWeapon: {
-            if (made) {
+    };
+    switch (service) {
+        case Service::Combine:
+            if (j.recipe == Recipe::PlusTen || j.recipe == Recipe::PlusEleven) {
+                // The thing is Reference 1: StaysAsIs and up one on success, Disappear on
+                // failure. The jewels Disappear either way.
+                const Held thing = machine_[j.target];
+                machine_.clear();
+                if (made) {
+                    const content::ItemRow& row = tables_->items[size_t(thing.item)];
+                    machine_.put(j.target, atPlus(row, thing, std::min(kMachineCap,
+                                                                       thing.refinement + 1)));
+                }
+            } else if (made) {
                 machine_.clear();
                 // SimpleItemCraftingHandler.CreateResultItemsAsync, in its order: the pick, the
                 // plus, then ChaosWeaponAndFirstWingsCrafting's luck and option.
@@ -187,14 +195,65 @@ bool Realm::mix() {
                 }
             }
             break;
-        }
-        case Recipe::None:
+        case Service::RemoveRune: {
+            Held thing = machine_[j.target];
+            Held freed{rune, 0, 1};
+            freed.powers[0] = thing.powers[j.socket];
+            thing.powers[j.socket] = 0;
+            spendAllBut(j.target);
+            machine_.put(j.target, thing);
+            machine_.put(machine_.free(*tables_, 1, 1), freed);
             break;
+        }
+        case Service::AddSocket: {
+            Held thing = machine_[j.target];
+            spendAllBut(j.target);
+            if (made) thing.sockets = uint8_t(thing.sockets + 1);
+            machine_.put(j.target, thing);
+            break;
+        }
+        case Service::FuseRunes: {
+            // The next rarity's runes his class may set, as a drop draws them (Realm::leave),
+            // and any of that rarity should his class have none.
+            int rarity = -1;
+            for (int cell = 0; cell < kMachineCells && rarity < 0; ++cell) {
+                const PowerRow* power =
+                    machine_[cell].empty() ? nullptr : powerOf(machine_[cell].powers[0]);
+                if (power && creation(tables_->items[size_t(machine_[cell].item)])) {
+                    rarity = int(power->rarity) + 1;
+                }
+            }
+            const auto drawable = [&](const PowerRow& row) {
+                const Element element = elementOf(row.power);
+                if (element != Element::None) return elementServes(element, hero.kin);
+                return row.takenBy(hero.kin);
+            };
+            int count = 0, any = 0;
+            for (int p = 1; powerOf(uint8_t(p)); ++p) {
+                const PowerRow& row = *powerOf(uint8_t(p));
+                if (int(row.rarity) != rarity) continue;
+                ++any;
+                if (drawable(row)) ++count;
+            }
+            const bool mine = count > 0;
+            int pick = mixDice_.nextInt(0, mine ? count : std::max(1, any));
+            Held fused{rune, 0, 1};
+            for (int p = 1; powerOf(uint8_t(p)); ++p) {
+                const PowerRow& row = *powerOf(uint8_t(p));
+                if (int(row.rarity) != rarity || (mine && !drawable(row))) continue;
+                if (pick-- == 0) fused.powers[0] = uint8_t(p);
+            }
+            machine_.clear();
+            machine_.put(0, fused);
+            break;
+        }
     }
     mixed_ = !machine_.empty();
-    core::logf("machine: %s at %d%% for %lld zen -- %s", recipeName(j.recipe), j.rate,
+    core::logf("machine: %s at %d%% for %lld zen -- %s",
+               service == Service::Combine ? recipeName(j.recipe) : serviceName(service), j.rate,
                static_cast<long long>(j.zen), made ? "made" : "failed");
-    say(What::Mixed, hero, int32_t(j.recipe), made ? 1 : 0, j.rate);
+    say(What::Mixed, hero, service == Service::Combine ? int32_t(j.recipe) : 100 + int(service),
+        made ? 1 : 0, j.rate);
     return true;
 }
 

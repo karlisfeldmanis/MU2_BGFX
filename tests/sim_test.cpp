@@ -4841,6 +4841,76 @@ void testChaosMachine() {
     box.put(1, plain);
     check(sim::judge(noria, box).recipe == sim::Recipe::None, "a thing with no option spoils it");
     check(sim::judge(noria, box).nearest == sim::Recipe::None, "and nothing is like it");
+
+    // The rune services, at the Goblin again.
+    const int32_t rune = noria.itemAt(14, 22);
+    check(rune >= 0, "the Rune of Creation is in Noria's tables");
+    if (rune < 0) return;
+    realm.ask(talk);
+    for (int tick = 0; tick < 400 && realm.mixing() < 0; ++tick) realm.step();
+    check(realm.mixing() == goblin, "the Goblin opens his machine again");
+    // Remove Rune: a sword with Stormcall in its second socket and a Chaos.
+    const uint8_t set[3] = {0, uint8_t(sim::Power::Stormcall), 0};
+    check(realm.putIn(realm.give(sword, -1, 3, -1, false, 0, 0, 2, set)) >= 0, "a runed sword goes in");
+    check(realm.putIn(realm.give(chaos)) >= 0, "a Chaos goes in");
+    j = realm.judged(sim::Service::RemoveRune);
+    check(j.ready && j.socket == 1, "Remove Rune is ready and picks the socket with the rune");
+    checkEqual(j.rate, 100, "it cannot fail");
+    check(!realm.judged(sim::Service::Combine).ready, "and the same box is no Combine");
+    const int64_t before = realm.money();
+    check(realm.mix(sim::Service::RemoveRune, 1), "the Goblin removes it");
+    checkEqual(int(before - realm.money()), int(j.zen), "for its rarity's Zen");
+    int freed = -1, emptied = -1;
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+        const sim::Held& h = realm.machine()[cell];
+        if (h.empty()) continue;
+        if (h.item == rune && h.powers[0] == uint8_t(sim::Power::Stormcall)) freed = cell;
+        if (h.item == sword) emptied = cell;
+    }
+    check(freed >= 0, "Stormcall comes back as a rune");
+    check(emptied >= 0 && realm.machine()[emptied].powers[1] == 0 &&
+              realm.machine()[emptied].sockets == 2,
+          "and the sword keeps both sockets, empty");
+    check(realm.takeOut(freed) >= 0 && realm.takeOut(emptied) >= 0 && realm.machine().empty(),
+          "both come out");
+
+    // Add Socket: a sword with none, a Chaos and a Soul, until it takes.
+    bool socketed = false;
+    for (int attempt = 0; attempt < 30 && !socketed; ++attempt) {
+        check(realm.putIn(realm.give(sword, -1, 0)) >= 0 && realm.putIn(realm.give(chaos)) >= 0 &&
+                  realm.putIn(realm.give(soul)) >= 0,
+              "a sword, a Chaos and a Soul go in");
+        j = realm.judged(sim::Service::AddSocket);
+        check(j.ready, "Add Socket is ready");
+        checkEqual(j.rate, sim::kAddSocketRate[0], "at the first socket's rate");
+        check(realm.mix(sim::Service::AddSocket), "the Goblin tries");
+        int left = 0, at = -1;
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) ++left, at = cell;
+        }
+        checkEqual(left, 1, "only the sword is left, made or not");
+        socketed = realm.machine()[at].sockets == 1;
+        realm.takeOut(at);
+    }
+    check(socketed, "thirty tries put a socket in");
+
+    // Fuse Runes: three rares and a Chaos make an epic.
+    int rares[3] = {}, found = 0;
+    for (int p = 1; sim::powerOf(uint8_t(p)) && found < 3; ++p) {
+        if (sim::powerOf(uint8_t(p))->rarity == sim::Rarity::Rare) rares[found++] = p;
+    }
+    check(found == 3, "three rare runes to fuse");
+    for (int i = 0; i < 3; ++i) {
+        const uint8_t power[1] = {uint8_t(rares[i])};
+        check(realm.putIn(realm.give(rune, -1, 0, 1, false, 0, 0, 0, power)) >= 0, "a rare rune goes in");
+    }
+    check(!realm.judged(sim::Service::FuseRunes).ready, "not without a Chaos");
+    check(realm.putIn(realm.give(chaos)) >= 0, "a Chaos goes in");
+    check(realm.judged(sim::Service::FuseRunes).ready, "three rares and a Chaos are ready");
+    check(realm.mix(sim::Service::FuseRunes), "the Goblin fuses them");
+    const sim::PowerRow* fused = sim::powerOf(realm.machine()[0].powers[0]);
+    check(realm.machine()[0].item == rune && fused && fused->rarity == sim::Rarity::Epic,
+          "into one epic rune");
 }
 
 // Lorencia's one quest (sim/quests.h): Marlon offers it, a kill of his own counts, a hand-in pays

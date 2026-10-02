@@ -42,8 +42,7 @@ place, since there is no system log. Sparks over the box for two seconds, drawn 
 own ink (MU's BITMAP_SHINY is not in the interface art).
 
 **Sounds.** eMix with eGem on success, eMix with eBreak on failure (`machine_mix`,
-`machine_break` in `source/sounds/sounds.json`). They need `pipeline/index.py` then
-`tools/cook.py --only showing`; until then the log says "no cooked event" and the mix is silent.
+`machine_break` in `source/sounds/sounds.json`), cooked 2026-10-02.
 
 ## Open
 
@@ -52,7 +51,33 @@ own ink (MU's BITMAP_SHINY is not in the interface art).
   this world's tables"). Importing the three is the next content step, and every world's tables
   after it.
 - The shine ladder has no +10/+11 rung of its own yet.
-- Phase two: our own window and our own combinations (the user's to choose).
+
+## Phase two: services (2026-10-02)
+
+The user picked the revised proposal (claude.ai/artifact/FaaQXq4irQCdk5oed6SksA, "proposed
+version is perfect"): the same window, improved with controls the game already draws, and no
+paginator dots.
+
+- **Service row** under the title: Options' row and chevrons, the service in gold. A step plays
+  `quest_page_turn` (the journal's and the map's page sound) and turns the page as the quest
+  journal does: out in 0.14 s, in in 0.20 s, sliding 22 units (`Canvas::fadeSince`).
+- **Box** (unchanged), then **Recipe** (or **Sockets**), **Needs** with in-box/wanted counts,
+  **Chance** on the character card's meter (luck's share faint when the thing is not lucky),
+  Success and Failure in words. The answer stands in the Chance block's place, gold or red, and
+  the button becomes **Take out**.
+- **Foot**: the vault's coin and the cost (red when short) at the left, the button at the right,
+  the confirm on the same foot.
+
+The services (`sim::Service`, `sim::judge(tables, box, service, socket, kin)`):
+
+| service | box | chance | Zen | answer |
+|---|---|---|---|---|
+| Combine | phase one's recipes | as above | as above | as above |
+| Remove Rune | one thing with a rune, 1 Chaos | 100% | 500k / 1M / 1.5M by rarity | the picked socket's rune back as a Rune of Creation, the socket empty |
+| Add Socket | one thing with room for a socket, 1 Chaos, 1 Soul | 50 / 35 / 20% for the 1st / 2nd / 3rd | 1,000,000 | one more socket; failure takes the jewels only |
+| Fuse Runes | three runes of one rarity (not Legendary), 1 Chaos | 100% | 500,000 | one random rune of the next rarity his class may set |
+
+All three rune services are invention, and their numbers are the proposal's first guesses.
 
 ## Trying it
 
