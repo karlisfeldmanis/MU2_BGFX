@@ -80,6 +80,22 @@ void dot(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t ink) {
 // A quest on offer, beside sim::QuestState's own Active and Ready in Drawn::quests.
 constexpr uint8_t kOffered = 10;
 
+// A tick `size` tall centred on (cx, cy), two strokes as quads: the canvas has no glyph for it.
+void tick(gfx::Canvas& canvas, float cx, float cy, float size, uint32_t ink) {
+    const float t = std::max(1.5f, size * 0.17f) * 0.5f;
+    const float ax = cx - size * 0.42f, ay = cy + size * 0.02f;
+    const float bx = cx - size * 0.12f, by = cy + size * 0.32f;
+    const float qx = cx + size * 0.44f, qy = cy - size * 0.36f;
+    const auto stroke = [&](float x0, float y0, float x1, float y1) {
+        const float dx = x1 - x0, dy = y1 - y0, n = std::sqrt(dx * dx + dy * dy);
+        const float nx = -dy / n * t, ny = dx / n * t;
+        const float xy[8] = {x0 + nx, y0 + ny, x1 + nx, y1 + ny, x1 - nx, y1 - ny, x0 - nx, y0 - ny};
+        canvas.polygon(nullptr, xy, nullptr, 4, ink);
+    };
+    stroke(ax, ay, bx, by + t * 0.7f);
+    stroke(bx, by, qx, qy);
+}
+
 uint32_t alpha(uint32_t abgr, float a) {
     return (abgr & 0x00FFFFFFu) | (gfx::rgbaByte(a * float(abgr >> 24) / 255.0f) << 24);
 }
@@ -114,7 +130,10 @@ bool Travel::Drawn::operator==(const Drawn& o) const {
         if (refusals[i] != o.refusals[i] || lockedBy[i] != o.lockedBy[i]) return false;
     }
     for (int i = 0; i < sim::kQuests; ++i) {
-        if (quests[i] != o.quests[i] || shares[i] != o.shares[i] || again[i] != o.again[i]) return false;
+        if (quests[i] != o.quests[i] || shares[i] != o.shares[i] || again[i] != o.again[i] ||
+            restMinutes[i] != o.restMinutes[i]) {
+            return false;
+        }
     }
     for (int i = 0; i < kPlaces; ++i) {
         if (events[i] != o.events[i] || eventSeconds[i] != o.eventSeconds[i]) return false;
@@ -234,6 +253,15 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
         now.again[q] = one.completions > 0;
         if (realm.questOffered(q)) {
             now.quests[q] = kOffered;
+            continue;
+        }
+        if (one.state == sim::QuestState::Resting) {
+            // Handed in and resting: done, and the minutes until it is offered again.
+            now.quests[q] = uint8_t(sim::QuestState::Resting);
+            const int64_t wall = realm.wallClock();
+            now.restMinutes[q] = wall > 0 && one.availableAt > wall
+                                     ? int((one.availableAt - wall + 59) / 60)
+                                     : 0;
             continue;
         }
         if (one.state != sim::QuestState::Active && one.state != sim::QuestState::Ready) continue;
@@ -455,17 +483,30 @@ void Travel::rebuild(const Drawn& now) {
                 const float base = controls::middle(b.y + kLine2 * u, kLineTall * u, size);
                 const bool offered = now.quests[q] == kOffered;
                 const bool ready = now.quests[q] == uint8_t(sim::QuestState::Ready);
+                // Handed in and resting until its twelve hours run: a tick in the repeat's blue,
+                // and when it comes back (the user, 2026-10-02: 'if we finish the quest, show it').
+                const bool done = now.quests[q] == uint8_t(sim::QuestState::Resting);
                 const float x0 = b.x + kPadX * u;
                 const uint32_t hi = now.again[q] ? kAgainHi : kGoldHi;
-                controls::caps(canvas_, x0, controls::middle(b.y + kLine2 * u, kLineTall * u, markSize),
-                               markSize, offered || ready ? hi : style::kAshInk,
-                               offered ? "!" : "?", 0.0f);
-                const std::string right = offered ? "" : ready ? "Hand in"
-                                                               : std::to_string(now.shares[q]) + "%";
+                if (done) {
+                    tick(canvas_, x0 + 3.5f * u, b.y + (kLine2 + kLineTall * 0.5f) * u, 11.0f * u, kAgainHi);
+                } else {
+                    controls::caps(canvas_, x0, controls::middle(b.y + kLine2 * u, kLineTall * u, markSize),
+                                   markSize, offered || ready ? hi : style::kAshInk,
+                                   offered ? "!" : "?", 0.0f);
+                }
+                std::string right = offered ? "" : ready ? "Hand in"
+                                                         : std::to_string(now.shares[q]) + "%";
+                if (done) {
+                    const int m = now.restMinutes[q];
+                    right = "Done";
+                    if (m >= 60) right += " \xC2\xB7 " + std::to_string(m / 60) + "h " + std::to_string(m % 60) + "m";
+                    else if (m > 0) right += " \xC2\xB7 " + std::to_string(m) + "m";
+                }
                 const float rightW = right.empty() ? 0.0f : controls::labelWidth(size, right);
                 if (!right.empty()) {
                     controls::ranged(canvas_, b.right() - kPadX * u, base, size,
-                                     ready ? hi : style::kAshInk, right);
+                                     ready ? hi : done ? kAgainHi : style::kAshInk, right);
                 }
                 // The title, trimmed to the room left between the mark and the figure.
                 const float tx = x0 + 12.0f * u;
@@ -479,7 +520,7 @@ void Travel::rebuild(const Drawn& now) {
                         break;
                     }
                 }
-                controls::label(canvas_, tx, base, size, style::kBone2, title);
+                controls::label(canvas_, tx, base, size, done ? style::kAshInk : style::kBone2, title);
             }
         }
     }

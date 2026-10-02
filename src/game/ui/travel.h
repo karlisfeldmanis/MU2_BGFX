@@ -69,6 +69,8 @@ private:
         // Each quest under way or done and not handed in, and how far along, in percent.
         uint8_t quests[sim::kQuests] = {};
         uint8_t shares[sim::kQuests] = {};
+        // A Resting quest's minutes until its giver offers it again, 0 for unknown.
+        int restMinutes[sim::kQuests] = {};
         // Each quest cleared before: its marks in the beacon's repeat blue.
         bool again[sim::kQuests] = {};
         int hoverPlace = -1, hoverFloor = -1;
