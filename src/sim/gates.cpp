@@ -36,6 +36,9 @@ constexpr ExitGate kExits[] = {
     {39, 4, {52, 53, 55, 54}, -1, -1},      // Lost Tower 6, down from 5
     {41, 4, {8, 85, 9, 87}, -1, -1},        // Lost Tower 7, down from 6
     {44, 2, {2, 246, 3, 247}, 0, -1},       // Devias, out of the Lost Tower, under the beacon
+    // Blood Castle 1's, Gates.cs:216 (WZD Gate.txt:115): its safe court beside the Archangel,
+    // with no direction. Reached only through the Messenger (sim/event.h).
+    {66, 11, {12, 5, 14, 10}, 0, 0},
 };
 
 // Gates.cs, CreateEnterGates: 23 on Lorencia's last rows, 25 on Noria's first, each two rows
@@ -73,6 +76,9 @@ constexpr EnterGate kEnters[] = {
     {11, 1, {2, 84, 2, 85}, 20, 12},        // Dungeon 3 up to Dungeon 2
     {13, 1, {5, 34, 6, 34}, 20, 14},        // Dungeon 2 down to Dungeon 3, the second way
     {15, 1, {29, 127, 30, 127}, 20, 16},    // Dungeon 3 up to Dungeon 2, the second way
+    // Ours: the Messenger's door into Blood Castle 1 (sim/event.h kCastleEnterGate), a row with
+    // a box off the map so no step ever stands in it. His talk sends him through.
+    {1066, 2, {-1, -1, -1, -1}, 0, 66},
 };
 
 }  // namespace

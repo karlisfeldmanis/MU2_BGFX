@@ -36,6 +36,26 @@ constexpr int castleEntryLeft(int daySeconds) {
     return phase < kCastleEntry ? kCastleEntry - phase : 0;
 }
 
+// **The Messenger's door** (WebZen NpcTalk.cpp:1655-1753, protocol.cpp:19629-~20030): spoken to
+// with an Invisibility Cloak while the entry is open, he takes the cloak and sends him to exit gate
+// 66, the castle's safe court (gObjMoveGate(GATE_BLOODCASTLE_1)). MU has no enter gate for it;
+// kCastleEnterGate is ours, a row with no box, so the map change takes the gates' road
+// (sim/gates.cpp, Realm::passGate). The cloak's level is the castle; castle 1 asks levels 15 to
+// 80 (BloodCastle.h:105-120, CheckEnterLevel :1214-1267).
+constexpr int32_t kCastleGate = 66;
+constexpr int32_t kCastleEnterGate = 1066;
+constexpr int kCastleLowest = 15;
+constexpr int kCastleHighest = 80;
+// Why he did not let him in, carried in Shout::Greet's b (0 is the old "not ready").
+enum class CastleRefusal : int32_t {
+    None = 0,
+    NoCloak = 1,    // ServerCmd 1,21
+    NotYet = 2,     // ServerCmd 1,20: a cloak, outside the entry window
+    TooLow = 3,     // result 4
+    TooHigh = 4,    // result 3
+    NotBuilt = 5,   // ours: a cloak for a castle past the first, which is not built
+};
+
 // A rectangle of tiles, inclusive, and the attribute bits the run clears from it.
 struct GridBox {
     int x1, y1, x2, y2;

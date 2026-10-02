@@ -12,8 +12,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <ctime>
 
 #include "core/log.h"
+#include "sim/event.h"
 #include "sim/gates.h"
 #include "sim/realm_tuning.h"
 
@@ -226,6 +228,11 @@ bool Realm::throughGate(Body& hero) {
         say(What::Barred, hero, gate->number, gate->level);
         return false;
     }
+    return passGate(hero, *gate);
+}
+
+bool Realm::passGate(Body& hero, const EnterGate& through) {
+    const EnterGate* gate = &through;
     const ExitGate* out = exitGate(gate->target);
     if (out == nullptr) return false;
     int column = dice_.nextInt(out->box.x1, out->box.x2 + 1);
@@ -566,5 +573,38 @@ void Realm::think(Body& beast) {
 }
 
 // ---- the fight -------------------------------------------------------------------------
+
+// WebZen NpcTalk.cpp:1655-1753 and CGRequestEnterBloodCastle (protocol.cpp:19629-~20030), in
+// their order: a cloak, the entry open, his level in the castle's band; then the cloak is spent
+// and he goes to gate 66. MU opens a window to pick the castle and asks again on its button; with
+// one castle built the talk is the button. The entry is the local wall clock's (sim/event.h); a
+// realm never handed one -- headless -- keeps the door shut.
+void Realm::askMessenger(Body& hero, int folk) {
+    const auto refuse = [&](CastleRefusal why, int32_t castle = 0) {
+        (void)castle;
+        say(What::Shouted, hero, int32_t(Shout::Greet), int32_t(why), folk);
+    };
+    int slot = -1;
+    for (int i = kWorn; i < kSlots && slot < 0; ++i) {
+        if (!bag_[i].empty() && invisibilityCloak(tables_->items[size_t(bag_[i].item)])) slot = i;
+    }
+    if (slot < 0) return refuse(CastleRefusal::NoCloak);
+    int day = -1;
+    if (wall_ > 0) {
+        const time_t at = time_t(wall_);
+        struct tm local {};
+        localtime_r(&at, &local);
+        day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
+    }
+    if (day < 0 || castleEntryLeft(day) == 0) return refuse(CastleRefusal::NotYet);
+    if (bag_[slot].refinement != 1) return refuse(CastleRefusal::NotBuilt);
+    if (hero.level < kCastleLowest) return refuse(CastleRefusal::TooLow);
+    if (hero.level > kCastleHighest) return refuse(CastleRefusal::TooHigh);
+    const EnterGate* gate = enterGateNumbered(kCastleEnterGate);
+    if (gate == nullptr) return;
+    // "You have come to Blood Castle %d" (lMsg 1171): the cloak is spent as he goes.
+    bag_.lift(slot);
+    passGate(hero, *gate);
+}
 
 }  // namespace mu::sim

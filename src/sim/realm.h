@@ -40,6 +40,7 @@
 #include "sim/travel.h"
 #include "sim/vault.h"
 #include "sim/machine.h"
+#include "sim/gates.h"
 
 namespace mu::sim {
 
@@ -143,8 +144,9 @@ constexpr int kGuildMaster = 241;
 // Sevina the Priestess, MU's NPC 235: the class change's giver, whose quest is not written yet.
 // Until it is she wears a grey "!" and tells the hero he is not ready (the user, 2026-09-30).
 constexpr int kSevina = 235;
-// The Messenger of Archangel, MU's NPC 233: Blood Castle's gatekeeper, who has no castle to
-// open yet. Spoken to, he says so, as the Guild Master does (the user, 2026-09-30).
+// The Messenger of Archangel, MU's NPC 233: Blood Castle's gatekeeper in Devias. Spoken to with
+// an Invisibility Cloak in the hour's entry he sends him in (Realm::askMessenger, sim/event.h);
+// otherwise he says why not, as his Greet.
 constexpr int kMessenger = 233;
 // Thompson the Merchant, MU's NPC 231, a Devias trader who once supplied the Lost Tower's shrine
 // and has only lines about it; and Tersia, MU's 566 (OpenMU's Mercenary Guild Felicia), its last guard and the tower's quest giver
@@ -1084,6 +1086,12 @@ private:
     // MuMain's CheckGate on the tile he has just stepped onto: through an enter gate when his
     // level allows (`Gated`, and true), told he is too low when it does not (`Barred`).
     bool throughGate(Body& hero);
+    // The rest of a gate once it lets him through: the landing in the target's box, and the
+    // map change said (Gated) or the floor of this map he is put down on.
+    bool passGate(Body& hero, const EnterGate& gate);
+    // The Messenger of Archangel spoken to (sim/event.h): the cloak taken and the castle's gate
+    // passed, or why not, said as his Greet. `folk` is his folk row.
+    void askMessenger(Body& hero, int folk);
     void rearm(Body& hero);
     // A blow's wear on the player's gear: `took` the health a blow took off him, which wears one
     // defending piece; `landed` a blow of his that did harm, which wears the weapon.

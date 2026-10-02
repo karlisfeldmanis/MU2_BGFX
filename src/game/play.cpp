@@ -6,11 +6,13 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <ctime>
 
 #include "core/files.h"
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "sim/event.h"
 #include "sim/gates.h"
 #include "sim/realm_tuning.h"
 
@@ -1803,12 +1805,6 @@ void Play::speak(const sim::Happening& happening) {
             "No banners are being sworn yet. Devias is not ready for guilds.",
             "Not yet. When the guilds open, you will hear of it first.",
         };
-        // The Messenger of Archangel, whose Blood Castle is still to come (the user, 2026-09-30).
-        static const char* const kMessenger[] = {
-            "The Archangel's castle is not open yet. Its gate is still sealed.",
-            "Not yet, warrior. Blood Castle is not ready for you.",
-            "The Archangel has not called for help yet. Wait for his word.",
-        };
         // Charon, whose Devil Square is still to come (the user, 2026-09-30).
         static const char* const kCharon[] = {
             "The Devil's Square is not open yet. Its doors stay shut.",
@@ -1850,10 +1846,44 @@ void Play::speak(const sim::Happening& happening) {
             "When Devin vouches for you, we will talk about pay.",
         };
         const int32_t number = tables_.folk[size_t(folk)].number;
+        // The Messenger of Archangel, why he did not let him into Blood Castle (sim/event.h,
+        // Realm::askMessenger), in MU's own words (Localization/Game.en.resx:3109, 3113, 3204);
+        // the time to the door, the band and the unbuilt castle are ours.
+        if (number == sim::kMessenger) {
+            const auto why = sim::CastleRefusal(happening.b);
+            if (why == sim::CastleRefusal::NotYet) {
+                one.line = "I see that you have the Cloak of Invisibility. But you need to wait "
+                           "till the gate opens to enter the Blood Castle.";
+                if (const int64_t wall = realm_.wallClock(); wall > 0) {
+                    const time_t at = time_t(wall);
+                    struct tm local {};
+                    localtime_r(&at, &local);
+                    const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
+                    const int phase = ((day - sim::kCastleOpensAt) % sim::kCastlePeriod +
+                                       sim::kCastlePeriod) % sim::kCastlePeriod;
+                    const int minutes = (sim::kCastlePeriod - phase + 59) / 60;
+                    one.line += " It opens in " + std::to_string(minutes) +
+                                (minutes == 1 ? " minute." : " minutes.");
+                }
+            } else if (why == sim::CastleRefusal::TooLow || why == sim::CastleRefusal::TooHigh) {
+                one.line = "The first castle is for warriors of level " +
+                           std::to_string(sim::kCastleLowest) + " to " +
+                           std::to_string(sim::kCastleHighest) + ".";
+            } else if (why == sim::CastleRefusal::NotBuilt) {
+                one.line = "The level of the Cloak of Invisibility is incorrect.";
+            } else {
+                one.line = "Your courage is admirable but you need a Cloak of Invisibility to "
+                           "enter Blood Castle. You need more than just courage, warrior.";
+            }
+            one.folk = folk;
+            said_.push_back(one);
+            core::logf("greet: tick %lld, %s says \"%s\"", (long long)realm_.tick(),
+                       tables_.folk[size_t(folk)].name.c_str(), one.line.c_str());
+            return;
+        }
         const char* const* lines = number == sim::kSevina      ? kSevina
                                    : number == sim::kThompson  ? kThompson
                                    : number == sim::kTersia    ? kTersiaNotYet
-                                   : number == sim::kMessenger ? kMessenger
                                    : number == sim::kCharon    ? kCharon
                                    : sim::questOf(number) >= 0 ? kDevinNotYet
                                                                : kGuildMaster;

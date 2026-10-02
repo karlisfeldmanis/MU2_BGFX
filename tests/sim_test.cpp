@@ -4496,7 +4496,7 @@ void testDeviasFolk() {
     check(greeted, "walked to the Guild Master and he answered");
     check(realm.trading() < 0 && realm.banking() < 0, "and opened nothing");
 
-    // The Messenger of Archangel (2026-09-30): Blood Castle is not written, so he answers too.
+    // The Messenger of Archangel: spoken to with nothing, he answers.
     int messenger = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kMessenger) messenger = int(i);
@@ -4515,7 +4515,57 @@ void testDeviasFolk() {
                         one.c == messenger;
         }
     }
-    check(answered, "walked to the Messenger and he said Blood Castle is not ready");
+    check(answered, "walked to the Messenger and he answered");
+
+    // His door (sim/event.h): a cloak, the hour's entry and castle 1's band, or why not.
+    const int32_t cloak = devias.itemAt(13, 18);
+    check(cloak >= 0, "the Invisibility Cloak is in Devias's tables");
+    if (cloak < 0) return;
+    const auto at = [](int hour, int minute) {
+        const time_t now = std::time(nullptr);
+        struct tm local {};
+        localtime_r(&now, &local);
+        local.tm_hour = hour;
+        local.tm_min = minute;
+        local.tm_sec = 0;
+        return int64_t(std::mktime(&local));
+    };
+    // Spoken to with the bag as `plus` (-1 none), at that time, at that level: the refusal's
+    // reason, or -1 when he went through, with the gate and landing checked.
+    const auto ask = [&](int plus, int64_t wall, int level) {
+        sim::Realm r;
+        r.raise(&devias, 7, 220, 27, sim::Kin::DarkKnight, level);
+        if (plus >= 0) r.give(cloak, -1, plus);
+        r.setWallClock(wall);
+        talk.target = uint32_t(messenger);
+        r.ask(talk);
+        for (int tick = 0; tick < 400; ++tick) {
+            r.step();
+            for (const sim::Happening& one : r.happenings()) {
+                if (one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Greet)) {
+                    return int(one.b);
+                }
+                if (one.what == sim::What::Gated) {
+                    const sim::EnterGate* in = sim::enterGateNumbered(one.a);
+                    const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
+                    check(out && out->map == sim::kBloodCastleMap && out->box.holds(one.b, one.c),
+                          "through the Messenger's door into Blood Castle 1's court");
+                    bool kept = false;
+                    for (int i = sim::kWorn; i < sim::kSlots; ++i) kept |= r.satchel()[i].item == cloak;
+                    check(!kept, "and the cloak is spent");
+                    return -1;
+                }
+            }
+        }
+        return -2;
+    };
+    checkEqual(ask(-1, at(10, 26), 50), int(sim::CastleRefusal::NoCloak), "no cloak, no door");
+    checkEqual(ask(1, at(10, 10), 50), int(sim::CastleRefusal::NotYet), "a cloak at hh:10 waits");
+    checkEqual(ask(1, 0, 50), int(sim::CastleRefusal::NotYet), "and with no clock at all");
+    checkEqual(ask(2, at(10, 26), 50), int(sim::CastleRefusal::NotBuilt), "a +2 cloak's castle is not built");
+    checkEqual(ask(1, at(10, 26), 10), int(sim::CastleRefusal::TooLow), "level 10 is under the band");
+    checkEqual(ask(1, at(10, 26), 81), int(sim::CastleRefusal::TooHigh), "level 81 over it");
+    checkEqual(ask(1, at(10, 26), 50), -1, "a +1 cloak at hh:26, level 50, goes in");
 }
 
 void testVault(const content::Tables& tables) {
