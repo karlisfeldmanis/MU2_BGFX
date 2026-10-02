@@ -23,10 +23,10 @@
     "squid02_body": "#E8C050"
   },
   "sheet_f0": {
-    "squid01": 0.45,
-    "squid02_body": 0.45
+    "squid01": 0.25,
+    "squid02_body": 0.25
   },
-  "sheet_f0_tint_from": "The user's, 2026-09-30, in several passes. 'i think those tentacles has to be metallic', then 'looks blue', 'less bronze and more in sync', and at last MuMain's own picture of the pit, a pale olive gold (120:105:85, 1 : 0.87 : 0.70), and 'lets make it dark bronze'. So brass (cast, roughness 0.44) at f0 0.45, with #E8C050 baked into the metal sheet (sheet_f0_tint; the cook drops glTF's baseColorFactor, so a sheet_tint never reached the game). The blue is left out of the tint on purpose: the Dungeon's fill is cold, and any blue in a metal's f0 turned the worms mauve. Tried and turned down: plate steel (blue), #FF9A50 (copper), wrought iron at 0.25 (grey), #FFCC80 (mauve). An invention on MU's look: MU lights squid01 as any other sheet.",
+  "sheet_f0_tint_from": "The user's, 2026-09-30, in several passes. 'i think those tentacles has to be metallic', then 'looks blue', 'less bronze and more in sync', and at last MuMain's own picture of the pit, a pale olive gold (120:105:85, 1 : 0.87 : 0.70), and 'lets make it dark bronze'. So brass (cast, roughness 0.44) at f0 0.45, with #E8C050 baked into the metal sheet (sheet_f0_tint; the cook drops glTF's baseColorFactor, so a sheet_tint never reached the game). The blue is left out of the tint on purpose: the Dungeon's fill is cold, and any blue in a metal's f0 turned the worms mauve. Tried and turned down: plate steel (blue), #FF9A50 (copper), wrought iron at 0.25 (grey), #FFCC80 (mauve). An invention on MU's look: MU lights squid01 as any other sheet. Then, 2026-10-02, at the pit: 'tenticles is to much vissible, they have to be less vissible but vissible'. f0 0.45 to 0.25, the same bronze tint, so the body sinks into the dark and only a dim bronze edge shows.",
   "why_this_one": "A giant worm, a second shape, 17 of them: the same body arched over the floor. Seen in the world 2026-09-30 at 131.9,246. See echo_from.",
   "additive": [
     "squid02"
