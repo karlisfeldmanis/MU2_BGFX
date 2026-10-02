@@ -28,6 +28,12 @@ if [ ! -d extern/bgfx.cmake/bgfx ]; then
   git -C extern/bgfx.cmake checkout --quiet $BGFX_CMAKE_REV
   git -C extern/bgfx.cmake submodule update --init --recursive
 fi
+# Our changes to bgfx, kept as patches since extern/ is not in git. Applied once: a patch
+# that is already in reverses cleanly, and is left alone.
+for p in patches/bgfx-*.patch; do
+  git -C extern/bgfx.cmake/bgfx apply --reverse --check "$PWD/$p" 2>/dev/null ||
+    git -C extern/bgfx.cmake/bgfx apply "$PWD/$p"
+done
 [ -f extern/cgltf.h ] || curl -sSL -o extern/cgltf.h https://raw.githubusercontent.com/jkuhlmann/cgltf/$CGLTF_REV/cgltf.h
 [ -f extern/stb_image.h ] || curl -sSL -o extern/stb_image.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_image.h
 [ -f extern/stb_truetype.h ] || curl -sSL -o extern/stb_truetype.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_truetype.h

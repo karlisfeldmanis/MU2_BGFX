@@ -118,6 +118,28 @@ GPU wait. Tried and taken out the same day. Letting bgfx run its own render thre
 the same at 2K (6.34 and 6.31 ms against 6.31 and 6.93) and 0.08 ms faster at half scale:
 the frame is the GPU's, and a render thread costs a frame of latency, so it stays off.
 
+### bgfx wrote back tile memory nothing read, 0.25 ms at 2K, patched 2026-10-02
+
+Apple's GPUs render a pass in on-chip tiles and write each attachment back to memory at its
+end. bgfx's Metal backend asked for every write back: all four samples of the shade pass's
+RGBA16F colour beside its resolve, and the D32F depth after the shade and transparent pass,
+which nothing reads again. `patches/bgfx-metal-store-actions.patch` (applied by bootstrap.sh)
+plans the frame from its sort keys and drops a resolved MSAA colour's samples, and a
+write-only depth, after the last pass that binds them. The prepass's depth is still written
+back, since the shade pass loads it; its MSAA_SAMPLE normals are untouched, since SSAO reads
+them. `MU2_BGFX_KEEP_STORES=1` turns it off for an A/B in one binary.
+
+Lorencia 140,126 `--still`, 2560x1273, vsync off, `--repeat 3` of 600, interleaved, load ~14:
+
+| | launch 1 | launch 2 |
+|---|---|---|
+| patched | 7.399 | 7.337 |
+| `MU2_BGFX_KEEP_STORES=1` | 7.591 | 7.608 |
+
+**About 0.23 ms**, spreads 0.08 or less. Shots at frame 120 differ only on what moves (the
+crowd, the fountain); walls and ground are pixel-identical. The estimate before measuring was
+1-2 ms of bandwidth: the GPU hides most of a write back behind the next pass's work.
+
 ### The view timers were 0.77 ms of every frame, and are off by default now
 
 Found the same afternoon in a Metal System Trace (attached to a running game with

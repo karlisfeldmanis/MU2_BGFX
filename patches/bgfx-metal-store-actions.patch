@@ -1,0 +1,269 @@
+diff --git a/src/renderer_mtl.cpp b/src/renderer_mtl.cpp
+index f758e733b..48335e15b 100644
+--- a/src/renderer_mtl.cpp
++++ b/src/renderer_mtl.cpp
+@@ -3629,6 +3629,226 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 		bool m_hasVSync;
+ 		bool m_hasMaximumDrawableCount;
+ 
++		// MU2_BGFX: store actions that keep tile memory on the tile. Apple's GPUs render a
++		// pass in on-chip tiles and write each attachment back to memory at the end of it,
++		// and bgfx asked for every write back: all four samples of an MSAA colour beside its
++		// resolve, and every depth. When no later pass this frame loads an attachment again,
++		// that write is pure bandwidth -- at 2560x1440 with 4x MSAA about 118 MB for an
++		// RGBA16F colour and 59 MB for a D32F depth. The frame is planned once from its sort
++		// keys before it is drawn: which segments (a view's compute or its draws) open a new
++		// render pass, and the last such pass that binds each texture. A pass then drops the
++		// samples of a resolved MSAA colour, and the contents of a write-only depth, that
++		// nothing after it loads. Only those two: anything else may be sampled later, and
++		// sampling is not visible in the plan. A pass opened where the plan did not expect
++		// one turns the whole thing off for the rest of the run and says so once.
++		enum { kMaxPlanSegments = BGFX_CONFIG_MAX_VIEWS * 2 };
++		int32_t  m_attachmentLastPass[BGFX_CONFIG_MAX_TEXTURES];
++		uint32_t m_attachmentStamp[BGFX_CONFIG_MAX_TEXTURES] = {};
++		uint32_t m_attachmentFrame = 0;
++		bool     m_segmentOpensPass[kMaxPlanSegments];
++		bool     m_attachmentPlanValid = false;
++		bool     m_attachmentPlanBroken = false;
++
++		void planAttachmentStores(Frame* _render, bool _profileViews)
++		{
++			m_attachmentPlanValid = false;
++
++			// MU2_BGFX_KEEP_STORES=1 keeps every write back, for an A/B in one binary.
++			static const bool keepStores = NULL != getenv("MU2_BGFX_KEEP_STORES");
++
++			if (m_attachmentPlanBroken
++			||  keepStores)
++			{
++				return;
++			}
++
++			const uint32_t stamp = ++m_attachmentFrame;
++
++			auto mark = [&](uint16_t _idx, int32_t _segment)
++			{
++				if (kInvalidHandle == _idx)
++				{
++					return;
++				}
++
++				if (m_attachmentStamp[_idx] != stamp)
++				{
++					m_attachmentStamp[_idx]    = stamp;
++					m_attachmentLastPass[_idx] = _segment;
++				}
++				else
++				{
++					m_attachmentLastPass[_idx] = bx::max(m_attachmentLastPass[_idx], _segment);
++				}
++			};
++
++			// A blit's source is read outside any render pass: never discard it.
++			for (uint32_t ii = 0, num = _render->m_numBlitItems; ii < num; ++ii)
++			{
++				const Handle& src = _render->m_blitItem[ii].m_src;
++
++				if (Handle::Texture == src.type)
++				{
++					mark(src.idx, INT32_MAX);
++				}
++			}
++
++			const uint32_t numBlit = _render->m_numBlitItems;
++			uint32_t blitItem = 0;
++			BlitKey  blitKey;
++
++			if (0 < numBlit)
++			{
++				blitKey.decode(_render->m_blitKeys[0]);
++			}
++
++			SortKey key;
++			int32_t segment = -1;
++			ViewId  segmentView = 0;
++			bool    segmentCompute = false;
++			bool    prevGraphics = false;
++			FrameBufferHandle prevFbh = BGFX_INVALID_HANDLE;
++
++			for (uint32_t item = 0, numItems = _render->m_numRenderItems; item < numItems; ++item)
++			{
++				const bool isCompute = key.decode(_render->m_sortKeys[item], _render->m_viewRemap);
++
++				if (0 <= segment
++				&&  key.m_view == segmentView
++				&&  isCompute  == segmentCompute)
++				{
++					continue;
++				}
++
++				++segment;
++
++				if (kMaxPlanSegments <= segment)
++				{
++					return;
++				}
++
++				segmentView    = key.m_view;
++				segmentCompute = isCompute;
++				m_segmentOpensPass[segment] = false;
++
++				// submitBlit ends the render pass when a blit is due at this view.
++				bool blits = false;
++
++				while (blitItem < numBlit
++				&&     blitKey.m_view <= _render->m_viewOrder[segmentView])
++				{
++					blits = true;
++
++					if (++blitItem < numBlit)
++					{
++						blitKey.decode(_render->m_blitKeys[blitItem]);
++					}
++				}
++
++				if (isCompute)
++				{
++					prevGraphics = false;
++					continue;
++				}
++
++				const FrameBufferHandle fbh = _render->m_view[segmentView].m_fbh;
++				const bool opensPass = false
++					|| !prevGraphics
++					|| blits
++					|| _profileViews
++					|| fbh.idx != prevFbh.idx
++					;
++
++				prevGraphics = true;
++				prevFbh      = fbh;
++
++				if (!opensPass)
++				{
++					continue;
++				}
++
++				m_segmentOpensPass[segment] = true;
++
++				if (isValid(fbh) )
++				{
++					const FrameBufferMtl& frameBuffer = m_frameBuffers[fbh.idx];
++
++					for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
++					{
++						mark(frameBuffer.m_colorHandle[ii].idx, segment);
++					}
++
++					mark(frameBuffer.m_depthHandle.idx, segment);
++				}
++			}
++
++			m_attachmentPlanValid = true;
++		}
++
++		bool attachmentLoadedLater(TextureHandle _handle, int32_t _segment) const
++		{
++			return m_attachmentStamp[_handle.idx] != m_attachmentFrame
++				|| m_attachmentLastPass[_handle.idx] > _segment
++				;
++		}
++
++		void discardUnloadedAttachments(MTL::RenderPassDescriptor* _renderPassDescriptor, FrameBufferHandle _fbh, int32_t _segment)
++		{
++			if (!m_attachmentPlanValid
++			||  !isValid(_fbh)
++			||  0 > _segment
++			||  kMaxPlanSegments <= _segment)
++			{
++				return;
++			}
++
++			if (!m_segmentOpensPass[_segment])
++			{
++				m_attachmentPlanBroken = true;
++				m_attachmentPlanValid  = false;
++				bx::debugPrintf("bgfx: MU2_BGFX attachment store plan missed a render pass; stores kept from now on\n");
++				return;
++			}
++
++			const FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
++
++			for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
++			{
++				MTL::RenderPassColorAttachmentDescriptor* desc = _renderPassDescriptor->colorAttachments()->object(ii);
++
++				if (NULL != desc->texture()
++				&&  NULL != desc->resolveTexture()
++				&&  1 < desc->texture()->sampleCount()
++				&&  !attachmentLoadedLater(frameBuffer.m_colorHandle[ii], _segment) )
++				{
++					desc->setStoreAction(MTL::StoreActionMultisampleResolve);
++				}
++			}
++
++			const TextureHandle depthHandle = frameBuffer.m_depthHandle;
++
++			if (isValid(depthHandle)
++			&&  0 != (m_textures[depthHandle.idx].m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
++			&&  !attachmentLoadedLater(depthHandle, _segment) )
++			{
++				MTL::RenderPassDepthAttachmentDescriptor* depthAttachment = _renderPassDescriptor->depthAttachment();
++
++				if (NULL != depthAttachment->texture()
++				&&  NULL == depthAttachment->resolveTexture() )
++				{
++					depthAttachment->setStoreAction(MTL::StoreActionDontCare);
++				}
++
++				MTL::RenderPassStencilAttachmentDescriptor* stencilAttachment = _renderPassDescriptor->stencilAttachment();
++
++				if (NULL != stencilAttachment->texture()
++				&&  NULL == stencilAttachment->resolveTexture() )
++				{
++					stencilAttachment->setStoreAction(MTL::StoreActionDontCare);
++				}
++			}
++		}
++
+ 		ChunkedScratchBufferMtl m_uniformScratchBuffer;
+ 
+ 		uint8_t  m_vsScratch[64<<10];
+@@ -6144,6 +6364,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 
+ 		m_occlusionQuery.resolve(_render);
+ 
++		planAttachmentStores(_render, profileViews);
++		int32_t planSegment = -1;
++		ViewId  planSegmentView = 0;
++		bool    planSegmentCompute = false;
++
+ 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
+ 		{
+ 			viewState.m_rect = _render->m_view[0].m_rect;
+@@ -6155,6 +6380,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
+ 				statsKeyType[isCompute]++;
+ 
++				// The same segments planAttachmentStores walked.
++				if (0 > planSegment
++				||  key.m_view != planSegmentView
++				||  isCompute  != planSegmentCompute)
++				{
++					++planSegment;
++					planSegmentView    = key.m_view;
++					planSegmentCompute = isCompute;
++				}
++
+ 				const bool viewChanged = 0
+ 					|| key.m_view != view
+ 					|| item == numItems
+@@ -6370,6 +6605,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 								}
+ 							}
+ 
++							discardUnloadedAttachments(renderPassDescriptor, fbh, planSegment);
++
+ 							if (m_variableRateShadingSupported)
+ 							{
+ 								MTL::RasterizationRateLayerDescriptor* rrld = newRasterizationRateLayerDescriptor(s_shadingRate[_render->m_view[view].m_shadingRate]);
