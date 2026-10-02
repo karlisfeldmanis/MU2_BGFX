@@ -87,6 +87,11 @@ private:
     // says when he falls is lit exactly as the line it says when he arrives somewhere.
     gfx::Face soft_;
     bgfx::TextureHandle softTexture_ = BGFX_INVALID_HANDLE;
+    // The death's face and tight halo, Cinzel Bold, apart from the figures' since 2026-10-02.
+    // The lane borrows this halo: Cinzel under Cinzel, where the figures' would not line up.
+    gfx::Face death_, deathHalo_;
+    bgfx::TextureHandle deathTexture_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle deathHaloTexture_ = BGFX_INVALID_HANDLE;
     // And the lane's own face, Cinzel Medium: every row in it -- experience, Zen, a potion --
     // is one size and one weight, and that weight is not the fight's.
     gfx::Face quiet_;

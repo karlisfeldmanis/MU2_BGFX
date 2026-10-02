@@ -37,6 +37,12 @@ desynchronise every seeded log (`src/sim/rules.cpp` says so at the branch).
 
 ## The style, in one paragraph
 
+**Since 2026-10-02 the blows are Philosopher Bold, smaller**, the user's pick off a page of
+fourteen faces drawn over a Lorencia fight: swing 14, skill 18, critical 21, miss 8, absorbed 6,
+stack step 14 (0.65 of the sizes below). The halo, drop, motion and inks are unchanged. The
+death and the lane's halo stay Cinzel Bold, baked apart (`Tally::death_`). The paragraph below
+is the 2026-09-23 build.
+
 Size is force, hue is kind, and there is nothing else. **Cinzel** — the map name's own family,
 Bold for the fight and the arrival's exact Medium for the lane — at 21 interface units for a
 swing, 27 for a skill, 32 for a critical, 15.5 for the shield's share and 12 for a miss. No

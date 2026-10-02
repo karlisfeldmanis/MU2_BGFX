@@ -21,14 +21,17 @@ namespace {
 // A point smaller than the page drew them, because Cinzel is a Roman capital and not a
 // condensed grotesque: at the page's own 23 a three-figure blow was half a tile wide. The
 // stack rule below is what now does the work the narrow face was chosen for.
-constexpr float kSwingSize = 21.0f;
-constexpr float kSkillSize = 27.0f;
-constexpr float kCriticalSize = 32.0f;
+//
+// And smaller again on 2026-10-02 with the move to Philosopher: the user picked the design
+// page's "Smallest" set, 0.65 of what these were (21, 27, 32, miss 12, absorbed 9).
+constexpr float kSwingSize = 14.0f;
+constexpr float kSkillSize = 18.0f;
+constexpr float kCriticalSize = 21.0f;
 // And a miss is quieter still -- a word, not a figure, and the one thing on the ramp that says
 // nothing happened. Smaller again at the user's word, 2026-09-23.
-constexpr float kMissSize = 12.0f;
+constexpr float kMissSize = 8.0f;
 // And ABSORBED quieter than a miss, the user's of 2026-10-01: a long word beside the red.
-constexpr float kAbsorbedSize = 9.0f;
+constexpr float kAbsorbedSize = 6.0f;
 // None on a figure. Roman capitals want air between LETTERS, and Cinzel's own drawing already
 // carries it; a number is one object and tracking it made 27 read as 2 7 (the user, on sight,
 // 2026-09-23). The word MISS keeps its own, below, because a word is not a number.
@@ -44,7 +47,7 @@ constexpr float kHold = 0.66f;    // of the life at full opacity, then out
 // A row for each figure already standing over that body when this one went up -- Showing::land
 // counts them. One line of the swing size, which is what keeps two readings apart without
 // either of them leaving the body they belong to.
-constexpr float kStackStep = 21.0f;
+constexpr float kStackStep = 14.0f;
 // The pop: up to 1.08 and settled by a quarter of the way through. Small on purpose -- the
 // page's own, and what makes it read as a blow landing rather than as a thing being announced.
 constexpr float kPopTo = 1.08f;
@@ -287,15 +290,22 @@ constexpr float kQuietBake = 48.0f;
 void Tally::open(const gfx::Interface& interface) {
     interface.adopt(canvas_);
     const char* path = gfx::figureFacePath();
-    // Two bakes, each judged on its own: a halo that will not pack must not take the face it
-    // shades down with it. One face for everything the tally says -- the blow, the lane and the
-    // death are one voice at four sizes.
+    // Each bake judged on its own: a halo that will not pack must not take the face it shades
+    // down with it. The blows are Philosopher; the death and the lane's halo are Cinzel.
     const bool figures = bakeOne(face_, faceTexture_, path, kSharpBake, 2048, 0.0f,
                                  "tally figures");
     const bool halo = bakeOne(halo_, haloTexture_, path, kHaloBake, 2048, kHaloSigmaEm,
                               "tally halo");
-    const bool soft = bakeOne(soft_, softTexture_, path, kSoftBake, 2048, kSoftSigmaEm,
+    // The death keeps the map name's voice, so it and its two halos are baked from Cinzel.
+    const char* deathPath = gfx::deathFacePath();
+    const bool soft = bakeOne(soft_, softTexture_, deathPath, kSoftBake, 2048, kSoftSigmaEm,
                               "tally soft halo");
+    const bool death = bakeOne(death_, deathTexture_, deathPath, kSharpBake, 2048, 0.0f,
+                               "tally death");
+    const bool deathHalo = bakeOne(deathHalo_, deathHaloTexture_, deathPath, kHaloBake, 2048,
+                                   kHaloSigmaEm, "tally death halo");
+    if (!death) core::logError("tally: no death face; You Died will not be said");
+    if (!deathHalo) core::logError("tally: no death halo; the lane and the death will read thin");
     const bool lane = bakeOne(quiet_, quietTexture_, gfx::quietFacePath(), kQuietBake, 1024,
                               0.0f, "tally lane");
     if (!lane) core::logError("tally: no lane face; nothing will be said over the HUD");
@@ -306,7 +316,8 @@ void Tally::open(const gfx::Interface& interface) {
 
 void Tally::shutdown() {
     for (bgfx::TextureHandle* t :
-         {&faceTexture_, &haloTexture_, &softTexture_, &quietTexture_}) {
+         {&faceTexture_, &haloTexture_, &softTexture_, &quietTexture_, &deathTexture_,
+          &deathHaloTexture_}) {
         if (bgfx::isValid(*t)) bgfx::destroy(*t);
         *t = BGFX_INVALID_HANDLE;
     }
@@ -433,8 +444,8 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         // Half the halo the fight takes: a blur baked for a 42-unit figure, laid under a
         // 9-unit one at full strength, is a dark band behind the words rather than air round
         // them -- seen in the first shot of it.
-        writeIn(quiet_, quietTexture_, halo_, haloTexture_, centreX, baseline, size, ink, text,
-                trackingEm, false, 0.5f);
+        writeIn(quiet_, quietTexture_, deathHalo_, deathHaloTexture_, centreX, baseline, size,
+                ink, text, trackingEm, false, 0.5f);
     };
 
     // ---- the blows ---------------------------------------------------------------------
@@ -492,23 +503,25 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             const float size = kDiedSize * unit;
             const float tracking = kDiedTracking * size;
             const std::string said = "You Died";
-            const float wide = face_.measure(size, said) + tracking * float(said.size() - 1);
+            const float wide = death_.measure(size, said) + tracking * float(said.size() - 1);
             const float x = std::round(centre - wide * 0.5f);
             // No lift: it fades in where it will stand, and stands there.
             const float at = std::round(float(height) * kDiedDownScreen);
             // The cloud first, behind the whole block -- the word, the rule and the air round
             // them -- and then the arrival's own two black halos under the word.
             scrim(centre, at - size * 0.25f, unit, alpha);
-            if (bgfx::isValid(haloTexture_)) {
-                canvas_.lettered(halo_, haloTexture_, x, at, size, tracking,
+            if (bgfx::isValid(deathHaloTexture_)) {
+                canvas_.lettered(deathHalo_, deathHaloTexture_, x, at, size, tracking,
                                  black(kTightAlpha * alpha), said);
             }
             if (bgfx::isValid(softTexture_)) {
                 canvas_.lettered(soft_, softTexture_, x, at + kSoftDrop * unit, size, tracking,
                                  black(kSoftAlpha * alpha), said);
             }
-            canvas_.lettered(face_, faceTexture_, x, at, size, tracking,
-                             withAlpha(kDiedInk, alpha), said);
+            if (bgfx::isValid(deathTexture_)) {
+                canvas_.lettered(death_, deathTexture_, x, at, size, tracking,
+                                 withAlpha(kDiedInk, alpha), said);
+            }
             rule(centre, at + kDiedRuleDrop * unit, unit, alpha, 1.0f, 1.0f);
             // The lane's own stack is left where it was: nothing else is up while he is down,
             // and a row that arrives after him starts at the foot of the screen as always.

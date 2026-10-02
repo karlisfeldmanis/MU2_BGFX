@@ -22,11 +22,13 @@ constexpr const char* kFacePath = MU2_ROOT_DIR "/extern/OpenSans-SemiBold.ttf";
 // The arrival's map name: Cinzel Medium, Google Fonts' static instance, which is what the
 // design page the user chose on 2026-09-22 was drawn in. bootstrap.sh fetches it.
 constexpr const char* kTitleFacePath = MU2_ROOT_DIR "/extern/Cinzel-Medium.ttf";
-// The damage figures: Cinzel Bold. The design page of 2026-09-23 drew concept B2 in a condensed
-// grotesque, and the user replaced the family on sight of it -- the fight must speak in the same
-// voice as the map name, which is Cinzel. What survives of B2 is everything the page actually
-// argued: the ramp, the flatness, and no event for a critical.
-constexpr const char* kFigureFacePath = MU2_ROOT_DIR "/extern/Cinzel-Bold.ttf";
+// The damage figures: Philosopher Bold, the user's pick on 2026-10-02 off a page of fourteen
+// faces drawn over a Lorencia fight, at that page's smallest sizes. Cinzel Bold had them from
+// 2026-09-23; what survives of the B2 page is still the ramp, the flatness, and no event for a
+// critical.
+constexpr const char* kFigureFacePath = MU2_ROOT_DIR "/extern/Philosopher-Bold.ttf";
+// The death, and the halo the gain lane borrows: still Cinzel Bold, the map name's voice.
+constexpr const char* kDeathFacePath = MU2_ROOT_DIR "/extern/Cinzel-Bold.ttf";
 // The gain lane and the death, in the map name's own Medium: quieter than the fight by a whole
 // weight, and the same face the player already reads a town's name in.
 constexpr const char* kQuietFacePath = MU2_ROOT_DIR "/extern/Cinzel-Medium.ttf";
@@ -41,6 +43,7 @@ constexpr int kSolidRows = 12;
 const char* facePath() { return kFacePath; }
 const char* titleFacePath() { return kTitleFacePath; }
 const char* figureFacePath() { return kFigureFacePath; }
+const char* deathFacePath() { return kDeathFacePath; }
 const char* quietFacePath() { return kQuietFacePath; }
 
 bool Face::bake(const std::string& path, float pixels, int size, int padding, int oversample,

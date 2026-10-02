@@ -68,6 +68,15 @@ if [ ! -f extern/Cinzel-Bold.ttf ]; then
   curl -sSL -o extern/Cinzel-Bold.ttf $CINZEL_BOLD_URL
   echo "$CINZEL_BOLD_SHA256  extern/Cinzel-Bold.ttf" | shasum -a 256 -c - || { rm -f extern/Cinzel-Bold.ttf; exit 1; }
 fi
+# The damage figures' own face, Philosopher Bold (SIL OFL), the user's pick on 2026-10-02 off a
+# page of fourteen faces drawn over a Lorencia fight. Cinzel Bold above stays for the death.
+# Google Fonts' static 700 instance, pinned by the checksum as the Cinzels are.
+PHILOSOPHER_BOLD_URL=https://fonts.gstatic.com/s/philosopher/v21/vEFI2_5QCwIS4_Dhez5jcWjVamgc.ttf
+PHILOSOPHER_BOLD_SHA256=5b2bd1ca0ef9ed2869fbad9511ce3f9e5f08848712a0a94c0549fd4b360921fd
+if [ ! -f extern/Philosopher-Bold.ttf ]; then
+  curl -sSL -o extern/Philosopher-Bold.ttf $PHILOSOPHER_BOLD_URL
+  echo "$PHILOSOPHER_BOLD_SHA256  extern/Philosopher-Bold.ttf" | shasum -a 256 -c - || { rm -f extern/Philosopher-Bold.ttf; exit 1; }
+fi
 # The Sanctuary interface's two sans faces (SIL OFL), chosen by the user on 2026-09-27 with the
 # rest of game/ui/style.h: Alegreya Sans SC Bold for every button's word, set with no tracking,
 # and Alegreya Sans Medium for a control's label. Google Fonts' static instances, versioned by
