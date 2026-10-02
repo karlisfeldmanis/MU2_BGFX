@@ -497,7 +497,10 @@ void Realm::spiritStrike(Body& hero, const SpiritBlow& blow) {
     strikeAt(hero, *target, blow.force, row, true, false);
     // Its Hit or Missed is the first thing the blow says, shown whatever his body is playing
     // (`thrown`), and in the rune's colour when the shield let it go.
-    if (said < happenings_.size()) happenings_[said].rune = blow.rune;
+    if (said < happenings_.size()) {
+        happenings_[said].rune = blow.rune;
+        happenings_[said].spirit = happenings_[said].what == What::Hit;
+    }
     hero.stats.wizardMinimum = own.wizardMinimum;
     hero.stats.wizardMaximum = own.wizardMaximum;
 }

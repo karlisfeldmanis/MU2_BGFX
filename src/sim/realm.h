@@ -191,6 +191,9 @@ struct Happening {
     // A `Hit` a Rune of Creation's power dealt -- Stormcall's lightning, Meteor's rock, Frost
     // Arrow's second wound -- drawn in the rune's own colour (the user, 2026-10-01).
     bool rune = false;
+    // A `Hit` Evil Spirit's spirits dealt, the wizard's spell's or the shield rune's: the drawing
+    // spins what it struck (Play, kSpiritStormTime).
+    bool spirit = false;
     // A boss's Flame of Evil: the Death Gorgon's and the Balrog's one blow in five (WebZen's
     // `rand() % 5 == 0` on A.Type 150, gObjMonster.cpp:1849-1925), its damage the monster's own
     // band as WebZen sends it -- the drawing's cue, nothing else changes.

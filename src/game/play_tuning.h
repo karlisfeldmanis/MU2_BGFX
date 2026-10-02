@@ -43,6 +43,17 @@ constexpr float kAppearSeconds = 1.1f;
 // How long Defense's ribbons play at the cast: once, and not for the guard's whole length.
 // Invention, 2026-09-25.
 constexpr float kGuardShowSeconds = 2.0f;
+// A body Evil Spirit strikes spins (the user, 2026-10-02: "when evil spirit hit monster we need
+// that monster is rotatinig, this is how i remember it from MuMain"). The spin is MuMain's own,
+// PushingCharacter's `Angle[2] += StormTime * 10` a frame with StormTime counted down a frame at
+// a time (ZzzCharacter.cpp:3140-3144): ten of MU's 25 frames, 0.4 s and about a turn and a half.
+// MuMain as forked sets StormTime nowhere -- it only zeroes it (WSclient.cpp:5797, 5809, 5874) --
+// so what started it for which skill is not in the source read: Evil Spirit as its trigger is
+// the user's memory. The angle it is left at then eases back to the body's facing over about
+// kSpinSettleSeconds, where MuMain keeps it until the body next turns (ours).
+constexpr float kSpiritStormTime = 10.0f;
+constexpr float kStormFramesPerSecond = 25.0f;
+constexpr float kSpinSettleSeconds = 0.25f;
 
 // How long a skill's clip blends in over, against the 0.18 s every other clip uses
 // (`kBlendSeconds`, crowd.cpp). **invention**: a skill is a wind-up rather than a jab, and at the

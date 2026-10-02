@@ -580,6 +580,13 @@ void Play::update(double seconds) {
                     shock(*struck, struck->shockClip);
                 }
             }
+            // And Evil Spirit's blow spins what it strikes (kSpiritStormTime, the user's memory of
+            // MuMain), from the full turn again if it was spinning already.
+            if (happening.what == sim::What::Hit && happening.spirit) {
+                if (Drawn* struck = drawnOf(happening.whom); struck && struck->placed) {
+                    struck->stormTime = kSpiritStormTime;
+                }
+            }
             // Evil Spirit let go round him, his spell's or his shield rune's (fx/spirits.h), with
             // SOUND_EVIL as MU plays it at the release (ZzzCharacter.cpp:4603).
             if (happening.what == sim::What::Spirits) {

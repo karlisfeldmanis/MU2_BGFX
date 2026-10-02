@@ -815,6 +815,18 @@ void Play::follow(float seconds) {
         const float dx = std::cos(facing);
         const float dz = -std::sin(facing);
         one.yaw = std::atan2(dx, dz);
+        // Evil Spirit's spin on top (kSpiritStormTime): MuMain's PushingCharacter while its
+        // StormTime lasts, then what turn it left eased back to the facing.
+        if (one.stormTime > 0.0f) {
+            const float frames = std::min(one.stormTime, seconds * kStormFramesPerSecond);
+            one.spin += one.stormTime * 10.0f * frames * (3.14159265f / 180.0f);
+            one.stormTime -= frames;
+            if (one.stormTime <= 0.0f) one.spin = wrapped(one.spin);
+        } else if (one.spin != 0.0f) {
+            one.spin *= std::exp(-3.0f * seconds / kSpinSettleSeconds);
+            if (std::fabs(one.spin) < 1e-3f) one.spin = 0.0f;
+        }
+        one.yaw += one.spin;
 
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;

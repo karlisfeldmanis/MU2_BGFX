@@ -704,6 +704,10 @@ private:
         // Seconds of a flinch left to play, held as a swing is -- without it the idle took the
         // shock clip back on the next frame. A swing or a step ends it. See Play::flinch.
         float shocked = 0.0f;
+        // Evil Spirit's spin (kSpiritStormTime): MuMain's StormTime, in its 25 fps frames, and
+        // the turn it has put on the body over its facing, in radians.
+        float stormTime = 0.0f;
+        float spin = 0.0f;
         // Seconds his weapon stays slung on his back: a guard's salute is given with the hand
         // that holds it, and with the crossbow in it the salute was him aiming at Marlon.
         float stowed = 0.0f;
