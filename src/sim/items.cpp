@@ -251,7 +251,7 @@ const PowerRow* powerOf(uint8_t power) {
          true, Kin::DarkKnight},
         {Power::Ice, "Ice",
          "A swing that lands has a 15% chance to freeze the monster he struck, slowing it to half "
-         "its pace",
+         "its pace and wounding it for half the swing, raised by his energy",
          true, Kin::DarkKnight},
         {Power::Poison, "Poison",
          "A swing that lands has a 15% chance to poison the monster he struck, hurting it for "
@@ -310,11 +310,9 @@ Element elementOf(Power power) {
 
 bool elementServes(Element element, Kin kin) {
     switch (kin) {
-        // His runes' rock (fire), sickness (poison) and lightning; Cyclone and Twisting Slash
-        // (wind). The Ice rune's freeze wounds nothing.
-        case Kin::DarkKnight:
-            return element == Element::Fire || element == Element::Poison ||
-                   element == Element::Lightning || element == Element::Wind;
+        // His runes' rock (fire), frost (ice, since 2026-10-02 the Ice rune wounds), sickness
+        // (poison) and lightning; Cyclone and Twisting Slash (wind).
+        case Kin::DarkKnight: return element != Element::None;
         // Fire Ball, Flame, Meteorite; Ice; Poison; Lightning. Twister is not built.
         case Kin::DarkWizard:
             return element != Element::None && element != Element::Wind;

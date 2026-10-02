@@ -307,6 +307,29 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         say(What::Loosed, hero, ice ? skill::kIce : skill::kPoison, 0, 0, struck.id);
         core::logf("%s rune: tick %lld, on #%u", ice ? "ice" : "poison", (long long)tick_,
                    struck.id);
+        // And Ice wounds as it chills, as Stormcall's lightning and the Poison rune's sickness
+        // do (the user, 2026-10-02: "ice also does frost damage"): Frost Arrow's second wound
+        // -- kFrostWound of his swing and his energy's band, critical off his own chance at the
+        // swing whole and the top of the band. ours.
+        if (ice) {
+            const int energy = hero.points.energy;
+            const bool critical = hero.stats.criticalChance > 0.0 &&
+                                  runeDice_.nextBool(hero.stats.criticalChance);
+            const int high = int(energy * kRuneEnergyHigh);
+            const int bare =
+                critical ? std::max(1, wound) + high
+                         : std::max(1, int(float(wound) * kFrostWound)) +
+                               runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1);
+            // Frost, so Glacier raises it as it raises Frost Arrow's.
+            const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice)));
+            struck.health = std::max(0, struck.health - bite);
+            say(What::Hit, hero, bite, bite, struck.health, struck.id);
+            happenings_.back().critical = critical;
+            happenings_.back().rune = true;
+            core::logf("ice rune: tick %lld, on #%u, %d frost%s", (long long)tick_, struck.id,
+                       bite, critical ? " (critical)" : "");
+            if (struck.health <= 0) kill(struck, hero);
+        }
         return;
     }
     // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,

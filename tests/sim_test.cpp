@@ -4776,7 +4776,7 @@ void testRunes(const content::Tables& tables) {
     // -- a chill it walks slowed under, or pulses that go on hurting it; the same sword with its
     // socket empty leaves nothing on anything.
     struct Elements {
-        int swings = 0, said = 0, onStruck = 0, took = 0, pulses = 0;
+        int swings = 0, said = 0, onStruck = 0, took = 0, pulses = 0, wounds = 0, wounded = 0;
     };
     const auto elements = [&](uint8_t power) {
         Elements seen;
@@ -4816,6 +4816,12 @@ void testRunes(const content::Tables& tables) {
             for (const sim::Happening& h : realm.happenings()) {
                 if (h.who != realm.hero().id) continue;
                 if (h.what == sim::What::Hit && h.poisoned) ++seen.pulses;
+                // The Ice rune's frost wound, its own Hit in the rune's colour.
+                if (h.what == sim::What::Hit && h.rune && !h.poisoned) {
+                    ++seen.wounds;
+                    seen.wounded += h.a;
+                    continue;
+                }
                 if (h.what == sim::What::Hit && !h.thrown && !h.poisoned) {
                     ++seen.swings;
                     struck = h.whom;
@@ -4848,6 +4854,10 @@ void testRunes(const content::Tables& tables) {
     checkEqual(ice.onStruck, ice.said, "always the monster he struck");
     checkEqual(ice.took, ice.said, "which walks chilled after it");
     check(double(ice.said) <= double(ice.swings) * 0.25, "at no more than its chance and some");
+    std::printf("  %d frost wounds, %.1f each\n", ice.wounds,
+                ice.wounds ? double(ice.wounded) / ice.wounds : 0.0);
+    checkEqual(ice.wounds, ice.said, "and every chill wounds, as Stormcall and Poison do");
+    check(ice.wounded >= ice.wounds, "for at least one each");
     const Elements venom = elements(uint8_t(sim::Power::Poison));
     std::printf("  %d landed swings, %d poisonings, %d pulses\n", venom.swings, venom.said,
                 venom.pulses);
@@ -4855,6 +4865,7 @@ void testRunes(const content::Tables& tables) {
     checkEqual(venom.onStruck, venom.said, "always the monster he struck");
     checkEqual(venom.took, venom.said, "which goes on poisoned after it");
     check(venom.pulses > 0, "and its pulses hurt, his");
+    checkEqual(venom.wounds, 0, "Poison's hurt is its pulses, no wound of its own");
     const Elements bare = elements(0);
     check(bare.said == 0 && bare.pulses == 0, "and none of either from an empty socket");
 
