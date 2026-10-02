@@ -23,8 +23,10 @@ constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 constexpr float kDepthMin = 0.2f, kDepthMax = 1.5f;
 constexpr float kSizeMin = 9.0f, kSizeMax = 14.0f;
 constexpr float kGrowth = 0.3f;
-constexpr float kFadeOut = 8.0f;  // seconds, a cloud drifting towards ground or out of reach
-constexpr float kFadeIn = 6.0f;   // seconds, every cloud from nothing, the first ones too
+// 10 s and 12 s since 'they are not supper smooth whn char moves or they appear' (2026-10-02):
+// at 8 and 6 a cloud born in view was seen arriving as he walked.
+constexpr float kFadeOut = 10.0f;  // seconds, a cloud drifting towards ground or out of reach
+constexpr float kFadeIn = 12.0f;   // seconds, every cloud from nothing, the first ones too
 constexpr float kDrift[2] = {0.5f, 0.22f};  // metres a second
 constexpr float kScatter = 0.12f;
 constexpr float kSpin = 0.045f;             // radians a second at most
@@ -41,7 +43,7 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // is one colour, so the smoke blend reads the same in any order and the sort cannot flicker.
 // Added, smoke01 was too small a puff to cover, and smoke02 added stood as brown squares.
 // And 'little bit to much vvisslbe clouds': 0.044.
-constexpr float kAlpha = 0.044f;
+constexpr float kAlpha = 0.032f;  // and 'cloud still little bit to much vissible': 0.032
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
