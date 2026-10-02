@@ -3921,6 +3921,39 @@ void testTowerKeeper() {
     checkEqual(links, 7, "seven links, a floor each");
     checkEqual(chained, 6, "each after the one before");
     checkEqual(unmade, 0, "and every thing she pays is a cooked item");
+    // Links 2-7's first clears (2026-10-02): every class a rune it may set, in what that link pays
+    // it where the link pays a socketed piece; a repeat pays neither.
+    const int creationRow = tower.itemNamed("Jewel22");
+    for (int link = 1; link < 7 && creationRow >= 0; ++link) {
+        const sim::QuestRow& row = sim::questAt(shrine + link);
+        for (int kin = 0; kin < 3; ++kin) {
+            int runes = 0, fits = 0, pieces = 0, again = 0;
+            for (int i = 0; i < row.paidCount; ++i) {
+                const sim::QuestItem& rune = row.paid[i];
+                if (rune.item == std::string("Jewel22") || rune.sockets > 0) {
+                    again += sim::questPays(rune, kin, false) ? 1 : 0;
+                }
+                if (!sim::questPays(rune, kin, true)) continue;
+                pieces += rune.sockets > 0 ? 1 : 0;
+                const sim::PowerRow* power = sim::powerOf(rune.power);
+                if (!power) continue;
+                ++runes;
+                check(power->takenBy(sim::Kin(kin)), "her rune is one its class may set");
+                sim::Held jewel{int32_t(creationRow), 0, 1};
+                jewel.powers[0] = rune.power;
+                for (int j = 0; j < row.paidCount; ++j) {
+                    const sim::QuestItem& piece = row.paid[j];
+                    if (piece.sockets == 0 || !sim::questPays(piece, kin, true)) continue;
+                    sim::Held target{int32_t(tower.itemNamed(piece.item)), 0, 1};
+                    target.sockets = piece.sockets;
+                    fits += sim::settable(tower, jewel, target, sim::Kin(kin)) ? 1 : 0;
+                }
+            }
+            check(runes >= 1, "each of her links pays every class a rune");
+            check(pieces == 0 || fits >= 1, "and it goes in the piece that link pays");
+            checkEqual(again, 0, "a repeat pays neither");
+        }
+    }
     const auto folkOf = [](const content::Tables& tables, int number) {
         for (size_t i = 0; i < tables.folk.size(); ++i) {
             if (tables.folk[i].number == number) return int(i);

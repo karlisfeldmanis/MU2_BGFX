@@ -545,6 +545,14 @@ QuestRow tersiaSecond() {
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 6;
+    // The first clears of links 2-7 (the user, 2026-10-02: "we made bunch of new runes but we
+    // need to also armors or weapons/shield/rings also for rewards"; "lets do it we can always
+    // change rewards later"): what the set from Devin and the Dungeon lacks -- a second ring, a
+    // better weapon, the pendant, a shield, the class runes, and the Balrog's top weapon. Ours.
+    // Here the second ring, and the rune for a pet's keeper.
+    row.paid[row.paidCount++] = {.item = "Ring02", .sockets = 1, .firstOnly = true};  // of Poison
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Kinship),
+                                 .firstOnly = true};
     row.voice = "tersia_2";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -569,6 +577,22 @@ QuestRow tersiaThird() {
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 7;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // A better weapon, two sockets, and a rune for it: the knight's one-handed, so a shield fits.
+    row.paid[row.paidCount++] = {.item = "Sword14", .kin = knight, .sockets = 2,
+                                 .firstOnly = true};  // Double Blade
+    row.paid[row.paidCount++] = {.item = "Staff04", .kin = wizard, .sockets = 2,
+                                 .firstOnly = true};  // Thunder Staff
+    row.paid[row.paidCount++] = {.item = "Bow05", .kin = elf, .sockets = 2,
+                                 .firstOnly = true};  // Tiger Bow
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
+                                 .power = uint8_t(Power::Meteor), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
+                                 .power = uint8_t(Power::Inferno), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Glacier),
+                                 .firstOnly = true};
     row.voice = "tersia_3";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -594,6 +618,11 @@ QuestRow tersiaFourth() {
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 8;
+    // The pendant, every class's.
+    row.paid[row.paidCount++] = {.item = "Necklace01", .sockets = 1,
+                                 .firstOnly = true};  // Pendant of Lightning
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell),
+                                 .firstOnly = true};
     row.voice = "tersia_4";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -617,6 +646,17 @@ QuestRow tersiaFifth() {
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 9;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // A shield; the elf's bow takes both hands, so hers is a Ring of Ice.
+    row.paid[row.paidCount++] = {.item = "Shield12", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Serpent Shield
+    row.paid[row.paidCount++] = {.item = "Shield15", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};  // Legendary Shield
+    row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
+                                 .firstOnly = true};
     row.voice = "tersia_5";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -641,6 +681,16 @@ QuestRow tersiaSixth() {
     row.steps[3] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 4;
     row.afterAny = 1u << 10;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // No item: each class's legendary rune. The elf has only Frost Arrow, so a second.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
+                                 .power = uint8_t(Power::FireRing), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
+                                 .power = uint8_t(Power::Pyroblast), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
+                                 .firstOnly = true};
     row.voice = "tersia_6";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -672,6 +722,22 @@ QuestRow tersiaBalrog() {
     row.stepCount = 4;
     row.afterAny = 1u << 11;
     row.paid[row.paidCount++] = {.item = "Jewel15"};  // Jewel of Chaos
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // The top weapon, two sockets -- the knight's the Balrog's own Bill -- and a legendary rune.
+    row.paid[row.paidCount++] = {.item = "Spear10", .kin = knight, .sockets = 2,
+                                 .firstOnly = true};  // Bill of Balrog
+    row.paid[row.paidCount++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
+                                 .firstOnly = true};  // Legendary Staff
+    row.paid[row.paidCount++] = {.item = "CrossBow06", .kin = elf, .sockets = 2,
+                                 .firstOnly = true};  // Bluewing Crossbow
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
+                                 .power = uint8_t(Power::Fireburst), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
+                                 .firstOnly = true};
     row.voice = "tersia_7";  // tools/voice.py, VOICES["tersia"]
     return row;
 }

@@ -139,12 +139,12 @@ their levels. (The Dungeon's rows open with the link taken, as before.)
 | # | title | floor | steps (count, floor's population) | every clear | first clear |
 |---|---|---|---|---|---|
 | 1 | The Shrine's Door | LT1 | Shadows 40 (71), Poison Shadows 15 (27) | 100k exp, 100k Zen, 2 Bless | 400k exp; top gloves with a socket, Rune: Undying |
-| 2 | The Poisoned Floor | LT2 | Poison Shadows 35 (60), Cursed Wizards 12 (21) | 110k, 110k, 2 Bless | 350k exp |
-| 3 | The Wizards' Floor | LT3 | Cursed Wizards 15 (28), Death Cows 20 (32) | 130k, 130k, 3 Bless, 1 Soul | 400k exp |
-| 4 | The Red Floor | LT4 | Death Cows 12 (19), Devils 10 (15) | 150k, 150k, 3 Bless, 1 Soul | 450k exp |
-| 5 | The Knights' Floor | LT5 | Devils 12 (19), Death Knights 12 (18) | 170k, 170k, 4 Bless, 1 Soul | 500k exp |
-| 6 | The Gorgons' Floor | LT6 | Devils 8 (12), Death Knights 8 (13), Death Gorgons 8 (11) | 200k, 200k, 4 Bless, 2 Soul | 600k exp |
-| 7 | The Balrog | LT7 | Death Gorgons 25 (50), Death Knights 20 (41), the Balrog 1 (2) | 250k, 250k, 5 Bless, 2 Soul, 1 Chaos | 1M exp |
+| 2 | The Poisoned Floor | LT2 | Poison Shadows 35 (60), Cursed Wizards 12 (21) | 110k, 110k, 2 Bless | 350k exp; Ring of Poison with a socket, Rune: Kinship |
+| 3 | The Wizards' Floor | LT3 | Cursed Wizards 15 (28), Death Cows 20 (32) | 130k, 130k, 3 Bless, 1 Soul | 400k exp; two-socket weapon (DK Double Blade, DW Thunder Staff, elf Tiger Bow), Rune: DK Meteor, DW Inferno, elf Glacier |
+| 4 | The Red Floor | LT4 | Death Cows 12 (19), Devils 10 (15) | 150k, 150k, 3 Bless, 1 Soul | 450k exp; Pendant of Lightning with a socket, Rune: Bloodwell |
+| 5 | The Knights' Floor | LT5 | Devils 12 (19), Death Knights 12 (18) | 170k, 170k, 4 Bless, 1 Soul | 500k exp; shield with a socket (DK Serpent, DW Legendary; the elf a Ring of Ice), Rune: Undying |
+| 6 | The Gorgons' Floor | LT6 | Devils 8 (12), Death Knights 8 (13), Death Gorgons 8 (11) | 200k, 200k, 4 Bless, 2 Soul | 600k exp; Rune: DK Ring of Fire, DW Pyroblaster, elf Frost Arrow |
+| 7 | The Balrog | LT7 | Death Gorgons 25 (50), Death Knights 20 (41), the Balrog 1 (2) | 250k, 250k, 5 Bless, 2 Soul, 1 Chaos | 1M exp; two-socket top weapon (DK Bill of Balrog, DW Legendary Staff, elf Bluewing Crossbow), Rune: DK Fireburst, DW Arcane Echo, elf Frost Arrow |
 
 Kills count by breed wherever they fall, as the Golden Archer's do. **All rewards are proposals**;
 new runes for the chain are the user's to choose (see below).
@@ -161,5 +161,7 @@ new runes for the chain are the user's to choose (see below).
   that came down the stairs, of the sixth the shrine's old records, and the twelve never reached the
   Balrog. All seven re-read with each full stop held 0.6 s (VOICES["tersia"] sentence_gap).
 - Thompson's and Tersia's tiles are ours; move them on the user's word.
-- New runes for links 2-7 (proposed in chat 2026-10-01, not chosen).
+- Links 2-7's first clears, taken 2026-10-02 ("lets do it we can always change rewards later"): what
+  the set from Devin and the Dungeon lacks. Unpaid by any quest: Bulwark, Ice, Poison, Venom, Thunder,
+  Tempest. The elf has one class rune, so Frost Arrow comes twice.
 - Sevina's Scroll of the Emperor, which MuMain places in this tower.
