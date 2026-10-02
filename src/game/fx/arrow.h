@@ -20,6 +20,11 @@
 // it, because a level arrow at 1.35 m passes over a spider, and the realm has already decided
 // it hits. The speed and the tile short are the realm's own (`kArrowTilesPerSecond`), so the
 // arrow vanishes on the tick the blow lands.
+//
+// **Ours:** the wooden arrow also burns at its tail -- small licks of the same `fire` strip,
+// laid every few centimetres where the sprite is, rising and fading in a third of a second, at
+// the shot's Luminosity roll. MU's embers are 0.7 m apart and drift behind; at 17.5 tiles a
+// second they read as a trail and not as an arrow on fire (the user: 'minimal fire emitter').
 #pragma once
 
 #include <cstdint>
@@ -80,6 +85,7 @@ private:
         float to[3];     // where the body's middle was last seen
         float left;      // reference frames
         float flown;     // metres since the last ember
+        float licked;    // metres since the last lick
         float glow;      // this frame's Luminosity roll
     };
     struct Ember {
@@ -89,6 +95,15 @@ private:
         float size;         // metres
         float spin;
         float rise;
+        float left;         // reference frames
+    };
+    struct Lick {  // ours: the tail's own flame
+        bool alive = false;
+        float at[3];
+        float velocity[3];  // metres a second
+        float size;         // metres
+        float spin;
+        float glow;
         float left;         // reference frames
     };
 
@@ -113,18 +128,30 @@ private:
     // `(0.8, 0.5, 0.2) x Luminosity`, Luminosity `(rand() % 4 + 7) * 0.1` (ZzzEffect.cpp:6645).
     static constexpr float kEmberLight[3] = {0.8f, 0.5f, 0.2f};
 
+    // ---- Ours: the tail's licks ----------------------------------------------------------------
+    static constexpr float kLickSpacing = 0.12f;   // metres of flight between licks
+    static constexpr float kLickBehind = 0.22f;    // metres behind the arrow's origin: the
+                                                   // sprite's middle (loaded z 0 to -0.41 m)
+    static constexpr float kLickFrames = 8.0f;
+    static constexpr float kSmallestLick = 0.16f, kLargestLick = 0.28f;  // metres
+    static constexpr float kLickRise = 0.7f;       // metres a second
+    static constexpr float kLickJitter = 0.15f;    // metres a second, either way across
+
     static constexpr int kShots = 16;
     static constexpr int kEmbers = 256;
+    static constexpr int kLicks = 256;
 
     Shape shapes_[kModels];
     bgfx::TextureHandle emberSheet_ = BGFX_INVALID_HANDLE;
     float metresPerTile_ = 1.0f;
     Shot shots_[kShots];
     Ember embers_[kEmbers];
+    Lick licks_[kLicks];
     uint32_t dice_ = 0x41525257u;
 
     float roll();  // 0..1
     void shed(const Shot& shot);
+    void lick(const Shot& shot);
 };
 
 }  // namespace mu::game

@@ -73,6 +73,7 @@ void Arrows::shutdown() {
     for (Shape& shape : shapes_) shape.parts.clear();
     for (Shot& one : shots_) one.alive = false;
     for (Ember& one : embers_) one.alive = false;
+    for (Lick& one : licks_) one.alive = false;
 }
 
 Arrows::Model Arrows::modelFor(int32_t group, int32_t number) {
@@ -119,6 +120,7 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     normalise(shot->along);
     shot->left = kFrames;
     shot->flown = 0.0f;
+    shot->licked = kLickSpacing;  // one at the muzzle
     shot->glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
 }
 
@@ -150,6 +152,11 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
                 shot.flown -= spacing;
                 shed(shot);
             }
+            shot.licked += step;
+            while (shot.licked >= kLickSpacing) {
+                shot.licked -= kLickSpacing;
+                lick(shot);
+            }
         }
         // A tile short of the body, on the ground plane: CheckClientArrow, and the realm's hit.
         const float dx = shot.to[0] - shot.at[0], dz = shot.to[2] - shot.at[2];
@@ -169,6 +176,34 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
         e.rise += kEmberRise * frames;
         e.at[1] += e.rise * kEmberRiseScale * kUnit * frames;
         for (int k = 0; k < 3; ++k) e.at[k] += e.velocity[k] * seconds;
+    }
+    for (Lick& l : licks_) {
+        if (!l.alive) continue;
+        l.left -= frames;
+        if (l.left <= 0.0f) {
+            l.alive = false;
+            continue;
+        }
+        for (int k = 0; k < 3; ++k) l.at[k] += l.velocity[k] * seconds;
+    }
+}
+
+void Arrows::lick(const Shot& shot) {
+    if (!bgfx::isValid(emberSheet_)) return;
+    for (Lick& l : licks_) {
+        if (l.alive) continue;
+        l.alive = true;
+        for (int k = 0; k < 3; ++k) {
+            l.at[k] = shot.at[k] - shot.along[k] * kLickBehind + (roll() - 0.5f) * 0.04f;
+        }
+        l.velocity[0] = (roll() * 2.0f - 1.0f) * kLickJitter;
+        l.velocity[1] = kLickRise * (0.7f + 0.6f * roll());
+        l.velocity[2] = (roll() * 2.0f - 1.0f) * kLickJitter;
+        l.size = kSmallestLick + (kLargestLick - kSmallestLick) * roll();
+        l.spin = roll() * kTwoPi;
+        l.glow = shot.glow;
+        l.left = kLickFrames;
+        return;
     }
 }
 
@@ -225,6 +260,23 @@ void Arrows::gather(gfx::Effects& effects) const {
         sprite.u1 = float(cell + 1) / float(kEmberCells);
         // Held, not faded: what an ember loses is its size.
         for (int k = 0; k < 3; ++k) sprite.colour[k] = kEmberLight[k] * 0.85f;
+        sprite.colour[3] = 1.0f;
+        sprite.sheet = emberSheet_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
+    }
+    for (const Lick& l : licks_) {
+        if (!l.alive) continue;
+        const float life = l.left / kLickFrames;  // 1 at birth, 0 at the end
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = l.at[k];
+        // Grows a little as it leaves the tail, then dims away.
+        sprite.halfWidth = sprite.halfHeight = l.size * (0.75f + 0.25f * (1.0f - life)) * 0.5f;
+        sprite.spin = l.spin;
+        const int cell = std::clamp(int((1.0f - life) * float(kEmberCells)), 0, kEmberCells - 1);
+        sprite.u0 = float(cell) / float(kEmberCells);
+        sprite.u1 = float(cell + 1) / float(kEmberCells);
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = kEmberLight[k] * l.glow * life;
         sprite.colour[3] = 1.0f;
         sprite.sheet = emberSheet_;
         sprite.blend = gfx::Blend::Additive;
