@@ -12,6 +12,7 @@
 #include "game/world/grass.h"
 #include "game/world/lamps.h"
 #include "game/world/lava_smoke.h"
+#include "game/world/void_clouds.h"
 #include "game/world/leaves.h"
 #include "game/world/portal.h"
 #include "game/world/weather.h"
@@ -70,6 +71,7 @@ public:
     const Sway& sway() const { return sway_; }
     Ornaments& ornaments() { return ornaments_; }
     LavaSmoke& lavaSmoke() { return lavaSmoke_; }
+    VoidClouds& voidClouds() { return voidClouds_; }
     const Shades& shades() const { return shades_; }
     Boids& boids() { return boids_; }
     const Boids& boids() const { return boids_; }
@@ -103,6 +105,7 @@ private:
     Sway sway_;
     Ornaments ornaments_;
     LavaSmoke lavaSmoke_;
+    VoidClouds voidClouds_;
     Shades shades_;
     Boids boids_;
     Leaves leaves_;

@@ -124,6 +124,7 @@ add_executable(mu2
   src/game/world/grass.cpp
   src/game/world/lamps.cpp
   src/game/world/lava_smoke.cpp
+  src/game/world/void_clouds.cpp
   src/game/world/sway.cpp
   src/game/world/doors.cpp
   src/game/world/skulls.cpp
