@@ -2172,8 +2172,8 @@ void testArchery(const content::Tables& tables) {
     check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow");
     const sim::Satchel& bag = realm.satchel();
     check(realm.hero().archer == 1, "and she is an archer");
-    check(!bag[sim::kWeaponLeft].empty() && bag[sim::kWeaponRight].durability == 255,
-          "the bow in her left hand and 255 arrows in her right");
+    check(!bag[sim::kWeaponRight].empty() && bag[sim::kWeaponLeft].durability == 255,
+          "the bow in her weapon hand and 255 arrows in her left");
     // Her archery band: level-one points, agility 25 and strength 22, on the Short Bow.
     sim::Fighter melee;
     int health = 0;
@@ -2183,8 +2183,8 @@ void testArchery(const content::Tables& tables) {
           "the band is not her melee one");
 
     // The quiver into the bag: the first shot must take it back into the empty hand.
-    check(realm.moveItem(sim::kWeaponRight, sim::kWorn), "the arrows go into the bag");
-    check(bag[sim::kWeaponRight].empty(), "and her right hand is empty");
+    check(realm.moveItem(sim::kWeaponLeft, sim::kWorn), "the arrows go into the bag");
+    check(bag[sim::kWeaponLeft].empty(), "and her left hand is empty");
 
     int drawn = 0, loosed = 0, far = 0, arrowless = 0, landedOnTime = 0, flewAtAll = 0;
     int64_t firstShotTick = -1;
@@ -2239,7 +2239,7 @@ void testArchery(const content::Tables& tables) {
             if (h.what == sim::What::Arrowless) ++arrowless;
         }
         if (firstShotTick == realm.tick()) {
-            check(bag[sim::kWeaponRight].durability == 254 && bag[sim::kWorn].empty(),
+            check(bag[sim::kWeaponLeft].durability == 254 && bag[sim::kWorn].empty(),
                   "the first shot reloads the hand from the bag and spends one");
         }
     }
@@ -2250,7 +2250,7 @@ void testArchery(const content::Tables& tables) {
     check(far > 0, "some are shot from past arm's length");
     check(flewAtAll > 0 && landedOnTime > 0, "and those land a flight after the let-go");
     check(arrowless == 1, "the empty quiver stops the attack with no more arrows");
-    check(bag[sim::kWeaponRight].empty(), "and leaves the hand empty");
+    check(bag[sim::kWeaponLeft].empty(), "and leaves the hand empty");
     std::printf("  %d drawn, %d shots, %d from range, %d in the air, %d landed on time\n", drawn, loosed, far,
                 flewAtAll, landedOnTime);
 
@@ -2258,7 +2258,7 @@ void testArchery(const content::Tables& tables) {
     // and its price off WebZen's table, the arrows 70 / 1,200 / 2,000 / 2,800.
     const int arrows = tables.itemAt(4, 15), bolt = tables.itemAt(4, 7);
     const int bare = realm.hero().stats.maximumDamage;
-    check(realm.give(arrows, sim::kWeaponRight, 2) == sim::kWeaponRight, "a +2 quiver in hand");
+    check(realm.give(arrows, sim::kWeaponLeft, 2) == sim::kWeaponLeft, "a +2 quiver in hand");
     checkEqual(realm.hero().quiverPlus, 2, "and her band knows its plus");
     checkEqual(realm.hero().stats.maximumDamage, bare + int(float(bare) * 0.05f + 1.0f),
                "and it adds 5% and one to her damage");
@@ -2321,7 +2321,7 @@ void testElfSkills(const content::Tables& tables) {
     check(realm.hero().stats.greaterDamage == 0, "Greater Damage lapses after its minute");
 
     // Skillshot on the quick slot, at the nearest spider, over and over.
-    const int quiver = realm.satchel()[sim::kWeaponRight].durability;
+    const int quiver = realm.satchel()[sim::kWeaponLeft].durability;
     int fans = 0, flown = 0;
     for (int tick = 0; tick < 3000; ++tick) {
         if (tick % 10 == 0) {
@@ -2349,7 +2349,7 @@ void testElfSkills(const content::Tables& tables) {
             if ((h.what == sim::What::Hit || h.what == sim::What::Missed) && h.thrown) ++flown;
         }
     }
-    const int spent = quiver - realm.satchel()[sim::kWeaponRight].durability;
+    const int spent = quiver - realm.satchel()[sim::kWeaponLeft].durability;
     check(fans > 0, "Skillshot is loosed off the quick slot");
     check(spent > 0 && flown > 0, "and its arrows strike and are paid for");
     std::printf("  %d fans, %d arrows spent, %d landed\n", fans, spent, flown);
@@ -6329,6 +6329,103 @@ void testDrops(const content::Tables& tables) {
     }
 }
 
+// Putting a thing on takes down whatever it cannot be worn with, into the bag (the user,
+// 2026-10-02): a two-handed weapon over a sword and shield takes both off, a crossbow over a bow
+// takes the bow and its arrows, and every bow and crossbow goes in the one weapon slot.
+void testWearingTakesDown(const content::Tables& tables) {
+    std::printf("wearing takes down\n");
+    // The first row of its kind this character can wear, or -1.
+    const auto first = [&](const sim::Realm& realm, auto&& wanted) {
+        for (size_t i = 0; i < tables.items.size(); ++i) {
+            const content::ItemRow& row = tables.items[i];
+            if (wanted(row) && sim::fits(tables, realm.wearer(), sim::Held{int32_t(i), 0, 1})) {
+                return int32_t(i);
+            }
+        }
+        return int32_t(-1);
+    };
+    const auto bow = [](const content::ItemRow& r) {
+        return r.group == sim::kGroupBows && !sim::ammunition(r);
+    };
+    const auto count = [](const sim::Satchel& bag) {
+        int n = 0;
+        for (int s = sim::kWorn; s < sim::kSlots; ++s) n += !bag[s].empty();
+        return n;
+    };
+
+    sim::Realm knight;
+    check(knight.raise(&tables, 3, 138, 124, sim::Kin::DarkKnight, 60), "a knight raises");
+    knight.spend(knight.hero().pointsInHand * 3 / 4, knight.hero().pointsInHand / 4, 0, 0);
+    const int32_t sword = first(knight, [](const content::ItemRow& r) {
+        return r.weapon() && !r.shield() && r.group < sim::kGroupBows && !r.twoHanded();
+    });
+    const int32_t shield = first(knight, [](const content::ItemRow& r) { return r.shield(); });
+    const int32_t big = first(knight, [](const content::ItemRow& r) {
+        return r.weapon() && r.group < sim::kGroupBows && r.twoHanded();
+    });
+    check(sword >= 0 && shield >= 0 && big >= 0, "a sword, a shield and a two-hander he wears");
+    if (sword >= 0 && shield >= 0 && big >= 0) {
+        knight.give(sword, sim::kWeaponRight);
+        knight.give(shield, sim::kWeaponLeft);
+        const int at = knight.give(big);
+        check(sim::movable(tables, knight.wearer(), knight.satchel(), at, sim::kWeaponRight),
+              "the two-hander lights the weapon slot");
+        check(knight.moveItem(at, sim::kWeaponRight), "and goes on");
+        checkEqual(knight.satchel()[sim::kWeaponRight].item, big, "in the weapon hand");
+        check(knight.satchel()[sim::kWeaponLeft].empty(), "the shield came off");
+        checkEqual(count(knight.satchel()), 2, "and both it and the sword are in the bag");
+
+        // And the shield back on over the two-hander: the two-hander comes down.
+        int shieldAt = -1;
+        for (int s = sim::kWorn; s < sim::kSlots; ++s) {
+            if (knight.satchel()[s].item == shield) shieldAt = s;
+        }
+        check(knight.moveItem(shieldAt, sim::kWeaponLeft), "the shield goes back on");
+        check(knight.satchel()[sim::kWeaponRight].empty(), "and takes the two-hander off");
+
+        // A bag with no room for what would come down refuses, whole.
+        sim::Realm full;
+        full.raise(&tables, 3, 138, 124, sim::Kin::DarkKnight, 60);
+        full.spend(full.hero().pointsInHand * 3 / 4, full.hero().pointsInHand / 4, 0, 0);
+        full.give(sword, sim::kWeaponRight);
+        full.give(shield, sim::kWeaponLeft);
+        const int bigAt = full.give(big);
+        const int32_t apple = tables.itemAt(14, 0);
+        while (full.give(apple, -1, 0, 1) >= 0) {}
+        check(!full.moveItem(bigAt, sim::kWeaponRight), "a full bag refuses the two-hander");
+        checkEqual(full.satchel()[sim::kWeaponLeft].item, shield, "and the shield stays on");
+    }
+
+    sim::Realm elf;
+    check(elf.raise(&tables, 5, 212, 198, sim::Kin::FairyElf, 60), "an elf raises");
+    elf.spend(elf.hero().pointsInHand / 4, elf.hero().pointsInHand * 3 / 4, 0, 0);
+    const int32_t shortBow = first(elf, [&](const content::ItemRow& r) {
+        return bow(r) && r.number <= 6;
+    });
+    const int32_t cross = first(elf, [&](const content::ItemRow& r) {
+        return bow(r) && r.number > 6;
+    });
+    check(shortBow >= 0 && cross >= 0, "a bow and a crossbow she wears");
+    if (shortBow >= 0 && cross >= 0) {
+        checkEqual(sim::placeOf(tables.items[size_t(shortBow)]), int(sim::kWeaponRight),
+                   "a bow goes in the weapon slot");
+        checkEqual(sim::placeOf(tables.items[size_t(cross)]), int(sim::kWeaponRight),
+                   "and so does a crossbow");
+        const int32_t arrows = tables.itemAt(sim::kGroupBows, 15);
+        elf.give(shortBow, sim::kWeaponRight);
+        elf.give(arrows, sim::kWeaponLeft, 0, 100);
+        const int at = elf.give(cross);
+        check(elf.moveItem(at, sim::kWeaponRight), "the crossbow goes on over the bow");
+        checkEqual(elf.satchel()[sim::kWeaponRight].item, cross, "in the weapon slot");
+        check(elf.satchel()[sim::kWeaponLeft].empty(), "and the arrows, which it cannot shoot, came off");
+        checkEqual(count(elf.satchel()), 2, "the bow and the arrows are in the bag");
+        const int32_t bolts = tables.itemAt(sim::kGroupBows, 7);
+        const int boltAt = elf.give(bolts, -1, 0, 100);
+        check(elf.moveItem(boltAt, sim::kWeaponLeft), "the bolts go on beside it");
+        checkEqual(elf.satchel()[sim::kWeaponRight].item, cross, "and the crossbow stays");
+    }
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -6371,6 +6468,7 @@ int main() {
     testArcherHolds(tables);
     testStrollers(tables);
     testArchery(tables);
+    testWearingTakesDown(tables);
     testElfSkills(tables);
     testSummons(tables);
     testGates(tables);

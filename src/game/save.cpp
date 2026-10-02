@@ -251,6 +251,21 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         capSockets(tables.items[size_t(row)], held);
     }
+    // Bows and crossbows went to the weapon slot and every quiver to the left hand (2026-10-02,
+    // sim::placeOf): a save from before has a bow on the left or arrows on the right, so the two
+    // hands change places. No version bump -- the file means the same, only the hand moved.
+    {
+        sim::Held* hands = saved.hero.slots;
+        const auto rowAt = [&](const sim::Held& h) {
+            return h.empty() ? nullptr : &tables.items[size_t(h.item)];
+        };
+        const content::ItemRow* left = rowAt(hands[sim::kWeaponLeft]);
+        const content::ItemRow* right = rowAt(hands[sim::kWeaponRight]);
+        if ((left && left->group == sim::kGroupBows && !sim::ammunition(*left)) ||
+            (right && sim::ammunition(*right))) {
+            std::swap(hands[sim::kWeaponLeft], hands[sim::kWeaponRight]);
+        }
+    }
     for (int key = 0; key < 5; ++key) {
         saved.quick[key] = rowOf(tables, saved.quickGroup[key], saved.quickNumber[key]);
     }

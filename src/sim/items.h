@@ -112,9 +112,9 @@ Needs shortOf(const Needs& asked, int level, const HeroPoints& points);
 int damageBonus(int refinement);
 int defenseBonus(bool shield, int refinement);
 
-// Which worn slot a thing goes in, or -1 for a thing that is not worn: a bow and ammunition
-// by MU's own hand rule (a bow is Weapon[1], a crossbow Weapon[0]; arrows beside the bow and
-// bolts beside the crossbow), a shield the left hand, armour its group less five.
+// Which worn slot a thing goes in, or -1 for a thing that is not worn: every weapon, bow and
+// crossbow the right hand and its quiver the left (ours, not MU's split), a shield the left
+// hand, armour its group less five.
 int placeOf(const content::ItemRow& row);
 // A Dark Knight's second weapon: a one-handed sword, axe, mace or spear may go in his LEFT hand
 // as well. MuMain's IsEquipable (an EQUIPMENT_WEAPON_RIGHT item into EQUIPMENT_WEAPON_LEFT,
@@ -249,15 +249,18 @@ struct Wearer {
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
 // Whether a thing in one hand and a thing going into the other are one hand too many: a
-// two-handed weapon wants the other hand empty, and ammunition does not count. Beast.Handful.
+// two-handed weapon wants the other hand empty or a quiver, and a bow or crossbow wants it
+// empty or holding its own ammunition. Beast.Handful.
 bool handful(const content::Tables& tables, const Satchel& bag, const Held& what, int hand);
 // Whether a move from one slot to another would be taken -- into a worn slot only from the
-// bag and only where it goes and only if it fits; into the bag if the rectangle is clear of
-// everything but the thing itself and at most one other it would swap with. Beast.Movable.
+// bag and only where it goes and only if it fits, and only if what it takes down (the slot's
+// own, and the other hand when the two cannot be held together) finds room in the bag; into
+// the bag if the rectangle is clear of everything but the thing itself and at most one other
+// it would swap with. Beast.Movable.
 bool movable(const content::Tables& tables, const Wearer& who, const Satchel& bag, int from,
              int to);
 // The move itself, after `movable` said yes: what is in the way comes back to where this one
-// was. Beast.Move.
+// was, and onto a worn slot whatever else comes down goes wherever the bag has room. Beast.Move.
 bool move(const content::Tables& tables, const Wearer& who, Satchel& bag, int from, int to);
 
 // Pours as much of `what` as fits into the stack at `at`, and says how many went. Nothing

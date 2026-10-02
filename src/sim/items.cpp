@@ -400,10 +400,12 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
 
 int placeOf(const content::ItemRow& row) {
     if (row.group < kGroupShields) {
-        // A bow is Weapon[1] and a crossbow Weapon[0] (GetEquipedBowType); the bolt goes in
-        // the left hand beside a crossbow, the arrows in the right beside a bow -- OpenMU's
-        // CreateAmmunition slot column. Everything swung goes in the right hand. Satchel.Hand.
-        if (row.group == kGroupBows && (row.number <= 6 || row.number == 7)) return kWeaponLeft;
+        // Every bow and crossbow in the weapon slot and every quiver in the left hand -- ours
+        // (the user, 2026-10-02: "bow/crosbow has to go to the same slot"). MU puts a bow in
+        // Weapon[1] and its arrows in Weapon[0] (GetEquipedBowType, OpenMU's CreateAmmunition),
+        // so a bow and a crossbow sat in different hands. The figure draws a bow by its name in
+        // the hand its clip holds it in, whichever slot it came out of. Satchel.Hand.
+        if (ammunition(row)) return kWeaponLeft;
         return kWeaponRight;
     }
     if (row.group >= kGroupShields && row.group <= kGroupBoots) return row.group - 5;
@@ -560,13 +562,69 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();
 }
 
+namespace {
+
+// A bow or a crossbow: the bow group less its two quivers.
+bool shooter(const content::ItemRow& row) {
+    return row.group == kGroupBows && !ammunition(row);
+}
+
+// Whether two things may be held at once, one in each hand: a two-handed weapon beside nothing
+// but a quiver, and a bow or crossbow beside nothing but its own -- the arrows a bow's, the bolt
+// a crossbow's (MuMain's CheckArrow pairs them the same way).
+bool together(const content::ItemRow& a, const content::ItemRow& b) {
+    if (shooter(a) || shooter(b)) {
+        const content::ItemRow& bow = shooter(a) ? a : b;
+        const content::ItemRow& other = shooter(a) ? b : a;
+        return ammunition(other) && other.number == (bow.number <= 6 ? 15 : 7);
+    }
+    if (ammunition(a) || ammunition(b)) return true;
+    return !a.twoHanded() && !b.twoHanded();
+}
+
+// Puts the bag's thing at `from` on at worn slot `to`, and takes down whatever it cannot be
+// worn with: what was in that slot, and the other hand when the two cannot be held together --
+// a two-handed sword or a bow put on over a sword and shield takes both off. What comes down
+// goes into the bag, the first where this came from if it fits there and the rest wherever
+// there is room (the user, 2026-10-02: "it has to drop old one in inventory and get space for
+// anything what it needs"). False, with the bag half-changed, when something has nowhere to go;
+// the callers run it on a copy.
+bool wearOn(const content::Tables& tables, const Wearer& who, Satchel& bag, int from, int to) {
+    const content::ItemRow* row = rowOf(tables, bag[from]);
+    if (!row || !baggable(from) || !placesIn(*row, who.kin, to) || !fits(tables, who, bag[from])) {
+        return false;
+    }
+    const Held what = bag.lift(from);
+    Held down[2];
+    int count = 0;
+    if (!bag[to].empty()) down[count++] = bag.lift(to);
+    if (to == kWeaponRight || to == kWeaponLeft) {
+        const int other = to == kWeaponRight ? kWeaponLeft : kWeaponRight;
+        const content::ItemRow* held = rowOf(tables, bag[other]);
+        if (held && !together(*row, *held)) down[count++] = bag.lift(other);
+    }
+    bag.put(to, what);
+    for (int i = 0; i < count; ++i) {
+        const content::ItemRow* r = rowOf(tables, down[i]);
+        if (!r) return false;
+        const int at = i == 0 && bag.room(tables, from, r->width, r->height)
+                           ? from
+                           : bag.free(tables, r->width, r->height);
+        if (at < 0) return false;
+        bag.put(at, down[i]);
+    }
+    return true;
+}
+
+}  // namespace
+
 bool handful(const content::Tables& tables, const Satchel& bag, const Held& what, int hand) {
     if (hand != kWeaponRight && hand != kWeaponLeft) return false;
     const Held& other = bag[hand == kWeaponRight ? kWeaponLeft : kWeaponRight];
     const content::ItemRow* mine = rowOf(tables, what);
     const content::ItemRow* theirs = rowOf(tables, other);
-    if (!mine || !theirs || ammunition(*mine) || ammunition(*theirs)) return false;
-    return mine->twoHanded() || theirs->twoHanded();
+    if (!mine || !theirs) return false;
+    return !together(*mine, *theirs);
 }
 
 bool movable(const content::Tables& tables, const Wearer& who, const Satchel& bag, int from,
@@ -577,17 +635,9 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
     if (!row) return false;
 
     if (wearable(to)) {
-        if (!baggable(from) || !placesIn(*row, who.kin, to) || !fits(tables, who, what) ||
-            handful(tables, bag, what, to)) {
-            return false;
-        }
-        // What was worn comes down to where this came from, so it has to fit there. MU2's
-        // Beast.Movable does not ask, and a Kite Shield (2x3) put on over a Small Shield (2x2)
-        // would be fine while a Small Shield put on over a Kite would lay the Kite across
-        // whatever sat under the Small Shield's footprint. Asked here; a departure from MU2
-        // in the direction of refusing what would corrupt the bag.
-        const content::ItemRow* worn = rowOf(tables, bag[to]);
-        return !worn || bag.room(tables, from, worn->width, worn->height, from);
+        // Tried on a copy: whatever comes down has to find room in the bag, or nothing moves.
+        Satchel trial = bag;
+        return wearOn(tables, who, trial, from, to);
     }
 
     const int block = blocking(tables, bag, from, to);
@@ -616,6 +666,12 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
 
 bool move(const content::Tables& tables, const Wearer& who, Satchel& bag, int from, int to) {
     if (!movable(tables, who, bag, from, to)) return false;
+    if (wearable(to)) {
+        Satchel trial = bag;
+        if (!wearOn(tables, who, trial, from, to)) return false;
+        bag = trial;
+        return true;
+    }
     // A stack let go on a stack of its kind pours into it, and what does not fit stays behind
     // (kStackMost). A full one swaps, as anything else does.
     if (baggable(from) && baggable(to)) {
@@ -634,7 +690,7 @@ bool move(const content::Tables& tables, const Wearer& who, Satchel& bag, int fr
     // Whatever is in the way, which with a footprint is not always what is recorded at the
     // destination cell: a sword dropped on a breastplate's lower half displaces the
     // breastplate, whose own slot is two cells up.
-    const int block = wearable(to) ? (bag[to].empty() ? -1 : to) : blocking(tables, bag, from, to);
+    const int block = blocking(tables, bag, from, to);
     const Held what = bag.lift(from);
     const Held displaced = block >= 0 ? bag.lift(block) : Held{};
     bag.put(to, what);
