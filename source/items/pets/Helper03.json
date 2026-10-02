@@ -1,0 +1,92 @@
+{
+  "item": "Helper03",
+  "mu_name": "Horn of Uniria",
+  "mu_name_from": "MODEL_HELPER+2, Data/Player/Helper03.bmd (ZzzOpenData.cpp:706-707, the helper run i<3), textures from Data/Item. ITEM_HORN_OF_UNIRIA is ITEM_HELPER+2, group 13 number 2. The bag icon and the drop; the ridden horse is Rider01.",
+  "profile": "weapon",
+  "profile_note": "A small held object seen in the bag and on the ground: the weapon profile, as every misc item.",
+  "sheets": {
+    "unicon": "unicon.png",
+    "unicon01": "unicon01.png"
+  },
+  "sheet_from": "The horse's own two sheets: the horn is cut from unicon.OZJ's horn and unicon01's strap.",
+  "tiled": true,
+  "tiled_why": "unicon01 carries alpha, as on the horse.",
+  "sheet_materials": {
+    "unicon": "bone",
+    "unicon01": "leather"
+  },
+  "sheet_materials_from": "A horn, bound with a strap. Judged from the sheets.",
+  "cutout": [
+    "unicon01"
+  ],
+  "cutout_from": "unicon01.OZT's own alpha.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Pets.cs:36 and CreatePet (:40-71).",
+    "call": "this.CreatePet(2, \"Horn of Uniria\", 25, (Stats.MovementSpeed, MovementSpeedConstants.BasicMountMovementSpeed, AggregateType.Maximum), (Stats.MovementSpeedUnderwater, ...)); AddItemToJewelItemDrop",
+    "group": 13,
+    "number": 2,
+    "drop_level": 25,
+    "drops_from_monsters": true,
+    "jewel": true,
+    "width": 1,
+    "height": 1,
+    "durability": 255,
+    "slot": 8,
+    "requires": {
+      "level": 25,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "power_note": "No damage, defence or absorb in OpenMU or WebZen's 0.97d base. OpenMU's one power-up is MovementSpeed 15 (MovementSpeedConstants.cs:35), MuMain's CharacterMoveSpeed 15 off a safe tile (ZzzCharacter.cpp:6320-6335). Ours is 17, the user's 'mount has to be faster that runing' (docs/mount.md). Slot 8 is the helper slot, so the Angel and the Imp shut it out.",
+    "classes_note": "All three 0.75 classes (CreatePet :53)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 38,
+      "area": 2903.4,
+      "along": [
+        -22.6,
+        14.8
+      ],
+      "mu_uv": [
+        0.495,
+        0.893,
+        0.988,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.815,
+        0.725
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 4,
+      "area": 609.2,
+      "along": [
+        -8.2,
+        14.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.84,
+        0.221,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.734,
+        0.737,
+        0.996
+      ]
+    }
+  ]
+}

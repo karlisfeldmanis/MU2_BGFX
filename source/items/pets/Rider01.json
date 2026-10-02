@@ -1,0 +1,249 @@
+{
+  "item": "Rider01",
+  "mu_name": "Uniria",
+  "mu_name_from": "AccessModel(MODEL_UNICON, L\"Data\\\\Skill\\\\\", L\"Rider\", 1) (ZzzOpenData.cpp:4204), so Data/Skill/Rider01.bmd; its sheets come from Data/Item (unicon.OZJ, unicon01.OZT). The ridden figure only: the bag item and the drop are Helper03.bmd. GOBoid.cpp creates it for a player whose helper is ITEM_HORN_OF_UNIRIA.",
+  "profile": "monster",
+  "profile_note": "A creature on its own rig, seen at the character's size under him: the monster profile and its 3x cap.",
+  "rig_from": "24 bones and four actions: 0 idle (6 keys), 1 (6 keys, never played for Uniria), 2 the run (7 keys, LockPositions), 3 the attack (6 keys). GOBoid.cpp:525-595 picks 2 while the rider moves, 3 while he attacks, 0 otherwise; it asks for 6 when he casts PLAYER_SKILL_RIDER, which this model does not have, and SetAction returns early for an action past NumActions (ZzzAI.cpp:424), so the horse holds what it was playing. Velocity 0.34 for every action (GOBoid.cpp:596).",
+  "play_speed": 0.34,
+  "scale_from": "0.9 at CreateMount (GOBoid.cpp:111-114), overwritten to 1.0 each frame by RenderMount (:684-691); drawn at 1.0. No bone link: it copies the rider's position and angle (:515, :524), the seat is in the player's ride clips.",
+  "sheets": {
+    "unicon": "unicon.png",
+    "unicon01": "unicon01.png"
+  },
+  "sheet_from": "Data/Item/unicon.OZJ (128x128, opaque: the hide, the horn, the saddle and a riveted plate) and unicon01.OZT (32x32 with alpha: the white mane and tail, cut away 24%, and a brown strap), from MuMain's own bin/Data.",
+  "tiled": true,
+  "tiled_why": "The mane is alpha cards, and the Imp showed what the baked atlas does to them: packed flush against an opaque island, the card's edge samples its neighbour's alpha. Tiled keeps unicon01 its own sheet, cut by its own alpha.",
+  "sheet_materials": {
+    "unicon": "fur",
+    "unicon01": "hair"
+  },
+  "sheet_materials_from": "One material a sheet when tiled. unicon is mostly the hide, so fur; the horn, saddle and plate on it take fur too, which is a first pass (judge in the bench). unicon01 is the mane: hair.",
+  "cutout": [
+    "unicon01"
+  ],
+  "cutout_from": "unicon01.OZT carries alpha that cuts away 24%: the mane's edge is its alpha.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 362,
+      "area": 44310.5,
+      "along": [
+        -46.6,
+        107.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.724,
+        0.53
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 28,
+      "area": 1756.9,
+      "along": [
+        56.1,
+        109.3
+      ],
+      "mu_uv": [
+        0.495,
+        0.893,
+        0.988,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.018,
+        0.403,
+        0.435
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 28,
+      "area": 2122.0,
+      "along": [
+        -17.8,
+        10.2
+      ],
+      "mu_uv": [
+        0.759,
+        0.705,
+        0.992,
+        0.879
+      ],
+      "bake_uv": [
+        0.065,
+        0.009,
+        0.419,
+        0.457
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 10,
+      "area": 3149.9,
+      "along": [
+        -23.6,
+        22.0
+      ],
+      "mu_uv": [
+        -0.004,
+        -0.005,
+        0.43,
+        0.417
+      ],
+      "bake_uv": [
+        0.01,
+        0.658,
+        0.348,
+        0.818
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 10,
+      "area": 3149.9,
+      "along": [
+        -29.8,
+        11.6
+      ],
+      "mu_uv": [
+        -0.004,
+        -0.005,
+        0.43,
+        0.417
+      ],
+      "bake_uv": [
+        0.714,
+        0.47,
+        0.866,
+        0.867
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 4,
+      "area": 939.5,
+      "along": [
+        39.7,
+        68.3
+      ],
+      "mu_uv": [
+        0.006,
+        0.005,
+        0.572,
+        0.528
+      ],
+      "bake_uv": [
+        0.01,
+        0.48,
+        0.202,
+        0.658
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 6,
+      "area": 2020.7,
+      "along": [
+        9.5,
+        73.8
+      ],
+      "mu_uv": [
+        0.008,
+        0.571,
+        0.994,
+        0.996
+      ],
+      "bake_uv": [
+        0.367,
+        0.604,
+        0.7,
+        0.748
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 4,
+      "area": 939.5,
+      "along": [
+        39.7,
+        68.3
+      ],
+      "mu_uv": [
+        0.006,
+        0.005,
+        0.572,
+        0.528
+      ],
+      "bake_uv": [
+        0.548,
+        0.01,
+        0.74,
+        0.187
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 6,
+      "area": 2020.7,
+      "along": [
+        9.5,
+        73.8
+      ],
+      "mu_uv": [
+        0.008,
+        0.571,
+        0.994,
+        0.996
+      ],
+      "bake_uv": [
+        0.253,
+        0.443,
+        0.587,
+        0.587
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 20,
+      "area": 978.6,
+      "along": [
+        17.0,
+        92.0
+      ],
+      "mu_uv": [
+        0.68,
+        0.028,
+        1.0,
+        0.465
+      ],
+      "bake_uv": [
+        0.011,
+        0.009,
+        0.991,
+        0.985
+      ]
+    }
+  ],
+  "stats_note": "No item row: this is the ridden figure, never a drop or a bag item. The row is Helper03's (13/2)."
+}
