@@ -5664,6 +5664,38 @@ void testGroupRunes(const content::Tables& tables) {
     }
 }
 
+// The runes' rarity (sim::Rarity, the user, 2026-10-02: "we need also make group of rarity of
+// runes"): a dropped Rune of Creation is Rare, Epic or Legendary at kRuneRarityShare, every
+// class having all three.
+void testRuneRarity(const content::Tables& tables) {
+    std::printf("rune rarity\n");
+    const int rune = tables.itemAt(14, 22);
+    check(rune >= 0, "the Rune of Creation");
+    if (rune < 0) return;
+    for (const sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf}) {
+        sim::Realm realm;
+        realm.raise(&tables, 11, 138, 124, kin, 50);
+        int tally[3] = {}, runes = 0, unsettable = 0;
+        for (int i = 0; i < 1000000 && runes < 1500; ++i) {
+            realm.dropFor(40);
+            if (realm.lying().empty() || realm.lying().back().what.item != rune) continue;
+            const sim::PowerRow* power = sim::powerOf(realm.lying().back().what.powers[0]);
+            if (!power) continue;
+            ++runes;
+            ++tally[int(power->rarity)];
+            unsettable += !power->takenBy(kin);
+        }
+        std::printf("  kin %d: %d runes, %d rare, %d epic, %d legendary\n", int(kin), runes,
+                    tally[0], tally[1], tally[2]);
+        checkEqual(unsettable, 0, "every rune drawn is one his class may set");
+        for (int r = 0; r < 3; ++r) {
+            const double share = runes > 0 ? double(tally[r]) / runes : 0.0;
+            check(std::abs(share - sim::kRuneRarityShare[r]) < 0.05,
+                  "each rarity drops at its share");
+        }
+    }
+}
+
 // The pets at WebZen's word (docs/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
 // landed blow, and their wear.
 // The Dungeon's runes (sim/items.h) and Devin's Renewal, by what they DO in a fight, each against
@@ -6333,6 +6365,7 @@ int main() {
     testDungeonRunes(tables);
     testElementRunes(tables);
     testGroupRunes(tables);
+    testRuneRarity(tables);
     testEvilSpirit(tables);
     testRunes(tables);
     testJewellery(tables);

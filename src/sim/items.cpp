@@ -264,69 +264,78 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Stormcall, "Stormcall",
          "A swing that lands has a 20% chance to call lightning down on a monster near him, another "
          "where there is one, its damage raised by his energy",
-         kKnightOnly, kInWeapon},
+         kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::Meteor, "Meteor",
          "A swing that lands has a 15% chance to bring a burning rock down on a monster near him, "
          "another where there is one",
-         kKnightOnly, kInWeapon},
+         kKnightOnly, kInWeapon, Rarity::Epic},
         {Power::Ice, "Ice",
          "A swing that lands has a 15% chance to freeze the monster he struck, slowing it to half "
          "its pace and wounding it for half the swing, raised by his energy",
-         kKnightOnly, kInWeapon},
+         kKnightOnly, kInWeapon, Rarity::Epic},
         {Power::Poison, "Poison",
          "A swing that lands has a 15% chance to poison the monster he struck, hurting it for "
          "twenty seconds",
-         kKnightOnly, kInWeapon},
+         kKnightOnly, kInWeapon, Rarity::Epic},
         {Power::Fireburst, "Fireburst",
          "A swing that lands has a 10% chance to burst into four fire balls, each flying at a "
          "monster near the one before, raised by his energy",
-         kKnightOnly, kInWeapon},
+         kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::FireRing, "Ring of Fire",
          "A swing that lands has a 10% chance to let a ring of fire burst round him, striking "
          "every monster within four tiles, raised by his energy",
-         kKnightOnly, kInWeapon},
+         kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::Bulwark, "Bulwark", "Defense can be raised without a shield", kKnightOnly,
-         kInWeapon},
+         kInWeapon, Rarity::Epic},
         {Power::Frost, "Frost Arrow",
          "An arrow that lands has a 20% chance to freeze the monster it struck for two seconds "
          "and wound it again for half the arrow's damage, raised by her energy",
-         kElfOnly, kInWeapon},
+         kElfOnly, kInWeapon, Rarity::Legendary},
         {Power::Echo, "Arcane Echo",
          "A spell he casts has a 20% chance to be cast a second time, for no mana", kWizardOnly,
-         kInWeapon},
+         kInWeapon, Rarity::Legendary},
         {Power::Pyroblast, "Pyroblaster",
          "Fire Ball strikes 50% harder, and one that lands has a 20% chance to burst into four "
          "more, each flying at a monster near the one it struck",
-         kWizardOnly, kInWeapon},
-        {Power::Undying, "Undying", "+20% maximum health", kEveryClass, kWorn},
-        {Power::KeenEye, "Keen Eye", "+10% critical hit chance", kEveryClass, kWorn},
+         kWizardOnly, kInWeapon, Rarity::Legendary},
+        {Power::Undying, "Undying", "+20% maximum health", kEveryClass, kWorn, Rarity::Epic},
+        {Power::KeenEye, "Keen Eye", "+10% critical hit chance", kEveryClass, kWorn, Rarity::Rare},
         {Power::Bloodwell, "Bloodwell",
          "3% of the damage you deal comes back as life, and 5% of your mana after a kill",
-         kEveryClass, kWorn},
+         kEveryClass, kWorn, Rarity::Epic},
         {Power::Frenzy, "Frenzy",
          "A blow that lands has a 15% chance to raise attack and casting speed by 20 for three "
          "seconds",
-         kEveryClass, kWorn},
+         kEveryClass, kWorn, Rarity::Epic},
         {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
-         kEveryClass, kWorn},
+         kEveryClass, kWorn, Rarity::Rare},
         {Power::Spirits, "Evil Spirit",
          "A blow that misses you has a 15% chance to release evil spirits around you, which "
          "strike most of the monsters within ten tiles, raised by your energy",
-         kEveryClass, kInShield | kInJewellery},
+         kEveryClass, kInShield | kInJewellery, Rarity::Legendary},
         {Power::Kinship, "Kinship",
          "Your Guardian Angel no longer lowers your damage, and your Imp and Dinorant take no "
          "life for their blows",
-         kEveryClass, kInJewellery},
-        {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld},
-        {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld},
-        {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld},
-        {Power::Thunder, "Thunder", "+20% lightning damage", kEveryClass, kHeld},
-        {Power::Tempest, "Tempest", "+20% wind damage", kEveryClass, kHeld},
+         kEveryClass, kInJewellery, Rarity::Rare},
+        {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
+        {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
+        {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},
+        {Power::Thunder, "Thunder", "+20% lightning damage", kEveryClass, kHeld, Rarity::Rare},
+        {Power::Tempest, "Tempest", "+20% wind damage", kEveryClass, kHeld, Rarity::Rare},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
     }
     return nullptr;
+}
+
+const char* rarityName(Rarity rarity) {
+    switch (rarity) {
+        case Rarity::Rare: return "Rare";
+        case Rarity::Epic: return "Epic";
+        case Rarity::Legendary: return "Legendary";
+    }
+    return "";
 }
 
 Element elementOf(Power power) {

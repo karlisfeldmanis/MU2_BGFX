@@ -205,10 +205,21 @@ uint32_t moneyColour(long long zen) {
     return gfx::rgba(150.0f / 255.0f, 220.0f / 255.0f, 1.0f);
 }
 
+// A rune's rarity in WoW's colour for it (sim::Rarity).
+static Tone rarityTone(sim::Rarity rarity) {
+    return rarity == sim::Rarity::Legendary ? Tone::Legendary
+           : rarity == sim::Rarity::Epic    ? Tone::Epic
+                                            : Tone::Rare;
+}
+
 tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     // MU's rungs kept in its order (excellent over a socket over +7 over an option, the socket
     // ours from 2026-09-28: "item drop with +socket is rare"), each in WoW's colour for its tier.
-    if (sim::creation(row)) return Tone::Legendary;
+    // A Rune of Creation is its rune's rarity (sim::Rarity), legendary while it carries none.
+    if (sim::creation(row)) {
+        const sim::PowerRow* power = sim::powerOf(powerAt(what, 0));
+        return power ? rarityTone(power->rarity) : Tone::Legendary;
+    }
     if (what.excellent != 0) return Tone::Epic;
     if (socketsOf(what) > 0) return Tone::Rare;
     if ((row.jewel() && row.group != sim::kGroupPets) || what.refinement >= kRefinedFrom) {
@@ -517,9 +528,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 sheet.rune = runeRow(tables);
                 line.keyword = power->name;
                 line.free = power->tells ? power->tells : "";
-                line.freeTone = Tone::Orange;
+                line.freeTone = rarityTone(power->rarity);
                 line.mark = tip::Mark::RingSet;
-                line.markTone = Tone::Orange;
+                line.markTone = rarityTone(power->rarity);
                 socket.rows.push_back(line);
                 // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
                 // "show damage for dps runes based on base dmg and scaling"): the swing's band as
@@ -641,9 +652,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             Row line;
             line.keyword = power->name;
             line.mark = tip::Mark::RingSet;
-            line.markTone = Tone::Orange;
+            line.markTone = rarityTone(power->rarity);
             line.free = power->tells ? power->tells : "";
-            line.freeTone = Tone::Orange;
+            line.freeTone = rarityTone(power->rarity);
             carries.rows.push_back(line);
             // Its group (sim::PowerRow): the classes, and the sockets that take it.
             const bool everyone = power->classes == sim::kEveryClass;
@@ -666,7 +677,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 sockets += kinds[k];
             }
             Row where;
-            where.free = classes + " \xC2\xB7 " + sockets + " socket";
+            where.free = std::string(sim::rarityName(power->rarity)) + " \xC2\xB7 " + classes +
+                         " \xC2\xB7 " + sockets + " socket";
             where.freeTone = Tone::Gray;
             carries.rows.push_back(where);
             sheet.sections.push_back(carries);

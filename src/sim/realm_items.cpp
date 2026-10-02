@@ -908,19 +908,36 @@ void Realm::leave(const Body& dead, const Body& killer) {
     if (roll < creationChance) {
         const int32_t item = draw([](const content::ItemRow& r) { return creation(r); });
         if (item < 0) return;
-        // A power the killer's class may set, drawn evenly -- an element rune only where his
-        // class throws something of its element (sim::elementServes).
+        // A power the killer's class may set -- an element rune only where his class throws
+        // something of its element (sim::elementServes) -- its rarity drawn first at
+        // kRuneRarityShare among the rarities holding one, then one of that rarity evenly.
         uint8_t powers[kMostSockets] = {};
         const auto drawable = [&](const PowerRow& row) {
             const Element element = elementOf(row.power);
             if (element != Element::None) return elementServes(element, killer.kin);
             return row.takenBy(killer.kin);
         };
-        int count = 0;
-        for (int p = 1; powerOf(uint8_t(p)); ++p) count += drawable(*powerOf(uint8_t(p))) ? 1 : 0;
-        int pick = count > 0 ? dice_.nextInt(0, count) : -1;
+        int count[3] = {};
+        double held = 0.0;
+        for (int p = 1; powerOf(uint8_t(p)); ++p) {
+            if (drawable(*powerOf(uint8_t(p)))) ++count[int(powerOf(uint8_t(p))->rarity)];
+        }
+        for (int r = 0; r < 3; ++r) held += count[r] > 0 ? kRuneRarityShare[r] : 0.0;
+        int rarity = -1;
+        if (held > 0.0) {
+            double roll = dice_.nextDouble() * held;
+            for (int r = 0; r < 3 && rarity < 0; ++r) {
+                if (count[r] == 0) continue;
+                if (roll < kRuneRarityShare[r]) rarity = r;
+                roll -= kRuneRarityShare[r];
+            }
+            // The last rarity holding one, should rounding carry the roll past all three.
+            for (int r = 2; rarity < 0 && r >= 0; --r) rarity = count[r] > 0 ? r : -1;
+        }
+        int pick = rarity >= 0 ? dice_.nextInt(0, count[rarity]) : -1;
         for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
-            if (drawable(*powerOf(uint8_t(p))) && pick-- == 0) powers[0] = uint8_t(p);
+            const PowerRow& row = *powerOf(uint8_t(p));
+            if (drawable(row) && int(row.rarity) == rarity && pick-- == 0) powers[0] = uint8_t(p);
         }
         one.what = Held{item, 0, 1};
         one.what.powers[0] = powers[0];

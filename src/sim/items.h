@@ -445,12 +445,22 @@ constexpr uint8_t kInWeapon = 1;     // either hand's weapon, never a shield
 constexpr uint8_t kInShield = 2;
 constexpr uint8_t kInArmour = 4;     // helm, armour, pants, gloves, boots
 constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
+// **A rune's rarity** (the user, 2026-10-02: "we need also make group of rarity of runes"), on
+// WoW's ladder as the item names are (game/ui describe's qualityOf): Rare blue, Epic purple,
+// Legendary orange. A Rune of Creation that drops draws its rarity first, at kRuneRarityShare,
+// out of the rarities that hold a rune the killer's class may set, and then one of those runes
+// evenly. Rare is a number on a stat, Epic a power that answers a blow or the build's own
+// shape, Legendary the class's signature. A quest's rune is the quest's. invention.
+enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2 };
+constexpr double kRuneRarityShare[3] = {0.60, 0.30, 0.10};
+const char* rarityName(Rarity rarity);
 struct PowerRow {
     Power power;
     const char* name;
     const char* tells;
     uint8_t classes;  // who may set it, classBit each
     uint8_t slots;    // what takes it, kIn* each
+    Rarity rarity;
     bool takenBy(Kin kin) const { return (classes & classBit(kin)) != 0; }
     // A weapon's power: read off the hands, and rolled on a swing, an arrow or a spell.
     bool weapon() const { return (slots & kInWeapon) != 0; }
