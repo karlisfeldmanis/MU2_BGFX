@@ -529,6 +529,10 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
                               : measurePlant(body, body.walkSafeClip);
     // The run, drawn only on a body the realm says is running.
     body.runClip = body.library->find(kRunAction);
+    body.rideIdleClip = body.library->find(13);
+    body.rideIdleArmedClip = body.library->find(14);
+    body.rideRunClip = body.library->find(36);
+    body.rideRunArmedClip = body.library->find(37);
     body.plantSpeedRun = body.runClip >= 0 ? measurePlant(body, body.runClip) : 0.0f;
     if (!measureStrikes(body, body.runClip, body.runFeet)) body.runFeet[0] = body.runFeet[1] = -1.0f;
 }

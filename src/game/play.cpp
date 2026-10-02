@@ -817,6 +817,18 @@ void Play::update(double seconds) {
                                     ? swinger->attackClip2 : swinger->attackClip;
                         ++swinger->swordCount;
                     }
+                    // On a horse, MU's ride clips stand in (docs/mount.md): the weapon's ride
+                    // swing (ZzzCharacter.cpp:1112-1153), PLAYER_RIDE_SKILL 156 for a spell
+                    // (:1326-1328) and PLAYER_SKILL_RIDER 68 for a knight's skill or an elf's
+                    // buff (ClassAttack.cpp:1807). A clip the library lacks keeps the standing one.
+                    if (happening.who == realm_.hero().id && realm_.hero().riding &&
+                        swinger->figure.body() && swinger->figure.body()->library) {
+                        const FigureBody* look = swinger->figure.body();
+                        const int ridden = look->library->find(
+                            !cast ? rideSlotFor(look->stance)
+                                  : realm_.hero().kin == sim::Kin::DarkWizard ? 156 : 68);
+                        if (ridden >= 0) swing = ridden;
+                    }
                     if (pose && swing >= 0 && swinger->figure.body()) {
                         // A skill blends in longer than a swing does. An ordinary blow is a jab
                         // out of a stance and 0.18 s hides the join; a skill is a wind-up, and at
@@ -1487,6 +1499,17 @@ void Play::update(double seconds) {
                 if (row.group == sim::kGroupPets && worn.durability > 0) pet = row.number;
             }
             pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
+            // GOBoid's clip for the horse off the rider's: a weapon's ride swing is 3, the run
+            // ride 2, anything else 0 -- a spell's PLAYER_RIDE_SKILL included (GOBoid.cpp:525-595).
+            const FigureBody* look = hero->figure.body();
+            const int clip = hero->figure.clip();
+            const bool galloping =
+                look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip);
+            const int action = hero->swinging > 0.0f && hero->castSkill == 0 ? 3
+                               : galloping                                   ? 2
+                                                                             : 0;
+            pets_.ride(float(seconds), hero->figure, realm_.hero().riding && realm_.hero().alive(),
+                       action);
         }
     }
 }

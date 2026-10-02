@@ -125,6 +125,7 @@ public:
     // window into a clip, and so what sprint 6 will ask this for.
     float through() const;
     const float* position() const { return position_; }
+    float yaw() const { return yaw_; }
     // Whether what it holds is on its back this frame rather than in its hands: standing on a
     // safe tile, on a rig with somewhere to sling it.
     bool slung() const { return safe_ && body_ && body_->backBone >= 0; }

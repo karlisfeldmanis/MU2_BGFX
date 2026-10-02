@@ -32,6 +32,10 @@ constexpr float kAngelLost = 1500.0f;
 // snaps -- to a new random one about every 32 frames, and 20 degrees a frame when it turns back --
 // which read at 25 fps as a flutter and at 180 as a twitch. The flight itself is untouched.
 constexpr float kHeadingEase = 10.0f;
+// How long the horse takes to come and go at a safe zone's edge. MU sets its Alpha to 0 on the
+// tile and back (GOBoid.cpp:498-502), a cut; **ours**, a short fade, as a pop on screen is
+// closed (docs/mount.md).
+constexpr float kHorseFade = 0.25f;
 
 // This engine's world against MU's: x east alike, MU's y north is -z, MU's z up is y.
 void toMu(const float world[3], float mu[3]) {
@@ -57,6 +61,7 @@ float turn(float angle, float target, float most) {
 void Pets::open(const Figures& figures) {
     angelBody_ = figures.body("Helper01");
     impBody_ = figures.body("Helper02");
+    horseBody_ = figures.body("Rider01");
 }
 
 float Pets::roll() {
@@ -116,6 +121,36 @@ void Pets::stepAngel(const float owner[3]) {
     }
     if (at_[2] < owner[2] + 100.0f) direction_[2] += 1.5f;
     if (at_[2] > owner[2] + 200.0f) direction_[2] -= 1.5f;
+}
+
+void Pets::ride(float seconds, const Figure& hero, bool riding, int action) {
+    // The Horn of Uniria's horse: GOBoid.cpp's MODEL_UNICON, on the rider's own spot and facing
+    // (:515, :524) at scale 1.0 (:684-691). No bone joins them; the seat is in his ride clips.
+    if (shown_ != 2 || !horseBody_) {
+        horseIn_ = 0.0f;
+        horseUp_ = false;
+        return;
+    }
+    horseIn_ = std::clamp(horseIn_ + (riding ? seconds : -seconds) / kHorseFade, 0.0f, 1.0f);
+    if (!horseUp_) {
+        horse_.stand(horseBody_, hero.position(), hero.yaw(), hero.scale());
+        horseUp_ = true;
+    }
+    // Where it stands while it fades out at the zone's edge is where he stepped off it: the
+    // rider walks on, the horse does not follow him in.
+    if (riding) horse_.place(hero.position(), hero.yaw(), false);
+    // Its clip off the rider's (GOBoid.cpp:525-595): 2 while he rides on, 3 while he swings,
+    // 0 otherwise -- held where it is through anything else, as SetAction refuses the 6 this
+    // four-action model lacks (ZzzAI.cpp:424).
+    const int clip = horseBody_->library ? horseBody_->library->find(action) : -1;
+    if (clip >= 0) horse_.play(clip, false, -1.0f);
+    horse_.update(seconds);
+    // And in step with him. MU runs the two on two clocks at one rate, and its run ride and the
+    // horse's leap are both 7 keys at 0.34, so they hold together there; drawn here they part
+    // on a crossfade, a hitch or a resumed walk phase, and the rider bounces off the saddle's
+    // beat. So the leap and the stand take his clip's own place, as a fraction: one bound of
+    // the horse is one bounce of the rider, whatever the frame did. **ours**.
+    if (action != 3) horse_.setClock(hero.through() * horse_.length());
 }
 
 void Pets::update(float seconds, const Figure& hero, int pet, bool alive) {
@@ -188,6 +223,9 @@ void Pets::gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float
     } else if (shown_ == 0 && angelUp_) {
         figure = &angel_;
         fade = std::clamp(angelIn_ / kAngelFadeIn, 0.0f, 1.0f);
+    } else if (shown_ == 2 && horseUp_ && horseIn_ > 0.0f) {
+        figure = &horse_;
+        fade = horseIn_;
     }
     if (!figure) return;
     const int bones = figure->pose(scratch.data());

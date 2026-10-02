@@ -14,6 +14,9 @@
 // on player bone 34 -- Bip01 L Clavicle -- at (20, 0, 0) in the bone's frame, in the bone's
 // own rotation, at the character's scale, PlaySpeed 0.5 (ZzzCharacter.cpp:15433-15466).
 //
+// **The Horn of Uniria is ridden** (docs/mount.md): its horse, Rider01, stands on his spot
+// facing his way, under his ride clips, and is hidden in town where he walks.
+//
 // Not yet here: the Angel's four grey sparks a frame and green BITMAP_LIGHT, and the Imp's red
 // one (docs/pets.md).
 #pragma once
@@ -30,9 +33,13 @@ namespace mu::game {
 class Pets {
 public:
     void open(const Figures& figures);
-    // `pet` is the row's number in group 13 -- 0 the Angel, 1 the Imp -- or -1 for none worn.
+    // `pet` is the row's number in group 13 -- 0 the Angel, 1 the Imp, 2 the Horn of Uniria --
+    // or -1 for none worn.
     // `hero` is his drawn figure, `alive` whether he stands.
     void update(float seconds, const Figure& hero, int pet, bool alive);
+    // And the horse, after `update`: drawn under him while `riding` (sim::Body::riding), gone in
+    // town; `action` is its own clip as GOBoid picks it off his -- 2 riding on, 3 a swing, 0.
+    void ride(float seconds, const Figure& hero, bool riding, int action);
     // After the hero is posed this frame: the Imp takes his clavicle as it is now.
     void gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);
@@ -45,7 +52,10 @@ private:
 
     const FigureBody* angelBody_ = nullptr;
     const FigureBody* impBody_ = nullptr;
-    Figure angel_, imp_;
+    const FigureBody* horseBody_ = nullptr;
+    Figure angel_, imp_, horse_;
+    bool horseUp_ = false;
+    float horseIn_ = 0.0f;  // 0 gone, 1 there: the fade at a safe zone's edge
     int shown_ = -1;
     bool angelUp_ = false;
     float angelIn_ = 0.0f;  // seconds since it appeared, for its fade in

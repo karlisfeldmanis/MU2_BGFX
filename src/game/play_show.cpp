@@ -886,12 +886,23 @@ void Play::follow(float seconds) {
         // phase, and must not read as stopping and setting off again.
         // And the run is a third walk, which the realm decides (sim::Body::running), turned into
         // and out of with the same phase-kept crossfade as the zone's edge.
-        const int walkHere = (body->running && look->runClip >= 0)   ? look->runClip
-                             : (safe && look->walkSafeClip >= 0) ? look->walkSafeClip
-                                                                 : look->walkClip;
+        // And on a horse the run ride is the only gait and the stop ride the only stand, bare
+        // while the weapon is slung and armed while it is drawn (sim::Body::riding, game/pets.h).
+        const bool riding = body->riding && look->rideRunClip >= 0 && look->rideIdleClip >= 0;
+        const int rideRun = safe || look->rideRunArmedClip < 0 ? look->rideRunClip
+                                                               : look->rideRunArmedClip;
+        const int rideIdle = safe || look->rideIdleArmedClip < 0 ? look->rideIdleClip
+                                                                 : look->rideIdleArmedClip;
+        const int walkHere = riding                                ? rideRun
+                             : (body->running && look->runClip >= 0) ? look->runClip
+                             : (safe && look->walkSafeClip >= 0)   ? look->walkSafeClip
+                                                                   : look->walkClip;
+        const auto isRide = [&](int c) {
+            return c >= 0 && (c == look->rideRunClip || c == look->rideRunArmedClip);
+        };
         const auto isWalk = [&](int c) {
-            return c >= 0 &&
-                   (c == look->walkClip || c == look->walkSafeClip || c == look->runClip);
+            return c >= 0 && (c == look->walkClip || c == look->walkSafeClip ||
+                              c == look->runClip || isRide(c));
         };
         // Walking is what the drawn body is doing, and nothing else sets a walk going: a body
         // the sim has walking but still turning on the spot stays in its idle until the first
@@ -924,6 +935,8 @@ void Play::follow(float seconds) {
         }
         if (walking) {
             clip = walkHere;
+        } else if (riding) {
+            clip = rideIdle;
         } else if (posed >= 0) {
             clip = posed;
         } else if (safe && look->idleSafeClip >= 0) {
@@ -989,7 +1002,14 @@ void Play::follow(float seconds) {
             }
         }
         one.clipRate = 1.0f;
-        if (isWalk(one.figure.clip())) {
+        // The run ride is seated: no foot plants on the earth, so it plays at MU's own rate and
+        // the horse under him carries the ground (game/pets.h). That rate is 0.34, the whole
+        // PLAYER_RUN..PLAYER_RUN_RIDE_WEAPON run (ZzzCharacter.cpp:511-516), where actions.json
+        // cooked it at 0.3; at 0.3 the rider bounced out of step with the horse's 0.34 (the user,
+        // 2026-10-02: "char is not perfectly synced with mount bouncing").
+        constexpr float kRideRunRate = 0.34f / 0.3f;
+        if (isRide(one.figure.clip())) one.clipRate = kRideRunRate;
+        if (isWalk(one.figure.clip()) && !isRide(one.figure.clip())) {
             const float metresPerTile = ground_->metresPerTile();
             const float gait = pace * metresPerTile / float(kTickSeconds);
             // The clip's own planted foot decides, and the cook's whole-cycle travel is the

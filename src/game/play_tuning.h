@@ -188,6 +188,17 @@ inline int attackSlotFor(const std::string& stance) {
     return 39;
 }
 
+// And the same swing on a horse: MU's PLAYER_ATTACK_RIDE_* (ZzzCharacter.cpp:1112-1153) --
+// the one-hand sword's for a fist or a staff, as MU gives them.
+inline int rideSlotFor(const std::string& stance) {
+    if (stance == "two_hand_sword") return 55;
+    if (stance == "spear") return 56;
+    if (stance == "scythe") return 57;
+    if (stance == "bow") return 58;
+    if (stance == "crossbow") return 59;
+    return 54;
+}
+
 // An angle folded into a half turn either side of nothing, so that a body a few degrees the
 // other side of due north turns the short way. The sim has its own copy (realm.cpp's `wrapped`)
 // and this is deliberately not shared with it: the sim must not grow a dependency on the
