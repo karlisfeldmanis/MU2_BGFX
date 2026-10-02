@@ -77,12 +77,12 @@ OpenMU on rules, `docs/webzen-audit.md`).
 
 ## Ours (proposed)
 
-1. **Speed 17, above the run.** The user, 2026-10-02: "mount has to be faster that runing". Our
-   run is 14 (`kRunFactor` 14/12), so MU's 15 would be 7% faster and hardly felt. 17 is OpenMU's
-   `HorseOrFenrirMovementSpeed`, MU's own number for the later mounts, ~21% over the run.
-   **ours** on Uniria.
+1. **Speed 16, above the run.** The user, 2026-10-02: "mount has to be faster that runing". Our
+   run is 14 (`kRunFactor` 14/12), so MU's 15 would be 7% faster and hardly felt. 17, OpenMU's
+   `HorseOrFenrirMovementSpeed`, was tried first and was 'litttle bit to fast'; 16 is ~14% over
+   the run. **ours** on Uniria.
 2. **Rides in combat too.** MU's rider never walks: clip 36/37 and full speed whether fighting or
-   not. Our rule makes a man on foot walk in combat. Proposed: mounted, he rides at 17 in and out
+   not. Our rule makes a man on foot walk in combat. Proposed: mounted, he rides at 16 in and out
    of combat, so the horse is the way out of a fight. *Open: user's call.*
 3. **Skills unblocked**, as 0.75: knight skills play clip 68, spells 156, the elf's bow 58/59.
    *Open: whether the skill clip on the horse reads well enough, judged in game.*
@@ -122,7 +122,7 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
 - **Step 2, the sim** (2026-10-02). 13/2 goes in slot 8 (`placeOf`); `PetPower::mount` and wear
   0.1/10, damage/100 a hit taken, through the pets' `wearOnTaken`, destroyed at 0. `Body::riding`
   is set every tick in `Realm::advance`: a mount with life left, off a safe tile, walking or not,
-  in a fight or out. The step covers `strideFactor` ground (`kRideFactor` 17/12 riding,
+  in a fight or out. The step covers `strideFactor` ground (`kRideFactor` 16/12 riding,
   `kRunFactor` running), read by the drawing's pace too so the two cannot part. On Lumen's shelf,
   cell 4, at 15,700. Indexed and cooked (tables on all five worlds, figures). The buff cell is
   `buff_uniria`, the rearing horse on a dusk violet (`pipeline/model_icons.py`), with "Movement
@@ -165,7 +165,7 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
 
 1. **Import and build** `Rider01.bmd` (horse, clips 0/2/3/6) and `Helper03.bmd` (the bag item)
    through `source/` + `tools/asset.sh`; cook. Bench the horse alone.
-2. **Sim**: 13/2 in `PetPower`, the speed in `realm_move.cpp` (mounted and off a safe tile: 17,
+2. **Sim**: 13/2 in `PetPower`, the speed in `realm_move.cpp` (mounted and off a safe tile: 16,
    combat or not), wear in `Realm::wearOnTaken`, the price and shelf, `testMount` in sim_test.
 3. **Figure**: a second figure at the rider's position and yaw, the rider's clip table switched
    to the ride clips off a safe tile, the horse's clip driven by the rider's, faded in town.
