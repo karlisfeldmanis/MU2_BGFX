@@ -125,6 +125,23 @@ void Ice::chill(const float feet[3], float tall, float seconds) {
     }
 }
 
+void Ice::rime(const float feet[3], float tall, float seconds) {
+    const float owed = seconds * kFps / kRimeEvery;
+    int count = int(owed);
+    if (unit() < owed - float(count)) ++count;
+    for (int i = 0; i < count; ++i) {
+        const float turn = unit() * kTwoPi;
+        const float reach = kRimeRadius * (0.4f + unit() * 0.6f);
+        const float at[3] = {feet[0] + std::cos(turn) * reach,
+                             feet[1] + tall * (0.15f + unit() * 0.75f),
+                             feet[2] + std::sin(turn) * reach};
+        Wisp* wisp = puff(at);
+        if (wisp == nullptr) return;
+        wisp->frost = true;
+        wisp->size = between(0.18f, 0.3f);
+    }
+}
+
 void Ice::update(float seconds) {
     const float frames = seconds * kFps;
     for (Block& one : blocks_) {

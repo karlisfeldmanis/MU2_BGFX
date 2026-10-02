@@ -36,6 +36,10 @@ public:
     // smoke effect on cast"), ours, as Meteorite's burn is: frosty wisps born round his body --
     // `feet` and his drawn `tall` -- rising off him. Called every frame the cast runs.
     void chill(const float feet[3], float tall, float seconds);
+    // **Rime on an iced body** for as long as it is iced, ours (beside the glaze, kIcedChrome in
+    // play_tuning.h): the caster's frost, sparser and closer, smoking off it. No clock of its own
+    // -- a coin per call -- so any number of bodies can carry it in one frame.
+    void rime(const float feet[3], float tall, float seconds);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
 
@@ -88,6 +92,9 @@ private:
     static constexpr float kFrostRadius = 0.35f;
     static constexpr float kFrost[3] = {0.42f, 0.58f, 0.82f};
     float frostDue_ = 0.0f;
+    // The rime: a wisp every four reference frames a body, within 0.25 m, shins to crown.
+    static constexpr float kRimeEvery = 4.0f;
+    static constexpr float kRimeRadius = 0.25f;
 
     static constexpr int kBlocks = 16;
     static constexpr int kMaxShards = 96;

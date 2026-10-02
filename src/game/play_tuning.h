@@ -154,6 +154,13 @@ constexpr float kSpawnFadeSeconds = 0.35f;
 constexpr float kSousedLight[3] = {0.9f, 0.5f, 0.5f};
 // An iced body's light, MU's `eDeBuff_Freeze` BodyLight (ZzzObject.cpp:1126).
 constexpr float kIcedLight[3] = {0.3f, 0.5f, 1.0f};
+// **Ours.** The ice on an iced body (the user, 2026-10-02: "if mosnter/char is iced add some ice
+// effect to the model also"). MU stops at the blue light; this adds the +7 chrome's pass --
+// Chrome01's bands crawling over the body, which is how MU draws its cloak (RENDER_CHROME,
+// ZzzObject.cpp:10244) -- in a cold blue, so the body reads glazed. What a thing already
+// refined to +7 or more wears is left as it is.
+constexpr int kIcedPlus = 7;
+constexpr float kIcedChrome[3] = {0.35f, 0.6f, 1.0f};
 // A poisoned body's, `eDeBuff_Poison`, and one both poisoned and iced (ZzzObject.cpp:1118-1123).
 constexpr float kPoisonedLight[3] = {0.3f, 1.0f, 0.5f};
 constexpr float kPoisonIcedLight[3] = {0.3f, 1.0f, 0.8f};

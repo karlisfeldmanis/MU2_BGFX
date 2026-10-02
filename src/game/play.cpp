@@ -1484,6 +1484,21 @@ void Play::update(double seconds) {
             }
         }
     }
+    // The rime on everything iced, chilled or frozen, for as long as it lasts.
+    if (ground_) {
+        for (const Drawn& one : drawn_) {
+            if (!one.placed) continue;
+            const sim::Body* body = realm_.find(one.id);
+            if (body == nullptr || !body->alive() ||
+                (body->chilledUntil <= realm_.tick() && body->frozenUntil <= realm_.tick())) {
+                continue;
+            }
+            const FigureBody* look = one.figure.body();
+            const float feet[3] = {one.crown[0], ground_->heightAt(one.crown[0], one.crown[2]),
+                                   one.crown[2]};
+            ice_.rime(feet, look ? look->height * look->scale : 1.8f, float(seconds));
+        }
+    }
     // The crackle on him for as long as he channels.
     if (const sim::Body& hero = realm_.hero(); hero.channelSkill != 0 && ground_) {
         if (const Drawn* drawn = drawnOf(hero.id); drawn != nullptr && drawn->placed) {

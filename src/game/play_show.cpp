@@ -1218,7 +1218,9 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // And an iced body is MU's blue while it lasts: `eDeBuff_Freeze` puts (0.3, 0.5, 1.0) on
         // its BodyLight (ZzzObject.cpp:1126).
         const sim::Body* inRealm = realm_.find(one.id);
-        const bool iced = inRealm != nullptr && inRealm->chilledUntil > realm_.tick();
+        // A Frost Arrow's freeze is ice as much as the chill is.
+        const bool iced = inRealm != nullptr && (inRealm->chilledUntil > realm_.tick() ||
+                                                 inRealm->frozenUntil > realm_.tick());
         // And a poisoned one green, MU's `eDeBuff_Poison` (0.3, 1.0, 0.5); both, (0.3, 1.0, 0.8).
         const bool poisoned = one.venomous ||
                               (inRealm != nullptr && inRealm->poisonUntil > realm_.tick());
@@ -1236,6 +1238,13 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                 out[i].light[0] *= by[0];
                 out[i].light[1] *= by[1];
                 out[i].light[2] *= by[2];
+                // The glaze (kIcedChrome). An excellent thing's plus rides at 20 and up
+                // (shaders/shine.sh), so its flag is kept.
+                const int excellent = out[i].refine >= 20 ? 20 : 0;
+                if (iced && out[i].refine - excellent < kIcedPlus) {
+                    out[i].refine = excellent + kIcedPlus;
+                    std::copy(kIcedChrome, kIcedChrome + 3, out[i].refineColour);
+                }
             }
         };
         if (fade < 1.0f) {
