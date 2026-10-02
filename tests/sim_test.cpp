@@ -4302,7 +4302,7 @@ void testThroughWalls() {
 
 // The Lost Tower's way in (docs/lost-tower-quest.md, 2026-10-01): Devin's hand-in sends the hero
 // to Tersia in the tower's hall; her chain of seven floors waits on Devin's, speaking to her
-// opens the hall's row, and each deeper floor's row waits on its link handed in.
+// opens the hall's row, and each deeper floor's row waits on its link taken.
 // Thompson in Devias only answers with a line.
 void testTowerKeeper() {
     std::printf("the tower's keeper\n");
@@ -4429,12 +4429,10 @@ void testTowerKeeper() {
     sim::HeroRecord on = later.record();
     on.quests[shrine + 1].state = sim::QuestState::Active;
     later.restore(on);
-    checkEqual(int(later.travelRefusal(second)), int(sim::TravelRefusal::Quest),
-               "and stays shut while it is only taken");
-    on.quests[shrine + 1].state = sim::QuestState::Resting;
-    on.quests[shrine + 1].completions = 1;
-    later.restore(on);
-    check(later.travelRefusal(second) != sim::TravelRefusal::Quest, "and opens handed in");
+    check(later.travelRefusal(second) != sim::TravelRefusal::Quest,
+          "and opens once it is taken (2026-10-03)");
+    checkEqual(int(later.travelRefusal(second + 1)), int(sim::TravelRefusal::Quest),
+               "the third floor's still waits on its own");
 }
 
 void testDeviasFolk() {

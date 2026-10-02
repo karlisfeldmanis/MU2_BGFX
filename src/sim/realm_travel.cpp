@@ -29,17 +29,16 @@ constexpr TravelRow kRows[kTravels] = {
     {"Lost Tower 7", 4, 70, 8000, 8, 86, -1, -1},
 };
 
-// A chained map's floors: the Dungeon's are the Golden Archer's, every floor a link, its row open
-// once the link is taken; the Lost Tower's Tersia's (the user, 2026-10-01), its hall
-// opening as she is spoken to and floors 2-7 only once their links are handed in -- "character
-// can manually use gates if he wants and has levels, but fast travel only works when quests are
-// done". The stairs ask only their levels (sim/gates.cpp).
+// A chained map's floors, every floor a link and its row open once the link is taken: the
+// Dungeon's are the Golden Archer's; the Lost Tower's Tersia's (the user, 2026-10-01), its hall
+// opening as she is spoken to and floors 2-7 with their links -- at first only handed in, since
+// 2026-10-03 taken ('if char accept quest which has to go to lost tower 2, unlock LT2 fast travel
+// also'). The stairs ask only their levels (sim/gates.cpp).
 struct Chain {
     int32_t map, giver;
     int fromFloor;
-    bool handedIn;  // the row waits on the link handed in, not only taken
 };
-constexpr Chain kChains[] = {{1, 236, 0, false}, {4, 566, 1, true}};
+constexpr Chain kChains[] = {{1, 236, 0}, {4, 566, 1}};
 
 const Chain* chainOf(int32_t map) {
     for (const Chain& chain : kChains) {
@@ -170,14 +169,10 @@ TravelRefusal Realm::travelRefusal(int index) const {
     if (to.map == int32_t(tables_->map) && tables_->grid.safe(to.column, to.row) &&
         tables_->grid.safe(standing.column(), standing.row()))
         return TravelRefusal::Here;
-    // Its link of the chain, taken at least once: under way, ready, resting or ever handed in --
-    // or, on the Lost Tower, handed in at least once.
+    // Its link of the chain, taken at least once: under way, ready, resting or ever handed in.
     if (const int q = travelQuest(index); q >= 0) {
         const QuestProgress& link = quests_[q];
-        if (chainOf(to.map)->handedIn ? link.completions == 0
-                                      : link.state == QuestState::Untaken && link.completions == 0) {
-            return TravelRefusal::Quest;
-        }
+        if (link.state == QuestState::Untaken && link.completions == 0) return TravelRefusal::Quest;
     }
     const Body& hero = bodies_[0];
     if (!hero.alive()) return TravelRefusal::Dead;

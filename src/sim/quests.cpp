@@ -450,8 +450,8 @@ QuestRow pit() {
 // char has to clear each floor and gets rewards"): seven links, a floor each, each offered once the
 // one before is handed in, the first once Devin's is. Each link's steps are its floor's breeds
 // (docs/lost-tower-port.md A §4.1), counts about half the floor; the last ends on the Balrog. The
-// travel row to floors 2-7 opens once its link is handed in, not only taken as the Dungeon's do
-// (Realm::travelQuest); the hall's opens as she is spoken to; the stairs ask only their levels. Every class's, each link repeatable every twelve hours.
+// travel row to floors 2-7 opens once its link is taken, as the Dungeon's do (Realm::travelQuest;
+// handed in until 2026-10-03); the hall's opens as she is spoken to; the stairs ask only their levels. Every class's, each link repeatable every twelve hours.
 // What she says of the tower is Webzen's (above) or the game's own (the Cursed Wizards' reach,
 // the Devils' push, the Gorgons' rolling fire, the burning plates); the rest is ours. The rewards
 // are proposals: every clear experience, Zen and jewels rising floor by floor; the first clear of

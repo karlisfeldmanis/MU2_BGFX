@@ -104,7 +104,7 @@ For a caption, a tooltip or the travel list, if the user wants one:
 2. **The walk**: Devias gate 28 under the blue lightning (level 40), LT1's arrival, about 184
    steps to the hall.
 3. **Tersia**: spoken to, she **opens the hall's row** on the travel list. The other six rows wait
-   on her links handed in (below); the stairs down need only their levels.
+   on her links taken (below); the stairs down need only their levels.
 4. **Tersia's chain**, seven links, a floor each, the first offered once Devin's is handed in
    (`afterAny` bit 2). Before that she wears a grey "!" and answers with a line.
 
@@ -132,9 +132,9 @@ can stand against" it) or the game's own (the Cursed Wizards' reach, a Devil's p
 Gorgons' rolling fire, the burning plates). Before Devin's is handed in she answers with a line.
 
 **Travel** (`Realm::travelQuest`): the hall's row opens as she is spoken to; the row to floor *k*
-(2-7) opens only once link *k* is **handed in** -- the user's: "character can manually use gates if
-he wants and has levels, but fast travel only works when quests are done". The stairs ask only
-their levels. (The Dungeon's rows open with the link taken, as before.)
+(2-7) opens once link *k* is **taken**, as the Dungeon's do -- the user's of 2026-10-03: "if char
+accept quest which has to go to lost tower 2, unlock LT2 fast travel also". (Until then only once
+handed in: "fast travel only works when quests are done".) The stairs ask only their levels.
 
 | # | title | floor | steps (count, floor's population) | every clear | first clear |
 |---|---|---|---|---|---|
