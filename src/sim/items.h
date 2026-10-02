@@ -449,8 +449,10 @@ constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
 // WoW's ladder as the item names are (game/ui describe's qualityOf): Rare blue, Epic purple,
 // Legendary orange. A Rune of Creation that drops draws its rarity first, at kRuneRarityShare,
 // out of the rarities that hold a rune the killer's class may set, and then one of those runes
-// evenly. Rare is a number on a stat, Epic a power that answers a blow or the build's own
-// shape, Legendary the class's signature. A quest's rune is the quest's. invention.
+// evenly. Rare is a number on a narrow stat; Epic a power that answers a blow or holds him up
+// in a fight (Stormcall and Meteor, a proc on one more monster; Renewal and Kinship, which the
+// user rates above a stat); Legendary strikes a crowd or opens a build no other rune does
+// (Bulwark's shieldless guard). A quest's rune is the quest's. invention.
 enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2 };
 constexpr double kRuneRarityShare[3] = {0.60, 0.30, 0.10};
 const char* rarityName(Rarity rarity);

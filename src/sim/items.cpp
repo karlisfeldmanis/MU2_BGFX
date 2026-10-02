@@ -264,7 +264,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Stormcall, "Stormcall",
          "A swing that lands has a 20% chance to call lightning down on a monster near him, another "
          "where there is one, its damage raised by his energy",
-         kKnightOnly, kInWeapon, Rarity::Legendary},
+         kKnightOnly, kInWeapon, Rarity::Epic},
         {Power::Meteor, "Meteor",
          "A swing that lands has a 15% chance to bring a burning rock down on a monster near him, "
          "another where there is one",
@@ -286,7 +286,7 @@ const PowerRow* powerOf(uint8_t power) {
          "every monster within four tiles, raised by his energy",
          kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::Bulwark, "Bulwark", "Defense can be raised without a shield", kKnightOnly,
-         kInWeapon, Rarity::Epic},
+         kInWeapon, Rarity::Legendary},
         {Power::Frost, "Frost Arrow",
          "An arrow that lands has a 20% chance to freeze the monster it struck for two seconds "
          "and wound it again for half the arrow's damage, raised by her energy",
@@ -308,7 +308,7 @@ const PowerRow* powerOf(uint8_t power) {
          "seconds",
          kEveryClass, kWorn, Rarity::Epic},
         {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
-         kEveryClass, kWorn, Rarity::Rare},
+         kEveryClass, kWorn, Rarity::Epic},
         {Power::Spirits, "Evil Spirit",
          "A blow that misses you has a 15% chance to release evil spirits around you, which "
          "strike most of the monsters within ten tiles, raised by your energy",
@@ -316,7 +316,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Kinship, "Kinship",
          "Your Guardian Angel no longer lowers your damage, and your Imp and Dinorant take no "
          "life for their blows",
-         kEveryClass, kInJewellery, Rarity::Rare},
+         kEveryClass, kInJewellery, Rarity::Epic},
         {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},
