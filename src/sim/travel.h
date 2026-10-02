@@ -29,8 +29,8 @@ struct TravelRow {
 inline constexpr int kTravels = 13;
 const TravelRow& travelAt(int index);
 
-// Why a trip is refused, first reason first. `Here` is a town's row asked from inside that town:
-// a map of one row has nowhere in it to go. A map of several (the Dungeon's floors) has.
+// Why a trip is refused, first reason first. `Here` is no longer given: a row of the map he is on
+// sets him down at its landing (the user, 2026-10-02); kept so the log's reasons keep their order.
 // `Quest` is ours (the user, 2026-09-30: "dont allow to teleport to dungeon 1,2,3 if quest line is
 // not started"): a Dungeon floor's row asks its own link of the Golden Archer's chain taken once
 // -- the first floor The Catacombs, the second the next, the third the last (travelQuest).

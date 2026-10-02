@@ -304,7 +304,7 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
         if (!pointer.pressed) continue;
         if (now.hoverFloor >= 0) {
             asked = hit.chipRow[now.hoverFloor];
-        } else if (place.map != now.here) {
+        } else {
             for (int row : place.rows) {
                 if (asked < 0 && now.refusals[row] == uint8_t(sim::TravelRefusal::None)) asked = row;
             }
@@ -346,7 +346,7 @@ void Travel::rebuild(const Drawn& now) {
     for (const Hit& hit : hits_) {
         const Place& place = places_[size_t(hit.place)];
         const bool here = place.map == now.here;
-        const bool over = hit.place == now.hoverPlace && !here;
+        const bool over = hit.place == now.hoverPlace;
         Box b = hit.box;
         if (!hit.usable && !ruled) {
             ruled = true;

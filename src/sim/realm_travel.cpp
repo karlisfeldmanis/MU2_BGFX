@@ -162,9 +162,8 @@ TravelRefusal Realm::travelRefusal(int index) const {
     if (index < 0 || index >= kTravels || !tables_) return TravelRefusal::Unknown;
     const TravelRow& to = kRows[index];
     if (((found_ >> index) & 1u) == 0) return TravelRefusal::Unknown;
-    const uint32_t rows = travelRowsOf(to.map);
-    if (to.map == int32_t(tables_->map) && (rows & (rows - 1)) == 0) return TravelRefusal::Here;
-    if (to.map == int32_t(tables_->map) && travelFloor() == index) return TravelRefusal::Here;
+    // The map he is on is a trip too (the user, 2026-10-02: 'allow to travel to current map'):
+    // set down at its landing in place, as another of the Dungeon's floors is.
     // Its link of the chain, taken at least once: under way, ready, resting or ever handed in --
     // or, on the Lost Tower, handed in at least once.
     if (const int q = travelQuest(index); q >= 0) {

@@ -3677,6 +3677,24 @@ void testTravelQuestLock() {
     record.quests[link].state = sim::QuestState::Active;
     realm.restore(record);
     check(realm.travelRefusal(second) != sim::TravelRefusal::Quest, "and not for it once taken");
+
+    // The map he is on is a trip too (2026-10-02): the floor he stands on sets him at its landing.
+    int first = -1;
+    for (int i = 0; i < sim::kTravels && first < 0; ++i) {
+        if (sim::travelAt(i).map == 1) first = i;
+    }
+    if (const int q = realm.travelQuest(first); q >= 0) {
+        record = realm.record();
+        record.quests[q].state = sim::QuestState::Active;
+        realm.restore(record);
+    }
+    realm.setHeroDown(150, 150, 1, 0);
+    checkEqual(int(realm.travelRefusal(first)), int(sim::TravelRefusal::None),
+               "the floor he is on is not refused");
+    check(realm.travel(first), "and is travelled to");
+    const int dc = realm.hero().column() - sim::travelAt(first).column;
+    const int dr = realm.hero().row() - sim::travelAt(first).row;
+    check(dc * dc + dr * dr <= 64, "set down at its landing");
 }
 
 // The Lost Tower's way in (docs/lost-tower-quest.md, 2026-10-01): Devin's hand-in sends the hero
