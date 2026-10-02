@@ -151,32 +151,25 @@ bool Play::refine(int jewelSlot, int targetSlot) {
 // step clears what it said before that loop could read it; a purchase and a sale are heard off
 // their own answers for the same reason.
 bool Play::discard(int slot) {
-    // A Firecracker is not laid down: it opens (sim::Realm::crack). An item it gives is held
-    // out of sight under MU's firework over the tile (CmdType 0) and falls, with its landing
-    // sound, on the show's first burst (the user: "has to be synced with animation"). Its Zen
-    // goes into the purse in silence (the same: "without zen sound"); MU sends no firework
-    // with Zen (Event.cpp:1520).
+    // A Firecracker is not laid down: it opens (sim::Realm::crack). An item it gives lands at
+    // once with its sound and MU's firework starts over the tile in the same frame (CmdType 0;
+    // the user: "it has to be instant, as soon we drop it it has to start"). Its Zen goes into
+    // the purse in silence ("without zen sound"); MU sends no firework with Zen
+    // (Event.cpp:1520).
     if (realm_.cracks(slot)) {
         const sim::Cracked cracked = realm_.crack(slot);
         core::logf("window: %d cracked %s", slot,
                    !cracked.opened ? "refused" : cracked.id ? "into an item" : "into Zen");
         if (!cracked.opened) return false;
         if (cracked.id == 0) return true;
-        uint32_t tag = 0;
+        landed(cracked.id);
         if (ground_) {
             const float metres = ground_->metresPerTile();
             const float x = (float(cracked.column) + 0.5f) * metres;
             const float z = -(float(cracked.row) + 0.5f) * metres;
             const float at[3] = {x, ground_->heightAt(x, z), z};
-            tag = firework_.launch(at);
+            firework_.launch(at);
         }
-        if (tag == 0) {
-            // No show to wait on: it falls now.
-            landed(cracked.id);
-            return true;
-        }
-        cracking_.push_back({cracked.id, tag});
-        heldIds_.push_back(cracked.id);
         return true;
     }
     const bool worn = slot >= 0 && sim::wearable(slot);

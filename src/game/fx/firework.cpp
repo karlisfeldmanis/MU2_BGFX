@@ -38,6 +38,9 @@ bool Firework::open(const std::string& assetDir, content::Textures& textures,
 }
 
 uint32_t Firework::launch(const float at[3]) {
+    // A show thrown into a quiet sky steps on the frame it is thrown, so its first rocket is
+    // up as the cracker leaves the hand rather than a reference frame later.
+    if (!live()) owed_ = 1.0f;
     for (Launcher& launcher : launchers_) {
         if (launcher.alive) continue;
         launcher.alive = true;

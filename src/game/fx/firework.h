@@ -164,10 +164,7 @@ private:
 
 template <typename Burst>
 void Firework::update(float seconds, Burst burst) {
-    if (!live()) {
-        owed_ = 0.0f;
-        return;
-    }
+    if (!live()) return;
     owed_ += seconds * kFps;
     while (owed_ >= 1.0f) {
         owed_ -= 1.0f;
