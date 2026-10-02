@@ -263,6 +263,10 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (!runeDice_.nextBool(kFrostChance)) return;
         if (!struck.alive() || !struck.monster()) return;
         struck.frozenUntil = tick_ + kFrostTicks;
+        // And its walk ended where it stands: `advance` skips a frozen body, but one left walking
+        // was drawn striding on the spot for the whole freeze (the user: "when monsters is frozen
+        // he suppost to not walk"). It plans again when it thaws.
+        halt(struck);
         say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
         const int energy = hero.points.energy;
         // It may land critical as his swing may (the user, 2026-10-01: "they can critical
