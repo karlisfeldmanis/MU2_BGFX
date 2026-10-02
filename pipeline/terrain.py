@@ -163,6 +163,9 @@ GRASS_BY_MAP = {
     3: ["TileGrass01", "TileGrass02"],
     # The Lost Tower ships no TileGrass .OZT either, and its TileGrass01 is the stone floor.
     4: [],
+    # Blood Castle ships a TileGrass01.OZT, but MU sows no grass in any castle
+    # (ZzzLodTerrain.cpp:2082), and its TileGrass01 is the castle's brick. docs/blood-castle-port.md.
+    11: [],
 }
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the

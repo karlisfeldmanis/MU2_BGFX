@@ -1,0 +1,27 @@
+{
+  "tileset": "bloodcastle",
+  "mu_name": "Blood Castle ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "bc_tilegrass01.png",
+    "TileGrass02": "bc_tilegrass02.png",
+    "TileGround02": "bc_tileground02.png",
+    "TileGround03": "bc_tileground03.png",
+    "TileRock02": "bc_tilerock02.png"
+  },
+  "sheet_from": "Data/World12/Tile*.OZJ, from MuMain, decoded under a bc_ prefix: assets/textures is one flat pool and every name is another world's too. World12 is all seven castles' data (MapManager.cpp:1104-1107, 1207-1210). Its other sheets (TileGround01 is absent; TileRock01/03/04, TileWater01, TileWood01) are in the folder but no tile wears them, so they are not decoded. docs/blood-castle-port.md.",
+  "slot_note": "MU sows no grass in a castle (ZzzLodTerrain.cpp:2082), though World12 ships a TileGrass01.OZT; terrain.py GRASS_BY_MAP[11] is empty. The castle is a strip down the grid's west edge, x 0-30: the safe court at 8-19,3-14, the long walk south over a NoGround chasm, the drawbridge at 13-15,70-75 before the door at 14,75, and the courtyard beyond.",
+  "sheet_materials": {
+    "TileGrass01": "flagstone",
+    "TileGrass02": "rock",
+    "TileGround02": "rock",
+    "TileGround03": "flagstone",
+    "TileRock02": "plank",
+    "TileGrass01_over": "flagstone",
+    "TileGrass02_over": "rock",
+    "TileGround02_over": "rock",
+    "TileGround03_over": "flagstone",
+    "TileRock02_over": "plank"
+  },
+  "material_note": "Read off the art; the names lie. TileGrass01 is blue-grey brick, 97% of the map, laid stone: flagstone, never grass. TileGrass02 is green-grey mossy rock and TileGround02 dark rough earth: rock. TileGround03 is the courtyard's octagon paving, grey slabs with olive insets: flagstone. TileRock02 is dark planks banded in iron, eighteen tiles at 13-15,70-75, the drawbridge before the castle door: plank."
+}

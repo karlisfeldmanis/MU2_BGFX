@@ -26,6 +26,11 @@ constexpr MapRow kMaps[] = {
     // The Lost Tower's spawn gate 42, 203,70 to 213,81: the safe hall on its first floor
     // (Gates.cs:138, docs/lost-tower-port.md), where a death and the Town Portal land too.
     {"losttower", 4, {208, 75}, true},
+    // Blood Castle 1, MU's map 11: its exit gate 66, 12,5 to 14,10, in the safe court beside
+    // the Archangel (OpenMU VersionSeasonSix Gates.cs:216; docs/blood-castle-port.md). Not 0.75's:
+    // its first castle is Season Six's. MU draws it on its black clear with no weather
+    // (SceneManager.cpp:402), so it takes the underground's air, though it has no roof.
+    {"bloodcastle", 11, {13, 8}, true},
 };
 
 }  // namespace
