@@ -29,7 +29,8 @@ constexpr float kPerMetre = 100.0f;
 // A flame is born at the fuel, hot, and rises on its own buoyancy, swaying, tapering and
 // cooling from yellow-white at the base to red at the tip; fs_flame turns that heat into
 // colour and the bloom catches the hot part. Embers leave a bonfire now and then and a torch
-// rarely; a bonfire smokes.
+// rarely; a bonfire smokes, and a torch lets off a faint thread of it (the user, 2026-10-02:
+// 'some minimal smoke from torches').
 struct Profile {
     float flamesPerSecond;
     float size[2];          // full width of a flame at birth, metres
@@ -44,7 +45,7 @@ struct Profile {
 };
 // A torch: the cages and the bridges' and the gate's fires, FireLight01/02 and the rest.
 constexpr Profile kTorch = {38.0f, {0.42f, 0.62f}, {0.38f, 0.62f}, {0.45f, 0.8f}, 1.8f,
-                            0.07f, 0.12f, 0.05f, 0.7f, 0.0f};
+                            0.07f, 0.12f, 0.05f, 0.7f, 1.1f};
 // A dragon's breath (Fire::breath): how far a torch may stand from an Object17's origin and
 // be one of its mouths -- the heads' torches stand 2.5 to 2.9 m off it, the nearest other
 // torch 6 m -- and how its flames go: thrown out along the mouth at kBreathSpeed, slowing,
@@ -519,10 +520,13 @@ void Lamps::spawn(const Fire& fire, uint8_t kind) {
         one.velocity[1] = mix(1.0f, 2.2f, unit());
         one.velocity[2] = lean[2] + (unit() - 0.5f) * 0.9f;
     } else {
-        // Smoke leaves from over the flames rather than out of the logs.
-        one.life = mix(2.6f, 3.8f, unit());
-        one.size = mix(0.5f, 0.8f, unit());
-        one.position[1] += 0.9f;
+        // Smoke leaves from over the flames rather than out of the logs. A torch's is a thread:
+        // smaller puffs off its shorter flame, and `heat` is how thick, a third of a bonfire's.
+        // Ours, judged by eye.
+        one.life = fire.bonfire ? mix(2.6f, 3.8f, unit()) : mix(2.0f, 2.8f, unit());
+        one.size = fire.bonfire ? mix(0.5f, 0.8f, unit()) : mix(0.22f, 0.34f, unit());
+        one.heat = fire.bonfire ? 1.0f : 0.32f;
+        one.position[1] += fire.bonfire ? 0.9f : 0.42f;
         one.spin = 6.2831853f * unit();
         one.spinRate = (unit() - 0.5f) * 0.5f;
         one.velocity[0] = lean[0] + (unit() - 0.5f) * 0.15f;
@@ -627,7 +631,8 @@ void Lamps::update(float seconds, Town& town, gfx::Renderer& renderer, const flo
         fire.smoke += dt * p.smokePerSecond;
         while (fire.smoke >= 1.0f) {
             fire.smoke -= 1.0f;
-            if (bgfx::isValid(smoke_)) spawn(fire, kSmoke);
+            // Not from a dragon's mouth: its fire is thrown, and smoke would hang in its jaws.
+            if (bgfx::isValid(smoke_) && !fire.breath) spawn(fire, kSmoke);
         }
     }
 }
@@ -681,7 +686,8 @@ void Lamps::gather(gfx::Effects& effects, const float near[3], float daylight) c
             sprite.colour[0] = 0.30f * daylight + fire;
             sprite.colour[1] = 0.29f * daylight + fire * 0.45f;
             sprite.colour[2] = 0.30f * daylight + fire * 0.12f;
-            sprite.colour[3] = 0.85f * smooth(0.0f, 0.15f, t) * (1.0f - smooth(0.35f, 1.0f, t));
+            sprite.colour[3] = 0.85f * one.heat * smooth(0.0f, 0.15f, t) *
+                               (1.0f - smooth(0.35f, 1.0f, t));
             sprite.sheet = smoke_;
             sprite.blend = gfx::Blend::Smoke;
         }
