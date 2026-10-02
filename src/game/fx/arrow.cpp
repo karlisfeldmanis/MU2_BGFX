@@ -64,8 +64,12 @@ bool Arrows::open(const std::string& assetDir, content::Textures& textures,
     if (fire != nullptr) {
         emberSheet_ = textures.load(assetDir + "/" + fire->path, content::TextureRole::Albedo);
     }
-    core::logf("arrows: %d parts of 5, embers %s", loaded,
-               bgfx::isValid(emberSheet_) ? "yes" : "NO");
+    if (const content::EffectSheet* smoke = table.effect("smoke01")) {
+        smokeSheet_ = textures.load(assetDir + "/" + smoke->path, content::TextureRole::Albedo);
+    }
+    core::logf("arrows: %d parts of 5, embers %s, smoke %s", loaded,
+               bgfx::isValid(emberSheet_) ? "yes" : "NO",
+               bgfx::isValid(smokeSheet_) ? "yes" : "NO");
     return loaded > 0;
 }
 
@@ -74,6 +78,7 @@ void Arrows::shutdown() {
     for (Shot& one : shots_) one.alive = false;
     for (Ember& one : embers_) one.alive = false;
     for (Lick& one : licks_) one.alive = false;
+    for (Wisp& one : wisps_) one.alive = false;
 }
 
 Arrows::Model Arrows::modelFor(int32_t group, int32_t number) {
@@ -121,6 +126,7 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     shot->left = kFrames;
     shot->flown = 0.0f;
     shot->licked = kLickSpacing;  // one at the muzzle
+    shot->smoked = 0.0f;
     shot->glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
 }
 
@@ -157,6 +163,11 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
                 shot.licked -= kLickSpacing;
                 lick(shot);
             }
+            shot.smoked += step;
+            while (shot.smoked >= kWispSpacing) {
+                shot.smoked -= kWispSpacing;
+                smoke(shot);
+            }
         }
         // A tile short of the body, on the ground plane: CheckClientArrow, and the realm's hit.
         const float dx = shot.to[0] - shot.at[0], dz = shot.to[2] - shot.at[2];
@@ -185,6 +196,29 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
             continue;
         }
         for (int k = 0; k < 3; ++k) l.at[k] += l.velocity[k] * seconds;
+    }
+    for (Wisp& w : wisps_) {
+        if (!w.alive) continue;
+        w.age += frames;
+        if (w.age >= kWispFrames) {
+            w.alive = false;
+            continue;
+        }
+        w.at[1] += kWispRise * seconds;
+    }
+}
+
+void Arrows::smoke(const Shot& shot) {
+    if (!bgfx::isValid(smokeSheet_)) return;
+    for (Wisp& w : wisps_) {
+        if (w.alive) continue;
+        w.alive = true;
+        for (int k = 0; k < 3; ++k) {
+            w.at[k] = shot.at[k] - shot.along[k] * kWispBehind + (roll() - 0.5f) * 0.06f;
+        }
+        w.spin = roll() * kTwoPi;
+        w.age = 0.0f;
+        return;
     }
 }
 
@@ -280,6 +314,22 @@ void Arrows::gather(gfx::Effects& effects) const {
         sprite.colour[3] = 1.0f;
         sprite.sheet = emberSheet_;
         sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
+    }
+    // The smoke, mixed as Inferno's: opening as it rises, in and out softly.
+    for (const Wisp& w : wisps_) {
+        if (!w.alive) continue;
+        const float t = std::clamp(w.age / kWispFrames, 0.0f, 1.0f);
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = w.at[k];
+        sprite.halfWidth = sprite.halfHeight = 0.5f * (kWispBorn + (kWispGrown - kWispBorn) * t);
+        sprite.spin = w.spin + t * 0.6f;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = kWispGrey;
+        const float in = std::min(1.0f, t / 0.15f);
+        const float out = 1.0f - std::clamp((t - 0.3f) / 0.7f, 0.0f, 1.0f);
+        sprite.colour[3] = kWispAlpha * in * out;
+        sprite.sheet = smokeSheet_;
+        sprite.blend = gfx::Blend::Smoke;
         effects.add(sprite);
     }
 }

@@ -25,6 +25,9 @@
 // laid every few centimetres where the sprite is, rising and fading in a third of a second, at
 // the shot's Luminosity roll. MU's embers are 0.7 m apart and drift behind; at 17.5 tiles a
 // second they read as a trail and not as an arrow on fire (the user: 'minimal fire emitter').
+// And a thin smoke behind the flame (the user: 'and minimal smoke'): faint smoke01 wisps every
+// third of a metre, opening and rising slowly, gone in under a second -- Inferno's puffs
+// (fx/inferno.h) at a fraction of the size. Single shot and the fan alike: every wooden arrow.
 #pragma once
 
 #include <cstdint>
@@ -86,6 +89,7 @@ private:
         float left;      // reference frames
         float flown;     // metres since the last ember
         float licked;    // metres since the last lick
+        float smoked;    // metres since the last wisp
         float glow;      // this frame's Luminosity roll
     };
     struct Ember {
@@ -105,6 +109,12 @@ private:
         float spin;
         float glow;
         float left;         // reference frames
+    };
+    struct Wisp {  // ours: the smoke behind the flame
+        bool alive = false;
+        float at[3];
+        float spin;
+        float age;          // reference frames
     };
 
     // ---- MU's numbers (Arrow01.json and the three beside it) ---------------------------------
@@ -137,21 +147,34 @@ private:
     static constexpr float kLickRise = 0.7f;       // metres a second
     static constexpr float kLickJitter = 0.15f;    // metres a second, either way across
 
+    // ---- Ours: the smoke behind it ---------------------------------------------------------------
+    static constexpr float kWispSpacing = 0.35f;   // metres of flight between wisps
+    static constexpr float kWispBehind = 0.40f;    // metres behind the origin, past the flame
+    static constexpr float kWispFrames = 20.0f;
+    static constexpr float kWispBorn = 0.18f, kWispGrown = 0.60f;  // metres across
+    static constexpr float kWispRise = 0.35f;      // metres a second
+    static constexpr float kWispGrey = 0.45f;
+    static constexpr float kWispAlpha = 0.16f;
+
     static constexpr int kShots = 16;
     static constexpr int kEmbers = 256;
     static constexpr int kLicks = 256;
+    static constexpr int kWisps = 384;
 
     Shape shapes_[kModels];
     bgfx::TextureHandle emberSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle smokeSheet_ = BGFX_INVALID_HANDLE;
     float metresPerTile_ = 1.0f;
     Shot shots_[kShots];
     Ember embers_[kEmbers];
     Lick licks_[kLicks];
+    Wisp wisps_[kWisps];
     uint32_t dice_ = 0x41525257u;
 
     float roll();  // 0..1
     void shed(const Shot& shot);
     void lick(const Shot& shot);
+    void smoke(const Shot& shot);
 };
 
 }  // namespace mu::game
