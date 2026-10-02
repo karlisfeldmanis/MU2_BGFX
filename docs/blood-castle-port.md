@@ -1190,6 +1190,13 @@ state -- unless the user wants seven map numbers (decision 3).
 
 ## 5. Decisions for the user
 
+**Answered 2026-10-02 (the four the event waited on):**
+- Schedule: **(a)**, on the 2-hour wall clock that `kEvents` draws; entry only in its window, 20 min of play.
+- Ticket: **the Invisibility Cloak**, so Scroll of Archangel + Blood Bone drops and the one-recipe combine (step 7).
+- BC1 stats: **WebZen 1.00.93**, monsters at levels 33-51.
+- Death inside: **out to Devias, the run lost** (MU's rule: the cloak is spent).
+
+
 1. **Timed event or always open?** (a) on the 2-hour wall clock already drawn by `kEvents`
    (enter only in its window, 20 min); (b) any time, a 20-minute run from entry; (c) any time,
    no timer. Single player makes (a) a wait; (b) keeps the tension.

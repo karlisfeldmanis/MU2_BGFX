@@ -83,6 +83,16 @@ void PlayMode::keep(Context& ctx) {
         // And without her summon: a map change dismisses it (realm_summon.cpp).
         now.hero.summonSkill = 0;
     }
+    // Inside an event he is written in its town, at the spawn gate: a quit or a crash in Blood
+    // Castle comes back in Devias (WebZen user.cpp:3147-3150), the run lost.
+    const game::MapRow* map = game::mapOf(now.world);
+    const game::MapRow* home = map && map->event ? game::mapNumbered(map->home) : nullptr;
+    if (travelTo_.empty() && home != nullptr) {
+        now.world = home->world;
+        now.hero.column = home->arrive[0];
+        now.hero.row = home->arrive[1];
+        now.hero.summonSkill = 0;
+    }
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
@@ -650,10 +660,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
 
-    // A Town Portal read in the Dungeon: to Lorencia's safe zone, its spawn gate (MapRow arrive),
-    // as OpenMU's SafezoneMap for a map with no spawn gate (BaseMapInitializer.cs:91).
+    // A Town Portal read, or a death, on a map with no safe zone: to its town's spawn gate
+    // (MapRow arrive) -- Lorencia's from the Dungeon, as OpenMU's SafezoneMap for a map with no
+    // spawn gate (BaseMapInitializer.cs:91), Devias's from Blood Castle (MapRow home).
     if (world_.played().isOpen() && travelTo_.empty() && world_.played().takeHome()) {
-        if (const game::MapRow* home = game::mapNumbered(0)) {
+        const game::MapRow* here = game::mapOf(args.world);
+        if (const game::MapRow* home = game::mapNumbered(here ? here->home : 0)) {
             ctx.goBack.landing = true;
             travel(ctx, home->world);
         }

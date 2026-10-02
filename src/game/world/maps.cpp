@@ -30,7 +30,8 @@ constexpr MapRow kMaps[] = {
     // the Archangel (OpenMU VersionSeasonSix Gates.cs:216; docs/blood-castle-port.md). Not 0.75's:
     // its first castle is Season Six's. MU draws it on its black clear with no weather
     // (SceneManager.cpp:402), so it takes the underground's air, though it has no roof.
-    {"bloodcastle", 11, {13, 8}, true},
+    // Its town is Devias: a death, a Town Portal and the end of the run all land there.
+    {"bloodcastle", 11, {13, 8}, true, 2, true},
 };
 
 }  // namespace
