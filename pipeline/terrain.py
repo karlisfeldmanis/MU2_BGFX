@@ -197,6 +197,17 @@ VOID_BY_MAP = {
 #: them, whose blending into the black the user tuned.
 LAVA_SPILL_BY_MAP = {4: 256}
 
+#: Boxes of a map's grid opened at import, as (x1, y1, x2, y2, bits cleared), inclusive tiles.
+#: Ours, marked, and only until the run is built: Blood Castle's entrance, its drawbridge's gap
+#: and its door with the courtyard behind it are closed in MU's grid and opened by the event --
+#: the entrance at the start, the gap's NoGround at the first quota, the door's NoMove when the
+#: Castle Gate dies (WebZen BloodCastle.h:128-173, BloodCastle.cpp:2506-2625; docs/
+#: blood-castle-port.md, Part A section 4.3). With no event yet the hero was shut in the safe
+#: court (the user, 2026-10-02: 'i cant pass the gates to bridge'). Step 5 takes this out and
+#: opens them at run time; the gap's TileRock02 planks then show as ground, MU's lowered bridge.
+OPEN_BY_MAP = {11: [(13, 15, 15, 23, 0x04), (13, 70, 15, 75, 0x08), (13, 76, 15, 79, 0x04),
+                    (11, 80, 25, 89, 0x04), (8, 80, 10, 83, 0x04)]}
+
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5
 
@@ -552,6 +563,10 @@ def main() -> None:
         print(f"               {slot:3d}  {tile:14s} {share:5.1f}% of the ground")
 
     flags = attributes(world, number)
+    for x1, y1, x2, y2, bits in OPEN_BY_MAP.get(number - 1, ()):
+        flags = np.array(flags)
+        flags[y1:y2 + 1, x1:x2 + 1] &= flags.dtype.type(~bits & 0xFFFF)
+        print(f"  opened     {x1},{y1} to {x2},{y2}: bits 0x{bits:02x} cleared (OPEN_BY_MAP)")
 
     lit = baked_light(world)
 
