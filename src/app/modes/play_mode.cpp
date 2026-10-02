@@ -32,7 +32,8 @@ void PlayMode::readSave(Context& ctx) {
     // is playing would be the worst kind of helpful. Nor a --quest-ready demo, whose quest was
     // never walked. A named `--save` is still obeyed, because then the caller asked for a file
     // by name.
-    const bool unsaved = args.frames != 0 || !args.arena.empty() || args.questReady;
+    const bool unsaved =
+        args.frames != 0 || !args.arena.empty() || args.questReady || !args.questsDone.empty();
     savePath_ = !args.savePath.empty() ? args.savePath
                 : !unsaved             ? game::defaultSavePath()
                                        : std::string();
@@ -405,6 +406,21 @@ void PlayMode::runScript(Context& ctx) {
                 }
             }
             world_.played().restore(ready);
+        }
+        // --quests-done: those handed in once and resting, the demo of what waits on them.
+        if (!args.questsDone.empty()) {
+            sim::HeroRecord done = world_.played().record();
+            for (const char* at = args.questsDone.c_str(); *at;) {
+                const int q = std::atoi(at);
+                if (q >= 0 && q < sim::kQuests) {
+                    done.quests[q] = sim::QuestProgress{};
+                    done.quests[q].state = sim::QuestState::Resting;
+                    done.quests[q].completions = 1;
+                }
+                while (*at && *at != ',') ++at;
+                if (*at == ',') ++at;
+            }
+            world_.played().restore(done);
         }
         if (!args.talk.empty()) world_.played().talkTo(args.talk);
         if (args.perch >= 0) world_.played().perch(args.perch);

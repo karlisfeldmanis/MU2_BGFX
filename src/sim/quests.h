@@ -23,7 +23,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 6;
+inline constexpr int kQuests = 13;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 10;

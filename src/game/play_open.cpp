@@ -365,7 +365,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         // And the `play(idleClip)` that used to follow threw away the clip `stand` had just
         // chosen for exactly this: it is the ARMED idle, so every townsperson stood in the
         // combat stance with empty hands and the weapon on the back at the same time.
-        one.figure.stand(look, at, yaw, look->scale, tables_.grid.safe(person.x, person.y));
+        // Tersia at MuMain's 0.93 (ZzzCharacter.cpp:15009); an NPC recipe carries no scale.
+        const float scale = look->scale * (person.number == sim::kTersia ? 0.93f : 1.0f);
+        one.figure.stand(look, at, yaw, scale, tables_.grid.safe(person.x, person.y));
         settle(one);
         bones = std::max(bones, look->boneCount());
         folk_.push_back(std::move(one));

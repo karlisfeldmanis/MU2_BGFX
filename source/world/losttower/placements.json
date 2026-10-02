@@ -1,0 +1,25 @@
+{
+  "world": "losttower",
+  "summary": "What the extraction cannot know, for the Lost Tower: its townspeople in the safe hall. Version075's two (LostTower.cs:47-48) and Tersia, who is ours. The game stands them from tools/cook.py's FOLK_VERSION075[4]; these rows are what puts their figures in the tower's figure cook.",
+  "spawns": [
+    {
+      "model": "PotionGirlAmy",
+      "who": "Potion Girl Amy",
+      "tile": [207, 76],
+      "facing": 2
+    },
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [201, 76],
+      "facing": 4
+    },
+    {
+      "model": "tersia",
+      "who": "Tersia",
+      "tile": [206, 81],
+      "facing": 3,
+      "ours": "the tower's quest giver (docs/lost-tower-quest.md, the user's of 2026-10-01), NPC 566 (OpenMU's Mercenary Guild Felicia, Npc/tersia.bmd, MuMain scale 0.93), where the user stood and said \"put her here\": just inside the hall's south arches, between the two dragon-head statues, facing the carpet out"
+    }
+  ]
+}

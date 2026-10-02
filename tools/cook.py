@@ -1944,12 +1944,23 @@ FOLK_VERSION075 = {
         # two tiles Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45). 0.75 has no
         # Blood Castle; until it is written he says the hero is not ready (the user, 2026-09-30).
         (233, "Messenger of Archangel", "", 217, 29, 4),
+        # Ours: Thompson the Merchant (231, MuMain's MODEL_DEVIAS_TRADER, Npc/DeviasTrader01.bmd),
+        # who sends the hero to the Lost Tower (docs/lost-tower-quest.md, the user's of
+        # 2026-10-01). No OpenMU version stands him; the tile is ours, on the west square. His
+        # figure stands from placements.json, as Sevina's.
+        (231, "Thompson the Merchant", "", 195, 39, 4),
     ],
     4: [  # Lost Tower: Version075/Maps/LostTower.cs:47-48, both in the safe hall. Baz is
         # named Storage01 here because the tower's own placements have no vault for him to
         # take, as Lorencia's and Noria's do.
         (253, "Potion Girl Amy", "PotionGirlAmy", 207, 76, 2),
         (240, "Baz The Vault Keeper", "Storage01", 201, 76, 4),
+        # Ours: Tersia (566, Npc/tersia.bmd; OpenMU's Mercenary Guild Felicia, MuMain's Korean
+        # "Guild Manager Tersia"), the shrine's last guard and the tower's quest giver
+        # (docs/lost-tower-quest.md, the user's of 2026-10-01); where the user stood and said "put
+        # her here": just inside the hall's south arches, between the two dragon-head statues,
+        # where the carpet runs out, facing it.
+        (566, "Tersia", "tersia", 206, 81, 3),
     ],
 }
 

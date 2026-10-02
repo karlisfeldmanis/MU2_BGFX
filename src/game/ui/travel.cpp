@@ -491,9 +491,13 @@ void Travel::rebuild(const Drawn& now) {
         locked.freeTone = tip::Tone::Red;
         section.rows.push_back(locked);
         tip::Row how;
-        // Only the Golden Archer's links lock a row (Realm::travelQuest), and he is "the".
-        how.free = std::string("Take \"") + quest.title + "\" from the " + quest.giverName +
-                   " to travel here.";
+        // The Golden Archer's links lock a row until taken, and he is "the"; Tersia's until
+        // handed in (Realm::travelQuest).
+        how.free = quest.giver == sim::kTersia
+                       ? std::string("Complete \"") + quest.title + "\" for " + quest.giverName +
+                             " to travel here."
+                       : std::string("Take \"") + quest.title + "\" from the " + quest.giverName +
+                             " to travel here.";
         how.freeTone = tip::Tone::Yellow;
         section.rows.push_back(how);
         sheet.sections.push_back(section);

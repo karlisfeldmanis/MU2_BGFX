@@ -1,0 +1,419 @@
+{
+  "item": "tersia",
+  "mu_name": "Tersia",
+  "mu_name_from": "NPC/tersia.bmd, loaded as MODEL_TERSIA (ZzzOpenData.cpp:2220-2222, its textures out of Npc\\), MuMain's MONSTER_MERCENARY_GUILD_FELICIA, whose ID is the Korean for 'Guild Manager Tersia' (ZzzCharacter.cpp:15005-15010). Type 566, OpenMU's 'Mercenary Guild Felicia' (VersionSeasonSix/NpcInitialization.cs:818). Not Version075's.",
+  "world": "losttower",
+  "object_type": -1,
+  "why_this_one": "The user asked for her in the Lost Tower's safe hall in place of Senatus (2026-10-01); placement and her quest are the user's. A purple-haired woman in dark purple leather armour and boots: 1314 triangles on six sheets, 60 bones, two idles.",
+  "scale_from": "CreateCharacter stands her at `c->Object.Scale = 0.93f` (ZzzCharacter.cpp:15009), MU's own and not this mesh's: whoever stands her owes the 0.93, as a placement's scale. No lift, no BlendMesh, no subtype.",
+  "actions_from": "Two idles, both kept (export-rig --actions=all): action 0 eight keys, action 1 twenty-two.",
+  "play_speed_from": "OpenNpc's late overrides (ZzzOpenData.cpp:2276-2278) give her MONSTER01_STOP1 (action 0) PlaySpeed 0.35 and MONSTER01_STOP2 (action 1) 0.3. Not carried: a townsperson's clips are exported at export_gltf's flat DEFAULT_PLAY_SPEED 0.25 and the npc recipe has no per-action speed (only a monster's `monster.model_index` or the player's actions.json reach --speeds). So as built her idles run slow: action 0 at 0.25/0.35 = 71% of MU's rate (8 keys over 1.28 s where MU takes 0.91 s), action 1 at 0.25/0.3 = 83% (3.52 s where MU takes 2.93 s). Owed.",
+  "draw_from": "RenderObjectMesh's MODEL_TERSIA case (ZzzObject.cpp:2478-2482): the body drawn as it is, then mesh 0 (seta, her armour) again RENDER_BRIGHT | RENDER_CHROME at alpha 0.4 -- an added chrome sheen over the armour. Not drawn yet; this is the opaque body alone.",
+  "profile": "npc",
+  "sheets": {
+    "seta": "npc_seta.png",
+    "setb": "npc_setb.png",
+    "terhead": "npc_terhead.png",
+    "wmerhair": "npc_wmerhair.png",
+    "npcpharmercy01a": "npc_npcpharmercy01a.png",
+    "npcpharmercy01": "npc_npcpharmercy01.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix. npcpharmercy01 and npcpharmercy01a are another NPC's sheets (a merchant's page with a pouch and a feather), which tersia.bmd borrows for 16 and 2 triangles.",
+  "sheet_materials": {
+    "seta": "skin",
+    "setb": "skin",
+    "terhead": "skin",
+    "wmerhair": "hair",
+    "npcpharmercy01a": "feather",
+    "npcpharmercy01": "skin"
+  },
+  "sheet_materials_from": "seta paints her armour with bare skin at the neckline on the same page, so skin, as every townsperson's shared page does; setb is a chain and spiked trim, terhead her face. wmerhair is her hair, npcpharmercy01a a feather, npcpharmercy01 a painted page of leather and cloth.",
+  "cutout": [
+    "setb",
+    "wmerhair",
+    "npcpharmercy01a"
+  ],
+  "cutout_alpha": [
+    "setb",
+    "wmerhair",
+    "npcpharmercy01a"
+  ],
+  "cutout_from": "The three .OZT sheets carry a real alpha, and it is the shape: setb cuts away 30% (the chain and the spikes on black), wmerhair 8% (the ends of the locks), npcpharmercy01a 74% (a feather on a square). Keyed off that alpha, not off brightness.",
+  "islands_from": "Found by the build, then assigned by sheet, the triangle counts matching export-obj's per mesh: 16 (182) is all of wmerhair, hair; 1 (2) is npcpharmercy01a's feather, feather; 15 (304) is terhead, her face. The rest are seta's armour, setb's chain and trim and npcpharmercy01's page, skin. The build welds 1314 triangles to 1304 (clean_lowpoly drops ten).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 8,
+      "area": 839.4,
+      "along": [
+        33.2,
+        59.8
+      ],
+      "mu_uv": [
+        0.002,
+        0.003,
+        0.131,
+        0.301
+      ],
+      "bake_uv": [
+        0.935,
+        0.399,
+        0.974,
+        0.489
+      ]
+    },
+    {
+      "island": 1,
+      "material": "feather",
+      "triangles": 2,
+      "area": 159.2,
+      "along": [
+        14.7,
+        40.6
+      ],
+      "mu_uv": [
+        0.803,
+        0.008,
+        0.993,
+        0.78
+      ],
+      "bake_uv": [
+        0.725,
+        0.734,
+        0.782,
+        0.966
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 148,
+      "area": 5180.2,
+      "along": [
+        -2.7,
+        30.7
+      ],
+      "mu_uv": [
+        0.019,
+        0.009,
+        0.68,
+        0.989
+      ],
+      "bake_uv": [
+        0.098,
+        0.313,
+        0.698,
+        0.985
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 35,
+      "area": 4475.5,
+      "along": [
+        -11.0,
+        33.2
+      ],
+      "mu_uv": [
+        0.007,
+        0.016,
+        0.986,
+        0.978
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.751,
+        0.906
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 40,
+      "area": 989.6,
+      "along": [
+        11.8,
+        38.8
+      ],
+      "mu_uv": [
+        0.013,
+        0.199,
+        0.75,
+        0.635
+      ],
+      "bake_uv": [
+        0.012,
+        0.073,
+        0.831,
+        0.777
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 70,
+      "area": 2358.4,
+      "along": [
+        11.7,
+        36.3
+      ],
+      "mu_uv": [
+        0.652,
+        0.004,
+        0.929,
+        0.568
+      ],
+      "bake_uv": [
+        0.014,
+        0.212,
+        0.726,
+        0.915
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 100,
+      "area": 1534.1,
+      "along": [
+        -4.6,
+        48.7
+      ],
+      "mu_uv": [
+        0.153,
+        -0.163,
+        0.992,
+        0.988
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.769,
+        0.78
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 148,
+      "area": 5087.1,
+      "along": [
+        -2.7,
+        28.0
+      ],
+      "mu_uv": [
+        0.019,
+        0.009,
+        0.68,
+        0.989
+      ],
+      "bake_uv": [
+        0.106,
+        0.013,
+        0.759,
+        0.966
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 1,
+      "area": 19.2,
+      "along": [
+        3.5,
+        7.4
+      ],
+      "mu_uv": [
+        0.026,
+        0.228,
+        0.093,
+        0.259
+      ],
+      "bake_uv": [
+        0.673,
+        0.321,
+        0.693,
+        0.33
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 40,
+      "area": 984.8,
+      "along": [
+        -5.9,
+        20.8
+      ],
+      "mu_uv": [
+        0.013,
+        0.199,
+        0.75,
+        0.635
+      ],
+      "bake_uv": [
+        0.012,
+        0.107,
+        0.861,
+        0.963
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 70,
+      "area": 2358.4,
+      "along": [
+        -5.8,
+        27.9
+      ],
+      "mu_uv": [
+        0.652,
+        0.004,
+        0.929,
+        0.568
+      ],
+      "bake_uv": [
+        0.229,
+        0.144,
+        0.966,
+        0.966
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 100,
+      "area": 1526.8,
+      "along": [
+        15.5,
+        32.8
+      ],
+      "mu_uv": [
+        0.153,
+        -0.163,
+        0.992,
+        0.988
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.974,
+        0.813
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 16,
+      "area": 1163.4,
+      "along": [
+        -6.4,
+        30.3
+      ],
+      "mu_uv": [
+        0.007,
+        0.016,
+        0.28,
+        0.271
+      ],
+      "bake_uv": [
+        0.545,
+        0.908,
+        0.627,
+        0.985
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 22,
+      "area": 152.2,
+      "along": [
+        10.5,
+        18.8
+      ],
+      "mu_uv": [
+        0.094,
+        0.816,
+        0.208,
+        0.932
+      ],
+      "bake_uv": [
+        0.263,
+        0.087,
+        0.361,
+        0.299
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 18,
+      "area": 4176.9,
+      "along": [
+        -13.2,
+        31.8
+      ],
+      "mu_uv": [
+        0.013,
+        0.041,
+        0.986,
+        0.826
+      ],
+      "bake_uv": [
+        0.013,
+        0.407,
+        0.835,
+        0.793
+      ]
+    },
+    {
+      "island": 15,
+      "material": "skin",
+      "triangles": 304,
+      "area": 534.3,
+      "along": [
+        3.6,
+        18.3
+      ],
+      "mu_uv": [
+        -0.002,
+        -0.251,
+        0.97,
+        0.986
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.977,
+        0.688
+      ]
+    },
+    {
+      "island": 16,
+      "material": "hair",
+      "triangles": 182,
+      "area": 4329.9,
+      "along": [
+        -20.9,
+        19.1
+      ],
+      "mu_uv": [
+        0.02,
+        0.027,
+        0.978,
+        0.985
+      ],
+      "bake_uv": [
+        0.013,
+        0.012,
+        0.977,
+        0.988
+      ]
+    }
+  ]
+}

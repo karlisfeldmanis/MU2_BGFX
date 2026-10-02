@@ -82,6 +82,20 @@ VOICES = {
                                  "aecho=0.8:0.55:190|380|620:0.22|0.12|0.06,"
                                  "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
                                  "apad=pad_dur=0.6,loudnorm=I=-16:TP=-1.5:LRA=11"),
+    # Tersia, the Lost Tower's last guard (the user, 2026-10-01). Her giver was first an old man,
+    # Senatus, whose voice the user sent back twice -- "to happy, we need more tired old man and
+    # scared", "to much echo", "without reverb, and minimal echo" -- and then picked the third of
+    # three auditions, "third woman voice was nice", and a woman to match. Her reference is
+    # Kokoro-82M's bm_fable (Apache 2.0) reading a frightened, exhausted line at 0.78 speed,
+    # source/voice/ref/tersia_fable_scared.wav; cloned at 0.6 and 0.3, seed 11 -- 0.3 read her pages
+    # "very monotome, lack of emotion", and of 0.6, 0.85 and 1.1 the user took 0.6. Aged and
+    # shaken, not pitched: 8% slower, a tremble in volume and pitch, a thinner bottom, one faint
+    # echo at 90 ms. One voice for her seven floors, tersia_1 to tersia_7 (VOICES by the stem).
+    "tersia": dict(ref="tersia_fable_scared.wav", exaggeration=0.6, cfg_weight=0.3, seed=11,
+                   polish="atempo=0.92,tremolo=f=6:d=0.2,vibrato=f=6:d=0.07,highpass=f=90,"
+                          "aecho=0.8:0.4:90:0.12,"
+                          "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
+                          "apad=pad_dur=0.4,loudnorm=I=-17:TP=-1.5:LRA=11"),
 }
 
 
@@ -129,7 +143,8 @@ def main():
     import torchaudio
     from chatterbox.tts import ChatterboxTTS
 
-    how = VOICES[args.voice]
+    # A chain's links share their giver's voice: golden_archer_2 reads as golden_archer.
+    how = VOICES.get(args.voice) or VOICES[re.sub(r"_\d+$", "", args.voice)]
     model = ChatterboxTTS.from_pretrained(device=args.device)
     out = ROOT / "source" / "voice" / args.voice
     out.mkdir(parents=True, exist_ok=True)
@@ -139,7 +154,7 @@ def main():
                 continue
             parts = []
             for i, words in enumerate(paragraphs):
-                torch.manual_seed(7)
+                torch.manual_seed(how.get("seed", 7))
                 wav = model.generate(spoken(words), audio_prompt_path=str(REFS / how["ref"]),
                                      exaggeration=how["exaggeration"],
                                      cfg_weight=how["cfg_weight"],

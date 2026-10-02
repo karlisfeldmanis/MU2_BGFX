@@ -224,12 +224,13 @@ QuestRow devin() {
     row.underway = "\"Not yet. The storms still rage, and the Queens still live.\"";
     row.handIn[0] = "\"The sky over Devias is clear again. Thank you.\"";
     row.handIn[1] =
-        "\"Take these. You will need them for what comes next: the Lost Tower. But that is a "
-        "story for another day.\"";
+        "\"Take these. Your road goes on to the Lost Tower. Find Tersia in its hall. She will "
+        "tell you the rest.\"";
     row.resting = "\"Rest now. By morning, the Queens will call the storms back.\"";
-    // None until the Lost Tower is decided (the doc's "Next").
-    row.next = "";
-    // Read by hand, not by voice.py's main(): source/voice/devin/recorded_with.py.txt.
+    // The way on (the user, 2026-10-01): the Lost Tower and its keeper, Tersia's chain.
+    row.next = "Seek Tersia in the Lost Tower";
+    // Read by hand, not by voice.py's main(): source/voice/devin/recorded_with.py.txt. The
+    // hand-in's second page still says the old words ("a story for another day") until re-read.
     row.voice = "devin";
     row.steps[0] = {QuestStepKind::Clear, 24, 40, "Worms"};
     row.steps[1] = {QuestStepKind::Clear, 22, 35, "Ice Monsters"};
@@ -441,7 +442,243 @@ QuestRow pit() {
     return row;
 }
 
-const QuestRow kTable[kQuests] = {marlon(), peia(), devin(), catacombs(), halls(), pit()};
+// The Lost Tower's way in (docs/lost-tower-quest.md, the user's of 2026-10-01): Devin's hand-in
+// sends the hero to the tower, where its last keeper gives the first quest and her hall opens on
+// the travel list. She is MU's own, not 0.75's: Tersia (566, Npc/tersia.bmd, MuMain's MODEL_TERSIA;
+// its Korean ID 길드관리인 테르시아, "Guild Manager Tersia", which OpenMU and the English client
+// call Mercenary Guild Felicia) -- a purple-haired woman in dark leather armour, the user's pick
+// on 2026-10-01 after Oracle Layla (Npc/kalnpc.bmd, sat on a boat of potions) and Senatus.
+// Tersia as the shrine's last guard is ours.
+//
+// Tersia's chain, the Lost Tower's (the user, 2026-10-01: "similar like golden archer where
+// char has to clear each floor and gets rewards"): seven links, a floor each, each offered once the
+// one before is handed in, the first once Devin's is. Each link's steps are its floor's breeds
+// (docs/lost-tower-port.md A §4.1), counts about half the floor; the last ends on the Balrog. The
+// travel row to floors 2-7 opens once its link is handed in, not only taken as the Dungeon's do
+// (Realm::travelQuest); the hall's opens as she is spoken to; the stairs ask only their levels. Every class's, each link repeatable every twelve hours.
+// What she says of the tower is Webzen's (above) or the game's own (the Cursed Wizards' reach,
+// the Devils' push, the Gorgons' rolling fire, the burning plates); the rest is ours. The rewards
+// are proposals: every clear experience, Zen and jewels rising floor by floor; the first clear of
+// the first link each class's top gloves with a socket and the Undying (no quest has paid it since
+// Devin's became Renewal); the Balrog's a Jewel of Chaos on top.
+QuestRow tersiaLink(const char* title, int64_t experience, int64_t first, int64_t zen, int bless,
+                   int soul) {
+    QuestRow row;
+    row.giver = 566;
+    row.giverName = "Tersia";
+    row.place = "the Lost Tower";
+    row.title = title;
+    row.repeatSeconds = 12 * 60 * 60;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    row.experience = experience;
+    row.firstExperience = first;
+    row.zen = zen;
+    row.paid[row.paidCount++] = {.item = "Jewel01", .count = bless};  // Jewels of Bless
+    if (soul > 0) row.paid[row.paidCount++] = {.item = "Jewel02", .count = soul};  // of Soul
+    return row;
+}
+
+QuestRow tersiaDoor() {
+    QuestRow row = tersiaLink("The Last Contract", 100000, 400000, 100000, 2, 0);
+    row.offer[0] =
+        "\"Devin sent you? Good. Sit down before you fall down. I know that look; I see it in "
+        "the water every morning.\"";
+    row.offer[1] =
+        "\"My name is Tersia. The Mercenary Guild took a contract to guard this shrine. "
+        "Twelve of us came up the road. I am what is left.\"";
+    row.offer[2] =
+        "\"The contract was never closed, and I cannot close it alone. I have not slept a "
+        "whole night since the shrine fell.\"";
+    row.offer[3] =
+        "\"The Shadows come out of the walls on this floor, and the Poison Shadows behind "
+        "them. Thin them out for me. I will pay what the guild owes.\"";
+    row.underway = "\"I can still hear them in the walls. Keep going.\"";
+    row.handIn[0] = "\"Quiet. I had forgotten what that sounds like.\"";
+    row.handIn[1] =
+        "\"Here is your pay. Guild rates, and a little more, because nobody else would come.\"";
+    row.resting =
+        "\"Let me sleep an hour. Just one. Then we talk about the next floor.\"";
+    row.next = "Tersia has another contract: the second floor";
+    row.steps[0] = {QuestStepKind::Clear, 36, 40, "Shadows"};
+    row.steps[1] = {QuestStepKind::Clear, 39, 15, "Poison Shadows"};
+    row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 3;
+    row.afterAny = 1u << 2;  // Devin's handed in: his hand-in sends the hero to her
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.paid[row.paidCount++] = {.item = "GloveMale02", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Dragon
+    row.paid[row.paidCount++] = {.item = "GloveMale04", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};  // Legendary
+    row.paid[row.paidCount++] = {.item = "GloveElf05", .kin = elf, .sockets = 1,
+                                 .firstOnly = true};  // Guardian
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
+                                 .firstOnly = true};
+    row.voice = "tersia_1";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+QuestRow tersiaSecond() {
+    QuestRow row = tersiaLink("Bad Air", 110000, 350000, 110000, 2, 0);
+    row.offer[0] =
+        "\"Brann held the second floor. A big man who laughed at everything. The poison took "
+        "him slowly.\"";
+    row.offer[1] =
+        "\"The Poison Shadows nest there now, and Cursed Wizards walk among them. Mind the "
+        "plates in the floor. They still burn.\"";
+    row.offer[2] =
+        "\"Clear it, and I will write Brann's name in the guild book as avenged.\"";
+    row.underway = "\"Is the air still thick down there? Then it is not done.\"";
+    row.handIn[0] = "\"I will write his name tonight. Thank you.\"";
+    row.handIn[1] =
+        "\"Your pay. Do not spend it all on potions. No. Spend it all on potions. You will "
+        "need them.\"";
+    row.resting = "\"I am writing names. Leave me a while.\"";
+    row.next = "Tersia has another contract: the third floor";
+    row.steps[0] = {QuestStepKind::Clear, 39, 35, "Poison Shadows"};
+    row.steps[1] = {QuestStepKind::Clear, 34, 12, "Cursed Wizards"};
+    row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 3;
+    row.afterAny = 1u << 6;
+    row.voice = "tersia_2";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+QuestRow tersiaThird() {
+    QuestRow row = tersiaLink("Fire from Afar", 130000, 400000, 130000, 3, 1);
+    row.offer[0] =
+        "\"Our archers held the third floor. The Cursed Wizards outranged them anyway.\"";
+    row.offer[1] =
+        "\"Their fire reaches farther than any bow. Do not trade shots with them. Get close, "
+        "and fast.\"";
+    row.offer[2] =
+        "\"The Death Cows will charge you while you do it. Put them down as well.\"";
+    row.underway = "\"I can still see firelight on the stairs.\"";
+    row.handIn[0] = "\"Dark up there again. Good. Dark is good.\"";
+    row.handIn[1] =
+        "\"Pay, as promised. Past that floor the stone turns red. I never went that far.\"";
+    row.resting = "\"My hands keep shaking. It passes. Come back later.\"";
+    row.next = "Tersia has another contract: the fourth floor";
+    row.steps[0] = {QuestStepKind::Clear, 34, 15, "Cursed Wizards"};
+    row.steps[1] = {QuestStepKind::Clear, 41, 20, "Death Cows"};
+    row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 3;
+    row.afterAny = 1u << 7;
+    row.voice = "tersia_3";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+QuestRow tersiaFourth() {
+    QuestRow row = tersiaLink("The Red Floor", 150000, 450000, 150000, 3, 1);
+    row.offer[0] =
+        "\"Nobody from my company came back from the fourth floor. Nobody.\"";
+    row.offer[1] =
+        "\"Devils walk there. Their lightning throws a grown man across the room. Plant your "
+        "feet.\"";
+    row.offer[2] =
+        "\"Clear the Devils, and what is left of the Death Cows. Then tell me what you saw.\"";
+    row.underway =
+        "\"You are back already. Is it done? No. I can see in your face that it is not.\"";
+    row.handIn[0] = "\"You came back. From the fourth floor. You came back.\"";
+    row.handIn[1] =
+        "\"Your pay. And my thanks, which is worth less, but you have it anyway.\"";
+    row.resting = "\"I dream about the red floor. Give me until morning.\"";
+    row.next = "Tersia has another contract: the fifth floor";
+    row.steps[0] = {QuestStepKind::Clear, 41, 12, "Death Cows"};
+    row.steps[1] = {QuestStepKind::Clear, 37, 10, "Devils"};
+    row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 3;
+    row.afterAny = 1u << 8;
+    row.voice = "tersia_4";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+QuestRow tersiaFifth() {
+    QuestRow row = tersiaLink("Knights Who Do Not Sleep", 170000, 500000, 170000, 4, 1);
+    row.offer[0] =
+        "\"The Death Knights on the fifth floor wear armour like ours. Some of it is ours.\"";
+    row.offer[1] =
+        "\"I do not want to know which. Just put them down. The Devils are still with them, "
+        "so mind the lightning.\"";
+    row.underway = "\"They are still standing. I can feel it.\"";
+    row.handIn[0] =
+        "\"If you found a guild badge on any of them, keep it. I do not want to see it.\"";
+    row.handIn[1] = "\"Here. Your pay. Two floors left.\"";
+    row.resting = "\"Not now. I need to be alone for a while.\"";
+    row.next = "Tersia has another contract: the sixth floor";
+    row.steps[0] = {QuestStepKind::Clear, 37, 12, "Devils"};
+    row.steps[1] = {QuestStepKind::Clear, 40, 12, "Death Knights"};
+    row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 3;
+    row.afterAny = 1u << 9;
+    row.voice = "tersia_5";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+QuestRow tersiaSixth() {
+    QuestRow row = tersiaLink("Rolling Fire", 200000, 600000, 200000, 4, 2);
+    row.offer[0] =
+        "\"The sixth floor is where the Death Gorgons begin. They roll fire along the ground.\"";
+    row.offer[1] =
+        "\"Do not stand where the fire is going to be. That is all the advice I have. It was "
+        "not enough for us.\"";
+    row.offer[2] =
+        "\"Clear the Devils, the Knights and the Gorgons, and come back to me.\"";
+    row.underway = "\"Something is still burning down there.\"";
+    row.handIn[0] = "\"One floor left. One. I never thought I would say that.\"";
+    row.handIn[1] = "\"Your pay. Sleep before the last one. One of us should.\"";
+    row.resting = "\"The last floor waits. So do I.\"";
+    row.next = "Tersia has the last contract: the Balrog";
+    row.steps[0] = {QuestStepKind::Clear, 37, 8, "Devils"};
+    row.steps[1] = {QuestStepKind::Clear, 40, 8, "Death Knights"};
+    row.steps[2] = {QuestStepKind::Clear, 35, 8, "Death Gorgons"};
+    row.steps[3] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 4;
+    row.afterAny = 1u << 10;
+    row.voice = "tersia_6";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+QuestRow tersiaBalrog() {
+    QuestRow row = tersiaLink("The Scythe", 250000, 1000000, 250000, 5, 2);
+    // Webzen's words for the Balrog, as near as she says them.
+    row.offer[0] =
+        "\"The last floor. Kundun left his Balrog there, a foul beast with a scythe.\"";
+    row.offer[1] =
+        "\"Few warriors in all of MU can stand against it. The guild sent twelve. You know "
+        "how that ended.\"";
+    row.offer[2] =
+        "\"Clear the Death Gorgons and the Death Knights around it, and bring it down. Then "
+        "the contract is closed.\"";
+    row.offer[3] =
+        "\"If you do not come back, I will write your name in the book with the others.\"";
+    row.underway = "\"It is still up there. I can hear the scythe on the stone.\"";
+    row.handIn[0] =
+        "\"The contract is closed. Eleven names in the book, and the Balrog's beside them.\"";
+    row.handIn[1] =
+        "\"Full pay, and the guild's bonus. Tonight I am going to sleep. All night.\"";
+    row.resting =
+        "\"Another Balrog will crawl up there. When it does, the contract opens again.\"";
+    row.steps[0] = {QuestStepKind::Clear, 35, 25, "Death Gorgons"};
+    row.steps[1] = {QuestStepKind::Clear, 40, 20, "Death Knights"};
+    row.steps[2] = {QuestStepKind::Clear, 38, 1, "The Balrog"};
+    row.steps[3] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 4;
+    row.afterAny = 1u << 11;
+    row.paid[row.paidCount++] = {.item = "Jewel15"};  // Jewel of Chaos
+    row.voice = "tersia_7";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+const QuestRow kTable[kQuests] = {marlon(),      peia(),        devin(),      catacombs(),
+                                  halls(),       pit(),         tersiaDoor(),  tersiaSecond(),
+                                  tersiaThird(),  tersiaFourth(), tersiaFifth(), tersiaSixth(),
+                                  tersiaBalrog()};
 
 }  // namespace
 

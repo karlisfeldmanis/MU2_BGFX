@@ -140,6 +140,11 @@ constexpr int kSevina = 235;
 // The Messenger of Archangel, MU's NPC 233: Blood Castle's gatekeeper, who has no castle to
 // open yet. Spoken to, he says so, as the Guild Master does (the user, 2026-09-30).
 constexpr int kMessenger = 233;
+// Thompson the Merchant, MU's NPC 231, a Devias trader who once supplied the Lost Tower's shrine
+// and has only lines about it; and Tersia, MU's 566 (OpenMU's Mercenary Guild Felicia), its last guard and the tower's quest giver
+// (sim/quests.cpp, docs/lost-tower-quest.md).
+constexpr int kThompson = 231;
+constexpr int kTersia = 566;
 // Charon, MU's NPC 237: Devil Square's gatekeeper in Noria, likewise (the user, 2026-09-30).
 constexpr int kCharon = 237;
 
@@ -743,7 +748,8 @@ public:
     // Why a trip on that row would be refused now, or None.
     TravelRefusal travelRefusal(int index) const;
     // The quest a row waits on (TravelRefusal::Quest): a Dungeon floor's link of the Golden
-    // Archer's chain, the n-th floor the n-th link; -1 for a row that waits on none.
+    // Archer's chain, taken; a Lost Tower floor's (2-7) of Tersia's, handed in; the n-th
+    // floor the n-th link; -1 for a row that waits on none.
     int travelQuest(int index) const;
     // The row he is standing in on a map of several (which of the Dungeon's floors), or -1.
     int travelFloor() const;

@@ -143,6 +143,8 @@ void printUsage() {
         "  --talk NAME               walk to the townsperson whose name holds NAME\n"
         "  --quest-ready             every quest's steps already done, only the hand-in left;\n"
         "                            never saved\n"
+        "  --quests-done 2,6         those quests (table order) handed in once, so what waits on\n"
+        "                            them is offered; never saved\n"
         "  --walk-to COLUMN,ROW      one walk to that tile at the start, as a click there\n"
         "  --perch N                 walk to perch N (sit, lean) and take its pose\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
@@ -533,6 +535,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.talk = v;
         } else if (!std::strcmp(s, "--quest-ready")) {
             a.questReady = true;
+        } else if (!std::strcmp(s, "--quests-done")) {
+            if (const char* v = next(s)) a.questsDone = v;
         } else if (!std::strcmp(s, "--walk-to")) {
             if (const char* v = next(s)) std::sscanf(v, "%d,%d", &a.walkColumn, &a.walkRow);
         } else if (!std::strcmp(s, "--perch")) {

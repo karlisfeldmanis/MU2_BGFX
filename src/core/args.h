@@ -291,6 +291,9 @@ struct Args {
     bool entrance = false; // --entrance: the fade-up and the character's dissolve in a --frames run
     std::string talk;      // walk to this townsperson (by a piece of his name) at the start
     bool questReady = false;  // --quest-ready: every quest Ready, the hand-in's demo; no save
+    // --quests-done 2,6: those quests (sim/quests.cpp's table order) handed in once, so what waits
+    // on them is offered -- the Lost Tower's chain after Devin's; no save.
+    std::string questsDone;
     int walkColumn = -1, walkRow = -1;  // --walk-to: one walk to this tile at the start
     int perch = -1;       // walk to this perch (an index into the tables' perches) and take it
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on

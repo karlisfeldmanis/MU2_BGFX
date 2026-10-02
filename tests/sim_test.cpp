@@ -3342,7 +3342,7 @@ void testWear(const content::Tables& tables) {
     checkEqual(grown.repairAll(), 0, "and there is no repair-all away from a counter");
 }
 
-// Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin, Sevina and the Messenger, the three shelves, Zienna's
+// Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin, Sevina, the Messenger and Thompson, the three shelves, Zienna's
 // counter, and the Guild Master answering with a line where MU opens a guild window.
 // A monster's poison on him is 0.75's, one at a time (the user, 2026-10-01: "poison damage from
 // monsters seems to overpowered"): a bite while one is on neither adds to it nor starts it
@@ -3466,13 +3466,122 @@ void testTravelQuestLock() {
     check(realm.travelRefusal(second) != sim::TravelRefusal::Quest, "and not for it once taken");
 }
 
+// The Lost Tower's way in (docs/lost-tower-quest.md, 2026-10-01): Devin's hand-in sends the hero
+// to Tersia in the tower's hall; her chain of seven floors waits on Devin's, speaking to her
+// opens the hall's row, and each deeper floor's row waits on its link handed in.
+// Thompson in Devias only answers with a line.
+void testTowerKeeper() {
+    std::printf("the tower's keeper\n");
+    content::Tables devias, tower;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur", devias,
+                              error),
+          "Devias's tables load");
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/losttower/losttower.mur",
+                              tower, error),
+          "the Lost Tower's tables load");
+    const int shrine = sim::questOf(sim::kTersia);
+    check(shrine >= 0, "Tersia gives a quest");
+    checkEqual(sim::questOf(sim::kThompson), -1, "Thompson gives none");
+    if (shrine < 0) return;
+    check(sim::questAt(shrine).afterAny == (1u << 2), "hers waits on Devin's");
+    int links = 0, unmade = 0, chained = 0;
+    for (int q = 0; q < sim::kQuests; ++q) {
+        const sim::QuestRow& row = sim::questAt(q);
+        if (row.giver != sim::kTersia) continue;
+        if (links > 0) chained += row.afterAny == (1u << (q - 1)) ? 1 : 0;
+        ++links;
+        for (int i = 0; i < row.paidCount; ++i) unmade += tower.itemNamed(row.paid[i].item) < 0;
+    }
+    checkEqual(links, 7, "seven links, a floor each");
+    checkEqual(chained, 6, "each after the one before");
+    checkEqual(unmade, 0, "and every thing she pays is a cooked item");
+    const auto folkOf = [](const content::Tables& tables, int number) {
+        for (size_t i = 0; i < tables.folk.size(); ++i) {
+            if (tables.folk[i].number == number) return int(i);
+        }
+        return -1;
+    };
+    const int thompson = folkOf(devias, sim::kThompson), tersia = folkOf(tower, sim::kTersia);
+    check(thompson >= 0, "Thompson stands in Devias");
+    check(tersia >= 0, "Tersia stands in the Lost Tower");
+    if (thompson < 0 || tersia < 0) return;
+    // Spoken to: a dialog opened, or a line said.
+    const auto talkTo = [](sim::Realm& realm, int folk, bool* offered, bool* greeted) {
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(folk);
+        realm.ask(talk);
+        *offered = *greeted = false;
+        for (int tick = 0; tick < 400 && !*offered && !*greeted; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                *offered |= one.what == sim::What::Offered;
+                *greeted |= one.what == sim::What::Shouted &&
+                            one.a == int32_t(sim::Shout::Greet) && one.c == folk;
+            }
+        }
+    };
+
+    const content::Townsperson& t = devias.folk[size_t(thompson)];
+    sim::Realm town;
+    check(town.raise(&devias, 7, t.x, t.y + 2, sim::Kin::DarkKnight, 45), "a knight by Thompson");
+    bool offered = false, greeted = false;
+    talkTo(town, thompson, &offered, &greeted);
+    check(greeted && !offered, "Thompson answers with a line");
+
+    int hall = -1;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (sim::travelAt(i).map == 4 && hall < 0) hall = i;
+    }
+    const uint32_t deeper = sim::travelRowsOf(4) & ~(uint32_t(1) << hall);
+    const content::Townsperson& l = tower.folk[size_t(tersia)];
+    sim::Realm early;
+    check(early.raise(&tower, 7, l.x, l.y + 2, sim::Kin::DarkKnight, 45), "a knight by Tersia");
+    check(((early.found() >> hall) & 1u) == 0, "standing in the hall does not open its row");
+    check(early.questLocked(shrine), "before Devin's is handed in, her quest waits");
+    talkTo(early, tersia, &offered, &greeted);
+    check(greeted && !offered, "and she answers with a line");
+    check(((early.found() >> hall) & 1u) != 0, "but speaking to her opens the hall's row");
+    check(early.travelQuest(hall) < 0, "which waits on no link");
+    int shut = 0;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (((deeper >> i) & 1u) && early.travelRefusal(i) == sim::TravelRefusal::Quest) ++shut;
+    }
+    checkEqual(shut, 6, "and the six floors past it wait on their links");
+
+    sim::HeroRecord record = early.record();
+    record.quests[2].state = sim::QuestState::Resting;
+    record.quests[2].completions = 1;
+    sim::Realm later;
+    check(later.raise(&tower, 7, l.x, l.y + 2, sim::Kin::DarkKnight, 45), "and again, Devias cleared");
+    later.restore(record);
+    check(!later.questLocked(shrine) && later.questOffered(shrine), "her quest is offered");
+    talkTo(later, tersia, &offered, &greeted);
+    check(offered && !greeted, "her dialog opens");
+    check(later.acceptQuest(shrine), "and it is taken");
+    checkEqual(int(later.quest(shrine).state), int(sim::QuestState::Active),
+               "under way: the first floor's two breeds");
+    const int second = hall + 1;
+    check(later.travelQuest(second) == shrine + 1, "the second floor's row waits on the second link");
+    sim::HeroRecord on = later.record();
+    on.quests[shrine + 1].state = sim::QuestState::Active;
+    later.restore(on);
+    checkEqual(int(later.travelRefusal(second)), int(sim::TravelRefusal::Quest),
+               "and stays shut while it is only taken");
+    on.quests[shrine + 1].state = sim::QuestState::Resting;
+    on.quests[shrine + 1].completions = 1;
+    later.restore(on);
+    check(later.travelRefusal(second) != sim::TravelRefusal::Quest, "and opens handed in");
+}
+
 void testDeviasFolk() {
     std::printf("devias folk\n");
     content::Tables devias;
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur";
     check(content::loadTables(path, devias, error), "Devias's tables load");
-    checkEqual(long(devias.folk.size()), 12L, "twelve townsfolk stand in Devias");
+    checkEqual(long(devias.folk.size()), 13L, "thirteen townsfolk stand in Devias (Thompson since 2026-10-01)");
     int master = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kGuildMaster) master = int(i);
@@ -5562,6 +5671,7 @@ int main() {
     testWardens(tables);
     testArcherHolds(tables);
     testStrollers(tables);
+    testTowerKeeper();
     testArchery(tables);
     testElfSkills(tables);
     testSummons(tables);

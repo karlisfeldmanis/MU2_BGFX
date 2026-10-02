@@ -1,0 +1,274 @@
+{
+  "item": "DeviasTrader01",
+  "mu_name": "Thompson the Merchant",
+  "mu_name_from": "NPC/DeviasTrader01.bmd, loaded as MODEL_DEVIAS_TRADER (ZzzOpenData.cpp:1929-1931, AccessModel L\"DeviasTrader\", 1, its textures out of Npc\\), MuMain's MONSTER_THOMPSON_THE_MERCHANT at the default scale and no subtype (ZzzCharacter.cpp:14344-14347; the client names him the Korean for 'Devias's added merchant'). Type 231, OpenMU's 'Thompson the Merchant' (VersionSeasonSix/NpcInitialization.cs:76), the one whose general-goods store OpenMU clones for later merchants (Updates/AddMissingMerchantStoresPlugIn.cs:40). Not Version075's.",
+  "world": "devias",
+  "object_type": -1,
+  "why_this_one": "The user asked for Thompson as a figure for Devias (2026-10-01); placement and his shop are the user's. An old bearded man in a leather apron with steel-studded straps, working a sword on a whetstone wheel: 658 triangles on three sheets, 38 bones, his own two idles.",
+  "profile": "npc",
+  "sheets": {
+    "man": "npc_man.png",
+    "sword03": "sword03_npc.png",
+    "knifestone": "npc_knifestone.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix. sword03 is Data/NPC/sword03.OZJ, which decodes pixel for pixel to sword03_npc.png already in source/textures (Sword02's blade), so it is shared.",
+  "sheet_materials": {
+    "man": "skin",
+    "sword03": "steel",
+    "knifestone": "hardwood"
+  },
+  "sheet_materials_from": "man is one page carrying his face, beard, apron and straps together, so skin, as every townsperson's shared page does. sword03 is the blade he sharpens. knifestone is the wheel's timber frame and the stone disc on it.",
+  "actions_from": "Two idles, both kept (export-rig --actions=all): MoveCharacter's MODEL_DEVIAS_TRADER case (ZzzCharacter.cpp:3746-3754) picks action 1 with a 1-in-32 chance each time a clip ends, otherwise action 0 again.",
+  "effects_from": "MoveCharacterVisual's MODEL_DEVIAS_TRADER case (ZzzCharacter.cpp:6112-6131), not drawn yet: while he plays action 0 the sharpening throws sparks -- a terrain light (Luminosity*0.5, *0.3, 0) radius 3 on his tile, and at bone 37 (BoneP1, the wheel's edge) offset (0, 5, 10), up to four BITMAP_JOINT_SPARK joints a frame at angle (rand%60+90, 0, rand%30), each with a BITMAP_SPARK particle one time in two. No BlendMesh, no scale, no RenderCharacter case: he is drawn as he is.",
+  "islands_from": "Found by the build, then assigned by sheet. Island 7 (516 triangles) is all of man, so skin. Islands 8-10 are sword03 (44 triangles) laid out exactly as Sword02's three: 10 the blade (steel), 9 the gold guard (brass), 8 the black grip (leather_wrap), as Sword02's own measured note gives them. Islands 0-6 are knifestone (98): 6 is the round stone disc on the sheet's left half and 0 the grey plate beside it, both rock; 1-5 are the frame's timber, hardwood.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 4187.7,
+      "along": [
+        12.3,
+        59.9
+      ],
+      "mu_uv": [
+        0.513,
+        0.385,
+        0.738,
+        0.984
+      ],
+      "bake_uv": [
+        0.059,
+        0.012,
+        0.764,
+        0.986
+      ]
+    },
+    {
+      "island": 1,
+      "material": "hardwood",
+      "triangles": 10,
+      "area": 3351.4,
+      "along": [
+        27.6,
+        55.1
+      ],
+      "mu_uv": [
+        0.716,
+        0.019,
+        0.988,
+        0.972
+      ],
+      "bake_uv": [
+        0.012,
+        0.377,
+        0.969,
+        0.971
+      ]
+    },
+    {
+      "island": 2,
+      "material": "hardwood",
+      "triangles": 10,
+      "area": 3351.4,
+      "along": [
+        27.6,
+        55.1
+      ],
+      "mu_uv": [
+        0.716,
+        0.019,
+        0.988,
+        0.972
+      ],
+      "bake_uv": [
+        0.339,
+        0.01,
+        0.89,
+        0.99
+      ]
+    },
+    {
+      "island": 3,
+      "material": "hardwood",
+      "triangles": 10,
+      "area": 157.3,
+      "along": [
+        39.7,
+        42.5
+      ],
+      "mu_uv": [
+        0.011,
+        0.8,
+        0.248,
+        0.899
+      ],
+      "bake_uv": [
+        0.059,
+        0.691,
+        0.858,
+        0.952
+      ]
+    },
+    {
+      "island": 4,
+      "material": "hardwood",
+      "triangles": 10,
+      "area": 228.6,
+      "along": [
+        39.7,
+        42.5
+      ],
+      "mu_uv": [
+        0.012,
+        0.8,
+        0.248,
+        0.899
+      ],
+      "bake_uv": [
+        0.059,
+        0.186,
+        0.917,
+        0.894
+      ]
+    },
+    {
+      "island": 5,
+      "material": "hardwood",
+      "triangles": 12,
+      "area": 306.8,
+      "along": [
+        39.2,
+        43.1
+      ],
+      "mu_uv": [
+        0.012,
+        0.8,
+        0.248,
+        0.9
+      ],
+      "bake_uv": [
+        0.011,
+        0.094,
+        0.913,
+        0.94
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 36,
+      "area": 7608.6,
+      "along": [
+        10.9,
+        69.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.07,
+        0.486,
+        0.998
+      ],
+      "bake_uv": [
+        0.04,
+        0.226,
+        0.699,
+        0.776
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 516,
+      "area": 37553.1,
+      "along": [
+        -38.2,
+        68.4
+      ],
+      "mu_uv": [
+        0.004,
+        0.009,
+        0.995,
+        1.0
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.887,
+        0.952
+      ]
+    },
+    {
+      "island": 8,
+      "material": "leather_wrap",
+      "triangles": 12,
+      "area": 210.9,
+      "along": [
+        51.3,
+        55.5
+      ],
+      "mu_uv": [
+        0.832,
+        0.479,
+        0.999,
+        0.615
+      ],
+      "bake_uv": [
+        0.059,
+        0.716,
+        0.783,
+        0.829
+      ]
+    },
+    {
+      "island": 9,
+      "material": "brass",
+      "triangles": 20,
+      "area": 496.3,
+      "along": [
+        39.9,
+        69.2
+      ],
+      "mu_uv": [
+        0.712,
+        0.001,
+        0.832,
+        0.999
+      ],
+      "bake_uv": [
+        0.886,
+        0.011,
+        0.963,
+        0.728
+      ]
+    },
+    {
+      "island": 10,
+      "material": "steel",
+      "triangles": 12,
+      "area": 2360.3,
+      "along": [
+        41.2,
+        61.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.217,
+        0.795,
+        0.907
+      ],
+      "bake_uv": [
+        0.011,
+        0.01,
+        0.455,
+        0.456
+      ]
+    }
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.4
+    }
+  },
+  "material_overrides_note": "Sword02's, for the same broad flat blade: at the library's 0.2 it mirrors the ground and renders near black."
+}

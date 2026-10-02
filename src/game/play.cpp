@@ -1599,8 +1599,23 @@ void Play::speak(const sim::Happening& happening) {
             "Help Marlon or Peia first. Then come to me.",
             "The south is not safe yet. Finish there, and Devias will be waiting.",
         };
+        // Thompson, a Devias trader with nothing to sell the hero, and his memory of the Lost
+        // Tower; and Tersia before Devin's quest is handed in (docs/lost-tower-quest.md, ours,
+        // 2026-10-01).
+        static const char* const kThompson[] = {
+            "I carried bread and lamp oil to the Lost Tower's keeper for years. No wagon goes there now.",
+            "The gate under the blue lightning leads to the tower. I do not take it anymore.",
+            "It was a shrine once, that tower. Kundun's creatures hold every floor of it now.",
+        };
+        static const char* const kTersiaNotYet[] = {
+            "Guild business. I have no contract for you. Not while the storms still hold Devias.",
+            "Who sent you? Nobody? Then go back down the road while you still can.",
+            "When Devin vouches for you, we will talk about pay.",
+        };
         const int32_t number = tables_.folk[size_t(folk)].number;
         const char* const* lines = number == sim::kSevina      ? kSevina
+                                   : number == sim::kThompson  ? kThompson
+                                   : number == sim::kTersia    ? kTersiaNotYet
                                    : number == sim::kMessenger ? kMessenger
                                    : number == sim::kCharon    ? kCharon
                                    : sim::questOf(number) >= 0 ? kDevinNotYet

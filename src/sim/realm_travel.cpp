@@ -29,6 +29,25 @@ constexpr TravelRow kRows[kTravels] = {
     {"Lost Tower 7", 4, 70, 8000, 8, 86, -1, -1},
 };
 
+// A chained map's floors: the Dungeon's are the Golden Archer's, every floor a link, its row open
+// once the link is taken; the Lost Tower's Tersia's (the user, 2026-10-01), its hall
+// opening as she is spoken to and floors 2-7 only once their links are handed in -- "character
+// can manually use gates if he wants and has levels, but fast travel only works when quests are
+// done". The stairs ask only their levels (sim/gates.cpp).
+struct Chain {
+    int32_t map, giver;
+    int fromFloor;
+    bool handedIn;  // the row waits on the link handed in, not only taken
+};
+constexpr Chain kChains[] = {{1, 236, 0, false}, {4, 566, 1, true}};
+
+const Chain* chainOf(int32_t map) {
+    for (const Chain& chain : kChains) {
+        if (chain.map == map) return &chain;
+    }
+    return nullptr;
+}
+
 // Where each class is born: the elf in Noria, the rest in Lorencia (game/roster.cpp's `home`).
 int32_t homeMap(Kin kin) { return kin == Kin::FairyElf ? 3 : 0; }
 
@@ -124,16 +143,16 @@ int Realm::floorAt(int column, int row) const {
 int Realm::travelQuest(int index) const {
     if (index < 0 || index >= kTravels) return -1;
     const TravelRow& to = kRows[index];
-    // The Dungeon's floors, map 1: which of its rows this is, in the list's order.
-    constexpr int32_t kDungeon = 1;
-    constexpr int32_t kGoldenArcher = 236;
-    if (to.map != kDungeon) return -1;
+    const Chain* chain = chainOf(to.map);
+    if (!chain) return -1;
+    // Which of its rows this is, in the list's order.
     int floor = 0;
-    for (int i = 0; i < index; ++i) floor += kRows[i].map == kDungeon ? 1 : 0;
+    for (int i = 0; i < index; ++i) floor += kRows[i].map == chain->map ? 1 : 0;
+    if (floor < chain->fromFloor) return -1;
     // And the chain's links, in the quest table's order.
     int link = 0;
     for (int q = 0; q < kQuests; ++q) {
-        if (questAt(q).giver != kGoldenArcher) continue;
+        if (questAt(q).giver != chain->giver) continue;
         if (link++ == floor) return q;
     }
     return -1;
@@ -146,10 +165,14 @@ TravelRefusal Realm::travelRefusal(int index) const {
     const uint32_t rows = travelRowsOf(to.map);
     if (to.map == int32_t(tables_->map) && (rows & (rows - 1)) == 0) return TravelRefusal::Here;
     if (to.map == int32_t(tables_->map) && travelFloor() == index) return TravelRefusal::Here;
-    // Its link of the chain, taken at least once: under way, ready, resting or ever handed in.
+    // Its link of the chain, taken at least once: under way, ready, resting or ever handed in --
+    // or, on the Lost Tower, handed in at least once.
     if (const int q = travelQuest(index); q >= 0) {
         const QuestProgress& link = quests_[q];
-        if (link.state == QuestState::Untaken && link.completions == 0) return TravelRefusal::Quest;
+        if (chainOf(to.map)->handedIn ? link.completions == 0
+                                      : link.state == QuestState::Untaken && link.completions == 0) {
+            return TravelRefusal::Quest;
+        }
     }
     const Body& hero = bodies_[0];
     if (!hero.alive()) return TravelRefusal::Dead;

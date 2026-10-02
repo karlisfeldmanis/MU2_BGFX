@@ -26,14 +26,19 @@ The card font has no em dash: "--" prints literally, as in Marlon's.
 
 **Hand-in**
 1. "The sky over Devias is clear again. Thank you."
-2. "Take these. You will need them for what comes next: the Lost Tower. But that is a story for another day."
+2. "Take these. Your road goes on to the Lost Tower. Find Tersia in its hall. She will tell you the rest."
+
+(Until 2026-10-01: "Take these. You will need them for what comes next: the Lost Tower. But that is
+a story for another day." The recorded `devin_handin.wav` still says that; its `handin2` take
+needs reading again.)
 
 **Resting:** "Rest now. By morning, the Queens will call the storms back."
 
 The Lost Tower is mentioned once, at the hand-in, when the quest is finished (the user,
 2026-09-29), and nowhere else.
 
-**Next:** none until the Lost Tower is decided.
+**Next:** "Seek Tersia in the Lost Tower" -- the first of her seven floors, "The Shrine's Door" (docs/lost-tower-quest.md),
+offered once this is handed in.
 
 ## Steps
 
