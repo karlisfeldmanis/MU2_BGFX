@@ -133,6 +133,10 @@ bool Realm::mix(Service service, int socket) {
             return false;
         }
     }
+    if (j.recipe == Recipe::Dinorant && tables_->itemAt(kGroupPets, 3) < 0) {
+        refusal_ = "no Horn of Dinorant is in this world's tables";
+        return false;
+    }
     const int32_t rune = tables_->itemAt(kGroupPotions, 22);
     if ((service == Service::RemoveRune || service == Service::FuseRunes) && rune < 0) {
         refusal_ = "no Rune of Creation is in this world's tables";
@@ -163,6 +167,19 @@ bool Realm::mix(Service service, int socket) {
                     const content::ItemRow& row = tables_->items[size_t(thing.item)];
                     machine_.put(j.target, atPlus(row, thing, std::min(kMachineCap,
                                                                        thing.refinement + 1)));
+                }
+            } else if (j.recipe == Recipe::Dinorant) {
+                // PegasiaChaosMix: the box goes either way, and a success is a whole Horn of
+                // Dinorant (ItemSerialCreateSend's 255), its options not rolled (sim/machine.h).
+                machine_.clear();
+                if (made) {
+                    const int32_t horn = tables_->itemAt(kGroupPets, 3);
+                    if (horn >= 0) {
+                        const content::ItemRow& row = tables_->items[size_t(horn)];
+                        Held dinorant{horn, 0, 0};
+                        dinorant.durability = int16_t(maximumDurability(row, dinorant));
+                        machine_.put(0, dinorant);
+                    }
                 }
             } else if (made) {
                 machine_.clear();

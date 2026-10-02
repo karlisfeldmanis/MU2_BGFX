@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "sim/market.h"
+#include "sim/wear.h"
 
 namespace mu::sim {
 namespace {
@@ -40,6 +41,7 @@ struct Sorted {
     int atCell[2] = {-1, -1};
     int runed = 0, runedCell = -1;        // things with a rune set in a socket
     int socketable = 0, socketCell = -1;  // things with room for another socket
+    int horns = 0, wornHorns = 0;         // Horns of Uniria at full life, and short of it
     int runes = 0;                        // Runes of Creation carrying a power
     int runeCells[kMostSockets + 1] = {-1, -1, -1, -1};
     int things = 0;     // everything that is not one of the three jewels
@@ -69,6 +71,11 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 continue;
             }
             ++s.others;
+            if (row->group == kGroupPets && row->number == 2) {
+                // `m_Durability == 255`: only a horn at its whole life counts.
+                ++(what.durability >= maximumDurability(*row, what) ? s.horns : s.wornHorns);
+                continue;
+            }
             if (what.refinement >= 4 && what.option > 0) ++s.optioned;
             for (int k = 0; k < 2; ++k) {
                 if (raisable(*row) && what.refinement == 9 + k) {
@@ -104,6 +111,9 @@ bool exactly(Recipe recipe, const Sorted& s) {
         }
         case Recipe::ChaosWeapon:
             return s.optioned >= 1 && s.things == s.optioned && s.chaos >= 1;
+        case Recipe::Dinorant:
+            return s.horns == kDinorantHorns && s.things == s.horns && s.chaos == 1 &&
+                   s.bless == 0 && s.soul == 0;
         case Recipe::None:
             break;
     }
@@ -131,6 +141,10 @@ int likeness(Recipe recipe, const Sorted& s) {
             if (s.bless > 0) points += 3;
             if (s.soul > 0) points += 3;
             break;
+        case Recipe::Dinorant:
+            if (s.things != s.horns + s.wornHorns || s.bless > 0 || s.soul > 0) return 0;
+            if (s.horns + s.wornHorns > 0) points += 10;
+            break;
         case Recipe::None:
             return 0;
     }
@@ -138,7 +152,8 @@ int likeness(Recipe recipe, const Sorted& s) {
     return points;
 }
 
-constexpr Recipe kOrder[] = {Recipe::PlusTen, Recipe::PlusEleven, Recipe::ChaosWeapon};
+constexpr Recipe kOrder[] = {Recipe::PlusTen, Recipe::PlusEleven, Recipe::Dinorant,
+                             Recipe::ChaosWeapon};
 
 void need(Judged& j, std::string name, int have, int want) {
     if (j.needCount >= kMostNeeds) return;
@@ -181,12 +196,12 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             need(j, "Jewel of Chaos", s.chaos, 1);
             need(j, "Jewel of Bless", s.bless, k + 1);
             need(j, "Jewel of Soul", s.soul, k + 1);
-            // SuccessPercent, and SuccessPercentageAdditionForLuck on a lucky thing.
-            j.luck = 25;
+            // WebZen's: the rate, twenty for luck, and the cap.
+            j.luck = kPlusLuck;
             j.rate = k == 0 ? 50 : 45;
             if (s.atCell[k] >= 0 && box[s.atCell[k]].luck) {
                 j.lucky = true;
-                j.rate = std::min(100, j.rate + j.luck);
+                j.rate = std::min(kPlusCap, j.rate + j.luck);
             }
             j.zen = 2000000LL * (k + 1);
             if (s.atCell[k] >= 0) {
@@ -214,6 +229,14 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             j.failure = "Jewels lost, items a plus lower";
             break;
         }
+        case Recipe::Dinorant:
+            need(j, "Horn of Uniria, full life", s.horns, kDinorantHorns);
+            need(j, "Jewel of Chaos", s.chaos, 1);
+            j.rate = kDinorantRate;
+            j.zen = kDinorantZen;
+            j.success = "Horn of Dinorant";
+            j.failure = "The horns and the Chaos are lost";
+            break;
         case Recipe::None:
             break;
     }
@@ -414,6 +437,7 @@ const char* recipeName(Recipe recipe) {
         case Recipe::ChaosWeapon: return "Chaos Weapon";
         case Recipe::PlusTen: return "+10 Item";
         case Recipe::PlusEleven: return "+11 Item";
+        case Recipe::Dinorant: return "Dinorant";
         case Recipe::None: break;
     }
     return "";

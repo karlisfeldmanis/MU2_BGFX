@@ -5107,8 +5107,64 @@ void testChaosMachine() {
     load(10, 2, true);
     j = realm.judged();
     check(j.recipe == sim::Recipe::PlusEleven, "+10 and two of each are +11");
-    checkEqual(j.rate, 70, "at 45% and a quarter more for luck");
+    checkEqual(j.rate, 65, "at 45% and twenty more for luck, WebZen's");
     checkEqual(int(j.zen), 4000000, "for four million");
+
+    // The Dinorant: ten whole Horns of Uniria and a Chaos, 70%, half a million.
+    {
+        sim::Machine horns;
+        const int32_t uniria = noria.itemAt(13, 2);
+        check(uniria >= 0, "the Horn of Uniria is in Noria's tables");
+        if (uniria >= 0) {
+            const content::ItemRow& row = noria.items[size_t(uniria)];
+            sim::Held whole{uniria, 0, int16_t(sim::maximumDurability(row, sim::Held{uniria, 0, 0}))};
+            for (int i = 0; i < sim::kDinorantHorns; ++i) horns.put(i, whole);
+            horns.put(16, sim::Held{chaos, 0, 1});
+            sim::Judged d = sim::judge(noria, horns);
+            check(d.recipe == sim::Recipe::Dinorant, "ten horns and a Chaos are a Dinorant");
+            checkEqual(d.rate, 70, "at 70%");
+            checkEqual(int(d.zen), 500000, "for half a million");
+            sim::Held tired = whole;
+            tired.durability = int16_t(whole.durability - 1);
+            horns.put(9, tired);
+            d = sim::judge(noria, horns);
+            check(d.recipe == sim::Recipe::None && d.nearest == sim::Recipe::Dinorant,
+                  "a horn short of its life spoils it, and the box still looks like one");
+        }
+    }
+
+    // The Chaos Weapon runs now its three answers are cooked: one roll, either outcome checked.
+    {
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+        }
+        check(realm.machine().empty(), "the box is emptied first");
+        check(realm.putIn(realm.give(sword, -1, 4, -1, false, 2)) >= 0 &&
+                  realm.putIn(realm.give(chaos)) >= 0 && realm.putIn(realm.give(bless)) >= 0 &&
+                  realm.putIn(realm.give(soul)) >= 0,
+              "a +4 with an option and three jewels go in");
+        check(realm.judged().recipe == sim::Recipe::ChaosWeapon, "the box is a Chaos Weapon");
+        check(realm.mix(), "and the Goblin runs it");
+        const auto& said = realm.happenings();
+        const bool madeOne = !said.empty() && said.back().what == sim::What::Mixed && said.back().b == 1;
+        int weapons = 0, jewels = 0;
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            const sim::Held& h = realm.machine()[cell];
+            if (h.empty()) continue;
+            const content::ItemRow& r = noria.items[size_t(h.item)];
+            if ((r.group == 2 && r.number == 6) || (r.group == 4 && r.number == 6) ||
+                (r.group == 5 && r.number == 7)) {
+                ++weapons;
+                check(h.refinement >= 0 && h.refinement <= 4, "made at +0 to +4");
+            }
+            if (sim::jewelOfChaos(r) || sim::jewelOfBless(r) || sim::jewelOfSoul(r)) ++jewels;
+        }
+        checkEqual(jewels, 0, "the jewels are spent either way");
+        checkEqual(weapons, madeOne ? 1 : 0, "a success leaves one Chaos weapon, a failure none");
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+        }
+    }
 
     // Walking off hands the box back.
     sim::Request walk;

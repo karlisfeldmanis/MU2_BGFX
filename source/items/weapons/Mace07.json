@@ -1,0 +1,193 @@
+{
+  "item": "Mace07",
+  "mu_name": "Chaos Dragon Axe",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:122 names group 2, index 6 the Chaos Dragon Axe; _enum.h:1544 MODEL_CHAOS_DRAGON_AXE = MODEL_MACE + 6, loaded from Item/Mace07.bmd, and mu.db's row (code 1030) agrees.",
+  "why_this_one": "The Chaos Machine's Chaos Weapon recipe makes one of the three Chaos weapons (MixMgr.cpp:689, :1002); none of them drops (dropsFromMonsters false in the call), so without a mesh the recipe had nothing to make (2026-10-02).",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:122. The 0.75 table.",
+    "call": "CreateWeapon(2, 6, 0, 23, 2, 4, false, \"Chaos Dragon Axe\", 75, 102, 130, 35, 80, 0, 0, 140, 50, 0, 0, 0, 1, 0)",
+    "group": 2,
+    "number": 6,
+    "drop_level": 75,
+    "drops_from_monsters": false,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 102,
+    "maximum_damage": 130,
+    "attack_speed": 35,
+    "durability": 80,
+    "requires": {
+      "level": 0,
+      "strength": 140,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "skill": 23
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "ZzzCharacter.cpp:356-368: a sword, axe or mace that is TwoHand (width 2) stands PLAYER_STOP_TWO_HAND_SWORD.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "ft6": "ft6.png",
+    "ft72": "ft72.png"
+  },
+  "sheet_from": "Data/Item/ft6.OZJ (64x128: polished silver-white blades edged in red, gold scrollwork and red studs) on 98 triangles, ft72.OZJ (64x32, a red flame on black) on 12. Decoded from MuMain with pipeline/decode_texture.py.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As the Crystal Morning Star's and the Flail's: steel's own 0.2 mirrors the ground.",
+  "glow": {
+    "ft72": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    }
+  },
+  "glow_note": "`case MODEL_CHAOS_DRAGON_AXE`: BlendMesh 1, BlendMeshLight = sin(WorldTime*0.004)*0.3+0.7 (ZzzObject.cpp:5263-5266) -- texture 1, ft72's red flame, is drawn added and breathes. Drawn added on its raw sheet (export_gltf.glow_material). ZzzOpenData.cpp:1248 sets Meshs[1].NoneBlendMesh, which only keeps the chrome of a levelled item off that mesh (ZzzBMD.cpp:1425). Not here: the red BITMAP_SHINY+1 sprites MU hangs along the haft when held (ZzzCharacter.cpp:10431-10445) and the red swing blur it shares with the Double Blade (ZzzCharacter.cpp:3951) are client effects. The flame's two bones (Box01, Box03) drift ~5 units through MU's 13-key action 0; held items are rigid here, so it is built at key 0.",
+  "rig_note": "No .rig.json, as on Staff06: Mace07.bmd's nine bones include a Mesh01, which the player's skeleton also has at the hand, and a borrowed bind pose would skin the head to it. The .obj is MU's geometry at action 0 key 0, which is all a rigid weapon needs.",
+  "material_note": "The body (98 triangles on ft6) is polished silver-white blades with red edges and gold scrollwork -- steel, the metal being most of it. The flame's 12 triangles are the glow part and wear no material here; their island rows keep steel for the bake only.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 12,
+      "area": 1028.0,
+      "along": [
+        16.3,
+        102.4
+      ],
+      "mu_uv": [
+        0.946,
+        0.005,
+        0.981,
+        0.624
+      ],
+      "bake_uv": [
+        0.759,
+        0.452,
+        0.875,
+        0.846
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 26,
+      "area": 1257.3,
+      "along": [
+        -37.2,
+        16.3
+      ],
+      "mu_uv": [
+        0.062,
+        0.771,
+        0.316,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.007,
+        0.493,
+        0.467
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 30,
+      "area": 3214.1,
+      "along": [
+        32.8,
+        141.0
+      ],
+      "mu_uv": [
+        0.03,
+        0.001,
+        1.008,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.958,
+        0.627
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 30,
+      "area": 3214.1,
+      "along": [
+        32.8,
+        141.0
+      ],
+      "mu_uv": [
+        0.03,
+        0.001,
+        1.008,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.32,
+        0.784,
+        0.994
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 6,
+      "area": 2566.8,
+      "along": [
+        18.1,
+        184.4
+      ],
+      "mu_uv": [
+        0.058,
+        0.107,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.236,
+        0.07,
+        0.295
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 6,
+      "area": 2566.8,
+      "along": [
+        18.1,
+        184.4
+      ],
+      "mu_uv": [
+        0.058,
+        0.107,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.395,
+        0.242,
+        0.457,
+        0.301
+      ]
+    }
+  ]
+}

@@ -22,6 +22,8 @@
 //     (ChaosWeaponAndFirstWingsCrafting); failure takes the jewels and drops each thing to a
 //     lower plus at random, its option a level down half the time.
 //
+//   * **Dinorant**, below (WebZen's PegasiaChaosMix).
+//
 // Which of the two a box is when it is both -- a +9 thing with an option and one of each
 // jewel -- MuMain settles by mix.bmd's order, which this tree does not have. Here the narrower
 // recipe wins: a box laid out exactly for +10 is meant for +10. Ours.
@@ -72,7 +74,7 @@ private:
 };
 
 // MuMain's ChaosMachineMixType numbers, which are OpenMU's ItemCrafting.Number.
-enum class Recipe : int8_t { None = -1, ChaosWeapon = 1, PlusTen = 3, PlusEleven = 4 };
+enum class Recipe : int8_t { None = -1, ChaosWeapon = 1, PlusTen = 3, PlusEleven = 4, Dinorant = 5 };
 
 // **The services** (the user, 2026-10-02, docs/chaos-machine.md "Phase two"): the Goblin's box
 // read four ways, picked on the window's service row. Combine is MU's machine; the other three
@@ -127,7 +129,20 @@ struct Judged {
 Judged judge(const content::Tables& tables, const Machine& box,
              Service service = Service::Combine, int socket = -1, Kin kin = Kin::DarkKnight);
 
-// "Chaos Weapon", "+10 Item", "+11 Item": MuMain's recipe names.
+// The Dinorant (WebZen 1.00.93 MixSystem.cpp:2141-2290, PegasiaChaosMix under NEW_FORSKYLAND2,
+// as docs/mount.md takes it): ten Horns of Uniria at their full 255 life and one Chaos, 70%,
+// 500,000 Zen; a failure takes the box. Its three options (30%, then one in five a second) are
+// not rolled: the Dinorant's options are not built (docs/mount.md).
+constexpr int kDinorantHorns = 10;
+constexpr int kDinorantRate = 70;
+constexpr int64_t kDinorantZen = 500000;
+// +10 and +11 as WebZen's base 0.97d branch has them (MixSystem.cpp:1380-1890): 50% and 45%,
+// twenty more for a lucky thing (`m_Option2 != 0`, `+= 20`), and never above 75
+// (m_iMaxCombinationRate). OpenMU's 0.95d gives luck 25 and no cap; WebZen outranks it here.
+constexpr int kPlusLuck = 20;
+constexpr int kPlusCap = 75;
+
+// "Chaos Weapon", "+10 Item", "+11 Item", "Dinorant": MuMain's recipe names.
 const char* recipeName(Recipe recipe);
 
 // What a thing is worth to the machine: MixMgr's EvaluateMixItemValue, OpenMU's

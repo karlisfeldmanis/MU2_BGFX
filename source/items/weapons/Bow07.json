@@ -1,0 +1,342 @@
+{
+  "item": "Bow07",
+  "mu_name": "Chaos Nature Bow",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:141 names group 4, index 6 the Chaos Nature Bow; _enum.h:1575 MODEL_CHAOS_NATURE_BOW = MODEL_BOW + 6, loaded from Item/Bow07.bmd (ZzzOpenData.cpp loads MODEL_BOW + i from Bow{i+1}), and mu.db's row (code 2054) agrees.",
+  "why_this_one": "The Chaos Machine's Chaos Weapon recipe makes one of the three Chaos weapons (MixMgr.cpp:689, :1002); none of them drops (dropsFromMonsters false in the call), so without a mesh the recipe had nothing to make (2026-10-02).",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:141. The 0.75 table.",
+    "call": "CreateWeapon(4, 6, 1, 24, 2, 4, false, \"Chaos Nature Bow\", 75, 88, 106, 35, 68, 0, 0, 40, 150, 0, 0, 0, 0, 1)",
+    "group": 4,
+    "number": 6,
+    "drop_level": 75,
+    "drops_from_monsters": false,
+    "slot": 1,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 88,
+    "maximum_damage": 106,
+    "attack_speed": 35,
+    "durability": 68,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 150,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "skill": 24
+  },
+  "stance": "bow",
+  "stance_from": "PLAYER_STOP_BOW 8 and PLAYER_WALK_BOW 21: CharacterManager.cpp:71 counts MODEL_BOW through MODEL_CHAOS_NATURE_BOW as bows, and ZzzCharacter.cpp's stance switch sends BOWTYPE_BOW to PLAYER_STOP_BOW.",
+  "two_handed": true,
+  "fires": "Arrow01",
+  "fires_from": "ZzzEffectMagicSkill.cpp:244: `case MODEL_CHAOS_NATURE_BOW: CreateEffect(MODEL_ARROW_NATURE, ...)`. MODEL_ARROW_NATURE is not built (src/game/fx/arrow.h says so), so this throws the wooden arrow, as Arrows::modelFor already sends every bow-group number below 8.",
+  "sheets": {
+    "bow77": "bow77.png",
+    "bow01": "bow01.png",
+    "bow05": "bow05.tga.png"
+  },
+  "sheet_from": "Data/Item/bow77.OZJ (128x64: green lacquered limbs, silver and gold fittings, two pale green gems), decoded from MuMain; bow01.OZJ and bow05.ozt were already in the tree from the other bows. The .bmd names bow77.jpg on 285 triangles, bow01.jpg on 10 (the nocked arrow) and bow05.tga on 3 (the string card). The bow07.OZJ beside it in Data/Item is not what this model names.",
+  "glow": {
+    "bow77": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    },
+    "bow01": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    },
+    "bow05": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    }
+  },
+  "glow_note": "MuMain draws this bow transparent, as the Bluewing Crossbow. ItemObjectAttribute (ZzzObject.cpp:5242-5246): `case MODEL_CHAOS_NATURE_BOW` with the Bluewing and Aquagold: BlendMesh = -2, BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7, and BMD::RenderMesh (ZzzBMD.cpp:1509, `blendMeshIndex <= -2`) draws every mesh added -- the whole bow, its nocked arrow and string, is a breathing additive ghost, so all three sheets are glows here. Not here: the green BITMAP_SHINY+1 glints MU puts on its six `light` bones when held (ZzzCharacter.cpp:7036-7041), a client effect.",
+  "material_note": "No baked material: MU draws every mesh added (see glow_note), so the bow ships as glow parts on MU's raw sheets. The islands below are what islands.py measured; their materials go unused.",
+  "release": 0.667,
+  "release_from": "Key 4 of this rig's six (the other bows carry seven): Bone10, the second root carrying the arrow and the string, runs -46.6, -23.4, -8.2, +4.4 through keys 0 to 3 and then -54.5 on key 4, and the four limb bones (Bone02, Bone04, Bone06, Bone08) bend to 0.13-0.30 through key 3 and come back to within 0.01 on key 4 -- the Tiger Bow's tracks to the decimal, and the loose. 4/6.",
+  "muzzle_bone": "Bone10",
+  "muzzle_axis": "Bone11",
+  "muzzle_offset": [
+    1.0,
+    -10.7,
+    0.3
+  ],
+  "muzzle_from": "Measured, and it comes out the Tiger Bow's. Bone10 is at (0, -6.173, -46.594) with no parent and Bone11 at (0, 0.326, 64.829) hanging off it; the arrow is the same seven vertices on bow01, all bound to Bone10. In the model's axes (x, z, -y) the bone is at (0, -46.59, 6.17) and the arrow's point at (1.05, -57.29, 6.46): (+1.05, -10.70, +0.29). Bone10 minus Bone11 is down the shaft toward the point. The release is not folded in, for the reason Bow02.json's muzzle_offset_from gives.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 10,
+      "area": 481.2,
+      "along": [
+        5.4,
+        7.4
+      ],
+      "mu_uv": [
+        0.941,
+        0.014,
+        0.98,
+        0.51
+      ],
+      "bake_uv": [
+        0.01,
+        0.364,
+        0.793,
+        0.626
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 1,
+      "area": 41.7,
+      "along": [
+        3.7,
+        8.8
+      ],
+      "mu_uv": [
+        0.569,
+        0.468,
+        0.889,
+        0.698
+      ],
+      "bake_uv": [
+        0.01,
+        0.647,
+        0.16,
+        0.755
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 2,
+      "area": 234.7,
+      "along": [
+        -0.9,
+        13.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.79,
+        0.568,
+        0.999
+      ],
+      "bake_uv": [
+        0.49,
+        0.839,
+        0.755,
+        0.937
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 56,
+      "area": 5033.5,
+      "along": [
+        7.8,
+        141.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.387,
+        0.988,
+        0.881
+      ],
+      "bake_uv": [
+        0.287,
+        0.009,
+        0.902,
+        0.642
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 32,
+      "area": 1904.4,
+      "along": [
+        12.7,
+        96.9
+      ],
+      "mu_uv": [
+        0.332,
+        0.001,
+        0.952,
+        0.809
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.579,
+        0.388
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 32,
+      "area": 594.4,
+      "along": [
+        11.0,
+        38.4
+      ],
+      "mu_uv": [
+        0.762,
+        0.153,
+        0.964,
+        0.79
+      ],
+      "bake_uv": [
+        0.01,
+        0.306,
+        0.227,
+        0.674
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 16,
+      "area": 468.7,
+      "along": [
+        6.2,
+        45.8
+      ],
+      "mu_uv": [
+        0.708,
+        0.789,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.066,
+        0.687,
+        0.865,
+        0.788
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 13,
+      "area": 679.0,
+      "along": [
+        -78.5,
+        92.2
+      ],
+      "mu_uv": [
+        0.711,
+        0.703,
+        0.72,
+        0.717
+      ],
+      "bake_uv": [
+        0.034,
+        0.01,
+        0.067,
+        0.045
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 56,
+      "area": 5033.5,
+      "along": [
+        -128.9,
+        5.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.387,
+        0.988,
+        0.881
+      ],
+      "bake_uv": [
+        0.01,
+        0.584,
+        0.713,
+        0.992
+      ]
+    },
+    {
+      "island": 9,
+      "material": "steel",
+      "triangles": 32,
+      "area": 1904.4,
+      "along": [
+        -83.8,
+        0.4
+      ],
+      "mu_uv": [
+        0.332,
+        0.001,
+        0.952,
+        0.809
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.44,
+        0.584
+      ]
+    },
+    {
+      "island": 10,
+      "material": "steel",
+      "triangles": 32,
+      "area": 594.4,
+      "along": [
+        -25.4,
+        2.1
+      ],
+      "mu_uv": [
+        0.762,
+        0.153,
+        0.964,
+        0.79
+      ],
+      "bake_uv": [
+        0.07,
+        0.181,
+        0.75,
+        0.633
+      ]
+    },
+    {
+      "island": 11,
+      "material": "steel",
+      "triangles": 16,
+      "area": 468.7,
+      "along": [
+        -32.8,
+        6.9
+      ],
+      "mu_uv": [
+        0.708,
+        0.789,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.709,
+        0.264,
+        0.894,
+        0.712
+      ]
+    }
+  ]
+}
