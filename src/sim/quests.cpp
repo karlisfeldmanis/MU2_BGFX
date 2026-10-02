@@ -419,26 +419,20 @@ QuestRow pit() {
     row.experience = 100000;
     row.firstExperience = 400000;
     row.zen = 120000;
-    // The user's: boots with a socket, and Frenzy for them; three Jewels of Bless and a Jewel of
-    // Soul on top, the chain's last. Each class's top set, about the Gorgon's level. Two sockets
-    // since 2026-10-02 ("give 2 sockets for boots. same for all classes").
+    // The user's: boots with a socket; three Jewels of Bless and a Jewel of Soul on top, the
+    // chain's last. Each class's top set, about the Gorgon's level. Two sockets since 2026-10-02
+    // ("give 2 sockets for boots. same for all classes").
     row.paid[0] = {.item = "BootMale02", .kin = knight, .sockets = 2, .firstOnly = true};  // Dragon
     row.paid[1] = {.item = "BootMale04", .kin = wizard, .sockets = 2, .firstOnly = true};  // Legendary
     row.paid[2] = {.item = "BootElf05", .kin = elf, .sockets = 2, .firstOnly = true};      // Guardian
-    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
-    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    row.paid[5] = {.item = "Jewel02"};              // Jewel of Soul
-    // And a second rune with a new thing to set it in (the user, 2026-10-01: "give dungeon 3
-    // other jewel of rune and new weapon ... shield with socket and rune which on miss has
-    // chance to cast evil spirits"): Evil Spirit, and for every class a Ring of Ice with one
-    // socket, which takes Evil Spirit alone (sim::settable). It was a socketed shield each, and
-    // then the ring for the elf whose bow fills the shield's hand; the user settled it the same
-    // day: "give ring with +1 sockets, and give only evil spirits rune", "everbody get the ring",
-    // "not shield". One socket, a ring's most (sim::mostSocketsOf; the user, 2026-10-02: "keep
-    // only 1 socket for the rings"), after a day at two.
-    row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
-    row.paid[7] = {.item = "Jewel22", .power = uint8_t(Power::Spirits), .firstOnly = true};
-    row.paidCount = 8;
+    row.paid[3] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paid[4] = {.item = "Jewel02"};              // Jewel of Soul
+    // And for every class a Ring of Ice with one socket, a ring's most (sim::mostSocketsOf; the
+    // user, 2026-10-02: "keep only 1 socket for the rings"). It came with Evil Spirit to set in
+    // it, and the boots with Frenzy, until the user, 2026-10-02: "in this quest we give to much.
+    // we dont give epic runes so early, but we can give that ring with +socket".
+    row.paid[5] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
+    row.paidCount = 6;
     return row;
 }
 
