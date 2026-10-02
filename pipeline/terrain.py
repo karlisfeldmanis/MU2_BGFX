@@ -272,7 +272,10 @@ def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndar
 #: a hard edge (the user: 'you did not migrated void blending with long road'). Then 0.6, the
 #: user: 'we ened more actual shadows and little bit less baked in' -- the floors' edges now
 #: reach the void's black by the void's own blend (VOID_BY_MAP), and most void is lava.
-LIGHT_DEPTH_BY_MAP = {4: 0.6}
+#: Blood Castle keeps all of it: its court is painted bright (about 144-175 against the map's
+#: mean of 87) and, halved, sank into the dark earth sheet under it, darker than the grey gravel
+#: of the user's MuMain shots (2026-10-02).
+LIGHT_DEPTH_BY_MAP = {4: 0.6, 11: 1.0}
 
 WATER_FLOW_BY_MAP = {
     # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at
