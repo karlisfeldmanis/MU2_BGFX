@@ -13,6 +13,7 @@
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "game/world/maps.h"
+#include "sim/event.h"
 #include "sim/market.h"
 #include "sim/quests.h"
 
@@ -50,13 +51,18 @@ constexpr uint32_t kAgainHi = gfx::rgba(0.56f, 0.80f, 1.00f);
 // the Messenger of Archangel in Devias, Charon in Noria. A card shows its map's event from half
 // an hour before it starts until it ends, in place of the monsters' levels (the user,
 // 2026-09-30, option A of the proposal). Neither event is open yet; only the countdown is.
+// Blood Castle's is its own (sim/event.h): every hour from hh:25, and "now" while the Messenger
+// lets him in (the user, 2026-10-02: 'every 1 hour BC is opened').
 struct Event {
     const char* name;
     int32_t map;
     int period;  // seconds between starts
     int length;  // and how long one runs
+    int offset = 0;  // the first start, seconds after midnight
 };
-constexpr Event kEvents[] = {{"Blood Castle", 2, 7200, 1200}, {"Devil Square", 3, 14400, 1500}};
+constexpr Event kEvents[] = {
+    {"Blood Castle", 2, sim::kCastlePeriod, sim::kCastleEntry, sim::kCastleOpensAt},
+    {"Devil Square", 3, 14400, 1500}};
 constexpr int kSoonSeconds = 1800;
 
 // A small dot, drawn as a fan: the canvas has no circle.
@@ -204,7 +210,7 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
         for (size_t p = 0; p < places_.size() && p < size_t(kPlaces); ++p) {
             for (const Event& one : kEvents) {
                 if (one.map != places_[p].map) continue;
-                const int phase = day % one.period;
+                const int phase = ((day - one.offset) % one.period + one.period) % one.period;
                 if (phase < one.length) {
                     now.events[p] = 2;
                     now.eventSeconds[p] = one.length - phase;

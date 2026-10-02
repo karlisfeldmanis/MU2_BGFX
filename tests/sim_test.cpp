@@ -7181,6 +7181,10 @@ void testCastleGrid(const content::Tables& lorencia) {
     }
     check(reaches(14, 85), "with the door down the courtyard plans");
     check(castle.grid.words() == cooked, "the cooked tables are untouched");
+    check(sim::castleEntryLeft(10 * 3600 + 25 * 60) == 300, "the Messenger opens at hh:25");
+    check(sim::castleEntryLeft(10 * 3600 + 29 * 60 + 59) == 1, "until hh:29:59");
+    check(sim::castleEntryLeft(10 * 3600 + 30 * 60) == 0, "and is shut at hh:30");
+    check(sim::castleEntryLeft(10) == 0, "and past midnight");
     check(realm.raise(&castle, 3, 13, 8), "a raise again");
     check(!reaches(14, 85), "starts with the castle closed");
     sim::Realm town;

@@ -1198,14 +1198,24 @@ state -- unless the user wants seven map numbers (decision 3).
 
 **Revised the same day -- Blood Castle is a quest (the user: 'BC is a quest and players has to kill
 specific count of monsters to open the gates'):**
-- Untimed and open at any time: no wall-clock window and no 20-minute run (replaces the schedule above).
-- The Archangel (232) gives the quest. All three gates (entrance, bridge and door) open on kill
+- ~~Untimed and open at any time~~ -- revised again (the user: 'there has to be time. every 1 hour BC
+  is opened. you need a ticket, you talk with NPC in devias to get in. when you are in there is
+  timer and BC starts'):
+  - The Messenger of Archangel in Devias lets a cloak holder in **every hour, from hh:25 for 5
+    minutes** (WebZen's hourly default).
+  - The run is timed **on his own clock from entry**: 60 s in the safe court, then **15 minutes**
+    (WebZen's numbers; OpenMU's is 20). It starts on entry; that part is ours.
+  - The entrance lifts **when the 60 s are up**, as MU's start, not on taking the quest. The
+    Archangel's part is the hand-in.
+  - All of this is in `sim/event.h` (`castleEntryLeft`), and the Devias travel card counts down
+    to it.
+- The Archangel (232) takes the weapon at the end. All three gates (entrance, bridge and door) open on kill
   counts, so the Castle Gate monster (131) does not hold the door.
 - The end stays MU's: past the door the Saint Statue (132) drops the Weapon of Archangel, and
   bringing it back to the Archangel wins.
 - Unchanged: the cloak ticket, WebZen's levels 33-51, and death out to Devias.
 - The gates, settled:
-  - **Entrance**: lifts when the Archangel gives the quest.
+  - **Entrance**: lifts when the run starts, after the 60 s wait.
   - **Bridge**: falls at **40 kills** on the road (MU's quota 1).
   - **Door**: opens at **2 Spirit Sorcerers (89)**. Ours: they rise in front of the door as the bridge
     falls, where MU raises them in the courtyard after the gate.
