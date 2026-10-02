@@ -90,7 +90,24 @@ bool Window::open(const WindowDesc& desc) {
     // underneath: two of them a few pixels apart is worse than either. MU2's own remark on
     // Pointer.cs applies unchanged -- this is what a screenshot shows, so the desktop's own
     // cursor must not be in it too.
-    glfwSetInputMode(handle_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    //
+    // Not GLFW_CURSOR_HIDDEN: on macOS that is [NSCursor hide] when GLFW sees the pointer
+    // enter the window and unhide when it sees it leave, and that bookkeeping goes wrong --
+    // after a focus change, or the menu bar and the Dock sliding in at a fullscreen edge, the
+    // arrow came back over the game's own (the user, 2026-10-02: *"there cannot be that
+    // suddenly we see system cursor together with game cursor"*). A cursor image with no
+    // pixels in it is the window's own cursor wherever the pointer is, and needs no tracking.
+    {
+        unsigned char clear[4 * 4 * 4] = {};
+        GLFWimage image{4, 4, clear};
+        blank_ = glfwCreateCursor(&image, 0, 0);
+        if (blank_) {
+            glfwSetCursor(handle_, blank_);
+        } else {
+            glfwSetInputMode(handle_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        }
+    }
+    setPresentation(desc.fullscreen);
 
     // The backbuffer is asked for in pixels, not in points: on a Retina display the two
     // differ by two, and a frame measured at the wrong size is not the frame.
@@ -157,6 +174,9 @@ bool Window::open(const WindowDesc& desc) {
 void Window::close() {
     bgfx::shutdown();
     if (handle_) glfwDestroyWindow(handle_);
+    if (blank_) glfwDestroyCursor(blank_);
+    blank_ = nullptr;
+    if (handle_) setPresentation(false);
     glfwTerminate();
     handle_ = nullptr;
 }
@@ -263,6 +283,7 @@ void Window::setFullscreen(bool on) {
         glfwSetWindowMonitor(handle_, nullptr, windowedX_, windowedY_, windowedW_, windowedH_,
                              GLFW_DONT_CARE);
     }
+    setPresentation(on);
     core::logf("window: %s", on ? "fullscreen" : "windowed");
 }
 

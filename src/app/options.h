@@ -9,6 +9,8 @@
 
 #include "core/args.h"
 #include "game/ui/menu.h"
+#include "gfx/lighting.h"
+#include "gfx/renderer.h"
 #include "gfx/window.h"
 
 namespace mu::app {
@@ -22,6 +24,14 @@ inline void fillSettings(const gfx::Window& window, const core::Args& args,
     set->vsync = window.vsync();
     set->fps = args.fps;
     set->volume = args.volume;
+    set->scale = int(args.scale * 100.0f + 0.5f);
+    set->msaa = args.msaa;
+    set->shadows = args.shadows;
+    set->ssao = args.ssao;
+    set->bloom = args.bloom;
+    set->reflections = args.reflections;
+    set->grass = args.grass;
+    set->cap = args.cap;
     int dw = 0, dh = 0;
     window.displaySize(&dw, &dh);
     set->display = {dw, dh};
@@ -63,6 +73,14 @@ inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
     args.vsync = set.vsync;
     args.fps = set.fps;
     args.volume = set.volume;
+    args.scale = float(set.scale) / 100.0f;
+    args.msaa = set.msaa;
+    args.shadows = set.shadows;
+    args.ssao = set.ssao;
+    args.bloom = set.bloom;
+    args.reflections = set.reflections;
+    args.grass = set.grass;
+    args.cap = set.cap;
     // The window's size as asked for, not as the window reports it yet, and kept through
     // fullscreen so going back to a window after a restart comes back to it.
     if (!set.sizes.empty()) {
@@ -73,6 +91,34 @@ inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
         }
     }
     core::saveOptions(args);
+}
+
+// The Graphics rows onto the renderer, every frame on both screens before they draw: the
+// same values again cost a compare, a changed scale, MSAA or shadow map rebuilds the targets
+// between frames. --shadow-size and --shadow-noise outrank the Shadows row, for measuring.
+inline void applyGraphics(gfx::Renderer& renderer, const core::Args& args) {
+    const uint16_t side = args.shadowAsked ? uint16_t(args.shadowSize)
+                                           : uint16_t(args.shadows == 0 ? 2048 : 4096);
+    renderer.setQuality(args.scale, args.msaa, side);
+    // 0 the turned taps, 2 the still ones (shadow.sh); -1 leaves the renderer's own.
+    const int noise = args.shadowAsked ? args.shadowNoise : (args.shadows == 2 ? 2 : 0);
+    renderer.setShadowDebug(args.shadowView ? 1 : 0, noise);
+}
+
+// The world's lighting sheet as this frame draws it: the sheet's own values, with what the
+// Graphics rows switched off taken out. A copy, so turning a row back on gives back the sheet.
+inline gfx::Lighting graphicsLook(const gfx::Lighting& sheet, const core::Args& args) {
+    gfx::Lighting look = sheet;
+    if (!args.ssao) look.ssaoStrength = 0.0f;
+    if (!args.bloom) look.bloomStrength = 0.0f;
+    if (!args.reflections) look.probe = 0.0f;
+    if (args.grass == 0) {
+        look.grass = 0.0f;
+    } else if (args.grass == 1) {
+        look.grassDensity *= 0.6f;
+        look.grassRadius *= 0.75f;
+    }
+    return look;
 }
 
 }  // namespace mu::app

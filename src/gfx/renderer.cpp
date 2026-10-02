@@ -69,7 +69,7 @@ void Renderer::bindShadeInputs() {
                      BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(5, sShadowDepth_, shadowMap_,
                      BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-    bgfx::setTexture(7, sAo_, probePass_ ? whiteAo_ : blurTex_);
+    bgfx::setTexture(7, sAo_, probePass_ || !aoOn_ ? whiteAo_ : blurTex_);
     // The probe: read by the camera's shade once one has been filtered, and never by a probe
     // face, which takes the closed-form sky instead of the cube it is being drawn into.
     if (bgfx::isValid(uProbe_)) {
@@ -304,6 +304,8 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
 
 void Renderer::bloom(const Lighting& lighting) {
     if (!bgfx::isValid(bloomDownProgram_) || !bgfx::isValid(bloomUpProgram_)) return;
+    // Off in Options is a strength of 0, and nine passes that add nothing are not drawn.
+    if (lighting.bloomStrength <= 0.0f) return;
     // Down: the shade target into level 0 with the threshold, then each level into the next.
     for (int i = 0; i < kBloomLevels; ++i) {
         const bgfx::ViewId view = bgfx::ViewId(ViewBloomDown + i);
@@ -529,6 +531,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     lampParams_[3] = lighting.lampShadow;
     glowStrength_ = lighting.glowStrength;
     probeOn_ = lighting.probe > 0.5f;
+    aoOn_ = lighting.ssaoStrength > 0.0f;
     probeView_ = lighting.probeView;
     // Switched off, the cube is forgotten: switched back on, it starts from a whole new one
     // rather than reading one taken wherever the player stood when it went off.
@@ -800,32 +803,34 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                      lighting.exposure, projScale};
 
             // --- views 2 and 3: SSAO and its blur, at half resolution ----------------
+            // Not drawn at all with ambient occlusion off in Options: the shade reads a white
+            // texel instead (aoOn_), which is what an occlusion of nothing looks like.
+            if (aoOn_) {
+                bgfx::setViewFrameBuffer(ViewSsao, ssaoFb_);
+                bgfx::setViewRect(ViewSsao, 0, 0, hw, hh);
+                bgfx::setViewClear(ViewSsao, 0, 0, 1.0f, 0);
+                bgfx::setViewTransform(ViewSsao, nullptr, nullptr);
+                bgfx::setUniform(uParams_, params);
+                const float tanHalfY = std::tan(camera.fovDegrees * 0.5f * 3.14159265f / 180.0f);
+                const float camRay[4] = {tanHalfY * float(width_) / float(height_), tanHalfY, 0.0f,
+                                         0.0f};
+                bgfx::setUniform(uCamRay_, camRay);
+                const float prepassSize[4] = {float(width_), float(height_), 1.0f / float(width_),
+                                              1.0f / float(height_)};
+                bgfx::setUniform(uPrepassSize_, prepassSize);
+                bgfx::setTexture(6, sPrepass_, prepassColour_);
+                screenPass(ViewSsao, msaa_ > 1 ? ssaoMsProgram_ : ssaoProgram_);
 
-
-            bgfx::setViewFrameBuffer(ViewSsao, ssaoFb_);
-            bgfx::setViewRect(ViewSsao, 0, 0, hw, hh);
-            bgfx::setViewClear(ViewSsao, 0, 0, 1.0f, 0);
-            bgfx::setViewTransform(ViewSsao, nullptr, nullptr);
-            bgfx::setUniform(uParams_, params);
-            const float tanHalfY = std::tan(camera.fovDegrees * 0.5f * 3.14159265f / 180.0f);
-            const float camRay[4] = {tanHalfY * float(width_) / float(height_), tanHalfY, 0.0f,
-                                     0.0f};
-            bgfx::setUniform(uCamRay_, camRay);
-            const float prepassSize[4] = {float(width_), float(height_), 1.0f / float(width_),
-                                          1.0f / float(height_)};
-            bgfx::setUniform(uPrepassSize_, prepassSize);
-            bgfx::setTexture(6, sPrepass_, prepassColour_);
-            screenPass(ViewSsao, msaa_ > 1 ? ssaoMsProgram_ : ssaoProgram_);
-
-            bgfx::setViewFrameBuffer(ViewBlur, blurFb_);
-            bgfx::setViewRect(ViewBlur, 0, 0, hw, hh);
-            bgfx::setViewClear(ViewBlur, 0, 0, 1.0f, 0);
-            bgfx::setViewTransform(ViewBlur, nullptr, nullptr);
-            bgfx::setUniform(uParams_, params);
-            bgfx::setUniform(uPrepassSize_, prepassSize);
-            bgfx::setTexture(6, sPrepass_, prepassColour_);
-            bgfx::setTexture(7, sAo_, ssaoTex_);
-            screenPass(ViewBlur, msaa_ > 1 ? blurMsProgram_ : blurProgram_);
+                bgfx::setViewFrameBuffer(ViewBlur, blurFb_);
+                bgfx::setViewRect(ViewBlur, 0, 0, hw, hh);
+                bgfx::setViewClear(ViewBlur, 0, 0, 1.0f, 0);
+                bgfx::setViewTransform(ViewBlur, nullptr, nullptr);
+                bgfx::setUniform(uParams_, params);
+                bgfx::setUniform(uPrepassSize_, prepassSize);
+                bgfx::setTexture(6, sPrepass_, prepassColour_);
+                bgfx::setTexture(7, sAo_, ssaoTex_);
+                screenPass(ViewBlur, msaa_ > 1 ? blurMsProgram_ : blurProgram_);
+            }
 
             // --- view 4: the one lit pass --------------------------------------------
             float shadowMtx[16];
@@ -902,7 +907,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                  BGFX_SAMPLER_V_CLAMP);
             bgfx::setTexture(5, sShadowDepth_, shadowMap_,
                              BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-            bgfx::setTexture(7, sAo_, blurTex_);
+            bgfx::setTexture(7, sAo_, aoOn_ ? blurTex_ : whiteAo_);
 
             // Depth EQUAL against what the prepass laid down, and no depth write: nothing
             // here is shaded twice.

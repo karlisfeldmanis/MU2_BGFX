@@ -123,6 +123,8 @@ public:
     void setCharacterOpen(bool open) { characterOpen_ = open; }
     // The Sanctuary bench (game/ui/specimen.h), from `--windows sanctuary`.
     void setSpecimenOpen(bool open) { specimenOpen_ = open; }
+    // The game menu up on a page, for a review: --windows menu, options or graphics.
+    void showMenu(Menu::Page page) { menu_.show(page); }
     bool specimenOpen() const { return specimenOpen_; }
     // The four skill keys, by MU's skill number, 0 for empty: what the save keeps. Restoring
     // marks the arrangement as the player's, so the first-free-key convenience does not put

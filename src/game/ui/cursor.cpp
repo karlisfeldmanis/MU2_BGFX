@@ -47,8 +47,9 @@ void Cursor::update(float seconds, float x, float y, bool onMonster, bool onLoot
     // size. This project scales every other piece of interface art with the screen
     // (panel::unit(), 2 at 1080 lines), and a cursor that stayed fixed while the HUD and the
     // panels grew around it would look wrong on anything else -- so it is scaled the same way,
-    // 1 at 1080p and proportional either side of it.
-    const float factor = panel::unit() * 0.5f;
+    // 1 at 1080p and proportional either side of it -- and 85% of that since 2026-10-02, the
+    // user: *"scale down game cursor little bit"*.
+    const float factor = panel::unit() * 0.5f * 0.85f;
     const float size = kSize * factor;
     const gfx::Box to{x - kTipX * factor, y - kTipY * factor, size, size};
 

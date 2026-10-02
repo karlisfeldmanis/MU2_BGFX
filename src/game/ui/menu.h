@@ -8,9 +8,13 @@
 // inner line, a warm light rising under the one the pointer is on, and Exit set apart below a
 // rule and lit red.
 //
-// Two pages in one sheet: the menu, and Options, which offers only what
-// can change while the game runs -- the display (a window or the whole screen), the window's
-// size, v-sync, the volume and the frame-rate counter. Switch Character goes back to the
+// Three pages in one sheet: the menu; Options, which offers only what can change while the
+// game runs -- the display (a window or the whole screen), the window's size, v-sync, the
+// volume and the frame-rate counter; and Graphics, behind a button on Options, with a quality
+// preset over the rows it sets -- render scale, anti-aliasing, shadows, ambient occlusion,
+// bloom, reflections, grass -- and the frame-rate limit, as a modern game's has them (the
+// user, 2026-10-02: *"add more options ... so user can adjust graphics settings based on his
+// machine capabilities"*, *"similar like it is on any modern game"*). Switch Character goes back to the
 // character screen (game/ui/lobby.h) when the run came through one, and stands there inactive
 // when it did not -- a --frames review or a bench-made hero has no screen to go back to.
 //
@@ -31,7 +35,7 @@ namespace mu::game {
 
 class Menu {
 public:
-    enum class Page : uint8_t { Main, Options };
+    enum class Page : uint8_t { Main, Options, Graphics };
     struct Result {
         bool closed = false;    // Resume: the menu went down this frame
         bool quit = false;      // Exit Game, which is instant: the user, 2026-09-27
@@ -52,15 +56,30 @@ public:
         bool vsync = false;
         int volume = 100;  // percent
         bool fps = true;
+        // The Graphics page's, applied every frame by app/options.h: the world's scale in
+        // percent (MetalFX under 91), MSAA samples, shadows 0..2, the three effects, grass
+        // 0 none 1 thinned 2 full, and the frame-rate limit (0 none).
+        int scale = 100;
+        int msaa = 4;
+        int shadows = 2;
+        bool ssao = true;
+        bool bloom = true;
+        bool reflections = true;
+        int grass = 2;
+        int cap = 0;
         bool operator==(const Settings& o) const {
             return fullscreen == o.fullscreen && sizes == o.sizes && size == o.size &&
-                   display == o.display && vsync == o.vsync && volume == o.volume && fps == o.fps;
+                   display == o.display && vsync == o.vsync && volume == o.volume && fps == o.fps &&
+                   scale == o.scale && msaa == o.msaa && shadows == o.shadows && ssao == o.ssao &&
+                   bloom == o.bloom && reflections == o.reflections && grass == o.grass &&
+                   cap == o.cap;
         }
     };
 
     void open(const gfx::Interface& interface);
 
-    void show();
+    // Up on `page`: Main from Escape and the HUD's button, any page from a review's --windows.
+    void show(Page page = Page::Main);
     // Whether Switch Character answers. Only a run that came through the character screen
     // (--lobby) has one to go back to; everywhere else the button stands there inactive.
     void allowSwitch(bool on) { switchable_ = on; }
@@ -91,7 +110,7 @@ private:
     float width_ = 0.0f, height_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;  // the sheet's corner, in pixels
     int over_ = -1, pressing_ = -1;
-    static constexpr int kTargets = 20;
+    static constexpr int kTargets = 40;
     float lift_[kTargets] = {};
     struct Drawn {
         bool up = false;

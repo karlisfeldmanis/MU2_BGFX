@@ -449,11 +449,14 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         world_.town().gatherAll(casters_, true);
     }
     pedestals_.gather(ctx.renderer, drawables_, &casters_);
+    // The Options page's Graphics rows, as the game applies them (app/options.h).
+    applyGraphics(ctx.renderer, ctx.args);
+    const gfx::Lighting drawn = graphicsLook(ctx.lighting, ctx.args);
     gfx::GrassField grassField;
     const bool grassDrawn =
-        world_.grass().gather(world_.ground(), ctx.lighting, viewProj, camera_.position, nullptr,
+        world_.grass().gather(world_.ground(), drawn, viewProj, camera_.position, nullptr,
                               0, float(at.elapsed), grassField);
-    ctx.renderer.draw(camera_, ctx.lighting, drawables_, &world_.ground(), &casters_,
+    ctx.renderer.draw(camera_, drawn, drawables_, &world_.ground(), &casters_,
                       grassDrawn ? &grassField : nullptr);
 
     // ---- the screen over it ----------------------------------------------------------------

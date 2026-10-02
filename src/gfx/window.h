@@ -7,6 +7,7 @@
 #include <bgfx/bgfx.h>
 
 struct GLFWwindow;
+struct GLFWcursor;
 
 namespace mu::gfx {
 
@@ -140,7 +141,13 @@ public:
     void setVsync(bool on);
 
 private:
+    // Fullscreen hides the menu bar and the Dock outright rather than letting them slide in
+    // at an edge, which brought the system's arrow with them. window_mac.mm.
+    static void setPresentation(bool fullscreen);
+
     GLFWwindow* handle_ = nullptr;
+    // A fully transparent cursor the window wears in place of the system's. See open().
+    GLFWcursor* blank_ = nullptr;
     int width_ = 0;
     int height_ = 0;
     bool clicked_[2] = {false, false};  // 0 left, 1 right

@@ -558,6 +558,31 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                     how.freeTone = Tone::Gray;
                     socket.rows.push_back(how);
                 }
+                // Evil Spirit's blow as Realm::spiritStrike rolls it: the spell's 45 through
+                // `sim::cast`, on his wizardry band, or his energy's where his class has none.
+                if (power->power == sim::Power::Spirits) {
+                    const sim::SkillRow* spell = sim::skillNumbered(sim::skill::kEvilSpirit);
+                    const bool band = who.wizardMinimum > 0.0 || who.wizardMaximum > 0.0;
+                    const double bandLow = band ? who.wizardMinimum
+                                                : double(who.points.energy) * sim::kRuneEnergyLow;
+                    const double bandHigh = band ? who.wizardMaximum
+                                                 : double(who.points.energy) * sim::kRuneEnergyHigh;
+                    const int damage = spell ? spell->damage : 0;
+                    const int low = int((bandLow + double(damage)) * who.wizardryRate);
+                    const int high =
+                        int((bandHigh + double(damage + damage / 2)) * who.wizardryRate);
+                    socket.rows.push_back(stat("Each spirit",
+                                               std::to_string(low) + " ~ " + std::to_string(high),
+                                               Tone::Yellow));
+                    char sum[96];
+                    std::snprintf(sum, sizeof(sum), "spell %d ~ %d, +%d ~ %d from %d ene", damage,
+                                  damage + damage / 2, int(bandLow), int(bandHigh),
+                                  who.points.energy);
+                    Row how;
+                    how.free = sum;
+                    how.freeTone = Tone::Gray;
+                    socket.rows.push_back(how);
+                }
                 continue;
             } else {
                 line.free = "Empty Socket";

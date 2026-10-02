@@ -384,6 +384,21 @@ void Renderer::destroyTargets() {
     blurTex_ = BGFX_INVALID_HANDLE;
 }
 
+void Renderer::setQuality(float scale, int msaa, uint16_t shadowSize) {
+    scale = scale < 0.5f ? 0.5f : (scale > 1.0f ? 1.0f : scale);
+    if (msaa != 1 && msaa != 2 && msaa != 4 && msaa != 8) msaa = 4;
+    if (shadowSize < 256) shadowSize = 256;
+    if (scale == scale_ && msaa == msaa_ && shadowSize == shadowSize_) return;
+    scale_ = scale;
+    msaa_ = msaa;
+    shadowSize_ = shadowSize;
+    if (outWidth_ <= 0 || outHeight_ <= 0) return;
+    core::logf("graphics: scale %.2f, %dx msaa, shadow %u", double(scale_), msaa_,
+               unsigned(shadowSize_));
+    destroyTargets();
+    createTargets(outWidth_, outHeight_);
+}
+
 void Renderer::resize(int width, int height) {
     if (width == outWidth_ && height == outHeight_) return;
     destroyTargets();

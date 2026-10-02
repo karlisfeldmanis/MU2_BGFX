@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <strings.h>
 #include <filesystem>
 
 #include "core/log.h"
@@ -36,6 +37,14 @@ void readOptions(Args& a) {
             a.fps = value != 0;
             a.fpsAsked = true;
         }
+        else if (!std::strcmp(key, "scale") && value >= 50 && value <= 100) a.scale = float(value) / 100.0f;
+        else if (!std::strcmp(key, "msaa") && (value == 1 || value == 2 || value == 4)) a.msaa = value;
+        else if (!std::strcmp(key, "shadows") && value >= 0 && value <= 2) a.shadows = value;
+        else if (!std::strcmp(key, "ssao")) a.ssao = value != 0;
+        else if (!std::strcmp(key, "bloom")) a.bloom = value != 0;
+        else if (!std::strcmp(key, "reflections")) a.reflections = value != 0;
+        else if (!std::strcmp(key, "grass") && value >= 0 && value <= 2) a.grass = value;
+        else if (!std::strcmp(key, "cap") && value >= 0) a.cap = value;
     }
     std::fclose(file);
     logf("options: %s from %s, %dx%d", a.fullscreen ? "fullscreen" : "windowed",
@@ -65,6 +74,10 @@ void saveOptions(const Args& a) {
     std::fprintf(file, "fullscreen %d\nwidth %d\nheight %d\nvsync %d\nvolume %d\nfps %d\n",
                  a.fullscreen ? 1 : 0, a.width, a.height, a.vsync ? 1 : 0, a.volume,
                  a.fps ? 1 : 0);
+    std::fprintf(file, "scale %d\nmsaa %d\nshadows %d\nssao %d\nbloom %d\nreflections %d\n"
+                       "grass %d\ncap %d\n",
+                 int(a.scale * 100.0f + 0.5f), a.msaa, a.shadows, a.ssao ? 1 : 0, a.bloom ? 1 : 0,
+                 a.reflections ? 1 : 0, a.grass, a.cap);
     std::fclose(file);
 }
 
@@ -86,6 +99,7 @@ void printUsage() {
         "  --scale F                 draw the world at F of the backbuffer, 0.5 to 1 (the "
         "ring and the HUD stay at full size), upscaled by MetalFX\n"
         "  --no-metalfx              under --scale, stretch in the present instead of MetalFX\n"
+        "  --graphics P              the Options page's preset: low, medium or high\n"
         "  --frames N                quit after N frames\n"
         "  --repeat N                measure N segments of --frames, loading the world once\n"
         "  --shot N                  write a PNG every N frames, and on the last\n"
@@ -127,7 +141,8 @@ void printUsage() {
         "  --fps                     the frame rate anyway, in a run that would have it off\n"
         "  --category WORD           world|monsters|people|armour|weapons|parts\n"
         "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
-        "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
+        "  --windows LIST            open these from the first frame: inventory,character; menu,\n"
+        "                            options or graphics raise the game menu on that page; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --ui-type F:TEXT          type TEXT into the open box on frame F (enter, escape)\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
@@ -228,6 +243,25 @@ Args parseArgs(int argc, char** argv) {
                     logError("--scale is a fraction from 0.5 to 1, got %s", v);
                     a.valid = false;
                 }
+            }
+        } else if (!std::strcmp(s, "--graphics")) {
+            const char* v = next(s);
+            bool known = false;
+            for (int i = 0; v && i < kGraphicsPresetCount; ++i) {
+                const GraphicsPreset& p = kGraphicsPresets[i];
+                if (strcasecmp(v, p.name) != 0) continue;
+                a.scale = float(p.scale) / 100.0f;
+                a.msaa = p.msaa;
+                a.shadows = p.shadows;
+                a.ssao = p.ssao;
+                a.bloom = p.bloom;
+                a.reflections = p.reflections;
+                a.grass = p.grass;
+                known = true;
+            }
+            if (!known) {
+                logError("--graphics is low, medium or high, got %s", v ? v : "");
+                a.valid = false;
             }
         } else if (!std::strcmp(s, "--no-metalfx")) {
             a.metalfx = false;
@@ -627,6 +661,7 @@ Args parseArgs(int argc, char** argv) {
             a.shadowView = true;
         } else if (!std::strcmp(s, "--shadow-noise")) {
             if (const char* v = next(s)) {
+                a.shadowAsked = true;
                 if (!std::strcmp(v, "screen")) a.shadowNoise = 0;
                 else if (!std::strcmp(v, "world")) a.shadowNoise = 1;
                 else if (!std::strcmp(v, "none")) a.shadowNoise = 2;
@@ -637,6 +672,7 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--shadow-size")) {
             if (const char* v = next(s)) {
+                a.shadowAsked = true;
                 a.shadowSize = std::atoi(v);
                 if (a.shadowSize < 256 || a.shadowSize > 8192 ||
                     (a.shadowSize & (a.shadowSize - 1))) {

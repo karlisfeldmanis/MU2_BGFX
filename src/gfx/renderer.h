@@ -215,6 +215,11 @@ public:
               uint16_t shadowSize = 4096, float scale = 1.0f, bool metalfx = true);
     void shutdown();
     void resize(int width, int height);
+    // The Options page's Graphics: the world's scale, the MSAA samples and the shadow map's
+    // side. Any change rebuilds the targets between frames; the same values again cost a
+    // compare. Clamped as init() clamps them.
+    void setQuality(float scale, int msaa, uint16_t shadowSize);
+    float scale() const { return scale_; }
 
     // The clock every time-animated material reads: the fountain's water and the other
     // scrolling submeshes (content::Material::scrollPerSecond), and the cloud shadow's slide.
@@ -853,6 +858,7 @@ private:
     bgfx::UniformHandle sSource_ = BGFX_INVALID_HANDLE;
     bool probeOk_ = false;       // everything above was made
     bool probeOn_ = false;       // the sheet wants it this frame
+    bool aoOn_ = true;  // the ssao pass this frame; off reads whiteAo_
     float probeView_ = 0.0f;
     float metalGain_ = 1.0f;     // the sheet's metal_gain, into u_probe.w     // the sheet's check view: 0 off, else the mip shown plus one
     bool probeReady_ = false;    // a filtered cube exists to read
