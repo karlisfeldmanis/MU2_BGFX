@@ -485,8 +485,8 @@ QuestRow tersiaLink(const char* title, int64_t experience, int64_t first, int64_
 QuestRow tersiaDoor() {
     QuestRow row = tersiaLink("The Last Contract", 100000, 400000, 100000, 2, 0);
     row.offer[0] =
-        "\"Devin sent you? Good. Sit down before you fall down. I know that look; I see it in "
-        "the water every morning.\"";
+        "\"Devin sent you? Good. Sit down before you fall down. I know that look. I wear it "
+        "myself.\"";
     row.offer[1] =
         "\"My name is Tersia. The Mercenary Guild took a contract to guard this shrine. "
         "Twelve of us came up the road. I am what is left.\"";
@@ -533,7 +533,7 @@ QuestRow tersiaSecond() {
         "plates in the floor. They still burn.\"";
     row.offer[2] =
         "\"Clear it, and I will write Brann's name in the guild book as avenged.\"";
-    row.underway = "\"Is the air still thick down there? Then it is not done.\"";
+    row.underway = "\"Is the air still thick up there? Then it is not done.\"";
     row.handIn[0] = "\"I will write his name tonight. Thank you.\"";
     row.handIn[1] =
         "\"Your pay. Do not spend it all on potions. No. Spend it all on potions. You will "
@@ -552,7 +552,7 @@ QuestRow tersiaSecond() {
 QuestRow tersiaThird() {
     QuestRow row = tersiaLink("Fire from Afar", 130000, 400000, 130000, 3, 1);
     row.offer[0] =
-        "\"Our archers held the third floor. The Cursed Wizards outranged them anyway.\"";
+        "\"Our archers held the third floor, until the Cursed Wizards came.\"";
     row.offer[1] =
         "\"Their fire reaches farther than any bow. Do not trade shots with them. Get close, "
         "and fast.\"";
@@ -601,9 +601,10 @@ QuestRow tersiaFourth() {
 QuestRow tersiaFifth() {
     QuestRow row = tersiaLink("Knights Who Do Not Sleep", 170000, 500000, 170000, 4, 1);
     row.offer[0] =
-        "\"The Death Knights on the fifth floor wear armour like ours. Some of it is ours.\"";
+        "\"A Death Knight came down the stairs once, from the fifth floor. It wore armour like "
+        "ours. Some of it was ours.\"";
     row.offer[1] =
-        "\"I do not want to know which. Just put them down. The Devils are still with them, "
+        "\"I do not want to know whose. Just put them down. The Devils are up there with them, "
         "so mind the lightning.\"";
     row.underway = "\"They are still standing. I can feel it.\"";
     row.handIn[0] =
@@ -623,13 +624,13 @@ QuestRow tersiaFifth() {
 QuestRow tersiaSixth() {
     QuestRow row = tersiaLink("Rolling Fire", 200000, 600000, 200000, 4, 2);
     row.offer[0] =
-        "\"The sixth floor is where the Death Gorgons begin. They roll fire along the ground.\"";
+        "\"I know the sixth floor only from the shrine's old records. The Death Gorgons live "
+        "there, and they roll fire along the ground.\"";
     row.offer[1] =
-        "\"Do not stand where the fire is going to be. That is all the advice I have. It was "
-        "not enough for us.\"";
+        "\"Do not stand where the fire is going to be. That is all the advice I have.\"";
     row.offer[2] =
         "\"Clear the Devils, the Knights and the Gorgons, and come back to me.\"";
-    row.underway = "\"Something is still burning down there.\"";
+    row.underway = "\"Something is still burning up there.\"";
     row.handIn[0] = "\"One floor left. One. I never thought I would say that.\"";
     row.handIn[1] = "\"Your pay. Sleep before the last one. One of us should.\"";
     row.resting = "\"The last floor waits. So do I.\"";
@@ -650,8 +651,8 @@ QuestRow tersiaBalrog() {
     row.offer[0] =
         "\"The last floor. Kundun left his Balrog there, a foul beast with a scythe.\"";
     row.offer[1] =
-        "\"Few warriors in all of MU can stand against it. The guild sent twelve. You know "
-        "how that ended.\"";
+        "\"Few warriors in all of MU can stand against it. The guild sent twelve to close "
+        "this contract. None of them reached it.\"";
     row.offer[2] =
         "\"Clear the Death Gorgons and the Death Knights around it, and bring it down. Then "
         "the contract is closed.\"";
@@ -659,7 +660,7 @@ QuestRow tersiaBalrog() {
         "\"If you do not come back, I will write your name in the book with the others.\"";
     row.underway = "\"It is still up there. I can hear the scythe on the stone.\"";
     row.handIn[0] =
-        "\"The contract is closed. Eleven names in the book, and the Balrog's beside them.\"";
+        "\"The contract is closed. Eleven names in the book, and every one of them avenged.\"";
     row.handIn[1] =
         "\"Full pay, and the guild's bonus. Tonight I am going to sleep. All night.\"";
     row.resting =

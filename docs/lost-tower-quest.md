@@ -151,10 +151,15 @@ new runes for the chain are the user's to choose (see below).
 
 ## Open
 
-- Voices: Tersia is voiced, `tersia_1` to `tersia_7` (tools/voice.py `VOICES["tersia"]`: Kokoro's
-  bm_fable reading a frightened, exhausted line as the reference, cloned by Chatterbox at 0.6,
-  shaky, one faint echo; the user's picks). Devin's hand-in was read again for Tersia on 2026-10-02
+- Voices: Tersia is voiced, `tersia_1` to `tersia_7` (tools/voice.py `VOICES["tersia"]`: since
+  2026-10-02 Kokoro's bf_isabella reading a hushed line as the reference, cloned by Chatterbox at
+  0.5, a semitone and a half down with a soft echo -- the user's "lower more mystical" pick of four;
+  bm_fable's shaky read before it). Devin's hand-in was read again for Tersia on 2026-10-02
   (docs/devin-quest.md).
+- Text pass 2026-10-02 (the user: "not logical"): the floors are *up there*, as the tower rises to
+  the Balrog; she never went past the third floor, so what she knows of the fifth is a Death Knight
+  that came down the stairs, of the sixth the shrine's old records, and the twelve never reached the
+  Balrog. All seven re-read with each full stop held 0.6 s (VOICES["tersia"] sentence_gap).
 - Thompson's and Tersia's tiles are ours; move them on the user's word.
 - New runes for links 2-7 (proposed in chat 2026-10-01, not chosen).
 - Sevina's Scroll of the Emperor, which MuMain places in this tower.

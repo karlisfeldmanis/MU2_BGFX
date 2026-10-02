@@ -91,11 +91,19 @@ VOICES = {
     # "very monotome, lack of emotion", and of 0.6, 0.85 and 1.1 the user took 0.6. Aged and
     # shaken, not pitched: 8% slower, a tremble in volume and pitch, a thinner bottom, one faint
     # echo at 90 ms. One voice for her seven floors, tersia_1 to tersia_7 (VOICES by the stem).
-    "tersia": dict(ref="tersia_fable_scared.wav", exaggeration=0.6, cfg_weight=0.3, seed=11,
-                   polish="atempo=0.92,tremolo=f=6:d=0.2,vibrato=f=6:d=0.07,highpass=f=90,"
-                          "aecho=0.8:0.4:90:0.12,"
+    # Her sentences ran together under SQUEEZE (the user, 2026-10-02: "little pause between
+    # sentences"), so each full stop is widened back to 0.6 s after it (sentence_gap). The same day
+    # the user asked for "some other woman voice ... with lower more mystical tembre" and took the
+    # second of four auditions, "second one is perfect": Kokoro-82M's bf_isabella (Apache 2.0)
+    # reading a hushed shrine line at 0.85 speed, source/voice/ref/tersia_isabella_mystic.wav,
+    # cloned at an even 0.5; a semitone and a half down (asetrate 0.917, tempo nearly put back),
+    # more chest, and a soft three-tap echo. The bm_fable reference and its tremble are retired.
+    "tersia": dict(ref="tersia_isabella_mystic.wav", exaggeration=0.5, cfg_weight=0.3, seed=11,
+                   sentence_gap=0.6,
+                   polish="asetrate=24000*0.917,aresample=24000,atempo=1.04,highpass=f=70,"
+                          "bass=g=3:f=130,aecho=0.8:0.6:80|160|300:0.22|0.14|0.08,"
                           "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
-                          "apad=pad_dur=0.4,loudnorm=I=-17:TP=-1.5:LRA=11"),
+                          "apad=pad_dur=0.3,loudnorm=I=-17:TP=-1.5:LRA=11"),
 }
 
 
@@ -125,6 +133,38 @@ def pages(voice):
             page = m.group(1).lower()
             found.setdefault(page, []).append((int(m.group(2) or 0), words))
     return {page: [w for _, w in sorted(lines)] for page, lines in found.items()}
+
+
+def widen(path, words, gap):
+    """Each sentence's end in a squeezed take held `gap` seconds: the pause nearest where the
+    sentence ends by its share of the letters (Devin's recorded_with.py.txt did it by hand)."""
+    import numpy as np
+    import soundfile as sf
+    sentences = [s for s in re.split(r"(?<=[.!?])\s+", words) if s]
+    if len(sentences) < 2:
+        return
+    x, sr = sf.read(str(path))
+    err = subprocess.run(["ffmpeg", "-i", str(path), "-af", "silencedetect=n=-42dB:d=0.06", "-f",
+                          "null", "-"], capture_output=True, text=True).stderr
+    quiet = list(zip([float(v) for v in re.findall(r"silence_start: ([0-9.]+)", err)],
+                     [float(v) for v in re.findall(r"silence_end: ([0-9.]+)", err)]))
+    end = len(x) / sr
+    quiet = [q for q in quiet if q[0] > 0.05 and q[1] < end - 0.05]
+    letters, seen, adds = sum(map(len, sentences)), 0, []
+    for s in sentences[:-1]:
+        seen += len(s)
+        if not quiet:
+            break
+        q = min(quiet, key=lambda q: abs((q[0] + q[1]) / 2 - end * seen / letters))
+        quiet.remove(q)
+        adds.append(((q[0] + q[1]) / 2, max(0.0, gap - (q[1] - q[0]))))
+    out, last = [], 0
+    for t, add in sorted(adds):
+        i = int(t * sr)
+        out += [x[last:i], np.zeros(int(add * sr))]
+        last = i
+    out.append(x[last:])
+    sf.write(str(path), np.concatenate(out), sr)
 
 
 def main():
@@ -162,7 +202,16 @@ def main():
                 raw = pathlib.Path(scratch) / f"{page}{i}.raw.wav"
                 torchaudio.save(str(raw), wav, model.sr)
                 part = pathlib.Path(scratch) / f"{page}{i}.wav"
-                subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", SQUEEZE + how["polish"],
+                polish = how["polish"]
+                if "sentence_gap" in how:
+                    squeezed = pathlib.Path(scratch) / f"{page}{i}.squeezed.wav"
+                    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af",
+                                    SQUEEZE.rstrip(","), str(squeezed)], check=True)
+                    widen(squeezed, spoken(words), how["sentence_gap"])
+                    raw = squeezed
+                else:
+                    polish = SQUEEZE + polish
+                subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", polish,
                                 "-ar", "24000", "-ac", "1", "-sample_fmt", "s16", str(part)],
                                check=True)
                 parts.append(part)
