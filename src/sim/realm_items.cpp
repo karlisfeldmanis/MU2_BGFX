@@ -931,7 +931,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         int count[3] = {};
         double held = 0.0;
         for (int p = 1; powerOf(uint8_t(p)); ++p) {
-            if (drawable(*powerOf(uint8_t(p)))) ++count[int(powerOf(uint8_t(p))->rarity)];
+            const int r = int(powerOf(uint8_t(p))->rarity);
+            if (drawable(*powerOf(uint8_t(p))) && level >= kRuneRarityLevel[r]) ++count[r];
         }
         for (int r = 0; r < 3; ++r) held += count[r] > 0 ? kRuneRarityShare[r] : 0.0;
         int rarity = -1;
@@ -948,7 +949,9 @@ void Realm::leave(const Body& dead, const Body& killer) {
         int pick = rarity >= 0 ? dice_.nextInt(0, count[rarity]) : -1;
         for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
             const PowerRow& row = *powerOf(uint8_t(p));
-            if (drawable(row) && int(row.rarity) == rarity && pick-- == 0) powers[0] = uint8_t(p);
+            if (drawable(row) && int(row.rarity) == rarity && level >= kRuneRarityLevel[rarity] &&
+                pick-- == 0)
+                powers[0] = uint8_t(p);
         }
         one.what = Held{item, 0, 1};
         one.what.powers[0] = powers[0];

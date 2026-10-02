@@ -548,6 +548,13 @@ constexpr double kJewelChance = 0.005;
 constexpr double kJewelGroupChance = 0.001;
 constexpr double kCreationChance = 0.0005;
 constexpr int kCreationLevel = 15;
+// The monster level each rune rarity starts at (the user, 2026-10-02: an Epic out of Dungeon 1
+// "does not make sense", then "i think legendary can start drop only in lostter 5", "not only
+// but starting at"): a Rare from kCreationLevel, an Epic from 40 -- the Dungeon's Hell Spiders
+// down, Devias's Ice Queen -- and a Legendary from 60, the Lost Tower's fifth floor (Devil 60,
+// Death Knight 62) and anything harder after it. A rarity a kill cannot reach is out of the
+// draw, and kRuneRarityShare is shared among the rest. invention.
+constexpr int kRuneRarityLevel[3] = {kCreationLevel, 40, 60};
 // The Bless (14, 13), the Soul (14, 14) and the Chaos (12, 15): the three kJewelChance draws.
 bool refiningJewel(const content::ItemRow& row);
 // The first socket with nothing set in it, or -1.

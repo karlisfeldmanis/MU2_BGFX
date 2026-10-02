@@ -6009,32 +6009,40 @@ void testGroupRunes(const content::Tables& tables) {
 
 // The runes' rarity (sim::Rarity, the user, 2026-10-02: "we need also make group of rarity of
 // runes"): a dropped Rune of Creation is Rare, Epic or Legendary at kRuneRarityShare, every
-// class having all three.
+// class having all three -- from a monster that reaches every rarity. And each rarity starts at
+// its kRuneRarityLevel (an Epic out of Dungeon 1 "does not make sense"; a Legendary starts at the
+// Lost Tower's fifth floor): at 40 no Legendary, at 30 Rares alone.
 void testRuneRarity(const content::Tables& tables) {
     std::printf("rune rarity\n");
     const int rune = tables.itemAt(14, 22);
     check(rune >= 0, "the Rune of Creation");
     if (rune < 0) return;
     for (const sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf}) {
-        sim::Realm realm;
-        realm.raise(&tables, 11, 138, 124, kin, 50);
-        int tally[3] = {}, runes = 0, unsettable = 0;
-        for (int i = 0; i < 1000000 && runes < 1500; ++i) {
-            realm.dropFor(40);
-            if (realm.lying().empty() || realm.lying().back().what.item != rune) continue;
-            const sim::PowerRow* power = sim::powerOf(realm.lying().back().what.powers[0]);
-            if (!power) continue;
-            ++runes;
-            ++tally[int(power->rarity)];
-            unsettable += !power->takenBy(kin);
-        }
-        std::printf("  kin %d: %d runes, %d rare, %d epic, %d legendary\n", int(kin), runes,
-                    tally[0], tally[1], tally[2]);
-        checkEqual(unsettable, 0, "every rune drawn is one his class may set");
-        for (int r = 0; r < 3; ++r) {
-            const double share = runes > 0 ? double(tally[r]) / runes : 0.0;
-            check(std::abs(share - sim::kRuneRarityShare[r]) < 0.05,
-                  "each rarity drops at its share");
+        for (const int level : {70, 40, 30}) {
+            sim::Realm realm;
+            realm.raise(&tables, 11, 138, 124, kin, 50);
+            int tally[3] = {}, runes = 0, unsettable = 0;
+            for (int i = 0; i < 1000000 && runes < 1500; ++i) {
+                realm.dropFor(level);
+                if (realm.lying().empty() || realm.lying().back().what.item != rune) continue;
+                const sim::PowerRow* power = sim::powerOf(realm.lying().back().what.powers[0]);
+                if (!power) continue;
+                ++runes;
+                ++tally[int(power->rarity)];
+                unsettable += !power->takenBy(kin);
+            }
+            std::printf("  kin %d, level %d: %d runes, %d rare, %d epic, %d legendary\n", int(kin),
+                        level, runes, tally[0], tally[1], tally[2]);
+            checkEqual(unsettable, 0, "every rune drawn is one his class may set");
+            double reachable = 0.0;
+            for (int r = 0; r < 3; ++r)
+                reachable += level >= sim::kRuneRarityLevel[r] ? sim::kRuneRarityShare[r] : 0.0;
+            for (int r = 0; r < 3; ++r) {
+                const double share = runes > 0 ? double(tally[r]) / runes : 0.0;
+                const double want =
+                    level >= sim::kRuneRarityLevel[r] ? sim::kRuneRarityShare[r] / reachable : 0.0;
+                check(std::abs(share - want) < 0.05, "each rarity drops at its share, or not at all");
+            }
         }
     }
 }
