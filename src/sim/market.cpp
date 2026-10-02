@@ -113,13 +113,17 @@ constexpr Offer kBarmaid[] = {
 // and Dinorant beside the pets (docs/mount.md, ours: 0.75 sells neither, and the Dinorant is
 // made in a Chaos Machine this game does not have -- the user's pick), with Amy's potions on
 // the two rows below it, laid out as Amy lays them, a single over its three. Lorencia only --
-// Caren keeps the plain bar, since Izabel sells the potions in Devias.
+// Caren keeps the plain bar, since Izabel sells the potions in Devias. **And the arrows and
+// bolts +0 to +3 under the potions, ours too** (the user, 2026-10-02: "sell arows bolts also in
+// lorencia tavern", "+0,+1,+2,+3"): Amy and Eo stop at +2; the +3 is priced off quiver().
 constexpr Offer kLumen[] = {
     sip(0, 9, 1),   sip(1, 10, 1),  gear(2, kPets, 0, 0), gear(3, kPets, 1, 0),
     gear(4, kPets, 2, 0), gear(5, kPets, 3, 0),
     sip(16, 0, 1),  sip(24, 0, 3),  sip(17, 1, 1),  sip(25, 1, 3),  sip(18, 2, 1),  sip(26, 2, 3),
     sip(19, 3, 1),  sip(27, 3, 3),  sip(20, 4, 1),  sip(28, 4, 3),  sip(21, 5, 1),  sip(29, 5, 3),
     sip(22, 6, 1),  sip(30, 6, 3),  sip(23, 8, 1),  sip(31, 8, 3),
+    gear(32, kBows, 15, 0), gear(33, kBows, 15, 1), gear(34, kBows, 15, 2), gear(35, kBows, 15, 3),
+    gear(36, kBows, 7, 0),  gear(37, kBows, 7, 1),  gear(38, kBows, 7, 2),  gear(39, kBows, 7, 3),
 };
 
 // Elf Lala (shop10): the potions, the Vine and Silk sets, the Wind helm, armour and pants, the
