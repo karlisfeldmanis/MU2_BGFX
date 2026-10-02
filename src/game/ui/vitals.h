@@ -18,8 +18,10 @@
 // Play::shownAlive and shownHealth, and the pick keeps a body that is still standing
 // (Play::point). And MU2's Escort, since sprint 15: the elf's summon wears a small green bar
 // over its head for as long as it lives, whether pointed at or not (the user, 2026-09-28: "a
-// minimal HP bar for elf summons which is always visible"). No name and no figures -- green,
-// because red over something on her side reads as a thing to hit (Vitals.cs's Friendly).
+// minimal HP bar for elf summons which is always visible"). No name -- green, because red over
+// something on her side reads as a thing to hit (Vitals.cs's Friendly) -- and its figures inside
+// it, at the hover bar's proportion of type to bar (the user, 2026-10-02: "show HP number for elf
+// summons based on hp bar scale").
 //
 // Godot drew the rounded pieces with StyleBoxFlat; the canvas has no such thing, so every
 // shape is laid down one pixel row at a time, each row cut to the rounded outline and its two
@@ -75,12 +77,14 @@ private:
         // Her summon's escort bar, 0 for none showing (sprint 15).
         uint32_t escort = 0;
         float escortX = 0, escortY = 0, escortHealth = 0;
+        int escortReading = 0, escortMaximum = 0;
         bool operator==(const Readout& o) const {
             return on == o.on && x == o.x && y == o.y && shown == o.shown && lag == o.lag &&
                    health == o.health && reading == o.reading && maximum == o.maximum &&
                    unit == o.unit && folk == o.folk && folkX == o.folkX && folkY == o.folkY &&
                    folkShown == o.folkShown && escort == o.escort && escortX == o.escortX &&
-                   escortY == o.escortY && escortHealth == o.escortHealth;
+                   escortY == o.escortY && escortHealth == o.escortHealth &&
+                   escortReading == o.escortReading && escortMaximum == o.escortMaximum;
         }
     };
 

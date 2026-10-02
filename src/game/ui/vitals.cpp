@@ -30,10 +30,12 @@ constexpr float kChip[4] = {232 / 255.0f, 220 / 255.0f, 197 / 255.0f, 170 / 255.
 
 // ---- geometry, in interface units (panel::unit() pixels each) --------------------------
 constexpr float kBarWide = 78.0f;
-// The escort: half the hover bar's width and under half its height, and MU2's Friendly green
-// (52, 124, 58) lifted to sit beside kFill's depth.
+// The escort: half the hover bar's width, and MU2's Friendly green (52, 124, 58) lifted to sit
+// beside kFill's depth. Its figures stand to it as the hover bar's do to that (5 in 7.5), at the
+// smallest type points() allows at 1080 lines, so the bar is as tall as they need and no taller.
 constexpr float kEscortWide = 40.0f;
-constexpr float kEscortTall = 3.5f;
+constexpr float kEscortReading = 4.0f;
+constexpr float kEscortTall = 6.0f;
 constexpr float kFriendly[4] = {60 / 255.0f, 150 / 255.0f, 66 / 255.0f, 1.0f};
 constexpr float kBarTall = 7.5f;  // set by the figures printed inside it
 constexpr float kEdge = 1.0f;
@@ -303,6 +305,8 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         now.escortY = std::round(y);
         // In hundredths, so a bar does not rebuild on every point of a large pool.
         now.escortHealth = std::round(fraction(summon->id) * 100.0f) / 100.0f;
+        now.escortReading = play.shownHealth(summon->id);
+        now.escortMaximum = summon->maxHealth;
     }
     if (now == drawn_ && rebuilds_ > 0) return;
     drawn_ = now;
@@ -332,6 +336,18 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         if (r.escortHealth > 0.0f) {
             flat(canvas_, inside, in, inside.x + inside.w * r.escortHealth, colour(kFriendly, 1.0f));
         }
+        // Both figures as the hover bar prints them, or the health alone when a large pool
+        // would run past the ends.
+        const gfx::Face& face = canvas_.face();
+        const float size = points(kEscortReading * unit);
+        std::string reading =
+            std::to_string(r.escortReading) + " / " + std::to_string(r.escortMaximum);
+        if (face.measure(size, reading) > inside.w - 2.0f * edge) {
+            reading = std::to_string(r.escortReading);
+        }
+        const float baseline = bar.midY() + (face.ascent(size) - face.descent(size)) * 0.5f;
+        type(canvas_, std::round(bar.midX() - face.measure(size, reading) * 0.5f),
+             std::round(baseline), size, 1.0f, reading);
     }
     if (r.on == 0 || r.shown <= 0.0f) return;
     const sim::Body* beast = play.realm().find(r.on);
