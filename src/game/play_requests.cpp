@@ -377,7 +377,11 @@ bool Play::travel(int index) {
     core::logf("window: travel to %s %s", sim::travelAt(index).name,
                paid ? "paid" : kWhy[int(why)]);
     // A floor of this same map was set down in place by the realm; only another map is the mode's.
+    // In place he lands as a Town Portal lands him (the user, 2026-10-02: 'use teleport effect also
+    // when travel to same map'): said between ticks, the realm's Climbed is cleared by the next
+    // step before update() reads it, so the landing is shown here, as goBack's is.
     if (paid && sim::travelAt(index).map != int32_t(realm_.tables()->map)) travelled_ = index;
+    else if (paid) warped();
     if (!paid) ui(Ui::Refused);
     return paid;
 }
