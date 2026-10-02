@@ -1471,6 +1471,81 @@ uint32_t Realm::discard(int slot) {
     return one.id;
 }
 
+bool Realm::cracks(int slot) const {
+    if (!tables_ || slot < 0 || slot >= kSlots || bag_[slot].empty()) return false;
+    const Held& held = bag_[slot];
+    return size_t(held.item) < tables_->items.size() && firecracker(tables_->items[size_t(held.item)]);
+}
+
+// WebZen's FireCrackerOpenEven (Event.cpp:1201-1310 and the Zen at 1520), its rolls in its own
+// order: whether an item comes, which row, the level, the skill, the luck, then the option.
+Cracked Realm::crack(int slot) {
+    Cracked cracked;
+    if (!cracks(slot)) return cracked;
+    Body& hero = bodies_[0];
+    // A dead man throws nothing, as `discard`.
+    if (!hero.alive()) return cracked;
+    bag_.lift(slot);
+    cracked.opened = true;
+    cracked.column = hero.column();
+    cracked.row = hero.row();
+
+    // The bag's rows this tree has items for, counted then drawn by index as `leave` draws.
+    const auto rowOf = [this](const BagRow& wanted) -> int32_t {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            const content::ItemRow& row = tables_->items[i];
+            if (row.group == wanted.group && row.number == wanted.number) return int32_t(i);
+        }
+        return -1;
+    };
+    int present = 0;
+    for (const BagRow& wanted : kFirecrackerBag) present += rowOf(wanted) >= 0 ? 1 : 0;
+
+    if (present > 0 && dice_.nextInt(0, 10) < kFirecrackerItemIn10) {
+        int pick = dice_.nextInt(0, present);
+        int32_t item = -1;
+        for (const BagRow& wanted : kFirecrackerBag) {
+            const int32_t found = rowOf(wanted);
+            if (found >= 0 && pick-- == 0) item = found;
+        }
+        const content::ItemRow& row = tables_->items[size_t(item)];
+        Lying one;
+        // `level = GetLevel + rand()%5`, Option1 the skill and Option2 the luck at a half each,
+        // and the option where either is missing: one in five +12, else +0, +4 or +8. The skill
+        // is rolled and not given -- skills are orbs here (`leave`) -- so the option comes as
+        // often as MU's does.
+        const int plus = kFirecrackerPlus + dice_.nextInt(0, kFirecrackerPluses);
+        const bool skill = dice_.nextInt(0, 2) == 1;
+        const bool luck = dice_.nextInt(0, 2) == 1;
+        int option = 0;
+        if (!luck || !skill) option = dice_.nextInt(0, 5) < 1 ? 3 : dice_.nextInt(0, 3);
+        if (takesOptions(row)) {
+            const int refinement = std::min(plus, kRefineCap);
+            one.what = Held{item, int16_t(refinement), int16_t(fullDurability(row, refinement))};
+            one.what.luck = luck;
+            one.what.option = int8_t(option);
+        } else {
+            // "혼석, 축석, 영석은 레벨이 없게": the Chaos, the Bless and the Soul come bare.
+            one.what = Held{item, 0, 1};
+        }
+        std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
+        one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+        one.id = nextId_++;
+        lying_.push_back(one);
+        cracked.id = one.id;
+        cracked.item = item;
+        cracked.column = one.column;
+        cracked.row = one.row;
+        say(What::Cracked, hero, int32_t(one.id), item, one.what.refinement);
+        return cracked;
+    }
+    // Zen into the purse at the excellent armour's rate, as a kill's Zen (`leave`).
+    cracked.zen = int64_t(double(kFirecrackerZen) * hero.excel.zenRate);
+    money_ += cracked.zen;
+    say(What::Cracked, hero, -1, -1, int32_t(cracked.zen));
+    return cracked;
+}
+
 // The ground is swept first, so a run of a million deaths is not a million drops searched for
 // a bare tile.
 void Realm::dropFor(int level) {

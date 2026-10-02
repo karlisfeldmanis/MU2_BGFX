@@ -373,6 +373,10 @@ bool creation(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 22;
 }
 
+bool firecracker(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 11;
+}
+
 bool refiningJewel(const content::ItemRow& row) {
     return (row.group == kGroupPotions && (row.number == 13 || row.number == 14)) ||
            (row.group == 12 && row.number == 15);

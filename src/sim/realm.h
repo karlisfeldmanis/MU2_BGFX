@@ -120,6 +120,8 @@ enum class What : uint8_t {
                // ticks until its last pulse, whom: the monster whose miss let it go
     Mixed,     // the Chaos Machine ran (sim/machine.h): a: the sim::Recipe for a Combine, else
                // 100 + the sim::Service, b: 1 made, 0 failed, c: the rate it ran at
+    Cracked,   // a Firecracker thrown and opened (Realm::crack): a: the id of what it left on
+               // the ground, or -1 for Zen, b: that thing's item row or -1, c: the Zen or its plus
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -166,6 +168,16 @@ struct Lying {
     int64_t zen = 0;
     int32_t column = 0, row = 0;
     int64_t vanishesAt = 0;
+};
+
+// What a thrown Firecracker gave (Realm::crack): an item lying at his feet, or Zen in the purse.
+// `id` is 0 when it was refused and nothing was thrown.
+struct Cracked {
+    uint32_t id = 0;       // the thing it left on the ground, 0 for Zen or a refusal
+    int32_t item = -1;     // its row, -1 for Zen
+    int64_t zen = 0;       // what went into the purse, 0 for an item
+    int32_t column = 0, row = 0;  // where it burst: the thing's tile, or his for Zen
+    bool opened = false;
 };
 
 // One thing that happened, flat and copyable. The numbers mean what the enum above says they
@@ -655,6 +667,14 @@ public:
     // step clears the What::Dropped it says before the showing could read it. What rings the
     // thing landing is the caller, off this id (Play::discard).
     uint32_t discard(int slot);
+    // Whether the thing in `slot` opens when it is thrown rather than lying where it falls: a
+    // Firecracker (sim/items.h). The window's drag out asks this before it asks `discard`.
+    bool cracks(int slot) const;
+    // Throws a Firecracker: spent from the slot, and WebZen's roll -- two in ten an item off
+    // eventitembag5, +5 to +9 with luck and the option rolled, lying at his feet as a kill's
+    // drop lies; else 2,004 Zen into the purse. Asked between ticks as `discard` is, so the
+    // answer carries what the showing needs; says What::Cracked for the log.
+    Cracked crack(int slot);
     // The bench's, and no rule of MU's: a thing laid on the ground beside him as a kill's drop
     // lies, from nobody's bag, for looking at a drop Lorencia never leaves. Its id, or 0.
     uint32_t lay(int32_t item, int refinement = 0, bool luck = false, int option = 0,

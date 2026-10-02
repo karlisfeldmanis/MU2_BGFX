@@ -7015,6 +7015,85 @@ void testWearingTakesDown(const content::Tables& tables) {
     }
 }
 
+// A thrown Firecracker (sim/items.h, Realm::crack): WebZen's FireCrackerOpenEven.
+void testFirecracker(const content::Tables& tables) {
+    std::printf("firecracker\n");
+    const int cracker = tables.itemAt(14, 11);
+    check(cracker >= 0, "the Firecracker has a row (14, 11)");
+    if (cracker < 0) return;
+    int present = 0;
+    for (const sim::BagRow& row : sim::kFirecrackerBag) present += tables.itemAt(row.group, row.number) >= 0;
+    std::printf("  %d of eventitembag5's %zu rows are items here\n", present,
+                std::size(sim::kFirecrackerBag));
+    check(present > 0, "and some of its bag is here to draw");
+
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, 50);
+        const int sword = realm.give(tables.itemAt(0, 1));
+        check(!realm.cracks(sword), "a sword is thrown, not cracked");
+        check(!realm.crack(sword).opened && !realm.satchel()[sword].empty(),
+              "and crack refuses it and leaves it be");
+        check(!realm.crack(-1).opened && !realm.crack(sim::kSlots).opened, "nor a slot that is none");
+    }
+
+    const int tries = 20000;
+    int items = 0, zens = 0, lucky = 0, optioned = 0, bare = 0, badPlus = 0, badZen = 0, kept = 0;
+    int plusSeen[10] = {};
+    // A fresh realm every two hundred, so the ground under him does not fill, each on its own
+    // seed so the two hundred are not the same two hundred again.
+    auto fresh = std::make_unique<sim::Realm>();
+    for (int i = 0; i < tries; ++i) {
+        if (i % 200 == 0) {
+            fresh = std::make_unique<sim::Realm>();
+            fresh->raise(&tables, uint32_t(11 + i), 138, 124, sim::Kin::DarkKnight, 50);
+        }
+        sim::Realm& realm = *fresh;
+        const int slot = realm.give(cracker);
+        if (!realm.cracks(slot)) {
+            ++kept;
+            continue;
+        }
+        const int64_t purse = realm.money();
+        const sim::Cracked cracked = realm.crack(slot);
+        kept += !realm.satchel()[slot].empty();
+        if (cracked.id == 0) {
+            ++zens;
+            badZen += realm.money() - purse != sim::kFirecrackerZen;
+            continue;
+        }
+        ++items;
+        const sim::Lying& lying = realm.lying().back();
+        const content::ItemRow& row = tables.items[size_t(lying.what.item)];
+        if (!sim::takesOptions(row)) {
+            bare += lying.what.refinement == 0 && !lying.what.luck && lying.what.option == 0;
+            continue;
+        }
+        const int plus = lying.what.refinement;
+        badPlus += plus < sim::kFirecrackerPlus ||
+                   plus >= sim::kFirecrackerPlus + sim::kFirecrackerPluses;
+        if (plus >= 0 && plus < 10) ++plusSeen[plus];
+        lucky += lying.what.luck;
+        optioned += lying.what.option > 0;
+    }
+    std::printf("  %d thrown: %d items, %d Zen; +5..+9 %d %d %d %d %d\n", tries, items, zens,
+                plusSeen[5], plusSeen[6], plusSeen[7], plusSeen[8], plusSeen[9]);
+    checkEqual(kept, 0, "every one thrown is spent");
+    check(std::abs(double(items) / tries - 0.2) < 0.015, "two in ten give an item");
+    checkEqual(badZen, 0, "the rest give 2,004 Zen into the purse");
+    checkEqual(badPlus, 0, "an item comes +5 to +9");
+    for (int plus = 5; plus <= 9; ++plus) check(plusSeen[plus] > 0, "each of +5 to +9 comes");
+    int optionable = 0;
+    for (int plus = 0; plus < 10; ++plus) optionable += plusSeen[plus];
+    if (optionable > 0) {
+        check(std::abs(double(lucky) / optionable - 0.5) < 0.05, "luck half the time");
+        // The option where the skill or the luck is missing (three in four), then four in five
+        // of those draw +0, +4 or +8 and one in five +12: 0.75 x (0.2 + 0.8 x 2/3) = 0.55.
+        check(std::abs(double(optioned) / optionable - 0.55) < 0.05, "an option 55% of the time");
+    }
+    checkEqual(bare, items - optionable, "a jewel out of one comes bare");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -7081,6 +7160,7 @@ int main() {
     testPoisonOnce();
     testWishDropsOnWalk(tables);
     testTravelQuestLock();
+    testFirecracker(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

@@ -1364,6 +1364,12 @@ void Play::update(double seconds) {
     ice_.update(float(seconds));
     poison_.update(float(seconds));
     flame_.update(float(seconds));
+    // Each rocket's burst rings where it bursts: SOUND_XMAS_FIRECRACKER, and eExplosion.wav off
+    // the blast born with it (fx/firework.h).
+    firework_.update(float(seconds), [&](const float* at) {
+        emit(heard_.firework, at[0], at[2]);
+        emit(heard_.explosion, at[0], at[2]);
+    });
     spirits_.update(float(seconds), [&](uint32_t id, float* feet) {
         const Drawn* drawn = drawnOf(id);
         if (drawn == nullptr || !drawn->placed || !ground_) return false;

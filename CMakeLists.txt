@@ -173,6 +173,7 @@ add_executable(mu2
   src/game/fx/poison.cpp
   src/game/fx/flame.cpp
   src/game/fx/spirits.cpp
+  src/game/fx/firework.cpp
   src/game/fx/wheel.cpp
   src/game/fx/fury.cpp
   src/game/fx/hellfire.cpp

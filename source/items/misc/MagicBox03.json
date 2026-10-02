@@ -1,0 +1,54 @@
+{
+  "item": "MagicBox03",
+  "mu_name": "Firecracker",
+  "mu_name_from": "MuMain ZzzInventory.cpp:1693, `case 2: I18N::Game::Firecracker` -- MU's Box of Luck (14, 11, ITEM_BOX_OF_LUCK) at level 2, drawn as MODEL_EVENT + 5 (ZzzObject.cpp:6058-6066), which ZzzOpenData.cpp:981 loads from Data\\Item\\MagicBox03.bmd.",
+  "why_this_one": "The user, 2026-10-02: \"i like idea of the firecrarcker, but only from dungeons\", then \"lets implement it with all the mechanincs, but drops only from dungeons liek dungeon,lost-tower,bc,and devil aquare iin future\". MU keys every one of its boxes off 14, 11 by level (docs/drop-boxes.md); this tree gives the Firecracker its own row at MU's group and number, since nothing else here is a 14, 11 yet. invention: the row per box rather than per level.\n\nIt does not drop from monsters by the ordinary draw: where it falls is its own roll (sim/items.h), so the flag is off and Realm::leave's pools never meet it.",
+  "profile": "weapon",
+  "profile_note": "As the Ale: a small painted sheet on a made object seen close.",
+  "tells": "Throw it and you may receive some Zen or items.",
+  "tells_from": "MU's own tooltip for its boxes (docs/kundun-box-sources.md section 4.2): \"Throw it and you may receive some Zen or items\".",
+  "stats": {
+    "note": "Group and number are MU's ITEM_BOX_OF_LUCK; one cell, as MU's box, and one use.",
+    "group": 14,
+    "number": 11,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. Thrown once."
+  },
+  "sheets": {
+    "firecracker": "firecracker.png"
+  },
+  "sheet_from": "Data/Item/firecracker.OZJ (32x32) from MuMain's own bin/Data, which MagicBox03.bmd names firecracker.jpg on all 24 triangles: a red paper tube with gold bands and the character 福 (fortune) on it -- a New Year cracker.",
+  "cutout": false,
+  "cutout_from": "A JPEG: no alpha.",
+  "material_note": "Paper wrapped round a charge: cloth, the library's rough dielectric. The gold bands are paint on the paper.",
+  "upright": true,
+  "upright_from": "MU stands MODEL_EVENT + 5 up by `Angle[0] = 90` (ZzzObject.cpp:5729) on the ground; as authored here.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 24,
+      "area": 6241.9,
+      "along": [
+        -12.9,
+        12.8
+      ],
+      "mu_uv": [
+        -0.083,
+        0.001,
+        0.917,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.724,
+        0.997
+      ]
+    }
+  ]
+}

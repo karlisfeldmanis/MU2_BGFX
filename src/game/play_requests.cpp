@@ -151,6 +151,31 @@ bool Play::refine(int jewelSlot, int targetSlot) {
 // step clears what it said before that loop could read it; a purchase and a sale are heard off
 // their own answers for the same reason.
 bool Play::discard(int slot) {
+    // A Firecracker is not laid down: it opens (sim::Realm::crack). An item it gives lands as a
+    // thrown thing lands, with MU's firework over the tile (CmdType 0); its Zen goes into the
+    // purse and rings the coins, and MU sends no firework with Zen (Event.cpp:1520).
+    if (realm_.cracks(slot)) {
+        const sim::Cracked cracked = realm_.crack(slot);
+        core::logf("window: %d cracked %s", slot,
+                   !cracked.opened ? "refused" : cracked.id ? "into an item" : "into Zen");
+        if (!cracked.opened) return false;
+        if (cracked.id == 0) {
+            const Drawn* hero = drawnOf(realm_.hero().id);
+            if (heard_.moneyDrop >= 0 && hero && hero->placed) {
+                emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+            }
+            return true;
+        }
+        landed(cracked.id);
+        if (ground_) {
+            const float metres = ground_->metresPerTile();
+            const float x = (float(cracked.column) + 0.5f) * metres;
+            const float z = -(float(cracked.row) + 0.5f) * metres;
+            const float at[3] = {x, ground_->heightAt(x, z), z};
+            firework_.launch(at);
+        }
+        return true;
+    }
     const bool worn = slot >= 0 && sim::wearable(slot);
     const uint32_t thrown = realm_.discard(slot);
     core::logf("window: %d thrown on the ground %s", slot, thrown ? "taken" : "refused");

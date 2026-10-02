@@ -1147,6 +1147,15 @@ std::string describe(const Happening& happening, const Realm& realm) {
                           happening.tick, who, happening.a, happening.c,
                           happening.b ? "made" : "failed");
             break;
+        case What::Cracked:
+            if (happening.a < 0) {
+                std::snprintf(line, sizeof(line), "%6u %s cracked a firecracker: %d Zen",
+                              happening.tick, who, happening.c);
+            } else {
+                std::snprintf(line, sizeof(line), "%6u %s cracked a firecracker: item %d +%d as #%d",
+                              happening.tick, who, happening.b, happening.c, happening.a);
+            }
+            break;
     }
     return std::string(line);
 }

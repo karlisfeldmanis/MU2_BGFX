@@ -479,6 +479,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.itemDrop = sound_.load("item_drop", true);
     heard_.moneyDrop = sound_.load("money_drop", true);
     heard_.jewel = sound_.load("jewel_get", true);
+    heard_.firework = sound_.load("firework", true);
     heard_.take = sound_.load("item_get", false);
     heard_.drink = sound_.load("player_drink", false);
     heard_.warp = sound_.load("spell_magic", false);

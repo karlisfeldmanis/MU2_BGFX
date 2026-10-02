@@ -650,4 +650,40 @@ Element elementOf(Power power);
 // Whether `kin` throws anything of `element`, so a rune of it would do something in his hands.
 bool elementServes(Element element, Kin kin);
 
+// ---- the Firecracker (docs/drop-boxes.md §8) ------------------------------------------------
+//
+// MU's Box of Luck at level 2 (14, 11), its own row here (source/items/misc/MagicBox03.json).
+// Thrown on the ground it is spent and opens: WebZen's FireCrackerOpenEven (Event.cpp:1201, the
+// MODIFY_DROP_ITEM_OF_FIRE_CRACKER_EVENT_20050316 body 1.00.93 builds). Two in ten an item off
+// eventitembag5 at the thrower's feet with a firework over it, else 2,004 Zen. Realm::crack.
+bool firecracker(const content::ItemRow& row);
+// `rand()%10 < g_ItemDropRateForgFireCracker`, 2 in WebZen's own 0.99.60T commonserver.cfg.
+constexpr int kFirecrackerItemIn10 = 2;
+// Every eventitembag5 row is level 5, and outside Korea `GetLevel + rand()%5` (gLanguage != 0):
+// +5 to +9.
+constexpr int kFirecrackerPlus = 5;
+constexpr int kFirecrackerPluses = 5;
+// The Zen when no item comes: MoneyItemDrop(2004, ...), the year. Into the purse, as every Zen
+// here (Realm::leave).
+constexpr int64_t kFirecrackerZen = 2004;
+// WebZen's eventitembag5.txt (0.99.60T's Data, the Firecracker's and the Heart of Love's bag; its
+// header still calls it the Christmas star's), row for row, by MU's group and number. A row this
+// tree has no item for is left out of the draw, so the draw is even over what is here.
+struct BagRow {
+    int8_t group = 0;
+    int16_t number = 0;
+};
+inline constexpr BagRow kFirecrackerBag[] = {
+    // weapons and shields
+    {0, 2}, {0, 4}, {0, 3}, {1, 1}, {1, 2}, {2, 0}, {2, 1}, {4, 8}, {4, 9}, {5, 0}, {6, 4},
+    {6, 1}, {6, 2}, {0, 10}, {0, 11}, {0, 13}, {1, 5}, {1, 6}, {1, 7}, {2, 3}, {3, 7}, {3, 4},
+    {4, 11}, {4, 4}, {4, 12}, {5, 3}, {6, 5}, {6, 8},
+    // Leather, Pad, Bronze, Wind, Spirit and Sphinx, helm to boots
+    {7, 5}, {8, 5}, {9, 5}, {10, 5}, {11, 5}, {7, 2}, {8, 2}, {9, 2}, {10, 2}, {11, 2},
+    {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
+    {7, 13}, {8, 13}, {9, 13}, {10, 13}, {11, 13}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7},
+    // the Bless, the Soul and the Chaos, which come bare
+    {14, 13}, {14, 14}, {12, 15},
+};
+
 }  // namespace mu::sim

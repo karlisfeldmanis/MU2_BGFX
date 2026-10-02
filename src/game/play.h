@@ -36,6 +36,7 @@
 #include "game/fx/poison.h"
 #include "game/fx/flame.h"
 #include "game/fx/spirits.h"
+#include "game/fx/firework.h"
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
@@ -478,6 +479,8 @@ public:
     Flame& flame() { return flame_; }
     // And Evil Spirit's spirits round him, the spell's and the shield rune's. fx/spirits.h.
     Spirits& spirits() { return spirits_; }
+    // And a thrown Firecracker's firework over the tile it opened on. fx/firework.h.
+    Firework& firework() { return firework_; }
     // The knight's Twisting Slash: his weapon flung round him. fx/wheel.h.
     Wheel& wheel() { return wheel_; }
     // The knight's Rageful Blow: his weapon thrown down and the ground broken. fx/fury.h.
@@ -886,6 +889,7 @@ private:
     Poison poison_;
     Flame flame_;
     Spirits spirits_;
+    Firework firework_;
     Wheel wheel_;
     Fury fury_;
     Hellfire hellfire_;
@@ -952,6 +956,7 @@ private:
         int fountain = -1;                                       // the fountain's water
         int hammer = -1;                                         // Hanzo at his anvil
         int itemDrop = -1, moneyDrop = -1, jewel = -1;  // a thing landing; a jewel's own ring
+        int firework = -1;  // a Firecracker's rocket bursting, SOUND_XMAS_FIRECRACKER
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept

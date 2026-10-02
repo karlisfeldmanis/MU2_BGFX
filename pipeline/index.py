@@ -334,6 +334,23 @@ EFFECTS = {
     # down behind it every reference frame.
     "explosion": "effects/meteor/explotion01.png",
 
+    # A thrown Firecracker's firework (game/fx/firework.cpp), MU's BITMAP_FIRECRACKER0001-0003
+    # (ZzzEffect.cpp:2909-2958, MoveHandlers.cpp:4930-4990). Effect/firecracker0001-0007.jpg, 256
+    # squares loaded GL_NEAREST (ZzzOpenData.cpp:5306-5312): a burst of white stars growing and
+    # thinning over seven frames, which FIRECRACKER0003 plays as a sprite tinted at random. The
+    # burst's flash is BITMAP_DS_SHOCK, Effect/Shockwave.jpg (a 128 ring, :5260), and its blast
+    # BITMAP_EXPLOTION_MONO, Effect/explotion01mono.jpg (:5248), a 4x4 strip of which MU plays
+    # the first ten frames -- the bottom right of the file is white and never drawn.
+    "firework_1": "effects/firecracker/firecracker0001.png",
+    "firework_2": "effects/firecracker/firecracker0002.png",
+    "firework_3": "effects/firecracker/firecracker0003.png",
+    "firework_4": "effects/firecracker/firecracker0004.png",
+    "firework_5": "effects/firecracker/firecracker0005.png",
+    "firework_6": "effects/firecracker/firecracker0006.png",
+    "firework_7": "effects/firecracker/firecracker0007.png",
+    "shockwave": "effects/firecracker/shockwave.png",
+    "explosion_mono": "effects/firecracker/explotion01mono.png",
+
     # And what the wizard's Flame burns with. See client/core/Flame.cs.
     #
     # BITMAP_FLAME, which ZzzOpenData loads from Effect/Flame01.jpg with GL_CLAMP_TO_EDGE - a
