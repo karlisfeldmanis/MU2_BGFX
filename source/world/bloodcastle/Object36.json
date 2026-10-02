@@ -1,0 +1,64 @@
+{
+  "item": "Object36",
+  "mu_name": "Object36",
+  "mu_name_from": "Blood Castle's object slot 35, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128); World12/Object12 serves all seven castles (MapManager.cpp:1104-1107).",
+  "world": "bloodcastle",
+  "object_type": 35,
+  "placements": 2,
+  "profile": "world",
+  "sheets": {
+    "ses": "bc_ses.png"
+  },
+  "sheet_from": "Data/Object12/, from MuMain, decoded under a bc_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "ses": "wrought_iron"
+  },
+  "why_this_one": "A chain winch either side of the door. docs/blood-castle-port.md, Part B section 1.2.",
+  "material_note": "Read off the art: br001 the castle's blue-grey brick, flagstone; ses the grey iron of chains and fittings, wrought_iron; pant01 carved stone, rock, its orange frieze pant01_R added; bro01 mossy stone, rock; woodc01 dark weathered wood, timber; ng01 the angel-knights' blue-silver plate, plate_steel; skin_special_01 their faces and cloth, skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 32,
+      "area": 6940.7,
+      "along": [
+        -0.4,
+        24.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.639,
+        0.895
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 2198.9,
+      "along": [
+        -0.4,
+        2.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "bake_uv": [
+        0.607,
+        0.52,
+        0.998,
+        0.996
+      ]
+    }
+  ]
+}

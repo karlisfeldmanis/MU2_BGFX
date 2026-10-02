@@ -783,6 +783,7 @@ def cook_meshes(world, out_dir):
             break
         tris, verts, size, _bones = cook_mesh(model, path,
                                               os.path.join(mesh_dir, model + ".mum"), textures,
+                                              hidden=carried.get(model, {}).get("hidden_part"),
                                               scroll_per_second=scroll,
                                               scrolls=carried.get(model, {}).get("glow"))
         triangles += tris

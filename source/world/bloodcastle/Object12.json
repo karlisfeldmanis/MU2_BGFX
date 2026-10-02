@@ -351,5 +351,7 @@
         0.708
       ]
     }
-  ]
+  ],
+  "hidden_part": "ses",
+  "hidden_part_from": "The candles' grey holders (ses) are not drawn. All eleven clusters stand over the NoGround chasm, and MU lights an object by its tile's painted TerrainLight, which over the void is black or near it (2-22 of 255 east of the bridge), so MU's holders sink into the dark and only the added flames and their sprites show -- the orange points over the void in the user's MuMain shots. Lit by our sun and lamps they stood as grey squares in the air (the user, 2026-10-02: 'why there is those floating items in air?')."
 }

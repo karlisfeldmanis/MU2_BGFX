@@ -2776,6 +2776,11 @@ def main() -> None:
             if (emitters := document.get("emitters")):
                 entry["emitters"] = emitters
 
+            # A part the world never draws, by its material's name: Blood Castle's candle
+            # holders, which stand over the void and which MU lights by the void's black.
+            if (hidden_part := document.get("hidden_part")):
+                entry["hidden_part"] = hidden_part
+
             objects.append(entry)
 
     # MU's own names for the actions travel with the index, so the viewer reads one file
