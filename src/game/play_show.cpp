@@ -1094,8 +1094,14 @@ void Play::follow(float seconds) {
         // PLAYER_RUN..PLAYER_RUN_RIDE_WEAPON run (ZzzCharacter.cpp:511-516), where actions.json
         // cooked it at 0.3; at 0.3 the rider bounced out of step with the horse's 0.34 (the user,
         // 2026-10-02: "char is not perfectly synced with mount bouncing").
+        // Slowed (iced), the ride slows with the ground it covers, and the horse with it, since
+        // it takes the rider's place in the clip (Pets::ride): at full rate over half the ground
+        // the two galloped on the spot (the user, 2026-10-03). **ours**.
         constexpr float kRideRunRate = 0.34f / 0.3f;
-        if (isRide(one.figure.clip())) one.clipRate = kRideRunRate;
+        if (isRide(one.figure.clip())) {
+            const float full = body->speed * sim::strideFactor(*body);
+            one.clipRate = kRideRunRate * (full > 1e-4f ? std::min(pace / full, 1.0f) : 1.0f);
+        }
         if (readyBow >= 0 && one.figure.clip() == readyBow) {
             one.figure.setClock(0.0f);
             one.clipRate = 0.0f;
