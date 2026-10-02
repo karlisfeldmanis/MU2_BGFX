@@ -67,10 +67,12 @@ constexpr Offer kMartin[] = {
 };
 
 // Hanzo (shop0): the knight's first weapons, the Bronze set, Scale gloves and boots and three
-// shields. **And the knight's nine orbs after them, which are ours**: in 0.75 the weapon WAS
-// the skill (docs/skills-dk.md §1.2), and this shelf is the route that replaces it -- in the
+// shields. **And the knight's four early orbs after them, which are ours**: in 0.75 the weapon
+// WAS the skill (docs/skills-dk.md §1.2), and this shelf is the route that replaces it -- in the
 // ladder's own order, the level each asks being the drop level of the first weapon that carried
-// that skill.
+// that skill. Only Defense, Uppercut, Falling Slash and Lunge, drop level 20 and under (the user,
+// 2026-10-02: "dont sell best orbs but sell only early game orbs and scrolls"); Twisting Slash,
+// Cyclone, Slash, Death Stab and Rageful Blow drop and are not sold.
 //
 // **Without the source's three +S copies** (the user, 2026-10-01: "dublivated item"): the
 // Sword of Assassin, the Morning Star and the Double Axe stood twice, plain and with their skill. With the
@@ -84,8 +86,7 @@ constexpr Offer kBlacksmith[] = {
     gear(42, kAxes, 2, 0), gear(52, kSwords, 0, 0),
     gear(61, kSpears, 5, 0), gear(64, kShields, 0, 0), gear(66, kShields, 4, 0),
     gear(80, kShields, 1, 0), gear(53, kOrbs, 3, 0), gear(63, kOrbs, 4, 0), gear(68, kOrbs, 5, 0),
-    gear(71, kOrbs, 6, 0), gear(76, kOrbs, 7, 0), gear(79, kOrbs, 25, 0), gear(82, kOrbs, 12, 0),
-    gear(83, kOrbs, 20, 0), gear(84, kOrbs, 19, 0),
+    gear(71, kOrbs, 6, 0),
 };
 
 // Pasi (shop2): Fire Ball and Power Wave, the Pad set, Bone gloves and boots, two staves. **And
@@ -123,7 +124,9 @@ constexpr Offer kLumen[] = {
 
 // Elf Lala (shop10): the potions, the Vine and Silk sets, the Wind helm, armour and pants, the
 // Town Portal Scroll and the Orb of Healing. **And the Orb of Skillshot after it, which is ours**
-// (sprint 15). Her other orbs drop.
+// (sprint 15). **And Greater Defense, Greater Damage and Summoning after those** (the user,
+// 2026-10-02: "a lot of orbs for DK but not enough for Elf"): all three early, and all three
+// on 0.75's own Lala (OpenMU Version075/MerchantStores.cs:231-243), which WebZen's shop10 lacks.
 constexpr Offer kElfLala[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
     sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
@@ -132,7 +135,8 @@ constexpr Offer kElfLala[] = {
     gear(32, kPants, 10, 0), gear(34, kPants, 12, 0), gear(36, kGloves, 10, 0),
     gear(38, kBoots, 10, 0), gear(48, kHelms, 11, 0), gear(50, kArmours, 11, 0),
     gear(52, kPants, 11, 0), gear(54, kGloves, 11, 0), gear(64, kBoots, 11, 0), sip(66, 10, 1),
-    gear(67, kOrbs, 8, 0), gear(68, kOrbs, 21, 0),
+    gear(67, kOrbs, 8, 0), gear(68, kOrbs, 21, 0), gear(69, kOrbs, 9, 0), gear(70, kOrbs, 10, 0),
+    gear(71, kOrbs, 11, 0),
 };
 
 // Eo the Craftsman (shop9): the bows and crossbows and the arrows and bolts to +2. The source

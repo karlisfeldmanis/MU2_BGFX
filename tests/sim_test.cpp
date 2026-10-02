@@ -2595,7 +2595,7 @@ void testSkills(const content::Tables& tables) {
         checkEqual(met, 0, "a knight is raised knowing nothing");
     }
 
-    // Hanzo's counter, and the nine orbs on it. This is the route end to end: walk to the
+    // Hanzo's counter, and the four orbs on it. This is the route end to end: walk to the
     // blacksmith, buy the orb, right-click it, and the skill is his -- the same three calls the
     // windows make (`Talk`, `buy`, `useItem`).
     int hanzo = -1;
@@ -2625,8 +2625,13 @@ void testSkills(const content::Tables& tables) {
         // is left in the bag, which is checked below on the one that is still there.
         if (realm.useItem(slot)) ++read;
     }
-    checkEqual(orbs, 9, "the blacksmith stocks all nine orbs");
-    checkEqual(read, 9, "and every one of them was bought and read");
+    checkEqual(orbs, 4, "the blacksmith stocks the four early orbs");
+    checkEqual(read, 4, "and every one of them was bought and read");
+    // The later five are not sold (2026-10-02); they drop, and are read here as if found.
+    for (int i = 0; i < sim::skillCount(); ++i) {
+        const sim::SkillRow& row = sim::skillAt(i);
+        if (row.kin == sim::Kin::DarkKnight && !realm.knows(row.number)) realm.learn(row.number);
+    }
     bool all = true;
     for (int i = 0; i < sim::skillCount(); ++i) {
         if (sim::skillAt(i).kin != sim::Kin::DarkKnight) continue;
@@ -2689,14 +2694,14 @@ void testSkills(const content::Tables& tables) {
             return -1;
         };
         const int uppercut = young.buy(orbOf(sim::skill::kUppercut));
-        const int slash = young.buy(orbOf(sim::skill::kSlash));
-        check(uppercut >= 0 && slash >= 0, "he buys the orb he is ready for and one he is not");
+        const int lunge = young.buy(orbOf(sim::skill::kLunge));
+        check(uppercut >= 0 && lunge >= 0, "he buys the orb he is ready for and one he is not");
         check(young.useItem(uppercut),
               "twenty-four is enough for Uppercut, which asks for twenty-four");
         check(young.knows(sim::skill::kUppercut), "and he has it");
-        check(!young.useItem(slash), "but Slash asks for a hundred and four and he is twenty-four");
-        check(!young.knows(sim::skill::kSlash), "so he has not learned it");
-        check(!young.satchel()[slash].empty(), "and the orb is unspent, waiting for the level");
+        check(!young.useItem(lunge), "but Lunge asks for forty and he is twenty-four");
+        check(!young.knows(sim::skill::kLunge), "so he has not learned it");
+        check(!young.satchel()[lunge].empty(), "and the orb is unspent, waiting for the level");
 
         // And a wizard may not read a knight's orb at any level: the row names its class, and
         // `useItem` asks that before it asks anything else.
