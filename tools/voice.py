@@ -16,7 +16,7 @@ weird. Peia, low and mystical, carries a faint echo, and Devin the same one.
 Needs its own Python, which this repo does not carry:
 
     uv venv -p 3.11 ~/.cache/mu2-voice
-    uv pip install -p ~/.cache/mu2-voice/bin/python chatterbox-tts "setuptools<81"
+    uv pip install -p ~/.cache/mu2-voice/bin/python chatterbox-tts faster-whisper "setuptools<81"
     ~/.cache/mu2-voice/bin/python tools/voice.py marlon
 
 About a minute of CPU a line on this Mac; MPS was slower. The seed is fixed, so a page read
@@ -135,29 +135,51 @@ def pages(voice):
     return {page: [w for _, w in sorted(lines)] for page, lines in found.items()}
 
 
+_heard = None
+
+
+def heard(path):
+    """The take's words as faster-whisper hears them, [(word, start, end)]."""
+    global _heard
+    if _heard is None:
+        from faster_whisper import WhisperModel
+        _heard = WhisperModel("small.en", device="cpu", compute_type="int8", cpu_threads=3)
+    segments, _ = _heard.transcribe(str(path), word_timestamps=True, beam_size=5)
+    return [(w.word, w.start, w.end) for s in segments for w in s.words]
+
+
+def plain(word):
+    return re.sub(r"[^a-z0-9]", "", word.lower())
+
+
 def widen(path, words, gap):
-    """Each sentence's end in a squeezed take held `gap` seconds: the pause nearest where the
-    sentence ends by its share of the letters (Devin's recorded_with.py.txt did it by hand)."""
+    """Each sentence's end in a squeezed take held `gap` seconds, cut where the take was heard to
+    say the sentence's last word. Placed first by letter share, it cut Tersia's second offer
+    inside "poison" and after "plates" (the user, 2026-10-03: "little bit buggy audio")."""
+    import difflib
     import numpy as np
     import soundfile as sf
-    sentences = [s for s in re.split(r"(?<=[.!?])\s+", words) if s]
-    if len(sentences) < 2:
+    said = [plain(w) for w in words.split()]
+    ends = {i for i, w in enumerate(words.split()) if re.search(r"[.!?][\"']?$", w)}
+    ends.discard(len(said) - 1)
+    if not ends:
         return
     x, sr = sf.read(str(path))
-    err = subprocess.run(["ffmpeg", "-i", str(path), "-af", "silencedetect=n=-42dB:d=0.06", "-f",
-                          "null", "-"], capture_output=True, text=True).stderr
-    quiet = list(zip([float(v) for v in re.findall(r"silence_start: ([0-9.]+)", err)],
-                     [float(v) for v in re.findall(r"silence_end: ([0-9.]+)", err)]))
-    end = len(x) / sr
-    quiet = [q for q in quiet if q[0] > 0.05 and q[1] < end - 0.05]
-    letters, seen, adds = sum(map(len, sentences)), 0, []
-    for s in sentences[:-1]:
-        seen += len(s)
-        if not quiet:
-            break
-        q = min(quiet, key=lambda q: abs((q[0] + q[1]) / 2 - end * seen / letters))
-        quiet.remove(q)
-        adds.append(((q[0] + q[1]) / 2, max(0.0, gap - (q[1] - q[0]))))
+    take = heard(path)
+    match = difflib.SequenceMatcher(None, said, [plain(w) for w, _, _ in take], autojunk=False)
+    at = {a + k: b + k for a, b, n in match.get_matching_blocks() for k in range(n)}
+    adds = []
+    for i in sorted(ends):
+        if i not in at or at[i] + 1 >= len(take):
+            print(f"voice: sentence end '{words.split()[i]}' not heard, left as read",
+                  file=sys.stderr)
+            continue
+        stop, start = take[at[i]][2], take[at[i] + 1][1]
+        # whisper's word edges are loose: cut at the quietest 20 ms near them, not in a tail
+        a, b, hop = int((stop - 0.1) * sr), int((start + 0.1) * sr), int(0.02 * sr)
+        quiet = min(range(max(0, a), min(len(x) - hop, b), hop // 2),
+                    key=lambda j: np.square(x[j:j + hop]).mean(), default=int(stop * sr))
+        adds.append(((quiet + hop / 2) / sr, max(0.0, gap - (start - stop))))
     out, last = [], 0
     for t, add in sorted(adds):
         i = int(t * sr)
