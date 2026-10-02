@@ -87,8 +87,8 @@ void wrap(const std::string& text, float size, float wide, std::vector<std::stri
 }
 
 // The Messenger's words for what stands between him and the castle: MU's own sentences
-// (Localization/Game.en.resx), ours where MU has none (the band).
-const char* gateWords(sim::CastleRefusal why) {
+// (Localization/Game.en.resx), ours where MU has none (the band, a castle not built).
+std::string gateWords(sim::CastleRefusal why, int castle) {
     switch (why) {
         case sim::CastleRefusal::None:
             return "Your will to help the Archangel is appreciated. But be careful, young warrior "
@@ -97,11 +97,12 @@ const char* gateWords(sim::CastleRefusal why) {
             return "I see that you have the Cloak of Invisibility. But you need to wait till the "
                    "gate opens to enter the Blood Castle.";  // :3109
         case sim::CastleRefusal::NotBuilt:
-            return "The level of the Cloak of Invisibility is incorrect.";  // :3204
+            return "The Archangel has not called anyone to Blood Castle " +
+                   std::to_string(castle) + " yet. Its gate is sealed.";  // ours
         case sim::CastleRefusal::TooLow:
         case sim::CastleRefusal::TooHigh:
-            return "I see that you have the Cloak of Invisibility. But the first castle is for "
-                   "warriors of level 15 to 80.";  // ours
+            return "I see that you have the Cloak of Invisibility. But this castle is not for "
+                   "warriors of your strength.";  // ours
         case sim::CastleRefusal::NoCloak:
             break;
     }
@@ -109,6 +110,11 @@ const char* gateWords(sim::CastleRefusal why) {
     return "Your courage is admirable but you need a Cloak of Invisibility to enter Blood Castle. "
            "You need more than just courage, warrior. You'll find the 'Scroll of Archangel' and "
            "'Blood Bone' by hunting monsters on the Continent of Mu.";
+}
+std::string bandOf(int castle) {
+    const int* band = sim::kCastleBands[castle - 1];
+    return band[1] == 0 ? "Level " + std::to_string(band[0]) + " and over"
+                        : "Level " + std::to_string(band[0]) + " to " + std::to_string(band[1]);
 }
 constexpr int kGateRows = 3;
 const sim::QuestProgress kNoProgress{};
@@ -249,9 +255,11 @@ void QuestDialog::layout(const Play& play) {
         case Mode::Stranger:
             words(row.stranger);
             break;
-        case Mode::Gate:
-            words(gateWords(why_));
+        case Mode::Gate: {
+            const std::string said = gateWords(why_, castle_);
+            words(said.c_str());
             break;
+        }
     }
 
     // The body, top down in its own units: the kicker and his words, the steps, the rewards.
@@ -265,9 +273,9 @@ void QuestDialog::layout(const Play& play) {
         y += kSection * 0.5f + 24.0f;
         Cell cell;
         cell.item = tables.itemAt(13, 18);
-        cell.plus = 1;
+        cell.plus = castle_;
         if (cell.item >= 0) {
-            const sim::Held held = rewardHeld(tables, cell.item, 1, 1, 0, 0);
+            const sim::Held held = rewardHeld(tables, cell.item, castle_, 1, 0, 0);
             cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
             cell.box = {kInset, y, wide, kIcon};
             cells_.push_back(cell);
@@ -349,7 +357,7 @@ void QuestDialog::layout(const Play& play) {
     const float side = style::kSmallSquare;
     buttons_[2] = {kWide - style::kPad - side, (style::kHead - side) * 0.5f, side, side};
     // The journal's arrows, at the band's two ends, while there is more than one live quest.
-    if (reading_ && pages_ > 1) {
+    if ((reading_ && pages_ > 1) || gate) {
         const float arrow = style::kSmallSquare + 6.0f;
         const float top = style::kHead + (kBanner - arrow) * 0.5f;
         buttons_[3] = {kInset - 6.0f, top, arrow, arrow};
@@ -383,7 +391,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             pending_ = quest;
             if (turn_ >= 0.0f) turn_ = -std::min(1.0f, turn_);  // out from wherever it stood
         }
-    } else if (!(reading && reading_)) {
+    } else if (!(reading && reading_) && quest != kGate) {
         pending_ = -1;
         turn_ = 1.0f;
     }
@@ -411,8 +419,10 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     }
     if (gate) {
         mode = Mode::Gate;
-        why_ = realm.castleRefusal();
-        const int slot = realm.cloakSlot();
+        if (mode_ != Mode::Gate) castle_ = sim::castleFor(realm.hero().level);
+        why_ = realm.castleRefusal(castle_);
+        int slot = realm.cloakSlot(castle_);
+        if (slot < 0) slot = realm.cloakSlot();
         cloakPlus_ = slot >= 0 ? int(realm.satchel()[slot].refinement) : -1;
         level_ = realm.hero().level;
         doorSeconds_ = -1;
@@ -499,6 +509,12 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             else if (pressing_ == 1 || pressing_ == 2) cancel = true;
             else if (pressing_ == 3) turn = -1;
             else if (pressing_ == 4) turn = 1;
+            // The Messenger's castles turn here, the new page fading in from the arrow's side.
+            if (turn != 0 && mode_ == Mode::Gate) {
+                castle_ = (castle_ - 1 + turn + sim::kCastles) % sim::kCastles + 1;
+                turnDir_ = turn;
+                turn_ = 0.0f;
+            }
             else if (pressing_ >= 10) {
                 const int picked = cells_[size_t(pressing_ - 10)].choice;
                 chosen_ = chosen_ == picked ? -1 : picked;
@@ -511,7 +527,10 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         out->picked = chose;
         out->turn = turn;
         if (cancel) out->close = true;
-        else if (primary && mode_ == Mode::Gate) out->enter = true;
+        else if (primary && mode_ == Mode::Gate) {
+            out->enter = true;
+            out->castle = castle_;
+        }
         else if (primary && mode_ == Mode::Offer) out->accept = true;
         else if (primary && mode_ == Mode::HandIn) {
             out->complete = true;
@@ -552,6 +571,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         now.gate[2] = level_;
         now.gate[3] = doorSeconds_;
         now.gate[4] = opensIn_;
+        now.gate[5] = castle_;
     }
     if (built_ && now == drawn_) return;
     drawn_ = now;
@@ -608,13 +628,15 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                      style::kAsh1);
         const float title = std::round(22.0f * u);
         const float small = std::round(13.5f * u);
-        const std::string name = gate ? "Blood Castle" : row.title;
+        const std::string name = gate ? "Blood Castle " + std::to_string(castle_) : row.title;
         const size_t turning = canvas_.mark();
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(title, name) * 0.5f,
                         wy(top + 30.0f), title, style::kBoneHi, name);
-        std::string where = gate ? std::string("Devias   \xC2\xB7   Messenger of Archangel")
+        // The Messenger's page between its arrows: which castle of the six, and no more -- the
+        // kicker under it names him (the user, 2026-10-03: 'to much text under title does not fit').
+        std::string where = gate ? std::to_string(castle_) + " of " + std::to_string(sim::kCastles)
                                  : std::string(row.place) + "   \xC2\xB7   " + row.giverName;
-        if (reading_ && pages_ > 1) {
+        if (!gate && reading_ && pages_ > 1) {
             where += "   \xC2\xB7   " + std::to_string(pageAt_) + " of " + std::to_string(pages_);
         }
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(small, where) * 0.5f,
@@ -706,6 +728,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             std::string figure;
             bool met;
         };
+        const std::string band = bandOf(castle_);
         // The ticket: its picture in a cell, its name in its tone, and whether he holds it.
         for (const Cell& one : cells_) {
             const Box box = cellBox(one);
@@ -713,18 +736,21 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::cell(body_, icon, controls::Cell::Rest, u);
             const float ly = one.box.y + kIcon * 0.5f + kName * 0.35f;
             controls::label(body_, sx(one.box.x + kIcon + kNameGap), by(ly), kName * u,
-                            one.ink ? one.ink : kItemWhite, "Invisibility Cloak +1");
+                            one.ink ? one.ink : kItemWhite,
+                            "Invisibility Cloak +" + std::to_string(castle_));
             controls::ranged(body_, sx(kInset + inner()), by(ly), kBody * u,
-                             cloakPlus_ == 1 ? style::kFits : style::kDanger,
+                             cloakPlus_ == castle_ ? style::kFits : style::kDanger,
                              cloakPlus_ < 0 ? std::string("none")
-                                            : cloakPlus_ == 1 ? std::string("in your bag")
+                                            : cloakPlus_ == castle_ ? std::string("in your bag")
                                                               : "a +" + std::to_string(cloakPlus_));
             cy = one.box.y + kIcon + kCellGap;
         }
         const Need needs[kGateRows - 1] = {
             {"The gate open, hh:25 to hh:30", door, doorSeconds_ >= 0},
-            {"Level 15 to 80", std::to_string(level_),
-             level_ >= sim::kCastleLowest && level_ <= sim::kCastleHighest},
+            {band.c_str(), std::to_string(level_),
+             level_ >= sim::kCastleBands[castle_ - 1][0] &&
+                 (sim::kCastleBands[castle_ - 1][1] == 0 ||
+                  level_ <= sim::kCastleBands[castle_ - 1][1])},
         };
         for (int i = 0; i < kGateRows - 1; ++i) {
             const float rowY = cy + float(i) * kStepRow;

@@ -44,8 +44,21 @@ constexpr int castleEntryLeft(int daySeconds) {
 // 80 (BloodCastle.h:105-120, CheckEnterLevel :1214-1267).
 constexpr int32_t kCastleGate = 66;
 constexpr int32_t kCastleEnterGate = 1066;
-constexpr int kCastleLowest = 15;
-constexpr int kCastleHighest = 80;
+// The castles a cloak can be made for at 0.97d (+1 to +6, sim/machine.h kCloakMostLevel), each
+// with its band (BloodCastle.h:105-120; the sixth "281-MAX", 0 here for no ceiling), and how many
+// are built: the first. The Messenger's page steps through all six (the user, 2026-10-03: 'allow to
+// choose BC levels with arrows sismilair like we show active quests').
+constexpr int kCastles = 6;
+constexpr int kCastlesBuilt = 1;
+constexpr int kCastleBands[kCastles][2] = {{15, 80},   {81, 130},  {131, 180},
+                                           {181, 230}, {231, 280}, {281, 0}};
+// The castle his level's band holds, 1 to kCastles: the page the Messenger opens on.
+constexpr int castleFor(int level) {
+    for (int c = 0; c < kCastles; ++c) {
+        if (level <= kCastleBands[c][1] || kCastleBands[c][1] == 0) return c + 1;
+    }
+    return kCastles;
+}
 // Why he did not let him in, carried in Shout::Greet's b (0 is the old "not ready").
 enum class CastleRefusal : int32_t {
     None = 0,
@@ -53,7 +66,7 @@ enum class CastleRefusal : int32_t {
     NotYet = 2,     // ServerCmd 1,20: a cloak, outside the entry window
     TooLow = 3,     // result 4
     TooHigh = 4,    // result 3
-    NotBuilt = 5,   // ours: a cloak for a castle past the first, which is not built
+    NotBuilt = 5,   // ours: a castle past kCastlesBuilt
 };
 
 // A rectangle of tiles, inclusive, and the attribute bits the run clears from it.

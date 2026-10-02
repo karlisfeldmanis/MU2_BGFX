@@ -4531,7 +4531,7 @@ void testDeviasFolk() {
     };
     // Spoken to with the bag as `plus` (-1 none), at that time, at that level: the refusal's
     // reason, or -1 when he went through, with the gate and landing checked.
-    const auto ask = [&](int plus, int64_t wall, int level) {
+    const auto ask = [&](int plus, int64_t wall, int level, int castle = 1) {
         sim::Realm r;
         r.raise(&devias, 7, 220, 27, sim::Kin::DarkKnight, level);
         if (plus >= 0) r.give(cloak, -1, plus);
@@ -4540,12 +4540,12 @@ void testDeviasFolk() {
         r.ask(talk);
         for (int tick = 0; tick < 400 && r.gating() < 0; ++tick) r.step();
         if (r.gating() != messenger) return -3;
-        const sim::CastleRefusal why = r.castleRefusal();
+        const sim::CastleRefusal why = r.castleRefusal(castle);
         if (why != sim::CastleRefusal::None) {
-            check(!r.enterCastle(), "and Enter does nothing while he refuses");
+            check(!r.enterCastle(castle), "and Enter does nothing while he refuses");
             return int(why);
         }
-        check(r.enterCastle(), "Enter takes him through");
+        check(r.enterCastle(castle), "Enter takes him through");
         {
             for (const sim::Happening& one : r.happenings()) {
                 if (one.what == sim::What::Gated) {
@@ -4565,7 +4565,11 @@ void testDeviasFolk() {
     checkEqual(ask(-1, at(10, 26), 50), int(sim::CastleRefusal::NoCloak), "no cloak, no door");
     checkEqual(ask(1, at(10, 10), 50), int(sim::CastleRefusal::NotYet), "a cloak at hh:10 waits");
     checkEqual(ask(1, 0, 50), int(sim::CastleRefusal::NotYet), "and with no clock at all");
-    checkEqual(ask(2, at(10, 26), 50), int(sim::CastleRefusal::NotBuilt), "a +2 cloak's castle is not built");
+    checkEqual(ask(2, at(10, 26), 50), int(sim::CastleRefusal::NoCloak), "a +2 cloak is not castle 1's");
+    checkEqual(ask(2, at(10, 26), 90, 2), int(sim::CastleRefusal::NotBuilt), "castle 2 is not built");
+    checkEqual(sim::castleFor(50), 1, "level 50 is castle 1's");
+    checkEqual(sim::castleFor(81), 2, "81 castle 2's");
+    checkEqual(sim::castleFor(400), 6, "400 the sixth's");
     checkEqual(ask(1, at(10, 26), 10), int(sim::CastleRefusal::TooLow), "level 10 is under the band");
     checkEqual(ask(1, at(10, 26), 81), int(sim::CastleRefusal::TooHigh), "level 81 over it");
     checkEqual(ask(1, at(10, 26), 50), -1, "a +1 cloak at hh:26, level 50, goes in");

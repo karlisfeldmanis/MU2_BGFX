@@ -782,12 +782,14 @@ public:
     // The Messenger of Archangel's window (sim/event.h): his folk row while it is open, or -1.
     // Opened by a Talk reaching him, shut by any other order, as a counter is.
     int gating() const { return gating_; }
-    // Why he would not let him in now, or None: what the window shows and Enter asks again.
-    CastleRefusal castleRefusal() const;
-    // The cloak in the bag the Messenger would take: the first, as a bag slot, or -1.
-    int cloakSlot() const;
+    // Why he would not let him into `castle` (1 to kCastles) now, or None: what the window shows
+    // and Enter asks again.
+    CastleRefusal castleRefusal(int castle) const;
+    // The cloak in the bag the Messenger would take for `castle`, one of its level, or -1 -- or
+    // with `castle` 0 any cloak, the first.
+    int cloakSlot(int castle = 0) const;
     // Enter: the cloak spent and the castle's gate passed (Gated), or false and nothing done.
-    bool enterCastle();
+    bool enterCastle(int castle);
     // Farewell: his window shut, as walking away shuts it.
     void closeGate() { gating_ = -1; }
     void closeMachine();

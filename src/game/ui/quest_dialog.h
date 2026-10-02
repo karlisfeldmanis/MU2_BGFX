@@ -22,7 +22,8 @@
 // Messenger of Archangel spoken to opens this window on a page of its own (kGate) -- his words,
 // MU's for the case, what he asks for as the objectives (the cloak, the gate's hour, castle 1's
 // band), each struck when met, and Not now and Enter, lit only when all three are. MU opens its
-// castle list here (NewUIBloodCastleEnter); with one castle built the list is the page.
+// castle list here (NewUIBloodCastleEnter); here its castles are pages, turned by the journal's
+// arrows (the user, 2026-10-03), opened on the one his level's band holds.
 #pragma once
 
 #include <cstdint>
@@ -47,7 +48,8 @@ public:
         int choice = -1;  // with `complete`: the quest row's choice index, or -1 for none owed
         bool picked = false;  // a reward cell was chosen or unchosen this frame
         int turn = 0;         // the journal's arrows this frame: -1 the quest before, +1 the next
-        bool enter = false;   // kGate's Enter: into Blood Castle
+        bool enter = false;   // kGate's Enter: into Blood Castle `castle`
+        int castle = 0;
     };
     // The `quest` that opens the Messenger's page (Realm::gating).
     static constexpr int kGate = 1000;
@@ -127,7 +129,9 @@ private:
     int pageAt_ = 0, pages_ = 0;
     // The Messenger's page, read from the realm each frame: why not, the cloak held (-1 none),
     // his level, the entry's seconds left (0 held open, -1 shut) and the minutes to the next.
+    // `castle_` is the page, 1 to sim::kCastles, stepped by the arrows; it opens on his band's.
     sim::CastleRefusal why_ = sim::CastleRefusal::NoCloak;
+    int castle_ = 1;
     int cloakPlus_ = -1, level_ = 0, doorSeconds_ = -1, opensIn_ = 0;
     // A page turn: -1 to 0 the old page going out, 0 to 1 the new one coming in, 1 at rest. The
     // quest handed in waits in `pending_` until the old page is out.
@@ -161,7 +165,7 @@ private:
         int counts[16] = {};
         uint16_t picture = 0xFFFF;
         bool reading = false;
-        int gate[5] = {};
+        int gate[6] = {};
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;

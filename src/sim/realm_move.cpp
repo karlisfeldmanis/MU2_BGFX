@@ -581,16 +581,19 @@ void Realm::think(Body& beast) {
 // its castle window (NewUIBloodCastleEnter) and its button asks the server again; here the window
 // is the quest window's page (QuestDialog::kGate) and Enter is enterCastle. The entry is the local
 // wall clock's (sim/event.h); a realm never handed one -- headless -- keeps the door shut.
-int Realm::cloakSlot() const {
+int Realm::cloakSlot(int castle) const {
     for (int i = kWorn; i < kSlots; ++i) {
-        if (!bag_[i].empty() && invisibilityCloak(tables_->items[size_t(bag_[i].item)])) return i;
+        if (bag_[i].empty() || !invisibilityCloak(tables_->items[size_t(bag_[i].item)])) continue;
+        if (castle == 0 || bag_[i].refinement == castle) return i;
     }
     return -1;
 }
 
-CastleRefusal Realm::castleRefusal() const {
-    const int slot = cloakSlot();
-    if (slot < 0) return CastleRefusal::NoCloak;
+CastleRefusal Realm::castleRefusal(int castle) const {
+    if (castle < 1 || castle > kCastles) return CastleRefusal::NotBuilt;
+    // Ours, first: a castle not built yet says so whatever he holds.
+    if (castle > kCastlesBuilt) return CastleRefusal::NotBuilt;
+    if (cloakSlot(castle) < 0) return CastleRefusal::NoCloak;
     int day = -1;
     if (wall_ > 0) {
         const time_t at = time_t(wall_);
@@ -599,21 +602,21 @@ CastleRefusal Realm::castleRefusal() const {
         day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
     }
     if (!castleOpen_ && (day < 0 || castleEntryLeft(day) == 0)) return CastleRefusal::NotYet;
-    if (bag_[slot].refinement != 1) return CastleRefusal::NotBuilt;
     const Body& hero = bodies_[0];
-    if (hero.level < kCastleLowest) return CastleRefusal::TooLow;
-    if (hero.level > kCastleHighest) return CastleRefusal::TooHigh;
+    const int* band = kCastleBands[castle - 1];
+    if (hero.level < band[0]) return CastleRefusal::TooLow;
+    if (band[1] != 0 && hero.level > band[1]) return CastleRefusal::TooHigh;
     return CastleRefusal::None;
 }
 
-bool Realm::enterCastle() {
+bool Realm::enterCastle(int castle) {
     if (gating_ < 0 || !serving(gating_)) return false;
     Body& hero = bodies_[0];
-    if (castleRefusal() != CastleRefusal::None) return false;
+    if (castleRefusal(castle) != CastleRefusal::None) return false;
     const EnterGate* gate = enterGateNumbered(kCastleEnterGate);
     if (gate == nullptr) return false;
     // "You have come to Blood Castle %d" (lMsg 1171): the cloak is spent as he goes.
-    bag_.lift(cloakSlot());
+    bag_.lift(cloakSlot(castle));
     gating_ = -1;
     return passGate(hero, *gate);
 }

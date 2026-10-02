@@ -243,6 +243,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         questing_ = questing;
         if (result.picked) click();
+        // The Messenger's castles turned (QuestDialog::kGate): the journal's page sound.
+        if (gating && result.turn != 0) {
+            play.sound().play(play.sound().load("quest_page_turn", false));
+        }
         // The journal's arrows: the live quest before or after, round the ends.
         if (reading && result.turn != 0 && liveAt >= 0 && lives > 1) {
             questDialog_.turning(result.turn);
@@ -256,7 +260,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             else play.closeQuest();
             click();
         } else if (result.enter) {
-            if (play.enterCastle()) click();
+            if (play.enterCastle(result.castle)) click();
             else refused();
         } else if (result.accept) {
             if (play.acceptQuest(quest)) play.closeQuest();
