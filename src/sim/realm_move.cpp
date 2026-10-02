@@ -140,12 +140,14 @@ void Realm::advance(Body& one) {
                 why = "a monster on him";
             }
         }
-        if (why != nullptr) {
-            if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
-            one.combatUntil = tick_ + kCombatTicks;
-        }
         const bool safe = tables_->grid.safe(one.column(), one.row());
         one.riding = one.pet.mount && !safe;
+        if (why != nullptr) {
+            if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
+            one.combatUntil = tick_ + (one.riding ? kRideCombatTicks : kCombatTicks);
+        } else if (one.riding) {
+            one.combatUntil = std::min(one.combatUntil, tick_ + kRideCombatTicks);
+        }
         one.running = one.walking && one.combatUntil <= tick_ && !safe;
     }
     if (!one.walking) {

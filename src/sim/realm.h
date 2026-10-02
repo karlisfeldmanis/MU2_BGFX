@@ -237,6 +237,10 @@ float strideFactor(const Body& one);
 // chasing or fighting him, an attack order, a blow or a cast in the air. **invention**, so a
 // pause between two blows does not flip him into the run and back.
 constexpr int kCombatTicks = 60;
+// On a horse the hold guards nothing -- the rider never walks, so there is no run to flip --
+// and it only kept the weapon drawn three seconds over a dead monster. The user, 2026-10-02:
+// 'char has to go back to not combat ASAP'. **ours**: a quarter of a second.
+constexpr int kRideCombatTicks = 5;
 // And how near a chasing monster must be to count, in tiles. **invention**: one that saw him
 // across the field is not yet a fight, and he may outrun it.
 constexpr float kCombatReach = 4.0f;
