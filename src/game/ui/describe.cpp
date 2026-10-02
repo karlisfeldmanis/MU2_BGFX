@@ -523,7 +523,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 // `sim::reckon` makes it off his strength and agility and this weapon, its share,
                 // and his energy's band on top (sim/items.h, kRuneEnergyLow/High).
                 const bool storm = power->power == sim::Power::Stormcall;
-                const bool frost = power->power == sim::Power::Frost;
+                const bool arrow = power->power == sim::Power::Frost;
+                // The knight's Ice wounds as Frost Arrow does, off his swing.
+                const bool frost = arrow || power->power == sim::Power::Ice;
                 if ((storm || frost) && weapon) {
                     sim::Arms arms;
                     arms.weaponMinimumDamage = row.minimumDamage + bonus;
@@ -545,7 +547,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                                                Tone::Yellow));
                     char sum[96];
                     std::snprintf(sum, sizeof(sum), "%s %d ~ %d, +%d ~ %d from %d ene",
-                                  storm ? "his swing" : "half the arrow",
+                                  storm ? "his swing" : arrow ? "half the arrow" : "half his swing",
                                   int(float(swing.minimumDamage) * share),
                                   int(float(swing.maximumDamage) * share), eLow, eHigh, energy);
                     Row how;
