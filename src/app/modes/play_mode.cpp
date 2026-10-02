@@ -1024,6 +1024,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     world_.lavaSmoke().gather(ctx.renderer.effects());
     world_.voidClouds().update(float(deltaSeconds), eye.target);
     world_.voidClouds().gather(ctx.renderer.effects());
+    world_.castleSparks().update(float(deltaSeconds), eye.target);
+    world_.castleSparks().gather(ctx.renderer.effects());
     world_.portal().update(float(deltaSeconds));
     world_.portal().gather(ctx.renderer.effects(), eye.target);
     // The shade under the bridges, which MU draws as a blended mesh. See game/world/shades.h.

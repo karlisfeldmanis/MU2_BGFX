@@ -1201,8 +1201,12 @@ ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
 # The Lost Tower's 95 Flame vents (Object25, hidden): MoveObject's WD_4LOSTTOWER arm lights
 # the wizard's Flame on one a frame in 64 (ZzzObject.cpp:4020-4024). Kind 5, a vent: Lamps
 # rolls it and Play burns it (game/world/lamps.h).
+# Blood Castle's nine Object38 (type 37, no .bmd): MU's emitters, which roll BITMAP_ADV_SMOKE
+# and BITMAP_CLOUD up from the court, the bridge, the gap and the castle every other frame on a
+# four-tick cadence (ZzzObject.cpp:3227-3242). Kind 4, the chimney's rising smoke.
 ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
-                         "losttower": {"Object25": 5}}
+                         "losttower": {"Object25": 5},
+                         "bloodcastle": {"Object38": 4}}
 BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is

@@ -13,6 +13,7 @@
 #include "game/world/lamps.h"
 #include "game/world/lava_smoke.h"
 #include "game/world/void_clouds.h"
+#include "game/world/castle_sparks.h"
 #include "game/world/leaves.h"
 #include "game/world/portal.h"
 #include "game/world/weather.h"
@@ -72,6 +73,7 @@ public:
     Ornaments& ornaments() { return ornaments_; }
     LavaSmoke& lavaSmoke() { return lavaSmoke_; }
     VoidClouds& voidClouds() { return voidClouds_; }
+    CastleSparks& castleSparks() { return castleSparks_; }
     const Shades& shades() const { return shades_; }
     Boids& boids() { return boids_; }
     const Boids& boids() const { return boids_; }
@@ -106,6 +108,7 @@ private:
     Ornaments ornaments_;
     LavaSmoke lavaSmoke_;
     VoidClouds voidClouds_;
+    CastleSparks castleSparks_;
     Shades shades_;
     Boids boids_;
     Leaves leaves_;

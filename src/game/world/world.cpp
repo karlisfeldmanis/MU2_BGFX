@@ -114,6 +114,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // The Lost Tower's smoke over its lava (ours). See game/world/lava_smoke.h.
     lavaSmoke_.open(assetDir, name, ground_, textures);
     voidClouds_.open(assetDir, name, ground_, textures);
+    castleSparks_.open(assetDir, name, town_.cooked(), textures);
     // And the shade MU hangs under each bridge. See game/world/shades.h.
     if (town_.isOpen()) shades_.open(assetDir, town_, textures);
     // The near field: the card strip, built once, and MU's own painted grass sheets for
@@ -372,6 +373,7 @@ void World::shutdown() {
     ornaments_.shutdown();
     lavaSmoke_.shutdown();
     voidClouds_.shutdown();
+    castleSparks_.shutdown();
     shades_.shutdown();
     boids_.shutdown();
     leaves_.shutdown();
