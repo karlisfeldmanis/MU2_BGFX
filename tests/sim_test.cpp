@@ -4629,7 +4629,8 @@ void testQuests(const content::Tables& tables) {
         *runes = *bless = *potions = 0;
         for (int slot = 0; slot < sim::kSlots; ++slot) {
             const sim::Held& one = r.satchel()[slot];
-            if (one.item == sword && one.luck && one.sockets == 1 && one.powers[0] == 0) {
+            if (one.item == sword && one.luck && one.option == sim::kQuestOption &&
+                one.sockets == 1 && one.powers[0] == 0) {
                 *falchion = true;
             }
             if (one.item == rune && one.powers[0] == uint8_t(sim::Power::Stormcall)) ++*runes;

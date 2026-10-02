@@ -51,11 +51,15 @@ struct QuestItem {
     int32_t count = 1;
     int32_t plus = 0;
     int8_t kin = -1;          // the class it is paid to (sim::Kin), -1 every class
-    bool luck = false;
     uint8_t sockets = 0;
     uint8_t power = 0;        // a Rune of Creation's (sim::Power)
     bool firstOnly = false;   // paid on the first completion and never again
 };
+
+// Every weapon, piece of armour and shield a quest pays comes with luck and the additional
+// option at this level, +4 (the user, 2026-10-02: "all armors and weapon we give from quests is
+// with +luck and +opt"); whatever takesOptions refuses, a ring or a jewel, goes without. Ours.
+constexpr int kQuestOption = 1;
 
 // Whether this thing is paid to this class; `first` is questFirst's, the first clear of one born
 // in the giver's town.

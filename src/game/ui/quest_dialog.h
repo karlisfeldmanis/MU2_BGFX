@@ -86,7 +86,6 @@ private:
         int32_t item = -1;
         int plus = 0;
         int count = 1;
-        bool luck = false;
         uint8_t sockets = 0;
         uint8_t power = 0;
         uint32_t ink = 0;  // its name's, the card's own tone for it

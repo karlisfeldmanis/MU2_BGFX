@@ -90,8 +90,9 @@ Box placed(float x, float y, const Box& b, float u) {
 }
 
 // A reward as completeQuest will put it in the bag: a stack is one piece of its count, gear comes
-// whole at its plus with its luck and empty sockets, a Rune of Creation with its power.
-sim::Held rewardHeld(const content::Tables& tables, int32_t item, int plus, int count, bool luck,
+// whole at its plus, lucky with its option (sim::kQuestOption) and its empty sockets, a Rune of
+// Creation with its power.
+sim::Held rewardHeld(const content::Tables& tables, int32_t item, int plus, int count,
                      uint8_t sockets, uint8_t power) {
     const content::ItemRow& row = tables.items[size_t(item)];
     sim::Held what;
@@ -100,7 +101,9 @@ sim::Held rewardHeld(const content::Tables& tables, int32_t item, int plus, int 
     what.durability =
         int16_t(sim::stacks(row) ? std::max(1, count) : sim::fullDurability(row, plus));
     if (sim::takesOptions(row) || sim::takesSockets(row)) {
-        what.luck = luck && sim::takesOptions(row);
+        const bool gear = sim::takesOptions(row);
+        what.luck = gear;
+        what.option = int8_t(gear ? sim::kQuestOption : 0);
         what.sockets = uint8_t(std::min<int>(sockets, sim::kMostSockets));
     }
     if (sim::creation(row)) what.powers[0] = power;
@@ -243,12 +246,11 @@ void QuestDialog::layout(const Play& play) {
                 cell.item = tables.itemNamed(what.item);
                 cell.count = what.count;
                 cell.plus = what.plus;
-                cell.luck = what.luck;
                 cell.sockets = what.sockets;
                 cell.power = what.power;
                 if (cell.item >= 0) {
                     const sim::Held held = rewardHeld(tables, cell.item, cell.plus, cell.count,
-                                                      cell.luck, cell.sockets, cell.power);
+                                                      cell.sockets, cell.power);
                     cell.ink = tip::colourOf(
                         describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
                 }
@@ -479,7 +481,7 @@ void QuestDialog::drawTip(const Play& play, int cell, float width, float height)
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Held what =
-        rewardHeld(tables, one.item, one.plus, one.count, one.luck, one.sockets, one.power);
+        rewardHeld(tables, one.item, one.plus, one.count, one.sockets, one.power);
     tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
     if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
     // Over the cell as it stands on screen, scrolled.

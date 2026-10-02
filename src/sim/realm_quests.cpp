@@ -145,12 +145,14 @@ bool Realm::completeQuest(int index, int choice) {
             if (slotOut) *slotOut = slot;
             return slot >= 0;
         }
-        // Gear comes whole at its plus, with its luck and its empty sockets; a Rune of Creation
-        // with its power.
+        // Gear comes whole at its plus, lucky with its option (kQuestOption) and its empty
+        // sockets; a Rune of Creation with its power.
         const uint8_t powers[kMostSockets] = {what.power};
+        const bool gear = takesOptions(itemRow);
         for (int piece = 0; piece < std::max(1, what.count); ++piece) {
-            const int slot = give(item, -1, what.plus, fullDurability(itemRow, what.plus), what.luck,
-                                  0, 0, what.sockets, creation(itemRow) ? powers : nullptr);
+            const int slot = give(item, -1, what.plus, fullDurability(itemRow, what.plus), gear,
+                                  gear ? kQuestOption : 0, 0, what.sockets,
+                                  creation(itemRow) ? powers : nullptr);
             if (slot < 0) return false;
             if (slotOut && piece == 0) *slotOut = slot;
         }
