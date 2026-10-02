@@ -877,6 +877,22 @@ void Realm::leave(const Body& dead, const Body& killer) {
             ? tables_->kinds[size_t(dead.kind)].number
             : -1);
     double roll = dice_.nextDouble();
+    // A dungeon's Firecracker, first, so it takes the body's own tile and the kill's drop the
+    // next clear one: its own roll off its own dice, and beside whatever else the kill leaves.
+    if (level >= kFirecrackerFromLevel && firecrackerMap(tables_->map) &&
+        crackerDice_.nextInt(0, kFirecrackerOdds) == 0) {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (!firecracker(tables_->items[i])) continue;
+            Lying cracker;
+            cracker.what = Held{int32_t(i), 0, 1};
+            std::tie(cracker.column, cracker.row) = clearing(dead.column(), dead.row());
+            cracker.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            cracker.id = nextId_++;
+            lying_.push_back(cracker);
+            say(What::Dropped, dead, int32_t(cracker.id), int32_t(i), 0);
+            break;
+        }
+    }
     Lying one;
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;

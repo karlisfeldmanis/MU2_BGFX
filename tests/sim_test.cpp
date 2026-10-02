@@ -7114,6 +7114,38 @@ void testFirecracker(const content::Tables& tables) {
         check(std::abs(double(optioned) / optionable - 0.55) < 0.05, "an option 55% of the time");
     }
     checkEqual(bare, items - optionable, "a jewel out of one comes bare");
+
+    // Where it falls: a dungeon's kill of level 17 or over, one in kFirecrackerOdds; never in
+    // Lorencia, never from a monster under 17.
+    const auto crackersIn = [&](const content::Tables& map, int level, int kills) {
+        int found = 0;
+        auto at = std::make_unique<sim::Realm>();
+        for (int i = 0; i < kills; ++i) {
+            if (i % 500 == 0) {
+                at = std::make_unique<sim::Realm>();
+                at->raise(&map, uint32_t(77 + i), 138, 124, sim::Kin::DarkKnight, 50);
+            }
+            at->dropFor(level);
+            for (const sim::Lying& one : at->lying()) found += one.what.item == cracker;
+        }
+        return found;
+    };
+    checkEqual(crackersIn(tables, 40, 30000), 0, "Lorencia's kills leave no Firecracker");
+    content::Tables dungeon;
+    std::string error;
+    if (!content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur", dungeon,
+                             error)) {
+        check(false, "the Dungeon's tables load");
+        return;
+    }
+    const int kills = 90000;
+    const int fallen = crackersIn(dungeon, 40, kills);
+    std::printf("  the Dungeon: %d Firecrackers off %d kills at level 40 (one in %d wanted)\n", fallen,
+                kills, sim::kFirecrackerOdds);
+    const double want = double(kills) / sim::kFirecrackerOdds;
+    check(std::abs(fallen - want) < want * 0.2, "a dungeon's kill leaves one one time in 300");
+    checkEqual(crackersIn(dungeon, sim::kFirecrackerFromLevel - 1, 30000), 0,
+               "never from a monster under 17");
 }
 
 int main() {

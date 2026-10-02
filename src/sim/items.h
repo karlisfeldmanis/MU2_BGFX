@@ -663,6 +663,17 @@ constexpr int kFirecrackerItemIn10 = 2;
 // +5 to +9.
 constexpr int kFirecrackerPlus = 5;
 constexpr int kFirecrackerPluses = 5;
+// Where it falls (the user, 2026-10-02: "only from dungeons like dungeon, lost-tower, bc, and
+// devil square", then "lets do 1 of 300 to all dungeons"): a kill on a dungeon's map -- the
+// Dungeon (1), the Lost Tower (4), Devil Square (9) and Blood Castle (11 to 17) -- of a monster
+// of kFirecrackerFromLevel or over, one in kFirecrackerOdds, beside whatever else it leaves.
+// MU's own was any map under Atlans at 10 in 10,000 while its event ran, from Giant-level (17)
+// monsters (gObjMonster.cpp ~5040); the maps and the rate are ours.
+constexpr int kFirecrackerOdds = 300;
+constexpr int kFirecrackerFromLevel = 17;
+inline bool firecrackerMap(uint32_t map) {
+    return map == 1 || map == 4 || map == 9 || (map >= 11 && map <= 17);
+}
 // The Zen when no item comes: MoneyItemDrop(2004, ...), the year. Into the purse, as every Zen
 // here (Realm::leave).
 constexpr int64_t kFirecrackerZen = 2004;

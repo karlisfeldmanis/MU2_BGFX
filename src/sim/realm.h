@@ -1215,6 +1215,9 @@ private:
     Random trapDice_{0};
     // The bosses' own, for their one blow in five: a run with none of them is not moved.
     Random bossDice_{0};
+    // Whether a dungeon's kill leaves a Firecracker (sim/items.h), so a seeded hunt there rolls
+    // its loot as it always did.
+    Random crackerDice_{0};
     std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;
