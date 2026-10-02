@@ -41,6 +41,7 @@
 #include "sim/vault.h"
 #include "sim/machine.h"
 #include "sim/gates.h"
+#include "sim/event.h"
 
 namespace mu::sim {
 
@@ -144,9 +145,9 @@ constexpr int kGuildMaster = 241;
 // Sevina the Priestess, MU's NPC 235: the class change's giver, whose quest is not written yet.
 // Until it is she wears a grey "!" and tells the hero he is not ready (the user, 2026-09-30).
 constexpr int kSevina = 235;
-// The Messenger of Archangel, MU's NPC 233: Blood Castle's gatekeeper in Devias. Spoken to with
-// an Invisibility Cloak in the hour's entry he sends him in (Realm::askMessenger, sim/event.h);
-// otherwise he says why not, as his Greet.
+// The Messenger of Archangel, MU's NPC 233: Blood Castle's gatekeeper in Devias. Spoken to, he
+// opens his page of the quest window (Realm::gating, QuestDialog::kGate), which asks for the
+// Invisibility Cloak.
 constexpr int kMessenger = 233;
 // Thompson the Merchant, MU's NPC 231, a Devias trader who once supplied the Lost Tower's shrine
 // and has only lines about it; and Tersia, MU's 566 (OpenMU's Mercenary Guild Felicia), its last guard and the tower's quest giver
@@ -778,6 +779,17 @@ public:
     // (OpenMU's temporary storage goes back on close). What will not fit stays in the box and
     // is there the next time he opens it, and the save keeps it.
     int mixing() const { return mixing_; }
+    // The Messenger of Archangel's window (sim/event.h): his folk row while it is open, or -1.
+    // Opened by a Talk reaching him, shut by any other order, as a counter is.
+    int gating() const { return gating_; }
+    // Why he would not let him in now, or None: what the window shows and Enter asks again.
+    CastleRefusal castleRefusal() const;
+    // The cloak in the bag the Messenger would take: the first, as a bag slot, or -1.
+    int cloakSlot() const;
+    // Enter: the cloak spent and the castle's gate passed (Gated), or false and nothing done.
+    bool enterCastle();
+    // Farewell: his window shut, as walking away shuts it.
+    void closeGate() { gating_ = -1; }
     void closeMachine();
     const Machine& machine() const { return machine_; }
     // Bag to box: a bag slot (never a worn one) to a cell, or -1 for the first it fits in. The
@@ -828,6 +840,9 @@ public:
     // The wall clock, in unix seconds, which a repeating quest waits on. Handed in by the game;
     // a run that never sets it (the headless hunt) never sees a quest come back.
     void setWallClock(int64_t unixSeconds) { wall_ = unixSeconds; }
+    // --castle-open's: the Messenger's entry open at any hour, for a test (Realm::castleRefusal).
+    void openCastleDoor() { castleOpen_ = true; }
+    bool castleDoorHeld() const { return castleOpen_; }
     int64_t wallClock() const { return wall_; }
     // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
     bool questChoiceFits(int index, int choice) const;
@@ -1089,9 +1104,6 @@ private:
     // The rest of a gate once it lets him through: the landing in the target's box, and the
     // map change said (Gated) or the floor of this map he is put down on.
     bool passGate(Body& hero, const EnterGate& gate);
-    // The Messenger of Archangel spoken to (sim/event.h): the cloak taken and the castle's gate
-    // passed, or why not, said as his Greet. `folk` is his folk row.
-    void askMessenger(Body& hero, int folk);
     void rearm(Body& hero);
     // A blow's wear on the player's gear: `took` the health a blow took off him, which wears one
     // defending piece; `landed` a blow of his that did harm, which wears the weapon.
@@ -1260,6 +1272,7 @@ private:
     int banking_ = -1;
     Vault vault_;
     int mixing_ = -1;
+    int gating_ = -1;  // see gating()
     Machine machine_;
     bool mixed_ = false;
     // The machine's own dice, off the realm's seed: a run that never mixes is not moved.
@@ -1292,6 +1305,7 @@ private:
     };
     std::vector<Stroller> strollers_;
     int64_t wall_ = 0;
+    bool castleOpen_ = false;  // see openCastleDoor
     // A monster the hero killed, counted against every live Clear of its breed.
     void countKill(const Body& dead);
     bool banked() const { return banking_ >= 0 && serving(banking_); }

@@ -192,6 +192,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             quest = realm.questHere(realm.tables()->folk[size_t(realm.questing())].number);
             journal_ = -1;
         }
+        // The Messenger of Archangel's page, Blood Castle's door (QuestDialog::kGate).
+        const bool gating = realm.gating() >= 0;
+        if (gating) {
+            quest = QuestDialog::kGate;
+            journal_ = -1;
+        }
         const bool reading = quest < 0 && journal_ >= 0;
         if (reading) quest = journal_;
         // The live quests, for the journal's arrows: where this page is among them.
@@ -230,7 +236,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // ears as the interface's are.
         if (tracker_.takeStrike()) play.sound().play(play.sound().load("quest_step_done", false));
         // A giver's window opens as a counter does: ReceiveTalk's click and SOUND_INTERFACE01.
-        const bool questing = realm.questing() >= 0;
+        const bool questing = realm.questing() >= 0 || gating;
         if (questing && !questing_) {
             click();
             play.ui(Play::Ui::Opened);
@@ -246,8 +252,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         if (result.close) {
             if (reading) journal_ = -1;
+            else if (gating) play.closeGate();
             else play.closeQuest();
             click();
+        } else if (result.enter) {
+            if (play.enterCastle()) click();
+            else refused();
         } else if (result.accept) {
             if (play.acceptQuest(quest)) play.closeQuest();
         } else if (result.complete) {

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <ctime>
 
 #include "game/play.h"
 #include "game/ui/controls.h"
@@ -85,6 +86,33 @@ void wrap(const std::string& text, float size, float wide, std::vector<std::stri
     if (!lineNow.empty()) out.push_back(lineNow);
 }
 
+// The Messenger's words for what stands between him and the castle: MU's own sentences
+// (Localization/Game.en.resx), ours where MU has none (the band).
+const char* gateWords(sim::CastleRefusal why) {
+    switch (why) {
+        case sim::CastleRefusal::None:
+            return "Your will to help the Archangel is appreciated. But be careful, young warrior "
+                   "for Blood Castle is a dangerous place. May God be with you.";  // :3117
+        case sim::CastleRefusal::NotYet:
+            return "I see that you have the Cloak of Invisibility. But you need to wait till the "
+                   "gate opens to enter the Blood Castle.";  // :3109
+        case sim::CastleRefusal::NotBuilt:
+            return "The level of the Cloak of Invisibility is incorrect.";  // :3204
+        case sim::CastleRefusal::TooLow:
+        case sim::CastleRefusal::TooHigh:
+            return "I see that you have the Cloak of Invisibility. But the first castle is for "
+                   "warriors of level 15 to 80.";  // ours
+        case sim::CastleRefusal::NoCloak:
+            break;
+    }
+    // :3113, and :3149's where to find what makes one.
+    return "Your courage is admirable but you need a Cloak of Invisibility to enter Blood Castle. "
+           "You need more than just courage, warrior. You'll find the 'Scroll of Archangel' and "
+           "'Blood Bone' by hunting monsters on the Continent of Mu.";
+}
+constexpr int kGateRows = 3;
+const sim::QuestProgress kNoProgress{};
+
 Box placed(float x, float y, const Box& b, float u) {
     return {std::round(x + b.x * u), std::round(y + b.y * u), std::round(b.w * u), std::round(b.h * u)};
 }
@@ -119,6 +147,9 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
         minutesLeft != o.minutesLeft || picture != o.picture || reading != o.reading ||
         pageAt != o.pageAt || pages != o.pages || turn != o.turn) {
         return false;
+    }
+    for (int i = 0; i < 5; ++i) {
+        if (gate[i] != o.gate[i]) return false;
     }
     for (int i = 0; i < kButtons; ++i) {
         if (lift[i] != o.lift[i]) return false;
@@ -190,7 +221,8 @@ int QuestDialog::cellAt(float ux, float uy, bool anyCell) const {
 
 void QuestDialog::layout(const Play& play) {
     const sim::Realm& realm = play.realm();
-    const sim::QuestRow& row = sim::questAt(quest_);
+    const bool gate = mode_ == Mode::Gate;
+    const sim::QuestRow& row = sim::questAt(gate ? 0 : quest_);
     const content::Tables& tables = *realm.tables();
     lines_.clear();
     cells_.clear();
@@ -217,13 +249,18 @@ void QuestDialog::layout(const Play& play) {
         case Mode::Stranger:
             words(row.stranger);
             break;
+        case Mode::Gate:
+            words(gateWords(why_));
+            break;
     }
 
     // The body, top down in its own units: the kicker and his words, the steps, the rewards.
     float y = 12.0f + 16.0f;
     for (const std::string& one : lines_) y += one.empty() ? kParagraph : kLead;
     y += kSection;
-    if (mode_ != Mode::Resting && mode_ != Mode::Stranger) {
+    if (gate) {
+        y += kSection * 0.5f + 24.0f + float(kGateRows) * kStepRow + kSection;
+    } else if (mode_ != Mode::Resting && mode_ != Mode::Stranger) {
         int counted = 0;
         for (int s = 0; s < row.stepCount; ++s) {
             counted += row.steps[s].kind == sim::QuestStepKind::Clear ? 1 : 0;
@@ -286,7 +323,7 @@ void QuestDialog::layout(const Play& play) {
     const float buttonTop = kTall - 18.0f - style::kButtonM;
     const float middle = kWide * 0.5f;
     for (Box& one : buttons_) one = {0, 0, 0, 0};
-    if (mode_ == Mode::Offer && !reading_) {
+    if ((mode_ == Mode::Offer || gate) && !reading_) {
         const float left = middle - kButtonW - style::kGap * 0.5f;
         buttons_[1] = {left, buttonTop, kButtonW, style::kButtonM};
         buttons_[0] = {left + kButtonW + style::kGap, buttonTop, kButtonW, style::kButtonM};
@@ -349,7 +386,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         scroll_ = 0.0f;
         lift_[0] = lift_[1] = lift_[2] = 0.0f;
     }
-    const sim::QuestProgress& progress = realm.quest(quest_);
+    const bool gate = quest_ == kGate;
+    const sim::QuestProgress& progress = gate ? kNoProgress : realm.quest(quest_);
     Mode mode = Mode::Offer;
     if (progress.state == sim::QuestState::Active) mode = Mode::Underway;
     // Read from the journal, away from him, a quest ready to hand in is still under way.
@@ -357,7 +395,32 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     else if (progress.state == sim::QuestState::Resting && !realm.questOffered(quest_)) {
         mode = Mode::Resting;
     }
-    if (!sim::questOpen(sim::questAt(quest_), int(realm.hero().kin))) mode = Mode::Stranger;
+    if (gate) {
+        mode = Mode::Gate;
+        why_ = realm.castleRefusal();
+        const int slot = realm.cloakSlot();
+        cloakPlus_ = slot >= 0 ? int(realm.satchel()[slot].refinement) : -1;
+        level_ = realm.hero().level;
+        doorSeconds_ = -1;
+        opensIn_ = 0;
+        if (realm.castleDoorHeld()) {
+            doorSeconds_ = 0;
+        } else if (const int64_t wall = realm.wallClock(); wall > 0) {
+            const time_t at = time_t(wall);
+            struct tm local {};
+            localtime_r(&at, &local);
+            const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
+            if (const int left = sim::castleEntryLeft(day); left > 0) {
+                doorSeconds_ = left;
+            } else {
+                const int phase = ((day - sim::kCastleOpensAt) % sim::kCastlePeriod +
+                                   sim::kCastlePeriod) % sim::kCastlePeriod;
+                opensIn_ = (sim::kCastlePeriod - phase + 59) / 60;
+            }
+        }
+    } else if (!sim::questOpen(sim::questAt(quest_), int(realm.hero().kin))) {
+        mode = Mode::Stranger;
+    }
     if (mode != mode_) {
         mode_ = mode;
         chosen_ = -1;
@@ -396,7 +459,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
 
     bool owed = false;
     for (const Cell& one : cells_) owed |= one.choice >= 0;
-    const bool primaryOff = mode_ == Mode::HandIn && owed && chosen_ < 0;
+    const bool primaryOff = (mode_ == Mode::HandIn && owed && chosen_ < 0) ||
+                            (mode_ == Mode::Gate && why_ != sim::CastleRefusal::None);
 
     int over = dragging_ ? -1 : buttonAt(ux, uy);
     if (over < 0 && !dragging_) {
@@ -411,7 +475,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     }
     if (pointer.pressed && !dragging_) pressing_ = over_;
     bool primary = enter && !primaryOff && !reading_ &&
-                   (mode_ == Mode::Offer || mode_ == Mode::HandIn);
+                   (mode_ == Mode::Offer || mode_ == Mode::HandIn || mode_ == Mode::Gate);
     bool cancel = escape;
     bool chose = false;
     int turn = 0;
@@ -433,6 +497,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         out->picked = chose;
         out->turn = turn;
         if (cancel) out->close = true;
+        else if (primary && mode_ == Mode::Gate) out->enter = true;
         else if (primary && mode_ == Mode::Offer) out->accept = true;
         else if (primary && mode_ == Mode::HandIn) {
             out->complete = true;
@@ -467,6 +532,13 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     for (int s = 0; s < sim::kQuestSteps && s < 16; ++s) now.counts[s] = progress.counts[s];
     now.picture = stage && stage->picture().valid() ? stage->picture().handle.idx : 0xFFFF;
     now.reading = reading_;
+    if (gate) {
+        now.gate[0] = int(why_);
+        now.gate[1] = cloakPlus_;
+        now.gate[2] = level_;
+        now.gate[3] = doorSeconds_;
+        now.gate[4] = opensIn_;
+    }
     if (built_ && now == drawn_) return;
     drawn_ = now;
     built_ = true;
@@ -496,8 +568,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     if (quest_ < 0) return;
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
-    const sim::QuestRow& row = sim::questAt(quest_);
-    const sim::QuestProgress& progress = realm.quest(quest_);
+    const bool gate = mode_ == Mode::Gate;
+    const sim::QuestRow& row = sim::questAt(gate ? 0 : quest_);
+    const sim::QuestProgress& progress = gate ? kNoProgress : realm.quest(quest_);
     const float u = unit_, x = x_, y = y_;
     // Window units to the screen, and the body's own units (which scroll) to the screen.
     const auto sx = [&](float ux) { return x + ux * u; };
@@ -521,11 +594,12 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                      style::kAsh1);
         const float title = std::round(22.0f * u);
         const float small = std::round(13.5f * u);
-        const std::string name = row.title;
+        const std::string name = gate ? "Blood Castle" : row.title;
         const size_t turning = canvas_.mark();
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(title, name) * 0.5f,
                         wy(top + 30.0f), title, style::kBoneHi, name);
-        std::string where = std::string(row.place) + "   \xC2\xB7   " + row.giverName;
+        std::string where = gate ? std::string("Devias   \xC2\xB7   Messenger of Archangel")
+                                 : std::string(row.place) + "   \xC2\xB7   " + row.giverName;
         if (reading_ && pages_ > 1) {
             where += "   \xC2\xB7   " + std::to_string(pageAt_) + " of " + std::to_string(pages_);
         }
@@ -558,6 +632,12 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Accept", controls::Kind::Primary,
                              state(0, false), u);
             break;
+        case Mode::Gate:
+            controls::button(canvas_, placed(x, y, buttons_[1], u), "Not now", controls::Kind::Secondary,
+                             state(1, false), u);
+            controls::button(canvas_, placed(x, y, buttons_[0], u), "Enter", controls::Kind::Primary,
+                             state(0, why_ != sim::CastleRefusal::None), u);
+            break;
         case Mode::HandIn:
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Complete quest",
                              controls::Kind::Primary, state(0, owed && chosen_ < 0), u);
@@ -575,11 +655,12 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         return Box{std::round(sx(one.box.x)), std::round(by(one.box.y)), std::round(one.box.w * u),
                    std::round(one.box.h * u)};
     };
-    const bool offered = mode_ != Mode::Stranger && mode_ != Mode::Resting;
+    const bool offered = mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate;
 
     float cy = 12.0f;
     controls::caps(body_, sx(kInset), by(cy + 10.0f), style::kKickerSize * u, style::kAshInk,
-                   std::string(row.giverName) + " of " + row.place);
+                   gate ? std::string("Messenger of Archangel of Devias")
+                        : std::string(row.giverName) + " of " + row.place);
     cy += 16.0f;
     for (const std::string& one : lines_) {
         if (one.empty()) {
@@ -591,7 +672,44 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     }
     cy += kSection;
 
-    if (mode_ == Mode::Stranger) {
+    if (gate) {
+        // What he asks for, as objectives: each struck when it is met, its figure beside it.
+        controls::rule(body_, sx(kInset), by(cy - kSection * 0.5f), inner() * u, u);
+        cy += kSection * 0.5f;
+        controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Requirements", u);
+        cy += 24.0f;
+        const auto clock = [](int seconds) {
+            char text[16];
+            std::snprintf(text, sizeof(text), "%d:%02d", seconds / 60, seconds % 60);
+            return std::string(text);
+        };
+        const std::string cloak =
+            cloakPlus_ < 0 ? std::string("none") : "+" + std::to_string(cloakPlus_);
+        const std::string door = doorSeconds_ > 0    ? clock(doorSeconds_) + " left"
+                                 : doorSeconds_ == 0 ? std::string("open")
+                                 : opensIn_ > 0      ? "in " + std::to_string(opensIn_) + " min"
+                                                     : std::string("shut");
+        struct Need {
+            const char* line;
+            std::string figure;
+            bool met;
+        };
+        const Need needs[kGateRows] = {
+            {"An Invisibility Cloak +1", cloak, cloakPlus_ == 1},
+            {"The gate open, hh:25 to hh:30", door, doorSeconds_ >= 0},
+            {"Level 15 to 80", std::to_string(level_),
+             level_ >= sim::kCastleLowest && level_ <= sim::kCastleHighest},
+        };
+        for (int i = 0; i < kGateRows; ++i) {
+            const float rowY = cy + float(i) * kStepRow;
+            quest_marks::mark(body_, needs[i].met ? StepMark::Done : StepMark::Live,
+                              sx(kInset + 7.0f), by(rowY + 8.0f), u);
+            controls::label(body_, sx(kInset + 24.0f), by(rowY + 13.0f), kBody * u,
+                            needs[i].met ? style::kAshInk : style::kBoneHi, needs[i].line);
+            controls::ranged(body_, sx(kInset + inner()), by(rowY + 13.0f), kBody * u,
+                             needs[i].met ? style::kFits : style::kDanger, needs[i].figure);
+        }
+    } else if (mode_ == Mode::Stranger) {
         // His words are the whole of it: nothing offered, so nothing to count or pay.
     } else if (mode_ == Mode::Resting) {
         const int64_t left = std::max<int64_t>(0, progress.availableAt - realm.wallClock());

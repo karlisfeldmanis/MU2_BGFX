@@ -185,6 +185,7 @@ struct Args {
     int arenaCount = 1;
     int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
+    bool castleOpen = false;    // `--castle-open`: the Messenger's door open at any hour (a test)
     bool peaceful = false;      // `--peaceful`: no nests on the map (Play::Arena::peaceful)
     // The character's file. Empty means the default (game/save.cpp) for a played run and no
     // file at all for a review run (--frames): a scripted fight must not overwrite the

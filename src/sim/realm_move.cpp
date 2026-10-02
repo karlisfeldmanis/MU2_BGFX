@@ -253,6 +253,7 @@ bool Realm::passGate(Body& hero, const EnterGate& through) {
     trading_ = -1;
     banking_ = -1;
     closeMachine();
+    gating_ = -1;
     // A gate to a floor of this same map -- the Dungeon's stairs between its three floors, one
     // grid with three regions the router cannot cross -- is not a map change: he is put down
     // there now, as a Town Portal puts him down (realm_items.cpp), the monsters on him lose
@@ -276,6 +277,7 @@ void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
     trading_ = -1;
     banking_ = -1;
     closeMachine();
+    gating_ = -1;
     int open = column, openRow = row;
     if (router_.nearestOpen(column, row, content::kWallCharacter, 8, &open, &openRow)) {
         column = open;
@@ -575,20 +577,20 @@ void Realm::think(Body& beast) {
 // ---- the fight -------------------------------------------------------------------------
 
 // WebZen NpcTalk.cpp:1655-1753 and CGRequestEnterBloodCastle (protocol.cpp:19629-~20030), in
-// their order: a cloak, the entry open, his level in the castle's band; then the cloak is spent
-// and he goes to gate 66. MU opens a window to pick the castle and asks again on its button; with
-// one castle built the talk is the button. The entry is the local wall clock's (sim/event.h); a
-// realm never handed one -- headless -- keeps the door shut.
-void Realm::askMessenger(Body& hero, int folk) {
-    const auto refuse = [&](CastleRefusal why, int32_t castle = 0) {
-        (void)castle;
-        say(What::Shouted, hero, int32_t(Shout::Greet), int32_t(why), folk);
-    };
-    int slot = -1;
-    for (int i = kWorn; i < kSlots && slot < 0; ++i) {
-        if (!bag_[i].empty() && invisibilityCloak(tables_->items[size_t(bag_[i].item)])) slot = i;
+// their order: a cloak, the entry open, the cloak's castle, his level in its band. MU's talk opens
+// its castle window (NewUIBloodCastleEnter) and its button asks the server again; here the window
+// is the quest window's page (QuestDialog::kGate) and Enter is enterCastle. The entry is the local
+// wall clock's (sim/event.h); a realm never handed one -- headless -- keeps the door shut.
+int Realm::cloakSlot() const {
+    for (int i = kWorn; i < kSlots; ++i) {
+        if (!bag_[i].empty() && invisibilityCloak(tables_->items[size_t(bag_[i].item)])) return i;
     }
-    if (slot < 0) return refuse(CastleRefusal::NoCloak);
+    return -1;
+}
+
+CastleRefusal Realm::castleRefusal() const {
+    const int slot = cloakSlot();
+    if (slot < 0) return CastleRefusal::NoCloak;
     int day = -1;
     if (wall_ > 0) {
         const time_t at = time_t(wall_);
@@ -596,15 +598,24 @@ void Realm::askMessenger(Body& hero, int folk) {
         localtime_r(&at, &local);
         day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
     }
-    if (day < 0 || castleEntryLeft(day) == 0) return refuse(CastleRefusal::NotYet);
-    if (bag_[slot].refinement != 1) return refuse(CastleRefusal::NotBuilt);
-    if (hero.level < kCastleLowest) return refuse(CastleRefusal::TooLow);
-    if (hero.level > kCastleHighest) return refuse(CastleRefusal::TooHigh);
+    if (!castleOpen_ && (day < 0 || castleEntryLeft(day) == 0)) return CastleRefusal::NotYet;
+    if (bag_[slot].refinement != 1) return CastleRefusal::NotBuilt;
+    const Body& hero = bodies_[0];
+    if (hero.level < kCastleLowest) return CastleRefusal::TooLow;
+    if (hero.level > kCastleHighest) return CastleRefusal::TooHigh;
+    return CastleRefusal::None;
+}
+
+bool Realm::enterCastle() {
+    if (gating_ < 0 || !serving(gating_)) return false;
+    Body& hero = bodies_[0];
+    if (castleRefusal() != CastleRefusal::None) return false;
     const EnterGate* gate = enterGateNumbered(kCastleEnterGate);
-    if (gate == nullptr) return;
+    if (gate == nullptr) return false;
     // "You have come to Blood Castle %d" (lMsg 1171): the cloak is spent as he goes.
-    bag_.lift(slot);
-    passGate(hero, *gate);
+    bag_.lift(cloakSlot());
+    gating_ = -1;
+    return passGate(hero, *gate);
 }
 
 }  // namespace mu::sim

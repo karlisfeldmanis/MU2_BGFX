@@ -435,6 +435,7 @@ void Realm::accept() {
         banking_ = -1;
         questing_ = -1;
         closeMachine();
+        gating_ = -1;
         // **And a skill still waiting to be thrown is dropped by an order that moves him**: a
         // wish outlives a channel (kWishTicks), so a key pressed during Lightning threw it again
         // round him after he had walked on (the user, 2026-09-30: "when i am done with casting
@@ -643,7 +644,10 @@ void Realm::press() {
                 questing_ = int(order_.target);
                 say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
             } else if (one.number == kMessenger) {
-                askMessenger(hero, int(order_.target));
+                // His page of the quest window: the ticket he asks for and the door
+                // (QuestDialog::kGate).
+                gating_ = int(order_.target);
+                say(What::Served, hero, gating_, one.number);
             } else if (one.number == kGuildMaster || one.number == kSevina ||
                        one.number == kCharon ||
                        one.number == kThompson ||

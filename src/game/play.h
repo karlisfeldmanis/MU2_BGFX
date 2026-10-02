@@ -266,6 +266,10 @@ public:
         return row;
     }
     void setWallClock(int64_t unixSeconds) { realm_.setWallClock(unixSeconds); }
+    void openCastleDoor() { realm_.openCastleDoor(); }
+    // The Messenger's page's two answers (QuestDialog::kGate).
+    bool enterCastle() { return realm_.enterCastle(); }
+    void closeGate() { realm_.closeGate(); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
     void earn(long long zen) { realm_.earn(zen); }

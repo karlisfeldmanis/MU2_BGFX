@@ -16,6 +16,13 @@
 // Opened by the realm (a Talk order reaching the giver) and closed by it on any other order; the
 // window only asks. Return is the primary answer, Escape the close, the wheel scrolls. Modal while
 // it is up, as the Zen box is. Ours: MU 0.75 has no quests (sim/quests.h).
+//
+// **And Blood Castle's door** (the user, 2026-10-02: 'we need some kind of dialog for angel which
+// asks for ticket and there is buttons', then 'use existing quest log window for BC also'): the
+// Messenger of Archangel spoken to opens this window on a page of its own (kGate) -- his words,
+// MU's for the case, what he asks for as the objectives (the cloak, the gate's hour, castle 1's
+// band), each struck when met, and Not now and Enter, lit only when all three are. MU opens its
+// castle list here (NewUIBloodCastleEnter); with one castle built the list is the page.
 #pragma once
 
 #include <cstdint>
@@ -24,6 +31,7 @@
 
 #include "game/ui/hud.h"
 #include "game/ui/stage.h"
+#include "sim/event.h"
 #include "gfx/interface.h"
 
 namespace mu::game {
@@ -39,7 +47,10 @@ public:
         int choice = -1;  // with `complete`: the quest row's choice index, or -1 for none owed
         bool picked = false;  // a reward cell was chosen or unchosen this frame
         int turn = 0;         // the journal's arrows this frame: -1 the quest before, +1 the next
+        bool enter = false;   // kGate's Enter: into Blood Castle
     };
+    // The `quest` that opens the Messenger's page (Realm::gating).
+    static constexpr int kGate = 1000;
     // The journal's place among the live quests, set before update: `at` 1-based of `of`. The
     // arrows show while reading with more than one; 0, 0 for none.
     void setPages(int at, int of) {
@@ -64,7 +75,9 @@ public:
     // The page up -- 0 the offer, 1 under way, 2 the hand-in, 3 resting -- or -1: what the
     // giver's voice reads (QuestRow::voice).
     // A stranger turned away is not voiced.
-    int page() const { return quest_ >= 0 && mode_ != Mode::Stranger ? int(mode_) : -1; }
+    int page() const {
+        return quest_ >= 0 && mode_ != Mode::Stranger && mode_ != Mode::Gate ? int(mode_) : -1;
+    }
     // The window's rectangle on screen, for the pointer the desk keeps from the world.
     bool covers(float x, float y) const;
     // The frame and the body, which scrolls clipped to its pane; drawn in that order.
@@ -79,7 +92,8 @@ public:
 
 private:
     // Stranger: one born outside the giver's town, whom he does not serve (sim::questOpen).
-    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger };
+    // Gate: the Messenger's page (kGate).
+    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger, Gate };
     static constexpr int kButtons = 5;
     struct Cell {
         int choice = -1;  // the row's choice index, or -1 for a paid item
@@ -111,6 +125,10 @@ private:
     int over_ = -1, pressing_ = -1;
     float lift_[kButtons] = {};
     int pageAt_ = 0, pages_ = 0;
+    // The Messenger's page, read from the realm each frame: why not, the cloak held (-1 none),
+    // his level, the entry's seconds left (0 held open, -1 shut) and the minutes to the next.
+    sim::CastleRefusal why_ = sim::CastleRefusal::NoCloak;
+    int cloakPlus_ = -1, level_ = 0, doorSeconds_ = -1, opensIn_ = 0;
     // A page turn: -1 to 0 the old page going out, 0 to 1 the new one coming in, 1 at rest. The
     // quest handed in waits in `pending_` until the old page is out.
     float turn_ = 1.0f;
@@ -143,6 +161,7 @@ private:
         int counts[16] = {};
         uint16_t picture = 0xFFFF;
         bool reading = false;
+        int gate[5] = {};
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;

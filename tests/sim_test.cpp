@@ -4496,7 +4496,7 @@ void testDeviasFolk() {
     check(greeted, "walked to the Guild Master and he answered");
     check(realm.trading() < 0 && realm.banking() < 0, "and opened nothing");
 
-    // The Messenger of Archangel: spoken to with nothing, he answers.
+    // The Messenger of Archangel: spoken to, he opens his window.
     int messenger = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kMessenger) messenger = int(i);
@@ -4511,11 +4511,10 @@ void testDeviasFolk() {
     for (int tick = 0; tick < 400 && !answered; ++tick) {
         gate.step();
         for (const sim::Happening& one : gate.happenings()) {
-            answered |= one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Greet) &&
-                        one.c == messenger;
+            answered |= one.what == sim::What::Served && one.a == messenger;
         }
     }
-    check(answered, "walked to the Messenger and he answered");
+    check(answered && gate.gating() == messenger, "walked to the Messenger and his window opened");
 
     // His door (sim/event.h): a cloak, the hour's entry and castle 1's band, or why not.
     const int32_t cloak = devias.itemAt(13, 18);
@@ -4539,12 +4538,16 @@ void testDeviasFolk() {
         r.setWallClock(wall);
         talk.target = uint32_t(messenger);
         r.ask(talk);
-        for (int tick = 0; tick < 400; ++tick) {
-            r.step();
+        for (int tick = 0; tick < 400 && r.gating() < 0; ++tick) r.step();
+        if (r.gating() != messenger) return -3;
+        const sim::CastleRefusal why = r.castleRefusal();
+        if (why != sim::CastleRefusal::None) {
+            check(!r.enterCastle(), "and Enter does nothing while he refuses");
+            return int(why);
+        }
+        check(r.enterCastle(), "Enter takes him through");
+        {
             for (const sim::Happening& one : r.happenings()) {
-                if (one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Greet)) {
-                    return int(one.b);
-                }
                 if (one.what == sim::What::Gated) {
                     const sim::EnterGate* in = sim::enterGateNumbered(one.a);
                     const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;

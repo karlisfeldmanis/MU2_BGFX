@@ -403,6 +403,7 @@ bool PlayMode::open(Context& ctx) {
 
 void PlayMode::runScript(Context& ctx) {
     core::Args& args = ctx.args;
+    if (world_.played().isOpen() && args.castleOpen) world_.played().openCastleDoor();
     if (world_.played().isOpen() && !args.give.empty()) {
         size_t from = 0;
         while (from <= args.give.size()) {
