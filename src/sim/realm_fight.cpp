@@ -1157,6 +1157,9 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = dead.pet.taken;
+        // And Greater Damage's bonus off the reckoned stats too, which `might = 0` alone left
+        // riding his blows until something re-armed him.
+        dead.stats.greaterDamage = 0;
         // The Ale too, which is this project's rule and not OpenMU's: AlcoholEffectInitializer
         // sets StopByDeath false, so there he would rise still drunk. One rule for everything in
         // the buff strip was the user's (2026-09-25), and a knight who stands up in town with

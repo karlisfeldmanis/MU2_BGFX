@@ -758,8 +758,35 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     if (row == nullptr) return {};
     sheet.name = row->name;
     sheet.nameTone = tip::Tone::Blue;
+    const sim::HeroPoints& has = hero_->points;
+    if (row->mightTicks > 0) {
+        // The elf's Greater Damage: `3 + energy / 7` on every blow after the defence
+        // (sim::mightOf), held at the cast.
+        sheet.base = "AURA \xc2\xb7 FAIRY ELF";
+        const int held = hero_->might;
+        const int now = sim::mightOf(has);
+        tip::Section what;
+        what.rows.push_back(said("Damage", "+" + std::to_string(held), tip::Tone::Green));
+        what.rows.push_back(prose("on every blow, after the defence; arrows and spells too"));
+        sheet.sections.push_back(what);
+        tip::Section sum;
+        sum.kicker = "Bonus";
+        sum.rows.push_back(said("Base", "3", tip::Tone::White));
+        sum.rows.push_back(said("Energy  " + std::to_string(has.energy) + " / 7",
+                                std::to_string(std::max(0, has.energy) / 7), tip::Tone::White));
+        sum.rows.push_back(said("Total", std::to_string(now), tip::Tone::Yellow));
+        sheet.sections.push_back(sum);
+        if (now != held) {
+            sheet.note = "Cast again for +" + std::to_string(now);
+            sheet.noteTone = now > held ? tip::Tone::Green : tip::Tone::Red;
+        }
+        return sheet;
+    }
     const bool barrier = row->number == sim::skill::kSoulBarrier;
-    sheet.base = barrier ? "AURA \xc2\xb7 DARK WIZARD" : "AURA \xc2\xb7 DARK KNIGHT";
+    const bool ward = row->number == sim::skill::kGreaterDefense;
+    sheet.base = barrier ? "AURA \xc2\xb7 DARK WIZARD"
+                 : ward  ? "AURA \xc2\xb7 FAIRY ELF"
+                         : "AURA \xc2\xb7 DARK KNIGHT";
 
     // What it does now, which was fixed at the cast.
     const float held = 1.0f - hero_->boonDamageTaken;
@@ -769,22 +796,36 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     sheet.sections.push_back(what);
 
     // And how it is reckoned, with his own numbers: the points, then the curve. Strength is the
-    // knight's main stat and energy the wizard's (`guardPoints`, `barrierPoints`).
-    const sim::HeroPoints& has = hero_->points;
+    // knight's main stat and energy the wizard's (`guardPoints`, `barrierPoints`); the elf's ward
+    // is agility with energy at half, and a flat 15 where a shield would be (`wardPoints`).
     const int shield = hero_->shieldDefense;
-    const int main = barrier ? has.energy : has.strength;
-    const float points =
-        barrier ? sim::barrierPoints(has, shield) : sim::guardPoints(has, shield);
     const float now = sim::boonShare(*row, has, shield);
     tip::Section sum;
-    sum.kicker = barrier ? "Barrier points" : "Guard points";
-    sum.rows.push_back(said("Shield  " + times(shield, 5.0f), std::to_string(5 * shield),
-                            tip::Tone::White));
-    sum.rows.push_back(said(std::string(barrier ? "Energy  " : "Strength  ") + times(main, 1.1f),
-                            std::to_string(int(std::lround(1.1 * main))), tip::Tone::White));
-    sum.rows.push_back(said("Agility  " + times(has.agility, 0.5f),
-                            std::to_string(int(std::lround(0.5 * has.agility))),
-                            tip::Tone::White));
+    float points = 0.0f;
+    if (ward) {
+        points = sim::wardPoints(has);
+        sum.kicker = "Ward points";
+        sum.rows.push_back(said("No shield", std::to_string(int(sim::kWardShieldPoints)),
+                                tip::Tone::White));
+        sum.rows.push_back(said("Agility  " + times(has.agility, 1.1f),
+                                std::to_string(int(std::lround(1.1 * has.agility))),
+                                tip::Tone::White));
+        sum.rows.push_back(said("Energy  " + times(has.energy, 0.5f),
+                                std::to_string(int(std::lround(0.5 * has.energy))),
+                                tip::Tone::White));
+    } else {
+        const int main = barrier ? has.energy : has.strength;
+        points = barrier ? sim::barrierPoints(has, shield) : sim::guardPoints(has, shield);
+        sum.kicker = barrier ? "Barrier points" : "Guard points";
+        sum.rows.push_back(said("Shield  " + times(shield, 5.0f), std::to_string(5 * shield),
+                                tip::Tone::White));
+        sum.rows.push_back(said(std::string(barrier ? "Energy  " : "Strength  ") +
+                                    times(main, 1.1f),
+                                std::to_string(int(std::lround(1.1 * main))), tip::Tone::White));
+        sum.rows.push_back(said("Agility  " + times(has.agility, 0.5f),
+                                std::to_string(int(std::lround(0.5 * has.agility))),
+                                tip::Tone::White));
+    }
     sum.rows.push_back(said("Total", std::to_string(int(std::lround(points))), tip::Tone::Yellow));
     char curve[96];
     std::snprintf(curve, sizeof curve, "%d%% x %.0f / (%.0f + 150) = %s  (cap %d%%)",

@@ -408,13 +408,15 @@ constexpr SkillRow kRows[kSkills] = {
               "blow it takes.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .needLevel = 6, .kin = Kin::FairyElf, .anyHand = true},
-    // Greater Damage 28: 0.75's row -- forty mana, `3 + energy / 7` on every blow for sixty
-    // seconds (GreaterDamageEffectInitializer). Ours: twelve seconds of cooldown floored at its
-    // length and two, as the guards are. Its orb asks 92 energy and no level (Gem04.json).
+    // Greater Damage 28: 0.75's row -- forty mana, `3 + energy / 7` on every blow. Ours: twelve
+    // seconds of cooldown floored at its length and two, as the guards are, and **five minutes
+    // where 0.75 gives sixty seconds** (GreaterDamageEffectInitializer) -- the user, 2026-10-02:
+    // "it has to be same durations as defense", Greater Defense's 6000 ticks. Its orb asks 92
+    // energy and no level (Gem04.json).
     {.number = skill::kGreaterDamage, .name = "Greater Damage", .mana = 40, .coolTicks = 240,
-     .tells = "Every blow harder by a share of her energy, for a minute.",
+     .tells = "Every blow harder by a share of her energy, for five minutes.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
-     .needLevel = 0, .kin = Kin::FairyElf, .anyHand = true, .mightTicks = 1200},
+     .needLevel = 0, .kin = Kin::FairyElf, .anyHand = true, .mightTicks = 6000},
 
     // Her six summons, 30 to 35, at 0.75's mana (`SkillsInitializer.cs:68-73`): one at a time,
     // raised beside her, and a second cast dismisses the one standing (TargetedSkillDefaultPlugin

@@ -2316,9 +2316,17 @@ void testElfSkills(const content::Tables& tables) {
     for (int wait = 0; wait < 40; ++wait) realm.step();
     check(cast(sim::skill::kHeal), "Heal is cast");
     check(realm.hero().health <= realm.hero().maxHealth, "and never past the most she has");
-    // Greater Damage lapses on its minute.
+    // Greater Damage stands as long as Greater Defense (the user, 2026-10-02), then lapses.
+    {
+        const sim::SkillRow* might = sim::skillNumbered(sim::skill::kGreaterDamage);
+        const sim::SkillRow* ward = sim::skillNumbered(sim::skill::kGreaterDefense);
+        check(might && ward && might->mightTicks == ward->boonTicks,
+              "Greater Damage lasts as long as Greater Defense");
+    }
     for (int wait = 0; wait < 1210; ++wait) realm.step();
-    check(realm.hero().stats.greaterDamage == 0, "Greater Damage lapses after its minute");
+    check(realm.hero().stats.greaterDamage > 0, "and is still up after a minute");
+    for (int wait = 0; wait < 6000; ++wait) realm.step();
+    check(realm.hero().stats.greaterDamage == 0, "Greater Damage lapses after its five minutes");
 
     // Skillshot on the quick slot, at the nearest spider, over and over.
     const int quiver = realm.satchel()[sim::kWeaponLeft].durability;

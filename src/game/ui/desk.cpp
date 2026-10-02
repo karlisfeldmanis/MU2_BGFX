@@ -1077,6 +1077,16 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = left * 0.05f;  // 20 Hz
         boon.share = row && row->boonTicks > 0 ? left / float(row->boonTicks) : 0.0f;
     }
+    // The elf's Greater Damage, which stands beside her guard rather than in its place: its own
+    // clock (Body::mightUntil) and its own cell.
+    if (hero.mightUntil > realm.tick() && standing < Hud::kBoons) {
+        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kGreaterDamage);
+        const float left = float(hero.mightUntil - realm.tick());
+        Hud::Boon& boon = boons[standing++];
+        boon.skill = sim::skill::kGreaterDamage;
+        boon.seconds = left * 0.05f;
+        boon.share = row && row->mightTicks > 0 ? left / float(row->mightTicks) : 0.0f;
+    }
     if (const int64_t left = realm.aleLeft(); left > 0) {
         Hud::Boon& boon = boons[standing++];
         boon.ale = true;
