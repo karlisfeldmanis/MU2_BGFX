@@ -45,7 +45,7 @@ struct Profile {
 };
 // A torch: the cages and the bridges' and the gate's fires, FireLight01/02 and the rest.
 constexpr Profile kTorch = {38.0f, {0.42f, 0.62f}, {0.38f, 0.62f}, {0.45f, 0.8f}, 1.8f,
-                            0.07f, 0.12f, 0.05f, 0.7f, 1.1f};
+                            0.07f, 0.12f, 0.05f, 0.7f, 1.8f};
 // A dragon's breath (Fire::breath): how far a torch may stand from an Object17's origin and
 // be one of its mouths -- the heads' torches stand 2.5 to 2.9 m off it, the nearest other
 // torch 6 m -- and how its flames go: thrown out along the mouth at kBreathSpeed, slowing,
@@ -520,12 +520,13 @@ void Lamps::spawn(const Fire& fire, uint8_t kind) {
         one.velocity[1] = mix(1.0f, 2.2f, unit());
         one.velocity[2] = lean[2] + (unit() - 0.5f) * 0.9f;
     } else {
-        // Smoke leaves from over the flames rather than out of the logs. A torch's is a thread:
-        // smaller puffs off its shorter flame, and `heat` is how thick, a third of a bonfire's.
+        // Smoke leaves from over the flames rather than out of the logs. A torch's is a haze:
+        // wide, faint puffs off its shorter flame, given often so they run together into a haze
+        // rather than reading one by one; `heat` is how thick, an eighth of a bonfire's.
         // Ours, judged by eye.
         one.life = fire.bonfire ? mix(2.6f, 3.8f, unit()) : mix(2.0f, 2.8f, unit());
-        one.size = fire.bonfire ? mix(0.5f, 0.8f, unit()) : mix(0.22f, 0.34f, unit());
-        one.heat = fire.bonfire ? 1.0f : 0.32f;
+        one.size = fire.bonfire ? mix(0.5f, 0.8f, unit()) : mix(0.38f, 0.55f, unit());
+        one.heat = fire.bonfire ? 1.0f : 0.13f;
         one.position[1] += fire.bonfire ? 0.9f : 0.42f;
         one.spin = 6.2831853f * unit();
         one.spinRate = (unit() - 0.5f) * 0.5f;
