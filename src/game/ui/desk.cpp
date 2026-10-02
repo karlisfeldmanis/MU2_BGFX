@@ -851,7 +851,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // weapon or not at all (docs/skills-dk.md §3.1b), so the plate asks `row.suits()` exactly as
     // `Realm::throwSkill` does and cannot hold a different opinion about a dark key.
     const uint32_t inHand = sim::familyOf(weapon);
-    const uint32_t onArm = sim::familyOf(shield);
+    const uint32_t onArm = sim::armFamily(hero, shield);
     const auto armedFor = [&](const sim::SkillRow& row) {
         return row.suits(row.onSelf() ? onArm : inHand);
     };
@@ -1185,7 +1185,8 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         return tables && at >= 0 && size_t(at) < tables->arms.size() ? &tables->arms[size_t(at)]
                                                                     : nullptr;
     };
-    const uint32_t hand = sim::familyOf(armIn(row.onSelf() ? hero.shield : hero.weapon));
+    const uint32_t hand = row.onSelf() ? sim::armFamily(hero, armIn(hero.shield))
+                                       : sim::familyOf(armIn(hero.weapon));
     // **The families on one line, with commas** (`familiesListed`), the user's of 2026-09-29 --
     // the same line the orb's card prints. They were stacked a line each (2026-09-23) when the
     // words were long: "Two-handed swords and axes" as one value walked over the label. The

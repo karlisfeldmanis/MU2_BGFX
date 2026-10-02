@@ -645,13 +645,28 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.free = power->tells ? power->tells : "";
             line.freeTone = Tone::Orange;
             carries.rows.push_back(line);
+            // Its group (sim::PowerRow): the classes, and the sockets that take it.
+            const bool everyone = power->classes == sim::kEveryClass;
+            std::string classes = everyone ? "Every class" : "";
+            for (size_t i = 0; !everyone && i < 3; ++i) {
+                if (!power->takenBy(sim::Kin(i))) continue;
+                classes += (classes.empty() ? "" : " / ") + std::string(kNames[i]);
+            }
+            std::vector<const char*> kinds;
+            if (power->slots & sim::kInWeapon) kinds.push_back("weapon's");
+            if (power->slots & sim::kInArmour) kinds.push_back("armour's");
+            if (power->slots & sim::kInShield) kinds.push_back("shield's");
+            if (power->slots & sim::kInJewellery) {
+                kinds.push_back("ring's");
+                kinds.push_back("pendant's");
+            }
+            std::string sockets = kinds.empty() || kinds[0][0] != 'a' ? "a " : "an ";
+            for (size_t k = 0; k < kinds.size(); ++k) {
+                sockets += k == 0 ? "" : k + 1 == kinds.size() ? " or " : ", ";
+                sockets += kinds[k];
+            }
             Row where;
-            where.free = std::string(power->everyone ? "Every class" : kNames[size_t(power->kin)]) +
-                         " \xC2\xB7 " +
-                         (power->jewelleryToo ? "a weapon's, ring's or pendant's socket"
-                          : power->weapon     ? "a weapon's socket"
-                          : power->shieldOnly ? "a shield's, ring's or pendant's socket"
-                                              : "an armour's, ring's or pendant's socket");
+            where.free = classes + " \xC2\xB7 " + sockets + " socket";
             where.freeTone = Tone::Gray;
             carries.rows.push_back(where);
             sheet.sections.push_back(carries);

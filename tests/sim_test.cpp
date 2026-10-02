@@ -5521,6 +5521,149 @@ void testElementRunes(const content::Tables& tables) {
     }
 }
 
+// The rune groups (sim::PowerRow, the user, 2026-10-02: "group runes which is only for specific
+// classes, for specific weapon slots") and their first four: the knight's Fireburst, Ring of Fire
+// and Bulwark in his weapon alone, and every class's Kinship in a ring or the pendant alone.
+void testGroupRunes(const content::Tables& tables) {
+    std::printf("group runes\n");
+    const int rune = tables.itemAt(14, 22), sword = tables.itemNamed("Sword01");
+    const int ring = tables.itemAt(13, 8), plate = tables.itemAt(8, 9);
+    const int angel = tables.itemAt(13, 0), imp = tables.itemAt(13, 1);
+    check(rune >= 0 && sword >= 0 && ring >= 0 && plate >= 0 && angel >= 0 && imp >= 0,
+          "the Rune of Creation, a sword, a ring, a plate and the two pets");
+    if (rune < 0 || sword < 0 || ring < 0 || plate < 0 || angel < 0 || imp < 0) return;
+    const auto held = [](int item, uint8_t sockets, sim::Power first) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = uint8_t(first);
+        return h;
+    };
+    const auto sets = [&](sim::Power power, int into, sim::Kin kin) {
+        return sim::settable(tables, held(rune, 0, power), held(into, 1, sim::Power::None), kin);
+    };
+    using sim::Kin;
+    using sim::Power;
+    int groupless = 0;
+    for (int p = 1; sim::powerOf(uint8_t(p)); ++p) {
+        groupless += sim::powerOf(uint8_t(p))->classes == 0 || sim::powerOf(uint8_t(p))->slots == 0;
+    }
+    checkEqual(groupless, 0, "every rune names its classes and its sockets");
+    for (const Power power : {Power::Fireburst, Power::FireRing, Power::Bulwark}) {
+        check(sets(power, sword, Kin::DarkKnight), "a knight's rune goes in his sword");
+        check(!sets(power, sword, Kin::DarkWizard) && !sets(power, sword, Kin::FairyElf),
+              "and in no other class's");
+        check(!sets(power, ring, Kin::DarkKnight) && !sets(power, plate, Kin::DarkKnight),
+              "and not in a ring or armour");
+    }
+    for (const Kin kin : {Kin::DarkKnight, Kin::DarkWizard, Kin::FairyElf}) {
+        check(sets(Power::Kinship, ring, kin), "Kinship goes in any class's ring");
+        check(!sets(Power::Kinship, sword, kin) && !sets(Power::Kinship, plate, kin),
+              "and not in a weapon or armour");
+    }
+    check(sets(Power::Undying, plate, Kin::FairyElf) && !sets(Power::Undying, sword, Kin::FairyElf),
+          "the old groups hold: the Undying in armour and not a weapon");
+    check(sets(Power::Spirits, ring, Kin::DarkWizard) && !sets(Power::Spirits, plate, Kin::DarkWizard),
+          "Evil Spirit in a ring and not a plate");
+    check(sets(Power::Inferno, ring, Kin::FairyElf) && sets(Power::Inferno, sword, Kin::FairyElf),
+          "an element rune in a ring or a weapon");
+
+    // Bulwark: Defense up with a bare sword only while it carries one.
+    for (const bool worn : {false, true}) {
+        sim::Realm knight;
+        knight.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
+        knight.learn(sim::skill::kDefense);
+        const uint8_t powers[3] = {uint8_t(worn ? Power::Bulwark : Power::None), 0, 0};
+        knight.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        knight.invoke(sim::skill::kDefense, knight.hero().id);
+        for (int tick = 0; tick < 60 && knight.cooling(sim::skill::kDefense) == 0; ++tick) {
+            knight.step();
+        }
+        const bool raised = knight.hero().boonSkill == sim::skill::kDefense;
+        check(raised == worn, worn ? "a Bulwark sword raises Defense with no shield"
+                                   : "and a bare sword does not");
+    }
+
+    // Kinship: the Imp's gift without its life, the Angel's guard without its cut.
+    for (const int pet : {imp, angel}) {
+        sim::Realm realm;
+        realm.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
+        realm.give(pet, sim::kPet);
+        const sim::PetPower bare = realm.hero().pet;
+        const uint8_t powers[3] = {uint8_t(Power::Kinship), 0, 0};
+        realm.give(ring, sim::kRingRight, 0, -1, false, 0, 0, 1, powers);
+        const sim::PetPower kin = realm.hero().pet;
+        check(bare.lifeCost > 0 || bare.dealt < 1.0, "the pet has a price");
+        check(kin.lifeCost == 0 && kin.dealt >= 1.0, "and Kinship lifts it");
+        check(kin.dealt == std::max(1.0, bare.dealt) && kin.taken == bare.taken &&
+                  kin.health == bare.health,
+              "and keeps its gift");
+    }
+
+    // Fireburst and Ring of Fire on a knight's hunt: each answers about one landed swing in ten,
+    // the burst's hops fly on to other monsters, and the ring strikes round him.
+    const auto hunt = [&](Power power, int* swings, int* answers, int* blows) {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, Kin::DarkKnight, 40);
+        const uint8_t powers[3] = {uint8_t(power), 0, 0};
+        realm.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 6000 && realm.hero().alive(); ++tick) {
+            if (realm.hero().health < realm.hero().maxHealth / 3) {
+                sim::HeroRecord record = realm.record();
+                record.health = realm.hero().maxHealth;
+                realm.restore(record);
+            }
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            bool ringing = false;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id) continue;
+                if (h.what == sim::What::Hit && !h.thrown) ++*swings;
+                if (h.what == sim::What::Loosed && h.rune) {
+                    const bool burst = h.a == sim::skill::kFireBall && h.c == int32_t(fighting);
+                    if (burst || h.a == sim::skill::kInferno) ++*answers;
+                    ringing = ringing || h.a == sim::skill::kInferno;
+                }
+                if (h.what == sim::What::Hit && h.thrown && (h.rune || ringing)) ++*blows;
+            }
+        }
+    };
+    int swings = 0, bursts = 0, hops = 0;
+    hunt(Power::Fireburst, &swings, &bursts, &hops);
+    std::printf("  Fireburst: %d landed swings, %d bursts, %d hops landed\n", swings, bursts, hops);
+    check(bursts > 0 && hops >= bursts, "a Fireburst bursts and its fire balls land");
+    if (swings > 0) {
+        const double rate = double(bursts) / swings;
+        check(rate > 0.05 && rate < 0.16, "about one landed swing in ten");
+    }
+    int ringSwings = 0, rings = 0, ringBlows = 0;
+    hunt(Power::FireRing, &ringSwings, &rings, &ringBlows);
+    std::printf("  Ring of Fire: %d landed swings, %d rings, %d blows\n", ringSwings, rings,
+                ringBlows);
+    check(rings > 0 && ringBlows >= rings, "a Ring of Fire goes off and strikes round him");
+    if (ringSwings > 0) {
+        const double rate = double(rings) / ringSwings;
+        check(rate > 0.05 && rate < 0.16, "about one landed swing in ten");
+    }
+}
+
 // The pets at WebZen's word (docs/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
 // landed blow, and their wear.
 // The Dungeon's runes (sim/items.h) and Devin's Renewal, by what they DO in a fight, each against
@@ -6106,7 +6249,7 @@ void testDrops(const content::Tables& tables) {
             else if (what.item == rune) {
                 ++r;
                 const sim::PowerRow* power = sim::powerOf(what.powers[0]);
-                unsettable += !power || !(power->everyone || power->kin == sim::Kin::DarkKnight);
+                unsettable += !power || !power->takenBy(sim::Kin::DarkKnight);
             } else if (row.jewel() || (row.group == 14 && (row.number == 9 || row.number == 10))) {
                 ++others;
             } else {
@@ -6189,6 +6332,7 @@ int main() {
     testQuests(tables);
     testDungeonRunes(tables);
     testElementRunes(tables);
+    testGroupRunes(tables);
     testEvilSpirit(tables);
     testRunes(tables);
     testJewellery(tables);

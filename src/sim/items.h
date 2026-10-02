@@ -426,17 +426,34 @@ enum class Power : uint8_t {
     Glacier = 15,
     Venom = 16,
     Thunder = 17,
-    Tempest = 18
+    Tempest = 18,
+    Fireburst = 19,
+    FireRing = 20,
+    Bulwark = 21,
+    Kinship = 22
 };
+// **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
+// specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
+// which sockets take it, a bit a kind of thing. `settable` asks both, the drop draws only a
+// rune the killer's class may set, and the card prints both.
+constexpr uint8_t classBit(Kin kin) { return uint8_t(1u << unsigned(kin)); }
+constexpr uint8_t kWizardOnly = classBit(Kin::DarkWizard);
+constexpr uint8_t kElfOnly = classBit(Kin::FairyElf);
+constexpr uint8_t kKnightOnly = classBit(Kin::DarkKnight);
+constexpr uint8_t kEveryClass = kWizardOnly | kElfOnly | kKnightOnly;
+constexpr uint8_t kInWeapon = 1;     // either hand's weapon, never a shield
+constexpr uint8_t kInShield = 2;
+constexpr uint8_t kInArmour = 4;     // helm, armour, pants, gloves, boots
+constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
 struct PowerRow {
     Power power;
     const char* name;
     const char* tells;
-    bool weapon;  // true a weapon's socket, false armour's or a shield's
-    Kin kin;      // who may set it
-    bool everyone = false;  // every class may, and `kin` is not read
-    bool shieldOnly = false;  // a shield's socket and no armour's
-    bool jewelleryToo = false;  // a weapon's rune a ring and a pendant take as well
+    uint8_t classes;  // who may set it, classBit each
+    uint8_t slots;    // what takes it, kIn* each
+    bool takenBy(Kin kin) const { return (classes & classBit(kin)) != 0; }
+    // A weapon's power: read off the hands, and rolled on a swing, an arrow or a spell.
+    bool weapon() const { return (slots & kInWeapon) != 0; }
 };
 
 // **The Undying**, the first armour power and every class's (the user, 2026-09-30: "its for
@@ -517,7 +534,7 @@ bool refiningJewel(const content::ItemRow& row);
 // The first socket with nothing set in it, or -1.
 int freeSocket(const Held& thing);
 // Whether this rune may be set into that thing by this class: a Creation with a power, a thing
-// with a free socket, of the power's kind (weapon or not), and the class the power names.
+// with a free socket, of a kind the power's group takes, and a class in that group.
 bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin);
 
 // **Stormcall**, the Dark Knight's first power: a swing that lands has this chance to call
@@ -581,6 +598,27 @@ constexpr float kPyroblastReach = 8.0f;
 // Frost Arrow ice, the Poison rune's sickness poison). Drops only to a class with something of
 // its element (`elementServes`). invention, all of it.
 constexpr double kElementRuneDamage = 0.20;
+// **The knight's fire runes** (the user, 2026-10-02: "pyroblast chance for DK weapon", "inferno
+// chance for DK weapon"), in a knight's weapon alone. **Fireburst**: a swing that lands has
+// kFireburstChance to burst into the Pyroblaster's chain -- kPyroblastChain Fire Balls, each
+// flying from the monster the last struck at the nearest it has not, within kPyroblastReach.
+// **Ring of Fire**: a swing that lands has kFireRingChance to let the wizard's Inferno ring go
+// round him, striking every monster within its four tiles. Each blow of either is his swing's
+// roll with his energy's band on top, as Stormcall's is (kRuneEnergyLow/High), at its force,
+// and fire, so Inferno runes raise it. Half Stormcall's chance, as each strikes several.
+// invention, all of it.
+constexpr double kFireburstChance = 0.10;
+constexpr float kFireburstForce = 0.8f;
+constexpr double kFireRingChance = 0.10;
+constexpr float kFireRingForce = 1.0f;
+// **Bulwark** (the user: "allow to use defense skill without shield"), a knight's weapon's: his
+// Defense goes up with no shield on his arm -- a second weapon, a two-handed one or an empty
+// hand -- off his strength and agility alone (`guardShare` with no shield's defence in it).
+// invention.
+// **Kinship** (the user: "remove guardian angel or imp debuffs"), every class's, in a ring or
+// the pendant: the worn pet's price is lifted -- the Guardian Angel's x0.8 on his blows (ours,
+// sim::petPower) and the life the Imp and the Horn of Dinorant take for each blow they raise.
+// Their gifts stay. invention.
 // The element a rune adds to, None for every other power.
 Element elementOf(Power power);
 // Whether `kin` throws anything of `element`, so a rune of it would do something in his hands.

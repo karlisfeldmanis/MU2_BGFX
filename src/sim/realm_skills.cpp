@@ -187,7 +187,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                                          : nullptr;
         // Asked through the same column as an attack's, because `arms::kShield` is a family:
         // one question -- does this hand suit this row -- rather than two rules that can drift.
-        if (!row.suits(familyOf(shield))) return false;
+        // A Bulwark answers for the shield (sim::armFamily).
+        if (!row.suits(armFamily(hero, shield))) return false;
         // A self-cast has no target to be far from and reads its victim off the caster.
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
@@ -500,7 +501,8 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
     const auto armAt = [&](int32_t at) -> const content::Arm* {
         return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
     };
-    return row.suits(familyOf(armAt(row.onSelf() ? hero.shield : hero.weapon)));
+    return row.onSelf() ? row.suits(armFamily(hero, armAt(hero.shield)))
+                        : row.suits(familyOf(armAt(hero.weapon)));
 }
 
 void Realm::keepBoon(Body& hero) {

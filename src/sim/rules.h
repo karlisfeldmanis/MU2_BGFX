@@ -75,6 +75,10 @@ struct Excellence {
     // How many element runes his hands, rings and pendant carry, by sim::Element (sim/items.h
     // kElementRuneDamage), each adding its share to his blows of that element.
     int elementRunes[6] = {};
+    // A Bulwark in his hands, which lets Defense up with no shield on his arm, and a Kinship in a
+    // ring or the pendant, which lifts his pet's price (sim/items.h).
+    bool bulwark = false;
+    bool kinship = false;
     // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
     // resistance worn to Ice and to Poison, each turning the element aside r times in r + 1, and
     // the percent of maximum life the worn pieces' options give back every kJewelleryRegenTicks.

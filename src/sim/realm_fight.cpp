@@ -249,7 +249,7 @@ void Realm::stormcall(Body& hero, Body& struck, int wound) {
         // Each socket's power rolls on its own, in socket order.
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            if (power == nullptr || !power->weapon || power->kin != hero.kin) continue;
+            if (power == nullptr || !power->weapon() || !power->takenBy(hero.kin)) continue;
             callDown(hero, struck, *power, wound);
             if (!hero.alive()) return;
         }
@@ -336,6 +336,38 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         }
         return;
     }
+    // The knight's Fireburst: the Pyroblaster's chain off the monster he struck, each hop his
+    // rune's blow and fire (sim/items.h). Thrown whether or not the swing killed it, as a
+    // Pyroblaster's chain is off a Fire Ball that did.
+    if (power.power == Power::Fireburst) {
+        if (!runeDice_.nextBool(kFireburstChance)) return;
+        core::logf("fireburst: tick %lld, a chain off #%u", (long long)tick_, struck.id);
+        Flight from;
+        from.force = kFireburstForce * elementForce(hero, Element::Fire);
+        from.chained[0] = struck.id;
+        from.swung = true;
+        hop(hero, from, struck.id, struck.x, struck.y);
+        return;
+    }
+    // His Ring of Fire: the wizard's Inferno ring round him, said as Inferno let go so the
+    // drawing lights it at his feet, and his rune's blow on everything it gathers.
+    if (power.power == Power::FireRing) {
+        if (!runeDice_.nextBool(kFireRingChance)) return;
+        const SkillRow* ring = skillNumbered(skill::kInferno);
+        if (ring == nullptr) return;
+        uint32_t victims[kVictims];
+        const int found = gather(hero, *ring, victims, kVictims);
+        say(What::Loosed, hero, skill::kInferno, 0, 0, 0);
+        happenings_.back().rune = true;
+        core::logf("ring of fire: tick %lld, %d round him", (long long)tick_, found);
+        const float force = kFireRingForce * elementForce(hero, Element::Fire);
+        for (int i = 0; i < found && hero.alive(); ++i) {
+            if (Body* victim = body(victims[i]); victim && victim->alive()) {
+                runeStrike(hero, *victim, force);
+            }
+        }
+        return;
+    }
     // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
     // asked where he casts; left to fall through, a wizard's plain staff swing called a knight's
     // lightning.
@@ -392,6 +424,11 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     say(What::Loosed, hero, skill::kLightning, 0, 0, struckBy->id);
     core::logf("stormcall: tick %lld, lightning on #%u beside #%u", (long long)tick_,
                struckBy->id, struck.id);
+    runeStrike(hero, *struckBy, kStormcallForce * elementForce(hero, Element::Lightning));
+    if (struckBy->alive()) push(*struckBy, hero);
+}
+
+void Realm::runeStrike(Body& hero, Body& target, float force) {
     // His energy's band on both ends of the swing's, for this one blow, as the Imp's price
     // lays its rate for one in strikeAt. The first hand's band only: a second hand's is summed
     // in anyway, and raising an empty one would roll a weapon he does not hold.
@@ -400,11 +437,9 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     const int high = int(hero.points.energy * kRuneEnergyHigh);
     hero.stats.minimumDamage += low;
     hero.stats.maximumDamage += high;
-    strikeAt(hero, *struckBy, kStormcallForce * elementForce(hero, Element::Lightning), nullptr,
-             true, false);
+    strikeAt(hero, target, force, nullptr, true, false);
     hero.stats.minimumDamage = swing.minimumDamage;
     hero.stats.maximumDamage = swing.maximumDamage;
-    if (struckBy->alive()) push(*struckBy, hero);
 }
 
 bool Realm::spiritsGoing() const {
@@ -520,7 +555,9 @@ bool Realm::echoes(Body& hero) {
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            if (power == nullptr || power->power != Power::Echo || power->kin != hero.kin) continue;
+            if (power == nullptr || power->power != Power::Echo || !power->takenBy(hero.kin)) {
+                continue;
+            }
             if (runeDice_.nextBool(kEchoChance)) return true;
         }
     }
@@ -633,7 +670,8 @@ int Realm::pyroblasts(const Body& hero) const {
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            worn += power != nullptr && power->power == Power::Pyroblast && power->kin == hero.kin;
+            worn += power != nullptr && power->power == Power::Pyroblast &&
+                    power->takenBy(hero.kin);
         }
     }
     return worn;
@@ -807,7 +845,12 @@ void Realm::arrive() {
         if (!target || !target->alive()) continue;
         const float x = target->x, y = target->y;
         const size_t said = happenings_.size();
-        strikeAt(hero, *target, flight.force, row, true, flight.pays);
+        // A knight's Fireburst hop lands as his rune's blow; every other flight as its own.
+        if (flight.swung) {
+            runeStrike(hero, *target, flight.force);
+        } else {
+            strikeAt(hero, *target, flight.force, row, true, flight.pays);
+        }
         // A Pyroblaster's burst is the rune's, drawn in its colour; his own Fire Ball that
         // landed may burst.
         // A Pyroblaster's hop is the rune's, drawn in its colour, and flies on to the next

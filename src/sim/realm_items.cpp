@@ -355,6 +355,14 @@ void Realm::rearm(Body& hero) {
             if (power && elementOf(power->power) != Element::None) {
                 ++hero.excel.elementRunes[int(elementOf(power->power))];
             }
+            // The knight's Bulwark from his hands, Kinship from the rings and the pendant.
+            if (power && power->power == Power::Bulwark && !jewellery(*row) &&
+                power->takenBy(hero.kin)) {
+                hero.excel.bulwark = true;
+            }
+            if (power && power->power == Power::Kinship && jewellery(*row)) {
+                hero.excel.kinship = true;
+            }
         }
     }
     // The rings and the pendant: the largest resistance worn in each element (Max3), and every
@@ -424,6 +432,11 @@ void Realm::rearm(Body& hero) {
     // The pet in slot 8, while it has life (ItemPowerUpFactory.cs:38-41).
     const content::ItemRow* pet = rowAt(kPet);
     hero.pet = pet && bag_[kPet].durability > 0 ? petPower(*pet) : PetPower{};
+    // Kinship lifts the price and keeps the gift (sim/items.h).
+    if (hero.excel.kinship) {
+        hero.pet.dealt = std::max(1.0, hero.pet.dealt);
+        hero.pet.lifeCost = 0;
+    }
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
     // **A guard stands only behind the shield that raised it.** Taking the shield off ends
@@ -434,7 +447,7 @@ void Realm::rearm(Body& hero) {
         const SkillRow* boon = skillNumbered(hero.boonSkill);
         const content::Arm* shield = hero.shield >= 0 ? &tables_->arms[size_t(hero.shield)] : nullptr;
         if (boon != nullptr && (boon->families & arms::kShield) != 0 &&
-            !boon->suits(familyOf(shield))) {
+            !boon->suits(armFamily(hero, shield))) {
             hero.boonUntil = 0;
             hero.boonSkill = skill::kNone;
             hero.boonDamageTaken = 1.0f;
@@ -461,7 +474,7 @@ Wearer Realm::wearer() const {
                   hero.stats.wizardryRate,
                   hero.staffRise,
                   familyOf(armAt(hero.weapon)),
-                  familyOf(armAt(hero.shield))};
+                  armFamily(hero, armAt(hero.shield))};
 }
 
 int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,
@@ -901,7 +914,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         const auto drawable = [&](const PowerRow& row) {
             const Element element = elementOf(row.power);
             if (element != Element::None) return elementServes(element, killer.kin);
-            return row.everyone || row.kin == killer.kin;
+            return row.takenBy(killer.kin);
         };
         int count = 0;
         for (int p = 1; powerOf(uint8_t(p)); ++p) count += drawable(*powerOf(uint8_t(p))) ? 1 : 0;

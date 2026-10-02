@@ -256,56 +256,72 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
 }
 
 const PowerRow* powerOf(uint8_t power) {
+    // Grouped by who sets them and where (sim::PowerRow): the knight's weapon, the elf's, the
+    // wizard's, every class's armour and shield, and every class's weapon and jewellery.
+    constexpr uint8_t kWorn = kInArmour | kInShield | kInJewellery;
+    constexpr uint8_t kHeld = kInWeapon | kInJewellery;
     static const PowerRow kPowers[] = {
         {Power::Stormcall, "Stormcall",
          "A swing that lands has a 20% chance to call lightning down on a monster near him, another "
          "where there is one, its damage raised by his energy",
-         true, Kin::DarkKnight},
+         kKnightOnly, kInWeapon},
         {Power::Meteor, "Meteor",
          "A swing that lands has a 15% chance to bring a burning rock down on a monster near him, "
          "another where there is one",
-         true, Kin::DarkKnight},
+         kKnightOnly, kInWeapon},
         {Power::Ice, "Ice",
          "A swing that lands has a 15% chance to freeze the monster he struck, slowing it to half "
          "its pace and wounding it for half the swing, raised by his energy",
-         true, Kin::DarkKnight},
+         kKnightOnly, kInWeapon},
         {Power::Poison, "Poison",
          "A swing that lands has a 15% chance to poison the monster he struck, hurting it for "
          "twenty seconds",
-         true, Kin::DarkKnight},
+         kKnightOnly, kInWeapon},
+        {Power::Fireburst, "Fireburst",
+         "A swing that lands has a 10% chance to burst into four fire balls, each flying at a "
+         "monster near the one before, raised by his energy",
+         kKnightOnly, kInWeapon},
+        {Power::FireRing, "Ring of Fire",
+         "A swing that lands has a 10% chance to let a ring of fire burst round him, striking "
+         "every monster within four tiles, raised by his energy",
+         kKnightOnly, kInWeapon},
+        {Power::Bulwark, "Bulwark", "Defense can be raised without a shield", kKnightOnly,
+         kInWeapon},
         {Power::Frost, "Frost Arrow",
          "An arrow that lands has a 20% chance to freeze the monster it struck for two seconds "
          "and wound it again for half the arrow's damage, raised by her energy",
-         true, Kin::FairyElf},
+         kElfOnly, kInWeapon},
         {Power::Echo, "Arcane Echo",
-         "A spell he casts has a 20% chance to be cast a second time, for no mana", true,
-         Kin::DarkWizard},
-        {Power::Undying, "Undying", "+20% maximum health", false, Kin::DarkKnight, true},
-        {Power::KeenEye, "Keen Eye", "+10% critical hit chance", false, Kin::DarkKnight, true},
-        {Power::Bloodwell, "Bloodwell",
-         "3% of the damage you deal comes back as life, and 5% of your mana after a kill", false,
-         Kin::DarkKnight, true},
-        {Power::Frenzy, "Frenzy",
-         "A blow that lands has a 15% chance to raise attack and casting speed by 20 for three "
-         "seconds",
-         false, Kin::DarkKnight, true},
-        {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
-         false, Kin::DarkKnight, true},
-        {Power::Spirits, "Evil Spirit",
-         "A blow that misses you has a 15% chance to release evil spirits around you, which "
-         "strike most of the monsters within ten tiles, raised by your energy",
-         false, Kin::DarkKnight, true, true},
+         "A spell he casts has a 20% chance to be cast a second time, for no mana", kWizardOnly,
+         kInWeapon},
         {Power::Pyroblast, "Pyroblaster",
          "Fire Ball strikes 50% harder, and one that lands has a 20% chance to burst into four "
          "more, each flying at a monster near the one it struck",
-         true, Kin::DarkWizard},
-        {Power::Inferno, "Inferno", "+20% fire damage", true, Kin::DarkKnight, true, false,
-         true},
-        {Power::Glacier, "Glacier", "+20% ice damage", true, Kin::DarkKnight, true, false, true},
-        {Power::Venom, "Venom", "+20% poison damage", true, Kin::DarkKnight, true, false, true},
-        {Power::Thunder, "Thunder", "+20% lightning damage", true, Kin::DarkKnight, true, false,
-         true},
-        {Power::Tempest, "Tempest", "+20% wind damage", true, Kin::DarkKnight, true, false, true},
+         kWizardOnly, kInWeapon},
+        {Power::Undying, "Undying", "+20% maximum health", kEveryClass, kWorn},
+        {Power::KeenEye, "Keen Eye", "+10% critical hit chance", kEveryClass, kWorn},
+        {Power::Bloodwell, "Bloodwell",
+         "3% of the damage you deal comes back as life, and 5% of your mana after a kill",
+         kEveryClass, kWorn},
+        {Power::Frenzy, "Frenzy",
+         "A blow that lands has a 15% chance to raise attack and casting speed by 20 for three "
+         "seconds",
+         kEveryClass, kWorn},
+        {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
+         kEveryClass, kWorn},
+        {Power::Spirits, "Evil Spirit",
+         "A blow that misses you has a 15% chance to release evil spirits around you, which "
+         "strike most of the monsters within ten tiles, raised by your energy",
+         kEveryClass, kInShield | kInJewellery},
+        {Power::Kinship, "Kinship",
+         "Your Guardian Angel no longer lowers your damage, and your Imp and Dinorant take no "
+         "life for their blows",
+         kEveryClass, kInJewellery},
+        {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld},
+        {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld},
+        {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld},
+        {Power::Thunder, "Thunder", "+20% lightning damage", kEveryClass, kHeld},
+        {Power::Tempest, "Tempest", "+20% wind damage", kEveryClass, kHeld},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -360,16 +376,17 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (!known(jewel) || !known(target)) return false;
     if (!creation(tables.items[size_t(jewel.item)])) return false;
     const PowerRow* power = powerOf(jewel.powers[0]);
-    if (power == nullptr || (!power->everyone && power->kin != kin)) return false;
+    if (power == nullptr || !power->takenBy(kin)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!takesSockets(row) || freeSocket(target) < 0) return false;
-    // A ring's and a pendant's sockets take every armour rune, Evil Spirit with them (the user,
-    // 2026-10-02: "allow to put runes on jewels and pendants"; it was Evil Spirit alone). A
-    // weapon's rune is read off the hands only, so it stays out.
-    // The element runes go in either (sim::kElementRuneDamage).
-    if (jewellery(row)) return !power->weapon || power->jewelleryToo;
-    if (power->shieldOnly) return row.shield();
-    return power->weapon == (row.weapon() && !row.shield());
+    // Its group's sockets (sim::PowerRow::slots): a ring's and a pendant's take the armour runes
+    // and the element runes (the user, 2026-10-02: "allow to put runes on jewels and pendants"),
+    // and a weapon's power is read off the hands only, so it stays out of them.
+    const uint8_t kind = jewellery(row) ? kInJewellery
+                         : row.shield() ? kInShield
+                         : row.weapon() ? kInWeapon
+                                        : kInArmour;
+    return (power->slots & kind) != 0;
 }
 
 int placeOf(const content::ItemRow& row) {

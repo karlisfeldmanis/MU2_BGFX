@@ -950,6 +950,9 @@ private:
     void stormcall(Body& hero, Body& struck, int wound);
     // One power's roll and, when it answers, its lightning, rock, chill or poison.
     void callDown(Body& hero, Body& struck, const PowerRow& power, int wound);
+    // A magic rune's blow: his swing's roll with his energy's band on top (sim::kRuneEnergyLow
+    // and High), at `force`, unpaid. Stormcall's lightning and the knight's fire runes.
+    void runeStrike(Body& hero, Body& target, float force);
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
     // something standable or not at all.
     void push(Body& target, const Body& from) { push(target, from.x, from.y); }
@@ -1060,6 +1063,9 @@ private:
         // and the monsters it has struck so far, the first his own Fire Ball's.
         int8_t hops = 0;
         uint32_t chained[kPyroblastChain + 1] = {};
+        // A knight's Fireburst chain: each hop lands as his rune's blow (`runeStrike`), not as
+        // the wizard's spell.
+        bool swung = false;
     };
     // A Pyroblaster's chain flying on from `off`, which it struck at (x, y): to the nearest
     // monster it has not struck yet, while it has hops left.
