@@ -1196,6 +1196,22 @@ state -- unless the user wants seven map numbers (decision 3).
 - BC1 stats: **WebZen 1.00.93**, monsters at levels 33-51.
 - Death inside: **out to Devias, the run lost** (MU's rule: the cloak is spent).
 
+**Revised the same day -- Blood Castle is a quest (the user: 'BC is a quest and players has to kill
+specific count of monsters to open the gates'):**
+- Untimed and open at any time: no wall-clock window and no 20-minute run (replaces the schedule above).
+- The Archangel (232) gives the quest. All three gates (entrance, bridge and door) open on kill
+  counts, so the Castle Gate monster (131) does not hold the door.
+- The end stays MU's: past the door the Saint Statue (132) drops the Weapon of Archangel, and
+  bringing it back to the Archangel wins.
+- Unchanged: the cloak ticket, WebZen's levels 33-51, and death out to Devias.
+- The gates, settled:
+  - **Entrance**: lifts when the Archangel gives the quest.
+  - **Bridge**: falls at **40 kills** on the road (MU's quota 1).
+  - **Door**: opens at **2 Spirit Sorcerers (89)**. Ours: they rise in front of the door as the bridge
+    falls, where MU raises them in the courtyard after the gate.
+  - Then the statue rises at 14,95. The Castle Gate (131) is not raised; its figure may stand
+    as scenery.
+
 
 1. **Timed event or always open?** (a) on the 2-hour wall clock already drawn by `kEvents`
    (enter only in its window, 20 min); (b) any time, a 20-minute run from entry; (c) any time,
