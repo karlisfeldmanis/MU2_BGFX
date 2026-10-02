@@ -366,6 +366,11 @@ struct Body {
     uint32_t blowTarget = 0;
     float blowForce = 1.0f;    // a skill's multiplier, 1 for a swing
     int32_t blowSkill = 0;     // which skill it belongs to, 0 for a swing
+    // A skill aimed at the pointer's ground keeps that way until it is let go
+    // (SkillRow::aimsAtPointer): a primary does not hold him, and the fight he is in would turn
+    // him back to its body before the release.
+    bool blowAimed = false;
+    float blowAim = 0.0f;      // radians, as `aim`
     int64_t castUntil = 0;
     // Whether a click to move may end that hold: every skill's but Teleport's, whose fade and
     // settle are the move (the user, 2026-10-02: "any spell ahs to be cancelable").

@@ -1273,13 +1273,15 @@ void testCastLock(const content::Tables& tables) {
                   flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.0f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
-        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 5,
+        // Each of the wizard's late rows by the next one's, so a row added on the end moves none.
+        check(sim::skillIndexOf(sim::skill::kFlame) + 1 == sim::skillIndexOf(sim::skill::kEvilSpirit),
               "and its row is past the elf's, so no save's learned bit moves");
         const sim::SkillRow& spirit = *sim::skillNumbered(sim::skill::kEvilSpirit);
         check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 90 &&
                   spirit.built && spirit.kin == sim::Kin::DarkWizard,
               "Evil Spirit is a no-cooldown spell of forty-five damage and ninety mana");
-        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 4,
+        check(sim::skillIndexOf(sim::skill::kEvilSpirit) + 1 ==
+                  sim::skillIndexOf(sim::skill::kHellfire),
               "and its row is past Flame's");
         const int32_t evilScroll = tables.itemAt(15, 8);
         check(evilScroll >= 0 && tables.items[size_t(evilScroll)].teaches == sim::skill::kEvilSpirit &&
@@ -1297,7 +1299,7 @@ void testCastLock(const content::Tables& tables) {
                   hell.spread == sim::Spread::Ring && hell.reach == 4.0f && hell.clip == 154 &&
                   hell.kin == sim::Kin::DarkWizard,
               "Hellfire is a no-cooldown ring of a hundred and twenty damage and 160 mana");
-        check(sim::skillIndexOf(sim::skill::kHellfire) == sim::kSkills - 3,
+        check(sim::skillIndexOf(sim::skill::kHellfire) + 1 == sim::skillIndexOf(sim::skill::kTwister),
               "and its row is past Evil Spirit's");
         const int32_t hellScroll = tables.itemAt(15, 9);
         check(hellScroll >= 0 && tables.items[size_t(hellScroll)].teaches == sim::skill::kHellfire &&
@@ -1366,7 +1368,7 @@ void testCastLock(const content::Tables& tables) {
               "Twister is a no-cooldown storm of thirty-five damage and sixty mana, striking "
               "three times");
         check(sim::skillElement(sim::skill::kTwister) == sim::Element::Wind, "and it is wind");
-        check(sim::skillIndexOf(sim::skill::kTwister) == sim::kSkills - 2,
+        check(sim::skillIndexOf(sim::skill::kTwister) + 1 == sim::skillIndexOf(sim::skill::kInferno),
               "and its row is past Hellfire's, the learned mask's thirty-second bit");
         const int32_t twisterScroll = tables.itemAt(15, 7);
         check(twisterScroll >= 0 &&
@@ -1451,8 +1453,8 @@ void testCastLock(const content::Tables& tables) {
                   inferno.kin == sim::Kin::DarkWizard,
               "Inferno is a no-cooldown ring of a hundred damage and two hundred mana");
         check(sim::skillElement(sim::skill::kInferno) == sim::Element::Fire, "and it is fire");
-        check(sim::skillIndexOf(sim::skill::kInferno) == sim::kSkills - 1 && sim::kSkills == 33,
-              "and its row is the table's last, the learned mask's thirty-third bit");
+        check(sim::skillIndexOf(sim::skill::kInferno) + 1 == sim::skillIndexOf(sim::skill::kAquaBeam),
+              "and its row is past Twister's, the learned mask's thirty-third bit");
         const int32_t infernoScroll = tables.itemAt(15, 13);
         check(infernoScroll >= 0 &&
                   tables.items[size_t(infernoScroll)].teaches == sim::skill::kInferno &&
@@ -1501,6 +1503,118 @@ void testCastLock(const content::Tables& tables) {
             check(struck >= rings, "and every ring strikes");
             checkEqual(outside, 0, "only within four tiles of him");
             checkEqual(twice, 0, "and each body once a ring");
+        }
+
+        // Aqua Beam: 0.75's row, struck as MU's client strikes it -- four circles of a tile and
+        // a half along his aim from his hand (sim/skills.h kBeamStart), each body once.
+        const sim::SkillRow& aqua = *sim::skillNumbered(sim::skill::kAquaBeam);
+        check(aqua.wizardry && aqua.primary() && aqua.damage == 80 && aqua.mana == 140 &&
+                  aqua.spread == sim::Spread::Beam && aqua.reach == 6.0f && aqua.clip == 152 &&
+                  aqua.kin == sim::Kin::DarkWizard,
+              "Aqua Beam is a no-cooldown beam of eighty damage and a hundred and forty mana");
+        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 1 && sim::kSkills == 34,
+              "and its row is the table's last");
+        const int32_t aquaScroll = tables.itemAt(15, 11);
+        check(aquaScroll >= 0 &&
+                  tables.items[size_t(aquaScroll)].teaches == sim::skill::kAquaBeam &&
+                  tables.items[size_t(aquaScroll)].teachesEnergy == 345 &&
+                  tables.items[size_t(aquaScroll)].teachesLevel == 148,
+              "the Scroll of Aqua Beam teaches skill 12 at 345 energy and level 148");
+        {
+            sim::Realm beamer;
+            check(beamer.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 150),
+                  "a wizard raises for Aqua Beam");
+            check(beamer.learn(sim::skill::kAquaBeam), "who knows Aqua Beam");
+            // With the energy the scroll asks spent, as its reader has it: unspent, a level-150
+            // wizard's 360 mana is two beams and then his staff.
+            sim::HeroRecord spent = beamer.record();
+            spent.points.energy = 345 + 200;
+            spent.mana = 1 << 20;
+            beamer.restore(spent);
+            int beams = 0, struck = 0, outside = 0, twice = 0;
+            float aim = 0.0f, fromX = 0.0f, fromY = 0.0f;
+            uint32_t fighting = 0;
+            for (int tick = 0; tick < 4000 && beamer.hero().alive(); ++tick) {
+                const uint32_t nearest = nearestTo(beamer);
+                if (nearest != 0 && nearest != fighting) {
+                    fighting = nearest;
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    request.skill = sim::skill::kAquaBeam;
+                    beamer.ask(request);
+                }
+                beamer.step();
+                uint32_t onThis[sim::kVictims] = {};
+                int seen = 0;
+                for (const sim::Happening& one : beamer.happenings()) {
+                    if (one.who != beamer.hero().id) continue;
+                    if (one.what == sim::What::Loosed && one.a == sim::skill::kAquaBeam) {
+                        ++beams;
+                        aim = float(one.c) / 1000.0f;
+                        fromX = one.x;
+                        fromY = one.y;
+                    }
+                    if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                    if (!one.thrown) continue;  // his staff, once his mana is out
+                    const sim::Body* at = beamer.find(one.whom);
+                    if (at == nullptr) continue;
+                    ++struck;
+                    for (int i = 0; i < seen; ++i) twice += onThis[i] == one.whom;
+                    if (seen < sim::kVictims) onThis[seen++] = one.whom;
+                    bool inside = false;
+                    for (int k = 1; k <= sim::kBeamPoints; ++k) {
+                        const float along = sim::kBeamStart + sim::kBeamStep * float(k);
+                        inside = inside || std::hypot(at->x - fromX - std::cos(aim) * along,
+                                                      at->y - fromY - std::sin(aim) * along) <=
+                                               sim::kBeamRadius + 0.3f;
+                    }
+                    if (!inside) ++outside;
+                }
+            }
+            std::printf("  aqua beam: %d beams, %d blows\n", beams, struck);
+            check(beams > 3, "he casts it");
+            check(struck >= beams / 2, "and its beams strike");
+            checkEqual(outside, 0, "only within the beam's four circles");
+            checkEqual(twice, 0, "and each body once a beam");
+        }
+
+        // A skill with a direction, pressed from a key with the mouse over the ground, goes the
+        // pointer's way -- body or no body (SkillRow::aimsAtPointer; the user, 2026-10-02).
+        {
+            sim::Realm pointer;
+            check(pointer.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 150),
+                  "a wizard raises to aim at the pointer");
+            check(pointer.learn(sim::skill::kAquaBeam) && pointer.learn(sim::skill::kTwister),
+                  "who knows Aqua Beam and Twister");
+            sim::HeroRecord full = pointer.record();
+            full.points.energy = 600;
+            full.mana = 1 << 20;
+            pointer.restore(full);
+            check(sim::skillNumbered(sim::skill::kAquaBeam)->aimsAtPointer() &&
+                      sim::skillNumbered(sim::skill::kTwister)->aimsAtPointer() &&
+                      !sim::skillNumbered(sim::skill::kHellfire)->aimsAtPointer() &&
+                      !sim::skillNumbered(sim::skill::kFireBall)->aimsAtPointer(),
+                  "a beam and a storm aim at the pointer; a ring and a single throw do not");
+            const auto pressAt = [&](int32_t skill, int dc, int dr) {
+                const int column = pointer.hero().column(), row = pointer.hero().row();
+                pointer.invokeAt(skill, column + dc, row + dr);
+                for (int tick = 0; tick < 200; ++tick) {
+                    pointer.step();
+                    for (const sim::Happening& one : pointer.happenings()) {
+                        if (one.who == pointer.hero().id && one.what == sim::What::Loosed &&
+                            one.a == skill) {
+                            return float(one.c) / 1000.0f;
+                        }
+                    }
+                }
+                return 99.0f;
+            };
+            const float east = pressAt(sim::skill::kAquaBeam, 6, 0);
+            check(std::fabs(east) < 0.05f, "Aqua Beam pressed toward the east goes east");
+            const float north = pressAt(sim::skill::kTwister, 0, -6);
+            check(std::fabs(north + 1.5708f) < 0.05f, "and Twister toward the north goes north");
+            std::printf("  pointer: beam %.2f, storm %.2f radians\n", east, north);
         }
 
         sim::Realm wiz;

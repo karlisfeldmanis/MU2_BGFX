@@ -548,6 +548,12 @@
       "from": "SOUND_STORM, which ZzzOpenData loads from Data\\\\Sound\\\\sTornado.wav with two voices (ZzzOpenData.cpp:4791). ZzzCharacter plays it for AT_SKILL_STORM in the *release* arm of MoveCharacter, on the line under the CreateEffect that stands the storm up (ZzzCharacter.cpp:4497) - Flame's beat, without Flame's scene guard.",
       "note": "Four and a half seconds of wind for an effect that walks for two and a third, so the storm is gone well before its wave is. Twister's own, and the sharing across the wizard's eight built spells is unchanged by it: Energy Ball with Power Wave on sMagic, Fire Ball with Meteorite on eMeteorite, and Lightning, Ice, Poison's borrowed heartbeat, Flame and this one each with a wave of their own."
     },
+    "spell_flash": {
+      "files": [
+        "sAquaFlash.wav"
+      ],
+      "from": "SOUND_FLASH, which ZzzOpenData loads from Data\\\\Sound\\\\sAquaFlash.wav with two voices (ZzzOpenData.cpp:4798). ZzzCharacter plays it for AT_SKILL_FLASH in the release arm of MoveCharacter, on the line under the CreateEffect that lays the BITMAP_BOSS_LASER beam (ZzzCharacter.cpp:4551-4554)."
+    },
     "player_step_grass": {
       "files": [
         "pwalk_grass.wav"

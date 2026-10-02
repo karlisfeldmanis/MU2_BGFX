@@ -42,6 +42,8 @@
 #include "game/fx/hellfire.h"
 #include "game/fx/storm.h"
 #include "game/fx/inferno.h"
+#include "game/fx/aqua.h"
+#include "game/fx/deathstab.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -470,6 +472,10 @@ public:
     Storm& storm() { return storm_; }
     // The wizard's Inferno: the ring of blasts round him. fx/inferno.h.
     Inferno& inferno() { return inferno_; }
+    // The wizard's Aqua Beam: the line of water out ahead of him. fx/aqua.h.
+    Aqua& aqua() { return aqua_; }
+    // The knight's Death Stab: its streaks, cones and the wound it leaves. fx/deathstab.h.
+    DeathStab& deathStab() { return deathStab_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -862,6 +868,8 @@ private:
     Hellfire hellfire_;
     Storm storm_;
     Inferno inferno_;
+    Aqua aqua_;
+    DeathStab deathStab_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;

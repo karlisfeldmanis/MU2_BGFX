@@ -243,14 +243,29 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // snaps the angle onto the target as it attacks (ZzzInterface.cpp:1303, `o->Angle[2] =
         // CreateAngle2D`); the knight's swing keeps its turn, as above.
         if (aimed && row.wizardry) hero.facing = hero.aim;
+        // **Or at the ground under the pointer**, which wins: a press of a skill with a direction
+        // carries the tile the mouse is on (`invokeAt`), and he turns to it and casts that way
+        // whatever stands there (SkillRow::aimsAtPointer).
+        const bool pointed = wantsColumn_ >= 0 && row.aimsAtPointer() &&
+                             (wantsColumn_ != hero.column() || wantsRow_ != hero.row());
+        if (pointed) {
+            hero.aim = std::atan2(float(wantsRow_) - hero.y, float(wantsColumn_) - hero.x);
+            if (row.wizardry) hero.facing = hero.aim;
+        }
         if (row.spread == Spread::One || row.spread == Spread::Line ||
             row.spread == Spread::Fan) {
             // A line is thrown AT a body as a single blow is, and goes on through: it needs the
-            // body to aim by, and the rest of its way is found when it is let go.
-            if (!aimed) return false;
+            // body to aim by, and the rest of its way is found when it is let go -- or the
+            // pointer's ground, for a shape that has a direction.
+            if (!aimed && !pointed) return false;
             // Nothing may be thrown at something sheltered either, which is the check the far end
             // of `ApplySkillAsync` makes and `press` already makes for a swing.
-            if (tables_->grid.safe(target->column(), target->row())) return false;
+            if (aimed && !pointed && tables_->grid.safe(target->column(), target->row())) {
+                return false;
+            }
+        } else if (pointed && row.spread == Spread::Beam) {
+            // A beam aimed at the pointer goes out whether or not anything stands in it, as MU's
+            // does; the realm strikes what is there when it is let go.
         } else {
             // An area skill is not thrown AT a body, it is thrown AROUND him, so what it needs is
             // somebody inside the shape rather than a named target: a knight whose quarry has
@@ -354,8 +369,19 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // rides with it -- 0.75's own `SkillMultiplier` with strength on it, §3.2 -- and the
         // knock, when a skill has one, belongs to the landing too and is why `shove` is reached
         // from there rather than here.
-        begin(hero, at, force(row, hero.points), row.number, clip);
+        //
+        // **Over the clip as it is drawn, `held`**: a skill with a cooldown is played at its
+        // authored pace (game/play.cpp fits only a spell's and a primary's to `clip`), so landed
+        // at half the quickened `clip` the blow came long before the thrust -- a level-150
+        // knight's Death Stab struck while the spear still pointed behind him (2026-10-02, the
+        // user: "effect looked buggy"). For a spell and a primary `held` is `clip`, unchanged.
+        begin(hero, at, force(row, hero.points), row.number, held);
+        // Thrown at the pointer's ground: that way, whatever turns him before it is let go.
+        hero.blowAimed = wantsColumn_ >= 0 && row.aimsAtPointer();
+        hero.blowAim = hero.aim;
     }
+    // The pointer's ground is spent with the press: a later throw off a click is aimed afresh.
+    wantsColumn_ = wantsRow_ = -1;
     return true;
 }
 
@@ -379,7 +405,12 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
     for (const Body& one : bodies_) {
         if (!one.monster() || !one.alive()) continue;
         // A line runs as far as the wave sweeps, past the reach it is aimed within.
-        if (!within(hero, one, row.spread == Spread::Line ? kLineTiles : row.reach)) continue;
+        if (!within(hero, one,
+                    row.spread == Spread::Line   ? kLineTiles
+                    : row.spread == Spread::Beam ? kBeamTiles
+                                                 : row.reach)) {
+            continue;
+        }
         // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const float dx = one.x - hero.x, dy = one.y - hero.y;
@@ -393,6 +424,17 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
             const float ahead = dx * c + dy * s;
             const float aside = -dx * s + dy * c;
             if (ahead <= 0.0f || ahead > kLineTiles || std::fabs(aside) > kLineHalfWidth) continue;
+        }
+        if (row.spread == Spread::Beam) {
+            // Within a tile and a half of one of the four points MU strikes round, stepped along
+            // the aim from his hand (skills.h kBeamStart).
+            const float c = std::cos(hero.aim), s = std::sin(hero.aim);
+            bool struck = false;
+            for (int k = 1; k <= kBeamPoints && !struck; ++k) {
+                const float along = kBeamStart + kBeamStep * float(k);
+                struck = std::hypot(dx - c * along, dy - s * along) <= kBeamRadius;
+            }
+            if (!struck) continue;
         }
         if (row.spread == Spread::Arc) {
             // The facing eighth and the two beside it. `aim` and not `facing`, because the throw
@@ -429,7 +471,9 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
     // A spell round him -- Hellfire -- rolls his wizardry band off its row, which also lays its
     // element runes (strikeAt), and is said as let go so the drawing lights its circle.
     const bool spell = row.wizardry;
-    if (spell) say(What::Loosed, hero, row.number, 0, 0, 0);
+    // His aim rides in `c`, in thousandths of a radian, so Aqua Beam's is drawn down the line it
+    // struck (`Spread::Beam`); the rings round him ignore it.
+    if (spell) say(What::Loosed, hero, row.number, 0, int32_t(std::lround(hero.aim * 1000.0f)), 0);
     // Cyclone's and Twisting Slash's wind, under his element runes (realm_tuning.h).
     if (!spell) force *= elementForce(hero, skillElement(row.number));
     for (int i = 0; i < found; ++i) {

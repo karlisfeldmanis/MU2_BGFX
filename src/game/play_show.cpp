@@ -136,6 +136,11 @@ void Play::exhale(float seconds) {
         if (skill && one.swingSkill == sim::skill::kTwistingSlash) continue;
         // Nor Rageful Blow, past them too, whose weapon is out of his hand. fx/fury.h.
         if (skill && one.swingSkill == sim::skill::kRagefulBlow) continue;
+        // Nor Death Stab: PLAYER_ATTACK_DEATHSTAB is on neither of CreateWeaponBlur's lists -- a
+        // spear blurs PLAYER_ATTACK_SPEAR1..SCYTHE3 alone (ZzzCharacter.cpp:3859-3863) -- and the
+        // blur the skill rung laid over its thrust was a pink-white smear MU never draws
+        // (2026-10-02, the user: "still buggy"). Its own look is fx/deathstab.h.
+        if (skill && one.swingSkill == sim::skill::kDeathStab) continue;
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the

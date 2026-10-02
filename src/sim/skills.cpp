@@ -26,6 +26,8 @@ namespace {
 //   * `coolTicks` is at 20 Hz: 60 is three seconds.
 // Hellfire's landing key, 6 of 18 (see its row).
 constexpr float kHellfireLanding = 6.0f / 18.0f;
+// Aqua Beam's throw, key 5 of 12 (see its row).
+constexpr float kAquaThrow = 5.0f / 12.0f;
 
 constexpr SkillRow kRows[kSkills] = {
     // Defense 18: a buff for 30 mana (`DefenseEffectInitializer`). Five minutes of it, where
@@ -137,9 +139,16 @@ constexpr SkillRow kRows[kSkills] = {
     // a staff in the right hand (SkillCast.cpp:157) and the skill has been a spear's in every
     // version that hands it out. The hardest single blow in the table, and the point of carrying
     // a polearm: a spear's answer to Falling Slash, which it may not throw.
+    //
+    // **Its own clip**, MU's PLAYER_ATTACK_DEATHSTAB (SkillCast.cpp:302-304) at 0.25
+    // (ZzzCharacter.cpp:925): player.muc's 71, where Lunge's 61 stood in for it until 2026-10-02
+    // (the user: "lets work on Cyclone and Death Stab"). Its thrust lands at half the clip -- the
+    // right hand from 77 units behind him to 71 ahead between keys 2 and 3 of 6 -- so the blow
+    // lands there as every swing's does. sKnightSkill2 is MU's own for it (ZzzCharacter.cpp:2631),
+    // and its streaks, cones and the wound on what it strikes are game/fx/deathstab.h.
     {skill::kDeathStab, "Death Stab", 15, 1.0f, 2.3f, 1.0f / 900.0f, 110, false, Spread::One, 0,
      1.0f, "The point driven through one body at speed. Nothing he has hits one thing harder.",
-     61, "player_skill_sword2", true, arms::kSpear, 60},
+     71, "player_skill_sword2", true, arms::kSpear, 60},
 
     // ---- the wizard's, appended after the knight's nine ----------------------------------------
     //
@@ -567,6 +576,32 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 153, .sound = "explosion", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 100,
      .flies = 1000.0f},
+
+    // ---- Aqua Beam 12, the wizard's, after Inferno for the same reason --------------------------
+    //
+    // 0.75's row: eighty damage, distance six, a hundred and forty mana, three hundred and
+    // forty-five energy, water, an area that strikes by itself, OpenMU's frustum a tile and a
+    // half wide and eight long (`Version075/SkillsInitializer.cs:55-56`), taught by the Scroll of
+    // Aqua Beam (Book12). What it strikes is MU's client, which WebZen 1.00.93 takes as sent
+    // (AT_SKILL_FLASH is on CGBeattackRecv's list, protocol.cpp:16359): the beam's four circles
+    // ahead of him, `Spread::Beam` (skills.h), each body once. Water is 0.75's element, and no
+    // rune here carries it, so it has none (realm_tuning.h `skillElement`).
+    //
+    // Its clip is MU's own PLAYER_SKILL_FLASH at 0.4 (ClassAttack.cpp:1365-1376, ZzzCharacter.cpp:
+    // 943): player.muc's 152, one before the enum's 153, as Inferno's and Hellfire's are
+    // (source/players/rig/actions.json). MU makes the beam with SOUND_FLASH at the let-go
+    // (ZzzCharacter.cpp:4551-4554). **Let go as the arm is thrown**, key 5 of 12, not at half the
+    // clip (the user, 2026-10-02: "aqua beam cast has to be perfectly synced with cast
+    // animation"): the right hand is up over his head to key 5 and out in front of him at key 6,
+    // 187 units on in one key (action 152 in source/players/rig/player.rig.json), and let go at
+    // half the beam came two frames after the arm in the arena. No cooldown, a standard spell.
+    // Its beam and sAquaFlash are game/fx/aqua.h.
+    {.number = skill::kAquaBeam, .name = "Aqua Beam", .mana = 140, .reach = 6.0f, .force = 1.0f,
+     .spread = Spread::Beam,
+     .tells = "A beam of water thrown straight out ahead of him, striking everything along it.",
+     .clip = 152, .sound = "spell_flash", .built = true, .families = arms::kNone,
+     .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 80,
+     .flies = 1000.0f, .release = kAquaThrow},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

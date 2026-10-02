@@ -495,6 +495,11 @@ void Realm::land(Body& hero) {
     const uint32_t at = hero.blowTarget;
     const float force = hero.blowForce;
     const int32_t skill = hero.blowSkill;
+    // Back to the pointer's way, if that is where it was thrown.
+    if (hero.blowAimed) {
+        hero.aim = hero.blowAim;
+        hero.blowAimed = false;
+    }
     hero.blowAt = 0;
     hero.blowTarget = 0;
     hero.blowSkill = 0;
@@ -728,18 +733,6 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
     // One `Loosed` for the cast: the drawing fans its own arrows off it.
     say(What::Loosed, hero, row.number, 0, hero.archer, aimedAt);
     constexpr float kRadians = 3.14159265358979f / 180.0f;
-    // **Each body once a cast** (the user, 2026-10-02: "multi-shot feels very overpowered"): the
-    // lanes are 1.5 tiles wide and 15 degrees apart, so all three cross anything within 2.9 tiles
-    // of her, and a body that close took every arrow -- three plain shots for one, at the plain
-    // shot's pace. The fan pays off on a crowd, not on one body. ours, as the pierce is.
-    uint32_t struck[kVictims];
-    int struckCount = 0;
-    const auto struckAlready = [&](uint32_t id) {
-        for (int i = 0; i < struckCount; ++i) {
-            if (struck[i] == id) return true;
-        }
-        return false;
-    };
     for (int a = 0; a < row.arrows; ++a) {
         // Straight, then one either side, then the next pair out.
         const int step = (a + 1) / 2;
@@ -753,7 +746,7 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
         Struck lane[kVictims];
         int found = 0;
         for (const Body& one : bodies_) {
-            if (!one.alive() || !one.monster() || struckAlready(one.id)) continue;
+            if (!one.alive() || !one.monster()) continue;
             if (tables_->grid.safe(one.column(), one.row())) continue;
             const float dx = one.x - hero.x, dy = one.y - hero.y;
             const float along = dx * cx + dy * cy;
@@ -774,15 +767,15 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
                 say(What::Arrowless, hero, hero.archer);
                 return;
             }
-            if (struckCount < kVictims) struck[struckCount++] = lane[i].id;
             loose(hero, row, lane[i].id, force, false, lane[i].id == aimedAt);
         }
     }
 }
 
 void Realm::looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
-    // The wave is drawn once, toward what he aimed at, and said once.
-    say(What::Loosed, hero, row.number, 0, 0, aimedAt);
+    // The wave is drawn once, along his aim -- at what he aimed at, or the pointer's ground -- and
+    // said once, the aim in `c` in thousandths of a radian.
+    say(What::Loosed, hero, row.number, 0, int32_t(std::lround(hero.aim * 1000.0f)), aimedAt);
     uint32_t victims[kVictims];
     const int found = gather(hero, row, victims, kVictims);
     // Nearest first, as `gather` sorts them, so the landings come in the order the wave meets
@@ -958,8 +951,9 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
     // he aimed (`SkillRow::walks`), whether or not the body still stands: MU turns him to it and
     // sends the storm off his own position and angle (ClassAttack.cpp:1354, ZzzCharacter.cpp:4496).
     if (row.walks > 0.0f) {
-        const float way =
-            aimed ? std::atan2(aimed->y - hero.y, aimed->x - hero.x) : hero.aim;
+        // His aim, set at the throw: at the body he named, or at the pointer's ground (`land`
+        // puts that back), which is MU's angle at the cast rather than the body's later place.
+        const float way = hero.aim;
         for (Fire& one : fires_) {
             if (one.next != 0) continue;
             one = Fire{tick_ + kStormFirst, hero.x, hero.y, row.number, row.burns, force, aimedAt,

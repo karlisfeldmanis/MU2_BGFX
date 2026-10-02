@@ -686,9 +686,15 @@ void Play::update(double seconds) {
                     } else if (happening.a == sim::skill::kLightning) {
                         thunder_.strike(from, to, happening.whom);
                     } else if (happening.a == sim::skill::kPowerWave) {
-                        // A curtain standing on the ground, under where every spell leaves.
+                        // A curtain standing on the ground, under where every spell leaves, sent
+                        // along the aim the realm struck down (`c`, thousandths of a radian):
+                        // at the body, or at the pointer's ground.
                         const float ground[3] = {from[0], feet, from[2]};
-                        wave_.cast(ground, to);
+                        const float way = float(happening.c) / 1000.0f;
+                        const float tile = ground_->metresPerTile();
+                        const float along[3] = {from[0] + std::cos(way) * 6.0f * tile, to[1],
+                                                from[2] - std::sin(way) * 6.0f * tile};
+                        wave_.cast(ground, along);
                     } else if (happening.a == sim::skill::kHellfire) {
                         // The sigil and the wall at his feet, turned to him (fx/hellfire.h).
                         const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
@@ -707,6 +713,13 @@ void Play::update(double seconds) {
                         inferno_.cast(ground, caster->yaw, [&](const float* at) {
                             meteor_.stones(at[0], at[2], at[1], 2);
                         });
+                    } else if (happening.a == sim::skill::kAquaBeam) {
+                        // The beam from his hand along the aim the realm struck down, said in
+                        // thousandths of a radian (`Realm::strikeAround`); the grid's row runs
+                        // against world z (fx/aqua.h).
+                        const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
+                        const float way = float(happening.c) / 1000.0f;
+                        aqua_.cast(ground, std::cos(way), -std::sin(way));
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -927,6 +940,8 @@ void Play::update(double seconds) {
                             // A spell's wave is not on its wind-up: MU plays SOUND_MAGIC on the
                             // line after the bolt is made, so it goes with `Loosed`.
                             if (spell && spell->wizardry) cry = -1;
+                            // Death Stab's on AttackTime 8, cued by fx/deathstab.h.
+                            if (swinger->castSkill == sim::skill::kDeathStab) cry = -1;
                             // Twisting Slash's goes with its wheel, fifteen frames in.
                             if (swinger->castSkill == sim::skill::kTwistingSlash) {
                                 cry = -1;
@@ -958,6 +973,11 @@ void Play::update(double seconds) {
                         // the drawn body is still sliding in to where the realm has stopped him.
                         // The streak asks the skill itself, and a spell lays none.
                         if (cast) swinger->casting = swinger->swinging;
+                        // Death Stab's streaks, cones and wound run on its clip as played
+                        // (fx/deathstab.h).
+                        if (cast && happening.a == sim::skill::kDeathStab) {
+                            deathStab_.begin(happening.who, happening.whom, swinger->swinging);
+                        }
 
                         // What this swing was thrown with, kept until the blow settles -- for a
                         // player that is a tick or two later, in the branch below.
@@ -1365,6 +1385,59 @@ void Play::update(double seconds) {
         [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
     // Inferno's ring and its sparks (fx/inferno.h).
     inferno_.update(float(seconds));
+    // Aqua Beam's line (fx/aqua.h).
+    aqua_.update(float(seconds));
+    // Death Stab's streaks, cones and wound (fx/deathstab.h): where a body is drawn, its weapon's
+    // link bone, and the thin bolts of the wound -- Thunder's.
+    deathStab_.update(
+        float(seconds),
+        [&](uint32_t id, float* feet, float* tall, float* yaw) {
+            const Drawn* drawn = drawnOf(id);
+            if (drawn == nullptr || !drawn->placed || !ground_) return false;
+            const FigureBody* look = drawn->figure.body();
+            feet[0] = drawn->crown[0];
+            feet[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
+            feet[2] = drawn->crown[2];
+            *tall = look ? look->height * look->scale : 1.8f;
+            *yaw = drawn->yaw;
+            return true;
+        },
+        [&](uint32_t id, float* out) {
+            const Drawn* drawn = drawnOf(id);
+            const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
+            if (look == nullptr) return false;
+            for (const HeldItem& held : look->held) {
+                if (held.kind != "weapon" || held.bone < 0) continue;
+                const float grip[3] = {0.0f, 0.0f, 0.0f};
+                return drawn->figure.pointOn(held.bone, grip, out);
+            }
+            return false;
+        },
+        [&](const float* from, const float* to) { thunder_.fork(from, to); },
+        [&](uint32_t id) {
+            const int index = sim::skillIndexOf(sim::skill::kDeathStab);
+            const Drawn* drawn = drawnOf(id);
+            if (index >= 0 && heard_.skill[index] >= 0 && drawn != nullptr && drawn->placed) {
+                emit(heard_.skill[index], drawn->crown[0], drawn->crown[2], id);
+            }
+        },
+        [&](uint32_t id, float (*pairs)[2][3], int most) {
+            // Each bone and its parent where the figure is posed now -- MU's wound runs along them.
+            const Drawn* drawn = drawnOf(id);
+            const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
+            if (look == nullptr || look->skeletonMesh == nullptr) return 0;
+            const auto& bones = look->skeletonMesh->bones();
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            int found = 0;
+            for (size_t b = 0; b < bones.size() && found < most; ++b) {
+                const int parent = bones[b].parent;
+                if (parent < 0) continue;
+                if (!drawn->figure.pointOn(int(b), origin, pairs[found][0])) continue;
+                if (!drawn->figure.pointOn(parent, origin, pairs[found][1])) continue;
+                ++found;
+            }
+            return found;
+        });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts

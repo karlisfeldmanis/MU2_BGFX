@@ -757,9 +757,10 @@
       "play_speed": 0.25
     },
     "152": {
-      "enum": "PLAYER_SKILL_TELEPORT",
-      "name": "Skill teleport",
-      "play_speed": 0.3
+      "enum": "PLAYER_SKILL_FLASH",
+      "name": "Skill flash",
+      "play_speed": 0.4,
+      "label_note": "One late, as 153 and 154 are: MuMain's enum says 152 is PLAYER_SKILL_TELEPORT and 153 PLAYER_SKILL_FLASH, but 153 is Inferno's crouch and 154 Hellfire's leap, so the enum's Flash is here. On the bench (mu2 --figure DarkWizardBare --clip 152, 2026-10-02) a crouch with one arm raised over his head and then thrown forward -- Aqua Beam's. 0.4 is PLAYER_SKILL_FLASH's PlaySpeed (ZzzCharacter.cpp:943). 151 and below are not checked; Teleport does not play an action here."
     },
     "153": {
       "enum": "PLAYER_SKILL_INFERNO",

@@ -292,6 +292,11 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table(), &world_.ground());
                 world_.played().inferno().open(assets, ctx.textures,
                                                world_.played().showing().table(), &world_.ground());
+                world_.played().aqua().open(assets, ctx.textures,
+                                            world_.played().showing().table(), &world_.ground());
+                world_.played().deathStab().open(assets, ctx.textures,
+                                                 world_.played().showing().table(),
+                                                 &world_.ground());
                 // The refinement shine's two sheets: Chrome01 for +7, Shiny01 for +9.
                 game::lendShine(world_.played().showing().table(), assets, ctx.textures,
                                 ctx.renderer);
@@ -963,6 +968,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Inferno's ring, one warm light for its blasts (fx/inferno.h).
         count += world_.played().inferno().lights(falling + count,
                                                   gfx::Renderer::kMaxTransientLights - count);
+        // And Aqua Beam's line, three blue lights along it (fx/aqua.h).
+        count += world_.played().aqua().lights(falling + count,
+                                               gfx::Renderer::kMaxTransientLights - count);
         // And a Fire Trap's burst on the floor, two tiles.
         count += world_.played().trapShow().lights(falling + count,
                                                    gfx::Renderer::kMaxTransientLights - count);
@@ -1137,6 +1145,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().hellfire().gatherEffects(ctx.renderer.effects());
         world_.played().storm().gatherEffects(ctx.renderer.effects());
         world_.played().inferno().gatherEffects(ctx.renderer.effects());
+        world_.played().aqua().gatherEffects(ctx.renderer.effects());
+        world_.played().deathStab().gatherEffects(ctx.renderer.effects());
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         openItems(ctx);

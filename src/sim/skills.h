@@ -88,6 +88,9 @@ constexpr int32_t kTwister = 8;
 // `AT_SKILL_INFERNO`, off the Scroll of Inferno (group 15 number 13, `Book14`) -- 0.95d's and
 // not 0.75's: eight blasts in a ring round him, striking every monster within four tiles once.
 constexpr int32_t kInferno = 14;
+// `AT_SKILL_FLASH`, off the Scroll of Aqua Beam (group 15 number 11, `Book12`) at three hundred
+// and forty-five energy: a beam of water thrown straight out ahead of him.
+constexpr int32_t kAquaBeam = 12;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
 // Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
 // "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
@@ -204,7 +207,7 @@ std::string familiesListed(uint32_t families);
 // rest `kFanDegrees` apart either side, each striking every body within `kLineHalfWidth` of it
 // between `kFanNearest` tiles and the row's reach -- MU2's `Realm.Passes`, off MuMain's Triple
 // Shot, whose arrows fly on through what they strike (`Kind = 1`).
-enum class Spread : uint8_t { One, Ring, Arc, Line, Fan };
+enum class Spread : uint8_t { One, Ring, Arc, Line, Fan, Beam };
 constexpr float kFanDegrees = 15.0f;
 constexpr float kFanNearest = 0.6f;
 
@@ -216,6 +219,19 @@ constexpr float kLineHalfWidth = 0.75f;
 // is aimed at may stand. The user, 2026-09-28: "we need to increase range for that spell because
 // it goes far"; first cut stopped at six, where MU starts fading it.
 constexpr float kLineTiles = 12.0f;
+
+// **Aqua Beam's** `Spread::Beam`: MU's client asks `AttackCharacterRange(..., 150.f)` once, on the
+// beam's birth, at four points stepped 150 units along his facing from his hand, which
+// `CalcAddPosition(o, -20, -90, 100)` puts 90 units ahead of him (ZzzEffect.cpp:1018-1029,
+// ZzzCharacter.cpp:4551-4554). So four circles of a tile and a half round 2.4, 3.9, 5.4 and 6.9
+// tiles out, and whatever stands in any of them is struck. WebZen takes the client's lists as
+// sent (CGBeattackRecv), so a body inside two circles was in two packets and struck twice; here
+// it is struck once, as OpenMU's frustum strikes it -- ours, and marked.
+constexpr float kBeamStart = 0.9f;
+constexpr float kBeamStep = 1.5f;
+constexpr int kBeamPoints = 4;
+constexpr float kBeamRadius = 1.5f;
+constexpr float kBeamTiles = kBeamStart + kBeamStep * float(kBeamPoints) + kBeamRadius;
 
 struct SkillRow {
     int32_t number = 0;
@@ -359,6 +375,17 @@ struct SkillRow {
     // **A fire that walks**: tiles a tick it moves from his feet along where he aimed, striking
     // on `kStormFirst`/`kStormEvery` rather than lit under the body. 0 for a fire that stays put.
     float walks = 0.0f;
+    // **Whether a press aims it at the ground under the pointer** rather than at a body: the
+    // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
+    // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
+    // mouse is and casts that way, with or without a monster there (the user, 2026-10-02: "if we
+    // cast skill from quick bar or right click slot it cast to direction where hover mouse is
+    // hovered"), as MU's client casts them at its own angle into empty air. The rings round him
+    // have no direction and the single throws need a body to fly at.
+    bool aimsAtPointer() const {
+        return spread == Spread::Beam || spread == Spread::Line || spread == Spread::Arc ||
+               walks > 0.0f;
+    }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -377,13 +404,13 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit, Hellfire, Twister and
-// Inferno, on the end past the elf's. The learned mask is sixty-four bits since Inferno, the
-// thirty-third (`Body::learned`, and the save writes it whole); past sixty-four it needs widening
+// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit, Hellfire, Twister,
+// Inferno and Aqua Beam, on the end past the elf's. The learned mask is sixty-four bits since
+// Inferno, the thirty-third (`Body::learned`, and the save writes it whole); past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 33;
+constexpr int kSkills = 34;
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing

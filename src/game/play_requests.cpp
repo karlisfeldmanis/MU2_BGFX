@@ -44,6 +44,12 @@ void Play::castSkill(int32_t skill, uint32_t at) {
         realm_.invokeAt(skill, pointedColumn_, pointedRow_);
         core::logf("window: %s aimed at tile %d,%d from %d,%d", row->name, pointedColumn_,
                    pointedRow_, realm_.hero().column(), realm_.hero().row());
+    } else if (row != nullptr && row->aimsAtPointer() && pointedColumn_ >= 0) {
+        // A skill with a direction goes the way the mouse is, body or no body
+        // (SkillRow::aimsAtPointer; the user, 2026-10-02).
+        realm_.invokeAt(skill, pointedColumn_, pointedRow_);
+        core::logf("window: %s aimed toward tile %d,%d from %d,%d", row->name, pointedColumn_,
+                   pointedRow_, realm_.hero().column(), realm_.hero().row());
     } else {
         realm_.invoke(skill, at);
     }

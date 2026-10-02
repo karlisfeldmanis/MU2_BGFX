@@ -324,10 +324,19 @@ void Play::rightClick() {
     // thrown (Realm::press). The left button's attack is the weapon alone. The user, 2026-09-28,
     // the same for every class; with nothing in the slot it is the left button's attack.
     const sim::Body* at = pointedAt_ != 0 ? realm_.find(pointedAt_) : nullptr;
+    const sim::SkillRow* quick = quickSkill_ != 0 ? sim::skillNumbered(quickSkill_) : nullptr;
     if (at != nullptr && at->alive() && at->monster()) {
         request.kind = sim::Request::Kind::Attack;
         request.target = pointedAt_;
         request.skill = quickSkill_;
+    } else if (quick != nullptr && quick->aimsAtPointer() && pointedColumn_ >= 0) {
+        // **A skill with a direction on the right button goes the way the mouse is** over bare
+        // ground too (SkillRow::aimsAtPointer; the user, 2026-10-02): a press, as a key's is,
+        // and no order changes -- he casts where he stands.
+        realm_.invokeAt(quickSkill_, pointedColumn_, pointedRow_);
+        mark_ = false;
+        marker_.dismiss();
+        return;
     } else {
         request.kind = sim::Request::Kind::Stop;
     }
