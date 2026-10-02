@@ -66,7 +66,12 @@ constexpr float kHaloDrop = 1.0f;  // interface units, the page's 1 px at 1080
 // of in it, not enough to become a second reading beside the first. A Roman capital wants it
 // more than the grotesque did: Cinzel's stems are thin where they meet the serif, and the soft
 // halo alone let the grass through them.
-constexpr float kDropAway = 1.6f;   // interface units, down and right
+//
+// A share of the size since 2026-10-02, the 1.6 units it was on a 21-unit swing: at a fixed
+// 1.6 the smaller sizes put it a quarter of a letter away, and ABSORBED read twice (the user:
+// "absorbed drop shadow was buggy"). And never under a word -- MISS and ABSORBED are the
+// lane's size, and the lane's rule holds: a shadow under text that small is a smudge.
+constexpr float kDropAwayEm = 1.6f / 21.0f;  // of the size, down and right
 constexpr float kDropAlpha = 0.55f;
 
 // ---- the lane over the HUD ------------------------------------------------------------------
@@ -425,17 +430,18 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         // The hard drop goes over the halo and under the figure, so the halo is the air round
         // it and this is the shadow it casts.
         if (drop) {
-            canvas_.lettered(face, texture, x + kDropAway * unit, baseline + kDropAway * unit,
+            const float away = kDropAwayEm * size;
+            canvas_.lettered(face, texture, x + away, baseline + away,
                              size, tracking, gfx::rgba(0.0f, 0.0f, 0.0f, kDropAlpha * alpha),
                              text);
         }
         canvas_.lettered(face, texture, x, baseline, size, tracking, ink, text);
     };
-    // A blow, in the fight's own Bold, with its drop.
+    // A blow, in the fight's own face; a figure takes the drop and a word does not.
     const auto write = [&](float centreX, float baseline, float size, uint32_t ink,
-                           const std::string& text, float trackingEm) {
+                           const std::string& text, float trackingEm, bool drop) {
         writeIn(face_, faceTexture_, halo_, haloTexture_, centreX, baseline, size, ink, text,
-                trackingEm, true);
+                trackingEm, drop);
     };
     // A gain: the Medium, and no hard drop -- a shadow under nine-unit text is a smudge, and
     // the fight's own halo (baked from the Bold) is close enough at this size to shade it.
@@ -473,7 +479,8 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         // solid at this size it reads as one long glyph. ABSORBED is set solid all the same,
         // the user's, 2026-10-01.
         const float tracking = figure.mark == Mark::Absorbed ? 0.0f : word ? 0.14f : kTracking;
-        write(std::round(x), std::round(y), size, withAlpha(inkOf(figure), alpha), text, tracking);
+        write(std::round(x), std::round(y), size, withAlpha(inkOf(figure), alpha), text, tracking,
+              !word);
     }
 
     // ---- the lane ----------------------------------------------------------------------
