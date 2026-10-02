@@ -40,7 +40,8 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // a cloud fades over 8 s, in and out on a squared sine. The stutter was those cuts: every sheet
 // is one colour, so the smoke blend reads the same in any order and the sort cannot flicker.
 // Added, smoke01 was too small a puff to cover, and smoke02 added stood as brown squares.
-constexpr float kAlpha = 0.055f;
+// And 'little bit to much vvisslbe clouds': 0.044.
+constexpr float kAlpha = 0.044f;
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
