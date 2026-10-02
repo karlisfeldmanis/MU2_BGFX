@@ -728,6 +728,18 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
     // One `Loosed` for the cast: the drawing fans its own arrows off it.
     say(What::Loosed, hero, row.number, 0, hero.archer, aimedAt);
     constexpr float kRadians = 3.14159265358979f / 180.0f;
+    // **Each body once a cast** (the user, 2026-10-02: "multi-shot feels very overpowered"): the
+    // lanes are 1.5 tiles wide and 15 degrees apart, so all three cross anything within 2.9 tiles
+    // of her, and a body that close took every arrow -- three plain shots for one, at the plain
+    // shot's pace. The fan pays off on a crowd, not on one body. ours, as the pierce is.
+    uint32_t struck[kVictims];
+    int struckCount = 0;
+    const auto struckAlready = [&](uint32_t id) {
+        for (int i = 0; i < struckCount; ++i) {
+            if (struck[i] == id) return true;
+        }
+        return false;
+    };
     for (int a = 0; a < row.arrows; ++a) {
         // Straight, then one either side, then the next pair out.
         const int step = (a + 1) / 2;
@@ -741,7 +753,7 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
         Struck lane[kVictims];
         int found = 0;
         for (const Body& one : bodies_) {
-            if (!one.alive() || !one.monster()) continue;
+            if (!one.alive() || !one.monster() || struckAlready(one.id)) continue;
             if (tables_->grid.safe(one.column(), one.row())) continue;
             const float dx = one.x - hero.x, dy = one.y - hero.y;
             const float along = dx * cx + dy * cy;
@@ -762,6 +774,7 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
                 say(What::Arrowless, hero, hero.archer);
                 return;
             }
+            if (struckCount < kVictims) struck[struckCount++] = lane[i].id;
             loose(hero, row, lane[i].id, force, false, lane[i].id == aimedAt);
         }
     }
