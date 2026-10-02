@@ -48,6 +48,9 @@ item's. No luck: nothing in `CItem::Convert` reads it on a ring.
 
 - The Pit's elf gets a **Ring of Ice with one socket** in place of the shield her bow cannot
   hold, and Evil Spirit for it (the user, 2026-10-01: "give ring with +1 sockets, and give only
-  evil spirits rune"). A ring's socket takes Evil Spirit alone, and only an elf may set it there.
-  Drops never roll sockets on jewellery.
+  evil spirits rune").
+- A ring's and a pendant's sockets take every armour rune -- Undying, Keen Eye, Bloodwell,
+  Frenzy, Renewal and Evil Spirit -- by any class, and no weapon's (the user, 2026-10-02: "allow
+  to put runes on jewels and pendants"). Jewellery drops roll sockets as weapons and armour do
+  (kSocketChance, kMoreSocketChance).
 - The knight's and the wizard's Pit shields have two sockets, for Frenzy and Evil Spirit.

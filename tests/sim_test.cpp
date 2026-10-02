@@ -4365,6 +4365,23 @@ void testRunes(const content::Tables& tables) {
                   "nor Stormcall by her");
         }
     }
+    // A ring and a pendant take every armour rune, Evil Spirit too, and no weapon's.
+    {
+        const int ring = tables.itemAt(13, 8), pendant = tables.itemAt(13, 12);
+        check(ring >= 0 && pendant >= 0, "a Ring of Ice and a Pendant of Lightning");
+        if (ring >= 0 && pendant >= 0) {
+            for (const sim::Power power : {sim::Power::Renewal, sim::Power::Spirits}) {
+                const sim::Held set = held(rune, 0, uint8_t(power));
+                check(sim::settable(tables, set, held(ring, 1, 0), sim::Kin::DarkWizard),
+                      "an armour rune goes in a socketed ring");
+                check(sim::settable(tables, set, held(pendant, 1, 0), sim::Kin::FairyElf),
+                      "and a socketed pendant");
+            }
+            check(!sim::settable(tables, carried, held(ring, 1, 0), dk),
+                  "but not Stormcall: it is a weapon's power");
+            check(!sim::settable(tables, carried, held(pendant, 1, 0), dk), "in either");
+        }
+    }
     // The Undying, every class's armour power: in armour or a shield by anyone, never a weapon;
     // x1.2 on maximum health each; and Devin's first clear pays it to every class.
     {
@@ -4455,15 +4472,15 @@ void testRunes(const content::Tables& tables) {
         check(serpentShield < 0 || sim::settable(tables, spirit, held(serpentShield, 1, 0), dk),
               "and in the knight's Serpent Shield");
         check(!sim::settable(tables, spirit, held(serpent, 1, 0), dk), "nor in a weapon");
-        // The Pit's ring (docs/jewellery.md): Evil Spirit alone, from any class.
+        // The Pit's ring (docs/jewellery.md): Evil Spirit and every armour rune, from any class.
         const int ice = tables.itemNamed("Ring01");
         check(ice >= 0, "the Ring of Ice is in the table");
         for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
             check(ice < 0 || sim::settable(tables, spirit, held(ice, 1, 0), kin),
                   "Evil Spirit goes in the socketed ring, whoever wears it");
-            check(ice < 0 || !sim::settable(tables, held(rune, 0, uint8_t(sim::Power::Frenzy)),
-                                            held(ice, 1, 0), kin),
-                  "and no other rune does");
+            check(ice < 0 || sim::settable(tables, held(rune, 0, uint8_t(sim::Power::Frenzy)),
+                                           held(ice, 1, 0), kin),
+                  "and Frenzy does too");
         }
         const sim::QuestRow& pit = sim::questAt(5);
         for (int kin = 0; kin < 3; ++kin) {

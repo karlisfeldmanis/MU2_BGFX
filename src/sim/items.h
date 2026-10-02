@@ -479,9 +479,11 @@ constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty
 const PowerRow* powerOf(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);
-// Who may carry sockets: the option-bearing set, weapons, armour and shields, and a ring, which
-// only the Pit's reward gives one (a drop's roll is under takesOptions).
-inline bool takesSockets(const content::ItemRow& row) { return takesOptions(row) || ring(row); }
+// Who may carry sockets: the option-bearing set, weapons, armour and shields, and the rings and
+// pendants, which roll them as a drop as the rest do and take only an armour's rune (settable).
+inline bool takesSockets(const content::ItemRow& row) {
+    return takesOptions(row) || jewellery(row);
+}
 constexpr int kMostSockets = 3;
 // A drop's chance of a socket, drawn after luck and the option, and then of each further one
 // (the user, 2026-09-28: "item drop with +socket is rare"; 2026-10-01: "incerase drop rate for

@@ -312,9 +312,10 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || (!power->everyone && power->kin != kin)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!takesSockets(row) || freeSocket(target) < 0) return false;
-    // A ring's sockets (the Pit's, the only ring there is with any) take Evil Spirit alone: the user,
-    // 2026-10-01, "give ring with +1 sockets, and give only evil spirits rune".
-    if (ring(row)) return power->power == Power::Spirits;
+    // A ring's and a pendant's sockets take every armour rune, Evil Spirit with them (the user,
+    // 2026-10-02: "allow to put runes on jewels and pendants"; it was Evil Spirit alone). A
+    // weapon's rune is read off the hands only, so it stays out.
+    if (jewellery(row)) return !power->weapon;
     if (power->shieldOnly) return row.shield();
     return power->weapon == (row.weapon() && !row.shield());
 }

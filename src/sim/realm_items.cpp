@@ -327,8 +327,7 @@ void Realm::rearm(Body& hero) {
         }
     }
     // The Rune of the Undying, in any socket of anything worn that takes an armour's rune: the
-    // armour and the shield, not a weapon. sim::kUndyingHealth each. A ring's socket holds only
-    // Evil Spirit (sim::settable).
+    // armour, the shield, the rings and the pendant, not a weapon. sim::kUndyingHealth each.
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || (row->weapon() && !row->shield())) continue;
@@ -344,7 +343,7 @@ void Realm::rearm(Body& hero) {
             }
             if (power->power == Power::Frenzy) ++e.frenzies;
             if (power->power == Power::Renewal) e.renewal += kRenewalShare;
-            if (power->power == Power::Spirits && (row->shield() || ring(*row))) ++e.spirits;
+            if (power->power == Power::Spirits && (row->shield() || jewellery(*row))) ++e.spirits;
         }
     }
     // The rings and the pendant: the largest resistance worn in each element (Max3), and every
@@ -952,14 +951,12 @@ void Realm::leave(const Body& dead, const Body& killer) {
         // Luck and the option (items.h). No skill: skills are orbs here. A ring or a pendant
         // takes the option alone, its life regeneration.
         if (jewellery(row)) rollOptions(one.what, 0);
-        if (takesOptions(row)) {
-            rollOptions(one.what, kLuckIn100);
-            // Sockets: rare, and each further one rarer. invention.
-            if (takesSockets(row) && runeDice_.nextBool(kSocketChance)) {
-                one.what.sockets = 1;
-                while (one.what.sockets < kMostSockets && runeDice_.nextBool(kMoreSocketChance)) {
-                    ++one.what.sockets;
-                }
+        if (takesOptions(row)) rollOptions(one.what, kLuckIn100);
+        // Sockets: rare, and each further one rarer, a ring's and a pendant's too. invention.
+        if (takesSockets(row) && runeDice_.nextBool(kSocketChance)) {
+            one.what.sockets = 1;
+            while (one.what.sockets < kMostSockets && runeDice_.nextBool(kMoreSocketChance)) {
+                ++one.what.sockets;
             }
         }
     } else if (dice_.nextInt(0, rate.moneyRate) < 10) {
