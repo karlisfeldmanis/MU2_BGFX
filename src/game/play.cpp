@@ -1556,8 +1556,8 @@ void Play::update(double seconds) {
             pets_.ride(float(seconds), hero->figure, realm_.hero().riding && realm_.hero().alive(),
                        action);
             // And its dust while it runs, rand_fps_check(2) at the horse +-32 on the ground
-            // (GOBoid.cpp:542-556): white BITMAP_SMOKE in Devias, the Bull Fighter's puff, and
-            // smoke02's brown everywhere else (fx/dust.h).
+            // (GOBoid.cpp:542-556): white in Devias, MU's BITMAP_SMOKE, and smoke02's brown
+            // everywhere else (fx/dust.h).
             if (galloping && realm_.hero().riding && ground_) {
                 const auto dustDice = [this]() {
                     dustSeed_ ^= dustSeed_ << 13;
@@ -1572,12 +1572,7 @@ void Play::update(double seconds) {
                     float at[3] = {feet[0] + float(int(dustDice() % 64) - 32) * 0.01f, feet[1],
                                    feet[2] + float(int(dustDice() % 64) - 32) * 0.01f};
                     at[1] = ground_->heightAt(at[0], at[2]);
-                    if (snowy_) {
-                        at[1] += float(int(dustDice() % 32) - 16) * 0.01f;
-                        snort_.puff(at);
-                    } else {
-                        dust_.puff(at, hero->figure.yaw());
-                    }
+                    dust_.puff(at, hero->figure.yaw(), snowy_);
                 }
             } else {
                 dustOwed_ = 0.0f;
