@@ -1,0 +1,304 @@
+{
+  "item": "Mace05",
+  "mu_name": "Crystal Morning Star",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:120 names group 2, index 4 the Crystal Morning Star against Item/Mace05.bmd (MODEL_CRYSTAL_MORNING_STAR).",
+  "why_this_one": "Drop level 66: the Lost Tower's Balrog (66) leaves it. The last unbuilt weapon in the Lost Tower's windows with the Light Saber (2026-10-02).",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:120. The 0.75 table.",
+    "call": "CreateWeapon(2, 4, 0, 19, 2, 3, true, \"Crystal Morning Star\", 66, 78, 107, 30, 72, 0, 0, 130, 0, 0, 0, 1, 1, 1)",
+    "group": 2,
+    "number": 4,
+    "drop_level": 66,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 78,
+    "maximum_damage": 107,
+    "attack_speed": 30,
+    "durability": 72,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "skill": 19
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "ZzzCharacter.cpp:356-368: a sword, axe or mace that is TwoHand (width 2) stands PLAYER_STOP_TWO_HAND_SWORD.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "mace": "mace.png",
+    "maceB": "maceB.png"
+  },
+  "sheet_from": "Data/Item/mace.OZJ (64x64: dark blue-black spiked metal with gold studs and a glyph) on 96 triangles, maceB.OZJ (32x32, the blue crystal) on 93.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As the Flail's and the Great Hammer's: steel's own 0.2 mirrors the ground.",
+  "glow": {
+    "maceB": {
+      "pulse": [
+        0.2,
+        0.8
+      ]
+    }
+  },
+  "glow_note": "`case MODEL_CRYSTAL_MORNING_STAR`: BlendMesh 1, BlendMeshLight = sin(WorldTime*0.004)*0.2+0.8 (ZzzObject.cpp:5256-5259) -- the whole crystal (mesh 1, maceB) is drawn added and breathes. Drawn added on its raw sheet (export_gltf.glow_material).",
+  "material_note": "The body (96 triangles) is mace's dark blue-black metal, studs and glyph in gold -- steel, the metal being most of it. The crystal's 93 triangles are the glow part and wear no material here; their island rows keep steel for the bake only.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 72,
+      "area": 4531.2,
+      "along": [
+        -41.7,
+        69.8
+      ],
+      "mu_uv": [
+        0.046,
+        0.005,
+        0.993,
+        0.637
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.992,
+        0.856
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 52,
+      "area": 3471.6,
+      "along": [
+        61.5,
+        95.4
+      ],
+      "mu_uv": [
+        -0.01,
+        0.063,
+        0.808,
+        0.994
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.73,
+        0.76
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 3,
+      "area": 123.9,
+      "along": [
+        86.8,
+        101.5
+      ],
+      "mu_uv": [
+        0.493,
+        0.649,
+        0.719,
+        0.731
+      ],
+      "bake_uv": [
+        0.009,
+        0.043,
+        0.116,
+        0.134
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 3,
+      "area": 123.9,
+      "along": [
+        86.8,
+        101.5
+      ],
+      "mu_uv": [
+        0.493,
+        0.649,
+        0.719,
+        0.731
+      ],
+      "bake_uv": [
+        0.146,
+        0.009,
+        0.255,
+        0.06
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 10,
+      "area": 657.1,
+      "along": [
+        66.7,
+        95.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.029,
+        0.455,
+        0.515
+      ],
+      "bake_uv": [
+        0.588,
+        0.008,
+        0.688,
+        0.666
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 10,
+      "area": 657.1,
+      "along": [
+        66.7,
+        95.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.029,
+        0.455,
+        0.515
+      ],
+      "bake_uv": [
+        0.461,
+        0.145,
+        0.648,
+        0.539
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 3,
+      "area": 605.8,
+      "along": [
+        65.2,
+        80.3
+      ],
+      "mu_uv": [
+        0.196,
+        0.607,
+        0.896,
+        0.928
+      ],
+      "bake_uv": [
+        0.126,
+        0.25,
+        0.496,
+        0.299
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 3,
+      "area": 605.8,
+      "along": [
+        65.2,
+        80.3
+      ],
+      "mu_uv": [
+        0.196,
+        0.607,
+        0.896,
+        0.928
+      ],
+      "bake_uv": [
+        0.008,
+        0.051,
+        0.083,
+        0.407
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 3,
+      "area": 1181.9,
+      "along": [
+        73.7,
+        85.7
+      ],
+      "mu_uv": [
+        0.196,
+        0.607,
+        0.896,
+        0.928
+      ],
+      "bake_uv": [
+        0.041,
+        0.008,
+        0.451,
+        0.19
+      ]
+    },
+    {
+      "island": 9,
+      "material": "steel",
+      "triangles": 3,
+      "area": 832.4,
+      "along": [
+        79.6,
+        95.1
+      ],
+      "mu_uv": [
+        0.196,
+        0.607,
+        0.896,
+        0.928
+      ],
+      "bake_uv": [
+        0.008,
+        0.305,
+        0.248,
+        0.541
+      ]
+    },
+    {
+      "island": 10,
+      "material": "steel",
+      "triangles": 3,
+      "area": 839.4,
+      "along": [
+        79.6,
+        95.1
+      ],
+      "mu_uv": [
+        0.196,
+        0.607,
+        0.896,
+        0.928
+      ],
+      "bake_uv": [
+        0.135,
+        0.008,
+        0.474,
+        0.237
+      ]
+    }
+  ]
+}

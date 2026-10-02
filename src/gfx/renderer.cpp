@@ -259,7 +259,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                              glowPass ? scrollOffset : material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
             // The albedo is bound even in the depth passes, because the cutout reads its alpha.
-            bgfx::setTexture(0, sAlbedo_, material.albedo);
+            bgfx::setTexture(0, sAlbedo_, material.albedo,
+                             glowPass && material.glowClamped()
+                                 ? BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+                                 : UINT32_MAX);
             if (bindMaterial) {
                 bgfx::setTexture(1, sNormal_, material.normal);
                 bgfx::setTexture(2, sOrm_, material.orm);

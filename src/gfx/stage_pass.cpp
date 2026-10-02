@@ -89,7 +89,10 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
                 // MU's BlendMeshLight at the middle of its breathing: sin() * a + b, at sin 0.
                 const float glow[4] = {material.cutout, 0.0f, material.pulse[1], 0.0f};
                 bgfx::setUniform(uMaterial_, glow);
-                bgfx::setTexture(0, sAlbedo_, material.albedo);
+                bgfx::setTexture(0, sAlbedo_, material.albedo,
+                                 material.glowClamped()
+                                     ? BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+                                     : UINT32_MAX);
                 if (skinned) bgfx::setTexture(12, sBones_, palette_);
                 bgfx::setVertexBuffer(0, mesh.vertexBuffer());
                 bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);

@@ -104,6 +104,12 @@ struct Material {
     // An item's glow rather than a lamp's: drawn at MU's BlendMeshLight alone, without the
     // world sheet's glow_strength, which is tuned for fires and windows (2.0 in Lorencia).
     bool itemGlow = false;
+    // An item's glow whose sheet never moves is sampled clamped, as MU loads every model
+    // sheet (LoadBitmap's GL_CLAMP_TO_EDGE, ZzzTexture.h:15). Tiled, the Light Saber's
+    // beam, black at its tip and green at its hilt end, bled the hilt's green round onto the
+    // tip, and its three crossed quads drew a star above the blade. A sliding or jumping
+    // sheet keeps tiling: it is the wrap that moves it.
+    bool glowClamped() const { return itemGlow && scrollPerSecond == 0.0f && jitter == 0.0f; }
     // A glow that casts the sun's shadow all the same, though it is drawn only in the glow
     // pass, at this strength: 0 none, 1 full, between dithered by fs_shadow as a fading figure
     // is. Ours, on the Ice Monster alone: MU draws it no shadow (ZzzCharacter.cpp:8668), and
