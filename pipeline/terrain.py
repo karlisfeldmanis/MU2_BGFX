@@ -184,7 +184,12 @@ GRASS_BY_MAP = {
 #: their sides fall 1.7 m to the void's corners: `rim` takes a corner touching the void to the
 #: walkway's level, and the abyss takes everything below it to black over 1.7 m, so the sides
 #: melt into the dark as MU's do (the user's MU shot of floor 7's causeway, 2026-10-01).
+#: The Dungeon's pits: its worms and tentacles stand 1.5 to 8.5 m under the floor with their
+#: crowns near it, and the default 1.5 m start left most of them fully lit ('tenticles in
+#: dungeon still is very good lightened when they are under the ground', 2026-10-02). From
+#: the floor to black 2 m down, so the crowns at the lip keep their bronze and the bodies sink.
 VOID_BY_MAP = {
+    1: {"start": 0.0, "depth": 2.0},
     4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
 }
 #: Blood Castle tried the tower's (the user, 2026-10-02: 'we need to add some nice void gradients

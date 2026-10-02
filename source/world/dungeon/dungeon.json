@@ -20,6 +20,10 @@
   "8": "TileRock02"
  },
  "grass_slots": [],
+ "void": {
+  "start": 0.0,
+  "depth": 2.0
+ },
  "water_flow": {
   "sources": [
    [
