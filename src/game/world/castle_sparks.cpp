@@ -17,6 +17,9 @@ constexpr float kTurnRate = 0.1f / kFrame;  // 0.1 rad a frame
 constexpr float kShrink = 0.002f / kFrame;  // Scale a second
 constexpr float kSheetMetres = 0.64f;       // a 64-texel sheet at Scale 1
 constexpr size_t kMost = 40;
+// Ours: the sparks and the emitters' flares at 0.4 of MU's size (the user, 2026-10-02: 'thos
+// flying sparcles has to be much smaller').
+constexpr float kSparkSize = 0.4f;
 // The emitters: a puff about one frame in eight each (rand_fps_check(2) on a four-tick
 // cadence), a flare with every other.
 constexpr float kPuffEvery = 8.0f * kFrame;
@@ -120,7 +123,7 @@ void CastleSparks::update(float seconds, const float hero[3]) {
                 flare.flare = true;
                 flare.rise = (1.0f + unit() * 5.0f) * 0.25f;
                 flare.life = kFlareLife;
-                flare.size = 0.5f * kSheetMetres * 0.19f;
+                flare.size = 0.5f * kSheetMetres * 0.19f * kSparkSize;
                 puffs_.push_back(flare);
             }
         }
@@ -176,7 +179,7 @@ void CastleSparks::gather(gfx::Effects& effects) const {
         sprite.position[0] = one.start[0] + std::sin(count) * kTurnRadius;
         sprite.position[2] = one.start[2] + std::cos(count) * kTurnRadius;
         sprite.position[1] = one.start[1] + one.height;
-        sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * one.scale;
+        sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * one.scale * kSparkSize;
         for (int k = 0; k < 3; ++k) sprite.colour[k] = 1.0f;
         sprite.colour[3] = 1.0f;
         sprite.sheet = sheet_;
