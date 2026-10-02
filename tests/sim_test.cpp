@@ -1247,14 +1247,14 @@ void testCastLock(const content::Tables& tables) {
                   flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.0f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
-        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 2,
+        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 3,
               "and its row is past the elf's, so no save's learned bit moves");
         const sim::SkillRow& spirit = *sim::skillNumbered(sim::skill::kEvilSpirit);
         check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 90 &&
                   spirit.built && spirit.kin == sim::Kin::DarkWizard,
               "Evil Spirit is a no-cooldown spell of forty-five damage and ninety mana");
-        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 1,
-              "and its row is the table's last");
+        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 2,
+              "and its row is past Flame's");
         const int32_t evilScroll = tables.itemAt(15, 8);
         check(evilScroll >= 0 && tables.items[size_t(evilScroll)].teaches == sim::skill::kEvilSpirit &&
                   tables.items[size_t(evilScroll)].teachesEnergy == 220,
@@ -1263,6 +1263,71 @@ void testCastLock(const content::Tables& tables) {
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kFlame &&
                   tables.items[size_t(scroll)].teachesEnergy == 160,
               "the Scroll of Flame teaches skill 5 at a hundred and sixty energy");
+
+        // Hellfire: the ground round him on fire, every monster within four tiles struck once
+        // with his wizardry band (WebZen's SkillHellFire), said once a cast for the circle.
+        const sim::SkillRow& hell = *sim::skillNumbered(sim::skill::kHellfire);
+        check(hell.wizardry && hell.primary() && hell.damage == 120 && hell.mana == 160 &&
+                  hell.spread == sim::Spread::Ring && hell.reach == 4.0f && hell.clip == 154 &&
+                  hell.kin == sim::Kin::DarkWizard,
+              "Hellfire is a no-cooldown ring of a hundred and twenty damage and 160 mana");
+        check(sim::skillIndexOf(sim::skill::kHellfire) == sim::kSkills - 1,
+              "and its row is the table's last");
+        const int32_t hellScroll = tables.itemAt(15, 9);
+        check(hellScroll >= 0 && tables.items[size_t(hellScroll)].teaches == sim::skill::kHellfire &&
+                  tables.items[size_t(hellScroll)].teachesEnergy == 260,
+              "the Scroll of Hellfire teaches skill 10 at two hundred and sixty energy");
+        {
+            sim::Realm burner;
+            check(burner.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 100),
+                  "a wizard raises to burn");
+            check(burner.learn(sim::skill::kHellfire), "who knows Hellfire");
+            int circles = 0, struck = 0, outside = 0, mostOnOne = 0, offLanding = 0;
+            int64_t swungAt = -1;
+            // The landing: a third of the clip, key 6 of 18, where his hips come down.
+            const int32_t clip = sim::castTicks(tables, sim::Kin::DarkWizard,
+                                                burner.hero().points.agility, nullptr, nullptr, hell);
+            const int64_t landing = std::lround(float(clip) * 6.0f / 18.0f);
+            uint32_t fighting = 0;
+            for (int tick = 0; tick < 4000 && burner.hero().alive(); ++tick) {
+                const uint32_t nearest = nearestTo(burner);
+                if (nearest != 0 && nearest != fighting) {
+                    fighting = nearest;
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    request.skill = sim::skill::kHellfire;
+                    burner.ask(request);
+                }
+                burner.step();
+                int onThis = 0;
+                for (const sim::Happening& one : burner.happenings()) {
+                    if (one.who != burner.hero().id) continue;
+                    if (one.what == sim::What::Swung && one.a == sim::skill::kHellfire) {
+                        swungAt = one.tick;
+                    }
+                    if (one.what == sim::What::Loosed && one.a == sim::skill::kHellfire) {
+                        ++circles;
+                        if (swungAt < 0 || int64_t(one.tick) - swungAt != landing) ++offLanding;
+                    }
+                    if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                    const sim::Body* at = burner.find(one.whom);
+                    if (at == nullptr) continue;
+                    ++struck;
+                    ++onThis;
+                    const float dx = at->x - burner.hero().x, dy = at->y - burner.hero().y;
+                    if (std::max(std::fabs(dx), std::fabs(dy)) > 4.0f) ++outside;
+                }
+                mostOnOne = std::max(mostOnOne, onThis);
+            }
+            std::printf("  hellfire: %d circles, %d blows, most on one tick %d\n", circles, struck,
+                        mostOnOne);
+            check(circles > 5, "he casts it");
+            check(struck >= circles, "and every circle strikes");
+            checkEqual(outside, 0, "only within four tiles of him");
+            std::printf("  hellfire: a %d-tick clip, let go %lld in\n", clip, (long long)landing);
+            checkEqual(offLanding, 0, "and the circle is his landing, a third of the clip in");
+        }
 
         sim::Realm wiz;
         check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
@@ -5212,7 +5277,6 @@ void testDungeonRunes(const content::Tables& tables) {
     // Keen Eye: exactly its tenth on the chance, and about a tenth more crits in the fight.
     check(std::fabs(keen.critChance - bare.critChance - sim::kKeenEyeCritical) < 1e-9,
           "Keen Eye adds a tenth to his critical chance");
-
     check(bare.blows > 500 && keen.blows > 500, "both knights fight long enough to count");
     const double more = rate(keen.crits, keen.blows) - rate(bare.crits, bare.blows);
     check(more > 0.05 && more < 0.15, "and about a tenth more of his blows are critical");

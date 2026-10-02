@@ -170,6 +170,7 @@ add_executable(mu2
   src/game/fx/spirits.cpp
   src/game/fx/wheel.cpp
   src/game/fx/fury.cpp
+  src/game/fx/hellfire.cpp
   src/game/fx/bolt.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp

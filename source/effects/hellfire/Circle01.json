@@ -1,0 +1,16 @@
+{
+  "item": "Circle01",
+  "mu_name_from": "Data/Skill/Circle01.bmd, loaded as MODEL_CIRCLE at ZzzOpenData.cpp:4163.",
+  "kind": "skill",
+  "why_this_one": "Hellfire's sigil (AT_SKILL_HELL_FIRE): made at his feet as the spell is let go (ZzzCharacter.cpp:4424-4435), born at ZzzEffect.cpp:2137-2164, moved by Move_MODEL_CIRCLE (MoveHandlers.cpp:3757-3828). game/fx/hellfire.h draws it.",
+  "mesh": "Circle01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Circle01.bmd, from MuMain: a flat disc four hundred units across the radius, forty-one over his feet.",
+  "parts": [
+    {
+      "group": "magic_a01",
+      "sheet": "magic_a01.png",
+      "blend": "additive",
+      "note": "MODEL_CIRCLE subtype 0: LifeTime 45, BlendMesh 0, BlendMeshLight LifeTime * 0.1 -- whole until its last ten frames, then fading. magic_a01.OZJ is a quarter of the star; the disc's UVs mirror it into the whole."
+    }
+  ]
+}

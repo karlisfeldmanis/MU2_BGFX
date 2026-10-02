@@ -471,8 +471,15 @@ void Realm::spiritStrike(Body& hero, const SpiritBlow& blow) {
 void Realm::begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t overTicks) {
     // Half the clip that is being played -- the weapon's swing, or the skill's own, which is
     // longer. `Showing::kLandingPoint` is the same 0.5 on the drawing's side and the two must
-    // not drift apart: this is the number that decides when the damage is real.
-    hero.blowAt = tick_ + std::max<int64_t>(1, overTicks / 2);
+    // not drift apart: this is the number that decides when the damage is real. A skill whose
+    // row lets it go elsewhere in its clip -- Hellfire on its landing -- is let go there; the
+    // half stays the integer half, so nothing else moves.
+    const SkillRow* row = skillNumbered(skill);
+    const int64_t release =
+        row != nullptr && row->release != 0.5f
+            ? int64_t(std::lround(float(overTicks) * row->release))
+            : int64_t(overTicks / 2);
+    hero.blowAt = tick_ + std::max<int64_t>(1, release);
     hero.blowTarget = at;
     hero.blowForce = force;
     hero.blowSkill = skill;

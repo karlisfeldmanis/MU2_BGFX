@@ -1,0 +1,16 @@
+{
+  "item": "Circle02",
+  "mu_name_from": "Data/Skill/Circle02.bmd, loaded as MODEL_CIRCLE_LIGHT at ZzzOpenData.cpp:4164.",
+  "kind": "skill",
+  "why_this_one": "Hellfire's wall of fire (AT_SKILL_HELL_FIRE): made beside the sigil (ZzzCharacter.cpp:4424-4435), born at ZzzEffect.cpp:2165-2185, moved by Move_MODEL_CIRCLE_LIGHT (MoveHandlers.cpp:3830-3870). game/fx/hellfire.h draws it.",
+  "mesh": "Circle02.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Circle02.bmd, from MuMain: a ring of fire about 320 units out and from 41 to 456 units up.",
+  "parts": [
+    {
+      "group": "magic_a02",
+      "sheet": "magic_a02.png",
+      "blend": "additive",
+      "note": "MODEL_CIRCLE_LIGHT subtype 0: LifeTime 40, BlendMesh 0, light (40 - LifeTime) * 0.1 up to ten then LifeTime * 0.1, the sheet scrolled -LifeTime * 0.01, EarthQuake (rand() % 6 - 6) * 0.1 every frame, a MODEL_STONE within 300 units on one frame in four, an orange terrain light (1, 0.8, 0.2) four tiles round."
+    }
+  ]
+}

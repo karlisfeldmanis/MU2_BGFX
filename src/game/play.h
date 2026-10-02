@@ -38,6 +38,7 @@
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
+#include "game/fx/hellfire.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -460,6 +461,8 @@ public:
     Wheel& wheel() { return wheel_; }
     // The knight's Rageful Blow: his weapon thrown down and the ground broken. fx/fury.h.
     Fury& fury() { return fury_; }
+    // The wizard's Hellfire: the sigil and the wall of fire at his feet. fx/hellfire.h.
+    Hellfire& hellfire() { return hellfire_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -848,6 +851,7 @@ private:
     Spirits spirits_;
     Wheel wheel_;
     Fury fury_;
+    Hellfire hellfire_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;

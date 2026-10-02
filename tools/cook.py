@@ -2136,11 +2136,13 @@ def cook_tables(world, out_dir):
     # 13 keys at 0.25 -- the 2.08 s the drawing plays. And 65, `PLAYER_ATTACK_SKILL_WHEEL`,
     # Twisting Slash's own spin (SkillCast.cpp:306-312), 13 keys at 0.24. And 66,
     # `PLAYER_ATTACK_SKILL_FURY_STRIKE`, Rageful Blow's own (ClassAttack.cpp:986), 11 keys at 0.38.
+    # And 154, `PLAYER_SKILL_HELL`, Hellfire's own (ClassAttack.cpp:1202-1210), 18 keys at 0.5 --
+    # player.muc's 154, one before the enum's (source/players/rig/actions.json).
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     unassigned = {"183": 0.25}
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 147, 148, 183, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 147, 148, 154, 183, 187]:
         name = str(action)
         speed = speeds.get(name, unassigned.get(name))
         if name not in keys or speed is None:
@@ -3111,6 +3113,14 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
     # then shipped in the data.
     player_holds = {int(slot) for slot, label in index.get("actions", {}).items()
                     if label.startswith("Die")}
+    # And every action actions.json marks `hold_at_end`, which its export already writes without
+    # the closing key: Hellfire's leap (154), whose clock otherwise wrapped while it faded out
+    # into the stance and played the take-off again (the user, 2026-10-02: "after he jump, land
+    # he has to not jump again"), and the short recoil the Skeleton Warrior flinches with (230).
+    with open(os.path.join(ROOT, "source", "players", "rig", "actions.json")) as handle:
+        marked = json.load(handle).get("actions", {})
+    player_holds |= {int(slot) for slot, entry in marked.items()
+                     if isinstance(entry, dict) and entry.get("hold_at_end")}
     travel_of = {}
     for one in monsters:
         travel_of.setdefault(one["mesh"], one.get("action_travel", {}))

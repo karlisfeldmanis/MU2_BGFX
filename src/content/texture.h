@@ -42,6 +42,11 @@ enum class TextureRole {
     // The note in downsample() named this exact failure and said there was no cutout content
     // to suffer it. The grass is that content. docs/grass.md.
     Cutout,
+    // An effect's sheet laid once across its model and never tiled -- Hellfire's sigil, whose
+    // quarter star runs to the sheet's edge. sRGB and decoded like an albedo, but clamped, so the
+    // far edge's bright lines do not bleed round the model's rim as a square outline (the user,
+    // 2026-10-02: "i see sqaure outline").
+    Decal,
 };
 
 // Keeps one handle per path, so a texture two materials share is loaded once.

@@ -1575,6 +1575,12 @@
       ],
       "from": "SOUND_HELLFIRE, played with the Balrog's skill blow's circle (ZzzCharacter.cpp:1974-1981)."
     },
+    "spell_hellfire": {
+      "files": [
+        "sHellFire.wav"
+      ],
+      "from": "SOUND_HELLFIRE, played as the wizard's Hellfire lays its MODEL_CIRCLE and MODEL_CIRCLE_LIGHT at his feet (ZzzCharacter.cpp:4424-4435)."
+    },
     "rage_blow_1": {
       "files": [
         "eRageBlow_1.wav"

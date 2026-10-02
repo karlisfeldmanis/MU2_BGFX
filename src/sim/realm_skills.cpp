@@ -410,13 +410,21 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
 void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
     uint32_t victims[kVictims];
     const int found = gather(hero, row, victims, kVictims);
+    // A spell round him -- Hellfire -- rolls his wizardry band off its row, which also lays its
+    // element runes (strikeAt), and is said as let go so the drawing lights its circle.
+    const bool spell = row.wizardry;
+    if (spell) say(What::Loosed, hero, row.number, 0, 0, 0);
     // Cyclone's and Twisting Slash's wind, under his element runes (realm_tuning.h).
-    force *= elementForce(hero, skillElement(row.number));
+    if (!spell) force *= elementForce(hero, skillElement(row.number));
     for (int i = 0; i < found; ++i) {
         // Looked up again rather than held: a body killed earlier in this same sweep may have
         // been left where it fell, and `strikeAt` refuses the dead itself. The vector cannot
         // grow inside the loop -- nothing here spawns -- but ids are what survive one that does.
-        if (Body* victim = body(victims[i])) strikeAt(hero, *victim, force);
+        // A spell's blows are shown on their own tick, with its circle, as a flight's are --
+        // not at the drawing's half of the swing (`thrown`).
+        if (Body* victim = body(victims[i])) {
+            strikeAt(hero, *victim, force, spell ? &row : nullptr, spell);
+        }
     }
 }
 

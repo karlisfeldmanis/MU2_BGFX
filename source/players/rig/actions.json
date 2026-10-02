@@ -767,14 +767,18 @@
       "play_speed": 0.4
     },
     "154": {
-      "enum": "PLAYER_SKILL_INFERNO",
-      "name": "Skill inferno",
-      "play_speed": 0.6
-    },
-    "155": {
       "enum": "PLAYER_SKILL_HELL",
       "name": "Skill hell",
-      "play_speed": 0.5
+      "play_speed": 0.5,
+      "hold_at_end": true,
+      "hold_note": "Ours: MU loops it, and the leap is its first keys -- faded out into the stance, its clock wrapped and he took off again (the user, 2026-10-02). Held, it ends crouched on the landing and the stance takes it from there.",
+      "label_note": "One late here, as at the emotes (Salute is 218): MuMain's enum says 154 is PLAYER_SKILL_INFERNO and 155 PLAYER_SKILL_HELL, but on the bench (mu2 --figure DarkWizardBare --clip N, 2026-10-02) 154 is the wizard leaping high and landing with a hand driven into the ground -- Hellfire -- and 155 a wide squat with both arms held forward, a mounted pose. 0.5 is PLAYER_SKILL_HELL's PlaySpeed (ZzzCharacter.cpp:945). 153 and below are not checked."
+    },
+    "155": {
+      "enum": "PLAYER_RIDE_SKILL",
+      "name": "Ride skill",
+      "play_speed": 0.3,
+      "label_note": "See 154: this is the mounted pose, so the enum one on; 0.3 is PLAYER_RIDE_SKILL's PlaySpeed (ZzzCharacter.cpp:946). 156 on is not checked."
     },
     "156": {
       "enum": "PLAYER_RIDE_SKILL",

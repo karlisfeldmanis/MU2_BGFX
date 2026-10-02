@@ -35,7 +35,7 @@ bgfx::TextureHandle solid(uint32_t abgr) {
 
 bool isSrgb(TextureRole role) {
     return role == TextureRole::Albedo || role == TextureRole::Emissive ||
-           role == TextureRole::Cutout;
+           role == TextureRole::Cutout || role == TextureRole::Decal;
 }
 
 // Whether the bytes are sRGB, which is what the mip chain is averaged by -- a wider question
@@ -249,6 +249,9 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
     } else if (role == TextureRole::Interface) {
         // Face on and never tiled: a window's art is clamped, so a plate's edge does not
         // bleed the other edge into it, and anisotropy has no angle to work at.
+        flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+    } else if (role == TextureRole::Decal) {
+        // Never tiled either, so clamped for the same reason.
         flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
     } else if (anisotropy_ > 1) {
         // MU's camera looks down a town at a shallow angle, which is what anisotropy is for:

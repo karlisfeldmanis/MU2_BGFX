@@ -680,6 +680,10 @@ void Play::update(double seconds) {
                         // A curtain standing on the ground, under where every spell leaves.
                         const float ground[3] = {from[0], feet, from[2]};
                         wave_.cast(ground, to);
+                    } else if (happening.a == sim::skill::kHellfire) {
+                        // The sigil and the wall at his feet, turned to him (fx/hellfire.h).
+                        const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
+                        hellfire_.cast(ground, caster->yaw);
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -1298,11 +1302,16 @@ void Play::update(double seconds) {
         },
         [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); },
         [&](const float* at) { meteor_.blast(at, 0.5f); });
+    // Hellfire's wall, and the stones it kicks up -- the meteor's (fx/hellfire.h).
+    hellfire_.update(float(seconds),
+                     [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
-    // sliding in on its run, and the fire read as a man on fire running.
+    // sliding in on its run, and the fire read as a man on fire running. And while he casts
+    // Hellfire: MU's ten BITMAP_FIREs on his bones a frame (ZzzCharacter.cpp:5751-5758).
     if (const sim::Body& hero = realm_.hero();
-        heroCasting_ == sim::skill::kMeteorite && realm_.casting() && ground_) {
+        (heroCasting_ == sim::skill::kMeteorite || heroCasting_ == sim::skill::kHellfire) &&
+        realm_.casting() && ground_) {
         if (const Drawn* drawn = drawnOf(hero.id);
             drawn != nullptr && drawn->placed && drawn->casting > 0.0f) {
             const FigureBody* look = drawn->figure.body();

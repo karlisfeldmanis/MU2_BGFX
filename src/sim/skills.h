@@ -79,6 +79,9 @@ constexpr int32_t kFlame = 5;
 // twenty energy: spirits round him, striking most of what is within ten tiles once. The shield's Evil Spirit rune lets the
 // same go off a miss (sim/items.h kSpiritChance).
 constexpr int32_t kEvilSpirit = 9;
+// `AT_SKILL_HELL_FIRE`, off the Scroll of Hellfire (group 15 number 9) at two hundred and sixty
+// energy: the ground on fire round him, striking every monster within four tiles once.
+constexpr int32_t kHellfire = 10;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
 // Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
 // "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
@@ -333,6 +336,12 @@ struct SkillRow {
     // centre -- whoever stands in it then, not whoever stood in it when it was lit. 0 for none.
     int32_t burns = 0;
     float burnTiles = 0.0f;
+    // ---- Hellfire's, appended after Flame's -----------------------------------------------
+    // **Where in its clip it is let go**, as a share of the clip: half for everything else --
+    // the arm at the bottom of the swing, `Showing::kLandingPoint` -- and Hellfire's landing,
+    // the key his hips come down on (the user, 2026-10-02: "when char lands than there is
+    // hellfire").
+    float release = 0.5f;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -351,12 +360,12 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame and Evil Spirit, on the end past
-// the elf's. Also
+// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit and Hellfire, on the
+// end past the elf's. Thirty-one of the learned mask's thirty-two bits. Also
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 30;
+constexpr int kSkills = 31;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

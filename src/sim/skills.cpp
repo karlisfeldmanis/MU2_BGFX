@@ -24,6 +24,9 @@ namespace {
 //   * `forcePerStrength` is 1/K_dmg: 1/1000 on the anchor, gentler on the jab, steeper on the
 //     two-handed sweep.
 //   * `coolTicks` is at 20 Hz: 60 is three seconds.
+// Hellfire's landing key, 6 of 18 (see its row).
+constexpr float kHellfireLanding = 6.0f / 18.0f;
+
 constexpr SkillRow kRows[kSkills] = {
     // Defense 18: a buff for 30 mana (`DefenseEffectInitializer`). Five minutes of it, where
     // 0.75 gives four seconds: the user's call of 2026-09-25, ours and not MU's. What it takes
@@ -482,6 +485,36 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 147, .sound = "spell_evil", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 45, .clipOther = 148,
      .flies = 1000.0f},
+
+    // ---- Hellfire 10, the wizard's, after Evil Spirit for the same reason -----------------------
+    //
+    // 0.75's row: a hundred and twenty damage, a hundred and sixty mana, two hundred and sixty
+    // energy, fire, an area that strikes by itself (`Version075/SkillsInitializer.cs:53`), taught
+    // by the Scroll of Hellfire (Book10). What it strikes is WebZen's SkillHellFire (1.00.93
+    // ObjUseSkill.cpp): every monster within four tiles of him (`gObjCalDistance < 4`), once --
+    // `Spread::Ring` at `reach` 4, every body `gather` finds round him, each taking his wizardry
+    // band. WebZen holds each blow 200 ms (gObjAddAttackProcMsgSendDelay); here it lands on the
+    // let-go with the circle. Its clip is MU's own PLAYER_SKILL_HELL (0.5: ClassAttack.cpp:
+    // 1202-1210, ZzzCharacter.cpp:945), the leap and the landing with a hand on the ground --
+    // action 154 in player.muc, one before the enum's 155 (source/players/rig/actions.json); the
+    // landing is half the clip, where the realm lets it go. Its circle and sHellFire are
+    // game/fx/hellfire.h.
+    //
+    // **No cooldown**, a standard spell as Evil Spirit is: a press is one leap, a held key goes
+    // on. (A two-second wait was tried on 2026-10-02 for "its like he is jumping twice" and
+    // taken out the same day: the second leap was the arena's own hand, which fights with what
+    // --arena-learn taught.) The force past 0.75's one is ours.
+    //
+    // **Let go on the landing**, not at half the clip (the user, 2026-10-02: "animation has to be
+    // in sync with spell. when char lands than there is hellfire"): the clip's hips are over three
+    // metres up from key 1 to key 5 and down at key 6 of 18 (source/players/rig/player.rig.json,
+    // action 154's Bip01 track), so the circle and every blow are a third of the way in.
+    {.number = skill::kHellfire, .name = "Hellfire", .mana = 160, .reach = 4.0f, .force = 1.0f,
+     .spread = Spread::Ring,
+     .tells = "Sets the ground round him on fire, striking every monster within four tiles.",
+     .clip = 154, .sound = "spell_hellfire", .built = true, .families = arms::kNone,
+     .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 120,
+     .flies = 1000.0f, .release = kHellfireLanding},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
