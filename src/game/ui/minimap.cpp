@@ -244,9 +244,10 @@ uint32_t toneOf(Minimap::Glyph glyph) {
     using Glyph = Minimap::Glyph;
     switch (glyph) {
         case Glyph::Hero: return kHeroGreen;
-        case Glyph::Offer: return style::kBoneHi;
-        // A quest ready to hand in is the map's one gold, the user's (2026-10-01): "lets color
-        // finished quests more vissible gold color". Bone sank into the lit ground.
+        // A quest ready to hand in is gold, the user's (2026-10-01): "lets color finished quests
+        // more vissible gold color". Bone sank into the lit ground. A quest not yet taken wears
+        // the same gold (the user, 2026-10-02); the sign, "!" or hook, tells them apart.
+        case Glyph::Offer:
         case Glyph::HandIn: return kHandInGold;
         // The one colour on the map, Sanctuary's one accent: what the quest wants killed (the
         // user, 2026-09-29, "quest monsters as red circles").
