@@ -5661,6 +5661,7 @@ int main() {
     testPerches(tables);
     testVault(tables);
     testDeviasFolk();
+    testTowerKeeper();
     testCharon();
     testRefine(tables);
     testOptions(tables);
@@ -5671,7 +5672,6 @@ int main() {
     testWardens(tables);
     testArcherHolds(tables);
     testStrollers(tables);
-    testTowerKeeper();
     testArchery(tables);
     testElfSkills(tables);
     testSummons(tables);
