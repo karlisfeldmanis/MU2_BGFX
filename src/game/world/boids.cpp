@@ -223,9 +223,12 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
                 const float perTile = std::max(ground.metresPerTile(), 0.001f);
                 const int c = int(std::floor(calls[i].at[0] / perTile));
                 const int r = int(std::floor(-calls[i].at[2] / perTile));
-                if (c < 0 || r < 0 || c >= ground.size() || r >= ground.size() ||
-                    (ground.attributesAt(c, r) & content::kSafeZone) == 0)
-                    continue;
+                // Off the court a quarter as often, one call in four kept -- ours: MU caws only
+                // over the court (the user, 2026-10-02, of the crows over the bridge: 'lets do it
+                // i like it').
+                const bool safe = c >= 0 && r >= 0 && c < ground.size() && r < ground.size() &&
+                                  (ground.attributesAt(c, r) & content::kSafeZone) != 0;
+                if (!safe && (offCourt_++ & 3) != 0) continue;
             }
             if (event >= 0) {
                 sound_->playAt(event, calls[i].at[0], calls[i].at[1], calls[i].at[2]);

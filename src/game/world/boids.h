@@ -148,6 +148,7 @@ private:
     std::unique_ptr<ClipLibrary> library_;
     std::unique_ptr<FigureBody> body_;
     bool crowEyes_ = false;  // Blood Castle's crows' two red eyes (glow())
+    uint32_t offCourt_ = 0;  // their calls off the court, one in four of which is kept
     // One per bird, by the same index Flight keeps them in.
     Figure figures_[Flight::kMaxBirds];
     int paletteRows_[Flight::kMaxBirds] = {};
