@@ -495,6 +495,49 @@ bool Play::rearrange(int from, int to) {
     return moved;
 }
 
+bool Play::putIn(int bagSlot, int cell) {
+    const int at = realm_.putIn(bagSlot, cell);
+    core::logf("window: machine takes slot %d -> cell %d %s", bagSlot, at,
+               at >= 0 ? "taken" : "refused");
+    if (at >= 0) mixAnswer_ = -1;
+    return at >= 0;
+}
+
+bool Play::takeOut(int cell, int bagSlot) {
+    const int at = realm_.takeOut(cell, bagSlot);
+    core::logf("window: machine gives cell %d -> slot %d %s", cell, at,
+               at >= 0 ? "taken" : "refused");
+    return at >= 0;
+}
+
+bool Play::shuffle(int from, int to) {
+    const bool moved = realm_.shuffle(from, to);
+    core::logf("window: machine move %d -> %d %s", from, to, moved ? "taken" : "refused");
+    return moved;
+}
+
+bool Play::mix() {
+    const sim::Judged judged = realm_.judged();
+    if (!realm_.mix()) {
+        core::logf("window: mix refused (%s)", realm_.refusal().c_str());
+        return false;
+    }
+    // The realm said Mixed last; its b is whether it made.
+    const auto& said = realm_.happenings();
+    const bool made = !said.empty() && said.back().what == sim::What::Mixed && said.back().b == 1;
+    mixAnswer_ = made ? 1 : 0;
+    mixRecipe_ = judged.recipe;
+    sound_.play(heard_.mix);
+    if (made) {
+        if (const Drawn* hero = drawnOf(realm_.hero().id)) {
+            emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
+        }
+    } else {
+        sound_.play(heard_.mixBreak);
+    }
+    return true;
+}
+
 bool Play::depositZen(int64_t zen) {
     const bool moved = realm_.depositZen(zen);
     core::logf("window: vault takes %lld Zen %s (%lld carried, %lld kept)", (long long)zen,

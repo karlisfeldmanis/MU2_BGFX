@@ -311,9 +311,9 @@ int pour(const content::Tables& tables, Grid& grid, int first, int last, Held wh
 
 // ---- refining with jewels (docs/refining.md) ----------------------------------------------
 //
-// The highest plus anything is carried at until the Chaos Machine exists: the Soul stops at +9
-// on its own, and a drop must not hand out what nothing can make. MU2's Refine.Cap; eleven,
-// Version075's MaximumItemLevel, once the machine's +10 and +11 are built.
+// The highest plus a jewel or a drop gives: the Soul stops at +9 on its own, and a drop must not
+// hand out what only the machine makes. MU2's Refine.Cap. The Chaos Machine's +10 and +11 go
+// past it to kMachineCap, Version075's MaximumItemLevel (sim/machine.h).
 constexpr int kRefineCap = 9;
 
 // Which of the two refining jewels a row is: the Bless (14, 13) or the Soul (14, 14). The

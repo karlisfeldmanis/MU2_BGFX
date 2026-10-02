@@ -38,6 +38,7 @@
 #include "sim/skills.h"
 #include "sim/travel.h"
 #include "sim/vault.h"
+#include "sim/machine.h"
 
 namespace mu::sim {
 
@@ -117,6 +118,8 @@ enum class What : uint8_t {
                // trap's index in traps(), c: his health left. `who` is the hero.
     Spirits,   // his shield's Evil Spirit let go round him (sim/items.h kSpiritChance): a: the
                // ticks until its last pulse, whom: the monster whose miss let it go
+    Mixed,     // the Chaos Machine ran (sim/machine.h): a: the sim::Recipe, b: 1 made, 0 failed,
+               // c: the rate it ran at
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -727,6 +730,35 @@ public:
     void closeVault() { banking_ = -1; }
     const Vault& vault() const { return vault_; }
 
+    // ---- the Chaos Machine (sim/machine.h) -------------------------------------------------
+    // The Chaos Goblin's box, opened by a Talk order arriving within `kCounter` of him and
+    // closed by any other order, as the vault is. The townsperson's index, or -1.
+    //
+    // Closing it puts what is in it back in the bag, as MU's machine never keeps anything
+    // (OpenMU's temporary storage goes back on close). What will not fit stays in the box and
+    // is there the next time he opens it, and the save keeps it.
+    int mixing() const { return mixing_; }
+    void closeMachine();
+    const Machine& machine() const { return machine_; }
+    // Bag to box: a bag slot (never a worn one) to a cell, or -1 for the first it fits in. The
+    // cell, or -1 refused. Refused while the last mix's answer is still in it -- MuMain locks
+    // the box at MIX_FINISHED until it is reopened, and here until it is emptied.
+    int putIn(int bagSlot, int cell = -1);
+    // Box to bag: a cell to a bag slot, or -1 for the first slot it fits. The slot, or -1.
+    int takeOut(int cell, int bagSlot = -1);
+    // Inside the box, from one cell to another.
+    bool shuffle(int from, int to);
+    // What the box makes as it stands: sim::judge.
+    Judged judged() const;
+    // Runs it: refused, whole, when the box is no recipe, he has not the Zen or the bag could
+    // not take the answer (MuMain's "Combine items after organizing your inventory"). Pays,
+    // rolls off the machine's own dice, and says What::Mixed. The answer is left in the box.
+    bool mix();
+    // Whether the box holds the last mix's answer, untouched since.
+    bool mixed() const { return mixed_; }
+    // Laid on the realm from the save.
+    void restoreMachine(const Machine& saved) { machine_ = saved; }
+
     // ---- the quests (sim/quests.h) ------------------------------------------------------------
     // A giver's dialog, opened by a Talk order arriving within `kCounter` of him and closed by
     // any other order, as a counter is: his index in Tables::folk, or -1.
@@ -1149,6 +1181,11 @@ private:
     std::vector<Sale> sold_;  // oldest first, at most kBuybacks
     int banking_ = -1;
     Vault vault_;
+    int mixing_ = -1;
+    Machine machine_;
+    bool mixed_ = false;
+    // The machine's own dice, off the realm's seed: a run that never mixes is not moved.
+    Random mixDice_{0};
     QuestProgress quests_[kQuests];
     int questing_ = -1;
     uint32_t found_ = 0;  // the travel rows he has opened (sim/travel.h)
@@ -1180,6 +1217,7 @@ private:
     // A monster the hero killed, counted against every live Clear of its breed.
     void countKill(const Body& dead);
     bool banked() const { return banking_ >= 0 && serving(banking_); }
+    bool atMachine() const { return mixing_ >= 0 && serving(mixing_); }
     std::vector<Lying> lying_;
     int64_t potionUntil_ = 0;
     // A potion's worth arrives in three instalments, 20% 60% 20% at 200, 600 and 200 ms

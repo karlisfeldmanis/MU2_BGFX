@@ -78,6 +78,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     runeDice_.seed(seed ^ 0x165667b19e3779f9ull);
     trapDice_.seed(seed ^ 0x27d4eb2f165667c5ull);
     bossDice_.seed(seed ^ 0x165667b19e3779f9ull);
+    mixDice_.seed(seed ^ 0x85ebca6b2c1b3c6dull);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
@@ -404,6 +405,7 @@ void Realm::accept() {
         trading_ = -1;
         banking_ = -1;
         questing_ = -1;
+        closeMachine();
         // **And a skill still waiting to be thrown is dropped by an order that moves him**: a
         // wish outlives a channel (kWishTicks), so a key pressed during Lightning threw it again
         // round him after he had walked on (the user, 2026-09-30: "when i am done with casting
@@ -603,6 +605,9 @@ void Realm::press() {
             } else if (one.number == kVaultKeeper) {
                 banking_ = int(order_.target);
                 say(What::Served, hero, banking_, one.number);
+            } else if (one.number == kChaosGoblin) {
+                mixing_ = int(order_.target);
+                say(What::Served, hero, mixing_, one.number);
             } else if (const int quest = questHere(one.number); quest >= 0 && !questLocked(quest)) {
                 // A quest giver: his dialog opens, whatever it has to say -- the offer, the
                 // quest under way, the hand-in, or that it is not his to give again yet.
@@ -1111,6 +1116,11 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Refined:
             std::snprintf(line, sizeof(line), "%6u %s refined slot %d from +%d to +%d",
                           happening.tick, who, happening.a, happening.b, happening.c);
+            break;
+        case What::Mixed:
+            std::snprintf(line, sizeof(line), "%6u %s mixed recipe %d at %d%%: %s",
+                          happening.tick, who, happening.a, happening.c,
+                          happening.b ? "made" : "failed");
             break;
     }
     return std::string(line);

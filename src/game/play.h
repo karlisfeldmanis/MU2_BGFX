@@ -208,6 +208,8 @@ public:
     // figure was last dressed in, so a shot that empties or refills the hand redresses her.
     std::string quiverName() const;
     std::string dressedQuiver_;
+    int mixAnswer_ = -1;
+    sim::Recipe mixRecipe_ = sim::Recipe::None;
     // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
     // `count` is a stack's size for a potion and ignored for anything else.
     // `extras` is `+N` for a plus, `L` for luck and `O` then a digit for the option: +3LO2.
@@ -234,6 +236,19 @@ public:
     bool withdrawZen(int64_t zen);
     void closeVault() { realm_.closeVault(); }
     void restoreVault(const sim::Vault& saved) { realm_.restoreVault(saved); }
+    // The Chaos Machine (sim/machine.h), as the realm keeps it: the vault's three moves, and the
+    // mix, heard as MU hears its answer -- eMix with eGem for a success, with eBreak for a
+    // failure (ReceiveMixExtended, ReceiveTradeInventoryExtended).
+    bool putIn(int bagSlot, int cell);
+    bool takeOut(int cell, int bagSlot);
+    bool shuffle(int from, int to);
+    bool mix();
+    void closeMachine() { realm_.closeMachine(); }
+    void restoreMachine(const sim::Machine& saved) { realm_.restoreMachine(saved); }
+    // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
+    // filled or closed. The window's line in place of the recipe.
+    int mixAnswer() const { return realm_.mixing() >= 0 ? mixAnswer_ : -1; }
+    sim::Recipe mixRecipe() const { return mixRecipe_; }
     // A quest giver's dialog (sim/quests.h): accept, hand in with a choice, walk away. The wall
     // clock a repeating quest waits on is handed to the realm each frame (Realm::setWallClock).
     bool acceptQuest(int quest);
@@ -943,6 +958,7 @@ private:
         int grate = -1, trapFlame = -1;                 // the traps' aGrate and sFlame
         int click = -1, refused = -1, opened = -1;      // the windows
         int repair = -1;                                // SOUND_REPAIR: a counter mended
+        int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         int evil = -1, hellfire = -1;  // the Devil's sEvil and the Balrog's sHellFire
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks

@@ -613,6 +613,7 @@ bool Realm::useItem(int slot) {
         wants_ = skill::kNone;
         trading_ = -1;
         banking_ = -1;
+        closeMachine();
         const std::pair<int, int> landing = haven();
         setDown(hero, landing.first, landing.second);
         hero.facing = hero.aim;

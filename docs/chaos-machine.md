@@ -1,0 +1,63 @@
+# The Chaos Machine
+
+Started 2026-10-02. The user: "first we need to migrate basic things how it was in MuMain, and
+then we build our own UI and options which machine". This page is phase one, MuMain's machine
+as it was; phase two is our own window and our own combinations.
+
+## Phase one: MuMain's machine
+
+**Where.** The Chaos Goblin, NPC 238, in Noria at 180,103 (Version075/Maps/Noria.cs). A Talk
+order within `kCounter` opens it, as Baz opens the vault; any other order closes it.
+
+**The box.** `sim::Machine`, 8 x 4 (`CNewUIMixInventory`'s `CNewUIInventoryCtrl`), cells
+`row * 8 + column`, the vault's moves: bag to box (drag, or right-click a bag thing), box to bag
+(drag out over the bag, or right-click), and inside the box. Closing puts everything back in
+the bag; what does not fit stays in the box and is saved with the character (`"machine"` in the
+save, absent when empty). After a mix the box is locked to new things until it is emptied (MU
+locks it at MIX_FINISHED until reopened).
+
+**What it makes** (`sim/machine.h`, matched in this order):
+
+| combination | box | rate | Zen | success | failure | source |
+|---|---|---|---|---|---|---|
+| +10 Item | one thing at +9, 1 Chaos, 1 Bless, 1 Soul | 50%, +25 lucky | 2,000,000 | +10 | thing and jewels gone | Version095d `ItemLevelUpgradeCrafting` |
+| +11 Item | one thing at +10, 1 Chaos, 2 Bless, 2 Soul | 45%, +25 lucky | 4,000,000 | +11 | thing and jewels gone | the same |
+| Chaos Weapon | 1+ things at +4 or more with an option, 1+ Chaos, any Bless and Soul | box's old price / 20,000, at most 100 | 10,000 a percent | Chaos Dragon Axe, Nature Bow or Lightning Staff at +0..+4, own luck and option rolls | jewels gone, each thing to a lower plus, option down half the time | Version075 `ChaosMixes`, `ChaosWeaponAndFirstWingsCrafting` |
+
+- +10/+11 are **not 0.75**; they are why `kMachineCap` is 11 while `kRefineCap` (jewels, drops)
+  stays 9.
+- A box that is both +10 and Chaos Weapon is +10. MuMain decides by mix.bmd's order, which this
+  tree does not have. Ours.
+- Old prices are MixMgr's and OpenMU's: Bless 100,000, Soul 70,000, Chaos 40,000, the rest what
+  a merchant charges.
+- No +S skill roll on a Chaos weapon: skills are orbs here.
+- The mix draws from its own dice (`mixDice_`), so no seeded run moves.
+
+**The window** (`game/ui/mixer.cpp`), MuMain's RenderFrame top to bottom: the recipe (yellow
+ready, red "Improper items for combination"), success rate and Zen (pale blue; Zen red when he
+is short, ours), the grid, "Assembly prediction:" and the likest recipe's lines coloured as
+GetSourceName colours them, and Combine, which asks "Do you want to combine your items?" on the
+same foot. The answer ("Chaos combination has succeeded / has failed") stands in the recipe's
+place, since there is no system log. Sparks over the box for two seconds, drawn in the window's
+own ink (MU's BITMAP_SHINY is not in the interface art).
+
+**Sounds.** eMix with eGem on success, eMix with eBreak on failure (`machine_mix`,
+`machine_break` in `source/sounds/sounds.json`). They need `pipeline/index.py` then
+`tools/cook.py --only showing`; until then the log says "no cooked event" and the mix is silent.
+
+## Open
+
+- **The Chaos weapons are not built.** Mace07, Bow07 and Staff08 are not in `index.json`, so a
+  Chaos Weapon box is judged and priced but the Goblin refuses to run it ("no Chaos weapon is in
+  this world's tables"). Importing the three is the next content step, and every world's tables
+  after it.
+- The shine ladder has no +10/+11 rung of its own yet.
+- Phase two: our own window and our own combinations (the user's to choose).
+
+## Trying it
+
+    ./main.sh --new --windowed --world noria --at 182,106 --level 50 --zen 20000000 \
+      --give "Sword01:1:+9,Jewel15,Jewel01,Jewel02" --talk "Chaos Goblin" --save /tmp/mix.json
+
+`tests/sim_test.cpp` `testChaosMachine` runs +10 until it makes one, checks +11's rate and price,
+the Chaos Weapon's judge, and that walking off hands the box back.

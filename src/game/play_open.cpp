@@ -491,6 +491,8 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.refused = sound_.load("window_refused", false);
     heard_.opened = sound_.load("window_open", false);
     heard_.repair = sound_.load("window_repair", false);
+    heard_.mix = sound_.load("machine_mix", false);
+    heard_.mixBreak = sound_.load("machine_break", false);
     heard_.meteorite = sound_.load("meteorite", true);
     heard_.evil = sound_.load("devil_evil", true);
     heard_.rage2 = sound_.load("rage_blow_2", true);

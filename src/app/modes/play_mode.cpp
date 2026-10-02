@@ -73,6 +73,7 @@ void PlayMode::keep(Context& ctx) {
     now.slot = saved_.slot;
     now.world = ctx.args.world;
     now.hero = world_.played().record();
+    now.machine = world_.played().realm().machine();
     // On the way to another world the arguments already name it, so he is written standing
     // where he comes in: the next world resumes him there, and a quit mid-load finds him there.
     if (!travelTo_.empty()) {
@@ -207,6 +208,7 @@ bool PlayMode::open(Context& ctx) {
             if (resumed_) {
                 game::resolveSave(*world_.played().realm().tables(), saved_);
                 world_.played().restore(saved_.hero);
+                world_.played().restoreMachine(saved_.machine);
             }
             if (!savePath_.empty()) {
                 world_.played().restoreVault(

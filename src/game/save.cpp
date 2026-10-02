@@ -197,6 +197,10 @@ bool loadSave(const std::string& path, Saved& out) {
 
     const core::Json& items = doc["items"];
     for (size_t i = 0; i < items.size(); ++i) saved.items.push_back(readItem(items.at(i)));
+    const core::Json& machine = doc["machine"];
+    for (size_t i = 0; i < machine.size(); ++i) {
+        saved.machineItems.push_back(readItem(machine.at(i)));
+    }
     if (version < 2) {
         for (Saved::Item& item : saved.items) item.slot = mountedSlot(item);
     }
@@ -269,6 +273,22 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
     for (int key = 0; key < 5; ++key) {
         saved.quick[key] = rowOf(tables, saved.quickGroup[key], saved.quickNumber[key]);
     }
+    // The machine's box, put back only where each thing still fits, as the vault's is.
+    saved.machine.clear();
+    for (const Saved::Item& item : saved.machineItems) {
+        const int32_t row = rowOf(tables, item.group, item.number);
+        const content::ItemRow* r = row >= 0 ? &tables.items[size_t(row)] : nullptr;
+        if (!r || !saved.machine.room(tables, item.slot, r->width, r->height)) {
+            ++lost;
+            continue;
+        }
+        sim::Held held{row, int16_t(item.plus), durabilityOf(tables, row, item),
+                       item.skill, item.luck, int8_t(item.option), uint8_t(item.excellent)};
+        held.sockets = uint8_t(item.sockets);
+        for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
+        capSockets(*r, held);
+        saved.machine.put(item.slot, held);
+    }
     if (lost > 0) {
         core::logError("save: %d item(s) are not in the cooked tables and were left out", lost);
     }
@@ -334,7 +354,18 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         if (held.empty() || size_t(held.item) >= tables.items.size()) continue;
         writeHeld(f, tables, slot, held, &first);
     }
-    std::fprintf(f, "%s],\n  \"quick\": [", first ? "" : "\n  ");
+    std::fprintf(f, "%s],\n", first ? "" : "\n  ");
+    if (!saved.machine.empty()) {
+        std::fprintf(f, "  \"machine\": [");
+        first = true;
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            const sim::Held& held = saved.machine[cell];
+            if (held.empty() || size_t(held.item) >= tables.items.size()) continue;
+            writeHeld(f, tables, cell, held, &first);
+        }
+        std::fprintf(f, "%s],\n", first ? "" : "\n  ");
+    }
+    std::fprintf(f, "  \"quick\": [");
     for (int key = 0; key < 5; ++key) {
         const int32_t item = saved.quick[key];
         std::fprintf(f, "%s{", key ? ", " : "");

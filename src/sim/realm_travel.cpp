@@ -192,6 +192,7 @@ bool Realm::travel(int index) {
     money_ -= to.zen;
     // Whatever he had open or was doing stays behind with the map.
     trading_ = banking_ = questing_ = -1;
+    closeMachine();
     halt(bodies_[0]);
     core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(to.zen));
     // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map

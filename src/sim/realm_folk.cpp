@@ -235,7 +235,7 @@ void Realm::stroll(Body& walker) {
         for (size_t i = 0; i < tables_->folk.size(); ++i) {
             if (tables_->folk[i].number == stop.with) partner = int(i);
         }
-        const bool busy = partner >= 0 && (trading_ == partner || banking_ == partner ||
+        const bool busy = partner >= 0 && (trading_ == partner || banking_ == partner || mixing_ == partner ||
                                            questing_ == partner ||
                                            (order_.kind == Request::Kind::Talk &&
                                             int(order_.target) == partner));

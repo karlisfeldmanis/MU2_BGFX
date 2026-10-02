@@ -4694,6 +4694,122 @@ void testCharon() {
     check(answered, "walked to Charon and he said Devil Square is not ready");
 }
 
+// The Chaos Machine (sim/machine.h): the Goblin opens it, the judge names the box, +10 and +11
+// raise past the jewels' cap or take the thing, and closing hands the box back to the bag.
+void testChaosMachine() {
+    std::printf("chaos machine\n");
+    content::Tables noria;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/noria/noria.mur";
+    check(content::loadTables(path, noria, error), "Noria's tables load");
+    int goblin = -1;
+    for (size_t i = 0; i < noria.folk.size(); ++i) {
+        if (noria.folk[i].number == sim::kChaosGoblin) goblin = int(i);
+    }
+    check(goblin >= 0, "the Chaos Goblin is in Noria's table");
+    if (goblin < 0) return;
+    const int32_t chaos = noria.itemAt(12, 15), bless = noria.itemAt(14, 13),
+                  soul = noria.itemAt(14, 14);
+    int32_t sword = -1;
+    for (size_t i = 0; i < noria.items.size() && sword < 0; ++i) {
+        if (noria.items[i].group == 0 && noria.items[i].width == 1) sword = int32_t(i);
+    }
+    check(chaos >= 0 && bless >= 0 && soul >= 0 && sword >= 0, "the three jewels and a sword");
+    if (chaos < 0 || bless < 0 || soul < 0 || sword < 0) return;
+
+    sim::Realm realm;
+    check(realm.raise(&noria, 7, 182, 105, sim::Kin::DarkKnight, 50), "a realm raises by him");
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(goblin);
+    realm.ask(talk);
+    for (int tick = 0; tick < 400 && realm.mixing() < 0; ++tick) realm.step();
+    check(realm.mixing() == goblin, "talking to the Goblin opens his machine");
+    check(realm.judged().empty && realm.judged().recipe == sim::Recipe::None, "an empty box is nothing");
+    realm.earn(50000000);
+
+    // Loads a +10 or +11 box: the thing at `plus` and `jewels` of the Bless and the Soul.
+    const auto load = [&](int plus, int jewels, bool luck) {
+        check(realm.putIn(realm.give(sword, -1, plus, -1, luck)) >= 0, "the thing goes in");
+        check(realm.putIn(realm.give(chaos)) >= 0, "a Chaos goes in");
+        for (int i = 0; i < jewels; ++i) {
+            check(realm.putIn(realm.give(bless)) >= 0 && realm.putIn(realm.give(soul)) >= 0,
+                  "a Bless and a Soul go in");
+        }
+    };
+    load(9, 1, false);
+    sim::Judged j = realm.judged();
+    check(j.recipe == sim::Recipe::PlusTen, "+9, a Chaos, a Bless and a Soul are +10");
+    checkEqual(j.rate, 50, "at 50%");
+    checkEqual(int(j.zen), 2000000, "for two million");
+    check(realm.putIn(realm.give(chaos)) >= 0, "a second Chaos goes in");
+    check(realm.judged().recipe == sim::Recipe::None, "and the box is no recipe with it");
+    check(!realm.mix(), "so the Goblin will not run it");
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+        if (!realm.machine()[cell].empty() && realm.machine()[cell].item == chaos) {
+            const int back = realm.takeOut(cell);
+            check(back >= 0, "the Chaos comes back out");
+            realm.discard(back);  // so the next Chaos given is a stack of one
+            break;
+        }
+    }
+    // Run until it makes one, every failure taking the thing and every jewel.
+    bool made = false;
+    for (int attempt = 0; attempt < 40 && !made; ++attempt) {
+        if (attempt > 0) load(9, 1, false);
+        const int64_t before = realm.money();
+        check(realm.mix(), "the Goblin runs a +10 box");
+        checkEqual(int(before - realm.money()), 2000000, "and takes his two million");
+        made = realm.mixed();
+        int left = 0, at = -1;
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) ++left, at = cell;
+        }
+        if (made) {
+            checkEqual(left, 1, "a +10 leaves the thing alone in the box");
+            checkEqual(int(realm.machine()[at].refinement), 10, "at +10, past the jewels' nine");
+            check(realm.putIn(realm.give(chaos)) < 0, "and the box is locked while it stands");
+            check(realm.takeOut(at) >= 0 && !realm.mixed(), "taken out, the box is his again");
+        } else {
+            checkEqual(left, 0, "a failed +10 takes the thing and the jewels");
+        }
+    }
+    check(made, "forty tries make a +10");
+
+    load(10, 2, true);
+    j = realm.judged();
+    check(j.recipe == sim::Recipe::PlusEleven, "+10 and two of each are +11");
+    checkEqual(j.rate, 70, "at 45% and a quarter more for luck");
+    checkEqual(int(j.zen), 4000000, "for four million");
+
+    // Walking off hands the box back.
+    sim::Request walk;
+    walk.kind = sim::Request::Kind::WalkTo;
+    walk.column = 178;
+    walk.row = 105;
+    realm.ask(walk);
+    realm.step();
+    check(realm.mixing() < 0 && realm.machine().empty(), "walking off closes it, the box in the bag");
+
+    // The Chaos Weapon's box: a +4 with an option and a Chaos, its rate the box's old price.
+    sim::Machine box;
+    sim::Held optioned{sword, 4, 20};
+    optioned.option = 1;
+    box.put(0, optioned);
+    box.put(8, sim::Held{chaos, 0, 1});
+    j = sim::judge(noria, box);
+    check(j.recipe == sim::Recipe::ChaosWeapon, "a +4 with an option and a Chaos is a Chaos Weapon");
+    const int64_t worth = sim::mixValue(noria, optioned) + 40000;
+    checkEqual(j.rate, int(std::min<int64_t>(100, worth / 20000)), "its rate is the old price over 20,000");
+    checkEqual(int(j.zen), j.rate * 10000, "and ten thousand Zen a percent");
+    box.put(9, sim::Held{bless, 0, 1});
+    check(sim::judge(noria, box).rate > j.rate, "a Bless raises it");
+    sim::Held plain{sword, 4, 20};
+    box.put(1, plain);
+    check(sim::judge(noria, box).recipe == sim::Recipe::None, "a thing with no option spoils it");
+    check(sim::judge(noria, box).nearest == sim::Recipe::None, "and nothing is like it");
+}
+
 // Lorencia's one quest (sim/quests.h): Marlon offers it, a kill of his own counts, a hand-in pays
 // only what his class may take and only into room, and twelve hours of wall clock bring it back.
 void testQuests(const content::Tables& tables) {
@@ -6458,6 +6574,7 @@ int main() {
     testDeviasFolk();
     testTowerKeeper();
     testCharon();
+    testChaosMachine();
     testRefine(tables);
     testOptions(tables);
     testExcellent(tables);

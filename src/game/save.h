@@ -67,6 +67,12 @@ struct Saved {
     // cell; turned into a sim::Vault by resolveVault once the tables are there.
     int64_t vaultZen = 0;
     std::vector<Item> vaultItems;
+
+    // What was left in the Chaos Machine's box (sim/machine.h): its items as read, `slot` a cell,
+    // and the box itself once resolveSave has the tables -- and on the way out, the realm's box.
+    // Absent in a file from before the machine, and in one whose box was empty.
+    std::vector<Item> machineItems;
+    sim::Machine machine;
 };
 
 // Where the save lives when --save does not say: saves/hero.json in the client folder

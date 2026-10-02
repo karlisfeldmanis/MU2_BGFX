@@ -189,6 +189,7 @@ add_executable(mu2
   src/game/ui/bag.cpp
   src/game/ui/shelf.cpp
   src/game/ui/chest.cpp
+  src/game/ui/mixer.cpp
   src/game/ui/amount.cpp
   src/game/ui/menu.cpp
   src/game/ui/slab.cpp
@@ -222,10 +223,12 @@ add_executable(mu2
   src/sim/market.cpp
   src/sim/wear.cpp
   src/sim/vault.cpp
+  src/sim/machine.cpp
   src/sim/gates.cpp
   src/sim/traps.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
+  src/sim/realm_machine.cpp
   src/sim/realm_quests.cpp
   src/sim/quests.cpp
   src/sim/realm_travel.cpp
@@ -342,10 +345,12 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/market.cpp
   src/sim/wear.cpp
   src/sim/vault.cpp
+  src/sim/machine.cpp
   src/sim/gates.cpp
   src/sim/traps.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
+  src/sim/realm_machine.cpp
   src/sim/realm_quests.cpp
   src/sim/quests.cpp
   src/sim/realm_travel.cpp
@@ -372,7 +377,7 @@ target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 add_executable(bot EXCLUDE_FROM_ALL
   tools/bot/bot.cpp
   src/sim/rules.cpp src/sim/swings.cpp src/sim/route.cpp src/sim/items.cpp src/sim/market.cpp
-  src/sim/wear.cpp src/sim/vault.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
+  src/sim/wear.cpp src/sim/vault.cpp src/sim/machine.cpp src/sim/realm_machine.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
   src/sim/realm_items.cpp src/sim/realm_quests.cpp src/sim/quests.cpp src/sim/realm_travel.cpp
   src/sim/realm_move.cpp src/sim/realm_fight.cpp src/sim/realm_skills.cpp src/sim/realm_watch.cpp
   src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/skills.cpp

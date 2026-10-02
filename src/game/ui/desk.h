@@ -17,6 +17,7 @@
 #include "game/ui/beacon.h"
 #include "game/ui/card.h"
 #include "game/ui/chest.h"
+#include "game/ui/mixer.h"
 #include "game/ui/endurance.h"
 #include "game/ui/go_back.h"
 #include "game/ui/cursor.h"
@@ -190,6 +191,11 @@ private:
     Bag bag_;
     Shelf shelf_;
     Chest chest_;
+    // The Chaos Goblin's machine (game/ui/mixer.h), which borrows the shelf's stage as the vault
+    // does: the two are never open together.
+    Mixer mixer_;
+    bool mixing_ = false;
+    bool bagForMachine_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
     Amount amount_;
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).

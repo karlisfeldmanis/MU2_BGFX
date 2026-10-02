@@ -243,6 +243,7 @@ bool Realm::throughGate(Body& hero) {
     wants_ = skill::kNone;
     trading_ = -1;
     banking_ = -1;
+    closeMachine();
     // A gate to a floor of this same map -- the Dungeon's stairs between its three floors, one
     // grid with three regions the router cannot cross -- is not a map change: he is put down
     // there now, as a Town Portal puts him down (realm_items.cpp), the monsters on him lose
@@ -265,6 +266,7 @@ void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
     wants_ = skill::kNone;
     trading_ = -1;
     banking_ = -1;
+    closeMachine();
     int open = column, openRow = row;
     if (router_.nearestOpen(column, row, content::kWallCharacter, 8, &open, &openRow)) {
         column = open;

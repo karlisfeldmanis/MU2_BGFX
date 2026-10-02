@@ -616,6 +616,20 @@
       "from": "SOUND_CLICK01, which ZzzOpenData loads from Data\\Sound\\iButtonClick.wav. MuMain plays it on the I and V keys and the main frame's bag button, open and close alike; on C and the character button; on the stat plus, without waiting for the reply; on Escape closing the bag, the character window or a shop; and with SOUND_INTERFACE01 when a shop opens (ReceiveTalk). NOT on the bag's or the character window's exit button: CNewUIMyInventory and CNewUICharacterInfoWindow hide the window there with no PlayBuffer. MU2's note said the exit button clicked; MuMain's own code says otherwise.",
       "note": "Unplaced in the client, as every interface sound is; played on the character here, where the listener stands, which is the same thing."
     },
+    "machine_mix": {
+      "files": [
+        "emix.wav"
+      ],
+      "from": "SOUND_MIX01, which ZzzOpenData.cpp line 4763 loads from Data\\Sound\\eMix.wav with two voices. ReceiveMixExtended (WSclient.cpp:6696) plays it with SOUND_JEWEL01 when the Chaos Machine's answer is a success, and ReceiveTradeInventoryExtended's subcode 3 (WSclient.cpp:1691) with SOUND_BREAK01 when the box comes back broken.",
+      "note": "Unplaced, as every interface sound is. Played with jewel_get on a success and with machine_break on a failure, as MU pairs them."
+    },
+    "machine_break": {
+      "files": [
+        "ebreak.wav"
+      ],
+      "from": "SOUND_BREAK01, which ZzzOpenData.cpp line 4800 loads from Data\\Sound\\eBreak.wav. The Chaos Machine's failure, beside SOUND_MIX01 (WSclient.cpp:1692, 1699).",
+      "note": "Unplaced, as every interface sound is."
+    },
     "window_repair": {
       "files": [
         "irepair.wav"

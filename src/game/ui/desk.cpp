@@ -64,11 +64,13 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     bag_.useTipStage(&tipStagePicture_);
     shelf_.useTipStage(&tipStagePicture_);
     chest_.useTipStage(&tipStagePicture_);
+    mixer_.useTipStage(&tipStagePicture_);
     questDialog_.useTipStage(&tipStagePicture_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
     chest_.open(interface_, &arts_);
+    mixer_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
     questDialog_.open(interface_);
     tracker_.open(interface_);
@@ -267,7 +269,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
     const bool windowsOpen =
-        inventoryOpen_ || characterOpen_ || trading_ || banking_ || travel_.up();
+        inventoryOpen_ || characterOpen_ || trading_ || banking_ || mixing_ || travel_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -280,6 +282,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 inventoryOpen_ = characterOpen_ = false;
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
+                if (mixing_) play.closeMachine();
                 travel_.hide();
                 fanLatched_ = false;
             } else {
@@ -543,11 +546,61 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
 
+    // The Chaos Machine, as the vault is: it opens the bag beside it and closes the character
+    // window, and walking away closes it in the realm -- which puts the box back in the bag.
+    const bool mixing = play.isOpen() && play.realm().mixing() >= 0;
+    if (mixing && !mixing_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+        characterOpen_ = false;
+        bagForMachine_ = !inventoryOpen_;
+        inventoryOpen_ = true;
+    }
+    if (!mixing && mixing_ && bagForMachine_) {
+        inventoryOpen_ = false;
+        bagForMachine_ = false;
+    }
+    mixing_ = mixing;
+    if (mixing_) {
+        MixerRequests asked;
+        const bool fromBag = inventoryOpen_ && bag_.dragging();
+        mixer_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr,
+                        fromBag && sim::baggable(bag_.dragged()) && !play.realm().mixed());
+        mixer_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(),
+                      play.mixAnswer(), pointer, shelfStage_, &asked);
+        if (asked.moveFrom >= 0) {
+            if (play.shuffle(asked.moveFrom, asked.moveTo)) took();
+            else refused();
+        }
+        // Let go outside: into the bag cell under the pointer, and nowhere else, as the vault.
+        if (asked.outside >= 0) {
+            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
+            if (slot >= 0 && play.takeOut(asked.outside, slot)) took();
+            else refused();
+        }
+        if (asked.back >= 0) {
+            if (play.takeOut(asked.back, -1)) took();
+            else refused();
+        }
+        if (asked.click) click();
+        // CMixCheckMsgBoxLayout's OK: the click, and the realm's answer is heard by Play.
+        if (asked.mix) {
+            click();
+            if (play.mix()) mixer_.spark();
+            else refused();
+        }
+        if (asked.close) {
+            play.closeMachine();
+            click();
+        }
+    }
+
     // The bag, in the right-hand column or beside the character window when that is up.
     if (inventoryOpen_ && play.isOpen()) {
         BagRequests asked;
-        bag_.carrying(banking_ && chest_.dragging() ? &play.realm().vault()[chest_.dragged()]
-                                                    : nullptr);
+        bag_.carrying(banking_ && chest_.dragging()   ? &play.realm().vault()[chest_.dragged()]
+                      : mixing_ && mixer_.dragging() ? &play.realm().machine()[mixer_.dragged()]
+                                                     : nullptr);
         bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
                     play.realm(), pointer, bagStage_, &asked);
         // A move is ReceiveEquipmentItem, which ends its success branch on SOUND_GET_ITEM01 --
@@ -561,7 +614,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.refineJewel >= 0 && !play.refine(asked.refineJewel, asked.refineTarget)) {
             refused();
         }
-        if (asked.use >= 0 && !play.useItem(asked.use)) refused();
+        // At the machine a right-click puts the thing in the box instead
+        // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
+        if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
+            if (play.putIn(asked.use, -1)) took();
+            else refused();
+        } else if (asked.use >= 0 && !play.useItem(asked.use)) {
+            refused();
+        }
         // A click in repair mode: mended where it lies, heard as SOUND_REPAIR by Play, and a
         // refusal -- whole already, not repairable, not the Zen -- is the interface's no.
         if (asked.repair >= 0 && !play.repair(asked.repair)) refused();
@@ -586,6 +646,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // Into the vault cell under the pointer; over the foot or the head, the first cell
             // it fits in.
             if (play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY))) {
+                took();
+            } else {
+                refused();
+            }
+        } else if (asked.outside >= 0 && mixing_ &&
+                   mixer_.covers(asked.outsideX, asked.outsideY)) {
+            if (play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY))) {
                 took();
             } else {
                 refused();
@@ -624,7 +691,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         int columns = 0;
         if (characterOpen_) columns = 1;
         if (inventoryOpen_) columns = characterOpen_ ? 2 : std::max(columns, 1);
-        if (trading_ || banking_) columns = std::max(columns, 2);
+        if (trading_ || banking_ || mixing_) columns = std::max(columns, 2);
         const float width = float(window.width());
         const float right = columns > 0 ? panel::columnX(width, columns) : width;
         endurance_.update(width, float(window.height()), right, play.realm(), pointer);
@@ -655,7 +722,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
-                    (banking_ && (chest_.covers(pointer.x, pointer.y) || chest_.dragging()));
+                    (banking_ && (chest_.covers(pointer.x, pointer.y) || chest_.dragging())) ||
+                    (mixing_ && (mixer_.covers(pointer.x, pointer.y) || mixer_.dragging()));
 
     // The pointer, drawn last of all: MU2's Pointer.Show and Step in one call. The flags are
     // last frame's raycast (Play::point runs after this, on the same frame it is drawn), which
@@ -1448,7 +1516,8 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
                    viewProj, width, height);
     // The quest on screen, out of the way of a window on the right and of the giver's own.
     tracker_.update(seconds, play,
-                    inventoryOpen_ || characterOpen_ || trading_ || banking_ || questDialog_.up(),
+                    inventoryOpen_ || characterOpen_ || trading_ || banking_ || mixing_ ||
+                        questDialog_.up(),
                     viewProj, width, height);
     // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
     // on world points and the lane on the HUD's top edge.
@@ -1460,7 +1529,9 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
     const float pixelsPerUnit = panel::scale();
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
-    if (trading_ || banking_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    if (trading_ || banking_ || mixing_) {
+        shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    }
     // The quest giver's rewards on the same stage, which is free whenever he is (no counter).
     else if (questDialog_.up()) {
         shelfStagePicture_.render(renderer, questDialog_.pixelsPerUnit(), seconds);
@@ -1499,8 +1570,11 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // never under a window it is carried across -- a vault piece over the bag hid behind it.
     const bool vaultOnTop = banking_ && chest_.dragging();
     if (banking_ && !vaultOnTop) interface_.add(chest_.canvas());
+    const bool machineOnTop = mixing_ && mixer_.dragging();
+    if (mixing_ && !machineOnTop) interface_.add(mixer_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());
     if (vaultOnTop) interface_.add(chest_.canvas());
+    if (machineOnTop) interface_.add(mixer_.canvas());
     // The worn-gear warning hangs left of the windows and so never lies under one; over them,
     // because its hover line is the one part of it that can reach one.
     if (endurance_.showing()) interface_.add(endurance_.canvas());
@@ -1509,6 +1583,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(hud_.tipCanvas());
     if (trading_) interface_.add(shelf_.tipCanvas());
     if (banking_) interface_.add(chest_.tipCanvas());
+    if (mixing_) interface_.add(mixer_.tipCanvas());
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
