@@ -6,6 +6,8 @@
 // lighter, every shore and wall an iron hairline -- and over it the marks, each a single flat
 // tone from style.h and one clean glyph, baked in code as the quest marker is:
 //   * him: a bone arrow at the middle, turned the way he faces;
+//   * her summon: a paler green dot with his hairline of ink, held to the edge when it is out of
+//     reach, so a summon left behind is found (the user, 2026-10-02: 'show summon on minimap');
 //   * the quest's monsters: a red dot on each live one of a breed a quest still counts -- the
 //     one colour on it, Sanctuary's accent;
 //   * the quest giver while he has something for him: a "!" or a "?";
@@ -82,7 +84,7 @@ public:
     uint64_t rebuilds() const { return rebuilds_; }
 
     // What a mark is: the glyph's cell in the baked strip.
-    enum class Glyph : uint8_t { Hero, Quarry, Offer, HandIn, Vendor, Smith, Vault, Gate, Folk, Potion };
+    enum class Glyph : uint8_t { Hero, Quarry, Offer, HandIn, Vendor, Smith, Vault, Gate, Folk, Potion, Summon };
 
 private:
     // One thing on the square, in sixteenths of a screen pixel, rounded, so two frames that would draw the same

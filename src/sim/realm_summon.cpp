@@ -159,7 +159,20 @@ void Realm::tend(Body& summon) {
 
     // Tethered: past its leash from her it walks back beside her and does nothing else.
     const int tether = summon.quarry != 0 ? kSummonTetherFighting : kSummonTether;
-    if (reach(summon, *owner) > float(tether)) {
+    const float gap = reach(summon, *owner);
+    if (gap > float(tether)) {
+        // Walking back and not half a tile from where it stood a second and a half ago: caught
+        // on something.
+        if (summon.temper != Temper::Homing ||
+            std::max(std::fabs(summon.x - summon.stuckX), std::fabs(summon.y - summon.stuckY)) >
+                kSummonStuckGain) {
+            summon.stuckX = summon.x;
+            summon.stuckY = summon.y;
+            summon.stuckAt = tick_;
+        } else if (tick_ - summon.stuckAt >= kSummonStuckTicks &&
+                   blinkSummon(summon, *owner)) {
+            return;
+        }
         summon.temper = Temper::Homing;
         if (tick_ >= summon.repathsAt) {
             summon.repathsAt = tick_ + kRepath;

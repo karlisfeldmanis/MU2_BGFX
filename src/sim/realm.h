@@ -349,6 +349,10 @@ struct Body {
     int64_t swingsAt = 0;
     int64_t thinksAt = 0;
     int64_t repathsAt = 0;
+    // A summon walking back to her: where it stood, and on what tick, so one that has not got
+    // anywhere since is put down behind her (Realm::tend, kSummonStuckTicks).
+    float stuckX = 0.0f, stuckY = 0.0f;
+    int64_t stuckAt = 0;
     int64_t risesAt = 0;
     // Until when it stands over what it has just killed instead of turning away. See
     // Realm::think and kStandOverTicks; it is the one thing in this layer put there for the

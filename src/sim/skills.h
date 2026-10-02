@@ -551,8 +551,13 @@ constexpr int kSummonTetherFighting = 5;
 // keeps her pace, ridden or running, and a little over it so the gap closes rather than holds;
 // and past `kSummonBlink` tiles from her, or with no road back to her, it steps out of the air
 // behind her (Realm::blinkSummon). Past the hunt's eight would let it lose its quarry first.
+// And then ('we need better system when summon falls behind, he has to teleport to char when
+// char is out of reach'): six tiles, and a summon walking back that has not moved half a tile
+// in kSummonStuckTicks -- caught on a corner, a fence or a crowd -- steps through too.
 constexpr float kSummonCatchUp = 1.15f;
-constexpr int kSummonBlink = 7;
+constexpr int kSummonBlink = 6;
+constexpr float kSummonStuckGain = 0.5f;  // tiles
+constexpr int kSummonStuckTicks = 30;     // a second and a half
 
 // Heal's health and Greater Damage's bonus, off her energy.
 int healOf(const HeroPoints& points);

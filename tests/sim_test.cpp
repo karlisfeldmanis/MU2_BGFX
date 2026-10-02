@@ -2593,6 +2593,57 @@ void testSummons(const content::Tables& tables) {
 // teleport him self closer to char if he wall behind to much". An elf on Uniria rides forty
 // tiles east off the town with her Golem raised: it walks back at her pace (kSummonCatchUp) and
 // is never left past kSummonBlink, a teleport putting it behind her when it falls that far.
+
+// The user, 2026-10-02: "he has to teleport to char when char is out of reach". An elf on foot
+// walks a long loop through Lorencia's fields among the monsters, the Golem fighting what comes
+// at her: it is never more than a tile past kSummonBlink from her, for a single tick.
+void testSummonOnAHunt(const content::Tables& tables) {
+    std::printf("the summon stays with her on a hunt\n");
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, sim::Kin::FairyElf, 60);
+    realm.spend(0, 0, 0, 200);
+    realm.learn(sim::skill::kSummonGolem);
+    for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    const sim::Body* golem = nullptr;
+    for (int tick = 0; tick < 60 && !(golem && golem->alive()); ++tick) {
+        realm.step();
+        golem = realm.summoned();
+    }
+    check(golem != nullptr, "the Golem stands");
+    if (!golem) return;
+    const uint32_t id = golem->id;
+    const int legs[][2] = {{230, 160}, {230, 200}, {180, 210}, {150, 180}, {170, 130},
+                           {220, 120}, {200, 160}, {120, 140}, {136, 143}, {200, 160}};
+    float worst = 0.0f;
+    int over = 0, longest = 0, run = 0, blinks = 0, refused = 0;
+    for (const auto& leg : legs) {
+        sim::Request walk;
+        walk.kind = sim::Request::Kind::WalkTo;
+        walk.column = leg[0];
+        walk.row = leg[1];
+        realm.ask(walk);
+        for (int tick = 0; tick < 400; ++tick) {
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Blinked && h.who == id) ++blinks;
+                if (h.what == sim::What::Refused && h.who == id) ++refused;
+            }
+            const sim::Body* g = realm.find(id);
+            if (!g || !g->alive()) break;
+            const float d = std::max(std::fabs(g->x - realm.hero().x), std::fabs(g->y - realm.hero().y));
+            worst = std::max(worst, d);
+            if (d > float(sim::kSummonBlink) + 1.0f) {
+                ++over; ++run; longest = std::max(longest, run);
+            } else run = 0;
+            if (!realm.hero().walking && tick > 40) break;
+        }
+    }
+    std::printf("  worst %.1f, %d ticks past the blink, longest %d, %d blinks, %d refused, her health %d\n",
+                worst, over, longest, blinks, refused, realm.hero().health);
+    check(over == 0, "never left past the blink");
+}
+
 void testSummonKeepsUp(const content::Tables& tables) {
     std::printf("the summon keeps up with her ride\n");
     sim::Realm realm;
@@ -7250,6 +7301,7 @@ int main() {
     testSummons(tables);
     testSummonAggro(tables);
     testSummonKeepsUp(tables);
+    testSummonOnAHunt(tables);
     testGates(tables);
     testDungeonGates(tables);
     testTraps();
