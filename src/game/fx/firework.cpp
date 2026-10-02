@@ -174,7 +174,7 @@ void Firework::ribbon(gfx::Effects& effects, const Rocket& rocket) const {
         for (int k = 0; k < 3; ++k) points[i + 1][k] = rocket.tail[i][k];
     }
     const int count = rocket.tails + 1;
-    const float half = rocket.width * kUnit * 0.5f;
+    const float half = rocket.width * kTrailWidth * kUnit * 0.5f;
     for (int s = 0; s + 1 < count; ++s) {
         const float* a = points[s];
         const float* b = points[s + 1];

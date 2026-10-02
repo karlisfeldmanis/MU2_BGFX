@@ -61,17 +61,20 @@ private:
     static constexpr float kRocketTone = 0.8f;
     static constexpr float kBlastTone = 0.2f;
     static constexpr float kFlashTone = 0.35f;
-    static constexpr float kFlashSize = 0.4f;
+    static constexpr float kFlashSize = 0.15f;
     static constexpr float kSparkTone = 0.7f;
     static constexpr float kGlitterTone = 0.75f;
     static constexpr float kStarTone = 0.45f;
-    static constexpr float kStarSize = 0.35f;
+    static constexpr float kStarSize = 0.12f;
     // And tiny sparkles (the user, the same day: "we need tiny sparkles"): every point of light
     // well under MU's size, and the blast and the head's flare with them.
-    static constexpr float kSparkSize = 0.35f;
-    static constexpr float kGlitterSize = 0.5f;
-    static constexpr float kBlastSize = 0.5f;
-    static constexpr float kHeadSize = 0.5f;
+    static constexpr float kSparkSize = 0.15f;
+    static constexpr float kGlitterSize = 0.2f;
+    static constexpr float kBlastSize = 0.15f;
+    static constexpr float kHeadSize = 0.3f;
+    // The rocket's trail: MU widens it 3 units a frame to about half a metre, which drew
+    // Shiny01's star along it as big white crosses (the user: "sparkles is to to large").
+    static constexpr float kTrailWidth = 0.2f;
     // And how many of MU's sparks, specks and stars a burst throws: half (the user's second
     // look, the same day). MU's 60 + 30 sparks, 60 specks and twelve stars a second.
     static constexpr float kShare = 0.5f;
