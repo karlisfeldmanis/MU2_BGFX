@@ -459,6 +459,22 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // The cell a dragged thing would land on: blue where the move would be taken and red where
     // not, asked of the realm's own gate. Bag.Target.
     const float ux = (now_.dragX - x) / k, uy = (now_.dragY - y) / k;
+    // One box over the whole footprint and no rule between its cells: the vault's target, so
+    // both windows mark a drop alike (the user, 2026-10-02: "just outline").
+    const auto light = [&](const int* cells, int count, bool ok) {
+        Box over = slotBox(cells[0]);
+        for (int i = 1; i < count; ++i) {
+            const Box one = slotBox(cells[i]);
+            const float right = std::max(over.right(), one.right());
+            const float bottom = std::max(over.bottom(), one.bottom());
+            over.x = std::min(over.x, one.x);
+            over.y = std::min(over.y, one.y);
+            over.w = right - over.x;
+            over.h = bottom - over.y;
+        }
+        panel::cell(canvas_, x, y, wellOf(over, sim::wearable(cells[0])),
+                    ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
+    };
     if (dragging_ >= 0 && covers(now_.dragX, now_.dragY)) {
         const int cell = slotAt(ux, uy);
         const sim::Held& moving = bag[dragging_];
@@ -467,10 +483,6 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             const content::ItemRow& row = tables.items[size_t(moving.item)];
             int cells[sim::kSlots];
             const int count = bag.covered(cell, row.width, row.height, cells);
-            const auto light = [&](int at, bool ok) {
-                panel::cell(canvas_, x, y, wellOf(slotBox(at), sim::wearable(at)),
-                            ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
-            };
             // A jewel over a thing it goes on lights the thing, all of its cells, and not the
             // jewel's own footprint: MuMain's CanUpgradeItem colour, MU2's Bag.Target.
             const int under = bag.holder(tables, cell);
@@ -486,10 +498,11 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 (setting || refused || sim::refinable(tables, moving, bag[under]))) {
                 const content::ItemRow& target = tables.items[size_t(bag[under].item)];
                 const int covering = bag.covered(under, target.width, target.height, cells);
-                for (int i = 0; i < covering; ++i) light(cells[i], !refused);
+                light(cells, covering, !refused);
+            } else if (count == 0) {
+                light(&cell, 1, false);
             } else {
-                if (count == 0) light(cell, false);
-                for (int i = 0; i < count; ++i) light(cells[i], fits);
+                light(cells, count, fits);
             }
         }
     }
@@ -499,22 +512,18 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
         const int cell = slotAt(ux, uy);
         if (cell >= 0) {
-            const auto light = [&](int at, bool ok) {
-                panel::cell(canvas_, x, y, wellOf(slotBox(at), sim::wearable(at)),
-                            ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
-            };
             const content::ItemRow& row = tables.items[size_t(incoming_.item)];
             const int under = sim::baggable(cell) ? bag.holder(tables, cell) : -1;
             int cells[sim::kSlots];
             if (under >= 0 && sim::tops(tables, bag[under], incoming_)) {
                 const content::ItemRow& target = tables.items[size_t(bag[under].item)];
                 const int covering = bag.covered(under, target.width, target.height, cells);
-                for (int i = 0; i < covering; ++i) light(cells[i], true);
+                light(cells, covering, true);
             } else {
                 const bool fits = sim::baggable(cell) && bag.room(tables, cell, row.width, row.height);
                 const int count = sim::baggable(cell) ? bag.covered(cell, row.width, row.height, cells) : 0;
-                if (count == 0) light(cell, false);
-                for (int i = 0; i < count; ++i) light(cells[i], fits);
+                if (count == 0) light(&cell, 1, false);
+                else light(cells, count, fits);
             }
         }
     }
