@@ -95,9 +95,10 @@ private:
         int name = -1;       // the folk index, or -1; the hint's words come from here
         int32_t kind = -1;   // a monster's breed, or a gate's number, for the hint
         int fade = 16;       // how much of it the rim's fade leaves, in sixteenths
+        bool again = false;  // a giver's quest cleared once before: the beacon's repeat blue
         bool operator==(const Mark& o) const {
             return glyph == o.glyph && x == o.x && y == o.y && angle == o.angle && fade == o.fade &&
-                   pinned == o.pinned && name == o.name && kind == o.kind;
+                   pinned == o.pinned && name == o.name && kind == o.kind && again == o.again;
         }
     };
 

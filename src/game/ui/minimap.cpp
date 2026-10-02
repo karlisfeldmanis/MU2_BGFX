@@ -233,12 +233,17 @@ constexpr float kBadgeSign = 0.72f;  // the sign's scale inside it
 constexpr float kBadgeDark = 0.82f;  // the disc's own alpha
 
 constexpr uint32_t kHandInGold = gfx::rgba(0.86f, 0.64f, 0.12f);  // "little bit darker"
+// A repeat's offer and hand-in: the beacon's blue (game/ui/beacon.cpp kLitAgain), so the map's
+// mark reads as the "!" over his head (the user, 2026-10-02).
+constexpr uint32_t kAgainBlue = gfx::rgba(0.56f, 0.80f, 1.00f);
+// Him in green (the user, 2026-10-02: "character arrow green"), bright enough over the lit ground.
+constexpr uint32_t kHeroGreen = gfx::rgba(0.42f, 0.86f, 0.36f);
 
 // The tone each is drawn in: bone for what matters, the quieter inks for the rest.
 uint32_t toneOf(Minimap::Glyph glyph) {
     using Glyph = Minimap::Glyph;
     switch (glyph) {
-        case Glyph::Hero:
+        case Glyph::Hero: return kHeroGreen;
         case Glyph::Offer: return style::kBoneHi;
         // A quest ready to hand in is the map's one gold, the user's (2026-10-01): "lets color
         // finished quests more vissible gold color". Bone sank into the lit ground.
@@ -606,6 +611,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     // The townsfolk who do something, the giver last so he is drawn over them.
     int giver = -1;
     Glyph giverGlyph = Glyph::Folk;
+    bool giverAgain = false;
     float giverColumn = 0.0f, giverRow = 0.0f;
     for (size_t i = 0; i < tables.folk.size(); ++i) {
         const content::Townsperson& one = tables.folk[i];
@@ -621,6 +627,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
             if (ready || realm.questOffered(quest)) {
                 giver = int(i);
                 giverGlyph = ready ? Glyph::HandIn : Glyph::Offer;
+                giverAgain = realm.quest(quest).completions > 0;
                 giverColumn = column;
                 giverRow = row;
                 continue;
@@ -656,7 +663,11 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         put(Glyph::Gate, float(b.x1 + b.x2) * 0.5f, float(b.y1 + b.y2) * 0.5f, true, -1,
             gate->number);
     }
-    if (giver >= 0) put(giverGlyph, giverColumn, giverRow, true, giver, -1);
+    if (giver >= 0) {
+        const size_t before = marks.size();
+        put(giverGlyph, giverColumn, giverRow, true, giver, -1);
+        if (marks.size() > before) marks.back().again = giverAgain;
+    }
 
     // Him, last and on top: his facing as a screen direction, clockwise from up.
     {
@@ -852,7 +863,7 @@ void Minimap::rebuild(const Play& play) {
     for (const Mark& mark : now_.marks) {
         const float from = float(int(mark.glyph)) * cellPx;
         const float x = float(mark.x) / 16.0f, y = float(mark.y) / 16.0f;
-        uint32_t tone = toneOf(mark.glyph);
+        uint32_t tone = mark.again ? kAgainBlue : toneOf(mark.glyph);
         // Held at the rim, it is the way there rather than the place: quieter. Under the rim's
         // fade, it fades with it.
         // A quest to hand in is never quieted: it is the one mark worth walking to.
