@@ -543,6 +543,24 @@ void Play::update(double seconds) {
                 blinkOut_ = -1.0f;
                 blinkIn_ = 0.0f;
             }
+            // Her summon put down behind her (Realm::blinkSummon): drawn there from this frame,
+            // and the Teleport's pillar where it lands, without the sound -- it may come every
+            // few seconds on a ride.
+            if (happening.what == sim::What::Blinked && happening.who != heroId) {
+                const sim::Body* summon = realm_.find(happening.who);
+                if (Drawn* drawn = drawnOf(happening.who); drawn != nullptr && summon != nullptr) {
+                    drawn->nowX = drawn->wasX = summon->x;
+                    drawn->nowY = drawn->wasY = summon->y;
+                    drawn->groundSpeed = 0.0f;
+                    if (ground_) {
+                        const float metres = ground_->metresPerTile();
+                        const float x = (summon->x + 0.5f) * metres;
+                        const float z = -(summon->y + 0.5f) * metres;
+                        const float feet[3] = {x, ground_->heightAt(x, z), z};
+                        blink_.cast(feet);
+                    }
+                }
+            }
             // Pushed by Lightning: the realm slides it, and it flinches as it goes.
             // A draw that emptied the quiver hand, or refilled it from the bag.
             if ((happening.what == sim::What::Swung || happening.what == sim::What::Arrowless) &&

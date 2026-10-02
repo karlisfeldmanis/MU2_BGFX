@@ -116,8 +116,14 @@ void Realm::tend(Body& summon) {
     }
     // Her level and points as they are now: a level gained or a point spent mid-fight shows.
     fitSummon(summon, *owner);
-    advance(summon);
     const content::MonsterKind& kind = tables_->kinds[size_t(summon.kind)];
+    // Its breed's own pace, but walking back to her at hers -- on her mount it fell behind
+    // and never caught up -- and a little over it so the gap closes (kSummonCatchUp, ours).
+    const float pace = 1.0f / float(std::max(1, kind.moveTicks));
+    summon.speed = summon.temper == Temper::Homing
+                       ? std::max(pace, owner->speed * strideFactor(*owner) * kSummonCatchUp)
+                       : pace;
+    advance(summon);
     const int attackRange = std::max(1, kind.attackRange);
 
     // The one it is on, while it lives and stays within the hunt round her; else a monster on
@@ -147,6 +153,10 @@ void Realm::tend(Body& summon) {
         summon.quarry = chosen;
     }
 
+    // Left far behind -- she rode off, or went through a door it is on the wrong side of -- it
+    // is put down behind her rather than trailing across the map (kSummonBlink, ours).
+    if (reach(summon, *owner) > float(kSummonBlink) && blinkSummon(summon, *owner)) return;
+
     // Tethered: past its leash from her it walks back beside her and does nothing else.
     const int tether = summon.quarry != 0 ? kSummonTetherFighting : kSummonTether;
     if (reach(summon, *owner) > float(tether)) {
@@ -154,7 +164,21 @@ void Realm::tend(Body& summon) {
         if (tick_ >= summon.repathsAt) {
             summon.repathsAt = tick_ + kRepath;
             int column = 0, rowAt = 0;
-            if (beside(*owner, 1, summon, &column, &rowAt)) send(summon, column, rowAt);
+            if (beside(*owner, 1, summon, &column, &rowAt)) {
+                // No road back to her, or one round a wall that is longer than the blink: the
+                // walk would be a lap of the building, so it steps through instead.
+                if (!send(summon, column, rowAt)) {
+                    blinkSummon(summon, *owner);
+                } else {
+                    float x = summon.x, y = summon.y, walk = 0.0f;
+                    for (const Step& step : summon.route) {
+                        walk += std::hypot(float(step.column) - x, float(step.row) - y);
+                        x = float(step.column);
+                        y = float(step.row);
+                    }
+                    if (walk > float(kSummonBlink * 2)) blinkSummon(summon, *owner);
+                }
+            }
         }
         return;
     }
@@ -183,6 +207,29 @@ void Realm::tend(Body& summon) {
             if (beside(quarry, attackRange, summon, &column, &rowAt)) send(summon, column, rowAt);
         }
     }
+}
+
+bool Realm::blinkSummon(Body& summon, const Body& owner) {
+    // Two tiles behind her, against the way she faces, so it falls in at her back and not in
+    // her path; else any open tile within three of that; and it must see her, or it would land
+    // on the far side of the wall it was stuck behind.
+    const float backX = owner.x - std::cos(owner.facing) * 2.0f;
+    const float backY = owner.y - std::sin(owner.facing) * 2.0f;
+    int column = 0, rowAt = 0;
+    const bool behind =
+        router_.nearestOpen(int(std::lround(backX)), int(std::lround(backY)), wallOf(summon), 3,
+                            &column, &rowAt) &&
+        (column != owner.column() || rowAt != owner.row()) &&
+        router_.sees(float(column), float(rowAt), owner.x, owner.y, wallOf(summon));
+    if (!behind && !beside(owner, 2, summon, &column, &rowAt, true)) return false;
+    halt(summon);
+    summon.x = float(column);
+    summon.y = float(rowAt);
+    summon.aim = summon.facing = owner.facing;
+    summon.temper = Temper::Wandering;
+    summon.repathsAt = tick_ + kRepath;
+    say(What::Blinked, summon, column, rowAt);
+    return true;
 }
 
 }  // namespace mu::sim

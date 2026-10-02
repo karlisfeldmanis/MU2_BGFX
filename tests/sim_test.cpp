@@ -2552,6 +2552,59 @@ void testSummons(const content::Tables& tables) {
                 golem->stats.minimumDamage, golem->stats.maximumDamage, blows, kills);
 }
 
+// The user, 2026-10-02: "when char is using mount wich is fast summon cant keep up", and "summon
+// teleport him self closer to char if he wall behind to much". An elf on Uniria rides forty
+// tiles east off the town with her Golem raised: it walks back at her pace (kSummonCatchUp) and
+// is never left past kSummonBlink, a teleport putting it behind her when it falls that far.
+void testSummonKeepsUp(const content::Tables& tables) {
+    std::printf("the summon keeps up with her ride\n");
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, sim::Kin::FairyElf, 40);
+    realm.spend(0, 0, 0, 150);
+    realm.learn(sim::skill::kSummonGolem);
+    const int horn = tables.itemAt(13, 2);
+    check(horn >= 0 && realm.give(horn, sim::kMount) >= 0, "she wears the Horn of Uniria");
+    for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    const sim::Body* golem = nullptr;
+    for (int tick = 0; tick < 60 && !(golem && golem->alive()); ++tick) {
+        realm.step();
+        golem = realm.summoned();
+    }
+    check(golem != nullptr && golem->alive(), "the Golem stands beside her");
+    if (golem == nullptr || !golem->alive()) return;
+    const uint32_t golemId = golem->id;
+    sim::Request ride;
+    ride.kind = sim::Request::Kind::WalkTo;
+    ride.column = realm.hero().column() + 40;
+    ride.row = realm.hero().row();
+    realm.ask(ride);
+    float worst = 0.0f;
+    int blinks = 0;
+    bool rode = false;
+    for (int tick = 0; tick < 200; ++tick) {
+        realm.step();
+        rode |= realm.hero().riding;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what == sim::What::Blinked && h.who == golemId) ++blinks;
+        }
+        const sim::Body* g = realm.find(golemId);
+        if (g == nullptr || !g->alive()) break;
+        worst = std::max(worst, std::max(std::fabs(g->x - realm.hero().x),
+                                         std::fabs(g->y - realm.hero().y)));
+    }
+    const sim::Body* g = realm.find(golemId);
+    const float last = g ? std::max(std::fabs(g->x - realm.hero().x),
+                                    std::fabs(g->y - realm.hero().y))
+                         : 1e9f;
+    std::printf("  rode %.1f tiles; the Golem at most %.2f behind, %d teleports, %.2f at the end\n",
+                realm.hero().x - 200.0f, worst, blinks, last);
+    check(rode, "she rides");
+    check(g != nullptr && g->alive(), "and the Golem goes with her");
+    check(worst <= float(sim::kSummonBlink) + 1.5f, "never left past the blink");
+    check(last <= float(sim::kSummonTetherFighting) + 1.0f, "and at her side when she stops");
+}
+
 // The user, 2026-10-02: "summons should get aggro if he does some damage". A monster on her
 // that her summon wounds (a miss draws nothing, as hers does not) turns on the summon and stays there while she shoots it: counted over
 // a long hunt, every turn and every blow the monster throws after it.
@@ -6946,6 +6999,7 @@ int main() {
     testElfSkills(tables);
     testSummons(tables);
     testSummonAggro(tables);
+    testSummonKeepsUp(tables);
     testGates(tables);
     testDungeonGates(tables);
     testTraps();

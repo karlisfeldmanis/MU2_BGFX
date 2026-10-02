@@ -1022,6 +1022,9 @@ private:
     void stroll(Body& walker);
     // The summon's turn: guard her, peel what is on her, follow her, fight (realm_summon.cpp).
     void tend(Body& summon);
+    // Put down on an open tile behind her that sees her, and said as a Teleport's `Blinked`.
+    // False when there is none, and it walks.
+    bool blinkSummon(Body& summon, const Body& owner);
     // Its level and row off its breed and her level and points (skills.h): at the cast, and on
     // every tick it stands, keeping its share of health when the maximum moves.
     void fitSummon(Body& summon, const Body& hero);

@@ -544,6 +544,13 @@ float summonClimb(Ladder column, int breedLevel, int level);
 constexpr int kSummonHunt = 8;
 constexpr int kSummonTether = 2;
 constexpr int kSummonTetherFighting = 5;
+// Ours, the user's of 2026-10-02 ("when char is using mount wich is fast summon cant keep up",
+// "summon teleport him self closer to char if he wall behind to much"). Walking back to her it
+// keeps her pace, ridden or running, and a little over it so the gap closes rather than holds;
+// and past `kSummonBlink` tiles from her, or with no road back to her, it steps out of the air
+// behind her (Realm::blinkSummon). Past the hunt's eight would let it lose its quarry first.
+constexpr float kSummonCatchUp = 1.15f;
+constexpr int kSummonBlink = 7;
 
 // Heal's health and Greater Damage's bonus, off her energy.
 int healOf(const HeroPoints& points);
