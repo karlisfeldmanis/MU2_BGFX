@@ -134,6 +134,8 @@ void Play::exhale(float seconds) {
         }
         // Nor the wheel: MU blurs SKILL_SWORD1..5 and its action is past them. fx/wheel.h.
         if (skill && one.swingSkill == sim::skill::kTwistingSlash) continue;
+        // Nor Rageful Blow, past them too, whose weapon is out of his hand. fx/fury.h.
+        if (skill && one.swingSkill == sim::skill::kRagefulBlow) continue;
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the
@@ -451,6 +453,30 @@ void Play::throwWheel(const Drawn& swinger, const sim::Body* body) {
                          tables_.arms[size_t(body->weapon)].group == 3;
     wheel_.cast(swinger.id, weapon ? weapon->mesh : nullptr, weapon ? weapon->shine : ShineLook{},
                 polearm);
+}
+
+// The same weapon as the wheel's, thrown up off his hand a key into the clip and brought down a
+// metre ahead of him; his hand is empty for the clip's first four keys. Both quickened with the
+// clip.
+void Play::throwFury(Drawn& swinger, const sim::Body* body) {
+    const HeldItem* weapon = nullptr;
+    if (const FigureBody* look = swinger.figure.body()) {
+        for (const HeldItem& held : look->held) {
+            if (held.kind != "weapon" || held.mesh == nullptr) continue;
+            if (weapon == nullptr || inRightHand(held)) weapon = &held;
+            if (inRightHand(held)) break;
+        }
+    }
+    const bool polearm = body != nullptr && body->weapon >= 0 &&
+                         size_t(body->weapon) < tables_.arms.size() &&
+                         tables_.arms[size_t(body->weapon)].group == 3;
+    const float pace = std::max(swinger.swingPace, 0.01f);
+    const float feet[3] = {swinger.crown[0],
+                           ground_ ? ground_->heightAt(swinger.crown[0], swinger.crown[2]) : 0.0f,
+                           swinger.crown[2]};
+    fury_.cast(swinger.id, feet, swinger.yaw, Fury::kKeySeconds / pace,
+               weapon ? weapon->mesh : nullptr, weapon ? weapon->shine : ShineLook{}, polearm);
+    swinger.handEmpty = Fury::kEmptyKeys * Fury::kKeySeconds / pace;
 }
 
 void Play::lightForges(Lamps& lamps) const {
@@ -1123,6 +1149,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     }
     // Twisting Slash's copies of his weapon, the camera's alone.
     wheel_.gather(out);
+    // And Rageful Blow's weapon in the air.
+    fury_.gather(out);
     // His pet, after him, so the Imp takes his clavicle as this frame posed it.
     if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->visible) {
         pets_.gather(renderer, hero->figure, scratch_, out, casters);

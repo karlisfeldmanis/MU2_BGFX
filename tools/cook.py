@@ -2123,12 +2123,13 @@ def cook_tables(world, out_dir):
     # recovery", the arm thrown up to the sky that Lightning and Meteorite are cast in: MU gives it
     # no play speed, so it has the exporter's default (pipeline/export_gltf.py DEFAULT_PLAY_SPEED),
     # 13 keys at 0.25 -- the 2.08 s the drawing plays. And 65, `PLAYER_ATTACK_SKILL_WHEEL`,
-    # Twisting Slash's own spin (SkillCast.cpp:306-312), 13 keys at 0.24.
+    # Twisting Slash's own spin (SkillCast.cpp:306-312), 13 keys at 0.24. And 66,
+    # `PLAYER_ATTACK_SKILL_FURY_STRIKE`, Rageful Blow's own (ClassAttack.cpp:986), 11 keys at 0.38.
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     unassigned = {"183": 0.25}
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 147, 148, 183, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 147, 148, 183, 187]:
         name = str(action)
         speed = speeds.get(name, unassigned.get(name))
         if name not in keys or speed is None:

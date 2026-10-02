@@ -340,7 +340,8 @@
     },
     "66": {
       "enum": "PLAYER_ATTACK_SKILL_FURY_STRIKE",
-      "name": "Attack skill fury strike"
+      "name": "Attack skill fury strike",
+      "play_speed": 0.38
     },
     "67": {
       "enum": "PLAYER_SKILL_VITALITY",

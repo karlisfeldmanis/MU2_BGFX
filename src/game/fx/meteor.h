@@ -96,6 +96,9 @@ public:
     // `count` of the rock's stones thrown up off the ground at `x, z` -- a Flame's kicked-up
     // debris, MU's `MODEL_STONE1 + rand() % 2` off the same ballistic arm (fx/flame.h).
     void stones(float x, float z, float floor, int count) { stonesAt(x, z, floor, count); }
+    // The blast alone at `at`, `share` of its size: Rageful Blow's BITMAP_EXPLOTION at half,
+    // where its weapon comes down (fx/fury.h).
+    void blast(const float at[3], float share) { blastAt(at[0], at[1], at[2], share); }
     // Advances the fireballs by the frame's seconds, steering each after where its target is
     // drawn -- `alive(id)` and `where(id, out)` as `Bolt::update` takes them. Call beside update().
     template <typename Alive, typename Where>

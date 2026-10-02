@@ -490,6 +490,8 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.repair = sound_.load("window_repair", false);
     heard_.meteorite = sound_.load("meteorite", true);
     heard_.evil = sound_.load("devil_evil", true);
+    heard_.rage2 = sound_.load("rage_blow_2", true);
+    heard_.rage3 = sound_.load("rage_blow_3", true);
     heard_.hellfire = sound_.load("balrog_hellfire", true);
     heard_.iceCast = sound_.load("spell_ice", true);
     // The knight's skills, by the table's own index, so a cast asks for its wave by the same

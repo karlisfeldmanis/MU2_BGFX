@@ -37,6 +37,7 @@
 #include "game/fx/spirits.h"
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
+#include "game/fx/fury.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -457,6 +458,8 @@ public:
     Spirits& spirits() { return spirits_; }
     // The knight's Twisting Slash: his weapon flung round him. fx/wheel.h.
     Wheel& wheel() { return wheel_; }
+    // The knight's Rageful Blow: his weapon thrown down and the ground broken. fx/fury.h.
+    Fury& fury() { return fury_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -677,6 +680,9 @@ private:
         // into being; left far above kSpawnFadeSeconds otherwise, which reads as "done fading".
         float spawnFade = 1e9f;
         float swinging = 0.0f;   // seconds of it left to play before idle or walk take over
+        // Seconds his right hand stays empty: Rageful Blow's weapon is in the air while its clip
+        // is under its fourth key (ZzzCharacter.cpp:10079). fx/fury.h.
+        float handEmpty = 0.0f;
         float swingPace = 1.0f;  // how much faster than authored the swing clip must run
         // Seconds of a flinch left to play, held as a swing is -- without it the idle took the
         // shock clip back on the next frame. A swing or a step ends it. See Play::flinch.
@@ -841,6 +847,7 @@ private:
     Flame flame_;
     Spirits spirits_;
     Wheel wheel_;
+    Fury fury_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;
@@ -868,6 +875,8 @@ private:
     void smithy(float seconds);
     // Twisting Slash's wheel, thrown with the weapon in his right hand. fx/wheel.h.
     void throwWheel(const Drawn& swinger, const sim::Body* body);
+    // Rageful Blow's weapon and the ground it breaks. fx/fury.h.
+    void throwFury(Drawn& swinger, const sim::Body* body);
     // The Giant's death sand, thrown between keys 8 and 9 of its death clip. Read per frame off
     // the clip's own clock, so it starts a third of the way down the fall and stops itself.
     void sandOnDeath();
@@ -902,6 +911,7 @@ private:
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         int evil = -1, hellfire = -1;  // the Devil's sEvil and the Balrog's sHellFire
+        int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.

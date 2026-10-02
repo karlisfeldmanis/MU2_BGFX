@@ -395,6 +395,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         const HeldItem& item = body_->held[index];
         if (!item.mesh) continue;
         const bool slung = (safe_ || item.alwaysSlung) && body_->backBone >= 0;
+        if (emptyHand_ && !slung && item.kind == "weapon" && inRightHand(item)) continue;
         const int bone = slung ? body_->backBone : item.bone;
         if (bone < 0 || size_t(bone) * 16 + 16 > world_.size()) continue;
 

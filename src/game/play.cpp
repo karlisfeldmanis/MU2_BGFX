@@ -874,6 +874,11 @@ void Play::update(double seconds) {
                                 cry = -1;
                                 throwWheel(*swinger, body);
                             }
+                            // Rageful Blow's SOUND_FURY_STRIKE1 is the row's own, as the clip
+                            // starts; the weapon leaves his hand a key in. fx/fury.h.
+                            if (swinger->castSkill == sim::skill::kRagefulBlow) {
+                                throwFury(*swinger, body);
+                            }
                         }
                         if (cry >= 0 && swinger->placed) {
                             emit(cry, swinger->crown[0], swinger->crown[2],
@@ -1125,6 +1130,8 @@ void Play::update(double seconds) {
         // either way, which is why the rate goes in as a rate rather than as a scaled delta.
         one.figure.update(float(seconds), one.clipRate);
         if (one.swinging > 0.0f) one.swinging -= float(seconds);
+        if (one.handEmpty > 0.0f) one.handEmpty = std::max(0.0f, one.handEmpty - float(seconds));
+        one.figure.emptyHand(one.handEmpty > 0.0f);
     }
     for (Standing& one : folk_) {
         one.figure.update(float(seconds));
@@ -1281,6 +1288,16 @@ void Play::update(double seconds) {
             const int index = sim::skillIndexOf(sim::skill::kTwistingSlash);
             if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], feet[0], feet[2], id);
         });
+    // Rageful Blow's weapon and the ground it breaks: its two later sounds, the stones its fires
+    // kick up (the meteor's), and its half-size blast (the meteor's Explotion01).
+    fury_.update(
+        float(seconds),
+        [&](int which, const float* at) {
+            const int event = which == 2 ? heard_.rage2 : heard_.rage3;
+            if (event >= 0) emit(event, at[0], at[2]);
+        },
+        [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); },
+        [&](const float* at) { meteor_.blast(at, 0.5f); });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running.

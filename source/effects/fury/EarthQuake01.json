@@ -1,0 +1,16 @@
+{
+  "item": "EarthQuake01",
+  "mu_name_from": "Data/Skill/EarthQuake01.bmd, loaded at ZzzOpenData.cpp:4414-4424.",
+  "kind": "skill",
+  "why_this_one": "Rageful Blow's ground (AT_SKILL_RAGEFUL_BLOW): Move_MODEL_SKILL_FURY_STRIKE, MoveHandlers.cpp:2940-3175, its pieces' births at ZzzEffect.cpp:1866-1945 and their movers at :7103-7258. game/fx/fury.h draws it.",
+  "mesh": "EarthQuake01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/EarthQuake01.bmd, from MuMain.",
+  "parts": [
+    {
+      "group": "fury",
+      "sheet": "fury.png",
+      "blend": "additive",
+      "note": "MODEL_SKILL_FURY_STRIKE + 1: the crater's molten glow, at the impact, Scale 1.5, LifeTime 35, BlendMesh 0, BlendMeshLight LifeTime * 0.1 / 3; sinks half a unit a frame under ten; shakes the camera every third frame over fifteen."
+    }
+  ]
+}

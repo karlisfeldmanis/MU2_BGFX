@@ -1572,8 +1572,8 @@ void testCastLock(const content::Tables& tables) {
               "Lightning is a channel round him as long as its clip, with no cooldown, and it "
               "pushes");
         check(bolt.force == 1.5f && sim::force(bolt, sim::HeroPoints{}) == 1.5f &&
-                  sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.0f,
-              "and each strike is at half again the band, its long clip being its wait, where Fire Ball's is at one");
+                  sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.8f,
+              "and each strike is at half again the band, its long clip being its wait, where Fire Ball's is at 1.8");
         check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32 &&
                   bolt.strikesEach == 1,
               "and it strikes every three ticks while his arm is up, once at most a body");

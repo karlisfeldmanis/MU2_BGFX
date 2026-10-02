@@ -1,0 +1,16 @@
+{
+  "item": "EarthQuake05",
+  "mu_name_from": "Data/Skill/EarthQuake05.bmd, loaded at ZzzOpenData.cpp:4414-4424.",
+  "kind": "skill",
+  "why_this_one": "Rageful Blow's ground (AT_SKILL_RAGEFUL_BLOW): Move_MODEL_SKILL_FURY_STRIKE, MoveHandlers.cpp:2940-3175, its pieces' births at ZzzEffect.cpp:1866-1945 and their movers at :7103-7258. game/fx/fury.h draws it.",
+  "mesh": "EarthQuake05.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/EarthQuake05.bmd, from MuMain.",
+  "parts": [
+    {
+      "group": "magic_a02",
+      "sheet": "magic_a02.png",
+      "blend": "additive",
+      "note": "MODEL_SKILL_FURY_STRIKE + 5: the fire on each broken patch, LifeTime 40, BlendMesh 0, light (40 - LifeTime) * 0.1 up to thirty then LifeTime * 0.1, scrolled, a red terrain light, a stone on one frame in fifteen; sinks under fifteen."
+    }
+  ]
+}

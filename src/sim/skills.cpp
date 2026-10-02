@@ -89,9 +89,11 @@ constexpr SkillRow kRows[kSkills] = {
     // followed, and inventing one and calling it traced would be worse than saying this.
     //
     // Twisting Slash plays MU's own spin, `PLAYER_ATTACK_SKILL_WHEEL` (action 65,
-    // SkillCast.cpp:306-312), 13 keys at 0.24 -- slower than a sword skill, as MU's is. The other
-    // two reuse 0.75's clips, the nearest blow, and the note is here rather than in the drawing:
-    // the overhead for the crush, the thrust for the stab.
+    // SkillCast.cpp:306-312), 13 keys at 0.24 -- slower than a sword skill, as MU's is. Rageful
+    // Blow plays MU's own `PLAYER_ATTACK_SKILL_FURY_STRIKE` (action 66, ClassAttack.cpp:986), 11
+    // keys at 0.38 (ZzzCharacter.cpp:1008), with SOUND_FURY_STRIKE1 as it starts and the weapon
+    // thrown and the ground broken by game/fx/fury.h. Death Stab reuses 0.75's thrust, the
+    // nearest blow, and the note is here rather than in the drawing.
     //
     // Twisting Slash is the one skill of the three MU puts no weapon requirement on at all --
     // it is the knight's staple, "whirl his weapon violently around him" -- so it is the one row
@@ -101,7 +103,10 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // **No cooldown** (the user, 2026-10-01: "remove cooldown from twisting slash"), which makes
     // it a primary: paced by its spin alone, held on the key, its mana the only limit.
-    {skill::kTwistingSlash, "Twisting Slash", 22, 1.0f, 1.2f, 1.0f / 1500.0f, 0, false,
+    //
+    // **1.5 and not 1.2** (the user, 2026-10-02: "twisting slash needs multiplier"). Ours: at 1.2
+    // it was a plain swing round him, and the bot pressed it 71 times in three hours.
+    {skill::kTwistingSlash, "Twisting Slash", 22, 1.0f, 1.5f, 1.0f / 1500.0f, 0, false,
      Spread::Ring, 0, 1.0f,
      "A whirl of whatever he is holding, into everything within a tile. Every weapon can throw "
      "it; none throws it hard.",
@@ -113,11 +118,15 @@ constexpr SkillRow kRows[kSkills] = {
     // weapon requirement on either, and a knight of any hand should have a heavy answer as well as
     // a wide one. So the two skills past 0.75 that every family shares are the pair, spin and
     // crush, and every gate in the table below them is traced to a carrier.
-    {skill::kRagefulBlow, "Rageful Blow", 25, 1.0f, 2.1f, 1.0f / 900.0f, 170, false, Spread::Arc,
+    //
+    // **The knight's cooldown blow: 3.0 and not 2.1, and its 8.5 s kept** (the user, 2026-10-02:
+    // "ragefull blow will be cooldown spell with some multiplier"). Ours: the hardest blow in
+    // the table, paid for by the longest wait.
+    {skill::kRagefulBlow, "Rageful Blow", 25, 1.0f, 3.0f, 1.0f / 900.0f, 170, false, Spread::Arc,
      0, 1.0f,
      "The weapon driven down into the ground, and what it breaks is the three tiles ahead of "
      "him.",
-     60, "player_skill_sword1", true, arms::kEvery, 44},
+     66, "rage_blow_1", true, arms::kEvery, 44},
     // Death Stab: the spear's, and MU gates it on the hand too -- `SkillWarrior` refuses it with
     // a staff in the right hand (SkillCast.cpp:157) and the skill has been a spear's in every
     // version that hands it out. The hardest single blow in the table, and the point of carrying
@@ -140,7 +149,11 @@ constexpr SkillRow kRows[kSkills] = {
     // **Nine tiles and not six** (the user, 2026-09-28: "lets also increase range for fireball and
     // energy ball"). Ours. The bolt lives twenty frames at sixty units, twelve tiles, so it still
     // reaches with room to steer.
-    {skill::kEnergyBall, "Energy Ball", 1, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    //
+    // **One and a half times the band** (the user, 2026-10-02: "basic DW spells also multipliers
+    // so its more balanced"). Ours: at 1.0 the bot's wizard dealt a third of the knight's damage
+    // a minute until Meteorite arrived (--fights, seed 1: 1,716 against 5,829 at two hours).
+    {skill::kEnergyBall, "Energy Ball", 1, 9.0f, 1.5f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A bolt of light thrown at one body up to nine tiles off. Its force is his energy and his "
      "staff's.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 3, 148},
@@ -186,9 +199,11 @@ constexpr SkillRow kRows[kSkills] = {
     // the bolt, which is the difference between the two in the air.
     //
     // Nine tiles and not six, with Energy Ball, on the same word; the fireball lives sixty frames.
-    {skill::kFireBall, "Fire Ball", 3, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "A ball of fire thrown at one body up to nine tiles off: half again the force of an Energy "
-     "Ball, for three times the mana.",
+    //
+    // **1.8 times the band**, on the same word as Energy Ball's 1.5. Ours.
+    {skill::kFireBall, "Fire Ball", 3, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A ball of fire thrown at one body up to nine tiles off: harder than an Energy Ball, for "
+     "three times the mana.",
      147, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 8, 148, 12.5f},
 
     // Power Wave 11, 0.75's row: `CreateSkill(PowerWave, ..., DamageType.Wizardry, 14, 6,
@@ -204,9 +219,11 @@ constexpr SkillRow kRows[kSkills] = {
     // its clip, a hit paying back. About twice Energy Ball against one body at fifty-six energy
     // (20-31 against 9-18) for five mana. The same two hands; `SOUND_MAGIC`, Energy Ball's wave,
     // which MU plays for both. Sixty units a reference frame, the bolt's fifteen tiles a second.
-    {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.0f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
+    //
+    // **1.6 times the band**, on the same word: under Fire Ball, since it strikes the whole line.
+    {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.6f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
      "A wave of light swept along the ground for twelve tiles, striking everything in its line "
-     "at twice the force of an Energy Ball.",
+     "harder than an Energy Ball.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
 
     // Lightning 3: 0.75's row for the numbers that survive -- seventeen damage, fifteen mana,

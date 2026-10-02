@@ -1960,6 +1960,7 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "poison"),
         **_models(root, build, "storm"),
         **_models(root, build, "summon"),
+        **_models(root, build, "fury"),
     }
 
 

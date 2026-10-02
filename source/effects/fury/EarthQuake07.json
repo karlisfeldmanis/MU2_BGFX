@@ -1,0 +1,16 @@
+{
+  "item": "EarthQuake07",
+  "mu_name_from": "Data/Skill/EarthQuake07.bmd, loaded at ZzzOpenData.cpp:4414-4424.",
+  "kind": "skill",
+  "why_this_one": "Rageful Blow's ground (AT_SKILL_RAGEFUL_BLOW): Move_MODEL_SKILL_FURY_STRIKE, MoveHandlers.cpp:2940-3175, its pieces' births at ZzzEffect.cpp:1866-1945 and their movers at :7103-7258. game/fx/fury.h draws it.",
+  "mesh": "EarthQuake07.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/EarthQuake07.bmd, from MuMain.",
+  "parts": [
+    {
+      "group": "test_2",
+      "sheet": "test_2.png",
+      "blend": "additive",
+      "note": "MODEL_SKILL_FURY_STRIKE + 7: a crack segment, five branches of four 85-99 units long running out at LifeTime 10, Scale 1, LifeTime 40, BlendMesh 0, BlendMeshLight LifeTime * 0.1 / 3; sinks under ten."
+    }
+  ]
+}

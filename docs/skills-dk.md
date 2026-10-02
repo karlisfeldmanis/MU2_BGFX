@@ -367,14 +367,21 @@ damage = strike(...) × M
 | Falling Slash 19 | one | 2.0 | 1000 | 2.03 | 2.50 | 3.00 | 4.00 |
 | Cyclone 22 | up to 9 | 1.3 | 1400 | 1.32 | 1.66 | 2.01 | 2.73 |
 | Slash 23 | up to 3 | 1.8 | 1000 | 1.83 | 2.30 | 2.80 | 3.80 |
-| Twisting Slash 41 | up to 9 | 1.2 | 1500 | 1.22 | 1.53 | 1.87 | 2.53 |
-| Rageful Blow 42 | up to 3 | 2.1 | 900 | 2.13 | 2.66 | 3.21 | 4.32 |
+| Twisting Slash 41 | up to 9 | 1.5 | 1500 | 1.52 | 1.83 | 2.17 | 2.83 |
+| Rageful Blow 42 | up to 3 | 3.0 | 900 | 3.03 | 3.56 | 4.11 | 5.22 |
 | Death Stab 43 | one | 2.3 | 900 | 2.33 | 2.86 | 3.41 | 4.52 |
 
 The last three are §3.1b's, and they sit where the shape says they should: Twisting Slash under
 Cyclone, because it is the key every family has and nothing every family has should be the best
 one; Rageful Blow and Death Stab above Falling Slash, because each is the *only* heavy blow its
 family owns and pays for it in cooldown (8.5 s and 5.5 s against Falling Slash's 4.0).
+
+**Moved 2026-10-02** (the user: "ragefull blow will be cooldown spell with some multiplier, also
+twisting slash needs multiplier"): Twisting Slash 1.2 to 1.5 and Rageful Blow 2.1 to 3.0, its 8.5 s
+kept, so the spin now sits over Cyclone and Rageful Blow is the hardest blow in the table, paid for
+by the longest wait. At the old numbers the bot pressed them 71 and 33 times in three hours against
+Falling Slash's 790; now about 100-150 each. The wizard's three primaries moved on the same word
+(Energy Ball 1.5, Fire Ball 1.8, Power Wave 1.6, all from 1.0; `src/sim/skills.cpp`).
 
 `M₀ = 2.0` on Falling Slash is 0.75's own number, and it is the anchor the other four are spread
 around — **Falling Slash is the heaviest single blow and the two area skills are paid in coverage

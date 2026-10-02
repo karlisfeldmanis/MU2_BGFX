@@ -1,0 +1,19 @@
+# EarthQuake01.bmd — MU geometry at action 0 key 0, exported for MU2
+# 1 mesh(es)
+
+g fury
+# texture: fury.jpg
+v -62.3161 0 14.06581
+v -15.1768 0 61.2051
+v 17.2039 0 -65.4542
+v 64.3432 0 -18.31491
+vn 0 1 -0
+vn 0 1 -0
+vn 0 1 -0
+vn 0 1 -0
+vt 0.0005 0.9995
+vt 0.0005 0.0005
+vt 0.9995 0.9995
+vt 0.9995 0.0005
+f 1/1/1 3/3/3 2/2/2
+f 4/4/4 2/2/2 3/3/3

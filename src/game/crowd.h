@@ -104,6 +104,9 @@ public:
     // through exactly; a figure's own clips are left linear, where a curve would round a
     // blow's snap.
     void smoothKeys(bool on) { smooth_ = on; }
+    // Draws his right hand's weapon or not: Rageful Blow's is in the air while its clip is
+    // under its fourth key (fx/fury.h). Only in the hand -- slung, it is drawn.
+    void emptyHand(bool on) { emptyHand_ = on; }
 
     const FigureBody* body() const { return body_; }
     int clip() const { return clip_; }
@@ -158,6 +161,7 @@ private:
     bool safe_ = false;  // standing on a safe tile: weapon on the back, unarmed stance
     bool smooth_ = false;  // curved between keys; see smoothKeys
     bool mounted_ = false;  // drawn in mount_'s frame; see mount
+    bool emptyHand_ = false;  // the right hand's weapon left out; see emptyHand
     float mount_[16] = {};
 };
 

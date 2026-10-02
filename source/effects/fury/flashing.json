@@ -1,0 +1,16 @@
+{
+  "item": "flashing",
+  "mu_name_from": "Data/Skill/flashing.bmd, loaded at ZzzOpenData.cpp:4414-4424.",
+  "kind": "skill",
+  "why_this_one": "Rageful Blow's ground (AT_SKILL_RAGEFUL_BLOW): Move_MODEL_SKILL_FURY_STRIKE, MoveHandlers.cpp:2940-3175, its pieces' births at ZzzEffect.cpp:1866-1945 and their movers at :7103-7258. game/fx/fury.h draws it.",
+  "mesh": "flashing.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/flashing.bmd, from MuMain.",
+  "parts": [
+    {
+      "group": "magic2",
+      "sheet": "magic2.png",
+      "blend": "additive",
+      "note": "MODEL_WAVE, Data/Skill/flashing.bmd: the flash at the impact, Scale 0.5 growing 1.2 a frame to 2 then 0.1, BlendMeshLight 1.5 then LifeTime / 30, LifeTime 15 (ZzzEffect.cpp:1338-1345, MoveHandlers.cpp:2584-2604)."
+    }
+  ]
+}

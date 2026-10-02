@@ -1574,6 +1574,24 @@
         "sHellFire.wav"
       ],
       "from": "SOUND_HELLFIRE, played with the Balrog's skill blow's circle (ZzzCharacter.cpp:1974-1981)."
+    },
+    "rage_blow_1": {
+      "files": [
+        "eRageBlow_1.wav"
+      ],
+      "from": "SOUND_FURY_STRIKE1, Data\\Sound\\eRageBlow_1.wav (ZzzOpenData.cpp:4848). Played as Rageful Blow's MODEL_SKILL_FURY_STRIKE is made, the weapon leaving his hand (ZzzCharacter.cpp:4166-4167)."
+    },
+    "rage_blow_2": {
+      "files": [
+        "eRageBlow_2.wav"
+      ],
+      "from": "SOUND_FURY_STRIKE2, Data\\Sound\\eRageBlow_2.wav (ZzzOpenData.cpp:4849). Played at the effect's LifeTime 13, as the weapon's streaks fall (MoveHandlers.cpp:3150)."
+    },
+    "rage_blow_3": {
+      "files": [
+        "eRageBlow_3.wav"
+      ],
+      "from": "SOUND_FURY_STRIKE3, Data\\Sound\\eRageBlow_3.wav. Played at the effect's LifeTime 10, as the ground cracks open (MoveHandlers.cpp:3108)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

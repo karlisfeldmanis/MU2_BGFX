@@ -281,6 +281,9 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().wheel().open(assets, ctx.textures,
                                              world_.played().showing().table(),
                                              &world_.ground());
+                world_.played().fury().open(assets, ctx.textures,
+                                            world_.played().showing().table(),
+                                            &world_.ground());
                 // The refinement shine's two sheets: Chrome01 for +7, Shiny01 for +9.
                 game::lendShine(world_.played().showing().table(), assets, ctx.textures,
                                 ctx.renderer);
@@ -804,7 +807,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // the quarter of a MU unit it says it is: four millimetres, on a camera six
     // metres out, which is nothing at all.
     {
-        const float pitch = world_.played().meteor().quakeDegrees();
+        // And Rageful Blow's crater, which shakes it the same way (fx/fury.h).
+        const float pitch = world_.played().meteor().quakeDegrees() +
+                            world_.played().fury().quakeDegrees();
         if (pitch != 0.0f) {
             float ahead[3], right[3], up[3];
             for (int a = 0; a < 3; ++a) ahead[a] = eye.position[a] - eye.target[a];
@@ -914,6 +919,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Twisting Slash's wheel, the grey MU lays under each copy, as one.
         count += world_.played().wheel().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count);
+        // And Rageful Blow's broken ground, MU's red under its fires, as one.
+        count += world_.played().fury().lights(falling + count,
+                                               gfx::Renderer::kMaxTransientLights - count);
         // And a Fire Trap's burst on the floor, two tiles.
         count += world_.played().trapShow().lights(falling + count,
                                                    gfx::Renderer::kMaxTransientLights - count);
@@ -1082,6 +1090,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                     daylightOf(ctx.lighting));
         world_.played().wheel().gatherEffects(ctx.renderer.effects(), eye.position, eye.target,
                                               daylightOf(ctx.lighting));
+        world_.played().fury().gatherEffects(ctx.renderer.effects(), eye.position, eye.target,
+                                             daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         openItems(ctx);
