@@ -18,8 +18,8 @@ constexpr float kShrink = 0.002f / kFrame;  // Scale a second
 constexpr float kSheetMetres = 0.64f;       // a 64-texel sheet at Scale 1
 constexpr size_t kMost = 40;
 // Ours: the sparks and the emitters' flares at 0.4 of MU's size (the user, 2026-10-02: 'thos
-// flying sparcles has to be much smaller').
-constexpr float kSparkSize = 0.4f;
+// flying sparcles has to be much smaller'), then 0.18 ('sparkles still to big'), then 0.14 ('just little bit smaller').
+constexpr float kSparkSize = 0.14f;
 // The emitters: a puff about one frame in eight each (rand_fps_check(2) on a four-tick
 // cadence), a flare with every other.
 constexpr float kPuffEvery = 8.0f * kFrame;
