@@ -186,13 +186,11 @@ GRASS_BY_MAP = {
 #: melt into the dark as MU's do (the user's MU shot of floor 7's causeway, 2026-10-01).
 VOID_BY_MAP = {
     4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
-    # Blood Castle's court, bridge and courtyard over its chasm, the same: their edges stood as
-    # grey jagged cliffs against the black (the user, 2026-10-02: 'we need to add some nice void
-    # gradients to ground edges similiar like we did for devias voids' -- the Lost Tower's).
-    # The blend 0.7 tiles in, not the tower's 2: the bridge is three tiles wide and at 2 went
-    # dark from side to side.
-    11: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 0.7},
 }
+#: Blood Castle tried the tower's (the user, 2026-10-02: 'we need to add some nice void gradients
+#: to ground edges'), blend 2 and then 0.7 tiles: the three-tile bridge went dark from side to
+#: side, then a hard dark band ran down its open side ('something dont look correct it was kind
+#: of better'). Taken out; the castle keeps the default sink.
 
 #: How far a world's lava floods its void, in tiles. Ours, marked: MU framed its maps for a
 #: 4:3 screen, and the Lost Tower's long lava field (floor 1's east strip, 150-185 x 0-140)

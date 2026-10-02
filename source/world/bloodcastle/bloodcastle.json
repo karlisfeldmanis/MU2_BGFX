@@ -16,12 +16,6 @@
   "8": "TileRock02"
  },
  "grass_slots": [],
- "void": {
-  "start": 0.1,
-  "depth": 1.6,
-  "rim": true,
-  "blend": 0.7
- },
  "light_depth": 1.0,
  "objects": [
   {
