@@ -46,6 +46,15 @@ public:
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
+    // The vault cell being dragged, or -1.
+    int dragged() const { return dragging_; }
+    // A thing dragged out of the bag and over this window, or null, and whether the vault takes
+    // it at all (a worn piece it does not): the cells it would land on are lit by
+    // Realm::deposit's gate. Set before update.
+    void carrying(const sim::Held* what, bool takes) {
+        incoming_ = what ? *what : sim::Held{};
+        incomingTakes_ = takes;
+    }
     // The vault cell under a point on screen, or -1: where a thing dragged out of the bag lands.
     int cellUnder(float x, float y) const;
     const gfx::Canvas& canvas() const { return canvas_; }
@@ -57,6 +66,9 @@ private:
         uint32_t version = 0, bagVersion = 0;
         long long money = -1;
         int dragging = -1;
+        int32_t incoming = -1;
+        int16_t incomingCount = 0;
+        bool incomingTakes = false;
         float dragX = 0, dragY = 0;
         int hovered = -1;
         float pointerX = 0, pointerY = 0;
@@ -78,6 +90,8 @@ private:
     float x_ = 0.0f, y_ = 0.0f, screenW_ = 0.0f, screenH_ = 0.0f;
     bool up_ = false;
     int dragging_ = -1;
+    sim::Held incoming_;
+    bool incomingTakes_ = false;
     int hovered_ = -1;
     int button_ = -1;    // the coin button under the pointer, 0 in and 1 out
     int pressing_ = -1;  // the one pressed and not yet let go

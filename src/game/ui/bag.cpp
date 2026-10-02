@@ -181,7 +181,9 @@ const char* ghostArt(int slot) { return ghostFor(slot); }
 
 bool Bag::Contents::operator==(const Contents& o) const {
     return version == o.version && money == o.money && dragging == o.dragging &&
-           (dragging < 0 || (dragX == o.dragX && dragY == o.dragY)) && hovered == o.hovered &&
+           incoming == o.incoming && incomingCount == o.incomingCount &&
+           ((dragging < 0 && incoming < 0) || (dragX == o.dragX && dragY == o.dragY)) &&
+           hovered == o.hovered &&
            (hovered < 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            closing == o.closing && overClose == o.overClose && level == o.level && strength == o.strength &&
            agility == o.agility && vitality == o.vitality && energy == o.energy && x == o.x &&
@@ -246,6 +248,8 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     // potion hovered by its lower half is still the potion.
     const int cell = inside ? slotAt(ux, uy) : -1;
     hovered_ = cell >= 0 ? bag.holder(tables, cell) : -1;
+    // A vault piece riding over the bag hovers nothing: no lit cell, no card under it.
+    if (!incoming_.empty()) hovered_ = -1;
 
     const Box cross = panel::frameClose();
     overClose_ = inside && cross.has(ux, uy);
@@ -334,6 +338,8 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     now_.version = bag.version();
     now_.money = realm.money();
     now_.dragging = dragging_;
+    now_.incoming = incoming_.item;
+    now_.incomingCount = incoming_.durability;
     now_.dragX = pointer.x;
     now_.dragY = pointer.y;
     now_.hovered = dragging_ < 0 ? hovered_ : -1;
@@ -482,6 +488,31 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 const int covering = bag.covered(under, target.width, target.height, cells);
                 for (int i = 0; i < covering; ++i) light(cells[i], !refused);
             } else {
+                if (count == 0) light(cell, false);
+                for (int i = 0; i < count; ++i) light(cells[i], fits);
+            }
+        }
+    }
+    // The same for a vault piece carried over the bag, by Realm::withdraw's gate: onto a stack
+    // of its kind with room, or into the satchel where its footprint is free. A worn slot
+    // takes nothing from the vault.
+    if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
+        const int cell = slotAt(ux, uy);
+        if (cell >= 0) {
+            const auto light = [&](int at, bool ok) {
+                panel::cell(canvas_, x, y, wellOf(slotBox(at), sim::wearable(at)),
+                            ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
+            };
+            const content::ItemRow& row = tables.items[size_t(incoming_.item)];
+            const int under = sim::baggable(cell) ? bag.holder(tables, cell) : -1;
+            int cells[sim::kSlots];
+            if (under >= 0 && sim::tops(tables, bag[under], incoming_)) {
+                const content::ItemRow& target = tables.items[size_t(bag[under].item)];
+                const int covering = bag.covered(under, target.width, target.height, cells);
+                for (int i = 0; i < covering; ++i) light(cells[i], true);
+            } else {
+                const bool fits = sim::baggable(cell) && bag.room(tables, cell, row.width, row.height);
+                const int count = sim::baggable(cell) ? bag.covered(cell, row.width, row.height, cells) : 0;
                 if (count == 0) light(cell, false);
                 for (int i = 0; i < count; ++i) light(cells[i], fits);
             }

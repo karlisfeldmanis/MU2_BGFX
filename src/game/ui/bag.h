@@ -64,6 +64,11 @@ public:
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
+    // The slot being dragged, or -1.
+    int dragged() const { return dragging_; }
+    // A thing dragged out of the vault and over this window, or null: the bag lights the cells
+    // it would land on as it lights its own drag, by Realm::withdraw's gate. Set before update.
+    void carrying(const sim::Held* what) { incoming_ = what ? *what : sim::Held{}; }
     // The slot under a point on screen, or -1: where a thing dragged out of the vault lands.
     int slotUnder(float x, float y) const {
         if (!covers(x, y)) return -1;
@@ -89,6 +94,8 @@ private:
         uint32_t version = 0;
         long long money = -1;
         int dragging = -1;
+        int32_t incoming = -1;
+        int16_t incomingCount = 0;
         float dragX = 0, dragY = 0;
         int hovered = -1;
         float pointerX = 0, pointerY = 0;
@@ -113,6 +120,7 @@ private:
     float screenW_ = 0.0f, screenH_ = 0.0f;
     bool up_ = false;
     int dragging_ = -1;
+    sim::Held incoming_;
     int hovered_ = -1;
     float pointerX_ = 0.0f, pointerY_ = 0.0f;
     bool closing_ = false;

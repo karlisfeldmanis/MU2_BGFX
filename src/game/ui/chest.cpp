@@ -57,7 +57,9 @@ Box itemBox(const content::Tables& tables, int cell, const sim::Held& what) {
 
 bool Chest::Contents::operator==(const Contents& o) const {
     return version == o.version && bagVersion == o.bagVersion && money == o.money &&
-           dragging == o.dragging && (dragging < 0 || (dragX == o.dragX && dragY == o.dragY)) &&
+           dragging == o.dragging && incoming == o.incoming &&
+           incomingCount == o.incomingCount && incomingTakes == o.incomingTakes &&
+           ((dragging < 0 && incoming < 0) || (dragX == o.dragX && dragY == o.dragY)) &&
            hovered == o.hovered &&
            (hovered < 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            button == o.button && pressing == o.pressing && closing == o.closing &&
@@ -109,7 +111,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
     const bool inside = covers(pointer.x, pointer.y);
 
     const int cell = inside ? cellAt(ux, uy) : -1;
-    hovered_ = cell >= 0 ? vault.holder(tables, cell) : -1;
+    hovered_ = cell >= 0 && incoming_.empty() ? vault.holder(tables, cell) : -1;
     button_ = inside ? buttonAt(ux, uy) : -1;
 
     const Box cross = panel::frameClose();
@@ -163,6 +165,9 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
     now_.bagVersion = realm.satchel().version();
     now_.money = vault.zen();
     now_.dragging = dragging_;
+    now_.incoming = incoming_.item;
+    now_.incomingCount = incoming_.durability;
+    now_.incomingTakes = incomingTakes_;
     now_.dragX = pointer.x;
     now_.dragY = pointer.y;
     now_.hovered = dragging_ < 0 ? hovered_ : -1;
@@ -222,6 +227,25 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
             const int w = std::min<int>(row.width, sim::kVaultColumns - column);
             const int h = std::min<int>(row.height, sim::kVaultRows - line);
             panel::cell(canvas_, x, y, cellBox(cell, w, h),
+                        fits ? sheet::Cell::Fits : sheet::Cell::Blocked);
+        }
+    }
+    // And a bag piece carried over the vault, by Realm::deposit's gate: onto a stack of its
+    // kind with room, or where its footprint is free; a worn piece nowhere.
+    if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
+        const int cell = cellAt((now_.dragX - x) / k, (now_.dragY - y) / k);
+        if (cell >= 0) {
+            const content::ItemRow& row = tables.items[size_t(incoming_.item)];
+            const int under = vault.holder(tables, cell);
+            const bool topping = incomingTakes_ && under >= 0 && sim::tops(tables, vault[under], incoming_);
+            const int at = topping ? under : cell;
+            const content::ItemRow& shape = topping ? tables.items[size_t(vault[under].item)] : row;
+            const bool fits =
+                topping || (incomingTakes_ && vault.room(tables, cell, row.width, row.height));
+            const int column = at % sim::kVaultColumns, line = at / sim::kVaultColumns;
+            const int w = std::min<int>(shape.width, sim::kVaultColumns - column);
+            const int h = std::min<int>(shape.height, sim::kVaultRows - line);
+            panel::cell(canvas_, x, y, cellBox(at, w, h),
                         fits ? sheet::Cell::Fits : sheet::Cell::Blocked);
         }
     }

@@ -514,6 +514,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     banking_ = banking;
     if (banking_) {
         ChestRequests asked;
+        // The bag's drag as it stood last frame: the bag updates after the vault.
+        const bool fromBag = inventoryOpen_ && bag_.dragging();
+        chest_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr,
+                        fromBag && sim::baggable(bag_.dragged()));
         chest_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
                       shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
@@ -542,6 +546,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // The bag, in the right-hand column or beside the character window when that is up.
     if (inventoryOpen_ && play.isOpen()) {
         BagRequests asked;
+        bag_.carrying(banking_ && chest_.dragging() ? &play.realm().vault()[chest_.dragged()]
+                                                    : nullptr);
         bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
                     play.realm(), pointer, bagStage_, &asked);
         // A move is ReceiveEquipmentItem, which ends its success branch on SOUND_GET_ITEM01 --
