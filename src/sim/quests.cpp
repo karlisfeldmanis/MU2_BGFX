@@ -419,20 +419,22 @@ QuestRow pit() {
     row.experience = 100000;
     row.firstExperience = 400000;
     row.zen = 120000;
-    // The user's: boots with a socket; three Jewels of Bless and a Jewel of Soul on top, the
-    // chain's last. Each class's top set, about the Gorgon's level. Two sockets since 2026-10-02
-    // ("give 2 sockets for boots. same for all classes").
+    // The user's: boots with a socket, and Frenzy for them; three Jewels of Bless and a Jewel of
+    // Soul on top, the chain's last. Each class's top set, about the Gorgon's level. Two sockets
+    // since 2026-10-02 ("give 2 sockets for boots. same for all classes").
     row.paid[0] = {.item = "BootMale02", .kin = knight, .sockets = 2, .firstOnly = true};  // Dragon
     row.paid[1] = {.item = "BootMale04", .kin = wizard, .sockets = 2, .firstOnly = true};  // Legendary
     row.paid[2] = {.item = "BootElf05", .kin = elf, .sockets = 2, .firstOnly = true};      // Guardian
-    row.paid[3] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    row.paid[4] = {.item = "Jewel02"};              // Jewel of Soul
+    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
+    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paid[5] = {.item = "Jewel02"};              // Jewel of Soul
     // And for every class a Ring of Ice with one socket, a ring's most (sim::mostSocketsOf; the
-    // user, 2026-10-02: "keep only 1 socket for the rings"). It came with Evil Spirit to set in
-    // it, and the boots with Frenzy, until the user, 2026-10-02: "in this quest we give to much.
-    // we dont give epic runes so early, but we can give that ring with +socket".
-    row.paid[5] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
-    row.paidCount = 6;
+    // user, 2026-10-02: "keep only 1 socket for the rings"). It came with Evil Spirit, the
+    // legendary rune, to set in it, until the user, 2026-10-02: "in this quest we give to much.
+    // we dont give epic runes so early, but we can give that ring with +socket", then "keep 1
+    // rune, but not the legendary one".
+    row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
+    row.paidCount = 7;
     return row;
 }
 

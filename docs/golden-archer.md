@@ -173,7 +173,7 @@ Only seven Skeleton Archers spawn on Dungeon 1. Either keep the count at seven, 
   |---|---|---|
   | Catacombs | helm: Brass Helm / Sphinx Mask / Wind Helm | **Keen Eye**: +10% critical chance |
   | Halls | pants: Plate Pants / Legendary Pants / Spirit Pants | **Bloodwell**: 3% of damage dealt back as life, 5% mana after a kill |
-  | Pit | boots: Dragon / Legendary / Guardian Boots, two sockets | none since 2026-10-02 (was **Frenzy**) |
+  | Pit | boots: Dragon / Legendary / Guardian Boots, two sockets | **Frenzy**: 15% on a landed blow, +20 attack and casting speed for 3 s (a buff cell, MU's cell 44 chevrons) |
 
   The Pit's first clear also pays, since 2026-10-01 (the user: "give dungeon 3 other jewel of
   rune and new weapon ... shield with socket and rune which on miss has chance to cast evil
@@ -183,10 +183,11 @@ Only seven Skeleton Archers spawn on Dungeon 1. Either keep the count at seven, 
   tiles, two in three of them, struck once within two seconds -- raised by his energy. The wizard can now also learn Evil Spirit as a spell (Scroll of Evil
   Spirit, 220 energy, 90 mana, no cooldown).
 
-  Since 2026-10-02 the Pit pays neither rune (the user: "in this quest we give to much. we dont
-  give epic runes so early, but we can give that ring with +socket"): its first clear pays the
-  boots, a Ring of Ice with one socket for every class, three Bless and a Soul. Frenzy and Evil
-  Spirit wait for a later reward.
+  Since 2026-10-02 the Pit pays no Evil Spirit, the legendary rune (the user: "in this quest we
+  give to much. we dont give epic runes so early, but we can give that ring with +socket", then
+  "keep 1 rune, but not the legendary one"): its first clear pays the boots and Frenzy, a Ring of
+  Ice with one socket for every class, three Bless and a Soul. Evil Spirit waits for a later
+  reward.
 
   Devin's rune changed the same day from the Undying (+20% max health) to **Renewal**: 3% of max
   health back every 3 s, anywhere.
