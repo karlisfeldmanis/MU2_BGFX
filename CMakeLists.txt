@@ -257,6 +257,22 @@ set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-
 if(APPLE)
   target_compile_definitions(mu2 PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
   target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework MetalFX" "-framework QuartzCore" "-framework IOKit")
+  # The game is build/MU2.app, so macOS reads it as a game (src/app/Info.plist.in) and Game
+  # Mode can take it. build/mu2 is a link to the binary inside, which is what every script
+  # runs; macOS resolves the link and finds the bundle. A double click with no switches plays
+  # as main.sh does (src/main.cpp). The data stays in this folder: MU2_ROOT_DIR above.
+  set_target_properties(mu2 PROPERTIES
+    MACOSX_BUNDLE TRUE
+    OUTPUT_NAME MU2
+    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/src/app/Info.plist.in
+    MACOSX_BUNDLE_BUNDLE_NAME MU2
+    MACOSX_BUNDLE_GUI_IDENTIFIER com.mu2.game
+    MACOSX_BUNDLE_SHORT_VERSION_STRING 0.1
+    MACOSX_BUNDLE_BUNDLE_VERSION 1)
+  add_custom_command(TARGET mu2 POST_BUILD
+    COMMAND ln -sfh MU2.app/Contents/MacOS/MU2 ${CMAKE_BINARY_DIR}/mu2
+    COMMAND codesign --force --sign - ${CMAKE_BINARY_DIR}/MU2.app
+    VERBATIM)
 endif()
 add_dependencies(mu2 mu2_shaders)
 

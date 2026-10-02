@@ -54,6 +54,9 @@ void onGlfwError(int code, const char* what) { core::logError("glfw %d: %s", cod
 
 bool Window::open(const WindowDesc& desc) {
     glfwSetErrorCallback(onGlfwError);
+    // In build/MU2.app GLFW would move the working folder into Contents/Resources, and the
+    // scripts' relative --shot paths with it.
+    glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
     if (!glfwInit()) {
         core::logError("glfw did not start");
         return false;
