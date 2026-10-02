@@ -286,7 +286,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // step. `press` reads this before it engages, so a quarry that shuffles round him does not
     // spin the body mid-swing.
     //
-    // **Not a primary.** The wizard's Energy Ball is thrown over and over, and a lock on every
+    // **Not a thrown primary.** The wizard's Energy Ball is thrown over and over, and a lock on every
     // clip would be a wizard who can never be walked away from a fight. Like a swing it is
     // cancelled by a click until it leaves his hand; after that it is in the air and lands.
     // A channel first, primary or not: Lightning has had no cooldown since 2026-09-30 and still
@@ -304,11 +304,16 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // pace however much agility he had. The drawing plays a primary's clip fitted to `clip`
     // (game/play.cpp), so the hold and the spin still end together; a skill with a cooldown
     // keeps the authored floor.
+    //
+    // **And a thrown primary is walked out of, every class's**: the user, 2026-10-02 -- "if elf
+    // shoots multishot we can cancel it with click to move". Skillshot is the elf's Energy Ball,
+    // so the wizard's rule is now the test of whether it flies: a click drops the volley until
+    // it leaves the bow. Twisting Slash strikes at arm's length and keeps its hold.
     const int32_t held = row.wizardry || row.primary()
                              ? clip
                              : std::max(clip, authoredCastTicks(*tables_, row));
-    hero.castUntil = row.channelled()                ? tick_ + row.channelTicks
-                     : row.primary() && row.wizardry ? tick_
+    hero.castUntil = row.channelled()               ? tick_ + row.channelTicks
+                     : row.primary() && row.thrown() ? tick_
                                                      : tick_ + held;
     hero.swingsAt = std::max(hero.swingsAt, hero.castUntil);
     if (row.channelled()) {
