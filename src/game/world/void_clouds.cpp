@@ -10,10 +10,10 @@
 namespace mu::game {
 namespace {
 
-constexpr int kWisps = 90;
+constexpr int kWisps = 140;
 // Spawned within this of the camera's point, and let go past a little more.
-constexpr float kReach = 28.0f;
-constexpr float kLetGo = 40.0f;
+constexpr float kReach = 40.0f;
+constexpr float kLetGo = 44.0f;
 constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 // How far under the floor the layer lies, and the sheets' half width and growth.
 // 0.8-3 m since the user asked to see them round the castle's court too (2026-10-02: 'also i
@@ -21,9 +21,9 @@ constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 // void shows past the court; and 90 within 28 m rather than 72 within 34.
 // Then 0.2-1.5: deeper, the court's edges sloping into the chasm hid them.
 constexpr float kDepthMin = 0.2f, kDepthMax = 1.5f;
-constexpr float kSizeMin = 7.0f, kSizeMax = 11.0f;
+constexpr float kSizeMin = 9.0f, kSizeMax = 14.0f;
 constexpr float kGrowth = 0.3f;
-constexpr float kFadeOut = 4.0f;  // seconds, when a cloud drifts towards ground
+constexpr float kFadeOut = 8.0f;  // seconds, a cloud drifting towards ground or out of reach
 constexpr float kDrift[2] = {0.5f, 0.22f};  // metres a second
 constexpr float kScatter = 0.12f;
 constexpr float kSpin = 0.045f;             // radians a second at most
@@ -34,7 +34,12 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // 34 m, each a little fainter, 0.055 to 0.05, so their overlap stays dark; and 'little bit to
 // vissible': 0.038.
 // 0.048 with them nearer the court, where fewer overlap than over the bridge's wide chasm.
-constexpr float kAlpha = 0.048f;
+// Then 'clouds is little bit shuttering they have to be subtle and al around balck void and very
+// smooth': 140 over 40 m, 9-14 m half widths, and none cut off -- out of reach or towards ground
+// a cloud fades over 8 s, in and out on a squared sine. The stutter was those cuts: every sheet
+// is one colour, so the smoke blend reads the same in any order and the sort cannot flicker.
+// Added, smoke01 was too small a puff to cover, and smoke02 added stood as brown squares.
+constexpr float kAlpha = 0.055f;
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
@@ -139,7 +144,9 @@ void VoidClouds::update(float seconds, const float near[3]) {
             wisp.at[2] += wisp.drift[1] * seconds;
             wisp.turn += wisp.spin * seconds;
             const float dx = wisp.at[0] - near[0], dz = wisp.at[2] - near[2];
-            if (wisp.age >= wisp.life || dx * dx + dz * dz > kLetGo * kLetGo) wisp.alive = false;
+            if (wisp.age >= wisp.life) wisp.alive = false;
+            if (wisp.alive && dx * dx + dz * dz > kLetGo * kLetGo)
+                wisp.age = std::max(wisp.age, wisp.life - kFadeOut);
             // Drifting towards ground: it fades out over its last few seconds there and then.
             const float grown = wisp.size * (1.0f + kGrowth * wisp.age / wisp.life);
             if (wisp.alive && !clearUnder(wisp.at[0], wisp.at[2], grown))
@@ -154,7 +161,9 @@ void VoidClouds::gather(gfx::Effects& effects) const {
     for (const Wisp& wisp : wisps_) {
         if (!wisp.alive) continue;
         const float t = wisp.age / wisp.life;
-        const float alpha = kAlpha * std::sin(3.14159265f * std::clamp(t, 0.0f, 1.0f));
+        // In and out on a squared sine, so neither end has an edge to it.
+        const float rise = std::sin(3.14159265f * std::clamp(t, 0.0f, 1.0f));
+        const float alpha = kAlpha * rise * rise;
         if (alpha <= 0.002f) continue;
         const float half = wisp.size * (1.0f + kGrowth * t);
         const float c = std::cos(wisp.turn) * half, s = std::sin(wisp.turn) * half;
