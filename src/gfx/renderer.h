@@ -212,7 +212,7 @@ public:
     // display is. The frame is fill-bound, measured: it costs about 1.2 ms plus 1.55 ms a
     // megapixel on this Mac, so this is the one knob that moves it in proportion.
     bool init(int width, int height, const std::string& shaderDir, int msaa,
-              uint16_t shadowSize = 4096, float scale = 1.0f);
+              uint16_t shadowSize = 4096, float scale = 1.0f, bool metalfx = true);
     void shutdown();
     void resize(int width, int height);
 
@@ -583,6 +583,10 @@ private:
     int outWidth_ = 0;
     int outHeight_ = 0;
     float scale_ = 1.0f;
+    // Whether a scaled world goes through MetalFX (gfx/metalfx.h) into `upscaled_`, which is
+    // the screen's size; invalid when the scale is 1 or MetalFX is off.
+    bool metalfx_ = true;
+    bgfx::TextureHandle upscaled_ = BGFX_INVALID_HANDLE;
     int msaa_ = 1;
     uint32_t drawCount_ = 0;
     SplitRecord split_;

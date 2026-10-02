@@ -1,8 +1,32 @@
 diff --git a/src/renderer_mtl.cpp b/src/renderer_mtl.cpp
-index f758e733b..48335e15b 100644
+index f758e733b..a5c45c5d0 100644
 --- a/src/renderer_mtl.cpp
 +++ b/src/renderer_mtl.cpp
-@@ -3629,6 +3629,226 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -864,6 +864,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 	struct RendererContextMtl;
+ 	static RendererContextMtl* s_renderMtl;
+ 
++	// MU2_BGFX: a hook that runs Metal work of the caller's own between two views -- MetalFX,
++	// which bgfx has no notion of. Called on the render thread with no encoder open, before
++	// the hooked view's first pass, with the command buffer and both textures' Metal objects
++	// (the resolved one for an MSAA texture). Declared for the caller in src/gfx/metalfx.h.
++	typedef void (*ViewHookFn)(void* _commandBuffer, void* _src, void* _dst, void* _userData);
++
++	struct ViewHook
++	{
++		ViewHookFn    fn       = NULL;
++		void*         userData = NULL;
++		ViewId        view     = 0;
++		TextureHandle src      = BGFX_INVALID_HANDLE;
++		TextureHandle dst      = BGFX_INVALID_HANDLE;
++	};
++
++	static ViewHook s_viewHook;
++
+ 	static uint32_t getBufferBindOffset(const Binding& _bind, uint32_t _size)
+ 	{
+ 		const uint32_t offset = bx::min(_bind.m_offset, _size);
+@@ -3629,6 +3646,227 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  		bool m_hasVSync;
  		bool m_hasMaximumDrawableCount;
  
@@ -132,6 +156,7 @@ index f758e733b..48335e15b 100644
 +				const bool opensPass = false
 +					|| !prevGraphics
 +					|| blits
++					|| (NULL != s_viewHook.fn && segmentView == s_viewHook.view)
 +					|| _profileViews
 +					|| fbh.idx != prevFbh.idx
 +					;
@@ -229,7 +254,7 @@ index f758e733b..48335e15b 100644
  		ChunkedScratchBufferMtl m_uniformScratchBuffer;
  
  		uint8_t  m_vsScratch[64<<10];
-@@ -6144,6 +6364,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -6144,6 +6382,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  
  		m_occlusionQuery.resolve(_render);
  
@@ -241,7 +266,7 @@ index f758e733b..48335e15b 100644
  		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
  		{
  			viewState.m_rect = _render->m_view[0].m_rect;
-@@ -6155,6 +6380,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -6155,6 +6398,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
  				statsKeyType[isCompute]++;
  
@@ -258,7 +283,29 @@ index f758e733b..48335e15b 100644
  				const bool viewChanged = 0
  					|| key.m_view != view
  					|| item == numItems
-@@ -6370,6 +6605,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -6194,6 +6447,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 
+ 					submitBlit(bs, view);
+ 
++					if (NULL != s_viewHook.fn
++					&&  view == s_viewHook.view
++					&&  !isCompute
++					&&  isValid(s_viewHook.src)
++					&&  isValid(s_viewHook.dst)
++					&&  NULL != m_commandBuffer)
++					{
++						endEncoding();
++						s_viewHook.fn(m_commandBuffer
++							, m_textures[s_viewHook.src.idx].m_ptr
++							, m_textures[s_viewHook.dst.idx].m_ptr
++							, s_viewHook.userData
++							);
++					}
++
+ 					if (!isCompute)
+ 					{
+ 						const FrameBufferHandle viewFbh = _render->m_view[view].m_fbh;
+@@ -6370,6 +6638,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  								}
  							}
  
@@ -267,3 +314,19 @@ index f758e733b..48335e15b 100644
  							if (m_variableRateShadingSupported)
  							{
  								MTL::RasterizationRateLayerDescriptor* rrld = newRasterizationRateLayerDescriptor(s_shadingRate[_render->m_view[view].m_shadingRate]);
+@@ -7361,6 +7631,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 		}
+ 	}
+ 
++	void setViewHook(ViewId _view, TextureHandle _src, TextureHandle _dst, ViewHookFn _fn, void* _userData)
++	{
++		s_viewHook.fn       = _fn;
++		s_viewHook.userData = _userData;
++		s_viewHook.view     = _view;
++		s_viewHook.src      = _src;
++		s_viewHook.dst      = _dst;
++	}
++
+ } /* namespace mtl */ } // namespace bgfx
+ 
+ #else

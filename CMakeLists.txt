@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(mu2 LANGUAGES C CXX)
+project(mu2 LANGUAGES C CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -104,6 +104,7 @@ add_executable(mu2
   src/gfx/lighting.cpp
   src/gfx/renderer.cpp
   src/gfx/renderer_setup.cpp
+  src/gfx/metalfx.mm
   src/gfx/renderer_probe.cpp
   src/gfx/renderer_outline.cpp
   src/gfx/renderer_lights.cpp
@@ -249,7 +250,7 @@ target_compile_options(mu2 PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-miss
 set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-w")
 if(APPLE)
   target_compile_definitions(mu2 PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
-  target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework QuartzCore" "-framework IOKit")
+  target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework MetalFX" "-framework QuartzCore" "-framework IOKit")
 endif()
 add_dependencies(mu2 mu2_shaders)
 

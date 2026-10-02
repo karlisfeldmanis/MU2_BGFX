@@ -123,7 +123,7 @@ the frame is the GPU's, and a render thread costs a frame of latency, so it stay
 Apple's GPUs render a pass in on-chip tiles and write each attachment back to memory at its
 end. bgfx's Metal backend asked for every write back: all four samples of the shade pass's
 RGBA16F colour beside its resolve, and the D32F depth after the shade and transparent pass,
-which nothing reads again. `patches/bgfx-metal-store-actions.patch` (applied by bootstrap.sh)
+which nothing reads again. `patches/bgfx-metal.patch` (applied by bootstrap.sh)
 plans the frame from its sort keys and drops a resolved MSAA colour's samples, and a
 write-only depth, after the last pass that binds them. The prepass's depth is still written
 back, since the shade pass loads it; its MSAA_SAMPLE normals are untouched, since SSAO reads
@@ -139,6 +139,29 @@ Lorencia 140,126 `--still`, 2560x1273, vsync off, `--repeat 3` of 600, interleav
 **About 0.23 ms**, spreads 0.08 or less. Shots at frame 120 differ only on what moves (the
 crowd, the fountain); walls and ground are pixel-identical. The estimate before measuring was
 1-2 ms of bandwidth: the GPU hides most of a write back behind the next pass's work.
+
+### MetalFX upscales a scaled world, 2026-10-02
+
+At `--scale` 0.9 and under, Apple's MetalFX spatial scaler (src/gfx/metalfx.mm, through a
+view hook in patches/bgfx-metal.patch) upscales the shade target into a screen-sized one
+before the present, in place of the present's bilinear read; the present's sharpen is off
+then, as MetalFX sharpens itself and the two together drew a dotted grain on flat metal.
+`--no-metalfx` brings the stretch back. Lorencia 140,126 `--still`, 2560x1273, vsync off,
+`--repeat 3` of 600, load ~20:
+
+| | ms |
+|---|---|
+| native | 7.432 |
+| 0.67, MetalFX | 5.129 |
+| 0.67, stretch | 4.568 |
+| 0.5, MetalFX | 4.025 |
+| 0.5, stretch (sharpen on) | 3.507 |
+
+**MetalFX costs about 0.55 ms at 2560x1273 output**, and scales with the output's pixels. At
+0.67 it keeps edges near native; at 0.5 fine texture reads a little painted, still well
+ahead of the stretch. A 4K screen was not measured (the display is 2560x1440); projected from
+these rows, 4K native is about 15 ms and 4K at 0.5 with MetalFX about 7. The 0.99 the user
+plays at does not engage it.
 
 ### The view timers were 0.77 ms of every frame, and are off by default now
 

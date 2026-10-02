@@ -84,7 +84,8 @@ void printUsage() {
         "  --cap N                   hold the picture to N frames a second (0 free, the "
         "default); with --vsync, a divisor of the refresh\n"
         "  --scale F                 draw the world at F of the backbuffer, 0.5 to 1 (the "
-        "ring and the HUD stay at full size)\n"
+        "ring and the HUD stay at full size), upscaled by MetalFX\n"
+        "  --no-metalfx              under --scale, stretch in the present instead of MetalFX\n"
         "  --frames N                quit after N frames\n"
         "  --repeat N                measure N segments of --frames, loading the world once\n"
         "  --shot N                  write a PNG every N frames, and on the last\n"
@@ -228,6 +229,8 @@ Args parseArgs(int argc, char** argv) {
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--no-metalfx")) {
+            a.metalfx = false;
         } else if (!std::strcmp(s, "--cap")) {
             if (const char* v = next(s)) {
                 a.cap = std::atoi(v);

@@ -13,14 +13,16 @@
 #include <cstring>
 
 #include "core/log.h"
+#include "gfx/metalfx.h"
 #include "gfx/renderer_internal.h"
 #include "gfx/views.h"
 
 namespace mu::gfx {
 
 bool Renderer::init(int width, int height, const std::string& shaderDir, int msaa,
-                    uint16_t shadowSize, float scale) {
+                    uint16_t shadowSize, float scale, bool metalfx) {
     msaa_ = msaa;
+    metalfx_ = metalfx;
     shadowSize_ = shadowSize;
     // Held to a half at the bottom: below that the magnification is visible on a figure's
     // silhouette however good the filter is, and there is nothing to be gained by letting a
@@ -316,6 +318,21 @@ bool Renderer::createTargets(int width, int height) {
         if (!bgfx::isValid(bloomFb_[i])) core::logError("bloom level %d did not survive", i);
     }
 
+    // The screen-sized target MetalFX writes the scaled world into, ahead of the present.
+    // Not above 0.9: the user plays at 0.99 as a sharpness setting (main.sh), where the
+    // present's own read is all but one to one and MetalFX would only add its 0.55 ms.
+    if (scale_ <= 0.9f && metalfx_ && metalfx::supported()) {
+        upscaled_ = bgfx::createTexture2D(uint16_t(outWidth_), uint16_t(outHeight_), false, 1,
+                                          bgfx::TextureFormat::RGBA16F,
+                                          rt | BGFX_TEXTURE_COMPUTE_WRITE | clamp);
+        if (bgfx::isValid(upscaled_)) {
+            metalfx::attach(ViewPresent, shadeColour_, upscaled_);
+        } else {
+            core::logError("metalfx: the %dx%d target did not survive; the present stretches",
+                           outWidth_, outHeight_);
+        }
+    }
+
     // Named one by one, because "a render target did not survive" is not a thing anyone can
     // act on, and a format this Metal refuses is exactly the kind of thing that lands here.
     const std::pair<const char*, bool> made[] = {
@@ -342,6 +359,11 @@ bool Renderer::createTargets(int width, int height) {
 }
 
 void Renderer::destroyTargets() {
+    if (bgfx::isValid(upscaled_)) {
+        metalfx::detach();
+        bgfx::destroy(upscaled_);
+        upscaled_ = BGFX_INVALID_HANDLE;
+    }
     for (bgfx::FrameBufferHandle* fb : {&shadowFb_, &prepassFb_, &ssaoFb_, &blurFb_, &shadeFb_}) {
         if (bgfx::isValid(*fb)) bgfx::destroy(*fb);
         *fb = BGFX_INVALID_HANDLE;

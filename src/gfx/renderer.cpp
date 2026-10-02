@@ -1012,8 +1012,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     const bool bloomed = bgfx::isValid(bloomDownProgram_) && bgfx::isValid(bloomUpProgram_);
     const float bloomParams[4] = {0.0f, 0.0f, bloomed ? lighting.bloomStrength : 0.0f, 0.0f};
     bgfx::setUniform(uBloom_, bloomParams);
-    const float present[4] = {lighting.sharpen, lighting.contrast, 1.0f / float(width_),
-                              1.0f / float(height_)};
+    // MetalFX hands the present a screen-sized picture, read one to one and already
+    // sharpened: the present's own sharpen on top of it is a second one, and draws a dotted
+    // grain over flat metal.
+    const bool upscaled = bgfx::isValid(upscaled_);
+    const float present[4] = {upscaled ? 0.0f : lighting.sharpen, lighting.contrast,
+                              1.0f / float(upscaled ? outWidth_ : width_),
+                              1.0f / float(upscaled ? outHeight_ : height_)};
     bgfx::setUniform(uPresent_, present);
     const float grade[4] = {lighting.tonemap, lighting.saturation * (1.0f - drain_),
                             lighting.split, dim_};
@@ -1033,7 +1038,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     bgfx::setViewClear(ViewPresent, BGFX_CLEAR_COLOR, 0x101418ff, 1.0f, 0);
     bgfx::setViewTransform(ViewPresent, nullptr, nullptr);
     bgfx::setUniform(uParams_, params);
-    bgfx::setTexture(8, sColour_, shadeColour_);
+    bgfx::setTexture(8, sColour_, upscaled ? upscaled_ : shadeColour_);
     screenPass(ViewPresent, presentProgram_);
 
     // View 7 is the HUD's, and is submitted empty until sprint 7 fills it. A view bgfx sees
