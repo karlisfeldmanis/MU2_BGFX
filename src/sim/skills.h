@@ -526,6 +526,8 @@ float wardShare(const HeroPoints& points);
 // A new elf's Goblin is the breed's own. A level-102 elf of 351 agility and 110 energy has a
 // level-13 Goblin of 645 health and an 83-119 bite, or a level-38 Golem of 3 000 and 236-259;
 // at 300 energy the Golem has 5 500 and 301-330. One knob each, here.
+// The minute every summon key cools for after one is raised (skills.cpp, the summons' rows).
+constexpr int32_t kSummonCool = 1200;
 constexpr float kSummonHealthPerEnergy = 1.0f / 100.0f;
 constexpr float kSummonHealthPerVitality = 1.0f / 200.0f;
 constexpr float kSummonForcePerEnergy = 1.0f / 200.0f;

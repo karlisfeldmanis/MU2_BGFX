@@ -2467,6 +2467,12 @@ void testSummons(const content::Tables& tables) {
     check(golem != nullptr && golem->alive() && golem->summoner == realm.hero().id,
           "the Stone Golem stands beside her");
     if (golem == nullptr || !golem->alive()) return;
+    // The user, 2026-10-02: "give elf summon a 1 min cooldown after summon. its global for all
+    // summons" -- a minute on every summon key, her agility notwithstanding.
+    realm.learn(sim::skill::kSummonGoblin);
+    check(realm.cooling(sim::skill::kSummonGolem) > sim::kSummonCool - 60 &&
+              realm.cooling(sim::skill::kSummonGoblin) == realm.cooling(sim::skill::kSummonGolem),
+          "a summon cools every summon key for a minute");
     const content::MonsterKind& kind = tables.kinds[size_t(golem->kind)];
     checkEqual((long long)kind.number, 32LL, "and it is the Stone Golem's breed");
     const int level = sim::summonLevel(kind.level, realm.hero().level, sim::skill::kSummonGolem);

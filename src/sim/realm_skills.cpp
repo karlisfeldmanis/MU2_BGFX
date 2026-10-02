@@ -118,8 +118,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     if (row.kin != hero.kin) return false;
 
     // The cooldown, which is ours and has no counterpart in 0.75. A wait rather than a refusal,
-    // exactly as the swing timer is: the key does nothing and says nothing.
-    if (tick_ < hero.cools[size_t(index)]) return false;
+    // exactly as the swing timer is: the key does nothing and says nothing. A summon key still
+    // dismisses the one standing while it cools: that costs nothing and raises nothing.
+    const bool dismisses = row.summons > 0 && summonSlot_ >= 0 &&
+                           bodies_[size_t(summonSlot_)].alive();
+    if (tick_ < hero.cools[size_t(index)] && !dismisses) return false;
 
     // **The hand, and now it is the RIGHT hand rather than any hand.** The user's rule of
     // 2026-09-22 was "nothing is thrown bare-handed, nothing off a bow"; the rule of 2026-09-23
@@ -292,6 +295,14 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                       : cooldownTicks(row, hero.points.agility,
                                       floorTicksFor(row, clipTicksOf(hero, row)));
     hero.cools[size_t(index)] = tick_ + cool;
+    // **A summon cools every summon** (the user, 2026-10-02: "give elf summon a 1 min cooldown
+    // after summon. its global for all summons"), ours: raising the Goblin puts the Golem's key
+    // on the same minute, so swapping breeds is no way round it.
+    if (row.summons > 0) {
+        for (int i = 0; i < kSkills; ++i) {
+            if (skillAt(i).summons > 0) hero.cools[size_t(i)] = tick_ + cool;
+        }
+    }
     // And the swing clock, the longer of his own rhythm and the clip this skill plays. Without
     // the second half a skill whose animation outlasts the weapon's swing is cut off by the next
     // blow -- MU2 measured exactly that on Defense, whose clip is the longest of the six.

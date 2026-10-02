@@ -424,31 +424,43 @@ constexpr SkillRow kRows[kSkills] = {
     // (WSclient.cpp:4153-4184). Only the Goblin and the Stone Golem are `built`: they are
     // Noria's own breeds and are cooked. The Assassin, the Elite Yeti, the Dark Knight and Bali
     // live on maps this game does not have, and their rows wait for their figures.
-    {.number = skill::kSummonGoblin, .name = "Summon Goblin", .mana = 40, .coolTicks = 60,
+    //
+    // **A minute, shared by all six** (the user, 2026-10-02: "give elf summon a 1 min cooldown
+    // after summon. its global for all summons"), ours, where 0.75 has none: a cast cools every
+    // summon key (Realm::throwSkill), agility does not haste it (`cooldownTicks`), and a key
+    // that is cooling still dismisses the one standing.
+    {.number = skill::kSummonGoblin, .name = "Summon Goblin", .mana = 40,
+     .coolTicks = kSummonCool,
      .tells = "A goblin at her side, that fights what she fights and draws it off her. The "
               "keener the elf, the tougher it is.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .kin = Kin::FairyElf, .anyHand = true, .summons = 26},
-    {.number = skill::kSummonGolem, .name = "Summon Stone Golem", .mana = 70, .coolTicks = 60,
-     .tells = "A stone golem at her side, slow and hard to break, that holds what it fights. The "
-              "keener the elf, the tougher it is.",
+    {.number = skill::kSummonGolem, .name = "Summon Stone Golem", .mana = 70,
+     .coolTicks = kSummonCool,
+     .tells = "A stone golem at her side, slow and hard to break, that holds what it fights. "
+              "The keener the elf, the tougher it is.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .kin = Kin::FairyElf, .anyHand = true, .summons = 32},
-    {.number = skill::kSummonAssassin, .name = "Summon Assassin", .mana = 110, .coolTicks = 60,
+    {.number = skill::kSummonAssassin, .name = "Summon Assassin", .mana = 110,
+     .coolTicks = kSummonCool,
      .tells = "An assassin at her side.", .clip = 151, .sound = "player_skill_defense",
      .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
      .summons = 21},
-    {.number = skill::kSummonYeti, .name = "Summon Elite Yeti", .mana = 160, .coolTicks = 60,
+    {.number = skill::kSummonYeti, .name = "Summon Elite Yeti", .mana = 160,
+     .coolTicks = kSummonCool,
      .tells = "An elite yeti at her side.", .clip = 151, .sound = "player_skill_defense",
      .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
      .summons = 20},
-    {.number = skill::kSummonKnight, .name = "Summon Dark Knight", .mana = 200, .coolTicks = 60,
+    {.number = skill::kSummonKnight, .name = "Summon Dark Knight", .mana = 200,
+     .coolTicks = kSummonCool,
      .tells = "A dark knight at her side.", .clip = 151, .sound = "player_skill_defense",
      .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
      .summons = 10},
-    {.number = skill::kSummonBali, .name = "Summon Bali", .mana = 250, .coolTicks = 60,
-     .tells = "Bali at her side.", .clip = 151, .sound = "player_skill_defense", .built = false,
-     .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true, .summons = 150},
+    {.number = skill::kSummonBali, .name = "Summon Bali", .mana = 250,
+     .coolTicks = kSummonCool,
+     .tells = "Bali at her side.", .clip = 151, .sound = "player_skill_defense",
+     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .summons = 150},
 
     // ---- Flame 5, the wizard's, on the end so no save's learned bit moves ----------------------
     //
@@ -878,6 +890,8 @@ std::string spoken(float seconds) {
 
 int32_t cooldownTicks(const SkillRow& row, int agility, int32_t floorTicks) {
     if (row.coolTicks <= 0) return std::max<int32_t>(0, floorTicks);
+    // A summon's minute is a minute: agility hastes the elf's hands, not the summoning.
+    if (row.summons > 0) return std::max(floorTicks, row.coolTicks);
     const float haste = float(std::max(0, agility)) / kAgilityPerDoubling;
     const int32_t hasted = int32_t(std::lround(float(row.coolTicks) / (1.0f + haste)));
     return std::max(std::max<int32_t>(1, floorTicks), hasted);
