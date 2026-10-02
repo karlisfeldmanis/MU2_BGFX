@@ -35,6 +35,7 @@ enum class Mark : uint8_t {
     Poison,    // a poison's pulse, MuMain's DT_POISON green (0, 1, 0), at a swing's size
     Rune,      // a Rune of Creation's power, ice blue, at a skill's size
     RuneCritical,  // and its critical, paler, at a critical's size
+    Summon,    // her summon's blow, its own lilac, at a swing's size
 };
 
 // A blow that has landed on the tick and has not yet been shown.
@@ -76,6 +77,7 @@ struct Cue {
     bool arrow = false;
     bool poison = false;  // a poison's pulse (Happening::poisoned)
     bool rune = false;    // a rune power's blow (Happening::rune)
+    bool summon = false;  // her summon's blow on a monster (Play::land fills it)
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the
     // fuses were not. See Showing::advance.

@@ -80,6 +80,8 @@ void PlayMode::keep(Context& ctx) {
         now.hero.column = arriveColumn_;
         now.hero.row = arriveRow_;
         if (arriveFaced_) now.hero.facing = arriveFacing_;
+        // And without her summon: a map change dismisses it (realm_summon.cpp).
+        now.hero.summonSkill = 0;
     }
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);

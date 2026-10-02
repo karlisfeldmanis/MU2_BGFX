@@ -174,6 +174,9 @@ const uint32_t kPoisonInk = byteColour(40, 235, 60);
 // paler, as the ramp's gold is paler than its amber.
 const uint32_t kRuneInk = byteColour(92, 182, 255);
 const uint32_t kRuneCriticalInk = byteColour(180, 224, 255);
+// Her summon's blow (the user, 2026-10-02: "we need to show summon made damage"): a lilac nothing
+// else in the fight wears, so its numbers read as its own beside her bone and amber.
+const uint32_t kSummonInk = byteColour(196, 170, 255);
 const uint32_t kMissInk = byteColour(207, 199, 184);
 const uint32_t kMissOnHeroInk = byteColour(236, 228, 214);
 // The lane's own inks, and they are deliberately not the fight's: experience is the ramp's
@@ -203,6 +206,7 @@ float sizeOf(Mark mark) {
         case Mark::Absorbed: return kAbsorbedSize;
         case Mark::Swing:
         case Mark::Poison:
+        case Mark::Summon:
         case Mark::Taken: break;
     }
     return kSwingSize;
@@ -219,6 +223,7 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Poison: return kPoisonInk;
         case Mark::Rune: return kRuneInk;
         case Mark::RuneCritical: return kRuneCriticalInk;
+        case Mark::Summon: return kSummonInk;
         case Mark::Miss: return figure.onHero ? kMissOnHeroInk : kMissInk;
         case Mark::Swing: break;
     }

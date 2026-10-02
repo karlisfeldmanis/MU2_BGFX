@@ -149,6 +149,8 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         if (cue.poison) return Mark::Poison;
         if (onHero) return Mark::Taken;
         if (cue.reflected) return Mark::Reflected;
+        // Her summon's, one colour whatever the roll: hers are told apart, its are its own.
+        if (cue.summon) return Mark::Summon;
         // A rune's blow keeps its colour whatever the roll: its critical is its own step.
         if (cue.rune) return cue.critical || cue.excellent ? Mark::RuneCritical : Mark::Rune;
         if (cue.excellent) return Mark::Excellent;

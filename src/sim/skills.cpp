@@ -795,12 +795,58 @@ float wardShare(const HeroPoints& points) {
     return kGuardCap * p / (p + 150.0f);
 }
 
-float summonHealthRate(int energy) {
-    return 1.0f + float(std::max(0, energy)) * kSummonHealthPerEnergy;
+float summonHealthRate(const HeroPoints& points) {
+    return 1.0f + float(std::max(0, points.energy)) * kSummonHealthPerEnergy +
+           float(std::max(0, points.vitality)) * kSummonHealthPerVitality;
 }
 
-float summonForceRate(int energy) {
-    return 1.0f + float(std::max(0, energy)) * kSummonForcePerEnergy;
+float summonForceRate(const HeroPoints& points) {
+    return 1.0f + float(std::max(0, points.energy)) * kSummonForcePerEnergy +
+           float(std::max(0, points.agility)) * kSummonForcePerAgility;
+}
+
+int summonLevel(int breedLevel, int heroLevel, int32_t skill) {
+    const int tier = std::clamp(int(skill - skill::kSummonGoblin), 0,
+                                int(skill::kSummonBali - skill::kSummonGoblin));
+    const float share = kSummonLevelShare + kSummonLevelShareStep * float(tier);
+    return breedLevel + int(float(std::max(0, heroLevel)) * share);
+}
+
+namespace {
+
+// 0.75's monsters by level, read off every cooked breed (Lorencia to the Lost Tower): health,
+// the bottom of the damage band, defence, attack rate, defence rate. Between two rows it is a
+// straight line, and past the last it goes on at the last row's slope.
+struct Rung {
+    float level, column[5];
+};
+constexpr Rung kLadder[] = {
+    {2, {30, 4, 1, 8, 1}},           // Spider
+    {10, {165, 26, 10, 44, 10}},     // Beetle Monster
+    {20, {600, 75, 25, 100, 25}},    // Worm
+    {30, {900, 105, 37, 150, 37}},   // Yeti
+    {40, {1600, 130, 60, 200, 47}},  // Hell Spider
+    {50, {3500, 155, 85, 250, 73}},  // Poison Shadow
+    {60, {5000, 180, 115, 300, 88}}, // Devil
+    {64, {6000, 200, 130, 320, 94}}, // Death Gorgon
+};
+
+float rung(int column, float level) {
+    constexpr size_t kLast = sizeof(kLadder) / sizeof(kLadder[0]) - 1;
+    size_t at = 0;
+    while (at + 1 < kLast && level > kLadder[at + 1].level) ++at;
+    const Rung& low = kLadder[at];
+    const Rung& high = kLadder[at + 1];
+    const float t = (std::max(level, low.level) - low.level) / (high.level - low.level);
+    return low.column[column] + (high.column[column] - low.column[column]) * t;
+}
+
+}  // namespace
+
+float summonClimb(Ladder column, int breedLevel, int level) {
+    if (level <= breedLevel) return 1.0f;
+    const int at = int(column);
+    return rung(at, float(level)) / std::max(1.0f, rung(at, float(breedLevel)));
 }
 
 int healOf(const HeroPoints& points) { return 5 + std::max(0, points.energy) / 5; }

@@ -508,14 +508,37 @@ float wardShare(const HeroPoints& points);
 // **A summon scales with her energy** -- the user's, 2026-09-28: "if an elf player decided to go
 // full energy elf, that summon is actually doing good damage and can hold aggro". Ours: 0.75
 // summons the breed's row as it stands (PlayerSummon.CreateAsync), which a levelled elf outgrows.
-// Its health is the breed's times `1 + energy / 100`, and its damage, defence and both rates
-// the breed's times `1 + energy / 200`: a tank first and a weapon second. A new elf's (energy 15)
-// Goblin is barely more than the breed; at 200 energy her Stone Golem has three times its health
-// and twice its bite. One knob each, here.
+// **And with her level and her other stats** -- the user, 2026-10-02: "elf summons did not
+// scale with elf stats and lvls, we need to fix that". Ours, in two steps:
+//   * it stands at the breed's level plus a share of hers (`summonLevel`), and the breed's row
+//     is carried up 0.75's own monster ladder to that level (`summonClimb`, the cooked breeds'
+//     health, damage, defence and rates by level). **The better summon takes the bigger share**
+//     (the user, the same day: "if elf gets better summon, he of course is better with
+//     scaling", "it would be weird if goblin is same power as late game summon"): a tenth of
+//     her level for the Goblin, a tenth more each summon up, six tenths for Bali. Beside a
+//     level-60 elf the Goblin fights at 9 and the Golem at 30; at 150, at 18 and 48, so the
+//     gap between them widens as she levels. A fifth for the Goblin and half for every breed
+//     were each tried first and were too heavy (the user, on a level-102 elf's Goblin rolling
+//     565: "scaling is to heavy");
+//   * then her points: health times `1 + energy / 100 + vitality / 200`, and damage, defence and
+//     both rates times `1 + energy / 200 + agility / 800` -- energy her summoner's stat, a tank
+//     first and a weapon second; vitality lends half of energy's, agility (her bow's) a quarter.
+// A new elf's Goblin is the breed's own. A level-102 elf of 351 agility and 110 energy has a
+// level-13 Goblin of 645 health and an 83-119 bite, or a level-38 Golem of 3 000 and 236-259;
+// at 300 energy the Golem has 5 500 and 301-330. One knob each, here.
 constexpr float kSummonHealthPerEnergy = 1.0f / 100.0f;
+constexpr float kSummonHealthPerVitality = 1.0f / 200.0f;
 constexpr float kSummonForcePerEnergy = 1.0f / 200.0f;
-float summonHealthRate(int energy);
-float summonForceRate(int energy);
+constexpr float kSummonForcePerAgility = 1.0f / 800.0f;
+constexpr float kSummonLevelShare = 0.1f;      // the Goblin's share of her level
+constexpr float kSummonLevelShareStep = 0.1f;  // and each summon up takes this much more
+float summonHealthRate(const HeroPoints& points);
+float summonForceRate(const HeroPoints& points);
+// `skill` is the summon's own (kSummonGoblin ... kSummonBali), which sets its share.
+int summonLevel(int breedLevel, int heroLevel, int32_t skill);
+// What one of the ladder's columns grows by from the breed's level to `level`: 1 at its own.
+enum class Ladder : uint8_t { Health, Damage, Defense, AttackRate, DefenseRate };
+float summonClimb(Ladder column, int breedLevel, int level);
 // How far from her it hunts, and how far it strays before it walks back: OpenMU's
 // SummonedMonsterIntelligence -- eight tiles round the owner, two tiles idle, five fighting.
 constexpr int kSummonHunt = 8;

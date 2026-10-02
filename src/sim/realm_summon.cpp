@@ -5,7 +5,8 @@
 // distance: one at a time, raised within three tiles of her, hunting the nearest monster within
 // eight tiles of HER, walking back when it strays past two (five while it fights), never turning
 // on her, and a second cast dismisses it. What is ours, and the user's of 2026-09-28:
-//   * **it scales with her energy** (skills.h, `summonHealthRate` and `summonForceRate`);
+//   * **it scales with her level and her points**, energy most (skills.h, `summonLevel`,
+//     `summonClimb`, `summonHealthRate` and `summonForceRate`; refit every tick it stands);
 //   * **it holds aggro**: what it has struck stays on it though she shoots it too
 //     (Realm::strikeAt), and it takes a monster that is on her before any other, so it peels
 //     them off her -- the guard's "one on the hero first" (realm_watch.cpp);
@@ -44,8 +45,6 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
         return false;
     }
     const content::MonsterKind& kind = tables_->kinds[size_t(kindAt)];
-    const float lasts = summonHealthRate(hero.points.energy);
-    const float bites = summonForceRate(hero.points.energy);
     Body& summon = bodies_[size_t(summonSlot_)];
     const uint32_t id = summon.id;
     summon = Body{};
@@ -53,14 +52,8 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
     summon.summoner = hero.id;
     summon.summonedBy = row.number;
     summon.kind = kindAt;
-    summon.level = kind.level;
-    summon.maxHealth = summon.health = std::max(1, int(float(kind.health) * lasts));
-    summon.stats.level = kind.level;
-    summon.stats.attackRate = float(kind.attackRate) * bites;
-    summon.stats.defenseRate = float(kind.defenseRate) * bites;
-    summon.stats.defense = int(float(kind.defense) * bites);
-    summon.stats.minimumDamage = int(float(kind.minimumDamage) * bites);
-    summon.stats.maximumDamage = int(float(kind.maximumDamage) * bites);
+    fitSummon(summon, hero);
+    summon.health = summon.maxHealth;
     summon.swingTicks = kind.attackTicks;
     summon.speed = 1.0f / float(std::max(1, kind.moveTicks));
     summon.x = float(column);
@@ -73,6 +66,29 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
     summon.route.reserve(32);
     say(What::Spawned, summon, summon.level, summon.health);
     return true;
+}
+
+void Realm::fitSummon(Body& summon, const Body& hero) {
+    const content::MonsterKind& kind = tables_->kinds[size_t(summon.kind)];
+    const int level = summonLevel(kind.level, hero.level, summon.summonedBy);
+    const float lasts = summonHealthRate(hero.points);
+    const float bites = summonForceRate(hero.points);
+    const auto climb = [&](Ladder column) { return summonClimb(column, kind.level, level); };
+    const int maxHealth =
+        std::max(1, int(float(kind.health) * climb(Ladder::Health) * lasts));
+    // A refit while it stands (she levelled, or spent a point) keeps its share of health.
+    if (summon.maxHealth > 0 && summon.maxHealth != maxHealth) {
+        summon.health = std::max(1, int(int64_t(summon.health) * maxHealth / summon.maxHealth));
+    }
+    summon.maxHealth = maxHealth;
+    summon.level = level;
+    summon.stats.level = level;
+    summon.stats.attackRate = float(kind.attackRate) * climb(Ladder::AttackRate) * bites;
+    summon.stats.defenseRate = float(kind.defenseRate) * climb(Ladder::DefenseRate) * bites;
+    summon.stats.defense = int(float(kind.defense) * climb(Ladder::Defense) * bites);
+    const float damage = climb(Ladder::Damage) * bites;
+    summon.stats.minimumDamage = int(float(kind.minimumDamage) * damage);
+    summon.stats.maximumDamage = int(float(kind.maximumDamage) * damage);
 }
 
 void Realm::dismiss(Body& summon) {
@@ -98,6 +114,8 @@ void Realm::tend(Body& summon) {
         dismiss(summon);
         return;
     }
+    // Her level and points as they are now: a level gained or a point spent mid-fight shows.
+    fitSummon(summon, *owner);
     advance(summon);
     const content::MonsterKind& kind = tables_->kinds[size_t(summon.kind)];
     const int attackRange = std::max(1, kind.attackRange);

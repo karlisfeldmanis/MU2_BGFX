@@ -273,6 +273,10 @@ HeroRecord Realm::record() const {
     for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
     for (int i = 0; i < kQuests; ++i) out.quests[i] = quests_[i];
     out.found = found_;
+    if (const Body* summon = summoned(); summon != nullptr && summon->alive()) {
+        out.summonSkill = summon->summonedBy;
+        out.summonHealth = summon->health;
+    }
     return out;
 }
 
@@ -327,6 +331,12 @@ void Realm::restore(const HeroRecord& saved) {
     hero.health = saved.health > 0 ? std::min(saved.health, hero.maxHealth) : hero.maxHealth;
     hero.mana = std::max(0, std::min(saved.mana, hero.maxMana));
     settleFound(saved.found);
+    // Her summon, raised on the next tick at the health it was saved with: a summon skill she
+    // knows, or none.
+    const SkillRow* summons = skillNumbered(saved.summonSkill);
+    const bool owed = summons != nullptr && summons->summons > 0 && knows(summons->number);
+    summonOwed_ = owed ? summons->number : 0;
+    summonOwedHealth_ = owed ? saved.summonHealth : 0;
 }
 
 bool Realm::spend(int strength, int agility, int vitality, int energy) {
@@ -741,6 +751,16 @@ void Realm::step() {
     // considered for respawn. Nothing here walks a hash container, and every id came from one
     // monotonic counter.
     Body& hero = bodies_[0];
+    if (summonOwed_ != 0) {
+        const SkillRow* row = skillNumbered(summonOwed_);
+        if (hero.alive() && row != nullptr && conjure(hero, *row)) {
+            Body& summon = bodies_[size_t(summonSlot_)];
+            if (summonOwedHealth_ > 0) {
+                summon.health = std::min(summonOwedHealth_, summon.maxHealth);
+            }
+        }
+        summonOwed_ = 0;
+    }
     sip();
     recover(hero);
     // The floor he stands on, opened in the travel list when this map opens floor by floor.

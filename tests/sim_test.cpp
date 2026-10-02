@@ -2438,10 +2438,35 @@ void testSummons(const content::Tables& tables) {
     if (golem == nullptr || !golem->alive()) return;
     const content::MonsterKind& kind = tables.kinds[size_t(golem->kind)];
     checkEqual((long long)kind.number, 32LL, "and it is the Stone Golem's breed");
-    const int energy = realm.hero().points.energy;
+    const int level = sim::summonLevel(kind.level, realm.hero().level, sim::skill::kSummonGolem);
+    checkEqual((long long)golem->level, (long long)(kind.level + realm.hero().level * 2 / 10),
+               "it stands at the breed's level and a fifth of hers");
+    // The better summon scales better: beside a level-150 elf the Goblin is well under the
+    // Golem, further under it than beside a level-60 one.
+    const auto lead = [](int heroLevel) {
+        const int goblin = sim::summonLevel(3, heroLevel, sim::skill::kSummonGoblin);
+        const int golemAt = sim::summonLevel(18, heroLevel, sim::skill::kSummonGolem);
+        return 465.0f * sim::summonClimb(sim::Ladder::Health, 18, golemAt) /
+               (45.0f * sim::summonClimb(sim::Ladder::Health, 3, goblin));
+    };
+    std::printf("  a Golem over a Goblin, in health: %.1fx at level 60, %.1fx at 150\n",
+                lead(60), lead(150));
+    const auto gap = [](int heroLevel) {
+        return sim::summonLevel(18, heroLevel, sim::skill::kSummonGolem) -
+               sim::summonLevel(3, heroLevel, sim::skill::kSummonGoblin);
+    };
+    check(gap(150) > gap(60) && lead(60) > 2.0f && lead(150) > 2.0f,
+          "and a Golem stays well over a Goblin, further up the ladder as she levels");
     checkEqual((long long)golem->maxHealth,
-               (long long)int(float(kind.health) * sim::summonHealthRate(energy)),
-               "its health is the breed's scaled by her energy");
+               (long long)int(float(kind.health) *
+                              sim::summonClimb(sim::Ladder::Health, kind.level, level) *
+                              sim::summonHealthRate(realm.hero().points)),
+               "its health is the breed's, up the ladder to its level and scaled by her points");
+    // Up the ladder: a Golem at 60 stands near the ladder's own 60 before her points.
+    check(std::fabs(sim::summonClimb(sim::Ladder::Health, 18, 60) * 465.0f / 5000.0f - 1.0f) <
+              0.15f,
+          "the ladder carries a Golem's health to the level-60 monsters'");
+    check(sim::summonClimb(sim::Ladder::Damage, 3, 3) == 1.0f, "and leaves a breed at its own");
     check(golem->stats.minimumDamage > kind.minimumDamage, "and it bites harder than the breed");
     const uint32_t golemId = golem->id;
 
@@ -2525,6 +2550,107 @@ void testSummons(const content::Tables& tables) {
     }
     std::printf("  golem %d health, %d-%d, %d blows, %d killed\n", golem->maxHealth,
                 golem->stats.minimumDamage, golem->stats.maximumDamage, blows, kills);
+}
+
+// The user, 2026-10-02: "summons should get aggro if he does some damage". A monster on her
+// that her summon wounds (a miss draws nothing, as hers does not) turns on the summon and stays there while she shoots it: counted over
+// a long hunt, every turn and every blow the monster throws after it.
+void testSummonAggro(const content::Tables& tables) {
+    std::printf("the summon takes aggro by its blows\n");
+    int standColumn = 212, standRow = 198;
+    {
+        sim::Realm look;
+        look.raise(&tables, 5, 212, 198, sim::Kin::FairyElf, 40);
+        for (const sim::Body& one : look.bodies()) {
+            if (one.monster() && tables.kinds[size_t(one.kind)].number == 14) {
+                standColumn = one.homeColumn + 3;
+                standRow = one.homeRow;
+                break;
+            }
+        }
+    }
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, standColumn, standRow, sim::Kin::FairyElf, 40),
+          "an elf raises by the Skeleton Warriors");
+    realm.equip(tables.armNamed("Bow01"), -1, true);
+    realm.spend(0, 0, 0, 150);
+    realm.learn(sim::skill::kSummonGolem);
+    for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    for (int tick = 0; tick < 60; ++tick) realm.step();
+    const sim::Body* golem = realm.summoned();
+    check(golem != nullptr && golem->alive(), "the golem stands");
+    if (golem == nullptr || !golem->alive()) return;
+    const uint32_t golemId = golem->id, heroId = realm.hero().id;
+    // Each golem blow on a monster that was on her: does the monster's next blow go to the golem?
+    int peeled = 0, turned = 0, onHerAfter = 0, onGolemAfter = 0;
+    std::vector<uint32_t> peeledIds;
+    for (int tick = 0; tick < 6000; ++tick) {
+        std::vector<std::pair<uint32_t, uint32_t>> before;
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.monster() && one.alive()) before.push_back({one.id, one.quarry});
+        }
+        // She shoots whatever the golem is on, as an elf fighting beside it does.
+        if (const sim::Body* g = realm.find(golemId); g && g->alive() && g->quarry != 0 &&
+                                                      tick % 25 == 0) {
+            sim::Request shoot;
+            shoot.kind = sim::Request::Kind::Attack;
+            shoot.target = g->quarry;
+            realm.ask(shoot);
+        }
+        realm.step();
+        if (!realm.hero().alive()) break;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who == golemId && h.what == sim::What::Hit) {
+                for (const auto& [id, quarry] : before) {
+                    if (id != h.whom || quarry != heroId) continue;
+                    ++peeled;
+                    const sim::Body* one = realm.find(id);
+                    if (one && (one->quarry == golemId || !one->alive())) ++turned;
+                    peeledIds.push_back(id);
+                }
+            }
+            const bool peeledOne =
+                std::find(peeledIds.begin(), peeledIds.end(), h.who) != peeledIds.end();
+            if (peeledOne && (h.what == sim::What::Hit || h.what == sim::What::Missed)) {
+                if (h.whom == heroId) ++onHerAfter;
+                if (h.whom == golemId) ++onGolemAfter;
+            }
+        }
+    }
+    std::printf("  %d golem blows on a monster on her, %d turned; their blows after: %d on her, "
+                "%d on the golem\n",
+                peeled, turned, onHerAfter, onGolemAfter);
+    check(peeled > 0, "the golem strikes a monster that was on her");
+    check(turned == peeled, "and every one turns on the golem");
+    check(onGolemAfter > onHerAfter, "and strikes the golem, not her");
+
+    // And a restart keeps it (the user, the same day: "remember it so after restart it still
+    // there how it was before"): recorded standing, restored into a fresh realm, raised on its
+    // first tick at the health it was saved with.
+    const sim::Body* still = realm.summoned();
+    if (still == nullptr || !still->alive()) {
+        for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+        realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+        for (int tick = 0; tick < 60; ++tick) realm.step();
+        still = realm.summoned();
+    }
+    const sim::HeroRecord saved = realm.record();
+    checkEqual((long long)saved.summonSkill, (long long)sim::skill::kSummonGolem,
+               "the record carries her golem");
+    sim::Realm again;
+    again.raise(&tables, 5, saved.column, saved.row, sim::Kin::FairyElf, saved.level);
+    again.restore(saved);
+    check(again.summoned() == nullptr || !again.summoned()->alive(), "not raised by restore");
+    again.step();
+    bool spawned = false;
+    for (const sim::Happening& h : again.happenings()) spawned |= h.what == sim::What::Spawned;
+    const sim::Body* back = again.summoned();
+    check(back != nullptr && back->alive() && spawned, "but on the first tick, said as Spawned");
+    if (back != nullptr && still != nullptr) {
+        checkEqual((long long)back->health, (long long)std::min(still->health, back->maxHealth),
+                   "at the health it was saved with");
+    }
 }
 
 // The two area shapes, and the cooldown's own arithmetic under them.
@@ -6819,6 +6945,7 @@ int main() {
     testWearingTakesDown(tables);
     testElfSkills(tables);
     testSummons(tables);
+    testSummonAggro(tables);
     testGates(tables);
     testDungeonGates(tables);
     testTraps();

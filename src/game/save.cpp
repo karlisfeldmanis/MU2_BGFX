@@ -172,6 +172,10 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.boonTicksLeft = int64_t(boon["ticks_left"].numberOr(0.0));
     // An Ale's ticks left, absent when none stood. The realm caps it at one Ale's length.
     hero.aleTicksLeft = int64_t(doc["ale_ticks_left"].numberOr(0.0));
+    // Her summon standing, absent when none did. The realm asks that she knows its skill.
+    const core::Json& summon = doc["summon"];
+    hero.summonSkill = int32_t(summon["skill"].numberOr(0.0));
+    hero.summonHealth = int32_t(summon["health"].numberOr(0.0));
     // The cooldowns running, as [skill number, ticks left] pairs, absent when none was. By MU's
     // number and not the table's index, as the bar is, so a row appended later lands on its own.
     const core::Json& cooling = doc["cooling"];
@@ -328,6 +332,10 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     if (hero.aleTicksLeft > 0) {
         std::fprintf(f, "  \"ale_ticks_left\": %lld,\n",
                      static_cast<long long>(hero.aleTicksLeft));
+    }
+    if (hero.summonSkill != 0) {
+        std::fprintf(f, "  \"summon\": {\"skill\": %d, \"health\": %d},\n", hero.summonSkill,
+                     hero.summonHealth);
     }
     std::fprintf(f, "  \"quests\": [");
     for (int i = 0; i < sim::kQuests; ++i) {

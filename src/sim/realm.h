@@ -501,6 +501,12 @@ struct HeroRecord {
     QuestProgress quests[kQuests];
     // The travel list's rows he has opened, a bit a row (sim/travel.h).
     uint32_t found = 0;
+    // Her summon standing when she was saved: the skill that raised it and its health, 0 for
+    // none. Saved so a restart does not take it from her (the user, 2026-10-02: "remember it so
+    // after restart it still there how it was before"); a map change writes none, as the realm
+    // she lands in raises it dormant.
+    int32_t summonSkill = 0;
+    int32_t summonHealth = 0;
 };
 
 // What the game asks the sim for. Nothing here is a skill, and that is on purpose: PLAN.md
@@ -1016,6 +1022,9 @@ private:
     void stroll(Body& walker);
     // The summon's turn: guard her, peel what is on her, follow her, fight (realm_summon.cpp).
     void tend(Body& summon);
+    // Its level and row off its breed and her level and points (skills.h): at the cast, and on
+    // every tick it stands, keeping its share of health when the maximum moves.
+    void fitSummon(Body& summon, const Body& hero);
     // Raised beside her off the row's breed, scaled by her energy; or false with no breed cooked.
     bool conjure(Body& hero, const SkillRow& row);
     // Gone: dismissed, or with her death. Nothing drops and nothing rises.
@@ -1179,6 +1188,10 @@ private:
     std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;
+    // A summon a restored record carried, raised on the next tick rather than in restore(), so
+    // its `Spawned` reaches the drawing (step() clears the happenings first). 0 for none.
+    int32_t summonOwed_ = 0;
+    int32_t summonOwedHealth_ = 0;
     // The fraction of a point each worn slot has lost and not yet shown, beside the item it
     // was lost by: a piece moved out and back starts its fraction again, which is under a point.
     double wearCarry_[kWorn] = {};
