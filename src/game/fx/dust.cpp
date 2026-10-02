@@ -19,9 +19,13 @@ constexpr float kSheet = 64.0f;
 // How much of it shows, **ours**: through the soft Dust blend smoke02 reads far denser than MU's
 // EnableAlphaBlend3 drew it, and a trail of orange clouds hid the horse's legs (the user: "dust
 // is to much vissible"). A third, faded in over the first fifth of its life as the Budge
-// Dragon's smoke is (fx/breath.cpp), and born a little smaller.
-constexpr float kDustAlpha = 0.3f;
-constexpr float kDustScale = 0.75f;
+// Dragon's smoke is (fx/breath.cpp). Then "little bit more blury and less vissible": wider and
+// fainter again, since fs_dust is the dragon's too and its blur stays as it is -- a puff spread
+// over half as much again at half the strength reads as a haze rather than a cloud.
+constexpr float kDustAlpha = 0.15f;
+constexpr float kDustScale = 1.1f;
+// And the snow's, added rather than mixed (see gather): how bright the white wisp is put on.
+constexpr float kSnowLight = 0.35f;
 
 }  // namespace
 
@@ -41,6 +45,9 @@ bool Dust::open(const std::string& assetDir, content::Textures& textures,
         return false;
     }
     smoke_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+    if (const content::EffectSheet* white = table.effect("smoke01")) {
+        snow_ = textures.load(assetDir + "/" + white->path, content::TextureRole::Albedo);
+    }
     puffs_.reserve(kPuffs);
     open_ = bgfx::isValid(smoke_);
     return open_;
@@ -51,9 +58,10 @@ void Dust::shutdown() {
     open_ = false;
 }
 
-void Dust::puff(const float at[3], float yaw) {
+void Dust::puff(const float at[3], float yaw, bool snow) {
     if (!open_ || puffs_.size() >= kPuffs) return;
     Puff one;
+    one.snow = snow && bgfx::isValid(snow_);
     one.position[0] = at[0] + float(int(roll() % 16) - 8) * kUnit;
     one.position[1] = at[1];
     one.position[2] = at[2] + float(int(roll() % 16) - 8) * kUnit;
@@ -99,6 +107,16 @@ void Dust::gather(gfx::Effects& effects) const {
         sprite.colour[3] = light * risen * kDustAlpha;
         sprite.sheet = smoke_;
         sprite.blend = gfx::Blend::Dust;
+        // smoke01 is a grey wisp on black with no alpha: mixed, its black darkened the snow into
+        // grey smudges. MU adds it (BITMAP_SMOKE through EnableAlphaBlend, fx/snort.h), and
+        // added the black is nothing and the wisp is white -- at the haze's own faintness.
+        if (one.snow) {
+            const float white = light * risen * kSnowLight;
+            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = white;
+            sprite.colour[3] = 1.0f;
+            sprite.sheet = snow_;
+            sprite.blend = gfx::Blend::Additive;
+        }
         effects.add(sprite);
     }
 }

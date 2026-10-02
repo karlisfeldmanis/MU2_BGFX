@@ -1,6 +1,6 @@
 # The first mount: the Horn of Uniria (13/2)
 
-Researched 2026-10-02. Steps 1-3 (models, sim, riding) done the same day; the dust and the card are left. The 0.75 mount: group 13 number 2, the third of the
+Researched 2026-10-02. Steps 1-4 (models, sim, riding, hooves and dust) done the same day; the card's polish is left. The 0.75 mount: group 13 number 2, the third of the
 helpers after the Guardian Angel and the Imp (`docs/pets.md`). Sources: OpenMU Version075,
 MuMain (a Season 6 fork, read for the client), WebZen GameServer 1.00.93's 0.97d base (outranks
 OpenMU on rules, `docs/webzen-audit.md`).
@@ -145,6 +145,13 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
   (`upper`), the ride clip staying the main one so the horse's sync holds. All **ours**. Found on
   the way: a pair's counter was stepped by both halves of the hero's blow, 0 2 0 2, so only the
   right hand ever swung -- on foot as well; counted now only where the clip plays.
+- **Hooves and dust** (2026-10-02). `mount_hoof` is MU's Dark Horse pHorseStep1-3 at random,
+  two a bound of the run ride (ours on Uniria; MuMain gives it nothing). `game/fx/dust.h` is
+  GOBoid's dust, a puff every second reference frame at the galloping horse +-32: smoke02 brown,
+  and on Devias MU's white smoke01, added so its black is nothing. Ours, the user's taste ("dust
+  is to much vissible", "little bit more blury and less vissible", "in devias it has to be
+  white"): a faint ground haze, 1.1 times MU's size at 0.15 strength (snow added at 0.35),
+  faded in, held on the ground where MU's BITMAP_SMOKE rises.
 
 ## Steps
 
