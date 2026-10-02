@@ -319,9 +319,8 @@ bool elementServes(Element element, Kin kin) {
         // His runes' rock (fire), frost (ice, since 2026-10-02 the Ice rune wounds), sickness
         // (poison) and lightning; Cyclone and Twisting Slash (wind).
         case Kin::DarkKnight: return element != Element::None;
-        // Fire Ball, Flame, Meteorite; Ice; Poison; Lightning. Twister is not built.
-        case Kin::DarkWizard:
-            return element != Element::None && element != Element::Wind;
+        // Fire Ball, Flame, Meteorite, Hellfire; Ice; Poison; Lightning; Twister (wind).
+        case Kin::DarkWizard: return element != Element::None;
         // Frost Arrow's wound.
         case Kin::FairyElf: return element == Element::Ice;
         default: return false;

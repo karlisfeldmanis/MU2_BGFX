@@ -82,6 +82,9 @@ constexpr int32_t kEvilSpirit = 9;
 // `AT_SKILL_HELL_FIRE`, off the Scroll of Hellfire (group 15 number 9) at two hundred and sixty
 // energy: the ground on fire round him, striking every monster within four tiles once.
 constexpr int32_t kHellfire = 10;
+// `AT_SKILL_STORM`, off the Scroll of Twister (group 15 number 7, `Book08`) at a hundred and
+// eighty energy: a whirlwind sent walking out ahead of him, striking what it passes three times.
+constexpr int32_t kTwister = 8;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
 // Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
 // "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
@@ -119,6 +122,13 @@ constexpr int32_t kChillSwingTicks = 16;
 // (MoveHandlers.cpp:1817) -- so twice, 0.8 s apart, which is sixteen ticks. OpenMU caps the
 // hits at two (`maximumHitsPerTarget`) and puts them 500 ms apart; the picture's pace is MU's.
 constexpr int32_t kBurnEvery = 16;
+// Twister's storm strikes when `(int)LifeTime % 15 == 0` (Move_MODEL_STORM, MoveHandlers.cpp:
+// 3423-3425) over a fifty-nine-frame life. MoveEffect runs the mover before it takes the frame
+// off and kills the effect at nought (ZzzEffect.cpp:8573-8576), so the mover sees 59 to 1 and
+// strikes at 45, 30 and 15 -- three times, fourteen, twenty-nine and forty-four frames in. At 20
+// Hz that is the first eleven ticks after the let-go and each next twelve on (15 frames = 0.6 s).
+constexpr int32_t kStormFirst = 11;
+constexpr int32_t kStormEvery = 12;
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
 //
@@ -342,6 +352,10 @@ struct SkillRow {
     // the key his hips come down on (the user, 2026-10-02: "when char lands than there is
     // hellfire").
     float release = 0.5f;
+    // ---- Twister's, appended after Hellfire's ---------------------------------------------
+    // **A fire that walks**: tiles a tick it moves from his feet along where he aimed, striking
+    // on `kStormFirst`/`kStormEvery` rather than lit under the body. 0 for a fire that stays put.
+    float walks = 0.0f;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -360,12 +374,13 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit and Hellfire, on the
-// end past the elf's. Thirty-one of the learned mask's thirty-two bits. Also
+// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit, Hellfire and Twister,
+// on the end past the elf's. **All thirty-two of the learned mask's bits**: the next row needs
+// the mask (and the save's) widened first. Also
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 31;
+constexpr int kSkills = 32;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

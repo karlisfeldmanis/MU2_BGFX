@@ -937,6 +937,24 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
     // On the TILE the body stands on, at its centre, as MU lights it at `SkillX + 0.5`: a fire
     // is a place, and the body is free to walk out of it before the second strike.
     const Body* aimed = body(aimedAt);
+    // Twister's storm is not lit under the body but stood at his feet and walked out along where
+    // he aimed (`SkillRow::walks`), whether or not the body still stands: MU turns him to it and
+    // sends the storm off his own position and angle (ClassAttack.cpp:1354, ZzzCharacter.cpp:4496).
+    if (row.walks > 0.0f) {
+        const float way =
+            aimed ? std::atan2(aimed->y - hero.y, aimed->x - hero.x) : hero.aim;
+        for (Fire& one : fires_) {
+            if (one.next != 0) continue;
+            one = Fire{tick_ + kStormFirst, hero.x, hero.y, row.number, row.burns, force, aimedAt,
+                       std::cos(way) * row.walks, std::sin(way) * row.walks};
+            // Said once with no flight (`b` is a Loosed's air) and its heading in `c`, in
+            // thousandths of a radian, so the drawing walks the storm down the same line the
+            // realm strikes along.
+            say(What::Loosed, hero, row.number, 0, int32_t(std::lround(way * 1000.0f)), aimedAt);
+            return;
+        }
+        return;
+    }
     if (aimed == nullptr || !aimed->alive()) return;
     for (Fire& one : fires_) {
         if (one.next != 0) continue;
@@ -952,7 +970,11 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
 void Realm::burn() {
     Body& hero = bodies_[0];
     for (Fire& fire : fires_) {
-        if (fire.next == 0 || fire.next > tick_) continue;
+        if (fire.next == 0) continue;
+        // A storm walks every tick, struck or not; it was stood at his feet on the let-go's tick.
+        fire.x += fire.dx;
+        fire.y += fire.dy;
+        if (fire.next > tick_) continue;
         const SkillRow* row = skillNumbered(fire.skill);
         const float radius = row ? row->burnTiles : 1.5f;
         const bool first = fire.left == (row ? row->burns : 0);
@@ -983,7 +1005,7 @@ void Realm::burn() {
             }
         }
         if (--fire.left > 0) {
-            fire.next = tick_ + kBurnEvery;
+            fire.next = tick_ + (row && row->walks > 0.0f ? kStormEvery : kBurnEvery);
         } else {
             fire = Fire{};
         }

@@ -1089,6 +1089,7 @@ private:
         int32_t left = 0;
         float force = 1.0f;
         uint32_t aimed = 0;  // the body it was thrown at, whose first strike pays back
+        float dx = 0.0f, dy = 0.0f;  // tiles a tick it walks: Twister's storm (`SkillRow::walks`)
     };
     static constexpr int kFires = 8;
     Fire fires_[kFires] = {};

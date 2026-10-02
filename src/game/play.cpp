@@ -693,6 +693,13 @@ void Play::update(double seconds) {
                         // The sigil and the wall at his feet, turned to him (fx/hellfire.h).
                         const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
                         hellfire_.cast(ground, caster->yaw);
+                    } else if (happening.a == sim::skill::kTwister) {
+                        // The storm at his feet, walked along the heading the realm said in
+                        // thousandths of a radian (`Realm::light`): the grid's row runs against
+                        // world z, so its y is drawn negated (fx/storm.h).
+                        const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
+                        const float way = float(happening.c) / 1000.0f;
+                        storm_.cast(ground, std::cos(way), -std::sin(way));
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -1335,6 +1342,10 @@ void Play::update(double seconds) {
     // Hellfire's wall, and the stones it kicks up -- the meteor's (fx/hellfire.h).
     hellfire_.update(float(seconds),
                      [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
+    // Twister's storm, the thin bolts down into it, and the stones -- the meteor's (fx/storm.h).
+    storm_.update(
+        float(seconds), [&](const float* from, const float* to) { thunder_.fork(from, to); },
+        [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts

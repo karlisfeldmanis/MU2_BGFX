@@ -386,7 +386,7 @@ constexpr int64_t kRiseIdleTicks = 100;
 
 // A skill's element for the element runes (sim::kElementRuneDamage): 0.75's elementalModifier
 // where it has one, and ours past it -- Meteorite fire (OpenMU's Earth), and the knight's two
-// whirls wind, as Twister is not built.
+// whirls wind, as Twister is (0.75's Wind).
 inline Element skillElement(int32_t number) {
     switch (number) {
         case skill::kFireBall:
@@ -397,6 +397,7 @@ inline Element skillElement(int32_t number) {
         case skill::kPoison: return Element::Poison;
         case skill::kLightning: return Element::Lightning;
         case skill::kCyclone:
+        case skill::kTwister:
         case skill::kTwistingSlash: return Element::Wind;
         default: return Element::None;
     }

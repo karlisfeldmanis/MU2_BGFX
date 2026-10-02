@@ -1247,13 +1247,13 @@ void testCastLock(const content::Tables& tables) {
                   flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.0f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
-        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 3,
+        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 4,
               "and its row is past the elf's, so no save's learned bit moves");
         const sim::SkillRow& spirit = *sim::skillNumbered(sim::skill::kEvilSpirit);
         check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 90 &&
                   spirit.built && spirit.kin == sim::Kin::DarkWizard,
               "Evil Spirit is a no-cooldown spell of forty-five damage and ninety mana");
-        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 2,
+        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 3,
               "and its row is past Flame's");
         const int32_t evilScroll = tables.itemAt(15, 8);
         check(evilScroll >= 0 && tables.items[size_t(evilScroll)].teaches == sim::skill::kEvilSpirit &&
@@ -1271,8 +1271,8 @@ void testCastLock(const content::Tables& tables) {
                   hell.spread == sim::Spread::Ring && hell.reach == 4.0f && hell.clip == 154 &&
                   hell.kin == sim::Kin::DarkWizard,
               "Hellfire is a no-cooldown ring of a hundred and twenty damage and 160 mana");
-        check(sim::skillIndexOf(sim::skill::kHellfire) == sim::kSkills - 1,
-              "and its row is the table's last");
+        check(sim::skillIndexOf(sim::skill::kHellfire) == sim::kSkills - 2,
+              "and its row is past Evil Spirit's");
         const int32_t hellScroll = tables.itemAt(15, 9);
         check(hellScroll >= 0 && tables.items[size_t(hellScroll)].teaches == sim::skill::kHellfire &&
                   tables.items[size_t(hellScroll)].teachesEnergy == 260,
@@ -1327,6 +1327,93 @@ void testCastLock(const content::Tables& tables) {
             checkEqual(outside, 0, "only within four tiles of him");
             std::printf("  hellfire: a %d-tick clip, let go %lld in\n", clip, (long long)landing);
             checkEqual(offLanding, 0, "and the circle is his landing, a third of the clip in");
+        }
+
+        // Twister: a storm stood at his feet and walked out along where he aimed, an eighth of a
+        // tile a tick, striking everything within a tile and a half of it 11, 23 and 35 ticks
+        // after the let-go -- MU's client, which WebZen takes as sent.
+        const sim::SkillRow& twister = *sim::skillNumbered(sim::skill::kTwister);
+        check(twister.wizardry && twister.primary() && twister.damage == 35 && twister.mana == 60 &&
+                  twister.reach == 6.0f && twister.burns == 3 && twister.burnTiles == 1.5f &&
+                  twister.walks == 0.125f && twister.clip == 147 && twister.clipOther == 148 &&
+                  twister.kin == sim::Kin::DarkWizard,
+              "Twister is a no-cooldown storm of thirty-five damage and sixty mana, striking "
+              "three times");
+        check(sim::skillElement(sim::skill::kTwister) == sim::Element::Wind, "and it is wind");
+        check(sim::skillIndexOf(sim::skill::kTwister) == sim::kSkills - 1 && sim::kSkills == 32,
+              "and its row is the table's last, the learned mask's thirty-second bit");
+        const int32_t twisterScroll = tables.itemAt(15, 7);
+        check(twisterScroll >= 0 &&
+                  tables.items[size_t(twisterScroll)].teaches == sim::skill::kTwister &&
+                  tables.items[size_t(twisterScroll)].teachesEnergy == 180,
+              "the Scroll of Twister teaches skill 8 at a hundred and eighty energy");
+        {
+            sim::Realm blower;
+            check(blower.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 100),
+                  "a wizard raises to blow");
+            check(blower.learn(sim::skill::kTwister), "who knows Twister");
+            struct Storm {
+                int64_t at;
+                float x, y, dx, dy;
+            };
+            Storm storms[64] = {};
+            int casts = 0, struck = 0, offPath = 0, offBeat = 0, thrice = 0, swung = 0;
+            uint32_t fighting = 0;
+            for (int tick = 0; tick < 4000 && blower.hero().alive(); ++tick) {
+                const uint32_t nearest = nearestTo(blower);
+                if (nearest != 0 && nearest != fighting) {
+                    fighting = nearest;
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    request.skill = sim::skill::kTwister;
+                    blower.ask(request);
+                }
+                blower.step();
+                for (const sim::Happening& one : blower.happenings()) {
+                    if (one.who != blower.hero().id) continue;
+                    if (one.what == sim::What::Loosed && one.a == sim::skill::kTwister) {
+                        const float way = float(one.c) / 1000.0f;
+                        storms[casts % 64] =
+                            Storm{int64_t(one.tick), one.x, one.y, std::cos(way), std::sin(way)};
+                        ++casts;
+                    }
+                    if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                    // The storm's strikes are said as flown; a blow of his staff, once his mana
+                    // is out, is not.
+                    if (!one.thrown) {
+                        ++swung;
+                        continue;
+                    }
+                    const sim::Body* at = blower.find(one.whom);
+                    if (at == nullptr) continue;
+                    ++struck;
+                    // Which storm, by its beat: one of them must be 11, 23 or 35 ticks old and
+                    // stand within a tile and a half of the body (and a step it took since).
+                    bool beat = false, near = false;
+                    for (int s = std::max(0, casts - 64); s < casts; ++s) {
+                        const Storm& storm = storms[s % 64];
+                        const int64_t age = int64_t(one.tick) - storm.at;
+                        if (age != 11 && age != 23 && age != 35) continue;
+                        beat = true;
+                        if (age == 35) ++thrice;
+                        const float walked = float(age + 1) * 0.125f;
+                        const float sx = storm.x + storm.dx * walked, sy = storm.y + storm.dy * walked;
+                        if (std::hypot(at->x - sx, at->y - sy) <= 1.5f + 0.3f) near = true;
+                    }
+                    if (!beat) ++offBeat;
+                    if (!near) ++offPath;
+                }
+            }
+            std::printf("  twister: %d storms, %d blows, %d on a third beat, %d of his staff\n",
+                        casts, struck, thrice, swung);
+            check(casts > 5, "he casts it");
+            // Not every storm: one cast at a body six tiles off meets it walking in, and what
+            // walks through the storm between its beats is not struck, as in MU.
+            check(struck > casts / 2, "and its storms strike");
+            check(thrice > 0, "as late as its third strike, four and a half tiles out");
+            checkEqual(offBeat, 0, "every blow on a storm's beat, 11, 23 or 35 ticks in");
+            checkEqual(offPath, 0, "and only within a tile and a half of where it has walked");
         }
 
         sim::Realm wiz;
@@ -5113,10 +5200,10 @@ void testElementRunes(const content::Tables& tables) {
     check(!sim::settable(tables, held(rune, 0, inferno), held(plate, 1, 0), sim::Kin::DarkKnight),
           "and not in armour");
     check(sim::elementServes(sim::Element::Wind, sim::Kin::DarkKnight) &&
-              !sim::elementServes(sim::Element::Wind, sim::Kin::DarkWizard) &&
+              sim::elementServes(sim::Element::Wind, sim::Kin::DarkWizard) &&
               sim::elementServes(sim::Element::Ice, sim::Kin::FairyElf) &&
               !sim::elementServes(sim::Element::Fire, sim::Kin::FairyElf),
-          "a Tempest drops to a knight, not a wizard, and only a Glacier to an elf");
+          "a Tempest drops to a knight and to a wizard (Twister), and only a Glacier to an elf");
     // The wizard's Fire Ball on the nearest monster, the plain landings averaged.
     const auto average = [&](int slot, int item) {
         sim::Realm realm;

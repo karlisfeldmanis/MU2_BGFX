@@ -43,6 +43,11 @@ public:
     // light flickers on him. Called every frame the channel runs; it stops when the calls stop.
     void crackle(const float feet[3], float tall, float seconds);
 
+    // **A thin bolt down into Twister's storm** (fx/storm.h): MU's `BITMAP_JOINT_THUNDER` at
+    // sub-type 0 and scale 10, two frames long (ZzzEffectJoint.cpp:1093-1102) -- the crackle's
+    // thin arc, from `from` to `to`, with no spark, light or smoke.
+    void fork(const float from[3], const float to[3]);
+
     // `alive(id)` and `where(id, out)` as the bolt takes them: the far end follows the body.
     template <typename Alive, typename Where>
     void update(float seconds, Alive alive, Where where);
@@ -109,6 +114,7 @@ private:
     // The crackle: a pair every two reference frames, each three frames long, a third the width.
     static constexpr float kCrackleEvery = 2.0f, kCrackleFrames = 3.0f, kCrackleWidth = 0.35f;
     static constexpr int kCracklePair = 2;
+    static constexpr float kForkFrames = 2.0f;  // a storm's thin joint: LifeTime 2
     static constexpr float kCrackleRadius = 0.45f;      // metres round his middle
     static constexpr float kCrackleGlow[3] = {0.30f, 0.40f, 1.0f};
     static constexpr float kCrackleGlowTiles = 2.5f;

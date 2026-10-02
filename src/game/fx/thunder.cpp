@@ -93,6 +93,24 @@ void Thunder::crackle(const float feet[3], float tall, float seconds) {
     }
 }
 
+void Thunder::fork(const float from[3], const float to[3]) {
+    for (Arc& one : arcs_) {
+        if (one.alive) continue;
+        one = Arc{};
+        one.alive = true;
+        one.small = true;
+        for (int k = 0; k < 3; ++k) {
+            one.from[k] = from[k];
+            one.to[k] = to[k];
+        }
+        one.target = 0;
+        one.left = kForkFrames;
+        throwPath(one);
+        one.forked = false;
+        return;
+    }
+}
+
 void Thunder::throwPath(Arc& arc) {
     // Two directions off the line to throw the points along: level across it, and up.
     float line[3] = {arc.to[0] - arc.from[0], arc.to[1] - arc.from[1], arc.to[2] - arc.from[2]};

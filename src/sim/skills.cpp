@@ -515,6 +515,36 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 154, .sound = "spell_hellfire", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 120,
      .flies = 1000.0f, .release = kHellfireLanding},
+
+    // ---- Twister 8, the wizard's, after Hellfire for the same reason ----------------------------
+    //
+    // 0.75's row: thirty-five damage, sixty mana, a hundred and eighty energy, distance six, wind
+    // (`Version075/SkillsInitializer.cs:49-50`), taught by the Scroll of Twister (Book08). What it
+    // strikes is MU's client: WebZen's 1.00.93 judges nothing for AT_SKILL_STORM -- it is on
+    // CGBeattackRecv's list of skills whose victims the client sends (protocol.cpp:16355), held
+    // only to five packets a cast and eight seconds (UseMagicCount, UseMagicTime) -- so the rule is
+    // MuMain's: `CreateEffect(MODEL_STORM, o->Position, o->Angle, ...)` at the let-go
+    // (ZzzCharacter.cpp:4495-4497), at HIS feet and turned to what he aimed at (ClassAttack.cpp:
+    // 1354), walked ten units a frame along that facing (`Direction = (0, -10, 0)`, ZzzEffect.cpp:
+    // 2000-2010) -- an eighth of a tile a tick -- and asking `AttackCharacterRange(..., 150.f)`
+    // round itself on three of its frames (`kStormFirst`, `kStormEvery`). So three strikes, 1.4,
+    // 2.9 and 4.4 tiles out in MU (1.5, 3 and 4.5 here: it walks on the let-go's tick too), on
+    // everything within a tile and a half of the storm then; a body
+    // that walks with it may be struck by all three, as WebZen lets it. OpenMU's cone and its
+    // two hits a target at 0.7 are what 0.75's server does instead, and are not used.
+    //
+    // **No cooldown**, a standard spell as Flame is. Its clip is `SetPlayerMagic`'s two hands, 147
+    // and 148 (ClassAttack.cpp:1361; checked on the bench 2026-10-02: both arms up and thrust
+    // forward, one arm up and out), let go at half the clip as MU lets it go on AttackTime's
+    // limit. Six tiles, 0.75's own, so a body at the edge is just past the last strike, as in MU.
+    // Its storm and sTornado are game/fx/storm.h.
+    {.number = skill::kTwister, .name = "Twister", .mana = 60, .reach = 6.0f, .force = 1.0f,
+     .spread = Spread::One,
+     .tells = "Sends a whirlwind walking out ahead of him, striking everything it passes three "
+              "times.",
+     .clip = 147, .sound = "spell_storm", .built = true, .families = arms::kNone,
+     .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 35, .clipOther = 148,
+     .flies = 1000.0f, .burns = 3, .burnTiles = 1.5f, .walks = 0.125f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
