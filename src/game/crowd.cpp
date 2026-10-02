@@ -96,7 +96,8 @@ float Figure::radius() const {
     return body_->radius * scale_ * 1.5f;
 }
 
-void Figure::seat(int clip) {
+void Figure::seat(int clip, bool handsOnly) {
+    seatHands_ = handsOnly;
     if (clip == seat_) return;
     seat_ = clip;
     seatTime_ = 0.0f;
@@ -305,24 +306,29 @@ int Figure::pose(float* rows12) {
         if (seatBody_ != body_) {
             seatBody_ = body_;
             seated_.assign(count, 0);
+            arm_.assign(count, 0);
             std::vector<uint8_t> leg(count, 0);
             for (size_t i = 0; i < count; ++i) {
                 const std::string& name = bones[i].name;
                 const int32_t parent = bones[i].parent;
                 leg[i] = name.find("Thigh") != std::string::npos ||
                          (parent >= 0 && leg[size_t(parent)]);
+                arm_[i] = name.find("Clavicle") != std::string::npos ||
+                          (parent >= 0 && arm_[size_t(parent)]);
                 const bool pelvis = name.size() >= 6 && name.compare(name.size() - 6, 6, "Pelvis") == 0;
                 seated_[i] = leg[i] || parent < 0 || pelvis;
             }
         }
         // The layer's bones out of its own clip: the seated ones for a seat, the rest for an
         // upper body.
+        // A hands-only seat takes every bone but the arms.
         const auto layer = [&](int clip, float time, bool below) {
             float layerRotations[kMaxBones * 4];
             float layerTranslations[kMaxBones * 3];
             sample(clip, time, posed, layerRotations, layerTranslations);
             for (size_t i = 0; i < posed && i < seated_.size(); ++i) {
-                if (bool(seated_[i]) != below) continue;
+                const bool covered = below && seatHands_ ? !arm_[i] : bool(seated_[i]) == below;
+                if (!covered) continue;
                 std::memcpy(&rotations[i * 4], &layerRotations[i * 4], 4 * sizeof(float));
                 std::memcpy(&translations[i * 3], &layerTranslations[i * 3], 3 * sizeof(float));
             }

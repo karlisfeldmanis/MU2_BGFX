@@ -56,8 +56,11 @@ public:
     // Seats whatever plays on a saddle: Bip01, the pelvis and both legs are taken from `clip`,
     // on its own clock, and the spine and everything above it from the clip playing. A rider's
     // standing swing -- the knight's paired blows, which MU has no ride clip for -- keeps his
-    // seat (docs/mount.md, option 1). -1 lets the legs follow the clip again.
-    void seat(int clip);
+    // seat (docs/mount.md, option 1). -1 lets the legs follow the clip again. `handsOnly` seats
+    // all but the arms: everything from the clavicles out from the clip playing, the rest -- the
+    // spine and the head with the legs -- from `clip`. A buff cast on a horse (the user: "we need
+    // that only hands do the job").
+    void seat(int clip, bool handsOnly = false);
     // The other way round: the spine and everything above it from `clip`, on its own clock,
     // over the clip playing -- a two-handed grip held over the ride's own seat, where MU's one
     // armed ride stance is a one-handed one. -1 for none.
@@ -160,10 +163,12 @@ private:
     // once per rig.
     int seat_ = -1;
     float seatTime_ = 0.0f;
+    bool seatHands_ = false;
     int upper_ = -1;
     float upperTime_ = 0.0f;
     const FigureBody* seatBody_ = nullptr;
     std::vector<uint8_t> seated_;
+    std::vector<uint8_t> arm_;  // a clavicle or a child of one
     float pitch_ = 0.0f, roll_ = 0.0f;
     float scale_ = 1.0f;
     int clip_ = -1;

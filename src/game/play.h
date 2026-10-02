@@ -628,6 +628,9 @@ private:
         // found that taking the weapon's clip over the top of a cast was what killed its sparks.
         int32_t castSkill = 0;
         int castClip = -1;
+        // The clip a buff -- a cast on himself -- was started with, while it is the one playing:
+        // on a horse only its arms are drawn, over the ride's seat (play_show). -1 for none.
+        int selfClip = -1;
         // Seconds of a cast's own animation still owed. A SWING is cancelled by a step -- see
         // play_show, where that rule and its measurement live -- and a SKILL is not: the realm
         // holds the character still for the whole clip (Realm::throwSkill takes the longer of

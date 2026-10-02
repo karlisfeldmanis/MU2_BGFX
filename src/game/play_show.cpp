@@ -867,7 +867,10 @@ void Play::follow(float seconds) {
             const bool standing = seatLook && seatLook->library && now >= 0 &&
                                   size_t(now) < seatLook->library->clips.clips.size() &&
                                   !rideAction(seatLook->library->clips.clips[size_t(now)].slot);
-            one.figure.seat(body->riding && standing ? seatLook->rideIdleArmedClip : -1);
+            // A buff on a horse moves his arms alone (Drawn::selfClip).
+            if (one.selfClip >= 0 && now != one.selfClip) one.selfClip = -1;
+            const bool hands = body->riding && one.selfClip >= 0;
+            one.figure.seat(body->riding && standing ? seatLook->rideIdleArmedClip : -1, hands);
             // And a two-handed weapon drawn on a horse holds its own standing grip over the
             // ride's seat (Figure::upper), the user: "we need also two hand weapon stance on
             // mount" -- MU's one armed ride stance, 14 and 37, is a one-handed one. Not while
