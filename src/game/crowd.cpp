@@ -96,8 +96,28 @@ float Figure::radius() const {
     return body_->radius * scale_ * 1.5f;
 }
 
+void Figure::seat(int clip) {
+    if (clip == seat_) return;
+    seat_ = clip;
+    seatTime_ = 0.0f;
+}
+
+void Figure::upper(int clip) {
+    if (clip == upper_) return;
+    upper_ = clip;
+    upperTime_ = 0.0f;
+}
+
 void Figure::update(float seconds, float clipRate) {
     if (!body_ || !body_->library || clip_ < 0) return;
+    if (upper_ >= 0 && size_t(upper_) < body_->library->clips.clips.size()) {
+        const float length = body_->library->clips.clips[size_t(upper_)].duration;
+        upperTime_ = length > 0.0f ? std::fmod(upperTime_ + seconds, length) : 0.0f;
+    }
+    if (seat_ >= 0 && size_t(seat_) < body_->library->clips.clips.size()) {
+        const float length = body_->library->clips.clips[size_t(seat_)].duration;
+        seatTime_ = length > 0.0f ? std::fmod(seatTime_ + seconds, length) : 0.0f;
+    }
     const content::CookedClip& clip = body_->library->clips.clips[size_t(clip_)];
     // The clip's own clock runs at the rate the caller asked for; the fade below runs in real
     // seconds. See the note on this function in crowd.h.
@@ -273,6 +293,42 @@ int Figure::pose(float* rows12) {
             core::lerpVec3(&wasTranslations[i * 3], &translations[i * 3], t, moved);
             std::memcpy(&translations[i * 3], moved, sizeof(moved));
         }
+    }
+
+    // The seat over it: the root, the pelvis and every bone from a thigh down out of the seat's
+    // clip, so the hips sit the saddle and the spine swings from them. Bones are parents first,
+    // so a leg is a thigh or a child of one.
+    const size_t clipCount = body_->library->clips.clips.size();
+    const bool seating = seat_ >= 0 && size_t(seat_) < clipCount;
+    const bool uppering = upper_ >= 0 && size_t(upper_) < clipCount;
+    if (seating || uppering) {
+        if (seatBody_ != body_) {
+            seatBody_ = body_;
+            seated_.assign(count, 0);
+            std::vector<uint8_t> leg(count, 0);
+            for (size_t i = 0; i < count; ++i) {
+                const std::string& name = bones[i].name;
+                const int32_t parent = bones[i].parent;
+                leg[i] = name.find("Thigh") != std::string::npos ||
+                         (parent >= 0 && leg[size_t(parent)]);
+                const bool pelvis = name.size() >= 6 && name.compare(name.size() - 6, 6, "Pelvis") == 0;
+                seated_[i] = leg[i] || parent < 0 || pelvis;
+            }
+        }
+        // The layer's bones out of its own clip: the seated ones for a seat, the rest for an
+        // upper body.
+        const auto layer = [&](int clip, float time, bool below) {
+            float layerRotations[kMaxBones * 4];
+            float layerTranslations[kMaxBones * 3];
+            sample(clip, time, posed, layerRotations, layerTranslations);
+            for (size_t i = 0; i < posed && i < seated_.size(); ++i) {
+                if (bool(seated_[i]) != below) continue;
+                std::memcpy(&rotations[i * 4], &layerRotations[i * 4], 4 * sizeof(float));
+                std::memcpy(&translations[i * 3], &layerTranslations[i * 3], 3 * sizeof(float));
+            }
+        };
+        if (seating) layer(seat_, seatTime_, true);
+        if (uppering) layer(upper_, upperTime_, false);
     }
 
     // One walk of the hierarchy, parents first -- which the cook guarantees and the reader

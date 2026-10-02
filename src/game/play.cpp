@@ -840,16 +840,23 @@ void Play::update(double seconds) {
                                     ? swinger->dualClips[swinger->swordCount % 4]
                                 : (swinger->attackClip2 >= 0 && swinger->swordCount % 3 != 0)
                                     ? swinger->attackClip2 : swinger->attackClip;
-                        ++swinger->swordCount;
+                        // Counted on the happening that plays the clip and on no other: the
+                        // hero's blow comes as its start and its landing, and counting both
+                        // stepped a pair 0, 2, 0, 2 -- the right hand's two blows and never the
+                        // left's (the user, of the mounted pair: "only one hand attacked").
+                        if (pose) ++swinger->swordCount;
                     }
                     // On a horse, the weapon's ride swing stands in (docs/mount.md,
                     // ZzzCharacter.cpp:1112-1153), and for an arrow skill too, which plays the
                     // bow's swing; a spell's ride cast was chosen with castClip. A clip the
                     // library lacks keeps the standing one.
                     const bool arrowCast = cast && swinger->castClip == swinger->attackClip;
+                    // A pair and a two-handed weapon keep their standing blows, seated by the
+                    // drawing (Figure::seat).
                     if (happening.who == realm_.hero().id && realm_.hero().riding &&
-                        (!cast || arrowCast) && swinger->figure.body() &&
-                        swinger->figure.body()->library) {
+                        (!cast || arrowCast) && swinger->dualClips[0] < 0 &&
+                        swinger->figure.body() && swinger->figure.body()->library &&
+                        !twoHandedStance(swinger->figure.body()->stance)) {
                         const FigureBody* look = swinger->figure.body();
                         const int ridden = look->library->find(rideSlotFor(look->stance));
                         if (ridden >= 0) swing = ridden;

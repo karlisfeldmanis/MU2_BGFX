@@ -53,6 +53,15 @@ public:
     // its first key, which is one leg fully forward: taken from legs caught mid-cross, that is
     // the longest crossfade in the game and the one nobody asked for.
     void setClock(float seconds);
+    // Seats whatever plays on a saddle: Bip01, the pelvis and both legs are taken from `clip`,
+    // on its own clock, and the spine and everything above it from the clip playing. A rider's
+    // standing swing -- the knight's paired blows, which MU has no ride clip for -- keeps his
+    // seat (docs/mount.md, option 1). -1 lets the legs follow the clip again.
+    void seat(int clip);
+    // The other way round: the spine and everything above it from `clip`, on its own clock,
+    // over the clip playing -- a two-handed grip held over the ride's own seat, where MU's one
+    // armed ride stance is a one-handed one. -1 for none.
+    void upper(int clip);
 
     // `clipRate` advances the CLIP's clock faster or slower than the world's, while the
     // crossfade keeps running in real seconds. That split is the whole of walking without
@@ -147,6 +156,14 @@ private:
     const FigureBody* body_ = nullptr;
     float position_[3] = {0, 0, 0};
     float yaw_ = 0.0f;
+    // The seat (see `seat`): its clip and clock, and which bones are below the spine, worked out
+    // once per rig.
+    int seat_ = -1;
+    float seatTime_ = 0.0f;
+    int upper_ = -1;
+    float upperTime_ = 0.0f;
+    const FigureBody* seatBody_ = nullptr;
+    std::vector<uint8_t> seated_;
     float pitch_ = 0.0f, roll_ = 0.0f;
     float scale_ = 1.0f;
     int clip_ = -1;

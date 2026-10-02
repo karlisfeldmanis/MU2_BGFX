@@ -134,6 +134,17 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
   Hounds: two-hand Slash, dual Cyclone, Berdysh Falling Slash, sword and shield Lunge, wizard
   Fire Ball, elf bow Triple Shot and crossbow. Monsters on the neighbouring tiles stand inside
   the horse's long body, as they would in MU. `--give NAME:1:H` wears a weapon in the off hand.
+- **Seated standing clips** (2026-10-02, the user: "we need to figure out how to make dual vield
+  attack on mount", then "try 1", "we need also two hand weapon stance on mount", "not only two
+  hand stance bt also two hand attack"). `Figure::seat(clip)` takes Bip01, the pelvis and both
+  legs from a second clip on its own clock; `Figure::upper(clip)` the spine and above. On a horse
+  any clip that is not one of MU's ride clips (`rideAction`) is seated on the armed stop ride, 14:
+  the knight's pair keeps its four standing blows, 39 41 40 42, and a two-handed sword, spear or
+  scythe its own standing blow (43, 46, 47) rather than the one-handed-looking ride swings 55-57.
+  Drawn and not swinging, a two-handed weapon holds its standing grip over the ride stance
+  (`upper`), the ride clip staying the main one so the horse's sync holds. All **ours**. Found on
+  the way: a pair's counter was stepped by both halves of the hero's blow, 0 2 0 2, so only the
+  right hand ever swung -- on foot as well; counted now only where the clip plays.
 
 ## Steps
 

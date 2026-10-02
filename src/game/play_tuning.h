@@ -199,6 +199,21 @@ inline int rideSlotFor(const std::string& stance) {
     return 54;
 }
 
+// A weapon held in both hands: on a horse it keeps its own standing grip and blows, seated
+// (Figure::seat, Figure::upper), as MU's armed ride stance and swings read one-handed (the user:
+// "we need also two hand weapon stance on mount", "not only two hand stance bt also two hand
+// attack"). **ours**.
+inline bool twoHandedStance(const std::string& stance) {
+    return stance == "two_hand_sword" || stance == "spear" || stance == "scythe";
+}
+
+// MU's own ride clips, which seat themselves: the stop and run rides, the ride swings, the rider
+// skill and the ride cast. Anything else played on a horse is a standing clip and is seated.
+inline bool rideAction(int slot) {
+    return slot == 13 || slot == 14 || slot == 36 || slot == 37 || (slot >= 54 && slot <= 59) ||
+           slot == 68 || slot == 69 || slot == 156;
+}
+
 // An angle folded into a half turn either side of nothing, so that a body a few degrees the
 // other side of due north turns the short way. The sim has its own copy (realm.cpp's `wrapped`)
 // and this is deliberately not shared with it: the sim must not grow a dependency on the

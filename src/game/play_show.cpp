@@ -824,6 +824,25 @@ void Play::follow(float seconds) {
                           (body->player && body->combatUntil <= realm_.tick()) ||
                           (dressed && dressed->slungAtRest && body->temper != sim::Temper::Fighting);
         one.figure.place(position, one.yaw, safe);
+        // A standing clip on a horse is seated (Figure::seat): a knight's paired blows, which MU
+        // has no ride clip for the left hand's, and a two-handed weapon's blows. The armed stop
+        // ride holds the legs. MU's own ride clips seat themselves (rideAction).
+        if (body->player) {
+            const FigureBody* seatLook = one.figure.body();
+            const int now = one.figure.clip();
+            const bool standing = seatLook && seatLook->library && now >= 0 &&
+                                  size_t(now) < seatLook->library->clips.clips.size() &&
+                                  !rideAction(seatLook->library->clips.clips[size_t(now)].slot);
+            one.figure.seat(body->riding && standing ? seatLook->rideIdleArmedClip : -1);
+            // And a two-handed weapon drawn on a horse holds its own standing grip over the
+            // ride's seat (Figure::upper), the user: "we need also two hand weapon stance on
+            // mount" -- MU's one armed ride stance, 14 and 37, is a one-handed one. Not while
+            // a swing plays: the ride swings 55-57 are two-handed already. **ours**.
+            const bool twoHanded = seatLook && twoHandedStance(seatLook->stance);
+            one.figure.upper(body->riding && twoHanded && !safe && one.swinging <= 0.0f
+                                 ? seatLook->idleClip
+                                 : -1);
+        }
         {
             const FigureBody* look = one.figure.body();
             one.crown[0] = position[0];
