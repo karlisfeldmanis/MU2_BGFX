@@ -22,7 +22,13 @@ model and the castle's monsters, contact sheets) is in
 - the `kMaps` row `{"bloodcastle", 11, {13, 8}, true}`, plus the banner and minimap names;
 - `sheets/worlds/bloodcastle.json`, started from the Lost Tower's numbers and pulled to the neutral grey of the user's MuMain shots (grey gravel court, grey brick, a black void with drifting orange embers -- MU's flares, ZzzObject.cpp:4365-4381, for step 8).
 
-Nothing else is built: no objects, monsters, gates, event, or way home to Devias. It is reached by
+**Lights and fires (2026-10-02, the user: 'lets work on light emiters and fire emiters').**
+- The four objects that carry them are built: Object12, the candle clusters (11); Object14, the monks (4); Object09, the ember heaps (2); and Object34, the floor feathers (20).
+- MU's sprites are in `game/world/ornaments.cpp`: seven breathing BITMAP_LIGHTs a cluster and the monks' BITMAP_FLARE. Neither rig has a clip, so the sprites are fixed at the bones' bind points.
+- Ours, marked in the recipes: one warm light a cluster, a faint one at each monk's lamp, and flames with CreateFire's light on the heaps.
+- The sheet's `glow_strength` is 0.9 and its saturation 0.8.
+
+Nothing else is built: no other objects, monsters, gates, event, or way home to Devias. It is reached by
 `--world bloodcastle` or `--travel-at`, and only as bare land.
 
 ## The one thing to know first

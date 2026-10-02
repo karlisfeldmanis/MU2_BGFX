@@ -124,6 +124,19 @@ constexpr TowerGlow kTowerGlows[] = {
 constexpr int kTowerBones[3] = {15, 19, 21};
 constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
 
+// ---- Blood Castle's: RenderObjectVisual, case WD_11BLOODCASTLE1 to +6 ----------------------
+//
+// Type 11 (Object12, the candle clusters; ZzzObject.cpp:3205-3218): a BITMAP_LIGHT at each of
+// bones 1, 2, 4, 6, 9, 10 and 11, the bone's own origin, Scale 0.5, in Luminosity * (1, 0.5, 0)
+// with Luminosity = sin((Angle[2] * 20 + WorldTime) * 0.001) * 0.5 + 0.5: a six-second breath,
+// put out of step by the placement's turn. Type 13 (Object14, the monks; :3219-3225): a white
+// BITMAP_FLARE at bone 3, the lamp, Luminosity = sin(WorldTime * 0.001) * 0.3 + 0.7 and Scale
+// Luminosity + 0.5. docs/blood-castle-port.md, Part B section 2.
+constexpr int kCandleBones[7] = {1, 2, 4, 6, 9, 10, 11};
+constexpr float kCandleColour[3] = {1.0f, 0.5f, 0.0f};
+constexpr int kMonkBone = 3;
+constexpr float kDegreesPerRadian = 57.2957795f;
+
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
@@ -173,6 +186,21 @@ void through(const float* m, const float* v, float w, float* out) {
         out[j] = v[0] * m[0 * 4 + j] + v[1] * m[1 * 4 + j] + v[2] * m[2 * 4 + j] +
                  w * m[3 * 4 + j];
     }
+}
+
+// The model-space origin of a bone, from its inverse bind: a row-vector affine [R 0; t 1]
+// inverts to [R^-1 0; -t R^-1 1], whose last row is the origin.
+void bindOrigin(const float* inverse, float out[3]) {
+    const float a = inverse[0], b = inverse[1], c = inverse[2];
+    const float d = inverse[4], e = inverse[5], f = inverse[6];
+    const float g = inverse[8], h = inverse[9], k = inverse[10];
+    const float det = a * (e * k - f * h) - b * (d * k - f * g) + c * (d * h - e * g);
+    const float s = std::fabs(det) > 1e-12f ? 1.0f / det : 0.0f;
+    const float r[9] = {(e * k - f * h) * s, (c * h - b * k) * s, (b * f - c * e) * s,
+                        (f * g - d * k) * s, (a * k - c * g) * s, (c * d - a * f) * s,
+                        (d * h - e * g) * s, (b * g - a * h) * s, (a * e - b * d) * s};
+    const float* t = inverse + 12;
+    for (int j = 0; j < 3; ++j) out[j] = -(t[0] * r[0 * 3 + j] + t[1] * r[1 * 3 + j] + t[2] * r[2 * 3 + j]);
 }
 
 }  // namespace
@@ -263,6 +291,39 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                     }
                 }
             }
+        } else if (world == "bloodcastle" && (name == "Object12" || name == "Object14")) {
+            static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
+            static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+            const bool candles = name == "Object12";
+            const float turn = town.cooked().instances[i].yaw * kDegreesPerRadian;
+            for (int b = 0; b < (candles ? 7 : 1); ++b) {
+                Lantern lantern;
+                lantern.anchor =
+                    anchor(i, mesh, candles ? kCandleBones[b] : kMonkBone, kOrigin, kNoAcross);
+                for (int a = 0; a < 3; ++a) lantern.anchor.point[a] = 0.0f;
+                lantern.breathes = true;
+                if (candles) {
+                    lantern.scale = 0.5f;
+                    for (int a = 0; a < 3; ++a) lantern.colour[a] = kCandleColour[a];
+                    lantern.breathBase = 0.5f;
+                    lantern.breathAmp = 0.5f;
+                    lantern.breathPhase = turn * 20.0f * 0.001f;
+                } else {
+                    lantern.sheet = 3;
+                    lantern.breathSize = true;
+                    lantern.breathBase = 0.7f;
+                    lantern.breathAmp = 0.3f;
+                }
+                if (lantern.anchor.bone < 0) continue;
+                // No clip on either rig, so Sway never poses them: fixed in the world at open.
+                const content::TownInstance& at = town.cooked().instances[i];
+                float m[16], origin[3];
+                content::placementTransform(at.pitch, at.yaw, at.roll, at.scale, at.position, m);
+                bindOrigin(mesh->bones()[size_t(lantern.anchor.bone)].inverseBind, origin);
+                through(m, origin, 1.0f, lantern.fixedAt);
+                lantern.fixed = true;
+                lanterns_.push_back(lantern);
+            }
         } else if (world == "noria") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
@@ -322,6 +383,7 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
         light_ = take("light");    // Effect/flare01, MU's BITMAP_LIGHT
         lightning_ = take("lightning_2");  // Effect/lightning2, MU's BITMAP_LIGHTNING+1
         magic_ = take("magic_ground");     // Effect/Magic_Ground2, MU's BITMAP_MAGIC+1
+        flare_ = take("flare");    // Effect/Flare, MU's BITMAP_FLARE
         shiny_ = take("shiny");    // Effect/Shiny01, MU's BITMAP_SHINY
     }
     if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
@@ -356,7 +418,7 @@ void Ornaments::shutdown() {
     glints_.clear();
     throwers_.clear();
     strikeCount_ = 0;
-    smoke_ = light_ = lightning_ = shiny_ = magic_ = BGFX_INVALID_HANDLE;
+    smoke_ = light_ = lightning_ = shiny_ = magic_ = flare_ = BGFX_INVALID_HANDLE;
 }
 
 void Ornaments::update(float seconds, const Sway& sway) {
@@ -453,6 +515,7 @@ void Ornaments::update(float seconds, const Sway& sway) {
     }
 
     spun_ = std::fmod(spun_ + seconds, 360.0f / kStarDegreesPerSecond);
+    breath_ = std::fmod(breath_ + seconds, 6.28318531f);
 
     for (Glint& glint : glints_) glint.age += dt * kFramesPerSecond;
     glints_.erase(std::remove_if(glints_.begin(), glints_.end(),
@@ -571,22 +634,34 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
     }
     if (bgfx::isValid(light_)) {
         for (const Lantern& lantern : lanterns_) {
-            const bgfx::TextureHandle sheet =
-                lantern.sheet == 2 ? magic_ : lantern.sheet == 1 ? lightning_ : light_;
+            const bgfx::TextureHandle sheet = lantern.sheet == 3   ? flare_
+                                              : lantern.sheet == 2 ? magic_
+                                              : lantern.sheet == 1 ? lightning_
+                                                                   : light_;
             if (!bgfx::isValid(sheet)) continue;
             const Figure* figure = sway.posedAt(lantern.anchor.townIndex);
-            if (!figure) continue;
             gfx::Sprite sprite;
-            if (!figure->pointOn(lantern.anchor.bone, lantern.anchor.point, sprite.position)) continue;
+            if (figure) {
+                if (!figure->pointOn(lantern.anchor.bone, lantern.anchor.point, sprite.position)) continue;
+            } else if (lantern.fixed) {
+                for (int a = 0; a < 3; ++a) sprite.position[a] = lantern.fixedAt[a];
+            } else {
+                continue;
+            }
             // CreateSprite's Scale is `Luminosity * 5` over a 64-texel sheet -- a quad up to
             // 3.2 m across, and taken whole it cut through the canopy and the crates beside
             // the lamp: a hard-edged orange patch on the load and half a disc hanging past the
             // corner. MU's picture hid that at 25 frames in low range. A quarter of it, the
             // lamp's own glow; ours, and marked as ours.
             // The merchant animal's is `Luminosity * 5` in scale; Noria's are a plain Scale.
+            const float breath =
+                lantern.breathes
+                    ? std::sin(lantern.breathPhase + breath_) * lantern.breathAmp + lantern.breathBase
+                    : 0.0f;
+            const float size = lantern.breathSize ? breath + 0.5f : lantern.scale;
             sprite.halfWidth = sprite.halfHeight =
-                0.5f * kSheetMetres * lantern.scale * (lantern.swells ? luminosity_ : 1.0f);
-            const float level = lantern.steady ? 1.0f : luminosity_;
+                0.5f * kSheetMetres * size * (lantern.swells ? luminosity_ : 1.0f);
+            const float level = lantern.breathes ? breath : lantern.steady ? 1.0f : luminosity_;
             for (int k = 0; k < 3; ++k) sprite.colour[k] = lantern.colour[k] * level;
             sprite.colour[3] = 1.0f;
             sprite.spin = lantern.spin * spun_ * 3.14159265f / 180.0f;

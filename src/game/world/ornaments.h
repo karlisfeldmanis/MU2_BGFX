@@ -97,6 +97,15 @@ private:
         bool swells = false;  // its size breathes with Luminosity too: the merchant animal's
         int sheet = 0;
         float spin = 0.0f;
+        // Blood Castle's: the level is `sin(phase + t) * amp + base` on a sine of t seconds,
+        // where WorldTime * 0.001 is, and with `breathSize` the size is that level + 0.5.
+        bool breathes = false;
+        bool breathSize = false;
+        float breathBase = 0.0f, breathAmp = 0.0f, breathPhase = 0.0f;
+        // Where it hangs in the world when nothing poses its object -- a rig with no clip, as
+        // Blood Castle's candles and monks are: the bone's bind origin through the placement.
+        bool fixed = false;
+        float fixedAt[3] = {0, 0, 0};
     };
     // A fall on a placement that never moves: its landing and scatter already in the world.
     struct Fall {
@@ -158,12 +167,14 @@ private:
     size_t strikeCount_ = 0;
     float luminosity_ = 1.0f;  // this frame's roll, shared by every lantern as MU's is
     float lanternWait_ = 0.0f;
+    float breath_ = 0.0f;  // seconds, wrapped at 2 pi: Blood Castle's sines (one radian a second)
     float spun_ = 0.0f;  // seconds, for the machine's star: WorldTime's own clock, wrapped
     uint32_t seed_ = 0x51AB1Eu;
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle magic_ = BGFX_INVALID_HANDLE;  // Effect/Magic_Ground2, MU's BITMAP_MAGIC+1
+    bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;  // Effect/Flare, MU's BITMAP_FLARE
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;  // Effect/Shiny01, MU's BITMAP_SHINY  // lightning2, MU's BITMAP_LIGHTNING+1
 };
 

@@ -1,0 +1,200 @@
+{
+  "item": "Object34",
+  "mu_name": "Object34",
+  "mu_name_from": "Blood Castle's object slot 33, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128); World12/Object12 serves all seven castles (MapManager.cpp:1104-1107).",
+  "world": "bloodcastle",
+  "object_type": 33,
+  "placements": 20,
+  "profile": "world",
+  "sheets": {
+    "ju01_R": "bc_ju01_r.png"
+  },
+  "sheet_from": "Data/Object12/, from MuMain, decoded under a bc_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "ju01_R": "lamplight"
+  },
+  "additive": [
+    "ju01_R"
+  ],
+  "additive_from": "A sheet named _R is drawn RENDER_BRIGHT, added (TextureScriptParsing, TextureScript.cpp:16-70).",
+  "why_this_one": "A handful of white angel feathers, and a few flame tongues, laid flat on the floor, 20: eight in the safe court and twelve in the castle, ju01_R added. The feathers round the angel-knights in the user's MuMain shots (2026-10-02). They light nothing: a warm light under each was tried the same day and read as white pools under feathers.",
+  "material_note": "ju01_R alone, lamplight, added.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        -0.0,
+        34.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.245,
+        0.443
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        64.2,
+        95.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.255,
+        0.005,
+        0.495,
+        0.443
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        5.7,
+        38.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.005,
+        0.453,
+        0.245,
+        0.891
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        -35.3,
+        -2.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.255,
+        0.453,
+        0.495,
+        0.891
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        64.5,
+        98.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.505,
+        0.005,
+        0.745,
+        0.443
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        6.2,
+        41.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.755,
+        0.453,
+        0.995,
+        0.891
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        -60.4,
+        -25.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.505,
+        0.453,
+        0.745,
+        0.891
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 2,
+      "area": 481.7,
+      "along": [
+        -50.7,
+        -23.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.287,
+        0.524
+      ],
+      "bake_uv": [
+        0.755,
+        0.005,
+        0.995,
+        0.443
+      ]
+    }
+  ]
+}
