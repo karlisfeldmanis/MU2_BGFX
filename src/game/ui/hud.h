@@ -147,6 +147,7 @@ public:
         // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).
         int pet = -1;
         int life = 0, lifeMost = 0;
+        bool kinship = false; // a Kinship rune worn lifts the pet's price (sim::Power::Kinship)
         float seconds = 0.0f; // what is left of it
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
         bool empty() const { return skill == 0 && !ale && !poison && !chill && !frenzy && pet < 0; }
@@ -156,7 +157,7 @@ public:
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
             return skill == o.skill && ale == o.ale && poison == o.poison &&
-                   chill == o.chill && frenzy == o.frenzy && pet == o.pet &&
+                   chill == o.chill && frenzy == o.frenzy && pet == o.pet && kinship == o.kinship &&
                    life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
     };

@@ -1083,6 +1083,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             boon.pet = row.number;
             boon.life = pet.durability;
             boon.lifeMost = most;
+            boon.kinship = hero.excel.kinship;
             boon.share = float(pet.durability) / float(most);
         }
     }

@@ -658,7 +658,13 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         content::ItemRow row;
         row.group = sim::kGroupPets;
         row.number = one.pet;
-        const sim::PetPower power = sim::petPower(row);
+        sim::PetPower power = sim::petPower(row);
+        // A Kinship rune lifts the price and keeps the gift, as rearm reckons it.
+        const bool lifted = one.kinship && (power.dealt < 1.0 || power.lifeCost > 0);
+        if (one.kinship) {
+            power.dealt = std::max(1.0, power.dealt);
+            power.lifeCost = 0;
+        }
         const auto percent = [](double share) {
             return std::to_string(int(std::lround(share * 100.0))) + "%";
         };
@@ -692,6 +698,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
                                      tip::Tone::Green));
             what.rows.push_back(prose("over running, ridden outside town"));
         }
+        if (lifted) what.rows.push_back(prose("its price lifted by your Kinship rune"));
         what.rows.push_back(prose("loses Life as you take damage, and is gone at none"));
         sheet.sections.push_back(what);
         sheet.wear = "Life " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);
