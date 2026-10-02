@@ -2325,6 +2325,28 @@ void testElfSkills(const content::Tables& tables) {
     }
     for (int wait = 0; wait < 1210; ++wait) realm.step();
     check(realm.hero().stats.greaterDamage > 0, "and is still up after a minute");
+    // And it is saved: a restart brings it back at the same bonus, for the time it had left.
+    {
+        const sim::HeroRecord saved = realm.record();
+        check(saved.might == realm.hero().might && saved.mightTicksLeft > 0,
+              "her save carries Greater Damage");
+        sim::Realm again;
+        check(again.raise(&tables, 11, 212, 198, sim::Kin::FairyElf, 30), "and she comes back");
+        again.restore(saved);
+        check(again.hero().stats.greaterDamage == realm.hero().stats.greaterDamage &&
+                  again.hero().mightUntil - again.tick() == saved.mightTicksLeft,
+              "with Greater Damage up, at the same bonus and time left");
+        sim::HeroRecord edited = saved;
+        edited.might = 100000;
+        edited.mightTicksLeft = 100000000;
+        sim::Realm forged;
+        check(forged.raise(&tables, 11, 212, 198, sim::Kin::FairyElf, 30), "a forged save raises");
+        forged.restore(edited);
+        check(forged.hero().might <= sim::mightOf(forged.hero().points) &&
+                  forged.hero().mightUntil - forged.tick() <=
+                      sim::skillNumbered(sim::skill::kGreaterDamage)->mightTicks,
+              "and an edited file gives no more than her energy, for no longer than the skill");
+    }
     for (int wait = 0; wait < 6000; ++wait) realm.step();
     check(realm.hero().stats.greaterDamage == 0, "Greater Damage lapses after its five minutes");
 

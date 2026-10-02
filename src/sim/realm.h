@@ -508,6 +508,9 @@ struct HeroRecord {
     int64_t boonTicksLeft = 0;
     // And an Ale's ticks left, 0 for none, saved for the same reason as the boon.
     int64_t aleTicksLeft = 0;
+    // And her Greater Damage: the bonus it was cast at and its ticks left, 0 for none.
+    int32_t might = 0;
+    int64_t mightTicksLeft = 0;
     Held slots[kSlots];
     // Every quest's progress, by sim/quests.h's index.
     QuestProgress quests[kQuests];

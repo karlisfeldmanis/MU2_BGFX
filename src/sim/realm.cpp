@@ -269,6 +269,10 @@ HeroRecord Realm::record() const {
         out.boonTicksLeft = hero.boonUntil - tick_;
     }
     out.aleTicksLeft = aleLeft();
+    if (hero.mightUntil > tick_) {
+        out.might = hero.might;
+        out.mightTicksLeft = hero.mightUntil - tick_;
+    }
     for (int i = 0; i < kSkills; ++i) out.coolsLeft[i] = std::max<int64_t>(0, hero.cools[i] - tick_);
     for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
     for (int i = 0; i < kQuests; ++i) out.quests[i] = quests_[i];
@@ -320,6 +324,13 @@ void Realm::restore(const HeroRecord& saved) {
     }
     // And an Ale, no longer than one lasts, before rearm so the swing is reckoned with it.
     if (saved.aleTicksLeft > 0) hero.aleUntil = tick_ + std::min(saved.aleTicksLeft, kAleTicks);
+    // And her Greater Damage, no longer than the skill lasts and no more than her energy gives
+    // now, also before rearm, which is what carries it into her blows.
+    if (const SkillRow* row = skillNumbered(skill::kGreaterDamage);
+        row != nullptr && saved.might > 0 && saved.mightTicksLeft > 0) {
+        hero.might = std::min(saved.might, int32_t(mightOf(hero.points)));
+        hero.mightUntil = tick_ + std::min<int64_t>(saved.mightTicksLeft, row->mightTicks);
+    }
     rearm(hero);
     // The waits he was saved with, each no longer than the skill's own cooldown at his agility
     // now, so an edited file cannot lock a key for an hour. After rearm, which is what the clip's

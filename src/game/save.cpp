@@ -172,6 +172,11 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.boonTicksLeft = int64_t(boon["ticks_left"].numberOr(0.0));
     // An Ale's ticks left, absent when none stood. The realm caps it at one Ale's length.
     hero.aleTicksLeft = int64_t(doc["ale_ticks_left"].numberOr(0.0));
+    // Her Greater Damage, absent when none stood: the bonus and ticks left, both capped by the
+    // realm.
+    const core::Json& might = doc["might"];
+    hero.might = int32_t(might["bonus"].numberOr(0.0));
+    hero.mightTicksLeft = int64_t(might["ticks_left"].numberOr(0.0));
     // Her summon standing, absent when none did. The realm asks that she knows its skill.
     const core::Json& summon = doc["summon"];
     hero.summonSkill = int32_t(summon["skill"].numberOr(0.0));
@@ -332,6 +337,10 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     if (hero.aleTicksLeft > 0) {
         std::fprintf(f, "  \"ale_ticks_left\": %lld,\n",
                      static_cast<long long>(hero.aleTicksLeft));
+    }
+    if (hero.might > 0 && hero.mightTicksLeft > 0) {
+        std::fprintf(f, "  \"might\": {\"bonus\": %d, \"ticks_left\": %lld},\n", hero.might,
+                     static_cast<long long>(hero.mightTicksLeft));
     }
     if (hero.summonSkill != 0) {
         std::fprintf(f, "  \"summon\": {\"skill\": %d, \"health\": %d},\n", hero.summonSkill,
