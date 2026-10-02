@@ -661,14 +661,15 @@ void Realm::press() {
                 const bool standing = row->summons > 0 && summonSlot_ >= 0 &&
                                       bodies_[size_t(summonSlot_)].alive();
                 if (!standing && cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, hero.id);
-            } else if (within(hero, *target, row->reach) && !sheltered) {
+            } else if (within(hero, *target, row->reach) && !sheltered && seen(hero, *target)) {
                 if (row->thrown() || cooled) {
                     if (tick_ >= hero.castUntil) engage(hero, *target);
                     if (cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, order_.target);
                     return;
                 }
             } else if (row->thrown()) {
-                approach(hero, *target, int(row->reach));
+                // Out of reach, or in it with a wall between: to where it can be thrown from.
+                approach(hero, *target, int(row->reach), true);
                 return;
             }
         }
@@ -676,7 +677,7 @@ void Realm::press() {
 
     const int reachOf = hero.archer != 0 ? kArcherReach : kHeroAttackRange;
     if (within(hero, *target, float(reachOf)) &&
-        !tables_->grid.safe(target->column(), target->row())) {
+        !tables_->grid.safe(target->column(), target->row()) && seen(hero, *target)) {
         // Not while a skill's clip is running: the blow was thrown at where he was facing, and a
         // body that turns under its own animation is the sudden movement the user objected to.
         if (tick_ >= hero.castUntil) engage(hero, *target);
@@ -709,10 +710,10 @@ void Realm::press() {
     // before this line is reached. So the player is never held still by his own attack -- he
     // gives it up, which is what an attack cancel is -- and the chase, which is the engine's
     // decision rather than his, waits its turn.
-    approach(hero, *target, reachOf);
+    approach(hero, *target, reachOf, true);
 }
 
-void Realm::approach(Body& hero, const Body& target, int radius) {
+void Realm::approach(Body& hero, const Body& target, int radius, bool sight) {
     if (tick_ < hero.swingsAt) return;
     if (tick_ >= hero.repathsAt) {
         hero.repathsAt = tick_ + kRepath;
@@ -720,7 +721,11 @@ void Realm::approach(Body& hero, const Body& target, int radius) {
             hero.chaseX = target.x;
             hero.chaseY = target.y;
             int column = 0, row = 0;
-            if (beside(target, radius, hero, &column, &row)) send(hero, column, row);
+            // A tile in sight first; with none in reach, up to it, round the wall.
+            if (beside(target, radius, hero, &column, &row, sight) ||
+                (sight && beside(target, 1, hero, &column, &row))) {
+                send(hero, column, row);
+            }
         }
     }
 }
@@ -777,7 +782,7 @@ void Realm::step() {
                 float best = 0.0f;
                 for (const Body& one : bodies_) {
                     if (!one.monster() || !one.alive() || !within(hero, one, row->reach)) continue;
-                    if (tables_->grid.safe(one.column(), one.row())) continue;
+                    if (tables_->grid.safe(one.column(), one.row()) || !seen(hero, one)) continue;
                     const float gap = reach(hero, one);
                     if (echo.target == 0 || gap < best) {
                         echo.target = one.id;

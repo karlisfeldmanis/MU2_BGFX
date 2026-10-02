@@ -56,6 +56,9 @@ constexpr int kSleepSlack = 2;
 // nest of these three maps but Devias's points (10 there, taken as 30).
 constexpr int64_t kGrudgeTicks = 80;
 constexpr int kLoseSight = 15;
+// The span inside which a body is never walled off from him (Realm::seen): the eight tiles
+// round his own, so a swing at a body on the far side of a wall's corner still lands. Ours.
+constexpr float kArmsLength = 1.5f;
 constexpr int kWanderReach = 30;
 // And the leash back on top of them (the user, 2026-10-01: "monster leash is to far"): past
 // kLeash tiles of home a beast lets go and walks back, twice that once it has been hit -- MU2's

@@ -374,12 +374,22 @@ bool Realm::drifted(const Body& chaser, const Body& target) const {
            std::fabs(target.x - chaser.chaseX) + std::fabs(target.y - chaser.chaseY) > kDrift;
 }
 
+bool Realm::seen(const Body& from, const Body& to) const { return seen(from.x, from.y, to); }
+
+bool Realm::seen(float fromX, float fromY, const Body& to) const {
+    if (std::fabs(to.x - fromX) <= kArmsLength && std::fabs(to.y - fromY) <= kArmsLength) {
+        return true;
+    }
+    return router_.sees(fromX, fromY, to.x, to.y, content::kWallNoMove);
+}
+
 // The nearest tile beside a target that a walker can both stand on and finish its approach
 // from. Nearest rather than OpenMU's random one: the randomness is there to stop a pack
 // converging on one tile, and nearest-to-the-walker keeps that spread by construction while
 // being STABLE -- asked again a tick later from almost the same place it gives the same
 // answer, so a chase that re-plans three times a second does not zig-zag.
-bool Realm::beside(const Body& target, int radius, const Body& walker, int* column, int* row) {
+bool Realm::beside(const Body& target, int radius, const Body& walker, int* column, int* row,
+                   bool sight) {
     bool found = false;
     float closest = 1e30f;
     for (int down = -radius; down <= radius; ++down) {
@@ -388,6 +398,8 @@ bool Realm::beside(const Body& target, int radius, const Body& walker, int* colu
             const int c = target.column() + across, r = target.row() + down;
             if (!tables_->grid.open(c, r, wallOf(walker))) continue;
             if (c == walker.column() && r == walker.row()) continue;
+            // A shot from here must not cross a wall: the hero's ranged approach (`seen`).
+            if (sight && !seen(float(c), float(r), target)) continue;
             // Standing here has to be close enough on the same measure the arrival will be
             // judged by -- the centre of this tile against where the target actually is. Without
             // this the approach and the arrival are in different spaces and can disagree

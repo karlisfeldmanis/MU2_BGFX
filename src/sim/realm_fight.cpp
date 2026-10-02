@@ -461,6 +461,9 @@ bool Realm::letSpiritsGo(Body& hero, float force, bool rune) {
         if (!b.monster() || !b.alive()) continue;
         const float dx = b.x - hero.x, dy = b.y - hero.y;
         if (dx * dx + dy * dy >= kSpiritReach * kSpiritReach) continue;
+        // WebZen asks no wall of the spirits; here they stop at one (Realm::seen, the user's
+        // 2026-10-02 rule for every skill).
+        if (!seen(hero, b)) continue;
         ++near;
         if (!dice.nextBool(kSpiritOdds)) continue;
         const int64_t wait = dice.nextInt(0, int(kSpiritDelayTicks));
@@ -793,6 +796,8 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
             const float along = dx * cx + dy * cy;
             const float across = std::fabs(dx * cy - dy * cx);
             if (along < kFanNearest || along > row.reach || across > kLineHalfWidth) continue;
+            // An arrow does not fly through a wall to the body behind it (Realm::seen).
+            if (!seen(hero, one)) continue;
             if (found == kVictims) break;
             int at = found++;
             while (at > 0 && (lane[at - 1].along > along ||
@@ -982,6 +987,8 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const float gap = std::hypot(one.x - cx, one.y - cy);
         if (gap > row.splash || found >= kVictims) continue;
+        // The splash stops at a wall, as the blow it rides on does (Realm::seen).
+        if (one.id != aimed->id && !seen(cx, cy, one)) continue;
         int at = found;
         while (at > 0 && (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
             off[at] = off[at - 1];
@@ -1039,6 +1046,13 @@ void Realm::burn() {
         // A storm walks every tick, struck or not; it was stood at his feet on the let-go's tick.
         fire.x += fire.dx;
         fire.y += fire.dy;
+        // A storm walked into a wall is spent there (the user, 2026-10-02: nothing through walls).
+        if ((fire.dx != 0.0f || fire.dy != 0.0f) &&
+            !tables_->grid.open(int(std::lround(fire.x)), int(std::lround(fire.y)),
+                                content::kWallNoMove)) {
+            fire = Fire{};
+            continue;
+        }
         if (fire.next > tick_) continue;
         const SkillRow* row = skillNumbered(fire.skill);
         const float radius = row ? row->burnTiles : 1.5f;
@@ -1053,6 +1067,7 @@ void Realm::burn() {
             if (tables_->grid.safe(one.column(), one.row())) continue;
             const float gap = std::hypot(one.x - fire.x, one.y - fire.y);
             if (gap > radius || found >= kVictims) continue;
+            if (!seen(fire.x, fire.y, one)) continue;
             int at = found;
             while (at > 0 &&
                    (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {

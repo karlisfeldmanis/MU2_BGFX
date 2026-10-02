@@ -233,6 +233,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // is the swing's.
         const bool aimed = target && target->alive() && target->monster() &&
                            within(hero, *target, row.reach);
+        // Behind a wall: nothing is thrown at it -- no mana, no cooldown (Realm::seen).
+        const bool walled = aimed && !seen(hero, *target);
         // Aimed before the shape is measured, because Arc is measured off where he is looking.
         // Only the aim is set and not the facing: he turns to it at the body's own rate, as he
         // does for a swing (`engage`), and the blow lands half a clip later by which time he has
@@ -259,6 +261,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // body to aim by, and the rest of its way is found when it is let go -- or the
             // pointer's ground, for a shape that has a direction.
             if (!aimed && !pointed) return false;
+            if (walled && !pointed) return false;
             // Nothing may be thrown at something sheltered either, which is the check the far end
             // of `ApplySkillAsync` makes and `press` already makes for a swing.
             if (aimed && !pointed && tables_->grid.safe(target->column(), target->row())) {
@@ -417,6 +420,8 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         }
         // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.
         if (tables_->grid.safe(one.column(), one.row())) continue;
+        // And a wall from all of it: a spin, a wave, a beam or a channel stops at the stone.
+        if (!seen(hero, one)) continue;
         const float dx = one.x - hero.x, dy = one.y - hero.y;
         // Clockwise from north, where north is the row decreasing -- the drawing's own negation
         // of the row, borrowed here only to give the sort a stated zero.

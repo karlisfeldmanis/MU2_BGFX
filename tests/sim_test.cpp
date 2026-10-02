@@ -3891,6 +3891,122 @@ void testTravelQuestLock() {
                "and Lorencia is taken from its field");
 }
 
+// Nothing through a wall (the user, 2026-10-02: "dont allow to cast multi-shot or other class
+// skills throught walls"). An elf hunts the Lost Tower's first floor, all corridors, on Skillshot
+// and then on her plain shot, at whatever monster is nearest, wall or not. Each time she looses,
+// which monsters she could see is written down; an arrow that then lands on one she could not see
+// in any of her last few looses went through stone. And she still hunts: walking to a tile in
+// sight rather than standing at range behind the wall.
+void testThroughWalls() {
+    std::printf("nothing through walls\n");
+    content::Tables tower;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/losttower/losttower.mur",
+                              tower, error),
+          "the Lost Tower's tables load");
+    if (tower.items.empty()) return;
+    sim::Router sight;
+    sight.open(&tower.grid);
+    const auto sees = [&](float x, float y, const sim::Body& to) {
+        return (std::fabs(to.x - x) <= sim::kArmsLength && std::fabs(to.y - y) <= sim::kArmsLength) ||
+               sight.sees(x, y, to.x, to.y, content::kWallNoMove);
+    };
+    // Where she starts: the open tile with the most monsters within six tiles that a wall hides,
+    // over the floor as the seed lays it out.
+    int startColumn = 204, startRow = 76, most = -1;
+    {
+        sim::Realm laid;
+        laid.raise(&tower, 5, 204, 76, sim::Kin::FairyElf, 350);
+        for (int r = 0; r < tower.grid.size(); r += 2) {
+            for (int c = 0; c < tower.grid.size(); c += 2) {
+                if (!tower.grid.open(c, r) || tower.grid.safe(c, r)) continue;
+                int hidden = 0, near = 0;
+                for (const sim::Body& one : laid.bodies()) {
+                    if (!one.monster() || std::hypot(one.x - c, one.y - r) > 6.0f) continue;
+                    ++near;
+                    hidden += sees(float(c), float(r), one) ? 0 : 1;
+                }
+                if (near <= 5 && hidden > most) {
+                    most = hidden;
+                    startColumn = c;
+                    startRow = r;
+                }
+            }
+        }
+    }
+    for (const int32_t skill : {sim::skill::kSkillshot, sim::skill::kNone}) {
+        sim::Realm realm;
+        check(realm.raise(&tower, 5, startColumn, startRow, sim::Kin::FairyElf, 350),
+              "an elf among the tower's walls");
+        check(realm.equip(tower.armNamed("Bow05"), -1, true), "with the Tiger Bow and a quiver");
+        // Her points in agility and vitality: the test is the stone, not whether she lives.
+        const int spare = realm.hero().pointsInHand;
+        realm.spend(0, spare / 2, spare - spare / 2, 0);
+        if (skill != sim::skill::kNone) check(realm.learn(skill), "and Skillshot");
+        std::vector<std::vector<uint32_t>> seenAt;  // the last few looses' monsters in sight
+        int looses = 0, landed = 0, walled = 0, aimedHidden = 0;
+        for (int tick = 0; tick < 6000 && realm.hero().alive(); ++tick) {
+            if (tick % 10 == 0) {
+                // The nearest she cannot see within a bow's reach, on purpose; else the nearest.
+                uint32_t nearest = 0;
+                float closest = 1e30f;
+                bool hidden = false;
+                for (const sim::Body& one : realm.bodies()) {
+                    if (!one.monster() || !one.alive()) continue;
+                    const float d = std::hypot(one.x - realm.hero().x, one.y - realm.hero().y);
+                    const bool behind = d <= 6.0f && !sees(realm.hero().x, realm.hero().y, one);
+                    if ((behind && !hidden) || (behind == hidden && d < closest)) {
+                        closest = d;
+                        nearest = one.id;
+                        hidden = behind;
+                    }
+                }
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = skill;
+                if (nearest != 0) realm.ask(request);
+                aimedHidden += hidden ? 1 : 0;
+            }
+            realm.step();
+            const sim::Body& hero = realm.hero();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != hero.id) continue;
+                if (h.what == sim::What::Loosed && h.a == skill) {
+                    ++looses;
+                    std::vector<uint32_t> visible;
+                    for (const sim::Body& one : realm.bodies()) {
+                        if (one.monster() && one.alive() && sees(hero.x, hero.y, one)) {
+                            visible.push_back(one.id);
+                        }
+                    }
+                    seenAt.push_back(visible);
+                    if (seenAt.size() > 4) seenAt.erase(seenAt.begin());
+                }
+                if (h.what == sim::What::Hit && h.thrown) {
+                    ++landed;
+                    bool was = false;
+                    for (const auto& visible : seenAt) {
+                        was |= std::find(visible.begin(), visible.end(), h.whom) != visible.end();
+                    }
+                    walled += was ? 0 : 1;
+                }
+            }
+            // A full quiver whenever it runs low: this is about the stone, not the arrows.
+            if (realm.satchel()[sim::kWeaponLeft].durability < 20) {
+                realm.equip(tower.armNamed("Bow05"), -1, true);
+            }
+        }
+        // With Realm::seen answering yes to everything, 58 of Skillshot's and 75 plain arrows
+        // landed through stone here (2026-10-02).
+        std::printf("  %s: %d looses, %d landed, %d aimed behind a wall, %d through one\n",
+                    skill ? "Skillshot" : "plain shot", looses, landed, aimedHidden, walled);
+        check(landed > 20, "she hunts the corridors");
+        check(aimedHidden > 0, "and is sent at monsters behind walls");
+        checkEqual(walled, 0, "and no arrow lands on a monster she could not see");
+    }
+}
+
 // The Lost Tower's way in (docs/lost-tower-quest.md, 2026-10-01): Devin's hand-in sends the hero
 // to Tersia in the tower's hall; her chain of seven floors waits on Devin's, speaking to her
 // opens the hall's row, and each deeper floor's row waits on its link handed in.
@@ -5596,7 +5712,7 @@ void testRunes(const content::Tables& tables) {
         const uint8_t powers[3] = {power, 0, 0};
         realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
         uint32_t fighting = 0, chainAt = 0;
-        int length = 0;
+        int length = 0, chainTick = -1;
         std::vector<uint32_t> struck;
         for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
             const sim::Body& hero = realm.hero();
@@ -5622,8 +5738,10 @@ void testRunes(const content::Tables& tables) {
             for (const sim::Happening& h : realm.happenings()) {
                 if (h.who != realm.hero().id) continue;
                 if (h.what == sim::What::Loosed && h.a == sim::skill::kFireBall && h.rune) {
-                    // A hop off the monster the last one flew at goes on the same chain.
-                    if (uint32_t(h.c) != chainAt) {
+                    // A hop off the monster the last one flew at, said on the tick that one
+                    // lands, goes on the same chain; a fresh Fire Ball bursting off the same
+                    // monster later starts another.
+                    if (uint32_t(h.c) != chainAt || tick != chainTick) {
                         ++out.chains;
                         length = 0;
                         struck.assign(1, uint32_t(h.c));
@@ -5631,6 +5749,7 @@ void testRunes(const content::Tables& tables) {
                     for (const uint32_t one : struck) out.repeats |= one == h.whom;
                     struck.push_back(h.whom);
                     chainAt = h.whom;
+                    chainTick = tick + h.b;
                     ++length;
                     ++out.hops;
                     out.longest = std::max(out.longest, length);
@@ -6676,6 +6795,7 @@ int main() {
     testVault(tables);
     testDeviasFolk();
     testTowerKeeper();
+    testThroughWalls();
     testCharon();
     testChaosMachine();
     testRefine(tables);

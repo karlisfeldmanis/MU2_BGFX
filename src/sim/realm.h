@@ -961,8 +961,15 @@ private:
                  int* outRow) const;
     // And putting him down there, on the tick the fade-out ends.
     void blink(Body& hero);
-    // Walks him to within `radius` of what he is fighting, on the chase's own re-plan clock.
-    void approach(Body& hero, const Body& target, int radius);
+    // Walks him to within `radius` of what he is fighting, on the chase's own re-plan clock --
+    // and with `sight`, to a tile from which nothing walls it off (`seen`).
+    void approach(Body& hero, const Body& target, int radius, bool sight = false);
+    // **Nothing is thrown through a wall** (the user, 2026-10-02: "dont allow to cast multi-shot
+    // or other class skills throught walls"): whether a straight line from one body to the other
+    // crosses only tiles a body could stand on (Route::sees, kWallNoMove). A body beside him is
+    // always seen -- an arm's length is not through anything. Ours: 0.75 asks no wall of a skill.
+    bool seen(const Body& from, const Body& to) const;
+    bool seen(float fromX, float fromY, const Body& to) const;
     // Whether the quick slot's skill could be thrown now but for the cooldown and the reach:
     // learned, his class's, the right hand, the mana. What a right-click falls back to the
     // weapon on.
@@ -1055,7 +1062,8 @@ private:
     void perch(Body& hero);
     void rise(Body& one);
     void settle(Body& one);
-    bool beside(const Body& target, int radius, const Body& walker, int* column, int* row);
+    bool beside(const Body& target, int radius, const Body& walker, int* column, int* row,
+                bool sight = false);
     bool drifted(const Body& chaser, const Body& target) const;
     bool worth(const Body& beast, const Body& target, int range) const;
     void say(What what, const Body& who, int32_t a = 0, int32_t b = 0, int32_t c = 0,
