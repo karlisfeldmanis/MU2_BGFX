@@ -1,0 +1,57 @@
+{
+  "item": "EventBloodCastle00",
+  "mu_name": "Scroll of Archangel",
+  "mu_name_from": "Loaded as MODEL_HELPER + 16 + i from Data\\\\Item\\\\EventBloodCastle0i.bmd for i < 3 (ZzzOpenData.cpp:990-995, _enum.h:2027-2029). Names as OpenMU's, OpenMU VersionSeasonSix/Items/EventTicketItems.cs:29-32.",
+  "why_this_one": "Blood Castle's ticket (the user, 2026-10-02: 'letes make a tickets, and ingreadeants to make a ticket on hcaos machine'). The Scroll of Archangel and the Blood Bone of one level with a Jewel of Chaos make the Invisibility Cloak of that level in the Chaos Machine, 80%, 50,000 Zen at +1 (WebZen BloodCastle.cpp:1294-1577, BloodCastle.h:208-236); the cloak lets him in through the Messenger in Devias. The level is the castle's, carried in the refinement. docs/blood-castle-port.md.",
+  "profile": "weapon",
+  "profile_note": "As the Ale and the Firecracker: a small object in the bag and on the ground.",
+  "tells": "Used when creating a Cloak of Invisibility",
+  "tells_from": "GT 'Used when creating a Cloak of Invisibility', Game.en.resx:3052, white (ZzzInventory.cpp:4427-4431); its name yellow (ZzzInventory.cpp:2190-2193).",
+  "stats": {
+    "note": "Group, number, size and durability are WebZen's row; it is not in the ordinary drop -- the scroll and the bone fall on their own roll outside the castle (WebZen gObjMonster.cpp:5823-5985).",
+    "from": "WebZen 1.00.93 Data/item.txt group 13 (docs/blood-castle-port.md Part A 2.2); OpenMU VersionSeasonSix/Items/EventTicketItems.cs:29-32",
+    "group": 13,
+    "number": 16,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 2,
+    "durability": 128
+  },
+  "sheets": {
+    "angelscroll01": "angelscroll01.png"
+  },
+  "sheet_from": "Data/Item/angelscroll01.OZT (64x64): a parchment scroll with the Archangel's blue script, its torn ends cut out in the alpha.",
+  "sheet_materials": {
+    "angelscroll01": "cloth"
+  },
+  "cutout": [
+    "angelscroll01"
+  ],
+  "cutout_from": "The sheet's own alpha.",
+  "material_note": "Parchment: cloth, the library's rough dielectric, as the Firecracker's paper.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 6132.4,
+      "along": [
+        -7.4,
+        27.9
+      ],
+      "mu_uv": [
+        0.018,
+        0.019,
+        0.982,
+        0.987
+      ],
+      "bake_uv": [
+        0.018,
+        0.019,
+        0.982,
+        0.987
+      ]
+    }
+  ]
+}

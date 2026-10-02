@@ -42,6 +42,8 @@ struct Sorted {
     int runed = 0, runedCell = -1;        // things with a rune set in a socket
     int socketable = 0, socketCell = -1;  // things with room for another socket
     int horns = 0, wornHorns = 0;         // Horns of Uniria at full life, and short of it
+    int scrolls = 0, bones = 0;           // the cloak's: Scrolls of Archangel and Blood Bones
+    int scrollLevel = 0, boneLevel = 0;   // and the last one's level
     int runes = 0;                        // Runes of Creation carrying a power
     int runeCells[kMostSockets + 1] = {-1, -1, -1, -1};
     int things = 0;     // everything that is not one of the three jewels
@@ -71,6 +73,11 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 continue;
             }
             ++s.others;
+            if (scrollOfArchangel(*row) || bloodBone(*row)) {
+                ++(scrollOfArchangel(*row) ? s.scrolls : s.bones);
+                (scrollOfArchangel(*row) ? s.scrollLevel : s.boneLevel) = what.refinement;
+                continue;
+            }
             if (row->group == kGroupPets && row->number == 2) {
                 // `m_Durability == 255`: only a horn at its whole life counts.
                 ++(what.durability >= maximumDurability(*row, what) ? s.horns : s.wornHorns);
@@ -114,6 +121,10 @@ bool exactly(Recipe recipe, const Sorted& s) {
         case Recipe::Dinorant:
             return s.horns == kDinorantHorns && s.things == s.horns && s.chaos == 1 &&
                    s.bless == 0 && s.soul == 0;
+        case Recipe::Cloak:
+            return s.scrolls == 1 && s.bones == 1 && s.things == 2 && s.chaos == 1 &&
+                   s.bless == 0 && s.soul == 0 && s.scrollLevel == s.boneLevel &&
+                   s.scrollLevel >= 1 && s.scrollLevel <= kCloakMostLevel;
         case Recipe::None:
             break;
     }
@@ -145,6 +156,11 @@ int likeness(Recipe recipe, const Sorted& s) {
             if (s.things != s.horns + s.wornHorns || s.bless > 0 || s.soul > 0) return 0;
             if (s.horns + s.wornHorns > 0) points += 10;
             break;
+        case Recipe::Cloak:
+            if (s.things != s.scrolls + s.bones || s.bless > 0 || s.soul > 0) return 0;
+            if (s.scrolls > 0) points += 10;
+            if (s.bones > 0) points += 5;
+            break;
         case Recipe::None:
             return 0;
     }
@@ -153,7 +169,7 @@ int likeness(Recipe recipe, const Sorted& s) {
 }
 
 constexpr Recipe kOrder[] = {Recipe::PlusTen, Recipe::PlusEleven, Recipe::Dinorant,
-                             Recipe::ChaosWeapon};
+                             Recipe::Cloak, Recipe::ChaosWeapon};
 
 void need(Judged& j, std::string name, int have, int want) {
     if (j.needCount >= kMostNeeds) return;
@@ -237,6 +253,25 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             j.success = "Horn of Dinorant";
             j.failure = "The horns and the Chaos are lost";
             break;
+        case Recipe::Cloak: {
+            need(j, "Scroll of Archangel", s.scrolls, 1);
+            need(j, "Blood Bone", s.bones, 1);
+            need(j, "Jewel of Chaos", s.chaos, 1);
+            j.rate = kCloakRate;
+            // The scroll's level sets the price; a box whose two disagree is not ready, and
+            // says so where the result would be (WebZen's result 9).
+            const int level = s.scrollLevel > 0 ? s.scrollLevel : s.boneLevel;
+            j.zen = level >= 1 && level <= kCloakMostLevel ? kCloakZen[level] : 0;
+            if (s.scrolls == 1 && s.bones == 1 && s.scrollLevel != s.boneLevel) {
+                j.success = "The scroll and the bone must be of one level";
+            } else if (level > kCloakMostLevel) {
+                j.success = "A +" + std::to_string(level) + " cannot be combined";
+            } else {
+                j.success = "Invisibility Cloak +" + std::to_string(std::max(1, level));
+            }
+            j.failure = "The scroll, the bone and the Chaos are lost";
+            break;
+        }
         case Recipe::None:
             break;
     }
@@ -438,6 +473,7 @@ const char* recipeName(Recipe recipe) {
         case Recipe::PlusTen: return "+10 Item";
         case Recipe::PlusEleven: return "+11 Item";
         case Recipe::Dinorant: return "Dinorant";
+        case Recipe::Cloak: return "Invisibility Cloak";
         case Recipe::None: break;
     }
     return "";

@@ -1,0 +1,64 @@
+{
+  "item": "EventBloodCastle02",
+  "mu_name": "Invisibility Cloak",
+  "mu_name_from": "Loaded as MODEL_HELPER + 16 + i from Data\\\\Item\\\\EventBloodCastle0i.bmd for i < 3 (ZzzOpenData.cpp:990-995, _enum.h:2027-2029). Names as OpenMU's, OpenMU VersionSeasonSix/Items/EventTicketItems.cs:29-32.",
+  "why_this_one": "Blood Castle's ticket (the user, 2026-10-02: 'letes make a tickets, and ingreadeants to make a ticket on hcaos machine'). The Scroll of Archangel and the Blood Bone of one level with a Jewel of Chaos make the Invisibility Cloak of that level in the Chaos Machine, 80%, 50,000 Zen at +1 (WebZen BloodCastle.cpp:1294-1577, BloodCastle.h:208-236); the cloak lets him in through the Messenger in Devias. The level is the castle's, carried in the refinement. docs/blood-castle-port.md.",
+  "profile": "weapon",
+  "profile_note": "As the Ale and the Firecracker: a small object in the bag and on the ground.",
+  "tells": "Used when entering Blood Castle",
+  "tells_from": "GT 'Used when entering Blood Castle', Game.en.resx:3044 (ZzzInventory.cpp:4439-4450). MU's next two lines, the remaining time on a right click, are about the entry window and wait for the Messenger.",
+  "stats": {
+    "note": "Group, number, size and durability are WebZen's row; it is not in the ordinary drop -- the scroll and the bone fall on their own roll outside the castle (WebZen gObjMonster.cpp:5823-5985).",
+    "from": "WebZen 1.00.93 Data/item.txt group 13 (docs/blood-castle-port.md Part A 2.2); OpenMU VersionSeasonSix/Items/EventTicketItems.cs:29-32",
+    "group": 13,
+    "number": 18,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 2,
+    "height": 2,
+    "durability": 255
+  },
+  "sheets": {
+    "mangto04": "mangto04.png"
+  },
+  "sheet_from": "Data/Item/mangto04.OZJ (64x64): dark blue cloth with a gold trim.",
+  "sheet_materials": {
+    "mangto04": "cloth"
+  },
+  "cutout": false,
+  "cutout_from": "Drawn without its alpha.",
+  "material_note": "No baked material: MU draws the whole cloak added, RENDER_TEXTURE | RENDER_BRIGHT, BlendMeshLight sin(WorldTime*0.002)*0.3 + 0.7 (ZzzObject.cpp:9837-9843), so the dark cloth goes clear and the gold trim and the blue glow breathe -- the cloak half there. Here it pulses on the item glow's fixed 0.004 clock, twice MU's rate (content/mesh.h).",
+  "glow": {
+    "mangto04": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    }
+  },
+  "glow_note": "MU's RENDER_BRIGHT whole body at sin(t)*0.3 + 0.7 (ZzzObject.cpp:9837-9843).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 98,
+      "area": 25002.9,
+      "along": [
+        -39.7,
+        48.4
+      ],
+      "mu_uv": [
+        0.02,
+        0.026,
+        0.982,
+        0.966
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.98,
+        0.993
+      ]
+    }
+  ]
+}

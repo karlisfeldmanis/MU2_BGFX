@@ -23,6 +23,7 @@
 //     lower plus at random, its option a level down half the time.
 //
 //   * **Dinorant**, below (WebZen's PegasiaChaosMix).
+//   * **Invisibility Cloak**, below (WebZen's Blood Castle ticket).
 //
 // Which of the two a box is when it is both -- a +9 thing with an option and one of each
 // jewel -- MuMain settles by mix.bmd's order, which this tree does not have. Here the narrower
@@ -74,7 +75,14 @@ private:
 };
 
 // MuMain's ChaosMachineMixType numbers, which are OpenMU's ItemCrafting.Number.
-enum class Recipe : int8_t { None = -1, ChaosWeapon = 1, PlusTen = 3, PlusEleven = 4, Dinorant = 5 };
+enum class Recipe : int8_t {
+    None = -1,
+    ChaosWeapon = 1,
+    PlusTen = 3,
+    PlusEleven = 4,
+    Dinorant = 5,
+    Cloak = 8,
+};
 
 // **The services** (the user, 2026-10-02, docs/chaos-machine.md "Phase two"): the Goblin's box
 // read four ways, picked on the window's service row. Combine is MU's machine; the other three
@@ -139,10 +147,22 @@ constexpr int64_t kDinorantZen = 500000;
 // +10 and +11 as WebZen's base 0.97d branch has them (MixSystem.cpp:1380-1890): 50% and 45%,
 // twenty more for a lucky thing (`m_Option2 != 0`, `+= 20`), and never above 75
 // (m_iMaxCombinationRate). OpenMU's 0.95d gives luck 25 and no cap; WebZen outranks it here.
+// The Invisibility Cloak, Blood Castle's ticket (WebZen BloodCastle.cpp:1294-1577, the user,
+// 2026-10-02: 'letes make a tickets, and ingreadeants to make a ticket on hcaos machine'): a
+// Scroll of Archangel and a Blood Bone of one level, +1 to +6, and one Chaos, nothing else. 80%
+// (BloodCastle.h:208-221); the Zen by the level (:223-236); a failure takes the box. He must be
+// level 15 ("Must be over level 15 to combine a Cloak of Invisibility", :1556-1569). OpenMU's
+// BloodCastleTicketCrafting agrees.
+constexpr int kCloakRate = 80;
+constexpr int kCloakMostLevel = 6;
+constexpr int64_t kCloakZen[kCloakMostLevel + 1] = {0, 50000, 80000, 150000, 250000, 400000,
+                                                    600000};
+constexpr int kCloakFromLevel = 15;
 constexpr int kPlusLuck = 20;
 constexpr int kPlusCap = 75;
 
-// "Chaos Weapon", "+10 Item", "+11 Item", "Dinorant": MuMain's recipe names.
+// "Chaos Weapon", "+10 Item", "+11 Item", "Dinorant", "Invisibility Cloak": MuMain's recipe
+// names.
 const char* recipeName(Recipe recipe);
 
 // What a thing is worth to the machine: MixMgr's EvaluateMixItemValue, OpenMU's

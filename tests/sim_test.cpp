@@ -5221,6 +5221,63 @@ void testChaosMachine() {
         }
     }
 
+    // Blood Castle's ticket: a Scroll of Archangel and a Blood Bone of one level and a Chaos,
+    // 80%, 50,000 Zen at +1 (WebZen BloodCastle.cpp:1294-1577).
+    {
+        const int32_t scroll = noria.itemAt(13, 16), bone = noria.itemAt(13, 17);
+        const int32_t cloak = noria.itemAt(13, 18);
+        check(scroll >= 0 && bone >= 0 && cloak >= 0, "the scroll, the bone and the cloak are in the tables");
+        if (scroll >= 0 && bone >= 0 && cloak >= 0) {
+            sim::Machine box;
+            box.put(0, sim::Held{scroll, 1, 128});
+            box.put(1, sim::Held{bone, 1, 128});
+            box.put(2, sim::Held{chaos, 0, 1});
+            sim::Judged c = sim::judge(noria, box);
+            check(c.recipe == sim::Recipe::Cloak, "a scroll, a bone and a Chaos are a cloak");
+            checkEqual(c.rate, 80, "at 80%");
+            checkEqual(int(c.zen), 50000, "for 50,000 at +1");
+            box.put(1, sim::Held{bone, 3, 128});
+            c = sim::judge(noria, box);
+            check(c.recipe == sim::Recipe::None && c.nearest == sim::Recipe::Cloak,
+                  "a +3 bone with a +1 scroll is not ready, and still looks like a cloak");
+            box.put(0, sim::Held{scroll, 3, 128});
+            checkEqual(int(sim::judge(noria, box).zen), 150000, "+3 for 150,000");
+            box.put(4, sim::Held{bless, 0, 1});
+            check(sim::judge(noria, box).recipe == sim::Recipe::None, "a Bless spoils it");
+        }
+        checkEqual(sim::castleMaterialLevel(31), 1, "a level 31 monster drops +1");
+        checkEqual(sim::castleMaterialLevel(32), 2, "a level 32 one +2");
+        checkEqual(sim::castleMaterialLevel(83), 6, "83 +6");
+        checkEqual(sim::castleMaterialLevel(84), 7, "84 +7, which no box takes");
+        // Run by the Goblin until one is made: the box goes either way.
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+        }
+        bool cloaked = false;
+        for (int attempt = 0; attempt < 20 && !cloaked && scroll >= 0; ++attempt) {
+            check(realm.putIn(realm.give(scroll, -1, 1)) >= 0 && realm.putIn(realm.give(bone, -1, 1)) >= 0 &&
+                      realm.putIn(realm.give(chaos)) >= 0,
+                  "the scroll, the bone and a Chaos go in");
+            const int64_t before = realm.money();
+            check(realm.mix(), "the Goblin runs the cloak");
+            checkEqual(int(before - realm.money()), 50000, "and takes 50,000");
+            int left = 0, at = -1;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                if (!realm.machine()[cell].empty()) ++left, at = cell;
+            }
+            cloaked = realm.mixed();
+            if (cloaked) {
+                checkEqual(left, 1, "a cloak alone in the box");
+                check(realm.machine()[at].item == cloak, "and it is the Invisibility Cloak");
+                checkEqual(int(realm.machine()[at].refinement), 1, "of the scroll's level, +1");
+                realm.takeOut(at);
+            } else {
+                checkEqual(left, 0, "a failure takes the box");
+            }
+        }
+        check(cloaked, "twenty tries make a cloak");
+    }
+
     // The Chaos Weapon runs now its three answers are cooked: one roll, either outcome checked.
     {
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {

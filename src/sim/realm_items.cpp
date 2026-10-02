@@ -876,6 +876,26 @@ void Realm::leave(const Body& dead, const Body& killer) {
         dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()
             ? tables_->kinds[size_t(dead.kind)].number
             : -1);
+    // Blood Castle's scroll, then its bone, anywhere but a castle (sim/items.h): each its own
+    // roll off its own dice, and one that lands is the kill's whole drop, as WebZen's `return
+    // TRUE` -- the coins and the item rolls below are not made.
+    if (!bloodCastleMap(tables_->map)) {
+        const bool scroll = ticketDice_.nextInt(0, 10000) < kScrollOfArchangelIn10000;
+        const bool bone = !scroll && ticketDice_.nextInt(0, 10000) < kBloodBoneIn10000;
+        if (scroll || bone) {
+            const int32_t item = tables_->itemAt(kGroupPets, scroll ? 16 : 17);
+            if (item >= 0) {
+                Lying material;
+                material.what = Held{item, int16_t(castleMaterialLevel(level)), 128};
+                std::tie(material.column, material.row) = clearing(dead.column(), dead.row());
+                material.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+                material.id = nextId_++;
+                lying_.push_back(material);
+                say(What::Dropped, dead, int32_t(material.id), item, material.what.refinement);
+                return;
+            }
+        }
+    }
     double roll = dice_.nextDouble();
     // A dungeon's Firecracker, first, so it takes the body's own tile and the kill's drop the
     // next clear one: its own roll off its own dice, and beside whatever else the kill leaves.

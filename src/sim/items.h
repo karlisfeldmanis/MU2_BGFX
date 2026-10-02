@@ -674,6 +674,25 @@ constexpr int kFirecrackerFromLevel = 17;
 inline bool firecrackerMap(uint32_t map) {
     return map == 1 || map == 4 || map == 9 || (map >= 11 && map <= 17);
 }
+// **Blood Castle's ticket** (docs/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
+// (13, 16) and the Blood Bone (13, 17) of one level make the Invisibility Cloak (13, 18) of that
+// level in the Chaos Machine. The level is the castle's, carried in the refinement.
+bool scrollOfArchangel(const content::ItemRow& row);
+bool bloodBone(const content::ItemRow& row);
+bool invisibilityCloak(const content::ItemRow& row);
+// WebZen gObjMonster.cpp:5823-5985: a kill anywhere but a Blood Castle rolls the scroll, then the
+// bone, `rand()%10000 < rate` with the code's defaults (Gamemain.cpp:1133-1134), and one that
+// lands is the kill's whole drop (`return TRUE`). 128 its durability, as WebZen's ItemSerialCreate.
+constexpr int kScrollOfArchangelIn10000 = 10;
+constexpr int kBloodBoneIn10000 = 20;
+inline bool bloodCastleMap(uint32_t map) { return map >= 11 && map <= 17; }
+// Its level by the monster's: +1 under 32, +2 under 45, +3 under 57, +4 under 68, +5 under 76,
+// +6 under 84, +7 from there (gObjMonster.cpp:5863-5900; a +7 cannot be combined at 0.97d).
+constexpr int castleMaterialLevel(int monsterLevel) {
+    return monsterLevel < 32 ? 1 : monsterLevel < 45 ? 2 : monsterLevel < 57 ? 3
+         : monsterLevel < 68 ? 4 : monsterLevel < 76 ? 5 : monsterLevel < 84 ? 6 : 7;
+}
+
 // The Zen when no item comes: MoneyItemDrop(2004, ...), the year. Into the purse, as every Zen
 // here (Realm::leave).
 constexpr int64_t kFirecrackerZen = 2004;

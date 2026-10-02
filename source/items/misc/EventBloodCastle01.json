@@ -1,0 +1,55 @@
+{
+  "item": "EventBloodCastle01",
+  "mu_name": "Blood Bone",
+  "mu_name_from": "Loaded as MODEL_HELPER + 16 + i from Data\\\\Item\\\\EventBloodCastle0i.bmd for i < 3 (ZzzOpenData.cpp:990-995, _enum.h:2027-2029). Names as OpenMU's, OpenMU VersionSeasonSix/Items/EventTicketItems.cs:29-32.",
+  "why_this_one": "Blood Castle's ticket (the user, 2026-10-02: 'letes make a tickets, and ingreadeants to make a ticket on hcaos machine'). The Scroll of Archangel and the Blood Bone of one level with a Jewel of Chaos make the Invisibility Cloak of that level in the Chaos Machine, 80%, 50,000 Zen at +1 (WebZen BloodCastle.cpp:1294-1577, BloodCastle.h:208-236); the cloak lets him in through the Messenger in Devias. The level is the castle's, carried in the refinement. docs/blood-castle-port.md.",
+  "profile": "weapon",
+  "profile_note": "As the Ale and the Firecracker: a small object in the bag and on the ground.",
+  "tells": "Used when creating a Cloak of Invisibility",
+  "tells_from": "GT 'Used when creating a Cloak of Invisibility', Game.en.resx:3052, white (ZzzInventory.cpp:4433-4437); its name yellow (ZzzInventory.cpp:2190-2193).",
+  "stats": {
+    "note": "Group, number, size and durability are WebZen's row; it is not in the ordinary drop -- the scroll and the bone fall on their own roll outside the castle (WebZen gObjMonster.cpp:5823-5985).",
+    "from": "WebZen 1.00.93 Data/item.txt group 13 (docs/blood-castle-port.md Part A 2.2); OpenMU VersionSeasonSix/Items/EventTicketItems.cs:29-32",
+    "group": 13,
+    "number": 17,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 2,
+    "durability": 128
+  },
+  "sheets": {
+    "bone02": "bone02.png"
+  },
+  "sheet_from": "Data/Item/bone02.OZT (64x64): a pale bone, a vein of half alpha down its length.",
+  "sheet_materials": {
+    "bone02": "bone"
+  },
+  "cutout": false,
+  "cutout_from": "Drawn without its alpha.",
+  "material_note": "Bone. MU draws a red Chrome pass under it first, BodyLight (0.9, 0.1, 0.1), sliding (ZzzObject.cpp:9825-9835), which shows through the half-alpha vein as blood running; not built here yet -- the vein is drawn opaque, dark.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 40,
+      "area": 6643.5,
+      "along": [
+        -17.6,
+        15.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.998,
+        0.713
+      ]
+    }
+  ]
+}

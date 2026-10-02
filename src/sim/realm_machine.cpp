@@ -133,6 +133,14 @@ bool Realm::mix(Service service, int socket) {
             return false;
         }
     }
+    if (j.recipe == Recipe::Cloak && tables_->itemAt(kGroupPets, 18) < 0) {
+        refusal_ = "no Invisibility Cloak is in this world's tables";
+        return false;
+    }
+    if (j.recipe == Recipe::Cloak && hero.level < kCloakFromLevel) {
+        refusal_ = "Must be over level 15 to combine a Cloak of Invisibility.";
+        return false;
+    }
     if (j.recipe == Recipe::Dinorant && tables_->itemAt(kGroupPets, 3) < 0) {
         refusal_ = "no Horn of Dinorant is in this world's tables";
         return false;
@@ -180,6 +188,24 @@ bool Realm::mix(Service service, int socket) {
                         dinorant.durability = int16_t(maximumDurability(row, dinorant));
                         machine_.put(0, dinorant);
                     }
+                }
+            } else if (j.recipe == Recipe::Cloak) {
+                // The box goes either way (BloodCastle.cpp:1409-1435); a success is a whole
+                // cloak of the scroll's level.
+                int level = 1;
+                for (int cell = 0; cell < kMachineCells; ++cell) {
+                    const content::ItemRow* row = machine_[cell].empty()
+                        ? nullptr
+                        : &tables_->items[size_t(machine_[cell].item)];
+                    if (row && scrollOfArchangel(*row)) level = machine_[cell].refinement;
+                }
+                machine_.clear();
+                if (made) {
+                    const int32_t cloak = tables_->itemAt(kGroupPets, 18);
+                    const content::ItemRow& row = tables_->items[size_t(cloak)];
+                    Held ticket{cloak, int16_t(level), 0};
+                    ticket.durability = int16_t(maximumDurability(row, ticket));
+                    machine_.put(0, ticket);
                 }
             } else if (made) {
                 machine_.clear();
