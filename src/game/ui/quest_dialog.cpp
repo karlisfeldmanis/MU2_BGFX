@@ -259,7 +259,21 @@ void QuestDialog::layout(const Play& play) {
     for (const std::string& one : lines_) y += one.empty() ? kParagraph : kLead;
     y += kSection;
     if (gate) {
-        y += kSection * 0.5f + 24.0f + float(kGateRows) * kStepRow + kSection;
+        // The ticket as the rewards are shown, a picture and its name (the user, 2026-10-03: 'if
+        // requirments is items, show items thumbs, similiar like you show rewards'); then the
+        // gate's hour and the band as lines.
+        y += kSection * 0.5f + 24.0f;
+        Cell cell;
+        cell.item = tables.itemAt(13, 18);
+        cell.plus = 1;
+        if (cell.item >= 0) {
+            const sim::Held held = rewardHeld(tables, cell.item, 1, 1, 0, 0);
+            cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+            cell.box = {kInset, y, wide, kIcon};
+            cells_.push_back(cell);
+            y += kIcon + kCellGap;
+        }
+        y += float(kGateRows - 1) * kStepRow + kSection;
     } else if (mode_ != Mode::Resting && mode_ != Mode::Stranger) {
         int counted = 0;
         for (int s = 0; s < row.stepCount; ++s) {
@@ -683,8 +697,6 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             std::snprintf(text, sizeof(text), "%d:%02d", seconds / 60, seconds % 60);
             return std::string(text);
         };
-        const std::string cloak =
-            cloakPlus_ < 0 ? std::string("none") : "+" + std::to_string(cloakPlus_);
         const std::string door = doorSeconds_ > 0    ? clock(doorSeconds_) + " left"
                                  : doorSeconds_ == 0 ? std::string("open")
                                  : opensIn_ > 0      ? "in " + std::to_string(opensIn_) + " min"
@@ -694,13 +706,27 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             std::string figure;
             bool met;
         };
-        const Need needs[kGateRows] = {
-            {"An Invisibility Cloak +1", cloak, cloakPlus_ == 1},
+        // The ticket: its picture in a cell, its name in its tone, and whether he holds it.
+        for (const Cell& one : cells_) {
+            const Box box = cellBox(one);
+            const Box icon{box.x, box.y, box.h, box.h};
+            controls::cell(body_, icon, controls::Cell::Rest, u);
+            const float ly = one.box.y + kIcon * 0.5f + kName * 0.35f;
+            controls::label(body_, sx(one.box.x + kIcon + kNameGap), by(ly), kName * u,
+                            one.ink ? one.ink : kItemWhite, "Invisibility Cloak +1");
+            controls::ranged(body_, sx(kInset + inner()), by(ly), kBody * u,
+                             cloakPlus_ == 1 ? style::kFits : style::kDanger,
+                             cloakPlus_ < 0 ? std::string("none")
+                                            : cloakPlus_ == 1 ? std::string("in your bag")
+                                                              : "a +" + std::to_string(cloakPlus_));
+            cy = one.box.y + kIcon + kCellGap;
+        }
+        const Need needs[kGateRows - 1] = {
             {"The gate open, hh:25 to hh:30", door, doorSeconds_ >= 0},
             {"Level 15 to 80", std::to_string(level_),
              level_ >= sim::kCastleLowest && level_ <= sim::kCastleHighest},
         };
-        for (int i = 0; i < kGateRows; ++i) {
+        for (int i = 0; i < kGateRows - 1; ++i) {
             const float rowY = cy + float(i) * kStepRow;
             quest_marks::mark(body_, needs[i].met ? StepMark::Done : StepMark::Live,
                               sx(kInset + 7.0f), by(rowY + 8.0f), u);
