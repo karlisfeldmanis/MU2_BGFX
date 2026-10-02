@@ -896,11 +896,19 @@ bool Realm::chills(const Body& monster) const {
 }
 
 void Realm::chillHero(const Body& attacker, Body& target) {
-    if (!target.player || !target.alive() || attacker.player || !chills(attacker)) return;
+    // Him, or the elf's summon beside him (the user, 2026-10-02: "remember that elf char is
+    // summoned monster on char"): WebZen's monster lays its ice on whatever it strikes, and a
+    // summon turns it aside by its own row's resistance, as a monster does.
+    const bool summon = target.summoner != 0;
+    if ((!target.player && !summon) || !target.alive() || attacker.player || !chills(attacker)) {
+        return;
+    }
     // Not again while it is on: OpenMU adds an effect only when it is not already active
     // (AttackableExtensions.cs:473), so ten seconds from the first, not from the last.
     if (target.chilledUntil > tick_) return;
-    if (heroResists(target.excel.iceResistance)) return;
+    if (summon ? resists(target, true, runeDice_) : heroResists(target.excel.iceResistance)) {
+        return;
+    }
     target.chilledUntil = tick_ + kHeroChillTicks;
 }
 
