@@ -312,7 +312,7 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || (!power->everyone && power->kin != kin)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!takesSockets(row) || freeSocket(target) < 0) return false;
-    // A ring's socket (the Pit's, the only one there is) takes Evil Spirit alone: the user,
+    // A ring's sockets (the Pit's, the only ring there is with any) take Evil Spirit alone: the user,
     // 2026-10-01, "give ring with +1 sockets, and give only evil spirits rune".
     if (ring(row)) return power->power == Power::Spirits;
     if (power->shieldOnly) return row.shield();

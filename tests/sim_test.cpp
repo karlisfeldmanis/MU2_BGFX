@@ -4473,11 +4473,11 @@ void testRunes(const content::Tables& tables) {
                 if (!sim::questPays(what, kin, true)) continue;
                 if (what.power == uint8_t(sim::Power::Spirits)) ++spirits;
                 const int item = tables.itemNamed(what.item);
-                if (item >= 0 && sim::ring(tables.items[size_t(item)]) && what.sockets == 1) ++shields;
+                if (item >= 0 && sim::ring(tables.items[size_t(item)]) && what.sockets == 2) ++shields;
                 if (item >= 0 && tables.items[size_t(item)].shield()) shields += 100;
             }
             checkEqual(spirits, 1, "the Pit's first clear pays every class Evil Spirit");
-            checkEqual(shields, 1, "and a ring with a socket to set it in, and no shield");
+            checkEqual(shields, 1, "and a ring with two sockets to set it in, and no shield");
         }
     }
     // The Golden Archer's chain in order (Realm::questHere): the Catacombs first, the Halls and

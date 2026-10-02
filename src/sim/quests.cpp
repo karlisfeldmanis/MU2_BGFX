@@ -432,8 +432,8 @@ QuestRow pit() {
     // socket, which takes Evil Spirit alone (sim::settable). It was a socketed shield each, and
     // then the ring for the elf whose bow fills the shield's hand; the user settled it the same
     // day: "give ring with +1 sockets, and give only evil spirits rune", "everbody get the ring",
-    // "not shield".
-    row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
+    // "not shield". Two sockets since 2026-10-02: "ring of ice end of dungeon 3 needs 2 sockets".
+    row.paid[6] = {.item = "Ring01", .sockets = 2, .firstOnly = true};  // of Ice
     row.paid[7] = {.item = "Jewel22", .power = uint8_t(Power::Spirits), .firstOnly = true};
     row.paidCount = 8;
     return row;
