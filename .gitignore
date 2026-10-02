@@ -31,3 +31,6 @@ __pycache__/
 
 # The player's own: options, characters, the vault. Kept in the client folder, never in git.
 saves/
+
+# A crash or a freeze report (src/core/watch.h).
+crashes/

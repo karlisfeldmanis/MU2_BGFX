@@ -85,6 +85,7 @@ add_executable(mu2
   src/app/modes/lobby_mode.cpp
   src/app/modes/bench_mode.cpp
   src/core/log.cpp
+  src/core/watch.cpp
   src/core/args.cpp
   src/core/files.cpp
   src/core/json.cpp

@@ -18,6 +18,7 @@
 #include "app/sweep.h"
 #include "content/showing.h"
 #include "core/log.h"
+#include "core/watch.h"
 #include "game/headless.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
@@ -153,6 +154,9 @@ int Application::run(int argc, char** argv) {
     // logged failure and the run's exit code into 1, long after the run was worth repeating.
     if (args_.shotEvery) ::mkdir(paths_.shots.c_str(), 0755);
 
+    // A crash or a freeze leaves a report in crashes/ (core/watch.h).
+    core::watchStart(paths_.root.c_str());
+
     if (!boot()) {
         core::logClose();
         return 1;
@@ -216,6 +220,7 @@ int Application::run(int argc, char** argv) {
     bool quitEarly = mode->quitEarly();
     bool handoffFailed = false;
     while (!quitEarly && !mode->quitting() && window_.pump() && !window_.escapePressed()) {
+        core::watchBeat();
         renderer_.resize(window_.width(), window_.height());
 
         // Four times a second, counted in milliseconds rather than frames: the point is to
@@ -343,6 +348,7 @@ int Application::run(int argc, char** argv) {
         // the next world sets its own and may not set all of them.
         if (const Mode::Next next = mode->next(); next != Mode::Next::None) {
             sweep.abort("the world handed the run on (a gate, or the lobby)");
+            core::watchPause();
             mode->shutdown(ctx);
             mode.reset();
             renderer_.setPointLights(nullptr, 0, 0.0f, 0.0f, 0.0f);
@@ -388,6 +394,7 @@ int Application::run(int argc, char** argv) {
         }
     }
 
+    core::watchStop();
     const bool withinBudget = stats.finish(args_.budget);
     if (sweep.active()) sweep.abort("the window closed or the frames ran out");
     sweep.close();

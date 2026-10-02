@@ -1,5 +1,8 @@
 #include "core/log.h"
 
+#include <unistd.h>
+
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -20,6 +23,23 @@ std::string g_pending;
 std::atomic<bool> g_silent{false};
 LogTap g_tap = nullptr;
 void* g_tapUser = nullptr;
+// The last 64 KB said, kept in memory for the crash and hang reports (core/watch.h): mu2.log
+// itself is renamed away by the next run, and a review run started while the player's game
+// is up takes the player's log with it.
+constexpr size_t kTail = 64 * 1024;
+char g_tail[kTail];
+size_t g_tailAt = 0;
+bool g_tailWrapped = false;
+
+void keepTail(const char* text, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+        g_tail[g_tailAt] = text[i];
+        if (++g_tailAt == kTail) {
+            g_tailAt = 0;
+            g_tailWrapped = true;
+        }
+    }
+}
 
 // Wall clock, not `clock()`. `clock()` counts this process's own CPU time, and a run that
 // waits -- for the drawable, for a file, for the compositor -- spends wall seconds it never
@@ -86,6 +106,7 @@ void logv(const char* fmt, va_list args) {
 
     std::lock_guard<std::recursive_mutex> hold(g_lock);
     if (g_tap) g_tap(line, g_tapUser);
+    keepTail(stamped, std::min(size_t(m), sizeof(stamped) - 1));
     std::fwrite(stamped, 1, size_t(m), stdout);
     if (g_file) {
         std::fwrite(stamped, 1, size_t(m), g_file);
@@ -113,5 +134,11 @@ void logError(const char* fmt, ...) {
 }
 
 int logErrorCount() { return g_errors; }
+
+void logWriteTail(int fd) {
+    // No lock: a crash may land while this very thread holds it.
+    if (g_tailWrapped) (void)!::write(fd, g_tail + g_tailAt, kTail - g_tailAt);
+    (void)!::write(fd, g_tail, g_tailAt);
+}
 
 }  // namespace mu::core

@@ -38,4 +38,8 @@ MU_PRINTF(1, 2) void logError(const char* fmt, ...);
 // silent twice.
 int logErrorCount();
 
+// Writes the last 64 KB logged to `fd`, oldest first, taking no lock and allocating nothing:
+// what the crash and hang reports (core/watch.h) end with.
+void logWriteTail(int fd);
+
 }  // namespace mu::core
