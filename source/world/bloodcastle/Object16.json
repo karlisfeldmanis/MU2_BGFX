@@ -1,0 +1,218 @@
+{
+  "item": "Object16",
+  "mu_name": "Object16",
+  "mu_name_from": "Blood Castle's object slot 15, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128); World12/Object12 serves all seven castles (MapManager.cpp:1104-1107).",
+  "world": "bloodcastle",
+  "object_type": 15,
+  "placements": 9,
+  "profile": "world",
+  "sheets": {
+    "ses": "bc_ses.png"
+  },
+  "sheet_from": "Data/Object12/, from MuMain, decoded under a bc_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "ses": "wrought_iron"
+  },
+  "why_this_one": "A long hanging chain along the east parapet, swinging. docs/blood-castle-port.md, Part B section 1.2.",
+  "material_note": "Read off the art: br001 the castle's blue-grey brick, flagstone; ses the grey iron of chains and fittings, wrought_iron; pant01 carved stone, rock, its orange frieze pant01_R added; bro01 mossy stone, rock; woodc01 dark weathered wood, timber; ng01 the angel-knights' blue-silver plate, plate_steel; skin_special_01 their faces and cloth, skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -10.4,
+        7.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.193,
+        0.793
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -6.1,
+        2.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.207,
+        0.393,
+        0.793
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -9.3,
+        7.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.207,
+        0.007,
+        0.593,
+        0.793
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -5.5,
+        2.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.207,
+        0.007,
+        0.793,
+        0.393
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -9.9,
+        6.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.207,
+        0.793,
+        0.593
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 24,
+      "area": 996.9,
+      "along": [
+        -10.4,
+        7.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.207,
+        0.407,
+        0.793,
+        0.593
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -6.1,
+        2.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.407,
+        0.007,
+        0.793,
+        0.793
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -9.3,
+        7.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.207,
+        0.593,
+        0.993
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1282.8,
+      "along": [
+        -5.5,
+        2.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.207,
+        0.407,
+        0.593,
+        0.993
+      ]
+    }
+  ]
+}
