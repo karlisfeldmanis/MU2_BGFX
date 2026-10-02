@@ -100,6 +100,7 @@ private:
         // Blood Castle's: the level is `sin(phase + t) * amp + base` on a sine of t seconds,
         // where WorldTime * 0.001 is, and with `breathSize` the size is that level + 0.5.
         bool breathes = false;
+        bool flickers = false;  // a flame's quick flicker on its breath, on its own beat
         bool breathSize = false;
         float breathBase = 0.0f, breathAmp = 0.0f, breathPhase = 0.0f;
         // Where it hangs in the world when nothing poses its object -- a rig with no clip, as

@@ -303,13 +303,18 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                 for (int a = 0; a < 3; ++a) lantern.anchor.point[a] = 0.0f;
                 lantern.breathes = true;
                 if (candles) {
-                    // Ours: half MU's 0.5 (the user, 2026-10-02, of the candles over the void:
-                    // 'those sparkle to big').
-                    lantern.scale = 0.25f;
+                    // Ours: a quarter of MU's 0.5 (the user, 2026-10-02, of the candles over the
+                    // void: 'those sparkle to big', then 'still to big').
+                    lantern.scale = 0.12f;
                     for (int a = 0; a < 3; ++a) lantern.colour[a] = kCandleColour[a];
                     lantern.breathBase = 0.5f;
                     lantern.breathAmp = 0.5f;
-                    lantern.breathPhase = turn * 20.0f * 0.001f;
+                    // MU's phase is the placement's turn alone, and nearly every cluster here is
+                    // turned 0, so all seventy-seven breathed as one slow light and read as still
+                    // ('i think they shoudo aniamte yes?'). Ours: each candle its own phase, and a
+                    // flame's flicker on top.
+                    lantern.breathPhase = turn * 20.0f * 0.001f + float(b) * 0.9f + float(i) * 1.7f;
+                    lantern.flickers = true;
                 } else {
                     lantern.sheet = 3;
                     lantern.breathSize = true;
@@ -663,7 +668,14 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
             const float size = lantern.breathSize ? breath + 0.5f : lantern.scale;
             sprite.halfWidth = sprite.halfHeight =
                 0.5f * kSheetMetres * size * (lantern.swells ? luminosity_ : 1.0f);
-            const float level = lantern.breathes ? breath : lantern.steady ? 1.0f : luminosity_;
+            float level = lantern.breathes ? breath : lantern.steady ? 1.0f : luminosity_;
+            // Each on its own beat, two quick sines off its phase: the shared roll would flicker
+            // all of them together.
+            if (lantern.flickers) {
+                const float p = lantern.breathPhase * 7.0f;
+                level *= 0.7f + 0.15f * std::sin(breath_ * 9.0f + p) +
+                         0.15f * std::sin(breath_ * 14.0f + p * 1.3f);
+            }
             for (int k = 0; k < 3; ++k) sprite.colour[k] = lantern.colour[k] * level;
             sprite.colour[3] = 1.0f;
             sprite.spin = lantern.spin * spun_ * 3.14159265f / 180.0f;
