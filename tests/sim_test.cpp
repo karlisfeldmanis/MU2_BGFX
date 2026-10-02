@@ -4815,6 +4815,90 @@ void testRunes(const content::Tables& tables) {
     int swingCast = 0, swingLoosed = 0, lightning = 0;
     casts(echo, &swingCast, &swingLoosed, 0, &lightning);
     checkEqual(lightning, 0, "an Echo staff's plain swings call no lightning");
+
+    // Pyroblaster, the wizard's second: his Fire Ball half again as hard, and some that land
+    // start a chain, one fireball flying on from the monster struck to the next, four hops at
+    // most, never back to one it has struck.
+    const uint8_t pyro = uint8_t(sim::Power::Pyroblast);
+    check(sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), sim::Kin::DarkWizard),
+          "Pyroblaster goes in a wizard's socketed staff");
+    check(!sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), dk), "and not by a knight");
+    struct Blasts {
+        int hits = 0, damage = 0, chains = 0, hops = 0, burstHits = 0, longest = 0;
+        bool repeats = false;
+    };
+    const auto blasts = [&](uint8_t power) {
+        Blasts out;
+        sim::Realm realm;
+        realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
+        realm.learn(sim::skill::kFireBall);
+        const uint8_t powers[3] = {power, 0, 0};
+        realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        uint32_t fighting = 0, chainAt = 0;
+        int length = 0;
+        std::vector<uint32_t> struck;
+        for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kFireBall;
+                realm.ask(request);
+            }
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id) continue;
+                if (h.what == sim::What::Loosed && h.a == sim::skill::kFireBall && h.rune) {
+                    // A hop off the monster the last one flew at goes on the same chain.
+                    if (uint32_t(h.c) != chainAt) {
+                        ++out.chains;
+                        length = 0;
+                        struck.assign(1, uint32_t(h.c));
+                    }
+                    for (const uint32_t one : struck) out.repeats |= one == h.whom;
+                    struck.push_back(h.whom);
+                    chainAt = h.whom;
+                    ++length;
+                    ++out.hops;
+                    out.longest = std::max(out.longest, length);
+                }
+                if (h.what == sim::What::Hit && h.thrown && h.rune) ++out.burstHits;
+                if (h.what == sim::What::Hit && h.thrown && !h.rune && !h.critical &&
+                    !h.excellent) {
+                    ++out.hits;
+                    out.damage += h.a;
+                }
+            }
+        }
+        return out;
+    };
+    const Blasts blasted = blasts(pyro), plain = blasts(0);
+    std::printf("  Pyroblaster: %d hits at %.1f, %d chains of %d hops (longest %d), %d landed; bare %d at %.1f\n",
+                blasted.hits, blasted.hits ? double(blasted.damage) / blasted.hits : 0.0,
+                blasted.chains, blasted.hops, blasted.longest, blasted.burstHits, plain.hits,
+                plain.hits ? double(plain.damage) / plain.hits : 0.0);
+    check(blasted.hits > 30 && plain.hits > 30, "the wizard lands Fire Balls");
+    if (blasted.hits > 0 && plain.hits > 0) {
+        const double ratio = (double(blasted.damage) / blasted.hits) / (double(plain.damage) / plain.hits);
+        check(ratio > 1.3 && ratio < 1.7, "a Pyroblaster's Fire Ball strikes about half again as hard");
+    }
+    check(blasted.chains > 0, "and some start a chain");
+    check(blasted.longest <= sim::kPyroblastChain, "of four hops at most");
+    check(!blasted.repeats, "never back to a monster the chain has struck");
+    check(blasted.burstHits > 0, "and the chain's hops land");
+    checkEqual(plain.chains, 0, "and a bare staff starts none");
 }
 
 // The pets at WebZen's word (docs/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
@@ -4925,83 +5009,6 @@ void testDungeonRunes(const content::Tables& tables) {
     check(std::fabs(keen.critChance - bare.critChance - sim::kKeenEyeCritical) < 1e-9,
           "Keen Eye adds a tenth to his critical chance");
 
-    // Pyroblaster, the wizard's second: his Fire Ball half again as hard, and some that land
-    // burst into four more, flown from the monster struck, which burst no further.
-    const uint8_t pyro = uint8_t(sim::Power::Pyroblast);
-    check(sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), sim::Kin::DarkWizard),
-          "Pyroblaster goes in a wizard's socketed staff");
-    check(!sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), dk), "and not by a knight");
-    struct Blasts {
-        int hits = 0, damage = 0, bursts = 0, burstBalls = 0, burstHits = 0, widest = 0;
-    };
-    const auto blasts = [&](uint8_t power) {
-        Blasts out;
-        sim::Realm realm;
-        realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
-        realm.learn(sim::skill::kFireBall);
-        const uint8_t powers[3] = {power, 0, 0};
-        realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
-        uint32_t fighting = 0;
-        for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
-            const sim::Body& hero = realm.hero();
-            uint32_t nearest = 0;
-            float best = 1e9f;
-            for (const sim::Body& one : realm.bodies()) {
-                if (!one.monster() || !one.alive()) continue;
-                const float dx = one.x - hero.x, dy = one.y - hero.y;
-                if (dx * dx + dy * dy < best) {
-                    best = dx * dx + dy * dy;
-                    nearest = one.id;
-                }
-            }
-            if (nearest != 0 && nearest != fighting) {
-                fighting = nearest;
-                sim::Request request;
-                request.kind = sim::Request::Kind::Attack;
-                request.target = nearest;
-                request.skill = sim::skill::kFireBall;
-                realm.ask(request);
-            }
-            realm.step();
-            uint32_t from = 0;
-            int balls = 0;
-            for (const sim::Happening& h : realm.happenings()) {
-                if (h.who != realm.hero().id) continue;
-                if (h.what == sim::What::Loosed && h.a == sim::skill::kFireBall && h.rune) {
-                    if (uint32_t(h.c) != from) {
-                        out.widest = std::max(out.widest, balls);
-                        from = uint32_t(h.c);
-                        balls = 0;
-                        ++out.bursts;
-                    }
-                    ++balls;
-                    ++out.burstBalls;
-                }
-                if (h.what == sim::What::Hit && h.thrown && h.rune) ++out.burstHits;
-                if (h.what == sim::What::Hit && h.thrown && !h.rune && !h.critical &&
-                    !h.excellent) {
-                    ++out.hits;
-                    out.damage += h.a;
-                }
-            }
-            out.widest = std::max(out.widest, balls);
-        }
-        return out;
-    };
-    const Blasts blasted = blasts(pyro), plain = blasts(0);
-    std::printf("  Pyroblaster: %d hits at %.1f, %d bursts of %d balls, %d landed; bare %d at %.1f\n",
-                blasted.hits, blasted.hits ? double(blasted.damage) / blasted.hits : 0.0,
-                blasted.bursts, blasted.burstBalls, blasted.burstHits, plain.hits,
-                plain.hits ? double(plain.damage) / plain.hits : 0.0);
-    check(blasted.hits > 30 && plain.hits > 30, "the wizard lands Fire Balls");
-    if (blasted.hits > 0 && plain.hits > 0) {
-        const double ratio = (double(blasted.damage) / blasted.hits) / (double(plain.damage) / plain.hits);
-        check(ratio > 1.3 && ratio < 1.7, "a Pyroblaster's Fire Ball strikes about half again as hard");
-    }
-    check(blasted.bursts > 0, "and some burst");
-    check(blasted.widest <= sim::kPyroblastChain, "into four at most");
-    check(blasted.burstHits > 0, "and the burst's balls land");
-    checkEqual(plain.bursts, 0, "and a bare staff bursts nothing");
     check(bare.blows > 500 && keen.blows > 500, "both knights fight long enough to count");
     const double more = rate(keen.crits, keen.blows) - rate(bare.crits, bare.blows);
     check(more > 0.05 && more < 0.15, "and about a tenth more of his blows are critical");

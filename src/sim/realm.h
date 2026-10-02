@@ -846,7 +846,7 @@ private:
     // whether the landing pays mana back (a line pays for the body it was aimed at only).
     void loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce = true,
                bool pays = true);
-    // How many Pyroblasters his hands carry (sim/items.h), and the burst one rolls for off a Fire
+    // How many Pyroblasters his hands carry (sim/items.h), and the chain one rolls for off a Fire
     // Ball that landed on the body `struck`, which stood at (x, y).
     int pyroblasts(const Body& hero) const;
     void pyroblast(Body& hero, uint32_t struck, float x, float y, float force);
@@ -1026,13 +1026,19 @@ private:
         int32_t skill = 0;
         float force = 1.0f;
         bool pays = true;
+        // A Pyroblaster's chain (sim/items.h): how many hops it has made, 0 for a plain flight,
+        // and the monsters it has struck so far, the first his own Fire Ball's.
+        int8_t hops = 0;
+        uint32_t chained[kPyroblastChain + 1] = {};
     };
+    // A Pyroblaster's chain flying on from `off`, which it struck at (x, y): to the nearest
+    // monster it has not struck yet, while it has hops left.
+    void hop(Body& hero, const Flight& from, uint32_t off, float x, float y);
     // Room for a line's worth of bodies and the bolts around it.
     static constexpr int kFlights = 32;
     Flight flights_[kFlights] = {};
     // An Arcane Echo waiting to be let go: the spell again, at `at`. One at a time; a cast that
     // echoes while one waits does not.
-        bool chain = false;  // a Pyroblaster's burst, which bursts no further
     struct Echo {
         int64_t at = 0;  // 0 for none
         uint32_t target = 0;

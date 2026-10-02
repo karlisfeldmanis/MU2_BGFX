@@ -599,54 +599,63 @@ void Realm::pyroblast(Body& hero, uint32_t struck, float x, float y, float force
     // Each worn rolls off the sockets' stream, drawn only when one is worn.
     bool burst = false;
     for (int i = 0; i < worn && !burst; ++i) burst = runeDice_.nextBool(kPyroblastChance);
+    if (!burst) return;
+    core::logf("pyroblaster: tick %lld, a chain off #%u", (long long)tick_, struck);
+    Flight from;
+    from.force = force;
+    from.chained[0] = struck;
+    from.hops = 0;
+    hop(hero, from, struck, x, y);
+}
+
+void Realm::hop(Body& hero, const Flight& from, uint32_t off, float x, float y) {
     const SkillRow* row = skillNumbered(skill::kFireBall);
-    if (!burst || row == nullptr) return;
-    // The nearest kPyroblastChain living monsters round the one it struck and in its sight, by
-    // distance and then by id, so the log is fixed.
-    struct Near {
-        float d2;
-        uint32_t id;
+    if (row == nullptr || !hero.alive() || from.hops >= kPyroblastChain) return;
+    // The nearest living monster to where it struck, in its sight and not struck yet in this
+    // chain; by distance and then by id, so the log is fixed.
+    const auto struckAlready = [&](uint32_t id) {
+        for (int i = 0; i <= from.hops; ++i) {
+            if (from.chained[i] == id) return true;
+        }
+        return false;
     };
-    Near nearest[kPyroblastChain];
-    int count = 0;
+    uint32_t next = 0;
+    float best = kPyroblastReach * kPyroblastReach;
     for (const Body& b : bodies_) {
-        if (!b.monster() || !b.alive() || b.id == struck) continue;
+        if (!b.monster() || !b.alive() || struckAlready(b.id)) continue;
         const float dx = b.x - x, dy = b.y - y;
         const float d2 = dx * dx + dy * dy;
-        if (d2 > kPyroblastReach * kPyroblastReach) continue;
+        if (d2 > best || (d2 == best && next != 0 && b.id > next)) continue;
         if (!router_.sees(x, y, b.x, b.y, content::kWallNoMove)) continue;
-        const Near one{d2, b.id};
-        const auto before = [](const Near& l, const Near& r) {
-            return l.d2 < r.d2 || (l.d2 == r.d2 && l.id < r.id);
-        };
-        if (count == kPyroblastChain && !before(one, nearest[count - 1])) continue;
-        int at = count < kPyroblastChain ? count++ : count - 1;
-        while (at > 0 && before(one, nearest[at - 1])) {
-            nearest[at] = nearest[at - 1];
-            --at;
-        }
-        nearest[at] = one;
+        best = d2;
+        next = b.id;
     }
-    core::logf("pyroblaster: tick %lld, off #%u, %d fire balls", (long long)tick_, struck, count);
-    for (int i = 0; i < count; ++i) {
-        // Flown from the struck monster at the row's pace, a tick at least so it always flies.
-        // Said as his Fire Ball let go with `c` the monster it flies from and `rune` set, which
-        // is how the drawing knows to throw it from there.
-        const float gap = std::max(0.0f, std::sqrt(nearest[i].d2) - kBoltStopsShort);
-        const int32_t air = std::max<int32_t>(
-            1, int32_t(std::lround(gap / std::max(1.0f, row->flies) * kTicksPerSecond)));
-        say(What::Loosed, hero, skill::kFireBall, air, int32_t(struck), nearest[i].id);
-        happenings_.back().rune = true;
-        bool held = false;
-        for (Flight& one : flights_) {
-            if (one.at != 0) continue;
-            one = Flight{tick_ + air, nearest[i].id, skill::kFireBall, force, false, true};
-            held = true;
-            break;
-        }
-        if (!held) {
-            if (Body* target = body(nearest[i].id)) strikeAt(hero, *target, force, row, true, false);
-        }
+    if (next == 0) {
+        core::logf("pyroblaster: tick %lld, the chain ends at #%u after %d hops", (long long)tick_,
+                   off, from.hops);
+        return;
+    }
+    // Flown from where it struck at the row's pace, a tick at least so it always flies. Said as
+    // his Fire Ball let go with `c` the monster it leaves and `rune` set, which is how the
+    // drawing knows to throw it from there.
+    const float gap = std::max(0.0f, std::sqrt(best) - kBoltStopsShort);
+    const int32_t air = std::max<int32_t>(
+        1, int32_t(std::lround(gap / std::max(1.0f, row->flies) * kTicksPerSecond)));
+    say(What::Loosed, hero, skill::kFireBall, air, int32_t(off), next);
+    happenings_.back().rune = true;
+    Flight hopping = from;
+    hopping.at = tick_ + air;
+    hopping.target = next;
+    hopping.skill = skill::kFireBall;
+    hopping.pays = false;
+    hopping.hops = int8_t(from.hops + 1);
+    hopping.chained[hopping.hops] = next;
+    core::logf("pyroblaster: tick %lld, hop %d, #%u to #%u", (long long)tick_, hopping.hops, off,
+               next);
+    for (Flight& one : flights_) {
+        if (one.at != 0) continue;
+        one = hopping;
+        return;
     }
 }
 
@@ -754,9 +763,12 @@ void Realm::arrive() {
         strikeAt(hero, *target, flight.force, row, true, flight.pays);
         // A Pyroblaster's burst is the rune's, drawn in its colour; his own Fire Ball that
         // landed may burst.
+        // A Pyroblaster's hop is the rune's, drawn in its colour, and flies on to the next
+        // whatever it did; his own Fire Ball that landed may start a chain.
         if (said < happenings_.size()) {
-            if (flight.chain) {
+            if (flight.hops > 0) {
                 happenings_[said].rune = true;
+                hop(hero, flight, flight.target, x, y);
             } else if (flight.skill == skill::kFireBall && happenings_[said].what == What::Hit) {
                 pyroblast(hero, flight.target, x, y, flight.force);
             }
