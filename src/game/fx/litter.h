@@ -21,14 +21,9 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
 #include <vector>
 
-#include <bgfx/bgfx.h>
-
 #include "content/ground.h"
-#include "content/texture.h"
-#include "gfx/effects.h"
 #include "game/item_models.h"
 #include "game/shine.h"
 #include "gfx/renderer.h"
@@ -43,18 +38,14 @@ public:
         models_ = models;
         ground_ = ground;
     }
-    // The showing's `light` (Effect/flare01) and `lightning_2` sheets, for a lying jewel's glow.
-    void openSheets(const std::string& assetDir, content::Textures& textures);
-
     // **A jewel lying down glows** (the user, 2026-10-02: "actualy we need minimal light emiters
     // for all jewel drops", and "some nice effect for drop jewel of creations"). Ours: MU throws
     // nothing round a lying jewel. Every jewel (the table's jewel flag, pets aside) and every
     // Rune of Creation that has touched the ground lights a little of it in its own colour: the
     // nearest to `near` take what is left of the renderer's moving lights, after the skills.
+    // A rune glows as a jewel does, in its rarity's colour (Rare blue, Epic purple, Legendary
+    // orange); a flare and two stars over it were taken off the same day ('overkill').
     uint32_t lights(gfx::PointLight* out, uint32_t max, const float near[3]) const;
-    // And the Rune of Creation, a breathing flare over it and two small stars turning apart,
-    // in its rarity's colour (Rare blue, Epic purple, Legendary orange, as its name is drawn).
-    void gatherGlow(gfx::Effects& effects) const;
 
     // Follows the realm's list and moves what is still in the air. Called once a frame, with
     // the realm already stepped.
@@ -98,9 +89,7 @@ private:
     void buildHeap(const sim::Lying& one, Drop& drop);
 
     std::vector<uint32_t> settled_;
-    float clock_ = 0.0f;  // seconds, wrapped: the glow's breath and the stars' turn
-    bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle star_ = BGFX_INVALID_HANDLE;
+    float clock_ = 0.0f;  // seconds, wrapped: the glow's breath
     ItemModels* models_ = nullptr;
     const content::Ground* ground_ = nullptr;
     std::vector<Drop> drops_;

@@ -6,7 +6,6 @@
 
 #include <bx/math.h>
 
-#include "content/showing.h"
 
 namespace mu::game {
 namespace {
@@ -98,16 +97,11 @@ size_t Litter::pieces() const {
 
 namespace {
 
-// A lying jewel's glow: its light's reach in tiles and level, the flare's size in metres and how
-// fast it breathes. Faint, the user's 'minimal'; a Rune of Creation a little more than a jewel.
+// A lying jewel's glow: its light's reach in tiles and level, and how fast it breathes. Faint,
+// the user's 'minimal'; a Rune of Creation the same (its flare and stars were 'overkill').
 constexpr float kJewelReach = 1.4f, kJewelLevel = 0.14f;
-constexpr float kRuneReach = 1.8f, kRuneLevel = 0.24f;
 constexpr float kGlowLift = 0.15f;        // metres over the jewel's middle
-constexpr float kRuneFlare = 0.55f;       // half width, metres
-constexpr float kRuneStar = 0.32f;
-constexpr float kRuneStarSpin = 0.6f;     // radians a second, the two turning apart
 constexpr float kBreath = 1.6f;           // radians a second
-constexpr float kTau = 6.28318531f;
 
 // Each jewel in a colour of its own, as its stone is painted: Bless warm white, Soul pale blue,
 // Chaos violet, Life red; anything else the flag holds, white.
@@ -131,19 +125,6 @@ void runeColour(const sim::Held& what, float out[3]) {
 }
 
 }  // namespace
-
-void Litter::openSheets(const std::string& assetDir, content::Textures& textures) {
-    content::Showing table;
-    std::string error;
-    if (!content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) return;
-    const auto take = [&](const char* name) -> bgfx::TextureHandle {
-        const content::EffectSheet* sheet = table.effect(name);
-        if (sheet == nullptr) return BGFX_INVALID_HANDLE;
-        return textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
-    };
-    flare_ = take("light");
-    star_ = take("lightning_2");
-}
 
 void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     const content::Mesh* mesh = models_->of(one.what.item);
@@ -351,49 +332,19 @@ uint32_t Litter::lights(gfx::PointLight* out, uint32_t max, const float near[3])
         if (count == max) break;
         const Drop& drop = *one.drop;
         const float* at = drop.pieces.front().rest + 12;
-        const bool rune = drop.glow == 2;
         const float breath = 0.85f + 0.15f * std::sin(clock_ * kBreath + float(drop.id % 7));
         gfx::PointLight& light = out[count++];
         light = gfx::PointLight();
         light.position[0] = at[0];
         light.position[1] = at[1] + kGlowLift;
         light.position[2] = at[2];
-        light.reach = (rune ? kRuneReach : kJewelReach) * ground_->metresPerTile();
+        light.reach = kJewelReach * ground_->metresPerTile();
         light.height = kGlowLift + 0.3f;
-        const float level = (rune ? kRuneLevel : kJewelLevel) * breath;
+        const float level = kJewelLevel * breath;
         for (int k = 0; k < 3; ++k) light.colour[k] = drop.glowColour[k] * level;
     }
     return count;
 }
 
-void Litter::gatherGlow(gfx::Effects& effects) const {
-    if (!bgfx::isValid(flare_)) return;
-    for (const Drop& drop : drops_) {
-        if (drop.glow != 2 || drop.pieces.empty()) continue;
-        const Piece& piece = drop.pieces.front();
-        const float at[3] = {piece.rest[12], piece.rest[13] + piece.above + kGlowLift, piece.rest[14]};
-        const float breath = 0.75f + 0.25f * std::sin(clock_ * kBreath + float(drop.id % 7));
-        gfx::Sprite flare;
-        for (int a = 0; a < 3; ++a) flare.position[a] = at[a];
-        flare.halfWidth = flare.halfHeight = kRuneFlare * (0.9f + 0.1f * breath);
-        for (int k = 0; k < 3; ++k) flare.colour[k] = drop.glowColour[k] * 0.55f * breath;
-        flare.colour[3] = 1.0f;
-        flare.sheet = flare_;
-        flare.blend = gfx::Blend::Additive;
-        effects.add(flare);
-        if (!bgfx::isValid(star_)) continue;
-        for (float way : {1.0f, -1.0f}) {
-            gfx::Sprite star;
-            for (int a = 0; a < 3; ++a) star.position[a] = at[a];
-            star.halfWidth = star.halfHeight = kRuneStar;
-            for (int k = 0; k < 3; ++k) star.colour[k] = (0.35f + 0.65f * drop.glowColour[k]) * 0.4f * breath;
-            star.colour[3] = 1.0f;
-            star.spin = way * kRuneStarSpin * clock_;
-            star.sheet = star_;
-            star.blend = gfx::Blend::Additive;
-            effects.add(star);
-        }
-    }
-}
 
 }  // namespace mu::game
