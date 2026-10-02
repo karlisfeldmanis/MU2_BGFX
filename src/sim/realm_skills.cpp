@@ -298,8 +298,15 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // use click to move if twisting slash animation is not played to the end"). And no blow of
     // his own begins inside it either. A knight's primary is held as well -- Twisting Slash lost
     // its cooldown the same day, and the walk-out is the wizard's alone.
-    const int32_t held =
-        row.wizardry ? clip : std::max(clip, authoredCastTicks(*tables_, row));
+    //
+    // **A primary is held for its quickened clip**, every class's: the user, 2026-10-02 -- "it
+    // suppost to speed up all classed" -- of Twisting Slash and Skillshot staying at the authored
+    // pace however much agility he had. The drawing plays a primary's clip fitted to `clip`
+    // (game/play.cpp), so the hold and the spin still end together; a skill with a cooldown
+    // keeps the authored floor.
+    const int32_t held = row.wizardry || row.primary()
+                             ? clip
+                             : std::max(clip, authoredCastTicks(*tables_, row));
     hero.castUntil = row.channelled()                ? tick_ + row.channelTicks
                      : row.primary() && row.wizardry ? tick_
                                                      : tick_ + held;

@@ -438,6 +438,13 @@ void PlayMode::runScript(Context& ctx) {
     if (args.windows.find("inventory") != std::string::npos) desk_.setInventoryOpen(true);
     if (args.windows.find("character") != std::string::npos) desk_.setCharacterOpen(true);
     if (args.windows.find("sanctuary") != std::string::npos) desk_.setSpecimenOpen(true);
+    if (args.windows.find("graphics") != std::string::npos) {
+        desk_.showMenu(game::Menu::Page::Graphics);
+    } else if (args.windows.find("options") != std::string::npos) {
+        desk_.showMenu(game::Menu::Page::Options);
+    } else if (args.windows.find("menu") != std::string::npos) {
+        desk_.showMenu(game::Menu::Page::Main);
+    }
 }
 
 void PlayMode::openProbes(Context& ctx) {
@@ -1171,6 +1178,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // split. docs/grass.md.
     gfx::GrassField grassField;
     bool grassDrawn = false;
+    // The Options page's Graphics rows: the targets' quality, and the sheet as drawn.
+    applyGraphics(ctx.renderer, ctx.args);
+    const gfx::Lighting look = graphicsLook(ctx.lighting, ctx.args);
     {
         float view[16];
         float proj[16];
@@ -1183,7 +1193,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const int walking = world_.played().isOpen()
                                 ? world_.played().walkers(walkers, gfx::GrassField::kMaxWalkers)
                                 : 0;
-        grassDrawn = world_.grass().gather(world_.ground(), ctx.lighting, viewProj, eye.position,
+        grassDrawn = world_.grass().gather(world_.ground(), look, viewProj, eye.position,
                                            walkers, walking, float(at.elapsed), grassField);
         // Devias's blizzard bows the grass the way its snow flies, harder in each gust: at 0.6
         // of the wind a gust lays the sward over by about half, an ordinary blow by a quarter.
@@ -1191,7 +1201,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.leaves().stormWind(grassField.storm);
         grassField.storm[0] *= 0.6f;
     }
-    ctx.renderer.draw(eye, ctx.lighting, townDrawables_, &world_.ground(), casters,
+    ctx.renderer.draw(eye, look, townDrawables_, &world_.ground(), casters,
                       grassDrawn ? &grassField : nullptr);
     // The gold ring: over the world the frame above just drew, under the windows the
     // line below is about to -- so a window drawn over a ringed monster still covers

@@ -898,7 +898,10 @@ void Play::update(double seconds) {
                         // hand was still coming down when the next cast began.
                         const sim::SkillRow* spell =
                             cast ? sim::skillNumbered(swinger->castSkill) : nullptr;
-                        if (spell && spell->wizardry && body) {
+                        // A primary's does the same at AttackSpeed, every class's: the realm
+                        // holds Twisting Slash and Skillshot for their quickened clip
+                        // (Realm::throwSkill), so the spin has to end when the hold does.
+                        if (spell && (spell->wizardry || spell->primary()) && body) {
                             const auto armAt = [&](int32_t at) -> const content::Arm* {
                                 return at >= 0 && size_t(at) < tables_.arms.size()
                                            ? &tables_.arms[size_t(at)] : nullptr;

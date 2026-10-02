@@ -105,6 +105,7 @@ add_executable(mu2
   src/gfx/renderer.cpp
   src/gfx/renderer_setup.cpp
   src/gfx/metalfx.mm
+  src/gfx/window_mac.mm
   src/gfx/renderer_probe.cpp
   src/gfx/renderer_outline.cpp
   src/gfx/renderer_lights.cpp
