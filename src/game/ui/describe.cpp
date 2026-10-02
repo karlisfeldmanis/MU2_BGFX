@@ -221,6 +221,9 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
         return power ? rarityTone(power->rarity) : Tone::Legendary;
     }
     if (what.excellent != 0) return Tone::Epic;
+    // A Firecracker is rare to come by (the user, 2026-10-02: "its kind of rare item so i think
+    // we should use some rare color for that item"): WoW's rare blue, the socket's rung.
+    if (sim::firecracker(row)) return Tone::Rare;
     if (socketsOf(what) > 0) return Tone::Rare;
     if ((row.jewel() && row.group != sim::kGroupPets) || what.refinement >= kRefinedFrom) {
         return Tone::Artifact;
