@@ -350,12 +350,13 @@ void Play::landed(uint32_t drop) {
         // half that is worth hearing, which is the taking.
         if (one.what.empty()) return;
         int sound = heard_.itemDrop;
-        if (one.what.item >= 0 && size_t(one.what.item) < tables_.items.size() &&
-                   tables_.items[size_t(one.what.item)].jewel() &&
-                   tables_.items[size_t(one.what.item)].group != sim::kGroupPets &&
-                   heard_.jewel >= 0) {
-            // A pet carries the jewel flag in the table but lands as any other thing.
-            sound = heard_.jewel;
+        if (one.what.item >= 0 && size_t(one.what.item) < tables_.items.size() && heard_.jewel >= 0) {
+            const content::ItemRow& row = tables_.items[size_t(one.what.item)];
+            // A pet carries the jewel flag in the table but lands as any other thing. The Rune
+            // of Creation does not carry it -- the flag is also OpenMU's jewel drop group -- and
+            // lands as a jewel all the same (the user, 2026-10-02: 'play jewel sound when jewel
+            // of creation is droped').
+            if ((row.jewel() && row.group != sim::kGroupPets) || sim::creation(row)) sound = heard_.jewel;
         }
         const float metresPerTile = ground_->metresPerTile();
         emit(sound, (float(one.column) + 0.5f) * metresPerTile,
