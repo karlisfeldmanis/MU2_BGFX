@@ -10,10 +10,13 @@
 namespace mu::game {
 namespace {
 
-constexpr int kWisps = 140;
+// 320 over 60 m since 'smoke for some reason feels laggy' (the void clouds, 2026-10-02): over 40
+// m with a 12 s fade-in a walk outran them, and the void ahead filled in late, as if they lagged
+// behind him. The ring is now wider than he crosses in a fade, at the same density.
+constexpr int kWisps = 320;
 // Spawned within this of the camera's point, and let go past a little more.
-constexpr float kReach = 40.0f;
-constexpr float kLetGo = 44.0f;
+constexpr float kReach = 60.0f;
+constexpr float kLetGo = 66.0f;
 constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 // How far under the floor the layer lies, and the sheets' half width and growth.
 // 0.8-3 m since the user asked to see them round the castle's court too (2026-10-02: 'also i
