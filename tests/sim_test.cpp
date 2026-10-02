@@ -2206,10 +2206,10 @@ void testSkills(const content::Tables& tables) {
           "strength is force");
 
     sim::Realm realm;
-    // Level 120, the top of the orb ladder since Rageful Blow's orb moved there (2026-10-02).
-    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 120), "a realm raises for the keys");
+    // Level 80, the top of the orb ladder since Rageful Blow's orb moved there (2026-10-02).
+    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 80), "a realm raises for the keys");
     // A blade in his hand, because nothing is thrown bare-handed and `raise` dresses nobody:
-    // `given`, so a level-120 knight's strength is not what this is testing.
+    // `given`, so a level-80 knight's strength is not what this is testing.
     check(realm.equip(tables.armNamed("Sword03"), -1, true), "and a blade is put in his hand");
 
     // ---- and nothing in his head (docs/skills-dk.md §3.3) ------------------------------------
@@ -4902,6 +4902,89 @@ void testRunes(const content::Tables& tables) {
     checkEqual(plain.chains, 0, "and a bare staff starts none");
 }
 
+// The element runes (sim::kElementRuneDamage): every class sets them in a weapon, a ring or a
+// pendant, they drop only to a class with something of their element, and a wizard's Fire Ball
+// with an Inferno in his staff, or in his ring, strikes a fifth harder than bare.
+void testElementRunes(const content::Tables& tables) {
+    std::printf("element runes\n");
+    const int rune = tables.itemAt(14, 22), staff = tables.itemNamed("Staff03");
+    const int ring = tables.itemAt(13, 8), plate = tables.itemAt(8, 9);
+    check(rune >= 0 && staff >= 0 && ring >= 0 && plate >= 0,
+          "the Rune of Creation, a staff, a Ring of Ice and a plate");
+    if (rune < 0 || staff < 0 || ring < 0 || plate < 0) return;
+    const auto held = [](int item, uint8_t sockets, uint8_t first) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = first;
+        return h;
+    };
+    const uint8_t inferno = uint8_t(sim::Power::Inferno);
+    for (const sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf}) {
+        check(sim::settable(tables, held(rune, 0, inferno), held(staff, 1, 0), kin),
+              "an Inferno goes in any class's weapon");
+        check(sim::settable(tables, held(rune, 0, inferno), held(ring, 1, 0), kin),
+              "and in a ring");
+    }
+    check(!sim::settable(tables, held(rune, 0, inferno), held(plate, 1, 0), sim::Kin::DarkKnight),
+          "and not in armour");
+    check(sim::elementServes(sim::Element::Wind, sim::Kin::DarkKnight) &&
+              !sim::elementServes(sim::Element::Wind, sim::Kin::DarkWizard) &&
+              sim::elementServes(sim::Element::Ice, sim::Kin::FairyElf) &&
+              !sim::elementServes(sim::Element::Fire, sim::Kin::FairyElf),
+          "a Tempest drops to a knight, not a wizard, and only a Glacier to an elf");
+    // The wizard's Fire Ball on the nearest monster, the plain landings averaged.
+    const auto average = [&](int slot, int item) {
+        sim::Realm realm;
+        realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
+        realm.learn(sim::skill::kFireBall);
+        realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 0, nullptr);
+        if (item >= 0) {
+            const uint8_t powers[3] = {inferno, 0, 0};
+            realm.give(item, slot, 0, -1, false, 0, 0, 1, powers);
+        }
+        int hits = 0, damage = 0;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kFireBall;
+                realm.ask(request);
+            }
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id || h.what != sim::What::Hit || !h.thrown) continue;
+                if (h.rune || h.critical || h.excellent) continue;
+                ++hits;
+                damage += h.a;
+            }
+        }
+        return std::pair<int, double>(hits, hits ? double(damage) / hits : 0.0);
+    };
+    const auto bare = average(0, -1);
+    const auto ringed = average(sim::kRingRight, ring);
+    std::printf("  Fire Ball: bare %d at %.1f, Inferno ring %d at %.1f\n", bare.first,
+                bare.second, ringed.first, ringed.second);
+    check(bare.first > 30 && ringed.first > 30, "the wizard lands Fire Balls");
+    if (bare.second > 0.0) {
+        const double ratio = ringed.second / bare.second;
+        check(ratio > 1.1 && ratio < 1.3, "an Inferno ring's Fire Ball strikes about a fifth harder");
+    }
+}
+
 // The pets at WebZen's word (docs/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
 // landed blow, and their wear.
 // The Dungeon's runes (sim/items.h) and Devin's Renewal, by what they DO in a fight, each against
@@ -5487,6 +5570,7 @@ int main() {
     testTraps();
     testQuests(tables);
     testDungeonRunes(tables);
+    testElementRunes(tables);
     testEvilSpirit(tables);
     testRunes(tables);
     testJewellery(tables);

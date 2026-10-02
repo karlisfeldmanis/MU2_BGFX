@@ -134,7 +134,8 @@ PetPower petPower(const content::ItemRow& row);
 // item.txt 1 in its own element times the plus (CItem::Convert), the largest worn counting
 // (ObjCalCharacter's Max3); only Ice and Poison act on him in 0.75. A ring takes the armour's
 // excellent family and a pendant the weapon's -- Lightning the staff's.
-enum class Element : uint8_t { None, Ice, Poison, Lightning, Fire };
+enum class Element : uint8_t { None, Ice, Poison, Lightning, Fire, Wind };
+constexpr int kElements = 6;
 bool ring(const content::ItemRow& row);
 bool pendant(const content::ItemRow& row);
 inline bool jewellery(const content::ItemRow& row) { return ring(row) || pendant(row); }
@@ -420,7 +421,12 @@ enum class Power : uint8_t {
     Frenzy = 10,
     Renewal = 11,
     Spirits = 12,
-    Pyroblast = 13
+    Pyroblast = 13,
+    Inferno = 14,
+    Glacier = 15,
+    Venom = 16,
+    Thunder = 17,
+    Tempest = 18
 };
 struct PowerRow {
     Power power;
@@ -430,6 +436,7 @@ struct PowerRow {
     Kin kin;      // who may set it
     bool everyone = false;  // every class may, and `kin` is not read
     bool shieldOnly = false;  // a shield's socket and no armour's
+    bool jewelleryToo = false;  // a weapon's rune a ring and a pendant take as well
 };
 
 // **The Undying**, the first armour power and every class's (the user, 2026-09-30: "its for
@@ -563,5 +570,20 @@ constexpr double kPyroblastChance = 0.20;
 constexpr int kPyroblastChain = 4;
 // Eight tiles, Evil Spirit's ten less two: at five most bursts in Lorencia found nothing near.
 constexpr float kPyroblastReach = 8.0f;
+// **The element runes** (the user, 2026-10-02: "make new runes with +20% fire damage, ice damage,
+// poison damage, lighting damage, wind damage"): Inferno, Glacier, Venom, Thunder and Tempest,
+// every class's, in a weapon's, a ring's or a pendant's socket, each adding kElementRuneDamage to
+// what his blows of its element deal, summed over every one worn. What is of an element is
+// `skillElement` (sim/realm_fight.cpp): 0.75's own elementalModifier where it has one (Fire Ball
+// and Flame fire, Ice, Poison, Lightning), and ours past it -- Meteorite fire where OpenMU says
+// Earth, as nothing here is earth; Cyclone and Twisting Slash wind, as 0.75's one wind spell,
+// Twister, is not built; the runes' own blows their spells' (Meteor fire, Stormcall lightning,
+// Frost Arrow ice, the Poison rune's sickness poison). Drops only to a class with something of
+// its element (`elementServes`). invention, all of it.
+constexpr double kElementRuneDamage = 0.20;
+// The element a rune adds to, None for every other power.
+Element elementOf(Power power);
+// Whether `kin` throws anything of `element`, so a rune of it would do something in his hands.
+bool elementServes(Element element, Kin kin);
 
 }  // namespace mu::sim

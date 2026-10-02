@@ -384,4 +384,27 @@ constexpr DropRate dropRateOf(int32_t number) {
 // A risen beast's five idle seconds (gObjMonster.cpp:185), in ticks.
 constexpr int64_t kRiseIdleTicks = 100;
 
+// A skill's element for the element runes (sim::kElementRuneDamage): 0.75's elementalModifier
+// where it has one, and ours past it -- Meteorite fire (OpenMU's Earth), and the knight's two
+// whirls wind, as Twister is not built.
+inline Element skillElement(int32_t number) {
+    switch (number) {
+        case skill::kFireBall:
+        case skill::kFlame:
+        case skill::kMeteorite: return Element::Fire;
+        case skill::kIce: return Element::Ice;
+        case skill::kPoison: return Element::Poison;
+        case skill::kLightning: return Element::Lightning;
+        case skill::kCyclone:
+        case skill::kTwistingSlash: return Element::Wind;
+        default: return Element::None;
+    }
+}
+
+// What his element runes multiply a blow of `element` by: 1 for none worn, or for a monster's.
+inline float elementForce(const Body& hero, Element element) {
+    if (!hero.player || element == Element::None) return 1.0f;
+    return float(1.0 + kElementRuneDamage * hero.excel.elementRunes[int(element)]);
+}
+
 }  // namespace mu::sim

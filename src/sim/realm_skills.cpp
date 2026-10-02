@@ -410,6 +410,8 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
 void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
     uint32_t victims[kVictims];
     const int found = gather(hero, row, victims, kVictims);
+    // Cyclone's and Twisting Slash's wind, under his element runes (realm_tuning.h).
+    force *= elementForce(hero, skillElement(row.number));
     for (int i = 0; i < found; ++i) {
         // Looked up again rather than held: a body killed earlier in this same sweep may have
         // been left where it fell, and `strikeAt` refuses the dead itself. The vector cannot

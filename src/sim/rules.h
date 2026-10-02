@@ -68,6 +68,9 @@ struct Excellence {
     // How many Evil Spirit runes his shield, rings and pendant carry, each rolling on a miss
     // (sim::kSpiritChance).
     int spirits = 0;
+    // How many element runes his hands, rings and pendant carry, by sim::Element (sim/items.h
+    // kElementRuneDamage), each adding its share to his blows of that element.
+    int elementRunes[6] = {};
     // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
     // resistance worn to Ice and to Poison, each turning the element aside r times in r + 1, and
     // the percent of maximum life the worn pieces' options give back every kJewelleryRegenTicks.

@@ -346,6 +346,17 @@ void Realm::rearm(Body& hero) {
             if (power->power == Power::Spirits && (row->shield() || jewellery(*row))) ++e.spirits;
         }
     }
+    // The element runes, in the hands, the rings and the pendant (sim::kElementRuneDamage).
+    for (int slot : {kWeaponRight, kWeaponLeft, kAmulet, kRingRight, kRingLeft}) {
+        const content::ItemRow* row = rowAt(slot);
+        if (!row || row->shield()) continue;
+        for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
+            const PowerRow* power = powerOf(bag_[slot].powers[at]);
+            if (power && elementOf(power->power) != Element::None) {
+                ++hero.excel.elementRunes[int(elementOf(power->power))];
+            }
+        }
+    }
     // The rings and the pendant: the largest resistance worn in each element (Max3), and every
     // piece's life regeneration summed (docs/jewellery.md).
     for (int slot : {kAmulet, kRingRight, kRingLeft}) {
@@ -884,17 +895,19 @@ void Realm::leave(const Body& dead, const Body& killer) {
     if (roll < creationChance) {
         const int32_t item = draw([](const content::ItemRow& r) { return creation(r); });
         if (item < 0) return;
-        // A power the killer's class may set, drawn evenly.
+        // A power the killer's class may set, drawn evenly -- an element rune only where his
+        // class throws something of its element (sim::elementServes).
         uint8_t powers[kMostSockets] = {};
+        const auto drawable = [&](const PowerRow& row) {
+            const Element element = elementOf(row.power);
+            if (element != Element::None) return elementServes(element, killer.kin);
+            return row.everyone || row.kin == killer.kin;
+        };
         int count = 0;
-        for (int p = 1; powerOf(uint8_t(p)); ++p) {
-            const PowerRow* row = powerOf(uint8_t(p));
-            count += row->everyone || row->kin == killer.kin ? 1 : 0;
-        }
+        for (int p = 1; powerOf(uint8_t(p)); ++p) count += drawable(*powerOf(uint8_t(p))) ? 1 : 0;
         int pick = count > 0 ? dice_.nextInt(0, count) : -1;
         for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
-            const PowerRow* row = powerOf(uint8_t(p));
-            if ((row->everyone || row->kin == killer.kin) && pick-- == 0) powers[0] = uint8_t(p);
+            if (drawable(*powerOf(uint8_t(p))) && pick-- == 0) powers[0] = uint8_t(p);
         }
         one.what = Held{item, 0, 1};
         one.what.powers[0] = powers[0];

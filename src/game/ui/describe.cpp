@@ -618,7 +618,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             Row where;
             where.free = std::string(power->everyone ? "Every class" : kNames[size_t(power->kin)]) +
                          " \xC2\xB7 " +
-                         (power->weapon       ? "a weapon's socket"
+                         (power->jewelleryToo ? "a weapon's, ring's or pendant's socket"
+                          : power->weapon     ? "a weapon's socket"
                           : power->shieldOnly ? "a shield's, ring's or pendant's socket"
                                               : "an armour's, ring's or pendant's socket");
             where.freeTone = Tone::Gray;

@@ -283,11 +283,45 @@ const PowerRow* powerOf(uint8_t power) {
          "Fire Ball strikes 50% harder, and one that lands has a 20% chance to burst into four "
          "more, each flying at a monster near the one it struck",
          true, Kin::DarkWizard},
+        {Power::Inferno, "Inferno", "+20% fire damage", true, Kin::DarkKnight, true, false,
+         true},
+        {Power::Glacier, "Glacier", "+20% ice damage", true, Kin::DarkKnight, true, false, true},
+        {Power::Venom, "Venom", "+20% poison damage", true, Kin::DarkKnight, true, false, true},
+        {Power::Thunder, "Thunder", "+20% lightning damage", true, Kin::DarkKnight, true, false,
+         true},
+        {Power::Tempest, "Tempest", "+20% wind damage", true, Kin::DarkKnight, true, false, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
     }
     return nullptr;
+}
+
+Element elementOf(Power power) {
+    switch (power) {
+        case Power::Inferno: return Element::Fire;
+        case Power::Glacier: return Element::Ice;
+        case Power::Venom: return Element::Poison;
+        case Power::Thunder: return Element::Lightning;
+        case Power::Tempest: return Element::Wind;
+        default: return Element::None;
+    }
+}
+
+bool elementServes(Element element, Kin kin) {
+    switch (kin) {
+        // His runes' rock (fire), sickness (poison) and lightning; Cyclone and Twisting Slash
+        // (wind). The Ice rune's freeze wounds nothing.
+        case Kin::DarkKnight:
+            return element == Element::Fire || element == Element::Poison ||
+                   element == Element::Lightning || element == Element::Wind;
+        // Fire Ball, Flame, Meteorite; Ice; Poison; Lightning. Twister is not built.
+        case Kin::DarkWizard:
+            return element != Element::None && element != Element::Wind;
+        // Frost Arrow's wound.
+        case Kin::FairyElf: return element == Element::Ice;
+        default: return false;
+    }
 }
 
 int freeSocket(const Held& thing) {
@@ -319,7 +353,8 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     // A ring's and a pendant's sockets take every armour rune, Evil Spirit with them (the user,
     // 2026-10-02: "allow to put runes on jewels and pendants"; it was Evil Spirit alone). A
     // weapon's rune is read off the hands only, so it stays out.
-    if (jewellery(row)) return !power->weapon;
+    // The element runes go in either (sim::kElementRuneDamage).
+    if (jewellery(row)) return !power->weapon || power->jewelleryToo;
     if (power->shieldOnly) return row.shield();
     return power->weapon == (row.weapon() && !row.shield());
 }

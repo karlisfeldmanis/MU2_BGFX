@@ -96,6 +96,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         pyroblasts(attacker) > 0) {
         force *= kPyroblastForce;
     }
+    // His element runes on a spell or a skill of their element; the sweeps' are laid in
+    // strikeAround and the runes' own blows where each is let go.
+    if (row != nullptr) force *= elementForce(attacker, skillElement(row->number));
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
@@ -269,10 +272,11 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         const bool critical = hero.stats.criticalChance > 0.0 &&
                               runeDice_.nextBool(hero.stats.criticalChance);
         const int high = int(energy * kRuneEnergyHigh);
-        const int bite =
+        const int bare =
             critical ? std::max(1, wound) + high
                      : std::max(1, int(float(wound) * kFrostWound)) +
                            runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1);
+        const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice)));
         struck.health = std::max(0, struck.health - bite);
         say(What::Hit, hero, bite, bite, struck.health, struck.id);
         happenings_.back().critical = critical;
@@ -296,7 +300,8 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         } else {
             struck.poisonUntil = tick_ + spell->poisonTicks;
             struck.poisonNext = tick_ + kPoisonEvery;
-            struck.poisonDamage = std::max(1, wound / 4);
+            struck.poisonDamage =
+                std::max(1, int(float(wound / 4) * elementForce(hero, Element::Poison)));
             struck.poisonBy = hero.id;
         }
         say(What::Loosed, hero, ice ? skill::kIce : skill::kPoison, 0, 0, struck.id);
@@ -346,12 +351,13 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         say(What::Loosed, hero, skill::kMeteorite, fall, 0, struckBy->id);
         core::logf("meteor rune: tick %lld, a rock on #%u beside #%u", (long long)tick_,
                    struckBy->id, struck.id);
+        const float rockForce = kMeteorForce * elementForce(hero, Element::Fire);
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
-            one = Flight{tick_ + fall, struckBy->id, 0, kMeteorForce, false};
+            one = Flight{tick_ + fall, struckBy->id, 0, rockForce, false};
             return;
         }
-        strikeAt(hero, *struckBy, kMeteorForce, nullptr, true, false);
+        strikeAt(hero, *struckBy, rockForce, nullptr, true, false);
         return;
     }
     // Said as Lightning let go at it, which is what the drawing throws a thunder on; the blow
@@ -367,7 +373,8 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     const int high = int(hero.points.energy * kRuneEnergyHigh);
     hero.stats.minimumDamage += low;
     hero.stats.maximumDamage += high;
-    strikeAt(hero, *struckBy, kStormcallForce, nullptr, true, false);
+    strikeAt(hero, *struckBy, kStormcallForce * elementForce(hero, Element::Lightning), nullptr,
+             true, false);
     hero.stats.minimumDamage = swing.minimumDamage;
     hero.stats.maximumDamage = swing.maximumDamage;
     if (struckBy->alive()) push(*struckBy, hero);
