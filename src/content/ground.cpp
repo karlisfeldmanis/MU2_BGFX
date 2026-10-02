@@ -647,6 +647,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     abyssDepth_ = float(chasm["depth"].numberOr(5.0));
     abyssRim_ = chasm["rim"].boolOr(false);
     abyssBlend_ = float(chasm["blend"].numberOr(0.0));
+    abyssLift_ = float(chasm["lift"].numberOr(0.0));
 
     if (!readGrids(worldDir, doc["height"].stringOr("height.png"),
                    doc["attributes"].stringOr("attributes.png"))) {
@@ -1158,7 +1159,11 @@ void Ground::buildAbyss() {
     }
     std::vector<uint16_t> texels(source.size() * 2);
     for (size_t i = 0; i < source.size(); ++i) {
-        const float level = source[i] >= 0 ? rimLevel[size_t(source[i])] : height_[i];
+        float level = source[i] >= 0 ? rimLevel[size_t(source[i])] : height_[i];
+        // A point in the void, not touching ground, lifted by `lift`: what stands in a pit is
+        // in the dark from the lip down. A ground tile's four corners all touch it, so the
+        // floor and everything on it read their own level as before.
+        if (source[i] != int(i)) level += abyssLift_;
         texels[i * 2] = bx::halfFromFloat(level);
         texels[i * 2 + 1] = bx::halfFromFloat(edge[i]);
     }
@@ -1170,9 +1175,10 @@ void Ground::buildAbyss() {
     abyssParams_[1] = abyssDepth_;
     abyssParams_[2] = 1.0f / (metresPerTile_ * float(n));
     abyssParams_[3] = 0.5f / float(n);
-    core::logf("abyss: %zu of %zu points dark below their nearest rim, %.1f m to %.1f m under it",
+    core::logf("abyss: %zu of %zu points dark below their nearest rim, %.1f m to %.1f m under it, "
+               "the void lifted %.1f m",
                source.size() - touching, source.size(), double(abyssStart_),
-               double(abyssStart_ + abyssDepth_));
+               double(abyssStart_ + abyssDepth_), double(abyssLift_));
 }
 
 // The land by material, not by pair.

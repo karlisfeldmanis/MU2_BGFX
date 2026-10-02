@@ -188,8 +188,11 @@ GRASS_BY_MAP = {
 #: crowns near it, and the default 1.5 m start left most of them fully lit ('tenticles in
 #: dungeon still is very good lightened when they are under the ground', 2026-10-02). From
 #: the floor to black 2 m down, so the crowns at the lip keep their bronze and the bodies sink.
+#: Then 'under the ground there is much less light which means that tenticles should be very
+#: dark': `lift` puts the void's own points a metre above the rim, so a crown level with the
+#: floor is already three quarters dark, and black half a metre down.
 VOID_BY_MAP = {
-    1: {"start": 0.0, "depth": 2.0},
+    1: {"start": 0.0, "depth": 1.5, "lift": 1.0},
     4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
 }
 #: Blood Castle tried the tower's (the user, 2026-10-02: 'we need to add some nice void gradients

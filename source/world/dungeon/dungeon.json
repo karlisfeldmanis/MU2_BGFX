@@ -22,7 +22,8 @@
  "grass_slots": [],
  "void": {
   "start": 0.0,
-  "depth": 2.0
+  "depth": 1.5,
+  "lift": 1.0
  },
  "water_flow": {
   "sources": [

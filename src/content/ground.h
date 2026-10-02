@@ -197,6 +197,11 @@ private:
     // the Lost Tower's causeways, which MU's terrain light takes down to its black fog. 0 off.
     // The world's `void.blend`.
     float abyssBlend_ = 0.0f;
+    // How far above the rim the void's own points read their level, in metres, so whatever
+    // stands in a pit is already that far into the dark at the lip: the Dungeon's worms,
+    // whose crowns sit level with the floor and stood fully lit in the hole. 0 off. The
+    // world's `void.lift`. Ours.
+    float abyssLift_ = 0.0f;
     bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
     float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     std::vector<float> height_;  // metres, [row * size + column]
