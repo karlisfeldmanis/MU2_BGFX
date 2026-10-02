@@ -168,6 +168,7 @@ private:
     size_t strikeCount_ = 0;
     float luminosity_ = 1.0f;  // this frame's roll, shared by every lantern as MU's is
     float lanternWait_ = 0.0f;
+    float wander_ = 0.0f;  // seconds, wrapped at 2 pi / 0.05: the candle glows' slow wander
     float breath_ = 0.0f;  // seconds, wrapped at 2 pi: Blood Castle's sines (one radian a second)
     float spun_ = 0.0f;  // seconds, for the machine's star: WorldTime's own clock, wrapped
     uint32_t seed_ = 0x51AB1Eu;

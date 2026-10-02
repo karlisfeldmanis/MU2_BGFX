@@ -523,6 +523,8 @@ void Ornaments::update(float seconds, const Sway& sway) {
 
     spun_ = std::fmod(spun_ + seconds, 360.0f / kStarDegreesPerSecond);
     breath_ = std::fmod(breath_ + seconds, 6.28318531f);
+    // Wrapped where every wander rate (multiples of 0.05) turns whole, so nothing jumps.
+    wander_ = std::fmod(wander_ + seconds, 6.28318531f / 0.05f);
 
     for (Glint& glint : glints_) glint.age += dt * kFramesPerSecond;
     glints_.erase(std::remove_if(glints_.begin(), glints_.end(),
@@ -652,6 +654,15 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
                 if (!figure->pointOn(lantern.anchor.bone, lantern.anchor.point, sprite.position)) continue;
             } else if (lantern.fixed) {
                 for (int a = 0; a < 3; ++a) sprite.position[a] = lantern.fixedAt[a];
+                // The candles' glows over the void, with no holder drawn under them, wander a
+                // little round their candle and bob, slowly, each on its own beat -- ours (the
+                // user, 2026-10-02: 'those sparkles has to slowly move').
+                if (lantern.flickers) {
+                    const float p = lantern.breathPhase * 3.0f;
+                    sprite.position[0] += 0.15f * std::sin(wander_ * 0.35f + p);
+                    sprite.position[2] += 0.15f * std::cos(wander_ * 0.25f + p * 1.7f);
+                    sprite.position[1] += 0.1f * std::sin(wander_ * 0.5f + p * 0.6f);
+                }
             } else {
                 continue;
             }
