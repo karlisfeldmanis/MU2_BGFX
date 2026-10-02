@@ -64,7 +64,7 @@ bool Arrows::open(const std::string& assetDir, content::Textures& textures,
     if (fire != nullptr) {
         emberSheet_ = textures.load(assetDir + "/" + fire->path, content::TextureRole::Albedo);
     }
-    if (const content::EffectSheet* smoke = table.effect("smoke01")) {
+    if (const content::EffectSheet* smoke = table.effect("smoke")) {
         smokeSheet_ = textures.load(assetDir + "/" + smoke->path, content::TextureRole::Albedo);
     }
     core::logf("arrows: %d parts of 5, embers %s, smoke %s", loaded,
@@ -316,7 +316,7 @@ void Arrows::gather(gfx::Effects& effects) const {
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
-    // The smoke, mixed as Inferno's: opening as it rises, in and out softly.
+    // The smoke, smoke02 read as grey (fs_smoke), opening as it rises, quick in and out.
     for (const Wisp& w : wisps_) {
         if (!w.alive) continue;
         const float t = std::clamp(w.age / kWispFrames, 0.0f, 1.0f);
@@ -324,7 +324,7 @@ void Arrows::gather(gfx::Effects& effects) const {
         for (int k = 0; k < 3; ++k) sprite.position[k] = w.at[k];
         sprite.halfWidth = sprite.halfHeight = 0.5f * (kWispBorn + (kWispGrown - kWispBorn) * t);
         sprite.spin = w.spin + t * 0.6f;
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = kWispGrey;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = kWispGrey[k];
         const float in = std::min(1.0f, t / 0.15f);
         const float out = 1.0f - std::clamp((t - 0.3f) / 0.7f, 0.0f, 1.0f);
         sprite.colour[3] = kWispAlpha * in * out;

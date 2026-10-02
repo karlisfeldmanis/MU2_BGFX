@@ -25,9 +25,11 @@
 // laid every few centimetres where the sprite is, rising and fading in a third of a second, at
 // the shot's Luminosity roll. MU's embers are 0.7 m apart and drift behind; at 17.5 tiles a
 // second they read as a trail and not as an arrow on fire (the user: 'minimal fire emitter').
-// And a thin smoke behind the flame (the user: 'and minimal smoke'): faint smoke01 wisps every
-// third of a metre, opening and rising slowly, gone in under a second -- Inferno's puffs
-// (fx/inferno.h) at a fraction of the size. Single shot and the fan alike: every wooden arrow.
+// And a thin smoke behind the flame (the user: 'and minimal smoke', then 'actual smoke, not fire
+// color smoke, but subtle and has to disappear fast'): smoke02 wisps every third of a metre,
+// ash grey as the lamps' cooled smoke (world/lamps.cpp), born clear of the flame and gone in
+// half a second. The licks rise slowly, so the flame stays at the tail and does not stand in
+// for an orange plume. Single shot and the fan alike: every wooden arrow.
 #pragma once
 
 #include <cstdint>
@@ -144,17 +146,17 @@ private:
                                                    // sprite's middle (loaded z 0 to -0.41 m)
     static constexpr float kLickFrames = 8.0f;
     static constexpr float kSmallestLick = 0.16f, kLargestLick = 0.28f;  // metres
-    static constexpr float kLickRise = 0.7f;       // metres a second
+    static constexpr float kLickRise = 0.3f;       // metres a second
     static constexpr float kLickJitter = 0.15f;    // metres a second, either way across
 
     // ---- Ours: the smoke behind it ---------------------------------------------------------------
     static constexpr float kWispSpacing = 0.35f;   // metres of flight between wisps
-    static constexpr float kWispBehind = 0.40f;    // metres behind the origin, past the flame
-    static constexpr float kWispFrames = 20.0f;
-    static constexpr float kWispBorn = 0.18f, kWispGrown = 0.60f;  // metres across
-    static constexpr float kWispRise = 0.35f;      // metres a second
-    static constexpr float kWispGrey = 0.45f;
-    static constexpr float kWispAlpha = 0.16f;
+    static constexpr float kWispBehind = 0.55f;    // metres behind the origin, past the flame
+    static constexpr float kWispFrames = 12.0f;
+    static constexpr float kWispBorn = 0.15f, kWispGrown = 0.45f;  // metres across
+    static constexpr float kWispRise = 0.25f;      // metres a second
+    static constexpr float kWispGrey[3] = {0.30f, 0.30f, 0.32f};
+    static constexpr float kWispAlpha = 0.30f;
 
     static constexpr int kShots = 16;
     static constexpr int kEmbers = 256;
