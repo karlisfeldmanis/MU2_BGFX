@@ -10,13 +10,17 @@
 namespace mu::game {
 namespace {
 
-constexpr int kWisps = 72;
+constexpr int kWisps = 90;
 // Spawned within this of the camera's point, and let go past a little more.
-constexpr float kReach = 34.0f;
+constexpr float kReach = 28.0f;
 constexpr float kLetGo = 40.0f;
 constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 // How far under the floor the layer lies, and the sheets' half width and growth.
-constexpr float kDepthMin = 1.5f, kDepthMax = 4.5f;
+// 0.8-3 m since the user asked to see them round the castle's court too (2026-10-02: 'also i
+// want to see those clouds in voids also in starting point in BC'), where only a narrow band of
+// void shows past the court; and 90 within 28 m rather than 72 within 34.
+// Then 0.2-1.5: deeper, the court's edges sloping into the chasm hid them.
+constexpr float kDepthMin = 0.2f, kDepthMax = 1.5f;
 constexpr float kSizeMin = 7.0f, kSizeMax = 11.0f;
 constexpr float kGrowth = 0.3f;
 constexpr float kFadeOut = 4.0f;  // seconds, when a cloud drifts towards ground
@@ -29,7 +33,8 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // the drift 0.22 to 0.5 m/s, the turn 0.02 to 0.045. Then 'we need more clouds': 38 to 72 over
 // 34 m, each a little fainter, 0.055 to 0.05, so their overlap stays dark; and 'little bit to
 // vissible': 0.038.
-constexpr float kAlpha = 0.038f;
+// 0.048 with them nearer the court, where fewer overlap than over the bridge's wide chasm.
+constexpr float kAlpha = 0.048f;
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').

@@ -86,5 +86,26 @@
         0.497
       ]
     }
-  ]
+  ],
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        0,
+        60
+      ],
+      "colour": [
+        0.55,
+        0.68,
+        1.0
+      ],
+      "low": 0.55,
+      "high": 0.65,
+      "range_tiles": 3.5,
+      "flicker_hz": 0.3,
+      "smooth_seconds": 2.0
+    }
+  ],
+  "emitters_from": "Ours, marked: MU's shafts are a sheet added and light nothing (no AddTerrainLight in any castle). The user, 2026-10-02: 'we need that BC lightng beams at the start actual make lighting'. One pale blue light where each shaft meets the floor, 60 units up, in light_R's own blue, over three and a half tiles, breathing a little."
 }
