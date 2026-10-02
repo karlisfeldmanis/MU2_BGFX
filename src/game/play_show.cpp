@@ -300,6 +300,7 @@ void Play::exhale(float seconds) {
 // fx/eyes.h have the client's code.
 void Play::snort(float seconds) {
     snort_.update(seconds);
+    dust_.update(seconds);
     eyes_.update(seconds);
     const float frames = seconds * 25.0f;
     for (Drawn& one : drawn_) {

@@ -1598,6 +1598,15 @@
         "eRageBlow_3.wav"
       ],
       "from": "SOUND_FURY_STRIKE3, Data\\Sound\\eRageBlow_3.wav. Played at the effect's LifeTime 10, as the ground cracks open (MoveHandlers.cpp:3108)."
+    },
+    "mount_hoof": {
+      "files": [
+        "phorsestep1.wav",
+        "phorsestep2.wav",
+        "phorsestep3.wav"
+      ],
+      "from": "SOUND_RUN_DARK_HORSE_1..3, which ZzzOpenData loads from Data\\Sound\\pHorseStep1-3.wav (ZzzOpenData.cpp:4863); SetPlayerWalk plays one at random, `SOUND_RUN_DARK_HORSE_1 + rand() % 3`, for a Dark Lord on the Dark Horse off a safe tile (ZzzCharacter.cpp:764-767).",
+      "note": "**Ours** on the Horn of Uniria: MuMain gives Uniria no run sound at all, and the user asked for the ride with sound (2026-10-02). Two hoofbeats a bound of the run ride, on the walk's own keys, the hero's alone as his steps are (Play::steps)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

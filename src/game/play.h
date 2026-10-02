@@ -25,6 +25,7 @@
 #include "game/fx/eyes.h"
 #include "game/fx/shadow_stars.h"
 #include "game/fx/snort.h"
+#include "game/fx/dust.h"
 #include "game/fx/forge.h"
 #include "game/fx/bolt.h"
 #include "game/fx/wave.h"
@@ -490,6 +491,7 @@ public:
     // A Bull Fighter's snort and an Elite's eyes: opened by the caller for the same reason as
     // breath; fed in `snort`.
     Snort& snorts() { return snort_; }
+    Dust& dust() { return dust_; }
     Eyes& eyes() { return eyes_; }
     // The Shadows' stars: opened by the caller as the eyes are; fed in `shade`.
     ShadowStars& shadowStars() { return shadowStars_; }
@@ -871,6 +873,10 @@ private:
     Gleam gleam_;
     Forge forge_;
     Snort snort_;
+    // And a ridden horse's dust (fx/dust.h), owed in reference frames as the snorts are.
+    Dust dust_;
+    float dustOwed_ = 0.0f;
+    uint32_t dustSeed_ = 0x3c6ef372u;
     Eyes eyes_;
     ShadowStars shadowStars_;
     // The Shadows' stars, off the same posed frame as the eyes. fx/shadow_stars.h.
@@ -905,6 +911,7 @@ private:
         int deathBell = -1;                                      // the user's bell, his fall
         int shock = -1, shockFemale = -1;                        // his flinch's scream, and hers
         int grass = -1, soil = -1;                               // his footsteps
+        int hoof = -1;  // and his horse's, on the run ride (mount_hoof)
         int wind = -1;                                           // Lorencia's air
         int fire = -1;                                           // a bonfire's crackle
         int fountain = -1;                                       // the fountain's water

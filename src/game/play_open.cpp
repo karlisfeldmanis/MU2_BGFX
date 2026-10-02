@@ -448,6 +448,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.shockFemale = sound_.load("player_shock_female", true);
     heard_.grass = sound_.load("player_step_grass", true);
     heard_.soil = sound_.load("player_step_soil", true);
+    heard_.hoof = sound_.load("mount_hoof", true);
     for (int step : {heard_.grass, heard_.soil}) {
         sound_.vary(step, kStepSemitones, kStepDropDb, kStepDarken);
     }

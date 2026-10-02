@@ -54,9 +54,12 @@ void Play::steps() {
     const sim::Body& him = realm_.hero();
     const FigureBody* look = hero ? hero->figure.body() : nullptr;
     const int clip = hero ? hero->figure.clip() : -1;
+    // And the run ride: the horse's hooves where his feet would be (mount_hoof, ours).
+    const bool riding = look && clip >= 0 &&
+                        (clip == look->rideRunClip || clip == look->rideRunArmedClip);
     const bool walking = hero && look && him.alive() && hero->visible && clip >= 0 &&
                          (clip == look->walkClip || clip == look->walkSafeClip ||
-                          clip == look->runClip);
+                          clip == look->runClip || riding);
     if (!walking || ground_ == nullptr) {
         // Not walking, so the next cycle starts fresh: the client clears both latches the
         // moment the animation is not running.
@@ -87,6 +90,10 @@ void Play::steps() {
     stepKey_ = key;
     if (key < firstFoot) return;
     const auto tread = [&]() {
+        if (riding) {
+            if (heard_.hoof >= 0) emit(heard_.hoof, hero->crown[0], hero->crown[2], hero->id);
+            return;
+        }
         const float metresPerTile = ground_->metresPerTile();
         const int column = int(std::floor(hero->crown[0] / metresPerTile));
         const int row = int(std::floor(-hero->crown[2] / metresPerTile));
