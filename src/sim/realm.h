@@ -846,6 +846,10 @@ private:
     // whether the landing pays mana back (a line pays for the body it was aimed at only).
     void loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce = true,
                bool pays = true);
+    // How many Pyroblasters his hands carry (sim/items.h), and the burst one rolls for off a Fire
+    // Ball that landed on the body `struck`, which stood at (x, y).
+    int pyroblasts(const Body& hero) const;
+    void pyroblast(Body& hero, uint32_t struck, float x, float y, float force);
     // Power Wave: one `Loosed` for the cast, and a flight to every body in the line.
     void looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void arrive();
@@ -1028,6 +1032,7 @@ private:
     Flight flights_[kFlights] = {};
     // An Arcane Echo waiting to be let go: the spell again, at `at`. One at a time; a cast that
     // echoes while one waits does not.
+        bool chain = false;  // a Pyroblaster's burst, which bursts no further
     struct Echo {
         int64_t at = 0;  // 0 for none
         uint32_t target = 0;

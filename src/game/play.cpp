@@ -635,6 +635,18 @@ void Play::update(double seconds) {
                                 to[1], caster->crown[2] + std::sin(centre + turn) * (reach + tile)};
                             shootArrow(*caster, far, 0);
                         }
+                    } else if (happening.a == sim::skill::kFireBall && happening.rune &&
+                               happening.c != 0) {
+                        // A Pyroblaster's burst: thrown from the middle of the monster it
+                        // struck (`c`), not his hand (Realm::pyroblast).
+                        if (const Drawn* off = drawnOf(uint32_t(happening.c));
+                            off != nullptr && off->placed) {
+                            const FigureBody* look = off->figure.body();
+                            const float tall = look ? look->height * look->scale : 1.0f;
+                            const float at[3] = {off->crown[0], off->crown[1] - tall * 0.5f,
+                                                 off->crown[2]};
+                            meteor_.hurl(at, to, happening.whom, false);
+                        }
                     } else if (happening.a == sim::skill::kFireBall) {
                         meteor_.hurl(from, to, happening.whom, atHand);
                     } else if (happening.a == sim::skill::kPoison) {

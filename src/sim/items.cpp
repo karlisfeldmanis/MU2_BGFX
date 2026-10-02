@@ -279,6 +279,10 @@ const PowerRow* powerOf(uint8_t power) {
          "A blow that misses you has a 15% chance to release evil spirits around you, which "
          "strike most of the monsters within ten tiles, raised by your energy",
          false, Kin::DarkKnight, true, true},
+        {Power::Pyroblast, "Pyroblaster",
+         "Fire Ball strikes 50% harder, and one that lands has a 20% chance to burst into four "
+         "more, each flying at a monster near the one it struck",
+         true, Kin::DarkWizard},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;

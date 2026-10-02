@@ -91,6 +91,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         }
         return;
     }
+    // A Pyroblaster's Fire Ball strikes harder, its burst's too (sim::kPyroblastForce).
+    if (row != nullptr && row->number == skill::kFireBall && attacker.player &&
+        pyroblasts(attacker) > 0) {
+        force *= kPyroblastForce;
+    }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
@@ -564,7 +569,84 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
     }
     // Point blank, or no room in the air: it lands now.
     if (Body* struck = body(at); struck && struck->alive()) {
+        const float x = struck->x, y = struck->y;
+        const size_t said = happenings_.size();
         strikeAt(hero, *struck, force, &row, true, pays);
+        if (row.number == skill::kFireBall && hero.player && said < happenings_.size() &&
+            happenings_[said].what == What::Hit) {
+            pyroblast(hero, at, x, y, force);
+        }
+    }
+}
+
+int Realm::pyroblasts(const Body& hero) const {
+    if (!tables_ || !hero.player) return 0;
+    int worn = 0;
+    for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
+        const Held& hand = bag_[slot];
+        if (hand.empty()) continue;
+        for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
+            const PowerRow* power = powerOf(hand.powers[socket]);
+            worn += power != nullptr && power->power == Power::Pyroblast && power->kin == hero.kin;
+        }
+    }
+    return worn;
+}
+
+void Realm::pyroblast(Body& hero, uint32_t struck, float x, float y, float force) {
+    const int worn = pyroblasts(hero);
+    if (worn == 0 || !hero.alive()) return;
+    // Each worn rolls off the sockets' stream, drawn only when one is worn.
+    bool burst = false;
+    for (int i = 0; i < worn && !burst; ++i) burst = runeDice_.nextBool(kPyroblastChance);
+    const SkillRow* row = skillNumbered(skill::kFireBall);
+    if (!burst || row == nullptr) return;
+    // The nearest kPyroblastChain living monsters round the one it struck and in its sight, by
+    // distance and then by id, so the log is fixed.
+    struct Near {
+        float d2;
+        uint32_t id;
+    };
+    Near nearest[kPyroblastChain];
+    int count = 0;
+    for (const Body& b : bodies_) {
+        if (!b.monster() || !b.alive() || b.id == struck) continue;
+        const float dx = b.x - x, dy = b.y - y;
+        const float d2 = dx * dx + dy * dy;
+        if (d2 > kPyroblastReach * kPyroblastReach) continue;
+        if (!router_.sees(x, y, b.x, b.y, content::kWallNoMove)) continue;
+        const Near one{d2, b.id};
+        const auto before = [](const Near& l, const Near& r) {
+            return l.d2 < r.d2 || (l.d2 == r.d2 && l.id < r.id);
+        };
+        if (count == kPyroblastChain && !before(one, nearest[count - 1])) continue;
+        int at = count < kPyroblastChain ? count++ : count - 1;
+        while (at > 0 && before(one, nearest[at - 1])) {
+            nearest[at] = nearest[at - 1];
+            --at;
+        }
+        nearest[at] = one;
+    }
+    core::logf("pyroblaster: tick %lld, off #%u, %d fire balls", (long long)tick_, struck, count);
+    for (int i = 0; i < count; ++i) {
+        // Flown from the struck monster at the row's pace, a tick at least so it always flies.
+        // Said as his Fire Ball let go with `c` the monster it flies from and `rune` set, which
+        // is how the drawing knows to throw it from there.
+        const float gap = std::max(0.0f, std::sqrt(nearest[i].d2) - kBoltStopsShort);
+        const int32_t air = std::max<int32_t>(
+            1, int32_t(std::lround(gap / std::max(1.0f, row->flies) * kTicksPerSecond)));
+        say(What::Loosed, hero, skill::kFireBall, air, int32_t(struck), nearest[i].id);
+        happenings_.back().rune = true;
+        bool held = false;
+        for (Flight& one : flights_) {
+            if (one.at != 0) continue;
+            one = Flight{tick_ + air, nearest[i].id, skill::kFireBall, force, false, true};
+            held = true;
+            break;
+        }
+        if (!held) {
+            if (Body* target = body(nearest[i].id)) strikeAt(hero, *target, force, row, true, false);
+        }
     }
 }
 
@@ -667,7 +749,18 @@ void Realm::arrive() {
         // `CheckTargetRange`'s own first line is `to->Live`.
         Body* target = body(flight.target);
         if (!target || !target->alive()) continue;
+        const float x = target->x, y = target->y;
+        const size_t said = happenings_.size();
         strikeAt(hero, *target, flight.force, row, true, flight.pays);
+        // A Pyroblaster's burst is the rune's, drawn in its colour; his own Fire Ball that
+        // landed may burst.
+        if (said < happenings_.size()) {
+            if (flight.chain) {
+                happenings_[said].rune = true;
+            } else if (flight.skill == skill::kFireBall && happenings_[said].what == What::Hit) {
+                pyroblast(hero, flight.target, x, y, flight.force);
+            }
+        }
     }
 }
 

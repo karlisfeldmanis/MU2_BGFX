@@ -419,7 +419,8 @@ enum class Power : uint8_t {
     Bloodwell = 9,
     Frenzy = 10,
     Renewal = 11,
-    Spirits = 12
+    Spirits = 12,
+    Pyroblast = 13
 };
 struct PowerRow {
     Power power;
@@ -550,5 +551,17 @@ constexpr float kFrostWound = 0.5f;
 // channel ends, without his arm and without holding him. invention.
 constexpr double kEchoChance = 0.20;  // 20% since 2026-10-01, as Stormcall
 constexpr int64_t kEchoTicks = 6;  // 0.3 s: two throws, read apart
+// **Pyroblaster**, the Dark Wizard's second weapon rune (the user, 2026-10-02: "DW only rune,
+// which makes Fireball 50% stronger and there is chance of chain reactiion with 4 monsters
+// dooing fireballs"): his Fire Ball strikes at kPyroblastForce, and one that lands has
+// kPyroblastChance, each one worn rolling, to burst into kPyroblastChain more, each flying from
+// the monster it struck at another within kPyroblastReach tiles of it and in its sight, the
+// nearest first. They are his Fire Ball at the cast's force, paying nothing, and burst no
+// further. invention, all of it.
+constexpr float kPyroblastForce = 1.5f;
+constexpr double kPyroblastChance = 0.20;
+constexpr int kPyroblastChain = 4;
+// Eight tiles, Evil Spirit's ten less two: at five most bursts in Lorencia found nothing near.
+constexpr float kPyroblastReach = 8.0f;
 
 }  // namespace mu::sim
