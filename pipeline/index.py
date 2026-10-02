@@ -1032,7 +1032,16 @@ def fixed(declared: dict, corrections: Path) -> dict:
         if fix.get("drop"):
             placed.remove(closest)
             applied += 1
-        elif "height" in fix:
+            continue
+
+        # And one slid across the floor, in tiles as `near` is: a laid table's food stood
+        # at its edge rather than its middle.
+        if "at" in fix:
+            closest["at"][0] = float(fix["at"][0]) * 100.0
+            closest["at"][1] = float(fix["at"][1]) * 100.0
+            applied += 1
+
+        if "height" in fix:
             closest["at"][2] = float(fix["height"]) * 100.0
             applied += 1
 

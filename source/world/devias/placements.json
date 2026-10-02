@@ -1,6 +1,22 @@
 {
   "world": "devias",
   "summary": "What the extraction cannot know, for Devias: its townspeople. Nine of Version075's, and Apostle Devin, Sevina the Priestess and the Messenger of Archangel, who are ours. See docs/devias-port.md section 1.7.",
+  "fixes": [
+    {
+      "model": "Object48",
+      "near": [230.79, 26.68],
+      "at": [230.5, 27.0],
+      "was": [230.79, 26.68],
+      "why": "OURS: the tavern's laid table of grapes, goblet and bottles stood 0.3 m off the middle of its plank table (Object42 at 230.5, 27.0), at the edge of the short side; the user asked for the food more on the centre of the table (2026-10-02). Moved onto the table's own centre, height unchanged."
+    },
+    {
+      "model": "Object49",
+      "near": [234.56, 26.56],
+      "at": [234.5, 27.0],
+      "was": [234.56, 26.56],
+      "why": "OURS: the laid table with apples, the same story on the next plank table (Object42 at 234.5, 27.0), 0.44 m toward its end. Moved onto the table's centre, height unchanged."
+    }
+  ],
   "spawns": [
     {
       "model": "SnowMerchant01",
