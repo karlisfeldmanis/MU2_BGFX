@@ -303,7 +303,9 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                 for (int a = 0; a < 3; ++a) lantern.anchor.point[a] = 0.0f;
                 lantern.breathes = true;
                 if (candles) {
-                    lantern.scale = 0.5f;
+                    // Ours: half MU's 0.5 (the user, 2026-10-02, of the candles over the void:
+                    // 'those sparkle to big').
+                    lantern.scale = 0.25f;
                     for (int a = 0; a < 3; ++a) lantern.colour[a] = kCandleColour[a];
                     lantern.breathBase = 0.5f;
                     lantern.breathAmp = 0.5f;
