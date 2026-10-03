@@ -589,6 +589,25 @@ private:
     void spend() {
         int points = realm_->hero().pointsInHand;
         if (points <= 0) return;
+        // First what a carried piece of his class asks that he is a few points short of (the
+        // user, 2026-10-03: a socketed drop or reward has to be read as a replacement): the
+        // Catacombs' Double Blade asks 120 agility, a knight of level 107 had 113 and carried it
+        // into the next sale. Within thirty points, strength and agility both.
+        {
+            const sim::Body& me = realm_->hero();
+            for (int slot = sim::kWorn; slot < sim::kSlots && points > 0; ++slot) {
+                const sim::Held& one = realm_->satchel()[slot];
+                if (!nearlyFits(one)) continue;
+                const auto a = sim::asks(rowOf(one), one.refinement, one.excellent != 0);
+                const int str = std::max(0, int(a.strength) - me.points.strength);
+                const int agi = std::max(0, int(a.agility) - me.points.agility);
+                const int s1 = std::min(points, str);
+                const int a1 = std::min(points - s1, agi);
+                realm_->spend(s1, a1, 0, 0);
+                points -= s1 + a1;
+            }
+            if (points <= 0) return;
+        }
         // First the strength his class's best armour at his level asks (Needs: 3 x drop level x
         // raw / 100 + 20), as a player keeps up with his set: a wizard of level 114 with all of it
         // in energy had 21 and could not wear even the Pad Armor, which asks 29.
@@ -738,7 +757,19 @@ private:
     // How good he is now: his blow and his guard, as the realm has re-reckoned them.
     double score() const {
         const sim::Body& hero = realm_->hero();
-        return blow() * 2.0 + hero.stats.defense + hero.stats.defenseRate * 0.5;
+        // **And what his sockets are worth** (the user, 2026-10-03: "if armor or weapon drop with
+        // sockets he has to understand that it's a good replacement"): each socket a share of the
+        // rest, a set one twice that -- a rune is power the band and the guard do not show, and an
+        // empty socket is one waiting for the next. A Double Blade +0 with two lost to a Blade +2
+        // with none, and a knight wore the Blade.
+        double sockets = 0.0;
+        for (int slot = 0; slot < sim::kWorn; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty()) continue;
+            for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) sockets += one.powers[k] ? 2.0 : 1.0;
+        }
+        const double base = blow() * 2.0 + hero.stats.defense + hero.stats.defenseRate * 0.5;
+        return base * (1.0 + 0.04 * sockets);
     }
 
     // The same piece: what a trial took off is found again by this, wherever it went.
@@ -867,8 +898,11 @@ private:
             if (jewel.empty()) continue;
             const content::ItemRow& row = rowOf(jewel);
             if (sim::creation(row)) {
-                for (const int to : {int(sim::kWeaponRight), int(sim::kWeaponLeft)}) {
-                    if (realm_->satchel()[to].empty()) continue;
+                // Any worn piece it may be set in, the weapon and shield first: a Keen Eye,
+                // a Bloodwell, an Undying go in armour and never in a weapon (sim::settable).
+                for (const int to : {int(sim::kWeaponRight), int(sim::kWeaponLeft), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}) {
+                    if (to >= sim::kWorn || realm_->satchel()[to].empty()) continue;
+                    if (!sim::settable(*tables_, jewel, realm_->satchel()[to], options_.kin)) continue;
                     const std::string on = rowOf(realm_->satchel()[to]).label;
                     if (realm_->refine(slot, to)) {
                         say("sets %s into his %s", row.label.c_str(), on.c_str());
@@ -942,8 +976,23 @@ private:
     // crossbow carried six quivers of arrows, three Guardian Angels, three Imps and two Horns of
     // Uniria, and her bag had no room for a quiver of bolts -- 148 trips for arrows she never
     // bought in eight hours.
+    // Whether he is within thirty points of strength and agility of wearing a carried piece of
+    // his class he cannot wear yet: kept through a sale, and his points go there first (spend).
+    bool nearlyFits(const sim::Held& one) const {
+        if (one.empty()) return false;
+        const content::ItemRow& row = rowOf(one);
+        if (sim::placeOf(row) < 0 || sim::ammunition(row)) return false;
+        if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) return false;
+        if (sim::fits(*tables_, realm_->wearer(), one)) return false;
+        const sim::Body& me = realm_->hero();
+        const auto a = sim::asks(row, one.refinement, one.excellent != 0);
+        const int str = std::max(0, int(a.strength) - me.points.strength);
+        const int agi = std::max(0, int(a.agility) - me.points.agility);
+        return a.level <= me.level && a.energy <= me.points.energy && str + agi > 0 && str + agi <= 30;
+    }
     bool keepsAt(int slot) const {
         const sim::Held& one = realm_->satchel()[slot];
+        if (slot >= sim::kWorn && nearlyFits(one)) return true;
         if (one.empty() || !keeps(one)) return false;
         const content::ItemRow& row = rowOf(one);
         if (sim::ammunition(row)) return archer() && feeds(row);

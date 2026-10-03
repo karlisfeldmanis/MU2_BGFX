@@ -333,7 +333,13 @@ QuestRow catacombs() {
     row.paid[2] = {.item = "HelmElf03", .kin = elf, .sockets = 1, .firstOnly = true};      // Wind
     row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::KeenEye), .firstOnly = true};
     row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    row.paidCount = 5;
+    // **And the knight a Double Blade with two sockets** (the user, 2026-10-03: "we probably
+    // need to give some better weapon from some quest for DK with sockets so he can perform
+    // better"): the bots showed him past level 150 in a Blade -- the shops stop at it and the
+    // only one-handed swords above it were Tersia's. One-handed, so his shield and Defense stay;
+    // Stormcall and Keen Eye fill its sockets. Tersia's third floor pays three sockets now.
+    row.paid[5] = {.item = "Sword14", .kin = knight, .sockets = 2, .firstOnly = true};  // Double Blade
+    row.paidCount = 6;
     return row;
 }
 
@@ -577,7 +583,8 @@ QuestRow tersiaThird() {
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
     // A better weapon, two sockets, and a rune for it: the knight's one-handed, so a shield fits.
-    row.paid[row.paidCount++] = {.item = "Sword14", .kin = knight, .sockets = 2,
+    // His Double Blade with three, since the Catacombs pay one with two (2026-10-03).
+    row.paid[row.paidCount++] = {.item = "Sword14", .kin = knight, .sockets = 3,
                                  .firstOnly = true};  // Double Blade
     row.paid[row.paidCount++] = {.item = "Staff04", .kin = wizard, .sockets = 2,
                                  .firstOnly = true};  // Thunder Staff

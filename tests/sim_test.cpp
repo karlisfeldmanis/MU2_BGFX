@@ -5844,8 +5844,10 @@ void testRunes(const content::Tables& tables) {
                     }
                 }
                 checkEqual(runes, 1, "each link's first clear pays every class its rune");
-                // The Pit's two: its boots, and the ring (2026-10-01).
-                checkEqual(pieces, link == 2 ? 2 : 1, "and one socketed piece of his own");
+                // The Pit's two: its boots, and the ring (2026-10-01). And the Catacombs' knight
+                // two: his helm and the Double Blade (2026-10-03).
+                const bool blade = link == 0 && kin == int(sim::Kin::DarkKnight);
+                checkEqual(pieces, link == 2 || blade ? 2 : 1, "and one socketed piece of his own");
                 checkEqual(again, 0, "and a repeat pays neither");
             }
         }
