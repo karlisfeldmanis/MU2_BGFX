@@ -4,6 +4,7 @@
 
 #include <execinfo.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <signal.h>
 #include <spawn.h>
 #include <sys/stat.h>
@@ -40,6 +41,10 @@ std::mutex g_lock;
 std::condition_variable g_wake;
 bool g_stopping = false;
 char g_altStack[64 * 1024];
+// The thread that beats, and where its stack goes when the watch stops it (onMainStack).
+pthread_t g_main;
+char g_hangPath[1024];
+std::atomic<bool> g_stackSaid{false};
 
 int64_t nowMs() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -103,6 +108,21 @@ void onTerminate() {
     std::abort();
 }
 
+// The main thread's own stack, written by the main thread: the watch signals it and this runs
+// on top of whatever it is stuck in. A wait in the kernel is interrupted for it and resumed.
+void onMainStack(int) {
+    const int fd = ::open(g_hangPath, O_WRONLY | O_APPEND);
+    if (fd >= 0) {
+        say(fd, "the main thread, where the watch found it (names mangled: pipe through "
+                "c++filt):\n");
+        void* frames[128];
+        const int n = backtrace(frames, 128);
+        backtrace_symbols_fd(frames, n, fd);
+        ::close(fd);
+    }
+    g_stackSaid = true;
+}
+
 // /usr/bin/sample: every thread's stack, symbolised, over two seconds of the stuck process.
 // Run from outside it, so it works whatever the main thread is stuck in.
 void sampleInto(const std::string& path, double goneSeconds) {
@@ -110,9 +130,26 @@ void sampleInto(const std::string& path, double goneSeconds) {
         FILE* f = std::fopen(path.c_str(), "w");
         if (!f) return;
         std::fprintf(f, "mu2 froze: no frame for %.1f s, pid %d\n"
-                        "Read the main thread (com.apple.main-thread) first.\n\n",
+                        "The main thread's stack, then the log's tail, then /usr/bin/sample's "
+                        "look at every thread.\n\n",
                      goneSeconds, int(getpid()));
         std::fclose(f);
+    }
+    // Said before the sample, not after: 11:36 on 2026-10-03 the game was closed during the
+    // sample's two seconds, and the report kept its header and nothing else.
+    std::snprintf(g_hangPath, sizeof(g_hangPath), "%s", path.c_str());
+    g_stackSaid = false;
+    pthread_kill(g_main, SIGUSR2);
+    for (int i = 0; i < 50 && !g_stackSaid; ++i)
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    {
+        const int fd = ::open(path.c_str(), O_WRONLY | O_APPEND);
+        if (fd < 0) return;
+        if (!g_stackSaid) say(fd, "(the main thread did not answer the watch)\n");
+        say(fd, "\nthe last of the log:\n");
+        logWriteTail(fd);
+        say(fd, "\n");
+        ::close(fd);
     }
     const std::string samplePath = path + ".sample";
     const std::string pid = std::to_string(getpid());
@@ -142,8 +179,6 @@ void sampleInto(const std::string& path, double goneSeconds) {
     } else {
         say(fd, "(sample could not be run)\n");
     }
-    say(fd, "\nthe last of the log:\n");
-    logWriteTail(fd);
     ::close(fd);
 }
 
@@ -189,6 +224,13 @@ void watchStart(const char* root) {
     act.sa_flags = SA_SIGINFO | SA_ONSTACK;
     sigemptyset(&act.sa_mask);
     for (int sig : {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT, SIGTRAP}) sigaction(sig, &act, nullptr);
+
+    g_main = pthread_self();
+    struct sigaction stack{};
+    stack.sa_handler = onMainStack;
+    stack.sa_flags = SA_RESTART;
+    sigemptyset(&stack.sa_mask);
+    sigaction(SIGUSR2, &stack, nullptr);
     std::set_terminate(onTerminate);
 }
 

@@ -143,6 +143,7 @@ private:
     FILE* shadowLog_ = nullptr;
     std::vector<float> pointGrid_;  // x, y, z a point
 
+    size_t findingsSaid_ = 0;  // the audit's first lines already in the log
     bool quitEarly_ = false;
     bool backNow_ = false;  // --lobby-back's frame has come
 };

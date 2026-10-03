@@ -1391,6 +1391,12 @@ void PlayMode::report(Context& ctx) {
         if (play.findings().total() > 0) {
             core::logError("  play: %llu invariants broken",
                            (unsigned long long)play.findings().total());
+            // What broke, once a kind: the count alone ran to 865 over a freeze on
+            // 2026-10-03 and never said which rule it was.
+            const std::vector<std::string>& first = play.findings().first;
+            if (findingsSaid_ > first.size()) findingsSaid_ = 0;  // a new world's audit
+            for (; findingsSaid_ < first.size(); ++findingsSaid_)
+                core::logError("  play: broken: %s", first[findingsSaid_].c_str());
         }
     }
     if (world_.crowd().figureCount() > 0) {
