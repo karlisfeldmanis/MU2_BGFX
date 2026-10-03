@@ -656,6 +656,7 @@ void Realm::setCastle(int castle) {
         if (kind >= 0 && !tables_->kinds[size_t(kind)].figure.empty()) statues[drawn++] = number;
     }
     const int32_t statue = drawn > 0 ? statues[dice_.nextInt(0, drawn)] : kCastleStatue;
+    core::logf("castle: Blood Castle %d, the statue %d of %d standing", castle, statue, drawn);
     for (Body& one : bodies_) {
         if (!one.monster()) continue;
         const int32_t number = tables_->kinds[size_t(one.kind)].number;

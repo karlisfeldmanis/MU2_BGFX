@@ -427,6 +427,7 @@ void PlayMode::runScript(Context& ctx) {
         world_.played().setCastle(ctx.castleNext);
         ctx.castleNext = 0;
     }
+    if (world_.played().isOpen() && args.castle > 0) world_.played().setCastle(args.castle);
     if (world_.played().isOpen() && args.castleOpen) world_.played().openCastleDoor();
     if (world_.played().isOpen() && args.castleFree) world_.played().freeCastle();
     if (world_.played().isOpen() && args.castleBridge >= 0) {
