@@ -1564,6 +1564,18 @@
       ],
       "from": "Sounds[4], slot 193 -- 403 REDSKULLDIE, mRedSkullDie.wav. SetMonsterSound(..., 192, -1, 194, -1, 193) in ZzzOpenData.cpp:3814-3819 (MONSTER_MODEL_RED_SKELETON_KNIGHT, Blood Castle's Red Skeleton Knight); offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:343-345)."
     },
+    "magicskeleton_move": {
+      "files": [
+        "mMagicSkull.wav"
+      ],
+      "from": "Sounds[0], slot 186 -- 396 MAGICSKULL1. SetMonsterSound(..., 186, -1, -1, -1, 187) in ZzzOpenData.cpp:3793-3797 (MONSTER_MODEL_MAGIC_SKELETON, Blood Castle's Magic Skeleton), mMagicSkull.wav loaded into both slots; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:337-338); no attack sound."
+    },
+    "magicskeleton_die": {
+      "files": [
+        "mMagicSkull.wav"
+      ],
+      "from": "Sounds[4], slot 187 -- 397 MAGICSKULL2, the same file. SetMonsterSound(..., 186, -1, -1, -1, 187) in ZzzOpenData.cpp:3793-3797 (MONSTER_MODEL_MAGIC_SKELETON, Blood Castle's Magic Skeleton), mMagicSkull.wav loaded into both slots; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:337-338); no attack sound."
+    },
     "poisonshadow_move": {
       "files": [
         "mShadow1.wav",

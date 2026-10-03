@@ -1,0 +1,929 @@
+{
+  "item": "MagicSkeleton01",
+  "mu_name": "Magic Skeleton",
+  "mu_name_from": "MuMain _enum.h MONSTER_MAGIC_SKELETON_1 (89), drawn as MODEL_MAGIC_SKELETON = MODEL_MONSTER01 + 62, so OpenMonsterModel loads Monster63.bmd; the client's name is 마법해골, 'magic skull' (ZzzCharacter.cpp:13405). WebZen's Monster.txt:117 calls breed 89 'Spirit Sorcerer', the castle's quota-2 breed; MuMain's English client and OpenMU S6 BloodCastle1.cs call it Magic Skeleton. docs/blood-castle-port.md Part B 3.",
+  "world": "bloodcastle",
+  "object_type": 89,
+  "monster": {
+    "model_index": 62,
+    "scale": 1.2
+  },
+  "monster_from": "ZzzCharacter.cpp:13393-13406, CreateMonster, case MONSTER_MAGIC_SKELETON_1..8: OpenMonsterModel(MONSTER_MODEL_MAGIC_SKELETON); CreateCharacter(Key, MODEL_MAGIC_SKELETON, ...); Weapon[0] = MODEL_STAFF at Level 11; Scale = 1.2f. Its attack (MoveCharacterVisual's attack switch, ZzzCharacter.cpp:2071-2083): at attack time 14, from bone 33, MODEL_PIERCING+1 and a BITMAP_JOINT_THUNDER joint to the target -- a lightning bolt, so its attack_skill here is Lightning (3), the Devil's and the Thunder Lich's.",
+  "right_hand": "Staff01",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "MODEL_STAFF is Item/Staff01.bmd, the Skull Staff (cooked). MODEL_MAGIC_SKELETON is not in CreateCharacter's weapon-link switch; bone 33, knife_gdf under the right hand, is where its lightning leaves from and where the knights' switch puts Weapon[0]. MU's Level 11 is not carried: a held weapon is +0 here.",
+  "profile": "monster",
+  "rig_from": "Seven actions, exported with --actions=all. 55 bones.",
+  "sheets": {
+    "bsh01": "magicskeleton_bsh01.png",
+    "bons": "bons.png",
+    "bsh02": "magicskeleton_bsh02.png",
+    "bsh03": "magicskeleton_bsh03.png"
+  },
+  "sheet_from": "Four meshes: bsh01.OZJ (128x256, no alpha: the robe and the armour, 645 triangles), bons (the Skeleton's, shared: the skull, 56), bsh02.OZT (32x64, the red cloth strip, cut out, 47) and bsh03.OZT (32x32, a purple wisp of flame, cut out, 56). Decoded under a magicskeleton_ prefix.",
+  "sheet_materials": {
+    "bsh01": "cloth",
+    "bons": "bone",
+    "bsh02": "cloth",
+    "bsh03": "cloth"
+  },
+  "sheet_materials_from": "Read off the sheets at 2x: bsh01 is a dark red robe with gold seams over black lacquered plate on the legs and arms; bsh02 the same red cloth, bsh03 a wisp. All cloth: the plate shares its island with the robe (island 7, 292 triangles), so it takes the robe's, its black kept as the sheet paints it. bons the skull, bone.",
+  "cutout": [
+    "bsh02",
+    "bsh03"
+  ],
+  "cutout_from": "bsh02 and bsh03 are .OZT, their alpha cut.",
+  "glow": {
+    "bsh02": {
+      "pulse": [
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "glow_from": "ZzzObject.cpp:1250-1254, the render switch, MODEL_MAGIC_SKELETON: RenderBody as usual, then RenderMesh(2, RENDER_TEXTURE, ..., BlendMesh 2, light 1.0) -- mesh 2, bsh02, drawn again with its own index as the BlendMesh, so added and unlit at full light. Here it is drawn as that glow alone.",
+  "sounds_from": "ZzzOpenData.cpp:3793-3797: mMagicSkull loaded twice, SetMonsterSound(..., 186, -1, -1, -1, 187) -- offsets from SOUND_MONSTER_BULL1 = 210: 396 MAGICSKULL1 to walk, 397 MAGICSKULL2 (the same file) to die, no attack sound (DSPlaySound.h:337-338). Wired as magicskeleton_* in sounds.json.",
+  "islands_from": "40 islands for 804 triangles. Island 0 (56, u 0.45-0.72) is the .obj's whole bons group, the skull -- bone; 12-39, two triangles each over the whole sheet, are bsh03's 28 wisp quads; the rest bsh01's robe and plate and bsh02's strip. All but the skull cloth. They arrived as skin, the monster profile's default.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 56,
+      "area": 312.8,
+      "along": [
+        9.4,
+        15.3
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.846,
+        0.073,
+        0.955,
+        0.723
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 48,
+      "area": 1643.4,
+      "along": [
+        -4.9,
+        14.5
+      ],
+      "mu_uv": [
+        0.732,
+        0.011,
+        0.98,
+        0.197
+      ],
+      "bake_uv": [
+        0.628,
+        0.905,
+        0.903,
+        0.937
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 65,
+      "area": 1686.7,
+      "along": [
+        2.7,
+        44.9
+      ],
+      "mu_uv": [
+        0.489,
+        0.012,
+        0.719,
+        0.28
+      ],
+      "bake_uv": [
+        0.866,
+        0.207,
+        0.935,
+        0.884
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 14,
+      "area": 930.4,
+      "along": [
+        -19.8,
+        11.9
+      ],
+      "mu_uv": [
+        0.496,
+        0.258,
+        0.783,
+        0.373
+      ],
+      "bake_uv": [
+        0.722,
+        0.266,
+        0.961,
+        0.934
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 48,
+      "area": 1689.3,
+      "along": [
+        -30.6,
+        4.2
+      ],
+      "mu_uv": [
+        0.732,
+        0.011,
+        0.98,
+        0.197
+      ],
+      "bake_uv": [
+        0.512,
+        0.912,
+        0.606,
+        0.939
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 65,
+      "area": 1699.6,
+      "along": [
+        -28.3,
+        0.2
+      ],
+      "mu_uv": [
+        0.489,
+        0.012,
+        0.719,
+        0.28
+      ],
+      "bake_uv": [
+        0.846,
+        0.234,
+        0.941,
+        0.784
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 14,
+      "area": 930.4,
+      "along": [
+        -41.1,
+        -13.8
+      ],
+      "mu_uv": [
+        0.496,
+        0.258,
+        0.783,
+        0.373
+      ],
+      "bake_uv": [
+        0.786,
+        0.304,
+        0.961,
+        0.934
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 292,
+      "area": 19155.5,
+      "along": [
+        -23.4,
+        40.7
+      ],
+      "mu_uv": [
+        0.008,
+        0.001,
+        0.441,
+        0.727
+      ],
+      "bake_uv": [
+        0.686,
+        0.011,
+        0.953,
+        0.955
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 137,
+      "area": 25029.6,
+      "along": [
+        -58.6,
+        24.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.512,
+        0.343,
+        0.957,
+        0.94
+      ]
+    },
+    {
+      "island": 9,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 42.5,
+      "along": [
+        4.0,
+        24.7
+      ],
+      "mu_uv": [
+        0.704,
+        0.443,
+        0.836,
+        0.513
+      ],
+      "bake_uv": [
+        0.922,
+        0.452,
+        0.942,
+        0.495
+      ]
+    },
+    {
+      "island": 10,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 136.2,
+      "along": [
+        4.0,
+        24.7
+      ],
+      "mu_uv": [
+        0.704,
+        0.468,
+        0.828,
+        0.513
+      ],
+      "bake_uv": [
+        0.922,
+        0.488,
+        0.94,
+        0.495
+      ]
+    },
+    {
+      "island": 11,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1583.7,
+      "along": [
+        13.3,
+        21.4
+      ],
+      "mu_uv": [
+        0.009,
+        0.577,
+        0.315,
+        0.994
+      ],
+      "bake_uv": [
+        0.931,
+        0.043,
+        0.937,
+        0.051
+      ]
+    },
+    {
+      "island": 12,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 769.4,
+      "along": [
+        -26.2,
+        10.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.156,
+        0.156
+      ]
+    },
+    {
+      "island": 13,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 772.3,
+      "along": [
+        -21.0,
+        5.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.512,
+        0.178,
+        0.657,
+        0.322
+      ]
+    },
+    {
+      "island": 14,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1365.8,
+      "along": [
+        -38.8,
+        1.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.011,
+        0.178,
+        0.156,
+        0.322
+      ]
+    },
+    {
+      "island": 15,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 997.3,
+      "along": [
+        -35.3,
+        -2.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.512,
+        0.344,
+        0.657,
+        0.489
+      ]
+    },
+    {
+      "island": 16,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1024.5,
+      "along": [
+        -42.9,
+        -3.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.178,
+        0.011,
+        0.323,
+        0.156
+      ]
+    },
+    {
+      "island": 17,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1241.1,
+      "along": [
+        -44.4,
+        -5.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.512,
+        0.511,
+        0.657,
+        0.656
+      ]
+    },
+    {
+      "island": 18,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 640.4,
+      "along": [
+        -20.8,
+        10.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.178,
+        0.178,
+        0.323,
+        0.322
+      ]
+    },
+    {
+      "island": 19,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 633.4,
+      "along": [
+        -17.5,
+        6.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.011,
+        0.678,
+        0.156,
+        0.822
+      ]
+    },
+    {
+      "island": 20,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 852.3,
+      "along": [
+        -31.3,
+        4.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.011,
+        0.344,
+        0.156,
+        0.489
+      ]
+    },
+    {
+      "island": 21,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1319.5,
+      "along": [
+        -27.8,
+        1.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.178,
+        0.678,
+        0.323,
+        0.822
+      ]
+    },
+    {
+      "island": 22,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1133.8,
+      "along": [
+        -38.8,
+        -2.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.178,
+        0.344,
+        0.323,
+        0.489
+      ]
+    },
+    {
+      "island": 23,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 600.9,
+      "along": [
+        -37.9,
+        -4.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.345,
+        0.678,
+        0.49,
+        0.822
+      ]
+    },
+    {
+      "island": 24,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1351.5,
+      "along": [
+        -31.1,
+        -6.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.345,
+        0.011,
+        0.49,
+        0.156
+      ]
+    },
+    {
+      "island": 25,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 734.5,
+      "along": [
+        -32.6,
+        -5.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.984,
+        0.996
+      ],
+      "bake_uv": [
+        0.178,
+        0.844,
+        0.322,
+        0.989
+      ]
+    },
+    {
+      "island": 26,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 768.0,
+      "along": [
+        6.0,
+        24.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.512,
+        0.678,
+        0.657,
+        0.822
+      ]
+    },
+    {
+      "island": 27,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 817.9,
+      "along": [
+        8.9,
+        28.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.345,
+        0.178,
+        0.49,
+        0.322
+      ]
+    },
+    {
+      "island": 28,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 706.2,
+      "along": [
+        -5.8,
+        9.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.679,
+        0.011,
+        0.824,
+        0.156
+      ]
+    },
+    {
+      "island": 29,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1476.0,
+      "along": [
+        -7.0,
+        10.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.345,
+        0.344,
+        0.49,
+        0.489
+      ]
+    },
+    {
+      "island": 30,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1006.4,
+      "along": [
+        -23.8,
+        0.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.679,
+        0.178,
+        0.824,
+        0.322
+      ]
+    },
+    {
+      "island": 31,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 1220.6,
+      "along": [
+        -22.4,
+        -2.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.011,
+        0.511,
+        0.156,
+        0.656
+      ]
+    },
+    {
+      "island": 32,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 942.3,
+      "along": [
+        7.2,
+        35.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.679,
+        0.344,
+        0.824,
+        0.489
+      ]
+    },
+    {
+      "island": 33,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 914.8,
+      "along": [
+        9.5,
+        33.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.178,
+        0.511,
+        0.323,
+        0.656
+      ]
+    },
+    {
+      "island": 34,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 611.2,
+      "along": [
+        2.8,
+        14.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.679,
+        0.511,
+        0.824,
+        0.656
+      ]
+    },
+    {
+      "island": 35,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 731.4,
+      "along": [
+        5.1,
+        19.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.345,
+        0.511,
+        0.49,
+        0.656
+      ]
+    },
+    {
+      "island": 36,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 552.6,
+      "along": [
+        -12.4,
+        4.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.679,
+        0.678,
+        0.824,
+        0.822
+      ]
+    },
+    {
+      "island": 37,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 590.9,
+      "along": [
+        -10.1,
+        2.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.512,
+        0.011,
+        0.657,
+        0.156
+      ]
+    },
+    {
+      "island": 38,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 526.7,
+      "along": [
+        -27.0,
+        -2.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.011,
+        0.844,
+        0.156,
+        0.989
+      ]
+    },
+    {
+      "island": 39,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 438.3,
+      "along": [
+        -23.6,
+        -4.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.984,
+        0.996
+      ],
+      "bake_uv": [
+        0.344,
+        0.844,
+        0.488,
+        0.989
+      ]
+    }
+  ]
+}

@@ -8,7 +8,7 @@
     "model_index": 58,
     "scale": 0.8
   },
-  "monster_from": "ZzzCharacter.cpp:13485-13496, CreateMonster, case MONSTER_GIANT_OGRE_1..8: OpenMonsterModel(MONSTER_MODEL_GIANT_OGRE); CreateCharacter(Key, MODEL_GIANT_OGRE, ...); Scale = 0.8f. No weapon, no BlendMesh, no effect of its own: its ranged attack is WebZen's attack type 17, Energy Ball (Monster.txt:115), the Yeti's.",
+  "monster_from": "ZzzCharacter.cpp:13485-13496, CreateMonster, case MONSTER_GIANT_OGRE_1..8: OpenMonsterModel(MONSTER_MODEL_GIANT_OGRE); CreateCharacter(Key, MODEL_GIANT_OGRE, ...); Scale = 0.8f. No weapon, no BlendMesh. Its ranged attack: WebZen's attack type is 17 (Monster.txt:115), but what MuMain draws (MoveCharacterVisual's attack switch, ZzzCharacter.cpp:2090-2105) is MODEL_FIRE subtype 5 from bone 6, a ball of fire flying straight out at 30 units a frame for 40 frames (ZzzEffect.cpp:2580-2584) -- so its attack_skill here is Fire Ball (4), not Energy Ball's orb.",
   "profile": "monster",
   "rig_from": "Eight actions, exported with --actions=all. 70 bones, 1,934 triangles -- the heaviest body in the castle.",
   "sheets": {
