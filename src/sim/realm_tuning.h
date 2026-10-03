@@ -41,6 +41,12 @@ inline void restoreMana(Body& hero) {
 
 // How far past its view range something can be and still keep a monster awake. Realm.cs:63.
 constexpr int kMargin = 8;
+// And never nearer than this, so whatever stands on the screen is awake and wandering: at sight
+// 3 and the margin, Blood Castle's road stood frozen a dozen tiles from him, in plain view (the
+// user, 2026-10-03: 'when BCmonsters is spawned theay are not wondering / moving'). Its own sight
+// still decides what it attacks (Realm::think); this only lets it move. Ours, and Blood Castle's
+// alone: everywhere else the seeded fights are as they were.
+constexpr int kWakeAtLeast = 16;
 // And how much further again it has to get before the monster goes back to sleep. **invention**,
 // and it is here for the picture: a character standing exactly on the margin crosses it twice a
 // second as he shuffles, and a monster that falls asleep is HALTED where it stands -- so the

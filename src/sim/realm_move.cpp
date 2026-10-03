@@ -307,7 +307,9 @@ bool Realm::worth(const Body& beast, const Body& target, int range) const {
 
 void Realm::rouse(Body& beast) {
     const content::MonsterKind& kind = tables_->kinds[size_t(beast.kind)];
-    const float far = float(kind.viewRange + kMargin);
+    const float far = float(tables_->map == kBloodCastleMap
+                                ? std::max(kind.viewRange + kMargin, kWakeAtLeast)
+                                : kind.viewRange + kMargin);
     float nearest = 1e30f;
     for (uint32_t who : players_) {
         // Alive or not, and the "or not" is the point: being roused is about whether anybody
