@@ -26,12 +26,12 @@
       "smooth_seconds": 0.12
     }
   },
-  "glow_from": "Ours: MU draws the shards at a steady BlendMeshLight. The user, 2026-10-03, of the heap by the statue: 'i think yhose crystals has to glow to be with fire'. They breathe with the heap's own fire emitter (below), at its 3 Hz and 0.12 s, and above a plain draw -- 0.9 to 1.5 -- so the crystal reads as lit from inside by the flame.",
+  "glow_from": "Ours: MU draws the shards at a steady BlendMeshLight. The user, 2026-10-03, of the heap by the statue: 'i think yhose crystals has to glow to be with fire'. They breathe with the heap's own light (its emitter, below), at its 3 Hz and 0.12 s, and above a plain draw -- 0.9 to 1.5 -- so the crystal reads as lit from inside by the flame.",
   "why_this_one": "A heap of jagged orange shards, the courtyard's two embers by the Saint statue (12-15.5, 99.5-100), all of it pan_R's soft orange, added: a fire painted as a mesh.",
   "material_note": "pan_R alone, lamplight, added.",
   "emitters": [
     {
-      "kind": "fire",
+      "kind": "lamp",
       "at": [
         0,
         0,
@@ -49,7 +49,7 @@
       "smooth_seconds": 0.12
     }
   ],
-  "emitters_from": "Ours, marked: MU calls no CreateFire on any castle type and the heap burns only by its added sheet. The user asked for the castle's fire emitters (2026-10-02): flames from the heap's middle, 0.9 m up, and CreateFire(0)'s warm light (ZzzEffectFireLeave.cpp:61) over four tiles.",
+  "emitters_from": "Ours, marked: MU calls no CreateFire on any castle type and the heap burns only by its added sheet. The user asked for the castle's fire emitters (2026-10-02), then (2026-10-03): 'remove taht fire from cystals, but keep glowing with some emiter' -- so a lamp, light alone with no flames: CreateFire(0)'s warm colour (ZzzEffectFireLeave.cpp:61) from the heap's middle, 0.9 m up, over four tiles, flickering with the shards' glow",
   "islands": [
     {
       "island": 0,
