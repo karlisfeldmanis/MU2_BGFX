@@ -152,6 +152,10 @@ public:
     // One tick: a decision when one is due, the realm's step, what came of it, and a map change
     // when one is owed.
     void tick() {
+        // The share of a blow his guard lets through, the least seen while one was up.
+        if (realm_->hero().boonUntil > realm_->tick()) {
+            guardSeen_ = std::min(guardSeen_, double(realm_->hero().stats.damageTaken));
+        }
         if (clock_ % kThink == 0) play();
         if (realm_->hero().alive()) {
             ++tally_.alive;
@@ -843,14 +847,48 @@ private:
         if (attackRate <= 0.0) return 0.03;
         return std::clamp(1.0 - defenseRate / attackRate, 0.03, 1.0);
     }
+    // **His real attack, not his bare hand** (the user, 2026-10-03: "lets continue to improve
+    // bots"): the blow of the strongest primary he knows and may throw -- Energy Ball or Fire
+    // Ball, Twisting Slash, Skillshot -- and the ticks it takes, as `press` reckons a skill. The
+    // swing alone said a Larva cost a wizard more than half his health, and he never went down
+    // into the Dungeon.
+    void attack(double* hit, int32_t* ticks) const {
+        const sim::Body& hero = realm_->hero();
+        const sim::Wearer w = realm_->wearer();
+        *hit = blow();
+        *ticks = std::max(1, hero.swingTicks);
+        const auto arm = [&](int32_t at) -> const content::Arm* {
+            return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
+        };
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            if (!row.primary() || !realm_->knows(row.number) || !row.suits(w.hand)) continue;
+            const double base = row.wizardry
+                                    ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
+                                    : blow();
+            const double one = base * sim::force(row, hero.points);
+            const int32_t cast = sim::castTicks(*tables_, hero.kin, hero.points.agility, arm(hero.weapon),
+                                                arm(hero.shield), row);
+            const int32_t t = std::max<int32_t>(1, row.wizardry ? cast : std::max(cast, hero.swingTicks));
+            if (one / t > *hit / *ticks) {
+                *hit = one;
+                *ticks = t;
+            }
+        }
+    }
     double costOf(const content::MonsterKind& kind) const {
         const sim::Body& hero = realm_->hero();
-        const double landed = std::max(1.0, blow() - kind.defense) *
+        double hit = 0.0;
+        int32_t ticks = 1;
+        attack(&hit, &ticks);
+        const double landed = std::max(1.0, hit - kind.defense) *
                               hitChance(hero.stats.attackRate, float(kind.defenseRate));
-        const double seconds = kind.health / landed * std::max(1, hero.swingTicks) / 20.0;
+        const double seconds = kind.health / landed * ticks / 20.0;
+        // And what his guard takes off a blow, as he keeps it up (guardSeen_): Defense, Soul
+        // Barrier, Greater Defense.
         const double taken =
             std::max(0.0, (kind.minimumDamage + kind.maximumDamage) / 2.0 - hero.stats.defense) *
-            hitChance(float(kind.attackRate), hero.stats.defenseRate);
+            hitChance(float(kind.attackRate), hero.stats.defenseRate) * guardSeen_;
         return caution_ * taken * seconds * 20.0 / std::max(1, kind.attackTicks);
     }
     // Whether he takes this breed on: a kill costs him under a third of his health (a half to
@@ -1811,7 +1849,8 @@ private:
     std::vector<int> errands_, sellers_;
     bool safe_ = true, tripOwed_ = false, restOwed_ = false;
     int64_t awayShopUntil_ = 0;
-    int awayTo_ = -1;  // the town he is on his way to shop in, -1 for none  // the next trip that may go to another town's counters
+    int awayTo_ = -1;
+    double guardSeen_ = 1.0;  // the share of a blow his guard lets through, once he has one  // the town he is on his way to shop in, -1 for none  // the next trip that may go to another town's counters
     int restAt_[2] = {0, 0};
     int64_t tripSince_ = 0, lastTrip_ = 0, nextSort_ = 0, freeSince_ = 0, nextAim_ = 0, nextFloorAt_ = 0, noTripUntil_ = 0;
     std::unordered_map<uint32_t, int64_t> banned_;
