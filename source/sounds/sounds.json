@@ -1516,6 +1516,30 @@
       ],
       "from": "Sounds[4], slot 189 -- 399 BLACKSKULLDIE, Data\\\\Sound\\\\mBlackSkullDie.wav. SetMonsterSound(..., 188, -1, 190, -1, 189) in ZzzOpenData.cpp:3802-3808 (MONSTER_MODEL_DARK_SKULL_SOLDIER, Blood Castle's Dark Skull Soldier); offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:339-341)."
     },
+    "giantogre_move": {
+      "files": [
+        "mHunter2.wav"
+      ],
+      "from": "Sounds[0], slot 188 -- 398 HUNTER2_, mHunter2.wav. SetMonsterSound(..., 188, -1, 190, -1, 191) in ZzzOpenData.cpp:3809-3813 (MONSTER_MODEL_GIANT_OGRE, Blood Castle's Giant Ogre); offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:338-342)."
+    },
+    "giantogre_attack": {
+      "files": [
+        "mBlackSkullAttack.wav"
+      ],
+      "from": "Sounds[2], slot 190 -- 400 BLACKSKULLATTACK, which the Giant Ogre does not load itself: the Dark Skull Soldier in the same castle does, so in MU it sounds. SetMonsterSound(..., 188, -1, 190, -1, 191) in ZzzOpenData.cpp:3809-3813 (MONSTER_MODEL_GIANT_OGRE, Blood Castle's Giant Ogre); offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:338-342)."
+    },
+    "giantogre_shock": {
+      "files": [
+        "mBlackSkullAttack.wav"
+      ],
+      "from": "Sounds[2] again -- the client reuses the attack for the flinch. SetMonsterSound(..., 188, -1, 190, -1, 191) in ZzzOpenData.cpp:3809-3813 (MONSTER_MODEL_GIANT_OGRE, Blood Castle's Giant Ogre); offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:338-342)."
+    },
+    "giantogre_die": {
+      "files": [
+        "mGhaintOrgerDie.wav"
+      ],
+      "from": "Sounds[4], slot 191 -- 401 GHAINTORGERDIE, mGhaintOrgerDie.wav. SetMonsterSound(..., 188, -1, 190, -1, 191) in ZzzOpenData.cpp:3809-3813 (MONSTER_MODEL_GIANT_OGRE, Blood Castle's Giant Ogre); offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:338-342)."
+    },
     "poisonshadow_move": {
       "files": [
         "mShadow1.wav",
