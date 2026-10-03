@@ -239,8 +239,10 @@ struct Body;
 float strideFactor(const Body& one);
 // How long a fight holds him in it after the last thing that says he is in one: a monster
 // chasing or fighting him, an attack order, a blow or a cast in the air. **invention**, so a
-// pause between two blows does not flip him into the run and back.
-constexpr int kCombatTicks = 60;
+// pause between two blows does not flip him into the run and back. The user, 2026-10-03: 'lets
+// go to runing faster after the combat'. **ours**: one second, from three; a blow, a cast, an
+// attack order or a monster on him holds it, so the hold only spans the gaps between those.
+constexpr int kCombatTicks = 20;
 // On a horse the hold guards nothing -- the rider never walks, so there is no run to flip --
 // and it only kept the weapon drawn three seconds over a dead monster. The user, 2026-10-02:
 // 'char has to go back to not combat ASAP'. **ours**: a quarter of a second.
