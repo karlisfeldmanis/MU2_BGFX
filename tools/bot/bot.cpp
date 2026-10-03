@@ -181,6 +181,8 @@ public:
         std::sort(rows.rbegin(), rows.rend());
         std::printf("  kills:");
         for (const auto& [n, name] : rows) std::printf(" %s %d,", name.c_str(), n);
+        std::printf("\n  casts:");
+        for (const auto& [name, n] : castsOf_) std::printf(" %s %d,", name.c_str(), n);
         std::printf("\n  quests:");
         for (int q = 0; q < sim::kQuests; ++q) {
             const sim::QuestProgress& p = realm_->quest(q);
@@ -409,6 +411,11 @@ private:
     void heard() {
         const uint32_t me = realm_->hero().id;
         for (const sim::Happening& h : realm_->happenings()) {
+            // Every skill he threw, by name, for the report's `casts:` line -- what the realm
+            // let go, not what the bot asked for.
+            if (h.what == sim::What::Cast && h.who == me) {
+                if (const sim::SkillRow* row = sim::skillNumbered(h.a)) ++castsOf_[row->name];
+            }
             switch (h.what) {
                 case sim::What::Died:
                     if (h.who == me) {
@@ -679,6 +686,38 @@ private:
         return blow() * 2.0 + hero.stats.defense + hero.stats.defenseRate * 0.5;
     }
 
+    // The same piece: what a trial took off is found again by this, wherever it went.
+    static bool same(const sim::Held& a, const sim::Held& b) {
+        return a.item == b.item && a.refinement == b.refinement && a.durability == b.durability &&
+               a.skill == b.skill && a.luck == b.luck && a.option == b.option &&
+               a.excellent == b.excellent && a.sockets == b.sockets &&
+               a.powers[0] == b.powers[0] && a.powers[1] == b.powers[1] && a.powers[2] == b.powers[2];
+    }
+    // Puts every worn slot back to `worn`: a trial that put a weapon on can take the other hand
+    // down too, into whatever bag cell was free, and the old one-move undo left that hand bare
+    // -- so the next look found a "better" swap again, and a knight traded Small Axe +1 and
+    // Hand Axe every five seconds for hours (seed 1, 2026-10-03).
+    void restoreWorn(const sim::Held (&worn)[sim::kWorn]) {
+        for (int pass = 0; pass < 2; ++pass) {
+            for (int w = 0; w < sim::kWorn; ++w) {
+                const sim::Held now = realm_->satchel()[w];
+                if (same(now, worn[w])) continue;
+                if (worn[w].empty()) {
+                    for (int to = sim::kWorn; to < sim::kSlots; ++to) {
+                        if (realm_->moveItem(w, to)) break;
+                    }
+                    continue;
+                }
+                for (int at = sim::kWorn; at < sim::kSlots; ++at) {
+                    if (same(realm_->satchel()[at], worn[w])) {
+                        realm_->moveItem(at, w);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     // Tries each bag piece in each place it may go, and keeps it there only if he is better.
     // True when anything went on.
     bool wearBest() {
@@ -700,6 +739,18 @@ private:
                 realm_->money() < 1000) continue;
             for (const int place : {int(sim::kWeaponRight), int(sim::kWeaponLeft), sim::placeOf(row)}) {
                 if (!sim::placesIn(row, options_.kin, place)) continue;
+                // **The left hand is the shield's** for a knight and a wizard (the user,
+                // 2026-10-03: "teach DK to use shield and defense skill", "same with DW"): a
+                // second weapon there scored its offhand blow over any shield, and Defense and
+                // Soul Barrier, drawn up behind one, were never cast.
+                if ((options_.kin == sim::Kin::DarkKnight || options_.kin == sim::Kin::DarkWizard) &&
+                    place == int(sim::kWeaponLeft) && row.weapon() && !row.shield()) continue;
+                // And a knight's weapon one-handed, so the shield always has its hand: a
+                // two-handed Berdysh outscored sword and shield and Defense went uncast again.
+                if (options_.kin == sim::Kin::DarkKnight && row.weapon() && !row.shield() &&
+                    row.twoHanded()) continue;
+                sim::Held worn[sim::kWorn];
+                for (int w = 0; w < sim::kWorn; ++w) worn[w] = realm_->satchel()[w];
                 // A two-hander wants the other hand empty: that hand's thing into the bag first,
                 // and back if the trade is not better.
                 int freed = -1;
@@ -730,10 +781,11 @@ private:
                     any = true;
                     break;
                 }
-                // Back as it was.
+                // Back as it was: the moved piece first, then every worn slot to what it held.
                 if (wasEmpty) realm_->moveItem(place, slot);
                 else realm_->moveItem(slot, place);
                 putBack();
+                restoreWorn(worn);
             }
         }
         return any;
@@ -996,19 +1048,48 @@ private:
 
     // Raises his guard when it has lapsed and something is on him: the knight's Defense or the
     // wizard's Soul Barrier, each drawn up behind a shield (SkillRow::suits off the left hand).
+    //
+    // And every class's own self-casts besides (the user, 2026-10-03: "teach DK to use shield and
+    // defense skill", "same with DW and elf"): a might -- the elf's Greater Damage -- when it has
+    // lapsed, a mend -- her Heal -- under half his health, and her summon when none of hers
+    // stands. Each only when it is ready, paid for and his hand may throw it.
     bool guard() {
         const sim::Body& hero = realm_->hero();
-        if (hero.boonUntil > realm_->tick()) return false;
         const sim::Wearer w = realm_->wearer();
+        const int64_t now = realm_->tick();
+        bool summoned = false;
+        for (const sim::Body& b : realm_->bodies()) {
+            if (b.summoner == hero.id && b.alive()) summoned = true;
+        }
+        int summon = -1;
         for (int i = 0; i < sim::skillCount(); ++i) {
             const sim::SkillRow& row = sim::skillAt(i);
-            if (row.boonTicks <= 0 || !realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
+            if (!row.onSelf() || !realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
+            // Tried in the last five seconds: a cast the realm refused starts no cooldown, and
+            // asked again every think it would hold him out of the fight. On the bot's own
+            // clock: a map change raises a new realm whose tick starts again at nought, and a
+            // realm tick kept here barred every self-cast for the rest of the run.
+            if (guardTried_[row.number] > clock_) continue;
             if (hero.mana < row.mana || !row.suits(w.offHand)) continue;
-            realm_->invoke(row.number, hero.id);
+            const bool wanted = (row.boonTicks > 0 && hero.boonUntil <= now) ||
+                                (row.mightTicks > 0 && hero.mightUntil <= now) ||
+                                (row.mends && hero.health * 2 < hero.maxHealth);
+            if (wanted) {
+                guardTried_[row.number] = clock_ + 100;
+                realm_->invoke(row.number, hero.id);
+                return true;
+            }
+            // The last summon in the table she knows: the later breeds are the stronger.
+            if (row.summons > 0 && !summoned) summon = i;
+        }
+        if (summon >= 0) {
+            guardTried_[sim::skillAt(summon).number] = clock_ + 100;
+            realm_->invoke(sim::skillAt(summon).number, hero.id);
             return true;
         }
         return false;
     }
+    std::map<int32_t, int64_t> guardTried_;
 
     // Presses the strongest skill that is ready on the body he fights: a blow's force times
     // what it rolls on (a spell adds its own damage to the band), the guards and buffs aside.
@@ -1086,15 +1167,28 @@ private:
         return -1;
     }
     bool archer() const { return ammoHand() >= 0; }
+    // Whether a quiver is the one her weapon shoots: arrows (15) for a bow, numbers 0-6, and
+    // bolts (7) for a crossbow -- sim's `together`, MuMain's CheckArrow. Since 2026-10-02 every
+    // quiver goes in the left hand, so the hand no longer tells them apart, and the bot bought
+    // bolts for a Short Bow and stood three hours with nothing to shoot.
+    bool feeds(const content::ItemRow& quiver) const {
+        if (!sim::ammunition(quiver) || sim::placeOf(quiver) != ammoHand()) return false;
+        for (const int slot : {int(sim::kWeaponRight), int(sim::kWeaponLeft)}) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty()) continue;
+            const content::ItemRow& bow = rowOf(one);
+            if (bow.group != sim::kGroupBows || sim::ammunition(bow)) continue;
+            return quiver.number == (bow.number <= 6 ? 15 : 7);
+        }
+        return false;
+    }
     // The shots she has for that hand, in it and in the bag.
     int ammo() const {
         const int hand = ammoHand();
         int n = 0;
         for (int slot = 0; slot < sim::kSlots; ++slot) {
             const sim::Held& one = realm_->satchel()[slot];
-            if (!one.empty() && sim::ammunition(rowOf(one)) && sim::placeOf(rowOf(one)) == hand) {
-                n += one.durability;
-            }
+            if (!one.empty() && hand >= 0 && feeds(rowOf(one))) n += one.durability;
         }
         return n;
     }
@@ -1195,7 +1289,10 @@ private:
             return;
         }
         ask(request);
-        if (engaged && guard()) return;
+        // Guarded and buffed whenever he goes to fight, not only once something is on him: the
+        // wizard's nine tiles kill most things before they close, and Defense was raised six
+        // times in four hours.
+        if ((engaged || request.kind == sim::Request::Kind::Attack) && guard()) return;
         if (request.kind == sim::Request::Kind::Attack) press(request.target);
     }
 
@@ -1368,8 +1465,7 @@ private:
             const sim::Offer* shelf = sim::stockOf(tables_->folk[size_t(folk)].number, &count);
             for (int i = 0; i < count; ++i) {
                 const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
-                if (item >= 0 && sim::ammunition(tables_->items[size_t(item)]) &&
-                    sim::placeOf(tables_->items[size_t(item)]) == hand) return true;
+                if (item >= 0 && hand >= 0 && feeds(tables_->items[size_t(item)])) return true;
             }
         }
         return false;
@@ -1522,7 +1618,7 @@ private:
             const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
             if (item < 0 || shelf[i].refinement) continue;
             const content::ItemRow& row = tables_->items[size_t(item)];
-            if (!sim::ammunition(row) || sim::placeOf(row) != hand) continue;
+            if (!feeds(row)) continue;
             const int64_t price = sim::buyingPrice(row, 0, shelf[i].pieces, shelf[i].skill);
             while (ammo() < 500 && realm_->money() >= price) {
                 const int slot = buyOne(shelf[i], " (ammunition)");
@@ -1664,6 +1760,7 @@ private:
     std::map<int, int64_t> fearUntil_;  // by breed number
     std::map<int, int> deathsTo_;
     std::map<std::string, int> killsOf_;
+    std::map<std::string, int> castsOf_;
     std::map<std::string, int64_t> triedOn_;  // an item's name -> when it may be tried again
     uint32_t chasing_ = 0;
     int64_t chasedSince_ = 0;
