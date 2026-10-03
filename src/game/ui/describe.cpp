@@ -227,6 +227,16 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
         const sim::PowerRow* power = sim::powerOf(powerAt(what, 0));
         return power ? rarityTone(power->rarity) : Tone::Legendary;
     }
+    // A powered ring or pendant is its count of powers (sim::affixCount): one green, two blue,
+    // three purple, four legendary -- the user's ladder of 2026-10-03. Being excellent lifts it to
+    // purple at least and a socket to blue, as either does anything else.
+    if (sim::powered(row)) {
+        static const Tone kByCount[4] = {Tone::Uncommon, Tone::Rare, Tone::Epic, Tone::Legendary};
+        Tone tone = kByCount[std::clamp(sim::affixCount(row, what), 1, 4) - 1];
+        if (what.excellent != 0 && tone < Tone::Epic) tone = Tone::Epic;
+        if (socketsOf(what) > 0 && tone < Tone::Rare) tone = Tone::Rare;
+        return tone;
+    }
     if (what.excellent != 0) return Tone::Epic;
     // A Firecracker is rare to come by (the user, 2026-10-02: "its kind of rare item so i think
     // we should use some rare color for that item"): WoW's rare blue, the socket's rung.
@@ -404,12 +414,29 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // realm fights by (sim::petPower), so the card and the blow cannot disagree.
     // A ring's or a pendant's resistance, 1 a plus in its element (docs/jewellery.md); MuMain's
     // card says it as "Ice Resistance +%d" and the rest alike.
-    if (sim::jewellery(row)) {
+    if (sim::jewellery(row) && sim::elementOf(row) != sim::Element::None) {
         static const char* const kElement[] = {"", "Ice resistance", "Poison resistance",
                                                "Lightning resistance", "Fire resistance"};
         const int resists = sim::resistanceOf(row, what.refinement);
         does.rows.push_back(stat(kElement[int(sim::elementOf(row))], "+" + std::to_string(resists),
                                  resists > 0 ? Tone::White : Tone::Gray));
+    }
+    // A powered piece's powers at its plus (sim::affixValue): its signature first, white, and the
+    // ones the drop added after it in the name's colour.
+    if (sim::powered(row)) {
+        const Tone tone = qualityOf(row, what);
+        const auto power = [&](sim::Affix affix, Tone ink) {
+            const int value = sim::affixValue(affix, what.refinement);
+            Row line;
+            line.free = sim::affixName(affix);
+            line.tail = "+" + std::to_string(value) + (affix == sim::Affix::Leech ? "" : "%");
+            line.freeTone = ink;
+            does.rows.push_back(line);
+        };
+        power(sim::signatureOf(row), Tone::White);
+        for (uint8_t a : what.affixes) {
+            if (a != 0) power(sim::Affix(a), tone);
+        }
     }
     if (row.group == sim::kGroupPets && !sim::jewellery(row)) {
         const sim::PetPower power = sim::petPower(row);

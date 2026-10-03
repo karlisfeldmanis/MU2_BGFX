@@ -282,10 +282,17 @@ void Play::restore(const sim::HeroRecord& saved) {
 // --weapon, and asked of no requirement. Anything else is ignored.
 static void readExtras(const std::string& extras, int* plus, bool* luck, int* option,
                        uint8_t* excellent, bool* worn = nullptr, int* sockets = nullptr,
-                       uint8_t* powers = nullptr, bool* offhand = nullptr) {
-    int nextPower = 0;
+                       uint8_t* powers = nullptr, bool* offhand = nullptr,
+                       uint8_t* affixes = nullptr) {
+    int nextPower = 0, nextAffix = 0;
     for (size_t i = 0; i < extras.size(); ++i) {
         const char c = extras[i];
+        // A<n>, again for each: a powered ring's or pendant's further powers (sim::Affix, 1 Wisdom
+        // to 5 Fury), past its own. `RingWisdom::+9LA2A3A4W` is a legendary +9 worn.
+        if ((c == 'A' || c == 'a') && affixes && nextAffix < 3) {
+            affixes[nextAffix++] = uint8_t(std::clamp(std::atoi(extras.c_str() + i + 1), 0,
+                                                      sim::kAffixes));
+        }
         // S<n>: that many sockets; P<n>, again for each: the powers set in them in order, or a
         // Rune of Creation's own (sim/items.h).
         if ((c == 'S' || c == 's') && sockets) *sockets = std::atoi(extras.c_str() + i + 1);
@@ -326,8 +333,10 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
         bool worn = false;
         int sockets = 0;
         uint8_t powers[3] = {};
+        uint8_t affixes[3] = {};
         bool offhand = false;
-        readExtras(extras, &plus, &luck, &option, &excellent, &worn, &sockets, powers, &offhand);
+        readExtras(extras, &plus, &luck, &option, &excellent, &worn, &sockets, powers, &offhand,
+                   affixes);
         const int into = offhand ? int(sim::kWeaponLeft) : worn ? sim::placeOf(row) : -1;
         // Whatever he wears there already goes into the bag first -- the arena's own sword.
         if (into >= 0 && !realm_.satchel()[into].empty()) {
@@ -337,7 +346,7 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
             if (spare >= 0) realm_.moveItem(into, spare);
         }
         slot = realm_.give(item, into, plus, stacks ? durability : sim::fullDurability(row, plus),
-                           luck, option, excellent, uint8_t(sockets), powers);
+                           luck, option, excellent, uint8_t(sockets), powers, affixes);
         if (worn && slot >= 0) redress();
         core::logf("given %s%s into slot %d", row.label.c_str(),
                    stacks ? (" x" + std::to_string(durability)).c_str() : "", slot);

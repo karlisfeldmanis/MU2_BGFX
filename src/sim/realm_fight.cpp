@@ -161,6 +161,10 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                            back, wound);
             }
         }
+        // The Ring of the Leech's and its kind's life on a landed blow (sim::Affix::Leech).
+        if (attacker.excel.lifeOnHit > 0) {
+            attacker.health = std::min(attacker.maxHealth, attacker.health + attacker.excel.lifeOnHit);
+        }
         if (attacker.excel.frenzies > 0) {
             if (attacker.frenzyUntil <= tick_) attacker.frenzyStacks = 0;
             const bool more = attacker.frenzyStacks < kFrenzyMostStacks;
@@ -1237,9 +1241,14 @@ void Realm::kill(Body& dead, Body& killer) {
     // invention, with the guards themselves.
     Body& hero = bodies_[0];
     const bool helped = dead.heroStruck && hero.alive();
+    // A kill's experience at the game's rate, and the Rings of Wisdom's on top (sim::Affix).
+    const auto paid = [&](const Body& to) {
+        return int32_t(double(killExperience(dead.level, to.level)) * kExperienceRate *
+                       double(100 + to.excel.moreExperience) / 100.0);
+    };
     if (killer.warden >= 0 && helped) {
         leave(dead, hero);
-        gain(hero, int32_t(killExperience(dead.level, hero.level) * kExperienceRate));
+        gain(hero, paid(hero));
     }
     // And the guard who fought it points him on to the rest, whoever landed the last blow.
     if (helped && dead.guardedBy != 0) {
@@ -1253,7 +1262,7 @@ void Realm::kill(Body& dead, Body& killer) {
     if (killer.summoner != 0) {
         if (Body* owner = body(killer.summoner); owner != nullptr && owner->alive()) {
             leave(dead, *owner);
-            gain(*owner, int32_t(killExperience(dead.level, owner->level) * kExperienceRate));
+            gain(*owner, paid(*owner));
         }
     }
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
@@ -1286,7 +1295,7 @@ void Realm::kill(Body& dead, Body& killer) {
         // (PlayerExperience.cs:105), then the server's rate -- which this note used to say
         // there was none of, and the replica's answer is still the formula above: the rate is
         // one number at one place, stated, the way a live server states one. See kExperienceRate.
-        gain(killer, int32_t(killExperience(dead.level, killer.level) * kExperienceRate));
+        gain(killer, paid(killer));
     }
     // And his quests count it, when the kill is his by the rules above: his own blow, her
     // summon's, or a guard's he had a hand in. A guard's own kill does not count, as it pays him

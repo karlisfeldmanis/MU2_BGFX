@@ -1,0 +1,91 @@
+{
+  "item": "RingLeech",
+  "mu_name": "Ring of the Leech",
+  "mu_name_from": "OURS. Group 13 number 24 is free in 0.75 (later MU's own jewellery numbers, whose art this tree does not have). The name says its signature power. docs/jewellery.md, 'Powers'.",
+  "why_this_one": "The powered rings and pendants (the user, 2026-10-03: 'lets make new rings and pendats, which make sense from classical ARPG experience, like exp gain, zen gain'). Its signature: Life per hit, +1 at +0 to +5 at +9, on every blow that lands. Up to three more powers roll at the drop; how many is its colour.",
+  "profile": "weapon",
+  "profile_note": "As Gem05: a small painted sheet on a made object seen close.",
+  "stats": {
+    "note": "Ours, on MU's jewellery row: a 1x1 piece, durability 50, every class, level asked its drop level.",
+    "from": "sim/items.h, 'powered rings and pendants'; docs/jewellery.md.",
+    "group": 13,
+    "number": 24,
+    "drop_level": 32,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 50,
+    "slot": 10,
+    "requires": {
+      "level": 32,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_note": "Every class (CreateJewelery :176-179).",
+    "power": "Life per hit, +1 at +0 to +5 at +9, on every blow that lands."
+  },
+  "sheets": {
+    "ring": "ring_leech.png"
+  },
+  "sheet_from": "source/textures/ring_leech.png: MuMain's ring.OZJ with both painted stones re-hued crimson, each pixel's lightness kept (2026-10-03).",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "sheet_materials": {
+    "ring": "steel"
+  },
+  "sheet_materials_from": "ring.OZJ is silver set with two painted stones: a green one in the top-left cell and a violet one under it, and a silver ramp down the right half. The metal stays the weapon profile's steel; an island wholly on a stone's cell is glass, as Gem05's painted ball (judged from the sheet's pixels).",
+  "mesh_from": "Ring01's geometry, copied: the same MuMain model, with the stones re-hued crimson on its own copy of ring.png so it reads apart from MU's pieces.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 42,
+      "area": 845.0,
+      "along": [
+        -9.7,
+        8.4
+      ],
+      "mu_uv": [
+        0.612,
+        0.001,
+        0.988,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.984,
+        0.638
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 10,
+      "area": 299.4,
+      "along": [
+        -1.3,
+        10.1
+      ],
+      "mu_uv": [
+        0.03,
+        0.018,
+        0.579,
+        0.567
+      ],
+      "bake_uv": [
+        0.005,
+        0.647,
+        0.71,
+        0.995
+      ]
+    }
+  ]
+}

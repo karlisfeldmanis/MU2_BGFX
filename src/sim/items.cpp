@@ -3,6 +3,7 @@
 #include "sim/skills.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace mu::sim {
 namespace {
@@ -119,11 +120,54 @@ PetPower petPower(const content::ItemRow& row) {
 }
 
 bool ring(const content::ItemRow& row) {
-    return row.group == kGroupPets && (row.number == 8 || row.number == 9);
+    // MU's two, and the four powered rings (sim::Affix).
+    return row.group == kGroupPets &&
+           (row.number == 8 || row.number == 9 || (row.number >= 21 && row.number <= 24));
 }
 
 bool pendant(const content::ItemRow& row) {
-    return row.group == kGroupPets && (row.number == 12 || row.number == 13);
+    // MU's two, and the Pendant of Fury.
+    return row.group == kGroupPets && (row.number == 12 || row.number == 13 || row.number == 25);
+}
+
+Affix signatureOf(const content::ItemRow& row) {
+    if (row.group != kGroupPets) return Affix::None;
+    switch (row.number) {
+        case 21: return Affix::Wisdom;
+        case 22: return Affix::Wealth;
+        case 23: return Affix::Fortune;
+        case 24: return Affix::Leech;
+        case 25: return Affix::Fury;
+        default: return Affix::None;
+    }
+}
+
+int affixCount(const content::ItemRow& row, const Held& what) {
+    if (!powered(row)) return 0;
+    int count = 1;
+    for (uint8_t a : what.affixes) count += a != 0 ? 1 : 0;
+    return count;
+}
+
+int affixValue(Affix affix, int refinement) {
+    // +0 and +9, the user's of 2026-10-03 ("+9 still to OP", then "its better").
+    static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 2};
+    static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 12};
+    const int at = int(affix);
+    if (at <= 0 || at > kAffixes) return 0;
+    const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
+    return int(std::lround(kLow[at] + (kHigh[at] - kLow[at]) * t * t));
+}
+
+const char* affixName(Affix affix) {
+    switch (affix) {
+        case Affix::Wisdom: return "Experience from kills";
+        case Affix::Wealth: return "Zen from kills";
+        case Affix::Fortune: return "Item find";
+        case Affix::Leech: return "Life per hit";
+        case Affix::Fury: return "Critical damage";
+        default: return "";
+    }
 }
 
 Element elementOf(const content::ItemRow& row) {
@@ -249,7 +293,9 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
     const Jewel kind = jewelOf(tables.items[size_t(jewel.item)]);
     if (kind == Jewel::None) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
-    if (row.group > kGroupBoots || ammunition(row)) return false;
+    // And the rings and pendants, ours (the user, 2026-10-03: "if user upgrades rings and pendants
+    // with jewel of bless or soul"); MU refines nothing past the boots.
+    if ((row.group > kGroupBoots && !jewellery(row)) || ammunition(row)) return false;
     // BlessJewelConsumeHandlerPlugIn's MaximumLevel 5, SoulJewelConsumeHandlerPlugIn's 8.
     const int highest = kind == Jewel::Bless ? 5 : 8;
     return target.refinement <= highest && target.refinement < kRefineCap;

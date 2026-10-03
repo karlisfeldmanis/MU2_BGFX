@@ -6805,10 +6805,93 @@ void testJewellery(const content::Tables& tables) {
     checkEqual(e.iceResistance, 3, "ice: the +3 ring's");
     checkEqual(e.poisonResistance, 4, "poison: the +4 ring's");
     checkEqual(e.lifeRegen, 3, "the two options summed");
-    check(!realm.satchel()[sim::kRingRight].luck, "luck asked for is not kept");
+    // Ours since 2026-10-03: a ring refines, so it keeps luck as armour does.
+    check(realm.satchel()[sim::kRingRight].luck, "luck asked for is kept");
+    checkEqual(realm.hero().stats.criticalChance, sim::kLuckCritical, "and a lucky ring is a crit");
     check(sim::sellingPrice(ring, 0, 1, false, 0, 0, false, 2, 0) >
               sim::sellingPrice(ring, 0, 1, false, 0, 0, false, 0, 0),
           "the option prices a ring up");
+}
+
+// The powered rings and pendant (sim::Affix, docs/jewellery.md "Powers"): the curve, every worn
+// piece's sum, what each power does, the colour's count at the drop, and the refining.
+void testPoweredJewellery(const content::Tables& tables) {
+    std::printf("powered rings and pendants\n");
+    const int wisdom = tables.itemAt(13, 21), wealth = tables.itemAt(13, 22);
+    const int fortune = tables.itemAt(13, 23), leech = tables.itemAt(13, 24);
+    const int fury = tables.itemAt(13, 25), bless = tables.itemAt(14, 13);
+    check(wisdom >= 0 && wealth >= 0 && fortune >= 0 && leech >= 0 && fury >= 0,
+          "the five are in the table");
+    if (wisdom < 0 || wealth < 0 || fortune < 0 || leech < 0 || fury < 0) return;
+    const auto row = [&](int i) -> const content::ItemRow& { return tables.items[size_t(i)]; };
+    check(sim::ring(row(wisdom)) && sim::ring(row(leech)) && sim::pendant(row(fury)),
+          "four rings and a pendant");
+    check(sim::signatureOf(row(fortune)) == sim::Affix::Fortune, "each its own power");
+    check(sim::signatureOf(row(tables.itemAt(13, 8))) == sim::Affix::None, "MU's carry none");
+    checkEqual(sim::affixValue(sim::Affix::Wisdom, 0), 1, "Wisdom +1% at +0");
+    checkEqual(sim::affixValue(sim::Affix::Wisdom, 4), 2, "+2% at +4");
+    checkEqual(sim::affixValue(sim::Affix::Wisdom, 9), 8, "+8% at +9");
+    checkEqual(sim::affixValue(sim::Affix::Leech, 9), 5, "the Leech 5 life a hit at +9");
+    sim::Held two{wisdom, 0, 50};
+    two.affixes[0] = uint8_t(sim::Affix::Wealth);
+    checkEqual(sim::affixCount(row(wisdom), two), 2, "a signature and one more is two");
+
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+    const uint8_t right[3] = {uint8_t(sim::Affix::Wealth)};
+    const uint8_t amulet[3] = {uint8_t(sim::Affix::Wisdom), uint8_t(sim::Affix::Leech)};
+    check(realm.give(wisdom, sim::kRingRight, 9, -1, false, 0, 0, 0, nullptr, right) >= 0,
+          "a Ring of Wisdom +9 with Wealth on the right");
+    check(realm.give(wealth, sim::kRingLeft, 0) >= 0, "a Ring of Wealth +0 on the left");
+    check(realm.give(fury, sim::kAmulet, 9, -1, false, 0, 0, 0, nullptr, amulet) >= 0,
+          "a Pendant of Fury +9 with Wisdom and the Leech");
+    const sim::Excellence& e = realm.hero().excel;
+    checkEqual(e.moreExperience, 16, "experience: the ring's 8 and the pendant's 8");
+    checkEqual(e.moreZen, 14, "Zen: the +9's 12 and the +0's 2");
+    check(std::abs(e.zenRate - 1.14) < 1e-9, "on the Zen rate");
+    checkEqual(e.lifeOnHit, 5, "life a hit: the pendant's");
+    checkEqual(realm.hero().stats.criticalDamage, 12, "critical damage reaches the blow");
+
+    // A critical lays the top of the band and Fury's share on it.
+    sim::Fighter attacker, defender;
+    attacker.attackRate = 1000.0f;
+    attacker.minimumDamage = 50;
+    attacker.maximumDamage = 100;
+    attacker.criticalChance = 1.0;
+    attacker.criticalDamage = 12;
+    sim::Random dice(7);
+    const sim::Blow blow = sim::strike(attacker, defender, dice);
+    check(blow.hit && blow.critical, "a sure critical lands");
+    checkEqual(blow.rolled, 112, "at the top and 12% more");
+
+    // The drop: how many powers by the kill's level, never three under 40 nor four under 60.
+    int most[2] = {0, 0}, powered[2] = {0, 0};
+    for (int round = 0; round < 2; ++round) {
+        sim::Realm drops;
+        drops.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        const int level = round == 0 ? 35 : 75;
+        for (int i = 0; i < 60000; ++i) {
+            drops.dropFor(level);
+            for (const sim::Lying& one : drops.lying()) {
+                if (one.what.empty() || !sim::powered(row(one.what.item))) continue;
+                ++powered[round];
+                most[round] = std::max(most[round], sim::affixCount(row(one.what.item), one.what));
+            }
+        }
+    }
+    std::printf("  powered drops: %d at 35 (most %d powers), %d at 75 (most %d)\n", powered[0],
+                most[0], powered[1], most[1]);
+    check(powered[0] > 0 && most[0] <= 2, "a level-35 kill leaves green and blue only");
+    checkEqual(most[1], 4, "a level-75 kill can leave a legendary");
+
+    // Bless and Soul take a ring, and a jewel's refusal still holds past the boots.
+    if (bless >= 0) {
+        check(sim::refinable(tables, sim::Held{bless, 0, 1}, sim::Held{wealth, 0, 50}),
+              "a Bless goes on a ring");
+        check(!sim::refinable(tables, sim::Held{bless, 0, 1},
+                              sim::Held{tables.itemAt(13, 0), 0, 50}),
+              "and not on a pet");
+    }
 }
 
 void testPets(const content::Tables& tables) {
@@ -7671,6 +7754,7 @@ int main() {
     testEvilSpirit(tables);
     testRunes(tables);
     testJewellery(tables);
+    testPoweredJewellery(tables);
     testPets(tables);
     testMount(tables);
     testDinorant(tables);

@@ -56,3 +56,49 @@ item's. No luck: nothing in `CItem::Convert` reads it on a ring.
   user, 2026-10-02: "maximum amount of sockets for rings is 1"; sim::mostSocketsOf). The Pit's
   Ring of Ice is back to one socket, and its boots have two, every class's.
 - The knight's and the wizard's Pit shields have two sockets, for Frenzy and Evil Spirit.
+
+## Powers (ours, 2026-10-03)
+
+The user: "lets make new rings and pendants, which make sense from classical ARPG experience,
+like exp gain, zen gain", then "idea is that there is really good rings or pendants which has
+multiple things", "if there is only 1 options its green, if more blue, purple, legendary", and
+after three rounds on the numbers, "its better, lets implement". The proposal page:
+claude.ai/artifact/RQANq4YNoKpejyUYd29V5u.
+
+Five pieces in group 13's free numbers, each on MuMain's own model with its stones re-hued on a
+copy of ring.png (source/textures/ring_*.png, necklace_fury.png):
+
+| item | 13/n | file | drop level | signature power | +0 | +4 | +6 | +9 |
+|---|---|---|---|---|---|---|---|---|
+| Ring of Wisdom | 21 | RingWisdom (Ring01, sapphire) | 24 | experience from kills | 1% | 2% | 4% | 8% |
+| Ring of Wealth | 22 | RingWealth (Ring01, amber) | 18 | Zen from kills | 2% | 4% | 6% | 12% |
+| Ring of Fortune | 23 | RingFortune (Ring01, amethyst) | 40 | item find | 1% | 3% | 5% | 10% |
+| Ring of the Leech | 24 | RingLeech (Ring01, crimson) | 32 | life per landed blow | 1 | 2 | 3 | 5 |
+| Pendant of Fury | 25 | NecklaceFury (Necklace01, fire-orange) | 48 | critical damage | 2% | 4% | 6% | 12% |
+
+- **A value** is `lo + (hi - lo) x (plus / 9)^2`, rounded (sim::affixValue): weak at +0, most of
+  it in the last pluses. Every worn piece adds its own; two rings of a kind both count.
+- **What each does.** Wisdom multiplies a kill's experience (the hero's own, a summon's for her,
+  a guard's he helped). Wealth multiplies the Zen rate beside the excellent armour's x1.4.
+  Fortune multiplies both item rolls of a kill (the excellent and the plain), out of the Zen and
+  the nothing below them. The Leech adds life on every wound he lands on a monster, per body.
+  Fury raises a critical's top of the band, swing and spell alike; it draws no dice.
+- **Colour is the count.** A drop rolls how many powers (sim::kAffixCountShare): one 55%
+  (green), two 28% (blue), three 13% (purple, from monster level 40), four 4% (legendary, from
+  60); a count a kill cannot reach is out and its share goes to the rest. The extra powers are
+  drawn from the four its signature leaves, none twice, and kept in `Held::affixes`. Excellent
+  lifts the name to purple at least and a socket to blue.
+- **Where they drop.** As an ordinary item in the 15-level band; past it a deep kill still draws
+  them on kDeepJewellery (15%) of its item drops, or purple and legendary could never fall. At
+  monster level 35 about 0.4% of kills leave one, at 75 about 0.6% (sim_test).
+- **Refining and luck.** Bless and Soul take every ring and pendant, MU's four too, at armour's
+  odds and to the armour's caps (sim::refinable). A ring or pendant drop rolls luck at 4 in 100;
+  luck worn on one adds kLuckCritical and the Soul's +25%. MU's four keep their resistance, a
+  point a plus.
+- **Quests** pay one on the first clear, every class's: the Ring of Wealth +1 (Marlon, Peia),
+  Wisdom +2 with Wealth (Devin), the Leech +2 with Fury (Catacombs), Fortune +3 with Wealth
+  (Knights' Halls), the Pendant of Fury +3 with the Leech and Wisdom (the Pit), Wealth +3 with
+  Wisdom and Fortune (The Red Floor), and the one legendary, Wisdom +4 with Wealth, Fortune and
+  the Leech (The Scythe). Quest jewellery comes lucky with its option, as quest gear does.
+- **Not yet:** the shop price is MU's group-13 formula and ignores the powers. `--give` takes
+  `A<n>` for each further power (1 Wisdom ... 5 Fury): `--give RingWisdom::+9LA2A3A4W`.

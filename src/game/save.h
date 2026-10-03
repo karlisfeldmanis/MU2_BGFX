@@ -56,6 +56,8 @@ struct Saved {
         // (sim/items.h). Absent in a file from before sockets.
         int sockets = 0;
         int powers[3] = {0, 0, 0};
+        // A powered ring's or pendant's further powers (sim::Affix); absent before them.
+        int affixes[3] = {0, 0, 0};
         // Whether the file recorded wear. A file written before gear had durability says 0 for
         // every sword, and that 0 is not "broken" -- it is "never counted", read back as full.
         bool worn = false;

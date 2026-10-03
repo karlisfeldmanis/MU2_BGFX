@@ -92,6 +92,9 @@ struct Held {
     // in `powers[0]`.
     uint8_t sockets = 0;
     uint8_t powers[3] = {};
+    // A powered ring's or pendant's further powers (sim::Affix), past the one its row carries:
+    // 0 for none. How many it has is its colour (sim::affixCount).
+    uint8_t affixes[3] = {};
     bool empty() const { return item < 0; }
 };
 
@@ -150,6 +153,35 @@ inline int resistanceOf(const content::ItemRow& row, int refinement) {
 }
 constexpr int kJewelleryMostPlus = 4;
 constexpr int64_t kJewelleryRegenTicks = 7 * 20;  // m_LifeFillCount > 6, once a second
+
+// ---- powered rings and pendants (docs/jewellery.md, "Powers") -----------------------------
+//
+// Ours, every number (the user, 2026-10-03: "lets make new rings and pendants, which make sense
+// from classical ARPG experience, like exp gain, zen gain"). Five pieces in group 13's free 21-25,
+// each with a power of its own -- its signature -- and up to three more drawn at the drop from
+// the other four. How many it has is its colour: one green, two blue, three purple, four
+// legendary ("if there is only 1 options its green, if more blue, purple, legendary"). A power's
+// value is the plus's alone, a square curve from +0 to +9 ("+9 still to OP", then "its better"),
+// and every worn piece adds its own.
+enum class Affix : uint8_t { None = 0, Wisdom, Wealth, Fortune, Leech, Fury };
+constexpr int kAffixes = 5;
+// The row's own power, or None for anything not one of the five.
+Affix signatureOf(const content::ItemRow& row);
+inline bool powered(const content::ItemRow& row) { return signatureOf(row) != Affix::None; }
+// How many powers it carries, its signature with them: 0 on anything unpowered.
+int affixCount(const content::ItemRow& row, const Held& what);
+// A power's value at a plus: lo + (hi - lo) x (plus / 9)^2, rounded. Percent for all but the
+// Leech, whose is life a blow.
+int affixValue(Affix affix, int refinement);
+const char* affixName(Affix affix);   // the card's words: "Experience from kills", ...
+// The share of drops each count takes (1 to 4 powers), and the monster level the three- and
+// four-power pieces start at -- the runes' kRuneRarityLevel Epic and Legendary.
+constexpr double kAffixCountShare[4] = {0.55, 0.28, 0.13, 0.04};
+constexpr int kAffixCountLevel[4] = {0, 0, 40, 60};
+// The share of a deep kill's item drops that may draw a powered piece below its fifteen-level
+// band (Realm::leave), and the lowest drop level among them (the Ring of Wealth's).
+constexpr double kDeepJewellery = 0.15;
+constexpr int kDeepJewelleryFrom = 18;
 
 // Whether it is ammunition: the bow group's 7 and 15.
 bool ammunition(const content::ItemRow& row);

@@ -386,7 +386,26 @@ void Realm::rearm(Body& hero) {
             e.poisonResistance = std::max(e.poisonResistance, resists);
         }
         e.lifeRegen += optionValue(*row, bag_[slot].option);
+        // A powered piece's signature and its further powers, every worn piece's added
+        // (sim::Affix, docs/jewellery.md "Powers").
+        if (!powered(*row)) continue;
+        const Held& held = bag_[slot];
+        const auto add = [&](Affix affix) {
+            const int value = affixValue(affix, held.refinement);
+            switch (affix) {
+                case Affix::Wisdom: e.moreExperience += value; break;
+                case Affix::Wealth: e.moreZen += value; break;
+                case Affix::Fortune: e.itemFind += value; break;
+                case Affix::Leech: e.lifeOnHit += value; break;
+                case Affix::Fury: e.criticalDamage += value; break;
+                default: break;
+            }
+        };
+        add(signatureOf(*row));
+        for (uint8_t a : held.affixes) add(Affix(a));
     }
+    // And Wealth on the Zen, beside the excellent armour's x1.4.
+    hero.excel.zenRate *= 1.0 + double(hero.excel.moreZen) / 100.0;
     // Said once a change, when any is worn, so a run's log shows what the fight below it had.
     {
         const Excellence& e = hero.excel;
@@ -397,11 +416,12 @@ void Realm::rearm(Body& hero) {
                        e.runeCritical, e.lifeSteal, e.frenzies, e.renewal, e.spirits);
         }
     }
-    // Luck on anything worn, from the hands to the boots.
+    // Luck on anything worn, from the hands to the boots, and the rings and the pendant (ours,
+    // since they refine: the user, 2026-10-03, "that means that items can have +luck").
     hero.luckyWorn = 0;
-    for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
+    for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
-        if (row && takesOptions(*row) && bag_[slot].luck) ++hero.luckyWorn;
+        if (row && (takesOptions(*row) || jewellery(*row)) && bag_[slot].luck) ++hero.luckyWorn;
     }
     // What each piece's wear takes off it (sim/wear.h), read off the slot it is worn in.
     const auto cutAt = [&](int slot) {
@@ -497,7 +517,8 @@ Wearer Realm::wearer() const {
 }
 
 int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,
-                uint8_t excellent, uint8_t sockets, const uint8_t* powers) {
+                uint8_t excellent, uint8_t sockets, const uint8_t* powers,
+                const uint8_t* affixes) {
     if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return -1;
     const content::ItemRow& row = tables_->items[size_t(item)];
     // A stack asked for anywhere pours into what he carries, twenty a cell.
@@ -513,12 +534,14 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
     if (durability < 0) durability = fullDurability(row, refinement);
     Held put{item, int16_t(refinement), int16_t(durability)};
     if (takesOptions(row) || jewellery(row)) {
-        // No luck on a ring or a pendant: nothing in CItem::Convert reads it there.
-        put.luck = luck && takesOptions(row);
+        // Luck on a ring or a pendant too, since they refine: ours (2026-10-03); MU's
+        // CItem::Convert reads none there.
+        put.luck = luck;
         put.option = int8_t(std::clamp(option, 0, kMostOption));
         put.excellent = uint8_t(excellent & 63);
         put.sockets = uint8_t(std::min<int>(sockets, mostSocketsOf(row)));
         for (int i = 0; i < put.sockets && powers; ++i) put.powers[i] = powers[i];
+        for (int i = 0; i < 3 && affixes && powered(row); ++i) put.affixes[i] = affixes[i];
         // Whole means whole with its fifteen, when it was asked for whole.
         if (put.excellent && durability == fullDurability(row, refinement) && wears(row)) {
             put.durability = int16_t(maximumDurability(row, put));
@@ -877,8 +900,12 @@ void Realm::leave(const Body& dead, const Body& killer) {
     // (:5920); its plus `(level - drop level) / 3`, and a row whose plus would pass the breed's
     // MaxItemLevel is not in the pool (MonsterItemMng.cpp:626). Zen is the breed's MoneyRate
     // (kDropRates) where MU2's Loot had a flat half.
-    constexpr double kJewel = kJewelGroupChance, kItem = 0.1;
-    constexpr double kExcellentChance = kItem * kExcellentShareOfItem;
+    constexpr double kJewel = kJewelGroupChance;
+    // The Ring of Fortune's and its kind's item find raise both item rolls (sim::Affix::Fortune),
+    // taking from the Zen and the nothing below them.
+    const double find = 1.0 + double(bodies_[0].excel.itemFind) / 100.0;
+    const double itemChance = 0.1 * find;
+    const double excellentItemChance = 0.1 * kExcellentShareOfItem * find;
     constexpr int kGap = 15;
     constexpr int kPotionGap = 8;
     constexpr int kBaseMoney = 7;      // Loot.BaseMoney
@@ -961,6 +988,33 @@ void Realm::leave(const Body& dead, const Body& killer) {
         }
         return -1;
     };
+    // A powered ring's or pendant's further powers (sim::Affix): how many first, at
+    // kAffixCountShare among the counts this kill's level reaches (kAffixCountLevel), then that
+    // many of the four its signature leaves, none twice. Off the sockets' dice. ours.
+    const auto rollAffixes = [&](Held& what, const content::ItemRow& row) {
+        const Affix own = signatureOf(row);
+        if (own == Affix::None) return;
+        double held = 0.0;
+        for (int c = 0; c < 4; ++c) held += level >= kAffixCountLevel[c] ? kAffixCountShare[c] : 0.0;
+        double pick = runeDice_.nextDouble() * held;
+        int count = 1;
+        for (int c = 0; c < 4; ++c) {
+            if (level < kAffixCountLevel[c]) continue;
+            count = c + 1;
+            if (pick < kAffixCountShare[c]) break;
+            pick -= kAffixCountShare[c];
+        }
+        uint8_t left[kAffixes - 1];
+        int n = 0;
+        for (int a = 1; a <= kAffixes; ++a) {
+            if (Affix(a) != own) left[n++] = uint8_t(a);
+        }
+        for (int i = 0; i < count - 1; ++i) {
+            const int at = runeDice_.nextInt(0, n);
+            what.affixes[i] = left[at];
+            left[at] = left[--n];
+        }
+    };
     // The option: one of three draws, each a third, under 4, 8 or 12 in 100 for +12, +8, +4.
     const auto rollOptions = [&](Held& what, int luckIn100) {
         what.luck = dice_.nextInt(0, 100) < luckIn100;
@@ -1029,7 +1083,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         const int32_t item = draw([&](const content::ItemRow& r) { return jewelGroup(r) && reaches(r); });
         if (item < 0) return;
         one.what = Held{item, 0, 1};
-    } else if ((roll -= kJewel) <= kExcellentChance) {
+    } else if ((roll -= kJewel) <= excellentItemChance) {
         // Nothing from a monster under 25, and otherwise what a monster 25 levels lower would
         // drop, at +0, luck at 1 in 100, the option as on any drop, and NewOptionRand's options.
         // Only a row that can carry them is drawn.
@@ -1043,7 +1097,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];
         one.what = Held{item, 0, int16_t(fullDurability(row, 0))};
-        rollOptions(one.what, jewellery(row) ? 0 : kExcellentLuckIn100);
+        rollOptions(one.what, kExcellentLuckIn100);
+        rollAffixes(one.what, row);
         int first = dice_.nextInt(0, kExcellentOptions);
         if (first == 1 && dice_.nextInt(0, 2) != 0) first = dice_.nextInt(0, kExcellentOptions);
         one.what.excellent = uint8_t(1u << first);
@@ -1051,7 +1106,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             one.what.excellent |= uint8_t(1u << dice_.nextInt(0, kExcellentOptions));
         }
         one.what.durability = int16_t(maximumDurability(row, one.what));
-    } else if ((roll -= kExcellentChance) <= kItem) {
+    } else if ((roll -= excellentItemChance) <= itemChance) {
         // Prize.TakesRefinement: the weapon and armour groups, ammunition taken back out.
         // A ring's and a pendant's the same way, to +4 (GetLevelItem, docs/jewellery.md).
         const auto plusOf = [level, kMostRefined](const content::ItemRow& r) {
@@ -1059,10 +1114,16 @@ void Realm::leave(const Body& dead, const Body& killer) {
             if (jewellery(r)) return std::clamp((level - r.dropLevel) / 3, 0, kJewelleryMostPlus);
             return refinable ? std::clamp((level - r.dropLevel) / 3, 0, kMostRefined) : 0;
         };
+        // A powered ring or pendant past its fifteen levels is still drawn, on kDeepJewellery of
+        // the item drops, or its purple and legendary (kAffixCountLevel) could never fall from
+        // the kills deep enough to roll them -- and on that share only, or the few rows a deep
+        // pool holds would make every other item a ring. ours. Drawn only where it matters.
+        const bool deep = level - kGap > kDeepJewelleryFrom && runeDice_.nextBool(kDeepJewellery);
         const int32_t item = draw([&](const content::ItemRow& r) {
             const int gap = r.group == kGroupPotions ? kPotionGap : kGap;
             return r.dropsFromMonsters() && !summoningOrb(r) && reaches(r) &&
-                   r.dropLevel >= level - gap && plusOf(r) <= rate.maxPlus;
+                   (r.dropLevel >= level - gap || (deep && powered(r))) &&
+                   plusOf(r) <= rate.maxPlus;
         });
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];
@@ -1071,8 +1132,11 @@ void Realm::leave(const Body& dead, const Body& killer) {
         // Whole at its plus, as DefaultDropGenerator sets `GetMaximumDurabilityOfOnePiece`.
         one.what = Held{item, int16_t(plus), int16_t(stacks ? 1 : fullDurability(row, plus))};
         // Luck and the option (items.h). No skill: skills are orbs here. A ring or a pendant
-        // takes the option alone, its life regeneration.
-        if (jewellery(row)) rollOptions(one.what, 0);
+        // takes the option, its life regeneration, and luck since it refines (ours, 2026-10-03).
+        if (jewellery(row)) {
+            rollOptions(one.what, kLuckIn100);
+            rollAffixes(one.what, row);
+        }
         if (takesOptions(row)) rollOptions(one.what, kLuckIn100);
         // Sockets: rare, and each further one rarer, a ring's and a pendant's too. invention.
         if (takesSockets(row) && runeDice_.nextBool(kSocketChance)) {
@@ -1637,7 +1701,7 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     one.what = Held{item, int16_t(std::clamp(refinement, 0, kRefineCap)),
                     int16_t(std::max(1, fullDurability(row, refinement)))};
     if (takesOptions(row) || jewellery(row)) {
-        one.what.luck = luck && takesOptions(row);
+        one.what.luck = luck;
         one.what.option = int8_t(std::clamp(option, 0, kMostOption));
         one.what.excellent = uint8_t(excellent & 63);
         one.what.sockets = uint8_t(std::min<int>(sockets, mostSocketsOf(row)));

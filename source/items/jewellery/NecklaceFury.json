@@ -1,0 +1,135 @@
+{
+  "item": "NecklaceFury",
+  "mu_name": "Pendant of Fury",
+  "mu_name_from": "OURS. Group 13 number 25 is free in 0.75 (later MU's own jewellery numbers, whose art this tree does not have). The name says its signature power. docs/jewellery.md, 'Powers'.",
+  "why_this_one": "The powered rings and pendants (the user, 2026-10-03: 'lets make new rings and pendats, which make sense from classical ARPG experience, like exp gain, zen gain'). Its signature: Critical damage, +2% at +0 to +12% at +9 over the top of the band. Up to three more powers roll at the drop; how many is its colour.",
+  "profile": "weapon",
+  "profile_note": "As Gem05: a small painted sheet on a made object seen close.",
+  "stats": {
+    "note": "Ours, on MU's jewellery row: a 1x1 piece, durability 50, every class, level asked its drop level.",
+    "from": "sim/items.h, 'powered rings and pendants'; docs/jewellery.md.",
+    "group": 13,
+    "number": 25,
+    "drop_level": 48,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 50,
+    "slot": 9,
+    "requires": {
+      "level": 48,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_note": "Every class (CreateJewelery :176-179).",
+    "power": "Critical damage, +2% at +0 to +12% at +9 over the top of the band."
+  },
+  "sheets": {
+    "ring": "necklace_fury.png"
+  },
+  "sheet_from": "source/textures/necklace_fury.png: MuMain's ring.OZJ with both painted stones re-hued fire-orange, each pixel's lightness kept (2026-10-03).",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "sheet_materials": {
+    "ring": "steel"
+  },
+  "sheet_materials_from": "ring.OZJ is silver set with two painted stones: a green one in the top-left cell and a violet one under it, and a silver ramp down the right half. The metal stays the weapon profile's steel; an island wholly on a stone's cell is glass, as Gem05's painted ball (judged from the sheet's pixels).",
+  "mesh_from": "Necklace01's geometry, copied: the same MuMain model, with the stones re-hued fire-orange on its own copy of ring.png so it reads apart from MU's pieces.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 48,
+      "area": 252.8,
+      "along": [
+        -13.3,
+        2.6
+      ],
+      "mu_uv": [
+        0.242,
+        0.117,
+        0.379,
+        0.415
+      ],
+      "bake_uv": [
+        0.261,
+        0.007,
+        0.579,
+        0.947
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 10,
+      "area": 217.4,
+      "along": [
+        0.7,
+        14.5
+      ],
+      "mu_uv": [
+        0.237,
+        0.542,
+        0.506,
+        0.928
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.29,
+        0.831
+      ]
+    },
+    {
+      "island": 2,
+      "material": "glass",
+      "triangles": 10,
+      "area": 47.5,
+      "along": [
+        0.5,
+        7.3
+      ],
+      "mu_uv": [
+        0.237,
+        0.542,
+        0.506,
+        0.928
+      ],
+      "bake_uv": [
+        0.262,
+        0.005,
+        0.913,
+        0.542
+      ]
+    },
+    {
+      "island": 3,
+      "material": "glass",
+      "triangles": 10,
+      "area": 47.5,
+      "along": [
+        -3.3,
+        1.4
+      ],
+      "mu_uv": [
+        0.237,
+        0.542,
+        0.506,
+        0.928
+      ],
+      "bake_uv": [
+        0.485,
+        0.363,
+        0.993,
+        0.995
+      ]
+    }
+  ]
+}

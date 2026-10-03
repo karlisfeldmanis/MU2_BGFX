@@ -87,6 +87,14 @@ struct Excellence {
     int iceResistance = 0;
     int poisonResistance = 0;
     int lifeRegen = 0;
+    // The powered rings' and pendant's (sim::Affix), every worn piece's summed, in percent but
+    // the Leech's: more experience a kill, more Zen, a likelier item, life on a landed blow, and
+    // a critical's top raised.
+    int moreExperience = 0;
+    int moreZen = 0;
+    int itemFind = 0;
+    int lifeOnHit = 0;
+    int criticalDamage = 0;
 };
 
 struct Fighter {
@@ -114,6 +122,9 @@ struct Fighter {
     // for every monster and for an unlucky character. It is a field rather than a constant
     // because the draw against it is conditional and the condition is load-bearing.
     double criticalChance = 0.0;
+    // What a critical lays on the top of the band, in percent: the Pendant of Fury's and its
+    // kind's (sim::Affix::Fury), ours. 0 is MU's critical, the maximum exactly. No draw.
+    int criticalDamage = 0;
     // Stats.DamageReceiveDecrement. 0.75 grants it from exactly one thing, the knight's
     // Defense skill at 0.50 for four seconds. 1 is "nothing is reducing this".
     double damageTaken = 1.0;

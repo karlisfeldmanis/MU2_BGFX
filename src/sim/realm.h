@@ -649,7 +649,7 @@ public:
     // it went to, or -1 when there was nowhere. A durability of -1 is whole at its plus.
     int give(int32_t item, int slot = -1, int refinement = 0, int durability = -1,
              bool luck = false, int option = 0, uint8_t excellent = 0, uint8_t sockets = 0,
-             const uint8_t* powers = nullptr);
+             const uint8_t* powers = nullptr, const uint8_t* affixes = nullptr);
     // A drag from one slot to another, equipping and unequipping included. Refused, whole,
     // where `movable` says no -- the same answer the window colours the cell by.
     bool moveItem(int from, int to);

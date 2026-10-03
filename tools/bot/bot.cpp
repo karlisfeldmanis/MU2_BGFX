@@ -788,7 +788,9 @@ private:
         return a.item == b.item && a.refinement == b.refinement && a.durability == b.durability &&
                a.skill == b.skill && a.luck == b.luck && a.option == b.option &&
                a.excellent == b.excellent && a.sockets == b.sockets &&
-               a.powers[0] == b.powers[0] && a.powers[1] == b.powers[1] && a.powers[2] == b.powers[2];
+               a.powers[0] == b.powers[0] && a.powers[1] == b.powers[1] && a.powers[2] == b.powers[2] &&
+               a.affixes[0] == b.affixes[0] && a.affixes[1] == b.affixes[1] &&
+               a.affixes[2] == b.affixes[2];
     }
     // Puts every worn slot back to `worn`: a trial that put a weapon on can take the other hand
     // down too, into whatever bag cell was free, and the old one-move undo left that hand bare
@@ -983,9 +985,52 @@ private:
         }
     }
 
+    // What a ring or pendant is worth to him: each power at its plus (sim::affixValue), a point
+    // of resistance, the option, and luck's crit. A rough sum; it only has to rank them.
+    double jewelleryWorth(const sim::Held& one) const {
+        const content::ItemRow& row = tables_->items[size_t(one.item)];
+        double worth = sim::resistanceOf(row, one.refinement) + one.option * 2.0 + (one.luck ? 5.0 : 0.0);
+        if (sim::powered(row)) {
+            worth += 4.0 + sim::affixValue(sim::signatureOf(row), one.refinement);
+            for (uint8_t a : one.affixes) {
+                if (a != 0) worth += 4.0 + sim::affixValue(sim::Affix(a), one.refinement);
+            }
+        }
+        return worth + one.refinement;
+    }
+
+    // Puts his best rings and pendant on: each slot takes the bag's best that is worth more than
+    // what it holds, the old one going back into the bag. He wore none before 2026-10-03.
+    void wearJewellery() {
+        for (int place : {int(sim::kAmulet), int(sim::kRingRight), int(sim::kRingLeft)}) {
+            const sim::Held& on = realm_->satchel()[place];
+            double best = on.empty() ? -1.0 : jewelleryWorth(on);
+            int from = -1;
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                const sim::Held& one = realm_->satchel()[slot];
+                if (one.empty() || !sim::jewellery(tables_->items[size_t(one.item)])) continue;
+                if (!sim::placesIn(tables_->items[size_t(one.item)], realm_->hero().kin, place)) {
+                    continue;
+                }
+                if (!sim::fits(*tables_, realm_->wearer(), one)) continue;
+                const double worth = jewelleryWorth(one);
+                if (worth > best) best = worth, from = slot;
+            }
+            if (from < 0) continue;
+            const std::string label = tables_->items[size_t(realm_->satchel()[from].item)].label;
+            if (!on.empty()) {
+                const content::ItemRow& old = tables_->items[size_t(on.item)];
+                const int spare = realm_->satchel().free(*tables_, old.width, old.height);
+                if (spare < 0 || !realm_->moveItem(place, spare)) continue;
+            }
+            if (realm_->moveItem(from, place)) say("wears %s", label.c_str());
+        }
+    }
+
     void sortBag() {
         readOrbs();
         wearBest();
+        wearJewellery();
         useJewels();
     }
 

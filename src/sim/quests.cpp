@@ -116,7 +116,10 @@ QuestRow marlon() {
                    .firstOnly = true};  // Rune of Creation, Arcane Echo
     row.paid[4] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[5] = {.item = "Potion04", .count = 20};  // Large Healing Potions
-    row.paidCount = 6;
+    // The first powered ring, a green one (sim::Affix; the user, 2026-10-03: "also add some
+    // rings and pendants to some quest lines"). Each line deeper pays one more power.
+    row.paid[6] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth
+    row.paidCount = 7;
     return row;
 }
 
@@ -186,7 +189,8 @@ QuestRow peia() {
                    .firstOnly = true};  // Rune of Creation, Frost Arrow
     row.paid[2] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[3] = {.item = "Potion04", .count = 20};  // Large Healing Potions
-    row.paidCount = 4;
+    row.paid[4] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth, as Marlon's
+    row.paidCount = 5;
     return row;
 }
 
@@ -265,7 +269,9 @@ QuestRow devin() {
     // which is much more important i think than just max hp").
     row.paid[4] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                    .firstOnly = true};  // Rune of Creation, Renewal
-    row.paidCount = 5;
+    row.paid[5] = {.item = "RingWisdom", .plus = 2, .firstOnly = true,
+                   .affixes = {uint8_t(Affix::Wealth)}};  // Ring of Wisdom, blue
+    row.paidCount = 6;
     return row;
 }
 
@@ -345,7 +351,9 @@ QuestRow catacombs() {
     // three eight-hour runs it never fell -- he struck one body at a time. Its orb asks level
     // 60; the Catacombs come at about 105.
     row.paid[6] = {.item = "Gem01", .kin = knight, .firstOnly = true};  // Orb of Twisting Slash
-    row.paidCount = 7;
+    row.paid[7] = {.item = "RingLeech", .plus = 2, .firstOnly = true,
+                   .affixes = {uint8_t(Affix::Fury)}};  // Ring of the Leech, blue
+    row.paidCount = 8;
     return row;
 }
 
@@ -391,7 +399,9 @@ QuestRow halls() {
     row.paid[2] = {.item = "PantElf04", .kin = elf, .sockets = 1, .firstOnly = true};      // Spirit
     row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell), .firstOnly = true};
     row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    row.paidCount = 5;
+    row.paid[5] = {.item = "RingFortune", .plus = 3, .firstOnly = true,
+                   .affixes = {uint8_t(Affix::Wealth)}};  // Ring of Fortune, blue
+    row.paidCount = 6;
     return row;
 }
 
@@ -446,7 +456,9 @@ QuestRow pit() {
     // we dont give epic runes so early, but we can give that ring with +socket", then "keep 1
     // rune, but not the legendary one".
     row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
-    row.paidCount = 7;
+    row.paid[7] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
+                   .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};  // purple
+    row.paidCount = 8;
     return row;
 }
 
@@ -632,6 +644,8 @@ QuestRow tersiaFourth() {
                                  .firstOnly = true};  // Pendant of Lightning
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell),
                                  .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "RingWealth", .plus = 3, .firstOnly = true,
+                                 .affixes = {uint8_t(Affix::Wisdom), uint8_t(Affix::Fortune)}};
     row.voice = "tersia_4";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -760,6 +774,10 @@ QuestRow tersiaBalrog() {
     // for all classes, create that rune its legendary"), in place of Fireburst, Echo and Frost.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Wrath),
                                  .firstOnly = true};
+    // And the one legendary ring a quest pays: four powers.
+    row.paid[row.paidCount++] = {.item = "RingWisdom", .plus = 4, .firstOnly = true,
+                                 .affixes = {uint8_t(Affix::Wealth), uint8_t(Affix::Fortune),
+                                             uint8_t(Affix::Leech)}};
     row.voice = "tersia_7";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
