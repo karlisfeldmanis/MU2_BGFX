@@ -69,6 +69,25 @@ enum class CastleRefusal : int32_t {
     NotBuilt = 5,   // ours: a castle past kCastlesBuilt
 };
 
+// **The run** (docs/blood-castle-port.md §5; the user, 2026-10-03: 'lets test scnearou that
+// character is already in there is timer to start BC, gates are locked'). Raised on the castle,
+// he waits kCastleWait in the safe court with the entrance shut, then the run's kCastleRun
+// starts and the entrance opens. WebZen's quotas for one player (SetMonsterKillCount,
+// gObjMonster.cpp:1238-1341): 40 kills of anything but the Spirit Sorcerer, then 2 of those.
+enum class CastlePhase : uint8_t { None, Waiting, Running, Ended };
+constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
+constexpr int kCastleKills = 40;
+constexpr int kCastleSorcerers = 2;
+constexpr int32_t kCastleSorcerer = 89;  // the Magic Skeleton, WebZen's Spirit Sorcerer
+struct CastleRun {
+    CastlePhase phase = CastlePhase::None;
+    int castle = 1;
+    int64_t startsAt = 0;  // the tick the wait ends and the run starts
+    int64_t endsAt = 0;    // the tick the run's time is up
+    int kills = 0;         // quota 1
+    int sorcerers = 0;     // quota 2
+};
+
 // A rectangle of tiles, inclusive, and the attribute bits the run clears from it.
 struct GridBox {
     int x1, y1, x2, y2;

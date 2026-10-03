@@ -261,7 +261,10 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
     if (quest != o.quest || shown != o.shown || width != o.width || height != o.height ||
         minutesLeft != o.minutesLeft || pointing != o.pointing || pointX != o.pointX ||
         pointY != o.pointY || pointMetres != o.pointMetres ||
-        focus != o.focus || progress.state != o.progress.state) {
+        focus != o.focus || progress.state != o.progress.state ||
+        eventPhase != o.eventPhase || eventSeconds != o.eventSeconds ||
+        eventKills != o.eventKills || eventSorcerers != o.eventSorcerers ||
+        eventShown != o.eventShown) {
         return false;
     }
     for (int i = 0; i < sim::kQuestSteps; ++i) {
@@ -495,8 +498,22 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         rebuildBanner(width, height);
     }
 
+    // Blood Castle's run: up the whole time it lasts, in the quest's place (the user, 2026-10-03:
+    // 'Lets use already UI which is for quests, but also sho timer there').
+    const sim::CastleRun& run = realm.castleRun();
+    const bool inRun = run.phase != sim::CastlePhase::None;
+    eventShown_ = inRun && !hidden ? std::min(1.0f, eventShown_ + step)
+                                   : std::max(0.0f, eventShown_ - step);
+
     Drawn now;
-    now.quest = shown_ * wake_ > 0.0f ? quest_ : -1;
+    if (eventShown_ > 0.0f) {
+        now.eventPhase = int(run.phase);
+        now.eventSeconds = realm.castleSecondsLeft();
+        now.eventKills = run.kills;
+        now.eventSorcerers = run.sorcerers;
+        now.eventShown = int(std::lround(eventShown_ * 64.0f));
+    }
+    now.quest = shown_ * wake_ > 0.0f && eventShown_ <= 0.0f ? quest_ : -1;
     now.shown = int(std::lround(shown_ * wake_ * 64.0f));
     now.width = width;
     now.height = height;
@@ -566,6 +583,10 @@ void Tracker::rebuild(const Play& play, int width, int height) {
              metres);
     }
 
+    if (drawn_.eventShown > 0) {
+        rebuildEvent(width);
+        return;
+    }
     if (drawn_.quest < 0) return;
     const float alpha = float(drawn_.shown) / 64.0f;
     const int q = drawn_.quest;
@@ -692,6 +713,85 @@ void Tracker::rebuild(const Play& play, int width, int height) {
                                  faded(style::kBone, rowAlpha));
                 }
             }
+        }
+        y += rowTall + kRowGap * u;
+    }
+}
+
+// Blood Castle's run in the tracker's place, in its own words and marks: the castle, the clock --
+// the court's wait before it starts, then its time -- and the run's steps, MU's in order
+// (docs/blood-castle-port.md §5): the road's 40 kills drop the bridge, two Spirit Sorcerers open
+// the door, the statue gives up the staff, and the Archangel takes it back. The step being
+// fought for is live, the rest wait; a quota met is a check.
+void Tracker::rebuildEvent(int width) {
+    const float u = tip::unit();
+    const float alpha = float(drawn_.eventShown) / 64.0f;
+    const float right = float(width) - kRight * u;
+    const float left = right - kWide * u;
+    float y = kTop * u;
+    const auto phase = sim::CastlePhase(drawn_.eventPhase);
+    const bool waiting = phase == sim::CastlePhase::Waiting;
+    const bool ended = phase == sim::CastlePhase::Ended;
+
+    controls::caps(canvas_, left, y + 12.0f * u, style::kKickerSize * u,
+                   faded(style::kAshInk, alpha), "Event");
+    y += 24.0f * u;
+    title(canvas_, left, y + kTitle * u, kTitle * u, kTitleTrack, style::kBoneHi, alpha,
+          "Blood Castle 1");
+    // The clock on the title's line, ranged right: gold counting down to the start, then the
+    // run's time in bone, red in its last minute.
+    {
+        char clock[16];
+        std::snprintf(clock, sizeof(clock), "%d:%02d", drawn_.eventSeconds / 60,
+                      drawn_.eventSeconds % 60);
+        const std::string text = ended ? std::string("Time is up") : std::string(clock);
+        const uint32_t ink = ended || (!waiting && drawn_.eventSeconds < 60) ? style::kBloodHi
+                             : waiting                                          ? kGoldLit
+                                                                                : style::kBoneHi;
+        const float w = lineWidth(kStep * u, text);
+        line(canvas_, right - w, y + kTitle * u, kStep * u, ink, alpha, text);
+    }
+    y += kTitle * u + 10.0f * u;
+    {
+        const float third = kWide * u / 3.0f;
+        const uint32_t iron = faded(style::kIron, alpha), clear = faded(style::kIron, 0.0f);
+        canvas_.shade({left, y, third, std::max(1.0f, u)}, clear, iron, iron, clear);
+        canvas_.rect({left + third, y, kWide * u - third, std::max(1.0f, u)}, iron);
+    }
+    y += kRuleGap * u;
+
+    struct Row {
+        std::string text;
+        std::string figure;
+        StepMark mark;
+    };
+    const bool bridge = drawn_.eventKills >= sim::kCastleKills;
+    const bool door = drawn_.eventSorcerers >= sim::kCastleSorcerers;
+    const Row rows[] = {
+        {waiting ? "Wait for the gate to open" : "Slay the castle's guards",
+         waiting ? std::string()
+                 : std::to_string(std::min(drawn_.eventKills, sim::kCastleKills)) + " / " +
+                       std::to_string(sim::kCastleKills),
+         waiting ? StepMark::Live : bridge ? StepMark::Done : StepMark::Live},
+        {"Slay the Spirit Sorcerers",
+         std::to_string(std::min(drawn_.eventSorcerers, sim::kCastleSorcerers)) + " / " +
+             std::to_string(sim::kCastleSorcerers),
+         door ? StepMark::Done : bridge && !waiting ? StepMark::Live : StepMark::Waiting},
+        {"Destroy the Statue of Saint", "", door ? StepMark::Live : StepMark::Waiting},
+        {"Return the staff to the Archangel", "", StepMark::Waiting},
+    };
+    for (const Row& row : rows) {
+        const float rowTall = kStep * u;
+        const bool live = row.mark == StepMark::Live;
+        const bool done = row.mark == StepMark::Done;
+        const uint32_t ink = live ? style::kBoneHi : style::kAshInk;
+        quest_marks::mark(canvas_, row.mark, left + 7.0f * u, y + rowTall * 0.5f, u, alpha);
+        const float baseline = controls::middle(y, rowTall, kStep * u);
+        line(canvas_, left + kMarkRoom * u, baseline, kStep * u, ink, alpha, row.text);
+        if (!row.figure.empty()) {
+            const float fw = lineWidth(kStep * u, row.figure);
+            line(canvas_, right - fw, baseline, kStep * u,
+                 done ? style::kAshInk : live ? style::kBoneHi : style::kAshInk, alpha, row.figure);
         }
         y += rowTall + kRowGap * u;
     }

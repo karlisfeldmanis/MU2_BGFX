@@ -7447,6 +7447,13 @@ void testCastleGrid(const content::Tables& lorencia) {
         std::vector<sim::Step> route;
         return router.plan(13, 8, column, row, content::kWallCharacter, route);
     };
+    // The run's wait (sim/event.h): the entrance shut until it ends, then the road open.
+    check(realm.castleRun().phase == sim::CastlePhase::Waiting, "raised, the run waits");
+    checkEqual(realm.castleSecondsLeft(), sim::kCastleWait, "for the court's sixty seconds");
+    check(!reaches(14, 40), "with the entrance shut");
+    for (int64_t t = 0; t < int64_t(sim::kCastleWait) * sim::kCastleTicksPerSecond; ++t) realm.step();
+    check(realm.castleRun().phase == sim::CastlePhase::Running, "then the run starts");
+    checkEqual(realm.castleSecondsLeft(), sim::kCastleRun, "with its fifteen minutes");
     check(reaches(14, 40), "the road down to the bridge is open from the court");
     check(!reaches(14, 85), "the courtyard is shut behind the raised bridge and the door");
     const sim::GridBox& bridge = sim::kCastleBridge;

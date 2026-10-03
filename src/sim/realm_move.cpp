@@ -630,4 +630,31 @@ void Realm::passCastle(int castle) {
     passGate(hero, *gate);
 }
 
+// ---- Blood Castle's run (sim/event.h) ------------------------------------------------------
+
+void Realm::castleTick() {
+    if (run_.phase == CastlePhase::Waiting && tick_ >= run_.startsAt) {
+        // "Blood Castle 1 quest has begun" (lMsg 1161): the barrier lifted, the clock started.
+        run_.phase = CastlePhase::Running;
+        run_.endsAt = tick_ + int64_t(kCastleRun) * kCastleTicksPerSecond;
+        changeGrid(kCastleEntrance.x1, kCastleEntrance.y1, kCastleEntrance.x2, kCastleEntrance.y2,
+                   kCastleEntrance.bits, false);
+    } else if (run_.phase == CastlePhase::Running && tick_ >= run_.endsAt) {
+        run_.phase = CastlePhase::Ended;
+    }
+}
+
+void Realm::castleKill(const Body& dead) {
+    if (run_.phase != CastlePhase::Running) return;
+    if (tables_->kinds[size_t(dead.kind)].number == kCastleSorcerer) ++run_.sorcerers;
+    else ++run_.kills;
+}
+
+int Realm::castleSecondsLeft() const {
+    const int64_t until = run_.phase == CastlePhase::Waiting   ? run_.startsAt
+                          : run_.phase == CastlePhase::Running ? run_.endsAt
+                                                               : tick_;
+    return int(std::max<int64_t>(0, until - tick_ + kCastleTicksPerSecond - 1) / kCastleTicksPerSecond);
+}
+
 }  // namespace mu::sim

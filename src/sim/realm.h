@@ -795,6 +795,10 @@ public:
     // Enter: checked now, and at the next tick's start the cloak spent and the castle's gate
     // passed (Gated); false and nothing done when he would refuse.
     bool enterCastle(int castle);
+    // Blood Castle's run, while he is in one (sim/event.h), and the whole seconds left of its
+    // wait or of its time.
+    const CastleRun& castleRun() const { return run_; }
+    int castleSecondsLeft() const;
     // Farewell: his window shut, as walking away shuts it.
     void closeGate() { gating_ = -1; }
     void closeMachine();
@@ -1287,6 +1291,10 @@ private:
     int gating_ = -1;  // see gating()
     // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
     int castleOwed_ = 0;
+    CastleRun run_;  // see castleRun()
+    // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
+    void castleTick();
+    void castleKill(const Body& dead);
     void passCastle(int castle);
     Machine machine_;
     bool mixed_ = false;

@@ -102,6 +102,10 @@ private:
     float bannerAge_ = -1.0f;
     float bannerHold_ = 2.2f;
 
+    // Blood Castle's run in the tracker's place: always up while it lasts, out of a window's way.
+    float eventShown_ = 0.0f;
+    void rebuildEvent(int width);
+
     // The edge pointer, when the giver is the next step and off the frame.
     bool pointing_ = false;
     float pointX_ = 0.0f, pointY_ = 0.0f, pointAngle_ = 0.0f;
@@ -120,6 +124,9 @@ private:
         int64_t minutesLeft = 0;
         bool pointing = false;
         int pointX = 0, pointY = 0, pointMetres = 0;
+        // Blood Castle's run, when he is in one (sim/event.h): its phase, the seconds left of
+        // its wait or its time, and the two quotas. Shown in the quest's place.
+        int eventPhase = 0, eventSeconds = 0, eventKills = 0, eventSorcerers = 0, eventShown = 0;
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;
