@@ -79,6 +79,8 @@ struct Excellence {
     // ring or the pendant, which lifts his pet's price (sim/items.h).
     bool bulwark = false;
     bool kinship = false;
+    // How many Wraths his hands carry, each adding sim::kWrathDamage to every blow he deals.
+    int wraths = 0;
     // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
     // resistance worn to Ice and to Poison, each turning the element aside r times in r + 1, and
     // the percent of maximum life the worn pieces' options give back every kJewelleryRegenTicks.

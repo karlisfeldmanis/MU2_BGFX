@@ -437,7 +437,8 @@ enum class Power : uint8_t {
     Fireburst = 19,
     FireRing = 20,
     Bulwark = 21,
-    Kinship = 22
+    Kinship = 22,
+    Wrath = 23
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -625,6 +626,11 @@ constexpr float kPyroblastReach = 8.0f;
 // Frost Arrow ice, the Poison rune's sickness poison). Drops only to a class with something of
 // its element (`elementServes`). invention, all of it.
 constexpr double kElementRuneDamage = 0.20;
+// **Wrath** (the user, 2026-10-03: "+20% damage rune for all classes ... its legendary i guess"),
+// the Balrog's rune: every blow he deals -- a swing, an arrow, a spell, a rune's own -- takes
+// kWrathDamage more for each set in his hands, laid with the skill's multiplier in strikeAt.
+// Every class's, a weapon's socket only. ours.
+constexpr double kWrathDamage = 0.20;
 // **The knight's fire runes** (the user, 2026-10-02: "pyroblast chance for DK weapon", "inferno
 // chance for DK weapon"), in a knight's weapon alone. **Fireburst**: a swing that lands has
 // kFireburstChance to burst into the Pyroblaster's chain -- kPyroblastChain Fire Balls, each

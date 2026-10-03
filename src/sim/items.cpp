@@ -317,6 +317,7 @@ const PowerRow* powerOf(uint8_t power) {
          "Your Guardian Angel no longer lowers your damage, and your Imp and Dinorant take no "
          "life for their blows",
          kEveryClass, kInJewellery, Rarity::Epic},
+        {Power::Wrath, "Wrath", "+20% damage", kEveryClass, kInWeapon, Rarity::Legendary},
         {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},

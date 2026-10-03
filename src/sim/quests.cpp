@@ -743,11 +743,9 @@ QuestRow tersiaBalrog() {
     // The elf's the Chaos Nature Bow since the sixth took the Bluewing (2026-10-03).
     row.paid[row.paidCount++] = {.item = "Bow07", .kin = elf, .sockets = 2,
                                  .firstOnly = true};  // Chaos Nature Bow
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
-                                 .power = uint8_t(Power::Fireburst), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
-                                 .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
+    // The rune, every class's Wrath since 2026-10-03 (the user: "LT7 has to be +20% damage rune
+    // for all classes, create that rune its legendary"), in place of Fireburst, Echo and Frost.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Wrath),
                                  .firstOnly = true};
     row.voice = "tersia_7";  // tools/voice.py, VOICES["tersia"]
     return row;

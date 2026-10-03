@@ -5717,6 +5717,47 @@ void testRunes(const content::Tables& tables) {
                        "a pendant three");
         }
     }
+    // Wrath, the Balrog's legendary (2026-10-03): every class's, in a weapon's socket only, and
+    // +20% on each blow -- a knight's first swing on the same seed lands 1.2 times as hard.
+    {
+        const sim::Held wrath = held(rune, 0, uint8_t(sim::Power::Wrath));
+        const int staff = tables.itemNamed("Staff03"), bow = tables.itemNamed("Bow04");
+        const int ring = tables.itemAt(13, 8);
+        check(sim::settable(tables, wrath, held(serpent, 1, 0), dk) && staff >= 0 &&
+                  sim::settable(tables, wrath, held(staff, 1, 0), sim::Kin::DarkWizard) &&
+                  bow >= 0 && sim::settable(tables, wrath, held(bow, 1, 0), sim::Kin::FairyElf),
+              "Wrath goes in every class's socketed weapon");
+        check(ring >= 0 && !sim::settable(tables, wrath, held(ring, 1, 0), dk), "and not a ring");
+        const auto firstBlow = [&](uint8_t power) {
+            sim::Realm realm;
+            realm.raise(&tables, 3, 200, 160, dk, 60);
+            const uint8_t powers[3] = {power, 0, 0};
+            realm.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+            bool asked = false;
+            for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
+                if (!asked) {
+                    for (const sim::Body& one : realm.bodies()) {
+                        if (!one.monster() || !one.alive()) continue;
+                        sim::Request request;
+                        request.kind = sim::Request::Kind::Attack;
+                        request.target = one.id;
+                        realm.ask(request);
+                        asked = true;
+                        break;
+                    }
+                }
+                realm.step();
+                for (const sim::Happening& h : realm.happenings()) {
+                    if (h.what == sim::What::Hit && h.who == realm.hero().id) return h.a;
+                }
+            }
+            return 0;
+        };
+        const int bare = firstBlow(0), wrathful = firstBlow(uint8_t(sim::Power::Wrath));
+        std::printf("  first swing %d bare, %d with Wrath\n", bare, wrathful);
+        check(bare > 0 && std::abs(wrathful - int(bare * 1.2f)) <= 1,
+              "and a swing with Wrath strikes 20% harder");
+    }
     // The Undying, every class's armour power: in armour or a shield by anyone, never a weapon;
     // x1.2 on maximum health each; and Devin's first clear pays it to every class.
     {

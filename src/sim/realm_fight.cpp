@@ -99,6 +99,10 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // His element runes on a spell or a skill of their element; the sweeps' are laid in
     // strikeAround and the runes' own blows where each is let go.
     if (row != nullptr) force *= elementForce(attacker, skillElement(row->number));
+    // His Wraths on every blow of his, whatever threw it (sim::kWrathDamage).
+    if (attacker.player && attacker.excel.wraths > 0) {
+        force *= float(1.0 + kWrathDamage * attacker.excel.wraths);
+    }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.

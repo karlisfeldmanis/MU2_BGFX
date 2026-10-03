@@ -371,6 +371,7 @@ void Realm::rearm(Body& hero) {
             if (power && power->power == Power::Kinship && jewellery(*row)) {
                 hero.excel.kinship = true;
             }
+            if (power && power->power == Power::Wrath && !jewellery(*row)) ++hero.excel.wraths;
         }
     }
     // The rings and the pendant: the largest resistance worn in each element (Max3), and every
