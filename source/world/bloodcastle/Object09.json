@@ -17,6 +17,16 @@
     "pan_R"
   ],
   "additive_from": "A sheet named _R is drawn RENDER_BRIGHT, added (TextureScriptParsing, TextureScript.cpp:16-70).",
+  "glow": {
+    "pan_R": {
+      "low": 0.9,
+      "high": 1.5,
+      "steps": 16,
+      "hz": 3.0,
+      "smooth_seconds": 0.12
+    }
+  },
+  "glow_from": "Ours: MU draws the shards at a steady BlendMeshLight. The user, 2026-10-03, of the heap by the statue: 'i think yhose crystals has to glow to be with fire'. They breathe with the heap's own fire emitter (below), at its 3 Hz and 0.12 s, and above a plain draw -- 0.9 to 1.5 -- so the crystal reads as lit from inside by the flame.",
   "why_this_one": "A heap of jagged orange shards, the courtyard's two embers by the Saint statue (12-15.5, 99.5-100), all of it pan_R's soft orange, added: a fire painted as a mesh.",
   "material_note": "pan_R alone, lamplight, added.",
   "emitters": [
