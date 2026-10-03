@@ -361,6 +361,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.channelNext = tick_ + row.strikeFrom;
         // The sweep starts where he is facing, and nobody has been struck yet.
         hero.channelTurn = hero.aim;
+        hero.channelAim = at;
+        hero.channelLast = 0;
         hero.channelStruckCount = 0;
         hero.channelEcho = false;
     }
@@ -559,6 +561,7 @@ void Realm::channel(Body& hero) {
             hero.channelNext = tick_ + kEchoTicks;
             hero.channelFrom = hero.channelNext - row->strikeFrom;
             hero.channelUntil = hero.channelFrom + row->strikeUntil + 1;
+            hero.channelLast = 0;
             hero.channelStruckCount = 0;
             core::logf("arcane echo: tick %lld, %s sweeps again", (long long)tick_, row->name);
             return;
@@ -576,13 +579,15 @@ void Realm::channel(Body& hero) {
     // Past the window, his arm is coming down: the channel runs out without striking.
     if (tick_ > hero.channelFrom + row->strikeUntil) return;
     hero.channelNext += std::max<int32_t>(1, row->pulseTicks);
-    // Everything in its shape now -- a body that walked in since the last strike can be the next
-    // -- and of those ONE: the first clockwise from where the last strike went, so the bolt goes
-    // round the ring. Clockwise is the bearing increasing in the realm's own x/y; a lone body is
-    // struck every time. One `Loosed`, which is what the drawing throws a bolt on, and the blow
-    // on the same tick: lightning does not fly. Ties go to the lower id, so the log is fixed.
-    uint32_t victims[kVictims];
-    const int found = gather(hero, *row, victims, kVictims);
+    // **A chain** (the user, 2026-10-03: "lightning also is a chain spell like pyroblast rune";
+    // until then it went round him, the first body clockwise from the last strike). The first
+    // strike goes from his hand into the body he cast at, or the nearest in his reach when that
+    // one is gone; each next leaps from the last body struck, from where it stood, to the
+    // nearest living monster it has not struck, within the row's reach of it and in its sight,
+    // as the Pyroblaster's hop finds its next (Realm::hop). With nowhere to leap the chain ends
+    // and the rest of the channel strikes nothing. One `Loosed` a strike, `c` the body it leaps
+    // from (0 for his hand), and the blow on the same tick: lightning does not fly. Ties go to
+    // the lower id, so the log is fixed.
     // How often this channel has struck a body already.
     const auto times = [&](uint32_t id) -> int {
         for (int k = 0; k < hero.channelStruckCount; ++k) {
@@ -590,25 +595,44 @@ void Realm::channel(Body& hero) {
         }
         return 0;
     };
+    const auto spent = [&](const Body& b) {
+        return row->strikesEach > 0 && times(b.id) >= row->strikesEach;
+    };
     Body* next = nullptr;
-    float nextTurn = 0.0f, nextGap = 0.0f;
-    for (int i = 0; i < found; ++i) {
-        Body* victim = body(victims[i]);
-        if (victim == nullptr || !victim->alive()) continue;
-        // Struck its share already: the sweep passes it by.
-        if (row->strikesEach > 0 && times(victim->id) >= row->strikesEach) continue;
-        const float turn = std::atan2(victim->y - hero.y, victim->x - hero.x);
-        float gap = turn - hero.channelTurn;
-        while (gap <= 1e-4f) gap += 6.28318530718f;
-        while (gap > 6.28318530718f + 1e-4f) gap -= 6.28318530718f;
-        if (next == nullptr || gap < nextGap || (gap == nextGap && victim->id < next->id)) {
-            next = victim;
-            nextTurn = turn;
-            nextGap = gap;
+    if (hero.channelLast == 0) {
+        uint32_t victims[kVictims];
+        const int found = gather(hero, *row, victims, kVictims);
+        // Nearest first, as `gather` sorts them; the aimed body before all of them.
+        for (int i = 0; i < found; ++i) {
+            Body* victim = body(victims[i]);
+            if (victim == nullptr || !victim->alive() || spent(*victim)) continue;
+            if (victim->id == hero.channelAim) {
+                next = victim;
+                break;
+            }
+            if (next == nullptr) next = victim;
+        }
+    } else {
+        const float x = hero.channelLastX, y = hero.channelLastY;
+        float best = row->reach * row->reach;
+        for (Body& b : bodies_) {
+            if (!b.monster() || !b.alive() || spent(b)) continue;
+            const float dx = b.x - x, dy = b.y - y;
+            const float d2 = dx * dx + dy * dy;
+            if (d2 > best || (d2 == best && next != nullptr && b.id > next->id)) continue;
+            if (!router_.sees(x, y, b.x, b.y, content::kWallNoMove)) continue;
+            best = d2;
+            next = &b;
         }
     }
-    if (next == nullptr) return;
-    hero.channelTurn = nextTurn;
+    if (next == nullptr) {
+        if (hero.channelLast != 0) {
+            core::logf("lightning: tick %lld, the chain ends at #%u", (long long)tick_,
+                       hero.channelLast);
+            hero.channelNext = hero.channelUntil;
+        }
+        return;
+    }
     // Counted before the blow, so a death under it changes nothing.
     bool counted = false;
     for (int k = 0; k < hero.channelStruckCount; ++k) {
@@ -622,7 +646,10 @@ void Realm::channel(Body& hero) {
         hero.channelTimes[hero.channelStruckCount] = 1;
         ++hero.channelStruckCount;
     }
-    say(What::Loosed, hero, row->number, 0, 0, next->id);
+    say(What::Loosed, hero, row->number, 0, int32_t(hero.channelLast), next->id);
+    hero.channelLast = next->id;
+    hero.channelLastX = next->x;
+    hero.channelLastY = next->y;
     strikeAt(hero, *next, force(*row, hero.points), row, true);
 }
 

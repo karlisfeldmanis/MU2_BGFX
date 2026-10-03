@@ -449,6 +449,13 @@ float force(const SkillRow& row, const HeroPoints& points);
 int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const content::Arm* right,
                   const content::Arm* left, const SkillRow& row, int extra = 0);
 
+// **The wizard's cooldown spells cast quicker** (the user, 2026-10-03: "we need to increase DW
+// meteor, ice, poison, lighting attack speed for animation"): Meteorite's, Ice's and Poison's
+// clips run this much faster than MagicSpeed alone makes them, and the realm holds him for the
+// shorter clip, which the drawing fits the clip to. Lightning's channel is written shorter on
+// its row by the same factor. Ours.
+constexpr float kSpellQuicken = 1.4f;
+
 // How long the clip takes at its authored pace, in ticks -- what the drawing plays a knight's
 // skill with a cooldown at (game/play.cpp, `swingPace` 1 on a cast); a primary is fitted to
 // castTicks instead. Zero as castTicks is.

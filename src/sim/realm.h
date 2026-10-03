@@ -438,6 +438,10 @@ struct Body {
     // Where the last strike went, as a bearing from him in radians: the next goes to the body
     // clockwise from it, so the channel sweeps round.
     float channelTurn = 0.0f;
+    // Lightning's chain: the body it was cast at, struck first from his hand, and the last body
+    // struck and where it stood, which the next strike leaps from. 0 before the first strike.
+    uint32_t channelAim = 0, channelLast = 0;
+    float channelLastX = 0.0f, channelLastY = 0.0f;
     // Whom this channel has struck and how often, for `SkillRow::strikesEach`. Emptied at the cast.
     uint32_t channelStruck[kVictims] = {};
     uint8_t channelTimes[kVictims] = {};

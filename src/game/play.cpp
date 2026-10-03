@@ -414,7 +414,10 @@ void Play::update(double seconds) {
                         core::logf("channel: %s plays clip %d, %.3f s long", row->name, row->clip,
                                    double(caster->figure.length()));
                         caster->casting = lasts;
-                        caster->swingPace = 1.0f;
+                        // Once over the channel, however short its row makes it (Lightning's
+                        // was the clip's own 2.08 s until kSpellQuicken, 2026-10-03).
+                        caster->swingPace = lasts > 0.01f ? std::max(1.0f, caster->figure.length() / lasts)
+                                                          : 1.0f;
                         caster->swinging = lasts;
                         ++caster->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
@@ -734,7 +737,20 @@ void Play::update(double seconds) {
                         // falls for the ticks the realm holds the blow.
                         meteor_.cast(to[0], to[2], happening.who);
                     } else if (happening.a == sim::skill::kLightning) {
-                        thunder_.strike(from, to, happening.whom);
+                        // A chain's leap: from the middle of the body it leaps off (`c`,
+                        // Realm::channel), not his hand -- the corpse's too, if the last strike
+                        // killed it.
+                        const Drawn* off =
+                            happening.c != 0 ? drawnOf(uint32_t(happening.c)) : nullptr;
+                        if (off != nullptr && off->placed) {
+                            const FigureBody* look = off->figure.body();
+                            const float tall = look ? look->height * look->scale : 1.0f;
+                            const float at[3] = {off->crown[0], off->crown[1] - tall * 0.5f,
+                                                 off->crown[2]};
+                            thunder_.strike(at, to, happening.whom);
+                        } else {
+                            thunder_.strike(from, to, happening.whom);
+                        }
                     } else if (happening.a == sim::skill::kPowerWave) {
                         // A curtain standing on the ground, under where every spell leaves, sent
                         // along the aim the realm struck down (`c`, thousandths of a radian):

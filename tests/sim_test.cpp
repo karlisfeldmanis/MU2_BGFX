@@ -1936,20 +1936,19 @@ void testCastLock(const content::Tables& tables) {
         checkEqual(movedWhile, 0, "and he does not move while he calls it");
     }
 
-    // ---- Lightning: a channel -- three seconds of pulses into everything around him ----------
+    // ---- Lightning: a channel -- a chain leaping body to body while his arm is up ------------
     {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
         check(bolt.wizardry && bolt.channelled() && bolt.primary() && !bolt.thrown() &&
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
-                  bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 42,
-              "Lightning is a channel round him as long as its clip, with no cooldown, and it "
-              "pushes");
+                  bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 30,
+              "Lightning is a channel, its clip quickened, with no cooldown, and it pushes");
         check(bolt.force == 1.5f && sim::force(bolt, sim::HeroPoints{}) == 1.5f &&
                   sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.8f,
               "and each strike is at half again the band, its long clip being its wait, where Fire Ball's is at 1.8");
-        check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32 &&
+        check(bolt.pulseTicks == 2 && bolt.strikeFrom == 10 && bolt.strikeUntil == 23 &&
                   bolt.strikesEach == 1,
-              "and it strikes every three ticks while his arm is up, once at most a body");
+              "and it strikes every two ticks while his arm is up, once at most a body");
         const int32_t scroll = tables.itemAt(15, 2);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kLightning &&
                   tables.items[size_t(scroll)].teachesEnergy == 72,
@@ -1967,6 +1966,9 @@ void testCastLock(const content::Tables& tables) {
         uint32_t swept[16] = {};
         int sweptTimes[16] = {};
         int sweptCount = 0, mostOnOne = 0;
+        // The chain (2026-10-03): a strike's `c` is the body the last one struck, 0 for the first.
+        uint32_t lastStruck = 0;
+        int brokenLinks = 0, links = 0;
         float worstStep = 0.0f;
         uint32_t fighting = 0, sliding = 0;
         float lastX = 0.0f, lastY = 0.0f, before = 0.0f;
@@ -2027,6 +2029,7 @@ void testCastLock(const content::Tables& tables) {
                     thisChannel = 0;
                     sweptMost = std::max(sweptMost, sweptCount);
                     sweptCount = 0;
+                    lastStruck = 0;
                 }
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kLightning && lastCast >= 0) {
                     earliest = std::min<int64_t>(earliest, int64_t(one.tick) - lastCast);
@@ -2039,6 +2042,11 @@ void testCastLock(const content::Tables& tables) {
                         thisPulse = 0;
                     }
                     widest = std::max(widest, ++thisPulse);
+                    if (one.who == wiz.hero().id) {
+                        if (uint32_t(one.c) != lastStruck) ++brokenLinks;
+                        if (one.c != 0) ++links;
+                        lastStruck = one.whom;
+                    }
                     bool seen = false;
                     for (int k = 0; k < sweptCount; ++k) {
                         if (swept[k] == one.whom) {
@@ -2077,14 +2085,18 @@ void testCastLock(const content::Tables& tables) {
         // Up to seven, one a body: a strike with nobody left unstruck in reach is not thrown, so a
         // cast strikes as many times as there are bodies round him, to seven.
         check(mostPulses >= 1 && mostPulses <= 7, "and a channel strikes up to seven times");
-        check(earliest >= 14, "and never before his arm is up");
+        check(earliest >= sim::skillNumbered(sim::skill::kLightning)->strikeFrom,
+              "and never before his arm is up");
         check(closest >= sim::skillNumbered(sim::skill::kLightning)->channelTicks,
               "and never twice inside one channel");
         // One body a strike, and round the ring: a channel with company strikes more than one.
         checkEqual(widest, 1, "and each strike goes to one body");
         check(mostOnOne <= 1, "and no body is struck more than once in a cast");
         check(sweptMost >= 2 || withCompany == 0,
-              "and a channel cast among company goes round to more than one");
+              "and a channel cast among company leaps to more than one");
+        std::printf("  lightning: %d leaps, %d off the wrong body\n", links, brokenLinks);
+        checkEqual(brokenLinks, 0, "and every strike leaps from the body the last one struck");
+        check(links > 0 || withCompany == 0, "and a chain leaps at least once among company");
         checkEqual(stillWhile, 0, "and he stands still while it runs");
         // A strike at twice the band kills most of what it hits here, and the dead are not
         // pushed; what survives is.

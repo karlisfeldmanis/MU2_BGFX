@@ -151,11 +151,13 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
         const int strikes =
             row.pulseTicks > 0 ? (row.strikeUntil - row.strikeFrom) / row.pulseTicks + 1 : 1;
         out.push_back(stat("Strikes", "up to " + std::to_string(strikes), tone(Tone::White)));
-        out.push_back(stat("Area", reach + " round him", tone(Tone::White)));
-        note(row.strikesEach == 1   ? "going round, once each"
-             : row.strikesEach > 1 ? "one body at a time, going round, " +
+        // A chain since 2026-10-03 (Realm::channel): each strike leaps from the last body.
+        out.push_back(stat("Range", reach, tone(Tone::White)));
+        out.push_back(stat("Chain", reach + " a leap", tone(Tone::White)));
+        note(row.strikesEach == 1   ? "leaping body to body, once each"
+             : row.strikesEach > 1 ? "leaping body to body, " +
                                          std::to_string(row.strikesEach) + " times each at most"
-                                   : "one body at a time, going round");
+                                   : "leaping body to body");
     } else if (row.spread == sim::Spread::Line) {
         out.push_back(stat("Range", reach, tone(Tone::White)));
         out.push_back(stat("Area", "a line of " + std::to_string(int(sim::kLineTiles)) + " tiles",

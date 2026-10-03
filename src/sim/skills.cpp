@@ -278,11 +278,17 @@ constexpr SkillRow kRows[kSkills] = {
     // spells damage because now we are using longer cast animation, which i really like"): the
     // long clip is a wait of its own, so Lightning, Ice and Poison strike at half again the band
     // and Meteorite at twice it -- half of what the five seconds had bought each. Ours.
+    //
+    // **A chain, and quicker** (the user, 2026-10-03: "we want that lightning also is a chain
+    // spell like pyroblast rune", and its cast sped up with the other three): the first strike
+    // from his hand into the body he cast at, each next leaping from the last body struck to the
+    // nearest it has not struck within four tiles (Realm::channel), every two ticks. The channel
+    // 42 -> 30 ticks and its window 14-32 -> 10-23, kSpellQuicken's 1.4; seven strikes still.
     {skill::kLightning, "Lightning", 40, 4.0f, 1.5f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
-     "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
-     "another within four tiles and throwing each back a step.",
-     183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
-     3, 14, 32, 1},
+     "With his arm raised to the sky, lightning leaps from the body he points at into the next "
+     "and the next within four tiles, throwing each back a step.",
+     183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 30,
+     2, 10, 23, 1},
 
     // Meteorite 2: 0.75's row for the damage, `CreateSkill(Meteorite, ..., DamageType.Wizardry,
     // 21, 6, manaConsumption: 12, energyRequirement: 104, elementalModifier: Earth)` -- twenty-one
@@ -756,7 +762,9 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     const float bonus = row.onSelf()     ? 0.0f
                         : row.wizardry ? (magicSpeedStat(kin, agility) + float(extra)) * 0.004f
                                        : (attackSpeedStat(kin, agility, right, left) + float(extra)) * 0.004f;
-    const float rate = (clip->speed + bonus) * 25.0f;
+    const bool quick = row.number == skill::kMeteorite || row.number == skill::kIce ||
+                       row.number == skill::kPoison;
+    const float rate = (clip->speed + bonus) * 25.0f * (quick ? kSpellQuicken : 1.0f);
     if (rate <= 0.0f) return 0;
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));
 }
