@@ -679,7 +679,9 @@ void Play::releaseDrops() {
                                    if (dropper == nullptr) let = true;
                                    else if (dropper->fallOwed) let = false;
                                    else if (dropper->deadFor < 0.0f) let = true;  // rose again
-                                   else let = dropper->deadFor >= kDropDelay;
+                                   // Zen skips the drop's beat: it is the fight's sum, owed
+                                   // the moment the body starts to fall.
+                                   else let = one.zen > 0 || dropper->deadFor >= kDropDelay;
                                    if (let && one.zen > 0) takeZen(one.zen);
                                    else if (let) landed(one.drop);
                                    return let;

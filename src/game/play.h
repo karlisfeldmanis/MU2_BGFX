@@ -67,11 +67,11 @@ class Play {
 public:
     // A fight's Zen is said once, at its end: when this long has gone by with no pile taken, the
     // lane posts the sum (ui/tally.cpp) and the coins ring once (Play::takeZen) -- the user,
-    // 2026-10-03, "play zen sound when combat is over and total zen is calculated". 0.2, from
-    // 1.5 and then 0.6: "basically almost instantly after the combat". The wait no longer has
-    // to cover a spell's spread of falls, since it holds while any kill's Zen is still owed
-    // (zenOwed), so all it is for is the last pile's own beat.
-    static constexpr float kZenQuietSeconds = 0.2f;
+    // 2026-10-03, "play zen sound when combat is over and total zen is calculated". 0.05, from
+    // 1.5, 0.6 and 0.2: "basically almost instantly after the combat", then "can we get
+    // faster?". The wait no longer has to cover a spell's spread of falls, since it holds while
+    // any kill's Zen is still owed (zenOwed), so all it is for is a few frames' grace.
+    static constexpr float kZenQuietSeconds = 0.05f;
     // The arena (--arena), set BEFORE open() or not at all. It is not a second kind of realm
     // and not a bench: all it does is rewrite the map's nest table to one nest of one breed
     // beside where the hero is being put down, and the realm then raises that table exactly as
