@@ -31,6 +31,12 @@ constexpr float kPuffLevel = 0.12f;
 constexpr float kPuffColour[3] = {0.80f, 0.84f, 0.95f};
 constexpr float kFlareLife = 40.0f * kFrame;
 constexpr size_t kMostPuffs = 160;
+// The drawbridge's dust as it lands. MU throws ten BITMAP_SMOKE+1 puffs at its tip, 150 units
+// either way, on a float equality its swing never meets (ZzzObject.cpp:144-153), so in MU it
+// never shows; ours, asked for (the user, 2026-10-03: 'we need some minimal smoke effect on
+// landing'): grey, slow, about a second and a half.
+constexpr float kDustLevel = 0.16f;
+constexpr float kDustColour[3] = {0.78f, 0.78f, 0.80f};
 
 }  // namespace
 
@@ -91,6 +97,12 @@ void CastleSparks::update(float seconds, const float hero[3]) {
         one.age += seconds;
         if (one.flare) {
             one.at[1] += one.rise * seconds;
+        } else if (one.dust) {
+            one.at[0] += one.drift[0] * seconds;
+            one.at[1] += one.rise * seconds;
+            one.at[2] += one.drift[1] * seconds;
+            one.drift[0] *= std::pow(0.9f, seconds / kFrame);
+            one.drift[1] *= std::pow(0.9f, seconds / kFrame);
         } else {
             one.rise += kPuffClimb * seconds;
             one.at[1] += one.rise * seconds;
@@ -144,6 +156,26 @@ void CastleSparks::update(float seconds, const float hero[3]) {
     }
 }
 
+void CastleSparks::dust(const float at[3], int count, float spread) {
+    if (!open_ || !bgfx::isValid(smoke_)) return;
+    for (int i = 0; i < count && puffs_.size() < kMostPuffs; ++i) {
+        Puff puff;
+        const float across = (unit() * 2.0f - 1.0f) * spread;
+        puff.at[0] = at[0] + across;
+        puff.at[1] = at[1] + 0.1f + unit() * 0.2f;
+        puff.at[2] = at[2] + (unit() - 0.5f) * 0.4f;
+        puff.rise = 0.25f + unit() * 0.35f;
+        // Out from the line, as dust pushed from under a falling board.
+        puff.drift[0] = across * 0.6f;
+        puff.drift[1] = (unit() - 0.3f) * 1.2f;
+        puff.life = 1.2f + unit() * 0.6f;
+        puff.size = 0.45f + unit() * 0.2f;
+        puff.spin = unit() * 6.2831853f;
+        puff.dust = true;
+        puffs_.push_back(puff);
+    }
+}
+
 void CastleSparks::gather(gfx::Effects& effects) const {
     if (!open_) return;
     for (const Puff& one : puffs_) {
@@ -162,8 +194,10 @@ void CastleSparks::gather(gfx::Effects& effects) const {
             if (!bgfx::isValid(smoke_)) continue;
             // MU's Scale grows 0.05-0.09 a frame from 0.5; a 64-unit sheet at that, in metres.
             sprite.halfWidth = sprite.halfHeight = one.size * (1.0f + 2.5f * t);
-            const float level = kPuffLevel * std::sin(3.14159265f * t);
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = kPuffColour[k] * level;
+            const float level = (one.dust ? kDustLevel : kPuffLevel) * std::sin(3.14159265f * t);
+            for (int k = 0; k < 3; ++k) {
+                sprite.colour[k] = (one.dust ? kDustColour[k] : kPuffColour[k]) * level;
+            }
             sprite.spin = one.spin + t;
             sprite.sheet = smoke_;
         }

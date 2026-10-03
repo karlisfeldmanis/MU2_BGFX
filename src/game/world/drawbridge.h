@@ -5,7 +5,7 @@
 // Object37, stands raised at its stored 45 degrees. On the first of 21 frames, counted 20 down
 // to 0, it is set to 35 and eDownGate plays; every frame it pitches by a speed that starts at 1
 // and grows by 1.5, and passing 90 it is knocked back by the frames still to run and the speed
-// starts again at 2 -- a fall and a few bounces as it lands. On the last frame it goes (hidden)
+// starts again at 2 -- a fall and a few bounces as it lands; ours lands flat and stays (update). On the last frame it goes (hidden)
 // and types 9 and 10, Object10's deck and Object11's chains, show, with the terrain's planks on
 // the gap: the lowered bridge. Ours: the door stays, lying at 90 over the planks (lower()). MU's smoke at exactly 80 degrees is a float equality the swing never hits (it reads
 // 36, 38.5 ... 85, 86, 88, 81.5 ...), so it never shows in MU and is not drawn here.
@@ -26,7 +26,7 @@ class Town;
 class Drawbridge {
 public:
     // Finds the door and the deck among the town's placements. Only Blood Castle has them.
-    void open(const std::string& world, const Town& town);
+    void open(const std::string& world, const Town& town, float metresPerTile);
     void shutdown();
     bool isOpen() const { return door_ >= 0; }
 
@@ -38,6 +38,10 @@ public:
     bool started() const { return started_; }
     // Whether it is down: the door gone and the deck shown, and the gap's planks with it.
     bool lowered() const { return state_ == State::Lowered; }
+    // Whether the last update landed it, the dust's cue (CastleSparks::dust), and where its far
+    // end touches, in metres: the bridge's end, six tiles from the hinge.
+    bool landed() const { return landed_; }
+    void tip(float out[3]) const;
     const float* at() const { return rest_; }
 
 private:
@@ -55,6 +59,8 @@ private:
     float degrees_ = 45.0f, was_ = 45.0f, speed_ = 1.0f;
     float frame_ = 0.0f;
     bool started_ = false;
+    bool landed_ = false;
+    float metresPerTile_ = 1.0f;
 };
 
 }  // namespace mu::game

@@ -33,6 +33,9 @@ public:
 
     // One frame round `hero`, his feet, in metres.
     void update(float seconds, const float hero[3]);
+    // A little dust thrown up along a line: the drawbridge landing (game/world/drawbridge.h).
+    // `count` puffs at `at`, spread `spread` metres either way along x, slow and faint.
+    void dust(const float at[3], int count, float spread);
     void gather(gfx::Effects& effects) const;
 
 private:
@@ -44,6 +47,7 @@ private:
         float size = 1.0f;   // half width, metres
         float spin = 0.0f;
         bool flare = false;  // the pink-white flare rather than a puff
+        bool dust = false;   // a landing's dust: rises slowly and does not speed up
     };
     struct Vent {
         float at[3] = {0, 0, 0};

@@ -11,8 +11,9 @@ constexpr float kReference = 25.0f;  // MoveObject's frames a second
 
 }  // namespace
 
-void Drawbridge::open(const std::string& world, const Town& town) {
+void Drawbridge::open(const std::string& world, const Town& town, float metresPerTile) {
     shutdown();
+    metresPerTile_ = metresPerTile;
     if (world != "bloodcastle") return;
     const auto& models = town.cooked().models;
     const auto& instances = town.cooked().instances;
@@ -44,6 +45,14 @@ void Drawbridge::shutdown() {
     speed_ = 1.0f;
     frame_ = 0.0f;
     started_ = false;
+    landed_ = false;
+}
+
+void Drawbridge::tip(float out[3]) const {
+    // Six tiles from the hinge, down the bridge: MU's +y is our -z, and it falls to -y.
+    out[0] = rest_[0];
+    out[1] = rest_[1];
+    out[2] = rest_[2] + 6.0f * metresPerTile_;
 }
 
 void Drawbridge::lower(Town& town) {
@@ -58,6 +67,7 @@ void Drawbridge::lower(Town& town) {
 
 void Drawbridge::update(float seconds, bool falling, bool down, Town& town) {
     started_ = false;
+    landed_ = false;
     if (door_ < 0 || state_ == State::Lowered) return;
     if (state_ == State::Raised) {
         if (down && !falling) {
@@ -79,11 +89,11 @@ void Drawbridge::update(float seconds, bool falling, bool down, Town& town) {
         }
         degrees_ += speed_;
         speed_ += 1.5f;
+        // Ours: it lands flat and stays (the user, 2026-10-03: 'gate openiing has to happen
+        // without bounce'). MU knocks it back by the frames still to run and swings it again.
         if (degrees_ >= 90.0f) {
-            degrees_ -= float(time_);
-            speed_ = 2.0f;
-        }
-        if (time_ == 0) {
+            degrees_ = 90.0f;
+            landed_ = true;
             lower(town);
             return;
         }

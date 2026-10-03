@@ -108,7 +108,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // Devias's doors, which swing and slide as he comes near. See game/world/doors.h.
     if (town_.isOpen()) doors_.open(name, town_, ground_.metresPerTile());
     // Blood Castle's drawbridge, which falls when the run says. See game/world/drawbridge.h.
-    if (town_.isOpen()) drawbridge_.open(name, town_);
+    if (town_.isOpen()) drawbridge_.open(name, town_, ground_.metresPerTile());
     // The Lost Tower's skulls and chips, which he kicks as he walks. See game/world/skulls.h.
     if (town_.isOpen()) skulls_.open(name, town_, ground_.metresPerTile());
     // And what rides the swaying bones: the fountain's spray, the lanterns; and the mill's fall.
@@ -306,6 +306,12 @@ void World::update(double seconds, bool still) {
         drawbridge_.update(dt, falling, down, town_);
         // And the planks MU's terrain draws on the gap once its NoGround is cleared.
         ground_.showLater(drawbridge_.lowered());
+        // And a little dust where its far end comes down.
+        if (drawbridge_.landed()) {
+            float tip[3];
+            drawbridge_.tip(tip);
+            castleSparks_.dust(tip, 10, 1.5f * ground_.metresPerTile());
+        }
         if (drawbridge_.started() && drawbridgeSound_ >= 0) {
             const float* at = drawbridge_.at();
             play_.sound().playAt(drawbridgeSound_, at[0], at[1], at[2]);
