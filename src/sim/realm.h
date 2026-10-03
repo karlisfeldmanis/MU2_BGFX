@@ -242,7 +242,9 @@ float strideFactor(const Body& one);
 // pause between two blows does not flip him into the run and back. The user, 2026-10-03: 'lets
 // go to runing faster after the combat'. **ours**: one second, from three; a blow, a cast, an
 // attack order or a monster on him holds it, so the hold only spans the gaps between those.
-constexpr int kCombatTicks = 20;
+// Then, the same day: 'lets go instantly to runing if char can after the combat'. **ours**: one
+// tick -- the fight lets go on the first tick nothing holds him, and his next step is a run.
+constexpr int kCombatTicks = 1;
 // On a horse the hold guards nothing -- the rider never walks, so there is no run to flip --
 // and it only kept the weapon drawn three seconds over a dead monster. The user, 2026-10-02:
 // 'char has to go back to not combat ASAP'. **ours**: a quarter of a second.

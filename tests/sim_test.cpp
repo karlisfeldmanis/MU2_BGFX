@@ -1879,13 +1879,15 @@ void testCastLock(const content::Tables& tables) {
         check(wiz.learn(sim::skill::kMeteorite), "who knows Meteorite");
         const int32_t lock = sim::castTicks(tables, sim::Kin::DarkWizard,
                                              wiz.hero().points.agility, nullptr, nullptr, rock);
-        int casts = 0, falls = 0, landed = 0, lateOrEarly = 0, movedWhile = 0, widest = 0, thisFall = 0;
-        int64_t fallTick = -1;
+        int casts = 0, falls = 0, landed = 0, lateOrEarly = 0, movedWhile = 0, widest = 0;
         int64_t lastCast = -1, closest = 1 << 30;
         // When each rock is due down: its let-go and `b`, the wait in the sky (a spread rain,
         // 2026-10-03) and the fall. A rain of 24 needs the room.
         int64_t loosedAt[32] = {};
         uint32_t loosedOn[32] = {};
+        // And which cast let each go: a spread rain lands its rocks on ticks of their own, so a
+        // volley is counted by its cast, not by its tick.
+        int loosedBy[32] = {}, struckBy[64] = {};
         uint32_t fighting = 0;
         for (int tick = 0; tick < 6000; ++tick) {
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
@@ -1906,29 +1908,26 @@ void testCastLock(const content::Tables& tables) {
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Cast && one.a == sim::skill::kMeteorite) {
-                    ++casts;
+                    struckBy[++casts % 64] = 0;
                     if (lastCast >= 0) closest = std::min<int64_t>(closest, one.tick - lastCast);
                     lastCast = one.tick;
                 }
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kMeteorite) {
                     loosedAt[falls % 32] = int64_t(one.tick) + one.b;
                     loosedOn[falls % 32] = one.whom;
+                    loosedBy[falls % 32] = casts;
                     ++falls;
                 }
                 // The staff's swings do not fly, so every thrown landing is a rock -- and it
                 // lands its fall after the let-go, within two tiles of where it was called.
                 if ((one.what == sim::What::Hit || one.what == sim::What::Missed) && one.thrown) {
                     if (one.what == sim::What::Hit) ++landed;
-                    bool matched = false;
+                    int matched = -1;
                     for (int k = 0; k < 32; ++k) {
-                        if (loosedOn[k] == one.whom && int64_t(one.tick) == loosedAt[k]) matched = true;
+                        if (loosedOn[k] == one.whom && int64_t(one.tick) == loosedAt[k]) matched = k;
                     }
-                    if (!matched) ++lateOrEarly;
-                    if (int64_t(one.tick) != fallTick) {
-                        fallTick = one.tick;
-                        thisFall = 0;
-                    }
-                    widest = std::max(widest, ++thisFall);
+                    if (matched < 0) ++lateOrEarly;
+                    else widest = std::max(widest, ++struckBy[loosedBy[matched] % 64]);
                 }
             }
         }
