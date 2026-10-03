@@ -95,6 +95,7 @@ bool Meteor::open(const std::string& assetDir, content::Textures& textures,
     blastSheet_ = cooked("explosion");
     emberSheet_ = cooked("fire");
     glowSheet_ = cooked("light");  // a soft white flare, the fireball's burning heart
+    smokeSheet_ = cooked("smoke");  // Effect/smoke02, the arrows' wisps' sheet
 
     int fireTris = 0;
     for (int g = 0; g < fireGroupCount_; ++g) {
@@ -351,6 +352,34 @@ void Meteor::land(const Live& rock) {
     // 2. The blast, and it is asked for after the stones so that a nearly full pool spends its
     //    last slots on the debris rather than on one sprite.
     blastAt(rock.x, floor + kBlastLift * kUnit, rock.z, 1.0f);
+    // 3. And a little smoke rising out of it (kSmokePuffs, ours), last, so a full pool drops it
+    //    first.
+    smokeAt(rock.x, floor, rock.z);
+}
+
+void Meteor::smokeAt(float x, float floor, float z) {
+    if (!bgfx::isValid(smokeSheet_)) return;
+    for (int p = 0; p < kSmokePuffs; ++p) {
+        Mote* mote = freeMote();
+        if (mote == nullptr) return;
+        mote->alive = true;
+        mote->kind = Mote::Kind::Smoke;
+        const float yaw = unit() * kTwoPi;
+        const float out = 0.15f + 0.25f * unit();
+        mote->position[0] = x + std::sin(yaw) * out;
+        mote->position[1] = floor + 0.3f + 0.3f * unit();
+        mote->position[2] = z + std::cos(yaw) * out;
+        mote->velocity[0] = std::sin(yaw) * kSmokeDrift * unit();
+        mote->velocity[1] = kSmokeRise * (0.7f + 0.6f * unit());
+        mote->velocity[2] = std::cos(yaw) * kSmokeDrift * unit();
+        mote->size = kSmokeBorn;
+        mote->spin = unit() * kTwoPi;
+        // Staggered, so the three do not open as one.
+        mote->left = mote->born = kSmokeFrames * (0.8f + 0.2f * float(p) / float(kSmokePuffs));
+        mote->rise = 0.0f;
+        mote->cools = false;
+        for (int c = 0; c < 3; ++c) mote->colour[c] = kSmokeGrey[c];
+    }
 }
 
 void Meteor::stonesAt(float x, float z, float floor, int count) {
@@ -490,6 +519,11 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
         m.left -= refFrames;
         if (m.left <= 0.0f) { m.alive = false; continue; }
         for (int a = 0; a < 3; ++a) m.position[a] += m.velocity[a] * seconds;
+        if (m.kind == Mote::Kind::Smoke) {
+            const float t = 1.0f - m.left / m.born;
+            m.size = kSmokeBorn + (kSmokeGrown - kSmokeBorn) * std::sqrt(t);
+            m.spin += 0.012f * refFrames;
+        }
         if (m.kind == Mote::Kind::Ember) {
             // An accelerating LIFT and not a pull, whatever the field it is kept in is called:
             // `o->Gravity += 0.004` and then `Position[2] += Gravity * 10`, which is about
@@ -673,6 +707,17 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             }
         }
         sprite.blend = gfx::Blend::Additive;
+        if (m.kind == Mote::Kind::Smoke) {
+            // In quickly under the flash, out over the last two thirds.
+            const float t = 1.0f - m.left / m.born;
+            const float in = std::min(1.0f, t / 0.12f);
+            const float out = 1.0f - std::clamp((t - 0.33f) / 0.67f, 0.0f, 1.0f);
+            sprite.colour[3] = kSmokeAlpha * in * out;
+            sprite.sheet = smokeSheet_;
+            sprite.blend = gfx::Blend::Smoke;
+            effects.add(sprite);
+            continue;
+        }
         if (m.kind == Mote::Kind::Ember) {
             sprite.sheet = emberSheet_;
             // A 256x64 strip of four square cells, one every six frames: MU's

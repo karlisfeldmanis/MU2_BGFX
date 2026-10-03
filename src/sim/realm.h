@@ -1207,7 +1207,7 @@ private:
     // monster it has not struck yet, while it has hops left.
     void hop(Body& hero, const Flight& from, uint32_t off, float x, float y);
     // Room for a line's worth of bodies and the bolts around it.
-    static constexpr int kFlights = 32;
+    static constexpr int kFlights = 48;  // 32 until a Meteorite rained on 24 (2026-10-03)
     Flight flights_[kFlights] = {};
     // An Arcane Echo waiting to be let go: the spell again, at `at`. One at a time; a cast that
     // echoes while one waits does not.

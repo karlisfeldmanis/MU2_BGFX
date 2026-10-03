@@ -416,7 +416,8 @@ static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bit
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates
 // nothing, not a rule about crowds.
-constexpr int kVictims = 16;
+// 24 and not 16 since the wizard's spells reach the screen (2026-10-03, nine tiles).
+constexpr int kVictims = 24;
 
 // Half the Arc's spread, in radians: 67.5 degrees either side of where he is facing, which is
 // exactly the three compass eighths of "ahead and the two diagonals beside it". Written as an

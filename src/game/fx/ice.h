@@ -96,9 +96,9 @@ private:
     static constexpr float kRimeEvery = 4.0f;
     static constexpr float kRimeRadius = 0.25f;
 
-    static constexpr int kBlocks = 16;
-    static constexpr int kMaxShards = 96;
-    static constexpr int kWisps = 96;
+    static constexpr int kBlocks = 24;  // the spell's 24 bodies at most (sim kVictims)
+    static constexpr int kMaxShards = 144;
+    static constexpr int kWisps = 144;
 
     std::vector<EffectCorner> keys_[6];
     int keyCount_ = 0;

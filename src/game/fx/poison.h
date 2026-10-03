@@ -71,8 +71,8 @@ private:
     static constexpr float kFumeRadius = 0.35f;
     static constexpr float kCasterFume[3] = {0.25f, 0.6f, 0.3f};
 
-    static constexpr int kClouds = 16;
-    static constexpr int kMaxPuffs = 192;
+    static constexpr int kClouds = 24;  // the spell's 24 bodies at most (sim kVictims)
+    static constexpr int kMaxPuffs = 288;
 
     std::vector<EffectCorner> flat_[11], lit_[11];
     int keyCount_ = 0;

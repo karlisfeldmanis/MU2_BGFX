@@ -252,6 +252,18 @@ private:
     static constexpr float kGlowTiles = 2.0f;
     static constexpr float kBlastGlowTiles = 4.0f;
 
+    // **The smoke after a landing** (the user, 2026-10-03: "show minimal smoke after meteorite
+    // explosion"), ours: a few puffs of smoke02 read as grey (Blend::Smoke, the arrows' wisps),
+    // risen out of the blast and opening as they go, faint, faded in under the flash and out
+    // slowly. MU leaves only the stones.
+    static constexpr int kSmokePuffs = 3;
+    static constexpr float kSmokeFrames = 45.0f;               // 1.8 s
+    static constexpr float kSmokeBorn = 0.9f, kSmokeGrown = 2.4f;  // metres across
+    static constexpr float kSmokeRise = 0.55f;                 // metres a second
+    static constexpr float kSmokeDrift = 0.25f;                // metres a second, sideways at most
+    static constexpr float kSmokeGrey[3] = {0.38f, 0.37f, 0.36f};
+    static constexpr float kSmokeAlpha = 0.2f;
+
     static constexpr float kEmberSpacingUnits = 50.0f;
     static constexpr float kEmberFrames = 24.0f;
     static constexpr int kEmberCells = 4;     // a 256x64 strip
@@ -375,10 +387,10 @@ private:
 
     // Pools, sized once. A thing past its pool is refused and counted, never grown -- which is
     // MU's own rule as well as this engine's.
-    static constexpr int kMaxMeteors = 16;  // a Meteorite's rain is a rock a body
+    static constexpr int kMaxMeteors = 32;  // a Meteorite's rain is a rock a body, 24 at most
     static constexpr int kMaxFireballs = 8;
-    static constexpr int kMaxStones = 48;   // six a landing
-    static constexpr int kMaxMotes = 160;   // MU's own ceiling for the shared particle pool
+    static constexpr int kMaxStones = 144;  // six a landing
+    static constexpr int kMaxMotes = 256;   // MU's 160, raised for a rain of 24 with its smoke
 
     Group fireGroups_[2];   // [0] the rock, opaque-ish; [1] the flame cone, additive
     int fireGroupCount_ = 0;
@@ -386,6 +398,7 @@ private:
     bgfx::TextureHandle blastSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle emberSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle glowSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle smokeSheet_ = BGFX_INVALID_HANDLE;
     const content::Ground* ground_ = nullptr;
 
     Live meteors_[kMaxMeteors] = {};
@@ -413,6 +426,7 @@ private:
     void emberAt(const float at[3], const float heading[3], float light, bool fireball = false);
     void stonesAt(float x, float z, float floor, int count);
     void blastAt(float x, float y, float z, float share);
+    void smokeAt(float x, float floor, float z);
     void land(const Live& rock);
     // One fireball's frame, and whether it is still in the air.
     bool hurling(Hurled& ball, float seconds, bool standing, const float* there);

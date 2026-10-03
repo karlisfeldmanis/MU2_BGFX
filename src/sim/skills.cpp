@@ -284,11 +284,19 @@ constexpr SkillRow kRows[kSkills] = {
     // from his hand into the body he cast at, each next leaping from the last body struck to the
     // nearest it has not struck within four tiles (Realm::channel), every two ticks. The channel
     // 42 -> 30 ticks and its window 14-32 -> 10-23, kSpellQuicken's 1.4; seven strikes still.
-    {skill::kLightning, "Lightning", 40, 4.0f, 1.5f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
+    //
+    // **Harder and wider, the wizard's alone** (the user, 2026-10-03: "meteorite, ice, poison,
+    // lightning has to be more powerful for DW, only DW can get more tiles"): a third harder, and
+    // then "DW should get much more monsters on screen from 1 cast (except if there is wall)":
+    // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
+    // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
+    // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
+    // forces and reach (sim/items.h), so this is his.
+    {skill::kLightning, "Lightning", 40, 6.0f, 2.0f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning leaps from the body he points at into the next "
-     "and the next within four tiles, throwing each back a step.",
+     "and the next within six tiles, throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 30,
-     2, 10, 23, 1},
+     1, 10, 23, 1},
 
     // Meteorite 2: 0.75's row for the damage, `CreateSkill(Meteorite, ..., DamageType.Wizardry,
     // 21, 6, manaConsumption: 12, energyRequirement: 104, elementalModifier: Earth)` -- twenty-one
@@ -311,11 +319,19 @@ constexpr SkillRow kRows[kSkills] = {
     // lighting"): MU's "Skill recovery" (183), the arm thrown up to the sky, played once; the rock
     // is called at the middle of it, with the arm up, and he cannot walk out of it. MU casts it
     // with `SetPlayerMagic`'s two hands, 147/148.
-    {skill::kMeteorite, "Meteorite", 30, 9.0f, 2.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    //
+    // **Harder and wider, the wizard's alone** (the user, 2026-10-03: "meteorite, ice, poison,
+    // lightning has to be more powerful for DW, only DW can get more tiles"): a third harder, and
+    // then "DW should get much more monsters on screen from 1 cast (except if there is wall)":
+    // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
+    // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
+    // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
+    // forces and reach (sim/items.h), so this is his.
+    {skill::kMeteorite, "Meteorite", 30, 9.0f, 2.6f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "With his arm raised to the sky he calls burning rocks down on a body up to nine tiles off "
-     "and on everything within four tiles of it, one rock each.",
+     "and on everything within nine tiles of it, one rock each.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
-     0, 0, 7, 4.0f},
+     0, 0, 7, 9.0f},
 
     // Teleport 6: 0.75's row, `CreateSkill(Teleport, ..., manaConsumption: 30, energyRequirement:
     // 88)` -- thirty mana, six tiles, no damage. MuMain's: aimed at the tile under the pointer and
@@ -348,11 +364,19 @@ constexpr SkillRow kRows[kSkills] = {
     // it lands on the let-go), at **twice the band**, on five seconds of cooldown before agility's
     // haste. The mana is 0.75's. Nine tiles, with the other spells he throws at a body. Four and
     // not two, Meteorite's: two iced one of four Bull Fighters ("only 1 of 4 monsters was iced").
-    {skill::kIce, "Ice", 38, 9.0f, 1.5f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "Ice bursts on a body up to nine tiles off and on everything within four tiles of it; what "
+    //
+    // **Harder and wider, the wizard's alone** (the user, 2026-10-03: "meteorite, ice, poison,
+    // lightning has to be more powerful for DW, only DW can get more tiles"): a third harder, and
+    // then "DW should get much more monsters on screen from 1 cast (except if there is wall)":
+    // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
+    // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
+    // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
+    // forces and reach (sim/items.h), so this is his.
+    {skill::kIce, "Ice", 38, 9.0f, 2.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "Ice bursts on a body up to nine tiles off and on everything within nine tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
      147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
-     0, 0, 0, 0, 4.0f, false, 200},
+     0, 0, 0, 0, 9.0f, false, 200},
 
     // Poison 1: 0.75's row, `CreateSkill(Poison, ..., DamageType.Wizardry, 12, 6, manaConsumption:
     // 42, energyRequirement: 140, elementalModifier: Poison)` -- twelve damage, forty-two mana, and
@@ -368,11 +392,19 @@ constexpr SkillRow kRows[kSkills] = {
     // 3% of what health is left: at 3% a Bull Fighter lost three a pulse, which is no poison at
     // all. Six pulses, so the poison is half again the blow. It never kills on its own -- 0.75's
     // shape, which only ever takes a share of what is left -- and leaves one health. Ours.
-    {skill::kPoison, "Poison", 42, 9.0f, 1.5f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "A cloud of poison bursts on a body up to nine tiles off and on everything within four tiles "
+    //
+    // **Harder and wider, the wizard's alone** (the user, 2026-10-03: "meteorite, ice, poison,
+    // lightning has to be more powerful for DW, only DW can get more tiles"): a third harder, and
+    // then "DW should get much more monsters on screen from 1 cast (except if there is wall)":
+    // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
+    // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
+    // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
+    // forces and reach (sim/items.h), so this is his.
+    {skill::kPoison, "Poison", 42, 9.0f, 2.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A cloud of poison bursts on a body up to nine tiles off and on everything within nine tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
-     0, 0, 0, 0, 0, 4.0f, false, 0, 400},
+     0, 0, 0, 0, 0, 9.0f, false, 0, 400},
 
     // ---- the Fairy Elf's, appended after the wizard's (sprint 15) ------------------------------
     //
