@@ -161,6 +161,11 @@ public:
             ++tally_.alive;
             if (realm_->hero().mana < 3) ++tally_.dry;
             if (realm_->hero().walking) ++tally_.walking;
+            if (mode_ == Mode::Hunt) ++tally_.hunt;
+            else if (mode_ == Mode::Rest) ++tally_.rest;
+            else ++tally_.town;
+            if (owedMap_ >= 0 || awayTo_ >= 0 || tripOwed_ || restOwed_ ||
+                (mode_ == Mode::Hunt && aimMap_ != map())) ++tally_.travel;
         }
         if (options_.fights && clock_ > 0 && clock_ % (30 * 60 * 20) == 0) fights();
         realm_->step();
@@ -384,6 +389,9 @@ private:
     struct Tally {
         int landed = 0, missed = 0, kills = 0, drunk = 0;
         int64_t dealt = 0, taken = 0, alive = 0, dry = 0, walking = 0;
+        // Where the time went: hunting, resting, at the counters; and, hunting, the share spent
+        // getting to another map (an aim's or a trip's).
+        int64_t hunt = 0, rest = 0, town = 0, travel = 0;
         std::map<int, int> cast;
     } tally_;
 
@@ -399,6 +407,10 @@ private:
                     double(t.dealt) / std::max(1, t.landed), t.dealt / minutes, t.taken / minutes,
                     (out_.drunk - t.drunk) / minutes, 100.0 * t.dry / std::max<int64_t>(1, t.alive),
                     100.0 * t.walking / std::max<int64_t>(1, t.alive), hero.maxHealth, hero.maxMana);
+        const double a = double(std::max<int64_t>(1, t.alive));
+        std::printf("             time: hunting %.0f%%, resting %.0f%%, in town %.0f%%, on the way to "
+                    "another map %.0f%%\n", 100.0 * t.hunt / a, 100.0 * t.rest / a, 100.0 * t.town / a,
+                    100.0 * t.travel / a);
         if (!t.cast.empty()) {
             std::printf("             casts:");
             for (const auto& [skill, n] : t.cast) {
@@ -838,7 +850,7 @@ private:
         int n = 0;
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
             const sim::Held& one = realm_->satchel()[slot];
-            if (!one.empty() && !keeps(one)) ++n;
+            if (!one.empty() && !keepsAt(slot)) ++n;
         }
         return n;
     }
@@ -854,6 +866,12 @@ private:
         }
         return n;
     }
+    // Whether this trip should call on the vault: eight jewels and runes, or any once the bag is
+    // full -- one rule for the errand and the trip, which disagreed in Devias (six in a full bag
+    // started a trip every minute that the vault never answered).
+    bool wantsVault() const {
+        return vaultHere() >= 0 && (stash() >= 8 || (freeCells() < 6 && stash() > 0));
+    }
     // The vault keeper in this town (Baz, NPC 240), or -1.
     int vaultHere() const {
         for (size_t i = 0; i < tables_->folk.size(); ++i) {
@@ -862,6 +880,24 @@ private:
         return -1;
     }
 
+    // What he keeps at this slot: `keeps`, less the ammunition his weapon does not shoot and a
+    // second of a pet (the user, 2026-10-03, "continue improving bots"): an elf gone over to a
+    // crossbow carried six quivers of arrows, three Guardian Angels, three Imps and two Horns of
+    // Uniria, and her bag had no room for a quiver of bolts -- 148 trips for arrows she never
+    // bought in eight hours.
+    bool keepsAt(int slot) const {
+        const sim::Held& one = realm_->satchel()[slot];
+        if (one.empty() || !keeps(one)) return false;
+        const content::ItemRow& row = rowOf(one);
+        if (sim::ammunition(row)) return archer() && feeds(row);
+        if (row.group == sim::kGroupPets) {
+            for (int other = 0; other < slot; ++other) {
+                const sim::Held& was = realm_->satchel()[other];
+                if (!was.empty() && was.item == one.item) return false;
+            }
+        }
+        return true;
+    }
     // What he keeps through a sale: jewels, runes, potions, ammunition and pets.
     bool keeps(const sim::Held& one) const {
         const content::ItemRow& row = rowOf(one);
@@ -1220,7 +1256,7 @@ private:
         }
         // Only with something to sell or store: a bag full of what he keeps -- jewels, runes,
         // potions, quivers -- sent an elf back to town every thirty-six seconds for three hours.
-        if (freeCells() < 6 && (sellable() > 0 || (vaultHere() >= 0 && stash() > 0))) return "bag full";
+        if (freeCells() < 6 && (sellable() > 0 || wantsVault())) return "bag full";
         if (wornDown() >= 0 && !realm_->selfMending()) return "gear worn down";
         if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
         if (clock_ - lastTrip_ > 30 * 60 * 20 && money >= 5000 && const_cast<Bot*>(this)->shopWorth()) {
@@ -1541,7 +1577,7 @@ private:
         // **And the vault, when the jewels and runes he keeps fill eight cells** (the user,
         // 2026-10-03: "lets continue to improve bots"): Baz takes them in, as a player banks
         // what he keeps, so the bag has room for what falls.
-        vaultOwed_ = vaultHere() >= 0 && stash() >= 8;
+        vaultOwed_ = wantsVault();
         vaultSince_ = clock_;
         mode_ = Mode::Town;
         tripSince_ = clock_;
@@ -1692,7 +1728,7 @@ private:
         int64_t got = 0;
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
             const sim::Held& one = realm_->satchel()[slot];
-            if (one.empty() || keeps(one)) continue;
+            if (one.empty() || keepsAt(slot)) continue;
             const int64_t paid = realm_->sellItem(slot);
             if (paid >= 0) {
                 ++sold;
@@ -1755,13 +1791,18 @@ private:
                        buyOne(*offer, nullptr) >= 0) mana += 3;
             }
         };
+        // Twice the stock when the purse can stand forty bundles (2026-10-03, "continue
+        // improving bots"): a wizard with 250,000 Zen bought twenty-four, drank them in nine
+        // minutes in the Dungeon and paid two trips back to Lorencia for the next. Twenty a cell,
+        // so it is three cells more.
+        const int deep = realm_->money() > potionPrice(tier) * 40 ? 2 : 1;
         if (options_.kin == sim::Kin::DarkWizard) {
-            heal(6);
-            restore(30);
-            heal(24);
+            heal(6 * deep);
+            restore(30 * deep);
+            heal(24 * deep);
         } else {
-            heal(30);
-            restore(30);
+            heal(30 * deep);
+            restore(30 * deep);
         }
         if (bought || mana) say("buys %d healing and %d mana potions (%lld zen left)", bought, mana,
                                 (long long)realm_->money());
@@ -1776,7 +1817,10 @@ private:
             const content::ItemRow& row = tables_->items[size_t(item)];
             if (!feeds(row)) continue;
             const int64_t price = sim::buyingPrice(row, 0, shelf[i].pieces, shelf[i].skill);
-            while (ammo() < 500 && realm_->money() >= price) {
+            // Fifteen hundred when she can spare it: Skillshot looses three a cast, and five
+            // hundred sent her home every three minutes (126 trips in eight hours, 2026-10-03).
+            const int quiver = realm_->money() > 20000 ? 1500 : 500;
+            while (ammo() < quiver && realm_->money() >= price) {
                 const int slot = buyOne(shelf[i], " (ammunition)");
                 if (slot < 0) break;
                 if (realm_->satchel()[hand].empty()) realm_->moveItem(slot, hand);
