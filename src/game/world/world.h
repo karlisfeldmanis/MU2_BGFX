@@ -9,6 +9,7 @@
 #include "game/figures.h"
 #include "game/world/boids.h"
 #include "game/world/doors.h"
+#include "game/world/drawbridge.h"
 #include "game/world/grass.h"
 #include "game/world/lamps.h"
 #include "game/world/lava_smoke.h"
@@ -116,6 +117,8 @@ private:
     Portal portal_;
     Doors doors_;
     int doorSound_ = -1, gateSound_ = -1;  // world_door, world_gate
+    Drawbridge drawbridge_;
+    int drawbridgeSound_ = -1;  // world_drawbridge
     Skulls skulls_;
     int skullSound_ = -1;  // world_skull
     // Held from open() so play() can load the boid's mesh and the leaf's sheet. Those two

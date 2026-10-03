@@ -864,6 +864,9 @@ public:
     // --castle-free's: no run, and the entrance, the bridge's gap and the door all open, to walk
     // the castle (a test).
     void freeCastle();
+    // --castle-bridge's: the run started now if it waits, its first quota met, and the
+    // drawbridge falling `seconds` from now, to be watched (a test).
+    void dropCastleBridge(int seconds);
     int64_t wallClock() const { return wall_; }
     // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
     bool questChoiceFits(int index, int choice) const;

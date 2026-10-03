@@ -107,6 +107,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
     // Devias's doors, which swing and slide as he comes near. See game/world/doors.h.
     if (town_.isOpen()) doors_.open(name, town_, ground_.metresPerTile());
+    // Blood Castle's drawbridge, which falls when the run says. See game/world/drawbridge.h.
+    if (town_.isOpen()) drawbridge_.open(name, town_);
     // The Lost Tower's skulls and chips, which he kicks as he walks. See game/world/skulls.h.
     if (town_.isOpen()) skulls_.open(name, town_, ground_.metresPerTile());
     // And what rides the swaying bones: the fountain's spray, the lanterns; and the mill's fall.
@@ -218,6 +220,7 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
         gateSound_ = play_.sound().load("world_gate", true);
     }
     if (skulls_.isOpen()) skullSound_ = play_.sound().load("world_skull", true);
+    if (drawbridge_.isOpen()) drawbridgeSound_ = play_.sound().load("world_drawbridge", true);
     // And the rain, which shares the leaves' slots, and the air's sounds. game/world/weather.h.
     weather_.open(name, &play_.sound(), weather);
 }
@@ -286,6 +289,24 @@ void World::update(double seconds, bool still) {
                 const int sound = creak.gate ? gateSound_ : doorSound_;
                 if (sound >= 0) play_.sound().playAt(sound, creak.at[0], creak.at[1], creak.at[2]);
             }
+        }
+    }
+
+    // The drawbridge, as the run says: falling from the tick its quota was met, and down at once
+    // on a castle opened with its gap already ground (--castle-free, a late arrival).
+    if (drawbridge_.isOpen()) {
+        bool falling = false, down = false;
+        if (play_.isOpen()) {
+            const sim::Realm& realm = play_.realm();
+            const sim::CastleRun& run = realm.castleRun();
+            falling = run.bridgeAt >= 0 && realm.tick() >= run.bridgeAt;
+            const content::Tables* tables = realm.tables();
+            down = tables != nullptr && (tables->grid.at(14, 72) & content::kNoGround) == 0;
+        }
+        drawbridge_.update(dt, falling, down, town_);
+        if (drawbridge_.started() && drawbridgeSound_ >= 0) {
+            const float* at = drawbridge_.at();
+            play_.sound().playAt(drawbridgeSound_, at[0], at[1], at[2]);
         }
     }
 
@@ -368,6 +389,8 @@ void World::shutdown() {
     sway_.shutdown();
     doors_.shutdown();
     doorSound_ = gateSound_ = -1;
+    drawbridge_.shutdown();
+    drawbridgeSound_ = -1;
     skulls_.shutdown();
     skullSound_ = -1;
     ornaments_.shutdown();

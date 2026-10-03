@@ -833,6 +833,35 @@ private:
         wearBest();
     }
 
+    // What he would sell, and what he would store: jewels and runes, which a sale keeps.
+    int sellable() const {
+        int n = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && !keeps(one)) ++n;
+        }
+        return n;
+    }
+    bool stores(const sim::Held& one) const {
+        const content::ItemRow& row = rowOf(one);
+        return sim::refiningJewel(row) || sim::creation(row);
+    }
+    int stash() const {
+        int n = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && stores(one)) ++n;
+        }
+        return n;
+    }
+    // The vault keeper in this town (Baz, NPC 240), or -1.
+    int vaultHere() const {
+        for (size_t i = 0; i < tables_->folk.size(); ++i) {
+            if (tables_->folk[i].number == 240) return int(i);
+        }
+        return -1;
+    }
+
     // What he keeps through a sale: jewels, runes, potions, ammunition and pets.
     bool keeps(const sim::Held& one) const {
         const content::ItemRow& row = rowOf(one);
@@ -1187,7 +1216,9 @@ private:
         if (options_.kin == sim::Kin::DarkWizard && countOf(sim::restores) < 3 && money >= bundle) {
             return "out of mana potions";
         }
-        if (freeCells() < 6) return "bag full";
+        // Only with something to sell or store: a bag full of what he keeps -- jewels, runes,
+        // potions, quivers -- sent an elf back to town every thirty-six seconds for three hours.
+        if (freeCells() < 6 && (sellable() > 0 || (vaultHere() >= 0 && stash() > 0))) return "bag full";
         if (wornDown() >= 0 && !realm_->selfMending()) return "gear worn down";
         if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
         if (clock_ - lastTrip_ > 30 * 60 * 20 && money >= 5000 && const_cast<Bot*>(this)->shopWorth()) {
@@ -1505,6 +1536,11 @@ private:
         // Every counter in town; each after the first is asked again on the way whether it is
         // worth the walk (`town`), since the first one's sales are what pay for the rest.
         errands_ = sellers_;
+        // **And the vault, when the jewels and runes he keeps fill eight cells** (the user,
+        // 2026-10-03: "lets continue to improve bots"): Baz takes them in, as a player banks
+        // what he keeps, so the bag has room for what falls.
+        vaultOwed_ = vaultHere() >= 0 && stash() >= 8;
+        vaultSince_ = clock_;
         mode_ = Mode::Town;
         tripSince_ = clock_;
         lastTrip_ = clock_;
@@ -1551,6 +1587,30 @@ private:
         // another town he can reach has something, he goes there to shop -- the wizard sat in
         // Pad armour at level 119 with 200,000 Zen while Izabel in Devias sold Sphinx and Bone.
         // Not again for half an hour, so a piece that will not go on cannot bounce him.
+        // The vault first, when it is owed: deposit every jewel and rune, then the counters.
+        if (vaultOwed_) {
+            const int keeper = vaultHere();
+            if (keeper < 0 || clock_ - vaultSince_ > 90 * 20) {
+                vaultOwed_ = false;
+            } else if (realm_->banking() == keeper) {
+                int stored = 0;
+                for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                    const sim::Held one = realm_->satchel()[slot];
+                    if (!one.empty() && stores(one) && realm_->deposit(slot) >= 0) ++stored;
+                }
+                say("stores %d jewels and runes with %s", stored, tables_->folk[size_t(keeper)].name.c_str());
+                realm_->closeVault();
+                vaultOwed_ = false;
+                tripSince_ = clock_;
+                return;
+            } else {
+                sim::Request request;
+                request.kind = sim::Request::Kind::Talk;
+                request.target = uint32_t(keeper);
+                realm_->ask(request);
+                return;
+            }
+        }
         // On his way there: keep going -- a gate is a walk of many thinks, and the trip's own
         // errands here would take him off it.
         if (awayTo_ >= 0) {
@@ -1850,6 +1910,8 @@ private:
     bool safe_ = true, tripOwed_ = false, restOwed_ = false;
     int64_t awayShopUntil_ = 0;
     int awayTo_ = -1;
+    bool vaultOwed_ = false;   // this trip calls on the vault keeper first
+    int64_t vaultSince_ = 0;
     double guardSeen_ = 1.0;  // the share of a blow his guard lets through, once he has one  // the town he is on his way to shop in, -1 for none  // the next trip that may go to another town's counters
     int restAt_[2] = {0, 0};
     int64_t tripSince_ = 0, lastTrip_ = 0, nextSort_ = 0, freeSince_ = 0, nextAim_ = 0, nextFloorAt_ = 0, noTripUntil_ = 0;

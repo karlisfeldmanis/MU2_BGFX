@@ -90,6 +90,14 @@ public:
         town_.instances[instance].yaw = yaw;
         for (int a = 0; a < 3; ++a) town_.instances[instance].position[a] = position[a];
     }
+    // A placement left out of the frame and the sun's list, or put back: Blood Castle's
+    // drawbridge, whose door goes as its lowered deck comes (game/world/drawbridge.h). Bit 3 of
+    // the flags, which the cook sets on what it holds back for later (tools/cook.py SHOWN_LATER).
+    void setHidden(uint32_t instance, bool hidden) {
+        if (instance >= town_.instances.size()) return;
+        uint16_t& flags = town_.instances[instance].flags;
+        flags = hidden ? uint16_t(flags | 8) : uint16_t(flags & ~8);
+    }
     // The same with the piece tumbling as well: the Lost Tower's kicked skulls
     // (game/world/skulls.h). Radians, the cook's pitch and roll.
     void posePlacement(uint32_t instance, float pitch, float yaw, float roll,

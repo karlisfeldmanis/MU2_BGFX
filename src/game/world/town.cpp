@@ -174,6 +174,8 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
     if (instance.model >= meshes_.size()) return;
     // Bit 1 is a roof. tools/cook.py.
     if (roofsHidden_ && (instance.flags & 2) != 0) return;
+    // Bit 3 is held back: cooked hidden until the world shows it, or hidden since (setHidden).
+    if ((instance.flags & 8) != 0) return;
     const content::Mesh& mesh = meshes_[instance.model];
     if (!bgfx::isValid(mesh.vertexBuffer())) return;
 

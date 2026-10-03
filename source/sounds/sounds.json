@@ -1380,6 +1380,13 @@
       "from": "SOUND_DOOR02, Data\\Sound\\aCastleDoor.wav, one voice (ZzzOpenData.cpp:4750). MoveObject plays it for Devias's sliding gates, type 86 (ZzzObject.cpp:3942).",
       "note": "As world_door: at the gate, as it starts to open and to shut."
     },
+    "world_drawbridge": {
+      "files": [
+        "edowngate.wav"
+      ],
+      "from": "SOUND_DOWN_GATE, Data\\Sound\\eDownGate.wav (ZzzOpenData.cpp:4838). ActionObject plays it as Blood Castle's drawbridge, Object37, starts down -- the first of its 21 frames (ZzzObject.cpp:126-131), when the run's first quota is met.",
+      "note": "At the door, where MU plays it unplaced. game/world/drawbridge.h."
+    },
     "world_skull": {
       "files": [
         "mBone2.wav"

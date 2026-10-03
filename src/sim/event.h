@@ -78,6 +78,12 @@ enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
 constexpr int kCastleKills = 40;
 constexpr int kCastleSorcerers = 2;
+// How long the drawbridge takes to come down: MuMain's ActionObject swings Object37 over 21 of
+// its 25 Hz frames, SetActionObject(world, 36, 20) counted down to 0, and clears the gap's
+// NoGround on the last (ZzzObject.cpp:86-165): 0.84 s, 17 ticks. WebZen clears the server's
+// gap at once and the client's 3 s later (gObjMonster.cpp:1275-1316); here it opens as the
+// door lands, so nobody walks onto a gap still drawn open.
+constexpr int kCastleBridgeTicks = 17;
 constexpr int32_t kCastleSorcerer = 89;  // the Magic Skeleton, WebZen's Spirit Sorcerer
 constexpr int32_t kCastleStatue = 132;   // the Statue of Saint, raised by the run
 struct CastleRun {
@@ -88,6 +94,10 @@ struct CastleRun {
     int kills = 0;         // quota 1
     int sorcerers = 0;     // quota 2
     bool statueBroken = false;  // by him: the statue's bonus
+    // Quota 1 met: the tick the drawbridge starts down, or -1; and whether it is down, its gap
+    // walkable (Realm::castleTick, kCastleBridgeTicks after).
+    int64_t bridgeAt = -1;
+    bool bridgeDown = false;
     // What the win paid, for the Archangel's page (Realm::handInStaff).
     int64_t paidExperience = 0, paidZen = 0;
 };

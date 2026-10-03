@@ -272,6 +272,7 @@ public:
     void setWallClock(int64_t unixSeconds) { realm_.setWallClock(unixSeconds); }
     void openCastleDoor() { realm_.openCastleDoor(); }
     void freeCastle() { realm_.freeCastle(); }
+    void dropCastleBridge(int seconds) { realm_.dropCastleBridge(seconds); }
     // The Messenger's page's two answers (QuestDialog::kGate).
     bool enterCastle(int castle) { return realm_.enterCastle(castle); }
     void closeGate() { realm_.closeGate(); }

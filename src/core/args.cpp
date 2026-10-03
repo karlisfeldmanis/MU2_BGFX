@@ -196,6 +196,7 @@ void printUsage() {
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --castle-free             Blood Castle with no run, its gates open, the statue alone\n"
+        "  --castle-bridge S         Blood Castle's run on, its drawbridge falling in S seconds\n"
         "  --headless                run the sim with no window at all\n"
         "  --seed N                  the sim's seed; the same seed is the same run\n"
         "  --ticks N                 how many 20 Hz ticks to run (default 10000)\n"
@@ -349,6 +350,8 @@ Args parseArgs(int argc, char** argv) {
             a.castleOpen = true;
         } else if (!std::strcmp(s, "--castle-free")) {
             a.castleFree = true;
+        } else if (!std::strcmp(s, "--castle-bridge")) {
+            if (const char* v = next(s)) a.castleBridge = std::atoi(v);
         } else if (!std::strcmp(s, "--peaceful")) {
             a.peaceful = true;
         } else if (!std::strcmp(s, "--shield")) {

@@ -1228,6 +1228,12 @@ BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
 # Object130, whose green `angeflo_r` glow slabs stood on the wall tops until this was read.
+#: Hidden placements a world shows later, cooked with flag 8 so the town holds them back until
+#: the game clears it: Blood Castle's lowered drawbridge, Object10's deck and Object11's chains,
+#: which MuMain shows as Object37 lands (ActionObject, ZzzObject.cpp:107-123; game/world/
+#: drawbridge.h).
+SHOWN_LATER = {"bloodcastle": {"Object10", "Object11"}}
+
 HIDDEN_BY_WORLD = {"charscene": {"Object80", "Object81", "Object83", "Object84", "Object85",
                                  "Object86", "Object87", "Object130", "Object131", "Object132",
                                  "Object133"}}
@@ -1518,7 +1524,8 @@ def cook_placements(world, out_dir, chunk_tiles):
         if one["model"] in HIDDEN_BY_WORLD.get(world, ()):
             dropped_hidden += 1
             continue
-        if one.get("hidden"):
+        later = one.get("hidden") and one["model"] in SHOWN_LATER.get(world, ())
+        if one.get("hidden") and not later:
             # MU's hidden anchors are still something: Light01 is a fire nobody sees the
             # holder of, Light02 and Light03 are chimney smoke (MoveObject, WD_0LORENCIA).
             kind = ANCHOR_KINDS.get(one["model"])
@@ -1547,7 +1554,7 @@ def cook_placements(world, out_dir, chunk_tiles):
         # written correctly anyway -- it used to drop the angle on the floor.
         pitch, muRoll, yaw = (math.radians(a) for a in one["angle"])
         roll = -muRoll
-        flags = 0
+        flags = 8 if later else 0
         # Unless placements.json names it as MU's own, to be stood where the map stores it:
         # the fountain's planting is on the stone and in the bowl, not on the terrain.
         if one["type"] in GROUNDED_TYPES.get(world, ()) and not one.get("as_stored"):

@@ -129,6 +129,7 @@ add_executable(mu2
   src/game/world/castle_sparks.cpp
   src/game/world/sway.cpp
   src/game/world/doors.cpp
+  src/game/world/drawbridge.cpp
   src/game/world/skulls.cpp
   src/game/world/flight.cpp
   src/game/world/boids.cpp

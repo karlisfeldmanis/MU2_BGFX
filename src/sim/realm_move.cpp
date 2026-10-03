@@ -693,6 +693,12 @@ void Realm::castleTick() {
     } else if (run_.phase == CastlePhase::Running && tick_ >= run_.endsAt) {
         run_.phase = CastlePhase::Ended;
     }
+    // The drawbridge down: its gap is ground as the door lands (kCastleBridgeTicks).
+    if (run_.bridgeAt >= 0 && !run_.bridgeDown && tick_ >= run_.bridgeAt + kCastleBridgeTicks) {
+        run_.bridgeDown = true;
+        changeGrid(kCastleBridge.x1, kCastleBridge.y1, kCastleBridge.x2, kCastleBridge.y2,
+                   kCastleBridge.bits, false);
+    }
 }
 
 void Realm::castleKill(const Body& dead) {
@@ -703,6 +709,15 @@ void Realm::castleKill(const Body& dead) {
     if (number == kCastleStatue) run_.statueBroken = true;
     else if (number == kCastleSorcerer) ++run_.sorcerers;
     else ++run_.kills;
+    // Quota 1: "monsters cleared! attack the castle gate" (lMsg 1168), and the drawbridge falls.
+    if (run_.kills >= kCastleKills && run_.bridgeAt < 0) run_.bridgeAt = tick_;
+}
+
+void Realm::dropCastleBridge(int seconds) {
+    if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
+    if (run_.phase == CastlePhase::Waiting) run_.startsAt = tick_;
+    run_.kills = std::max(run_.kills, kCastleKills);
+    run_.bridgeAt = tick_ + int64_t(seconds) * kCastleTicksPerSecond;
 }
 
 int Realm::staffSlot() const {

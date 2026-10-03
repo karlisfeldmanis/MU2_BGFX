@@ -187,6 +187,7 @@ struct Args {
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
     bool castleOpen = false;    // `--castle-open`: the Messenger's door open at any hour (a test)
     bool castleFree = false;    // `--castle-free`: Blood Castle with no run and every gate open (a test)
+    int castleBridge = -1;      // `--castle-bridge S`: the run on, the drawbridge down in S seconds (a test)
     bool peaceful = false;      // `--peaceful`: no nests on the map (Play::Arena::peaceful)
     // The character's file. Empty means the default (game/save.cpp) for a played run and no
     // file at all for a review run (--frames): a scripted fight must not overwrite the
