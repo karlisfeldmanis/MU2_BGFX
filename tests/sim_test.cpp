@@ -1195,9 +1195,9 @@ void testCastLock(const content::Tables& tables) {
     // ---- Poison: a cooldown burst that goes on hurting ---------------------------------------
     {
         const sim::SkillRow& poison = *sim::skillNumbered(sim::skill::kPoison);
-        check(poison.wizardry && poison.primary() && poison.force == 2.0f && poison.damage == 12 &&
+        check(poison.wizardry && poison.primary() && poison.force == 1.8f && poison.damage == 12 &&
                   poison.mana == 42 && poison.poisonTicks == 400 && poison.splash == 9.0f,
-              "Poison is a standard spell of twelve damage at twice the band and forty-two mana, "
+              "Poison is a standard spell of twelve damage at 1.8 the band and forty-two mana, "
               "poisoning twenty seconds within nine tiles");
         const int32_t scroll = tables.itemAt(15, 0);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPoison &&
@@ -1207,7 +1207,9 @@ void testCastLock(const content::Tables& tables) {
         // Seed 5, not 7: on 7, under WebZen's round sight (realm_tuning.h, apart), no cast
         // caught two bodies at once.
         sim::Realm wiz;
-        check(wiz.raise(&tables, 5, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        // Level 40 since the nerf of 2026-10-03: at 30, a tenth less damage left a crowd on him and
+        // he fell after eight casts -- the hunt tested his survival, not the spell.
+        check(wiz.raise(&tables, 5, 190, 110, sim::Kin::DarkWizard, 40), "a wizard raises to hunt");
         check(wiz.learn(sim::skill::kPoison), "who knows Poison");
         int casts = 0, widest = 0, thisCast = 0, pulses = 0, pulseKills = 0, offBeat = 0;
         int64_t lastCast = -1, closest = 1 << 30, castTick = -1;
@@ -1264,7 +1266,9 @@ void testCastLock(const content::Tables& tables) {
         std::printf("  poison: %d cast, %d poisoned by one cast at the most, %d pulses, "
                     "%lld ticks apart at the closest\n",
                     casts, widest, pulses, (long long)closest);
-        check(casts > 10 && pulses > 0, "he throws Poison through a hunt and it pulses");
+        // Eight and not eleven since the nerf of 2026-10-03: he ends the hunt alive with full mana
+        // and nothing left near him to cast at -- the spell is thrown, the area runs out.
+        check(casts >= 8 && pulses > 0, "he throws Poison through a hunt and it pulses");
         check(widest >= 2, "and one cast poisons more than one body");
         check(closest >= 10, "paced by its own clip, with no cooldown");
         checkEqual(pulseKills, 0, "a pulse never kills");
@@ -1700,9 +1704,9 @@ void testCastLock(const content::Tables& tables) {
     // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
     {
         const sim::SkillRow& ice = *sim::skillNumbered(sim::skill::kIce);
-        check(ice.wizardry && ice.primary() && ice.force == 2.0f && ice.damage == 10 &&
+        check(ice.wizardry && ice.primary() && ice.force == 1.8f && ice.damage == 10 &&
                   ice.mana == 38 && ice.chillTicks == 200 && ice.splash == 9.0f,
-              "Ice is a standard spell of ten damage at twice the band and thirty-eight mana, chilling "
+              "Ice is a standard spell of ten damage at 1.8 the band and thirty-eight mana, chilling "
               "ten seconds within nine tiles");
         const int32_t scroll = tables.itemAt(15, 6);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kIce &&
@@ -1831,8 +1835,8 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& rock = *sim::skillNumbered(sim::skill::kMeteorite);
         check(rock.wizardry && rock.primary() && rock.thrown() && rock.damage == 21 &&
-                  rock.fallTicks == 7 && rock.clip == 183 && rock.force == 2.6f && rock.splash == 9.0f,
-              "Meteorite is a thrown standard spell at twenty-one damage, at 2.6 the band within nine tiles, falling "
+                  rock.fallTicks == 7 && rock.clip == 183 && rock.force == 2.3f && rock.splash == 9.0f,
+              "Meteorite is a thrown standard spell at twenty-one damage, at 2.3 the band within nine tiles, falling "
               "seven ticks, cast in the arm-up clip");
         const int32_t scroll = tables.itemAt(15, 1);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kMeteorite &&
@@ -1870,7 +1874,8 @@ void testCastLock(const content::Tables& tables) {
               "and read at a hundred and four");
 
         sim::Realm wiz;
-        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        // Level 40, as Poison's hunt (2026-10-03).
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 40), "a wizard raises to hunt");
         check(wiz.learn(sim::skill::kMeteorite), "who knows Meteorite");
         const int32_t lock = sim::castTicks(tables, sim::Kin::DarkWizard,
                                              wiz.hero().points.agility, nullptr, nullptr, rock);
@@ -1945,9 +1950,9 @@ void testCastLock(const content::Tables& tables) {
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
                   bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 30,
               "Lightning is a channel, its clip quickened, with no cooldown, and it pushes");
-        check(bolt.force == 2.0f && sim::force(bolt, sim::HeroPoints{}) == 2.0f && bolt.reach == 6.0f &&
+        check(bolt.force == 1.8f && sim::force(bolt, sim::HeroPoints{}) == 1.8f && bolt.reach == 6.0f &&
                   sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.8f,
-              "and each strike is at twice the band, six tiles a leap, where Fire Ball's is at 1.8");
+              "and each strike is at 1.8 the band, six tiles a leap, as Fire Ball's is");
         check(bolt.pulseTicks == 1 && bolt.strikeFrom == 10 && bolt.strikeUntil == 23 &&
                   bolt.strikesEach == 1,
               "and it strikes every tick while his arm is up, once at most a body");

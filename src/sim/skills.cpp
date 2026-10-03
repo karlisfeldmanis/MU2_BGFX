@@ -291,8 +291,10 @@ constexpr SkillRow kRows[kSkills] = {
     // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
     // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
     // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
-    // forces and reach (sim/items.h), so this is his.
-    {skill::kLightning, "Lightning", 40, 6.0f, 2.0f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
+    // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
+    // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
+    // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
+    {skill::kLightning, "Lightning", 40, 6.0f, 1.8f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning leaps from the body he points at into the next "
      "and the next within six tiles, throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 30,
@@ -326,8 +328,10 @@ constexpr SkillRow kRows[kSkills] = {
     // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
     // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
     // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
-    // forces and reach (sim/items.h), so this is his.
-    {skill::kMeteorite, "Meteorite", 30, 9.0f, 2.6f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
+    // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
+    // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
+    {skill::kMeteorite, "Meteorite", 30, 9.0f, 2.3f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "With his arm raised to the sky he calls burning rocks down on a body up to nine tiles off "
      "and on everything within nine tiles of it, one rock each.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
@@ -371,8 +375,10 @@ constexpr SkillRow kRows[kSkills] = {
     // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
     // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
     // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
-    // forces and reach (sim/items.h), so this is his.
-    {skill::kIce, "Ice", 38, 9.0f, 2.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
+    // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
+    // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
+    {skill::kIce, "Ice", 38, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "Ice bursts on a body up to nine tiles off and on everything within nine tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
      147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
@@ -399,8 +405,10 @@ constexpr SkillRow kRows[kSkills] = {
     // nine tiles round the body it lands on, about the half of the screen MU's camera shows,
     // stopped by walls as before (Realm::seen); Lightning a strike every tick, fourteen, six
     // tiles a leap. The runes that lend other classes a rock, a frost or a bolt keep their own
-    // forces and reach (sim/items.h), so this is his.
-    {skill::kPoison, "Poison", 42, 9.0f, 2.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
+    // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
+    // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
+    {skill::kPoison, "Poison", 42, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A cloud of poison bursts on a body up to nine tiles off and on everything within nine tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
