@@ -25,6 +25,15 @@
   "sheet_materials_from": "Read off the sheets at 2x: gilt bronze plate -- pauldrons, a girdle of bands, greaves and knee cops -- over dark cloth; kni01 the same bronze with a grey blade; kni02 the helm. First built as brass, which lifted the base colour to a pale cream and blew out under Blood Castle's exposure 3.3 -- silver knights where MU paints dark bronze. painted_steel instead, as the Shadow's and the Dark Knight's plate: the bronze kept as albedo, the sheen in a low roughness.",
   "sounds_from": "ZzzOpenData.cpp:3724-3729: mHunter2, mBullDie and mOrcCapAttack1, SetMonsterSound(..., 86, 86, 161, 161, 4) -- offsets from SOUND_MONSTER_BULL1 = 210: 296 HUNTER2 to walk, 371 ORCCAPATTACK1 to swing and flinch, 214 BULLDIE to die. Wired as chiefskeletonwarrior_* in sounds.json.",
   "islands_from": "15 islands for 657 triangles, all painted_steel (see sheet_materials_from). They arrived as skin, the monster profile's default (islands.py never reads sheet_materials, as Larva01 records).",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "depth": 0.01,
+        "roughness_range": 0.01
+      }
+    }
+  },
+  "material_overrides_why": "painted_steel's brushed grain (depth 0.08, streaks down V) striped the plate: the user, 2026-10-03, at the first look: 'kind fo striped?'. MU's plate is smooth paint, so the grain is all but taken out on this figure (depth 0.01, roughness range 0.01); the bronze stays the sheet's.",
   "islands": [
     {
       "island": 0,
