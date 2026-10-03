@@ -799,6 +799,13 @@ public:
     // wait or of its time.
     const CastleRun& castleRun() const { return run_; }
     int castleSecondsLeft() const;
+    // The Archangel's page (sim/event.h): his folk row while it is open, what it shows, and Give
+    // -- checked now, the staff taken and the win paid at the next tick's start.
+    int angeling() const { return angeling_; }
+    AngelState angelState() const;
+    int staffSlot() const;
+    bool handInStaff();
+    void closeAngel() { angeling_ = -1; }
     // Farewell: his window shut, as walking away shuts it.
     void closeGate() { gating_ = -1; }
     void closeMachine();
@@ -1292,6 +1299,8 @@ private:
     // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
     int castleOwed_ = 0;
     CastleRun run_;  // see castleRun()
+    int angeling_ = -1;     // see angeling()
+    bool staffOwed_ = false;
     // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
     void castleTick();
     void castleKill(const Body& dead);

@@ -189,6 +189,7 @@ bool Realm::travel(int index) {
     trading_ = banking_ = questing_ = -1;
     closeMachine();
     gating_ = -1;
+    angeling_ = -1;
     halt(bodies_[0]);
     core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(to.zen));
     // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map

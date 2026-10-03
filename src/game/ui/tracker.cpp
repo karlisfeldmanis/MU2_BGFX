@@ -732,6 +732,7 @@ void Tracker::rebuildEvent(int width) {
     const auto phase = sim::CastlePhase(drawn_.eventPhase);
     const bool waiting = phase == sim::CastlePhase::Waiting;
     const bool ended = phase == sim::CastlePhase::Ended;
+    const bool won = phase == sim::CastlePhase::Won;
 
     controls::caps(canvas_, left, y + 12.0f * u, style::kKickerSize * u,
                    faded(style::kAshInk, alpha), "Event");
@@ -744,8 +745,11 @@ void Tracker::rebuildEvent(int width) {
         char clock[16];
         std::snprintf(clock, sizeof(clock), "%d:%02d", drawn_.eventSeconds / 60,
                       drawn_.eventSeconds % 60);
-        const std::string text = ended ? std::string("Time is up") : std::string(clock);
-        const uint32_t ink = ended || (!waiting && drawn_.eventSeconds < 60) ? style::kBloodHi
+        const std::string text = won     ? std::string("Complete")
+                                 : ended ? std::string("Time is up")
+                                         : std::string(clock);
+        const uint32_t ink = won ? kGoldLit
+                             : ended || (!waiting && drawn_.eventSeconds < 60) ? style::kBloodHi
                              : waiting                                          ? kGoldLit
                                                                                 : style::kBoneHi;
         const float w = lineWidth(kStep * u, text);
@@ -765,8 +769,8 @@ void Tracker::rebuildEvent(int width) {
         std::string figure;
         StepMark mark;
     };
-    const bool bridge = drawn_.eventKills >= sim::kCastleKills;
-    const bool door = drawn_.eventSorcerers >= sim::kCastleSorcerers;
+    const bool bridge = won || drawn_.eventKills >= sim::kCastleKills;
+    const bool door = won || drawn_.eventSorcerers >= sim::kCastleSorcerers;
     const Row rows[] = {
         {waiting ? "Wait for the gate to open" : "Slay the castle's guards",
          waiting ? std::string()
@@ -777,8 +781,9 @@ void Tracker::rebuildEvent(int width) {
          std::to_string(std::min(drawn_.eventSorcerers, sim::kCastleSorcerers)) + " / " +
              std::to_string(sim::kCastleSorcerers),
          door ? StepMark::Done : bridge && !waiting ? StepMark::Live : StepMark::Waiting},
-        {"Destroy the Statue of Saint", "", door ? StepMark::Live : StepMark::Waiting},
-        {"Return the staff to the Archangel", "", StepMark::Waiting},
+        {"Destroy the Statue of Saint", "",
+         won ? StepMark::Done : door ? StepMark::Live : StepMark::Waiting},
+        {"Return the staff to the Archangel", "", won ? StepMark::Done : StepMark::Waiting},
     };
     // In the court's wait only the wait itself: the run's steps show once the gate opens (the
     // user, 2026-10-03: 'dont show other quests tasks before gate is not opened').

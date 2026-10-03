@@ -98,6 +98,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     happenings_.clear();
     happenings_.reserve(4096);
     castleOwed_ = 0;
+    staffOwed_ = false;
     // Raised on a castle, the run's wait starts and the entrance is shut until it ends
     // (WebZen BloodCastle.cpp:1128-1171: the court's 60 s, the barrier lifted at :887-917).
     run_ = CastleRun{};
@@ -462,6 +463,7 @@ void Realm::accept() {
         questing_ = -1;
         closeMachine();
         gating_ = -1;
+        angeling_ = -1;
         // **And a skill still waiting to be thrown is dropped by an order that moves him**: a
         // wish outlives a channel (kWishTicks), so a key pressed during Lightning threw it again
         // round him after he had walked on (the user, 2026-09-30: "when i am done with casting
@@ -677,6 +679,10 @@ void Realm::press() {
                 // quest under way, the hand-in, or that it is not his to give again yet.
                 questing_ = int(order_.target);
                 say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
+            } else if (one.number == kArchangel) {
+                // His page of the Event window: the staff he asks for, and Give.
+                angeling_ = int(order_.target);
+                say(What::Served, hero, angeling_, one.number);
             } else if (one.number == kMessenger) {
                 // His page of the quest window: the ticket he asks for and the door
                 // (QuestDialog::kGate).

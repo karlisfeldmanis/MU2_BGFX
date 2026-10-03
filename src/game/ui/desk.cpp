@@ -198,6 +198,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             quest = QuestDialog::kGate;
             journal_ = -1;
         }
+        // And the Archangel's, in Blood Castle's court (QuestDialog::kArchangel).
+        const bool angeling = realm.angeling() >= 0;
+        if (angeling) {
+            quest = QuestDialog::kArchangel;
+            journal_ = -1;
+        }
         const bool reading = quest < 0 && journal_ >= 0;
         if (reading) quest = journal_;
         // The live quests, for the journal's arrows: where this page is among them.
@@ -236,7 +242,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // ears as the interface's are.
         if (tracker_.takeStrike()) play.sound().play(play.sound().load("quest_step_done", false));
         // A giver's window opens as a counter does: ReceiveTalk's click and SOUND_INTERFACE01.
-        const bool questing = realm.questing() >= 0 || gating;
+        const bool questing = realm.questing() >= 0 || gating || angeling;
         if (questing && !questing_) {
             click();
             play.ui(Play::Ui::Opened);
@@ -257,8 +263,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (result.close) {
             if (reading) journal_ = -1;
             else if (gating) play.closeGate();
+            else if (angeling) play.closeAngel();
             else play.closeQuest();
             click();
+        } else if (result.give) {
+            const bool given = play.handInStaff();
+            core::logf("event: the Divine Staff to the Archangel -- %s", given ? "given" : "refused");
+            if (given) click();
+            else refused();
         } else if (result.enter) {
             const bool went = play.enterCastle(result.castle);
             core::logf("event: Enter on Blood Castle %d -- %s", result.castle,

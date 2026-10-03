@@ -50,9 +50,12 @@ public:
         int turn = 0;         // the journal's arrows this frame: -1 the quest before, +1 the next
         bool enter = false;   // kGate's Enter: into Blood Castle `castle`
         int castle = 0;
+        bool give = false;    // kArchangel's Give: the Divine Staff handed back
     };
     // The `quest` that opens the Messenger's page (Realm::gating).
     static constexpr int kGate = 1000;
+    // The `quest` that opens the Archangel's page in Blood Castle (Realm::angeling).
+    static constexpr int kArchangel = 1001;
     // The journal's place among the live quests, set before update: `at` 1-based of `of`. The
     // arrows show while reading with more than one; 0, 0 for none.
     void setPages(int at, int of) {
@@ -78,7 +81,10 @@ public:
     // giver's voice reads (QuestRow::voice).
     // A stranger turned away is not voiced.
     int page() const {
-        return quest_ >= 0 && mode_ != Mode::Stranger && mode_ != Mode::Gate ? int(mode_) : -1;
+        return quest_ >= 0 && mode_ != Mode::Stranger && mode_ != Mode::Gate &&
+                       mode_ != Mode::Angel
+                   ? int(mode_)
+                   : -1;
     }
     // The window's rectangle on screen, for the pointer the desk keeps from the world.
     bool covers(float x, float y) const;
@@ -95,7 +101,8 @@ public:
 private:
     // Stranger: one born outside the giver's town, whom he does not serve (sim::questOpen).
     // Gate: the Messenger's page (kGate).
-    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger, Gate };
+    // Angel: the Archangel's page (kArchangel).
+    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger, Gate, Angel };
     static constexpr int kButtons = 5;
     struct Cell {
         int choice = -1;  // the row's choice index, or -1 for a paid item
@@ -133,6 +140,10 @@ private:
     sim::CastleRefusal why_ = sim::CastleRefusal::NoCloak;
     int castle_ = 1;
     int cloakPlus_ = -1, level_ = 0, doorSeconds_ = -1, opensIn_ = 0;
+    // The Archangel's page, read each frame: where the run stands, and what the win paid.
+    sim::AngelState angel_ = sim::AngelState::NotYet;
+    int64_t paidExperience_ = 0, paidZen_ = 0;
+    bool staffHeld_ = false;  // the staff in his bag, whatever the run's phase
     // A page turn: -1 to 0 the old page going out, 0 to 1 the new one coming in, 1 at rest. The
     // quest handed in waits in `pending_` until the old page is out.
     float turn_ = 1.0f;
@@ -166,6 +177,7 @@ private:
         uint16_t picture = 0xFFFF;
         bool reading = false;
         int gate[6] = {};
+        int64_t angel[3] = {};
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;

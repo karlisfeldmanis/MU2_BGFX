@@ -270,6 +270,9 @@ public:
     // The Messenger's page's two answers (QuestDialog::kGate).
     bool enterCastle(int castle) { return realm_.enterCastle(castle); }
     void closeGate() { realm_.closeGate(); }
+    // The Archangel's page's answers (QuestDialog::kArchangel).
+    bool handInStaff() { return realm_.handInStaff(); }
+    void closeAngel() { realm_.closeAngel(); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
     void earn(long long zen) { realm_.earn(zen); }

@@ -111,6 +111,17 @@ std::string gateWords(sim::CastleRefusal why, int castle) {
            "You need more than just courage, warrior. You'll find the 'Scroll of Archangel' and "
            "'Blood Bone' by hunting monsters on the Continent of Mu.";
 }
+// The Archangel's words, MU's own (Localization/Game.en.resx): ServerCmd 1,24 while the weapon is
+// still out there (legacy 834), 1,23 as it is handed back (833).
+const char* angelWords(sim::AngelState state) {
+    if (state == sim::AngelState::Done) {
+        return "Ah! Great warrior. Thanks to your help, we have been able to protect the lands "
+               "from Kundun's soldiers. As a token of our appreciation, I will share my "
+               "experience with you.";
+    }
+    return "You're a warrior in training, I see. I will trust in your courage. Go ahead and bring "
+           "down those evil creatures and bring me back my weapon.";
+}
 std::string bandOf(int castle) {
     const int* band = sim::kCastleBands[castle - 1];
     return band[1] == 0 ? "Level " + std::to_string(band[0]) + " and over"
@@ -154,8 +165,11 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
         pageAt != o.pageAt || pages != o.pages || turn != o.turn) {
         return false;
     }
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 6; ++i) {
         if (gate[i] != o.gate[i]) return false;
+    }
+    for (int i = 0; i < 3; ++i) {
+        if (angel[i] != o.angel[i]) return false;
     }
     for (int i = 0; i < kButtons; ++i) {
         if (lift[i] != o.lift[i]) return false;
@@ -228,7 +242,8 @@ int QuestDialog::cellAt(float ux, float uy, bool anyCell) const {
 void QuestDialog::layout(const Play& play) {
     const sim::Realm& realm = play.realm();
     const bool gate = mode_ == Mode::Gate;
-    const sim::QuestRow& row = sim::questAt(gate ? 0 : quest_);
+    const bool angel = mode_ == Mode::Angel;
+    const sim::QuestRow& row = sim::questAt(gate || angel ? 0 : quest_);
     const content::Tables& tables = *realm.tables();
     lines_.clear();
     cells_.clear();
@@ -260,6 +275,9 @@ void QuestDialog::layout(const Play& play) {
             words(said.c_str());
             break;
         }
+        case Mode::Angel:
+            words(angelWords(angel_));
+            break;
     }
 
     // The body, top down in its own units: the kicker and his words, the steps, the rewards.
@@ -282,6 +300,23 @@ void QuestDialog::layout(const Play& play) {
             y += kIcon + kCellGap;
         }
         y += float(kGateRows - 1) * kStepRow + kSection;
+    } else if (angel) {
+        // What he asks for, the staff, as the rewards are shown; given back, what it paid.
+        y += kSection * 0.5f + 24.0f;
+        if (angel_ == sim::AngelState::Done) {
+            y += 3.0f * kStepRow + kSection;
+        } else {
+            Cell cell;
+            cell.item = tables.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
+            if (cell.item >= 0) {
+                const sim::Held held = rewardHeld(tables, cell.item, 0, 1, 0, 0);
+                cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+                cell.box = {kInset, y, wide, kIcon};
+                cells_.push_back(cell);
+                y += kIcon + kCellGap;
+            }
+            y += kSection;
+        }
     } else if (mode_ != Mode::Resting && mode_ != Mode::Stranger) {
         int counted = 0;
         for (int s = 0; s < row.stepCount; ++s) {
@@ -345,7 +380,7 @@ void QuestDialog::layout(const Play& play) {
     const float buttonTop = kTall - 18.0f - style::kButtonM;
     const float middle = kWide * 0.5f;
     for (Box& one : buttons_) one = {0, 0, 0, 0};
-    if ((mode_ == Mode::Offer || gate) && !reading_) {
+    if ((mode_ == Mode::Offer || gate || (angel && angel_ != sim::AngelState::Done)) && !reading_) {
         const float left = middle - kButtonW - style::kGap * 0.5f;
         buttons_[1] = {left, buttonTop, kButtonW, style::kButtonM};
         buttons_[0] = {left + kButtonW + style::kGap, buttonTop, kButtonW, style::kButtonM};
@@ -409,7 +444,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         lift_[0] = lift_[1] = lift_[2] = 0.0f;
     }
     const bool gate = quest_ == kGate;
-    const sim::QuestProgress& progress = gate ? kNoProgress : realm.quest(quest_);
+    const bool angel = quest_ == kArchangel;
+    const sim::QuestProgress& progress = gate || angel ? kNoProgress : realm.quest(quest_);
     Mode mode = Mode::Offer;
     if (progress.state == sim::QuestState::Active) mode = Mode::Underway;
     // Read from the journal, away from him, a quest ready to hand in is still under way.
@@ -417,7 +453,13 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     else if (progress.state == sim::QuestState::Resting && !realm.questOffered(quest_)) {
         mode = Mode::Resting;
     }
-    if (gate) {
+    if (angel) {
+        mode = Mode::Angel;
+        angel_ = realm.angelState();
+        staffHeld_ = realm.staffSlot() >= 0;
+        paidExperience_ = realm.castleRun().paidExperience;
+        paidZen_ = realm.castleRun().paidZen;
+    } else if (gate) {
         mode = Mode::Gate;
         if (mode_ != Mode::Gate) castle_ = sim::castleFor(realm.hero().level);
         why_ = realm.castleRefusal(castle_);
@@ -484,7 +526,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     bool owed = false;
     for (const Cell& one : cells_) owed |= one.choice >= 0;
     const bool primaryOff = (mode_ == Mode::HandIn && owed && chosen_ < 0) ||
-                            (mode_ == Mode::Gate && why_ != sim::CastleRefusal::None);
+                            (mode_ == Mode::Gate && why_ != sim::CastleRefusal::None) ||
+                            (mode_ == Mode::Angel && angel_ != sim::AngelState::Ready);
 
     int over = dragging_ ? -1 : buttonAt(ux, uy);
     if (over < 0 && !dragging_) {
@@ -499,7 +542,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     }
     if (pointer.pressed && !dragging_) pressing_ = over_;
     bool primary = enter && !primaryOff && !reading_ &&
-                   (mode_ == Mode::Offer || mode_ == Mode::HandIn || mode_ == Mode::Gate);
+                   (mode_ == Mode::Offer || mode_ == Mode::HandIn || mode_ == Mode::Gate ||
+                    mode_ == Mode::Angel);
     bool cancel = escape;
     bool chose = false;
     int turn = 0;
@@ -527,6 +571,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         out->picked = chose;
         out->turn = turn;
         if (cancel) out->close = true;
+        else if (primary && mode_ == Mode::Angel) out->give = true;
         else if (primary && mode_ == Mode::Gate) {
             out->enter = true;
             out->castle = castle_;
@@ -573,6 +618,11 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         now.gate[4] = opensIn_;
         now.gate[5] = castle_;
     }
+    if (angel) {
+        now.angel[0] = int64_t(angel_);
+        now.angel[1] = paidExperience_;
+        now.angel[2] = paidZen_ * 2 + (staffHeld_ ? 1 : 0);
+    }
     if (built_ && now == drawn_) return;
     drawn_ = now;
     built_ = true;
@@ -603,8 +653,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const bool gate = mode_ == Mode::Gate;
-    const sim::QuestRow& row = sim::questAt(gate ? 0 : quest_);
-    const sim::QuestProgress& progress = gate ? kNoProgress : realm.quest(quest_);
+    const bool angel = mode_ == Mode::Angel;
+    const sim::QuestRow& row = sim::questAt(gate || angel ? 0 : quest_);
+    const sim::QuestProgress& progress = gate || angel ? kNoProgress : realm.quest(quest_);
     const float u = unit_, x = x_, y = y_;
     // Window units to the screen, and the body's own units (which scroll) to the screen.
     const auto sx = [&](float ux) { return x + ux * u; };
@@ -616,7 +667,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     controls::frame(canvas_, placed(x, y, {0.0f, 0.0f, kWide, kTall}, u), u,
                     // The Messenger's page is an event's, not a quest's (the user, 2026-10-03:
                     // 'call it Event, not quest').
-                    gate ? "Event" : reading_ ? "Quest Journal" : "Quest");
+                    gate || angel ? "Event" : reading_ ? "Quest Journal" : "Quest");
     const auto state = [&](int which, bool off) {
         const float t = lift_[which] * lift_[which] * (3.0f - 2.0f * lift_[which]);
         return controls::State{t, pressing_ == which && over_ == which, off};
@@ -630,15 +681,18 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                      style::kAsh1);
         const float title = std::round(22.0f * u);
         const float small = std::round(13.5f * u);
-        const std::string name = gate ? "Blood Castle " + std::to_string(castle_) : row.title;
+        const std::string name = gate    ? "Blood Castle " + std::to_string(castle_)
+                                 : angel ? std::string("Blood Castle 1")
+                                         : row.title;
         const size_t turning = canvas_.mark();
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(title, name) * 0.5f,
                         wy(top + 30.0f), title, style::kBoneHi, name);
         // The Messenger's page between its arrows: which castle of the six, and no more -- the
         // kicker under it names him (the user, 2026-10-03: 'to much text under title does not fit').
-        std::string where = gate ? std::to_string(castle_) + " of " + std::to_string(sim::kCastles)
-                                 : std::string(row.place) + "   \xC2\xB7   " + row.giverName;
-        if (!gate && reading_ && pages_ > 1) {
+        std::string where = gate    ? std::to_string(castle_) + " of " + std::to_string(sim::kCastles)
+                            : angel ? std::string("Archangel")
+                                    : std::string(row.place) + "   \xC2\xB7   " + row.giverName;
+        if (!gate && !angel && reading_ && pages_ > 1) {
             where += "   \xC2\xB7   " + std::to_string(pageAt_) + " of " + std::to_string(pages_);
         }
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(small, where) * 0.5f,
@@ -676,6 +730,17 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Enter", controls::Kind::Primary,
                              state(0, why_ != sim::CastleRefusal::None), u);
             break;
+        case Mode::Angel:
+            if (angel_ == sim::AngelState::Done) {
+                controls::button(canvas_, placed(x, y, buttons_[1], u), "Farewell",
+                                 controls::Kind::Secondary, state(1, false), u);
+                break;
+            }
+            controls::button(canvas_, placed(x, y, buttons_[1], u), "Not now", controls::Kind::Secondary,
+                             state(1, false), u);
+            controls::button(canvas_, placed(x, y, buttons_[0], u), "Give", controls::Kind::Primary,
+                             state(0, angel_ != sim::AngelState::Ready), u);
+            break;
         case Mode::HandIn:
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Complete quest",
                              controls::Kind::Primary, state(0, owed && chosen_ < 0), u);
@@ -693,12 +758,13 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         return Box{std::round(sx(one.box.x)), std::round(by(one.box.y)), std::round(one.box.w * u),
                    std::round(one.box.h * u)};
     };
-    const bool offered = mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate;
+    const bool offered = mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate && !angel;
 
     float cy = 12.0f;
     controls::caps(body_, sx(kInset), by(cy + 10.0f), style::kKickerSize * u, style::kAshInk,
-                   gate ? std::string("Messenger of Archangel of Devias")
-                        : std::string(row.giverName) + " of " + row.place);
+                   gate    ? std::string("Messenger of Archangel of Devias")
+                   : angel ? std::string("Archangel of Blood Castle")
+                           : std::string(row.giverName) + " of " + row.place);
     cy += 16.0f;
     for (const std::string& one : lines_) {
         if (one.empty()) {
@@ -710,7 +776,45 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     }
     cy += kSection;
 
-    if (gate) {
+    if (angel) {
+        controls::rule(body_, sx(kInset), by(cy - kSection * 0.5f), inner() * u, u);
+        cy += kSection * 0.5f;
+        if (angel_ == sim::AngelState::Done) {
+            // Given back: what GiveReward_Win paid, a line each.
+            controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Rewards", u);
+            cy += 24.0f;
+            const std::string lines[3][2] = {
+                {"Experience", panel::commas(paidExperience_)},
+                {"Zen", panel::commas(paidZen_)},
+                {"Jewel of Chaos", "at your feet"},
+            };
+            for (int i = 0; i < 3; ++i) {
+                const float rowY = cy + float(i) * kStepRow;
+                quest_marks::mark(body_, StepMark::Done, sx(kInset + 7.0f), by(rowY + 8.0f), u);
+                controls::label(body_, sx(kInset + 24.0f), by(rowY + 13.0f), kBody * u,
+                                style::kBone, lines[i][0]);
+                controls::ranged(body_, sx(kInset + inner()), by(rowY + 13.0f), kBody * u,
+                                 i == 1 ? kZenGold : style::kBoneHi, lines[i][1]);
+            }
+        } else {
+            controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Requirements", u);
+            cy += 24.0f;
+            for (const Cell& one : cells_) {
+                const Box box = cellBox(one);
+                const Box icon{box.x, box.y, box.h, box.h};
+                controls::cell(body_, icon, controls::Cell::Rest, u);
+                // The name, and under it whether he holds it: the name is too long to share its
+                // line with the word.
+                const float nx = sx(one.box.x + kIcon + kNameGap);
+                const float ly = one.box.y + kIcon * 0.5f;
+                controls::label(body_, nx, by(ly - 3.0f), kName * u, one.ink ? one.ink : kItemWhite,
+                                "Divine Staff of Archangel");
+                controls::label(body_, nx, by(ly + 15.0f), kName * u,
+                                staffHeld_ ? style::kFits : style::kDanger,
+                                staffHeld_ ? std::string("in your bag") : std::string("none"));
+            }
+        }
+    } else if (gate) {
         // What he asks for, as objectives: each struck when it is met, its figure beside it.
         controls::rule(body_, sx(kInset), by(cy - kSection * 0.5f), inner() * u, u);
         cy += kSection * 0.5f;

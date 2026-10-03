@@ -624,6 +624,7 @@ bool Realm::useItem(int slot) {
         banking_ = -1;
         closeMachine();
         gating_ = -1;
+        angeling_ = -1;
         const std::pair<int, int> landing = haven();
         setDown(hero, landing.first, landing.second);
         hero.facing = hero.aim;

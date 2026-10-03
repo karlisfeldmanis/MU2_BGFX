@@ -74,7 +74,7 @@ enum class CastleRefusal : int32_t {
 // he waits kCastleWait in the safe court with the entrance shut, then the run's kCastleRun
 // starts and the entrance opens. WebZen's quotas for one player (SetMonsterKillCount,
 // gObjMonster.cpp:1238-1341): 40 kills of anything but the Spirit Sorcerer, then 2 of those.
-enum class CastlePhase : uint8_t { None, Waiting, Running, Ended };
+enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
 constexpr int kCastleKills = 40;
 constexpr int kCastleSorcerers = 2;
@@ -87,7 +87,23 @@ struct CastleRun {
     int64_t endsAt = 0;    // the tick the run's time is up
     int kills = 0;         // quota 1
     int sorcerers = 0;     // quota 2
+    bool statueBroken = false;  // by him: the statue's bonus
+    // What the win paid, for the Archangel's page (Realm::handInStaff).
+    int64_t paidExperience = 0, paidZen = 0;
 };
+// The Archangel, NPC 232, who takes the Divine Staff of Archangel (5,10) back: the win (the
+// user, 2026-10-03). His page in the Event window (QuestDialog::kArchangel).
+constexpr int kArchangel = 232;
+constexpr int kDivineStaffGroup = 5, kDivineStaffNumber = 10;
+// WebZen's win for castle 1, one player (GiveReward_Win, BloodCastle.cpp:3100-3577;
+// BloodCastle.h:192-205, 238-252, 308-322): 20,000 for the statue he broke, 5,000 for the
+// weapon handed in, 160 a second left on the clock; 20,000 Zen; a Jewel of Chaos at his feet.
+constexpr int64_t kCastleStatueExp = 20000;
+constexpr int64_t kCastleHandInExp = 5000;
+constexpr int64_t kCastleExpPerSecond = 160;
+constexpr int64_t kCastleWinZen = 20000;
+// What the Archangel's page shows (QuestDialog::kArchangel).
+enum class AngelState : uint8_t { NotYet, NoStaff, Ready, Done };
 
 // A rectangle of tiles, inclusive, and the attribute bits the run clears from it.
 struct GridBox {

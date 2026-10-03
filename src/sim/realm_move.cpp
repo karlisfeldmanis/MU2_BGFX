@@ -254,6 +254,7 @@ bool Realm::passGate(Body& hero, const EnterGate& through) {
     banking_ = -1;
     closeMachine();
     gating_ = -1;
+    angeling_ = -1;
     // A gate to a floor of this same map -- the Dungeon's stairs between its three floors, one
     // grid with three regions the router cannot cross -- is not a map change: he is put down
     // there now, as a Town Portal puts him down (realm_items.cpp), the monsters on him lose
@@ -278,6 +279,7 @@ void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
     banking_ = -1;
     closeMachine();
     gating_ = -1;
+    angeling_ = -1;
     int open = column, openRow = row;
     if (router_.nearestOpen(column, row, content::kWallCharacter, 8, &open, &openRow)) {
         column = open;
@@ -617,6 +619,7 @@ bool Realm::enterCastle(int castle) {
     if (castleRefusal(castle) != CastleRefusal::None) return false;
     castleOwed_ = castle;
     gating_ = -1;
+    angeling_ = -1;
     return true;
 }
 
@@ -633,6 +636,28 @@ void Realm::passCastle(int castle) {
 // ---- Blood Castle's run (sim/event.h) ------------------------------------------------------
 
 void Realm::castleTick() {
+    // The staff given back, inside the tick so what it says is this tick's (as enterCastle).
+    // "Ah! Great warrior..." (ServerCmd 1,23, NpcTalk.cpp:1461-1588), and GiveReward_Win.
+    if (staffOwed_) {
+        staffOwed_ = false;
+        const int slot = staffSlot();
+        if (slot >= 0 && run_.phase == CastlePhase::Running) {
+            bag_.lift(slot);
+            Body& hero = bodies_[0];
+            const int64_t seconds = castleSecondsLeft();
+            const int64_t experience =
+                (run_.statueBroken ? kCastleStatueExp : 0) + kCastleHandInExp +
+                seconds * kCastleExpPerSecond;
+            // At the game's experience rate, as every kill's (rules.h kExperienceRate).
+            run_.paidExperience = int64_t(double(experience) * kExperienceRate);
+            run_.paidZen = kCastleWinZen;
+            run_.phase = CastlePhase::Won;
+            gain(hero, int32_t(std::min<int64_t>(run_.paidExperience, INT32_MAX)));
+            money_ += kCastleWinZen;
+            const int32_t chaos = tables_->itemAt(12, 15);
+            if (chaos >= 0) lay(chaos);
+        }
+    }
     if (run_.phase == CastlePhase::Waiting && tick_ >= run_.startsAt) {
         // "Blood Castle 1 quest has begun" (lMsg 1161): the barrier lifted, the clock started.
         run_.phase = CastlePhase::Running;
@@ -648,6 +673,27 @@ void Realm::castleKill(const Body& dead) {
     if (run_.phase != CastlePhase::Running) return;
     if (tables_->kinds[size_t(dead.kind)].number == kCastleSorcerer) ++run_.sorcerers;
     else ++run_.kills;
+}
+
+int Realm::staffSlot() const {
+    for (int i = kWorn; i < kSlots; ++i) {
+        if (bag_[i].empty()) continue;
+        const content::ItemRow& row = tables_->items[size_t(bag_[i].item)];
+        if (row.group == kDivineStaffGroup && row.number == kDivineStaffNumber) return i;
+    }
+    return -1;
+}
+
+AngelState Realm::angelState() const {
+    if (run_.phase == CastlePhase::Won) return AngelState::Done;
+    if (run_.phase != CastlePhase::Running) return AngelState::NotYet;
+    return staffSlot() >= 0 ? AngelState::Ready : AngelState::NoStaff;
+}
+
+bool Realm::handInStaff() {
+    if (angeling_ < 0 || !serving(angeling_) || angelState() != AngelState::Ready) return false;
+    staffOwed_ = true;
+    return true;
 }
 
 int Realm::castleSecondsLeft() const {

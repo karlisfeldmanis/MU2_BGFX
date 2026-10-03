@@ -7477,6 +7477,42 @@ void testCastleGrid(const content::Tables& lorencia) {
     }
     check(reaches(14, 85), "with the door down the courtyard plans");
     check(castle.grid.words() == cooked, "the cooked tables are untouched");
+    // The Archangel takes the Divine Staff back: the win, and WebZen's pay.
+    {
+        int archangel = -1;
+        for (size_t i = 0; i < castle.folk.size(); ++i) {
+            if (castle.folk[i].number == sim::kArchangel) archangel = int(i);
+        }
+        check(archangel >= 0, "the Archangel stands in the castle's tables");
+        const int32_t staff = castle.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
+        check(staff >= 0, "and the Divine Staff of Archangel is an item");
+        if (archangel >= 0 && staff >= 0) {
+            sim::Request talk;
+            talk.kind = sim::Request::Kind::Talk;
+            talk.target = uint32_t(archangel);
+            realm.ask(talk);
+            for (int tick = 0; tick < 400 && realm.angeling() < 0; ++tick) realm.step();
+            check(realm.angeling() == archangel, "spoken to, his page opens");
+            check(realm.angelState() == sim::AngelState::NoStaff, "and asks for his weapon");
+            check(!realm.handInStaff(), "Give does nothing without it");
+            realm.give(staff);
+            check(realm.angelState() == sim::AngelState::Ready, "with it in the bag he is ready");
+            const int64_t zen = realm.money();
+            const uint64_t experience = realm.hero().experience;
+            const int level = realm.hero().level;
+            check(realm.handInStaff(), "Give takes it");
+            realm.step();
+            check(realm.castleRun().phase == sim::CastlePhase::Won, "the castle is won");
+            check(realm.staffSlot() < 0, "the staff is his again");
+            checkEqual(int(realm.money() - zen), int(sim::kCastleWinZen), "20,000 Zen");
+            check(realm.hero().level > level || realm.hero().experience > experience,
+                  "and the experience");
+            bool jewel = false;
+            for (const auto& one : realm.lying()) jewel |= one.what.item == castle.itemAt(12, 15);
+            check(jewel, "a Jewel of Chaos at his feet");
+            check(realm.angelState() == sim::AngelState::Done, "his page says it is done");
+        }
+    }
     check(sim::castleEntryLeft(10 * 3600 + 25 * 60) == 300, "the Messenger opens at hh:25");
     check(sim::castleEntryLeft(10 * 3600 + 29 * 60 + 59) == 1, "until hh:29:59");
     check(sim::castleEntryLeft(10 * 3600 + 30 * 60) == 0, "and is shut at hh:30");
