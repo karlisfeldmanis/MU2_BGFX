@@ -235,7 +235,7 @@ inline bool twoHandedStance(const std::string& stance) {
 // skill and the ride cast. Anything else played on a horse is a standing clip and is seated.
 inline bool rideAction(int slot) {
     return slot == 13 || slot == 14 || slot == 36 || slot == 37 || (slot >= 54 && slot <= 59) ||
-           slot == 68 || slot == 69 || slot == 156;
+           slot == 68 || slot == 69 || slot == 155;
 }
 
 // An angle folded into a half turn either side of nothing, so that a body a few degrees the

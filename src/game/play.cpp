@@ -371,9 +371,12 @@ void Play::update(double seconds) {
                     caster->castClip = -1;
                     if (row && caster->figure.body() && caster->figure.body()->library) {
                         caster->castClip = caster->figure.body()->library->find(row->clip);
-                        // On a horse, MU's ride cast stands in: PLAYER_RIDE_SKILL 156 for a
-                        // spell (ZzzCharacter.cpp:1326-1328) and PLAYER_SKILL_RIDER 68 for a
-                        // knight's skill or an elf's buff (ClassAttack.cpp:1807). An arrow skill
+                        // On a horse, MU's ride cast stands in: PLAYER_RIDE_SKILL for a
+                        // spell (ZzzCharacter.cpp:1326-1328), our 155 as the labels run one
+                        // late there (actions.json; 156 is a standing crouch, the user: 'when
+                        // char is on mount and cast meteor he is standing'), and
+                        // PLAYER_SKILL_RIDER 68 for a knight's skill or an elf's buff
+                        // (ClassAttack.cpp:1807). An arrow skill
                         // takes the ride bow below, with the weapon's swing. A buff keeps its
                         // own standing clip, of which only the arms are drawn on the horse
                         // (Drawn::selfClip): the ride casts swing the whole body (the user, of
@@ -381,7 +384,7 @@ void Play::update(double seconds) {
                         if (happening.who == heroId && realm_.hero().riding && !row->arrows &&
                             !row->onSelf()) {
                             const int ridden = caster->figure.body()->library->find(
-                                realm_.hero().kin == sim::Kin::DarkWizard ? 156 : 68);
+                                realm_.hero().kin == sim::Kin::DarkWizard ? 155 : 68);
                             if (ridden >= 0) caster->castClip = ridden;
                         }
                     }
@@ -916,13 +919,13 @@ void Play::update(double seconds) {
                                 if (row->arrows > 0 && swinger->attackClip >= 0) {
                                     swinger->castClip = swinger->attackClip;
                                 }
-                                // And on a horse, the ride cast (156 a spell, 68 a skill), as
+                                // And on a horse, the ride cast (155 a spell, 68 a skill), as
                                 // where the cast is announced; an arrow keeps the bow's swing,
                                 // which the ride swing below replaces.
                                 if (happening.who == realm_.hero().id && realm_.hero().riding &&
                                     row->arrows == 0) {
                                     const int ridden = swinger->figure.body()->library->find(
-                                        realm_.hero().kin == sim::Kin::DarkWizard ? 156 : 68);
+                                        realm_.hero().kin == sim::Kin::DarkWizard ? 155 : 68);
                                     if (ridden >= 0) swinger->castClip = ridden;
                                 }
                             }

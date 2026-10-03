@@ -42,7 +42,7 @@ OpenMU on rules, `docs/webzen-audit.md`).
 | attack: two-hand | 55 `..._TWO_HAND_SWORD` |
 | attack: spear / scythe and polearms | 56 / 57 |
 | attack: bow / crossbow | 58 / 59 |
-| a spell | 156 `PLAYER_RIDE_SKILL` (`ZzzCharacter.cpp:1326-1328`) |
+| a spell | 155 `PLAYER_RIDE_SKILL` (the enum says 156) (`ZzzCharacter.cpp:1326-1328`) |
 | a knight skill, an elf buff | 68 `PLAYER_SKILL_RIDER` (`ClassAttack.cpp:1807`) |
 | hit | none: `SetPlayerShock` returns early for a rider (`:1368`) |
 | die | 232 Die 1, falls off as on foot |
@@ -133,7 +133,7 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
   faded 0.25 s at a safe zone's edge (ours; MU cuts Alpha to 0), its clip GOBoid's off his: 2
   riding on, 3 a weapon's swing, 0 otherwise. He rides on 13/14 and 36/37 (bare while slung,
   armed while drawn), swings 54-59 by stance (dual Kris too, every blow on the right hand's 54:
-  MU has no paired ride swing), casts 156 as a wizard and 68 otherwise; an elf's arrow skill
+  MU has no paired ride swing), casts 155 as a wizard (PLAYER_RIDE_SKILL, one late in our labels: 156 stood him up) and 68 otherwise; an elf's arrow skill
   takes the ride bow. The run ride plays at MU's 0.34 (actions.json cooked 0.3) and the horse's
   clip takes his clip's place as a fraction each frame, so the bounces hold together (the user:
   "char is not perfectly synced with mount bouncing"). **Ours**: a drawn bow or crossbow on the
