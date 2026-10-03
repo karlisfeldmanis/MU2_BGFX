@@ -690,13 +690,9 @@ QuestRow tersiaSixth() {
                                  .firstOnly = true};  // Gorgon Staff
     row.paid[row.paidCount++] = {.item = "CrossBow06", .kin = elf, .sockets = 3,
                                  .firstOnly = true};  // Bluewing Crossbow
-    // The lightning rune: the knight's Stormcall, a chance to call it down; Thunder, lightning
-    // damage, for the others, who have no lightning chance of their own.
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
-                                 .power = uint8_t(Power::Stormcall), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
-                                 .power = uint8_t(Power::Thunder), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Thunder),
+    // The lightning rune, Stormcall, every class's since this day: a swing, arrow or cast may
+    // call lightning down (the user: "that rune which has chance to cast lightnings on monsters").
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Stormcall),
                                  .firstOnly = true};
     // And each class's legendary rune. The elf has only Frost Arrow, so a second.
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,

@@ -5667,8 +5667,8 @@ void testRunes(const content::Tables& tables) {
     const sim::Held carried = held(rune, 0, storm);
     check(sim::settable(tables, carried, held(serpent, 1, 0), dk),
           "Stormcall goes in a knight's socketed sword");
-    check(!sim::settable(tables, carried, held(serpent, 1, 0), sim::Kin::DarkWizard),
-          "and not by a wizard");
+    check(sim::settable(tables, carried, held(serpent, 1, 0), sim::Kin::DarkWizard),
+          "and by a wizard, every class's since 2026-10-03");
     check(!sim::settable(tables, carried, held(serpent, 0, 0), dk), "nor in a sword with no socket");
     check(!sim::settable(tables, carried, held(serpent, 1, storm), dk), "nor in a full one");
     check(sim::settable(tables, carried, held(serpent, 2, storm), dk),
@@ -5689,8 +5689,8 @@ void testRunes(const content::Tables& tables) {
             check(sim::settable(tables, frosty, held(crossbow, 1, 0), sim::Kin::FairyElf),
                   "and her socketed crossbow");
             check(!sim::settable(tables, frosty, held(bow, 1, 0), dk), "and not by a knight");
-            check(!sim::settable(tables, carried, held(bow, 1, 0), sim::Kin::FairyElf),
-                  "nor Stormcall by her");
+            check(sim::settable(tables, carried, held(bow, 1, 0), sim::Kin::FairyElf),
+                  "and Stormcall by her");
         }
     }
     // A ring and a pendant take every armour rune, Evil Spirit too, and no weapon's.
@@ -6154,6 +6154,14 @@ void testRunes(const content::Tables& tables) {
     int swingCast = 0, swingLoosed = 0, lightning = 0;
     casts(echo, &swingCast, &swingLoosed, 0, &lightning);
     checkEqual(lightning, 0, "an Echo staff's plain swings call no lightning");
+    // Stormcall, every class's since 2026-10-03: his Energy Balls call it, about one cast in five.
+    int stormCast = 0, stormLoosed = 0, stormLightning = 0;
+    casts(uint8_t(sim::Power::Stormcall), &stormCast, &stormLoosed, sim::skill::kEnergyBall,
+          &stormLightning);
+    std::printf("  Stormcall staff: %d Energy Balls cast, %d lightning\n", stormCast,
+                stormLightning);
+    check(stormLightning > stormCast / 10 && stormLightning < stormCast * 3 / 10,
+          "a Stormcall staff's casts call lightning, at about its chance");
 
     // Pyroblaster, the wizard's second: his Fire Ball half again as hard, and some that land
     // start a chain, one fireball flying on from the monster struck to the next, four hops at

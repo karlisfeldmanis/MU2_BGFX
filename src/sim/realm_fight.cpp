@@ -552,6 +552,14 @@ void Realm::land(Body& hero) {
         echo_ = Echo{tick_ + kEchoTicks, at, skill, force};
     }
     release(hero, at, force, skill);
+    // And Stormcall answers the cast as it answers a swing (the user, 2026-10-03: "that rune
+    // which has chance to cast lightnings on monsters on casts"), once a cast, on a monster near
+    // him or else the one it was cast at. Only Stormcall rolls here: callDown passes over the
+    // wizard's other weapon powers, and the knight's are not his to set.
+    if (spell && spell->wizardry && hero.player && hero.alive()) {
+        Body* aimed = body(at);
+        stormcall(hero, aimed != nullptr ? *aimed : hero, 0);
+    }
 }
 
 bool Realm::echoes(Body& hero) {

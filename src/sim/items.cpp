@@ -262,9 +262,9 @@ const PowerRow* powerOf(uint8_t power) {
     constexpr uint8_t kHeld = kInWeapon | kInJewellery;
     static const PowerRow kPowers[] = {
         {Power::Stormcall, "Stormcall",
-         "A swing that lands has a 20% chance to call lightning down on a monster near him, another "
-         "where there is one, its damage raised by his energy",
-         kKnightOnly, kInWeapon, Rarity::Epic},
+         "A swing or arrow that lands, or a spell you cast, has a 20% chance to call lightning "
+         "down on a monster near you, another where there is one, its damage raised by your energy",
+         kEveryClass, kInWeapon, Rarity::Epic},
         {Power::Meteor, "Meteor",
          "A swing that lands has a 15% chance to bring a burning rock down on a monster near him, "
          "another where there is one",

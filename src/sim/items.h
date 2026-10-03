@@ -566,7 +566,8 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
 // **Stormcall**, the Dark Knight's first power: a swing that lands has this chance to call
 // lightning down on another monster within `kStormcallReach` tiles of him, which takes his
 // swing's roll at `kStormcallForce` and is pushed as Lightning pushes. invention. 20%, as the
-// first quests' three runes all are (the user, 2026-10-01).
+// first quests' three runes all are (the user, 2026-10-01). Every class's since 2026-10-03: the
+// elf's arrows roll it as the swing does, and the wizard's spells once a cast (Realm::land).
 constexpr double kStormcallChance = 0.20;
 constexpr float kStormcallReach = 4.0f;
 constexpr float kStormcallForce = 1.0f;
