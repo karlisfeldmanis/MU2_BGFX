@@ -826,6 +826,10 @@ private:
             if (held.empty()) continue;
             const content::ItemRow& row = rowOf(held);
             if (sim::placeOf(row) < 0 || sim::ammunition(row)) continue;
+            // Rings and the pendant are wearJewellery's, on its own worth: scored here by their
+            // sockets alone, a socketed Ring of Ice and a Ring of Fortune traded places every
+            // sort, 1,600 times in six hours (knight, seed 2, 2026-10-03).
+            if (sim::jewellery(row)) continue;
             // An elf keeps to the bow: her skills and her arrows are its. And to the one she can
             // feed: a crossbow shoots bolts where a bow shoots arrows, and a switch with no
             // quiver for it and no Zen for one leaves her nothing to shoot.
@@ -990,6 +994,8 @@ private:
     double jewelleryWorth(const sim::Held& one) const {
         const content::ItemRow& row = tables_->items[size_t(one.item)];
         double worth = sim::resistanceOf(row, one.refinement) + one.option * 2.0 + (one.luck ? 5.0 : 0.0);
+        // A rune set is worth a power; an empty socket a little, for the rune he may set later.
+        for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) worth += one.powers[k] ? 6.0 : 1.0;
         if (sim::powered(row)) {
             worth += 4.0 + sim::affixValue(sim::signatureOf(row), one.refinement);
             for (uint8_t a : one.affixes) {
