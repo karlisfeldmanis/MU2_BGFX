@@ -60,6 +60,9 @@ struct GroundPart {
     int slots[kLayers] = {-1, -1, -1};
     std::string name;      // the glTF material's own name, or the set of slots it wears
     std::string pairName;  // the same pair as ground_surfaces.json's entry names it
+    // Void tiles built anyway and held back until the world shows them (Ground::showLater):
+    // Blood Castle's drawbridge gap, MU's TileRock02 planks once its NoGround is cleared.
+    bool later = false;
 };
 
 class Ground {
@@ -142,6 +145,10 @@ public:
     // zw the texture's uv as world x and -z times z plus w. abyss() in common.sh.
     bgfx::TextureHandle abyss() const { return abyss_; }
     const float* abyssParams() const { return abyssParams_; }
+    // Whether the `later` parts are drawn: Blood Castle's gap, shown as its drawbridge lands
+    // (game/world/drawbridge.h). A part the renderer skips while this is false.
+    void showLater(bool shown) { laterShown_ = shown; }
+    bool draws(const GroundPart& part) const { return !part.later || laterShown_; }
     const float* weightSize() const { return weightSize_; }
     // Which texel row of weights() the water's flow band starts on, kWeightPad included, or
     // -1 where the world names no river: its water then slides along U as MU's does. A
@@ -201,6 +208,11 @@ private:
     // causeway's flanks, so a three-tile bridge keeps its light from side to side while the
     // floors round it melt. The world's `void.blend_keep`. Ours.
     std::vector<std::array<int, 4>> blendKeep_;
+    // Tile boxes, inclusive, of void the ground builds anyway as `later` parts: drawn once
+    // showLater says, as MU draws a tile whose NoGround the run clears (AddTerrainAttributeRange,
+    // ZzzObject.cpp:163). The world's `void.later`. Blood Castle's drawbridge gap.
+    std::vector<std::array<int, 4>> later_;
+    bool laterShown_ = false;
     // How far above the rim the void's own points read their level, in metres, so whatever
     // stands in a pit is already that far into the dark at the lip: the Dungeon's worms,
     // whose crowns sit level with the floor and stood fully lit in the hole. 0 off. The

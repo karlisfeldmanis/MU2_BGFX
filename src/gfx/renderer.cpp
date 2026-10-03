@@ -415,6 +415,7 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
 void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
                             const content::Ground& g, uint64_t state, bool lit) {
     for (const content::GroundPart& part : g.parts()) {
+        if (!g.draws(part)) continue;
         if (lit) {
             // First: it binds stages 6 and 15, and the land wants its own on both.
             bindShadeInputs();

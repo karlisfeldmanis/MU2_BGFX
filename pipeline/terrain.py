@@ -209,9 +209,13 @@ VOID_BY_MAP = {
     # on ground little bit more', of the safe court's stepped edge lit up to the void). The
     # blend that took the bridge dark (below) is back with `blend_keep`: the void beside the
     # bridge, and the drawbridge's gap with the pillars standing in it, fade nothing, so the
-    # three-tile bridge and the pillar tops keep their light. Ours.
+    # three-tile bridge and the pillar tops keep their light. Ours. And `later`: the drawbridge's
+    # gap, built as ground and held back until the bridge is down, when MU's terrain draws its
+    # TileRock02 planks (the user, 2026-10-03: 'when gates droped it was transparent without
+    # ground'; game/world/drawbridge.h).
     11: {"rim": True, "blend": 1.5,
-         "blend_keep": [[0, 16, 12, 75], [16, 16, 35, 75], [13, 70, 15, 75]]},
+         "blend_keep": [[0, 16, 12, 75], [16, 16, 35, 75], [13, 70, 15, 75]],
+         "later": [[13, 70, 15, 75]]},
 }
 #: Blood Castle tried the tower's (the user, 2026-10-02: 'we need to add some nice void gradients
 #: to ground edges'), blend 2 and then 0.7 tiles: the three-tile bridge went dark from side to

@@ -6,8 +6,8 @@
 // to 0, it is set to 35 and eDownGate plays; every frame it pitches by a speed that starts at 1
 // and grows by 1.5, and passing 90 it is knocked back by the frames still to run and the speed
 // starts again at 2 -- a fall and a few bounces as it lands. On the last frame it goes (hidden)
-// and types 9 and 10, Object10's deck and Object11's chains, show in its place: the lowered
-// bridge. MU's smoke at exactly 80 degrees is a float equality the swing never hits (it reads
+// and types 9 and 10, Object10's deck and Object11's chains, show, with the terrain's planks on
+// the gap: the lowered bridge. Ours: the door stays, lying at 90 over the planks (lower()). MU's smoke at exactly 80 degrees is a float equality the swing never hits (it reads
 // 36, 38.5 ... 85, 86, 88, 81.5 ...), so it never shows in MU and is not drawn here.
 //
 // A castle opened with the bridge already down -- MU's late joiner, who gets the end state at
@@ -36,6 +36,8 @@ public:
 
     // Whether the last update started the fall, eDownGate's cue, and the door's place in metres.
     bool started() const { return started_; }
+    // Whether it is down: the door gone and the deck shown, and the gap's planks with it.
+    bool lowered() const { return state_ == State::Lowered; }
     const float* at() const { return rest_; }
 
 private:

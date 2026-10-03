@@ -649,11 +649,16 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     abyssBlend_ = float(chasm["blend"].numberOr(0.0));
     abyssLift_ = float(chasm["lift"].numberOr(0.0));
     blendKeep_.clear();
-    for (size_t i = 0; i < chasm["blend_keep"].size(); ++i) {
-        const core::Json& box = chasm["blend_keep"].at(i);
-        if (box.size() != 4) continue;
-        blendKeep_.push_back({int(box.at(0).numberOr(0)), int(box.at(1).numberOr(0)),
-                              int(box.at(2).numberOr(-1)), int(box.at(3).numberOr(-1))});
+    later_.clear();
+    laterShown_ = false;
+    for (const char* key : {"blend_keep", "later"}) {
+        auto& boxes = key[0] == 'l' ? later_ : blendKeep_;
+        for (size_t i = 0; i < chasm[key].size(); ++i) {
+            const core::Json& box = chasm[key].at(i);
+            if (box.size() != 4) continue;
+            boxes.push_back({int(box.at(0).numberOr(0)), int(box.at(1).numberOr(0)),
+                             int(box.at(2).numberOr(-1)), int(box.at(3).numberOr(-1))});
+        }
     }
 
     if (!readGrids(worldDir, doc["height"].stringOr("height.png"),
@@ -1385,9 +1390,18 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
     struct Group {
         std::vector<int> slots;
         std::vector<size_t> quads;
+        bool later = false;
     };
     std::vector<Group> groups;
     std::vector<int> groupOfSet(size_t(1) << std::min(slots, 20), -1);
+    // The `later` tiles' own groups, by the same set: their parts are held back (showLater).
+    std::vector<int> laterOfSet(groupOfSet.size(), -1);
+    auto isLater = [&](int c, int r) {
+        for (const auto& box : later_) {
+            if (c >= box[0] && r >= box[1] && c <= box[2] && r <= box[3]) return true;
+        }
+        return false;
+    };
     std::vector<int> groupOf(quadCount, -1);
     size_t trimmed = 0;
     size_t voids = 0;
@@ -1399,7 +1413,8 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         // are that and nothing else -- the heights under them sit less than a metre below the
         // banks, and the depth is the dark. So the quad goes into no draw once all four of its
         // corners have sunk past the abyss's black (above); before then it is the edge's slope.
-        if (isVoid(tc, tr)) {
+        const bool later = isVoid(tc, tr) && isLater(tc, tr);
+        if (isVoid(tc, tr) && !later) {
             const auto at = [&](int c, int r) { return sink[size_t(r) * size_t(side) + size_t(c)]; };
             const float black = std::min(voidSink_, abyssStart_ + std::max(abyssDepth_, 0.0f));
             if (voidFade_ <= 0.0f || std::min(std::min(at(tc, tr), at(tc + 1, tr)),
@@ -1429,15 +1444,17 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         uint32_t set = 0;
         for (const auto& h : held) set |= 1u << uint32_t(h.second);
         if (set >= groupOfSet.size()) return false;
-        if (groupOfSet[set] < 0) {
+        std::vector<int>& ofSet = later ? laterOfSet : groupOfSet;
+        if (ofSet[set] < 0) {
             Group g;
             for (int s = 0; s < slots; ++s) {
                 if (set & (1u << uint32_t(s))) g.slots.push_back(s);
             }
-            groupOfSet[set] = int(groups.size());
+            g.later = later;
+            ofSet[set] = int(groups.size());
             groups.push_back(std::move(g));
         }
-        groupOf[q] = groupOfSet[set];
+        groupOf[q] = ofSet[set];
         groups[size_t(groupOf[q])].quads.push_back(q);
     }
 
@@ -1461,6 +1478,7 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         Group* into = nullptr;
         for (Group& big : groups) {
             if (&big == &small || big.slots.size() <= small.slots.size()) continue;
+            if (big.later != small.later) continue;
             if (big.quads.size() <= small.quads.size() || (maskOf(big) & want) != want) continue;
             if (!into || big.slots.size() < into->slots.size() ||
                 (big.slots.size() == into->slots.size() && big.quads.size() > into->quads.size())) {
@@ -1535,6 +1553,7 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
             part.name += slotNames_[size_t(g.slots[k])];
         }
         part.pairName = "splat";
+        part.later = g.later;
 
         for (size_t q : g.quads) {
             for (int k = 0; k < 4; ++k) {

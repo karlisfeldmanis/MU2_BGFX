@@ -304,6 +304,8 @@ void World::update(double seconds, bool still) {
             down = tables != nullptr && (tables->grid.at(14, 72) & content::kNoGround) == 0;
         }
         drawbridge_.update(dt, falling, down, town_);
+        // And the planks MU's terrain draws on the gap once its NoGround is cleared.
+        ground_.showLater(drawbridge_.lowered());
         if (drawbridge_.started() && drawbridgeSound_ >= 0) {
             const float* at = drawbridge_.at();
             play_.sound().playAt(drawbridgeSound_, at[0], at[1], at[2]);

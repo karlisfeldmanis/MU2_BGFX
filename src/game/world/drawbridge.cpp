@@ -48,7 +48,11 @@ void Drawbridge::shutdown() {
 
 void Drawbridge::lower(Town& town) {
     state_ = State::Lowered;
-    town.setHidden(uint32_t(door_), true);
+    // MU hides the door here and its terrain's planks show in its place (HiddenMesh -2); ours
+    // keeps it lying flat over the gap, the planks under it: the swap read as the bridge's
+    // texture changing as it landed (the user, 2026-10-03: 'for some reason texture changes
+    // when gate drop happens').
+    town.posePlacement(uint32_t(door_), 90.0f * kPi / 180.0f, yaw_, roll_, rest_);
     for (uint32_t piece : deck_) town.setHidden(piece, false);
 }
 
