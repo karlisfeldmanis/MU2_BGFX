@@ -1221,6 +1221,11 @@ specific count of monsters to open the gates'):**
     falls, where MU raises them in the courtyard after the gate.
   - Then the statue rises at 14,95. The Castle Gate (131) is not raised; its figure may stand
     as scenery.
+- **The original length and quotas, kept** (the user, 2026-10-03: 'we want to keep original
+  lenght of BC and minimal amount of monsters which chars ahs to kill'): WebZen's 60 s in the
+  court, then 15 minutes (`sim/event.h` kCastleWait, kCastleRun); quota 1 is 40 kills for one
+  player, and quota 2 is 2 Spirit Sorcerers (section 5.3, `SetMonsterKillCount`, solo). The quotas
+  are not scaled down or up for a single player.
 
 
 1. **Timed event or always open?** (a) on the 2-hour wall clock already drawn by `kEvents`
