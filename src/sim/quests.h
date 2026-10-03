@@ -26,7 +26,7 @@ namespace mu::sim {
 inline constexpr int kQuests = 13;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
-inline constexpr int kQuestPaid = 10;
+inline constexpr int kQuestPaid = 12;
 
 enum class QuestStepKind : uint8_t {
     // Kill `count` of breed `target` (MU's monster number); a count of 0 is the breed's whole

@@ -658,7 +658,7 @@ QuestRow tersiaFifth() {
 }
 
 QuestRow tersiaSixth() {
-    QuestRow row = tersiaLink("Rolling Fire", 200000, 600000, 200000, 4, 2);
+    QuestRow row = tersiaLink("Rolling Fire", 200000, 600000, 200000, 4, 3);
     row.offer[0] =
         "\"I know the sixth floor only from the shrine's old records. The Death Gorgons live "
         "there, and they roll fire along the ground.\"";
@@ -680,7 +680,25 @@ QuestRow tersiaSixth() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // No item: each class's legendary rune. The elf has only Frost Arrow, so a second.
+    // A weapon with three sockets, a weapon's most (the user, 2026-10-03: "lets give some weapons
+    // with +3 sockets, and ligting rune chance"; "also give jewel of soul", a third), each between
+    // the fifth's and the Balrog's: the knight's one-handed, so the shield still fits. The elf's
+    // the Balrog's old crossbow (the user: "we need some stronger bow or crosbow").
+    row.paid[row.paidCount++] = {.item = "Sword15", .kin = knight, .sockets = 3,
+                                 .firstOnly = true};  // Lighting Sword
+    row.paid[row.paidCount++] = {.item = "Staff05", .kin = wizard, .sockets = 3,
+                                 .firstOnly = true};  // Gorgon Staff
+    row.paid[row.paidCount++] = {.item = "CrossBow06", .kin = elf, .sockets = 3,
+                                 .firstOnly = true};  // Bluewing Crossbow
+    // The lightning rune: the knight's Stormcall, a chance to call it down; Thunder, lightning
+    // damage, for the others, who have no lightning chance of their own.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
+                                 .power = uint8_t(Power::Stormcall), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
+                                 .power = uint8_t(Power::Thunder), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Thunder),
+                                 .firstOnly = true};
+    // And each class's legendary rune. The elf has only Frost Arrow, so a second.
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
                                  .power = uint8_t(Power::FireRing), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
@@ -726,8 +744,9 @@ QuestRow tersiaBalrog() {
                                  .firstOnly = true};  // Bill of Balrog
     row.paid[row.paidCount++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
                                  .firstOnly = true};  // Legendary Staff
-    row.paid[row.paidCount++] = {.item = "CrossBow06", .kin = elf, .sockets = 2,
-                                 .firstOnly = true};  // Bluewing Crossbow
+    // The elf's the Chaos Nature Bow since the sixth took the Bluewing (2026-10-03).
+    row.paid[row.paidCount++] = {.item = "Bow07", .kin = elf, .sockets = 2,
+                                 .firstOnly = true};  // Chaos Nature Bow
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
                                  .power = uint8_t(Power::Fireburst), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
