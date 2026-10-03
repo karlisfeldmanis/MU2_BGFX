@@ -696,6 +696,10 @@ inline bool firecrackerMap(uint32_t map) {
 bool scrollOfArchangel(const content::ItemRow& row);
 bool bloodBone(const content::ItemRow& row);
 bool invisibilityCloak(const content::ItemRow& row);
+// The Divine Staff of Archangel (5,10) the Statue of Saint gives up: a quest item here, carried
+// back to the Archangel and worn by nobody (the user, 2026-10-03: 'we need that archange staff
+// is quest item and its not ussable for any char').
+bool divineStaff(const content::ItemRow& row);
 // WebZen gObjMonster.cpp:5823-5985: a kill anywhere but a Blood Castle rolls the scroll, then the
 // bone, `rand()%10000 < rate` with the code's defaults (Gamemain.cpp:1133-1134), and one that
 // lands is the kill's whole drop (`return TRUE`). 128 its durability, as WebZen's ItemSerialCreate.

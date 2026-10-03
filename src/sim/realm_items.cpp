@@ -1197,6 +1197,8 @@ int64_t Realm::sellValue(int slot) const {
     if (!baggable(slot) || bag_[slot].empty()) return -1;
     const Held& thing = bag_[slot];
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
+    // A quest item is the Archangel's, not a merchant's (sim::divineStaff).
+    if (divineStaff(row)) return -1;
     const bool stacks = row.group == kGroupPotions;
     int64_t paid = sellingPrice(row, thing.refinement,
                                 stacks ? std::max<int>(1, thing.durability) : 1, thing.skill,
@@ -1211,6 +1213,8 @@ int64_t Realm::sellValue(int slot) const {
 
 int64_t Realm::sellItem(int slot) {
     if (trading_ < 0 || !serving(trading_) || !baggable(slot) || bag_[slot].empty()) return -1;
+    // A quest item is not sold (sim::divineStaff).
+    if (divineStaff(tables_->items[size_t(bag_[slot].item)])) return -1;
     const Held thing = bag_[slot];
     const int64_t paid = std::max<int64_t>(0, sellValue(slot));
     bag_.lift(slot);

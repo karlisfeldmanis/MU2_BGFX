@@ -2,33 +2,19 @@
   "item": "Staff11",
   "mu_name": "Divine Staff of Archangel",
   "mu_name_from": "_enum.h:1604 MODEL_DIVINE_STAFF_OF_ARCHANGEL = MODEL_STAFF + 10, loaded from Item/Staff11.bmd (ZzzOpenData.cpp:678); group 5 number 10 in WebZen's item.txt and OpenMU S6 Weapons.cs:252.",
-  "why_this_one": "The Saint Statue of Blood Castle 1 carries it over its coffin (ZzzCharacter.cpp:8952-8966, MONSTER_STATUE_OF_SAINT_1), and it is the castle's Archangel weapon (docs/blood-castle-port.md). Built so the statue holds it (the user, 2026-10-03: 'do next').",
+  "why_this_one": "The Saint Statue of Blood Castle 1 carries it over its coffin (ZzzCharacter.cpp:8952-8966) and gives it up when broken; carried back to the Archangel it wins the castle (the user, 2026-10-03). A quest item, worn by nobody.",
   "profile": "weapon",
   "stats": {
     "from": "WebZen item.txt group 5 (the Data/lang/main/item.txt of the 1.00.93 server files): 10 0 0 1 4 1 1 1 'Divine Staff of Archangel' 104 153 165 30 0 182 156 0 36 4 0 0 0 0 | DW 1, DK 0, Elf 0, MG 1, DL 0. OpenMU S6 Weapons.cs:252 agrees.",
     "group": 5,
     "number": 10,
     "drop_level": 104,
-    "drops_from_monsters": true,
+    "drops_from_monsters": false,
     "slot": 0,
     "width": 1,
     "height": 4,
-    "minimum_damage": 153,
-    "maximum_damage": 165,
-    "attack_speed": 30,
-    "magic_power": 156,
     "durability": 182,
-    "requires": {
-      "level": 0,
-      "strength": 36,
-      "agility": 4,
-      "energy": 0,
-      "vitality": 0
-    },
-    "classes": [
-      "wizard"
-    ],
-    "skill": 0
+    "note": "A quest item here (the user, 2026-10-03: 'we need that archange staff is quest item and its not ussable for any char'): the Statue of Saint gives it up and the Archangel takes it back; nobody wears it (sim::divineStaff in fits), and its damage, magic power, requirements and class are left out so the card says none. WebZen's row was drop 104, 153-165, magic 156, wizard; it does not drop from monsters."
   },
   "stance": "sword",
   "stance_from": "Width 1: a one-handed staff stands as a sword does, as the Skull Staff (Staff01) and the other one-handed staves here.",
@@ -293,5 +279,7 @@
         0.926
       ]
     }
-  ]
+  ],
+  "tells": "Reward received when returned to the Archangel",
+  "tells_from": "MU's own sentence for the Archangel's weapon, Game.en.resx:3049 'Reward received when returned to the Archangel'; the 'Quest item' line over it is ours (game/ui/describe.cpp)."
 }

@@ -7486,6 +7486,11 @@ void testCastleGrid(const content::Tables& lorencia) {
         check(archangel >= 0, "the Archangel stands in the castle's tables");
         const int32_t staff = castle.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
         check(staff >= 0, "and the Divine Staff of Archangel is an item");
+        if (staff >= 0) {
+            check(!sim::fits(castle, realm.wearer(), sim::Held{staff, 0, 1}),
+                  "a quest item, worn by nobody");
+            check(sim::divineStaff(castle.items[size_t(staff)]), "and known as the quest item");
+        }
         if (archangel >= 0 && staff >= 0) {
             sim::Request talk;
             talk.kind = sim::Request::Kind::Talk;

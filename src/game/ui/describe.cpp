@@ -48,6 +48,11 @@ std::string decimal(float v) {
 // it is here because the head of a card wants a second, quieter line.
 std::string kindOf(const content::ItemRow& row) {
     if (sim::ammunition(row)) return "Ammunition";
+    // Blood Castle's: the quest item the statue gives up, the ticket and what makes it -- in
+    // MU's helper group, which would read them as pets.
+    if (sim::divineStaff(row)) return "Quest item";
+    if (sim::invisibilityCloak(row)) return "Blood Castle ticket";
+    if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) return "Ticket material";
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
     if (row.shield()) return "Shield";
     // Before the pets: the rings and pendants share their group 13 (docs/jewellery.md).
@@ -228,7 +233,8 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     if (sim::firecracker(row)) return Tone::Rare;
     // Blood Castle's ticket and what makes it: MU's yellow name (ZzzInventory.cpp:2190-2193),
     // our ladder's gold.
-    if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row)) {
+    if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row) ||
+        sim::divineStaff(row)) {
         return Tone::Artifact;
     }
     if (socketsOf(what) > 0) return Tone::Rare;
@@ -887,7 +893,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // And gear's is its wear: MU's `Durability: [51/66]` (GT 71, ZI:4756) against the maximum at
     // its plus, the bar in the band's colour once it is at half or under -- the same four the
     // warning icons and the slot's wash use.
-    if (sim::wears(row)) {
+    if (sim::wears(row) && !sim::divineStaff(row)) {
         const int maximum = sim::maximumDurability(row, what);
         // A pet's is its Life: MU's `Life: %d` (GT 70) for ITEM_HELPER to +7 (:4656-4661).
         const char* word =
