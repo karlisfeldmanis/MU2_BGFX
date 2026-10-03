@@ -528,25 +528,31 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
             canvas_.rect(P({from, meter.y + 1.0f, wide, meter.h - 2.0f}),
                          gfx::rgba(0.91f, 0.86f, 0.77f, 0.3f));
         }
-        at += 9.0f;
+        at += 12.0f;
         if (j.luck > 0) {
             left(at, style::kAshInk,
                  j.lucky ? "Lucky item: +" + std::to_string(j.luck) + "% counted"
                          : "A lucky item adds " + std::to_string(j.luck) + "%");
             at += kLine;
         }
-        if (!j.success.empty()) {
-            left(at, style::kBone2, "Success");
-            right(at, kFigure, j.success);
+        // An outcome on one row when its words fit beside the label, else under it, indented.
+        const auto outcome = [&](const char* label, uint32_t ink, const std::string& s) {
+            const float room = (kRight - kLeft) * k - controls::labelWidth(text, label) - 8.0f * k;
+            left(at, style::kBone2, label);
+            if (controls::labelWidth(text, s) <= room) {
+                right(at, ink, s);
+            } else {
+                at += kLine - 1.5f;
+                controls::label(canvas_, x + (kLeft + 8.0f) * k, base(at, kLine, text), text, ink,
+                                s);
+            }
             at += kLine;
-        }
+        };
+        if (!j.success.empty()) outcome("Success", kFigure, j.success);
         if (!j.failure.empty()) {
-            left(at, style::kBone2, "Failure");
-            right(at, kMissing, j.failure);
-            at += kLine;
+            outcome("Failure", kMissing, j.failure);
         } else if (!j.success.empty()) {
-            left(at, style::kBone2, "Failure");
-            right(at, style::kAshInk, "cannot fail");
+            outcome("Failure", style::kAshInk, "cannot fail");
         }
     }
 
