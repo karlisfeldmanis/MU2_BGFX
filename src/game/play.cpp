@@ -973,6 +973,13 @@ void Play::update(double seconds) {
                         if (cast) {
                             const int index = sim::skillIndexOf(swinger->castSkill);
                             if (index >= 0 && heard_.skill[index] >= 0) cry = heard_.skill[index];
+                            // Skillshot's is the string in her hands, eBow or eCrossbow, as
+                            // SetPlayerAttack picks it for the bow's attack action the fan
+                            // plays; the row's player_bow was a crossbow heard as a bow.
+                            if (swinger->castSkill == sim::skill::kSkillshot && body &&
+                                body->player) {
+                                cry = swingSound(*body);
+                            }
                             // A spell's wave is not on its wind-up: MU plays SOUND_MAGIC on the
                             // line after the bolt is made, so it goes with `Loosed`.
                             if (spell && spell->wizardry) cry = -1;

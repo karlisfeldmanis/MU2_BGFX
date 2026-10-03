@@ -1009,6 +1009,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Aqua Beam's line, three blue lights along it (fx/aqua.h).
         count += world_.played().aqua().lights(falling + count,
                                                gfx::Renderer::kMaxTransientLights - count);
+        // And a steel or saw bolt's faint cold light (fx/arrow.h; ours).
+        count += world_.played().arrows().lights(falling + count,
+                                                 gfx::Renderer::kMaxTransientLights - count);
         // And a Fire Trap's burst on the floor, two tiles.
         count += world_.played().trapShow().lights(falling + count,
                                                    gfx::Renderer::kMaxTransientLights - count);

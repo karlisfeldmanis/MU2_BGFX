@@ -30,6 +30,17 @@
 // ash grey as the lamps' cooled smoke (world/lamps.cpp), born clear of the flame and gone in
 // half a second. The licks rise slowly, so the flame stays at the tail and does not stand in
 // for an orange plume. Single shot and the fan alike: every wooden arrow.
+//
+// **Ours:** the steel and the saw bolt, which MU flies bare, leave a cold trail in the same
+// rhythm (the user, 2026-10-03: 'more exciting with similar effect but maybe not fire'): a
+// blue-white streak of flare01 glints laid close behind the head and gone in a quarter of a
+// second, and smaller glints thrown off sideways as sparks that fall and wink out, where the wooden
+// arrow's embers drift, and a faint cold light goes with the head. No smoke. The Light
+// Crossbow's laser glows already and is left bare.
+//
+// ArrowSteel01 is built head at -Z -- its broadhead, widest at z -18 and pointed at -43, with
+// the bare shaft out to +44 -- where Arrow01's head is at +Z; drawn as the others it flew tail
+// first (the user: 'bolts looks inverted'). It is turned half round (Shape::reversed).
 #pragma once
 
 #include <cstdint>
@@ -41,6 +52,7 @@
 #include "content/texture.h"
 #include "game/fx/effect_mesh.h"
 #include "gfx/effects.h"
+#include "gfx/renderer.h"
 
 namespace mu::game {
 
@@ -67,6 +79,8 @@ public:
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
     void update(float seconds, const std::function<bool(uint32_t, float*)>& middle);
     void gather(gfx::Effects& effects) const;
+    // Ours: a bolt's faint cold light at its head, one a steel or saw bolt in the air.
+    uint32_t lights(gfx::PointLight* out, uint32_t max) const;
 
     uint32_t flying() const;
 
@@ -79,6 +93,8 @@ private:
     };
     struct Shape {
         std::vector<Part> parts;
+        // Built head at -Z: turned half round about its up, so it flies head first.
+        bool reversed = false;
     };
     struct Shot {
         bool alive = false;
@@ -93,6 +109,18 @@ private:
         float licked;    // metres since the last lick
         float smoked;    // metres since the last wisp
         float glow;      // this frame's Luminosity roll
+        float glinted;   // metres since the last glint (the bolts')
+        float chipped;   // metres since the last spark
+    };
+    struct Glint {  // ours: a bolt's streak (still) or spark (thrown, falling)
+        bool alive = false;
+        bool spark = false;
+        float at[3];
+        float velocity[3];  // metres a second
+        float size;         // metres
+        float spin;
+        float left;         // reference frames
+        float frames;       // what it was born with
     };
     struct Ember {
         bool alive = false;
@@ -158,7 +186,24 @@ private:
     static constexpr float kWispGrey[3] = {0.30f, 0.30f, 0.32f};
     static constexpr float kWispAlpha = 0.30f;
 
+    // ---- Ours: the bolts' cold trail -----------------------------------------------------------
+    static constexpr float kGlintSpacing = 0.04f;  // metres of flight between glints
+    static constexpr float kGlintBehind = 0.10f;   // metres behind the head
+    static constexpr float kGlintFrames = 6.0f;
+    static constexpr float kSmallestGlint = 0.22f, kLargestGlint = 0.32f;  // metres
+    static constexpr float kGlintLight[3] = {0.45f, 0.62f, 0.95f};
+    static constexpr float kSparkSpacing = 0.30f;  // metres of flight between sparks
+    static constexpr float kSparkFrames = 9.0f;
+    static constexpr float kSparkSize = 0.05f;     // metres
+    static constexpr float kSparkThrow = 1.6f;     // metres a second, across
+    static constexpr float kSparkFall = 6.0f;      // metres a second, a second
+    static constexpr float kSparkLight[3] = {0.85f, 0.92f, 1.0f};
+    static constexpr float kBoltLight[3] = {0.25f, 0.38f, 0.70f};
+    static constexpr float kBoltLightReach = 1.6f;   // metres on the ground
+    static constexpr float kBoltLightHeight = 1.4f;  // metres, about where it flies
+
     static constexpr int kShots = 16;
+    static constexpr int kGlints = 384;
     static constexpr int kEmbers = 256;
     static constexpr int kLicks = 256;
     static constexpr int kWisps = 384;
@@ -166,17 +211,20 @@ private:
     Shape shapes_[kModels];
     bgfx::TextureHandle emberSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle smokeSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle glintSheet_ = BGFX_INVALID_HANDLE;  // flare01, streak and sparks
     float metresPerTile_ = 1.0f;
     Shot shots_[kShots];
     Ember embers_[kEmbers];
     Lick licks_[kLicks];
     Wisp wisps_[kWisps];
+    Glint glints_[kGlints];
     uint32_t dice_ = 0x41525257u;
 
     float roll();  // 0..1
     void shed(const Shot& shot);
     void lick(const Shot& shot);
     void smoke(const Shot& shot);
+    void glint(const Shot& shot, bool spark, float back);
 };
 
 }  // namespace mu::game
