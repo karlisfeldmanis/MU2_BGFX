@@ -7,7 +7,10 @@ namespace mu::game {
 namespace {
 
 constexpr float kPi = 3.14159265f;
-constexpr float kReference = 25.0f;  // MoveObject's frames a second
+// When eDownGate's thud comes: its chain rattles from 0.12 s to 0.8 s, goes quiet, and the
+// board strikes at 1.18 s (measured off the wav's loudness in 20 ms windows). The fall lands
+// on it (the user, 2026-10-03: 'gates drop has to be sync with sound perfeftly').
+constexpr float kLandSeconds = 1.18f;
 
 }  // namespace
 
@@ -26,14 +29,14 @@ void Drawbridge::open(const std::string& world, const Town& town, float metresPe
             for (int a = 0; a < 3; ++a) rest_[a] = at.position[a];
             yaw_ = at.yaw;
             roll_ = at.roll;
-            degrees_ = was_ = at.pitch * 180.0f / kPi;
+            restDegrees_ = at.pitch * 180.0f / kPi;
         } else if (name == "Object10" || name == "Object11") {
             deck_.push_back(i);
         }
     }
     if (door_ >= 0) {
         core::logf("drawbridge: Object37 raised at %.0f degrees, %zu deck pieces held back",
-                   double(degrees_), deck_.size());
+                   double(restDegrees_), deck_.size());
     }
 }
 
@@ -41,9 +44,7 @@ void Drawbridge::shutdown() {
     state_ = State::Raised;
     door_ = -1;
     deck_.clear();
-    time_ = 20;
-    speed_ = 1.0f;
-    frame_ = 0.0f;
+    elapsed_ = 0.0f;
     started_ = false;
     landed_ = false;
 }
@@ -75,31 +76,24 @@ void Drawbridge::update(float seconds, bool falling, bool down, Town& town) {
             return;
         }
         if (!falling) return;
+        // The sound starts with the fall, on this frame (World::update plays it).
         state_ = State::Falling;
-        frame_ = 1.0f;  // the first frame is stepped now
+        started_ = true;
+        elapsed_ = 0.0f;
     } else {
-        frame_ += seconds * kReference;
+        elapsed_ += seconds;
     }
-    while (frame_ >= 1.0f && state_ == State::Falling) {
-        frame_ -= 1.0f;
-        was_ = degrees_;
-        if (time_ == 20) {
-            degrees_ = was_ = 35.0f;
-            started_ = true;
-        }
-        degrees_ += speed_;
-        speed_ += 1.5f;
-        // Ours: it lands flat and stays (the user, 2026-10-03: 'gate openiing has to happen
-        // without bounce'). MU knocks it back by the frames still to run and swings it again.
-        if (degrees_ >= 90.0f) {
-            degrees_ = 90.0f;
-            landed_ = true;
-            lower(town);
-            return;
-        }
-        --time_;
+    // Ours, timed to the sound: from where it stands to flat as a body falls, slow while the
+    // chain lets it out and fastest as it strikes, landing on the thud and staying there (the
+    // user: 'gate openiing has to happen without bounce'). MU's swing -- from 35 by a speed
+    // growing 1.5 a frame, knocked back past 90 -- lands in 0.36 s, mid-rattle.
+    if (elapsed_ >= kLandSeconds) {
+        landed_ = true;
+        lower(town);
+        return;
     }
-    const float drawn = was_ + (degrees_ - was_) * frame_;
+    const float t = elapsed_ / kLandSeconds;
+    const float drawn = restDegrees_ + (90.0f - restDegrees_) * t * t;
     town.posePlacement(uint32_t(door_), drawn * kPi / 180.0f, yaw_, roll_, rest_);
 }
 

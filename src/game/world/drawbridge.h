@@ -4,11 +4,14 @@
 // when the server says the monsters are cleared (NewBloodCastleSystem.cpp:68-70). Type 36,
 // Object37, stands raised at its stored 45 degrees. On the first of 21 frames, counted 20 down
 // to 0, it is set to 35 and eDownGate plays; every frame it pitches by a speed that starts at 1
-// and grows by 1.5, and passing 90 it is knocked back by the frames still to run and the speed
-// starts again at 2 -- a fall and a few bounces as it lands; ours lands flat and stays (update). On the last frame it goes (hidden)
-// and types 9 and 10, Object10's deck and Object11's chains, show, with the terrain's planks on
-// the gap: the lowered bridge. Ours: the door stays, lying at 90 over the planks (lower()). MU's smoke at exactly 80 degrees is a float equality the swing never hits (it reads
-// 36, 38.5 ... 85, 86, 88, 81.5 ...), so it never shows in MU and is not drawn here.
+// and grows by 1.5, and passing 90 it is knocked back by the frames still to run -- a fall and a
+// few bounces in 0.84 s. On the last frame it goes (hidden) and types 9 and 10, Object10's deck
+// and Object11's chains, show, with the terrain's planks on the gap: the lowered bridge.
+//
+// Ours, asked for: it falls as a body does from its 45 degrees and lands flat, once, on
+// eDownGate's thud at 1.18 s, and stays lying over the planks (update(), lower()). MU's smoke at
+// exactly 80 degrees is a float equality its swing never hits, so the dust as it lands is ours
+// too (CastleSparks::dust).
 //
 // A castle opened with the bridge already down -- MU's late joiner, who gets the end state at
 // once (WSclient.cpp:8724-8727) -- shows the deck without the fall. The realm decides; this only
@@ -53,11 +56,8 @@ private:
     std::vector<uint32_t> deck_;
     float rest_[3] = {0.0f, 0.0f, 0.0f};
     float yaw_ = 0.0f, roll_ = 0.0f;
-    // MU's own: g_iActionTime, Angle[0] in degrees and g_fActionObjectVelocity, stepped at 25 Hz;
-    // `was` the angle a frame before, drawn between the two by `frame`.
-    int time_ = 20;
-    float degrees_ = 45.0f, was_ = 45.0f, speed_ = 1.0f;
-    float frame_ = 0.0f;
+    float restDegrees_ = 45.0f;  // its stored pitch, raised
+    float elapsed_ = 0.0f;       // seconds into the fall
     bool started_ = false;
     bool landed_ = false;
     float metresPerTile_ = 1.0f;
