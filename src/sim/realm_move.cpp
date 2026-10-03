@@ -693,11 +693,14 @@ void Realm::castleTick() {
     } else if (run_.phase == CastlePhase::Running && tick_ >= run_.endsAt) {
         run_.phase = CastlePhase::Ended;
     }
-    // The drawbridge down: its gap is ground as the door lands (kCastleBridgeTicks).
+    // The drawbridge down: its gap is ground as the door lands (kCastleBridgeTicks), and the
+    // castle's door open behind it, the courtyard with it -- ours (the user, 2026-10-03: 'when
+    // gates drop allopw to go inside'); WebZen opens the door when the Castle Gate dies.
     if (run_.bridgeAt >= 0 && !run_.bridgeDown && tick_ >= run_.bridgeAt + kCastleBridgeTicks) {
         run_.bridgeDown = true;
-        changeGrid(kCastleBridge.x1, kCastleBridge.y1, kCastleBridge.x2, kCastleBridge.y2,
-                   kCastleBridge.bits, false);
+        for (const GridBox& box : {kCastleBridge, kCastleDoor[0], kCastleDoor[1], kCastleDoor[2]}) {
+            changeGrid(box.x1, box.y1, box.x2, box.y2, box.bits, false);
+        }
     }
 }
 

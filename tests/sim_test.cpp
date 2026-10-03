@@ -7470,14 +7470,13 @@ void testCastleGrid(const content::Tables& lorencia) {
     check(standing(false) > 0, "the garrison has risen with the gate");
     checkEqual(standing(true), 0, "but not the Statue of Saint");
     check(!reaches(14, 85), "the courtyard is shut behind the raised bridge and the door");
-    const sim::GridBox& bridge = sim::kCastleBridge;
-    check(realm.changeGrid(bridge.x1, bridge.y1, bridge.x2, bridge.y2, bridge.bits, false),
-          "the bridge's gap is filled");
-    check(!reaches(14, 85), "the door still holds");
-    for (const sim::GridBox& box : sim::kCastleDoor) {
-        realm.changeGrid(box.x1, box.y1, box.x2, box.y2, box.bits, false);
-    }
-    check(reaches(14, 85), "with the door down the courtyard plans");
+    // Quota 1 met: the drawbridge falls, and as it lands the door opens with it.
+    realm.dropCastleBridge(0);
+    realm.step();
+    check(!realm.castleRun().bridgeDown && !reaches(14, 85), "while the bridge falls, still shut");
+    for (int t = 0; t < sim::kCastleBridgeTicks; ++t) realm.step();
+    check(realm.castleRun().bridgeDown, "the drawbridge lands");
+    check(reaches(14, 85), "and the courtyard plans, over the bridge and through the door");
     check(castle.grid.words() == cooked, "the cooked tables are untouched");
     // The Archangel takes the Divine Staff back: the win, and WebZen's pay.
     {

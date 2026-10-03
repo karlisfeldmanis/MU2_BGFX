@@ -1217,8 +1217,9 @@ specific count of monsters to open the gates'):**
 - The gates, settled:
   - **Entrance**: lifts when the run starts, after the 60 s wait.
   - **Bridge**: falls at **40 kills** on the road (MU's quota 1).
-  - **Door**: opens at **2 Spirit Sorcerers (89)**. Ours: they rise in front of the door as the bridge
-    falls, where MU raises them in the courtyard after the gate.
+  - **Door**: opens with the bridge, as it lands (the user, 2026-10-03: 'when gates drop allopw to
+    go inside'); it was to open at 2 Spirit Sorcerers (89). The sorcerers now stand between the
+    courtyard and the statue: they rise as the bridge falls, and the statue rises when both die.
   - Then the statue rises at 14,95. The Castle Gate (131) is not raised; its figure may stand
     as scenery.
 - **The hand-in** (the user, 2026-10-03: 'we will give back Divine Staff of Archangel staff to angel
