@@ -636,6 +636,11 @@ void Realm::passCastle(int castle) {
 
 // ---- Blood Castle's run (sim/event.h) ------------------------------------------------------
 
+bool Realm::fixed(const Body& body) const {
+    return body.monster() && body.kind >= 0 && size_t(body.kind) < tables_->kinds.size() &&
+           tables_->kinds[size_t(body.kind)].number == kCastleStatue;
+}
+
 void Realm::freeCastle() {
     if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
     run_ = CastleRun{};

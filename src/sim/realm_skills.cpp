@@ -530,6 +530,7 @@ void Realm::keepBoon(Body& hero) {
 }
 
 void Realm::shove(Body& target) {
+    if (fixed(target)) return;
     // One tile at random, and only onto something standable: OpenMU's `MoveRandomlyAsync` picks
     // a neighbour and a blocked one is simply not taken, which is what the grid test is. The
     // draw happens whether or not the tile is free, so the seeded log does not depend on the
@@ -696,6 +697,7 @@ void Realm::blink(Body& hero) {
 constexpr int32_t kPushTicks = 6;
 
 void Realm::push(Body& target, float fromX, float fromY) {
+    if (fixed(target)) return;
     // Not again while it is still sliding: a push restarted mid-slide begins off the tile's
     // centre and can go two tiles in five ticks. The next strike finds it landed.
     if (target.pushTicks > 0) return;

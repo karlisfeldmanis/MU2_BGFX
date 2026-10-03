@@ -1309,6 +1309,9 @@ private:
     // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
     void castleTick();
     void castleKill(const Body& dead);
+    // Blood Castle's Statue of Saint: never wakes, walks, turns or is pushed (WebZen
+    // gObjMonster.cpp:1524-1529, ObjAttack.cpp:2713-2719; MuMain NotRotateOnMagicHit).
+    bool fixed(const Body& body) const;
     void passCastle(int castle);
     Machine machine_;
     bool mixed_ = false;

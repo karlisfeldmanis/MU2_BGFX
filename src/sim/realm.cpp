@@ -268,6 +268,13 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     if (run_.phase == CastlePhase::Waiting) {
         for (Body& one : bodies_) {
             if (!one.monster()) continue;
+            // The statue stands as WebZen sets it, direction 0 (MonsterSetBase.txt:321), which
+            // MuMain turns to (0 - 1) * 45 degrees (WSclient.cpp:2736) -- a folk's look 8, as
+            // realm_folk.cpp's facingOf reads one -- and never turns from it (Realm::fixed).
+            if (fixed(one)) {
+                const float bearing = float(((8 - 3) % 8 + 8) % 8) * (3.14159265359f / 4.0f);
+                one.facing = one.aim = std::atan2(-std::cos(bearing), std::sin(bearing));
+            }
             one.health = 0;
             const int32_t number = tables_->kinds[size_t(one.kind)].number;
             one.risesAt = number == kCastleStatue ? std::numeric_limits<int64_t>::max()
@@ -934,6 +941,8 @@ void Realm::step() {
                 beast.x = float(beast.column());
                 beast.y = float(beast.row());
             }
+        } else if (beast.alive() && fixed(beast)) {
+            // The statue: struck where it stands, and nothing else.
         } else if (beast.alive()) {
             rouse(beast);
             if (beast.temper != Temper::Asleep) {
