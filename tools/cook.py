@@ -974,8 +974,16 @@ def cook_clips(document, binary, out_path, names, travel, holds, cloth=False):
                     poses[frame][bone] = (tuple(-v for v in now), poses[frame][bone][1])
 
         first, last = poses[0], poses[-1]
-        gaps = [max(max(abs(a - b) for a, b in zip(ra, rb)),
-                    max(abs(a - b) for a, b in zip(ta, tb)))
+        # A rotation and its negative are the same rotation: a bone that turns a whole circle
+        # through the clip -- the Staff of Resurrection's swirl, 0, 90, 180, 270 and 360 degrees
+        # -- comes back as -q, the flip above keeping each key beside the one before. Measured
+        # by sign, that read as open, and the closing key appended a fifth of every turn spent
+        # from -q to q, which is nothing: the swirl stood still once a turn (the user,
+        # 2026-10-04: 'i think we are missing something or doing something wrongly').
+        def turned(ra, rb):
+            return min(max(abs(a - b) for a, b in zip(ra, rb)),
+                       max(abs(a + b) for a, b in zip(ra, rb)))
+        gaps = [max(turned(ra, rb), max(abs(a - b) for a, b in zip(ta, tb)))
                 for (ra, ta), (rb, tb) in zip(first, last)]
         gap = max(gaps) if gaps else 0.0
         # Closed to a ten-thousandth: MU's exporter writes the repeat exactly, so this is a
