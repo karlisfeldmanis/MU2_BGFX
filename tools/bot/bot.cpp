@@ -588,7 +588,10 @@ private:
             if (points <= 0) return;
         }
         int w[4] = {4, 2, 3, 0};  // strength, agility, vitality, energy
-        if (options_.kin == sim::Kin::DarkWizard) { w[0] = 1; w[1] = 1; w[2] = 2; w[3] = 6; }
+        // The wizard 1/1/5/4 since 2026-10-03 ("improve DW bot"): over three seeds his quests
+        // came in ~20 minutes sooner than at 1/1/2/6 and his health 574 against 368 -- a wizard
+        // whose spells reach the screen is held back by what one blow costs him, not by damage.
+        if (options_.kin == sim::Kin::DarkWizard) { w[0] = 1; w[1] = 1; w[2] = 5; w[3] = 4; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
         if (options_.build[0] + options_.build[1] + options_.build[2] + options_.build[3] > 0) {
             std::copy(std::begin(options_.build), std::end(options_.build), w);
@@ -1485,6 +1488,39 @@ private:
             }
             return;
         }
+        // **A better piece on another town's shelf** (the user, 2026-10-03: "improve DW bot that he
+        // can better results"): at the start of a trip, when nothing here is worth his Zen and
+        // another town he can reach has something, he goes there to shop -- the wizard sat in
+        // Pad armour at level 119 with 200,000 Zen while Izabel in Devias sold Sphinx and Bone.
+        // Not again for half an hour, so a piece that will not go on cannot bounce him.
+        // On his way there: keep going -- a gate is a walk of many thinks, and the trip's own
+        // errands here would take him off it.
+        if (awayTo_ >= 0) {
+            if (map() == awayTo_) {
+                awayTo_ = -1;
+            } else {
+                if (goTo(awayTo_)) return;
+                awayTo_ = -1;
+            }
+        }
+        if (errands_.size() == sellers_.size() && clock_ >= awayShopUntil_ && !shopWorth()) {
+            for (const int there : {0, 3, 2}) {
+                if (there == map() || !reachable(there)) continue;
+                const content::Tables* town = world(there);
+                if (!town) continue;
+                bool worth = false;
+                for (const content::Townsperson& f : town->folk) worth = worth || shelfWorth(*town, f.number);
+                if (!worth) continue;
+                awayShopUntil_ = clock_ + 30 * 60 * 20;
+                say("goes to %s's counters: something there is worth his Zen", worldOf(there)->name);
+                tripOwed_ = true;
+                if (goTo(there)) {
+                    awayTo_ = there;
+                    return;
+                }
+                tripOwed_ = false;
+            }
+        }
         if (errands_.empty()) {
             mode_ = Mode::Hunt;
             return;
@@ -1754,6 +1790,8 @@ private:
     int owedMap_ = -1, owedColumn_ = 0, owedRow_ = 0, walkingTo_ = -1;
     std::vector<int> errands_, sellers_;
     bool safe_ = true, tripOwed_ = false, restOwed_ = false;
+    int64_t awayShopUntil_ = 0;
+    int awayTo_ = -1;  // the town he is on his way to shop in, -1 for none  // the next trip that may go to another town's counters
     int restAt_[2] = {0, 0};
     int64_t tripSince_ = 0, lastTrip_ = 0, nextSort_ = 0, freeSince_ = 0, nextAim_ = 0, nextFloorAt_ = 0, noTripUntil_ = 0;
     std::unordered_map<uint32_t, int64_t> banned_;
