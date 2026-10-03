@@ -67,8 +67,10 @@ class Play {
 public:
     // A fight's Zen is said once, at its end: when this long has gone by with no pile taken, the
     // lane posts the sum (ui/tally.cpp) and the coins ring once (Play::takeZen) -- the user,
-    // 2026-10-03, "play zen sound when combat is over and total zen is calculated".
-    static constexpr float kZenQuietSeconds = 1.5f;
+    // 2026-10-03, "play zen sound when combat is over and total zen is calculated". 0.6, from
+    // 1.5: a single kill waited the whole of it for its Zen (the user, "zen calculated after
+    // single monster kill has to be faster"); a spell's piles still land well inside it.
+    static constexpr float kZenQuietSeconds = 0.6f;
     // The arena (--arena), set BEFORE open() or not at all. It is not a second kind of realm
     // and not a bench: all it does is rewrite the map's nest table to one nest of one breed
     // beside where the hero is being put down, and the realm then raises that table exactly as
