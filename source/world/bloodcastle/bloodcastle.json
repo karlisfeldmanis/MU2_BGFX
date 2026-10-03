@@ -24,6 +24,7 @@
  },
  "light_depth": 1.0,
  "light_chroma": 0.75,
+ "figure_light": 0.5,
  "objects": [
   {
    "type": 33,

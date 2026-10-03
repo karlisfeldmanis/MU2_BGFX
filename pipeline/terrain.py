@@ -326,6 +326,14 @@ LIGHT_DEPTH_BY_MAP = {4: 0.6, 11: 1.0}
 #: has'). Ours.
 LIGHT_CHROMA_BY_MAP = {11: 0.75}
 
+#: Where a world's figures take MU's painted light where they stand (content::Ground::
+#: figureLightAt): the ground's curve raised to this, so a dim tile dims them less than the floor.
+#: Blood Castle's exposure is twice Lorencia's to lift its dark paint, and unlit by it every
+#: monster stood twice as bright as the stone (the user, 2026-10-03: 'something wrong probably
+#: with lightiing or materials, its not well balanced'). MuMain lights a character by its tile's
+#: terrain light (BodyLight). Ours, the softening.
+FIGURE_LIGHT_BY_MAP = {11: 0.5}
+
 WATER_FLOW_BY_MAP = {
     # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at
     # one end and drained at the other -- the two ends furthest apart along it, found by walking
@@ -723,6 +731,7 @@ def main() -> None:
         **({"void": VOID_BY_MAP[number - 1]} if number - 1 in VOID_BY_MAP else {}),
         **({"light_depth": LIGHT_DEPTH_BY_MAP[number - 1]} if number - 1 in LIGHT_DEPTH_BY_MAP else {}),
         **({"light_chroma": LIGHT_CHROMA_BY_MAP[number - 1]} if number - 1 in LIGHT_CHROMA_BY_MAP else {}),
+        **({"figure_light": FIGURE_LIGHT_BY_MAP[number - 1]} if number - 1 in FIGURE_LIGHT_BY_MAP else {}),
         **({"water_flow": WATER_FLOW_BY_MAP[number - 1]}
            if number - 1 in WATER_FLOW_BY_MAP else {}),
         "objects": placed,

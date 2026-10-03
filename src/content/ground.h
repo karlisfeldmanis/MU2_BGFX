@@ -132,6 +132,13 @@ public:
     // ON the ground can be given the light of the tile it stands on. NOT sRGB-decoded: it is
     // a lit result and not an albedo. docs/conventions.md.
     void lightAt(int column, int row, float* rgb) const;
+    // What a figure standing at (column, row) -- tiles, fractional -- is lit by, where the world
+    // asks for it (`figure_light`, 0 off): MU's painted light through the ground's own curve
+    // (pipeline/ground.py LIGHT_CONTRAST and LIGHT_SCALE), raised to `figure_light` so a dim tile
+    // dims a figure less than it does the floor, between the four tiles round it. MuMain lights
+    // a character by the terrain light where it stands (BodyLight). White where it is off.
+    void figureLightAt(float column, float row, float* rgb) const;
+    float figureLight() const { return figureLight_; }
 
     uint32_t triangleCount() const { return indexCount_ / 3; }
 
@@ -213,6 +220,7 @@ private:
     // ZzzObject.cpp:163). The world's `void.later`. Blood Castle's drawbridge gap.
     std::vector<std::array<int, 4>> later_;
     bool laterShown_ = false;
+    float figureLight_ = 0.0f;  // the world's `figure_light`; see figureLightAt
     // How far above the rim the void's own points read their level, in metres, so whatever
     // stands in a pit is already that far into the dark at the lip: the Dungeon's worms,
     // whose crowns sit level with the floor and stood fully lit in the hole. 0 off. The

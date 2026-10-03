@@ -1295,7 +1295,18 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         const bool poisoned = one.venomous ||
                               (inRealm != nullptr && inRealm->poisonUntil > realm_.tick());
         const size_t tintFrom = out.size();
+        // And where the world asks, the painted light where it stands (Ground::figureLightAt):
+        // Blood Castle, whose doubled exposure lifts a dark-painted floor and drew every figure
+        // twice as bright as the stone round it (the user, 2026-10-03: 'its not well balanced').
+        float place[3] = {1.0f, 1.0f, 1.0f};
+        const bool placeLit = ground_ != nullptr && ground_->figureLight() > 0.0f && inRealm != nullptr;
+        if (placeLit) ground_->figureLightAt(inRealm->x, inRealm->y, place);
         const auto tint = [&] {
+            if (placeLit) {
+                for (size_t i = tintFrom; i < out.size(); ++i) {
+                    for (int k = 0; k < 3; ++k) out[i].light[k] *= place[k];
+                }
+            }
             if (!soused && !iced && !poisoned && !one.murderer) return;
             // A debuff's light over a murderer's red: MU sets c->Light first and the debuff's
             // BodyLight after it.

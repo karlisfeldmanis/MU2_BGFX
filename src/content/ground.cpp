@@ -648,6 +648,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     abyssRim_ = chasm["rim"].boolOr(false);
     abyssBlend_ = float(chasm["blend"].numberOr(0.0));
     abyssLift_ = float(chasm["lift"].numberOr(0.0));
+    figureLight_ = float(doc["figure_light"].numberOr(0.0));
     blendKeep_.clear();
     later_.clear();
     laterShown_ = false;
@@ -1688,6 +1689,27 @@ void Ground::lightAt(int column, int row, float* rgb) const {
     if (light_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return;
     const size_t at = (size_t(row) * size_t(size_) + size_t(column)) * 3;
     for (int i = 0; i < 3; ++i) rgb[i] = float(light_[at + size_t(i)]) / 255.0f;
+}
+
+void Ground::figureLightAt(float column, float row, float* rgb) const {
+    rgb[0] = rgb[1] = rgb[2] = 1.0f;
+    if (figureLight_ <= 0.0f || light_.empty() || size_ <= 0) return;
+    // The ground's curve (pipeline/ground.py): a power of 1.45 under a scale of 0.72.
+    constexpr float kContrast = 1.45f, kScale = 0.72f;
+    const auto lit = [&](int c, int r, int channel) {
+        c = std::clamp(c, 0, size_ - 1);
+        r = std::clamp(r, 0, size_ - 1);
+        const float raw = float(light_[(size_t(r) * size_t(size_) + size_t(c)) * 3 + size_t(channel)]) / 255.0f;
+        return std::pow(std::pow(raw, kContrast) * kScale, figureLight_);
+    };
+    // Tile centres at whole numbers, as the sim's positions are.
+    const int c0 = int(std::floor(column)), r0 = int(std::floor(row));
+    const float fc = column - float(c0), fr = row - float(r0);
+    for (int k = 0; k < 3; ++k) {
+        const float top = lit(c0, r0, k) * (1.0f - fc) + lit(c0 + 1, r0, k) * fc;
+        const float bottom = lit(c0, r0 + 1, k) * (1.0f - fc) + lit(c0 + 1, r0 + 1, k) * fc;
+        rgb[k] = top * (1.0f - fr) + bottom * fr;
+    }
 }
 
 // MU's own test, and the engine's only one: `(word & ~NonBlocking) < wall`, with the wall at
