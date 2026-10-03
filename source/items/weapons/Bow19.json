@@ -1,0 +1,220 @@
+{
+ "item": "Bow19",
+ "mu_name": "Divine Crossbow of Archangel",
+ "mu_name_from": "_enum.h:1587 MODEL_DIVINE_CB_OF_ARCHANGEL = MODEL_BOW + 18, loaded from Item/Bow19.bmd (ZzzOpenData.cpp:699), a crossbow by CharacterManager.cpp:81; group 4 number 18 in OpenMU S6 Weapons.cs:234.",
+ "why_this_one": "The third Statue of Saint (134) carries it over its coffin, at scale 0.9 where the other two are 0.7 (ZzzCharacter.cpp:8952-8966; WebZen raises one of the three statues at random, BloodCastle.cpp:2216), and gives it up when broken; carried back to the Archangel it wins the castle, as the Divine Staff does. A quest item, worn by nobody. docs/blood-castle-port.md.",
+ "profile": "weapon",
+ "stats": {
+  "from": "OpenMU S6 Weapons.cs:234: CreateWeapon(4, 18, 0, 24, 2, 3, false, \"Divine Crossbow of Archangel\", 100, 224, 246, 45, 200, 0, 0, 40, 110, ...) -- drop 100, 224-246, speed 45, elf.",
+  "group": 4,
+  "number": 18,
+  "drop_level": 100,
+  "drops_from_monsters": false,
+  "slot": 0,
+  "width": 2,
+  "height": 3,
+  "durability": 200,
+  "note": "A quest item here, as the Divine Staff of Archangel (Staff11): the statue gives it up and the Archangel takes it back; nobody wears it, and its damage, requirements and class are left out so the card says none. OpenMU's row was drop 100, 224-246, elf; it does not drop from monsters."
+ },
+ "stance": "crossbow",
+ "stance_from": "A crossbow by MU's own range test (CharacterManager.cpp:81, MODEL_DIVINE_CB_OF_ARCHANGEL to MODEL_GREAT_REIGN_CROSSBOW).",
+ "two_handed": true,
+ "two_handed_from": "As every crossbow here (CrossBow04).",
+ "sheets": {
+  "crossbow06_R": "crossbow06_r.png",
+  "crossbow06": "crossbow06.png"
+ },
+ "sheet_from": "Data/Item/crossbow06_R.OZJ (32x64, the red crystal limbs, 112 triangles) and crossbow06.OZJ (16x64, the blue steel stock, 98). Decoded from MuMain with pipeline/decode_texture.py.",
+ "sheet_materials": {
+  "crossbow06_R": "steel",
+  "crossbow06": "steel"
+ },
+ "material_note": "As the Divine Staff's: steel, the paint its albedo. Not built, MuMain's effects: mesh 0, the red crystal, RENDER_METAL with BITMAP_CHROME sliding over it (ZzzObject.cpp:7054-7059); its held sparkles are commented out in MuMain (ZzzCharacter.cpp:7523-7539); fired, it would loose MODEL_ARROW_BEST_CROSSBOW (ZzzEffectMagicSkill.cpp:231), which a quest item never is. A statue holds it at scale 0.9, AngleMatrix(10, 0, 0) and (0, 110, 80) (ZzzCharacter.cpp:6684-6699).",
+ "rig_note": "No .rig.json: Bow19.bmd has one bone and one action of one key, nothing moves (export-rig --actions=all, 2026-10-03), and it is never drawn, so its string never draws back; a quest item needs only MU's geometry at action 0 key 0. No release, muzzle or bolt for the same reason.",
+ "material_overrides": {
+  "steel": {
+   "roughness": 0.45
+  }
+ },
+ "material_overrides_note": "As the Divine Staff's: steel's own 0.2 mirrors the scene.",
+ "tells": "Reward received when returned to the Archangel",
+ "tells_from": "MU's own sentence for the Archangel's weapon, Game.en.resx:3049; the 'Quest item' line over it is ours (game/ui/describe.cpp).",
+ "islands": [
+  {
+   "island": 0,
+   "material": "steel",
+   "triangles": 34,
+   "area": 1955.3,
+   "along": [
+    14.0,
+    18.3
+   ],
+   "mu_uv": [
+    0.001,
+    0.235,
+    0.947,
+    0.999
+   ],
+   "bake_uv": [
+    0.2,
+    0.126,
+    0.764,
+    0.831
+   ]
+  },
+  {
+   "island": 1,
+   "material": "steel",
+   "triangles": 30,
+   "area": 2525.2,
+   "along": [
+    14.0,
+    18.3
+   ],
+   "mu_uv": [
+    0.184,
+    0.001,
+    0.999,
+    0.969
+   ],
+   "bake_uv": [
+    0.08,
+    0.03,
+    0.582,
+    0.435
+   ]
+  },
+  {
+   "island": 2,
+   "material": "steel",
+   "triangles": 34,
+   "area": 1955.3,
+   "along": [
+    14.0,
+    18.3
+   ],
+   "mu_uv": [
+    0.001,
+    0.235,
+    0.947,
+    0.999
+   ],
+   "bake_uv": [
+    0.137,
+    0.009,
+    0.837,
+    0.896
+   ]
+  },
+  {
+   "island": 3,
+   "material": "steel",
+   "triangles": 30,
+   "area": 2525.2,
+   "along": [
+    14.0,
+    18.3
+   ],
+   "mu_uv": [
+    0.184,
+    0.001,
+    0.999,
+    0.969
+   ],
+   "bake_uv": [
+    0.009,
+    0.024,
+    0.769,
+    0.63
+   ]
+  },
+  {
+   "island": 4,
+   "material": "steel",
+   "triangles": 52,
+   "area": 5249.6,
+   "along": [
+    11.8,
+    19.4
+   ],
+   "mu_uv": [
+    0.023,
+    -0.311,
+    1.251,
+    1.192
+   ],
+   "bake_uv": [
+    0.009,
+    0.009,
+    0.773,
+    0.867
+   ]
+  },
+  {
+   "island": 5,
+   "material": "steel",
+   "triangles": 10,
+   "area": 553.6,
+   "along": [
+    11.9,
+    19.3
+   ],
+   "mu_uv": [
+    0.023,
+    0.372,
+    1.251,
+    0.633
+   ],
+   "bake_uv": [
+    0.009,
+    0.828,
+    0.894,
+    0.965
+   ]
+  },
+  {
+   "island": 6,
+   "material": "steel",
+   "triangles": 10,
+   "area": 553.6,
+   "along": [
+    11.9,
+    19.3
+   ],
+   "mu_uv": [
+    0.023,
+    0.372,
+    1.251,
+    0.633
+   ],
+   "bake_uv": [
+    0.367,
+    0.757,
+    0.975,
+    0.943
+   ]
+  },
+  {
+   "island": 7,
+   "material": "steel",
+   "triangles": 10,
+   "area": 914.7,
+   "along": [
+    -22.9,
+    13.4
+   ],
+   "mu_uv": [
+    0.023,
+    0.372,
+    1.251,
+    0.633
+   ],
+   "bake_uv": [
+    0.642,
+    0.494,
+    0.992,
+    0.671
+   ]
+  }
+ ]
+}
