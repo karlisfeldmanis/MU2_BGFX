@@ -1221,6 +1221,11 @@ specific count of monsters to open the gates'):**
     falls, where MU raises them in the courtyard after the gate.
   - Then the statue rises at 14,95. The Castle Gate (131) is not raised; its figure may stand
     as scenery.
+- **The hand-in** (the user, 2026-10-03: 'we will give back Divine Staff of Archangel staff to angel
+  who let us in BC', then, of the two angels, the Archangel inside): the statue drops the **Divine
+  Staff of Archangel (5,10)** itself -- the staff it holds -- where MU drops the quest item Weapon of
+  Archangel (13,19); it is carried back to the **Archangel (232) in the safe court at 10,9**, who
+  takes it: the win, and MU's rewards (section 6). The Messenger in Devias only lets him in.
 - **The original length and quotas, kept** (the user, 2026-10-03: 'we want to keep original
   lenght of BC and minimal amount of monsters which chars ahs to kill'): WebZen's 60 s in the
   court, then 15 minutes (`sim/event.h` kCastleWait, kCastleRun); quota 1 is 40 kills for one
