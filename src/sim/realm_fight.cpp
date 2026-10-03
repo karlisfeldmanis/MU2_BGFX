@@ -100,9 +100,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // strikeAround and the runes' own blows where each is let go.
     if (row != nullptr) force *= elementForce(attacker, skillElement(row->number));
     // His Wraths on every blow of his, whatever threw it (sim::kWrathDamage).
-    if (attacker.player && attacker.excel.wraths > 0) {
-        force *= float(1.0 + kWrathDamage * attacker.excel.wraths);
-    }
+    force *= wrathForce(attacker);
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
@@ -280,10 +278,14 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         const bool critical = hero.stats.criticalChance > 0.0 &&
                               runeDice_.nextBool(hero.stats.criticalChance);
         const int high = int(energy * kRuneEnergyHigh);
+        // The arrow's share already carries his Wraths (strikeAt); his energy's band takes them
+        // here (the user, 2026-10-03: "why the secondary damage is not increased?").
+        const float wrath = wrathForce(hero);
         const int bare =
-            critical ? std::max(1, wound) + high
+            critical ? std::max(1, wound) + int(float(high) * wrath)
                      : std::max(1, int(float(wound) * kFrostWound)) +
-                           runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1);
+                           int(float(runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1)) *
+                               wrath);
         const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice)));
         struck.health = std::max(0, struck.health - bite);
         say(What::Hit, hero, bite, bite, struck.health, struck.id);
@@ -324,10 +326,14 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             const bool critical = hero.stats.criticalChance > 0.0 &&
                                   runeDice_.nextBool(hero.stats.criticalChance);
             const int high = int(energy * kRuneEnergyHigh);
+            // The swing's share carries his Wraths already, the band takes them here.
+            const float wrath = wrathForce(hero);
             const int bare =
-                critical ? std::max(1, wound) + high
+                critical ? std::max(1, wound) + int(float(high) * wrath)
                          : std::max(1, int(float(wound) * kFrostWound)) +
-                               runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1);
+                               int(float(runeDice_.nextInt(int(energy * kRuneEnergyLow),
+                                                           high + 1)) *
+                                   wrath);
             // Frost, so Glacier raises it as it raises Frost Arrow's.
             const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice)));
             struck.health = std::max(0, struck.health - bite);
