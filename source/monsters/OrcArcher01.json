@@ -21,13 +21,13 @@
   },
   "sheet_from": "The Chief Skeleton Warrior's three sheets, which Monster47.bmd names as Monster48 does: kni00 on the body (512 triangles), kni01 (43), kni02 the helm (54). Shared with Orc01, decoded once as orc_*.",
   "sheet_materials": {
-    "kni00": "painted_steel",
-    "kni01": "painted_steel",
-    "kni02": "painted_steel"
+    "kni00": "plate_steel",
+    "kni01": "plate_steel",
+    "kni02": "plate_steel"
   },
-  "sheet_materials_from": "As the Chief Skeleton Warrior's (Orc01), which the user passed: gilt bronze plate kept as painted albedo.",
+  "sheet_materials_from": "As the Chief Skeleton Warrior's (Orc01), which the user passed: gilt bronze plate kept as painted albedo. Then plate_steel, 2026-10-03 (the user: 'skeleton warion metal armors doont look realistical enoguht also they are pretty light'; of Orc01 first, 'its better'): a real metal, half its reflectance taken from the painting, so the plate goes dark steel in its shadows and catches the moon and the lamps on its edges instead of reading as painted plastic; the grain override kept on it.",
   "material_overrides": {
-    "painted_steel": {
+    "plate_steel": {
       "grain": {
         "depth": 0.01,
         "roughness_range": 0.01
@@ -37,10 +37,14 @@
   "material_overrides_why": "As Orc01's: painted_steel's brushed grain striped the plate (the user: 'kind fo striped?'), so it is all but taken out.",
   "sounds_from": "ZzzOpenData.cpp:3718-3723: mOrcArcherAttack1 and mBullDie, SetMonsterSound(..., -1, -1, 162, 162, 4) -- no walking cry; 372 ORCARCHERATTACK1 to loose and flinch, 214 BULLDIE to die (offsets from SOUND_MONSTER_BULL1 = 210). Wired as chiefskeletonarcher_* in sounds.json.",
   "islands_from": "12 islands, all painted_steel (see sheet_materials_from). They arrived as skin, the monster profile's default.",
+  "plus": {
+    "right_hand": 1
+  },
+  "plus_from": "MU's Level 1 (ZzzCharacter.cpp:13464): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9.",
   "islands": [
     {
       "island": 0,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 162,
       "area": 17639.9,
       "along": [
@@ -62,7 +66,7 @@
     },
     {
       "island": 1,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 68,
       "area": 2358.5,
       "along": [
@@ -84,7 +88,7 @@
     },
     {
       "island": 2,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 29,
       "area": 3379.5,
       "along": [
@@ -106,7 +110,7 @@
     },
     {
       "island": 3,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 50,
       "area": 4008.8,
       "along": [
@@ -128,7 +132,7 @@
     },
     {
       "island": 4,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 28,
       "area": 2817.0,
       "along": [
@@ -150,7 +154,7 @@
     },
     {
       "island": 5,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 29,
       "area": 3390.7,
       "along": [
@@ -172,7 +176,7 @@
     },
     {
       "island": 6,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 50,
       "area": 4031.0,
       "along": [
@@ -194,7 +198,7 @@
     },
     {
       "island": 7,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 28,
       "area": 2817.0,
       "along": [
@@ -216,7 +220,7 @@
     },
     {
       "island": 8,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 68,
       "area": 2398.4,
       "along": [
@@ -238,7 +242,7 @@
     },
     {
       "island": 9,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 33,
       "area": 2192.3,
       "along": [
@@ -260,7 +264,7 @@
     },
     {
       "island": 10,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 1143.4,
       "along": [
@@ -282,7 +286,7 @@
     },
     {
       "island": 11,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 54,
       "area": 3297.1,
       "along": [
@@ -302,9 +306,5 @@
         0.809
       ]
     }
-  ],
-  "plus": {
-    "right_hand": 1
-  },
-  "plus_from": "MU's Level 1 (ZzzCharacter.cpp:13464): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9."
+  ]
 }

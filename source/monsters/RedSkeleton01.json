@@ -20,12 +20,12 @@
   },
   "sheet_from": "Two sheets, .OZJ with no alpha: Data/Monster/hop01 (256x256, the armour, 998 triangles), decoded as redskeleton_hop01; and bons (128x128, the skull, 56), the Skeleton's own and shared, as the Dark Skull Soldier's.",
   "sheet_materials": {
-    "hop01": "painted_steel",
+    "hop01": "plate_steel",
     "bons": "bone"
   },
-  "sheet_materials_from": "Read off the sheet at 3x: red lacquered plate with gold-rimmed scales -- breastplate, tassets, a fur-trimmed shoulder -- over black plate on the limbs, and a crystal blade; painted_steel, as the castle's other plate, the grain taken out. bons the skull, bone.",
+  "sheet_materials_from": "Read off the sheet at 3x: red lacquered plate with gold-rimmed scales -- breastplate, tassets, a fur-trimmed shoulder -- over black plate on the limbs, and a crystal blade; painted_steel, as the castle's other plate, the grain taken out. bons the skull, bone. Then plate_steel, 2026-10-03 (the user: 'skeleton warion metal armors doont look realistical enoguht also they are pretty light'; of Orc01 first, 'its better'): a real metal, half its reflectance taken from the painting, so the plate goes dark steel in its shadows and catches the moon and the lamps on its edges instead of reading as painted plastic; the grain override kept on it.",
   "material_overrides": {
-    "painted_steel": {
+    "plate_steel": {
       "grain": {
         "depth": 0.01,
         "roughness_range": 0.01
@@ -35,6 +35,10 @@
   "material_overrides_why": "As Orc01's: painted_steel's brushed grain striped the plate (the user: 'kind fo striped?'), so it is all but taken out.",
   "sounds_from": "ZzzOpenData.cpp:3814-3819: mRedSkull, mRedSkullDie and mRedSkullAttack, SetMonsterSound(..., 192, -1, 194, -1, 193) -- offsets from SOUND_MONSTER_BULL1 = 210: 402 REDSKULL to walk, 404 REDSKULLATTACK to swing and flinch, 403 REDSKULLDIE to die (DSPlaySound.h:343-345). Wired as redskeletonknight_* in sounds.json.",
   "islands_from": "19 islands for 1,054 triangles. The one of 56 is the .obj's whole bons group -- the skull -- bone; the rest are hop01's armour, painted_steel. They arrived as skin, the monster profile's default.",
+  "plus": {
+    "right_hand": 8
+  },
+  "plus_from": "MU's Level 8 in castles 1-2 (ZzzCharacter.cpp:13505-13508): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9.",
   "islands": [
     {
       "island": 0,
@@ -60,7 +64,7 @@
     },
     {
       "island": 1,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 15776.1,
       "along": [
@@ -82,7 +86,7 @@
     },
     {
       "island": 2,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 1983.2,
       "along": [
@@ -104,7 +108,7 @@
     },
     {
       "island": 3,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 1202.0,
       "along": [
@@ -126,7 +130,7 @@
     },
     {
       "island": 4,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 5650.7,
       "along": [
@@ -148,7 +152,7 @@
     },
     {
       "island": 5,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 68,
       "area": 5364.1,
       "along": [
@@ -170,7 +174,7 @@
     },
     {
       "island": 6,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 24,
       "area": 4974.8,
       "along": [
@@ -192,7 +196,7 @@
     },
     {
       "island": 7,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 1983.2,
       "along": [
@@ -214,7 +218,7 @@
     },
     {
       "island": 8,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 1202.0,
       "along": [
@@ -236,7 +240,7 @@
     },
     {
       "island": 9,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 5650.7,
       "along": [
@@ -258,7 +262,7 @@
     },
     {
       "island": 10,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 68,
       "area": 5364.1,
       "along": [
@@ -280,7 +284,7 @@
     },
     {
       "island": 11,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 410,
       "area": 27010.1,
       "along": [
@@ -302,7 +306,7 @@
     },
     {
       "island": 12,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 48,
       "area": 1807.2,
       "along": [
@@ -324,7 +328,7 @@
     },
     {
       "island": 13,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 65,
       "area": 1431.6,
       "along": [
@@ -346,7 +350,7 @@
     },
     {
       "island": 14,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 14,
       "area": 850.2,
       "along": [
@@ -368,7 +372,7 @@
     },
     {
       "island": 15,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 62,
       "area": 2548.0,
       "along": [
@@ -390,7 +394,7 @@
     },
     {
       "island": 16,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 48,
       "area": 2111.5,
       "along": [
@@ -412,7 +416,7 @@
     },
     {
       "island": 17,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 65,
       "area": 1454.4,
       "along": [
@@ -434,7 +438,7 @@
     },
     {
       "island": 18,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 14,
       "area": 850.2,
       "along": [
@@ -454,9 +458,5 @@
         0.989
       ]
     }
-  ],
-  "plus": {
-    "right_hand": 8
-  },
-  "plus_from": "MU's Level 8 in castles 1-2 (ZzzCharacter.cpp:13505-13508): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9."
+  ]
 }

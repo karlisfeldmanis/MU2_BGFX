@@ -22,12 +22,12 @@
   },
   "sheet_from": "Two sheets, .OZJ with no alpha: Data/Monster/npc_b1 (128x128, the armour, 654 triangles), decoded as darkskull_npc_b1; and bons (128x128, the bare skull and bones, 56), byte for byte the Skeleton's bons.png and shared with it.",
   "sheet_materials": {
-    "npc_b1": "painted_steel",
+    "npc_b1": "plate_steel",
     "bons": "bone"
   },
-  "sheet_materials_from": "Read off the sheets at 2x: npc_b1 is black lacquered plate with red flame-shaped trim on every piece -- painted_steel, as the Blood Castle orcs', grain taken out; bons the skull and bones, bone as the Skeleton's.",
+  "sheet_materials_from": "Read off the sheets at 2x: npc_b1 is black lacquered plate with red flame-shaped trim on every piece -- painted_steel, as the Blood Castle orcs', grain taken out; bons the skull and bones, bone as the Skeleton's. Then plate_steel, 2026-10-03 (the user: 'skeleton warion metal armors doont look realistical enoguht also they are pretty light'; of Orc01 first, 'its better'): a real metal, half its reflectance taken from the painting, so the plate goes dark steel in its shadows and catches the moon and the lamps on its edges instead of reading as painted plastic; the grain override kept on it.",
   "material_overrides": {
-    "painted_steel": {
+    "plate_steel": {
       "grain": {
         "depth": 0.01,
         "roughness_range": 0.01
@@ -62,7 +62,7 @@
     },
     {
       "island": 1,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 294,
       "area": 32889.4,
       "along": [
@@ -84,7 +84,7 @@
     },
     {
       "island": 2,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 50,
       "area": 4605.2,
       "along": [
@@ -106,7 +106,7 @@
     },
     {
       "island": 3,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 8,
       "area": 1394.6,
       "along": [
@@ -128,7 +128,7 @@
     },
     {
       "island": 4,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 8,
       "area": 1999.1,
       "along": [
@@ -150,7 +150,7 @@
     },
     {
       "island": 5,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 192.2,
       "along": [
@@ -172,7 +172,7 @@
     },
     {
       "island": 6,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 283.3,
       "along": [
@@ -194,7 +194,7 @@
     },
     {
       "island": 7,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 192.2,
       "along": [
@@ -216,7 +216,7 @@
     },
     {
       "island": 8,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 283.3,
       "along": [
@@ -238,7 +238,7 @@
     },
     {
       "island": 9,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 192.2,
       "along": [
@@ -260,7 +260,7 @@
     },
     {
       "island": 10,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 283.3,
       "along": [
@@ -282,7 +282,7 @@
     },
     {
       "island": 11,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 50,
       "area": 4564.4,
       "along": [
@@ -304,7 +304,7 @@
     },
     {
       "island": 12,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 192.2,
       "along": [
@@ -326,7 +326,7 @@
     },
     {
       "island": 13,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 283.3,
       "along": [
@@ -348,7 +348,7 @@
     },
     {
       "island": 14,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 192.2,
       "along": [
@@ -370,7 +370,7 @@
     },
     {
       "island": 15,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 283.3,
       "along": [
@@ -392,7 +392,7 @@
     },
     {
       "island": 16,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 192.2,
       "along": [
@@ -414,7 +414,7 @@
     },
     {
       "island": 17,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 283.3,
       "along": [
@@ -436,7 +436,7 @@
     },
     {
       "island": 18,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 28,
       "area": 1645.7,
       "along": [
@@ -458,7 +458,7 @@
     },
     {
       "island": 19,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 24,
       "area": 1749.0,
       "along": [
@@ -480,7 +480,7 @@
     },
     {
       "island": 20,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 696.5,
       "along": [
@@ -502,7 +502,7 @@
     },
     {
       "island": 21,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 28,
       "area": 4243.2,
       "along": [
@@ -524,7 +524,7 @@
     },
     {
       "island": 22,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 28,
       "area": 4243.2,
       "along": [
