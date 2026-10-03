@@ -23,6 +23,7 @@
 #include "game/fx/bones.h"
 #include "game/fx/breath.h"
 #include "game/fx/eyes.h"
+#include "game/fx/staff_fire.h"
 #include "game/fx/shadow_stars.h"
 #include "game/fx/snort.h"
 #include "game/fx/dust.h"
@@ -541,6 +542,7 @@ public:
     Snort& snorts() { return snort_; }
     Dust& dust() { return dust_; }
     Eyes& eyes() { return eyes_; }
+    StaffFire& staffFire() { return staffFire_; }
     // The Shadows' stars: opened by the caller as the eyes are; fed in `shade`.
     ShadowStars& shadowStars() { return shadowStars_; }
     // The townsfolk's RenderLight sprites, in `sheet` (the showing's `light`, MU's BITMAP_LIGHT):
@@ -974,6 +976,7 @@ private:
     float dustOwed_ = 0.0f;
     uint32_t dustSeed_ = 0x3c6ef372u;
     Eyes eyes_;
+    StaffFire staffFire_;  // the held Staff of Resurrection's spark and shaft lights
     ShadowStars shadowStars_;
     // The Shadows' stars, off the same posed frame as the eyes. fx/shadow_stars.h.
     void shade(float seconds);

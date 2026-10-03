@@ -307,6 +307,20 @@ void Play::snort(float seconds) {
     snort_.update(seconds);
     dust_.update(seconds);
     eyes_.update(seconds);
+    // The Staff of Resurrection's fire wherever it is held in hand (fx/staff_fire.h).
+    staffFire_.update(seconds);
+    {
+        float head[3], sparks[3], shaft[10][3];
+        StaffFire::points(head, sparks, shaft);
+        for (Drawn& one : drawn_) {
+            if (!one.visible || !one.placed) continue;
+            float worldHead[3], worldSparks[3], worldShaft[10][3];
+            if (!one.figure.heldPoint("Staff07", head, worldHead)) continue;
+            one.figure.heldPoint("Staff07", sparks, worldSparks);
+            for (int j = 0; j < 10; ++j) one.figure.heldPoint("Staff07", shaft[j], worldShaft[j]);
+            staffFire_.feed(worldHead, worldSparks, worldShaft);
+        }
+    }
     const float frames = seconds * 25.0f;
     for (Drawn& one : drawn_) {
         if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;

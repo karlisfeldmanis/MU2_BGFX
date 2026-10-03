@@ -479,6 +479,25 @@ void Figure::placement(float transform[16]) const {
     if (mounted_) std::memcpy(transform, mount_, sizeof(float) * 16);
 }
 
+bool Figure::heldPoint(const std::string& mesh, const float local[3], float out[3]) const {
+    if (!body_ || world_.empty() || safe_) return false;
+    for (const HeldItem& item : body_->held) {
+        if (!item.mesh || item.alwaysSlung || item.mesh->name() != mesh) continue;
+        const int bone = item.bone;
+        if (bone < 0 || size_t(bone) * 16 + 16 > world_.size()) return false;
+        float transform[16];
+        placement(transform);
+        float hand[16];
+        core::mulMatrix(&world_[size_t(bone) * 16], transform, hand);
+        for (int k = 0; k < 3; ++k) {
+            out[k] = local[0] * hand[k] + local[1] * hand[4 + k] + local[2] * hand[8 + k] +
+                     hand[12 + k];
+        }
+        return true;
+    }
+    return false;
+}
+
 bool Figure::muzzle(float at[3], float along[3]) const {
     if (!body_ || world_.empty() || safe_) return false;
     for (const HeldItem& item : body_->held) {

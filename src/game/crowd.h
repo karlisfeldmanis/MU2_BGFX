@@ -98,6 +98,11 @@ public:
     // posed. What MU's `b->TransformPosition(BoneTransform[n], p, Position)` does, for what
     // rides a bone without being drawn as a mesh: a lantern's glow, a spray's puff.
     bool pointOn(int bone, const float local[3], float out[3]) const;
+    // Where `local` -- a point in the held item `mesh`'s own space, in metres -- stands in the
+    // world on the last pose, carried through the hand that holds it, as MU's
+    // `TransformPosition(BoneTransform[w->LinkBone], p)` does for what rides a weapon. False
+    // when nothing of that name is in hand: none held, or slung on his back.
+    bool heldPoint(const std::string& mesh, const float local[3], float out[3]) const;
     // A bone's whole world matrix on the last pose, the placement included: what rides it
     // rigidly -- the Imp on a shoulder -- is drawn in this frame. False when not posed.
     bool boneWorld(int bone, float out[16]) const;
