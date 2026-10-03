@@ -439,7 +439,7 @@ void Play::shade(float seconds) {
         }
     }
     // The fight's coins, once its Zen has stopped coming (takeZen), with the lane's sum.
-    if (zenQuiet_ > 0.0f) {
+    if (zenQuiet_ > 0.0f && !zenOwed_) {
         zenQuiet_ -= seconds;
         if (zenQuiet_ <= 0.0f) {
             zenQuiet_ = 0.0f;
@@ -686,7 +686,9 @@ void Play::releaseDrops() {
                                }),
                 held_.end());
     heldIds_.clear();
+    zenOwed_ = false;
     for (const HeldDrop& one : held_) {
+        if (one.zen > 0) zenOwed_ = true;
         if (one.zen == 0) heldIds_.push_back(one.drop);
     }
 }

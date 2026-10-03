@@ -106,6 +106,7 @@ constexpr float kZenAboveHud = 14.0f;  // clear of the plate's top edge, in unit
 constexpr float kZenSize = 10.0f;
 constexpr float kZenUnitSize = 7.0f;
 constexpr float kZenLife = 2.6f;
+constexpr float kZenIn = 0.08f;  // seconds
 // **It scrolls, and its top fades** (the user, 2026-10-03: "can we make it scrolling with fade
 // out top?"): a row arriving pushes the stack down one row, eased over about a seventh of a
 // second (the scroll falls by e^-rate a second), never more than kLaneScrollMost rows behind
@@ -404,7 +405,7 @@ void Tally::collect(const Play& play, float seconds) {
                 break;
         }
     }
-    if (heldZen_ > 0) {
+    if (heldZen_ > 0 && !play.zenOwed()) {
         zenAge_ += seconds;
         if (zenAge_ >= kZenRollUp) {
             // Over the HUD, not in the lane: a later fight's sum takes the place of this one.
@@ -632,7 +633,8 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
     if (zenShowing_) {
         const float u = std::clamp(zenRow_.age / kZenLife, 0.0f, 1.0f);
         float alpha = 1.0f;
-        if (u < kRowIn) alpha = u / kRowIn;
+        // In faster than the lane's rows: the fight is over and the sum is owed now.
+        if (zenRow_.age < kZenIn) alpha = zenRow_.age / kZenIn;
         else if (u > kRowOut) alpha = std::clamp(1.0f - (u - kRowOut) / (1.0f - kRowOut), 0.0f, 1.0f);
         const float size = kZenSize * unit, small = kZenUnitSize * unit;
         const std::string figure = "+" + panel::commas((long long)zenRow_.value);

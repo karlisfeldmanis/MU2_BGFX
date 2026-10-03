@@ -67,10 +67,11 @@ class Play {
 public:
     // A fight's Zen is said once, at its end: when this long has gone by with no pile taken, the
     // lane posts the sum (ui/tally.cpp) and the coins ring once (Play::takeZen) -- the user,
-    // 2026-10-03, "play zen sound when combat is over and total zen is calculated". 0.6, from
-    // 1.5: a single kill waited the whole of it for its Zen (the user, "zen calculated after
-    // single monster kill has to be faster"); a spell's piles still land well inside it.
-    static constexpr float kZenQuietSeconds = 0.6f;
+    // 2026-10-03, "play zen sound when combat is over and total zen is calculated". 0.2, from
+    // 1.5 and then 0.6: "basically almost instantly after the combat". The wait no longer has
+    // to cover a spell's spread of falls, since it holds while any kill's Zen is still owed
+    // (zenOwed), so all it is for is the last pile's own beat.
+    static constexpr float kZenQuietSeconds = 0.2f;
     // The arena (--arena), set BEFORE open() or not at all. It is not a second kind of realm
     // and not a bench: all it does is rewrite the map's nest table to one nest of one breed
     // beside where the hero is being put down, and the realm then raises that table exactly as
@@ -383,6 +384,8 @@ public:
     // the monster that dropped them has not finished falling. Litter skips them, and so does
     // the pointer.
     const std::vector<uint32_t>& heldDrops() const { return heldIds_; }
+    // Whether a killed body's Zen is still held for its fall: the fight's sum waits on it.
+    bool zenOwed() const { return zenOwed_; }
 
     // Where each thing on the ground is on screen this frame, for its label: the id, and the
     // pixel a little above where it lies. Only those in front of the camera.
@@ -887,6 +890,7 @@ private:
     };
     std::vector<HeldDrop> held_;
     std::vector<uint32_t> heldIds_;
+    bool zenOwed_ = false;
     std::vector<uint32_t> settled_;
 
     content::Tables tables_;
