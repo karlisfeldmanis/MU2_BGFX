@@ -189,6 +189,13 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
                 shot.chipped -= kSparkSpacing;
                 glint(shot, true, shot.chipped);
             }
+            // And the wooden arrow's thin grey smoke behind the streak (the user: 'minimal
+            // smoke effect similar like for arrows').
+            shot.smoked += step;
+            while (shot.smoked >= kWispSpacing) {
+                shot.smoked -= kWispSpacing;
+                smoke(shot);
+            }
         }
         // A tile short of the body, on the ground plane: CheckClientArrow, and the realm's hit.
         const float dx = shot.to[0] - shot.at[0], dz = shot.to[2] - shot.at[2];

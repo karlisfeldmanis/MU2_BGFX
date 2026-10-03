@@ -35,7 +35,7 @@
 // rhythm (the user, 2026-10-03: 'more exciting with similar effect but maybe not fire'): a
 // blue-white streak of flare01 glints laid close behind the head and gone in a quarter of a
 // second, and smaller glints thrown off sideways as sparks that fall and wink out, where the wooden
-// arrow's embers drift, and a faint cold light goes with the head. No smoke. The Light
+// arrow's embers drift, a faint cold light with the head, and the arrow's own thin smoke. The Light
 // Crossbow's laser glows already and is left bare.
 //
 // ArrowSteel01 is built head at -Z -- its broadhead, widest at z -18 and pointed at -43, with
