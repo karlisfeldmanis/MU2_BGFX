@@ -64,10 +64,12 @@ constexpr OnBack kCrossbowOnBack = {{0.0f, 180.0f, -20.0f}, {-0.10f, 0.40f, -0.0
 // A bow, and the quiver of either kind: MU sends everything in the bow group that is not a
 // crossbow to the same translation.
 constexpr OnBack kQuiverOnBack = {{70.0f, 90.0f, 0.0f}, {-0.10f, 0.10f, -0.05f}, false};
-// A staff, the sword's turned end over end. A staff's head is modelled where a sword's blade
-// is, so on the sword's numbers it hung head down behind the hips with its butt over the
-// shoulder. Ours: the head rides up over the shoulder (the user, 2026-10-04: 'when weapon is on
-// back that sphere part has to be up, weapon has to be inverted').
+// The Staff of Resurrection, the sword's pose turned end over end. Its head is modelled where a
+// sword's blade is, so on the sword's numbers it hung head down behind the hips with its butt
+// over the shoulder. Ours: the head rides up over the shoulder (the user, 2026-10-04: 'when
+// weapon is on back that sphere part has to be up, weapon has to be inverted'). Every staff was
+// shot so and looked right, and the user kept it to this one: 'use this for staff of
+// resoructio for now'.
 constexpr OnBack kStaffOnBack = {{250.0f, 90.0f, 0.0f}, {-0.20f, 0.40f, -0.05f}, false};
 
 const OnBack& onBack(const HeldItem& item, bool leftHand) {
@@ -76,7 +78,7 @@ const OnBack& onBack(const HeldItem& item, bool leftHand) {
     if (item.stance == "bow") return kQuiverOnBack;
     if (item.kind == "shield") return kShieldOnBack;
     if (leftHand) return item.kind == "weapon" ? kWeaponOnBack : kShieldOnBack;
-    if (item.mesh && item.mesh->name().rfind("Staff", 0) == 0) return kStaffOnBack;
+    if (item.mesh && item.mesh->name() == "Staff07") return kStaffOnBack;
     return kWeaponOnBack;
 }
 
