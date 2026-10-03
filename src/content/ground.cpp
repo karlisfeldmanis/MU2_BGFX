@@ -648,6 +648,13 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     abyssRim_ = chasm["rim"].boolOr(false);
     abyssBlend_ = float(chasm["blend"].numberOr(0.0));
     abyssLift_ = float(chasm["lift"].numberOr(0.0));
+    blendKeep_.clear();
+    for (size_t i = 0; i < chasm["blend_keep"].size(); ++i) {
+        const core::Json& box = chasm["blend_keep"].at(i);
+        if (box.size() != 4) continue;
+        blendKeep_.push_back({int(box.at(0).numberOr(0)), int(box.at(1).numberOr(0)),
+                              int(box.at(2).numberOr(-1)), int(box.at(3).numberOr(-1))});
+    }
 
     if (!readGrids(worldDir, doc["height"].stringOr("height.png"),
                    doc["attributes"].stringOr("attributes.png"))) {
@@ -1121,7 +1128,13 @@ void Ground::buildAbyss() {
             for (int c = 0; c < n; ++c) {
                 bool touches = false;
                 for (int tr = r - 1; tr <= r && !touches; ++tr) {
-                    for (int tc = c - 1; tc <= c && !touches; ++tc) touches = isVoid(tc, tr);
+                    for (int tc = c - 1; tc <= c && !touches; ++tc) {
+                        bool kept = false;
+                        for (const auto& box : blendKeep_) {
+                            kept = kept || (tc >= box[0] && tr >= box[1] && tc <= box[2] && tr <= box[3]);
+                        }
+                        touches = !kept && isVoid(tc, tr);
+                    }
                 }
                 if (touches) {
                     dist[size_t(r * n + c)] = 0.0f;

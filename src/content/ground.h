@@ -197,6 +197,10 @@ private:
     // the Lost Tower's causeways, which MU's terrain light takes down to its black fog. 0 off.
     // The world's `void.blend`.
     float abyssBlend_ = 0.0f;
+    // Tile boxes, inclusive (x1, y1, x2, y2), whose void the blend does not fade from: a
+    // causeway's flanks, so a three-tile bridge keeps its light from side to side while the
+    // floors round it melt. The world's `void.blend_keep`. Ours.
+    std::vector<std::array<int, 4>> blendKeep_;
     // How far above the rim the void's own points read their level, in metres, so whatever
     // stands in a pit is already that far into the dark at the lip: the Dungeon's worms,
     // whose crowns sit level with the floor and stood fully lit in the hole. 0 off. The

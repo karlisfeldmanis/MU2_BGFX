@@ -203,11 +203,15 @@ GRASS_BY_MAP = {
 VOID_BY_MAP = {
     1: {"start": 0.0, "depth": 1.5, "lift": 1.0},
     4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
-    # Blood Castle: the rim alone (the user, 2026-10-03: 'also some ground edge blending not
-    # implemented', of the statue hall's edge standing as a lit grey slope into the black). The
-    # blend that took the bridge dark stays out (below); the rim darkens only the slopes that
-    # fall from the floor's edge, not the floor.
-    11: {"rim": True},
+    # Blood Castle: the rim (the user, 2026-10-03: 'also some ground edge blending not
+    # implemented', of the statue hall's edge standing as a lit grey slope into the black), and
+    # then the floors' own edges taken to the black over 1.5 tiles ('lets work on void blending
+    # on ground little bit more', of the safe court's stepped edge lit up to the void). The
+    # blend that took the bridge dark (below) is back with `blend_keep`: the void beside the
+    # bridge, and the drawbridge's gap with the pillars standing in it, fade nothing, so the
+    # three-tile bridge and the pillar tops keep their light. Ours.
+    11: {"rim": True, "blend": 1.5,
+         "blend_keep": [[0, 16, 12, 75], [16, 16, 35, 75], [13, 70, 15, 75]]},
 }
 #: Blood Castle tried the tower's (the user, 2026-10-02: 'we need to add some nice void gradients
 #: to ground edges'), blend 2 and then 0.7 tiles: the three-tile bridge went dark from side to
