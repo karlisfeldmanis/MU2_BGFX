@@ -1494,11 +1494,16 @@ def cook_placements(world, out_dir, chunk_tiles):
                  if no_ground is None or not no_ground(cx, cy)]
         mean = [sum(one[k] for one in drawn) / max(len(drawn), 1) for k in range(3)]
 
+    # And its tint, as the ground's (pipeline/ground.py light_chroma; the world's `light_chroma`).
+    chroma = float(map_data.get("light_chroma", 1.0))
+
     def deep(rgb):
-        if depth == 1.0:
-            return rgb
-        return tuple(int(round(min(max(mean[k] + (rgb[k] - mean[k]) * depth, 0), 255)))
-                     for k in range(3))
+        if depth != 1.0:
+            rgb = tuple(min(max(mean[k] + (rgb[k] - mean[k]) * depth, 0), 255) for k in range(3))
+        if chroma != 1.0:
+            luma = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+            rgb = tuple(luma + (rgb[k] - luma) * chroma for k in range(3))
+        return tuple(int(round(min(max(v, 0), 255))) for v in rgb)
 
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}

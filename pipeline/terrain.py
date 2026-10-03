@@ -318,6 +318,14 @@ def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndar
 #: of the user's MuMain shots (2026-10-02).
 LIGHT_DEPTH_BY_MAP = {4: 0.6, 11: 1.0}
 
+#: How much of MU's painted light's tint the ground and the objects keep (ground.py
+#: light_chroma), where a world differs from all of it. Blood Castle's is cold: the court about
+#: (204, 203, 225), the courtyard (83, 83, 112) and the statue hall a violet (77, 66, 86), and the
+#: floor under it came out a saturated blue, where the Dungeon's warm lamps carry its own cool
+#: paint (the user, 2026-10-03: 'we need that nice efefct which dungeon,lorencia,lost tower
+#: has'). Ours.
+LIGHT_CHROMA_BY_MAP = {11: 0.75}
+
 WATER_FLOW_BY_MAP = {
     # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at
     # one end and drained at the other -- the two ends furthest apart along it, found by walking
@@ -714,6 +722,7 @@ def main() -> None:
         **({"grass_slots": GRASS_BY_MAP[number - 1]} if number - 1 in GRASS_BY_MAP else {}),
         **({"void": VOID_BY_MAP[number - 1]} if number - 1 in VOID_BY_MAP else {}),
         **({"light_depth": LIGHT_DEPTH_BY_MAP[number - 1]} if number - 1 in LIGHT_DEPTH_BY_MAP else {}),
+        **({"light_chroma": LIGHT_CHROMA_BY_MAP[number - 1]} if number - 1 in LIGHT_CHROMA_BY_MAP else {}),
         **({"water_flow": WATER_FLOW_BY_MAP[number - 1]}
            if number - 1 in WATER_FLOW_BY_MAP else {}),
         "objects": placed,

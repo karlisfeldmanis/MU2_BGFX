@@ -1,12 +1,12 @@
 {
-  "note": "Blood Castle's light, laid over lighting.json while a character stands in a castle (game/world/maps.h). Started 2026-10-02 from the Lost Tower's sheet as the user tuned it, the nearest look: MU draws every castle on its default black clear and fog with no sky, no weather and no music (SceneManager.cpp:402), and its painted TerrainLight carries the floor -- a cold blue-violet safe court (about 144, 143, 175), the bridge dim (78), the castle door lit (153), the courtyard dim and cold (76, 73, 87); docs/blood-castle-port.md. So the Lost Tower's numbers, colder: the mist a cold dark grey, no lava (TileWater01 is worn by no tile here), no water knobs. First shots, 2026-10-02: on those numbers the brick came out saturated blue and the court near black. The user's MuMain shots show neutral grey gravel and grey brick, fairly bright, over a black void with drifting orange embers. So the key and tints went near neutral, saturation 0.85 to 0.55, exposure 2.3 to 3.3, ambient 1.6 to 2.0, and the mist a neutral dark grey. Shot at the court (13,8), the bridge (14,40), the drawbridge gap (14,68) and the courtyard (16,85). Not yet judged by the user; the court's centre still reads darker than MU's. Then the lights (2026-10-02): the Lost Tower's glow_strength 2.5 burned the added sheets white -- the ember heaps and the monks' lamps -- so 0.9. And the global saturation 0.55 bleached every warm light to peach -- the ember heaps, the candles -- so 0.8, the neutral key and tints keeping the stone grey.",
-  "elevation": 60.0,
+  "note": "Blood Castle's light, laid over lighting.json while a character stands in a castle (game/world/maps.h). Started 2026-10-02 from the Lost Tower's sheet as the user tuned it, the nearest look: MU draws every castle on its default black clear and fog with no sky, no weather and no music (SceneManager.cpp:402), and its painted TerrainLight carries the floor -- a cold blue-violet safe court (about 144, 143, 175), the bridge dim (78), the castle door lit (153), the courtyard dim and cold (76, 73, 87); docs/blood-castle-port.md. So the Lost Tower's numbers, colder: the mist a cold dark grey, no lava (TileWater01 is worn by no tile here), no water knobs. First shots, 2026-10-02: on those numbers the brick came out saturated blue and the court near black. The user's MuMain shots show neutral grey gravel and grey brick, fairly bright, over a black void with drifting orange embers. So the key and tints went near neutral, saturation 0.85 to 0.55, exposure 2.3 to 3.3, ambient 1.6 to 2.0, and the mist a neutral dark grey. Shot at the court (13,8), the bridge (14,40), the drawbridge gap (14,68) and the courtyard (16,85). Not yet judged by the user; the court's centre still reads darker than MU's. Then the lights (2026-10-02): the Lost Tower's glow_strength 2.5 burned the added sheets white -- the ember heaps and the monks' lamps -- so 0.9. And the global saturation 0.55 bleached every warm light to peach -- the ember heaps, the candles -- so 0.8, the neutral key and tints keeping the stone grey. Then 2026-10-03, the user: 'we need that nice efefct which dungeon,lorencia,lost tower has'. Tried the Dungeon's footing -- far less fill, a stronger moon, warm lamp pools, a denser warm dust -- and the user found each too dark, too contrasted, too dusty, the sun too strong: 'at complete begiign it was better we need just little bit adjust all settings to get that AAA game look'. So these numbers by a step each: exposure 3.3 to 3.1, ambient 2.0 to 1.8, the moon 2.2 to 2.4 and lowered to Lorencia's 52 degrees, saturation 0.82, ssao 1.35, the bloom from 0.9 at 0.45, lamps 10, a faint cool-low warm-high split, and the dust a lighter warm grey at the same density; with the floor's painted tint at 0.75 (terrain.py LIGHT_CHROMA_BY_MAP). 'good'.",
+  "elevation": 52.0,
   "sun_colour": [
     0.82,
     0.82,
     0.86
   ],
-  "sun_strength": 2.2,
+  "sun_strength": 2.4,
   "sky_colour": [
     0.1,
     0.1,
@@ -18,33 +18,33 @@
     0.03,
     0.03
   ],
-  "ambient_strength": 2.0,
-  "exposure": 3.3,
+  "ambient_strength": 1.8,
+  "exposure": 3.1,
   "dust_colour": [
-    0.22,
-    0.22,
-    0.24
+    0.3,
+    0.28,
+    0.27
   ],
   "dust_density": 0.005,
-  "lamp_strength": 8.5,
+  "lamp_strength": 10.0,
   "flame_strength": 8.0,
   "glow_strength": 0.9,
-  "bloom_threshold": 0.85,
-  "bloom_strength": 0.4,
+  "bloom_threshold": 0.9,
+  "bloom_strength": 0.45,
   "contrast": 0.45,
-  "saturation": 0.8,
+  "saturation": 0.82,
   "split": 0.55,
   "tint_low": [
-    0.98,
+    0.97,
     0.99,
-    1.02
+    1.03
   ],
   "tint_high": [
-    1.02,
+    1.03,
     1.0,
-    0.98
+    0.97
   ],
-  "ssao_strength": 1.2,
+  "ssao_strength": 1.35,
   "grass": 0.0,
   "probe": 0.0,
   "water_flow": 0.0,

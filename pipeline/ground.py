@@ -198,7 +198,17 @@ LIGHT_SCALE = 0.72
 LIGHT_DEPTH = 0.5
 
 
-def corner_light(lit: np.ndarray | None, size: int, depth: float = LIGHT_DEPTH) -> np.ndarray:
+def light_chroma(rgb: np.ndarray, chroma: float) -> np.ndarray:
+    """MU's painted light with its tint scaled by `chroma` about its own brightness: 1 as MU
+    painted it, 0 grey. A world's `light_chroma` (terrain.py LIGHT_CHROMA_BY_MAP)."""
+    if chroma == 1.0:
+        return rgb
+    luma = rgb[..., :3] @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
+    return luma[..., None] + (rgb - luma[..., None]) * chroma
+
+
+def corner_light(lit: np.ndarray | None, size: int, depth: float = LIGHT_DEPTH,
+                 chroma: float = 1.0) -> np.ndarray:
     """MU's baked light at every corner, wrapped, in 0..1. White where there is none.
 
     `depth` is the world's own LIGHT_DEPTH where it sets one (`light_depth` in its json): the
@@ -210,6 +220,7 @@ def corner_light(lit: np.ndarray | None, size: int, depth: float = LIGHT_DEPTH) 
     grid = np.ones((size + 1, size + 1, 3), dtype=np.float32)
     plane = np.power(lit.astype(np.float32) / 255.0, LIGHT_CONTRAST) * LIGHT_SCALE
     plane = plane.mean() + (plane - plane.mean()) * depth
+    plane = light_chroma(plane, chroma)
 
     grid[:size, :size] = plane
     grid[size, :size] = plane[0, :]
@@ -388,7 +399,8 @@ def main() -> None:
         print(f"  light      MU's own, mean "
               f"{lit.reshape(-1, 3).mean(axis=0).round().astype(int).tolist()} of 255")
 
-    light = corner_light(lit, size, float(world.get("light_depth", LIGHT_DEPTH)))
+    light = corner_light(lit, size, float(world.get("light_depth", LIGHT_DEPTH)),
+                         float(world.get("light_chroma", 1.0)))
 
     def sheet_for(name: str, blended: bool = False):
         """The prepared sheet for a slot, how far it reaches, and its material.
