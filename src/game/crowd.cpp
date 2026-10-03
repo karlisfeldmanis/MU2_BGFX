@@ -49,12 +49,35 @@ void Figure::place(const float position[3], float yaw, bool safe) {
     safe_ = safe;
 }
 
-void Figure::play(int clip, bool restart, float fade) {
+namespace {
+
+// Where a clip played `once` stops: on its last authored key, and not on the closing key the
+// cook gives every looping action, which holds key 0's pose again. That interval is inside the
+// clip, so clamping at its end did not save it: MU's Skill hand 1 turns the right upper arm 82
+// degrees and the forearm 60 back toward its opening key in the last seventh of the clip, and
+// the user saw an Energy Ball's hand "stoped and starts again".
+float onceEnd(const content::CookedClip& clip) {
+    if (clip.hold || clip.frames < 3) return clip.duration;
+    return clip.duration * float(clip.frames - 2) / float(clip.frames - 1);
+}
+
+}  // namespace
+
+void Figure::play(int clip, bool restart, float fade, bool once) {
     if (!body_ || !body_->library) return;
     if (clip < 0 || clip >= int(body_->library->clips.clips.size())) return;
     if (clip == clip_ && !restart) return;
+    // A change made before the last one has finished fading fades from the pose on screen,
+    // held still, and not from the clip under it: the fade keeps one clip behind it, and
+    // dropping the half-faded one jumped the body. A wizard casting again 0.15 s into his 0.28 s
+    // fade home moved both hands 0.6 m in a frame (the user: "missing motion to go back to idle
+    // or cast again", "sudden change").
+    frozen_ = fade_ > 0.0f && previous_ >= 0 && !shown_.empty();
+    if (frozen_) held_.assign(shown_.begin(), shown_.end());
     previous_ = clip_;
     previousTime_ = time_;
+    previousOnce_ = once_;
+    once_ = once;
     fadeLength_ = fade >= 0.0f ? fade : kBlendSeconds;
     fade_ = previous_ >= 0 ? fadeLength_ : 0.0f;
     clip_ = clip;
@@ -80,6 +103,12 @@ float Figure::travel() const {
     // at. MU2's `Strode` multiplies by `Sized` for the same reason, and a Budge Dragon is the
     // figure that proves it.
     return body_->library->clips.clips[size_t(clip_)].travel * scale_;
+}
+
+float Figure::played() const {
+    if (!body_ || !body_->library || clip_ < 0) return 0.0f;
+    const content::CookedClip& clip = body_->library->clips.clips[size_t(clip_)];
+    return once_ ? onceEnd(clip) : clip.duration;
 }
 
 float Figure::through() const {
@@ -124,8 +153,8 @@ void Figure::update(float seconds, float clipRate) {
     // seconds. See the note on this function in crowd.h.
     const float clipSeconds = seconds * clipRate;
     time_ += clipSeconds;
-    if (clip.hold) {
-        time_ = std::min(time_, clip.duration);
+    if (clip.hold || once_) {
+        time_ = std::min(time_, once_ ? onceEnd(clip) : clip.duration);
     } else if (clip.duration > 0.0f) {
         // The clock wraps, not the frame index. The extra key a looping clip carries holds
         // the first pose again, so the last interval IS the wrap and interpolating across it
@@ -142,13 +171,14 @@ void Figure::update(float seconds, float clipRate) {
             // a walk that kept running through its own fade would slide the feet for exactly
             // as long as the fade lasts -- which is the last step, the one that is looked at.
             previousTime_ += clipSeconds;
-            if (before.hold) {
+            if (before.hold || previousOnce_) {
                 // Clamped, exactly as the clip being played is. Without this the clock of a
                 // death being faded OUT of runs past its own end, and `sample` then hands
                 // nlerp a t well above 1 -- extrapolation, which throws a limb somewhere the
                 // clip never goes. The played clip was clamped from the first draft and this
                 // one was not, which is the kind of asymmetry a crossfade hides for months.
-                previousTime_ = std::min(previousTime_, before.duration);
+                previousTime_ = std::min(previousTime_,
+                                         previousOnce_ ? onceEnd(before) : before.duration);
             } else if (before.duration > 0.0f) {
                 previousTime_ = std::fmod(previousTime_, before.duration);
             }
@@ -156,6 +186,7 @@ void Figure::update(float seconds, float clipRate) {
         if (fade_ <= 0.0f) {
             fade_ = 0.0f;
             previous_ = -1;
+            frozen_ = false;
         }
     }
 }
@@ -280,7 +311,14 @@ int Figure::pose(float* rows12) {
     if (fade_ > 0.0f && previous_ >= 0) {
         float wasRotations[kMaxBones * 4];
         float wasTranslations[kMaxBones * 3];
-        sample(previous_, previousTime_, posed, wasRotations, wasTranslations);
+        if (frozen_ && held_.size() >= posed * 7) {
+            for (size_t i = 0; i < posed; ++i) {
+                std::memcpy(&wasRotations[i * 4], &held_[i * 7], 4 * sizeof(float));
+                std::memcpy(&wasTranslations[i * 3], &held_[i * 7 + 4], 3 * sizeof(float));
+            }
+        } else {
+            sample(previous_, previousTime_, posed, wasRotations, wasTranslations);
+        }
         // 0 at the start of the fade and 1 at its end: the new clip arrives rather than
         // starting whole. Against THIS fade's own length, not the default one -- a transition
         // given a shorter fade would otherwise begin part-blended and one given a longer fade
@@ -294,6 +332,13 @@ int Figure::pose(float* rows12) {
             core::lerpVec3(&wasTranslations[i * 3], &translations[i * 3], t, moved);
             std::memcpy(&translations[i * 3], moved, sizeof(moved));
         }
+    }
+    // What this frame shows, before the seat and the upper layer (which are drawn over any
+    // fade), kept for a change that arrives while it is still fading (`frozen_`).
+    if (shown_.size() != posed * 7) shown_.resize(posed * 7);
+    for (size_t i = 0; i < posed; ++i) {
+        std::memcpy(&shown_[i * 7], &rotations[i * 4], 4 * sizeof(float));
+        std::memcpy(&shown_[i * 7 + 4], &translations[i * 3], 3 * sizeof(float));
     }
 
     // The seat over it: the root, the pelvis and every bone from a thigh down out of the seat's

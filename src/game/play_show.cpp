@@ -1105,7 +1105,11 @@ void Play::follow(float seconds) {
                 // Coming to a stop is an arrival, drawn on the frame the body stops, and the
                 // fade is only long enough not to be a cut: any longer is feet sliding under a
                 // body that is no longer going anywhere.
-                one.figure.play(clip, false, isWalk(was) ? kHalting : -1.0f);
+                // Out of a skill as slowly as into one: its last key is a hand or a blade far
+                // from the stance, and the swing's blend snapped it home.
+                const bool fromCast = one.figure.once() && one.swingSkill != 0;
+                one.figure.play(clip, false,
+                                isWalk(was) ? kHalting : fromCast ? kCastBlend : -1.0f);
                 // And the arrival's own cry: the bottom of SetPlayerStop, which a monster runs
                 // once when its walk ends (ZzzCharacter.cpp:429-443, from MovePath at :6444),
                 // one in sixteen, once -- not scaled by the frame, as it is one call.

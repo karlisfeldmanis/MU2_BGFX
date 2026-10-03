@@ -48,7 +48,12 @@ public:
     // The two directions of one change are not the same change -- setting off is a weight
     // shift the eye wants to see take a moment, and stopping is an arrival the body is already
     // late for -- so the caller says which it is. MU2's `Crowd.Gaiting` and `Crowd.Halting`.
-    void play(int clip, bool restart = false, float fade = -1.0f);
+    //
+    // `once` plays a looping clip through a single time and holds its last authored key, as a
+    // swing or a cast is: the action clips carry the loop's closing key, a copy of key 0, and
+    // both its interval and a clock left to wrap played the wind-up again at the end (the user,
+    // of Energy Ball: "like its stoped and starts again"). `played` is how long that takes.
+    void play(int clip, bool restart = false, float fade = -1.0f, bool once = false);
     // Puts the clock somewhere in the clip. A walk resumes where it left off rather than at
     // its first key, which is one leg fully forward: taken from legs caught mid-cross, that is
     // the longest crossfade in the game and the one nobody asked for.
@@ -143,6 +148,9 @@ public:
     // most of what goes wrong with an animation and none of it is visible in a still.
     float clock() const { return time_; }
     float length() const;
+    // The length a `once` clip plays to, its closing key left out; `length` otherwise.
+    float played() const;
+    bool once() const { return once_; }
     // How far the clip now playing is meant to carry this body over one cycle, in metres, at
     // the size this body is drawn. Zero for everything that goes nowhere, which is every clip
     // but the locomotion set -- so it doubles as "is this a clip whose rate the ground
@@ -191,6 +199,14 @@ private:
     int previous_ = -1;
     float time_ = 0.0f;
     float previousTime_ = 0.0f;
+    // `play`'s `once`, for the clip playing and the one fading out.
+    bool once_ = false;
+    bool previousOnce_ = false;
+    // The last pose drawn, bone by bone as rotation and translation; the copy of it a fade
+    // now running starts from, and whether it does rather than from `previous_` (Figure::play).
+    std::vector<float> shown_;
+    std::vector<float> held_;
+    bool frozen_ = false;
     float fade_ = 0.0f;        // seconds left of the crossfade
     // How long this crossfade was asked to take. Kept because the blend weight is
     // `1 - fade_ / fadeLength_`, and dividing by a constant instead was right only while every

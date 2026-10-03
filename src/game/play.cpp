@@ -441,11 +441,11 @@ void Play::update(double seconds) {
                         caster->swingSkill = happening.a;
                     }
                     if (row && (row->onSelf() || row->blinks) && caster->castClip >= 0) {
-                        caster->figure.play(caster->castClip, true, kCastBlend);
+                        caster->figure.play(caster->castClip, true, kCastBlend, true);
                         caster->selfClip = row->onSelf() ? caster->castClip : -1;
-                        caster->casting = caster->figure.length();
+                        caster->casting = caster->figure.played();
                         caster->swingPace = 1.0f;
-                        caster->swinging = caster->figure.length();
+                        caster->swinging = caster->figure.played();
                         ++caster->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
                         caster->figure.nock(true);
@@ -962,7 +962,7 @@ void Play::update(double seconds) {
                         // begun to move, which reads as the animation snapping on rather than
                         // starting. **invention**, and the only number in the drawing that a
                         // skill has of its own.
-                        swinger->figure.play(swing, true, cast ? kCastBlend : -1.0f);
+                        swinger->figure.play(swing, true, cast ? kCastBlend : -1.0f, true);
                         // The clip has to fit between two blows, and MU's own reason is that
                         // the attack speed makes the CLIP run faster -- the swing rate follows
                         // from that, so anything that plays the animation has to apply the same
@@ -1000,7 +1000,9 @@ void Play::update(double seconds) {
                             const float fits = float(ticks) * float(kTickSeconds);
                             if (fits > 0.01f && clip > fits) swinger->swingPace = clip / fits;
                         }
-                        swinger->swinging = clip / swinger->swingPace;
+                        // Paced on the whole clip, as the realm times it, and ended on its
+                        // last authored key, before the closing one (Figure::played).
+                        swinger->swinging = swinger->figure.played() / swinger->swingPace;
                         ++swinger->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
                         swinger->figure.nock(true);
