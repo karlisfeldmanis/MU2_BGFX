@@ -701,7 +701,22 @@ void Realm::castleTick() {
         for (const GridBox& box : {kCastleBridge, kCastleDoor[0], kCastleDoor[1], kCastleDoor[2]}) {
             changeGrid(box.x1, box.y1, box.x2, box.y2, box.bits, false);
         }
+        // And quota 2's Spirit Sorcerers rise in the courtyard: WebZen's 2 for one player
+        // (gObjMonster.cpp:1302-1308), raised there when the gate falls (SetBossMonster).
+        int raised = 0;
+        for (Body& one : bodies_) {
+            if (raised >= kCastleSorcerers) break;
+            if (!one.monster() || one.alive()) continue;
+            if (tables_->kinds[size_t(one.kind)].number != kCastleSorcerer) continue;
+            one.risesAt = tick_;
+            ++raised;
+        }
     }
+    // The run over: a minute's rest, then out to Devias.
+    if ((run_.phase == CastlePhase::Won || run_.phase == CastlePhase::Ended) && run_.leavesAt < 0) {
+        run_.leavesAt = tick_ + int64_t(kCastleRest) * kCastleTicksPerSecond;
+    }
+    if (run_.leavesAt >= 0 && !run_.sentOut && tick_ >= run_.leavesAt) run_.sentOut = true;
 }
 
 void Realm::castleKill(const Body& dead) {
@@ -709,9 +724,34 @@ void Realm::castleKill(const Body& dead) {
     const int32_t number = tables_->kinds[size_t(dead.kind)].number;
     // The statue is the run's target, not one of its garrison: broken, it pays its bonus
     // (kCastleStatueExp) and counts toward neither quota.
-    if (number == kCastleStatue) run_.statueBroken = true;
-    else if (number == kCastleSorcerer) ++run_.sorcerers;
-    else ++run_.kills;
+    if (number == kCastleStatue) {
+        // Broken, it lets fall the staff it held, on the stone where it lay, to be carried back
+        // to the Archangel (the user, 2026-10-03; docs/blood-castle-port.md 5). Ours: WebZen's
+        // statue drops nothing by the drop table (gObjMonster.cpp:3985) and its weapon comes by
+        // another way. It lies there until the run's time is up.
+        run_.statueBroken = true;
+        const int32_t staff = tables_->itemAt(kDivineStaffGroup, kDivineStaffNumber);
+        if (staff >= 0) {
+            const uint32_t id = lay(staff, 0, false, 0, 0, 0);
+            if (!lying_.empty() && lying_.back().id == id) {
+                std::tie(lying_.back().column, lying_.back().row) =
+                    clearing(dead.column(), dead.row());
+                lying_.back().vanishesAt = run_.endsAt;
+            }
+        }
+    } else if (number == kCastleSorcerer) {
+        // Quota 2 met: the Statue of Saint rises in its hall.
+        if (++run_.sorcerers == kCastleSorcerers) {
+            for (Body& one : bodies_) {
+                if (one.monster() && !one.alive() &&
+                    tables_->kinds[size_t(one.kind)].number == kCastleStatue) {
+                    one.risesAt = tick_;
+                }
+            }
+        }
+    } else {
+        ++run_.kills;
+    }
     // Quota 1: "monsters cleared! attack the castle gate" (lMsg 1168), and the drawbridge falls.
     if (run_.kills >= kCastleKills && run_.bridgeAt < 0) run_.bridgeAt = tick_;
 }
@@ -747,6 +787,7 @@ bool Realm::handInStaff() {
 int Realm::castleSecondsLeft() const {
     const int64_t until = run_.phase == CastlePhase::Waiting   ? run_.startsAt
                           : run_.phase == CastlePhase::Running ? run_.endsAt
+                          : run_.leavesAt >= 0                 ? run_.leavesAt
                                                                : tick_;
     return int(std::max<int64_t>(0, until - tick_ + kCastleTicksPerSecond - 1) / kCastleTicksPerSecond);
 }

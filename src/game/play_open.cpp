@@ -33,6 +33,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     windy_ = world != "noria" && !(map && map->underground);
     dungeonAir_ = world == "dungeon" || world == "losttower";
     towerAir_ = world == "losttower";
+    castleAir_ = world == "bloodcastle";
     grassy_ = world == "lorencia" || world == "noria";
     snowy_ = world == "devias";
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
@@ -464,6 +465,8 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     // (SceneManager.cpp:859-861). It rides the wind's slot, which the Dungeon has no use for.
     // The tower's is aTower (SceneManager.cpp:873-875), the same way.
     else if (dungeonAir_) heard_.wind = sound_.load(towerAir_ ? "world_tower" : "world_dungeon", false);
+    // Blood Castle's match bed, looped while its run is on (Play::hear).
+    heard_.castleBed = castleAir_ ? sound_.load("world_bloodcastle", false) : -1;
     heard_.fire = sound_.load("world_bonfire", false);
     heard_.fountain = sound_.load("world_fountain", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);

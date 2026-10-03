@@ -98,6 +98,10 @@ struct CastleRun {
     // walkable (Realm::castleTick, kCastleBridgeTicks after).
     int64_t bridgeAt = -1;
     bool bridgeDown = false;
+    // The run over, won or out of time: the tick he is sent back to Devias (kCastleRest after),
+    // or -1; and `sentOut` once it has passed, for the mode to take him (Play::takeHome).
+    int64_t leavesAt = -1;
+    bool sentOut = false;
     // What the win paid, for the Archangel's page (Realm::handInStaff).
     int64_t paidExperience = 0, paidZen = 0;
 };
@@ -112,6 +116,9 @@ constexpr int64_t kCastleStatueExp = 20000;
 constexpr int64_t kCastleHandInExp = 5000;
 constexpr int64_t kCastleExpPerSecond = 160;
 constexpr int64_t kCastleWinZen = 20000;
+// After the run, won or timed out, WebZen's PLAYEND rest: a minute, then everyone left in the
+// castle is moved to Devias, gate 22 (BloodCastle.cpp:1066-1077; docs/blood-castle-port.md).
+constexpr int kCastleRest = 60;
 // What the Archangel's page shows (QuestDialog::kArchangel).
 enum class AngelState : uint8_t { NotYet, NoStaff, Ready, Done };
 

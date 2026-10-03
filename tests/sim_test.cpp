@@ -7521,6 +7521,76 @@ void testCastleGrid(const content::Tables& lorencia) {
             check(realm.angelState() == sim::AngelState::Done, "his page says it is done");
         }
     }
+    // The whole run, start to end: 40 of the garrison, the bridge and the door, the two Spirit
+    // Sorcerers, the statue and its staff, the hand-in, the minute's rest and out.
+    {
+        sim::Realm run;
+        check(run.raise(&castle, 5, 13, 8), "a run raises");
+        for (int64_t t = 0; t <= int64_t(sim::kCastleWait) * sim::kCastleTicksPerSecond; ++t) run.step();
+        const auto numberOf = [&](const sim::Body& one) {
+            return castle.kinds[size_t(one.kind)].number;
+        };
+        const auto standing = [&](int32_t number) {
+            int count = 0;
+            for (const sim::Body& one : run.bodies()) {
+                if (one.monster() && one.alive() && numberOf(one) == number) ++count;
+            }
+            return count;
+        };
+        checkEqual(standing(sim::kCastleSorcerer), 0, "no Spirit Sorcerer stands at the start");
+        for (int guard = 0; guard < 400 && run.castleRun().kills < sim::kCastleKills; ++guard) {
+            for (const sim::Body& one : run.bodies()) {
+                if (run.castleRun().kills >= sim::kCastleKills) break;
+                if (!one.monster() || !one.alive()) continue;
+                if (numberOf(one) == sim::kCastleSorcerer || numberOf(one) == sim::kCastleStatue) continue;
+                run.smite(one.id);
+            }
+            run.step();
+        }
+        checkEqual(run.castleRun().kills, sim::kCastleKills, "forty of the garrison fall");
+        for (int t = 0; t <= sim::kCastleBridgeTicks + 1; ++t) run.step();
+        check(run.castleRun().bridgeDown, "the bridge is down");
+        for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < sim::kCastleSorcerers; ++t) run.step();
+        checkEqual(standing(sim::kCastleSorcerer), sim::kCastleSorcerers,
+                   "and two Spirit Sorcerers have risen");
+        checkEqual(standing(sim::kCastleStatue), 0, "the statue not yet");
+        for (const sim::Body& one : run.bodies()) {
+            if (one.monster() && one.alive() && numberOf(one) == sim::kCastleSorcerer) run.smite(one.id);
+        }
+        run.step();
+        checkEqual(run.castleRun().sorcerers, sim::kCastleSorcerers, "both counted");
+        for (int t = 0; t < 100 && standing(sim::kCastleStatue) < 1; ++t) run.step();
+        checkEqual(standing(sim::kCastleStatue), 1, "and the Statue of Saint rises");
+        for (int t = 0; t < 200; ++t) run.step();
+        checkEqual(standing(sim::kCastleSorcerer), 0, "the sorcerers stay dead");
+        const int32_t staff = castle.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
+        for (const sim::Body& one : run.bodies()) {
+            if (one.monster() && one.alive() && numberOf(one) == sim::kCastleStatue) run.smite(one.id);
+        }
+        run.step();
+        check(run.castleRun().statueBroken, "the statue is broken");
+        bool dropped = false;
+        for (const auto& one : run.lying()) dropped |= one.what.item == staff;
+        check(dropped, "and the Divine Staff lies where it fell");
+        run.give(staff);
+        int archangel = -1;
+        for (size_t i = 0; i < castle.folk.size(); ++i) {
+            if (castle.folk[i].number == sim::kArchangel) archangel = int(i);
+        }
+        if (archangel >= 0) {
+            sim::Request talk;
+            talk.kind = sim::Request::Kind::Talk;
+            talk.target = uint32_t(archangel);
+            run.ask(talk);
+            for (int tick = 0; tick < 400 && run.angeling() < 0; ++tick) run.step();
+            check(run.handInStaff(), "the staff handed in");
+            run.step();
+            check(run.castleRun().phase == sim::CastlePhase::Won, "the castle won");
+            check(!run.castleRun().sentOut, "he stays for the rest");
+            for (int64_t t = 0; t <= int64_t(sim::kCastleRest) * sim::kCastleTicksPerSecond; ++t) run.step();
+            check(run.castleRun().sentOut, "and after a minute is sent out to Devias");
+        }
+    }
     check(sim::castleEntryLeft(10 * 3600 + 25 * 60) == 300, "the Messenger opens at hh:25");
     check(sim::castleEntryLeft(10 * 3600 + 29 * 60 + 59) == 1, "until hh:29:59");
     check(sim::castleEntryLeft(10 * 3600 + 30 * 60) == 0, "and is shut at hh:30");

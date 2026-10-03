@@ -1218,6 +1218,11 @@ void Realm::kill(Body& dead, Body& killer) {
     // the Ice Queen eleven (kDropRates' regen) -- where the cook's OpenMU numbers were ten and
     // fifty. The user's pick of 2026-09-30.
     dead.risesAt = tick_ + int64_t(dropRateOf(kind.number).regen + 1) * 20;
+    // Blood Castle's statue and Spirit Sorcerers are the run's, raised once by it and never again.
+    if (tables_->map == kBloodCastleMap &&
+        (kind.number == kCastleStatue || kind.number == kCastleSorcerer)) {
+        dead.risesAt = std::numeric_limits<int64_t>::max();
+    }
     // Every monster the killer is still holding as a quarry forgets it, or a chase carries on
     // toward a corpse.
     for (Body& one : bodies_) {
@@ -1379,8 +1384,10 @@ void Realm::reviveHero() {
     // to Lorencia for a map with no spawn gate (Player.cs:1559-1562, BaseMapInitializer.cs:91;
     // the user, 2026-10-01: "if char dies in dungeon, he has to respawn at lorencia"). `c` says
     // the map change is owed; the mode takes it (Play::takeHome).
+    // And Blood Castle, whose dead are out of the run and back in Devias (the user's pick of
+    // 2026-10-03, 'death sends you out to Devias'; docs/blood-castle-port.md 5).
     const int32_t* box = tables_->safeGate;
-    const bool home = !(box[2] > box[0] && box[3] > box[1]);
+    const bool home = !(box[2] > box[0] && box[3] > box[1]) || tables_->map == kBloodCastleMap;
     say(What::Rose, hero, hero.level, hero.health, home ? 1 : 0);
 }
 

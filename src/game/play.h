@@ -429,8 +429,9 @@ public:
     // on, as MuMain's ReceiveTeleport shuts every one (`g_pNewUISystem->HideAll()`).
     // A Town Portal read where the map has no safe zone (the Dungeon): Lorencia is owed, and
     // the map change is the mode's, as a gate's is. Once.
+    // And Blood Castle's run over and its rest out (sim::CastleRun::sentOut): Devias.
     bool takeHome() {
-        const bool was = homeOwed_;
+        const bool was = homeOwed_ || realm_.castleRun().sentOut;
         homeOwed_ = false;
         return was;
     }
@@ -903,6 +904,7 @@ private:
     // wind's slot (Play::openSound).
     bool dungeonAir_ = false;
     bool towerAir_ = false;
+    bool castleAir_ = false;  // Blood Castle: its run bed (heard_.castleBed)
     // Whether MU plays the grass step on a grass floor here: Lorencia and Noria alone
     // (PlayWalkSound), so the Dungeon's and the tower's slot 0 is stone underfoot.
     bool grassy_ = true;
@@ -997,6 +999,7 @@ private:
         int grass = -1, soil = -1;                               // his footsteps
         int hoof = -1;  // and his horse's, on the run ride (mount_hoof)
         int wind = -1;                                           // Lorencia's air
+        int castleBed = -1;  // Blood Castle's run bed, iBloodCastle (world_bloodcastle)
         int fire = -1;                                           // a bonfire's crackle
         int fountain = -1;                                       // the fountain's water
         int hammer = -1;                                         // Hanzo at his anvil

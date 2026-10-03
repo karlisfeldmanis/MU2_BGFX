@@ -1380,6 +1380,27 @@
       "from": "SOUND_DOOR02, Data\\Sound\\aCastleDoor.wav, one voice (ZzzOpenData.cpp:4750). MoveObject plays it for Devias's sliding gates, type 86 (ZzzObject.cpp:3942).",
       "note": "As world_door: at the gate, as it starts to open and to shut."
     },
+    "world_bloodcastle": {
+      "files": [
+        "ibloodcastle.wav"
+      ],
+      "from": "SOUND_BLOODCASTLE, Data\\Sound\\iBloodCastle.wav (MapManager.cpp:173). The castle's match bed: NewBloodCastleSystem loops it as the run starts (:42-43, PlayState 0) and stops it as it ends (:63-64, state 2). MU has no music track for any castle (SceneManager.cpp:985-1130).",
+      "note": "Looping and unplaced while the run is on (Play::hear, sim::CastlePhase::Running), under every other sound. 53 s of stereo at -10.5 dB RMS, near a music track's loudness, so set well under: ours, judged by ear.",
+      "loop": true,
+      "gain_db": -14.0
+    },
+    "statueofsaint_shock": {
+      "files": [
+        "ehitgate.wav"
+      ],
+      "from": "SOUND_HIT_GATE, Data\\Sound\\eHitGate.wav: MuMain plays it on every blow the castle's gate and statue take (ZzzCharacter.cpp:1435-1448)."
+    },
+    "statueofsaint_die": {
+      "files": [
+        "ehitgate2.wav"
+      ],
+      "from": "SOUND_HIT_GATE2, Data\\Sound\\eHitGate2.wav: the statue breaking into its StoneCoffin pieces (ZzzBMD.cpp:2077-2101)."
+    },
     "world_drawbridge": {
       "files": [
         "edowngate.wav"

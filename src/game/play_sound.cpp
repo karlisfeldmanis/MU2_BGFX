@@ -405,6 +405,9 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // The Dungeon's aDungeon rides that slot, and the Dungeon is under a roof on every tile:
     // its air plays throughout, as SceneManager.cpp:859-861 loops it for the whole map.
     sound_.loop(heard_.wind, !indoors || dungeonAir_);
+    // Blood Castle's bed, from the gate opening to the run's end, won or out of time
+    // (NewBloodCastleSystem.cpp:42-43, 63-64).
+    sound_.loop(heard_.castleBed, realm_.castleRun().phase == sim::CastlePhase::Running);
     // And the same switch is the room: a slap off the town's walls in the open, a small room
     // under a roof (docs/spatial-sound.md, E).
     // The Dungeon and the Lost Tower are stone buildings throughout: a hall's reverb, on every

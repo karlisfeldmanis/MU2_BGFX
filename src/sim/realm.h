@@ -867,6 +867,15 @@ public:
     // --castle-bridge's: the run started now if it waits, its first quota met, and the
     // drawbridge falling `seconds` from now, to be watched (a test).
     void dropCastleBridge(int seconds);
+    // A test's: the monster `id` felled by the hero's hand, through the kill every blow ends in
+    // -- its quota, its drop, its rise -- without the walk and the swings (tests/sim_test.cpp).
+    void smite(uint32_t id) {
+        const Body* found = find(id);
+        if (found == nullptr || !found->monster() || !found->alive()) return;
+        Body& beast = *const_cast<Body*>(found);
+        beast.health = 0;
+        kill(beast, bodies_[0]);
+    }
     int64_t wallClock() const { return wall_; }
     // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
     bool questChoiceFits(int index, int choice) const;

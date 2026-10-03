@@ -264,6 +264,7 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
         focus != o.focus || progress.state != o.progress.state ||
         eventPhase != o.eventPhase || eventSeconds != o.eventSeconds ||
         eventKills != o.eventKills || eventSorcerers != o.eventSorcerers ||
+        eventStatue != o.eventStatue ||
         eventShown != o.eventShown) {
         return false;
     }
@@ -511,6 +512,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         now.eventSeconds = realm.castleSecondsLeft();
         now.eventKills = run.kills;
         now.eventSorcerers = run.sorcerers;
+        now.eventStatue = run.statueBroken;
         now.eventShown = int(std::lround(eventShown_ * 64.0f));
     }
     now.quest = shown_ * wake_ > 0.0f && eventShown_ <= 0.0f ? quest_ : -1;
@@ -782,12 +784,19 @@ void Tracker::rebuildEvent(int width) {
              std::to_string(sim::kCastleSorcerers),
          door ? StepMark::Done : bridge && !waiting ? StepMark::Live : StepMark::Waiting},
         {"Destroy the Statue of Saint", "",
-         won ? StepMark::Done : door ? StepMark::Live : StepMark::Waiting},
-        {"Return the staff to the Archangel", "", won ? StepMark::Done : StepMark::Waiting},
+         won || drawn_.eventStatue ? StepMark::Done : door ? StepMark::Live : StepMark::Waiting},
+        {"Return the staff to the Archangel", "",
+         won ? StepMark::Done : drawn_.eventStatue ? StepMark::Live : StepMark::Waiting},
+        // The run over: a minute's rest, then out to Devias (sim kCastleRest).
+        {"Back to Devias",
+         std::to_string(drawn_.eventSeconds / 60) + ":" + (drawn_.eventSeconds % 60 < 10 ? "0" : "") +
+             std::to_string(drawn_.eventSeconds % 60),
+         StepMark::Live},
     };
     // In the court's wait only the wait itself: the run's steps show once the gate opens (the
     // user, 2026-10-03: 'dont show other quests tasks before gate is not opened').
-    const size_t shownRows = waiting ? 1 : sizeof(rows) / sizeof(rows[0]);
+    const size_t allRows = sizeof(rows) / sizeof(rows[0]);
+    const size_t shownRows = waiting ? 1 : won || ended ? allRows : allRows - 1;
     for (size_t r = 0; r < shownRows; ++r) {
         const Row& row = rows[r];
         const float rowTall = kStep * u;

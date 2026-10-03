@@ -178,6 +178,22 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         // here over free tiles within kPointScatter of it, each on a tile of its own. A nest
         // that is a box draws as it always did, so no other map's dice move.
         const bool point = nest.x1 == nest.x2 && nest.y1 == nest.y2 && nest.count > 1;
+        // Blood Castle's courtyard and statue hall are shut behind its door until the run opens
+        // it, and WebZen raises their garrison all the same, boxed in (SetMonster,
+        // BloodCastle.cpp:887-917): a tile shut only by the entrance's or the door's boxes stands
+        // one. Without this 23 of the castle's monsters were never raised, and seven of its eight
+        // Spirit Sorcerers. The Giant Ogre MonsterSetBase puts on the drawbridge's gap (14,70)
+        // still stands nowhere.
+        const auto castleShut = [&](int column, int row) {
+            if (tables_->map != kBloodCastleMap) return false;
+            if ((tables_->grid.at(column, row) & (content::kNoGround | content::kCharacter)) != 0) {
+                return false;
+            }
+            for (const GridBox& box : {kCastleEntrance, kCastleDoor[0], kCastleDoor[1], kCastleDoor[2]}) {
+                if (column >= box.x1 && column <= box.x2 && row >= box.y1 && row <= box.y2) return true;
+            }
+            return false;
+        };
         std::vector<std::pair<int, int>> taken;
         for (uint32_t n = 0; n < nest.count; ++n) {
             int tileColumn = 0, tileRow = 0;
@@ -189,7 +205,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
                 // Not in the town, either: two of Lorencia's nests clip the safe zone by a
                 // fraction of a percent, which is enough to put a Hound inside the ring where
                 // nothing may be attacked.
-                found = tables_->grid.open(tileColumn, tileRow, content::kWallCharacter) &&
+                found = (tables_->grid.open(tileColumn, tileRow, content::kWallCharacter) ||
+                         castleShut(tileColumn, tileRow)) &&
                         !tables_->grid.safe(tileColumn, tileRow) && !byPost(tileColumn, tileRow);
                 if (found && point) {
                     for (const auto& one : taken) {
@@ -275,8 +292,11 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
             if (fixed(one)) one.facing = one.aim = -3.14159265359f / 2.0f;
             one.health = 0;
             const int32_t number = tables_->kinds[size_t(one.kind)].number;
-            one.risesAt = number == kCastleStatue ? std::numeric_limits<int64_t>::max()
-                                                  : run_.startsAt;
+            // The statue and the Spirit Sorcerers are called up by the run (Realm::castleTick):
+            // the sorcerers as the bridge lands, the statue when they are dead.
+            one.risesAt = number == kCastleStatue || number == kCastleSorcerer
+                              ? std::numeric_limits<int64_t>::max()
+                              : run_.startsAt;
         }
     }
     for (const Body& one : bodies_) {
