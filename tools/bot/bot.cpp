@@ -54,7 +54,8 @@ constexpr int kThink = 5;             // ticks between decisions: four a second
 constexpr int64_t kGiveUp = 30 * 20;  // a target not won in thirty seconds is out of reach
 constexpr int64_t kForget = 5 * 60 * 20;
 constexpr int64_t kFear = 15 * 60 * 20;  // a breed that killed him twice is left this long
-constexpr int64_t kEpoch = 1800000000;   // the wall clock's start, unix seconds
+constexpr int64_t kEpoch = 1800000000;
+constexpr int kElfEnergyFrom = 70;     // the level the elf starts keeping energy for her orbs   // the wall clock's start, unix seconds
 
 
 // The worlds a quest takes him to: MU's map number, the cooked world, where one arrives.
@@ -586,6 +587,25 @@ private:
             realm_->spend(short_, 0, 0, 0);
             points -= short_;
             if (points <= 0) return;
+        }
+        // Then, for the elf from kElfEnergyFrom, the energy her orbs at this level ask --
+        // Summoning 30, Healing 52, Greater Damage 92 -- as a player keeps enough to read them:
+        // on 2/5/2/1 she had 18 at level 118 and read none of the three Lala sells (2026-10-03).
+        // Not before 70: from the start it took her agility while she needed it most and her
+        // first two quests came 30-40 min later; from 70 they are as quick as without, and over
+        // three seeds she ends higher (115-122 against 116-118) on half the potions.
+        if (options_.kin == sim::Kin::FairyElf && hero.level >= kElfEnergyFrom) {
+            int wants = 0;
+            for (const content::ItemRow& row : tables_->items) {
+                if (!row.teaches || row.teachesLevel > hero.level) continue;
+                if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) continue;
+                wants = std::max(wants, int(row.teachesEnergy));
+            }
+            if (const int short_ = std::min(points, wants - hero.points.energy); short_ > 0) {
+                realm_->spend(0, 0, 0, short_);
+                points -= short_;
+                if (points <= 0) return;
+            }
         }
         int w[4] = {4, 2, 3, 0};  // strength, agility, vitality, energy
         // The wizard 1/1/5/4 since 2026-10-03 ("improve DW bot"): over three seeds his quests
