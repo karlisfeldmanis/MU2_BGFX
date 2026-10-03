@@ -10,6 +10,7 @@
 // with a thigh.
 #pragma once
 
+#include "core/json.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -95,6 +96,17 @@ struct HeldItem {
     // its archer is in PLAYER_ATTACK_BOW..FLY_CROSSBOW and holds it on key 0 otherwise
     // (ZzzCharacter.cpp:10095-10106, 10160-10166).
     bool onShot = false;
+    // Where its missile leaves, MU2's Model.Muzzle: bone indices into the item's own rig, -1
+    // where it marks none, and the offset off the first in metres in that bone's frame. See
+    // Figure::muzzle.
+    int muzzleBone = -1;
+    int muzzleAxis = -1;
+    float muzzleOffset[3] = {0.0f, 0.0f, 0.0f};
+    // The material of the arrow or bolt drawn sitting on it ("nocked"), -1 for none. Left out
+    // from the loose until the next draw (Figure::nock).
+    int nockedMaterial = -1;
+    // The fraction of its own clip at which the string goes (its asset's `release`), 0 for none.
+    float release = 0.0f;
 };
 
 // Whether it hangs off the right grip: MU's `Weapon[0]`, what a skill that draws the weapon
@@ -223,7 +235,18 @@ struct Breed {
 struct ItemRow {
     std::string kind;
     std::string stance;
+    // A bow's or a crossbow's shot, off its asset through the cook (tools/cook.py shot_of): the
+    // fraction of its own clip the string goes at, the bone the missile leaves from, the bone
+    // behind it on the rail, and where off the first the missile sits (MU units). Empty bones
+    // on everything that does not shoot, and on the three whose rig marks none.
+    float release = 0.0f;
+    std::string muzzleBone;
+    std::string muzzleAxis;
+    float muzzleOffset[3] = {0.0f, 0.0f, 0.0f};
 };
+
+// One out of a manifest's item or arm entry.
+ItemRow itemRowOf(const core::Json& entry);
 
 class Figures {
 public:

@@ -420,14 +420,97 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
     }
 }
 
-void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
-    if (!body_) return;
-    float transform[16];
+void Figure::placement(float transform[16]) const {
     // The same transform MU builds for a placement, and by the same code: a figure standing
     // in the town is placed exactly as a barrel is. Pitch and roll are zero -- a figure
     // stands upright whatever the ground does, which is MU's own behaviour.
     content::placementTransform(0.0f, yaw_, 0.0f, scale_, position_, transform);
-    if (mounted_) std::memcpy(transform, mount_, sizeof(transform));
+    if (mounted_) std::memcpy(transform, mount_, sizeof(float) * 16);
+}
+
+bool Figure::muzzle(float at[3], float along[3]) const {
+    if (!body_ || world_.empty() || safe_) return false;
+    for (const HeldItem& item : body_->held) {
+        if (!item.mesh || item.muzzleBone < 0 || item.alwaysSlung) continue;
+        const int bone = item.bone;
+        if (bone < 0 || size_t(bone) * 16 + 16 > world_.size()) return false;
+        float transform[16];
+        placement(transform);
+        float hand[16];
+        core::mulMatrix(&world_[size_t(bone) * 16], transform, hand);
+        const auto& rig = item.mesh->bones();
+        // A point in a bone's rest frame, through the rest into the item's space, then the
+        // hand's: row vectors, as every matrix here is.
+        const auto carry = [&](int b, float out[3]) {
+            float rest[16], whole[16];
+            bx::mtxInverse(rest, rig[size_t(b)].inverseBind);
+            core::mulMatrix(rest, hand, whole);
+            const float* p = item.muzzleOffset;
+            for (int k = 0; k < 3; ++k) {
+                out[k] = p[0] * whole[k] + p[1] * whole[4 + k] + p[2] * whole[8 + k] + whole[12 + k];
+            }
+        };
+        carry(item.muzzleBone, at);
+        along[0] = along[1] = along[2] = 0.0f;
+        if (item.muzzleAxis >= 0) {
+            float tail[3];
+            carry(item.muzzleAxis, tail);
+            float length = 0.0f;
+            for (int k = 0; k < 3; ++k) {
+                along[k] = at[k] - tail[k];
+                length += along[k] * along[k];
+            }
+            length = std::sqrt(length);
+            if (length > 1e-5f) {
+                for (int k = 0; k < 3; ++k) along[k] /= length;
+            } else {
+                along[0] = along[1] = along[2] = 0.0f;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+float Figure::toRelease() const {
+    if (released() || !body_ || !body_->library || clip_ < 0) return 0.0f;
+    const content::CookedClip& one = body_->library->clips.clips[size_t(clip_)];
+    const float perKey = one.duration / float(one.frames - 1);
+    const float key = time_ / perKey;
+    for (const HeldItem& item : body_->held) {
+        if (!item.clip || !item.onShot || item.release <= 0.0f) continue;
+        const float period = float(item.clip->clips.front().frames - 1);
+        return std::max(0.0f, item.release * period - std::fmod(key, period)) * perKey;
+    }
+    return 0.0f;
+}
+
+bool Figure::released() const {
+    if (!body_ || !body_->library || clip_ < 0 ||
+        size_t(clip_) >= body_->library->clips.clips.size()) {
+        return true;
+    }
+    const content::CookedClip& one = body_->library->clips.clips[size_t(clip_)];
+    if (one.slot < 50 || one.slot > 53 || one.duration <= 0.0f || one.frames < 2) return true;
+    const float key = time_ / one.duration * float(one.frames - 1);
+    for (const HeldItem& item : body_->held) {
+        if (!item.clip || !item.onShot || item.release <= 0.0f) continue;
+        const content::CookedClip& own = item.clip->clips.front();
+        if (own.frames < 2) continue;
+        // Wrapped as poseHeld wraps it: the weapon's key is the body's, round its cycle.
+        const float period = float(own.frames - 1);
+        if (key >= period) return true;
+        // `release` is of the cycle, key 4 of seven (0.571): a looping clip's last key is its
+        // first again, so the cycle is frames - 1 long.
+        return std::fmod(key, period) >= item.release * period - 0.02f;
+    }
+    return true;
+}
+
+void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
+    if (!body_) return;
+    float transform[16];
+    placement(transform);
 
     for (size_t i = 0; i < body_->parts.size(); ++i) {
         const content::Mesh* part = body_->parts[i];
@@ -468,6 +551,8 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         // takes the row poseHeld posed it into, its string drawn on the shot; without one
         // (no clip cooked, or poseHeld not called) the renderer's bind row, its own rest.
         drawable.paletteRow = index < heldRows_.size() ? heldRows_[index] : -1;
+        // Its arrow gone from the string between the loose and the next draw (nock).
+        if (nockGone_ && !slung) drawable.hiddenMaterial = item.nockedMaterial;
 
         float local[16];
         if (slung) {

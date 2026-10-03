@@ -374,15 +374,30 @@ bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const 
     return true;
 }
 
-// MU's muzzle: her feet plus (-10, -60, 135) units turned by her facing -- 1.35 m up, 0.6 m
-// toward the target, a hand's width to the side (fx/arrow.h). The model is her weapon's.
-void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom) {
+// From the weapon: the point its rig marks on it, carried by her hand (Figure::muzzle, MU2's
+// Crowd.Rail). MU's own muzzle -- her feet plus (-10, -60, 135) units turned by her facing,
+// 1.35 m up, 0.6 m toward the target, a hand's width to the side (fx/arrow.h) -- for a weapon
+// that marks none. The model is her weapon's. The arrow on the string goes with it.
+void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, float seconds) {
     const float feet = ground_ ? ground_->heightAt(shooter.crown[0], shooter.crown[2]) : 0.0f;
     const float wayX = to[0] - shooter.crown[0], wayZ = to[2] - shooter.crown[2];
     const float flat = std::max(1e-4f, std::sqrt(wayX * wayX + wayZ * wayZ));
     const float fx = wayX / flat, fz = wayZ / flat;
-    const float muzzle[3] = {shooter.crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
-                             shooter.crown[2] + fz * 0.6f - fx * 0.1f};
+    float muzzle[3] = {shooter.crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
+                       shooter.crown[2] + fz * 0.6f - fx * 0.1f};
+    float rail[3];
+    const bool fromWeapon = shooter.figure.muzzle(muzzle, rail);
+    if (Drawn* own = drawnOf(shooter.id)) own->figure.nock(false);
+    if (whom != 0 || shooter.id == realm_.hero().id) {
+        // Off her feet, so a muzzle a metre wide of the weapon shows in the log.
+        core::logf("arrow: from the %s %.2f across, %.2f up, %.2f on from her feet, her clip "
+                   "%d at key %.2f",
+                   fromWeapon ? "weapon" : "chest",
+                   double((muzzle[0] - shooter.crown[0]) * fz - (muzzle[2] - shooter.crown[2]) * fx),
+                   double(muzzle[1] - feet),
+                   double((muzzle[0] - shooter.crown[0]) * fx + (muzzle[2] - shooter.crown[2]) * fz),
+                   shooter.figure.clip(), double(keyOf(shooter.figure)));
+    }
     Arrows::Model model = Arrows::Wood;
     const float* tint = nullptr;
     if (const sim::Body* body = realm_.find(shooter.id);
@@ -391,7 +406,7 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom) {
         model = Arrows::modelFor(arm.group, arm.number);
         tint = Arrows::tintFor(arm.group, arm.number);
     }
-    arrows_.loose(muzzle, to, whom, model, 0, tint);
+    arrows_.loose(muzzle, to, whom, model, 0, tint, seconds);
 }
 
 bool Play::shoots(uint32_t id, Arrows::Model* model) {

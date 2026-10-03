@@ -26,6 +26,9 @@ namespace mu::game {
 // The sim's own rate. docs/conventions.md, "Time": the tick never reads the frame's delta and
 // the frame never decides how many ticks have passed except by this number.
 constexpr double kTickSeconds = 1.0 / 20.0;
+// The longest a hero's shot waits for her string (Play::nocking_): her clip cut short -- a
+// click away, a death -- still lets the arrow go.
+constexpr float kNockHold = 0.33f;
 // The most ticks one frame may run. A window that was away -- dragged, or stalled on a
 // screenshot's readback -- comes back owing seconds of simulation, and stepping all of it in
 // one frame is a stall that makes the next frame owe more. MU2 called this the mirror clock's

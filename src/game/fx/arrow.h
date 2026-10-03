@@ -85,8 +85,10 @@ public:
     // `shooter`, when not 0, is reported in landed() the frame the arrow reaches `whom`: a
     // monster's shot, whose blow is shown where it lands (Play::hunterShot).
     // `tint`, from tintFor, tones the fire or the streak.
+    // `seconds`, when above 0, is how long it has to reach `to`: an arrow held for its string
+    // flies faster to land when the realm says it lands (Play::nocking_).
     void loose(const float from[3], const float to[3], uint32_t whom, Model model,
-               uint32_t shooter = 0, const float* tint = nullptr);
+               uint32_t shooter = 0, const float* tint = nullptr, float seconds = 0.0f);
     const std::vector<uint32_t>& landed() const { return landed_; }
 
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
@@ -125,6 +127,7 @@ private:
         float glinted;   // metres since the last glint (the bolts')
         float chipped;   // metres since the last spark
         float travelled; // metres from the muzzle
+        float speed;     // metres a second
         bool tinted;
         float tint[3];
     };

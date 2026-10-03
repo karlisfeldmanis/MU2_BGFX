@@ -136,6 +136,18 @@ size_t Figures::clipCount() const {
     return total;
 }
 
+ItemRow itemRowOf(const core::Json& entry) {
+    ItemRow row{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
+    row.release = float(entry["release"].numberOr(0.0));
+    row.muzzleBone = entry["muzzle_bone"].stringOr("");
+    row.muzzleAxis = entry["muzzle_axis"].stringOr("");
+    const core::Json& offset = entry["muzzle_offset"];
+    for (int k = 0; k < 3 && size_t(k) < offset.items.size(); ++k) {
+        row.muzzleOffset[k] = float(offset.items[size_t(k)].numberOr(0.0));
+    }
+    return row;
+}
+
 void Figures::bind(FigureBody& body) {
     if (body.parts.empty()) return;
     body.skeletonMesh = body.parts.front();
@@ -194,6 +206,29 @@ void Figures::bind(FigureBody& body) {
         if (!item.mesh || !item.mesh->isSkinned() || item.mesh->bones().size() > 16) continue;
         item.clip = heldClip(item.mesh->name());
         item.onShot = item.stance == "bow" || item.stance == "crossbow";
+        // Where its missile leaves and what sits on it, by the rig's own names.
+        const auto& rig = item.mesh->bones();
+        const auto boneNamed = [&](const std::string& name) {
+            for (size_t b = 0; b < rig.size(); ++b) {
+                if (!name.empty() && rig[b].name == name) return int(b);
+            }
+            return -1;
+        };
+        if (auto row = items_.find(item.mesh->name()); row != items_.end()) {
+            item.muzzleBone = boneNamed(row->second.muzzleBone);
+            item.muzzleAxis = boneNamed(row->second.muzzleAxis);
+            for (int k = 0; k < 3; ++k) item.muzzleOffset[k] = row->second.muzzleOffset[k] * 0.01f;
+            item.release = row->second.release;
+        }
+        const auto& materials = item.mesh->materials();
+        for (size_t m = 0; m < materials.size(); ++m) {
+            if (materials[m].name == "nocked") item.nockedMaterial = int(m);
+        }
+        if (item.onShot) {
+            core::logf("  %s holds %s: muzzle %d/%d, release %.3f, nocked material %d",
+                       body.name.c_str(), item.mesh->name().c_str(), item.muzzleBone,
+                       item.muzzleAxis, double(item.release), item.nockedMaterial);
+        }
     }
 
     // The box the whole figure was bound in, over every part it wears.
@@ -560,8 +595,7 @@ void Figures::readWardrobe() {
     // What each arm is, for one the figures never cooked: a shield out of the bag is still a
     // shield. The figures' own row wins where both have one.
     for (const core::Json& entry : manifest["arms"].items) {
-        items_.emplace(entry["name"].string,
-                       ItemRow{entry["kind"].stringOr(""), entry["stance"].stringOr("")});
+        items_.emplace(entry["name"].string, itemRowOf(entry));
     }
     for (const core::Json& set : manifest["sets"].items) {
         const bool keeps = set["keeps_head"].boolOr(false);
@@ -885,7 +919,7 @@ bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textu
         // What it is and how it is slung, as the figures' own items table carries it: the
         // stance is what decides the idle the body stands in, and a crossbow that arrives
         // here without one is a crossbow hanging off a fist. See posture().
-        items_[name] = ItemRow{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
+        items_[name] = itemRowOf(entry);
         const bool shield = entry["kind"].stringOr("") == "shield";
         const FigureBody* dressed =
             dress("Arm" + name, wearerFor(entry["classes"]), shield ? "" : name,
@@ -974,7 +1008,15 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     // quiver another, a shield a third. Never guessed from a name. Kept past open() because
     // dress() builds held items of its own out of the same table.
     for (const auto& [name, entry] : manifest["items"].members) {
-        items_[name] = ItemRow{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
+        // The figures' own row wins, but it may carry no shot where the wardrobe's does.
+        ItemRow row = itemRowOf(entry);
+        if (auto had = items_.find(name); had != items_.end() && row.muzzleBone.empty()) {
+            row.release = had->second.release;
+            row.muzzleBone = had->second.muzzleBone;
+            row.muzzleAxis = had->second.muzzleAxis;
+            for (int k = 0; k < 3; ++k) row.muzzleOffset[k] = had->second.muzzleOffset[k];
+        }
+        items_[name] = row;
     }
     auto describe = [&](HeldItem& item) {
         auto found = items_.find(item.mesh ? item.mesh->name() : std::string());

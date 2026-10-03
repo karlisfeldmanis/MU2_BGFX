@@ -59,6 +59,10 @@ struct Drawable {
     // cube is at the player, beside a thing and never in it. Per mesh, like `posed`: one
     // instance left out leaves out every instance of that mesh in the frame.
     bool inProbe = true;
+    // One material of the mesh left undrawn on this instance, or -1: the arrow nocked on a bow
+    // once it has left the string (game/crowd.cpp, Figure::nock). Instances that differ in it
+    // are batched apart.
+    int hiddenMaterial = -1;
 };
 
 // A chrome colour in one float: each channel at hundredths, 0 to 100, as r * 10201 + g * 101 + b.
@@ -476,6 +480,7 @@ private:
         // leaves these out: it is taken from the player's chest, and a cube taken from inside
         // him holds nothing but his armour's inside, which every piece of it would then reflect.
         bool posed = false;
+        int hiddenMaterial = -1;  // Drawable::hiddenMaterial, the batch's own
     };
 
     bool createTargets(int width, int height);
@@ -810,7 +815,8 @@ private:
     struct Groups {
         std::vector<std::vector<const Drawable*>> lists;
         size_t used = 0;
-        std::unordered_map<const content::Mesh*, size_t> seen;
+        // By mesh and the material it leaves out (Drawable::hiddenMaterial) together.
+        std::unordered_map<uint64_t, size_t> seen;
         void clear() {
             for (size_t i = 0; i < used; ++i) lists[i].clear();
             used = 0;

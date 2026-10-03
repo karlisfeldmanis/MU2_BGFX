@@ -768,7 +768,7 @@ private:
     // False when there is no figure to measure, and `out` is then his feet.
     bool castFrom(const Drawn& caster, const float to[3], float out[3]) const;
     // And an archer's arrow at `to`, from MU's muzzle, in the model her weapon throws.
-    void shootArrow(const Drawn& shooter, const float to[3], uint32_t whom);
+    void shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, float seconds = 0.0f);
     // A Hunter's blow drawn as MU draws it: CreateArrows off its MODEL_ARQUEBUS, which throws
     // MODEL_ARROW_SAW (ZzzCharacter.cpp:4831, ZzzEffectMagicSkill.cpp:225). The rules resolve
     // the blow at range on the tick and are not told; this only draws the bolt it would be.
@@ -783,6 +783,20 @@ private:
         float wait = 0.0f;  // seconds to the release
     };
     std::vector<Volley> volleys_;
+    // The hero's shots, held from the realm's `Loosed` until the string in her hands goes
+    // (Figure::released, MU2's release fuse): the arrow leaves the weapon with the string and
+    // flies what is left of the realm's flight, so it still lands on the tick it lands. A fan's
+    // arrows fly at their own speed toward the points they were aimed at.
+    struct Nocking {
+        uint32_t shooter = 0, whom = 0;
+        float to[3] = {0.0f, 0.0f, 0.0f};  // a fan arrow's far point; a shot reads its body
+        float air = 0.0f;                  // seconds of the realm's flight, 0 for a fan's
+        float waited = 0.0f;
+        // Hers to sound: the string, eBow or eCrossbow, started its onset ahead of the release
+        // so it is heard as the arrow leaves (MU2's Crowd.Shot). One of a fan's three.
+        bool sound = false;
+    };
+    std::vector<Nocking> nocking_;
     // An Ice Monster's blow casts Ice on its target (OpenMU's AttackSkill 7, shown on every
     // swing): MU's ReceiveMagic starts AttackTime at 1 and at 15 reference frames the skill arm
     // drops MODEL_ICE and five shards on the target and plays SOUND_ICE
@@ -953,6 +967,7 @@ private:
     // The events that are not a breed's, as Sound handles, found once at openSound.
     struct Heard {
         int swing = -1, swingLong = -1, bow = -1, crossbow = -1;  // the character's swing
+        float bowOnset = 0.0f, crossbowOnset = 0.0f;  // seconds to the string's attack
         int hit = -1;                                            // melee_hit, any blow let go
         int missile = -1;                                        // missile_hit, an arrow's
         int die = -1;                                            // pMaleDie, the knight's fall

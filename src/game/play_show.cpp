@@ -1232,6 +1232,10 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         if (fade <= 0.0f) continue;
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        // And its bow's or crossbow's own clip, on her key: the string drawn and let go with the
+        // arm (Figure::poseHeld). Never called here before 2026-10-03, so in play every bow
+        // stood strung and still -- only the town's crowd, the lobby and the bench played it.
+        one.figure.poseHeld(renderer, scratch_.data());
         // The hover ring's own copy: the SAME pose, just handed to a second list, so the
         // outline mask draws it again without a second call to Figure::pose. Only the body
         // pointedAt() names, and only while it is actually drawn -- a monster that faded out
@@ -1316,6 +1320,10 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         Standing& one = folk_[i];
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        // And its bow's or crossbow's own clip, on her key: the string drawn and let go with the
+        // arm (Figure::poseHeld). Never called here before 2026-10-03, so in play every bow
+        // stood strung and still -- only the town's crowd, the lobby and the bench played it.
+        one.figure.poseHeld(renderer, scratch_.data());
         // By the table's row, which is what the pick names: folk_ skips the rows with no
         // figure and appends the placements' four at the end, so its own index is not it.
         if (hover && pointedFolk_ >= 0 && one.folk == pointedFolk_) {

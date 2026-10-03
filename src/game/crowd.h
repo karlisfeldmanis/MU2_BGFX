@@ -119,6 +119,22 @@ public:
     // Draws his right hand's weapon or not: Rageful Blow's is in the air while its clip is
     // under its fourth key (fx/fury.h). Only in the hand -- slung, it is drawn.
     void emptyHand(bool on) { emptyHand_ = on; }
+    // Where a held bow's or crossbow's missile leaves and the way its rail points, in the
+    // world: MU2's Model.Muzzle. The weapon bone's REST, not its pose, carried by the hand --
+    // sampled posed, MU2's muzzle wandered up to 0.9 m shot to shot while the skeleton and the
+    // weapon's clip settled; the rest is the point on the weapon and the hand is where the
+    // weapon is. False when nothing in its hands marks one, or it is slung.
+    bool muzzle(float at[3], float along[3]) const;
+    // The arrow or bolt drawn on the weapon: gone from the loose, back on the next draw (MU2's
+    // Model.Nock). **Ours** -- MU draws every bow loaded, always, because it never plays the
+    // weapon's own clip and so nobody saw the two disagree.
+    void nock(bool shown) { nockGone_ = !shown; }
+    // Whether the string in its hands has gone: the shot clip has reached the weapon's release
+    // key (its `release` of the weapon's own keys, which poseHeld plays on the body's), or it
+    // is not in a shot at all. True for anything without a string.
+    bool released() const;
+    // Seconds of clip, at its authored pace, to that release; 0 once it is due or not in a shot.
+    float toRelease() const;
 
     const FigureBody* body() const { return body_; }
     int clip() const { return clip_; }
@@ -185,6 +201,8 @@ private:
     bool smooth_ = false;  // curved between keys; see smoothKeys
     bool mounted_ = false;  // drawn in mount_'s frame; see mount
     bool emptyHand_ = false;  // the right hand's weapon left out; see emptyHand
+    bool nockGone_ = false;   // the weapon's nocked missile left out; see nock
+    void placement(float transform[16]) const;  // where it stands, as gather draws it
     float mount_[16] = {};
 };
 

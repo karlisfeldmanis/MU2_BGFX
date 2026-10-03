@@ -123,7 +123,7 @@ float Arrows::roll() {
 }
 
 void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model model,
-                   uint32_t shooter, const float* tint) {
+                   uint32_t shooter, const float* tint, float seconds) {
     Shot* shot = nullptr;
     for (Shot& one : shots_) {
         if (!one.alive) {
@@ -150,6 +150,13 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     shot->glinted = kGlintSpacing;
     shot->chipped = 0.0f;
     shot->travelled = 0.0f;
+    shot->speed = kTilesASecond * metresPerTile_;
+    if (seconds > 0.0f) {
+        // Over the flat way to the tile short of it, never slower than the realm's own.
+        const float dx = to[0] - from[0], dz = to[2] - from[2];
+        const float way = std::sqrt(dx * dx + dz * dz) - kStopsShort * metresPerTile_;
+        shot->speed = std::max(shot->speed, way / seconds);
+    }
     shot->tinted = tint != nullptr;
     for (int k = 0; k < 3; ++k) shot->tint[k] = tint ? tint[k] : 1.0f;
     shot->glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
@@ -157,7 +164,6 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
 
 void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& middle) {
     const float frames = seconds * kReference;
-    const float speed = kTilesASecond * metresPerTile_;  // metres a second
     const float spacing = kEmberSpacingUnits * kUnit;
     landed_.clear();
     for (Shot& shot : shots_) {
@@ -174,7 +180,7 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
             for (int k = 0; k < 3; ++k) shot.along[k] = shot.to[k] - shot.at[k];
             normalise(shot.along);
         }
-        const float step = speed * seconds;
+        const float step = shot.speed * seconds;
         for (int k = 0; k < 3; ++k) shot.at[k] += shot.along[k] * step;
         shot.travelled += step;
         const bool clear = shot.travelled - kWispBehind >= kWispFromMuzzle;

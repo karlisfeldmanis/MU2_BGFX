@@ -425,6 +425,22 @@ def primitive_material_name(document, primitive):
     return materials[index].get("name", "") if index is not None and index < len(materials) else ""
 
 
+def shot_of(one):
+    """Where a bow or a crossbow lets go, as index.json carries it off the weapon's asset:
+    `release`, the fraction of its own clip at which the string goes, and `muzzle_bone`,
+    `muzzle_axis` and `muzzle_offset` (MU units), the point on it the missile leaves and the
+    rail it leaves along. MU2's Crowd.Rail and Model.Muzzle; game/crowd.cpp's Figure::muzzle.
+    Empty for everything that does not shoot."""
+    out = {}
+    if one.get("release"):
+        out["release"] = float(one["release"])
+    if one.get("muzzle_bone"):
+        out["muzzle_bone"] = one["muzzle_bone"]
+        out["muzzle_axis"] = one.get("muzzle_axis", "")
+        out["muzzle_offset"] = [float(v) for v in (one.get("muzzle_offset") or [0, 0, 0])]
+    return out
+
+
 def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.0,
               scrolls=None):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
@@ -3187,7 +3203,8 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
             continue
         name = os.path.splitext(os.path.basename(glb))[0]
         if name in models:
-            items[name] = {"kind": one.get("kind", ""), "stance": one.get("stance", "")}
+            items[name] = {"kind": one.get("kind", ""), "stance": one.get("stance", ""),
+                           **shot_of(one)}
 
     out = {"version": 1, "world": world, "meshes": mesh_table, "clips": clip_table,
            "clip_of": clip_of, "characters": characters, "monsters": monsters,
@@ -3305,6 +3322,7 @@ def cook_wardrobe(out_dir, texcook, threads):
         arms.append({"name": name, "label": one.get("label", name),
                      "mesh": name, "kind": one["kind"],
                      "stance": one.get("stance", ""),
+                     **shot_of(one),
                      "two_handed": bool(one.get("two_handed")),
                      "classes": stats.get("classes") or []})
 

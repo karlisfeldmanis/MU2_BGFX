@@ -189,6 +189,7 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
         const bool skinned = mesh.isSkinned();
         const bgfx::ProgramHandle batchProgram = skinned ? skinnedProgram : program;
         for (const content::Part& part : mesh.parts()) {
+            if (int(part.material) == batch.hiddenMaterial) continue;
             const content::Material& material = mesh.materials()[part.material];
             // A glow is drawn in its own pass and in no other. See the header. Except that a
             // glow that casts (Material::glowShadow) is in the sun's split as well, and in the
@@ -597,11 +598,15 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                 if (take == Take::Solid && fading) continue;
                 if (take == Take::Fading && !fading) continue;
                 const bool posed = d.paletteRow >= 0 || !d.inProbe;
-                auto found = out.seen.find(d.mesh);
+                // A user-space pointer leaves its top byte clear, and the hidden material
+                // (-1 to 254) rides there, so a bow with its arrow gone is a batch of its own.
+                const uint64_t key = uint64_t(reinterpret_cast<uintptr_t>(d.mesh)) ^
+                                     (uint64_t(uint8_t(d.hiddenMaterial + 1)) << 56);
+                auto found = out.seen.find(key);
                 if (found == out.seen.end()) {
-                    out.seen.emplace(d.mesh, out.used);
+                    out.seen.emplace(key, out.used);
                     out.add().push_back(&d);
-                    batches.push_back(Batch{d.mesh, 0, 0, posed});
+                    batches.push_back(Batch{d.mesh, 0, 0, posed, d.hiddenMaterial});
                 } else {
                     out.lists[found->second].push_back(&d);
                     if (posed) batches[found->second].posed = true;

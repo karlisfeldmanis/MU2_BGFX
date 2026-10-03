@@ -661,8 +661,14 @@ void Play::update(double seconds) {
                     // Fire Ball is the Lich's rock at its other subtype, thrown flat; every
                     // other spell that flies is the bolt.
                     if (happening.a == sim::skill::kNone) {
-                        // An archer's arrow (`Realm::looseArrow`).
-                        shootArrow(*caster, to, happening.whom);
+                        // An archer's arrow (`Realm::looseArrow`), held for her string.
+                        Nocking shot;
+                        shot.shooter = happening.who;
+                        shot.whom = happening.whom;
+                        for (int k = 0; k < 3; ++k) shot.to[k] = to[k];
+                        shot.air = float(happening.b) * float(kTickSeconds);
+                        shot.sound = true;
+                        nocking_.push_back(shot);
                     } else if (happening.a == sim::skill::kSkillshot) {
                         // The fan, drawn as the realm strikes it: straight at the body and
                         // kFanDegrees apart either side, out to the row's reach, flying on
@@ -682,7 +688,11 @@ void Play::update(double seconds) {
                             const float far[3] = {
                                 caster->crown[0] + std::cos(centre + turn) * (reach + tile),
                                 to[1], caster->crown[2] + std::sin(centre + turn) * (reach + tile)};
-                            shootArrow(*caster, far, 0);
+                            Nocking shot;
+                            shot.shooter = happening.who;
+                            for (int k = 0; k < 3; ++k) shot.to[k] = far[k];
+                            shot.sound = a == 0;
+                            nocking_.push_back(shot);
                         }
                     } else if (happening.a == sim::skill::kFireBall && happening.rune &&
                                happening.c != 0) {
@@ -976,6 +986,10 @@ void Play::update(double seconds) {
                         int cry = body == nullptr ? -1
                                   : body->player  ? swingSound(*body)
                                                   : swinger->cryAttack;
+                        // A player archer's string is heard at its release, not as the draw
+                        // starts: the noise is the string going (Play::nocking_, MU2's
+                        // Crowd.Shot). MU plays it on the first key.
+                        if (body && body->player && body->archer != 0 && !cast) cry = -1;
                         if (cast) {
                             const int index = sim::skillIndexOf(swinger->castSkill);
                             if (index >= 0 && heard_.skill[index] >= 0) cry = heard_.skill[index];
@@ -984,7 +998,7 @@ void Play::update(double seconds) {
                             // plays; the row's player_bow was a crossbow heard as a bow.
                             if (swinger->castSkill == sim::skill::kSkillshot && body &&
                                 body->player) {
-                                cry = swingSound(*body);
+                                cry = -1;  // her string, at the release (Play::nocking_)
                             }
                             // A spell's wave is not on its wind-up: MU plays SOUND_MAGIC on the
                             // line after the bolt is made, so it goes with `Loosed`.
@@ -1302,6 +1316,43 @@ void Play::update(double seconds) {
     volleys_.erase(std::remove_if(volleys_.begin(), volleys_.end(),
                                   [](const Volley& v) { return v.wait <= 0.0f; }),
                    volleys_.end());
+    // The hero's, when her string goes -- or a third of a second on, if her clip was cut.
+    for (Nocking& shot : nocking_) {
+        shot.waited += float(seconds);
+        const Drawn* from = drawnOf(shot.shooter);
+        if (!from || !from->placed) {
+            shot.air = -1.0f;
+            continue;
+        }
+        // The string, its onset ahead of the release, or now if the release is nearer than that.
+        if (shot.sound) {
+            const sim::Body* body = realm_.find(shot.shooter);
+            const int string = body ? swingSound(*body) : -1;
+            const float onset = string == heard_.bow        ? heard_.bowOnset
+                                : string == heard_.crossbow ? heard_.crossbowOnset
+                                                            : 0.0f;
+            const float left = from->figure.toRelease() / std::max(from->swingPace, 0.01f);
+            if (left <= onset || from->figure.released() || shot.waited >= kNockHold) {
+                if (string >= 0) emit(string, from->crown[0], from->crown[2], from->id);
+                shot.sound = false;
+            }
+        }
+        if (!from->figure.released() && shot.waited < kNockHold) continue;
+        float to[3] = {shot.to[0], shot.to[1], shot.to[2]};
+        if (shot.whom != 0) {
+            if (const Drawn* at = drawnOf(shot.whom); at && at->placed) {
+                const FigureBody* look = at->figure.body();
+                for (int k = 0; k < 3; ++k) to[k] = at->crown[k];
+                to[1] -= (look ? look->height * look->scale : 1.0f) * 0.5f;
+            }
+        }
+        const float left = shot.whom != 0 ? std::max(0.05f, shot.air - shot.waited) : 0.0f;
+        shootArrow(*from, to, shot.whom, left);
+        shot.air = -1.0f;
+    }
+    nocking_.erase(std::remove_if(nocking_.begin(), nocking_.end(),
+                                  [](const Nocking& n) { return n.air < 0.0f; }),
+                   nocking_.end());
     for (IceCast& cast : iceCasts_) {
         cast.wait -= float(seconds);
         if (cast.wait > 0.0f || ground_ == nullptr) continue;

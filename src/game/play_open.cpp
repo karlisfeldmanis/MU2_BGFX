@@ -433,6 +433,12 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.swingLong = sound_.load("player_swing_long", true);
     heard_.bow = sound_.load("player_bow", true);
     heard_.crossbow = sound_.load("player_crossbow", true);
+    if (const content::SoundEvent* e = showing().table().event("player_bow")) {
+        heard_.bowOnset = e->onset;
+    }
+    if (const content::SoundEvent* e = showing().table().event("player_crossbow")) {
+        heard_.crossbowOnset = e->onset;
+    }
     heard_.hit = sound_.load("melee_hit", true);
     heard_.missile = sound_.load("missile_hit", true);
     // The Dungeon's traps (ZzzCharacter.cpp:1223-1237): aGrate for the Lance and the Iron Stick,
