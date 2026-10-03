@@ -198,6 +198,7 @@ private:
     int clip_ = -1;
     int previous_ = -1;
     float time_ = 0.0f;
+    float heldClock_ = 0.0f;  // seconds, free-running: a held item's always-running clip (heldLoop)
     float previousTime_ = 0.0f;
     // `play`'s `once`, for the clip playing and the one fading out.
     bool once_ = false;

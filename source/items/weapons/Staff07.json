@@ -77,7 +77,9 @@
  },
  "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5238-5241): `case MODEL_STAFF_OF_RESURRECTION: BlendMesh = -2; BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7` -- every mesh drawn added and breathing (ZzzBMD.cpp:1509): the whole staff is a red glow. ZzzOpenData.cpp:1247's NoneBlendMesh on mesh 2 only keeps a levelled item's chrome pass off it (ZzzBMD.cpp:1425), as on the Chaos Dragon Axe; it was first read here as 'drawn solid', and wwe's black-backed cards stood as black squares on the staff (the user, 2026-10-03: 'staff of resurection needs work, black spots').",
  "material_note": "No baked material: MU draws all four meshes added (see glow_note), so the staff ships as glow parts on MU's raw sheets; the islands' materials go unused.",
- "rig_note": "No .rig.json, on purpose, as Staff06: Staff07.bmd has seventeen bones and sixteen of them move through a 4-key action 0, which MuMain plays at fifteen times the stand's speed when held (ZzzCharacter.cpp:10125-10128); a held item is rigid here, so it is built at key 0 -- the .obj is MU's geometry posed there. Not here: the shimmer of its moving parts, and what MuMain hangs on it held -- a warm BITMAP_SPARK and a BITMAP_SHINY+2 at its head, 145 units up the hand, and four spark particles thrown about it each frame (ZzzCharacter.cpp:10302-10318), client effects.",
+ "rig_note": "Staff07.rig.json from export-rig --actions=all: seventeen bones, the five swirl cards' Box bones turning a full circle through the 4-key action 0 (0, 90, 180, 270 degrees), played always at held_loop (Figure::poseHeld). Its own rig, so asset.sh does not borrow the player's (the trap Staff06 records). Not here: what MuMain hangs on it held -- a warm BITMAP_SPARK and a BITMAP_SHINY+2 at its head, 145 units up the hand, and four spark particles thrown about it each frame (ZzzCharacter.cpp:10302-10318), client effects.",
+ "held_loop": 1.25,
+ "held_loop_from": "MuMain plays the staff's action 0 always, at PLAYER_STOP_MALE's PlaySpeed 0.28 (ZzzOpenData.cpp:316-317) times 15 (ZzzCharacter.cpp:10125-10128): 4.2 keys a 25 Hz frame round a 4-key turn. Drawn at MU's 25 frames that is 0.2 of a key forward a frame -- 5 keys a second, a quarter turn a key: the five swirl cards on Box06, Box08, Box10, Box13 and Box16 spin about the head at 1.25 turns a second, which is what a player saw. `held_loop` is that, 1.25 turns a second, ours as a reading of the aliasing; the user, 2026-10-03: 'also i think that staff had some animations'.",
  "islands": [
   {
    "island": 0,
@@ -95,10 +97,10 @@
     0.999
    ],
    "bake_uv": [
-    0.417,
-    0.25,
-    0.796,
-    0.821
+    0.013,
+    0.013,
+    0.941,
+    0.961
    ]
   },
   {
@@ -117,10 +119,10 @@
     0.999
    ],
    "bake_uv": [
-    0.341,
-    0.068,
-    0.823,
-    0.821
+    0.014,
+    0.015,
+    0.971,
+    0.984
    ]
   },
   {
@@ -139,10 +141,10 @@
     0.999
    ],
    "bake_uv": [
-    0.379,
-    0.101,
-    0.829,
-    0.821
+    0.284,
+    0.015,
+    0.98,
+    0.987
    ]
   },
   {
@@ -161,10 +163,10 @@
     0.984
    ],
    "bake_uv": [
-    0.341,
-    0.008,
-    0.823,
-    0.822
+    0.064,
+    0.102,
+    0.98,
+    0.984
    ]
   },
   {
@@ -183,10 +185,10 @@
     0.999
    ],
    "bake_uv": [
-    0.675,
-    0.008,
-    0.806,
-    0.72
+    0.154,
+    0.013,
+    0.703,
+    0.127
    ]
   },
   {
@@ -205,10 +207,10 @@
     0.999
    ],
    "bake_uv": [
-    0.675,
-    0.008,
-    0.806,
-    0.624
+    0.013,
+    0.129,
+    0.157,
+    0.778
    ]
   },
   {
@@ -227,10 +229,10 @@
     0.999
    ],
    "bake_uv": [
-    0.675,
-    0.068,
-    0.806,
-    0.64
+    0.013,
+    0.156,
+    0.27,
+    0.788
    ]
   },
   {
@@ -249,10 +251,10 @@
     0.999
    ],
    "bake_uv": [
-    0.675,
-    0.129,
-    0.806,
-    0.656
+    0.139,
+    0.229,
+    0.65,
+    0.817
    ]
   },
   {
@@ -271,10 +273,10 @@
     0.999
    ],
    "bake_uv": [
-    0.675,
-    0.25,
-    0.806,
-    0.672
+    0.075,
+    0.094,
+    0.388,
+    0.402
    ]
   },
   {
@@ -293,10 +295,10 @@
     0.999
    ],
    "bake_uv": [
-    0.402,
-    0.372,
-    0.806,
-    0.719
+    0.245,
+    0.134,
+    0.493,
+    0.474
    ]
   },
   {
@@ -315,10 +317,10 @@
     0.999
    ],
    "bake_uv": [
-    0.462,
-    0.432,
-    0.806,
-    0.719
+    0.126,
+    0.013,
+    0.496,
+    0.505
    ]
   },
   {
@@ -337,10 +339,10 @@
     0.999
    ],
    "bake_uv": [
-    0.523,
-    0.493,
-    0.806,
-    0.72
+    0.013,
+    0.255,
+    0.583,
+    0.577
    ]
   },
   {
@@ -359,10 +361,10 @@
     0.5
    ],
    "bake_uv": [
-    0.341,
-    0.735,
-    0.568,
-    0.758
+    0.281,
+    0.608,
+    0.83,
+    0.804
    ]
   },
   {
@@ -381,10 +383,10 @@
     0.5
    ],
    "bake_uv": [
-    0.402,
-    0.735,
-    0.719,
-    0.758
+    0.424,
+    0.013,
+    0.846,
+    0.837
    ]
   },
   {
@@ -403,10 +405,10 @@
     0.999
    ],
    "bake_uv": [
-    0.584,
-    0.19,
-    0.78,
-    0.719
+    0.288,
+    0.115,
+    0.793,
+    0.82
    ]
   },
   {
@@ -425,10 +427,10 @@
     0.999
    ],
    "bake_uv": [
-    0.008,
-    0.341,
-    0.325,
-    0.659
+    0.118,
+    0.533,
+    0.232,
+    0.647
    ]
   },
   {
@@ -447,10 +449,10 @@
     0.999
    ],
    "bake_uv": [
-    0.341,
-    0.008,
-    0.659,
-    0.325
+    0.576,
+    0.564,
+    0.69,
+    0.678
    ]
   },
   {
@@ -469,10 +471,10 @@
     0.999
    ],
    "bake_uv": [
-    0.008,
-    0.008,
-    0.325,
-    0.325
+    0.394,
+    0.605,
+    0.508,
+    0.719
    ]
   },
   {
@@ -491,10 +493,10 @@
     0.999
    ],
    "bake_uv": [
-    0.341,
-    0.341,
-    0.659,
-    0.659
+    0.611,
+    0.19,
+    0.726,
+    0.304
    ]
   },
   {
@@ -513,10 +515,10 @@
     0.999
    ],
    "bake_uv": [
-    0.008,
-    0.675,
-    0.325,
-    0.992
+    0.611,
+    0.371,
+    0.726,
+    0.485
    ]
   },
   {
@@ -535,10 +537,10 @@
     0.999
    ],
    "bake_uv": [
-    0.341,
-    0.675,
-    0.386,
-    0.719
+    0.013,
+    0.013,
+    0.127,
+    0.127
    ]
   }
  ]

@@ -107,11 +107,19 @@ struct HeldItem {
     int nockedMaterial = -1;
     // The fraction of its own clip at which the string goes (its asset's `release`), 0 for none.
     float release = 0.0f;
+    // Times a second its own clip runs through, always, held or not (its asset's `held_loop`), 0
+    // for none: the Staff of Resurrection's swirl, which MuMain spins at fifteen times the
+    // stand's speed (ZzzCharacter.cpp:10125-10128). See Figure::poseHeld.
+    float heldLoop = 0.0f;
 };
 
 // Whether it hangs off the right grip: MU's `Weapon[0]`, what a skill that draws the weapon
 // itself draws (Twisting Slash's wheel, fx/wheel.h).
 bool inRightHand(const HeldItem& item);
+
+// The most bones a held item's own rig may have and still play its own clip: tools/cook.py's
+// wardrobe bakes a clip for no more. 24 since the Staff of Resurrection's 17 (2026-10-03).
+constexpr size_t kHeldBones = 24;
 
 // Which of the manifest's three lists a body came out of. It is not the rig and not the
 // behaviour -- the Skeleton Warrior is a monster on the player's rig -- it is the row that
@@ -240,6 +248,7 @@ struct ItemRow {
     // behind it on the rail, and where off the first the missile sits (MU units). Empty bones
     // on everything that does not shoot, and on the three whose rig marks none.
     float release = 0.0f;
+    float heldLoop = 0.0f;  // its asset's `held_loop`: its own clip run always, cycles a second
     std::string muzzleBone;
     std::string muzzleAxis;
     float muzzleOffset[3] = {0.0f, 0.0f, 0.0f};

@@ -153,6 +153,7 @@ void Figure::update(float seconds, float clipRate) {
     // seconds. See the note on this function in crowd.h.
     const float clipSeconds = seconds * clipRate;
     time_ += clipSeconds;
+    heldClock_ += seconds;
     if (clip.hold || once_) {
         time_ = std::min(time_, once_ ? onceEnd(clip) : clip.duration);
     } else if (clip.duration > 0.0f) {
@@ -425,7 +426,7 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
         const content::CookedClips& clips = *item.clip;
         const content::CookedClip& one = clips.clips.front();
         const std::vector<content::Bone>& bones = item.mesh->bones();
-        const size_t count = std::min({bones.size(), size_t(clips.bones), size_t(16),
+        const size_t count = std::min({bones.size(), size_t(clips.bones), kHeldBones,
                                        size_t(gfx::Renderer::kMaxBones)});
         if (count == 0 || one.frames == 0) continue;
 
@@ -435,6 +436,11 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
         if (key >= 0.0f && item.onShot && one.frames > 1) {
             const float period = float(one.frames - 1);
             where = std::fmod(key, period);
+        } else if (item.heldLoop > 0.0f && one.frames > 1) {
+            // Always running, on its own clock: the Staff of Resurrection's swirl.
+            // `heldLoop` is cycles a second, whatever keys the cook sampled the cycle into.
+            const float period = float(one.frames - 1);
+            where = std::fmod(heldClock_ * item.heldLoop * period, period);
         }
         uint32_t frame = uint32_t(where);
         if (frame + 1 >= one.frames) frame = one.frames > 1 ? one.frames - 2 : 0;
@@ -443,7 +449,7 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
         const float* a = &clips.rows[(size_t(one.firstRow) + size_t(frame) * clips.bones) * 7];
         const float* b = one.frames > 1 ? a + size_t(clips.bones) * 7 : a;
 
-        float world[16 * 16];
+        float world[kHeldBones * 16];
         for (size_t j = 0; j < count; ++j) {
             float rotation[4];
             float translation[3];

@@ -139,6 +139,7 @@ size_t Figures::clipCount() const {
 ItemRow itemRowOf(const core::Json& entry) {
     ItemRow row{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
     row.release = float(entry["release"].numberOr(0.0));
+    row.heldLoop = float(entry["held_loop"].numberOr(0.0));
     row.muzzleBone = entry["muzzle_bone"].stringOr("");
     row.muzzleAxis = entry["muzzle_axis"].stringOr("");
     const core::Json& offset = entry["muzzle_offset"];
@@ -203,7 +204,7 @@ void Figures::bind(FigureBody& body) {
     // A held weapon with a rig of its own takes its own clip: a bow's or a crossbow's string,
     // played on the shot (Figure::poseHeld). A staff on the player's rig is a part, not this.
     for (HeldItem& item : body.held) {
-        if (!item.mesh || !item.mesh->isSkinned() || item.mesh->bones().size() > 16) continue;
+        if (!item.mesh || !item.mesh->isSkinned() || item.mesh->bones().size() > kHeldBones) continue;
         item.clip = heldClip(item.mesh->name());
         item.onShot = item.stance == "bow" || item.stance == "crossbow";
         // Where its missile leaves and what sits on it, by the rig's own names.
@@ -219,6 +220,7 @@ void Figures::bind(FigureBody& body) {
             item.muzzleAxis = boneNamed(row->second.muzzleAxis);
             for (int k = 0; k < 3; ++k) item.muzzleOffset[k] = row->second.muzzleOffset[k] * 0.01f;
             item.release = row->second.release;
+            item.heldLoop = row->second.heldLoop;
         }
         const auto& materials = item.mesh->materials();
         for (size_t m = 0; m < materials.size(); ++m) {
@@ -1010,6 +1012,9 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     for (const auto& [name, entry] : manifest["items"].members) {
         // The figures' own row wins, but it may carry no shot where the wardrobe's does.
         ItemRow row = itemRowOf(entry);
+        if (auto had = items_.find(name); had != items_.end() && row.heldLoop <= 0.0f) {
+            row.heldLoop = had->second.heldLoop;
+        }
         if (auto had = items_.find(name); had != items_.end() && row.muzzleBone.empty()) {
             row.release = had->second.release;
             row.muzzleBone = had->second.muzzleBone;

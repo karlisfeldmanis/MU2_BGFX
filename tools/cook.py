@@ -438,6 +438,10 @@ def shot_of(one):
         out["muzzle_bone"] = one["muzzle_bone"]
         out["muzzle_axis"] = one.get("muzzle_axis", "")
         out["muzzle_offset"] = [float(v) for v in (one.get("muzzle_offset") or [0, 0, 0])]
+    # And a held weapon whose own clip runs always, cycles a second: the Staff of
+    # Resurrection's swirl (figures.h HeldItem::heldLoop).
+    if one.get("held_loop"):
+        out["held_loop"] = float(one["held_loop"])
     return out
 
 
@@ -3403,7 +3407,8 @@ def cook_wardrobe(out_dir, texcook, threads):
         # clip in the same glb, as a world object does; baked beside the mesh for the figure
         # that holds it to play (crowd.cpp, Figure::poseHeld). Never a staff, whose 60 bones
         # are the player's and whose clips are the player's library.
-        if 0 < bones <= 16:
+        # Up to 24 bones (figures.h kHeldBones): the Staff of Resurrection's rig has 17.
+        if 0 < bones <= 24:
             cook_world_clip(name, path, os.path.join(out_dir, "clips", name + ".muc"))
         triangles += tris
         vertices += verts

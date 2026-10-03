@@ -2520,6 +2520,10 @@ def main() -> None:
             # is read off the keys rather than chosen: see release_from on the asset.
             if (release := document.get("release")):
                 entry["release"] = float(release)
+            # A held weapon whose own clip runs always, in cycles a second (Figure::poseHeld):
+            # the Staff of Resurrection's spinning swirl.
+            if (loop := document.get("held_loop")):
+                entry["held_loop"] = float(loop)
 
             # And the bone the missile leaves from, for a weapon whose rig marks one.
             #
