@@ -235,6 +235,23 @@ public:
             }
             std::printf(",");
         }
+        // How deep his gear is (the user, 2026-10-03: "its wierd that bots are not ending with
+        // good gears"): the drop levels of his weapon, shield and five armour pieces, their mean
+        // and their plus's, against his own level.
+        {
+            int pieces = 0, levels = 0, pluses = 0;
+            for (int slot = sim::kWeaponRight; slot <= sim::kBoots; ++slot) {
+                const sim::Held& one = realm_->satchel()[slot];
+                if (one.empty() || sim::ammunition(tables_->items[size_t(one.item)])) continue;
+                ++pieces;
+                levels += tables_->items[size_t(one.item)].dropLevel;
+                pluses += one.refinement;
+            }
+            if (pieces > 0) {
+                std::printf("\n  gear: drop level %.0f, plus %.1f over %d pieces", double(levels) / pieces,
+                            double(pluses) / pieces, pieces);
+            }
+        }
         const sim::Body& hero = realm_->hero();
         std::printf("\n  damage %d-%d, defence %d, health %d, points %d/%d/%d/%d, in %s\n",
                     hero.stats.minimumDamage, hero.stats.maximumDamage, hero.stats.defense,
@@ -1237,11 +1254,24 @@ private:
         return caution_ * taken * seconds * 20.0 / std::max(1, kind.attackTicks);
     }
     // Whether he takes this breed on: a kill costs him under a third of his health (a half to
-    // keep at a quest already under way), and it has not killed him twice lately.
-    bool takes(const content::MonsterKind& kind, double share = 3.0) const {
+    // keep at a quest already under way, or while he can pay for the potions: riskShare), and it
+    // has not killed him twice lately.
+    bool takes(const content::MonsterKind& kind, double share = 0.0) const {
+        if (share <= 0.0) share = riskShare();
         const auto fear = fearUntil_.find(kind.number);
         if (fear != fearUntil_.end() && fear->second > clock_) return false;
         return costOf(kind) * share <= realm_->hero().maxHealth;
+    }
+    // **What share of his health a kill may cost** (the user, 2026-10-03: "its wierd that bots
+    // are not ending with good gears", then "push to harder maps"): a third, and for the wizard
+    // a half while his purse holds twenty potions of his tier -- he drinks his way down, as a
+    // player does. Three seeds of 8 h: the wizard's gear went from drop level 26-30 to 31-39 with
+    // it; the knight, who drinks through melee, lost 6-10 levels and gained nothing, and the elf
+    // was the same either way, so theirs stays a third. Off the purse alone, so the choice does
+    // not flicker as he drinks his bag down.
+    double riskShare() const {
+        const bool rich = realm_->money() >= 20 * potionPrice(healTier());
+        return options_.kin == sim::Kin::DarkWizard && rich ? 2.0 : 3.0;
     }
     // The strongest breed level on a map he takes, or -1.
     int bestOn(const content::Tables& tables) const {
@@ -1615,8 +1645,31 @@ private:
         if (aim_ == Aim::Hunt && aimMap_ == map()) {
             return std::find(quarry_.begin(), quarry_.end(), kind.number) != quarry_.end();
         }
+        // **Grinding, nothing far under the best he takes here**, so a floor of weaklings sends
+        // him down (nextFloor) -- what is on him he answers all the same. The map was chosen by
+        // its strongest breed he takes, but he fought whatever stood on the floor he landed on:
+        // a level-175 wizard killed 1,481 of the Dungeon's first-floor Skeleton Warriors in 8 h
+        // and wore Pad and Bone, as nothing there drops better (the user, 2026-10-03: "its
+        // wierd that bots are not ending with good gears").
+        if (aim_ == Aim::Grind && body.quarry != realm_->hero().id) {
+            const int best = bestHere();
+            if (best >= 0 && kind.level < best - kGrindBand) return false;
+        }
         return takes(kind);
     }
+    static constexpr int kGrindBand = 12;
+    // bestOn for the map he stands on, once a second: quarry asks it of every body every tick.
+    int bestHere() const {
+        if (bestHereAt_ != clock_ / 20 || bestHereMap_ != map()) {
+            bestHereAt_ = clock_ / 20;
+            bestHereMap_ = map();
+            bestHere_ = bestOn(*tables_);
+        }
+        return bestHere_;
+    }
+    mutable int64_t bestHereAt_ = -1;
+    mutable int bestHereMap_ = -1;
+    mutable int bestHere_ = -1;
 
     void hunt() {
         const sim::Body& hero = realm_->hero();
