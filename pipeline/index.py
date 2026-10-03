@@ -305,6 +305,10 @@ EFFECTS = {
     # BITMAP_FIRE + 1, Effect/Fire02.jpg: one 64 square of flame on black. The Dungeon's Fire
     # Trap throws it out of its vent (CreateEffect(BITMAP_FIRE + 1), ZzzCharacter.cpp:1233-1237,
     # its particle ZzzEffectParticle.cpp:500 and :4700). See game/world/trap_show.h.
+    # Ours: fire01 with each texel's brightest channel in all three, so an arrow's fire can be
+    # tinted to a colour other than its own orange -- the Chaos Nature Bow's green (the user,
+    # 2026-10-03: 'for chaos bow we can make green fire'). See game/fx/arrow.h.
+    "fire_grey": "effects/fire/fire01_grey.png",
     "fire2": "effects/fire/fire02.png",
     "smoke": "effects/fire/smoke02.png",
 

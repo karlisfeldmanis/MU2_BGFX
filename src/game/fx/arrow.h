@@ -38,6 +38,16 @@
 // arrow's embers drift, a faint cold light with the head, and the arrow's own thin smoke. The Light
 // Crossbow's laser glows already and is left bare.
 //
+// **Ours:** a very special bow or crossbow keeps the arrow's or the bolt's look and tones its
+// colour (the user, 2026-10-03: 'if there is some very special bow/crossbow we can tone the
+// effects colors', 'like for chaos bow we can make green fire'), each from MU's own picture of
+// it: the Chaos Nature Bow burns green (its BITMAP_SHINY+1 glints, ZzzCharacter.cpp:7036-7041),
+// the Silver Bow pale silver (PartObjectColor 5, white), the Bluewing Crossbow's streak cyan
+// (its ArrowWing01's bu009) and the Serpent Crossbow's amber (its ArrowThunder01's bow_d). A
+// tinted arrow's embers and licks are drawn off fire_grey -- fire01 with its brightest channel
+// in all three -- because orange times green is mud; the small fire on its own tail is
+// multiplied. The smoke stays grey.
+//
 // ArrowSteel01 is built head at -Z -- its broadhead, widest at z -18 and pointed at -43, with
 // the bare shaft out to +44 -- where Arrow01's head is at +Z; drawn as the others it flew tail
 // first (the user: 'bolts looks inverted'). It is turned half round (Shape::reversed).
@@ -68,12 +78,15 @@ public:
 
     // Which model a weapon throws, by its bow-group number (MuMain's CreateArrow).
     static Model modelFor(int32_t group, int32_t number);
+    // Its fire's or streak's colour when it is one of the few toned (see the top), or null.
+    static const float* tintFor(int32_t group, int32_t number);
 
     // One let go from `from` at the body `whom`, aimed first at `to`.
     // `shooter`, when not 0, is reported in landed() the frame the arrow reaches `whom`: a
     // monster's shot, whose blow is shown where it lands (Play::hunterShot).
+    // `tint`, from tintFor, tones the fire or the streak.
     void loose(const float from[3], const float to[3], uint32_t whom, Model model,
-               uint32_t shooter = 0);
+               uint32_t shooter = 0, const float* tint = nullptr);
     const std::vector<uint32_t>& landed() const { return landed_; }
 
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
@@ -112,6 +125,8 @@ private:
         float glinted;   // metres since the last glint (the bolts')
         float chipped;   // metres since the last spark
         float travelled; // metres from the muzzle
+        bool tinted;
+        float tint[3];
     };
     struct Glint {  // ours: a bolt's streak (still) or spark (thrown, falling)
         bool alive = false;
@@ -122,9 +137,12 @@ private:
         float spin;
         float left;         // reference frames
         float frames;       // what it was born with
+        float colour[3];
     };
     struct Ember {
         bool alive = false;
+        bool grey = false;  // off fire_grey, in `colour`
+        float colour[3];
         float at[3];
         float velocity[3];  // metres a second
         float size;         // metres
@@ -134,6 +152,8 @@ private:
     };
     struct Lick {  // ours: the tail's own flame
         bool alive = false;
+        bool grey = false;
+        float colour[3];
         float at[3];
         float velocity[3];  // metres a second
         float size;         // metres
@@ -163,7 +183,7 @@ private:
     static constexpr float kSmallestEmber = 1.28f, kLargestEmber = 1.92f;  // x the sheet's 64
     // **Ours:** drawn at this share of MU's size (the user, 2026-10-03: 'reduce arrows fire
     // effect little bit, its to wide').
-    static constexpr float kEmberShare = 0.65f;
+    static constexpr float kEmberShare = 0.75f;  // 0.65 was a touch narrow
     static constexpr float kEmberSheetUnits = 64.0f;
     static constexpr float kEmberShrink = 0.04f;
     static constexpr float kEmberRise = 0.004f;
@@ -177,18 +197,20 @@ private:
     static constexpr float kLickBehind = 0.22f;    // metres behind the arrow's origin: the
                                                    // sprite's middle (loaded z 0 to -0.41 m)
     static constexpr float kLickFrames = 8.0f;
-    static constexpr float kSmallestLick = 0.12f, kLargestLick = 0.20f;  // metres
+    static constexpr float kSmallestLick = 0.14f, kLargestLick = 0.24f;  // metres
     static constexpr float kLickRise = 0.3f;       // metres a second
     static constexpr float kLickJitter = 0.15f;    // metres a second, either way across
 
     // ---- Ours: the smoke behind it ---------------------------------------------------------------
-    static constexpr float kWispSpacing = 0.35f;   // metres of flight between wisps
+    // Cleaner, still soft (the user, 2026-10-03: 'make that smoke more clean but keep the
+    // blurriness'): fewer, lighter, fainter wisps that open wider and scatter less.
+    static constexpr float kWispSpacing = 0.45f;   // metres of flight between wisps
     static constexpr float kWispBehind = 0.55f;    // metres behind the origin, past the flame
     static constexpr float kWispFrames = 12.0f;
-    static constexpr float kWispBorn = 0.15f, kWispGrown = 0.45f;  // metres across
+    static constexpr float kWispBorn = 0.18f, kWispGrown = 0.55f;  // metres across
     static constexpr float kWispRise = 0.25f;      // metres a second
-    static constexpr float kWispGrey[3] = {0.30f, 0.30f, 0.32f};
-    static constexpr float kWispAlpha = 0.30f;
+    static constexpr float kWispGrey[3] = {0.42f, 0.42f, 0.44f};
+    static constexpr float kWispAlpha = 0.22f;
     // Not at the bow: the first wisp waits until the arrow is this far out, so the smoke is
     // left after the shot and not in her hands (the user, 2026-10-03).
     static constexpr float kWispFromMuzzle = 1.0f;  // metres
@@ -209,6 +231,17 @@ private:
     static constexpr float kBoltLightReach = 1.6f;   // metres on the ground
     static constexpr float kBoltLightHeight = 1.4f;  // metres, about where it flies
 
+    // ---- Ours: the toned few (see the top) -----------------------------------------------------
+    static constexpr float kNatureFire[3] = {0.30f, 0.95f, 0.40f};
+    static constexpr float kSilverFire[3] = {0.75f, 0.80f, 0.95f};
+    static constexpr float kBluewingStreak[3] = {0.25f, 0.80f, 0.95f};
+    static constexpr float kSerpentStreak[3] = {0.95f, 0.70f, 0.25f};
+    static constexpr float kTailTone = 1.6f;    // the tail's fire01, multiplied
+    // fire_grey carries the flame in all three channels where fire01 is mostly red, and green
+    // reads far brighter than red: at the tint alone the green embers were glowing balls.
+    static constexpr float kGreyFireShare = 0.45f;
+    static constexpr float kToneLight = 0.6f;   // a toned bolt's light, of its streak
+
     static constexpr int kShots = 16;
     static constexpr int kGlints = 384;
     static constexpr int kEmbers = 256;
@@ -218,6 +251,7 @@ private:
     Shape shapes_[kModels];
     bgfx::TextureHandle emberSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle smokeSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle greyFireSheet_ = BGFX_INVALID_HANDLE;  // fire_grey
     bgfx::TextureHandle glintSheet_ = BGFX_INVALID_HANDLE;  // flare01, streak and sparks
     float metresPerTile_ = 1.0f;
     Shot shots_[kShots];

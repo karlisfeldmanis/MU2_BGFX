@@ -65,6 +65,9 @@ bool Arrows::open(const std::string& assetDir, content::Textures& textures,
     if (fire != nullptr) {
         emberSheet_ = textures.load(assetDir + "/" + fire->path, content::TextureRole::Albedo);
     }
+    if (const content::EffectSheet* grey = table.effect("fire_grey")) {
+        greyFireSheet_ = textures.load(assetDir + "/" + grey->path, content::TextureRole::Albedo);
+    }
     if (const content::EffectSheet* smoke = table.effect("smoke")) {
         smokeSheet_ = textures.load(assetDir + "/" + smoke->path, content::TextureRole::Albedo);
     }
@@ -103,13 +106,24 @@ Arrows::Model Arrows::modelFor(int32_t group, int32_t number) {
     }
 }
 
+const float* Arrows::tintFor(int32_t group, int32_t number) {
+    if (group != 4) return nullptr;
+    switch (number) {
+        case 5: return kSilverFire;       // Silver Bow
+        case 6: return kNatureFire;       // Chaos Nature Bow
+        case 12: return kSerpentStreak;   // Serpent Crossbow
+        case 13: return kBluewingStreak;  // Bluewing Crossbow
+        default: return nullptr;
+    }
+}
+
 float Arrows::roll() {
     dice_ = dice_ * 1664525u + 1013904223u;
     return float(dice_ >> 8) / float(1u << 24);
 }
 
 void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model model,
-                   uint32_t shooter) {
+                   uint32_t shooter, const float* tint) {
     Shot* shot = nullptr;
     for (Shot& one : shots_) {
         if (!one.alive) {
@@ -136,6 +150,8 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     shot->glinted = kGlintSpacing;
     shot->chipped = 0.0f;
     shot->travelled = 0.0f;
+    shot->tinted = tint != nullptr;
+    for (int k = 0; k < 3; ++k) shot->tint[k] = tint ? tint[k] : 1.0f;
     shot->glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
 }
 
@@ -259,6 +275,12 @@ void Arrows::glint(const Shot& shot, bool spark, float back) {
             g.at[k] = shot.at[k] - shot.along[k] * ((spark ? 0.0f : kGlintBehind) + back);
             g.velocity[k] = 0.0f;
         }
+        // The streak in the bolt's tone, its sparks half way from it to white.
+        for (int k = 0; k < 3; ++k) {
+            g.colour[k] = !shot.tinted ? (spark ? kSparkLight[k] : kGlintLight[k])
+                          : spark      ? 0.5f * (shot.tint[k] + 1.0f)
+                                       : shot.tint[k];
+        }
         if (spark) {
             // Off either side and a little up, and on with a share of the bolt's way.
             for (int k = 0; k < 3; ++k) {
@@ -283,7 +305,7 @@ void Arrows::smoke(const Shot& shot) {
         if (w.alive) continue;
         w.alive = true;
         for (int k = 0; k < 3; ++k) {
-            w.at[k] = shot.at[k] - shot.along[k] * kWispBehind + (roll() - 0.5f) * 0.06f;
+            w.at[k] = shot.at[k] - shot.along[k] * kWispBehind + (roll() - 0.5f) * 0.03f;
         }
         w.spin = roll() * kTwoPi;
         w.age = 0.0f;
@@ -305,6 +327,10 @@ void Arrows::lick(const Shot& shot) {
         l.size = kSmallestLick + (kLargestLick - kSmallestLick) * roll();
         l.spin = roll() * kTwoPi;
         l.glow = shot.glow;
+        l.grey = shot.tinted && bgfx::isValid(greyFireSheet_);
+        for (int k = 0; k < 3; ++k) {
+            l.colour[k] = l.grey ? shot.tint[k] * kGreyFireShare : kEmberLight[k];
+        }
         l.left = kLickFrames;
         return;
     }
@@ -324,6 +350,10 @@ void Arrows::shed(const Shot& shot) {
                  kEmberSheetUnits * kUnit * kEmberShare;
         e.spin = roll() * kTwoPi;
         e.rise = 0.0f;
+        e.grey = shot.tinted && bgfx::isValid(greyFireSheet_);
+        for (int k = 0; k < 3; ++k) {
+            e.colour[k] = e.grey ? shot.tint[k] * kGreyFireShare : kEmberLight[k];
+        }
         e.left = kEmberFrames;
         return;
     }
@@ -353,9 +383,13 @@ void Arrows::gather(gfx::Effects& effects) const {
         }
         for (const Part& part : shape.parts) {
             if (!bgfx::isValid(part.sheet)) continue;
-            const float white[3] = {1.0f, 1.0f, 1.0f};
+            // A toned arrow's added tail, multiplied to its colour; the shaft stays wood.
+            float colour[3] = {1.0f, 1.0f, 1.0f};
+            if (shot.tinted && part.blend == gfx::Blend::Additive && shot.model == Wood) {
+                for (int k = 0; k < 3; ++k) colour[k] = shot.tint[k] * kTailTone;
+            }
             submitEffectAlong(effects, part.triangles, part.sheet, part.blend, shot.at, across,
-                              lift, ahead, kScale, white, 1.0f);
+                              lift, ahead, kScale, colour, 1.0f);
         }
     }
     for (const Ember& e : embers_) {
@@ -370,9 +404,9 @@ void Arrows::gather(gfx::Effects& effects) const {
         sprite.u0 = float(cell) / float(kEmberCells);
         sprite.u1 = float(cell + 1) / float(kEmberCells);
         // Held, not faded: what an ember loses is its size.
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = kEmberLight[k] * 0.85f;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = e.colour[k] * 0.85f;
         sprite.colour[3] = 1.0f;
-        sprite.sheet = emberSheet_;
+        sprite.sheet = e.grey ? greyFireSheet_ : emberSheet_;
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
@@ -387,9 +421,9 @@ void Arrows::gather(gfx::Effects& effects) const {
         const int cell = std::clamp(int((1.0f - life) * float(kEmberCells)), 0, kEmberCells - 1);
         sprite.u0 = float(cell) / float(kEmberCells);
         sprite.u1 = float(cell + 1) / float(kEmberCells);
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = kEmberLight[k] * l.glow * life;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = l.colour[k] * l.glow * life;
         sprite.colour[3] = 1.0f;
-        sprite.sheet = emberSheet_;
+        sprite.sheet = l.grey ? greyFireSheet_ : emberSheet_;
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
@@ -404,10 +438,10 @@ void Arrows::gather(gfx::Effects& effects) const {
         if (g.spark) {
             sprite.halfWidth = sprite.halfHeight = g.size * 0.5f;
             const float lit = std::min(1.0f, life * 3.0f);
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = kSparkLight[k] * lit;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = g.colour[k] * lit;
         } else {
             sprite.halfWidth = sprite.halfHeight = g.size * (0.4f + 0.6f * life) * 0.5f;
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = kGlintLight[k] * life;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = g.colour[k] * life;
         }
         sprite.sheet = glintSheet_;
         sprite.colour[3] = 1.0f;
@@ -421,7 +455,7 @@ void Arrows::gather(gfx::Effects& effects) const {
         gfx::Sprite sprite;
         for (int k = 0; k < 3; ++k) sprite.position[k] = w.at[k];
         sprite.halfWidth = sprite.halfHeight = 0.5f * (kWispBorn + (kWispGrown - kWispBorn) * t);
-        sprite.spin = w.spin + t * 0.6f;
+        sprite.spin = w.spin + t * 0.3f;
         for (int k = 0; k < 3; ++k) sprite.colour[k] = kWispGrey[k];
         const float in = std::min(1.0f, t / 0.15f);
         const float out = 1.0f - std::clamp((t - 0.3f) / 0.7f, 0.0f, 1.0f);
@@ -441,7 +475,10 @@ uint32_t Arrows::lights(gfx::PointLight* out, uint32_t max) const {
         for (int k = 0; k < 3; ++k) light.position[k] = shot.at[k];
         light.reach = kBoltLightReach;
         light.height = kBoltLightHeight;
-        for (int k = 0; k < 3; ++k) light.colour[k] = kBoltLight[k] * shot.glow;
+        for (int k = 0; k < 3; ++k) {
+            light.colour[k] =
+                (shot.tinted ? shot.tint[k] * kToneLight : kBoltLight[k]) * shot.glow;
+        }
     }
     return count;
 }

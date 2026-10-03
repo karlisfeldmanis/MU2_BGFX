@@ -384,12 +384,14 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom) {
     const float muzzle[3] = {shooter.crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
                              shooter.crown[2] + fz * 0.6f - fx * 0.1f};
     Arrows::Model model = Arrows::Wood;
+    const float* tint = nullptr;
     if (const sim::Body* body = realm_.find(shooter.id);
         body && body->weapon >= 0 && size_t(body->weapon) < tables_.arms.size()) {
         const content::Arm& arm = tables_.arms[size_t(body->weapon)];
         model = Arrows::modelFor(arm.group, arm.number);
+        tint = Arrows::tintFor(arm.group, arm.number);
     }
-    arrows_.loose(muzzle, to, whom, model);
+    arrows_.loose(muzzle, to, whom, model, 0, tint);
 }
 
 bool Play::shoots(uint32_t id, Arrows::Model* model) {
