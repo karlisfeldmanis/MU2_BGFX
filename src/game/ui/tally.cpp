@@ -78,17 +78,42 @@ constexpr float kDropAlpha = 0.55f;
 // Small, in Cinzel Medium, and the SAME size and weight for every row -- experience, Zen and a
 // potion are one kind of thing and are said one way (the user, 2026-09-23). The fight's Bold is
 // for the blows and the death.
-constexpr float kLaneSize = 9.0f;
-constexpr float kLaneUnitSize = 6.5f;
+// 6.0 and 4.4, from 9 and 6.5, 7.6 and 5.5, 6.6 and 4.8: the user, 2026-10-03, "make exp and zen
+// and potion hp gain text little bit smaller", then "smaller font size" in the top left corner,
+// then "little bit smaller font and reduce gaps little bit".
+constexpr float kLaneSize = 6.0f;
+constexpr float kLaneUnitSize = 4.4f;
 constexpr float kLaneUnitTracking = 0.24f;  // the arrival's caption tracking, near enough
-constexpr float kLaneGapAboveHud = 14.0f;  // clear of the plate's top edge
-constexpr float kLaneRowGap = 3.0f;
-constexpr float kLaneWordGap = 7.0f;
+constexpr float kLaneRowGap = 2.0f;  // 3 until 2026-10-03, "reduce gaps"
+constexpr float kLaneWordGap = 5.5f;  // 7 until 2026-10-03, the same
 constexpr float kRowLife = 2.1f;
 // The lane holds this many rows at most, the newest: a spell that fells two dozen at once
 // stacked two dozen experience rows up the screen (the user, 2026-10-03: "too much experience
-// text on screen, show latest 10"). The oldest go first, in order. Ours.
+// text on screen, show latest 10", then "show last 8", then "show last 15" once it moved to the
+// corner, and 10 again at the top left). The oldest go first, in order. Ours.
 constexpr size_t kLaneMost = 10;
+// **In the top left corner, read from the left** (the user, 2026-10-03: "move this scroll
+// container to screens left bottom side ... align text to left side", then "move exp scroll to
+// top left side"), off the HUD's middle where it stood: this far in from the screen's left edge
+// and down from its top, in units. The newest is the top row and the older are pushed down, so
+// the rows that fade by place are now the lowest.
+constexpr float kLaneLeft = 14.0f;
+constexpr float kLaneTop = 16.0f;
+// And a fight's Zen, not in the corner but centred over the HUD where the lane stood, a size up
+// from the lane's 7.6 and held a little longer (the user, 2026-10-03: "zen has to be back on
+// middle and little bit bigger"). Ours.
+constexpr float kZenAboveHud = 14.0f;  // clear of the plate's top edge, in units
+constexpr float kZenSize = 10.0f;
+constexpr float kZenUnitSize = 7.0f;
+constexpr float kZenLife = 2.6f;
+// **It scrolls, and its top fades** (the user, 2026-10-03: "can we make it scrolling with fade
+// out top?"): a row arriving pushes the stack down one row, eased over about a seventh of a
+// second (the scroll falls by e^-rate a second), never more than kLaneScrollMost rows behind
+// however many arrive at once; and the last kLaneFadeRows of the ten fade out by place, over
+// their own fade in time. Ours.
+constexpr float kLaneScrollRate = 14.0f;
+constexpr float kLaneScrollMost = 3.0f;
+constexpr float kLaneFadeRows = 3.0f;
 // The death is set larger and in the fight's own weight rather than the lane's: it is the one
 // line there that is not income.
 //
@@ -146,10 +171,12 @@ constexpr float kRowIn = 0.10f, kRowOut = 0.72f;  // of the life
 // full second of fade, which is long enough that it reads as the message letting go of the
 // screen rather than being switched off a moment before he stands up.
 constexpr float kDiedOut = 0.50f;
-constexpr float kRowLift = 8.0f;                  // it comes up into place, in units
-// Zen is summed for this long and posted once. A hunt pays a pile a body and a good one is a
-// pile a second; a figure for each is a slot machine, and one figure a second is income.
-constexpr float kZenRollUp = 1.0f;
+// Zen is summed over a fight and posted once at its end, when this long has gone by with no pile
+// taken (the user, 2026-10-03: "multiple monsters was killed in short time amount we calculate
+// total number of zen and show gain at the end of combat in one time"). It was a second from the
+// first pile, which posted in the middle of a rain of kills, and for a moment every pile was its
+// own row. Ours.
+constexpr float kZenRollUp = Play::kZenQuietSeconds;  // the coins ring on the same beat
 
 // ---- the palette ----------------------------------------------------------------------------
 // Bone, amber, gold: the ramp. Red for what lands on HIM, whatever threw it -- his own pain is
@@ -342,6 +369,7 @@ void Tally::dismiss() {
     lane_.clear();
     heldZen_ = 0;
     zenAge_ = 0.0f;
+    zenShowing_ = false;
     canvas_.clear();
     drawn_ = false;
 }
@@ -350,23 +378,28 @@ void Tally::collect(const Play& play, float seconds) {
     for (const Play::Gain& gain : play.gains()) {
         switch (gain.kind) {
             case Play::Gain::Kind::Zen:
-                // Held, not posted: see kZenRollUp.
-                if (heldZen_ == 0) zenAge_ = 0.0f;
+                // Held, and the wait begun again: see kZenRollUp.
+                zenAge_ = 0.0f;
                 heldZen_ += gain.value;
                 break;
             case Play::Gain::Kind::Experience:
                 lane_.push_back({Row::Kind::Experience, gain.value, 0.0f});
+                scroll_ += 1.0f;
                 break;
             case Play::Gain::Kind::Health:
                 lane_.push_back({Row::Kind::Health, gain.value, 0.0f});
+                scroll_ += 1.0f;
                 break;
             case Play::Gain::Kind::Mana:
                 lane_.push_back({Row::Kind::Mana, gain.value, 0.0f});
+                scroll_ += 1.0f;
                 break;
             case Play::Gain::Kind::Died:
                 // Alone: whatever he was earning a second ago is not what the lane is for now.
                 lane_.clear();
                 heldZen_ = 0;
+                zenShowing_ = false;
+                scroll_ = 0.0f;
                 lane_.push_back({Row::Kind::Died, 0, 0.0f});
                 break;
         }
@@ -374,11 +407,19 @@ void Tally::collect(const Play& play, float seconds) {
     if (heldZen_ > 0) {
         zenAge_ += seconds;
         if (zenAge_ >= kZenRollUp) {
-            lane_.push_back({Row::Kind::Zen, heldZen_, 0.0f});
+            // Over the HUD, not in the lane: a later fight's sum takes the place of this one.
+            zenRow_ = {Row::Kind::Zen, heldZen_, 0.0f};
+            zenShowing_ = true;
             heldZen_ = 0;
             zenAge_ = 0.0f;
         }
     }
+    if (zenShowing_) {
+        zenRow_.age += seconds;
+        if (zenRow_.age >= kZenLife) zenShowing_ = false;
+    }
+    scroll_ = std::min(scroll_, kLaneScrollMost) * std::exp(-kLaneScrollRate * seconds);
+    if (scroll_ < 0.001f) scroll_ = 0.0f;
     // The newest kLaneMost, the death's row kept whatever comes after it.
     while (lane_.size() > kLaneMost) {
         auto oldest = lane_.begin();
@@ -404,7 +445,7 @@ void Tally::update(float seconds, const Play& play, const float* viewProj, int w
         return;
     }
     collect(play, seconds);
-    const bool anything = !play.showing().figures().empty() || !lane_.empty();
+    const bool anything = !play.showing().figures().empty() || !lane_.empty() || zenShowing_;
     if (!anything) {
         // Cleared once, then left alone: a town with nothing happening in it rebuilds nothing.
         if (drawn_) {
@@ -458,15 +499,17 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         writeIn(face_, faceTexture_, halo_, haloTexture_, centreX, baseline, size, ink, text,
                 trackingEm, drop);
     };
-    // A gain: the Medium, and no hard drop -- a shadow under nine-unit text is a smudge, and
-    // the fight's own halo (baked from the Bold) is close enough at this size to shade it.
+    // A gain: the Medium. It had no hard drop -- a shadow under nine-unit text was a smudge --
+    // until the lane moved to the top left over the bright world, where a minimal one reads
+    // (the user, 2026-10-03: "with some minimal drop shadow"): the blows' own, a share of the
+    // size down and right, about a pixel at this size.
     const auto writeQuiet = [&](float centreX, float baseline, float size, uint32_t ink,
                                 const std::string& text, float trackingEm) {
         // Half the halo the fight takes: a blur baked for a 42-unit figure, laid under a
         // 9-unit one at full strength, is a dark band behind the words rather than air round
         // them -- seen in the first shot of it.
         writeIn(quiet_, quietTexture_, deathHalo_, deathHaloTexture_, centreX, baseline, size,
-                ink, text, trackingEm, false, 0.5f);
+                ink, text, trackingEm, true, 0.5f);
     };
 
     // ---- the blows ---------------------------------------------------------------------
@@ -499,13 +542,16 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
     }
 
     // ---- the lane ----------------------------------------------------------------------
-    // Newest at the bottom, stacking upward off the HUD's own top edge, centred on the screen
-    // as the plate is. A row that is fading still holds its place until it is gone, so nothing
-    // below it slides up under the eye.
-    float baseline = hudTop - kLaneGapAboveHud * unit;
+    // Newest at the top, stacking downward from the screen's top left corner, read from the left
+    // (kLaneLeft, kLaneTop) -- it stood centred over the HUD, then in the bottom left corner. A row that is fading still holds its place until it is gone, so nothing
+    // below it slides up under the eye. The whole stack is drawn `scroll_` rows low while it
+    // eases down into place, and the lowest rows of the ten fade by place.
     const float rowSize = kLaneSize * unit;
     const float unitSize = kLaneUnitSize * unit;
+    const float rowStep = quiet_.height(rowSize) + kLaneRowGap * unit;
+    float baseline = kLaneTop * unit + quiet_.height(rowSize) - scroll_ * rowStep;
     const float centre = float(width) * 0.5f;
+    float place = -scroll_;  // rows down from the top, where this row is drawn now
     for (size_t i = lane_.size(); i-- > 0;) {
         const Row& row = lane_[i];
         const bool died = row.kind == Row::Kind::Died;
@@ -515,7 +561,11 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         float alpha = 1.0f;
         if (u < kRowIn) alpha = u / kRowIn;
         else if (u > out) alpha = std::clamp(1.0f - (u - out) / (1.0f - out), 0.0f, 1.0f);
-        const float lift = u < kRowIn ? (1.0f - u / kRowIn) * kRowLift * unit : 0.0f;
+        // The scroll brings it up into place now, not a lift of its own (kRowLift's 8 units).
+        if (!died) {
+            const float top = float(kLaneMost) - 1.0f;
+            alpha *= std::clamp((top + 1.0f - place) / kLaneFadeRows, 0.0f, 1.0f);
+        }
 
         if (row.kind == Row::Kind::Died) {
             // In the middle of the screen and not in the lane, and dressed as the map name is:
@@ -564,9 +614,8 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         const float figureWide = quiet_.measure(rowSize, figure);
         const float wordWide = quiet_.measure(unitSize, unitWord) +
                                kLaneUnitTracking * unitSize * float(unitWord.size() - 1);
-        const float whole = figureWide + kLaneWordGap * unit + wordWide;
-        const float left = centre - whole * 0.5f;
-        const float at = std::round(baseline + lift);
+        const float left = kLaneLeft * unit;
+        const float at = std::round(baseline);
         const uint32_t tinted = withAlpha(ink, alpha);
         writeQuiet(std::round(left + figureWide * 0.5f), at, rowSize, tinted, figure, 0.0f);
         // The unit is the same ink at two thirds, uppercase and widely tracked: a label under
@@ -575,7 +624,29 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         for (char& c : shouted) c = char(std::toupper(static_cast<unsigned char>(c)));
         writeQuiet(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at,
                    unitSize, withAlpha(ink, alpha * 0.6f), shouted, kLaneUnitTracking);
-        baseline -= quiet_.height(rowSize) + kLaneRowGap * unit;
+        baseline += rowStep;
+        place += 1.0f;
+    }
+
+    // ---- the fight's Zen, centred over the HUD ------------------------------------------
+    if (zenShowing_) {
+        const float u = std::clamp(zenRow_.age / kZenLife, 0.0f, 1.0f);
+        float alpha = 1.0f;
+        if (u < kRowIn) alpha = u / kRowIn;
+        else if (u > kRowOut) alpha = std::clamp(1.0f - (u - kRowOut) / (1.0f - kRowOut), 0.0f, 1.0f);
+        const float size = kZenSize * unit, small = kZenUnitSize * unit;
+        const std::string figure = "+" + panel::commas((long long)zenRow_.value);
+        const std::string shouted = "ZEN";
+        const float figureWide = quiet_.measure(size, figure);
+        const float wordWide = quiet_.measure(small, shouted) +
+                               kLaneUnitTracking * small * float(shouted.size() - 1);
+        const float whole = figureWide + kLaneWordGap * unit + wordWide;
+        const float left = centre - whole * 0.5f;
+        const float at = std::round(hudTop - kZenAboveHud * unit);
+        writeQuiet(std::round(left + figureWide * 0.5f), at, size, withAlpha(kZenInk, alpha),
+                   figure, 0.0f);
+        writeQuiet(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at,
+                   small, withAlpha(kZenInk, alpha * 0.6f), shouted, kLaneUnitTracking);
     }
 }
 

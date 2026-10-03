@@ -438,6 +438,17 @@ void Play::shade(float seconds) {
             if ((handDice_ >> 20) & 1 && heard_.meteorite >= 0) emit(heard_.meteorite, x, z);
         }
     }
+    // The fight's coins, once its Zen has stopped coming (takeZen), with the lane's sum.
+    if (zenQuiet_ > 0.0f) {
+        zenQuiet_ -= seconds;
+        if (zenQuiet_ <= 0.0f) {
+            zenQuiet_ = 0.0f;
+            const Drawn* hero = drawnOf(realm_.hero().id);
+            if (heard_.moneyDrop >= 0 && hero && hero->placed) {
+                emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+            }
+        }
+    }
     // A spread rain's rocks, each starting its fall when its wait is up, where the body is now.
     for (RockDue& due : rocksDue_) {
         due.wait -= seconds;
@@ -682,10 +693,7 @@ void Play::releaseDrops() {
 
 void Play::takeZen(int64_t zen) {
     gains_.push_back({Gain::Kind::Zen, zen});
-    const Drawn* hero = drawnOf(realm_.hero().id);
-    if (heard_.moneyDrop >= 0 && hero && hero->placed) {
-        emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
-    }
+    zenQuiet_ = kZenQuietSeconds;
 }
 
 void Play::fall(Drawn& dead) {

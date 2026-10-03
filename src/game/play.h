@@ -65,6 +65,10 @@ class Ornaments;
 
 class Play {
 public:
+    // A fight's Zen is said once, at its end: when this long has gone by with no pile taken, the
+    // lane posts the sum (ui/tally.cpp) and the coins ring once (Play::takeZen) -- the user,
+    // 2026-10-03, "play zen sound when combat is over and total zen is calculated".
+    static constexpr float kZenQuietSeconds = 1.5f;
     // The arena (--arena), set BEFORE open() or not at all. It is not a second kind of realm
     // and not a bench: all it does is rewrite the map's nest table to one nest of one breed
     // beside where the hero is being put down, and the realm then raises that table exactly as
@@ -868,8 +872,10 @@ private:
     // Lets go of every held drop a beat after its dropper's killing blow lands, and rewrites
     // heldIds_.
     void releaseDrops();
-    // The kill's Zen, shown taken: the coins at him and the figure in the lane.
+    // The kill's Zen, shown taken: the figure to the lane, which sums a fight's, and the coins'
+    // wait begun again -- they ring once the fight's piles stop (zenQuiet_).
     void takeZen(int64_t zen);
+    float zenQuiet_ = 0.0f;  // seconds to the coins, 0 for none owed
     struct HeldDrop {
         uint32_t drop = 0;
         uint32_t dropper = 0;

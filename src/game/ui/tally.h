@@ -98,10 +98,17 @@ private:
     bgfx::TextureHandle quietTexture_ = BGFX_INVALID_HANDLE;
 
     std::vector<Row> lane_;
+    // How far, in rows, the lane is still drawn below where it stands: a new row adds one and it
+    // eases back to nought, so the stack scrolls up rather than jumping (kLaneScrollRate).
+    float scroll_ = 0.0f;
     // Zen rolled up: a good hunt pays a pile a second, and a figure for each reads as a slot
     // machine. They are summed for a second and posted once -- the design page's question 4.
     int64_t heldZen_ = 0;
     float zenAge_ = 0.0f;
+    // A fight's Zen, said once, centred over the HUD and apart from the lane in the corner (the
+    // user, 2026-10-03: "zen has to be back on middle and little bit bigger").
+    Row zenRow_{Row::Kind::Zen, 0, 0.0f};
+    bool zenShowing_ = false;
     uint64_t rebuilds_ = 0;
     bool drawn_ = false;  // the canvas holds something, so it must be cleared when empty
 };
