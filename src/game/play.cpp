@@ -381,10 +381,14 @@ void Play::update(double seconds) {
                         // own standing clip, of which only the arms are drawn on the horse
                         // (Drawn::selfClip): the ride casts swing the whole body (the user, of
                         // the auras: "wierd casting animation on mount").
+                        // A wizard's aura takes his ride cast too, now that it is the seated
+                        // 155 and not 156's standing crouch (the user, 2026-10-04: 'we need
+                        // solution to cast defense aura on DW while on mount').
+                        const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
                         if (happening.who == heroId && realm_.hero().riding && !row->arrows &&
-                            !row->onSelf()) {
-                            const int ridden = caster->figure.body()->library->find(
-                                realm_.hero().kin == sim::Kin::DarkWizard ? 155 : 68);
+                            (!row->onSelf() || wizard)) {
+                            const int ridden =
+                                caster->figure.body()->library->find(wizard ? 155 : 68);
                             if (ridden >= 0) caster->castClip = ridden;
                         }
                     }

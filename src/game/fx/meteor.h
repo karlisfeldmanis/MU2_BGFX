@@ -377,13 +377,16 @@ private:
     // Small, bright and quick, so they read as flame climbing off him: at 0.45 of the meteor's
     // ember they stood on him as red blobs, and cooling to the red at 0.22 and half speed they
     // were dull specks stuck to his legs.
-    static constexpr float kBurnEvery = 1.0f;       // reference frames
+    // A third as many, smaller and dimmer, and a light half as warm on two tiles (the user,
+    // 2026-10-04: 'self fire emiter is to strong when cast meteor DW' -- with no cooldown since
+    // 2026-10-03 the cast runs back to back and the burn on him with it).
+    static constexpr float kBurnEvery = 3.0f;       // reference frames
     static constexpr float kBurnRadius = 0.35f;     // metres
-    static constexpr float kBurnEmberShare = 0.3f;   // of the meteor's ember
+    static constexpr float kBurnEmberShare = 0.22f;  // of the meteor's ember
     static constexpr float kBurnClimb = 1.6f;        // x the meteor ember's drift, upward
-    static constexpr float kBurnEmber[3] = {1.0f, 0.62f, 0.2f};
-    static constexpr float kBurnGlowTiles = 3.0f;
-    static constexpr float kBurnGlow[3] = {1.0f, 0.42f, 0.1f};
+    static constexpr float kBurnEmber[3] = {0.6f, 0.37f, 0.12f};
+    static constexpr float kBurnGlowTiles = 2.0f;
+    static constexpr float kBurnGlow[3] = {0.5f, 0.21f, 0.05f};
 
     // Pools, sized once. A thing past its pool is refused and counted, never grown -- which is
     // MU's own rule as well as this engine's.
