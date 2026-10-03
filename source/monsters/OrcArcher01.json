@@ -1,0 +1,306 @@
+{
+  "item": "OrcArcher01",
+  "mu_name": "Chief Skeleton Archer",
+  "mu_name_from": "MuMain _enum.h MONSTER_CHIEF_SKELETON_ARCHER_1 (85), drawn as MODEL_ORC_ARCHER = MODEL_MONSTER01 + 46, so OpenMonsterModel loads Monster47.bmd. WebZen's Monster.txt:113 calls breed 85 'Orc Archer'; MuMain's English client and OpenMU S6 BloodCastle1.cs call it Chief Skeleton Archer. docs/blood-castle-port.md Part B 3.",
+  "world": "bloodcastle",
+  "object_type": 85,
+  "monster": {
+    "model_index": 46,
+    "scale": 1.1
+  },
+  "monster_from": "ZzzCharacter.cpp:13453-13466, CreateMonster, case MONSTER_CHIEF_SKELETON_ARCHER_1..8: OpenMonsterModel(MONSTER_MODEL_ORC_ARCHER); CreateCharacter(Key, MODEL_ORC_ARCHER, ...); Scale = 1.1f; Weapon[1].Type = MODEL_BATTLE_BOW, Level = 1. No BlendMesh, no effect.",
+  "right_hand": "Bow04",
+  "right_hand_bone": "hand_bofdgne01",
+  "right_hand_from": "MODEL_BATTLE_BOW is MODEL_BOW + 3, Item/Bow04.bmd (cooked). MU sets it in Weapon[1], the bow hand; here it is right_hand, as the Skeleton Archer's, because the cook reads the stance off that field. Its bone is CreateCharacter's weapon switch, case MODEL_ORC_ARCHER: Weapon[0].LinkBone = Weapon[1].LinkBone = 39 (ZzzCharacter.cpp:11970-11973), hand_bofdgne01. MU's Level 1 draws the bow plain, as +0 is here.",
+  "profile": "monster",
+  "rig_from": "Seven actions, exported with --actions=all. 40 bones. BoneHead = 7 (ZzzOpenData.cpp:3718-3723).",
+  "sheets": {
+    "kni00": "orc_kni00.png",
+    "kni01": "orc_kni01.png",
+    "kni02": "orc_kni02.png"
+  },
+  "sheet_from": "The Chief Skeleton Warrior's three sheets, which Monster47.bmd names as Monster48 does: kni00 on the body (512 triangles), kni01 (43), kni02 the helm (54). Shared with Orc01, decoded once as orc_*.",
+  "sheet_materials": {
+    "kni00": "painted_steel",
+    "kni01": "painted_steel",
+    "kni02": "painted_steel"
+  },
+  "sheet_materials_from": "As the Chief Skeleton Warrior's (Orc01), which the user passed: gilt bronze plate kept as painted albedo.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "depth": 0.01,
+        "roughness_range": 0.01
+      }
+    }
+  },
+  "material_overrides_why": "As Orc01's: painted_steel's brushed grain striped the plate (the user: 'kind fo striped?'), so it is all but taken out.",
+  "sounds_from": "ZzzOpenData.cpp:3718-3723: mOrcArcherAttack1 and mBullDie, SetMonsterSound(..., -1, -1, 162, 162, 4) -- no walking cry; 372 ORCARCHERATTACK1 to loose and flinch, 214 BULLDIE to die (offsets from SOUND_MONSTER_BULL1 = 210). Wired as chiefskeletonarcher_* in sounds.json.",
+  "islands_from": "12 islands, all painted_steel (see sheet_materials_from). They arrived as skin, the monster profile's default.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 162,
+      "area": 17639.9,
+      "along": [
+        -25.9,
+        27.1
+      ],
+      "mu_uv": [
+        0.07,
+        0.473,
+        0.919,
+        0.993
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.803,
+        0.904
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 68,
+      "area": 2358.5,
+      "along": [
+        15.5,
+        49.5
+      ],
+      "mu_uv": [
+        0.431,
+        0.02,
+        0.994,
+        0.774
+      ],
+      "bake_uv": [
+        0.415,
+        0.137,
+        0.822,
+        0.63
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 29,
+      "area": 3379.5,
+      "along": [
+        -13.4,
+        20.3
+      ],
+      "mu_uv": [
+        0.273,
+        0.287,
+        0.725,
+        0.478
+      ],
+      "bake_uv": [
+        0.01,
+        0.062,
+        0.64,
+        0.945
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 50,
+      "area": 4008.8,
+      "along": [
+        -0.9,
+        33.6
+      ],
+      "mu_uv": [
+        0.287,
+        0.003,
+        0.955,
+        0.288
+      ],
+      "bake_uv": [
+        0.011,
+        0.532,
+        0.945,
+        0.99
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 2817.0,
+      "along": [
+        -7.0,
+        27.5
+      ],
+      "mu_uv": [
+        0.373,
+        0.007,
+        0.9,
+        0.422
+      ],
+      "bake_uv": [
+        0.074,
+        0.011,
+        0.912,
+        0.893
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 29,
+      "area": 3390.7,
+      "along": [
+        -17.9,
+        11.0
+      ],
+      "mu_uv": [
+        0.273,
+        0.287,
+        0.725,
+        0.478
+      ],
+      "bake_uv": [
+        0.153,
+        0.302,
+        0.93,
+        0.949
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 50,
+      "area": 4031.0,
+      "along": [
+        -23.2,
+        19.6
+      ],
+      "mu_uv": [
+        0.287,
+        0.003,
+        0.955,
+        0.288
+      ],
+      "bake_uv": [
+        0.47,
+        0.01,
+        0.987,
+        0.972
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 2817.0,
+      "along": [
+        -21.4,
+        9.1
+      ],
+      "mu_uv": [
+        0.373,
+        0.007,
+        0.9,
+        0.422
+      ],
+      "bake_uv": [
+        0.209,
+        0.011,
+        0.929,
+        0.93
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 68,
+      "area": 2398.4,
+      "along": [
+        -15.9,
+        38.1
+      ],
+      "mu_uv": [
+        0.431,
+        0.02,
+        0.994,
+        0.774
+      ],
+      "bake_uv": [
+        0.355,
+        0.01,
+        0.904,
+        0.777
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 33,
+      "area": 2192.3,
+      "along": [
+        -19.1,
+        15.1
+      ],
+      "mu_uv": [
+        0.493,
+        0.227,
+        0.977,
+        0.852
+      ],
+      "bake_uv": [
+        0.343,
+        0.268,
+        0.748,
+        0.897
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 1143.4,
+      "along": [
+        -7.2,
+        -4.8
+      ],
+      "mu_uv": [
+        0.257,
+        0.007,
+        0.66,
+        0.251
+      ],
+      "bake_uv": [
+        0.332,
+        0.011,
+        0.893,
+        0.296
+      ]
+    },
+    {
+      "island": 11,
+      "material": "painted_steel",
+      "triangles": 54,
+      "area": 3297.1,
+      "along": [
+        -20.8,
+        17.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.716,
+        0.809
+      ]
+    }
+  ]
+}

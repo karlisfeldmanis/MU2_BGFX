@@ -1474,6 +1474,24 @@
       ],
       "from": "Sounds[4], slot 4 -- 214 BULLDIE. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Blood Castle's Chief Skeleton Warrior); offsets from SOUND_MONSTER_BULL1 = 210."
     },
+    "chiefskeletonarcher_attack": {
+      "files": [
+        "mOrcArcherAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both slots 162 -- 372 ORCARCHERATTACK1, Data\\Sound\\mOrcArcherAttack1.wav. SetMonsterSound(..., -1, -1, 162, 162, 4) in ZzzOpenData.cpp:3718-3723 (MONSTER_MODEL_ORC_ARCHER, Blood Castle's Chief Skeleton Archer), no walking cry; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "chiefskeletonarcher_shock": {
+      "files": [
+        "mOrcArcherAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., -1, -1, 162, 162, 4) in ZzzOpenData.cpp:3718-3723 (MONSTER_MODEL_ORC_ARCHER, Blood Castle's Chief Skeleton Archer), no walking cry; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "chiefskeletonarcher_die": {
+      "files": [
+        "mBullDie.wav"
+      ],
+      "from": "Sounds[4], slot 4 -- 214 BULLDIE. SetMonsterSound(..., -1, -1, 162, 162, 4) in ZzzOpenData.cpp:3718-3723 (MONSTER_MODEL_ORC_ARCHER, Blood Castle's Chief Skeleton Archer), no walking cry; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
     "poisonshadow_move": {
       "files": [
         "mShadow1.wav",

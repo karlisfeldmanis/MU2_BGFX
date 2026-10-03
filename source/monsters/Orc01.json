@@ -16,7 +16,7 @@
     "kni01": "orc_kni01.png",
     "kni02": "orc_kni02.png"
   },
-  "sheet_from": "Three sheets, .OZJ with no alpha, Data/Monster/kni00 (128x256, the body, 512 triangles), kni01 (128x128, the blade and plates, 91) and kni02 (64x64, the helm, 54). Decoded under an orc_ prefix. The Kni000/011/022 files beside them are the Orc Archer's (Monster47).",
+  "sheet_from": "Three sheets, .OZJ with no alpha, Data/Monster/kni00 (128x256, the body, 512 triangles), kni01 (128x128, the blade and plates, 91) and kni02 (64x64, the helm, 54). Decoded under an orc_ prefix. The Orc Archer (Monster47) names the same three; the Kni000/011/022 files beside them are read by neither.",
   "sheet_materials": {
     "kni00": "painted_steel",
     "kni01": "painted_steel",
