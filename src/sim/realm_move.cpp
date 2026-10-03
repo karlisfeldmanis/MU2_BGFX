@@ -692,7 +692,11 @@ void Realm::castleTick() {
 
 void Realm::castleKill(const Body& dead) {
     if (run_.phase != CastlePhase::Running) return;
-    if (tables_->kinds[size_t(dead.kind)].number == kCastleSorcerer) ++run_.sorcerers;
+    const int32_t number = tables_->kinds[size_t(dead.kind)].number;
+    // The statue is the run's target, not one of its garrison: broken, it pays its bonus
+    // (kCastleStatueExp) and counts toward neither quota.
+    if (number == kCastleStatue) run_.statueBroken = true;
+    else if (number == kCastleSorcerer) ++run_.sorcerers;
     else ++run_.kills;
 }
 

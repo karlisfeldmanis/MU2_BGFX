@@ -1562,8 +1562,24 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
         return;
     }
     speech_.update(play, viewProj, width, height);
-    vitals_.update(seconds, play, play.pointedAt(), play.pointedFolk(), takesPointer_, viewProj,
-                   width, height);
+    // Blood Castle's Statue of Saint is the run's target and not one of its monsters: its bar
+    // stands over it while it stands within sight of him, pointed at or not (the user,
+    // 2026-10-03: 'statue of spirit is not a monsters, its static which char need to destroy
+    // that means it has hp bar and nunber').
+    uint32_t shown = play.pointedAt();
+    if (shown == 0 && play.realm().tables() &&
+        play.realm().tables()->map == sim::kBloodCastleMap) {
+        const sim::Realm& realm = play.realm();
+        const sim::Body& hero = realm.hero();
+        for (const sim::Body& one : realm.bodies()) {
+            if (!one.monster() || !one.alive()) continue;
+            if (realm.tables()->kinds[size_t(one.kind)].number != sim::kCastleStatue) continue;
+            const float dx = one.x - hero.x, dy = one.y - hero.y;
+            if (dx * dx + dy * dy <= 12.0f * 12.0f) shown = one.id;
+        }
+    }
+    vitals_.update(seconds, play, shown, play.pointedFolk(), takesPointer_, viewProj, width,
+                   height);
     // After the names, so the marker rises by this frame's fade and not the last one's.
     beacon_.update(seconds, play, vitals_.namedFolk(), vitals_.folkShown(vitals_.namedFolk()),
                    viewProj, width, height);
