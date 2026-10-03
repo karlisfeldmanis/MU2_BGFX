@@ -993,16 +993,36 @@ private:
     // of resistance, the option, and luck's crit. A rough sum; it only has to rank them.
     double jewelleryWorth(const sim::Held& one) const {
         const content::ItemRow& row = tables_->items[size_t(one.item)];
-        double worth = sim::resistanceOf(row, one.refinement) + one.option * 2.0 + (one.luck ? 5.0 : 0.0);
+        // Resistance only where something casts it on him: Ice and Poison in 0.75; a Pendant of
+        // Fire's or Lightning's turns nothing aside (docs/jewellery.md).
+        const sim::Element element = sim::elementOf(row);
+        const bool resists = element == sim::Element::Ice || element == sim::Element::Poison;
+        double worth = (resists ? sim::resistanceOf(row, one.refinement) : 0) + one.option * 2.0 +
+                       (one.luck ? 5.0 : 0.0);
         // A rune set is worth a power; an empty socket a little, for the rune he may set later.
         for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) worth += one.powers[k] ? 6.0 : 1.0;
         if (sim::powered(row)) {
-            worth += 4.0 + sim::affixValue(sim::signatureOf(row), one.refinement);
+            worth += powerWorth(sim::signatureOf(row), one.refinement);
             for (uint8_t a : one.affixes) {
-                if (a != 0) worth += 4.0 + sim::affixValue(sim::Affix(a), one.refinement);
+                if (a != 0) worth += powerWorth(sim::Affix(a), one.refinement);
             }
         }
         return worth + one.refinement;
+    }
+
+    // One power to his class (the user, 2026-10-03, "yes" to weighting them so): the Leech most
+    // to the knight, who stands in the blows and drinks the most, less to the elf at range and
+    // least to the wizard; Fury by how often he crits at all, from half with no luck or Keen Eye
+    // to double at 15%. Experience, Zen and item find serve every class the same.
+    double powerWorth(sim::Affix affix, int refinement) const {
+        double weight = 1.0;
+        if (affix == sim::Affix::Leech) {
+            weight = options_.kin == sim::Kin::DarkKnight ? 2.5
+                     : options_.kin == sim::Kin::FairyElf ? 1.5
+                                                          : 1.0;
+        }
+        if (affix == sim::Affix::Fury) weight = 0.5 + 10.0 * realm_->hero().stats.criticalChance;
+        return 4.0 + weight * sim::affixValue(affix, refinement);
     }
 
     // Puts his best rings and pendant on: each slot takes the bag's best that is worth more than
