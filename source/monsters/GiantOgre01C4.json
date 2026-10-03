@@ -1,0 +1,16 @@
+{
+ "item": "GiantOgre01C4",
+ "mu_name": "Giant Ogre",
+ "mu_name_from": "MuMain's MONSTER_GIANT_OGRE_4 = 116 (_enum.h), drawn out of GiantOgre01's model by the same CreateMonster case as castle 1's (ZzzCharacter.cpp); WebZen's Monster.txt row 116 gives castle 4's numbers, in mu.db.",
+ "world": "bloodcastle",
+ "object_type": 116,
+ "mesh": "GiantOgre01",
+ "mesh_from": "GiantOgre01's model a second time: every castle raises the same six models (MonsterSetBase.txt, maps 11-16).",
+ "summoned_in": "bloodcastle",
+ "summoned_in_from": "It spawns on no map of ours: a castle 2-6 run raises it on castle 1's nests in place of its counterpart (Realm::raise), so it is cooked with the castle as Bali is with Noria.",
+ "monster": {
+  "model_index": 58,
+  "scale": 0.8
+ },
+ "profile": "monster"
+}

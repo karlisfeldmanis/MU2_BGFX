@@ -869,6 +869,17 @@ public:
     // --castle-bridge's: the run started now if it waits, its first quota met, and the
     // drawbridge falling `seconds` from now, to be watched (a test).
     void dropCastleBridge(int seconds);
+    // Which castle this run is, 1 to 6, as the Messenger let him into it: the garrison raised
+    // on castle 1's nests becomes that castle's own breeds (sim/event.h kCastleBreeds), and the
+    // Statue of Saint one of the three at random, at that castle's health. Asked once, after
+    // the raise and before the run starts (app/modes/play_mode.cpp).
+    void setCastle(int castle);
+    // Which castle the Messenger last passed him into, or 0: carried by the mode to the
+    // castle's own realm (Realm::setCastle).
+    int castlePassed() const { return castlePassed_; }
+    // The Archangel weapon this run's Statue of Saint holds -- the staff, the sword or the
+    // crossbow -- as an item index, or -1: what his page asks for and pictures.
+    int32_t castleWeaponItem() const;
     // A test's: the monster `id` felled by the hero's hand, through the kill every blow ends in
     // -- its quota, its drop, its rise -- without the walk and the swings (tests/sim_test.cpp).
     void smite(uint32_t id) {
@@ -1317,6 +1328,7 @@ private:
     int gating_ = -1;  // see gating()
     // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
     int castleOwed_ = 0;
+    int castlePassed_ = 0;  // see castlePassed()
     CastleRun run_;  // see castleRun()
     int angeling_ = -1;     // see angeling()
     bool staffOwed_ = false;

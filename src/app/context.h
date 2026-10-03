@@ -139,6 +139,9 @@ struct Context {
     // is drawn over the list rather than among it.
     gfx::Overlay& curtain;
     GoBack& goBack;
+    // The Blood Castle the Messenger let him into, 1 to 6, carried across the map change to the
+    // castle's own realm (Realm::setCastle); 0 when none is owed. Set where the gate is taken.
+    int castleNext = 0;
 };
 
 // What the day gives an unlit puff of smoke: the ambient and the sun on a flat surface, over

@@ -294,7 +294,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
             const int32_t number = tables_->kinds[size_t(one.kind)].number;
             // The statue and the Spirit Sorcerers are called up by the run (Realm::castleTick):
             // the sorcerers as the bridge lands, the statue when they are dead.
-            one.risesAt = number == kCastleStatue || number == kCastleSorcerer
+            one.risesAt = castleStatue(number) || castleSorcerer(number)
                               ? std::numeric_limits<int64_t>::max()
                               : run_.startsAt;
         }

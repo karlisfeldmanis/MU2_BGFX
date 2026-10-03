@@ -633,14 +633,63 @@ void Realm::passCastle(int castle) {
     if (gate == nullptr) return;
     // "You have come to Blood Castle %d" (lMsg 1171): the cloak is spent as he goes.
     bag_.lift(cloakSlot(castle));
+    castlePassed_ = castle;
     passGate(hero, *gate);
+}
+
+void Realm::setCastle(int castle) {
+    if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
+    castle = std::clamp(castle, 1, kCastles);
+    run_.castle = castle;
+    const auto kindNumbered = [&](int32_t number) {
+        for (size_t i = 0; i < tables_->kinds.size(); ++i) {
+            if (tables_->kinds[i].number == number) return int32_t(i);
+        }
+        return int32_t(-1);
+    };
+    // One of the three statues, as WebZen raises one at random (BloodCastle.cpp:2216) -- of
+    // those with a figure cooked, so none stands invisible.
+    int32_t statues[3];
+    int drawn = 0;
+    for (int32_t number : kCastleStatues) {
+        const int32_t kind = kindNumbered(number);
+        if (kind >= 0 && !tables_->kinds[size_t(kind)].figure.empty()) statues[drawn++] = number;
+    }
+    const int32_t statue = drawn > 0 ? statues[dice_.nextInt(0, drawn)] : kCastleStatue;
+    for (Body& one : bodies_) {
+        if (!one.monster()) continue;
+        const int32_t number = tables_->kinds[size_t(one.kind)].number;
+        int32_t want = number;
+        if (castleStatue(number)) {
+            want = statue;
+        } else {
+            for (int slot = 0; slot < 6; ++slot) {
+                if (kCastleBreeds[0][slot] == number) want = kCastleBreeds[castle - 1][slot];
+            }
+        }
+        const int32_t kind = kindNumbered(want);
+        if (kind < 0) continue;
+        // As Realm::raise dresses a body in its kind.
+        const content::MonsterKind& row = tables_->kinds[size_t(kind)];
+        one.kind = kind;
+        one.level = row.level;
+        one.maxHealth = castleStatue(want) ? kCastleStatueHealth[castle - 1] : row.health;
+        one.stats.level = row.level;
+        one.stats.attackRate = row.attackRate;
+        one.stats.defenseRate = row.defenseRate;
+        one.stats.defense = row.defense;
+        one.stats.minimumDamage = row.minimumDamage;
+        one.stats.maximumDamage = row.maximumDamage;
+        one.swingTicks = row.attackTicks;
+        one.speed = 1.0f / float(std::max(1, row.moveTicks));
+    }
 }
 
 // ---- Blood Castle's run (sim/event.h) ------------------------------------------------------
 
 bool Realm::fixed(const Body& body) const {
     return body.monster() && body.kind >= 0 && size_t(body.kind) < tables_->kinds.size() &&
-           tables_->kinds[size_t(body.kind)].number == kCastleStatue;
+           castleStatue(tables_->kinds[size_t(body.kind)].number);
 }
 
 void Realm::freeCastle() {
@@ -654,7 +703,7 @@ void Realm::freeCastle() {
     // looked at (the user, 2026-10-03: 'did not see the archachel statue').
     for (Body& one : bodies_) {
         if (!one.monster()) continue;
-        if (tables_->kinds[size_t(one.kind)].number == kCastleStatue) {
+        if (castleStatue(tables_->kinds[size_t(one.kind)].number)) {
             if (!one.alive()) one.risesAt = tick_;
         } else {
             one.health = 0;
@@ -673,17 +722,24 @@ void Realm::castleTick() {
             bag_.lift(slot);
             Body& hero = bodies_[0];
             const int64_t seconds = castleSecondsLeft();
+            // This castle's pay (sim/event.h): castle 1's 20,000 / 5,000 / 160 a second / 20,000
+            // Zen up to castle 6's 110,000 / 30,000 / 260 / 250,000.
+            const int c = std::clamp(run_.castle, 1, kCastles) - 1;
             const int64_t experience =
-                (run_.statueBroken ? kCastleStatueExp : 0) + kCastleHandInExp +
-                seconds * kCastleExpPerSecond;
+                (run_.statueBroken ? kCastleStatueExps[c] : 0) + kCastleHandInExps[c] +
+                seconds * kCastleExpPerSeconds[c];
             // At the game's experience rate, as every kill's (rules.h kExperienceRate).
             run_.paidExperience = int64_t(double(experience) * kExperienceRate);
-            run_.paidZen = kCastleWinZen;
+            run_.paidZen = kCastleWinZens[c];
             run_.phase = CastlePhase::Won;
             gain(hero, int32_t(std::min<int64_t>(run_.paidExperience, INT32_MAX)));
-            money_ += kCastleWinZen;
-            const int32_t chaos = tables_->itemAt(12, 15);
-            if (chaos >= 0) lay(chaos);
+            money_ += kCastleWinZens[c];
+            // And the castle's jewels at his feet, one each (BloodCastle.dat "Reward Items").
+            for (const auto& jewel : kCastleRewardJewels[c]) {
+                if (jewel[0] < 0) break;
+                const int32_t item = tables_->itemAt(jewel[0], jewel[1]);
+                if (item >= 0) lay(item);
+            }
         }
     }
     if (run_.phase == CastlePhase::Waiting && tick_ >= run_.startsAt) {
@@ -709,7 +765,7 @@ void Realm::castleTick() {
         for (Body& one : bodies_) {
             if (raised >= kCastleSorcerers) break;
             if (!one.monster() || one.alive()) continue;
-            if (tables_->kinds[size_t(one.kind)].number != kCastleSorcerer) continue;
+            if (!castleSorcerer(tables_->kinds[size_t(one.kind)].number)) continue;
             one.risesAt = tick_;
             ++raised;
         }
@@ -726,13 +782,15 @@ void Realm::castleKill(const Body& dead) {
     const int32_t number = tables_->kinds[size_t(dead.kind)].number;
     // The statue is the run's target, not one of its garrison: broken, it pays its bonus
     // (kCastleStatueExp) and counts toward neither quota.
-    if (number == kCastleStatue) {
-        // Broken, it lets fall the staff it held, on the stone where it lay, to be carried back
-        // to the Archangel (the user, 2026-10-03; docs/blood-castle-port.md 5). Ours: WebZen's
-        // statue drops nothing by the drop table (gObjMonster.cpp:3985) and its weapon comes by
-        // another way. It lies there until the run's time is up.
+    if (castleStatue(number)) {
+        // Broken, it lets fall the weapon it held -- the staff, the sword or the crossbow, by
+        // which of the three it was -- on the stone where it lay, to be carried back to the
+        // Archangel (the user, 2026-10-03; docs/blood-castle-port.md 5). Ours: WebZen's statue
+        // drops nothing by the drop table (gObjMonster.cpp:3985) and its weapon comes by another
+        // way. It lies there until the run's time is up.
         run_.statueBroken = true;
-        const int32_t staff = tables_->itemAt(kDivineStaffGroup, kDivineStaffNumber);
+        const int* weapon = kArchangelWeapons[std::clamp(number - kCastleStatues[0], 0, 2)];
+        const int32_t staff = tables_->itemAt(weapon[0], weapon[1]);
         if (staff >= 0) {
             const uint32_t id = lay(staff, 0, false, 0, 0, 0);
             if (!lying_.empty() && lying_.back().id == id) {
@@ -741,12 +799,12 @@ void Realm::castleKill(const Body& dead) {
                 lying_.back().vanishesAt = run_.endsAt;
             }
         }
-    } else if (number == kCastleSorcerer) {
+    } else if (castleSorcerer(number)) {
         // Quota 2 met: the Statue of Saint rises in its hall.
         if (++run_.sorcerers == kCastleSorcerers) {
             for (Body& one : bodies_) {
                 if (one.monster() && !one.alive() &&
-                    tables_->kinds[size_t(one.kind)].number == kCastleStatue) {
+                    castleStatue(tables_->kinds[size_t(one.kind)].number)) {
                     one.risesAt = tick_;
                 }
             }
@@ -765,11 +823,22 @@ void Realm::dropCastleBridge(int seconds) {
     run_.bridgeAt = tick_ + int64_t(seconds) * kCastleTicksPerSecond;
 }
 
+int32_t Realm::castleWeaponItem() const {
+    if (tables_ == nullptr) return -1;
+    int which = 0;
+    for (const Body& one : bodies_) {
+        if (!one.monster()) continue;
+        const int32_t number = tables_->kinds[size_t(one.kind)].number;
+        if (castleStatue(number)) which = std::clamp(number - kCastleStatues[0], 0, 2);
+    }
+    return tables_->itemAt(kArchangelWeapons[which][0], kArchangelWeapons[which][1]);
+}
+
 int Realm::staffSlot() const {
     for (int i = kWorn; i < kSlots; ++i) {
         if (bag_[i].empty()) continue;
         const content::ItemRow& row = tables_->items[size_t(bag_[i].item)];
-        if (row.group == kDivineStaffGroup && row.number == kDivineStaffNumber) return i;
+        if (archangelWeapon(row)) return i;
     }
     return -1;
 }

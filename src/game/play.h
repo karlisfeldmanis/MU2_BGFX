@@ -276,6 +276,7 @@ public:
     void openCastleDoor() { realm_.openCastleDoor(); }
     void freeCastle() { realm_.freeCastle(); }
     void dropCastleBridge(int seconds) { realm_.dropCastleBridge(seconds); }
+    void setCastle(int castle) { realm_.setCastle(castle); }
     // The Messenger's page's two answers (QuestDialog::kGate).
     bool enterCastle(int castle) { return realm_.enterCastle(castle); }
     void closeGate() { realm_.closeGate(); }

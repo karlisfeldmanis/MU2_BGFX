@@ -1,0 +1,21 @@
+{
+ "item": "MagicSkeleton01C2",
+ "mu_name": "Magic Skeleton",
+ "mu_name_from": "MuMain's MONSTER_MAGIC_SKELETON_2 = 95 (_enum.h), drawn out of MagicSkeleton01's model by the same CreateMonster case as castle 1's (ZzzCharacter.cpp); WebZen's Monster.txt row 95 gives castle 2's numbers, in mu.db.",
+ "world": "bloodcastle",
+ "object_type": 95,
+ "mesh": "MagicSkeleton01",
+ "mesh_from": "MagicSkeleton01's model a second time: every castle raises the same six models (MonsterSetBase.txt, maps 11-16).",
+ "summoned_in": "bloodcastle",
+ "summoned_in_from": "It spawns on no map of ours: a castle 2-6 run raises it on castle 1's nests in place of its counterpart (Realm::raise), so it is cooked with the castle as Bali is with Noria.",
+ "monster": {
+  "model_index": 62,
+  "scale": 1.2
+ },
+ "profile": "monster",
+ "right_hand": "Staff01",
+ "right_hand_bone": "knife_gdf",
+ "plus": {
+  "right_hand": 11
+ }
+}

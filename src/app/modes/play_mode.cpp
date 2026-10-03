@@ -422,6 +422,11 @@ bool PlayMode::open(Context& ctx) {
 
 void PlayMode::runScript(Context& ctx) {
     core::Args& args = ctx.args;
+    // Into a castle by the Messenger: its garrison and its statue are that castle's.
+    if (world_.played().isOpen() && ctx.castleNext > 0) {
+        world_.played().setCastle(ctx.castleNext);
+        ctx.castleNext = 0;
+    }
     if (world_.played().isOpen() && args.castleOpen) world_.played().openCastleDoor();
     if (world_.played().isOpen() && args.castleFree) world_.played().freeCastle();
     if (world_.played().isOpen() && args.castleBridge >= 0) {
@@ -664,6 +669,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             if (map != nullptr) {
                 // Walked out through a gate: the way back by magic is given up.
                 ctx.goBack.clear();
+                // And the Messenger's: which castle, for the castle's realm (Realm::setCastle).
+                ctx.castleNext = number == sim::kCastleEnterGate
+                                     ? world_.played().realm().castlePassed()
+                                     : 0;
                 travel(ctx, map->world, gateColumn, gateRow,
                        std::atan2(float(out->dy), float(out->dx)));
             } else {

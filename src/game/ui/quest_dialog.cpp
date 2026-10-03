@@ -310,7 +310,8 @@ void QuestDialog::layout(const Play& play) {
             y += 3.0f * kStepRow + kSection;
         } else {
             Cell cell;
-            cell.item = tables.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
+            // The weapon this run's statue holds: the staff, the sword or the crossbow.
+            cell.item = realm.castleWeaponItem();
             if (cell.item >= 0) {
                 const sim::Held held = rewardHeld(tables, cell.item, 0, 1, 0, 0);
                 cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
@@ -811,8 +812,11 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                 // line with the word.
                 const float nx = sx(one.box.x + kIcon + kNameGap);
                 const float ly = one.box.y + kIcon * 0.5f;
+                // The run's own weapon: the staff, the sword or the crossbow.
                 controls::label(body_, nx, by(ly - 3.0f), kName * u, one.ink ? one.ink : kItemWhite,
-                                "Divine Staff of Archangel");
+                                one.item >= 0 && size_t(one.item) < tables.items.size()
+                                    ? tables.items[size_t(one.item)].label
+                                    : std::string("Divine Staff of Archangel"));
                 controls::label(body_, nx, by(ly + 15.0f), kName * u,
                                 staffHeld_ ? style::kFits : style::kDanger,
                                 staffHeld_ ? std::string("in your bag") : std::string("not in your bag"));

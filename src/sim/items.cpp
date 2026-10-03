@@ -430,6 +430,11 @@ bool scrollOfArchangel(const content::ItemRow& row) {
 
 bool bloodBone(const content::ItemRow& row) { return row.group == kGroupPets && row.number == 17; }
 
+bool archangelWeapon(const content::ItemRow& row) {
+    return (row.group == 5 && row.number == 10) || (row.group == 0 && row.number == 19) ||
+           (row.group == 4 && row.number == 18);
+}
+
 bool divineStaff(const content::ItemRow& row) {
     return row.group == 5 && row.number == 10;  // group 5, the staves
 }
@@ -621,7 +626,7 @@ int Satchel::free(const content::Tables& tables, int width, int height) const {
 
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     const content::ItemRow* row = rowOf(tables, what);
-    if (!row || placeOf(*row) < 0 || divineStaff(*row)) return false;
+    if (!row || placeOf(*row) < 0 || archangelWeapon(*row)) return false;
     // mu.db's class enumeration, bit 0 wizard, bit 1 elf, bit 2 knight; none named is anybody.
     if (row->classes != 0 && (row->classes & (1 << int(who.kin))) == 0) return false;
     return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();

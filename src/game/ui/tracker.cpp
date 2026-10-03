@@ -787,7 +787,7 @@ void Tracker::rebuildEvent(int width) {
          door ? StepMark::Done : bridge && !waiting ? StepMark::Live : StepMark::Waiting},
         {"Destroy the Statue of Saint", "",
          won || drawn_.eventStatue ? StepMark::Done : door ? StepMark::Live : StepMark::Waiting},
-        {"Return the staff to the Archangel", "",
+        {"Return the weapon to the Archangel", "",
          won ? StepMark::Done : drawn_.eventStatue ? StepMark::Live : StepMark::Waiting},
         // The run over: a minute's rest, then out to Devias (sim kCastleRest).
         {"Back to Devias",

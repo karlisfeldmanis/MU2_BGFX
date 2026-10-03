@@ -4614,7 +4614,7 @@ void testDeviasFolk() {
     checkEqual(ask(1, at(10, 10), 50), int(sim::CastleRefusal::NotYet), "a cloak at hh:10 waits");
     checkEqual(ask(1, 0, 50), int(sim::CastleRefusal::NotYet), "and with no clock at all");
     checkEqual(ask(2, at(10, 26), 50), int(sim::CastleRefusal::NoCloak), "a +2 cloak is not castle 1's");
-    checkEqual(ask(2, at(10, 26), 90, 2), int(sim::CastleRefusal::NotBuilt), "castle 2 is not built");
+    checkEqual(ask(2, at(10, 26), 90, 2), -1, "castle 2 lets a +2 cloak in at 90");
     checkEqual(sim::castleFor(50), 1, "level 50 is castle 1's");
     checkEqual(sim::castleFor(81), 2, "81 castle 2's");
     checkEqual(sim::castleFor(400), 6, "400 the sixth's");
@@ -7678,6 +7678,24 @@ void testCastleGrid(const content::Tables& lorencia) {
             for (int64_t t = 0; t <= int64_t(sim::kCastleRest) * sim::kCastleTicksPerSecond; ++t) run.step();
             check(run.castleRun().sentOut, "and after a minute is sent out to Devias");
         }
+    }
+    // Castle 3 by the Messenger: castle 1's nests raise castle 3's breeds, the statue at its health.
+    {
+        sim::Realm three;
+        check(three.raise(&castle, 7, 13, 8), "a castle 3 run raises");
+        three.setCastle(3);
+        checkEqual(three.castleRun().castle, 3, "it is castle 3");
+        int ours = 0, firsts = 0, statueHealth = 0;
+        for (const sim::Body& one : three.bodies()) {
+            if (!one.monster()) continue;
+            const int32_t number = castle.kinds[size_t(one.kind)].number;
+            for (int32_t n : sim::kCastleBreeds[2]) ours += n == number;
+            for (int32_t n : sim::kCastleBreeds[0]) firsts += n == number;
+            if (sim::castleStatue(number)) statueHealth = one.maxHealth;
+        }
+        check(ours > 90, "castle 3's breeds stand on the nests");
+        checkEqual(firsts, 0, "and none of castle 1's");
+        checkEqual(statueHealth, int(sim::kCastleStatueHealth[2]), "the statue at castle 3's health");
     }
     check(sim::castleEntryLeft(10 * 3600 + 25 * 60) == 300, "the Messenger opens at hh:25");
     check(sim::castleEntryLeft(10 * 3600 + 29 * 60 + 59) == 1, "until hh:29:59");

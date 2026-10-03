@@ -906,7 +906,7 @@ void Play::follow(float seconds) {
         // tile it stands on (ZzzObject.cpp:276-282).
         const bool statue =
             !body->player && size_t(body->kind) < tables_.kinds.size() &&
-            tables_.kinds[size_t(body->kind)].number == sim::kCastleStatue;
+            sim::castleStatue(tables_.kinds[size_t(body->kind)].number);
         const float position[3] = {x, ground_->heightAt(x, z) + lift,
                                    statue ? z - 1.2f * metresPerTile : z};
         // The safe zone is a stance and not only a place: inside one MU carries the weapon on

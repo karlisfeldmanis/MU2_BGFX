@@ -1573,7 +1573,7 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
         const sim::Body& hero = realm.hero();
         for (const sim::Body& one : realm.bodies()) {
             if (!one.monster() || !one.alive()) continue;
-            if (realm.tables()->kinds[size_t(one.kind)].number != sim::kCastleStatue) continue;
+            if (!sim::castleStatue(realm.tables()->kinds[size_t(one.kind)].number)) continue;
             const float dx = one.x - hero.x, dy = one.y - hero.y;
             if (dx * dx + dy * dy <= 12.0f * 12.0f) shown = one.id;
         }

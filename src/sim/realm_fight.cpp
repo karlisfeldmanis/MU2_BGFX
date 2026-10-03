@@ -1224,7 +1224,7 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.risesAt = tick_ + int64_t(dropRateOf(kind.number).regen + 1) * 20;
     // Blood Castle's statue and Spirit Sorcerers are the run's, raised once by it and never again.
     if (tables_->map == kBloodCastleMap &&
-        (kind.number == kCastleStatue || kind.number == kCastleSorcerer)) {
+        (castleStatue(kind.number) || castleSorcerer(kind.number))) {
         dead.risesAt = std::numeric_limits<int64_t>::max();
     }
     // Every monster the killer is still holding as a quarry forgets it, or a chase carries on

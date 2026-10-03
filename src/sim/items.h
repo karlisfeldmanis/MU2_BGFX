@@ -732,6 +732,9 @@ bool invisibilityCloak(const content::ItemRow& row);
 // back to the Archangel and worn by nobody (the user, 2026-10-03: 'we need that archange staff
 // is quest item and its not ussable for any char').
 bool divineStaff(const content::ItemRow& row);
+// Any of the three Archangel weapons a Statue of Saint gives up -- the Divine Staff, Sword and
+// Crossbow (sim/event.h kArchangelWeapons): quest items, worn by nobody, never sold.
+bool archangelWeapon(const content::ItemRow& row);
 // WebZen gObjMonster.cpp:5823-5985: a kill anywhere but a Blood Castle rolls the scroll, then the
 // bone, `rand()%10000 < rate` with the code's defaults (Gamemain.cpp:1133-1134), and one that
 // lands is the kill's whole drop (`return TRUE`). 128 its durability, as WebZen's ItemSerialCreate.

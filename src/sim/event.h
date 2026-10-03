@@ -46,10 +46,11 @@ constexpr int32_t kCastleGate = 66;
 constexpr int32_t kCastleEnterGate = 1066;
 // The castles a cloak can be made for at 0.97d (+1 to +6, sim/machine.h kCloakMostLevel), each
 // with its band (BloodCastle.h:105-120; the sixth "281-MAX", 0 here for no ceiling), and how many
-// are built: the first. The Messenger's page steps through all six (the user, 2026-10-03: 'allow to
+// are built: all six since 2026-10-03, each castle's breeds on castle 1's nests (kCastleBreeds,
+// Realm::setCastle). The Messenger's page steps through all six (the user, 2026-10-03: 'allow to
 // choose BC levels with arrows sismilair like we show active quests').
 constexpr int kCastles = 6;
-constexpr int kCastlesBuilt = 1;
+constexpr int kCastlesBuilt = 6;
 constexpr int kCastleBands[kCastles][2] = {{15, 80},   {81, 130},  {131, 180},
                                            {181, 230}, {231, 280}, {281, 0}};
 // The castle his level's band holds, 1 to kCastles: the page the Messenger opens on.
@@ -86,6 +87,29 @@ constexpr int kCastleSorcerers = 2;
 constexpr int kCastleBridgeTicks = 24;
 constexpr int32_t kCastleSorcerer = 89;  // the Magic Skeleton, WebZen's Spirit Sorcerer
 constexpr int32_t kCastleStatue = 132;   // the Statue of Saint, raised by the run
+// Each castle's six breeds, in castle 1's order -- Chief Skeleton Warrior, Archer, Dark Skull
+// Soldier, Giant Ogre, Red Skeleton Knight, Magic Skeleton (the Spirit Sorcerer) -- on the same
+// nests (MonsterSetBase.txt, maps 11-16; MuMain _enum.h MONSTER_*_1.._6). A castle 2-6 run
+// raises castle 1's nests and swaps each body for its castle's own (Realm::setCastle).
+constexpr int32_t kCastleBreeds[6][6] = {
+    {84, 85, 86, 87, 88, 89},     {90, 91, 92, 93, 94, 95},     {96, 97, 98, 99, 111, 112},
+    {113, 114, 115, 116, 117, 118}, {119, 120, 121, 122, 123, 124}, {125, 126, 127, 128, 129, 130},
+};
+// The three Statues of Saint, one raised at random each run (BC_SAINT_STATUE_1 + rand()%3,
+// BloodCastle.cpp:2216), each over its own Archangel weapon (ZzzCharacter.cpp:8952-8966): the
+// Divine Staff (5,10), Sword (0,19) and Crossbow (4,18) of Archangel.
+constexpr int32_t kCastleStatues[3] = {132, 133, 134};
+constexpr int kArchangelWeapons[3][2] = {{5, 10}, {0, 19}, {4, 18}};
+// Each castle's statue health (BloodCastle.dat, "Castle Door Health": 65,000 for castle 1 up
+// to 265,000 for castle 6).
+constexpr int32_t kCastleStatueHealth[6] = {65000, 105000, 145000, 185000, 225000, 265000};
+inline bool castleSorcerer(int32_t number) {
+    for (const auto& one : kCastleBreeds) {
+        if (one[5] == number) return true;
+    }
+    return false;
+}
+inline bool castleStatue(int32_t number) { return number >= 132 && number <= 134; }
 struct CastleRun {
     CastlePhase phase = CastlePhase::None;
     int castle = 1;
@@ -116,6 +140,23 @@ constexpr int64_t kCastleStatueExp = 20000;
 constexpr int64_t kCastleHandInExp = 5000;
 constexpr int64_t kCastleExpPerSecond = 160;
 constexpr int64_t kCastleWinZen = 20000;
+// And every castle's, castle 1 first: g_iBC_Add_Exp's statue, quest and per-second columns
+// (BloodCastle.h:308-322, the table without the 2008 schedule update), g_iQuestWinExpendZEN's
+// winner column (:192-205), and BloodCastle.dat's "Reward Items", each laid at his feet.
+constexpr int64_t kCastleStatueExps[6] = {20000, 50000, 80000, 90000, 100000, 110000};
+constexpr int64_t kCastleHandInExps[6] = {5000, 10000, 15000, 20000, 25000, 30000};
+constexpr int64_t kCastleExpPerSeconds[6] = {160, 180, 200, 220, 240, 260};
+constexpr int64_t kCastleWinZens[6] = {20000, 50000, 100000, 150000, 200000, 250000};
+// Jewels of Chaos (12,15), Creation (14,22), Soul (14,14), Bless (14,13) and Life (14,16); a
+// group of -1 ends a castle's list.
+constexpr int kCastleRewardJewels[6][4][2] = {
+    {{12, 15}, {-1, -1}, {-1, -1}, {-1, -1}},
+    {{12, 15}, {14, 22}, {-1, -1}, {-1, -1}},
+    {{12, 15}, {14, 22}, {-1, -1}, {-1, -1}},
+    {{12, 15}, {14, 22}, {14, 14}, {-1, -1}},
+    {{12, 15}, {14, 22}, {14, 14}, {-1, -1}},
+    {{12, 15}, {14, 14}, {14, 13}, {14, 16}},
+};
 // After the run, won or timed out, WebZen's PLAYEND rest: a minute, then everyone left in the
 // castle is moved to Devias, gate 22 (BloodCastle.cpp:1066-1077; docs/blood-castle-port.md).
 constexpr int kCastleRest = 60;

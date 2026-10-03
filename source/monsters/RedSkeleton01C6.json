@@ -1,0 +1,19 @@
+{
+ "item": "RedSkeleton01C6",
+ "mu_name": "Red Skeleton Knight",
+ "mu_name_from": "MuMain's MONSTER_RED_SKELETON_KNIGHT_6 = 129 (_enum.h), drawn out of RedSkeleton01's model by the same CreateMonster case as castle 1's (ZzzCharacter.cpp); WebZen's Monster.txt row 129 gives castle 6's numbers, in mu.db.",
+ "world": "bloodcastle",
+ "object_type": 129,
+ "mesh": "RedSkeleton01",
+ "mesh_from": "RedSkeleton01's model a second time: every castle raises the same six models (MonsterSetBase.txt, maps 11-16).",
+ "summoned_in": "bloodcastle",
+ "summoned_in_from": "It spawns on no map of ours: a castle 2-6 run raises it on castle 1's nests in place of its counterpart (Realm::raise), so it is cooked with the castle as Bali is with Noria.",
+ "monster": {
+  "model_index": 57,
+  "scale": 1.19
+ },
+ "profile": "monster",
+ "right_hand": "Mace07",
+ "right_hand_bone": "knife_gdf",
+ "plus_from": "MuMain gives the Chaos Dragon Axe +8 while !int((7 + (WorldActive - WD_11BLOODCASTLE_END)) / 3) (ZzzCharacter.cpp, the MONSTER_RED_SKELETON_KNIGHT case): castles 1 and 2; +0 from castle 3."
+}
