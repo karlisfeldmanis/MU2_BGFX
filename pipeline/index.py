@@ -2185,6 +2185,9 @@ def monster_entry(entry: dict, document: dict, root: Path, build: Path, combat: 
         **({"number": number} if number is not None else {}),
         **({"combat": stats} if stats else {}),
         **({"spawns": spawns[number]} if number in spawns else {}),
+        # The world that cooks a breed which spawns nowhere -- Bali, the elf's sixth summon --
+        # for the rest to borrow (cook.py figure_set, Figures::borrow).
+        **({"summoned_in": home} if (home := document.get("summoned_in")) else {}),
         **({"metal": found} if (found := metal_slots(
             document, root, build / model if model else None)) else {}),
 

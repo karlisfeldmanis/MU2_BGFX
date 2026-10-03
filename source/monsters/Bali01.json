@@ -1,0 +1,318 @@
+{
+  "item": "Bali01",
+  "mu_name": "Bali",
+  "mu_name_from": "MuMain's _enum.h:4182: MONSTER_MODEL_BALI = 32, so OpenMonsterModel loads Monster{32 + 1}, Monster33.bmd; the server's type is MONSTER_BALI = 150 (_enum.h:4521). The client's name is 발리 (ZzzCharacter.cpp:13817-13822). OpenMU's Version075 SkillsInitializer.cs:94-123 (CreateSpecialSummonMonsters) makes number 150 'Bali' at level 52 with 5000 health, 165-170 damage, 100 defense, MoveRange 3, AttackRange 1, ViewRange 7, AttackDelay 1600, attack rate 260, defense rate 75 -- the row put in mu.db's monster_kinds. It lives on no 0.75 map: it is the Fairy Elf's sixth summon (skill 35, the Orb of Summoning at +5), and nothing else.",
+  "world": "noria",
+  "summoned_in": "noria",
+  "summoned_in_from": "Bali spawns nowhere, and a world cooks only the breeds that spawn in it (tools/cook.py figure_set). It is cooked with Noria, the elf's home, and the other maps borrow it as they borrow the Goblin (Figures::borrow).",
+  "object_type": 150,
+  "monster": {
+    "model_index": 32,
+    "scale": 0.12
+  },
+  "monster_from": "ZzzCharacter.cpp:13817-13822, CreateMonster, case MONSTER_BALI:\n\n    OpenMonsterModel(MONSTER_MODEL_BALI);\n    c = CreateCharacter(Key, MODEL_BALI, PositionX, PositionY);\n    wcscpy(c->ID, L\"발리\");\n    c->Object.Scale = 0.12f;\n\nNo weapon, no BlendMesh, no HiddenMesh. The model is authored very large and stood down to 0.12.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6 (the .bmd has eleven: ATTACK3, ATTACK4, APEAR and RUN past them, which a summon never plays). Keys: 6, 6, 7, 7, 7, 6, 13; the walk is the one locked action. 57 bones. BoneHead = 6, Bip01 Head (ZzzOpenData.cpp:3634). ZzzOpenData.cpp:3626-3635 slows ATTACK3, ATTACK4, APEAR and RUN to 0.4 -- none of them exported -- and leaves the seven at OpenMonsterModel's defaults.",
+  "sheets": {
+    "rt03": "bali_rt03.png",
+    "tgh03": "bali_tgh03.png"
+  },
+  "sheet_from": "Two sheets out of Data/Monster: rt03.OZJ, 256 square, no alpha, on the body (692 triangles); tgh03.OZT, 32 by 64 with alpha cutting 58%, on mesh 1 (28 triangles). Decoded under a bali_ prefix.",
+  "cutout_from": "tgh03 is a .OZT whose alpha is the ragged edge of a cyan mane -- cut out, as MU alpha-tests it.",
+  "sheet_materials": {
+    "rt03": "skin",
+    "tgh03": "hair"
+  },
+  "sheet_materials_from": "Read off the sheets at 4x. rt03: a teal demon's hide, hard muscle with cyan highlights, clawed hands and feet, worn with gold -- an embossed loin plate with a figure on it, banded collars and bracers in gold scrollwork, gold horn tips. The hide is skin; the gold is set per island (islands_from). tgh03: a cyan mane in streaks with a cut edge -- hair.",
+  "effects_from": "Not built: MoveCharacterVisual's `case MODEL_BALI` (ZzzCharacter.cpp:6019-6045) puts a BITMAP_ENERGY and a BITMAP_FIRE on attack_r01 (bone 33) every frame of ATTACK1 and on attack_l01 (bone 20) through ATTACK2 (and attack_r03, bone 41, through ATTACK3, not exported). RenderCharacter's edge (ZzzObject.cpp:315-350) draws it with BoneScale 1.2 and 1.08 where others take 1 + 0.1/Scale.",
+  "sounds_from": "ZzzOpenData.cpp:3626-3631: mBali1, mBali2, mBaliAttack1, mBaliAttack2, then SetMonsterSound(..., 126, 127, 128, 129, 127) -- offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158), so 336-337 BALI1-2 on the move, 338-339 BALIATTACK1-2 on the swing and the flinch, and 337, mBali2, again on the death. Wired as bali_* in sounds.json.",
+  "islands_from": "Thirteen islands for 718 triangles. 0 is the body (578), the teal hide in skin -- its gold collars and bracers painted on the same island stay skin. The gold is set apart by its UV on rt03: 2, 3, 7 and 8 (18 and 24 each, mirrored) on the banded scrollwork strip at the sheet's foot, 4 and 5 on the embossed loin plate, 1 and 6 (2 each) on the gold horn bases -- brass, as the Serpent crossbow's gold. 9-12 are mesh 1, the tgh03 mane cards, in hair. They arrived as skin, the monster profile's default.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 578,
+      "area": 4266262.2,
+      "along": [
+        -431.3,
+        553.0
+      ],
+      "mu_uv": [
+        -0.002,
+        -0.001,
+        0.987,
+        1.002
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.98,
+        0.961
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 2,
+      "area": 16049.7,
+      "along": [
+        -25.0,
+        150.7
+      ],
+      "mu_uv": [
+        0.827,
+        0.793,
+        0.913,
+        0.91
+      ],
+      "bake_uv": [
+        0.298,
+        0.875,
+        0.327,
+        0.914
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 18,
+      "area": 83362.9,
+      "along": [
+        -419.4,
+        -201.0
+      ],
+      "mu_uv": [
+        0.006,
+        0.0,
+        0.284,
+        0.109
+      ],
+      "bake_uv": [
+        0.009,
+        0.483,
+        0.879,
+        0.976
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 24,
+      "area": 103348.6,
+      "along": [
+        64.7,
+        228.2
+      ],
+      "mu_uv": [
+        0.005,
+        0.098,
+        0.285,
+        0.205
+      ],
+      "bake_uv": [
+        0.179,
+        0.353,
+        0.991,
+        0.98
+      ]
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 8,
+      "area": 160273.8,
+      "along": [
+        48.6,
+        311.4
+      ],
+      "mu_uv": [
+        0.188,
+        0.209,
+        0.295,
+        0.524
+      ],
+      "bake_uv": [
+        0.708,
+        0.573,
+        0.822,
+        0.678
+      ]
+    },
+    {
+      "island": 5,
+      "material": "brass",
+      "triangles": 16,
+      "area": 348378.6,
+      "along": [
+        -351.7,
+        -194.2
+      ],
+      "mu_uv": [
+        0.009,
+        0.206,
+        0.182,
+        0.529
+      ],
+      "bake_uv": [
+        0.298,
+        0.009,
+        0.768,
+        0.945
+      ]
+    },
+    {
+      "island": 6,
+      "material": "brass",
+      "triangles": 2,
+      "area": 17780.8,
+      "along": [
+        -25.0,
+        150.7
+      ],
+      "mu_uv": [
+        0.827,
+        0.793,
+        0.913,
+        0.91
+      ],
+      "bake_uv": [
+        0.934,
+        0.573,
+        0.962,
+        0.612
+      ]
+    },
+    {
+      "island": 7,
+      "material": "brass",
+      "triangles": 18,
+      "area": 83362.9,
+      "along": [
+        4.6,
+        241.0
+      ],
+      "mu_uv": [
+        0.006,
+        0.0,
+        0.284,
+        0.109
+      ],
+      "bake_uv": [
+        0.179,
+        0.433,
+        0.968,
+        0.973
+      ]
+    },
+    {
+      "island": 8,
+      "material": "brass",
+      "triangles": 24,
+      "area": 103348.7,
+      "along": [
+        -151.1,
+        47.5
+      ],
+      "mu_uv": [
+        0.005,
+        0.098,
+        0.285,
+        0.205
+      ],
+      "bake_uv": [
+        0.009,
+        0.393,
+        0.969,
+        0.984
+      ]
+    },
+    {
+      "island": 9,
+      "material": "hair",
+      "triangles": 4,
+      "area": 62639.0,
+      "along": [
+        -354.8,
+        -32.3
+      ],
+      "mu_uv": [
+        -0.001,
+        0.001,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.34,
+        0.339
+      ]
+    },
+    {
+      "island": 10,
+      "material": "hair",
+      "triangles": 10,
+      "area": 88652.3,
+      "along": [
+        -323.2,
+        330.8
+      ],
+      "mu_uv": [
+        -0.001,
+        0.001,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.358,
+        0.009,
+        0.689,
+        0.339
+      ]
+    },
+    {
+      "island": 11,
+      "material": "hair",
+      "triangles": 4,
+      "area": 80105.0,
+      "along": [
+        -383.5,
+        184.8
+      ],
+      "mu_uv": [
+        -0.001,
+        0.001,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.358,
+        0.34,
+        0.688
+      ]
+    },
+    {
+      "island": 12,
+      "material": "hair",
+      "triangles": 10,
+      "area": 94663.5,
+      "along": [
+        -359.3,
+        330.8
+      ],
+      "mu_uv": [
+        -0.001,
+        0.001,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.358,
+        0.358,
+        0.689,
+        0.688
+      ]
+    }
+  ]
+}

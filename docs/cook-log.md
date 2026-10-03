@@ -270,3 +270,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Chaos Nature Bow | arm | 2026-10-02 21:36 | passed | studio 8x3: the whole bow an additive green ghost on bow77, as MU's BlendMesh -2 draws it; silver fittings bright but not blown, holds at night |
 | Chaos Lightning Staff | arm | 2026-10-02 21:42 | passed | studio 8x3: deep blue lacquered head and spikes, gold rings; the u2u2 streaks flicker blue round the head and foot; no blowouts |
 | Orc01 | figure | 2026-10-03 11:19 | passed | bloodcastle, on the road: painted_steel keeps the gilt bronze; brass had gone pale silver |
+| Bali01 | figure | 2026-10-03 11:24 | passed | summoned in a muted Lorencia arena, borrowed from figures_noria.json (Bali spawns nowhere; summoned_in noria): teal muscled hide in skin, the loin plate, bracers and horn bases in brass without blowout, the cyan mane cut out; about twice the elf's height at MU's 0.12 |

@@ -1757,7 +1757,10 @@ def figure_set(world):
 
     monsters = []
     for one in index["monsters"]:
-        if not any(s["map"] == number for s in one.get("spawns", [])):
+        # And a breed that spawns nowhere, in the world its recipe names: Bali, raised only by
+        # the elf's sixth summon, is cooked with Noria and borrowed everywhere else.
+        if not any(s["map"] == number for s in one.get("spawns", [])) and \
+                one.get("summoned_in") != world:
             continue
         # Skeleton01's row is the only one whose `glb` is a list and whose model_index is -1:
         # it is shaped like a character because it IS one -- a 60-joint player rig with no

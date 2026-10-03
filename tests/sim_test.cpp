@@ -2439,7 +2439,11 @@ void testElfSkills(const content::Tables& tables) {
             int n = 0;
             const sim::Offer* shelf = sim::stockOf(npc, &n);
             for (int i = 0; i < n; ++i) {
-                if (shelf[i].refinement > 0 && shelf[i].group != 4) refined = true;
+                // The Orb of Summoning's plus is the beast it calls, not a refinement.
+                if (shelf[i].refinement > 0 && shelf[i].group != 4 &&
+                    !(shelf[i].group == 12 && shelf[i].number == 11)) {
+                    refined = true;
+                }
                 if (npc == 251 && shelf[i].group == 8 && shelf[i].number == 0) bronze = true;
             }
         }

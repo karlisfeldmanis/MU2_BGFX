@@ -421,9 +421,10 @@ constexpr SkillRow kRows[kSkills] = {
     // Her six summons, 30 to 35, at 0.75's mana (`SkillsInitializer.cs:68-73`): one at a time,
     // raised beside her, and a second cast dismisses the one standing (TargetedSkillDefaultPlugin
     // .cs:121-125). `PLAYER_SKILL_ELF1` and `SOUND_SKILL_DEFENSE`, as ReceiveMagic plays them
-    // (WSclient.cpp:4153-4184). Only the Goblin and the Stone Golem are `built`: they are
-    // Noria's own breeds and are cooked. The Assassin, the Elite Yeti, the Dark Knight and Bali
-    // live on maps this game does not have, and their rows wait for their figures.
+    // (WSclient.cpp:4153-4184). All six are `built`: the Goblin and the Stone Golem are
+    // Noria's, the Assassin and the Elite Yeti Devias's and the Dark Knight the Dungeon's, every
+    // world's table carries every breed, and a summon borrows its figure from any of them. Bali
+    // lives on no map, and is cooked with Noria for the rest to borrow (Bali01's summoned_in).
     //
     // **A minute, shared by all six** (the user, 2026-10-02: "give elf summon a 1 min cooldown
     // after summon. its global for all summons"), ours, where 0.75 has none: a cast cools every
@@ -444,22 +445,22 @@ constexpr SkillRow kRows[kSkills] = {
     {.number = skill::kSummonAssassin, .name = "Summon Assassin", .mana = 110,
      .coolTicks = kSummonCool,
      .tells = "An assassin at her side.", .clip = 151, .sound = "player_skill_defense",
-     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .built = true, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
      .summons = 21},
     {.number = skill::kSummonYeti, .name = "Summon Elite Yeti", .mana = 160,
      .coolTicks = kSummonCool,
      .tells = "An elite yeti at her side.", .clip = 151, .sound = "player_skill_defense",
-     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .built = true, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
      .summons = 20},
     {.number = skill::kSummonKnight, .name = "Summon Dark Knight", .mana = 200,
      .coolTicks = kSummonCool,
      .tells = "A dark knight at her side.", .clip = 151, .sound = "player_skill_defense",
-     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .built = true, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
      .summons = 10},
     {.number = skill::kSummonBali, .name = "Summon Bali", .mana = 250,
      .coolTicks = kSummonCool,
      .tells = "Bali at her side.", .clip = 151, .sound = "player_skill_defense",
-     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .built = true, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
      .summons = 150},
 
     // ---- Flame 5, the wizard's, on the end so no save's learned bit moves ----------------------
