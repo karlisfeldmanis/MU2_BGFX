@@ -780,7 +780,11 @@ void Tracker::rebuildEvent(int width) {
         {"Destroy the Statue of Saint", "", door ? StepMark::Live : StepMark::Waiting},
         {"Return the staff to the Archangel", "", StepMark::Waiting},
     };
-    for (const Row& row : rows) {
+    // In the court's wait only the wait itself: the run's steps show once the gate opens (the
+    // user, 2026-10-03: 'dont show other quests tasks before gate is not opened').
+    const size_t shownRows = waiting ? 1 : sizeof(rows) / sizeof(rows[0]);
+    for (size_t r = 0; r < shownRows; ++r) {
+        const Row& row = rows[r];
         const float rowTall = kStep * u;
         const bool live = row.mark == StepMark::Live;
         const bool done = row.mark == StepMark::Done;
