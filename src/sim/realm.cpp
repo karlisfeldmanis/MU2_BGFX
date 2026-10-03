@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 
 #include "core/log.h"
 #include "sim/event.h"
@@ -258,6 +259,20 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         if (bodies_[i].player) players_.push_back(i);
     }
 
+    // Blood Castle's garrison is not there in the court's wait: WebZen raises it as the run
+    // starts (SetMonster, BloodCastle.cpp:887-917; the user, 2026-10-03: 'i remember that
+    // monsters was not rendered before timer'). Each is raised down, to rise -- on a tile drawn
+    // from its nest, as any respawn -- the tick the gate opens; the Statue of Saint not until
+    // the run calls it up. A body raised down is never drawn until it rises.
+    if (run_.phase == CastlePhase::Waiting) {
+        for (Body& one : bodies_) {
+            if (!one.monster()) continue;
+            one.health = 0;
+            const int32_t number = tables_->kinds[size_t(one.kind)].number;
+            one.risesAt = number == kCastleStatue ? std::numeric_limits<int64_t>::max()
+                                                  : run_.startsAt;
+        }
+    }
     for (const Body& one : bodies_) {
         if (one.summoner == 0) say(What::Spawned, one, one.level, one.health);
     }

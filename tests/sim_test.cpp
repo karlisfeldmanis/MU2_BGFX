@@ -7451,10 +7451,22 @@ void testCastleGrid(const content::Tables& lorencia) {
     check(realm.castleRun().phase == sim::CastlePhase::Waiting, "raised, the run waits");
     checkEqual(realm.castleSecondsLeft(), sim::kCastleWait, "for the court's sixty seconds");
     check(!reaches(14, 40), "with the entrance shut");
+    const auto standing = [&](bool statue) {
+        int count = 0;
+        for (const sim::Body& one : realm.bodies()) {
+            if (!one.monster() || !one.alive()) continue;
+            const bool isStatue = realm.tables()->kinds[size_t(one.kind)].number == sim::kCastleStatue;
+            if (isStatue == statue) ++count;
+        }
+        return count;
+    };
+    checkEqual(standing(false), 0, "and no garrison stands in the wait");
     for (int64_t t = 0; t < int64_t(sim::kCastleWait) * sim::kCastleTicksPerSecond; ++t) realm.step();
     check(realm.castleRun().phase == sim::CastlePhase::Running, "then the run starts");
     checkEqual(realm.castleSecondsLeft(), sim::kCastleRun, "with its fifteen minutes");
     check(reaches(14, 40), "the road down to the bridge is open from the court");
+    check(standing(false) > 0, "the garrison has risen with the gate");
+    checkEqual(standing(true), 0, "but not the Statue of Saint");
     check(!reaches(14, 85), "the courtyard is shut behind the raised bridge and the door");
     const sim::GridBox& bridge = sim::kCastleBridge;
     check(realm.changeGrid(bridge.x1, bridge.y1, bridge.x2, bridge.y2, bridge.bits, false),

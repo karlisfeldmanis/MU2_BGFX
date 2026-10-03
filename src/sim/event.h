@@ -79,6 +79,7 @@ constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.
 constexpr int kCastleKills = 40;
 constexpr int kCastleSorcerers = 2;
 constexpr int32_t kCastleSorcerer = 89;  // the Magic Skeleton, WebZen's Spirit Sorcerer
+constexpr int32_t kCastleStatue = 132;   // the Statue of Saint, raised by the run
 struct CastleRun {
     CastlePhase phase = CastlePhase::None;
     int castle = 1;
