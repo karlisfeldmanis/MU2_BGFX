@@ -802,6 +802,12 @@ private:
     std::vector<IceCast> thunderCasts_;
     // The Devil's swing: its beams from both hands to the hero while `wait` lasts (seconds).
     std::vector<IceCast> laserCasts_;
+    // A Balrog's meteor storm round where it stood: one more meteor every kBalrogStormEvery
+    // while `left` lasts (seconds).
+    struct MeteorStorm {
+        float x = 0.0f, z = 0.0f, left = 0.0f, next = 0.0f;
+    };
+    std::vector<MeteorStorm> storms_;
     // Whether a body's blow is drawn as a missile, and in which model: the Hunter's saw bolt,
     // or a guard's arrow or bolt by what she holds.
     bool shoots(uint32_t id, Arrows::Model* model);

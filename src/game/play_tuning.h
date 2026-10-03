@@ -359,6 +359,17 @@ constexpr float kKnightEmberEveryFrames = 4.0f;
 // (ZzzCharacter.cpp:2295-2313); ours, a beam a hand for this long.
 inline constexpr const char* kDevilFigure = "Devil01";
 constexpr float kDevilBeamSeconds = 0.6f;
+// MU's four beams wander: each joint is laid at a fresh random angle every frame. Ours, the
+// second beam off each hand meets the target this far off its middle, rolled again each frame,
+// and an ember off a hand one reference frame in this many (MU: a BITMAP_FIRE a beam a frame).
+constexpr float kDevilBeamWander = 0.35f;  // metres
+constexpr float kDevilFireEveryFrames = 2.0f;
+// The Balrog's Flame of Evil rains MODEL_FIRE within 512 units on every frame its skill lasts
+// (ZzzCharacter.cpp:1980-1985, rand_fps_check(1)); ours, the Lich's meteor, one every this
+// often for this long -- a storm, under Meteor's sixteen at once. The user, 2026-10-03: the
+// four it threw before were less than MU's.
+constexpr float kBalrogStormSeconds = 1.6f;  // its attack's 1600 ms
+constexpr float kBalrogStormEvery = 0.12f;
 // How far into sEvil (3.34 s) another Evil Spirit may start it, in the realm's ticks: half its
 // length, so under MU's two voices the two overlap and neither is cut back to its start -- the
 // stutter heard as a loop when every cast restarted it -- and a third steals only the last

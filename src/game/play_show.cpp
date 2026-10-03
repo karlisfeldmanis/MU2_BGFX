@@ -402,14 +402,45 @@ void Play::shade(float seconds) {
         if (devil == nullptr || target == nullptr || !devil->placed || !target->placed) continue;
         const float to[3] = {target->crown[0], target->crown[1] - 0.7f, target->crown[2]};
         const float origin[3] = {0.0f, 0.0f, 0.0f};
+        // MU's four, two a hand: the first to the middle, the second wandering round it, and
+        // now and then an ember off the hand (kDevilBeamWander, kDevilFireEveryFrames).
+        const bool fire = (wanderDice_ = wanderDice_ * 1664525u + 1013904223u) % 1000 <
+                          uint32_t(1000.0f * std::min(1.0f, seconds * 25.0f / kDevilFireEveryFrames));
         for (const int hand : devil->handBones) {
             float from[3];
-            if (hand >= 0 && devil->figure.pointOn(hand, origin, from)) shadowStars_.beam(from, to);
+            if (hand < 0 || !devil->figure.pointOn(hand, origin, from)) continue;
+            shadowStars_.beam(from, to);
+            float off[3] = {to[0], to[1], to[2]};
+            for (int i = 0; i < 3; ++i) {
+                wanderDice_ = wanderDice_ * 1664525u + 1013904223u;
+                off[i] += (float((wanderDice_ >> 8) % 1000) / 500.0f - 1.0f) * kDevilBeamWander;
+            }
+            shadowStars_.beam(from, off);
+            if (fire) shadowStars_.ember(from);
         }
     }
     laserCasts_.erase(std::remove_if(laserCasts_.begin(), laserCasts_.end(),
                                      [](const IceCast& one) { return one.wait <= 0.0f; }),
                       laserCasts_.end());
+    // The Balrog's meteor storm (play.cpp's Flame of Evil): a meteor at random within MU's 512
+    // units of where it stood, every kBalrogStormEvery, eMeteorite on every other.
+    for (MeteorStorm& storm : storms_) {
+        storm.left -= seconds;
+        storm.next -= seconds;
+        while (storm.next <= 0.0f && storm.left > 0.0f) {
+            storm.next += kBalrogStormEvery;
+            handDice_ ^= handDice_ << 13;
+            handDice_ ^= handDice_ >> 17;
+            handDice_ ^= handDice_ << 5;
+            const float x = storm.x + (float(handDice_ % 1024) - 512.0f) * 0.01f;
+            const float z = storm.z + (float((handDice_ >> 10) % 1024) - 512.0f) * 0.01f;
+            meteor_.cast(x, z, 0);
+            if ((handDice_ >> 20) & 1 && heard_.meteorite >= 0) emit(heard_.meteorite, x, z);
+        }
+    }
+    storms_.erase(std::remove_if(storms_.begin(), storms_.end(),
+                                 [](const MeteorStorm& one) { return one.left <= 0.0f; }),
+                  storms_.end());
 }
 
 // Hanzo at his anvil: MU's sparks off the hammer's head while the blow is between keys 5 and
