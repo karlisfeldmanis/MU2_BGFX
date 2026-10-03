@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdio>
 #include <ctime>
+#include <limits>
 
 #include "core/log.h"
 #include "sim/event.h"
@@ -641,6 +642,17 @@ void Realm::freeCastle() {
     for (const GridBox& box : {kCastleEntrance, kCastleBridge, kCastleDoor[0], kCastleDoor[1],
                                kCastleDoor[2]}) {
         changeGrid(box.x1, box.y1, box.x2, box.y2, box.bits, false);
+    }
+    // The garrison kept down for good, and the Statue of Saint stood in its hall at once, to be
+    // looked at (the user, 2026-10-03: 'did not see the archachel statue').
+    for (Body& one : bodies_) {
+        if (!one.monster()) continue;
+        if (tables_->kinds[size_t(one.kind)].number == kCastleStatue) {
+            if (!one.alive()) one.risesAt = tick_;
+        } else {
+            one.health = 0;
+            one.risesAt = std::numeric_limits<int64_t>::max();
+        }
     }
 }
 

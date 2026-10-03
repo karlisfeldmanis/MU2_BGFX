@@ -132,6 +132,9 @@ HIDDEN_BY_MAP = {
     # and is only the mist emitters. The user, 2026-10-02: 'i remember that gates was closed'.
     # docs/blood-castle-port.md.
     11: {9, 10, 37},
+    # Atlans's two (ZzzObject.cpp:4059, 4772): 22, the bubble vents, 845 of them, and 39 the
+    # lean box. docs/atlans-port.md.
+    7: {22, 39},
 }
 
 #: What each world draws additively, by map number and placement type.
@@ -151,6 +154,9 @@ BLEND_MESH_BY_MAP = {
     # The Lost Tower's (MoveObject, ZzzObject.cpp:4006-4017): the light shaft's light01, the
     # floor machines' cyan orb and the lamp posts' blue dots.
     4: {18: 1, 19: 4, 20: 4, 23: 1},
+    # Atlans's (MoveObject, ZzzObject.cpp:4067-4083): the light shafts, the glyph stones and
+    # arches, the magic circles and the caustic sheets. docs/atlans-port.md.
+    7: {23: 0, 32: 1, 34: 1, 38: 0, 40: 0},
 }
 
 #: Where a world's grass grows, by map number, where its slots' recipes would say otherwise.
@@ -172,6 +178,9 @@ GRASS_BY_MAP = {
     # Blood Castle ships a TileGrass01.OZT, but MU sows no grass in any castle
     # (ZzzLodTerrain.cpp:2082), and its TileGrass01 is the castle's brick. docs/blood-castle-port.md.
     11: [],
+    # Atlans ships no TileGrass .OZT and MU turns grass off by map (ZzzLodTerrain.cpp:3619);
+    # its TileGrass01 is the sea floor's sand. docs/atlans-port.md.
+    7: [],
 }
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the
@@ -194,6 +203,11 @@ GRASS_BY_MAP = {
 VOID_BY_MAP = {
     1: {"start": 0.0, "depth": 1.5, "lift": 1.0},
     4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
+    # Blood Castle: the rim alone (the user, 2026-10-03: 'also some ground edge blending not
+    # implemented', of the statue hall's edge standing as a lit grey slope into the black). The
+    # blend that took the bridge dark stays out (below); the rim darkens only the slopes that
+    # fall from the floor's edge, not the floor.
+    11: {"rim": True},
 }
 #: Blood Castle tried the tower's (the user, 2026-10-02: 'we need to add some nice void gradients
 #: to ground edges'), blend 2 and then 0.7 tiles: the three-tile bridge went dark from side to
@@ -227,6 +241,13 @@ LAVA_SPILL_BY_MAP = {4: 256}
 #: (2026-10-02: 'i remember that gates was closed'): only the entrance stays open, so the bridge
 #: can be walked to the raised drawbridge.
 OPEN_BY_MAP = {11: [(13, 15, 15, 23, 0x04)]}
+
+#: Boxes of a map's grid made floor that is not walked, as (x1, y1, x2, y2), inclusive tiles:
+#: NoGround cleared and NoMove set, so the ground draws them and VOID_FILL does not take them
+#: back. Blood Castle's courtyard hole (the user, 2026-10-03: 'some holes'): three tiles MU's
+#: grid marks NoGround inside the courtyard, 9,84 10,84 10,85, which MU draws as floor -- its
+#: void is a painted black, not the grid -- and this ground cut out as a pit. Ours, marked.
+FLOOR_BY_MAP = {11: [(9, 84, 10, 85)]}
 
 #: Where a map's own walk starts, for VOID_FILL: every tile MU leaves walkable that no walk from
 #: here reaches becomes NoGround, drawn as the void. Ours, marked. Blood Castle's grid is a strip
@@ -319,6 +340,7 @@ OPERABLE_BY_MAP = {
     1: {59, 60},  # the Dungeon's seat and lean box, ZzzInterface.cpp:1707-1712
     2: {22, 25, 40, 45, 55, 73, 91},
     3: {8, 38},
+    7: {39},  # Atlans's lean box, ZzzInterface.cpp:1736-1742
 }
 
 #: Types a character walks onto and poses against, for Lorencia.
@@ -599,6 +621,11 @@ def main() -> None:
         flags = np.array(flags)
         flags[y1:y2 + 1, x1:x2 + 1] &= flags.dtype.type(~bits & 0xFFFF)
         print(f"  opened     {x1},{y1} to {x2},{y2}: bits 0x{bits:02x} cleared (OPEN_BY_MAP)")
+    for x1, y1, x2, y2 in FLOOR_BY_MAP.get(number - 1, ()):
+        for y in range(y1, y2 + 1):
+            for x in range(x1, x2 + 1):
+                flags[y][x] = (int(flags[y][x]) & ~NO_GROUND) | NO_MOVE
+        print(f"  floored    {x1},{y1} to {x2},{y2}: NoGround cleared, NoMove set (FLOOR_BY_MAP)")
     if (seeds := VOID_FILL_BY_MAP.get(number - 1)):
         from collections import deque
         flags = np.array(flags)
