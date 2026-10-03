@@ -135,6 +135,7 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     shot->smoked = 0.0f;
     shot->glinted = kGlintSpacing;
     shot->chipped = 0.0f;
+    shot->travelled = 0.0f;
     shot->glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
 }
 
@@ -159,6 +160,8 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
         }
         const float step = speed * seconds;
         for (int k = 0; k < 3; ++k) shot.at[k] += shot.along[k] * step;
+        shot.travelled += step;
+        const bool clear = shot.travelled - kWispBehind >= kWispFromMuzzle;
         shot.glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
         if (shot.model == Wood) {
             shot.flown += step;
@@ -171,7 +174,7 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
                 shot.licked -= kLickSpacing;
                 lick(shot);
             }
-            shot.smoked += step;
+            if (clear) shot.smoked += step;
             while (shot.smoked >= kWispSpacing) {
                 shot.smoked -= kWispSpacing;
                 smoke(shot);
@@ -191,7 +194,7 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
             }
             // And the wooden arrow's thin grey smoke behind the streak (the user: 'minimal
             // smoke effect similar like for arrows').
-            shot.smoked += step;
+            if (clear) shot.smoked += step;
             while (shot.smoked >= kWispSpacing) {
                 shot.smoked -= kWispSpacing;
                 smoke(shot);
@@ -207,7 +210,7 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
     for (Ember& e : embers_) {
         if (!e.alive) continue;
         e.left -= frames;
-        e.size -= kEmberShrink * kEmberSheetUnits * kUnit * frames;
+        e.size -= kEmberShrink * kEmberSheetUnits * kUnit * kEmberShare * frames;
         if (e.left <= 0.0f || e.size <= 0.0f) {
             e.alive = false;
             continue;
@@ -318,7 +321,7 @@ void Arrows::shed(const Shot& shot) {
             (kSlowestDrift + (kFastestDrift - kSlowestDrift) * roll()) * kUnit * kReference;
         for (int k = 0; k < 3; ++k) e.velocity[k] = shot.along[k] * drift;
         e.size = (kSmallestEmber + (kLargestEmber - kSmallestEmber) * roll()) *
-                 kEmberSheetUnits * kUnit;
+                 kEmberSheetUnits * kUnit * kEmberShare;
         e.spin = roll() * kTwoPi;
         e.rise = 0.0f;
         e.left = kEmberFrames;

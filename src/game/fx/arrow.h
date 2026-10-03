@@ -111,6 +111,7 @@ private:
         float glow;      // this frame's Luminosity roll
         float glinted;   // metres since the last glint (the bolts')
         float chipped;   // metres since the last spark
+        float travelled; // metres from the muzzle
     };
     struct Glint {  // ours: a bolt's streak (still) or spark (thrown, falling)
         bool alive = false;
@@ -160,6 +161,9 @@ private:
     static constexpr int kEmberCells = 4;
     static constexpr int kEmberHeld = 6;
     static constexpr float kSmallestEmber = 1.28f, kLargestEmber = 1.92f;  // x the sheet's 64
+    // **Ours:** drawn at this share of MU's size (the user, 2026-10-03: 'reduce arrows fire
+    // effect little bit, its to wide').
+    static constexpr float kEmberShare = 0.65f;
     static constexpr float kEmberSheetUnits = 64.0f;
     static constexpr float kEmberShrink = 0.04f;
     static constexpr float kEmberRise = 0.004f;
@@ -173,7 +177,7 @@ private:
     static constexpr float kLickBehind = 0.22f;    // metres behind the arrow's origin: the
                                                    // sprite's middle (loaded z 0 to -0.41 m)
     static constexpr float kLickFrames = 8.0f;
-    static constexpr float kSmallestLick = 0.16f, kLargestLick = 0.28f;  // metres
+    static constexpr float kSmallestLick = 0.12f, kLargestLick = 0.20f;  // metres
     static constexpr float kLickRise = 0.3f;       // metres a second
     static constexpr float kLickJitter = 0.15f;    // metres a second, either way across
 
@@ -185,6 +189,9 @@ private:
     static constexpr float kWispRise = 0.25f;      // metres a second
     static constexpr float kWispGrey[3] = {0.30f, 0.30f, 0.32f};
     static constexpr float kWispAlpha = 0.30f;
+    // Not at the bow: the first wisp waits until the arrow is this far out, so the smoke is
+    // left after the shot and not in her hands (the user, 2026-10-03).
+    static constexpr float kWispFromMuzzle = 1.0f;  // metres
 
     // ---- Ours: the bolts' cold trail -----------------------------------------------------------
     static constexpr float kGlintSpacing = 0.04f;  // metres of flight between glints
