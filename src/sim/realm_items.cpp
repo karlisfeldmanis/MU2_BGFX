@@ -923,6 +923,23 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    // The Orb of Summoning, its own roll off its own dice and beside the rest (sim/items.h).
+    if (orbDice_.nextInt(0, kSummonOrbOdds) == 0) {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            const content::ItemRow& row = tables_->items[i];
+            if (!summoningOrb(row) || row.dropLevel > level) continue;
+            const int plus = std::min((level - row.dropLevel) / kSummonOrbLevelsAPlus,
+                                      kSummonOrbMostPlus);
+            Lying orb;
+            orb.what = Held{int32_t(i), int16_t(plus), 1};
+            std::tie(orb.column, orb.row) = clearing(dead.column(), dead.row());
+            orb.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            orb.id = nextId_++;
+            lying_.push_back(orb);
+            say(What::Dropped, dead, int32_t(orb.id), int32_t(i), orb.what.refinement);
+            break;
+        }
+    }
     Lying one;
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
@@ -1042,8 +1059,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         };
         const int32_t item = draw([&](const content::ItemRow& r) {
             const int gap = r.group == kGroupPotions ? kPotionGap : kGap;
-            return r.dropsFromMonsters() && reaches(r) && r.dropLevel >= level - gap &&
-                   plusOf(r) <= rate.maxPlus;
+            return r.dropsFromMonsters() && !summoningOrb(r) && reaches(r) &&
+                   r.dropLevel >= level - gap && plusOf(r) <= rate.maxPlus;
         });
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];

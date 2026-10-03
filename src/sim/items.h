@@ -172,6 +172,15 @@ bool antidote(const content::ItemRow& row);
 // (2026-09-28), named for what it raises: "Orb of Goblin", "Orb of Golem" and on. Every other row
 // comes back as it is. Reading and the tooltip both go through here, so the two cannot differ.
 bool summoningOrb(const content::ItemRow& row);
+// **Its drop** (the user, 2026-10-03: "i barely see any summon orbs drops", "just fix summon orb
+// drops"). In the item pool it was one row among up to seventy, on one kill in ten, and only from
+// monsters up to level 18: one in 250 to 700 kills, the Goblin alone. Now its own roll, beside
+// whatever else the kill leaves, from any monster its drop level reaches: one in kSummonOrbOdds,
+// at +1 for every kSummonOrbLevelsAPlus levels the monster has over the orb's, up to the +4 Lala
+// sells. invention, all of it.
+constexpr int kSummonOrbOdds = 150;
+constexpr int kSummonOrbLevelsAPlus = 12;
+constexpr int kSummonOrbMostPlus = 4;
 content::ItemRow asRead(const content::ItemRow& row, int refinement);
 constexpr int kAleSpeed = 20;
 constexpr int64_t kAleTicks = 80 * 20;

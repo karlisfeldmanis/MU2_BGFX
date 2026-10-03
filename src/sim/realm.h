@@ -1261,6 +1261,8 @@ private:
     // Blood Castle's scroll and bone, rolled on every kill outside a castle (Realm::leave), off
     // a stream of their own so the kill's own drops draw as they did.
     Random ticketDice_{0};
+    // The Orb of Summoning's own roll on every kill (sim/items.h), so the rest draw as they did.
+    Random orbDice_{0};
     std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;
