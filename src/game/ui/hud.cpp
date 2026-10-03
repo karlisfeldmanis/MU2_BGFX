@@ -691,12 +691,14 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
             what.rows.push_back(prose("for every blow you land; no bonus at " +
                                       std::to_string(power.lifeCost) + " Life or less"));
         }
-        // The Horn of Uniria's ride (sim::kRideFactor): off a safe tile, in a fight or out.
+        // The Horn of Uniria's ride (sim::kRideFactor): off a safe tile on an open map
+        // (sim::rideMap), in a fight or out.
         if (power.mount) {
             what.rows.push_back(said("Movement speed",
                                      "+" + percent(double(sim::kRideFactor / sim::kRunFactor) - 1.0),
                                      tip::Tone::Green));
-            what.rows.push_back(prose("over running, ridden outside town"));
+            what.rows.push_back(
+                prose("over running, ridden outside town on the open lands, never in a dungeon"));
         }
         if (lifted) what.rows.push_back(prose("its price lifted by your Kinship rune"));
         what.rows.push_back(prose("loses Life as you take damage, and is gone at none"));

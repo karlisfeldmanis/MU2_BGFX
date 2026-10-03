@@ -454,7 +454,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         if (power.health > 0) say("Max HP +" + std::to_string(power.health) + " increased");
         // The Horn of Uniria. MuMain's card has only its Life; "Moving speed" is GT 68, the line
         // later mounts print (ZzzInventory.cpp:4081). Ours, so the card says what the horn is for.
-        if (power.mount) say("Moving speed: ride outside town, faster than running");
+        if (power.mount) {
+            say("Moving speed: ride outside town on the open lands, faster than running");
+        }
         if (power.dealt > 1.0) {
             say("Increase " + std::to_string(int(std::lround((power.dealt - 1.0) * 100.0))) +
                 "% of attacking & Wizardry Dmg");

@@ -6967,6 +6967,11 @@ void testMount(const content::Tables& tables) {
     const content::ItemRow& row = tables.items[size_t(horn)];
     checkEqual(sim::placeOf(row), int(sim::kMount), "it goes in the mount's slot, not the pets'");
     checkEqual(row.dropLevel, 25, "from level 25");
+    checkEqual(row.needLevel, 100, "worn from level 100, the user's");
+    check(sim::rideMap(0) && sim::rideMap(2) && sim::rideMap(3) && sim::rideMap(7),
+          "ridden on Lorencia, Devias, Noria and Atlans");
+    check(!sim::rideMap(1) && !sim::rideMap(4) && !sim::rideMap(9) && !sim::rideMap(11),
+          "and never in a dungeon");
     const sim::PetPower power = sim::petPower(row);
     check(power.mount && power.taken == 1.0 && power.dealt == 1.0 && power.health == 0,
           "it is ridden and does nothing else");

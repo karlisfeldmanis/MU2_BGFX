@@ -18,6 +18,7 @@
 #include "core/log.h"
 #include "sim/event.h"
 #include "sim/gates.h"
+#include "sim/items.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::sim {
@@ -144,7 +145,7 @@ void Realm::advance(Body& one) {
             }
         }
         const bool safe = tables_->grid.safe(one.column(), one.row());
-        one.riding = one.pet.mount && !safe;
+        one.riding = one.pet.mount && !safe && rideMap(tables_->map);
         if (why != nullptr) {
             if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
             one.combatUntil = tick_ + (one.riding ? kRideCombatTicks : kCombatTicks);

@@ -33,8 +33,9 @@
     "height": 1,
     "durability": 255,
     "slot": 8,
+    "requires_note": "Ours: level 100 where 0.75 asks 25 (the user, 2026-10-04: 'allow to start to use mount only from lvl 100').",
     "requires": {
-      "level": 25,
+      "level": 100,
       "strength": 0,
       "agility": 0,
       "energy": 0,
