@@ -590,6 +590,10 @@ void Play::update(double seconds) {
             // (ZzzCharacter.cpp:5251-5310): not when the thing arrives. Once a swing, and only for
             // the skill the swing was thrown with -- a rune's Ice, Lightning or rock says `Loosed`
             // on a swing that was something else, and MU has no rune to play a hit for.
+            // **A spell's is owed to its landing instead** (the user, 2026-10-03: "when i shoot
+            // energy ball i hear impact sound faster that energy ball actualy touch monster"):
+            // the release already has the spell's own wave, and MU's melee hit there read as the
+            // impact half a second early. Paid where the first body is struck. Ours.
             if (happening.what == sim::What::Loosed && happening.whom != 0) {
                 if (Drawn* caster = drawnOf(happening.who);
                     caster != nullptr && caster->placed && happening.a == caster->swingSkill &&
@@ -599,8 +603,17 @@ void Play::update(double seconds) {
                     const sim::SkillRow* shot = sim::skillNumbered(happening.a);
                     const bool arrow = shooter != nullptr && shooter->archer != 0 &&
                                        (shot == nullptr || shot->arrows > 0);
-                    const int hit = arrow ? heard_.missile : heard_.hit;
-                    if (hit >= 0) emit(hit, caster->crown[0], caster->crown[2], caster->id);
+                    if (!arrow) {
+                        // Its flight (`b`) and a little over, by which a blow it owes has come.
+                        const int64_t due = int64_t(happening.tick) + happening.b + kOwedSlack;
+                        for (int64_t& owed : caster->owedHits) {
+                            if (owed != 0) continue;
+                            owed = due;
+                            break;
+                        }
+                    } else if (heard_.missile >= 0) {
+                        emit(heard_.missile, caster->crown[0], caster->crown[2], caster->id);
+                    }
                 }
             }
             // A rune's lightning -- Stormcall, Loosed on a swing that was not Lightning -- always
@@ -1714,6 +1727,19 @@ void Play::update(double seconds) {
             swinger->heardToken = cue.token;
             const int hit = cue.arrow ? heard_.missile : heard_.hit;
             if (hit >= 0) emit(hit, swinger->crown[0], swinger->crown[2], swinger->id);
+        }
+        // A spell's hit, owed since its release (`Loosed`, above), where it strikes the first
+        // body: a Power Wave or a rain of rocks sounds once. Not on a miss, which flies past.
+        if (cue.thrown && !cue.arrow && !cue.poison && !cue.miss) {
+            int64_t* first = nullptr;
+            for (int64_t& owed : swinger->owedHits) {
+                if (owed != 0 && owed < realm_.tick()) owed = 0;
+                if (owed != 0 && (first == nullptr || owed < *first)) first = &owed;
+            }
+            if (first != nullptr) {
+                *first = 0;
+                if (heard_.hit >= 0) emit(heard_.hit, x, z);
+            }
         }
         // Her own arrow sounds again where it goes in (CheckClientArrow, ZzzEffect.cpp:6620),
         // miss or not: the client's own test found the body, not the server.

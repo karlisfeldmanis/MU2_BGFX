@@ -774,6 +774,10 @@ private:
         // The swing whose release has sounded its hit: a Meteorite says `Loosed` once per body
         // it falls on and a channel once per strike, and MU plays the hit once, at the release.
         uint32_t heardToken = 0;
+        // A spell's hit, owed by its release and paid where it first strikes (Play::update): the
+        // tick each is due to land by, 0 for none. Four, because the next bolt can be let go
+        // before the last one lands; a miss lapses rather than paying for the next.
+        int64_t owedHits[4] = {};
     };
 
     Drawn* drawnOf(uint32_t id);
