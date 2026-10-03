@@ -1213,6 +1213,8 @@ private:
         const int64_t money = realm_->money();
         const int64_t bundle = potionPrice(healTier());
         if (countOf(sim::heals) < 3 && money >= bundle) return "out of potions";
+        // The wizard's alone: a knight sent home for mana potions too (2026-10-03) ended fifteen
+        // levels lower in eight hours -- the trips cost more than Uppercut and Lunge gave back.
         if (options_.kin == sim::Kin::DarkWizard && countOf(sim::restores) < 3 && money >= bundle) {
             return "out of mana potions";
         }
@@ -1759,7 +1761,7 @@ private:
             heal(24);
         } else {
             heal(30);
-            restore(21);
+            restore(30);
         }
         if (bought || mana) say("buys %d healing and %d mana potions (%lld zen left)", bought, mana,
                                 (long long)realm_->money());
