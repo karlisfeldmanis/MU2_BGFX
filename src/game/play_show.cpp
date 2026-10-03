@@ -438,6 +438,20 @@ void Play::shade(float seconds) {
             if ((handDice_ >> 20) & 1 && heard_.meteorite >= 0) emit(heard_.meteorite, x, z);
         }
     }
+    // A spread rain's rocks, each starting its fall when its wait is up, where the body is now.
+    for (RockDue& due : rocksDue_) {
+        due.wait -= seconds;
+        if (due.wait > 0.0f) continue;
+        float x = due.x, z = due.z;
+        if (const Drawn* on = drawnOf(due.whom); on != nullptr && on->placed) {
+            x = on->crown[0];
+            z = on->crown[2];
+        }
+        meteor_.cast(x, z, due.who);
+    }
+    rocksDue_.erase(std::remove_if(rocksDue_.begin(), rocksDue_.end(),
+                                   [](const RockDue& one) { return one.wait <= 0.0f; }),
+                    rocksDue_.end());
     storms_.erase(std::remove_if(storms_.begin(), storms_.end(),
                                  [](const MeteorStorm& one) { return one.left <= 0.0f; }),
                   storms_.end());

@@ -821,6 +821,15 @@ private:
     std::vector<IceCast> laserCasts_;
     // A Balrog's meteor storm round where it stood: one more meteor every kBalrogStormEvery
     // while `left` lasts (seconds).
+    // A Meteorite's rock still waiting in the sky (Realm::rain spreads the rain): its fall starts
+    // on the body when `wait` (seconds) is up, at the body's drawn place then, or at (x, z) if
+    // it is gone.
+    struct RockDue {
+        float wait = 0.0f;
+        uint32_t who = 0, whom = 0;
+        float x = 0.0f, z = 0.0f;
+    };
+    std::vector<RockDue> rocksDue_;
     struct MeteorStorm {
         float x = 0.0f, z = 0.0f, left = 0.0f, next = 0.0f;
     };

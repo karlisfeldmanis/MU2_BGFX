@@ -986,8 +986,10 @@ private:
     // `arrive` on the tick it gets there. Past his hand, a new order no longer takes it back.
     // `announce` says `Loosed` (one wave is drawn per cast, so a line says it once); `pays` is
     // whether the landing pays mana back (a line pays for the body it was aimed at only).
+    // `delay`: ticks the rock waits in the sky before its fall begins -- a Meteorite's rain is
+    // not one volley (Realm::rain).
     void loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce = true,
-               bool pays = true);
+               bool pays = true, int32_t delay = 0);
     // How many Pyroblasters his hands carry (sim/items.h), and the chain one rolls for off a Fire
     // Ball that landed on the body `struck`, which stood at (x, y).
     int pyroblasts(const Body& hero) const;

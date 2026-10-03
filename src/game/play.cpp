@@ -734,8 +734,16 @@ void Play::update(double seconds) {
                     } else if (happening.a == sim::skill::kMeteorite) {
                         // The Lich's rock, dropped where the body is drawn: MU's
                         // `CreateEffect(MODEL_FIRE, to->Position, ...)` at the let-go. It
-                        // falls for the ticks the realm holds the blow.
-                        meteor_.cast(to[0], to[2], happening.who);
+                        // falls for the ticks the realm holds the blow -- after its wait in the
+                        // sky, when the rain is spread (`b` is the wait and the fall).
+                        const sim::SkillRow* rock = sim::skillNumbered(sim::skill::kMeteorite);
+                        const int32_t fall = rock != nullptr ? rock->fallTicks : 0;
+                        const float wait = float(happening.b - fall) * float(kTickSeconds);
+                        if (wait > 0.001f) {
+                            rocksDue_.push_back({wait, happening.who, happening.whom, to[0], to[2]});
+                        } else {
+                            meteor_.cast(to[0], to[2], happening.who);
+                        }
                     } else if (happening.a == sim::skill::kLightning) {
                         // A chain's leap: from the middle of the body it leaps off (`c`,
                         // Realm::channel), not his hand -- the corpse's too, if the last strike

@@ -746,7 +746,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             pointerX = args.pointX * float(ctx.window.width());
             pointerY = args.pointY * float(ctx.window.height());
         }
-        if (!args.arena.empty()) arenaHand();
+        // --no-hand leaves the arena's hero to the player, for a hand-played try in a crowd.
+        if (!args.arena.empty() && !args.noHand) arenaHand();
         const bool clickNow = scriptedPointer(ctx, at, view, proj, &pointerX, &pointerY);
         // The windows first: a click that lands on one is the interface's, and the
         // world only hears the clicks that land on none. A scripted click is the

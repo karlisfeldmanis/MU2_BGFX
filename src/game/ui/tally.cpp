@@ -85,6 +85,10 @@ constexpr float kLaneGapAboveHud = 14.0f;  // clear of the plate's top edge
 constexpr float kLaneRowGap = 3.0f;
 constexpr float kLaneWordGap = 7.0f;
 constexpr float kRowLife = 2.1f;
+// The lane holds this many rows at most, the newest: a spell that fells two dozen at once
+// stacked two dozen experience rows up the screen (the user, 2026-10-03: "too much experience
+// text on screen, show latest 10"). The oldest go first, in order. Ours.
+constexpr size_t kLaneMost = 10;
 // The death is set larger and in the fight's own weight rather than the lane's: it is the one
 // line there that is not income.
 //
@@ -374,6 +378,12 @@ void Tally::collect(const Play& play, float seconds) {
             heldZen_ = 0;
             zenAge_ = 0.0f;
         }
+    }
+    // The newest kLaneMost, the death's row kept whatever comes after it.
+    while (lane_.size() > kLaneMost) {
+        auto oldest = lane_.begin();
+        if (oldest->kind == Row::Kind::Died) ++oldest;
+        lane_.erase(oldest);
     }
     for (size_t i = 0; i < lane_.size();) {
         lane_[i].age += seconds;

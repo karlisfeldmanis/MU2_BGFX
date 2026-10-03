@@ -1877,8 +1877,10 @@ void testCastLock(const content::Tables& tables) {
         int casts = 0, falls = 0, landed = 0, lateOrEarly = 0, movedWhile = 0, widest = 0, thisFall = 0;
         int64_t fallTick = -1;
         int64_t lastCast = -1, closest = 1 << 30;
-        int64_t loosedAt[8] = {};
-        uint32_t loosedOn[8] = {};
+        // When each rock is due down: its let-go and `b`, the wait in the sky (a spread rain,
+        // 2026-10-03) and the fall. A rain of 24 needs the room.
+        int64_t loosedAt[32] = {};
+        uint32_t loosedOn[32] = {};
         uint32_t fighting = 0;
         for (int tick = 0; tick < 6000; ++tick) {
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
@@ -1904,8 +1906,8 @@ void testCastLock(const content::Tables& tables) {
                     lastCast = one.tick;
                 }
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kMeteorite) {
-                    loosedAt[falls % 8] = one.tick;
-                    loosedOn[falls % 8] = one.whom;
+                    loosedAt[falls % 32] = int64_t(one.tick) + one.b;
+                    loosedOn[falls % 32] = one.whom;
                     ++falls;
                 }
                 // The staff's swings do not fly, so every thrown landing is a rock -- and it
@@ -1913,8 +1915,8 @@ void testCastLock(const content::Tables& tables) {
                 if ((one.what == sim::What::Hit || one.what == sim::What::Missed) && one.thrown) {
                     if (one.what == sim::What::Hit) ++landed;
                     bool matched = false;
-                    for (int k = 0; k < 8; ++k) {
-                        if (loosedOn[k] != 0 && int64_t(one.tick) - loosedAt[k] == 7) matched = true;
+                    for (int k = 0; k < 32; ++k) {
+                        if (loosedOn[k] == one.whom && int64_t(one.tick) == loosedAt[k]) matched = true;
                     }
                     if (!matched) ++lateOrEarly;
                     if (int64_t(one.tick) != fallTick) {
@@ -1931,7 +1933,7 @@ void testCastLock(const content::Tables& tables) {
         check(lock > 20, "the arm-up clip has its length in the realm");
         check(casts > 10 && falls > 0 && landed > 0, "he calls Meteorite through a hunt and it lands");
         check(closest >= 10, "paced by its own clip, with no cooldown");
-        checkEqual(lateOrEarly, 0, "every rock lands its fall after the let-go");
+        checkEqual(lateOrEarly, 0, "every rock lands its wait and fall after the let-go");
         check(widest >= 2, "and one cast drops a rock on more than one body");
         checkEqual(movedWhile, 0, "and he does not move while he calls it");
     }

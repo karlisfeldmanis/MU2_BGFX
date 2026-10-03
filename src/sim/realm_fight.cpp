@@ -653,9 +653,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
 // the air for no ticks and lands on the let-go.
 constexpr float kBoltStopsShort = 1.0f;
 constexpr float kTicksPerSecond = 20.0f;  // the realm's own clock
+// How far a Meteorite's rain is spread, in ticks: a second from the first rock to the last. Ours.
+constexpr int32_t kRainSpreadTicks = 20;
 
 void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce,
-                  bool pays) {
+                  bool pays, int32_t delay) {
     const Body* target = body(at);
     // The straight line, not MU's larger-axis reach: a bolt flies the diagonal.
     const float dx = target ? target->x - hero.x : 0.0f;
@@ -664,7 +666,7 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
     // A rock out of the sky takes its fall, however far off the body stands.
     const int32_t air =
         row.fallTicks > 0
-            ? row.fallTicks
+            ? row.fallTicks + std::max<int32_t>(0, delay)
             : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
     if (announce) say(What::Loosed, hero, row.number, air, 0, at);
     if (air > 0) {
@@ -1017,8 +1019,17 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
         victims[at] = one.id;
         ++found;
     }
+    // **Not all at once** (the user, 2026-10-03: "not all meteors falling at the same time so
+    // there is realism"): a falling spell's rocks each wait their own while in the sky, up to
+    // kRainSpreadTicks, the aimed body's none -- rolled off the body's id rather than any dice,
+    // so no stream moves. The drawing starts each fall when its wait is up (`b` is the whole).
     for (int i = 0; i < found; ++i) {
-        loose(hero, row, victims[i], force, true, victims[i] == aimedAt);
+        const bool aimedOne = victims[i] == aimedAt;
+        const int32_t wait =
+            row.fallTicks > 0 && !aimedOne
+                ? int32_t((victims[i] * 2654435761u >> 16) % uint32_t(kRainSpreadTicks + 1))
+                : 0;
+        loose(hero, row, victims[i], force, true, aimedOne, wait);
     }
 }
 
