@@ -55,7 +55,8 @@ constexpr int64_t kGiveUp = 30 * 20;  // a target not won in thirty seconds is o
 constexpr int64_t kForget = 5 * 60 * 20;
 constexpr int64_t kFear = 15 * 60 * 20;  // a breed that killed him twice is left this long
 constexpr int64_t kEpoch = 1800000000;
-constexpr int kElfEnergyFrom = 70;     // the level the elf starts keeping energy for her orbs   // the wall clock's start, unix seconds
+constexpr int kElfEnergyFrom = 70;
+constexpr int kRuneWeaponLevel = 40;  // a weapon rune is set only in a weapon of this drop level up     // the level the elf starts keeping energy for her orbs   // the wall clock's start, unix seconds
 
 
 // The worlds a quest takes him to: MU's map number, the cooked world, where one arrives.
@@ -222,6 +223,16 @@ public:
             if (one.empty()) continue;
             std::printf(" %s", tables_->items[size_t(one.item)].label.c_str());
             if (one.refinement) std::printf(" +%d", one.refinement);
+            if (one.excellent) std::printf(" (excellent)");
+            // Its sockets: each rune by name, an empty one as `-`.
+            if (one.sockets > 0) {
+                std::printf(" [");
+                for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) {
+                    const sim::PowerRow* power = one.powers[k] ? sim::powerOf(one.powers[k]) : nullptr;
+                    std::printf("%s%s", k ? ", " : "", power ? power->name : "-");
+                }
+                std::printf("]");
+            }
             std::printf(",");
         }
         const sim::Body& hero = realm_->hero();
@@ -892,6 +903,39 @@ private:
     // carries goes onto what he wears: a rune into the first free socket of his weapon, then his
     // shield; a Bless or Soul onto the worn piece with the lowest plus, the weapon first on a
     // tie -- a Soul only below +7, where a failed one would reset it to +0 (kSoulResetFrom).
+    // At the Goblin's box: for each carried piece whose runes are worth it, each rune in turn --
+    // the piece and a Chaos in, Remove Rune on that socket, the box emptied back into the bag.
+    void unrune() {
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (!unruneWorth(realm_->satchel()[slot])) continue;
+            const std::string label = rowOf(realm_->satchel()[slot]).label;
+            int piece = slot;
+            for (int k = 0; k < 3; ++k) {
+                const sim::Held thing = realm_->satchel()[piece];
+                if (thing.empty() || k >= thing.sockets || !thing.powers[k]) continue;
+                int chaosSlot = -1;
+                for (int c = sim::kWorn; c < sim::kSlots && chaosSlot < 0; ++c) {
+                    const sim::Held& one = realm_->satchel()[c];
+                    if (!one.empty() && chaos(rowOf(one))) chaosSlot = c;
+                }
+                if (chaosSlot < 0) break;
+                const int pieceCell = realm_->putIn(piece);
+                const int chaosCell = realm_->putIn(chaosSlot);
+                const bool done = pieceCell >= 0 && chaosCell >= 0 && realm_->mix(sim::Service::RemoveRune, k);
+                // Everything back, the piece first so it finds a slot.
+                piece = -1;
+                for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                    if (realm_->machine()[cell].empty()) continue;
+                    const bool isPiece = rowOf(realm_->machine()[cell]).label == label;
+                    const int back = realm_->takeOut(cell);
+                    if (isPiece) piece = back;
+                }
+                if (done) say("takes a rune out of his %s at the Chaos Goblin", label.c_str());
+                if (!done || piece < 0) break;
+            }
+        }
+    }
+
     void useJewels() {
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
             const sim::Held jewel = realm_->satchel()[slot];
@@ -903,6 +947,15 @@ private:
                 for (const int to : {int(sim::kWeaponRight), int(sim::kWeaponLeft), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}) {
                     if (to >= sim::kWorn || realm_->satchel()[to].empty()) continue;
                     if (!sim::settable(*tables_, jewel, realm_->satchel()[to], options_.kin)) continue;
+                    // **A weapon rune waits for a weapon worth keeping** (the user, 2026-10-03:
+                    // "bot saves weapon runes"): Marlon's Stormcall went into the Falchion at
+                    // level 40, was sold with it, and the Double Blade's sockets stayed empty.
+                    const content::ItemRow& target = rowOf(realm_->satchel()[to]);
+                    // The knight's alone: the wizard's Serpent Staff and the elf's Battle Bow are the
+                    // weapons they keep, and holding Arcane Echo and Frost Arrow off them cost both
+                    // the Knights' Halls on two seeds of three.
+                    if (options_.kin == sim::Kin::DarkKnight && target.weapon() && !target.shield() &&
+                        target.dropLevel < kRuneWeaponLevel) continue;
                     const std::string on = rowOf(realm_->satchel()[to]).label;
                     if (realm_->refine(slot, to)) {
                         say("sets %s into his %s", row.label.c_str(), on.c_str());
@@ -947,7 +1000,56 @@ private:
     }
     bool stores(const sim::Held& one) const {
         const content::ItemRow& row = rowOf(one);
-        return sim::refiningJewel(row) || sim::creation(row);
+        // A weapon rune of his class is carried for the weapon it waits for (savesRune), and
+        // the Jewels of Chaos for the machine's Remove Rune, three of them.
+        if (sim::creation(row)) return options_.kin != sim::Kin::DarkKnight || !weaponRune(one);
+        if (chaos(row)) return chaosCount() > 3;
+        return sim::refiningJewel(row);
+    }
+    static bool chaos(const content::ItemRow& row) { return row.group == 12 && row.number == 15; }
+    int chaosCount() const {
+        int n = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && chaos(rowOf(one))) ++n;
+        }
+        return n;
+    }
+    // A Rune of Creation whose power goes in a weapon and is his class's.
+    bool weaponRune(const sim::Held& one) const {
+        if (one.empty() || !sim::creation(rowOf(one))) return false;
+        const sim::PowerRow* power = sim::powerOf(one.powers[0]);
+        return power != nullptr && (power->slots & sim::kInWeapon) != 0 && power->takenBy(options_.kin);
+    }
+    // What taking the runes out of a carried piece would cost, or -1 when it has none: the
+    // machine's Remove Rune is one Chaos and Zen by the rune's rarity, each.
+    int64_t unruneCost(const sim::Held& one) const {
+        if (one.empty() || sim::creation(rowOf(one))) return -1;
+        int64_t zen = 0;
+        int runes = 0;
+        for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) {
+            const sim::PowerRow* power = one.powers[k] ? sim::powerOf(one.powers[k]) : nullptr;
+            if (!power) continue;
+            zen += sim::kRemoveRuneZen[int(power->rarity)];
+            ++runes;
+        }
+        return runes > 0 ? zen : -1;
+    }
+    // Whether a carried, unworn piece with runes set is worth the machine now: the Zen over his
+    // potions, a Chaos for each rune, and a Chaos Goblin in this town (the user, 2026-10-03: "bot
+    // removes runes when rich").
+    bool unruneWorth(const sim::Held& one) const {
+        const int64_t zen = unruneCost(one);
+        if (zen < 0 || realm_->money() < zen + potionReserve()) return false;
+        int runes = 0;
+        for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) runes += one.powers[k] ? 1 : 0;
+        return chaosCount() >= runes;
+    }
+    int goblinHere() const {
+        for (size_t i = 0; i < tables_->folk.size(); ++i) {
+            if (tables_->folk[i].number == sim::kChaosGoblin) return int(i);
+        }
+        return -1;
     }
     int stash() const {
         int n = 0;
@@ -993,6 +1095,7 @@ private:
     bool keepsAt(int slot) const {
         const sim::Held& one = realm_->satchel()[slot];
         if (slot >= sim::kWorn && nearlyFits(one)) return true;
+        if (slot >= sim::kWorn && unruneWorth(one)) return true;
         if (one.empty() || !keeps(one)) return false;
         const content::ItemRow& row = rowOf(one);
         if (sim::ammunition(row)) return archer() && feeds(row);
@@ -1542,8 +1645,15 @@ private:
         const sim::Body& hero = realm_->hero();
         float closest = 1e30f;
         int to = -1;
+        // Grinding, only the level he would grind here, as the hunt's own pick does: without it
+        // a knight paid down to Dungeon 2 and back up to Dungeon 1 every thirty seconds for four
+        // hours (seed 2, 2026-10-03), each floor's bodies the other's quarry and neither his.
+        // Not the elf's: over three seeds she ended 15 levels lower with it (172-174 against
+        // 187-190), the knight 30 lower without it (140-145 against 175-180).
+        const int cap = (aim_ == Aim::Hunt || options_.kin == sim::Kin::FairyElf) ? -1 : bestOn(*tables_);
         for (const sim::Body& body : realm_->bodies()) {
             if (here < 0 || !quarry(body, true)) continue;
+            if (cap >= 0 && body.level != cap) continue;
             const int floor = realm_->floorAt(body.column(), body.row());
             if (floor < 0 || floor == here) continue;
             const float dx = body.x - hero.x, dy = body.y - hero.y;
@@ -1552,6 +1662,8 @@ private:
                 to = floor;
             }
         }
+        // And never straight back to the floor he has just left.
+        if (to >= 0 && to == floorLeft_ && clock_ < floorLeftAt_ + 5 * 60 * 20) to = -1;
         if (to < 0) {
             setAside();
             return;
@@ -1559,6 +1671,8 @@ private:
         const sim::TravelRow& row = sim::travelAt(to);
         if (realm_->travelRefusal(to) == sim::TravelRefusal::None && realm_->money() >= row.zen + potionReserve()) {
             if (clock_ >= nextFloorAt_ && realm_->travel(to)) {
+                floorLeft_ = here;
+                floorLeftAt_ = clock_;
                 say("pays %lld zen down to %s", (long long)row.zen, row.name);
                 banned_.clear();
                 nextFloorAt_ = clock_ + 30 * 20;
@@ -1685,6 +1799,13 @@ private:
         // 2026-10-03: "lets continue to improve bots"): Baz takes them in, as a player banks
         // what he keeps, so the bag has room for what falls.
         vaultOwed_ = wantsVault();
+        machineOwed_ = false;
+        if (goblinHere() >= 0) {
+            for (int slot = sim::kWorn; slot < sim::kSlots && !machineOwed_; ++slot) {
+                machineOwed_ = unruneWorth(realm_->satchel()[slot]);
+            }
+        }
+        machineSince_ = clock_;
         vaultSince_ = clock_;
         mode_ = Mode::Town;
         tripSince_ = clock_;
@@ -1732,6 +1853,28 @@ private:
         // another town he can reach has something, he goes there to shop -- the wizard sat in
         // Pad armour at level 119 with 200,000 Zen while Izabel in Devias sold Sphinx and Bone.
         // Not again for half an hour, so a piece that will not go on cannot bounce him.
+        // The Chaos Goblin first, when a carried piece's runes are worth taking out: into the box
+        // with a Chaos, Remove Rune, everything back out; the rune goes into his weapon at the
+        // next sort of the bag (useJewels).
+        if (machineOwed_) {
+            const int goblin = goblinHere();
+            if (goblin < 0 || clock_ - machineSince_ > 90 * 20) {
+                machineOwed_ = false;
+            } else if (realm_->mixing() == goblin) {
+                unrune();
+                realm_->closeMachine();
+                machineOwed_ = false;
+                tripSince_ = clock_;
+                sortBag();
+                return;
+            } else {
+                sim::Request request;
+                request.kind = sim::Request::Kind::Talk;
+                request.target = uint32_t(goblin);
+                realm_->ask(request);
+                return;
+            }
+        }
         // The vault first, when it is owed: deposit every jewel and rune, then the counters.
         if (vaultOwed_) {
             const int keeper = vaultHere();
@@ -2063,7 +2206,11 @@ private:
     bool safe_ = true, tripOwed_ = false, restOwed_ = false;
     int64_t awayShopUntil_ = 0;
     int awayTo_ = -1;
+    int floorLeft_ = -1;       // the floor he last paid to leave, and when
+    int64_t floorLeftAt_ = 0;
     bool vaultOwed_ = false;   // this trip calls on the vault keeper first
+    bool machineOwed_ = false;  // and on the Chaos Goblin, to take runes out
+    int64_t machineSince_ = 0;
     int64_t vaultSince_ = 0;
     double guardSeen_ = 1.0;  // the share of a blow his guard lets through, once he has one  // the town he is on his way to shop in, -1 for none  // the next trip that may go to another town's counters
     int restAt_[2] = {0, 0};

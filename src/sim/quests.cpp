@@ -339,7 +339,13 @@ QuestRow catacombs() {
     // only one-handed swords above it were Tersia's. One-handed, so his shield and Defense stay;
     // Stormcall and Keen Eye fill its sockets. Tersia's third floor pays three sockets now.
     row.paid[5] = {.item = "Sword14", .kin = knight, .sockets = 2, .firstOnly = true};  // Double Blade
-    row.paidCount = 6;
+    // **And his crowd skill** (the user, 2026-10-03, of the bots' knight: "Twisting Slash from a
+    // quest"): the wizard's spells reach the screen and the elf has Skillshot from Lala, but the
+    // knight's Twisting Slash is drop-only (the shops sell early orbs alone, 2026-10-02) and in
+    // three eight-hour runs it never fell -- he struck one body at a time. Its orb asks level
+    // 60; the Catacombs come at about 105.
+    row.paid[6] = {.item = "Gem01", .kin = knight, .firstOnly = true};  // Orb of Twisting Slash
+    row.paidCount = 7;
     return row;
 }
 
