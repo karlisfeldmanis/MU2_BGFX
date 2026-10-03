@@ -811,7 +811,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                                 "Divine Staff of Archangel");
                 controls::label(body_, nx, by(ly + 15.0f), kName * u,
                                 staffHeld_ ? style::kFits : style::kDanger,
-                                staffHeld_ ? std::string("in your bag") : std::string("none"));
+                                staffHeld_ ? std::string("in your bag") : std::string("not in your bag"));
             }
         }
     } else if (gate) {
@@ -846,7 +846,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                             "Invisibility Cloak +" + std::to_string(castle_));
             controls::ranged(body_, sx(kInset + inner()), by(ly), kBody * u,
                              cloakPlus_ == castle_ ? style::kFits : style::kDanger,
-                             cloakPlus_ < 0 ? std::string("none")
+                             cloakPlus_ < 0 ? std::string("not in your bag")
                                             : cloakPlus_ == castle_ ? std::string("in your bag")
                                                               : "a +" + std::to_string(cloakPlus_));
             cy = one.box.y + kIcon + kCellGap;
