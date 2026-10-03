@@ -623,7 +623,10 @@ private:
                 if (points <= 0) return;
             }
         }
-        int w[4] = {4, 2, 3, 0};  // strength, agility, vitality, energy
+        // The knight 4/3/2/0 since 2026-10-03: of five builds over three seeds of eight hours it
+        // handed in all three quests soonest (50, 79, 161 min against 63, 86, 171 at 4/2/3/0) and
+        // ended highest (156-161) -- agility's defence rate and pace over vitality's health.
+        int w[4] = {4, 3, 2, 0};  // strength, agility, vitality, energy
         // The wizard 1/1/5/4 since 2026-10-03 ("improve DW bot"): over three seeds his quests
         // came in ~20 minutes sooner than at 1/1/2/6 and his health 574 against 368 -- a wizard
         // whose spells reach the screen is held back by what one blow costs him, not by damage.
