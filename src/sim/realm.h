@@ -861,6 +861,9 @@ public:
     // --castle-open's: the Messenger's entry open at any hour, for a test (Realm::castleRefusal).
     void openCastleDoor() { castleOpen_ = true; }
     bool castleDoorHeld() const { return castleOpen_; }
+    // --castle-free's: no run, and the entrance, the bridge's gap and the door all open, to walk
+    // the castle (a test).
+    void freeCastle();
     int64_t wallClock() const { return wall_; }
     // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
     bool questChoiceFits(int index, int choice) const;

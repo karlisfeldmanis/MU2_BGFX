@@ -635,6 +635,15 @@ void Realm::passCastle(int castle) {
 
 // ---- Blood Castle's run (sim/event.h) ------------------------------------------------------
 
+void Realm::freeCastle() {
+    if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
+    run_ = CastleRun{};
+    for (const GridBox& box : {kCastleEntrance, kCastleBridge, kCastleDoor[0], kCastleDoor[1],
+                               kCastleDoor[2]}) {
+        changeGrid(box.x1, box.y1, box.x2, box.y2, box.bits, false);
+    }
+}
+
 void Realm::castleTick() {
     // The staff given back, inside the tick so what it says is this tick's (as enterCastle).
     // "Ah! Great warrior..." (ServerCmd 1,23, NpcTalk.cpp:1461-1588), and GiveReward_Win.
