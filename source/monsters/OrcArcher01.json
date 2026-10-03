@@ -11,7 +11,7 @@
   "monster_from": "ZzzCharacter.cpp:13453-13466, CreateMonster, case MONSTER_CHIEF_SKELETON_ARCHER_1..8: OpenMonsterModel(MONSTER_MODEL_ORC_ARCHER); CreateCharacter(Key, MODEL_ORC_ARCHER, ...); Scale = 1.1f; Weapon[1].Type = MODEL_BATTLE_BOW, Level = 1. No BlendMesh, no effect.",
   "right_hand": "Bow04",
   "right_hand_bone": "hand_bofdgne01",
-  "right_hand_from": "MODEL_BATTLE_BOW is MODEL_BOW + 3, Item/Bow04.bmd (cooked). MU sets it in Weapon[1], the bow hand; here it is right_hand, as the Skeleton Archer's, because the cook reads the stance off that field. Its bone is CreateCharacter's weapon switch, case MODEL_ORC_ARCHER: Weapon[0].LinkBone = Weapon[1].LinkBone = 39 (ZzzCharacter.cpp:11970-11973), hand_bofdgne01. MU's Level 1 draws the bow plain, as +0 is here.",
+  "right_hand_from": "MODEL_BATTLE_BOW is MODEL_BOW + 3, Item/Bow04.bmd (cooked). MU sets it in Weapon[1], the bow hand; here it is right_hand, as the Skeleton Archer's, because the cook reads the stance off that field. Its bone is CreateCharacter's weapon switch, case MODEL_ORC_ARCHER: Weapon[0].LinkBone = Weapon[1].LinkBone = 39 (ZzzCharacter.cpp:11970-11973), hand_bofdgne01.",
   "profile": "monster",
   "rig_from": "Seven actions, exported with --actions=all. 40 bones. BoneHead = 7 (ZzzOpenData.cpp:3718-3723).",
   "sheets": {
@@ -302,5 +302,9 @@
         0.809
       ]
     }
-  ]
+  ],
+  "plus": {
+    "right_hand": 1
+  },
+  "plus_from": "MU's Level 1 (ZzzCharacter.cpp:13464): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9."
 }

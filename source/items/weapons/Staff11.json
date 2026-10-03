@@ -1,0 +1,297 @@
+{
+  "item": "Staff11",
+  "mu_name": "Divine Staff of Archangel",
+  "mu_name_from": "_enum.h:1604 MODEL_DIVINE_STAFF_OF_ARCHANGEL = MODEL_STAFF + 10, loaded from Item/Staff11.bmd (ZzzOpenData.cpp:678); group 5 number 10 in WebZen's item.txt and OpenMU S6 Weapons.cs:252.",
+  "why_this_one": "The Saint Statue of Blood Castle 1 carries it over its coffin (ZzzCharacter.cpp:8952-8966, MONSTER_STATUE_OF_SAINT_1), and it is the castle's Archangel weapon (docs/blood-castle-port.md). Built so the statue holds it (the user, 2026-10-03: 'do next').",
+  "profile": "weapon",
+  "stats": {
+    "from": "WebZen item.txt group 5 (the Data/lang/main/item.txt of the 1.00.93 server files): 10 0 0 1 4 1 1 1 'Divine Staff of Archangel' 104 153 165 30 0 182 156 0 36 4 0 0 0 0 | DW 1, DK 0, Elf 0, MG 1, DL 0. OpenMU S6 Weapons.cs:252 agrees.",
+    "group": 5,
+    "number": 10,
+    "drop_level": 104,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 153,
+    "maximum_damage": 165,
+    "attack_speed": 30,
+    "magic_power": 156,
+    "durability": 182,
+    "requires": {
+      "level": 0,
+      "strength": 36,
+      "agility": 4,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "skill": 0
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed staff stands as a sword does, as the Skull Staff (Staff01) and the other one-handed staves here.",
+  "two_handed": false,
+  "sheets": {
+    "wand44_R": "wand44_r.png",
+    "wand44": "wand44.png"
+  },
+  "sheet_from": "Data/Item/wand44_R.OZJ (32x64, the red crystal head, 232 triangles) and wand44.OZJ (16x64, the ornate red, blue and gold shaft, 120). Decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "wand44_R": "steel",
+    "wand44": "steel"
+  },
+  "material_note": "MU draws mesh 0, the red crystal head, RENDER_METAL with a Chrome lightmap sliding over it (ZzzObject.cpp:7048-7052, and as held, ZzzCharacter.cpp:7062-7075, with ten Shiny01 sparkles down bone 0) -- the slide and the sparkles not built. All steel, as the islands arrived: the shaft's paint stays its albedo.",
+  "rig_note": "No .rig.json, as Staff08: a rigid weapon needs only MU's geometry at action 0 key 0.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As the Devias staves' and Staff08's: steel's own 0.2 mirrors the scene.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 48,
+      "area": 2374.1,
+      "along": [
+        -155.2,
+        -57.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.021,
+        0.737,
+        0.999
+      ],
+      "bake_uv": [
+        0.394,
+        0.012,
+        0.964,
+        0.973
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 42,
+      "area": 1772.3,
+      "along": [
+        -89.3,
+        -11.7
+      ],
+      "mu_uv": [
+        0.048,
+        0.001,
+        0.999,
+        0.433
+      ],
+      "bake_uv": [
+        0.363,
+        0.104,
+        0.962,
+        0.962
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 42,
+      "area": 2007.4,
+      "along": [
+        78.7,
+        167.8
+      ],
+      "mu_uv": [
+        0.093,
+        0.001,
+        0.999,
+        0.433
+      ],
+      "bake_uv": [
+        0.024,
+        0.252,
+        0.975,
+        0.983
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 48,
+      "area": 2374.1,
+      "along": [
+        -155.2,
+        -57.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.021,
+        0.737,
+        0.999
+      ],
+      "bake_uv": [
+        0.096,
+        0.011,
+        0.973,
+        0.759
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 42,
+      "area": 1772.3,
+      "along": [
+        -89.3,
+        -11.7
+      ],
+      "mu_uv": [
+        0.048,
+        0.001,
+        0.999,
+        0.433
+      ],
+      "bake_uv": [
+        0.203,
+        0.289,
+        0.967,
+        0.967
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 42,
+      "area": 2007.4,
+      "along": [
+        78.7,
+        167.8
+      ],
+      "mu_uv": [
+        0.093,
+        0.001,
+        0.999,
+        0.433
+      ],
+      "bake_uv": [
+        0.011,
+        0.56,
+        0.91,
+        0.989
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 52,
+      "area": 3999.7,
+      "along": [
+        -93.9,
+        127.6
+      ],
+      "mu_uv": [
+        0.023,
+        -1.055,
+        1.251,
+        2.028
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.913,
+        0.827
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 10,
+      "area": 332.7,
+      "along": [
+        -83.9,
+        -64.6
+      ],
+      "mu_uv": [
+        0.023,
+        0.372,
+        1.251,
+        0.633
+      ],
+      "bake_uv": [
+        0.25,
+        0.458,
+        0.807,
+        0.739
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 10,
+      "area": 332.7,
+      "along": [
+        -83.9,
+        -64.6
+      ],
+      "mu_uv": [
+        0.023,
+        0.372,
+        1.251,
+        0.633
+      ],
+      "bake_uv": [
+        0.118,
+        0.75,
+        0.807,
+        0.81
+      ]
+    },
+    {
+      "island": 9,
+      "material": "steel",
+      "triangles": 8,
+      "area": 977.9,
+      "along": [
+        123.3,
+        188.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.855,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.159,
+        0.111,
+        0.888,
+        0.883
+      ]
+    },
+    {
+      "island": 10,
+      "material": "steel",
+      "triangles": 8,
+      "area": 1006.4,
+      "along": [
+        -154.5,
+        -87.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.855,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.012,
+        0.011,
+        0.932,
+        0.926
+      ]
+    }
+  ]
+}

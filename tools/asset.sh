@@ -723,7 +723,16 @@ print('yes' if json.load(open(sys.argv[1])).get('additive') else '')" "$asset" 2
   if [[ -f $source_dir/$item.rig.json ]]; then
     rig_args+=("--rig=$source_dir/$item.rig.json")
 
-    if python3 -c "
+    # A monster's rig is its own whether anything in it moves or not: the Saint Statue's seven
+    # actions are one still key each -- it is stone -- and read as a worn part's bind pose it
+    # borrowed player.bmd's 60 bones and 283 clips, and the staff on its Bone01 hung off a
+    # bone the player rig has not (2026-10-03).
+    local own_monster
+    own_monster="$(python3 -c "
+import json, sys
+print('yes' if json.load(open(sys.argv[1])).get('monster') else '')" "$asset" 2>/dev/null || true)"
+
+    if [[ -n $own_monster ]] || python3 -c "
 import json, sys
 
 # Whether this rig carries motion of its own, which is not the same as carrying an action.

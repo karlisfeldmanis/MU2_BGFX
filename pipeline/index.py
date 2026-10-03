@@ -2182,6 +2182,11 @@ def monster_entry(entry: dict, document: dict, root: Path, build: Path, combat: 
         "model_index": int(beast.get("model_index", -1)),
         "scale": float(beast.get("scale", 1.0)),
         **hands,
+        # The plus its held weapon is drawn at, which cook.py's figure entry reads
+        # ({"right_hand": 9}): the Balrog's Bill of Balrog, Blood Castle's +8 Chaos Dragon Axe
+        # and +11 Skull Staff. Carried only for the townsfolk until 2026-10-03, so the Balrog's
+        # +9 was drawn at +0.
+        **({"plus": plus} if (plus := document.get("plus")) else {}),
         **({"hidden_mesh": int(hidden)} if hidden is not None else {}),
         # The glb part a variant puts away when it is not the one the base named `hidden`:
         # the Hell Hound hides the bare head (`fur`) and keeps the helm the plain Hound hides.

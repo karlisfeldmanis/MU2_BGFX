@@ -11,7 +11,7 @@
   "monster_from": "ZzzCharacter.cpp:13498-13511, CreateMonster, case MONSTER_RED_SKELETON_KNIGHT_1..8: OpenMonsterModel(MONSTER_MODEL_RED_SKELETON_KNIGHT); CreateCharacter(Key, MODEL_RED_SKELETON_KNIGHT, ...); Weapon[0] = MODEL_CHAOS_DRAGON_AXE at Level 8 in castles 1 and 2 (`!int((7 + (World - WD_11BLOODCASTLE_END)) / 3)`), 0 from castle 3; Scale = 1.19f. No BlendMesh, no effect.",
   "right_hand": "Mace07",
   "right_hand_bone": "knife_gdf",
-  "right_hand_from": "MODEL_CHAOS_DRAGON_AXE is Item/Mace07.bmd (cooked with the Chaos Machine's weapons). Weapon[0] in right_hand; its bone is CreateCharacter's weapon switch, case MODEL_RED_SKELETON_KNIGHT: Weapon[0].LinkBone = 30, Weapon[1].LinkBone = 39 (ZzzCharacter.cpp:11946-11949) -- knife_gdf; Weapon[1] holds nothing. MU's Level 8 is not carried: a held weapon is drawn at +0 here (a recipe has no plus for it).",
+  "right_hand_from": "MODEL_CHAOS_DRAGON_AXE is Item/Mace07.bmd (cooked with the Chaos Machine's weapons). Weapon[0] in right_hand; its bone is CreateCharacter's weapon switch, case MODEL_RED_SKELETON_KNIGHT: Weapon[0].LinkBone = 30, Weapon[1].LinkBone = 39 (ZzzCharacter.cpp:11946-11949) -- knife_gdf; Weapon[1] holds nothing.",
   "profile": "monster",
   "rig_from": "Eight actions, exported with --actions=all. 44 bones, the weapon on knife_gdf (30).",
   "sheets": {
@@ -454,5 +454,9 @@
         0.989
       ]
     }
-  ]
+  ],
+  "plus": {
+    "right_hand": 8
+  },
+  "plus_from": "MU's Level 8 in castles 1-2 (ZzzCharacter.cpp:13505-13508): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9."
 }

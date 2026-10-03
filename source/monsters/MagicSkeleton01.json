@@ -11,7 +11,7 @@
   "monster_from": "ZzzCharacter.cpp:13393-13406, CreateMonster, case MONSTER_MAGIC_SKELETON_1..8: OpenMonsterModel(MONSTER_MODEL_MAGIC_SKELETON); CreateCharacter(Key, MODEL_MAGIC_SKELETON, ...); Weapon[0] = MODEL_STAFF at Level 11; Scale = 1.2f. Its attack (MoveCharacterVisual's attack switch, ZzzCharacter.cpp:2071-2083): at attack time 14, from bone 33, MODEL_PIERCING+1 and a BITMAP_JOINT_THUNDER joint to the target -- a lightning bolt, so its attack_skill here is Lightning (3), the Devil's and the Thunder Lich's.",
   "right_hand": "Staff01",
   "right_hand_bone": "knife_gdf",
-  "right_hand_from": "MODEL_STAFF is Item/Staff01.bmd, the Skull Staff (cooked). MODEL_MAGIC_SKELETON is not in CreateCharacter's weapon-link switch; bone 33, knife_gdf under the right hand, is where its lightning leaves from and where the knights' switch puts Weapon[0]. MU's Level 11 is not carried: a held weapon is +0 here.",
+  "right_hand_from": "MODEL_STAFF is Item/Staff01.bmd, the Skull Staff (cooked). MODEL_MAGIC_SKELETON is not in CreateCharacter's weapon-link switch; bone 33, knife_gdf under the right hand, is where its lightning leaves from and where the knights' switch puts Weapon[0].",
   "profile": "monster",
   "rig_from": "Seven actions, exported with --actions=all. 55 bones.",
   "sheets": {
@@ -925,5 +925,9 @@
         0.989
       ]
     }
-  ]
+  ],
+  "plus": {
+    "right_hand": 11
+  },
+  "plus_from": "MU's Level 11 (ZzzCharacter.cpp:13403): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9."
 }
