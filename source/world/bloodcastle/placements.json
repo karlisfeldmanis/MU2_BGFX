@@ -1,0 +1,16 @@
+{
+ "world": "bloodcastle",
+ "summary": "What the extraction cannot know, for Blood Castle: the Archangel in the safe court. The game stands him from tools/cook.py's FOLK_VERSION075[11]; this row is what puts his figure in the castle's figure cook.",
+ "spawns": [
+  {
+   "model": "BloodCastle01",
+   "who": "Archangel",
+   "tile": [
+    10,
+    9
+   ],
+   "facing": 2,
+   "ours": "NPC 232, where OpenMU's Season Six stands him in every castle's safe court, SouthWest (VersionSeasonSix/Maps/BloodCastleBase.cs:51); 0.75 has no Blood Castle"
+  }
+ ]
+}

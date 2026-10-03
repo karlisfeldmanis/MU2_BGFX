@@ -1968,6 +1968,11 @@ FOLK_VERSION075 = {
         # where the carpet runs out, facing it.
         (566, "Tersia", "tersia", 206, 81, 3),
     ],
+    11: [  # Blood Castle 1: OpenMU VersionSeasonSix BloodCastleBase.cs:51, the safe court.
+        # The Archangel (232), to whom the Divine Staff of Archangel is carried back from the
+        # statue -- the run's hand-in (the user, 2026-10-03; docs/blood-castle-port.md §5).
+        (232, "Archangel", "BloodCastle01", 10, 9, 2),
+    ],
 }
 
 
