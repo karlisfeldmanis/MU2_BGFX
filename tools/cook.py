@@ -2403,6 +2403,22 @@ def resample(samples, rate, target):
     return out
 
 
+#: How long the tail of a one-shot is faded to silence. MU's pWalk(Soil).wav stops at a fifth
+#: of its peak, mid-wave, and a sample that stops mid-wave is a click. The reverb hid it in
+#: the open; the Lost Tower's dry steps did not (the user, 2026-10-03: 'when i step on LT the
+#: sound is glitchy'). Four milliseconds is under anything heard as a fade. Ours.
+TAIL_FADE_SECONDS = 0.004
+
+
+def fade_tail(samples, rate):
+    """The last TAIL_FADE_SECONDS ramped to zero. Not for a loop, whose tail meets its head."""
+    count = min(len(samples), max(1, int(rate * TAIL_FADE_SECONDS)))
+    start = len(samples) - count
+    for i in range(count):
+        samples[start + i] = int(samples[start + i] * (count - 1 - i) / count)
+    return samples
+
+
 def write_wav(path, samples, rate):
     with wave.open(path, "wb") as handle:
         handle.setnchannels(1)
@@ -2531,6 +2547,9 @@ def cook_showing(out_dir, texcook, threads):
                 if rate != SOUND_RATE:
                     resampled += 1
                     samples = resample(samples, rate, SOUND_RATE)
+                # The world_ events are the loops (Sound::loop); everything else is a one-shot.
+                if not name.startswith("world_"):
+                    samples = fade_tail(samples, SOUND_RATE)
                 target = os.path.join(out_dir, "sounds",
                                       safe(os.path.basename(relative)))
                 write_wav(target, samples, SOUND_RATE)
