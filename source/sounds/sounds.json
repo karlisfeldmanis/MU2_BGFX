@@ -1251,6 +1251,33 @@
       ],
       "from": "Sounds[4]. SetMonsterSound(..., SetMonsterSound(MODEL_ELITE_YETI, 68, 69, 70, 70, 71): 278-279 YETI1-2, 280 YETIATTACK1, 281 YETIDIE) in ZzzOpenData.cpp:3519-3528; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
     },
+    "bali_move": {
+      "files": [
+        "mBali1.wav",
+        "mBali2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(MODEL_BALI, 126, 127, 128, 129, 127): 336-337 BALI1-2, 338-339 BALIATTACK1-2, 337 again for the death) in ZzzOpenData.cpp:3626-3631; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "bali_attack": {
+      "files": [
+        "mBaliAttack1.wav",
+        "mBaliAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(MODEL_BALI, 126, 127, 128, 129, 127): 336-337 BALI1-2, 338-339 BALIATTACK1-2, 337 again for the death) in ZzzOpenData.cpp:3626-3631; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "bali_shock": {
+      "files": [
+        "mBaliAttack1.wav",
+        "mBaliAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(MODEL_BALI, 126, 127, 128, 129, 127): 336-337 BALI1-2, 338-339 BALIATTACK1-2, 337 again for the death) in ZzzOpenData.cpp:3626-3631; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "bali_die": {
+      "files": [
+        "mBali2.wav"
+      ],
+      "from": "Sounds[4], which is 127, mBali2 -- Bali dies on its second move cry. SetMonsterSound(MODEL_BALI, 126, 127, 128, 129, 127): 336-337 BALI1-2, 338-339 BALIATTACK1-2, 337 again for the death) in ZzzOpenData.cpp:3626-3631; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
     "forestmonster_move": {
       "files": [
         "mWoodMon1.wav",
@@ -1422,6 +1449,30 @@
         "mShadowDie.wav"
       ],
       "from": "Sounds[4], 327 SHADOWDIE. SetMonsterSound(..., 113, 114, 115, 116, 117) in ZzzOpenData.cpp:3607-3613; offsets from SOUND_MONSTER_BULL1 = 210, so 323 SHADOW1 to 327 SHADOWDIE (DSPlaySound.h:270)."
+    },
+    "chiefskeletonwarrior_move": {
+      "files": [
+        "mHunter2.wav"
+      ],
+      "from": "Sounds[rand()%2], both slots 86 -- 296 HUNTER2. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Blood Castle's Chief Skeleton Warrior); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "chiefskeletonwarrior_attack": {
+      "files": [
+        "mOrcCapAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both slots 161 -- 371 ORCCAPATTACK1, Data\\Sound\\mOrcCapAttack1.wav. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Blood Castle's Chief Skeleton Warrior); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "chiefskeletonwarrior_shock": {
+      "files": [
+        "mOrcCapAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Blood Castle's Chief Skeleton Warrior); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "chiefskeletonwarrior_die": {
+      "files": [
+        "mBullDie.wav"
+      ],
+      "from": "Sounds[4], slot 4 -- 214 BULLDIE. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Blood Castle's Chief Skeleton Warrior); offsets from SOUND_MONSTER_BULL1 = 210."
     },
     "poisonshadow_move": {
       "files": [

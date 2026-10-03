@@ -269,3 +269,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Chaos Dragon Axe | arm | 2026-10-02 21:30 | passed | studio 8x3: silver-red blades read at noon and dusk, the ft72 flame breathes red at the edges; the far face goes dark in shade as the Legendary Sword's does, no blowouts |
 | Chaos Nature Bow | arm | 2026-10-02 21:36 | passed | studio 8x3: the whole bow an additive green ghost on bow77, as MU's BlendMesh -2 draws it; silver fittings bright but not blown, holds at night |
 | Chaos Lightning Staff | arm | 2026-10-02 21:42 | passed | studio 8x3: deep blue lacquered head and spikes, gold rings; the u2u2 streaks flicker blue round the head and foot; no blowouts |
+| Orc01 | figure | 2026-10-03 11:19 | passed | bloodcastle, on the road: painted_steel keeps the gilt bronze; brass had gone pale silver |
