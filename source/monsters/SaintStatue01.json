@@ -10,7 +10,7 @@
   },
   "monster_from": "ZzzCharacter.cpp:13416-13423, CreateMonster, case MONSTER_STATUE_OF_SAINT_1: OpenMonsterModel(MONSTER_MODEL_STATUE_OF_SAINT); CreateCharacter(Key, MODEL_STATUE_OF_SAINT, ...); NotRotateOnMagicHit; Scale = 0.8f; EnableShadow = false (a shadow here, not carried). It never moves or strikes (WebZen gObjMonster.cpp:1524-1529, ObjAttack.cpp:2713-2719).",
   "profile": "monster",
-  "rig_from": "No rig: the stone never moves, and MU's geometry at action 0 key 0 is the .obj (the staff baked into it on Bone01's frame, see staff_from). A carved saint lying on his stone coffin -- 성자의석관 -- 374 units long and the staff standing from it; as WebZen stands it, direction 0, MuMain's (0 - 1) * 45 degrees (Realm::raise).",
+  "rig_from": "No rig: the stone never moves, and MU's geometry at action 0 key 0 is the .obj (the staff baked into it on Bone01's frame, see staff_from). A carved saint lying on his stone coffin -- 성자의석관 -- 374 units long and the staff standing from it; it lies on the wedge of stone beside its tile (Object13), drawn 120 forward of it as MuMain draws it (ZzzObject.cpp:276-282; play_show.cpp), its back along the stone's slope (Realm::raise).",
   "sheets": {
     "skR": "saintstatue_skr.png",
     "wand44_R": "wand44_r.png",

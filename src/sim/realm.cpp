@@ -268,13 +268,11 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     if (run_.phase == CastlePhase::Waiting) {
         for (Body& one : bodies_) {
             if (!one.monster()) continue;
-            // The statue stands as WebZen sets it, direction 0 (MonsterSetBase.txt:321), which
-            // MuMain turns to (0 - 1) * 45 degrees (WSclient.cpp:2736) -- a folk's look 8, as
-            // realm_folk.cpp's facingOf reads one -- and never turns from it (Realm::fixed).
-            if (fixed(one)) {
-                const float bearing = float(((8 - 3) % 8 + 8) % 8) * (3.14159265359f / 4.0f);
-                one.facing = one.aim = std::atan2(-std::cos(bearing), std::sin(bearing));
-            }
+            // The statue lies along the slope of the wedge of stone it is drawn on (play_show.cpp;
+            // Object13 at angle 0), its back on the stone and its head at the top -- MU's .obj
+            // and Object13's fitted together at MU's angle 0. Facing up the rows; the other way
+            // sank its body into the stone, photographed. It never turns (Realm::fixed).
+            if (fixed(one)) one.facing = one.aim = -3.14159265359f / 2.0f;
             one.health = 0;
             const int32_t number = tables_->kinds[size_t(one.kind)].number;
             one.risesAt = number == kCastleStatue ? std::numeric_limits<int64_t>::max()

@@ -897,7 +897,14 @@ void Play::follow(float seconds) {
                 }
             }
         }
-        const float position[3] = {x, ground_->heightAt(x, z) + lift, z};
+        // The Statue of Saint is drawn 120 forward of its tile, along MU's +y -- the row, our
+        // -z -- which lays it on the wedge of stone (Object13) beside it; on the ground of the
+        // tile it stands on (ZzzObject.cpp:276-282).
+        const bool statue =
+            !body->player && size_t(body->kind) < tables_.kinds.size() &&
+            tables_.kinds[size_t(body->kind)].number == sim::kCastleStatue;
+        const float position[3] = {x, ground_->heightAt(x, z) + lift,
+                                   statue ? z - 1.2f * metresPerTile : z};
         // The safe zone is a stance and not only a place: inside one MU carries the weapon on
         // the back and stands in the unarmed idle, and steps out of it with the weapon drawn.
         // `place` moves the weapon; the clip below is the other half of the same rule, and the
