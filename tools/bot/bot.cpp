@@ -661,6 +661,7 @@ private:
             const sim::Held& one = realm_->satchel()[slot];
             if (!one.empty() && kind(rowOf(one)) && realm_->useItem(slot)) {
                 ++out_.drunk;  // counted here: the next step clears what useItem says
+                if (kind == sim::heals) ++healed_;
                 return true;
             }
         }
@@ -672,12 +673,24 @@ private:
     void learnCaution() {
         if (clock_ < cautionAt_) return;
         cautionAt_ = clock_ + 5 * 60 * 20;
-        const int drunk = out_.drunk - drunkAt_;
-        drunkAt_ = out_.drunk;
+        // Healing potions only (2026-10-03): a knight's mana potions for Uppercut and Lunge were
+        // read as danger, and at caution x8 he ground monsters far under his level while taking
+        // 10-40 health a minute.
+        const int drunk = healed_ - drunkAt_;
+        drunkAt_ = healed_;
         const double was = caution_;
         if (drunk > 20) caution_ = std::min(8.0, caution_ * 1.5);
         else if (drunk < 5) caution_ = std::max(1.0, caution_ / 1.2);
         if (caution_ > was) say("%d potions in 5 min: fights reckoned x%.1f", drunk, caution_);
+        // **And a grinding ground that drinks him dry whatever he picks there is left** (the
+        // user, 2026-10-03: "keep working on weak bots"): a knight grinding the Dungeon's weak
+        // Skeleton Warriors drank 30-60 potions every five minutes at caution x8 -- the floor's
+        // other breeds were on him the whole time, which no breed's own cost can see. Twenty
+        // minutes away from it, grinding wherever is next best.
+        if (drunk > 20 && caution_ >= 4.0 && aim_ == Aim::Grind) {
+            shunned_[map()] = clock_ + 20 * 60 * 20;
+            say("leaves %s for 20 min: %d potions in 5 min", worldOf(map())->name, drunk);
+        }
     }
 
     bool casts() const {
@@ -1163,7 +1176,7 @@ private:
         if (aim_ == Aim::Grind) {
             // The map with the strongest breed he takes, where he is on a tie.
             aimMap_ = map();
-            int best = bestOn(*tables_);
+            int best = shunned_[map()] > clock_ ? -1 : bestOn(*tables_);
             // Lorencia and Noria only, until both their quests are in.
             const bool open = !options_.quests || townsDone();
             if (!open && map() != 0 && map() != 3) {
@@ -1173,6 +1186,7 @@ private:
             for (const WorldRow& w : kWorlds) {
                 const content::Tables* t = world(w.map);
                 if (!t || !reachable(w.map) || (!open && w.map != 0 && w.map != 3)) continue;
+                if (shunned_[w.map] > clock_) continue;
                 const int b = bestOn(*t);
                 if (b > best) {
                     best = b;
@@ -2013,8 +2027,9 @@ private:
     std::map<std::string, int64_t> triedOn_;  // an item's name -> when it may be tried again
     uint32_t chasing_ = 0;
     int64_t chasedSince_ = 0;
-    int pressed_ = 0, lastLevel_ = 1, drunkAt_ = 0;
+    int pressed_ = 0, lastLevel_ = 1, drunkAt_ = 0, healed_ = 0;
     double caution_ = 1.0;
+    std::map<int, int64_t> shunned_;  // a grinding ground left until this tick (learnCaution)
     int64_t cautionAt_ = 0;
 };
 
