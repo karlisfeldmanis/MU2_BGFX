@@ -19,7 +19,9 @@ using quest_marks::faded;
 using quest_marks::StepMark;
 
 // The proposal's measures, in tip::unit() at 1080 lines.
-constexpr float kWide = 300.0f;
+constexpr float kWide = 250.0f;  // 300 until 2026-10-03, "reduce the width of quest tasks window"
+// And everything in it a size down, the anchors kept: "scale it down little bit" (the same day).
+constexpr float kScale = 0.9f;
 constexpr float kRight = 44.0f;   // the right edge, in from the screen's
 constexpr float kTop = 250.0f;   // under the minimap, which stands over it (game/ui/minimap.h)
 constexpr float kTitle = 18.0f, kTitleTrack = 0.08f;
@@ -118,7 +120,7 @@ float standing(float struck) {
 // through, a few motes lifting off -- then all of it fading at `alpha` as the row folds away.
 void strike(gfx::Canvas& canvas, int step, float t, float left, float right, float top,
             float rowTall, float alpha, const std::string& words, int goal) {
-    const float u = tip::unit();
+    const float u = tip::unit() * kScale;
     const float wide = right - left;
     const float flare = (t - kFlareAt) / kFlareSeconds;  // 0..1 while the light runs
     const float gold = smooth(flare * 2.0f);              // the words' turn to gold
@@ -546,12 +548,12 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
 
 void Tracker::rebuild(const Play& play, int width, int height) {
     canvas_.clear();
-    const float u = tip::unit();
+    const float pu = tip::unit(), u = pu * kScale;
     const sim::Realm& realm = play.realm();
 
     // The pointer is the giver's, and shows whether the tracker is in a window's way or not.
     if (drawn_.pointing) {
-        const float s = 11.0f * u;
+        const float s = 11.0f * pu;
         const float c = std::cos(pointAngle_), sn = std::sin(pointAngle_);
         // A slim blade pointing along the angle: tip, the two back corners, the notch.
         const auto at = [&](float fx, float fy, float* out) {
@@ -573,15 +575,15 @@ void Tracker::rebuild(const Play& play, int width, int height) {
         const bool left = pointX_ > float(width) * 0.5f;
         const std::string name = sim::questAt(std::max(0, drawn_.quest)).giverName;
         const std::string metres = std::to_string(drawn_.pointMetres) + " m";
-        const float nameSize = 14.0f * u, metreSize = 13.0f * u;
-        const float gap = 16.0f * u;
+        const float nameSize = 14.0f * pu, metreSize = 13.0f * pu;
+        const float gap = 16.0f * pu;
         const float nameW = titleWidth(nameSize, 0.06f, name), metreW = lineWidth(metreSize, metres);
         const float wide = std::max(nameW, metreW);
         const float x = left ? pointX_ - gap - wide : pointX_ + gap;
-        const float top = std::clamp(pointY_ - 14.0f * u, 8.0f * u, float(height) - 40.0f * u);
-        title(canvas_, left ? x + wide - nameW : x, top + 12.0f * u, nameSize, 0.06f,
+        const float top = std::clamp(pointY_ - 14.0f * pu, 8.0f * pu, float(height) - 40.0f * pu);
+        title(canvas_, left ? x + wide - nameW : x, top + 12.0f * pu, nameSize, 0.06f,
               style::kBoneHi, 1.0f, name);
-        line(canvas_, left ? x + wide - metreW : x, top + 28.0f * u, metreSize, style::kBone2, 1.0f,
+        line(canvas_, left ? x + wide - metreW : x, top + 28.0f * pu, metreSize, style::kBone2, 1.0f,
              metres);
     }
 
@@ -594,9 +596,9 @@ void Tracker::rebuild(const Play& play, int width, int height) {
     const int q = drawn_.quest;
     const sim::QuestRow& row = sim::questAt(q);
     const sim::QuestProgress& now = drawn_.progress;
-    const float right = float(width) - kRight * u;
+    const float right = float(width) - kRight * pu;
     const float left = right - kWide * u;
-    float y = kTop * u;
+    float y = kTop * pu;
 
     // The scrim: the banners' own soft cloud (a Gaussian each way, as the map name's), its
     // middle at the screen's right edge and the tracker's middle, so it has no edge anywhere. A
@@ -726,11 +728,11 @@ void Tracker::rebuild(const Play& play, int width, int height) {
 // the door, the statue gives up the staff, and the Archangel takes it back. The step being
 // fought for is live, the rest wait; a quota met is a check.
 void Tracker::rebuildEvent(int width) {
-    const float u = tip::unit();
+    const float pu = tip::unit(), u = pu * kScale;
     const float alpha = float(drawn_.eventShown) / 64.0f;
-    const float right = float(width) - kRight * u;
+    const float right = float(width) - kRight * pu;
     const float left = right - kWide * u;
-    float y = kTop * u;
+    float y = kTop * pu;
     const auto phase = sim::CastlePhase(drawn_.eventPhase);
     const bool waiting = phase == sim::CastlePhase::Waiting;
     const bool ended = phase == sim::CastlePhase::Ended;

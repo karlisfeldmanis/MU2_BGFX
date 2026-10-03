@@ -81,8 +81,8 @@ constexpr float kDropAlpha = 0.55f;
 // 6.0 and 4.4, from 9 and 6.5, 7.6 and 5.5, 6.6 and 4.8: the user, 2026-10-03, "make exp and zen
 // and potion hp gain text little bit smaller", then "smaller font size" in the top left corner,
 // then "little bit smaller font and reduce gaps little bit".
-constexpr float kLaneSize = 6.0f;
-constexpr float kLaneUnitSize = 4.4f;
+constexpr float kLaneSize = 6.6f;  // 6.0 until 2026-10-03, "increase exp gain font size little bit"
+constexpr float kLaneUnitSize = 4.8f;
 constexpr float kLaneUnitTracking = 0.24f;  // the arrival's caption tracking, near enough
 constexpr float kLaneRowGap = 2.0f;  // 3 until 2026-10-03, "reduce gaps"
 constexpr float kLaneWordGap = 5.5f;  // 7 until 2026-10-03, the same
