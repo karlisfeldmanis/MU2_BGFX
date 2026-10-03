@@ -840,9 +840,50 @@ private:
         }
     }
 
+    // **Jewels and runes put to use** (the user, 2026-10-03: "does bots upgrade items with
+    // runes?" -- they did not; they banked them). Each Bless, Soul and Rune of Creation he
+    // carries goes onto what he wears: a rune into the first free socket of his weapon, then his
+    // shield; a Bless or Soul onto the worn piece with the lowest plus, the weapon first on a
+    // tie -- a Soul only below +7, where a failed one would reset it to +0 (kSoulResetFrom).
+    void useJewels() {
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held jewel = realm_->satchel()[slot];
+            if (jewel.empty()) continue;
+            const content::ItemRow& row = rowOf(jewel);
+            if (sim::creation(row)) {
+                for (const int to : {int(sim::kWeaponRight), int(sim::kWeaponLeft)}) {
+                    if (realm_->satchel()[to].empty()) continue;
+                    const std::string on = rowOf(realm_->satchel()[to]).label;
+                    if (realm_->refine(slot, to)) {
+                        say("sets %s into his %s", row.label.c_str(), on.c_str());
+                        break;
+                    }
+                }
+                continue;
+            }
+            if (!sim::refiningJewel(row)) continue;
+            const bool soul = sim::jewelOf(row) == sim::Jewel::Soul;
+            int best = -1;
+            for (int to = 0; to < sim::kWorn; ++to) {
+                const sim::Held& worn = realm_->satchel()[to];
+                if (worn.empty() || !sim::refinable(*tables_, jewel, worn)) continue;
+                if (soul && worn.refinement >= 7) continue;
+                if (best < 0 || worn.refinement < realm_->satchel()[best].refinement) best = to;
+            }
+            if (best < 0) continue;
+            const std::string on = rowOf(realm_->satchel()[best]).label;
+            const int was = realm_->satchel()[best].refinement;
+            if (realm_->refine(slot, best)) {
+                say("%s on %s +%d: +%d", row.label.c_str(), on.c_str(), was,
+                    int(realm_->satchel()[best].refinement));
+            }
+        }
+    }
+
     void sortBag() {
         readOrbs();
         wearBest();
+        useJewels();
     }
 
     // What he would sell, and what he would store: jewels and runes, which a sale keeps.
