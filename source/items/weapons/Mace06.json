@@ -1,0 +1,257 @@
+{
+  "item": "Mace06",
+  "mu_name": "Crystal Sword",
+  "mu_name_from": "_enum.h:1543 MODEL_CRYSTAL_SWORD = MODEL_MACE + 5, loaded from Item/Mace06.bmd; OpenMU Version075 Items/Weapons.cs:121 names group 2, index 5 the Crystal Sword.",
+  "why_this_one": "Drop level 72: Blood Castle 3's monsters (56-79) reach it, and it was one of the three pieces of gear in that window not built (the user, 2026-10-03: 'Build the six missing items ... then the four drops').",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:121. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(2, 5, 0, 23, 2, 4, true, \"Crystal Sword\", 72, 89, 120, 40, 76, 0, 0, 130, 70, 0, 0, 1, 1, 1)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 2,
+    "number": 5,
+    "drop_level": 72,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 89,
+    "maximum_damage": 120,
+    "attack_speed": 40,
+    "durability": 76,
+    "skill": 23,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, all three set, as the Crystal Morning Star's."
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "ZzzCharacter.cpp:356-368: a sword, axe or mace that is TwoHand (width 2) stands PLAYER_STOP_TWO_HAND_SWORD. As Mace05.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "ni99": "ni99.png"
+  },
+  "sheet_from": "Data/Item/ni99.OZJ (64x128, a blue crystal blade, spiked, on grey), 192 triangles, the one mesh. Decoded from MuMain with pipeline/decode_texture.py.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As the Crystal Morning Star's; the whole sword is the glow below, so the steel serves the bake only.",
+  "glow": {
+    "ni99": {}
+  },
+  "glow_note": "`case MODEL_CRYSTAL_SWORD`: BlendMesh 0 and no BlendMeshLight (ZzzObject.cpp:5260-5262) -- texture 0, ni99, its one mesh, is drawn added at a steady light: the whole sword is a crystal ghost, as the Bluewing Crossbow is. Drawn added on its raw sheet (export_gltf.glow_material). Not here: the blue swing blur MuMain picks for its fifth skill swing, BlurMapping 1 (ZzzCharacter.cpp:3822-3828), a client effect.",
+  "rig_note": "No .rig.json: Mace06.bmd has one bone and one action of one key (export-rig --actions=all, 2026-10-03), nothing moves -- MuMain sets it playing action 0 at twice the stand's speed when held (ZzzCharacter.cpp:10120-10123), on a single key.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 38,
+      "area": 3438.9,
+      "along": [
+        -0.9,
+        62.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.109,
+        0.547,
+        0.399
+      ],
+      "bake_uv": [
+        0.046,
+        0.008,
+        0.763,
+        0.729
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 26,
+      "area": 1096.7,
+      "along": [
+        -24.8,
+        28.6
+      ],
+      "mu_uv": [
+        0.273,
+        0.001,
+        0.39,
+        0.244
+      ],
+      "bake_uv": [
+        0.092,
+        0.249,
+        0.589,
+        0.771
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 38,
+      "area": 3438.9,
+      "along": [
+        -0.9,
+        62.6
+      ],
+      "mu_uv": [
+        0.117,
+        0.109,
+        0.664,
+        0.399
+      ],
+      "bake_uv": [
+        0.008,
+        0.153,
+        0.849,
+        0.867
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 37,
+      "area": 3620.4,
+      "along": [
+        26.2,
+        194.2
+      ],
+      "mu_uv": [
+        0.345,
+        0.233,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.794,
+        0.791
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 3,
+      "area": 257.8,
+      "along": [
+        93.0,
+        194.2
+      ],
+      "mu_uv": [
+        0.345,
+        0.538,
+        0.663,
+        0.999
+      ],
+      "bake_uv": [
+        0.409,
+        0.52,
+        0.596,
+        0.791
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 5,
+      "area": 347.2,
+      "along": [
+        56.0,
+        116.7
+      ],
+      "mu_uv": [
+        0.526,
+        0.369,
+        0.999,
+        0.646
+      ],
+      "bake_uv": [
+        0.516,
+        0.421,
+        0.794,
+        0.583
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 37,
+      "area": 3620.4,
+      "along": [
+        26.2,
+        194.2
+      ],
+      "mu_uv": [
+        0.345,
+        0.233,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.213,
+        0.142,
+        0.991,
+        0.992
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 3,
+      "area": 257.8,
+      "along": [
+        93.0,
+        194.2
+      ],
+      "mu_uv": [
+        0.345,
+        0.538,
+        0.663,
+        0.999
+      ],
+      "bake_uv": [
+        0.213,
+        0.321,
+        0.4,
+        0.593
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 5,
+      "area": 347.2,
+      "along": [
+        56.0,
+        116.7
+      ],
+      "mu_uv": [
+        0.526,
+        0.369,
+        0.999,
+        0.646
+      ],
+      "bake_uv": [
+        0.32,
+        0.222,
+        0.598,
+        0.385
+      ]
+    }
+  ]
+}

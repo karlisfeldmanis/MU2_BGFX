@@ -1,0 +1,419 @@
+{
+ "item": "Shield14",
+ "mu_name": "Dragon Shield",
+ "mu_name_from": "_enum.h:1636 MODEL_DRAGON_SHIELD = MODEL_SHIELD + 13, which MuMain loads from Shield14.bmd; OpenMU's 0.75 Armors.cs:49 names shield 13 the Dragon Shield.",
+ "why_this_one": "Blood Castle 2's drop window reaches it, drop level 60 against its monsters' 49-69, and it was the one piece of gear in that window not built (the user, 2026-10-03: 'Build the six missing items ... then the four drops').",
+ "profile": "weapon",
+ "profile_from": "The weapon profile, as every built shield uses; its default steel swapped for brass, as Shield13 records.",
+ "stats": {
+  "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+  "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs:49. The 0.75 table, which is the version this server is being built to.",
+  "call": "CreateShield(13, 1, 18, 2, 2, \"Dragon Shield\", 60, 14, 60, 60, 120, 40, 0, 1, 0)",
+  "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel); the group is slot + 5, 6. See Shield13.",
+  "group": 6,
+  "number": 13,
+  "drop_level": 60,
+  "drops_from_monsters": true,
+  "slot": 1,
+  "width": 2,
+  "height": 2,
+  "defense": 14,
+  "defense_rate": 60,
+  "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+  "skill": 18,
+  "skill_note": "The shield's block skill in OpenMU's table, carried for the row and nothing more.",
+  "durability": 60,
+  "requires": {
+   "level": 0,
+   "strength": 120,
+   "agility": 40,
+   "energy": 0,
+   "vitality": 0
+  },
+  "classes": [
+   "knight"
+  ],
+  "classes_from": "The last three ints of the call are the wizard, knight and elf flags."
+ },
+ "sheets": {
+  "shield10": "shield10.png",
+  "shield102": "shield102.png"
+ },
+ "sheet_from": "Data/Item/shield10.OZJ (32x64, red-copper dragon scales in black ridges) and shield102.OZJ (16x16, a red gradient), from MuMain with pipeline/decode_texture.py.",
+ "sheet_materials": {
+  "shield10": "brass",
+  "shield102": "brass"
+ },
+ "material_note": "The face is red-copper scale in black ridges: a cast, unpolished alloy, brass, as the Bronze Shield's green bronze; the colour is MU's painting. The gradient sheet is the glow below.",
+ "material_overrides": {
+  "brass": {
+   "roughness": 0.6
+  }
+ },
+ "material_overrides_note": "As Shield13's.",
+ "glow": {
+  "shield102": {
+   "pulse": [
+    0.3,
+    0.7
+   ]
+  }
+ },
+ "glow_note": "MU's ItemObjectAttribute, `case MODEL_DRAGON_SHIELD` with the Serpent and Bronze Shields: BlendMesh 1, BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7 (ZzzObject.cpp:5341-5347) -- mesh 1, shield102's red gradient, drawn added and breathing.",
+ "rig_note": "No .rig.json: Shield14.bmd has one action of one key (export-rig --actions=all, 2026-10-03), nothing moves.",
+ "islands": [
+  {
+   "island": 0,
+   "material": "brass",
+   "triangles": 10,
+   "area": 202.0,
+   "along": [
+    0.8,
+    11.9
+   ],
+   "mu_uv": [
+    0.07,
+    0.866,
+    0.275,
+    0.987
+   ],
+   "bake_uv": [
+    0.266,
+    0.829,
+    0.851,
+    0.915
+   ]
+  },
+  {
+   "island": 1,
+   "material": "brass",
+   "triangles": 58,
+   "area": 5266.1,
+   "along": [
+    -53.5,
+    41.1
+   ],
+   "mu_uv": [
+    0.012,
+    0.023,
+    0.724,
+    0.987
+   ],
+   "bake_uv": [
+    0.008,
+    0.009,
+    0.992,
+    0.915
+   ]
+  },
+  {
+   "island": 2,
+   "material": "brass",
+   "triangles": 4,
+   "area": 101.4,
+   "along": [
+    -6.8,
+    5.1
+   ],
+   "mu_uv": [
+    0.531,
+    0.207,
+    0.876,
+    0.615
+   ],
+   "bake_uv": [
+    0.492,
+    0.715,
+    0.603,
+    0.846
+   ]
+  },
+  {
+   "island": 3,
+   "material": "brass",
+   "triangles": 4,
+   "area": 101.4,
+   "along": [
+    4.3,
+    10.8
+   ],
+   "mu_uv": [
+    0.531,
+    0.207,
+    0.876,
+    0.615
+   ],
+   "bake_uv": [
+    0.383,
+    0.767,
+    0.494,
+    0.898
+   ]
+  },
+  {
+   "island": 4,
+   "material": "brass",
+   "triangles": 16,
+   "area": 2578.9,
+   "along": [
+    -27.2,
+    -1.8
+   ],
+   "mu_uv": [
+    0.024,
+    0.036,
+    0.978,
+    0.878
+   ],
+   "bake_uv": [
+    0.009,
+    0.009,
+    0.316,
+    0.455
+   ]
+  },
+  {
+   "island": 5,
+   "material": "brass",
+   "triangles": 16,
+   "area": 2675.5,
+   "along": [
+    -37.3,
+    -0.3
+   ],
+   "mu_uv": [
+    0.007,
+    0.029,
+    0.746,
+    0.982
+   ],
+   "bake_uv": [
+    0.265,
+    0.305,
+    0.794,
+    0.771
+   ]
+  },
+  {
+   "island": 6,
+   "material": "brass",
+   "triangles": 16,
+   "area": 2578.9,
+   "along": [
+    2.4,
+    28.0
+   ],
+   "mu_uv": [
+    0.027,
+    0.031,
+    0.98,
+    0.873
+   ],
+   "bake_uv": [
+    0.247,
+    0.009,
+    0.59,
+    0.567
+   ]
+  },
+  {
+   "island": 7,
+   "material": "brass",
+   "triangles": 16,
+   "area": 2675.5,
+   "along": [
+    2.7,
+    29.2
+   ],
+   "mu_uv": [
+    0.0,
+    0.028,
+    0.739,
+    0.982
+   ],
+   "bake_uv": [
+    0.009,
+    0.01,
+    0.755,
+    0.664
+   ]
+  },
+  {
+   "island": 8,
+   "material": "brass",
+   "triangles": 2,
+   "area": 220.1,
+   "along": [
+    -25.4,
+    -15.9
+   ],
+   "mu_uv": [
+    0.334,
+    0.007,
+    0.716,
+    0.961
+   ],
+   "bake_uv": [
+    0.008,
+    0.27,
+    0.026,
+    0.314
+   ]
+  },
+  {
+   "island": 9,
+   "material": "brass",
+   "triangles": 2,
+   "area": 649.9,
+   "along": [
+    -13.8,
+    2.7
+   ],
+   "mu_uv": [
+    0.334,
+    0.008,
+    0.716,
+    0.962
+   ],
+   "bake_uv": [
+    0.008,
+    0.099,
+    0.026,
+    0.143
+   ]
+  },
+  {
+   "island": 10,
+   "material": "brass",
+   "triangles": 2,
+   "area": 192.4,
+   "along": [
+    -39.7,
+    -25.4
+   ],
+   "mu_uv": [
+    0.335,
+    0.011,
+    0.717,
+    0.962
+   ],
+   "bake_uv": [
+    0.313,
+    0.2,
+    0.331,
+    0.244
+   ]
+  },
+  {
+   "island": 11,
+   "material": "brass",
+   "triangles": 2,
+   "area": 190.6,
+   "along": [
+    -59.9,
+    -32.1
+   ],
+   "mu_uv": [
+    0.336,
+    0.01,
+    0.717,
+    0.962
+   ],
+   "bake_uv": [
+    0.37,
+    0.262,
+    0.388,
+    0.305
+   ]
+  },
+  {
+   "island": 12,
+   "material": "brass",
+   "triangles": 2,
+   "area": 220.1,
+   "along": [
+    0.1,
+    15.9
+   ],
+   "mu_uv": [
+    0.335,
+    0.007,
+    0.716,
+    0.961
+   ],
+   "bake_uv": [
+    0.208,
+    0.011,
+    0.225,
+    0.054
+   ]
+  },
+  {
+   "island": 13,
+   "material": "brass",
+   "triangles": 2,
+   "area": 649.9,
+   "along": [
+    3.7,
+    17.9
+   ],
+   "mu_uv": [
+    0.334,
+    0.008,
+    0.716,
+    0.962
+   ],
+   "bake_uv": [
+    0.174,
+    0.009,
+    0.191,
+    0.053
+   ]
+  },
+  {
+   "island": 14,
+   "material": "brass",
+   "triangles": 2,
+   "area": 192.4,
+   "along": [
+    22.2,
+    32.7
+   ],
+   "mu_uv": [
+    0.336,
+    0.011,
+    0.717,
+    0.962
+   ],
+   "bake_uv": [
+    0.339,
+    0.246,
+    0.356,
+    0.289
+   ]
+  },
+  {
+   "island": 15,
+   "material": "brass",
+   "triangles": 2,
+   "area": 190.5,
+   "along": [
+    29.5,
+    48.9
+   ],
+   "mu_uv": [
+    0.336,
+    0.011,
+    0.717,
+    0.962
+   ],
+   "bake_uv": [
+    0.402,
+    0.277,
+    0.419,
+    0.321
+   ]
+  }
+ ],
+ "islands_from": "16 islands for 140 triangles. They arrived as steel, the weapon profile's default (islands.py never reads sheet_materials); all brass, the face as Shield13's -- the gradient's glow part ships on its raw sheet whatever its rows say."
+}

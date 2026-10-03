@@ -1,0 +1,113 @@
+{
+ "item": "CrossBow07",
+ "mu_name": "Aquagold Crossbow",
+ "mu_name_from": "ZzzOpenData.cpp loads the crossbows as MODEL_BOW + i + 8 from CrossBow{i+1}, so number 14 is CrossBow07.bmd; _enum.h:1583 MODEL_AQUAGOLD_CROSSBOW = MODEL_BOW + 14; OpenMU Version075 Weapons.cs:149.",
+ "why_this_one": "Drop level 72: Blood Castle 3's monsters (56-79) reach it, and it was one of the three pieces of gear in that window not built (the user, 2026-10-03: 'Build the six missing items ... then the four drops').",
+ "profile": "weapon",
+ "stats": {
+  "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+  "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:149. The 0.75 table, which is the version this server is being built to.",
+  "call": "CreateWeapon(4, 14, 0, 24, 2, 3, true, \"Aquagold Crossbow\", 72, 78, 92, 30, 60, 0, 0, 50, 130, 0, 0, 0, 0, 1)",
+  "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+  "group": 4,
+  "number": 14,
+  "drop_level": 72,
+  "drops_from_monsters": true,
+  "slot": 0,
+  "width": 2,
+  "height": 3,
+  "minimum_damage": 78,
+  "maximum_damage": 92,
+  "attack_speed": 30,
+  "durability": 60,
+  "skill": 24,
+  "requires": {
+   "level": 0,
+   "strength": 50,
+   "agility": 130,
+   "energy": 0,
+   "vitality": 0
+  },
+  "classes": [
+   "elf"
+  ],
+  "classes_from": "The last three ints of the call are the wizard, knight and elf flags."
+ },
+ "stance": "crossbow",
+ "stance_from": "A crossbow by MU's own range test (CharacterManager.cpp:79, MODEL_CROSSBOW to MODEL_AQUAGOLD_CROSSBOW), two-handed as every crossbow here.",
+ "two_handed": true,
+ "fires_note": "ZzzEffectMagicSkill.cpp:229: `case MODEL_AQUAGOLD_CROSSBOW: CreateEffect(MODEL_ARROW_BOMB, ...)`. ArrowBomb is not built, so `fires` is left out and the steel bolt flies, as for the Bluewing.",
+ "sheets": {
+  "jo00": "jo00.png",
+  "jo01": "jo01.png"
+ },
+ "sheet_from": "Data/Item/jo00.OZJ (128x64, black horn and plate with gold filigree) and jo01.OZJ (64x32, gold strokes on black, a sheet drawn to be added), from MuMain with pipeline/decode_texture.py; 236 triangles.",
+ "material_overrides": {
+  "steel": {
+   "roughness": 0.45
+  }
+ },
+ "glow": {
+  "jo00": {
+   "pulse": [
+    0.3,
+    0.7
+   ]
+  },
+  "jo01": {
+   "pulse": [
+    0.3,
+    0.7
+   ]
+  }
+ },
+ "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5242-5247): `case MODEL_BLUEWING_CROSSBOW: case MODEL_AQUAGOLD_CROSSBOW: BlendMesh = -2; BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7`, and a BlendMesh of -2 draws every mesh added (ZzzBMD.cpp:1509) -- the whole Aquagold is a breathing additive ghost, as the Bluewing is. jo01 (gold strokes on black) is a shell coincident with jo00's and clean_lowpoly's weld drops it as duplicate faces, so its glow names no slot and asset.sh says so (2026-10-03); jo00's shell carries the look alone, as the Bluewing's jk00 does.",
+ "material_note": "No baked material: MU draws both meshes added (see glow_note), so it ships as glow parts on MU's raw sheets; the islands' materials go unused.",
+ "rig_note": "CrossBow07.rig.json from export-rig --actions=all: one bone, one action of one key, nothing moves (2026-10-03); kept as the Bluewing keeps its own.",
+ "islands": [
+  {
+   "island": 0,
+   "material": "steel",
+   "triangles": 104,
+   "area": 11091.7,
+   "along": [
+    5.0,
+    30.6
+   ],
+   "mu_uv": [
+    0.004,
+    0.036,
+    0.999,
+    0.991
+   ],
+   "bake_uv": [
+    0.005,
+    0.005,
+    0.914,
+    0.995
+   ]
+  },
+  {
+   "island": 1,
+   "material": "steel",
+   "triangles": 14,
+   "area": 535.9,
+   "along": [
+    -11.2,
+    12.2
+   ],
+   "mu_uv": [
+    0.762,
+    0.001,
+    0.89,
+    0.622
+   ],
+   "bake_uv": [
+    0.84,
+    0.137,
+    0.986,
+    0.832
+   ]
+  }
+ ]
+}
