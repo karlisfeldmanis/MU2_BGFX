@@ -132,8 +132,9 @@ constexpr Offer kLumen[] = {
 // 2026-10-02: "a lot of orbs for DK but not enough for Elf"): all three early, and all three
 // on 0.75's own Lala (OpenMU Version075/MerchantStores.cs:231-243), which WebZen's shop10 lacks.
 // **And the Orb of Summoning at +1 to +4 under them** (the user, 2026-10-03: "add some more
-// summon orbs in elf shop"): the Stone Golem, the Assassin, the Elite Yeti and the Dark Knight,
-// the five stacks 0.75's Lala keeps (MerchantStores.cs:239-243). Bali, +5, she never sold.
+// summon orbs in elf shop"): the Stone Golem, the Assassin and the Elite Yeti, of the five stacks
+// 0.75's Lala keeps (MerchantStores.cs:239-243). Bali, +5, she never sold, and the Dark Knight,
+// +4, she no longer does (the user, 2026-10-03: "remove dark knight orb from shop").
 constexpr Offer kElfLala[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
     sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
@@ -144,7 +145,6 @@ constexpr Offer kElfLala[] = {
     gear(52, kPants, 11, 0), gear(54, kGloves, 11, 0), gear(64, kBoots, 11, 0), sip(66, 10, 1),
     gear(67, kOrbs, 8, 0), gear(68, kOrbs, 21, 0), gear(69, kOrbs, 9, 0), gear(70, kOrbs, 10, 0),
     gear(71, kOrbs, 11, 0), gear(76, kOrbs, 11, 1), gear(77, kOrbs, 11, 2), gear(78, kOrbs, 11, 3),
-    gear(79, kOrbs, 11, 4),
 };
 
 // Eo the Craftsman (shop9): the bows and crossbows and the arrows and bolts to +2. The source

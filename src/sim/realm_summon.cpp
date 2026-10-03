@@ -86,7 +86,7 @@ void Realm::fitSummon(Body& summon, const Body& hero) {
     summon.stats.attackRate = float(kind.attackRate) * climb(Ladder::AttackRate) * bites;
     summon.stats.defenseRate = float(kind.defenseRate) * climb(Ladder::DefenseRate) * bites;
     summon.stats.defense = int(float(kind.defense) * climb(Ladder::Defense) * bites);
-    const float damage = climb(Ladder::Damage) * bites;
+    const float damage = climb(Ladder::Damage) * bites * kSummonDamageShare;
     summon.stats.minimumDamage = int(float(kind.minimumDamage) * damage);
     summon.stats.maximumDamage = int(float(kind.maximumDamage) * damage);
 }

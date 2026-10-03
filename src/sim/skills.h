@@ -524,8 +524,8 @@ float wardShare(const HeroPoints& points);
 //     both rates times `1 + energy / 200 + agility / 800` -- energy her summoner's stat, a tank
 //     first and a weapon second; vitality lends half of energy's, agility (her bow's) a quarter.
 // A new elf's Goblin is the breed's own. A level-102 elf of 351 agility and 110 energy has a
-// level-13 Goblin of 645 health and an 83-119 bite, or a level-38 Golem of 3 000 and 236-259;
-// at 300 energy the Golem has 5 500 and 301-330. One knob each, here.
+// level-13 Goblin of 645 health and a 50-71 bite, or a level-38 Golem of 3 000 and 142-155;
+// at 300 energy the Golem has 5 500 and 181-198 (kSummonDamageShare's, 0.6 of what they were). One knob each, here.
 // The minute every summon key cools for after one is raised (skills.cpp, the summons' rows).
 constexpr int32_t kSummonCool = 1200;
 constexpr float kSummonHealthPerEnergy = 1.0f / 100.0f;
@@ -534,6 +534,8 @@ constexpr float kSummonForcePerEnergy = 1.0f / 200.0f;
 constexpr float kSummonForcePerAgility = 1.0f / 800.0f;
 constexpr float kSummonLevelShare = 0.1f;      // the Goblin's share of her level
 constexpr float kSummonLevelShareStep = 0.1f;  // and each summon up takes this much more
+// What a summon's bite keeps of all that (the user, 2026-10-03: "nerf summons damage").
+constexpr float kSummonDamageShare = 0.6f;
 float summonHealthRate(const HeroPoints& points);
 float summonForceRate(const HeroPoints& points);
 // `skill` is the summon's own (kSummonGoblin ... kSummonBali), which sets its share.
