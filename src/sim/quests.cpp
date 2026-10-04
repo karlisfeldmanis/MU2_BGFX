@@ -931,11 +931,38 @@ QuestRow tearOfElf() {
     return row;
 }
 
+// The demo's two (kDemoQuests): Peia's once enableQuestDemo runs, nobody's before. Ours, and
+// placeholders: short hunts in Noria, the words a sketch.
+QuestRow demoQuest(const char* title, int32_t minLevel) {
+    QuestRow row;
+    row.giver = -1;
+    row.giverName = "Peia";
+    row.place = "Noria";
+    row.title = title;
+    row.offer[0] = "\"A demo quest, traveller: a second errand of mine beside the forest's song.\"";
+    row.underway = "\"Not yet.\"";
+    row.handIn[0] = "\"Done already? Then take this.\"";
+    row.resting = "\"Come back tomorrow.\"";
+    row.minLevel = minLevel;
+    row.steps[0] = {QuestStepKind::Clear, minLevel > 0 ? 32 : 26, 10,
+                    minLevel > 0 ? "Stone Golems" : "Goblins"};
+    row.steps[1] = {QuestStepKind::Return, 0, 1, "Return to Peia"};
+    row.stepCount = 2;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.natives = 0x7;
+    row.strangers = true;
+    row.experience = 2000;
+    row.zen = 5000;
+    return row;
+}
+
 const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),        catacombs(),
                                   halls(),       pit(),         tersiaDoor(),   tersiaSecond(),
                                   tersiaThird(),  tersiaFourth(), tersiaFifth(),  tersiaSixth(),
                                   tersiaBalrog(), sevinaTrial(), brokenSword(),  soulOfWizard(),
-                                  tearOfElf()};
+                                  tearOfElf(),
+                                  demoQuest("Whispers in the Roots (demo)", 0),
+                                  demoQuest("The Golem's Heart (demo)", 60)};
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every
 // class (the user, 2026-10-04: 'give fireccracker on all quests', then 'give 3 firecrackers in
@@ -955,12 +982,16 @@ QuestTable withFirecrackers() {
     }
     return table;
 }
-const QuestTable kQuestTable = withFirecrackers();
+QuestTable kQuestTable = withFirecrackers();
 const QuestRow* const kTable = kQuestTable.rows;
 
 }  // namespace
 
 const QuestRow& questAt(int index) { return kTable[index]; }
+
+void enableQuestDemo() {
+    for (int index : kDemoQuests) kQuestTable.rows[index].giver = 257;
+}
 
 int questOf(int32_t giver) {
     for (int i = 0; i < kQuests; ++i) {

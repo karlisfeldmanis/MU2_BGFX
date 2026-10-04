@@ -23,7 +23,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 17;
+inline constexpr int kQuests = 19;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 12;
@@ -142,6 +142,11 @@ inline int64_t questExperience(const QuestRow& row, bool first) {
 }
 
 const QuestRow& questAt(int index);
+// Two demo quests of Peia's, given by nobody until --quest-demo hands them to her, so her window
+// opens on its list (QuestDialog::kList): the user, 2026-10-04, 'show me demo for noria quest
+// giver which has multiple quests'. The second asks level 60, to show a locked row.
+inline constexpr int kDemoQuests[2] = {17, 18};
+void enableQuestDemo();
 // The quest a giver hands out, by NPC number, or -1. One a giver.
 int questOf(int32_t giver);
 

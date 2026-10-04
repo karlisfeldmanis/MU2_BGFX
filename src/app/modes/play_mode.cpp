@@ -487,6 +487,7 @@ void PlayMode::runScript(Context& ctx) {
             }
             world_.played().restore(done);
         }
+        if (args.questDemo) sim::enableQuestDemo();
         if (!args.talk.empty()) world_.played().talkTo(args.talk);
         if (args.perch >= 0) world_.played().perch(args.perch);
         // Once: a gate's next world is opened on these same arguments.

@@ -329,6 +329,7 @@ struct Args {
     // --quests-done 2,6: those quests (sim/quests.cpp's table order) handed in once, so what waits
     // on them is offered -- the Lost Tower's chain after Devin's; no save.
     std::string questsDone;
+    bool questDemo = false;  // --quest-demo: Peia gives the two demo quests too (sim::kDemoQuests)
     int walkColumn = -1, walkRow = -1;  // --walk-to: one walk to this tile at the start
     int perch = -1;       // walk to this perch (an index into the tables' perches) and take it
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
