@@ -12,10 +12,12 @@ namespace {
 // game/world/maps.cpp's arrival tiles (gates 17, 27, 22), and face nowhere in particular; the
 // Dungeon's three on exit gates 2, 6 and 10 (docs/dungeon-port.md §1.2-1.3), facing as those do.
 // Every level here is MU's doubled, ours, as the gates' are (sim/gates.cpp; the user, 2026-10-04:
-// 'fix tab travels also'): the experience is 100x. The prices are MU's.
+// 'fix tab travels also'): the experience is 100x. The prices are MU's. The two towns ask no
+// level, ours (the user, 2026-10-04: 'allow to fast travel to noria and lorencia from the
+// begining').
 constexpr TravelRow kRows[kTravels] = {
-    {"Lorencia", 0, 20, 2000, 142, 126, 0, 0},
-    {"Noria", 3, 20, 2000, 174, 112, 0, 0},
+    {"Lorencia", 0, 1, 2000, 142, 126, 0, 0},
+    {"Noria", 3, 1, 2000, 174, 112, 0, 0},
     {"Devias", 2, 40, 2000, 207, 42, 0, 0},
     {"Dungeon", 1, 60, 3000, 108, 247, -1, -1},
     {"Dungeon 2", 1, 80, 3500, 232, 126, -1, -1},
@@ -48,9 +50,6 @@ const Chain* chainOf(int32_t map) {
     }
     return nullptr;
 }
-
-// Where each class is born: the elf in Noria, the rest in Lorencia (game/roster.cpp's `home`).
-int32_t homeMap(Kin kin) { return kin == Kin::FairyElf ? 3 : 0; }
 
 }  // namespace
 
@@ -104,7 +103,8 @@ void Realm::settleFound(uint32_t saved) {
     }
 
     found_ = saved & ((uint32_t(1) << kTravels) - 1);
-    found_ |= travelRowsOf(homeMap(bodies_[0].kin));
+    // Both towns from the start, whichever he was born in (the user, 2026-10-04).
+    found_ |= travelRowsOf(0) | travelRowsOf(3);
     // A map nobody gives a quest on opens as he stands in it. Silently: a raise logs the same
     // lines on every run.
     bool giver = false;

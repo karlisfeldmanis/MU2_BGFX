@@ -8,9 +8,9 @@
 //
 // **Opening a row is ours** (the user, 2026-09-30, claude.ai/artifact/CeRcbNmeWq31yAA2WUL15X): a
 // town's row opens the first time he speaks to its quest giver, and a map with no giver -- the
-// Dungeon -- opens every row of itself the first time he stands in it. The town he was born in is
-// open from the start (an elf's Noria, everyone else's Lorencia). 0.75 asks only the level and the
-// Zen, of anybody, anywhere.
+// Dungeon -- opens every row of itself the first time he stands in it. Lorencia and Noria are open
+// from the start, at any level (the user, 2026-10-04). 0.75 asks only the level and the Zen, of
+// anybody, anywhere.
 #pragma once
 
 #include <cstdint>
