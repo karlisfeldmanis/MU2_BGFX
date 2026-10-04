@@ -202,12 +202,19 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // 3 -- pushes the hero as the wizard's Lightning pushes a monster: a tile straight away, never
     // onto a safe one (the user, 2026-10-01: "when dungeon lich attack ... there is no push back").
     // Held until its bolt lands (kBeastPushDelay), from where it stood; one at a time.
+    // And a split blow's lightning, every part of it (the user, 2026-10-04: 'lughtings from head
+    // aso has to push character'): a swing's own part when its bolt lands, the later ones --
+    // shown on the tick they strike (kSplitBlows) -- at once; a melee first part does not push.
+    // Ours.
+    const SplitBlow* split = attacker.player ? nullptr : splitOf(attacker);
+    const bool shoves = split == nullptr || thrown || !split->meleeFirst;
     if (target.player && target.alive() && !attacker.player && attacker.kind >= 0 &&
         size_t(attacker.kind) < tables_->kinds.size() &&
-        tables_->kinds[size_t(attacker.kind)].attackSkill == skill::kLightning &&
-        target.pushAt == 0 && target.pushTicks == 0 &&
+        (tables_->kinds[size_t(attacker.kind)].attackSkill == skill::kLightning ||
+         split != nullptr) &&
+        shoves && target.pushAt == 0 && target.pushTicks == 0 &&
         !heroResists(target.excel.lightningResistance)) {
-        target.pushAt = tick_ + kBeastPushDelay;
+        target.pushAt = tick_ + (split != nullptr && thrown ? 1 : kBeastPushDelay);
         target.pushFromX = attacker.x;
         target.pushFromY = attacker.y;
     }
@@ -943,6 +950,37 @@ bool Realm::fireBlow(const Body& monster, bool flame) const {
     return skillElement(tables_->kinds[size_t(monster.kind)].attackSkill) == Element::Fire;
 }
 
+const SplitBlow* Realm::splitOf(const Body& monster) const {
+    return sim::splitOf(numberOf(monster));
+}
+
+void Realm::beamOn(Body& beast) {
+    if (beast.beamsLeft <= 0 || tick_ < beast.beamAt) return;
+    Body* target = body(beast.beamOn);
+    // A beam that finds nothing in its reach -- he ran, died, or it did -- and the rest with it.
+    const content::MonsterKind* kind =
+        beast.kind >= 0 && size_t(beast.kind) < tables_->kinds.size()
+            ? &tables_->kinds[size_t(beast.kind)]
+            : nullptr;
+    const SplitBlow* split = splitOf(beast);
+    if (!beast.alive() || target == nullptr || !target->alive() || kind == nullptr ||
+        split == nullptr || !within(beast, *target, float(kind->attackRange) + 1.0f)) {
+        beast.beamsLeft = 0;
+        return;
+    }
+    --beast.beamsLeft;
+    beast.beamAt = tick_ + split->every;
+    const size_t before = happenings_.size();
+    strikeAt(beast, *target, 1.0f / float(split->parts), nullptr, true);
+    for (size_t i = before; i < happenings_.size(); ++i) {
+        Happening& one = happenings_[i];
+        if (one.who == beast.id && (one.what == What::Hit || one.what == What::Missed)) {
+            one.beamed = true;
+            one.boss = false;  // a Flame of Evil is the swing's, not a beam's
+        }
+    }
+}
+
 bool Realm::chills(const Body& monster) const {
     if (monster.kind < 0 || size_t(monster.kind) >= tables_->kinds.size()) return false;
     const int32_t number = tables_->kinds[size_t(monster.kind)].number;
@@ -1166,6 +1204,7 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.walking = false;
     // A push in hand ends with the body: it lies where the blow found it, on its tile.
     dead.pushAt = 0;
+    dead.beamsLeft = 0;
     if (dead.pushTicks > 0) {
         dead.pushTicks = 0;
         dead.x = float(dead.column());

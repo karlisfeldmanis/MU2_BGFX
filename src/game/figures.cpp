@@ -799,6 +799,12 @@ void Figures::shine(const std::vector<content::ItemRow>& items) {
                     // model table names it, so it takes the plus as its level and
                     // PartObjectColor's orange for everything not named: MU's gold.
                     body->partShine[i].level = body->wornPlus;
+                    // Or the colour its recipe names: the Silver Valkyrie, whose second pass MU
+                    // draws in its plain body colour (RenderPartObjectBodyColor, white at
+                    // Bright 1; ZzzCharacter.cpp:8716-8785).
+                    if (body->wornColour[0] >= 0.0f) {
+                        for (int k = 0; k < 3; ++k) body->partShine[i].colour[k] = body->wornColour[k];
+                    }
                 } else {
                     core::logError("%s wears %s at +%d, which the item table does not know, so "
                                    "it is drawn plain", name.c_str(),
@@ -1229,6 +1235,11 @@ void Figures::addMonster(const core::Json& entry) {
         if (const content::Mesh* found = mesh(part.string)) made->parts.push_back(found);
     }
     made->wornPlus = int(entry["plus"]["parts"].numberOr(0.0));
+    if (entry["plus"]["colour"].items.size() == 3) {
+        for (int k = 0; k < 3; ++k) {
+            made->wornColour[k] = float(entry["plus"]["colour"].items[size_t(k)].numberOr(1.0));
+        }
+    }
     made->library = libraryFor(body->name());
     for (const char* side : {"right_hand", "left_hand"}) {
         const std::string name = entry[side].stringOr("");

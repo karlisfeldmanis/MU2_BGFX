@@ -404,6 +404,32 @@ constexpr float kLizardBoltWander = 0.12f;
 // own space; the head is 1.45) to the head, wandering this far off the line. Ours.
 constexpr float kLizardShaftFrom = 0.35f;
 constexpr float kLizardShaftWander = 0.06f;
+// The Hydra, Atlans's boss. MU lets a BITMAP_BOSS_LASER + 1 off its gem (bone 63, Cone01) every
+// fifth attack frame and a ring of nine for its Flame of Evil (ZzzCharacter.cpp:1905-1929); both
+// left out (the user, 2026-10-04: 'lets keep only lasers from head'), so its swing shows by the
+// beams its heads carry (below) and the flare on its gem.
+inline constexpr const char* kHydraFigure = "Hydra01";
+constexpr int32_t kHydraNumber = 49;
+// Its four heads, whose beams strike (sim kSplitBlows): MU's BlendMesh 5 is never drawn (the
+// user, 2026-10-04: 'from heads we shoot red lightiing not lasers?'), and each beam is the
+// Lizard King's red lightning from a mouth instead -- the bone each beam rides in Monster38 and
+// the root of that beam in the model's bind space, metres, read off the mesh. Ours.
+struct HydraHead {
+    const char* bone;
+    float mouth[3];
+};
+inline constexpr HydraHead kHydraHeads[4] = {
+    {"Box49", {1.603f, 2.451f, 1.392f}},
+    {"Box29", {0.926f, 2.728f, 1.368f}},
+    {"Box37", {-1.039f, 2.362f, 1.794f}},
+    {"Box43", {-1.75f, 2.233f, 1.392f}},
+};
+// How long a head's bolt stands. Ours, the Lizard King's.
+constexpr float kHydraBoltSeconds = 0.45f;
+// Its BlendMesh 5, bbbb03: four red beams from its mouths, which MU lights only in an attack --
+// BlendMeshLight up 0.1 a frame in ATTACK1-2 and 0 in anything else (ZzzCharacter.cpp:
+// 5989-6001). Ours, never drawn: its heads throw red lightning instead (kHydraHeads).
+inline constexpr const char* kHydraBeamMaterial = "glow_bbbb03";
 constexpr float kDevilBeamSeconds = 0.6f;
 // MU's four beams wander: each joint is laid at a fresh random angle every frame. Ours, the
 // second beam off each hand meets the target this far off its middle, rolled again each frame,
@@ -446,6 +472,9 @@ inline constexpr AuraLight kAuraLights[] = {
     // The Lizard King's four sparks and shinies (ZzzCharacter.cpp:11228-11238): a pale light on
     // the first of their bones.
     {"LizardKing01", {0.7f, 0.8f, 1.0f}, "Box27"},
+    // The Hydra's horn, where MU always hangs a lightning and a shiny sprite (ZzzCharacter.cpp:
+    // 11216-11219): a pale blue.
+    {"Hydra01", {0.5f, 0.6f, 1.0f}, "Cone01"},
 };
 inline constexpr const char* kPoisonShadowFigure = "PoisonShadow01";
 inline constexpr const char* kShadowJoints[] = {

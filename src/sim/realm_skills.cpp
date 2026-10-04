@@ -241,7 +241,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // the gap themselves; nothing closes a gap here (docs/skills-dk.md §3.1a), so the test
         // is the swing's.
         const bool aimed = target && target->alive() && target->monster() &&
-                           within(hero, *target, row.reach);
+                           within(hero, *target, row.reach + float(bulkOf(numberOf(*target))));
         // Behind a wall: nothing is thrown at it -- no mana, no cooldown (Realm::seen).
         const bool walled = aimed && !seen(hero, *target);
         // Aimed before the shape is measured, because Arc is measured off where he is looking.
@@ -434,7 +434,7 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         if (!within(hero, one,
                     row.spread == Spread::Line   ? kLineTiles
                     : row.spread == Spread::Beam ? kBeamTiles
-                                                 : row.reach)) {
+                                                 : row.reach + float(bulkOf(numberOf(one))))) {
             continue;
         }
         // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.

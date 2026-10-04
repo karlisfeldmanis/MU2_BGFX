@@ -157,7 +157,16 @@ Free ways out stay free; Atlans's way back keeps 60. The sim_test gate checks fo
 - Not yet: Fish03 (MU rolls Fish02 or Fish03), the ten bigger swimmers (Scurry: Fish04-07 north, the glowing Fish08/09 south), and MU's turn at the safe zone's edge.
 - Procedural grass: MU has none in Atlans; a seagrass carpet would be ours, which is asked of the user.
 
-Nothing else is built: no monsters, warp row or drops. Atlans is reached by `--world atlans`.
+**The monsters (2026-10-04): all seven breeds, OpenMU Version075's 336 spawns** (mu.db spawn ids 930-1265). The first five (Bahamut, Vepar, Valkyrie, Lizard King, Great Bahamut) are in commit eb523810; then:
+- **Silver Valkyrie (52)**: the Valkyrie's Monster36 at 1.4 with the Bluewing Crossbow, its body solid plate with MU's white chrome second pass (`plus.colour`, Figures::addMonster); its Ice chills him (`kChillers`).
+- **Hydra (49)**, Monster38 at 1.0, the boss (`kBosses`, WebZen's Flame of Evil one blow in five): matte skin on hide and necks, MU's vein overlay (`bbbb.jpg` on a copy of mesh 0, pushed 0.5 units out along its normals so the build's weld keeps it apart) breathing at 0.5 +- 0.3, the gem glowing cyan with MU's two RenderLight sprites on bone 63 (`ShadowStars::flare`). Its sounds are MuMain's own: mHydraAttack1 on the swing, mHydra1 to walk and die.
+- **Ours, the user's asks of 2026-10-04**: MU's BlendMesh beams and both its BITMAP_BOSS_LASERs (the gem's and the ring of nine) are not drawn; its blow is split into four (`kSplitBlows`), each its own roll at a quarter, each the Lizard King's red lightning from one head's mouth (`kHydraHeads`, read off the beam mesh), each pushing him a tile, each with eThunder. Its body takes one tile of the hero's reach (`bulkOf`), so he fights against it rather than inside it.
+- **The Lizard King's blow in two**: its staff's half, then its lightning's half, which pushes and sounds eThunder.
+- **Every monster lightning leaves a wisp** of smoke01 on what it struck (Thunder Lich, Devil, Lizard King, Hydra).
+- **Respawns and resistances**: `kDropRates` gives the seven WZO's RegTime 8 / 15 / 150 s (+1, as webzen-audit #9) and MoneyRate 14 / MaxItemLevel 3; `kResistances` their ice and poison. Before this they rose in 6 s.
+- **Sevina's trial asks Atlans** (`kAtlansHunted` on): 30 Lizard Kings, 40 Great Bahamuts and 40 Silver Valkyries beside the tower's two.
+
+Drops are the general ones by level (§5: 0.75 has nothing Atlans-specific), with ours on top (Loch's Feather, the second class's gear, the class-change treasure). Not built: the warp row. Atlans is reached by `--world atlans`; `--arena Hydra01` stands one alone.
 
 ## The one thing to know first
 

@@ -215,6 +215,9 @@ struct Happening {
     // A `Hit` Evil Spirit's spirits dealt, the wizard's spell's or the shield rune's: the drawing
     // spins what it struck (Play, kSpiritStormTime).
     bool spirit = false;
+    // A split blow's part after the first (kSplitBlows) -- a Hydra's head bolt, a Lizard King's
+    // lightning: no swing, a number and its blood where it lands.
+    bool beamed = false;
     // A boss's Flame of Evil: the Death Gorgon's and the Balrog's one blow in five (WebZen's
     // `rand() % 5 == 0` on A.Type 150, gObjMonster.cpp:1849-1925), its damage the monster's own
     // band as WebZen sends it -- the drawing's cue, nothing else changes.
@@ -243,6 +246,7 @@ constexpr float kFlyFactor = 15.0f / 12.0f;
 // And the Wings of Dragon's 16 (ZzzCharacter.cpp:6324-6331), our ride's.
 constexpr float kFastFlyFactor = 16.0f / 12.0f;
 struct Body;
+struct SplitBlow;  // realm_tuning.h
 // How much ground a walk covers against the breed's own pace: riding, running or neither.
 float strideFactor(const Body& one);
 // How long a fight holds him in it after the last thing that says he is in one: a monster
@@ -458,6 +462,11 @@ struct Body {
     // goes, 0 for none, and where the beast stood when it struck.
     int64_t pushAt = 0;
     float pushFromX = 0.0f, pushFromY = 0.0f;
+    // The parts of a split blow still to land this swing (kSplitBlows), the tick the next lands
+    // and whom they are aimed at. 0 none.
+    int32_t beamsLeft = 0;
+    int64_t beamAt = 0;
+    uint32_t beamOn = 0;
     // A channel running (`Realm::channel`): which skill, when it began and ends, and the tick of
     // its next pulse. 0 for none. The interface reads the first three for its bar.
     int32_t channelSkill = 0;
@@ -1090,6 +1099,10 @@ private:
     bool chills(const Body& monster) const;
     // Whether a monster's blow is fire, for his Fire resistance (sim::Affix).
     bool fireBlow(const Body& monster, bool flame) const;
+    // A breed whose blow comes in parts (kSplitBlows), and its parts after the first landing on
+    // their ticks.
+    const SplitBlow* splitOf(const Body& monster) const;
+    void beamOn(Body& beast);
     // Whether this blow is a boss's Flame of Evil (realm_tuning.h kBosses): one in five, off
     // bossDice_; false and no draw for every other breed.
     bool bossBlow(const Body& monster);
@@ -1149,6 +1162,12 @@ private:
     void channel(Body& hero);
     // How long the clip this skill plays takes, and so what its cooldown cannot go under.
     int32_t clipTicksOf(const Body& hero, const SkillRow& row) const;
+    // A body's breed number, MU's monster index; -1 for the player and anything without a row.
+    int32_t numberOf(const Body& one) const {
+        return one.kind >= 0 && size_t(one.kind) < tables_->kinds.size()
+                   ? tables_->kinds[size_t(one.kind)].number
+                   : -1;
+    }
     void kill(Body& beast, Body& killer);
     // The town's guards: raised off the folk table once the monsters are placed, and each tick
     // looking for a monster near his post, going for it, and walking back when it is dead.

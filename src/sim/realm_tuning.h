@@ -128,6 +128,14 @@ constexpr int kHeroAttackRange = 1;
 // And six with any bow type drawn: MuMain's `Action()`, `Range = 6.f` whenever
 // GetEquipedBowType is not BOWTYPE_NONE (ZzzInterface.cpp:1245-1261).
 constexpr int kArcherReach = 6;
+// How many tiles a breed's body stands past its own tile, which his reach takes as well, so he
+// strikes it from its edge and does not walk into it. Ours (the user, 2026-10-04: 'attack
+// distance is incorrect for char because monster is big'): MU reaches the tile alone and
+// lets him stand inside a Hydra, whose body runs 2.8 m out from its tile, front and back. At 2
+// he stood clear of it; 1 keeps him close against it ('little but closer').
+constexpr int bulkOf(int32_t number) {
+    return number == 49 ? 1 : 0;  // Hydra: a tile in, close against its body
+}
 // An arrow's flight: MU's `Direction[1] = -70` units a reference frame at 25, 1750 units -- 17.5
 // tiles -- a second, stopping a tile short of the body as a spell does (MU2 Realm.cs:79).
 constexpr float kArrowTilesPerSecond = 17.5f;
@@ -309,14 +317,46 @@ constexpr float kHeroPoisonShare = 0.03f;
 // swing on a hero with none, and not again while it is on. Iced is ten seconds at half his speed
 // (SkillsInitializerBase.cs:205-207, :274-295; MovementSpeedConstants.cs:50) -- the wizard's own
 // chill, whose ticks and factor are Ice's row. A Ring of Ice's resistance is not carried.
-constexpr int32_t kChillers[] = {22};
+// Atlans's Silver Valkyrie (52), `AttackSkill = Ice` (Version075/Maps/Atlans.cs:630-660; WebZen's
+// A.Type 7), the same.
+constexpr int32_t kChillers[] = {22, 52};
 
 // ---- the bosses' Flame of Evil -----------------------------------------------------------------
 // The Lost Tower's Death Gorgon (35) and Balrog (38), A.Type 150 in WebZen's Monster.txt: one blow
 // in five is skill 50, Flame of Evil, on everyone within five tiles (gObjMonster.cpp:1849-1925,
 // 1738-1752) -- with one player, the blow on him, at the monster's own damage band. OpenMU 075
 // never creates its skill 150, so there they only melee; WebZen's, docs/lost-tower-port.md.
-constexpr int32_t kBosses[] = {35, 38};
+// And Atlans's Hydra (49), A.Type 150 the same (Monster.txt:72; docs/atlans-port.md 4.2).
+constexpr int32_t kBosses[] = {35, 38, 49};
+
+// ---- blows split into parts --------------------------------------------------------------------
+// **Ours.** MU and WebZen strike once a swing; these breeds' one blow is split into `parts`, each
+// its own roll at a parts'th of the blow -- several numbers where one stood, the same damage.
+// The first is the swing's own; the rest come `every` ticks apart from `after` ticks after the
+// swing, each only while he is still in the breed's reach (Realm::beamOn), and each is lightning,
+// which pushes him (Realm::strikeAt).
+//   * Atlans's Hydra (49): a bolt from each of its four heads (the user, 2026-10-04: 'each laser
+//     from head has to do some damage', 'from heads we shoot red lightiing'), the first a bolt
+//     too. Its swing is 1.4 s and its blow shows at half of it, tick 14.
+//   * The Lizard King (48): its staff's blow and then its red lightning (the user, 2026-10-04:
+//     'lizards has to do melee and lihgting damage, not onyl melee') -- the first part melee,
+//     which does not push. Its swing is 1.6 s, its blow at tick 16, the bolt just after.
+struct SplitBlow {
+    int32_t number;
+    int parts;
+    bool meleeFirst;
+    int64_t after, every;
+};
+constexpr SplitBlow kSplitBlows[] = {
+    {49, 4, false, 18, 4},  // Hydra
+    {48, 2, true, 18, 4},   // Lizard King
+};
+constexpr const SplitBlow* splitOf(int32_t number) {
+    for (const SplitBlow& one : kSplitBlows) {
+        if (one.number == number) return &one;
+    }
+    return nullptr;
+}
 
 // ---- a spot of many -----------------------------------------------------------------------------
 // How far a one-tile nest with a count scatters its members (Realm's raise): **ours**, a
@@ -357,6 +397,14 @@ constexpr Resistance kResistances[] = {
     {39, 6, 4},    // Poison Shadow
     {40, 6, 6},    // Death Knight
     {41, 5, 5},    // Death Cow
+    // Atlans's seven (Version075/Maps/Atlans.cs, read the same way; WZO Monster.txt agrees).
+    {45, 1, 1},    // Bahamut
+    {46, 2, 2},    // Vepar
+    {47, 6, 2},    // Valkyrie
+    {48, 7, 7},    // Lizard King
+    {49, 12, 12},  // Hydra
+    {51, 6, 6},    // Great Bahamut
+    {52, 7, 7},    // Silver Valkyrie
 };
 
 // ---- what each breed leaves -------------------------------------------------------------------
@@ -384,6 +432,10 @@ constexpr DropRate kDropRates[] = {
     // Decision 3: the user kept WebZen's, 2026-10-01).
     {34, 14, 3}, {35, 14, 3}, {36, 14, 3}, {37, 14, 3}, {38, 14, 3, 10}, {39, 14, 3},
     {40, 14, 3}, {41, 14, 3},
+    // Atlans's: MoneyRate 14 and MaxItemLevel 3 for all seven, RegTime 8 for the first three,
+    // 15 for the elite and 150 for the Hydra (WZO Monster.txt:39-72; docs/atlans-port.md 4.2).
+    {45, 14, 3, 8}, {46, 14, 3, 8}, {47, 14, 3, 8}, {48, 14, 3, 15}, {49, 14, 3, 150},
+    {51, 14, 3, 15}, {52, 14, 3, 15},
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {

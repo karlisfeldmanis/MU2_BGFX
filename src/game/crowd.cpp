@@ -588,6 +588,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         drawable.mesh = part;
         std::memcpy(drawable.transform, transform, sizeof(transform));
         drawable.paletteRow = part->isSkinned() ? row : -1;
+        drawable.hiddenMaterial = bodyHidden_;
         if (i < body_->partShine.size()) wear(body_->partShine[i], drawable);
         // MU's Level 3 (Selection.cpp:106, body light +1.5): the Ice Queen is drawn at her
         // sheet's own colour in any light. Its w is the flag vs_skinned reads.

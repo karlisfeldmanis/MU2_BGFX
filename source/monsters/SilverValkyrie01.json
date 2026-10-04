@@ -1,0 +1,176 @@
+{
+  "item": "SilverValkyrie01",
+  "mu_name": "Silver Valkyrie",
+  "mu_name_from": "MuMain _enum.h MONSTER_SILVER_VALKYRIE (52), drawn out of the Valkyrie's model (MONSTER_MODEL_VALKYRIE, Monster36.bmd). OpenMU Version075 Maps/Atlans.cs names breed 52 'Silver Valkyrie'. docs/atlans-port.md Part B 4.",
+  "world": "atlans",
+  "object_type": 52,
+  "monster": {
+    "model_index": 35,
+    "scale": 1.4
+  },
+  "monster_from": "ZzzCharacter.cpp:13769-13774, CreateMonster, case MONSTER_SILVER_VALKYRIE: OpenMonsterModel(MONSTER_MODEL_VALKYRIE); CreateCharacter(Key, MODEL_VALKYRIE, ...); Scale = 1.4f; Weapon[0] = MODEL_BLUEWING_CROSSBOW. No BlendMesh, so its body is drawn solid -- not the Valkyrie's glow -- and then again with RENDER_CHROME | RENDER_BRIGHT in its body colour at Bright 1, with the Balrog and the golden monsters (:8716-8785): a silver warrior. Its own build of Monster36 for that, since the Valkyrie's bakes the body as a glow.",
+  "right_hand": "CrossBow06",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "Weapon[0], the Bluewing Crossbow, on link bone 30 (knife_gdf), as the Valkyrie's.",
+  "plus": {
+    "parts": 7,
+    "colour": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "plus_from": "MU's second pass, RENDER_CHROME | RENDER_BRIGHT in white, is the chrome a +7 item is drawn with (shine.sh: Chrome01 added, the base at 0.8): the body at +7, white rather than the orange a body with no item row would take.",
+  "profile": "monster",
+  "rig_from": "Monster36 again: seven actions, 41 bones, BoneHead 19 (ZzzOpenData.cpp:3653-3659).",
+  "sheets": {
+    "gp01": "valkyrie_gp01.png",
+    "gp02": "valkyrie_gp02.png"
+  },
+  "sheet_from": "The Valkyrie's two sheets, valkyrie_gp01 (the dark finned plate) and valkyrie_gp02 (the blue fins).",
+  "sheet_materials": {
+    "gp01": "plate_steel",
+    "gp02": "leather"
+  },
+  "sheet_materials_from": "Plate, the body solid here; the fins a membrane, blended as the Valkyrie's.",
+  "soft_alpha": [
+    "leather"
+  ],
+  "soft_alpha_from": "gp02.OZT tested and blended, as the Valkyrie's fins.",
+  "sounds_from": "The Valkyrie's model's: SetMonsterSound(..., 135, 135, 136, 136, 137) in ZzzOpenData.cpp:3653-3659. Wired as silvervalkyrie_* in sounds.json, as valkyrie_*.",
+  "islands_from": "6 islands for 655 triangles. Islands 0-2 are gp01, the body (638), plate_steel; 3-5 are gp02, the fins (17), leather and blended (soft_alpha). They arrived as skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 636,
+      "area": 25376.0,
+      "along": [
+        -62.8,
+        44.4
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.999,
+        0.993
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.988,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 80.6,
+      "along": [
+        -10.6,
+        3.5
+      ],
+      "mu_uv": [
+        0.258,
+        0.747,
+        0.258,
+        0.747
+      ],
+      "bake_uv": [
+        0.08,
+        0.04,
+        0.08,
+        0.04
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 96.2,
+      "along": [
+        -10.5,
+        -2.4
+      ],
+      "mu_uv": [
+        0.258,
+        0.747,
+        0.258,
+        0.747
+      ],
+      "bake_uv": [
+        0.08,
+        0.057,
+        0.08,
+        0.057
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 7,
+      "area": 1603.9,
+      "along": [
+        -62.8,
+        -16.2
+      ],
+      "mu_uv": [
+        0.021,
+        0.037,
+        0.972,
+        0.644
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.468,
+        0.301
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 5,
+      "area": 423.5,
+      "along": [
+        -30.1,
+        -3.5
+      ],
+      "mu_uv": [
+        0.043,
+        0.634,
+        0.756,
+        0.983
+      ],
+      "bake_uv": [
+        0.449,
+        0.626,
+        0.792,
+        0.794
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather",
+      "triangles": 5,
+      "area": 423.5,
+      "along": [
+        -47.6,
+        -20.5
+      ],
+      "mu_uv": [
+        0.043,
+        0.634,
+        0.756,
+        0.983
+      ],
+      "bake_uv": [
+        0.009,
+        0.685,
+        0.352,
+        0.854
+      ]
+    }
+  ]
+}

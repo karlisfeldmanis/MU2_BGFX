@@ -511,6 +511,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.mixBreak = sound_.load("machine_break", false);
     heard_.meteorite = sound_.load("meteorite", true);
     heard_.evil = sound_.load("devil_evil", true);
+    heard_.boltThunder = sound_.load("spell_thunder", true);
     heard_.rage2 = sound_.load("rage_blow_2", true);
     heard_.rage3 = sound_.load("rage_blow_3", true);
     heard_.hellfire = sound_.load("balrog_hellfire", true);
@@ -679,7 +680,26 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.handBones[0] = one.handBones[1] = -1;
             one.beams = look->name == kVeparFigure        ? Drawn::Beams::Blur
                         : look->name == kLizardKingFigure ? Drawn::Beams::Thunder
+                        : look->name == kHydraFigure      ? Drawn::Beams::Horn
                                                           : Drawn::Beams::Laser;
+            one.beamMaterial = -1;
+            for (int& head : one.headBones) head = -1;
+            if (look->name == kHydraFigure && !look->parts.empty()) {
+                const auto& materials = look->parts.front()->materials();
+                for (size_t m = 0; m < materials.size(); ++m) {
+                    if (materials[m].name == kHydraBeamMaterial) one.beamMaterial = int(m);
+                }
+                // MU's beams are never drawn: its heads throw red lightning instead.
+                one.figure.hideBodyMaterial(one.beamMaterial);
+                if (look->skeletonMesh) {
+                    const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                    for (size_t h = 0; h < 4; ++h) {
+                        for (size_t b = 0; b < bones.size(); ++b) {
+                            if (bones[b].name == kHydraHeads[h].bone) one.headBones[h] = int(b);
+                        }
+                    }
+                }
+            }
             if (look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {

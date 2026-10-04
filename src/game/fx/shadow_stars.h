@@ -72,6 +72,14 @@ public:
     // A Balrog's Flame of Evil circle on the ground at `at`, spreading and fading: MU's
     // MODEL_CIRCLE and CIRCLE_LIGHT (:1976-1978), ours as a flat ring of Magic_Ground2 in orange.
     void circle(const float at[3]);
+    // The Hydra's gem for this frame only: MU's RenderLight on its bone 63 (ZzzCharacter.cpp:
+    // 11216-11219, 8453-8463) -- lightning2 at scale 1 and Shiny03's streak at 4, added in
+    // (1, 0.6, 0.4) times sin(WorldTime*0.002)*0.3 + 0.7. `pulse` is that luminosity.
+    void flare(const float at[3], float fade, float pulse);
+    // What a monster's lightning leaves where it struck (the user, 2026-10-04: 'lightings always
+    // has to leave some minimal smoke for every monster which uses lighting'): a few faint grey
+    // wisps of MU's smoke01 rising off `at` and gone in about a second. Ours.
+    void wisp(const float at[3]);
     // The nearest of this frame's glows to `near`, at most two, into the renderer's moving
     // lights; after the spells, which keep their slots.
     uint32_t lights(gfx::PointLight* out, uint32_t max, const float near[3]) const;
@@ -120,6 +128,20 @@ private:
         float age;   // seconds
     };
     std::vector<Circle> circles_;
+    struct Flare {
+        float position[3];
+        float level;   // fade times pulse
+    };
+    std::vector<Flare> flares_;
+    struct Wisp {
+        float position[3];
+        float drift[2];
+        float age;   // seconds
+    };
+    std::vector<Wisp> wisps_;
+    bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;      // smoke01, a grey wisp on black
+    bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;  // lightning_2, BITMAP_LIGHTNING + 1
+    bgfx::TextureHandle streak_ = BGFX_INVALID_HANDLE;     // shiny_03, BITMAP_SHINY + 2
     bool open_ = false;
 };
 

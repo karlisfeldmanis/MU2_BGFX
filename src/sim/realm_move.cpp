@@ -555,7 +555,15 @@ void Realm::think(Body& beast) {
             // where a per-skill cooldown will go.
             beast.swingsAt =
                 tick_ + kind.attackTicks + (beast.chilledUntil > tick_ ? kChillSwingTicks : 0);
-            strikeAt(beast, *body(chosen));
+            if (const SplitBlow* split = splitOf(beast)) {
+                // The first part is the swing's blow; the rest follow (beamOn).
+                strikeAt(beast, *body(chosen), 1.0f / float(split->parts));
+                beast.beamsLeft = split->parts - 1;
+                beast.beamAt = tick_ + split->after;
+                beast.beamOn = chosen;
+            } else {
+                strikeAt(beast, *body(chosen));
+            }
         }
         return;
     }

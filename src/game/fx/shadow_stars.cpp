@@ -48,6 +48,24 @@ constexpr float kRollDim = 0.7f;
 constexpr float kCircleRadius = 4.0f;  // metres
 constexpr float kCircleLife = 0.9f;    // seconds
 constexpr float kCircleDim = 0.5f;
+// The Hydra's gem: MU's sprites at a sheet's pixels times their scale in centimetres --
+// lightning2 (128 square) at 1, Shiny03 (128 by 16) at 4 -- in RenderLight's orange-white, at
+// this much of MU's light. Ours, so the flare does not drown the gem in this HDR frame.
+constexpr float kFlareLightningHalf = 128.0f * 1.0f * kUnit * 0.5f;
+constexpr float kFlareStreakHalfWidth = 128.0f * 4.0f * kUnit * 0.5f;
+constexpr float kFlareStreakHalfHeight = 16.0f * 4.0f * kUnit * 0.5f;
+constexpr float kFlareColour[3] = {1.0f, 0.6f, 0.4f};
+constexpr float kFlareDim = 0.5f;
+// A lightning's wisp of smoke: this many puffs, this big growing to this, rising this fast and
+// drifting this far, gone over this life at this much of the sheet. Ours, minimal.
+constexpr int kWispPuffs = 3;
+constexpr float kWispHalf = 0.25f;
+constexpr float kWispGrow = 2.2f;
+constexpr float kWispRise = 0.5f;     // metres a second
+constexpr float kWispDrift = 0.25f;   // metres a second
+constexpr float kWispLife = 1.1f;     // seconds
+constexpr float kWispDim = 0.5f;
+constexpr size_t kWisps = 96;
 
 }  // namespace
 
@@ -68,6 +86,11 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     laser_ = load("joint_laser");
     blur_ = load("trail_motion");
     thunder_ = load("joint_thunder");
+    lightning_ = load("lightning_2");
+    smoke_ = load("smoke01");
+    wisps_.reserve(kWisps);
+    streak_ = load("shiny_03");
+    flares_.reserve(8);
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
@@ -83,6 +106,7 @@ void ShadowStars::update(float seconds) {
     stars_.clear();
     glows_.clear();
     beams_.clear();
+    flares_.clear();
     for (Roll& one : rolls_) {
         one.age += seconds;
         one.position[0] += one.dx * kRollSpeed * seconds;
@@ -95,6 +119,15 @@ void ShadowStars::update(float seconds) {
     circles_.erase(std::remove_if(circles_.begin(), circles_.end(),
                                   [](const Circle& one) { return one.age >= kCircleLife; }),
                    circles_.end());
+    for (Wisp& one : wisps_) {
+        one.age += seconds;
+        one.position[0] += one.drift[0] * seconds;
+        one.position[1] += kWispRise * seconds;
+        one.position[2] += one.drift[1] * seconds;
+    }
+    wisps_.erase(std::remove_if(wisps_.begin(), wisps_.end(),
+                                [](const Wisp& one) { return one.age >= kWispLife; }),
+                 wisps_.end());
     for (Ember& one : embers_) {
         one.age += seconds * 25.0f;
         one.position[1] += kEmberRise * seconds;
@@ -166,6 +199,27 @@ void ShadowStars::circle(const float at[3]) {
     one.position[1] += 0.05f;
     one.age = 0.0f;
     circles_.push_back(one);
+}
+
+void ShadowStars::flare(const float at[3], float fade, float pulse) {
+    if (!open_ || fade <= 0.0f || flares_.size() >= 8) return;
+    Flare one;
+    for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    one.level = fade * pulse;
+    flares_.push_back(one);
+}
+
+void ShadowStars::wisp(const float at[3]) {
+    if (!open_ || !bgfx::isValid(smoke_)) return;
+    for (int i = 0; i < kWispPuffs && wisps_.size() < kWisps; ++i) {
+        Wisp one;
+        for (int k = 0; k < 3; ++k) one.position[k] = at[k];
+        const float turn = (float(i) + float(wisps_.size() % 7) * 0.37f) * 2.0943951f;
+        one.drift[0] = std::cos(turn) * kWispDrift;
+        one.drift[1] = std::sin(turn) * kWispDrift;
+        one.age = -0.08f * float(i);  // one after another
+        wisps_.push_back(one);
+    }
 }
 
 void ShadowStars::ember(const float at[3]) {
@@ -295,6 +349,33 @@ void ShadowStars::gather(gfx::Effects& effects) const {
         sprite.colour[1] = 0.35f * kCircleDim * left;
         sprite.colour[2] = 0.05f * kCircleDim * left;
         sprite.sheet = ring_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
+    }
+    for (const Flare& one : flares_) {
+        for (int pass = 0; pass < 2; ++pass) {
+            const bgfx::TextureHandle sheet = pass == 0 ? lightning_ : streak_;
+            if (!bgfx::isValid(sheet)) continue;
+            gfx::Sprite sprite;
+            for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
+            sprite.halfWidth = pass == 0 ? kFlareLightningHalf : kFlareStreakHalfWidth;
+            sprite.halfHeight = pass == 0 ? kFlareLightningHalf : kFlareStreakHalfHeight;
+            for (int i = 0; i < 3; ++i) sprite.colour[i] = kFlareColour[i] * kFlareDim * one.level;
+            sprite.sheet = sheet;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    for (const Wisp& one : wisps_) {
+        if (one.age < 0.0f) continue;
+        const float t = one.age / kWispLife;
+        gfx::Sprite sprite;
+        for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
+        sprite.halfWidth = sprite.halfHeight = kWispHalf * (1.0f + (kWispGrow - 1.0f) * t);
+        // In quickly and out slowly.
+        const float level = std::min(1.0f, t * 6.0f) * (1.0f - t);
+        for (int i = 0; i < 3; ++i) sprite.colour[i] = kWispDim * level;
+        sprite.sheet = smoke_;
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }

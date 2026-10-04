@@ -139,6 +139,9 @@ public:
     // Model.Nock). **Ours** -- MU draws every bow loaded, always, because it never plays the
     // weapon's own clip and so nobody saw the two disagree.
     void nock(bool shown) { nockGone_ = !shown; }
+    // One material of the body's own parts left undrawn, or -1: the Hydra's breath beams,
+    // which its red head lightning stands in for (play_open.cpp, Drawn::beamMaterial).
+    void hideBodyMaterial(int material) { bodyHidden_ = material; }
     // Whether the string in its hands has gone: the shot clip has reached the weapon's release
     // key (its `release` of the weapon's own keys, which poseHeld plays on the body's), or it
     // is not in a shot at all. True for anything without a string.
@@ -224,6 +227,7 @@ private:
     bool mounted_ = false;  // drawn in mount_'s frame; see mount
     bool emptyHand_ = false;  // the right hand's weapon left out; see emptyHand
     bool nockGone_ = false;   // the weapon's nocked missile left out; see nock
+    int bodyHidden_ = -1;     // see hideBodyMaterial
     void placement(float transform[16]) const;  // where it stands, as gather draws it
     float mount_[16] = {};
 };

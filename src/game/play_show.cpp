@@ -386,6 +386,10 @@ void Play::shade(float seconds) {
             float at[3];
             if (one.figure.pointOn(one.auraBone, origin, at)) {
                 shadowStars_.glow(at, fade, one.auraColour);
+                // The Hydra's gem, its aura bone (kHydraFigure): MU's two pulsing sprites on it.
+                if (one.beams == Drawn::Beams::Horn) {
+                    shadowStars_.flare(at, fade, std::sin(folkClock_ * 2.0f) * 0.3f + 0.7f);
+                }
             }
         }
         // A Death Gorgon: an ember now and then off a joint picked at random.
@@ -424,6 +428,41 @@ void Play::shade(float seconds) {
         if (devil == nullptr || target == nullptr || !devil->placed || !target->placed) continue;
         const float to[3] = {target->crown[0], target->crown[1] - 0.7f, target->crown[2]};
         const float origin[3] = {0.0f, 0.0f, 0.0f};
+        // A Hydra's: the Lizard King's red lightning, one broad bolt and three thin, from the
+        // mouth of the head it left (kHydraHeads) into the middle of the body struck, with
+        // Lightning's eThunder (the user, 2026-10-04: 'from heads we shoot red lightiing not
+        // lasers?', 'we need to play lighting sound'); the Hydra's own voice stays MuMain's
+        // ('use default hydra sounds from MuMain'). Ours, in place of MU's beams.
+        if (devil->beams == Drawn::Beams::Horn) {
+            const int head = devil->headBones[size_t(cast.head) % 4];
+            float from[3];
+            if (head < 0 || !devil->figure.pointOnBind(head, kHydraHeads[size_t(cast.head) % 4].mouth, from)) {
+                continue;
+            }
+            if (!cast.heard) {
+                cast.heard = true;
+                if (heard_.boltThunder >= 0) emit(heard_.boltThunder, from[0], from[2]);
+            }
+            const FigureBody* aim = target->figure.body();
+            const float tall = aim ? aim->height * aim->scale : 1.4f;
+            const float chest[3] = {target->crown[0], target->crown[1] - tall * 0.5f,
+                                    target->crown[2]};
+            for (int bolt = 0; bolt < 4; ++bolt) {
+                float end[3] = {chest[0], chest[1], chest[2]};
+                for (int i = 0; i < 3; ++i) {
+                    if (bolt == 0) break;
+                    wanderDice_ = wanderDice_ * 1664525u + 1013904223u;
+                    end[i] += (float((wanderDice_ >> 8) % 1000) / 500.0f - 1.0f) * kLizardBoltWander;
+                }
+                shadowStars_.thunderBeam(from, end, kLizardBoltHalf[bolt == 0 ? 0 : 1],
+                                         kLizardBoltColour);
+            }
+            if (!cast.smoked) {
+                cast.smoked = true;
+                shadowStars_.wisp(chest);
+            }
+            continue;
+        }
         // MU's four, two a hand: the first to the middle, the second wandering round it, and
         // now and then an ember off the hand (kDevilBeamWander, kDevilFireEveryFrames).
         const bool fire = (wanderDice_ = wanderDice_ * 1664525u + 1013904223u) % 1000 <
@@ -440,6 +479,12 @@ void Play::shade(float seconds) {
             StaffFire::points(head, sparks, shaft);
             float from[3];
             if (!devil->figure.heldPoint(kLizardStaff, head, from)) continue;
+            // And Lightning's eThunder with it, once a bolt (the user, 2026-10-04: 'lizard is
+            // missing lightiing sound from lighting'), as the Hydra's heads have. Ours.
+            if (!cast.heard) {
+                cast.heard = true;
+                if (heard_.boltThunder >= 0) emit(heard_.boltThunder, from[0], from[2]);
+            }
             const FigureBody* aim = target->figure.body();
             const float tall = aim ? aim->height * aim->scale : 1.4f;
             const float chest[3] = {target->crown[0], target->crown[1] - tall * 0.5f,
@@ -470,7 +515,16 @@ void Play::shade(float seconds) {
                 shadowStars_.thunderBeam(from, end, kLizardBoltHalf[bolt == 0 ? 0 : 1],
                                          kLizardBoltColour);
             }
+            if (!cast.smoked) {
+                cast.smoked = true;
+                shadowStars_.wisp(chest);
+            }
             continue;
+        }
+        // The Devil's Lightning, drawn as its lasers: its wisp where they meet him, once.
+        if (devil->beams == Drawn::Beams::Laser && !cast.smoked) {
+            cast.smoked = true;
+            shadowStars_.wisp(to);
         }
         for (const int hand : devil->handBones) {
             float from[3];

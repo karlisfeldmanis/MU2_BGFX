@@ -794,9 +794,9 @@ QuestRow tersiaBalrog() {
 // is repeatable. The second class is the name and MU's bare bodies (HelmClass201-203 and their
 // fellows) and nothing else yet, the user's of the same day.
 //
-// The Atlans steps wait on Atlans's monsters (docs/atlans-port.md step 8): until they are raised,
-// the trial is the seventh floor's alone, and its words already name both.
-constexpr bool kAtlansHunted = false;
+// The Atlans steps waited on Atlans's monsters (docs/atlans-port.md step 8); all seven breeds
+// stand there since 2026-10-04, so the trial is the seventh floor's and the sea's.
+constexpr bool kAtlansHunted = true;
 
 QuestRow sevinaTrial() {
     QuestRow row;

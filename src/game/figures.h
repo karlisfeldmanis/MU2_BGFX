@@ -144,6 +144,9 @@ struct FigureBody {
     // The plus every worn part is at by its recipe -- Marlon's plate is +7 -- until
     // Figures::shine reads the item table and turns it into partShine.
     int wornPlus = 0;
+    // And the colour that plus shines in on a body that is one model and no item, where its
+    // recipe names one (`plus.colour`): the Silver Valkyrie's white chrome. Below 0, MU's gold.
+    float wornColour[3] = {-1.0f, -1.0f, -1.0f};
     std::vector<HeldItem> held;
     const content::Mesh* skeletonMesh = nullptr;  // whose bone table the palette is built on
     const ClipLibrary* library = nullptr;

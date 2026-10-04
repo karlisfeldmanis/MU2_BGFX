@@ -1636,6 +1636,54 @@
       ],
       "from": "Sounds[4], 137 -- 347 VALKYRIEDIE, Data\\Sound\\mValkyrieDie.wav. SetMonsterSound(..., 135, 135, 136, 136, 137) in ZzzOpenData.cpp:3653-3659."
     },
+    "silvervalkyrie_move": {
+      "files": [
+        "mValkyrie1.wav"
+      ],
+      "from": "The Valkyrie's model's, as valkyrie_move: 345 VALKYRIE1. ZzzOpenData.cpp:3653-3659 (the Silver Valkyrie is MONSTER_MODEL_VALKYRIE)."
+    },
+    "silvervalkyrie_attack": {
+      "files": [
+        "mBaliAttack2.wav"
+      ],
+      "from": "As valkyrie_attack: mBaliAttack2, the file the arm loads for the silent 346."
+    },
+    "silvervalkyrie_shock": {
+      "files": [
+        "mBaliAttack2.wav"
+      ],
+      "from": "As valkyrie_shock."
+    },
+    "silvervalkyrie_die": {
+      "files": [
+        "mValkyrieDie.wav"
+      ],
+      "from": "As valkyrie_die: 347 VALKYRIEDIE."
+    },
+    "hydra_move": {
+      "files": [
+        "mHydra1.wav"
+      ],
+      "from": "SetMonsterSound(..., 141, 141, 142, 142, 141) in ZzzOpenData.cpp:3671-3677 (MONSTER_MODEL_HYDRA): 141 -- 351 HYDRA1 (mHydra1.wav) to move; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "hydra_attack": {
+      "files": [
+        "mHydraAttack1.wav"
+      ],
+      "from": "142 -- 352 HYDRAATTACK1 (mHydraAttack1.wav), its attack."
+    },
+    "hydra_shock": {
+      "files": [
+        "mHydraAttack1.wav"
+      ],
+      "from": "As hydra_attack: the same slot 142."
+    },
+    "hydra_die": {
+      "files": [
+        "mHydra1.wav"
+      ],
+      "from": "141 -- 351 HYDRA1, as hydra_move."
+    },
     "lizardking_move": {
       "files": [
         "mLizardKing1.wav",

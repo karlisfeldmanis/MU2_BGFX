@@ -903,6 +903,26 @@ void Play::update(double seconds) {
                     cue.thrown = true;
                     cue.fuse = 0.0f;
                     showing_.schedule(cue);
+                } else if (happening.beamed) {
+                    // One of a Hydra's head beams after the first (sim kSplitBlows): it lands while
+                    // the swing that breathed it plays, so the number and the blood come now and
+                    // no swing starts -- and its bolt from the next head, now.
+                    if (Drawn* hydra = drawnOf(happening.who);
+                        hydra && hydra->beams == Drawn::Beams::Horn) {
+                        IceCast bolt{happening.who, happening.whom, kHydraBoltSeconds, 0.0f};
+                        bolt.head = hydra->nextHead++ % 4;
+                        laserCasts_.push_back(bolt);
+                    }
+                    Cue cue;
+                    cue.attacker = happening.who;
+                    cue.target = happening.whom;
+                    cue.damage = happening.a;
+                    cue.taken = taken;
+                    cue.absorbed = absorbed;
+                    cue.miss = happening.what == sim::What::Missed;
+                    cue.thrown = true;
+                    cue.fuse = 0.0f;
+                    showing_.schedule(cue);
                 } else if (Drawn* swinger = drawnOf(happening.who)) {
                     // The pose is started once, by whichever half comes first: `Swung` for the
                     // player, the `Hit` itself for a monster.
@@ -1221,6 +1241,16 @@ void Play::update(double seconds) {
                                                        kDevilBeamSeconds});
                             }
                         }
+                        // A Hydra's first head bolt, the swing's own beam (sim kSplitBlows): from
+                        // just before its blow shows, as the Lizard King's.
+                        if (Drawn* hydra = drawnOf(happening.who);
+                            hydra && hydra->beams == Drawn::Beams::Horn) {
+                            const float lands = swinger->swinging * Showing::kLandingPoint;
+                            IceCast bolt{happening.who, happening.whom, kHydraBoltSeconds,
+                                         std::max(0.0f, lands - kLizardBoltLead)};
+                            bolt.head = hydra->nextHead++ % 4;
+                            laserCasts_.push_back(bolt);
+                        }
                         // A boss's Flame of Evil, one blow in five (sim kBosses). MU throws the
                         // Death Gorgon's as a ring of eighteen MODEL_FIRE rolling out from it and
                         // the Balrog's as its Hellfire circle with meteors raining round it
@@ -1237,7 +1267,14 @@ void Play::update(double seconds) {
                                                 size_t(body->kind) < tables_.kinds.size() &&
                                                 tables_.kinds[size_t(body->kind)].number == 35;
                             const float floor[3] = {bx, ground_->heightAt(bx, bz), bz};
-                            if (gorgon) {
+                            // The Hydra's shows as its swing does: its head beams alone (the
+                            // user, 2026-10-04: 'lets keep only lasers from head'). MU's ring of
+                            // nine BITMAP_BOSS_LASER (ZzzCharacter.cpp:1915-1929) is left out.
+                            const bool hydra = body->kind >= 0 &&
+                                               size_t(body->kind) < tables_.kinds.size() &&
+                                               tables_.kinds[size_t(body->kind)].number == kHydraNumber;
+                            if (hydra) {
+                            } else if (gorgon) {
                                 for (int i = 0; i < 18; ++i) {
                                     const float turn = float(i) * 6.2831853f / 18.0f;
                                     shadowStars_.roll(floor, std::cos(turn), std::sin(turn));
@@ -1493,6 +1530,9 @@ void Play::update(double seconds) {
         float from[3];
         castFrom(*caster, to, from);
         thunder_.strike(from, to, cast.target);
+        // And its wisp of smoke on what it struck (ShadowStars::wisp), as every monster's
+        // lightning leaves one.
+        shadowStars_.wisp(to);
         const int index = sim::skillIndexOf(sim::skill::kLightning);
         if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2]);
     }

@@ -553,6 +553,10 @@ EFFECTS = {
     # _MINUS) so it darkens (ZzzOpenData.cpp:5287; ZzzEffectJoint.cpp:642-650).
     "joint_spirit": "effects/spirit/joint_spirit01.png",
     "lightning_2": "effects/summon/lightning2.png",
+    # The Hydra's gem, MU's RenderLight on its bone 63 (ZzzCharacter.cpp:11216-11219):
+    # BITMAP_LIGHTNING + 1 (above) at scale 1 and BITMAP_SHINY + 2, Effect/Shiny03.OZJ
+    # (ZzzOpenData.cpp:5264), at 4, both added in a pulsing orange-white. See fx/shadow_stars.
+    "shiny_03": "effects/hydra/shiny03.png",
 
     # And what a barrier looks like, which is a different sheet and not a tint of the one
     # above. CreateJoint's MODEL_SPEARSKILL subtypes 0, 4 and 9 all set

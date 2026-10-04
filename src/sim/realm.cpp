@@ -751,6 +751,7 @@ void Realm::press() {
     // range for the cooldown, and a knight's, whose reach is his arm's, swings through it --
     // which is the auto-attack floor docs/skills-dk.md §3.1a already gave him.
     const bool sheltered = tables_->grid.safe(target->column(), target->row());
+    const int bulk = bulkOf(numberOf(*target));
     if (order_.skill != skill::kNone) {
         const SkillRow* row = skillNumbered(order_.skill);
         if (row && armed(hero, *row)) {
@@ -763,7 +764,8 @@ void Realm::press() {
                 const bool standing = row->summons > 0 && summonSlot_ >= 0 &&
                                       bodies_[size_t(summonSlot_)].alive();
                 if (!standing && cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, hero.id);
-            } else if (within(hero, *target, row->reach) && !sheltered && seen(hero, *target)) {
+            } else if (within(hero, *target, row->reach + float(bulk)) && !sheltered &&
+                       seen(hero, *target)) {
                 if (row->thrown() || cooled) {
                     if (tick_ >= hero.castUntil) engage(hero, *target);
                     if (cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, order_.target);
@@ -771,13 +773,13 @@ void Realm::press() {
                 }
             } else if (row->thrown()) {
                 // Out of reach, or in it with a wall between: to where it can be thrown from.
-                approach(hero, *target, int(row->reach), true);
+                approach(hero, *target, int(row->reach) + bulk, true);
                 return;
             }
         }
     }
 
-    const int reachOf = hero.archer != 0 ? kArcherReach : kHeroAttackRange;
+    const int reachOf = (hero.archer != 0 ? kArcherReach : kHeroAttackRange) + bulk;
     if (within(hero, *target, float(reachOf)) &&
         !tables_->grid.safe(target->column(), target->row()) && seen(hero, *target)) {
         // Not while a skill's clip is running: the blow was thrown at where he was facing, and a
@@ -954,6 +956,7 @@ void Realm::step() {
             continue;
         }
         poisonPulse(beast);
+        beamOn(beast);
         if (beast.alive() && beast.pushTicks > 0) {
             // Pushed: it slides and does nothing else until it lands on its tile.
             beast.x += beast.pushX;
