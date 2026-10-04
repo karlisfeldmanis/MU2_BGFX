@@ -180,6 +180,33 @@ int Renderer::addPalette(const float* rows12, int bones) {
     return row;
 }
 
+void Renderer::packInstance(const Drawable& d, float out[kInstanceFloats]) {
+    std::memcpy(out, d.transform, sizeof(float) * 16);
+    std::memcpy(out + 16, d.light, sizeof(float) * 4);
+    // No row of its own means the bind row, which is row 0 and is the identity. -1 would be
+    // read as a texel outside the palette. z is the item's plus, for the shine.
+    out[20] = d.sway ? -1.0f : float(d.paletteRow < 0 ? kBindRow : d.paletteRow);
+    out[21] = d.fade;
+    out[22] = float(d.refine);
+    out[23] = packRefineColour(d.refineColour);
+}
+
+const bgfx::VertexLayout& Renderer::instanceLayout() {
+    static const bgfx::VertexLayout layout = [] {
+        bgfx::VertexLayout l;
+        l.begin()
+            .add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord2, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord3, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord4, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord5, 4, bgfx::AttribType::Float)
+            .end();
+        return l;
+    }();
+    return layout;
+}
+
 void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                              bgfx::ProgramHandle skinnedProgram,
                              const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb,
@@ -321,7 +348,11 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
 
             bgfx::setVertexBuffer(0, mesh.vertexBuffer());
             bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);
-            bgfx::setInstanceDataBuffer(&idb, batch.first, batch.count);
+            if (bgfx::isValid(batch.resident)) {
+                bgfx::setInstanceDataBuffer(batch.resident, batch.first, batch.count);
+            } else {
+                bgfx::setInstanceDataBuffer(&idb, batch.first, batch.count);
+            }
             bgfx::setState(drawState);
             bgfx::submit(view, batchProgram);
             ++drawCount_;
@@ -613,6 +644,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // been culled -- a chunk behind the camera still casts into the frame.
     batches_.clear();
     casterBatches_.clear();
+    // Taken by this draw alone (setResidentCasters).
+    const std::vector<ResidentBatch>* resident = residentCasters_;
+    residentCasters_ = nullptr;
     const std::vector<Drawable>& casterList = casters ? *casters : drawables;
     const bool anything = !drawables.empty() || !casterList.empty() || ground != nullptr;
     if (anything) {
@@ -686,20 +720,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     uint32_t count = 0;
                     for (const Drawable* d : from.lists[gi]) {
                         if (written >= total) break;
-                        std::memcpy(idb.data + written * stride, d->transform,
-                                    sizeof(float) * 16);
-                        std::memcpy(idb.data + written * stride + sizeof(float) * 16, d->light,
-                                    sizeof(float) * 4);
-                        // No row of its own means the bind row, which is row 0 and is the
-                        // identity. -1 would be read as a texel outside the palette. z is the
-                        // item's plus, for the shine.
-                        const float skin[4] = {
-                            d->sway ? -1.0f
-                                    : float(d->paletteRow < 0 ? kBindRow : d->paletteRow),
-                            d->fade,
-                            float(d->refine), packRefineColour(d->refineColour)};
-                        std::memcpy(idb.data + written * stride + sizeof(float) * 20, skin,
-                                    sizeof(skin));
+                        packInstance(*d, reinterpret_cast<float*>(idb.data + written * stride));
                         ++written;
                         ++count;
                     }
@@ -712,6 +733,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             fill(groups_, batches_);
             fill(fadeGroups_, fadeBatches_);
             if (separateCasters) fill(casterGroups_, casterBatches_);
+            // And the scenery that lives on the GPU, after the list's own casters.
+            if (separateCasters && resident != nullptr) {
+                for (const ResidentBatch& r : *resident) {
+                    if (r.mesh == nullptr || r.count == 0 || !bgfx::isValid(r.buffer)) continue;
+                    casterBatches_.push_back(Batch{r.mesh, r.first, r.count, r.posed, -1, r.buffer});
+                }
+            }
             // Without a list of its own, the sun draws what the camera draws.
             std::vector<Batch>& shadowBatches = separateCasters ? casterBatches_ : batches_;
 

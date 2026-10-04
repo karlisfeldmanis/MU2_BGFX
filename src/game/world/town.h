@@ -65,7 +65,13 @@ public:
     // which tried a tenth-of-a-second fade first and found a half-transparent roof worse than
     // none -- the room and the roof both seen through each other, in the very frames the
     // doorway matters.
-    void setRoofsHidden(bool hidden) { roofsHidden_ = hidden; }
+    void setRoofsHidden(bool hidden) {
+        if (hidden == roofsHidden_) return;
+        roofsHidden_ = hidden;
+        for (uint32_t i = 0; i < town_.instances.size(); ++i) {
+            if ((town_.instances[i].flags & 2) != 0) markDirty(i);
+        }
+    }
     bool roofsHidden() const { return roofsHidden_; }
 
     // The cooked table itself, for what reads the placements without drawing them: the
@@ -74,14 +80,25 @@ public:
     // How bright a placement's glow parts draw this frame, MU's BlendMeshLight: 1 unless the
     // lamps flicker it. Rides in the instance's fifth vec4 .w, which fs_glow reads.
     void setGlowLevel(uint32_t instance, float level) {
-        if (instance < glowLevels_.size()) glowLevels_[instance] = level;
+        if (instance < glowLevels_.size() && glowLevels_[instance] != level) {
+            glowLevels_[instance] = level;
+            markDirty(instance);
+        }
     }
     // Which row of the bone palette a placement poses against this frame, or -1 for its bind
     // pose -- the same idea as setGlowLevel, and set the same way: something outside Town
     // computes it (Sway, for now) and writes it in before the town is gathered. Town knows
     // nothing about clips or clocks, only that a row was asked for.
     void setPaletteRow(uint32_t instance, int row) {
-        if (instance < paletteRows_.size()) paletteRows_[instance] = row;
+        if (instance >= paletteRows_.size() || paletteRows_[instance] == row) return;
+        // The run's `posed` is a count of its posed placements, kept as they change.
+        if (instance < residentBatchOf_.size() && residentBatchOf_[instance] != kNoSlot) {
+            uint32_t& posed = posedIn_[residentBatchOf_[instance]];
+            if (paletteRows_[instance] >= 0) --posed;
+            if (row >= 0) ++posed;
+        }
+        paletteRows_[instance] = row;
+        markDirty(instance);
     }
     // A placement stood somewhere else this frame: Devias's doors (game/world/doors.h). The
     // chunk bounds are the cook's and stay; a door moves under a metre, a gate under four.
@@ -89,6 +106,7 @@ public:
         if (instance >= town_.instances.size()) return;
         town_.instances[instance].yaw = yaw;
         for (int a = 0; a < 3; ++a) town_.instances[instance].position[a] = position[a];
+        markDirty(instance);
     }
     // A placement left out of the frame and the sun's list, or put back: Blood Castle's
     // drawbridge, whose door goes as its lowered deck comes (game/world/drawbridge.h). Bit 3 of
@@ -96,7 +114,9 @@ public:
     void setHidden(uint32_t instance, bool hidden) {
         if (instance >= town_.instances.size()) return;
         uint16_t& flags = town_.instances[instance].flags;
+        const uint16_t was = flags;
         flags = hidden ? uint16_t(flags | 8) : uint16_t(flags & ~8);
+        if (flags != was) markDirty(instance);
     }
     // The same with the piece tumbling as well: the Lost Tower's kicked skulls
     // (game/world/skulls.h). Radians, the cook's pitch and roll.
@@ -113,6 +133,15 @@ public:
         return model < meshes_.size() ? &meshes_[model] : nullptr;
     }
 
+    // **The sun's casters, kept on the GPU** (2026-10-04, the user: "lets continue to use GPU
+    // on processes where we can"). Every placement's instance lives in one buffer, grouped by
+    // model, built on the first call; this uploads only the placements a setter above changed
+    // since (a lamp's flicker, a sway's row, a door, a kicked skull), and hands back the runs
+    // for Renderer::setResidentCasters. gatherAll(out, true) is the same list rebuilt on the
+    // CPU every frame, which the lobby and the benches still use. A placement hidden (a roof,
+    // a held-back piece) is a zero matrix in its slot, which draws nothing.
+    const std::vector<gfx::Renderer::ResidentBatch>& residentCasters();
+
     const TownCounts& counts() const { return counts_; }
     const TownCounts& casterCounts() const { return casterCounts_; }
     size_t modelCount() const { return meshes_.size(); }
@@ -127,6 +156,15 @@ private:
     size_t loadMeshes(const std::string& assetDir, const std::vector<bool>& wanted,
                       content::Textures& textures);
     void append(const content::TownInstance& instance, std::vector<gfx::Drawable>& out);
+    // The drawable a placement is this frame, or false when it is not drawn at all.
+    bool drawableOf(const content::TownInstance& instance, gfx::Drawable& out) const;
+    void buildResident();
+    void markDirty(uint32_t instance) {
+        if (instance >= isDirty_.size() || isDirty_[instance]) return;
+        isDirty_[instance] = 1;
+        dirty_.push_back(instance);
+    }
+    static constexpr uint32_t kNoSlot = 0xffffffffu;
 
     content::CookedTown town_;
     std::vector<content::Mesh> meshes_;
@@ -137,6 +175,16 @@ private:
     std::vector<float> glowLevels_;
     std::vector<int> paletteRows_;
     double loadSeconds_ = 0.0;
+    // residentCasters()'s: the buffer, each placement's slot in it and run, the runs, how
+    // many of each run are posed, and the placements changed since the last upload.
+    bgfx::DynamicVertexBufferHandle resident_ = BGFX_INVALID_HANDLE;
+    std::vector<uint32_t> residentSlot_;
+    std::vector<uint32_t> residentBatchOf_;
+    std::vector<gfx::Renderer::ResidentBatch> residentBatches_;
+    std::vector<uint32_t> posedIn_;
+    std::vector<float> records_;
+    std::vector<uint32_t> dirty_;
+    std::vector<uint8_t> isDirty_;
 };
 
 }  // namespace mu::game

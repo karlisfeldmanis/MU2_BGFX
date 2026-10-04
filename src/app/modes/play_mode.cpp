@@ -1148,7 +1148,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // the split against its own box is the next step and it is measured
             // separately; drawing every caster is the honest baseline to measure it
             // against.
-            world_.town().gatherAll(townCasters_, true);
+            // On the GPU: the town's casters stand in a buffer of their own and only what
+            // changed is uploaded (Town::residentCasters). townCasters_ carries the rest.
+            ctx.renderer.setResidentCasters(&world_.town().residentCasters());
             casters = &townCasters_;
         } else {
             world_.town().gatherAll(townDrawables_);

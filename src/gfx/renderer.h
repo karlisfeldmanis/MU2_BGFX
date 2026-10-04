@@ -287,6 +287,28 @@ public:
 
     uint32_t lastDrawCount() const { return drawCount_; }
 
+    // --- scenery that lives on the GPU ----------------------------------------------------
+    // One instance as every pass reads it: a 4x4 matrix, the baked light (w the glow), then
+    // the pose row, fade, plus and plus colour. 24 floats, 96 bytes, the instance stride.
+    static constexpr uint32_t kInstanceFloats = 24;
+    static void packInstance(const Drawable& d, float out[kInstanceFloats]);
+    // A buffer of such instances, 96 bytes a vertex, for a caller to keep resident.
+    static const bgfx::VertexLayout& instanceLayout();
+    // A run of a resident buffer's instances that share a mesh (game/world/town.h). Handed in
+    // before draw() and taken by that draw alone: the sun's split and the probe draw them as
+    // they draw the caster list, and the CPU does nothing per instance (2026-10-04: the town's
+    // 5,136 Lost Tower casters were rebuilt, hashed and copied every frame).
+    struct ResidentBatch {
+        const content::Mesh* mesh = nullptr;
+        bgfx::DynamicVertexBufferHandle buffer = BGFX_INVALID_HANDLE;
+        uint32_t first = 0;
+        uint32_t count = 0;
+        bool posed = false;  // Batch::posed: any of them in a pose of its own this frame
+    };
+    void setResidentCasters(const std::vector<ResidentBatch>* batches) {
+        residentCasters_ = batches;
+    }
+
     // --- the shadow probe -------------------------------------------------------------
     // Where the sun's split stood this frame, measured against a grid fixed to the WORLD --
     // the sun's own axes through the origin -- and not against the split's own matrix, which
@@ -488,6 +510,8 @@ private:
         // him holds nothing but his armour's inside, which every piece of it would then reflect.
         bool posed = false;
         int hiddenMaterial = -1;  // Drawable::hiddenMaterial, the batch's own
+        // A resident buffer's run (ResidentBatch) instead of the frame's instance buffer.
+        bgfx::DynamicVertexBufferHandle resident = BGFX_INVALID_HANDLE;
     };
 
     bool createTargets(int width, int height);
@@ -824,6 +848,7 @@ private:
 
     std::vector<Batch> batches_;
     std::vector<Batch> casterBatches_;
+    const std::vector<ResidentBatch>* residentCasters_ = nullptr;  // this draw's, then cleared
     std::vector<Batch> fadeBatches_;
 
     // A frame's drawables grouped by mesh, in the order each mesh was first seen. Kept on the

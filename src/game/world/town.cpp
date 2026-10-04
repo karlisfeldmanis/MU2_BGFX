@@ -167,19 +167,32 @@ void Town::shutdown() {
     town_ = content::CookedTown();
     glowLevels_.clear();
     paletteRows_.clear();
+    if (bgfx::isValid(resident_)) bgfx::destroy(resident_);
+    resident_ = BGFX_INVALID_HANDLE;
+    residentSlot_.clear();
+    residentBatchOf_.clear();
+    residentBatches_.clear();
+    posedIn_.clear();
+    records_.clear();
+    dirty_.clear();
+    isDirty_.clear();
     triangles_ = 0;
 }
 
 void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawable>& out) {
-    if (instance.model >= meshes_.size()) return;
-    // Bit 1 is a roof. tools/cook.py.
-    if (roofsHidden_ && (instance.flags & 2) != 0) return;
-    // Bit 3 is held back: cooked hidden until the world shows it, or hidden since (setHidden).
-    if ((instance.flags & 8) != 0) return;
-    const content::Mesh& mesh = meshes_[instance.model];
-    if (!bgfx::isValid(mesh.vertexBuffer())) return;
-
     gfx::Drawable drawable;
+    if (drawableOf(instance, drawable)) out.push_back(drawable);
+}
+
+bool Town::drawableOf(const content::TownInstance& instance, gfx::Drawable& drawable) const {
+    if (instance.model >= meshes_.size()) return false;
+    // Bit 1 is a roof. tools/cook.py.
+    if (roofsHidden_ && (instance.flags & 2) != 0) return false;
+    // Bit 3 is held back: cooked hidden until the world shows it, or hidden since (setHidden).
+    if ((instance.flags & 8) != 0) return false;
+    const content::Mesh& mesh = meshes_[instance.model];
+    if (!bgfx::isValid(mesh.vertexBuffer())) return false;
+
     drawable.mesh = &mesh;
     // content/placement.cpp, which is MU's own (Z * Y) * X in our axes, with a test
     // against MuMain's AngleMatrix beside it. Not bx::mtxSRT: that composes the three the
@@ -198,7 +211,79 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
     // way from the day the cook started writing them skinned. See Renderer::kBindRow.
     drawable.paletteRow = paletteRows_[index];
     drawable.sway = (instance.flags & 16) != 0;
-    out.push_back(drawable);
+    return true;
+}
+
+void Town::buildResident() {
+    const size_t n = town_.instances.size();
+    residentSlot_.assign(n, kNoSlot);
+    residentBatchOf_.assign(n, kNoSlot);
+    residentBatches_.clear();
+    posedIn_.clear();
+    isDirty_.assign(n, 0);
+    dirty_.clear();
+    // Grouped by model, each model's placements in the cook's order.
+    std::vector<std::vector<uint32_t>> byModel(meshes_.size());
+    for (uint32_t i = 0; i < n; ++i) {
+        const uint32_t model = town_.instances[i].model;
+        if (model < meshes_.size() && bgfx::isValid(meshes_[model].vertexBuffer())) {
+            byModel[model].push_back(i);
+        }
+    }
+    uint32_t slots = 0;
+    for (size_t model = 0; model < byModel.size(); ++model) {
+        if (byModel[model].empty()) continue;
+        gfx::Renderer::ResidentBatch batch;
+        batch.mesh = &meshes_[model];
+        batch.first = slots;
+        batch.count = uint32_t(byModel[model].size());
+        uint32_t posed = 0;
+        for (uint32_t i : byModel[model]) {
+            residentSlot_[i] = slots++;
+            residentBatchOf_[i] = uint32_t(residentBatches_.size());
+            if (paletteRows_[i] >= 0) ++posed;
+        }
+        residentBatches_.push_back(batch);
+        posedIn_.push_back(posed);
+    }
+    if (slots == 0) return;
+    records_.assign(size_t(slots) * gfx::Renderer::kInstanceFloats, 0.0f);
+    for (uint32_t i = 0; i < n; ++i) {
+        if (residentSlot_[i] == kNoSlot) continue;
+        gfx::Drawable d;
+        if (drawableOf(town_.instances[i], d)) {
+            gfx::Renderer::packInstance(d, &records_[size_t(residentSlot_[i]) * gfx::Renderer::kInstanceFloats]);
+        }
+    }
+    resident_ = bgfx::createDynamicVertexBuffer(
+        bgfx::copy(records_.data(), uint32_t(records_.size() * sizeof(float))),
+        gfx::Renderer::instanceLayout());
+    for (auto& b : residentBatches_) b.buffer = resident_;
+}
+
+const std::vector<gfx::Renderer::ResidentBatch>& Town::residentCasters() {
+    if (!bgfx::isValid(resident_)) buildResident();
+    // Only what changed goes up, each its own 96 bytes; a hidden one is a zero matrix.
+    constexpr uint32_t kFloats = gfx::Renderer::kInstanceFloats;
+    for (uint32_t i : dirty_) {
+        isDirty_[i] = 0;
+        const uint32_t slot = residentSlot_[i];
+        if (slot == kNoSlot || !bgfx::isValid(resident_)) continue;
+        float* record = &records_[size_t(slot) * kFloats];
+        gfx::Drawable d;
+        if (drawableOf(town_.instances[i], d)) {
+            gfx::Renderer::packInstance(d, record);
+        } else {
+            std::fill(record, record + kFloats, 0.0f);
+        }
+        bgfx::update(resident_, slot, bgfx::copy(record, kFloats * sizeof(float)));
+    }
+    dirty_.clear();
+    for (size_t b = 0; b < residentBatches_.size(); ++b) residentBatches_[b].posed = posedIn_[b] > 0;
+    casterCounts_ = TownCounts();
+    casterCounts_.chunksDrawn = uint32_t(town_.chunks.size());
+    casterCounts_.instancesDrawn = uint32_t(town_.instances.size());
+    return residentBatches_;
 }
 
 void Town::gatherAll(std::vector<gfx::Drawable>& out, bool asCasters) {
