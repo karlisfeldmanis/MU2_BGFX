@@ -373,7 +373,7 @@ void Realm::rearm(Body& hero) {
             }
             // The knight's Bulwark from his hands, Kinship from the rings and the pendant.
             if (power && power->power == Power::Bulwark && !jewellery(*row) &&
-                power->takenBy(hero.kin)) {
+                power->takenBy(hero.kin, hero.second)) {
                 hero.excel.bulwark = true;
             }
             if (power && power->power == Power::Kinship && jewellery(*row)) {
@@ -381,7 +381,7 @@ void Realm::rearm(Body& hero) {
             }
             if (power && power->power == Power::Wrath && !jewellery(*row)) ++hero.excel.wraths;
             if (power && power->power == Power::Whirlwind && !jewellery(*row) &&
-                power->takenBy(hero.kin)) {
+                power->takenBy(hero.kin, hero.second)) {
                 ++hero.excel.whirlwinds;
             }
         }
@@ -786,7 +786,7 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     Held thing = bag_[targetSlot];
     // A Rune of Creation is set, not spent on a roll: its power into the thing's first empty
     // socket, and the rune gone. Nothing is drawn.
-    if (settable(*tables_, jewel, thing, hero.kin)) {
+    if (settable(*tables_, jewel, thing, hero.kin, hero.second)) {
         const int socket = freeSocket(thing);
         thing.powers[socket] = jewel.powers[0];
         bag_.lift(jewelSlot);
@@ -1141,7 +1141,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         if (item < 0) return;
         // A power the killer's class may set (drawRunePower).
         one.what = Held{item, 0, 1};
-        one.what.powers[0] = drawRunePower(dice_, killer.kin, level);
+        one.what.powers[0] = drawRunePower(dice_, killer.kin, killer.second, level);
     } else if ((roll -= creationChance) < kJewelChance) {
         const int32_t item =
             draw([&](const content::ItemRow& r) { return refiningJewel(r) && reaches(r); });
@@ -1785,11 +1785,11 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     return one.id;
 }
 
-uint8_t drawRunePower(Random& dice, Kin kin, int level) {
+uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level) {
     const auto drawable = [&](const PowerRow& row) {
         const Element element = elementOf(row.power);
         if (element != Element::None) return elementServes(element, kin);
-        return row.takenBy(kin);
+        return row.takenBy(kin, second);
     };
     int count[3] = {};
     double held = 0.0;

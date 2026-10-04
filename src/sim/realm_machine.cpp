@@ -305,7 +305,7 @@ bool Realm::mix(Service service, int socket) {
             const auto drawable = [&](const PowerRow& row) {
                 const Element element = elementOf(row.power);
                 if (element != Element::None) return elementServes(element, hero.kin);
-                return row.takenBy(hero.kin);
+                return row.takenBy(hero.kin, hero.second);
             };
             int count = 0, any = 0;
             for (int p = 1; powerOf(uint8_t(p)); ++p) {

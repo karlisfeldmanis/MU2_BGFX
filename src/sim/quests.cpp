@@ -108,12 +108,12 @@ QuestRow marlon() {
                    .firstOnly = true};  // Falchion
     row.paid[1] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Stormcall),
                    .firstOnly = true};  // Rune of Creation, Stormcall's lightning
-    // The wizard's (the user, 2026-09-29): a lucky Serpent Staff with a socket, and the rune
-    // that echoes his spells.
+    // The wizard's (the user, 2026-09-29): a lucky Serpent Staff with a socket, and a rune for
+    // it -- Stormcall, as the knight's, since Arcane Echo is the Soul Master's (2026-10-04).
     row.paid[2] = {.item = "Staff03", .kin = wizard, .sockets = 1,
                    .firstOnly = true};  // Serpent Staff
-    row.paid[3] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
-                   .firstOnly = true};  // Rune of Creation, Arcane Echo
+    row.paid[3] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Stormcall),
+                   .firstOnly = true};  // Rune of Creation, Stormcall
     row.paid[4] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[5] = {.item = "Potion04", .count = 20};  // Large Healing Potions
     // The first powered ring, a green one (sim::Affix; the user, 2026-10-03: "also add some
@@ -185,8 +185,9 @@ QuestRow peia() {
     row.zen = 50000;
     row.paid[0] = {.item = "Bow04", .kin = elf, .sockets = 1,
                    .firstOnly = true};  // Battle Bow
-    row.paid[1] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
-                   .firstOnly = true};  // Rune of Creation, Frost Arrow
+    // Stormcall for her bow: Frost Arrow is the Muse Elf's since 2026-10-04.
+    row.paid[1] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Stormcall),
+                   .firstOnly = true};  // Rune of Creation, Stormcall
     row.paid[2] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[3] = {.item = "Potion04", .count = 20};  // Large Healing Potions
     row.paid[4] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth, as Marlon's
@@ -721,12 +722,13 @@ QuestRow tersiaSixth() {
     // call lightning down (the user: "that rune which has chance to cast lightnings on monsters").
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Stormcall),
                                  .firstOnly = true};
-    // And each class's legendary rune. The elf has only Frost Arrow, so a second.
+    // And an epic each: the class legendaries are the second classes' since 2026-10-04 (the user
+    // chose an epic in their place) -- the knight's Meteor for his sword, Frenzy for the others.
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
-                                 .power = uint8_t(Power::FireRing), .firstOnly = true};
+                                 .power = uint8_t(Power::Meteor), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
-                                 .power = uint8_t(Power::Pyroblast), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
+                                 .power = uint8_t(Power::Frenzy), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frenzy),
                                  .firstOnly = true};
     row.voice = "tersia_6";  // tools/voice.py, VOICES["tersia"]
     return row;

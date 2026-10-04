@@ -591,7 +591,13 @@ struct PowerRow {
     uint8_t classes;  // who may set it, classBit each
     uint8_t slots;    // what takes it, kIn* each
     Rarity rarity;
-    bool takenBy(Kin kin) const { return (classes & classBit(kin)) != 0; }
+    // Set only by a class's second -- Blade Knight, Soul Master, Muse Elf (the user, 2026-10-04:
+    // 'we need that some stronger runes is for 2nd classes', then the class legendaries locked).
+    bool second = false;
+    // Whether a hero of this class, his second or not, may set it and have it work.
+    bool takenBy(Kin kin, bool isSecond) const {
+        return (classes & classBit(kin)) != 0 && (!second || isSecond);
+    }
     // A weapon's power: read off the hands, and rolled on a swing, an arrow or a spell.
     bool weapon() const { return (slots & kInWeapon) != 0; }
 };
@@ -681,14 +687,15 @@ constexpr int kRuneRarityLevel[3] = {kCreationLevel, 40, 60};
 // (elementServes) -- its rarity drawn first at kRuneRarityShare among the rarities `level`
 // reaches that hold one, then one of that rarity evenly. 0 when none can be drawn.
 class Random;
-uint8_t drawRunePower(Random& dice, Kin kin, int level);
+uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level);
 // The Bless (14, 13), the Soul (14, 14) and the Chaos (12, 15): the three kJewelChance draws.
 bool refiningJewel(const content::ItemRow& row);
 // The first socket with nothing set in it, or -1.
 int freeSocket(const Held& thing);
 // Whether this rune may be set into that thing by this class: a Creation with a power, a thing
 // with a free socket, of a kind the power's group takes, and a class in that group.
-bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin);
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin,
+              bool second);
 
 // **Stormcall**, the Dark Knight's first power: a swing that lands has this chance to call
 // lightning down on another monster within `kStormcallReach` tiles of him, which takes his

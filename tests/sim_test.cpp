@@ -43,6 +43,13 @@ void check(bool held, const char* what) {
     std::printf("  FAILED: %s\n", what);
 }
 
+// His class's second, as Sevina's treasure handed in makes him: what the class legendaries ask.
+void promote(sim::Realm& realm) {
+    sim::HeroRecord record = realm.record();
+    record.quests[sim::kTreasureQuests[int(realm.hero().kin)]].completions = 1;
+    realm.restore(record);
+}
+
 void checkEqual(long long got, long long wanted, const char* what) {
     ++g_checks;
     if (got == wanted) return;
@@ -4405,7 +4412,7 @@ void testTowerKeeper() {
                 const sim::PowerRow* power = sim::powerOf(rune.power);
                 if (!power) continue;
                 ++runes;
-                check(power->takenBy(sim::Kin(kin)), "her rune is one its class may set");
+                check(power->takenBy(sim::Kin(kin), false), "her rune is one its class may set");
                 sim::Held jewel{int32_t(creationRow), 0, 1};
                 jewel.powers[0] = rune.power;
                 for (int j = 0; j < row.paidCount; ++j) {
@@ -4413,7 +4420,7 @@ void testTowerKeeper() {
                     if (piece.sockets == 0 || !sim::questPays(piece, kin, true)) continue;
                     sim::Held target{int32_t(tower.itemNamed(piece.item)), 0, 1};
                     target.sockets = piece.sockets;
-                    fits += sim::settable(tower, jewel, target, sim::Kin(kin)) ? 1 : 0;
+                    fits += sim::settable(tower, jewel, target, sim::Kin(kin), false) ? 1 : 0;
                 }
             }
             check(runes >= 1, "each of her links pays every class a rune");
@@ -6154,17 +6161,17 @@ void testRunes(const content::Tables& tables) {
     };
     const sim::Kin dk = sim::Kin::DarkKnight;
     const sim::Held carried = held(rune, 0, storm);
-    check(sim::settable(tables, carried, held(serpent, 1, 0), dk),
+    check(sim::settable(tables, carried, held(serpent, 1, 0), dk, true),
           "Stormcall goes in a knight's socketed sword");
-    check(sim::settable(tables, carried, held(serpent, 1, 0), sim::Kin::DarkWizard),
+    check(sim::settable(tables, carried, held(serpent, 1, 0), sim::Kin::DarkWizard, true),
           "and by a wizard, every class's since 2026-10-03");
-    check(!sim::settable(tables, carried, held(serpent, 0, 0), dk), "nor in a sword with no socket");
-    check(!sim::settable(tables, carried, held(serpent, 1, storm), dk), "nor in a full one");
-    check(sim::settable(tables, carried, held(serpent, 2, storm), dk),
+    check(!sim::settable(tables, carried, held(serpent, 0, 0), dk, true), "nor in a sword with no socket");
+    check(!sim::settable(tables, carried, held(serpent, 1, storm), dk, true), "nor in a full one");
+    check(sim::settable(tables, carried, held(serpent, 2, storm), dk, true),
           "but in the second of two, one set");
-    check(!sim::settable(tables, carried, held(plate, 1, 0), dk),
+    check(!sim::settable(tables, carried, held(plate, 1, 0), dk, true),
           "nor in armour: it is a weapon's power");
-    check(!sim::settable(tables, held(rune, 0, 0), held(serpent, 1, 0), dk),
+    check(!sim::settable(tables, held(rune, 0, 0), held(serpent, 1, 0), dk, true),
           "and a Rune of Creation with no power sets nothing");
     // Frost Arrow, the elf's: a bow's or a crossbow's socket, hers alone.
     {
@@ -6173,12 +6180,12 @@ void testRunes(const content::Tables& tables) {
         check(bow >= 0 && crossbow >= 0, "a Battle Bow and an Arquebus");
         if (bow >= 0 && crossbow >= 0) {
             const sim::Held frosty = held(rune, 0, frost);
-            check(sim::settable(tables, frosty, held(bow, 1, 0), sim::Kin::FairyElf),
+            check(sim::settable(tables, frosty, held(bow, 1, 0), sim::Kin::FairyElf, true),
                   "Frost Arrow goes in an elf's socketed bow");
-            check(sim::settable(tables, frosty, held(crossbow, 1, 0), sim::Kin::FairyElf),
+            check(sim::settable(tables, frosty, held(crossbow, 1, 0), sim::Kin::FairyElf, true),
                   "and her socketed crossbow");
-            check(!sim::settable(tables, frosty, held(bow, 1, 0), dk), "and not by a knight");
-            check(sim::settable(tables, carried, held(bow, 1, 0), sim::Kin::FairyElf),
+            check(!sim::settable(tables, frosty, held(bow, 1, 0), dk, true), "and not by a knight");
+            check(sim::settable(tables, carried, held(bow, 1, 0), sim::Kin::FairyElf, true),
                   "and Stormcall by her");
         }
     }
@@ -6189,14 +6196,14 @@ void testRunes(const content::Tables& tables) {
         if (ring >= 0 && pendant >= 0) {
             for (const sim::Power power : {sim::Power::Renewal, sim::Power::Spirits}) {
                 const sim::Held set = held(rune, 0, uint8_t(power));
-                check(sim::settable(tables, set, held(ring, 1, 0), sim::Kin::DarkWizard),
+                check(sim::settable(tables, set, held(ring, 1, 0), sim::Kin::DarkWizard, true),
                       "an armour rune goes in a socketed ring");
-                check(sim::settable(tables, set, held(pendant, 1, 0), sim::Kin::FairyElf),
+                check(sim::settable(tables, set, held(pendant, 1, 0), sim::Kin::FairyElf, true),
                       "and a socketed pendant");
             }
-            check(!sim::settable(tables, carried, held(ring, 1, 0), dk),
+            check(!sim::settable(tables, carried, held(ring, 1, 0), dk, true),
                   "but not Stormcall: it is a weapon's power");
-            check(!sim::settable(tables, carried, held(pendant, 1, 0), dk), "in either");
+            check(!sim::settable(tables, carried, held(pendant, 1, 0), dk, true), "in either");
             checkEqual(sim::mostSocketsOf(tables.items[size_t(ring)]), 1, "a ring holds one socket");
             checkEqual(sim::mostSocketsOf(tables.items[size_t(pendant)]), sim::kMostSockets,
                        "a pendant three");
@@ -6208,11 +6215,11 @@ void testRunes(const content::Tables& tables) {
         const sim::Held wrath = held(rune, 0, uint8_t(sim::Power::Wrath));
         const int staff = tables.itemNamed("Staff03"), bow = tables.itemNamed("Bow04");
         const int ring = tables.itemAt(13, 8);
-        check(sim::settable(tables, wrath, held(serpent, 1, 0), dk) && staff >= 0 &&
-                  sim::settable(tables, wrath, held(staff, 1, 0), sim::Kin::DarkWizard) &&
-                  bow >= 0 && sim::settable(tables, wrath, held(bow, 1, 0), sim::Kin::FairyElf),
+        check(sim::settable(tables, wrath, held(serpent, 1, 0), dk, true) && staff >= 0 &&
+                  sim::settable(tables, wrath, held(staff, 1, 0), sim::Kin::DarkWizard, true) &&
+                  bow >= 0 && sim::settable(tables, wrath, held(bow, 1, 0), sim::Kin::FairyElf, true),
               "Wrath goes in every class's socketed weapon");
-        check(ring >= 0 && !sim::settable(tables, wrath, held(ring, 1, 0), dk), "and not a ring");
+        check(ring >= 0 && !sim::settable(tables, wrath, held(ring, 1, 0), dk, true), "and not a ring");
         const auto firstBlow = [&](uint8_t power) {
             sim::Realm realm;
             realm.raise(&tables, 3, 200, 160, dk, 60);
@@ -6250,12 +6257,12 @@ void testRunes(const content::Tables& tables) {
         const sim::Held hardy = held(rune, 0, undying);
         const int shield = tables.itemAt(6, 0);
         for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
-            check(sim::settable(tables, hardy, held(plate, 1, 0), kin),
+            check(sim::settable(tables, hardy, held(plate, 1, 0), kin, true),
                   "the Undying goes in socketed armour, whoever wears it");
         }
-        check(shield < 0 || sim::settable(tables, hardy, held(shield, 1, 0), dk),
+        check(shield < 0 || sim::settable(tables, hardy, held(shield, 1, 0), dk, true),
               "and in a socketed shield");
-        check(!sim::settable(tables, hardy, held(serpent, 1, 0), dk), "but not in a weapon");
+        check(!sim::settable(tables, hardy, held(serpent, 1, 0), dk, true), "but not in a weapon");
         sim::Fighter fighter;
         int bare = 0, once = 0, twice = 0;
         sim::Arms arms;
@@ -6292,17 +6299,17 @@ void testRunes(const content::Tables& tables) {
         const sim::Held wind = held(rune, 0, uint8_t(sim::Power::SecondWind));
         const sim::Held whirl = held(rune, 0, uint8_t(sim::Power::Whirlwind));
         for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
-            check(sim::settable(tables, iron, held(plate, 1, 0), kin) &&
-                      sim::settable(tables, steady, held(plate, 1, 0), kin) &&
-                      sim::settable(tables, wind, held(plate, 1, 0), kin),
+            check(sim::settable(tables, iron, held(plate, 1, 0), kin, true) &&
+                      sim::settable(tables, steady, held(plate, 1, 0), kin, true) &&
+                      sim::settable(tables, wind, held(plate, 1, 0), kin, true),
                   "Ironskin, Steadfast and Second Wind go in anyone's socketed armour");
         }
-        check(!sim::settable(tables, iron, held(serpent, 1, 0), dk), "and Ironskin not in a weapon");
-        check(sim::settable(tables, whirl, held(serpent, 1, 0), dk), "Whirlwind goes in his sword");
+        check(!sim::settable(tables, iron, held(serpent, 1, 0), dk, true), "and Ironskin not in a weapon");
+        check(sim::settable(tables, whirl, held(serpent, 1, 0), dk, true), "Whirlwind goes in his sword");
         const int staff = tables.itemNamed("Staff03");
-        check(staff >= 0 && !sim::settable(tables, whirl, held(staff, 1, 0), sim::Kin::DarkWizard),
+        check(staff >= 0 && !sim::settable(tables, whirl, held(staff, 1, 0), sim::Kin::DarkWizard, true),
               "and in no wizard's staff");
-        check(!sim::settable(tables, whirl, held(plate, 1, 0), dk), "nor in armour");
+        check(!sim::settable(tables, whirl, held(plate, 1, 0), dk, true), "nor in armour");
 
         sim::Fighter bare, ironed, steadied;
         int health = 0;
@@ -6334,6 +6341,7 @@ void testRunes(const content::Tables& tables) {
         // Worn, each counts: the Whirlwind in his sword, the other three in his armour.
         sim::Realm realm;
         realm.raise(&tables, 7, 190, 110, dk, 200);
+        promote(realm);  // Whirlwind is the Blade Knight's
         const uint8_t one[3] = {uint8_t(sim::Power::Whirlwind), 0, 0};
         realm.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 1, one);
         const uint8_t three[3] = {uint8_t(sim::Power::Ironskin), uint8_t(sim::Power::Steadfast),
@@ -6388,12 +6396,12 @@ void testRunes(const content::Tables& tables) {
             const sim::Held one = held(rune, 0, uint8_t(power));
             check(sim::powerOf(uint8_t(power)) != nullptr, "the Dungeon's rune has a row");
             for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
-                check(helm < 0 || sim::settable(tables, one, held(helm, 1, 0), kin),
+                check(helm < 0 || sim::settable(tables, one, held(helm, 1, 0), kin, true),
                       "it goes in a socketed helm, whoever wears it");
-                check(boots < 0 || sim::settable(tables, one, held(boots, 1, 0), kin),
+                check(boots < 0 || sim::settable(tables, one, held(boots, 1, 0), kin, true),
                       "and in socketed boots");
             }
-            check(!sim::settable(tables, one, held(serpent, 1, 0), dk), "but not in a weapon");
+            check(!sim::settable(tables, one, held(serpent, 1, 0), dk, true), "but not in a weapon");
         }
         const sim::Power chain[3] = {sim::Power::KeenEye, sim::Power::Bloodwell, sim::Power::Frenzy};
         for (int link = 0; link < 3; ++link) {
@@ -6423,22 +6431,22 @@ void testRunes(const content::Tables& tables) {
         const int serpentShield = tables.itemNamed("Shield12"), legend = tables.itemNamed("Shield15");
         check(sim::powerOf(uint8_t(sim::Power::Spirits)) != nullptr, "Evil Spirit has a row");
         for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
-            check(legend < 0 || sim::settable(tables, spirit, held(legend, 1, 0), kin),
+            check(legend < 0 || sim::settable(tables, spirit, held(legend, 1, 0), kin, true),
                   "Evil Spirit goes in a socketed shield, whoever wears it");
-            check(helm < 0 || !sim::settable(tables, spirit, held(helm, 1, 0), kin),
+            check(helm < 0 || !sim::settable(tables, spirit, held(helm, 1, 0), kin, true),
                   "but not in a helm");
         }
-        check(serpentShield < 0 || sim::settable(tables, spirit, held(serpentShield, 1, 0), dk),
+        check(serpentShield < 0 || sim::settable(tables, spirit, held(serpentShield, 1, 0), dk, true),
               "and in the knight's Serpent Shield");
-        check(!sim::settable(tables, spirit, held(serpent, 1, 0), dk), "nor in a weapon");
+        check(!sim::settable(tables, spirit, held(serpent, 1, 0), dk, true), "nor in a weapon");
         // The Pit's ring (docs/jewellery.md): Evil Spirit and every armour rune, from any class.
         const int ice = tables.itemNamed("Ring01");
         check(ice >= 0, "the Ring of Ice is in the table");
         for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
-            check(ice < 0 || sim::settable(tables, spirit, held(ice, 1, 0), kin),
+            check(ice < 0 || sim::settable(tables, spirit, held(ice, 1, 0), kin, true),
                   "Evil Spirit goes in the socketed ring, whoever wears it");
             check(ice < 0 || sim::settable(tables, held(rune, 0, uint8_t(sim::Power::Frenzy)),
-                                           held(ice, 1, 0), kin),
+                                           held(ice, 1, 0), kin, true),
                   "and Frenzy does too");
         }
         const sim::QuestRow& pit = sim::questAt(5);
@@ -6721,14 +6729,18 @@ void testRunes(const content::Tables& tables) {
     const uint8_t echo = uint8_t(sim::Power::Echo);
     check(staff >= 0, "a Serpent Staff");
     if (staff < 0) return;
-    check(sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard),
+    check(sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard, true),
           "Arcane Echo goes in a wizard's socketed staff");
-    check(!sim::settable(tables, held(rune, 0, echo), held(serpent, 1, 0), dk),
+    check(!sim::settable(tables, held(rune, 0, echo), held(serpent, 1, 0), dk, true),
           "and not by a knight");
+    check(!sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard,
+                         false),
+          "and only by a Soul Master: a Dark Wizard cannot set it");
     const auto casts = [&](uint8_t power, int* cast, int* loosed, int32_t skill = sim::skill::kEnergyBall,
                            int* lightning = nullptr) {
         sim::Realm realm;
         realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
+        promote(realm);  // Arcane Echo is the Soul Master's
         const uint8_t powers[3] = {power, 0, 0};
         realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
         uint32_t fighting = 0;
@@ -6795,9 +6807,9 @@ void testRunes(const content::Tables& tables) {
     // start a chain, one fireball flying on from the monster struck to the next, four hops at
     // most, never back to one it has struck.
     const uint8_t pyro = uint8_t(sim::Power::Pyroblast);
-    check(sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), sim::Kin::DarkWizard),
+    check(sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), sim::Kin::DarkWizard, true),
           "Pyroblaster goes in a wizard's socketed staff");
-    check(!sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), dk), "and not by a knight");
+    check(!sim::settable(tables, held(rune, 0, pyro), held(staff, 1, 0), dk, true), "and not by a knight");
     struct Blasts {
         int hits = 0, damage = 0, chains = 0, hops = 0, burstHits = 0, longest = 0;
         bool repeats = false;
@@ -6806,6 +6818,7 @@ void testRunes(const content::Tables& tables) {
         Blasts out;
         sim::Realm realm;
         realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
+        promote(realm);  // the Pyroblaster is the Soul Master's
         realm.learn(sim::skill::kFireBall);
         const uint8_t powers[3] = {power, 0, 0};
         realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
@@ -6897,12 +6910,12 @@ void testElementRunes(const content::Tables& tables) {
     };
     const uint8_t inferno = uint8_t(sim::Power::Inferno);
     for (const sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf}) {
-        check(sim::settable(tables, held(rune, 0, inferno), held(staff, 1, 0), kin),
+        check(sim::settable(tables, held(rune, 0, inferno), held(staff, 1, 0), kin, true),
               "an Inferno goes in any class's weapon");
-        check(sim::settable(tables, held(rune, 0, inferno), held(ring, 1, 0), kin),
+        check(sim::settable(tables, held(rune, 0, inferno), held(ring, 1, 0), kin, true),
               "and in a ring");
     }
-    check(!sim::settable(tables, held(rune, 0, inferno), held(plate, 1, 0), sim::Kin::DarkKnight),
+    check(!sim::settable(tables, held(rune, 0, inferno), held(plate, 1, 0), sim::Kin::DarkKnight, true),
           "and not in armour");
     check(sim::elementServes(sim::Element::Wind, sim::Kin::DarkKnight) &&
               sim::elementServes(sim::Element::Wind, sim::Kin::DarkWizard) &&
@@ -6980,7 +6993,7 @@ void testGroupRunes(const content::Tables& tables) {
         return h;
     };
     const auto sets = [&](sim::Power power, int into, sim::Kin kin) {
-        return sim::settable(tables, held(rune, 0, power), held(into, 1, sim::Power::None), kin);
+        return sim::settable(tables, held(rune, 0, power), held(into, 1, sim::Power::None), kin, true);
     };
     using sim::Kin;
     using sim::Power;
@@ -7012,6 +7025,7 @@ void testGroupRunes(const content::Tables& tables) {
     for (const bool worn : {false, true}) {
         sim::Realm knight;
         knight.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
+        promote(knight);  // Bulwark is the Blade Knight's
         knight.learn(sim::skill::kDefense);
         const uint8_t powers[3] = {uint8_t(worn ? Power::Bulwark : Power::None), 0, 0};
         knight.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
@@ -7045,6 +7059,7 @@ void testGroupRunes(const content::Tables& tables) {
     const auto hunt = [&](Power power, int* swings, int* answers, int* blows) {
         sim::Realm realm;
         realm.raise(&tables, 5, 200, 160, Kin::DarkKnight, 40);
+        promote(realm);  // the fire runes are the Blade Knight's
         const uint8_t powers[3] = {uint8_t(power), 0, 0};
         realm.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
         uint32_t fighting = 0;
@@ -7127,7 +7142,7 @@ void testRuneRarity(const content::Tables& tables) {
                 if (!power) continue;
                 ++runes;
                 ++tally[int(power->rarity)];
-                unsettable += !power->takenBy(kin);
+                unsettable += !power->takenBy(kin, false);
             }
             std::printf("  kin %d, level %d: %d runes, %d rare, %d epic, %d legendary\n", int(kin),
                         level, runes, tally[0], tally[1], tally[2]);
@@ -7839,7 +7854,7 @@ void testDrops(const content::Tables& tables) {
             else if (what.item == rune) {
                 ++r;
                 const sim::PowerRow* power = sim::powerOf(what.powers[0]);
-                unsettable += !power || !power->takenBy(sim::Kin::DarkKnight);
+                unsettable += !power || !power->takenBy(sim::Kin::DarkKnight, false);
             } else if (row.jewel() || (row.group == 14 && (row.number == 9 || row.number == 10))) {
                 ++others;
             } else {
@@ -8247,7 +8262,7 @@ void testCastleGrid(const content::Tables& lorencia) {
                 const sim::Held& held = realm.satchel()[i];
                 if (!held.empty() && held.item == castle.itemAt(14, 22)) rune = sim::powerOf(held.powers[0]);
             }
-            check(rune && rune->rarity == sim::Rarity::Rare && rune->takenBy(realm.hero().kin) &&
+            check(rune && rune->rarity == sim::Rarity::Rare && rune->takenBy(realm.hero().kin, false) &&
                       realm.castleRun().paidRunes[0] == uint8_t(rune->power),
                   "a Rare rune his class may set, in his bag");
             check(realm.angelState() == sim::AngelState::Done, "his page says it is done");

@@ -773,9 +773,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             // Its group (sim::PowerRow): the classes, and the sockets that take it.
             const bool everyone = power->classes == sim::kEveryClass;
             std::string classes = everyone ? "Every class" : "";
+            // A second class's rune names the second: 'Blade Knight' (sim::PowerRow::second).
             for (size_t i = 0; !everyone && i < 3; ++i) {
-                if (!power->takenBy(sim::Kin(i))) continue;
-                classes += (classes.empty() ? "" : " / ") + std::string(kNames[i]);
+                if (!power->takenBy(sim::Kin(i), true)) continue;
+                classes += (classes.empty() ? "" : " / ") +
+                           std::string(power->second ? sim::className(int(i), true) : kNames[i]);
             }
             std::vector<const char*> kinds;
             if (power->slots & sim::kInWeapon) kinds.push_back("weapon's");

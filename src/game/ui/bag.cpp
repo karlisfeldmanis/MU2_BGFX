@@ -302,7 +302,8 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                 // takes either, and refuses whole what it cannot do.
                 if (under >= 0 && under != from &&
                     (sim::refinable(tables, bag[from], bag[under]) ||
-                     sim::settable(tables, bag[from], bag[under], realm.wearer().kin))) {
+                     sim::settable(tables, bag[from], bag[under], realm.wearer().kin,
+                                   realm.wearer().second))) {
                     out->refineJewel = from;
                     out->refineTarget = under;
                 } else {
@@ -501,7 +502,8 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             // another class's power. The drop there would only be a swap, and a swap is not what
             // the hand holding the jewel means.
             const bool setting = under >= 0 && under != dragging_ &&
-                                 sim::settable(tables, moving, bag[under], realm.wearer().kin);
+                                 sim::settable(tables, moving, bag[under], realm.wearer().kin,
+                                               realm.wearer().second);
             const bool refused = under >= 0 && under != dragging_ && !setting &&
                                  creationJewel(tables, moving) && socketsOf(bag[under]) > 0;
             if (under >= 0 && under != dragging_ &&

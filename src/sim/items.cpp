@@ -386,24 +386,24 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Fireburst, "Fireburst",
          "A swing that lands has a 10% chance to burst into four fire balls, each flying at a "
          "monster near the one before, raised by his energy",
-         kKnightOnly, kInWeapon, Rarity::Legendary},
+         kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::FireRing, "Ring of Fire",
          "A swing that lands has a 10% chance to let a ring of fire burst round him, striking "
          "every monster within four tiles, raised by his energy",
-         kKnightOnly, kInWeapon, Rarity::Legendary},
+         kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Bulwark, "Bulwark", "Defense can be raised without a shield", kKnightOnly,
-         kInWeapon, Rarity::Legendary},
+         kInWeapon, Rarity::Legendary, true},
         {Power::Frost, "Frost Arrow",
          "An arrow that lands has a 20% chance to freeze the monster it struck for two seconds "
          "and wound it again for half the arrow's damage, raised by her energy",
-         kElfOnly, kInWeapon, Rarity::Legendary},
+         kElfOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Echo, "Arcane Echo",
          "A spell he casts has a 20% chance to be cast a second time, for no mana", kWizardOnly,
-         kInWeapon, Rarity::Legendary},
+         kInWeapon, Rarity::Legendary, true},
         {Power::Pyroblast, "Pyroblaster",
          "Fire Ball strikes 50% harder, and one that lands has a 20% chance to burst into four "
          "more, each flying at a monster near the one it struck",
-         kWizardOnly, kInWeapon, Rarity::Legendary},
+         kWizardOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Undying, "Undying", "+20% maximum health", kEveryClass, kWorn, Rarity::Epic},
         {Power::KeenEye, "Keen Eye", "+10% critical hit chance", kEveryClass, kWorn, Rarity::Rare},
         {Power::Bloodwell, "Bloodwell",
@@ -433,7 +433,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Whirlwind, "Whirlwind",
          "Twisting Slash strikes 50% harder, and has a 25% chance to pull every monster within "
          "six tiles in to you first",
-         kKnightOnly, kInWeapon, Rarity::Legendary},
+         kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},
@@ -522,14 +522,15 @@ bool refiningJewel(const content::ItemRow& row) {
            (row.group == 12 && row.number == 15);
 }
 
-bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin) {
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin,
+              bool second) {
     const auto known = [&](const Held& h) {
         return !h.empty() && size_t(h.item) < tables.items.size();
     };
     if (!known(jewel) || !known(target)) return false;
     if (!creation(tables.items[size_t(jewel.item)])) return false;
     const PowerRow* power = powerOf(jewel.powers[0]);
-    if (power == nullptr || !power->takenBy(kin)) return false;
+    if (power == nullptr || !power->takenBy(kin, second)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!takesSockets(row) || freeSocket(target) < 0) return false;
     // Its group's sockets (sim::PowerRow::slots): a ring's and a pendant's take the armour runes

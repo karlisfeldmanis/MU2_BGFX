@@ -255,7 +255,9 @@ void Realm::stormcall(Body& hero, Body& struck, int wound) {
         // Each socket's power rolls on its own, in socket order.
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            if (power == nullptr || !power->weapon() || !power->takenBy(hero.kin)) continue;
+            if (power == nullptr || !power->weapon() || !power->takenBy(hero.kin, hero.second)) {
+                continue;
+            }
             callDown(hero, struck, *power, wound);
             if (!hero.alive()) return;
         }
@@ -583,7 +585,8 @@ bool Realm::echoes(Body& hero) {
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            if (power == nullptr || power->power != Power::Echo || !power->takenBy(hero.kin)) {
+            if (power == nullptr || power->power != Power::Echo ||
+                !power->takenBy(hero.kin, hero.second)) {
                 continue;
             }
             if (runeDice_.nextBool(kEchoChance)) return true;
@@ -701,7 +704,7 @@ int Realm::pyroblasts(const Body& hero) const {
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
             worn += power != nullptr && power->power == Power::Pyroblast &&
-                    power->takenBy(hero.kin);
+                    power->takenBy(hero.kin, hero.second);
         }
     }
     return worn;
