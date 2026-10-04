@@ -12,6 +12,7 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/wings.h"
 #include "game/world/lamps.h"
 #include "game/world/sway.h"
 #include "game/world/town.h"
@@ -241,6 +242,7 @@ private:
     std::unordered_map<std::string, ShineLook> shineByMesh_;
     Figures figures_;
     Figure figure_;
+    WingLook wing_;  // the Wings tab's: what the standing body wears on its back
     std::vector<float> scratch_;
     std::vector<gfx::Drawable> drawables_;
     gfx::Camera camera_;

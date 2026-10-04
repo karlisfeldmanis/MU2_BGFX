@@ -1050,6 +1050,15 @@ void Play::follow(float seconds) {
         // And on a horse the run ride is the only gait and the stop ride the only stand, bare
         // while the weapon is slung and armed while it is drawn (sim::Body::riding, game/pets.h).
         const bool riding = body->riding && look->rideRunClip >= 0 && look->rideIdleClip >= 0;
+        // On wings off a safe tile he flies (sim::Body::flying): MU's Fly stance, the stop fly
+        // where he stands and the fly where he goes, never a walk or the run; the crossbow's
+        // own pair (ZzzCharacter.cpp:298-326, 615-621). It outranks the sea's swim, as in MU.
+        const bool flies = body->flying && !riding && look->flyClip >= 0 && look->flyIdleClip >= 0;
+        const bool crossbow = look->stance == "crossbow";
+        const int flyMove = crossbow && look->flyCrossbowClip >= 0 ? look->flyCrossbowClip
+                                                                   : look->flyClip;
+        const int flyIdle = crossbow && look->flyIdleCrossbowClip >= 0 ? look->flyIdleCrossbowClip
+                                                                       : look->flyIdleClip;
         const int rideRun = safe || look->rideRunArmedClip < 0 ? look->rideRunClip
                                                                : look->rideRunArmedClip;
         int rideIdle = safe || look->rideIdleArmedClip < 0 ? look->rideIdleClip
@@ -1070,12 +1079,16 @@ void Play::follow(float seconds) {
                                  ? look->swimIdleCrossbowClip
                                  : look->swimIdleClip;
         const int walkHere = riding                                ? rideRun
+                             : flies                               ? flyMove
                              : swims                               ? swimMove
                              : (body->running && look->runClip >= 0) ? look->runClip
                              : (safe && look->walkSafeClip >= 0)   ? look->walkSafeClip
                                                                    : look->walkClip;
+        // The fly is one of the rides here: seated in the air, it plants nothing and plays at the
+        // run ride's own 0.34 (ZzzOpenData.cpp:511-516), slowed with the ground he covers.
         const auto isRide = [&](int c) {
-            return c >= 0 && (c == look->rideRunClip || c == look->rideRunArmedClip);
+            return c >= 0 && (c == look->rideRunClip || c == look->rideRunArmedClip ||
+                              c == look->flyClip || c == look->flyCrossbowClip);
         };
         const auto isSwim = [&](int c) {
             return c >= 0 && (c == look->swimWalkClip || c == look->swimRunClip);
@@ -1124,6 +1137,8 @@ void Play::follow(float seconds) {
             clip = rideIdle;
         } else if (posed >= 0) {
             clip = posed;
+        } else if (flies) {
+            clip = flyIdle;
         } else if (swims) {
             clip = swimIdle;
         } else if (safe && look->idleSafeClip >= 0) {
@@ -1405,6 +1420,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     // His pet, after him, so the Imp takes his clavicle as this frame posed it.
     if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->visible) {
         pets_.gather(renderer, hero->figure, scratch_, out, casters);
+        wing_.gather(renderer, hero->figure, scratch_, out, casters);
     }
     for (size_t i = 0; i < folk_.size(); ++i) {
         Standing& one = folk_[i];

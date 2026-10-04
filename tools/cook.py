@@ -3336,7 +3336,7 @@ def cook_wardrobe(out_dir, texcook, threads):
     rows = {}
     for one in index.get("objects", []):
         glb = one.get("glb", "")
-        if not glb or one.get("kind") not in ("armor", "weapon", "shield"):
+        if not glb or one.get("kind") not in ("armor", "weapon", "shield", "wing"):
             continue
         name = os.path.splitext(os.path.basename(glb))[0]
         full = os.path.join(ASSETS, glb)
@@ -3389,6 +3389,17 @@ def cook_wardrobe(out_dir, texcook, threads):
                      **shot_of(one),
                      "two_handed": bool(one.get("two_handed")),
                      "classes": stats.get("classes") or []})
+
+    # --- the wings: each worn on the back of the class that may wear it ---------------------
+    # Its mesh and its one clip, the flap, are cooked below with the arms'; the viewer stands
+    # the class's bare body and hangs the wing on its Bone05 (game/wings.h, docs/wings.md).
+    wings = []
+    for name, (one, _full) in sorted(rows.items()):
+        if one.get("kind") != "wing":
+            continue
+        stats = one.get("stats") or {}
+        wings.append({"name": name, "label": one.get("label", name),
+                      "classes": stats.get("classes") or []})
 
     os.makedirs(os.path.join(out_dir, "textures"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "meshes"), exist_ok=True)
@@ -3463,13 +3474,14 @@ def cook_wardrobe(out_dir, texcook, threads):
         mesh_table[name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,
                             "triangles": tris}
 
-    out = {"version": 1, "meshes": mesh_table, "sets": sets, "arms": arms}
+    out = {"version": 1, "meshes": mesh_table, "sets": sets, "arms": arms, "wings": wings}
     with open(os.path.join(out_dir, "wardrobe.json"), "w") as handle:
         json.dump(out, handle, indent=1, sort_keys=True)
     cooked = sum(os.path.getsize(os.path.join(out_dir, "textures", f))
                  for f in os.listdir(os.path.join(out_dir, "textures")))
     print(f"cook: {len(mesh_table)} meshes, {triangles} triangles, {vertices} vertices; "
-          f"{len(sets)} suits, {len(arms)} arms; {cooked / 1e6:.1f} MB of .ktx")
+          f"{len(sets)} suits, {len(arms)} arms, {len(wings)} wings; "
+          f"{cooked / 1e6:.1f} MB of .ktx")
     return 0
 
 

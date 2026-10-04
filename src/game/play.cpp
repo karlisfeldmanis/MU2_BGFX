@@ -1798,6 +1798,16 @@ void Play::update(double seconds) {
                 if (row.group == sim::kGroupPets && worn.durability > 0) pet = row.number;
             }
             pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
+            // His wing, while it has life left; beating fast while he flies (game/wings.h).
+            const sim::Held& wing = realm_.satchel()[sim::kWings];
+            const content::ItemRow* wingRow =
+                !wing.empty() && wing.durability > 0 && size_t(wing.item) < tables_.items.size()
+                    ? &tables_.items[size_t(wing.item)]
+                    : nullptr;
+            wing_.wear(wingRow && figures_ ? wingBody(*figures_, wingRow->group, wingRow->number)
+                                           : nullptr,
+                       hero->figure);
+            wing_.update(float(seconds), realm_.hero().flying);
             int mount = -1;
             const sim::Held& ridden = realm_.satchel()[sim::kMount];
             if (!ridden.empty() && size_t(ridden.item) < tables_.items.size()) {

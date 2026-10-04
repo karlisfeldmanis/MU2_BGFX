@@ -147,6 +147,7 @@ add_executable(mu2
   src/game/figures.cpp
   src/game/crowd.cpp
   src/game/pets.cpp
+  src/game/wings.cpp
   src/game/headless.cpp
   src/game/play.cpp
   src/game/play_open.cpp

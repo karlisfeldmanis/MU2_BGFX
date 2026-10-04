@@ -342,6 +342,9 @@ bool ModelBench::fillBrowser(const std::string& assetDir, const std::string& wor
     // how anybody holds one. The loose meshes are still a tab of their own, below.
     categories_.push_back({"Armour sets", bodiesIn(figures_, BodyKind::Armour), 0});
     categories_.push_back({"Weapons", bodiesIn(figures_, BodyKind::Weapon), 0});
+    // And the wings, each on the back of its class, flapping as it does at rest; [ and ] walk
+    // the body's clips, and the fly clips (34, 35) beat it as in the air (game/wings.h).
+    categories_.push_back({"Wings", bodiesIn(figures_, BodyKind::Wing), 0});
     // And the figures' loose meshes, which is what this viewer showed before there were
     // categories: one armour plate, one helmet, one sword, as the cook wrote it. Still worth
     // a tab -- a part is where a material fault is read -- but not the first one.
@@ -415,7 +418,7 @@ bool ModelBench::openCategory(const std::string& word, content::Textures& textur
         return loadCurrent(textures);
     }
     core::logError("browser: no category called %s; there are world, monsters, people, "
-                   "armour, weapons and parts", word.c_str());
+                   "armour, weapons, wings and parts", word.c_str());
     return false;
 }
 
@@ -493,6 +496,7 @@ bool ModelBench::standFigure(const FigureBody* body) {
     haveModel_ = false;
     haveFigure_ = true;
     figure_.stand(body, stand_, 0.0f, body->scale, false);
+    wing_.wear(body->wing, figure_);
     if (body->library && !body->library->clips.clips.empty()) {
         figure_.play(body->idleClip >= 0 ? body->idleClip : 0, true);
     } else {
@@ -666,6 +670,7 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
     figure_.poseHeld(renderer, scratch_.data());
     const size_t first = drawables_.size();
     figure_.gather(row, drawables_);
+    wing_.gather(renderer, figure_, scratch_, drawables_, nullptr);
     if (!shineByMesh_.empty()) {
         for (size_t i = first; i < drawables_.size(); ++i) {
             const auto found = shineByMesh_.find(drawables_[i].mesh->name());
@@ -754,6 +759,14 @@ void ModelBench::zoom(float notches) {
 
 void ModelBench::update(double seconds, double delta, bool spin) {
     if (haveFigure_) figure_.update(float(delta));
+    if (haveFigure_) {
+        // The flap beats as in the air while the body plays a fly clip.
+        const FigureBody* look = figure_.body();
+        const bool flying = look && figure_.clip() >= 0 &&
+                            (figure_.clip() == look->flyClip ||
+                             figure_.clip() == look->flyCrossbowClip);
+        wing_.update(float(delta), flying);
+    }
     // MU looks down at about 40 degrees; the bench keeps that so what is judged here reads
     // the way the game will. The turn is slow enough that a shot every hundred frames walks
     // round the subject rather than jumping.

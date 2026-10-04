@@ -5596,6 +5596,25 @@ void testChaosMachine() {
                 checkEqual(int(smith.machine()[got].refinement), 0, "at +0");
                 checkEqual(int(smith.machine()[got].durability), 200, "whole, at 200");
             }
+
+            // Worn on slot 7 from level 180, and off a safe tile he flies (docs/wings.md).
+            const int young = smith.give(satan);
+            check(young >= 0 && !smith.moveItem(young, sim::kWings), "a level 50 knight cannot wear it");
+            int column = -1, row = -1;
+            for (int c = 150; c < 250 && column < 0; ++c) {
+                for (int r = 60; r < 160 && column < 0; ++r) {
+                    if (!noria.grid.safe(c, r) && noria.grid.open(c, r)) column = c, row = r;
+                }
+            }
+            sim::Realm flier;
+            check(column >= 0 && flier.raise(&noria, 7, column, row, sim::Kin::DarkKnight, 180),
+                  "a level 180 knight off the safe zone");
+            const int bagged = flier.give(satan);
+            check(bagged >= 0 && flier.moveItem(bagged, sim::kWings), "he wears the Wings of Satan");
+            check(!flier.hero().flying, "and is not flying before a tick");
+            flier.step();
+            check(flier.hero().flying, "a tick off the safe zone and he flies");
+            checkEqual(sim::strideFactor(flier.hero()), sim::kFlyFactor, "at MU's 15 against 12");
         }
     }
 

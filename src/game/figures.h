@@ -130,7 +130,7 @@ constexpr size_t kHeldBones = 24;
 // worn on the bare body of the class that may wear it and a weapon held by the class that may
 // hold it. A suit of armour has no other way to be looked at -- five pieces on a rig is what
 // it is, and a helmet lying on the grass is not it.
-enum class BodyKind { Character, Monster, Townsfolk, Armour, Weapon };
+enum class BodyKind { Character, Monster, Townsfolk, Armour, Weapon, Wing };
 
 // One breed or character: the parts, what is in its hands, its rig and its clips.
 struct FigureBody {
@@ -177,6 +177,8 @@ struct FigureBody {
     // "scythe", "bow", "crossbow", "wand", or empty for bare hands. Read from the weapon's
     // own index.json row by the cook, never guessed from a name.
     std::string stance;
+    // A wardrobe's Wings tab body: the wing it wears on its back (game/wings.h), else null.
+    const FigureBody* wing = nullptr;
     // Where a slung item hangs: `Bone05`, between the shoulders, a child of Bip01 Spine --
     // `w->LinkBone = 47` in the old client's RenderCharacterBackItem. -1 on a rig that has
     // none, which is every monster's.
@@ -210,6 +212,12 @@ struct FigureBody {
     // the run ride is his only gait. Bare while the weapon is slung, armed while it is drawn.
     int rideIdleClip = -1, rideIdleArmedClip = -1;
     int rideRunClip = -1, rideRunArmedClip = -1;
+    // And on wings, off a safe zone (docs/wings.md): MU's PLAYER_STOP_FLY 11 where he stands
+    // (PLAYER_STOP_FLY_CROSSBOW 12 with a crossbow) and PLAYER_FLY 34 where he goes
+    // (PLAYER_FLY_CROSSBOW 35), ZzzCharacter.cpp:298-326, 615-621. Played at MU's 0.34, the
+    // run ride's (ZzzOpenData.cpp:511-516): nothing plants in the air.
+    int flyIdleClip = -1, flyIdleCrossbowClip = -1;
+    int flyClip = -1, flyCrossbowClip = -1;
     // And under the sea, off its safe zone (Atlans): MU's Fly stance, PLAYER_STOP_FLY 11
     // treading water (PLAYER_STOP_FLY_CROSSBOW 12 with a crossbow), and PLAYER_WALK_SWIM 24,
     // or PLAYER_RUN_SWIM 33 once he runs (ZzzCharacter.cpp:298-326, 624-630). Played at MU's

@@ -24,7 +24,7 @@
 namespace mu::sim {
 
 float strideFactor(const Body& one) {
-    return one.riding ? kRideFactor : one.running ? kRunFactor : 1.0f;
+    return one.riding ? kRideFactor : one.flying ? kFlyFactor : one.running ? kRunFactor : 1.0f;
 }
 
 bool Realm::send(Body& one, int column, int row, bool byRoad) {
@@ -146,6 +146,7 @@ void Realm::advance(Body& one) {
         }
         const bool safe = tables_->grid.safe(one.column(), one.row());
         one.riding = one.pet.mount && !safe && rideMap(tables_->map);
+        one.flying = !one.riding && !safe && !bag_[kWings].empty() && bag_[kWings].durability > 0;
         if (why != nullptr) {
             if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
             one.combatUntil = tick_ + (one.riding ? kRideCombatTicks : kCombatTicks);

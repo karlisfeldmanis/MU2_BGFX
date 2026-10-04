@@ -68,7 +68,19 @@ wing's plus through OpenMU's per-level tables), luck, CanFly. Level 180 kept (th
    pets, which the next `--only figures` cook of each world writes. The mix now hands the
    wing over (`sim_test`: a 100% box gives a knight the Wings of Satan at +0, whole). In the
    bag and on the ground it is its own glb, unturned (MU turns it (270, 0, 45) there).
-3. **Wear**: slot 7 takes a wing of his class from level 180; damage x1.12, taken x0.88,
-   defence, the option, wear on hits as armour. The card's lines.
-4. **Draw**: the wing on bone 47 with its own clip; the fly actions out of town; the speed.
-5. Wardrobe cook, studio pass, a muted run.
+3. **Wear**: slot 7 takes a wing of his class from level 180 -- done 2026-10-04
+   (`sim::placeOf`, the row's own requirements). Still to do: damage x1.12, taken x0.88,
+   defence, the option, wear on hits as armour, the card's lines.
+4. **Draw** -- done 2026-10-04. `game/wings.h` (WingLook) hangs the wing on Bone05 at
+   (0, 0, 15), its flap at rate 1 (MU's 0.25) and 4 while he flies (MU's 1). Off a safe tile,
+   not riding, a winged hero flies (`sim::Body::flying`, at kFlyFactor, MU's 15 against the
+   walk's 12): MU's stop fly 11 where he stands and fly 34 where he goes, 12 and 35 with a
+   crossbow, played as the run ride is (0.34, slowed with the ground). It outranks Atlans's
+   swim, as MU's wing does. **Effects**: MuMain gives the 1st wings none -- no sprite,
+   particle or light, and no plus shine (ZzzObject.cpp:9566-9569); the Elf's are added.
+5. **Wardrobe** -- done 2026-10-04. `cook.py --only wardrobe` takes kind `wing` (mesh and
+   flap clip, and a `wings` list); every world's figures cooked `--no-monsters` so each
+   carries Wing01-03. The bench has a **Wings** tab: each wing on its class's bare body,
+   standing in the stop fly (`--category wings --pick Satan`). Studio shots at 3.2 m passed
+   by eye: the joint between the shoulders, Satan's membrane lit through, Heaven's feathers,
+   the Elf's glow.

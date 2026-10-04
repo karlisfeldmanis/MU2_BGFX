@@ -578,6 +578,10 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.rideIdleArmedClip = body.library->find(14);
     body.rideRunClip = body.library->find(36);
     body.rideRunArmedClip = body.library->find(37);
+    body.flyIdleClip = body.library->find(11);
+    body.flyIdleCrossbowClip = body.library->find(12);
+    body.flyClip = body.library->find(34);
+    body.flyCrossbowClip = body.library->find(35);
     body.swimIdleClip = body.library->find(11);
     body.swimIdleCrossbowClip = body.library->find(12);
     body.swimWalkClip = body.library->find(24);
@@ -947,9 +951,29 @@ bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textu
         ++arms;
     }
 
+    // --- the wings, each on the back of the bare class that may wear it ----------------
+    // The wing itself is the world's figure (cook.py takes kind "wing" into every world's
+    // standalone figures), so a world cooked before it has none and the tab is empty.
+    size_t wings = 0;
+    for (const core::Json& entry : manifest["wings"].items) {
+        const std::string name = entry["name"].string;
+        const FigureBody* wing = body(name);
+        const FigureBody* bare = body(wearerFor(entry["classes"]));
+        if (!wing || !bare) continue;
+        auto made = std::make_unique<FigureBody>(*bare);
+        made->name = "Wing" + name;
+        made->label = entry["label"].stringOr(name.c_str());
+        made->kind = BodyKind::Wing;
+        made->wing = wing;
+        // Standing as a winged hero stands off a safe zone: MU's stop fly, 11.
+        if (bare->flyIdleClip >= 0) made->idleClip = bare->flyIdleClip;
+        ++wings;
+        bodies_[made->name] = std::move(made);
+    }
+
     const double seconds = double(bx::getHPCounter() - started) / double(bx::getHPFrequency());
     core::logf("wardrobe: %zu meshes added (%zu failed), %zu suits worn, %zu arms held, "
-               "%.2f s", added, failed, suits, arms, seconds);
+               "%zu wings, %.2f s", added, failed, suits, arms, wings, seconds);
     return failed == 0;
 }
 

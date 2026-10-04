@@ -487,6 +487,8 @@ int placeOf(const content::ItemRow& row) {
     if (pendant(row)) return kAmulet;
     if (row.group == kGroupPets && (row.number == 2 || row.number == 3)) return kMount;
     if (row.group == kGroupPets && row.number <= 1) return kPet;
+    // The 1st level wings, EQUIPMENT_WING (OpenMU Version075 Wings.cs, ItemSlot 7).
+    if (row.group == 12 && row.number <= 2) return kWings;
     return -1;
 }
 

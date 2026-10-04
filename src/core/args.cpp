@@ -140,7 +140,7 @@ void printUsage() {
         "  --no-fps                  no frame rate in the corner (already off with --still, "
         "--budget or --stats)\n"
         "  --fps                     the frame rate anyway, in a run that would have it off\n"
-        "  --category WORD           world|monsters|people|armour|weapons|parts\n"
+        "  --category WORD           world|monsters|people|armour|weapons|wings|parts\n"
         "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
         "  --windows LIST            open these from the first frame: inventory,character; menu,\n"
         "                            options or graphics raise the game menu on that page; off: no HUD\n"

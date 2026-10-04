@@ -234,6 +234,10 @@ constexpr float kRunFactor = 14.0f / 12.0f;
 // the later mounts (OpenMU's HorseOrFenrirMovementSpeed), was then 'litttle bit to fast'.
 // **ours**: 16. In a fight too: MU's rider never walks (docs/mount.md).
 constexpr float kRideFactor = 16.0f / 12.0f;
+// Flying on the 1st level wings: CharacterMoveSpeed's 15 off a safe tile, in a fight or out
+// (ZzzCharacter.cpp:6320-6335, the wing beside the horn). MU's own number, between our run's
+// 14 and our ride's 16 (docs/wings.md).
+constexpr float kFlyFactor = 15.0f / 12.0f;
 struct Body;
 // How much ground a walk covers against the breed's own pace: riding, running or neither.
 float strideFactor(const Body& one);
@@ -348,6 +352,10 @@ struct Body {
     // off a safe tile, walking or standing, in a fight or out. In town MU hides it and he walks
     // (GOBoid.cpp:498-502, every ride branch gated `!c->SafeZone`).
     bool riding = false;
+    // And whether he flies this tick: a wing worn with life left, off a safe tile, not riding
+    // (MU's horn and wing share one branch, the horn first). MuMain's PLAYER_FLY: he never
+    // walks or runs then, in a fight or out (ZzzCharacter.cpp:615-621).
+    bool flying = false;
 
     Temper temper = Temper::Asleep;
     uint32_t quarry = 0;  // an id, 0 for nobody
