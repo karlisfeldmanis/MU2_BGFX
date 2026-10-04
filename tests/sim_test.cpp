@@ -4633,9 +4633,14 @@ void testClassChange() {
     check(offered, "her dialog opens on the hand-in");
     check(back.completeQuest(knightQuest, -1), "and it is handed in");
     check(back.promoted() && back.hero().second, "a Blade Knight now");
-    int swords = 0;
-    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) swords += back.satchel()[slot].item == sword;
+    int swords = 0, feathers = 0;
+    const int32_t feather = devias.itemNamed("Quest04");
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        swords += back.satchel()[slot].item == sword;
+        feathers += feather >= 0 && back.satchel()[slot].item == feather;
+    }
     checkEqual(swords, 0, "the sword is hers");
+    checkEqual(feathers, 1, "and he is paid Loch's Feather");
     sim::Realm again;
     check(again.raise(&devias, 3, s.x, s.y + 2, sim::Kin::DarkKnight, 200), "and after a restart");
     again.restore(back.record());

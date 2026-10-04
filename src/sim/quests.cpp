@@ -860,6 +860,9 @@ QuestRow sevinaTreasure(Kin kin, const char* title, const char* item, const char
     row.strangers = false;
     row.promotes = true;
     row.boon = boon;
+    // And Loch's Feather (13,14), what the 2nd wings are made of in the Chaos Machine (docs/
+    // second-wings.md): the user, 2026-10-04, 'on second quest reward also give feather'. Ours.
+    row.paid[row.paidCount++] = {.item = "Quest04"};
     // MU's own (Text_75), when it is done.
     row.resting = "\"You already possess great power. I do not have an oracle for you.\"";
     return row;
