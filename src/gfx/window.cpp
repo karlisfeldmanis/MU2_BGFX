@@ -194,10 +194,19 @@ bool Window::pump() {
     // so no enter ever came and the arrow stood over the game's own until it left the screen
     // and came back (the user, 2026-10-02: "i see system cursor when launch game in
     // fullscreen"). glfwSetCursor sets it only while the pointer is in the window, so this is
-    // one [NSCursor set] a frame and no tracking of its own.
-    if (blank_ && glfwGetWindowAttrib(handle_, GLFW_FOCUSED) &&
-        glfwGetWindowAttrib(handle_, GLFW_HOVERED)) {
-        glfwSetCursor(handle_, blank_);
+    // one [NSCursor set] and no tracking of its own.
+    //
+    // **Four times a second, not every frame** (2026-10-04): GLFW_HOVERED is a round trip to
+    // the WindowServer (SLSCopyWindowRoutingRecordsForScreenLocation), and asked every frame it
+    // was a fifth of the main thread's samples in a Meteorite fight at 180 Hz. A quarter second
+    // of the arrow after a fullscreen open is all this gives back.
+    const double now = glfwGetTime();
+    if (blank_ && now >= cursorDue_) {
+        cursorDue_ = now + 0.25;
+        if (glfwGetWindowAttrib(handle_, GLFW_FOCUSED) &&
+            glfwGetWindowAttrib(handle_, GLFW_HOVERED)) {
+            glfwSetCursor(handle_, blank_);
+        }
     }
 
     // Edges, taken here and cleared here: polled state would report one press for every frame
