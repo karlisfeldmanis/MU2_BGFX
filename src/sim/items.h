@@ -558,7 +558,8 @@ enum class Power : uint8_t {
     Ironskin = 24,
     Steadfast = 25,
     SecondWind = 26,
-    Whirlwind = 27
+    Whirlwind = 27,
+    Volley = 28
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -784,6 +785,11 @@ constexpr double kSecondWindShare = 0.05;
 constexpr double kWhirlwindDamage = 0.50;
 constexpr double kWhirlwindChance = 0.25;
 constexpr float kWhirlwindReach = 6.0f;
+// **Piercing Volley** (Legendary, the Muse Elf's weapon; the user, 2026-10-04: 'make legendary
+// strong rune that penetration can be used as multishot'): her Penetration is loosed as
+// sim::kVolleyLanes arrows in Skillshot's fan, kFanDegrees apart, each flying on through
+// everything in its lane at Penetration's own force, each body struck once a cast as the fan
+// strikes it. Every shot, no chance; a second one worn adds nothing. invention.
 // **The knight's fire runes** (the user, 2026-10-02: "pyroblast chance for DK weapon", "inferno
 // chance for DK weapon"), in a knight's weapon alone. **Fireburst**: a swing that lands has
 // kFireburstChance to burst into the Pyroblaster's chain -- kPyroblastChain Fire Balls, each

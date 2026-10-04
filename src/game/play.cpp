@@ -692,16 +692,20 @@ void Play::update(double seconds) {
                         shot.air = float(happening.b) * float(kTickSeconds);
                         shot.sound = true;
                         nocking_.push_back(shot);
-                    } else if (happening.a == sim::skill::kSkillshot) {
+                    } else if (const sim::SkillRow* shot = sim::skillNumbered(happening.a);
+                               shot != nullptr && shot->spread == sim::Spread::Fan) {
                         // The fan, drawn as the realm strikes it: straight at the body and
                         // kFanDegrees apart either side, out to the row's reach, flying on
-                        // through what they meet (MU's Triple Shot, `Kind = 1`).
-                        const sim::SkillRow* shot = sim::skillNumbered(happening.a);
+                        // through what they meet (MU's Triple Shot, `Kind = 1`). Penetration is
+                        // a fan of one, three with a Piercing Volley (sim::lanesOf), each arrow
+                        // wound in MODEL_PIERCING's bands.
                         const float tile = ground_->metresPerTile();
-                        const float reach = (shot ? shot->reach : 6.0f) * tile;
+                        const float reach = sim::laneTiles(*shot) * tile;
                         const float centre = std::atan2(to[2] - caster->crown[2],
                                                         to[0] - caster->crown[0]);
-                        const int count = shot ? shot->arrows : 3;
+                        const sim::Body* shooter = realm_.find(happening.who);
+                        const int count =
+                            sim::lanesOf(*shot, shooter != nullptr ? shooter->excel.volleys : 0);
                         for (int a = 0; a < count; ++a) {
                             const int step = (a + 1) / 2;
                             // World z runs against the grid's rows, so a turn the realm makes
@@ -711,11 +715,12 @@ void Play::update(double seconds) {
                             const float far[3] = {
                                 caster->crown[0] + std::cos(centre + turn) * (reach + tile),
                                 to[1], caster->crown[2] + std::sin(centre + turn) * (reach + tile)};
-                            Nocking shot;
-                            shot.shooter = happening.who;
-                            for (int k = 0; k < 3; ++k) shot.to[k] = far[k];
-                            shot.sound = a == 0;
-                            nocking_.push_back(shot);
+                            Nocking nocked;
+                            nocked.shooter = happening.who;
+                            for (int k = 0; k < 3; ++k) nocked.to[k] = far[k];
+                            nocked.sound = a == 0;
+                            nocked.pierce = happening.a == sim::skill::kPenetration;
+                            nocking_.push_back(nocked);
                         }
                     } else if (happening.a == sim::skill::kFireBall && happening.rune &&
                                happening.c != 0) {
@@ -1403,6 +1408,12 @@ void Play::update(double seconds) {
             const float left = from->figure.toRelease() / std::max(from->swingPace, 0.01f);
             if (left <= onset || from->figure.released() || shot.waited >= kNockHold) {
                 if (string >= 0) emit(string, from->crown[0], from->crown[2], from->id);
+                // And MODEL_PIERCING's SOUND_FLASH, sAquaFlash, as its bands are made
+                // (ZzzEffect.cpp:1541) -- Aqua Beam's row's wave.
+                const int flash = sim::skillIndexOf(sim::skill::kAquaBeam);
+                if (shot.pierce && flash >= 0 && heard_.skill[flash] >= 0) {
+                    emit(heard_.skill[flash], from->crown[0], from->crown[2], from->id);
+                }
                 shot.sound = false;
             }
         }
@@ -1416,7 +1427,7 @@ void Play::update(double seconds) {
             }
         }
         const float left = shot.whom != 0 ? std::max(0.05f, shot.air - shot.waited) : 0.0f;
-        shootArrow(*from, to, shot.whom, left);
+        shootArrow(*from, to, shot.whom, left, shot.pierce);
         shot.air = -1.0f;
     }
     nocking_.erase(std::remove_if(nocking_.begin(), nocking_.end(),

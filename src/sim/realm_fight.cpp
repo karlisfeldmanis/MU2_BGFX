@@ -801,10 +801,18 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
     const Body* aimed = body(aimedAt);
     const float centre =
         aimed ? std::atan2(aimed->y - hero.y, aimed->x - hero.x) : hero.aim;
+    // **The lanes reach the body they were aimed at**: the cast measures its reach as MU does, on
+    // the larger axis (`within`), and a lane runs a straight line, so a body eight tiles off on
+    // both axes was in reach and eleven tiles down the lane -- loosed at and never struck. ours.
+    const float length = aimed ? std::max(laneTiles(row), std::hypot(aimed->x - hero.x,
+                                                                      aimed->y - hero.y))
+                               : laneTiles(row);
     // One `Loosed` for the cast: the drawing fans its own arrows off it.
     say(What::Loosed, hero, row.number, 0, hero.archer, aimedAt);
     constexpr float kRadians = 3.14159265358979f / 180.0f;
-    for (int a = 0; a < row.arrows; ++a) {
+    // Penetration's one lane, or three with a Piercing Volley in her bow (sim::lanesOf).
+    const int lanes = lanesOf(row, hero.player ? hero.excel.volleys : 0);
+    for (int a = 0; a < lanes; ++a) {
         // Straight, then one either side, then the next pair out.
         const int step = (a + 1) / 2;
         const float turn = float(a % 2 == 1 ? step : -step) * kFanDegrees * kRadians;
@@ -822,7 +830,7 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
             const float dx = one.x - hero.x, dy = one.y - hero.y;
             const float along = dx * cx + dy * cy;
             const float across = std::fabs(dx * cy - dy * cx);
-            if (along < kFanNearest || along > row.reach || across > kLineHalfWidth) continue;
+            if (along < kFanNearest || along > length || across > kLineHalfWidth) continue;
             // An arrow does not fly through a wall to the body behind it (Realm::seen).
             if (!seen(hero, one)) continue;
             if (found == kVictims) break;

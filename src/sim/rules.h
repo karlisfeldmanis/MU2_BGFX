@@ -90,6 +90,8 @@ struct Excellence {
     double runeDefense = 0.0;
     double blockChance = 0.0;
     int whirlwinds = 0;
+    // And Piercing Volleys in a Muse Elf's hands, which fan her Penetration (sim::lanesOf).
+    int volleys = 0;
     // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
     // resistance worn to Ice and to Poison, each turning the element aside r times in r + 1, and
     // the percent of maximum life the worn pieces' options give back every kJewelleryRegenTicks.

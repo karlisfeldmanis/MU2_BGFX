@@ -378,7 +378,8 @@ bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const 
 // Crowd.Rail). MU's own muzzle -- her feet plus (-10, -60, 135) units turned by her facing,
 // 1.35 m up, 0.6 m toward the target, a hand's width to the side (fx/arrow.h) -- for a weapon
 // that marks none. The model is her weapon's. The arrow on the string goes with it.
-void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, float seconds) {
+void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, float seconds,
+                      bool pierce) {
     const float feet = ground_ ? ground_->heightAt(shooter.crown[0], shooter.crown[2]) : 0.0f;
     const float wayX = to[0] - shooter.crown[0], wayZ = to[2] - shooter.crown[2];
     const float flat = std::max(1e-4f, std::sqrt(wayX * wayX + wayZ * wayZ));
@@ -406,7 +407,7 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
         model = Arrows::modelFor(arm.group, arm.number);
         tint = Arrows::tintFor(arm.group, arm.number);
     }
-    arrows_.loose(muzzle, to, whom, model, 0, tint, seconds);
+    arrows_.loose(muzzle, to, whom, model, 0, tint, seconds, pierce);
 }
 
 bool Play::shoots(uint32_t id, Arrows::Model* model) {
@@ -488,6 +489,14 @@ void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     if (skill == sim::skill::kNone) {
         // Her own weapon's arrow, from the muzzle a shot leaves.
         shootArrow(hero, to, 0);
+        return;
+    }
+    if (skill == sim::skill::kPenetration) {
+        // Penetration's: her arrow wound in its bands, flown its whole way.
+        const float tile = ground_->metresPerTile();
+        const float way = (sim::kPierceTiles + 1.0f) * tile / flat;
+        const float end[3] = {feet[0] + acrossX * way, feet[1] + 1.0f, feet[2] + acrossZ * way};
+        shootArrow(hero, end, 0, 0.0f, true);
         return;
     }
     if (skill == sim::skill::kFireBall) {

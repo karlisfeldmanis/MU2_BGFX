@@ -384,6 +384,10 @@ void Realm::rearm(Body& hero) {
                 power->takenBy(hero.kin, hero.second)) {
                 ++hero.excel.whirlwinds;
             }
+            if (power && power->power == Power::Volley && !jewellery(*row) &&
+                power->takenBy(hero.kin, hero.second)) {
+                ++hero.excel.volleys;
+            }
         }
     }
     // The rings and the pendant: the largest resistance worn in each element (Max3), and every

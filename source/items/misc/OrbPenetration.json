@@ -1,0 +1,44 @@
+{
+  "item": "OrbPenetration",
+  "mu_name": "Orb of Penetration",
+  "mu_name_from": "VersionSeasonSix/Items/Orbs.cs:47 -- CreateOrb(17, SkillNumber.Penetration, 1, \"Orb of Penetration\", 64, 130, ...), and MuMain's ITEM_ORB_OF_PENETRATION (_enum.h). 0.95d's skill, not 0.75's.",
+  "why_this_one": "The elf's second attack (the user, 2026-10-04: 'migrate Penetration'): an arrow that flies on through everything in its line (sim/skills.cpp, Penetration). Its number in group 12 is MU's own and was free here.\n\nIts drop level 64 and level 130 are MU's own, already about the twice its drop level the project's orbs ask (exp-rate audit of 2026-10-02). Sold by nobody, as WebZen's shelves sell it nowhere: it drops.",
+  "mesh": "Gem05",
+  "mesh_note": "No geometry of its own. Gem01.bmd through Gem05.bmd are byte-identical in MuMain's Data/Item -- one md5 across all five -- so every orb in MU is one model told apart by its row, and this names the one the pipeline has built.",
+  "stats": {
+    "note": "The elf orbs' shape (Version075/Items/Orbs.cs:63-67): one cell, durability one, dropped by monsters.",
+    "group": 12,
+    "number": 17,
+    "drop_level": 64,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. One reading, as a scroll is.",
+    "value": 72000,
+    "value_from": "VersionSeasonSix/Items/Orbs.cs:47's money, 72000.",
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "CharacterClasses.AllElfs. A knight or a wizard cannot learn it at any level.",
+    "requires": {
+      "level": 130,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "Carried raw, as every orb's is (docs/mu-scrolls-and-orbs.md SS4). The same number is on the skill block below, which is what Realm::useItem checks."
+  },
+  "skill": {
+    "note": "What the orb teaches. Read once and gone.",
+    "number": 52,
+    "name": "Penetration",
+    "tells": "An arrow loosed at a body up to eight tiles off, flying on through everything in its line. One arrow is spent for every body struck.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things.",
+    "level_requirement": 130,
+    "energy_requirement": 0,
+    "energy_from": "None, as OpenMU's row asks none (VersionSeasonSix/SkillsInitializer.cs:171).",
+    "value": 72000
+  }
+}

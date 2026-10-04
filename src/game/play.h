@@ -796,7 +796,8 @@ private:
     // False when there is no figure to measure, and `out` is then his feet.
     bool castFrom(const Drawn& caster, const float to[3], float out[3]) const;
     // And an archer's arrow at `to`, from MU's muzzle, in the model her weapon throws.
-    void shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, float seconds = 0.0f);
+    void shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, float seconds = 0.0f,
+                    bool pierce = false);
     // A Hunter's blow drawn as MU draws it: CreateArrows off its MODEL_ARQUEBUS, which throws
     // MODEL_ARROW_SAW (ZzzCharacter.cpp:4831, ZzzEffectMagicSkill.cpp:225). The rules resolve
     // the blow at range on the tick and are not told; this only draws the bolt it would be.
@@ -823,6 +824,8 @@ private:
         // Hers to sound: the string, eBow or eCrossbow, started its onset ahead of the release
         // so it is heard as the arrow leaves (MU2's Crowd.Shot). One of a fan's three.
         bool sound = false;
+        // Penetration's: wound in MODEL_PIERCING's bands (fx/arrow.h), with its SOUND_FLASH.
+        bool pierce = false;
     };
     std::vector<Nocking> nocking_;
     // An Ice Monster's blow casts Ice on its target (OpenMU's AttackSkill 7, shown on every

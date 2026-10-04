@@ -112,6 +112,10 @@ SKILLS = {
     # inferno"): 0.95d's (Version095d/SkillsInitializer.cs:59), off the Scroll of Inferno, group
     # 15 number 13. Below 57 and not use-type 4, so the arithmetic above finds its cell.
     14: ("Dark Wizard", "Inferno"),
+    # And Penetration, cut on 2026-10-04 because the game now has it (the user: "migrate
+    # Penetration"): 0.95d's, off the Orb of Penetration, group 12 number 17. Below 57 and not
+    # use-type 4, so the arithmetic above finds its cell.
+    52: ("Fairy Elf", "Penetration"),
 }
 
 

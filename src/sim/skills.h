@@ -108,6 +108,15 @@ constexpr int32_t kSummonAssassin = 32;
 constexpr int32_t kSummonYeti = 33;
 constexpr int32_t kSummonKnight = 34;
 constexpr int32_t kSummonBali = 35;
+// `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
+// 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
+// carries the row). An arrow that flies on through everything in its line.
+constexpr int32_t kPenetration = 52;
+// `AT_SKILL_RIDER`, Fire Breath: the Horn of Dinorant's and not learned. 0.95d's and not 0.75's
+// (Version095d/SkillsInitializer.cs:80): thirty damage, three tiles, nine mana, level 110, the
+// knight's; MuMain prints it on the horn as his own skill (ZzzInventory.cpp:5174). Known while
+// the horn is worn and its life lasts (Realm::knows), thrown only while it is ridden.
+constexpr int32_t kFireBreath = 49;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -355,7 +364,8 @@ struct SkillRow {
     // **Greater Damage**: `3 + energy / 7` added to every blow after the defence, for this long
     // (GreaterDamageEffectInitializer, sixty seconds; AttackableExtensions.cs:185). 0 for none.
     int32_t mightTicks = 0;
-    // **Skillshot**: how many arrows the fan looses. Each body struck costs one.
+    // **Skillshot**: how many arrows the fan looses. Each body struck costs one. Penetration's
+    // one is a fan of a single lane; a Piercing Volley makes it more (`lanesOf`).
     int32_t arrows = 0;
     // **A summon**: the monster number it raises, 0 for none (the map above).
     int32_t summons = 0;
@@ -410,7 +420,7 @@ struct SkillRow {
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 34;
+constexpr int kSkills = 35;
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
@@ -568,6 +578,21 @@ constexpr float kSummonCatchUp = 1.15f;
 constexpr int kSummonBlink = 6;
 constexpr float kSummonStuckGain = 0.5f;  // tiles
 constexpr int kSummonStuckTicks = 30;     // a second and a half
+
+// **How many lanes a fan looses**: the row's own arrows, and Penetration's three while a
+// Piercing Volley is in her hands (`volleys`, Excellence::volleys; sim/items.h). One answer
+// for the realm that strikes the lanes and the drawing that flies them.
+constexpr int kVolleyLanes = 3;
+// **How far a Penetration arrow flies**, in tiles: through the screen and out of it (the user,
+// 2026-10-04: 'penetration has to fly through screen'), striking everything on the way, where
+// the body it is loosed at may stand no more than its row's reach off. ours: MU's frustum is 8.
+constexpr float kPierceTiles = 16.0f;
+inline float laneTiles(const SkillRow& row) {
+    return row.number == skill::kPenetration ? kPierceTiles : row.reach;
+}
+inline int lanesOf(const SkillRow& row, int volleys) {
+    return row.number == skill::kPenetration && volleys > 0 ? kVolleyLanes : row.arrows;
+}
 
 // Heal's health and Greater Damage's bonus, off her energy.
 int healOf(const HeroPoints& points);

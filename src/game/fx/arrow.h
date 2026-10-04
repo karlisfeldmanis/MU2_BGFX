@@ -51,6 +51,15 @@
 // ArrowSteel01 is built head at -Z -- its broadhead, widest at z -18 and pointed at -43, with
 // the bare shaft out to +44 -- where Arrow01's head is at +Z; drawn as the others it flew tail
 // first (the user: 'bolts looks inverted'). It is turned half round (Shape::reversed).
+//
+// **Penetration's arrow** (`pierce`) is the weapon's own, wound in MU's MODEL_PIERCING: four
+// BITMAP_FLARE+1 joints (Flare02, white at half, added) on the arrow, at 0, 90, 180 and 240
+// degrees round it (ZzzEffect.cpp:1506-1543, the joints' `Velocity`). Each lays a tail pair
+// every thirty degrees of its turn, three a reference frame, a band 20 units wide 18 units off
+// the line (`Direction = Scale * 1.5`, ZzzEffectJoint.cpp:2061-2095), so the four corkscrew
+// along the whole flight and stay where they were laid; at fifteen frames of its thirty the
+// band dims by a third a frame (ZzzEffectJoint.cpp:6190-6222). Laid level across the flight as
+// the joint's own matrix lays a tail.
 #pragma once
 
 #include <cstdint>
@@ -87,8 +96,10 @@ public:
     // `tint`, from tintFor, tones the fire or the streak.
     // `seconds`, when above 0, is how long it has to reach `to`: an arrow held for its string
     // flies faster to land when the realm says it lands (Play::nocking_).
+    // `pierce` winds MODEL_PIERCING's bands round it: Penetration's arrow (see the top).
     void loose(const float from[3], const float to[3], uint32_t whom, Model model,
-               uint32_t shooter = 0, const float* tint = nullptr, float seconds = 0.0f);
+               uint32_t shooter = 0, const float* tint = nullptr, float seconds = 0.0f,
+               bool pierce = false);
     const std::vector<uint32_t>& landed() const { return landed_; }
 
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
@@ -105,6 +116,11 @@ private:
         std::vector<EffectCorner> triangles;
         bgfx::TextureHandle sheet = BGFX_INVALID_HANDLE;
         gfx::Blend blend = gfx::Blend::Alpha;
+        // Turned half round on its own: Arrow01's shaft, whose point is at loaded -Z (the
+        // loader negates Z) where its fire01 is laid behind -- it flew tail first under the
+        // fire, and bare on a Penetration arrow it showed (the user, 2026-10-04: 'looks like
+        // arrow is inverted'). The fire stays where it trails.
+        bool flipped = false;
     };
     struct Shape {
         std::vector<Part> parts;
@@ -130,7 +146,16 @@ private:
         float speed;     // metres a second
         bool tinted;
         float tint[3];
+        // Penetration's: wound in the bands and bare of fire -- no embers, licks or fire tail,
+        // only the thin smoke, where MU's wooden arrow keeps them (the user, 2026-10-04: 'better but without
+        // fire'). ours.
+        bool pierce;
+        // Reference frames left of its fade, once its flight is over: Penetration's flies on as
+        // it goes (the user, 2026-10-04: 'penetraiton arrow cant just stoped and fadeout, it has
+        // to fadeout in movement'). 0 while it flies. ours.
+        float fading;
     };
+    static constexpr float kPierceFade = 8.0f;  // reference frames, a third of a second
     struct Glint {  // ours: a bolt's streak (still) or spark (thrown, falling)
         bool alive = false;
         bool spark = false;
@@ -170,6 +195,52 @@ private:
         float spin;
         float age;          // reference frames
     };
+    // ---- MU's MODEL_PIERCING (see the top) ------------------------------------------------------
+    // **Ours: a short spiral that travels with the arrow** (the user, 2026-10-04: 'penetration
+    // effect dont have to just fade out on plane place but that had to happened on movement'),
+    // where MU's fifty tails lay the whole flight in the air: twenty-four pairs, eight reference
+    // frames of its turn, about 5 m ('penetration trail has to be longer with some smoke'),
+    // bright at the head and gone at its back end. The wooden arrow's thin smoke rides behind.
+    static constexpr int kBandTails = 24;
+    static constexpr float kBandFrames = 30.0f;        // `LifeTime = PKKey`, 30
+    static constexpr float kBandDimFrom = 15.0f;       // `if (o->LifeTime < 15)`
+    static constexpr float kBandDim = 1.5f;            // `powf(1.f / 1.5f, ...)` a frame
+    static constexpr float kBandTurn = 30.0f;          // degrees a tail pair
+    static constexpr float kBandTurnsAFrame = 3.0f;    // the mover's three a frame
+    static constexpr float kBandRadiusUnits = 18.0f;   // 12 * 1.5
+    static constexpr float kBandWidthUnits = 20.0f;    // `o->Scale = 20.f`, Skill 0
+    static constexpr float kBandLight = 0.5f;          // `Vector(0.5f, 0.5f, 0.5f, o->Light)`
+    static constexpr float kBandPhases[4] = {0.0f, 90.0f, 180.0f, 240.0f};
+    // **Ours: drilled, not painted** (the user, 2026-10-04: 'a tighter spiral at the head'):
+    // the bands wind at this share of MU's 18 units round the arrowhead and open to the second
+    // share at the spiral's back end.
+    static constexpr float kBandHeadRadius = 0.35f;
+    static constexpr float kBandTailRadius = 1.4f;
+    // **Ours: a faint cool light on the arrow** ('some minimal light emiter'), off MU's gathering's
+    // (0.2, 0.4, 1.0) (MoveHandlers.cpp:1638), dimmer than the bolts' and fading with the arrow.
+    // Gold since the bands went gold (below), where MU's gathering is blue.
+    static constexpr float kPierceLight[3] = {0.50f, 0.36f, 0.14f};
+    // **Ours: gold tones** (the user, 2026-10-04: 'can we add some gold tones for penetration'):
+    // two of the four bands, the first and the third, are drawn in this gold over MU's white.
+    static constexpr float kBandGold[3] = {1.0f, 0.72f, 0.30f};
+    static constexpr float kPierceLightReach = 1.8f;  // metres on the ground
+    struct Band {
+        bool alive = false;
+        int shot = -1;       // its arrow in shots_, -1 once the arrow is gone
+        bool gold = false;   // one of the two gold bands
+        float turn = 0.0f;   // degrees round the line
+        float due = 0.0f;    // reference frames to the next tail pair
+        float age = 0.0f;    // reference frames
+        int count = 0;       // tails laid, oldest first
+        float axis[kBandTails][3];    // the arrow's line where each pair was laid
+        float radial[kBandTails][3];  // and the unit out from it to the band
+        float across[kBandTails][3];  // level, across the flight: the band's width
+    };
+    static constexpr int kBands = 64;
+    Band bands_[kBands];
+    bgfx::TextureHandle bandSheet_ = BGFX_INVALID_HANDLE;  // flare02
+    void wind(int shot);
+    void lay(Band& band, const Shot& shot, float back);
 
     // ---- MU's numbers (Arrow01.json and the three beside it) ---------------------------------
     static constexpr float kReference = 25.0f;

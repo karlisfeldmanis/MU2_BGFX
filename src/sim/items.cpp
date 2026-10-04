@@ -434,6 +434,10 @@ const PowerRow* powerOf(uint8_t power) {
          "Twisting Slash strikes 50% harder, and has a 25% chance to pull every monster within "
          "six tiles in to you first",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
+        {Power::Volley, "Piercing Volley",
+         "Penetration is loosed as three arrows in a fan, each flying on through everything in "
+         "its line",
+         kElfOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},
@@ -473,8 +477,8 @@ bool elementServes(Element element, Kin kin) {
         case Kin::DarkKnight: return element != Element::None;
         // Fire Ball, Flame, Meteorite, Hellfire; Ice; Poison; Lightning; Twister (wind).
         case Kin::DarkWizard: return element != Element::None;
-        // Frost Arrow's wound.
-        case Kin::FairyElf: return element == Element::Ice;
+        // Frost Arrow's wound; Penetration (wind).
+        case Kin::FairyElf: return element == Element::Ice || element == Element::Wind;
         default: return false;
     }
 }

@@ -409,7 +409,8 @@ inline Element skillElement(int32_t number) {
         case skill::kLightning: return Element::Lightning;
         case skill::kCyclone:
         case skill::kTwister:
-        case skill::kTwistingSlash: return Element::Wind;
+        case skill::kTwistingSlash:
+        case skill::kPenetration: return Element::Wind;  // OpenMU's ElementalType.Wind
         default: return Element::None;
     }
 }

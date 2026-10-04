@@ -1528,8 +1528,8 @@ void testCastLock(const content::Tables& tables) {
                   aqua.spread == sim::Spread::Beam && aqua.reach == 6.0f && aqua.clip == 152 &&
                   aqua.kin == sim::Kin::DarkWizard,
               "Aqua Beam is a no-cooldown beam of eighty damage and a hundred and forty mana");
-        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 1 && sim::kSkills == 34,
-              "and its row is the table's last");
+        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 2 && sim::kSkills == 35,
+              "and its row is the last but Penetration's");
         const int32_t aquaScroll = tables.itemAt(15, 11);
         check(aquaScroll >= 0 &&
                   tables.items[size_t(aquaScroll)].teaches == sim::skill::kAquaBeam &&
@@ -2481,6 +2481,141 @@ void testElfSkills(const content::Tables& tables) {
         check(harold != martin, "Harold and Martin keep shelves of their own");
         check(caren > 0 && bar[0].group == 14 && bar[0].number == 9, "Caren's first is the Ale");
     }
+}
+
+// Penetration (52) and the Piercing Volley (the user, 2026-10-04: 'migrate Penetration, and make
+// legendary strong rune that penetration can be used as multishot'): OpenMU's row as a fan of one
+// lane, its orb, wind, and the Muse Elf's rune that looses three lanes.
+void testPenetration(const content::Tables& tables) {
+    std::printf("penetration\n");
+    const sim::SkillRow* row = sim::skillNumbered(sim::skill::kPenetration);
+    check(row != nullptr, "Penetration has a row");
+    if (row == nullptr) return;
+    check(row->spread == sim::Spread::Fan && row->arrows == 1 && row->reach == 8.0f &&
+              row->mana == 7 && row->needLevel == 130 && row->kin == sim::Kin::FairyElf &&
+              row->families == sim::arms::kMissiles && row->primary(),
+          "one lane of eight tiles, seven mana, level 130, any bow, no cooldown");
+    check(sim::skillElement(sim::skill::kPenetration) == sim::Element::Wind, "and it is wind");
+    check(sim::elementServes(sim::Element::Wind, sim::Kin::FairyElf),
+          "so a Tempest rune may drop for her");
+    const sim::SkillRow* fan = sim::skillNumbered(sim::skill::kSkillshot);
+    checkEqual(sim::lanesOf(*row, 0), 1, "one lane bare");
+    checkEqual(sim::lanesOf(*row, 1), sim::kVolleyLanes, "three with a Piercing Volley");
+    check(fan && sim::lanesOf(*fan, 1) == fan->arrows, "and the Volley leaves Skillshot alone");
+
+    // Its orb, MU's own number.
+    const int orb = tables.itemAt(12, 17);
+    check(orb >= 0, "the Orb of Penetration is cooked");
+    if (orb >= 0) {
+        const content::ItemRow& o = tables.items[size_t(orb)];
+        check(o.teaches == sim::skill::kPenetration && o.needLevel == 130,
+              "and teaches Penetration at level 130");
+    }
+
+    // The rune: the Muse Elf's, in a weapon's socket.
+    const int rune = tables.itemAt(14, 22), bow = tables.itemNamed("Bow04");
+    const int ring = tables.itemAt(13, 8);
+    check(rune >= 0 && bow >= 0 && ring >= 0, "a Rune of Creation, a Battle Bow and a ring");
+    if (rune < 0 || bow < 0 || ring < 0) return;
+    const uint8_t volley = uint8_t(sim::Power::Volley);
+    const sim::PowerRow* power = sim::powerOf(volley);
+    check(power && power->rarity == sim::Rarity::Legendary && power->second,
+          "Piercing Volley is a second class's legendary");
+    sim::Held carried{int32_t(rune), 0, 1};
+    carried.powers[0] = volley;
+    sim::Held socketed{int32_t(bow), 0, 1};
+    socketed.sockets = 1;
+    sim::Held ringed{int32_t(ring), 0, 1};
+    ringed.sockets = 1;
+    check(sim::settable(tables, carried, socketed, sim::Kin::FairyElf, true),
+          "it goes in a Muse Elf's socketed bow");
+    check(!sim::settable(tables, carried, socketed, sim::Kin::FairyElf, false),
+          "not a first-class elf's");
+    check(!sim::settable(tables, carried, socketed, sim::Kin::DarkKnight, true), "nor a knight's");
+    check(!sim::settable(tables, carried, ringed, sim::Kin::FairyElf, true), "nor in a ring");
+
+    // One cast, set up: a tile where a monster stands in sight within six tiles and a second
+    // stands fifteen degrees off it -- in a Volley's side lane and out of the straight one --
+    // as the seed lays them. Penetration at the first: one arrow bare, two with the Volley.
+    sim::Router sight;
+    sight.open(&tables.grid);
+    int startColumn = -1, startRow = -1;
+    uint32_t aimedId = 0;
+    {
+        sim::Realm laid;
+        laid.raise(&tables, 11, 212, 198, sim::Kin::FairyElf, 150);
+        constexpr float kDegrees = 3.14159265f / 180.0f;
+        for (int r = 0; r < tables.grid.size() && aimedId == 0; ++r) {
+            for (int c = 0; c < tables.grid.size() && aimedId == 0; ++c) {
+                if (!tables.grid.open(c, r) || tables.grid.safe(c, r)) continue;
+                const float x = float(c), y = float(r);
+                const auto clear = [&](const sim::Body& one) {
+                    return one.monster() && one.alive() &&
+                           !tables.grid.safe(one.column(), one.row()) &&
+                           sight.sees(x, y, one.x, one.y, content::kWallNoMove);
+                };
+                for (const sim::Body& aimed : laid.bodies()) {
+                    const float d = std::hypot(aimed.x - x, aimed.y - y);
+                    if (!clear(aimed) || d < 2.0f || d > 6.0f) continue;
+                    const float centre = std::atan2(aimed.y - y, aimed.x - x);
+                    bool lone = true, flanked = false;
+                    for (const sim::Body& other : laid.bodies()) {
+                        if (other.id == aimed.id || !other.monster() || !other.alive()) continue;
+                        const float e = std::hypot(other.x - x, other.y - y);
+                        if (e > 7.0f) continue;
+                        float off = std::atan2(other.y - y, other.x - x) - centre;
+                        off = std::remainder(off, 2.0f * 3.14159265f);
+                        const float across = std::fabs(e * std::sin(off));
+                        // Nothing else near the straight lane, so the bare shot strikes one.
+                        if (std::cos(off) > 0.0f && across < 1.5f) lone = false;
+                        if (clear(other) && std::fabs(std::fabs(off) - 15.0f * kDegrees) <
+                                                4.0f * kDegrees && e > 2.5f) {
+                            flanked = true;
+                        }
+                    }
+                    if (lone && flanked) {
+                        startColumn = c;
+                        startRow = r;
+                        aimedId = aimed.id;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    check(aimedId != 0, "a spider in line and another fifteen degrees off it");
+    if (aimedId == 0) return;
+    const auto cast = [&](bool withVolley, int* volleys) {
+        sim::Realm realm;
+        realm.raise(&tables, 11, startColumn, startRow, sim::Kin::FairyElf, 150);
+        promote(realm);
+        const uint8_t powers[3] = {uint8_t(withVolley ? volley : 0), 0, 0};
+        const int arrows = tables.itemAt(4, 15);
+        const int held = realm.give(bow, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        const int quivered = realm.give(arrows, sim::kWeaponLeft, 0, 255);
+        check(held == sim::kWeaponRight && quivered == sim::kWeaponLeft, "she holds a bow and arrows");
+        check(realm.learn(sim::skill::kPenetration), "and learns Penetration");
+        *volleys = realm.hero().excel.volleys;
+        const int before = realm.satchel()[sim::kWeaponLeft].durability;
+        realm.invoke(sim::skill::kPenetration, aimedId);
+        for (int tick = 0; tick < 80; ++tick) {
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who == realm.hero().id && h.what == sim::What::Loosed &&
+                    h.a == sim::skill::kPenetration) {
+                    return before - realm.satchel()[sim::kWeaponLeft].durability;
+                }
+            }
+        }
+        return -1;
+    };
+    int bareVolleys = 0, fannedVolleys = 0;
+    const int plain = cast(false, &bareVolleys), fanned = cast(true, &fannedVolleys);
+    std::printf("  from (%d, %d) at #%u: %d arrows bare, %d with a Piercing Volley\n", startColumn,
+                startRow, aimedId, plain, fanned);
+    check(bareVolleys == 0 && fannedVolleys == 1, "the Volley in her bow is counted");
+    check(plain == 1, "Penetration strikes the body in its line, an arrow paid for it");
+    check(fanned >= 2, "and the Volley's side lane strikes the one beside it");
 }
 
 // Sprint 15, step 5: her summon. Raised beside her off the breed's row and scaled by her energy;
@@ -8424,6 +8559,7 @@ int main() {
     testArchery(tables);
     testWearingTakesDown(tables);
     testElfSkills(tables);
+    testPenetration(tables);
     testSummons(tables);
     testSummonAggro(tables);
     testSummonKeepsUp(tables);

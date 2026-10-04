@@ -390,6 +390,11 @@ EFFECTS = {
     # one on the tip of its tail in its own colour - see Entry.Glints and ChainScorpion01.
     "light": "effects/light/flare01.png",
 
+    # BITMAP_FLARE+1, which ZzzOpenData loads from Effect/Flare02.jpg with GL_REPEAT
+    # (ZzzOpenData.cpp:5320): a white streak across the middle of 64 square. The four bands
+    # MODEL_PIERCING winds round a Penetration arrow (ZzzEffect.cpp:1506-1543). See fx/arrow.h.
+    "pierce": "effects/pierce/flare02.png",
+
     # What comes off something that has just been hit. See Wounds.
     #
     # The client throws blood at every landed blow and strikes sparks only off a sword skill,

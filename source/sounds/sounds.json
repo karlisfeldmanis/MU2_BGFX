@@ -369,6 +369,13 @@
       "from": "SOUND_BOW01, which ZzzOpenData loads from Data\\Sound\\eBow.wav. Played when a character whose left hand holds a bow starts a swing.",
       "note": "The hand matters and is not a detail. GetEquipedBowType tests IsBowModel against Weapon[1] and IsCrossbowModel against Weapon[0], which is the same split OpenMU's item rows carry - the bows are given slot 1 and the crossbows slot 0."
     },
+    "player_piercing": {
+      "files": [
+        "ePiercing.wav"
+      ],
+      "from": "SOUND_PIERCING, which ZzzOpenData loads from Data\\Sound\\ePiercing.wav (ZzzOpenData.cpp:4829). ZzzCharacter plays it for AT_SKILL_PENETRATION on the draw's third attack time, with the BITMAP_GATHERING that gathers before her bow (ZzzCharacter.cpp:2774-2779); her string follows at the release.",
+      "note": "Penetration's row sound (sim/skills.cpp), heard as the cast starts."
+    },
     "player_crossbow": {
       "files": [
         "ecrossbow.wav"

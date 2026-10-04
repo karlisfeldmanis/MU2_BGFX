@@ -663,6 +663,28 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 152, .sound = "spell_flash", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 80,
      .flies = 1000.0f, .release = kAquaThrow},
+    // ---- Penetration 52, the elf's, after Aqua Beam for the same reason -------------------------
+    //
+    // OpenMU's row (VersionSeasonSix/SkillsInitializer.cs:171-172): seventy damage, distance six,
+    // seven mana, level 130, wind, an area that strikes by itself down a frustum 1.1 to 1.2 tiles
+    // wide and eight long -- one arrow that flies on through everything in its line. MuMain's:
+    // thrown off any bow (`GetEquipedBowType`, ClassAttack.cpp:128-152), one arrow of the bow's own
+    // model with MODEL_PIERCING's ribbons wound round it and `Kind = 1`, which passes through what
+    // it strikes (ZzzEffect.cpp:1755-1760). Taught by the Orb of Penetration (12, 17), level 130.
+    //
+    // Here it is Skillshot's fan with one lane, thrown at a body up to eight tiles off and flying
+    // sixteen through the screen (`kPierceTiles`, skills.h), each body in it struck once and
+    // costing an arrow. **Ours:** half again of her shot where MU adds its seventy to the arrow
+    // (about that, on a level-130 elf's band); no cooldown, as MU has none and Skillshot has none;
+    // and a Piercing Volley in her bow looses three lanes (`lanesOf`, sim/items.h). Its clip is her
+    // bow's 50 or 51, as Skillshot's is; SOUND_PIERCING is MU's, at the draw (ZzzCharacter.cpp:
+    // 2774-2779). Wind (realm_fight.cpp `skillElement`), so Tempest raises it.
+    {.number = skill::kPenetration, .name = "Penetration", .mana = 7, .reach = 8.0f,
+     .force = 1.5f, .spread = Spread::Fan,
+     .tells = "An arrow loosed at a body up to eight tiles off, flying on through everything in "
+              "its line. One arrow is spent for every body struck.",
+     .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
+     .needLevel = 130, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 1},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
