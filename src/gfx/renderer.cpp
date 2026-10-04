@@ -191,13 +191,18 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
         for (const content::Part& part : mesh.parts()) {
             if (int(part.material) == batch.hiddenMaterial) continue;
             const content::Material& material = mesh.materials()[part.material];
+            // Soft alpha (content::Material::softAlpha): out of the opaque prepass and shade,
+            // and alone in its own blended pass after them. Every other view takes it as the
+            // plain cut-out it also is.
+            if (softSelect_ == SoftSelect::Skip && material.softAlpha) continue;
+            if (softSelect_ == SoftSelect::Only && !material.softAlpha) continue;
             // A glow is drawn in its own pass and in no other. See the header. Except that a
             // glow that casts (Material::glowShadow) is in the sun's split as well, and in the
             // hover ring's mask, solid: the Ice Monster's body is that glow, and without it the
             // mask held only its few solid parts and the ring cut across its body.
             const bool casting = material.glowShadow > 0.0f && view == ViewShadow;
-            const bool ringed = material.glowShadow > 0.0f && view >= ViewOutlineMask &&
-                                view < ViewOutlineMask + kOutlineRings;
+            const bool ringView = view >= ViewOutlineMask && view < ViewOutlineMask + kOutlineRings;
+            const bool ringed = material.glowShadow > 0.0f && ringView;
             if (material.glow != glowPass && !casting && !ringed) continue;
             // Nor grass, flowers or leaves: hundreds of small cutout draws that, at the blur a
             // reflection is read at, are the green the ground under them already gives.
@@ -256,7 +261,13 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                                             (material.maskHeld ? 2.0f : 0.0f) +
                                                             (material.waterFrames ? 4.0f : 0.0f)
                                              : (material.twoSided ? 1.0f : 0.0f) +
-                                                 (material.calibrated ? 2.0f : 0.0f),
+                                                 (material.calibrated ? 2.0f : 0.0f) +
+                                                 // Not in the hover ring's mask, which
+                                                 // draws with fs_shadow: there a soft part's
+                                                 // dither left holes the ring traced as
+                                                 // dots (the user, 2026-10-04: 'tiiny yellow
+                                                 // dots ono hover outline'). The plain cut.
+                                                 (material.softAlpha && !ringView ? 4.0f : 0.0f),
                                              glowPass ? glowLevel
                                              // In a depth-only pass z is how much of the
                                              // shadow is thinned away by fs_shadow's dither:
@@ -820,8 +831,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setUniform(uMaterial_, noCutout);
             if (ground) submitGround(ViewPrepass, groundPrepassProgram_, *ground, prepassState, false);
             if (total > 0) {
+                softSelect_ = SoftSelect::Skip;
                 submitBatches(ViewPrepass, prepassProgram_, skinnedPrepassProgram_, batches_, idb,
                               prepassState, false);
+                softSelect_ = SoftSelect::All;
             }
 
             // --- view 4's shared uniforms -------------------------------------------
@@ -982,8 +995,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                         (msaa_ > 1 ? BGFX_STATE_BLEND_ALPHA_TO_COVERAGE : 0);
             if (grass) submitGrass(ViewShade, grassShadeProgram_, *grass, grassState);
             if (total > 0) {
+                softSelect_ = SoftSelect::Skip;
                 submitBatches(ViewShade, shadeProgram_, skinnedShadeProgram_, batches_, idb,
                               shadeState, true);
+                softSelect_ = SoftSelect::All;
             }
 
             // --- view 5, before the glow: whatever is only part there ------------------
@@ -1008,6 +1023,22 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                          BGFX_STATE_BLEND_ALPHA;
                 submitBatches(ViewTransparent, shadeProgram_, skinnedShadeProgram_, fadeBatches_,
                               idb, blended, true);
+            }
+            // And the solid figures' soft-alpha parts, the same two passes: MU's alpha test and
+            // blend with the depth written (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393). The
+            // depth pass cuts below the material's threshold, so the nearest kept surface wins,
+            // and the shade is blended by the sheet's own alpha (fs_shade, u_material.y's 4) over
+            // the finished picture: the Bahamut's fin membrane, seen through as MU draws it.
+            if (total > 0 && bgfx::isValid(prepassProgram_)) {
+                bgfx::setViewMode(ViewTransparent, bgfx::ViewMode::Sequential);
+                softSelect_ = SoftSelect::Only;
+                submitBatches(ViewTransparent, prepassProgram_, skinnedPrepassProgram_, batches_,
+                              idb, BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS, false);
+                submitBatches(ViewTransparent, shadeProgram_, skinnedShadeProgram_, batches_, idb,
+                              BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_EQUAL |
+                                  BGFX_STATE_BLEND_ALPHA,
+                              true);
+                softSelect_ = SoftSelect::All;
             }
 
             // --- view 5, first half: MU's BlendMeshes --------------------------------

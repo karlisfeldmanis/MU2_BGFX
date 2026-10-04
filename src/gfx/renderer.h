@@ -509,6 +509,10 @@ private:
     // `glowPass` picks which parts: false draws every part but the glows, which is what the
     // shadow, the prepass and the shade want -- a glow casts nothing, occludes nothing and is
     // not lit -- and true draws the glows alone, into the transparent view.
+    // Which parts submitBatches takes by content::Material::softAlpha: all, all but those, or
+    // those alone (their own blended pass). Set around a call and put back to All.
+    enum class SoftSelect : uint8_t { All, Skip, Only };
+    SoftSelect softSelect_ = SoftSelect::All;
     void submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                        bgfx::ProgramHandle skinnedProgram, const std::vector<Batch>& batches,
                        const bgfx::InstanceDataBuffer& idb, uint64_t state, bool bindMaterial,

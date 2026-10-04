@@ -141,7 +141,8 @@ def material_for(obj, source: Path | None, interpolation: str, slot: int = 0,
 
 def carry_alpha(
         trees, target, size: int,
-        cutout: "set[str] | None" = None, keep: "set[str] | None" = None) -> None:
+        cutout: "set[str] | None" = None, keep: "set[str] | None" = None,
+        linear: bool = False) -> None:
     """Bakes the sheet's alpha into the albedo's, in a second pass.
 
     MU cuts shapes out with alpha rather than modelling them. The Plate helm's plume is two
@@ -211,6 +212,15 @@ def carry_alpha(
         return
 
     mask = bpy.data.images.new("alpha", width=size, height=size, alpha=False)
+    # A new byte image is tagged sRGB, and `pixels` reads back what it stores: the emitted alpha
+    # encoded, so 0.2 comes back 0.48 and 0.5 comes back 0.74. A hard mask (0 or 1) passes
+    # untouched, which is why nothing showed it until a sheet's alpha was an amount: the
+    # Valkyrie's fins, which fade to nothing along their trailing edge, baked nearly solid (the
+    # user, 2026-10-04: 'something wrong with wings'). `linear` keeps the alpha as painted. Asked
+    # for by an asset that blends its alpha (`soft_alpha`), so every other cut-out's edge, tuned
+    # against the lifted mask, stays where it was.
+    if linear:
+        mask.colorspace_settings.name = "Non-Color"
 
     for tree, texture, emission, written, name in sources:
         for link in list(emission.inputs["Color"].links):
@@ -356,7 +366,7 @@ def main() -> None:
 
     bpy.ops.object.bake(type="EMIT")
 
-    carry_alpha(trees, target, size, cutout, keep)
+    carry_alpha(trees, target, size, cutout, keep, "--linear-alpha" in argv[4:])
 
     destination.parent.mkdir(parents=True, exist_ok=True)
     target.filepath_raw = str(destination)

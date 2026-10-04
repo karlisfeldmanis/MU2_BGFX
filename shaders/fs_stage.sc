@@ -54,8 +54,11 @@ void main()
 	// The camera is orthographic and looks down -z, so every pixel looks the same way.
 	vec3 v = vec3(0.0, 0.0, 1.0);
 	vec3 ng = normalize(v_normal);
-	float calibrated = step(1.5, u_material.y);
-	float twoSided = u_material.y - 2.0 * calibrated;
+	// y: 1 two-sided, 2 calibrated, 4 soft alpha (content::Material::softAlpha).
+	float soft = step(3.5, u_material.y);
+	float flagsLow = u_material.y - 4.0 * soft;
+	float calibrated = step(1.5, flagsLow);
+	float twoSided = flagsLow - 2.0 * calibrated;
 	if (twoSided > 0.5 && dot(ng, v) < 0.0) ng = -ng;
 
 	vec3 t = normalize(v_tangent.xyz - ng * dot(ng, v_tangent.xyz));

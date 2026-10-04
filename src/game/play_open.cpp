@@ -635,6 +635,10 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             }
             // The Ice Monster keeps its death clip and shatters at its end (sandOnDeath).
             if (look->name == kShatteringFigure) one.shatters = true;
+            // The Great Bahamut's Level 1 trail is the dragon's own dust, one BITMAP_SMOKE + 1
+            // round it every fourth reference frame while it lives (ZzzCharacter.cpp:6169-6176),
+            // and no fire: it has no head bone named for one, so the bite's spark never comes.
+            if (look->name == kGreatBahamutFigure) one.breathes = true;
             if (look->name == kBreathingFigure && look->skeletonMesh) {
                 one.breathes = true;
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
@@ -673,14 +677,20 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.emberEvery = look->name == kDeathKnightFigure ? kKnightEmberEveryFrames
                                                               : kEmberEveryFrames;
             one.handBones[0] = one.handBones[1] = -1;
+            one.beams = look->name == kVeparFigure        ? Drawn::Beams::Blur
+                        : look->name == kLizardKingFigure ? Drawn::Beams::Thunder
+                                                          : Drawn::Beams::Laser;
             if (look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
                     if (look->name == kDeathKnightFigure && bones[b].name == "Bip01 Pelvis") {
                         one.emberBone = int(b);
                     }
-                    if (look->name == kDevilFigure && bones[b].name == "knife_gdf") one.handBones[0] = int(b);
-                    if (look->name == kDevilFigure && bones[b].name == "hand_bofdgne01") one.handBones[1] = int(b);
+                    // The Vepar's link bones carry the Devil's names (Monster35, 30 and 39).
+                    const bool beams = look->name == kDevilFigure || look->name == kVeparFigure ||
+                                       look->name == kLizardKingFigure;
+                    if (beams && bones[b].name == "knife_gdf") one.handBones[0] = int(b);
+                    if (beams && bones[b].name == "hand_bofdgne01") one.handBones[1] = int(b);
                 }
             }
             one.auraBone = -1;

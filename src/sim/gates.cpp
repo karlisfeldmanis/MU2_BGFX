@@ -54,8 +54,8 @@ constexpr ExitGate kExits[] = {
 constexpr EnterGate kEnters[] = {
     // Every level here is MU's doubled, ours (the user, 2026-10-04: 'also increase other gate
     // requirments because we have fast paced exp gains', after Atlans's 60 went to 120): the
-    // experience rate is 100x (sim kExperienceRate). The free ways out stay free, and Atlans's
-    // way back keeps 60 so nobody is shut in.
+    // experience rate is 100x (sim kExperienceRate). The free ways out stay free. Atlans's way
+    // in is 70 and its way back keeps 60, below.
     {23, 0, {213, 246, 217, 247}, 20, 24},  // Lorencia to Noria
     {25, 3, {148, 3, 155, 4}, 20, 26},      // Noria to Lorencia
     // Gates.cs:193-194. Lorencia's asks level 15; the way back asks nothing.
@@ -64,9 +64,10 @@ constexpr EnterGate kEnters[] = {
     // Gates.cs:205-206: Noria's far south-east corner to Atlans, and the basin's corner back,
     // both level 60 in every source (OM 075, WebZen's official gate.txt; docs/atlans-port.md
     // A §2.2). The user, 2026-10-04: 'lets migrate noria -> atlans gates and add lvl
-    // requirments for gates'. Then 'increase lvl requirment to 120': the way in asks 120, ours;
-    // the way out keeps MU's 60, so nobody under 120 who is in Atlans is shut in.
-    {45, 3, {242, 240, 245, 243}, 120, 46}, // Noria to Atlans
+    // requirments for gates'. Then 'increase lvl requirment to 120', and back down to 70 once
+    // the monsters' 43-74 showed 120 made the map trivial ('gate back toward 60-70'): the way
+    // in asks 70, ours, Season Six's Atlans warp level; the way out keeps MU's 60.
+    {45, 3, {242, 240, 245, 243}, 70, 46},  // Noria to Atlans
     {47, 7, {9, 9, 11, 12}, 60, 48},        // Atlans to Noria
     // Gates.cs:197, Devias's far corner under the Lost Tower's beacon, level 40, to exit gate 29.
     {28, 2, {2, 248, 3, 249}, 80, 29},      // Devias to the Lost Tower

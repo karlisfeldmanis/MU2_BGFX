@@ -268,7 +268,11 @@ void Play::exhale(float seconds) {
             one.dustOwed -= 1.0f;
             const float feet[3] = {one.crown[0], ground_->heightAt(one.crown[0], one.crown[2]),
                                    one.crown[2]};
-            breath_.puff(feet, along, scale);
+            // The Great Bahamut's trail broader and fainter than the dragon's dust (the user,
+            // 2026-10-04: 'that smoke is to small and to vissible'); ours.
+            const bool great = look->name == kGreatBahamutFigure;
+            breath_.puff(feet, along, scale, great ? kGreatBahamutPuffGrow : 1.0f,
+                         great ? kGreatBahamutPuffAlpha : 1.0f);
         }
 
         // rand_fps_check(1) inside the bite's first four keys: a spark every reference frame.
@@ -410,6 +414,10 @@ void Play::shade(float seconds) {
     }
     // The Devil's beams, a hand each to the middle of whoever it swung at, while they last.
     for (IceCast& cast : laserCasts_) {
+        if (cast.delay > 0.0f) {
+            cast.delay -= seconds;
+            continue;
+        }
         cast.wait -= seconds;
         const Drawn* devil = drawnOf(cast.caster);
         const Drawn* target = drawnOf(cast.target);
@@ -420,9 +428,58 @@ void Play::shade(float seconds) {
         // now and then an ember off the hand (kDevilBeamWander, kDevilFireEveryFrames).
         const bool fire = (wanderDice_ = wanderDice_ * 1664525u + 1013904223u) % 1000 <
                           uint32_t(1000.0f * std::min(1.0f, seconds * 25.0f / kDevilFireEveryFrames));
+        // The Lizard King's: off the head of the staff it holds, not its hands (the user,
+        // 2026-10-04: 'lughtiing has to happen from lizrard staff not hands') -- ours; MU lets
+        // them off its two link bones. One broad bolt to the middle of the body struck and three
+        // thin ones wandering a little round it, the broad and the thin MU's Scale 50 and 10.
+        // Into the middle of the body, as an arrow is aimed (volleyShot): half its own height
+        // under its crown, so they meet the chest of whoever it is ('lughtinig has to connect
+        // better with character body').
+        if (devil->beams == Drawn::Beams::Thunder) {
+            float head[3], sparks[3], shaft[10][3];
+            StaffFire::points(head, sparks, shaft);
+            float from[3];
+            if (!devil->figure.heldPoint(kLizardStaff, head, from)) continue;
+            const FigureBody* aim = target->figure.body();
+            const float tall = aim ? aim->height * aim->scale : 1.4f;
+            const float chest[3] = {target->crown[0], target->crown[1] - tall * 0.5f,
+                                    target->crown[2]};
+            // And it clings to the staff (the user, 2026-10-04: 'lighting has to stick on lizard
+            // weapon'): two thin bolts crackling up the shaft from the grip to the head, each
+            // frame a little off the line, so the weapon is seen to carry the charge it lets go.
+            const float grip[3] = {0.0f, 0.0f, kLizardShaftFrom};
+            float low[3];
+            if (devil->figure.heldPoint(kLizardStaff, grip, low)) {
+                for (int arc = 0; arc < 2; ++arc) {
+                    float mid[3];
+                    for (int i = 0; i < 3; ++i) {
+                        wanderDice_ = wanderDice_ * 1664525u + 1013904223u;
+                        mid[i] = 0.5f * (low[i] + from[i]) +
+                                 (float((wanderDice_ >> 8) % 1000) / 500.0f - 1.0f) * kLizardShaftWander;
+                    }
+                    shadowStars_.thunderBeam(low, mid, kLizardBoltHalf[1], kLizardBoltColour);
+                    shadowStars_.thunderBeam(mid, from, kLizardBoltHalf[1], kLizardBoltColour);
+                }
+            }
+            for (int bolt = 0; bolt < 4; ++bolt) {
+                float end[3] = {chest[0], chest[1], chest[2]};
+                for (int i = 0; bolt > 0 && i < 3; ++i) {
+                    wanderDice_ = wanderDice_ * 1664525u + 1013904223u;
+                    end[i] += (float((wanderDice_ >> 8) % 1000) / 500.0f - 1.0f) * kLizardBoltWander;
+                }
+                shadowStars_.thunderBeam(from, end, kLizardBoltHalf[bolt == 0 ? 0 : 1],
+                                         kLizardBoltColour);
+            }
+            continue;
+        }
         for (const int hand : devil->handBones) {
             float from[3];
             if (hand < 0 || !devil->figure.pointOn(hand, origin, from)) continue;
+            // The Vepar's: its two blurred joints a hand, both straight to the target.
+            if (devil->beams == Drawn::Beams::Blur) {
+                for (const float half : kVeparBeamHalf) shadowStars_.blurBeam(from, to, half);
+                continue;
+            }
             shadowStars_.beam(from, to);
             float off[3] = {to[0], to[1], to[2]};
             for (int i = 0; i < 3; ++i) {
@@ -1366,8 +1423,16 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         float place[3] = {1.0f, 1.0f, 1.0f};
         const bool placeLit = ground_ != nullptr && ground_->figureLight() > 0.0f && inRealm != nullptr;
         if (placeLit) ground_->figureLightAt(inRealm->x, inRealm->y, place);
+        // And MU's Level 1, which SelectCharacter lights at -0.4 where an ordinary monster takes
+        // +0.2 (Selection.cpp:101-107): the Great Bahamut, a near-black fish beside the red-brown
+        // Bahamut (the user, 2026-10-04: 'i think Great Bahamut has some darker tint').
+        const FigureBody* lookNow = one.figure.body();
+        const bool darkLevel = lookNow != nullptr && lookNow->name == kGreatBahamutFigure;
+        if (darkLevel) {
+            for (float& k : place) k *= kLevelOneLight;
+        }
         const auto tint = [&] {
-            if (placeLit) {
+            if (placeLit || darkLevel) {
                 for (size_t i = tintFrom; i < out.size(); ++i) {
                     for (int k = 0; k < 3; ++k) out[i].light[k] *= place[k];
                 }

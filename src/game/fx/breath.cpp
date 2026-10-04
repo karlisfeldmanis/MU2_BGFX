@@ -96,7 +96,8 @@ void Breath::spark(const float at[3], const float along[2], float scale) {
     sparks_.push_back(one);
 }
 
-void Breath::puff(const float feet[3], const float along[2], float scale) {
+void Breath::puff(const float feet[3], const float along[2], float scale, float grow,
+                  float alpha) {
     if (!open_ || !bgfx::isValid(smoke_)) return;
     if (puffs_.size() >= kPuffs) {
         ++refused_;
@@ -110,8 +111,9 @@ void Breath::puff(const float feet[3], const float along[2], float scale) {
     const float speed = 3.0f * kUnit * scale;
     one.velocity[0] = along[0] * speed;
     one.velocity[1] = along[1] * speed;
-    one.scale = float(roll() % 32 + 32) * 0.01f;
+    one.scale = float(roll() % 32 + 32) * 0.01f * grow;
     one.size = scale;
+    one.alpha = alpha;
     puffs_.push_back(one);
 }
 

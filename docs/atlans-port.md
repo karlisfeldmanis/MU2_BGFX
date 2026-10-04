@@ -128,10 +128,10 @@ It coils round the wrecks, about 56,56 and along the court's west edge. Under th
 
 **The gates (2026-10-04, the user: 'lets migrate noria -> atlans gates and add lvl requirments for gates with speach buble ho you did for other gates').** Step 2, in src/sim/gates.cpp:
 - Exits 48 (Noria, 240-241 x 240-243, North), 46 (Atlans, 14-15 x 12-13, South) and 49 (the basin, the spawn gate: death and the Town Portal).
-- Enters 45 (Noria, 242-245 x 240-243, to 46) and 47 (Atlans, 9-11 x 9-12, level 60, to 48), from Gates.cs:135, 148-149 and 205-206. Gate 45 asks **120**, ours (the user, 2026-10-04: 'increase lvl requirment to 120'); MU's is 60. The way out keeps 60, so nobody under 120 already in Atlans is shut in.
+- Enters 45 (Noria, 242-245 x 240-243, to 46) and 47 (Atlans, 9-11 x 9-12, level 60, to 48), from Gates.cs:135, 148-149 and 205-206. Gate 45 asks **70**, ours; MU's is 60. It was 120 for a while (the user, 2026-10-04: 'increase lvl requirment to 120'), until the monsters' levels, 43-74, showed 120 made the map trivial: 'gate back toward 60-70'. 70 is Season Six's Atlans warp level. The way out keeps 60.
 - A hero under level 60 is Barred with 60, and the play says MU's 'Only characters of level 60 or higher can enter.' over him, as every gate does (play.cpp).
 - index.py `GATE_BOXES_BY_MAP[3]` keeps Noria's two boxes open; Noria's and Atlans's tables are recooked.
-- sim_test `testAtlansGates`: a level 120 knight goes in and a level 60 one comes out, each onto the right exit box; a level 119 one is refused at 45 with 120, and a level 59 one at 47 with 60. 3838 checks, the three old failures.
+- sim_test `testAtlansGates`: a level 70 knight goes in and a level 60 one comes out, each onto the right exit box; a level 69 one is refused at 45 with 70, and a level 59 one at 47 with 60. 3838 checks, the three old failures.
 - Also `testAtlansPerches`. The 11 basin tiles MuMain's grid closes (12-14 x 17-18, 13-14 x 21-22, 15,23) are opened as WebZen's official grid has them (terrain.py `OPEN_BY_MAP[7]`), so the lean box at 15,23 leans; the one at 23,26 is NoMove in every grid and is refused, as MU's is.
 
 **Every gate's level doubled (the user, 2026-10-04: 'also increase other gate requirments because we have fast paced exp gains').** Ours, in src/sim/gates.cpp's kEnters, after Atlans's 60 went to 120:

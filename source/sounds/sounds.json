@@ -1530,6 +1530,132 @@
       ],
       "from": "Sounds[4], slot 4 -- 214 BULLDIE. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Blood Castle's Chief Skeleton Warrior); offsets from SOUND_MONSTER_BULL1 = 210."
     },
+    "bahamut_move": {
+      "files": [
+        "mBahamut1.wav"
+      ],
+      "from": "Sounds[rand()%2], both slots 130 -- 340 BAHAMUT1, Data\\Sound\\mBahamut1.wav. SetMonsterSound(..., 130, 130, 131, 131, 130) in ZzzOpenData.cpp:3639-3643 (MONSTER_MODEL_BAHAMUT, Atlans's Bahamut); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "bahamut_attack": {
+      "files": [
+        "mYeti1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both slots 131 -- 341, SOUND_MONSTER_YETI1___ (DSPlaySound.h:283), which nothing loads: the arm loads mYeti1.wav into SOUND_MONSTER_YETI1 (278) instead, so MuMain's Bahamut swings silent. mYeti1 is what the arm means. ZzzOpenData.cpp:3639-3643."
+    },
+    "bahamut_shock": {
+      "files": [
+        "mYeti1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch; mYeti1 as bahamut_attack. ZzzOpenData.cpp:3639-3643."
+    },
+    "bahamut_die": {
+      "files": [
+        "mBahamut1.wav"
+      ],
+      "from": "Sounds[4], slot 130 -- 340 BAHAMUT1. SetMonsterSound(..., 130, 130, 131, 131, 130) in ZzzOpenData.cpp:3639-3643 (MONSTER_MODEL_BAHAMUT, Atlans's Bahamut)."
+    },
+    "greatbahamut_move": {
+      "files": [
+        "mBahamut1.wav"
+      ],
+      "from": "The Bahamut's model's, as bahamut_move: 340 BAHAMUT1. ZzzOpenData.cpp:3639-3643 (the Great Bahamut is MONSTER_MODEL_BAHAMUT)."
+    },
+    "greatbahamut_attack": {
+      "files": [
+        "mYeti1.wav"
+      ],
+      "from": "As bahamut_attack: mYeti1, the file the arm loads for the silent 341. ZzzOpenData.cpp:3639-3643."
+    },
+    "greatbahamut_shock": {
+      "files": [
+        "mYeti1.wav"
+      ],
+      "from": "As bahamut_shock."
+    },
+    "greatbahamut_die": {
+      "files": [
+        "mBahamut1.wav"
+      ],
+      "from": "As bahamut_die: 340 BAHAMUT1."
+    },
+    "vepar_move": {
+      "files": [
+        "mBepar1.wav",
+        "mBepar2.wav"
+      ],
+      "from": "Sounds[rand()%2]: 132 -- 342 BEPAR1 (mBepar1.wav) and 133 -- 343 BEPAR2 (mBepar2.wav). SetMonsterSound(..., 132, 133, 104, 104, 133) in ZzzOpenData.cpp:3644-3652 (MONSTER_MODEL_VEPAR, Atlans's Vepar); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "vepar_attack": {
+      "files": [
+        "sEvil.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] are both 104 -- 314 SOUND_MONSTER_GOLEMDIE, which only the Golem's model loads, so in Atlans the Vepar's swing sounds only the SOUND_EVIL its attack arm plays (ZzzCharacter.cpp:2183-2188, c->CheckAttackTime(1)), as the Devil's.",
+      "gain_db": 6.0,
+      "gain_from": "spell_evil's: sEvil is quiet against the other attacks."
+    },
+    "vepar_shock": {
+      "files": [
+        "mBalrog1.wav"
+      ],
+      "from": "The flinch is the attack pair again, the silent 314; mBalrog1.wav is the one sound the Vepar's arm loads that no slot names (ZzzOpenData.cpp:3647), so it is given the flinch. Ours."
+    },
+    "vepar_die": {
+      "files": [
+        "mBepar2.wav"
+      ],
+      "from": "Sounds[4], 133 -- 343 BEPAR2. SetMonsterSound(..., 132, 133, 104, 104, 133) in ZzzOpenData.cpp:3644-3652."
+    },
+    "valkyrie_move": {
+      "files": [
+        "mValkyrie1.wav"
+      ],
+      "from": "Sounds[rand()%2], both 135 -- 345 VALKYRIE1, Data\\Sound\\mValkyrie1.wav. SetMonsterSound(..., 135, 135, 136, 136, 137) in ZzzOpenData.cpp:3653-3659 (MONSTER_MODEL_VALKYRIE, Atlans's Valkyrie); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "valkyrie_attack": {
+      "files": [
+        "mBaliAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both 136 -- 346, SOUND_MONSTER_BALIATTACK2_ (DSPlaySound.h:288), which nothing loads: the arm loads mBaliAttack2.wav into SOUND_MONSTER_BALIATTACK2 (339) instead, so MuMain's Valkyrie shoots silent. mBaliAttack2 is what the arm means. ZzzOpenData.cpp:3653-3659."
+    },
+    "valkyrie_shock": {
+      "files": [
+        "mBaliAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch; mBaliAttack2 as valkyrie_attack."
+    },
+    "valkyrie_die": {
+      "files": [
+        "mValkyrieDie.wav"
+      ],
+      "from": "Sounds[4], 137 -- 347 VALKYRIEDIE, Data\\Sound\\mValkyrieDie.wav. SetMonsterSound(..., 135, 135, 136, 136, 137) in ZzzOpenData.cpp:3653-3659."
+    },
+    "lizardking_move": {
+      "files": [
+        "mLizardKing1.wav",
+        "mLizardKing2.wav"
+      ],
+      "from": "Sounds[rand()%2]: 138 -- 348 LIZARDKING1 and 139 -- 349 LIZARDKING2. SetMonsterSound(..., 138, 139, 138, 139, 140) in ZzzOpenData.cpp:3660-3669 (MONSTER_MODEL_LIZARD, Atlans's Lizard King); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "lizardking_attack": {
+      "files": [
+        "mLizardKing1.wav",
+        "mLizardKing2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]: the same pair, 138 and 139. ZzzOpenData.cpp:3660-3669."
+    },
+    "lizardking_shock": {
+      "files": [
+        "mLizardKing1.wav",
+        "mLizardKing2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch."
+    },
+    "lizardking_die": {
+      "files": [
+        "mGorgonDie.wav"
+      ],
+      "from": "Sounds[4], 140 -- 350 SOUND_MONSTER_GORGONDIE_ (DSPlaySound.h:292), which nothing loads: the arm loads mGorgonDie.wav into SOUND_MONSTER_GORGONDIE instead, so MuMain's Lizard King dies silent. mGorgonDie is what the arm means. ZzzOpenData.cpp:3660-3669."
+    },
     "chiefskeletonarcher_attack": {
       "files": [
         "mOrcArcherAttack1.wav"

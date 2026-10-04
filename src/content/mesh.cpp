@@ -407,6 +407,7 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.jitter = from.jitter;
         out.itemGlow = from.itemGlow;
         out.slowPulse = (from.scrollMode & 8) != 0;
+        out.softAlpha = !from.glow && from.cutout >= 0.0f && (from.scrollMode & 16) != 0;
         out.glowShadow = from.glowShadow;
         auto texture = [&](const std::string& path, TextureRole role) {
             bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;

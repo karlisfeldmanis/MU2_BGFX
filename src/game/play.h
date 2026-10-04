@@ -659,6 +659,11 @@ private:
         float emberEvery = 0.0f;   // reference frames between embers
         // The Devil's two hands, its beams' ends; -1 on everything else.
         int handBones[2] = {-1, -1};
+        // What its beams are: the Devil's laser, the Vepar's soft blur (kVeparFigure, two a
+        // hand straight to the target) or the Lizard King's lightning (kLizardKingFigure, three
+        // a hand wandering round it). The last two throw no embers.
+        enum class Beams : uint8_t { Laser, Blur, Thunder };
+        Beams beams = Beams::Laser;
         // MU's SwordCount, incremented on each swing. `swordCount % 3 == 0` plays Attack 1,
         // the rest Attack 2 — ZzzCharacter.cpp:1269-1276. The drawing's own counter, not the
         // sim's: it draws from no seeded state.
@@ -827,6 +832,8 @@ private:
     struct IceCast {
         uint32_t caster = 0, target = 0;
         float wait = 0.0f;
+        // Seconds before it starts at all: a Lizard King's bolts wait for its swing (laserCasts_).
+        float delay = 0.0f;
     };
     std::vector<IceCast> iceCasts_;
     // An Ice Queen's Power Wave (OpenMU's AttackSkill 11): at the same fifteenth reference frame

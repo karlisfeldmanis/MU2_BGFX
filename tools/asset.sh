@@ -307,6 +307,15 @@ import json,sys
 d=json.load(open(sys.argv[1]))
 print(' '.join(f'--keepalpha={g}' for g in d.get('cutout_alpha', [])))" "$asset" 2>/dev/null || true)"
 
+  # And whether its alpha is baked as painted rather than through the mask image's sRGB: an
+  # asset that blends its alpha (`soft_alpha`, the Bahamut's and the Valkyrie's fins). See
+  # carry_alpha.
+  local linearalpha
+  linearalpha="$(python3 -c "
+import json,sys
+d=json.load(open(sys.argv[1]))
+print('--linear-alpha' if d.get('soft_alpha') else '')" "$asset" 2>/dev/null || true)"
+
   # And which of them MU wraps round the model rather than laying out flat. See
   # transfer_albedo: the default is to clip outside the sheet, which is right for an atlas
   # and puts a black gash down anything whose UVs leave [0,1] — the Apple's do.
@@ -682,7 +691,7 @@ print('yes' if json.load(open(sys.argv[1])).get('additive') else '')" "$asset" 2
       echo "baking the albedo from ${#pairs[@]} sheet(s)..."
       # Linear: every sheet has already been taken to HD with its boundaries respected.
       "$blender" --background --python "$pipeline/transfer_albedo.py" -- \
-        "$blend" "$albedo" "$maps" Linear ${cutout:-} ${keepalpha:-} ${wrapped:-} "${pairs[@]}"
+        "$blend" "$albedo" "$maps" Linear ${cutout:-} ${keepalpha:-} ${wrapped:-} ${linearalpha:-} "${pairs[@]}"
     fi
   fi
 

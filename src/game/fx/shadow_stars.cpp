@@ -66,6 +66,8 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     ring_ = load("magic_ground_soft");
     fire_ = load("fire");
     laser_ = load("joint_laser");
+    blur_ = load("trail_motion");
+    thunder_ = load("joint_thunder");
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
@@ -112,12 +114,37 @@ void ShadowStars::glow(const float at[3], float fade, const float colour[3]) {
 }
 
 void ShadowStars::beam(const float from[3], const float to[3]) {
-    if (!open_ || !bgfx::isValid(laser_) || beams_.size() >= 16) return;
+    if (!open_ || !bgfx::isValid(laser_) || beams_.size() >= 32) return;
     Beam one;
     for (int i = 0; i < 3; ++i) {
         one.from[i] = from[i];
         one.to[i] = to[i];
     }
+    beams_.push_back(one);
+}
+
+void ShadowStars::blurBeam(const float from[3], const float to[3], float half) {
+    if (!open_ || !bgfx::isValid(blur_) || beams_.size() >= 32) return;
+    Beam one;
+    for (int i = 0; i < 3; ++i) {
+        one.from[i] = from[i];
+        one.to[i] = to[i];
+    }
+    one.half = half;
+    beams_.push_back(one);
+}
+
+void ShadowStars::thunderBeam(const float from[3], const float to[3], float half,
+                              const float colour[3]) {
+    if (!open_ || !bgfx::isValid(thunder_) || beams_.size() >= 32) return;
+    Beam one;
+    for (int i = 0; i < 3; ++i) {
+        one.from[i] = from[i];
+        one.to[i] = to[i];
+    }
+    one.half = half;
+    one.thunder = true;
+    for (int i = 0; i < 3; ++i) one.colour[i] = colour[i];
     beams_.push_back(one);
 }
 
@@ -207,8 +234,9 @@ void ShadowStars::gather(gfx::Effects& effects) const {
         const float d[3] = {one.to[0] - one.from[0], one.to[1] - one.from[1], one.to[2] - one.from[2]};
         const float flat = std::sqrt(d[0] * d[0] + d[2] * d[2]);
         if (flat < 0.01f) continue;
-        const float side[2][3] = {{-d[2] / flat * kBeamHalf, 0.0f, d[0] / flat * kBeamHalf},
-                                  {0.0f, kBeamHalf, 0.0f}};
+        const float half = one.half > 0.0f ? one.half : kBeamHalf;
+        const float side[2][3] = {{-d[2] / flat * half, 0.0f, d[0] / flat * half},
+                                  {0.0f, half, 0.0f}};
         for (const auto& s : side) {
             gfx::Sprite sprite;
             for (int i = 0; i < 3; ++i) sprite.position[i] = 0.5f * (one.from[i] + one.to[i]);
@@ -225,7 +253,10 @@ void ShadowStars::gather(gfx::Effects& effects) const {
                 sprite.cornerUv[k][1] = uv[k][1];
             }
             sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = kBeamDim;
-            sprite.sheet = laser_;
+            if (one.thunder) {
+                for (int i = 0; i < 3; ++i) sprite.colour[i] = one.colour[i];
+            }
+            sprite.sheet = one.thunder ? thunder_ : one.half > 0.0f ? blur_ : laser_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }

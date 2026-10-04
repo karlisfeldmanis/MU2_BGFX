@@ -1,0 +1,173 @@
+{
+  "item": "Valkyrie01",
+  "mu_name": "Valkyrie",
+  "mu_name_from": "MuMain _enum.h MONSTER_VALKYRIE (47), drawn as MONSTER_MODEL_VALKYRIE = 35 (_enum.h:4185), so OpenMonsterModel loads Monster36.bmd. OpenMU Version075 Maps/Atlans.cs names breed 47 'Valkyrie'. docs/atlans-port.md Part B 4.",
+  "world": "atlans",
+  "object_type": 47,
+  "monster": {
+    "model_index": 35,
+    "scale": 1.1
+  },
+  "monster_from": "ZzzCharacter.cpp:13799-13806, CreateMonster, case MONSTER_VALKYRIE: OpenMonsterModel(MONSTER_MODEL_VALKYRIE); CreateCharacter(Key, MODEL_VALKYRIE, ...); Scale = 1.1f; Weapon[0] = MODEL_BLUEWING_CROSSBOW; BlendMesh = 0 at BlendMeshLight 1.0, so mesh 0 -- the whole armoured body, gp01 -- is drawn added and never solid (BMD::RenderBody, ZzzBMD.cpp:2242; RenderMesh's blend arm), a glowing figure, and ZzzObject.cpp:1135-1140 holds its light at 1. Its link bones are 30 and 39 (:11996-11998), and it fires arrows as the Hunter and the Orc Archer do (:4831-4835).",
+  "right_hand": "CrossBow06",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "Weapon[0], the Bluewing Crossbow (CrossBow06, already cooked), on Weapon[0].LinkBone 30 -- knife_gdf in Monster36, as in the Devil's and the Vepar's rigs.",
+  "profile": "monster",
+  "rig_from": "Seven actions, exported with --actions=all. 41 bones. MONSTER_MODEL_VALKYRIE sets BoneHead 19 and no PlaySpeed (ZzzOpenData.cpp:3653-3659).",
+  "sheets": {
+    "gp01": "valkyrie_gp01.png",
+    "gp02": "valkyrie_gp02.png"
+  },
+  "sheet_from": "Two sheets out of Data/Monster beside the model, decoded under a valkyrie_ prefix: gp01.OZJ (256x256, the body, 638 triangles) -- dark blue-black finned plate traced in gold; gp02.OZT (64x64, 17) -- blue fins, its own alpha a real mask.",
+  "sheet_materials": {
+    "gp01": "plate_steel",
+    "gp02": "leather"
+  },
+  "sheet_materials_from": "The body is plate, but drawn as MU's BlendMesh (`glow`), added and unlit, so its material only names it; the fins a membrane, blended as the Bahamut's.",
+  "glow": {
+    "gp01": {
+      "shadow": 0.5
+    }
+  },
+  "glow_from": "MU's BlendMesh 0 at light 1: the whole body added to the frame, a glowing figure. Ours as the Ice Monster's body is, a glow that still casts half a shadow so it stands on the sand.",
+  "soft_alpha": [
+    "leather"
+  ],
+  "soft_alpha_from": "gp02.OZT is drawn by MU tested and blended (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393), as the Bahamut's fins.",
+  "sounds_from": "ZzzOpenData.cpp:3653-3659: SetMonsterSound(..., 135, 135, 136, 136, 137), offsets from SOUND_MONSTER_BULL1 = 210 -- 345 VALKYRIE1 (mValkyrie1.wav) to move, 347 VALKYRIEDIE (mValkyrieDie.wav) to die, 346 to attack and flinch. 346 is SOUND_MONSTER_BALIATTACK2_ (DSPlaySound.h:288), which nothing loads: the arm loads mBaliAttack2.wav into SOUND_MONSTER_BALIATTACK2 (339), so MuMain's Valkyrie shoots silent. mBaliAttack2 is what the arm means, and is used. Wired as valkyrie_* in sounds.json.",
+  "islands_from": "6 islands for 655 triangles. Islands 0-2 are gp01, the body (638), plate_steel under the glow; 3-5 are gp02, the fins (17), leather and blended (soft_alpha). They arrived as skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 636,
+      "area": 25376.0,
+      "along": [
+        -62.8,
+        44.4
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.999,
+        0.993
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.549,
+        0.551
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 80.6,
+      "along": [
+        -10.6,
+        3.5
+      ],
+      "mu_uv": [
+        0.258,
+        0.747,
+        0.258,
+        0.747
+      ],
+      "bake_uv": [
+        0.006,
+        0.008,
+        0.006,
+        0.008
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 96.2,
+      "along": [
+        -10.5,
+        -2.4
+      ],
+      "mu_uv": [
+        0.258,
+        0.747,
+        0.258,
+        0.747
+      ],
+      "bake_uv": [
+        0.006,
+        0.03,
+        0.006,
+        0.03
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 7,
+      "area": 1603.9,
+      "along": [
+        -62.8,
+        -16.2
+      ],
+      "mu_uv": [
+        0.021,
+        0.037,
+        0.972,
+        0.644
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.839,
+        0.537
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 5,
+      "area": 423.5,
+      "along": [
+        -30.1,
+        -3.5
+      ],
+      "mu_uv": [
+        0.043,
+        0.634,
+        0.756,
+        0.983
+      ],
+      "bake_uv": [
+        0.006,
+        0.475,
+        0.631,
+        0.781
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather",
+      "triangles": 5,
+      "area": 423.5,
+      "along": [
+        -47.6,
+        -20.5
+      ],
+      "mu_uv": [
+        0.043,
+        0.634,
+        0.756,
+        0.983
+      ],
+      "bake_uv": [
+        0.006,
+        0.69,
+        0.631,
+        0.995
+      ]
+    }
+  ]
+}

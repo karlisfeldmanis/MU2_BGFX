@@ -1,0 +1,584 @@
+{
+  "item": "Bahamut01",
+  "mu_name": "Bahamut",
+  "mu_name_from": "MuMain _enum.h:4420 MONSTER_BAHAMUT (45), drawn as MONSTER_MODEL_BAHAMUT = 33 (_enum.h:4183), so OpenMonsterModel loads Monster34.bmd. OpenMU Version075 Maps/Atlans.cs:405-406 names breed 45 'Bahamut'. docs/atlans-port.md Part B 4.",
+  "world": "atlans",
+  "object_type": 45,
+  "monster": {
+    "model_index": 33,
+    "scale": 0.6
+  },
+  "monster_from": "ZzzCharacter.cpp:13812-13816, CreateMonster, case MONSTER_BAHAMUT: OpenMonsterModel(MONSTER_MODEL_BAHAMUT); CreateCharacter(Key, MODEL_BAHAMUT, ...); Scale = 0.6f. No weapon. Every frame it trails four bubbles and four BITMAP_BLOOD + 1 from bone 2 (:2002-2012), not drawn yet. The Great Bahamut (51) is this body at 1.0 with a smoke trail.",
+  "profile": "monster",
+  "rig_from": "Seven actions, exported with --actions=all. 35 bones. MONSTER_MODEL_BAHAMUT sets no BoneHead and no PlaySpeed of its own (ZzzOpenData.cpp:3639-3643).",
+  "sheets": {
+    "fs00": "bahamut_fs00.png",
+    "fs01": "bahamut_fs01.png",
+    "fs02": "bahamut_fs02.png"
+  },
+  "sheet_from": "Three sheets out of Data/Monster beside the model, decoded under a bahamut_ prefix: fs00.OZJ (256x128, the body, 350 triangles) -- a red-brown scaled fish with a toothed head and teal fins; fs01.OZT (128x128, 38) -- the spined fin rays, its own alpha a real mask; fs02.OZJ (3x3 white, 8 triangles), the eyes' glint.",
+  "sheet_materials": {
+    "fs00": "chitin",
+    "fs01": "leather",
+    "fs02": "chitin"
+  },
+  "sheet_materials_from": "As the Budge Dragon's: the scaled hide is a shell and reads a little glossy (chitin), the fin rays a membrane, duller (leather). The eyes take the body's.",
+  "soft_alpha": [
+    "leather"
+  ],
+  "soft_alpha_from": "The fin rays' membrane (fs01.OZT, the leather islands): MU draws every sheet with an alpha channel tested AND blended (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393; BMD::RenderMesh, ZzzBMD.cpp:1542-1545), so the membrane at a third to four fifths alpha is seen through and the rays stand solid. Cut at the quarter alone, it drew as solid cards (the user, 2026-10-04: 'work on transparency issues for monster fins').",
+  "sounds_from": "ZzzOpenData.cpp:3639-3643: SetMonsterSound(..., 130, 130, 131, 131, 130), offsets from SOUND_MONSTER_BULL1 = 210 -- 340 BAHAMUT1 (mBahamut1.wav) to move and die, 341 to attack and flinch. 341 is SOUND_MONSTER_YETI1___ (DSPlaySound.h:283), which nothing loads: the arm loads mYeti1.wav into SOUND_MONSTER_YETI1 (278) instead, so MuMain's Bahamut swings silent. mYeti1 is what the arm means, and is used. Wired as bahamut_* in sounds.json.",
+  "islands_from": "25 islands for 396 triangles. Island 0 is the body (306, fs00), chitin; islands 1-16 are its teeth, eight mirrored pairs of three triangles in fs00's head corner, bone; 17-23 the fin rays (fs01), leather; 24 the eyes (fs02's white), chitin. They arrived as skin, the monster profile's default (islands.py never reads sheet_materials).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 306,
+      "area": 95075.5,
+      "along": [
+        -138.5,
+        184.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.021,
+        0.997,
+        0.99
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.937,
+        0.973
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bone",
+      "triangles": 3,
+      "area": 388.2,
+      "along": [
+        133.2,
+        154.0
+      ],
+      "mu_uv": [
+        0.005,
+        0.205,
+        0.073,
+        0.382
+      ],
+      "bake_uv": [
+        0.175,
+        0.191,
+        0.399,
+        0.487
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bone",
+      "triangles": 3,
+      "area": 202.8,
+      "along": [
+        122.6,
+        134.1
+      ],
+      "mu_uv": [
+        0.079,
+        0.203,
+        0.116,
+        0.307
+      ],
+      "bake_uv": [
+        0.493,
+        0.009,
+        0.538,
+        0.051
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bone",
+      "triangles": 3,
+      "area": 172.8,
+      "along": [
+        110.1,
+        119.3
+      ],
+      "mu_uv": [
+        0.129,
+        0.205,
+        0.163,
+        0.287
+      ],
+      "bake_uv": [
+        0.387,
+        0.488,
+        0.617,
+        0.705
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bone",
+      "triangles": 3,
+      "area": 220.5,
+      "along": [
+        140.8,
+        153.5
+      ],
+      "mu_uv": [
+        -0.005,
+        0.199,
+        0.042,
+        0.289
+      ],
+      "bake_uv": [
+        0.021,
+        0.009,
+        0.3,
+        0.044
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 3,
+      "area": 286.8,
+      "along": [
+        122.1,
+        137.5
+      ],
+      "mu_uv": [
+        0.067,
+        0.198,
+        0.108,
+        0.335
+      ],
+      "bake_uv": [
+        0.427,
+        0.01,
+        0.477,
+        0.063
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bone",
+      "triangles": 3,
+      "area": 181.4,
+      "along": [
+        112.3,
+        124.0
+      ],
+      "mu_uv": [
+        0.117,
+        0.212,
+        0.15,
+        0.298
+      ],
+      "bake_uv": [
+        0.559,
+        0.009,
+        0.6,
+        0.552
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 3,
+      "area": 150.2,
+      "along": [
+        101.8,
+        110.9
+      ],
+      "mu_uv": [
+        0.159,
+        0.201,
+        0.193,
+        0.268
+      ],
+      "bake_uv": [
+        0.517,
+        0.373,
+        0.709,
+        0.565
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bone",
+      "triangles": 3,
+      "area": 147.2,
+      "along": [
+        134.3,
+        147.0
+      ],
+      "mu_uv": [
+        0.019,
+        0.268,
+        0.064,
+        0.338
+      ],
+      "bake_uv": [
+        0.337,
+        0.01,
+        0.46,
+        0.23
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bone",
+      "triangles": 3,
+      "area": 388.2,
+      "along": [
+        127.4,
+        145.6
+      ],
+      "mu_uv": [
+        0.005,
+        0.205,
+        0.073,
+        0.382
+      ],
+      "bake_uv": [
+        0.149,
+        0.402,
+        0.235,
+        0.473
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bone",
+      "triangles": 3,
+      "area": 202.8,
+      "along": [
+        113.3,
+        123.3
+      ],
+      "mu_uv": [
+        0.079,
+        0.203,
+        0.116,
+        0.307
+      ],
+      "bake_uv": [
+        0.01,
+        0.476,
+        0.583,
+        0.521
+      ]
+    },
+    {
+      "island": 11,
+      "material": "bone",
+      "triangles": 3,
+      "area": 172.8,
+      "along": [
+        98.9,
+        109.4
+      ],
+      "mu_uv": [
+        0.129,
+        0.205,
+        0.163,
+        0.287
+      ],
+      "bake_uv": [
+        0.324,
+        0.646,
+        0.429,
+        0.709
+      ]
+    },
+    {
+      "island": 12,
+      "material": "bone",
+      "triangles": 3,
+      "area": 220.5,
+      "along": [
+        136.3,
+        151.6
+      ],
+      "mu_uv": [
+        -0.005,
+        0.199,
+        0.042,
+        0.289
+      ],
+      "bake_uv": [
+        0.091,
+        0.031,
+        0.337,
+        0.296
+      ]
+    },
+    {
+      "island": 13,
+      "material": "bone",
+      "triangles": 3,
+      "area": 286.8,
+      "along": [
+        118.6,
+        127.9
+      ],
+      "mu_uv": [
+        0.067,
+        0.198,
+        0.108,
+        0.335
+      ],
+      "bake_uv": [
+        0.248,
+        0.421,
+        0.56,
+        0.562
+      ]
+    },
+    {
+      "island": 14,
+      "material": "bone",
+      "triangles": 3,
+      "area": 181.4,
+      "along": [
+        104.2,
+        113.9
+      ],
+      "mu_uv": [
+        0.117,
+        0.212,
+        0.15,
+        0.298
+      ],
+      "bake_uv": [
+        0.508,
+        0.149,
+        0.617,
+        0.468
+      ]
+    },
+    {
+      "island": 15,
+      "material": "bone",
+      "triangles": 3,
+      "area": 150.2,
+      "along": [
+        90.4,
+        100.6
+      ],
+      "mu_uv": [
+        0.159,
+        0.201,
+        0.193,
+        0.268
+      ],
+      "bake_uv": [
+        0.29,
+        0.346,
+        0.657,
+        0.712
+      ]
+    },
+    {
+      "island": 16,
+      "material": "bone",
+      "triangles": 3,
+      "area": 147.2,
+      "along": [
+        130.8,
+        144.3
+      ],
+      "mu_uv": [
+        0.019,
+        0.268,
+        0.064,
+        0.338
+      ],
+      "bake_uv": [
+        0.279,
+        0.084,
+        0.392,
+        0.487
+      ]
+    },
+    {
+      "island": 17,
+      "material": "leather",
+      "triangles": 4,
+      "area": 3571.6,
+      "along": [
+        27.5,
+        63.9
+      ],
+      "mu_uv": [
+        0.021,
+        0.147,
+        0.381,
+        0.607
+      ],
+      "bake_uv": [
+        0.009,
+        0.314,
+        0.148,
+        0.492
+      ]
+    },
+    {
+      "island": 18,
+      "material": "leather",
+      "triangles": 4,
+      "area": 2925.2,
+      "along": [
+        -86.7,
+        -43.2
+      ],
+      "mu_uv": [
+        0.021,
+        0.148,
+        0.381,
+        0.608
+      ],
+      "bake_uv": [
+        0.726,
+        0.204,
+        0.865,
+        0.382
+      ]
+    },
+    {
+      "island": 19,
+      "material": "leather",
+      "triangles": 4,
+      "area": 3519.5,
+      "along": [
+        -6.1,
+        91.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.555,
+        0.652,
+        0.997
+      ],
+      "bake_uv": [
+        0.096,
+        0.711,
+        0.346,
+        0.882
+      ]
+    },
+    {
+      "island": 20,
+      "material": "leather",
+      "triangles": 4,
+      "area": 3595.7,
+      "along": [
+        -105.3,
+        -0.6
+      ],
+      "mu_uv": [
+        0.014,
+        0.549,
+        0.656,
+        0.993
+      ],
+      "bake_uv": [
+        0.639,
+        0.394,
+        0.887,
+        0.565
+      ]
+    },
+    {
+      "island": 21,
+      "material": "leather",
+      "triangles": 10,
+      "area": 8087.6,
+      "along": [
+        -183.1,
+        -105.3
+      ],
+      "mu_uv": [
+        0.358,
+        0.021,
+        0.983,
+        0.916
+      ],
+      "bake_uv": [
+        0.467,
+        0.01,
+        0.709,
+        0.356
+      ]
+    },
+    {
+      "island": 22,
+      "material": "leather",
+      "triangles": 4,
+      "area": 3202.0,
+      "along": [
+        26.7,
+        39.3
+      ],
+      "mu_uv": [
+        0.021,
+        0.147,
+        0.381,
+        0.607
+      ],
+      "bake_uv": [
+        0.726,
+        0.009,
+        0.865,
+        0.187
+      ]
+    },
+    {
+      "island": 23,
+      "material": "leather",
+      "triangles": 4,
+      "area": 3410.3,
+      "along": [
+        -122.6,
+        -50.3
+      ],
+      "mu_uv": [
+        0.021,
+        0.148,
+        0.381,
+        0.608
+      ],
+      "bake_uv": [
+        0.852,
+        0.56,
+        0.991,
+        0.737
+      ]
+    },
+    {
+      "island": 24,
+      "material": "chitin",
+      "triangles": 8,
+      "area": 173.4,
+      "along": [
+        183.5,
+        190.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.624,
+        0.624
+      ]
+    }
+  ]
+}

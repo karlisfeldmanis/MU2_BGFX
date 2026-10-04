@@ -267,6 +267,16 @@ inline constexpr const char* kSmithFigure = "Smith01";
 // The one breed in Lorencia that breathes fire and raises dust. MU2's BudgeDragon01.json
 // `effects` block, which the cook does not carry; stated here once.
 inline constexpr const char* kBreathingFigure = "BudgeDragon01";
+// The Great Bahamut, whose Level 1 trails that same dust round it (play_open.cpp).
+inline constexpr const char* kGreatBahamutFigure = "GreatBahamut01";
+// And its light: MU's Level 1 body light is -0.4 where Level 0's is +0.2 (Selection.cpp:101-107).
+// MU takes the 0.4 off the tile's own light, so the dimmer the land the darker it goes: on
+// Atlans's sea floor it is all but black (the user's reference, a near-black fish). As a share
+// of what an ordinary monster is drawn by here, this; 0.45 left it brown.
+constexpr float kLevelOneLight = 0.25f;
+// Its trail's puffs against the dragon's dust: this much larger, and this faint. Ours.
+constexpr float kGreatBahamutPuffGrow = 2.2f;
+constexpr float kGreatBahamutPuffAlpha = 0.3f;
 // And the one that does not fall: MU's SetPlayerDie tests the sub-type of a body on the player
 // rig (MODEL_SKELETON1..3) and makes eleven bones of it instead of playing a death
 // (ZzzCharacter.cpp:1465-1471).
@@ -364,6 +374,36 @@ constexpr float kKnightEmberEveryFrames = 4.0f;
 // link bones to the hero and fire off them while it swings, with SOUND_EVIL
 // (ZzzCharacter.cpp:2295-2313); ours, a beam a hand for this long.
 inline constexpr const char* kDevilFigure = "Devil01";
+// The Vepar, whose Energy Ball MU never throws (its AT_SKILL_ENERGYBALL arm breaks for it,
+// ZzzCharacter.cpp:5092): its attack is SOUND_EVIL and, while it swings, two BITMAP_BLUR + 1
+// joints off each of its link bones (30 and 39, named as the Devil's) to the target, at Scale
+// 50 and 10 (:2183-2201). Ours, those two a hand as soft streaks this many metres either side
+// of their line, for the Devil's beam time.
+inline constexpr const char* kVeparFigure = "Vepar01";
+constexpr float kVeparBeamHalf[2] = {0.25f, 0.06f};
+// The Lizard King, whose Lightning MU draws as six BITMAP_JOINT_THUNDER a frame off its two link
+// bones (52 and 65, named as the Devil's) to the target, three a hand at Scale 50 and 10, and no
+// bolt from the sky (ZzzCharacter.cpp:2330-2342). Ours, three a hand as joint_thunder streaks
+// this many metres either side of their line, for the Devil's beam time.
+inline constexpr const char* kLizardKingFigure = "LizardKing01";
+// The staff it holds, whose head the bolts leave from (fx/staff_fire's head point).
+inline constexpr const char* kLizardStaff = "Staff07";
+constexpr float kLizardBoltHalf[2] = {0.22f, 0.07f};
+// And red, to match the Staff of Resurrection it holds (the user, 2026-10-04: 'make lizard
+// lighting match the weapon color'): between the staff fire's head (1, 0.6, 0.4) and its shaft
+// lights (1, 0.2, 0.1), fx/staff_fire. Ours; MU's joints take the white sheet's own colour.
+constexpr float kLizardBoltColour[3] = {1.0f, 0.32f, 0.18f};
+// And on its swing: the bolts start this long before the blow lands (half the swing, where the
+// cue shows it) and last this long. Ours.
+constexpr float kLizardBoltLead = 0.1f;
+constexpr float kLizardBoltSeconds = 0.45f;
+// How far the thin bolts' ends wander round the middle of the body they strike, metres: small,
+// so all three meet the body (the Devil's 0.35 scattered them past it).
+constexpr float kLizardBoltWander = 0.12f;
+// The crackle along its staff while it casts: from this far up the shaft (metres in the staff's
+// own space; the head is 1.45) to the head, wandering this far off the line. Ours.
+constexpr float kLizardShaftFrom = 0.35f;
+constexpr float kLizardShaftWander = 0.06f;
 constexpr float kDevilBeamSeconds = 0.6f;
 // MU's four beams wander: each joint is laid at a fresh random angle every frame. Ours, the
 // second beam off each hand meets the target this far off its middle, rolled again each frame,
@@ -400,6 +440,12 @@ inline constexpr AuraLight kAuraLights[] = {
     {"DeathKnight01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
     // The Balrog's red stream mesh.
     {"Balrog01", {1.0f, 0.15f, 0.05f}, "Bip01 Spine"},
+    // The Vepar's hands, which MU always lights with a lightning, a spark and a shiny sprite
+    // (ZzzCharacter.cpp:11220-11227): a pale blue, on its right hand's link bone.
+    {"Vepar01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
+    // The Lizard King's four sparks and shinies (ZzzCharacter.cpp:11228-11238): a pale light on
+    // the first of their bones.
+    {"LizardKing01", {0.7f, 0.8f, 1.0f}, "Box27"},
 };
 inline constexpr const char* kPoisonShadowFigure = "PoisonShadow01";
 inline constexpr const char* kShadowJoints[] = {

@@ -1181,16 +1181,39 @@ void Play::update(double seconds) {
                             // hands and sEvil as the swing begins, the blow with the swing.
                             const Drawn* devil = drawnOf(happening.who);
                             const bool own = devil && devil->handBones[0] >= 0;
-                            if (own) {
+                            if (own && devil->beams == Drawn::Beams::Thunder) {
+                                // The Lizard King's on its swing (the user, 2026-10-04: 'sync
+                                // lighting spell with swing for lizard'): from just before the
+                                // blow lands, where the cue shows it, through the strike. MU's
+                                // run from the attack's first frame for fifteen; ours.
+                                const float lands = swinger->swinging * Showing::kLandingPoint;
+                                laserCasts_.push_back({happening.who, happening.whom,
+                                                       kLizardBoltSeconds,
+                                                       std::max(0.0f, lands - kLizardBoltLead)});
+                            } else if (own) {
                                 laserCasts_.push_back({happening.who, happening.whom,
                                                        kDevilBeamSeconds});
-                                if (heard_.evil >= 0 && devil->placed) {
+                                if (heard_.evil >= 0 && devil->placed &&
+                                    devil->beams == Drawn::Beams::Laser) {
                                     emit(heard_.evil, devil->crown[0], devil->crown[2]);
                                 }
                             } else {
                                 thunderCasts_.push_back(
                                     {happening.who, happening.whom, 15.0f / 25.0f});
                                 cue.fuse = 15.0f / 25.0f;
+                            }
+                        }
+                        // The Vepar's Energy Ball (attackSkill == 17), which MU never throws: its
+                        // swing draws its blurred joints off both hands instead (kVeparFigure),
+                        // and its attack sound is sEvil already (vepar_attack).
+                        if (body && !body->player && body->kind >= 0 &&
+                            size_t(body->kind) < tables_.kinds.size() &&
+                            tables_.kinds[size_t(body->kind)].attackSkill ==
+                                sim::skill::kEnergyBall) {
+                            const Drawn* vepar = drawnOf(happening.who);
+                            if (vepar && vepar->handBones[0] >= 0) {
+                                laserCasts_.push_back({happening.who, happening.whom,
+                                                       kDevilBeamSeconds});
                             }
                         }
                         // A boss's Flame of Evil, one blow in five (sim kBosses). MU throws the

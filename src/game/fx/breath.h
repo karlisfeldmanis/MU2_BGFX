@@ -59,7 +59,8 @@ public:
     // monster's facing on the ground plane, unit length.
     void spark(const float at[3], const float along[2], float scale);
     // One BITMAP_SMOKE + 1 round a body standing at `feet`, drifting along `along`.
-    void puff(const float feet[3], const float along[2], float scale);
+    void puff(const float feet[3], const float along[2], float scale, float grow = 1.0f,
+              float alpha = 1.0f);
 
     // One puff of a Giant's death sand: the same particle and the same sheet, thrown OUTWARD
     // from the body on `out` rather than drifted along its facing, and dressed for a low cloud

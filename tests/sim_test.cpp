@@ -5249,20 +5249,26 @@ void testAtlansGates() {
     check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/atlans/atlans.mur", atlans,
                               error),
           "Atlans's tables load");
-    // The way in asks 120, ours since 2026-10-04 (MU's 60); the way out keeps 60.
-    Seen s = walk(noria, 238, 241, 243, 241, 120);
-    checkEqual(s.gated, 45, "a level 120 knight takes Noria's way to Atlans, gate 45");
+    // The way in asks 70, ours since 2026-10-04 (MU's 60); the way out keeps 60.
+    Seen s = walk(noria, 238, 241, 243, 241, 70);
+    checkEqual(s.gated, 45, "a level 70 knight takes Noria's way to Atlans, gate 45");
     check(s.column >= 14 && s.column <= 15 && s.row >= 12 && s.row <= 13,
           "out on Atlans's gate 46 by the basin");
-    s = walk(noria, 238, 241, 243, 241, 119);
-    checkEqual(s.gated, 0, "a level 119 knight does not");
-    checkEqual(s.barred, 120, "and is told it asks level 120");
+    s = walk(noria, 238, 241, 243, 241, 69);
+    checkEqual(s.gated, 0, "a level 69 knight does not");
+    checkEqual(s.barred, 70, "and is told it asks level 70");
     s = walk(atlans, 14, 14, 10, 10, 60);
     checkEqual(s.gated, 47, "the basin's corner, gate 47, takes him back");
     check(s.column >= 240 && s.column <= 241 && s.row >= 240 && s.row <= 243,
           "out on Noria's gate 48");
     s = walk(atlans, 14, 14, 10, 10, 59);
     checkEqual(s.barred, 60, "and asks level 60 too");
+    // A death in Atlans rises in its own basin, spawn gate 49 (Gates.cs:148, mu.db gates 49),
+    // not in Lorencia: Realm::reviveHero sends him home only from a map with no safe box (the
+    // user, 2026-10-04: 'make atlans death respawn on atlans safezone').
+    check(atlans.safeGate[0] == 15 && atlans.safeGate[1] == 11 && atlans.safeGate[2] == 27 &&
+              atlans.safeGate[3] == 23,
+          "Atlans's safe box is the basin, 15,11 to 27,23, so a death rises there");
 }
 
 void testDungeonGates(const content::Tables& lorencia) {

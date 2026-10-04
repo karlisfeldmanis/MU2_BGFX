@@ -1,0 +1,183 @@
+{
+  "item": "LizardKing01",
+  "mu_name": "Lizard King",
+  "mu_name_from": "MuMain _enum.h MONSTER_LIZARD_KING (48), drawn as MONSTER_MODEL_LIZARD = 36 (_enum.h:4186), so OpenMonsterModel loads Monster37.bmd. OpenMU Version075 Maps/Atlans.cs names breed 48 'Lizard King'. docs/atlans-port.md Part B 4.",
+  "world": "atlans",
+  "object_type": 48,
+  "monster": {
+    "model_index": 36,
+    "scale": 1.4
+  },
+  "monster_from": "ZzzCharacter.cpp:13793-13798, CreateMonster, case MONSTER_LIZARD_KING: OpenMonsterModel(MONSTER_MODEL_LIZARD); CreateCharacter(Key, MODEL_LIZARD, ...); Scale = 1.4f; Weapon[0] = MODEL_STAFF_OF_RESURRECTION. Link bones 52 and 65 (:11992-11995). RenderCharacter lights its eyes (RenderEye 42, 43) and hangs a spark and a shiny on bones 26, 31, 36 and 41 always (:11228-11238); its Lightning lets six BITMAP_JOINT_THUNDER off its two link bones to the target, three a hand, at Scale 50 and 10 (:2330-2342).",
+  "right_hand": "Staff07",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "Weapon[0], the Staff of Resurrection (Staff07, already cooked), on Weapon[0].LinkBone 52 -- knife_gdf in Monster37.",
+  "profile": "monster",
+  "rig_from": "Seven actions, exported with --actions=all. 79 bones. MONSTER_MODEL_LIZARD sets BoneHead 19 (Type 36) and no PlaySpeed (ZzzOpenData.cpp:3660-3669).",
+  "sheets": {
+    "fr00": "lizardking_fr00.png"
+  },
+  "sheet_from": "One sheet out of Data/Monster beside the model, decoded under a lizardking_ prefix: fr00.OZJ (256x256, all 1058 triangles) -- a tusked lizard-man in bronze-brown plated hide, a dark green scaled tail, gold bands.",
+  "sheet_materials": {
+    "fr00": "chitin"
+  },
+  "sheet_materials_from": "A plated, scaled hide is a shell, as the Budge Dragon's body: chitin, a little glossy.",
+  "sounds_from": "ZzzOpenData.cpp:3660-3669: SetMonsterSound(..., 138, 139, 138, 139, 140), offsets from SOUND_MONSTER_BULL1 = 210 -- 348 LIZARDKING1 (mLizardKing1.wav) and 349 LIZARDKING2 (mLizardKing2.wav) to move and to attack, 350 to die. 350 is SOUND_MONSTER_GORGONDIE_ (DSPlaySound.h:292), which nothing loads: the arm loads mGorgonDie.wav into SOUND_MONSTER_GORGONDIE instead, so MuMain's Lizard King dies silent. mGorgonDie is what the arm means, and is used. Wired as lizardking_* in sounds.json.",
+  "islands_from": "7 islands for 1058 triangles, all fr00 and all chitin (the one sheet's plated hide). They arrived as skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 996,
+      "area": 48277.1,
+      "along": [
+        -122.5,
+        54.3
+      ],
+      "mu_uv": [
+        0.011,
+        0.011,
+        0.965,
+        0.996
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.979,
+        0.989
+      ]
+    },
+    {
+      "island": 1,
+      "material": "chitin",
+      "triangles": 2,
+      "area": 88.0,
+      "along": [
+        -6.0,
+        1.3
+      ],
+      "mu_uv": [
+        0.734,
+        0.94,
+        0.78,
+        0.995
+      ],
+      "bake_uv": [
+        0.153,
+        0.131,
+        0.597,
+        0.211
+      ]
+    },
+    {
+      "island": 2,
+      "material": "chitin",
+      "triangles": 5,
+      "area": 946.7,
+      "along": [
+        13.6,
+        28.2
+      ],
+      "mu_uv": [
+        0.003,
+        0.447,
+        0.712,
+        0.915
+      ],
+      "bake_uv": [
+        0.206,
+        0.012,
+        0.625,
+        0.557
+      ]
+    },
+    {
+      "island": 3,
+      "material": "chitin",
+      "triangles": 10,
+      "area": 1327.0,
+      "along": [
+        3.8,
+        35.1
+      ],
+      "mu_uv": [
+        0.034,
+        0.453,
+        0.729,
+        1.008
+      ],
+      "bake_uv": [
+        0.14,
+        0.067,
+        0.43,
+        0.89
+      ]
+    },
+    {
+      "island": 4,
+      "material": "chitin",
+      "triangles": 2,
+      "area": 82.6,
+      "along": [
+        -6.0,
+        1.9
+      ],
+      "mu_uv": [
+        0.734,
+        0.94,
+        0.78,
+        0.995
+      ],
+      "bake_uv": [
+        0.153,
+        0.188,
+        0.239,
+        0.404
+      ]
+    },
+    {
+      "island": 5,
+      "material": "chitin",
+      "triangles": 5,
+      "area": 918.0,
+      "along": [
+        13.8,
+        28.2
+      ],
+      "mu_uv": [
+        0.003,
+        0.447,
+        0.712,
+        0.915
+      ],
+      "bake_uv": [
+        0.22,
+        0.189,
+        0.725,
+        0.658
+      ]
+    },
+    {
+      "island": 6,
+      "material": "chitin",
+      "triangles": 10,
+      "area": 1327.0,
+      "along": [
+        7.2,
+        27.5
+      ],
+      "mu_uv": [
+        0.034,
+        0.453,
+        0.729,
+        1.008
+      ],
+      "bake_uv": [
+        0.427,
+        0.012,
+        0.765,
+        0.422
+      ]
+    }
+  ]
+}

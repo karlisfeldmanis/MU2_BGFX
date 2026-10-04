@@ -1,0 +1,406 @@
+{
+  "item": "Vepar01",
+  "mu_name": "Vepar",
+  "mu_name_from": "MuMain _enum.h MONSTER_VEPAR (46), drawn as MONSTER_MODEL_VEPAR = 34 (_enum.h:4184), so OpenMonsterModel loads Monster35.bmd. OpenMU Version075 Maps/Atlans.cs:437-438 names breed 46 'Vepar'. docs/atlans-port.md Part B 4.",
+  "world": "atlans",
+  "object_type": 46,
+  "monster": {
+    "model_index": 34,
+    "scale": 1.0
+  },
+  "monster_from": "ZzzCharacter.cpp:13807-13811, CreateMonster, case MONSTER_VEPAR: OpenMonsterModel(MONSTER_MODEL_VEPAR); CreateCharacter(Key, MODEL_VEPAR, ...); Scale = 1.0f. No weapon; its link bones are 30 and 39 (:12000-12003), where RenderCharacter hangs a lightning, a spark and a shiny sprite each, always (:11220-11227). It casts Energy Ball (OpenMU Atlans.cs:446), and its attack lets SOUND_EVIL go with two blurred joints off each hand to the target (:2183-2201), as the Devil's.",
+  "profile": "monster",
+  "rig_from": "Seven actions, exported with --actions=all. 41 bones. MONSTER_MODEL_VEPAR plays both attacks at 0.5 and sets BoneHead 20 (ZzzOpenData.cpp:3644-3652).",
+  "sheets": {
+    "hp00": "vepar_hp00.png",
+    "hp01": "vepar_hp01.png"
+  },
+  "sheet_from": "Two sheets out of Data/Monster beside the model, decoded under a vepar_ prefix: hp00.OZJ (128x256, the body, 490 triangles) -- a merman, blue-skinned torso with a steel breastplate patch, black-gloved arms, a green scaled tail ringed with bronze bands, dark fin-hair; hp01.OZT (128x128, 72) -- his fins, gold and green rays on a soft membrane, its own alpha a real mask.",
+  "sheet_materials": {
+    "hp00": "skin",
+    "hp01": "leather"
+  },
+  "sheet_materials_from": "The body skin to begin with, the tail's scales and the plate judged per island once islands.py has listed them; the fins a membrane (leather), blended as the Bahamut's.",
+  "soft_alpha": [
+    "leather"
+  ],
+  "soft_alpha_from": "hp01.OZT is drawn by MU tested and blended (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393), as the Bahamut's fins: the membrane seen through, the rays solid.",
+  "sounds_from": "ZzzOpenData.cpp:3644-3652: SetMonsterSound(..., 132, 133, 104, 104, 133), offsets from SOUND_MONSTER_BULL1 = 210 -- 342 BEPAR1 (mBepar1.wav) and 343 BEPAR2 (mBepar2.wav) to move, 343 to die, 314 to attack and flinch. 314 is SOUND_MONSTER_GOLEMDIE, which only the Golem's model loads, so in Atlans MuMain's Vepar swings to SOUND_EVIL alone (:2183-2188); the arm loads mBalrog1.wav, which no slot names. mBalrog1 is used for the flinch, sEvil for the attack. Wired as vepar_* in sounds.json.",
+  "islands_from": "17 islands for 562 triangles. Islands 0-2 are hp00, the body (490): one island over the torso, the plate and the scaled tail, so it takes the torso's skin. 3-16 are hp01, his fins (72), leather and blended (soft_alpha). They arrived as skin, the monster profile's default.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 488,
+      "area": 19410.6,
+      "along": [
+        -21.6,
+        39.9
+      ],
+      "mu_uv": [
+        0.13,
+        0.001,
+        0.864,
+        0.995
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.729,
+        0.969
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 1,
+      "area": 4.8,
+      "along": [
+        18.6,
+        25.1
+      ],
+      "mu_uv": [
+        0.789,
+        0.453,
+        0.839,
+        0.484
+      ],
+      "bake_uv": [
+        0.65,
+        0.283,
+        0.673,
+        0.297
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 1,
+      "area": 4.8,
+      "along": [
+        23.6,
+        30.9
+      ],
+      "mu_uv": [
+        0.789,
+        0.453,
+        0.839,
+        0.484
+      ],
+      "bake_uv": [
+        0.235,
+        0.043,
+        0.257,
+        0.057
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 8,
+      "area": 2411.1,
+      "along": [
+        -5.1,
+        5.6
+      ],
+      "mu_uv": [
+        0.596,
+        0.001,
+        0.999,
+        0.987
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.353,
+        0.449
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 6,
+      "area": 322.3,
+      "along": [
+        -13.9,
+        5.5
+      ],
+      "mu_uv": [
+        0.777,
+        0.702,
+        0.991,
+        1.001
+      ],
+      "bake_uv": [
+        0.746,
+        0.337,
+        0.841,
+        0.47
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather",
+      "triangles": 6,
+      "area": 2447.7,
+      "along": [
+        -63.7,
+        -0.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.429,
+        0.472,
+        1.002
+      ],
+      "bake_uv": [
+        0.62,
+        0.01,
+        0.83,
+        0.264
+      ]
+    },
+    {
+      "island": 6,
+      "material": "leather",
+      "triangles": 6,
+      "area": 597.4,
+      "along": [
+        2.8,
+        19.1
+      ],
+      "mu_uv": [
+        0.783,
+        0.716,
+        0.989,
+        1.0
+      ],
+      "bake_uv": [
+        0.768,
+        0.689,
+        0.859,
+        0.815
+      ]
+    },
+    {
+      "island": 7,
+      "material": "leather",
+      "triangles": 4,
+      "area": 278.5,
+      "along": [
+        16.8,
+        31.0
+      ],
+      "mu_uv": [
+        0.723,
+        0.007,
+        0.967,
+        0.64
+      ],
+      "bake_uv": [
+        0.394,
+        0.019,
+        0.503,
+        0.301
+      ]
+    },
+    {
+      "island": 8,
+      "material": "leather",
+      "triangles": 4,
+      "area": 530.6,
+      "along": [
+        5.9,
+        34.7
+      ],
+      "mu_uv": [
+        0.127,
+        0.001,
+        0.697,
+        0.261
+      ],
+      "bake_uv": [
+        0.009,
+        0.699,
+        0.263,
+        0.815
+      ]
+    },
+    {
+      "island": 9,
+      "material": "leather",
+      "triangles": 4,
+      "area": 969.9,
+      "along": [
+        -10.9,
+        30.0
+      ],
+      "mu_uv": [
+        0.109,
+        0.002,
+        0.678,
+        0.243
+      ],
+      "bake_uv": [
+        0.22,
+        0.774,
+        0.474,
+        0.881
+      ]
+    },
+    {
+      "island": 10,
+      "material": "leather",
+      "triangles": 4,
+      "area": 490.2,
+      "along": [
+        8.6,
+        44.1
+      ],
+      "mu_uv": [
+        0.107,
+        0.004,
+        0.673,
+        0.242
+      ],
+      "bake_uv": [
+        0.382,
+        0.885,
+        0.633,
+        0.991
+      ]
+    },
+    {
+      "island": 11,
+      "material": "leather",
+      "triangles": 6,
+      "area": 322.3,
+      "along": [
+        -13.9,
+        5.5
+      ],
+      "mu_uv": [
+        0.777,
+        0.702,
+        0.991,
+        1.001
+      ],
+      "bake_uv": [
+        0.746,
+        0.533,
+        0.841,
+        0.666
+      ]
+    },
+    {
+      "island": 12,
+      "material": "leather",
+      "triangles": 6,
+      "area": 2447.7,
+      "along": [
+        -63.7,
+        -0.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.429,
+        0.472,
+        1.002
+      ],
+      "bake_uv": [
+        0.337,
+        0.492,
+        0.547,
+        0.747
+      ]
+    },
+    {
+      "island": 13,
+      "material": "leather",
+      "triangles": 6,
+      "area": 597.4,
+      "along": [
+        2.8,
+        19.1
+      ],
+      "mu_uv": [
+        0.783,
+        0.716,
+        0.989,
+        1.0
+      ],
+      "bake_uv": [
+        0.808,
+        0.202,
+        0.9,
+        0.329
+      ]
+    },
+    {
+      "island": 14,
+      "material": "leather",
+      "triangles": 4,
+      "area": 278.5,
+      "along": [
+        17.5,
+        32.7
+      ],
+      "mu_uv": [
+        0.723,
+        0.007,
+        0.967,
+        0.64
+      ],
+      "bake_uv": [
+        0.045,
+        0.39,
+        0.154,
+        0.672
+      ]
+    },
+    {
+      "island": 15,
+      "material": "leather",
+      "triangles": 4,
+      "area": 530.6,
+      "along": [
+        5.9,
+        34.7
+      ],
+      "mu_uv": [
+        0.127,
+        0.001,
+        0.697,
+        0.261
+      ],
+      "bake_uv": [
+        0.492,
+        0.747,
+        0.745,
+        0.863
+      ]
+    },
+    {
+      "island": 16,
+      "material": "leather",
+      "triangles": 4,
+      "area": 970.8,
+      "along": [
+        -10.9,
+        30.0
+      ],
+      "mu_uv": [
+        0.109,
+        0.002,
+        0.678,
+        0.243
+      ],
+      "bake_uv": [
+        0.692,
+        0.84,
+        0.946,
+        0.947
+      ]
+    }
+  ]
+}

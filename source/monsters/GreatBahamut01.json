@@ -1,0 +1,16 @@
+{
+  "item": "GreatBahamut01",
+  "mu_name": "Great Bahamut",
+  "mu_name_from": "MuMain _enum.h MONSTER_GREAT_BAHAMUT (51), drawn out of the Bahamut's model (MONSTER_MODEL_BAHAMUT, Monster34.bmd). OpenMU Version075 Maps/Atlans.cs names breed 51 'Great Bahamut'. docs/atlans-port.md Part B 4.",
+  "world": "atlans",
+  "object_type": 51,
+  "mesh": "Bahamut01",
+  "mesh_from": "Bahamut01's model a second time: ZzzCharacter.cpp:13775-13780, CreateMonster, case MONSTER_GREAT_BAHAMUT: OpenMonsterModel(MONSTER_MODEL_BAHAMUT); CreateCharacter(Key, MODEL_BAHAMUT, ...); Scale = 1.0f; Level = 1. The same body and sheets at full size, with the fins' soft alpha its model carries.",
+  "monster": {
+    "model_index": 33,
+    "scale": 1.0
+  },
+  "monster_from": "Scale 1.0 against the Bahamut's 0.6. Level 1 adds, while it lives, a BITMAP_SMOKE + 1 within 32 units of it one reference frame in four (ZzzCharacter.cpp:6169-6176), the Budge Dragon's own dust; Play's breathing figures draw it (kGreatBahamutFigure).",
+  "profile": "monster",
+  "sounds_from": "The Bahamut's model's: SetMonsterSound(..., 130, 130, 131, 131, 130) in ZzzOpenData.cpp:3639-3643. Wired as greatbahamut_* in sounds.json, as bahamut_*."
+}

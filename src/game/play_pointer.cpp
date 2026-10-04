@@ -431,6 +431,22 @@ bool Play::shoots(uint32_t id, Arrows::Model* model) {
         *model = Arrows::Laser;
         return true;
     }
+    // And a monster on its own rig with a bow or a crossbow in its hand, whose stance is not the
+    // player rig's to say: MU's CreateArrows list, the Hunter, the Valkyrie, the Soldier and the
+    // Orc Archer (ZzzCharacter.cpp:4831-4835) -- Atlans's Valkyrie with the Bluewing Crossbow and
+    // Blood Castle's Chief Skeleton Archer with its bow.
+    if (body->monster()) {
+        for (const HeldItem& item : look->held) {
+            if (item.stance == "crossbow") {
+                *model = Arrows::Laser;
+                return true;
+            }
+            if (item.stance == "bow") {
+                *model = Arrows::Wood;
+                return true;
+            }
+        }
+    }
     return false;
 }
 

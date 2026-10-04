@@ -448,7 +448,7 @@ def shot_of(one):
 
 
 def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.0,
-              scrolls=None):
+              scrolls=None, soft=()):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
 
     A skinned .glb writes version 4: a 56-byte vertex with four joint bytes and four weight
@@ -644,6 +644,15 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
                         | (4 if own.get("water_frames") else 0))
         if flags & 2 and rate:
             flags |= 16
+        # Mode bit 4, on a cut-out that is not a glow: soft alpha. MU draws every sheet with an
+        # alpha channel tested AND blended -- EnableAlphaTest sets GL_SRC_ALPHA,
+        # GL_ONE_MINUS_SRC_ALPHA as well as the alpha func (ZzzOpenglUtil.cpp:366-393) -- so a
+        # membrane at half alpha is half seen through. The renderer draws these parts after the
+        # opaque frame, depth first and then blended by the sheet's alpha. Named by the asset
+        # (`soft_alpha`), since a hard mask -- a helm's plume, a leaf -- wants the plain cut.
+        if not flags & 2 and cutout >= 0.0 and material.get("name") in soft:
+            mode |= 16
+            flags |= 128
         if flags & 16 and mode:
             flags |= 128
         # Mode bit 3: a glow's pulse at MU's WorldTime*0.001, four times slower than an item's
@@ -1858,6 +1867,8 @@ def figure_set(world):
             "scale": float(one.get("scale", 1.0)),
             "hidden_mesh": one.get("hidden_mesh"),
             "hidden_part": one.get("hidden_part"),
+            # The materials blended by their own alpha above the cut (cook_mesh's `soft`).
+            **({"soft_alpha": one["soft_alpha"]} if one.get("soft_alpha") else {}),
             "right_hand": reach(one.get("right_hand")),
             "right_hand_bone": one.get("right_hand_bone", ""),
             "left_hand": reach(one.get("left_hand")),
@@ -3182,8 +3193,10 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
     for name, path in sorted(models.items()):
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
         scroll = next((one.get("scroll", 0.0) for one in monsters if one["mesh"] == name), 0.0)
+        soft = next((one.get("soft_alpha", []) for one in monsters if one["mesh"] == name), [])
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
-                                              hidden_of.get(name), scroll_per_second=scroll)
+                                              hidden_of.get(name), scroll_per_second=scroll,
+                                              soft=set(soft))
         triangles += tris
         vertices += verts
         mesh_table[name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,

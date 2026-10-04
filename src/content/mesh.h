@@ -97,6 +97,11 @@ struct Material {
     // Atlans's Object24. The sheet is the 8 by 4 caustic atlas and `scrollPerSecond` the frame
     // rate; fs_glow cuts the frame's cell out of it. The cook's mode bit 2.
     bool waterFrames = false;
+    // MU's alpha test AND blend on a cut-out (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393): cut
+    // below `cutout`, and above it seen through by the sheet's own alpha -- the Bahamut's fin
+    // membrane. Out of the prepass and the shade; drawn after the opaque frame, depth first and
+    // then blended (Renderer::draw, view 5). Shadows keep the plain cut. The cook's mode bit 4.
+    bool softAlpha = false;
     // An item's glow as ItemObjectAttribute sets it (ZzzObject.cpp:5199): its brightness
     // `sin(WorldTime*0.004)*pulse[0] + pulse[1]` -- the Light Spear's and the two shields'
     // breathing, 0/1 on a steady glow -- and `jitter`, the step of the per-frame random jump

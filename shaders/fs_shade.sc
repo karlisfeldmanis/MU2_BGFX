@@ -42,8 +42,11 @@ void main()
 	// are single sheets of mixed winding and are drawn two-sided, so this matters on them.
 	vec3 ng = normalize(v_normal);
 	// y is two flags: 1 two-sided, 2 calibrated. See the renderer.
-	float calibrated = step(1.5, u_material.y);
-	float twoSided = u_material.y - 2.0 * calibrated;
+	// y: 1 two-sided, 2 calibrated, 4 soft alpha (content::Material::softAlpha).
+	float soft = step(3.5, u_material.y);
+	float flagsLow = u_material.y - 4.0 * soft;
+	float calibrated = step(1.5, flagsLow);
+	float twoSided = flagsLow - 2.0 * calibrated;
 	// Which side is facing the eye is decided by the TRIANGLE, not by the smoothed normal. 62 of
 	// Lorencia's 74 placed models carry their normals inverted (MU's winding, through the
 	// export) and smoothed across their edges, so on a flat roof they lean 20 to 50 degrees
@@ -219,6 +222,14 @@ void main()
 	// the ground's, so fixed-function clamps it to the sheet's own colour in any light -- the
 	// Ice Queen. Never darker than her sheet; the sun still adds its highlights by day.
 	colour = mix(colour, max(colour, albedoTex.rgb * 0.9), selfLit(v_light.w));
+	// A soft-alpha membrane -- the Valkyrie's wings, the Bahamut's and the Vepar's fins -- is lit
+	// as MU lights a model: its sheet times the land's light at its tile (BodyLight, glColor
+	// over an unshaded texture), so the painted blue and its rays come through rather than the
+	// shading's dark side. Never darker than that, at 0.85; the sun and the lamps still add
+	// their highlights. Ours, after the user, 2026-10-04: the wings 'too dark / flat blue'.
+	colour = mix(colour, max(colour, albedo * 0.85), soft);
 
-	gl_FragColor = vec4(abyss(dusty(colour, v_wpos), v_wpos), fade);
+	// A soft-alpha part is blended by its sheet's alpha as well as by the fade: MU's alpha test
+	// and blend (Renderer::draw draws it after the opaque frame; elsewhere this alpha is unread).
+	gl_FragColor = vec4(abyss(dusty(colour, v_wpos), v_wpos), fade * mix(1.0, albedoTex.a, soft));
 }

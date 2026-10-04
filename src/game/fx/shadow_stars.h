@@ -60,6 +60,12 @@ public:
     // The Devil's beam for this frame only: MU's BITMAP_JOINT_LASER + 1 from a hand to the hero
     // (ZzzCharacter.cpp:2300-2311), ours as one faint strip a hand, drawn as two crossed quads.
     void beam(const float from[3], const float to[3]);
+    // The Vepar's: MU's BITMAP_BLUR + 1 joints from its hands to the target (ZzzCharacter.cpp:
+    // 2190-2200), a soft streak of motion_blur `half` metres either side of its line.
+    void blurBeam(const float from[3], const float to[3], float half);
+    // The Lizard King's: MU's BITMAP_JOINT_THUNDER from its hands to the target (ZzzCharacter.cpp:
+    // 2330-2342), a streak of joint_thunder `half` metres either side of its line.
+    void thunderBeam(const float from[3], const float to[3], float half, const float colour[3]);
     // One of a Death Gorgon's Flame of Evil fireballs, rolling out along the ground from `at` the
     // way (dx, dz) points: MU's MODEL_FIRE subtype 1 (:1959-1968), ours as a Fire01 sprite.
     void roll(const float at[3], float dx, float dz);
@@ -95,9 +101,14 @@ private:
     bgfx::TextureHandle fire_ = BGFX_INVALID_HANDLE;
     struct Beam {
         float from[3], to[3];
+        float half = 0.0f;  // 0: the laser's own width; else a blur or thunder beam's
+        bool thunder = false;
+        float colour[3] = {0.0f, 0.0f, 0.0f};  // a thunder beam's own; the others kBeamDim grey
     };
     std::vector<Beam> beams_;
     bgfx::TextureHandle laser_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle blur_ = BGFX_INVALID_HANDLE;  // trail_motion, BITMAP_BLUR + 1
+    bgfx::TextureHandle thunder_ = BGFX_INVALID_HANDLE;  // joint_thunder
     struct Roll {
         float position[3];
         float dx, dz;

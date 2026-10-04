@@ -2207,6 +2207,9 @@ def monster_entry(entry: dict, document: dict, root: Path, build: Path, combat: 
         # The glb part a variant puts away when it is not the one the base named `hidden`:
         # the Hell Hound hides the bare head (`fur`) and keeps the helm the plain Hound hides.
         **({"hidden_part": str(part)} if (part := document.get("hidden_part")) else {}),
+        # The glb materials whose sheet MU blends as well as tests, by the material's name: the
+        # Bahamut's fin membrane (cook.py's soft alpha, content::Material::softAlpha).
+        **({"soft_alpha": list(soft)} if (soft := document.get("soft_alpha")) else {}),
         **({"number": number} if number is not None else {}),
         **({"combat": stats} if stats else {}),
         **({"spawns": spawns[number]} if number in spawns else {}),
