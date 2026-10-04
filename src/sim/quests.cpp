@@ -935,7 +935,9 @@ const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),     
 
 // **Every quest pays a Firecracker** besides its own reward, every completion, to every class
 // (the user, 2026-10-04: 'give fireccracker on all quests'). Ours. Added here once rather than in
-// each quest, so a quest written later pays it too; the dialog lists it with the rest.
+// each quest, so a quest written later pays it too; the dialog lists it with the rest. Not
+// Sevina's class change -- her trial and the three treasures (the user, 2026-10-04: 'dont give
+// Firecracker to class chancge quests').
 struct QuestTable {
     QuestRow rows[kQuests];
 };
@@ -943,6 +945,7 @@ QuestTable withFirecrackers() {
     QuestTable table;
     for (int i = 0; i < kQuests; ++i) {
         QuestRow& row = table.rows[i] = kRawTable[i];
+        if (i == kSevinaTrial || row.promotes) continue;
         if (row.paidCount < kQuestPaid) row.paid[row.paidCount++] = {.item = "MagicBox03"};
     }
     return table;
