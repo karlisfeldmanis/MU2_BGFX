@@ -804,6 +804,7 @@ QuestRow sevinaTrial() {
     row.giverName = "Sevina";
     row.place = "Devias";
     row.title = "The Emperor's Treasures";
+    row.voice = "sevina_1";  // tools/voice.py, VOICES["sevina"]
     row.offer[0] = "\"You came back, child. And this time the gods can hear you.\"";
     row.offer[1] =
         "\"When Muren, the first emperor, united MU, the peoples swore loyalty to him and gave "
@@ -873,6 +874,7 @@ QuestRow sevinaTreasure(Kin kin, const char* title, const char* item, const char
 QuestRow brokenSword() {
     QuestRow row = sevinaTreasure(Kin::DarkKnight, "The Broken Sword", "Quest01",
                                   "Find the Broken Sword", "Become a Blade Knight");
+    row.voice = "sevina_2";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Seek out the 'Broken Sword' that the ancient dark knights offered at the "
         "commemoration of peace. A few dark knights have found it in Atlans and the Lost "
@@ -893,6 +895,7 @@ QuestRow brokenSword() {
 QuestRow soulOfWizard() {
     QuestRow row = sevinaTreasure(Kin::DarkWizard, "The Soul of Wizard", "Quest03",
                                   "Find the Soul of Wizard", "Become a Soul Master");
+    row.voice = "sevina_3";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Go find the 'Soul of Wizard'. According to the ancient dark wizards, it was last "
         "seen around the Lost Tower and Atlans.\"";
@@ -911,6 +914,7 @@ QuestRow soulOfWizard() {
 QuestRow tearOfElf() {
     QuestRow row = sevinaTreasure(Kin::FairyElf, "The Tear of Elf", "Quest02",
                                   "Find the Tear of Elf", "Become a Muse Elf");
+    row.voice = "sevina_4";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Go find the crystal 'Tear of Elf', made by the ancient elves with the strength of the "
         "spirit. Some adventurous elves have seen it in the Lost Tower and Atlans.\"";

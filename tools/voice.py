@@ -116,13 +116,29 @@ VOICES = {
                              "highpass=f=45,aecho=0.8:0.55:180|380|650:0.24|0.14|0.07,"
                              "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
                              "apad=pad_dur=1.2,loudnorm=I=-16:TP=-1.5:LRA=11"),
+    # Sevina the Priestess, the class change's giver: a woman, "very mythical ... low voice" (the
+    # user, 2026-10-04), the first of eight auditions. Kokoro-82M's bf_emma (Apache 2.0) reading
+    # an oracle's line at 0.8 speed, source/voice/ref/sevina_emma_oracle.wav, cloned at 0.8 and
+    # 0.3, seed 11. The "oracle" finish: three semitones down and tempo put back, the same voice an
+    # octave lower at 0.28 under it, more chest, a temple's tail at 140 to 800 ms. Her paragraphs
+    # pad 0.35 s, not the audition's 1.2. One voice for her four rows, sevina_1 to sevina_4.
+    "sevina": dict(ref="sevina_emma_oracle.wav", exaggeration=0.8, cfg_weight=0.3, seed=11,
+                   polish="asetrate=24000*0.84,aresample=24000,atempo=1.19,asplit=2[a][b];"
+                          "[b]asetrate=24000*0.5,aresample=24000,atempo=2.0,lowpass=f=700,volume=0.28[lo];"
+                          "[a][lo]amix=inputs=2:normalize=0,highpass=f=60,bass=g=3:f=150,"
+                          "aecho=0.8:0.6:140|300|520|800:0.26|0.18|0.11|0.06,"
+                          "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
+                          "apad=pad_dur=0.35,loudnorm=I=-16:TP=-1.5:LRA=11"),
 }
 VOICES["messenger"] = VOICES["archangel"]
+
 # Takes read again on another seed, heard wrong by whisper on the voice's own: at 1.0 the welcome
 # said "appreciates me", the wait "injure", the staff's thanks "with" twice, the crossbow's
 # "Koon Koon".
 RETAKES = {("messenger", "none"): 51, ("messenger", "notyet"): 23,
-           ("archangel", "done_staff"): 23, ("archangel", "done_crossbow"): 23}
+           ("archangel", "done_staff"): 23, ("archangel", "done_crossbow"): 23,
+           # Sevina's: the trial's thanks said "with few warriors reorg", the sword's "the god".
+           ("sevina_1", "handin"): 23, ("sevina_2", "handin"): 23}
 
 # Pages that are not a quest row's: the Messenger's and the Archangel's, said in
 # src/game/ui/quest_dialog.cpp (gateWords, angelWords), one clip a thing he can say, named as
@@ -190,17 +206,31 @@ def spoken(words):
 def pages(voice):
     """The quest row whose `row.voice` is `voice`, as {page: [paragraph, ...]}."""
     text = QUESTS.read_text()
-    found = {}
-    for body in re.split(r"\nQuestRow \w+\(\) \{", text)[1:]:
-        if f'row.voice = "{voice}"' not in body:
-            continue
+    # Every function returning a QuestRow, to its closing brace. A row built on a helper (Sevina's
+    # treasures on sevinaTreasure) takes the helper's pages, its own written over them.
+    parts = re.split(r"\nQuestRow (\w+)\([^)]*\) \{", text)
+    bodies = {name: body.split("\n}\n")[0] for name, body in zip(parts[1::2], parts[2::2])}
+
+    def read(body):
+        found = {}
         for m in re.finditer(r'row\.(offer|handIn|underway|resting)(?:\[(\d)\])?\s*=\s*'
                              r'((?:\s*"(?:[^"\\]|\\.)*")+);', body):
             words = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(3)))
             words = words.replace('\\"', "").strip()
             page = m.group(1).lower()
             found.setdefault(page, []).append((int(m.group(2) or 0), words))
-    return {page: [w for _, w in sorted(lines)] for page, lines in found.items()}
+        return {page: [w for _, w in sorted(lines)] for page, lines in found.items()}
+
+    for name, body in bodies.items():
+        if f'row.voice = "{voice}"' not in body:
+            continue
+        found = {}
+        for helper, helped in bodies.items():
+            if helper != name and re.search(rf"\b{helper}\(", body):
+                found.update(read(helped))
+        found.update(read(body))
+        return found
+    return {}
 
 
 _heard = None
