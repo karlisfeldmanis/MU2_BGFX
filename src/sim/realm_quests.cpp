@@ -37,22 +37,61 @@ bool Realm::questOffered(int index) const {
 }
 
 int Realm::questHere(int32_t giver) const {
-    int untaken = -1, back = -1, rested = -1, first = -1;
+    int ready = -1, active = -1, untaken = -1, back = -1, rested = -1, first = -1;
     for (int i = 0; i < kQuests; ++i) {
         if (questAt(i).giver != giver) continue;
         if (first < 0) first = i;
         const QuestState state = quests_[i].state;
-        if (state == QuestState::Active || state == QuestState::Ready) return i;
+        if (state == QuestState::Ready && ready < 0) ready = i;
+        if (state == QuestState::Active && active < 0) active = i;
         if (state == QuestState::Untaken && untaken < 0 && questOffered(i)) untaken = i;
         if (state == QuestState::Resting) {
             if (back < 0 && questOffered(i)) back = i;
             rested = i;
         }
     }
-    // The chain moves on before a link comes back round: the Halls before the Catacombs again.
+    // What his mark says, with more than one of his standing: a hand-in first, then an offer,
+    // then one under way. The chain moves on before a link comes back round: the Halls before
+    // the Catacombs again.
+    if (ready >= 0) return ready;
     if (untaken >= 0) return untaken;
     if (back >= 0) return back;
+    if (active >= 0) return active;
     return rested >= 0 ? rested : first;
+}
+
+bool Realm::questUnderLevel(int index) const {
+    if (index < 0 || index >= kQuests) return false;
+    const QuestRow& row = questAt(index);
+    if (!questOpen(row, int(bodies_[0].kin)) || bodies_[0].level >= row.minLevel) return false;
+    const QuestProgress& one = quests_[index];
+    if (one.state != QuestState::Untaken || one.completions > 0) return false;
+    if (row.afterAny == 0) return true;
+    for (int i = 0; i < kQuests; ++i) {
+        if (((row.afterAny >> i) & 1u) && quests_[i].completions > 0) return true;
+    }
+    return false;
+}
+
+int Realm::questsAt(int32_t giver, int* out) const {
+    int n = 0;
+    for (int i = 0; i < kQuests; ++i) {
+        const QuestRow& row = questAt(i);
+        if (row.giver != giver || !questOpen(row, int(bodies_[0].kin))) continue;
+        const QuestState state = quests_[i].state;
+        // A link of a chain handed in for good is gone from the list; a repeat waits there.
+        const bool listed = state == QuestState::Active || state == QuestState::Ready ||
+                            questOffered(i) || questUnderLevel(i) ||
+                            (state == QuestState::Resting && row.repeatSeconds > 0);
+        if (listed) out[n++] = i;
+    }
+    return n;
+}
+
+bool Realm::questListed(int32_t giver) const {
+    int list[kQuests];
+    const int n = questsAt(giver, list);
+    return n > 1 || (n == 1 && questUnderLevel(list[0]));
 }
 
 bool Realm::questLocked(int index) const {

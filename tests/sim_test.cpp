@@ -4765,8 +4765,15 @@ void testClassChange() {
         sim::Realm young;
         check(young.raise(&devias, 3, s.x, s.y + 2, sim::Kin::DarkKnight, 199), "a knight of 199");
         check(young.questLocked(sim::kSevinaTrial), "her trial waits on his level");
+        check(young.questUnderLevel(sim::kSevinaTrial), "on his level alone");
+        // Her window opens on its list (QuestDialog::kList), the trial greyed with its level.
+        int list[sim::kQuests];
+        checkEqual(young.questsAt(sim::kSevina, list), 1, "her list holds one quest");
+        checkEqual(list[0], sim::kSevinaTrial, "the trial");
+        check(young.questListed(sim::kSevina), "and shows as a list, its page would only refuse");
         talkTo(young, &offered, &greeted);
-        check(greeted && !offered, "and she says he is not ready");
+        check(offered && !greeted, "so her window opens");
+        check(!young.acceptQuest(sim::kSevinaTrial), "and the trial cannot be taken");
     }
     sim::Realm grown;
     check(grown.raise(&devias, 3, s.x, s.y + 2, sim::Kin::DarkKnight, 200), "and one of 200");
@@ -6714,8 +6721,14 @@ void testRunes(const content::Tables& tables) {
             realm.restore(record);
         };
         const int64_t later = 1000000 + 12 * 60 * 60;
+        check(!realm.questListed(236), "one quest of his to show: its page, no list");
         rest(3, later);
         checkEqual(realm.questHere(236), 4, "the Catacombs handed in, he offers the Halls");
+        // Two of his now -- the Halls offered, the Catacombs resting -- so his window lists them.
+        int list[sim::kQuests];
+        checkEqual(realm.questsAt(236, list), 2, "his list holds the Catacombs and the Halls");
+        check(list[0] == 3 && list[1] == 4, "in the table's order");
+        check(realm.questListed(236), "and his window opens on it");
         rest(4, later);
         checkEqual(realm.questHere(236), 5, "and then the Pit");
         rest(5, later);

@@ -188,10 +188,19 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         const sim::Realm& realm = play.realm();
         // Or the journal (L), the same window read away from him; reaching him takes it over.
         int quest = -1;
+        bool listed = false;
         if (realm.questing() >= 0) {
-            quest = realm.questHere(realm.tables()->folk[size_t(realm.questing())].number);
+            const int32_t giver = realm.tables()->folk[size_t(realm.questing())].number;
+            if (realm.questing() != listFolk_) picked_ = -1;
+            listFolk_ = realm.questing();
+            // More than one of his, or one waiting on his level: his list, then the one picked.
+            listed = realm.questListed(giver);
+            quest = !listed ? realm.questHere(giver) : picked_ >= 0 ? picked_ : QuestDialog::kList;
             journal_ = -1;
+        } else {
+            listFolk_ = picked_ = -1;
         }
+        questDialog_.setListed(listed && picked_ >= 0);
         // The Messenger of Archangel's page, Blood Castle's door (QuestDialog::kGate).
         const bool gating = realm.gating() >= 0;
         if (gating) {
@@ -262,7 +271,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // The page's own sound, not the click: the turn is timed to its two strokes.
             play.sound().play(play.sound().load("quest_page_turn", false));
         }
-        if (result.close) {
+        if (result.pick >= 0) {
+            picked_ = result.pick;
+            click();
+        } else if (result.back) {
+            picked_ = -1;
+            click();
+        } else if (result.close) {
             if (reading) journal_ = -1;
             else if (gating) play.closeGate();
             else if (angeling) play.closeAngel();

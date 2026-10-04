@@ -210,6 +210,9 @@ private:
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
     bool scriptJournal_ = false;  // a script's L for the next update (--ui-type FRAME:journal)
     bool questing_ = false;  // a giver's window was up last frame, so its opening is heard once
+    // A giver with a list (Realm::questListed): the folk it was read for, and the quest picked
+    // from it, -1 while the list itself is up.
+    int listFolk_ = -1, picked_ = -1;
     std::string voiced_;  // the voice clip last started, or empty
     Tracker tracker_;
     // The map around him, top right over the tracker, always up in a played world (game/ui/minimap.h).

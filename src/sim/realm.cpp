@@ -703,9 +703,11 @@ void Realm::press() {
             } else if (one.number == kChaosGoblin) {
                 mixing_ = int(order_.target);
                 say(What::Served, hero, mixing_, one.number);
-            } else if (const int quest = questHere(one.number); quest >= 0 && !questLocked(quest)) {
+            } else if (const int quest = questHere(one.number);
+                       quest >= 0 && (!questLocked(quest) || questListed(one.number))) {
                 // A quest giver: his dialog opens, whatever it has to say -- the offer, the
-                // quest under way, the hand-in, or that it is not his to give again yet.
+                // quest under way, the hand-in, or that it is not his to give again yet; or his
+                // list, even of one quest waiting on the hero's level (questListed).
                 questing_ = int(order_.target);
                 say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
             } else if (one.number == kArchangel) {

@@ -892,6 +892,16 @@ public:
     // (the Dungeon's three floors, quests.cpp), which shows the link under way or ready, else
     // the first one offered and not handed in, else one come back round, else the last handed in.
     int questHere(int32_t giver) const;
+    // Whether it waits on his level alone: one his class may take, its chain open, never handed
+    // in, and he below its QuestRow::minLevel. The list shows it greyed with the level it asks.
+    bool questUnderLevel(int index) const;
+    // What a giver's window lists, in table order (QuestDialog::kList): each quest of his this
+    // class may take that is under way or ready, offered, waiting on his level alone, or a
+    // repeat resting. Into `out` (kQuests long); how many. Ours, as WoW's gossip list.
+    int questsAt(int32_t giver, int* out) const;
+    // Whether his window opens on that list rather than one quest's page: more than one, or one
+    // waiting on his level (its page would only refuse).
+    bool questListed(int32_t giver) const;
     // The wall clock, in unix seconds, which a repeating quest waits on. Handed in by the game;
     // a run that never sets it (the headless hunt) never sees a quest come back.
     void setWallClock(int64_t unixSeconds) { wall_ = unixSeconds; }

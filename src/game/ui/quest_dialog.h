@@ -33,6 +33,7 @@
 #include "game/ui/hud.h"
 #include "game/ui/stage.h"
 #include "sim/event.h"
+#include "sim/quests.h"
 #include "gfx/interface.h"
 
 namespace mu::game {
@@ -51,11 +52,21 @@ public:
         bool enter = false;   // kGate's Enter: into Blood Castle `castle`
         int castle = 0;
         bool give = false;    // kArchangel's Give: the Divine Staff handed back
+        int pick = -1;        // kList: the quest a row was clicked for
+        bool back = false;    // a quest's page opened from kList: Back, to the list
     };
     // The `quest` that opens the Messenger's page (Realm::gating).
     static constexpr int kGate = 1000;
     // The `quest` that opens the Archangel's page in Blood Castle (Realm::angeling).
     static constexpr int kArchangel = 1001;
+    // The `quest` that opens a giver's list of his quests (Realm::questsAt), when he has more
+    // than one, or one waiting on the hero's level (the user, 2026-10-04: 'we need a quest window
+    // system if quest giver can give multiple quests, and some quests need minimal lvl
+    // requirments'). WoW's gossip list: a row a quest, its mark, and the level a locked one asks;
+    // a row opens that quest's page, whose second answer is then Back.
+    static constexpr int kList = 1002;
+    // Whether the quest page up was opened from kList, so its second answer goes back to it.
+    void setListed(bool listed) { listed_ = listed; }
     // The journal's place among the live quests, set before update: `at` 1-based of `of`. The
     // arrows show while reading with more than one; 0, 0 for none.
     void setPages(int at, int of) {
@@ -82,7 +93,7 @@ public:
     // A stranger turned away is not voiced.
     int page() const {
         return quest_ >= 0 && mode_ != Mode::Stranger && mode_ != Mode::Gate &&
-                       mode_ != Mode::Angel
+                       mode_ != Mode::Angel && mode_ != Mode::List
                    ? int(mode_)
                    : -1;
     }
@@ -105,7 +116,8 @@ private:
     // Stranger: one born outside the giver's town, whom he does not serve (sim::questOpen).
     // Gate: the Messenger's page (kGate).
     // Angel: the Archangel's page (kArchangel).
-    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger, Gate, Angel };
+    // List: a giver's quests (kList).
+    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger, Gate, Angel, List };
     static constexpr int kButtons = 5;
     struct Cell {
         int choice = -1;  // the row's choice index, or -1 for a paid item
@@ -123,6 +135,7 @@ private:
     void rebuild(const Play& play, Stage* stage);
     int buttonAt(float ux, float uy) const;
     int cellAt(float ux, float uy, bool anyCell = false) const;
+    int entryAt(float ux, float uy) const;  // kList: the row under the pointer, or -1
     void drawTip(const Play& play, int cell, float width, float height);
     float scrollMost() const;
     gfx::Box thumb() const;  // the scrollbar's thumb, in window units
@@ -149,6 +162,16 @@ private:
     sim::AngelState angel_ = sim::AngelState::NotYet;
     int64_t paidExperience_ = 0, paidZen_ = 0;
     bool staffHeld_ = false;  // the staff in his bag, whatever the run's phase
+    // kList: the giver's quests, read from the realm each frame, and each row's box in the
+    // body's units. Hovered and pressed as 20 + the row.
+    struct Entry {
+        int quest = -1;
+        gfx::Box box;
+    };
+    std::vector<Entry> entries_;
+    int32_t giver_ = -1;
+    bool listed_ = false;
+    bool underLevel_ = false;  // a quest's offer read below its QuestRow::minLevel: Accept dark
     std::string clip_;        // see clip(); set where the words are
     // A page turn: -1 to 0 the old page going out, 0 to 1 the new one coming in, 1 at rest. The
     // quest handed in waits in `pending_` until the old page is out.
@@ -184,6 +207,9 @@ private:
         bool reading = false;
         int gate[6] = {};
         int64_t angel[3] = {};
+        int entries[sim::kQuests] = {};
+        int level = 0;
+        bool listed = false;
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;

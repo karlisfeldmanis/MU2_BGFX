@@ -46,6 +46,10 @@ constexpr float kButtonW = 120.0f, kButtonWide = 180.0f;
 constexpr uint32_t kZenGold = gfx::rgba(1.0f, 0.8f, 0.102f);
 constexpr uint32_t kItemWhite = gfx::rgba(1.0f, 1.0f, 1.0f);
 
+// A giver's list (kList): a row a quest, its mark at the left and its state ranged right.
+constexpr float kEntry = 34.0f;
+constexpr uint32_t kRepeatBlue = gfx::rgba(0.56f, 0.80f, 1.0f);  // beacon.cpp's kLitAgain
+
 float inner() { return kWide - kInset * 2.0f - 10.0f; }  // leaving room for the bar
 // The header band under the frame's head: the quest's name, its map and its giver, and in the
 // journal the arrows to the next live quest either side (the user, 2026-09-30).
@@ -183,7 +187,8 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
         pressing != o.pressing || x != o.x || y != o.y || unit != o.unit || scroll != o.scroll ||
         overThumb != o.overThumb || dragging != o.dragging || version != o.version ||
         minutesLeft != o.minutesLeft || picture != o.picture || reading != o.reading ||
-        pageAt != o.pageAt || pages != o.pages || turn != o.turn) {
+        pageAt != o.pageAt || pages != o.pages || turn != o.turn || level != o.level ||
+        listed != o.listed) {
         return false;
     }
     for (int i = 0; i < 6; ++i) {
@@ -197,6 +202,9 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
     }
     for (int i = 0; i < 16; ++i) {
         if (counts[i] != o.counts[i]) return false;
+    }
+    for (int i = 0; i < sim::kQuests; ++i) {
+        if (entries[i] != o.entries[i]) return false;
     }
     return true;
 }
@@ -260,11 +268,21 @@ int QuestDialog::cellAt(float ux, float uy, bool anyCell) const {
     return -1;
 }
 
+int QuestDialog::entryAt(float ux, float uy) const {
+    if (mode_ != Mode::List || uy < paneTop() || uy > paneTop() + paneTall()) return -1;
+    const float by = uy - paneTop() + scroll_;
+    for (size_t i = 0; i < entries_.size(); ++i) {
+        if (entries_[i].box.has(ux, by)) return int(i);
+    }
+    return -1;
+}
+
 void QuestDialog::layout(const Play& play) {
     const sim::Realm& realm = play.realm();
     const bool gate = mode_ == Mode::Gate;
     const bool angel = mode_ == Mode::Angel;
-    const sim::QuestRow& row = sim::questAt(gate || angel ? 0 : quest_);
+    const bool list = mode_ == Mode::List;
+    const sim::QuestRow& row = sim::questAt(quest_ >= kGate ? 0 : quest_);
     const content::Tables& tables = *realm.tables();
     lines_.clear();
     cells_.clear();
@@ -292,6 +310,8 @@ void QuestDialog::layout(const Play& play) {
         case Mode::Stranger:
             words(row.stranger);
             break;
+        case Mode::List:
+            break;  // the rows are the whole of it
         case Mode::Gate: {
             const std::string said = gateWords(why_, castle_);
             words(said.c_str());
@@ -332,7 +352,14 @@ void QuestDialog::layout(const Play& play) {
     float y = 12.0f + 16.0f;
     for (const std::string& one : lines_) y += one.empty() ? kParagraph : kLead;
     y += kSection;
-    if (gate) {
+    if (list) {
+        // Under the kicker, a row a quest, full width.
+        y = 12.0f + 16.0f + 10.0f;
+        for (Entry& one : entries_) {
+            one.box = {kInset - 6.0f, y, wide + 12.0f, kEntry};
+            y += kEntry + 4.0f;
+        }
+    } else if (gate) {
         // The ticket as the rewards are shown, a picture and its name (the user, 2026-10-03: 'if
         // requirments is items, show items thumbs, similiar like you show rewards'); then the
         // gate's hour and the band as lines.
@@ -401,6 +428,7 @@ void QuestDialog::layout(const Play& play) {
             y += kSection * 0.5f;
         } else {
             y += kSection * 0.5f + 24.0f;
+            if (underLevel_) y += kStepRow;  // the level it asks, over the steps
             for (int s = 0; s < row.stepCount; ++s) {
                 const sim::QuestStepRow& want = row.steps[s];
                 if (!sim::questCounted(want.kind)) continue;
@@ -468,7 +496,7 @@ void QuestDialog::layout(const Play& play) {
         }
         if (!fits.empty()) y += kAsk;
         grid(fits);
-    } else {
+    } else if (!list) {
         y += kLead;
     }
     bodyTall_ = y + 8.0f;
@@ -544,7 +572,9 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     }
     const bool gate = quest_ == kGate;
     const bool angel = quest_ == kArchangel;
-    const sim::QuestProgress& progress = gate || angel ? kNoProgress : realm.quest(quest_);
+    const bool list = quest_ == kList;
+    const sim::QuestProgress& progress = quest_ >= kGate ? kNoProgress : realm.quest(quest_);
+    underLevel_ = quest_ < kGate && !reading_ && realm.questUnderLevel(quest_);
     Mode mode = Mode::Offer;
     if (progress.state == sim::QuestState::Active) mode = Mode::Underway;
     // Read from the journal, away from him, a quest ready to hand in is still under way.
@@ -552,7 +582,16 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     else if (progress.state == sim::QuestState::Resting && !realm.questOffered(quest_)) {
         mode = Mode::Resting;
     }
-    if (angel) {
+    if (list) {
+        mode = Mode::List;
+        entries_.clear();
+        if (realm.questing() >= 0) {
+            giver_ = realm.tables()->folk[size_t(realm.questing())].number;
+            int quests[sim::kQuests];
+            const int n = realm.questsAt(giver_, quests);
+            for (int i = 0; i < n; ++i) entries_.push_back({quests[i], {}});
+        }
+    } else if (angel) {
         mode = Mode::Angel;
         angel_ = realm.angelState();
         castle_ = realm.castleRun().castle;
@@ -627,12 +666,14 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     for (const Cell& one : cells_) owed |= one.choice >= 0;
     const bool primaryOff = (mode_ == Mode::HandIn && owed && chosen_ < 0) ||
                             (mode_ == Mode::Gate && why_ != sim::CastleRefusal::None) ||
-                            (mode_ == Mode::Angel && angel_ != sim::AngelState::Ready);
+                            (mode_ == Mode::Angel && angel_ != sim::AngelState::Ready) ||
+                            (mode_ == Mode::Offer && underLevel_);
 
     int over = dragging_ ? -1 : buttonAt(ux, uy);
     if (over < 0 && !dragging_) {
         const int cell = cellAt(ux, uy);
         if (cell >= 0 && mode_ == Mode::HandIn) over = 10 + cell;
+        if (const int entry = entryAt(ux, uy); entry >= 0) over = 20 + entry;
     }
     over_ = over;
     for (int which = 0; which < kButtons; ++which) {
@@ -646,11 +687,15 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
                     mode_ == Mode::Angel);
     bool cancel = escape;
     bool chose = false;
+    bool back = false;
+    int pick = -1;
     int turn = 0;
     if (pointer.released) {
         if (pressing_ >= 0 && pressing_ == over_) {
             if (pressing_ == 0 && !primaryOff && !reading_) primary = true;
+            else if (pressing_ == 1 && listed_) back = true;
             else if (pressing_ == 1 || pressing_ == 2) cancel = true;
+            else if (pressing_ >= 20) pick = entries_[size_t(pressing_ - 20)].quest;
             else if (pressing_ == 3) turn = -1;
             else if (pressing_ == 4) turn = 1;
             // The Messenger's castles turn here, the new page fading in from the arrow's side.
@@ -659,7 +704,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
                 turnDir_ = turn;
                 turn_ = 0.0f;
             }
-            else if (pressing_ >= 10) {
+            else if (pressing_ >= 10 && pressing_ < 20) {
                 const int picked = cells_[size_t(pressing_ - 10)].choice;
                 chosen_ = chosen_ == picked ? -1 : picked;
                 chose = picked >= 0;
@@ -670,6 +715,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     if (out) {
         out->picked = chose;
         out->turn = turn;
+        out->pick = pick;
+        out->back = back;
         if (cancel) out->close = true;
         else if (primary && mode_ == Mode::Angel) out->give = true;
         else if (primary && mode_ == Mode::Gate) {
@@ -710,6 +757,14 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     for (int s = 0; s < sim::kQuestSteps && s < 16; ++s) now.counts[s] = progress.counts[s];
     now.picture = stage && stage->picture().valid() ? stage->picture().handle.idx : 0xFFFF;
     now.reading = reading_;
+    now.level = realm.hero().level;
+    now.listed = listed_;
+    for (size_t i = 0; i < entries_.size() && i < size_t(sim::kQuests); ++i) {
+        const sim::QuestProgress& one = realm.quest(entries_[i].quest);
+        now.entries[i] = 1 + entries_[i].quest + int(one.state) * 64 +
+                         int(realm.questOffered(entries_[i].quest)) * 512 +
+                         int(std::max<int64_t>(0, one.availableAt - realm.wallClock()) / 60) * 1024;
+    }
     if (gate) {
         now.gate[0] = int(why_);
         now.gate[1] = cloakPlus_;
@@ -754,8 +809,12 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     const content::Tables& tables = *realm.tables();
     const bool gate = mode_ == Mode::Gate;
     const bool angel = mode_ == Mode::Angel;
-    const sim::QuestRow& row = sim::questAt(gate || angel ? 0 : quest_);
-    const sim::QuestProgress& progress = gate || angel ? kNoProgress : realm.quest(quest_);
+    const bool list = mode_ == Mode::List;
+    // The list is headed with its giver, whose name and town every row of his carries.
+    const sim::QuestRow& row = sim::questAt(quest_ < kGate ? quest_
+                                            : list && !entries_.empty() ? entries_[0].quest
+                                                                        : 0);
+    const sim::QuestProgress& progress = quest_ >= kGate ? kNoProgress : realm.quest(quest_);
     const float u = unit_, x = x_, y = y_;
     // Window units to the screen, and the body's own units (which scroll) to the screen.
     const auto sx = [&](float ux) { return x + ux * u; };
@@ -783,6 +842,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         const float small = std::round(13.5f * u);
         const std::string name = gate    ? "Blood Castle " + std::to_string(castle_)
                                  : angel ? "Blood Castle " + std::to_string(castle_)
+                                 : list  ? std::string(row.giverName)
                                          : row.title;
         const size_t turning = canvas_.mark();
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(title, name) * 0.5f,
@@ -791,6 +851,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         // kicker under it names him (the user, 2026-10-03: 'to much text under title does not fit').
         std::string where = gate    ? std::to_string(castle_) + " of " + std::to_string(sim::kCastles)
                             : angel ? std::string("Archangel")
+                            : list  ? std::string(row.place)
                                     : std::string(row.place) + "   \xC2\xB7   " + row.giverName;
         if (!gate && !angel && reading_ && pages_ > 1) {
             where += "   \xC2\xB7   " + std::to_string(pageAt_) + " of " + std::to_string(pages_);
@@ -819,10 +880,10 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     for (const Cell& one : cells_) owed |= one.choice >= 0;
     switch (reading_ ? Mode::Resting : mode_) {
         case Mode::Offer:
-            controls::button(canvas_, placed(x, y, buttons_[1], u), "Not now", controls::Kind::Secondary,
-                             state(1, false), u);
+            controls::button(canvas_, placed(x, y, buttons_[1], u), listed_ ? "Back" : "Not now",
+                             controls::Kind::Secondary, state(1, false), u);
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Accept", controls::Kind::Primary,
-                             state(0, false), u);
+                             state(0, underLevel_), u);
             break;
         case Mode::Gate:
             controls::button(canvas_, placed(x, y, buttons_[1], u), "Not now", controls::Kind::Secondary,
@@ -846,7 +907,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                              controls::Kind::Primary, state(0, owed && chosen_ < 0), u);
             break;
         default:
-            controls::button(canvas_, placed(x, y, buttons_[1], u), reading_ ? "Close" : "Farewell",
+            controls::button(canvas_, placed(x, y, buttons_[1], u),
+                             reading_ ? "Close" : listed_ ? "Back" : "Farewell",
                              controls::Kind::Secondary, state(1, false), u);
             break;
     }
@@ -858,7 +920,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         return Box{std::round(sx(one.box.x)), std::round(by(one.box.y)), std::round(one.box.w * u),
                    std::round(one.box.h * u)};
     };
-    const bool offered = mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate && !angel;
+    const bool offered =
+        mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate && !angel && !list;
     // A thing asked for, one look wherever a quest or an event asks one (the user, 2026-10-04:
     // 'we need unificied UI when there is item requirments in quests'): its picture in a cell, its
     // name in its tone, and under it whether he carries it -- green, or red. The Messenger's
@@ -909,7 +972,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
 
     float cy = 12.0f;
     controls::caps(body_, sx(kInset), by(cy + 10.0f), style::kKickerSize * u, style::kAshInk,
-                   gate    ? std::string("Messenger of Archangel of Devias")
+                   list    ? std::string("What ") + row.giverName + " has for you"
+                   : gate  ? std::string("Messenger of Archangel of Devias")
                    : angel ? std::string("Archangel of Blood Castle")
                            : std::string(row.giverName) + " of " + row.place);
     cy += 16.0f;
@@ -923,7 +987,56 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     }
     cy += kSection;
 
-    if (angel) {
+    if (list) {
+        // A row a quest: WoW's mark at the left -- a gold "!" offered, a gold "?" to hand in, in
+        // the beacon's blue once cleared before, a grey "?" under way, a grey "!" waiting on his
+        // level -- the title, and at the right what stands between him and it.
+        for (size_t i = 0; i < entries_.size(); ++i) {
+            const Entry& one = entries_[i];
+            const sim::QuestRow& quest = sim::questAt(one.quest);
+            const sim::QuestProgress& at = realm.quest(one.quest);
+            const bool again = at.completions > 0;
+            const bool low = realm.questUnderLevel(one.quest);
+            const bool ready = at.state == sim::QuestState::Ready;
+            const bool underway = at.state == sim::QuestState::Active;
+            const bool offer = realm.questOffered(one.quest);
+            const char* glyph = ready || underway ? "?" : "!";
+            const uint32_t lit = again ? kRepeatBlue : kZenGold;
+            const uint32_t ink = ready || offer ? lit : style::kAshInk;
+            std::string status;
+            uint32_t statusInk = style::kAshInk;
+            if (low) {
+                status = "Level " + std::to_string(quest.minLevel);
+                statusInk = style::kDanger;
+            } else if (ready) {
+                status = "Complete";
+                statusInk = lit;
+            } else if (underway) {
+                status = "In progress";
+            } else if (!offer) {
+                status = "Done \xC2\xB7 " +
+                         quest_marks::wait(std::max<int64_t>(0, at.availableAt - realm.wallClock()));
+            } else if (again) {
+                status = "Repeatable";
+                statusInk = kRepeatBlue;
+            }
+            const Box box = {std::round(sx(one.box.x)), std::round(by(one.box.y)),
+                             std::round(one.box.w * u), std::round(one.box.h * u)};
+            if (over_ == 20 + int(i)) {
+                const uint32_t hot = quest_marks::faded(style::kBlood, style::kEmberAlpha);
+                const uint32_t clear = quest_marks::faded(style::kBlood, 0.0f);
+                body_.shade({box.x, box.y + box.h * 0.3f, box.w, box.h * 0.7f}, clear, clear, hot, hot);
+            }
+            const float mid = one.box.y + kEntry * 0.5f + 5.0f;
+            controls::label(body_, sx(kInset + 2.0f), by(mid + 1.0f), 19.0f * u, ink, glyph);
+            const bool bright = (offer || ready || underway) && !low;
+            controls::label(body_, sx(kInset + 22.0f), by(mid), kBody * u,
+                            bright ? style::kBoneHi : style::kAshInk, quest.title);
+            if (!status.empty()) {
+                controls::ranged(body_, sx(kInset + inner()), by(mid), 13.5f * u, statusInk, status);
+            }
+        }
+    } else if (angel) {
         controls::rule(body_, sx(kInset), by(cy - kSection * 0.5f), inner() * u, u);
         cy += kSection * 0.5f;
         if (angel_ == sim::AngelState::Done) {
@@ -1004,6 +1117,15 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             cy += 24.0f;
             const bool shownCounts = mode_ != Mode::Offer;
             const float columnWide = inner();
+            if (underLevel_) {
+                // The level it asks, as the Messenger's band is shown: his own, red, at the right.
+                quest_marks::mark(body_, StepMark::Live, sx(kInset + 7.0f), by(cy + 8.0f), u);
+                controls::label(body_, sx(kInset + 24.0f), by(cy + 13.0f), kBody * u,
+                                style::kBoneHi, "Level " + std::to_string(row.minLevel) + " and over");
+                controls::ranged(body_, sx(kInset + columnWide), by(cy + 13.0f), kBody * u,
+                                 style::kDanger, std::to_string(realm.hero().level));
+                cy += kStepRow;
+            }
             for (int s = 0; s < row.stepCount; ++s) {
                 const sim::QuestStepRow& want = row.steps[s];
                 if (!sim::questCounted(want.kind)) continue;
