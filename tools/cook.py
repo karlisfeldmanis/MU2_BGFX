@@ -1859,7 +1859,7 @@ def figure_set(world):
     # The pets, on every map: a worn Guardian Angel or Imp is drawn with whoever wears it
     # (game/pets.h), wherever that is. Each is one model playing its own one clip.
     for one in index.get("objects", []):
-        if one.get("kind") == "pet" and one["name"] not in named:
+        if one.get("kind") in ("pet", "wing") and one["name"] not in named:
             mesh = reach(one.get("glb"))
             if mesh:
                 standalone.append({"name": one["name"], "mesh": mesh})

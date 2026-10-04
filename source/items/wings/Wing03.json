@@ -1,0 +1,99 @@
+{
+  "item": "Wing03",
+  "mu_name": "Wings of Satan",
+  "mu_name_from": "MODEL_WING + 2, MODEL_WINGS_OF_SATAN (_enum.h:1921), Data/Item/Wing03.bmd (ZzzOpenData.cpp:1019), group 12 number 2; OpenMU Version075 Wings.cs.",
+  "why_this_one": "The knight's 1st level wing, the Chaos Machine's answer to a Chaos weapon box (docs/wings.md, 2026-10-04).",
+  "profile": "monster",
+  "profile_note": "A small model on its own rig worn on the character, as the Imp: the monster profile and its 3x cap.",
+  "rig_from": "Sixteen bones and one action of seven keys, the flap.",
+  "play_speed": 0.25,
+  "sheets": {
+    "devil_wing": "devil_wing.png"
+  },
+  "sheet_from": "Data/Item/devil_wing.OZT, 128x128 with alpha: a brown bat's membrane between dark finger bones, 32 triangles. Decoded from MuMain with pipeline/decode_texture.py.",
+  "tiled": true,
+  "tiled_why": "A two-sided alpha card seen from both faces, as the Imp's wings (Helper02's tiled_why).",
+  "sheet_materials": {
+    "devil_wing": "foliage"
+  },
+  "sheet_materials_from": "A membrane, lit through from both faces as Bat01's and the Imp's wings are.",
+  "cutout": [
+    "devil_wing"
+  ],
+  "cutout_from": "devil_wing.OZT is 128 by 128 with 59% of it cut away: the wing's shape is its alpha.",
+  "worn_note": "Worn on slot 7 (EQUIPMENT_WING). MuMain links it rigidly to player bone 47 at (0, 0, 15) and plays its own action 0 at PlaySpeed 0.25, or 1 while the hero flies (PLAYER_FLY, out of a safe zone; ZzzCharacter.cpp:15400-15430, :615-621). No plus glow: RenderLinkObject's level is forced to 0 for the wings (ZzzObject.cpp:9566-9569). docs/wings.md.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Wings.cs: Initialize and CreateWing.",
+    "call": "this.CreateWing(2, 5, 2, \"Wings of Satan\", 100, 20, 200, 180, ..., this.BuildOptions((0, OptionType.PhysDamage)), 12, 12)",
+    "group": 12,
+    "number": 2,
+    "drop_level": 100,
+    "drops_from_monsters": false,
+    "slot": 7,
+    "width": 5,
+    "height": 2,
+    "defense": 20,
+    "durability": 200,
+    "requires": {
+      "level": 180,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "damage_increase": 1.12,
+    "damage_taken": 0.88,
+    "option": "PhysDamage",
+    "power_note": "AttackDamageIncrease x1.12 and DamageReceiveDecrement x0.88, each raised by the wing's plus through OpenMU's per-level tables; defence by its plus as armour's. One random option of its kind (AddChance 0.25) and luck. CanFly. Made at the Chaos Machine only (sim/machine.h, Recipe::Wings)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 16,
+      "area": 13574.6,
+      "along": [
+        -52.2,
+        -3.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.516,
+        0.516
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 16,
+      "area": 13495.5,
+      "along": [
+        -51.3,
+        -3.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.455,
+        0.484,
+        0.969,
+        0.998
+      ]
+    }
+  ]
+}

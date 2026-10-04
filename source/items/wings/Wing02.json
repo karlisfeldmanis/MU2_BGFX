@@ -1,0 +1,99 @@
+{
+  "item": "Wing02",
+  "mu_name": "Wings of Heaven",
+  "mu_name_from": "MODEL_WING + 1, MODEL_WINGS_OF_HEAVEN (_enum.h:1920), Data/Item/Wing02.bmd (ZzzOpenData.cpp:1019), group 12 number 1; OpenMU Version075 Wings.cs.",
+  "why_this_one": "The wizard's 1st level wing, the Chaos Machine's answer to a Chaos weapon box (docs/wings.md, 2026-10-04).",
+  "profile": "monster",
+  "profile_note": "A small model on its own rig worn on the character, as the Imp: the monster profile and its 3x cap.",
+  "rig_from": "Sixteen bones and one action of seven keys, the flap.",
+  "play_speed": 0.25,
+  "sheets": {
+    "angel_wing": "angel_wing.png"
+  },
+  "sheet_from": "Data/Item/angel_wing.OZT, 128x128 with alpha: white feathers, 46 triangles. Decoded from MuMain with pipeline/decode_texture.py.",
+  "tiled": true,
+  "tiled_why": "A two-sided alpha card seen from both faces, as the Imp's wings (Helper02's tiled_why): its own sheet, cut by its own alpha and lit through.",
+  "sheet_materials": {
+    "angel_wing": "foliage"
+  },
+  "sheet_materials_from": "White feathers, but foliage for Bat01's and the Imp's reason: a thin alpha card seen from either face, which a leaf's translucency lights from both. Feather has no translucency and would go black from the unlit side.",
+  "cutout": [
+    "angel_wing"
+  ],
+  "cutout_from": "angel_wing.OZT is 128 by 128 with 76% of it cut away: the wing's shape is its alpha.",
+  "worn_note": "Worn on slot 7 (EQUIPMENT_WING). MuMain links it rigidly to player bone 47 at (0, 0, 15) and plays its own action 0 at PlaySpeed 0.25, or 1 while the hero flies (PLAYER_FLY, out of a safe zone; ZzzCharacter.cpp:15400-15430, :615-621). No plus glow: RenderLinkObject's level is forced to 0 for the wings (ZzzObject.cpp:9566-9569). docs/wings.md.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Wings.cs: Initialize and CreateWing.",
+    "call": "this.CreateWing(1, 5, 3, \"Wings of Heaven\", 100, 10, 200, 180, ..., this.BuildOptions((0, OptionType.WizDamage)), 12, 12)",
+    "group": 12,
+    "number": 1,
+    "drop_level": 100,
+    "drops_from_monsters": false,
+    "slot": 7,
+    "width": 5,
+    "height": 3,
+    "defense": 10,
+    "durability": 200,
+    "requires": {
+      "level": 180,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "damage_increase": 1.12,
+    "damage_taken": 0.88,
+    "option": "WizDamage",
+    "power_note": "AttackDamageIncrease x1.12 and DamageReceiveDecrement x0.88, each raised by the wing's plus through OpenMU's per-level tables; defence by its plus as armour's. One random option of its kind (AddChance 0.25) and luck. CanFly. Made at the Chaos Machine only (sim/machine.h, Recipe::Wings)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 23,
+      "area": 23231.6,
+      "along": [
+        -142.5,
+        -3.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.552,
+        0.552
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 23,
+      "area": 23099.0,
+      "along": [
+        -139.3,
+        -3.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.448,
+        0.552,
+        0.998
+      ]
+    }
+  ]
+}

@@ -2621,10 +2621,11 @@ def main() -> None:
                 # which the fight takes off and a merchant puts back (sim/wear.h). A stacking
                 # row's is its count and comes from the purchase, so it is not carried there.
                 # Worn is groups 0 to 11: the weapons, the shields and the five armour groups --
-                # and 13, the pets, whose durability is their Life (sim/wear.h).
+                # and 13, the pets, whose durability is their Life (sim/wear.h), and the wings,
+                # slot 7, which group 12 shares with the orbs and the Jewel of Chaos.
                 if stats.get("durability") and (
                     stats.get("is_ammunition") or 0 <= stats.get("group", -1) <= 11
-                    or stats.get("group") == 13
+                    or stats.get("group") == 13 or stats.get("slot") == 7
                 ):
                     entry["stats"]["durability"] = stats["durability"]
 

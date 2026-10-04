@@ -5478,6 +5478,31 @@ void testChaosMachine() {
             low.put(0, bare);
             low.put(8, sim::Held{chaos, 0, 1});
             check(sim::judge(noria, low).recipe == sim::Recipe::None, "a +3 Chaos weapon is not enough");
+
+            // At the Goblin, a box worth 100%: the knight is handed the Wings of Satan at +0.
+            const int32_t satan = noria.itemAt(12, 2);
+            check(satan >= 0, "the Wings of Satan are in Noria's tables");
+            sim::Realm smith;
+            check(smith.raise(&noria, 7, 182, 105, sim::Kin::DarkKnight, 50), "a knight by him");
+            smith.ask(talk);
+            for (int tick = 0; tick < 400 && smith.mixing() < 0; ++tick) smith.step();
+            smith.earn(50000000);
+            check(smith.putIn(smith.give(axe, -1, 4, -1, true, 3)) >= 0, "a +4 Chaos axe goes in");
+            check(smith.putIn(smith.give(chaos)) >= 0, "and a Chaos");
+            for (int i = 0; i < 16; ++i) smith.putIn(smith.give(bless));
+            const sim::Judged sure = smith.judged();
+            check(sure.recipe == sim::Recipe::Wings, "the box is wings");
+            checkEqual(sure.rate, 100, "at 100% with sixteen Bless");
+            check(smith.mix(), "the Goblin runs it");
+            int got = -1;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                if (!smith.machine()[cell].empty()) got = cell;
+            }
+            check(got >= 0 && smith.machine()[got].item == satan, "the box holds the Wings of Satan alone");
+            if (got >= 0) {
+                checkEqual(int(smith.machine()[got].refinement), 0, "at +0");
+                checkEqual(int(smith.machine()[got].durability), 200, "whole, at 200");
+            }
         }
     }
 

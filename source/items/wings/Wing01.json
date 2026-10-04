@@ -1,0 +1,99 @@
+{
+  "item": "Wing01",
+  "mu_name": "Wings of Elf",
+  "mu_name_from": "ZzzOpenData.cpp:1019 loads MODEL_WING + i from Data/Item/Wing(i+1).bmd, so Wing01 is MODEL_WING + 0, MODEL_WINGS_OF_ELF (_enum.h:1919), group 12 number 0; OpenMU Version075 Wings.cs names it Wings of Elf.",
+  "why_this_one": "The elf's 1st level wing, the Chaos Machine's answer to a Chaos weapon box (docs/wings.md, 2026-10-04).",
+  "profile": "monster",
+  "profile_note": "A small model on its own rig worn on the character, as the Imp: the monster profile and its 3x cap.",
+  "rig_from": "Eleven bones and one action of seven keys, the flap.",
+  "play_speed": 0.25,
+  "sheets": {
+    "elfin_wing": "elfin_wing.png"
+  },
+  "sheet_from": "Data/Item/elfin_wing.OZJ, 64x64, no alpha: cyan feather strokes on black, on 16 triangles. Decoded from MuMain with pipeline/decode_texture.py.",
+  "additive": [
+    "elfin_wing"
+  ],
+  "additive_from": "ItemObjectAttribute (ZzzObject.cpp:5332-5340) sets o->BlendMesh = 0 for MODEL_WING: its one mesh is added over what is behind it, and the black is the part that adds nothing. The Angel's wings are the same case.",
+  "tiled": true,
+  "tiled_why": "An added sheet needs its own material, which the baked path cannot give (Helper01).",
+  "sheet_materials": {
+    "elfin_wing": "feather"
+  },
+  "sheet_materials_from": "Feathers drawn as light. Added, so the material only names it.",
+  "worn_note": "Worn on slot 7 (EQUIPMENT_WING). MuMain links it rigidly to player bone 47 at (0, 0, 15) and plays its own action 0 at PlaySpeed 0.25, or 1 while the hero flies (PLAYER_FLY, out of a safe zone; ZzzCharacter.cpp:15400-15430, :615-621). No plus glow: RenderLinkObject's level is forced to 0 for the wings (ZzzObject.cpp:9566-9569). docs/wings.md.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Wings.cs: Initialize and CreateWing.",
+    "call": "this.CreateWing(0, 3, 2, \"Wings of Elf\", 100, 10, 200, 180, ..., this.BuildOptions((0, OptionType.HealthRecover)), 12, 12)",
+    "group": 12,
+    "number": 0,
+    "drop_level": 100,
+    "drops_from_monsters": false,
+    "slot": 7,
+    "width": 3,
+    "height": 2,
+    "defense": 10,
+    "durability": 200,
+    "requires": {
+      "level": 180,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "damage_increase": 1.12,
+    "damage_taken": 0.88,
+    "option": "HealthRecover",
+    "power_note": "AttackDamageIncrease x1.12 and DamageReceiveDecrement x0.88, each raised by the wing's plus through OpenMU's per-level tables; defence by its plus as armour's. One random option of its kind (AddChance 0.25) and luck. CanFly. Made at the Chaos Machine only (sim/machine.h, Recipe::Wings)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 8,
+      "area": 6655.1,
+      "along": [
+        -8.1,
+        -3.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.003,
+        0.51,
+        0.511
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 8,
+      "area": 6655.3,
+      "along": [
+        -8.2,
+        -3.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.001,
+        0.997,
+        0.999
+      ],
+      "bake_uv": [
+        0.47,
+        0.49,
+        0.976,
+        0.998
+      ]
+    }
+  ]
+}

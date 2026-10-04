@@ -59,8 +59,15 @@ wing's plus through OpenMU's per-level tables), luck, CanFly. Level 180 kept (th
 1. **The recipe** -- done 2026-10-04. `Recipe::Wings` in `sim/machine.cpp`, ahead of the
    Chaos Weapon; the realm refuses it ("no Wings of Satan is in this world's tables") until
    step 2. `sim_test` `testChaosMachine` judges it.
-2. **Import** Wing01-03 from MuMain with their sheets and action, recipes in
-   `source/items/wings/`, built, synced, indexed and cooked into every world's tables.
+2. **Import** -- done 2026-10-04. Wing01-03 from MuMain (`Item/Wing0N.bmd`, one mesh, 11/16/16
+   bones, one 7-key flap each) with elfin_wing (added, as MU's BlendMesh 0), angel_wing and
+   devil_wing (cut by their alpha, foliage for the Imp's reason), recipes in
+   `source/items/wings/`, kind `wing`. Built, synced, their three rows merged into
+   `assets/index.json`, every world's tables cooked (222 items). index.py carries a slot 7
+   row's durability; cook.py takes the wings into a world's standalone figures beside the
+   pets, which the next `--only figures` cook of each world writes. The mix now hands the
+   wing over (`sim_test`: a 100% box gives a knight the Wings of Satan at +0, whole). In the
+   bag and on the ground it is its own glb, unturned (MU turns it (270, 0, 45) there).
 3. **Wear**: slot 7 takes a wing of his class from level 180; damage x1.12, taken x0.88,
    defence, the option, wear on hits as armour. The card's lines.
 4. **Draw**: the wing on bone 47 with its own clip; the fly actions out of town; the speed.
