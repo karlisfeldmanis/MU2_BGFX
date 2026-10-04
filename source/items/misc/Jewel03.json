@@ -29,12 +29,15 @@
     }
   },
   "sheets": {
-    "wolf02": "wolf02.png"
+    "wolf02": "wolf02_gold.png"
   },
+  "sheet_tint_note": "wolf02_gold.png is MU's wolf02.png made a gold ramp: each texel is gold (232, 186, 96) times 0.38 + 0.62 x its grey over the sheet's brightest grey (189.3), in sRGB -- ours, the user's (2026-10-04: 'work on color, i think it was more goldish'). The floor lifts the near-black quarter the two broad faces sit on, which read as a hole from above ('its not fully 3d'). MU's grey sheet is kept beside it; the bake path has no tint of its own (sheet_tint reaches only the tiled path), so the colour is in the sheet.",
   "sheet_from": "Data/Item/wolf02.OZJ, MuMain's own bin/Data: Jewel03.bmd names wolf02.jpg and all 44 of its triangles are on it. Eight pixels square, four grey stone tones in quarters (light, mid, near black, dark), MU's whole painting of it.",
   "cutout": false,
   "cutout_from": "No alpha in the .OZJ (decode_texture: fully opaque).",
   "material_note": "marble, over the weapon profile's steel: a carved stone, polished, a dielectric. MuMain draws it plainly -- no tint, no light, no effect (ZzzObject.cpp:5864 turns it upright and that is all).",
+  "flat_shaded": true,
+  "flat_shaded_why": "As Jewel01: MU authored every corner on its face's own normal (all 132 at 0 degrees, the .obj's 180 being the winding convention), and the weld averaged them into a smooth blob that read flat on the ground -- the user: 'something wrong on droped version, its not fully 3d'.",
   "upright": true,
   "upright_from": "ZzzObject.cpp:5864-5868 stands it at Angle (270, 0, 45) in the cell: upright, a quarter turn.",
   "islands": [
