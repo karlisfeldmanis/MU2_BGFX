@@ -30,7 +30,7 @@ model and the castle's monsters, contact sheets) is in
 
 **Voices and the court's auras (2026-10-04).**
 - **One voice for the Archangel and his Messenger:** the user's "nr 9" of thirteen auditions, made more dramatic (exaggeration 1.0). It is `tools/voice.py archangel` / `messenger`, reading `gateWords` and `angelWords` out of `quest_dialog.cpp`, and refusing when the two drift apart.
-- **The Archangel (13 clips):** his four states, each read once for the staff, the sword and the crossbow, and "the time has run out".
+- **The Archangel (10 clips):** before the run, holding the weapon, and the thanks, each read once for the staff, the sword and the crossbow, and "the time has run out". He is silent while the run is on and the weapon is still in the statue.
 - **The Messenger (2 clips):** he speaks only to one carrying a Cloak of Invisibility, and only on a castle page his level can go into: the welcome and "wait till the gate opens". His no-cloak and wrong-level lines are silent.
 - **Ours, the court's auras:** the safe court lets a boon, a mend or a might be cast on oneself to prepare for the fight (`SkillRow::aura`). Summons and aimed skills are still refused.
 

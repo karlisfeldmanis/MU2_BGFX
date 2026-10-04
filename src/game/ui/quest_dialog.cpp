@@ -315,10 +315,15 @@ void QuestDialog::layout(const Play& play) {
             const char* arm = label.find("Sword") != std::string::npos      ? "sword"
                               : label.find("Crossbow") != std::string::npos ? "crossbow"
                                                                             : "staff";
-            clip_ = angel_ == sim::AngelState::NotYet && realm.castleRun().phase == sim::CastlePhase::Ended
-                        ? std::string("voice/archangel/archangel_ended.wav")
-                        : std::string("voice/archangel/archangel_") + kState[int(angel_)] + "_" +
-                              arm + ".wav";
+            // Silent while the run is on and the weapon is not yet in his hands (the user,
+            // 2026-10-04): the fight is the thing then, not his words.
+            if (angel_ != sim::AngelState::NoStaff) {
+                clip_ = angel_ == sim::AngelState::NotYet &&
+                                realm.castleRun().phase == sim::CastlePhase::Ended
+                            ? std::string("voice/archangel/archangel_ended.wav")
+                            : std::string("voice/archangel/archangel_") + kState[int(angel_)] + "_" +
+                                  arm + ".wav";
+            }
             break;
         }
     }

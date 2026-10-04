@@ -120,15 +120,15 @@ VOICES = {
 VOICES["messenger"] = VOICES["archangel"]
 # Takes read again on another seed, heard wrong by whisper on the voice's own: at 1.0 the welcome
 # said "appreciates me", the wait "injure", the staff's thanks "with" twice, the crossbow's
-# "Koon Koon", the sword's "spear of sorcerers". "Saint's grip" blurs on every seed tried.
+# "Koon Koon".
 RETAKES = {("messenger", "none"): 51, ("messenger", "notyet"): 23,
-           ("archangel", "done_staff"): 23, ("archangel", "done_crossbow"): 23,
-           ("archangel", "nostaff_staff"): 51, ("archangel", "nostaff_sword"): 23}
+           ("archangel", "done_staff"): 23, ("archangel", "done_crossbow"): 23}
 
 # Pages that are not a quest row's: the Messenger's and the Archangel's, said in
 # src/game/ui/quest_dialog.cpp (gateWords, angelWords), one clip a thing he can say, named as
 # Desk asks for it -- the Messenger's only to one with a cloak and on a castle he can go into, so
 # his "no cloak" and "not for warriors of your strength" are not voiced.
+# The Archangel is silent while the run is on without the weapon (his 'still in the statue').
 # A weapon he names is read once for each of the three (WEAPONS).
 # lines() checks each against the C++, so an edit there that is not made here is refused.
 DIALOG = ROOT / "src" / "game" / "ui" / "quest_dialog.cpp"
@@ -147,10 +147,6 @@ SAID = {
                     "have learned in this long war.",
         "ready_{w}": "You carry my {weapon}! Give it to me, warrior, and Blood Castle is ours "
                      "again.",
-        "nostaff_{w}": "My {weapon} is still in the Statue of Saint's grip. Cut down the guards "
-                       "until the drawbridge falls, slay the Spirit Sorcerers who hold the door, "
-                       "and break the statue. Then bring my weapon to me, before the time runs "
-                       "out.",
         "ended": "The time has run out, and Kundun's soldiers hold the castle still. Rest, "
                  "warrior, and come back stronger when the gate opens again.",
         "notyet_{w}": "Kundun's soldiers have taken this castle, and a Statue of Saint holds my "
