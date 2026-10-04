@@ -37,7 +37,10 @@ enum class Tone : uint8_t {
     Uncommon, Rare, Epic, Legendary, Artifact,
     // A quest item's own (the user, 2026-10-04: 'quest items has to be purple'): a violet
     // brighter than the epic's, so it is not read as an excellent and holds on its dark plate.
-    Quest
+    Quest,
+    // A legendary rune's (the user, 2026-10-04: 'legendary runes has to use orange color'): WoW's
+    // legendary orange, kept for the runes when every other legendary went green.
+    RuneLegendary
 };
 uint32_t colourOf(Tone tone);
 

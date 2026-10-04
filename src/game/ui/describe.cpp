@@ -215,9 +215,10 @@ uint32_t moneyColour(long long zen) {
     return gfx::rgba(150.0f / 255.0f, 220.0f / 255.0f, 1.0f);
 }
 
-// A rune's rarity in WoW's colour for it (sim::Rarity).
+// A rune's rarity in WoW's colour for it (sim::Rarity): a legendary one orange, not the green
+// of every other legendary (the user, 2026-10-04: 'legendary runes has to use orange color').
 static Tone rarityTone(sim::Rarity rarity) {
-    return rarity == sim::Rarity::Legendary ? Tone::Legendary
+    return rarity == sim::Rarity::Legendary ? Tone::RuneLegendary
            : rarity == sim::Rarity::Epic    ? Tone::Epic
                                             : Tone::Rare;
 }
@@ -228,7 +229,7 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     // A Rune of Creation is its rune's rarity (sim::Rarity), legendary while it carries none.
     if (sim::creation(row)) {
         const sim::PowerRow* power = sim::powerOf(powerAt(what, 0));
-        return power ? rarityTone(power->rarity) : Tone::Legendary;
+        return power ? rarityTone(power->rarity) : Tone::RuneLegendary;
     }
     // A powered ring or pendant is its count of powers (sim::affixCount): one green, two blue,
     // three purple, four legendary -- the user's ladder of 2026-10-03. Being excellent lifts it to

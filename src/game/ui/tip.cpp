@@ -362,6 +362,7 @@ uint32_t colourOf(Tone tone) {
         // UI gold, #ffd100, which is also MU's +7 yellow near enough.
         case Tone::Artifact: return gfx::rgba(1.0f, 0xd1 / 255.0f, 0.0f);
         case Tone::Quest: return gfx::rgba(0.84f, 0.52f, 1.0f);
+        case Tone::RuneLegendary: return gfx::rgba(1.0f, 0x80 / 255.0f, 0.0f);  // WoW's #ff8000
         case Tone::White:
         default: return gfx::rgba(1.0f, 1.0f, 1.0f);
     }

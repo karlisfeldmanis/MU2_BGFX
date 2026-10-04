@@ -62,7 +62,7 @@ uint32_t rarityInk(sim::Rarity rarity) {
     switch (rarity) {
         case sim::Rarity::Rare: return gfx::rgba(0.0f, 0.44f, 0.87f);
         case sim::Rarity::Epic: return gfx::rgba(0.64f, 0.21f, 0.93f);
-        case sim::Rarity::Legendary: return gfx::rgba(0x1e / 255.0f, 1.0f, 0.0f);  // green, 2026-10-04
+        case sim::Rarity::Legendary: return gfx::rgba(1.0f, 0x80 / 255.0f, 0.0f);  // a rune's orange
     }
     return kFigure;
 }
