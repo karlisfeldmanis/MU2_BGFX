@@ -59,7 +59,9 @@ Needs asks(const content::ItemRow& row, int refinement, bool excellent) {
         return raw <= 0 ? 0 : multiplier * scaled * raw / 100 + 20;
     };
     Needs n;
-    n.level = row.needLevel;
+    // A wing asks 4 levels more a plus: it falls to the rings' branch of WebZen's
+    // `m_RequireLevel = RequireLevel + m_Level * 4` (zzzitem.cpp:628-632).
+    n.level = row.needLevel + (firstWing(row) ? 4 * std::max(0, refinement) : 0);
     n.strength = ask(row.needStrength, 3);
     n.agility = ask(row.needAgility, 3);
     n.energy = ask(row.needEnergy, 4);
@@ -278,10 +280,32 @@ std::string excellentLine(const content::ItemRow& row, int bit) {
                                                                       : kAttack[bit];
 }
 
+bool firstWing(const content::ItemRow& row) { return row.group == 12 && row.number <= 2; }
+
+int wingDefense(const content::ItemRow& row, int refinement) {
+    if (!firstWing(row)) return 0;
+    const int plus = std::max(0, refinement);
+    int defense = row.defense + 3 * plus;
+    if (plus >= 10) defense += (plus - 9) * (plus - 9 + 1) / 2;
+    return defense;
+}
+
+PetPower wingPower(const content::ItemRow& row, int refinement) {
+    PetPower power;
+    if (!firstWing(row)) return power;
+    const int plus = std::max(0, refinement);
+    power.dealt = double(112 + 2 * plus) / 100.0;
+    power.taken = double(88 - 2 * plus) / 100.0;
+    power.lifeCost = row.number == 1 ? 1 : 3;
+    return power;
+}
+
 int optionValue(const content::ItemRow& row, int level) {
     if (level <= 0) return 0;
     // A ring's and a pendant's is life regeneration, a percent a level (AT_LIFE_REGENERATION).
     if (jewellery(row)) return level;
+    // And the Wings of Elf's (zzzitem.cpp:1150-1153); Heaven's and Satan's are 4 a level.
+    if (firstWing(row) && row.number == 0) return level;
     return level * (row.shield() ? 5 : 4);
 }
 
@@ -295,7 +319,11 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
     const content::ItemRow& row = tables.items[size_t(target.item)];
     // And the rings and pendants, ours (the user, 2026-10-03: "if user upgrades rings and pendants
     // with jewel of bless or soul"); MU refines nothing past the boots.
-    if ((row.group > kGroupBoots && !jewellery(row)) || ammunition(row)) return false;
+    // And the 1st level wings, which MU raises (WebZen's level-up refuses from 12/7 on,
+    // user.cpp:28576-28584).
+    if ((row.group > kGroupBoots && !jewellery(row) && !firstWing(row)) || ammunition(row)) {
+        return false;
+    }
     // BlessJewelConsumeHandlerPlugIn's MaximumLevel 5, SoulJewelConsumeHandlerPlugIn's 8.
     const int highest = kind == Jewel::Bless ? 5 : 8;
     return target.refinement <= highest && target.refinement < kRefineCap;

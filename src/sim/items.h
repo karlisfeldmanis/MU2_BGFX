@@ -131,6 +131,23 @@ bool placesIn(const content::ItemRow& row, Kin kin, int slot);
 // 13/2 and Dinorant 13/3. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);
 
+// ---- the 1st level wings (docs/wings.md) ----------------------------------------------------
+// Wings of Elf, Heaven and Satan, 12/0-2, slot 7, on WebZen 1.00.93's base 0.97d branch.
+bool firstWing(const content::ItemRow& row);
+// Its defence at a plus: the row's, 3 a plus, and from +10 the triangle every worn thing takes
+// (zzzitem.cpp:880-896).
+int wingDefense(const content::ItemRow& row, int refinement);
+// What it does while it has life (gObjWingSprite, user.cpp:10432-10467): his blows x(112 + 2 a
+// plus)%, at 1 Life a blow for the wizard's wing and 3 for the others' -- the class's, and each
+// wing has one (ObjAttack.cpp:1140-1210, NEW_FORSKYLAND3 not taken, which lowers the elf's to
+// 1) -- and what reaches him x(88 - 2 a plus)% (:1219-1280). As a PetPower so it folds in with
+// the Imp's price and the Angel's cut.
+PetPower wingPower(const content::ItemRow& row, int refinement);
+// Its wear by the hour (gObjSecondDurDown, user.cpp:10866-10912): DurabilityDown(1) every tenth
+// second it is worn, a point gone at the 565th -- one point in 94 minutes, 200 in 313 hours.
+constexpr int64_t kWingWearTicks = 10 * 20;
+constexpr double kWingWearSteps = 565.0;
+
 // ---- rings and pendants (docs/jewellery.md) ------------------------------------------------
 //
 // The four 0.75 pieces in group 13 beside the pets: the Rings of Ice (8) and Poison (9), worn in

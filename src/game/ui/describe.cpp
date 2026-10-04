@@ -64,6 +64,7 @@ std::string kindOf(const content::ItemRow& row) {
     // In the potions' group as MU files it (14, 22), and not drunk: set in a socket.
     if (sim::creation(row)) return "Epic jewel";
     if (row.group == 15) return "Scroll";
+    if (sim::firstWing(row)) return "Wings";
     if (row.group == 12) return "Orb";
     switch (row.group) {
         case sim::kGroupHelms: return "Helm";
@@ -91,6 +92,7 @@ float swingOf(const content::ItemRow& row, const sim::Held& held) {
 }
 
 int armourOf(const content::ItemRow& row, const sim::Held& held) {
+    if (sim::firstWing(row)) return sim::wingDefense(row, held.refinement);
     if (!row.armour() && !row.shield()) return 0;
     return row.defense + sim::defenseBonus(row.shield(), held.refinement) +
            (row.shield() ? 0 : sim::optionValue(row, held.option)) +
@@ -383,6 +385,18 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
         if (excellent > 0) rail("+" + std::to_string(excellent), Tone::Green, "excellent");
     }
+    // A wing's defence, 3 a plus (sim::wingDefense).
+    if (sim::firstWing(row)) {
+        const int defense = sim::wingDefense(row, plus);
+        sheet.hero.value = std::to_string(defense);
+        sheet.hero.tone = lifted;
+        sheet.hero.word = "Armor";
+        if (defense > row.defense) {
+            rail(std::to_string(row.defense), Tone::White, "base");
+            rail("+" + std::to_string(defense - row.defense), Tone::Yellow,
+                 "refined to +" + std::to_string(plus));
+        }
+    }
     if (row.defenseRate > 0) {
         const int block =
             row.defenseRate + (what.excellent != 0 ? sim::excellentBlock(row) : 0);
@@ -481,6 +495,27 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             does.rows.push_back(line);
         }
     }
+    // A wing's powers in MuMain's words and order (GT 577, 578, 579; ZzzInventory.cpp:4270-4278),
+    // `12 + Level * 2` off sim::wingPower, so the card and the blow cannot disagree; and its price
+    // in red, as the Imp's, which MuMain's card leaves out and WebZen's server takes.
+    if (sim::firstWing(row)) {
+        const sim::PetPower power = sim::wingPower(row, what.refinement);
+        const auto say = [&](const std::string& words, Tone tone) {
+            Row line;
+            line.free = words;
+            line.freeTone = tone;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        };
+        say("Increase " + std::to_string(int(std::lround((power.dealt - 1.0) * 100.0))) +
+                "% of Damage",
+            Tone::White);
+        say("Absorb " + std::to_string(int(std::lround((1.0 - power.taken) * 100.0))) +
+                "% of Damage",
+            Tone::White);
+        say("Increase speed", Tone::White);
+        say("Life -" + std::to_string(power.lifeCost) + " for each successful attack", Tone::Red);
+    }
     if (sim::heals(row) || sim::restores(row)) {
         Row line;
         line.free = sim::heals(row) ? "Restores life when it goes down."
@@ -492,7 +527,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // A stack says how many, as MU's `Number of items` does; a quiver's shots are its wear and
     // go in the foot with everything else that is spent.
     if (!sim::ammunition(row) && what.durability > 1 && !worn && !weapon &&
-        row.group != sim::kGroupPets) {
+        row.group != sim::kGroupPets && !sim::firstWing(row)) {
         does.rows.push_back(stat("Quantity", std::to_string(what.durability), Tone::Blue));
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
@@ -544,7 +579,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         if (what.option > 0) {
             const std::string value = std::to_string(sim::optionValue(row, what.option));
             // A ring's and a pendant's is AT_LIFE_REGENERATION, MuMain's "Automatic HP recovery".
-            if (sim::jewellery(row)) rolled("", "Automatic HP recovery +" + value + "%");
+            // A wing's by its kind: the Elf's life regeneration, Heaven's wizardry, Satan's damage.
+            if (sim::firstWing(row)) {
+                rolled("", row.number == 0   ? "Automatic HP recovery +" + value + "%"
+                           : row.number == 1 ? "Additional Wizardry Dmg +" + value
+                                             : "Additional Dmg +" + value);
+            } else if (sim::jewellery(row)) rolled("", "Automatic HP recovery +" + value + "%");
             else if (row.shield()) rolled("", "Additional defense rate +" + value);
             else if (row.armour()) rolled("", "Additional defense +" + value);
             else if (row.magicPower > 0) rolled("", "Additional Wizardry Dmg +" + value);

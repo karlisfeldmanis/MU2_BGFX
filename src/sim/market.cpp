@@ -294,6 +294,16 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
         if (refinement > 0) price *= int64_t(std::pow(2.0, refinement));
         return round(price / 10 * 10 * (pieces > 1 ? pieces : 1));
     }
+    // A 1st level wing: `40000000 + (40 + Level2) * Level2^2 * 11` (WebZen zzzitem.cpp:2485-2488),
+    // its luck and option then as anything's.
+    if (firstWing(row)) {
+        const int64_t level = row.dropLevel + refinement * 3 + steeper(refinement);
+        int64_t wing = 40000000LL + (40 + level) * level * level * 11;
+        if (luck) wing += wing * 25 / 100;
+        if (option == 1) wing += int64_t(double(wing) * 0.6);
+        if (option > 1) wing += int64_t(double(wing) * 0.7 * std::pow(2.0, option - 1));
+        return round(wing);
+    }
     // An excellent thing is priced as if it dropped 25 levels deeper (ItemPriceCalculator).
     const int64_t dropLevel =
         row.dropLevel + refinement * 3 + steeper(refinement) + (excellent > 0 ? 25 : 0);

@@ -68,9 +68,28 @@ wing's plus through OpenMU's per-level tables), luck, CanFly. Level 180 kept (th
    pets, which the next `--only figures` cook of each world writes. The mix now hands the
    wing over (`sim_test`: a 100% box gives a knight the Wings of Satan at +0, whole). In the
    bag and on the ground it is its own glb, unturned (MU turns it (270, 0, 45) there).
-3. **Wear**: slot 7 takes a wing of his class from level 180 -- done 2026-10-04
-   (`sim::placeOf`, the row's own requirements). Still to do: damage x1.12, taken x0.88,
-   defence, the option, wear on hits as armour, the card's lines.
+3. **Wear** -- done 2026-10-04, WebZen 1.00.93's base 0.97d branch throughout
+   (`sim::firstWing`, `wingPower`, `wingDefense`; `sim_test` checks each):
+   - his blows x(112 + 2 a plus)%, at 1 Life a blow for Heaven (the wizard's) and 3 for
+     Satan and Elf (ObjAttack.cpp:1140-1210; NEW_FORSKYLAND3's elf at 1 not taken); what
+     reaches him x(88 - 2 a plus)% (:1219-1280). Folded into `Body::pet` after Kinship, so
+     the ring lifts a pet's price and not the wing's. Only while it has life.
+   - defence: the row's (10/10/20) + 3 a plus, the triangle from +10 (zzzitem.cpp:880-896),
+     worn down as armour's.
+   - the option: Satan +4 a level on both damage bands, Heaven +4 on wizardry, Elf 1% life
+     regeneration a level beside the rings' (zzzitem.cpp:1150-1165, :3026-3036).
+   - luck counts as any lucky thing worn (ours: 5% critical, the project's luck, where WebZen
+     gives a wing 4).
+   - level 180 + 4 a plus (the rings' branch, zzzitem.cpp:628-632); Bless and Soul raise it
+     (user.cpp:28576-28584 refuses only from 12/7).
+   - wear by the hour, not on hits: 1/565 of a point every ten seconds worn, a point in
+     94 minutes (gObjSecondDurDown); at nought it stays, broken and powerless, until mended.
+   - price `40000000 + (40 + L) * L^2 * 11`, L = 100 + 3 a plus and the steeper rungs
+     (zzzitem.cpp:2485-2488): 55.4 million at +0, a third of it sold.
+   - the card: "Increase N% of Damage", "Absorb N% of Damage", "Increase speed" (GT 577-579,
+     ZzzInventory.cpp:4270-4278), the Life price in red (ours, as the Imp's), defence as
+     Armor with its rail, the option by kind. In the bag a wing lies span across (MU turns
+     it (270, 0, 45) there).
 4. **Draw** -- done 2026-10-04. `game/wings.h` (WingLook) hangs the wing on Bone05 at
    (0, 0, 15), its flap at rate 1 (MU's 0.25) and 4 while he flies (MU's 1). Off a safe tile,
    not riding, a winged hero flies (`sim::Body::flying`, at kFlyFactor, MU's 15 against the

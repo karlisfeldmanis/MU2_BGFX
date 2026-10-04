@@ -356,6 +356,8 @@ struct Body {
     // (MU's horn and wing share one branch, the horn first). MuMain's PLAYER_FLY: he never
     // walks or runs then, in a fight or out (ZzzCharacter.cpp:615-621).
     bool flying = false;
+    // His wing's option, while it has life (sim::Arms::wingDamage, wingWizardry).
+    int wingDamage = 0, wingWizardry = 0;
 
     Temper temper = Temper::Asleep;
     uint32_t quarry = 0;  // an id, 0 for nobody

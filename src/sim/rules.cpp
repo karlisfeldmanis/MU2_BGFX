@@ -247,6 +247,16 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
             out->maximumDamage += int(float(out->maximumDamage) * rise + 1.0f);
         }
     }
+    // A wing's damage option, on the band his blows are rolled from, both hands, after the bow's
+    // (ObjCalCharacter.cpp:473-477).
+    if (arms.wingDamage > 0) {
+        out->minimumDamage += arms.wingDamage;
+        out->maximumDamage += arms.wingDamage;
+        if (arms.dual) {
+            out->offhandMinimumDamage += arms.wingDamage;
+            out->offhandMaximumDamage += arms.wingDamage;
+        }
+    }
     // The luck option is 0.75's only source: a twentieth for each lucky thing worn.
     out->criticalChance = arms.criticalChance;
     out->criticalDamage = arms.excel.criticalDamage;
@@ -268,8 +278,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // The wizard's band and his staff (ClassDarkWizard.cs:72-73, :81). Only his class file
     // relates energy to wizardry damage; a knight or an elf with a staff has no band to raise.
     const bool wizard = kin == Kin::DarkWizard;
-    out->wizardMinimum = wizard ? double(points.energy) / 9.0 : 0.0;
-    out->wizardMaximum = wizard ? double(points.energy) / 4.0 : 0.0;
+    out->wizardMinimum = wizard ? double(points.energy) / 9.0 + arms.wingWizardry : 0.0;
+    out->wizardMaximum = wizard ? double(points.energy) / 4.0 + arms.wingWizardry : 0.0;
     out->wizardryRate = 1.0 + arms.staffRise / 100.0;
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;

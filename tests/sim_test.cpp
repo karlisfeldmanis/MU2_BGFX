@@ -5615,6 +5615,30 @@ void testChaosMachine() {
             flier.step();
             check(flier.hero().flying, "a tick off the safe zone and he flies");
             checkEqual(sim::strideFactor(flier.hero()), sim::kFlyFactor, "at MU's 15 against 12");
+
+            // Its powers, WebZen's base 0.97d (docs/wings.md step 3).
+            const content::ItemRow& satanRow = noria.items[size_t(satan)];
+            checkNear(flier.hero().stats.damageDealt, 1.12, 1e-9, "his blows x1.12 at +0");
+            checkNear(flier.hero().stats.damageTaken, 0.88, 1e-9, "what reaches him x0.88");
+            checkEqual(flier.hero().pet.lifeCost, 3, "3 Life a blow, the knight's");
+            checkNear(sim::wingPower(satanRow, 5).dealt, 1.22, 1e-9, "x1.22 at +5");
+            checkNear(sim::wingPower(satanRow, 5).taken, 0.78, 1e-9, "x0.78 at +5");
+            checkEqual(sim::wingPower(noria.items[size_t(noria.itemAt(12, 1))], 0).lifeCost, 1,
+                       "the wizard's wing costs 1");
+            checkEqual(sim::wingDefense(satanRow, 0), 20, "Satan's defence 20 at +0");
+            checkEqual(sim::wingDefense(satanRow, 9), 47, "3 a plus to +9");
+            checkEqual(sim::wingDefense(satanRow, 11), 56, "and the triangle from +10");
+            checkEqual(sim::asks(satanRow, 0, false).level, 180, "level 180 at +0");
+            checkEqual(sim::asks(satanRow, 5, false).level, 200, "4 more a plus");
+            check(sim::refinable(noria, sim::Held{bless, 0, 1}, sim::Held{satan, 0, 200}),
+                  "a Bless raises it");
+            checkEqual(sim::optionValue(satanRow, 3), 12, "Satan's option +12 at its third");
+            checkEqual(sim::optionValue(noria.items[size_t(noria.itemAt(12, 0))], 2), 2,
+                       "the Elf's 2% regeneration at its second");
+            checkEqual(int(sim::buyingPrice(satanRow, 0, 1, false, 200, 200, false, 0, 0)),
+                       55400000, "40,000,000 + 140 x 100^2 x 11");
+            const int worn = flier.hero().wornDefense;
+            check(worn >= 20, "its defence is in his");
         }
     }
 

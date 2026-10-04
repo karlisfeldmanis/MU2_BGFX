@@ -7,6 +7,7 @@
 
 #include "core/log.h"
 #include "game/shine.h"
+#include "sim/items.h"
 
 namespace mu::game {
 namespace {
@@ -119,6 +120,10 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         if (!row.armour() && !row.jewel()) {
             int order[3] = {0, 1, 2};
             std::sort(order, order + 3, [&](int a, int c) { return size[a] > size[c]; });
+            // A wing lies with its span across and stands its height up, as its 5 by 2 cell is
+            // shaped: on the longest-axis rule it stood on a tip, a sliver edge-on. MU turns every
+            // wing (270, 0, 45) in the bag (ZzzObject.cpp:6002-6007), spread toward its camera.
+            if (sim::firstWing(row)) std::swap(order[0], order[1]);
             const float world[3][3] = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
             for (int i = 0; i < 16; ++i) basis[i] = 0.0f;
             basis[15] = 1.0f;

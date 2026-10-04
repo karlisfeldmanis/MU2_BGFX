@@ -63,6 +63,8 @@ Arms Realm::armsOf(const Body& one) const {
         arms.excel = one.excel;
         arms.staffRise = double(one.staffRise);
         arms.pet = one.pet;
+        arms.wingDamage = one.wingDamage;
+        arms.wingWizardry = one.wingWizardry;
         arms.archery = one.archer != 0;
         arms.quiverPlus = one.quiverPlus;
         arms.greaterDamage = one.mightUntil > tick_ ? one.might : 0;
@@ -421,7 +423,9 @@ void Realm::rearm(Body& hero) {
     hero.luckyWorn = 0;
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
-        if (row && (takesOptions(*row) || jewellery(*row)) && bag_[slot].luck) ++hero.luckyWorn;
+        if (row && (takesOptions(*row) || jewellery(*row) || firstWing(*row)) && bag_[slot].luck) {
+            ++hero.luckyWorn;
+        }
     }
     // What each piece's wear takes off it (sim/wear.h), read off the slot it is worn in.
     const auto cutAt = [&](int slot) {
@@ -458,6 +462,12 @@ void Realm::rearm(Body& hero) {
             hero.wornDefenseRate += rate - int(float(rate) * cut);
         }
     }
+    // The wing's defence, worn down as armour is (ItemDefense, the item's m_Defense cut by its
+    // m_CurrentDurabilityState).
+    if (const content::ItemRow* wing = rowAt(kWings); wing && firstWing(*wing)) {
+        const int defense = wingDefense(*wing, bag_[kWings].refinement);
+        hero.wornDefense += defense - int(float(defense) * cutAt(kWings));
+    }
     // The pet in slot 8 and the mount in its own, each while it has life (ItemPowerUpFactory.cs:
     // 38-41): their prices and gifts multiply and add, and either one ridden puts him on it.
     hero.pet = PetPower{};
@@ -475,6 +485,22 @@ void Realm::rearm(Body& hero) {
     if (hero.excel.kinship) {
         hero.pet.dealt = std::max(1.0, hero.pet.dealt);
         hero.pet.lifeCost = 0;
+    }
+    // And the wing, while it has life (gObjWingSprite), after Kinship: the ring lifts a pet's
+    // price, not the wing's. Its option by its kind: the Elf's life regeneration beside the
+    // rings', Heaven's wizardry, Satan's damage (docs/wings.md).
+    hero.wingDamage = hero.wingWizardry = 0;
+    if (const content::ItemRow* wing = rowAt(kWings);
+        wing && firstWing(*wing) && bag_[kWings].durability > 0) {
+        const Held& worn = bag_[kWings];
+        const PetPower power = wingPower(*wing, worn.refinement);
+        hero.pet.taken *= power.taken;
+        hero.pet.dealt *= power.dealt;
+        hero.pet.lifeCost += power.lifeCost;
+        const int option = optionValue(*wing, worn.option);
+        if (wing->number == 0) hero.excel.lifeRegen += option;
+        else if (wing->number == 1) hero.wingWizardry = option;
+        else hero.wingDamage = option;
     }
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
@@ -828,6 +854,13 @@ void Realm::recover(Body& hero) {
         hero.health < hero.maxHealth) {
         const int back = std::max(1, hero.maxHealth * hero.excel.lifeRegen / 100);
         hero.health = std::min(hero.maxHealth, hero.health + back);
+    }
+    // The wing's wear by the hour, worn or not fighting (sim::kWingWearTicks). At nought it stays,
+    // broken, and does nothing until it is mended.
+    if (tick_ % kWingWearTicks == 0 && !bag_[kWings].empty() && bag_[kWings].durability > 0 &&
+        size_t(bag_[kWings].item) < tables_->items.size() &&
+        firstWing(tables_->items[size_t(bag_[kWings].item)])) {
+        wearDown(kWings, 1.0 / kWingWearSteps);
     }
     // Health on the same three seconds, a hundredth of the pool, and only on a safe tile -- and
     // a Renewal rune's share anywhere, beside it (sim::kRenewalShare).

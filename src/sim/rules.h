@@ -272,6 +272,11 @@ struct Arms {
     int quiverPlus = 0;
     // Greater Damage while it stands (Fighter::greaterDamage).
     int greaterDamage = 0;
+    // A worn wing's option (docs/wings.md): Satan's on both ends of every band he swings, and
+    // Heaven's on his wizardry, 4 a level, PlusSpecial's AT_IMPROVE_DAMAGE and AT_IMPROVE_MAGIC
+    // (ObjCalCharacter.cpp:473-477, :582-583).
+    int wingDamage = 0;
+    int wingWizardry = 0;
     // The worn pet's, while its life lasts.
     PetPower pet;
 };
