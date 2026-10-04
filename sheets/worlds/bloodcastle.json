@@ -50,5 +50,7 @@
   "water_flow": 0.0,
   "tonemap": 1,
   "lamp_shadow": 0.85,
-  "water_sheen": 0.0
+  "water_sheen": 0.0,
+  "ground_wet": 0.4,
+  "ground_puddles": 0.3
 }

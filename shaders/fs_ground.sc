@@ -14,6 +14,7 @@ uniform vec4 u_groundRepeat;  // xyz: each layer's repeat  w: the bite
 uniform vec4 u_groundBlend;   // x: the flow's cycle  y: its band's row, or -1  z: reach, or MU's slide  w: layers
 uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are water, a bit each
 uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)  w: water_variety
+uniform vec4 u_groundWet;     // x: how wet the ground is (ground_wet)  y: how much lies as puddles
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
 uniform vec4 u_caustic;       // x: MU's caustic frame, 0-31  y: how bright  z: which layers, a bit each
@@ -94,6 +95,20 @@ vec3 varied(vec3 texel, vec3 other, vec2 tile, float variety)
 // A layer's texel, or on running water the two dragged copies cross-faded: `run` is a
 // uniform's, so the branch keeps the mips' derivatives whole, and a still layer reads once.
 #define LAYER(s, a, b, run) ((run) ? mix(texture2D(s, a), texture2D(s, b), flowFade) : texture2D(s, a))
+
+// A value noise over the land for wet ground's puddles: smooth, about one feature a unit.
+float wetHash(vec2 p)
+{
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float wetNoise(vec2 p)
+{
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	vec2 u = f * f * (3.0 - 2.0 * f);
+	return mix(mix(wetHash(i), wetHash(i + vec2(1.0, 0.0)), u.x),
+	           mix(wetHash(i + vec2(0.0, 1.0)), wetHash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
 
 void main()
 {
@@ -295,6 +310,22 @@ void main()
 	// becomes a real difference when water arrives with a specular path of its own.
 	vec3 diffuseColour = albedo * (1.0 - metal);
 
+	// Wet ground, where the sheet asks (ground_wet; Blood Castle's). Ours. Water in the stone
+	// darkens it -- the pores fill and less light scatters back out -- and standing water,
+	// in patches a few metres across where a slow noise over the land lies low, darkens it
+	// more and lies flat over the stone's relief. The sheen is added after the lamps.
+	float wet = u_groundWet.x;
+	float puddle = 0.0;
+	if (wet > 0.0)
+	{
+		vec2 at = v_wpos.xz;
+		float lay = wetNoise(at * 0.23) * 0.7 + wetNoise(at * 0.83 + vec2(17.3, 5.1)) * 0.3;
+		puddle = smoothstep(0.6, 0.68, lay) * u_groundWet.y;
+		float darken = mix(1.0, 0.68, wet) * mix(1.0, 0.75, puddle);
+		diffuseColour *= darken;
+		ownAlbedo *= darken;
+	}
+
 	vec3 l = normalize(u_sunDir.xyz);
 	float ndotl = saturate(dot(n, l));
 
@@ -324,6 +355,35 @@ void main()
 	vec3 v = normalize(u_camPos.xyz - v_wpos);
 	colour += lampLight(v_wpos, n, v, ownAlbedo * (1.0 - metal), vec3_splat(0.0), roughness,
 	                    saturate(dot(n, v)) + 1e-5, 0.0) * mix(1.0, sunLit, u_lampParams.w);
+
+	// And the wet ground's sheen: the lamps' highlight through the water's own low GGX, broad
+	// on wet stone and nearly a mirror on a puddle, whose normal is the ground's and not the
+	// stone's; and the sun's or moon's, the same way. No sky reflection, as on the water.
+	if (wet > 0.0)
+	{
+		// Seen along the camera's own axis, not from the eye's point: the camera follows him
+		// at one fixed angle, and taken from the eye a highlight slid over the stone with
+		// every step he took (the user: 'light drops is changing angles when char is
+		// moviing'). Along the axis it stays where it lies, as a painted wet floor would.
+		vec3 axis = normalize(mul(u_invView, vec4(0.0, 0.0, 1.0, 0.0)).xyz);
+		vec3 vw = dot(axis, u_camPos.xyz - v_wpos) > 0.0 ? axis : -axis;
+		vec3 nw = normalize(mix(n, ng, puddle * 0.9));
+		float wr = mix(0.3, 0.07, puddle);
+		float wndotv = saturate(dot(nw, vw)) + 1e-5;
+		vec3 glint = lampLight(v_wpos, nw, vw, vec3_splat(0.0), vec3_splat(0.02), wr, wndotv, 1.0)
+		           * mix(1.0, sunLit, u_lampParams.w);
+		float wndotl = saturate(dot(nw, l));
+		if (wndotl > 0.0)
+		{
+			vec3 hw = normalize(l + vw);
+			float spec = distributionGGX(saturate(dot(nw, hw)), wr) *
+			             geometrySmith(wndotv, wndotl, wr) /
+			             max(4.0 * wndotv * wndotl, 1e-4);
+			glint += fresnelSchlick(vec3_splat(0.02), saturate(dot(vw, hw))) * spec *
+			         u_sunColour.rgb * u_sunDir.w * wndotl * sunLit;
+		}
+		colour += glint * wet * (1.0 - dot(w, isWater));
+	}
 
 	// Water's sheen, where the sheet asks for one (water_sheen, u_groundColour.w). Ours: MU's
 	// water is its painted sheet sliding, and the Dungeon's is near black, so away from a

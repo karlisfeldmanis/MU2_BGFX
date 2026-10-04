@@ -97,6 +97,13 @@ struct Lighting {
     // tower with no torch is the only warm light (docs/lost-tower-port.md). Ours. 0 everywhere
     // else, so their water is as it was.
     float waterGlow[3] = {0.0f, 0.0f, 0.0f};
+    // Wet ground, where the sheet asks (ground_wet, 0 to 1): stone darkened as water darkens it
+    // and given a low, glassy sheen for the lamps and the sun or moon to streak across; and
+    // `groundPuddles`, 0 to 1, how much of it lies as standing water in patches a few metres
+    // across (fs_ground). Blood Castle's (the user, 2026-10-03: 'can we add wet ground effect to
+    // BC ground?'). Ours. 0 everywhere else.
+    float groundWet = 0.0f;
+    float groundPuddles = 0.0f;
     // How far a still water sheet is kept from repeating, 0 to 1: a second copy of it, turned
     // and at another scale, blended in by a slow noise over the land, and its brightness drifting
     // with a second one (fs_ground). The Lost Tower's lava, flooded over the void, showed MU's

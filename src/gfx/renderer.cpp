@@ -483,6 +483,7 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
                                            (l[2].water ? 4 : 0))};
             bgfx::setUniform(uGroundRelief_, relief);
             bgfx::setUniform(uWaterGlow_, waterGlow_);
+            bgfx::setUniform(uGroundWet_, groundWet_);
             // xyz are each layer's water slide, in widths of its own sheet: MuMain's
             // WaterMove, `(WorldTime % 20000) * 0.00005` (ZzzLodTerrain.cpp), added to U on
             // every tile that wears TileWater01 -- one sheet width every twenty seconds, along
@@ -579,6 +580,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     waterFlow_ = lighting.waterFlow;
     for (int i = 0; i < 3; ++i) waterGlow_[i] = lighting.waterGlow[i];
     waterGlow_[3] = lighting.waterVariety;
+    groundWet_[0] = lighting.groundWet;
+    groundWet_[1] = lighting.groundPuddles;
     caustic_ = lighting.caustic;
     sway_ = lighting.sway;
     causticSheet_ = ground ? ground->caustic() : bgfx::TextureHandle{bgfx::kInvalidHandle};

@@ -583,6 +583,7 @@ private:
     float elapsed_ = 0.0f;
     float waterFlow_ = 1.0f;  // the sheet's water_flow, taken at draw() for submitGround
     float waterGlow_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // the sheet's water_glow, likewise
+    float groundWet_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // ground_wet, ground_puddles, likewise
     float caustic_ = 0.0f;  // the sheet's caustic, likewise
     float sway_ = 0.0f;     // and its sway
     // And the ground's caustic frames themselves (content::Ground::caustic), which a mesh in
@@ -764,6 +765,7 @@ private:
     bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRelief_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uWaterGlow_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGroundWet_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCaustic_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uSway_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundSlots_ = BGFX_INVALID_HANDLE;
