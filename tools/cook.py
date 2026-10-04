@@ -2350,6 +2350,10 @@ def cook_tables(world, out_dir):
         classes = 0
         for name in stats.get("classes") or []:
             classes |= kClass.get(name, 0)
+        # A second class's alone (class_level 2): the same class's bit again, eight higher, so
+        # the i32 keeps its meaning below and sim::secondClassOnly reads the rest.
+        if int(stats.get("class_level") or 1) >= 2:
+            classes |= classes << 8
         flags = 0
         if stats.get("drops_from_monsters", True):
             flags |= kItemDrops

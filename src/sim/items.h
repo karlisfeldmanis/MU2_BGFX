@@ -351,6 +351,9 @@ struct Wearer {
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
+// Whether it asks its class's second (OpenMU's class level 2, tools/cook.py's bits 8-10): the
+// 2nd wings and the second class's gear (docs/second-class-gear.md).
+inline bool secondClassOnly(const content::ItemRow& row) { return ((row.classes >> 8) & 7) != 0; }
 // Whether a thing in one hand and a thing going into the other are one hand too many: a
 // two-handed weapon wants the other hand empty or a quiver, and a bow or crossbow wants it
 // empty or holding its own ammunition. Beast.Handful.

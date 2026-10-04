@@ -705,8 +705,9 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     if (!row || placeOf(*row) < 0 || archangelWeapon(*row)) return false;
     // mu.db's class enumeration, bit 0 wizard, bit 1 elf, bit 2 knight; none named is anybody.
     if (row->classes != 0 && (row->classes & (1 << int(who.kin))) == 0) return false;
-    // A 2nd level wing is its class's second's: OpenMU's class level 2 (docs/second-wings.md).
-    if (secondWing(*row) && !who.second) return false;
+    // A 2nd level wing and the second class's gear are its class's second's: OpenMU's class
+    // level 2 (docs/second-class-gear.md).
+    if (secondClassOnly(*row) && !who.second) return false;
     return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();
 }
 

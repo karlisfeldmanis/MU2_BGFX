@@ -1,0 +1,218 @@
+{
+  "item": "GloveMale18",
+  "mu_name": "Dark Phoenix Gloves",
+  "mu_name_from": "MuMain loads MODEL_DARK_PHOENIX_GLOVES + 0 from Data/Player/GloveMale18.bmd (ZzzOpenData.cpp:180-198: the set at index 17 is file 18, `18 + i`). MU's group 10 number 17.",
+  "why_this_one": "The Blade Knight's first set, the second class's gear (the user, 2026-10-04: 'Early sets'). docs/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets), and WebZen's own 1.00m item(Kor).txt row 17 agrees in every number.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs; WebZen 0.99.60T package, Data/lang/Kor/item(Kor).txt (Version 1.00m, 2005-03-07).",
+    "call": "CreateGloves(17, \"Dark Phoenix Gloves\", 86, 37, 6, 80, 0, 205, 63, 0, 2, 0, 0, 0, 0)",
+    "group": 10,
+    "number": 17,
+    "drop_level": 86,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 37,
+    "durability": 80,
+    "requires": {
+      "level": 0,
+      "strength": 205,
+      "agility": 63,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2, WebZen's 흑기사 column 2. sim::fits asks Wearer::second (docs/second-class-gear.md).",
+    "attack_speed": 6
+  },
+  "sheets": [
+    "gloves_bld.png",
+    "hide.png"
+  ],
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: deep blue lacquered plate with gold trim; hide is MU's black cap over the openings.",
+  "material_note": "painted_steel and not plate_steel: Dark Phoenix is blue lacquer with gold trim painted on, and as plate_steel the blue read as polished black metal with white blowouts in the fire (studio, 2026-10-04). MU's paint is the look.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1694.4,
+      "along": [
+        -8.5,
+        7.6
+      ],
+      "mu_uv": [
+        0.005,
+        -0.007,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.837,
+        0.833
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 15,
+      "area": 699.4,
+      "along": [
+        -28.8,
+        -4.2
+      ],
+      "mu_uv": [
+        0.602,
+        0.435,
+        0.98,
+        0.993
+      ],
+      "bake_uv": [
+        0.195,
+        0.277,
+        0.58,
+        0.709
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 388.8,
+      "along": [
+        -7.6,
+        4.5
+      ],
+      "mu_uv": [
+        0.246,
+        0.61,
+        0.574,
+        0.95
+      ],
+      "bake_uv": [
+        0.468,
+        0.717,
+        0.787,
+        0.942
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 409.8,
+      "along": [
+        -8.7,
+        5.5
+      ],
+      "mu_uv": [
+        0.246,
+        0.61,
+        0.574,
+        0.95
+      ],
+      "bake_uv": [
+        0.797,
+        0.009,
+        0.95,
+        0.318
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1694.4,
+      "along": [
+        -8.5,
+        7.6
+      ],
+      "mu_uv": [
+        0.001,
+        -0.007,
+        0.927,
+        0.999
+      ],
+      "bake_uv": [
+        0.143,
+        0.008,
+        0.907,
+        0.907
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 388.8,
+      "along": [
+        -7.6,
+        4.5
+      ],
+      "mu_uv": [
+        0.246,
+        0.61,
+        0.574,
+        0.95
+      ],
+      "bake_uv": [
+        0.807,
+        0.327,
+        0.981,
+        0.951
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 409.8,
+      "along": [
+        -8.7,
+        5.5
+      ],
+      "mu_uv": [
+        0.246,
+        0.61,
+        0.574,
+        0.95
+      ],
+      "bake_uv": [
+        0.01,
+        0.83,
+        0.452,
+        0.992
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 15,
+      "area": 699.4,
+      "along": [
+        -28.8,
+        -4.2
+      ],
+      "mu_uv": [
+        0.602,
+        0.435,
+        0.98,
+        0.993
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.549,
+        0.711
+      ]
+    }
+  ]
+}

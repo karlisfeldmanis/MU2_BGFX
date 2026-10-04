@@ -911,8 +911,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             classes += (classes.empty() ? "" : " / ") + std::string(kNames[i]);
         }
         bool mine = (row.classes >> int(who.kin)) & 1;
-        // A 2nd level wing is the second class's -- "Blade Knight" -- and his once promoted.
-        if (sim::secondWing(row)) {
+        // A 2nd level wing or the second class's gear is the second class's -- "Blade Knight" --
+        // and his once promoted.
+        if (sim::secondClassOnly(row)) {
             classes.clear();
             for (int i = 0; i < 3; ++i) {
                 if (!((row.classes >> i) & 1)) continue;
