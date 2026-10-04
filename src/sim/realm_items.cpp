@@ -1099,42 +1099,9 @@ void Realm::leave(const Body& dead, const Body& killer) {
     if (roll < creationChance) {
         const int32_t item = draw([](const content::ItemRow& r) { return creation(r); });
         if (item < 0) return;
-        // A power the killer's class may set -- an element rune only where his class throws
-        // something of its element (sim::elementServes) -- its rarity drawn first at
-        // kRuneRarityShare among the rarities holding one, then one of that rarity evenly.
-        uint8_t powers[kMostSockets] = {};
-        const auto drawable = [&](const PowerRow& row) {
-            const Element element = elementOf(row.power);
-            if (element != Element::None) return elementServes(element, killer.kin);
-            return row.takenBy(killer.kin);
-        };
-        int count[3] = {};
-        double held = 0.0;
-        for (int p = 1; powerOf(uint8_t(p)); ++p) {
-            const int r = int(powerOf(uint8_t(p))->rarity);
-            if (drawable(*powerOf(uint8_t(p))) && level >= kRuneRarityLevel[r]) ++count[r];
-        }
-        for (int r = 0; r < 3; ++r) held += count[r] > 0 ? kRuneRarityShare[r] : 0.0;
-        int rarity = -1;
-        if (held > 0.0) {
-            double roll = dice_.nextDouble() * held;
-            for (int r = 0; r < 3 && rarity < 0; ++r) {
-                if (count[r] == 0) continue;
-                if (roll < kRuneRarityShare[r]) rarity = r;
-                roll -= kRuneRarityShare[r];
-            }
-            // The last rarity holding one, should rounding carry the roll past all three.
-            for (int r = 2; rarity < 0 && r >= 0; --r) rarity = count[r] > 0 ? r : -1;
-        }
-        int pick = rarity >= 0 ? dice_.nextInt(0, count[rarity]) : -1;
-        for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
-            const PowerRow& row = *powerOf(uint8_t(p));
-            if (drawable(row) && int(row.rarity) == rarity && level >= kRuneRarityLevel[rarity] &&
-                pick-- == 0)
-                powers[0] = uint8_t(p);
-        }
+        // A power the killer's class may set (drawRunePower).
         one.what = Held{item, 0, 1};
-        one.what.powers[0] = powers[0];
+        one.what.powers[0] = drawRunePower(dice_, killer.kin, level);
     } else if ((roll -= creationChance) < kJewelChance) {
         const int32_t item =
             draw([&](const content::ItemRow& r) { return refiningJewel(r) && reaches(r); });
@@ -1776,6 +1743,40 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     lying_.push_back(one);
     say(What::Dropped, hero, int32_t(one.id), one.what.item, one.what.refinement);
     return one.id;
+}
+
+uint8_t drawRunePower(Random& dice, Kin kin, int level) {
+    const auto drawable = [&](const PowerRow& row) {
+        const Element element = elementOf(row.power);
+        if (element != Element::None) return elementServes(element, kin);
+        return row.takenBy(kin);
+    };
+    int count[3] = {};
+    double held = 0.0;
+    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+        const int r = int(powerOf(uint8_t(p))->rarity);
+        if (drawable(*powerOf(uint8_t(p))) && level >= kRuneRarityLevel[r]) ++count[r];
+    }
+    for (int r = 0; r < 3; ++r) held += count[r] > 0 ? kRuneRarityShare[r] : 0.0;
+    int rarity = -1;
+    if (held > 0.0) {
+        double roll = dice.nextDouble() * held;
+        for (int r = 0; r < 3 && rarity < 0; ++r) {
+            if (count[r] == 0) continue;
+            if (roll < kRuneRarityShare[r]) rarity = r;
+            roll -= kRuneRarityShare[r];
+        }
+        // The last rarity holding one, should rounding carry the roll past all three.
+        for (int r = 2; rarity < 0 && r >= 0; --r) rarity = count[r] > 0 ? r : -1;
+    }
+    int pick = rarity >= 0 ? dice.nextInt(0, count[rarity]) : -1;
+    for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
+        const PowerRow& row = *powerOf(uint8_t(p));
+        if (drawable(row) && int(row.rarity) == rarity && level >= kRuneRarityLevel[rarity] &&
+            pick-- == 0)
+            return uint8_t(p);
+    }
+    return 0;
 }
 
 }  // namespace mu::sim

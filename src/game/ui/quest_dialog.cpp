@@ -336,13 +336,22 @@ void QuestDialog::layout(const Play& play) {
             y += 16.0f + kPurse;
             const int across = int(kChoiceColumns);
             const float cellWide = (wide - kCellGap * (kChoiceColumns - 1.0f)) / kChoiceColumns;
-            int n = 0;
+            // The jewels, then the runes the win drew (CastleRun::paidRunes), with their powers.
+            std::vector<std::pair<int32_t, uint8_t>> paid;
             for (const auto& jewel : sim::kCastleRewardJewels[std::clamp(castle_, 1, sim::kCastles) - 1]) {
                 const int32_t item = jewel[0] < 0 ? -1 : tables.itemAt(jewel[0], jewel[1]);
-                if (item < 0) continue;
+                if (item >= 0) paid.push_back({item, 0});
+            }
+            for (uint8_t power : realm.castleRun().paidRunes) {
+                const int32_t rune = tables.itemAt(14, 22);
+                if (power && rune >= 0) paid.push_back({rune, power});
+            }
+            int n = 0;
+            for (const auto& [item, power] : paid) {
                 Cell cell;
                 cell.item = item;
-                const sim::Held held = rewardHeld(tables, item, 0, 1, 0, 0);
+                cell.power = power;
+                const sim::Held held = rewardHeld(tables, item, 0, 1, 0, power);
                 cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
                 cell.box = {kInset + float(n % across) * (cellWide + kCellGap),
                             y + float(n / across) * (kIcon + kCellGap), cellWide, kIcon};

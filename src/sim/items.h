@@ -659,6 +659,12 @@ constexpr int kCreationLevel = 15;
 // Death Knight 62) and anything harder after it. A rarity a kill cannot reach is out of the
 // draw, and kRuneRarityShare is shared among the rest. invention.
 constexpr int kRuneRarityLevel[3] = {kCreationLevel, 40, 60};
+// A rune's power as a drop draws it, for a monster of `level` and a hero of `kin`: one his class
+// may set -- an element rune only where his class throws something of its element
+// (elementServes) -- its rarity drawn first at kRuneRarityShare among the rarities `level`
+// reaches that hold one, then one of that rarity evenly. 0 when none can be drawn.
+class Random;
+uint8_t drawRunePower(Random& dice, Kin kin, int level);
 // The Bless (14, 13), the Soul (14, 14) and the Chaos (12, 15): the three kJewelChance draws.
 bool refiningJewel(const content::ItemRow& row);
 // The first socket with nothing set in it, or -1.

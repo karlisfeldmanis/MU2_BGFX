@@ -752,6 +752,17 @@ void Realm::castleTick() {
                 const int32_t item = tables_->itemAt(jewel[0], jewel[1]);
                 if (item >= 0 && give(item) < 0) lay(item);
             }
+            // And the castle's runes, each with a power his class may set (kCastleRunes).
+            const int32_t rune = tables_->itemAt(14, 22);
+            for (int i = 0; rune >= 0 && i < kCastleRunes[c]; ++i) {
+                const uint8_t powers[kMostSockets] = {drawRunePower(dice_, hero.kin, kCastleRuneLevel[c])};
+                run_.paidRunes[i] = powers[0];
+                if (give(rune, -1, 0, -1, false, 0, 0, 0, powers) >= 0) continue;
+                const uint32_t id = lay(rune);
+                for (Lying& one : lying_) {
+                    if (one.id == id) one.what.powers[0] = powers[0];
+                }
+            }
         }
     }
     if (run_.phase == CastlePhase::Waiting && tick_ >= run_.startsAt) {

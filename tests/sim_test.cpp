@@ -8074,6 +8074,15 @@ void testCastleGrid(const content::Tables& lorencia) {
             }
             for (const auto& one : realm.lying()) lying |= one.what.item == castle.itemAt(12, 15);
             check(jewel && !lying, "a Jewel of Chaos in his bag, as a quest pays");
+            // And castle 1's rune: a Rare his class may set, in the bag (kCastleRunes).
+            const sim::PowerRow* rune = nullptr;
+            for (int i = 0; i < sim::kSlots; ++i) {
+                const sim::Held& held = realm.satchel()[i];
+                if (!held.empty() && held.item == castle.itemAt(14, 22)) rune = sim::powerOf(held.powers[0]);
+            }
+            check(rune && rune->rarity == sim::Rarity::Rare && rune->takenBy(realm.hero().kin) &&
+                      realm.castleRun().paidRunes[0] == uint8_t(rune->power),
+                  "a Rare rune his class may set, in his bag");
             check(realm.angelState() == sim::AngelState::Done, "his page says it is done");
         }
     }

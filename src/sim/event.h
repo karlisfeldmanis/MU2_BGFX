@@ -110,6 +110,14 @@ inline bool castleSorcerer(int32_t number) {
     return false;
 }
 inline bool castleStatue(int32_t number) { return number >= 132 && number <= 134; }
+// And runes by the castle (the user, 2026-10-04: 'i thin we should give some runes also based of
+// BC level'): this many Runes of Creation, each with a power his class may set, drawn as a drop
+// of a monster of kCastleRuneLevel draws one (sim::drawRunePower) -- castle 1 reaches Rare only,
+// castles 2-3 Epic, castles 4-6 Legendary (kRuneRarityLevel). Into the bag with the jewels.
+// invention.
+constexpr int kCastleMostRunes = 2;
+constexpr int kCastleRunes[6] = {1, 1, 1, 1, 2, 2};
+constexpr int kCastleRuneLevel[6] = {15, 40, 40, 60, 60, 60};
 struct CastleRun {
     CastlePhase phase = CastlePhase::None;
     int castle = 1;
@@ -128,6 +136,7 @@ struct CastleRun {
     bool sentOut = false;
     // What the win paid, for the Archangel's page (Realm::handInStaff).
     int64_t paidExperience = 0, paidZen = 0;
+    uint8_t paidRunes[kCastleMostRunes] = {};  // each rune's power, 0 past kCastleRunes
 };
 // The Archangel, NPC 232, who takes the Divine Staff of Archangel (5,10) back: the win (the
 // user, 2026-10-03). His page in the Event window (QuestDialog::kArchangel).
@@ -147,14 +156,15 @@ constexpr int64_t kCastleStatueExps[6] = {20000, 50000, 80000, 90000, 100000, 11
 constexpr int64_t kCastleHandInExps[6] = {5000, 10000, 15000, 20000, 25000, 30000};
 constexpr int64_t kCastleExpPerSeconds[6] = {160, 180, 200, 220, 240, 260};
 constexpr int64_t kCastleWinZens[6] = {20000, 50000, 100000, 150000, 200000, 250000};
-// Jewels of Chaos (12,15), Creation (14,22), Soul (14,14), Bless (14,13) and Life (14,16); a
-// group of -1 ends a castle's list.
+// Jewels of Chaos (12,15), Soul (14,14), Bless (14,13) and Life (14,16); a group of -1 ends a
+// castle's list. WebZen's castles 2-5 also pay a Jewel of Creation (14,22), here the Rune of
+// Creation, which with no power sets into nothing: kCastleRunes pays it with one instead.
 constexpr int kCastleRewardJewels[6][4][2] = {
     {{12, 15}, {-1, -1}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {14, 22}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {14, 22}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {14, 22}, {14, 14}, {-1, -1}},
-    {{12, 15}, {14, 22}, {14, 14}, {-1, -1}},
+    {{12, 15}, {-1, -1}, {-1, -1}, {-1, -1}},
+    {{12, 15}, {-1, -1}, {-1, -1}, {-1, -1}},
+    {{12, 15}, {14, 14}, {-1, -1}, {-1, -1}},
+    {{12, 15}, {14, 14}, {-1, -1}, {-1, -1}},
     {{12, 15}, {14, 14}, {14, 13}, {14, 16}},
 };
 // After the run, won or timed out, WebZen's PLAYEND rest: a minute, then everyone left in the
