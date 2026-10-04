@@ -24,6 +24,7 @@ locks it at MIX_FINISHED until reopened).
 | +11 Item | one thing at +10, 1 Chaos, 2 Bless, 2 Soul | 45%, +20 lucky, at most 75% | 4,000,000 | +11 | thing and jewels gone | the same |
 | Dinorant | ten Horns of Uniria at full life (255), 1 Chaos | 70% | 500,000 | a Horn of Dinorant, its options not rolled | the box gone | WebZen `PegasiaChaosMix` under NEW_FORSKYLAND2 (OpenMU 0.95d: three horns, 250,000) |
 | Chaos Weapon | 1+ things at +4 or more with an option, 1+ Chaos, any Bless and Soul | box's old price / 20,000, at most 100 | 10,000 a percent | Chaos Dragon Axe, Nature Bow or Lightning Staff at +0..+4, own luck and option rolls | jewels gone, each thing to a lower plus, option down half the time | Version075 `ChaosMixes`, `ChaosWeaponAndFirstWingsCrafting` |
+| 1st Level Wings | the Chaos Weapon's box with a Chaos weapon at +4 with an option in it | as the Chaos Weapon | as the Chaos Weapon | the hero's class's wing at +0 (ours) | as the Chaos Weapon | WebZen `DefaultChaosMix` `MixResult2`; OpenMU 0.95d number 11. docs/wings.md |
 
 - +10/+11 are **not 0.75**; they are why `kMachineCap` is 11 while `kRefineCap` (jewels, drops)
   stays 9.

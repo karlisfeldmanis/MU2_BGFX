@@ -5442,6 +5442,45 @@ void testChaosMachine() {
     check(sim::judge(noria, box).recipe == sim::Recipe::None, "a thing with no option spoils it");
     check(sim::judge(noria, box).nearest == sim::Recipe::None, "and nothing is like it");
 
+    // The 1st level wings: the same box with one Chaos weapon at +4 with an option in it.
+    {
+        const int32_t axe = noria.itemAt(2, 6);
+        check(axe >= 0, "the Chaos Dragon Axe is in Noria's tables");
+        if (axe >= 0) {
+            sim::Machine wings;
+            sim::Held chaosAxe{axe, 4, 20};
+            chaosAxe.option = 1;
+            wings.put(0, chaosAxe);
+            wings.put(8, sim::Held{chaos, 0, 1});
+            sim::Judged w = sim::judge(noria, wings, sim::Service::Combine, -1, sim::Kin::DarkKnight);
+            check(w.recipe == sim::Recipe::Wings, "a +4 Chaos weapon with an option and a Chaos are wings");
+            checkEqual(w.target, 0, "worked on the Chaos weapon");
+            check(w.success == "Wings of Satan", "a knight's are the Wings of Satan");
+            check(sim::judge(noria, wings, sim::Service::Combine, -1, sim::Kin::DarkWizard).success ==
+                      "Wings of Heaven",
+                  "a wizard's the Wings of Heaven");
+            check(sim::judge(noria, wings, sim::Service::Combine, -1, sim::Kin::FairyElf).success ==
+                      "Wings of Elf",
+                  "an elf's the Wings of Elf");
+            const int64_t wingWorth = sim::mixValue(noria, chaosAxe) + 40000;
+            checkEqual(w.rate, int(std::min<int64_t>(100, wingWorth / 20000)),
+                       "at the Chaos Weapon's rate, the old price over 20,000");
+            checkEqual(int(w.zen), w.rate * 10000, "and its price");
+            wings.put(1, optioned);
+            check(sim::judge(noria, wings).recipe == sim::Recipe::Wings,
+                  "another +4 with an option only raises it");
+            wings.put(2, chaosAxe);
+            check(sim::judge(noria, wings).recipe == sim::Recipe::Wings,
+                  "two Chaos weapons are wings too, as WebZen's MixResult2 is");
+            sim::Held bare{axe, 3, 20};
+            bare.option = 1;
+            sim::Machine low;
+            low.put(0, bare);
+            low.put(8, sim::Held{chaos, 0, 1});
+            check(sim::judge(noria, low).recipe == sim::Recipe::None, "a +3 Chaos weapon is not enough");
+        }
+    }
+
     // The rune services, at the Goblin again.
     const int32_t rune = noria.itemAt(14, 22);
     check(rune >= 0, "the Rune of Creation is in Noria's tables");

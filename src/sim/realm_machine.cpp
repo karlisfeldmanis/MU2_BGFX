@@ -133,6 +133,15 @@ bool Realm::mix(Service service, int socket) {
             return false;
         }
     }
+    if (j.recipe == Recipe::Wings) {
+        // The hero's class's wing alone (sim/machine.h), so the pick below has one choice.
+        const int32_t wing = tables_->itemAt(12, firstWingOf(hero.kin));
+        if (wing < 0) {
+            refusal_ = std::string("no ") + firstWingName(hero.kin) + " is in this world's tables";
+            return false;
+        }
+        answers[choices++] = wing;
+    }
     if (j.recipe == Recipe::Cloak && tables_->itemAt(kGroupPets, 18) < 0) {
         refusal_ = "no Invisibility Cloak is in this world's tables";
         return false;
@@ -210,10 +219,12 @@ bool Realm::mix(Service service, int socket) {
             } else if (made) {
                 machine_.clear();
                 // SimpleItemCraftingHandler.CreateResultItemsAsync, in its order: the pick, the
-                // plus, then ChaosWeaponAndFirstWingsCrafting's luck and option.
+                // plus, then ChaosWeaponAndFirstWingsCrafting's luck and option. A wing is +0
+                // (CHAOS_MIX_WING_ITEMLEVEL_FIX) and draws no plus.
                 const int32_t item = answers[mixDice_.nextInt(0, choices)];
                 const content::ItemRow& row = tables_->items[size_t(item)];
-                Held answer{item, int16_t(mixDice_.nextInt(0, 5)), 0};
+                const int plus = j.recipe == Recipe::Wings ? 0 : mixDice_.nextInt(0, 5);
+                Held answer{item, int16_t(plus), 0};
                 answer.durability = int16_t(std::max(1, fullDurability(row, answer.refinement)));
                 answer.luck = mixDice_.nextInt(0, 100) < j.rate / 5 + 4;
                 const int i = mixDice_.nextInt(0, 3);

@@ -1,0 +1,67 @@
+# The 1st level wings
+
+Started 2026-10-04. The user: "lets work on first wings, we need logic how we can make first
+wings". Wings of Elf, Heaven and Satan, group 12 numbers 0-2, slot 7 (`sim::kWings`).
+
+## How they are made
+
+Not a recipe of its own in MU: the Chaos Weapon's box with a Chaos weapon in it.
+
+- **Box:** a Chaos Dragon Axe, Nature Bow or Lightning Staff at +4 or better with an option,
+  one or more Jewels of Chaos; any Bless, Soul and other +4 things with an option raise the
+  chance.
+- **Chance:** the box's old price / 20,000, at most 100. **Zen:** 10,000 a percent.
+- **Success:** the hero's class's wing at +0, its luck and option rolled as the Chaos weapon's
+  are. **Failure:** the jewels gone, each thing a plus lower, its option down half the time.
+
+| box | chance | Zen |
+|---|---|---|
+| Chaos weapon +4, +4 option, 1 Chaos | ~11% | 110k |
+| the same with luck | ~14% | 140k |
+| +4, luck, +12 option, 1 Chaos | ~30% | 300k |
+| each Bless / Soul more | +5 / +3.5 | |
+
+So the ladder is: a +4 thing with an option -> Chaos Weapon mix -> raise the Chaos weapon to
++4 and give it an option -> the wing mix with jewels.
+
+Sources: WebZen 1.00.93 `MixSystem.cpp` `ChaosBoxMix` (:240-460, the value and `MixResult2`)
+and `DefaultChaosMix` (:462-600, the rolls and the wing pick); OpenMU Version095d
+`ChaosMixes.cs:172` "1st Level Wings", number 11. Version075 has the wings
+(`Items/Wings.cs`, `DropsFromMonsters = false`) and no recipe for them.
+
+**Ours** (the user's picks, 2026-10-04): the hero's class's wing, not WebZen's `rand()%3` of
+any class; +0, as `CHAOS_MIX_WING_ITEMLEVEL_FIX`, not the base branch's +0..+4. Two Chaos
+weapons in a box are wings, as WebZen's flag is (OpenMU takes one at most). The +S roll is
+not taken (skills are orbs here).
+
+## The items (OpenMU Version075 `Items/Wings.cs`)
+
+| | number | size | defence | level | class | option |
+|---|---|---|---|---|---|---|
+| Wings of Elf | 0 | 3x2 | 10 | 180 | elf | Health Recover |
+| Wings of Heaven | 1 | 5x3 | 10 | 180 | wizard | Wizardry Damage |
+| Wings of Satan | 2 | 5x2 | 20 | 180 | knight | Physical Damage |
+
+All: drop level 100, durability 200, damage x1.12 and damage taken x0.88 (each raised by the
+wing's plus through OpenMU's per-level tables), luck, CanFly. Level 180 kept (the user).
+
+## What MU draws (MuMain, `ZzzCharacter.cpp`)
+
+- The wing is its own model (`Item/Wing01-03.bmd`) with its own flapping action, linked
+  rigidly to player bone 47 at (0, 0, 15) (:15400-15430).
+- Out of a safe zone a winged hero flies instead of running: `PLAYER_FLY`, or
+  `PLAYER_FLY_CROSSBOW` with a crossbow (:615-621), the bow shots `PLAYER_ATTACK_FLY_BOW_UP`
+  (:1053-1064). The wing flaps at PlaySpeed 1 while flying, 0.25 otherwise.
+- Speed 15 against a run's 12 out of a safe zone, as on the Horn of Uniria (:6320-6335).
+
+## Steps
+
+1. **The recipe** -- done 2026-10-04. `Recipe::Wings` in `sim/machine.cpp`, ahead of the
+   Chaos Weapon; the realm refuses it ("no Wings of Satan is in this world's tables") until
+   step 2. `sim_test` `testChaosMachine` judges it.
+2. **Import** Wing01-03 from MuMain with their sheets and action, recipes in
+   `source/items/wings/`, built, synced, indexed and cooked into every world's tables.
+3. **Wear**: slot 7 takes a wing of his class from level 180; damage x1.12, taken x0.88,
+   defence, the option, wear on hits as armour. The card's lines.
+4. **Draw**: the wing on bone 47 with its own clip; the fly actions out of town; the speed.
+5. Wardrobe cook, studio pass, a muted run.

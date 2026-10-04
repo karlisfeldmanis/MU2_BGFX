@@ -26,6 +26,12 @@ bool raisable(const content::ItemRow& row) {
     return row.group <= kGroupBoots && !ammunition(row);
 }
 
+// The three Chaos weapons, Version075's MODEL_MACE+6, MODEL_BOW+6 and MODEL_STAFF+7.
+bool chaosWeapon(const content::ItemRow& row) {
+    return (row.group == 2 && row.number == 6) || (row.group == kGroupBows && row.number == 6) ||
+           (row.group == 5 && row.number == 7);
+}
+
 bool anyRune(const Held& what) {
     for (int i = 0; i < what.sockets && i < kMostSockets; ++i) {
         if (what.powers[i] != 0) return true;
@@ -37,6 +43,8 @@ bool anyRune(const Held& what) {
 struct Sorted {
     int chaos = 0, bless = 0, soul = 0;
     int optioned = 0;   // things at +4 or better with the additional option: the Chaos Weapon's
+    int chaosWeapons = 0;  // and of them the Chaos weapons, which make it the wings' box
+    int chaosWeaponCell = -1;
     int at[2] = {};     // raisable things at +9 and at +10
     int atCell[2] = {-1, -1};
     int runed = 0, runedCell = -1;        // things with a rune set in a socket
@@ -83,7 +91,13 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 ++(what.durability >= maximumDurability(*row, what) ? s.horns : s.wornHorns);
                 continue;
             }
-            if (what.refinement >= 4 && what.option > 0) ++s.optioned;
+            if (what.refinement >= 4 && what.option > 0) {
+                ++s.optioned;
+                if (chaosWeapon(*row)) {
+                    ++s.chaosWeapons;
+                    s.chaosWeaponCell = cell;
+                }
+            }
             for (int k = 0; k < 2; ++k) {
                 if (raisable(*row) && what.refinement == 9 + k) {
                     ++s.at[k];
@@ -118,6 +132,8 @@ bool exactly(Recipe recipe, const Sorted& s) {
         }
         case Recipe::ChaosWeapon:
             return s.optioned >= 1 && s.things == s.optioned && s.chaos >= 1;
+        case Recipe::Wings:
+            return s.chaosWeapons >= 1 && s.things == s.optioned && s.chaos >= 1;
         case Recipe::Dinorant:
             return s.horns == kDinorantHorns && s.things == s.horns && s.chaos == 1 &&
                    s.bless == 0 && s.soul == 0;
@@ -152,6 +168,14 @@ int likeness(Recipe recipe, const Sorted& s) {
             if (s.bless > 0) points += 3;
             if (s.soul > 0) points += 3;
             break;
+        case Recipe::Wings:
+            // Ahead of the Chaos Weapon in kOrder, so a box with a Chaos weapon in it looks
+            // like wings at the same points, and one without none at all.
+            if (s.things != s.optioned || s.chaosWeapons == 0) return 0;
+            points += 10;
+            if (s.bless > 0) points += 3;
+            if (s.soul > 0) points += 3;
+            break;
         case Recipe::Dinorant:
             if (s.things != s.horns + s.wornHorns || s.bless > 0 || s.soul > 0) return 0;
             if (s.horns + s.wornHorns > 0) points += 10;
@@ -168,8 +192,9 @@ int likeness(Recipe recipe, const Sorted& s) {
     return points;
 }
 
+// The wings before the Chaos Weapon: a box that is both is WebZen's `MixResult2`, a wing.
 constexpr Recipe kOrder[] = {Recipe::PlusTen, Recipe::PlusEleven, Recipe::Dinorant,
-                             Recipe::Cloak, Recipe::ChaosWeapon};
+                             Recipe::Cloak, Recipe::Wings, Recipe::ChaosWeapon};
 
 void need(Judged& j, std::string name, int have, int want) {
     if (j.needCount >= kMostNeeds) return;
@@ -184,7 +209,8 @@ std::string labelAt(const content::Tables& tables, const Machine& box, int cell)
     return row ? row->label : std::string();
 }
 
-void combine(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
+void combine(const content::Tables& tables, const Machine& box, const Sorted& s, Kin kin,
+             Judged& j) {
     for (Recipe one : kOrder) {
         if (exactly(one, s)) {
             j.recipe = one;
@@ -231,8 +257,13 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             }
             break;
         }
-        case Recipe::ChaosWeapon: {
-            need(j, "Item +4 with an option", s.optioned, 1);
+        case Recipe::ChaosWeapon:
+        case Recipe::Wings: {
+            if (j.nearest == Recipe::Wings) {
+                need(j, "Chaos weapon +4 with an option", std::min(s.chaosWeapons, 1), 1);
+            } else {
+                need(j, "Item +4 with an option", s.optioned, 1);
+            }
             need(j, "Jewel of Chaos", s.chaos, 1);
             need(j, "Jewel of Bless", s.bless, 0);
             need(j, "Jewel of Soul", s.soul, 0);
@@ -241,7 +272,12 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             for (int cell = 0; cell < kMachineCells; ++cell) worth += mixValue(tables, box[cell]);
             j.rate = int(std::min<int64_t>(100, worth / 20000));
             j.zen = 10000LL * j.rate;
-            j.success = "A Chaos weapon, +0 to +4";
+            if (j.nearest == Recipe::Wings) {
+                j.target = s.chaosWeaponCell;
+                j.success = firstWingName(kin);
+            } else {
+                j.success = "A Chaos weapon, +0 to +4";
+            }
             j.failure = "Jewels lost, items a plus lower";
             break;
         }
@@ -458,13 +494,30 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
     const Sorted s = sort(tables, box);
     j.empty = !s.any;
     switch (service) {
-        case Service::Combine: combine(tables, box, s, j); break;
+        case Service::Combine: combine(tables, box, s, kin, j); break;
         case Service::RemoveRune: removeRune(tables, box, s, socket, j); break;
         case Service::AddSocket: addSocket(tables, box, s, j); break;
         case Service::FuseRunes: fuseRunes(tables, box, s, j); break;
     }
-    (void)kin;
     return j;
+}
+
+int firstWingOf(Kin kin) {
+    switch (kin) {
+        case Kin::DarkWizard: return 1;
+        case Kin::FairyElf: return 0;
+        case Kin::DarkKnight: return 2;
+    }
+    return 2;
+}
+
+const char* firstWingName(Kin kin) {
+    switch (kin) {
+        case Kin::DarkWizard: return "Wings of Heaven";
+        case Kin::FairyElf: return "Wings of Elf";
+        case Kin::DarkKnight: return "Wings of Satan";
+    }
+    return "";
 }
 
 const char* recipeName(Recipe recipe) {
@@ -474,6 +527,7 @@ const char* recipeName(Recipe recipe) {
         case Recipe::PlusEleven: return "+11 Item";
         case Recipe::Dinorant: return "Dinorant";
         case Recipe::Cloak: return "Invisibility Cloak";
+        case Recipe::Wings: return "1st Level Wings";
         case Recipe::None: break;
     }
     return "";

@@ -22,6 +22,17 @@
 //     (ChaosWeaponAndFirstWingsCrafting); failure takes the jewels and drops each thing to a
 //     lower plus at random, its option a level down half the time.
 //
+//   * **1st Level Wings**, the Chaos Weapon's box with a Chaos weapon in it at +4 or better
+//     with an option (OpenMU Version095d ChaosMixes.cs:172, "1st Level Wings", number 11;
+//     WebZen's DefaultChaosMix makes a wing whenever `MixResult2`, a Chaos weapon, is in the
+//     box, MixSystem.cpp:296-305, :537-575). Two or more are wings too, as WebZen's flag is;
+//     OpenMU takes one at most and lets more fall to the Chaos Weapon. Its rate, price and
+//     failure are the Chaos Weapon's. Not 0.75: Version075 has the three wings and no recipe
+//     for them. The wing is the hero's class's, not WebZen's `rand()%3` of any (the user,
+//     2026-10-04: one player, no trading, so another class's wing is dead loot), and comes
+//     out at +0, as WebZen's CHAOS_MIX_WING_ITEMLEVEL_FIX has it, not the base branch's
+//     `rand()%5`. Ours, both.
+//
 //   * **Dinorant**, below (WebZen's PegasiaChaosMix).
 //   * **Invisibility Cloak**, below (WebZen's Blood Castle ticket).
 //
@@ -82,7 +93,13 @@ enum class Recipe : int8_t {
     PlusEleven = 4,
     Dinorant = 5,
     Cloak = 8,
+    Wings = 11,
 };
+
+// The 1st level wing a class wears: group 12, Wings of Heaven (1) for the wizard, of Elf (0)
+// for the elf, of Satan (2) for the knight (OpenMU Version075 Items/Wings.cs).
+int firstWingOf(Kin kin);
+const char* firstWingName(Kin kin);
 
 // **The services** (the user, 2026-10-02, docs/chaos-machine.md "Phase two"): the Goblin's box
 // read four ways, picked on the window's service row. Combine is MU's machine; the other three
@@ -161,8 +178,8 @@ constexpr int kCloakFromLevel = 15;
 constexpr int kPlusLuck = 20;
 constexpr int kPlusCap = 75;
 
-// "Chaos Weapon", "+10 Item", "+11 Item", "Dinorant", "Invisibility Cloak": MuMain's recipe
-// names.
+// "Chaos Weapon", "+10 Item", "+11 Item", "Dinorant", "Invisibility Cloak", "1st Level Wings":
+// MuMain's recipe names.
 const char* recipeName(Recipe recipe);
 
 // What a thing is worth to the machine: MixMgr's EvaluateMixItemValue, OpenMU's
