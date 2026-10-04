@@ -61,7 +61,10 @@ Needs asks(const content::ItemRow& row, int refinement, bool excellent) {
     Needs n;
     // A wing asks 4 levels more a plus: it falls to the rings' branch of WebZen's
     // `m_RequireLevel = RequireLevel + m_Level * 4` (zzzitem.cpp:628-632).
-    n.level = row.needLevel + (firstWing(row) ? 4 * std::max(0, refinement) : 0);
+    // A 2nd wing 5 a plus (zzzitem.cpp:594-597).
+    n.level = row.needLevel + (firstWing(row)    ? 4 * std::max(0, refinement)
+                               : secondWing(row) ? 5 * std::max(0, refinement)
+                                                 : 0);
     n.strength = ask(row.needStrength, 3);
     n.agility = ask(row.needAgility, 3);
     n.energy = ask(row.needEnergy, 4);
@@ -282,25 +285,48 @@ std::string excellentLine(const content::ItemRow& row, int bit) {
 
 bool firstWing(const content::ItemRow& row) { return row.group == 12 && row.number <= 2; }
 bool secondWing(const content::ItemRow& row) {
-    return row.group == 12 && row.number >= 3 && row.number <= 5;
+    return row.group == 12 && (row.number == kSpiritsNumber || row.number == kSoulNumber ||
+                               row.number == kDragonNumber);
 }
 bool lochsFeather(const content::ItemRow& row) { return row.group == 13 && row.number == 14; }
+bool anyWing(const content::ItemRow& row) { return firstWing(row) || secondWing(row); }
+
+WingOption wingOption(const content::ItemRow& row, uint8_t bits) {
+    const bool kind = (bits & kWingOptionKind) != 0;
+    switch (row.group == 12 ? row.number : -1) {
+        case 0: return WingOption::Regeneration;
+        case 1: return WingOption::Wizardry;
+        case kSpiritsNumber: return kind ? WingOption::Regeneration : WingOption::Damage;
+        case kSoulNumber: return kind ? WingOption::Wizardry : WingOption::Regeneration;
+        case kDragonNumber: return kind ? WingOption::Damage : WingOption::Regeneration;
+        default: return WingOption::Damage;
+    }
+}
+
+int wingOptionValue(const content::ItemRow& row, const Held& held) {
+    if (held.option <= 0) return 0;
+    return wingOption(row, held.wing) == WingOption::Regeneration ? held.option : held.option * 4;
+}
 
 int wingDefense(const content::ItemRow& row, int refinement) {
-    if (!firstWing(row)) return 0;
+    if (!anyWing(row)) return 0;
     const int plus = std::max(0, refinement);
-    int defense = row.defense + 3 * plus;
+    // 3 a plus on a 1st wing, 2 on a 2nd (zzzitem.cpp:878-889), the triangle on both.
+    int defense = row.defense + (secondWing(row) ? 2 : 3) * plus;
     if (plus >= 10) defense += (plus - 9) * (plus - 9 + 1) / 2;
     return defense;
 }
 
 PetPower wingPower(const content::ItemRow& row, int refinement) {
     PetPower power;
-    if (!firstWing(row)) return power;
+    if (!anyWing(row)) return power;
     const int plus = std::max(0, refinement);
-    power.dealt = double(112 + 2 * plus) / 100.0;
-    power.taken = double(88 - 2 * plus) / 100.0;
-    power.lifeCost = row.number == 1 ? 1 : 3;
+    // A 2nd wing's x(132 + plus)% and x(75 - 2 a plus)% (ObjAttack.cpp, `m_Type >
+    // MAKE_ITEMNUM(12,2)` under NEW_FORSKYLAND3, the flag that brought them).
+    power.dealt = secondWing(row) ? double(132 + plus) / 100.0 : double(112 + 2 * plus) / 100.0;
+    power.taken = secondWing(row) ? double(75 - 2 * plus) / 100.0 : double(88 - 2 * plus) / 100.0;
+    // The wizard's wing, Heaven or Soul, 1 Life a blow; the others 3.
+    power.lifeCost = row.number == 1 || row.number == kSoulNumber ? 1 : 3;
     return power;
 }
 
@@ -310,6 +336,8 @@ int optionValue(const content::ItemRow& row, int level) {
     if (jewellery(row)) return level;
     // And the Wings of Elf's (zzzitem.cpp:1150-1153); Heaven's and Satan's are 4 a level.
     if (firstWing(row) && row.number == 0) return level;
+    // A 2nd wing's option without its kind (the price, the box's value) reads as 4 a level;
+    // wingOptionValue says what it gives.
     return level * (row.shield() ? 5 : 4);
 }
 
@@ -325,7 +353,7 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
     // with jewel of bless or soul"); MU refines nothing past the boots.
     // And the 1st level wings, which MU raises (WebZen's level-up refuses from 12/7 on,
     // user.cpp:28576-28584).
-    if ((row.group > kGroupBoots && !jewellery(row) && !firstWing(row)) || ammunition(row)) {
+    if ((row.group > kGroupBoots && !jewellery(row) && !anyWing(row)) || ammunition(row)) {
         return false;
     }
     // BlessJewelConsumeHandlerPlugIn's MaximumLevel 5, SoulJewelConsumeHandlerPlugIn's 8.
@@ -524,7 +552,7 @@ int placeOf(const content::ItemRow& row) {
     if (row.group == kGroupPets && (row.number == 2 || row.number == 3)) return kMount;
     if (row.group == kGroupPets && row.number <= 1) return kPet;
     // The 1st level wings, EQUIPMENT_WING (OpenMU Version075 Wings.cs, ItemSlot 7).
-    if (row.group == 12 && row.number <= 2) return kWings;
+    if (anyWing(row)) return kWings;
     return -1;
 }
 

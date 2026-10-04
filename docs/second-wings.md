@@ -1,8 +1,9 @@
 # The 2nd level wings
 
 Started 2026-10-04. The user: "lets work on second wings, which is for second class". Wings of
-Spirits, Soul and Dragon, group 12 numbers 3-5, slot 7, one each for the Muse Elf, the Soul
-Master and the Blade Knight. The Magic Gladiator's Wings of Darkness (12/6) is not in this game.
+Spirits, Soul and Dragon, MU's group 12 numbers 3-5 (ours 13, 14 and 16, below), slot 7, one
+each for the Muse Elf, the Soul Master and the Blade Knight. The Magic Gladiator's Wings of
+Darkness (MU's 12/6) is not in this game.
 The 1st wings are docs/wings.md.
 
 Sources: WebZen 1.00.93 (github ptr0x-real/Mu-GS-Webzen-MC-10093), base 0.97d branch unless a
@@ -32,11 +33,16 @@ of a monster of level 60 or over leaves one in 500 (`sim::kFeatherOdds`, its own
 
 ## The wings
 
-| | number | class | size | defence | level |
-|---|---|---|---|---|---|
-| Wings of Spirits | 12/3 | Muse Elf | 5x3 | 30 | 215 |
-| Wings of Soul | 12/4 | Soul Master | 5x3 | 30 | 215 |
-| Wings of Dragon | 12/5 | Blade Knight | 3x3 | 45 | 215 |
+| | ours | MU's | class | size | defence | level |
+|---|---|---|---|---|---|---|
+| Wings of Spirits | 12/13 | 12/3 | Muse Elf | 5x3 | 30 | 215 |
+| Wings of Soul | 12/14 | 12/4 | Soul Master | 5x3 | 30 | 215 |
+| Wings of Dragon | 12/16 | 12/5 | Blade Knight | 3x3 | 45 | 215 |
+
+**Our numbers are not MU's.** This project gave 12/3-6 to the knight's orbs (Defense,
+Uppercut, Falling Slash, Lunge) before the wings came, so the wings moved to numbers 0.75
+leaves empty (the user, 2026-10-04: 'Move the wings'). `sim::kSpiritsNumber` and its fellows
+hold them; read every MU line about 12/3-5 as these.
 
 Drop level 150, durability 200, never dropped (OpenMU VersionSeasonSix Wings.cs, class level 2).
 
@@ -62,8 +68,22 @@ Drop level 150, durability 200, never dropped (OpenMU VersionSeasonSix Wings.cs,
    wings in kOrder; `Held::wing` saved as "wing"; Loch's Feather imported (Quest04), indexed,
    in every world's tables, and its drop. The Goblin refuses the mix ("no Wings of Dragon is in
    this world's tables") until step 2.
-2. **Import** Wing04-06 with their sheets, the pulse and the added mesh; rows; tables, figures
-   and wardrobe.
-3. **Wear**: the class gate (the second class, Sevina's, another session's work as of
-   2026-10-04), the powers above, the card, the price.
-4. **Draw**: on Bone05 as the 1st wings, the pulse, Dragon's 16.
+2. **Import** -- done 2026-10-04. Wing04-06 from MuMain with NewingEl (added, as MU's
+   BlendMesh 0), NEWWW/NEWW_R and NDW/NDW_R; the `_R` shells are MU's Bright meshes
+   (TextureScript.cpp:38-39), added at a slow pulse -- Soul's [1, 1.1], Dragon's [0.25, 0.25]
+   at MU's WorldTime*0.001: `pulse_rate: "slow"` in the recipe's glow, carried by asset.sh
+   onto the tiled slot, export_gltf's extras and cook.py's mode bit 3 to
+   `content::Material::slowPulse`. `separate_meshes`, or the weld made the shell and its base
+   one set of faces and Blender kept one. The glow pass draws at LEQUAL, as MU's GL does, so
+   a shell on its own base passes. Rows at our numbers, every world's tables (229 items),
+   figures and the wardrobe (6 wings).
+3. **Wear** -- done 2026-10-04 but for the class gate: slot 7 takes them at 215 + 5 a plus;
+   x(132 + plus)% and x(75 - 2 a plus)%, 1 Life a blow on Soul and 3 on the others; defence
+   + 2 a plus; the option by its kind bit (`sim::wingOption`); the extras -- max life and mana
+   +50 and 5 a plus, the 3% ignore-defence draw (`Fighter::ignoreDefense`, its own draw only
+   when above nought); price on the 1st wings' line. The card: "2nd level wings", MuMain's
+   three lines, the option by kind, the extras in MuMain's words (GT 740-742).
+   **The class gate waits**: Sevina's second class is another session's work, uncommitted as
+   of 2026-10-04; until it lands a level 215 hero of the class wears one.
+4. **Draw** -- done 2026-10-04: on Bone05 as the 1st wings, the pulse, Dragon's 16
+   (`sim::kFastFlyFactor`). The bench's Wings tab has all six.

@@ -1,0 +1,1829 @@
+{
+  "item": "Wing05",
+  "mu_name": "Wings of Soul",
+  "mu_name_from": "MODEL_WINGS_OF_SOUL = MODEL_WING + 4, Data/Item/Wing05.bmd (ZzzOpenData.cpp:1023); OpenMU's Wings of Soul, 12/4.",
+  "why_this_one": "The Soul Master's 2nd level wing (docs/second-wings.md, 2026-10-04).",
+  "profile": "monster",
+  "profile_note": "A model on its own rig worn on the character, as the 1st wings: the monster profile.",
+  "play_speed": 0.25,
+  "tiled": true,
+  "worn_note": "Worn on slot 7 as the 1st wings are: linked to player bone 47 at (0, 0, 15), its own 8-key flap at PlaySpeed 0.25, 1 while he flies (ZzzCharacter.cpp:15400-15430). docs/second-wings.md.",
+  "rig_from": "Seventy-five bones and one action of eight keys, the flap.",
+  "sheets": {
+    "newww": "newww.png",
+    "neww_r": "neww_r.png"
+  },
+  "sheet_from": "Data/Item/NEWWW.OZJ (128x64, white feathers on blue-grey, 436 triangles) and NEWW_R.OZJ (128x64, purple glow lines on black, the same 436 again as a shell).",
+  "additive": [
+    "neww_r"
+  ],
+  "additive_from": "A texture named _R is MuMain's Bright mesh (TextureScript.cpp:38-39): drawn as the blend mesh, added, at BlendMeshLight (ZzzBMD.cpp RenderBody:2216-2242).",
+  "glow": {
+    "neww_r": {
+      "pulse": [
+        1.0,
+        1.1
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "`o->BlendMeshLight = sinf(WorldTime * 0.001f) + 1.1f` (ZzzObject.cpp:9941-9944): 0.1 to 2.1, a slow breath -- pulse [1, 1.1] at the slow rate (content::Material::slowPulse).",
+  "tiled_why": "Two sheets, one added: each its own material, and the base a two-sided card lit through as the Imp's wings are.",
+  "sheet_materials": {
+    "newww": "foliage",
+    "neww_r": "feather"
+  },
+  "sheet_materials_from": "White feathers on a thin card seen from both faces: foliage for the Imp's reason (translucency). The shell is light.",
+  "stats": {
+    "note": "The item's own row, OpenMU's Season 6 initialiser (0.95d has no 2nd wings).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Wings.cs",
+    "call": "this.CreateWing(4, 5, 3, \"Wings of Soul\", 150, 30, 200, 215, 2, 0, 0, ...)",
+    "group": 12,
+    "number": 14,
+    "drop_level": 150,
+    "drops_from_monsters": false,
+    "slot": 7,
+    "width": 5,
+    "height": 3,
+    "defense": 30,
+    "durability": 200,
+    "requires": {
+      "level": 215,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "Its class's second (Muse Elf, Soul Master, Blade Knight): OpenMU's class level 2.",
+    "power_note": "His blows x(132 + plus)%, what reaches him x(75 - 2 a plus)%, defence + 2 a plus, level + 5 a plus; the option's kind by its PLUS_WING_OP1_TYPE bit; the extras in Held::wing. docs/second-wings.md.",
+    "number_note": "MU's 12/4; ours 12/14, since this project gave 12/3-6 to the knight's orbs (the user, 2026-10-04: 'Move the wings'). docs/second-wings.md."
+  },
+  "separate_meshes": true,
+  "separate_meshes_why": "The _R shell is the base's own geometry again, vertex for vertex: welded across meshes the two shells became duplicate faces and Blender kept only one -- Soul built as its glow alone, Dragon as its membrane alone (2026-10-04). MU draws them as two meshes and never merges them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 28,
+      "area": 2101.5,
+      "along": [
+        -12.7,
+        4.8
+      ],
+      "mu_uv": [
+        -0.001,
+        0.092,
+        0.533,
+        0.892
+      ],
+      "bake_uv": [
+        0.014,
+        0.283,
+        0.35,
+        0.381
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 8,
+      "area": 439.8,
+      "along": [
+        -13.6,
+        -7.8
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.716,
+        0.646,
+        0.73,
+        0.655
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 8,
+      "area": 430.0,
+      "along": [
+        -10.5,
+        -4.9
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.621,
+        0.373,
+        0.634,
+        0.381
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 8,
+      "area": 412.6,
+      "along": [
+        -5.9,
+        -1.7
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.334,
+        0.014,
+        0.349,
+        0.023
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4647.3,
+      "along": [
+        -10.5,
+        2.6
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.413,
+        0.015,
+        0.446,
+        0.067
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 8,
+      "area": 424.1,
+      "along": [
+        -12.0,
+        -6.5
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.013,
+        0.736,
+        0.028,
+        0.744
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 8,
+      "area": 415.3,
+      "along": [
+        -8.6,
+        -4.8
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.727,
+        0.175,
+        0.74,
+        0.184
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 8,
+      "area": 407.9,
+      "along": [
+        -4.5,
+        0.1
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.35,
+        0.699,
+        0.365,
+        0.707
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 24,
+      "area": 1301.3,
+      "along": [
+        -3.5,
+        2.2
+      ],
+      "mu_uv": [
+        0.525,
+        0.634,
+        0.832,
+        0.825
+      ],
+      "bake_uv": [
+        0.175,
+        0.014,
+        0.639,
+        0.345
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 16,
+      "area": 1111.2,
+      "along": [
+        -1.7,
+        5.5
+      ],
+      "mu_uv": [
+        0.478,
+        0.778,
+        0.742,
+        0.991
+      ],
+      "bake_uv": [
+        0.014,
+        0.251,
+        0.538,
+        0.671
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4650.5,
+      "along": [
+        -11.2,
+        2.5
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.319,
+        0.329,
+        0.351,
+        0.381
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1277.2,
+      "along": [
+        -14.9,
+        -10.1
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.219,
+        0.013,
+        0.23,
+        0.048
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 8,
+      "area": 492.3,
+      "along": [
+        -17.1,
+        -13.1
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.626,
+        0.493,
+        0.629,
+        0.519
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 4,
+      "area": 247.8,
+      "along": [
+        -15.3,
+        -11.9
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.369,
+        0.737,
+        0.372,
+        0.753
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 12,
+      "area": 561.2,
+      "along": [
+        -18.7,
+        -14.0
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.475,
+        0.059,
+        0.482,
+        0.087
+      ]
+    },
+    {
+      "island": 15,
+      "material": "skin",
+      "triangles": 12,
+      "area": 634.2,
+      "along": [
+        -14.8,
+        -6.4
+      ],
+      "mu_uv": [
+        0.785,
+        0.475,
+        0.942,
+        0.971
+      ],
+      "bake_uv": [
+        0.076,
+        0.269,
+        0.237,
+        0.469
+      ]
+    },
+    {
+      "island": 16,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1277.1,
+      "along": [
+        -14.8,
+        -9.9
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.228,
+        0.128,
+        0.239,
+        0.163
+      ]
+    },
+    {
+      "island": 17,
+      "material": "skin",
+      "triangles": 8,
+      "area": 484.1,
+      "along": [
+        -16.0,
+        -10.3
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.359,
+        0.644,
+        0.363,
+        0.671
+      ]
+    },
+    {
+      "island": 18,
+      "material": "skin",
+      "triangles": 4,
+      "area": 244.0,
+      "along": [
+        -13.0,
+        -9.7
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.399,
+        0.742,
+        0.402,
+        0.758
+      ]
+    },
+    {
+      "island": 19,
+      "material": "skin",
+      "triangles": 12,
+      "area": 580.5,
+      "along": [
+        -18.6,
+        -11.4
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.454,
+        0.496,
+        0.462,
+        0.524
+      ]
+    },
+    {
+      "island": 20,
+      "material": "skin",
+      "triangles": 28,
+      "area": 2101.9,
+      "along": [
+        -12.7,
+        4.8
+      ],
+      "mu_uv": [
+        -0.001,
+        0.092,
+        0.533,
+        0.892
+      ],
+      "bake_uv": [
+        0.013,
+        0.224,
+        0.48,
+        0.482
+      ]
+    },
+    {
+      "island": 21,
+      "material": "skin",
+      "triangles": 8,
+      "area": 439.9,
+      "along": [
+        -13.6,
+        -7.8
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.192,
+        0.713,
+        0.207,
+        0.721
+      ]
+    },
+    {
+      "island": 22,
+      "material": "skin",
+      "triangles": 8,
+      "area": 430.1,
+      "along": [
+        -10.5,
+        -4.8
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.727,
+        0.605,
+        0.74,
+        0.613
+      ]
+    },
+    {
+      "island": 23,
+      "material": "skin",
+      "triangles": 8,
+      "area": 412.6,
+      "along": [
+        -5.9,
+        -1.7
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.67,
+        0.703,
+        0.685,
+        0.712
+      ]
+    },
+    {
+      "island": 24,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4649.0,
+      "along": [
+        -10.5,
+        2.6
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.388,
+        0.403,
+        0.42,
+        0.455
+      ]
+    },
+    {
+      "island": 25,
+      "material": "skin",
+      "triangles": 8,
+      "area": 424.0,
+      "along": [
+        -12.0,
+        -6.5
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.707,
+        0.134,
+        0.721,
+        0.142
+      ]
+    },
+    {
+      "island": 26,
+      "material": "skin",
+      "triangles": 8,
+      "area": 415.3,
+      "along": [
+        -8.6,
+        -4.7
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.07,
+        0.736,
+        0.083,
+        0.744
+      ]
+    },
+    {
+      "island": 27,
+      "material": "skin",
+      "triangles": 8,
+      "area": 407.9,
+      "along": [
+        -4.6,
+        0.1
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.013,
+        0.699,
+        0.028,
+        0.707
+      ]
+    },
+    {
+      "island": 28,
+      "material": "skin",
+      "triangles": 24,
+      "area": 1301.3,
+      "along": [
+        -3.5,
+        2.1
+      ],
+      "mu_uv": [
+        0.525,
+        0.634,
+        0.832,
+        0.825
+      ],
+      "bake_uv": [
+        0.26,
+        0.554,
+        0.648,
+        0.634
+      ]
+    },
+    {
+      "island": 29,
+      "material": "skin",
+      "triangles": 16,
+      "area": 1111.2,
+      "along": [
+        -1.7,
+        5.5
+      ],
+      "mu_uv": [
+        0.478,
+        0.778,
+        0.742,
+        0.991
+      ],
+      "bake_uv": [
+        0.258,
+        0.013,
+        0.675,
+        0.675
+      ]
+    },
+    {
+      "island": 30,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4651.7,
+      "along": [
+        -11.2,
+        2.5
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.014,
+        0.219,
+        0.046,
+        0.271
+      ]
+    },
+    {
+      "island": 31,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1267.9,
+      "along": [
+        -14.9,
+        -10.1
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.256,
+        0.013,
+        0.266,
+        0.048
+      ]
+    },
+    {
+      "island": 32,
+      "material": "skin",
+      "triangles": 8,
+      "area": 492.3,
+      "along": [
+        -17.1,
+        -13.1
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.164,
+        0.677,
+        0.168,
+        0.703
+      ]
+    },
+    {
+      "island": 33,
+      "material": "skin",
+      "triangles": 4,
+      "area": 247.8,
+      "along": [
+        -15.3,
+        -11.9
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.429,
+        0.746,
+        0.432,
+        0.763
+      ]
+    },
+    {
+      "island": 34,
+      "material": "skin",
+      "triangles": 12,
+      "area": 561.2,
+      "along": [
+        -18.7,
+        -14.0
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.491,
+        0.523,
+        0.498,
+        0.551
+      ]
+    },
+    {
+      "island": 35,
+      "material": "skin",
+      "triangles": 12,
+      "area": 634.1,
+      "along": [
+        -14.8,
+        -6.4
+      ],
+      "mu_uv": [
+        0.785,
+        0.475,
+        0.942,
+        0.971
+      ],
+      "bake_uv": [
+        0.25,
+        0.17,
+        0.482,
+        0.441
+      ]
+    },
+    {
+      "island": 36,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1267.8,
+      "along": [
+        -14.8,
+        -9.9
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.292,
+        0.013,
+        0.303,
+        0.048
+      ]
+    },
+    {
+      "island": 37,
+      "material": "skin",
+      "triangles": 8,
+      "area": 484.1,
+      "along": [
+        -16.0,
+        -10.3
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.704,
+        0.013,
+        0.707,
+        0.039
+      ]
+    },
+    {
+      "island": 38,
+      "material": "skin",
+      "triangles": 4,
+      "area": 244.0,
+      "along": [
+        -13.0,
+        -9.7
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.778,
+        0.014,
+        0.781,
+        0.03
+      ]
+    },
+    {
+      "island": 39,
+      "material": "skin",
+      "triangles": 12,
+      "area": 580.5,
+      "along": [
+        -18.6,
+        -11.4
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.511,
+        0.195,
+        0.519,
+        0.223
+      ]
+    },
+    {
+      "island": 40,
+      "material": "skin",
+      "triangles": 28,
+      "area": 2101.5,
+      "along": [
+        -12.7,
+        4.8
+      ],
+      "mu_uv": [
+        -0.001,
+        0.092,
+        0.533,
+        0.892
+      ],
+      "bake_uv": [
+        0.012,
+        0.045,
+        0.496,
+        0.594
+      ]
+    },
+    {
+      "island": 41,
+      "material": "skin",
+      "triangles": 8,
+      "area": 439.8,
+      "along": [
+        -13.6,
+        -7.8
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.809,
+        0.432,
+        0.912,
+        0.493
+      ]
+    },
+    {
+      "island": 42,
+      "material": "skin",
+      "triangles": 8,
+      "area": 430.0,
+      "along": [
+        -10.5,
+        -4.9
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.585,
+        0.901,
+        0.673,
+        0.96
+      ]
+    },
+    {
+      "island": 43,
+      "material": "skin",
+      "triangles": 8,
+      "area": 412.6,
+      "along": [
+        -5.9,
+        -1.7
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.676,
+        0.809,
+        0.781,
+        0.871
+      ]
+    },
+    {
+      "island": 44,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4647.3,
+      "along": [
+        -10.5,
+        2.6
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.012,
+        0.328,
+        0.24,
+        0.696
+      ]
+    },
+    {
+      "island": 45,
+      "material": "skin",
+      "triangles": 8,
+      "area": 424.1,
+      "along": [
+        -12.0,
+        -6.5
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.811,
+        0.601,
+        0.914,
+        0.662
+      ]
+    },
+    {
+      "island": 46,
+      "material": "skin",
+      "triangles": 8,
+      "area": 415.3,
+      "along": [
+        -8.6,
+        -4.8
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.401,
+        0.91,
+        0.489,
+        0.969
+      ]
+    },
+    {
+      "island": 47,
+      "material": "skin",
+      "triangles": 8,
+      "area": 407.9,
+      "along": [
+        -4.5,
+        0.1
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.538,
+        0.834,
+        0.643,
+        0.896
+      ]
+    },
+    {
+      "island": 48,
+      "material": "skin",
+      "triangles": 24,
+      "area": 1301.3,
+      "along": [
+        -3.5,
+        2.2
+      ],
+      "mu_uv": [
+        0.525,
+        0.634,
+        0.832,
+        0.825
+      ],
+      "bake_uv": [
+        0.145,
+        0.715,
+        0.363,
+        0.868
+      ]
+    },
+    {
+      "island": 49,
+      "material": "skin",
+      "triangles": 16,
+      "area": 1111.2,
+      "along": [
+        -1.7,
+        5.5
+      ],
+      "mu_uv": [
+        0.478,
+        0.778,
+        0.742,
+        0.991
+      ],
+      "bake_uv": [
+        0.013,
+        0.689,
+        0.882,
+        0.873
+      ]
+    },
+    {
+      "island": 50,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4650.5,
+      "along": [
+        -11.2,
+        2.5
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.02,
+        0.012,
+        0.248,
+        0.381
+      ]
+    },
+    {
+      "island": 51,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1277.2,
+      "along": [
+        -14.9,
+        -10.1
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.531,
+        0.265,
+        0.608,
+        0.513
+      ]
+    },
+    {
+      "island": 52,
+      "material": "skin",
+      "triangles": 8,
+      "area": 492.3,
+      "along": [
+        -17.1,
+        -13.1
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.902,
+        0.197,
+        0.928,
+        0.384
+      ]
+    },
+    {
+      "island": 53,
+      "material": "skin",
+      "triangles": 4,
+      "area": 247.8,
+      "along": [
+        -15.3,
+        -11.9
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.956,
+        0.571,
+        0.979,
+        0.687
+      ]
+    },
+    {
+      "island": 54,
+      "material": "skin",
+      "triangles": 12,
+      "area": 561.2,
+      "along": [
+        -18.7,
+        -14.0
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.483,
+        0.616,
+        0.539,
+        0.815
+      ]
+    },
+    {
+      "island": 55,
+      "material": "skin",
+      "triangles": 12,
+      "area": 634.2,
+      "along": [
+        -14.8,
+        -6.4
+      ],
+      "mu_uv": [
+        0.785,
+        0.475,
+        0.942,
+        0.971
+      ],
+      "bake_uv": [
+        0.012,
+        0.502,
+        0.59,
+        0.749
+      ]
+    },
+    {
+      "island": 56,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1277.1,
+      "along": [
+        -14.8,
+        -9.9
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.262,
+        0.438,
+        0.339,
+        0.687
+      ]
+    },
+    {
+      "island": 57,
+      "material": "skin",
+      "triangles": 8,
+      "area": 484.1,
+      "along": [
+        -16.0,
+        -10.3
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.939,
+        0.39,
+        0.965,
+        0.577
+      ]
+    },
+    {
+      "island": 58,
+      "material": "skin",
+      "triangles": 4,
+      "area": 244.0,
+      "along": [
+        -13.0,
+        -9.7
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.939,
+        0.849,
+        0.962,
+        0.965
+      ]
+    },
+    {
+      "island": 59,
+      "material": "skin",
+      "triangles": 12,
+      "area": 580.5,
+      "along": [
+        -18.6,
+        -11.4
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.082,
+        0.575,
+        0.138,
+        0.774
+      ]
+    },
+    {
+      "island": 60,
+      "material": "skin",
+      "triangles": 28,
+      "area": 2101.9,
+      "along": [
+        -12.7,
+        4.8
+      ],
+      "mu_uv": [
+        -0.001,
+        0.092,
+        0.533,
+        0.892
+      ],
+      "bake_uv": [
+        0.257,
+        0.083,
+        0.733,
+        0.709
+      ]
+    },
+    {
+      "island": 61,
+      "material": "skin",
+      "triangles": 8,
+      "area": 439.9,
+      "along": [
+        -13.6,
+        -7.8
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.813,
+        0.147,
+        0.917,
+        0.208
+      ]
+    },
+    {
+      "island": 62,
+      "material": "skin",
+      "triangles": 8,
+      "area": 430.1,
+      "along": [
+        -10.5,
+        -4.8
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.155,
+        0.864,
+        0.243,
+        0.923
+      ]
+    },
+    {
+      "island": 63,
+      "material": "skin",
+      "triangles": 8,
+      "area": 412.6,
+      "along": [
+        -5.9,
+        -1.7
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.8,
+        0.013,
+        0.905,
+        0.075
+      ]
+    },
+    {
+      "island": 64,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4649.0,
+      "along": [
+        -10.5,
+        2.6
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.503,
+        0.013,
+        0.73,
+        0.381
+      ]
+    },
+    {
+      "island": 65,
+      "material": "skin",
+      "triangles": 8,
+      "area": 424.0,
+      "along": [
+        -12.0,
+        -6.5
+      ],
+      "mu_uv": [
+        0.438,
+        0.251,
+        0.683,
+        0.396
+      ],
+      "bake_uv": [
+        0.301,
+        0.872,
+        0.404,
+        0.933
+      ]
+    },
+    {
+      "island": 66,
+      "material": "skin",
+      "triangles": 8,
+      "area": 415.3,
+      "along": [
+        -8.6,
+        -4.7
+      ],
+      "mu_uv": [
+        0.498,
+        0.366,
+        0.709,
+        0.508
+      ],
+      "bake_uv": [
+        0.013,
+        0.873,
+        0.101,
+        0.933
+      ]
+    },
+    {
+      "island": 67,
+      "material": "skin",
+      "triangles": 8,
+      "area": 407.9,
+      "along": [
+        -4.6,
+        0.1
+      ],
+      "mu_uv": [
+        0.508,
+        0.489,
+        0.757,
+        0.637
+      ],
+      "bake_uv": [
+        0.804,
+        0.85,
+        0.908,
+        0.912
+      ]
+    },
+    {
+      "island": 68,
+      "material": "skin",
+      "triangles": 24,
+      "area": 1301.3,
+      "along": [
+        -3.5,
+        2.1
+      ],
+      "mu_uv": [
+        0.525,
+        0.634,
+        0.832,
+        0.825
+      ],
+      "bake_uv": [
+        0.673,
+        0.323,
+        0.875,
+        0.815
+      ]
+    },
+    {
+      "island": 69,
+      "material": "skin",
+      "triangles": 16,
+      "area": 1111.2,
+      "along": [
+        -1.7,
+        5.5
+      ],
+      "mu_uv": [
+        0.478,
+        0.778,
+        0.742,
+        0.991
+      ],
+      "bake_uv": [
+        0.393,
+        0.241,
+        0.873,
+        0.894
+      ]
+    },
+    {
+      "island": 70,
+      "material": "skin",
+      "triangles": 16,
+      "area": 4651.7,
+      "along": [
+        -11.2,
+        2.5
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.56,
+        0.892
+      ],
+      "bake_uv": [
+        0.265,
+        0.051,
+        0.493,
+        0.419
+      ]
+    },
+    {
+      "island": 71,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1267.9,
+      "along": [
+        -14.9,
+        -10.1
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.633,
+        0.371,
+        0.71,
+        0.619
+      ]
+    },
+    {
+      "island": 72,
+      "material": "skin",
+      "triangles": 8,
+      "area": 492.3,
+      "along": [
+        -17.1,
+        -13.1
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.948,
+        0.014,
+        0.974,
+        0.2
+      ]
+    },
+    {
+      "island": 73,
+      "material": "skin",
+      "triangles": 4,
+      "area": 247.8,
+      "along": [
+        -15.3,
+        -11.9
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.956,
+        0.224,
+        0.979,
+        0.34
+      ]
+    },
+    {
+      "island": 74,
+      "material": "skin",
+      "triangles": 12,
+      "area": 561.2,
+      "along": [
+        -18.7,
+        -14.0
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.737,
+        0.013,
+        0.792,
+        0.212
+      ]
+    },
+    {
+      "island": 75,
+      "material": "skin",
+      "triangles": 12,
+      "area": 634.1,
+      "along": [
+        -14.8,
+        -6.4
+      ],
+      "mu_uv": [
+        0.785,
+        0.475,
+        0.942,
+        0.971
+      ],
+      "bake_uv": [
+        0.352,
+        0.502,
+        0.481,
+        0.781
+      ]
+    },
+    {
+      "island": 76,
+      "material": "skin",
+      "triangles": 5,
+      "area": 1267.8,
+      "along": [
+        -14.8,
+        -9.9
+      ],
+      "mu_uv": [
+        0.785,
+        0.36,
+        0.968,
+        0.951
+      ],
+      "bake_uv": [
+        0.72,
+        0.412,
+        0.797,
+        0.66
+      ]
+    },
+    {
+      "island": 77,
+      "material": "skin",
+      "triangles": 8,
+      "area": 484.1,
+      "along": [
+        -16.0,
+        -10.3
+      ],
+      "mu_uv": [
+        0.85,
+        0.057,
+        0.912,
+        0.501
+      ],
+      "bake_uv": [
+        0.911,
+        0.648,
+        0.937,
+        0.834
+      ]
+    },
+    {
+      "island": 78,
+      "material": "skin",
+      "triangles": 4,
+      "area": 244.0,
+      "along": [
+        -13.0,
+        -9.7
+      ],
+      "mu_uv": [
+        0.917,
+        0.239,
+        0.972,
+        0.514
+      ],
+      "bake_uv": [
+        0.744,
+        0.872,
+        0.767,
+        0.988
+      ]
+    },
+    {
+      "island": 79,
+      "material": "skin",
+      "triangles": 12,
+      "area": 580.5,
+      "along": [
+        -18.6,
+        -11.4
+      ],
+      "mu_uv": [
+        0.705,
+        0.02,
+        0.836,
+        0.495
+      ],
+      "bake_uv": [
+        0.59,
+        0.616,
+        0.645,
+        0.815
+      ]
+    }
+  ]
+}

@@ -4,6 +4,7 @@
 
 #include "content/placement.h"
 #include "core/maths.h"
+#include "sim/items.h"
 
 namespace mu::game {
 namespace {
@@ -15,8 +16,13 @@ constexpr float kWingOffset[3] = {0.0f, 0.0f, 0.15f};
 }  // namespace
 
 const FigureBody* wingBody(const Figures& figures, int group, int number) {
-    if (group != 12 || number < 0 || number > 2) return nullptr;
-    return figures.body("Wing0" + std::to_string(number + 1));
+    if (group != 12) return nullptr;
+    if (number >= 0 && number <= 2) return figures.body("Wing0" + std::to_string(number + 1));
+    // And the 2nd wings, Wing04-06 (ZzzOpenData.cpp:1023, `Wing`, 4 + i), at our numbers.
+    if (number == sim::kSpiritsNumber) return figures.body("Wing04");
+    if (number == sim::kSoulNumber) return figures.body("Wing05");
+    if (number == sim::kDragonNumber) return figures.body("Wing06");
+    return nullptr;
 }
 
 void WingLook::wear(const FigureBody* wing, const Figure& bearer) {

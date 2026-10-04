@@ -423,7 +423,7 @@ void Realm::rearm(Body& hero) {
     hero.luckyWorn = 0;
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
-        if (row && (takesOptions(*row) || jewellery(*row) || firstWing(*row)) && bag_[slot].luck) {
+        if (row && (takesOptions(*row) || jewellery(*row) || anyWing(*row)) && bag_[slot].luck) {
             ++hero.luckyWorn;
         }
     }
@@ -464,7 +464,7 @@ void Realm::rearm(Body& hero) {
     }
     // The wing's defence, worn down as armour is (ItemDefense, the item's m_Defense cut by its
     // m_CurrentDurabilityState).
-    if (const content::ItemRow* wing = rowAt(kWings); wing && firstWing(*wing)) {
+    if (const content::ItemRow* wing = rowAt(kWings); wing && anyWing(*wing)) {
         const int defense = wingDefense(*wing, bag_[kWings].refinement);
         hero.wornDefense += defense - int(float(defense) * cutAt(kWings));
     }
@@ -491,16 +491,25 @@ void Realm::rearm(Body& hero) {
     // rings', Heaven's wizardry, Satan's damage (docs/wings.md).
     hero.wingDamage = hero.wingWizardry = 0;
     if (const content::ItemRow* wing = rowAt(kWings);
-        wing && firstWing(*wing) && bag_[kWings].durability > 0) {
+        wing && anyWing(*wing) && bag_[kWings].durability > 0) {
         const Held& worn = bag_[kWings];
         const PetPower power = wingPower(*wing, worn.refinement);
         hero.pet.taken *= power.taken;
         hero.pet.dealt *= power.dealt;
         hero.pet.lifeCost += power.lifeCost;
-        const int option = optionValue(*wing, worn.option);
-        if (wing->number == 0) hero.excel.lifeRegen += option;
-        else if (wing->number == 1) hero.wingWizardry = option;
-        else hero.wingDamage = option;
+        const int option = wingOptionValue(*wing, worn);
+        switch (wingOption(*wing, worn.wing)) {
+            case WingOption::Regeneration: hero.excel.lifeRegen += option; break;
+            case WingOption::Wizardry: hero.wingWizardry = option; break;
+            case WingOption::Damage: hero.wingDamage = option; break;
+        }
+        // A 2nd wing's extras (zzzitem.cpp:1488-1505, :3039-3044; ObjCalCharacter.cpp:1264-1265).
+        if (secondWing(*wing)) {
+            const int extra = kWingExtraBase + kWingExtraPerPlus * std::max<int>(0, worn.refinement);
+            if (worn.wing & kWingMaxLife) hero.pet.health += extra;
+            if (worn.wing & kWingMaxMana) hero.excel.moreMana += extra;
+            if (worn.wing & kWingIgnoreDefense) hero.excel.ignoreDefense += kWingIgnoreChance;
+        }
     }
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
@@ -859,7 +868,7 @@ void Realm::recover(Body& hero) {
     // broken, and does nothing until it is mended.
     if (tick_ % kWingWearTicks == 0 && !bag_[kWings].empty() && bag_[kWings].durability > 0 &&
         size_t(bag_[kWings].item) < tables_->items.size() &&
-        firstWing(tables_->items[size_t(bag_[kWings].item)])) {
+        anyWing(tables_->items[size_t(bag_[kWings].item)])) {
         wearDown(kWings, 1.0 / kWingWearSteps);
     }
     // Health on the same three seconds, a hundredth of the pool, and only on a safe tile -- and

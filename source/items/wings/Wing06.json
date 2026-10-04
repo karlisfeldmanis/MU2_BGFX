@@ -1,0 +1,510 @@
+{
+  "item": "Wing06",
+  "mu_name": "Wings of Dragon",
+  "mu_name_from": "MODEL_WINGS_OF_DRAGON = MODEL_WING + 5, Data/Item/Wing06.bmd (ZzzOpenData.cpp:1023); OpenMU's Wings of Dragon, 12/5.",
+  "why_this_one": "The Blade Knight's 2nd level wing (docs/second-wings.md, 2026-10-04).",
+  "profile": "monster",
+  "profile_note": "A model on its own rig worn on the character, as the 1st wings: the monster profile.",
+  "play_speed": 0.25,
+  "tiled": true,
+  "worn_note": "Worn on slot 7 as the 1st wings are: linked to player bone 47 at (0, 0, 15), its own 8-key flap at PlaySpeed 0.25, 1 while he flies (ZzzCharacter.cpp:15400-15430). docs/second-wings.md.",
+  "rig_from": "Eighty bones and one action of eight keys, the flap.",
+  "sheets": {
+    "ndw": "ndw.png",
+    "ndw_r": "ndw_r.png"
+  },
+  "sheet_from": "Data/Item/NDW.OZJ (128x64, a dark bat membrane, 256 triangles) and NDW_R.OZJ (128x64, orange veins on black, the same 256 again as a shell).",
+  "additive": [
+    "ndw_r"
+  ],
+  "additive_from": "A texture named _R is MuMain's Bright mesh (TextureScript.cpp:38-39), added at BlendMeshLight.",
+  "glow": {
+    "ndw_r": {
+      "pulse": [
+        0.25,
+        0.25
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "`o->BlendMeshLight = (sinf(WorldTime * 0.001f) + 1.f) / 4.f` (ZzzObject.cpp:9937-9940): 0 to 0.5, the veins smouldering -- pulse [0.25, 0.25] at the slow rate.",
+  "tiled_why": "Two sheets, one added, each its own material.",
+  "sheet_materials": {
+    "ndw": "foliage",
+    "ndw_r": "feather"
+  },
+  "sheet_materials_from": "A membrane lit through from both faces, as Satan's and the bat's. The shell is light.",
+  "speed_note": "Flies at CharacterMoveSpeed 16, where the others fly at 15 (ZzzCharacter.cpp:6324-6331).",
+  "stats": {
+    "note": "The item's own row, OpenMU's Season 6 initialiser (0.95d has no 2nd wings).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Wings.cs",
+    "call": "this.CreateWing(5, 3, 3, \"Wings of Dragon\", 150, 45, 200, 215, 0, 2, 0, ...)",
+    "group": 12,
+    "number": 16,
+    "drop_level": 150,
+    "drops_from_monsters": false,
+    "slot": 7,
+    "width": 3,
+    "height": 3,
+    "defense": 45,
+    "durability": 200,
+    "requires": {
+      "level": 215,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level": 2,
+    "class_level_note": "Its class's second (Muse Elf, Soul Master, Blade Knight): OpenMU's class level 2.",
+    "power_note": "His blows x(132 + plus)%, what reaches him x(75 - 2 a plus)%, defence + 2 a plus, level + 5 a plus; the option's kind by its PLUS_WING_OP1_TYPE bit; the extras in Held::wing. docs/second-wings.md.",
+    "number_note": "MU's 12/5; ours 12/16, since this project gave 12/3-6 to the knight's orbs (the user, 2026-10-04: 'Move the wings'). docs/second-wings.md."
+  },
+  "separate_meshes": true,
+  "separate_meshes_why": "The _R shell is the base's own geometry again, vertex for vertex: welded across meshes the two shells became duplicate faces and Blender kept only one -- Soul built as its glow alone, Dragon as its membrane alone (2026-10-04). MU draws them as two meshes and never merges them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 62,
+      "area": 2177.8,
+      "along": [
+        -35.2,
+        -9.3
+      ],
+      "mu_uv": [
+        0.016,
+        0.194,
+        0.983,
+        0.98
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.848,
+        0.335
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 34,
+      "area": 9297.5,
+      "along": [
+        -35.2,
+        23.6
+      ],
+      "mu_uv": [
+        0.016,
+        0.016,
+        0.993,
+        0.98
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.824,
+        0.824
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 12,
+      "area": 782.2,
+      "along": [
+        -36.8,
+        -24.5
+      ],
+      "mu_uv": [
+        0.364,
+        0.805,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.397,
+        0.155,
+        0.856,
+        0.903
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 8,
+      "area": 5169.4,
+      "along": [
+        -36.1,
+        -24.5
+      ],
+      "mu_uv": [
+        0.381,
+        0.377,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.652,
+        0.01,
+        0.982,
+        0.982
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 12,
+      "area": 512.2,
+      "along": [
+        -13.5,
+        23.6
+      ],
+      "mu_uv": [
+        0.366,
+        0.797,
+        0.993,
+        0.971
+      ],
+      "bake_uv": [
+        0.581,
+        0.412,
+        0.816,
+        0.846
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 62,
+      "area": 2183.5,
+      "along": [
+        -35.2,
+        -9.3
+      ],
+      "mu_uv": [
+        0.016,
+        0.194,
+        0.983,
+        0.98
+      ],
+      "bake_uv": [
+        0.01,
+        0.07,
+        0.599,
+        0.661
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 34,
+      "area": 9296.7,
+      "along": [
+        -35.1,
+        23.6
+      ],
+      "mu_uv": [
+        0.016,
+        0.016,
+        0.993,
+        0.98
+      ],
+      "bake_uv": [
+        0.033,
+        0.01,
+        0.667,
+        0.845
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 12,
+      "area": 783.9,
+      "along": [
+        -36.7,
+        -24.4
+      ],
+      "mu_uv": [
+        0.364,
+        0.805,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.367,
+        0.592,
+        0.963,
+        0.862
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 8,
+      "area": 5174.4,
+      "along": [
+        -36.0,
+        -24.4
+      ],
+      "mu_uv": [
+        0.381,
+        0.377,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.203,
+        0.447,
+        0.963,
+        0.991
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 12,
+      "area": 512.2,
+      "along": [
+        -13.5,
+        23.6
+      ],
+      "mu_uv": [
+        0.366,
+        0.797,
+        0.993,
+        0.971
+      ],
+      "bake_uv": [
+        0.01,
+        0.765,
+        0.566,
+        0.865
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 62,
+      "area": 2177.8,
+      "along": [
+        -35.2,
+        -9.3
+      ],
+      "mu_uv": [
+        0.016,
+        0.194,
+        0.983,
+        0.98
+      ],
+      "bake_uv": [
+        0.01,
+        0.018,
+        0.154,
+        0.283
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 34,
+      "area": 9297.5,
+      "along": [
+        -35.2,
+        23.6
+      ],
+      "mu_uv": [
+        0.016,
+        0.016,
+        0.993,
+        0.98
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.222,
+        0.355
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 12,
+      "area": 782.2,
+      "along": [
+        -36.8,
+        -24.5
+      ],
+      "mu_uv": [
+        0.364,
+        0.805,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.01,
+        0.351,
+        0.344,
+        0.378
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 8,
+      "area": 5169.4,
+      "along": [
+        -36.1,
+        -24.5
+      ],
+      "mu_uv": [
+        0.381,
+        0.377,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.011,
+        0.349,
+        0.105,
+        0.431
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 12,
+      "area": 512.2,
+      "along": [
+        -13.5,
+        23.6
+      ],
+      "mu_uv": [
+        0.366,
+        0.797,
+        0.993,
+        0.971
+      ],
+      "bake_uv": [
+        0.009,
+        0.322,
+        0.093,
+        0.349
+      ]
+    },
+    {
+      "island": 15,
+      "material": "skin",
+      "triangles": 62,
+      "area": 2183.5,
+      "along": [
+        -35.2,
+        -9.3
+      ],
+      "mu_uv": [
+        0.016,
+        0.194,
+        0.983,
+        0.98
+      ],
+      "bake_uv": [
+        0.01,
+        0.018,
+        0.214,
+        0.167
+      ]
+    },
+    {
+      "island": 16,
+      "material": "skin",
+      "triangles": 34,
+      "area": 9296.7,
+      "along": [
+        -35.1,
+        23.6
+      ],
+      "mu_uv": [
+        0.016,
+        0.016,
+        0.993,
+        0.98
+      ],
+      "bake_uv": [
+        0.168,
+        0.009,
+        0.299,
+        0.374
+      ]
+    },
+    {
+      "island": 17,
+      "material": "skin",
+      "triangles": 12,
+      "area": 783.9,
+      "along": [
+        -36.7,
+        -24.4
+      ],
+      "mu_uv": [
+        0.364,
+        0.805,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.368,
+        0.009,
+        0.44,
+        0.038
+      ]
+    },
+    {
+      "island": 18,
+      "material": "skin",
+      "triangles": 8,
+      "area": 5174.4,
+      "along": [
+        -36.0,
+        -24.4
+      ],
+      "mu_uv": [
+        0.381,
+        0.377,
+        0.983,
+        0.972
+      ],
+      "bake_uv": [
+        0.276,
+        0.009,
+        0.396,
+        0.422
+      ]
+    },
+    {
+      "island": 19,
+      "material": "skin",
+      "triangles": 12,
+      "area": 512.2,
+      "along": [
+        -13.5,
+        23.6
+      ],
+      "mu_uv": [
+        0.366,
+        0.797,
+        0.993,
+        0.971
+      ],
+      "bake_uv": [
+        0.046,
+        0.029,
+        0.261,
+        0.258
+      ]
+    }
+  ]
+}

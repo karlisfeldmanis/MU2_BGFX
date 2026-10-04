@@ -238,6 +238,8 @@ constexpr float kRideFactor = 16.0f / 12.0f;
 // (ZzzCharacter.cpp:6320-6335, the wing beside the horn). MU's own number, between our run's
 // 14 and our ride's 16 (docs/wings.md).
 constexpr float kFlyFactor = 15.0f / 12.0f;
+// And the Wings of Dragon's 16 (ZzzCharacter.cpp:6324-6331), our ride's.
+constexpr float kFastFlyFactor = 16.0f / 12.0f;
 struct Body;
 // How much ground a walk covers against the breed's own pace: riding, running or neither.
 float strideFactor(const Body& one);
@@ -359,6 +361,8 @@ struct Body {
     // (MU's horn and wing share one branch, the horn first). MuMain's PLAYER_FLY: he never
     // walks or runs then, in a fight or out (ZzzCharacter.cpp:615-621).
     bool flying = false;
+    // And on the Wings of Dragon, at 16 where the others fly at 15 (sim::kFastFlyFactor).
+    bool flyFast = false;
     // His wing's option, while it has life (sim::Arms::wingDamage, wingWizardry).
     int wingDamage = 0, wingWizardry = 0;
 

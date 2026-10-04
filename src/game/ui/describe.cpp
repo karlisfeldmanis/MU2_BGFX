@@ -64,7 +64,7 @@ std::string kindOf(const content::ItemRow& row) {
     // In the potions' group as MU files it (14, 22), and not drunk: set in a socket.
     if (sim::creation(row)) return "Epic jewel";
     if (row.group == 15) return "Scroll";
-    if (sim::firstWing(row)) return "Wings";
+    if (sim::anyWing(row)) return sim::secondWing(row) ? "2nd level wings" : "Wings";
     if (row.group == 12) return "Orb";
     switch (row.group) {
         case sim::kGroupHelms: return "Helm";
@@ -92,7 +92,7 @@ float swingOf(const content::ItemRow& row, const sim::Held& held) {
 }
 
 int armourOf(const content::ItemRow& row, const sim::Held& held) {
-    if (sim::firstWing(row)) return sim::wingDefense(row, held.refinement);
+    if (sim::anyWing(row)) return sim::wingDefense(row, held.refinement);
     if (!row.armour() && !row.shield()) return 0;
     return row.defense + sim::defenseBonus(row.shield(), held.refinement) +
            (row.shield() ? 0 : sim::optionValue(row, held.option)) +
@@ -387,8 +387,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
         if (excellent > 0) rail("+" + std::to_string(excellent), Tone::Green, "excellent");
     }
-    // A wing's defence, 3 a plus (sim::wingDefense).
-    if (sim::firstWing(row)) {
+    // A wing's defence, 3 a plus on a 1st, 2 on a 2nd (sim::wingDefense).
+    if (sim::anyWing(row)) {
         const int defense = sim::wingDefense(row, plus);
         sheet.hero.value = std::to_string(defense);
         sheet.hero.tone = lifted;
@@ -500,7 +500,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // A wing's powers in MuMain's words and order (GT 577, 578, 579; ZzzInventory.cpp:4270-4278),
     // `12 + Level * 2` off sim::wingPower, so the card and the blow cannot disagree; and its price
     // in red, as the Imp's, which MuMain's card leaves out and WebZen's server takes.
-    if (sim::firstWing(row)) {
+    if (sim::anyWing(row)) {
         const sim::PetPower power = sim::wingPower(row, what.refinement);
         const auto say = [&](const std::string& words, Tone tone) {
             Row line;
@@ -529,7 +529,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // A stack says how many, as MU's `Number of items` does; a quiver's shots are its wear and
     // go in the foot with everything else that is spent.
     if (!sim::ammunition(row) && what.durability > 1 && !worn && !weapon &&
-        row.group != sim::kGroupPets && !sim::firstWing(row)) {
+        row.group != sim::kGroupPets && !sim::anyWing(row)) {
         does.rows.push_back(stat("Quantity", std::to_string(what.durability), Tone::Blue));
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
@@ -545,7 +545,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // two lines become "Luck" as a keyword on each, which is the only change to MU's wording.
     const bool carriesSkill = what.skill && row.skill > 0;
     if ((sim::takesOptions(row) || sim::jewellery(row)) &&
-        (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill)) {
+        (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill ||
+         (sim::secondWing(row) && what.wing != 0))) {
         Section options;
         // MU's line split at its last word where that word is the value: "Increase Max HP +4%"
         // is the prose "Increase Max HP" and the value "+4%". A line whose last word is not a
@@ -582,15 +583,34 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             const std::string value = std::to_string(sim::optionValue(row, what.option));
             // A ring's and a pendant's is AT_LIFE_REGENERATION, MuMain's "Automatic HP recovery".
             // A wing's by its kind: the Elf's life regeneration, Heaven's wizardry, Satan's damage.
-            if (sim::firstWing(row)) {
-                rolled("", row.number == 0   ? "Automatic HP recovery +" + value + "%"
-                           : row.number == 1 ? "Additional Wizardry Dmg +" + value
-                                             : "Additional Dmg +" + value);
+            if (sim::anyWing(row)) {
+                const std::string worth = std::to_string(sim::wingOptionValue(row, what));
+                switch (sim::wingOption(row, what.wing)) {
+                    case sim::WingOption::Regeneration:
+                        rolled("", "Automatic HP recovery +" + worth + "%");
+                        break;
+                    case sim::WingOption::Wizardry:
+                        rolled("", "Additional Wizardry Dmg +" + worth);
+                        break;
+                    case sim::WingOption::Damage: rolled("", "Additional Dmg +" + worth); break;
+                }
             } else if (sim::jewellery(row)) rolled("", "Automatic HP recovery +" + value + "%");
             else if (row.shield()) rolled("", "Additional defense rate +" + value);
             else if (row.armour()) rolled("", "Additional defense +" + value);
             else if (row.magicPower > 0) rolled("", "Additional Wizardry Dmg +" + value);
             else rolled("", "Additional Dmg +" + value);
+        }
+        // A 2nd wing's extras in MuMain's words (GT 740-742, docs/mu-tooltip-lines.md), its
+        // numbers WebZen's: 50 and 5 a plus (zzzitem.cpp:3039-3044).
+        if (sim::secondWing(row) && (what.wing & (sim::kWingMaxLife | sim::kWingMaxMana |
+                                                  sim::kWingIgnoreDefense))) {
+            const std::string extra = std::to_string(sim::kWingExtraBase +
+                                                     sim::kWingExtraPerPlus * what.refinement);
+            if (what.wing & sim::kWingMaxLife) rolled("", "HP +" + extra + " increased");
+            if (what.wing & sim::kWingMaxMana) rolled("", "Mana +" + extra + " increased");
+            if (what.wing & sim::kWingIgnoreDefense) {
+                rolled("", "Ignore opponent's defensive power by 3%");
+            }
         }
         // And the excellent ones last, in their bit order, as SetItemAttributes adds them.
         for (int bit = 0; bit < sim::kExcellentOptions; ++bit) {

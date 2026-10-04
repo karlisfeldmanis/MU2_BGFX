@@ -152,10 +152,27 @@ constexpr int64_t kWingWearTicks = 10 * 20;
 constexpr double kWingWearSteps = 565.0;
 
 // ---- the 2nd level wings (docs/second-wings.md) ----------------------------------------------
-// Wings of Spirits, Soul and Dragon, 12/3-5: the Muse Elf's, the Soul Master's and the Blade
-// Knight's (OpenMU VersionSeasonSix Wings.cs, class level 2). The Magic Gladiator's Darkness
-// (12/6) is not in this game.
+// Wings of Spirits, Soul and Dragon: the Muse Elf's, the Soul Master's and the Blade Knight's
+// (OpenMU VersionSeasonSix Wings.cs, class level 2). MU's 12/3, 12/4 and 12/5, which this project
+// gave the knight's orbs (OrbDefense and its fellows, 12/3-6), so **ours** are 12/13, 12/14 and
+// 12/16, numbers 0.75 leaves empty (the user, 2026-10-04: 'Move the wings'). The Magic
+// Gladiator's Darkness (MU's 12/6) is not in this game.
+constexpr int kSpiritsNumber = 13, kSoulNumber = 14, kDragonNumber = 16;
 bool secondWing(const content::ItemRow& row);
+// Either level: what slot 7 takes and every rule below reads.
+bool anyWing(const content::ItemRow& row);
+// What a worn wing's additional option is (zzzitem.cpp:1150-1222): the 1st wings' by the wing,
+// the 2nd wings' by their PLUS_WING_OP1_TYPE bit (Held::wing's kWingOptionKind) -- Spirits
+// regeneration with it and damage without, Soul wizardry or regeneration, Dragon damage or
+// regeneration. Its value is 1% a level of regeneration, else 4 a level.
+enum class WingOption : uint8_t { Regeneration, Damage, Wizardry };
+WingOption wingOption(const content::ItemRow& row, uint8_t bits);
+int wingOptionValue(const content::ItemRow& row, const Held& held);
+// The extras' numbers: max life and mana 50 and 5 a plus (zzzitem.cpp:3039-3044), and the chance
+// a blow ignores the defence it meets -- the card's 3%; WebZen's `rand()%100 <= 3` is 4 (ours,
+// the card's number).
+constexpr int kWingExtraBase = 50, kWingExtraPerPlus = 5;
+constexpr double kWingIgnoreChance = 0.03;
 // Its extras, Held::wing, WebZen's PLUS_WING_* (zzzitem.cpp:1488-1505): max life and max mana
 // +50 and 5 a plus, a 3% chance a blow ignores the defence it meets (ObjBaseAttack.cpp:1322-
 // 1339), and which of its two options it carries (`PLUS_WING_OP1_TYPE`, zzzitem.cpp:1168-1222).

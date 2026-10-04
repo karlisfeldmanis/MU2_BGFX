@@ -296,7 +296,8 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     }
     // A 1st level wing: `40000000 + (40 + Level2) * Level2^2 * 11` (WebZen zzzitem.cpp:2485-2488),
     // its luck and option then as anything's.
-    if (firstWing(row)) {
+    // The 2nd wings on the same line (:2485-2488 takes 12/0-6 alike), from their drop level 150.
+    if (anyWing(row)) {
         const int64_t level = row.dropLevel + refinement * 3 + steeper(refinement);
         int64_t wing = 40000000LL + (40 + level) * level * level * 11;
         if (luck) wing += wing * 25 / 100;

@@ -1272,6 +1272,15 @@ def tiled_materials(document: dict, binary: Binary, slots: list[dict]) -> dict[s
                 material["emissiveTexture"] = dict(
                     material["pbrMetallicRoughness"]["baseColorTexture"])
 
+                # An item's glow, where its recipe says one for this sheet: drawn at its own
+                # BlendMeshLight rather than the world's glow_strength, as glow_material's are.
+                said = slot.get("glow") or {}
+                if said:
+                    material["extras"] = {
+                        "item": True,
+                        **{k: said[k] for k in ("pulse", "jitter", "shadow", "pulse_rate")
+                           if said.get(k)}}
+
                 # And how far past white it sits.
                 #
                 # emissiveFactor is capped at one by the specification, which is exactly the
@@ -1561,7 +1570,8 @@ def glow_material(document: dict, binary: "Binary", slot: str, said: dict,
     # in Lorencia, tuned for fires and lit windows) off it. With it on, the Serpent Shield's
     # two fangs came out as blown-out orange bars.
     material["extras"] = {"item": True,
-                          **{k: said[k] for k in ("pulse", "jitter", "shadow") if said.get(k)}}
+                          **{k: said[k] for k in ("pulse", "jitter", "shadow", "pulse_rate")
+                             if said.get(k)}}
     document["materials"].append(material)
     return len(document["materials"]) - 1
 

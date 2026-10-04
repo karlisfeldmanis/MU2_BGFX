@@ -105,6 +105,9 @@ struct Material {
     // A negative pulse[1] is not a sine: it is MU's per-frame roll, (rand()%10)*0.1 times
     // -pulse[1] -- the Gorgon's eye (Renderer::submitBatches).
     float pulse[2] = {0.0f, 1.0f};
+    // And at MU's WorldTime*0.001 rather than 0.004: the 2nd wings' slow breath (the cooked
+    // scroll mode's bit 3, docs/second-wings.md).
+    bool slowPulse = false;
     float jitter = 0.0f;
     // An item's glow rather than a lamp's: drawn at MU's BlendMeshLight alone, without the
     // world sheet's glow_strength, which is tuned for fires and windows (2.0 in Lorencia).

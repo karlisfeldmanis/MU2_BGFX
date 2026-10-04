@@ -56,6 +56,10 @@ struct Excellence {
     double reflect = 0.0;         // 3: 0.05 of what reaches him sent back
     double damageDecrease = 0.0;  // 4: 0.04 off what reaches him (ArmorDamageDecrease)
     double manaRate = 1.0;        // 5: x1.04 on max mana
+    // A 2nd wing's extras (sim::kWingMaxMana, kWingIgnoreDefense): raw max mana before the rate,
+    // and the chance a blow ignores the defence it meets.
+    int moreMana = 0;
+    double ignoreDefense = 0.0;
     double healthRate = 1.0;      // 6: x1.04 on max life
     // Not an option: the Rune of the Undying's x1.2 on max life, each one set in anything worn
     // (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
@@ -125,6 +129,9 @@ struct Fighter {
     // What a critical lays on the top of the band, in percent: the Pendant of Fury's and its
     // kind's (sim::Affix::Fury), ours. 0 is MU's critical, the maximum exactly. No draw.
     int criticalDamage = 0;
+    // The chance a blow lays the defence it meets at nought, a 2nd wing's extra
+    // (GetTargetDefense, ObjBaseAttack.cpp:1322-1339). Drawn only when above nought.
+    double ignoreDefense = 0.0;
     // Stats.DamageReceiveDecrement. 0.75 grants it from exactly one thing, the knight's
     // Defense skill at 0.50 for four seconds. 1 is "nothing is reducing this".
     double damageTaken = 1.0;

@@ -646,6 +646,11 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
             flags |= 16
         if flags & 16 and mode:
             flags |= 128
+        # Mode bit 3: a glow's pulse at MU's WorldTime*0.001, four times slower than an item's
+        # 0.004 -- the 2nd wings' `_R` shells (ZzzObject.cpp:9937-9944, docs/second-wings.md).
+        if flags & 2 and ((material.get("extras") or {}).get("pulse_rate") == "slow"):
+            mode |= 8
+            flags |= 128
         # Bit 5: an item's glow -- drawn at its own level, not the world's glow_strength --
         # and whether it pulses or jumps, as MU's ItemObjectAttribute makes it --
         # BlendMeshLight = sin(WorldTime*0.004)*a + b, and a per-frame BlendMeshTexCoord jump in

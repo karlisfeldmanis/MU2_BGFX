@@ -57,7 +57,9 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     }
 
     // 4. Minus the defence, which cannot help the attacker.
-    const int damage = blow.rolled - std::max(0, defender.defense);
+    // A 2nd wing's 3% lays it at nought (its own draw, only when there is a chance).
+    const bool ignored = attacker.ignoreDefense > 0.0 && dice.nextBool(attacker.ignoreDefense);
+    const int damage = blow.rolled - (ignored ? 0 : std::max(0, defender.defense));
     blow.afterDefense = damage;
     settle(blow, damage, attacker, defender);
     return blow;
@@ -77,7 +79,8 @@ Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Ran
         attacker.criticalChance > 0.0 && dice.nextBool(attacker.criticalChance);
     const bool excellent =
         attacker.excellentChance > 0.0 && dice.nextBool(attacker.excellentChance);
-    const int defense = std::max(0, defender.defense);
+    const bool ignored = attacker.ignoreDefense > 0.0 && dice.nextBool(attacker.ignoreDefense);
+    const int defense = ignored ? 0 : std::max(0, defender.defense);
     int damage = 0;
     // 3. The wizardry arm takes the defence off FIRST, then multiplies (:156-181).
     if (excellent) {
@@ -284,6 +287,7 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;
     out->damageDecrease = excel.damageDecrease;
+    out->ignoreDefense = excel.ignoreDefense;
     out->damageTaken = arms.pet.taken;
     out->damageDealt = arms.pet.dealt;
     out->greaterDamage = arms.greaterDamage;

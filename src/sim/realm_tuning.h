@@ -30,7 +30,8 @@ namespace mu::sim {
 inline void restoreMana(Body& hero) {
     const int was = hero.maxMana;
     // And the excellent armour's +4% a piece (Excellence::manaRate).
-    hero.maxMana = int(double(maximumMana(hero.kin, hero.level, hero.points)) * hero.excel.manaRate);
+    hero.maxMana = int(double(maximumMana(hero.kin, hero.level, hero.points) + hero.excel.moreMana) *
+                       hero.excel.manaRate);
     hero.mana = std::min(hero.maxMana, hero.mana + std::max(0, hero.maxMana - was));
     const int wasSd = hero.maxSd;
     hero.maxSd = maximumShield(hero.level, hero.points, hero.stats.defense);

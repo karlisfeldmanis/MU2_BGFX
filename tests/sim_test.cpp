@@ -5819,6 +5819,76 @@ void testChaosMachine() {
                 second.lift(23);
                 second.lift(5);
                 check(sim::judge(noria, second).recipe == sim::Recipe::None, "no feather, no wings");
+
+                // At the Goblin: a knight gets the Wings of Dragon at +0, and a failure takes
+                // the whole box. 13% a try, so tried until one is made.
+                const int32_t dragon = noria.itemAt(12, sim::kDragonNumber);
+                check(dragon >= 0, "the Wings of Dragon are in Noria's tables");
+                sim::Realm forge;
+                check(forge.raise(&noria, 7, 182, 105, sim::Kin::DarkKnight, 220), "a knight by him");
+                forge.ask(talk);
+                for (int tick = 0; tick < 400 && forge.mixing() < 0; ++tick) forge.step();
+                forge.earn(2000000000);
+                bool flew = false;
+                for (int attempt = 0; attempt < 60 && !flew && dragon >= 0; ++attempt) {
+                    check(forge.putIn(forge.give(satan)) >= 0 && forge.putIn(forge.give(feather)) >= 0 &&
+                              forge.putIn(forge.give(chaos)) >= 0,
+                          "a wing, a feather and a Chaos go in");
+                    check(forge.judged().recipe == sim::Recipe::SecondWings, "and are the 2nd wings' box");
+                    const int64_t before = forge.money();
+                    check(forge.mix(), "the Goblin runs it");
+                    checkEqual(int(before - forge.money()), 5000000, "for five million");
+                    int left = 0, at = -1;
+                    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                        if (!forge.machine()[cell].empty()) ++left, at = cell;
+                    }
+                    flew = forge.mixed();
+                    if (flew) {
+                        checkEqual(left, 1, "the new wing alone in the box");
+                        check(forge.machine()[at].item == dragon, "the Wings of Dragon");
+                        checkEqual(int(forge.machine()[at].refinement), 0, "at +0");
+                        checkEqual(int(forge.machine()[at].durability), 200, "whole");
+                        check((forge.machine()[at].wing & ~(sim::kWingMaxLife | sim::kWingMaxMana |
+                                                            sim::kWingIgnoreDefense |
+                                                            sim::kWingOptionKind)) == 0,
+                              "with no extra but WebZen's four bits");
+                    } else {
+                        checkEqual(left, 0, "a failure takes the whole box, the 1st wing too");
+                    }
+                }
+                check(flew, "sixty tries make one");
+
+                // The 2nd wings' rules (docs/second-wings.md step 3).
+                if (dragon >= 0) {
+                    const content::ItemRow& dr = noria.items[size_t(dragon)];
+                    checkNear(sim::wingPower(dr, 0).dealt, 1.32, 1e-9, "a 2nd wing x1.32 at +0");
+                    checkNear(sim::wingPower(dr, 5).dealt, 1.37, 1e-9, "one more a plus");
+                    checkNear(sim::wingPower(dr, 5).taken, 0.65, 1e-9, "x(75 - 2 a plus)%");
+                    checkEqual(sim::wingDefense(dr, 5), 55, "Dragon's 45 and 2 a plus");
+                    checkEqual(sim::asks(dr, 3, false).level, 230, "215 and 5 levels a plus");
+                    check(sim::wingOption(dr, 0) == sim::WingOption::Regeneration &&
+                              sim::wingOption(dr, sim::kWingOptionKind) == sim::WingOption::Damage,
+                          "Dragon's option is regeneration, or damage with its kind bit");
+                    const int32_t soul = noria.itemAt(12, sim::kSoulNumber);
+                    check(soul >= 0 && sim::wingPower(noria.items[size_t(soul)], 0).lifeCost == 1,
+                          "the wizard's Soul costs 1 Life a blow");
+                    sim::Held extra{dragon, 2, 200};
+                    extra.option = 2;
+                    extra.wing = sim::kWingMaxLife | sim::kWingOptionKind;
+                    checkEqual(sim::wingOptionValue(dr, extra), 8, "its damage option +8 at its second");
+                    // Worn, off the safe zone: x1.34, +60 life, and Dragon's 16.
+                    sim::Realm blade;
+                    check(blade.raise(&noria, 7, column, row, sim::Kin::DarkKnight, 230),
+                          "a level 230 knight off the safe zone");
+                    const int baseLife = blade.hero().maxHealth;
+                    check(blade.moveItem(blade.give(dragon, -1, 2, -1, false, 2), sim::kWings),
+                          "he wears the Wings of Dragon");
+                    blade.step();
+                    checkNear(blade.hero().stats.damageDealt, 1.34, 1e-9, "his blows x1.34 at +2");
+                    checkEqual(sim::strideFactor(blade.hero()), sim::kFastFlyFactor,
+                               "Dragon flies at 16");
+                    check(blade.hero().maxHealth == baseLife, "no extra, no life");
+                }
             }
         }
     }

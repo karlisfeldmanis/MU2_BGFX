@@ -237,7 +237,9 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 h ^= h >> 13;
                 glowLevel *= float(h % 10u) * 0.1f * -material.pulse[1];
             } else if (glowPass) {
-                glowLevel *= std::sin(elapsed_ * 4.0f) * material.pulse[0] + material.pulse[1];
+                glowLevel *= std::sin(elapsed_ * (material.slowPulse ? 1.0f : 4.0f)) *
+                                 material.pulse[0] +
+                             material.pulse[1];
                 if (material.jitter > 0.0f) {
                     uint32_t h = uint32_t(elapsed_ * 25.0f) * 2654435761u ^
                                  uint32_t(reinterpret_cast<uintptr_t>(&material));
@@ -1014,7 +1016,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // they are meshes that ride the frame's instance buffer, which lives in this
             // block; the view's target and transform are set below with the sprites'.
             if (total > 0 && bgfx::isValid(glowProgram_) && bgfx::isValid(skinnedGlowProgram_)) {
-                const uint64_t glowState = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LESS |
+                // LEQUAL, as MU's GL draws its BlendMesh: a glow shell modelled on its own base
+                // -- the 2nd wings' `_R` meshes, the same vertices again -- lies at exactly the
+                // depth the base wrote and failed LESS on every pixel (docs/second-wings.md).
+                const uint64_t glowState = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LEQUAL |
                                            BGFX_STATE_BLEND_ADD;
                 submitBatches(ViewTransparent, glowProgram_, skinnedGlowProgram_, batches_, idb,
                               glowState, false, true);

@@ -1,0 +1,187 @@
+{
+  "item": "Wing04",
+  "mu_name": "Wings of Spirits",
+  "mu_name_from": "MODEL_WINGS_OF_SPIRITS = MODEL_WING + 3, Data/Item/Wing04.bmd (ZzzOpenData.cpp:1023, `Wing`, 4 + i); OpenMU's Wings of Spirits, 12/3.",
+  "why_this_one": "The Muse Elf's 2nd level wing, the Chaos Machine's answer to a 1st wing, a Loch's Feather and a Chaos (docs/second-wings.md, 2026-10-04).",
+  "profile": "monster",
+  "profile_note": "A model on its own rig worn on the character, as the 1st wings: the monster profile.",
+  "play_speed": 0.25,
+  "tiled": true,
+  "worn_note": "Worn on slot 7 as the 1st wings are: linked to player bone 47 at (0, 0, 15), its own 8-key flap at PlaySpeed 0.25, 1 while he flies (ZzzCharacter.cpp:15400-15430). docs/second-wings.md.",
+  "rig_from": "Twenty bones and one action of eight keys, the flap.",
+  "sheets": {
+    "newingel": "newingel.png"
+  },
+  "sheet_from": "Data/Item/NewingEl.OZJ, 128x128, no alpha: a green and teal veined membrane on black, 102 triangles.",
+  "additive": [
+    "newingel"
+  ],
+  "additive_from": "ItemObjectAttribute's MODEL_WINGS_OF_SPIRITS: BlendMesh 0 (ZzzObject.cpp:5324-5327), its one mesh added, the black adding nothing -- as the Wings of Elf.",
+  "tiled_why": "An added sheet needs its own material (Helper01, Wing01).",
+  "sheet_materials": {
+    "newingel": "feather"
+  },
+  "sheet_materials_from": "A membrane drawn as light; added, so the material only names it.",
+  "stats": {
+    "note": "The item's own row, OpenMU's Season 6 initialiser (0.95d has no 2nd wings).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Wings.cs",
+    "call": "this.CreateWing(3, 5, 3, \"Wings of Spirits\", 150, 30, 200, 215, 0, 0, 2, ...)",
+    "group": 12,
+    "number": 13,
+    "drop_level": 150,
+    "drops_from_monsters": false,
+    "slot": 7,
+    "width": 5,
+    "height": 3,
+    "defense": 30,
+    "durability": 200,
+    "requires": {
+      "level": 215,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "Its class's second (Muse Elf, Soul Master, Blade Knight): OpenMU's class level 2.",
+    "power_note": "His blows x(132 + plus)%, what reaches him x(75 - 2 a plus)%, defence + 2 a plus, level + 5 a plus; the option's kind by its PLUS_WING_OP1_TYPE bit; the extras in Held::wing. docs/second-wings.md.",
+    "number_note": "MU's 12/3; ours 12/13, since this project gave 12/3-6 to the knight's orbs (the user, 2026-10-04: 'Move the wings'). docs/second-wings.md."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 17,
+      "area": 1212.8,
+      "along": [
+        -22.2,
+        -19.5
+      ],
+      "mu_uv": [
+        -0.03,
+        0.109,
+        1.018,
+        0.943
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.427,
+        0.341
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 17,
+      "area": 9381.2,
+      "along": [
+        -16.2,
+        -16.2
+      ],
+      "mu_uv": [
+        -0.03,
+        0.109,
+        1.018,
+        0.943
+      ],
+      "bake_uv": [
+        0.005,
+        0.33,
+        0.427,
+        0.666
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 17,
+      "area": 4443.8,
+      "along": [
+        -16.2,
+        -16.2
+      ],
+      "mu_uv": [
+        -0.03,
+        0.109,
+        1.018,
+        0.943
+      ],
+      "bake_uv": [
+        0.394,
+        0.307,
+        0.816,
+        0.643
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 17,
+      "area": 4443.7,
+      "along": [
+        -16.2,
+        -16.2
+      ],
+      "mu_uv": [
+        -0.03,
+        0.109,
+        1.018,
+        0.943
+      ],
+      "bake_uv": [
+        0.452,
+        0.005,
+        0.874,
+        0.341
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 17,
+      "area": 9381.2,
+      "along": [
+        -16.2,
+        -16.2
+      ],
+      "mu_uv": [
+        -0.03,
+        0.109,
+        1.018,
+        0.943
+      ],
+      "bake_uv": [
+        0.393,
+        0.635,
+        0.815,
+        0.97
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 17,
+      "area": 1212.8,
+      "along": [
+        -22.2,
+        -19.5
+      ],
+      "mu_uv": [
+        -0.03,
+        0.109,
+        1.018,
+        0.943
+      ],
+      "bake_uv": [
+        0.005,
+        0.66,
+        0.427,
+        0.995
+      ]
+    }
+  ]
+}

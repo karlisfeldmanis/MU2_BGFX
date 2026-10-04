@@ -593,6 +593,9 @@ for pair in sys.argv[4:]:
         # saying so.
         **({"cutout_at": float(cutout_at[group])} if group in cutout_at else {}),
         "additive": group in additive,
+        # And an added sheet's item glow, its pulse as the baked path's glow_material reads it
+        # (the 2nd wings' `_R` shells, docs/second-wings.md).
+        **({"glow": asset["glow"][group]} if group in (asset.get("glow") or {}) else {}),
         "skip": group in set(asset.get("skip_sheets", [])),
         # How much of a metal sheet's painting survives its f0, where the sheet wants other
         # than its material says. See tiled_maps.calibrated.

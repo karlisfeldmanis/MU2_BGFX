@@ -560,11 +560,11 @@ int firstWingOf(Kin kin) {
 
 int secondWingOf(Kin kin) {
     switch (kin) {
-        case Kin::DarkWizard: return 4;
-        case Kin::FairyElf: return 3;
-        case Kin::DarkKnight: return 5;
+        case Kin::DarkWizard: return kSoulNumber;
+        case Kin::FairyElf: return kSpiritsNumber;
+        case Kin::DarkKnight: return kDragonNumber;
     }
-    return 5;
+    return kDragonNumber;
 }
 
 const char* secondWingName(Kin kin) {
