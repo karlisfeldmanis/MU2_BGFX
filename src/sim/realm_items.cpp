@@ -1732,7 +1732,14 @@ Cracked Realm::crack(int slot) {
     Body& hero = bodies_[0];
     // A dead man throws nothing, as `discard`.
     if (!hero.alive()) return cracked;
-    bag_.lift(slot);
+    // One off the top of a stack (kFirecrackerStackMost); the last takes the cell with it.
+    Held rest = bag_[slot];
+    if (rest.durability > 1) {
+        rest.durability = int16_t(rest.durability - 1);
+        bag_.put(slot, rest);
+    } else {
+        bag_.lift(slot);
+    }
     cracked.opened = true;
     cracked.column = hero.column();
     cracked.row = hero.row();

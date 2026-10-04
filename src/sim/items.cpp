@@ -643,12 +643,18 @@ bool portal(const content::ItemRow& row) {
 
 // And the Antidote, the user's (2026-09-30: "antidotes are not stacking"): the Dungeon's poisons
 // stack now, and a player carries a few.
-bool stacks(const content::ItemRow& row) { return heals(row) || restores(row) || antidote(row); }
+int stackMost(const content::ItemRow& row) {
+    if (heals(row) || restores(row) || antidote(row)) return kStackMost;
+    if (firecracker(row)) return kFirecrackerStackMost;
+    return 0;
+}
+
+bool stacks(const content::ItemRow& row) { return stackMost(row) > 0; }
 
 bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
     if (onto.empty() || onto.item != what.item || onto.refinement != what.refinement) return false;
     if (size_t(onto.item) >= tables.items.size()) return false;
-    return stacks(tables.items[size_t(onto.item)]) && onto.durability < kStackMost;
+    return onto.durability < stackMost(tables.items[size_t(onto.item)]);
 }
 
 // ---- the satchel ------------------------------------------------------------------------------

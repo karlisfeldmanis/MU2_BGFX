@@ -933,8 +933,9 @@ const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),     
                                   tersiaBalrog(), sevinaTrial(), brokenSword(),  soulOfWizard(),
                                   tearOfElf()};
 
-// **Every quest pays a Firecracker** besides its own reward, every completion, to every class
-// (the user, 2026-10-04: 'give fireccracker on all quests'). Ours. Added here once rather than in
+// **Every quest pays three Firecrackers** besides its own reward, every completion, to every
+// class (the user, 2026-10-04: 'give fireccracker on all quests', then 'give 3 firecrackers in
+// quest rewards not 1'), one stack of them. Ours. Added here once rather than in
 // each quest, so a quest written later pays it too; the dialog lists it with the rest. Not
 // Sevina's class change -- her trial and the three treasures (the user, 2026-10-04: 'dont give
 // Firecracker to class chancge quests').
@@ -946,7 +947,7 @@ QuestTable withFirecrackers() {
     for (int i = 0; i < kQuests; ++i) {
         QuestRow& row = table.rows[i] = kRawTable[i];
         if (i == kSevinaTrial || row.promotes) continue;
-        if (row.paidCount < kQuestPaid) row.paid[row.paidCount++] = {.item = "MagicBox03"};
+        if (row.paidCount < kQuestPaid) row.paid[row.paidCount++] = {.item = "MagicBox03", .count = 3};
     }
     return table;
 }

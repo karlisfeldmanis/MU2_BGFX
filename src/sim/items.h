@@ -309,7 +309,13 @@ bool portal(const content::ItemRow& row);
 // counted in `Held::durability`, up to twenty a cell. INVENTION: 0.75 caps nothing and merges
 // nothing -- a bought three is its own cell for good and a dropped potion takes a fresh one.
 constexpr int kStackMost = 20;
-// Whether a row's pieces stack: the drinkable potions.
+// Firecrackers stack too, five a cell (the user, 2026-10-04: 'allow them to stack them, max 5').
+// Ours, as the potions' twenty.
+constexpr int kFirecrackerStackMost = 5;
+// How many of a row's pieces one cell holds: kStackMost for the drinkable potions,
+// kFirecrackerStackMost for a Firecracker, 0 for a row that does not stack.
+int stackMost(const content::ItemRow& row);
+// Whether a row's pieces stack.
 bool stacks(const content::ItemRow& row);
 // Whether `what` may pour into `onto`: the same stacking row at the same plus, and room left.
 bool tops(const content::Tables& tables, const Held& onto, const Held& what);
@@ -407,7 +413,8 @@ template <class Grid>
 int topUp(const content::Tables& tables, Grid& grid, int at, const Held& what) {
     if (!tops(tables, grid[at], what)) return 0;
     Held onto = grid[at];
-    const int went = std::min<int>(what.durability, kStackMost - onto.durability);
+    const int most = stackMost(tables.items[size_t(onto.item)]);
+    const int went = std::min<int>(what.durability, most - onto.durability);
     onto.durability = int16_t(onto.durability + went);
     grid.put(at, onto);
     return went;
@@ -438,7 +445,7 @@ int pour(const content::Tables& tables, Grid& grid, int first, int last, Held wh
         const int at = after.free(tables, row.width, row.height);
         if (at < 0) return -1;
         Held stack = what;
-        stack.durability = int16_t(std::min<int>(what.durability, kStackMost));
+        stack.durability = int16_t(std::min<int>(what.durability, stackMost(row)));
         after.put(at, stack);
         what.durability = int16_t(what.durability - stack.durability);
         if (landed < 0) landed = at;

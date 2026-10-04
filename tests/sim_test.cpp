@@ -8352,7 +8352,8 @@ void testFirecracker(const content::Tables& tables) {
                "never from a monster under 17");
 }
 
-// Every quest pays a Firecracker besides its own reward (the user, 2026-10-04).
+// Every quest pays three Firecrackers besides its own reward (the user, 2026-10-04), and they
+// stack five a cell.
 void testQuestFirecrackers(const content::Tables& tables) {
     std::printf("quest firecrackers\n");
     const int32_t cracker = tables.itemNamed("MagicBox03");
@@ -8367,7 +8368,7 @@ void testQuestFirecrackers(const content::Tables& tables) {
         for (int k = 0; k < row.paidCount; ++k) {
             const sim::QuestItem& one = row.paid[k];
             if (one.item && std::string(one.item) == "MagicBox03" && one.kin < 0 && !one.firstOnly &&
-                one.count == 1) {
+                one.count == 3) {
                 ++(change ? paying : others);
                 break;
             }
@@ -8375,8 +8376,25 @@ void testQuestFirecrackers(const content::Tables& tables) {
     }
     checkEqual(changing, 4, "Sevina's trial and three treasures are the class change");
     checkEqual(others, sim::kQuests - changing,
-               "every other quest pays one, every completion, to every class");
+               "every other quest pays three, every completion, to every class");
     checkEqual(paying, 0, "and the class change pays none");
+
+    sim::Realm realm;
+    realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, 50);
+    const int first = realm.give(cracker, -1, 0, 7);
+    checkEqual(int(realm.satchel()[first].durability), sim::kFirecrackerStackMost,
+               "seven Firecrackers stack five in a cell");
+    int cells = 0, pieces = 0;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        if (realm.satchel()[slot].item != cracker) continue;
+        ++cells;
+        pieces += realm.satchel()[slot].durability;
+    }
+    checkEqual(cells, 2, "and the other two in a second");
+    checkEqual(pieces, 7, "none lost");
+    check(realm.crack(first).opened, "one of the stack is thrown");
+    checkEqual(int(realm.satchel()[first].durability), sim::kFirecrackerStackMost - 1,
+               "and the stack keeps the rest");
 }
 
 // Where the second class's gear falls (docs/second-class-gear.md): Blood Castle 6 and Tarkan by
