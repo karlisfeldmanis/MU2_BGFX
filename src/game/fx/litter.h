@@ -46,7 +46,7 @@ public:
     // treasures (sim::classTreasure) stand under a violet column of light -- MU's chasellight, the
     // lobby's streak, three body heights tall and turned to face the camera -- breathing, with a
     // brighter core, and light the ground round them violet, ahead of any jewel's glow.
-    // And a legendary drop the same, in legendary orange (the user, 2026-10-04: 'we need also
+    // And a legendary drop the same, in legendary green (the user, 2026-10-04: 'we need also
     // that light for legendary drops'); Loch's Feather in the quest violet; an excellent drop in
     // the epic purple ('excelnt drops needs also light').
     void gatherBeams(gfx::Effects& effects, const float eye[3]) const;
@@ -56,7 +56,7 @@ public:
     // Rune of Creation that has touched the ground lights a little of it in its own colour: the
     // nearest to `near` take what is left of the renderer's moving lights, after the skills.
     // A rune glows as a jewel does, in its rarity's colour (Rare blue, Epic purple, Legendary
-    // orange); a flare and two stars over it were taken off the same day ('overkill').
+    // green since 2026-10-04); a flare and two stars over it were taken off the same day ('overkill').
     uint32_t lights(gfx::PointLight* out, uint32_t max, const float near[3]) const;
 
     // Follows the realm's list and moves what is still in the air. Called once a frame, with

@@ -352,10 +352,12 @@ uint32_t colourOf(Tone tone) {
         case Tone::RedPurple: return gfx::rgba(0.8f, 0.5f, 0.8f);
         case Tone::Orange: return gfx::rgba(0.9f, 0.42f, 0.04f);
         // WoW's item quality colours, its own hex values.
-        case Tone::Uncommon: return gfx::rgba(0x1e / 255.0f, 1.0f, 0.0f);
+        // The user's ladder of 2026-10-04: 'use green for legendary and replace weaker green with
+        // white' -- the weakest rung white, and WoW's uncommon green taken up to legendary.
+        case Tone::Uncommon: return gfx::rgba(1.0f, 1.0f, 1.0f);
         case Tone::Rare: return gfx::rgba(0.0f, 0x70 / 255.0f, 0xdd / 255.0f);
         case Tone::Epic: return gfx::rgba(0xa3 / 255.0f, 0x35 / 255.0f, 0xee / 255.0f);
-        case Tone::Legendary: return gfx::rgba(1.0f, 0x80 / 255.0f, 0.0f);
+        case Tone::Legendary: return gfx::rgba(0x1e / 255.0f, 1.0f, 0.0f);
         // Not WoW's artifact #e6cc80, which beside white on the ground label read as white: its
         // UI gold, #ffd100, which is also MU's +7 yellow near enough.
         case Tone::Artifact: return gfx::rgba(1.0f, 0xd1 / 255.0f, 0.0f);

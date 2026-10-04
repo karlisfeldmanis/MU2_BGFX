@@ -103,7 +103,7 @@ constexpr float kJewelReach = 1.4f, kJewelLevel = 0.14f;
 // A quest item's: wider and several times brighter, a violet the beam shares.
 constexpr float kQuestReach = 3.0f, kQuestLevel = 0.7f;
 constexpr float kQuestViolet[3] = {0.72f, 0.38f, 1.0f};  // the user's purple
-constexpr float kLegendaryOrange[3] = {1.0f, 0.5f, 0.08f};  // WoW's legendary, as the name
+constexpr float kLegendaryGreen[3] = {0.12f, 1.0f, 0.08f};  // legendary's green since 2026-10-04
 constexpr float kEpicPurple[3] = {0.64f, 0.21f, 0.93f};      // WoW's epic, an excellent's name
 // Its beam: metres tall and wide, and the core's share of the width.
 constexpr float kBeamTall = 5.5f, kBeamWide = 1.6f, kCoreShare = 0.45f;
@@ -131,12 +131,12 @@ bool legendary(const content::ItemRow& row, const sim::Held& what) {
     return sim::powered(row) && sim::affixCount(row, what) >= 4;
 }
 
-// A rune's rarity in the colours its name is drawn in: Rare blue, Epic purple, Legendary orange.
+// A rune's rarity in the colours its name is drawn in: Rare blue, Epic purple, Legendary green.
 void runeColour(const sim::Held& what, float out[3]) {
     const sim::PowerRow* power = sim::powerOf(what.powers[0]);
     const sim::Rarity rarity = power ? power->rarity : sim::Rarity::Legendary;
     const float rare[3] = {0.3f, 0.55f, 1.0f}, epic[3] = {0.7f, 0.35f, 1.0f},
-                legendary[3] = {1.0f, 0.55f, 0.15f};
+                legendary[3] = {0.12f, 1.0f, 0.08f};
     const float* c = rarity == sim::Rarity::Rare ? rare : rarity == sim::Rarity::Epic ? epic : legendary;
     for (int k = 0; k < 3; ++k) out[k] = c[k];
 }
@@ -154,10 +154,10 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
         drop.glow = 3;
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = kQuestViolet[k];
     } else if (legendary(row, one.what)) {
-        // A legendary drop stands in the same column, in its own orange (the user, 2026-10-04:
+        // A legendary drop stands in the same column, in its own green (the user, 2026-10-04:
         // 'we need also that light for legendary drops'): the colour its name is drawn in.
         drop.glow = 3;
-        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kLegendaryOrange[k];
+        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kLegendaryGreen[k];
     } else if (one.what.excellent != 0) {
         // And an excellent one, in the epic purple its name is drawn in (the user, 2026-10-04:
         // 'excelnt drops needs also light').
