@@ -132,6 +132,10 @@ private:
     // Indices into `sprites_`, sorted by distance from the eye. Sorting the indices and not
     // the sprites moves 4 bytes instead of 64.
     std::vector<uint32_t> order_;
+    // The radix sort's keys (each sprite's distance, worked out once) and its scratch.
+    std::vector<uint32_t> orderSpare_;
+    std::vector<uint32_t> keys_;
+    std::vector<uint32_t> keysSpare_;
     // Reserved to capacity at init and reused. `bgfx::allocTransientVertexBuffer` owns the
     // per-frame vertex memory, which is bgfx's own ring and not an allocation of ours.
     uint32_t drawCount_ = 0;

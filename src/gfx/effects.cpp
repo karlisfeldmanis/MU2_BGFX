@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
+
+#include <bx/sort.h>
 
 #include "core/log.h"
 #include "gfx/program.h"
@@ -56,6 +59,9 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
     // and a frame only ever writes into what is already reserved.
     sprites_.reserve(capacity);
     order_.reserve(capacity);
+    orderSpare_.reserve(capacity);
+    keys_.reserve(capacity);
+    keysSpare_.reserve(capacity);
     core::logf("effects: transparent pass ready, %u sprites reserved", capacity);
     return true;
 }
@@ -75,6 +81,10 @@ void Effects::shutdown() {
     sprites_.shrink_to_fit();
     order_.clear();
     order_.shrink_to_fit();
+    for (auto* v : {&orderSpare_, &keys_, &keysSpare_}) {
+        v->clear();
+        v->shrink_to_fit();
+    }
 }
 
 void Effects::begin() {
@@ -115,22 +125,32 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
 
     // Back to front, because a blended pass has no depth write and the order IS the result.
     // The indices are sorted and not the sprites: 4 bytes moved instead of 64.
-    order_.resize(sprites_.size());
-    for (uint32_t i = 0; i < sprites_.size(); ++i) order_[i] = i;
-    const auto distanceSq = [&](uint32_t i) {
+    //
+    // Farthest first. Ties broken by index so the order is stable frame to frame: two sprites
+    // at the same distance swapping places every frame is a visible flicker in exactly the
+    // case this pass is for, a cloud of particles thrown from one point.
+    //
+    // **A radix sort on each distance, worked out once** (2026-10-04): std::sort worked both
+    // distances out again in every comparison and was nine tenths of this pass's CPU in a
+    // Meteorite shower. A non-negative float's bits order as its value does, so the inverted
+    // bits put the farthest first, and the radix sort is stable, so equal distances keep the
+    // index order -- the same order as before, checked against std::sort on 200 random sets.
+    const uint32_t count = uint32_t(sprites_.size());
+    order_.resize(count);
+    orderSpare_.resize(count);
+    keys_.resize(count);
+    keysSpare_.resize(count);
+    for (uint32_t i = 0; i < count; ++i) {
         const float dx = sprites_[i].position[0] - eye[0];
         const float dy = sprites_[i].position[1] - eye[1];
         const float dz = sprites_[i].position[2] - eye[2];
-        return dx * dx + dy * dy + dz * dz;
-    };
-    std::sort(order_.begin(), order_.end(), [&](uint32_t a, uint32_t b) {
-        const float da = distanceSq(a), db = distanceSq(b);
-        // Farthest first. Ties broken by index so the order is stable frame to frame: two
-        // sprites at the same distance swapping places every frame is a visible flicker in
-        // exactly the case this pass is for, a cloud of particles thrown from one point.
-        if (da != db) return da > db;
-        return a < b;
-    });
+        const float away = dx * dx + dy * dy + dz * dz;
+        uint32_t bits;
+        std::memcpy(&bits, &away, sizeof(bits));
+        keys_[i] = ~bits;
+        order_[i] = i;
+    }
+    bx::radixSort(keys_.data(), keysSpare_.data(), order_.data(), orderSpare_.data(), count);
 
     const uint32_t quads = uint32_t(sprites_.size());
     const uint32_t vertexCount = quads * 4;
