@@ -28,6 +28,8 @@ constexpr float kWeaponEndUnits = 5.0f;
 // RenderObjectScreen's `WorldTime * 0.45`, 0.45 degrees a millisecond.
 constexpr float kRestYaw = 8.0f * bx::kPi / 180.0f;
 constexpr float kSpinPerSecond = 0.45f * 1000.0f * bx::kPi / 180.0f;
+// The Invisibility Cloak's lean back, MU's 290 less its face-on 270.
+constexpr float kCloakLean = 20.0f * bx::kPi / 180.0f;
 
 // Row-vector matrices, as bgfx's own: a point is v * M, and mtxMul(out, a, b) applies a first.
 void translation(float* m, float x, float y, float z) { bx::mtxTranslate(m, x, y, z); }
@@ -117,7 +119,12 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         // wider than it is tall -- the Soul 0.224 across and 0.219 high -- so the longest-axis
         // rule below laid the Soul on its side and stood the Bless on its point, on a margin
         // that is not a fact about the item. MU2's `upright`, docs/refining.md there.
-        if (!row.armour() && !row.jewel()) {
+        // And so is the Invisibility Cloak, hung as it was modelled: it is all but a cube, 0.94
+        // across, 0.89 high and 0.88 deep, so the rule laid it on its side by a hair. MU stands
+        // it face-on and leans it back 20 degrees, `Vector(290, 0, 0)` against the 270 that is
+        // face-on (ZzzInventory.cpp:8230-8233).
+        const bool cloak = sim::invisibilityCloak(row);
+        if (!row.armour() && !row.jewel() && !cloak) {
             int order[3] = {0, 1, 2};
             std::sort(order, order + 3, [&](int a, int c) { return size[a] > size[c]; });
             // A wing lies with its span across and stands its height up, as its 5 by 2 cell is
@@ -164,6 +171,8 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
             extent[0] = size[order[1]];
             extent[2] = size[order[2]];
         }
+        // Its top back from the viewer is a negative turn here; the positive showed its inside.
+        if (cloak) bx::mtxRotateX(basis, -kCloakLean);
         // **Fitted for the turn it is going to make, not for the pose it is in.** The picture
         // under the pointer spins (`RenderObjectScreen`, and `Standing::spinning`), and a yaw
         // takes the model's DEPTH across the screen: the widest a body of half-extents a by c
