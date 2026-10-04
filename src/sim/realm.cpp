@@ -87,6 +87,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     bossDice_.seed(seed ^ 0x165667b19e3779f9ull);
     mixDice_.seed(seed ^ 0x85ebca6b2c1b3c6dull);
     crackerDice_.seed(seed ^ 0xd6e8feb86659fd93ull);
+    featherDice_.seed(seed ^ 0x8c3b1e4f5a7d2961ull);
     ticketDice_.seed(seed ^ 0x9fb21c651e98df25ull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
     for (int slot = 0; slot < kWorn; ++slot) {

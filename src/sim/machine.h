@@ -94,7 +94,20 @@ enum class Recipe : int8_t {
     Dinorant = 5,
     Cloak = 8,
     Wings = 11,
+    SecondWings = 7,
 };
+
+// **2nd Level Wings** (WebZen 1.00.93 MixSystem.cpp WingChaosMix:2470-2990, OpenMU's number 7;
+// docs/second-wings.md): one 1st level wing, one Jewel of Chaos and one Loch's Feather, and any
+// excellent things at +4 or more, nothing else. The rate is the wing's price over 4,000,000 and
+// the excellent things' over 40,000 (:2715-2716), at most 100 (:2736); 5,000,000 Zen (:2690).
+// Success is the hero's class's 2nd wing at +0 (ours, as the 1st wings': WebZen's
+// `3 + rand()%4` is any of four), luck one in five, the option at 4/10/20% for its third,
+// second and first level, one of three extras one in five and its option's kind one in two
+// (:2817-2880). Failure empties the box, the 1st wing with it (:2909-2915; the user kept it).
+constexpr int64_t kSecondWingsZen = 5000000;
+int secondWingOf(Kin kin);
+const char* secondWingName(Kin kin);
 
 // The 1st level wing a class wears: group 12, Wings of Heaven (1) for the wizard, of Elf (0)
 // for the elf, of Satan (2) for the knight (OpenMU Version075 Items/Wings.cs).

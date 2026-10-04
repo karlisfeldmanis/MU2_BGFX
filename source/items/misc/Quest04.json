@@ -1,0 +1,79 @@
+{
+  "item": "Quest04",
+  "mu_name": "Loch's Feather",
+  "mu_name_from": "MODEL_LOCHS_FEATHER = MODEL_HELPER + 14 (_enum.h:2025), loaded from Data\\Item\\Quest04.bmd (ZzzOpenData.cpp:1012); ITEM_LOCHS_FEATHER, group 13 number 14. Named as OpenMU's VersionSeasonSix/Items/Wings.cs CreateFeather.",
+  "why_this_one": "The 2nd level wings' ingredient: a 1st level wing, a Jewel of Chaos and one Loch's Feather in the Chaos Machine (WebZen 1.00.93 MixSystem.cpp WingChaosMix:2470-2990), docs/second-wings.md. In MU it falls in Icarus alone (gObjMonster.cpp:4620, m_bFeatherOnlyIcarus); this game has no Icarus, so it is a rare drop in Atlans and the Lost Tower (the user, 2026-10-04).",
+  "profile": "weapon",
+  "profile_note": "As the Ale and the Blood Bone: a small object in the bag and on the ground.",
+  "tells": "Used to upgrade wings",
+  "tells_from": "GT 748, 'Used to upgrade wings' (docs/mu-tooltip-lines.md 2.9; ZzzInventory.cpp:4384); its name yellow, as the quest drops' (ZzzInventory.cpp:1351, docs/mu-tooltip-lines.md table row 1).",
+  "stats": {
+    "note": "OpenMU's row; not in the ordinary drop -- it falls on its own roll (sim::kFeatherOdds, docs/second-wings.md).",
+    "from": "OpenMU VersionSeasonSix/Items/Wings.cs CreateFeather: Number 14, Group 13, DropLevel 78, 1x2, Durability 1, MaximumItemLevel 1.",
+    "group": 13,
+    "number": 14,
+    "drop_level": 78,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 2,
+    "durability": 1
+  },
+  "sheets": {
+    "rok": "rok.png"
+  },
+  "sheet_from": "Data/Item/rok.OZT (16x32 with alpha): a blue feather, 56% of the square cut away, on 12 triangles. Decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "rok": "feather"
+  },
+  "sheet_materials_from": "A feather.",
+  "cutout": [
+    "rok"
+  ],
+  "cutout_from": "rok.OZT's alpha is the feather's outline.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 6,
+      "area": 860.0,
+      "along": [
+        -0.0,
+        0.0
+      ],
+      "mu_uv": [
+        0.179,
+        0.001,
+        0.835,
+        0.985
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.658,
+        0.986
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 6,
+      "area": 56.4,
+      "along": [
+        -0.1,
+        1.1
+      ],
+      "mu_uv": [
+        0.357,
+        0.001,
+        0.618,
+        0.997
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.924,
+        0.997
+      ]
+    }
+  ]
+}

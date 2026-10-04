@@ -58,6 +58,7 @@ struct Saved {
         int powers[3] = {0, 0, 0};
         // A powered ring's or pendant's further powers (sim::Affix); absent before them.
         int affixes[3] = {0, 0, 0};
+        int wing = 0;  // a 2nd level wing's extras (sim::Held::wing)
         // Whether the file recorded wear. A file written before gear had durability says 0 for
         // every sword, and that 0 is not "broken" -- it is "never counted", read back as full.
         bool worn = false;

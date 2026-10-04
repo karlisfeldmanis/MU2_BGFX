@@ -142,6 +142,12 @@ bool Realm::mix(Service service, int socket) {
         }
         answers[choices++] = wing;
     }
+    const int32_t secondWingItem =
+        j.recipe == Recipe::SecondWings ? tables_->itemAt(12, secondWingOf(hero.kin)) : -1;
+    if (j.recipe == Recipe::SecondWings && secondWingItem < 0) {
+        refusal_ = std::string("no ") + secondWingName(hero.kin) + " is in this world's tables";
+        return false;
+    }
     if (j.recipe == Recipe::Cloak && tables_->itemAt(kGroupPets, 18) < 0) {
         refusal_ = "no Invisibility Cloak is in this world's tables";
         return false;
@@ -197,6 +203,25 @@ bool Realm::mix(Service service, int socket) {
                         dinorant.durability = int16_t(maximumDurability(row, dinorant));
                         machine_.put(0, dinorant);
                     }
+                }
+            } else if (j.recipe == Recipe::SecondWings) {
+                // WingChaosMix: the box goes either way; a success is the wing at +0 with
+                // WebZen's own rolls (MixSystem.cpp:2817-2880).
+                machine_.clear();
+                if (made) {
+                    const content::ItemRow& row = tables_->items[size_t(secondWingItem)];
+                    Held wing{secondWingItem, 0, 0};
+                    wing.durability = int16_t(maximumDurability(row, wing));
+                    wing.luck = mixDice_.nextInt(0, 5) == 0;
+                    const int roll = mixDice_.nextInt(0, 100);
+                    switch (mixDice_.nextInt(0, 3)) {
+                        case 0: if (roll < 4) wing.option = 3; break;
+                        case 1: if (roll < 10) wing.option = 2; break;
+                        default: if (roll < 20) wing.option = 1; break;
+                    }
+                    if (mixDice_.nextInt(0, 5) == 0) wing.wing = uint8_t(1u << mixDice_.nextInt(0, 3));
+                    if (mixDice_.nextInt(0, 2) != 0) wing.wing |= kWingOptionKind;
+                    machine_.put(0, wing);
                 }
             } else if (j.recipe == Recipe::Cloak) {
                 // The box goes either way (BloodCastle.cpp:1409-1435); a success is a whole

@@ -985,6 +985,21 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    // Loch's Feather in Atlans and the Lost Tower, the same way (sim::kFeatherOdds).
+    if (level >= kFeatherFromLevel && featherMap(tables_->map) &&
+        featherDice_.nextInt(0, kFeatherOdds) == 0) {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (!lochsFeather(tables_->items[i])) continue;
+            Lying feather;
+            feather.what = Held{int32_t(i), 0, 1};
+            std::tie(feather.column, feather.row) = clearing(dead.column(), dead.row());
+            feather.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            feather.id = nextId_++;
+            lying_.push_back(feather);
+            say(What::Dropped, dead, int32_t(feather.id), int32_t(i), 0);
+            break;
+        }
+    }
     // The Orb of Summoning, its own roll off its own dice and beside the rest (sim/items.h).
     if (orbDice_.nextInt(0, kSummonOrbOdds) == 0) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {

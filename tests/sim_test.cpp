@@ -5639,6 +5639,38 @@ void testChaosMachine() {
                        55400000, "40,000,000 + 140 x 100^2 x 11");
             const int worn = flier.hero().wornDefense;
             check(worn >= 20, "its defence is in his");
+
+            // The 2nd wings' box (docs/second-wings.md): a 1st wing, Loch's Feather, a Chaos.
+            const int32_t feather = noria.itemAt(13, 14);
+            check(feather >= 0, "Loch's Feather is in Noria's tables");
+            if (feather >= 0) {
+                sim::Machine second;
+                second.put(0, sim::Held{satan, 0, 200});  // 5 by 2: cells 0-4 and 8-12
+                second.put(5, sim::Held{feather, 0, 1});
+                second.put(6, sim::Held{chaos, 0, 1});
+                sim::Judged s2 = sim::judge(noria, second, sim::Service::Combine, -1,
+                                            sim::Kin::DarkKnight);
+                check(s2.recipe == sim::Recipe::SecondWings, "a wing, a feather and a Chaos");
+                check(s2.success == "Wings of Dragon", "make a knight the Wings of Dragon");
+                checkEqual(s2.rate, 13, "a +0 wing alone, 55.4 million over 4 million");
+                checkEqual(int(s2.zen), 5000000, "for five million");
+                check(sim::judge(noria, second, sim::Service::Combine, -1, sim::Kin::DarkWizard)
+                              .success == "Wings of Soul",
+                      "a wizard's are the Wings of Soul");
+                // An excellent +4 thing adds its price over 40,000: a Kris is worth too little to
+                // move it (WebZen's own arithmetic), a Chaos Dragon Axe about eleven.
+                sim::Held sharp{axe, 4, 20};
+                sharp.excellent = 1;
+                second.put(16, sharp);
+                const sim::Judged lifted = sim::judge(noria, second);
+                check(lifted.recipe == sim::Recipe::SecondWings && lifted.rate > s2.rate,
+                      "an excellent +4 thing raises it");
+                second.put(23, sim::Held{bless, 0, 1});
+                check(sim::judge(noria, second).recipe == sim::Recipe::None, "a Bless spoils it");
+                second.lift(23);
+                second.lift(5);
+                check(sim::judge(noria, second).recipe == sim::Recipe::None, "no feather, no wings");
+            }
         }
     }
 

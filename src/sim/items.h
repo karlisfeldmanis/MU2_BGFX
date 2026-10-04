@@ -95,6 +95,9 @@ struct Held {
     // A powered ring's or pendant's further powers (sim::Affix), past the one its row carries:
     // 0 for none. How many it has is its colour (sim::affixCount).
     uint8_t affixes[3] = {};
+    // A 2nd level wing's extras, MU's m_NewOption on it (sim::kWingMaxLife and its fellows): 0 on
+    // everything else. Its own field, since `excellent` would make the wing read as excellent.
+    uint8_t wing = 0;
     bool empty() const { return item < 0; }
 };
 
@@ -147,6 +150,29 @@ PetPower wingPower(const content::ItemRow& row, int refinement);
 // second it is worn, a point gone at the 565th -- one point in 94 minutes, 200 in 313 hours.
 constexpr int64_t kWingWearTicks = 10 * 20;
 constexpr double kWingWearSteps = 565.0;
+
+// ---- the 2nd level wings (docs/second-wings.md) ----------------------------------------------
+// Wings of Spirits, Soul and Dragon, 12/3-5: the Muse Elf's, the Soul Master's and the Blade
+// Knight's (OpenMU VersionSeasonSix Wings.cs, class level 2). The Magic Gladiator's Darkness
+// (12/6) is not in this game.
+bool secondWing(const content::ItemRow& row);
+// Its extras, Held::wing, WebZen's PLUS_WING_* (zzzitem.cpp:1488-1505): max life and max mana
+// +50 and 5 a plus, a 3% chance a blow ignores the defence it meets (ObjBaseAttack.cpp:1322-
+// 1339), and which of its two options it carries (`PLUS_WING_OP1_TYPE`, zzzitem.cpp:1168-1222).
+enum : uint8_t {
+    kWingMaxLife = 0x01,
+    kWingMaxMana = 0x02,
+    kWingIgnoreDefense = 0x04,
+    kWingOptionKind = 0x20,
+};
+// **Loch's Feather** (13/14), the 2nd wings' ingredient. MU drops it in Icarus alone
+// (gObjMonster.cpp:4620); this game has no Icarus, so a kill in Atlans or the Lost Tower of a
+// monster of kFeatherFromLevel or over leaves one in kFeatherOdds, on its own roll beside the
+// rest (the user, 2026-10-04: 'Rare drop, high maps'). The maps, the level and the rate are ours.
+bool lochsFeather(const content::ItemRow& row);
+constexpr int kFeatherOdds = 500;
+constexpr int kFeatherFromLevel = 60;
+inline bool featherMap(uint32_t map) { return map == 4 || map == 7; }
 
 // ---- rings and pendants (docs/jewellery.md) ------------------------------------------------
 //

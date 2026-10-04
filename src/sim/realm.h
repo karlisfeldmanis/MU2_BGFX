@@ -1315,6 +1315,8 @@ private:
     // Whether a dungeon's kill leaves a Firecracker (sim/items.h), so a seeded hunt there rolls
     // its loot as it always did.
     Random crackerDice_{0};
+    // Whether a kill in Atlans or the Lost Tower leaves a Loch's Feather (sim::kFeatherOdds).
+    Random featherDice_{0};
     // Blood Castle's scroll and bone, rolled on every kill outside a castle (Realm::leave), off
     // a stream of their own so the kill's own drops draw as they did.
     Random ticketDice_{0};

@@ -281,6 +281,10 @@ std::string excellentLine(const content::ItemRow& row, int bit) {
 }
 
 bool firstWing(const content::ItemRow& row) { return row.group == 12 && row.number <= 2; }
+bool secondWing(const content::ItemRow& row) {
+    return row.group == 12 && row.number >= 3 && row.number <= 5;
+}
+bool lochsFeather(const content::ItemRow& row) { return row.group == 13 && row.number == 14; }
 
 int wingDefense(const content::ItemRow& row, int refinement) {
     if (!firstWing(row)) return 0;
