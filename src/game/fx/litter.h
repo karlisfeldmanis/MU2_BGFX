@@ -47,7 +47,8 @@ public:
     // lobby's streak, three body heights tall and turned to face the camera -- breathing, with a
     // brighter core, and light the ground round them violet, ahead of any jewel's glow.
     // And a legendary drop the same, in legendary orange (the user, 2026-10-04: 'we need also
-    // that light for legendary drops'); Loch's Feather in the quest violet.
+    // that light for legendary drops'); Loch's Feather in the quest violet; an excellent drop in
+    // the epic purple ('excelnt drops needs also light').
     void gatherBeams(gfx::Effects& effects, const float eye[3]) const;
     // **A jewel lying down glows** (the user, 2026-10-02: "actualy we need minimal light emiters
     // for all jewel drops", and "some nice effect for drop jewel of creations"). Ours: MU throws

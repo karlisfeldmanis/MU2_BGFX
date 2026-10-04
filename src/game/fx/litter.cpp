@@ -104,6 +104,7 @@ constexpr float kJewelReach = 1.4f, kJewelLevel = 0.14f;
 constexpr float kQuestReach = 3.0f, kQuestLevel = 0.7f;
 constexpr float kQuestViolet[3] = {0.72f, 0.38f, 1.0f};  // the user's purple
 constexpr float kLegendaryOrange[3] = {1.0f, 0.5f, 0.08f};  // WoW's legendary, as the name
+constexpr float kEpicPurple[3] = {0.64f, 0.21f, 0.93f};      // WoW's epic, an excellent's name
 // Its beam: metres tall and wide, and the core's share of the width.
 constexpr float kBeamTall = 5.5f, kBeamWide = 1.6f, kCoreShare = 0.45f;
 constexpr float kGlowLift = 0.15f;        // metres over the jewel's middle
@@ -157,6 +158,11 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
         // 'we need also that light for legendary drops'): the colour its name is drawn in.
         drop.glow = 3;
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = kLegendaryOrange[k];
+    } else if (one.what.excellent != 0) {
+        // And an excellent one, in the epic purple its name is drawn in (the user, 2026-10-04:
+        // 'excelnt drops needs also light').
+        drop.glow = 3;
+        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kEpicPurple[k];
     } else if (sim::creation(row)) {
         drop.glow = 2;
         runeColour(one.what, drop.glowColour);
