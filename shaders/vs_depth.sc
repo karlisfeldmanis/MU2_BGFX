@@ -11,5 +11,6 @@ void main()
 	v_texcoord0 = a_texcoord0;
 	// fs_shadow's dither: a static mesh is all there unless it is in a fading figure's hand.
 	v_light = vec4(1.0, 1.0, 1.0, i_data5.y < 1.0 ? 2.0 + i_data5.y : 1.0);
-	gl_Position = mul(u_viewProj, mul(model, vec4(a_position, 1.0)));
+	vec3 p = i_data5.x < 0.0 ? swayed(a_position, i_data3.xyz) : a_position;
+	gl_Position = mul(u_viewProj, mul(model, vec4(p, 1.0)));
 }

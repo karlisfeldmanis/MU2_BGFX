@@ -1,0 +1,108 @@
+{
+  "item": "Object04",
+  "mu_name": "Object04",
+  "mu_name_from": "Atlans's object slot 3, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 3,
+  "placements": 72,
+  "profile": "world",
+  "sheets": {
+    "star01": "at_star01.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "star01": "chitin"
+  },
+  "why_this_one": "Starfish, 72 of them: star01's red and pale starfish modelled flat, 1.6 by 1.2 m, set on the rocks and floor. The user, 2026-10-03: 'do next batch'.",
+  "material_note": "star01 is three photographed starfish, two red and one pale, on a dark ground the mesh does not reach: chitin, for their hard knobbled skins.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 1235.7,
+      "along": [
+        -40.7,
+        2.3
+      ],
+      "mu_uv": [
+        0.008,
+        0.309,
+        0.669,
+        0.992
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.781,
+        0.808
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 995.8,
+      "along": [
+        19.2,
+        54.8
+      ],
+      "mu_uv": [
+        0.635,
+        0.623,
+        0.956,
+        0.952
+      ],
+      "bake_uv": [
+        0.554,
+        0.006,
+        0.932,
+        0.392
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 506.4,
+      "along": [
+        47.8,
+        69.6
+      ],
+      "mu_uv": [
+        0.635,
+        0.623,
+        0.956,
+        0.952
+      ],
+      "bake_uv": [
+        0.556,
+        0.548,
+        0.933,
+        0.935
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 10,
+      "area": 446.8,
+      "along": [
+        -46.7,
+        -27.1
+      ],
+      "mu_uv": [
+        0.635,
+        0.623,
+        0.956,
+        0.952
+      ],
+      "bake_uv": [
+        0.004,
+        0.609,
+        0.382,
+        0.996
+      ]
+    }
+  ]
+}

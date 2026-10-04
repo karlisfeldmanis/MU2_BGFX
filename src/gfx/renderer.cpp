@@ -216,6 +216,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // y carries two flags: 1 two-sided, 2 calibrated (the albedo's metal is already
             // reflectance, so the sheet's metal_gain stays off it). fs_shade unpacks them.
             float scrollOffset = -std::fmod(elapsed_ * material.scrollPerSecond, 1.0f);
+            // MU's water frames: the frame, 0 to 31, rather than a slide (content::Material).
+            if (material.waterFrames) {
+                scrollOffset = std::floor(std::fmod(elapsed_ * material.scrollPerSecond, 32.0f));
+            }
             // An item's glow as ItemObjectAttribute sets it: BlendMeshLight's breathing,
             // sin(WorldTime*0.004)*a + b with WorldTime in ms, and a random jump of its sheet in
             // steps of `jitter` (MU's (rand()%10)*0.1 each frame it draws). The jump is drawn 25
@@ -247,7 +251,8 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // along U, 2 with the sheet's alpha held still (content::Material::maskHeld).
             const float materialParams[4] = {material.cutout,
                                              glowPass ? (material.scrollAlongU ? 1.0f : 0.0f) +
-                                                            (material.maskHeld ? 2.0f : 0.0f)
+                                                            (material.maskHeld ? 2.0f : 0.0f) +
+                                                            (material.waterFrames ? 4.0f : 0.0f)
                                              : (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f),
                                              glowPass ? glowLevel
@@ -259,8 +264,13 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                                  : material.roughnessFactor,
                                              glowPass ? scrollOffset : material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
+            // The water's sway (common.sh's swayed), for the still plants marked to take it.
+            const float swayParams[4] = {elapsed_, sway_, 0.0f, 0.0f};
+            bgfx::setUniform(uSway_, swayParams);
             // The albedo is bound even in the depth passes, because the cutout reads its alpha.
-            bgfx::setTexture(0, sAlbedo_, material.albedo,
+            const bool waterSheet =
+                glowPass && material.waterFrames && bgfx::isValid(causticSheet_);
+            bgfx::setTexture(0, sAlbedo_, waterSheet ? causticSheet_ : material.albedo,
                              glowPass && material.glowClamped()
                                  ? BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
                                  : UINT32_MAX);
@@ -455,10 +465,24 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             bgfx::setTexture(0, sAlbedo_, l[0].albedo);
             bgfx::setTexture(1, sNormal_, l[0].normal);
             bgfx::setTexture(2, sOrm_, l[0].orm);
-            bgfx::setTexture(9, sAlbedo2_, l[1].albedo);
+            // MU's caustics (content::Ground::setCaustic): the layer laid on TileWater01's
+            // slot is drawn as the 32 frames added, not as a sheet blended in, so its albedo
+            // stage takes the frames' sheet. x the frame, one a reference frame (25 a second,
+            // WaterTextureNumber, SceneManager.cpp:326-337); y how bright, the sheet's caustic;
+            // z which layers, a bit each. Never layer 0: MU only ever overlays it.
+            int causticBits = 0;
+            if (caustic_ > 0.0f && bgfx::isValid(g.caustic())) {
+                for (int k = 1; k < part.layerCount; ++k) {
+                    if (part.slots[k] >= 0 && part.slots[k] == g.causticSlot()) causticBits |= 1 << k;
+                }
+            }
+            const float causticParams[4] = {std::floor(std::fmod(elapsed_ * 25.0f, 32.0f)),
+                                            caustic_, float(causticBits), 0.0f};
+            bgfx::setUniform(uCaustic_, causticParams);
+            bgfx::setTexture(9, sAlbedo2_, (causticBits & 2) ? g.caustic() : l[1].albedo);
             bgfx::setTexture(10, sNormal2_, l[1].normal);
             bgfx::setTexture(11, sOrm2_, l[1].orm);
-            bgfx::setTexture(3, sAlbedo3_, l[2].albedo);
+            bgfx::setTexture(3, sAlbedo3_, (causticBits & 4) ? g.caustic() : l[2].albedo);
             bgfx::setTexture(8, sNormal3_, l[2].normal);
             bgfx::setTexture(12, sOrm3_, l[2].orm);
             // The shared corner weights, read through a B-spline; the vertex weights where
@@ -511,6 +535,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     waterFlow_ = lighting.waterFlow;
     for (int i = 0; i < 3; ++i) waterGlow_[i] = lighting.waterGlow[i];
     waterGlow_[3] = lighting.waterVariety;
+    caustic_ = lighting.caustic;
+    sway_ = lighting.sway;
+    causticSheet_ = ground ? ground->caustic() : bgfx::TextureHandle{bgfx::kInvalidHandle};
     // The chasms' dark, which is the world's and not the sheet's. content::Ground::abyss.
     abyss_ = ground ? ground->abyss() : bgfx::TextureHandle{bgfx::kInvalidHandle};
     if (bgfx::isValid(abyss_)) {
@@ -654,7 +681,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                         // identity. -1 would be read as a texel outside the palette. z is the
                         // item's plus, for the shine.
                         const float skin[4] = {
-                            float(d->paletteRow < 0 ? kBindRow : d->paletteRow), d->fade,
+                            d->sway ? -1.0f
+                                    : float(d->paletteRow < 0 ? kBindRow : d->paletteRow),
+                            d->fade,
                             float(d->refine), packRefineColour(d->refineColour)};
                         std::memcpy(idb.data + written * stride + sizeof(float) * 20, skin,
                                     sizeof(skin));

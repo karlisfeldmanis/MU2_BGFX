@@ -1,0 +1,55 @@
+{
+  "note": "Atlans's light, laid over lighting.json while a character stands in Atlans (game/world/maps.h). MU draws it on its default black clear and fog (SceneManager.cpp:380-401) with no lamp at all: the teal-blue TerrainLight (walkable mean 34, 104, 139) carries the floor, the additive caustics (wt00-31) and light shafts say sunlight through water, and MU draws every shadow at 20% (ZzzObject.cpp:9483). So: a pale cyan key from nearly overhead, a teal fill close behind it so the shadows stay faint, and a teal water haze in place of MU's black fog, so distance reads as sea and not night. Invention on MU's look; first cut 2026-10-03 from docs/atlans-port.md B \u00a76. A stronger-shadow cut (2026-10-04: ambient 0.6, key 3.4 at 62 degrees, exposure 1.6, the Dungeon's way) was tried and taken back the same day: the user, 'original version of tonemaping you amde was the best actualy'.",
+  "elevation": 78.0,
+  "sun_colour": [
+    0.78,
+    0.92,
+    1.0
+  ],
+  "sun_strength": 2.6,
+  "sky_colour": [
+    0.12,
+    0.32,
+    0.38
+  ],
+  "horizon_paleness": 0.4,
+  "ground_colour": [
+    0.05,
+    0.12,
+    0.12
+  ],
+  "ambient_strength": 1.2,
+  "exposure": 1.5,
+  "dust_colour": [
+    0.18,
+    0.42,
+    0.48
+  ],
+  "dust_density": 0.006,
+  "lamp_strength": 3.14159,
+  "glow_strength": 1.6,
+  "bloom_threshold": 0.9,
+  "bloom_strength": 0.3,
+  "contrast": 0.4,
+  "saturation": 0.95,
+  "split": 0.4,
+  "tint_low": [
+    0.86,
+    1.0,
+    1.08
+  ],
+  "tint_high": [
+    1.08,
+    1.03,
+    0.92
+  ],
+  "ssao_strength": 1.0,
+  "grass": 0.0,
+  "probe": 0.0,
+  "water_flow": 0.0,
+  "water_sheen": 0.0,
+  "caustic": 2.0,
+  "sway": 0.035,
+  "tonemap": 1,
+  "lamp_shadow": 0.85
+}

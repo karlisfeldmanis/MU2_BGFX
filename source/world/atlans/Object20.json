@@ -1,0 +1,90 @@
+{
+  "item": "Object20",
+  "mu_name": "Object20",
+  "mu_name_from": "Atlans's object slot 19, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 19,
+  "placements": 16,
+  "profile": "world",
+  "sheets": {
+    "wood04": "at_wood04.png",
+    "wood01": "at_wood01.png",
+    "wood03": "at_wood03.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "wood04": "hardwood",
+    "wood01": "timber",
+    "wood03": "cloth"
+  },
+  "why_this_one": "A broken spar standing out of the sand, 16 of them: 4.6 m long. The user, 2026-10-03: 'continou'.",
+  "material_note": "As the wreck's large pieces (Object12-16): wooda and wood02 planking, plank; wood01 weathered beams, timber; wood03 the sail, cloth; wood04 the mast's grain, hardwood.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 18,
+      "area": 41544.5,
+      "along": [
+        -122.9,
+        115.4
+      ],
+      "mu_uv": [
+        -0.156,
+        0.007,
+        1.04,
+        2.207
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.994,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2254.1,
+      "along": [
+        -41.0,
+        0.4
+      ],
+      "mu_uv": [
+        -0.013,
+        0.001,
+        0.987,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.589,
+        0.851
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2254.1,
+      "along": [
+        61.6,
+        103.1
+      ],
+      "mu_uv": [
+        -0.013,
+        0.001,
+        0.987,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.691,
+        0.895
+      ]
+    }
+  ]
+}

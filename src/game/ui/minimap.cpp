@@ -293,6 +293,7 @@ const char* mapName(uint32_t map) {
         case 2: return "Devias";
         case 3: return "Noria";
         case 4: return "Lost Tower";
+        case 7: return "Atlans";
         case 11: return "Blood Castle";
         default: return "another map";
     }

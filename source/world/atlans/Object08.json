@@ -1,0 +1,43 @@
+{
+  "item": "Object08",
+  "mu_name": "Object08",
+  "mu_name_from": "Atlans's object slot 7, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 7,
+  "placements": 23,
+  "profile": "world",
+  "sheets": {
+    "bfish07": "at_bfish07.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "bfish07": "skin"
+  },
+  "why_this_one": "The giant octopus's head, 23 of them: bfish07, brick-red skin with its eyes, on 34 bones, 4.2 m tall, its own 30-key clip. The user, 2026-10-03: 'do last abtch'.",
+  "material_note": "bfish07 is the octopus's brick-red head with its two eyes: skin.",
+  "play_speed_from": "No WD_7ATLANSE arm sets its Velocity (ZzzObject.cpp:4055-4084), so its clip plays at the 0.16 every object starts with.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 632,
+      "area": 160953.5,
+      "along": [
+        -222.4,
+        196.5
+      ],
+      "mu_uv": [
+        -0.1,
+        -0.005,
+        0.961,
+        1.005
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.711
+      ]
+    }
+  ]
+}

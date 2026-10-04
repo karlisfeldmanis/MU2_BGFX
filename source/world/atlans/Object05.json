@@ -1,0 +1,152 @@
+{
+  "item": "Object05",
+  "mu_name": "Object05",
+  "mu_name_from": "Atlans's object slot 4, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 4,
+  "placements": 70,
+  "profile": "world",
+  "sheets": {
+    "star01": "at_star01.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "star01": "chitin"
+  },
+  "why_this_one": "A larger starfish group, 70 of them: star01, 2.5 by 1.7 m. The user, 2026-10-03: 'do next batch'.",
+  "material_note": "As Object04: chitin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 2079.1,
+      "along": [
+        -43.4,
+        19.8
+      ],
+      "mu_uv": [
+        0.008,
+        0.309,
+        0.669,
+        0.992
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.547,
+        0.566
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 995.8,
+      "along": [
+        -5.8,
+        29.8
+      ],
+      "mu_uv": [
+        0.635,
+        0.623,
+        0.956,
+        0.952
+      ],
+      "bake_uv": [
+        0.005,
+        0.434,
+        0.269,
+        0.704
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 60,
+      "area": 2429.2,
+      "along": [
+        8.0,
+        92.0
+      ],
+      "mu_uv": [
+        0.506,
+        0.05,
+        0.976,
+        0.548
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.923,
+        0.415
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 10,
+      "area": 506.4,
+      "along": [
+        -69.3,
+        -47.6
+      ],
+      "mu_uv": [
+        0.635,
+        0.623,
+        0.956,
+        0.952
+      ],
+      "bake_uv": [
+        0.141,
+        0.658,
+        0.405,
+        0.928
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 10,
+      "area": 446.8,
+      "along": [
+        -69.1,
+        -49.5
+      ],
+      "mu_uv": [
+        0.635,
+        0.623,
+        0.956,
+        0.952
+      ],
+      "bake_uv": [
+        0.728,
+        0.725,
+        0.992,
+        0.995
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 10,
+      "area": 1039.4,
+      "along": [
+        -74.4,
+        -36.9
+      ],
+      "mu_uv": [
+        0.008,
+        0.309,
+        0.669,
+        0.992
+      ],
+      "bake_uv": [
+        0.353,
+        0.337,
+        0.895,
+        0.897
+      ]
+    }
+  ]
+}

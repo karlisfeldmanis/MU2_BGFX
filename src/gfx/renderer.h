@@ -39,6 +39,9 @@ struct Drawable {
     // Five worn parts of one character share a row: wearing is swapping which meshes draw
     // against one set of bone rows, and the skeleton does not know what it has on.
     int paletteRow = -1;
+    // A still mesh that sways in the water anyway (vs_static's swayed): its palette slot,
+    // which a static draw never reads, goes as -1 to say so. Atlans's plants. Ours.
+    bool sway = false;
     // How much of this is there, 0 to 1. Below 1 it is not in the opaque passes at all: it is
     // drawn after them, its own depth first and then shaded and blended at this opacity, which
     // is what stops a half-there figure showing its own far side through itself. Its shadow is
@@ -196,6 +199,10 @@ struct PointLight {
     // little behind itself, so what is on the far side of the stone it hangs on stays dark: a
     // light casts no shadow here, and without this a bridge torch lit the deck through its rail.
     float away[3] = {0.0f, 0.0f, 0.0f};
+    // How far round the light reaches what it lights, 0 to 1: n.l is wrapped by it, so a
+    // surface edge-on to the light still takes some, and a figure inside a pool is lit on every
+    // side. 0, the plain n.l, on every light but Atlans's. lights.sh.
+    float wrap = 0.0f;
     // A moving light only: when `line`, the light runs from `position` to `to` and lights from
     // its nearest point, which is how a glowing blade or suit is a light source along its whole
     // shape rather than a point beside it (game/fx/gleam.h).
@@ -548,6 +555,12 @@ private:
     float elapsed_ = 0.0f;
     float waterFlow_ = 1.0f;  // the sheet's water_flow, taken at draw() for submitGround
     float waterGlow_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // the sheet's water_glow, likewise
+    float caustic_ = 0.0f;  // the sheet's caustic, likewise
+    float sway_ = 0.0f;     // and its sway
+    // And the ground's caustic frames themselves (content::Ground::caustic), which a mesh in
+    // MU's water frames draws instead of its own upscaled copy: the upscale bled each frame
+    // into its neighbours, and the cells cut the sheet in seams.
+    bgfx::TextureHandle causticSheet_ = BGFX_INVALID_HANDLE;
     // The shine (setShine): its sheets, and u_refine, bound for each draw by bindShine() off
     // the same play clock. `shineStrength_` is how strongly the chrome is added, and
     // `shineTint_` how much of MuMain's tint the lit colour takes; 1 is MuMain's own for both.
@@ -723,6 +736,8 @@ private:
     bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRelief_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uWaterGlow_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uCaustic_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uSway_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundSlots_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundWeights_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sGroundWeights_ = BGFX_INVALID_HANDLE;

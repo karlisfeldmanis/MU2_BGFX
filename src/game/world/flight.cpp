@@ -46,6 +46,57 @@ constexpr float kFirstMax = 90.0f;
 // How far from the player a bird gets before it is asked to go, and the backstop under the
 // on-screen test: twice that is far past anything the town draws.
 constexpr float kFlyDistance = 15.0f;
+// Atlans's fish live north of this row (CreateAtlanseFish's `Position[1] * 0.01 < 128`).
+constexpr float kFishNorthOf = 128.0f;
+// Ours: how far a fish strays from its school's anchor before it turns back (Flight::swim).
+constexpr float kFishTether = 3.0f;
+// Ours: how long a fish holds its heading after turning about at the dry basin's edge (MU's
+// ten frames), and the least distance it looks ahead for the edge.
+constexpr float kFishTurn = 0.4f;
+constexpr float kFishProbe = 0.8f;
+// Ours, the school's realism (the user, 2026-10-04: 'make fishes smaller and we need more
+// realism and randomness'). Size is the drawn scale, MU's being 0.8 of a 0.35 m model.
+constexpr float kFishSizeMin = 0.42f;
+constexpr float kFishSizeMax = 0.68f;
+// Cruise in metres a second; MU's cruise is about 1.2 at the rolls' means.
+constexpr float kFishCruiseMin = 0.5f;
+constexpr float kFishCruiseMax = 1.1f;
+// A dart: how much faster, how long, how often, and how near a neighbour follows it.
+constexpr float kFishDartPace = 3.0f;
+constexpr float kFishDartMin = 0.3f;
+constexpr float kFishDartMax = 0.9f;
+constexpr float kFishDartsPerSecond = 0.08f;
+constexpr float kFishStartle = 1.5f;
+// How near the swimmer comes before a fish bolts.
+constexpr float kFishShy = 1.2f;
+// Fish give him room (the user, 2026-10-04: 'fishes has to avoiud character'): inside kFishAvoid
+// a fish turns away from him at a bird's full rate whatever else it is doing, and none comes
+// nearer than kFishClear.
+constexpr float kFishAvoid = 2.0f;
+constexpr float kFishClear = 0.9f;
+// A fish turns at this share of a bird's 13 degrees a frame.
+constexpr float kFishTurnShare = 0.35f;
+// The wander's turn rate, radians a second: how hard it is kicked, how fast it settles, its most.
+constexpr float kFishSwerveKick = 9.0f;
+constexpr float kFishSwerveSettle = 1.2f;
+constexpr float kFishSwerveMost = 1.1f;
+// Depths over the floor, how often a new one is chosen, and the bob.
+constexpr float kFishDepthMin = 0.9f;
+constexpr float kFishDepthMax = 3.2f;
+constexpr float kFishDepthsPerSecond = 0.1f;
+constexpr float kFishBob = 0.05f;
+// A school keeps closer than a flock.
+constexpr float kFishFlockRange = 2.5f;
+constexpr float kFishPersonalSpace = 0.35f;
+// A new fish is born beside one already swimming off the frame this often, so the forty go
+// about in schools of look-alikes rather than alone.
+constexpr float kFishJoins = 0.75f;
+// How much faster than its cruise a fish left behind swims to catch the school up.
+constexpr float kFishCatchUp = 2.2f;
+// A school keeps to its own point this far off him, on a bearing it shares and that drifts, so
+// the schools hang about to one side rather than ringing him.
+constexpr float kFishAnchor = 3.5f;
+constexpr float kFishAnchorDrift = 0.25f;
 constexpr float kFarGone = 30.0f;
 
 // `Direction[2] = ±10` a reference frame, `-20` in a dive, `+20` off the ground.
@@ -128,6 +179,10 @@ void Flight::update(float seconds, const float hero[3], bool walking, bool indoo
     // whatever this one is running at. `FPS_ANIMATION_FACTOR`.
     const float factor = seconds * kReference;
     cycle_ = std::fmod(cycle_ + seconds, kCycle);
+    if (fish_) {
+        school(seconds, factor, hero, sky);
+        return;
+    }
 
     // The next flock, once the last one has gone. Empty slots do not refill one by one: a bird
     // that sets off alone has no neighbours for the flocking rule to hold it to, and a flock
@@ -360,6 +415,217 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
     }
 }
 
+// Atlans's fish. MU's MoveBoids keeps all forty slots and refills each the frame it empties,
+// born within 5.12 m of the hero (CreateAtlanseFish) -- but only while he is in the north half,
+// `Hero->Object.Position[1] * 0.01 < 128`; south of that a new one is not born. Ours, marked: a
+// fish is born off the frame, on the birds' ring, so none appears out of nothing in view, and
+// one sent off leaves the frame before its slot empties, as a bird does.
+//
+// And none while he stands in the dry basin: MoveBoids births a fish only when the hero's own
+// tile is 0 or TW_CHARACTER (GOBoid.cpp:1226, :1309), and turns each live one about while it is
+// TW_SAFEZONE, dropping it on the second turn (:1459-1471). Here the school is sent off instead,
+// as in the south half.
+void Flight::school(float seconds, float factor, const float hero[3], const Sky& sky) {
+    // MU's y is the row; ours is -z, a metre a tile.
+    const bool ashore = sky.dry && sky.dry(sky.context, hero[0], hero[2]);
+    const bool north = -hero[2] < kFishNorthOf && !ashore;
+    uint32_t swimming = 0;
+    for (int i = 0; i < kMaxSlots; ++i) {
+        Bird& fish = birds_[i];
+        if (!fish.live && north) {
+            for (int attempt = 0; attempt < 4 && !fish.live; ++attempt) {
+                const float bearing = random01() * kTau;
+                const float range = kSpawnRingMin + random01() * (kSpawnRingMax - kSpawnRingMin);
+                float spot[3] = {hero[0] + std::cos(bearing) * range, 0.0f,
+                                 hero[2] + std::sin(bearing) * range};
+                float lift = 1.5f + random01() * 2.0f;
+                // Ours: most are born into a school already swimming, beside one of it off the
+                // frame, with its heading and near its size.
+                const Bird* mate = nullptr;
+                if (random01() < kFishJoins) {
+                    const int pick = int(random01() * float(kMaxSlots)) % kMaxSlots;
+                    for (int k = 0; k < kMaxSlots && !mate; ++k) {
+                        const Bird& other = birds_[(pick + k) % kMaxSlots];
+                        if (other.live && !other.leaving && &other != &fish &&
+                            !sky.inFrame(sky.context, other.position)) {
+                            mate = &other;
+                        }
+                    }
+                }
+                if (mate) {
+                    spot[0] = mate->position[0] + (random01() - 0.5f) * 1.6f;
+                    spot[2] = mate->position[2] + (random01() - 0.5f) * 1.6f;
+                    lift = std::max(0.6f, mate->lift + (random01() - 0.5f) * 0.6f);
+                }
+                const float at[3] = {spot[0], sky.ground(sky.context, spot[0], spot[2]) + lift,
+                                     spot[2]};
+                if (sky.inFrame(sky.context, at)) continue;
+                if (sky.dry && sky.dry(sky.context, at[0], at[2])) continue;
+                fish = Bird();
+                std::memcpy(fish.position, at, sizeof(fish.position));
+                fish.lift = lift;
+                fish.depth = lift;
+                fish.velocity = random01() < 0.9f ? 0.3f : 0.25f;
+                // Ours: each its own size, most of them small (MU draws every one at 0.8), and
+                // its own cruise, the smaller the slower. MU's Velocity still parts the slow
+                // tenth from the rest, and its last five slots still swim faster (Flight::swim).
+                const float roll = random01();
+                fish.size = kFishSizeMin + (kFishSizeMax - kFishSizeMin) * roll * roll;
+                if (mate) {
+                    fish.size = std::clamp(mate->size * (0.9f + 0.2f * random01()), kFishSizeMin,
+                                           kFishSizeMax);
+                }
+                fish.cruise = (kFishCruiseMin + random01() * (kFishCruiseMax - kFishCruiseMin)) *
+                              (fish.velocity / 0.3f) * (0.75f + 0.5f * fish.size / kFishSizeMax) *
+                              (i >= 35 ? 1.4f : 1.0f);
+                fish.speed = fish.cruise;
+                fish.facing = mate ? wrapPi(mate->facing + (random01() - 0.5f) * 0.5f)
+                                   : wrapPi(random01() * kTau);
+                fish.anchor = mate ? mate->anchor : random01() * kTau;
+                fish.timer = float(int(random01() * 314.0f)) * 0.01f;
+                fish.live = true;
+                fish.heading[0] = at[0] + std::sin(fish.facing) * kLookAhead;
+                fish.heading[1] = at[2] + std::cos(fish.facing) * kLookAhead;
+            }
+        }
+        if (!fish.live) continue;
+        if (!north) fish.leaving = true;
+        swim(fish, i, hero, seconds, factor, sky);
+        if (fish.live) ++swimming;
+    }
+    flying_ = swimming;
+}
+
+// MoveBoid's Atlans arm cruises a fish for half of a 4 s `Timer` and darts it for the other half,
+// each step re-rolled, every fish on the same beat (GOBoid.cpp:1142-1166). Ours in its place
+// (the user, 2026-10-04: 'we need more realism and randomness'): each fish cruises at its own
+// pace, eased, and darts in short bursts at random, which can startle its neighbours and which
+// the swimmer coming close always does; it wanders on a curving path, turns at a fish's rate and
+// not a bird's, drifts between depths and bobs a little. It flocks as the birds do, tighter.
+void Flight::swim(Bird& fish, int index, const float hero[3], float seconds, float factor,
+                  const Sky& sky) {
+    (void)index;
+    if (!fish.wasSeen && sky.inFrame(sky.context, fish.position)) fish.wasSeen = true;
+    fish.timer += seconds;
+    // A fish turns at kFishTurnShare of a bird's rate, so its path bends rather than snaps.
+    const float steer = factor * kFishTurnShare;
+    const float fromX = fish.position[0] - hero[0], fromZ = fish.position[2] - hero[2];
+    const float fromHero = fromX * fromX + fromZ * fromZ;
+    // The school's point, off to one side of him.
+    fish.anchor = wrapPi(fish.anchor + (random01() - 0.5f) * kFishAnchorDrift * 2.0f * seconds);
+    const float point[3] = {hero[0] + std::sin(fish.anchor) * kFishAnchor, hero[1],
+                            hero[2] + std::cos(fish.anchor) * kFishAnchor};
+    const float fromPointX = fish.position[0] - point[0], fromPointZ = fish.position[2] - point[2];
+    const float fromPoint = fromPointX * fromPointX + fromPointZ * fromPointZ;
+
+    // Startled by the swimmer: away from him, a little to one side, at once.
+    if (fish.dart <= 0.0f && fromHero < kFishShy * kFishShy && fromHero > 0.0001f) {
+        fish.facing = wrapPi(std::atan2(fromX, fromZ) + (random01() - 0.5f) * 1.2f);
+        fish.dart = kFishDartMin + random01() * (kFishDartMax - kFishDartMin);
+        fish.turned = std::max(fish.turned, 0.25f);
+    }
+    // Or a dart of its own, now and then, which a near neighbour may follow.
+    if (fish.dart <= 0.0f && chance(kFishDartsPerSecond / kReference, factor)) {
+        fish.dart = kFishDartMin + random01() * (kFishDartMax - kFishDartMin);
+        fish.facing = wrapPi(fish.facing + (random01() - 0.5f) * 1.6f);
+        for (Bird& other : birds_) {
+            if (!other.live || &other == &fish || other.dart > 0.0f) continue;
+            const float ox = other.position[0] - fish.position[0];
+            const float oz = other.position[2] - fish.position[2];
+            if (ox * ox + oz * oz > kFishStartle * kFishStartle || random01() > 0.6f) continue;
+            other.dart = kFishDartMin + random01() * (kFishDartMax - kFishDartMin);
+            other.facing = wrapPi(fish.facing + (random01() - 0.5f) * 0.8f);
+        }
+    }
+
+    // Ours: past a tether it turns back toward its school's point near him, as the bat does.
+    // MU's are born within five metres of him and cross his view as they go; born off the frame
+    // here, without this they swam straight on out and the school was all but never seen
+    // (2026-10-04). And near him it turns away from him before anything else.
+    if (fromHero < kFishAvoid * kFishAvoid) {
+        away(fish, hero, factor);
+        if (fish.turned > 0.0f) fish.turned -= seconds;
+    } else if (fish.turned > 0.0f) {
+        fish.turned -= seconds;
+    } else if (fish.leaving) {
+        away(fish, hero, steer);
+    } else if (fromPoint > kFishTether * kFishTether) {
+        home(fish, point, factor);
+    } else {
+        flock(fish, steer);
+    }
+    // The wander: a turn rate that drifts at random and settles back, so no two fish hold a
+    // line together for long.
+    fish.swerve += (-fish.swerve * kFishSwerveSettle +
+                    (random01() - 0.5f) * kFishSwerveKick) * seconds;
+    fish.swerve = std::clamp(fish.swerve, -kFishSwerveMost, kFishSwerveMost);
+    if (fish.turned <= 0.0f && fromHero >= kFishAvoid * kFishAvoid) {
+        fish.facing = wrapPi(fish.facing + fish.swerve * seconds);
+    }
+
+    // Its pace: the cruise breathing a little, a dart three times over, eased into quickly and
+    // out of slowly, as a fish kicks and glides.
+    const float breathing = 0.85f + 0.3f * std::sin(fish.timer * 0.9f + fish.size * 17.0f);
+    const bool behind = !fish.leaving && fromPoint > 4.0f * kFishTether * kFishTether;
+    const float target = fish.dart > 0.0f ? fish.cruise * kFishDartPace
+                         : behind         ? fish.cruise * kFishCatchUp
+                                          : fish.cruise * breathing;
+    const float ease = fish.dart > 0.0f ? 6.0f : 1.2f;
+    fish.speed += (target - fish.speed) * std::min(1.0f, ease * seconds);
+    if (fish.dart > 0.0f) fish.dart -= seconds;
+
+    // Its depth: a new one now and then, drifted to.
+    if (chance(kFishDepthsPerSecond / kReference, factor)) {
+        fish.depth = kFishDepthMin + random01() * (kFishDepthMax - kFishDepthMin);
+    }
+    fish.lift += (fish.depth - fish.lift) * std::min(1.0f, 0.35f * seconds);
+
+    fish.climb = 0.0f;
+    const float speed = fish.speed;
+    // Ours: no fish over the dry basin. Where the water ahead ends it turns about, as MU's turn
+    // a fish about in the safe zone (`Angle[2] += 180`, held ten frames, GOBoid.cpp:1459-1465),
+    // and holds that heading for kFishTurn so the steering does not walk it straight back.
+    if (sky.dry) {
+        const float reach = std::max(speed * kFishTurn, kFishProbe);
+        const float aheadX = fish.position[0] + std::sin(fish.facing) * reach;
+        const float aheadZ = fish.position[2] + std::cos(fish.facing) * reach;
+        if (sky.dry(sky.context, aheadX, aheadZ)) {
+            fish.facing = wrapPi(fish.facing + kPi);
+            fish.turned = kFishTurn;
+        }
+    }
+    const float was[2] = {fish.position[0], fish.position[2]};
+    step(fish, speed, seconds);
+    if (sky.dry && sky.dry(sky.context, fish.position[0], fish.position[2]) &&
+        !sky.dry(sky.context, was[0], was[1])) {
+        fish.position[0] = was[0];
+        fish.position[2] = was[1];
+    }
+    // Never through him: pushed back out to kFishClear along the line from him.
+    {
+        const float ax = fish.position[0] - hero[0], az = fish.position[2] - hero[2];
+        const float apart = std::sqrt(ax * ax + az * az);
+        if (apart < kFishClear && apart > 0.0001f) {
+            fish.position[0] = hero[0] + ax / apart * kFishClear;
+            fish.position[2] = hero[2] + az / apart * kFishClear;
+        }
+    }
+    const float land = sky.ground(sky.context, fish.position[0], fish.position[2]);
+    fish.position[1] = land + fish.lift + kFishBob * std::sin(fish.timer * 1.7f + fish.size * 31.0f);
+
+    const float dx = fish.position[0] - hero[0];
+    const float dz = fish.position[2] - hero[2];
+    if (dx * dx + dz * dz >= kFlyDistance * kFlyDistance || chance(1.0f / 512.0f, factor)) {
+        fish.leaving = true;
+    }
+    if (fish.leaving) {
+        if (!sky.inFrame(sky.context, fish.position) || dx * dx + dz * dz >= kFarGone * kFarGone) {
+            fish.live = false;
+            fish.leaving = false;
+        }
+    }
+}
+
 void Flight::flock(Bird& bird, float factor) {
     // Each neighbour within range contributes its own heading, and either the direction toward
     // this bird or away from it depending on whether it is inside the personal space. The sum is
@@ -367,15 +633,17 @@ void Flight::flock(Bird& bird, float factor) {
     // flock loosely agrees on a direction without ever converging on a point.
     float target[2] = {0.0f, 0.0f};
     int neighbours = 0;
+    const float range = fish_ ? kFishFlockRange : kFlockRange;
+    const float space = fish_ ? kFishPersonalSpace : kPersonalSpace;
     for (const Bird& other : birds_) {
         if (!other.live || &other == &bird) continue;
         const float dx = bird.position[0] - other.position[0];
         const float dy = bird.position[1] - other.position[1];
         const float dz = bird.position[2] - other.position[2];
         const float apart = std::sqrt(dx * dx + dy * dy + dz * dz);
-        if (apart >= kFlockRange) continue;
+        if (apart >= range) continue;
 
-        const bool close = apart < kPersonalSpace;
+        const bool close = apart < space;
         const float heading[2] = {other.heading[0] - other.position[0],
                                   other.heading[1] - other.position[2]};
         const float between[2] = {other.heading[0] - bird.position[0],

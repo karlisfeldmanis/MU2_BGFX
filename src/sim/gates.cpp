@@ -39,43 +39,61 @@ constexpr ExitGate kExits[] = {
     // Blood Castle 1's, Gates.cs:216 (WZD Gate.txt:115): its safe court beside the Archangel,
     // with no direction. Reached only through the Messenger (sim/event.h).
     {66, 11, {12, 5, 14, 10}, 0, 0},
+    // Atlans's and Noria's, Gates.cs:135 and 148-149 (docs/atlans-port.md A §2.1). 48 is
+    // Direction.North (7), (-1,+1), into Noria and away from gate 45 beside it; 46 is
+    // Direction.South (3), (+1,-1), into the basin and away from gate 47; 49 is the spawn gate,
+    // the safe basin, with no direction: a death and the Town Portal land there.
+    {48, 3, {240, 240, 241, 243}, -1, 1},   // Noria, from Atlans
+    {46, 7, {14, 12, 15, 13}, 1, -1},       // Atlans, from Noria
+    {49, 7, {15, 11, 27, 23}, 0, 0},        // Atlans's basin: death, Town Portal
 };
 
 // Gates.cs, CreateEnterGates: 23 on Lorencia's last rows, 25 on Noria's first, each two rows
 // past its exit gate so a character who comes out is not sent straight back, and each asks
 // level 10.
 constexpr EnterGate kEnters[] = {
-    {23, 0, {213, 246, 217, 247}, 10, 24},  // Lorencia to Noria
-    {25, 3, {148, 3, 155, 4}, 10, 26},      // Noria to Lorencia
+    // Every level here is MU's doubled, ours (the user, 2026-10-04: 'also increase other gate
+    // requirments because we have fast paced exp gains', after Atlans's 60 went to 120): the
+    // experience rate is 100x (sim kExperienceRate). The free ways out stay free, and Atlans's
+    // way back keeps 60 so nobody is shut in.
+    {23, 0, {213, 246, 217, 247}, 20, 24},  // Lorencia to Noria
+    {25, 3, {148, 3, 155, 4}, 20, 26},      // Noria to Lorencia
     // Gates.cs:193-194. Lorencia's asks level 15; the way back asks nothing.
-    {18, 0, {5, 38, 6, 41}, 15, 19},        // Lorencia to Devias
+    {18, 0, {5, 38, 6, 41}, 30, 19},        // Lorencia to Devias
     {20, 2, {244, 34, 245, 37}, 0, 21},     // Devias to Lorencia
+    // Gates.cs:205-206: Noria's far south-east corner to Atlans, and the basin's corner back,
+    // both level 60 in every source (OM 075, WebZen's official gate.txt; docs/atlans-port.md
+    // A §2.2). The user, 2026-10-04: 'lets migrate noria -> atlans gates and add lvl
+    // requirments for gates'. Then 'increase lvl requirment to 120': the way in asks 120, ours;
+    // the way out keeps MU's 60, so nobody under 120 who is in Atlans is shut in.
+    {45, 3, {242, 240, 245, 243}, 120, 46}, // Noria to Atlans
+    {47, 7, {9, 9, 11, 12}, 60, 48},        // Atlans to Noria
     // Gates.cs:197, Devias's far corner under the Lost Tower's beacon, level 40, to exit gate 29.
-    {28, 2, {2, 248, 3, 249}, 40, 29},      // Devias to the Lost Tower
+    {28, 2, {2, 248, 3, 249}, 80, 29},      // Devias to the Lost Tower
     // The Lost Tower's, Gates.cs:198-204 (docs/lost-tower-port.md §2.2): the door out asks 15,
     // the first two stairs 40 and the last four 50 (OM's, not the repack's 80). Every stair goes
     // down; no source has one back up. Each box sits in a wall niche with 2-3 open tiles, which
     // throughGate's test of the walker's own tile handles. Floors are regions of one map, so
     // 30-40 lead to the map they stand on, as the Dungeon's stairs do.
-    {43, 4, {162, 0, 166, 1}, 15, 44},      // Lost Tower 1 out to Devias
-    {30, 4, {190, 6, 191, 8}, 40, 31},      // Lost Tower 1 down to 2
-    {32, 4, {166, 163, 167, 166}, 40, 33},  // Lost Tower 2 down to 3
-    {34, 4, {132, 245, 135, 246}, 50, 35},  // Lost Tower 3 down to 4
-    {36, 4, {132, 135, 135, 136}, 50, 37},  // Lost Tower 4 down to 5
-    {38, 4, {131, 15, 132, 18}, 50, 39},    // Lost Tower 5 down to 6
-    {40, 4, {6, 5, 7, 8}, 50, 41},          // Lost Tower 6 down to 7
+    {43, 4, {162, 0, 166, 1}, 30, 44},      // Lost Tower 1 out to Devias
+    {30, 4, {190, 6, 191, 8}, 80, 31},      // Lost Tower 1 down to 2
+    {32, 4, {166, 163, 167, 166}, 80, 33},  // Lost Tower 2 down to 3
+    {34, 4, {132, 245, 135, 246}, 100, 35},  // Lost Tower 3 down to 4
+    {36, 4, {132, 135, 135, 136}, 100, 37},  // Lost Tower 4 down to 5
+    {38, 4, {131, 15, 132, 18}, 100, 39},    // Lost Tower 5 down to 6
+    {40, 4, {6, 5, 7, 8}, 100, 41},          // Lost Tower 6 down to 7
     // Gates.cs:185, Lorencia's stair down at DoungeonGate01, level 20, to the Dungeon's exit
     // gate 2. And the Dungeon's own, :186-192: the way out asks nothing, every stair between
     // its three floors asks level 20. Floors are regions of one map, so 5 to 15 lead to the
     // map they stand on (Realm::throughGate).
-    {1, 0, {121, 232, 123, 233}, 20, 2},    // Lorencia to Dungeon 1
+    {1, 0, {121, 232, 123, 233}, 40, 2},    // Lorencia to Dungeon 1
     {3, 1, {108, 248, 109, 248}, 0, 4},     // Dungeon 1 to Lorencia
-    {5, 1, {239, 149, 239, 150}, 20, 6},    // Dungeon 1 down to Dungeon 2
-    {7, 1, {232, 127, 233, 128}, 20, 8},    // Dungeon 2 up to Dungeon 1
-    {9, 1, {2, 17, 2, 18}, 20, 10},         // Dungeon 2 down to Dungeon 3
-    {11, 1, {2, 84, 2, 85}, 20, 12},        // Dungeon 3 up to Dungeon 2
-    {13, 1, {5, 34, 6, 34}, 20, 14},        // Dungeon 2 down to Dungeon 3, the second way
-    {15, 1, {29, 127, 30, 127}, 20, 16},    // Dungeon 3 up to Dungeon 2, the second way
+    {5, 1, {239, 149, 239, 150}, 40, 6},    // Dungeon 1 down to Dungeon 2
+    {7, 1, {232, 127, 233, 128}, 40, 8},    // Dungeon 2 up to Dungeon 1
+    {9, 1, {2, 17, 2, 18}, 40, 10},         // Dungeon 2 down to Dungeon 3
+    {11, 1, {2, 84, 2, 85}, 40, 12},        // Dungeon 3 up to Dungeon 2
+    {13, 1, {5, 34, 6, 34}, 40, 14},        // Dungeon 2 down to Dungeon 3, the second way
+    {15, 1, {29, 127, 30, 127}, 40, 16},    // Dungeon 3 up to Dungeon 2, the second way
     // Ours: the Messenger's door into Blood Castle 1 (sim/event.h kCastleEnterGate), a row with
     // a box off the map so no step ever stands in it. His talk sends him through.
     {1066, 2, {-1, -1, -1, -1}, 0, 66},

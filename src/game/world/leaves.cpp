@@ -51,6 +51,10 @@ constexpr float kStrayDistance = 16.0f;
 
 // How much of its own brightness a leaf is drawn at.
 constexpr float kFaintness = 0.62f;
+// Atlans's motes: a soft dot rather than a leaf's speck, square, and added. Ours: the size and
+// the level, MU's being its leaves' RenderPlane3D on a sheet that is mostly falloff.
+constexpr float kMoteHalf = 0.04f;
+constexpr float kMoteLevel = 0.5f;
 
 // A drop: `RenderPlane3D(1, 20)`, which is half-extents, so two centimetres by forty -- the
 // longest one here. Each drop draws its own length and faintness, so a shower is a scatter of
@@ -162,9 +166,22 @@ float Leaves::random01() {
 }
 
 bool Leaves::open(const std::string& assetDir, content::Textures& textures,
-                  const content::Showing& table, bool snow) {
+                  const content::Showing& table, bool snow, bool motes) {
     shutdown();
     snow_ = snow;
+    if (motes) {
+        const content::EffectSheet* mote = table.effect("mote");
+        if (mote == nullptr) {
+            core::logError("leaves: no cooked effect named 'mote'; nothing drifts in Atlans "
+                           "(tools/cook.py --only showing)");
+            return false;
+        }
+        motes_ = true;
+        sheet_ = textures.load(assetDir + "/" + mote->path, content::TextureRole::Albedo);
+        core::logf("leaves: %d motes in the water, sheet %s (%s)", kCount, mote->path.c_str(),
+                   bgfx::isValid(sheet_) ? "ready" : "missing");
+        return bgfx::isValid(sheet_);
+    }
     if (snow_) {
         const content::EffectSheet* flake = table.effect("snow");
         const content::EffectSheet* star = table.effect("snow_star");
@@ -203,6 +220,7 @@ void Leaves::shutdown() {
     for (Ring& ring : rings_) ring = Ring();
     sheet_ = rainSheet_ = ringSheet_ = starSheet_ = BGFX_INVALID_HANDLE;
     snow_ = false;
+    motes_ = false;
     blowing_ = falling_ = 0;
 }
 
@@ -241,6 +259,11 @@ void Leaves::landRing(const float at[3], float faint) {
 void Leaves::update(float seconds, const float hero[3], const float eye[3], bool indoors,
                     const content::Ground& ground, float rain) {
     if (!bgfx::isValid(sheet_)) return;
+    // The sea has no roof over it and no rain in it: the map is "underground" for its air.
+    if (motes_) {
+        indoors = false;
+        rain = 0.0f;
+    }
     const float factor = seconds * kReference;
     uint32_t live = 0;
 
@@ -574,6 +597,16 @@ void Leaves::gather(gfx::Effects& effects, const float eye[3]) const {
         sprite.position[0] = leaf.position[0];
         sprite.position[1] = leaf.position[1];
         sprite.position[2] = leaf.position[2];
+        if (motes_) {
+            sprite.halfWidth = sprite.halfHeight = kMoteHalf;
+            sprite.sheet = sheet_;
+            sprite.blend = gfx::Blend::Additive;
+            const float level = leaf.light * kMoteLevel;
+            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = level;
+            sprite.colour[3] = 1.0f;
+            effects.add(sprite);
+            continue;
+        }
         sprite.halfWidth = kHalfWidth;
         sprite.halfHeight = kHalfHeight;
         sprite.u0 = kU0;

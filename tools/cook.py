@@ -200,7 +200,9 @@ def safe(name):
 # velocity, whether the terrain's light falls on it and whether it calls are the same kind of
 # fact and live beside it in the engine (game/world/boids.h), as MU2's `Airs.cs` gathered them.
 AIRS = {"lorencia": "Bird01", "noria": "Butterfly01", "dungeon": "Bat01", "losttower": "Bat01",
-        "bloodcastle": "Crow01"}
+        "bloodcastle": "Crow01",
+        # Atlans's school fish, MODEL_FISH01 + 1 (CreateAtlanseFish, GOBoid.cpp:886-918).
+        "atlans": "Fish02"}
 # And what runs along the floor: MU's fish slot (MoveFishs), which the Dungeon fills with
 # MODEL_RAT01 (GOBoid.cpp:1720-1722). Unplaced for the same reason, so named here too; the
 # engine's pool is game/world/scurry.h.
@@ -631,11 +633,15 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         # this reads the same as it always did.
         rate = scroll_per_second
         mode = 0
-        if scrolls and any(("axis" in one or "mask_held" in one) for one in scrolls.values()):
+        if scrolls and any(("axis" in one or "mask_held" in one or "water_frames" in one)
+                           for one in scrolls.values()):
             own = scrolls.get(material.get("name", ""))
             rate = float(own.get("scrolls_per_second", 0.0)) if own else 0.0
             if own:
-                mode = (1 if own.get("axis") == "u" else 0) | (2 if own.get("mask_held") else 0)
+                # Mode bit 2: MU's water frames, the 32 caustic frames stepped at `rate` a
+                # second rather than slid (content::Material::waterFrames).
+                mode = ((1 if own.get("axis") == "u" else 0) | (2 if own.get("mask_held") else 0)
+                        | (4 if own.get("water_frames") else 0))
         if flags & 2 and rate:
             flags |= 16
         if flags & 16 and mode:
@@ -1203,6 +1209,11 @@ GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
 # into the ground, which is shallower than the metre its grounded neighbours are sunk.
 # Measured 2026-09-24: lowest vertex 1.38 m, 1.40 m and 0.67 m over the bed. Keyed by
 # model and MU's stored (x, y); metres to lower by.
+# OURS, by model and world: metres a model is stood above where MU stores it. Atlans's caustic
+# pools (Object24) lie 0.5 cm over the sea floor, and the floor fought them for the depth --
+# they flickered and cut (the user, 2026-10-03: 'its not smooth its like it cuttent something
+# wrong').
+LIFTED_BY_WORLD = {"atlans": {"Object24": 0.06}}
 LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
            ("Stone03", 2708.711, 13432.253): 1.55,
            ("Stone01", 2430.678, 13666.117): 0.82,
@@ -1235,7 +1246,12 @@ ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
 # four-tick cadence (ZzzObject.cpp:3227-3242). Kind 4, the chimney's rising smoke.
 ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
                          "losttower": {"Object25": 5},
-                         "bloodcastle": {"Object38": 4}}
+                         "bloodcastle": {"Object38": 4},
+                         # Atlans's 845 bubble vents, Object23 (type 22, hidden): MoveObject's
+                         # WD_7ATLANSE arm throws a BITMAP_BUBBLE a frame for half of every
+                         # four seconds (ZzzObject.cpp:4055-4063). Kind 6, a bubble vent: no
+                         # light; game/world/bubbles.h rolls them.
+                         "atlans": {"Object23": 6}}
 BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
@@ -1256,7 +1272,9 @@ ANCHOR_LIGHT = {1: ((1.0, 0.6, 0.4), 0.6, 1.1, 4.0, 3.0, 0.12),
                 4: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
                 # A vent's light is the Flame's, (1, 0.4, 0) over three tiles (MoveHandlers.cpp:
                 # 1815-1816), and dark until it burns: Lamps drives its level.
-                5: ((1.0, 0.4, 0.0), 0.0, 0.0, 3.0, 0.0, 0.0)}
+                5: ((1.0, 0.4, 0.0), 0.0, 0.0, 3.0, 0.0, 0.0),
+                # A bubble vent throws no light.
+                6: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0)}
 
 
 # Where the town's own stone stands in the lawn, for the grass to stay out of. The .walls
@@ -1423,6 +1441,8 @@ def cook_placements(world, out_dir, chunk_tiles):
     with open(os.path.join(ASSETS, "index.json")) as handle:
         listed = json.load(handle).get("objects", [])
     roofs = {one["name"] for one in listed if one.get("roof_fade")}
+    # Bit 4: a still model that sways in the water anyway (the recipe's `sway`, vs_static).
+    in_the_water = {one["name"] for one in listed if one.get("sway")}
     # The models that sway, which the mesh cook wrote down just before this runs: only
     # those can be held still for being buried. See `flags |= 4` below.
     try:
@@ -1584,6 +1604,9 @@ def cook_placements(world, out_dir, chunk_tiles):
         if lowered is not None:
             y -= lowered
             lowered_count += 1
+        y += LIFTED_BY_WORLD.get(world, {}).get(one["model"], 0.0)
+        if one["model"] in in_the_water:
+            flags |= 16
         if one["model"] in roofs:
             flags |= 2
             roofed += 1
@@ -1661,8 +1684,11 @@ def cook_placements(world, out_dir, chunk_tiles):
     emitter_count = 0
     kinds = {"lamp": 0, "fire": 1, "candle": 2, "window": 3, "smoke": 4, "vent": 5}
 
-    def emitter(model, kind, at, colour, low, high, reach, hz, smooth):
-        return struct.pack("<HBx3f3f5f", model, kind, *at, *colour, low, high, reach, hz, smooth)
+    # `wrap`, 0 to 1, in the byte that was spare: how far round the light reaches what it lights
+    # (content::TownEmitter::wrap). 0 for every light but Atlans's.
+    def emitter(model, kind, at, colour, low, high, reach, hz, smooth, wrap=0.0):
+        return struct.pack("<HBB3f3f5f", model, kind, int(round(min(max(wrap, 0.0), 1.0) * 255)),
+                           *at, *colour, low, high, reach, hz, smooth)
 
     glows = bytearray()
     glow_count = 0
@@ -1676,7 +1702,7 @@ def cook_placements(world, out_dir, chunk_tiles):
                                 (mx / per_tile, mz / per_tile, -my / per_tile),
                                 one.get("colour", (1, 1, 1)), float(one.get("low", high)), high,
                                 float(one.get("range_tiles", 3)), float(one.get("flicker_hz", 0)),
-                                float(one.get("smooth_seconds", 0)))
+                                float(one.get("smooth_seconds", 0)), float(one.get("wrap", 0)))
             emitter_count += 1
         # One flicker per object: MU keeps a single BlendMeshLight. A glow entry that only
         # scrolls (House04, the waterspout) has no brightness to carry.
@@ -2008,6 +2034,14 @@ FOLK_VERSION075 = {
         # where the carpet runs out, facing it.
         (566, "Tersia", "tersia", 206, 81, 3),
     ],
+    7: [  # Atlans: Version075/Maps/Atlans.cs:53, Baz in the safe basin facing SouthWest, named
+        # Storage01 as in the Lost Tower, since the basin has no vault placement for him to take.
+        # WebZen's official 0.99.60T data stands nobody here (docs/atlans-port.md §1).
+        (240, "Baz The Vault Keeper", "Storage01", 23, 17, 2),
+        # Ours: Potion Girl Amy, the repack's (WZD MonsterSetBase.txt:48, 16,24), a tile east
+        # of hers because 16,24 is a lean box; without her the nearest potions are in Noria.
+        (253, "Potion Girl Amy", "PotionGirlAmy", 17, 24, 4),
+    ],
     11: [  # Blood Castle 1: OpenMU VersionSeasonSix BloodCastleBase.cs:51, the safe court.
         # The Archangel (232), to whom the Divine Staff of Archangel is carried back from the
         # statue -- the run's hand-in (the user, 2026-10-03; docs/blood-castle-port.md §5).
@@ -2048,6 +2082,12 @@ PERCHES = {
     3: {  # Noria
         38: (4, True, True, False),     # the hanging tree, invisible
         8: (2, False, False, False),    # the stump
+    },
+    7: {  # Atlans: MOVEMENT_OPERATE's WD_7ATLANSE arm, `Pose = true` and turned to the box
+          # (ZzzInterface.cpp:1736-1742); CreateOperate and hidden (ZzzObject.cpp:4769-4776). Not
+          # on RenderCursor's lean list (:4051-4055) and given no tall box. The four lean boxes at
+          # the safe basin. The user, 2026-10-03: 'do: two hidden ones ... and Object22'.
+        39: (3, True, False, False),    # Object40, the lean box, invisible
     },
 }
 

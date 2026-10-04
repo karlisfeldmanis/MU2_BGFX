@@ -55,7 +55,7 @@ struct CookedMaterial {
     // Only ever set alongside glow (bit 1); see content::Material.
     float scrollPerSecond = 0.0f;
     // bit 7 and a byte after bit 6's float: bit 0 the scroll runs along U, bit 1 the sheet's
-    // alpha holds still while its colour slides. See content::Material.
+    // alpha holds still while its colour slides, bit 2 MU's water frames. See content::Material.
     uint8_t scrollMode = 0;
     // An item glow's pulse and jump (bit 5): MU's ItemObjectAttribute. See content::Material.
     float pulse[2] = {0.0f, 1.0f};
@@ -171,7 +171,8 @@ struct TownInstance {
     uint16_t model;
     uint16_t flags;    // bit 0: laid on the terrain rather than placed as the map stores it;
                        // bit 1: a roof; bit 2: buried, its clip held; bit 3: held back
-                       // until the game shows it (tools/cook.py SHOWN_LATER)
+                       // until the game shows it (tools/cook.py SHOWN_LATER); bit 4: a still
+                       // model that sways in the water (the recipe's `sway`, vs_static)
     uint8_t light[3];  // MU's baked terrain light at this tile
     uint8_t spare;
 };
@@ -180,12 +181,17 @@ static_assert(sizeof(TownInstance) == 36, "the town instance layout drifted from
 // One light a model carries, or one the world carries on its own (a hidden anchor). 48 bytes,
 // packed by the cook in exactly this order. docs/sprints/08a-the-lamps.md.
 // Vent: the Lost Tower's Flame vents, dark but for a burst (game/world/lamps.h).
-enum class EmitterKind : uint8_t { Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4, Vent = 5 };
+enum class EmitterKind : uint8_t {
+    Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4, Vent = 5,
+    Bubble = 6  // Atlans's bubble vents, game/world/bubbles.h
+};
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;
     uint16_t model;       // the model that carries it, or kWorld
     EmitterKind kind;
-    uint8_t spare;
+    // How far round the light reaches what it lights, 0 to 255 for 0 to 1 (lights.sh's wrap):
+    // a figure standing in an Atlans pool takes it on every side, as light does in water.
+    uint8_t wrap;
     float at[3];          // metres, our axes: the model's own frame unscaled, or the world's
     float colour[3];
     float low, high;      // MU's luminance, the dimmest and brightest it flickers between

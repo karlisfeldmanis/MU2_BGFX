@@ -461,6 +461,9 @@ constexpr float kFirstFoot = 1.5f, kSecondFoot = 4.5f;
 // air closed by up to an octave and a half -- from 16 kHz to about 5.7, under the 11 kHz the
 // 22 kHz files hold, so it is heard. WoW's way with one sample; MU plays every step identical.
 constexpr float kStepSemitones = 1.0f, kStepDropDb = 4.0f, kStepDarken = 1.5f;
+// The swim's stroke, wider: a long splash, where a step is a click, and the same one every 0.4 s
+// read as a loop under the steps' spread. Ours, with its three takes (sounds.json).
+constexpr float kSwimSemitones = 2.0f, kSwimDropDb = 6.0f, kSwimDarken = 1.5f;
 
 // The window of the smith's first action his hammer lands in: `CurrentAction == 0 &&
 // AnimationFrame >= 5.f && <= 10.f`, in keys and not seconds. MU2's Scenery.HammerFrom.

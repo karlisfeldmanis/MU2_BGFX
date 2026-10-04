@@ -918,6 +918,11 @@ private:
     bool dungeonAir_ = false;
     bool towerAir_ = false;
     bool castleAir_ = false;  // Blood Castle: its run bed (heard_.castleBed)
+    // Atlans's: aWater, on the wind's slot too, the whole map and in the open.
+    bool waterAir_ = false;
+    // Under the sea: off its safe zone a player swims (FigureBody::swimWalkClip), MU's Fly
+    // stance for Atlans (ZzzCharacter.cpp:298-301).
+    bool underwater_ = false;
     // Whether MU plays the grass step on a grass floor here: Lorencia and Noria alone
     // (PlayWalkSound), so the Dungeon's and the tower's slot 0 is stone underfoot.
     bool grassy_ = true;
@@ -1012,6 +1017,7 @@ private:
         int shock = -1, shockFemale = -1;                        // his flinch's scream, and hers
         int grass = -1, soil = -1;                               // his footsteps
         int hoof = -1;  // and his horse's, on the run ride (mount_hoof)
+        int swim = -1;  // and his stroke, swimming in Atlans (player_step_swim)
         int wind = -1;                                           // Lorencia's air
         int castleBed = -1;  // Blood Castle's run bed, iBloodCastle (world_bloodcastle)
         int fire = -1;                                           // a bonfire's crackle

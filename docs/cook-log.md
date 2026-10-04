@@ -101,46 +101,46 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | NewFace01 | bust | 2026-09-28 23:37 | awaiting |  |
 | NewFace02 | bust | 2026-09-28 23:37 | awaiting |  |
 | NewFace03 | bust | 2026-09-28 23:37 | awaiting |  |
-| Object01 | world | 2026-09-29 19:38 | awaiting |  |
-| Object02 | world | 2026-09-30 14:04 | awaiting |  |
-| Object03 | world | 2026-09-29 21:29 | awaiting |  |
-| Object04 | world | 2026-09-29 20:39 | awaiting |  |
-| Object05 | world | 2026-09-29 20:02 | awaiting |  |
-| Object06 | world | 2026-09-29 21:22 | awaiting |  |
-| Object07 | world | 2026-09-29 21:01 | awaiting |  |
-| Object08 | world | 2026-09-29 21:51 | awaiting |  |
-| Object09 | world | 2026-09-29 21:51 | awaiting |  |
-| Object10 | world | 2026-09-29 21:27 | awaiting |  |
-| Object11 | world | 2026-09-29 21:01 | awaiting |  |
-| Object12 | world | 2026-09-30 17:49 | awaiting |  |
-| Object13 | world | 2026-09-29 20:59 | awaiting |  |
-| Object14 | world | 2026-09-29 20:59 | awaiting |  |
-| Object15 | world | 2026-09-29 20:10 | awaiting |  |
-| Object16 | world | 2026-09-29 20:00 | awaiting |  |
-| Object17 | world | 2026-09-29 20:36 | awaiting |  |
-| Object18 | world | 2026-09-30 14:11 | awaiting |  |
-| Object19 | world | 2026-09-29 20:37 | awaiting |  |
-| Object20 | world | 2026-09-29 19:57 | awaiting |  |
-| Object21 | world | 2026-09-29 21:46 | awaiting |  |
-| Object22 | world | 2026-09-29 21:52 | awaiting |  |
-| Object23 | world | 2026-09-30 17:45 | awaiting |  |
-| Object24 | world | 2026-09-30 17:47 | awaiting |  |
-| Object25 | world | 2026-09-30 17:31 | awaiting |  |
-| Object26 | world | 2026-09-29 20:59 | awaiting |  |
-| Object27 | world | 2026-09-28 20:03 | passed | noria, in the world: lilies, palm, roots |
-| Object28 | world | 2026-09-29 21:31 | awaiting |  |
-| Object29 | world | 2026-09-28 20:04 | passed | noria, in the world: lilies, palm, roots |
-| Object30 | world | 2026-09-29 21:47 | awaiting |  |
-| Object31 | world | 2026-09-29 21:48 | awaiting |  |
-| Object32 | world | 2026-09-29 21:53 | awaiting |  |
-| Object33 | world | 2026-09-28 20:12 | passed | noria, in the world: stones, the slim plant |
-| Object34 | world | 2026-09-29 21:30 | awaiting |  |
-| Object35 | world | 2026-09-29 21:26 | awaiting |  |
-| Object36 | world | 2026-09-29 21:26 | awaiting |  |
-| Object37 | world | 2026-09-29 21:33 | awaiting |  |
-| Object38 | world | 2026-09-29 20:59 | awaiting |  |
+| Object01 | world | 2026-10-03 22:22 | passed | blue-grey sea-worn boulders, pitted stone reads, coral at their feet (41,116 and 130,17) |
+| Object02 | world | 2026-10-03 22:27 | passed | blue-grey sea-worn boulders, pitted stone reads, coral at their feet (41,116 and 130,17) |
+| Object03 | world | 2026-10-03 22:32 | passed | blue-grey sea-worn boulders, pitted stone reads, coral at their feet (41,116 and 130,17) |
+| Object04 | world | 2026-10-03 22:32 | passed | MU's small red and pale starfish lying on the sand by the basin's rocks (16,18 and 22,163) |
+| Object05 | world | 2026-10-03 22:33 | passed | MU's small red and pale starfish lying on the sand by the basin's rocks (16,18 and 22,163) |
+| Object06 | world | 2026-10-03 21:51 | passed | MU's cut-out coral and sea lettuce on clean edges, no dark fringe; fields read in muted --play at 184,24 and 152,152 |
+| Object07 | world | 2026-10-03 21:53 | passed | MU's cut-out coral and sea lettuce on clean edges, no dark fringe; fields read in muted --play at 184,24 and 152,152 |
+| Object08 | world | 2026-10-03 23:45 | passed | MU's giant octopus coiled round the wrecks at 56,56 and 14,212, its tentacles moving on its own clip; red skin reads dark blue-grey under the teal light |
+| Object09 | world | 2026-10-03 23:47 | passed | MU's giant octopus coiled round the wrecks at 56,56 and 14,212, its tentacles moving on its own clip; red skin reads dark blue-grey under the teal light |
+| Object10 | world | 2026-10-03 23:49 | passed | MU's giant octopus coiled round the wrecks at 56,56 and 14,212, its tentacles moving on its own clip; red skin reads dark blue-grey under the teal light |
+| Object11 | world | 2026-10-03 23:51 | passed | MU's giant octopus coiled round the wrecks at 56,56 and 14,212, its tentacles moving on its own clip; red skin reads dark blue-grey under the teal light |
+| Object12 | world | 2026-10-03 22:46 | passed | the wreck graveyard reads in the south-west court: ribs, planked hull sections, stove-in boats, leaning masts; planking under the court's dim teal light (24,224, 32,232, 15,214, 56,74) |
+| Object13 | world | 2026-10-03 22:48 | passed | the wreck graveyard reads in the south-west court: ribs, planked hull sections, stove-in boats, leaning masts; planking under the court's dim teal light (24,224, 32,232, 15,214, 56,74) |
+| Object14 | world | 2026-10-03 22:50 | passed | the wreck graveyard reads in the south-west court: ribs, planked hull sections, stove-in boats, leaning masts; planking under the court's dim teal light (24,224, 32,232, 15,214, 56,74) |
+| Object15 | world | 2026-10-03 22:52 | passed | the wreck graveyard reads in the south-west court: ribs, planked hull sections, stove-in boats, leaning masts; planking under the court's dim teal light (24,224, 32,232, 15,214, 56,74) |
+| Object16 | world | 2026-10-03 22:55 | passed | the wreck graveyard reads in the south-west court: ribs, planked hull sections, stove-in boats, leaning masts; planking under the court's dim teal light (24,224, 32,232, 15,214, 56,74) |
+| Object17 | world | 2026-10-03 23:03 | passed | loose planks, broken frames and spars strewn over the sand and ridges at 168,168, 168,184 and 136,200; the brown planking reads jade green under the teal light -- asked of the user |
+| Object18 | world | 2026-10-03 23:05 | passed | loose planks, broken frames and spars strewn over the sand and ridges at 168,168, 168,184 and 136,200; the brown planking reads jade green under the teal light -- asked of the user |
+| Object19 | world | 2026-10-03 23:08 | passed | loose planks, broken frames and spars strewn over the sand and ridges at 168,168, 168,184 and 136,200; the brown planking reads jade green under the teal light -- asked of the user |
+| Object20 | world | 2026-10-03 23:12 | passed | loose planks, broken frames and spars strewn over the sand and ridges at 168,168, 168,184 and 136,200; the brown planking reads jade green under the teal light -- asked of the user |
+| Object21 | world | 2026-10-03 23:20 | passed | dark crags rising out of the floor at 62,212, mostly buried as MU stands them |
+| Object22 | world | 2026-10-02 21:44 | awaiting |  |
+| Object23 | world | 2026-10-02 22:30 | awaiting |  |
+| Object24 | world | 2026-10-03 21:10 | awaiting |  |
+| Object25 | world | 2026-10-03 23:28 | passed | broad green kelp blades in beds along the ridges, swaying on MU's 31-key clip, clean cut-out (198,90 and 138,114) |
+| Object26 | world | 2026-10-03 23:28 | passed | broad green kelp blades in beds along the ridges, swaying on MU's 31-key clip, clean cut-out (198,90 and 138,114) |
+| Object27 | world | 2026-10-03 21:55 | passed | MU's cut-out coral and sea lettuce on clean edges, no dark fringe; fields read in muted --play at 184,24 and 152,152 |
+| Object28 | world | 2026-10-03 23:36 | passed | long weed, kelp and coral clumps swaying on MU's 31-key clip, clean cut-outs |
+| Object29 | world | 2026-10-03 23:38 | passed | long weed, kelp and coral clumps swaying on MU's 31-key clip, clean cut-outs |
+| Object30 | world | 2026-10-03 22:00 | passed | pale encrusted boulders over their weed beds, rock reads at 40,12 |
+| Object31 | world | 2026-10-03 22:05 | passed | pale encrusted boulders over their weed beds, rock reads at 40,12 |
+| Object32 | world | 2026-10-03 23:38 | passed | dark olive weed tufts clustered round the glyph stones at 40,56, swaying on MU's 15-key clip |
+| Object33 | world | 2026-10-03 20:43 | awaiting |  |
+| Object34 | world | 2026-10-03 23:38 | passed | dark olive weed tufts clustered round the glyph stones at 40,56, swaying on MU's 15-key clip |
+| Object35 | world | 2026-10-03 20:48 | awaiting |  |
+| Object36 | world | 2026-10-03 23:21 | passed | MU's skeleton remains among the wreck timbers at 28,218 |
+| Object37 | world | 2026-10-03 23:22 | passed | MU's skeleton remains among the wreck timbers at 28,218 |
+| Object38 | world | 2026-10-03 23:23 | passed | the drifting skeleton plays its own 60-key clip at 31,199 (pose differs 24 s apart) |
 | Object40 | world | 2026-09-30 19:08 | awaiting |  |
-| Object41 | world | 2026-09-30 19:10 | awaiting |  |
+| Object41 | world | 2026-10-03 21:21 | awaiting |  |
 | Object42 | world | 2026-09-29 21:33 | awaiting |  |
 | Object43 | world | 2026-09-29 21:28 | awaiting |  |
 | Silk | set | 2026-09-28 21:05 | passed | purple quilted silk with gold trim and the visored hood, MU's own colours; skin islands right; nothing blown at noon, dusk or night |
@@ -174,7 +174,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object99 | world | 2026-09-29 20:58 | awaiting |  |
 | Object57 | world | 2026-09-29 20:59 | awaiting |  |
 | Object69 | world | 2026-09-29 20:59 | awaiting |  |
-| Object39 | world | 2026-09-29 20:59 | awaiting |  |
+| Object39 | world | 2026-10-03 20:49 | awaiting |  |
 | Object75 | world | 2026-09-29 21:00 | awaiting |  |
 | Object83 | world | 2026-09-29 21:00 | awaiting |  |
 | Object62 | world | 2026-09-29 21:01 | awaiting |  |
@@ -271,3 +271,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Chaos Lightning Staff | arm | 2026-10-02 21:42 | passed | studio 8x3: deep blue lacquered head and spikes, gold rings; the u2u2 streaks flicker blue round the head and foot; no blowouts |
 | Orc01 | figure | 2026-10-03 11:19 | passed | bloodcastle, on the road: painted_steel keeps the gilt bronze; brass had gone pale silver |
 | Bali01 | figure | 2026-10-03 11:24 | passed | summoned in a muted Lorencia arena, borrowed from figures_noria.json (Bali spawns nowhere; summoned_in noria): teal muscled hide in skin, the loin plate, bracers and horn bases in brass without blowout, the cyan mane cut out; about twice the elf's height at MU's 0.12 |
+| Fish02 | world | 2026-10-04 00:24 | passed | the school reads at 184,24: small cichlids shoaling past the corals, tethered round the hero |

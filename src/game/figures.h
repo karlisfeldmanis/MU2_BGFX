@@ -210,6 +210,12 @@ struct FigureBody {
     // the run ride is his only gait. Bare while the weapon is slung, armed while it is drawn.
     int rideIdleClip = -1, rideIdleArmedClip = -1;
     int rideRunClip = -1, rideRunArmedClip = -1;
+    // And under the sea, off its safe zone (Atlans): MU's Fly stance, PLAYER_STOP_FLY 11
+    // treading water (PLAYER_STOP_FLY_CROSSBOW 12 with a crossbow), and PLAYER_WALK_SWIM 24,
+    // or PLAYER_RUN_SWIM 33 once he runs (ZzzCharacter.cpp:298-326, 624-630). Played at MU's
+    // own 0.35 (ZzzOpenData.cpp:332-333): nothing plants on the sea floor.
+    int swimIdleClip = -1, swimIdleCrossbowClip = -1;
+    int swimWalkClip = -1, swimRunClip = -1;
     // The keys its two feet land on, in cycle order (measureStrikes), -1 when unmeasured: the
     // run's footsteps, where a MU walk has PlayWalkSound's 1.5 and 4.5.
     float runFeet[2] = {-1.0f, -1.0f};

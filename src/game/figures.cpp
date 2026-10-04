@@ -578,6 +578,10 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.rideIdleArmedClip = body.library->find(14);
     body.rideRunClip = body.library->find(36);
     body.rideRunArmedClip = body.library->find(37);
+    body.swimIdleClip = body.library->find(11);
+    body.swimIdleCrossbowClip = body.library->find(12);
+    body.swimWalkClip = body.library->find(24);
+    body.swimRunClip = body.library->find(33);
     body.plantSpeedRun = body.runClip >= 0 ? measurePlant(body, body.runClip) : 0.0f;
     if (!measureStrikes(body, body.runClip, body.runFeet)) body.runFeet[0] = body.runFeet[1] = -1.0f;
 }

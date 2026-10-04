@@ -1,0 +1,42 @@
+{
+  "item": "Object31",
+  "mu_name": "Object31",
+  "mu_name_from": "Atlans's object slot 30, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 30,
+  "placements": 101,
+  "profile": "world",
+  "sheets": {
+    "ston033": "at_ston033.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "ston033": "rock"
+  },
+  "why_this_one": "A second encrusted boulder, 101 of them, scaled 0.56 to 2.3: ston033, 1.8 m. The user, 2026-10-03: 'lets start to work on atlans objects, lets do with small batches and check them in world'.",
+  "material_note": "As Object30: rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 102,
+      "area": 52915.8,
+      "along": [
+        -89.5,
+        83.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

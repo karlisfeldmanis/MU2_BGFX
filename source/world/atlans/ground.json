@@ -1,0 +1,36 @@
+{
+  "tileset": "atlans",
+  "mu_name": "Atlans ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "at_tilegrass01.png",
+    "TileGround01": "at_tileground01.png",
+    "TileGround03": "at_tileground03.png",
+    "TileWater01": "at_tilewater01.png",
+    "TileRock01": "at_tilerock01.png",
+    "TileRock02": "at_tilerock02.png",
+    "TileRock03": "at_tilerock03.png",
+    "TileRock04": "at_tilerock04.png"
+  },
+  "sheet_from": "Data/World8/Tile*.OZJ, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool and every name is another world's too. TileGrass02 and TileWood01 are in World8 but no tile wears them, so they are not decoded. World8 ships no TileWater01: MU draws its slot-5 overlay as the caustic flipbook Object8/wt00-31 instead (ZzzLodTerrain.cpp:1971-1975, 2056-2060), so slot 5 is parked on a copy of the sand (at_tilewater01.png, TileGrass01's pixels under its own name: two slots on one file name break the ground's surface pairs) until the caustics are built, and the 4089 pools read as plain sand. docs/atlans-port.md.",
+  "slot_note": "World8 ships no TileGrass .OZT and MU turns grass off in Atlans (ZzzLodTerrain.cpp:3619); terrain.py GRASS_BY_MAP[7] is empty. The sea floor: three walkable bands of sand running south-west to north-east between low mossy rock ridges, the safe basin in the north-west corner (10-34, 7-28), a pale stone court in the south-west. No NoGround anywhere.",
+  "sheet_materials": {
+    "TileGrass01": "sand",
+    "TileGround01": "sand",
+    "TileGround03": "rock",
+    "TileWater01": "sand",
+    "TileRock01": "rock",
+    "TileRock02": "rock",
+    "TileRock03": "rock",
+    "TileRock04": "rock",
+    "TileGrass01_over": "sand",
+    "TileGround01_over": "sand",
+    "TileGround03_over": "rock",
+    "TileWater01_over": "sand",
+    "TileRock01_over": "rock",
+    "TileRock02_over": "rock",
+    "TileRock03_over": "rock",
+    "TileRock04_over": "rock"
+  },
+  "material_note": "Read off the art; the names lie. TileGrass01 is pale cream rippled sand, the sea floor under 42.5% of the map: sand. TileGround01 is tan-brown pebbly earth laid over it: sand. TileGround03 is a near-black bed of olive weed, TileRock01 pink-tan rock, TileRock02 lilac-blue rough stone, TileRock03 the south-west court's smooth grey-teal stone, TileRock04 the dark mossy green rock of every ridge (55%): rock."
+}

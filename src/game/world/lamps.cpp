@@ -189,6 +189,7 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
                 light.position[i] = at[i];
                 light.colour[i] = one.colour[i];
             }
+            light.wrap = float(one.wrap) / 255.0f;
             // MU's light is two-dimensional: R tiles on the ground, height ignored. So the reach
             // is R measured flat, and the light's height above the ground under it is the band
             // in which height stays ignored. lights.sh.

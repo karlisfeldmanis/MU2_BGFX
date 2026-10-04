@@ -78,7 +78,11 @@ vec3 lampAt(vec4 at, vec4 lit, vec4 side, vec3 wpos, vec3 n, vec3 v, vec3 diffus
 
 	float len2 = dot(d, d);
 	vec3 l = d * inversesqrt(max(len2, 1e-6));
-	float ndotl = saturate(dot(n, l));
+	// side.w wraps it (gfx::PointLight::wrap): (n.l + w) / (1 + w), the same 1 on a face
+	// turned to the light and some on one edge-on, so a figure standing in an Atlans pool is
+	// lit round, as light is in water -- under a light straight over him his sides face it
+	// edge-on and took none. 0 everywhere else, the plain n.l. Ours.
+	float ndotl = saturate((dot(n, l) + side.w) / (1.0 + side.w));
 	if (ndotl <= 0.0) return vec3_splat(0.0);
 
 	float fall = 1.0 - dist2 / reach2;

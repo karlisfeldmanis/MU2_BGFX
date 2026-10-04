@@ -103,6 +103,13 @@ struct Lighting {
     // one sheet stamped tile after tile (the user: 'make that lava repeating pattern is not so
     // repeatative'). Ours. 0 everywhere else, so their water is as it was.
     float waterVariety = 0.0f;
+    // How bright MU's caustics are, where a world has them (content::Ground::setCaustic): the
+    // 32 frames added over every tile whose overlay is TileWater01, times the TerrainLight, as
+    // MU's RenderFaceBlend adds them (ZzzLodTerrain.cpp:1971-1975). Atlans's. 0 draws none.
+    float caustic = 0.0f;
+    // How far a still plant marked `sway` bends in the water, metres at a metre of its height
+    // (common.sh's swayed). Atlans's corals and lettuce; ours, MU stands them still. 0 none.
+    float sway = 0.0f;
     float bloomThreshold = 1.2f;
     float bloomKnee = 0.6f;
     float bloomStrength = 0.25f;

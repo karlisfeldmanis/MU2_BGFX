@@ -1,0 +1,41 @@
+{
+  "item": "Fish02",
+  "mu_name": "Fish02",
+  "mu_name_from": "Object8/Fish02.bmd, which is not a placement: GOBoid.cpp's boid slot takes MODEL_FISH01 + 1 or + 2 in Atlans (CreateAtlanseFish, GOBoid.cpp:886-918) and keeps up to forty round the hero while he is in the map's north half. Built like any world model and named in tools/cook.py's AIRS, since nothing on the map refers to it.",
+  "world": "atlans",
+  "object_type": -1,
+  "why_this_one": "Atlans's school fish: a small cichlid, 0.35 m, 5 bones, one 8-key swim. CreateAtlanseFish sets it at Scale 0.8, 1.5 to 3.5 m over the floor, unlit (LightEnable false), at Velocity 0.3 or 0.25; MoveBoid's Atlans arm cruises it and darts it on a ten-step timer (GOBoid.cpp:1141-1160). The user, 2026-10-04: 'what abour prodecual atlans grass and fish boids?'.",
+  "profile": "world",
+  "sheets": {
+    "bfish04": "at_bfish04.png"
+  },
+  "sheet_from": "Data/Object8/bfish04.OZJ, from MuMain, decoded under an at_ prefix.",
+  "sheet_materials": {
+    "bfish04": "skin"
+  },
+  "material_note": "bfish04 is the cichlid's painted scales: skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 30,
+      "area": 476.6,
+      "along": [
+        -19.9,
+        15.2
+      ],
+      "mu_uv": [
+        0.017,
+        0.126,
+        0.978,
+        0.924
+      ],
+      "bake_uv": [
+        0.017,
+        0.126,
+        0.978,
+        0.924
+      ]
+    }
+  ]
+}

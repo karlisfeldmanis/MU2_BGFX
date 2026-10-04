@@ -248,7 +248,12 @@ LAVA_SPILL_BY_MAP = {4: 256}
 #: The gap and the door were opened too until the user asked for MU's closed gates back
 #: (2026-10-02: 'i remember that gates was closed'): only the entrance stays open, so the bridge
 #: can be walked to the raised drawbridge.
-OPEN_BY_MAP = {11: [(13, 15, 15, 23, 0x04)]}
+OPEN_BY_MAP = {11: [(13, 15, 15, 23, 0x04)],
+               # Atlans: the eleven basin tiles MuMain's EncTerrain8.att closes and WebZen's
+               # official 2005 Terrain8.att (and OpenMU's) leave open -- a later door's footing,
+               # docs/atlans-port.md A §3 -- among them 15,23, a lean box MU at 0.75 lets him lean
+               # on (the user, 2026-10-03, clicking it: nothing).
+               7: [(12, 17, 14, 18, 0x04), (13, 21, 14, 22, 0x04), (15, 23, 15, 23, 0x04)]}
 
 #: Boxes of a map's grid made floor that is not walked, as (x1, y1, x2, y2), inclusive tiles:
 #: NoGround cleared and NoMove set, so the ground draws them and VOID_FILL does not take them

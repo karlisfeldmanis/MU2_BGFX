@@ -1,0 +1,86 @@
+{
+  "item": "Object37",
+  "mu_name": "Object37",
+  "mu_name_from": "Atlans's object slot 36, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 36,
+  "placements": 46,
+  "profile": "world",
+  "sheets": {
+    "bons": "at_bons.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "bons": "bone"
+  },
+  "why_this_one": "A second set of remains, 46 of them: bons, 0.7 by 1.1 m. The user, 2026-10-03: 'don next batch'.",
+  "material_note": "As Object36: bone.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -16.1,
+        12.0
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.799,
+        0.902
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        27.9,
+        55.0
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.024,
+        0.009,
+        0.95,
+        0.779
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -52.2,
+        -24.1
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.006,
+        0.042,
+        0.882,
+        0.994
+      ]
+    }
+  ]
+}

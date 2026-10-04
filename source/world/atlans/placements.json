@@ -1,0 +1,19 @@
+{
+  "world": "atlans",
+  "summary": "What the extraction cannot know, for Atlans: its townspeople in the safe basin. Version075's one (Atlans.cs:51-54) and Amy, who is the repack's. The game stands them from tools/cook.py's FOLK_VERSION075[7]; these rows are what puts their figures in Atlans's figure cook.",
+  "spawns": [
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [23, 17],
+      "facing": 2
+    },
+    {
+      "model": "PotionGirlAmy",
+      "who": "Potion Girl Amy",
+      "tile": [17, 24],
+      "facing": 4,
+      "ours": "the repack's (WZD MonsterSetBase.txt:48, 253 at 16,24), not Version075's: without her the nearest potions are in Noria. A tile east of WZD's, which is one of the basin's four lean boxes (Object40), facing the basin"
+    }
+  ]
+}

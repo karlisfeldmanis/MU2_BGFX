@@ -1,0 +1,134 @@
+{
+  "item": "Object19",
+  "mu_name": "Object19",
+  "mu_name_from": "Atlans's object slot 18, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 18,
+  "placements": 16,
+  "profile": "world",
+  "sheets": {
+    "wood04": "at_wood04.png",
+    "wood01": "at_wood01.png",
+    "wood03": "at_wood03.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "wood04": "hardwood",
+    "wood01": "timber",
+    "wood03": "cloth"
+  },
+  "why_this_one": "A yard with its sail lying flat on the sand, 16 of them: 5.7 m long. The user, 2026-10-03: 'continou'.",
+  "material_note": "As the wreck's large pieces (Object12-16): wooda and wood02 planking, plank; wood01 weathered beams, timber; wood03 the sail, cloth; wood04 the mast's grain, hardwood.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 18,
+      "area": 20171.0,
+      "along": [
+        -19.1,
+        5.6
+      ],
+      "mu_uv": [
+        -0.095,
+        -0.219,
+        0.982,
+        1.003
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.426,
+        0.778
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 24,
+      "area": 12608.8,
+      "along": [
+        -6.5,
+        5.0
+      ],
+      "mu_uv": [
+        0.134,
+        -0.394,
+        0.729,
+        0.615
+      ],
+      "bake_uv": [
+        0.005,
+        0.416,
+        0.796,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2254.1,
+      "along": [
+        -28.3,
+        13.3
+      ],
+      "mu_uv": [
+        -0.013,
+        0.001,
+        0.987,
+        0.999
+      ],
+      "bake_uv": [
+        0.436,
+        0.416,
+        0.886,
+        0.871
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2254.1,
+      "along": [
+        -28.8,
+        13.0
+      ],
+      "mu_uv": [
+        -0.013,
+        0.001,
+        0.987,
+        0.999
+      ],
+      "bake_uv": [
+        0.436,
+        0.416,
+        0.976,
+        0.91
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 12,
+      "area": 35205.1,
+      "along": [
+        -23.0,
+        9.6
+      ],
+      "mu_uv": [
+        -0.094,
+        -1.207,
+        0.906,
+        -0.236
+      ],
+      "bake_uv": [
+        0.436,
+        0.005,
+        0.849,
+        0.406
+      ]
+    }
+  ]
+}

@@ -150,19 +150,19 @@ private:
     bool crowEyes_ = false;  // Blood Castle's crows' two red eyes (glow())
     uint32_t offCourt_ = 0;  // their calls off the court, one in four of which is kept
     // One per bird, by the same index Flight keeps them in.
-    Figure figures_[Flight::kMaxBirds];
-    int paletteRows_[Flight::kMaxBirds] = {};
+    Figure figures_[Flight::kMaxSlots];
+    int paletteRows_[Flight::kMaxSlots] = {};
     // MU's baked terrain light under each this frame, or the unlit boid's own colour.
-    float light_[Flight::kMaxBirds][3] = {};
+    float light_[Flight::kMaxSlots][3] = {};
     // Whether the figure has been stood on this bird's current life, so a flock that arrives
     // is put down once and then only moved: `stand` clears the clip and the clock, and a bird
     // re-stood every frame holds the first key of its flap forever.
-    bool standing_[Flight::kMaxBirds] = {};
+    bool standing_[Flight::kMaxSlots] = {};
     std::vector<float> scratch_;
     Airs airs_;
     Sound* sound_ = nullptr;
     bgfx::TextureHandle glowSheet_ = BGFX_INVALID_HANDLE;
-    float glowLevel_[Flight::kMaxBirds] = {};
+    float glowLevel_[Flight::kMaxSlots] = {};
     float glowWait_ = 0.0f;
     uint32_t glowSeed_ = 0xB077E7F1u;
     int call1_ = -1;

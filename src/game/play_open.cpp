@@ -34,6 +34,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     dungeonAir_ = world == "dungeon" || world == "losttower";
     towerAir_ = world == "losttower";
     castleAir_ = world == "bloodcastle";
+    // Atlans's is aWater, the same way: the whole map, under no roof (SceneManager.cpp:879-881).
+    waterAir_ = world == "atlans";
+    underwater_ = world == "atlans";
     grassy_ = world == "lorencia" || world == "noria";
     snowy_ = world == "devias";
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
@@ -457,14 +460,17 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.grass = sound_.load("player_step_grass", true);
     heard_.soil = sound_.load("player_step_soil", true);
     heard_.hoof = sound_.load("mount_hoof", true);
+    heard_.swim = underwater_ ? sound_.load("player_step_swim", true) : -1;
     for (int step : {heard_.grass, heard_.soil}) {
         sound_.vary(step, kStepSemitones, kStepDropDb, kStepDarken);
     }
+    sound_.vary(heard_.swim, kSwimSemitones, kSwimDropDb, kSwimDarken);
     if (windy_) heard_.wind = sound_.load("world_wind", false);
     // The Dungeon's air is aDungeon, played as the wind is: looping and unplaced, the whole map
     // (SceneManager.cpp:859-861). It rides the wind's slot, which the Dungeon has no use for.
     // The tower's is aTower (SceneManager.cpp:873-875), the same way.
     else if (dungeonAir_) heard_.wind = sound_.load(towerAir_ ? "world_tower" : "world_dungeon", false);
+    else if (waterAir_) heard_.wind = sound_.load("world_water", false);
     // Blood Castle's match bed, looped while its run is on (Play::hear).
     heard_.castleBed = castleAir_ ? sound_.load("world_bloodcastle", false) : -1;
     heard_.fire = sound_.load("world_bonfire", false);

@@ -935,7 +935,17 @@ void Play::follow(float seconds) {
         const bool safe = tables_.grid.safe(body->column(), body->row()) || one.stowed > 0.0f ||
                           (body->player && body->combatUntil <= realm_.tick()) ||
                           (dressed && dressed->slungAtRest && body->temper != sim::Temper::Fighting);
-        one.figure.place(position, one.yaw, safe);
+        // Under the sea a player swims off the safe zone: MU's Fly stance for Atlans, treading
+        // water where he stands and swimming where he goes (ZzzCharacter.cpp:298-326, 624-630),
+        // with the weapon on his back while he swims, drawn while he treads (bBindBack,
+        // :15251-15254). A horse outranks it, as a wing does in MU.
+        const bool swims = underwater_ && body->player && !body->riding && dressed &&
+                           dressed->swimWalkClip >= 0 && dressed->swimIdleClip >= 0 &&
+                           !tables_.grid.safe(body->column(), body->row());
+        const bool stroking = swims && one.figure.clip() >= 0 &&
+                              (one.figure.clip() == dressed->swimWalkClip ||
+                               one.figure.clip() == dressed->swimRunClip);
+        one.figure.place(position, one.yaw, safe || stroking);
         // A standing clip on a horse is seated (Figure::seat): a knight's paired blows, which MU
         // has no ride clip for the left hand's, and a two-handed weapon's blows. The armed stop
         // ride holds the legs. MU's own ride clips seat themselves (rideAction).
@@ -1053,16 +1063,26 @@ void Play::follow(float seconds) {
                                  ? look->library->find(rideSlotFor(look->stance))
                                  : -1;
         if (readyBow >= 0) rideIdle = readyBow;
+        // Swimming: the run swim once he runs, as MU's `Run >= 40`; the crossbow's own tread.
+        const int swimMove = body->running && look->swimRunClip >= 0 ? look->swimRunClip
+                                                                     : look->swimWalkClip;
+        const int swimIdle = look->stance == "crossbow" && look->swimIdleCrossbowClip >= 0
+                                 ? look->swimIdleCrossbowClip
+                                 : look->swimIdleClip;
         const int walkHere = riding                                ? rideRun
+                             : swims                               ? swimMove
                              : (body->running && look->runClip >= 0) ? look->runClip
                              : (safe && look->walkSafeClip >= 0)   ? look->walkSafeClip
                                                                    : look->walkClip;
         const auto isRide = [&](int c) {
             return c >= 0 && (c == look->rideRunClip || c == look->rideRunArmedClip);
         };
+        const auto isSwim = [&](int c) {
+            return c >= 0 && (c == look->swimWalkClip || c == look->swimRunClip);
+        };
         const auto isWalk = [&](int c) {
             return c >= 0 && (c == look->walkClip || c == look->walkSafeClip ||
-                              c == look->runClip || isRide(c));
+                              c == look->runClip || isRide(c) || isSwim(c));
         };
         // Walking is what the drawn body is doing, and nothing else sets a walk going: a body
         // the sim has walking but still turning on the spot stays in its idle until the first
@@ -1104,6 +1124,8 @@ void Play::follow(float seconds) {
             clip = rideIdle;
         } else if (posed >= 0) {
             clip = posed;
+        } else if (swims) {
+            clip = swimIdle;
         } else if (safe && look->idleSafeClip >= 0) {
             clip = look->idleSafeClip;
         }
@@ -1184,11 +1206,17 @@ void Play::follow(float seconds) {
             const float full = body->speed * sim::strideFactor(*body);
             one.clipRate = kRideRunRate * (full > 1e-4f ? std::min(pace / full, 1.0f) : 1.0f);
         }
+        // A swim plants nothing either: MU's own 0.35, cooked in, slowed with the ground he
+        // covers as the ride is.
+        if (isSwim(one.figure.clip())) {
+            const float full = body->speed * sim::strideFactor(*body);
+            one.clipRate = full > 1e-4f ? std::min(pace / full, 1.0f) : 1.0f;
+        }
         if (readyBow >= 0 && one.figure.clip() == readyBow) {
             one.figure.setClock(0.0f);
             one.clipRate = 0.0f;
         }
-        if (isWalk(one.figure.clip()) && !isRide(one.figure.clip())) {
+        if (isWalk(one.figure.clip()) && !isRide(one.figure.clip()) && !isSwim(one.figure.clip())) {
             const float metresPerTile = ground_->metresPerTile();
             const float gait = pace * metresPerTile / float(kTickSeconds);
             // The clip's own planted foot decides, and the cook's whole-cycle travel is the

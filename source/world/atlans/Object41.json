@@ -1,0 +1,101 @@
+{
+  "item": "Object41",
+  "mu_name": "Object41",
+  "mu_name_from": "Atlans's object slot 40, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 40,
+  "placements": 86,
+  "profile": "world",
+  "sheets": {
+    "ioi01": "at_ioi01.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "ioi01": "lamplight"
+  },
+  "why_this_one": "A magic circle standing in the water, 86 of them: ioi01, a cyan rune ring on a 2.7 m quad. The user: 'now lets work on light and fire emiters'.",
+  "material_note": "ioi01 is a cyan ring of runes on black, added.",
+  "additive": [
+    "ioi01"
+  ],
+  "additive_from": "BlendMesh 0 on type 40, BlendMeshLight sin(WorldTime*0.004)*0.3+0.5, Velocity 0.05 (ZzzObject.cpp:4081-4083).",
+  "glow": {
+    "ioi01": {
+      "low": 0.15,
+      "high": 0.5,
+      "hz": 0.64,
+      "smooth_seconds": 0.75
+    }
+  },
+  "glow_from": "MU's breath, 0.2 to 0.8 on a 1.57 s period, as the glow's wander between the two. First shot 2026-10-03: at 0.2-0.8 the circles stood out as bright cyan signs; 0.15-0.5 keeps them a glow in the water.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.25,
+        0.75,
+        1.0
+      ],
+      "low": 1.0,
+      "high": 1.2,
+      "range_tiles": 3,
+      "flicker_hz": 0.64,
+      "smooth_seconds": 0.75,
+      "wrap": 1.0
+    }
+  ],
+  "emitters_from": "Ours, marked, as Object33's: a faint cyan pool under each circle. At the circle's own centre, its pivot (the mesh runs -136..136 round it), not 1.3 m off it. Then the user, 2026-10-03: 'atlans light sources actualy has to make light, so if char swims inside light source we can see it': raised to light a figure inside it. At 0.2-0.5 a figure inside read the same as one outside, under Atlans's bright overhead key; 1.0-1.2. And `wrap` 1: a figure standing in the pool took none of it, its sides edge-on to a light over it (the user, 2026-10-03: 'chat is standing on light source but is not receiving that light'); wrapped, it is lit round as in water.",
+  "play_speed": 0.05,
+  "play_speed_from": "MoveObject's WD_7ATLANSE arm, type 40: `o->Velocity = 0.05f` (ZzzObject.cpp:4081-4083), against every object's flat 0.16. Its clip is five keys turning its two rune discs a whole turn each, opposite ways (bones Box04 and Box05), so at 0.05 a key a frame the circle turns once in 3.2 s. The user, 2026-10-03: 'objects which we gave now in atlans, check if there has to be some animations and effects'.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 55387.2,
+      "along": [
+        -117.7,
+        117.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.498,
+        0.498
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 74529.0,
+      "along": [
+        -136.5,
+        136.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.502,
+        0.002,
+        0.998,
+        0.498
+      ]
+    }
+  ]
+}

@@ -46,6 +46,7 @@ OPERABLE_BY_MAP = {
     1: {59, 60},
     2: {22, 25, 40, 45, 55, 73, 91},
     3: {8, 38},
+    7: {39},
 }
 
 #: The gates' boxes, by the server's map number: OpenMU Version075 Gates.cs, enter and exit
@@ -62,7 +63,11 @@ GATE_BOXES_BY_MAP = {
         (5, 34, 6, 34), (5, 32, 7, 33), (3, 83, 4, 86), (2, 84, 2, 85),
         (29, 125, 30, 126), (29, 127, 30, 127)],
     2: [(244, 34, 245, 37), (242, 34, 243, 37)],
-    3: [(148, 3, 155, 4), (148, 5, 155, 6)],
+    3: [(148, 3, 155, 4), (148, 5, 155, 6),
+        # The way to Atlans and its landing, Gates.cs:135 and 205. docs/atlans-port.md.
+        (242, 240, 245, 243), (240, 240, 241, 243)],
+    # Atlans's way back to Noria and its landing, Gates.cs:149 and 206. docs/atlans-port.md.
+    7: [(9, 9, 11, 12), (14, 12, 15, 13)],
 }
 
 #: What the walker actually compares, which is a threshold and not a bit test: a tile is open
@@ -564,6 +569,17 @@ EFFECTS = {
     # where black drops out. So the brightness is carried into alpha over white.
     "snow": "effects/leaf/devias_snow01.png",
     "snow_star": "effects/leaf/devias_snow02.png",
+
+    # Atlans's water, out of Object8 and World8. MU's caustics are 32 frames, wt00-31.jpg, a
+    # 64 square each, which it lays one a reference frame over every tile whose overlay is
+    # slot 5 (SceneManager.cpp:326-337, ZzzLodTerrain.cpp:1971-1975): here one 512x256 sheet,
+    # eight frames to a row, which fs_ground steps through. BITMAP_BUBBLE is drop01.jpg, nine
+    # 16-texel bubbles on black (MapManager.cpp:41), and the motes are World8's leaf01.jpg,
+    # a soft white dot MU blows as its leaves and adds (ZzzEffectFireLeave.cpp:299-319, 525).
+    # docs/atlans-port.md.
+    "caustic": "effects/atlans/caustic.png",
+    "bubble": "effects/atlans/drop01.png",
+    "mote": "effects/atlans/mote01.png",
 
     # The rain, which shares the leaves' pool in the client (CreateHeavenRain: the first
     # RainCurrent share of the slots are drops, the rest leaves). World1/rain01.OZT is
@@ -2724,6 +2740,9 @@ def main() -> None:
             # model; the flag is the same fact said where the asset can carry it.
             if document.get("roof_fade"):
                 entry["roof_fade"] = True
+            # Whether it sways in the water (vs_static's swayed, ours): Atlans's still plants.
+            if document.get("sway"):
+                entry["sway"] = True
 
             # Whether it is ground cover: grass, flowers, the leafy clutter a map is carpeted
             # in. Said by its sheets rather than by a list of names, because Noria's models

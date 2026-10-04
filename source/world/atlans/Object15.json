@@ -1,0 +1,178 @@
+{
+  "item": "Object15",
+  "mu_name": "Object15",
+  "mu_name_from": "Atlans's object slot 14, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 14,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "wooda": "at_wooda.png",
+    "wood02": "at_wood02.png",
+    "wood01": "at_wood01.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "wooda": "plank",
+    "wood02": "plank",
+    "wood01": "timber"
+  },
+  "why_this_one": "The ship's stern, 10 of them: 3.2 by 2.9 m and 4.9 m tall. The user, 2026-10-03: 'do next batch'.",
+  "material_note": "wooda and wood02 are brown planking, a ship's strakes and deck: plank. wood01 is grey sea-weathered beam grain: timber. wood03 is a pale folded sail: cloth. wood04 is brown grain with a knot, the mast and keel: hardwood.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 260,
+      "area": 580746.4,
+      "along": [
+        -269.3,
+        224.7
+      ],
+      "mu_uv": [
+        -3.869,
+        -4.251,
+        5.838,
+        3.807
+      ],
+      "bake_uv": [
+        0.011,
+        0.012,
+        0.943,
+        0.989
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 14,
+      "area": 14401.8,
+      "along": [
+        -212.9,
+        4.2
+      ],
+      "mu_uv": [
+        -1.327,
+        0.588,
+        5.514,
+        2.948
+      ],
+      "bake_uv": [
+        0.08,
+        0.301,
+        0.966,
+        0.962
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 2929.2,
+      "along": [
+        -141.6,
+        -76.9
+      ],
+      "mu_uv": [
+        0.006,
+        0.344,
+        5.104,
+        4.427
+      ],
+      "bake_uv": [
+        0.356,
+        0.07,
+        0.948,
+        0.646
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 10,
+      "area": 4051.9,
+      "along": [
+        -179.2,
+        -91.4
+      ],
+      "mu_uv": [
+        0.006,
+        0.344,
+        5.321,
+        4.166
+      ],
+      "bake_uv": [
+        0.013,
+        0.283,
+        0.966,
+        0.971
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 10,
+      "area": 3723.8,
+      "along": [
+        -142.4,
+        -73.7
+      ],
+      "mu_uv": [
+        -1.442,
+        0.344,
+        5.109,
+        4.622
+      ],
+      "bake_uv": [
+        0.012,
+        0.12,
+        0.971,
+        0.806
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 10,
+      "area": 2969.4,
+      "along": [
+        -193.9,
+        -155.3
+      ],
+      "mu_uv": [
+        -2.642,
+        0.344,
+        5.397,
+        4.965
+      ],
+      "bake_uv": [
+        0.18,
+        0.039,
+        0.939,
+        0.971
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 10,
+      "area": 2860.7,
+      "along": [
+        -72.9,
+        0.5
+      ],
+      "mu_uv": [
+        0.006,
+        0.344,
+        4.71,
+        4.483
+      ],
+      "bake_uv": [
+        0.347,
+        0.112,
+        0.966,
+        0.856
+      ]
+    }
+  ]
+}

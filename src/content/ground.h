@@ -156,6 +156,19 @@ public:
     // (game/world/drawbridge.h). A part the renderer skips while this is false.
     void showLater(bool shown) { laterShown_ = shown; }
     bool draws(const GroundPart& part) const { return !part.later || laterShown_; }
+    // MU's caustics, where a world has them: the sheet of 32 frames (the showing's `caustic`)
+    // and the slot it is laid over, TileWater01's, which MU draws as those frames added rather
+    // than as a sheet (ZzzLodTerrain.cpp:1971-1975). Atlans's, set by World::open. The slot is
+    // -1, and nothing drawn, on a world with no TileWater01 or no sheet.
+    void setCaustic(bgfx::TextureHandle sheet) {
+        caustic_ = sheet;
+        causticSlot_ = -1;
+        for (size_t i = 0; bgfx::isValid(sheet) && i < slotNames_.size(); ++i) {
+            if (slotNames_[i] == "TileWater01") causticSlot_ = int(i);
+        }
+    }
+    bgfx::TextureHandle caustic() const { return caustic_; }
+    int causticSlot() const { return causticSlot_; }
     const float* weightSize() const { return weightSize_; }
     // Which texel row of weights() the water's flow band starts on, kWeightPad included, or
     // -1 where the world names no river: its water then slides along U as MU's does. A
@@ -228,6 +241,8 @@ private:
     float abyssLift_ = 0.0f;
     bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
     float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    bgfx::TextureHandle caustic_ = BGFX_INVALID_HANDLE;  // setCaustic
+    int causticSlot_ = -1;
     std::vector<float> height_;  // metres, [row * size + column]
     std::vector<uint8_t> floors_;   // tiles.png red: MU's base slot; empty when absent
     std::vector<uint8_t> overlays_; // tiles.png green: MU's overlay slot

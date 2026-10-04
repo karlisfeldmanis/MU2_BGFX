@@ -42,6 +42,9 @@ struct Sky {
     // looking**, which is not the same as "no". A pool with no camera retires its birds exactly
     // as the client does, and a test that answers true to everything would never see one go.
     bool (*inFrame)(void* context, const float at[3]) = nullptr;
+    // Whether a point is over a safe tile, which in Atlans is the dry basin: no fish swims
+    // there. Null where nothing asks it.
+    bool (*dry)(void* context, float x, float z) = nullptr;
     void* context = nullptr;
 };
 
@@ -58,6 +61,9 @@ class Flight {
 public:
     // Birds in the air at once. The client breaks its loop at five.
     static constexpr int kMaxBirds = 5;
+    // And the pool's slots: MAX_BOIDS, forty, every one of which Atlans's fish fill
+    // (GOBoid.cpp:1233-1235, no `i >= 5` cut there). Birds use the first five.
+    static constexpr int kMaxSlots = 40;
     // Two calls a bird, so a frame can never produce more than this.
     static constexpr int kMostCalls = kMaxBirds * 2;
 
@@ -90,6 +96,21 @@ public:
         float timer = 0.0f;
         // The bat's jink: a turn rate in radians a second, redrawn on a roll. See Flight::move.
         float swerve = 0.0f;
+        // A fish's height over the floor, drawn at birth (CreateAtlanseFish's 150 to 350 units),
+        // and its Velocity, 0.3 or 0.25. See Flight::school.
+        float lift = 0.0f;
+        float velocity = 0.0f;
+        // Seconds left of a fish's turn at the dry basin's edge, its steering held so it swims
+        // the turn out rather than back into the edge. See Flight::swim.
+        float turned = 0.0f;
+        // Ours, a fish's own (Flight::swim): its drawn scale, its cruise in metres a second,
+        // seconds left of a dart, and the depth over the floor it is drifting to.
+        float size = 0.8f;
+        float cruise = 0.0f;
+        float dart = 0.0f;
+        float depth = 0.0f;
+        // The bearing from him of its school's point, shared with the fish it was born beside.
+        float anchor = 0.0f;
     };
 
     // `seed` makes a run repeatable, which is what lets a test say "this seed, this second, this
@@ -110,6 +131,11 @@ public:
     // rolls once at one in 128 (GOBoid.cpp:1495-1501). 0 keeps the bird's (or the bat's).
     void setCalls(float every, int rolls) { callEvery_ = every; callRolls_ = rolls; }
     bool isBat() const { return bat_; }
+    // Atlans's fish rather than birds: CreateAtlanseFish and MoveBoid's Atlans arm (GOBoid.cpp:
+    // 886-918, 1141-1160). Forty, each slot born again as it empties while the hero is in the
+    // map's north half, swimming at a height held over the floor, cruising and darting.
+    void setFish(bool on) { fish_ = on; }
+    bool isFish() const { return fish_; }
 
     // The first flock arrives on the next step rather than 20 to 90 seconds in. One-shot: a
     // caller with this in its frame loop would otherwise refill the sky the instant it empties,
@@ -129,6 +155,9 @@ public:
 
 private:
     void arrive(const float hero[3], const Sky& sky);
+    void school(float seconds, float factor, const float hero[3], const Sky& sky);
+    void swim(Bird& fish, int index, const float hero[3], float seconds, float factor,
+              const Sky& sky);
     void move(Bird& bird, const float hero[3], bool walking, float seconds, float factor,
               const Sky& sky);
     void flock(Bird& bird, float factor);
@@ -140,10 +169,11 @@ private:
     bool chance(float perFrame, float factor);
     float random01();
 
-    Bird birds_[kMaxBirds];
+    Bird birds_[kMaxSlots];
     float pace_ = 1.0f;
     bool butterfly_ = false;
     bool bat_ = false;
+    bool fish_ = false;
     float callEvery_ = 0.0f;
     int callRolls_ = 0;
     // Seconds the bats' flock has left with him before it flies off. See Flight::update.

@@ -1,0 +1,43 @@
+{
+  "item": "Object10",
+  "mu_name": "Object10",
+  "mu_name_from": "Atlans's object slot 9, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 9,
+  "placements": 35,
+  "profile": "world",
+  "sheets": {
+    "bfish073": "at_bfish073.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "bfish073": "skin"
+  },
+  "why_this_one": "An octopus tentacle rising, 35 of them: bfish073 on 8 bones, 2.6 m tall, its own 30-key clip. The user, 2026-10-03: 'do last abtch'.",
+  "material_note": "bfish073 is the tentacle's brick red with its rows of suckers: skin.",
+  "play_speed_from": "No WD_7ATLANSE arm sets its Velocity (ZzzObject.cpp:4055-4084), so its clip plays at the 0.16 every object starts with.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 1050,
+      "area": 72721.8,
+      "along": [
+        -36.4,
+        226.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.011,
+        0.519,
+        0.984
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.996,
+        0.979
+      ]
+    }
+  ]
+}

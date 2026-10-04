@@ -57,9 +57,12 @@ void Play::steps() {
     // And the run ride: the horse's hooves where his feet would be (mount_hoof, ours).
     const bool riding = look && clip >= 0 &&
                         (clip == look->rideRunClip || clip == look->rideRunArmedClip);
+    // And the swim: pSwim on the walk's own two keys (PlayWalkSound, ZzzCharacter.cpp:5368-5371).
+    const bool swimming = look && clip >= 0 &&
+                          (clip == look->swimWalkClip || clip == look->swimRunClip);
     const bool walking = hero && look && him.alive() && hero->visible && clip >= 0 &&
                          (clip == look->walkClip || clip == look->walkSafeClip ||
-                          clip == look->runClip || riding);
+                          clip == look->runClip || riding || swimming);
     if (!walking || ground_ == nullptr) {
         // Not walking, so the next cycle starts fresh: the client clears both latches the
         // moment the animation is not running.
@@ -92,6 +95,10 @@ void Play::steps() {
     const auto tread = [&]() {
         if (riding) {
             if (heard_.hoof >= 0) emit(heard_.hoof, hero->crown[0], hero->crown[2], hero->id);
+            return;
+        }
+        if (swimming) {
+            if (heard_.swim >= 0) emit(heard_.swim, hero->crown[0], hero->crown[2], hero->id);
             return;
         }
         const float metresPerTile = ground_->metresPerTile();
@@ -404,7 +411,8 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // SOUND_WIND01 on HeroTile 4. Unplaced: wind is not somewhere, it is everywhere.
     // The Dungeon's aDungeon rides that slot, and the Dungeon is under a roof on every tile:
     // its air plays throughout, as SceneManager.cpp:859-861 loops it for the whole map.
-    sound_.loop(heard_.wind, !indoors || dungeonAir_);
+    // Atlans's aWater the same: the map is "underground" for its air (game/world/maps.h).
+    sound_.loop(heard_.wind, !indoors || dungeonAir_ || waterAir_);
     // Blood Castle's bed, from the gate opening to the run's end, won or out of time
     // (NewBloodCastleSystem.cpp:42-43, 63-64).
     sound_.loop(heard_.castleBed, realm_.castleRun().phase == sim::CastlePhase::Running);
@@ -412,7 +420,9 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // under a roof (docs/spatial-sound.md, E).
     // The Dungeon and the Lost Tower are stone buildings throughout: a hall's reverb, on every
     // step, voice and blow the world's bus carries.
+    // Atlans is open water, though "underground" for its air: its own room, the world muffled.
     sound_.room(dungeonAir_ ? Sound::Room::Stone
+                : waterAir_ ? Sound::Room::Water
                 : indoors   ? Sound::Room::Roofed
                             : Sound::Room::Open);
     // The walls are the rules' own line of sight on the tile grid (F). The far end is pulled a

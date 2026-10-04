@@ -573,7 +573,18 @@
         "pwalk_soil.wav"
       ],
       "from": "SOUND_HUMAN_WALK_GROUND, Data\\Sound\\pWalk(Soil).wav, two voices. PlayWalkSound's final else - everything that is not grass, snow or water, which on Lorencia is every tile but 0.",
-      "note": "The other two arms of the client's branch are maps this project does not have: pWalk(Snow).wav for Devias and the ice maps, and pSwim.wav for Atlans and Hellas. Neither is carried, because a sound with no map to play it on is a file waiting for a map."
+      "note": "The other two arms of the client's branch: pWalk(Snow).wav for Devias and the ice maps, which the user heard as the grass step instead (2026-09-29), and pSwim.wav for Atlans, player_step_swim."
+    },
+    "player_step_swim": {
+      "files": [
+        "pswim.wav",
+        "pswim_short.wav",
+        "pswim_late.wav"
+      ],
+      "files_note": "Ours: pSwim cut into three takes, picked at random a stroke -- the whole stroke; its first splash alone, faded out at 0.5 s (pswim_short); and from 0.18 s in, mid-splash, to its tail (pswim_late). One 0.82 s file every 0.4 s overlapped itself as a loop (the user, 2026-10-03: 'we need more random nes on swim like we did for runing and walk').",
+      "from": "SOUND_HUMAN_WALK_SWIM, Data\\Sound\\pSwim.wav (ZzzOpenData.cpp:4742). PlayWalkSound's Atlans arm: off the safe zone, on the swim's own keys 1.5 and 4.5 (ZzzCharacter.cpp:5368-5371). The hero's alone, as his steps are.",
+      "gain_db": -7.0,
+      "note": "A 0.82 s stroke at -29.7 dB RMS against the soil step's 0.14 s at -34.8: -7 sits it with the steps rather than over them (2026-10-03)."
     },
     "player_swing": {
       "files": [
@@ -1432,6 +1443,23 @@
       "loop": true,
       "gain_db": -10.0,
       "note": "-10 rather than world_dungeon's -16: aTower's RMS is -33.8 dBFS against aDungeon's -28.0, so the two airs sit at one level."
+    },
+    "world_bubbles": {
+      "files": [
+        "mdeathbubble.wav"
+      ],
+      "from": "SOUND_DEATH_BUBBLE, Data\\Sound\\mDeathBubble.wav (MapManager.cpp:996), which MU plays for Kalima's dissolving bodies (ZzzEffectParticle.cpp:208). Ours in Atlans, where MU's bubbles are silent: a vent within 8 m as it comes on, and his head's stream as it starts (game/world/bubbles.h). The user, 2026-10-03: 'lets work on audio effects and ambient on world'.",
+      "gain_db": -20.0,
+      "note": "A 3.6 s gurgle at -20.9 dB RMS: -20 keeps it under the water bed's -44 plus a little, a thing heard as he passes, varied in pitch so no two vents match."
+    },
+    "world_water": {
+      "files": [
+        "awater.wav"
+      ],
+      "from": "SOUND_WATER01, Data\\Sound\\aWater.wav (ZzzOpenData.cpp:4736). PlayWorldAmbientSounds plays it looping and unplaced while Atlans is the world (SceneManager.cpp:879-881) and stops it elsewhere (:952-955). Atlans's air.",
+      "loop": true,
+      "gain_db": -23.0,
+      "note": "aWater's RMS is -21.3 dBFS against aDungeon's -28.0, so -23 rather than world_dungeon's -16 puts it at the same -44 dB bed (2026-10-03)."
     },
     "boid_bat": {
       "files": [

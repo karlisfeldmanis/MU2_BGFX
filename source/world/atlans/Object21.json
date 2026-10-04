@@ -1,0 +1,42 @@
+{
+  "item": "Object21",
+  "mu_name": "Object21",
+  "mu_name_from": "Atlans's object slot 20, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 20,
+  "placements": 126,
+  "profile": "world",
+  "sheets": {
+    "ston00": "at_ston00.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "ston00": "rock"
+  },
+  "why_this_one": "A great rock, 126 of them: ston00 over 266 triangles, 4.6 by 5.8 m and 4.9 m tall, mostly stood deep in the floor (its foot 5.4 m under its pivot), so what shows is a crag. The user, 2026-10-03: 'don next batch'.",
+  "material_note": "ston00 is dark green-grey rock: rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 266,
+      "area": 489653.0,
+      "along": [
+        -48.6,
+        440.9
+      ],
+      "mu_uv": [
+        0.002,
+        0.001,
+        0.994,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.001,
+        0.994,
+        0.999
+      ]
+    }
+  ]
+}

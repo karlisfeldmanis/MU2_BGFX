@@ -197,6 +197,7 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
     // reach -- the town's rigged models that do not sway yet, and everything else, drew this
     // way from the day the cook started writing them skinned. See Renderer::kBindRow.
     drawable.paletteRow = paletteRows_[index];
+    drawable.sway = (instance.flags & 16) != 0;
     out.push_back(drawable);
 }
 

@@ -15,6 +15,7 @@ uniform vec4 u_edge;        // xy: the map's far corner in metres (+x and -z). z
                             // to keep, which is every bench. See dusty().
 uniform vec4 u_camPos;      // xyz: the eye, world space. w: the far plane
 uniform vec4 u_params;      // x: ssao radius  y: ssao strength  z: exposure  w: pixels per unit at unit depth
+uniform vec4 u_sway;        // x: the play clock, seconds  y: the sheet's sway, metres at a metre's height
 uniform vec4 u_material;    // x: cutout threshold (<0 is no cutout)  y: two-sided
                             // z: roughness factor  w: metal factor, both glTF's, both multiply the ORM
 
@@ -214,6 +215,23 @@ mat4 skinMatrix(uvec4 indices, vec4 weights, int row)
 	m += boneMatrix(int(indices.z), row) * weights.z;
 	m += boneMatrix(int(indices.w), row) * weights.w;
 	return m;
+}
+
+// A still mesh swaying in the water (Atlans's corals and lettuce; ours, MU stands them still):
+// each vertex bent by the square of its height in the model, so the plant stays rooted where it
+// grows -- its lower half all but still, the tips leaning -- on one slow current whose phase
+// comes from where it stands, so no two plants keep time. At h^1.5 the crowns moved enough that
+// whole plants read as drifting (the user, 2026-10-03: 'natura cant change they grow position').
+// `base` is the placement's own position. vs_static and vs_depth, so the shadow sways with it.
+vec3 swayed(vec3 p, vec3 base)
+{
+	float h = max(p.y, 0.0);
+	float bend = u_sway.y * h * h;
+	float phase = dot(base.xz, vec2(0.37, 0.61));
+	float t = u_sway.x;
+	p.x += sin(t * 0.9 + phase) * bend;
+	p.z += cos(t * 0.7 + phase * 0.8) * 0.5 * bend;
+	return p;
 }
 
 #endif // MU2_COMMON_SH

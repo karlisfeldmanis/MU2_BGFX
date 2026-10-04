@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "content/showing.h"
 #include "core/files.h"
 #include "core/loading.h"
 #include "core/log.h"
@@ -97,6 +98,21 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // Its share of the load, by what each took on a cold start (core/loading.h).
     core::Loading::stage("the land", 0.0f, 0.05f);
     if (!ground_.load(dir, name, textures)) return false;
+    // Atlans's caustics: MU draws its TileWater01 overlay as 32 frames of light, not a sheet
+    // (content::Ground::setCaustic). The showing's `caustic`, read here because the play's
+    // showing opens after the land.
+    if (name == "atlans") {
+        content::Showing table;
+        std::string error;
+        const content::EffectSheet* sheet = nullptr;
+        if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error))
+            sheet = table.effect("caustic");
+        ground_.setCaustic(sheet ? textures.load(assetDir + "/" + sheet->path,
+                                                 content::TextureRole::Albedo)
+                                 : bgfx::TextureHandle{bgfx::kInvalidHandle});
+        core::logf("caustics: %s, on slot %d", sheet ? sheet->path.c_str() : "NO sheet 'caustic'",
+                   ground_.causticSlot());
+    }
     core::Loading::stage("the town", 0.05f, 0.56f);
     // The town is not required: the land is a world on its own, and a cook that has not been
     // run yet says so in the log rather than failing the launch.
@@ -117,6 +133,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     lavaSmoke_.open(assetDir, name, ground_, textures);
     voidClouds_.open(assetDir, name, ground_, textures);
     castleSparks_.open(assetDir, name, town_.cooked(), textures);
+    bubbles_.open(assetDir, name, town_.cooked(), textures);
     // And the shade MU hangs under each bridge. See game/world/shades.h.
     if (town_.isOpen()) shades_.open(assetDir, town_, textures);
     // The near field: the card strip, built once, and MU's own painted grass sheets for
@@ -215,12 +232,15 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
     }
     // No leaves blow underground: World2 ships no leaf sheet, and MU's weather has no arm for it.
     if (!underground_) leaves_.open(assetDir, *textures_, play_.showing().table(), name == "devias");
+    // Atlans is "underground" for its air, but its motes drift everywhere (leaves.h).
+    else if (name == "atlans") leaves_.open(assetDir, *textures_, play_.showing().table(), false, true);
     if (doors_.isOpen()) {
         doorSound_ = play_.sound().load("world_door", true);
         gateSound_ = play_.sound().load("world_gate", true);
     }
     if (skulls_.isOpen()) skullSound_ = play_.sound().load("world_skull", true);
     if (drawbridge_.isOpen()) drawbridgeSound_ = play_.sound().load("world_drawbridge", true);
+    bubbles_.setSound(&play_.sound());
     // And the rain, which shares the leaves' slots, and the air's sounds. game/world/weather.h.
     weather_.open(name, &play_.sound(), weather);
 }
@@ -405,6 +425,7 @@ void World::shutdown() {
     lavaSmoke_.shutdown();
     voidClouds_.shutdown();
     castleSparks_.shutdown();
+    bubbles_.shutdown();
     shades_.shutdown();
     boids_.shutdown();
     leaves_.shutdown();

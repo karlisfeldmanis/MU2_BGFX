@@ -30,10 +30,25 @@ void main()
 	// Tower's red chrome streams behind a band that does not move.
 	float mode = u_material.y;
 	float alongU = mod(mode, 2.0);
-	float held = step(1.5, mode);
+	float held = mod(floor(mode * 0.5), 2.0);
 	vec2 uv = v_texcoord0 + u_material.w * vec2(alongU, 1.0 - alongU);
-	vec4 sheet = texture2D(s_albedo, uv);
-	sheet.a = mix(sheet.a, texture2D(s_albedo, v_texcoord0).a, held);
+	vec4 sheet;
+	// +4: MU's water frames (content::Material::waterFrames). u_material.w is the frame,
+	// 0 to 31, of the 8 by 4 caustic atlas; the frame's cell is cut half a texel in, and the
+	// mip read off the unwrapped coordinate, as fs_ground's caustics are.
+	if (mode > 3.5)
+	{
+		vec2 cell = fract(v_texcoord0) * (62.0 / 64.0) + vec2_splat(1.0 / 64.0);
+		vec2 frame = vec2(mod(u_material.w, 8.0), floor(u_material.w / 8.0));
+		vec2 scale = vec2(1.0 / 8.0, 1.0 / 4.0);
+		sheet = texture2DGrad(s_albedo, (frame + cell) * scale,
+		                      dFdx(v_texcoord0) * scale, dFdy(v_texcoord0) * scale);
+	}
+	else
+	{
+		sheet = texture2D(s_albedo, uv);
+		sheet.a = mix(sheet.a, texture2D(s_albedo, v_texcoord0).a, held);
+	}
 	// A figure's w is 2 + its fade (common.sh's figureFade), which was 1.0 here before there
 	// was a fade; so a figure's glow is its fade, and comes in with it.
 	float level = v_light.w >= 2.0 ? figureFade(v_light.w) : v_light.w;

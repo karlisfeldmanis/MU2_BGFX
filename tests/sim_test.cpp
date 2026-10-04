@@ -3496,6 +3496,42 @@ void testPerches(const content::Tables& tables) {
           "a box on a NoMove tile is refused where he stands");
 }
 
+// Atlans's four lean boxes in the basin (tools/cook.py PERCHES[7]): MU's Pose, turned to the box.
+// 15,23 stands on one of the eleven tiles MuMain's grid closes and WebZen's official grid leaves
+// open (pipeline/terrain.py OPEN_BY_MAP[7]), so it leans; 23,26 is NoMove in every grid, MU's
+// included, and is refused where he stands, as MU's click on it is.
+void testAtlansPerches() {
+    std::printf("atlans lean boxes\n");
+    content::Tables atlans;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/atlans/atlans.mur", atlans,
+                              error),
+          "Atlans's tables load");
+    checkEqual(int64_t(atlans.perches.size()), 4, "Atlans has its four lean boxes");
+    for (const auto& want : {std::pair<int, int>{15, 23}, {16, 24}, {28, 8}, {23, 26}}) {
+        int index = -1;
+        for (size_t i = 0; i < atlans.perches.size(); ++i) {
+            if (atlans.perches[i].column == want.first && atlans.perches[i].row == want.second)
+                index = int(i);
+        }
+        check(index >= 0, "a lean box stands where the map puts it");
+        if (index < 0) continue;
+        sim::Realm realm;
+        check(realm.raise(&atlans, 7, 21, 17), "a realm raises in the basin");
+        sim::Request lean;
+        lean.kind = sim::Request::Kind::Perch;
+        lean.target = index;
+        realm.ask(lean);
+        for (int tick = 0; tick < 200 && realm.hero().pose == sim::Pose::Standing; ++tick)
+            realm.step();
+        const bool closed = want.first == 23 && want.second == 26;
+        check(closed ? realm.hero().pose == sim::Pose::Standing
+                     : realm.hero().pose == sim::Pose::Leaning,
+              closed ? "the box on a NoMove tile is refused, as MU's click is"
+                     : "he walks to the box and leans");
+    }
+}
+
 // Baz's vault: opened by walking to him, shut by walking off; an item across and back, the Zen
 // across and back, and every refusal leaving both sides as they were.
 // Wear and the repair (sim/wear.h): the tables against MuMain's and OpenMU's own, the prices
@@ -4928,7 +4964,8 @@ void testRecovery(const content::Tables& tables) {
 }
 
 // Lorencia's gate 23 to Noria (sim/gates.h): a level 10 hero walked into it goes through to a
-// tile of Noria's gate 24 and stops; a level 1 hero is told it asks level 10 and does not.
+// tile of Noria's gate 24 and stops; a level 1 hero is told it asks level 20 (MU's 10, doubled)
+// and does not.
 // The Dungeon's gates (sim/gates.cpp, docs/dungeon-port.md): Lorencia's stair down and the way
 // back to the arch, and a stair between floors -- one map, so the realm puts him down in place
 // (What::Climbed) and the tables stay the Dungeon's.
@@ -5020,6 +5057,60 @@ void testTraps() {
     }
 }
 
+// Noria's corner to Atlans and back, Gates.cs:135, 148-149 and 205-206, both level 60; the
+// refusal is the level's (docs/atlans-port.md A §2).
+void testAtlansGates() {
+    std::printf("atlans gates\n");
+    struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
+    const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
+                         int level) {
+        Seen seen;
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
+              "a realm raises by the gate");
+        sim::Request go;
+        go.kind = sim::Request::Kind::WalkTo;
+        go.column = toC;
+        go.row = toR;
+        realm.ask(go);
+        for (int tick = 0; tick < 400 && seen.gated == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Barred && seen.barred == 0) seen.barred = one.b;
+                if (one.what == sim::What::Gated) {
+                    seen.gated = one.a;
+                    seen.column = one.b;
+                    seen.row = one.c;
+                }
+            }
+        }
+        return seen;
+    };
+    content::Tables noria, atlans;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/noria/noria.mur", noria,
+                              error),
+          "Noria's tables load");
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/atlans/atlans.mur", atlans,
+                              error),
+          "Atlans's tables load");
+    // The way in asks 120, ours since 2026-10-04 (MU's 60); the way out keeps 60.
+    Seen s = walk(noria, 238, 241, 243, 241, 120);
+    checkEqual(s.gated, 45, "a level 120 knight takes Noria's way to Atlans, gate 45");
+    check(s.column >= 14 && s.column <= 15 && s.row >= 12 && s.row <= 13,
+          "out on Atlans's gate 46 by the basin");
+    s = walk(noria, 238, 241, 243, 241, 119);
+    checkEqual(s.gated, 0, "a level 119 knight does not");
+    checkEqual(s.barred, 120, "and is told it asks level 120");
+    s = walk(atlans, 14, 14, 10, 10, 60);
+    checkEqual(s.gated, 47, "the basin's corner, gate 47, takes him back");
+    check(s.column >= 240 && s.column <= 241 && s.row >= 240 && s.row <= 243,
+          "out on Noria's gate 48");
+    s = walk(atlans, 14, 14, 10, 10, 59);
+    checkEqual(s.barred, 60, "and asks level 60 too");
+}
+
 void testDungeonGates(const content::Tables& lorencia) {
     std::printf("dungeon gates\n");
     struct Seen { int gated = 0, climbed = 0, barred = 0, column = 0, row = 0; };
@@ -5053,12 +5144,13 @@ void testDungeonGates(const content::Tables& lorencia) {
         }
         return seen;
     };
-    Seen s = walk(lorencia, 122, 229, 122, 233, 20);
-    checkEqual(s.gated, 1, "a level 20 knight takes Lorencia's stair down, gate 1");
+    // MU's 20, doubled since 2026-10-04 (sim/gates.cpp: the experience is 100x).
+    Seen s = walk(lorencia, 122, 229, 122, 233, 40);
+    checkEqual(s.gated, 1, "a level 40 knight takes Lorencia's stair down, gate 1");
     check(s.column >= 107 && s.column <= 110 && s.row == 247, "out on the Dungeon's gate 2");
-    s = walk(lorencia, 122, 229, 122, 233, 19);
-    checkEqual(s.gated, 0, "a level 19 knight does not");
-    checkEqual(s.barred, 20, "and is told it asks level 20");
+    s = walk(lorencia, 122, 229, 122, 233, 39);
+    checkEqual(s.gated, 0, "a level 39 knight does not");
+    checkEqual(s.barred, 40, "and is told it asks level 40");
 
     content::Tables dungeon;
     std::string error;
@@ -5067,16 +5159,16 @@ void testDungeonGates(const content::Tables& lorencia) {
     s = walk(dungeon, 108, 246, 108, 248, 1);
     checkEqual(s.gated, 3, "the way out, gate 3, asks nothing");
     check(s.column >= 121 && s.column <= 123 && s.row == 231, "out in front of Lorencia's arch");
-    s = walk(dungeon, 242, 152, 239, 150, 20);
+    s = walk(dungeon, 242, 152, 239, 150, 40);
     checkEqual(s.climbed, 5, "gate 5 is a stair down, taken in place");
     checkEqual(s.gated, 0, "and not a map change");
     check(s.column >= 228 && s.column <= 237 && s.row >= 123 && s.row <= 130,
           "he is put down at Dungeon 2's gate 6");
     check(!(s.column >= 232 && s.column <= 233 && s.row >= 127 && s.row <= 128),
           "and not inside gate 7 beside it");
-    s = walk(dungeon, 242, 152, 239, 150, 19);
-    checkEqual(s.climbed, 0, "a level 19 knight is not");
-    checkEqual(s.barred, 20, "and is told it asks level 20");
+    s = walk(dungeon, 242, 152, 239, 150, 39);
+    checkEqual(s.climbed, 0, "a level 39 knight is not");
+    checkEqual(s.barred, 40, "and is told it asks level 40");
 
     // The Dungeon's perches: MOVEMENT_OPERATE's WD_1DUNGEON arm, 59 sits and 60 leans
     // (ZzzInterface.cpp:1705-1712). The seat at (244, 145) in the dragon room, walked to and sat on.
@@ -5147,14 +5239,15 @@ void testGates(const content::Tables& tables) {
         return !realm.hero().walking;
     };
     int gate = 0, column = 0, row = 0, barred = 0;
-    const bool stopped = walkIn(10, &gate, &column, &row, &barred);
-    checkEqual(gate, 23, "a level 10 knight goes through gate 23");
+    // MU's 10, doubled since 2026-10-04 (sim/gates.cpp: the experience is 100x).
+    const bool stopped = walkIn(20, &gate, &column, &row, &barred);
+    checkEqual(gate, 23, "a level 20 knight goes through gate 23");
     check(column >= 148 && column <= 155 && row >= 5 && row <= 6,
           "and comes out on a tile of Noria's gate 24");
     check(stopped, "and stops at the gate");
     walkIn(1, &gate, &column, &row, &barred);
     checkEqual(gate, 0, "a level 1 knight does not");
-    checkEqual(barred, 10, "and is told the gate asks level 10");
+    checkEqual(barred, 20, "and is told the gate asks level 20");
 
     // And back: from where gate 24 put him, up into Noria's gate 25, out on Lorencia's 26.
     content::Tables noria;
@@ -5162,7 +5255,7 @@ void testGates(const content::Tables& tables) {
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/noria/noria.mur";
     check(content::loadTables(path, noria, error), "Noria's tables load");
     sim::Realm realm;
-    check(realm.raise(&noria, 7, 151, 6, sim::Kin::DarkKnight, 10), "a realm raises in Noria");
+    check(realm.raise(&noria, 7, 151, 6, sim::Kin::DarkKnight, 20), "a realm raises in Noria");
     sim::Request walk;
     walk.kind = sim::Request::Kind::WalkTo;
     walk.column = 151;
@@ -7806,6 +7899,7 @@ int main() {
     testSkills(tables);
     testCastLock(tables);
     testPerches(tables);
+    testAtlansPerches();
     testVault(tables);
     testDeviasFolk();
     testTowerKeeper();
@@ -7831,6 +7925,7 @@ int main() {
     testSummonOnAHunt(tables);
     testGates(tables);
     testDungeonGates(tables);
+    testAtlansGates();
     testTraps();
     testQuests(tables);
     testDungeonRunes(tables);

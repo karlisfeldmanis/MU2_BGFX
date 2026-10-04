@@ -11,22 +11,24 @@ namespace {
 // `OM/Version075/Gates.cs:45-50`. The towns land on their spawn gates, whose middles are
 // game/world/maps.cpp's arrival tiles (gates 17, 27, 22), and face nowhere in particular; the
 // Dungeon's three on exit gates 2, 6 and 10 (docs/dungeon-port.md §1.2-1.3), facing as those do.
+// Every level here is MU's doubled, ours, as the gates' are (sim/gates.cpp; the user, 2026-10-04:
+// 'fix tab travels also'): the experience is 100x. The prices are MU's.
 constexpr TravelRow kRows[kTravels] = {
-    {"Lorencia", 0, 10, 2000, 142, 126, 0, 0},
-    {"Noria", 3, 10, 2000, 174, 112, 0, 0},
-    {"Devias", 2, 20, 2000, 207, 42, 0, 0},
-    {"Dungeon", 1, 30, 3000, 108, 247, -1, -1},
-    {"Dungeon 2", 1, 40, 3500, 232, 126, -1, -1},
-    {"Dungeon 3", 1, 50, 4000, 3, 84, 1, -1},
+    {"Lorencia", 0, 20, 2000, 142, 126, 0, 0},
+    {"Noria", 3, 20, 2000, 174, 112, 0, 0},
+    {"Devias", 2, 40, 2000, 207, 42, 0, 0},
+    {"Dungeon", 1, 60, 3000, 108, 247, -1, -1},
+    {"Dungeon 2", 1, 80, 3500, 232, 126, -1, -1},
+    {"Dungeon 3", 1, 100, 4000, 3, 84, 1, -1},
     // `Gates.cs:51-57` (docs/lost-tower-port.md §2.3): LostTower lands in the safe hall, on spawn
     // gate 42, facing nowhere; LostTower2-7 on each floor's arrival gate, 31-41, as those face.
-    {"Lost Tower", 4, 50, 5000, 208, 75, 0, 0},
-    {"Lost Tower 2", 4, 50, 5500, 242, 237, -1, -1},
-    {"Lost Tower 3", 4, 50, 6000, 86, 167, 1, -1},
-    {"Lost Tower 4", 4, 60, 6500, 87, 87, 1, -1},
-    {"Lost Tower 5", 4, 60, 7000, 129, 53, -1, -1},
-    {"Lost Tower 6", 4, 70, 7500, 53, 53, -1, -1},
-    {"Lost Tower 7", 4, 70, 8000, 8, 86, -1, -1},
+    {"Lost Tower", 4, 100, 5000, 208, 75, 0, 0},
+    {"Lost Tower 2", 4, 100, 5500, 242, 237, -1, -1},
+    {"Lost Tower 3", 4, 100, 6000, 86, 167, 1, -1},
+    {"Lost Tower 4", 4, 120, 6500, 87, 87, 1, -1},
+    {"Lost Tower 5", 4, 120, 7000, 129, 53, -1, -1},
+    {"Lost Tower 6", 4, 140, 7500, 53, 53, -1, -1},
+    {"Lost Tower 7", 4, 140, 8000, 8, 86, -1, -1},
 };
 
 // A chained map's floors, every floor a link and its row open once the link is taken: the

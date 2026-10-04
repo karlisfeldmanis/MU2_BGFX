@@ -92,6 +92,11 @@ struct Material {
     // slides, so the stream moves and the band it shows through does not. The cook's bit 7.
     bool scrollAlongU = false;
     bool maskHeld = false;
+    // MU's BITMAP_WATER instead of a slide: a mesh whose sheet is wt00 steps through the 32
+    // caustic frames one a reference frame, as the ground's pools do (ZzzBMD.cpp:1322-1325) --
+    // Atlans's Object24. The sheet is the 8 by 4 caustic atlas and `scrollPerSecond` the frame
+    // rate; fs_glow cuts the frame's cell out of it. The cook's mode bit 2.
+    bool waterFrames = false;
     // An item's glow as ItemObjectAttribute sets it (ZzzObject.cpp:5199): its brightness
     // `sin(WorldTime*0.004)*pulse[0] + pulse[1]` -- the Light Spear's and the two shields'
     // breathing, 0/1 on a steady glow -- and `jitter`, the step of the per-frame random jump

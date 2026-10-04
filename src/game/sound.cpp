@@ -103,6 +103,9 @@ struct Preset {
     // a voice (Sound::load's `voiced`) -- as a share of the voices' send. 1 everywhere but the
     // stone halls.
     float plain = 1.0f;
+    // The highest any placed sound's low-pass opens, Hz: the world heard through something.
+    // kOpen everywhere but under the sea.
+    float ceiling = kOpen;
 };
 constexpr Preset kDry = {0.0f, 0.5f, 0.5f};
 // Drier, shorter and duller than it was (open 0.126 wet 0.35 room 0.6 damp, roofed 0.22 / 0.6 /
@@ -122,6 +125,10 @@ constexpr Preset kRoofed = {0.126f, 0.52f, 0.5f};   // -18 dB
 // And then off for all but voices: 'lets reduce reverb more, or even remove it but keep for
 // voice'. Cries, hurts and deaths keep this room; steps, swings and blows go dry (plain 0).
 constexpr Preset kStone = {0.089f, 0.50f, 0.55f, 0.0f};   // -21 dB, voices alone
+// Under the sea, Atlans: every placed sound through water -- its top taken off at 3.5 kHz --
+// and a dark, soft tail, a shade wetter than the open air's. Ours: MU plays Atlans dry (the
+// user, 2026-10-03: 'lets work on audio effects and ambient on world').
+constexpr Preset kWater = {0.089f, 0.45f, 0.8f, 1.0f, 3500.0f};  // -21 dB
 constexpr float kRoomEaseMs = 150.0f;
 
 enum Importance { kCrowd = 0, kNearHero = 1, kHero = 2 };
@@ -405,7 +412,8 @@ struct Sound::Impl {
         if (v < file.filtered) {
             const float rate = float(ma_engine_get_sample_rate(&engine));
             // Behind a wall the filter closes toward the muffle, in the log of the frequency.
-            const float open = std::min(w.cutoff * event.tone[v], rate * 0.45f);
+            const float open =
+                std::min({w.cutoff * event.tone[v], rate * 0.45f, roomNow.ceiling});
             const float cutoff =
                 std::exp(std::log(open) +
                          (std::log(std::min(kMuffled, open)) - std::log(open)) * walled);
@@ -1076,7 +1084,9 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
         const Preset& was = im.roomNow;
         im.setRoom({was.wet + (to.wet - was.wet) * step, was.room + (to.room - was.room) * step,
                     was.damp + (to.damp - was.damp) * step,
-                    was.plain + (to.plain - was.plain) * step});
+                    was.plain + (to.plain - was.plain) * step,
+                    std::exp(std::log(was.ceiling) +
+                             (std::log(to.ceiling) - std::log(was.ceiling)) * step)});
     }
     if (im.duckEnds != 0 && now >= im.duckEnds) {
         ma_sound_group_set_fade_in_milliseconds(&im.world, -1.0f, 1.0f, kDuckOutMs);
@@ -1138,6 +1148,7 @@ void Sound::room(Room which) {
     impl_->roomWanted = which == Room::Dry      ? kDry
                         : which == Room::Roofed ? kRoofed
                         : which == Room::Stone  ? kStone
+                        : which == Room::Water  ? kWater
                                                 : kOpenAir;
 }
 

@@ -40,6 +40,7 @@ void Renderer::setPointLights(const PointLight* lights, uint32_t count, float mi
         }
         lampCpu_[row + size_t(i) * 4 + 3] = one.height;
         for (int c = 0; c < 3; ++c) lampCpu_[2 * row + size_t(i) * 4 + c] = one.away[c];
+        lampCpu_[2 * row + size_t(i) * 4 + 3] = one.wrap;
     }
     lampsDirty_ = true;
 

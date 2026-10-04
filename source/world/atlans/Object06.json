@@ -1,0 +1,92 @@
+{
+  "item": "Object06",
+  "mu_name": "Object06",
+  "mu_name_from": "Atlans's object slot 5, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 5,
+  "placements": 421,
+  "profile": "world",
+  "sheets": {
+    "bu01": "at_bu01.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "bu01": "foliage"
+  },
+  "why_this_one": "Yellow branching coral, 421 of them: bu01 on two crossed cards, 2.2 by 1.4 m. The user, 2026-10-03: 'lets start to work on atlans objects, lets do with small batches and check them in world'.",
+  "material_note": "bu01 is yellow branching coral, cut out: foliage, for its thin light-catching branches.",
+  "cutout": [
+    "bu01"
+  ],
+  "cutout_from": "Each carries a real alpha channel, as decode_texture reports it (bu0 34%, bu01 54%, bu02 56% cut away). Declared rather than detected.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 15768.6,
+      "along": [
+        -107.9,
+        32.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.004,
+        0.992,
+        0.995
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.521,
+        0.785
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 15780.9,
+      "along": [
+        -85.4,
+        21.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.004,
+        0.992,
+        0.995
+      ],
+      "bake_uv": [
+        0.003,
+        0.503,
+        0.546,
+        0.996
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 15607.2,
+      "along": [
+        -22.4,
+        34.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.004,
+        0.992,
+        0.995
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.785
+      ]
+    }
+  ],
+  "sway": true,
+  "sway_from": "Ours, marked: MU stands it still (one bone, one key). The user, 2026-10-03: 'nature objects is not swaying'. Bent in the water by the sheet's `sway` (vs_static, common.sh's swayed), the foot planted."
+}

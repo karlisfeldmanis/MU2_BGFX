@@ -1,0 +1,64 @@
+{
+  "item": "Object02",
+  "mu_name": "Object02",
+  "mu_name_from": "Atlans's object slot 1, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 1,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "sea01": "at_sea01.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "sea01": "rock"
+  },
+  "why_this_one": "A smaller sea-worn rock, 6 of them: sea01, 3 by 2.2 m. The user, 2026-10-03: 'do next batch'.",
+  "material_note": "As Object01: rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 362,
+      "area": 87748.7,
+      "along": [
+        -66.3,
+        64.0
+      ],
+      "mu_uv": [
+        -0.289,
+        -0.244,
+        1.289,
+        1.289
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.898,
+        0.998
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 22,
+      "area": 3423.4,
+      "along": [
+        -33.1,
+        36.2
+      ],
+      "mu_uv": [
+        0.43,
+        0.771,
+        0.904,
+        1.217
+      ],
+      "bake_uv": [
+        0.77,
+        0.306,
+        0.998,
+        0.532
+      ]
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "item": "Object25",
+  "mu_name": "Object25",
+  "mu_name_from": "Atlans's object slot 24, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 24,
+  "placements": 246,
+  "profile": "world",
+  "sheets": {
+    "bu03": "at_bu03.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "bu03": "foliage"
+  },
+  "why_this_one": "Single kelp blades, 246 of them: bu03 on 28 bones, 2.4 m tall, swaying on its own 31-key clip. The user, 2026-10-03: 'do next batch'.",
+  "material_note": "bu03 is green kelp blades, cut out: foliage.",
+  "cutout": [
+    "bu03"
+  ],
+  "cutout_from": "bu03.OZT carries a real alpha channel, as decode_texture reports it. Declared rather than detected.",
+  "play_speed_from": "No WD_7ATLANSE arm sets its Velocity (ZzzObject.cpp:4055-4084), so its clip plays at the 0.16 every object starts with.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 11836.0,
+      "along": [
+        -10.2,
+        10.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.496,
+        0.496
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 7173.7,
+      "along": [
+        -60.3,
+        -7.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.504,
+        0.496,
+        0.996
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 5821.5,
+      "along": [
+        -39.2,
+        -20.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.504,
+        0.004,
+        0.996,
+        0.496
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 8,
+      "area": 9737.8,
+      "along": [
+        -2.5,
+        51.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.504,
+        0.504,
+        0.996,
+        0.996
+      ]
+    }
+  ]
+}

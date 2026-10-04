@@ -1,0 +1,123 @@
+{
+  "item": "Object35",
+  "mu_name": "Object35",
+  "mu_name_from": "Atlans's object slot 34, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 34,
+  "placements": 25,
+  "profile": "world",
+  "sheets": {
+    "wood05": "at_wood05.png",
+    "wood052": "at_wood052.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "wood05": "rock",
+    "wood052": "lamplight"
+  },
+  "why_this_one": "The glyph arch, 25 of them: the glyph stone's stone and glyph on a 5.7 by 4 m ring. The user: 'now lets work on light and fire emiters'.",
+  "material_note": "As Object33: wood05 rock, wood052 the teal glyph added.",
+  "additive": [
+    "wood052"
+  ],
+  "additive_from": "BlendMesh 1 on types 32 and 34, BlendMeshLight sin(WorldTime*0.004)*0.5+0.5 (ZzzObject.cpp:4072-4077).",
+  "glow": {
+    "wood052": {
+      "low": 0.1,
+      "high": 1.0,
+      "hz": 0.64,
+      "smooth_seconds": 0.75
+    }
+  },
+  "glow_from": "As Object33's.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        0,
+        40
+      ],
+      "colour": [
+        0.25,
+        0.75,
+        1.0
+      ],
+      "low": 0.6,
+      "high": 0.8,
+      "range_tiles": 3,
+      "flicker_hz": 0.64,
+      "smooth_seconds": 0.75,
+      "wrap": 1.0
+    }
+  ],
+  "emitters_from": "Ours, marked, as Object33's: a faint teal pool, over three tiles for the arch's span. Then the user, 2026-10-03: 'atlans light sources actualy has to make light, so if char swims inside light source we can see it': raised to light a figure inside it. At 0.2-0.5 a figure inside read the same as one outside, under Atlans's bright overhead key; 0.6-0.8. And `wrap` 1: a figure standing in the pool took none of it, its sides edge-on to a light over it (the user, 2026-10-03: 'chat is standing on light source but is not receiving that light'); wrapped, it is lit round as in water.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 280,
+      "area": 39233.2,
+      "along": [
+        -20.1,
+        20.1
+      ],
+      "mu_uv": [
+        0.234,
+        0.001,
+        0.779,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.618,
+        0.628
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 304,
+      "area": 54342.7,
+      "along": [
+        -31.0,
+        31.0
+      ],
+      "mu_uv": [
+        0.078,
+        0.242,
+        0.775,
+        0.456
+      ],
+      "bake_uv": [
+        0.006,
+        0.62,
+        0.889,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 280,
+      "area": 39233.1,
+      "along": [
+        -20.1,
+        20.1
+      ],
+      "mu_uv": [
+        0.234,
+        0.001,
+        0.779,
+        0.999
+      ],
+      "bake_uv": [
+        0.143,
+        0.006,
+        0.757,
+        0.628
+      ]
+    }
+  ]
+}

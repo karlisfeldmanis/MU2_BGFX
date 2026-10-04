@@ -27,6 +27,16 @@ float groundAt(void* context, float x, float z) {
     return static_cast<const Looking*>(context)->ground->heightAt(x, z);
 }
 
+// A safe tile: in Atlans the basin, which is dry (Flight::swim).
+bool dryAt(void* context, float x, float z) {
+    const content::Ground& ground = *static_cast<const Looking*>(context)->ground;
+    const float perTile = std::max(ground.metresPerTile(), 0.001f);
+    const int c = int(std::floor(x / perTile));
+    const int r = int(std::floor(-z / perTile));
+    return c >= 0 && r >= 0 && c < ground.size() && r < ground.size() &&
+           (ground.attributesAt(c, r) & content::kSafeZone) != 0;
+}
+
 // How far outside the frame still counts as on screen, as a share of it. A bird is a point to
 // this test and a model on screen, and the model has a wingspan; the margin covers that and the
 // frame or two between deciding and drawing.
@@ -61,6 +71,9 @@ std::string boidOf(const std::string& world) {
     if (world == "dungeon" || world == "losttower") return "Bat01";
     // Every Blood Castle's: MODEL_CROW (GOBoid.cpp:1342-1345), cooked from Object12.
     if (world == "bloodcastle") return "Crow01";
+    // Atlans's: MODEL_FISH01 + 1 (CreateAtlanseFish, GOBoid.cpp:886-918). MU rolls + 1 or + 2;
+    // Fish02 alone here until Fish03 is cooked.
+    if (world == "atlans") return "Fish02";
     return std::string();
 }
 
@@ -85,6 +98,13 @@ Airs airsOf(const std::string& world) {
         airs.call[0] = "boid_bat";
         airs.call[1] = nullptr;
     }
+    if (world == "atlans") {
+        // CreateAtlanseFish: `LightEnable = false`, `Light = (1, 1, 1)`, and no fish calls.
+        airs.lit = false;
+        airs.tint[0] = airs.tint[1] = airs.tint[2] = 1.0f;
+        airs.calls = false;
+        airs.call[0] = airs.call[1] = nullptr;
+    }
     if (world == "bloodcastle") {
         // The crow keeps the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1324) and caws
         // SOUND_CROW alone, a frame in 128, over the court only.
@@ -108,6 +128,7 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     crowEyes_ = model == "Crow01";
     flight_.setButterfly(model == "Butterfly01");
     flight_.setBat(model == "Bat01");
+    flight_.setFish(model == "Fish02");
     scurry_.open(assetDir, world, crawlOf(world), textures, sound);
     if (model.empty()) return true;
 
@@ -185,7 +206,7 @@ void Boids::shutdown() {
     if (mesh_) mesh_->shutdown();
     mesh_.reset();
     scratch_.clear();
-    for (int i = 0; i < Flight::kMaxBirds; ++i) {
+    for (int i = 0; i < Flight::kMaxSlots; ++i) {
         paletteRows_[i] = -1;
         standing_[i] = false;
     }
@@ -202,6 +223,7 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
     Sky sky;
     sky.ground = &groundAt;
     sky.inFrame = &inFrame;
+    if (flight_.isFish()) sky.dry = &dryAt;
     sky.context = &looking;
 
     BirdCall calls[Flight::kMostCalls];
@@ -237,7 +259,7 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
     }
 
     const float perTile = std::max(ground.metresPerTile(), 0.001f);
-    for (int i = 0; i < Flight::kMaxBirds; ++i) {
+    for (int i = 0; i < Flight::kMaxSlots; ++i) {
         const Flight::Bird& bird = flight_.bird(i);
         if (!bird.live) {
             paletteRows_[i] = -1;
@@ -247,7 +269,8 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         Figure& figure = figures_[i];
         if (!standing_[i]) {
             standing_[i] = true;
-            figure.stand(body_.get(), bird.position, bird.facing, kBirdScale);
+            figure.stand(body_.get(), bird.position, bird.facing,
+                         flight_.isFish() ? bird.size : kBirdScale);
             figure.play(body_->idleClip);
             // Each on its own beat, or five birds flap as one wing. The client zeroes the frame
             // for every boid; MU2 gave the town's placements a seeded phase for the same reason
@@ -261,7 +284,14 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         }
         // The clock runs whether or not it is seen, as Sway's does, so a bird the camera turns
         // back to is where its own time has taken it.
-        figure.update(seconds, airs_.flap);
+        // A fish's tail beats with its pace, and a small one's faster (ours, Flight::swim);
+        // MU plays every boid at one rate.
+        float flap = airs_.flap;
+        if (flight_.isFish() && bird.cruise > 0.0f) {
+            flap *= std::clamp(0.6f + 0.55f * bird.speed / bird.cruise, 0.6f, 2.4f) *
+                    (0.65f / std::max(bird.size, 0.2f)) * 0.8f;
+        }
+        figure.update(seconds, flap);
         const int posed = figure.pose(scratch_.data());
         paletteRows_[i] = posed > 0 ? renderer.addPalette(scratch_.data(), posed) : -1;
 
@@ -289,7 +319,7 @@ void Boids::glow(gfx::Effects& effects) {
         // side, Scale 0.1, (1, 0.2, 0) times (rand() % 32 + 128) * 0.01 -- the butterfly's roll
         // carried onto 1.28-1.59.
         static const float kEyes[2][3] = {{-0.05f, 0.0f, 0.0f}, {0.05f, 0.0f, 0.0f}};
-        for (int i = 0; i < Flight::kMaxBirds; ++i) {
+        for (int i = 0; i < Flight::kMaxSlots; ++i) {
             if (!flight_.bird(i).live || !standing_[i]) continue;
             const float luminosity = 1.28f + (glowLevel_[i] - 0.64f) / 0.32f * 0.31f;
             for (const float* eye : kEyes) {
@@ -307,7 +337,7 @@ void Boids::glow(gfx::Effects& effects) {
         return;
     }
     if (!flight_.isButterfly()) return;
-    for (int i = 0; i < Flight::kMaxBirds; ++i) {
+    for (int i = 0; i < Flight::kMaxSlots; ++i) {
         const Flight::Bird& bird = flight_.bird(i);
         if (!bird.live) continue;
         gfx::Sprite sprite;
@@ -337,7 +367,7 @@ void Boids::stepGlow(float seconds) {
 void Boids::gather(std::vector<gfx::Drawable>& out) const {
     scurry_.gather(out);
     if (!body_) return;
-    for (int i = 0; i < Flight::kMaxBirds; ++i) {
+    for (int i = 0; i < Flight::kMaxSlots; ++i) {
         if (!flight_.bird(i).live || paletteRows_[i] < 0) continue;
         const size_t first = out.size();
         figures_[i].gather(paletteRows_[i], out);

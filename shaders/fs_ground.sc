@@ -16,6 +16,7 @@ uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are w
 uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)  w: water_variety
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
+uniform vec4 u_caustic;       // x: MU's caustic frame, 0-31  y: how bright  z: which layers, a bit each
 
 // A texel's height, taken off its luminance. The proxy MU2's own pipeline uses, and a fair
 // one on art where the raised stones are lit and the mortar between them is not.
@@ -186,6 +187,17 @@ void main()
 	}
 	w = max(w, vec3_splat(0.0));
 	w /= max(w.x + w.y + w.z, 1e-5);
+	// MU's caustics (Atlans): the layer on TileWater01's slot is not a sheet in the blend but
+	// light added over it, by the weight MU's overlay alpha gives it (ZzzLodTerrain.cpp:1697-1707,
+	// 1971-1975). Its weight is kept for that and taken out of the blend, so the sand under it
+	// is the sand as MU leaves it.
+	vec3 isCaustic = mod(floor(vec3_splat(u_caustic.z) / vec3(1.0, 2.0, 4.0)), 2.0);
+	float causticWeight = dot(w, isCaustic);
+	if (u_caustic.z > 0.5)
+	{
+		w *= vec3_splat(1.0) - isCaustic;
+		w /= max(w.x + w.y + w.z, 1e-5);
+	}
 	// Sharpened, where the spline has made a fade: cubed and renormalised, which leaves the
 	// halfway line where MU put it and narrows the band either side of it. Without this the
 	// spline's fade was two tiles wide on every shore, and water under seventy percent
@@ -344,6 +356,24 @@ void main()
 	// (water_glow): the Lost Tower's lava. Ours; zero on every other world.
 	colour += (albedo0 * (isWater.x * w.x) + albedo1 * (isWater.y * w.y)
 	         + albedo2 * (isWater.z * w.z)) * u_waterGlow.rgb;
+
+	// MU's caustics, added: frame u_caustic.x of the 8 by 4 sheet, one 64-texel frame across
+	// four tiles (FaceTexture's Scale, ZzzLodTerrain.cpp:1715-1719), times the TerrainLight as
+	// MU's RenderFaceBlend draws it. A frame is cut half a texel in from its edges, and the mip
+	// is read off the unwrapped coordinate, so a frame's seam and its neighbours do not show.
+	// The sun's shadow takes them out too: ours, MU's are drawn under everything.
+	if (u_caustic.z > 0.5 && causticWeight > 0.001)
+	{
+		vec2 span = v_texcoord0 * 0.25;
+		vec2 cell = fract(span) * (62.0 / 64.0) + vec2_splat(1.0 / 64.0);
+		vec2 frame = vec2(mod(u_caustic.x, 8.0), floor(u_caustic.x / 8.0));
+		vec2 cuv = (frame + cell) / vec2(8.0, 4.0);
+		vec2 dx = dFdx(span) / vec2(8.0, 4.0);
+		vec2 dy = dFdy(span) / vec2(8.0, 4.0);
+		vec3 light = isCaustic.y > 0.5 ? texture2DGrad(s_albedo2, cuv, dx, dy).rgb
+		                               : texture2DGrad(s_albedo3, cuv, dx, dy).rgb;
+		colour += light * v_colour.rgb * causticWeight * u_caustic.y * sunLit;
+	}
 
 	// No sky reflection and no sun specular on dry ground. MU's ground art has its own
 	// lighting painted into it, so a sheen on top is a second highlight on a surface that

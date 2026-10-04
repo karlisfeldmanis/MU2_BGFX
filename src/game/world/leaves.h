@@ -87,8 +87,11 @@ public:
     // are asked for too, and without them it does not rain.
     // `snow` is Devias's: the same pool falls as CreateDeviasSnow's flakes instead of blowing
     // as leaves, off the showing's `snow` and `snow_star`. See the note on Flakes below.
+    // `motes` is Atlans's: CreateAtlanseLeaf (ZzzEffectFireLeave.cpp:299-319) spawns the leaves'
+    // own field and drift with World8's leaf01, a soft white dot, and RenderLeaves adds them
+    // (:525). The showing's `mote`. Under the sea there is no roof and no rain to stop them.
     bool open(const std::string& assetDir, content::Textures& textures,
-              const content::Showing& table, bool snow = false);
+              const content::Showing& table, bool snow = false, bool motes = false);
     void shutdown();
 
     // One frame, around wherever the character is drawn. `eye` is the camera, which decides
@@ -167,6 +170,7 @@ private:
 
     Leaf leaves_[kStormFlakes > kCount ? kStormFlakes : kCount];
     bool snow_ = false;
+    bool motes_ = false;
     float storm_ = 0.0f;  // setStorm: how far Devias's blizzard is in, 0 to 1
     // The blizzard's wind, which wanders: its heading off the leaves' -x in radians and its
     // strength as a share, each turning towards a target drawn afresh every few seconds.

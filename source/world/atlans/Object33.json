@@ -1,0 +1,79 @@
+{
+  "item": "Object33",
+  "mu_name": "Object33",
+  "mu_name_from": "Atlans's object slot 32, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "atlans",
+  "object_type": 32,
+  "placements": 105,
+  "profile": "world",
+  "sheets": {
+    "wood05": "at_wood05.png",
+    "wood052": "at_wood052.png"
+  },
+  "sheet_from": "Data/Object8/, from MuMain, decoded under an at_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "wood05": "rock",
+    "wood052": "lamplight"
+  },
+  "why_this_one": "The glyph stone, 105 of them: a carved green-grey slab, 1.4 by 2.7 m and 1.3 m tall, its glyph lit teal. The user: 'now lets work on light and fire emiters'.",
+  "material_note": "wood05 is green-grey sea-worn stone with a carved glyph: rock. wood052 is the same glyph in teal on black, laid over it and added.",
+  "additive": [
+    "wood052"
+  ],
+  "additive_from": "BlendMesh 1 on types 32 and 34, BlendMeshLight sin(WorldTime*0.004)*0.5+0.5 (ZzzObject.cpp:4072-4077): the glyph breathes from dark to full on a 1.57 s period.",
+  "glow": {
+    "wood052": {
+      "low": 0.1,
+      "high": 1.0,
+      "hz": 0.64,
+      "smooth_seconds": 0.75
+    }
+  },
+  "glow_from": "MU's breath, 0 to 1, as the glow's wander between the two: a flicker, not MU's sine.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        0,
+        70
+      ],
+      "colour": [
+        0.25,
+        0.75,
+        1.0
+      ],
+      "low": 0.6,
+      "high": 0.8,
+      "range_tiles": 2,
+      "flicker_hz": 0.64,
+      "smooth_seconds": 0.75,
+      "wrap": 1.0
+    }
+  ],
+  "emitters_from": "Ours, marked. MU's Atlans has no light but its TerrainLight (no CreateFire, no AddTerrainLight, ZzzObject.cpp:4055-4084). A faint teal pool round each stone, breathing with its glyph, after the Lost Tower's lamp posts; the user likes these faint. Then the user, 2026-10-03: 'atlans light sources actualy has to make light, so if char swims inside light source we can see it': raised to light a figure inside it. At 0.2-0.5 a figure inside read the same as one outside, under Atlans's bright overhead key; 0.6-0.8. And `wrap` 1: a figure standing in the pool took none of it, its sides edge-on to a light over it (the user, 2026-10-03: 'chat is standing on light source but is not receiving that light'); wrapped, it is lit round as in water.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 46,
+      "area": 87997.7,
+      "along": [
+        -64.4,
+        64.4
+      ],
+      "mu_uv": [
+        0.01,
+        0.001,
+        0.992,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.996
+      ]
+    }
+  ]
+}
