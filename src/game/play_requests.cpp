@@ -154,24 +154,29 @@ bool Play::refine(int jewelSlot, int targetSlot) {
 bool Play::discard(int slot) {
     // A Firecracker is not laid down: it opens (sim::Realm::crack). An item it gives lands at
     // once with its sound and MU's firework starts over the tile in the same frame (CmdType 0;
-    // the user: "it has to be instant, as soon we drop it it has to start"). Its Zen goes into
-    // the purse without the coins ("without zen sound") but is posted on the gain lane, and the
-    // firework goes up over his tile all the same -- MU sends none with Zen (Event.cpp:1520),
-    // which read as nothing happening (the user, 2026-10-04: "it could be zen, we just need
-    // that there is always something"). Ours.
+    // the user: "it has to be instant, as soon we drop it it has to start"). Zen goes up as a
+    // firework over his tile all the same -- MU sends none with Zen (Event.cpp:1520), which read
+    // as nothing happening (the user, 2026-10-04: "it could be zen, we just need that there is
+    // always something") -- and its coins and sum come when the show is over. Ours.
     if (realm_.cracks(slot)) {
         const sim::Cracked cracked = realm_.crack(slot);
         core::logf("window: %d cracked %s", slot,
                    !cracked.opened ? "refused" : cracked.id ? "into an item" : "into Zen");
         if (!cracked.opened) return false;
         if (cracked.id != 0) landed(cracked.id);
-        else crackedZen_ += cracked.zen;  // for the next frame's gains, as a potion's
+        uint32_t tag = 0;
         if (ground_) {
             const float metres = ground_->metresPerTile();
             const float x = (float(cracked.column) + 0.5f) * metres;
             const float z = -(float(cracked.row) + 0.5f) * metres;
             const float at[3] = {x, ground_->heightAt(x, z), z};
-            firework_.launch(at);
+            tag = firework_.launch(at);
+        }
+        // Zen waits for the show to end (Play::update); with no show it is paid on the next
+        // frame -- not here, between frames, where the next frame's clear would take it.
+        if (cracked.zen > 0) {
+            if (tag != 0) crackerZen_.push_back({tag, cracked.zen});
+            else crackerZen_.push_back({~0u, cracked.zen, 0.0f});
         }
         return true;
     }

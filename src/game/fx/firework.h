@@ -26,6 +26,14 @@
 // A sprite's size is its sheet's width in MU's units times its Scale (RenderParticles,
 // ZzzEffectParticle.cpp:8923). Everything is added (EnableAlphaBlend). Not built: the BITMAP_SHINY
 // ribbon's own texture coordinates along the tail, drawn here as the spirits' ribbons are.
+//
+// **Ours: the launcher's beat is the sound's.** SOUND_XMAS_FIRECRACKER is a 3.8 s barrage with
+// its own bangs, and rung at each of five bursts it was five barrages over one another that
+// matched none of them (the user, 2026-10-04: "lets sync firecracrer anuamtion with sound
+// somehow"). It is rung once, at the first burst, and the rockets go up on kSends so each bursts
+// on one of the clip's five strongest bangs: 0.00, 0.16, 0.75, 1.40 and 1.78 s into
+// christmas_fireworks01.wav, found by onset over 10 ms bins. A rocket's flight to its burst is
+// the same 16 frames for all, so its send is its bang's time; eExplosion.wav stays on each.
 #pragma once
 
 #include <cstdint>
@@ -40,13 +48,15 @@ namespace mu::game {
 
 class Firework {
 public:
+    static constexpr int kShots = 5;  // rockets a throw sends up
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table, const content::Ground* ground);
     // Thrown at `at`, world metres on the ground. Its tag, which every rocket it sends up
     // carries to its burst; 0 when four are already in the air and none is thrown.
     uint32_t launch(const float at[3]);
-    // Ages everything on MU's clock and calls `burst(at, tag)` once for each rocket that bursts
-    // this frame, at the burst's own point -- where the sound belongs -- with its launch's tag.
+    // Ages everything on MU's clock and calls `burst(at, tag, nth)` once for each rocket that
+    // bursts this frame, at the burst's own point -- where the sound belongs -- with its
+    // launch's tag and which of its kShots it is (0 the first, kShots - 1 the last).
     template <typename Burst>
     void update(float seconds, Burst burst);
     void gather(gfx::Effects& effects) const;
@@ -80,6 +90,10 @@ private:
     // look, the same day). MU's 60 + 30 sparks, 60 specks and twelve stars a second.
     static constexpr float kShare = 0.5f;
     static constexpr int kTails = 30;
+    // The reference frames after the throw that each rocket goes up on (see the head): the
+    // clip's bangs at 25 a second. MU's own were 0, 7, 14, 22 and 30.
+    static constexpr int kSends[kShots] = {0, 4, 19, 35, 45};
+    static constexpr int kLaunchLife = 46;
     static constexpr int kLaunchers = 4;
     static constexpr int kRockets = kLaunchers * 5;
     static constexpr int kSparks = kLaunchers * 5 * 90;
@@ -93,6 +107,7 @@ private:
         uint32_t tag = 0;
         float at[3] = {};
         float left = 0.0f;  // frames
+        int sent = 0;
     };
     struct Rocket {
         bool alive = false;
@@ -101,6 +116,7 @@ private:
         float width = 0.0f;   // units
         float light[3] = {};
         float left = 0.0f;
+        int nth = 0;  // which of its launcher's kShots
         float tail[kTails][3] = {};
         int tails = 0;
     };
@@ -179,13 +195,14 @@ void Firework::step(Burst& burst) {
     // The launchers' rockets first, then the rockets, so one sent up this frame flies from it.
     for (Launcher& launcher : launchers_) {
         if (!launcher.alive) continue;
-        const int frame = int(launcher.left + 0.5f);
-        if (frame == 31 || frame == 24 || frame == 17 || frame == 9 || frame == 1) {
+        const int frame = kLaunchLife - int(launcher.left + 0.5f);
+        if (launcher.sent < kShots && frame == kSends[launcher.sent]) {
             for (Rocket& rocket : rockets_) {
                 if (rocket.alive) continue;
                 rocket = Rocket{};
                 rocket.alive = true;
                 rocket.tag = launcher.tag;
+                rocket.nth = launcher.sent;
                 // `rand() % 200 - 100` units either way on the ground, at its height.
                 rocket.at[0] = launcher.at[0] + float(dice(200) - 100) * kUnit;
                 rocket.at[1] = launcher.at[1];
@@ -197,6 +214,7 @@ void Firework::step(Burst& burst) {
                 rocket.left = 26.0f;
                 break;
             }
+            ++launcher.sent;
         }
         launcher.left -= 1.0f;
         if (launcher.left <= 0.0f) launcher.alive = false;
@@ -207,7 +225,7 @@ void Firework::step(Burst& burst) {
         fly(rocket, bursts);
         if (bursts) {
             pop(rocket);
-            burst(rocket.at, rocket.tag);
+            burst(rocket.at, rocket.tag, rocket.nth);
         }
     }
     // The burst's stars: one frame in five at the client's sixty is twelve a second, so on a

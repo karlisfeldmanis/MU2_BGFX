@@ -45,10 +45,11 @@ uint32_t Firework::launch(const float at[3]) {
         if (launcher.alive) continue;
         launcher.alive = true;
         launcher.tag = nextTag_++;
+        launcher.sent = 0;
         if (nextTag_ == 0) nextTag_ = 1;
         for (int k = 0; k < 3; ++k) launcher.at[k] = at[k];
-        // LifeTime 31: its first frame is the 31 that sends the first rocket.
-        launcher.left = 31.0f;
+        // Its first frame sends the first rocket; it lives to send the last (kSends).
+        launcher.left = float(kLaunchLife);
         return launcher.tag;
     }
     return 0;
