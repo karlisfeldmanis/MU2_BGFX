@@ -108,11 +108,43 @@ vec3 toSrgb(vec3 linearColour)
 // linear. The sharpen works on these, since sharpening HDR rings round every flame. The
 // bloom is half resolution and smooth, so the centre's is added to every tap rather than
 // read five times.
+// **A sharp stretch** (2026-10-04, the user: "work on biggest wins"): when the world is drawn
+// smaller than the screen and MetalFX is not drawing it up (u_params.w), Catmull-Rom over the
+// source in five bilinear reads rather than one, which keeps a painted texture's edges where a
+// plain stretch smears them. Clamped to the range of its own reads, so a lamp's 8.0 does not
+// ring into a dark halo -- the job MetalFX's HDR mode did. MetalFX and its clean pass were
+// 1.1 ms of a 2K fight at scale 0.75; this is a few reads more in a pass that was reading.
+vec3 sharpStretch(vec2 uv)
+{
+	vec2 texel = u_present.zw;
+	vec2 at = uv / texel;
+	vec2 one = floor(at - 0.5) + 0.5;
+	vec2 f = at - one;
+	vec2 w0 = f * (-0.5 + f * (1.0 - 0.5 * f));
+	vec2 w1 = 1.0 + f * f * (-2.5 + 1.5 * f);
+	vec2 w2 = f * (0.5 + f * (2.0 - 1.5 * f));
+	vec2 w3 = f * f * (-0.5 + 0.5 * f);
+	vec2 w12 = w1 + w2;
+	vec2 p0 = (one - 1.0) * texel;
+	vec2 p3 = (one + 2.0) * texel;
+	vec2 p12 = (one + w2 / w12) * texel;
+	vec3 a = texture2D(s_colour, vec2(p12.x, p0.y)).rgb;
+	vec3 b = texture2D(s_colour, vec2(p0.x, p12.y)).rgb;
+	vec3 c = texture2D(s_colour, p12).rgb;
+	vec3 d = texture2D(s_colour, vec2(p3.x, p12.y)).rgb;
+	vec3 e = texture2D(s_colour, vec2(p12.x, p3.y)).rgb;
+	float wa = w12.x * w0.y, wb = w0.x * w12.y, wc = w12.x * w12.y, wd = w3.x * w12.y, we = w12.x * w3.y;
+	vec3 sum = (a * wa + b * wb + c * wc + d * wd + e * we) / (wa + wb + wc + wd + we);
+	vec3 lo = min(c, min(min(a, b), min(d, e)));
+	vec3 hi = max(c, max(max(a, b), max(d, e)));
+	return clamp(sum, lo, hi);
+}
+
 vec3 seen(vec2 uv, vec3 glow)
 {
 	// Finite first, as fs_bloom_down's taps are: a NaN or +inf texel is a black pixel
 	// through the tone curve, and a sharpen tap spreads it to its neighbours.
-	vec3 c = texture2D(s_colour, uv).rgb;
+	vec3 c = u_params.w > 0.5 ? sharpStretch(uv) : texture2D(s_colour, uv).rgb;
 	c = min(vec3(isnan(c.r) ? 0.0 : c.r, isnan(c.g) ? 0.0 : c.g, isnan(c.b) ? 0.0 : c.b),
 	        vec3_splat(65504.0));
 	return tonemap((c + glow) * u_params.z);

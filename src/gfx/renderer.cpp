@@ -1120,7 +1120,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     bloom(lighting);
 
     // --- the present ------------------------------------------------------------------
-    const float params[4] = {lighting.ssaoRadius, lighting.ssaoStrength, lighting.exposure, 0.0f};
+    // w: the present stretches a smaller world itself, and sharply (fs_present's sharpStretch).
+    const bool stretched = !bgfx::isValid(upscaled_) && width_ < outWidth_;
+    const float params[4] = {lighting.ssaoRadius, lighting.ssaoStrength, lighting.exposure,
+                             stretched ? 1.0f : 0.0f};
     const bool bloomed = bgfx::isValid(bloomDownProgram_) && bgfx::isValid(bloomUpProgram_);
     const float bloomParams[4] = {0.0f, 0.0f, bloomed ? lighting.bloomStrength : 0.0f, 0.0f};
     bgfx::setUniform(uBloom_, bloomParams);
@@ -1128,7 +1131,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // sharpened: the present's own sharpen on top of it is a second one, and draws a dotted
     // grain over flat metal.
     const bool upscaled = bgfx::isValid(upscaled_);
-    const float present[4] = {upscaled ? 0.0f : lighting.sharpen, lighting.contrast,
+    // Nor on the sharp stretch, which is Catmull-Rom already and whose five reads a sharpen
+    // took five times over (1.1 ms at 2K, measured).
+    const float present[4] = {upscaled || stretched ? 0.0f : lighting.sharpen, lighting.contrast,
                               1.0f / float(upscaled ? outWidth_ : width_),
                               1.0f / float(upscaled ? outHeight_ : height_)};
     bgfx::setUniform(uPresent_, present);
