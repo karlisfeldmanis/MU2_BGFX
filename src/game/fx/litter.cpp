@@ -104,8 +104,10 @@ constexpr float kJewelReach = 1.4f, kJewelLevel = 0.14f;
 constexpr float kQuestReach = 3.0f, kQuestLevel = 0.7f;
 constexpr float kQuestViolet[3] = {0.72f, 0.38f, 1.0f};  // the user's purple
 constexpr float kLegendaryGreen[3] = {0.12f, 1.0f, 0.08f};  // legendary's green since 2026-10-04
-constexpr float kRuneOrange[3] = {1.0f, 0.5f, 0.0f};        // a legendary rune's, as its name
-constexpr float kEpicPurple[3] = {0.64f, 0.21f, 0.93f};      // WoW's epic, an excellent's name
+// A legendary rune's, redder than its name's #ff8000: under the night's grade a half green
+// read olive in the column.
+constexpr float kRuneOrange[3] = {1.0f, 0.3f, 0.0f};
+constexpr float kExcellentGreen[3] = {0.15f, 1.0f, 0.25f};  // MU's excellent green, less blue: 0.5 read teal
 // Its beam: metres tall and wide, and the core's share of the width.
 constexpr float kBeamTall = 5.5f, kBeamWide = 1.6f, kCoreShare = 0.45f;
 constexpr float kGlowLift = 0.15f;        // metres over the jewel's middle
@@ -157,15 +159,16 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = kQuestViolet[k];
     } else if (legendary(row, one.what)) {
         // A legendary drop stands in the same column, in its own green (the user, 2026-10-04:
-        // 'we need also that light for legendary drops'): the colour its name is drawn in.
+        // 'we need also that light for legendary drops'): the colour its name is drawn in, a
+        // legendary rune's orange.
         drop.glow = 3;
         const float* ink = sim::creation(row) ? kRuneOrange : kLegendaryGreen;  // a rune orange
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = ink[k];
     } else if (one.what.excellent != 0) {
-        // And an excellent one, in the epic purple its name is drawn in (the user, 2026-10-04:
-        // 'excelnt drops needs also light').
+        // And an excellent one, in MU's excellent green its name is drawn in (the user,
+        // 2026-10-04: 'excelnt drops needs also light', then 'excelent has to be green').
         drop.glow = 3;
-        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kEpicPurple[k];
+        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kExcellentGreen[k];
     } else if (sim::creation(row)) {
         drop.glow = 2;
         runeColour(one.what, drop.glowColour);
@@ -415,7 +418,14 @@ void Litter::gatherBeams(gfx::Effects& effects, const float eye[3]) const {
             beam.placed = true;
             for (int k = 0; k < 3; ++k) {
                 const float c = drop.glowColour[k];
-                beam.colour[k] = layer == 0 ? (1.0f - c) * 0.8f : layer == 1 ? c : 0.5f + 0.5f * c;
+                // The two added layers sum to about the colour itself and not past it (the user,
+                // 2026-10-04: 'legendary drops need legendary color light beam'): a full glow
+                // and a half-white core summed past 1 and read gold-white whatever the colour.
+                // The taken-away layer by the square root of the complement, so a colour with a
+                // half channel (orange's green) still clears the grass's green under it.
+                beam.colour[k] = layer == 0 ? std::sqrt(1.0f - c) * 0.9f
+                                 : layer == 1 ? 0.65f * c
+                                              : 0.08f + 0.5f * c;
             }
             beam.colour[3] = (layer == 2 ? 1.0f : 0.9f) * breath;
             const float low = footY - 0.05f, high = footY + kBeamTall;

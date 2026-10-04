@@ -241,7 +241,9 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
         if (socketsOf(what) > 0 && tone < Tone::Rare) tone = Tone::Rare;
         return tone;
     }
-    if (what.excellent != 0) return Tone::Epic;
+    // An excellent thing is MU's green (the user, 2026-10-04: 'excelent has to be green'), MuMain's
+    // own colour for an excellent name, where WoW's epic purple stood.
+    if (what.excellent != 0) return Tone::Green;
     // A Firecracker is rare to come by (the user, 2026-10-02: "its kind of rare item so i think
     // we should use some rare color for that item"): WoW's rare blue, the socket's rung.
     if (sim::firecracker(row)) return Tone::Rare;
