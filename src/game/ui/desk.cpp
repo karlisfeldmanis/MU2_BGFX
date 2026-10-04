@@ -307,7 +307,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         const bool wasUp = menu_.up();
         if (!wasUp && escape) {
-            if (windowsOpen) {
+            if (mending_) {
+                // Repair mode is the first rung: Escape puts the hammer down -- the cursor and
+                // the foot's button both -- and leaves the bag or the counter open. The user:
+                // 'if player press escape he cancels the repair icon and button state'.
+                mending_ = false;
+                core::logf("window: repair mode off");
+            } else if (windowsOpen) {
                 inventoryOpen_ = characterOpen_ = false;
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
