@@ -13,7 +13,7 @@ int Realm::questGoal(int index, int step) const {
     const QuestRow& row = questAt(index);
     if (step >= row.stepCount) return 0;
     const QuestStepRow& one = row.steps[step];
-    if (one.kind != QuestStepKind::Clear) return 1;
+    if (one.kind != QuestStepKind::Clear) return std::max(1, int(one.count));
     if (one.count > 0) return one.count;
     // Clearing: the breed's whole population on this map, every nest of it summed.
     int total = 0;
@@ -59,7 +59,10 @@ bool Realm::questLocked(int index) const {
     if (index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);
     const QuestProgress& one = quests_[index];
-    if (row.afterAny == 0 || one.state != QuestState::Untaken || one.completions > 0) return false;
+    if (one.state != QuestState::Untaken || one.completions > 0) return false;
+    // Below its level: Sevina's, until 200 (the user, 2026-10-04).
+    if (bodies_[0].level < row.minLevel) return true;
+    if (row.afterAny == 0) return false;
     for (int i = 0; i < kQuests; ++i) {
         if (((row.afterAny >> i) & 1u) && quests_[i].completions > 0) return false;
     }
@@ -107,18 +110,95 @@ void Realm::countKill(const Body& dead) {
             counted = true;
             say(What::QuestStep, bodies_[0], index, one.counts[step], step);
         }
-        if (!counted) continue;
-        // Ready once every Clear is at its goal: all at once and in any order.
-        bool done = true;
-        for (int step = 0; step < row.stepCount; ++step) {
-            if (row.steps[step].kind == QuestStepKind::Clear &&
-                one.counts[step] < questGoal(index, step)) {
-                done = false;
-            }
+        if (counted) questSettle(index);
+    }
+}
+
+// Ready once every counted step is at its goal: all at once and in any order.
+void Realm::questSettle(int index) {
+    QuestProgress& one = quests_[index];
+    if (one.state != QuestState::Active) return;
+    const QuestRow& row = questAt(index);
+    for (int step = 0; step < row.stepCount; ++step) {
+        if (questCounted(row.steps[step].kind) && one.counts[step] < questGoal(index, step)) {
+            return;
         }
-        if (done) {
-            one.state = QuestState::Ready;
-            say(What::QuestReady, bodies_[0], index);
+    }
+    one.state = QuestState::Ready;
+    say(What::QuestReady, bodies_[0], index);
+}
+
+// A thing come into the bag: whatever Find step asks for it counts it. The treasure is picked up
+// as any drop is (Realm::take), so this is called from there.
+void Realm::questFound(int32_t item) {
+    if (!tables_ || item < 0) return;
+    for (int index = 0; index < kQuests; ++index) {
+        QuestProgress& one = quests_[index];
+        if (one.state != QuestState::Active) continue;
+        const QuestRow& row = questAt(index);
+        for (int step = 0; step < row.stepCount; ++step) {
+            const QuestStepRow& want = row.steps[step];
+            if (want.kind != QuestStepKind::Find || !want.item ||
+                tables_->itemNamed(want.item) != item) {
+                continue;
+            }
+            if (one.counts[step] >= questGoal(index, step)) continue;
+            ++one.counts[step];
+            say(What::QuestStep, bodies_[0], index, one.counts[step], step);
+        }
+        questSettle(index);
+    }
+}
+
+// The bag slot holding one of `item`, or -1. Past the worn slots, as the hand-in looks.
+int Realm::carried(int32_t item) const {
+    for (int slot = kWorn; slot < kSlots; ++slot) {
+        if (!bag_[slot].empty() && bag_[slot].item == item) return slot;
+    }
+    return -1;
+}
+
+// Whether a kill here may leave a class's treasure: the Lost Tower's last floor, or Atlans (the
+// user, 2026-10-04: "quest item drop which can drop in lt7 or atlans"). The seventh floor is the
+// travel list's last Lost Tower row, the floor a tile is on (Realm::floorAt).
+bool Realm::treasureGround(int column, int row) const {
+    if (!tables_) return false;
+    if (tables_->map == kAtlansMap) return true;
+    if (tables_->map != kLostTowerMap) return false;
+    int last = -1;
+    for (int i = 0; i < kTravels; ++i) {
+        if (travelAt(i).map == kLostTowerMap) last = i;
+    }
+    return last >= 0 && floorAt(column, row) == last;
+}
+
+// The class's treasure, at kTreasureIn10000 a kill on its ground while its Find stands and he
+// does not already carry one. Off its own dice and drawn only then, so a seeded hunt without
+// the quest rolls what it always did. Ours: MU drops the treasures from monsters of their maps
+// while the quest stands (WebZen's QuestUtil), at its own rate; this one is a proposal.
+void Realm::treasure(const Body& dead) {
+    if (!tables_ || !treasureGround(dead.column(), dead.row())) return;
+    for (int index = 0; index < kQuests; ++index) {
+        if (quests_[index].state != QuestState::Active) continue;
+        const QuestRow& row = questAt(index);
+        if (!questNative(row, int(bodies_[0].kin))) continue;
+        for (int step = 0; step < row.stepCount; ++step) {
+            const QuestStepRow& want = row.steps[step];
+            if (want.kind != QuestStepKind::Find || !want.item) continue;
+            if (quests_[index].counts[step] >= questGoal(index, step)) continue;
+            const int32_t item = tables_->itemNamed(want.item);
+            if (item < 0 || carried(item) >= 0) continue;
+            bool lying = false;
+            for (const Lying& one : lying_) lying = lying || one.what.item == item;
+            if (lying) continue;
+            if (treasureDice_.nextInt(0, 10000) >= kTreasureIn10000) continue;
+            Lying found;
+            found.what = Held{item, 0, 1};
+            std::tie(found.column, found.row) = clearing(dead.column(), dead.row());
+            found.vanishesAt = tick_ + int64_t(kTreasureLingerSeconds) * 20;
+            found.id = nextId_++;
+            lying_.push_back(found);
+            say(What::Dropped, dead, int32_t(found.id), item, 0);
         }
     }
 }
@@ -129,6 +209,19 @@ bool Realm::completeQuest(int index, int choice) {
     if (tables_->folk[size_t(questing_)].number != row.giver) return false;
     QuestProgress& one = quests_[index];
     if (one.state != QuestState::Ready) return false;
+    // A Find's thing must still be in the bag: sold or thrown away, the step is open again and
+    // the treasure falls again.
+    int handed[kQuestSteps];
+    for (int step = 0; step < row.stepCount; ++step) {
+        handed[step] = -1;
+        if (row.steps[step].kind != QuestStepKind::Find || !row.steps[step].item) continue;
+        handed[step] = carried(tables_->itemNamed(row.steps[step].item));
+        if (handed[step] < 0) {
+            one.state = QuestState::Active;
+            one.counts[step] = 0;
+            return false;
+        }
+    }
     // A choice is owed whenever his class has one to make.
     bool anyFits = false;
     for (int i = 0; i < row.choiceCount; ++i) anyFits |= questChoiceFits(index, i);
@@ -137,6 +230,10 @@ bool Realm::completeQuest(int index, int choice) {
     // Everything into the bag or nothing: tried on the bag itself and put back on a refusal, so
     // the check is the placing and the two cannot disagree.
     const Satchel before = bag_;
+    // The treasures go to the giver first, so their cells are free for the pay.
+    for (int step = 0; step < row.stepCount; ++step) {
+        if (handed[step] >= 0) bag_.lift(handed[step]);
+    }
     const auto pay = [&](const QuestItem& what, int* slotOut) {
         const int32_t item = what.item ? tables_->itemNamed(what.item) : -1;
         if (item < 0) return true;  // a row naming nothing cooked pays nothing, and says so below
@@ -183,6 +280,7 @@ bool Realm::completeQuest(int index, int choice) {
     one.state = QuestState::Resting;
     one.completions = completions;
     one.availableAt = wall_ + row.repeatSeconds;
+    if (row.promotes) hero.second = sim::promoted(quests_, int(hero.kin));
     return true;
 }
 

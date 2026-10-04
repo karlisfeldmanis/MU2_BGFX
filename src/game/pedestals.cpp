@@ -54,12 +54,6 @@ constexpr float kBlobDrawn = 0.22f, kSparkSmaller = 0.4f;
 // pBitmap->Width * Scale). chasellight is 16x128 and Impack03 64x64 (lobby_cut.py).
 constexpr float kBlobW = 16.0f, kBlobH = 128.0f, kSparkW = 64.0f, kSparkH = 64.0f;
 
-const char* bareOf(sim::Kin kin) {
-    // index.json's spellings: the elf's bare body has no suffix.
-    return kin == sim::Kin::DarkWizard ? "DarkWizardBare"
-           : kin == sim::Kin::FairyElf ? "FairyElf"
-                                       : "DarkKnightBare";
-}
 
 void tileToWorld(const content::Ground& ground, float column, float row, float out[3]) {
     const float m = ground.metresPerTile();
@@ -123,7 +117,7 @@ bool Pedestals::standing(int slot) const {
     return previewSlot_ == slot && stands_[kRosterSlots].up;
 }
 
-const FigureBody* Pedestals::dressed(int slot, sim::Kin kin,
+const FigureBody* Pedestals::dressed(int slot, sim::Kin kin, bool second,
                                      const std::vector<Saved::Item>& items) {
     // The hands by Beast.Rearm's rule (sim/realm_items.cpp's rearm): the weapon is what swings,
     // the right hand's first, and never ammunition; the shield is the left hand's when it is one,
@@ -172,7 +166,8 @@ const FigureBody* Pedestals::dressed(int slot, sim::Kin kin,
         worn.push_back(armour[s]->name);
         wornShine.push_back(shineOf(*armour[s], armourPlus[s], armourExcellent[s]));
     }
-    return figures_->dress("Lobby" + std::to_string(slot), bareOf(kin), weapon, shield, worn,
+    return figures_->dress("Lobby" + std::to_string(slot), bareBody(kin, second, figures_), weapon,
+                           shield, worn,
                            wornShine, weaponShine, shieldShine);
 }
 
@@ -201,7 +196,7 @@ void Pedestals::raise(const std::vector<Seat>& roster) {
     for (int slot = 0; slot < kRosterSlots; ++slot) stands_[slot] = Stand{};
     for (const Seat& one : roster) {
         if (one.slot < 0 || one.slot >= kRosterSlots) continue;
-        standAt(one.slot, dressed(one.slot, one.kin, one.items), one.kin);
+        standAt(one.slot, dressed(one.slot, one.kin, one.second, one.items), one.kin);
     }
     if (picked_ >= 0 && !standing(picked_)) picked_ = -1;
 }
@@ -211,7 +206,7 @@ void Pedestals::preview(int slot, sim::Kin kin) {
     previewSlot_ = -1;
     if (slot < 0 || slot >= kRosterSlots || stands_[slot].up) return;
     previewSlot_ = slot;
-    standAt(kRosterSlots, dressed(kRosterSlots, kin, {}), kin);
+    standAt(kRosterSlots, dressed(kRosterSlots, kin, false, {}), kin);
 }
 
 void Pedestals::pick(int slot) {

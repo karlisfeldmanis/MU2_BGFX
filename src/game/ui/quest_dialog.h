@@ -113,6 +113,7 @@ private:
         uint8_t power = 0;
         uint8_t affixes[3] = {};  // a powered ring's or pendant's further powers
         uint32_t ink = 0;  // its name's, the card's own tone for it
+        bool need = false;  // a thing asked for, drawn as a requirement row, not a reward
         gfx::Box box;     // in the body's own units, from the top of what scrolls
     };
     void layout(const Play& play);

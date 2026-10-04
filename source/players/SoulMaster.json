@@ -1,0 +1,17 @@
+{
+  "item": "SoulMaster",
+  "mu_name": "Soul Master, no armour",
+  "kind": "character",
+  "trade": "wizard",
+  "parts": [
+    "HelmClass201",
+    "ArmorClass201",
+    "PantClass201",
+    "GloveClass201",
+    "BootClass201"
+  ],
+  "note": "The second class's bare body: what a Soul Master wears where no armour covers him, after Sevina's treasure is handed in (sim::promoted, game/roster.h bareBody).",
+  "parts_from": "MuMain's HelmClass2{n} set (ZzzOpenData.cpp:121-127), skin 7 (_enum.h:3250-3252).",
+  "rig": "player.bmd, the same rig the first-class bodies are skinned to.",
+  "trade_from": "OpenMU's ClassDarkWizard. Nothing built is a wand yet, so this is the class saying who he is rather than anything the fight currently reads. See FairyElf.json."
+}

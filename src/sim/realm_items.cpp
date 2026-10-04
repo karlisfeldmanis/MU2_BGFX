@@ -948,6 +948,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()
             ? tables_->kinds[size_t(dead.kind)].number
             : -1);
+    // Sevina's treasure, while it is sought (realm_quests.cpp): beside whatever else the kill leaves.
+    treasure(dead);
     // Blood Castle's scroll, then its bone, anywhere but a castle (sim/items.h): each its own
     // roll off its own dice, and one that lands is the kill's whole drop, as WebZen's `return
     // TRUE` -- the coins and the item rolls below are not made.
@@ -1262,6 +1264,7 @@ bool Realm::take(size_t index) {
     lying_[index] = lying_.back();
     lying_.pop_back();
     say(What::Picked, bodies_[0], int32_t(one.id), slot, int32_t(one.zen));
+    if (!one.what.empty()) questFound(one.what.item);
     return true;
 }
 
@@ -1311,7 +1314,7 @@ int64_t Realm::sellValue(int slot) const {
     const Held& thing = bag_[slot];
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
     // A quest item is the Archangel's, not a merchant's (sim::divineStaff).
-    if (archangelWeapon(row)) return -1;
+    if (archangelWeapon(row) || classTreasure(row)) return -1;
     const bool stacks = row.group == kGroupPotions;
     int64_t paid = sellingPrice(row, thing.refinement,
                                 stacks ? std::max<int>(1, thing.durability) : 1, thing.skill,
@@ -1327,7 +1330,8 @@ int64_t Realm::sellValue(int slot) const {
 int64_t Realm::sellItem(int slot) {
     if (trading_ < 0 || !serving(trading_) || !baggable(slot) || bag_[slot].empty()) return -1;
     // A quest item is not sold (sim::divineStaff).
-    if (archangelWeapon(tables_->items[size_t(bag_[slot].item)])) return -1;
+    const content::ItemRow& selling = tables_->items[size_t(bag_[slot].item)];
+    if (archangelWeapon(selling) || classTreasure(selling)) return -1;
     const Held thing = bag_[slot];
     const int64_t paid = std::max<int64_t>(0, sellValue(slot));
     bag_.lift(slot);

@@ -1,0 +1,88 @@
+{
+  "item": "HelmClass203",
+  "mu_name": "Muse Elf head",
+  "mu_name_from": "MuMain loads the second classes' bare bodies as MODEL_BODY_HELM + MAX_CLASS + i from Data\\\\Player\\\\HelmClass2{i+1} (ZzzOpenData.cpp:121-127), and GetSkinModelIndex hands CLASS_SOULMASTER, CLASS_BLADEKNIGHT and CLASS_MUSEELF skins 7, 8 and 9 (_enum.h:3250-3252, CharacterManager.cpp:240-254): Class201 the Soul Master, 202 the Blade Knight, 203 the Muse Elf.",
+  "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/class-change-quest.md.",
+  "profile": "armour",
+  "sheets": {
+    "level_man033": "level_man033.png"
+  },
+  "sheet_from": "Data/Player/level_man033.OZJ (256x256), from MuMain. All five of the Muse Elf's parts name it.",
+  "rebind": {
+    "Bip01 Spine1": "Bip01 Head"
+  },
+  "cull": false,
+  "unstack": false,
+  "rebind_from": "As HelmClass03: MU binds the base of the neck rigidly to Bip01 Spine1 and the rest of the head to Bip01 Head, and the head turns a long way from the chest.",
+  "cull_from": "As HelmClass03's: MU's hair is single-sided fins.",
+  "unstack_why": "As HelmClass03's.",
+  "material_note": "Skin, all three: the face and hair are one island here (HelmClass03 had the hair apart), and the face is what a close look reads; the two small islands are the ears.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 128,
+      "area": 3183.7,
+      "along": [
+        -18.9,
+        10.9
+      ],
+      "mu_uv": [
+        0.502,
+        0.607,
+        0.993,
+        1.0
+      ],
+      "bake_uv": [
+        0.502,
+        0.607,
+        0.993,
+        1.0
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 12,
+      "area": 149.8,
+      "along": [
+        -17.7,
+        0.0
+      ],
+      "mu_uv": [
+        0.639,
+        0.492,
+        0.762,
+        0.562
+      ],
+      "bake_uv": [
+        0.639,
+        0.492,
+        0.762,
+        0.562
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 12,
+      "area": 149.8,
+      "along": [
+        -17.7,
+        0.0
+      ],
+      "mu_uv": [
+        0.639,
+        0.492,
+        0.762,
+        0.562
+      ],
+      "bake_uv": [
+        0.639,
+        0.492,
+        0.762,
+        0.562
+      ]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "item": "Quest02",
+  "mu_name": "Tear of Elf",
+  "mu_name_from": "Loaded as MODEL_SCROLL_OF_EMPEROR_RING_OF_HONOR + i from Data\\\\Item\\\\Quest0i.bmd (ZzzOpenData.cpp:929-932, _enum.h:2091-2093): group 14, number 25. Named as OpenMU's and MuMain's dialog.",
+  "why_this_one": "Sevina's class change (the user, 2026-10-04): the class's treasure, falling only on the Lost Tower's seventh floor and in Atlans while its quest stands (Realm::treasure, sim/items.h kTreasureIn10000), handed back to her for the second class. docs/class-change-quest.md.",
+  "profile": "weapon",
+  "profile_note": "As the Ale and the Firecracker: a small object in the bag and on the ground.",
+  "tells": "Bring it to Sevina in Devias",
+  "tells_from": "Ours. MU prints the name alone, yellow (ZzzInventory.cpp:2322-2345).",
+  "stats": {
+    "note": "Group, number and size are OpenMU's quest row (CreateQuestItem: 1 wide, a durability of 1, never in the ordinary drop). Bound to the character and never sold (sim::classTreasure).",
+    "from": "OpenMU VersionSeasonSix/Items/Quest.cs:69-71",
+    "group": 14,
+    "number": 25,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    }
+  },
+  "sheets": {
+    "Elf_E": "elf_e.png"
+  },
+  "sheet_from": "Data/Item/Elf_E.OZJ (8x8): a flat pale ice-blue, the colour the crystal is.",
+  "sheet_materials": {
+    "Elf_E": "glass"
+  },
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "material_note": "Glass: a crystal. MU draws it with a shine (Level 8, ZzzObject.cpp:9609) and a glow colour 2 (ZzzObject.cpp:6552) not built here yet.",
+  "flat_shaded": true,
+  "flat_shaded_why": "As the jewels: a cut stone is its facets.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 32,
+      "area": 1915.3,
+      "along": [
+        -9.5,
+        9.5
+      ],
+      "mu_uv": [
+        0.009,
+        0.007,
+        1.001,
+        1.0
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.969,
+        0.9
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 32,
+      "area": 748.2,
+      "along": [
+        -5.9,
+        5.9
+      ],
+      "mu_uv": [
+        0.009,
+        0.007,
+        1.001,
+        1.0
+      ],
+      "bake_uv": [
+        0.01,
+        0.104,
+        0.969,
+        0.99
+      ]
+    }
+  ]
+}

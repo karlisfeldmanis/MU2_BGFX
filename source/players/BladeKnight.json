@@ -1,0 +1,17 @@
+{
+  "item": "BladeKnight",
+  "mu_name": "Blade Knight, no armour",
+  "kind": "character",
+  "trade": "knight",
+  "parts": [
+    "HelmClass202",
+    "ArmorClass202",
+    "PantClass202",
+    "GloveClass202",
+    "BootClass202"
+  ],
+  "note": "The second class's bare body: what a Blade Knight wears where no armour covers him, after Sevina's treasure is handed in (sim::promoted, game/roster.h bareBody).",
+  "parts_from": "MuMain's HelmClass2{n} set (ZzzOpenData.cpp:121-127), skin 8 (_enum.h:3250-3252).",
+  "rig": "player.bmd, the same rig the first-class bodies are skinned to.",
+  "trade_from": "OpenMU's ClassDarkKnight: 28 strength, 20 agility, 25 vitality, 10 energy at level one, and the class the arena has always stood up. See FairyElf.json for what the field is for."
+}

@@ -4493,6 +4493,155 @@ void testTowerKeeper() {
                "the third floor's still waits on its own");
 }
 
+// Sevina's class change (docs/class-change-quest.md, the user's of 2026-10-04): a hunt on the
+// Lost Tower's last floor (and Atlans, once it has monsters) from level 200; then each class's
+// treasure, falling only there while its quest stands, whose hand-in makes him the second class.
+void testClassChange() {
+    std::printf("the class change\n");
+    content::Tables devias, tower;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur", devias,
+                              error),
+          "Devias's tables load");
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/losttower/losttower.mur",
+                              tower, error),
+          "the Lost Tower's tables load");
+    checkEqual(sim::questOf(sim::kSevina), sim::kSevinaTrial, "Sevina's first is the trial");
+    const sim::QuestRow& trial = sim::questAt(sim::kSevinaTrial);
+    checkEqual(trial.minLevel, 200, "from level 200");
+    for (int kin = 0; kin < 3; ++kin) {
+        const sim::QuestRow& row = sim::questAt(sim::kTreasureQuests[kin]);
+        check(row.giver == sim::kSevina && row.promotes, "each class's treasure is hers, and promotes");
+        check(row.natives == (1u << kin) && !row.strangers, "to that class alone");
+        check(row.afterAny == (1u << sim::kSevinaTrial), "after the trial");
+        check(row.steps[0].kind == sim::QuestStepKind::Find, "a thing to find");
+    }
+    check(std::string(sim::className(int(sim::Kin::DarkKnight), true)) == "Blade Knight" &&
+              std::string(sim::className(int(sim::Kin::DarkWizard), true)) == "Soul Master" &&
+              std::string(sim::className(int(sim::Kin::FairyElf), true)) == "Muse Elf",
+          "the three second classes by MU's names");
+
+    int sevina = -1;
+    for (size_t i = 0; i < devias.folk.size(); ++i) {
+        if (devias.folk[i].number == sim::kSevina) sevina = int(i);
+    }
+    check(sevina >= 0, "Sevina stands in Devias");
+    if (sevina < 0) return;
+    const auto talkTo = [&](sim::Realm& realm, bool* offered, bool* greeted) {
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(sevina);
+        realm.ask(talk);
+        *offered = *greeted = false;
+        for (int tick = 0; tick < 400 && !*offered && !*greeted; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                *offered |= one.what == sim::What::Offered;
+                *greeted |= one.what == sim::What::Shouted &&
+                            one.a == int32_t(sim::Shout::Greet) && one.c == sevina;
+            }
+        }
+    };
+    const content::Townsperson& s = devias.folk[size_t(sevina)];
+    bool offered = false, greeted = false;
+    {
+        sim::Realm young;
+        check(young.raise(&devias, 3, s.x, s.y + 2, sim::Kin::DarkKnight, 199), "a knight of 199");
+        check(young.questLocked(sim::kSevinaTrial), "her trial waits on his level");
+        talkTo(young, &offered, &greeted);
+        check(greeted && !offered, "and she says he is not ready");
+    }
+    sim::Realm grown;
+    check(grown.raise(&devias, 3, s.x, s.y + 2, sim::Kin::DarkKnight, 200), "and one of 200");
+    talkTo(grown, &offered, &greeted);
+    check(offered && !greeted, "her dialog opens");
+    check(grown.acceptQuest(sim::kSevinaTrial), "and the trial is taken");
+    check(!grown.promoted(), "a Dark Knight still");
+
+    // The treasure, on the seventh floor alone, while its quest stands.
+    const int32_t sword = tower.itemNamed("Quest01");
+    check(sword >= 0, "the Broken Sword is a cooked item");
+    if (sword < 0) return;
+    const int knightQuest = sim::kTreasureQuests[int(sim::Kin::DarkKnight)];
+    int seventh = -1;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (sim::travelAt(i).map == 4) seventh = i;
+    }
+    (void)seventh;
+    // Stood among the seventh floor's own monsters, so a treasure there is a walk away.
+    int topColumn = -1, topRow = -1;
+    {
+        sim::Realm look;
+        look.raise(&tower, 5, 208, 75, sim::Kin::DarkKnight, 200);
+        for (const sim::Body& body : look.bodies()) {
+            if (topColumn < 0 && body.monster() && look.treasureGround(body.column(), body.row())) {
+                topColumn = body.column();
+                topRow = body.row();
+            }
+        }
+    }
+    check(topColumn >= 0, "the seventh floor has monsters");
+    sim::Realm hunt;
+    check(hunt.raise(&tower, 5, topColumn, topRow, sim::Kin::DarkKnight, 200), "a knight on LT7");
+    check(hunt.treasureGround(hunt.hero().column(), hunt.hero().row()), "standing on it");
+    const auto fell = [&](sim::Realm& realm, bool onTop, int rounds) {
+        int dropped = 0;
+        for (int round = 0; round < rounds && dropped == 0; ++round) {
+            for (const sim::Body& body : realm.bodies()) {
+                if (!body.monster() || !body.alive()) continue;
+                if (realm.treasureGround(body.column(), body.row()) != onTop) continue;
+                const size_t before = realm.happenings().size();
+                realm.smite(body.id);
+                for (size_t h = before; h < realm.happenings().size(); ++h) {
+                    const sim::Happening& one = realm.happenings()[h];
+                    dropped += one.what == sim::What::Dropped && one.b == sword;
+                }
+            }
+            for (int tick = 0; tick < 400; ++tick) realm.step();
+        }
+        return dropped;
+    };
+    checkEqual(fell(hunt, true, 4), 0, "no treasure falls before its quest is taken");
+    sim::HeroRecord seeking = hunt.record();
+    seeking.quests[sim::kSevinaTrial].state = sim::QuestState::Resting;
+    seeking.quests[sim::kSevinaTrial].completions = 1;
+    seeking.quests[knightQuest].state = sim::QuestState::Active;
+    hunt.restore(seeking);
+    checkEqual(fell(hunt, false, 4), 0, "nor below the seventh floor");
+    check(fell(hunt, true, 60) == 1, "on the seventh it falls, one at a time");
+    // Picked up -- in Devias, as he would not live long on the floor bare: carried, thrown down
+    // and taken up again, which is the pick-up the drop asks for.
+    sim::Realm back;
+    check(back.raise(&devias, 3, s.x, s.y + 2, sim::Kin::DarkKnight, 200), "back in Devias");
+    sim::HeroRecord carrying = hunt.record();
+    carrying.slots[sim::kWorn] = sim::Held{sword, 0, 1};
+    back.restore(carrying);
+    check(back.discard(sim::kWorn) != 0, "the sword thrown down");
+    sim::Request pick;
+    pick.kind = sim::Request::Kind::Pick;
+    pick.target = back.lying().back().id;
+    back.ask(pick);
+    for (int tick = 0; tick < 400 && back.quest(knightQuest).state == sim::QuestState::Active;
+         ++tick) {
+        back.step();
+    }
+    checkEqual(int(back.quest(knightQuest).state), int(sim::QuestState::Ready),
+               "picked up, it is ready to hand in");
+
+    // Handed in at Sevina: the sword taken, the class changed.
+    talkTo(back, &offered, &greeted);
+    check(offered, "her dialog opens on the hand-in");
+    check(back.completeQuest(knightQuest, -1), "and it is handed in");
+    check(back.promoted() && back.hero().second, "a Blade Knight now");
+    int swords = 0;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) swords += back.satchel()[slot].item == sword;
+    checkEqual(swords, 0, "the sword is hers");
+    sim::Realm again;
+    check(again.raise(&devias, 3, s.x, s.y + 2, sim::Kin::DarkKnight, 200), "and after a restart");
+    again.restore(back.record());
+    check(again.hero().second, "he is still a Blade Knight");
+}
+
 void testDeviasFolk() {
     std::printf("devias folk\n");
     content::Tables devias;
@@ -7978,6 +8127,7 @@ int main() {
     testVault(tables);
     testDeviasFolk();
     testTowerKeeper();
+    testClassChange();
     testThroughWalls();
     testCastleGrid(tables);
     testCharon();

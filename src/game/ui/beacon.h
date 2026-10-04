@@ -7,7 +7,7 @@
 // point -- over a small round dot, in old gold: a ridge down the middle with the left face lit
 // and the right in shade, a pale edge on the lit side, a little wear, a hairline of ink and a
 // soft dark halo so it reads over bright stone. A hand-in is a "?" of the same stroke and dot.
-// A quest still to come -- Sevina's, until the class change is written -- is the "!" in grey.
+// A quest still to come -- waiting on another quest, or on a level -- is the "!" in grey.
 // A quest taken and under way is the "?" in grey, gold again once it can be handed in.
 // Once the hero has cleared a quest, its "!" and hand-in "?" are blue: WoW's daily, since it comes
 // round again every twelve hours.

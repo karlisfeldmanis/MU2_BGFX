@@ -26,6 +26,7 @@
 #include "content/ground.h"
 #include "game/item_models.h"
 #include "game/shine.h"
+#include "gfx/effects.h"
 #include "gfx/renderer.h"
 #include "sim/items.h"
 #include "sim/realm.h"
@@ -34,10 +35,18 @@ namespace mu::game {
 
 class Litter {
 public:
-    void open(ItemModels* models, const content::Ground* ground) {
+    void open(ItemModels* models, const content::Ground* ground,
+              bgfx::TextureHandle beam = BGFX_INVALID_HANDLE) {
         models_ = models;
         ground_ = ground;
+        beam_ = beam;
     }
+    // **A quest item lying down is seen from across the screen** (the user, 2026-10-04: 'quest
+    // items needs to be well vissible'). Ours: MU drops a quest item as any other. Sevina's
+    // treasures (sim::classTreasure) stand under a violet column of light -- MU's chasellight, the
+    // lobby's streak, three body heights tall and turned to face the camera -- breathing, with a
+    // brighter core, and light the ground round them violet, ahead of any jewel's glow.
+    void gatherBeams(gfx::Effects& effects, const float eye[3]) const;
     // **A jewel lying down glows** (the user, 2026-10-02: "actualy we need minimal light emiters
     // for all jewel drops", and "some nice effect for drop jewel of creations"). Ours: MU throws
     // nothing round a lying jewel. Every jewel (the table's jewel flag, pets aside) and every
@@ -79,7 +88,7 @@ private:
         uint32_t id = 0;
         bool present = false;
         ShineLook shine;  // how the item's plus shows; a heap of Zen has none
-        int glow = 0;     // 0 none, 1 a jewel, 2 a Rune of Creation
+        int glow = 0;     // 0 none, 1 a jewel, 2 a Rune of Creation, 3 a quest item
         float glowColour[3] = {1.0f, 1.0f, 1.0f};
         std::vector<Piece> pieces;
     };
@@ -88,6 +97,7 @@ private:
     void buildItem(const sim::Lying& one, Drop& drop);
     void buildHeap(const sim::Lying& one, Drop& drop);
 
+    bgfx::TextureHandle beam_ = BGFX_INVALID_HANDLE;
     std::vector<uint32_t> settled_;
     float clock_ = 0.0f;  // seconds, wrapped: the glow's breath
     ItemModels* models_ = nullptr;

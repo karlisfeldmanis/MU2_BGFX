@@ -1,0 +1,20 @@
+{
+  "item": "MuseElf",
+  "mu_name": "Muse Elf, no armour",
+  "kind": "character",
+  "trade": "elf",
+  "parts": [
+    "HelmClass203",
+    "ArmorClass203",
+    "PantClass203",
+    "GloveClass203",
+    "BootClass203"
+  ],
+  "note": "The second class's bare body: what a Muse Elf wears where no armour covers him, after Sevina's treasure is handed in (sim::promoted, game/roster.h bareBody).",
+  "parts_from": "MuMain's HelmClass2{n} set (ZzzOpenData.cpp:121-127), skin 9 (_enum.h:3250-3252).",
+  "rig": "player.bmd, the same rig the first-class bodies are skinned to.",
+  "trade_from": "OpenMU's CharacterClassNumber for the Fairy Elf, which is Trade.FairyElf here. It is what the fight reads for the points a level one starts with - 22 strength, 25 agility, 20 vitality, 15 energy in ClassFairyElf - and for the one requirement that cannot be granted: every bow and crossbow in group 4 is elf-only, so a Dark Knight does not shoot one however many points he is given.",
+  "female": true,
+  "female_from": "The client keeps this as a question about the class rather than a flag on the model: CCharacterManager::IsFemale(c->Class) is what every branch tests. It decides two things and only two - which idle and walk she stands in, and which voice she uses - and both are written down under why_she_is_here.",
+  "hands": "Empty here, deliberately, as DarkKnightBare is. This entry exists to show the body; what she carries is chosen on the tab."
+}

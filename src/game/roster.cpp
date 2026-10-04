@@ -11,6 +11,8 @@
 
 #include "core/args.h"
 #include "core/log.h"
+#include "game/figures.h"
+#include "sim/quests.h"
 
 namespace mu::game {
 namespace {
@@ -102,6 +104,7 @@ std::vector<Seat> readRoster(const std::string& folderPath) {
         one.world = saved.world;
         one.slot = saved.slot;
         one.kin = saved.hero.kin;
+        one.second = sim::promoted(saved.hero.quests, int(saved.hero.kin));
         one.level = std::max(1, saved.hero.level);
         one.fresh = saved.fresh;
         one.items = std::move(saved.items);
@@ -215,6 +218,18 @@ const char* cradleWeapon(sim::Kin kin) {
         case sim::Kin::DarkKnight: return "Axe01";
     }
     return "";
+}
+
+const char* bareBody(sim::Kin kin, bool second, const Figures* figures) {
+    // index.json's spellings: the elf's first body has no suffix.
+    const char* first = kin == sim::Kin::DarkWizard ? "DarkWizardBare"
+                        : kin == sim::Kin::FairyElf ? "FairyElf"
+                                                    : "DarkKnightBare";
+    if (!second) return first;
+    const char* promoted = kin == sim::Kin::DarkWizard ? "SoulMaster"
+                           : kin == sim::Kin::FairyElf ? "MuseElf"
+                                                       : "BladeKnight";
+    return figures && !figures->body(promoted) ? first : promoted;
 }
 
 const char* className(sim::Kin kin) {

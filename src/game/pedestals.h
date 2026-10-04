@@ -110,7 +110,8 @@ private:
     // Who the rings, the streams and the light are on: the create window's class while it
     // stands on its pedestal, and the pick otherwise.
     const Stand* subject() const;
-    const FigureBody* dressed(int slot, sim::Kin kin, const std::vector<Saved::Item>& items);
+    const FigureBody* dressed(int slot, sim::Kin kin, bool second,
+                              const std::vector<Saved::Item>& items);
     void spawn(const float feet[3], bool blob);
     float roll(int n);  // 0 .. n-1, MU's rand() % n
 

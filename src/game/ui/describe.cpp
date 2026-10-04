@@ -50,7 +50,7 @@ std::string kindOf(const content::ItemRow& row) {
     if (sim::ammunition(row)) return "Ammunition";
     // Blood Castle's: the quest item the statue gives up, the ticket and what makes it -- in
     // MU's helper group, which would read them as pets.
-    if (sim::archangelWeapon(row)) return "Quest item";
+    if (sim::archangelWeapon(row) || sim::classTreasure(row)) return "Quest item";
     if (sim::invisibilityCloak(row)) return "Blood Castle ticket";
     if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) return "Ticket material";
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
@@ -245,8 +245,10 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     if (sim::firecracker(row)) return Tone::Rare;
     // Blood Castle's ticket and what makes it: MU's yellow name (ZzzInventory.cpp:2190-2193),
     // our ladder's gold.
-    if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row) ||
-        sim::archangelWeapon(row)) {
+    // A quest item is purple, the user's of 2026-10-04: Sevina's treasures and the Archangel's
+    // weapons, both carried back to whoever asked.
+    if (sim::archangelWeapon(row) || sim::classTreasure(row)) return Tone::Quest;
+    if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row)) {
         return Tone::Artifact;
     }
     if (socketsOf(what) > 0) return Tone::Rare;

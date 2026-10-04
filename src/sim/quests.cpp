@@ -782,10 +782,151 @@ QuestRow tersiaBalrog() {
     return row;
 }
 
-const QuestRow kTable[kQuests] = {marlon(),      peia(),        devin(),      catacombs(),
-                                  halls(),       pit(),         tersiaDoor(),  tersiaSecond(),
-                                  tersiaThird(),  tersiaFourth(), tersiaFifth(), tersiaSixth(),
-                                  tersiaBalrog()};
+// Sevina's class change (docs/class-change-quest.md), the user's of 2026-10-04: "this quest first
+// part will be kill quest on lt7 and atlans, and it starts at lvl 200. second part is quest item
+// drop which can drop in lt7 or atlans". MU's own giver (Sevina the Priestess, 235, Devias) and
+// MU's own treasures and words where MU has them (MuMain Localization/Dialog.en.resx, Text_50-82:
+// the Broken Sword, the Tear of Elf, the Soul of Wizard, Muren and Lugard), Tarkan left out as a
+// map this game does not have. The shape is ours: MU asked the Scroll of the Emperor at level 150
+// and the treasure at 220, each a single find; here a hunt from 200, then the treasure. Neither
+// is repeatable. The second class is the name and MU's bare bodies (HelmClass201-203 and their
+// fellows) and nothing else yet, the user's of the same day.
+//
+// The Atlans steps wait on Atlans's monsters (docs/atlans-port.md step 8): until they are raised,
+// the trial is the seventh floor's alone, and its words already name both.
+constexpr bool kAtlansHunted = false;
+
+QuestRow sevinaTrial() {
+    QuestRow row;
+    row.giver = 235;
+    row.giverName = "Sevina";
+    row.place = "Devias";
+    row.title = "The Emperor's Treasures";
+    row.offer[0] = "\"You came back, child. And this time the gods can hear you.\"";
+    row.offer[1] =
+        "\"When Muren, the first emperor, united MU, the peoples swore loyalty to him and gave "
+        "him treasures. The Scroll of the Emperor records them.\"";
+    row.offer[2] =
+        "\"Those treasures still hold great power. But they lie where Kundun's creatures are "
+        "strongest: the last floor of the Lost Tower, and the sunken halls of Atlans.\"";
+    row.offer[3] =
+        "\"Show me you can walk there. Hunt the Death Gorgons and the Death Knights at the top "
+        "of the tower, and the Lizard Kings, Great Bahamuts and Silver Valkyries of Atlans.\"";
+    row.offer[4] = "\"Return after you've become stronger. Then I will tell you the oracle.\"";
+    row.underway = "\"Not yet. The tower and the sea do not fear you yet.\"";
+    row.handIn[0] = "\"You walked where few warriors walk. Now I can tell you the oracle.\"";
+    row.handIn[1] =
+        "\"One of Muren's treasures was your own people's gift. Find it, and bring it to me.\"";
+    row.resting = "\"Go. The treasure will not find itself.\"";
+    row.next = "Sevina has an oracle for you";
+    int s = 0;
+    row.steps[s++] = {QuestStepKind::Clear, 35, 40, "Death Gorgons"};
+    row.steps[s++] = {QuestStepKind::Clear, 40, 30, "Death Knights"};
+    if (kAtlansHunted) {
+        row.steps[s++] = {QuestStepKind::Clear, 48, 30, "Lizard Kings"};
+        row.steps[s++] = {QuestStepKind::Clear, 51, 40, "Great Bahamuts"};
+        row.steps[s++] = {QuestStepKind::Clear, 52, 40, "Silver Valkyries"};
+    }
+    row.steps[s++] = {QuestStepKind::Return, 0, 1, "Return to Sevina"};
+    row.stepCount = s;
+    row.minLevel = 200;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    // A proposal, ours: the trial pays as a hard quest does; the class change pays nothing but
+    // itself.
+    row.experience = 1000000;
+    row.zen = 500000;
+    row.paid[row.paidCount++] = {.item = "Jewel01", .count = 5};  // Jewels of Bless
+    row.paid[row.paidCount++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
+    return row;
+}
+
+// One class's treasure: found, as `item`, on the trial's ground, and handed in for the class.
+QuestRow sevinaTreasure(Kin kin, const char* title, const char* item, const char* line,
+                        const char* boon) {
+    QuestRow row;
+    row.giver = 235;
+    row.giverName = "Sevina";
+    row.place = "Devias";
+    row.title = title;
+    row.steps[0] = {QuestStepKind::Find, 0, 1, line, item};
+    row.steps[1] = {QuestStepKind::Return, 0, 1, "Return to Sevina"};
+    row.stepCount = 2;
+    row.afterAny = 1u << kSevinaTrial;
+    row.natives = uint8_t(1u << int(kin));
+    row.strangers = false;
+    row.promotes = true;
+    row.boon = boon;
+    // MU's own (Text_75), when it is done.
+    row.resting = "\"You already possess great power. I do not have an oracle for you.\"";
+    return row;
+}
+
+QuestRow brokenSword() {
+    QuestRow row = sevinaTreasure(Kin::DarkKnight, "The Broken Sword", "Quest01",
+                                  "Find the Broken Sword", "Become a Blade Knight");
+    row.offer[0] =
+        "\"Seek out the 'Broken Sword' that the ancient dark knights offered at the "
+        "commemoration of peace. A few dark knights have found it in Atlans and the Lost "
+        "Tower.\"";
+    row.offer[1] =
+        "\"Danger lurks behind every corner in those places, and the 'Broken Sword' is not "
+        "easily spotted. But if you find it, new power will be bestowed upon you.\"";
+    row.underway = "\"If you've developed into a strong warrior, you will be able to find it.\"";
+    row.handIn[0] =
+        "\"Brave dark knight, you've found the 'Broken Sword'! Muren broke his sword "
+        "'Apocalypse' as a symbol of his wish that no war would ever erupt again.\"";
+    row.handIn[1] =
+        "\"You will be called a Blade Knight from now on. May the grace of Lugard be with you "
+        "at all times.\"";
+    return row;
+}
+
+QuestRow soulOfWizard() {
+    QuestRow row = sevinaTreasure(Kin::DarkWizard, "The Soul of Wizard", "Quest03",
+                                  "Find the Soul of Wizard", "Become a Soul Master");
+    row.offer[0] =
+        "\"Go find the 'Soul of Wizard'. According to the ancient dark wizards, it was last "
+        "seen around the Lost Tower and Atlans.\"";
+    row.offer[1] =
+        "\"With your power, I am sure that you will find it. Return to me once you have.\"";
+    row.underway = "\"If you've developed into a strong warrior, you will be able to find it.\"";
+    row.handIn[0] =
+        "\"I knew you'd find the 'Soul of Wizard'! Etramu, the greatest wizard of Arka, made "
+        "this soul-protecting magic stone against the attack of Kundun.\"";
+    row.handIn[1] =
+        "\"A dark wizard with this stone becomes a Soul Master. May the grace of Lugard be with "
+        "you at all times.\"";
+    return row;
+}
+
+QuestRow tearOfElf() {
+    QuestRow row = sevinaTreasure(Kin::FairyElf, "The Tear of Elf", "Quest02",
+                                  "Find the Tear of Elf", "Become a Muse Elf");
+    row.offer[0] =
+        "\"Go find the crystal 'Tear of Elf', made by the ancient elves with the strength of the "
+        "spirit. Some adventurous elves have seen it in the Lost Tower and Atlans.\"";
+    row.offer[1] =
+        "\"It is extremely hard to find. But if you find the 'Tear of Elf', new power will be "
+        "bestowed upon you.\"";
+    row.underway = "\"If you've developed into a strong warrior, you will be able to find it.\"";
+    row.handIn[0] =
+        "\"You've found the 'Tear of Elf'! Lunedil, the elf queen, cast magic on the spirit "
+        "stone so that elves could invoke the goddess' power.\"";
+    row.handIn[1] =
+        "\"The elf that finds this stone becomes a Muse Elf, able to conjure the power of the "
+        "elven goddesses. May the grace of Lugard be with you.\"";
+    return row;
+}
+
+const QuestRow kTable[kQuests] = {marlon(),      peia(),        devin(),        catacombs(),
+                                  halls(),       pit(),         tersiaDoor(),   tersiaSecond(),
+                                  tersiaThird(),  tersiaFourth(), tersiaFifth(),  tersiaSixth(),
+                                  tersiaBalrog(), sevinaTrial(), brokenSword(),  soulOfWizard(),
+                                  tearOfElf()};
 
 }  // namespace
 
@@ -796,6 +937,15 @@ int questOf(int32_t giver) {
         if (kTable[i].giver == giver) return i;
     }
     return -1;
+}
+
+const char* className(int kin, bool second) {
+    switch (Kin(kin)) {
+        case Kin::DarkWizard: return second ? "Soul Master" : "Dark Wizard";
+        case Kin::FairyElf: return second ? "Muse Elf" : "Fairy Elf";
+        case Kin::DarkKnight: break;
+    }
+    return second ? "Blade Knight" : "Dark Knight";
 }
 
 }  // namespace mu::sim

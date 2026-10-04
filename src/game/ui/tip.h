@@ -34,7 +34,10 @@ namespace mu::game::tip {
 // The last five are an item name's quality, WoW's ladder and not MU's (the user, 2026-09-29).
 enum class Tone : uint8_t {
     White, Blue, Red, Yellow, Green, Gray, Violet, RedPurple, Orange,
-    Uncommon, Rare, Epic, Legendary, Artifact
+    Uncommon, Rare, Epic, Legendary, Artifact,
+    // A quest item's own (the user, 2026-10-04: 'quest items has to be purple'): a violet
+    // brighter than the epic's, so it is not read as an excellent and holds on its dark plate.
+    Quest
 };
 uint32_t colourOf(Tone tone);
 

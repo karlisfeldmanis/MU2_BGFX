@@ -359,6 +359,7 @@ uint32_t colourOf(Tone tone) {
         // Not WoW's artifact #e6cc80, which beside white on the ground label read as white: its
         // UI gold, #ffd100, which is also MU's +7 yellow near enough.
         case Tone::Artifact: return gfx::rgba(1.0f, 0xd1 / 255.0f, 0.0f);
+        case Tone::Quest: return gfx::rgba(0.84f, 0.52f, 1.0f);
         case Tone::White:
         default: return gfx::rgba(1.0f, 1.0f, 1.0f);
     }

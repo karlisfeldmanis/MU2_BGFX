@@ -1,0 +1,130 @@
+{
+  "item": "Quest03",
+  "mu_name": "Soul of Wizard",
+  "mu_name_from": "Loaded as MODEL_SCROLL_OF_EMPEROR_RING_OF_HONOR + i from Data\\\\Item\\\\Quest0i.bmd (ZzzOpenData.cpp:929-932, _enum.h:2091-2093): group 14, number 26. MU's item list calls it the Soul Shard of Wizard (OpenMU Quest.cs:71, ITEM_SOUL_SHARD_OF_WIZARD); Sevina's words call it the Soul of Wizard (Dialog.en.resx), and so does the card, to say what she says.",
+  "why_this_one": "Sevina's class change (the user, 2026-10-04): the class's treasure, falling only on the Lost Tower's seventh floor and in Atlans while its quest stands (Realm::treasure, sim/items.h kTreasureIn10000), handed back to her for the second class. docs/class-change-quest.md.",
+  "profile": "weapon",
+  "profile_note": "As the Ale and the Firecracker: a small object in the bag and on the ground.",
+  "tells": "Bring it to Sevina in Devias",
+  "tells_from": "Ours. MU prints the name alone, yellow (ZzzInventory.cpp:2322-2345).",
+  "stats": {
+    "note": "Group, number and size are OpenMU's quest row (CreateQuestItem: 1 wide, a durability of 1, never in the ordinary drop). Bound to the character and never sold (sim::classTreasure).",
+    "from": "OpenMU VersionSeasonSix/Items/Quest.cs:69-71",
+    "group": 14,
+    "number": 26,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    }
+  },
+  "sheets": {
+    "W_S": "w_s.png"
+  },
+  "sheet_from": "Data/Item/W_S.OZJ (8x8): a flat pale violet, the stone's colour.",
+  "sheet_materials": {
+    "W_S": "glass"
+  },
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "material_note": "Glass: a magic stone. MU draws it with a shine (Level 8, ZzzObject.cpp:9610) and a glow colour 2 (ZzzObject.cpp:6552) not built here yet.",
+  "flat_shaded": true,
+  "flat_shaded_why": "As the jewels: a cut stone is its facets.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 48,
+      "area": 3000.7,
+      "along": [
+        -19.4,
+        7.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.012,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.877,
+        0.988
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 24,
+      "area": 640.3,
+      "along": [
+        -10.9,
+        -0.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.012,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.124,
+        0.012,
+        0.65,
+        0.988
+      ]
+    },
+    {
+      "island": 2,
+      "material": "glass",
+      "triangles": 48,
+      "area": 1449.2,
+      "along": [
+        -12.3,
+        1.4
+      ],
+      "mu_uv": [
+        0.011,
+        0.012,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.877,
+        0.988
+      ]
+    },
+    {
+      "island": 3,
+      "material": "glass",
+      "triangles": 24,
+      "area": 640.6,
+      "along": [
+        0.6,
+        19.7
+      ],
+      "mu_uv": [
+        0.011,
+        0.012,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.124,
+        0.012,
+        0.987,
+        0.655
+      ]
+    }
+  ]
+}

@@ -17,6 +17,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "game/roster.h"
 #include "sim/swings.h"
 #include "sim/wear.h"
 
@@ -236,7 +237,9 @@ void Play::redress() {
         hero.dual && !left.empty() && size_t(left.item) < tables_.items.size()
             ? shineOf(tables_.items[size_t(left.item)], left.refinement, left.excellent != 0)
             : handShine(shield);
-    const FigureBody* look = figures_->dress(kHeroDressName, bare_, weapon, shield, worn,
+    // His bare body: the class's second once Sevina has taken his treasure (game/roster.h).
+    const std::string bare = hero.second ? bareBody(hero.kin, true, figures_) : bare_;
+    const FigureBody* look = figures_->dress(kHeroDressName, bare, weapon, shield, worn,
                                              wornShine, handShine(weapon), leftShine,
                                              dressedQuiver_);
     if (!look) return;
@@ -437,6 +440,11 @@ bool Play::completeQuest(int quest, int choice) {
     }
     core::logf("window: hand in quest %d, choice %d, %s", quest, choice,
                paid ? "paid" : "refused (not ready, no choice, or no room)");
+    // Sevina's treasure: he is his class's second, and wears its body from this frame.
+    if (paid && sim::questAt(quest).promotes) {
+        core::logf("quest: %s", sim::className(int(realm_.hero().kin), realm_.hero().second));
+        redress();
+    }
     // The user's stinger, under the "Quest complete" banner the tracker raises this same frame,
     // the world leaning back for it; refused, the window's own no.
     if (paid) {

@@ -1941,8 +1941,8 @@ void Play::speak(const sim::Happening& happening) {
             "Not yet, mortal. The square is not ready for you.",
             "Come back when the square opens. You will know the hour.",
         };
-        // Sevina, whose class change is still to come (the user, 2026-09-30): the hero is not
-        // ready. Hers is the quest the Soul Master and the Blade Knight are born of.
+        // Sevina below level 200 (the user, 2026-09-30 and 2026-10-04): the hero is not ready.
+        // Hers is the quest the Soul Master and the Blade Knight are born of (sim/quests.cpp).
         static const char* const kSevina[] = {
             "You are not ready, child. The path beyond your strength is not yet open to you.",
             "Not yet. Grow stronger, and come back to me when the gods can hear you.",

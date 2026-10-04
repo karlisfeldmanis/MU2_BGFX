@@ -5,6 +5,7 @@
 #include "game/ui/controls.h"
 #include "game/ui/sheet.h"
 #include "game/ui/style.h"
+#include "sim/quests.h"
 #include "sim/rules.h"
 
 namespace mu::game {
@@ -77,18 +78,10 @@ constexpr uint32_t kDetailInk = style::kAshInk;
 // Points to spend are the one thing on the card that asks for a click: the accent.
 constexpr uint32_t kSpendable = style::kBloodHi;
 
-const char* titled(sim::Kin kin) {
-    switch (kin) {
-        case sim::Kin::DarkWizard: return "Dark Wizard";
-        case sim::Kin::FairyElf: return "Fairy Elf";
-        default: return "Dark Knight";
-    }
-}
-
 }  // namespace
 
 bool Card::Sheet::operator==(const Sheet& o) const {
-    return who == o.who && width == o.width && height == o.height && top == o.top &&
+    return who == o.who && second == o.second && width == o.width && height == o.height && top == o.top &&
            level == o.level &&
            points == o.points && experience == o.experience && strength == o.strength &&
            agility == o.agility && vitality == o.vitality && energy == o.energy &&
@@ -153,6 +146,7 @@ void Card::update(float width, float height, const sim::Body* hero, const Pointe
     now_ = Sheet{};
     if (hero) {
         now_.who = hero;
+        now_.second = hero->second;
         now_.width = width;
         now_.height = height;
         now_.top = y_;
@@ -208,7 +202,7 @@ void Card::rebuild() {
     // The class, across the whole table, in the head's own tracked capitals a size down: it is
     // a heading and not a value, and it was the only line on the card set like a value.
     controls::caps(canvas_, x + kLeft * k, y + (kSummary.y + 6.0f) * k + face.ascent(9.0f * k),
-                   9.0f * k, kHeading, titled(now_.who->kin), 0.08f);
+                   9.0f * k, kHeading, sim::className(int(now_.who->kin), now_.second), 0.08f);
     // Level and points on one line, experience beneath: MU's stack at its own places.
     const float pairY = kSummary.y + 24.0f;
     controls::caps(canvas_, x + kLeft * k, y + pairY * k + face.ascent(kSummaryLabel * k),

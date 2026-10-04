@@ -49,7 +49,7 @@ constexpr Rgb kLit = {1.00f, 0.88f, 0.42f};
 constexpr Rgb kShade = {0.90f, 0.66f, 0.22f};
 constexpr Rgb kEdge = {1.00f, 0.98f, 0.86f};
 constexpr Rgb kInk = {0.07f, 0.045f, 0.025f};
-// A quest still to come -- Sevina's, before its words are written (the user, 2026-09-30): the
+// A quest still to come -- a giver's waiting on another quest or a level (the user, 2026-09-30): the
 // same "!" gone to cold iron, lit and shaded as the gold one is, so it reads as "not yet".
 constexpr Rgb kLitLater = {0.70f, 0.70f, 0.68f};
 constexpr Rgb kShadeLater = {0.50f, 0.50f, 0.49f};

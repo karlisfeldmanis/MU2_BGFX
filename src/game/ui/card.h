@@ -34,6 +34,7 @@ public:
 private:
     struct Sheet {
         const sim::Body* who = nullptr;
+        bool second = false;  // his class's second: the heading's name changes with it
         float width = 0, height = 0;
         float top = 0;  // y_: the window comes down once the HUD's plate is laid out
         int level = 0, points = 0;

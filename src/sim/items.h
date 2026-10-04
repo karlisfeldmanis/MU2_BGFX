@@ -783,6 +783,15 @@ bool divineStaff(const content::ItemRow& row);
 // Any of the three Archangel weapons a Statue of Saint gives up -- the Divine Staff, Sword and
 // Crossbow (sim/event.h kArchangelWeapons): quest items, worn by nobody, never sold.
 bool archangelWeapon(const content::ItemRow& row);
+// **Sevina's treasures** (sim/quests.cpp, docs/class-change-quest.md): MU's Broken Sword (14, 24),
+// Tear of Elf (14, 25) and Soul of Wizard (14, 26), each a class's, carried back to her and
+// never sold. They fall on the Lost Tower's last floor and in Atlans (Realm::treasure), one kill
+// in about 150 while the class's quest stands -- the rate a proposal, ours.
+bool classTreasure(const content::ItemRow& row);
+constexpr int kTreasureIn10000 = 67;
+constexpr uint32_t kLostTowerMap = 4, kAtlansMap = 7;
+// A treasure lies twice the time an ordinary drop does, so it is not lost to a fight. Ours.
+constexpr int kTreasureLingerSeconds = 120;
 // WebZen gObjMonster.cpp:5823-5985: a kill anywhere but a Blood Castle rolls the scroll, then the
 // bone, `rand()%10000 < rate` with the code's defaults (Gamemain.cpp:1133-1134), and one that
 // lands is the kill's whole drop (`return TRUE`). 128 its durability, as WebZen's ItemSerialCreate.

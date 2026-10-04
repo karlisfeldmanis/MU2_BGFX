@@ -322,14 +322,35 @@ void QuestDialog::layout(const Play& play) {
             y += kSection;
         }
     } else if (mode_ != Mode::Resting && mode_ != Mode::Stranger) {
-        int counted = 0;
-        for (int s = 0; s < row.stepCount; ++s) {
-            counted += row.steps[s].kind == sim::QuestStepKind::Clear ? 1 : 0;
-        }
         // The hand-in leaves the objectives out: every one is done, and the room is the
         // reward's (the user, 2026-09-29).
-        y += mode_ == Mode::HandIn ? kSection * 0.5f
-                                   : kSection * 0.5f + 24.0f + float(counted + 1) * kStepRow + kSection;
+        if (mode_ == Mode::HandIn) {
+            y += kSection * 0.5f;
+        } else {
+            y += kSection * 0.5f + 24.0f;
+            for (int s = 0; s < row.stepCount; ++s) {
+                const sim::QuestStepRow& want = row.steps[s];
+                if (!sim::questCounted(want.kind)) continue;
+                const int32_t item = want.kind == sim::QuestStepKind::Find && want.item
+                                         ? tables.itemNamed(want.item)
+                                         : -1;
+                if (item < 0) {
+                    y += kStepRow;
+                    continue;
+                }
+                // A thing to find is shown as the rewards are, its picture and its name (the
+                // user, 2026-10-04: 'on second quest show quest item model as requirment').
+                Cell cell;
+                cell.item = item;
+                cell.need = true;
+                const sim::Held held = rewardHeld(tables, item, 0, 1, 0, 0);
+                cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+                cell.box = {kInset, y, wide, kIcon};
+                cells_.push_back(cell);
+                y += kIcon + kCellGap;
+            }
+            y += kStepRow + kSection;  // the return
+        }
         y += 16.0f + kPurse;
         // Two grids of the same cells: what his class is paid at this completion, then the
         // choice, when there is one, under its own line.
@@ -764,6 +785,25 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                    std::round(one.box.h * u)};
     };
     const bool offered = mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate && !angel;
+    // A thing asked for, one look wherever a quest or an event asks one (the user, 2026-10-04:
+    // 'we need unificied UI when there is item requirments in quests'): its picture in a cell, its
+    // name in its tone, and under it whether he carries it -- green, or red. The Messenger's
+    // ticket, the Archangel's weapon and Sevina's treasures.
+    const auto needRow = [&](const Cell& one, const std::string& name, bool met,
+                             const std::string& status) {
+        const Box box = cellBox(one);
+        const Box icon{box.x, box.y, box.h, box.h};
+        const int at = int(&one - cells_.data());
+        controls::cell(body_, icon, over_ == 10 + at ? controls::Cell::Over : controls::Cell::Rest, u);
+        const float nx = sx(one.box.x + kIcon + kNameGap);
+        const float ly = one.box.y + kIcon * 0.5f;
+        controls::label(body_, nx, by(ly - 3.0f), kName * u, one.ink ? one.ink : kItemWhite, name);
+        controls::label(body_, nx, by(ly + 15.0f), kName * u, met ? style::kFits : style::kDanger,
+                        status);
+    };
+    const auto bagWords = [](bool carried) {
+        return carried ? std::string("in your bag") : std::string("not in your bag");
+    };
 
     float cy = 12.0f;
     controls::caps(body_, sx(kInset), by(cy + 10.0f), style::kKickerSize * u, style::kAshInk,
@@ -805,21 +845,12 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Requirements", u);
             cy += 24.0f;
             for (const Cell& one : cells_) {
-                const Box box = cellBox(one);
-                const Box icon{box.x, box.y, box.h, box.h};
-                controls::cell(body_, icon, controls::Cell::Rest, u);
-                // The name, and under it whether he holds it: the name is too long to share its
-                // line with the word.
-                const float nx = sx(one.box.x + kIcon + kNameGap);
-                const float ly = one.box.y + kIcon * 0.5f;
                 // The run's own weapon: the staff, the sword or the crossbow.
-                controls::label(body_, nx, by(ly - 3.0f), kName * u, one.ink ? one.ink : kItemWhite,
-                                one.item >= 0 && size_t(one.item) < tables.items.size()
-                                    ? tables.items[size_t(one.item)].label
-                                    : std::string("Divine Staff of Archangel"));
-                controls::label(body_, nx, by(ly + 15.0f), kName * u,
-                                staffHeld_ ? style::kFits : style::kDanger,
-                                staffHeld_ ? std::string("in your bag") : std::string("not in your bag"));
+                needRow(one,
+                        one.item >= 0 && size_t(one.item) < tables.items.size()
+                            ? tables.items[size_t(one.item)].label
+                            : std::string("Divine Staff of Archangel"),
+                        staffHeld_, bagWords(staffHeld_));
             }
         }
     } else if (gate) {
@@ -845,18 +876,10 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         const std::string band = bandOf(castle_);
         // The ticket: its picture in a cell, its name in its tone, and whether he holds it.
         for (const Cell& one : cells_) {
-            const Box box = cellBox(one);
-            const Box icon{box.x, box.y, box.h, box.h};
-            controls::cell(body_, icon, controls::Cell::Rest, u);
-            const float ly = one.box.y + kIcon * 0.5f + kName * 0.35f;
-            controls::label(body_, sx(one.box.x + kIcon + kNameGap), by(ly), kName * u,
-                            one.ink ? one.ink : kItemWhite,
-                            "Invisibility Cloak +" + std::to_string(castle_));
-            controls::ranged(body_, sx(kInset + inner()), by(ly), kBody * u,
-                             cloakPlus_ == castle_ ? style::kFits : style::kDanger,
-                             cloakPlus_ < 0 ? std::string("not in your bag")
-                                            : cloakPlus_ == castle_ ? std::string("in your bag")
-                                                              : "a +" + std::to_string(cloakPlus_));
+            needRow(one, "Invisibility Cloak +" + std::to_string(castle_), cloakPlus_ == castle_,
+                    cloakPlus_ < 0 ? bagWords(false)
+                    : cloakPlus_ == castle_ ? bagWords(true)
+                                            : "a +" + std::to_string(cloakPlus_) + " in your bag");
             cy = one.box.y + kIcon + kCellGap;
         }
         const Need needs[kGateRows - 1] = {
@@ -889,15 +912,33 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             cy += 24.0f;
             const bool shownCounts = mode_ != Mode::Offer;
             const float columnWide = inner();
-            int index = 0;
             for (int s = 0; s < row.stepCount; ++s) {
                 const sim::QuestStepRow& want = row.steps[s];
-                if (want.kind != sim::QuestStepKind::Clear) continue;
+                if (!sim::questCounted(want.kind)) continue;
                 const int goal = realm.questGoal(quest_, s);
                 const int count = shownCounts ? int(progress.counts[s]) : 0;
                 const bool done = shownCounts && count >= goal;
                 const float colX = kInset;
-                const float rowY = cy + float(index) * kStepRow;
+                // A thing to find: its cell (layout) draws the picture and the name; the count
+                // stands at the right of it, level with the picture's middle.
+                const int32_t item = want.kind == sim::QuestStepKind::Find && want.item
+                                         ? tables.itemNamed(want.item)
+                                         : -1;
+                if (item >= 0) {
+                    bool carried = false;
+                    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                        carried = carried || realm.satchel()[slot].item == item;
+                    }
+                    for (const Cell& one : cells_) {
+                        if (one.need && one.item == item) {
+                            needRow(one, tables.items[size_t(item)].label, carried,
+                                    bagWords(carried));
+                        }
+                    }
+                    cy += kIcon + kCellGap;
+                    continue;
+                }
+                const float rowY = cy;
                 quest_marks::mark(body_, done ? StepMark::Done : StepMark::Live, sx(colX + 7.0f),
                                   by(rowY + 8.0f), u);
                 controls::label(body_, sx(colX + 24.0f), by(rowY + 13.0f), kBody * u,
@@ -907,9 +948,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                                                : std::to_string(goal);
                 controls::ranged(body_, sx(colX + columnWide), by(rowY + 13.0f), kBody * u,
                                  done ? style::kAshInk : style::kBone2, figure);
-                ++index;
+                cy += kStepRow;
             }
-            cy += float(index) * kStepRow;
             for (int s = 0; s < row.stepCount; ++s) {
                 if (row.steps[s].kind != sim::QuestStepKind::Return) continue;
                 const bool ready = progress.state == sim::QuestState::Ready;
@@ -924,13 +964,19 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
 
         controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Rewards", u);
         cy += 16.0f;
-        // The purse, one line: the experience, and the Zen ranged to the right.
-        controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, style::kBone,
-                        panel::commas(sim::questExperience(
-                            row, sim::questFirst(row, int(realm.hero().kin), progress.completions))) +
-                            " experience");
-        controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
-                         panel::commas(row.zen) + " Zen");
+        if (row.promotes) {
+            // Sevina's treasure pays the class itself and nothing else: that, on the purse's line.
+            controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, kZenGold, row.boon);
+        } else {
+            // The purse, one line: the experience, and the Zen ranged to the right.
+            controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, style::kBone,
+                            panel::commas(sim::questExperience(
+                                row, sim::questFirst(row, int(realm.hero().kin),
+                                                     progress.completions))) +
+                                " experience");
+            controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
+                             panel::commas(row.zen) + " Zen");
+        }
         // The choice's line stands over the first of its cells, under the paid grid.
         for (const Cell& one : cells_) {
             if (one.choice >= 0) {
@@ -949,6 +995,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         }
         for (size_t i = 0; i < cells_.size(); ++i) {
             const Cell& one = cells_[i];
+            if (one.need) continue;  // drawn with the objectives (needRow)
             const Box box = cellBox(one);
             const Box icon{box.x, box.y, box.h, box.h};
             controls::cell(body_, icon, over_ == 10 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);

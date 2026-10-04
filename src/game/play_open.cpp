@@ -334,10 +334,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     folk_.clear();
     questGivers_.clear();
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
-        // Whoever hands out a quest (sim/quests.cpp): Marlon, Peia and Devin. And Sevina, whose
-        // quest is still to come, under a grey mark (Beacon).
+        // Whoever hands out a quest (sim/quests.cpp): Marlon, Peia, Devin, Sevina and the rest.
         const int32_t number = tables_.folk[i].number;
-        if (sim::questOf(number) >= 0 || number == sim::kSevina) questGivers_.push_back(int(i));
+        if (sim::questOf(number) >= 0) questGivers_.push_back(int(i));
     }
     const float metresPerTile = ground_ ? ground_->metresPerTile() : 1.0f;
     for (size_t i = 0; i < tables_.folk.size(); ++i) {

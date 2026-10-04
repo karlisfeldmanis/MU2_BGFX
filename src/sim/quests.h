@@ -23,7 +23,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 13;
+inline constexpr int kQuests = 17;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 12;
@@ -32,15 +32,22 @@ enum class QuestStepKind : uint8_t {
     // Kill `count` of breed `target` (MU's monster number); a count of 0 is the breed's whole
     // population on the quest's map, which is what "clear" means.
     Clear,
+    // Carry one of `item` back: picked up, it counts, and the hand-in takes it from the bag.
+    // Sevina's treasures, which fall only while the quest stands (Realm::treasure).
+    Find,
     // Back to the giver, once every other step is done.
     Return,
 };
+
+// Whether a step has a count the tracker and the dialog show: every one but the return.
+inline bool questCounted(QuestStepKind kind) { return kind != QuestStepKind::Return; }
 
 struct QuestStepRow {
     QuestStepKind kind = QuestStepKind::Clear;
     int32_t target = 0;
     int32_t count = 0;
     const char* line = "";  // the tracker's words: the breed's plural, or "Return to Marlon"
+    const char* item = nullptr;  // a Find's item, by file name (Tables::itemNamed)
 };
 
 // A thing paid: an item by its file name (Tables::itemNamed), how many, at what plus, and to
@@ -95,6 +102,12 @@ struct QuestRow {
     // Offered only once one of these quests has been handed in (bit i, quest i); 0 for none.
     // Until then the giver wears a grey "!" and says he is not ready for him (Realm::questLocked).
     uint32_t afterAny = 0;
+    // The level it asks; below it the giver says he is not ready (Realm::questLocked). 0 none.
+    int32_t minLevel = 0;
+    // Handed in, it makes him his class's second: Blade Knight, Soul Master, Muse Elf
+    // (Realm::promoted). Sevina's treasures; `boon` is what the dialog's rewards say of it.
+    bool promotes = false;
+    const char* boon = "";
     // Who was born in the giver's town (1 << sim::Kin, each class its starting map). One born
     // elsewhere may take the quest only if `strangers`, and is then never paid the first clear's
     // things or experience -- the user's rule of 2026-09-29: an elf may clear Lorencia for its
@@ -132,6 +145,7 @@ const QuestRow& questAt(int index);
 // The quest a giver hands out, by NPC number, or -1. One a giver.
 int questOf(int32_t giver);
 
+
 enum class QuestState : uint8_t {
     Untaken = 0,
     Active = 1,
@@ -149,5 +163,17 @@ struct QuestProgress {
     int64_t availableAt = 0;
     uint32_t completions = 0;
 };
+
+// Sevina's class change (docs/class-change-quest.md): the trial, a hunt in the Lost Tower's
+// seventh floor and Atlans from level 200, then each class's treasure, found on the same ground,
+// whose hand-in makes him the second class. By sim::Kin, the treasure quest's index.
+inline constexpr int kSevinaTrial = 13;
+inline constexpr int kTreasureQuests[3] = {15, 16, 14};  // wizard, elf, knight
+// Whether a hero of this class with these quests is his class's second.
+inline bool promoted(const QuestProgress* quests, int kin) {
+    return kin >= 0 && kin < 3 && quests[kTreasureQuests[kin]].completions > 0;
+}
+// The class's name, first or second: "Dark Knight", or "Blade Knight" once promoted.
+const char* className(int kin, bool second);
 
 }  // namespace mu::sim

@@ -35,6 +35,7 @@ struct Seat {
     std::string world;
     int slot = 0;
     sim::Kin kin = sim::Kin::DarkKnight;
+    bool second = false;  // his class's second, Sevina's treasure handed in (sim::promoted)
     int level = 1;
     bool fresh = false;
     std::vector<Saved::Item> items;  // as read; slots 0 to 6 are what he wears
@@ -73,5 +74,12 @@ const char* cradleWeapon(sim::Kin kin);
 
 // The class as the name plate says it: MU's texts 20-22.
 const char* className(sim::Kin kin);
+
+// The bare body a class wears under no armour, by index.json's name: the first class's, or once
+// promoted MU's second-class body (HelmClass201-203 and their fellows, ZzzOpenData.cpp:121-127;
+// SKIN_CLASS_SOULMASTER and on, _enum.h:3250). `figures` says whether it is cooked: until it is,
+// the first class's.
+class Figures;
+const char* bareBody(sim::Kin kin, bool second, const Figures* figures = nullptr);
 
 }  // namespace mu::game

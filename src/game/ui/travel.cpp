@@ -268,7 +268,7 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
         now.quests[q] = uint8_t(one.state);
         int done = 0, goal = 0;
         for (int step = 0; step < sim::questAt(q).stepCount; ++step) {
-            if (sim::questAt(q).steps[step].kind != sim::QuestStepKind::Clear) continue;
+            if (!sim::questCounted(sim::questAt(q).steps[step].kind)) continue;
             const int g = realm.questGoal(q, step);
             goal += g;
             done += std::min<int>(one.counts[step], g);

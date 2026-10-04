@@ -121,7 +121,11 @@ void PlayMode::keep(Context& ctx) {
 void PlayMode::openItems(Context& ctx) {
     if (itemModels_.tables()) return;
     itemModels_.open(world_.played().realm().tables(), ctx.paths.assets, &ctx.textures);
-    litter_.open(&itemModels_, &world_.ground());
+    // The quest items' column (fx/litter.h): MU's chasellight, the lobby's own copy.
+    const std::string beam = core::join(ctx.paths.assets, "effects/lobby/chasellight.png");
+    litter_.open(&itemModels_, &world_.ground(),
+                 core::fileExists(beam) ? ctx.textures.load(beam, content::TextureRole::Albedo)
+                                        : bgfx::TextureHandle BGFX_INVALID_HANDLE);
     desk_.useModels(&itemModels_);
 }
 
@@ -1223,6 +1227,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         litter_.update(world_.played().realm(), deltaSeconds, world_.played().heldDrops());
         world_.played().setSettledDrops(litter_.settled());
         litter_.gather(townDrawables_, casters ? &townCasters_ : nullptr);
+        litter_.gatherBeams(ctx.renderer.effects(), eye.position);
         // The hover ring's own subject, if a drop is what is pointed at rather than a
         // body or a townsperson -- see Play::gather's `hover` for the other two, and
         // leftClick's own ladder, which this stays behind: pointedLying() can be set

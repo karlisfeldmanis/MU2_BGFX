@@ -142,8 +142,8 @@ enum class Shout : int32_t {
 
 // Devias's Guild Master, MU's NPC 241 (OpenMU's NpcWindow.GuildMaster). Shout::Greet.
 constexpr int kGuildMaster = 241;
-// Sevina the Priestess, MU's NPC 235: the class change's giver, whose quest is not written yet.
-// Until it is she wears a grey "!" and tells the hero he is not ready (the user, 2026-09-30).
+// Sevina the Priestess, MU's NPC 235: the class change's giver (sim/quests.cpp). Below level 200
+// she wears a grey "!" and tells the hero he is not ready (the user, 2026-09-30 and 2026-10-04).
 constexpr int kSevina = 235;
 // The Messenger of Archangel, MU's NPC 233: Blood Castle's gatekeeper in Devias. Spoken to, he
 // opens his page of the quest window (Realm::gating, QuestDialog::kGate), which asks for the
@@ -265,6 +265,9 @@ struct Body {
     bool player = false;
 
     Kin kin = Kin::DarkKnight;  // the player's class; meaningless on a monster
+    // And whether he is its second -- Blade Knight, Soul Master, Muse Elf -- Sevina's treasure
+    // handed in (sim::promoted, kept in step by Realm::restore and completeQuest).
+    bool second = false;
     HeroPoints points;          // likewise
     // What is in his hands, as indices into Tables::arms, or -1. A monster's weapon is part of
     // its row and not an item: `monster_kinds` carries the damage band whole. `shield` is the
@@ -909,6 +912,11 @@ public:
     // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
     // him), and room in the bag for all of it before anything is given. Pays and rests it.
     bool completeQuest(int index, int choice);
+    // Whether he is his class's second, Sevina's treasure handed in (sim::promoted).
+    bool promoted() const { return bodies_[0].second; }
+    // Whether a kill on this tile may leave a class's treasure: the Lost Tower's last floor, or
+    // Atlans (Realm::treasure).
+    bool treasureGround(int column, int row) const;
     // ---- travel (sim/travel.h) ---------------------------------------------------------------
     // The rows he has opened, a bit a row: his birth town's, each town whose giver he has spoken
     // to, each giverless map he has stood in.
@@ -1320,6 +1328,8 @@ private:
     // Blood Castle's scroll and bone, rolled on every kill outside a castle (Realm::leave), off
     // a stream of their own so the kill's own drops draw as they did.
     Random ticketDice_{0};
+    // Sevina's treasures (Realm::treasure), drawn only while one is sought.
+    Random treasureDice_{0};
     // The Orb of Summoning's own roll on every kill (sim/items.h), so the rest draw as they did.
     Random orbDice_{0};
     std::vector<Trap> traps_;
@@ -1359,6 +1369,12 @@ private:
     Random mixDice_{0};
     QuestProgress quests_[kQuests];
     int questing_ = -1;
+    // The quests' inner steps (realm_quests.cpp): Ready once every count is met; a thing come
+    // into the bag counted; the bag slot holding an item; a kill's treasure.
+    void questSettle(int index);
+    void questFound(int32_t item);
+    int carried(int32_t item) const;
+    void treasure(const Body& dead);
     uint32_t found_ = 0;  // the travel rows he has opened (sim/travel.h)
     bool byFloor_ = false;  // this map's rows open floor by floor (reachFloor)
     // On a map of several rows, which row's floor each tile is on (row-major, -1 for none): the

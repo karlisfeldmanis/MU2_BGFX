@@ -89,6 +89,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     crackerDice_.seed(seed ^ 0xd6e8feb86659fd93ull);
     featherDice_.seed(seed ^ 0x8c3b1e4f5a7d2961ull);
     ticketDice_.seed(seed ^ 0x9fb21c651e98df25ull);
+    treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
@@ -368,6 +369,7 @@ void Realm::restore(const HeroRecord& saved) {
                                                              questGoal(i, step)));
         }
     }
+    hero.second = sim::promoted(quests_, int(hero.kin));
     bag_.clear();
     for (int slot = 0; slot < kSlots; ++slot) {
         const Held& one = saved.slots[slot];
@@ -714,15 +716,14 @@ void Realm::press() {
                 // (QuestDialog::kGate).
                 gating_ = int(order_.target);
                 say(What::Served, hero, gating_, one.number);
-            } else if (one.number == kGuildMaster || one.number == kSevina ||
-                       one.number == kCharon ||
+            } else if (one.number == kGuildMaster || one.number == kCharon ||
                        one.number == kThompson ||
                        questOf(one.number) >= 0) {
                 // Ours (the user, 2026-09-29): MU opens the guild window here, which a single
                 // player game has no use for, so he answers with a line instead of nothing.
                 // Charon likewise, whose Devil Square window has nothing behind it yet.
-                // And Sevina, whose class change is not written yet, and a giver whose quest
-                // waits on another (Devin, until Lorencia or Noria is cleared): not ready.
+                // And a giver whose quest waits on another (Devin, until Lorencia or Noria is
+                // cleared) or on a level (Sevina, until 200): not ready.
                 // And Thompson, who has only his memory of the Lost Tower to tell.
                 say(What::Shouted, hero, int32_t(Shout::Greet), 0, int(order_.target));
             }

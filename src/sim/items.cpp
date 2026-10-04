@@ -467,6 +467,10 @@ bool archangelWeapon(const content::ItemRow& row) {
            (row.group == 4 && row.number == 18);
 }
 
+bool classTreasure(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number >= 24 && row.number <= 26;
+}
+
 bool divineStaff(const content::ItemRow& row) {
     return row.group == 5 && row.number == 10;  // group 5, the staves
 }

@@ -10,6 +10,7 @@
 #include "game/ui/sheet.h"
 #include "game/ui/slab.h"
 #include "game/ui/tip.h"
+#include "sim/quests.h"
 
 namespace mu::game {
 namespace {
@@ -502,7 +503,7 @@ void Lobby::rebuild() {
         const float namePx = 17.0f * u, linePx = 12.5f * u;
         const std::string name = one.name;
         const std::string sub = "LEVEL " + std::to_string(one.level) + "  " +
-                                sheet::shouted(className(one.kin));
+                                sheet::shouted(sim::className(int(one.kin), one.second));
         const gfx::Face* gothic = panel::titleFace();
         const gfx::Face& nf = gothic ? *gothic : face;
         const float nameTrack = namePx * 0.06f;

@@ -418,7 +418,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         const bool fresh = quest_ != struckQuest_;
         struckQuest_ = quest_;
         for (int s = 0; s < sim::kQuestSteps; ++s) {
-            const bool counted = s < row.stepCount && row.steps[s].kind == sim::QuestStepKind::Clear;
+            const bool counted = s < row.stepCount && sim::questCounted(row.steps[s].kind);
             const bool done = counted && now.counts[s] >= realm.questGoal(quest_, s);
             if (!done) struck_[s] = -1.0f;
             else if (fresh) struck_[s] = kStruckSeconds;
@@ -444,7 +444,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     if (quest_ >= 0) {
         const sim::QuestRow& row = sim::questAt(quest_);
         for (int s = 0; s < sim::kQuestSteps; ++s) {
-            const bool counted = s < row.stepCount && row.steps[s].kind == sim::QuestStepKind::Clear;
+            const bool counted = s < row.stepCount && sim::questCounted(row.steps[s].kind);
             // A row being struck off stays at full through its flare, even as the quest turns
             // Ready under it.
             const bool striking = struck_[s] >= 0.0f && struck_[s] < kStruckSeconds;
@@ -609,7 +609,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
         for (int s = 0; s < row.stepCount; ++s) {
             const float keep = standing(float(drawn_.struck[s]) / 60.0f);
             rows += keep;
-            if (s > 0 && row.steps[s].kind != sim::QuestStepKind::Clear) apart += kTurnInGap * keep;
+            if (s > 0 && !sim::questCounted(row.steps[s].kind)) apart += kTurnInGap * keep;
         }
         const float tall = now.state == sim::QuestState::Resting
                                ? (*row.next ? 92.0f : 70.0f)
@@ -661,7 +661,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
     for (int s = 0; s < row.stepCount; ++s) {
         const sim::QuestStepRow& want = row.steps[s];
         const int goal = realm.questGoal(q, s);
-        const bool counted = want.kind == sim::QuestStepKind::Clear;
+        const bool counted = sim::questCounted(want.kind);
         const bool done = counted ? now.counts[s] >= goal : false;
         StepMark kind = StepMark::Live;
         uint32_t ink = style::kBoneHi;

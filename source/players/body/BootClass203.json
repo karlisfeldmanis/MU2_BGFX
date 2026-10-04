@@ -1,0 +1,104 @@
+{
+  "item": "BootClass203",
+  "mu_name": "Muse Elf feet",
+  "mu_name_from": "MuMain loads the second classes' bare bodies as MODEL_BODY_BOOT + MAX_CLASS + i from Data\\\\Player\\\\BootClass2{i+1} (ZzzOpenData.cpp:121-127), and GetSkinModelIndex hands CLASS_SOULMASTER, CLASS_BLADEKNIGHT and CLASS_MUSEELF skins 7, 8 and 9 (_enum.h:3250-3252, CharacterManager.cpp:240-254): Class201 the Soul Master, 202 the Blade Knight, 203 the Muse Elf.",
+  "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/class-change-quest.md.",
+  "profile": "armour",
+  "sheets": {
+    "level_man033": "level_man033.png"
+  },
+  "sheet_from": "Data/Player/level_man033.OZJ (256x256), from MuMain. All five of the Muse Elf's parts name it.",
+  "unstack": false,
+  "unstack_why": "As BootClass03's.",
+  "material_note": "Brown leather boots and their soles: leather.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 10,
+      "area": 644.2,
+      "along": [
+        -10.4,
+        16.1
+      ],
+      "mu_uv": [
+        0.623,
+        0.031,
+        0.925,
+        0.211
+      ],
+      "bake_uv": [
+        0.623,
+        0.031,
+        0.925,
+        0.211
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 53,
+      "area": 2367.9,
+      "along": [
+        -8.3,
+        21.8
+      ],
+      "mu_uv": [
+        0.759,
+        0.255,
+        0.998,
+        0.752
+      ],
+      "bake_uv": [
+        0.759,
+        0.255,
+        0.998,
+        0.752
+      ]
+    },
+    {
+      "island": 2,
+      "material": "leather",
+      "triangles": 53,
+      "area": 2373.9,
+      "along": [
+        -8.3,
+        21.8
+      ],
+      "mu_uv": [
+        0.759,
+        0.255,
+        0.999,
+        0.752
+      ],
+      "bake_uv": [
+        0.759,
+        0.255,
+        0.999,
+        0.752
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 10,
+      "area": 644.2,
+      "along": [
+        -10.4,
+        16.1
+      ],
+      "mu_uv": [
+        0.623,
+        0.031,
+        0.925,
+        0.211
+      ],
+      "bake_uv": [
+        0.623,
+        0.031,
+        0.925,
+        0.211
+      ]
+    }
+  ]
+}

@@ -100,6 +100,11 @@ namespace {
 // A lying jewel's glow: its light's reach in tiles and level, and how fast it breathes. Faint,
 // the user's 'minimal'; a Rune of Creation the same (its flare and stars were 'overkill').
 constexpr float kJewelReach = 1.4f, kJewelLevel = 0.14f;
+// A quest item's: wider and several times brighter, a violet the beam shares.
+constexpr float kQuestReach = 3.0f, kQuestLevel = 0.7f;
+constexpr float kQuestViolet[3] = {0.72f, 0.38f, 1.0f};  // the user's purple
+// Its beam: metres tall and wide, and the core's share of the width.
+constexpr float kBeamTall = 5.5f, kBeamWide = 1.6f, kCoreShare = 0.45f;
 constexpr float kGlowLift = 0.15f;        // metres over the jewel's middle
 constexpr float kBreath = 1.6f;           // radians a second
 
@@ -131,7 +136,10 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     if (!mesh) return;
     const content::ItemRow& row = models_->tables()->items[size_t(one.what.item)];
     drop.shine = shineOf(row, one.what.refinement, one.what.excellent != 0);
-    if (sim::creation(row)) {
+    if (sim::classTreasure(row)) {
+        drop.glow = 3;
+        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kQuestViolet[k];
+    } else if (sim::creation(row)) {
         drop.glow = 2;
         runeColour(one.what, drop.glowColour);
     } else if (row.jewel() && row.group != sim::kGroupPets) {
@@ -326,7 +334,11 @@ uint32_t Litter::lights(gfx::PointLight* out, uint32_t max, const float near[3])
         const float dx = at[0] - near[0], dz = at[2] - near[2];
         lit.push_back({&drop, dx * dx + dz * dz});
     }
-    std::sort(lit.begin(), lit.end(), [](const Lit& a, const Lit& b) { return a.d2 < b.d2; });
+    // A quest item first, whatever is nearer: it is the one that must be seen.
+    std::sort(lit.begin(), lit.end(), [](const Lit& a, const Lit& b) {
+        if ((a.drop->glow == 3) != (b.drop->glow == 3)) return a.drop->glow == 3;
+        return a.d2 < b.d2;
+    });
     uint32_t count = 0;
     for (const Lit& one : lit) {
         if (count == max) break;
@@ -338,13 +350,69 @@ uint32_t Litter::lights(gfx::PointLight* out, uint32_t max, const float near[3])
         light.position[0] = at[0];
         light.position[1] = at[1] + kGlowLift;
         light.position[2] = at[2];
-        light.reach = kJewelReach * ground_->metresPerTile();
-        light.height = kGlowLift + 0.3f;
-        const float level = kJewelLevel * breath;
+        const bool quest = drop.glow == 3;
+        light.reach = (quest ? kQuestReach : kJewelReach) * ground_->metresPerTile();
+        light.height = kGlowLift + (quest ? 1.2f : 0.3f);
+        const float level = (quest ? kQuestLevel : kJewelLevel) * breath;
         for (int k = 0; k < 3; ++k) light.colour[k] = drop.glowColour[k] * level;
     }
     return count;
 }
 
+
+void Litter::gatherBeams(gfx::Effects& effects, const float eye[3]) const {
+    if (!bgfx::isValid(beam_) || !ground_) return;
+    for (const Drop& drop : drops_) {
+        if (drop.glow != 3 || drop.pieces.empty()) continue;
+        if (std::find(settled_.begin(), settled_.end(), drop.id) == settled_.end()) continue;
+        const float* at = drop.pieces.front().rest + 12;
+        const float footY = ground_->heightAt(at[0], at[2]);
+        // Turned about its own upright to face the eye: a column, not a billboard leaning
+        // with the camera's pitch.
+        float side[2] = {-(eye[2] - at[2]), eye[0] - at[0]};
+        const float length = std::sqrt(side[0] * side[0] + side[1] * side[1]);
+        if (length < 1e-4f) continue;
+        side[0] /= length;
+        side[1] /= length;
+        const float breath = 0.8f + 0.2f * std::sin(clock_ * 2.2f + float(drop.id % 5));
+        // Three layers. The sheet is opaque and holds its streak in its colour, so it is only
+        // ever added or taken away -- laid over the ground it is a grey slab. First the violet's
+        // complement taken away, which on Devias's snow, where added light shows nothing, turns
+        // the white under the column violet and on dark ground changes nothing; then a wide
+        // violet glow added, and a narrow paler core.
+        for (int layer = 0; layer < 3; ++layer) {
+            const float half = kBeamWide * 0.5f * (layer == 2 ? kCoreShare : 1.0f);
+            gfx::Sprite beam;
+            beam.sheet = beam_;
+            beam.blend = layer == 0 ? gfx::Blend::Minus : gfx::Blend::Additive;
+            beam.placed = true;
+            for (int k = 0; k < 3; ++k) {
+                beam.colour[k] = layer == 0   ? (1.0f - kQuestViolet[k]) * 0.8f
+                                 : layer == 1 ? kQuestViolet[k]
+                                              : 0.5f + 0.5f * kQuestViolet[k];
+            }
+            beam.colour[3] = (layer == 2 ? 1.0f : 0.9f) * breath;
+            const float low = footY - 0.05f, high = footY + kBeamTall;
+            const float corners[4][3] = {
+                {at[0] - side[0] * half, low, at[2] - side[1] * half},
+                {at[0] + side[0] * half, low, at[2] + side[1] * half},
+                {at[0] + side[0] * half, high, at[2] + side[1] * half},
+                {at[0] - side[0] * half, high, at[2] - side[1] * half},
+            };
+            // The streak's sheet is brightest at its middle and fades to both ends: its lower
+            // half is laid down the column, so it is hottest at the ground and gone at the top.
+            const float uv[4][2] = {{0.0f, 0.5f}, {1.0f, 0.5f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
+            for (int c = 0; c < 4; ++c) {
+                for (int k = 0; k < 3; ++k) beam.corner[c][k] = corners[c][k];
+                beam.cornerUv[c][0] = uv[c][0];
+                beam.cornerUv[c][1] = uv[c][1];
+            }
+            beam.position[0] = at[0];
+            beam.position[1] = footY + kBeamTall * 0.5f;
+            beam.position[2] = at[2];
+            effects.add(beam);
+        }
+    }
+}
 
 }  // namespace mu::game
