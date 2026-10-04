@@ -1251,6 +1251,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
             std::snprintf(line, sizeof(line), "%6u %s refined slot %d from +%d to +%d",
                           happening.tick, who, happening.a, happening.b, happening.c);
             break;
+        case What::Enlivened:
+            std::snprintf(line, sizeof(line), "%6u %s put a Life on slot %d: option %d to %d",
+                          happening.tick, who, happening.a, happening.b, happening.c);
+            break;
         case What::Mixed:
             std::snprintf(line, sizeof(line), "%6u %s mixed recipe %d at %d%%: %s",
                           happening.tick, who, happening.a, happening.c,

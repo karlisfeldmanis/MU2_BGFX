@@ -92,6 +92,7 @@ of ours. The Poison and Ice scrolls and Lala's other orbs are no longer sold; th
 
 ## Not built here, for later
 
-Jewel of Life 50% (a failure resets the option). Chaos Machine +10 50% / +11 45%,
+Jewel of Life 50% (a failure resets the option) -- built 2026-10-04, a lucky thing always
+takes it (ours), docs/refining.md. Chaos Machine +10 50% / +11 45%,
 +20 with luck, cap 75%, 2M / 4M Zen, a failure takes the box. Chaos weapon: value/20000
 success, weapon out at +0-4 (MixSystem.cpp:399-1948). AG per class (NEW_FORSKYLAND2).

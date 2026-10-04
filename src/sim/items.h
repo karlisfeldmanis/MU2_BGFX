@@ -432,16 +432,27 @@ int pour(const content::Tables& tables, Grid& grid, int first, int last, Held wh
 // past it to kMachineCap, Version075's MaximumItemLevel (sim/machine.h).
 constexpr int kRefineCap = 9;
 
-// Which of the two refining jewels a row is: the Bless (14, 13) or the Soul (14, 14). The
-// Chaos (12, 15) is a jewel too and goes on nothing -- it is the machine's.
-enum class Jewel : uint8_t { None, Bless, Soul };
+// Which of the jewels let go over a thing a row is: the Bless (14, 13), the Soul (14, 14) or
+// the Life (14, 16). The Chaos (12, 15) is a jewel too and goes on nothing -- it is the
+// machine's.
+enum class Jewel : uint8_t { None, Bless, Soul, Life };
 Jewel jewelOf(const content::ItemRow& row);
 
 // Whether a jewel would go on a thing, asked by the realm's refusal and by the bag's drop
 // colour. OpenMU's `CanLevelBeUpgraded` and the two handlers' ranges, which MuMain's
 // `CanUpgradeItem` paints by to the level: the weapon and armour groups up to the boots, less
-// the arrows and the bolts, a Bless on +0 to +5 and a Soul on +0 to +8.
+// the arrows and the bolts, a Bless on +0 to +5 and a Soul on +0 to +8. A Life goes on what
+// carries the additional option (takesOptions) and on a wing, below kMostOption -- WebZen's
+// gObjItemRandomOption3Up refuses group 12 from 12/7 up and the arrows and bolts
+// (user.cpp:28761-28790), so no ring or pendant.
 bool refinable(const content::Tables& tables, const Held& jewel, const Held& target);
+
+// The Jewel of Life (gObjItemRandomOption3Up, user.cpp:28754-28880): the option a level up at
+// m_iLifeRate, 50, and a failure takes it back to none. A lucky thing always takes it -- ours,
+// the user's (2026-10-04: "if luck is good for item there is 100% for sucedd"); WebZen's roll
+// never asks luck. A wing at no option draws which of its two kinds the option is
+// (PLUS_WING_OP1_TYPE, `rand()%2`, :28797-28808), the 2nd wings only.
+constexpr int kLifeChance = 50;
 
 // Whether it is too dear to throw on the ground: MuMain's `IsHighValueItem`
 // (ZzzInventory.cpp:7407), which both of its drop paths refuse with "You are not allowed to drop
@@ -689,7 +700,8 @@ constexpr int kRuneRarityLevel[3] = {kCreationLevel, 40, 60};
 // reaches that hold one, then one of that rarity evenly. 0 when none can be drawn.
 class Random;
 uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level);
-// The Bless (14, 13), the Soul (14, 14) and the Chaos (12, 15): the three kJewelChance draws.
+// The Bless (14, 13), the Soul (14, 14), the Life (14, 16) and the Chaos (12, 15): the
+// kJewelChance draws. The Life falls from 72 (OpenMU Version095d Jewels.cs:43), past Devias.
 bool refiningJewel(const content::ItemRow& row);
 // The first socket with nothing set in it, or -1.
 int freeSocket(const Held& thing);

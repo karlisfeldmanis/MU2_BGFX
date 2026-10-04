@@ -42,6 +42,9 @@ bool anyRune(const Held& what) {
 // The box, sorted into what the services ask about.
 struct Sorted {
     int chaos = 0, bless = 0, soul = 0;
+    // The Jewels of Life, which only Add Socket asks for. Each is counted as a thing too, so
+    // every other recipe and service refuses a box with one in it, as it refuses a stranger.
+    int life = 0;
     // The 2nd wings' box: the 1st wings in it, the feathers, the excellent things at +4 or more
     // that raise the rate, and any 2nd wing, which spoils it (MixSystem.cpp:2494-2508).
     int firstWings = 0, firstWingCell = -1, feathers = 0, excellents = 0, secondWings = 0;
@@ -76,6 +79,9 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
             s.bless += n;
         } else if (jewelOfSoul(*row)) {
             s.soul += n;
+        } else if (jewelOfLife(*row)) {
+            s.life += n;
+            s.things += n;
         } else {
             ++s.things;
             if (creation(*row) && what.powers[0] != 0) {
@@ -395,8 +401,10 @@ void removeRune(const content::Tables& tables, const Machine& box, const Sorted&
 
 void addSocket(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
     need(j, "Item with room for a socket", s.socketable, 1);
-    need(j, "Jewel of Chaos", s.chaos, 1);
-    need(j, "Jewel of Soul", s.soul, 1);
+    need(j, "Jewel of Life", s.life, kAddSocketLife);
+    need(j, "Jewel of Chaos", s.chaos, kAddSocketChaos);
+    need(j, "Jewels of Soul", s.soul, kAddSocketSoul);
+    need(j, "Jewels of Bless", s.bless, kAddSocketBless);
     j.zen = kAddSocketZen;
     if (s.socketable != 1) {
         j.title = s.socketable == 0 ? "Put in a weapon, armour or shield" : "One item at a time";
@@ -411,7 +419,8 @@ void addSocket(const content::Tables& tables, const Machine& box, const Sorted& 
     j.title = "Socket " + std::to_string(has + 1) + " for the " + name;
     j.success = name + " with " + std::to_string(has + 1) + (has == 0 ? " socket" : " sockets");
     j.failure = "The jewels are lost, the " + name + " is kept";
-    j.ready = s.things == 1 && s.chaos == 1 && s.soul == 1 && s.bless == 0;
+    j.ready = s.things == 1 + s.life && s.life == kAddSocketLife && s.chaos == kAddSocketChaos &&
+              s.soul == kAddSocketSoul && s.bless == kAddSocketBless;
 }
 
 void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
@@ -520,6 +529,9 @@ bool jewelOfBless(const content::ItemRow& row) {
 }
 bool jewelOfSoul(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 14;
+}
+bool jewelOfLife(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 16;
 }
 
 int64_t mixValue(const content::Tables& tables, const Held& what) {

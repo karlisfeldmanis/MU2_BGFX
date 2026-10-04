@@ -76,7 +76,7 @@ The services (`sim::Service`, `sim::judge(tables, box, service, socket, kin)`):
 |---|---|---|---|---|
 | Combine | phase one's recipes | as above | as above | as above |
 | Remove Rune | one thing with a rune, 1 Chaos | 100% | 500k / 1M / 1.5M by rarity | the picked socket's rune back as a Rune of Creation, the socket empty |
-| Add Socket | one thing with room for a socket, 1 Chaos, 1 Soul | 50 / 35 / 20% for the 1st / 2nd / 3rd | 1,000,000 | one more socket; failure takes the jewels only |
+| Add Socket | one thing with room for a socket, 1 Life, 1 Chaos, 2 Souls, 2 Blesses (the user, 2026-10-04) | 50 / 35 / 20% for the 1st / 2nd / 3rd | 1,000,000 | one more socket; failure takes the jewels only |
 | Fuse Runes | three runes of one rarity (not Legendary), 1 Chaos | 100% | 500,000 | one random rune of the next rarity his class may set |
 
 All three rune services are invention, and their numbers are the proposal's first guesses.

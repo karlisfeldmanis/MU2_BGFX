@@ -192,7 +192,12 @@ bool ammunition(const content::ItemRow& row) {
 
 Jewel jewelOf(const content::ItemRow& row) {
     if (row.group != kGroupPotions) return Jewel::None;
-    return row.number == 13 ? Jewel::Bless : row.number == 14 ? Jewel::Soul : Jewel::None;
+    switch (row.number) {
+        case 13: return Jewel::Bless;
+        case 14: return Jewel::Soul;
+        case 16: return Jewel::Life;
+        default: return Jewel::None;
+    }
 }
 
 bool expensive(const content::Tables& tables, const Held& what) {
@@ -349,6 +354,9 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
     const Jewel kind = jewelOf(tables.items[size_t(jewel.item)]);
     if (kind == Jewel::None) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
+    if (kind == Jewel::Life) {
+        return (takesOptions(row) || anyWing(row)) && target.option < kMostOption;
+    }
     // And the rings and pendants, ours (the user, 2026-10-03: "if user upgrades rings and pendants
     // with jewel of bless or soul"); MU refines nothing past the boots.
     // And the 1st level wings, which MU raises (WebZen's level-up refuses from 12/7 on,
@@ -524,7 +532,8 @@ bool invisibilityCloak(const content::ItemRow& row) {
 }
 
 bool refiningJewel(const content::ItemRow& row) {
-    return (row.group == kGroupPotions && (row.number == 13 || row.number == 14)) ||
+    return (row.group == kGroupPotions &&
+            (row.number == 13 || row.number == 14 || row.number == 16)) ||
            (row.group == 12 && row.number == 15);
 }
 

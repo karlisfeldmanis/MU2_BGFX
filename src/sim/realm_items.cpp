@@ -801,7 +801,34 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     }
     if (!refinable(*tables_, jewel, thing)) return false;
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
-    const bool soul = jewelOf(tables_->items[size_t(jewel.item)]) == Jewel::Soul;
+    const Jewel kind = jewelOf(tables_->items[size_t(jewel.item)]);
+    const bool soul = kind == Jewel::Soul;
+    // The Life works the option and not the plus (kLifeChance), so nothing it does can make a
+    // thing ask more than he has. Its own dice: the drop's, `dice_`, as the Soul's roll is.
+    if (kind == Jewel::Life) {
+        const int was = thing.option;
+        const bool took = thing.luck || dice_.nextInt(0, 100) < kLifeChance;
+        if (took) {
+            if (was == 0 && secondWing(row)) {
+                thing.wing = uint8_t(thing.wing & ~kWingOptionKind);
+                if (dice_.nextInt(0, 2) == 1) thing.wing = uint8_t(thing.wing | kWingOptionKind);
+            }
+            thing.option = int8_t(was + 1);
+        } else {
+            thing.option = 0;
+        }
+        if (jewel.durability > 1) {
+            Held left = jewel;
+            left.durability = int16_t(jewel.durability - 1);
+            bag_.put(jewelSlot, left);
+        } else {
+            bag_.lift(jewelSlot);
+        }
+        bag_.put(targetSlot, thing);
+        if (wearable(targetSlot)) rearm(hero);
+        say(What::Enlivened, hero, targetSlot, was, thing.option);
+        return true;
+    }
 
     const int was = thing.refinement;
     // A plus asks more (`asks`), so a worn thing can outgrow him: it comes off into the bag, as

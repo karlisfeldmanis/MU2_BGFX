@@ -113,6 +113,19 @@ are orbs here (the user, 2026-09-27). The name goes blue, the ground label goes 
 price takes a quarter for luck and 60%, then 0.7 x 2^(level-1), for the option
 (`ItemPriceCalculator`). The save carries both.
 
+### The Jewel of Life
+
+The Life (14, 16, `Jewel03.bmd`, MuMain's line "Increases item option by 1 level") is let go
+over a thing as the Bless and the Soul are (`Realm::refine`, says `What::Enlivened`). It goes
+on what carries the option and on wings, below `kMostOption` (+16): WebZen's
+`gObjItemRandomOption3Up` (user.cpp:28754-28880) refuses group 12 from 12/7 up, so no ring or
+pendant. Half the time (`kLifeChance`, WebZen's `m_iLifeRate`) the option goes up a level;
+otherwise it is back to none. **A lucky thing always takes it** -- ours, the user's
+(2026-10-04); WebZen's roll never asks luck. A 2nd wing at no option draws which of its two
+kinds the option is, as WebZen does. Drop level 72 (OpenMU 0.95d), on the jewels' draw: past
+every monster we have, so for now it comes from Blood Castle 6, and it is the Chaos Machine's
+Add Socket's (docs/chaos-machine.md). WebZen's own cap is level 7 (+28); ours stays 0.75's 4.
+
 ## Excellent
 
 **Not 0.75** — OpenMU adds it in 0.95d — and taken on the user's word (2026-09-27).
@@ -180,7 +193,6 @@ user chose on 2026-09-23 over MuMain's blue.
 - **Stacks of jewels.** A jewel is one cell. `Realm::refine` spends one from a stack if it is
   ever given one, but nothing merges them.
 - **The Chaos Machine**, and with it +10, +11 and the Chaos's only use.
-- **The Jewel of Life.** 0.95d, and it wants item options first.
 
 ## Sources
 

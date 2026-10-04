@@ -120,8 +120,9 @@ const char* firstWingName(Kin kin);
 //
 //   * **Remove Rune**: one thing with a rune set, one Chaos. The picked socket's rune comes back
 //     as a Rune of Creation and the socket is empty again; 100%, Zen by the rune's rarity.
-//   * **Add Socket**: one thing that takes sockets and has room for another, one Chaos, one
-//     Soul. 50%, 35%, 20% for the first, second and third; failure takes the jewels only.
+//   * **Add Socket**: one thing that takes sockets and has room for another, one Life, one
+//     Chaos, two Souls and two Blesses (the user, 2026-10-04). 50%, 35%, 20% for the first,
+//     second and third; failure takes the jewels only.
 //   * **Fuse Runes**: three runes of one rarity below Legendary and one Chaos make one random
 //     rune of the next rarity, one his class may set; 100%.
 enum class Service : uint8_t { Combine = 0, RemoveRune = 1, AddSocket = 2, FuseRunes = 3 };
@@ -132,6 +133,7 @@ const char* serviceVerb(Service service);  // the button: "Combine", "Remove", "
 constexpr int64_t kRemoveRuneZen[3] = {500000, 1000000, 1500000};  // Rare, Epic, Legendary
 constexpr int kAddSocketRate[3] = {50, 35, 20};                     // for the 1st, 2nd, 3rd
 constexpr int64_t kAddSocketZen = 1000000;
+constexpr int kAddSocketLife = 1, kAddSocketChaos = 1, kAddSocketSoul = 2, kAddSocketBless = 2;
 constexpr int64_t kFuseZen = 500000;
 constexpr int kFuseCount = 3;
 
@@ -142,7 +144,7 @@ struct Need {
     int have = 0, need = 0;
     bool met() const { return need == 0 ? true : have == need; }
 };
-constexpr int kMostNeeds = 4;
+constexpr int kMostNeeds = 5;  // Add Socket's five
 
 struct Judged {
     Service service = Service::Combine;
@@ -204,5 +206,6 @@ int64_t mixValue(const content::Tables& tables, const Held& what);
 bool jewelOfChaos(const content::ItemRow& row);
 bool jewelOfBless(const content::ItemRow& row);
 bool jewelOfSoul(const content::ItemRow& row);
+bool jewelOfLife(const content::ItemRow& row);
 
 }  // namespace mu::sim

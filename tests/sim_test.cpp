@@ -3679,6 +3679,81 @@ void testAtlansPerches() {
 // Wear and the repair (sim/wear.h): the tables against MuMain's and OpenMU's own, the prices
 // worked by hand from the formula, a worn shield's cut on his block, the wear a real fight
 // leaves, and Hanzo putting it right.
+// The Jewel of Life (sim::kLifeChance): the option a level up half the time and back to none
+// otherwise, always on a lucky thing (the user's), on what carries the option and on wings.
+void testJewelOfLife(const content::Tables& tables) {
+    std::printf("jewel of life\n");
+    const int life = tables.itemAt(14, 16), kris = tables.itemAt(0, 0);
+    const int arrows = tables.itemAt(4, 15), ring = tables.itemAt(13, 8), wing = tables.itemAt(12, 0);
+    check(life >= 0 && kris >= 0 && arrows >= 0 && ring >= 0 && wing >= 0,
+          "the rows the Life's tests use exist");
+    if (life < 0 || kris < 0 || arrows < 0 || ring < 0 || wing < 0) return;
+    check(sim::jewelOf(tables.items[size_t(life)]) == sim::Jewel::Life, "14/16 is the Life");
+    check(sim::refiningJewel(tables.items[size_t(life)]), "and drops on the jewels' draw");
+
+    const auto held = [](int item, int option) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.option = int8_t(option);
+        return h;
+    };
+    check(sim::refinable(tables, held(life, 0), held(kris, 0)), "a Life goes on a Kris with none");
+    check(sim::refinable(tables, held(life, 0), held(kris, sim::kMostOption - 1)),
+          "and on one a level short of the top");
+    check(!sim::refinable(tables, held(life, 0), held(kris, sim::kMostOption)), "not at the top");
+    check(sim::refinable(tables, held(life, 0), held(wing, 0)), "it goes on a wing");
+    check(!sim::refinable(tables, held(life, 0), held(ring, 0)), "not on a ring");
+    check(!sim::refinable(tables, held(life, 0), held(arrows, 0)), "nor on arrows");
+
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 138, 124), "a realm raises for the Life");
+    // Unlucky: half rise, half fall to none, each spending its jewel.
+    int tries = 0, rose = 0, lost = 0, others = 0;
+    for (int i = 0; i < 2000; ++i) {
+        const int at = realm.give(kris, -1, 0, -1, false, 2);
+        const int gem = realm.give(life);
+        if (at < 0 || gem < 0 || !realm.refine(gem, at)) break;
+        ++tries;
+        check(realm.satchel()[gem].empty(), "the Life is spent");
+        if (i == 0) {
+            const std::vector<sim::Happening>& said = realm.happenings();
+            check(!said.empty() && said.back().what == sim::What::Enlivened &&
+                      said.back().b == 2,
+                  "and the realm says the option it had");
+        }
+        const int now = realm.satchel()[at].option;
+        if (now == 3) ++rose;
+        else if (now == 0) ++lost;
+        else ++others;
+        realm.discard(at);
+    }
+    checkEqual(tries, 2000, "two thousand Lives, each spent");
+    checkEqual(others, 0, "each one +1 or none");
+    checkEqual(rose + lost, tries, "every miss back to none");
+    checkNear(double(rose) / tries, double(sim::kLifeChance) / 100.0, 0.05, "and half rose");
+    // Lucky: every one takes.
+    int luckyRose = 0;
+    for (int i = 0; i < 200; ++i) {
+        const int at = realm.give(kris, -1, 0, -1, true, 1);
+        const int gem = realm.give(life);
+        if (at < 0 || gem < 0 || !realm.refine(gem, at)) break;
+        if (realm.satchel()[at].option == 2 && realm.satchel()[at].luck) ++luckyRose;
+        realm.discard(at);
+    }
+    checkEqual(luckyRose, 200, "a lucky thing takes every Life");
+
+    // Worn: the hand is reckoned again with whatever option the roll left.
+    sim::Realm armed;
+    check(armed.raise(&tables, 12, 138, 124), "a realm raises for a worn Life");
+    check(armed.equip(tables.armNamed("Axe01"), -1, true), "an axe in his hand");
+    const int32_t axe = armed.satchel()[sim::kWeaponRight].item;
+    const int bonusBefore = armed.hero().weaponBonus;
+    check(armed.refine(armed.give(life), sim::kWeaponRight), "a Life goes on it");
+    const int option = armed.satchel()[sim::kWeaponRight].option;
+    checkEqual(armed.hero().weaponBonus,
+               bonusBefore + sim::optionValue(tables.items[size_t(axe)], option),
+               "and he hits for it");
+}
+
 // The jewels on a thing: OpenMU's two handlers and MuMain's CanUpgradeItem ranges.
 void testRefine(const content::Tables& tables) {
     std::printf("refine\n");
@@ -5624,13 +5699,14 @@ void testChaosMachine() {
     check(goblin >= 0, "the Chaos Goblin is in Noria's table");
     if (goblin < 0) return;
     const int32_t chaos = noria.itemAt(12, 15), bless = noria.itemAt(14, 13),
-                  soul = noria.itemAt(14, 14);
+                  soul = noria.itemAt(14, 14), life = noria.itemAt(14, 16);
     int32_t sword = -1;
     for (size_t i = 0; i < noria.items.size() && sword < 0; ++i) {
         if (noria.items[i].group == 0 && noria.items[i].width == 1) sword = int32_t(i);
     }
-    check(chaos >= 0 && bless >= 0 && soul >= 0 && sword >= 0, "the three jewels and a sword");
-    if (chaos < 0 || bless < 0 || soul < 0 || sword < 0) return;
+    check(chaos >= 0 && bless >= 0 && soul >= 0 && life >= 0 && sword >= 0,
+          "the four jewels and a sword");
+    if (chaos < 0 || bless < 0 || soul < 0 || life < 0 || sword < 0) return;
 
     sim::Realm realm;
     check(realm.raise(&noria, 7, 182, 105, sim::Kin::DarkKnight, 50), "a realm raises by him");
@@ -6083,12 +6159,27 @@ void testChaosMachine() {
     check(realm.takeOut(freed) >= 0 && realm.takeOut(emptied) >= 0 && realm.machine().empty(),
           "both come out");
 
-    // Add Socket: a sword with none, a Chaos and a Soul, until it takes.
+    // Add Socket: a sword with none, a Life, a Chaos, two Souls and two Blesses (the user's),
+    // until it takes. Without the Life it is not ready, and with one the Combine is nothing.
+    check(realm.putIn(realm.give(sword, -1, 0)) >= 0 && realm.putIn(realm.give(chaos)) >= 0 &&
+              realm.putIn(realm.give(soul)) >= 0 && realm.putIn(realm.give(soul)) >= 0 &&
+              realm.putIn(realm.give(bless)) >= 0 && realm.putIn(realm.give(bless)) >= 0,
+          "a sword and five jewels go in");
+    check(!realm.judged(sim::Service::AddSocket).ready, "Add Socket waits for a Life");
+    check(realm.putIn(realm.give(life)) >= 0, "a Life goes in");
+    check(realm.judged(sim::Service::Combine).recipe == sim::Recipe::None,
+          "and no combination takes a Life");
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+        if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+    }
+    check(realm.machine().empty(), "all of it comes out");
     bool socketed = false;
     for (int attempt = 0; attempt < 30 && !socketed; ++attempt) {
-        check(realm.putIn(realm.give(sword, -1, 0)) >= 0 && realm.putIn(realm.give(chaos)) >= 0 &&
-                  realm.putIn(realm.give(soul)) >= 0,
-              "a sword, a Chaos and a Soul go in");
+        check(realm.putIn(realm.give(sword, -1, 0)) >= 0 && realm.putIn(realm.give(life)) >= 0 &&
+                  realm.putIn(realm.give(chaos)) >= 0 && realm.putIn(realm.give(soul)) >= 0 &&
+                  realm.putIn(realm.give(soul)) >= 0 && realm.putIn(realm.give(bless)) >= 0 &&
+                  realm.putIn(realm.give(bless)) >= 0,
+              "a sword, a Life, a Chaos, two Souls and two Blesses go in");
         j = realm.judged(sim::Service::AddSocket);
         check(j.ready, "Add Socket is ready");
         checkEqual(j.rate, sim::kAddSocketRate[0], "at the first socket's rate");
@@ -6868,14 +6959,14 @@ void testRunes(const content::Tables& tables) {
           "Arcane Echo goes in a wizard's socketed staff");
     check(!sim::settable(tables, held(rune, 0, echo), held(serpent, 1, 0), dk, true),
           "and not by a knight");
-    check(sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard,
-                        false),
-          "and by a Dark Wizard, not the Soul Master alone: Marlon pays it");
+    check(!sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard,
+                         false),
+          "and only by a Soul Master: a Dark Wizard cannot set it");
     const auto casts = [&](uint8_t power, int* cast, int* loosed, int32_t skill = sim::skill::kEnergyBall,
                            int* lightning = nullptr) {
         sim::Realm realm;
         realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
-        // A first-class Dark Wizard: Arcane Echo is every wizard's since 2026-10-04.
+        promote(realm);  // Arcane Echo is the Soul Master's
         const uint8_t powers[3] = {power, 0, 0};
         realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
         uint32_t fighting = 0;
@@ -8552,6 +8643,7 @@ int main() {
     testCharon();
     testChaosMachine();
     testRefine(tables);
+    testJewelOfLife(tables);
     testOptions(tables);
     testExcellent(tables);
     testSets(tables);

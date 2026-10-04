@@ -1,0 +1,64 @@
+{
+  "item": "Jewel03",
+  "mu_name": "Jewel of Life",
+  "mu_name_from": "ZzzOpenData.cpp:913 loads it on its own line after the Bless/Soul run: `AccessModel(MODEL_JEWEL_OF_LIFE, L\"Data\\\\Item\\\\\", L\"Jewel\", 3)`, so Jewel03.bmd and not the Jewel04 the run would suggest. _enum.h:2086 `MODEL_JEWEL_OF_LIFE = MODEL_POTION + 16`, which OpenMU's Version095d Jewels.cs agrees with: group 14, number 16.",
+  "why_this_one": "The user, 2026-10-04: 'lets build it'. It raises a thing's additional option a level (Realm::refine, kLifeChance), and the Chaos Machine's Add Socket asks one. Not 0.75: OpenMU adds it in 0.95d. Blood Castle 6 already paid one and lost it, the row being missing.",
+  "tells": "Increases item option by 1 level",
+  "tells_from": "MU's own line, `I18N::Game::IncreasesItemOptionBy1Level`, WHITE and unbold on `ip->Type == ITEM_JEWEL_OF_LIFE` (ZzzInventory.cpp:4228-4232).",
+  "profile": "weapon",
+  "profile_note": "As the other jewels: a small painted sheet on a made object, looked at from arm's length.",
+  "stats": {
+    "note": "The item's own row, from OpenMU's 0.95d initialiser.",
+    "from": "openmu/src/Persistence/Initialization/Version095d/Items/Jewels.cs, CreateJewelOfLife.",
+    "call": "itemDefinition.Name = \"Jewel of Life\"; Number = 16; Group = 14; DropsFromMonsters = false; DropLevel = 72; Durability = 1; Width = 1; Height = 1; AddItemToJewelItemDrop(itemDefinition)",
+    "group": 14,
+    "number": 16,
+    "drop_level": 72,
+    "drops_from_monsters": false,
+    "jewel": true,
+    "drop_level_note": "Seventy-two, no ceiling: past every monster in Lorencia, Noria and Devias, so for now it comes from Blood Castle 6 and the Kundun boxes' tier, not from a kill. It rides the Bless's and the Soul's kJewelChance draw (sim::refiningJewel) once anything reaches it.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    }
+  },
+  "sheets": {
+    "wolf02": "wolf02.png"
+  },
+  "sheet_from": "Data/Item/wolf02.OZJ, MuMain's own bin/Data: Jewel03.bmd names wolf02.jpg and all 44 of its triangles are on it. Eight pixels square, four grey stone tones in quarters (light, mid, near black, dark), MU's whole painting of it.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ (decode_texture: fully opaque).",
+  "material_note": "marble, over the weapon profile's steel: a carved stone, polished, a dielectric. MuMain draws it plainly -- no tint, no light, no effect (ZzzObject.cpp:5864 turns it upright and that is all).",
+  "upright": true,
+  "upright_from": "ZzzObject.cpp:5864-5868 stands it at Angle (270, 0, 45) in the cell: upright, a quarter turn.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "marble",
+      "triangles": 44,
+      "area": 1001.9,
+      "along": [
+        -2.4,
+        3.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.972
+      ]
+    }
+  ]
+}

@@ -125,6 +125,8 @@ enum class What : uint8_t {
                // 100 + the sim::Service, b: 1 made, 0 failed, c: the rate it ran at
     Cracked,   // a Firecracker thrown and opened (Realm::crack): a: the id of what it left on
                // the ground, or -1 for Zen, b: that thing's item row or -1, c: the Zen or its plus
+    Enlivened,  // a Jewel of Life spent on a thing: a: its slot, b: the option level it had,
+                // c: the one it has (0 when it failed)
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -691,7 +693,8 @@ public:
     // A jewel let go over a thing: the Bless or the Soul, from a bag slot, onto a thing carried
     // or worn. Refused, whole and silent, where `refinable` says no. Otherwise the jewel is
     // spent whatever the roll gives, and the thing comes back at its new plus: OpenMU's
-    // UpgradeItemLevelJewelConsumeHandlerPlugIn. Says What::Refined.
+    // UpgradeItemLevelJewelConsumeHandlerPlugIn. Says What::Refined. A Life works the option
+    // instead (kLifeChance) and says What::Enlivened.
     bool refine(int jewelSlot, int targetSlot);
     // Zen in and out, for the merchants. `pay` refuses, whole, what he cannot afford.
     void earn(int64_t zen) { money_ += zen; }
