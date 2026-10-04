@@ -1,6 +1,7 @@
 #include "game/ui/quest_dialog.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <ctime>
 
@@ -111,16 +112,35 @@ std::string gateWords(sim::CastleRefusal why, int castle) {
            "You need more than just courage, warrior. You'll find the 'Scroll of Archangel' and "
            "'Blood Bone' by hunting monsters on the Continent of Mu.";
 }
-// The Archangel's words, MU's own (Localization/Game.en.resx): ServerCmd 1,24 while the weapon is
-// still out there (legacy 834), 1,23 as it is handed back (833).
-const char* angelWords(sim::AngelState state) {
-    if (state == sim::AngelState::Done) {
-        return "Ah! Great warrior. Thanks to your help, we have been able to protect the lands "
-               "from Kundun's soldiers. As a token of our appreciation, I will share my "
-               "experience with you.";
+// The Archangel's words, ours (the user, 2026-10-04: 'we need better text for archangel'): one
+// for each place the run can stand, naming the weapon this run's statue holds and the steps
+// the tracker lists. MU's two were ServerCmd 1,24 'You're a warrior in training...' while the
+// weapon is out (Game.en.resx legacy 834) and 1,23 'Ah! Great warrior...' once given (833).
+std::string angelWords(sim::AngelState state, sim::CastlePhase phase, const std::string& weapon) {
+    switch (state) {
+        case sim::AngelState::Done:
+            return "Ah, my " + weapon + "! Thanks to your courage, Blood Castle is free of "
+                   "Kundun's soldiers once more. Take this as a token of our thanks, and with it "
+                   "what I have learned in this long war.";
+        case sim::AngelState::Ready:
+            return "You carry my " + weapon + "! Give it to me, warrior, and Blood Castle is "
+                   "ours again.";
+        case sim::AngelState::NoStaff:
+            return "My " + weapon + " is still in the Statue of Saint's grip. Cut down the "
+                   "guards until the drawbridge falls, slay the Spirit Sorcerers who hold the "
+                   "door, and break the statue. Then bring my weapon to me, before the time "
+                   "runs out.";
+        case sim::AngelState::NotYet:
+            break;
     }
-    return "You're a warrior in training, I see. I will trust in your courage. Go ahead and bring "
-           "down those evil creatures and bring me back my weapon.";
+    if (phase == sim::CastlePhase::Ended) {
+        return "The time has run out, and Kundun's soldiers hold the castle still. Rest, "
+               "warrior, and come back stronger when the gate opens again.";
+    }
+    return "Kundun's soldiers have taken this castle, and a Statue of Saint holds my " + weapon +
+           " beyond its door. When the gate opens, cut through the guards, slay the Spirit "
+           "Sorcerers and break the statue. Bring my weapon back to me, and you will not go "
+           "unrewarded.";
 }
 std::string bandOf(int castle) {
     const int* band = sim::kCastleBands[castle - 1];
@@ -278,9 +298,14 @@ void QuestDialog::layout(const Play& play) {
             words(said.c_str());
             break;
         }
-        case Mode::Angel:
-            words(angelWords(angel_));
+        case Mode::Angel: {
+            const int32_t weapon = realm.castleWeaponItem();
+            const std::string said = angelWords(
+                angel_, realm.castleRun().phase,
+                weapon >= 0 ? tables.items[size_t(weapon)].label : std::string("Divine Staff of Archangel"));
+            words(said.c_str());
             break;
+        }
     }
 
     // The body, top down in its own units: the kicker and his words, the steps, the rewards.
@@ -307,7 +332,12 @@ void QuestDialog::layout(const Play& play) {
         // What he asks for, the staff, as the rewards are shown; given back, what it paid.
         y += kSection * 0.5f + 24.0f;
         if (angel_ == sim::AngelState::Done) {
-            y += 3.0f * kStepRow + kSection;
+            // Experience, Zen and each of the castle's jewels, as the page draws them.
+            int jewels = 0;
+            for (const auto& jewel : sim::kCastleRewardJewels[std::clamp(castle_, 1, sim::kCastles) - 1]) {
+                jewels += jewel[0] >= 0 && tables.itemAt(jewel[0], jewel[1]) >= 0;
+            }
+            y += float(2 + jewels) * kStepRow + kSection;
         } else {
             Cell cell;
             // The weapon this run's statue holds: the staff, the sword or the crossbow.
@@ -482,6 +512,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     if (angel) {
         mode = Mode::Angel;
         angel_ = realm.angelState();
+        castle_ = realm.castleRun().castle;
         staffHeld_ = realm.staffSlot() >= 0;
         paidExperience_ = realm.castleRun().paidExperience;
         paidZen_ = realm.castleRun().paidZen;
@@ -645,7 +676,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         now.gate[5] = castle_;
     }
     if (angel) {
-        now.angel[0] = int64_t(angel_);
+        now.angel[0] = int64_t(angel_) + int64_t(realm.castleRun().phase) * 8 + int64_t(castle_) * 64;
         now.angel[1] = paidExperience_;
         now.angel[2] = paidZen_ * 2 + (staffHeld_ ? 1 : 0);
     }
@@ -708,7 +739,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         const float title = std::round(22.0f * u);
         const float small = std::round(13.5f * u);
         const std::string name = gate    ? "Blood Castle " + std::to_string(castle_)
-                                 : angel ? std::string("Blood Castle 1")
+                                 : angel ? "Blood Castle " + std::to_string(castle_)
                                          : row.title;
         const size_t turning = canvas_.mark();
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(title, name) * 0.5f,
@@ -825,15 +856,19 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         controls::rule(body_, sx(kInset), by(cy - kSection * 0.5f), inner() * u, u);
         cy += kSection * 0.5f;
         if (angel_ == sim::AngelState::Done) {
-            // Given back: what GiveReward_Win paid, a line each.
+            // Given back: what GiveReward_Win paid, a line each, and each of this castle's
+            // jewels laid at his feet (sim kCastleRewardJewels).
             controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Rewards", u);
             cy += 24.0f;
-            const std::string lines[3][2] = {
+            std::vector<std::array<std::string, 2>> lines = {
                 {"Experience", panel::commas(paidExperience_)},
                 {"Zen", panel::commas(paidZen_)},
-                {"Jewel of Chaos", "at your feet"},
             };
-            for (int i = 0; i < 3; ++i) {
+            for (const auto& jewel : sim::kCastleRewardJewels[std::clamp(castle_, 1, sim::kCastles) - 1]) {
+                const int32_t item = jewel[0] < 0 ? -1 : tables.itemAt(jewel[0], jewel[1]);
+                if (item >= 0) lines.push_back({tables.items[size_t(item)].label, "at your feet"});
+            }
+            for (size_t i = 0; i < lines.size(); ++i) {
                 const float rowY = cy + float(i) * kStepRow;
                 quest_marks::mark(body_, StepMark::Done, sx(kInset + 7.0f), by(rowY + 8.0f), u);
                 controls::label(body_, sx(kInset + 24.0f), by(rowY + 13.0f), kBody * u,
