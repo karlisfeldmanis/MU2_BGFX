@@ -53,6 +53,10 @@
   "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
   "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
   "material_note": "painted_steel with plate_steel's cast grain: Divine is magenta-violet lacquer with gold trim painted on. Islands 2-7 are level_man033, her own bare skin.",
+  "cutout_alpha": [
+    "lower_E1"
+  ],
+  "cutout_alpha_from": "The sheet's own alpha, not its brightness: a cutout keys off brightness unless named here, and this paint is dark -- Divine's purple was cut away to its gold lines and her bare skin showed through (2026-10-04: the user, 'elf armor steel looks buggy', with MU's picture).",
   "islands": [
     {
       "island": 0,
