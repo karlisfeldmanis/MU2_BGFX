@@ -72,6 +72,8 @@ void submitEffectAlong(gfx::Effects& effects, const std::vector<EffectCorner>& t
     sprite.blend = blend;
     for (int k = 0; k < 3; ++k) sprite.colour[k] = colour[k];
     sprite.colour[3] = alpha;
+    const bool added = blend == gfx::Blend::Additive || blend == gfx::Blend::Flame ||
+                       blend == gfx::Blend::Breath;
     for (size_t i = 0; i + 2 < tris.size(); i += 3) {
         for (int k = 0; k < 4; ++k) {
             const EffectCorner& p = tris[i + size_t(std::min(k, 2))];
@@ -81,9 +83,15 @@ void submitEffectAlong(gfx::Effects& effects, const std::vector<EffectCorner>& t
             sprite.cornerUv[k][0] = p.u + uShift;
             sprite.cornerUv[k][1] = p.v;
         }
+        // An added mesh sorts as one piece, at its origin: adding is the same in any order,
+        // and each triangle sorted alone interleaved the mesh with whatever stood at its depth
+        // -- a Meteorite's cone with its own rock -- and broke the pass into a draw a few
+        // triangles (2026-10-04, 1,200 effect draws in a shower at 2K). A blended mesh still
+        // sorts by the triangle, which its picture needs.
         for (int a = 0; a < 3; ++a) {
             sprite.position[a] =
-                (sprite.corner[0][a] + sprite.corner[1][a] + sprite.corner[2][a]) / 3.0f;
+                added ? at[a]
+                      : (sprite.corner[0][a] + sprite.corner[1][a] + sprite.corner[2][a]) / 3.0f;
         }
         effects.add(sprite);
     }
