@@ -8079,6 +8079,27 @@ void testFirecracker(const content::Tables& tables) {
                "never from a monster under 17");
 }
 
+// Every quest pays a Firecracker besides its own reward (the user, 2026-10-04).
+void testQuestFirecrackers(const content::Tables& tables) {
+    std::printf("quest firecrackers\n");
+    const int32_t cracker = tables.itemNamed("MagicBox03");
+    check(cracker >= 0 && sim::firecracker(tables.items[size_t(cracker)]),
+          "MagicBox03 is the Firecracker");
+    int paying = 0;
+    for (int i = 0; i < sim::kQuests; ++i) {
+        const sim::QuestRow& row = sim::questAt(i);
+        for (int k = 0; k < row.paidCount; ++k) {
+            const sim::QuestItem& one = row.paid[k];
+            if (one.item && std::string(one.item) == "MagicBox03" && one.kin < 0 && !one.firstOnly &&
+                one.count == 1) {
+                ++paying;
+                break;
+            }
+        }
+    }
+    checkEqual(paying, sim::kQuests, "every quest pays one, every completion, to every class");
+}
+
 // Where the second class's gear falls (docs/second-class-gear.md): Blood Castle 6 and Tarkan by
 // the level window, Atlans's strongest one in kAtlansGearOdds, nowhere else.
 void testSecondClassDrops() {
@@ -8401,6 +8422,7 @@ int main() {
     testTravelQuestLock();
     testFirecracker(tables);
     testSecondClassDrops();
+    testQuestFirecrackers(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

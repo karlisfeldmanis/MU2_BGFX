@@ -925,11 +925,28 @@ QuestRow tearOfElf() {
     return row;
 }
 
-const QuestRow kTable[kQuests] = {marlon(),      peia(),        devin(),        catacombs(),
+const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),        catacombs(),
                                   halls(),       pit(),         tersiaDoor(),   tersiaSecond(),
                                   tersiaThird(),  tersiaFourth(), tersiaFifth(),  tersiaSixth(),
                                   tersiaBalrog(), sevinaTrial(), brokenSword(),  soulOfWizard(),
                                   tearOfElf()};
+
+// **Every quest pays a Firecracker** besides its own reward, every completion, to every class
+// (the user, 2026-10-04: 'give fireccracker on all quests'). Ours. Added here once rather than in
+// each quest, so a quest written later pays it too; the dialog lists it with the rest.
+struct QuestTable {
+    QuestRow rows[kQuests];
+};
+QuestTable withFirecrackers() {
+    QuestTable table;
+    for (int i = 0; i < kQuests; ++i) {
+        QuestRow& row = table.rows[i] = kRawTable[i];
+        if (row.paidCount < kQuestPaid) row.paid[row.paidCount++] = {.item = "MagicBox03"};
+    }
+    return table;
+}
+const QuestTable kQuestTable = withFirecrackers();
+const QuestRow* const kTable = kQuestTable.rows;
 
 }  // namespace
 
