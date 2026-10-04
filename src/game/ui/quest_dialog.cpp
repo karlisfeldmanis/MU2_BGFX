@@ -141,10 +141,9 @@ std::string angelWords(sim::AngelState state, sim::CastlePhase phase, const std:
            "Sorcerers and break the statue. Bring my weapon back to me, and you will not go "
            "unrewarded.";
 }
+// The floor only: a castle below his band lets him in (Realm::castleRefusal).
 std::string bandOf(int castle) {
-    const int* band = sim::kCastleBands[castle - 1];
-    return band[1] == 0 ? "Level " + std::to_string(band[0]) + " and over"
-                        : "Level " + std::to_string(band[0]) + " to " + std::to_string(band[1]);
+    return "Level " + std::to_string(sim::kCastleBands[castle - 1][0]) + " and over";
 }
 constexpr int kGateRows = 3;
 const sim::QuestProgress kNoProgress{};
@@ -958,10 +957,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         }
         const Need needs[kGateRows - 1] = {
             {"The gate open, hh:25 to hh:30", door, doorSeconds_ >= 0},
-            {band.c_str(), std::to_string(level_),
-             level_ >= sim::kCastleBands[castle_ - 1][0] &&
-                 (sim::kCastleBands[castle_ - 1][1] == 0 ||
-                  level_ <= sim::kCastleBands[castle_ - 1][1])},
+            {band.c_str(), std::to_string(level_), level_ >= sim::kCastleBands[castle_ - 1][0]},
         };
         for (int i = 0; i < kGateRows - 1; ++i) {
             const float rowY = cy + float(i) * kStepRow;

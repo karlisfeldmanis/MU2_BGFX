@@ -53,6 +53,8 @@ constexpr int kCastles = 6;
 constexpr int kCastlesBuilt = 6;
 constexpr int kCastleBands[kCastles][2] = {{15, 80},   {81, 130},  {131, 180},
                                            {181, 230}, {231, 280}, {281, 0}};
+// Only the floor is asked since 2026-10-04 (ours: any castle at or below his band lets him in,
+// Realm::castleRefusal); the ceilings stay to choose the page he opens on.
 // The castle his level's band holds, 1 to kCastles: the page the Messenger opens on.
 constexpr int castleFor(int level) {
     for (int c = 0; c < kCastles; ++c) {
@@ -66,7 +68,7 @@ enum class CastleRefusal : int32_t {
     NoCloak = 1,    // ServerCmd 1,21
     NotYet = 2,     // ServerCmd 1,20: a cloak, outside the entry window
     TooLow = 3,     // result 4
-    TooHigh = 4,    // result 3
+    TooHigh = 4,    // result 3; never said since 2026-10-04, the floor only
     NotBuilt = 5,   // ours: a castle past kCastlesBuilt
 };
 

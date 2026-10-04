@@ -616,9 +616,9 @@ CastleRefusal Realm::castleRefusal(int castle) const {
     }
     if (!castleOpen_ && (day < 0 || castleEntryLeft(day) == 0)) return CastleRefusal::NotYet;
     const Body& hero = bodies_[0];
-    const int* band = kCastleBands[castle - 1];
-    if (hero.level < band[0]) return CastleRefusal::TooLow;
-    if (band[1] != 0 && hero.level > band[1]) return CastleRefusal::TooHigh;
+    // The band's floor only, ours (the user, 2026-10-04: 'allow to go to lower level BC for all
+    // chars, basically we need min lvl requirments'): WebZen's ceiling, TooHigh, is never said.
+    if (hero.level < kCastleBands[castle - 1][0]) return CastleRefusal::TooLow;
     return CastleRefusal::None;
 }
 

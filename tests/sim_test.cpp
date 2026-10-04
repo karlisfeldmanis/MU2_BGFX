@@ -5025,7 +5025,9 @@ void testDeviasFolk() {
     checkEqual(sim::castleFor(81), 2, "81 castle 2's");
     checkEqual(sim::castleFor(400), 6, "400 the sixth's");
     checkEqual(ask(1, at(10, 26), 10), int(sim::CastleRefusal::TooLow), "level 10 is under the band");
-    checkEqual(ask(1, at(10, 26), 81), int(sim::CastleRefusal::TooHigh), "level 81 over it");
+    checkEqual(ask(1, at(10, 26), 81), -1, "level 81 still goes into castle 1, the floor only");
+    checkEqual(ask(1, at(10, 26), 400), -1, "and so does 400");
+    checkEqual(ask(2, at(10, 26), 80, 2), int(sim::CastleRefusal::TooLow), "80 is under castle 2");
     checkEqual(ask(1, at(10, 26), 50), -1, "a +1 cloak at hh:26, level 50, goes in");
 }
 
