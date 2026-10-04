@@ -1123,6 +1123,8 @@ private:
     std::vector<Gain> gains_;
     // A potion's worth, drunk between frames and handed to the next frame's gains.
     int32_t drankHealth_ = 0, drankMana_ = 0;
+    // A Firecracker's Zen, opened between frames, handed on the same way (Play::discard).
+    int64_t crackedZen_ = 0;
     int32_t heroCast_ = 0;  // see heroCast()
     int32_t heroCasting_ = 0;  // the hero's last cast, held until the next one
 

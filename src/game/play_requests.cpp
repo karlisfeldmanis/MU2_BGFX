@@ -165,7 +165,7 @@ bool Play::discard(int slot) {
                    !cracked.opened ? "refused" : cracked.id ? "into an item" : "into Zen");
         if (!cracked.opened) return false;
         if (cracked.id != 0) landed(cracked.id);
-        else if (cracked.zen > 0) gains_.push_back({Gain::Kind::Zen, cracked.zen});
+        else crackedZen_ += cracked.zen;  // for the next frame's gains, as a potion's
         if (ground_) {
             const float metres = ground_->metresPerTile();
             const float x = (float(cracked.column) + 0.5f) * metres;

@@ -125,6 +125,8 @@ void Play::update(double seconds) {
     if (drankHealth_ > 0) gains_.push_back({Gain::Kind::Health, drankHealth_});
     if (drankMana_ > 0) gains_.push_back({Gain::Kind::Mana, drankMana_});
     drankHealth_ = drankMana_ = 0;
+    if (crackedZen_ > 0) gains_.push_back({Gain::Kind::Zen, crackedZen_});
+    crackedZen_ = 0;
     accumulator_ += seconds;
     int stepped = 0;
     const int64_t started = bx::getHPCounter();
