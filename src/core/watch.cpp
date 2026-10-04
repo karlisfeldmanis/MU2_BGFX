@@ -200,6 +200,11 @@ void watch() {
             const std::string path = g_dir + "/hang-" + stamp() + ".txt";
             hold.unlock();
             sampleInto(path, gone);
+            // Said in mu2.log too, after the report is written: a freeze's log otherwise just
+            // stops, and the report beside it went unread (the user, 2026-10-04: 'what is the
+            // point of error log freeze log if you cant find what was it?').
+            logError("HANG no frame for %.1f s; the main thread's stack is in %s", gone,
+                     path.c_str());
             hold.lock();
             std::fprintf(stderr, "mu2 has had no frame for %.0f s; %s\n", gone, path.c_str());
         }
