@@ -882,11 +882,10 @@ constexpr int kFirecrackerFromLevel = 17;
 inline bool firecrackerMap(uint32_t map) {
     return map == 1 || map == 4 || map == 9 || (map >= 11 && map <= 17);
 }
-// **Where a mount is ridden**: the open maps alone, Lorencia (0), Devias (2), Noria (3) and Atlans
-// (7) -- never in a dungeon (the user, 2026-10-04: 'also dont allow to use mounts inside
-// dungeons', 'monts is ussable on opens maps like lorencia,devias,noria,atlans'). Ours; MU
-// rides anywhere off a safe zone. Elsewhere he walks with the horn worn.
-inline bool rideMap(uint32_t map) { return map == 0 || map == 2 || map == 3 || map == 7; }
+// **Where a mount is ridden**: every map, the dungeons and Blood Castle with the open ones, off a
+// safe tile, as MU rides (the user, 2026-10-05: 'allow to use mount in dungeons and BC', undoing
+// 2026-10-04's open maps alone).
+inline bool rideMap(uint32_t) { return true; }
 // **Blood Castle's ticket** (docs/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
 // (13, 16) and the Blood Bone (13, 17) of one level make the Invisibility Cloak (13, 18) of that
 // level in the Chaos Machine. The level is the castle's, carried in the refinement.
