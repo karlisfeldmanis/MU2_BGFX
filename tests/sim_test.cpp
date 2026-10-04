@@ -6277,6 +6277,102 @@ void testRunes(const content::Tables& tables) {
             }
         }
     }
+    // The four of 2026-10-04: Ironskin and Steadfast in anyone's armour or shield, Second Wind in
+    // anything worn, Whirlwind in a knight's weapon alone; what each does to the numbers; and a
+    // Twisting Slash with a Whirlwind pulling the crowd in.
+    {
+        const sim::Held iron = held(rune, 0, uint8_t(sim::Power::Ironskin));
+        const sim::Held steady = held(rune, 0, uint8_t(sim::Power::Steadfast));
+        const sim::Held wind = held(rune, 0, uint8_t(sim::Power::SecondWind));
+        const sim::Held whirl = held(rune, 0, uint8_t(sim::Power::Whirlwind));
+        for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
+            check(sim::settable(tables, iron, held(plate, 1, 0), kin) &&
+                      sim::settable(tables, steady, held(plate, 1, 0), kin) &&
+                      sim::settable(tables, wind, held(plate, 1, 0), kin),
+                  "Ironskin, Steadfast and Second Wind go in anyone's socketed armour");
+        }
+        check(!sim::settable(tables, iron, held(serpent, 1, 0), dk), "and Ironskin not in a weapon");
+        check(sim::settable(tables, whirl, held(serpent, 1, 0), dk), "Whirlwind goes in his sword");
+        const int staff = tables.itemNamed("Staff03");
+        check(staff >= 0 && !sim::settable(tables, whirl, held(staff, 1, 0), sim::Kin::DarkWizard),
+              "and in no wizard's staff");
+        check(!sim::settable(tables, whirl, held(plate, 1, 0), dk), "nor in armour");
+
+        sim::Fighter bare, ironed, steadied;
+        int health = 0;
+        sim::Arms arms;
+        arms.armourDefense = 60;
+        sim::reckon(dk, 60, sim::startingPoints(dk), arms, &bare, &health);
+        arms.excel.runeDefense = sim::kIronskinDefense;
+        sim::reckon(dk, 60, sim::startingPoints(dk), arms, &ironed, &health);
+        checkEqual(ironed.defense, bare.defense + int(double(bare.defense) * 0.1),
+                   "one Ironskin is +10% defense");
+        arms.excel.blockChance = sim::kSteadfastBlock * 9;
+        sim::reckon(dk, 60, sim::startingPoints(dk), arms, &steadied, &health);
+        check(std::fabs(steadied.blockChance - sim::kSteadfastMost) < 1e-9,
+              "and Steadfast's block stops at 25%");
+        sim::Fighter attacker;
+        attacker.attackRate = 1000.0f;
+        attacker.minimumDamage = attacker.maximumDamage = 50;
+        sim::Fighter wall = bare;
+        wall.blockChance = 1.0;
+        sim::Random dice(7);
+        bool anyLanded = false, allBlocked = true;
+        for (int i = 0; i < 50; ++i) {
+            const sim::Blow blow = sim::strike(attacker, wall, dice);
+            anyLanded |= blow.hit;
+            allBlocked &= blow.blocked || !blow.hit;
+        }
+        check(!anyLanded && allBlocked, "a certain block lets nothing land");
+
+        // Worn, each counts: the Whirlwind in his sword, the other three in his armour.
+        sim::Realm realm;
+        realm.raise(&tables, 7, 190, 110, dk, 200);
+        const uint8_t one[3] = {uint8_t(sim::Power::Whirlwind), 0, 0};
+        realm.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 1, one);
+        const uint8_t three[3] = {uint8_t(sim::Power::Ironskin), uint8_t(sim::Power::Steadfast),
+                                  uint8_t(sim::Power::SecondWind)};
+        realm.give(plate, sim::placeOf(tables.items[size_t(plate)]), 0, -1, false, 0, 0, 3, three);
+        const sim::Excellence& e = realm.hero().excel;
+        check(e.whirlwinds == 1 && e.runeDefense > 0.0 && e.blockChance > 0.0 &&
+                  e.killLife >= sim::kSecondWindShare && e.killMana >= sim::kSecondWindShare,
+              "worn, the four are each counted");
+        // Twisting Slash, again and again at the nearest: a Whirlwind's pull shoves monsters in.
+        check(realm.learn(sim::skill::kTwistingSlash), "he knows Twisting Slash");
+        int shoved = 0, casts = 0;
+        for (int tick = 0; tick < 4000 && realm.hero().alive() && shoved == 0; ++tick) {
+            uint32_t nearest = 0;
+            float closest = 1e30f;
+            for (const sim::Body& b : realm.bodies()) {
+                if (!b.monster() || !b.alive()) continue;
+                const float off = std::hypot(b.x - realm.hero().x, b.y - realm.hero().y);
+                if (off < closest) {
+                    closest = off;
+                    nearest = b.id;
+                }
+            }
+            // Walked in until something is within five tiles, then a cast every 25 ticks where he
+            // stands -- one asked each tick would drop the last before it lands.
+            if (nearest != 0 && tick % 25 == 0) {
+                if (closest > 5.0f) {
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    realm.ask(request);
+                } else {
+                    realm.invoke(sim::skill::kTwistingSlash, nearest);
+                }
+            }
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                shoved += h.what == sim::What::Shoved;
+                casts += h.what == sim::What::Cast && h.who == realm.hero().id;
+            }
+        }
+        std::printf("  whirlwind: %d casts, %d shoved, hero %s\n", casts, shoved,
+                    realm.hero().alive() ? "alive" : "dead");
+        check(shoved > 0, "and a Twisting Slash with a Whirlwind pulls monsters in");
+    }
     // The Dungeon's three and Devin's Renewal: every class's, armour only, like the Undying; and
     // the Golden Archer's chain pays each of its three once, the first time, to every class.
     {

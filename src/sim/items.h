@@ -541,7 +541,11 @@ enum class Power : uint8_t {
     FireRing = 20,
     Bulwark = 21,
     Kinship = 22,
-    Wrath = 23
+    Wrath = 23,
+    Ironskin = 24,
+    Steadfast = 25,
+    SecondWind = 26,
+    Whirlwind = 27
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -740,6 +744,26 @@ constexpr double kElementRuneDamage = 0.20;
 // kWrathDamage more for each set in his hands, laid with the skill's multiplier in strikeAt.
 // Every class's, a weapon's socket only. ours.
 constexpr double kWrathDamage = 0.20;
+// **Four more** (the user, 2026-10-04, picked from a list of ideas: 'defence', 'chance to block',
+// 'a kill restores of health and mana', 'Twisting Slash has chance pulls monsters in and hits 50%
+// harder'). Invention, all four.
+// **Ironskin** (Rare, every class's armour and shield): kIronskinDefense more defence for each,
+// on top of the set's.
+constexpr double kIronskinDefense = 0.10;
+// **Steadfast** (Rare, every class's armour and shield): a blow that would land has
+// kSteadfastBlock a rune to be blocked and miss, swing or spell, to kSteadfastMost at the most.
+constexpr double kSteadfastBlock = 0.05;
+constexpr double kSteadfastMost = 0.25;
+// **Second Wind** (Epic, every class's armour and jewellery): kSecondWindShare of maximum health
+// and of mana back after each kill, beside an excellent weapon's eighth.
+constexpr double kSecondWindShare = 0.05;
+// **Whirlwind** (Legendary, a knight's weapon): Twisting Slash strikes kWhirlwindDamage harder
+// for each in his hands, and a cast has kWhirlwindChance to pull every monster within
+// kWhirlwindReach tiles in to him first -- slid along the ground, stopped by walls -- and strike
+// those that land within its reach.
+constexpr double kWhirlwindDamage = 0.50;
+constexpr double kWhirlwindChance = 0.25;
+constexpr float kWhirlwindReach = 6.0f;
 // **The knight's fire runes** (the user, 2026-10-02: "pyroblast chance for DK weapon", "inferno
 // chance for DK weapon"), in a knight's weapon alone. **Fireburst**: a swing that lands has
 // kFireburstChance to burst into the Pyroblaster's chain -- kPyroblastChain Fire Balls, each

@@ -1,4 +1,5 @@
 #include "sim/rules.h"
+#include "sim/items.h"
 
 #include <algorithm>
 #include <cmath>
@@ -19,6 +20,11 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     Blow blow;
     // 1. Did it land. One draw, always.
     if (!dice.nextBool(hitChance(attacker.attackRate, defender.defenseRate))) return blow;
+    // 1a. Steadfast's block, its own draw and only when there is one (sim::kSteadfastBlock).
+    if (defender.blockChance > 0.0 && dice.nextBool(defender.blockChance)) {
+        blow.blocked = true;
+        return blow;
+    }
     blow.hit = true;
 
     // 2. A critical is the maximum exactly -- every bonus term that widens it belongs to a
@@ -69,6 +75,10 @@ Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Ran
     Blow blow;
     // 1. The same hit roll a swing makes: a spell can miss.
     if (!dice.nextBool(hitChance(attacker.attackRate, defender.defenseRate))) return blow;
+    if (defender.blockChance > 0.0 && dice.nextBool(defender.blockChance)) {
+        blow.blocked = true;
+        return blow;
+    }
     blow.hit = true;
     // 2. The band. GetSkillDmg's two lines are two different lines -- the top takes the spell's
     // damage and half of it again -- and GetBaseDmg's cast is taken after the staff's rate.
@@ -200,6 +210,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                        0.5);
     // A complete set on top of all of it, as CalculateDefense adds `Defense * addDefense` last.
     out->defense += int(double(out->defense) * arms.setDefense);
+    // And Ironskin's share of it all (sim::kIronskinDefense), last.
+    out->defense += int(double(out->defense) * arms.excel.runeDefense);
     // The arms, and then what is in them. A naked level-1 knight doing one point to a Bull
     // Fighter is not a bug -- it is what 0.75 says about hitting an armoured animal six levels
     // up with your fists, and the damage floor is what he has instead of nothing. A weapon adds
@@ -287,6 +299,7 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;
     out->damageDecrease = excel.damageDecrease;
+    out->blockChance = std::min(excel.blockChance, kSteadfastMost);
     out->ignoreDefense = excel.ignoreDefense;
     out->damageTaken = arms.pet.taken;
     out->damageDealt = arms.pet.dealt;

@@ -85,6 +85,11 @@ struct Excellence {
     bool kinship = false;
     // How many Wraths his hands carry, each adding sim::kWrathDamage to every blow he deals.
     int wraths = 0;
+    // Ironskin's share more defence, Steadfast's chance a blow is blocked, and how many
+    // Whirlwinds a knight's hands carry (sim/items.h). Second Wind rides killLife and killMana.
+    double runeDefense = 0.0;
+    double blockChance = 0.0;
+    int whirlwinds = 0;
     // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
     // resistance worn to Ice and to Poison, each turning the element aside r times in r + 1, and
     // the percent of maximum life the worn pieces' options give back every kJewelleryRegenTicks.
@@ -139,6 +144,9 @@ struct Fighter {
     // share taken off one received (Excellence).
     double excellentChance = 0.0;
     double damageDecrease = 0.0;
+    // Steadfast's chance a blow that would land on him is blocked and misses (sim/items.h). Drawn
+    // only when above nought, so nobody without one draws anything new.
+    double blockChance = 0.0;
     // `Stats.GreaterDamageBonus`: the elf's Greater Damage, added to every blow after the
     // defence (AttackableExtensions.cs:185). Nought for anybody not under it.
     int greaterDamage = 0;
@@ -166,6 +174,7 @@ struct Blow {
     int afterDefense = 0;
     bool overrated = false; // the x0.3 arm
     bool floored = false;   // the level floor bit
+    bool blocked = false;   // a Steadfast's block: a miss, though the hit roll landed
     int damage = 0;
 };
 

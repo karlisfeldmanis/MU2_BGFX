@@ -1133,6 +1133,9 @@ private:
     // something standable or not at all.
     void push(Body& target, const Body& from) { push(target, from.x, from.y); }
     void push(Body& target, float fromX, float fromY);
+    // A knight's Whirlwind on a Twisting Slash (sim/items.h): the force the slash strikes with,
+    // and on its chance the monsters beyond the slash pulled in and struck.
+    float whirl(Body& hero, const SkillRow& row, float force);
     // The channel's tick: a pulse when one is due, and the end when it is over.
     void channel(Body& hero);
     // How long the clip this skill plays takes, and so what its cooldown cannot go under.

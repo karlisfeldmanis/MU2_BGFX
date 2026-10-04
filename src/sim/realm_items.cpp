@@ -354,6 +354,12 @@ void Realm::rearm(Body& hero) {
             if (power->power == Power::Frenzy) ++e.frenzies;
             if (power->power == Power::Renewal) e.renewal += kRenewalShare;
             if (power->power == Power::Spirits && (row->shield() || jewellery(*row))) ++e.spirits;
+            if (power->power == Power::Ironskin) e.runeDefense += kIronskinDefense;
+            if (power->power == Power::Steadfast) e.blockChance += kSteadfastBlock;
+            if (power->power == Power::SecondWind) {
+                e.killLife += kSecondWindShare;
+                e.killMana += kSecondWindShare;
+            }
         }
     }
     // The element runes, in the hands, the rings and the pendant (sim::kElementRuneDamage).
@@ -374,6 +380,10 @@ void Realm::rearm(Body& hero) {
                 hero.excel.kinship = true;
             }
             if (power && power->power == Power::Wrath && !jewellery(*row)) ++hero.excel.wraths;
+            if (power && power->power == Power::Whirlwind && !jewellery(*row) &&
+                power->takenBy(hero.kin)) {
+                ++hero.excel.whirlwinds;
+            }
         }
     }
     // The rings and the pendant: the largest resistance worn in each element (Max3), and every

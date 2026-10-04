@@ -488,6 +488,10 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
 }
 
 void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
+    // A knight's Whirlwind (sim/items.h): Twisting Slash harder, and perhaps the crowd pulled in.
+    if (row.number == skill::kTwistingSlash && hero.player && hero.excel.whirlwinds > 0) {
+        force = whirl(hero, row, force);
+    }
     uint32_t victims[kVictims];
     const int found = gather(hero, row, victims, kVictims);
     // A spell round him -- Hellfire -- rolls his wizardry band off its row, which also lays its
@@ -720,6 +724,63 @@ void Realm::push(Body& target, float fromX, float fromY) {
     target.route.clear();
     target.onStep = 0;
     say(What::Shoved, target, column, row);
+}
+
+
+float Realm::whirl(Body& hero, const SkillRow& row, float force) {
+    force *= float(1.0 + kWhirlwindDamage * hero.excel.whirlwinds);
+    // One draw a cast, and only while one is carried, so nobody else's dice move.
+    if (!dice_.nextBool(kWhirlwindChance)) return force;
+    // Those beyond the slash's reach and within the pull's, seen from him and off sheltered
+    // ground, gathered first: a body the strike below kills must not move the list under it.
+    uint32_t pulled[kVictims];
+    int count = 0;
+    for (const Body& one : bodies_) {
+        if (count >= kVictims) break;
+        if (!one.monster() || !one.alive() || fixed(one) || one.pushTicks > 0) continue;
+        if (within(hero, one, row.reach) || !within(hero, one, kWhirlwindReach)) continue;
+        if (tables_->grid.safe(one.column(), one.row()) || !seen(hero, one)) continue;
+        pulled[count++] = one.id;
+    }
+    core::logf("whirlwind: tick %lld, %d to pull in", (long long)tick_, count);
+    for (int i = 0; i < count; ++i) {
+        Body* target = body(pulled[i]);
+        if (target == nullptr || !target->alive()) continue;
+        // Along the line to him a tile at a time, while the ground is open and not sheltered,
+        // until it stands beside him (reach's square measure): a wall holds it where the wall is.
+        const float dx = hero.x - target->x, dy = hero.y - target->y;
+        const float far = std::sqrt(dx * dx + dy * dy);
+        int column = target->column(), rowAt = target->row();
+        const auto beside = [&](int c, int r) {
+            return std::max(std::abs(c - hero.column()), std::abs(r - hero.row())) <= 1;
+        };
+        for (float along = 0.5f; along < far && !beside(column, rowAt); along += 0.5f) {
+            const int c = int(std::lround(target->x + dx / far * along));
+            const int r = int(std::lround(target->y + dy / far * along));
+            if (c == column && r == rowAt) continue;
+            if ((c == hero.column() && r == hero.row()) ||
+                !tables_->grid.open(c, r, content::kWallCharacter) || tables_->grid.safe(c, r)) {
+                break;
+            }
+            column = c;
+            rowAt = r;
+        }
+        if (column == target->column() && rowAt == target->row()) continue;
+        // Slid as the Lightning push slides, over the same ticks.
+        target->pushX = (float(column) - target->x) / float(kPushTicks);
+        target->pushY = (float(rowAt) - target->y) / float(kPushTicks);
+        target->pushTicks = kPushTicks;
+        target->walking = false;
+        target->route.clear();
+        target->onStep = 0;
+        say(What::Shoved, *target, column, rowAt);
+        // Landed within the slash's reach: struck by this cast too.
+        const float lx = float(column) - hero.x, ly = float(rowAt) - hero.y;
+        if (std::max(std::fabs(lx), std::fabs(ly)) <= row.reach) {
+            strikeAt(hero, *target, force, nullptr, false);
+        }
+    }
+    return force;
 }
 
 }  // namespace mu::sim
