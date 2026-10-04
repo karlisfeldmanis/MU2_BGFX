@@ -1794,7 +1794,11 @@ Cracked Realm::crack(int slot) {
         return cracked;
     }
     // Zen into the purse at the excellent armour's rate, as a kill's Zen (`leave`).
-    cracked.zen = int64_t(double(kFirecrackerZen) * hero.excel.zenRate);
+    // In tens, so the lane does not read as a stray number.
+    const int64_t rolled =
+        kFirecrackerZenLeast +
+        int64_t(dice_.nextInt(0, int((kFirecrackerZenMost - kFirecrackerZenLeast) / 10) + 1)) * 10;
+    cracked.zen = int64_t(double(rolled) * hero.excel.zenRate);
     money_ += cracked.zen;
     say(What::Cracked, hero, -1, -1, int32_t(cracked.zen));
     return cracked;

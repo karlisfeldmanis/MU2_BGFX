@@ -862,7 +862,8 @@ bool elementServes(Element element, Kin kin);
 // MU's Box of Luck at level 2 (14, 11), its own row here (source/items/misc/MagicBox03.json).
 // Thrown on the ground it is spent and opens: WebZen's FireCrackerOpenEven (Event.cpp:1201, the
 // MODIFY_DROP_ITEM_OF_FIRE_CRACKER_EVENT_20050316 body 1.00.93 builds). Two in ten an item off
-// eventitembag5 at the thrower's feet with a firework over it, else 2,004 Zen. Realm::crack.
+// eventitembag5 at the thrower's feet with a firework over it, else Zen (kFirecrackerZenLeast).
+// Realm::crack.
 bool firecracker(const content::ItemRow& row);
 // `rand()%10 < g_ItemDropRateForgFireCracker`, 2 in WebZen's own 0.99.60T commonserver.cfg.
 constexpr int kFirecrackerItemIn10 = 2;
@@ -923,9 +924,14 @@ constexpr int castleMaterialLevel(int monsterLevel) {
          : monsterLevel < 68 ? 4 : monsterLevel < 76 ? 5 : monsterLevel < 84 ? 6 : 7;
 }
 
-// The Zen when no item comes: MoneyItemDrop(2004, ...), the year. Into the purse, as every Zen
-// here (Realm::leave).
-constexpr int64_t kFirecrackerZen = 2004;
+// The Zen when no item comes, into the purse as every Zen here (Realm::leave). MU's is
+// MoneyItemDrop(2004, ...), the year; ours rolls kFirecrackerZenLeast to kFirecrackerZenMost
+// (the user, 2026-10-04: 'we need to give much more zen ... because item +9 can sold from a lot
+// of zen'). The band is what the item sells for: over 3,900 cracked items a median of 41,800,
+// most gear 30,000 to 130,000 a piece, the Bless and Soul at 2 and 3 million pulling the mean
+// to 148,270.
+constexpr int64_t kFirecrackerZenLeast = 30000;
+constexpr int64_t kFirecrackerZenMost = 100000;
 // WebZen's eventitembag5.txt (0.99.60T's Data, the Firecracker's and the Heart of Love's bag; its
 // header still calls it the Christmas star's), row for row, by MU's group and number. A row this
 // tree has no item for is left out of the draw, so the draw is even over what is here.

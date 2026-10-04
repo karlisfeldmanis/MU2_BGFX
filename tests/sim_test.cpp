@@ -8285,7 +8285,8 @@ void testFirecracker(const content::Tables& tables) {
         kept += !realm.satchel()[slot].empty();
         if (cracked.id == 0) {
             ++zens;
-            badZen += realm.money() - purse != sim::kFirecrackerZen;
+            const int64_t got = realm.money() - purse;
+            badZen += got < sim::kFirecrackerZenLeast || got > sim::kFirecrackerZenMost;
             continue;
         }
         ++items;
@@ -8306,7 +8307,7 @@ void testFirecracker(const content::Tables& tables) {
                 plusSeen[5], plusSeen[6], plusSeen[7], plusSeen[8], plusSeen[9]);
     checkEqual(kept, 0, "every one thrown is spent");
     check(std::abs(double(items) / tries - 0.2) < 0.015, "two in ten give an item");
-    checkEqual(badZen, 0, "the rest give 2,004 Zen into the purse");
+    checkEqual(badZen, 0, "the rest give 30,000 to 100,000 Zen into the purse");
     checkEqual(badPlus, 0, "an item comes +5 to +9");
     for (int plus = 5; plus <= 9; ++plus) check(plusSeen[plus] > 0, "each of +5 to +9 comes");
     int optionable = 0;

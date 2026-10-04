@@ -142,7 +142,9 @@ The user likes it, from dungeons only. WebZen's own data (0.99.60T package, see 
   code's fallback is 5,000 (50%).
 - **Opens** (`WZ Event.cpp:1201`): 2 in 10 an item from `eventitembag5` (shared with the Heart of
   Love) with a firework at the tile; else **2,004 Zen** (the year). An "effect only" switch made it
-  a pure firework.
+  a pure firework. **Here (ours, 2026-10-04):** the Zen is 30,000 to 100,000 in tens, the band the
+  item would sell for (median 41,800 over 3,900 cracks), with the firework too, and either the item
+  or the Zen comes 0.6 s after the last burst.
 - **The item**: every row is base level 5, plus `rand()%5` outside Korea -> **+5 to +9** (Korea +5/+6);
   skill 50%, luck 50%, option (20% +12). Jewels of Bless, Soul and Chaos come bare.
 - **WebZen's list**: Rapier, Sword of Assassin, Katana, Light Saber, Legendary Sword, Double Blade;
