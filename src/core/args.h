@@ -48,12 +48,12 @@ struct Args {
     // bottom. The frame costs about 1.2 ms plus 1.55 ms a megapixel on this Mac, so 0.9 at
     // 2560x1440 is worth about 0.6 ms.
     float scale = 1.0f;
-    // At 0.9 and under, the world was upscaled by Apple's MetalFX spatial scaler before the
-    // present. Since 2026-10-05 the present's own sharp stretch is the default (the user, shown
-    // the two side by side: "sharp stretch become the default in place of MetalFX"): Catmull-Rom
-    // in fs_present, 238 fps against MetalFX's 186 in a 2K Meteorite fight at scale 0.75, and
-    // close to it in look. --metalfx brings the scaler back.
-    bool metalfx = false;
+    // At 0.9 and under, the world is upscaled by Apple's MetalFX spatial scaler before the present,
+    // which reconstructs edges a stretch would smear. --no-metalfx has the present stretch it
+    // itself, sharply (fs_present's Catmull-Rom): 238 fps against 186 in a 2K Meteorite fight,
+    // and the default for a few hours on 2026-10-05, until the user played it: "i think its was
+    // pretties before". MetalFX is the look.
+    bool metalfx = true;
     // Frames a second to hold the picture to, 0 for as fast as it will go. A pace, not a
     // limit on the work: it waits after the present and the wait is kept out of the
     // statistics. Every measurement is taken at 0. See the remark in application.cpp.
