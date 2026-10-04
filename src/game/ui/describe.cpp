@@ -521,20 +521,6 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             Tone::White);
         say("Increase speed", Tone::White);
         say("Life -" + std::to_string(power.lifeCost) + " for each successful attack", Tone::Red);
-        // And whom a 2nd wing is for, said in the body where it cannot be missed (the user,
-        // 2026-10-04: 'show tooltip that 2nd wings ar for second classes'): the second class by
-        // name, white once he is one, red until then, and where the change is made. Ours; MuMain
-        // says only "Can be equipped by" the class.
-        if (sim::secondWing(row)) {
-            std::string seconds;
-            for (int i = 0; i < 3; ++i) {
-                if (!((row.classes >> i) & 1)) continue;
-                seconds += (seconds.empty() ? "" : " / ") + std::string(sim::className(i, true));
-            }
-            const bool his = ((row.classes >> int(who.kin)) & 1) && who.second;
-            say("Second class only: " + seconds, his ? Tone::White : Tone::Red);
-            if (!who.second) say("Sevina in Devias changes your class", Tone::Gray);
-        }
     }
     if (sim::heals(row) || sim::restores(row)) {
         Row line;
