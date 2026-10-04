@@ -147,6 +147,9 @@ castle, the party-completion rules and the time-attack score come in at 0.99B. L
   - At 0.97d a +7 can drop but can't be mixed (`CHECK_LIMIT(level-1, 6)` fails, `BloodCastle.cpp:1535-1539`).
   - OM: 1% per level bracket (`EventTicketItems.cs:29-30, 90`), with the +1 bracket starting at monster level 2.
     **OM's rate is 5-10x WebZen's.**
+  - **Ours** (the user, 2026-10-04, "increase drop for bc ticket ingredients"): OpenMU's 1% each, the scroll rolled
+    first and the bone on a miss (`sim::kScrollOfArchangelIn10000`, `kBloodBoneIn10000`). About one of each in a
+    hundred kills, against WebZen's one scroll in a thousand.
 - Items (WZD `item.txt:376-379`, OM `EventTicketItems.cs:29-32`): 13/16 1x2, 13/17 1x2, 13/18 2x2, 13/19 1x2. Tooltip lines
   GT 814 / 816 (`docs/mu-tooltip-lines.md:186`).
 

@@ -7966,7 +7966,8 @@ void testDrops(const content::Tables& tables) {
         return std::abs(double(got) - want) <= want * slack;
     };
     for (const int level : {10, 14, 26, 40, 70}) {
-        int b = 0, s = 0, c = 0, r = 0, others = 0, items = 0, unsettable = 0, orbs = 0, orbPlus = -1;
+        int b = 0, s = 0, c = 0, r = 0, others = 0, items = 0, unsettable = 0, orbs = 0, orbPlus = -1,
+            tickets = 0;
         for (int i = 0; i < kDeaths; ++i) {
             realm.dropFor(level);
             // The Orb of Summoning rolls beside the rest (sim::kSummonOrbOdds), so it is counted
@@ -7983,7 +7984,9 @@ void testDrops(const content::Tables& tables) {
             if (!own) continue;
             const sim::Held& what = *own;
             const content::ItemRow& row = tables.items[size_t(what.item)];
-            if (what.item == bless) ++b;
+            // A scroll or a bone of Blood Castle's ticket is the kill's whole drop (sim/items.h).
+            if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) ++tickets;
+            else if (what.item == bless) ++b;
             else if (what.item == soul) ++s;
             else if (what.item == chaos) ++c;
             else if (what.item == rune) {
@@ -8012,7 +8015,8 @@ void testDrops(const content::Tables& tables) {
         check(level >= sim::kCreationLevel ? near(r, kDeaths * sim::kCreationChance, 0.25) : r == 0,
               said("the Rune of Creation at its chance"));
         checkEqual((long long)unsettable, 0LL, said("every dropped rune holds a power he may set"));
-        check(near(items, kDeaths * 0.1, 0.05), said("the item chance is untouched"));
+        check(near(items, (kDeaths - tickets) * 0.1, 0.05), said("the item chance is untouched"));
+        check(near(tickets, kDeaths * 0.02, 0.25), said("a scroll or a bone in fifty"));
         check(near(orbs, double(kDeaths) / sim::kSummonOrbOdds, 0.1),
               said("the Orb of Summoning at its own chance"));
         checkEqual((long long)orbPlus,

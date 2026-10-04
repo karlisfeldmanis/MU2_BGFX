@@ -870,8 +870,10 @@ constexpr int kTreasureLingerSeconds = 120;
 // WebZen gObjMonster.cpp:5823-5985: a kill anywhere but a Blood Castle rolls the scroll, then the
 // bone, `rand()%10000 < rate` with the code's defaults (Gamemain.cpp:1133-1134), and one that
 // lands is the kill's whole drop (`return TRUE`). 128 its durability, as WebZen's ItemSerialCreate.
-constexpr int kScrollOfArchangelIn10000 = 10;
-constexpr int kBloodBoneIn10000 = 20;
+// The rates are OpenMU's 1% each (EventTicketItems.cs:29-30), not WebZen's 10 and 20: the user,
+// 2026-10-04, 'we need to increase drop for bc ticket ingreadients'.
+constexpr int kScrollOfArchangelIn10000 = 100;
+constexpr int kBloodBoneIn10000 = 100;
 inline bool bloodCastleMap(uint32_t map) { return map >= 11 && map <= 17; }
 // Its level by the monster's: +1 under 32, +2 under 45, +3 under 57, +4 under 68, +5 under 76,
 // +6 under 84, +7 from there (gObjMonster.cpp:5863-5900; a +7 cannot be combined at 0.97d).
