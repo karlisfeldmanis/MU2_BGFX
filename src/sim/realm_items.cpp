@@ -538,7 +538,7 @@ Wearer Realm::wearer() const {
     const auto armAt = [&](int32_t at) -> const content::Arm* {
         return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
     };
-    return Wearer{hero.kin,
+    Wearer who{hero.kin,
                   hero.level,
                   hero.points,
                   hero.learned,
@@ -549,6 +549,8 @@ Wearer Realm::wearer() const {
                   hero.staffRise,
                   familyOf(armAt(hero.weapon)),
                   armFamily(hero, armAt(hero.shield))};
+    who.second = hero.second;
+    return who;
 }
 
 int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,

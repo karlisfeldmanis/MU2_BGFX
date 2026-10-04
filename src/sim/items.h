@@ -346,6 +346,8 @@ struct Wearer {
     // card can say whether what it teaches can be thrown with what he holds, as the skill's own
     // card does (`SkillRow::suits`).
     uint32_t hand = 0, offHand = 0;
+    // Whether he is his class's second (Body::second, Sevina's): what a 2nd level wing asks.
+    bool second = false;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);

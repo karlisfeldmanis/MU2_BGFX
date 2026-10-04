@@ -83,7 +83,8 @@ Drop level 150, durability 200, never dropped (OpenMU VersionSeasonSix Wings.cs,
    +50 and 5 a plus, the 3% ignore-defence draw (`Fighter::ignoreDefense`, its own draw only
    when above nought); price on the 1st wings' line. The card: "2nd level wings", MuMain's
    three lines, the option by kind, the extras in MuMain's words (GT 740-742).
-   **The class gate waits**: Sevina's second class is another session's work, uncommitted as
-   of 2026-10-04; until it lands a level 215 hero of the class wears one.
+   **The class gate** -- done 2026-10-04, once Sevina's class change landed (1eea5fa0):
+   `sim::fits` refuses a 2nd wing to a hero who is not his class's second (`Wearer::second`),
+   and the card names the second class ("Blade Knight"), red until he is one.
 4. **Draw** -- done 2026-10-04: on Bone05 as the 1st wings, the pulse, Dragon's 16
    (`sim::kFastFlyFactor`). The bench's Wings tab has all six.

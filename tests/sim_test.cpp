@@ -5881,8 +5881,13 @@ void testChaosMachine() {
                     check(blade.raise(&noria, 7, column, row, sim::Kin::DarkKnight, 230),
                           "a level 230 knight off the safe zone");
                     const int baseLife = blade.hero().maxHealth;
-                    check(blade.moveItem(blade.give(dragon, -1, 2, -1, false, 2), sim::kWings),
-                          "he wears the Wings of Dragon");
+                    const int held = blade.give(dragon, -1, 2, -1, false, 2);
+                    check(!blade.moveItem(held, sim::kWings), "a Dark Knight cannot wear it");
+                    sim::HeroRecord record = blade.record();
+                    record.quests[sim::kTreasureQuests[int(sim::Kin::DarkKnight)]].completions = 1;
+                    blade.restore(record);
+                    check(blade.promoted(), "Sevina's treasure handed in: a Blade Knight");
+                    check(blade.moveItem(held, sim::kWings), "and the Blade Knight wears it");
                     blade.step();
                     checkNear(blade.hero().stats.damageDealt, 1.34, 1e-9, "his blows x1.34 at +2");
                     checkEqual(sim::strideFactor(blade.hero()), sim::kFastFlyFactor,

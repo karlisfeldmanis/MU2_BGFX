@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <string>
 
+#include "sim/quests.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/wear.h"
@@ -906,7 +907,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             if (!((row.classes >> i) & 1)) continue;
             classes += (classes.empty() ? "" : " / ") + std::string(kNames[i]);
         }
-        const bool mine = (row.classes >> int(who.kin)) & 1;
+        bool mine = (row.classes >> int(who.kin)) & 1;
+        // A 2nd level wing is the second class's -- "Blade Knight" -- and his once promoted.
+        if (sim::secondWing(row)) {
+            classes.clear();
+            for (int i = 0; i < 3; ++i) {
+                if (!((row.classes >> i) & 1)) continue;
+                classes += (classes.empty() ? "" : " / ") + std::string(sim::className(i, true));
+            }
+            mine = mine && who.second;
+        }
         sheet.who.push_back({classes, mine ? Tone::Green : Tone::Red, false});
     }
     const auto require = [&](const char* name, int wants, int lacking) {
