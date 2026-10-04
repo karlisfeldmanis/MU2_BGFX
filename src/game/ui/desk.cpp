@@ -786,7 +786,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         const bool leans = play.realm().tables()->perches[size_t(play.pointedPerch())].leans;
         perch = leans ? Cursor::Perch::Lean : Cursor::Perch::Sit;
     }
-    cursor_.update(seconds, real.x, real.y, onMonster, onLoot, onFolk, perch);
+    // In repair mode the pointer is MU's hammer wherever it rests, so the player sees the mode is
+    // on and that a click on a thing mends it -- the user: 'we need to show hammer cursor'.
+    cursor_.update(seconds, real.x, real.y, onMonster, onLoot, onFolk, perch, mending_,
+                   real.held || real.pressed);
 }
 
 void Desk::script(float x, float y, bool press, bool release, bool right) {

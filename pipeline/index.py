@@ -149,6 +149,12 @@ EFFECTS = {
     "cursor_lean": "interface/cursor_lean.png",
     "cursor_sit": "interface/cursor_sit.png",
 
+    # And the hammer in repair mode. BITMAP_CURSOR + 5 is Interface/CursorRepair.tga
+    # (ZzzOpenData.cpp:5145), decoded from MuMain's own OZT at its 32 pixels. RenderCursor
+    # draws it while the bag's or a counter's repair mode is on, tipped 45 degrees while the
+    # button is down -- the blow (ZzzInterface.cpp:4092-4105). See game/ui/cursor.cpp.
+    "cursor_repair": "interface/cursor_repair.png",
+
     # The three right-hand windows - inventory, character, shop - as MuDream skins them.
     #
     # The layout stays CNewUIMyInventory's, CNewUICharacterInfoWindow's and CNewUINPCShop's,

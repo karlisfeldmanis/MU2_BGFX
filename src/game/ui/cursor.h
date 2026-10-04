@@ -21,14 +21,17 @@ public:
 
     // Called once a frame, whether or not a fight is in view: MU2's Show and Step in one call.
     // `onLoot`, `onFolk`, `perch` and `onMonster` are RenderCursor's own ladder, item above NPC
-    // above operable above monster; passing them all empty draws the plain hand.
+    // above operable above monster; passing them all empty draws the plain hand. `mending` is
+    // the repair mode, above the whole ladder: MU's hammer, tipped into a blow while `pressed`.
     enum class Perch { None, Sit, Lean };
     void update(float seconds, float x, float y, bool onMonster, bool onLoot, bool onFolk,
-                Perch perch = Perch::None);
+                Perch perch = Perch::None, bool mending = false, bool pressed = false);
 
     const gfx::Canvas& canvas() const { return canvas_; }
 
 private:
+    void drawHammer(const gfx::Art& art, float x, float y, bool pressed);
+
     gfx::Canvas canvas_;
     panel::Arts* arts_ = nullptr;
     double elapsed_ = 0.0;  // the talk cursor's own clock, running always
