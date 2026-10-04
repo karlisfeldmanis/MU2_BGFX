@@ -398,6 +398,9 @@ struct SkillRow {
     }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
+    // Whether it is an aura: a self-cast that is not a summon. Blood Castle's court lets these
+    // be raised on its safe tiles, to go into the fight with them (Realm::throwSkill).
+    bool aura() const { return boonTicks > 0 || mends || mightTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
     // slot is his auto-attack (the user, 2026-09-28), paced by its own clip and nothing else,
     // and like a swing it can be walked out of and a hit pays mana back.

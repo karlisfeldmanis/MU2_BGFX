@@ -268,6 +268,7 @@ void QuestDialog::layout(const Play& play) {
     const content::Tables& tables = *realm.tables();
     lines_.clear();
     cells_.clear();
+    clip_.clear();
 
     const float wide = inner();
     const auto words = [&](const char* text) {
@@ -294,14 +295,30 @@ void QuestDialog::layout(const Play& play) {
         case Mode::Gate: {
             const std::string said = gateWords(why_, castle_);
             words(said.c_str());
+            // Voiced only to one carrying a Cloak of Invisibility, and only on a castle he can go
+            // into (the user, 2026-10-04): the ticketless, and a page his level is not for, are
+            // turned away in silence.
+            static const char* const kSaid[] = {"none", "", "notyet", "", ""};
+            if (cloakPlus_ >= 0 && int(why_) >= 0 && int(why_) < 5 && *kSaid[int(why_)]) {
+                clip_ = std::string("voice/messenger/messenger_") + kSaid[int(why_)] + ".wav";
+            }
             break;
         }
         case Mode::Angel: {
             const int32_t weapon = realm.castleWeaponItem();
-            const std::string said = angelWords(
-                angel_, realm.castleRun().phase,
-                weapon >= 0 ? tables.items[size_t(weapon)].label : std::string("Divine Staff of Archangel"));
+            const std::string label = weapon >= 0 ? tables.items[size_t(weapon)].label
+                                                  : std::string("Divine Staff of Archangel");
+            const std::string said = angelWords(angel_, realm.castleRun().phase, label);
             words(said.c_str());
+            // His clip: the state, and the weapon he names, read once for each of the three.
+            static const char* const kState[] = {"notyet", "nostaff", "ready", "done"};
+            const char* arm = label.find("Sword") != std::string::npos      ? "sword"
+                              : label.find("Crossbow") != std::string::npos ? "crossbow"
+                                                                            : "staff";
+            clip_ = angel_ == sim::AngelState::NotYet && realm.castleRun().phase == sim::CastlePhase::Ended
+                        ? std::string("voice/archangel/archangel_ended.wav")
+                        : std::string("voice/archangel/archangel_") + kState[int(angel_)] + "_" +
+                              arm + ".wav";
             break;
         }
     }

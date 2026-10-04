@@ -28,6 +28,12 @@ model and the castle's monsters, contact sheets) is in
 - Ours, marked in the recipes: one warm light a cluster, a faint one at each monk's lamp, and flames with CreateFire's light on the heaps.
 - The sheet's `glow_strength` is 0.9 and its saturation 0.8.
 
+**Voices and the court's auras (2026-10-04).**
+- **One voice for the Archangel and his Messenger:** the user's "nr 9" of thirteen auditions, made more dramatic (exaggeration 1.0). It is `tools/voice.py archangel` / `messenger`, reading `gateWords` and `angelWords` out of `quest_dialog.cpp`, and refusing when the two drift apart.
+- **The Archangel (13 clips):** his four states, each read once for the staff, the sword and the crossbow, and "the time has run out".
+- **The Messenger (2 clips):** he speaks only to one carrying a Cloak of Invisibility, and only on a castle page his level can go into: the welcome and "wait till the gate opens". His no-cloak and wrong-level lines are silent.
+- **Ours, the court's auras:** the safe court lets a boon, a mend or a might be cast on oneself to prepare for the fight (`SkillRow::aura`). Summons and aimed skills are still refused.
+
 Nothing else is built: no other objects, monsters, gates, event, or way home to Devias. It is reached by
 `--world bloodcastle` or `--travel-at`, and only as bare land.
 

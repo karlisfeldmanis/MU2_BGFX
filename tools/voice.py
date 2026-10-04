@@ -104,13 +104,85 @@ VOICES = {
                           "bass=g=3:f=130,aecho=0.8:0.6:80|160|300:0.22|0.14|0.08,"
                           "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
                           "apad=pad_dur=0.3,loudnorm=I=-17:TP=-1.5:LRA=11"),
+    # The Archangel, Blood Castle's mythical demigod, and his Messenger at the Devias gate: one
+    # voice for both (the user, 2026-10-04, the ninth of thirteen auditions, twice). Kokoro-82M's
+    # am_onyx (Apache 2.0) reading a solemn, ancient line at 0.8 speed,
+    # source/voice/ref/angel_onyx_solemn.wav, cloned at 1.0 and 0.3, seed 11 -- first 0.55, then
+    # "make it more dramatic": of 0.8, 1.0 and 1.2 the user took 1.0. The "throne"
+    # finish: three semitones down and tempo put back, a deep chest, and a stone room's tail at
+    # 180, 380 and 650 ms. The demigod's halo and the choir's doubled voices were passed over.
+    "archangel": dict(ref="angel_onyx_solemn.wav", exaggeration=1.0, cfg_weight=0.3, seed=11,
+                      polish="asetrate=24000*0.84,aresample=24000,atempo=1.19,bass=g=4:f=100,"
+                             "highpass=f=45,aecho=0.8:0.55:180|380|650:0.24|0.14|0.07,"
+                             "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
+                             "apad=pad_dur=1.2,loudnorm=I=-16:TP=-1.5:LRA=11"),
 }
+VOICES["messenger"] = VOICES["archangel"]
+# Takes read again on another seed, heard wrong by whisper on the voice's own: at 1.0 the welcome
+# said "appreciates me", the wait "injure", the staff's thanks "with" twice, the crossbow's
+# "Koon Koon", the sword's "spear of sorcerers". "Saint's grip" blurs on every seed tried.
+RETAKES = {("messenger", "none"): 51, ("messenger", "notyet"): 23,
+           ("archangel", "done_staff"): 23, ("archangel", "done_crossbow"): 23,
+           ("archangel", "nostaff_staff"): 51, ("archangel", "nostaff_sword"): 23}
+
+# Pages that are not a quest row's: the Messenger's and the Archangel's, said in
+# src/game/ui/quest_dialog.cpp (gateWords, angelWords), one clip a thing he can say, named as
+# Desk asks for it -- the Messenger's only to one with a cloak and on a castle he can go into, so
+# his "no cloak" and "not for warriors of your strength" are not voiced.
+# A weapon he names is read once for each of the three (WEAPONS).
+# lines() checks each against the C++, so an edit there that is not made here is refused.
+DIALOG = ROOT / "src" / "game" / "ui" / "quest_dialog.cpp"
+WEAPONS = {"staff": "Divine Staff of Archangel", "sword": "Divine Sword of Archangel",
+           "crossbow": "Divine Crossbow of Archangel"}
+SAID = {
+    "messenger": {
+        "none": "Your will to help the Archangel is appreciated. But be careful, young warrior "
+                "for Blood Castle is a dangerous place. May God be with you.",
+        "notyet": "I see that you have the Cloak of Invisibility. But you need to wait till the "
+                  "gate opens to enter the Blood Castle.",
+    },
+    "archangel": {
+        "done_{w}": "Ah, my {weapon}! Thanks to your courage, Blood Castle is free of Kundun's "
+                    "soldiers once more. Take this as a token of our thanks, and with it what I "
+                    "have learned in this long war.",
+        "ready_{w}": "You carry my {weapon}! Give it to me, warrior, and Blood Castle is ours "
+                     "again.",
+        "nostaff_{w}": "My {weapon} is still in the Statue of Saint's grip. Cut down the guards "
+                       "until the drawbridge falls, slay the Spirit Sorcerers who hold the door, "
+                       "and break the statue. Then bring my weapon to me, before the time runs "
+                       "out.",
+        "ended": "The time has run out, and Kundun's soldiers hold the castle still. Rest, "
+                 "warrior, and come back stronger when the gate opens again.",
+        "notyet_{w}": "Kundun's soldiers have taken this castle, and a Statue of Saint holds my "
+                      "{weapon} beyond its door. When the gate opens, cut through the guards, "
+                      "slay the Spirit Sorcerers and break the statue. Bring my weapon back to "
+                      "me, and you will not go unrewarded.",
+    },
+}
+
+
+def lines(voice):
+    """SAID[voice] as {clip: [words]}, each checked against quest_dialog.cpp's literals."""
+    source = re.sub(r'"\s*\n\s*"', "", DIALOG.read_text())  # adjacent literals joined
+    found = {}
+    for clip, words in SAID[voice].items():
+        for piece in words.split("{weapon}"):
+            if piece.strip() and piece not in source:
+                raise SystemExit(f"voice: {voice} '{clip}' is not what {DIALOG.name} says: "
+                                 f"{piece[:60]!r}...")
+        if "{w}" in clip:
+            for w, weapon in WEAPONS.items():
+                found[clip.format(w=w)] = [words.format(weapon=weapon)]
+        else:
+            found[clip] = [words]
+    return found
 
 
 # Words the model says wrong, spelled as they are said: the window keeps the written form. MU is
 # one syllable, "moo" (the user, 2026-09-29: "Moo is correct").
-# A dash is read as a comma: the model held a long breath at one.
-SPOKEN = {r"\bMU\b": "Moo", r"\s*--\s*": ", "}
+# A dash is read as a comma: the model held a long breath at one. The Messenger's "Continent of
+# Mu" is the same word, and his quotes round 'Blood Bone' are the window's, not said.
+SPOKEN = {r"\bMU\b": "Moo", r"\bMu\b": "Moo", r"\s*--\s*": ", ", r"(?<=\s)'|'(?=[\s.,])": ""}
 
 
 def spoken(words):
@@ -243,11 +315,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("voice")
-    parser.add_argument("--page", choices=("offer", "underway", "handin", "resting"))
+    parser.add_argument("--page", help="offer, underway, handin or resting; or a SAID clip")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--seed", type=int, help="another take of a page that came out wrong")
     args = parser.parse_args()
 
-    wanted = pages(args.voice)
+    wanted = lines(args.voice) if args.voice in SAID else pages(args.voice)
     if not wanted:
         print(f"voice: no quest in {QUESTS.name} has row.voice = \"{args.voice}\"", file=sys.stderr)
         return 1
@@ -266,7 +339,8 @@ def main():
                 continue
             parts = []
             for i, words in enumerate(paragraphs):
-                torch.manual_seed(how.get("seed", 7))
+                seed = RETAKES.get((args.voice, page), how.get("seed", 7))
+                torch.manual_seed(args.seed if args.seed is not None else seed)
                 wav = model.generate(spoken(words), audio_prompt_path=str(REFS / how["ref"]),
                                      exaggeration=how["exaggeration"],
                                      cfg_weight=how["cfg_weight"],

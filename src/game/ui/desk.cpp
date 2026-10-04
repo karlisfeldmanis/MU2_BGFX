@@ -224,19 +224,21 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                             free && window.entered(),
                             free && (window.escaped() || scriptEscape_), shelfStage_, &result);
         // His voice reads the page, from the frame it comes up: a new page cuts the last one
-        // and the window shutting stops him mid-line.
+        // and the window shutting stops him mid-line. The Messenger and the Archangel say what
+        // their page says, so theirs is the dialog's clip.
         const int page = questDialog_.page();
-        const int voiced = page < 0 || reading ? -1 : quest * 4 + page;
+        std::string voiced;
+        if (gating || angeling) {
+            voiced = questDialog_.clip();
+        } else if (page >= 0 && !reading) {
+            static const char* const kPage[4] = {"offer", "underway", "handin", "resting"};
+            const char* who = sim::questAt(quest).voice;
+            if (who && *who) voiced = std::string("voice/") + who + "/" + who + "_" + kPage[page] + ".wav";
+        }
         if (voiced != voiced_) {
             voiced_ = voiced;
-            const char* who = voiced >= 0 ? sim::questAt(quest).voice : "";
-            if (who && *who) {
-                static const char* const kPage[4] = {"offer", "underway", "handin", "resting"};
-                play.sound().voice(std::string("voice/") + who + "/" + who + "_" + kPage[page] +
-                                   ".wav");
-            } else {
-                play.sound().stopVoice();
-            }
+            if (!voiced.empty()) play.sound().voice(voiced);
+            else play.sound().stopVoice();
         }
         // A step struck off on the tracker last frame: the blade's cut on its flare, heard at the
         // ears as the interface's are.
@@ -997,7 +999,9 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // below, and a cold key with a red row above it needs no third telling.
     const bool inTown = tables.grid.safe(hero.column(), hero.row());
     const auto ready = [&](const sim::SkillRow& row) {
-        return hero.alive() && !inTown && armedFor(row) && hero.mana >= row.mana;
+        // Blood Castle's court is the one safe ground an aura is raised on (Realm::throwSkill).
+        const bool court = row.aura() && tables.map == sim::kBloodCastleMap;
+        return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= row.mana;
     };
 
     fan_.clear();

@@ -86,6 +86,9 @@ public:
                    ? int(mode_)
                    : -1;
     }
+    // The Messenger's or the Archangel's words as a voice clip, "voice/messenger/messenger_none.wav"
+    // and the like (tools/voice.py SAID), or empty: on any other page, and for a castle not built.
+    const std::string& clip() const { return clip_; }
     // The window's rectangle on screen, for the pointer the desk keeps from the world.
     bool covers(float x, float y) const;
     // The frame and the body, which scrolls clipped to its pane; drawn in that order.
@@ -146,6 +149,7 @@ private:
     sim::AngelState angel_ = sim::AngelState::NotYet;
     int64_t paidExperience_ = 0, paidZen_ = 0;
     bool staffHeld_ = false;  // the staff in his bag, whatever the run's phase
+    std::string clip_;        // see clip(); set where the words are
     // A page turn: -1 to 0 the old page going out, 0 to 1 the new one coming in, 1 at rest. The
     // quest handed in waits in `pending_` until the old page is out.
     float turn_ = 1.0f;

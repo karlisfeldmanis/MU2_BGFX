@@ -144,7 +144,13 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
 
     // `player.IsAtSafezone()` refuses everything, buffs included -- so a knight cannot even
     // raise his guard in Lorencia's square. The same rule `press` already applies to a swing.
-    if (tables_->grid.safe(hero.column(), hero.row())) return false;
+    // Ours: Blood Castle's court lets him raise his auras for the fight before the barrier lifts
+    // (the user, 2026-10-04: 'allow to cast auras on BC waiting zone to prepare for fight') --
+    // a boon, a mend or a might on himself, not a summon, and nothing aimed.
+    if (tables_->grid.safe(hero.column(), hero.row()) &&
+        !(row.aura() && tables_->map == kBloodCastleMap)) {
+        return false;
+    }
 
     // **A blink** (Teleport): no body, no blow -- the ground the key named, a fade, and him put
     // down there. The fight he was in is dropped, as a Town Portal drops it: left standing, the
