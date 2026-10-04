@@ -25,15 +25,18 @@ bool Renderer::createOutline(const std::string& shaderDir) {
     uOutlineScale_ = bgfx::createUniform("u_outlineScale", bgfx::UniformType::Vec4);
     sOutlineMask_ = bgfx::createUniform("s_mask", bgfx::UniformType::Sampler);
 
-    // R8: coverage is all this holds. Clamped, so a tap that strays past the mask's own edge
+    // Coverage is all this holds. Clamped, so a tap that strays past the mask's own edge
     // -- widening the search rings near the box's border -- finds the empty margin rather
     // than wrapping onto the far side of the texture.
     const uint64_t clamp = BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
     bool ok = bgfx::isValid(outlineProgram_);
     for (int slot = 0; slot < kOutlineRings; ++slot) {
+        // With its mips, which bgfx regenerates after each draw into it, and R16F: fs_outline
+        // reads the chain to skip pixels nothing of the shape is near, and an R8 average
+        // rounds a thin spike's coverage to nought a few levels down.
         outlineMaskTex_[slot] =
-            bgfx::createTexture2D(uint16_t(kOutlineMaskSize), uint16_t(kOutlineMaskSize), false,
-                                  1, bgfx::TextureFormat::R8, clamp);
+            bgfx::createTexture2D(uint16_t(kOutlineMaskSize), uint16_t(kOutlineMaskSize), true,
+                                  1, bgfx::TextureFormat::R16F, clamp);
         outlineMaskFb_[slot] = bgfx::createFrameBuffer(1, &outlineMaskTex_[slot], true);
         ok = ok && bgfx::isValid(outlineMaskTex_[slot]) && bgfx::isValid(outlineMaskFb_[slot]);
     }

@@ -74,6 +74,20 @@ void main()
 	float shade = u_outlineParams.z;
 	float reach = u_outlineParams.w;
 
+	// **Two early outs, each drawing exactly what the full search would** (2026-10-04: this
+	// pass was 1.9 ms of a Meteorite fight at 2K, 173 fps against 199 without it). Fully
+	// inside the shape, every term below is multiplied by (1 - here) and the pixel discards
+	// anyway. And where nothing of the shape lies within the farthest any tap below reaches,
+	// one read of the mask's mip chain says so: a texel twice that reach wide, read bilinear,
+	// covers every point the search could touch, and its average is above nought if any of
+	// them is covered. The mask is R16F so one texel's share of a 32x32 block survives the
+	// average; past level 6 the test is skipped rather than trusted.
+	if (here >= 1.0) discard;
+	float outer = max(width, width + reach);
+	if (shade > 0.0) outer = max(outer, length(u_outlineDrift.xy) + u_outlineDrift.z);
+	float level = ceil(log2(2.0 * (outer + 1.0)));
+	if (level <= 6.0 && texture2DLod(s_mask, at, level).r <= 0.0) discard;
+
 	// Inside the shape draws nothing: the ring sits outside the silhouette so the model is
 	// never covered by its own highlight.
 	float strength = 0.0;
