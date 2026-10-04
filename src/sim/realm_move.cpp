@@ -743,11 +743,14 @@ void Realm::castleTick() {
             run_.phase = CastlePhase::Won;
             gain(hero, int32_t(std::min<int64_t>(run_.paidExperience, INT32_MAX)));
             money_ += kCastleWinZens[c];
-            // And the castle's jewels at his feet, one each (BloodCastle.dat "Reward Items").
+            // And the castle's jewels, one each (BloodCastle.dat "Reward Items"), into the bag as
+            // a quest's pay goes (the user, 2026-10-04: 'when finish quest on BC put items on bag
+            // similiar like receving quests'); WebZen lays them at his feet, and one the bag
+            // cannot hold still falls there -- the win is not refused, as a quest's hand-in is.
             for (const auto& jewel : kCastleRewardJewels[c]) {
                 if (jewel[0] < 0) break;
                 const int32_t item = tables_->itemAt(jewel[0], jewel[1]);
-                if (item >= 0) lay(item);
+                if (item >= 0 && give(item) < 0) lay(item);
             }
         }
     }

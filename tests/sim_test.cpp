@@ -8068,9 +8068,12 @@ void testCastleGrid(const content::Tables& lorencia) {
             checkEqual(int(realm.money() - zen), int(sim::kCastleWinZen), "20,000 Zen");
             check(realm.hero().level > level || realm.hero().experience > experience,
                   "and the experience");
-            bool jewel = false;
-            for (const auto& one : realm.lying()) jewel |= one.what.item == castle.itemAt(12, 15);
-            check(jewel, "a Jewel of Chaos at his feet");
+            bool jewel = false, lying = false;
+            for (int i = 0; i < sim::kSlots; ++i) {
+                jewel |= realm.satchel()[i].item == castle.itemAt(12, 15);
+            }
+            for (const auto& one : realm.lying()) lying |= one.what.item == castle.itemAt(12, 15);
+            check(jewel && !lying, "a Jewel of Chaos in his bag, as a quest pays");
             check(realm.angelState() == sim::AngelState::Done, "his page says it is done");
         }
     }

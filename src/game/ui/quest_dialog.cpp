@@ -1,7 +1,6 @@
 #include "game/ui/quest_dialog.h"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <ctime>
 
@@ -330,15 +329,29 @@ void QuestDialog::layout(const Play& play) {
         y += float(kGateRows - 1) * kStepRow + kSection;
     } else if (angel) {
         // What he asks for, the staff, as the rewards are shown; given back, what it paid.
-        y += kSection * 0.5f + 24.0f;
+        y += kSection * 0.5f;
         if (angel_ == sim::AngelState::Done) {
-            // Experience, Zen and each of the castle's jewels, as the page draws them.
-            int jewels = 0;
+            // As a quest's: the purse's line, then a cell for each of the castle's jewels, put
+            // in his bag (Realm::castleTick).
+            y += 16.0f + kPurse;
+            const int across = int(kChoiceColumns);
+            const float cellWide = (wide - kCellGap * (kChoiceColumns - 1.0f)) / kChoiceColumns;
+            int n = 0;
             for (const auto& jewel : sim::kCastleRewardJewels[std::clamp(castle_, 1, sim::kCastles) - 1]) {
-                jewels += jewel[0] >= 0 && tables.itemAt(jewel[0], jewel[1]) >= 0;
+                const int32_t item = jewel[0] < 0 ? -1 : tables.itemAt(jewel[0], jewel[1]);
+                if (item < 0) continue;
+                Cell cell;
+                cell.item = item;
+                const sim::Held held = rewardHeld(tables, item, 0, 1, 0, 0);
+                cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+                cell.box = {kInset + float(n % across) * (cellWide + kCellGap),
+                            y + float(n / across) * (kIcon + kCellGap), cellWide, kIcon};
+                cells_.push_back(cell);
+                ++n;
             }
-            y += float(2 + jewels) * kStepRow + kSection;
+            y += float((n + across - 1) / across) * (kIcon + kCellGap) + kSection;
         } else {
+            y += 24.0f;
             Cell cell;
             // The weapon this run's statue holds: the staff, the sword or the crossbow.
             cell.item = realm.castleWeaponItem();
@@ -832,6 +845,34 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         controls::label(body_, nx, by(ly + 15.0f), kName * u, met ? style::kFits : style::kDanger,
                         status);
     };
+    // A reward in its cell: the picture's frame, the chosen one's rim, the name beside it.
+    const auto rewardCell = [&](size_t i) {
+        const Cell& one = cells_[i];
+        const Box box = cellBox(one);
+        const Box icon{box.x, box.y, box.h, box.h};
+        controls::cell(body_, icon, over_ == 10 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);
+        if (one.choice >= 0 && one.choice == chosen_) {
+            // The chosen one: the hover's ember from its foot and a blood rim.
+            const uint32_t hot = quest_marks::faded(style::kBlood, style::kEmberAlpha);
+            const uint32_t clear = quest_marks::faded(style::kBlood, 0.0f);
+            body_.shade({box.x, box.y + box.h * 0.4f, box.w, box.h * 0.6f}, clear, clear, hot, hot);
+            body_.outline(box, std::max(2.0f, 2.0f * u), style::kBlood);
+        }
+        const content::ItemRow& item = tables.items[size_t(one.item)];
+        std::string name = item.label;
+        if (one.plus > 0) name += " +" + std::to_string(one.plus);
+        // The name beside the picture, at most two lines, centred on it.
+        std::vector<std::string> lines;
+        wrap(name, kName, one.box.w - kIcon - kNameGap, lines);
+        if (lines.size() > 2) lines.resize(2);
+        const float lead = kName * 1.2f;
+        float ly = one.box.y + (kIcon - lead * float(lines.size())) * 0.5f + kName * 0.9f;
+        for (const std::string& line : lines) {
+            controls::label(body_, sx(one.box.x + kIcon + kNameGap), by(ly), kName * u,
+                            one.ink ? one.ink : kItemWhite, line);
+            ly += lead;
+        }
+    };
     const auto bagWords = [](bool carried) {
         return carried ? std::string("in your bag") : std::string("not in your bag");
     };
@@ -856,26 +897,15 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         controls::rule(body_, sx(kInset), by(cy - kSection * 0.5f), inner() * u, u);
         cy += kSection * 0.5f;
         if (angel_ == sim::AngelState::Done) {
-            // Given back: what GiveReward_Win paid, a line each, and each of this castle's
-            // jewels laid at his feet (sim kCastleRewardJewels).
+            // Given back: what GiveReward_Win paid, as a quest's rewards are shown -- the purse's
+            // line, then the castle's jewels, already in his bag, in their cells.
             controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Rewards", u);
-            cy += 24.0f;
-            std::vector<std::array<std::string, 2>> lines = {
-                {"Experience", panel::commas(paidExperience_)},
-                {"Zen", panel::commas(paidZen_)},
-            };
-            for (const auto& jewel : sim::kCastleRewardJewels[std::clamp(castle_, 1, sim::kCastles) - 1]) {
-                const int32_t item = jewel[0] < 0 ? -1 : tables.itemAt(jewel[0], jewel[1]);
-                if (item >= 0) lines.push_back({tables.items[size_t(item)].label, "at your feet"});
-            }
-            for (size_t i = 0; i < lines.size(); ++i) {
-                const float rowY = cy + float(i) * kStepRow;
-                quest_marks::mark(body_, StepMark::Done, sx(kInset + 7.0f), by(rowY + 8.0f), u);
-                controls::label(body_, sx(kInset + 24.0f), by(rowY + 13.0f), kBody * u,
-                                style::kBone, lines[i][0]);
-                controls::ranged(body_, sx(kInset + inner()), by(rowY + 13.0f), kBody * u,
-                                 i == 1 ? kZenGold : style::kBoneHi, lines[i][1]);
-            }
+            cy += 16.0f;
+            controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, style::kBone,
+                            panel::commas(paidExperience_) + " experience");
+            controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
+                             panel::commas(paidZen_) + " Zen");
+            for (size_t i = 0; i < cells_.size(); ++i) rewardCell(i);
         } else {
             controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Requirements", u);
             cy += 24.0f;
@@ -1029,32 +1059,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::label(body_, sx(kInset), by(cy + 12.0f), 15.0f * u, ink, ask);
         }
         for (size_t i = 0; i < cells_.size(); ++i) {
-            const Cell& one = cells_[i];
-            if (one.need) continue;  // drawn with the objectives (needRow)
-            const Box box = cellBox(one);
-            const Box icon{box.x, box.y, box.h, box.h};
-            controls::cell(body_, icon, over_ == 10 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);
-            if (one.choice >= 0 && one.choice == chosen_) {
-                // The chosen one: the hover's ember from its foot and a blood rim.
-                const uint32_t hot = quest_marks::faded(style::kBlood, style::kEmberAlpha);
-                const uint32_t clear = quest_marks::faded(style::kBlood, 0.0f);
-                body_.shade({box.x, box.y + box.h * 0.4f, box.w, box.h * 0.6f}, clear, clear, hot, hot);
-                body_.outline(box, std::max(2.0f, 2.0f * u), style::kBlood);
-            }
-            const content::ItemRow& item = tables.items[size_t(one.item)];
-            std::string name = item.label;
-            if (one.plus > 0) name += " +" + std::to_string(one.plus);
-            // The name beside the picture, at most two lines, centred on it.
-            std::vector<std::string> lines;
-            wrap(name, kName, one.box.w - kIcon - kNameGap, lines);
-            if (lines.size() > 2) lines.resize(2);
-            const float lead = kName * 1.2f;
-            float ly = one.box.y + (kIcon - lead * float(lines.size())) * 0.5f + kName * 0.9f;
-            for (const std::string& line : lines) {
-                controls::label(body_, sx(one.box.x + kIcon + kNameGap), by(ly), kName * u,
-                                one.ink ? one.ink : kItemWhite, line);
-                ly += lead;
-            }
+            if (!cells_[i].need) rewardCell(i);  // a need is drawn with the objectives (needRow)
         }
     }
 
