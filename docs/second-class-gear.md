@@ -54,8 +54,18 @@ as `plate_steel` the blue read as polished black metal with white blowouts in th
 
 ### Grand Soul (Soul Master), Divine (Muse Elf) -- next
 
-## Open
+## Where it falls
 
-- **Where they fall.** Our strongest monsters: Blood Castle's to about 99, the Lost Tower's
-  Balrog 66, the Dungeon's Gorgon 55, Atlans 46 so far. The drop window reaches most of these
-  sets in Blood Castle alone.
+The user, 2026-10-04: "there will be tarkan map where 2nd class drop, also BC6 and strongest
+monsters from atlans also can drop some". Ours, all of it (`sim::secondClassOnly` rows):
+
+- **Out of every ordinary and excellent pool** but Tarkan's (MU's map 8, `sim::kTarkanMap`, not
+  built yet) and Blood Castle 6's, where it falls by the level window as anything does --
+  castle 6's garrison stands to about 99, which reaches the early sets' 70-100.
+- **Atlans's strongest** (`kAtlansGearFromLevel` 43: Valkyrie 46, Vepar 45, Bahamut 43): one
+  kill in `kAtlansGearOdds` (400) leaves a random piece at +0 with a drop's luck and option, on
+  its own dice (`gearDice_`). Their levels never reach the gear by the window.
+- The 2nd wings never drop (`drops_from_monsters` false); they are the Goblin's.
+
+`sim_test` testSecondClassDrops: 108 pieces off 40,000 Atlans kills at 46, none under 43, none
+in the Lost Tower at 99, none in castle 1, some in castle 6.

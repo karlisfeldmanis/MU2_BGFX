@@ -8079,6 +8079,50 @@ void testFirecracker(const content::Tables& tables) {
                "never from a monster under 17");
 }
 
+// Where the second class's gear falls (docs/second-class-gear.md): Blood Castle 6 and Tarkan by
+// the level window, Atlans's strongest one in kAtlansGearOdds, nowhere else.
+void testSecondClassDrops() {
+    std::printf("second class gear drops\n");
+    const auto load = [](const char* world, content::Tables& out) {
+        std::string error;
+        return content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world +
+                                       ".mur",
+                                   out, error);
+    };
+    content::Tables atlans, tower, castle;
+    check(load("atlans", atlans) && load("losttower", tower) && load("bloodcastle", castle),
+          "Atlans's, the Lost Tower's and Blood Castle's tables load");
+    const auto gearIn = [](const content::Tables& map, int column, int row, int castleNumber,
+                           int level, int kills) {
+        int found = 0;
+        std::unique_ptr<sim::Realm> at;
+        for (int i = 0; i < kills; ++i) {
+            if (i % 500 == 0) {
+                at = std::make_unique<sim::Realm>();
+                at->raise(&map, uint32_t(91 + i), column, row, sim::Kin::DarkKnight, 50);
+                if (castleNumber > 0) at->setCastle(castleNumber);
+            }
+            at->dropFor(level);
+            for (const sim::Lying& one : at->lying()) {
+                found += sim::secondClassOnly(map.items[size_t(one.what.item)]) ? 1 : 0;
+            }
+        }
+        return found;
+    };
+    const int kills = 40000;
+    const int atlansGear = gearIn(atlans, 21, 17, 0, 46, kills);
+    std::printf("  Atlans: %d pieces off %d kills at level 46 (one in %d wanted)\n", atlansGear,
+                kills, sim::kAtlansGearOdds);
+    const double want = double(kills) / sim::kAtlansGearOdds;
+    check(std::abs(atlansGear - want) < want * 0.25, "Atlans's strongest leave one in 400");
+    checkEqual(gearIn(atlans, 21, 17, 0, sim::kAtlansGearFromLevel - 1, 20000), 0,
+               "never from a weaker Atlans monster");
+    checkEqual(gearIn(tower, 138, 122, 0, 99, 20000), 0,
+               "never in the Lost Tower, however strong the kill");
+    checkEqual(gearIn(castle, 13, 8, 1, 99, 20000), 0, "never in castle 1");
+    check(gearIn(castle, 13, 8, 6, 99, 20000) > 0, "and in castle 6 by the level window");
+}
+
 // Blood Castle's grid changes under the run (sim/event.h): the realm copies the castle's tables at
 // raise, so opening the bridge and the door changes its grid and nobody else's, the router sees it
 // on the next plan, and a raise again starts closed. Lorencia's tables are shared and refuse.
@@ -8356,6 +8400,7 @@ int main() {
     testWishDropsOnWalk(tables);
     testTravelQuestLock();
     testFirecracker(tables);
+    testSecondClassDrops();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

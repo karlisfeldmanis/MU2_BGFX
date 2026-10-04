@@ -1023,6 +1023,31 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    // The second class's gear from Atlans's strongest, the same way (sim::kAtlansGearOdds).
+    if (tables_->map == kAtlansMap && level >= kAtlansGearFromLevel &&
+        gearDice_.nextInt(0, kAtlansGearOdds) == 0) {
+        int count = 0;
+        for (const content::ItemRow& r : tables_->items) {
+            count += r.dropsFromMonsters() && secondClassOnly(r) ? 1 : 0;
+        }
+        int pick = count > 0 ? gearDice_.nextInt(0, count) : -1;
+        for (size_t i = 0; pick >= 0 && i < tables_->items.size(); ++i) {
+            const content::ItemRow& r = tables_->items[i];
+            if (!r.dropsFromMonsters() || !secondClassOnly(r) || pick-- != 0) continue;
+            Lying gear;
+            gear.what = Held{int32_t(i), 0, int16_t(fullDurability(r, 0))};
+            gear.what.luck = gearDice_.nextInt(0, 100) < kLuckIn100;
+            const int under = gearDice_.nextInt(0, 100);
+            const int which = gearDice_.nextInt(0, 3);
+            if (under < kOptionUnder[which]) gear.what.option = int8_t(kMostOptionDropped - which);
+            std::tie(gear.column, gear.row) = clearing(dead.column(), dead.row());
+            gear.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            gear.id = nextId_++;
+            lying_.push_back(gear);
+            say(What::Dropped, dead, int32_t(gear.id), int32_t(i), 0);
+            break;
+        }
+    }
     // The Orb of Summoning, its own roll off its own dice and beside the rest (sim/items.h).
     if (orbDice_.nextInt(0, kSummonOrbOdds) == 0) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
@@ -1044,8 +1069,13 @@ void Realm::leave(const Body& dead, const Body& killer) {
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
 
-    const auto reaches = [level](const content::ItemRow& row) {
-        return row.dropLevel <= level && (row.maximumDropLevel == 0 || level <= row.maximumDropLevel);
+    // The second class's gear only where it falls (sim::kTarkanMap): Tarkan and Blood Castle 6.
+    const bool secondGearHere =
+        tables_->map == kTarkanMap || (tables_->map == kBloodCastleMap && run_.castle >= kCastles);
+    const auto reaches = [level, secondGearHere](const content::ItemRow& row) {
+        return row.dropLevel <= level &&
+               (row.maximumDropLevel == 0 || level <= row.maximumDropLevel) &&
+               (secondGearHere || !secondClassOnly(row));
     };
     // The pools are counted then drawn from by index, so nothing is allocated for them.
     const auto draw = [&](auto&& admits) -> int32_t {
@@ -1130,7 +1160,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         const int32_t item = draw([&](const content::ItemRow& r) {
             return r.dropsFromMonsters() && excellentable(r) && r.dropLevel <= lower &&
                    (r.maximumDropLevel == 0 || lower <= r.maximumDropLevel) &&
-                   r.dropLevel >= lower - kGap;
+                   r.dropLevel >= lower - kGap && (secondGearHere || !secondClassOnly(r));
         });
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];

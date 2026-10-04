@@ -1332,6 +1332,9 @@ private:
     Random crackerDice_{0};
     // Whether a kill in Atlans or the Lost Tower leaves a Loch's Feather (sim::kFeatherOdds).
     Random featherDice_{0};
+    // And whether Atlans's strongest leave a piece of the second class's gear
+    // (sim::kAtlansGearOdds), the piece and its options off the same stream.
+    Random gearDice_{0};
     // Blood Castle's scroll and bone, rolled on every kill outside a castle (Realm::leave), off
     // a stream of their own so the kill's own drops draw as they did.
     Random ticketDice_{0};
