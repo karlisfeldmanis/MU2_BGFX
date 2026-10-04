@@ -1,0 +1,278 @@
+{
+  "item": "PantMale20",
+  "mu_name": "Divine Pants",
+  "mu_name_from": "MuMain loads the set at index 19 from Data/Player/PantMale20.bmd (ZzzOpenData.cpp:180-198: file 18 + i). MU's group 9 number 19.",
+  "why_this_one": "The Muse Elf's first set, the second class's gear (the user, 2026-10-04: 'Early sets'). docs/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets); WebZen's own 1.00m item(Kor).txt row 19 agrees.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs; WebZen 0.99.60T package, Data/lang/Kor/item(Kor).txt (Version 1.00m, 2005-03-07).",
+    "call": "CreateArmor(19, 4, 2, 2, \"Divine Pants\", 88, 39, 74, 0, 50, 110, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 19,
+    "drop_level": 88,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 39,
+    "durability": 74,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 110,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2, WebZen's 요정 column 2. sim::fits asks Wearer::second (docs/second-class-gear.md)."
+  },
+  "sheets": {
+    "lower_E1": "lower_e1.png",
+    "hide": "hide.png",
+    "level_man033": "level_man033.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: magenta-violet lacquered plate with gold trim. level_man033 is her own bare skin where the plate leaves it.",
+  "cutout": [
+    "lower_E1"
+  ],
+  "cutout_from": "Declared, not detected: the .OZT's alpha is real (decode_texture: 31% cut away) and it is the plate's outline.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
+  "material_note": "painted_steel with plate_steel's cast grain: Divine is magenta-violet lacquer with gold trim painted on. Islands 2-7 are level_man033, her own bare skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 352.2,
+      "along": [
+        -7.8,
+        10.3
+      ],
+      "mu_uv": [
+        0.098,
+        0.001,
+        0.902,
+        0.999
+      ],
+      "bake_uv": [
+        0.562,
+        0.094,
+        0.875,
+        0.544
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 100,
+      "area": 7632.4,
+      "along": [
+        -13.5,
+        11.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.665,
+        0.812
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 9,
+      "area": 817.9,
+      "along": [
+        -9.0,
+        6.8
+      ],
+      "mu_uv": [
+        0.199,
+        0.314,
+        0.24,
+        0.429
+      ],
+      "bake_uv": [
+        0.065,
+        0.055,
+        0.085,
+        0.096
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 11,
+      "area": 932.4,
+      "along": [
+        -9.0,
+        10.8
+      ],
+      "mu_uv": [
+        0.186,
+        0.308,
+        0.24,
+        0.429
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.027,
+        0.058
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 6,
+      "area": 546.4,
+      "along": [
+        -1.3,
+        10.8
+      ],
+      "mu_uv": [
+        0.186,
+        0.308,
+        0.213,
+        0.429
+      ],
+      "bake_uv": [
+        0.068,
+        0.005,
+        0.078,
+        0.048
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 9,
+      "area": 818.0,
+      "along": [
+        -9.0,
+        6.8
+      ],
+      "mu_uv": [
+        0.199,
+        0.314,
+        0.24,
+        0.429
+      ],
+      "bake_uv": [
+        0.088,
+        0.005,
+        0.108,
+        0.046
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 11,
+      "area": 932.4,
+      "along": [
+        -9.0,
+        10.8
+      ],
+      "mu_uv": [
+        0.186,
+        0.308,
+        0.24,
+        0.429
+      ],
+      "bake_uv": [
+        0.036,
+        0.005,
+        0.058,
+        0.058
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 6,
+      "area": 546.4,
+      "along": [
+        -1.3,
+        10.8
+      ],
+      "mu_uv": [
+        0.186,
+        0.308,
+        0.213,
+        0.429
+      ],
+      "bake_uv": [
+        0.005,
+        0.07,
+        0.048,
+        0.08
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 72,
+      "area": 3332.3,
+      "along": [
+        -33.2,
+        16.7
+      ],
+      "mu_uv": [
+        0.364,
+        0.041,
+        1.0,
+        0.974
+      ],
+      "bake_uv": [
+        0.586,
+        0.599,
+        0.994,
+        0.996
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 2023.1,
+      "along": [
+        -36.6,
+        16.7
+      ],
+      "mu_uv": [
+        0.557,
+        0.041,
+        1.0,
+        0.974
+      ],
+      "bake_uv": [
+        0.005,
+        0.618,
+        0.353,
+        0.95
+      ]
+    }
+  ]
+}

@@ -52,7 +52,36 @@ Sheets head_bld, upper_bld, lower_bld (and its .OZT as lower_bld_t on the cuiras
 gloves_bld, boots_bld, hide, level_man01: blue lacquer with gold trim, on `painted_steel` --
 as `plate_steel` the blue read as polished black metal with white blowouts in the fire.
 
-### Grand Soul (Soul Master), Divine (Muse Elf) -- next
+Its pants and cuirass: the grain override and the skirt's cutout below.
+
+### Grand Soul (Soul Master) -- built 2026-10-04
+
+Helm 81/27, armour (2x3) 91/33, pants 86/30, gloves 70/20 (attack speed 5), boots 76/22;
+durability 67; strength 59 (gloves 49), agility 20 (gloves and boots 10). A dark violet robe
+with gold trim, on `cloth`; the helm's level_man022 is the wizard's own head under the hood
+(face `skin`, white hair `hair`). **The pants' 56-triangle panel is MU's physics cloth**
+(CPhysicsClothMesh off bone 17, `t_lower_14m.tga`, ZzzObject.cpp:10774-10796): drawn rigid
+here for now, a cape standing a little off his back. How to draw it is open (a hanging cape
+with a sway, or real cloth).
+
+### Divine (Muse Elf) -- built 2026-10-04
+
+Helm 85/37, armour (2x2) 92/44, pants 88/39, gloves 72/29 (attack speed 6), boots 81/30;
+durability 74; strength 50, agility 110. Magenta-violet lacquer with gold trim on
+`painted_steel`, her bare skin (`level_man033`) on `skin`, the cuirass and pants cut by their
+.OZT alpha. The helm's `level_man01` piece is a pale square of that sheet, drawn by MU as it is
+(HideSkin is false for every character part), on `feather`. **Two texture coordinates in MU's
+own HelmMale20.bmd are (0, 1.114222e+23)**; the bake layout shrank to nothing round them and
+the helm baked black until each took a neighbouring corner's coordinate in the .obj.
+
+### Traps these sets found
+
+- **Sheets by group.** A sheet renamed on disk -- a jpg and a tga of one stem (`lower_14m_jpg`,
+  `lower_14m_tga`), an .OZT kept apart (`lower_bld_t`) -- has to be mapped to its obj group in
+  the recipe's `sheets`, or that group bakes black with only a log line to say so.
+- **painted_steel's grain is a blade's**, brushed along V: on armour it drew vertical streaks.
+  The sets override it with plate_steel's cast grain.
+- **Cutouts are declared, not detected**, and name the group.
 
 ## Where it falls
 

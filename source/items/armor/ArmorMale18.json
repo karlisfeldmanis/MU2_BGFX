@@ -30,13 +30,29 @@
     "class_level": 2,
     "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2, WebZen's 흑기사 column 2. sim::fits asks Wearer::second (docs/second-class-gear.md)."
   },
-  "sheets": [
-    "upper_bld.png",
-    "hide.png",
-    "lower_bld_t.png"
-  ],
+  "sheets": {
+    "upper_bld": "upper_bld.png",
+    "hide": "hide.png",
+    "lower_bld": "lower_bld_t.png"
+  },
   "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: deep blue lacquered plate with gold trim; hide is MU's black cap over the openings. lower_bld_t is the .OZT lower_bld, its alpha cutting a third away, on the cuirass's 16 skirt triangles; the pants wear the .OZJ.",
   "material_note": "painted_steel and not plate_steel: Dark Phoenix is blue lacquer with gold trim painted on, and as plate_steel the blue read as polished black metal with white blowouts in the fire (studio, 2026-10-04). MU's paint is the look.",
+  "cutout": [
+    "lower_bld"
+  ],
+  "cutout_from": "Declared, not detected: lower_bld.OZT's alpha is real (decode_texture: 33% cut away), the skirt's outline; left undeclared at first, it drew opaque.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
   "islands": [
     {
       "island": 0,

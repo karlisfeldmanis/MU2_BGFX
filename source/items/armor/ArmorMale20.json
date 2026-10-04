@@ -1,0 +1,234 @@
+{
+  "item": "ArmorMale20",
+  "mu_name": "Divine Armor",
+  "mu_name_from": "MuMain loads the set at index 19 from Data/Player/ArmorMale20.bmd (ZzzOpenData.cpp:180-198: file 18 + i). MU's group 8 number 19.",
+  "why_this_one": "The Muse Elf's first set, the second class's gear (the user, 2026-10-04: 'Early sets'). docs/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets); WebZen's own 1.00m item(Kor).txt row 19 agrees.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs; WebZen 0.99.60T package, Data/lang/Kor/item(Kor).txt (Version 1.00m, 2005-03-07).",
+    "call": "CreateArmor(19, 3, 2, 2, \"Divine Armor\", 92, 44, 74, 0, 50, 110, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 8,
+    "number": 19,
+    "drop_level": 92,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 44,
+    "durability": 74,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 110,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2, WebZen's 요정 column 2. sim::fits asks Wearer::second (docs/second-class-gear.md)."
+  },
+  "sheets": {
+    "upper_E1": "upper_e1.png",
+    "hide": "hide.png",
+    "level_man033": "level_man033.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: magenta-violet lacquered plate with gold trim. level_man033 is her own bare skin where the plate leaves it.",
+  "cutout": [
+    "upper_E1"
+  ],
+  "cutout_from": "Declared, not detected: the .OZT's alpha is real (decode_texture: 14% cut away) and it is the plate's outline.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
+  "material_note": "painted_steel with plate_steel's cast grain: Divine is magenta-violet lacquer with gold trim painted on. Island 1 is level_man033, her own bare skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 136,
+      "area": 6597.4,
+      "along": [
+        -12.9,
+        16.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.921,
+        0.818
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 32,
+      "area": 1222.3,
+      "along": [
+        -10.2,
+        11.7
+      ],
+      "mu_uv": [
+        0.146,
+        0.53,
+        0.333,
+        0.622
+      ],
+      "bake_uv": [
+        0.674,
+        0.026,
+        0.874,
+        0.781
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 22,
+      "area": 334.9,
+      "along": [
+        -5.0,
+        4.4
+      ],
+      "mu_uv": [
+        0.012,
+        0.004,
+        0.138,
+        0.298
+      ],
+      "bake_uv": [
+        0.867,
+        0.546,
+        0.992,
+        0.861
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 22,
+      "area": 334.9,
+      "along": [
+        -5.0,
+        4.4
+      ],
+      "mu_uv": [
+        0.012,
+        0.004,
+        0.138,
+        0.298
+      ],
+      "bake_uv": [
+        0.889,
+        0.431,
+        0.971,
+        0.973
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 2394.6,
+      "along": [
+        -30.1,
+        17.2
+      ],
+      "mu_uv": [
+        0.095,
+        0.0,
+        0.992,
+        0.791
+      ],
+      "bake_uv": [
+        0.01,
+        0.084,
+        0.853,
+        0.885
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 475.7,
+      "along": [
+        -7.4,
+        11.8
+      ],
+      "mu_uv": [
+        0.244,
+        0.099,
+        0.546,
+        0.3
+      ],
+      "bake_uv": [
+        0.228,
+        0.228,
+        0.929,
+        0.487
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 2394.6,
+      "along": [
+        -30.1,
+        17.2
+      ],
+      "mu_uv": [
+        0.095,
+        0.0,
+        0.992,
+        0.791
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.652,
+        0.899
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 475.7,
+      "along": [
+        -7.4,
+        11.8
+      ],
+      "mu_uv": [
+        0.244,
+        0.099,
+        0.546,
+        0.3
+      ],
+      "bake_uv": [
+        0.538,
+        0.109,
+        0.929,
+        0.962
+      ]
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "item": "BootMale20",
+  "mu_name": "Divine Boots",
+  "mu_name_from": "MuMain loads the set at index 19 from Data/Player/BootMale20.bmd (ZzzOpenData.cpp:180-198: file 18 + i). MU's group 11 number 19.",
+  "why_this_one": "The Muse Elf's first set, the second class's gear (the user, 2026-10-04: 'Early sets'). docs/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets); WebZen's own 1.00m item(Kor).txt row 19 agrees.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs; WebZen 0.99.60T package, Data/lang/Kor/item(Kor).txt (Version 1.00m, 2005-03-07).",
+    "call": "CreateBoots(19, \"Divine Boots\", 81, 30, 0, 74, 0, 50, 110, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 11,
+    "number": 19,
+    "drop_level": 81,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 30,
+    "durability": 74,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 110,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2, WebZen's 요정 column 2. sim::fits asks Wearer::second (docs/second-class-gear.md)."
+  },
+  "sheets": {
+    "boots_E1": "boots_e1.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: magenta-violet lacquered plate with gold trim.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
+  "material_note": "painted_steel with plate_steel's cast grain: Divine is magenta-violet lacquer with gold trim painted on.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 90,
+      "area": 4377.3,
+      "along": [
+        -18.6,
+        25.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        1.004,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.904,
+        0.904
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 5,
+      "area": 352.7,
+      "along": [
+        -16.3,
+        -1.9
+      ],
+      "mu_uv": [
+        0.749,
+        0.689,
+        1.004,
+        0.927
+      ],
+      "bake_uv": [
+        0.505,
+        0.193,
+        0.826,
+        0.447
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 90,
+      "area": 4377.3,
+      "along": [
+        -18.6,
+        25.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        1.004,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.748,
+        0.993
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 5,
+      "area": 352.7,
+      "along": [
+        -16.3,
+        -1.9
+      ],
+      "mu_uv": [
+        0.749,
+        0.689,
+        1.004,
+        0.927
+      ],
+      "bake_uv": [
+        0.007,
+        0.698,
+        0.17,
+        0.851
+      ]
+    }
+  ]
+}

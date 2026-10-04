@@ -1,0 +1,252 @@
+{
+  "item": "HelmMale20",
+  "mu_name": "Divine Helm",
+  "mu_name_from": "MuMain loads the set at index 19 from Data/Player/HelmMale20.bmd (ZzzOpenData.cpp:180-198: file 18 + i). MU's group 7 number 19.",
+  "why_this_one": "The Muse Elf's first set, the second class's gear (the user, 2026-10-04: 'Early sets'). docs/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets); WebZen's own 1.00m item(Kor).txt row 19 agrees.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs; WebZen 0.99.60T package, Data/lang/Kor/item(Kor).txt (Version 1.00m, 2005-03-07).",
+    "call": "CreateArmor(19, 2, 2, 2, \"Divine Helm\", 85, 37, 74, 0, 50, 110, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 19,
+    "drop_level": 85,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 37,
+    "durability": 74,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 110,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2, WebZen's 요정 column 2. sim::fits asks Wearer::second (docs/second-class-gear.md)."
+  },
+  "sheets": {
+    "head_E1": "head_e1.png",
+    "level_man01": "level_man01.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: magenta-violet lacquered plate with gold trim. level_man01 is the elf's own head and hair under the helm.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
+  "material_note": "painted_steel with plate_steel's cast grain: Divine is magenta-violet lacquer with gold trim painted on. Islands 6-8 are level_man01's pale feathered square, a white plume on the helm, on feather; as hair (its brushed grain) and skin they read as a streaky pink slab (2026-10-04: the user, 'somwthing wrong with elf helm').",
+  "uv_note": "Two texture coordinates in MU's own HelmMale20.bmd read (0, 1.114222e+23), a corrupt value; the bake layout scaled every island to nothing round it and the helm baked black (2026-10-04: the user, 'somwthing wrong with elf helm'). Each is given the coordinate of another corner of its own face in the .obj, so the face samples its neighbours' paint rather than a smear across the sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 206.4,
+      "along": [
+        8.9,
+        15.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.999,
+        0.998
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.877,
+        0.957
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 56,
+      "area": 2220.0,
+      "along": [
+        -19.3,
+        19.6
+      ],
+      "mu_uv": [
+        -0.03,
+        0.028,
+        0.997,
+        0.937
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.768,
+        0.768
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 5,
+      "area": 186.6,
+      "along": [
+        -4.0,
+        13.1
+      ],
+      "mu_uv": [
+        0.272,
+        0.836,
+        1.003,
+        1.0
+      ],
+      "bake_uv": [
+        0.01,
+        0.597,
+        0.381,
+        0.773
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 206.4,
+      "along": [
+        8.9,
+        15.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.999,
+        0.998
+      ],
+      "bake_uv": [
+        0.036,
+        0.023,
+        0.99,
+        0.991
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 5,
+      "area": 186.6,
+      "along": [
+        -4.0,
+        13.1
+      ],
+      "mu_uv": [
+        0.272,
+        0.836,
+        1.003,
+        1.0
+      ],
+      "bake_uv": [
+        0.354,
+        0.649,
+        0.714,
+        0.823
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 793.5,
+      "along": [
+        -28.0,
+        9.9
+      ],
+      "mu_uv": [
+        0.254,
+        0.356,
+        0.884,
+        0.843
+      ],
+      "bake_uv": [
+        0.319,
+        0.025,
+        0.706,
+        0.622
+      ]
+    },
+    {
+      "island": 6,
+      "material": "feather",
+      "triangles": 128,
+      "area": 3094.7,
+      "along": [
+        -18.9,
+        10.9
+      ],
+      "mu_uv": [
+        0.502,
+        0.607,
+        0.993,
+        1.0
+      ],
+      "bake_uv": [
+        0.186,
+        0.129,
+        0.923,
+        0.287
+      ]
+    },
+    {
+      "island": 7,
+      "material": "feather",
+      "triangles": 12,
+      "area": 117.7,
+      "along": [
+        -14.3,
+        0.0
+      ],
+      "mu_uv": [
+        0.639,
+        0.492,
+        0.762,
+        0.562
+      ],
+      "bake_uv": [
+        0.01,
+        0.406,
+        0.069,
+        0.547
+      ]
+    },
+    {
+      "island": 8,
+      "material": "feather",
+      "triangles": 12,
+      "area": 117.7,
+      "along": [
+        -14.3,
+        0.0
+      ],
+      "mu_uv": [
+        0.639,
+        0.492,
+        0.762,
+        0.562
+      ],
+      "bake_uv": [
+        0.01,
+        0.027,
+        0.559,
+        0.494
+      ]
+    }
+  ]
+}

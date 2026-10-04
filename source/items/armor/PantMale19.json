@@ -1,0 +1,109 @@
+{
+  "item": "PantMale19",
+  "mu_name": "Grand Soul Pants",
+  "mu_name_from": "MuMain loads the set at index 18 from Data/Player/t_PantMale19.bmd (ZzzOpenData.cpp:180-198: file 18 + i, and its pants from t_PantMale19 at :188-191). MU's group 9 number 18.",
+  "why_this_one": "The Soul Master's first set, the second class's gear (the user, 2026-10-04: 'Early sets'). docs/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets); WebZen's own 1.00m item(Kor).txt row 18 agrees.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs; WebZen 0.99.60T package, Data/lang/Kor/item(Kor).txt (Version 1.00m, 2005-03-07).",
+    "call": "CreateArmor(18, 4, 2, 2, \"Grand Soul Pants\", 86, 30, 67, 0, 59, 20, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 18,
+    "drop_level": 86,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 30,
+    "durability": 67,
+    "requires": {
+      "level": 0,
+      "strength": 59,
+      "agility": 20,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2, WebZen's 흑마법사 column 2. sim::fits asks Wearer::second (docs/second-class-gear.md)."
+  },
+  "sheets": {
+    "lower_14m_jpg": "lower_14m.png",
+    "hide": "hide.png",
+    "lower_14m_tga": "lower_14m_t.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: a dark violet robe with gold trim; hide is MU's black cap over the openings. lower_14m_t is the .OZT lower_14m, opaque, the framed front panel on its 56 triangles; the rest wear the .OZJ.",
+  "material_note": "cloth: the Grand Soul is a robe, dark violet with gold trim painted on, not plate.",
+  "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 100,
+      "area": 8235.7,
+      "along": [
+        -12.3,
+        14.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.097,
+        0.925,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 10,
+      "area": 1032.7,
+      "along": [
+        6.8,
+        32.7
+      ],
+      "mu_uv": [
+        0.37,
+        0.002,
+        0.995,
+        0.116
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.103,
+        0.206
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 56,
+      "area": 5097.5,
+      "along": [
+        -32.2,
+        0.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.458
+      ]
+    }
+  ]
+}

@@ -36,6 +36,17 @@
   ],
   "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: deep blue lacquered plate with gold trim; hide is MU's black cap over the openings.",
   "material_note": "painted_steel and not plate_steel: Dark Phoenix is blue lacquer with gold trim painted on, and as plate_steel the blue read as polished black metal with white blowouts in the fire (studio, 2026-10-04). MU's paint is the look.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
   "islands": [
     {
       "island": 0,
