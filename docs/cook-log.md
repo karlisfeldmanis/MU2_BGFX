@@ -266,9 +266,24 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | kalnpc | figure | 2026-10-01 23:13 | awaiting | Oracle Layla; judged only on a Blender render of the glb (no stage shot, not placed): hooded woman in a white robe with red vine paint sitting on a carved sandstone crate of red, blue and violet bottles; textured, not inside out; the sandstone reads coarse |
 | NpcSenatus | figure | 2026-10-01 23:40 | awaiting | Senior (223), in Layla's place; judged only on a Blender render of the glb (no stage shot, not placed): white-bearded old man, deep blue hooded robe with a gold mantle, gold belt and gold leaf at the hems, a pale panel down the front, a thin steel staff with a gilt head in his right hand; textured, not inside out. MU's scale 1.1 is the placement's |
 | tersia | figure | 2026-10-02 00:20 | awaiting | Tersia (566), in Senatus's place; judged only on a Blender render of the glb (no stage shot, not placed): long purple hair, dark purple-black leather armour with copper trim and a jagged cut-out skirt, armoured greaves and boots, an open parchment in one hand and a quill in the other; textured, not inside out, cut-outs whole. MU's scale 0.93 is the placement's; her idles play at the flat 0.25, not MU's 0.35/0.3; the chrome overlay on her armour is not drawn |
+| Mace04 | arm | 2026-10-02 16:55 | awaiting |  |
+| Sword11 | arm | 2026-10-02 17:17 | awaiting |  |
+| Mace05 | arm | 2026-10-02 17:16 | awaiting |  |
 | Chaos Dragon Axe | arm | 2026-10-02 21:30 | passed | studio 8x3: silver-red blades read at noon and dusk, the ft72 flame breathes red at the edges; the far face goes dark in shade as the Legendary Sword's does, no blowouts |
 | Chaos Nature Bow | arm | 2026-10-02 21:36 | passed | studio 8x3: the whole bow an additive green ghost on bow77, as MU's BlendMesh -2 draws it; silver fittings bright but not blown, holds at night |
 | Chaos Lightning Staff | arm | 2026-10-02 21:42 | passed | studio 8x3: deep blue lacquered head and spikes, gold rings; the u2u2 streaks flicker blue round the head and foot; no blowouts |
-| Orc01 | figure | 2026-10-03 11:19 | passed | bloodcastle, on the road: painted_steel keeps the gilt bronze; brass had gone pale silver |
+| Crow01 | world | 2026-10-02 21:56 | awaiting |  |
+| Orc01 | figure | 2026-10-03 21:34 | awaiting |  |
 | Bali01 | figure | 2026-10-03 11:24 | passed | summoned in a muted Lorencia arena, borrowed from figures_noria.json (Bali spawns nowhere; summoned_in noria): teal muscled hide in skin, the loin plate, bracers and horn bases in brass without blowout, the cyan mane cut out; about twice the elf's height at MU's 0.12 |
+| Staff11 | arm | 2026-10-03 12:44 | awaiting |  |
+| SaintStatue01 | figure | 2026-10-03 13:18 | awaiting |  |
+| OrcArcher01 | figure | 2026-10-03 21:40 | awaiting |  |
+| DarkSkull01 | figure | 2026-10-03 21:43 | awaiting |  |
+| RedSkeleton01 | figure | 2026-10-03 21:46 | awaiting |  |
+| Sword20 | arm | 2026-10-03 22:15 | awaiting |  |
+| Bow19 | arm | 2026-10-03 22:19 | awaiting |  |
+| Shield14 | arm | 2026-10-03 22:36 | awaiting |  |
+| Mace06 | arm | 2026-10-03 22:42 | awaiting |  |
+| CrossBow07 | arm | 2026-10-03 22:49 | awaiting |  |
+| Staff07 | arm | 2026-10-03 23:15 | awaiting |  |
 | Fish02 | world | 2026-10-04 00:24 | passed | the school reads at 184,24: small cichlids shoaling past the corals, tethered round the hero |

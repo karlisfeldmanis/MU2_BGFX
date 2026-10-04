@@ -1,0 +1,220 @@
+{
+  "item": "NpcSenatus",
+  "mu_name": "Senior",
+  "mu_name_from": "NPC/NpcSenatus.bmd, loaded as MODEL_NPC_SENATUS (ZzzOpenData.cpp:1961-1963, its textures out of Npc\\), MuMain's MONSTER_SENIOR (GMBattleCastle.cpp:1384-1391), the elder of the Valley of Loren. Type 223, OpenMU's 'Senior' (VersionSeasonSix/NpcInitialization.cs:395-396). Not Version075's.",
+  "world": "losttower",
+  "object_type": -1,
+  "why_this_one": "The user asked for him in the Lost Tower's safe hall in place of Oracle Layla (2026-10-01); placement and his quest are the user's. An old white-bearded man in a deep blue hooded robe with gold trim, holding a thin staff: 958 triangles on one 256 sheet, 52 bones, three clips.",
+  "scale_from": "CreateCharacter stands him at `c->Object.Scale = 1.1f` (GMBattleCastle.cpp:1388), MU's own and not this mesh's: whoever stands him owes the 1.1, as a placement's scale. No lift, no BlendMesh, no subtype; NotRotateOnMagicHit is set and both weapon slots are empty (-1), so the staff is his mesh, not a held item.",
+  "actions_from": "Three clips, all kept (export-rig --actions=all): action 0 seven keys, action 1 nineteen, action 2 thirteen. MuMain has no MoveCharacter or MoveCharacterVisual case for MODEL_NPC_SENATUS, so he plays them as any townsperson does, and no effect is owed.",
+  "profile": "npc",
+  "sheets": {
+    "elder": "npc_elder.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix.",
+  "sheet_materials": {
+    "elder": "skin"
+  },
+  "sheet_materials_from": "One page carrying his face, beard, robe, gold trim and staff together, so skin, as every townsperson's shared page does.",
+  "islands_from": "The build fills this.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 124,
+      "area": 1045.3,
+      "along": [
+        -5.4,
+        27.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.004,
+        0.781,
+        0.607
+      ],
+      "bake_uv": [
+        0.01,
+        0.023,
+        0.976,
+        0.947
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 326,
+      "area": 33128.9,
+      "along": [
+        -130.3,
+        12.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.005,
+        0.996,
+        0.998
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.961,
+        0.99
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 27,
+      "area": 1338.7,
+      "along": [
+        -36.2,
+        1.7
+      ],
+      "mu_uv": [
+        0.352,
+        0.826,
+        0.826,
+        0.971
+      ],
+      "bake_uv": [
+        0.011,
+        0.76,
+        0.431,
+        0.839
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 27,
+      "area": 1338.7,
+      "along": [
+        -36.1,
+        1.8
+      ],
+      "mu_uv": [
+        0.352,
+        0.826,
+        0.826,
+        0.971
+      ],
+      "bake_uv": [
+        0.1,
+        0.667,
+        0.358,
+        0.746
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 121,
+      "area": 9219.6,
+      "along": [
+        -56.6,
+        -10.6
+      ],
+      "mu_uv": [
+        0.094,
+        0.352,
+        0.88,
+        0.819
+      ],
+      "bake_uv": [
+        0.048,
+        0.012,
+        0.718,
+        0.738
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 121,
+      "area": 9327.0,
+      "along": [
+        -37.7,
+        16.7
+      ],
+      "mu_uv": [
+        0.094,
+        0.352,
+        0.88,
+        0.819
+      ],
+      "bake_uv": [
+        0.012,
+        0.011,
+        0.617,
+        0.86
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 64,
+      "area": 2115.9,
+      "along": [
+        -21.7,
+        13.6
+      ],
+      "mu_uv": [
+        0.472,
+        0.117,
+        0.692,
+        0.292
+      ],
+      "bake_uv": [
+        0.575,
+        0.421,
+        0.919,
+        0.848
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 40,
+      "area": 1182.1,
+      "along": [
+        -28.0,
+        5.5
+      ],
+      "mu_uv": [
+        0.327,
+        0.17,
+        0.607,
+        0.786
+      ],
+      "bake_uv": [
+        0.113,
+        0.011,
+        0.952,
+        0.375
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 40,
+      "area": 1174.3,
+      "along": [
+        -26.6,
+        5.3
+      ],
+      "mu_uv": [
+        0.327,
+        0.17,
+        0.607,
+        0.786
+      ],
+      "bake_uv": [
+        0.012,
+        0.03,
+        0.957,
+        0.98
+      ]
+    }
+  ]
+}

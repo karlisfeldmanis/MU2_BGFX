@@ -1,0 +1,1095 @@
+{
+  "item": "kalnpc",
+  "mu_name": "Oracle Layla",
+  "mu_name_from": "NPC/kalnpc.bmd, loaded as MODEL_KALIMA_SHOP (ZzzOpenData.cpp:1994-1997, its textures out of Npc\\), MuMain's MONSTER_ORACLE_LAYLA, named KalimaShop (ZzzCharacter.cpp:14627-14632). Type 259, OpenMU's 'Oracle Layla' (VersionSeasonSix/NpcInitialization.cs:172), who stands in Kalima's base (KalimaBase.cs:34) and sells the potion girl's store (Updates/AddKalimaPlugIn.cs:59-64). Not Version075's.",
+  "world": "losttower",
+  "object_type": -1,
+  "why_this_one": "The user asked for Layla as a figure for the Lost Tower's safe hall (2026-10-01); placement and her quest are the user's. A woman in a white robe with red vine paint, her potion bottles and a carved sandstone block with her: 1602 triangles on five sheets, 53 bones, one idle.",
+  "profile": "npc",
+  "sheets": {
+    "npcl": "npc_npcl.png",
+    "medicine1": "medicine1.png",
+    "medicine2": "medicine2.png",
+    "potion": "npc_potion.png",
+    "ship": "npc_ship.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix. medicine1 and medicine2 decode pixel for pixel to the potions' own medicine1.png and medicine2.png already in source/textures, so they are shared.",
+  "sheet_materials": {
+    "npcl": "skin",
+    "medicine1": "glass",
+    "medicine2": "glass",
+    "potion": "glass",
+    "ship": "rock"
+  },
+  "sheet_materials_from": "npcl is one page carrying her face and her robe together, so skin, as every townsperson's shared page does. medicine1 and medicine2 are the potions' glass, as Potion02's islands are; potion is a violet bottle with a gilt collar; ship is carved sandstone.",
+  "placement_from": "CreateCharacter raises her: `c->Object.Position[2] += 140.0f` (ZzzCharacter.cpp:14630), 140 MU units (1.4 m) above the ground she is spawned on. Whoever stands her owes that lift; it is not in the mesh. Default scale, no subtype, no BlendMesh.",
+  "draw_from": "RenderObjectMesh's MODEL_KALIMA_SHOP case (ZzzObject.cpp:1162-1198): every mesh RENDER_TEXTURE, opaque, under BodyLight (1,1,1), drawn in reverse order -- ship, potion, medicine2, medicine1, npcl -- which only matters to MU's own sorting; nothing is added or blended.",
+  "effects_from": "Same case, not drawn yet: two BITMAP_LIGHT sprites in (0.4, 0.2, 0.4) violet, scale sin(WorldTime*0.002)*0.3+0.6 + 3.5, one at bone 3 (Bip01 Pelvis) offset (30, 40, 0) and one at bone 21 (Bip01 L Thigh); and BITMAP_SMOKE type 11 at 0.4 under her each frame (fps-checked), at (+40, +30, -90) and (-40, -30, -90) from her raised position.",
+  "islands_from": "Found by the build, then assigned by sheet, the triangle counts adding up to export-obj's per mesh. 38 and 39 (432 + 38) are all of npcl, so skin. 0-37 (828) are medicine1 and medicine2 together, her rows of little bottles, glass as Potion02's are; 40-45 (192) are potion, the violet bottle, glass. 46 and 47 (102 + 10) are ship, the carved sandstone, rock.",
+  "bake_share": {
+    "medicine1": 0.03,
+    "medicine2": 0.03,
+    "potion": 0.2,
+    "ship": 0.12
+  },
+  "bake_share_note": "Her bottles are the potions' 32-px and 16-px sheets drawn nineteen times over, the violet bottle's sheet four times, and the carved sandstone one 128 tile laid a dozen times round her seat; clean_lowpoly.match_density counted every repeat at full weight and left her robe and face 6% of the map. As Mace03's chain: the shares bring each repeated sheet back to about one sheet's room, so the page MU painted her on gets the most of it.",
+  "obj_from": "tools/MuExtract export-obj and export-rig --actions=all off kalnpc.bmd, with one hand fix: the ship mesh carries two vertices no triangle uses (the 294th and 295th of its 310, OBJ 1599 and 1600), which Blender's OBJ import drops, and clean_lowpoly then refused the rig's 310 bindings against 308 vertices. Both are taken out of the .obj (faces renumbered) and out of the rig's ship vertex_bones (bone 50, as all of ship's are). Nothing drawn changes.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 44,
+      "area": 2213.0,
+      "along": [
+        -12.7,
+        4.0
+      ],
+      "mu_uv": [
+        -0.166,
+        0.5,
+        0.992,
+        0.998
+      ],
+      "bake_uv": [
+        0.374,
+        0.196,
+        0.878,
+        0.729
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1070.4,
+      "along": [
+        -11.4,
+        3.3
+      ],
+      "mu_uv": [
+        -0.0,
+        0.023,
+        1.0,
+        0.988
+      ],
+      "bake_uv": [
+        0.393,
+        0.904,
+        0.448,
+        0.972
+      ]
+    },
+    {
+      "island": 2,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1302.1,
+      "along": [
+        7.4,
+        22.0
+      ],
+      "mu_uv": [
+        -0.008,
+        0.496,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.336,
+        0.582,
+        0.908,
+        0.94
+      ]
+    },
+    {
+      "island": 3,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1302.1,
+      "along": [
+        -7.0,
+        7.7
+      ],
+      "mu_uv": [
+        -0.0,
+        0.023,
+        1.0,
+        0.988
+      ],
+      "bake_uv": [
+        0.446,
+        0.904,
+        0.529,
+        0.972
+      ]
+    },
+    {
+      "island": 4,
+      "material": "glass",
+      "triangles": 44,
+      "area": 2210.4,
+      "along": [
+        6.1,
+        23.1
+      ],
+      "mu_uv": [
+        -0.316,
+        0.02,
+        0.991,
+        0.985
+      ],
+      "bake_uv": [
+        0.337,
+        0.299,
+        0.825,
+        0.973
+      ]
+    },
+    {
+      "island": 5,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1302.1,
+      "along": [
+        7.3,
+        22.0
+      ],
+      "mu_uv": [
+        -0.008,
+        0.496,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.853,
+        0.013,
+        0.942,
+        0.651
+      ]
+    },
+    {
+      "island": 6,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1302.1,
+      "along": [
+        -10.7,
+        4.0
+      ],
+      "mu_uv": [
+        -0.0,
+        0.023,
+        1.0,
+        0.988
+      ],
+      "bake_uv": [
+        0.24,
+        0.914,
+        0.526,
+        0.972
+      ]
+    },
+    {
+      "island": 7,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1302.1,
+      "along": [
+        -17.2,
+        -2.5
+      ],
+      "mu_uv": [
+        -0.008,
+        0.496,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.853,
+        0.661,
+        0.961,
+        0.699
+      ]
+    },
+    {
+      "island": 8,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1070.4,
+      "along": [
+        7.6,
+        22.3
+      ],
+      "mu_uv": [
+        -0.0,
+        0.023,
+        1.0,
+        0.988
+      ],
+      "bake_uv": [
+        0.103,
+        0.918,
+        0.211,
+        0.973
+      ]
+    },
+    {
+      "island": 9,
+      "material": "glass",
+      "triangles": 44,
+      "area": 2210.4,
+      "along": [
+        -12.3,
+        4.7
+      ],
+      "mu_uv": [
+        -0.316,
+        0.02,
+        0.991,
+        0.985
+      ],
+      "bake_uv": [
+        0.745,
+        0.803,
+        0.878,
+        0.973
+      ]
+    },
+    {
+      "island": 10,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1070.4,
+      "along": [
+        7.5,
+        22.1
+      ],
+      "mu_uv": [
+        -0.008,
+        0.496,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.853,
+        0.09,
+        0.961,
+        0.74
+      ]
+    },
+    {
+      "island": 11,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1070.4,
+      "along": [
+        6.9,
+        21.5
+      ],
+      "mu_uv": [
+        -0.0,
+        0.023,
+        1.0,
+        0.988
+      ],
+      "bake_uv": [
+        0.013,
+        0.529,
+        0.981,
+        0.943
+      ]
+    },
+    {
+      "island": 12,
+      "material": "glass",
+      "triangles": 44,
+      "area": 2213.0,
+      "along": [
+        21.6,
+        38.3
+      ],
+      "mu_uv": [
+        -0.166,
+        0.5,
+        0.992,
+        0.998
+      ],
+      "bake_uv": [
+        0.816,
+        0.188,
+        0.931,
+        0.32
+      ]
+    },
+    {
+      "island": 13,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1070.5,
+      "along": [
+        27.0,
+        41.5
+      ],
+      "mu_uv": [
+        -0.008,
+        0.496,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.663,
+        0.09,
+        0.961,
+        0.915
+      ]
+    },
+    {
+      "island": 14,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1302.1,
+      "along": [
+        36.7,
+        51.4
+      ],
+      "mu_uv": [
+        -0.008,
+        0.496,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.582,
+        0.893,
+        0.772,
+        0.975
+      ]
+    },
+    {
+      "island": 15,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1302.1,
+      "along": [
+        24.7,
+        39.4
+      ],
+      "mu_uv": [
+        -0.0,
+        0.023,
+        1.0,
+        0.988
+      ],
+      "bake_uv": [
+        0.24,
+        0.143,
+        0.95,
+        0.982
+      ]
+    },
+    {
+      "island": 16,
+      "material": "glass",
+      "triangles": 44,
+      "area": 2213.0,
+      "along": [
+        12.3,
+        29.0
+      ],
+      "mu_uv": [
+        -0.166,
+        0.5,
+        0.992,
+        0.998
+      ],
+      "bake_uv": [
+        0.24,
+        0.292,
+        0.934,
+        0.888
+      ]
+    },
+    {
+      "island": 17,
+      "material": "glass",
+      "triangles": 44,
+      "area": 2213.0,
+      "along": [
+        21.6,
+        38.4
+      ],
+      "mu_uv": [
+        -0.166,
+        0.5,
+        0.992,
+        0.998
+      ],
+      "bake_uv": [
+        0.013,
+        0.879,
+        0.935,
+        0.935
+      ]
+    },
+    {
+      "island": 18,
+      "material": "glass",
+      "triangles": 28,
+      "area": 1070.5,
+      "along": [
+        32.0,
+        46.7
+      ],
+      "mu_uv": [
+        -0.0,
+        0.023,
+        1.0,
+        0.988
+      ],
+      "bake_uv": [
+        0.897,
+        0.404,
+        0.953,
+        0.985
+      ]
+    },
+    {
+      "island": 19,
+      "material": "glass",
+      "triangles": 12,
+      "area": 148.4,
+      "along": [
+        -13.6,
+        4.9
+      ],
+      "mu_uv": [
+        -0.003,
+        0.075,
+        0.997,
+        0.575
+      ],
+      "bake_uv": [
+        0.156,
+        0.815,
+        0.211,
+        0.842
+      ]
+    },
+    {
+      "island": 20,
+      "material": "glass",
+      "triangles": 12,
+      "area": 239.5,
+      "along": [
+        -13.6,
+        4.9
+      ],
+      "mu_uv": [
+        -0.003,
+        0.088,
+        0.997,
+        0.573
+      ],
+      "bake_uv": [
+        0.745,
+        0.848,
+        0.801,
+        0.875
+      ]
+    },
+    {
+      "island": 21,
+      "material": "glass",
+      "triangles": 8,
+      "area": 182.1,
+      "along": [
+        6.6,
+        22.9
+      ],
+      "mu_uv": [
+        -0.006,
+        0.08,
+        0.994,
+        0.567
+      ],
+      "bake_uv": [
+        0.663,
+        0.84,
+        0.718,
+        0.867
+      ]
+    },
+    {
+      "island": 22,
+      "material": "glass",
+      "triangles": 8,
+      "area": 182.1,
+      "along": [
+        -7.8,
+        8.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.07,
+        1.001,
+        0.553
+      ],
+      "bake_uv": [
+        0.833,
+        0.466,
+        0.889,
+        0.493
+      ]
+    },
+    {
+      "island": 23,
+      "material": "glass",
+      "triangles": 12,
+      "area": 151.0,
+      "along": [
+        5.1,
+        24.0
+      ],
+      "mu_uv": [
+        -0.006,
+        0.15,
+        0.994,
+        0.528
+      ],
+      "bake_uv": [
+        0.745,
+        0.901,
+        0.801,
+        0.922
+      ]
+    },
+    {
+      "island": 24,
+      "material": "glass",
+      "triangles": 12,
+      "area": 243.6,
+      "along": [
+        5.1,
+        24.0
+      ],
+      "mu_uv": [
+        -0.006,
+        0.13,
+        0.994,
+        0.534
+      ],
+      "bake_uv": [
+        0.843,
+        0.8,
+        0.899,
+        0.823
+      ]
+    },
+    {
+      "island": 25,
+      "material": "glass",
+      "triangles": 8,
+      "area": 182.1,
+      "along": [
+        6.5,
+        22.8
+      ],
+      "mu_uv": [
+        -0.006,
+        0.08,
+        0.994,
+        0.567
+      ],
+      "bake_uv": [
+        0.814,
+        0.143,
+        0.869,
+        0.17
+      ]
+    },
+    {
+      "island": 26,
+      "material": "glass",
+      "triangles": 8,
+      "area": 182.1,
+      "along": [
+        -11.5,
+        4.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.07,
+        1.001,
+        0.553
+      ],
+      "bake_uv": [
+        0.833,
+        0.518,
+        0.889,
+        0.545
+      ]
+    },
+    {
+      "island": 27,
+      "material": "glass",
+      "triangles": 8,
+      "area": 182.1,
+      "along": [
+        -18.0,
+        -1.7
+      ],
+      "mu_uv": [
+        -0.006,
+        0.08,
+        0.994,
+        0.567
+      ],
+      "bake_uv": [
+        0.816,
+        0.346,
+        0.872,
+        0.372
+      ]
+    },
+    {
+      "island": 28,
+      "material": "glass",
+      "triangles": 12,
+      "area": 151.0,
+      "along": [
+        -13.2,
+        5.7
+      ],
+      "mu_uv": [
+        -0.006,
+        0.15,
+        0.994,
+        0.528
+      ],
+      "bake_uv": [
+        0.826,
+        0.901,
+        0.882,
+        0.922
+      ]
+    },
+    {
+      "island": 29,
+      "material": "glass",
+      "triangles": 12,
+      "area": 243.6,
+      "along": [
+        -13.2,
+        5.7
+      ],
+      "mu_uv": [
+        -0.006,
+        0.13,
+        0.994,
+        0.534
+      ],
+      "bake_uv": [
+        0.848,
+        0.244,
+        0.904,
+        0.266
+      ]
+    },
+    {
+      "island": 30,
+      "material": "glass",
+      "triangles": 12,
+      "area": 148.4,
+      "along": [
+        20.6,
+        39.2
+      ],
+      "mu_uv": [
+        -0.003,
+        0.075,
+        0.997,
+        0.575
+      ],
+      "bake_uv": [
+        0.237,
+        0.815,
+        0.293,
+        0.842
+      ]
+    },
+    {
+      "island": 31,
+      "material": "glass",
+      "triangles": 12,
+      "area": 239.5,
+      "along": [
+        20.6,
+        39.2
+      ],
+      "mu_uv": [
+        -0.003,
+        0.088,
+        0.997,
+        0.573
+      ],
+      "bake_uv": [
+        0.393,
+        0.851,
+        0.448,
+        0.878
+      ]
+    },
+    {
+      "island": 32,
+      "material": "glass",
+      "triangles": 8,
+      "area": 182.1,
+      "along": [
+        35.9,
+        52.2
+      ],
+      "mu_uv": [
+        -0.006,
+        0.08,
+        0.994,
+        0.567
+      ],
+      "bake_uv": [
+        0.816,
+        0.398,
+        0.872,
+        0.425
+      ]
+    },
+    {
+      "island": 33,
+      "material": "glass",
+      "triangles": 8,
+      "area": 182.1,
+      "along": [
+        23.9,
+        40.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.07,
+        1.001,
+        0.553
+      ],
+      "bake_uv": [
+        0.834,
+        0.013,
+        0.889,
+        0.04
+      ]
+    },
+    {
+      "island": 34,
+      "material": "glass",
+      "triangles": 12,
+      "area": 148.4,
+      "along": [
+        11.3,
+        29.9
+      ],
+      "mu_uv": [
+        -0.003,
+        0.075,
+        0.997,
+        0.575
+      ],
+      "bake_uv": [
+        0.013,
+        0.825,
+        0.068,
+        0.853
+      ]
+    },
+    {
+      "island": 35,
+      "material": "glass",
+      "triangles": 12,
+      "area": 239.5,
+      "along": [
+        11.3,
+        29.9
+      ],
+      "mu_uv": [
+        -0.003,
+        0.088,
+        0.997,
+        0.573
+      ],
+      "bake_uv": [
+        0.474,
+        0.851,
+        0.529,
+        0.878
+      ]
+    },
+    {
+      "island": 36,
+      "material": "glass",
+      "triangles": 12,
+      "area": 148.4,
+      "along": [
+        20.7,
+        39.3
+      ],
+      "mu_uv": [
+        -0.003,
+        0.075,
+        0.997,
+        0.575
+      ],
+      "bake_uv": [
+        0.582,
+        0.84,
+        0.637,
+        0.868
+      ]
+    },
+    {
+      "island": 37,
+      "material": "glass",
+      "triangles": 12,
+      "area": 239.5,
+      "along": [
+        20.7,
+        39.3
+      ],
+      "mu_uv": [
+        -0.003,
+        0.088,
+        0.997,
+        0.573
+      ],
+      "bake_uv": [
+        0.826,
+        0.848,
+        0.882,
+        0.875
+      ]
+    },
+    {
+      "island": 38,
+      "material": "skin",
+      "triangles": 432,
+      "area": 22396.3,
+      "along": [
+        40.9,
+        108.7
+      ],
+      "mu_uv": [
+        0.022,
+        0.019,
+        0.988,
+        0.987
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.979,
+        0.977
+      ]
+    },
+    {
+      "island": 39,
+      "material": "skin",
+      "triangles": 38,
+      "area": 322.4,
+      "along": [
+        57.7,
+        68.8
+      ],
+      "mu_uv": [
+        0.529,
+        0.456,
+        0.682,
+        0.716
+      ],
+      "bake_uv": [
+        0.686,
+        0.013,
+        0.737,
+        0.429
+      ]
+    },
+    {
+      "island": 40,
+      "material": "glass",
+      "triangles": 64,
+      "area": 2270.7,
+      "along": [
+        -6.2,
+        21.8
+      ],
+      "mu_uv": [
+        0.082,
+        0.128,
+        0.98,
+        0.987
+      ],
+      "bake_uv": [
+        0.265,
+        0.218,
+        0.716,
+        0.751
+      ]
+    },
+    {
+      "island": 41,
+      "material": "glass",
+      "triangles": 16,
+      "area": 357.7,
+      "along": [
+        -6.3,
+        21.9
+      ],
+      "mu_uv": [
+        0.017,
+        0.023,
+        0.98,
+        0.105
+      ],
+      "bake_uv": [
+        0.582,
+        0.302,
+        0.771,
+        0.814
+      ]
+    },
+    {
+      "island": 42,
+      "material": "glass",
+      "triangles": 16,
+      "area": 284.6,
+      "along": [
+        3.8,
+        11.5
+      ],
+      "mu_uv": [
+        0.032,
+        0.345,
+        0.35,
+        0.978
+      ],
+      "bake_uv": [
+        0.763,
+        0.013,
+        0.976,
+        0.633
+      ]
+    },
+    {
+      "island": 43,
+      "material": "glass",
+      "triangles": 64,
+      "area": 2270.7,
+      "along": [
+        29.3,
+        57.3
+      ],
+      "mu_uv": [
+        0.082,
+        0.128,
+        0.98,
+        0.987
+      ],
+      "bake_uv": [
+        0.013,
+        0.143,
+        0.607,
+        0.751
+      ]
+    },
+    {
+      "island": 44,
+      "material": "glass",
+      "triangles": 16,
+      "area": 357.7,
+      "along": [
+        29.2,
+        57.4
+      ],
+      "mu_uv": [
+        0.017,
+        0.023,
+        0.98,
+        0.105
+      ],
+      "bake_uv": [
+        0.156,
+        0.777,
+        0.531,
+        0.826
+      ]
+    },
+    {
+      "island": 45,
+      "material": "glass",
+      "triangles": 16,
+      "area": 284.6,
+      "along": [
+        39.3,
+        47.0
+      ],
+      "mu_uv": [
+        0.032,
+        0.345,
+        0.35,
+        0.978
+      ],
+      "bake_uv": [
+        0.32,
+        0.188,
+        0.977,
+        0.828
+      ]
+    },
+    {
+      "island": 46,
+      "material": "rock",
+      "triangles": 102,
+      "area": 102897.2,
+      "along": [
+        -38.7,
+        73.9
+      ],
+      "mu_uv": [
+        -0.193,
+        -0.017,
+        0.999,
+        1.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.987,
+        0.951
+      ]
+    },
+    {
+      "island": 47,
+      "material": "rock",
+      "triangles": 10,
+      "area": 5137.9,
+      "along": [
+        -15.5,
+        50.7
+      ],
+      "mu_uv": [
+        0.022,
+        0.128,
+        0.947,
+        0.461
+      ],
+      "bake_uv": [
+        0.428,
+        0.74,
+        0.684,
+        0.947
+      ]
+    }
+  ]
+}
