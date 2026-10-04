@@ -1558,8 +1558,12 @@ void Desk::labelGround(const Play& play, int width, int height) {
         for (bool moved = true; moved;) {
             moved = false;
             for (size_t p : placed) {
-                if (crosses(plate, labels[p].plate)) {
-                    plate.y = labels[p].plate.y - plate.h - gap;
+                // Only ever up: just over p sits on crosses' own edge, and float rounding can
+                // still call it crossing -- set to the same y forever, it froze the game on a
+                // pile of drops (2026-10-04, crashes/hang-2026-10-04_22-07-25.txt).
+                const float over = labels[p].plate.y - plate.h - gap;
+                if (crosses(plate, labels[p].plate) && over < plate.y) {
+                    plate.y = over;
                     moved = true;
                 }
             }
