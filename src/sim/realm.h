@@ -1088,6 +1088,8 @@ private:
     // Whether this monster's blow ices the hero (realm_tuning.h, kChillers), and icing him when
     // it does and he is not iced already -- on a hit and on a miss alike.
     bool chills(const Body& monster) const;
+    // Whether a monster's blow is fire, for his Fire resistance (sim::Affix).
+    bool fireBlow(const Body& monster, bool flame) const;
     // Whether this blow is a boss's Flame of Evil (realm_tuning.h kBosses): one in five, off
     // bossDice_; false and no draw for every other breed.
     bool bossBlow(const Body& monster);

@@ -452,7 +452,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             const int value = sim::affixValue(affix, what.refinement);
             Row line;
             line.free = sim::affixName(affix);
-            line.tail = "+" + std::to_string(value) + (affix == sim::Affix::Leech ? "" : "%");
+            // Life a blow and resistance points are counts, the rest percent.
+            const bool count = affix == sim::Affix::Leech ||
+                               sim::affixElement(affix) != sim::Element::None;
+            line.tail = "+" + std::to_string(value) + (count ? "" : "%");
             line.freeTone = ink;
             does.rows.push_back(line);
         };

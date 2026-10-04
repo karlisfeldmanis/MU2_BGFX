@@ -156,8 +156,9 @@ int affixCount(const content::ItemRow& row, const Held& what) {
 
 int affixValue(Affix affix, int refinement) {
     // +0 and +9, the user's of 2026-10-03 ("+9 still to OP", then "its better").
-    static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 2};
-    static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 12};
+    // The resistances 1 to 4 points, MU's own ring at +4 (2026-10-04).
+    static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 2, 1, 1, 1, 1};
+    static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 12, 4, 4, 4, 4};
     const int at = int(affix);
     if (at <= 0 || at > kAffixes) return 0;
     const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
@@ -171,7 +172,21 @@ const char* affixName(Affix affix) {
         case Affix::Fortune: return "Item find";
         case Affix::Leech: return "Life per hit";
         case Affix::Fury: return "Critical damage";
+        case Affix::IceResistance: return "Ice resistance";
+        case Affix::PoisonResistance: return "Poison resistance";
+        case Affix::LightningResistance: return "Lightning resistance";
+        case Affix::FireResistance: return "Fire resistance";
         default: return "";
+    }
+}
+
+Element affixElement(Affix affix) {
+    switch (affix) {
+        case Affix::IceResistance: return Element::Ice;
+        case Affix::PoisonResistance: return Element::Poison;
+        case Affix::LightningResistance: return Element::Lightning;
+        case Affix::FireResistance: return Element::Fire;
+        default: return Element::None;
     }
 }
 

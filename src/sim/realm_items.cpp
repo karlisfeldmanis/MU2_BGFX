@@ -390,8 +390,10 @@ void Realm::rearm(Body& hero) {
             }
         }
     }
-    // The rings and the pendant: the largest resistance worn in each element (Max3), and every
-    // piece's life regeneration summed (docs/jewellery.md).
+    // The rings and the pendant: the largest resistance worn in each element (Max3), the
+    // resistance powers summed on top, and every piece's life regeneration summed
+    // (docs/jewellery.md).
+    int resistancePowers[kElements] = {};
     for (int slot : {kAmulet, kRingRight, kRingLeft}) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || !jewellery(*row)) continue;
@@ -400,6 +402,12 @@ void Realm::rearm(Body& hero) {
         if (elementOf(*row) == Element::Ice) e.iceResistance = std::max(e.iceResistance, resists);
         if (elementOf(*row) == Element::Poison) {
             e.poisonResistance = std::max(e.poisonResistance, resists);
+        }
+        if (elementOf(*row) == Element::Lightning) {
+            e.lightningResistance = std::max(e.lightningResistance, resists);
+        }
+        if (elementOf(*row) == Element::Fire) {
+            e.fireResistance = std::max(e.fireResistance, resists);
         }
         e.lifeRegen += optionValue(*row, bag_[slot].option);
         // A powered piece's signature and its further powers, every worn piece's added
@@ -414,12 +422,16 @@ void Realm::rearm(Body& hero) {
                 case Affix::Fortune: e.itemFind += value; break;
                 case Affix::Leech: e.lifeOnHit += value; break;
                 case Affix::Fury: e.criticalDamage += value; break;
-                default: break;
+                default: resistancePowers[int(affixElement(affix))] += value; break;
             }
         };
         add(signatureOf(*row));
         for (uint8_t a : held.affixes) add(Affix(a));
     }
+    hero.excel.iceResistance += resistancePowers[int(Element::Ice)];
+    hero.excel.poisonResistance += resistancePowers[int(Element::Poison)];
+    hero.excel.lightningResistance += resistancePowers[int(Element::Lightning)];
+    hero.excel.fireResistance += resistancePowers[int(Element::Fire)];
     // And Wealth on the Zen, beside the excellent armour's x1.4.
     hero.excel.zenRate *= 1.0 + double(hero.excel.moreZen) / 100.0;
     // Said once a change, when any is worn, so a run's log shows what the fight below it had.

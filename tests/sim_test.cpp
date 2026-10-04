@@ -7657,6 +7657,26 @@ void testPoweredJewellery(const content::Tables& tables) {
     checkEqual(e.lifeOnHit, 5, "life a hit: the pendant's");
     checkEqual(realm.hero().stats.criticalDamage, 12, "critical damage reaches the blow");
 
+    // The resistance powers (2026-10-04): every worn piece's on top of MU's largest.
+    checkEqual(sim::affixValue(sim::Affix::FireResistance, 0), 1, "a resistance 1 at +0");
+    checkEqual(sim::affixValue(sim::Affix::IceResistance, 9), 4, "4 at +9, MU's ring at +4");
+    sim::Realm wards;
+    wards.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+    const uint8_t iceFire[3] = {uint8_t(sim::Affix::IceResistance),
+                                uint8_t(sim::Affix::FireResistance)};
+    const uint8_t fireLightning[3] = {uint8_t(sim::Affix::FireResistance),
+                                      uint8_t(sim::Affix::LightningResistance)};
+    check(wards.give(tables.itemAt(13, 8), sim::kRingRight, 3) >= 0, "a Ring of Ice +3");
+    check(wards.give(wealth, sim::kRingLeft, 9, -1, false, 0, 0, 0, nullptr, iceFire) >= 0,
+          "a Ring of Wealth +9 with Ice and Fire resistance");
+    check(wards.give(fury, sim::kAmulet, 0, -1, false, 0, 0, 0, nullptr, fireLightning) >= 0,
+          "a Pendant of Fury +0 with Fire and Lightning resistance");
+    const sim::Excellence& w = wards.hero().excel;
+    checkEqual(w.iceResistance, 7, "ice: the ring's 3 and the power's 4");
+    checkEqual(w.fireResistance, 5, "fire: 4 and 1");
+    checkEqual(w.lightningResistance, 1, "lightning: the pendant's 1");
+    checkEqual(w.poisonResistance, 0, "poison: none worn");
+
     // A critical lays the top of the band and Fury's share on it.
     sim::Fighter attacker, defender;
     attacker.attackRate = 1000.0f;

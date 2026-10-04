@@ -101,6 +101,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (row != nullptr) force *= elementForce(attacker, skillElement(row->number));
     // His Wraths on every blow of his, whatever threw it (sim::kWrathDamage).
     force *= wrathForce(attacker);
+    // His Fire resistance on a monster's fire blow: kResistanceCut a point off, to
+    // kResistanceCutMost (sim::Affix, ours -- WebZen's fire turns nothing aside). No draw.
+    if (target.player && !attacker.player && target.excel.fireResistance > 0 &&
+        fireBlow(attacker, flame)) {
+        force *= float(1.0 - std::min(kResistanceCutMost,
+                                      kResistanceCut * double(target.excel.fireResistance)));
+    }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
@@ -198,7 +205,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (target.player && target.alive() && !attacker.player && attacker.kind >= 0 &&
         size_t(attacker.kind) < tables_->kinds.size() &&
         tables_->kinds[size_t(attacker.kind)].attackSkill == skill::kLightning &&
-        target.pushAt == 0 && target.pushTicks == 0) {
+        target.pushAt == 0 && target.pushTicks == 0 &&
+        !heroResists(target.excel.lightningResistance)) {
         target.pushAt = tick_ + kBeastPushDelay;
         target.pushFromX = attacker.x;
         target.pushFromY = attacker.y;
@@ -924,6 +932,15 @@ bool Realm::bossBlow(const Body& monster) {
     bool boss = false;
     for (const int32_t one : kBosses) boss = boss || one == number;
     return boss && bossDice_.nextInt(0, 4) == 0;
+}
+
+bool Realm::fireBlow(const Body& monster, bool flame) const {
+    // A boss's Flame of Evil, and a breed whose AttackSkill is a fire spell: the Lich's and the
+    // Cursed Wizard's Meteorite (WebZen's earth, a burning rock here as in skillElement) and Blood
+    // Castle's Giant Ogres' Fire Ball. The Hydra's head beams are lightning, which pushes.
+    if (flame) return true;
+    if (monster.kind < 0 || size_t(monster.kind) >= tables_->kinds.size()) return false;
+    return skillElement(tables_->kinds[size_t(monster.kind)].attackSkill) == Element::Fire;
 }
 
 bool Realm::chills(const Body& monster) const {

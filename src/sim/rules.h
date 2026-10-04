@@ -93,10 +93,15 @@ struct Excellence {
     // And Piercing Volleys in a Muse Elf's hands, which fan her Penetration (sim::lanesOf).
     int volleys = 0;
     // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
-    // resistance worn to Ice and to Poison, each turning the element aside r times in r + 1, and
-    // the percent of maximum life the worn pieces' options give back every kJewelleryRegenTicks.
+    // resistance worn in each element and the resistance powers on top: Ice and Poison each turn
+    // the element aside r times in r + 1, as Lightning does a beast's push; Fire cuts a fire blow
+    // (sim::kResistanceCut).
+    // And the percent of maximum life the worn pieces' options give back every
+    // kJewelleryRegenTicks.
     int iceResistance = 0;
     int poisonResistance = 0;
+    int lightningResistance = 0;
+    int fireResistance = 0;
     int lifeRegen = 0;
     // The powered rings' and pendant's (sim::Affix), every worn piece's summed, in percent but
     // the Leech's: more experience a kill, more Zen, a likelier item, life on a landed blow, and

@@ -100,5 +100,33 @@ copy of ring.png (source/textures/ring_*.png, necklace_fury.png):
   (Knights' Halls), the Pendant of Fury +3 with the Leech and Wisdom (the Pit), Wealth +3 with
   Wisdom and Fortune (The Red Floor), and the one legendary, Wisdom +4 with Wealth, Fortune and
   the Leech (The Scythe). Quest jewellery comes lucky with its option, as quest gear does.
+- **Resistances** (the user, 2026-10-04: "we need more resistance options for rings and
+  pendants, all of them as potential options"). Four more powers any of the five may draw as a
+  further power, none a signature: Ice, Poison, Lightning and Fire resistance, 1 point at +0, 2
+  at +4 and +6, 4 at +9 (MU's own ring at +4). Every worn piece's adds on top of the largest of
+  MU's four worn (Max3), so MU's Pendants of Fire and Lightning now count too. A drop's extra
+  powers are drawn from eight, so about half are resistances. `--give` takes A6 Ice, A7 Poison,
+  A8 Lightning, A9 Fire. See "Resistances" below for what each element stops.
 - **Not yet:** the shop price is MU's group-13 formula and ignores the powers. `--give` takes
   `A<n>` for each further power (1 Wisdom ... 5 Fury): `--give RingWisdom::+9LA2A3A4W`.
+
+## Resistances: who casts what (2026-10-04)
+
+The user: "we need to map all monsters which use some spell, and what type of damage is that so
+resistances make sense". WebZen never lessens damage by resistance: ResistanceCheck
+(ObjBaseAttack.cpp:558-700, 1.00.93) rolls the hero's resistance r against a spell's side effect
+only, turning it aside r times in r + 1 (retResistance). Skill.txt's attribute column names each
+spell's element (-1 none, 0 ice, 1 poison, 2 lightning, 3 fire, 4 earth). The breeds' spells are
+Monster.txt's A.Type, which agrees with our mu.db `attack_skill` for every breed to 52.
+
+| element | what it does to him | resistance does | breeds (number) |
+|---|---|---|---|
+| Poison (skill 1) | poisoned, 3% of life left every 3 s for 20 s (kPoisoners) | turns the poison aside, r in r+1 (WebZen) | Poison Bull (8), Larva (12), Poison Shadow (39) |
+| Ice (skill 7) | iced, half speed for 10 s (kChillers) | turns the chill aside, r in r+1 (WebZen) | Ice Monster (22), Silver Valkyrie (52) |
+| Lightning (skill 3) | pushed a tile (kBeastPushDelay) | turns the push aside, r in r+1 (WebZen's AT_SKILL_THUNDER) | Thunder Lich (9), Devil (37), Lizard King (48), Blood Castle's Magic Skeletons (89, 95, 112, 118, 124, 130); and the Hydra's (49) head beams, which push (ours) |
+| Fire | damage only | 5% less damage a point, to half (ours: MU's fire turns nothing aside) | Meteorite (skill 2, WebZen's earth, a burning rock here): Lich (6), Cursed Wizard (34); Fire Ball (skill 4): Blood Castle's Giant Ogres (87, 93, 99, 116, 122, 128); Flame of Evil (A.Type 150), one blow in five: Death Gorgon (35), Balrog (38), Hydra (49) |
+| none | damage only | nothing | Power Wave (11): Hell Spider (13), Ice Queen (25); Energy Ball (17): Yeti (19), Vepar (46) |
+
+Every other breed swings and has no spell. Open: the Ice Queen's is Power Wave in both WebZen and
+OpenMU, so she neither chills nor answers to Ice resistance; making her ice would be ours.
+

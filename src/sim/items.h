@@ -223,8 +223,30 @@ constexpr int64_t kJewelleryRegenTicks = 7 * 20;  // m_LifeFillCount > 6, once a
 // legendary ("if there is only 1 options its green, if more blue, purple, legendary"). A power's
 // value is the plus's alone, a square curve from +0 to +9 ("+9 still to OP", then "its better"),
 // and every worn piece adds its own.
-enum class Affix : uint8_t { None = 0, Wisdom, Wealth, Fortune, Leech, Fury };
-constexpr int kAffixes = 5;
+// The four resistances are further powers only, no piece's signature (the user, 2026-10-04: "we
+// need more resistance options for rings and pendants, all of them as potential options"): points
+// in their element on top of the largest of MU's own pieces worn. Ice, Poison and Lightning turn
+// aside the chill, the poison and the push r times in r + 1, WebZen's ResistanceCheck
+// (ObjBaseAttack.cpp:558); Fire, which turns nothing aside in MU, takes kResistanceCut a point
+// off a monster's fire blow, to kResistanceCutMost (ours). Which monster casts what:
+// docs/jewellery.md "Resistances".
+enum class Affix : uint8_t {
+    None = 0,
+    Wisdom,
+    Wealth,
+    Fortune,
+    Leech,
+    Fury,
+    IceResistance,
+    PoisonResistance,
+    LightningResistance,
+    FireResistance
+};
+constexpr int kAffixes = 9;
+// The element a resistance power is in, None for the other five.
+Element affixElement(Affix affix);
+constexpr double kResistanceCut = 0.05;
+constexpr double kResistanceCutMost = 0.5;
 // The row's own power, or None for anything not one of the five.
 Affix signatureOf(const content::ItemRow& row);
 inline bool powered(const content::ItemRow& row) { return signatureOf(row) != Affix::None; }

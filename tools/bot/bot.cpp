@@ -1010,11 +1010,9 @@ private:
     // of resistance, the option, and luck's crit. A rough sum; it only has to rank them.
     double jewelleryWorth(const sim::Held& one) const {
         const content::ItemRow& row = tables_->items[size_t(one.item)];
-        // Resistance only where something casts it on him: Ice and Poison in 0.75; a Pendant of
-        // Fire's or Lightning's turns nothing aside (docs/jewellery.md).
-        const sim::Element element = sim::elementOf(row);
-        const bool resists = element == sim::Element::Ice || element == sim::Element::Poison;
-        double worth = (resists ? sim::resistanceOf(row, one.refinement) : 0) + one.option * 2.0 +
+        // A point of resistance, every element's: Ice, Poison and Lightning turn the chill, the
+        // poison and the push aside, Fire cuts fire blows (docs/jewellery.md).
+        double worth = sim::resistanceOf(row, one.refinement) + one.option * 2.0 +
                        (one.luck ? 5.0 : 0.0);
         // A rune set is worth a power; an empty socket a little, for the rune he may set later.
         for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) worth += one.powers[k] ? 6.0 : 1.0;

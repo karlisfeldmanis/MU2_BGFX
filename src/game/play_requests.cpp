@@ -291,7 +291,8 @@ static void readExtras(const std::string& extras, int* plus, bool* luck, int* op
     for (size_t i = 0; i < extras.size(); ++i) {
         const char c = extras[i];
         // A<n>, again for each: a powered ring's or pendant's further powers (sim::Affix, 1 Wisdom
-        // to 5 Fury), past its own. `RingWisdom::+9LA2A3A4W` is a legendary +9 worn.
+        // to 5 Fury, 6 to 9 Ice, Poison, Lightning and Fire resistance), past its own.
+        // `RingWisdom::+9LA2A3A4W` is a legendary +9 worn.
         if ((c == 'A' || c == 'a') && affixes && nextAffix < 3) {
             affixes[nextAffix++] = uint8_t(std::clamp(std::atoi(extras.c_str() + i + 1), 0,
                                                       sim::kAffixes));
