@@ -46,6 +46,8 @@ public:
     // treasures (sim::classTreasure) stand under a violet column of light -- MU's chasellight, the
     // lobby's streak, three body heights tall and turned to face the camera -- breathing, with a
     // brighter core, and light the ground round them violet, ahead of any jewel's glow.
+    // And a legendary drop the same, in legendary orange (the user, 2026-10-04: 'we need also
+    // that light for legendary drops'); Loch's Feather in the quest violet.
     void gatherBeams(gfx::Effects& effects, const float eye[3]) const;
     // **A jewel lying down glows** (the user, 2026-10-02: "actualy we need minimal light emiters
     // for all jewel drops", and "some nice effect for drop jewel of creations"). Ours: MU throws
@@ -88,7 +90,7 @@ private:
         uint32_t id = 0;
         bool present = false;
         ShineLook shine;  // how the item's plus shows; a heap of Zen has none
-        int glow = 0;     // 0 none, 1 a jewel, 2 a Rune of Creation, 3 a quest item
+        int glow = 0;     // 0 none, 1 a jewel, 2 a Rune of Creation, 3 the column (quest, legendary)
         float glowColour[3] = {1.0f, 1.0f, 1.0f};
         std::vector<Piece> pieces;
     };

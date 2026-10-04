@@ -103,6 +103,7 @@ constexpr float kJewelReach = 1.4f, kJewelLevel = 0.14f;
 // A quest item's: wider and several times brighter, a violet the beam shares.
 constexpr float kQuestReach = 3.0f, kQuestLevel = 0.7f;
 constexpr float kQuestViolet[3] = {0.72f, 0.38f, 1.0f};  // the user's purple
+constexpr float kLegendaryOrange[3] = {1.0f, 0.5f, 0.08f};  // WoW's legendary, as the name
 // Its beam: metres tall and wide, and the core's share of the width.
 constexpr float kBeamTall = 5.5f, kBeamWide = 1.6f, kCoreShare = 0.45f;
 constexpr float kGlowLift = 0.15f;        // metres over the jewel's middle
@@ -117,6 +118,16 @@ void jewelColour(const content::ItemRow& row, float out[3]) {
     if (row.group == 12 && row.number == 15) { c[0] = 0.75f; c[1] = 0.45f; c[2] = 1.0f; }
     if (row.group == 14 && row.number == 16) { c[0] = 1.0f; c[1] = 0.35f; c[2] = 0.3f; }
     for (int k = 0; k < 3; ++k) out[k] = c[k];
+}
+
+// Whether a drop is legendary, as the card's quality says it (game/ui/describe.cpp qualityOf): a
+// Rune of Creation of a legendary power, or of none yet, and a ring or pendant of four powers.
+bool legendary(const content::ItemRow& row, const sim::Held& what) {
+    if (sim::creation(row)) {
+        const sim::PowerRow* power = sim::powerOf(what.powers[0]);
+        return !power || power->rarity == sim::Rarity::Legendary;
+    }
+    return sim::powered(row) && sim::affixCount(row, what) >= 4;
 }
 
 // A rune's rarity in the colours its name is drawn in: Rare blue, Epic purple, Legendary orange.
@@ -141,6 +152,11 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     if (sim::classTreasure(row) || sim::lochsFeather(row)) {
         drop.glow = 3;
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = kQuestViolet[k];
+    } else if (legendary(row, one.what)) {
+        // A legendary drop stands in the same column, in its own orange (the user, 2026-10-04:
+        // 'we need also that light for legendary drops'): the colour its name is drawn in.
+        drop.glow = 3;
+        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kLegendaryOrange[k];
     } else if (sim::creation(row)) {
         drop.glow = 2;
         runeColour(one.what, drop.glowColour);
@@ -389,9 +405,8 @@ void Litter::gatherBeams(gfx::Effects& effects, const float eye[3]) const {
             beam.blend = layer == 0 ? gfx::Blend::Minus : gfx::Blend::Additive;
             beam.placed = true;
             for (int k = 0; k < 3; ++k) {
-                beam.colour[k] = layer == 0   ? (1.0f - kQuestViolet[k]) * 0.8f
-                                 : layer == 1 ? kQuestViolet[k]
-                                              : 0.5f + 0.5f * kQuestViolet[k];
+                const float c = drop.glowColour[k];
+                beam.colour[k] = layer == 0 ? (1.0f - c) * 0.8f : layer == 1 ? c : 0.5f + 0.5f * c;
             }
             beam.colour[3] = (layer == 2 ? 1.0f : 0.9f) * breath;
             const float low = footY - 0.05f, high = footY + kBeamTall;
