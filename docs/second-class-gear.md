@@ -81,6 +81,9 @@ the helm baked black until each took a neighbouring corner's coordinate in the .
   the recipe's `sheets`, or that group bakes black with only a log line to say so.
 - **painted_steel's grain is a blade's**, brushed along V: on armour it drew vertical streaks.
   The sets override it with plate_steel's cast grain.
+- **Glossy paint wants a shallow grain.** At painted_steel's 0.28 roughness the cast pits at
+  plate_steel's depth 0.05 each caught a glint: white specks over Divine's flanks and
+  pauldrons. Divine takes depth 0.02, range 0.03.
 - **Cutouts are declared, not detected**, and name the group.
 
 ## Where it falls

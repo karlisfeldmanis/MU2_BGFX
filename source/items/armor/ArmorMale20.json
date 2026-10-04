@@ -45,12 +45,12 @@
       "grain": {
         "kind": "cast",
         "scale": 260,
-        "depth": 0.05,
-        "roughness_range": 0.06
+        "depth": 0.02,
+        "roughness_range": 0.03
       }
     }
   },
-  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is Depth 0.02 and range 0.03, not plate_steel's 0.05 and 0.06: on this lacquer's 0.28 roughness every pit at 0.05 caught its own glint, a field of white specks over the flanks and pauldrons (2026-10-04: the user, 'some micro white points on items') -- plate_steel's own note, the grain shallower as the surface gets glossier.",
   "sheets_note": "By group, as the bake matches: MU's .bmd names the texture and the obj group follows it, so a sheet renamed on disk (a jpg and a tga of one stem; an .OZT kept apart) has to be told which group it paints, or that group bakes black (2026-10-04: the user, 'texture is broken').",
   "material_note": "painted_steel with plate_steel's cast grain: Divine is magenta-violet lacquer with gold trim painted on. Island 1 is level_man033, her own bare skin.",
   "cutout_alpha": [
