@@ -30,14 +30,15 @@ constexpr Offer scroll(int slot, int number) { return Offer{slot, kScrolls, numb
 // Eye and Key (no Devil Square here). OpenMU's Version075 shelves, which these replace, were
 // Season 6's with its later rows taken out, at +3 with luck and options -- far fuller.
 
-// Potion Girl Amy (shop5): the eight potions, single and three, arrows and bolts to +2, the
-// Town Portal Scroll.
+// Potion Girl Amy (shop5): the eight potions, single and three, arrows and bolts to +2. **Not
+// the Town Portal Scroll, on no shelf** (the user, 2026-10-04: "there is no point of town
+// portal"): Tab and the warp list take him home.
 constexpr Offer kPotionGirl[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
     sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
     sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kBows, 7, 0),
     gear(17, kBows, 7, 1), gear(18, kBows, 7, 2), gear(19, kBows, 15, 0), gear(20, kBows, 15, 1),
-    gear(21, kBows, 15, 2), sip(22, 10, 1),
+    gear(21, kBows, 15, 2),
 };
 
 // Harold (shop3), the wandering merchant east of town: the potions and the Leather set.
@@ -117,7 +118,7 @@ constexpr Offer kBarmaid[] = {
 // bolts +0 to +3 under the potions, ours too** (the user, 2026-10-02: "sell arows bolts also in
 // lorencia tavern", "+0,+1,+2,+3"): Amy and Eo stop at +2; the +3 is priced off quiver().
 constexpr Offer kLumen[] = {
-    sip(0, 9, 1),   sip(1, 10, 1),  gear(2, kPets, 0, 0), gear(3, kPets, 1, 0),
+    sip(0, 9, 1),   gear(2, kPets, 0, 0), gear(3, kPets, 1, 0),
     gear(4, kPets, 2, 0), gear(5, kPets, 3, 0),
     sip(16, 0, 1),  sip(24, 0, 3),  sip(17, 1, 1),  sip(25, 1, 3),  sip(18, 2, 1),  sip(26, 2, 3),
     sip(19, 3, 1),  sip(27, 3, 3),  sip(20, 4, 1),  sip(28, 4, 3),  sip(21, 5, 1),  sip(29, 5, 3),
@@ -127,7 +128,7 @@ constexpr Offer kLumen[] = {
 };
 
 // Elf Lala (shop10): the potions, the Vine and Silk sets, the Wind helm, armour and pants, the
-// Town Portal Scroll and the Orb of Healing. **And the Orb of Skillshot after it, which is ours**
+// Orb of Healing. **And the Orb of Skillshot after it, which is ours**
 // (sprint 15). **And Greater Defense, Greater Damage and Summoning after those** (the user,
 // 2026-10-02: "a lot of orbs for DK but not enough for Elf"): all three early, and all three
 // on 0.75's own Lala (OpenMU Version075/MerchantStores.cs:231-243), which WebZen's shop10 lacks.
@@ -142,7 +143,7 @@ constexpr Offer kElfLala[] = {
     gear(18, kHelms, 12, 0), gear(20, kArmours, 10, 0), gear(22, kArmours, 12, 0),
     gear(32, kPants, 10, 0), gear(34, kPants, 12, 0), gear(36, kGloves, 10, 0),
     gear(38, kBoots, 10, 0), gear(48, kHelms, 11, 0), gear(50, kArmours, 11, 0),
-    gear(52, kPants, 11, 0), gear(54, kGloves, 11, 0), gear(64, kBoots, 11, 0), sip(66, 10, 1),
+    gear(52, kPants, 11, 0), gear(54, kGloves, 11, 0), gear(64, kBoots, 11, 0),
     gear(67, kOrbs, 8, 0), gear(68, kOrbs, 21, 0), gear(69, kOrbs, 9, 0), gear(70, kOrbs, 10, 0),
     gear(71, kOrbs, 11, 0), gear(76, kOrbs, 11, 1), gear(77, kOrbs, 11, 2), gear(78, kOrbs, 11, 3),
 };
@@ -158,13 +159,13 @@ constexpr Offer kCraftsman[] = {
     gear(81, kBows, 15, 2),
 };
 
-// Izabel the Wizard (shop7): the potions, Meteorite, Lightning and Teleport, the Town Portal
-// Scroll, the Sphinx pieces with a Bone Armor, and the Serpent Staff.
+// Izabel the Wizard (shop7): the potions, Meteorite, Lightning and Teleport, the
+// Sphinx pieces with a Bone Armor, and the Serpent Staff.
 constexpr Offer kIzabel[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
     sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
     sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), scroll(16, 1), scroll(17, 2),
-    scroll(18, 5), sip(19, 10, 1), gear(20, kHelms, 7, 0), gear(22, kArmours, 4, 0),
+    scroll(18, 5), gear(20, kHelms, 7, 0), gear(22, kArmours, 4, 0),
     gear(32, kPants, 7, 0), gear(34, kGloves, 7, 0), gear(36, kBoots, 7, 0),
     gear(38, kStaves, 2, 0),
 };

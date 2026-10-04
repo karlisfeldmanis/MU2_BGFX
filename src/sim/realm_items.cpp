@@ -1156,14 +1156,15 @@ void Realm::leave(const Body& dead, const Body& killer) {
     };
 
     // The jewels group is not only the jewels: `AddItemToJewelItemDrop` puts the Ale (drop level
-    // 15) and the Town Portal Scroll (30) in it too, and the three pets -- the Guardian Angel
+    // 15) and the Town Portal Scroll (30) in it too -- **the scroll left out, ours** (the user,
+    // 2026-10-04: "there is no point of town portal") -- and the three pets -- the Guardian Angel
     // (23) and the Imp (28) have rows, carrying the flag; the Horn of Uniria has none. Drawn by the monster's level alone, with no twelve-level gap (GenerateItemFromGroup's
     // `isJewel`). In Lorencia that is the Chaos from level 12 and the Ale from 15; the Bless (25)
     // and the Soul (30) are never left by anything in the town.
     // The Bless, the Soul and the Chaos have their own roll ahead of it (kJewelChance), and the
     // Rune of Creation one ahead of that, so the group's own draw leaves them out.
     const auto jewelGroup = [](const content::ItemRow& r) {
-        return (r.jewel() || (r.group == kGroupPotions && (r.number == 9 || r.number == 10))) &&
+        return (r.jewel() || (r.group == kGroupPotions && r.number == 9)) &&
                !refiningJewel(r);
     };
     const double creationChance = level >= kCreationLevel ? kCreationChance : 0.0;

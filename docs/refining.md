@@ -13,7 +13,7 @@ over the groups `GameConfigurationInitializerBase` registers on every map:
 
 | group | chance a drop slot | what it holds |
 |---|---|---|
-| jewels | 0.001 | the Bless (drop level 25), the Soul (30), the Chaos (12 to 66), the Ale (15), the Town Portal Scroll (30), the three pets |
+| jewels | 0.001 | the Bless (drop level 25), the Soul (30), the Chaos (12 to 66), the Ale (15), the three pets -- WebZen's Town Portal Scroll (30) left out, ours (2026-10-04) |
 | random item | 0.3 | anything `DropsFromMonsters` from the monster's level down to twelve below it |
 | money | 0.5 | the kill's experience plus seven |
 
@@ -30,7 +30,8 @@ that drops them exists.
 
 `Realm::leave` (`src/sim/realm_items.cpp`) rolls it this way already. The jewels group was the
 three jewel rows alone until today; the Ale and the Town Portal Scroll are in it now, as
-`AddItemToJewelItemDrop` puts them. The pets have no rows here. The item chance is 0.1 here, not
+`AddItemToJewelItemDrop` puts them. The scroll came out again on 2026-10-04 (the user: "there is no
+point of town portal"), and off every shelf with it. The pets have no rows here. The item chance is 0.1 here, not
 0.3, which is ours (2026-09-22) and said where it is set.
 
 When one lands, MuMain's `CreateItemDrop` plays `SOUND_JEWEL01` (eGem.wav) for the jewels and
