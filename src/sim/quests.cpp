@@ -108,12 +108,12 @@ QuestRow marlon() {
                    .firstOnly = true};  // Falchion
     row.paid[1] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Stormcall),
                    .firstOnly = true};  // Rune of Creation, Stormcall's lightning
-    // The wizard's (the user, 2026-09-29): a lucky Serpent Staff with a socket, and a rune for
-    // it -- Stormcall, as the knight's, since Arcane Echo is the Soul Master's (2026-10-04).
+    // The wizard's (the user, 2026-09-29): a lucky Serpent Staff with a socket, and the rune
+    // that echoes his spells -- every Dark Wizard's again since 2026-10-04, for this.
     row.paid[2] = {.item = "Staff03", .kin = wizard, .sockets = 1,
                    .firstOnly = true};  // Serpent Staff
-    row.paid[3] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Stormcall),
-                   .firstOnly = true};  // Rune of Creation, Stormcall
+    row.paid[3] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
+                   .firstOnly = true};  // Rune of Creation, Arcane Echo
     row.paid[4] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[5] = {.item = "Potion04", .count = 20};  // Large Healing Potions
     // The first powered ring, a green one (sim::Affix; the user, 2026-10-03: "also add some

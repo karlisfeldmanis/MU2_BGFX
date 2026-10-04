@@ -397,9 +397,11 @@ const PowerRow* powerOf(uint8_t power) {
          "An arrow that lands has a 20% chance to freeze the monster it struck for two seconds "
          "and wound it again for half the arrow's damage, raised by her energy",
          kElfOnly, kInWeapon, Rarity::Legendary, true},
+        // Every Dark Wizard's, not the Soul Master's alone (the user, 2026-10-04: "remove 2nd
+        // class requirement for that rune, because we give this rune on lorencia quest for DW").
         {Power::Echo, "Arcane Echo",
          "A spell he casts has a 20% chance to be cast a second time, for no mana", kWizardOnly,
-         kInWeapon, Rarity::Legendary, true},
+         kInWeapon, Rarity::Legendary},
         {Power::Pyroblast, "Pyroblaster",
          "Fire Ball strikes 50% harder, and one that lands has a 20% chance to burst into four "
          "more, each flying at a monster near the one it struck",

@@ -6868,14 +6868,14 @@ void testRunes(const content::Tables& tables) {
           "Arcane Echo goes in a wizard's socketed staff");
     check(!sim::settable(tables, held(rune, 0, echo), held(serpent, 1, 0), dk, true),
           "and not by a knight");
-    check(!sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard,
-                         false),
-          "and only by a Soul Master: a Dark Wizard cannot set it");
+    check(sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard,
+                        false),
+          "and by a Dark Wizard, not the Soul Master alone: Marlon pays it");
     const auto casts = [&](uint8_t power, int* cast, int* loosed, int32_t skill = sim::skill::kEnergyBall,
                            int* lightning = nullptr) {
         sim::Realm realm;
         realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
-        promote(realm);  // Arcane Echo is the Soul Master's
+        // A first-class Dark Wizard: Arcane Echo is every wizard's since 2026-10-04.
         const uint8_t powers[3] = {power, 0, 0};
         realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
         uint32_t fighting = 0;
