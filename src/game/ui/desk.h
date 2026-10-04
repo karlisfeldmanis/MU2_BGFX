@@ -285,7 +285,7 @@ private:
     float lastCooling_[Hud::kSkillBoxes] = {};  // last frame's wipe, to see one start over
     // The skill the realm last threw: only its box wears the cast's wait, not every primary's.
     int32_t lastThrown_ = 0;
-    uint32_t autoBound_ = 0;  // skills that have had their one free key
+    uint64_t autoBound_ = 0;  // skills that have had their one free key, by index (kSkills)
     bool barRestored_ = false;
     // The list above the plate: latched open by a click on the gold box, and open anyway while
     // the pointer rests on that box or on the list itself. The cells are rebuilt every frame off

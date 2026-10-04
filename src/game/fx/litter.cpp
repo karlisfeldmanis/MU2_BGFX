@@ -38,6 +38,20 @@ float turn(uint32_t id) {
     return float((id * 2654435761u) % 3600u) / 3600.0f * 2.0f * bx::kPi;
 }
 
+// The Jewel of Life faces the camera (the user, 2026-10-04: 'its look flat / 2d', then 'ok use
+// your fix'). It is a thin tablet, 6 units deep against 18 wide, and the hashed yaw stood it
+// edge-on as often as not. Its thin axis is local z, which the loader has negated, so bx's
+// turn about Y carries it to (sin, 0, -cos): at -45 degrees that is MU's camera, which looks
+// down along -(1, 0, 1) and is never turned in play (only the bench orbits). +45 stood every
+// one edge-on. Front or back by the id, the two faces being
+// one, and up to 15 degrees either way so a few of them do not look laid out. Ours.
+float facingCamera(uint32_t id) {
+    const uint32_t h = id * 2654435761u;
+    const float jitter = (float(h % 3001u) / 3000.0f - 0.5f) * 2.0f * (15.0f / 180.0f) * bx::kPi;
+    const float face = (h >> 20) & 1u ? bx::kPi : 0.0f;
+    return -0.25f * bx::kPi + face + jitter;
+}
+
 // A scatter of its own for each heap, for the same reason: stable, and different per drop.
 struct Dice {
     uint32_t state;
@@ -195,7 +209,7 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
 
     float toCentre[16], yaw[16], place[16], a[16];
     bx::mtxTranslate(toCentre, -centre[0], -centre[1], -centre[2]);
-    bx::mtxRotateY(yaw, turn(one.id));
+    bx::mtxRotateY(yaw, sim::jewelOf(row) == sim::Jewel::Life ? facingCamera(one.id) : turn(one.id));
     bx::mtxTranslate(place, x, y, z);
     Piece piece;
     piece.mesh = mesh;

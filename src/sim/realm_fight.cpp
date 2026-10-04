@@ -571,18 +571,31 @@ void Realm::land(Body& hero) {
     if (hero.blowAimed) {
         hero.aim = hero.blowAim;
         hero.blowAimed = false;
+    } else if (const SkillRow* thrown = skillNumbered(hero.blowSkill);
+               thrown != nullptr && thrown->wizardry && at != 0 && at != hero.id) {
+        // A spell at a body faces it as it leaves his hand, as MU snaps the angle onto the
+        // target (ZzzInterface.cpp:1303): set on another body meanwhile, he had turned to that
+        // one, and since 2026-10-04 the cast he began is let go all the same (Realm::accept).
+        if (const Body* aimed = body(at); aimed != nullptr && !hero.blowGround) {
+            hero.aim = std::atan2(aimed->y - hero.y, aimed->x - hero.x);
+            hero.facing = hero.aim;
+        }
     }
+    // A shower's ground, if he named one (SkillRow::showers).
+    const bool ground = hero.blowGround;
+    const float spot[2] = {hero.blowX, hero.blowY};
     hero.blowAt = 0;
     hero.blowTarget = 0;
     hero.blowSkill = 0;
     hero.blowForce = 1.0f;
+    hero.blowGround = false;
     // His spell, let go: an Arcane Echo may throw it again a beat later (sim/items.h). Rolled
     // before the release, whatever the release finds, as a swing's rune rolls on the landing.
     const SkillRow* spell = skillNumbered(skill);
     if (spell && spell->wizardry && hero.player && echo_.at == 0 && echoes(hero)) {
-        echo_ = Echo{tick_ + kEchoTicks, at, skill, force};
+        echo_ = Echo{tick_ + kEchoTicks, at, skill, force, ground, {spot[0], spot[1]}};
     }
-    release(hero, at, force, skill);
+    release(hero, at, force, skill, ground ? spot : nullptr);
     // And Stormcall answers the cast as it answers a swing (the user, 2026-10-03: "that rune
     // which has chance to cast lightnings on monsters on casts"), once a cast, on a monster near
     // him or else the one it was cast at. Only Stormcall rolls here: callDown passes over the
@@ -610,7 +623,7 @@ bool Realm::echoes(Body& hero) {
     return false;
 }
 
-void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
+void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const float* spot) {
     // An area skill has no one victim and is resolved where he stands rather than against the
     // body the key named: the shape is measured NOW, at the bottom of the swing, so a monster
     // that walked into the spin while the clip ran is caught by it and one that walked out is
@@ -638,7 +651,12 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
         light(hero, *row, at, force);
         return;
     }
-    // Meteorite: a rock on everything round what he called it on.
+    // Meteorite: a shower of rocks on the ground he named, or round what he called it on.
+    if (row && row->showers()) {
+        shower(hero, *row, at, force, spot);
+        return;
+    }
+    // Ice and Poison: their own on everything round what he threw them at.
     if (row && row->splash > 0.0f) {
         rain(hero, *row, at, force);
         return;
@@ -648,9 +666,21 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
         return;
     }
     Body* target = body(at);
-    // Gone, or dead before the arm came down: the swing is spent and nothing lands. That is the
-    // same answer `strikeAt` gives for a corpse, moved a few ticks earlier.
-    if (!target || !target->alive()) return;
+    if (!target) return;
+    // **A spell paid for is let go** (the user, 2026-10-04: "there canot be this bug when char
+    // is casting spell and spell is not happening - globally"): a body dead before his arm came
+    // down still has its bolt or its arrow thrown at where it fell, and `arrive` lands it on
+    // nothing. Until then the clip played and nothing left his hand.
+    if (!target->alive()) {
+        if (row && row->thrown()) {
+            loose(hero, *row, at, force);
+        } else if (!row && hero.player && hero.archer != 0) {
+            looseArrow(hero, at, force);
+        }
+        // A swing at a corpse is spent and nothing lands, the same answer `strikeAt` gives,
+        // moved a few ticks earlier.
+        return;
+    }
     // A spell is not landed at the bottom of the clip, it is LET GO there: the damage waits for
     // the bolt to cross the gap. MU2's rule and its reason -- "the clip's beat is the release,
     // not the landing"; a monster flinching before the thing that hits it has left the caster
@@ -675,8 +705,6 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
 // the air for no ticks and lands on the let-go.
 constexpr float kBoltStopsShort = 1.0f;
 constexpr float kTicksPerSecond = 20.0f;  // the realm's own clock
-// How far a Meteorite's rain is spread, in ticks: a second from the first rock to the last. Ours.
-constexpr int32_t kRainSpreadTicks = 20;
 
 void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce,
                   bool pays, int32_t delay) {
@@ -825,6 +853,18 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
     // One `Loosed` for the cast: the drawing fans its own arrows off it.
     say(What::Loosed, hero, row.number, 0, hero.archer, aimedAt);
     constexpr float kRadians = 3.14159265358979f / 180.0f;
+    // **Each body once a cast** (the user, 2026-10-02: "multi-shot feels very overpowered"): the
+    // lanes are 1.5 tiles wide and 15 degrees apart, so all three cross anything within 2.9 tiles
+    // of her, and a body that close took every arrow -- three plain shots for one, at the plain
+    // shot's pace. The fan pays off on a crowd, not on one body. ours, as the pierce is.
+    uint32_t struck[kVictims];
+    int struckCount = 0;
+    const auto struckAlready = [&](uint32_t id) {
+        for (int i = 0; i < struckCount; ++i) {
+            if (struck[i] == id) return true;
+        }
+        return false;
+    };
     // Penetration's one lane, or three with a Piercing Volley in her bow (sim::lanesOf).
     const int lanes = lanesOf(row, hero.player ? hero.excel.volleys : 0);
     for (int a = 0; a < lanes; ++a) {
@@ -840,12 +880,15 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
         Struck lane[kVictims];
         int found = 0;
         for (const Body& one : bodies_) {
-            if (!one.alive() || !one.monster()) continue;
+            if (!one.alive() || !one.monster() || struckAlready(one.id)) continue;
             if (tables_->grid.safe(one.column(), one.row())) continue;
             const float dx = one.x - hero.x, dy = one.y - hero.y;
             const float along = dx * cx + dy * cy;
             const float across = std::fabs(dx * cy - dy * cx);
-            if (along < kFanNearest || along > length || across > kLineHalfWidth) continue;
+            // From her own feet out: a body pressed against her is in front of the bow, not
+            // under it (the user, 2026-10-02: "when monster is very close ... dont take damage
+            // from multi shot" -- a Yeti's middle sat inside the old 0.6-tile dead zone).
+            if (along < 0.0f || along > length || across > kLineHalfWidth) continue;
             // An arrow does not fly through a wall to the body behind it (Realm::seen).
             if (!seen(hero, one)) continue;
             if (found == kVictims) break;
@@ -863,6 +906,7 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
                 say(What::Arrowless, hero, hero.archer);
                 return;
             }
+            if (struckCount < kVictims) struck[struckCount++] = lane[i].id;
             loose(hero, row, lane[i].id, force, false, lane[i].id == aimedAt);
         }
     }
@@ -984,8 +1028,8 @@ void Realm::beamOn(Body& beast) {
 bool Realm::chills(const Body& monster) const {
     if (monster.kind < 0 || size_t(monster.kind) >= tables_->kinds.size()) return false;
     const int32_t number = tables_->kinds[size_t(monster.kind)].number;
-    for (const int32_t one : kChillers) {
-        if (one == number) return true;
+    for (const Chiller& one : kChillers) {
+        if (one.number == number) return true;
     }
     return false;
 }
@@ -1001,10 +1045,23 @@ void Realm::chillHero(const Body& attacker, Body& target) {
     // Not again while it is on: OpenMU adds an effect only when it is not already active
     // (AttackableExtensions.cs:473), so ten seconds from the first, not from the last.
     if (target.chilledUntil > tick_) return;
+    // Its own odds first (kChillers): the Silver Valkyrie's one shot in four. No draw for a breed
+    // that ices every blow.
+    const int32_t number = numberOf(attacker);
+    for (const Chiller& one : kChillers) {
+        if (one.number == number && one.odds > 1 && chillDice_.nextInt(0, one.odds) != 0) return;
+    }
     if (summon ? resists(target, true, runeDice_) : heroResists(target.excel.iceResistance)) {
         return;
     }
     target.chilledUntil = tick_ + kHeroChillTicks;
+    // On the blow that iced him, for the drawing.
+    for (auto one = happenings_.rbegin(); one != happenings_.rend(); ++one) {
+        if (one->who == attacker.id && (one->what == What::Hit || one->what == What::Missed)) {
+            one->iced = true;
+            break;
+        }
+    }
 }
 
 // His ring's or pendant's resistance r turns the element aside r times in r + 1, the monsters'
@@ -1073,7 +1130,9 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
     float off[kVictims] = {};
     int found = 0;
     for (const Body& one : bodies_) {
-        if (!one.monster() || !one.alive()) continue;
+        // The aimed body even dead by the let-go, so the cast always bursts where he threw it
+        // (the user, 2026-10-04: no cast without its spell); `arrive` lands nothing on it.
+        if (!one.monster() || (!one.alive() && one.id != aimedAt)) continue;
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const float gap = std::hypot(one.x - cx, one.y - cy);
         if (gap > row.splash || found >= kVictims) continue;
@@ -1089,17 +1148,102 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
         victims[at] = one.id;
         ++found;
     }
-    // **Not all at once** (the user, 2026-10-03: "not all meteors falling at the same time so
-    // there is realism"): a falling spell's rocks each wait their own while in the sky, up to
-    // kRainSpreadTicks, the aimed body's none -- rolled off the body's id rather than any dice,
-    // so no stream moves. The drawing starts each fall when its wait is up (`b` is the whole).
+    // **All at once** (the user, 2026-10-04: "meteor landing has to happens at same time for
+    // multiple monsters", "withotu delays"): every rock of a cast falls together, as MU's do.
+    // From 2026-10-03 ("not all meteors falling at the same time so there is realism") each waited
+    // up to a second off its body's id; that is taken back.
     for (int i = 0; i < found; ++i) {
         const bool aimedOne = victims[i] == aimedAt;
-        const int32_t wait =
-            row.fallTicks > 0 && !aimedOne
-                ? int32_t((victims[i] * 2654435761u >> 16) % uint32_t(kRainSpreadTicks + 1))
-                : 0;
-        loose(hero, row, victims[i], force, true, aimedOne, wait);
+        loose(hero, row, victims[i], force, true, aimedOne, 0);
+    }
+}
+
+void Realm::shower(Body& hero, const SkillRow& row, uint32_t aimedAt, float force,
+                   const float* spot) {
+    // Round the ground he named, or round the body he called it on where it stands now.
+    float cx = 0.0f, cy = 0.0f;
+    if (spot != nullptr) {
+        cx = spot[0];
+        cy = spot[1];
+    } else if (const Body* aimed = body(aimedAt); aimed != nullptr && aimed->alive()) {
+        cx = aimed->x;
+        cy = aimed->y;
+    } else {
+        return;
+    }
+    // The rocks, off their own dice: the first within `kFirstRockOff` of the spot so what he
+    // clicked is always under one, the rest anywhere in the splash, evenly over its ground. A
+    // place in a wall, or one the spot cannot see past one, is drawn again a few times and then
+    // falls on the spot itself.
+    constexpr float kTau = 6.28318530718f;
+    float rocks[kShowerRocks][2];
+    float weight[kShowerRocks];
+    int32_t wait[kShowerRocks];
+    for (int i = 0; i < kShowerRocks; ++i) {
+        // Its weight and its wait in the sky; the first, on the spot, comes first.
+        const float roll = float(showerDice_.nextDouble());
+        weight[i] = kLightestRock + (kHeaviestRock - kLightestRock) * roll * roll;
+        wait[i] = i == 0 ? 0 : showerDice_.nextInt(0, kShowerSpreadTicks);
+        const float most = i == 0 ? kFirstRockOff : row.splash;
+        rocks[i][0] = cx;
+        rocks[i][1] = cy;
+        for (int tries = 0; tries < 4; ++tries) {
+            const float r = most * float(std::sqrt(showerDice_.nextDouble()));
+            const float way = kTau * float(showerDice_.nextDouble());
+            const float x = cx + r * std::cos(way), y = cy + r * std::sin(way);
+            if (!tables_->grid.open(int(std::lround(x)), int(std::lround(y)),
+                                    content::kWallNoMove) ||
+                !router_.sees(cx, cy, x, y, content::kWallNoMove)) {
+                continue;
+            }
+            rocks[i][0] = x;
+            rocks[i][1] = y;
+            break;
+        }
+        // Said with no body, its ground in `x`/`y`, its wait and fall in `b` and its weight in
+        // hundredths in `c`: the drawing drops a rock that size there when it is due.
+        say(What::Loosed, hero, row.number, row.fallTicks + wait[i],
+            int32_t(std::lround(weight[i] * 100.0f)), 0);
+        happenings_.back().x = rocks[i][0];
+        happenings_.back().y = rocks[i][1];
+    }
+    // Every monster within a rock's blast -- the heavier the wider -- and in its sight takes
+    // one blow a cast, the heaviest rock's that covers it, at that rock's weight and when that
+    // rock lands. Nearest the spot first and then by id, so the dice are drawn in a fixed order;
+    // the nearest pays back, as the aimed body did.
+    uint32_t victims[kVictims];
+    int by[kVictims] = {};
+    float off[kVictims] = {};
+    int found = 0;
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive()) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        int heaviest = -1;
+        for (int i = 0; i < kShowerRocks; ++i) {
+            if (heaviest >= 0 && weight[i] <= weight[heaviest]) continue;
+            if (std::hypot(one.x - rocks[i][0], one.y - rocks[i][1]) > kRockBlast * std::sqrt(weight[i]) ||
+                !seen(rocks[i][0], rocks[i][1], one)) {
+                continue;
+            }
+            heaviest = i;
+        }
+        if (heaviest < 0) continue;
+        const float gap = std::hypot(one.x - cx, one.y - cy);
+        if (found == kVictims && gap >= off[found - 1]) continue;
+        int at = std::min(found, kVictims - 1);
+        while (at > 0 && (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
+            off[at] = off[at - 1];
+            victims[at] = victims[at - 1];
+            by[at] = by[at - 1];
+            --at;
+        }
+        off[at] = gap;
+        victims[at] = one.id;
+        by[at] = heaviest;
+        found = std::min(found + 1, kVictims);
+    }
+    for (int i = 0; i < found; ++i) {
+        loose(hero, row, victims[i], force * weight[by[i]], false, i == 0, wait[by[i]]);
     }
 }
 
@@ -1126,7 +1270,9 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
         }
         return;
     }
-    if (aimed == nullptr || !aimed->alive()) return;
+    // Lit on the tile of a body that fell before his arm came down too: the fire is a place
+    // (the user, 2026-10-04: no cast without its spell).
+    if (aimed == nullptr) return;
     for (Fire& one : fires_) {
         if (one.next != 0) continue;
         one = Fire{tick_, float(aimed->column()), float(aimed->row()), row.number, row.burns,

@@ -168,7 +168,8 @@ void Realm::watch(Body& guard) {
     }
 
     Body& quarry = *body(guard.quarry);
-    if (within(guard, quarry, float(row->attackRange))) {
+    // Not through a wall, as a monster's shot (`seen`).
+    if (within(guard, quarry, float(row->attackRange)) && seen(guard, quarry)) {
         guard.temper = Temper::Fighting;
         engage(guard, quarry);
         if (tick_ >= guard.swingsAt) {
@@ -194,7 +195,7 @@ void Realm::watch(Body& guard) {
             int column = 0, rowAt = 0;
             // A tethered guard steps only to a tile within his leash of the post, and otherwise
             // waits where he is for it to come into his reach.
-            if (beside(quarry, std::max(1, row->attackRange), guard, &column, &rowAt) &&
+            if (beside(quarry, std::max(1, row->attackRange), guard, &column, &rowAt, true) &&
                 (!tethered || std::max(std::abs(column - guard.homeColumn),
                                        std::abs(rowAt - guard.homeRow)) <= row->leash)) {
                 send(guard, column, rowAt);

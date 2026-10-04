@@ -214,4 +214,12 @@ Version075 stops at 13/2, and the Dinorant is 0.95d's. Every rule below is marke
   Dinorant's does not (+16 -16 -3 +11 -19 -5 +17 against his pelvis's +7 -18 +7 +6 -17 +8 +7),
   so on the run his seat follows the dragon's back (`dinorantBob`, ours; the user: "bouncing with
   dyno is not perfectly synced"). Buff cell `buff_dinorant`, the dragon on steel blue. sim_test
-  `testDinorant`. Not built: Fire Breath, its options, flight -- not chosen.
+  `testDinorant`. Not built: its options, flight -- not chosen.
+- **Fire Breath** (2026-10-04, the user: "do it"). Skill 49, the table's last row: nine mana,
+  three tiles, x2.0 + str/1000 of his swing (WebZen's 2 + energy/1000), a 4 s cooldown (ours),
+  any weapon or none. Known while the horn is worn with life left (`Realm::knows`, no learned
+  bit, nothing saved), the knight's alone, thrown only while ridden (`SkillRow::mounted`). He
+  plays 68 and the dragon its 6. The breath is `game/fx/firebreath.h`: MuMain's BITMAP_SHOTGUN
+  -- two nostril sprays, Fire03's blue-violet haze laid two a frame as it flies at the body at
+  thirty units a frame, the ground lit cool blue, and DinoE's burst with SOUND_EXPLOTION01 where
+  the blow lands. Icon off MuMain's sheet (cell 48). sim_test `testFireBreath`.

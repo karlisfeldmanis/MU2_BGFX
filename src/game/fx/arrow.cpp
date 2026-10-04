@@ -237,12 +237,13 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
             }
             shot.fading = kPierceFade;
         }
-        // Follows the body while it is drawn; flies on straight once it is not.
+        // Straight on the line it was loosed on, as MU's flies (the user, 2026-10-04: 'arrow
+        // still change suddenly angle to monster during flying'). The body is followed for
+        // where it ends, not for which way it points: re-aimed each frame at a middle that walks
+        // and bobs, it swung round as it neared it.
         float seen[3];
         if (middle && middle(shot.whom, seen)) {
             for (int k = 0; k < 3; ++k) shot.to[k] = seen[k];
-            for (int k = 0; k < 3; ++k) shot.along[k] = shot.to[k] - shot.at[k];
-            normalise(shot.along);
         }
         const float step = shot.speed * seconds;
         for (int k = 0; k < 3; ++k) shot.at[k] += shot.along[k] * step;
@@ -293,10 +294,19 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
                 smoke(shot);
             }
         }
-        // A tile short of the body, on the ground plane: CheckClientArrow, and the realm's hit.
+        // A fan's arrow a tile short of its far point, on the ground plane: CheckClientArrow.
+        // **Ours:** a shot at a body goes into it -- ends at its middle, or once past it --
+        // where MU's tile short ended a shot at a body beside her on the frame it left the
+        // string, and it never flew.
         const float dx = shot.to[0] - shot.at[0], dz = shot.to[2] - shot.at[2];
-        if (std::sqrt(dx * dx + dz * dz) <= kStopsShort * metresPerTile_ &&
-            shot.fading <= 0.0f) {
+        bool arrived = std::sqrt(dx * dx + dz * dz) <= kStopsShort * metresPerTile_;
+        if (shot.whom != 0) {
+            const float dy = shot.to[1] - shot.at[1];
+            const float left = std::sqrt(dx * dx + dy * dy + dz * dz);
+            const float ahead = dx * shot.along[0] + dy * shot.along[1] + dz * shot.along[2];
+            arrived = left <= kIntoBody || ahead <= 0.0f;
+        }
+        if (arrived && shot.fading <= 0.0f) {
             if (shot.shooter != 0) landed_.push_back(shot.shooter);
             // Penetration's flies on past the end of its way, fading, straight on.
             if (shot.pierce) {
@@ -666,6 +676,15 @@ uint32_t Arrows::lights(gfx::PointLight* out, uint32_t max) const {
         }
     }
     return count;
+}
+
+bool Arrows::flyingAt(uint32_t shooter, uint32_t whom) const {
+    for (const Shot& one : shots_) {
+        if (one.alive && one.fading <= 0.0f && one.shooter == shooter && one.whom == whom) {
+            return true;
+        }
+    }
+    return false;
 }
 
 uint32_t Arrows::flying() const {

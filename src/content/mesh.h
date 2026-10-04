@@ -183,6 +183,16 @@ public:
     const std::vector<Bone>& bones() const { return bones_; }
     bool isSkinned() const { return !bones_.empty(); }
 
+    // The arrow or bolt drawn on a bow's or crossbow's string -- its "nocked" material -- as
+    // its two ends in the bind pose and the bone that carries it, so the one that flies can
+    // leave from where this one was drawn (Figure::nocked). Ends in no order; `bone` -1 when
+    // the mesh has no such part.
+    struct Nock {
+        int bone = -1;
+        float ends[2][3] = {{0, 0, 0}, {0, 0, 0}};
+    };
+    const Nock& nock() const { return nock_; }
+
     // The layout every static draw uses. Valid after the first Mesh::load in the process.
     static const bgfx::VertexLayout& layout();
     // And the one every skinned draw uses.
@@ -196,6 +206,7 @@ private:
     std::vector<Part> parts_;
     std::vector<Material> materials_;
     std::vector<Bone> bones_;
+    Nock nock_;
     bgfx::VertexBufferHandle vbh_ = BGFX_INVALID_HANDLE;
     bgfx::IndexBufferHandle ibh_ = BGFX_INVALID_HANDLE;
     uint32_t indexCount_ = 0;

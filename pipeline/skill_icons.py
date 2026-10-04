@@ -116,6 +116,10 @@ SKILLS = {
     # Penetration"): 0.95d's, off the Orb of Penetration, group 12 number 17. Below 57 and not
     # use-type 4, so the arithmetic above finds its cell.
     52: ("Fairy Elf", "Penetration"),
+    # And Fire Breath, cut on 2026-10-04 because the game now has it (the user: "do it", of the
+    # Dinorant's breath): 0.95d's, carried by the Horn of Dinorant and not learned. Below 57 and
+    # not use-type 4, so the arithmetic above finds its cell.
+    49: ("Dark Knight", "Fire Breath"),
 }
 
 

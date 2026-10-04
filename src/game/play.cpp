@@ -764,10 +764,21 @@ void Play::update(double seconds) {
                         const sim::SkillRow* rock = sim::skillNumbered(sim::skill::kMeteorite);
                         const int32_t fall = rock != nullptr ? rock->fallTicks : 0;
                         const float wait = float(happening.b - fall) * float(kTickSeconds);
+                        // A shower's rock has no body: it falls on the ground the realm drew
+                        // for it, said in tiles, at the weight it rolled, in hundredths in `c`
+                        // (Realm::shower). A knight's rune's rock says none, and is MU's own.
+                        float weight = 1.0f;
+                        if (happening.whom == 0) {
+                            const float tile = ground_->metresPerTile();
+                            to[0] = (happening.x + 0.5f) * tile;
+                            to[2] = -(happening.y + 0.5f) * tile;
+                            if (happening.c > 0) weight = float(happening.c) / 100.0f;
+                        }
                         if (wait > 0.001f) {
-                            rocksDue_.push_back({wait, happening.who, happening.whom, to[0], to[2]});
+                            rocksDue_.push_back(
+                                {wait, happening.who, happening.whom, to[0], to[2], weight});
                         } else {
-                            meteor_.cast(to[0], to[2], happening.who);
+                            meteor_.cast(to[0], to[2], happening.who, weight);
                         }
                     } else if (happening.a == sim::skill::kLightning) {
                         // A chain's leap: from the middle of the body it leaps off (`c`,
@@ -812,6 +823,19 @@ void Play::update(double seconds) {
                         inferno_.cast(ground, caster->yaw, [&](const float* at) {
                             meteor_.stones(at[0], at[2], at[1], 2);
                         });
+                    } else if (happening.a == sim::skill::kFireBreath) {
+                        // The Dinorant's breath, from the dragon under him -- MU's rider stands
+                        // 30 over the ground on it -- at the body, in the air as long as the realm
+                        // holds the blow, with SOUND_SKILL_SWORD3 as MU makes the BITMAP_SHOTGUN
+                        // (ZzzCharacter.cpp:4406-4409). fx/firebreath.h.
+                        const float rider[3] = {caster->crown[0], feet + kDinorantLift,
+                                                caster->crown[2]};
+                        fireBreath_.cast(rider, caster->yaw, to,
+                                         float(happening.b) * float(kTickSeconds));
+                        const int breathIndex = sim::skillIndexOf(happening.a);
+                        if (breathIndex >= 0 && heard_.skill[breathIndex] >= 0) {
+                            emit(heard_.skill[breathIndex], rider[0], rider[2], caster->id);
+                        }
                     } else if (happening.a == sim::skill::kAquaBeam) {
                         // The beam from his hand along the aim the realm struck down, said in
                         // thousandths of a radian (`Realm::strikeAround`); the grid's row runs
@@ -1076,6 +1100,8 @@ void Play::update(double seconds) {
                             if (spell && spell->wizardry) cry = -1;
                             // Death Stab's on AttackTime 8, cued by fx/deathstab.h.
                             if (swinger->castSkill == sim::skill::kDeathStab) cry = -1;
+                            // Fire Breath's with the breath, at the release (`Loosed`).
+                            if (swinger->castSkill == sim::skill::kFireBreath) cry = -1;
                             // Twisting Slash's goes with its wheel, fifteen frames in.
                             if (swinger->castSkill == sim::skill::kTwistingSlash) {
                                 cry = -1;
@@ -1175,10 +1201,14 @@ void Play::update(double seconds) {
                             cue.fuse = swinger->swinging * Showing::kLandingPoint;
                         }
                         // An Ice Monster (attackSkill == 7): its blow is a bite, and the Ice it
-                        // casts with it lands fifteen reference frames on, hit or miss.
+                        // casts with it lands fifteen reference frames on, hit or miss. A breed
+                        // that ices only one blow in some (sim::kChillers, the Silver Valkyrie's
+                        // one shot in four) shows it on the blow that iced him and no other.
                         if (body && !body->player && body->kind >= 0 &&
                             size_t(body->kind) < tables_.kinds.size() &&
-                            tables_.kinds[size_t(body->kind)].attackSkill == sim::skill::kIce) {
+                            tables_.kinds[size_t(body->kind)].attackSkill == sim::skill::kIce &&
+                            (sim::chillOdds(tables_.kinds[size_t(body->kind)].number) <= 1 ||
+                             happening.iced)) {
                             iceCasts_.push_back({happening.who, happening.whom, 15.0f / 25.0f});
                         }
                         // An Ice Queen (attackSkill == 11) throws Power Wave at the same frame,
@@ -1335,12 +1365,24 @@ void Play::update(double seconds) {
                                     (shot == nullptr || shot->arrows > 0);
                         }
                         cue.arrow = arrow;
-                        // A poison's pulse is MU's DT_POISON green, not a blow's number.
+                        // Her arrow still on the string or in the air: the realm let it go at
+                        // key 3.2 and her string goes at key 4 (Play::nocking_), so near a body
+                        // the blow was settled before the arrow left. Shown when it lands
+                        // (Arrows::landed), or after kArrowOwed if it never does.
+                        bool flying = false;
+                        if (arrow) {
+                            flying = arrows_.flyingAt(happening.who, happening.whom);
+                            for (const Nocking& shot : nocking_) {
+                                if (shot.shooter == happening.who && shot.whom == happening.whom) {
+                                    flying = true;
+                                }
+                            }
+                        }
                         cue.poison = happening.poisoned;
                         cue.rune = happening.rune;
                         cue.critical = happening.critical;
                         cue.excellent = happening.excellent;
-                        cue.fuse = 0.0f;
+                        cue.fuse = flying ? kArrowOwed : 0.0f;
                         cue.token = swinger->swingToken;
                         showing_.schedule(cue);
                     }
@@ -1463,8 +1505,10 @@ void Play::update(double seconds) {
                 to[1] -= (look ? look->height * look->scale : 1.0f) * 0.5f;
             }
         }
-        const float left = shot.whom != 0 ? std::max(0.05f, shot.air - shot.waited) : 0.0f;
-        shootArrow(*from, to, shot.whom, left, shot.pierce);
+        // At MU's own speed: her blow waits for it to land (kArrowOwed), where it was once
+        // hurried into what was left of the realm's flight -- across in a twentieth of a second
+        // near a body, too quick to see leave the string.
+        shootArrow(*from, to, shot.whom, 0.0f, shot.pierce);
         shot.air = -1.0f;
     }
     nocking_.erase(std::remove_if(nocking_.begin(), nocking_.end(),
@@ -1612,6 +1656,10 @@ void Play::update(double seconds) {
         },
         [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); },
         [&](const float* at) { meteor_.blast(at, 0.5f); });
+    // The Dinorant's breath, and SOUND_EXPLOTION01 as its DinoE burst is born (fx/firebreath.h).
+    fireBreath_.update(float(seconds), [&](const float* at) {
+        if (heard_.explosion >= 0) emit(heard_.explosion, at[0], at[2]);
+    });
     // Hellfire's wall, and the stones it kicks up -- the meteor's (fx/hellfire.h).
     hellfire_.update(float(seconds),
                      [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
@@ -1678,9 +1726,13 @@ void Play::update(double seconds) {
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts
     // Hellfire: MU's ten BITMAP_FIREs on his bones a frame (ZzzCharacter.cpp:5751-5758).
+    // On the drawn clip alone, not the realm's hold: Meteorite, Ice and Poison have no cooldown
+    // since 2026-10-03, and a primary spell holds him for no ticks, so `casting()` was never true
+    // and the fire, the frost and the fumes went out (the user, 2026-10-04: 'there is casting
+    // effect for lighting but not for meteor').
     if (const sim::Body& hero = realm_.hero();
         (heroCasting_ == sim::skill::kMeteorite || heroCasting_ == sim::skill::kHellfire) &&
-        realm_.casting() && ground_) {
+        ground_) {
         if (const Drawn* drawn = drawnOf(hero.id);
             drawn != nullptr && drawn->placed && drawn->casting > 0.0f) {
             const FigureBody* look = drawn->figure.body();
@@ -1692,8 +1744,7 @@ void Play::update(double seconds) {
     }
     // The frost on him while he casts Ice, and the fumes while he casts Poison.
     if (const sim::Body& hero = realm_.hero();
-        (heroCasting_ == sim::skill::kIce || heroCasting_ == sim::skill::kPoison) &&
-        realm_.casting() && ground_) {
+        (heroCasting_ == sim::skill::kIce || heroCasting_ == sim::skill::kPoison) && ground_) {
         if (const Drawn* drawn = drawnOf(hero.id);
             drawn != nullptr && drawn->placed && drawn->casting > 0.0f) {
             const FigureBody* look = drawn->figure.body();
@@ -1911,7 +1962,14 @@ void Play::update(double seconds) {
             const int clip = hero->figure.clip();
             const bool galloping =
                 look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip);
-            const int action = hero->swinging > 0.0f && hero->castSkill == 0 ? 3
+            // And the dragon's own 6 under PLAYER_SKILL_RIDER, a knight's skill on it -- Fire
+            // Breath's above all (GOBoid.cpp:559-565). Uniria's horse has no 6 and keeps its 3.
+            const sim::SkillRow* swung =
+                hero->swingSkill != 0 ? sim::skillNumbered(hero->swingSkill) : nullptr;
+            const bool riderSkill = mount == 3 && hero->swinging > 0.0f && swung != nullptr &&
+                                    !swung->wizardry && !swung->onSelf() && swung->arrows == 0;
+            const int action = riderSkill                                    ? 6
+                               : hero->swinging > 0.0f && hero->castSkill == 0 ? 3
                                : galloping                                   ? 2
                                                                              : 0;
             pets_.ride(float(seconds), hero->figure, mount,

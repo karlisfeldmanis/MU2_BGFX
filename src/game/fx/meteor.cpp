@@ -121,7 +121,7 @@ void Meteor::shutdown() {
     quake_ = 0.0f;
 }
 
-void Meteor::cast(float targetX, float targetZ, uint32_t attacker) {
+void Meteor::cast(float targetX, float targetZ, uint32_t attacker, float weight) {
     if (fireGroupCount_ == 0 || ground_ == nullptr) return;
     Live* slot = nullptr;
     for (auto& m : meteors_) {
@@ -146,7 +146,15 @@ void Meteor::cast(float targetX, float targetZ, uint32_t attacker) {
     // first and every rock landed a metre and a half east of the man it was thrown at.
     const float radians = kEntryDegrees * kPi / 180.0f;
     slot->alive = true;
-    slot->size = between(kSmallestRock, kLargestRock);
+    // A shower's rock is drawn at the root of its weight and not its own roll on top, so its
+    // largest (2) is MU's largest rock, 1.7, and its smallest a pebble at 0.76 (the user,
+    // 2026-10-04: "some of rocks was to big", at the weight times the roll, up to 3.4). Its
+    // stones, burst and light take the same root.
+    const float drawn = std::sqrt(weight);
+    slot->size = weight == 1.0f ? between(kSmallestRock, kLargestRock)
+                                : kLargestRock / std::sqrt(2.0f) * drawn;
+    slot->weight = drawn;
+    slot->shower = weight != 1.0f;
     slot->floorY = ground_->heightAt(targetX, targetZ);
     slot->x = targetX + (kSideways + float(roll() % uint32_t(kSidewaysSpread))) * kUnit;
     slot->y = slot->floorY + kLift * kUnit;
@@ -155,7 +163,29 @@ void Meteor::cast(float targetX, float targetZ, uint32_t attacker) {
     // the heading points back at the target the offset put it beside.
     slot->driftX = -std::sin(radians) * kFallSpeed * kUnit * kReferenceFps;
     slot->fallY = -std::cos(radians) * kFallSpeed * kUnit * kReferenceFps;
+    slot->driftZ = 0.0f;
+    slot->stretch = slot->wide = 1.0f;
+    for (float& c : slot->tint) c = 1.0f;
+    if (slot->shower) {
+        // Its own slant and quarter (kSlantDegrees, kYawDegrees). Down at MU's own speed, so
+        // the landing keeps fallSeconds(); set beside the target by the slant's tangent, so it
+        // lands on it.
+        const float slant = between(kSlantDegrees[0], kSlantDegrees[1]) * kPi / 180.0f;
+        const float yaw = between(-kYawDegrees, kYawDegrees) * kPi / 180.0f;
+        const float side = kLift * std::tan(slant) * kUnit;
+        slot->x = targetX + std::cos(yaw) * side;
+        slot->z = targetZ + std::sin(yaw) * side;
+        const float across = -std::fabs(slot->fallY) * std::tan(slant);
+        slot->driftX = std::cos(yaw) * across;
+        slot->driftZ = std::sin(yaw) * across;
+        slot->stretch = between(kTrailLength[0], kTrailLength[1]);
+        slot->wide = between(kTrailGirth[0], kTrailGirth[1]);
+        slot->tint[1] = between(kTrailGreen[0], kTrailGreen[1]);
+        slot->tint[2] = between(kTrailBlue[0], kTrailBlue[1]);
+    }
     slot->flown = 0.0f;
+    slot->sparked = 0.0f;
+    slot->smoked = 0.0f;
     slot->left = kRockFrames;
     slot->bodyLight = kBrightestGlow;
     slot->flameLight = kBrightestFlame;
@@ -172,14 +202,15 @@ Meteor::Mote* Meteor::freeMote() {
 
 void Meteor::ember(const Live& rock) {
     const float at[3] = {rock.x, rock.y, rock.z};
-    const float heading[3] = {rock.driftX, rock.fallY, 0.0f};
+    const float heading[3] = {rock.driftX, rock.fallY, rock.driftZ};
     emberAt(at, heading, rock.bodyLight);
 }
 
-void Meteor::emberAt(const float at[3], const float heading[3], float light, bool fireball) {
-    if (!bgfx::isValid(emberSheet_)) return;
+Meteor::Mote* Meteor::emberAt(const float at[3], const float heading[3], float light,
+                              bool fireball) {
+    if (!bgfx::isValid(emberSheet_)) return nullptr;
     Mote* mote = freeMote();
-    if (mote == nullptr) return;
+    if (mote == nullptr) return nullptr;
     mote->alive = true;
     mote->kind = Mote::Kind::Ember;
     for (int a = 0; a < 3; ++a) mote->position[a] = at[a];
@@ -199,6 +230,28 @@ void Meteor::emberAt(const float at[3], const float heading[3], float light, boo
     // The frame's own body light, HELD for the whole life: an ember does not fade its colour,
     // what shrinks is its size. A fireball's is born hotter and cools (see `cools`).
     for (int c = 0; c < 3; ++c) mote->colour[c] = (fireball ? kFireEmber[c] : kGlow[c]) * light;
+    return mote;
+}
+
+void Meteor::trailSmokeAt(const Live& rock) {
+    if (!bgfx::isValid(smokeSheet_)) return;
+    Mote* mote = freeMote();
+    if (mote == nullptr) return;
+    *mote = Mote{};
+    mote->alive = true;
+    mote->kind = Mote::Kind::Smoke;
+    mote->position[0] = rock.x + between(-0.1f, 0.1f);
+    mote->position[1] = rock.y + between(-0.1f, 0.1f);
+    mote->position[2] = rock.z + between(-0.1f, 0.1f);
+    // Left behind, drifting up a little: the rock goes on and the smoke stays in the sky.
+    mote->velocity[0] = between(-0.1f, 0.1f);
+    mote->velocity[1] = between(0.1f, 0.3f);
+    mote->velocity[2] = between(-0.1f, 0.1f);
+    mote->scale = kTrailSmokeScale * rock.weight * rock.wide;
+    mote->size = kSmokeBorn * mote->scale;
+    mote->spin = unit() * kTwoPi;
+    mote->left = mote->born = kTrailSmokeFrames * between(0.8f, 1.2f);
+    for (int c = 0; c < 3; ++c) mote->colour[c] = kTrailSmokeGrey[c];
 }
 
 void Meteor::burn(const float feet[3], float tall, float seconds) {
@@ -348,18 +401,23 @@ void Meteor::land(const Live& rock) {
 
     // 1. The six stones, on MU's shared ballistic arm -- the one its bones and its broken ice
     //    ride too.
-    stonesAt(rock.x, rock.z, floor, 6);
+    //    A shower's heavy rock throws more, a light one fewer (cast's `weight`).
+    stonesAt(rock.x, rock.z, floor, std::max(2, int(std::lround(6.0f * rock.weight))),
+             rock.shower ? kShowerStone : 1.0f);
     // 2. The blast, and it is asked for after the stones so that a nearly full pool spends its
     //    last slots on the debris rather than on one sprite.
-    blastAt(rock.x, floor + kBlastLift * kUnit, rock.z, 1.0f);
+    blastAt(rock.x, floor + kBlastLift * kUnit, rock.z, rock.weight, rock.shower);
     // 3. And a little smoke rising out of it (kSmokePuffs, ours), last, so a full pool drops it
     //    first.
-    smokeAt(rock.x, floor, rock.z);
+    smokeAt(rock.x, floor, rock.z, rock.weight, rock.shower);
 }
 
-void Meteor::smokeAt(float x, float floor, float z) {
+void Meteor::smokeAt(float x, float floor, float z, float weight, bool shower) {
     if (!bgfx::isValid(smokeSheet_)) return;
-    for (int p = 0; p < kSmokePuffs; ++p) {
+    // MU's rock its three; a shower's by its weight, fainter (kShowerPuff*, kShowerSmoke*).
+    const int puffs =
+        shower ? std::max(1, int(weight / kShowerPuffWeight)) : kSmokePuffs;
+    for (int p = 0; p < puffs; ++p) {
         Mote* mote = freeMote();
         if (mote == nullptr) return;
         mote->alive = true;
@@ -372,17 +430,19 @@ void Meteor::smokeAt(float x, float floor, float z) {
         mote->velocity[0] = std::sin(yaw) * kSmokeDrift * unit();
         mote->velocity[1] = kSmokeRise * (0.7f + 0.6f * unit());
         mote->velocity[2] = std::cos(yaw) * kSmokeDrift * unit();
-        mote->size = kSmokeBorn;
+        mote->scale = shower ? kShowerSmokeSize * weight : 1.0f;
+        mote->opacity = shower ? kShowerSmokeOpacity : 1.0f;
+        mote->size = kSmokeBorn * mote->scale;
         mote->spin = unit() * kTwoPi;
         // Staggered, so the three do not open as one.
-        mote->left = mote->born = kSmokeFrames * (0.8f + 0.2f * float(p) / float(kSmokePuffs));
+        mote->left = mote->born = kSmokeFrames * (0.8f + 0.2f * float(p) / float(puffs));
         mote->rise = 0.0f;
         mote->cools = false;
         for (int c = 0; c < 3; ++c) mote->colour[c] = kSmokeGrey[c];
     }
 }
 
-void Meteor::stonesAt(float x, float z, float floor, int count) {
+void Meteor::stonesAt(float x, float z, float floor, int count, float scale) {
     // Each rolls its own size, its own gravity and its own scatter; none of them takes the
     // rock's roll, which would put a field of boulders on the grass.
     for (int s = 0; s < count; ++s) {
@@ -396,7 +456,7 @@ void Meteor::stonesAt(float x, float z, float floor, int count) {
         slot->fade = 0.0f;
         slot->which = int(roll() & 1u);  // MODEL_STONE1 + rand() % 2
         slot->left = kStoneLeastFrames + float(roll() % uint32_t(kStoneMoreFrames));
-        slot->size = between(kSmallestStone, kLargestStone);
+        slot->size = between(kSmallestStone, kLargestStone) * scale;
         // An ACCELERATION: units a frame SQUARED, so two factors of 25 and not one. Read as a
         // velocity it comes out twenty-five times too small and the debris drifts in slow
         // motion, weightless.
@@ -416,7 +476,7 @@ void Meteor::stonesAt(float x, float z, float floor, int count) {
     }
 }
 
-void Meteor::blastAt(float x, float y, float z, float share) {
+void Meteor::blastAt(float x, float y, float z, float share, bool shower) {
     if (bgfx::isValid(blastSheet_)) {
         if (Mote* mote = freeMote()) {
             mote->alive = true;
@@ -432,7 +492,18 @@ void Meteor::blastAt(float x, float y, float z, float share) {
             // White. MU's colour argument here is uninitialised stack memory, so there is
             // nothing to port, and tinting it with the trail's red takes the heat out of an
             // already orange core.
-            for (int c = 0; c < 3; ++c) mote->colour[c] = 1.0f;
+            float heat = 1.0f;
+            // A shower's is smaller and dimmer, and no two alike: its own turn, size, heat and
+            // life (kShowerBlast*, ours). The heat is also its light's (lights()).
+            if (shower) {
+                mote->size *= kShowerBlast * between(kShowerBlastSize[0], kShowerBlastSize[1]);
+                mote->spin = unit() * kTwoPi;
+                mote->left = mote->born =
+                    between(kShowerBlastFrames[0], kShowerBlastFrames[1]);
+                heat = between(kShowerBlastHeat[0], kShowerBlastHeat[1]);
+            }
+            mote->lit = shower ? kShowerLight : 1.0f;
+            for (int c = 0; c < 3; ++c) mote->colour[c] = heat;
         }
     }
 }
@@ -445,6 +516,7 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
         if (!m.alive) continue;
         m.x += m.driftX * seconds;
         m.y += m.fallY * seconds;
+        m.z += m.driftZ * seconds;
         m.left -= refFrames;
 
         // Two rolls, every frame, and they are independent on purpose: the body's light is
@@ -458,10 +530,32 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
 
         // The trail, stepped by DISTANCE and never by time: fifty units of spacing at fifty
         // units a frame is MU's own one-an-frame, and it stays that at any frame rate.
-        m.flown += std::sqrt(m.driftX * m.driftX + m.fallY * m.fallY) * seconds;
+        const float speed =
+            std::sqrt(m.driftX * m.driftX + m.fallY * m.fallY + m.driftZ * m.driftZ);
+        m.flown += speed * seconds;
         while (m.flown >= kEmberSpacingUnits * kUnit) {
             m.flown -= kEmberSpacingUnits * kUnit;
             ember(m);
+        }
+        // A shower's ribbon of cooling sparks (kTrailSpacing, ours), off the line a little.
+        if (m.shower) {
+            m.sparked += speed * seconds;
+            m.smoked += speed * seconds;
+            const float heading[3] = {m.driftX, m.fallY, m.driftZ};
+            while (m.sparked >= kTrailSpacing * kUnit) {
+                m.sparked -= kTrailSpacing * kUnit;
+                const float off = kTrailScatter * m.weight * m.wide;
+                const float at[3] = {m.x + between(-off, off), m.y + between(-off, off),
+                                     m.z + between(-off, off)};
+                // Flung off the line too, some further than others.
+                if (Mote* spark = emberAt(at, heading, m.bodyLight * m.weight, true)) {
+                    for (int a = 0; a < 3; ++a) spark->velocity[a] += between(-kSparkKick, kSparkKick);
+                }
+            }
+            while (m.smoked >= kTrailSmokeSpacing * kUnit) {
+                m.smoked -= kTrailSmokeSpacing * kUnit;
+                trailSmokeAt(m);
+            }
         }
 
         // Landing. MU makes the blast either way -- on the ground or on running out of life.
@@ -475,7 +569,12 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
             // pitch and not a length, which is why no unit conversion belongs on it. A second
             // landing while the first one's jolt still runs takes the new value whole, as MU's
             // one global does.
-            quake_ = float(int(roll() % 4) - 4) * 0.1f;
+            const float jolt = float(int(roll() % 4) - 4) * 0.1f;
+            // A shower's pebbles land without one; past kQuakeFrom it grows to MU's whole.
+            if (!m.shower) quake_ = jolt;
+            else if (m.weight > kQuakeFrom) {
+                quake_ = jolt * std::min(1.0f, (m.weight - kQuakeFrom) / (kQuakeFull - kQuakeFrom));
+            }
             m.alive = false;
         }
     }
@@ -521,7 +620,7 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
         for (int a = 0; a < 3; ++a) m.position[a] += m.velocity[a] * seconds;
         if (m.kind == Mote::Kind::Smoke) {
             const float t = 1.0f - m.left / m.born;
-            m.size = kSmokeBorn + (kSmokeGrown - kSmokeBorn) * std::sqrt(t);
+            m.size = (kSmokeBorn + (kSmokeGrown - kSmokeBorn) * std::sqrt(t)) * m.scale;
             m.spin += 0.012f * refFrames;
         }
         if (m.kind == Mote::Kind::Ember) {
@@ -564,6 +663,9 @@ void Meteor::submit(gfx::Effects& effects, const std::vector<Corner>& tris,
     sprite.blend = blend;
     for (int k = 0; k < 3; ++k) sprite.colour[k] = colour[k];
     sprite.colour[3] = alpha;
+    // An added mesh sorts as one piece, at `at` (submitEffectAlong says why).
+    const bool added = blend == gfx::Blend::Additive || blend == gfx::Blend::Flame ||
+                       blend == gfx::Blend::Breath;
     for (size_t i = 0; i + 2 < tris.size(); i += 3) {
         for (int k = 0; k < 4; ++k) {
             const Corner& p = tris[i + size_t(std::min(k, 2))];
@@ -577,9 +679,68 @@ void Meteor::submit(gfx::Effects& effects, const std::vector<Corner>& tris,
         }
         for (int a = 0; a < 3; ++a) {
             sprite.position[a] =
-                (sprite.corner[0][a] + sprite.corner[1][a] + sprite.corner[2][a]) / 3.0f;
+                added ? at[a]
+                      : (sprite.corner[0][a] + sprite.corner[1][a] + sprite.corner[2][a]) / 3.0f;
         }
         effects.add(sprite);
+    }
+}
+
+void Meteor::gatherShowerRock(gfx::Effects& effects, const Live& m, const float* eye) const {
+    // Its basis off its own heading, as MU's lean puts it on the 20 degree one: the model's Y
+    // back up the fall, Z level across it, X the third. For MU's own heading this is the lean.
+    const float speed = std::sqrt(m.driftX * m.driftX + m.fallY * m.fallY + m.driftZ * m.driftZ);
+    if (speed <= 0.0f) return;
+    const float y[3] = {-m.driftX / speed, -m.fallY / speed, -m.driftZ / speed};
+    float z[3] = {-y[2], 0.0f, y[0]};
+    const float level = std::sqrt(z[0] * z[0] + z[2] * z[2]);
+    if (level < 1e-4f) return;
+    z[0] /= level;
+    z[2] /= level;
+    const float x[3] = {y[1] * z[2] - y[2] * z[1], y[2] * z[0] - y[0] * z[2],
+                        y[0] * z[1] - y[1] * z[0]};
+    const float white[3] = {1.0f, 1.0f, 1.0f};
+    const float at[3] = {m.x, m.y, m.z};
+    submitEffectAlong(effects, fireGroups_[0].triangles, fireGroups_[0].sheet,
+                      fireGroups_[0].blend, at, x, y, z, m.size, white, 1.0f);
+    // Its blur: the rock again a few hundredths of a second back, fainter (kRockGhosts).
+    for (int g = 0; g < kRockGhosts; ++g) {
+        const float back = kGhostSeconds[g];
+        const float was[3] = {m.x - m.driftX * back, m.y - m.fallY * back, m.z - m.driftZ * back};
+        submitEffectAlong(effects, fireGroups_[0].triangles, fireGroups_[0].sheet,
+                          fireGroups_[0].blend, was, x, y, z, m.size, white, kGhostAlpha[g]);
+    }
+    if (fireGroupCount_ < 2) return;
+    // The flame, its own length and girth and heat.
+    const float cx[3] = {x[0] * m.wide, x[1] * m.wide, x[2] * m.wide};
+    const float cy[3] = {y[0] * m.stretch, y[1] * m.stretch, y[2] * m.stretch};
+    const float cz[3] = {z[0] * m.wide, z[1] * m.wide, z[2] * m.wide};
+    const float cone[3] = {kDaylight[0] * m.flameLight * m.tint[0],
+                           kDaylight[1] * m.flameLight * m.tint[1],
+                           kDaylight[2] * m.flameLight * m.tint[2]};
+    submitEffectAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
+                      fireGroups_[1].blend, at, cx, cy, cz, m.size, cone, 1.0f);
+    // The molten head: the Fire Ball's halo and heart, drawn toward the eye so the stone does
+    // not sort over its middle (kHeadGlow).
+    if (!bgfx::isValid(glowSheet_)) return;
+    float toward[3] = {0.0f, 0.0f, 0.0f};
+    if (eye != nullptr) {
+        const float d[3] = {eye[0] - m.x, eye[1] - m.y, eye[2] - m.z};
+        const float far = std::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+        if (far > 1e-3f) for (int a = 0; a < 3; ++a) toward[a] = d[a] / far * kGlowForward;
+    }
+    for (int layer = 0; layer < 2; ++layer) {
+        gfx::Sprite glow;
+        for (int a = 0; a < 3; ++a) glow.position[a] = at[a] + toward[a];
+        const float wide =
+            (layer == 0 ? kHaloWide * kHeadHalo : kHeartWide) * m.size * kHeadGlow;
+        glow.halfWidth = glow.halfHeight = wide * 0.5f;
+        glow.spin = m.left * 0.4f;
+        const float* tint = layer == 0 ? kHalo : kHeart;
+        for (int c = 0; c < 3; ++c) glow.colour[c] = tint[c] * m.bodyLight * m.tint[c];
+        glow.sheet = glowSheet_;
+        glow.blend = gfx::Blend::Additive;
+        effects.add(glow);
     }
 }
 
@@ -590,6 +751,10 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
     for (const auto& m : meteors_) {
         if (!m.alive) continue;
         const float at[3] = {m.x, m.y, m.z};
+        if (m.shower) {
+            gatherShowerRock(effects, m, eye);
+            continue;
+        }
         if (fireGroupCount_ > 0) {
             // The rock's albedo is WHITE -- its sheet, unshaded, and nothing multiplied into
             // it. The body's luminosity roll is the ground light's energy and not a tint;
@@ -712,7 +877,7 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             const float t = 1.0f - m.left / m.born;
             const float in = std::min(1.0f, t / 0.12f);
             const float out = 1.0f - std::clamp((t - 0.33f) / 0.67f, 0.0f, 1.0f);
-            sprite.colour[3] = kSmokeAlpha * in * out;
+            sprite.colour[3] = kSmokeAlpha * m.opacity * in * out;
             sprite.sheet = smokeSheet_;
             sprite.blend = gfx::Blend::Smoke;
             effects.add(sprite);
@@ -732,8 +897,8 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             sprite.sheet = blastSheet_;
             // Explotion01's 4x4 grid walked one cell every two frames, so ten of its sixteen
             // are ever seen: `o->Frame = (20 - LifeTime) / 2`, in integers.
-            const int step = std::clamp(int((m.born - m.left) / float(kBlastHeld)), 0,
-                                        kBlastGrid * kBlastGrid - 1);
+            const int step =
+                std::clamp(int((m.born - m.left) / float(kBlastHeld)), 0, kBlastLastCell);
             const float side = 1.0f / float(kBlastGrid);
             sprite.u0 = float(step % kBlastGrid) * side + kBlastInset;
             sprite.v0 = float(step / kBlastGrid) * side + kBlastInset;
@@ -757,7 +922,7 @@ uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
         light.position[1] = m.y;
         light.position[2] = m.z;
         // `AddTerrainLight(..., 2, ...)`: two tiles, which is two metres here.
-        light.reach = kGlowTiles;
+        light.reach = kGlowTiles * m.weight * (m.shower ? kShowerReach : 1.0f);
         // How far it hangs over the ground under it. The rock is four metres up when it is
         // thrown and on the floor when it lands, so this is what it has fallen to -- without
         // it the light would be flat on the ground the whole way down and the pool would not
@@ -766,7 +931,8 @@ uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
         // The deep orange-red, dimmed by the frame's own body roll. It is the ONE place that
         // colour belongs besides the embers: over the flame cone it crushes the sheet toward
         // black.
-        for (int c = 0; c < 3; ++c) light.colour[c] = kGlow[c] * m.bodyLight;
+        const float share = m.shower ? kShowerLight : 1.0f;
+        for (int c = 0; c < 3; ++c) light.colour[c] = kGlow[c] * m.bodyLight * share;
     }
 
     // The fire on a wizard calling one down: his chest, three tiles, flickering.
@@ -806,10 +972,11 @@ uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
         if (!m.alive || m.kind != Mote::Kind::Blast || count >= max) continue;
         gfx::PointLight& light = out[count++];
         for (int a = 0; a < 3; ++a) light.position[a] = m.position[a];
-        light.reach = kBlastGlowTiles;
+        // A shower's dimmer blast lights less, by its heat (1 for every other).
+        light.reach = kBlastGlowTiles * (m.lit < 1.0f ? kShowerReach : 1.0f);
         light.height = kBlastLift * kUnit;
         const float luminosity = m.born > 0.0f ? m.left / m.born : 0.0f;
-        for (int c = 0; c < 3; ++c) light.colour[c] = kBlastGlow[c] * luminosity;
+        for (int c = 0; c < 3; ++c) light.colour[c] = kBlastGlow[c] * luminosity * m.colour[0] * m.lit;
     }
     return count;
 }

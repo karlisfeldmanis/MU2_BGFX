@@ -16,9 +16,9 @@
 // Where and how it flies. MU puts it at the shooter's feet plus (-10, -60, 135) turned by her
 // facing -- 1.35 m up, 0.6 m ahead -- at `Direction[1] = -70` units a reference frame, 17.5
 // tiles a second, and ends it on `CheckClientArrow`'s one tile from a body. **Ours:** MU's
-// arrow flies level and is not steered; this one is aimed at the target's middle and follows
-// it, because a level arrow at 1.35 m passes over a spider, and the realm has already decided
-// it hits. The speed and the tile short are the realm's own (`kArrowTilesPerSecond`), so the
+// arrow flies level; this one is aimed at the target's middle when it leaves, because a level
+// arrow at 1.35 m passes over a spider, and the realm has already decided it hits. Not steered
+// after, as MU's is not. The speed and the tile short are the realm's own (`kArrowTilesPerSecond`), so the
 // arrow vanishes on the tick the blow lands.
 //
 // **Ours:** the wooden arrow also burns at its tail -- small licks of the same `fire` strip,
@@ -87,6 +87,8 @@ public:
 
     // Which model a weapon throws, by its bow-group number (MuMain's CreateArrow).
     static Model modelFor(int32_t group, int32_t number);
+    // Half a missile's length at its drawn scale: Arrow01's -42 to +48 units at 0.8.
+    static constexpr float kHalfLength = 0.36f;
     // Its fire's or streak's colour when it is one of the few toned (see the top), or null.
     static const float* tintFor(int32_t group, int32_t number);
 
@@ -109,6 +111,8 @@ public:
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
 
     uint32_t flying() const;
+    // Whether `shooter`'s arrow at `whom` is still in the air: her blow waits for it to land.
+    bool flyingAt(uint32_t shooter, uint32_t whom) const;
 
 private:
     std::vector<uint32_t> landed_;  // this update's shooters whose arrow reached its body
@@ -249,6 +253,7 @@ private:
     static constexpr float kFrames = 30.0f;           // `o->LifeTime = 30`
     static constexpr float kTilesASecond = 17.5f;     // the realm's kArrowTilesPerSecond
     static constexpr float kStopsShort = 1.0f;        // tiles: CheckCharacterRange(o, 100)
+    static constexpr float kIntoBody = 0.25f;         // metres from its middle: ours
     // The embers: MU's BITMAP_FIRE sub-type 0, the numbers `fx/meteor.h` already carries.
     static constexpr float kEmberSpacingUnits = 70.0f;  // one a reference frame at 70 a frame
     static constexpr float kEmberFrames = 24.0f;

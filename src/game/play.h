@@ -46,6 +46,7 @@
 #include "game/fx/inferno.h"
 #include "game/fx/aqua.h"
 #include "game/fx/deathstab.h"
+#include "game/fx/firebreath.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -150,6 +151,11 @@ public:
     // The right button: a monster under it is attacked with the quick slot's skill, thrown
     // whenever it can be and the weapon swung when it cannot; anywhere else it stops him.
     void rightClick();
+    // And held down after the press: a skill aimed at the ground goes on being cast there, the
+    // next as soon as his arm comes down from the last (the user, 2026-10-04: "if i hold right
+    // click it has to cast again"), and moved onto another monster it sets him on that one
+    // ("allow me to hold right click and chancge monsters").
+    void rightHeld();
     // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
     // and handed down each frame, as the bar is the interface's and the order is the realm's.
     void setQuickSkill(int32_t skill) { quickSkill_ = skill; }
@@ -517,6 +523,8 @@ public:
     Aqua& aqua() { return aqua_; }
     // The knight's Death Stab: its streaks, cones and the wound it leaves. fx/deathstab.h.
     DeathStab& deathStab() { return deathStab_; }
+    // The Dinorant's Fire Breath: its sprays, its haze and its burst. fx/firebreath.h.
+    FireBreath& fireBreath() { return fireBreath_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -871,6 +879,7 @@ private:
         float wait = 0.0f;
         uint32_t who = 0, whom = 0;
         float x = 0.0f, z = 0.0f;
+        float weight = 1.0f;  // a shower's rock's size (sim::kLightestRock..kHeaviestRock)
     };
     std::vector<RockDue> rocksDue_;
     struct MeteorStorm {
@@ -987,6 +996,7 @@ private:
     Inferno inferno_;
     Aqua aqua_;
     DeathStab deathStab_;
+    FireBreath fireBreath_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;
@@ -994,6 +1004,9 @@ private:
     int gatedColumn_ = 0, gatedRow_ = 0;
     int travelled_ = -1;
     int32_t quickSkill_ = 0;
+    // The monster the right button last set him on, so a held button moved onto another one
+    // sets him on that (rightHeld); 0 when the last press was not on a monster.
+    uint32_t rightTarget_ = 0;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
     // so watching a wizard cast never moves the sim's seeded stream.

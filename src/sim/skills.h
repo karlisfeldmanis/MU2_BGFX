@@ -214,11 +214,14 @@ std::string familiesListed(uint32_t families);
 // thrown at, out to its reach -- the curtain sweeps through them all (the user, 2026-09-28).
 // Fan is Skillshot's: `arrows` lines out from him, one straight at the body he aims at and the
 // rest `kFanDegrees` apart either side, each striking every body within `kLineHalfWidth` of it
-// between `kFanNearest` tiles and the row's reach -- MU2's `Realm.Passes`, off MuMain's Triple
-// Shot, whose arrows fly on through what they strike (`Kind = 1`).
+// from her feet to the row's reach -- MU2's `Realm.Passes`, off MuMain's Triple Shot, whose
+// arrows fly on through what they strike (`Kind = 1`). MU2 left the first 0.6 tiles out, which
+// let a monster pressed against her take nothing.
 enum class Spread : uint8_t { One, Ring, Arc, Line, Fan, Beam };
+// How many bodies one Lightning chain strikes at most: eleven, not the fourteen its window
+// would reach (the user, 2026-10-04). The window and the arm keep their time. Realm::channel.
+constexpr int kLightningBodies = 11;
 constexpr float kFanDegrees = 15.0f;
-constexpr float kFanNearest = 0.6f;
 
 // Half the Line's width, in tiles: the curtain is 0.91 m across, so a body whose middle is within
 // three quarters of a tile of the line is in its way.
@@ -385,6 +388,12 @@ struct SkillRow {
     // **A fire that walks**: tiles a tick it moves from his feet along where he aimed, striking
     // on `kStormFirst`/`kStormEvery` rather than lit under the body. 0 for a fire that stays put.
     float walks = 0.0f;
+    // ---- Fire Breath's, appended after Twister's ------------------------------------------
+    // **The mount's and not his**: known while a Horn of Dinorant with life left is worn
+    // (`Realm::knows`, no learned bit and nothing in the save), thrown only while it is ridden
+    // (`Body::riding`, so never on a safe tile), with any weapon or none
+    // -- it is the dragon that breathes.
+    bool mounted = false;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -394,8 +403,14 @@ struct SkillRow {
     // have no direction and the single throws need a body to fly at.
     bool aimsAtPointer() const {
         return spread == Spread::Beam || spread == Spread::Line || spread == Spread::Arc ||
-               walks > 0.0f;
+               walks > 0.0f || showers();
     }
+    // **A shower**: rocks out of the sky on random ground within `splash` of where it is called
+    // -- Meteorite's since 2026-10-04 (the user: "click on any spot on ground and on that area
+    // meteors will drops on some random places on some 4 tile radius", "every time char rises
+    // hand meteors drops on that location"). Ice and Poison keep the splash with no fall: a
+    // body each round the aimed one (Realm::rain). Realm::shower.
+    bool showers() const { return splash > 0.0f && fallTicks > 0; }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
     // Whether it is an aura: a self-cast that is not a summon. Blood Castle's court lets these
@@ -423,7 +438,7 @@ struct SkillRow {
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 35;
+constexpr int kSkills = 36;
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
@@ -431,6 +446,28 @@ static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bit
 // nothing, not a rule about crowds.
 // 24 and not 16 since the wizard's spells reach the screen (2026-10-03, nine tiles).
 constexpr int kVictims = 24;
+
+// A shower's rocks (Realm::shower): how many fall each time his arm goes up, and how far round
+// where each lands it strikes. Six rocks of two tiles over a disc of four cover much of it and
+// leave a gap or two, which is the randomness the user asked for; the first rock always lands
+// within a tile of the spot he clicked. All ours, 2026-10-04: eight at first, six since the user
+// asked 'nerf meteor amount of meteors little bit' -- with Arcane Echo's second shower a long
+// fight was a sky of rocks, and fewer rocks also hit fewer bodies at a shower's edge.
+constexpr int kShowerRocks = 6;
+constexpr float kRockBlast = 2.0f;
+constexpr float kFirstRockOff = 1.0f;
+// **A rain, big rocks and small** (the user, 2026-10-04: "has to fele more like meteor rain,
+// some balls are bigger some are smaller", "bigger do more damage smalleer not so much"): each
+// rock rolls a weight in this band, which scales its blow, its blast's reach and its drawing
+// (said in hundredths in the `Loosed`'s `c`), and they come down over this many ticks rather
+// than on one. A body under several takes the heaviest. Ours.
+//
+// **Wider, and mostly small** (the user, 2026-10-04: "ad more variations of rock sizes"): 0.4 to
+// 2.0, drawn as the square of an even roll, so most of a rain is pebbles and a boulder is rare
+// (a third under 0.6, one in ten over 1.6; 0.93 on average). A rock's blast grows with the
+// root of its weight, 1.3 to 2.8 tiles, so a boulder does not cover the whole shower.
+constexpr float kLightestRock = 0.4f, kHeaviestRock = 2.0f;
+constexpr int32_t kShowerSpreadTicks = 12;
 
 // Half the Arc's spread, in radians: 67.5 degrees either side of where he is facing, which is
 // exactly the three compass eighths of "ahead and the two diagonals beside it". Written as an

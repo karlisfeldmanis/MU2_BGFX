@@ -29,6 +29,9 @@ constexpr double kTickSeconds = 1.0 / 20.0;
 // The longest a hero's shot waits for her string (Play::nocking_): her clip cut short -- a
 // click away, a death -- still lets the arrow go.
 constexpr float kNockHold = 0.33f;
+// The longest her blow waits for the arrow carrying it to land (Arrows::landed): the string's
+// hold and a long flight.
+constexpr float kArrowOwed = 0.8f;
 // How many ticks past its flight a spell's hit stays owed (Play::owedHits): a Meteorite's rain
 // spreads a second over its fall, and a miss lapses after it.
 constexpr int64_t kOwedSlack = 24;
@@ -409,6 +412,8 @@ constexpr float kLizardShaftWander = 0.06f;
 // left out (the user, 2026-10-04: 'lets keep only lasers from head'), so its swing shows by the
 // beams its heads carry (below) and the flare on its gem.
 inline constexpr const char* kHydraFigure = "Hydra01";
+// The Silver Valkyrie, whose bolts are Penetration's arrow (Play::volleyShot). Ours.
+inline constexpr const char* kPenetratingFigure = "SilverValkyrie01";
 constexpr int32_t kHydraNumber = 49;
 // Its four heads, whose beams strike (sim kSplitBlows): MU's BlendMesh 5 is never drawn (the
 // user, 2026-10-04: 'from heads we shoot red lightiing not lasers?'), and each beam is the

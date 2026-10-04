@@ -339,6 +339,9 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().deathStab().open(assets, ctx.textures,
                                                  world_.played().showing().table(),
                                                  &world_.ground());
+                world_.played().fireBreath().open(assets, ctx.textures,
+                                                  world_.played().showing().table(),
+                                                  &world_.ground());
                 // The refinement shine's two sheets: Chrome01 for +7, Shiny01 for +9.
                 game::lendShine(world_.played().showing().table(), assets, ctx.textures,
                                 ctx.renderer);
@@ -844,7 +847,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.played().pointAtLabel(desk_.labelUnder(pointerX, pointerY));
         }
         if ((ctx.window.clicked(0) && !windowed) || clickNow) world_.played().leftClick();
-        if (ctx.window.clicked(1) && !windowed) world_.played().rightClick();
+        if (ctx.window.clicked(1) && !windowed) {
+            world_.played().rightClick();
+        } else if (ctx.window.held(1) && !windowed) {
+            world_.played().rightHeld();
+        }
         world_.played().update(deltaSeconds);
         // The colour goes out of the world while he is down. Half a second out and a second
         // back: a fall should land and a recovery should feel like one. The renderer drains the
@@ -1029,6 +1036,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Inferno's ring, one warm light for its blasts (fx/inferno.h).
         count += world_.played().inferno().lights(falling + count,
                                                   gfx::Renderer::kMaxTransientLights - count);
+        // And the Dinorant's breath, MU's cool blue under it (fx/firebreath.h).
+        count += world_.played().fireBreath().lights(falling + count,
+                                                     gfx::Renderer::kMaxTransientLights - count);
         // And Aqua Beam's line, three blue lights along it (fx/aqua.h).
         count += world_.played().aqua().lights(falling + count,
                                                gfx::Renderer::kMaxTransientLights - count);
@@ -1224,6 +1234,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().inferno().gatherEffects(ctx.renderer.effects());
         world_.played().aqua().gatherEffects(ctx.renderer.effects());
         world_.played().deathStab().gatherEffects(ctx.renderer.effects());
+        world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
+                                                   eye.target, daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         openItems(ctx);

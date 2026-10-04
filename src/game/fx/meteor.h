@@ -49,7 +49,9 @@ public:
     // A Lich threw one. `targetX, targetZ` are where it will LAND, in world metres -- the
     // target's own tile -- and not where the rock appears. `attacker` is the Lich's body id,
     // carried through to the impact so the blow it belongs to can be landed with the fire.
-    void cast(float targetX, float targetZ, uint32_t attacker = 0);
+    // `weight` is a Meteorite shower's rock's own (sim::kLightestRock..kHeaviestRock, ours): it
+    // scales the rock, its stones, its blast and its light; 1 is MU's rock.
+    void cast(float targetX, float targetZ, uint32_t attacker = 0, float weight = 1.0f);
 
     // How long a meteor is in the air, in seconds, the same every throw because nothing about
     // the fall varies: 400 units of height at 50·cos20 = 46.98 units a reference frame is
@@ -155,9 +157,16 @@ private:
         bool alive = false;
         float x, y, z;         // world metres
         float driftX, fallY;   // its heading, metres a second
+        float driftZ;          // and across, a shower's rock's own yaw (0 for MU's)
+        float stretch, wide;   // a shower's flame, its own length and girth (1 for MU's)
+        float tint[3];         // and its own heat, yellow to red, on the cone (1 for MU's)
         float floorY;          // where the ground was under the tile it was thrown at
-        float size;            // 1.0 to 1.7, its own roll, on both meshes
+        float size;            // 1.0 to 1.7, its own roll, on both meshes, times its weight
+        float weight;          // a shower's rock's (cast), 1 for MU's
+        bool shower;           // a Meteorite shower's rock, which lands as ours (kShower*)
         float flown;           // metres travelled since the last ember
+        float sparked;         // and since a shower's last trail spark (kTrailSpacing)
+        float smoked;          // and since its last puff of trail smoke
         float left;            // life remaining, reference frames
         float bodyLight;       // this frame's 0.7-1.0 roll, for the rock
         float flameLight;      // this frame's INDEPENDENT 0.4-0.7 roll, for the cone
@@ -210,6 +219,9 @@ private:
         float born;      // what `left` started at
         float rise;      // the ember's accelerating lift
         float colour[3];
+        float scale = 1.0f;    // a smoke's size against kSmokeBorn..kSmokeGrown
+        float opacity = 1.0f;  // and its share of kSmokeAlpha
+        float lit = 1.0f;      // a blast's share of its ground light (kShowerLight)
         // A fireball's ember, which cools as it goes where the meteor's holds its colour (ours):
         // born `colour`, dying toward the deep red and out.
         bool cools = false;
@@ -287,6 +299,10 @@ private:
     static constexpr float kBlastFrames = 20.0f;
     static constexpr int kBlastHeld = 2;
     static constexpr int kBlastGrid = 4;
+    // Its last picture. Cells 10 to 15 of Explotion01 are blank WHITE, and a blast living past
+    // MU's twenty frames walked into cell 10 and drew a white square (the user, 2026-10-04:
+    // "some white squares"); the step is held here instead.
+    static constexpr int kBlastLastCell = 9;
     static constexpr float kBlastUnits = 256.0f;
     static constexpr float kBlastInset = 0.005f;
 
@@ -302,6 +318,73 @@ private:
     static constexpr float kStoneRestUnder = 0.5f;    // units a frame, under which it lies still
     static constexpr float kStoneFade = 0.1f;         // a frame, once landed
     static constexpr float kStoneTumble = 0.5f;       // MU's `Angle += 0.5 * LifeTime`
+
+    // **A shower's rock, ours** (the user, 2026-10-04: "maybe some minimal blurryness when meteors
+    // fall", "little bit more subtle explosions and more variations on explosions based on
+    // impact"). A Lich's rock keeps MU's look; only the wizard's shower takes these.
+    // The blur: the rock and its cone drawn again this far back along their fall, fainter, a
+    // shutter of a few hundredths of a second -- a smear, not a second rock.
+    // The rock alone: a ghosted cone thickened every trail into a tube.
+    // One, since the user asked for the frame at 2K (2026-10-04): the second cost a whole rock
+    // of blended triangles for 15% of a smear.
+    static constexpr int kRockGhosts = 1;
+    static constexpr float kGhostSeconds[kRockGhosts] = {0.03f};
+    static constexpr float kGhostAlpha[kRockGhosts] = {0.3f};
+    // **No two trails alike** (the user: "all trails all the same we need some variations"):
+    // each rock comes in at its own slant and from its own quarter of MU's side of the sky, with
+    // a flame of its own length, girth and heat. The slant changes only how fast it crosses the
+    // ground -- it falls at MU's speed, so it lands at fallSeconds() as the realm's blow does.
+    static constexpr float kSlantDegrees[2] = {13.0f, 30.0f};
+    static constexpr float kYawDegrees = 40.0f;            // either side of MU's quarter
+    static constexpr float kTrailLength[2] = {0.7f, 1.35f};
+    static constexpr float kTrailGirth[2] = {0.75f, 1.1f};
+    static constexpr float kTrailGreen[2] = {0.7f, 1.0f};   // of the daylight's, for the heat
+    static constexpr float kTrailBlue[2] = {0.55f, 1.0f};
+    // The sparks fly off the line as well as along it, and a dark smoke hangs behind the fire
+    // (the user's picture: black smoke over a burning streak), puffed every kTrailSmokeSpacing.
+    static constexpr float kSparkKick = 1.2f;              // metres a second, sideways at most
+    static constexpr float kTrailSmokeSpacing = 90.0f;     // units; 60 at first, the frame's
+    static constexpr float kTrailSmokeFrames = 28.0f;
+    static constexpr float kTrailSmokeScale = 0.45f;       // of a landing's puff
+    static constexpr float kTrailSmokeGrey[3] = {0.13f, 0.12f, 0.115f};
+    // **The smoke after a shower's landing, fainter and by the rock** (the user: "smoke after
+    // impact has to be more subtle", "and based on fireball size"): a puff for every
+    // kShowerPuffWeight of drawn weight, so a pebble leaves one and a boulder three, each opening
+    // to the rock's own size and at this share of MU's opacity.
+    static constexpr float kShowerPuffWeight = 0.5f;
+    static constexpr float kShowerSmokeSize = 0.7f;
+    static constexpr float kShowerSmokeOpacity = 0.5f;
+    // The rock's molten head (the user's picture): the Fire Ball's halo and heart over it, at
+    // this share of theirs and in the rock's own heat.
+    // The halo at kHeadHalo of that: at 0.8 a boulder's was 2.6 metres of added light, a dozen
+    // at once in a shower, and the heart reads as the molten head on its own.
+    static constexpr float kHeadGlow = 0.8f;
+    static constexpr float kHeadHalo = 0.5f;
+    // **Its light, a little less** (the user: "reduce fire emitter strength for meteors little
+    // bit"): the light a shower's rock casts as it falls and its blast's, at this share of MU's,
+    // over a reach a little shorter. Six rocks and an echo's six lit the ground too hot.
+    static constexpr float kShowerLight = 0.7f;
+    static constexpr float kShowerReach = 0.85f;
+    // The blast, smaller and dimmer than MU's, and each its own: a turn, a size and a heat
+    // rolled per landing, and a life a few frames either side of MU's twenty.
+    static constexpr float kShowerBlast = 0.72f;
+    static constexpr float kShowerBlastSize[2] = {0.82f, 1.18f};
+    static constexpr float kShowerBlastHeat[2] = {0.62f, 0.86f};
+    static constexpr float kShowerBlastFrames[2] = {15.0f, 21.0f};
+    // The weight says how much of the rest comes: a puff for a pebble and a column for a boulder
+    // (smoke puffs scale with the drawn weight, 0.63 to 1.41), and the camera's jolt only from
+    // a rock past kQuakeFrom, growing to MU's whole jolt at the heaviest.
+    static constexpr float kQuakeFrom = 1.1f, kQuakeFull = 1.41f;
+    // The stones it throws, smaller than MU's (the user: "smaller rocks on impact"): chips.
+    static constexpr float kShowerStone = 0.5f;
+    // **Its trail** (the user: "make nicer fire trails"): besides MU's ember every fifty units,
+    // a cooling spark every kTrailSpacing, scattered off the line by up to kTrailScatter metres,
+    // born orange and dying red as the Fire Ball's do, so the streak is a ribbon of sparks
+    // rather than a dotted line.
+    // 30 and not 18 for the frame at 2K (the user, 2026-10-04: "performance on fullscreen 2k for
+    // meteorite"): a cast and its echo held some 260 half-metre sparks in one place.
+    static constexpr float kTrailSpacing = 30.0f;  // units
+    static constexpr float kTrailScatter = 0.14f;  // metres
 
     // The quake: degrees of camera pitch, decayed by MU's own 0.2 a frame. A jolt, not a rumble.
     static constexpr float kQuakeDecay = 0.2f;
@@ -393,7 +476,9 @@ private:
     static constexpr int kMaxMeteors = 32;  // a Meteorite's rain is a rock a body, 24 at most
     static constexpr int kMaxFireballs = 8;
     static constexpr int kMaxStones = 144;  // six a landing
-    static constexpr int kMaxMotes = 256;   // MU's 160, raised for a rain of 24 with its smoke
+    // MU's 160, raised for a rain of 24 with its smoke, and again for a shower's spark ribbons
+    // and smoke trails (a cast and its echo, twelve rocks, ask some 370 at once).
+    static constexpr int kMaxMotes = 768;
 
     Group fireGroups_[2];   // [0] the rock, opaque-ish; [1] the flame cone, additive
     int fireGroupCount_ = 0;
@@ -426,10 +511,12 @@ private:
 
     Mote* freeMote();
     void ember(const Live& rock);
-    void emberAt(const float at[3], const float heading[3], float light, bool fireball = false);
-    void stonesAt(float x, float z, float floor, int count);
-    void blastAt(float x, float y, float z, float share);
-    void smokeAt(float x, float floor, float z);
+    Mote* emberAt(const float at[3], const float heading[3], float light, bool fireball = false);
+    void trailSmokeAt(const Live& rock);
+    void gatherShowerRock(gfx::Effects& effects, const Live& rock, const float* eye) const;
+    void stonesAt(float x, float z, float floor, int count, float scale = 1.0f);
+    void blastAt(float x, float y, float z, float share, bool shower = false);
+    void smokeAt(float x, float floor, float z, float weight = 1.0f, bool shower = false);
     void land(const Live& rock);
     // One fireball's frame, and whether it is still in the air.
     bool hurling(Hurled& ball, float seconds, bool standing, const float* there);

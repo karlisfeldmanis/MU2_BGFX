@@ -329,7 +329,14 @@ void Play::rightClick() {
         request.kind = sim::Request::Kind::Attack;
         request.target = pointedAt_;
         request.skill = quickSkill_;
-    } else if (quick != nullptr && quick->aimsAtPointer() && pointedColumn_ >= 0) {
+        rightTarget_ = pointedAt_;
+        realm_.ask(request);
+        mark_ = false;
+        marker_.dismiss();
+        return;
+    }
+    rightTarget_ = 0;
+    if (quick != nullptr && quick->aimsAtPointer() && pointedColumn_ >= 0) {
         // **A skill with a direction on the right button goes the way the mouse is** over bare
         // ground too (SkillRow::aimsAtPointer; the user, 2026-10-02): a press, as a key's is,
         // and no order changes -- he casts where he stands.
@@ -343,6 +350,24 @@ void Play::rightClick() {
     realm_.ask(request);
     mark_ = false;
     marker_.dismiss();
+}
+
+void Play::rightHeld() {
+    if (!isOpen()) return;
+    // Moved onto another monster: set on that one, as a fresh press on it would. On the one
+    // he is already set on, nothing: the order standing repeats the skill itself.
+    // A cast he has begun is let go whatever he is set on next (Realm::accept).
+    const sim::Body* at = pointedAt_ != 0 ? realm_.find(pointedAt_) : nullptr;
+    if (at != nullptr && at->alive() && at->monster()) {
+        if (pointedAt_ != rightTarget_) rightClick();
+        return;
+    }
+    if (pointedColumn_ < 0) return;
+    const sim::SkillRow* quick = quickSkill_ != 0 ? sim::skillNumbered(quickSkill_) : nullptr;
+    if (quick == nullptr || !quick->aimsAtPointer()) return;
+    // The wish is renewed every frame, aimed where the mouse is now; the realm throws it on the
+    // first tick his last cast lets him (Realm::invoke), and refuses it silently while it cools.
+    realm_.invokeAt(quickSkill_, pointedColumn_, pointedRow_);
 }
 
 // Where every spell leaves a caster: the middle of his chest, a little toward what it is
@@ -386,14 +411,36 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
     const float fx = wayX / flat, fz = wayZ / flat;
     float muzzle[3] = {shooter.crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
                        shooter.crown[2] + fz * 0.6f - fx * 0.1f};
+    // Best, the arrow on her string where it was last drawn: the one that flies leaves from its
+    // middle, aimed at the body as MU aims it (the user, 2026-10-04: 'it has come from logical
+    // place from weapon and perfectly synced with release animation', then 'dont change arrow
+    // destination angles', 'keep MU'). The rest-pose muzzle put it a whole arrow past the bow.
     float rail[3];
-    const bool fromWeapon = shooter.figure.muzzle(muzzle, rail);
+    float tail[3], tip[3];
+    const bool fromString = shooter.figure.nocked(to, tail, tip);
+    bool fromWeapon = fromString;
+    if (fromString) {
+        for (int k = 0; k < 3; ++k) muzzle[k] = 0.5f * (tail[k] + tip[k]);
+    } else if ((fromWeapon = shooter.figure.muzzle(muzzle, rail))) {
+        // The muzzle is the drawn arrow's point: the one that flies has its point there, its
+        // middle half an arrow back on its way to the body.
+        float way[3], length = 0.0f;
+        for (int k = 0; k < 3; ++k) {
+            way[k] = to[k] - muzzle[k];
+            length += way[k] * way[k];
+        }
+        length = std::sqrt(length);
+        if (length > 1e-4f) {
+            for (int k = 0; k < 3; ++k) muzzle[k] -= way[k] / length * Arrows::kHalfLength;
+        }
+    }
     if (Drawn* own = drawnOf(shooter.id)) own->figure.nock(false);
     if (whom != 0 || shooter.id == realm_.hero().id) {
         // Off her feet, so a muzzle a metre wide of the weapon shows in the log.
+        if (!fromWeapon) core::logf("arrow: no muzzle, %s", shooter.figure.noMuzzle());
         core::logf("arrow: from the %s %.2f across, %.2f up, %.2f on from her feet, her clip "
                    "%d at key %.2f",
-                   fromWeapon ? "weapon" : "chest",
+                   fromString ? "string" : fromWeapon ? "weapon" : "chest",
                    double((muzzle[0] - shooter.crown[0]) * fz - (muzzle[2] - shooter.crown[2]) * fx),
                    double(muzzle[1] - feet),
                    double((muzzle[0] - shooter.crown[0]) * fx + (muzzle[2] - shooter.crown[2]) * fz),
@@ -407,7 +454,8 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
         model = Arrows::modelFor(arm.group, arm.number);
         tint = Arrows::tintFor(arm.group, arm.number);
     }
-    arrows_.loose(muzzle, to, whom, model, 0, tint, seconds, pierce);
+    // A shot at a body says when it lands, and her blow is shown then (Play's arrow cue).
+    arrows_.loose(muzzle, to, whom, model, whom != 0 ? shooter.id : 0, tint, seconds, pierce);
 }
 
 bool Play::shoots(uint32_t id, Arrows::Model* model) {
@@ -468,7 +516,12 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     // MU's muzzle, (-10, -60, 135) turned by its facing, as shootArrow's.
     const float muzzle[3] = {from->crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
                              from->crown[2] + fz * 0.6f - fx * 0.1f};
-    arrows_.loose(muzzle, at, target, model, shooter);
+    // The Silver Valkyrie's are Penetration's, wound in MODEL_PIERCING's gold bands and flying
+    // on past what they strike (the user, 2026-10-04: 'silver vylket has to shoot penetration').
+    // Ours; MU's Silver Valkyrie shoots the Valkyrie's plain arrow.
+    const FigureBody* shooterLook = from->figure.body();
+    const bool pierce = shooterLook != nullptr && shooterLook->name == kPenetratingFigure;
+    arrows_.loose(muzzle, at, target, model, shooter, nullptr, 0.0f, pierce);
     // Read afterwards, as the meteor's line is: an arrow at two tiles is in the air for a tenth
     // of a second, and no shot schedule proves it flew.
     core::logf("arrow: tick %lld, #%u looses at #%u from %.1f m", (long long)realm_.tick(),

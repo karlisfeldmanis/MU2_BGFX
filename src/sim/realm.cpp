@@ -85,6 +85,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     runeDice_.seed(seed ^ 0x165667b19e3779f9ull);
     trapDice_.seed(seed ^ 0x27d4eb2f165667c5ull);
     bossDice_.seed(seed ^ 0x165667b19e3779f9ull);
+    chillDice_.seed(seed ^ 0x9b05688c2b3e6c1full);
     mixDice_.seed(seed ^ 0x85ebca6b2c1b3c6dull);
     crackerDice_.seed(seed ^ 0xd6e8feb86659fd93ull);
     featherDice_.seed(seed ^ 0x8c3b1e4f5a7d2961ull);
@@ -92,6 +93,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     ticketDice_.seed(seed ^ 0x9fb21c651e98df25ull);
     treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
+    showerDice_.seed(seed ^ 0x6a09e667bb67ae85ull);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
@@ -482,7 +484,15 @@ void Realm::accept() {
         // and the damage is still done". An Attack order on the SAME body is not a cancel.
         const bool same = pending_.kind == Request::Kind::Attack && order_.kind == pending_.kind &&
                           pending_.target == order_.target;
-        if (!same) dropBlow(hero);
+        // **Nor is setting him on another body: a skill he has begun is let go** (the user,
+        // 2026-10-04: "there canot be this bug when char is casting spell and spell is not
+        // happening - globally, only oom is of course a thing"). Held over a pack, the right
+        // button's attack moved from body to body and each move cancelled the cast his arm was
+        // already raising. Walking, picking up, talking and Stop still cancel it, and the
+        // drawing ends the clip with them.
+        const bool begunSkill = pending_.kind == Request::Kind::Attack && hero.blowAt != 0 &&
+                                hero.blowSkill != skill::kNone;
+        if (!same && !begunSkill) dropBlow(hero);
         order_ = pending_;
         pending_ = Request{};
         // Any order is walking away from a counter, including another Talk -- and from the vault,
@@ -899,7 +909,8 @@ void Realm::step() {
             // nearest living monster within the spell's reach, and is spent if there is none.
             const Body* aimed = body(echo.target);
             const SkillRow* row = skillNumbered(echo.skill);
-            if ((aimed == nullptr || !aimed->alive()) && row != nullptr) {
+            // A shower falls on its ground again, whoever stands there.
+            if (!echo.ground && (aimed == nullptr || !aimed->alive()) && row != nullptr) {
                 echo.target = 0;
                 float best = 0.0f;
                 for (const Body& one : bodies_) {
@@ -914,7 +925,7 @@ void Realm::step() {
             }
             core::logf("arcane echo: tick %lld, skill %d at #%u", (long long)tick_, echo.skill,
                        echo.target);
-            release(hero, echo.target, echo.force, echo.skill);
+            release(hero, echo.target, echo.force, echo.skill, echo.ground ? echo.spot : nullptr);
         }
         // And whatever he let go earlier and has now arrived, and the fires on the ground.
         arrive();

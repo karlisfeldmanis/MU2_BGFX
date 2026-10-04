@@ -215,6 +215,9 @@ struct Happening {
     // A `Hit` Evil Spirit's spirits dealt, the wizard's spell's or the shield rune's: the drawing
     // spins what it struck (Play, kSpiritStormTime).
     bool spirit = false;
+    // A chiller's blow that iced him (kChillers): the drawing shows a one-in-some chiller's ice
+    // on this blow alone.
+    bool iced = false;
     // A split blow's part after the first (kSplitBlows) -- a Hydra's head bolt, a Lizard King's
     // lightning: no swing, a number and its blood where it lands.
     bool beamed = false;
@@ -428,6 +431,10 @@ struct Body {
     // him back to its body before the release.
     bool blowAimed = false;
     float blowAim = 0.0f;      // radians, as `aim`
+    // And a shower's ground (SkillRow::showers), in tiles: where its rocks fall round when the
+    // blow is let go, whatever stands there by then.
+    bool blowGround = false;
+    float blowX = 0.0f, blowY = 0.0f;
     int64_t castUntil = 0;
     // Whether a click to move may end that hold: every skill's but Teleport's, whose fade and
     // settle are the move (the user, 2026-10-02: "any spell ahs to be cancelable").
@@ -637,7 +644,11 @@ public:
     // The bench's (`--arena-undying`): a blow that would fell the hero fills his health instead,
     // so a fight runs as long as it is watched. Never set in play.
     void undying(bool on) { undying_ = on; }
+    // Whether he may throw it at all: learned, or a mount's skill and that mount worn
+    // (`SkillRow::mounted`). What the bar and the list ask, and `throwSkill` before it spends.
     bool knows(int32_t skill) const;
+    // A Horn of Dinorant in the mount's slot with life left: Fire Breath is known while it is.
+    bool dinorantWorn() const;
     // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
     // frame needs to draw a sweep. Zero and zero when it is ready.
     int64_t cooling(int32_t skill) const;
@@ -1056,10 +1067,16 @@ private:
     void land(Body& hero);
     // What `land` does once the blow is due: the skill let go, flown, rained or swept, or the
     // swing struck. An Arcane Echo's second throw comes through here too, without the landing.
-    void release(Body& hero, uint32_t at, float force, int32_t skill);
+    // `spot`, a shower's ground in tiles (x, y), or null to fall round the body `at`.
+    void release(Body& hero, uint32_t at, float force, int32_t skill,
+                 const float* spot = nullptr);
     // Whether his staff's Arcane Echo answers this cast: each socket carrying it rolls, off the
     // runes' own dice. Draws nothing unless one is worn, so the seeded log does not move.
     bool echoes(Body& hero);
+    // How many Pyroblasters his hands carry (sim/items.h), and the chain one rolls for off a Fire
+    // Ball that landed on the body `struck`, which stood at (x, y).
+    int pyroblasts(const Body& hero) const;
+    void pyroblast(Body& hero, uint32_t struck, float x, float y, float force);
     // A spell let go: into the air for as long as it takes to cross the gap, and landed by
     // `arrive` on the tick it gets there. Past his hand, a new order no longer takes it back.
     // `announce` says `Loosed` (one wave is drawn per cast, so a line says it once); `pays` is
@@ -1068,10 +1085,6 @@ private:
     // not one volley (Realm::rain).
     void loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce = true,
                bool pays = true, int32_t delay = 0);
-    // How many Pyroblasters his hands carry (sim/items.h), and the chain one rolls for off a Fire
-    // Ball that landed on the body `struck`, which stood at (x, y).
-    int pyroblasts(const Body& hero) const;
-    void pyroblast(Body& hero, uint32_t struck, float x, float y, float force);
     // Power Wave: one `Loosed` for the cast, and a flight to every body in the line.
     void looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void arrive();
@@ -1092,6 +1105,12 @@ private:
     void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
+    // (tiles), or of the body `aimedAt` when there is none, each said as a `Loosed` with no body
+    // and its ground in `x`/`y`; every monster within `kRockBlast` of one, in its sight, takes
+    // one rock's blow when they land.
+    void shower(Body& hero, const SkillRow& row, uint32_t aimedAt, float force,
+                const float* spot);
     // Flame: a fire lit on the tile of the body it was thrown at, and each tick's due strikes.
     void light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void burn();
@@ -1141,7 +1160,7 @@ private:
     // learned, his class's, the right hand, the mana. What a right-click falls back to the
     // weapon on.
     bool armed(const Body& hero, const SkillRow& row) const;
-    void dropBlow(Body& hero) { hero.blowAt = 0; hero.blowTarget = 0; }
+    void dropBlow(Body& hero) { hero.blowAt = 0; hero.blowTarget = 0; hero.blowGround = false; }
     // A skill thrown, with the refusals in OpenMU's own order. False and silent for each.
     bool throwSkill(Body& hero, const SkillRow& row, uint32_t at);
     // Whom an area skill catches, in the order it strikes them: nearest first, then clockwise
@@ -1248,7 +1267,7 @@ private:
     void rise(Body& one);
     void settle(Body& one);
     bool beside(const Body& target, int radius, const Body& walker, int* column, int* row,
-                bool sight = false);
+                bool sight = false, bool disc = false);
     bool drifted(const Body& chaser, const Body& target) const;
     bool worth(const Body& beast, const Body& target, int range) const;
     void say(What what, const Body& who, int32_t a = 0, int32_t b = 0, int32_t c = 0,
@@ -1311,6 +1330,9 @@ private:
         uint32_t target = 0;
         int32_t skill = 0;
         float force = 1.0f;
+        // A shower's ground, fallen on again (Realm::shower).
+        bool ground = false;
+        float spot[2] = {};
     };
     Echo echo_;
     // Evil Spirit's blows held, his spell's or his shield's rune's (WebZen's SkillEvil): each on
@@ -1365,6 +1387,8 @@ private:
     Random trapDice_{0};
     // The bosses' own, for their one blow in five: a run with none of them is not moved.
     Random bossDice_{0};
+    // A chiller's that ices one blow in some (kChillers): a run with none of them is not moved.
+    Random chillDice_{0};
     // Whether a dungeon's kill leaves a Firecracker (sim/items.h), so a seeded hunt there rolls
     // its loot as it always did.
     Random crackerDice_{0};
@@ -1380,6 +1404,8 @@ private:
     Random treasureDice_{0};
     // The Orb of Summoning's own roll on every kill (sim/items.h), so the rest draw as they did.
     Random orbDice_{0};
+    // Where a Meteorite's rocks fall (Realm::shower), so a wizard's showers move no other roll.
+    Random showerDice_{0};
     std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;

@@ -75,6 +75,10 @@ public:
     // takes the roll alone, as subtype 0 does. The forge's own burst is strike(); Twisting
     // Slash's wheel throws its sparks through this, aimed by its own numbers (fx/wheel.h).
     void fling(const float at[3], float rollFrom, float yawFrom, bool streak, bool mote);
+    // One streak thrown as the caller aims it: `velocity` in world metres a reference frame,
+    // `life` in reference frames. The Dinorant's breath throws its nostril sprays through this,
+    // cones round his facing that fling's roll and yaw cannot say (fx/firebreath.h).
+    void dart(const float at[3], const float velocity[3], float life);
     // The hearth at `at` working for `seconds`: its smoke and its embers, owed and paid whole.
     // `owed` is the caller's, a pair a forge, so two smiths never share a debt.
     void smoulder(const float at[3], float seconds, float owed[2]);

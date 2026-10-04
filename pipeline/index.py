@@ -349,6 +349,14 @@ EFFECTS = {
     # down behind it every reference frame.
     "explosion": "effects/meteor/explotion01.png",
 
+    # The Dinorant's Fire Breath (game/fx/firebreath.h). BITMAP_FIRE + 2, Effect/Fire03.jpg
+    # (ZzzOpenData.cpp:5181): four 64-pixel cells in a 256 strip, and not fire at all -- a
+    # blue-violet haze with stars in it, thinning cell by cell. And BITMAP_EXPLOTION + 1,
+    # Effect/DinoE.jpg (:5261), the Dinorant's own blast: four 64 cells of a pink-white bloom
+    # going lavender. Both JPEGs on black, added.
+    "fire03": "effects/firebreath/fire03.png",
+    "dino_blast": "effects/firebreath/dinoe.png",
+
     # A thrown Firecracker's firework (game/fx/firework.cpp), MU's BITMAP_FIRECRACKER0001-0003
     # (ZzzEffect.cpp:2909-2958, MoveHandlers.cpp:4930-4990). Effect/firecracker0001-0007.jpg, 256
     # squares loaded GL_NEAREST (ZzzOpenData.cpp:5306-5312): a burst of white stars growing and

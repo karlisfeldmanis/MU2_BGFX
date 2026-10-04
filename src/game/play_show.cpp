@@ -583,7 +583,7 @@ void Play::shade(float seconds) {
             x = on->crown[0];
             z = on->crown[2];
         }
-        meteor_.cast(x, z, due.who);
+        meteor_.cast(x, z, due.who, due.weight);
     }
     rocksDue_.erase(std::remove_if(rocksDue_.begin(), rocksDue_.end(),
                                    [](const RockDue& one) { return one.wait <= 0.0f; }),
@@ -1046,8 +1046,13 @@ void Play::follow(float seconds) {
         // it when a fight takes him (the user, 2026-09-30; sim::kCombatTicks).
         one.stowed = std::max(0.0f, one.stowed - seconds);
         const FigureBody* dressed = one.figure.body();
+        // Not while a blow is still in his hands: the realm can end the fight -- the last body
+        // fallen -- at an elf's key 3.2, and her string goes at key 4; slung there, her bow
+        // left her hands and her arrow the chest (Play::shootArrow).
+        bool shooting = one.swinging > 0.0f;
+        for (const Nocking& shot : nocking_) shooting = shooting || shot.shooter == one.id;
         const bool safe = tables_.grid.safe(body->column(), body->row()) || one.stowed > 0.0f ||
-                          (body->player && body->combatUntil <= realm_.tick()) ||
+                          (body->player && body->combatUntil <= realm_.tick() && !shooting) ||
                           (dressed && dressed->slungAtRest && body->temper != sim::Temper::Fighting);
         // Under the sea a player swims off the safe zone: MU's Fly stance for Atlans, treading
         // water where he stands and swimming where he goes (ZzzCharacter.cpp:298-326, 624-630),
@@ -1335,11 +1340,18 @@ void Play::follow(float seconds) {
             const float full = body->speed * sim::strideFactor(*body);
             one.clipRate = kRideRunRate * (full > 1e-4f ? std::min(pace / full, 1.0f) : 1.0f);
         }
-        // A swim plants nothing either: MU's own 0.35, cooked in, slowed with the ground he
-        // covers as the ride is.
+        // A swim is paced as a walk is (below), by the water it covers against the stroke's own
+        // travel: MU's 0.35 strokes 3.09 m a 0.69 s cycle, 4.5 m/s, far past what he swims, and
+        // the legs kicked like a sprint (the user, 2026-10-04: 'swiming aniamtjons on legs seemed
+        // very fast', 'can we do the same with swimming mosnters?'). Ours. It plants no foot, so
+        // the whole cycle's travel is the measure.
         if (isSwim(one.figure.clip())) {
-            const float full = body->speed * sim::strideFactor(*body);
-            one.clipRate = full > 1e-4f ? std::min(pace / full, 1.0f) : 1.0f;
+            const float gait = pace * ground_->metresPerTile() / float(kTickSeconds);
+            const float travel = one.figure.travel();
+            const float duration = one.figure.length();
+            if (travel > 0.001f && duration > 0.0f) {
+                one.clipRate = std::min(gait * duration / travel, kFastestClip);
+            }
         }
         if (readyBow >= 0 && one.figure.clip() == readyBow) {
             one.figure.setClock(0.0f);

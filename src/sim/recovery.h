@@ -29,6 +29,12 @@ namespace mu::sim {
 constexpr int32_t kRecoverEveryTicks = 60;       // 3000 ms at 20 Hz
 constexpr float kManaRecoveryShare = 1.0f / 27.5f;
 constexpr float kAttackManaShare = 0.05f;        // invention: a twentieth of the pool a blow
+// **The one skill that pays**: Twisting Slash gives back this share of his pool for every body
+// its whirl wounds (the user, 2026-10-02: "DK has to restore little bit mana every time twisting
+// slash touch monster", "has to scale with something"). A share of the pool, so it grows with
+// his energy and level as the swing's does; at 22 a cast it takes a crowd of eight to break
+// even, so it slows the drain on a pack rather than filling him. invention.
+constexpr float kTwistManaShare = 0.03f;
 // Health comes back in a safe zone and nowhere else: OpenMU's HealthRecoveryMultiplier is the one
 // relationship `0.01 x IsInSafezone` (AddCommonAttributeRelationships), with no base and no flat
 // part, so outside town 0.75 is played off potions. MU2's Realm.HealthRecoveryInSafeZone.

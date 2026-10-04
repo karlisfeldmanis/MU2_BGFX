@@ -45,6 +45,9 @@ constexpr float kAsk = 22.0f;    // the choice's line over its grid
 constexpr float kButtonW = 120.0f, kButtonWide = 180.0f;
 constexpr uint32_t kZenGold = gfx::rgba(1.0f, 0.8f, 0.102f);
 constexpr uint32_t kItemWhite = gfx::rgba(1.0f, 1.0f, 1.0f);
+// A reward's name, whatever the item: WoW's legendary orange, the runes' (the user, 2026-10-04:
+// 'quest rewards hsa to use legendary color'). What a quest asks for keeps its own quality.
+inline uint32_t rewardInk() { return tip::colourOf(tip::Tone::RuneLegendary); }
 
 // A giver's list (kList): a row a quest, its mark at the left and its state ranged right.
 constexpr float kEntry = 34.0f;
@@ -399,8 +402,7 @@ void QuestDialog::layout(const Play& play) {
                 Cell cell;
                 cell.item = item;
                 cell.power = power;
-                const sim::Held held = rewardHeld(tables, item, 0, 1, 0, power);
-                cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+                cell.ink = rewardInk();
                 cell.box = {kInset + float(n % across) * (cellWide + kCellGap),
                             y + float(n / across) * (kIcon + kCellGap), cellWide, kIcon};
                 cells_.push_back(cell);
@@ -470,10 +472,7 @@ void QuestDialog::layout(const Play& play) {
                 cell.power = what.power;
                 for (int a = 0; a < 3; ++a) cell.affixes[a] = what.affixes[a];
                 if (cell.item >= 0) {
-                    const sim::Held held = rewardHeld(tables, cell.item, cell.plus, cell.count,
-                                                      cell.sockets, cell.power, cell.affixes);
-                    cell.ink = tip::colourOf(
-                        describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+                    cell.ink = rewardInk();
                 }
                 cell.box = {kInset + float(column) * (cellWide + kCellGap),
                             y + float(rowOf) * (kIcon + kCellGap), cellWide, kIcon};
@@ -1091,7 +1090,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             cy = one.box.y + kIcon + kCellGap;
         }
         const Need needs[kGateRows - 1] = {
-            {"The gate open, hh:25 to hh:30", door, doorSeconds_ >= 0},
+            {sim::kCastlePeriod == 3600 ? "The gate open, hh:25 to hh:30"
+                                        : "The gate open, a minute in two (test)",
+             door, doorSeconds_ >= 0},
             {band.c_str(), std::to_string(level_), level_ >= sim::kCastleBands[castle_ - 1][0]},
         };
         for (int i = 0; i < kGateRows - 1; ++i) {

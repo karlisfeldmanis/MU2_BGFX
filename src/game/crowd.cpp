@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "game/crowd.h"
 
 #include <bx/math.h>
@@ -334,6 +335,24 @@ int Figure::pose(float* rows12) {
             std::memcpy(&translations[i * 3], moved, sizeof(moved));
         }
     }
+    // SNAP_TRACE (temporary)
+    static const bool snapTrace = std::getenv("MU2_SNAP_TRACE") != nullptr;
+    if (snapTrace && shown_.size() == posed * 7) {
+        float worst = 0.0f;
+        size_t at = 0;
+        for (size_t i = 1; i < posed; ++i) {
+            float dot = 0.0f;
+            for (int c = 0; c < 4; ++c) dot += shown_[i * 7 + c] * rotations[i * 4 + c];
+            const float angle = 2.0f * std::acos(std::min(1.0f, std::fabs(dot))) * 57.29578f;
+            if (angle > worst) { worst = angle; at = i; }
+        }
+        if (worst > 25.0f) {
+            core::logf("snaptrace %s bone %s %.1f deg clip %d (slot %d) t %.3f prev %d pt %.3f fade %.3f/%.3f frozen %d once %d",
+                       body_->name.c_str(), bones[at].name.c_str(), worst, clip_,
+                       body_->library->clips.clips[size_t(clip_)].slot, time_, previous_, previousTime_,
+                       fade_, fadeLength_, int(frozen_), int(once_));
+        }
+    }
     // What this frame shows, before the seat and the upper layer (which are drawn over any
     // fade), kept for a change that arrives while it is still fading (`frozen_`).
     if (shown_.size() != posed * 7) shown_.resize(posed * 7);
@@ -405,6 +424,10 @@ int Figure::pose(float* rows12) {
 
 void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
     heldRows_.assign(body_ ? body_->held.size() : 0, -1);
+    heldNock_.assign(heldRows_.size() * 16, 0.0f);
+    for (size_t i = 0; i < heldRows_.size(); ++i) {
+        for (int k = 0; k < 4; ++k) heldNock_[i * 16 + size_t(k) * 5] = 1.0f;  // the bind
+    }
     if (!body_) return;
 
     // Where the body is in a shot, in its own keys. MU plays a bow's action 0 at the attack's
@@ -466,6 +489,10 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
             float skin[16];
             core::mulMatrix(bones[j].inverseBind, &world[j * 16], skin);
             core::writePaletteRows(skin, &rows12[j * 12]);
+            // The bone the shot leaves from: the nocked part's, or the muzzle's without one.
+            const int shotBone = item.mesh->nock().bone >= 0 ? item.mesh->nock().bone
+                                                               : item.muzzleBone;
+            if (int(j) == shotBone) std::memcpy(&heldNock_[i * 16], skin, sizeof(skin));
         }
         heldRows_[i] = renderer.addPalette(rows12, int(count));
     }
@@ -510,11 +537,20 @@ bool Figure::muzzle(float at[3], float along[3]) const {
         core::mulMatrix(&world_[size_t(bone) * 16], transform, hand);
         const auto& rig = item.mesh->bones();
         // A point in a bone's rest frame, through the rest into the item's space, then the
-        // hand's: row vectors, as every matrix here is.
+        // hand's: row vectors, as every matrix here is. The muzzle bone as it is drawn now
+        // (poseHeld's skin) -- at rest the string is slack, and its arrow's point stood a
+        // draw's length ahead of the drawn one, a whole arrow past the bow.
+        const size_t index = size_t(&item - body_->held.data());
         const auto carry = [&](int b, float out[3]) {
             float rest[16], whole[16];
             bx::mtxInverse(rest, rig[size_t(b)].inverseBind);
-            core::mulMatrix(rest, hand, whole);
+            if (b == item.muzzleBone && index * 16 + 16 <= heldNock_.size()) {
+                float posed[16];
+                core::mulMatrix(rest, &heldNock_[index * 16], posed);
+                core::mulMatrix(posed, hand, whole);
+            } else {
+                core::mulMatrix(rest, hand, whole);
+            }
             const float* p = item.muzzleOffset;
             for (int k = 0; k < 3; ++k) {
                 out[k] = p[0] * whole[k] + p[1] * whole[4 + k] + p[2] * whole[8 + k] + whole[12 + k];
@@ -540,6 +576,56 @@ bool Figure::muzzle(float at[3], float along[3]) const {
         return true;
     }
     return false;
+}
+
+bool Figure::nocked(const float toward[3], float tail[3], float tip[3]) const {
+    if (!body_ || world_.empty() || safe_) return false;
+    for (size_t index = 0; index < body_->held.size(); ++index) {
+        const HeldItem& item = body_->held[index];
+        if (!item.mesh || item.alwaysSlung || item.mesh->nock().bone < 0) continue;
+        const int bone = item.bone;
+        if (bone < 0 || size_t(bone) * 16 + 16 > world_.size()) return false;
+        float transform[16];
+        placement(transform);
+        float hand[16];
+        core::mulMatrix(&world_[size_t(bone) * 16], transform, hand);
+        // As the skin draws it: the bind-pose vertex through the bone's skin as last posed (the
+        // bind's identity when poseHeld gave it none), then the hand. Row vectors.
+        float whole[16];
+        if (index * 16 + 16 <= heldNock_.size()) {
+            core::mulMatrix(&heldNock_[index * 16], hand, whole);
+        } else {
+            std::memcpy(whole, hand, sizeof(whole));
+        }
+        float ends[2][3];
+        for (int e = 0; e < 2; ++e) {
+            const float* p = item.mesh->nock().ends[e];
+            for (int k = 0; k < 3; ++k) {
+                ends[e][k] = p[0] * whole[k] + p[1] * whole[4 + k] + p[2] * whole[8 + k] + whole[12 + k];
+            }
+        }
+        float lean = 0.0f;
+        for (int k = 0; k < 3; ++k) {
+            lean += (ends[0][k] - ends[1][k]) * (toward[k] - 0.5f * (ends[0][k] + ends[1][k]));
+        }
+        const int point = lean >= 0.0f ? 0 : 1;
+        std::memcpy(tip, ends[point], sizeof(ends[0]));
+        std::memcpy(tail, ends[1 - point], sizeof(ends[0]));
+        return true;
+    }
+    return false;
+}
+
+const char* Figure::noMuzzle() const {
+    if (!body_) return "no body";
+    if (world_.empty()) return "not posed";
+    if (safe_) return "safe";
+    for (const HeldItem& item : body_->held) {
+        if (!item.mesh) continue;
+        if (item.alwaysSlung) return "slung";
+        if (item.bone < 0 || size_t(item.bone) * 16 + 16 > world_.size()) return "no hand bone";
+    }
+    return "nothing marked";
 }
 
 float Figure::toRelease() const {

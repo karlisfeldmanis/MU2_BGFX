@@ -481,7 +481,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // The Horn of Uniria. MuMain's card has only its Life; "Moving speed" is GT 68, the line
         // later mounts print (ZzzInventory.cpp:4081). Ours, so the card says what the horn is for.
         if (power.mount) {
-            say("Moving speed: ride outside town on the open lands, faster than running");
+            say("Moving speed: ride outside town, faster than running");
+            say("Ridden in Lorencia, Devias, Noria and Atlans, never in a dungeon");
         }
         if (power.dealt > 1.0) {
             say("Increase " + std::to_string(int(std::lround((power.dealt - 1.0) * 100.0))) +

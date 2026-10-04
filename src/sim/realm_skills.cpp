@@ -73,7 +73,21 @@ bool Realm::learn(int32_t skill) {
 bool Realm::knows(int32_t skill) const {
     const int index = skillIndexOf(skill);
     if (index < 0) return false;
+    // A mount's skill is the horn's, as 0.75's skills were the weapon's: known while it is worn
+    // and not saved -- for his class alone, as MuMain marks it the knight's on the horn.
+    const SkillRow& row = skillAt(index);
+    if (row.mounted) return row.kin == bodies_[0].kin && dinorantWorn();
     return (bodies_[0].learned & (uint64_t(1) << index)) != 0;
+}
+
+bool Realm::dinorantWorn() const {
+    const Held& horn = bag_[kMount];
+    if (horn.empty() || horn.durability <= 0 || tables_ == nullptr ||
+        size_t(horn.item) >= tables_->items.size()) {
+        return false;
+    }
+    const content::ItemRow& row = tables_->items[size_t(horn.item)];
+    return row.group == kGroupPets && row.number == 3;
 }
 
 int64_t Realm::cooling(int32_t skill) const {
@@ -112,7 +126,10 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
 
     // Learned. In 0.75 this question was asked of his hands; here it is asked of what he has
     // read, which is the one place the design leaves the original on purpose.
-    if ((hero.learned & (uint64_t(1) << index)) == 0) return false;
+    // A mount's skill asks the horn instead (`knows`).
+    if (row.mounted ? !knows(row.number) : (hero.learned & (uint64_t(1) << index)) == 0) {
+        return false;
+    }
     // And his class's. Learning already asks it -- an orb or a scroll refuses the wrong class --
     // so this is the same answer asked again where the skill is spent.
     if (row.kin != hero.kin) return false;
@@ -151,6 +168,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         !(row.aura() && tables_->map == kBloodCastleMap)) {
         return false;
     }
+    // And a mount's skill only on the mount: off it -- on a safe tile, or the horn's life gone this
+    // tick -- there is nothing under him to breathe.
+    if (row.mounted && !hero.riding) return false;
 
     // **A blink** (Teleport): no body, no blow -- the ground the key named, a fade, and him put
     // down there. The fight he was in is dropped, as a Town Portal drops it: left standing, the
@@ -248,6 +268,25 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // Only the aim is set and not the facing: he turns to it at the body's own rate, as he
         // does for a swing (`engage`), and the blow lands half a clip later by which time he has
         // come round. Set even on a refusal below -- a knight turns toward what he tried to hit.
+        // **But a refusal does not turn him** (the user, 2026-10-04: out of mana, a Meteorite
+        // held and a click to walk, he moonwalked): a wish he cannot pay for is asked again every
+        // tick while he walks, and each ask snapped him to the spot behind him. His facing is put
+        // back on any refusal below, and the pointer's aim with it; a knight still turns his aim
+        // toward a body he tried to hit, as before.
+        const float wasAim = hero.aim, wasFacing = hero.facing;
+        bool paid = false, pointedAim = false;
+        struct Unturn {
+            Body& body;
+            const float& aim;
+            const float& facing;
+            const bool& paid;
+            const bool& pointed;
+            ~Unturn() {
+                if (paid) return;
+                body.facing = facing;
+                if (pointed) body.aim = aim;
+            }
+        } unturn{hero, wasAim, wasFacing, paid, pointedAim};
         if (aimed) hero.aim = std::atan2(target->y - hero.y, target->x - hero.x);
         // **A spell turns him at once.** A wizard's clip is cast from the tick it starts, and
         // left to the turn a body coming round from behind began it facing away -- 150 degrees
@@ -261,19 +300,37 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         const bool pointed = wantsColumn_ >= 0 && row.aimsAtPointer() &&
                              (wantsColumn_ != hero.column() || wantsRow_ != hero.row());
         if (pointed) {
+            pointedAim = true;
             hero.aim = std::atan2(float(wantsRow_) - hero.y, float(wantsColumn_) - hero.x);
             if (row.wizardry) hero.facing = hero.aim;
+        }
+        // **A shower falls on the ground he named** (SkillRow::showers), his own tile too: a
+        // spot past his reach is pulled back along the line to it, as Teleport's is, and one he
+        // cannot see over a wall is not called down at all -- no mana, no clip.
+        const bool grounded = row.showers() && wantsColumn_ >= 0;
+        float spotX = 0.0f, spotY = 0.0f;
+        if (grounded) {
+            float dx = float(wantsColumn_) - hero.x, dy = float(wantsRow_) - hero.y;
+            const float far = std::max(std::fabs(dx), std::fabs(dy));
+            if (far > row.reach) {
+                dx *= row.reach / far;
+                dy *= row.reach / far;
+            }
+            spotX = hero.x + dx;
+            spotY = hero.y + dy;
+            if (!router_.sees(hero.x, hero.y, spotX, spotY, content::kWallNoMove)) return false;
         }
         if (row.spread == Spread::One || row.spread == Spread::Line ||
             row.spread == Spread::Fan) {
             // A line is thrown AT a body as a single blow is, and goes on through: it needs the
             // body to aim by, and the rest of its way is found when it is let go -- or the
             // pointer's ground, for a shape that has a direction.
-            if (!aimed && !pointed) return false;
-            if (walled && !pointed) return false;
+            if (!aimed && !pointed && !grounded) return false;
+            if (walled && !pointed && !grounded) return false;
             // Nothing may be thrown at something sheltered either, which is the check the far end
             // of `ApplySkillAsync` makes and `press` already makes for a swing.
-            if (aimed && !pointed && tables_->grid.safe(target->column(), target->row())) {
+            if (aimed && !pointed && !grounded &&
+                tables_->grid.safe(target->column(), target->row())) {
                 return false;
             }
         } else if (pointed && row.spread == Spread::Beam) {
@@ -292,6 +349,20 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         if (row.arrows > 0 && !quivered(hero)) return false;
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
+        paid = true;
+        // Held with the blow until his arm is up (Realm::land); `begin` leaves it alone.
+        hero.blowGround = grounded;
+        hero.blowX = spotX;
+        hero.blowY = spotY;
+        // **Called on a body, it falls where the body stood at the cast** (the user, 2026-10-04:
+        // "dw does meteor cast animation, but meteorits is not flying"): held on a pack, the
+        // last rain killed the body the next was called on before his arm came up, and a rain
+        // round a corpse let nothing go -- the whole clip for no rocks.
+        if (row.showers() && !grounded && aimed) {
+            hero.blowGround = true;
+            hero.blowX = target->x;
+            hero.blowY = target->y;
+        }
     }
 
     // A primary has no cooldown at all -- its clip is its pace, and a key's wipe running down
@@ -515,14 +586,25 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
         // A spell's blows are shown on their own tick, with its circle, as a flight's are --
         // not at the drawing's half of the swing (`thrown`).
         if (Body* victim = body(victims[i])) {
+            const int before = victim->health;
             strikeAt(hero, *victim, force, spell ? &row : nullptr, spell);
+            // Twisting Slash's whirl pays a little back for each body it wounds (kTwistManaShare).
+            if (row.number == skill::kTwistingSlash && hero.player && victim->monster() &&
+                victim->health < before && hero.mana < hero.maxMana) {
+                const int back = std::max(1, int(float(hero.maxMana) * kTwistManaShare));
+                hero.mana = std::min(hero.maxMana, hero.mana + back);
+            }
         }
     }
 }
 
 bool Realm::armed(const Body& hero, const SkillRow& row) const {
     const int index = skillIndexOf(row.number);
-    if (index < 0 || (hero.learned & (uint64_t(1) << index)) == 0) return false;
+    if (index < 0) return false;
+    if (row.mounted ? !knows(row.number) || !hero.riding
+                    : (hero.learned & (uint64_t(1) << index)) == 0) {
+        return false;
+    }
     if (row.kin != hero.kin || hero.mana < row.mana) return false;
     // A fan with nothing to loose falls back to the bow, which then says there are no arrows.
     if (row.arrows > 0 && !quivered(hero)) return false;
@@ -609,6 +691,11 @@ void Realm::channel(Body& hero) {
     const auto spent = [&](const Body& b) {
         return row->strikesEach > 0 && times(b.id) >= row->strikesEach;
     };
+    // Lightning's chain ends at its most (kLightningBodies), his arm held up the rest of the window.
+    if (row->number == skill::kLightning && hero.channelStruckCount >= kLightningBodies) {
+        hero.channelNext = hero.channelUntil;
+        return;
+    }
     Body* next = nullptr;
     if (hero.channelLast == 0) {
         uint32_t victims[kVictims];
@@ -635,6 +722,17 @@ void Realm::channel(Body& hero) {
             best = d2;
             next = &b;
         }
+    }
+    if (next == nullptr && hero.channelLast == 0) {
+        // **Nobody left for the first strike**: the bolt still leaves his hand, into the body
+        // he cast at where it stands or fell, striking nothing, and the chain ends there (the
+        // user, 2026-10-04: no cast without its spell).
+        if (const Body* aimed = body(hero.channelAim); aimed != nullptr) {
+            say(What::Loosed, hero, row->number, 0, 0, aimed->id);
+            hero.channelLast = aimed->id;
+            hero.channelNext = hero.channelUntil;
+        }
+        return;
     }
     if (next == nullptr) {
         if (hero.channelLast != 0) {

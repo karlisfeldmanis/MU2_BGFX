@@ -24,11 +24,11 @@
     "note": "What the scroll teaches, read by Realm::useItem since 2026-09-28, which asks the hundred and four energy before it teaches. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
     "number": 2,
     "name": "Meteorite",
-    "tells": "With his arm raised to the sky he calls burning rocks down on a body and on everything round it, one rock each.",
+    "tells": "With his arm raised to the sky he calls a rain of burning rocks, big and small, down on the ground within four tiles of where he points.",
     "tells_from": "What the skill DOES, which is the line the tooltip prints under its name. MU never says it -- a scroll's tooltip there is the name, the requirement and the class -- so this is ours, and it describes the spell rather than its price: the numbers behind it (damage, range, mana, element, area) are in OpenMU's Version075/SkillsInitializer.cs and in docs/mu-scrolls-and-orbs.md, and the tooltip has its own rows for what a thing costs.",
-    "level_requirement": 42,
+    "level_requirement": 60,
     "energy_requirement": 104,
     "value": 11000,
-    "level_from": "Ours: about twice the scroll's drop level, in MU's own order (the user's audit of 2026-10-02: 'currently chars can get end game scroll and orbs pretty fast, remember we have 100% exp rate'). At kExperienceRate 100 a character who never leaves Lorencia reaches level 60 in about a hundred kills and 120 in about sixteen hundred, so MU's own gates -- energy alone on a scroll, the drop level on an orb -- fell within minutes. The energy (or other stat) MU asks is kept beside it."
+    "level_from": "Ours: about twice the scroll's drop level, in MU's own order (the user's audit of 2026-10-02: 'currently chars can get end game scroll and orbs pretty fast, remember we have 100% exp rate'). At kExperienceRate 100 a character who never leaves Lorencia reaches level 60 in about a hundred kills and 120 in about sixteen hundred, so MU's own gates -- energy alone on a scroll, the drop level on an orb -- fell within minutes. The energy (or other stat) MU asks is kept beside it. **60 and not 42** since 2026-10-04, Twisting Slash's (the user: 'minimal requirment to learn this spell has to be same as twisting slash')."
   }
 }

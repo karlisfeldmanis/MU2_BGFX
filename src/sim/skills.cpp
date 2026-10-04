@@ -106,19 +106,22 @@ constexpr SkillRow kRows[kSkills] = {
     // a bar of two. Its mana is MU's: MuMain's own orb tooltip reads `Twisting Slash Skill
     // (Mana:22)` (docs/mu-scrolls-and-orbs.md §5).
     //
-    // **Learned at 50 and not 28, Rageful Blow at 80 and not 44** (the user, 2026-10-02: "lets
-    // increase lvl requirments"), with their multipliers raised the same day.
+    // **Learned at 60 and not 28, Rageful Blow at 120 and not 44** (the user, 2026-10-02: "lets
+    // increase lvl requirments", then "increase ragefull lvl requirtment to 120 and twisting to
+    // 60"), with their multipliers raised the same day.
     //
     // **No cooldown** (the user, 2026-10-01: "remove cooldown from twisting slash"), which makes
     // it a primary: paced by its spin alone, held on the key, its mana the only limit.
     //
     // **1.5 and not 1.2** (the user, 2026-10-02: "twisting slash needs multiplier"). Ours: at 1.2
-    // it was a plain swing round him, and the bot pressed it 71 times in three hours.
-    {skill::kTwistingSlash, "Twisting Slash", 22, 1.0f, 1.5f, 1.0f / 1500.0f, 0, false,
+    // it was a plain swing round him, and the bot pressed it 71 times in three hours. **1.7**
+    // the same day ("we need to boost twisting slash little bit"), with mana back on every body
+    // it wounds (`kTwistManaShare`, recovery.h).
+    {skill::kTwistingSlash, "Twisting Slash", 22, 1.0f, 1.7f, 1.0f / 1500.0f, 0, false,
      Spread::Ring, 0, 1.0f,
      "A whirl of whatever he is holding, into everything within a tile. Every weapon can throw "
      "it; none throws it hard.",
-     65, "player_skill_sword4", true, arms::kEvery, 50},
+     65, "player_skill_sword4", true, arms::kEvery, 60},
     // Rageful Blow: **any weapon**, on the user's word of 2026-09-23. It was written for the
     // heavy hands -- MU's description is a "colossal area attack that unleashes shockwaves ... to
     // crush multiple opponents", which reads as something brought DOWN rather than drawn across --
@@ -134,7 +137,7 @@ constexpr SkillRow kRows[kSkills] = {
      0, 1.0f,
      "The weapon driven down into the ground, and what it breaks is the three tiles ahead of "
      "him.",
-     66, "rage_blow_1", true, arms::kEvery, 80},
+     66, "rage_blow_1", true, arms::kEvery, 120},
     // Death Stab: the spear's, and MU gates it on the hand too -- `SkillWarrior` refuses it with
     // a staff in the right hand (SkillCast.cpp:157) and the skill has been a spear's in every
     // version that hands it out. The hardest single blow in the table, and the point of carrying
@@ -294,6 +297,11 @@ constexpr SkillRow kRows[kSkills] = {
     // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
     // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
+    // Eleven bodies at most and not fourteen, so a cast catches fewer (the user, 2026-10-04: '9
+    // tile reach DW skillls is little bit to much, nerf it. i think its also for
+    // ice,posion,lighting', 'i am talking how much monsters get the spell', then 'and play it
+    // same time how it was before'): the window is the fourteen ticks it was, and the chain ends
+    // at `kLightningBodies` (skills.h), his arm held up the rest of it. Six tiles a leap.
     {skill::kLightning, "Lightning", 40, 6.0f, 1.8f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning leaps from the body he points at into the next "
      "and the next within six tiles, throwing each back a step.",
@@ -331,11 +339,26 @@ constexpr SkillRow kRows[kSkills] = {
     // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
     // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
-    {skill::kMeteorite, "Meteorite", 30, 9.0f, 2.3f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "With his arm raised to the sky he calls burning rocks down on a body up to nine tiles off "
-     "and on everything within nine tiles of it, one rock each.",
+    // Six tiles round the body it lands on and not nine, so a cast catches fewer (the user,
+    // 2026-10-04: '9 tile reach DW skillls is little bit to much, nerf it', 'i am talking how much
+    // monsters get the spell from meteor,ice,etc'), as Ice and Poison. Still nine tiles to cast.
+    //
+    // **A shower on the ground he clicks** (the user, 2026-10-04: "click on any spot on ground
+    // and on that area meteors will drops on some random places on some 4 tile radius", "every
+    // time char rises hand meteors drops on that location"): `kShowerRocks` rocks at random
+    // within four tiles of the tile, each striking what stands within `kRockBlast` of where it
+    // lands, a body once a cast (Realm::shower). Called on a body -- a right-click on a monster,
+    // the bots -- it falls round that body. Ours.
+    //
+    // **Sixty mana and 1.6 the band** (the user, 2026-10-04: "pretty OP spell for dw it should
+    // cost more mana"; fifty, then Inferno's two hundred, then "200 to much lets use 60, but
+    // decreae multiuplier to 1.6"): the dearest of his throws, and lighter than the 2.3 it was
+    // while one rock fell on each body -- a rain now catches a crowd for it.
+    {skill::kMeteorite, "Meteorite", 60, 9.0f, 1.6f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "With his arm raised to the sky he calls a shower of burning rocks down on the ground up "
+     "to nine tiles off, falling at random within four tiles of it.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
-     0, 0, 7, 9.0f},
+     0, 0, 7, 4.0f},
 
     // Teleport 6: 0.75's row, `CreateSkill(Teleport, ..., manaConsumption: 30, energyRequirement:
     // 88)` -- thirty mana, six tiles, no damage. MuMain's: aimed at the tile under the pointer and
@@ -379,10 +402,10 @@ constexpr SkillRow kRows[kSkills] = {
     // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
     {skill::kIce, "Ice", 38, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "Ice bursts on a body up to nine tiles off and on everything within nine tiles of it; what "
+     "Ice bursts on a body up to nine tiles off and on everything within six tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
      147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
-     0, 0, 0, 0, 9.0f, false, 200},
+     0, 0, 0, 0, 6.0f, false, 200},
 
     // Poison 1: 0.75's row, `CreateSkill(Poison, ..., DamageType.Wizardry, 12, 6, manaConsumption:
     // 42, energyRequirement: 140, elementalModifier: Poison)` -- twelve damage, forty-two mana, and
@@ -409,10 +432,10 @@ constexpr SkillRow kRows[kSkills] = {
     // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
     {skill::kPoison, "Poison", 42, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "A cloud of poison bursts on a body up to nine tiles off and on everything within nine tiles "
+     "A cloud of poison bursts on a body up to nine tiles off and on everything within six tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
-     0, 0, 0, 0, 0, 9.0f, false, 0, 400},
+     0, 0, 0, 0, 0, 6.0f, false, 0, 400},
 
     // ---- the Fairy Elf's, appended after the wizard's (sprint 15) ------------------------------
     //
@@ -663,6 +686,7 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 152, .sound = "spell_flash", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 80,
      .flies = 1000.0f, .release = kAquaThrow},
+
     // ---- Penetration 52, the elf's, after Aqua Beam for the same reason -------------------------
     //
     // OpenMU's row (VersionSeasonSix/SkillsInitializer.cs:171-172): seventy damage, distance six,
@@ -685,6 +709,26 @@ constexpr SkillRow kRows[kSkills] = {
               "its line. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
      .needLevel = 130, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 1},
+
+    // ---- Fire Breath 49, the Dinorant's, after Penetration so no save's learned bit moves -------
+    //
+    // OpenMU's row (Version095d/SkillsInitializer.cs:80): thirty damage, three tiles, nine mana,
+    // level 110, the knight's, physical, one body. WebZen calls it Raid Shoot and its blow
+    // `(200 + Energy/10) / 100` of his swing (ObjAttack.cpp:1392-1407) -- which is this table's own
+    // 2 + energy/1000, so the force is MU's and the strength term the knight's usual. MuMain plays
+    // PLAYER_SKILL_RIDER (68) on him and the dragon's 6, and makes the breath as the blow is let go
+    // (game/fx/firebreath.h). Carried by the horn, not learned (zzzitem.cpp:1018-1022): known while
+    // it is worn, thrown while it is ridden (`mounted`), with any weapon or none.
+    //
+    // **Ours:** the four-second cooldown, Falling Slash's -- MU has none, and with none a nine-mana
+    // blow at twice his swing would be a primary stronger than Twisting Slash. Its breath crosses
+    // the ground at MU's thirty units a frame, 7.5 tiles a second, so the blow lands as it arrives.
+    {.number = skill::kFireBreath, .name = "Fire Breath", .mana = 9, .reach = 3.0f,
+     .force = 2.0f, .forcePerStrength = 1.0f / 1000.0f, .coolTicks = 80,
+     .tells = "The dragon under him breathes at one body up to three tiles off. Only while he "
+              "rides the Dinorant.",
+     .clip = 68, .sound = "player_skill_sword3", .built = true, .families = arms::kNone,
+     .flies = 7.5f, .anyHand = true, .mounted = true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

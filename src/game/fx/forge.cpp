@@ -169,6 +169,21 @@ void Forge::fling(const float at[3], float rollFrom, float yawFrom, bool streak,
     }
 }
 
+void Forge::dart(const float at[3], const float velocity[3], float life) {
+    if (!open_ || !bgfx::isValid(streak_)) return;
+    if (streaks_.size() >= kStreaks) {
+        ++refused_;
+        return;
+    }
+    Streak one;
+    for (int k = 0; k < 3; ++k) {
+        one.position[k] = at[k];
+        one.velocity[k] = velocity[k];
+    }
+    one.life = life;
+    streaks_.push_back(one);
+}
+
 void Forge::puff(const float at[3], uint8_t kind) {
     if (puffs_.size() >= kPuffs) {
         ++refused_;

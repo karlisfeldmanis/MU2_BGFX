@@ -18,9 +18,11 @@ constexpr uint32_t kBloodCastleMap = 11;
 // **When it opens** (the user, 2026-10-02: 'every 1 hour BC is opened'): WebZen's hourly default.
 // The Messenger of Archangel in Devias lets a ticket holder in from hh:25 for five minutes
 // (BloodCastle.cpp:778-802, entry closed at hh:30, :1128-1171), on the local wall clock.
-constexpr int kCastlePeriod = 3600;      // seconds between openings
-constexpr int kCastleOpensAt = 25 * 60;  // into the hour
-constexpr int kCastleEntry = 5 * 60;     // how long the Messenger lets him in
+// TEST CLOCK (the user, 2026-10-04: 'reduce time to 1 minute so we can test it'): every two
+// minutes, open the second one, so the wait is a minute at most. Back to 3600, 25 * 60, 5 * 60.
+constexpr int kCastlePeriod = 120;       // seconds between openings
+constexpr int kCastleOpensAt = 60;       // into the hour
+constexpr int kCastleEntry = 60;         // how long the Messenger lets him in
 // **The run, on his own clock from the moment he is in** (the user: 'when you are in there is
 // timer and BC starts'). Ours that it starts on entry; WebZen starts every castle together at
 // hh:31. Its numbers are WebZen's: 60 s in the safe court ("the quest starts in 60 s", lMsg

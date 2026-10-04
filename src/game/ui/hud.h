@@ -148,6 +148,10 @@ public:
         int pet = -1;
         int life = 0, lifeMost = 0;
         bool kinship = false; // a Kinship rune worn lifts the pet's price (sim::Power::Kinship)
+        // A mount worn on a map it is not ridden on (sim::rideMap): its cell drawn cold, as a
+        // skill he cannot throw, and its card says why (the user, 2026-10-04: 'if mount is not
+        // usable on area, remove the buff or disable the aura icon so user understands why').
+        bool idle = false;
         float seconds = 0.0f; // what is left of it
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
         bool empty() const { return skill == 0 && !ale && !poison && !chill && !frenzy && pet < 0; }
@@ -158,7 +162,7 @@ public:
             // of four seconds would be eighty redraws for a number that changes forty times.
             return skill == o.skill && ale == o.ale && poison == o.poison &&
                    chill == o.chill && frenzy == o.frenzy && pet == o.pet && kinship == o.kinship &&
-                   life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
+                   idle == o.idle && life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
     };
     // The pet, a skill's boon, the Ale, a Frenzy and the two debuffs: all six.

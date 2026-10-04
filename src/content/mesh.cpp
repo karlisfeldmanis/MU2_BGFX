@@ -490,6 +490,32 @@ bool Mesh::buildSkinned(const std::string& name, std::vector<SkinnedVertex> vert
     materials_ = std::move(materials);
     parts_ = std::move(parts);
     bones_ = std::move(bones);
+    // The nocked missile: its two farthest vertices are its point and its nock, and the bone
+    // that weighs most on them carries it (the bows' Bone10, all of it bound there).
+    nock_ = Nock{};
+    for (const Part& part : parts_) {
+        if (part.material >= materials_.size() || materials_[part.material].name != "nocked") {
+            continue;
+        }
+        float widest = -1.0f;
+        for (uint32_t i = part.firstIndex; i < part.firstIndex + part.indexCount; ++i) {
+            if (i >= indices.size() || indices[i] >= vertices.size()) continue;
+            const SkinnedVertex& a = vertices[indices[i]];
+            if (nock_.bone < 0) nock_.bone = a.joints[0];
+            for (uint32_t j = i + 1; j < part.firstIndex + part.indexCount; ++j) {
+                if (j >= indices.size() || indices[j] >= vertices.size()) continue;
+                const SkinnedVertex& b = vertices[indices[j]];
+                float d = 0.0f;
+                for (int k = 0; k < 3; ++k) d += (a.position[k] - b.position[k]) * (a.position[k] - b.position[k]);
+                if (d > widest) {
+                    widest = d;
+                    std::memcpy(nock_.ends[0], a.position, sizeof(a.position));
+                    std::memcpy(nock_.ends[1], b.position, sizeof(b.position));
+                }
+            }
+        }
+        break;
+    }
     return finish(vertices.data(), uint32_t(vertices.size()), sizeof(SkinnedVertex),
                   skinnedLayout(), std::move(indices));
 }

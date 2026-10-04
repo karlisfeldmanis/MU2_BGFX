@@ -201,7 +201,8 @@ void Realm::tend(Body& summon) {
         return;
     }
     Body& quarry = *body(summon.quarry);
-    if (within(summon, quarry, float(attackRange))) {
+    // Not through a wall, as a monster's shot (`seen`).
+    if (within(summon, quarry, float(attackRange)) && seen(summon, quarry)) {
         summon.temper = Temper::Fighting;
         engage(summon, quarry);
         if (tick_ >= summon.swingsAt) {
@@ -217,7 +218,9 @@ void Realm::tend(Body& summon) {
             summon.chaseX = quarry.x;
             summon.chaseY = quarry.y;
             int column = 0, rowAt = 0;
-            if (beside(quarry, attackRange, summon, &column, &rowAt)) send(summon, column, rowAt);
+            if (beside(quarry, attackRange, summon, &column, &rowAt, true)) {
+                send(summon, column, rowAt);
+            }
         }
     }
 }

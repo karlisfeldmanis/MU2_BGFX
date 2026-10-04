@@ -413,7 +413,7 @@ bool Realm::seen(float fromX, float fromY, const Body& to) const {
 // being STABLE -- asked again a tick later from almost the same place it gives the same
 // answer, so a chase that re-plans three times a second does not zig-zag.
 bool Realm::beside(const Body& target, int radius, const Body& walker, int* column, int* row,
-                   bool sight) {
+                   bool sight, bool disc) {
     bool found = false;
     float closest = 1e30f;
     for (int down = -radius; down <= radius; ++down) {
@@ -432,6 +432,13 @@ bool Realm::beside(const Body& target, int radius, const Body& walker, int* colu
                 float(radius)) {
                 continue;
             }
+            // And on the monster's second measure too, WebZen's disc on the tiles (`apart`), which
+            // think() asks before it will swing. Without it a ranged beast walked to a corner of
+            // the square -- (4, 4) or (4, 3) for the Ice Queen's reach of 4, a disc distance of 5
+            // -- found itself out of reach, and planned again to the nearest OTHER tile: it hopped
+            // from tile to tile round him and never shot (the user, 2026-10-04: 'ice quenn ... she
+            // constanly changes positions').
+            if (disc && int(std::sqrt(double(across * across + down * down))) > radius) continue;
             const float toX = float(c) - walker.x, toY = float(r) - walker.y;
             const float far = toX * toX + toY * toY;
             if (!found || far < closest) {
@@ -544,8 +551,11 @@ void Realm::think(Body& beast) {
     // Both reaches: the larger axis on the bodies themselves, so a walker halts only where its
     // arm meets him and not half a tile short, and WebZen's disc on their tiles, which takes a
     // ranged beast's corners off (a reach of 4 no longer shoots from (4, 4)).
+    // And nothing shot through a wall (`seen`; the user, 2026-10-04: 'dont allow monsters to shoot
+    // arrows throught walls'): walled off, it chases to a tile it can see him from. A blow beside
+    // him is always seen. Ours, as the hero's own rule is; 0.75 asks no wall of a monster's reach.
     if (within(beast, quarry, float(kind.attackRange)) && apart(beast, quarry) <= kind.attackRange &&
-        !tables_->grid.safe(beast.column(), beast.row())) {
+        !tables_->grid.safe(beast.column(), beast.row()) && seen(beast, quarry)) {
         beast.temper = Temper::Fighting;
         engage(beast, quarry);
         if (tick_ >= beast.swingsAt) {
@@ -580,7 +590,7 @@ void Realm::think(Body& beast) {
             beast.chaseX = quarry.x;
             beast.chaseY = quarry.y;
             int column = 0, row = 0;
-            if (beside(quarry, std::max(1, kind.attackRange), beast, &column, &row) &&
+            if (beside(quarry, std::max(1, kind.attackRange), beast, &column, &row, true, true) &&
                 send(beast, column, row)) {
                 return;
             }

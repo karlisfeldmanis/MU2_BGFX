@@ -318,8 +318,20 @@ constexpr float kHeroPoisonShare = 0.03f;
 // (SkillsInitializerBase.cs:205-207, :274-295; MovementSpeedConstants.cs:50) -- the wizard's own
 // chill, whose ticks and factor are Ice's row. A Ring of Ice's resistance is not carried.
 // Atlans's Silver Valkyrie (52), `AttackSkill = Ice` (Version075/Maps/Atlans.cs:630-660; WebZen's
-// A.Type 7), the same.
-constexpr int32_t kChillers[] = {22, 52};
+// A.Type 7), the same chill -- but **ours**, one shot in `odds` (the user, 2026-10-04: 'Silver
+// Valkyrie has a chance to use ice oon char whwn shoot'), rolled off its own stream (chillDice_)
+// before his resistance is asked. 1 is every blow, MU's.
+struct Chiller {
+    int32_t number;
+    int odds;
+};
+constexpr Chiller kChillers[] = {{22, 1}, {52, 4}};
+constexpr int chillOdds(int32_t number) {
+    for (const Chiller& one : kChillers) {
+        if (one.number == number) return one.odds;
+    }
+    return 0;
+}
 
 // ---- the bosses' Flame of Evil -----------------------------------------------------------------
 // The Lost Tower's Death Gorgon (35) and Balrog (38), A.Type 150 in WebZen's Monster.txt: one blow

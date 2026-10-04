@@ -301,6 +301,25 @@ cooldown, six pulses a channel, up to four bodies in one pulse; he does not move
 pushes, no tick sliding a body more than 0.4 of a tile. Filmed with `--arena "Bull Fighter"
 --arena-count 4 --arena-learn 3 --level 12`: bolts to all four at once, the bar draining.
 
+## 2e'. Every cast lets its spell go
+
+The user, 2026-10-04: *"there canot be this bug when char is casting spell and spell is not
+happening - globally, only oom is of course a thing"*. A cast that has played its clip lets its
+spell go, whatever happened while his arm came up:
+
+- **Set on another body meanwhile** (a right button held over a pack): the cast he began is let
+  go at what it was cast at, and he faces it as it leaves his hand (`Realm::accept`'s
+  `begunSkill`, `Realm::land`'s snap, MU's ZzzInterface.cpp:1303). A walk, a pick-up, a talk or a
+  Stop still cancel it, and the drawing ends the clip with them.
+- **The body dead by then**: a bolt or an arrow flies to where it fell and lands on nothing, Flame
+  burns on its tile, Ice and Poison burst on it, a rain falls where it stood, and Lightning's first
+  bolt strikes it and the chain ends.
+- Out of mana nothing is cast at all, so there is no clip to play.
+
+`sim_test`'s `testEveryCastLetsGo` hunts with every wizard spell, set on the nearest and the next
+nearest body by turns every tick: 136 casts, all let go. With the order change still cancelling,
+928 of 971 casts let nothing go.
+
 ## 2f. Meteorite -- a rain on a cooldown
 
 0.75's row for the damage, `CreateSkill(Meteorite, ..., DamageType.Wizardry, 21, 6,
@@ -333,6 +352,41 @@ the user's, 2026-09-28:
 - The drawing drops `fx/meteor`'s rock on each `Loosed` at where the body is drawn, one wave for
   the volley; the landing's explosion, stones, flinch and camera jolt are the Lich's. A hero's rock
   does not rush the showing's cues: the realm lands it.
+
+**A meteor rain on the ground he clicks** (the user, 2026-10-04: *"click on any spot on ground and
+on that area meteors will drops on some random places on some 4 tile radius"*, *"every time char
+rises hand meteors drops on that location"*, *"has to fele more like meteor rain, some balls are
+bigger some are smaller"*, *"bigger do more damage smalleer not so much"*). This replaces the rock
+on every body above; all of it is ours:
+
+- **Aimed at the ground** (`SkillRow::showers`, which puts it among `aimsAtPointer`): a key or the
+  right button over bare ground names the tile under the pointer, his own included; past nine tiles
+  it is pulled back along the line, and a spot he cannot see over a wall is not cast. A right-click
+  on a monster, and the bots, still name a body, and the rain falls round where it stood at the cast
+  -- dead by his arm coming up or not; round a corpse it once let nothing go, the whole clip for no
+  rocks (*"dw does meteor cast animation, but meteorits is not flying"*).
+- **Eight rocks** (`kShowerRocks`) let go when his arm is up, each somewhere in the four tiles
+  (`splash` 4) off the shower's own dice (`showerDice_`, so no other roll moves); the first always
+  within a tile of the spot. A place in a wall is drawn again.
+- **Big rocks and small**: each weighs 0.4 to 2 (`kLightestRock`..`kHeaviestRock`), the square of
+  an even roll, so most are pebbles and a boulder is rare (*"ad more variations of rock sizes"*).
+  The weight scales its blow (`force` x weight), its blast (`kRockBlast` 2 tiles x its root, 1.3
+  to 2.8) and its drawing: the rock, its stones, its burst and its light (`Meteor::cast`'s
+  `weight`), drawn at the root too, so a boulder is MU's largest rock (1.7) and no bigger
+  (*"some of rocks was to big"* at the weight times MU's roll, up to 3.4).
+- **Held, the right button rains on** wherever the mouse is, the next as soon as his arm comes
+  down, and moved onto another monster it sets him on that one (`Play::rightHeld`).
+- **A rain, not a volley**: the first rock falls at once, the rest wait up to twelve ticks
+  (`kShowerSpreadTicks`, 0.6 s) in the sky before their fall. This takes back the morning's "all at
+  once" for the rain's sake.
+- **A body takes one blow a cast**, the heaviest rock's that covers it, when that rock lands; the
+  nearest the spot pays back.
+- **Sixty mana and 1.6 the band** (was thirty and 2.3; the user, 2026-10-04: *"pretty OP spell for
+  dw it should cost more mana"*; fifty, then Inferno's two hundred, then *"200 to much lets use 60,
+  but decreae multiuplier to 1.6"*).
+- **Learned at level 60**, Twisting Slash's (was 42; *"minimal requirment to learn this spell has
+  to be same as twisting slash"*): Book02's `level_requirement`, the hundred and four energy kept. Each rock is said as a `Loosed` with no body, its ground in `x`/`y`,
+  its wait and fall in `b` and its weight in hundredths in `c` (`Realm::shower`).
 
 Measured in `sim_test`: a level-30 wizard hunting 6 000 ticks casts 18 times, never inside the
 cooldown, lets go 30 rocks, lands 29, up to three bodies in one volley, every rock landing seven

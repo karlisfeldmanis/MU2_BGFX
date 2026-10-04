@@ -921,7 +921,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     if (barRestored_) {
         barRestored_ = false;
         for (int i = 0; i < sim::skillCount(); ++i) {
-            if (realm.knows(sim::skillAt(i).number)) autoBound_ |= uint32_t(1) << i;
+            if (realm.knows(sim::skillAt(i).number)) autoBound_ |= uint64_t(1) << i;
         }
     }
 
@@ -932,7 +932,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     for (int i = 0; i < sim::skillCount(); ++i) {
         const sim::SkillRow& row = sim::skillAt(i);
         if (!realm.knows(row.number)) continue;
-        const uint32_t bit = uint32_t(1) << i;
+        const uint64_t bit = uint64_t(1) << i;
         if ((autoBound_ & bit) != 0) continue;
         // Marked as having had its chance HERE, before anything is bound, and whether or not a
         // key was free for it. A knight knows six skills and the bar holds four, so two of them
@@ -1016,7 +1016,8 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const auto ready = [&](const sim::SkillRow& row) {
         // Blood Castle's court is the one safe ground an aura is raised on (Realm::throwSkill).
         const bool court = row.aura() && tables.map == sim::kBloodCastleMap;
-        return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= row.mana;
+        return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= row.mana &&
+               (!row.mounted || hero.riding);
     };
 
     fan_.clear();
@@ -1124,6 +1125,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             boon.life = pet.durability;
             boon.lifeMost = most;
             boon.kinship = hero.excel.kinship;
+            boon.idle = sim::petPower(row).mount && !sim::rideMap(realm.tables()->map);
             boon.share = float(pet.durability) / float(most);
         }
     }
@@ -1354,8 +1356,13 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     weapon.label = "Weapon";
     const tip::Tone met = row.suits(hand) ? tip::Tone::White : tip::Tone::Red;
     weapon.values.push_back({sim::familiesListed(row.families), met, false, "", 0});
-    // A spell asks nothing of the hand, so it has no such row.
-    if (!row.wizardry) facts.rows.push_back(weapon);
+    // A spell asks nothing of the hand, so it has no such row. Nor does a mount's skill, which
+    // asks for the mount under him instead: white while he rides it, red off it.
+    if (!row.wizardry && !row.mounted) facts.rows.push_back(weapon);
+    if (row.mounted) {
+        facts.rows.push_back(line("Mount", "Horn of Dinorant",
+                                  hero.riding ? tip::Tone::White : tip::Tone::Red));
+    }
     if (row.wizardry) {
         // The band in his hands and whom it strikes, in the words its scroll's card uses
         // (`spellLines`, game/ui/describe.cpp).

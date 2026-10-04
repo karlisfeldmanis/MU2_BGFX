@@ -135,6 +135,13 @@ public:
     // weapon's clip settled; the rest is the point on the weapon and the hand is where the
     // weapon is. False when nothing in its hands marks one, or it is slung.
     bool muzzle(float at[3], float along[3]) const;
+    // Where the arrow or bolt on her string is drawn now: its nock and its point, in the world,
+    // the point being the end nearer `toward`. The one that flies takes over from it here, so
+    // the shot leaves the string it was drawn on (Play::shootArrow). False when nothing in her
+    // hands carries a nocked part, or it is slung.
+    bool nocked(const float toward[3], float tail[3], float tip[3]) const;
+    // Why neither nocked() nor muzzle() could answer, for the log.
+    const char* noMuzzle() const;
     // The arrow or bolt drawn on the weapon: gone from the loose, back on the next draw (MU2's
     // Model.Nock). **Ours** -- MU draws every bow loaded, always, because it never plays the
     // weapon's own clip and so nobody saw the two disagree.
@@ -187,6 +194,7 @@ private:
     // finished.
     std::vector<float> world_;
     std::vector<int> heldRows_;  // each held item's palette row from poseHeld, -1 for none
+    std::vector<float> heldNock_;  // and its nocked part's bone's skin there, 16 an item
 
     const FigureBody* body_ = nullptr;
     float position_[3] = {0, 0, 0};
