@@ -727,6 +727,9 @@ void Realm::push(Body& target, float fromX, float fromY) {
 }
 
 
+// A Whirlwind's slide, in ticks a tile: 0.15 s, so five tiles take three quarters of a second.
+constexpr float kWhirlTicksPerTile = 3.0f;
+
 float Realm::whirl(Body& hero, const SkillRow& row, float force) {
     force *= float(1.0 + kWhirlwindDamage * hero.excel.whirlwinds);
     // One draw a cast, and only while one is carried, so nobody else's dice move.
@@ -766,19 +769,22 @@ float Realm::whirl(Body& hero, const SkillRow& row, float force) {
             rowAt = r;
         }
         if (column == target->column() && rowAt == target->row()) continue;
-        // Slid as the Lightning push slides, over the same ticks.
-        target->pushX = (float(column) - target->x) / float(kPushTicks);
-        target->pushY = (float(rowAt) - target->y) / float(kPushTicks);
-        target->pushTicks = kPushTicks;
+        // Slid as the Lightning push slides, but kWhirlTicksPerTile a tile so the pull is seen
+        // (the user, 2026-10-04: 'i did no see the pulling'), and struck by this cast when it
+        // lands beside him (realm.cpp's slide), not before it moves -- one blow killed it where
+        // it stood.
+        const float lx = float(column) - target->x, ly = float(rowAt) - target->y;
+        const int32_t ticks = std::max(
+            kPushTicks, int32_t(std::ceil(std::max(std::fabs(lx), std::fabs(ly)) * kWhirlTicksPerTile)));
+        target->pushX = lx / float(ticks);
+        target->pushY = ly / float(ticks);
+        target->pushTicks = ticks;
         target->walking = false;
         target->route.clear();
         target->onStep = 0;
+        target->whirledBy = hero.id;
+        target->whirlForce = force;
         say(What::Shoved, *target, column, rowAt);
-        // Landed within the slash's reach: struck by this cast too.
-        const float lx = float(column) - hero.x, ly = float(rowAt) - hero.y;
-        if (std::max(std::fabs(lx), std::fabs(ly)) <= row.reach) {
-            strikeAt(hero, *target, force, nullptr, false);
-        }
     }
     return force;
 }

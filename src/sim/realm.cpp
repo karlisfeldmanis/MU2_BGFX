@@ -961,6 +961,15 @@ void Realm::step() {
             if (--beast.pushTicks == 0) {
                 beast.x = float(beast.column());
                 beast.y = float(beast.row());
+                // Landed from a Whirlwind's pull: the slash's blow now, if it is beside him.
+                if (beast.whirledBy != 0) {
+                    Body* by = body(beast.whirledBy);
+                    const SkillRow* slash = skillNumbered(skill::kTwistingSlash);
+                    if (by && by->alive() && slash && within(*by, beast, slash->reach)) {
+                        strikeAt(*by, beast, beast.whirlForce, nullptr, false);
+                    }
+                    beast.whirledBy = 0;
+                }
             }
         } else if (beast.alive() && fixed(beast)) {
             // The statue: struck where it stands, and nothing else.

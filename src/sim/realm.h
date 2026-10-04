@@ -448,6 +448,10 @@ struct Body {
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;
     int32_t pushTicks = 0;
+    // Pulled in by a Whirlwind (`Realm::whirl`): who pulled it and the force his slash struck
+    // with, laid on it when the slide ends beside him, so the pull is seen before the blow. 0 none.
+    uint32_t whirledBy = 0;
+    float whirlForce = 0.0f;
     // A beast's Lightning push on him, held until its bolt lands (kBeastPushDelay): the tick it
     // goes, 0 for none, and where the beast stood when it struck.
     int64_t pushAt = 0;
