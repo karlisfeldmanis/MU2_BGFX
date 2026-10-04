@@ -247,8 +247,11 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     // Blood Castle's ticket and what makes it: MU's yellow name (ZzzInventory.cpp:2190-2193),
     // our ladder's gold.
     // A quest item is purple, the user's of 2026-10-04: Sevina's treasures and the Archangel's
-    // weapons, both carried back to whoever asked.
-    if (sim::archangelWeapon(row) || sim::classTreasure(row)) return Tone::Quest;
+    // weapons, both carried back to whoever asked; and Loch's Feather, which Sevina pays and the
+    // 2nd wings are made of ('loch feather has to use pruple label color').
+    if (sim::archangelWeapon(row) || sim::classTreasure(row) || sim::lochsFeather(row)) {
+        return Tone::Quest;
+    }
     if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row)) {
         return Tone::Artifact;
     }
