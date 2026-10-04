@@ -152,18 +152,17 @@ bool Play::refine(int jewelSlot, int targetSlot) {
 // step clears what it said before that loop could read it; a purchase and a sale are heard off
 // their own answers for the same reason.
 bool Play::discard(int slot) {
-    // A Firecracker is not laid down: it opens (sim::Realm::crack). An item it gives lands at
-    // once with its sound and MU's firework starts over the tile in the same frame (CmdType 0;
-    // the user: "it has to be instant, as soon we drop it it has to start"). Zen goes up as a
-    // firework over his tile all the same -- MU sends none with Zen (Event.cpp:1520), which read
-    // as nothing happening (the user, 2026-10-04: "it could be zen, we just need that there is
-    // always something") -- and its coins and sum come when the show is over. Ours.
+    // A Firecracker is not laid down: it opens (sim::Realm::crack), and MU's firework starts
+    // over the tile in the same frame (CmdType 0; the user: "it has to be instant, as soon we
+    // drop it it has to start"). Zen goes up as a firework all the same -- MU sends none with
+    // Zen (Event.cpp:1520), which read as nothing happening (the user, 2026-10-04: "it could be
+    // zen, we just need that there is always something"). What it gives, the item's landing or
+    // the Zen's coins and sum, comes when the show is over. Ours.
     if (realm_.cracks(slot)) {
         const sim::Cracked cracked = realm_.crack(slot);
         core::logf("window: %d cracked %s", slot,
                    !cracked.opened ? "refused" : cracked.id ? "into an item" : "into Zen");
         if (!cracked.opened) return false;
-        if (cracked.id != 0) landed(cracked.id);
         uint32_t tag = 0;
         if (ground_) {
             const float metres = ground_->metresPerTile();
@@ -172,12 +171,12 @@ bool Play::discard(int slot) {
             const float at[3] = {x, ground_->heightAt(x, z), z};
             tag = firework_.launch(at);
         }
-        // Zen waits for the show to end (Play::update); with no show it is paid on the next
-        // frame -- not here, between frames, where the next frame's clear would take it.
-        if (cracked.zen > 0) {
-            if (tag != 0) crackerZen_.push_back({tag, cracked.zen});
-            else crackerZen_.push_back({~0u, cracked.zen, 0.0f});
-        }
+        // What it gives waits for the show to end (Play::update); with no show it is given on
+        // the next frame -- not here, between frames, where the next frame's clear would take
+        // Zen. An item is held out of sight from now (heldIds_, rebuilt by releaseDrops).
+        crackerOwed_.push_back({tag != 0 ? tag : ~0u, cracked.zen, cracked.id,
+                                tag != 0 ? -1.0f : 0.0f});
+        if (cracked.id != 0) heldIds_.push_back(cracked.id);
         return true;
     }
     const bool worn = slot >= 0 && sim::wearable(slot);

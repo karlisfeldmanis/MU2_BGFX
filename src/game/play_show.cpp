@@ -818,6 +818,9 @@ void Play::releaseDrops() {
         if (one.zen > 0) zenOwed_ = true;
         if (one.zen == 0) heldIds_.push_back(one.drop);
     }
+    for (const CrackerOwed& owed : crackerOwed_) {
+        if (owed.drop != 0) heldIds_.push_back(owed.drop);
+    }
 }
 
 void Play::takeZen(int64_t zen) {

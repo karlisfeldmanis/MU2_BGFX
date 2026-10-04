@@ -1549,26 +1549,27 @@ void Play::update(double seconds) {
     flame_.update(float(seconds));
     // Each rocket's burst rings eExplosion.wav off the blast born with it, and the first of a
     // throw's rings SOUND_XMAS_FIRECRACKER, whose bangs the rest burst on (fx/firework.h). The
-    // last starts its Zen's wait.
+    // last starts the wait for what it gives.
     firework_.update(float(seconds), [&](const float* at, uint32_t tag, int nth) {
         if (nth == 0) emit(heard_.firework, at[0], at[2]);
         emit(heard_.explosion, at[0], at[2]);
         if (nth == Firework::kShots - 1) {
-            for (CrackerZen& owed : crackerZen_) {
-                if (owed.tag == tag) owed.wait = kCrackerZenAfter;
+            for (CrackerOwed& owed : crackerOwed_) {
+                if (owed.tag == tag) owed.wait = kCrackerAfter;
             }
         }
     });
-    for (CrackerZen& owed : crackerZen_) {
+    for (CrackerOwed& owed : crackerOwed_) {
         if (owed.wait < 0.0f) continue;
         owed.wait -= float(seconds);
         if (owed.wait > 0.0f) continue;
-        takeZen(owed.zen);
-        owed.tag = 0;  // paid
+        if (owed.drop != 0) landed(owed.drop);
+        else takeZen(owed.zen);
+        owed.tag = 0;  // given
     }
-    crackerZen_.erase(std::remove_if(crackerZen_.begin(), crackerZen_.end(),
-                                     [](const CrackerZen& owed) { return owed.tag == 0; }),
-                      crackerZen_.end());
+    crackerOwed_.erase(std::remove_if(crackerOwed_.begin(), crackerOwed_.end(),
+                                      [](const CrackerOwed& owed) { return owed.tag == 0; }),
+                       crackerOwed_.end());
     spirits_.update(float(seconds), [&](uint32_t id, float* feet) {
         const Drawn* drawn = drawnOf(id);
         if (drawn == nullptr || !drawn->placed || !ground_) return false;

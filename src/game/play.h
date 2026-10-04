@@ -1123,17 +1123,20 @@ private:
     std::vector<Gain> gains_;
     // A potion's worth, drunk between frames and handed to the next frame's gains.
     int32_t drankHealth_ = 0, drankMana_ = 0;
-    // A Firecracker's Zen, paid -- coins and the lane's sum -- when its firework is done:
+    // What a Firecracker opened into, given when its firework is done: Zen paid -- coins and
+    // the lane's sum -- or its item landed, held out of sight and reach until then (heldIds_).
     // `wait` starts at its last burst (Play::discard). Ours, the user, 2026-10-04: "play zen
-    // sound and notificaiton of getting zen after firefraxrer animation and sound".
-    struct CrackerZen {
+    // sound and notificaiton of getting zen after firefraxrer animation and sound", then "if
+    // there is item, it has to drop after firefracter aniamtion".
+    struct CrackerOwed {
         uint32_t tag = 0;
         int64_t zen = 0;
+        uint32_t drop = 0;   // the lying item, 0 for Zen
         float wait = -1.0f;  // seconds; below zero until the last burst
     };
-    std::vector<CrackerZen> crackerZen_;
-    // From the last burst to the coins: the barrage's tail, 1.78 s to about 2.4 s into it.
-    static constexpr float kCrackerZenAfter = 0.6f;
+    std::vector<CrackerOwed> crackerOwed_;
+    // From the last burst to the giving: the barrage's tail, 1.78 s to about 2.4 s into it.
+    static constexpr float kCrackerAfter = 0.6f;
     int32_t heroCast_ = 0;  // see heroCast()
     int32_t heroCasting_ = 0;  // the hero's last cast, held until the next one
 
