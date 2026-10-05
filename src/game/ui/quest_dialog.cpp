@@ -326,19 +326,8 @@ void QuestDialog::layout(const Play& play) {
                                                   : std::string("Divine Staff of Archangel");
             const std::string said = angelWords(angel_, realm.castleRun().phase, label);
             words(said.c_str());
-            // His clip, the weapon he names: voiced on his last page alone, the thanks once the
-            // weapon is given (the user, 2026-10-05: 'play audio only on completly last archangel
-            // text'), and his welcome before the run, the statue holding the weapon (the user,
-            // 2026-10-05: 'play audio for this'); every other page is read in silence.
-            const char* arm = label.find("Sword") != std::string::npos      ? "sword"
-                              : label.find("Crossbow") != std::string::npos ? "crossbow"
-                                                                            : "staff";
-            if (angel_ == sim::AngelState::Done) {
-                clip_ = std::string("voice/archangel/archangel_done_") + arm + ".wav";
-            } else if (angel_ == sim::AngelState::NotYet &&
-                       realm.castleRun().phase != sim::CastlePhase::Ended) {
-                clip_ = std::string("voice/archangel/archangel_notyet_") + arm + ".wav";
-            }
+            // Read in silence too: the Archangel has no voice (the user, 2026-10-05: 'lets not
+            // use audio on archangel at all').
             break;
         }
     }

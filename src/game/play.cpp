@@ -637,9 +637,15 @@ void Play::update(double seconds) {
                 }
             }
             // And Evil Spirit's blow spins what it strikes (kSpiritStormTime, the user's memory of
-            // MuMain), from the full turn again if it was spinning already.
+            // MuMain), from the full turn again if it was spinning already. Never the Statue of
+            // Saint, stone laid on its wedge (the user, 2026-10-05: 'immune to ... evil spirit
+            // rotating').
             if (happening.what == sim::What::Hit && happening.spirit) {
-                if (Drawn* struck = drawnOf(happening.whom); struck && struck->placed) {
+                const sim::Body* body = realm_.find(happening.whom);
+                const bool statue = body != nullptr && !body->player &&
+                                    size_t(body->kind) < tables_.kinds.size() &&
+                                    sim::castleStatue(tables_.kinds[size_t(body->kind)].number);
+                if (Drawn* struck = drawnOf(happening.whom); struck && struck->placed && !statue) {
                     struck->stormTime = kSpiritStormTime;
                 }
             }

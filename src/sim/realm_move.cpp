@@ -882,13 +882,14 @@ void Realm::castleKill(const Body& dead) {
             }
         }
     } else if (castleSorcerer(number)) {
-        // Quota 2 met: the Statue of Saint rises in its hall.
+        // Quota 2 met: the Statue of Saint rises in its hall, and the dead sorcerers, this one
+        // with them, rise no more (Realm::kill set them rising again).
         if (++run_.sorcerers == kCastleSorcerers) {
             for (Body& one : bodies_) {
-                if (one.monster() && !one.alive() &&
-                    castleStatue(tables_->kinds[size_t(one.kind)].number)) {
-                    one.risesAt = tick_;
-                }
+                if (!one.monster() || one.alive()) continue;
+                const int32_t kind = tables_->kinds[size_t(one.kind)].number;
+                if (castleStatue(kind)) one.risesAt = tick_;
+                if (castleSorcerer(kind)) one.risesAt = std::numeric_limits<int64_t>::max();
             }
         }
     } else {

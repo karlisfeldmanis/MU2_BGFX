@@ -43,8 +43,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // (DelayActionTime 800). The wizard's pulse is a quarter of his blow (ours); a miss has no
     // blow, so it takes WebZen's own 3% of what is left (user.cpp:25699-25710).
     const auto elements = [&](int damage) {
+        // Never the Statue of Saint (fixed): stone takes no chill (the user, 2026-10-05).
         if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster() &&
-            target.chilledUntil <= tick_ && !resists(target, true, dice)) {
+            !fixed(target) && target.chilledUntil <= tick_ && !resists(target, true, dice)) {
             target.chilledUntil = tick_ + row->chillTicks;
         }
         if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster() &&
@@ -285,12 +286,16 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     if (power.power == Power::Frost) {
         if (!runeDice_.nextBool(kFrostChance)) return;
         if (!struck.alive() || !struck.monster()) return;
-        struck.frozenUntil = tick_ + kFrostTicks;
-        // And its walk ended where it stands: `advance` skips a frozen body, but one left walking
-        // was drawn striding on the spot for the whole freeze (the user: "when monsters is frozen
-        // he suppost to not walk"). It plans again when it thaws.
-        halt(struck);
-        say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
+        // The Statue of Saint (fixed) takes the wound and not the freeze, nor its ice drawn
+        // (the user, 2026-10-05: 'immune to slow').
+        if (!fixed(struck)) {
+            struck.frozenUntil = tick_ + kFrostTicks;
+            // And its walk ended where it stands: `advance` skips a frozen body, but one left
+            // walking was drawn striding on the spot for the whole freeze (the user: "when
+            // monsters is frozen he suppost to not walk"). It plans again when it thaws.
+            halt(struck);
+            say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
+        }
         const int energy = hero.points.energy;
         // It may land critical as his swing may (the user, 2026-10-01: "they can critical
         // hit"), off his own chance and the sockets' stream: the top of the energy band, as a
@@ -324,6 +329,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         const bool ice = power.power == Power::Ice;
         if (!runeDice_.nextBool(ice ? kIceRuneChance : kPoisonRuneChance)) return;
         if (!struck.alive() || !struck.monster()) return;
+        if (ice && fixed(struck)) return;  // the Statue of Saint takes no chill
         const SkillRow* spell = skillNumbered(ice ? skill::kIce : skill::kPoison);
         if (spell == nullptr) return;
         if (ice) {
@@ -1435,9 +1441,13 @@ void Realm::kill(Body& dead, Body& killer) {
     // the Ice Queen eleven (kDropRates' regen) -- where the cook's OpenMU numbers were ten and
     // fifty. The user's pick of 2026-09-30.
     dead.risesAt = tick_ + int64_t(dropRateOf(kind.number).regen + 1) * 20;
-    // Blood Castle's statue and Spirit Sorcerers are the run's, raised once by it and never again.
+    // Blood Castle's statue is the run's, raised once by it and never again; its Spirit Sorcerers
+    // rise again as the garrison does while the run is on and quota 2 is not met
+    // (kCastleSorcerers); castleKill lays the dead down for good as the quota fills.
     if (tables_->map == kBloodCastleMap &&
-        (castleStatue(kind.number) || castleSorcerer(kind.number))) {
+        (castleStatue(kind.number) ||
+         (castleSorcerer(kind.number) &&
+          (run_.phase != CastlePhase::Running || run_.sorcerers >= kCastleSorcerers)))) {
         dead.risesAt = std::numeric_limits<int64_t>::max();
     }
     // Every monster the killer is still holding as a quarry forgets it, or a chase carries on

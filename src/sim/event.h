@@ -88,9 +88,11 @@ enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
 constexpr int kCastleKills = 400;
 // **Every one of the castle's eight, ours** (the user, 2026-10-05: 'increase the kill count for
-// all BC monsters'): WebZen's solo 2, at most 10 in a party; the castle places 8 and raises them
-// once, so eight is all of them.
-constexpr int kCastleSorcerers = 8;
+// all BC monsters'): WebZen's solo 2, at most 10 in a party. Twenty since 2026-10-05 ('we ened to
+// increase umbers of spirit monsters kills on BC'), WebZen's 2 a player times ten, as the 400 is:
+// the castle places 8, and a dead one rises again as the garrison does until the quota is met
+// (Realm::kill, Realm::castleKill).
+constexpr int kCastleSorcerers = 20;
 // How long the drawbridge takes to come down: 1.18 s, landing on eDownGate's thud (game/world/
 // drawbridge.h; ours, timed to the sound), 24 ticks. MuMain's ActionObject swings it over 21 of
 // its 25 Hz frames and clears the gap's NoGround on the last (ZzzObject.cpp:86-165); WebZen
