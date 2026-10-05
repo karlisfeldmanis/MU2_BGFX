@@ -13,14 +13,8 @@ namespace {
 
 using gfx::Box;
 
-// In MU's 640x480 units, scaled by the window's height. The tile is MuMain's 23 and a unit of
-// frame (ITEM_DUR_WIDTH); the column hangs 10 in from the free edge and starts at 118 -- the
-// canvas mock-up's numbers, which put it where MuMain's 140 did less the tile's own height.
-constexpr float kTile = 24.0f;
-constexpr float kGap = 3.0f;
-constexpr float kInset = 10.0f;
-constexpr float kTop = 118.0f;
-constexpr float kIconShare = 0.74f;  // of the tile, the rest is frame and air
+// The cells are the HUD's (Hud::wornCell): a buff cell's size, over the belt.
+constexpr float kIconShare = 0.74f;  // of the tile's width, the rest is frame and air
 
 // The slot's own silhouette, the one the bag draws in it (Bag.GhostFor), so the warning and the
 // equipment window name a piece with the same shape -- the user, 2026-09-24: MuMain's separate
@@ -64,12 +58,6 @@ int severity(sim::Worn band) {
     }
 }
 
-Box tileBox(int n, float right, float height) {
-    const float s = height / panel::kReferenceHeight;
-    return {right - (kTile + kInset) * s, (kTop + float(n) * (kTile + kGap)) * s, kTile * s,
-            kTile * s};
-}
-
 // What the slot is called on the card's second line.
 const char* slotName(int slot) {
     switch (slot) {
@@ -97,12 +85,14 @@ const char* stateName(sim::Worn band) {
 }  // namespace
 
 bool Endurance::Drawn::operator==(const Drawn& o) const {
-    if (count != o.count || hovered != o.hovered || right != o.right || width != o.width ||
-        height != o.height || self != o.self) {
+    if (count != o.count || hovered != o.hovered || width != o.width || height != o.height ||
+        self != o.self) {
         return false;
     }
     for (int i = 0; i < count; ++i) {
         if (!(icons[i] == o.icons[i])) return false;
+        const Box &a = cells[i], &b = o.cells[i];
+        if (a.x != b.x || a.y != b.y || a.w != b.w || a.h != b.h) return false;
     }
     return true;
 }
@@ -113,10 +103,9 @@ void Endurance::open(const gfx::Interface& interface, panel::Arts* arts) {
     arts_ = arts;
 }
 
-void Endurance::update(float width, float height, float right, const sim::Realm& realm,
+void Endurance::update(float width, float height, const Hud& hud, const sim::Realm& realm,
                        const Pointer& pointer) {
     now_ = Drawn{};
-    now_.right = right;
     now_.width = width;
     now_.height = height;
     now_.self = realm.selfMending();
@@ -139,7 +128,8 @@ void Endurance::update(float width, float height, float right, const sim::Realm&
         });
     }
     for (int i = 0; i < now_.count; ++i) {
-        if (tileBox(i, right, height).has(pointer.x, pointer.y)) now_.hovered = i;
+        now_.cells[i] = hud.wornCell(i);
+        if (now_.cells[i].has(pointer.x, pointer.y)) now_.hovered = i;
     }
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
@@ -157,7 +147,7 @@ void Endurance::rebuild(const sim::Realm& realm) {
 
     for (int i = 0; i < now_.count; ++i) {
         const Icon& one = now_.icons[i];
-        const Box box = tileBox(i, now_.right, now_.height);
+        const Box box = now_.cells[i];
         // A soft shade under the tile, and a broken piece's glow outside it: three rings
         // stepping out and fading, which is as near a blur as the canvas has.
         canvas_.rect(box.grown(line), gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f));
@@ -172,7 +162,7 @@ void Endurance::rebuild(const sim::Realm& realm) {
         const gfx::Art& art = arts_->get(artFor(one.slot));
         if (art.valid() && art.width > 0.0f && art.height > 0.0f) {
             const float room = box.w * kIconShare;
-            const float k = std::min(room / art.width, room / art.height);
+            const float k = std::min(room / art.width, box.h * kIconShare / art.height);
             const float w = art.width * k, h = art.height * k;
             canvas_.image(art, {box.midX() - w * 0.5f, box.midY() - h * 0.5f, w, h}, kShapeInk);
         }
@@ -233,13 +223,8 @@ void Endurance::rebuild(const sim::Realm& realm) {
                      std::to_string(one.maximum);
         sheet.worn = one.maximum > 0 ? float(one.durability) / float(one.maximum) : 0.0f;
         sheet.wearTone = toneOf(one.band);
-        // Beside the column, not over it: tip::draw centres the card over its anchor, and over the
-        // tile it hid the tiles above the one being read. So the anchor is moved left by half the
-        // card and a gap, and the card stands clear of the whole column.
-        const Box box = tileBox(now_.hovered, now_.right, now_.height);
-        const float half = sheet.wide * 0.5f * tip::unit();
-        tip::draw(tip_, sheet, box.x - half - 6.0f * tip::unit(), box.bottom(), now_.width,
-                  now_.height);
+        // Standing on the cell, as a buff's card stands on its cell (Hud's boon card).
+        tip::draw(tip_, sheet, now_.cells[now_.hovered], now_.width, now_.height);
     }
 }
 

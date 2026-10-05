@@ -389,6 +389,15 @@ void Hud::follow(const sim::Body* hero) {
 
 float Hud::plateTop() const { return plate(screen_, {0.0f, 0.0f, kPlateW, kPlateH}).y; }
 
+gfx::Box Hud::wornCell(int i) const {
+    // Right-aligned to the belt's last box, so the row stands over the potions as the buffs stand
+    // over the skills (the user, 2026-10-05: "we need to find betetr place and choose betetr size
+    // for broken item UI").
+    const float end = kQuickX + float(kQuickKeys - 1) * kQuickPitch + kQuickW;
+    const float x = end - float(i + 1) * kBuffsAt.w - float(i) * kBuffGap;
+    return plate(screen_, {x, kBuffsAt.y, kBuffsAt.w, kBuffsAt.h});
+}
+
 float Hud::progress() const {
     if (!hero_) return 0.0f;
     const uint64_t at = sim::neededExperience(hero_->level);

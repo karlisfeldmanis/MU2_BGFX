@@ -41,6 +41,14 @@ constexpr double kHitsPerDurability = 10000.0;
 // barely wears and one on the Dungeon's goes a point in some fifty to a hundred and fifty
 // blows. The pendant keeps kHitsPerDurability. `defense` is the struck monster's.
 double weaponWear(const content::ItemRow& row, const Held& held, int defense);
+// **Once a swing, not once a body** (the user, 2026-10-05: "items in equiprment is breaking to
+// fast"): a landed blow wears the weapon (or the pendant) only if this many ticks have passed
+// since the last one that did. WebZen wears on every blow, and there a blow is a swing at one
+// monster; here a knight's sweep, a fan, a chain or a Meteorite's rain lands on a crowd at once,
+// and at 100x experience a fight is a crowd -- a Sword of Destruction on defence-200 monsters,
+// struck ten at a sweep, went in some thirteen minutes. Half a second is about one swing, so a
+// fight with one monster wears as WebZen's does. Ours.
+constexpr int64_t kWeaponWearTicks = 10;
 
 // What a self-repair from the bag costs over a merchant's (CalcRepairCost's SelfRepair, OpenMU's
 // `!npcDiscount`), and what a thing worn to nothing costs over a worn one (DestroyedItemPenalty).

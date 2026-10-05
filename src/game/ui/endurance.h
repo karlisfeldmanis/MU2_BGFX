@@ -1,5 +1,5 @@
-// The worn-gear warning: one tile for each worn piece at half its durability or less, in a single
-// column down the right edge, worst piece on top, and a small card for the one under the pointer.
+// The worn-gear warning: one tile for each worn piece at half its durability or less, in a row
+// over the potion belt, worst piece on the right, and a small card for the one under the pointer.
 //
 // MuMain's `CNewUIItemEnduranceInfo` in the shape the user chose on the design canvas on
 // 2026-09-24 ("A3 · MU's column, polished", tint "Frame only"). Kept of MuMain: the four bands and
@@ -8,7 +8,10 @@
 // user's:
 //   * the picture is the slot's own silhouette from the equipment window (bag.h ghostArt), not
 //     MuMain's separate newui_durable_* set: one shape per slot everywhere in the game;
-//   * one column, not two to a column; worst piece first rather than slot order;
+//   * one row over the plate's right half, the buff strip's mirror and a buff cell's size, and
+//     not a column down the screen's edge (the user, 2026-10-05: "we need to find betetr place
+//     and choose betetr size for broken item UI"; at the edge under the minimap it was far from
+//     where a fight is watched); worst piece first rather than slot order;
 //   * the shape stays in the window's warm ink and only the frame takes the band's colour --
 //     MuMain's half-strength wash muddied the art -- with a red glow on a broken piece;
 //   * a bar down each tile's right edge, filled from the foot by what is left;
@@ -33,9 +36,8 @@ class Endurance {
 public:
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
-    // A frame. `right` is the backbuffer x the column hangs from: the screen's right edge, or
-    // the left edge of the leftmost window open against it.
-    void update(float width, float height, float right, const sim::Realm& realm,
+    // A frame. The cells are the HUD's (Hud::wornCell), so the row moves with the plate.
+    void update(float width, float height, const Hud& hud, const sim::Realm& realm,
                 const Pointer& pointer);
 
     bool showing() const { return !canvas_.empty(); }
@@ -57,8 +59,9 @@ private:
     struct Drawn {
         Icon icons[sim::kWorn];
         int count = 0;
+        gfx::Box cells[sim::kWorn] = {};
         int hovered = -1;
-        float right = 0.0f, width = 0.0f, height = 0.0f;
+        float width = 0.0f, height = 0.0f;
         bool self = false;  // he may mend it himself, which the card says
         bool operator==(const Drawn& o) const;
     };

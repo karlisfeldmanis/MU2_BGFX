@@ -98,6 +98,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
     }
+    weaponWornAt_ = -1000000;
     router_.open(&tables_->grid);
     bodies_.clear();
     happenings_.clear();

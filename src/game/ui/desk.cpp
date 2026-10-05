@@ -759,16 +759,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
 
-    // The worn-gear warning, hung left of whatever stands against the right edge: MuMain moves it
-    // with `SetPos(iScreenWidth)`, the width the open windows leave.
+    // The worn-gear warning, in its row over the potion belt (Hud::wornCell).
     if (play.isOpen()) {
-        int columns = 0;
-        if (characterOpen_) columns = 1;
-        if (inventoryOpen_) columns = characterOpen_ ? 2 : std::max(columns, 1);
-        if (trading_ || banking_ || mixing_) columns = std::max(columns, 2);
-        const float width = float(window.width());
-        const float right = columns > 0 ? panel::columnX(width, columns) : width;
-        endurance_.update(width, float(window.height()), right, play.realm(), pointer);
+        endurance_.update(float(window.width()), float(window.height()), hud_, play.realm(),
+                          pointer);
     }
 
     if (play.isOpen()) {

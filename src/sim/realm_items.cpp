@@ -1500,6 +1500,9 @@ void Realm::wearOnLanded(int defense) {
     if (offensive(pick)) result = pick;
     // A weapon at nought is spared, as DecreaseWeaponDurabilityAfterHitAsync returns on it.
     if (bag_[result].durability <= 0) return;
+    // And once a swing, not once a body (sim::kWeaponWearTicks).
+    if (tick_ - weaponWornAt_ < kWeaponWearTicks) return;
+    weaponWornAt_ = tick_;
     wearDown(result, weaponWear(tables_->items[size_t(bag_[result].item)], bag_[result], defense));
 }
 

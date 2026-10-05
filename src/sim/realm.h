@@ -1438,6 +1438,8 @@ private:
     // was lost by: a piece moved out and back starts its fraction again, which is under a point.
     double wearCarry_[kWorn] = {};
     int32_t wearItem_[kWorn] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    // The tick his weapon last wore on a landed blow (sim::kWeaponWearTicks).
+    int64_t weaponWornAt_ = -1000000;
     int64_t money_ = 0;
     int trading_ = -1;
     std::vector<Sale> sold_;  // oldest first, at most kBuybacks
