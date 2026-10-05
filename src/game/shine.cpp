@@ -1,6 +1,7 @@
 #include "game/shine.h"
 
 #include "core/log.h"
+#include "sim/items.h"
 
 namespace mu::game {
 
@@ -69,6 +70,12 @@ int levelOf(int group, int number, int plus) {
     if (group == 12 && number == 15) return 8;                    // JEWEL_OF_CHAOS
     if (group == 12 && number == 11) return 0;                    // ORB_OF_SUMMONING
     if (group == 12 && number >= 0 && number <= 2) return 0;      // the wings
+    // And the 2nd wings at our numbers: MU forces Level 0 on Spirits, Soul and Dragon with the
+    // 1st (ZzzObject.cpp:9562-9569), so a +7 one shows no chrome on the ground or in the bag.
+    if (group == 12 && (number == sim::kSpiritsNumber || number == sim::kSoulNumber ||
+                        number == sim::kDragonNumber)) {
+        return 0;
+    }
     // MuMain's later orbs at +9 are left out: a knight orb here sits on 7, 12 or 19 by
     // borrowing that number, or on a free one, and drew the chrome by which it happened to
     // be. One family, one look; 0.75's own orbs (8-10) draw at their plus.
