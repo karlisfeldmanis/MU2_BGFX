@@ -203,6 +203,7 @@ void main()
 	colour *= shineTint(plus);
 	colour += shineAdded(plus, normalize(v_normal), v_refine.yzw);
 	colour += shineExcellentAdded(shineExcellent(v_refine.x), normalize(v_normal));
+	colour += shineSweepAdded(plus, shineSweep(v_refine.x), normalize(v_normal));
 
 	// The emissive, or on foliage the light through it. MU2's pipeline writes a leaf's own
 	// sheet as its emissive at a fraction, standing in for transmission, and that fraction

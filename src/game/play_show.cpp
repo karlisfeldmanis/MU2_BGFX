@@ -1546,11 +1546,11 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                 out[i].light[0] *= by[0];
                 out[i].light[1] *= by[1];
                 out[i].light[2] *= by[2];
-                // The glaze (kIcedChrome). An excellent thing's plus rides at 20 and up
-                // (shaders/shine.sh), so its flag is kept.
-                const int excellent = out[i].refine >= 20 ? 20 : 0;
-                if (iced && out[i].refine - excellent < kIcedPlus) {
-                    out[i].refine = excellent + kIcedPlus;
+                // The glaze (kIcedChrome). An excellent thing's flag and its +11 sweep ride
+                // above the plus (game/shine.h), so they are kept.
+                const int flags = shineFlagsOf(out[i].refine);
+                if (iced && shineLevelOf(out[i].refine) < kIcedPlus) {
+                    out[i].refine = flags + kIcedPlus;
                     std::copy(kIcedChrome, kIcedChrome + 3, out[i].refineColour);
                 }
             }

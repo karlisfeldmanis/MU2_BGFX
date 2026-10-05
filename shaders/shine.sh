@@ -24,19 +24,26 @@ SAMPLER2D(s_chrome, 9);
 SAMPLER2D(s_shiny, 10);
 SAMPLER2D(s_chrome2, 11);
 
-// An excellent thing rides on the plus: game::wear hands the renderer plus + 20, so the plus
-// itself is never more than fifteen and the flag costs no instance data of its own.
-float shineExcellent(float refine)
-{
-	return floor(refine + 0.5) >= 20.0 ? 1.0 : 0.0;
-}
-
-// The plus, whole. It is the same at every corner of an instance, so this only rounds away
-// what interpolation might add.
-float shinePlus(float refine)
+// Three things ride the one float (game/shine.h): the level, 32 for excellent, 64 a +11 sweep
+// colour; so the flags cost no instance data of their own. It is the same at every corner of an
+// instance, so the rounding only takes away what interpolation might add.
+float shineBelowSweep(float refine)
 {
 	float whole = floor(refine + 0.5);
-	return whole >= 20.0 ? whole - 20.0 : whole;
+	return whole - 64.0 * floor(whole / 64.0);
+}
+float shineExcellent(float refine)
+{
+	return shineBelowSweep(refine) >= 32.0 ? 1.0 : 0.0;
+}
+float shinePlus(float refine)
+{
+	float rem = shineBelowSweep(refine);
+	return rem >= 32.0 ? rem - 32.0 : rem;
+}
+float shineSweep(float refine)
+{
+	return floor(floor(refine + 0.5) / 64.0);
 }
 
 // What an excellent thing adds over everything else: RenderPartObjectBodyColor2 with
@@ -91,6 +98,27 @@ vec3 shineAdded(float plus, vec3 n, vec3 colour)
 	// A flat glow of the chrome's colour over the whole surface was tried and turned down: it
 	// ate the bands and the star it was meant to show off.
 	return added * colour * u_refine.z * (1.0 + u_refineStar.y);
+}
+
+// What +11 adds over +9's chrome and star: MuMain's TIER_FULL_SPECULAR_V1 (ZzzObject.cpp:10377),
+// RenderPartObjectBodyColor2 with RENDER_CHROME2 | RENDER_BRIGHT before the metal and chrome.
+// Chrome02, added, swept across the piece on a five-second clock (ZzzBMD.cpp:1631-1640):
+//   u = (n.z + n.x) * 0.8 + Wave2 * 2     v = (n.y + n.x) + Wave2 * 3
+//   Wave2 = WorldTime % 5000 * 0.00024 - 0.4
+// in MU's axes; here MU's n.z is our n.y and MU's n.y our -n.z. Wave2 is our ten-second wave
+// doubled. Its colour is PartObjectColor2's on the 0.9 light the tier draws in: white, orange,
+// blue, or white at full (`sweep` 0-3). +10 has none of it: MuMain draws +9 and +10 alike.
+vec3 shineSweepAdded(float plus, float sweep, vec3 n)
+{
+	if (plus < 11.0 || u_refineStar.w <= 0.0) return vec3_splat(0.0);
+	float wave2 = fract(u_refine.y * 2.0) * 1.2 - 0.4;
+	vec2 uv = vec2((n.y + n.x) * 0.8 + wave2 * 2.0, (n.x - n.z) + wave2 * 3.0);
+	vec3 sheet = texture2DLod(s_chrome2, uv, 0.0).rgb;
+	vec3 tint = sweep < 0.5 ? vec3_splat(0.9)
+	          : sweep < 1.5 ? vec3(0.9, 0.45, 0.0)
+	          : sweep < 2.5 ? vec3(0.0, 0.45, 0.9)
+	          : vec3_splat(1.0);
+	return sheet * tint * u_refine.z * (1.0 + u_refineStar.y);
 }
 
 // **Invention.** What the lamps and fires light refined steel with. A fire 2 m off lights a

@@ -63,6 +63,23 @@ int colourOf(int group, int number) {
     return 0;
 }
 
+// The +11 sweep's colour, PartObjectColor2's (ZzzObject.cpp:6827-6904): named weapons, then the
+// armour by its set.
+int sweepOf(int group, int number) {
+    if (group == 4 && (number == 5 || number == 13)) return 2;  // SILVER_BOW, BLUEWING_CROSSBOW
+    if (group == 0 && number == 14) return 2;                   // MODEL_LIGHTING_SWORD
+    if (group == 5 && number == 5) return 2;                    // MODEL_LEGENDARY_STAFF
+    if (group >= 7 && group <= 11) {
+        switch (number) {
+            case 4: case 14: case 15: case 17: case 39: case 40: case 41: case 42: return 1;
+            case 18: case 43: return 2;
+            case 21: case 44: return 3;
+            default: return 0;
+        }
+    }
+    return 0;
+}
+
 // The models MuMain draws at a level of their own (ZzzObject.cpp:9531-9650). Group 12 is
 // numbered the same in OpenMU and MuMain (docs/mu-scrolls-and-orbs.md).
 int levelOf(int group, int number, int plus) {
@@ -94,6 +111,7 @@ ShineLook shineOf(const content::ItemRow& row, int plus, bool excellent) {
     look.colour[0] = c.r;
     look.colour[1] = c.g;
     look.colour[2] = c.b;
+    look.sweep = sweepOf(row.group, row.number);
     return look;
 }
 

@@ -69,7 +69,8 @@ void main()
 		// Not breathing with the glow, as MU's chrome pass does not; only a figure's fade.
 		float fade = v_light.w >= 2.0 ? figureFade(v_light.w) : 1.0;
 		colour += (shineAdded(plus, n, v_refine.yzw) +
-		           shineExcellentAdded(shineExcellent(v_refine.x), n)) * fade;
+		           shineExcellentAdded(shineExcellent(v_refine.x), n) +
+		           shineSweepAdded(plus, shineSweep(v_refine.x), n)) * fade;
 	}
 	gl_FragColor = vec4(colour, 1.0);
 }
