@@ -15,6 +15,12 @@ namespace {
 // into the chest instead of up between the shoulders.
 constexpr float kWingOffset[3] = {0.0f, 0.15f, 0.0f};
 
+// Ours: the Wings of Dragon pulled 5 cm in against the back (+z is MU's -y, forward). Wing06's
+// joint is modelled 6-9 cm behind its origin where Satan's and Soul's sit 3.5-5, so on MU's own
+// (0, 0, 15) it stood off a knight's back with a gap -- the user, 2026-10-05: 'looks liek
+// there is some gap on DK 2nd wings'.
+constexpr float kDragonInward = 0.05f;
+
 }  // namespace
 
 const FigureBody* wingBody(const Figures& figures, int group, int number) {
@@ -47,8 +53,10 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     float bone[16];
     if (!bearer.boneWorld(bearer.body()->backBone, bone)) return;
     // In the bone's own frame, moved along it by MU's offset, as the Imp is (game/pets.cpp).
+    float offset[3] = {kWingOffset[0], kWingOffset[1], kWingOffset[2]};
+    if (wing_->name == "Wing06") offset[2] += kDragonInward;
     float local[16];
-    content::placementTransform(0.0f, 0.0f, 0.0f, 1.0f, kWingOffset, local);
+    content::placementTransform(0.0f, 0.0f, 0.0f, 1.0f, offset, local);
     float parent[16];
     core::mulMatrix(local, bone, parent);
     figure_.mount(parent);
