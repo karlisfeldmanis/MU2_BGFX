@@ -333,19 +333,14 @@ void QuestDialog::layout(const Play& play) {
                                                   : std::string("Divine Staff of Archangel");
             const std::string said = angelWords(angel_, realm.castleRun().phase, label);
             words(said.c_str());
-            // His clip: the state, and the weapon he names, read once for each of the three.
-            static const char* const kState[] = {"notyet", "nostaff", "ready", "done"};
+            // His clip, the weapon he names: voiced on his last page alone, the thanks once the
+            // weapon is given (the user, 2026-10-05: 'play audio only on completly last archangel
+            // text'); every page before it is read in silence.
             const char* arm = label.find("Sword") != std::string::npos      ? "sword"
                               : label.find("Crossbow") != std::string::npos ? "crossbow"
                                                                             : "staff";
-            // Silent while the run is on and the weapon is not yet in his hands (the user,
-            // 2026-10-04): the fight is the thing then, not his words.
-            if (angel_ != sim::AngelState::NoStaff) {
-                clip_ = angel_ == sim::AngelState::NotYet &&
-                                realm.castleRun().phase == sim::CastlePhase::Ended
-                            ? std::string("voice/archangel/archangel_ended.wav")
-                            : std::string("voice/archangel/archangel_") + kState[int(angel_)] + "_" +
-                                  arm + ".wav";
+            if (angel_ == sim::AngelState::Done) {
+                clip_ = std::string("voice/archangel/archangel_done_") + arm + ".wav";
             }
             break;
         }

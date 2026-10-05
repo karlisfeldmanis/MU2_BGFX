@@ -781,6 +781,20 @@ void Realm::castleTick() {
                     if (one.id == id) one.what.powers[0] = powers[0];
                 }
             }
+            // And the castle is theirs again: every monster in it gone on the tick, out of the
+            // picture without a fall, and none rises for the rest of the run (the user,
+            // 2026-10-05: 'when quest is given all monsters have to desepear'). Ours.
+            for (Body& one : bodies_) {
+                if (!one.monster()) continue;
+                one.risesAt = std::numeric_limits<int64_t>::max();
+                if (!one.alive()) continue;
+                one.health = 0;
+                one.quarry = 0;
+                halt(one);
+                dropBlow(one);
+                say(What::Dismissed, one);
+            }
+            hero.quarry = 0;
         }
     }
     if (run_.phase == CastlePhase::Waiting && tick_ >= run_.startsAt) {

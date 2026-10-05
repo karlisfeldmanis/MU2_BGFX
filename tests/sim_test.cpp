@@ -8870,7 +8870,7 @@ void testCastleGrid(const content::Tables& lorencia) {
     checkEqual(standing(false), 0, "and no garrison stands in the wait");
     for (int64_t t = 0; t < int64_t(sim::kCastleWait) * sim::kCastleTicksPerSecond; ++t) realm.step();
     check(realm.castleRun().phase == sim::CastlePhase::Running, "then the run starts");
-    checkEqual(realm.castleSecondsLeft(), sim::kCastleRun, "with its fifteen minutes");
+    checkEqual(realm.castleSecondsLeft(), sim::kCastleRun, "with its ten minutes");
     check(reaches(14, 40), "the road down to the bridge is open from the court");
     check(standing(false) > 0, "the garrison has risen with the gate");
     checkEqual(standing(true), 0, "but not the Statue of Saint");
@@ -8953,7 +8953,7 @@ void testCastleGrid(const content::Tables& lorencia) {
             return count;
         };
         checkEqual(standing(sim::kCastleSorcerer), 0, "no Spirit Sorcerer stands at the start");
-        for (int guard = 0; guard < 400 && run.castleRun().kills < sim::kCastleKills; ++guard) {
+        for (int guard = 0; guard < 4000 && run.castleRun().kills < sim::kCastleKills; ++guard) {
             for (const sim::Body& one : run.bodies()) {
                 if (run.castleRun().kills >= sim::kCastleKills) break;
                 if (!one.monster() || !one.alive()) continue;
@@ -8962,7 +8962,7 @@ void testCastleGrid(const content::Tables& lorencia) {
             }
             run.step();
         }
-        checkEqual(run.castleRun().kills, sim::kCastleKills, "forty of the garrison fall");
+        checkEqual(run.castleRun().kills, sim::kCastleKills, "a hundred of the garrison fall");
         for (int t = 0; t <= sim::kCastleBridgeTicks + 1; ++t) run.step();
         check(run.castleRun().bridgeDown, "the bridge is down");
         for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < sim::kCastleSorcerers; ++t) run.step();

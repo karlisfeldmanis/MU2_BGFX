@@ -27,9 +27,10 @@ constexpr int kCastleEntry = 60;         // how long the Messenger lets him in
 // timer and BC starts'). Ours that it starts on entry; WebZen starts every castle together at
 // hh:31. Its numbers are WebZen's: 60 s in the safe court ("the quest starts in 60 s", lMsg
 // 1163), then 15 minutes of play (BloodCastle.cpp:887-917; the client's SetMatchInfo(15 * 60),
-// MuMain NewBloodCastleSystem.cpp:46, 73). OpenMU's is 20.
+// MuMain NewBloodCastleSystem.cpp:46, 73). OpenMU's is 20. **Ten minutes, ours** (the user,
+// 2026-10-05: 'decrease BC duration to 10 minutes').
 constexpr int kCastleWait = 60;
-constexpr int kCastleRun = 15 * 60;
+constexpr int kCastleRun = 10 * 60;
 
 // Seconds the Messenger has left to let him in, at `daySeconds` into the local day, or 0 when
 // the door is shut.
@@ -79,9 +80,11 @@ enum class CastleRefusal : int32_t {
 // he waits kCastleWait in the safe court with the entrance shut, then the run's kCastleRun
 // starts and the entrance opens. WebZen's quotas for one player (SetMonsterKillCount,
 // gObjMonster.cpp:1238-1341): 40 kills of anything but the Spirit Sorcerer, then 2 of those.
+// **A hundred kills, ours** (the user, 2026-10-05: 'we need increase amount of monsters which has
+// to be killed in BC'); the garrison rises again, so the quota is always there to be met.
 enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
-constexpr int kCastleKills = 40;
+constexpr int kCastleKills = 100;
 constexpr int kCastleSorcerers = 2;
 // How long the drawbridge takes to come down: 1.18 s, landing on eDownGate's thud (game/world/
 // drawbridge.h; ours, timed to the sound), 24 ticks. MuMain's ActionObject swings it over 21 of
