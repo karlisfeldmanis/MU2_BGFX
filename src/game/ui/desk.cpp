@@ -288,6 +288,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             core::logf("event: the Divine Staff to the Archangel -- %s", given ? "given" : "refused");
             if (given) click();
             else refused();
+        } else if (result.claim) {
+            const bool claimed = play.claimCastle();
+            core::logf("event: Complete on the Archangel's thanks -- %s", claimed ? "to Devias" : "refused");
+            if (claimed) {
+                play.closeAngel();
+                click();
+            } else {
+                refused();
+            }
         } else if (result.enter) {
             const bool went = play.enterCastle(result.castle);
             core::logf("event: Enter on Blood Castle %d -- %s", result.castle,

@@ -52,6 +52,7 @@ public:
         bool enter = false;   // kGate's Enter: into Blood Castle `castle`
         int castle = 0;
         bool give = false;    // kArchangel's Give: the Divine Staff handed back
+        bool claim = false;   // and Complete on his thanks: the win taken, out to Devias
         int pick = -1;        // kList: the quest a row was clicked for
         bool back = false;    // a quest's page opened from kList: Back, to the list
     };

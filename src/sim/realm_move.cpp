@@ -759,27 +759,9 @@ void Realm::castleTick() {
             run_.paidExperience = int64_t(double(experience) * kExperienceRate);
             run_.paidZen = kCastleWinZens[c];
             run_.phase = CastlePhase::Won;
-            gain(hero, int32_t(std::min<int64_t>(run_.paidExperience, INT32_MAX)));
-            money_ += kCastleWinZens[c];
-            // And the castle's jewels, one each (BloodCastle.dat "Reward Items"), into the bag as
-            // a quest's pay goes (the user, 2026-10-04: 'when finish quest on BC put items on bag
-            // similiar like receving quests'); WebZen lays them at his feet, and one the bag
-            // cannot hold still falls there -- the win is not refused, as a quest's hand-in is.
-            for (const auto& jewel : kCastleRewardJewels[c]) {
-                if (jewel[0] < 0) break;
-                const int32_t item = tables_->itemAt(jewel[0], jewel[1]);
-                if (item >= 0 && give(item) < 0) lay(item);
-            }
-            // And the castle's runes, each with a power his class may set (kCastleRunes).
-            const int32_t rune = tables_->itemAt(14, 22);
-            for (int i = 0; rune >= 0 && i < kCastleRunes[c]; ++i) {
-                const uint8_t powers[kMostSockets] = {drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c])};
-                run_.paidRunes[i] = powers[0];
-                if (give(rune, -1, 0, -1, false, 0, 0, 0, powers) >= 0) continue;
-                const uint32_t id = lay(rune);
-                for (Lying& one : lying_) {
-                    if (one.id == id) one.what.powers[0] = powers[0];
-                }
+            // The runes' powers drawn now, for his page to show; the pay waits for Complete.
+            for (int i = 0; i < kCastleRunes[c]; ++i) {
+                run_.paidRunes[i] = drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c]);
             }
             // And the castle is theirs again: every monster in it gone on the tick, out of the
             // picture without a fall, and none rises for the rest of the run (the user,
@@ -795,6 +777,16 @@ void Realm::castleTick() {
                 say(What::Dismissed, one);
             }
             hero.quarry = 0;
+        }
+    }
+    // Complete on his thanks: the win paid, and out to Devias now rather than after the rest.
+    if (claimOwed_) {
+        claimOwed_ = false;
+        if (run_.phase == CastlePhase::Won && !run_.claimed) {
+            payCastle();
+            angeling_ = -1;
+            run_.leavesAt = tick_;
+            run_.sentOut = true;
         }
     }
     if (run_.phase == CastlePhase::Waiting && tick_ >= run_.startsAt) {
@@ -829,7 +821,39 @@ void Realm::castleTick() {
     if ((run_.phase == CastlePhase::Won || run_.phase == CastlePhase::Ended) && run_.leavesAt < 0) {
         run_.leavesAt = tick_ + int64_t(kCastleRest) * kCastleTicksPerSecond;
     }
-    if (run_.leavesAt >= 0 && !run_.sentOut && tick_ >= run_.leavesAt) run_.sentOut = true;
+    if (run_.leavesAt >= 0 && !run_.sentOut && tick_ >= run_.leavesAt) {
+        // Won and never claimed: paid on the way out, so the win is not lost.
+        if (run_.phase == CastlePhase::Won) payCastle();
+        run_.sentOut = true;
+    }
+}
+
+void Realm::payCastle() {
+    if (run_.claimed) return;
+    run_.claimed = true;
+    Body& hero = bodies_[0];
+    const int c = std::clamp(run_.castle, 1, kCastles) - 1;
+    gain(hero, int32_t(std::min<int64_t>(run_.paidExperience, INT32_MAX)));
+    money_ += run_.paidZen;
+    // And the castle's jewels, one each (BloodCastle.dat "Reward Items"), into the bag as a
+    // quest's pay goes (the user, 2026-10-04: 'when finish quest on BC put items on bag similiar
+    // like receving quests'); WebZen lays them at his feet, and one the bag cannot hold still
+    // falls there -- the win is not refused, as a quest's hand-in is.
+    for (const auto& jewel : kCastleRewardJewels[c]) {
+        if (jewel[0] < 0) break;
+        const int32_t item = tables_->itemAt(jewel[0], jewel[1]);
+        if (item >= 0 && give(item) < 0) lay(item);
+    }
+    // And the castle's runes, each with the power drawn at the hand-in (kCastleRunes).
+    const int32_t rune = tables_->itemAt(14, 22);
+    for (int i = 0; rune >= 0 && i < kCastleRunes[c]; ++i) {
+        const uint8_t powers[kMostSockets] = {run_.paidRunes[i]};
+        if (give(rune, -1, 0, -1, false, 0, 0, 0, powers) >= 0) continue;
+        const uint32_t id = lay(rune);
+        for (Lying& one : lying_) {
+            if (one.id == id) one.what.powers[0] = powers[0];
+        }
+    }
 }
 
 void Realm::castleKill(const Body& dead) {
@@ -907,6 +931,14 @@ AngelState Realm::angelState() const {
 bool Realm::handInStaff() {
     if (angeling_ < 0 || !serving(angeling_) || angelState() != AngelState::Ready) return false;
     staffOwed_ = true;
+    return true;
+}
+
+bool Realm::claimCastle() {
+    if (angeling_ < 0 || !serving(angeling_) || run_.phase != CastlePhase::Won || run_.claimed) {
+        return false;
+    }
+    claimOwed_ = true;
     return true;
 }
 

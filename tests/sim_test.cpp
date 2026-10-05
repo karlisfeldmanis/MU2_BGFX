@@ -8915,6 +8915,15 @@ void testCastleGrid(const content::Tables& lorencia) {
             realm.step();
             check(realm.castleRun().phase == sim::CastlePhase::Won, "the castle is won");
             check(realm.staffSlot() < 0, "the staff is his again");
+            checkEqual(int(realm.money() - zen), 0, "nothing paid until Complete");
+            bool standing = false;
+            for (const sim::Body& one : realm.bodies()) standing |= one.monster() && one.alive();
+            check(!standing, "and every monster in the castle is gone");
+            check(realm.angelState() == sim::AngelState::Done, "his thanks are up");
+            check(realm.claimCastle(), "Complete takes the win");
+            realm.step();
+            check(!realm.claimCastle(), "once");
+            check(realm.castleRun().sentOut, "and sends him out to Devias at once");
             checkEqual(int(realm.money() - zen), int(sim::kCastleWinZen), "20,000 Zen");
             check(realm.hero().level > level || realm.hero().experience > experience,
                   "and the experience");
@@ -8933,10 +8942,9 @@ void testCastleGrid(const content::Tables& lorencia) {
             check(rune && rune->rarity == sim::Rarity::Rare && rune->takenBy(realm.hero().kin, false) &&
                       realm.castleRun().paidRunes[0] == uint8_t(rune->power),
                   "a Rare rune his class may set, in his bag");
-            check(realm.angelState() == sim::AngelState::Done, "his page says it is done");
         }
     }
-    // The whole run, start to end: 40 of the garrison, the bridge and the door, the two Spirit
+    // The whole run, start to end: 100 of the garrison, the bridge and the door, the eight Spirit
     // Sorcerers, the statue and its staff, the hand-in, the minute's rest and out.
     {
         sim::Realm run;
@@ -8967,13 +8975,13 @@ void testCastleGrid(const content::Tables& lorencia) {
         check(run.castleRun().bridgeDown, "the bridge is down");
         for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < sim::kCastleSorcerers; ++t) run.step();
         checkEqual(standing(sim::kCastleSorcerer), sim::kCastleSorcerers,
-                   "and two Spirit Sorcerers have risen");
+                   "and all eight Spirit Sorcerers have risen");
         checkEqual(standing(sim::kCastleStatue), 0, "the statue not yet");
         for (const sim::Body& one : run.bodies()) {
             if (one.monster() && one.alive() && numberOf(one) == sim::kCastleSorcerer) run.smite(one.id);
         }
         run.step();
-        checkEqual(run.castleRun().sorcerers, sim::kCastleSorcerers, "both counted");
+        checkEqual(run.castleRun().sorcerers, sim::kCastleSorcerers, "all counted");
         for (int t = 0; t < 100 && standing(sim::kCastleStatue) < 1; ++t) run.step();
         checkEqual(standing(sim::kCastleStatue), 1, "and the Statue of Saint rises");
         for (int t = 0; t < 200; ++t) run.step();
@@ -9004,6 +9012,7 @@ void testCastleGrid(const content::Tables& lorencia) {
             check(!run.castleRun().sentOut, "he stays for the rest");
             for (int64_t t = 0; t <= int64_t(sim::kCastleRest) * sim::kCastleTicksPerSecond; ++t) run.step();
             check(run.castleRun().sentOut, "and after a minute is sent out to Devias");
+            check(run.castleRun().claimed, "paid on the way out, never having pressed Complete");
         }
     }
     // Castle 3 by the Messenger: castle 1's nests raise castle 3's breeds, the statue at its health.

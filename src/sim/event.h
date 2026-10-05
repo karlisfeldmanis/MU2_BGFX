@@ -85,7 +85,10 @@ enum class CastleRefusal : int32_t {
 enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
 constexpr int kCastleKills = 100;
-constexpr int kCastleSorcerers = 2;
+// **Every one of the castle's eight, ours** (the user, 2026-10-05: 'increase the kill count for
+// all BC monsters'): WebZen's solo 2, at most 10 in a party; the castle places 8 and raises them
+// once, so eight is all of them.
+constexpr int kCastleSorcerers = 8;
 // How long the drawbridge takes to come down: 1.18 s, landing on eDownGate's thud (game/world/
 // drawbridge.h; ours, timed to the sound), 24 ticks. MuMain's ActionObject swings it over 21 of
 // its 25 Hz frames and clears the gap's NoGround on the last (ZzzObject.cpp:86-165); WebZen
@@ -141,9 +144,12 @@ struct CastleRun {
     // or -1; and `sentOut` once it has passed, for the mode to take him (Play::takeHome).
     int64_t leavesAt = -1;
     bool sentOut = false;
-    // What the win paid, for the Archangel's page (Realm::handInStaff).
+    // What the win pays, for the Archangel's page (Realm::handInStaff): worked out when the
+    // weapon is given, paid when he presses Complete (Realm::claimCastle) -- or, if he never does,
+    // as the rest sends him out -- and `claimed` once it is.
     int64_t paidExperience = 0, paidZen = 0;
     uint8_t paidRunes[kCastleMostRunes] = {};  // each rune's power, 0 past kCastleRunes
+    bool claimed = false;
 };
 // The Archangel, NPC 232, who takes the Divine Staff of Archangel (5,10) back: the win (the
 // user, 2026-10-03). His page in the Event window (QuestDialog::kArchangel).

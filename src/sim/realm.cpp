@@ -104,6 +104,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     happenings_.reserve(4096);
     castleOwed_ = 0;
     staffOwed_ = false;
+    claimOwed_ = false;
     // Raised on a castle, the run's wait starts and the entrance is shut until it ends
     // (WebZen BloodCastle.cpp:1128-1171: the court's 60 s, the barrier lifted at :887-917).
     run_ = CastleRun{};

@@ -505,7 +505,7 @@ void QuestDialog::layout(const Play& play) {
         const float left = middle - kButtonW - style::kGap * 0.5f;
         buttons_[1] = {left, buttonTop, kButtonW, style::kButtonM};
         buttons_[0] = {left + kButtonW + style::kGap, buttonTop, kButtonW, style::kButtonM};
-    } else if (mode_ == Mode::HandIn) {
+    } else if (mode_ == Mode::HandIn || angel) {
         buttons_[0] = {middle - kButtonWide * 0.5f, buttonTop, kButtonWide, style::kButtonM};
     } else {
         buttons_[1] = {middle - kButtonW * 0.5f, buttonTop, kButtonW, style::kButtonM};
@@ -712,7 +712,10 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         out->pick = pick;
         out->back = back;
         if (cancel) out->close = true;
-        else if (primary && mode_ == Mode::Angel) out->give = true;
+        else if (primary && mode_ == Mode::Angel) {
+            if (angel_ == sim::AngelState::Done) out->claim = true;
+            else out->give = true;
+        }
         else if (primary && mode_ == Mode::Gate) {
             out->enter = true;
             out->castle = castle_;
@@ -886,9 +889,11 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                              state(0, why_ != sim::CastleRefusal::None), u);
             break;
         case Mode::Angel:
+            // Given back, one answer: Complete takes the win and sends him to Devias (the user,
+            // 2026-10-05: 'here we need button complete').
             if (angel_ == sim::AngelState::Done) {
-                controls::button(canvas_, placed(x, y, buttons_[1], u), "Farewell",
-                                 controls::Kind::Secondary, state(1, false), u);
+                controls::button(canvas_, placed(x, y, buttons_[0], u), "Complete",
+                                 controls::Kind::Primary, state(0, false), u);
                 break;
             }
             controls::button(canvas_, placed(x, y, buttons_[1], u), "Not now", controls::Kind::Secondary,

@@ -290,6 +290,7 @@ public:
     void closeGate() { realm_.closeGate(); }
     // The Archangel's page's answers (QuestDialog::kArchangel).
     bool handInStaff() { return realm_.handInStaff(); }
+    bool claimCastle() { return realm_.claimCastle(); }
     void closeAngel() { realm_.closeAngel(); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.

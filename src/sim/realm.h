@@ -853,6 +853,10 @@ public:
     AngelState angelState() const;
     int staffSlot() const;
     bool handInStaff();
+    // Complete, on his thanks: the win paid into the bag and he is sent to Devias at the next
+    // tick's start (the user, 2026-10-05: 'when char clicks it we close window and take items
+    // and teleport to devias'). False before the weapon is given or once paid.
+    bool claimCastle();
     void closeAngel() { angeling_ = -1; }
     // Farewell: his window shut, as walking away shuts it.
     void closeGate() { gating_ = -1; }
@@ -1430,6 +1434,9 @@ private:
     CastleRun run_;  // see castleRun()
     int angeling_ = -1;     // see angeling()
     bool staffOwed_ = false;
+    bool claimOwed_ = false;
+    // The win's pay (CastleRun::paid*), into the bag, once.
+    void payCastle();
     // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
     void castleTick();
     void castleKill(const Body& dead);
