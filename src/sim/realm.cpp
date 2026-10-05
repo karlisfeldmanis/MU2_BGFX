@@ -639,6 +639,13 @@ void Realm::press() {
             }
         }
     }
+    // **The pointer's ground is the wish's and dies with it.** throwSkill spends it only on a
+    // throw, so a wish that lapsed unthrown -- a Meteorite over a wall, out of mana -- left it
+    // standing, and every throw of the right button's order on the monster under the pointer
+    // then fell on that old ground, or was refused at its wall every tick (the user,
+    // 2026-10-05: "while i am holding right clikc with metero ... casting is not hapening",
+    // "its while hovering monster").
+    if (wants_ == skill::kNone) wantsColumn_ = wantsRow_ = -1;
 
     // And a boon lapsing, which is the other half of a buff: replace rather than stack, off on
     // the tick it expires, and `Fighter.damageTaken` back to 1 -- the field `sim/rules.h` has
