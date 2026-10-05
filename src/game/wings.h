@@ -38,10 +38,15 @@ public:
     void gather(gfx::Renderer& renderer, const Figure& bearer, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters,
                 float fade = 1.0f);
+    // Its tips in world metres as last posed, for fx/wing_motes: the ends of its bone chains,
+    // at most `most`, spread along them. 0 before its first pose or with none worn.
+    int tips(float out[][3], int most) const;
 
 private:
     const FigureBody* wing_ = nullptr;
     Figure figure_;
+    std::vector<int> tipBones_;  // the chains' last bones, chosen on wear
+    bool posed_ = false;
 };
 
 // The wing body a worn row draws as: group 12 numbers 0-2 are Wing01-03 (ZzzOpenData.cpp:1019,

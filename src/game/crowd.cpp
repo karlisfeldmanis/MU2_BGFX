@@ -765,6 +765,8 @@ bool Figure::pointOn(int bone, const float local[3], float out[3]) const {
     if (!body_ || bone < 0 || size_t(bone) * 16 + 16 > world_.size()) return false;
     float transform[16];
     content::placementTransform(pitch_, yaw_, roll_, scale_, position_, transform);
+    // A mounted figure (a wing, the Imp) stands where its mount puts it, as placement() has it.
+    if (mounted_) std::memcpy(transform, mount_, sizeof(transform));
     float placed[16];
     core::mulMatrix(&world_[size_t(bone) * 16], transform, placed);
     for (int j = 0; j < 3; ++j) {
@@ -778,6 +780,7 @@ bool Figure::boneWorld(int bone, float out[16]) const {
     if (!body_ || bone < 0 || size_t(bone) * 16 + 16 > world_.size()) return false;
     float transform[16];
     content::placementTransform(pitch_, yaw_, roll_, scale_, position_, transform);
+    if (mounted_) std::memcpy(transform, mount_, sizeof(transform));
     core::mulMatrix(&world_[size_t(bone) * 16], transform, out);
     return true;
 }

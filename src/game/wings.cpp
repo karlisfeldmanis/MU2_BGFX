@@ -1,5 +1,6 @@
 #include "game/wings.h"
 
+#include <algorithm>
 #include <string>
 
 #include "content/placement.h"
@@ -42,8 +43,23 @@ const FigureBody* wingBody(const Figures& figures, int group, int number) {
 void WingLook::wear(const FigureBody* wing, const Figure& bearer) {
     if (wing == wing_) return;
     wing_ = wing;
+    tipBones_.clear();
+    posed_ = false;
     if (!wing_) return;
     figure_.stand(wing_, bearer.position(), 0.0f, bearer.scale());
+    // The tips: every bone no other bone hangs from, MU's dummies aside.
+    if (wing_->skeletonMesh) {
+        const std::vector<content::Bone>& bones = wing_->skeletonMesh->bones();
+        std::vector<uint8_t> parent(bones.size(), 0);
+        for (const content::Bone& one : bones) {
+            if (one.parent >= 0 && size_t(one.parent) < bones.size()) parent[size_t(one.parent)] = 1;
+        }
+        for (size_t i = 0; i < bones.size(); ++i) {
+            if (!parent[i] && bones[i].parent >= 0 && bones[i].name.rfind("dummy", 0) != 0) {
+                tipBones_.push_back(int(i));
+            }
+        }
+    }
     if (wing_->idleClip >= 0) figure_.play(wing_->idleClip, true, 0.0f);
 }
 
@@ -69,11 +85,25 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     core::mulMatrix(local, bone, parent);
     figure_.mount(parent);
     const int bones = figure_.pose(scratch.data());
+    posed_ = bones > 0;
     const int palette = bones > 0 ? renderer.addPalette(scratch.data(), bones) : -1;
     const size_t from = out.size();
     if (casters) figure_.gather(palette, *casters);
     figure_.gather(palette, out);
     for (size_t i = from; i < out.size(); ++i) out[i].fade = fade;
+}
+
+int WingLook::tips(float out[][3], int most) const {
+    if (!wing_ || !posed_ || tipBones_.empty() || most <= 0) return 0;
+    const int count = std::min(most, int(tipBones_.size()));
+    const float origin[3] = {0.0f, 0.0f, 0.0f};
+    int made = 0;
+    for (int i = 0; i < count; ++i) {
+        // Spread along the list when it holds more than are asked for.
+        const size_t at = size_t(i) * tipBones_.size() / size_t(count);
+        if (figure_.pointOn(tipBones_[at], origin, out[made])) ++made;
+    }
+    return made;
 }
 
 }  // namespace mu::game

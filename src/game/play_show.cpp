@@ -325,6 +325,22 @@ void Play::snort(float seconds) {
             staffFire_.feed(worldHead, worldSparks, worldShaft);
         }
     }
+    // The motes off a worn wing's tips, his and the envoy's (fx/wing_motes.h), at last frame's
+    // pose, as the staff's points are.
+    wingMotes_.update(seconds);
+    {
+        float tips[WingMotes::kMostTips][3];
+        const Drawn* hero = drawnOf(realm_.hero().id);
+        if (wing_.worn() && hero && hero->visible) {
+            const int count = wing_.tips(tips, WingMotes::kMostTips);
+            wingMotes_.feed(wing_.worn()->name, realm_.hero().flying, tips, count);
+        }
+        for (const Standing& one : folk_) {
+            if (!one.wing.worn()) continue;
+            const int count = one.wing.tips(tips, WingMotes::kMostTips);
+            wingMotes_.feed(one.wing.worn()->name, false, tips, count);
+        }
+    }
     const float frames = seconds * 25.0f;
     for (Drawn& one : drawn_) {
         if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;
