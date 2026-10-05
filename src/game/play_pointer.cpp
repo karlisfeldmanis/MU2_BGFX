@@ -358,6 +358,10 @@ void Play::rightClick() {
     marker_.dismiss();
 }
 
+// How often the held right button may ask its attack again, in realm ticks (twenty a second):
+// twice a second.
+constexpr int64_t kRightAskEvery = 10;
+
 void Play::rightHeld() {
     if (!isOpen()) return;
     // Moved onto another monster: set on that one, as a fresh press on it would. On the one
@@ -365,7 +369,25 @@ void Play::rightHeld() {
     // A cast he has begun is let go whatever he is set on next (Realm::accept).
     const sim::Body* at = pointedAt_ != 0 ? realm_.find(pointedAt_) : nullptr;
     if (at != nullptr && at->alive() && at->monster()) {
-        if (pointedAt_ != rightTarget_) rightClick();
+        if (pointedAt_ != rightTarget_) {
+            rightClick();
+            return;
+        }
+        // **And on the same one, asked again if the order is gone**: the realm ends an attack
+        // in many places (a death, a gate, a blink, an empty quiver), and held on the monster
+        // nothing re-asked it, so he stood idle until the button was let go and pressed again
+        // -- the user, 2026-10-05: 'while i am holdin gright click onn monster evil spirit and
+        // maybe other spells are not casting'. Twice a second at most, so a refusal that says
+        // something (no arrows) is not said every frame.
+        const sim::Request& order = realm_.order();
+        const bool standing = order.kind == sim::Request::Kind::Attack &&
+                              order.target == pointedAt_ && order.skill == quickSkill_;
+        if (!standing && realm_.tick() - rightAskedTick_ >= kRightAskEvery) {
+            rightAskedTick_ = realm_.tick();
+            core::logf("right: held on #%u with the order %d at #%u gone; asked again",
+                       pointedAt_, int(order.kind), order.target);
+            rightClick();
+        }
         return;
     }
     const sim::SkillRow* quick = quickSkill_ != 0 ? sim::skillNumbered(quickSkill_) : nullptr;

@@ -1010,6 +1010,8 @@ private:
     // The monster the right button last set him on, so a held button moved onto another one
     // sets him on that (rightHeld); 0 when the last press was not on a monster.
     uint32_t rightTarget_ = 0;
+    // The realm tick the held right button last asked its attack again (Play::rightHeld).
+    int64_t rightAskedTick_ = 0;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
     // so watching a wizard cast never moves the sim's seeded stream.
