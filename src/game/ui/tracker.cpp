@@ -312,6 +312,18 @@ void Tracker::close() {
     bannerDrawn_ = -1;
 }
 
+void Tracker::announce(const std::string& kicker, const std::string& title, int64_t experience,
+                       int64_t zen) {
+    bannerKicker_ = kicker;
+    bannerTitle_ = title;
+    bannerLine_ = grouped(experience) + " experience      ";
+    bannerZen_ = grouped(zen) + " Zen";
+    bannerNext_.clear();
+    // As long as a quest's: the stinger is still going.
+    bannerHold_ = 5.0f;
+    bannerAge_ = 0.0f;
+}
+
 void Tracker::update(float seconds, const Play& play, bool hidden, const float* viewProj,
                      int width, int height) {
     if (!opened_ || !play.isOpen()) return;

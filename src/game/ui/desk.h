@@ -148,6 +148,11 @@ public:
     void arrive(const std::string& world, float delay, const std::string& caption = {}) {
         arrival_.announce(world, delay, caption);
     }
+    // A banner over the tracker's, from outside a quest (Tracker::announce).
+    void announce(const std::string& kicker, const std::string& title, int64_t experience,
+                  int64_t zen) {
+        tracker_.announce(kicker, title, experience, zen);
+    }
     // The map's name, for the menu's foot: where he is standing.
     void setWorld(const std::string& world) { worldName_ = world; }
     // Go Back! (game/ui/go_back.h), told each frame by the mode, which keeps the spot and the

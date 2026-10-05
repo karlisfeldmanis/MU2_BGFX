@@ -380,20 +380,27 @@ void QuestDialog::layout(const Play& play) {
             const int across = int(kChoiceColumns);
             const float cellWide = (wide - kCellGap * (kChoiceColumns - 1.0f)) / kChoiceColumns;
             // The jewels, then the runes the win drew (CastleRun::paidRunes), with their powers.
-            std::vector<std::pair<int32_t, uint8_t>> paid;
+            // A jewel paid more than once is one cell with its count on the picture.
+            struct Paid {
+                int32_t item;
+                uint8_t power;
+                int count;
+            };
+            std::vector<Paid> paid;
             for (const auto& jewel : sim::kCastleRewardJewels[std::clamp(castle_, 1, sim::kCastles) - 1]) {
                 const int32_t item = jewel[0] < 0 ? -1 : tables.itemAt(jewel[0], jewel[1]);
-                if (item >= 0) paid.push_back({item, 0});
+                if (item >= 0) paid.push_back({item, 0, jewel[2]});
             }
             for (uint8_t power : realm.castleRun().paidRunes) {
                 const int32_t rune = tables.itemAt(14, 22);
-                if (power && rune >= 0) paid.push_back({rune, power});
+                if (power && rune >= 0) paid.push_back({rune, power, 1});
             }
             int n = 0;
-            for (const auto& [item, power] : paid) {
+            for (const auto& [item, power, count] : paid) {
                 Cell cell;
                 cell.item = item;
                 cell.power = power;
+                cell.count = count;
                 cell.ink = tip::colourOf(
                     describe(tables, rewardHeld(tables, item, 0, 1, 0, power), realm.wearer(),
                              realm.satchel())
@@ -666,7 +673,11 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     for (const Cell& one : cells_) owed |= one.choice >= 0;
     const bool primaryOff = (mode_ == Mode::HandIn && owed && chosen_ < 0) ||
                             (mode_ == Mode::Gate && why_ != sim::CastleRefusal::None) ||
-                            (mode_ == Mode::Angel && angel_ != sim::AngelState::Ready) ||
+                            // Complete on his thanks is live too: off only while the weapon is
+                            // still to be found (the user, 2026-10-05: 'when i press complete
+                            // nothing happened').
+                            (mode_ == Mode::Angel && angel_ != sim::AngelState::Ready &&
+                             angel_ != sim::AngelState::Done) ||
                             (mode_ == Mode::Offer && underLevel_);
 
     int over = dragging_ ? -1 : buttonAt(ux, uy);
@@ -932,7 +943,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     // name in its tone, and under it whether he carries it -- green, or red. The Messenger's
     // ticket, the Archangel's weapon and Sevina's treasures.
     const auto needRow = [&](const Cell& one, const std::string& name, bool met,
-                             const std::string& status) {
+                             const std::string& status, uint32_t statusInk = 0) {
         const Box box = cellBox(one);
         const Box icon{box.x, box.y, box.h, box.h};
         const int at = int(&one - cells_.data());
@@ -940,8 +951,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         const float nx = sx(one.box.x + kIcon + kNameGap);
         const float ly = one.box.y + kIcon * 0.5f;
         controls::label(body_, nx, by(ly - 3.0f), kName * u, one.ink ? one.ink : kItemWhite, name);
-        controls::label(body_, nx, by(ly + 15.0f), kName * u, met ? style::kFits : style::kDanger,
-                        status);
+        controls::label(body_, nx, by(ly + 15.0f), kName * u,
+                        statusInk ? statusInk : met ? style::kFits : style::kDanger, status);
     };
     // A reward in its cell: the picture's frame, the chosen one's rim, the name beside it.
     const auto rewardCell = [&](size_t i) {
@@ -1058,12 +1069,15 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Requirements", u);
             cy += 24.0f;
             for (const Cell& one : cells_) {
-                // The run's own weapon: the staff, the sword or the crossbow.
+                // The run's own weapon: the staff, the sword or the crossbow. Not yet carried,
+                // it is named for what it is, in its own purple, not as a want (the user,
+                // 2026-10-05: 'show QUest item not "not in your bag"').
                 needRow(one,
                         one.item >= 0 && size_t(one.item) < tables.items.size()
                             ? tables.items[size_t(one.item)].label
                             : std::string("Divine Staff of Archangel"),
-                        staffHeld_, bagWords(staffHeld_));
+                        staffHeld_, staffHeld_ ? bagWords(true) : std::string("Quest item"),
+                        staffHeld_ ? 0u : (one.ink ? one.ink : kItemWhite));
             }
         }
     } else if (gate) {
@@ -1227,7 +1241,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     // A stack's count on its picture's foot, after the picture so the model cannot cover it, and
     // shadowed as the bag prints it.
     for (const Cell& one : cells_) {
-        if (!offered || one.count <= 1) continue;
+        if ((!offered && !(angel && angel_ == sim::AngelState::Done)) || one.count <= 1) continue;
         const Box box = cellBox(one);
         const Box icon{box.x, box.y, box.h, box.h};
         body_.shadowed(icon.x, icon.bottom() - 4.0f * u, 13.0f * u, kItemWhite,

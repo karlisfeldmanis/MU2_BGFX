@@ -755,9 +755,10 @@ void Realm::castleTick() {
             const int64_t experience =
                 (run_.statueBroken ? kCastleStatueExps[c] : 0) + kCastleHandInExps[c] +
                 seconds * kCastleExpPerSeconds[c];
-            // At the game's experience rate, as every kill's (rules.h kExperienceRate).
-            run_.paidExperience = int64_t(double(experience) * kExperienceRate);
-            run_.paidZen = kCastleWinZens[c];
+            // At the game's experience rate, as every kill's (rules.h kExperienceRate), and the
+            // better win's (kCastleExpTimes, kCastleZenTimes).
+            run_.paidExperience = int64_t(double(experience * kCastleExpTimes) * kExperienceRate);
+            run_.paidZen = kCastleWinZens[c] * kCastleZenTimes;
             run_.phase = CastlePhase::Won;
             // The runes' powers drawn now, for his page to show; the pay waits for Complete.
             for (int i = 0; i < kCastleRunes[c]; ++i) {
@@ -842,7 +843,9 @@ void Realm::payCastle() {
     for (const auto& jewel : kCastleRewardJewels[c]) {
         if (jewel[0] < 0) break;
         const int32_t item = tables_->itemAt(jewel[0], jewel[1]);
-        if (item >= 0 && give(item) < 0) lay(item);
+        for (int i = 0; item >= 0 && i < jewel[2]; ++i) {
+            if (give(item) < 0) lay(item);
+        }
     }
     // And the castle's runes, each with the power drawn at the hand-in (kCastleRunes).
     const int32_t rune = tables_->itemAt(14, 22);

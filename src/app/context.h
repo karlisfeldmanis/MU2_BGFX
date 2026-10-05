@@ -142,6 +142,10 @@ struct Context {
     // The Blood Castle the Messenger let him into, 1 to 6, carried across the map change to the
     // castle's own realm (Realm::setCastle); 0 when none is owed. Set where the gate is taken.
     int castleNext = 0;
+    // And a castle won and claimed, carried home to Devias: its number and what it paid, for the
+    // "Event complete" banner and the quest's stinger as he lands there; 0 when none is owed.
+    int castleDone = 0;
+    int64_t castleDoneExperience = 0, castleDoneZen = 0;
 };
 
 // What the day gives an unlit puff of smoke: the ambient and the sun on a flat surface, over

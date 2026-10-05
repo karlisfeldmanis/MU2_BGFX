@@ -80,11 +80,13 @@ enum class CastleRefusal : int32_t {
 // he waits kCastleWait in the safe court with the entrance shut, then the run's kCastleRun
 // starts and the entrance opens. WebZen's quotas for one player (SetMonsterKillCount,
 // gObjMonster.cpp:1238-1341): 40 kills of anything but the Spirit Sorcerer, then 2 of those.
-// **A hundred kills, ours** (the user, 2026-10-05: 'we need increase amount of monsters which has
-// to be killed in BC'); the garrison rises again, so the quota is always there to be met.
+// **Four hundred kills, ours** (the user, 2026-10-05: 'we need increase amount of monsters which
+// has to be killed in BC', a hundred; then 'drastically increase ... because it will be up to 10
+// man party'): WebZen's 40 a player times its ten; the garrison rises again, so the quota is
+// always there to be met.
 enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
-constexpr int kCastleKills = 100;
+constexpr int kCastleKills = 400;
 // **Every one of the castle's eight, ours** (the user, 2026-10-05: 'increase the kill count for
 // all BC monsters'): WebZen's solo 2, at most 10 in a party; the castle places 8 and raises them
 // once, so eight is all of them.
@@ -125,8 +127,10 @@ inline bool castleStatue(int32_t number) { return number >= 132 && number <= 134
 // of a monster of kCastleRuneLevel draws one (sim::drawRunePower) -- castle 1 reaches Rare only,
 // castles 2-3 Epic, castles 4-6 Legendary (kRuneRarityLevel). Into the bag with the jewels.
 // invention.
-constexpr int kCastleMostRunes = 2;
-constexpr int kCastleRunes[6] = {1, 1, 1, 1, 2, 2};
+// Since 2026-10-05 one more from castle 4 and three in castle 6 (the user: 'we need betetr
+// rewards on finishinig BC based on BC level').
+constexpr int kCastleMostRunes = 3;
+constexpr int kCastleRunes[6] = {1, 1, 1, 2, 2, 3};
 constexpr int kCastleRuneLevel[6] = {15, 40, 40, 60, 60, 60};
 struct CastleRun {
     CastlePhase phase = CastlePhase::None;
@@ -169,16 +173,22 @@ constexpr int64_t kCastleStatueExps[6] = {20000, 50000, 80000, 90000, 100000, 11
 constexpr int64_t kCastleHandInExps[6] = {5000, 10000, 15000, 20000, 25000, 30000};
 constexpr int64_t kCastleExpPerSeconds[6] = {160, 180, 200, 220, 240, 260};
 constexpr int64_t kCastleWinZens[6] = {20000, 50000, 100000, 150000, 200000, 250000};
-// Jewels of Chaos (12,15), Soul (14,14), Bless (14,13) and Life (14,16); a group of -1 ends a
-// castle's list. WebZen's castles 2-5 also pay a Jewel of Creation (14,22), here the Rune of
-// Creation, which with no power sets into nothing: kCastleRunes pays it with one instead.
-constexpr int kCastleRewardJewels[6][4][2] = {
-    {{12, 15}, {-1, -1}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {-1, -1}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {-1, -1}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {14, 14}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {14, 14}, {-1, -1}, {-1, -1}},
-    {{12, 15}, {14, 14}, {14, 13}, {14, 16}},
+// **The better win, ours** (the user, 2026-10-05: 'we need betetr rewards on finishinig BC based
+// on BC level'): the experience above twice over, the Zen five times, and more jewels the higher
+// the castle -- WebZen's one or two to castle 6's twelve.
+constexpr int64_t kCastleExpTimes = 2;
+constexpr int64_t kCastleZenTimes = 5;
+// Jewels of Chaos (12,15), Bless (14,13), Soul (14,14) and Life (14,16), each with how many; a
+// group of -1 ends a castle's list. WebZen's castles 2-5 also pay a Jewel of Creation (14,22),
+// here the Rune of Creation, which with no power sets into nothing: kCastleRunes pays it with
+// one instead.
+constexpr int kCastleRewardJewels[6][4][3] = {
+    {{12, 15, 1}, {14, 13, 1}, {-1, -1, 0}, {-1, -1, 0}},
+    {{12, 15, 2}, {14, 13, 1}, {14, 14, 1}, {-1, -1, 0}},
+    {{12, 15, 2}, {14, 13, 2}, {14, 14, 1}, {-1, -1, 0}},
+    {{12, 15, 3}, {14, 13, 2}, {14, 14, 2}, {-1, -1, 0}},
+    {{12, 15, 3}, {14, 13, 3}, {14, 14, 2}, {14, 16, 1}},
+    {{12, 15, 4}, {14, 13, 3}, {14, 14, 3}, {14, 16, 2}},
 };
 // After the run, won or timed out, WebZen's PLAYEND rest: a minute, then everyone left in the
 // castle is moved to Devias, gate 22 (BloodCastle.cpp:1066-1077; docs/blood-castle-port.md).

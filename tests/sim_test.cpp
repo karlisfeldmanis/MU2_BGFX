@@ -8970,7 +8970,7 @@ void testCastleGrid(const content::Tables& lorencia) {
             }
             run.step();
         }
-        checkEqual(run.castleRun().kills, sim::kCastleKills, "a hundred of the garrison fall");
+        checkEqual(run.castleRun().kills, sim::kCastleKills, "the garrison's quota falls (kCastleKills)");
         for (int t = 0; t <= sim::kCastleBridgeTicks + 1; ++t) run.step();
         check(run.castleRun().bridgeDown, "the bridge is down");
         for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < sim::kCastleSorcerers; ++t) run.step();

@@ -712,6 +712,13 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     if (world_.played().isOpen() && travelTo_.empty() && world_.played().takeHome()) {
         const game::MapRow* here = game::mapOf(args.world);
         if (const game::MapRow* home = game::mapNumbered(here ? here->home : 0)) {
+            // Blood Castle won and paid: its banner and stinger are owed in Devias (goBack).
+            const sim::CastleRun& run = world_.played().realm().castleRun();
+            if (run.phase == sim::CastlePhase::Won && run.claimed) {
+                ctx.castleDone = run.castle;
+                ctx.castleDoneExperience = run.paidExperience;
+                ctx.castleDoneZen = run.paidZen;
+            }
             ctx.goBack.landing = true;
             travel(ctx, home->world);
         }
@@ -1501,6 +1508,17 @@ void PlayMode::goBack(Context& ctx, double seconds) {
         landed_ = true;
         if (back.landing) world_.played().landed();
         back.landing = false;
+        // Home from a Blood Castle won: "Event complete" over the quest's stinger, as a quest's
+        // hand-in is heard (the user, 2026-10-05: 'char has to be teleported back to devias and
+        // play quest done music but with window event done').
+        if (ctx.castleDone > 0) {
+            desk_.announce("Event complete", "Blood Castle " + std::to_string(ctx.castleDone),
+                           ctx.castleDoneExperience, ctx.castleDoneZen);
+            world_.played().sound().stinger("music/quest_complete.wav");
+            world_.played().sound().duck();
+            core::logf("event: home from Blood Castle %d, its banner and stinger", ctx.castleDone);
+            ctx.castleDone = 0;
+        }
         const content::Tables* tables = world_.played().realm().tables();
         if (back.open() && tables && !tables->grid.safe(hero.column(), hero.row())) back.clear();
     }

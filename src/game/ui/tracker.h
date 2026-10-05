@@ -54,6 +54,10 @@ public:
     // counted breeds has a nest here.
     static bool here(const sim::Realm& realm, int quest);
     bool announcing() const { return !banner_.empty(); }
+    // A banner raised from outside a quest, as a quest's "Quest complete" is: Blood Castle's
+    // "Event complete" in Devias (app/modes/play_mode.cpp).
+    void announce(const std::string& kicker, const std::string& title, int64_t experience,
+                  int64_t zen);
     // Once, as a step struck off starts its flare: the desk plays quest_step_done on it.
     bool takeStrike() {
         const bool heard = strikeHeard_;
