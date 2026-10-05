@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 
 #include "content/grid.h"
 #include "core/files.h"
@@ -13,18 +14,32 @@ namespace {
 // 320 over 60 m since 'smoke for some reason feels laggy' (the void clouds, 2026-10-02): over 40
 // m with a 12 s fade-in a walk outran them, and the void ahead filled in late, as if they lagged
 // behind him. The ring is now wider than he crosses in a fade, at the same density.
-constexpr int kWisps = 320;
-// Spawned within this of the camera's point, and let go past a little more.
-constexpr float kReach = 60.0f;
-constexpr float kLetGo = 66.0f;
+// Layered since 'make them layered so they are clouds also lower and in distance' (the user,
+// 2026-10-05): the first layer stays as it was; two more lie deeper and reach further, wider
+// sheets in a darker grey, so the void reads as depth rather than one sheet. Each deeper layer
+// drifts slower and a little across the one above, so they slide past each other. Ours.
+struct Layer {
+    int wisps;
+    float reach, letGo;           // spawned within reach of the camera's point, let go past letGo
+    float depthMin, depthMax;     // metres under the floor
+    float sizeMin, sizeMax;       // half widths, metres
+    float clear;                  // how much of the half width must lie over void
+    float shade;                  // the colour's share: deeper is darker
+    float drift;                  // the drift's share
+    float veer;                   // radians the drift turns from the top layer's
+};
+constexpr Layer kLayers[] = {
+    {320, 60.0f, 66.0f, 0.2f, 1.5f, 9.0f, 14.0f, 0.8f, 1.0f, 1.0f, 0.0f},
+    {150, 95.0f, 104.0f, 7.0f, 11.0f, 14.0f, 22.0f, 0.6f, 0.78f, 0.7f, 0.35f},
+    {90, 140.0f, 152.0f, 18.0f, 26.0f, 22.0f, 34.0f, 0.45f, 0.58f, 0.45f, -0.3f},
+};
 constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 // How far under the floor the layer lies, and the sheets' half width and growth.
 // 0.8-3 m since the user asked to see them round the castle's court too (2026-10-02: 'also i
 // want to see those clouds in voids also in starting point in BC'), where only a narrow band of
 // void shows past the court; and 90 within 28 m rather than 72 within 34.
 // Then 0.2-1.5: deeper, the court's edges sloping into the chasm hid them.
-constexpr float kDepthMin = 0.2f, kDepthMax = 1.5f;
-constexpr float kSizeMin = 9.0f, kSizeMax = 14.0f;
+// (Now the first layer's row in kLayers.)
 constexpr float kGrowth = 0.3f;
 // 10 s and 12 s since 'they are not supper smooth whn char moves or they appear' (2026-10-02):
 // at 8 and 6 a cloud born in view was seen arriving as he walked.
@@ -86,9 +101,15 @@ void VoidClouds::open(const std::string& assetDir, const std::string& world,
     for (int k = 0; k < 3; ++k) colour_[k] = world == "dungeon" ? kDungeonColour[k] : kColour[k];
     const std::string path = assetDir + "/effects/fire/smoke02.png";
     if (core::fileExists(path)) sheet_ = textures.load(path, content::TextureRole::Albedo);
-    wisps_.assign(kWisps, Wisp());
-    core::logf("void clouds: %d void tiles, floor %.2f m, %d wisps; smoke02 %s", voids, floor_,
-               kWisps, bgfx::isValid(sheet_) ? "yes" : "NO");
+    wisps_.clear();
+    for (int layer = 0; layer < int(std::size(kLayers)); ++layer) {
+        Wisp wisp;
+        wisp.layer = layer;
+        wisps_.insert(wisps_.end(), size_t(kLayers[layer].wisps), wisp);
+    }
+    core::logf("void clouds: %d void tiles, floor %.2f m, %d wisps in %d layers; smoke02 %s",
+               voids, floor_, int(wisps_.size()), int(std::size(kLayers)),
+               bgfx::isValid(sheet_) ? "yes" : "NO");
 }
 
 void VoidClouds::shutdown() {
@@ -108,9 +129,10 @@ bool VoidClouds::voidAt(float x, float z) const {
 // Only over complete darkness (the user, 2026-10-02: 'only on voids where is complete darknens
 // and no ground'): the sheet's middle and eight points round it, at most of its half width,
 // all on void, so no cloud lies over a floor or a wall's foot.
-bool VoidClouds::clearUnder(float x, float z, float half) const {
+// The deeper layers ask less of it: they lie well under any floor's edge.
+bool VoidClouds::clearUnder(float x, float z, float half, int layer) const {
     if (!voidAt(x, z)) return false;
-    const float r = half * 0.8f;
+    const float r = half * kLayers[layer].clear;
     for (int k = 0; k < 8; ++k) {
         const float a = 0.785398f * float(k);
         if (!voidAt(x + std::cos(a) * r, z + std::sin(a) * r)) return false;
@@ -119,18 +141,22 @@ bool VoidClouds::clearUnder(float x, float z, float half) const {
 }
 
 bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
+    const Layer& layer = kLayers[wisp.layer];
     for (int attempt = 0; attempt < 8; ++attempt) {
         const float angle = 6.2831853f * unit();
-        const float reach = kReach * std::sqrt(unit());
+        const float reach = layer.reach * std::sqrt(unit());
         const float x = near[0] + std::cos(angle) * reach;
         const float z = near[2] + std::sin(angle) * reach;
-        const float size = kSizeMin + (kSizeMax - kSizeMin) * unit();
-        if (!clearUnder(x, z, size)) continue;
+        const float size = layer.sizeMin + (layer.sizeMax - layer.sizeMin) * unit();
+        if (!clearUnder(x, z, size, wisp.layer)) continue;
         wisp.at[0] = x;
         wisp.at[2] = z;
-        wisp.at[1] = floor_ - (kDepthMin + (kDepthMax - kDepthMin) * unit());
-        wisp.drift[0] = kDrift[0] + (unit() - 0.5f) * 2.0f * kScatter;
-        wisp.drift[1] = kDrift[1] + (unit() - 0.5f) * 2.0f * kScatter;
+        wisp.at[1] = floor_ - (layer.depthMin + (layer.depthMax - layer.depthMin) * unit());
+        const float dx = kDrift[0] + (unit() - 0.5f) * 2.0f * kScatter;
+        const float dz = kDrift[1] + (unit() - 0.5f) * 2.0f * kScatter;
+        const float cv = std::cos(layer.veer), sv = std::sin(layer.veer);
+        wisp.drift[0] = (dx * cv - dz * sv) * layer.drift;
+        wisp.drift[1] = (dx * sv + dz * cv) * layer.drift;
         wisp.life = kLifeMin + (kLifeMax - kLifeMin) * unit();
         wisp.age = anyAge ? wisp.life * unit() : 0.0f;
         wisp.size = size;
@@ -156,7 +182,9 @@ void VoidClouds::update(float seconds, const float near[3]) {
             // Out of reach or drifting towards ground: it starts to leave, and from wherever its
             // fade stands goes down to nothing over kFadeOut -- no jump in its strength.
             const float grown = wisp.size * (1.0f + kGrowth * wisp.age / wisp.life);
-            if (dx * dx + dz * dz > kLetGo * kLetGo || !clearUnder(wisp.at[0], wisp.at[2], grown))
+            const float letGo = kLayers[wisp.layer].letGo;
+            if (dx * dx + dz * dz > letGo * letGo ||
+                !clearUnder(wisp.at[0], wisp.at[2], grown, wisp.layer))
                 wisp.leaving = true;
             if (wisp.leaving) {
                 wisp.fade -= seconds / kFadeOut;
@@ -193,7 +221,7 @@ void VoidClouds::gather(gfx::Effects& effects) const {
             sprite.cornerUv[k][0] = uvs[k][0];
             sprite.cornerUv[k][1] = uvs[k][1];
         }
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = colour_[k];
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = colour_[k] * kLayers[wisp.layer].shade;
         sprite.colour[3] = alpha;
         sprite.sheet = sheet_;
         sprite.blend = gfx::Blend::Smoke;

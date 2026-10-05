@@ -3,6 +3,7 @@
 // zones'. MU has a kin of it there -- nine Object38 emitters rolling BITMAP_CLOUD and smoke round
 // the bridge and the court (ZzzObject.cpp:3226-3240) -- but this is a layer, not those emitters.
 //
+// Three layers since 2026-10-05: the first as below, two deeper, wider and further out.
 // Flat sheets of smoke02, 14-22 m across, a few metres below the castle's floor over NoGround
 // tiles near the camera, overlapping into one faint layer, drifting one way and turning slowly,
 // faded in and out over half a minute. Cold grey, as the castle's light. Lava smoke's shape
@@ -42,10 +43,11 @@ private:
         float fade = 0.0f;     // 0 to 1, moving only gradually: in at birth, out when leaving
         bool leaving = false;  // out of reach or over ground: fading out, never cut off
         bool alive = false;
+        int layer = 0;  // into kLayers: 0 under the floor, deeper and wider after
     };
     bool spawn(Wisp& wisp, const float near[3], bool anyAge);
     bool voidAt(float x, float z) const;
-    bool clearUnder(float x, float z, float half) const;
+    bool clearUnder(float x, float z, float half, int layer) const;
     float unit();
 
     const content::Ground* ground_ = nullptr;
