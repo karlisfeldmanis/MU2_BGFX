@@ -45,8 +45,32 @@ constexpr float kDropSeconds = 0.6f, kDropFade = 0.36f;
 constexpr float kLeaveSeconds = 0.45f;
 constexpr float kSlideSeconds = 0.55f, kSlideFade = 0.3f;
 constexpr float kPulseSeconds = 1.8f;
-// When it speaks: half an hour before, a minute before, and the gate.
-constexpr int kAnnounce = 1800, kLastMinute = 60;
+// When it speaks: half an hour before, briefly; then the last few seconds counted down to the
+// gate, the gate opening under the green dot, held a moment and gone (the user, 2026-10-05:
+// 'show last 6 seconds of BC,DS gates open then show green indicator and then close
+// notification'). The minute's call it had before is gone.
+constexpr int kAnnounce = 1800, kCountdown = 6;
+constexpr float kOpenHold = 4.0f;  // the green dot's seconds before the line goes
+
+// The gates it counts to, each on its own timetable and level bands, 0 for no ceiling.
+struct Gate {
+    const char* name;
+    const char* place;
+    int period, opensAt, entry;  // seconds: between openings, into the day, held open
+    const int (*bands)[2];
+    int bandCount;
+    int built;  // the highest numbered one there is
+};
+// Devil Square: WebZen 0.97d's four squares (DevilSquare.h), Charon in Noria; on the travel
+// list's timetable, every four hours from midnight for 25 minutes (game/ui/travel.cpp kEvents,
+// OpenMU's DevilSquareStartConfiguration). Not playable yet: the herald counts to it as the
+// travel card does.
+constexpr int kSquareBands[4][2] = {{15, 130}, {131, 180}, {181, 230}, {231, 0}};
+const Gate kGates[] = {
+    {"Blood Castle", "Devias \xB7 Messenger", sim::kCastlePeriod, sim::kCastleOpensAt,
+     sim::kCastleEntry, sim::kCastleBands, sim::kCastles, sim::kCastlesBuilt},
+    {"Devil Square", "Noria \xB7 Charon", 14400, 0, 1500, kSquareBands, 4, 4},
+};
 
 // Black under the line, across its width: clear at the ends, 78% in the middle (60% was tried
 // and was too light: 'darkens was better before', 2026-10-05).
@@ -192,7 +216,7 @@ int dayOf(int64_t wall) {
 
 // A source that reached a moment: a fresh showing if none is up (or one is going), else onto
 // the one up, which runs long enough to give it its turn.
-void Herald::raise(int source) {
+void Herald::raise(int source, float hold, bool pin) {
     if (queued_ == 0 || leaving_ >= 0.0f) {
         queued_ = 0;
         at_ = 0;
@@ -205,13 +229,24 @@ void Herald::raise(int source) {
     bool queued = false;
     for (int i = 0; i < queued_; ++i) queued |= queue_[i] == source;
     if (!queued && queued_ < kSources) queue_[queued_++] = source;
-    life_ = std::max(life_, std::max(kLeast, kDwell * float(queued_)));
+    life_ = std::max(life_, std::max(hold, kDwell * float(queued_)));
+    // A gate counting down or opening holds the line on itself until it is done.
+    if (pin) {
+        for (int i = 0; i < queued_; ++i) {
+            if (queue_[i] != source) continue;
+            if (at_ != i) slide_ = 0.0f;
+            at_ = i;
+        }
+        pinned_ = source;
+        dwell_ = 0.0f;
+    }
 }
 
 void Herald::close() {
     canvas_.clear();
     for (Source& one : sources_) one = Source{};
     queued_ = 0;
+    pinned_ = -1;
     leaving_ = -1.0f;
     alpha_ = 0.0f;
     close_ = {};
@@ -227,32 +262,50 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
     // Inside the castle the tracker has the run; with no clock there is nothing to count to.
     const bool inside = realm.tables() && realm.tables()->map == sim::kBloodCastleMap;
 
-    // ---- Blood Castle: the Messenger's door, hourly (sim/event.h) ----------------------------
-    {
-        Source& one = sources_[0];
-        Call& call = calls_[0];
+    // ---- the gates: Blood Castle's Messenger (sim/event.h), Devil Square's Charon ------------
+    for (int g = 0; g < kSources; ++g) {
+        const Gate& gate = kGates[g];
+        Source& one = sources_[g];
+        Call& call = calls_[g];
         int moment = 0;
-        if (day >= 0 && play.isOpen() && hero.level >= sim::kCastleBands[0][0]) {
-            const int phase = ((day - sim::kCastleOpensAt) % sim::kCastlePeriod +
-                               sim::kCastlePeriod) % sim::kCastlePeriod;
-            const bool open = phase < sim::kCastleEntry;
-            const int toStart = open ? 0 : sim::kCastlePeriod - phase;
+        int toStart = 0;
+        if (day >= 0 && play.isOpen() && hero.level >= gate.bands[0][0]) {
+            const int phase = ((day - gate.opensAt) % gate.period + gate.period) % gate.period;
+            const bool open = phase < gate.entry;
+            toStart = open ? 0 : gate.period - phase;
             const int64_t startAt = open ? wall - phase : wall + toStart;
             // The same opening for the second or two the clock wobbles across a frame.
             if (std::llabs(startAt - one.startAt) > 2) one = Source{startAt, 0};
-            moment = open ? 3 : toStart <= kLastMinute ? 2 : toStart <= kAnnounce ? 1 : 0;
+            moment = open ? 3 : toStart <= kCountdown ? 2 : toStart <= kAnnounce ? 1 : 0;
 
-            const int castle = std::min(sim::castleFor(hero.level), sim::kCastlesBuilt);
-            call.name = "Blood Castle " + std::to_string(castle);
-            call.place = "Devias \xB7 Messenger";
+            // His band's number, no higher than is built.
+            int tier = gate.bandCount;
+            for (int b = 0; b < gate.bandCount; ++b) {
+                if (hero.level <= gate.bands[b][1] || gate.bands[b][1] == 0) {
+                    tier = b + 1;
+                    break;
+                }
+            }
+            tier = std::min(tier, gate.built);
+            call.name = std::string(gate.name) + " " + std::to_string(tier);
+            call.place = gate.place;
             call.live = open;
             call.state = open ? "gate open" : "";
-            call.seconds = open ? sim::kCastleEntry - phase : toStart;
+            call.seconds = open ? gate.entry - phase : toStart;
         }
         if (moment > one.spoken) {
+            const int was = one.spoken;
             one.spoken = moment;
             // Reached a moment it speaks at: into the showing, unless he is where it would not.
-            if (!inside) raise(0);
+            if (!inside) {
+                if (moment == 1) raise(g, kLeast, false);
+                // The countdown runs into the gate and past it by the hold.
+                else if (moment == 2) raise(g, float(toStart) + kOpenHold, true);
+                // Opened under a countdown already up: the line just turns. Opened unseen (he
+                // came in during it): it shows the open gate alone.
+                else if (was != 2 || queued_ == 0 || leaving_ >= 0.0f) raise(g, kLeast, true);
+                else life_ = std::max(life_, kOpenHold);
+            }
         }
     }
     if (inside && queued_ > 0 && leaving_ < 0.0f) leaving_ = 0.0f;
@@ -266,7 +319,7 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
             slide_ += seconds;
             dwell_ += seconds;
             life_ -= seconds;
-            if (dwell_ >= kDwell && queued_ > 1) {
+            if (dwell_ >= kDwell && queued_ > 1 && pinned_ < 0) {
                 at_ = (at_ + 1) % queued_;
                 dwell_ = 0.0f;
                 slide_ = 0.0f;
@@ -282,6 +335,7 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
             leaving_ += seconds;
             if (leaving_ >= kLeaveSeconds) {
                 queued_ = 0;
+                pinned_ = -1;
                 leaving_ = -1.0f;
             }
         }

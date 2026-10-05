@@ -8,9 +8,9 @@
 // less text ... its informative"); not even a missing ticket ("dont show that character dont
 // have ticket, stick on what we designed").
 //
-// It is not always up. It speaks at three moments of each event -- when it first comes within
-// half an hour, a minute before it starts, and when the gate opens -- showing the events that just
-// reached one, four seconds each and six at least, then goes. It drops in from the top and leaves
+// It is not always up. It speaks when an event first comes within half an hour, briefly; then for
+// the last six seconds before its gate, counting down, and on into the gate's opening under the
+// green dot, held four seconds, then goes. Several at once take four seconds each. It drops in from the top and leaves
 // upward; a second event slides in from the right. While a gate is open a green dot breathes
 // before the name; nothing marks an event that is only coming. The cross puts it away at once;
 // the next moment still raises it.
@@ -19,8 +19,9 @@
 // place, the figures' for the clock, the small capitals' for the state (the user: "all text items
 // has to be perfectly align in midle").
 //
-// Blood Castle is the only event the realm runs (sim/event.h). Devil Square, Chaos Castle and the
-// invasions were on the proposal to show a full slider; they join here when the realm has them.
+// Blood Castle on the realm's own clock (sim/event.h); Devil Square on the travel list's
+// timetable, counted to as that card does though its square is not built. Chaos Castle and the
+// invasions were on the proposal; they join here when the realm has them.
 //
 // Ours: 0.75 has no event notices; WebZen's server sends the hall a line of text a minute
 // (BloodCastle.cpp:778-802), which is the herald's first reason.
@@ -62,8 +63,8 @@ private:
         int64_t startAt = 0;
         int spoken = 0;
     };
-    static constexpr int kSources = 1;  // Blood Castle
-    void raise(int source);
+    static constexpr int kSources = 2;  // Blood Castle, Devil Square
+    void raise(int source, float hold, bool pin);
     void rebuild(int width);
 
     gfx::Canvas canvas_;
@@ -73,6 +74,7 @@ private:
     int queue_[kSources] = {};
     int queued_ = 0;
     int at_ = 0;
+    int pinned_ = -1;       // a gate counting down or open: the line stays on it
     float life_ = 0.0f;     // seconds the showing has left
     float dwell_ = 0.0f;    // seconds on the line up
     float age_ = 0.0f;      // seconds since the band came in, for the drop
