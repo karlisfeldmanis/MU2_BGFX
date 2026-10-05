@@ -23,8 +23,10 @@
 // level-up's flare (game/fx/aura.h) narrower, slower and longer, drawn by an Aura of its own so
 // it never takes a level-up's place.
 //
-// MuMain's +9 set adds lights at the hands' bones (:10988); the knight's boots' waterfalls are a
-// later set's. Neither is here. Presentation only: the set is read off his worn pieces.
+// And from +9 a complete set glows at the arms (:10988): every frame a soft light on each hand's
+// grip, elbow and shoulder, flare01 at 1.3 in the boots' chrome colour at half. The knight's
+// boots' waterfalls are a later set's and not here. Presentation only: the set is read off his
+// worn pieces.
 #pragma once
 
 #include <cstdint>
@@ -56,6 +58,10 @@ public:
     // One frame. `plus` is setPlus's, or -1 while he is not drawn; `feet` world metres, `yaw`
     // his facing, which a ribbon's cross is laid in as MU lays it in o->Angle.
     void update(float seconds, int plus, const float feet[3], float yaw, float metresPerTile);
+    // And this frame's six lights for a set of +9 and up, or none: MU's CreateSprite(BITMAP_LIGHT,
+    // ..., 1.3f, Light) at each of `points` (world metres), Light being the boots' chrome colour
+    // at half (PartObjectColor(..., 0.5f), ZzzCharacter.cpp:10988-10999), drawn this frame only.
+    void lights(const float (*points)[3], int count, const float colour[3], float metresPerTile);
     void gather(gfx::Effects& effects, const content::Ground& ground, const float eye[3]) const;
 
 private:
@@ -78,6 +84,11 @@ private:
     static constexpr int kFlares = 64;
 
     bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;  // flare01, MU's BITMAP_LIGHT
+    float lightAt_[6][3] = {};
+    int lights_ = 0;
+    float lightColour_[3] = {};
+    float lightPer_ = 0.01f;
     Aura ribbons_;
     Flare flares_[kFlares] = {};
     float clock_ = 0.0f;  // reference frames owed

@@ -190,6 +190,11 @@ struct FigureBody {
     // the body is the light (fx/gleam.h). -1 on a rig without them.
     int pelvisBone = -1;
     int neckBone = -1;
+    // A complete set's six lights (game/fx/set_shine.h): each hand's grip and the two bones up
+    // that arm, MU's Weapon[i].LinkBone and LinkBone - 6 and - 7 (ZzzCharacter.cpp:10988) --
+    // `knife_gdf`, R Forearm, R UpperArm, `hand_bofdgne01`, L Forearm, L UpperArm. -1 where a
+    // rig has none.
+    int armBones[6] = {-1, -1, -1, -1, -1, -1};
     // What this figure stands in with its weapon put away. Inside a safe zone MU carries the
     // weapon on the back and stands in the UNARMED idle, and steps out of the zone with the
     // weapon drawn: the client's own rule, from RenderCharacterBackItem and the safe-zone

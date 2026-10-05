@@ -1986,6 +1986,26 @@ void Play::update(double seconds) {
         }
         setShine_.update(float(seconds), plus, feet, drawn ? drawn->yaw : 0.0f,
                          ground_ ? ground_->metresPerTile() : 1.0f);
+        // From +9 the arms glow, in the boots' chrome colour (MU's BodyPart[5]).
+        float arms[6][3];
+        int lit = 0;
+        const FigureBody* look = plus >= 9 && drawn ? drawn->figure.body() : nullptr;
+        if (look && look->partShine.size() > 0) {
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            for (int k = 0; k < 6; ++k) {
+                if (look->armBones[k] >= 0 && drawn->figure.pointOn(look->armBones[k], origin, arms[lit])) {
+                    ++lit;
+                }
+            }
+        }
+        const sim::Held& boots = realm_.satchel()[sim::kBoots];
+        float colour[3] = {1.0f, 0.5f, 0.0f};
+        if (lit > 0 && !boots.empty() && realm_.tables() &&
+            size_t(boots.item) < realm_.tables()->items.size()) {
+            const ShineLook shine = shineOf(realm_.tables()->items[size_t(boots.item)], boots.refinement);
+            std::copy(shine.colour, shine.colour + 3, colour);
+        }
+        setShine_.lights(arms, lit, colour, ground_ ? ground_->metresPerTile() : 1.0f);
     }
     warp_.update(float(seconds));
     // And the guard walks with him, or goes when the realm says it has gone.

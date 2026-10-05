@@ -263,6 +263,11 @@ void Figures::bind(FigureBody& body) {
     body.backBone = boneNamed(*body.skeletonMesh, kBackBone);
     body.pelvisBone = boneNamed(*body.skeletonMesh, "Bip01 Pelvis");
     body.neckBone = boneNamed(*body.skeletonMesh, "Bip01 Neck");
+    {
+        static const char* const kArms[6] = {"knife_gdf",      "Bip01 R Forearm", "Bip01 R UpperArm",
+                                             "hand_bofdgne01", "Bip01 L Forearm", "Bip01 L UpperArm"};
+        for (int k = 0; k < 6; ++k) body.armBones[k] = boneNamed(*body.skeletonMesh, kArms[k]);
+    }
     for (HeldItem& item : body.held) {
         item.bone = boneNamed(*body.skeletonMesh, item.boneName);
         const OnBack& slung = onBack(item, item.boneName == kLeftGrip);

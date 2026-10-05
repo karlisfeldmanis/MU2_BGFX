@@ -18,6 +18,10 @@ constexpr Recipe kSetRibbon{1,     40.0f, 10.0f, 100.0f, 0.0f, 1.5f, 19.0f, 0.0f
 // Invention, the level-up's (game/fx/aura.cpp kStrength): Flare added at 1 burned white in this
 // engine's light.
 constexpr float kStrength = 0.65f;
+// Invention: the arms' lights at twice MU's half. MU adds 0.5 into 8-bit colour, where it shows
+// as a glow; in this engine's light it vanished on the gold of a lit suit even at night. Four
+// times was a yellow blaze; two is judged on the night shot of a +11 Brass set.
+constexpr float kArmGain = 2.0f;
 
 }  // namespace
 
@@ -35,6 +39,12 @@ bool SetShine::open(const std::string& assetDir, content::Textures& textures) {
         return false;
     }
     flare_ = textures.load(path, content::TextureRole::Albedo);
+    const std::string light = assetDir + "/effects/light/flare01.png";
+    if (core::fileExists(light)) {
+        light_ = textures.load(light, content::TextureRole::Albedo);
+    } else {
+        core::logError("set shine: no %s; a set's arms do not glow", light.c_str());
+    }
     ribbons_.open(assetDir, textures);
     return bgfx::isValid(flare_);
 }
@@ -42,6 +52,8 @@ bool SetShine::open(const std::string& assetDir, content::Textures& textures) {
 void SetShine::shutdown() {
     ribbons_.shutdown();
     flare_ = BGFX_INVALID_HANDLE;
+    light_ = BGFX_INVALID_HANDLE;
+    lights_ = 0;
     for (Flare& one : flares_) one.alive = false;
 }
 
@@ -107,9 +119,29 @@ void SetShine::update(float seconds, int plus, const float feet[3], float yaw,
     }
 }
 
+void SetShine::lights(const float (*points)[3], int count, const float colour[3],
+                      float metresPerTile) {
+    lights_ = std::clamp(count, 0, 6);
+    for (int k = 0; k < lights_; ++k) std::copy(points[k], points[k] + 3, lightAt_[k]);
+    if (colour) std::copy(colour, colour + 3, lightColour_);
+    lightPer_ = metresPerTile / 100.0f;
+}
+
 void SetShine::gather(gfx::Effects& effects, const content::Ground& ground,
                       const float eye[3]) const {
     ribbons_.gather(effects, ground, eye);
+    // The arms' lights: flare01 at its 64 texels times 1.3, the boots' colour at half, added.
+    if (bgfx::isValid(light_)) {
+        for (int k = 0; k < lights_; ++k) {
+            gfx::Sprite sprite;
+            std::copy(lightAt_[k], lightAt_[k] + 3, sprite.position);
+            sprite.halfWidth = sprite.halfHeight = kTexels * 1.3f * lightPer_ * 0.5f;
+            for (int c = 0; c < 3; ++c) sprite.colour[c] = lightColour_[c] * 0.5f * kArmGain;
+            sprite.sheet = light_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
     if (!bgfx::isValid(flare_)) return;
     for (const Flare& one : flares_) {
         // Not on its first frame, as MU's (`LifeTime != 60`).
