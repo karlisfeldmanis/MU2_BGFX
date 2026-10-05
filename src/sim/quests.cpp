@@ -844,6 +844,13 @@ QuestRow sevinaTrial() {
     row.zen = 500000;
     row.paid[row.paidCount++] = {.item = "Jewel01", .count = 5};  // Jewels of Bless
     row.paid[row.paidCount++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
+    // And Jewels of Chaos and runes every class sets (the user, 2026-10-06: 'add some jewel of
+    // chaos and firecrackers and some all class runes for this quest also'; the Firecrackers are
+    // withFirecrackers'): the two armour runes no quest paid before, and an epic for any socket.
+    row.paid[row.paidCount++] = {.item = "Jewel15", .count = 3};  // Jewels of Chaos
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Ironskin)};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Steadfast)};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterVigor)};
     return row;
 }
 
@@ -968,8 +975,8 @@ const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),     
 // class (the user, 2026-10-04: 'give fireccracker on all quests', then 'give 3 firecrackers in
 // quest rewards not 1'), one stack of them. Ours. Added here once rather than in
 // each quest, so a quest written later pays it too; the dialog lists it with the rest. Not
-// Sevina's class change -- her trial and the three treasures (the user, 2026-10-04: 'dont give
-// Firecracker to class chancge quests').
+// Sevina's three treasures (the user, 2026-10-04: 'dont give Firecracker to class chancge
+// quests'); her trial pays them since 2026-10-06 ('add some ... firecrackers ... for this quest').
 struct QuestTable {
     QuestRow rows[kQuests];
 };
@@ -977,7 +984,7 @@ QuestTable withFirecrackers() {
     QuestTable table;
     for (int i = 0; i < kQuests; ++i) {
         QuestRow& row = table.rows[i] = kRawTable[i];
-        if (i == kSevinaTrial || row.promotes) continue;
+        if (row.promotes) continue;
         if (row.paidCount < kQuestPaid) row.paid[row.paidCount++] = {.item = "MagicBox03", .count = 3};
     }
     return table;
