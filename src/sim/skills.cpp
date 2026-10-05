@@ -571,8 +571,12 @@ constexpr SkillRow kRows[kSkills] = {
     // normal spell without cooldown"). Aimed at a body nine tiles off at most, with his other
     // spells; the spirits go round him, not it. The shield's Evil Spirit rune lets the same go
     // off a miss (sim/items.h).
+    //
+    // **1.8 the band** (the user, 2026-10-05: "it has to be stronger that meteor"): at 0.75's
+    // one a spirit struck ~180 on a 689-energy wizard to a Meteorite rock's ~240 (its 21 at 1.6);
+    // at 1.8 a spirit is ~320. The shield's rune lets its spirits go at its own 1.0.
     {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 90, .reach = 9.0f,
-     .force = 1.0f, .spread = Spread::One,
+     .force = 1.8f, .spread = Spread::One,
      .tells = "Lets evil spirits loose around him, which strike most of the monsters within "
               "ten tiles.",
      .clip = 147, .sound = "spell_evil", .built = true, .families = arms::kNone,
@@ -631,7 +635,11 @@ constexpr SkillRow kRows[kSkills] = {
     // forward, one arm up and out), let go at half the clip as MU lets it go on AttackTime's
     // limit. Six tiles, 0.75's own, so a body at the edge is just past the last strike, as in MU.
     // Its storm and sTornado are game/fx/storm.h.
-    {.number = skill::kTwister, .name = "Twister", .mana = 60, .reach = 6.0f, .force = 1.0f,
+    //
+    // **1.65 the band** (the user, 2026-10-05: "twister has to be also stronger than meteorit bit
+    // weaker than evil spirits"): ~277 a strike on a 689-energy wizard, between a Meteorite
+    // rock's ~240 and a spirit's ~320.
+    {.number = skill::kTwister, .name = "Twister", .mana = 60, .reach = 6.0f, .force = 1.65f,
      .spread = Spread::One,
      .tells = "Sends a whirlwind walking out ahead of him, striking everything it passes three "
               "times.",
