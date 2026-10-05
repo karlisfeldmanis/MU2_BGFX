@@ -83,6 +83,12 @@ inline constexpr uint32_t kLife = gfx::rgba(0.702f, 0.149f, 0.118f);
 inline constexpr uint32_t kMana = gfx::rgba(0.184f, 0.392f, 0.788f);
 // Green, not MU2's blue: blue already means "has an option" on the loot in the same grid.
 inline constexpr uint32_t kFits = gfx::rgba(0.431f, 0.620f, 0.345f);
+// A gate open: the breathing dot before an event that is on, the herald's and the travel card's
+// (the user, 2026-10-05: 'use green pulsating indicator'). Green as kFits is, a shade brighter,
+// so it reads as "on" against the gold and the blood.
+inline constexpr uint32_t kLive = gfx::rgba(0.498f, 0.839f, 0.416f);
+inline constexpr uint32_t kLiveHi = gfx::rgba(0.643f, 0.925f, 0.565f);
+inline constexpr float kLiveSeconds = 1.8f;  // one breath, and one ring widening and gone
 
 // ---- measures, in tip::unit() ------------------------------------------------------------------
 

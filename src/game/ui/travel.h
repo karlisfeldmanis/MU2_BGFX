@@ -63,6 +63,8 @@ private:
         // to the end.
         uint8_t events[kPlaces] = {};
         int eventSeconds[kPlaces] = {};
+        // While a gate is open, where its dot is in its breath, in 36ths (style::kLiveSeconds).
+        int pulse = 0;
         uint8_t refusals[sim::kTravels] = {};
         // The quest a row refused for its quest waits on (Realm::travelQuest), or -1.
         int8_t lockedBy[sim::kTravels] = {};

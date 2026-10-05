@@ -44,7 +44,7 @@ constexpr float kLeast = 6.0f;       // the whole showing, at the least
 constexpr float kDropSeconds = 0.6f, kDropFade = 0.36f;
 constexpr float kLeaveSeconds = 0.45f;
 constexpr float kSlideSeconds = 0.55f, kSlideFade = 0.3f;
-constexpr float kPulseSeconds = 1.8f;
+constexpr float kPulseSeconds = style::kLiveSeconds;
 // When it speaks: half an hour before, briefly; then the last few seconds counted down to the
 // gate, the gate opening under the green dot, held a moment and gone (the user, 2026-10-05:
 // 'show last 6 seconds of BC,DS gates open then show green indicator and then close
@@ -78,9 +78,9 @@ constexpr float kBandAt[5] = {0.0f, 0.22f, 0.5f, 0.78f, 1.0f};
 constexpr float kBandAlpha[5] = {0.0f, 0.55f, 0.78f, 0.55f, 0.0f};
 // The travel list's gold (game/ui/travel.cpp): the hairline's middle, the clock that is near.
 constexpr uint32_t kGoldHi = gfx::rgba(0.886f, 0.776f, 0.541f);
-// The live dot: a green that reads as "on" against the gold and the blood.
-constexpr uint32_t kGreen = gfx::rgba(0.498f, 0.839f, 0.416f);
-constexpr uint32_t kGreenHi = gfx::rgba(0.643f, 0.925f, 0.565f);
+// The live dot (style.h).
+constexpr uint32_t kGreen = style::kLive;
+constexpr uint32_t kGreenHi = style::kLiveHi;
 
 uint32_t faded(uint32_t abgr, float a) {
     a = std::clamp(a, 0.0f, 1.0f);

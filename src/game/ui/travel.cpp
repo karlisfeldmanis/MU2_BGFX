@@ -1,6 +1,7 @@
 #include "game/ui/travel.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -113,6 +114,48 @@ void padlock(gfx::Canvas& canvas, float cx, float cy, float size, uint32_t ink) 
                 gfx::rgba(0.020f, 0.012f, 0.012f, 0.9f));
 }
 
+// Two packed colours mixed, `t` of the way from `a` to `b`.
+uint32_t mixed(uint32_t a, uint32_t b, float t) {
+    uint32_t out = 0;
+    for (int shift = 0; shift < 32; shift += 8) {
+        const float x = float((a >> shift) & 0xFFu), y = float((b >> shift) & 0xFFu);
+        out |= uint32_t(std::lround(x + (y - x) * t)) << shift;
+    }
+    return out;
+}
+
+// A ring `thick` wide inside radius `r`, as the strip of quads between two circles.
+void hoop(gfx::Canvas& canvas, float cx, float cy, float r, float thick, uint32_t ink) {
+    constexpr int kSteps = 24;
+    const uint32_t inks[4] = {ink, ink, ink, ink};
+    const float in = std::max(0.0f, r - thick);
+    for (int i = 0; i < kSteps; ++i) {
+        const float a0 = 6.28318531f * float(i) / float(kSteps);
+        const float a1 = 6.28318531f * float(i + 1) / float(kSteps);
+        const float quad[8] = {cx + std::cos(a0) * r,  cy + std::sin(a0) * r,
+                               cx + std::cos(a1) * r,  cy + std::sin(a1) * r,
+                               cx + std::cos(a1) * in, cy + std::sin(a1) * in,
+                               cx + std::cos(a0) * in, cy + std::sin(a0) * in};
+        canvas.polygon(quad, inks, 4);
+    }
+}
+
+// A word set with its ink's middle on `mid` -- the glyph `ref` standing for its height, as the
+// herald sets its line (game/ui/herald.cpp) -- over its drop. Returns its width.
+float inked(gfx::Canvas& canvas, const gfx::Face* face, bgfx::TextureHandle texture, float x,
+            float mid, float size, char ref, uint32_t ink, const std::string& text) {
+    if (!face || text.empty()) return 0.0f;
+    const gfx::FaceGlyph* g = face->glyph(ref);
+    const float tall = g ? -g->y0 * face->emScale(size) : size * 0.7f;
+    const float base = std::round(mid + tall * 0.5f);
+    x = std::round(x);
+    canvas.lettered(*face, texture, x + 1.0f, base + 1.0f, size, 0.0f, style::kDrop, text);
+    return canvas.lettered(*face, texture, x, base, size, 0.0f, ink, text);
+}
+float inkedWidth(const gfx::Face* face, float size, const std::string& text) {
+    return face && !text.empty() ? face->measure(size, text) : 0.0f;
+}
+
 std::string levels(int low, int high) {
     if (high == 0) return {};
     return low == high ? "Lv " + std::to_string(low)
@@ -138,7 +181,7 @@ bool Travel::Drawn::operator==(const Drawn& o) const {
     for (int i = 0; i < kPlaces; ++i) {
         if (events[i] != o.events[i] || eventSeconds[i] != o.eventSeconds[i]) return false;
     }
-    return true;
+    return pulse == o.pulse;
 }
 
 void Travel::open(const gfx::Interface& interface, const std::string& assetDir) {
@@ -239,6 +282,14 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
                 }
             }
         }
+    }
+    // An open gate's dot breathes: the card is drawn again a breath's 36th at a time while one is.
+    for (int p = 0; p < kPlaces; ++p) {
+        if (now.events[p] != 2) continue;
+        const double t = std::chrono::duration<double>(
+                              std::chrono::steady_clock::now().time_since_epoch()).count();
+        now.pulse = int(std::fmod(t, double(style::kLiveSeconds)) / style::kLiveSeconds * 36.0);
+        break;
     }
     for (int i = 0; i < sim::kTravels; ++i) {
         now.refusals[i] = uint8_t(realm.travelRefusal(i));
@@ -421,8 +472,10 @@ void Travel::rebuild(const Drawn& now) {
         const std::string lv = levels(place.low, place.high);
         const size_t p = size_t(hit.place);
         if (p < size_t(kPlaces) && now.events[p] != 0) {
-            // Its event, near or on, where the levels were: gold counting down to the start, red
-            // while it runs.
+            // Its event, near or on, where the levels were, in the herald's words (game/ui/
+            // herald.h): the name and its clock in gold counting down to the start; while it is
+            // on, a breathing green dot, the name, "gate open" and the time left to enter. Every
+            // word centred on its own ink.
             const Event* event = nullptr;
             for (const Event& one : kEvents) {
                 if (one.map == place.map) event = &one;
@@ -431,15 +484,35 @@ void Travel::rebuild(const Drawn& now) {
             const int s = now.eventSeconds[p];
             char when[16];
             std::snprintf(when, sizeof(when), "%d:%02d", s / 60, s % 60);
-            const std::string text = std::string(event ? event->name : "") + (on ? " \xC2\xB7 now" : " ") +
-                                     (on ? "" : when);
-            const uint32_t ink = on ? style::kBloodHi : kGold;
-            const float size = 12.5f * u;
-            const float base = controls::middle(b.y + kLine1 * u, kLineTall * u, size);
-            const float wide = controls::labelWidth(size, text);
-            controls::ranged(canvas_, b.right() - kPadX * u, base, size, ink, text);
-            dot(canvas_, b.right() - kPadX * u - wide - 6.0f * u,
-                b.y + (kLine1 + kLineTall * 0.5f) * u, 2.6f * u, ink);
+            const std::string name = event ? event->name : "";
+            const char* const state = "gate open";
+            const float nameSize = 12.5f * u, stateSize = 13.0f * u, clockSize = 13.0f * u;
+            const float gap = 7.0f * u, r = 3.2f * u;
+            const gfx::Face* label = controls::labelFace();
+            const gfx::Face* word = controls::wordFace();
+            float wide = inkedWidth(label, nameSize, name) + gap + inkedWidth(label, clockSize, when);
+            if (on) wide += r * 2.0f + gap + inkedWidth(word, stateSize, state) + gap;
+            const float mid = b.y + (kLine1 + kLineTall * 0.5f) * u;
+            float x = b.right() - kPadX * u - wide;
+            if (on) {
+                const float t = float(now.pulse) / 36.0f;
+                const float breath = 0.5f - 0.5f * std::cos(6.28318531f * t);
+                const float wave = 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t);
+                const float cx = x + r;
+                hoop(canvas_, cx, mid, r * 2.0f * (0.6f + 1.2f * wave), std::max(1.0f, u),
+                     alpha(style::kLive, 0.75f * (1.0f - wave)));
+                dot(canvas_, cx, mid, r * 2.2f, alpha(style::kLive, 0.10f + 0.12f * breath));
+                dot(canvas_, cx, mid, r * 1.5f, alpha(style::kLive, 0.18f + 0.18f * breath));
+                dot(canvas_, cx, mid, r, mixed(style::kLive, style::kLiveHi, breath));
+                x += r * 2.0f + gap;
+            }
+            x += inked(canvas_, label, controls::labelTexture(), x, mid, nameSize, 'H',
+                       style::kBone2, name) + gap;
+            if (on) {
+                x += inked(canvas_, word, controls::wordTexture(), x, mid, stateSize, 'x', kGoldHi,
+                           state) + gap;
+            }
+            inked(canvas_, label, controls::labelTexture(), x, mid, clockSize, '0', kGoldHi, when);
         } else if (!lv.empty()) {
             controls::ranged(canvas_, b.right() - kPadX * u,
                              controls::middle(b.y + kLine1 * u, kLineTall * u, kLevelSize * u),
