@@ -606,7 +606,12 @@ constexpr SkillRow kRows[kSkills] = {
     // in sync with spell. when char lands than there is hellfire"): the clip's hips are over three
     // metres up from key 1 to key 5 and down at key 6 of 18 (source/players/rig/player.rig.json,
     // action 154's Bip01 track), so the circle and every blow are a third of the way in.
-    {.number = skill::kHellfire, .name = "Hellfire", .mana = 160, .reach = 4.0f, .force = 1.0f,
+    //
+    // **The wizard's ladder** (the user, 2026-10-05: "hell fire is stroonger than evil spirit,
+    // inferno has to be stronger than [hellfire], aqua has to be stronger than inferno"), a blow
+    // on a 689-energy wizard: Meteorite ~240 < Twister ~277 < Evil Spirit ~320 < Hellfire 1.3
+    // ~356 < Inferno 1.6 ~398 < Aqua Beam 2.0 ~448.
+    {.number = skill::kHellfire, .name = "Hellfire", .mana = 160, .reach = 4.0f, .force = 1.3f,
      .spread = Spread::Ring,
      .tells = "Sets the ground round him on fire, striking every monster within four tiles.",
      .clip = 154, .sound = "spell_hellfire", .built = true, .families = arms::kNone,
@@ -661,8 +666,8 @@ constexpr SkillRow kRows[kSkills] = {
     // rig/actions.json; on the bench 2026-10-02 the low crouch with both arms driven out at the
     // ground). Let go at half the clip, the let-go MU makes the ring of blasts and MODEL_SKILL_
     // INFERNO in (ZzzCharacter.cpp:4574-4583). No cooldown, as Hellfire. Its ring and its
-    // eExplosion are game/fx/inferno.h.
-    {.number = skill::kInferno, .name = "Inferno", .mana = 200, .reach = 4.0f, .force = 1.0f,
+    // eExplosion are game/fx/inferno.h. 1.6 the band, above Hellfire (its ladder, above).
+    {.number = skill::kInferno, .name = "Inferno", .mana = 200, .reach = 4.0f, .force = 1.6f,
      .spread = Spread::Ring,
      .tells = "A ring of fire bursts round him, striking every monster within four tiles.",
      .clip = 153, .sound = "explosion", .built = true, .families = arms::kNone,
@@ -687,8 +692,8 @@ constexpr SkillRow kRows[kSkills] = {
     // animation"): the right hand is up over his head to key 5 and out in front of him at key 6,
     // 187 units on in one key (action 152 in source/players/rig/player.rig.json), and let go at
     // half the beam came two frames after the arm in the arena. No cooldown, a standard spell.
-    // Its beam and sAquaFlash are game/fx/aqua.h.
-    {.number = skill::kAquaBeam, .name = "Aqua Beam", .mana = 140, .reach = 6.0f, .force = 1.0f,
+    // Its beam and sAquaFlash are game/fx/aqua.h. 2.0 the band, the top of Hellfire's ladder.
+    {.number = skill::kAquaBeam, .name = "Aqua Beam", .mana = 140, .reach = 6.0f, .force = 2.0f,
      .spread = Spread::Beam,
      .tells = "A beam of water thrown straight out ahead of him, striking everything along it.",
      .clip = 152, .sound = "spell_flash", .built = true, .families = arms::kNone,
