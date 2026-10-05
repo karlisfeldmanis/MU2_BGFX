@@ -26,6 +26,7 @@ struct WingInward {
     const char* name;
     float metres;
 };
+constexpr float kHeavenTone = 0.82f;
 constexpr WingInward kInward[] = {{"Wing04", 0.18f}, {"Wing05", 0.065f}, {"Wing06", 0.08f}};
 
 }  // namespace
@@ -94,9 +95,13 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     // links a wing with lighting off (RenderLinkObject sets b->LightEnable = false), so its
     // painted feathers are what show, never the sun's dark side or the shadow map's blocks on
     // a thin card -- the user, 2026-10-05: 'angel wings wierdly accepts light and shadows'.
+    // Ours: the Wings of Heaven a little under their sheet, whose pure white glared at noon
+    // once self-lit -- the user, 2026-10-05: 'tone them down slightly'.
+    const float tone = wing_->name == "Wing02" ? kHeavenTone : 1.0f;
     for (size_t i = from; i < out.size(); ++i) {
         out[i].fade = fade;
         out[i].light[3] = 2.0f;
+        for (int k = 0; k < 3; ++k) out[i].light[k] = tone;
     }
 }
 

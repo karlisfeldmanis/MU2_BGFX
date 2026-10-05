@@ -221,7 +221,9 @@ void main()
 	// A self-lit figure: MU's Level 3, whose body light Selection.cpp:106 raises by 1.5 over
 	// the ground's, so fixed-function clamps it to the sheet's own colour in any light -- the
 	// Ice Queen. Never darker than her sheet; the sun still adds its highlights by day.
-	colour = mix(colour, max(colour, albedoTex.rgb * 0.9), selfLit(v_light.w));
+	// Off the albedo the instance's light has already scaled, so a self-lit part can be drawn
+	// below its sheet: the Wings of Heaven's white, toned down (game/wings.cpp).
+	colour = mix(colour, max(colour, albedo * 0.9), selfLit(v_light.w));
 	// A soft-alpha membrane -- the Valkyrie's wings, the Bahamut's and the Vepar's fins -- is lit
 	// as MU lights a model: its sheet times the land's light at its tile (BodyLight, glColor
 	// over an unshaded texture), so the painted blue and its rays come through rather than the
