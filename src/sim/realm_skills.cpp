@@ -304,6 +304,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             hero.aim = std::atan2(float(wantsRow_) - hero.y, float(wantsColumn_) - hero.x);
             if (row.wizardry) hero.facing = hero.aim;
         }
+        // Cast at nothing, a storm walks the way he faces (SkillRow::castsBare).
+        if (!aimed && !pointed && row.castsBare()) hero.aim = hero.facing;
         // **A shower falls on the ground he named** (SkillRow::showers), his own tile too: a
         // spot past his reach is pulled back along the line to it, as Teleport's is, and one he
         // cannot see over a wall is not called down at all -- no mana, no clip.
@@ -325,7 +327,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // A line is thrown AT a body as a single blow is, and goes on through: it needs the
             // body to aim by, and the rest of its way is found when it is let go -- or the
             // pointer's ground, for a shape that has a direction.
-            if (!aimed && !pointed && !grounded) return false;
+            // Or none at all for a spell cast round him (SkillRow::castsBare).
+            if (!aimed && !pointed && !grounded && !row.castsBare()) return false;
             if (walled && !pointed && !grounded) return false;
             // Nothing may be thrown at something sheltered either, which is the check the far end
             // of `ApplySkillAsync` makes and `press` already makes for a swing.
@@ -341,9 +344,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // somebody inside the shape rather than a named target: a knight whose quarry has
             // just died still spins into the three others standing on him. What it will not do is
             // spend mana and a cooldown on empty air, which is what 0.75's "no target, no skill"
-            // is really refusing.
+            // is really refusing -- except Hellfire's ring, cast on air too (SkillRow::castsBare).
             uint32_t victims[kVictims];
-            if (gather(hero, row, victims, kVictims) == 0) return false;
+            if (!row.castsBare() && gather(hero, row, victims, kVictims) == 0) return false;
         }
         // A fan is arrows: none in hand or in the bag and there is nothing to loose.
         if (row.arrows > 0 && !quivered(hero)) return false;

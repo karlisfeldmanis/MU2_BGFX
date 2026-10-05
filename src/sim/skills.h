@@ -411,6 +411,14 @@ struct SkillRow {
     // hand meteors drops on that location"). Ice and Poison keep the splash with no fall: a
     // body each round the aimed one (Realm::rain). Realm::shower.
     bool showers() const { return splash > 0.0f && fallTicks > 0; }
+    // **Cast with no monster to cast at** (the user, 2026-10-05: "evil spirit,twister,hellfire is
+    // aoe spell allow to cast it without monster"): the spirits go round him, the storm walks off
+    // his facing, the ring burns round him, empty or not -- mana and clip spent on air, which
+    // 0.75's "no target, no skill" refused. Ours.
+    bool castsBare() const {
+        return number == skill::kEvilSpirit || number == skill::kTwister ||
+               number == skill::kHellfire;
+    }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
     // Whether it is an aura: a self-cast that is not a summon. Blood Castle's court lets these

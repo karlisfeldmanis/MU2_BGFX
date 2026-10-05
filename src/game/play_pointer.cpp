@@ -344,6 +344,12 @@ void Play::rightClick() {
         mark_ = false;
         marker_.dismiss();
         return;
+    } else if (quick != nullptr && quick->castsBare()) {
+        // A spell cast round him goes off over bare ground too (SkillRow::castsBare).
+        realm_.invoke(quickSkill_, 0);
+        mark_ = false;
+        marker_.dismiss();
+        return;
     } else {
         request.kind = sim::Request::Kind::Stop;
     }
@@ -362,8 +368,12 @@ void Play::rightHeld() {
         if (pointedAt_ != rightTarget_) rightClick();
         return;
     }
-    if (pointedColumn_ < 0) return;
     const sim::SkillRow* quick = quickSkill_ != 0 ? sim::skillNumbered(quickSkill_) : nullptr;
+    if (quick != nullptr && quick->castsBare() && !quick->aimsAtPointer()) {
+        realm_.invoke(quickSkill_, 0);
+        return;
+    }
+    if (pointedColumn_ < 0) return;
     if (quick == nullptr || !quick->aimsAtPointer()) return;
     // The wish is renewed every frame, aimed where the mouse is now; the realm throws it on the
     // first tick his last cast lets him (Realm::invoke), and refuses it silently while it cools.
