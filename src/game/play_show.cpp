@@ -1095,7 +1095,13 @@ void Play::follow(float seconds) {
             // over whoever stands behind him.
             constexpr float kSeated = 0.68f;
             const bool seated = body->pose == sim::Pose::Sitting;
-            one.crown[1] = position[1] + look->height * look->scale * (seated ? kSeated : 1.0f);
+            // **No higher than the bind box's top over the feet**: a part bound under them is
+            // not his height. The Hydra's hidden beams reach 2.35 m below its feet and 15 m
+            // ahead, so its box stood 5.6 m tall to a 3.3 m body and its bar hung off the top of
+            // the screen (the user, 2026-10-05: "i dont see HP bar for hydra"). A body bound
+            // above its feet (the Bahamut's 0.23 m) keeps its height as before.
+            const float tall = std::min(look->height, look->max[1]);
+            one.crown[1] = position[1] + tall * look->scale * (seated ? kSeated : 1.0f);
             one.crown[2] = position[2];
             one.placed = true;
         }
@@ -1571,6 +1577,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         }
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
+        // After her pose, which the wing takes her Bone05 from (game/wings.h).
+        if (one.wing.worn()) one.wing.gather(renderer, one.figure, scratch_, out, casters);
     }
 }
 
