@@ -2446,6 +2446,11 @@ def main() -> None:
             if entry["kind"] == "scenery":
                 entry["world"] = one.parts[1]
 
+            # The glb materials MU blends as well as tests (cook.py's soft alpha), on a worn
+            # model as on a monster: the Wings of Heaven's feathers and Satan's membrane.
+            if soft := document.get("soft_alpha"):
+                entry["soft_alpha"] = list(soft)
+
             # What this asset changed about a library material for itself, verbatim.
             #
             # build_maps reads `material_overrides` and bakes the result into the ORM, and

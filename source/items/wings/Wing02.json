@@ -21,6 +21,10 @@
     "angel_wing"
   ],
   "cutout_from": "angel_wing.OZT is 128 by 128 with 76% of it cut away: the wing's shape is its alpha.",
+  "soft_alpha": [
+    "angel_wing"
+  ],
+  "soft_alpha_from": "angel_wing.OZT is drawn by MU tested and blended (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393), as the Bahamut's fins: the feathers' and the membrane's edges soft rather than cut -- the user, 2026-10-05: 'use transparency or something'.",
   "worn_note": "Worn on slot 7 (EQUIPMENT_WING). MuMain links it rigidly to player bone 47 at (0, 0, 15) and plays its own action 0 at PlaySpeed 0.25, or 1 while the hero flies (PLAYER_FLY, out of a safe zone; ZzzCharacter.cpp:15400-15430, :615-621). No plus glow: RenderLinkObject's level is forced to 0 for the wings (ZzzObject.cpp:9566-9569). docs/wings.md.",
   "stats": {
     "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",

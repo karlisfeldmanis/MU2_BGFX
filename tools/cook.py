@@ -3194,6 +3194,9 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
         scroll = next((one.get("scroll", 0.0) for one in monsters if one["mesh"] == name), 0.0)
         soft = next((one.get("soft_alpha", []) for one in monsters if one["mesh"] == name), [])
+        # A worn model's own (a wing's), off its index entry.
+        soft = soft or next((one.get("soft_alpha", []) for one in index.get("objects", [])
+                             if one.get("name") == name), [])
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
                                               hidden_of.get(name), scroll_per_second=scroll,
                                               soft=set(soft))
@@ -3483,7 +3486,8 @@ def cook_wardrobe(out_dir, texcook, threads):
     triangles = vertices = 0
     for name, path in sorted(models.items()):
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
-        tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest)
+        tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
+                                              soft=set(rows[name][0].get("soft_alpha", [])))
         # A weapon with a rig of its own -- a bow's or a crossbow's string -- carries its one
         # clip in the same glb, as a world object does; baked beside the mesh for the figure
         # that holds it to play (crowd.cpp, Figure::poseHeld). Never a staff, whose 60 bones

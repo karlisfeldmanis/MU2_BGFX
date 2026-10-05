@@ -90,7 +90,14 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     const size_t from = out.size();
     if (casters) figure_.gather(palette, *casters);
     figure_.gather(palette, out);
-    for (size_t i = from; i < out.size(); ++i) out[i].fade = fade;
+    // Drawn at its sheet's own colour in any light, as the Ice Queen is (Figure::gather): MU
+    // links a wing with lighting off (RenderLinkObject sets b->LightEnable = false), so its
+    // painted feathers are what show, never the sun's dark side or the shadow map's blocks on
+    // a thin card -- the user, 2026-10-05: 'angel wings wierdly accepts light and shadows'.
+    for (size_t i = from; i < out.size(); ++i) {
+        out[i].fade = fade;
+        out[i].light[3] = 2.0f;
+    }
 }
 
 int WingLook::tips(float out[][3], int most) const {
