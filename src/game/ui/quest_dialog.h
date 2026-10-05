@@ -98,8 +98,8 @@ public:
                    ? int(mode_)
                    : -1;
     }
-    // The Messenger's or the Archangel's words as a voice clip, "voice/messenger/messenger_none.wav"
-    // and the like (tools/voice.py SAID), or empty: on any other page, and for a castle not built.
+    // The Archangel's words as a voice clip, "voice/archangel/archangel_done_staff.wav" and the
+    // like (tools/voice.py SAID), or empty: on any other page (the Messenger's is never voiced).
     const std::string& clip() const { return clip_; }
     // The window's rectangle on screen, for the pointer the desk keeps from the world.
     bool covers(float x, float y) const;
