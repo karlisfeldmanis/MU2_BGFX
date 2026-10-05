@@ -159,12 +159,43 @@ ICONS = {
                         ((7, 6, 22, 22), (6, 5, 21, 21))),
 }
 
+#: And the ones cut from MuMain's own Data/Interface rather than MuDream's, in ICONS's shape
+#: with a last field saying whether the decoded sheet is upside down. The quest button (the user,
+#: 2026-10-05: "we need to find icon for quests button", picking this of the two mocked) is the
+#: character window's quest tab, `newui_chainfo_btn_quest`: an open book, grey at rest and gold
+#: lit, two 29-tall states. It has no open state of its own, so the open two are its own two
+#: with the glyph nudged a pixel down and right -- grey pressed in, and lit pressed in under the
+#: pointer -- as newui_menu_Bt01/02 draw an open main-frame button: (closed, closed-hovered,
+#: open, open-hovered), the four the HUD reads -- and at 0.7 of their light, as the main frame's
+#: open states are baked (inventory 0.73 and 0.72, character 0.69 and 0.66, measured on the cut
+#: sheets: an open window's button sits pressed in and dim). The decoder hands this
+#: TGA back bottom-up (the gold state first, the spine on top), so it is flipped.
+MUMAIN = PROJECT.parent / "LEGACY" / "reference" / "MuMain" / "src" / "bin" / "Data" / "Interface"
+MUMAIN_ICONS = {
+    "hud_button_quest": ("newui_chainfo_btn_quest.OZT", (36, 58), 2, (0, 1, 0, 1),
+                         ((6, 3, 30, 27), (6, 3, 30, 27), (5, 2, 29, 26), (5, 2, 29, 26)),
+                         True, (1.0, 1.0, 0.7, 0.7)),
+}
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--out", type=Path, default=ASSETS)
+    parser.add_argument("--only", nargs="+", default=[],
+                        help="cut only these of MUMAIN_ICONS, without MuDream's folder")
     args = parser.parse_args()
+
+    if args.only:
+        for name in args.only:
+            if name not in MUMAIN_ICONS:
+                raise SystemExit(f"error: {name} is not one of MUMAIN_ICONS")
+            file, size, states, keep, boxes, flip, light = MUMAIN_ICONS[name]
+            strip = decode(MUMAIN / file).convert("RGBA")
+            if flip:
+                strip = strip.transpose(Image.FLIP_TOP_BOTTOM)
+            cut_icon(strip, name, file, size, states, keep, boxes, args.out, light)
+        return
 
     source: Path = args.source / FOLDER
     out: Path = args.out
@@ -199,23 +230,38 @@ def main() -> None:
 
     for name, (file, size, states, keep, boxes) in ICONS.items():
         strip = decode(source / file).convert("RGBA")
+        cut_icon(strip, name, file, size, states, keep, boxes, out)
+    for name, (file, size, states, keep, boxes, flip, light) in MUMAIN_ICONS.items():
+        strip = decode(MUMAIN / file).convert("RGBA")
+        if flip:
+            strip = strip.transpose(Image.FLIP_TOP_BOTTOM)
+        cut_icon(strip, name, file, size, states, keep, boxes, out, light)
 
-        if strip.size != size:
-            raise SystemExit(f"error: {file} is {strip.size}, not the {size} its states are cut from")
 
-        tall = size[1] // states
-        wide, high = boxes[0][2] - boxes[0][0], boxes[0][3] - boxes[0][1]
-        stack = Image.new("RGBA", (wide, high * len(keep)))
+def cut_icon(strip: Image.Image, name: str, file: str, size, states: int, keep, boxes,
+             out: Path, light=None) -> None:
+    """One button's kept states, each glyph cut round, stacked in the order kept, each at its
+    share of `light` (all whole when none is given)."""
+    if strip.size != size:
+        raise SystemExit(f"error: {file} is {strip.size}, not the {size} its states are cut from")
 
-        for row, (state, box) in enumerate(zip(keep, boxes)):
-            if (box[2] - box[0], box[3] - box[1]) != (wide, high):
-                raise SystemExit(f"error: {name}'s state boxes are not all {wide} by {high}")
+    tall = size[1] // states
+    wide, high = boxes[0][2] - boxes[0][0], boxes[0][3] - boxes[0][1]
+    stack = Image.new("RGBA", (wide, high * len(keep)))
 
-            cell = strip.crop((box[0], (state * tall) + box[1], box[2], (state * tall) + box[3]))
-            stack.paste(glyph(cell), (0, row * high))
+    for row, (state, box) in enumerate(zip(keep, boxes)):
+        if (box[2] - box[0], box[3] - box[1]) != (wide, high):
+            raise SystemExit(f"error: {name}'s state boxes are not all {wide} by {high}")
 
-        stack.save(out / f"{name}.png", "PNG", optimize=True)
-        print(f"{name:22s} {stack.width:4d} x {stack.height:<4d}  {file}, states {keep} of {states}, glyph {boxes[0]}")
+        cell = strip.crop((box[0], (state * tall) + box[1], box[2], (state * tall) + box[3]))
+        if light is not None and light[row] != 1.0:
+            r, g, b, a = cell.split()
+            r, g, b = (band.point(lambda v, k=light[row]: int(v * k + 0.5)) for band in (r, g, b))
+            cell = Image.merge("RGBA", (r, g, b, a))
+        stack.paste(glyph(cell), (0, row * high))
+
+    stack.save(out / f"{name}.png", "PNG", optimize=True)
+    print(f"{name:22s} {stack.width:4d} x {stack.height:<4d}  {file}, states {keep} of {states}, glyph {boxes[0]}")
 
 
 def golden(image: Image.Image) -> Image.Image:

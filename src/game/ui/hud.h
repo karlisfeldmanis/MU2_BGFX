@@ -42,7 +42,7 @@ struct Pointer {
 
 class Hud {
 public:
-    enum class Button { Menu, Chat, Inventory, Character };
+    enum class Button { Menu, Chat, Inventory, Character, Quest };
 
     // The potion boxes, keyed 1 to 5.
     static constexpr int kQuickKeys = 5;
@@ -258,7 +258,8 @@ public:
     // it draws moved. Returns the button pressed this frame, if any, through `pressed`.
     void update(float seconds, float width, float height, const Pointer& pointer,
                 bool inventoryOpen, bool characterOpen, bool* toggleInventory,
-                bool* toggleCharacter, bool* toggleMenu = nullptr);
+                bool* toggleCharacter, bool* toggleMenu = nullptr, bool questOpen = false,
+                bool* toggleQuest = nullptr);
 
     // Whether a point is over the frame -- plate, rail or a side button -- so a click there
     // is the frame's and not the ground's. The plate's transparent corners count: a click in
@@ -281,7 +282,7 @@ private:
             level = 0;
         int gem = 0;
         float slid = 0;
-        bool inventory = false, character = false;
+        bool inventory = false, character = false, quest = false;
         int hovered = -1;  // which button or slot is lit
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;

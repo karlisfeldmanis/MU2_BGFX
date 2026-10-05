@@ -63,14 +63,19 @@ struct ButtonRow {
     bool left;
     bool live;
 };
-// Menu and chat left of the life gem, inventory and character right of the mana gem. The menu
-// is live since 2026-09-27 and raises the game menu (game/ui/menu.h), as Escape does; the chat
-// is drawn dim, there being no chat in a game for one.
-constexpr ButtonRow kButtons[4] = {
+// Menu and chat left of the life gem, inventory, character and quests right of the mana gem. The
+// menu is live since 2026-09-27 and raises the game menu (game/ui/menu.h), as Escape does; the
+// chat is drawn dim, there being no chat in a game for one. The quests' opens the journal, as L
+// does (the user, 2026-10-05: "we need to find icon for quests button which to put on right side
+// of hud where is inventiry and character buttons").
+constexpr int kButtonCount = 5;
+constexpr int kQuestButton = 4;
+constexpr ButtonRow kButtons[kButtonCount] = {
     {"hud_button_menu", true, true},
     {"hud_button_chat", true, false},
     {"hud_button_inventory", false, true},
     {"hud_button_character", false, true},
+    {"hud_button_quest", false, true},
 };
 
 // The gem sheets: six frames a row, ten rows, 152 square, turning at 24 a second.
@@ -279,7 +284,7 @@ Box cellBox(const panel::Screen& s, size_t count, float screenWidth, int index) 
 Box buttonPx(int which) {
     const bool left = kButtons[which].left;
     int rank = 0, pair = 0;
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < kButtonCount; ++i) {
         if (kButtons[i].left == left) {
             if (i < which) ++rank;
             ++pair;
@@ -337,7 +342,7 @@ bool Hud::Face::operator==(const Face& o) const {
            maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
            shield == o.shield && maxShield == o.maxShield &&
            level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
-           character == o.character && hovered == o.hovered && tip == o.tip &&
+           character == o.character && quest == o.quest && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(boons, boons + kBoons, o.boons) && fanOpen == o.fanOpen &&
            fanOver == o.fanOver &&
@@ -434,7 +439,7 @@ void Hud::slide(float seconds) {
 }
 
 int Hud::hoveredAt(float x, float y) const {
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < kButtonCount; ++i) {
         if (kButtons[i].live && plate(screen_, buttonPx(i)).has(x, y)) return 100 + i;
     }
     for (int i = 0; i < kSlots; ++i) {
@@ -508,7 +513,7 @@ bool Hud::covers(float x, float y) const {
     if (!hero_) return false;
     if (plate(screen_, {0.0f, 0.0f, kPlateW, kPlateH}).has(x, y)) return true;
     if (plate(screen_, kLevelTrack).has(x, y)) return true;
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < kButtonCount; ++i) {
         if (plate(screen_, buttonPx(i)).has(x, y)) return true;
     }
     // And the open list, which stands off the plate over the world: a click on it is the
@@ -518,7 +523,7 @@ bool Hud::covers(float x, float y) const {
 
 void Hud::update(float seconds, float width, float height, const Pointer& pointer,
                  bool inventoryOpen, bool characterOpen, bool* toggleInventory,
-                 bool* toggleCharacter, bool* toggleMenu) {
+                 bool* toggleCharacter, bool* toggleMenu, bool questOpen, bool* toggleQuest) {
     clock_ += double(seconds);
     screen_ = panel::screenOf(width, height);
     slide(seconds);
@@ -529,6 +534,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         if (over == 100 && toggleMenu) *toggleMenu = true;
         if (over == 102 && toggleInventory) *toggleInventory = true;
         if (over == 103 && toggleCharacter) *toggleCharacter = true;
+        if (over == 100 + kQuestButton && toggleQuest) *toggleQuest = true;
     }
 
     now_ = Face{};
@@ -548,6 +554,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.slid = slid_;
         now_.inventory = inventoryOpen;
         now_.character = characterOpen;
+        now_.quest = questOpen;
         now_.hovered = hoveredAt(pointer.x, pointer.y);
         now_.tip = tipAt(pointer.x, pointer.y);
         now_.pointerX = pointer.x;
@@ -1346,11 +1353,12 @@ void Hud::rebuild() {
     // window behind it put it in. Four states stacked for the main frame's two (closed,
     // closed-hovered, open, open-hovered), two for the chat's and the menu's.
     const gfx::Art& disc = arts.get("hud_disc");
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < kButtonCount; ++i) {
         const ButtonRow& row = kButtons[i];
         const Box box = plate(s, buttonPx(i));
         const bool hovered = now_.hovered == 100 + i;
-        const bool open = (i == 2 && now_.inventory) || (i == 3 && now_.character);
+        const bool open = (i == 2 && now_.inventory) || (i == 3 && now_.character) ||
+                          (i == kQuestButton && now_.quest);
         // Brightened under the pointer in MU2, by a modulate of 1.35; a byte cannot go past
         // white, so here the icon's own lit state is the whole of the hover. A departure.
         canvas_.image(disc, box, row.live ? 0xFFFFFFFFu : kDeadIcon);

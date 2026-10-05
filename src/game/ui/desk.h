@@ -20,7 +20,6 @@
 #include "game/ui/mixer.h"
 #include "game/ui/endurance.h"
 #include "game/ui/go_back.h"
-#include "game/ui/herald.h"
 #include "game/ui/cursor.h"
 #include "game/ui/hud.h"
 #include "game/item_models.h"
@@ -213,8 +212,6 @@ private:
     bool goBackShown_ = false, goBackClosed_ = false, goBackAsked_ = false;
     int goBackLeft_ = 0;
     std::string goBackWhere_;
-    // The events coming for his level, one line at the top centre (game/ui/herald.h).
-    Herald herald_;
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
     bool scriptJournal_ = false;  // a script's L for the next update (--ui-type FRAME:journal)
     // The HUD's quest button, pressed last frame: the journal opens or shuts on this one.

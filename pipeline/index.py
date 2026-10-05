@@ -263,6 +263,8 @@ EFFECTS = {
     "hud_button_chat": "interface/hud_button_chat.png",
     "hud_button_inventory": "interface/hud_button_inventory.png",
     "hud_button_character": "interface/hud_button_character.png",
+    # The quest journal's button, MuMain's character-window quest tab (hud_cut.py MUMAIN_ICONS).
+    "hud_button_quest": "interface/hud_button_quest.png",
 
     # The chat window: the log's grab bar and scrollbar above, the bar of ten buttons
     # below, and the lit state of each button to lay over the one the bar paints dark.

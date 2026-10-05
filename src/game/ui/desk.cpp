@@ -76,7 +76,6 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     tracker_.open(interface_);
     travel_.open(interface_, assetDir);
     goBack_.open(interface_);
-    herald_.open(interface_);
     minimap_.open(interface_);
     menu_.open(interface_);
     endurance_.open(interface_, &arts_);
@@ -98,7 +97,6 @@ void Desk::shutdown() {
     tracker_.close();
     travel_.close();
     goBack_.close();
-    herald_.close();
     minimap_.close();
     specimen_.close();
     controls::close();
@@ -391,8 +389,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // Ours: MU 0.75 has no quests, and its L is only the repair.
     const bool journalAsked = scriptJournal_;
     scriptJournal_ = false;
-    if (!keysHeld && !inventoryOpen_ && play.isOpen() && play.realm().questing() < 0 &&
-        (window.pressed(gfx::Window::Key::Repair) || journalAsked)) {
+    // The HUD's quest button asks the same, with the bag up too (Hud's kQuestButton).
+    const bool journalPressed = questButton_;
+    questButton_ = false;
+    if (!keysHeld && play.isOpen() && play.realm().questing() < 0 &&
+        (journalPressed ||
+         (!inventoryOpen_ && (window.pressed(gfx::Window::Key::Repair) || journalAsked)))) {
         if (journal_ >= 0) {
             journal_ = -1;
         } else {
@@ -459,15 +461,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             click();
         }
     }
-    // The herald: the event coming for his level, at its three moments. Its cross clicks.
-    if (herald_.update(seconds, play, amount_.up() || menu_.up() ? Pointer{} : pointer,
-                       window.width(), window.height())) {
-        click();
-    }
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
+    bool toggleQuest = false;
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
-                characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu);
+                characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu, journal_ >= 0,
+                &toggleQuest);
+    // Read by the journal's L on the next frame, which runs ahead of the HUD.
+    if (toggleQuest) questButton_ = true;
     if (toggleMenu) {
         menu_.show();
         core::logf("window: menu up");
@@ -792,7 +793,6 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
                     travelPressed || travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
-                    herald_.covers(pointer.x, pointer.y) ||
                     (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
                     liftedQuick_ >= 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
@@ -1689,8 +1689,6 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (tracker_.announcing()) interface_.add(tracker_.banner());
     // Go Back! over the HUD's middle: chrome, under every window.
     if (goBack_.showing()) interface_.add(goBack_.canvas());
-    // The herald at the top centre: a reading, under every window.
-    if (herald_.showing()) interface_.add(herald_.canvas());
     // Chrome like the plate, under every window that might open over its corner.
     if (minimap_.showing()) interface_.add(minimap_.canvas());
     if (travel_.up()) interface_.add(travel_.canvas());
