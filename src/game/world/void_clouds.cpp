@@ -27,12 +27,20 @@ struct Layer {
     float shade;                  // the colour's share: deeper is darker
     float drift;                  // the drift's share
     float veer;                   // radians the drift turns from the top layer's
+    float bankCell;               // metres across one cell of the layer's banks
+    float bankCut;                // the bank pattern's 0-1 value below which it is open sky
 };
+// Then 'clouds canot be to light and steal attention, they have to be really layayerd like real
+// clouds' (the same day): an even sheet per layer blurred into one grey wash. Each layer now
+// gathers into banks with open gaps between them, its own pattern drifting with it, so a lower
+// deck shows through the gaps of the one above; no brighter than before, the deeper ones dimmer.
 constexpr Layer kLayers[] = {
-    {320, 60.0f, 66.0f, 0.2f, 1.5f, 9.0f, 14.0f, 0.8f, 1.0f, 1.0f, 0.0f},
-    {150, 95.0f, 104.0f, 7.0f, 11.0f, 14.0f, 22.0f, 0.6f, 0.78f, 0.7f, 0.35f},
-    {90, 140.0f, 152.0f, 18.0f, 26.0f, 22.0f, 34.0f, 0.45f, 0.58f, 0.45f, -0.3f},
+    {320, 60.0f, 66.0f, 0.2f, 1.5f, 9.0f, 14.0f, 0.8f, 1.0f, 1.0f, 0.0f, 38.0f, 0.42f},
+    {150, 95.0f, 104.0f, 7.0f, 11.0f, 14.0f, 22.0f, 0.6f, 0.72f, 0.7f, 0.35f, 60.0f, 0.46f},
+    {90, 140.0f, 152.0f, 18.0f, 26.0f, 22.0f, 34.0f, 0.45f, 0.5f, 0.45f, -0.3f, 90.0f, 0.44f},
 };
+// How far over the cut a bank grows to full: a cloud nearer its gap than this is fainter.
+constexpr float kBankSoft = 0.18f;
 constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
 // How far under the floor the layer lies, and the sheets' half width and growth.
 // 0.8-3 m since the user asked to see them round the castle's court too (2026-10-02: 'also i
@@ -61,11 +69,31 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // is one colour, so the smoke blend reads the same in any order and the sort cannot flicker.
 // Added, smoke01 was too small a puff to cover, and smoke02 added stood as brown squares.
 // And 'little bit to much vvisslbe clouds': 0.044.
-constexpr float kAlpha = 0.032f;  // and 'cloud still little bit to much vissible': 0.032
+// and 'cloud still little bit to much vissible': 0.032; 0.028 when the layers became banks,
+// whose clouds overlap more inside a bank than the even sheet's did.
+constexpr float kAlpha = 0.028f;
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
 constexpr float kDungeonColour[3] = {0.33f, 0.31f, 0.29f};
+
+// Value noise on a lattice, smoothly interpolated, 0-1: the banks' pattern.
+float lattice(int x, int z, uint32_t salt) {
+    uint32_t h = uint32_t(x) * 374761393u + uint32_t(z) * 668265263u + salt * 2246822519u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    return float((h ^ (h >> 16)) & 0xFFFFu) / 65535.0f;
+}
+
+float valueNoise(float x, float z, uint32_t salt) {
+    const float fx = std::floor(x), fz = std::floor(z);
+    const int ix = int(fx), iz = int(fz);
+    float tx = x - fx, tz = z - fz;
+    tx = tx * tx * (3.0f - 2.0f * tx);
+    tz = tz * tz * (3.0f - 2.0f * tz);
+    const float a = lattice(ix, iz, salt), b = lattice(ix + 1, iz, salt);
+    const float c = lattice(ix, iz + 1, salt), d = lattice(ix + 1, iz + 1, salt);
+    return (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * tz;
+}
 
 bool wanted(const std::string& world) { return world == "bloodcastle" || world == "dungeon"; }
 
@@ -118,6 +146,19 @@ void VoidClouds::shutdown() {
     sheet_ = BGFX_INVALID_HANDLE;
 }
 
+// 0 in a gap, 1 well inside a bank: the layer's pattern where the layer has carried it by now,
+// two octaves so a bank's edge is ragged rather than round.
+float VoidClouds::bank(float x, float z, int layer) const {
+    const Layer& l = kLayers[layer];
+    const float cv = std::cos(l.veer), sv = std::sin(l.veer);
+    const float dx = (kDrift[0] * cv - kDrift[1] * sv) * l.drift;
+    const float dz = (kDrift[0] * sv + kDrift[1] * cv) * l.drift;
+    const float u = (x - dx * clock_) / l.bankCell, v = (z - dz * clock_) / l.bankCell;
+    const float n = 0.7f * valueNoise(u, v, 11u + uint32_t(layer)) +
+                    0.3f * valueNoise(u * 2.3f, v * 2.3f, 31u + uint32_t(layer));
+    return std::clamp((n - l.bankCut) / kBankSoft, 0.0f, 1.0f);
+}
+
 bool VoidClouds::voidAt(float x, float z) const {
     // Column is +x and row is -z, each tile's centre at its half (docs/conventions.md).
     const int c = int(std::floor(x / metresPerTile_));
@@ -142,12 +183,15 @@ bool VoidClouds::clearUnder(float x, float z, float half, int layer) const {
 
 bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
     const Layer& layer = kLayers[wisp.layer];
-    for (int attempt = 0; attempt < 8; ++attempt) {
+    for (int attempt = 0; attempt < 16; ++attempt) {
         const float angle = 6.2831853f * unit();
         const float reach = layer.reach * std::sqrt(unit());
         const float x = near[0] + std::cos(angle) * reach;
         const float z = near[2] + std::sin(angle) * reach;
         const float size = layer.sizeMin + (layer.sizeMax - layer.sizeMin) * unit();
+        // Inside a bank, more often the deeper in: a cloud on a bank's edge is let through
+        // only sometimes, so the edge thins out rather than stopping at a line.
+        if (bank(x, z, wisp.layer) <= unit()) continue;
         if (!clearUnder(x, z, size, wisp.layer)) continue;
         wisp.at[0] = x;
         wisp.at[2] = z;
@@ -172,6 +216,7 @@ bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
 
 void VoidClouds::update(float seconds, const float near[3]) {
     if (!ground_) return;
+    clock_ += seconds;
     for (Wisp& wisp : wisps_) {
         if (wisp.alive) {
             wisp.age += seconds;
@@ -205,7 +250,9 @@ void VoidClouds::gather(gfx::Effects& effects) const {
         // In and out on a squared sine, so neither end has an edge to it.
         const float rise = std::sin(3.14159265f * std::clamp(t, 0.0f, 1.0f));
         const float ease = wisp.fade * wisp.fade * (3.0f - 2.0f * wisp.fade);
-        const float alpha = kAlpha * rise * rise * ease;
+        // And thinner where its bank has drifted away from under it.
+        const float held = 0.35f + 0.65f * bank(wisp.at[0], wisp.at[2], wisp.layer);
+        const float alpha = kAlpha * rise * rise * ease * held;
         if (alpha <= 0.002f) continue;
         const float half = wisp.size * (1.0f + kGrowth * t);
         const float c = std::cos(wisp.turn) * half, s = std::sin(wisp.turn) * half;

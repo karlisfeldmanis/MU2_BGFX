@@ -47,6 +47,7 @@ private:
     };
     bool spawn(Wisp& wisp, const float near[3], bool anyAge);
     bool voidAt(float x, float z) const;
+    float bank(float x, float z, int layer) const;
     bool clearUnder(float x, float z, float half, int layer) const;
     float unit();
 
@@ -57,6 +58,7 @@ private:
     float colour_[3] = {1.0f, 1.0f, 1.0f};
     std::vector<Wisp> wisps_;
     uint32_t seed_ = 0xC10D5u;
+    float clock_ = 0.0f;  // seconds since open, carrying each layer's banks along
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
 };
 
