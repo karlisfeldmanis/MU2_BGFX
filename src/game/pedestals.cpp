@@ -171,7 +171,17 @@ const FigureBody* Pedestals::dressed(int slot, sim::Kin kin, bool second,
                            wornShine, weaponShine, shieldShine);
 }
 
-void Pedestals::standAt(int slot, const FigureBody* body, sim::Kin kin) {
+const FigureBody* Pedestals::wingOf(const std::vector<Saved::Item>& items) const {
+    // As Play wears it: while it has life left, a file from before wear counting as full.
+    for (const Saved::Item& item : items) {
+        if (item.slot != sim::kWings) continue;
+        if (item.worn && item.durability <= 0) return nullptr;
+        return wingBody(*figures_, item.group, item.number);
+    }
+    return nullptr;
+}
+
+void Pedestals::standAt(int slot, const FigureBody* body, sim::Kin kin, const FigureBody* wing) {
     const int where = slot == kRosterSlots ? previewSlot_ : slot;
     Stand& stand = stands_[slot];
     stand = Stand{};
@@ -184,6 +194,12 @@ void Pedestals::standAt(int slot, const FigureBody* body, sim::Kin kin) {
     // its back to the camera; both were tried and photographed.
     const float yaw = (180.0f - kStands[where][2]) * 3.14159265f / 180.0f;
     stand.figure.stand(body, at, yaw, body->scale * kSceneScale, true);
+    // Winged, the stop fly: the slung weapon leaves the bare pair, as in the field without a
+    // crossbow drawn.
+    if (wing && body->flyIdleClip >= 0) {
+        stand.figure.play(body->flyIdleClip, false, 0.0f);
+        stand.wing.wear(wing, stand.figure);
+    }
     stand.height = body->height * body->scale * kSceneScale;
     stand.up = true;
     stand.kin = kin;
@@ -196,7 +212,8 @@ void Pedestals::raise(const std::vector<Seat>& roster) {
     for (int slot = 0; slot < kRosterSlots; ++slot) stands_[slot] = Stand{};
     for (const Seat& one : roster) {
         if (one.slot < 0 || one.slot >= kRosterSlots) continue;
-        standAt(one.slot, dressed(one.slot, one.kin, one.second, one.items), one.kin);
+        standAt(one.slot, dressed(one.slot, one.kin, one.second, one.items), one.kin,
+                wingOf(one.items));
     }
     if (picked_ >= 0 && !standing(picked_)) picked_ = -1;
 }
@@ -322,6 +339,7 @@ void Pedestals::update(float seconds) {
     for (Stand& stand : stands_) {
         if (!stand.up) continue;
         stand.figure.update(seconds);
+        stand.wing.update(seconds, true);
         // Back to the idle as the greeting ends, the fade begun before its last key so the
         // clip never wraps round to its start.
         if (stand.greeting > 0.0f) {
@@ -370,6 +388,10 @@ void Pedestals::gather(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
         stand.figure.poseHeld(renderer, scratch_.data());
         stand.figure.gather(row, out);
         if (casters) stand.figure.gather(row, *casters);
+        if (const FigureBody* wing = stand.wing.worn()) {
+            if (scratch_.size() < wing->boneCount() * 12) scratch_.resize(wing->boneCount() * 12);
+            stand.wing.gather(renderer, stand.figure, scratch_, out, casters);
+        }
     }
 }
 

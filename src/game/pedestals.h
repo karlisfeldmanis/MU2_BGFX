@@ -25,6 +25,9 @@
 //
 // Every figure stands as a character stands in town: weapon slung and the bare idle, because the
 // scene is a safe place -- the arrangement MU2's Crowd.Dress draws on crossing into a safe zone.
+// But a figure with a wing on stands as he stands on wings in the field: MU's stop fly (11),
+// the wing beating as in the air -- the user, 2026-10-05: 'if char has wings use flying stance
+// on char selection screen'.
 #pragma once
 
 #include <cstdint>
@@ -37,6 +40,7 @@
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/roster.h"
+#include "game/wings.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
 
@@ -98,6 +102,7 @@ private:
         Figure figure;
         float height = 2.0f;  // the body's own height, metres, at the scene's scale
         sim::Kin kin = sim::Kin::DarkKnight;
+        WingLook wing;           // the wing on his back, if he wears one with life left
         int idle = -1;           // the clip it stands in
         float greeting = 0.0f;   // seconds of its greeting left, 0 when it stands idle
     };
@@ -106,7 +111,10 @@ private:
         float life, light, rise, half[2];
         bool blob;
     };
-    void standAt(int slot, const FigureBody* body, sim::Kin kin);
+    void standAt(int slot, const FigureBody* body, sim::Kin kin,
+                 const FigureBody* wing = nullptr);
+    // The wing body his wings slot draws as, or null for none or a broken one.
+    const FigureBody* wingOf(const std::vector<Saved::Item>& items) const;
     // Who the rings, the streams and the light are on: the create window's class while it
     // stands on its pedestal, and the pick otherwise.
     const Stand* subject() const;
