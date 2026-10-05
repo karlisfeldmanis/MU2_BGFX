@@ -170,7 +170,36 @@ ICONS = {
 #: open states are baked (inventory 0.73 and 0.72, character 0.69 and 0.66, measured on the cut
 #: sheets: an open window's button sits pressed in and dim). The decoder hands this
 #: TGA back bottom-up (the gold state first, the spine on top), so it is flipped.
+#:
+#: **Its lit state is the grey one's frame with the gold book laid in** (LIT_ONTO_REST; the user,
+#: 2026-10-05: "when i hover on quest button its offset is little bitt different"). MU's gold
+#: cell draws its book a pixel left of the grey one's (bounds 9-25 against 10-26) and lights the
+#: inner frame's bevel, which the round cut leaves showing top left: on hover the button seemed
+#: to jump. So the lit cell is built from the grey cell, its frame untouched, with the gold
+#: cell's warm book pixels pasted a pixel right, where the grey book is.
 MUMAIN = PROJECT.parent / "LEGACY" / "reference" / "MuMain" / "src" / "bin" / "Data" / "Interface"
+#: name -> (lit state, rest state, dx, dy): the lit state rebuilt as above.
+LIT_ONTO_REST = {"hud_button_quest": (1, 0, 1, 0)}
+
+
+def lit_onto_rest(strip: Image.Image, tall: int, lit: int, rest: int, dx: int, dy: int) -> Image.Image:
+    """The strip with its `lit` cell replaced by the `rest` cell and the lit cell's warm, coloured
+    pixels -- the glyph, not its grey frame -- pasted on it moved by (dx, dy)."""
+    out = strip.copy()
+    base = strip.crop((0, rest * tall, strip.width, (rest + 1) * tall))
+    glow = strip.crop((0, lit * tall, strip.width, (lit + 1) * tall))
+    for y in range(tall):
+        for x in range(strip.width):
+            r, g, b, a = glow.getpixel((x, y))
+            tx, ty = x + dx, y + dy
+            if not (0 <= tx < strip.width and 0 <= ty < tall):
+                continue
+            if r - b > 25 and max(r, g, b) > 40:
+                base.putpixel((tx, ty), (r, g, b, a))
+    out.paste(base, (0, lit * tall))
+    return out
+
+
 MUMAIN_ICONS = {
     "hud_button_quest": ("newui_chainfo_btn_quest.OZT", (36, 58), 2, (0, 1, 0, 1),
                          ((6, 3, 30, 27), (6, 3, 30, 27), (5, 2, 29, 26), (5, 2, 29, 26)),
@@ -194,6 +223,8 @@ def main() -> None:
             strip = decode(MUMAIN / file).convert("RGBA")
             if flip:
                 strip = strip.transpose(Image.FLIP_TOP_BOTTOM)
+            if name in LIT_ONTO_REST:
+                strip = lit_onto_rest(strip, size[1] // states, *LIT_ONTO_REST[name])
             cut_icon(strip, name, file, size, states, keep, boxes, args.out, light)
         return
 
@@ -235,6 +266,8 @@ def main() -> None:
         strip = decode(MUMAIN / file).convert("RGBA")
         if flip:
             strip = strip.transpose(Image.FLIP_TOP_BOTTOM)
+        if name in LIT_ONTO_REST:
+            strip = lit_onto_rest(strip, size[1] // states, *LIT_ONTO_REST[name])
         cut_icon(strip, name, file, size, states, keep, boxes, out, light)
 
 
