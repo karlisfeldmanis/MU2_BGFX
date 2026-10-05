@@ -13,8 +13,49 @@ namespace {
 
 using gfx::Box;
 
-// The cells are the HUD's (Hud::wornCell): a buff cell's size, over the belt.
-constexpr float kIconShare = 0.74f;  // of the tile's width, the rest is frame and air
+// The cells are the HUD's (Hud::wornCell): round, a little under a buff cell's width, over the
+// belt.
+constexpr float kIconShare = 0.56f;  // of the disc's width: inside the rim, with air round it
+constexpr float kRimShare = 0.16f;   // of the radius, the durability ring
+constexpr int kRound = 40;           // segments a full circle
+
+// A filled disc, as a fan: the canvas has no circle of its own.
+void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t abgr) {
+    float xy[kRound * 2];
+    uint32_t colours[kRound];
+    for (int k = 0; k < kRound; ++k) {
+        const float a = 6.28318531f * float(k) / float(kRound);
+        xy[k * 2] = cx + std::sin(a) * r;
+        xy[k * 2 + 1] = cy - std::cos(a) * r;
+        colours[k] = abgr;
+    }
+    canvas.polygon(xy, colours, kRound);
+}
+
+// A pie slice from the top, clockwise, between shares `from` and `to` of the turn: cut in
+// quarter turns at most, so every piece is convex for the canvas's fan.
+void wedge(gfx::Canvas& canvas, float cx, float cy, float r, float from, float to,
+           uint32_t abgr) {
+    constexpr int kPerQuarter = kRound / 4;
+    while (to - from > 1e-4f) {
+        const float end = std::min(to, from + 0.25f);
+        float xy[(kPerQuarter + 2) * 2];
+        uint32_t colours[kPerQuarter + 2];
+        int n = 0;
+        xy[0] = cx;
+        xy[1] = cy;
+        colours[n++] = abgr;
+        const int steps = std::max(1, int(std::ceil((end - from) * float(kRound))));
+        for (int k = 0; k <= steps; ++k) {
+            const float a = 6.28318531f * (from + (end - from) * float(k) / float(steps));
+            xy[n * 2] = cx + std::sin(a) * r;
+            xy[n * 2 + 1] = cy - std::cos(a) * r;
+            colours[n++] = abgr;
+        }
+        canvas.polygon(xy, colours, n);
+        from = end;
+    }
+}
 
 // The slot's own silhouette, the one the bag draws in it (Bag.GhostFor), so the warning and the
 // equipment window name a piece with the same shape -- the user, 2026-09-24: MuMain's separate
@@ -148,36 +189,35 @@ void Endurance::rebuild(const sim::Realm& realm) {
     for (int i = 0; i < now_.count; ++i) {
         const Icon& one = now_.icons[i];
         const Box box = now_.cells[i];
-        // A soft shade under the tile, and a broken piece's glow outside it: three rings
-        // stepping out and fading, which is as near a blur as the canvas has.
-        canvas_.rect(box.grown(line), gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f));
+        // A round container (the user, 2026-10-05: "make them little bit smaller and in circle
+        // containers"): a soft shade under it, and a broken piece's glow outside it, three
+        // discs stepping out and fading, which is as near a blur as the canvas has.
+        const float cx = box.midX(), cy = box.midY(), r = box.w * 0.5f;
         if (one.band == sim::Worn::Broken) {
-            for (int ring = 1; ring <= 3; ++ring) {
-                canvas_.outline(box.grown(line * float(ring + 1)), line,
-                                colourOf(one.band, 0.42f / float(ring)));
+            for (int ring = 3; ring >= 1; --ring) {
+                disc(canvas_, cx, cy, r + line * float(ring + 1),
+                     colourOf(one.band, 0.30f / float(ring)));
             }
         }
-        canvas_.rect(box, gfx::rgba(0.043f, 0.035f, 0.031f, 0.96f));
-        // Fitted at its own aspect, as the bag fits it: a boot is tall and a helm nearly square.
+        disc(canvas_, cx, cy, r + line, gfx::rgba(0.0f, 0.0f, 0.0f, 0.6f));
+        // What is left as the rim: the band's colour clockwise from the top for the share left,
+        // the rest of the rim the same colour dim -- so even a broken piece reads in its red.
+        const float left = one.maximum > 0
+                               ? std::clamp(float(one.durability) / float(one.maximum), 0.0f, 1.0f)
+                               : 0.0f;
+        disc(canvas_, cx, cy, r, colourOf(one.band, 0.28f));
+        wedge(canvas_, cx, cy, r, 0.0f, left, colourOf(one.band));
+        disc(canvas_, cx, cy, r - kRimShare * r, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
+        disc(canvas_, cx, cy, r - kRimShare * r - line, gfx::rgba(0.043f, 0.035f, 0.031f, 0.97f));
+        // Fitted at its own aspect inside the disc, as the bag fits it: a boot is tall and a helm
+        // nearly square.
         const gfx::Art& art = arts_->get(artFor(one.slot));
         if (art.valid() && art.width > 0.0f && art.height > 0.0f) {
             const float room = box.w * kIconShare;
-            const float k = std::min(room / art.width, box.h * kIconShare / art.height);
+            const float k = std::min(room / art.width, room / art.height);
             const float w = art.width * k, h = art.height * k;
-            canvas_.image(art, {box.midX() - w * 0.5f, box.midY() - h * 0.5f, w, h}, kShapeInk);
+            canvas_.image(art, {cx - w * 0.5f, cy - h * 0.5f, w, h}, kShapeInk);
         }
-        // The frame in the band's colour over a black hairline inside it, so the colour holds its
-        // edge against the grey art as well as against the ground.
-        canvas_.outline(box.grown(-line), line, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
-        canvas_.outline(box, line, colourOf(one.band));
-        // What is left, down the right edge, filled from the foot.
-        const float barW = std::max(2.0f, std::round(box.w / 14.0f));
-        const Box track{box.right() - line * 2.0f - barW, box.y + line * 2.5f, barW,
-                        box.h - line * 5.0f};
-        canvas_.rect(track, gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f));
-        const float left = one.maximum > 0 ? float(one.durability) / float(one.maximum) : 0.0f;
-        const float fill = std::max(track.h * 0.04f, track.h * std::clamp(left, 0.0f, 1.0f));
-        canvas_.rect({track.x, track.bottom() - fill, track.w, fill}, colourOf(one.band));
     }
 
     if (now_.hovered >= 0) {

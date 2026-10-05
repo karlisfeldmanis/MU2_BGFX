@@ -393,9 +393,12 @@ gfx::Box Hud::wornCell(int i) const {
     // Right-aligned to the belt's last box, so the row stands over the potions as the buffs stand
     // over the skills (the user, 2026-10-05: "we need to find betetr place and choose betetr size
     // for broken item UI").
+    // Round and a little smaller than a buff cell (the user, the same day: "make them little bit
+    // smaller and in circle containers"), standing on the strip's foot.
+    constexpr float kWornAcross = 34.0f;
     const float end = kQuickX + float(kQuickKeys - 1) * kQuickPitch + kQuickW;
-    const float x = end - float(i + 1) * kBuffsAt.w - float(i) * kBuffGap;
-    return plate(screen_, {x, kBuffsAt.y, kBuffsAt.w, kBuffsAt.h});
+    const float x = end - float(i + 1) * kWornAcross - float(i) * kBuffGap;
+    return plate(screen_, {x, kBuffsAt.y + kBuffsAt.h - kWornAcross, kWornAcross, kWornAcross});
 }
 
 float Hud::progress() const {

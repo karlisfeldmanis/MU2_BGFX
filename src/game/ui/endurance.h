@@ -1,5 +1,6 @@
-// The worn-gear warning: one tile for each worn piece at half its durability or less, in a row
-// over the potion belt, worst piece on the right, and a small card for the one under the pointer.
+// The worn-gear warning: one round container for each worn piece at half its durability or less,
+// in a row over the potion belt, worst piece on the right, its rim a ring of what is left, and a
+// small card for the one under the pointer.
 //
 // MuMain's `CNewUIItemEnduranceInfo` in the shape the user chose on the design canvas on
 // 2026-09-24 ("A3 · MU's column, polished", tint "Frame only"). Kept of MuMain: the four bands and
@@ -12,9 +13,12 @@
 //     not a column down the screen's edge (the user, 2026-10-05: "we need to find betetr place
 //     and choose betetr size for broken item UI"; at the edge under the minimap it was far from
 //     where a fight is watched); worst piece first rather than slot order;
-//   * the shape stays in the window's warm ink and only the frame takes the band's colour --
+//   * round, a little smaller than a buff cell (the user, 2026-10-05: "make them little bit
+//     smaller and in circle containers");
+//   * the shape stays in the window's warm ink and only the rim takes the band's colour --
 //     MuMain's half-strength wash muddied the art -- with a red glow on a broken piece;
-//   * a bar down each tile's right edge, filled from the foot by what is left;
+//   * the rim is the gauge: the band's colour clockwise from the top for what is left, the rest
+//     of it the same colour dim;
 //   * the hover is the item card's own glass (tip.h) rather than MU's one line: the name in its
 //     band, what it has left, what the wear costs it now, and where it is mended.
 //

@@ -250,8 +250,8 @@ public:
     // sits over the HUD at every window size without a second copy of the plate's arithmetic.
     float plateTop() const;
     // The worn-gear warning's `i`th cell (game/ui/endurance.h), in backbuffer pixels: the buff
-    // strip's mirror over the plate's other half, a buff cell's size, packed right to left from
-    // the end of the potion belt.
+    // strip's mirror over the plate's other half, a square for a round container a little under
+    // a buff cell's width, packed right to left from the end of the potion belt.
     gfx::Box wornCell(int i) const;
 
     // A frame: slides the hairline, answers the pointer, and rebuilds the canvas only if what
