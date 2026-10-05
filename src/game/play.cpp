@@ -1972,6 +1972,21 @@ void Play::update(double seconds) {
     watchAggro(float(seconds));
     showing_.update(float(seconds));
     aura_.update(float(seconds));
+    // A complete set's flares, round the hero where he is drawn.
+    {
+        const sim::Body& hero = realm_.hero();
+        const Drawn* drawn = drawnOf(hero.id);
+        int plus = -1;
+        float feet[3] = {0.0f, 0.0f, 0.0f};
+        if (ground_ && isOpen() && hero.alive() && drawn && drawn->placed && realm_.tables()) {
+            plus = SetShine::setPlus(*realm_.tables(), realm_.satchel());
+            feet[0] = drawn->crown[0];
+            feet[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
+            feet[2] = drawn->crown[2];
+        }
+        setShine_.update(float(seconds), plus, feet, drawn ? drawn->yaw : 0.0f,
+                         ground_ ? ground_->metresPerTile() : 1.0f);
+    }
     warp_.update(float(seconds));
     // And the guard walks with him, or goes when the realm says it has gone.
     if (isOpen()) guardStep();

@@ -159,6 +159,7 @@ add_executable(mu2
   src/game/fx/marker.cpp
   src/game/ui/arrival.cpp
   src/game/fx/aura.cpp
+  src/game/fx/set_shine.cpp
   src/game/fx/warp.cpp
   src/game/fx/bones.cpp
   src/game/fx/breath.cpp

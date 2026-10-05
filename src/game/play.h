@@ -19,6 +19,7 @@
 #include "content/ground.h"
 #include "content/tables.h"
 #include "game/fx/aura.h"
+#include "game/fx/set_shine.h"
 #include "game/fx/warp.h"
 #include "game/fx/bones.h"
 #include "game/fx/breath.h"
@@ -437,6 +438,7 @@ public:
     // What a level looks like, and sounds like. Opened by the caller for the same reason as
     // the showing.
     Aura& aura() { return aura_; }
+    SetShine& setShine() { return setShine_; }
     // Where a Town Portal Scroll lands him, opened by the caller for the same reason.
     Warp& warp() { return warp_; }
     void gatherWarp(gfx::Effects& effects) const {
@@ -609,6 +611,7 @@ public:
     void ui(Ui which);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
+        if (ground_) setShine_.gather(effects, *ground_, eye);
     }
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
     // blow that earned it has landed, and what `--rise` does for a review run.
@@ -976,6 +979,8 @@ private:
     Showing showing_;
     Marker marker_;
     Aura aura_;
+    // A complete set at +10 and +11: its flares and ribbons (game/fx/set_shine.h).
+    SetShine setShine_;
     Warp warp_;
     bool warpOwed_ = false;
     bool homeOwed_ = false;

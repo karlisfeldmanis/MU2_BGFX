@@ -255,6 +255,7 @@ bool PlayMode::open(Context& ctx) {
             world_.played().showing().open(assets, ctx.textures);
             world_.played().marker().open(assets, ctx.textures);
             world_.played().aura().open(assets, ctx.textures);
+            world_.played().setShine().open(assets, ctx.textures);
             world_.played().warp().open(assets, ctx.textures);
             if (world_.played().showing().isOpen()) {
                 if (const content::EffectSheet* light =
