@@ -298,7 +298,9 @@ bool Renderer::createTargets(int width, int height) {
     bgfx::TextureHandle prepassAttachments[] = {prepassColour_, sceneDepth_};
     prepassFb_ = bgfx::createFrameBuffer(2, prepassAttachments, false);
 
-    ssaoTex_ = bgfx::createTexture2D(hw, hh, false, 1, bgfx::TextureFormat::R8, rt | clamp);
+    // RG16F: the occlusion in r and the depth it was taken at in g, which the blur reads
+    // instead of the multisampled prepass (fs_ssao_body.sh).
+    ssaoTex_ = bgfx::createTexture2D(hw, hh, false, 1, bgfx::TextureFormat::RG16F, rt | clamp);
     ssaoFb_ = bgfx::createFrameBuffer(1, &ssaoTex_, true);
     blurTex_ = bgfx::createTexture2D(hw, hh, false, 1, bgfx::TextureFormat::R8, rt | clamp);
     blurFb_ = bgfx::createFrameBuffer(1, &blurTex_, true);

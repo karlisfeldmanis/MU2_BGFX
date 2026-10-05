@@ -7,7 +7,13 @@
 
 void main()
 {
-	float centreDepth = prepassAt(v_texcoord0).w;
+	// The depths come from the SSAO target's g, where fs_ssao left the depth it read at each
+	// texel: one half-resolution RG16F texel a tap, not one of the multisampled prepass
+	// (docs/perf-audit-2k.md, A5). A tap's uv lands on a corner between texels, and the texel
+	// past that corner is the one whose depth is read, by fetch, never averaged across an edge.
+	ivec2 here = ivec2(gl_FragCoord.xy);
+	ivec2 last = ivec2(1.0 / u_viewTexel.xy + 0.5) - ivec2(1, 1);
+	float centreDepth = texelFetch(s_ao, here, 0).g;
 	if (centreDepth <= 0.0)
 	{
 		gl_FragColor = vec4_splat(1.0);
@@ -21,7 +27,8 @@ void main()
 		for (int x = -2; x < 2; ++x)
 		{
 			vec2 uv = v_texcoord0 + vec2(float(x) + 0.5, float(y) + 0.5) * u_viewTexel.xy;
-			float depth = prepassAt(uv).w;
+			ivec2 at = clamp(here + ivec2(x + 1, y + 1), ivec2(0, 0), last);
+			float depth = texelFetch(s_ao, at, 0).g;
 			if (depth <= 0.0) continue;
 			// Within a tenth of the depth counts fully, and it falls off from there.
 			float w = saturate(1.0 - abs(depth - centreDepth) / (centreDepth * 0.1 + 1e-4));

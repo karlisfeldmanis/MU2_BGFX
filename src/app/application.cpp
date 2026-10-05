@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <thread>
@@ -128,6 +129,9 @@ int Application::run(int argc, char** argv) {
 
     paths_.assets = MU2_ASSET_DIR;
     paths_.shaders = MU2_SHADER_DIR;
+    // A copy of another build's shaders, for an A/B of two binaries in one afternoon: the
+    // directory is compiled in, so a baseline binary would otherwise read the new shaders.
+    if (const char* dir = std::getenv("MU2_SHADER_DIR")) paths_.shaders = dir;
     paths_.sheets = MU2_SHEET_DIR;
     paths_.root = MU2_ROOT_DIR;
     paths_.log = args_.logPath.empty() ? paths_.under(paths_.root, "mu2.log") : args_.logPath;

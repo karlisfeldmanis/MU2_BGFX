@@ -140,6 +140,16 @@ Lorencia 140,126 `--still`, 2560x1273, vsync off, `--repeat 3` of 600, interleav
 crowd, the fountain); walls and ground are pixel-identical. The estimate before measuring was
 1-2 ms of bandwidth: the GPU hides most of a write back behind the next pass's work.
 
+### The shadow disc as tables, grass before ground, and SSAO, 1.56 ms at 2K, 2026-10-05
+
+`docs/perf-audit-2k.md` has the audit and the table. The town at 140,126, 2560x1273, `--still`,
+`--repeat 3`, interleaved: **8.61 to 7.05 ms**, the open field at 190,110 8.31 to 6.92. Nearly
+all of it is the PCSS disc: its tap counts rode a uniform, so the loops never unrolled and
+every tap computed a sqrt, a cos and a sin before its read. Pictures match to a level.
+
+`MU2_SHADER_DIR` in the environment points a binary at another build's shaders, which is
+how two builds are A/B'd in one afternoon: the directory is otherwise compiled in.
+
 ### MetalFX upscales a scaled world, 2026-10-02
 
 At `--scale` 0.9 and under, Apple's MetalFX spatial scaler (src/gfx/metalfx.mm, through a

@@ -412,6 +412,10 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
                     const float* sheet, float density, uint32_t first, uint32_t indices,
                     float colour) {
         if (batch.count == 0 || !bgfx::isValid(batch.sheet)) return;
+        // The sun, the sky, the shadow map, the AO and the lamps, which fs_grass reads as the
+        // land does. The field used to inherit them from the ground's draws, submitted before
+        // it; drawn first now (Renderer::draw), it has to bind its own.
+        bindShadeInputs();
         bgfx::setUniform(uGrassCard_, card);
         bgfx::setUniform(uGrassWind_, grass.wind);
         bgfx::setUniform(uGrassRoot_, grass.root);
@@ -1002,7 +1006,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // here is shaded twice.
             const uint64_t shadeState =
                 BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_EQUAL;
-            if (ground) submitGround(ViewShade, groundShadeProgram_, *ground, shadeState, true);
+            // The ground AFTER the grass, which takes a view in submission order: bgfx sorts a
+            // view by program, and the ground's program came first, so the turf under the field
+            // was lit in full -- two or three material sets, the PCSS lookup, the lamp loop -- and
+            // then covered. Drawn second, it fails EQUAL wherever the grass wrote a nearer depth
+            // on all four samples, and those pixels showed grass in any case: the same picture
+            // (docs/perf-audit-2k.md, A3).
+            bgfx::setViewMode(ViewShade, bgfx::ViewMode::Sequential);
             // The grass, and it is the one thing in this view that does not test EQUAL.
             //
             // It is not in the prepass at all. It cannot be: a card is mostly empty, its edge
@@ -1016,7 +1026,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // under the field is shaded and then covered, where before the field's own prepass
             // depth made the ground fail EQUAL and skip its two blended material sets, its
             // PCSS lookup and its lamp loop. That saving was worth -0.26 ms -- the field was
-            // FASTER than no field. It was spent on not shimmering. docs/grass.md.
+            // FASTER than no field. It was spent on not shimmering. docs/grass.md. Drawing the
+            // field before the ground (above) takes it back wherever a pixel is grass throughout.
             //
             // Alpha to coverage only where there are samples to cover: at --msaa 1 there is
             // one, and a fractional coverage on one sample is a dither. The hard cut is right
@@ -1025,6 +1036,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                         BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
                                         (msaa_ > 1 ? BGFX_STATE_BLEND_ALPHA_TO_COVERAGE : 0);
             if (grass) submitGrass(ViewShade, grassShadeProgram_, *grass, grassState);
+            if (ground) submitGround(ViewShade, groundShadeProgram_, *ground, shadeState, true);
             if (total > 0) {
                 softSelect_ = SoftSelect::Skip;
                 submitBatches(ViewShade, shadeProgram_, skinnedShadeProgram_, batches_, idb,

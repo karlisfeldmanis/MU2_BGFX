@@ -14,11 +14,62 @@ uniform vec4 u_shadowDebug;
 // metres on the CPU, so that a finer map draws the same shadow sharper and not a smaller one
 uniform vec4 u_shadowReach;
 
-vec2 vogel(int i, int count, float phase)
+// The Vogel disc, written out: tap i of n sits at sqrt((i + 0.5) / n) out and i golden angles
+// round, for the four counts the filter takes. Computed per tap it was a sqrt, a cos and a sin
+// for each of 25 taps on every lit pixel, and the count rides a uniform, so the compiler could
+// fold none of it (docs/perf-audit-2k.md, A1). A turned disc is this one rotated by its phase,
+// which is one cos and one sin a pixel. `static`, since a global const in the HLSL that bgfx's
+// Metal path parses is a uniform, and braces, since that parser takes no array constructor.
+static const vec2 kVogel5[5] = {
+	vec2(0.3162278, 0.0000000),
+	vec2(-0.4038736, 0.3699813),
+	vec2(0.0618193, -0.7043993),
+	vec2(0.5090565, 0.6639740),
+	vec2(-0.9341812, -0.1652435)
+};
+static const vec2 kVogel8[8] = {
+	vec2(0.2500000, 0.0000000),
+	vec2(-0.3192901, 0.2924959),
+	vec2(0.0488725, -0.5568765),
+	vec2(0.4024445, 0.5249176),
+	vec2(-0.7385351, -0.1306365),
+	vec2(0.6996049, -0.4450314),
+	vec2(-0.2340042, 0.8704838),
+	vec2(-0.4462713, -0.8592682)
+};
+static const vec2 kVogel9[9] = {
+	vec2(0.2357023, 0.0000000),
+	vec2(-0.3010296, 0.2757678),
+	vec2(0.0460774, -0.5250282),
+	vec2(0.3794283, 0.4948970),
+	vec2(-0.6962976, -0.1231652),
+	vec2(0.6595939, -0.4195796),
+	vec2(-0.2206212, 0.8207000),
+	vec2(-0.4207486, -0.8101259),
+	vec2(0.9128562, 0.3333736)
+};
+static const vec2 kVogel16[16] = {
+	vec2(0.1767767, 0.0000000),
+	vec2(-0.2257722, 0.2068258),
+	vec2(0.0345581, -0.3937712),
+	vec2(0.2845712, 0.3711728),
+	vec2(-0.5222232, -0.0923739),
+	vec2(0.4946954, -0.3146847),
+	vec2(-0.1654659, 0.6155250),
+	vec2(-0.3155615, -0.6075944),
+	vec2(0.6846422, 0.2500302),
+	vec2(-0.7122561, 0.2940090),
+	vec2(0.3433545, -0.7337286),
+	vec2(0.2537302, 0.8089320),
+	vec2(-0.7647459, -0.4431859),
+	vec2(0.8971340, -0.1972324),
+	vec2(-0.5475069, 0.7787722),
+	vec2(-0.1264868, -0.9760897)
+};
+
+vec2 turnTap(vec2 tap, vec2 turn)
 {
-	float r = sqrt((float(i) + 0.5) / float(count));
-	float theta = float(i) * 2.39996323 + phase;
-	return vec2(cos(theta), sin(theta)) * r;
+	return vec2(tap.x * turn.x - tap.y * turn.y, tap.x * turn.y + tap.y * turn.x);
 }
 
 // The disc's turn, which spreads few taps into a penumbra that looks smooth in a still: it
@@ -79,21 +130,30 @@ float sunShadow(vec3 wpos, vec3 normal, float ndotl, vec2 pixel)
 	// at sixteen; twenty-four soften them for another 0.27 ms and do not remove them.
 	bool still = u_shadowDebug.y > 1.5;
 	float phase = discTurn(sc.xy, pixel);
-	int kSearch = still ? 9 : 5;
-	int kFilter = still ? 16 : 8;
+	vec2 turn = vec2(cos(phase), sin(phase));
 
 	float searchRadius = u_shadowReach.x;
 	float blockerSum = 0.0;
 	float blockerCount = 0.0;
-	for (int i = 0; i < kSearch; ++i)
-	{
-		float d = texture2D(s_shadowDepth, sc.xy + vogel(i, kSearch, phase) * searchRadius).r;
-		if (d < receiver)
-		{
-			blockerSum += d;
-			blockerCount += 1.0;
-		}
+	// Two loops of fixed length rather than one of a uniform's, so each unrolls over its table.
+#define MU2_SEARCH_TAP(TAP) \
+	{ \
+		float d = texture2D(s_shadowDepth, sc.xy + turnTap(TAP, turn) * searchRadius).r; \
+		if (d < receiver) \
+		{ \
+			blockerSum += d; \
+			blockerCount += 1.0; \
+		} \
 	}
+	if (still)
+	{
+		for (int i = 0; i < 9; ++i) MU2_SEARCH_TAP(kVogel9[i])
+	}
+	else
+	{
+		for (int i = 0; i < 5; ++i) MU2_SEARCH_TAP(kVogel5[i])
+	}
+#undef MU2_SEARCH_TAP
 	if (blockerCount < 0.5)
 	{
 		// Not lit outright: five turned taps can miss a grazing blocker, and a hard 1.0
@@ -116,10 +176,17 @@ float sunShadow(vec3 wpos, vec3 normal, float ndotl, vec2 pixel)
 	float radius = clamp(penumbra, u_shadowParams.z, u_shadowReach.y);
 
 	float sum = 0.0;
-	for (int i = 0; i < kFilter; ++i)
+	if (still)
 	{
-		vec2 offset = vogel(i, kFilter, phase) * radius;
-		sum += shadow2D(s_shadowCompare, vec3(sc.xy + offset, receiver));
+		for (int i = 0; i < 16; ++i)
+		{
+			sum += shadow2D(s_shadowCompare, vec3(sc.xy + turnTap(kVogel16[i], turn) * radius, receiver));
+		}
+		return sum / 16.0;
 	}
-	return sum / float(kFilter);
+	for (int i = 0; i < 8; ++i)
+	{
+		sum += shadow2D(s_shadowCompare, vec3(sc.xy + turnTap(kVogel8[i], turn) * radius, receiver));
+	}
+	return sum / 8.0;
 }
