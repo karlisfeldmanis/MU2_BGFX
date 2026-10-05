@@ -54,6 +54,10 @@
     }
   },
   "glow_note": "`case MODEL_CHAOS_DRAGON_AXE`: BlendMesh 1, BlendMeshLight = sin(WorldTime*0.004)*0.3+0.7 (ZzzObject.cpp:5263-5266) -- texture 1, ft72's red flame, is drawn added and breathes. Drawn added on its raw sheet (export_gltf.glow_material). ZzzOpenData.cpp:1248 sets Meshs[1].NoneBlendMesh, which only keeps the chrome of a levelled item off that mesh (ZzzBMD.cpp:1425). Not here: the red BITMAP_SHINY+1 sprites MU hangs along the haft when held (ZzzCharacter.cpp:10431-10445) and the red swing blur it shares with the Double Blade (ZzzCharacter.cpp:3951) are client effects. The flame's two bones (Box01, Box03) drift ~5 units through MU's 13-key action 0; held items are rigid here, so it is built at key 0.",
+  "no_chrome": [
+    "ft72"
+  ],
+  "no_chrome_from": "ZzzOpenData.cpp:1248: Meshs[1].NoneBlendMesh, so a +7 or +9 axe's chrome and metal passes (ZzzBMD.cpp:1425) stay off the flame.",
   "rig_note": "No .rig.json, as on Staff06: Mace07.bmd's nine bones include a Mesh01, which the player's skeleton also has at the hand, and a borrowed bind pose would skin the head to it. The .obj is MU's geometry at action 0 key 0, which is all a rigid weapon needs.",
   "material_note": "The body (98 triangles on ft6) is polished silver-white blades with red edges and gold scrollwork -- steel, the metal being most of it. The flame's 12 triangles are the glow part and wear no material here; their island rows keep steel for the bake only.",
   "islands": [

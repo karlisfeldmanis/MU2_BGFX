@@ -58,6 +58,10 @@
     }
   },
   "glow_note": "`case MODEL_SPEAR` with the Light Saber: BlendMesh 1, BlendMeshLight = sin(WorldTime*0.004)*0.3+0.7 (ZzzObject.cpp:5309-5312) -- the blue beam breathes. Drawn added on its raw sheet (export_gltf.glow_material).",
+  "no_chrome": [
+    "sword12_3"
+  ],
+  "no_chrome_from": "ZzzOpenData.cpp:1245: Meshs[1].NoneBlendMesh, so a +7 or +9 spear's chrome and metal passes (ZzzBMD.cpp:1425) stay off the beam.",
   "material_note": "The body (116 triangles) is pale blue-steel (163,176,180, highlights 239,255,254) -- steel. The twelve beam triangles are the glow part and wear no material here; their island rows keep steel for the bake only.",
   "islands": [
     {

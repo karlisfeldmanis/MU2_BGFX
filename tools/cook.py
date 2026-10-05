@@ -448,7 +448,7 @@ def shot_of(one):
 
 
 def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.0,
-              scrolls=None, soft=()):
+              scrolls=None, soft=(), no_chrome=()):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
 
     A skinned .glb writes version 4: a 56-byte vertex with four joint bytes and four weight
@@ -659,6 +659,14 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         # 0.004 -- the 2nd wings' `_R` shells (ZzzObject.cpp:9937-9944, docs/second-wings.md).
         if flags & 2 and ((material.get("extras") or {}).get("pulse_rate") == "slow"):
             mode |= 8
+            flags |= 128
+        # Mode bit 5: a glow MU keeps a levelled item's chrome and metal passes off -- its
+        # NoneBlendMesh (ZzzBMD.cpp:1425), named by the asset's `no_chrome` sheet slots: the
+        # Staff of Resurrection's swirl cards, the Light Saber's beam. Every other item glow
+        # takes them (fs_glow).
+        name = material.get("name", "")
+        if flags & 2 and (name in no_chrome or name.removeprefix("glow_") in no_chrome):
+            mode |= 32
             flags |= 128
         # Bit 5: an item's glow -- drawn at its own level, not the world's glow_strength --
         # and whether it pulses or jumps, as MU's ItemObjectAttribute makes it --
@@ -3487,7 +3495,8 @@ def cook_wardrobe(out_dir, texcook, threads):
     for name, path in sorted(models.items()):
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
-                                              soft=set(rows[name][0].get("soft_alpha", [])))
+                                              soft=set(rows[name][0].get("soft_alpha", [])),
+                                              no_chrome=set(rows[name][0].get("no_chrome", [])))
         # A weapon with a rig of its own -- a bow's or a crossbow's string -- carries its one
         # clip in the same glb, as a world object does; baked beside the mesh for the figure
         # that holds it to play (crowd.cpp, Figure::poseHeld). Never a staff, whose 60 bones

@@ -2451,6 +2451,11 @@ def main() -> None:
             if soft := document.get("soft_alpha"):
                 entry["soft_alpha"] = list(soft)
 
+            # The glows MU keeps a levelled item's chrome off (its NoneBlendMesh, cook.py's
+            # no chrome): the Staff of Resurrection's swirl cards, the Light Saber's beam.
+            if bare := document.get("no_chrome"):
+                entry["no_chrome"] = list(bare)
+
             # What this asset changed about a library material for itself, verbatim.
             #
             # build_maps reads `material_overrides` and bakes the result into the ORM, and

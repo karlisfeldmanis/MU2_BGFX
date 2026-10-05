@@ -113,6 +113,10 @@ struct Material {
     // And at MU's WorldTime*0.001 rather than 0.004: the 2nd wings' slow breath (the cooked
     // scroll mode's bit 3, docs/second-wings.md).
     bool slowPulse = false;
+    // A glow MU keeps a levelled item's chrome and metal passes off: its NoneBlendMesh
+    // (ZzzBMD.cpp:1425), the Staff of Resurrection's swirl cards and the Light Saber's beam.
+    // Every other item glow takes them in fs_glow. The cook's mode bit 5.
+    bool noChrome = false;
     float jitter = 0.0f;
     // An item's glow rather than a lamp's: drawn at MU's BlendMeshLight alone, without the
     // world sheet's glow_strength, which is tuned for fires and windows (2.0 in Lorencia).

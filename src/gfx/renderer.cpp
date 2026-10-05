@@ -282,11 +282,13 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 }
             }
             // In the glow pass y is how the scroll runs instead, which fs_glow alone reads: 1
-            // along U, 2 with the sheet's alpha held still (content::Material::maskHeld).
+            // along U, 2 with the sheet's alpha held still (content::Material::maskHeld); and
+            // 8 for a glow a levelled item's chrome stays off (content::Material::noChrome).
             const float materialParams[4] = {material.cutout,
                                              glowPass ? (material.scrollAlongU ? 1.0f : 0.0f) +
                                                             (material.maskHeld ? 2.0f : 0.0f) +
-                                                            (material.waterFrames ? 4.0f : 0.0f)
+                                                            (material.waterFrames ? 4.0f : 0.0f) +
+                                                            (material.noChrome ? 8.0f : 0.0f)
                                              : (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f) +
                                                  // Not in the hover ring's mask, which
@@ -323,6 +325,9 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 bindShadeInputs();
                 // Here and not in bindShadeInputs: the land binds its second layer on stages 9
                 // to 11 and then calls that, and the chrome went down over the town's ground.
+                bindShine();
+            } else if (glowPass) {
+                // A levelled item's glow takes MU's tint and chrome as its body does (fs_glow).
                 bindShine();
             }
 

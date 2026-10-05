@@ -76,6 +76,10 @@
   }
  },
  "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5238-5241): `case MODEL_STAFF_OF_RESURRECTION: BlendMesh = -2; BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7` -- every mesh drawn added and breathing (ZzzBMD.cpp:1509): the whole staff is a red glow. ZzzOpenData.cpp:1247's NoneBlendMesh on mesh 2 only keeps a levelled item's chrome pass off it (ZzzBMD.cpp:1425), as on the Chaos Dragon Axe; it was first read here as 'drawn solid', and wwe's black-backed cards stood as black squares on the staff (the user, 2026-10-03: 'staff of resurection needs work, black spots').",
+ "no_chrome": [
+  "wwe"
+ ],
+ "no_chrome_from": "ZzzOpenData.cpp:1247: Meshs[2].NoneBlendMesh, so a +7 or +9 staff's chrome and metal passes (ZzzBMD.cpp:1425) leave wwe's black-backed swirl cards alone; the staff's other three glows take them.",
  "material_note": "No baked material: MU draws all four meshes added (see glow_note), so the staff ships as glow parts on MU's raw sheets; the islands' materials go unused.",
  "rig_note": "Staff07.rig.json from export-rig --actions=all: seventeen bones, the five swirl cards' Box bones turning a full circle through the 4-key action 0 (0, 90, 180, 270 degrees), played always at held_loop (Figure::poseHeld). Its own rig, so asset.sh does not borrow the player's (the trap Staff06 records). Not here: what MuMain hangs on it held -- a warm BITMAP_SPARK and a BITMAP_SHINY+2 at its head, 145 units up the hand, and four spark particles thrown about it each frame (ZzzCharacter.cpp:10302-10318), client effects.",
  "held_loop": 1.25,

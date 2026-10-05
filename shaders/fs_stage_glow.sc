@@ -8,7 +8,10 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_r
 //
 // u_material.z is the level: the material's pulse held at its middle, since a picture is
 // taken on change and not every frame.
+//
+// And a levelled item's tint and chrome as fs_glow's, save on its NoneBlendMesh (y's 8).
 #include "common.sh"
+#include "shine.sh"
 
 // fs_stage's.
 vec3 toSrgb(vec3 c)
@@ -22,5 +25,13 @@ vec3 toSrgb(vec3 c)
 void main()
 {
 	vec4 sheet = texture2D(s_albedo, v_texcoord0);
-	gl_FragColor = vec4(toSrgb(sheet.rgb * (sheet.a * u_material.z)), 0.0);
+	float plus = shinePlus(v_refine.x);
+	vec3 colour = sheet.rgb * (sheet.a * u_material.z) * shineTint(plus);
+	if (mod(floor(u_material.y * 0.125), 2.0) < 0.5)
+	{
+		vec3 n = normalize(v_normal);
+		colour += shineAdded(plus, n, v_refine.yzw) +
+		          shineExcellentAdded(shineExcellent(v_refine.x), n);
+	}
+	gl_FragColor = vec4(toSrgb(colour), 0.0);
 }

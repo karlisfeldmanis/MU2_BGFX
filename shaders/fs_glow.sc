@@ -21,7 +21,14 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_r
 // world clock times the sheet's own rate, already wrapped to a fraction by the renderer. 0
 // on every glow that does not scroll, which samples exactly where it always did. The albedo
 // wraps by default (Renderer::submitBatches), which is what lets this run off the edge.
+//
+// A levelled item's glow is drawn as MU draws it: its BlendMesh's colour is BodyLight times
+// BlendMeshLight (ZzzBMD.cpp:1523), and BodyLight carries the +3/+5/+7/+9 tint; and from +7
+// the chrome and metal passes go over every mesh but its NoneBlendMesh (ZzzBMD.cpp:1425) --
+// shine.sh's, added unlit as fs_shade adds them. The Staff of Resurrection is all glow, and
+// a +9 one looked a +0 one without this. u_material.y's 8 is the NoneBlendMesh.
 #include "common.sh"
+#include "shine.sh"
 
 void main()
 {
@@ -31,12 +38,14 @@ void main()
 	float mode = u_material.y;
 	float alongU = mod(mode, 2.0);
 	float held = mod(floor(mode * 0.5), 2.0);
+	float water = mod(floor(mode * 0.25), 2.0);
+	float bare = mod(floor(mode * 0.125), 2.0);
 	vec2 uv = v_texcoord0 + u_material.w * vec2(alongU, 1.0 - alongU);
 	vec4 sheet;
 	// +4: MU's water frames (content::Material::waterFrames). u_material.w is the frame,
 	// 0 to 31, of the 8 by 4 caustic atlas; the frame's cell is cut half a texel in, and the
 	// mip read off the unwrapped coordinate, as fs_ground's caustics are.
-	if (mode > 3.5)
+	if (water > 0.5)
 	{
 		vec2 cell = fract(v_texcoord0) * (62.0 / 64.0) + vec2_splat(1.0 / 64.0);
 		vec2 frame = vec2(mod(u_material.w, 8.0), floor(u_material.w / 8.0));
@@ -52,5 +61,15 @@ void main()
 	// A figure's w is 2 + its fade (common.sh's figureFade), which was 1.0 here before there
 	// was a fade; so a figure's glow is its fade, and comes in with it.
 	float level = v_light.w >= 2.0 ? figureFade(v_light.w) : v_light.w;
-	gl_FragColor = vec4(sheet.rgb * (sheet.a * level * u_material.z), 1.0);
+	float plus = shinePlus(v_refine.x);
+	vec3 colour = sheet.rgb * (sheet.a * level * u_material.z) * shineTint(plus);
+	if (bare < 0.5)
+	{
+		vec3 n = normalize(v_normal);
+		// Not breathing with the glow, as MU's chrome pass does not; only a figure's fade.
+		float fade = v_light.w >= 2.0 ? figureFade(v_light.w) : 1.0;
+		colour += (shineAdded(plus, n, v_refine.yzw) +
+		           shineExcellentAdded(shineExcellent(v_refine.x), n)) * fade;
+	}
+	gl_FragColor = vec4(colour, 1.0);
 }

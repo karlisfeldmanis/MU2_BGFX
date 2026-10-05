@@ -87,8 +87,11 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
                     skinned ? skinnedStageGlowProgram_ : stageGlowProgram_;
                 if (!bgfx::isValid(glowProgram)) continue;
                 // MU's BlendMeshLight at the middle of its breathing: sin() * a + b, at sin 0.
-                const float glow[4] = {material.cutout, 0.0f, material.pulse[1], 0.0f};
+                // y: 8 for a glow a levelled item's chrome stays off, as fs_glow reads it.
+                const float glow[4] = {material.cutout, material.noChrome ? 8.0f : 0.0f,
+                                       material.pulse[1], 0.0f};
                 bgfx::setUniform(uMaterial_, glow);
+                bindShine(true);
                 bgfx::setTexture(0, sAlbedo_, material.albedo,
                                  material.glowClamped()
                                      ? BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP

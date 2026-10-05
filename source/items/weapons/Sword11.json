@@ -55,6 +55,10 @@
     }
   },
   "glow_note": "`case MODEL_LIGHT_SABER` with the Spear: BlendMesh 1, BlendMeshLight = sin(WorldTime*0.004)*0.3+0.7 (ZzzObject.cpp:5309-5312) -- the green beam breathes, as the Light Spear's blue one does. Drawn added on its raw sheet (export_gltf.glow_material).",
+  "no_chrome": [
+    "sword12_2"
+  ],
+  "no_chrome_from": "ZzzOpenData.cpp:1246: Meshs[1].NoneBlendMesh, so a +7 or +9 saber's chrome and metal passes (ZzzBMD.cpp:1425) stay off the beam.",
   "material_note": "The body (60 triangles) is sword12's pale blue-steel -- steel. The six beam triangles are the glow part and wear no material here; their island rows keep steel for the bake only.",
   "islands": [
     {
