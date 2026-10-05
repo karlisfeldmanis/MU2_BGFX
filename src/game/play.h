@@ -49,6 +49,7 @@
 #include "game/fx/deathstab.h"
 #include "game/fx/firebreath.h"
 #include "game/fx/meteor.h"
+#include "game/fx/comet.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
 #include "game/crowd.h"
@@ -490,6 +491,7 @@ public:
     void gatherBones(std::vector<gfx::Drawable>& out) const { bones_.gather(out); }
     // The Lich's meteorite: opened by the caller for the same reason as breath.
     Meteor& meteor() { return meteor_; }
+    Comet& comet() { return comet_; }
     // The wizard's Energy Ball: let go on `Loosed`, flown until its `Hit` arrives. fx/bolt.h.
     Bolt& bolt() { return bolt_; }
     // The wizard's Power Wave, opened beside the bolt. fx/wave.h.
@@ -538,7 +540,11 @@ public:
     void benchFace(float acrossX, float acrossZ);
     // `--walk-to`: one walk to a tile, as a click on the ground there would ask for.
     void walkTo(int column, int row);
-    void gatherMeteor(gfx::Effects& effects, const float eye[3]) const { meteor_.gather(effects, eye); }
+    // And Cometfall's comets with the rocks: the same pass, the same eye (fx/comet.h).
+    void gatherMeteor(gfx::Effects& effects, const float eye[3]) const {
+        meteor_.gather(effects, eye);
+        comet_.gather(effects, eye);
+    }
     // The blade's ribbon behind a skill swing. Fed in `show`, off the pose the frame has already
     // computed -- see fx/streak.h, which is MU's own `CreateWeaponBlur` rung for a skill.
     Streak& streak() { return streak_; }
@@ -883,6 +889,7 @@ private:
         uint32_t who = 0, whom = 0;
         float x = 0.0f, z = 0.0f;
         float weight = 1.0f;  // a shower's rock's size (sim::kLightestRock..kHeaviestRock)
+        bool comet = false;   // Cometfall's, drawn as a comet (fx/comet.h) and not a rock
     };
     std::vector<RockDue> rocksDue_;
     struct MeteorStorm {
@@ -978,6 +985,8 @@ private:
     Breath breath_;
     Bones bones_;
     Meteor meteor_;
+    // The wizard's Cometfall: blue comets on the ground he names. fx/comet.h.
+    Comet comet_;
     Bolt bolt_;
     Wave wave_;
     Arrows arrows_;
@@ -1045,6 +1054,8 @@ private:
     void sandOnDeath();
     // The Lich's meteors: impacts this frame, and the shock that follows each one.
     std::vector<Meteor::Impact> meteorImpacts_;
+    // Cometfall's landings this frame, each laid as a rock's impact (Play::update).
+    std::vector<Comet::Landing> cometLandings_;
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
     // sim's seeded stream.
     uint32_t wanderDice_ = 0x6d2b79f5u;

@@ -470,7 +470,8 @@ inline Element skillElement(int32_t number) {
         case skill::kMeteorite: return Element::Fire;
         case skill::kIce: return Element::Ice;
         case skill::kPoison: return Element::Poison;
-        case skill::kLightning: return Element::Lightning;
+        case skill::kLightning:
+        case skill::kCometfall: return Element::Lightning;  // OpenMU's ElementalType.Lightning
         case skill::kCyclone:
         case skill::kTwister:
         case skill::kTwistingSlash:

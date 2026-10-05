@@ -1,0 +1,25 @@
+{
+  "item": "Blast01",
+  "mu_name": "The comet a wizard's Cometfall calls down",
+  "mu_name_from": "ZzzOpenData.cpp:4297, `gLoadData.AccessModel(MODEL_SKILL_BLAST, L\"Data\\\\Skill\\\\\", L\"Blast\", 1)` - Data/Skill/Blast01.bmd.",
+  "kind": "comet",
+  "why_this_one": "Cometfall's one model: two MODEL_SKILL_BLASTs made over the tile he names at the let-go (ZzzCharacter.cpp:4557-4567). game/fx/comet.h draws it, a shower of them in the shape of Meteorite's (sim/skills.cpp).",
+  "mesh": "Blast01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Blast01.bmd, from MuMain's clean Data: one mesh, 16 vertices, 8 triangles on ring2.jpg - crossed cards 135 units wide standing from 99 units under the model's origin to 384 over it, so the head is at the bottom and the rays stream up behind it as it falls.",
+  "parts": [
+    {
+      "group": "ring2",
+      "sheet": "ring2.png",
+      "blend": "additive",
+      "note": "Data/Skill/ring2.OZJ, 64 x 128, mean (18, 28, 40): a blue-white head at the bottom with blue rays fanning up from it, over black. BlendMesh 0 adds the one mesh (ZzzEffect.cpp:1355-1366), at its creator's Light."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "The base the throw multiplies: `o->Scale = (rand() % 8 + 10) * 0.1f`, 1.0 to 1.7 a comet.",
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30`; it lands long before, on the ground under it (Move_MODEL_SKILL_BLAST, MoveHandlers.cpp:2550-2580).",
+  "lift": 550,
+  "lift_from": "`o->Position[2] += rand() % 500 + 300`, 300 to 800 units over the tile; the middle. It falls at `(0, 0, -50 - rand() % 50)` turned by its Angle (0, 20, 0), so a third of a second, as Meteorite's rock. 200 to 300 units aside on X, which the slant carries most of the way back.",
+  "trail_from": "`CreateJoint(BITMAP_JOINT_ENERGY, o->Position, o->Position, o->Angle, 5, o, 100.f)` at its birth: sub-type 5 rides the comet (its EyeLeft), ten tails, Scale 100 - a ribbon a metre across - at white light (ZzzEffectJoint.cpp:210-288, 485-491), on Effect/JointLaser01.jpg (ZzzOpenData.cpp:5288), here joint_laser01.png: 64 x 16, a teal gradient over black.",
+  "landing_from": "On the ground: six frames of MODEL_STONE1 + rand() % 2 (the meteor's stones), a BITMAP_SHINY + 4 and a BITMAP_EXPLOTION 80 units up, everything within 150 units struck, and gone. BITMAP_SHINY + 4 is Effect/ring.jpg (ZzzOpenData.cpp:5266), here ring.png: 64 square, a blue-white star burst. BITMAP_EXPLOTION plays SOUND_EXPLOTION01 at its birth (ZzzEffectParticle.cpp:2464-2482). While it falls it lights the ground (0.2, 0.4, 1.0) over two tiles."
+}

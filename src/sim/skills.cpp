@@ -742,6 +742,35 @@ constexpr SkillRow kRows[kSkills] = {
               "rides the Dinorant.",
      .clip = 68, .sound = "player_skill_sword3", .built = true, .families = arms::kNone,
      .flies = 7.5f, .anyHand = true, .mounted = true},
+
+    // ---- Cometfall 13, the wizard's, after Fire Breath so no save's learned bit moves ----------
+    //
+    // **Not 0.75's**: 0.75 has no Cometfall. Its row is 0.95d's -- seventy damage, a hundred and
+    // fifty mana, four hundred and thirty-six energy, lightning, two tiles round where it lands
+    // (`Version095d/SkillsInitializer.cs:57-58`) -- taught by the Scroll of Cometfall (Book13,
+    // group 15 number 12; `Version095d/Items/Scrolls.cs:31`). MuMain's: thrown at the TILE under
+    // the pointer (`SendRequestMagicContinue` with the target's X and Y, SkillCast.cpp:525-534),
+    // cast with SetPlayerMagic's two hands, and two MODEL_SKILL_BLASTs made over that tile at the
+    // let-go (ZzzCharacter.cpp:4557-4567): blue comets out of the sky, each striking within 150
+    // units -- a tile and a half -- where it lands (Move_MODEL_SKILL_BLAST, MoveHandlers.cpp:
+    // 2550-2580). Its comets are game/fx/comet.h.
+    //
+    // **Meteorite's family, and stronger** (the user, 2026-10-05: "it has to be same famulity as
+    // meteor but of course stronger"): Meteorite's shower on the ground he clicks -- its six at
+    // random within four tiles, the first within a tile of the spot, big and small (Realm::shower)
+    // -- in Meteorite's pose (183, the arm up, quickened as Meteorite's is), each comet falling for
+    // Meteorite's seven ticks. Where Meteorite's rock is 21 at 1.6 the band, ~240 a rock on a
+    // 689-energy wizard, a comet is MU's 70 at 1.8, **~350**: just under Hellfire on his ladder
+    // (Hellfire's row, above). MU's two comets, its 150 units and its cast in two hands are not
+    // followed; its mana and energy are. No sound at the let-go, as MU has none: each comet's
+    // landing is SOUND_EXPLOTION01, BITMAP_EXPLOTION's own. All the shower ours.
+    {.number = skill::kCometfall, .name = "Cometfall", .mana = 150, .reach = 9.0f, .force = 1.8f,
+     .spread = Spread::One,
+     .tells = "With his arm raised to the sky he calls blue comets down on the ground up to nine "
+              "tiles off, falling at random within four tiles of it.",
+     .clip = 183, .sound = "", .built = true, .families = arms::kNone,
+     .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 70,
+     .flies = 15.0f, .fallTicks = 7, .splash = 4.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -881,7 +910,8 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     const float bonus = row.onSelf()     ? 0.0f
                         : row.wizardry ? (magicSpeedStat(kin, agility) + float(extra)) * 0.004f
                                        : (attackSpeedStat(kin, agility, right, left) + float(extra)) * 0.004f;
-    const bool quick = row.number == skill::kMeteorite || row.number == skill::kIce ||
+    const bool quick = row.number == skill::kMeteorite || row.number == skill::kCometfall ||
+                       row.number == skill::kIce ||
                        row.number == skill::kPoison;
     const float rate = (clip->speed + bonus) * 25.0f * (quick ? kSpellQuicken : 1.0f);
     if (rate <= 0.0f) return 0;

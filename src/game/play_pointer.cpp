@@ -588,6 +588,8 @@ void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
         meteor_.hurl(from, to, 0, atHand);
     } else if (skill == sim::skill::kMeteorite) {
         meteor_.cast(to[0], to[2], 0);
+    } else if (skill == sim::skill::kCometfall) {
+        comet_.cast(to[0], to[2], 0, 1.0f, float(Meteor::fallSeconds()));
     } else if (skill == sim::skill::kPoison) {
         const float feet[3] = {to[0], ground_ ? ground_->heightAt(to[0], to[2]) : to[1], to[2]};
         poison_.cast(feet, hero.yaw);

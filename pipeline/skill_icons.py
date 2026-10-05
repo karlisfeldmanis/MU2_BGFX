@@ -120,6 +120,10 @@ SKILLS = {
     # Dinorant's breath): 0.95d's, carried by the Horn of Dinorant and not learned. Below 57 and
     # not use-type 4, so the arithmetic above finds its cell.
     49: ("Dark Knight", "Fire Breath"),
+    # And Cometfall, cut on 2026-10-05 because the game now has it (the user: "lets migrate
+    # Cometfall"): 0.95d's (Version095d/SkillsInitializer.cs:57), off the Scroll of Cometfall,
+    # group 15 number 12. Below 57 and not use-type 4, so the arithmetic above finds its cell.
+    13: ("Dark Wizard", "Cometfall"),
 }
 
 

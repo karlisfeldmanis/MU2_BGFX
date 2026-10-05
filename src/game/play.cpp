@@ -780,6 +780,28 @@ void Play::update(double seconds) {
                         } else {
                             meteor_.cast(to[0], to[2], happening.who, weight);
                         }
+                    } else if (happening.a == sim::skill::kCometfall) {
+                        // Cometfall's comet: a shower's rock drawn as MU's MODEL_SKILL_BLAST,
+                        // on the ground the realm drew for it, at its weight, after its wait
+                        // (fx/comet.h; Realm::shower says it as Meteorite's).
+                        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kCometfall);
+                        const int32_t fall = row != nullptr ? row->fallTicks : 0;
+                        const float wait = float(happening.b - fall) * float(kTickSeconds);
+                        float weight = 1.0f;
+                        if (happening.whom == 0) {
+                            const float tile = ground_->metresPerTile();
+                            to[0] = (happening.x + 0.5f) * tile;
+                            to[2] = -(happening.y + 0.5f) * tile;
+                            if (happening.c > 0) weight = float(happening.c) / 100.0f;
+                        }
+                        if (wait > 0.001f) {
+                            RockDue due{wait, happening.who, happening.whom, to[0], to[2], weight};
+                            due.comet = true;
+                            rocksDue_.push_back(due);
+                        } else {
+                            comet_.cast(to[0], to[2], happening.who, weight,
+                                        float(fall) * float(kTickSeconds));
+                        }
                     } else if (happening.a == sim::skill::kLightning) {
                         // A chain's leap: from the middle of the body it leaps off (`c`,
                         // Realm::channel), not his hand -- the corpse's too, if the last strike
@@ -1447,6 +1469,16 @@ void Play::update(double seconds) {
     // The Lich's meteors: advance every live one, collect impacts.
     meteorImpacts_.clear();
     meteor_.update(float(seconds), meteorImpacts_);
+    // Cometfall's landings, each the meteor's stones and blast, and an impact as a rock's is:
+    // the explosion, the shock round it and the blow's cue (MoveHandlers.cpp:2550-2573).
+    cometLandings_.clear();
+    comet_.update(float(seconds), cometLandings_);
+    for (const Comet::Landing& one : cometLandings_) {
+        meteor_.stones(one.x, one.z, one.y, std::max(2, int(std::lround(6.0f * one.weight))));
+        const float at[3] = {one.x, one.y + 0.8f, one.z};
+        meteor_.blast(at, 0.72f * one.weight);
+        meteorImpacts_.push_back({one.x, one.z, one.attacker});
+    }
     // The wizard's bolts and fireballs, each measured against where its target is drawn this
     // frame.
     const auto standing = [&](uint32_t id) {
@@ -1740,6 +1772,19 @@ void Play::update(double seconds) {
                                    ground_->heightAt(drawn->crown[0], drawn->crown[2]),
                                    drawn->crown[2]};
             meteor_.burn(feet, look ? look->height * look->scale : 1.8f, float(seconds));
+        }
+    }
+    // Lightning's crackle on him while he calls Cometfall down, as Meteorite's fire is on him
+    // for its rocks -- a lightning spell (OpenMU's element), ours.
+    if (const sim::Body& hero = realm_.hero();
+        heroCasting_ == sim::skill::kCometfall && ground_) {
+        if (const Drawn* drawn = drawnOf(hero.id);
+            drawn != nullptr && drawn->placed && drawn->casting > 0.0f) {
+            const FigureBody* look = drawn->figure.body();
+            const float feet[3] = {drawn->crown[0],
+                                   ground_->heightAt(drawn->crown[0], drawn->crown[2]),
+                                   drawn->crown[2]};
+            thunder_.crackle(feet, look ? look->height * look->scale : 1.8f, float(seconds));
         }
     }
     // The frost on him while he casts Ice, and the fumes while he casts Poison.

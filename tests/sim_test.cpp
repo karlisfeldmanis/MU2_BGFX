@@ -1650,8 +1650,8 @@ void testCastLock(const content::Tables& tables) {
                   aqua.spread == sim::Spread::Beam && aqua.reach == 6.0f && aqua.clip == 152 &&
                   aqua.kin == sim::Kin::DarkWizard,
               "Aqua Beam is a no-cooldown beam of eighty damage and a hundred and forty mana");
-        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 3 && sim::kSkills == 36,
-              "and its row is the last but Penetration's and Fire Breath's");
+        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 4 && sim::kSkills == 37,
+              "and its row is the last but Penetration's, Fire Breath's and Cometfall's");
         const int32_t aquaScroll = tables.itemAt(15, 11);
         check(aquaScroll >= 0 &&
                   tables.items[size_t(aquaScroll)].teaches == sim::skill::kAquaBeam &&
@@ -2147,6 +2147,56 @@ void testCastLock(const content::Tables& tables) {
         checkEqual(rocks, casts * sim::kShowerRocks, "six rocks a cast");
         checkEqual(nearFirst, casts, "the first of each within a tile of the tile he clicked");
         checkEqual(outside, 0, "and none past four tiles of it");
+    }
+
+    // ---- Cometfall: Meteorite's shower, stronger (the user, 2026-10-05) ----------------------
+    {
+        const sim::SkillRow& comet = *sim::skillNumbered(sim::skill::kCometfall);
+        const sim::SkillRow& rock = *sim::skillNumbered(sim::skill::kMeteorite);
+        check(comet.showers() && comet.primary() && comet.wizardry && comet.damage == 70 &&
+                  comet.mana == 150 && comet.splash == rock.splash &&
+                  comet.fallTicks == rock.fallTicks && comet.clip == rock.clip &&
+                  comet.kin == sim::Kin::DarkWizard,
+              "Cometfall is Meteorite's shower: seventy damage, a hundred and fifty mana");
+        // A 689-energy wizard's band is about 124 on average (energy/9 to energy/4).
+        check(comet.force * (124.0f + float(comet.damage)) >
+                  1.4f * rock.force * (124.0f + float(rock.damage)),
+              "and a comet strikes over half again as hard as a rock");
+        check(sim::skillElement(sim::skill::kCometfall) == sim::Element::Lightning,
+              "and it is lightning");
+        check(sim::skillIndexOf(sim::skill::kCometfall) == sim::skillCount() - 1,
+              "and its row is the table's last, so no save's learned bit moves");
+        const int32_t cometScroll = tables.itemAt(15, 12);
+        check(cometScroll >= 0 &&
+                  tables.items[size_t(cometScroll)].teaches == sim::skill::kCometfall &&
+                  tables.items[size_t(cometScroll)].teachesEnergy == 436 &&
+                  tables.items[size_t(cometScroll)].dropLevel == 80,
+              "the Scroll of Cometfall teaches skill 13 at 436 energy and drops from level 80");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 160), "a wizard raises");
+        check(wiz.learn(sim::skill::kCometfall), "who knows Cometfall");
+        const int column = wiz.hero().column() + 4, row = wiz.hero().row();
+        int casts = 0, comets = 0, outside = 0;
+        for (int tick = 0; tick < 400; ++tick) {
+            if (wiz.cooling(sim::skill::kCometfall) == 0 && !wiz.casting()) {
+                wiz.invokeAt(sim::skill::kCometfall, column, row);
+            }
+            wiz.step();
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.who != wiz.hero().id) continue;
+                if (one.what == sim::What::Cast && one.a == sim::skill::kCometfall) ++casts;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kCometfall) {
+                    if (std::hypot(one.x - float(column), one.y - float(row)) > 4.01f) ++outside;
+                    ++comets;
+                }
+            }
+        }
+        std::printf("  cometfall on the ground: %d cast, %d comets, mana %d\n", casts, comets,
+                    wiz.hero().mana);
+        check(casts >= 1, "he calls it down on bare ground");
+        checkEqual(comets, casts * sim::kShowerRocks, "six comets a cast");
+        checkEqual(outside, 0, "and none past four tiles of the tile");
     }
 
     // ---- Lightning: a channel -- a chain leaping body to body while his arm is up ------------

@@ -1,0 +1,35 @@
+{
+  "item": "Book13",
+  "mu_name": "Scroll of Cometfall",
+  "mu_name_from": "ZzzOpenData.cpp loads item group ITEM_ETC number i from Book{i+1:02}.bmd, so number 12 is Book13.bmd; MuMain's ZzzInfomation.cpp:434 has ITEM_SCROLL_OF_COMETFALL teach AT_SKILL_BLAST, and OpenMU's Version095d/Items/Scrolls.cs:31 names group 15 number 12 the Scroll of Cometfall. 0.95d's and not 0.75's: 0.75 has no Cometfall.",
+  "why_this_one": "The user, 2026-10-05: 'lets migrate Cometfall, which is soul master spell, it has to be same famulity as meteor but of course stronger', after the audit of what Tarkan and Blood Castle 6 drop and this game had not built. Drop level 80: Tarkan's Iron Wheel and everything past it, and Blood Castle 6's Chief Skeleton Archer and past him (sim/skills.cpp).",
+  "mesh": "Book01",
+  "mesh_note": "No geometry of its own. Book01.bmd through Book19.bmd are byte-identical in MuMain's Data/Item -- Book13.bmd's md5 is Book01's, addf8a7d -- so this names the one the pipeline has built, as Book02 through Book16 do.",
+  "stats": {
+    "note": "A scroll's row, in the shape of Book01's, at 0.95d's numbers.",
+    "from": "openmu/src/Persistence/Initialization/Version095d/Items/Scrolls.cs:31, CreateScroll(12, 13, \"Scroll of Cometfall\", 80, 0, 436, 175000); WebZen 1.00m's item(Kor).txt row 15/12 agrees on the drop level 80.",
+    "group": 15,
+    "number": 12,
+    "drop_level": 80,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll (Version095d adds the Magic Gladiator, who is not in this game). Prize.ReadBy refuses the other two. The user calls it the Soul Master's; MU lets any wizard read it, and so does this."
+  },
+  "skill": {
+    "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
+    "number": 13,
+    "name": "Cometfall",
+    "tells": "With his arm raised to the sky he calls blue comets down on the ground up to nine tiles off, falling at random within four tiles of it.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the scroll's tooltip and the skill's card say the same thing.",
+    "level_requirement": 160,
+    "energy_requirement": 436,
+    "energy_from": "Version095d/SkillsInitializer.cs:57 and Scrolls.cs:31 both: 436, the skill's own, carried raw as Inferno's 578 is (docs/mu-scrolls-and-orbs.md SS4).",
+    "value": 175000,
+    "level_from": "Ours: about twice the scroll's drop level, in MU's own order (the user's audit of 2026-10-02: 'currently chars can get end game scroll and orbs pretty fast, remember we have 100% exp rate'), between Aqua Beam's 148 and Inferno's 176. The energy MU asks is kept beside it."
+  }
+}

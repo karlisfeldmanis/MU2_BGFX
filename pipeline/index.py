@@ -607,6 +607,12 @@ EFFECTS = {
     "caustic": "effects/atlans/caustic.png",
     "bubble": "effects/atlans/drop01.png",
     "mote": "effects/atlans/mote01.png",
+    # Cometfall's (game/fx/comet.h): BITMAP_JOINT_ENERGY, Effect/JointLaser01.jpg, the ribbon each
+    # comet drags down (sub-type 5, ZzzEffectJoint.cpp:485-491), and BITMAP_SHINY + 4,
+    # Effect/ring.jpg, the blue star where it lands (MoveHandlers.cpp:2550-2580). Both on black,
+    # both added. source/effects/comet/Blast01.json.
+    "comet_trail": "effects/comet/joint_laser01.png",
+    "comet_flash": "effects/comet/ring.png",
 
     # The rain, which shares the leaves' pool in the client (CreateHeavenRain: the first
     # RainCurrent share of the slots are drops, the rest leaves). World1/rain01.OZT is
@@ -2029,6 +2035,7 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "fury"),
         **_models(root, build, "hellfire"),
         **_models(root, build, "inferno"),
+        **_models(root, build, "comet"),
         **_models(root, build, "deathstab"),
     }
 

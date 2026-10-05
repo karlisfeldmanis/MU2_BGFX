@@ -599,7 +599,13 @@ void Play::shade(float seconds) {
             x = on->crown[0];
             z = on->crown[2];
         }
-        meteor_.cast(x, z, due.who, due.weight);
+        if (due.comet) {
+            const sim::SkillRow* row = sim::skillNumbered(sim::skill::kCometfall);
+            comet_.cast(x, z, due.who, due.weight,
+                        float(row != nullptr ? row->fallTicks : 0) * float(kTickSeconds));
+        } else {
+            meteor_.cast(x, z, due.who, due.weight);
+        }
     }
     rocksDue_.erase(std::remove_if(rocksDue_.begin(), rocksDue_.end(),
                                    [](const RockDue& one) { return one.wait <= 0.0f; }),

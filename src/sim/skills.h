@@ -91,6 +91,9 @@ constexpr int32_t kInferno = 14;
 // `AT_SKILL_FLASH`, off the Scroll of Aqua Beam (group 15 number 11, `Book12`) at three hundred
 // and forty-five energy: a beam of water thrown straight out ahead of him.
 constexpr int32_t kAquaBeam = 12;
+// `AT_SKILL_BLAST`, off the Scroll of Cometfall (group 15 number 12, `Book13`) -- 0.95d's and not
+// 0.75's: comets out of the sky on the ground he names, Meteorite's shower made stronger.
+constexpr int32_t kCometfall = 13;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
 // Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
 // "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
@@ -441,12 +444,13 @@ struct SkillRow {
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
 // Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit, Hellfire, Twister,
-// Inferno and Aqua Beam, on the end past the elf's. The learned mask is sixty-four bits since
+// Inferno and Aqua Beam, on the end past the elf's, and Cometfall past the Dinorant's. The
+// learned mask is sixty-four bits since
 // Inferno, the thirty-third (`Body::learned`, and the save writes it whole); past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 36;
+constexpr int kSkills = 37;
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing

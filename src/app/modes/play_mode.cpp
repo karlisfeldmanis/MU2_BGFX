@@ -292,6 +292,8 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().meteor().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
+                world_.played().comet().open(assets, ctx.textures,
+                                             world_.played().showing().table(), &world_.ground());
                 world_.played().bolt().open(assets, ctx.textures,
                                             world_.played().showing().table());
                 world_.played().wave().open(assets, ctx.textures,
@@ -1016,6 +1018,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         gfx::PointLight falling[gfx::Renderer::kMaxTransientLights];
         uint32_t count =
             world_.played().meteor().lights(falling, gfx::Renderer::kMaxTransientLights);
+        // And Cometfall's comets, MU's blue under each as it falls and where it lands.
+        count += world_.played().comet().lights(falling + count,
+                                                gfx::Renderer::kMaxTransientLights - count);
         // And the wizard's bolts, the blue each throws on the ground it crosses.
         count += world_.played().bolt().lights(falling + count,
                                                gfx::Renderer::kMaxTransientLights - count);
