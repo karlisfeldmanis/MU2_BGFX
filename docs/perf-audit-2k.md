@@ -178,6 +178,12 @@ fragment + 0.63 vertex in the trace. The literature puts static/dynamic splittin
 saving of the shadow pass. Sway is the complication: trees that sway must stay in the
 dynamic list, or their shadows freeze.
 
+**Measured 2026-10-05, then declined by the user** ('lets better not cache shadows'). With the
+map frozen after warm-up, the frame fell 0.76 ms at the town and 0.65 in the field (7.04 to
+6.28, 6.88 to 6.23); drawing the skinned casters over the frozen map gave back 0.11 and 0.07.
+So about 0.65 ms of the shadow pass is static casters, before a cache's own costs (a restore
+of the map each frame, and the scroll as the split follows the hero). Not built.
+
 **C2. MetalFX temporal at 0.67-0.75 scale, in place of 4x MSAA.** This is the largest
 possible saving: the 0.62 of MSAA, plus everything that scales with pixels at a quarter to
 half fewer of them, minus MetalFX's own cost. It needs a velocity buffer (skinned and
