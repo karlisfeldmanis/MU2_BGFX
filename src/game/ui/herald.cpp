@@ -52,10 +52,6 @@ constexpr int kAnnounce = 1800, kLastMinute = 60;
 // and was too light: 'darkens was better before', 2026-10-05).
 constexpr float kBandAt[5] = {0.0f, 0.22f, 0.5f, 0.78f, 1.0f};
 constexpr float kBandAlpha[5] = {0.0f, 0.55f, 0.78f, 0.55f, 0.0f};
-// The hairlines' glow: a soft gold either side of each, this tall and this strong at its middle
-// ('add some elegant glow at top and bottom strokes').
-constexpr float kGlowTall = 10.0f;
-constexpr float kGlowAlpha = 0.45f;
 // The travel list's gold (game/ui/travel.cpp): the hairline's middle, the clock that is near.
 constexpr uint32_t kGoldHi = gfx::rgba(0.886f, 0.776f, 0.541f);
 // The live dot: a green that reads as "on" against the gold and the blood.
@@ -164,9 +160,9 @@ void stroke(gfx::Canvas& canvas, float x0, float y0, float x1, float y1, float t
     canvas.polygon(quad, inks, 4);
 }
 
-// A hairline across the band, faded in from both ends with gold at its middle, over a soft glow
-// of the same gold `glow` tall either side of it.
-void hairline(gfx::Canvas& canvas, const Box& band, float y, float thick, float alpha, float glow) {
+// A hairline across the band, faded in from both ends with gold at its middle. No glow: one was
+// tried either side and turned down ('dont use that glow', 2026-10-05).
+void hairline(gfx::Canvas& canvas, const Box& band, float y, float thick, float alpha) {
     constexpr int kStops = 7;
     const float at[kStops] = {0.0f, 0.06f, 0.30f, 0.50f, 0.70f, 0.94f, 1.0f};
     const uint32_t clear = faded(kGoldHi, 0.0f);
@@ -177,14 +173,8 @@ void hairline(gfx::Canvas& canvas, const Box& band, float y, float thick, float 
                                   faded(style::kIron, 0.7f * alpha),
                                   clear,
                                   clear};
-    // The glow's own profile: only the gold middle, gone well before the line's ends.
-    const float halo[kStops] = {0.0f, 0.0f, 0.35f, 1.0f, 0.35f, 0.0f, 0.0f};
     for (int i = 0; i + 1 < kStops; ++i) {
         const float x0 = band.x + band.w * at[i], x1 = band.x + band.w * at[i + 1];
-        const uint32_t l = faded(kGoldHi, kGlowAlpha * halo[i] * alpha);
-        const uint32_t r = faded(kGoldHi, kGlowAlpha * halo[i + 1] * alpha);
-        canvas.shade({x0, y - glow, x1 - x0, glow}, clear, clear, r, l);
-        canvas.shade({x0, y + thick, x1 - x0, glow}, l, r, clear, clear);
         canvas.shade({x0, y, x1 - x0, thick}, ink[i], ink[i + 1], ink[i + 1], ink[i]);
     }
 }
@@ -327,8 +317,8 @@ void Herald::rebuild(int width) {
         canvas_.shade({x0, band.y, x1 - x0, band.h}, l, r, r, l);
     }
     const float hair = std::max(1.0f, std::round(u));
-    hairline(canvas_, band, band.y, hair, a, kGlowTall * u);
-    hairline(canvas_, band, band.bottom() - hair, hair, a * 0.55f, kGlowTall * u);
+    hairline(canvas_, band, band.y, hair, a);
+    hairline(canvas_, band, band.bottom() - hair, hair, a * 0.55f);
 
     // The line up, sliding in from the right when it took over from another.
     const Call& call = calls_[queue_[std::clamp(at_, 0, queued_ - 1)]];
