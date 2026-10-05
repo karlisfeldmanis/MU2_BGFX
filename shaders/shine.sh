@@ -121,6 +121,15 @@ vec3 shineSweepAdded(float plus, float sweep, vec3 n)
 	return sheet * tint * u_refine.z * (1.0 + u_refineStar.y);
 }
 
+// How much of a glow card a refined item's added passes may cover: where the card itself glows,
+// its brightness times its alpha, full from a third up. Its alpha alone was not enough: a card
+// whose alpha is faint but not nought over its whole quad still showed as a pale diamond under
+// +11's bright sweep (the user, 2026-10-06: 'bug in atlans', a Staff of Resurrection).
+float shineCover(vec4 sheet)
+{
+	return clamp(max(max(sheet.r, sheet.g), sheet.b) * sheet.a * 3.0, 0.0, 1.0);
+}
+
 // **Invention.** What the lamps and fires light refined steel with. A fire 2 m off lights a
 // plate's near side past white, and a colour added to white is still white: a +9 Plate suit's
 // blue went out on the pauldron turned to the bonfire, where the +0 suit's measured 255 in every

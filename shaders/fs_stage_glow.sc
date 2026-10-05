@@ -30,10 +30,10 @@ void main()
 	if (mod(floor(u_material.y * 0.125), 2.0) < 0.5)
 	{
 		vec3 n = normalize(v_normal);
-		// Only where the card is drawn, as fs_glow (its alpha stands in for MU's black).
+		// Only where the card glows, as fs_glow (shine.sh's shineCover).
 		colour += (shineAdded(plus, n, v_refine.yzw) +
 		           shineExcellentAdded(shineExcellent(v_refine.x), n) +
-		           shineSweepAdded(plus, shineSweep(v_refine.x), n)) * sheet.a;
+		           shineSweepAdded(plus, shineSweep(v_refine.x), n)) * shineCover(sheet);
 	}
 	gl_FragColor = vec4(toSrgb(colour), 0.0);
 }
