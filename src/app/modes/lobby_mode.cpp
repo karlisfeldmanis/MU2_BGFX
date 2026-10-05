@@ -24,6 +24,18 @@ constexpr const char* kTablesWorld = "lorencia";
 // is where the pedestals stand. Nothing here walks; the grass and the town cull round it.
 constexpr float kFocusColumn = 80.0f, kFocusRow = 193.0f;
 
+// The leaves at the game's own speck size. Ours: 4 at first and 1.5 after, and the user,
+// 2026-10-05: 'leaves has to be much smaller', 'to large'.
+constexpr float kLeafSize = 1.0f;
+// And over the whole scene, not round one figure (the user, 2026-10-05: 'leave has to be in
+// whole scene not that selected char'): a field twice the game's, centred this share of the
+// way from the row to the camera, so it runs from the foreground past the back wall, and the
+// pool's whole 180 to fill it.
+constexpr float kLeafField = 2.0f, kLeafToward = 0.35f;
+constexpr int kLeafCount = 180;
+// And none nearer the camera than this, metres -- the row is about 17 off. The user,
+// 2026-10-05: 'dont fly leaves to close to camera'.
+constexpr float kLeafEyeClear = 9.0f;
 // The set's crackle, 0 to 1 of the game's own at that distance: in the background, under the
 // loading ambient. Ours, by ear.
 constexpr float kFireLevel = 0.5f;
@@ -203,6 +215,12 @@ bool LobbyMode::open(Context& ctx) {
             click_ = sound_.load("window_click", false);
             refused_ = sound_.load("window_refused", false);
             fire_ = sound_.load("world_bonfire", false);
+            // Lorencia's leaves on the wind about the pedestals, off the showing's `leaf`
+            // (game/world/leaves.h) -- ours, the user, 2026-10-05: 'better use some leaves'.
+            world_.leaves().open(assets, ctx.textures, showing_);
+            world_.leaves().setSize(kLeafSize);
+            world_.leaves().setField(kLeafField, kLeafCount);
+            world_.leaves().setEyeClear(kLeafEyeClear);
             // MU's anthem, MuTheme.mp3, which MuMain plays on its login window
             // (LoginMainWin.cpp:112); MuMain plays login_theme.mp3 here, from the login screen
             // through this one until loading (LoginScene.cpp:384, LoadingScene.cpp:84). The
@@ -439,6 +457,15 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
     world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
     world_.shades().gather(ctx.renderer.effects(), camera_.target);
     pedestals_.gatherEffects(ctx.renderer.effects());
+    if (world_.leaves().isOpen()) {
+        float about[3];
+        pedestals_.middle(about);
+        about[0] += (camera_.position[0] - about[0]) * kLeafToward;
+        about[2] += (camera_.position[2] - about[2]) * kLeafToward;
+        about[1] = world_.ground().heightAt(about[0], about[2]);
+        world_.leaves().update(seconds, about, camera_.position, false, world_.ground());
+        world_.leaves().gather(ctx.renderer.effects(), camera_.position);
+    }
     gatherStars(camera_, stars_, float(at.elapsed), ctx.renderer.effects());
     gatherMist(world_.ground(), mist_, float(at.elapsed), ctx.renderer.effects());
 

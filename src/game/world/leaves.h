@@ -112,6 +112,20 @@ public:
     // (world x and z). Nought and still outside a blizzard.
     void stormWind(float out[4]) const;
 
+    // Each leaf drawn this many times its own size: a camera further off than the game's 8 m
+    // sees the specks as nothing (the character screen's, 17 tiles off the row).
+    void setSize(float by) { size_ = by; }
+    // And blown over a field this many times the game's 16 by 14 metres, up to that many times
+    // higher, `count` of them at once (at most the pool's 180): a scene seen from further off
+    // than the game's is filled from its foreground to its back wall, not round one spot.
+    // And none nearer the eye than this many metres: one blown up to a far camera reads as a
+    // blot over the scene, not weather in it (the character screen's). 0, the default, is none.
+    void setEyeClear(float metres) { eyeClear_ = metres; }
+    void setField(float by, int count) {
+        field_ = by;
+        leafCount_ = count < 1 ? 1 : (count > kStormFlakes ? kStormFlakes : count);
+    }
+
     bool isOpen() const { return bgfx::isValid(sheet_); }
     uint32_t blowing() const { return blowing_; }
     uint32_t falling() const { return falling_; }
@@ -119,6 +133,10 @@ public:
 private:
     // The client's `iMaxLeaves` for an ordinary map.
     static constexpr int kCount = 80;
+    float size_ = 1.0f;
+    float field_ = 1.0f;
+    int leafCount_ = kCount;
+    float eyeClear_ = 0.0f;
     // Devias's flakes. **Invention:** the client's pool is the same 80 there; at this camera
     // eighty specks over a sixteen-metre field read as a few motes rather than a snowfall.
     static constexpr int kFlakes = 150;
@@ -169,6 +187,13 @@ private:
     float between(float low, float high) { return low + random01() * (high - low); }
 
     Leaf leaves_[kStormFlakes > kCount ? kStormFlakes : kCount];
+    bool tooNear(const Leaf& leaf, const float eye[3]) const {
+        if (eyeClear_ <= 0.0f) return false;
+        const float dx = leaf.position[0] - eye[0], dy = leaf.position[1] - eye[1],
+                    dz = leaf.position[2] - eye[2];
+        return dx * dx + dy * dy + dz * dz < eyeClear_ * eyeClear_;
+    }
+
     bool snow_ = false;
     bool motes_ = false;
     float storm_ = 0.0f;  // setStorm: how far Devias's blizzard is in, 0 to 1

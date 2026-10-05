@@ -32,8 +32,6 @@ constexpr float kFovDegrees = 30.75f;
 constexpr float kSceneScale = 1.2f;
 // The plate's foot this far over the crown, metres. MU2's BalloonClear.
 constexpr float kBalloonClear = 0.55f;
-// The rings sit this far up, or the grass swallows them.
-constexpr float kRingLift = 0.12f;
 // MU's frame, which the particles are counted in.
 constexpr float kMuFrame = 1.0f / 25.0f;
 // The greeting a figure gives when it is picked, by class (the user, 2026-10-01: 'some elegant
@@ -81,8 +79,7 @@ bool Pedestals::open(Figures* figures, const content::Ground* ground,
     figures_ = figures;
     ground_ = ground;
     tables_ = tables;
-    // MU's own sheets, cut from MuMain by MU2's lobby_cut.py: BITMAP_GM_AURORA (Skill/gmmzine)
-    // and the two particle sheets.
+    // MU's own sheets, cut from MuMain by MU2's lobby_cut.py: the two particle sheets.
     const auto sheet = [&](const char* name) {
         const std::string path = core::join(assetDir, std::string("effects/lobby/") + name);
         if (!core::fileExists(path)) {
@@ -91,7 +88,6 @@ bool Pedestals::open(Figures* figures, const content::Ground* ground,
         }
         return textures.load(path, content::TextureRole::Albedo);
     };
-    aurora_ = sheet("gmmzine.png");
     blob_ = sheet("chasellight.png");
     spark_ = sheet("impack03.png");
     motes_.reserve(128);
@@ -240,6 +236,10 @@ void Pedestals::pick(int slot) {
     if (clip < 0) return;
     stand.figure.play(clip, true, kGreetIn);
     stand.greeting = stand.figure.length();
+}
+
+void Pedestals::middle(float out[3]) const {
+    tileToWorld(*ground_, kStands[kRosterSlots / 2][0], kStands[kRosterSlots / 2][1], out);
 }
 
 void Pedestals::aim(gfx::Camera& camera) const {
@@ -398,38 +398,8 @@ void Pedestals::gather(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
 void Pedestals::gatherEffects(gfx::Effects& effects) const {
     const Stand* pick = subject();
     if (!pick) return;
-    const float* feet = pick->figure.position();
-    const float glow = std::sin(clock_ * 1.5f) * 0.3f + 0.5f;
-    if (bgfx::isValid(aurora_)) {
-        // Two discs turning opposite ways, ten degrees a second.
-        for (int ring = 0; ring < 2; ++ring) {
-            const float across = (ring == 0 ? 1.8f : 1.2f) * ground_->metresPerTile();
-            const float turn = (ring == 0 ? 1.0f : -1.0f) * clock_ * 10.0f * 3.14159265f / 180.0f;
-            gfx::Sprite disc;
-            disc.placed = true;
-            disc.sheet = aurora_;
-            disc.blend = gfx::Blend::Additive;
-            disc.colour[0] = disc.colour[1] = disc.colour[2] = glow;
-            disc.colour[3] = 1.0f;
-            const float half = across * 0.5f;
-            const float c = std::cos(turn) * half, s = std::sin(turn) * half;
-            const float offsets[4][2] = {{-c + s, -s - c}, {c + s, s - c}, {c - s, s + c},
-                                         {-c - s, -s + c}};
-            const float uvs[4][2] = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
-            for (int k = 0; k < 4; ++k) {
-                disc.corner[k][0] = feet[0] + offsets[k][0];
-                disc.corner[k][2] = feet[2] + offsets[k][1];
-                disc.corner[k][1] =
-                    ground_->heightAt(disc.corner[k][0], disc.corner[k][2]) + kRingLift;
-                disc.cornerUv[k][0] = uvs[k][0];
-                disc.cornerUv[k][1] = uvs[k][1];
-            }
-            disc.position[0] = feet[0];
-            disc.position[1] = feet[1] + kRingLift;
-            disc.position[2] = feet[2];
-            effects.add(disc);
-        }
-    }
+    // MU's two auroras at the feet are not drawn -- the user, 2026-10-05: 'remove that ring
+    // under the character when select char'.
     for (const Mote& mote : motes_) {
         const bgfx::TextureHandle sheet = mote.blob ? blob_ : spark_;
         if (!bgfx::isValid(sheet)) continue;

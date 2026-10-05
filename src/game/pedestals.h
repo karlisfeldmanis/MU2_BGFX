@@ -16,7 +16,8 @@
 //
 // **The pick** (RenderSelectedCharacterEffects, CharacterScene.cpp:275-351): two counter-rotating
 // auroras at the feet, 1.8 and 1.2 tiles across, turning a hundredth of a degree a millisecond at
-// a luminance of sin(t*1.5)*0.3+0.5; and two streams of particles, one of each a MU frame --
+// a luminance of sin(t*1.5)*0.3+0.5 -- not drawn here, the user, 2026-10-05: 'remove that ring
+// under the character' -- and two streams of particles, one of each a MU frame --
 // `chasellight` streaks that hang and `Impack03` sparks that rise, both starting at 0.15 of light
 // and brightening by 1.16 a frame for ten frames, then dimming (ZzzEffectParticle.cpp:88-146).
 // MU lights the picked figure at 1.4 and pools white terrain light one tile round its feet
@@ -76,6 +77,8 @@ public:
                float* y) const;
 
     int picked() const { return picked_; }
+    // The middle pedestal's foot, in world metres: what the scene's leaves blow about.
+    void middle(float out[3]) const;
     // A figure newly picked greets the camera once, its class's own gesture, and goes back to
     // its idle (see kGreeting in pedestals.cpp).
     void pick(int slot);
@@ -91,7 +94,7 @@ public:
     void update(float seconds);
     void gather(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
                 std::vector<gfx::Drawable>* casters);
-    // The rings and the two streams, into the transparent pass.
+    // The two streams, into the transparent pass.
     void gatherEffects(gfx::Effects& effects) const;
     // The light over the pick, or 0 when nobody is picked.
     uint32_t lights(gfx::PointLight* out, uint32_t room) const;
@@ -115,7 +118,7 @@ private:
                  const FigureBody* wing = nullptr);
     // The wing body his wings slot draws as, or null for none or a broken one.
     const FigureBody* wingOf(const std::vector<Saved::Item>& items) const;
-    // Who the rings, the streams and the light are on: the create window's class while it
+    // Who the streams and the light are on: the create window's class while it
     // stands on its pedestal, and the pick otherwise.
     const Stand* subject() const;
     const FigureBody* dressed(int slot, sim::Kin kin, bool second,
@@ -130,7 +133,6 @@ private:
     int previewSlot_ = -1;
     int picked_ = -1;
     std::vector<float> scratch_;
-    bgfx::TextureHandle aurora_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle blob_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
     std::vector<Mote> motes_;

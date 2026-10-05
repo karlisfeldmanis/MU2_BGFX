@@ -331,14 +331,16 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
     const bool raining = rain > 0.0f;
     // A blizzard fills a larger pool; every slot still moves, so what the storm raised above
     // the calm's count finishes its flight as the storm goes, and is not refilled.
-    const int count = snow_ ? kFlakes + int(storm_ * float(kStormFlakes - kFlakes)) : kCount;
-    const int slots = snow_ ? kStormFlakes : kCount;
+    const int count =
+        snow_ ? kFlakes + int(storm_ * float(kStormFlakes - kFlakes)) : leafCount_;
+    const int slots = snow_ ? kStormFlakes : std::max(kCount, leafCount_);
     for (int i = 0; i < slots; ++i) {
         Leaf& leaf = leaves_[i];
         if (!leaf.live) {
             if (i < count && !indoors && !raining) {
                 if (snow_) spawnFlake(leaf, hero, ground);
                 else spawn(leaf, hero, eye, ground);
+                if (tooNear(leaf, eye)) leaf.live = false;  // tried again next frame
             }
         } else if (indoors || raining) {
             // Inside: it is on its way out wherever it happens to be. No wind, no walk, no
@@ -356,7 +358,8 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
             const float dx = leaf.position[0] - hero[0];
             const float dy = leaf.position[1] - hero[1];
             const float dz = leaf.position[2] - hero[2];
-            if (dx * dx + dy * dy + dz * dz > kStrayDistance * kStrayDistance) leaf.live = false;
+            const float stray = kStrayDistance * field_;
+            if (dx * dx + dy * dy + dz * dz > stray * stray || tooNear(leaf, eye)) leaf.live = false;
         }
         if (leaf.live) ++live;
     }
@@ -369,9 +372,9 @@ void Leaves::spawn(Leaf& leaf, const float hero[3], const float eye[3],
     // Eight tiles across, five behind the player and nine in front, and between half a tile and
     // three and a half tiles up. Engine z runs against MU's y, so the asymmetric span flips
     // with it.
-    leaf.position[0] = hero[0] + between(-8.0f, 7.99f);
-    leaf.position[2] = hero[2] - between(-5.0f, 8.99f);
-    leaf.position[1] = ground.heightAt(hero[0], hero[2]) + between(0.5f, 3.49f);
+    leaf.position[0] = hero[0] + between(-8.0f, 7.99f) * field_;
+    leaf.position[2] = hero[2] - between(-5.0f, 8.99f) * field_;
+    leaf.position[1] = ground.heightAt(hero[0], hero[2]) + between(0.5f, 0.5f + 2.99f * field_);
 
     float wind = -between(0.064f, 0.127f);
     // Nearer the camera than the player: the wind turns round and drops to a crawl. This is
@@ -607,8 +610,8 @@ void Leaves::gather(gfx::Effects& effects, const float eye[3]) const {
             effects.add(sprite);
             continue;
         }
-        sprite.halfWidth = kHalfWidth;
-        sprite.halfHeight = kHalfHeight;
+        sprite.halfWidth = kHalfWidth * size_;
+        sprite.halfHeight = kHalfHeight * size_;
         sprite.u0 = kU0;
         sprite.u1 = kU1;
         sprite.sheet = sheet_;
