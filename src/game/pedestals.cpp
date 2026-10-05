@@ -339,7 +339,9 @@ void Pedestals::update(float seconds) {
     for (Stand& stand : stands_) {
         if (!stand.up) continue;
         stand.figure.update(seconds);
-        stand.wing.update(seconds, true);
+        // He hovers in MU's stop fly here, so the slow beat, as in game (Play's wing_); `true`
+        // beat it 4x -- the user, 2026-10-05: 'wings flap very fast', 'has to be as its in game'.
+        stand.wing.update(seconds, false);
         // Back to the idle as the greeting ends, the fade begun before its last key so the
         // clip never wraps round to its start.
         if (stand.greeting > 0.0f) {
