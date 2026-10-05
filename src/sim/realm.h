@@ -710,6 +710,23 @@ public:
     int64_t aleLeft() const { return std::max<int64_t>(0, bodies_[0].aleUntil - tick_); }
     // And a Frenzy's, the Dungeon's rune (sim::kFrenzyTicks).
     int64_t frenzyLeft() const { return std::max<int64_t>(0, bodies_[0].frenzyUntil - tick_); }
+    // A potion still pouring in, health or mana: the ticks to its last instalment (at most
+    // kPourTicks) and what is still to come of it. For the buff strip's cell; nothing to the sim.
+    static constexpr int64_t kPourTicks = 20;
+    struct Pouring {
+        int64_t left = 0;
+        int32_t amount = 0;
+    };
+    Pouring pouring(bool mana) const {
+        Pouring out;
+        for (int i = 0; i < sipCount_; ++i) {
+            const Sip& one = sips_[i];
+            if (!one.drunk || one.mana != mana) continue;
+            out.left = std::max(out.left, one.due - tick_);
+            out.amount += one.amount;
+        }
+        return out;
+    }
     // A jewel let go over a thing: the Bless or the Soul, from a bag slot, onto a thing carried
     // or worn. Refused, whole and silent, where `refinable` says no. Otherwise the jewel is
     // spent whatever the roll gives, and the thing comes back at its new plus: OpenMU's
@@ -1496,6 +1513,7 @@ private:
         int64_t due = 0;
         int32_t amount = 0;
         bool mana = false;
+        bool drunk = false;  // a potion's, and not a kill's life (kKillLifeTicks)
     };
     Sip sips_[8];
     int sipCount_ = 0;

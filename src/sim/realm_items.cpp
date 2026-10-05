@@ -761,7 +761,7 @@ bool Realm::useItem(int slot) {
     const int flat = std::max(0, (rank + 1) * 50 - hero.level);
     const int total = int(double(pool) * double(percent) / 100.0 + double(flat));
     // The three instalments, at 200, 600 and 200 ms after one another: 4, 12 and 4 ticks.
-    const int64_t steps[3] = {4, 12, 4};
+    const int64_t steps[3] = {4, 12, 4};  // kPourTicks in all
     const int shares[3] = {20, 60, 20};
     int paid = 0;
     int64_t due = tick_;
@@ -769,7 +769,7 @@ bool Realm::useItem(int slot) {
         due += steps[i];
         const int amount = i == 2 ? total - paid : total * shares[i] / 100;
         paid += amount;
-        sips_[sipCount_++] = Sip{due, amount, mana};
+        sips_[sipCount_++] = Sip{due, amount, mana, true};
     }
     potionUntil_ = tick_ + 10;  // PotionCooldown, half a second
     spendOne();

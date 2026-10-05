@@ -1169,6 +1169,16 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = float(left) * 0.05f;
         boon.share = float(left) / float(sim::kFrenzyTicks);
     }
+    // A potion still pouring in, health then mana: a cell while its instalments are due.
+    for (int mana = 0; mana < 2; ++mana) {
+        const sim::Realm::Pouring pour = realm.pouring(mana == 1);
+        if (pour.left <= 0 || standing >= Hud::kBoons) continue;
+        Hud::Boon& boon = boons[standing++];
+        boon.potion = mana;
+        boon.amount = pour.amount;
+        boon.seconds = float(pour.left) * 0.05f;
+        boon.share = std::min(1.0f, float(pour.left) / float(sim::Realm::kPourTicks));
+    }
     // And a poison on him, last: MU's debuff cell, and the reason to drink an Antidote.
     if (hero.poisonUntil > realm.tick() && standing < Hud::kBoons) {
         Hud::Boon& boon = boons[standing++];

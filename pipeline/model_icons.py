@@ -1,5 +1,5 @@
 """The buff strip's cells that are ours, rendered from the thing's own model: buff_angel,
-buff_imp, buff_ale, buff_uniria and buff_dinorant.
+buff_imp, buff_ale, buff_uniria, buff_dinorant, buff_healing and buff_mana.
 
     python3 pipeline/model_icons.py            renders through Blender (kept), then composes
 
@@ -45,10 +45,14 @@ PETS = {
     # The Dinorant's is its dragon, Rider02: a cold steel blue under its blue hide and gold, no
     # other cell's hue, and a pale gold glow the horns and wings stand out of. Ours, as Uniria's.
     "dinorant": ("pets/Rider02", (40, 90, 160), (4, 12, 34), (255, 235, 170), 35.0),
+    # A potion pouring in (the HUD's potion cell, ours): the Healing Potion on a blood red and
+    # the Mana Potion on a deep blue, each its own bottle as the bag shows it.
+    "healing": ("misc/Potion02", (200, 40, 40), (40, 2, 4), (255, 200, 190), 20.0),
+    "mana": ("misc/Potion05", (40, 80, 220), (2, 8, 44), (190, 215, 255), 20.0),
 }
 
 # Degrees, anticlockwise, for what stands too straight in its cell.
-LEAN = {"ale": 24.0}
+LEAN = {"ale": 24.0, "healing": 24.0, "mana": 24.0}
 
 RENDER = r'''
 import bpy, math, sys, mathutils

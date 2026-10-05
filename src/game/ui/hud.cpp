@@ -635,6 +635,8 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
                       : one.poison ? "buff_poison"
                       : one.ale    ? "buff_ale"
                       : one.frenzy ? "buff_frenzy"
+                      : one.potion == 0 ? "buff_healing"
+                      : one.potion == 1 ? "buff_mana"
                                    : buffArt(one.skill);
     if (art != nullptr) {
         const gfx::Art& icon = arts.get(art);
@@ -745,6 +747,19 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         tip::Section what;
         what.rows.push_back(said("Attack speed", "+" + std::to_string(sim::kAleSpeed),
                                  tip::Tone::Green));
+        sheet.sections.push_back(what);
+        return sheet;
+    }
+    if (one.potion >= 0) {
+        // A potion going down: its worth in three instalments over a second (Realm::useItem).
+        const bool mana = one.potion == 1;
+        sheet.name = mana ? "Mana Potion" : "Healing Potion";
+        sheet.nameTone = mana ? tip::Tone::Blue : tip::Tone::Red;
+        sheet.base = "POTION";
+        tip::Section what;
+        what.rows.push_back(said(mana ? "Mana" : "Health", "+" + panel::grouped(one.amount),
+                                 tip::Tone::Green));
+        what.rows.push_back(prose("still to come, over a second"));
         sheet.sections.push_back(what);
         return sheet;
     }
@@ -1167,6 +1182,8 @@ void Hud::rebuild() {
                           : one.chill            ? "buff_ice"
                           : one.ale              ? "buff_ale"
                           : one.frenzy           ? "buff_frenzy"
+                          : one.potion == 0      ? "buff_healing"
+                          : one.potion == 1      ? "buff_mana"
                           : buffArt(one.skill)   ? buffArt(one.skill)
                                                  : "buff_defense";
         const gfx::Art& icon = arts.get(art);
