@@ -66,11 +66,14 @@ void main()
 	if (bare < 0.5)
 	{
 		vec3 n = normalize(v_normal);
-		// Not breathing with the glow, as MU's chrome pass does not; only a figure's fade.
+		// Not breathing with the glow, as MU's chrome pass does not; only a figure's fade. And
+		// only where the card is drawn: its alpha is this pipeline's stand-in for MU's black, so
+		// chrome laid over the whole quad showed the card's rectangle -- a gold slab across a
+		// +9 Staff of Resurrection (the user, 2026-10-06: 'some bug with res staff').
 		float fade = v_light.w >= 2.0 ? figureFade(v_light.w) : 1.0;
 		colour += (shineAdded(plus, n, v_refine.yzw) +
 		           shineExcellentAdded(shineExcellent(v_refine.x), n) +
-		           shineSweepAdded(plus, shineSweep(v_refine.x), n)) * fade;
+		           shineSweepAdded(plus, shineSweep(v_refine.x), n)) * fade * sheet.a;
 	}
 	gl_FragColor = vec4(colour, 1.0);
 }
