@@ -975,8 +975,10 @@ const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),     
 // class (the user, 2026-10-04: 'give fireccracker on all quests', then 'give 3 firecrackers in
 // quest rewards not 1'), one stack of them. Ours. Added here once rather than in
 // each quest, so a quest written later pays it too; the dialog lists it with the rest. Not
-// Sevina's three treasures (the user, 2026-10-04: 'dont give Firecracker to class chancge
-// quests'); her trial pays them since 2026-10-06 ('add some ... firecrackers ... for this quest').
+// Sevina's class change, her trial and the three treasures, pays ten (the user, 2026-10-06: '10
+// cracrecks, for both quest parts'), two full stacks; none from 2026-10-04 to that day.
+constexpr int kQuestFirecrackers = 3;
+constexpr int kClassChangeFirecrackers = 10;
 struct QuestTable {
     QuestRow rows[kQuests];
 };
@@ -984,8 +986,9 @@ QuestTable withFirecrackers() {
     QuestTable table;
     for (int i = 0; i < kQuests; ++i) {
         QuestRow& row = table.rows[i] = kRawTable[i];
-        if (row.promotes) continue;
-        if (row.paidCount < kQuestPaid) row.paid[row.paidCount++] = {.item = "MagicBox03", .count = 3};
+        const bool change = i == kSevinaTrial || row.promotes;
+        const int count = change ? kClassChangeFirecrackers : kQuestFirecrackers;
+        if (row.paidCount < kQuestPaid) row.paid[row.paidCount++] = {.item = "MagicBox03", .count = count};
     }
     return table;
 }

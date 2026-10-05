@@ -8801,26 +8801,26 @@ void testQuestFirecrackers(const content::Tables& tables) {
     const int32_t cracker = tables.itemNamed("MagicBox03");
     check(cracker >= 0 && sim::firecracker(tables.items[size_t(cracker)]),
           "MagicBox03 is the Firecracker");
-    // Every quest but Sevina's three treasures, the class change (2026-10-04); her trial pays
-    // them since 2026-10-06.
+    // Every quest three, Sevina's class change -- her trial and the three treasures -- ten
+    // (2026-10-06).
     int paying = 0, others = 0, changing = 0;
     for (int i = 0; i < sim::kQuests; ++i) {
         const sim::QuestRow& row = sim::questAt(i);
-        const bool change = row.promotes;
+        const bool change = i == sim::kSevinaTrial || row.promotes;
         changing += change ? 1 : 0;
         for (int k = 0; k < row.paidCount; ++k) {
             const sim::QuestItem& one = row.paid[k];
             if (one.item && std::string(one.item) == "MagicBox03" && one.kin < 0 && !one.firstOnly &&
-                one.count == 3) {
+                one.count == (change ? 10 : 3)) {
                 ++(change ? paying : others);
                 break;
             }
         }
     }
-    checkEqual(changing, 3, "Sevina's three treasures are the class change");
+    checkEqual(changing, 4, "Sevina's trial and three treasures are the class change");
     checkEqual(others, sim::kQuests - changing,
                "every other quest pays three, every completion, to every class");
-    checkEqual(paying, 0, "and the class change pays none");
+    checkEqual(paying, changing, "and the class change pays ten");
 
     sim::Realm realm;
     realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, 50);
