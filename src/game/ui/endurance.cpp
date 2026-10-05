@@ -29,9 +29,10 @@ constexpr float kIconShare = 0.74f;  // of the tile, the rest is frame and air
 // warned about.
 constexpr uint32_t kShapeInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.88f);
 
-const char* artFor(int slot) {
-    return slot == sim::kPet || slot == sim::kMount ? nullptr : ghostArt(slot);
-}
+// Every worn slot, the pet's and the mount's too: they wear (Realm::wearOnTaken), and a
+// Dinorant ridden down to a quarter showed nothing here (the user, 2026-10-05: "some time we made
+// UI for broken items, UI is missing").
+const char* artFor(int slot) { return ghostArt(slot); }
 
 // The four bands, as the canvas drew them: MU's yellow, orange, red-orange and red, calmed.
 uint32_t colourOf(sim::Worn band, float alpha = 1.0f) {
@@ -79,6 +80,8 @@ const char* slotName(int slot) {
         case sim::kPants: return "PANTS";
         case sim::kGloves: return "GLOVES";
         case sim::kBoots: return "BOOTS";
+        case sim::kPet: return "PET";
+        case sim::kMount: return "MOUNT";
         default: return "WORN";
     }
 }
