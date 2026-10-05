@@ -1949,7 +1949,14 @@ void Play::update(double seconds) {
             wing_.wear(wingRow && figures_ ? wingBody(*figures_, wingRow->group, wingRow->number)
                                            : nullptr,
                        hero->figure);
-            wing_.update(float(seconds), realm_.hero().flying);
+            // The fast beat only on MU's PLAYER_FLY, while he goes; hovering where he stands
+            // (PLAYER_STOP_FLY) keeps the slow 0.25 (ZzzCharacter.cpp:15403-15418). The realm's
+            // `flying` is any tick off a safe tile, standing or not, which beat it 4x at rest.
+            const FigureBody* bearer = hero->figure.body();
+            const int beat = hero->figure.clip();
+            const bool beating = bearer && beat >= 0 &&
+                                 (beat == bearer->flyClip || beat == bearer->flyCrossbowClip);
+            wing_.update(float(seconds), beating);
             int mount = -1;
             const sim::Held& ridden = realm_.satchel()[sim::kMount];
             if (!ridden.empty() && size_t(ridden.item) < tables_.items.size()) {
