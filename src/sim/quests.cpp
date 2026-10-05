@@ -419,8 +419,8 @@ QuestRow pit() {
         "\"Kill the Poison Bulls and the Thunder Liches on the way down. Then find my brothers, "
         "and give them rest. Then the Gorgon.\"";
     row.offer[3] =
-        "\"Marlon thinks he is the last of us. Do not tell him what you find down there. Not "
-        "yet.\"";
+        "\"Marlon thinks he is the last of us. Do not tell him what you find down "
+        "there.\"";
     row.underway = "\"My brothers still walk. Go back down.\"";
     row.handIn[0] = "\"It is done. I felt it when they fell. My brothers are at rest.\"";
     // The card holds two hand-in paragraphs, so the doc's third joins the second.

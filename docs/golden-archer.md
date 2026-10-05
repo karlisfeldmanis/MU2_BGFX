@@ -146,7 +146,7 @@ Only seven Skeleton Archers spawn on Dungeon 1. Either keep the count at seven, 
 1. "The last company of the oath went down into the Pit to hold it. I went with them. None of us came back as we were."
 2. "The Gorgon waits at the bottom. It looked on my brothers, and they rose as Dark Knights. It looked on me, and I rose as this."
 3. "Kill the Poison Bulls and the Thunder Liches on the way down. Then find my brothers, and give them rest. Then the Gorgon."
-4. "Marlon thinks he is the last of us. Do not tell him what you find down there. Not yet."
+4. "Marlon thinks he is the last of us. Do not tell him what you find down there."
 
 **Underway:** "My brothers still walk. Go back down."
 

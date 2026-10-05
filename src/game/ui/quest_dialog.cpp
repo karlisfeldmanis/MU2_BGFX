@@ -45,9 +45,6 @@ constexpr float kAsk = 22.0f;    // the choice's line over its grid
 constexpr float kButtonW = 120.0f, kButtonWide = 180.0f;
 constexpr uint32_t kZenGold = gfx::rgba(1.0f, 0.8f, 0.102f);
 constexpr uint32_t kItemWhite = gfx::rgba(1.0f, 1.0f, 1.0f);
-// A reward's name, whatever the item: WoW's legendary orange, the runes' (the user, 2026-10-04:
-// 'quest rewards hsa to use legendary color'). What a quest asks for keeps its own quality.
-inline uint32_t rewardInk() { return tip::colourOf(tip::Tone::RuneLegendary); }
 
 // A giver's list (kList): a row a quest, its mark at the left and its state ranged right.
 constexpr float kEntry = 34.0f;
@@ -397,7 +394,10 @@ void QuestDialog::layout(const Play& play) {
                 Cell cell;
                 cell.item = item;
                 cell.power = power;
-                cell.ink = rewardInk();
+                cell.ink = tip::colourOf(
+                    describe(tables, rewardHeld(tables, item, 0, 1, 0, power), realm.wearer(),
+                             realm.satchel())
+                        .nameTone);
                 cell.box = {kInset + float(n % across) * (cellWide + kCellGap),
                             y + float(n / across) * (kIcon + kCellGap), cellWide, kIcon};
                 cells_.push_back(cell);
@@ -466,8 +466,14 @@ void QuestDialog::layout(const Play& play) {
                 cell.sockets = what.sockets;
                 cell.power = what.power;
                 for (int a = 0; a < 3; ++a) cell.affixes[a] = what.affixes[a];
+                // Its name in its own label's colour, as the bag shows it (the user, 2026-10-05:
+                // "not correct colors based on actual label colors"; the one legendary ink of
+                // 2026-10-04 is gone).
                 if (cell.item >= 0) {
-                    cell.ink = rewardInk();
+                    const sim::Held held = rewardHeld(tables, cell.item, cell.plus, cell.count,
+                                                      cell.sockets, cell.power, cell.affixes);
+                    cell.ink = tip::colourOf(
+                        describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
                 }
                 cell.box = {kInset + float(column) * (cellWide + kCellGap),
                             y + float(rowOf) * (kIcon + kCellGap), cellWide, kIcon};
