@@ -27,6 +27,10 @@ struct WingInward {
     float metres;
 };
 constexpr float kHeavenTone = 0.82f;
+// And seen through: drawn at this opacity after the opaque frame, its own depth first so its
+// far feathers stay hidden (gfx::Drawable::fade) -- the user, 2026-10-05: 'make angel wings
+// actual transparent so its very smooth'. Ours; MU's are opaque past the alpha.
+constexpr float kHeavenOpacity = 0.75f;
 constexpr WingInward kInward[] = {{"Wing04", 0.18f}, {"Wing05", 0.065f}, {"Wing06", 0.08f}};
 
 }  // namespace
@@ -97,9 +101,10 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     // a thin card -- the user, 2026-10-05: 'angel wings wierdly accepts light and shadows'.
     // Ours: the Wings of Heaven a little under their sheet, whose pure white glared at noon
     // once self-lit -- the user, 2026-10-05: 'tone them down slightly'.
-    const float tone = wing_->name == "Wing02" ? kHeavenTone : 1.0f;
+    const bool heaven = wing_->name == "Wing02";
+    const float tone = heaven ? kHeavenTone : 1.0f;
     for (size_t i = from; i < out.size(); ++i) {
-        out[i].fade = fade;
+        out[i].fade = fade * (heaven ? kHeavenOpacity : 1.0f);
         out[i].light[3] = 2.0f;
         for (int k = 0; k < 3; ++k) out[i].light[k] = tone;
     }
