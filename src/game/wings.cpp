@@ -15,11 +15,17 @@ namespace {
 // into the chest instead of up between the shoulders.
 constexpr float kWingOffset[3] = {0.0f, 0.15f, 0.0f};
 
-// Ours: the Wings of Dragon pulled 8 cm in against the back (+z is MU's -y, forward). Wing06's
-// joint is modelled 6-9 cm behind its origin where Satan's and Soul's sit 3.5-5, so on MU's own
-// (0, 0, 15) it stood off a knight's back with a gap -- the user, 2026-10-05: 'looks liek
-// there is some gap on DK 2nd wings'; 5 cm left 'still some minimal gap'.
-constexpr float kDragonInward = 0.08f;
+// Ours: the 2nd wings pulled in against the back (+z is MU's -y, forward). Their joints are
+// modelled further behind their origins than the 1st wings' (Satan's nearest 3.5 cm), so on
+// MU's own (0, 0, 15) they stood off the back with a gap -- the user, 2026-10-05: 'looks liek
+// there is some gap on DK 2nd wings', and at 5 cm 'stlll some minimal gap'. Dragon passed at
+// 8 cm, its joint's nearest 6.1 cm; Soul (4.8) and Spirits (16.2, the whole membrane behind)
+// take the same rule, the nearest point plus 1.9 cm.
+struct WingInward {
+    const char* name;
+    float metres;
+};
+constexpr WingInward kInward[] = {{"Wing04", 0.18f}, {"Wing05", 0.065f}, {"Wing06", 0.08f}};
 
 }  // namespace
 
@@ -54,7 +60,9 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     if (!bearer.boneWorld(bearer.body()->backBone, bone)) return;
     // In the bone's own frame, moved along it by MU's offset, as the Imp is (game/pets.cpp).
     float offset[3] = {kWingOffset[0], kWingOffset[1], kWingOffset[2]};
-    if (wing_->name == "Wing06") offset[2] += kDragonInward;
+    for (const WingInward& in : kInward) {
+        if (wing_->name == in.name) offset[2] += in.metres;
+    }
     float local[16];
     content::placementTransform(0.0f, 0.0f, 0.0f, 1.0f, offset, local);
     float parent[16];
