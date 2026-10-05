@@ -15,11 +15,11 @@ namespace {
 // into the chest instead of up between the shoulders.
 constexpr float kWingOffset[3] = {0.0f, 0.15f, 0.0f};
 
-// Ours: the Wings of Dragon pulled 5 cm in against the back (+z is MU's -y, forward). Wing06's
+// Ours: the Wings of Dragon pulled 8 cm in against the back (+z is MU's -y, forward). Wing06's
 // joint is modelled 6-9 cm behind its origin where Satan's and Soul's sit 3.5-5, so on MU's own
 // (0, 0, 15) it stood off a knight's back with a gap -- the user, 2026-10-05: 'looks liek
-// there is some gap on DK 2nd wings'.
-constexpr float kDragonInward = 0.05f;
+// there is some gap on DK 2nd wings'; 5 cm left 'still some minimal gap'.
+constexpr float kDragonInward = 0.08f;
 
 }  // namespace
 
