@@ -438,14 +438,19 @@ void Herald::rebuild(int width) {
     place.draw(canvas_, x, mid, style::kBone2, ca, call.place);
     x += place.width(call.place);
 
-    // The cross: two thin strokes, dim until the pointer is on it.
+    // The close: a cross in a thin round rim over a breath of dark, so it is found on any ground
+    // (the user, 2026-10-05: 'close notification is very hard to see, add some circle outline').
+    // Iron at rest, the gold under the pointer.
     close_ = {std::round(band.right() - kCloseRight * u - kCloseBox * u),
               std::round(mid - kCloseBox * u * 0.5f), std::round(kCloseBox * u),
               std::round(kCloseBox * u)};
-    const float arm = kCloseArm * u * 0.5f * 0.7071f;
     const float ccx = close_.midX(), ccy = close_.midY();
-    const uint32_t ink = faded(hover_ ? style::kBoneHi : style::kBone2, a * (hover_ ? 1.0f : 0.6f));
+    const float radius = kCloseBox * u * 0.5f;
     const float thick = std::max(1.0f, 1.5f * u);
+    disc(canvas_, ccx, ccy, radius, faded(style::kVoid, 0.45f * a));
+    hoop(canvas_, ccx, ccy, radius, thick, faded(hover_ ? kGoldHi : style::kIronHi, a * (hover_ ? 1.0f : 0.8f)));
+    const float arm = kCloseArm * u * 0.5f * 0.7071f * 0.62f;
+    const uint32_t ink = faded(hover_ ? style::kBoneHi : style::kBone, a * (hover_ ? 1.0f : 0.85f));
     stroke(canvas_, ccx - arm, ccy - arm, ccx + arm, ccy + arm, thick, ink);
     stroke(canvas_, ccx - arm, ccy + arm, ccx + arm, ccy - arm, thick, ink);
 }
