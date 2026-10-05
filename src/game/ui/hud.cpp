@@ -395,7 +395,7 @@ gfx::Box Hud::wornCell(int i) const {
     // for broken item UI").
     // Round and a little smaller than a buff cell (the user, the same day: "make them little bit
     // smaller and in circle containers"), standing on the strip's foot.
-    constexpr float kWornAcross = 34.0f;
+    constexpr float kWornAcross = 40.0f;
     const float end = kQuickX + float(kQuickKeys - 1) * kQuickPitch + kQuickW;
     const float x = end - float(i + 1) * kWornAcross - float(i) * kBuffGap;
     return plate(screen_, {x, kBuffsAt.y + kBuffsAt.h - kWornAcross, kWornAcross, kWornAcross});
