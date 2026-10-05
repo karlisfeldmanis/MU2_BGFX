@@ -120,6 +120,10 @@ float labelWidth(float size, const std::string& text);
 // it; null (and an invalid texture) before open() or when the face failed to bake.
 const gfx::Face* labelFace();
 bgfx::TextureHandle labelTexture();
+// The button words' face (Alegreya Sans SC Bold) and its texture, for a line that sets its own
+// small capitals and fades its own drop; null before open() or when the face failed to bake.
+const gfx::Face* wordFace();
+bgfx::TextureHandle wordTexture();
 // The same ranged against `right`.
 float ranged(gfx::Canvas& canvas, float right, float baseline, float size, uint32_t ink,
              const std::string& text);

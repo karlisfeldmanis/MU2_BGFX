@@ -493,6 +493,10 @@ float labelWidth(float size, const std::string& text) {
     return labelReady() ? s_label.measure(size, text) : 0.0f;
 }
 
+const gfx::Face* wordFace() { return wordReady() ? &s_word : nullptr; }
+bgfx::TextureHandle wordTexture() {
+    return wordReady() ? s_wordTexture : bgfx::TextureHandle BGFX_INVALID_HANDLE;
+}
 const gfx::Face* labelFace() { return labelReady() ? &s_label : nullptr; }
 bgfx::TextureHandle labelTexture() {
     return labelReady() ? s_labelTexture : bgfx::TextureHandle BGFX_INVALID_HANDLE;

@@ -216,6 +216,7 @@ add_executable(mu2
   src/game/ui/tracker.cpp
   src/game/ui/travel.cpp
   src/game/ui/go_back.cpp
+  src/game/ui/herald.cpp
   src/game/ui/minimap.cpp
   src/game/ui/quest_dialog.cpp
   src/game/ui/controls.cpp
