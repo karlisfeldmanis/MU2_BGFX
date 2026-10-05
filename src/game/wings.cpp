@@ -10,8 +10,10 @@ namespace mu::game {
 namespace {
 
 // ZzzCharacter.cpp:15430: RenderLinkObject(0, 0, 15, ...) -- where the wing sits in Bone05's
-// frame, in metres.
-constexpr float kWingOffset[3] = {0.0f, 0.0f, 0.15f};
+// frame, in metres. MU's (x, y, z) is the cook's (x, z, -y) in every bone's frame (as
+// game/pets.cpp maps), so MU's 15 up is +y here; left as z it pushed the wing 15 cm forward
+// into the chest instead of up between the shoulders.
+constexpr float kWingOffset[3] = {0.0f, 0.15f, 0.0f};
 
 }  // namespace
 
