@@ -317,8 +317,9 @@ void QuestDialog::layout(const Play& play) {
             words(said.c_str());
             // Voiced only to one carrying a Cloak of Invisibility, and only on a castle he can go
             // into (the user, 2026-10-04): the ticketless, and a page his level is not for, are
-            // turned away in silence.
-            static const char* const kSaid[] = {"none", "", "notyet", "", ""};
+            // turned away in silence. 'Wait till the gate opens' is read in silence too (the user,
+            // 2026-10-05: 'dont play that audio').
+            static const char* const kSaid[] = {"none", "", "", "", ""};
             if (cloakPlus_ >= 0 && int(why_) >= 0 && int(why_) < 5 && *kSaid[int(why_)]) {
                 clip_ = std::string("voice/messenger/messenger_") + kSaid[int(why_)] + ".wav";
             }
