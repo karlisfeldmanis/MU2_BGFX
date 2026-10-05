@@ -659,6 +659,11 @@ bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, fl
     return true;
 }
 
+// How far a crown may stand over the head joint, in the figure's own metres: a head and a tall
+// hat. Apostle Devin's is the tallest in the towns, 0.68 over his head joint, and keeps it; the
+// Messenger of Archangel's box is 3.72 m to a head at 1.25.
+constexpr float kCrownOverHead = 0.70f;
+
 bool Play::folkCrownOf(int folk, const float* viewProj, int width, int height, float* x,
                        float* y) const {
     if (!ground_ || folk < 0) return false;
@@ -666,17 +671,13 @@ bool Play::folkCrownOf(int folk, const float* viewProj, int width, int height, f
     for (const Standing& one : folk_) {
         if (one.folk != folk || !one.figure.body()) continue;
         const float* at = one.figure.position();
-        const float top = at[1] + one.figure.body()->height * one.figure.scale();
-        const float world[4] = {at[0], top + 0.33f * ground_->metresPerTile(), at[2], 1.0f};
-        float clip[4];
-        bx::vec4MulMtx(clip, world, viewProj);
-        if (clip[3] <= 0.0f) return false;
+        float top = at[1] + one.figure.body()->height * one.figure.scale();
         // Across, from the face: a point raised over the head leans away from the screen's middle
         // in the perspective, as the whole figure does, and the quest mark hung off to the side
         // of anyone standing off-centre -- Sevina, at the left of the frame, by eleven pixels
-        // (the user, 2026-09-30). So the across is the head joint's, where the pose holds it;
-        // the height is still the raised point's.
+        // (the user, 2026-09-30). So the across is the head joint's, where the pose holds it.
         float head[4] = {at[0], top, at[2], 1.0f};
+        bool headFound = false;
         if (const content::Mesh* skeleton = one.figure.body()->skeletonMesh) {
             const std::vector<content::Bone>& bones = skeleton->bones();
             for (size_t b = 0; b < bones.size(); ++b) {
@@ -690,10 +691,21 @@ bool Play::folkCrownOf(int folk, const float* viewProj, int width, int height, f
                     head[0] = onPose[0];
                     head[1] = onPose[1];
                     head[2] = onPose[2];
+                    headFound = true;
                 }
                 break;
             }
         }
+        // And the height no more than a head over the head joint: the figure's box counts
+        // everything it wears, and the Messenger of Archangel's wings stand some two and a half
+        // metres over his head, which hung his name far above him (the user, 2026-10-05: "label for devias angel
+        // is far far away from actual npc very high"). Anyone with nothing tall over the head
+        // keeps the box's top, which is under this.
+        if (headFound) top = std::min(top, head[1] + kCrownOverHead * one.figure.scale());
+        const float world[4] = {at[0], top + 0.33f * ground_->metresPerTile(), at[2], 1.0f};
+        float clip[4];
+        bx::vec4MulMtx(clip, world, viewProj);
+        if (clip[3] <= 0.0f) return false;
         float onHead[4];
         bx::vec4MulMtx(onHead, head, viewProj);
         const float across = onHead[3] > 0.0f ? onHead[0] / onHead[3] : clip[0] / clip[3];
