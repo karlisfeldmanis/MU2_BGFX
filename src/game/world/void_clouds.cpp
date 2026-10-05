@@ -34,28 +34,33 @@ struct Layer {
 // clouds' (the same day): an even sheet per layer blurred into one grey wash. Each layer now
 // gathers into banks with open gaps between them, its own pattern drifting with it, so a lower
 // deck shows through the gaps of the one above; no brighter than before, the deeper ones dimmer.
+// And 'clouds dont have to looks like puffs but like actual big clouds' (the same day): not
+// smoke02's 64-pixel puff by the hundred but a few big cloud masses each, from a sheet made for
+// it (pipeline/cloud_sheet.py), lit on their tops and shaded in their hollows. The cloud fills
+// about half its sheet, so a sheet's half width is about its cloud's whole.
 constexpr Layer kLayers[] = {
-    {320, 60.0f, 66.0f, 0.2f, 1.5f, 9.0f, 14.0f, 0.8f, 1.0f, 1.0f, 0.0f, 38.0f, 0.42f},
-    {150, 95.0f, 104.0f, 7.0f, 11.0f, 14.0f, 22.0f, 0.6f, 0.72f, 0.7f, 0.35f, 60.0f, 0.46f},
-    {90, 140.0f, 152.0f, 18.0f, 26.0f, 22.0f, 34.0f, 0.45f, 0.5f, 0.45f, -0.3f, 90.0f, 0.44f},
+    {44, 72.0f, 80.0f, 0.3f, 1.6f, 18.0f, 28.0f, 0.55f, 1.0f, 1.0f, 0.0f, 70.0f, 0.42f},
+    {26, 115.0f, 126.0f, 7.0f, 11.0f, 30.0f, 44.0f, 0.45f, 0.72f, 0.7f, 0.35f, 110.0f, 0.44f},
+    {16, 165.0f, 180.0f, 18.0f, 26.0f, 46.0f, 68.0f, 0.35f, 0.5f, 0.45f, -0.3f, 160.0f, 0.42f},
 };
 // How far over the cut a bank grows to full: a cloud nearer its gap than this is fainter.
 constexpr float kBankSoft = 0.18f;
-constexpr float kLifeMin = 22.0f, kLifeMax = 36.0f;
+// A big cloud lives longer than a puff: it forms and thins away slowly.
+constexpr float kLifeMin = 50.0f, kLifeMax = 80.0f;
 // How far under the floor the layer lies, and the sheets' half width and growth.
 // 0.8-3 m since the user asked to see them round the castle's court too (2026-10-02: 'also i
 // want to see those clouds in voids also in starting point in BC'), where only a narrow band of
 // void shows past the court; and 90 within 28 m rather than 72 within 34.
 // Then 0.2-1.5: deeper, the court's edges sloping into the chasm hid them.
 // (Now the first layer's row in kLayers.)
-constexpr float kGrowth = 0.3f;
+constexpr float kGrowth = 0.12f;
 // 10 s and 12 s since 'they are not supper smooth whn char moves or they appear' (2026-10-02):
 // at 8 and 6 a cloud born in view was seen arriving as he walked.
 constexpr float kFadeOut = 10.0f;  // seconds, a cloud drifting towards ground or out of reach
 constexpr float kFadeIn = 12.0f;   // seconds, every cloud from nothing, the first ones too
 constexpr float kDrift[2] = {0.5f, 0.22f};  // metres a second
 constexpr float kScatter = 0.12f;
-constexpr float kSpin = 0.045f;             // radians a second at most
+constexpr float kSpin = 0.012f;             // radians a second at most
 // Faint, as asked: subtle. Cold grey, the castle's light. First at 48 sheets, 0.07 and (0.44, 0.46,
 // 0.54) they greyed the whole chasm (the user: 'clouds is to light'); at 30, 0.035 and (0.34, 0.36,
 // 0.43) they were gone ('now little bot more vissible'). And 'they have to moove little bit':
@@ -72,7 +77,9 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // and 'cloud still little bit to much vissible': 0.032; 0.028 when the layers became banks,
 // whose clouds overlap more inside a bank than the even sheet's did. Then 'clouds cant be to
 // light but also they cant be to dark': 0.06, between that and the 8x test shot.
-constexpr float kAlpha = 0.06f;
+// 0.3 for the cloud sheets: a few big clouds overlap far less than the puffs did, and the
+// sheet's own alpha is thick only in a cloud's middle.
+constexpr float kAlpha = 0.1f;
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
@@ -128,7 +135,7 @@ void VoidClouds::open(const std::string& assetDir, const std::string& world,
     floor_ = heights[heights.size() / 2];
     ground_ = &ground;
     for (int k = 0; k < 3; ++k) colour_[k] = world == "dungeon" ? kDungeonColour[k] : kColour[k];
-    const std::string path = assetDir + "/effects/fire/smoke02.png";
+    const std::string path = assetDir + "/effects/clouds/void_clouds.png";
     if (core::fileExists(path)) sheet_ = textures.load(path, content::TextureRole::Albedo);
     wisps_.clear();
     for (int layer = 0; layer < int(std::size(kLayers)); ++layer) {
@@ -136,7 +143,7 @@ void VoidClouds::open(const std::string& assetDir, const std::string& world,
         wisp.layer = layer;
         wisps_.insert(wisps_.end(), size_t(kLayers[layer].wisps), wisp);
     }
-    core::logf("void clouds: %d void tiles, floor %.2f m, %d wisps in %d layers; smoke02 %s",
+    core::logf("void clouds: %d void tiles, floor %.2f m, %d clouds in %d layers; sheet %s",
                voids, floor_, int(wisps_.size()), int(std::size(kLayers)),
                bgfx::isValid(sheet_) ? "yes" : "NO");
 }
@@ -205,6 +212,7 @@ bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
         wisp.life = kLifeMin + (kLifeMax - kLifeMin) * unit();
         wisp.age = anyAge ? wisp.life * unit() : 0.0f;
         wisp.size = size;
+        wisp.variant = int(unit() * 4.0f) & 3;
         wisp.turn = 6.2831853f * unit();
         wisp.spin = (unit() - 0.5f) * 2.0f * kSpin;
         wisp.fade = 0.0f;
@@ -261,7 +269,9 @@ void VoidClouds::gather(gfx::Effects& effects) const {
         for (int a = 0; a < 3; ++a) sprite.position[a] = wisp.at[a];
         sprite.placed = true;
         const float corners[4][2] = {{-c + s, -s - c}, {c + s, s - c}, {c - s, s + c}, {-c - s, -s + c}};
-        const float uvs[4][2] = {{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
+        // One of the sheet's four clouds, a 2x2 atlas.
+        const float u0 = 0.5f * float(wisp.variant & 1), v0 = 0.5f * float(wisp.variant >> 1);
+        const float uvs[4][2] = {{u0, v0 + 0.5f}, {u0 + 0.5f, v0 + 0.5f}, {u0 + 0.5f, v0}, {u0, v0}};
         for (int k = 0; k < 4; ++k) {
             sprite.corner[k][0] = wisp.at[0] + corners[k][0];
             sprite.corner[k][1] = wisp.at[1];
@@ -272,7 +282,8 @@ void VoidClouds::gather(gfx::Effects& effects) const {
         for (int k = 0; k < 3; ++k) sprite.colour[k] = colour_[k] * kLayers[wisp.layer].shade;
         sprite.colour[3] = alpha;
         sprite.sheet = sheet_;
-        sprite.blend = gfx::Blend::Smoke;
+        // Plain alpha, not Smoke: the sheet carries its own light and shade, and its own edge.
+        sprite.blend = gfx::Blend::Alpha;
         effects.add(sprite);
     }
 }

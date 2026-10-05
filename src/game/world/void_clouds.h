@@ -3,10 +3,10 @@
 // zones'. MU has a kin of it there -- nine Object38 emitters rolling BITMAP_CLOUD and smoke round
 // the bridge and the court (ZzzObject.cpp:3226-3240) -- but this is a layer, not those emitters.
 //
-// Three layers since 2026-10-05: the first as below, two deeper, wider and further out.
-// Flat sheets of smoke02, 14-22 m across, a few metres below the castle's floor over NoGround
-// tiles near the camera, overlapping into one faint layer, drifting one way and turning slowly,
-// faded in and out over half a minute. Cold grey, as the castle's light. Lava smoke's shape
+// Three decks since 2026-10-05, each gathered into banks with open sky between them: big cloud
+// masses from our own sheet (pipeline/cloud_sheet.py), 36-56 m across under the floor, wider and
+// darker on the two decks below it, out to 165 m, over NoGround tiles round the camera, drifting
+// and turning slowly, forming and thinning away over a minute. Cold grey, as the castle's light. Lava smoke's shape
 // (game/world/lava_smoke.h); nothing here flickers.
 #pragma once
 
@@ -22,7 +22,7 @@ namespace mu::game {
 
 class VoidClouds {
 public:
-    // Opens on the worlds that ask for it (Blood Castle, the Dungeon) and takes smoke02; elsewhere it stays
+    // Opens on the worlds that ask for it (Blood Castle, the Dungeon) and takes the cloud sheet; elsewhere it stays
     // closed. The layer's height is the walkable ground's middle height less its depth.
     void open(const std::string& assetDir, const std::string& world, const content::Ground& ground,
               content::Textures& textures);
@@ -43,7 +43,8 @@ private:
         float fade = 0.0f;     // 0 to 1, moving only gradually: in at birth, out when leaving
         bool leaving = false;  // out of reach or over ground: fading out, never cut off
         bool alive = false;
-        int layer = 0;  // into kLayers: 0 under the floor, deeper and wider after
+        int layer = 0;    // into kLayers: 0 under the floor, deeper and wider after
+        int variant = 0;  // which of the sheet's four clouds
     };
     bool spawn(Wisp& wisp, const float near[3], bool anyAge);
     bool voidAt(float x, float z) const;

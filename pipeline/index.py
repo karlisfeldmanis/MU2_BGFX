@@ -323,6 +323,10 @@ EFFECTS = {
     "fire2": "effects/fire/fire02.png",
     "smoke": "effects/fire/smoke02.png",
 
+    # Ours: the void's big clouds, four masses on a 2x2 sheet made by pipeline/cloud_sheet.py.
+    # See game/world/void_clouds.h.
+    "void_clouds": "effects/clouds/void_clouds.png",
+
     # BITMAP_SMOKE itself, which is not the dust's sheet: smoke01.jpg is a grey wisp on
     # black with no alpha, and it is what a Bull Fighter snorts. See Snort.
     "smoke01": "effects/fire/smoke01.png",
