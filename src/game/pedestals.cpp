@@ -184,11 +184,12 @@ void Pedestals::standAt(int slot, const FigureBody* body, sim::Kin kin, const Fi
     if (!body || !ground_ || where < 0) return;
     float at[3];
     tileToWorld(*ground_, kStands[where][0], kStands[where][1], at);
-    // MU's angle[2] as a Figure's yaw: 180 less it. The axis swap is a mirror, which turns the
-    // angle's sense, and a character model faces the other way to a placement at angle 0. Taken
-    // as it is, the way the cook takes an object's, or negated alone, every figure stood with
-    // its back to the camera; both were tried and photographed.
-    const float yaw = (180.0f - kStands[where][2]) * 3.14159265f / 180.0f;
+    // MU's angle[2] as a Figure's yaw, as it is. 180 less it agreed only at slot 1's 90 and
+    // turned every other slot the wrong way by twice its offset (35 stood in profile, the winged
+    // wizard at 75 turned off), so the fan read as random -- the user, 2026-10-05: 'work on
+    // character angles on char selection screen'. Five slots photographed: each faces the camera
+    // within MU's ~25 degree fan.
+    const float yaw = kStands[where][2] * 3.14159265f / 180.0f;
     stand.figure.stand(body, at, yaw, body->scale * kSceneScale, true);
     // Winged, the stop fly: the slung weapon leaves the bare pair, as in the field without a
     // crossbow drawn.
