@@ -70,8 +70,9 @@ constexpr float kSpin = 0.045f;             // radians a second at most
 // Added, smoke01 was too small a puff to cover, and smoke02 added stood as brown squares.
 // And 'little bit to much vvisslbe clouds': 0.044.
 // and 'cloud still little bit to much vissible': 0.032; 0.028 when the layers became banks,
-// whose clouds overlap more inside a bank than the even sheet's did.
-constexpr float kAlpha = 0.028f;
+// whose clouds overlap more inside a bank than the even sheet's did. Then 'clouds cant be to
+// light but also they cant be to dark': 0.06, between that and the 8x test shot.
+constexpr float kAlpha = 0.06f;
 constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
