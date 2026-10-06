@@ -17,12 +17,12 @@
 //     gone when the comet lands. Turned to the eye, as MU's joints are.
 //   * **The ground light** while it falls: (0.2, 0.4, 1.0) over two tiles (AddTerrainLight,
 //     MoveHandlers.cpp:2575-2577).
-//   * **The landing** (MoveHandlers.cpp:2550-2573): the meteor's stones -- lent by fx/meteor.h
-//     through the caller, which also sounds SOUND_EXPLOTION01 and shocks what stands there, as
-//     for a rock -- and a BITMAP_SHINY + 4 (Effect/ring.jpg), the blue star drawn here. **Not
-//     MU's BITMAP_EXPLOTION**: the user, 2026-10-06, read its fire as Meteorite's; the comet
-//     lands blue. Its life is ours: MU's particle fades it in a
-//     few frames, here twelve, spinning.
+//   * **The landing** (MoveHandlers.cpp:2550-2573): MU's stones, BITMAP_EXPLOTION and ring.jpg
+//     star are **not** kept (the user, 2026-10-06: the fire read as Meteorite's, the star as
+//     jagged; "some kind of crystal explosion with smoke after"). Ours: Ice's shatter, ten
+//     crystal shards, laid by the caller, which also sounds SOUND_EXPLOTION01 and shocks what
+//     stands there as for a rock; a short soft glow (flare01) in the comet's blue; frost smoke
+//     rising after; and the ribbon running on into the ground for a few frames.
 //
 // Presentation only, `game` and not `sim`: the realm resolved every blow on the tick it was
 // cast. Pools are sized once and a frame allocates nothing.
@@ -81,14 +81,27 @@ private:
     static constexpr int kTails = 10;
     static constexpr float kRibbonUnits = 65.0f;
     static constexpr float kRibbonTint[3] = {0.55f, 0.42f, 0.75f};
-    // The star where it lands: ring.jpg, ours at this many units across, this bright at its
-    // birth and these frames of life. Smaller and dimmer than it was (the user, 2026-10-06:
-    // "more subtle comet explosion").
-    static constexpr float kFlashUnits = 150.0f;
-    static constexpr float kFlashPeak = 0.6f;
-    static constexpr float kFlashLift = 80.0f;
-    static constexpr float kFlashFrames = 10.0f;
-    static constexpr float kFlashSpin = 0.08f;  // radians a reference frame
+    // After it lands, its ribbon a while yet, running into the ground and fading (frames).
+    static constexpr float kTrailLinger = 6.0f;
+    // The landing, ours (the user, 2026-10-06: "some kind of crystal explosion with smoke
+    // after"): Ice's shatter -- ten crystal shards thrown off the ground, laid by the caller --
+    // under a short soft glow, and frost smoke rising after. MU's ring.jpg star, spiky at 64
+    // pixels and spinning, read as jagged shards of light; the glow is MU's flare01 (the
+    // `light` sheet) in the comet's blue, swelling as it goes out.
+    static constexpr float kFlashUnits = 170.0f;
+    static constexpr float kFlashPeak = 0.7f;
+    static constexpr float kFlashLift = 60.0f;
+    static constexpr float kFlashFrames = 8.0f;
+    static constexpr float kFlashTint[3] = {0.45f, 0.65f, 1.0f};
+    // The smoke: smoke01 as Ice's frost wisps are drawn, a few puffs a landing, opening after
+    // the glow, rising, spreading and going out.
+    static constexpr int kPuffsALanding = 5;
+    static constexpr float kPuffWaits = 4.0f;    // reference frames after the landing
+    static constexpr float kPuffFrames = 55.0f;  // its life once open
+    static constexpr float kPuffRise = 0.012f;   // metres a reference frame
+    static constexpr float kPuffSpread = 0.45f;  // metres off the landing
+    static constexpr float kPuffSize[2] = {0.7f, 1.8f};  // across, born and gone
+    static constexpr float kPuffTint[3] = {0.34f, 0.42f, 0.56f};
     // Its light: MU's blue over two tiles while it falls, and the star's, fading with it.
     static constexpr float kGlow[3] = {0.2f, 0.4f, 1.0f};
     static constexpr float kGlowTiles = 2.0f;
@@ -96,6 +109,7 @@ private:
 
     static constexpr int kMaxComets = 32;  // a cast and an echo's, twelve, and room
     static constexpr int kMaxFlashes = 32;
+    static constexpr int kMaxPuffs = 128;
 
     struct Live {
         bool alive = false;
@@ -109,6 +123,8 @@ private:
         int tailCount;
         float tailDue;       // reference frames to the next tail
         uint32_t attacker;
+        bool landed;         // on the ground: no head, its ribbon lingering
+        float linger;        // reference frames of ribbon left
     };
     struct Flash {
         bool alive = false;
@@ -117,14 +133,24 @@ private:
         float spin;
         float left;  // reference frames
     };
+    struct Puff {
+        bool alive = false;
+        float at[3];
+        float spin;
+        float wait;  // reference frames before it opens
+        float age;   // reference frames since
+        float weight;
+    };
 
     std::vector<EffectCorner> mesh_;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle trailSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle flashSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle smokeSheet_ = BGFX_INVALID_HANDLE;
     const content::Ground* ground_ = nullptr;
     Live comets_[kMaxComets] = {};
     Flash flashes_[kMaxFlashes] = {};
+    Puff puffs_[kMaxPuffs] = {};
     uint32_t refused_ = 0;
 
     // The drawing's own dice, never the sim's.

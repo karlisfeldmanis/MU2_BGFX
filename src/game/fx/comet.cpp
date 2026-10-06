@@ -39,8 +39,11 @@ bool Comet::open(const std::string& assetDir, content::Textures& textures,
     if (const content::EffectSheet* trail = table.effect("comet_trail")) {
         trailSheet_ = textures.load(assetDir + "/" + trail->path, content::TextureRole::Albedo);
     }
-    if (const content::EffectSheet* flash = table.effect("comet_flash")) {
+    if (const content::EffectSheet* flash = table.effect("light")) {
         flashSheet_ = textures.load(assetDir + "/" + flash->path, content::TextureRole::Albedo);
+    }
+    if (const content::EffectSheet* smoke = table.effect("smoke01")) {
+        smokeSheet_ = textures.load(assetDir + "/" + smoke->path, content::TextureRole::Albedo);
     }
     core::logf("comet: Blast01 %zu triangles, sheet %s, trail %s, flash %s", mesh_.size() / 3,
                bgfx::isValid(sheet_) ? "yes" : "NO", bgfx::isValid(trailSheet_) ? "yes" : "NO",
@@ -52,6 +55,7 @@ void Comet::shutdown() {
     mesh_.clear();
     for (Live& one : comets_) one.alive = false;
     for (Flash& one : flashes_) one.alive = false;
+    for (Puff& one : puffs_) one.alive = false;
 }
 
 void Comet::cast(float x, float z, uint32_t attacker, float weight, float fallSeconds) {
@@ -95,9 +99,16 @@ void Comet::update(float seconds, std::vector<Landing>& landings) {
     const float frames = seconds * kReferenceFps;
     for (Live& one : comets_) {
         if (!one.alive) continue;
-        const float step = std::fmin(seconds, one.left);
-        for (int k = 0; k < 3; ++k) one.at[k] += one.velocity[k] * step;
-        one.left -= seconds;
+        if (one.landed) {
+            // Its ribbon after it: the tails run on into the ground, so the trail draws itself
+            // down into the landing and fades, rather than vanishing with the head.
+            one.linger -= frames;
+            if (one.linger <= 0.0f) one.alive = false;
+        } else {
+            const float step = std::fmin(seconds, one.left);
+            for (int k = 0; k < 3; ++k) one.at[k] += one.velocity[k] * step;
+            one.left -= seconds;
+        }
         // A tail a reference frame, newest first, ten kept.
         one.tailDue -= frames;
         while (one.tailDue <= 0.0f) {
@@ -108,9 +119,11 @@ void Comet::update(float seconds, std::vector<Landing>& landings) {
             one.tailCount = std::min(one.tailCount + 1, kTails);
         }
         for (int k = 0; k < 3; ++k) one.tails[0][k] = one.at[k];
-        if (one.left > 0.0f) continue;
-        // On the ground: the star here, the rest by the caller.
-        one.alive = false;
+        if (one.landed || one.left > 0.0f) continue;
+        // On the ground: the glow here, the rest by the caller, and the ribbon a while yet.
+        one.landed = true;
+        one.linger = kTrailLinger;
+        one.at[1] = one.floorY;
         landings.push_back({one.at[0], one.floorY, one.at[2], one.weight, one.attacker});
         for (Flash& flash : flashes_) {
             if (flash.alive) continue;
@@ -119,16 +132,42 @@ void Comet::update(float seconds, std::vector<Landing>& landings) {
             flash.at[1] = one.floorY + kFlashLift * kUnit;
             flash.at[2] = one.at[2];
             flash.size = kFlashUnits * kUnit * one.weight;
-            flash.spin = unit() * kTwoPi;
+            flash.spin = 0.0f;
             flash.left = kFlashFrames;
             break;
+        }
+        int puffs = std::max(1, int(std::lround(kPuffsALanding * one.weight)));
+        for (Puff& puff : puffs_) {
+            if (puffs == 0) break;
+            if (puff.alive) continue;
+            --puffs;
+            const float turn = unit() * kTwoPi;
+            const float reach = kPuffSpread * std::sqrt(unit());
+            puff = Puff{};
+            puff.alive = true;
+            puff.at[0] = one.at[0] + std::cos(turn) * reach;
+            puff.at[1] = one.floorY + between(0.15f, 0.5f);
+            puff.at[2] = one.at[2] + std::sin(turn) * reach;
+            puff.spin = unit() * kTwoPi;
+            puff.wait = kPuffWaits * between(0.6f, 1.4f);
+            puff.weight = one.weight;
         }
     }
     for (Flash& one : flashes_) {
         if (!one.alive) continue;
         one.left -= frames;
-        one.spin += kFlashSpin * frames;
         if (one.left <= 0.0f) one.alive = false;
+    }
+    for (Puff& one : puffs_) {
+        if (!one.alive) continue;
+        if (one.wait > 0.0f) {
+            one.wait -= frames;
+            continue;
+        }
+        one.age += frames;
+        one.at[1] += kPuffRise * frames;
+        one.spin += 0.01f * frames;
+        if (one.age >= kPuffFrames) one.alive = false;
     }
 }
 
@@ -158,9 +197,12 @@ void Comet::gatherRibbon(gfx::Effects& effects, const Live& comet, const float* 
             const float* at = ends[c == 0 || c == 3 ? 0 : 1];
             const float s = (c == 0 || c == 1) ? -1.0f : 1.0f;
             for (int k = 0; k < 3; ++k) sprite.corner[c][k] = at[k] + side[k] * s;
-            // The sheet's bright end at the comet, its dark end at the last tail.
+            // The sheet's bright end at the comet, its dark end at the last tail it HAS, as
+            // MU's `(NumTails - j) / (MaxTails - 1)` reaches 0 at its last: over all ten, a
+            // comet falls in nine frames and its trail never reached the dark end, so it
+            // stopped bright and square.
             sprite.cornerUv[c][0] =
-                1.0f - float(t + (c == 0 || c == 3 ? 0 : 1)) / float(kTails - 1);
+                1.0f - float(t + (c == 0 || c == 3 ? 0 : 1)) / float(comet.tailCount - 1);
             sprite.cornerUv[c][1] = s < 0.0f ? 0.0f : 1.0f;
         }
         for (int k = 0; k < 3; ++k) sprite.position[k] = (a[k] + b[k]) * 0.5f;
@@ -183,6 +225,10 @@ void Comet::gather(gfx::Effects& effects, const float* eye) const {
     const float z[3] = {0.0f, 0.0f, 1.0f};
     for (const Live& one : comets_) {
         if (!one.alive) continue;
+        if (one.landed) {
+            gatherRibbon(effects, one, eye, nearness(one.at, eye) * one.linger / kTrailLinger);
+            continue;
+        }
         const float fade = nearness(one.at, eye);
         if (fade <= 0.0f) continue;
         gatherRibbon(effects, one, eye, fade);
@@ -196,10 +242,27 @@ void Comet::gather(gfx::Effects& effects, const float* eye) const {
         const float fade = std::clamp(one.left / kFlashFrames, 0.0f, 1.0f);
         gfx::Sprite sprite;
         for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
-        sprite.halfWidth = sprite.halfHeight = one.size * (1.4f - 0.4f * fade) * 0.5f;
+        sprite.halfWidth = sprite.halfHeight = one.size * (1.3f - 0.5f * fade) * 0.5f;
         sprite.spin = one.spin;
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = fade * kFlashPeak;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = fade * kFlashPeak * kFlashTint[k];
         sprite.sheet = flashSheet_;
+        sprite.blend = gfx::Blend::Additive;
+        if (!effects.add(sprite)) return;
+    }
+    if (!bgfx::isValid(smokeSheet_)) return;
+    for (const Puff& one : puffs_) {
+        if (!one.alive || one.wait > 0.0f) continue;
+        const float t = one.age / kPuffFrames;
+        // Opens over its first fifth and goes out over the rest.
+        const float open = std::min(1.0f, t * 5.0f);
+        const float out = std::clamp((1.0f - t) / 0.8f, 0.0f, 1.0f);
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
+        sprite.halfWidth = sprite.halfHeight =
+            (kPuffSize[0] + (kPuffSize[1] - kPuffSize[0]) * t) * one.weight * 0.5f;
+        sprite.spin = one.spin;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = kPuffTint[k] * open * out;
+        sprite.sheet = smokeSheet_;
         sprite.blend = gfx::Blend::Additive;
         if (!effects.add(sprite)) return;
     }
@@ -209,7 +272,7 @@ uint32_t Comet::lights(gfx::PointLight* out, uint32_t max) const {
     if (out == nullptr) return 0;
     uint32_t count = 0;
     for (const Live& one : comets_) {
-        if (!one.alive || count >= max) continue;
+        if (!one.alive || one.landed || count >= max) continue;
         gfx::PointLight& light = out[count++];
         light.position[0] = one.at[0];
         light.position[1] = one.floorY;

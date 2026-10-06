@@ -1525,7 +1525,7 @@ void Play::update(double seconds) {
     // The Lich's meteors: advance every live one, collect impacts.
     meteorImpacts_.clear();
     meteor_.update(float(seconds), meteorImpacts_);
-    // Cometfall's landings, each the meteor's stones and an impact as a rock's is: the
+    // Cometfall's landings, each Ice's crystals and an impact as a rock's is: the
     // explosion's sound, the shock round it and the blow's cue (MoveHandlers.cpp:2550-2573).
     // Not MU's fire blast (Explotion01): the user, 2026-10-06, read it as Meteorite's.
     cometLandings_.clear();
@@ -1542,9 +1542,11 @@ void Play::update(double seconds) {
     if (!staffLandings_.empty() && heard_.explosion >= 0) {
         emit(heard_.explosion, staffLandings_.front().x, staffLandings_.front().z);
     }
-    // Three stones at most, not MU's six (the user, 2026-10-06: a more subtle landing).
+    // Crystals and not MU's stones (the user, 2026-10-06: "some kind of crystal explosion with
+    // smoke after"): Ice's shatter, its ten shards thrown off the ground (fx/ice.h).
     for (const Comet::Landing& one : cometLandings_) {
-        meteor_.stones(one.x, one.z, one.y, std::max(1, int(std::lround(3.0f * one.weight))));
+        const float feet[3] = {one.x, one.y, one.z};
+        ice_.shatter(feet);
         meteorImpacts_.push_back({one.x, one.z, one.attacker});
     }
     // The wizard's bolts and fireballs, each measured against where its target is drawn this
