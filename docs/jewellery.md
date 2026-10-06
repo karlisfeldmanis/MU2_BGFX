@@ -127,6 +127,6 @@ Monster.txt's A.Type, which agrees with our mu.db `attack_skill` for every breed
 | Fire | damage only | 5% less damage a point, to half (ours: MU's fire turns nothing aside) | Meteorite (skill 2, WebZen's earth, a burning rock here): Lich (6), Cursed Wizard (34); Fire Ball (skill 4): Blood Castle's Giant Ogres (87, 93, 99, 116, 122, 128); Flame of Evil (A.Type 150), one blow in five: Death Gorgon (35), Balrog (38), Hydra (49), Drakan (73) |
 | none | damage only | nothing | Power Wave (11): Hell Spider (13), Ice Queen (25); Energy Ball (17): Yeti (19), Vepar (46), Alquamos (69), Queen Rainer (70) |
 
-Every other breed swings and has no spell; Icarus's Mega Crust (71) among them (WZO A.Type 0). Open: the Ice Queen's is Power Wave in both WebZen and
+Every other breed swings and has no spell; Icarus's Mega Crust (71) and Alpha Crust (74) among them (WZO A.Type 0). Open: the Ice Queen's is Power Wave in both WebZen and
 OpenMU, so she neither chills nor answers to Ice resistance; making her ice would be ours.
 

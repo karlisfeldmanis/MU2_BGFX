@@ -307,6 +307,7 @@ inline constexpr const char* kDeathCowFigure = "DeathCow01";
 // MODEL_CRUST, Icarus's Mega Crust: RenderEye(o, 26, 27, 2.0f) always (ZzzCharacter.cpp:
 // 11213-11215), on eye00 and eye01, at twice the sprite's size.
 inline constexpr const char* kCrustFigure = "MegaCrust01";
+inline constexpr const char* kAlphaCrustFigure = "AlphaCrust01";  // the same model, MONSTER_ALPHA_CRUST
 constexpr float kCrustEyeSize = 2.0f;
 // MODEL_ICE_MONSTER, which has no corpse either, but only once its death clip has played: the
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
@@ -700,6 +701,7 @@ inline constexpr InfernoBlow kInfernoBlows[] = {
     {61, false, true},            // Beam Knight
     {63, true, true},             // Death Beam Knight
     {71, true, true, attackTime(5)},  // Mega Crust
+    {74, true, true, attackTime(5)},  // Alpha Crust
     {73, true, true, attackTime(11), true},  // Drakan (ZzzCharacter.cpp:1734-1757)
 };
 

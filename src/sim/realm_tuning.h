@@ -454,6 +454,7 @@ constexpr Resistance kResistances[] = {
     {71, 9, 9},    // Mega Crust
     {70, 11, 9},   // Queen Rainer
     {73, 12, 12},  // Drakan
+    {74, 13, 13},  // Alpha Crust
 };
 
 // ---- what each breed leaves -------------------------------------------------------------------
@@ -491,8 +492,9 @@ constexpr DropRate kDropRates[] = {
     {57, 30, 3, 10}, {58, 30, 3, 20}, {59, 30, 3, 150}, {60, 30, 3, 10}, {61, 30, 3, 20},
     {62, 30, 3, 10}, {63, 30, 3, 150},
     // Icarus's: MoneyRate 14 and MaxItemLevel 3, RegTime 10 for the Alquamos, Mega Crust and Queen
-    // Rainer, 20 for the Drakan (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built.
+    // Rainer and Alpha Crust, 20 for the Drakan (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built.
     {69, 14, 3, 10}, {71, 14, 3, 10}, {70, 14, 3, 10}, {73, 14, 3, 20},
+    {74, 14, 3, 10},
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {

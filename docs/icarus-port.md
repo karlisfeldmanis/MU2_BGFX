@@ -234,6 +234,17 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   but each third its bolt (`kBoltBlowers`, `Happening::bolt`; MU's SwordCount % 3), pushes him a
   tile ten ticks on, as the bolt lands (`kBoltPushDelay`), and the drawing plays Attack 2 and the
   bolt on those blows alone. Seen at 45,69: two pushes with the bolts.
+- **Alpha Crust (74)**: Monster53 again as `AlphaCrust01`, its own build (the same export), scale
+  1.3; 6 spawns, ids 1516-1521, at the top of the south lane. RenderCharacter draws it with its
+  MonsterIndex as ExtraMon (`:8645-8651`), and RenderObject's MODEL_CRUST arm lights such a body
+  BodyLight (0.1, 1, 0.8) (`ZzzObject.cpp:1354-1358`): ours bakes that into copies of the Crust's
+  two sheets (`alphacrust_iui01/02`), a teal Crust with green flames. Thunder Blade and Legendary
+  Shield both at +9; the Crust's eyes, Inferno at CheckAttackTime(5), held sparks and sounds
+  (alphacrust_*). Left out, as the Mega Crust's: the cape, here iui03.tga. kResistances
+  {74, 13, 13}, kDropRates {74, 14, 3, 10}. Seen muted at 35,91, no errors. And a Mega Crust gap
+  found in the same arm, not built: with ExtraMon 0, MU first draws the Crust's body once more in
+  iui03.jpg (BITMAP_JANUSEXT), its mesh 0 streamed, at BodyLight (0.4, 0.3, 0.5), under the plate
+  (`ZzzObject.cpp:1326-1340`), so a violet stream shows through the rim's cut alpha.
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

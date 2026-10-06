@@ -2178,6 +2178,24 @@
       ],
       "from": "Sounds[4], 182 -- Data\\Sound\\mMegaCrustDie.wav. ZzzOpenData.cpp:3738-3745."
     },
+    "alphacrust_move": {
+      "files": [
+        "mMegaCrust1.wav"
+      ],
+      "from": "As megacrust_move: the Crust model's own, ZzzOpenData.cpp:3738-3745 (Icarus's Alpha Crust)."
+    },
+    "alphacrust_attack": {
+      "files": [
+        "mMegaCrustAttack1.wav"
+      ],
+      "from": "As megacrust_attack: the Crust model's own, ZzzOpenData.cpp:3738-3745 (Icarus's Alpha Crust)."
+    },
+    "alphacrust_die": {
+      "files": [
+        "mMegaCrustDie.wav"
+      ],
+      "from": "As megacrust_die: the Crust model's own, ZzzOpenData.cpp:3738-3745 (Icarus's Alpha Crust)."
+    },
     "queenrainer_move": {
       "files": [
         "mRainner1.wav"

@@ -845,7 +845,8 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 }
             }
             const bool elite = look->name == kEliteBullFigure || look->name == kDeathCowFigure;
-            if (look->name == kCrustFigure && look->skeletonMesh) {
+            if ((look->name == kCrustFigure || look->name == kAlphaCrustFigure) &&
+                look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
                     if (bones[b].name == "eye00") one.eyeBones[0] = int(b);
