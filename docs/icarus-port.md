@@ -111,8 +111,9 @@ Bone01 at -139.9, 0, 500.6 units, is where the motes will rise from). `tools/coo
 takes icarus, so none of the placements, which stand 3 m under the plane as MU's, is held as buried.
 MU's height kept (decision 4). MU draws the gyg_R statue card opaque (a 0.65 x 1.7 m card on the
 pillar's face, two on the arch's spandrels); in our light they read as photographs in black boxes
-(the user: 'this looks wrong'), so ours cuts the black to alpha and the statues stand on the stone
-as dark reliefs. Shot muted at the door and at 30,40: the arches line the road with their statues on
+(the user: 'this looks wrong'), so ours cuts the black to alpha; cut out, the dark figures stood out
+('to much vissivle has to be more intergrated on wall'), so the card is repainted in the pillar's own
+frosted stone, shaded softly by MU's figure: a faint carving, seen up close. Shot muted at the door and at 30,40: the arches line the road with their statues on
 top, 360 fps. Not yet judged by the user. Effects still to do: the wisps, the dragons, the item bob,
 and Object11's motes.
 

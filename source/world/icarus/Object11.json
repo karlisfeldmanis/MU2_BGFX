@@ -10,7 +10,7 @@
     "top02_R": "ic_top02_r.png",
     "gyg_R": "ic_gyg_r.png"
   },
-  "sheet_from": "Data/Object11/, from MuMain, decoded under an ic_ prefix: assets/textures is one flat pool, and top02_R names sheets in other worlds' folders too. gyg_R's black is cut to alpha (ours): a closed, hole-filled mask of everything above 3% grey, softened a texel, so the two statues stand on the stone without their black box.",
+  "sheet_from": "Data/Object11/, from MuMain, decoded under an ic_ prefix: assets/textures is one flat pool, and top02_R names sheets in other worlds' folders too. gyg_R is repainted (ours): its black cut to alpha (a closed, hole-filled mask above 3% grey, softened a texel), and the figures redrawn in the pillar's own stone, top02_R's frosted top band (the rows the face behind the card wears) at its mean with 40% of its grain, shaded 0.72-1.1 by MU's figure, so they read as a shallow carving.",
   "sheet_materials": {
     "top02_R": "marble",
     "gyg_R": "marble"
@@ -19,8 +19,8 @@
   "cutout": [
     "gyg_R"
   ],
-  "cutout_from": "Ours, marked. MU draws gyg_R opaque, a 0.65 by 1.7 m card on the pillar's face and two on the arch's spandrels, which under MU's dim grey light read as dark niches; in our light they were photographs in black boxes (the user, 2026-10-06: 'this looks wrong'). The sheet carries its alpha, cut from the black (sheet_from).",
-  "why_this_one": "The balustrade: a 5.4 m pillar with a pointed arch springing from it and a winged-statue card on its top, 180 of them along both edges of the cloud road, the map's silhouette. Objects batch 1 (the user, 2026-10-06: 'lets start to work with icarus objects'). docs/icarus-port.md B §1.2.",
+  "cutout_from": "Ours, marked. MU draws gyg_R opaque, a 0.65 by 1.7 m card on the pillar's face and two on the arch's spandrels, which under MU's dim grey light read as dark niches; in our light they were photographs in black boxes (the user, 2026-10-06: 'this looks wrong'), and cut out, dark figures that stood out (the user: 'to much vissivle has to be more intergrated on wall'). The sheet carries its alpha and the stone's colour (sheet_from).",
+  "why_this_one": "The balustrade: a 5.4 m pillar with a pointed arch springing from it and a winged-statue card on its top, 180 of them along both edges of the cloud road, the map's silhouette. Objects batch 1 (the user, 2026-10-06: 'lets start to work with icarus objects'). docs/icarus-port.md B \u00a71.2.",
   "effects_note": "MuMain's WD_10HEAVEN arm of CreateObject throws a white BITMAP_LIGHT mote at bone 3 (Bone01, at -139.9, 0, 500.6 units: the statue's top) every frame (ZzzObject.cpp:3171-3178); not carried yet. Its six bones hold one key, so it is built static, without its rig. No blend mesh.",
   "islands": [
     {
