@@ -1375,6 +1375,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         openItems(ctx);
+        litter_.setBob(args.world == "icarus");  // floating on the cloud, MU's (fx/litter.h)
         litter_.update(world_.played().realm(), deltaSeconds, world_.played().heldDrops());
         world_.played().setSettledDrops(litter_.settled());
         litter_.gather(townDrawables_, casters ? &townCasters_ : nullptr);

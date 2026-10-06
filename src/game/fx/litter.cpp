@@ -330,7 +330,7 @@ void Litter::gather(std::vector<gfx::Drawable>& out,
             std::memcpy(drawable.transform, piece.rest, sizeof(drawable.transform));
             // Row-vector matrices: the translation is the last row, so the fall is added to it
             // rather than composed as another matrix.
-            drawable.transform[13] += piece.above;
+            drawable.transform[13] += piece.above + bob(drop.id);
             wear(drop.shine, drawable);
             // A thing that is not the town is not in the probe: a cube taken at the player's
             // chest holds the street, and a sword at his feet would be reflected out of it
@@ -342,6 +342,12 @@ void Litter::gather(std::vector<gfx::Drawable>& out,
     }
 }
 
+float Litter::bob(uint32_t id) const {
+    if (!bob_) return 0.0f;
+    const double phase = (double(id) * 1237.0 + double(clock_) * 1000.0) * 0.002;
+    return 0.1f * float(std::sin(std::fmod(phase, 6.283185307179586)));
+}
+
 void Litter::gatherOne(uint32_t id, std::vector<gfx::Drawable>& out) const {
     if (id == 0) return;
     for (const Drop& drop : drops_) {
@@ -351,7 +357,7 @@ void Litter::gatherOne(uint32_t id, std::vector<gfx::Drawable>& out) const {
             gfx::Drawable drawable;
             drawable.mesh = piece.mesh;
             std::memcpy(drawable.transform, piece.rest, sizeof(drawable.transform));
-            drawable.transform[13] += piece.above;
+            drawable.transform[13] += piece.above + bob(drop.id);
             wear(drop.shine, drawable);
             drawable.inProbe = false;
             out.push_back(drawable);
