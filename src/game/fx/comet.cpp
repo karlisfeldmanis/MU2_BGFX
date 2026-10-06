@@ -12,6 +12,14 @@ constexpr float kPi = 3.14159265f;
 constexpr float kTwoPi = 6.28318531f;
 }  // namespace
 
+float Comet::nearness(const float at[3], const float* eye) {
+    if (eye == nullptr) return 1.0f;
+    float d = 0.0f;
+    for (int k = 0; k < 3; ++k) d += (at[k] - eye[k]) * (at[k] - eye[k]);
+    const float t = std::clamp((std::sqrt(d) - kNearGone) / (kNearWhole - kNearGone), 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
 float Comet::unit() {
     dice_ ^= dice_ << 13;
     dice_ ^= dice_ >> 17;
@@ -124,8 +132,9 @@ void Comet::update(float seconds, std::vector<Landing>& landings) {
     }
 }
 
-void Comet::gatherRibbon(gfx::Effects& effects, const Live& comet, const float* eye) const {
-    if (!bgfx::isValid(trailSheet_) || comet.tailCount < 2) return;
+void Comet::gatherRibbon(gfx::Effects& effects, const Live& comet, const float* eye,
+                         float fade) const {
+    if (!bgfx::isValid(trailSheet_) || comet.tailCount < 2 || fade <= 0.0f) return;
     const float half = kRibbonUnits * kUnit * 0.5f * comet.weight;
     for (int t = 0; t + 1 < comet.tailCount; ++t) {
         const float* a = comet.tails[t];
@@ -155,6 +164,7 @@ void Comet::gatherRibbon(gfx::Effects& effects, const Live& comet, const float* 
             sprite.cornerUv[c][1] = s < 0.0f ? 0.0f : 1.0f;
         }
         for (int k = 0; k < 3; ++k) sprite.position[k] = (a[k] + b[k]) * 0.5f;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = fade;
         sprite.sheet = trailSheet_;
         sprite.blend = gfx::Blend::Additive;
         if (!effects.add(sprite)) return;
@@ -173,9 +183,12 @@ void Comet::gather(gfx::Effects& effects, const float* eye) const {
     const float z[3] = {0.0f, 0.0f, 1.0f};
     for (const Live& one : comets_) {
         if (!one.alive) continue;
-        gatherRibbon(effects, one, eye);
+        const float fade = nearness(one.at, eye);
+        if (fade <= 0.0f) continue;
+        gatherRibbon(effects, one, eye, fade);
+        const float lit[3] = {kWhite[0] * fade, kWhite[1] * fade, kWhite[2] * fade};
         submitEffectAlong(effects, mesh_, sheet_, gfx::Blend::Additive, one.at, x, y, z,
-                          one.size, kWhite, 1.0f);
+                          one.size, lit, 1.0f);
     }
     if (!bgfx::isValid(flashSheet_)) return;
     for (const Flash& one : flashes_) {

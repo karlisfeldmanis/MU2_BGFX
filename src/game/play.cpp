@@ -1525,8 +1525,9 @@ void Play::update(double seconds) {
     // The Lich's meteors: advance every live one, collect impacts.
     meteorImpacts_.clear();
     meteor_.update(float(seconds), meteorImpacts_);
-    // Cometfall's landings, each the meteor's stones and blast, and an impact as a rock's is:
-    // the explosion, the shock round it and the blow's cue (MoveHandlers.cpp:2550-2573).
+    // Cometfall's landings, each the meteor's stones and an impact as a rock's is: the
+    // explosion's sound, the shock round it and the blow's cue (MoveHandlers.cpp:2550-2573).
+    // Not MU's fire blast (Explotion01): the user, 2026-10-06, read it as Meteorite's.
     cometLandings_.clear();
     comet_.update(float(seconds), cometLandings_);
     // A Tarkan boss's staffs: each under the ground an explosion 80 units up and six stones
@@ -1543,8 +1544,6 @@ void Play::update(double seconds) {
     }
     for (const Comet::Landing& one : cometLandings_) {
         meteor_.stones(one.x, one.z, one.y, std::max(2, int(std::lround(6.0f * one.weight))));
-        const float at[3] = {one.x, one.y + 0.8f, one.z};
-        meteor_.blast(at, 0.72f * one.weight);
         meteorImpacts_.push_back({one.x, one.z, one.attacker});
     }
     // The wizard's bolts and fireballs, each measured against where its target is drawn this

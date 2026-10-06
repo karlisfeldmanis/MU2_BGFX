@@ -17,10 +17,11 @@
 //     gone when the comet lands. Turned to the eye, as MU's joints are.
 //   * **The ground light** while it falls: (0.2, 0.4, 1.0) over two tiles (AddTerrainLight,
 //     MoveHandlers.cpp:2575-2577).
-//   * **The landing** (MoveHandlers.cpp:2550-2573): the meteor's stones and a BITMAP_EXPLOTION
-//     80 units up -- lent by fx/meteor.h through the caller, which also sounds
-//     SOUND_EXPLOTION01 and shocks what stands there, as for a rock -- and a BITMAP_SHINY + 4
-//     (Effect/ring.jpg), the blue star drawn here. Its life is ours: MU's particle fades it in a
+//   * **The landing** (MoveHandlers.cpp:2550-2573): the meteor's stones -- lent by fx/meteor.h
+//     through the caller, which also sounds SOUND_EXPLOTION01 and shocks what stands there, as
+//     for a rock -- and a BITMAP_SHINY + 4 (Effect/ring.jpg), the blue star drawn here. **Not
+//     MU's BITMAP_EXPLOTION**: the user, 2026-10-06, read its fire as Meteorite's; the comet
+//     lands blue. Its life is ours: MU's particle fades it in a
 //     few frames, here twelve, spinning.
 //
 // Presentation only, `game` and not `sim`: the realm resolved every blow on the tick it was
@@ -124,7 +125,14 @@ private:
     float unit();
     float between(float a, float b) { return a + unit() * (b - a); }
     float metres() const { return ground_ ? ground_->metresPerTile() : 1.0f; }
-    void gatherRibbon(gfx::Effects& effects, const Live& comet, const float* eye) const;
+    void gatherRibbon(gfx::Effects& effects, const Live& comet, const float* eye,
+                      float fade) const;
+    // Out at this far from the eye, whole from here. Ours: MU's band, 300 to 800 units up,
+    // brought a comet within 5.6 m of our nearer camera (measured 2026-10-06, the arena at
+    // level 220, eye ~11 m off the ground), and a head that near filled a quarter of the
+    // screen in flat white and teal blocks. An added mesh fades by its colour.
+    static constexpr float kNearGone = 6.0f, kNearWhole = 9.0f;
+    static float nearness(const float at[3], const float* eye);
 };
 
 }  // namespace mu::game
