@@ -25,6 +25,17 @@
   },
   "sheet_materials_from": "Read off the art: wheel is dark blue-grey plate with gold trim, a skull boss and a gold mask -- painted armour, painted_steel; w is the wheel's weathered brown face with a studded iron rim and a round iron boss -- wrought_iron.",
   "sounds_from": "ZzzOpenData.cpp:3679-3684: SetMonsterSound(..., 143, 143, 144, 144, 144): iron1 to move, iron_attack1 to attack and to die. Wired as ironwheel_* in sounds.json.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on this plate it baked vertical stripes into the normal and ORM (the user, 2026-10-06: 'looked striped'). The armour sets' cast grain instead (ArmorMale18's override), the paint left as it is.",
   "islands": [
     {
       "island": 0,

@@ -31,6 +31,17 @@
   },
   "glow_from": "BlendMesh 2 at BlendMeshLight 1: the mesh whose texture index is 2, bv03, is drawn added (ZzzBMD.cpp:1509-1516), steady -- nothing rolls its light. Added, the amber blur is the brute's burning eyes and seams.",
   "sounds_from": "ZzzOpenData.cpp:3685-3694: SetMonsterSound(..., 145, 146, 147, 148, 149): jaikan1 and jaikan2 to move, jaikan_attack1 and jaikan_attack2 to attack, jaikan_die to die. Wired as tantalos_* in sounds.json.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on this plate it baked vertical stripes into the normal and ORM (the user, 2026-10-06: 'looked striped'). The armour sets' cast grain instead (ArmorMale18's override), the paint left as it is.",
   "islands": [
     {
       "island": 0,

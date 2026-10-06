@@ -28,6 +28,17 @@
   ],
   "soft_alpha_from": "sander.OZT is drawn tested and blended (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393), as the Bahamut's fins.",
   "sounds_from": "ZzzOpenData.cpp:3711-3717: SetMonsterSound(..., 157, 158, 159, 159, 159): mutant1 and mutant2 to move, mutant_attack1 to attack and again to die. Wired as mutant_* in sounds.json.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on this plate it baked vertical stripes into the normal and ORM (the user, 2026-10-06: 'looked striped'). The armour sets' cast grain instead (ArmorMale18's override), the paint left as it is.",
   "islands": [
     {
       "island": 0,
