@@ -1,0 +1,18 @@
+{
+  "item": "ElfEnvoy",
+  "mu_name": "Lirien",
+  "kind": "character",
+  "parts": ["HelmMale20", "ArmorMale20", "PantMale20", "GloveMale20", "BootMale20"],
+  "right_hand": "Bow18",
+  "wings": "Wing04",
+  "plus": {"parts": 7, "right_hand": 7},
+  "female": true,
+  "note": "OURS, not MU's: Lirien (the user, 2026-10-05: 'make some nice name for her'; it echoes the lyre, for the elf whose song rose through the lake), the envoy Noria's queen kept in Atlans before the sea took it, who stayed and keeps the drowned city's memory in the safe basin; Peia's 'The Drowned Song' sends the hero to meet her (the Atlans lore draft of 2026-10-04). MU stands nobody in Atlans but Baz.",
+  "parts_from": "The Divine set, the Muse Elf's own (docs/second-class-gear.md) -- the user, 2026-10-05: 'the seond elf has to wear muse set and 2nd wings and some 2nd class bow or crosbow'. At Peia's +7, as a quest giver's.",
+  "right_hand_from": "The Celestial Bow (Bow18), the Muse Elf's early bow, picked by the user over the Great Reign Crossbow and the Arrow Viper Bow (2026-10-05). +7 beside the armour.",
+  "wings_from": "The Wings of Spirits (Wing04), the elf's 2nd wings, on her back as the hero's are drawn (game/wings.h), stirring at rest.",
+  "female_from": "The Fairy Elf's own body and clips, as Peia.",
+  "idle": "action2",
+  "idle_from": "PLAYER_STOP_FEMALE on the basin's safe tile, the bow slung, as Peia.",
+  "playable": false
+}

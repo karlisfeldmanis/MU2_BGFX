@@ -117,6 +117,13 @@ VOICES = {
                           "aecho=0.8:0.6:140|300|520|800:0.26|0.18|0.11|0.06,"
                           "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
                           "apad=pad_dur=0.35,loudnorm=I=-16:TP=-1.5:LRA=11"),
+    # Lirien, the elf envoy in Atlans who takes back Peia's 'The Drowned Song': "a completely
+    # different women audio model" from Peia's (the user, 2026-10-05), the first of eight
+    # auditions, "first one". Kokoro-82M's af_heart (Apache 2.0) reading a tide line at 0.85
+    # speed, source/voice/ref/lirien_heart_tide.wav, cloned at Peia's 0.4 and 0.3 with Peia's faint
+    # echo, at her own pitch. She reads only the hand-ins she takes back (row.receiverVoice).
+    "lirien": dict(ref="lirien_heart_tide.wav", exaggeration=0.4, cfg_weight=0.3,
+                   polish="aecho=0.8:0.5:70|140:0.18|0.1," + POLISH),
 }
 
 # Takes read again on another seed, heard wrong by whisper on the voice's own: Sevina's trial's
@@ -155,6 +162,9 @@ def pages(voice):
         return {page: [w for _, w in sorted(lines)] for page, lines in found.items()}
 
     for name, body in bodies.items():
+        # A receiver's voice reads only the hand-in she takes back: Lirien's of Peia's quest.
+        if f'row.receiverVoice = "{voice}"' in body:
+            return {page: lines for page, lines in read(body).items() if page == "handin"}
         if f'row.voice = "{voice}"' not in body:
             continue
         found = {}

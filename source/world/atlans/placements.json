@@ -14,6 +14,15 @@
       "tile": [17, 24],
       "facing": 4,
       "ours": "the repack's (WZD MonsterSetBase.txt:48, 253 at 16,24), not Version075's: without her the nearest potions are in Noria. A tile east of WZD's, which is one of the basin's four lean boxes (Object40), facing the basin"
+    },
+    {
+      "model": "ElfEnvoy",
+      "who": "Lirien",
+      "tile": [25, 24],
+      "facing": 3,
+      "idle": "action2",
+      "idle_why": "inside the safe zone",
+      "ours": "the elf envoy who stayed when Atlans sank, whom Peia's 'The Drowned Song' sends the hero to meet (2026-10-05); by the arch at the basin's edge, where the user stood and said 'put her here'; named Lirien at the user's 'make some nice name for her'"
     }
   ]
 }
