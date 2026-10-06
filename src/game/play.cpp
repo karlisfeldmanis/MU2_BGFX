@@ -1851,8 +1851,9 @@ void Play::update(double seconds) {
             meteor_.burn(feet, look ? look->height * look->scale : 1.8f, float(seconds));
         }
     }
-    // Lightning's crackle on him while he calls Cometfall down, as Meteorite's fire is on him
-    // for its rocks -- a lightning spell (OpenMU's element), ours.
+    // The comets' call on him while he casts Cometfall, as Meteorite's fire is on him for its
+    // rocks (fx/comet.h); it was Lightning's crackle until the user, 2026-10-06: "not comet
+    // style".
     if (const sim::Body& hero = realm_.hero();
         heroCasting_ == sim::skill::kCometfall && ground_) {
         if (const Drawn* drawn = drawnOf(hero.id);
@@ -1861,7 +1862,7 @@ void Play::update(double seconds) {
             const float feet[3] = {drawn->crown[0],
                                    ground_->heightAt(drawn->crown[0], drawn->crown[2]),
                                    drawn->crown[2]};
-            thunder_.crackle(feet, look ? look->height * look->scale : 1.8f, float(seconds));
+            comet_.charge(feet, look ? look->height * look->scale : 1.8f, float(seconds));
         }
     }
     // The frost on him while he casts Ice, and the fumes while he casts Poison.

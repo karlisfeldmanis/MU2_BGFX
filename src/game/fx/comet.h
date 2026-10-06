@@ -70,6 +70,12 @@ public:
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
     uint32_t refused() const { return refused_; }
 
+    // **The call on the caster** while he casts it, ours (the user, 2026-10-06: the casting
+    // effect was Lightning's crackle, "not comet style"): blue-white glints rising off his body
+    // -- `feet` and his drawn `tall` -- and streaking up into the sky the comets come out of,
+    // and a soft blue light on him. Called every frame the cast runs, as Meteor::burn is.
+    void charge(const float feet[3], float tall, float seconds);
+
 private:
     static constexpr float kReferenceFps = 25.0f;
     static constexpr float kUnit = 0.01f;
@@ -114,6 +120,18 @@ private:
     static constexpr int kMaxComets = 32;  // a cast and an echo's, twelve, and room
     static constexpr int kMaxFlashes = 32;
     static constexpr int kMaxPuffs = 128;
+    // The call: a glint every this many reference frames, within this of him, rising and
+    // quickening, MU's flare01 in the comet's blue, drawn tall so it reads as a streak upward.
+    static constexpr float kGlintEvery = 0.45f;
+    static constexpr float kGlintReach[2] = {0.2f, 0.45f};
+    static constexpr float kGlintRise[2] = {0.06f, 0.11f};  // metres a reference frame
+    static constexpr float kGlintQuickens = 1.06f;            // a reference frame
+    static constexpr float kGlintFrames[2] = {14.0f, 24.0f};
+    static constexpr float kGlintSize[2] = {0.18f, 0.32f};
+    static constexpr float kGlintStreak = 2.6f;  // tall to wide
+    static constexpr float kGlintTint[3] = {0.9f, 1.15f, 1.5f};
+    static constexpr float kCallGlow = 0.55f;  // his light, of the falling comet's
+    static constexpr int kMaxGlints = 96;
 
     struct Live {
         bool alive = false;
@@ -137,6 +155,14 @@ private:
         float spin;
         float left;  // reference frames
     };
+    struct Glint {
+        bool alive = false;
+        float at[3];
+        float rise;  // metres a reference frame
+        float size;
+        float life;  // reference frames
+        float age;
+    };
     struct Puff {
         bool alive = false;
         float at[3];
@@ -155,6 +181,11 @@ private:
     Live comets_[kMaxComets] = {};
     Flash flashes_[kMaxFlashes] = {};
     Puff puffs_[kMaxPuffs] = {};
+    Glint glints_[kMaxGlints] = {};
+    float glintDue_ = 0.0f;
+    // His light while he calls: where, and how much is left of it (1 on a frame he casts).
+    float caller_[3] = {};
+    float callLit_ = 0.0f;
     uint32_t refused_ = 0;
 
     // The drawing's own dice, never the sim's.

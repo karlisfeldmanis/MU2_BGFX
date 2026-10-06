@@ -56,6 +56,38 @@ void Comet::shutdown() {
     for (Live& one : comets_) one.alive = false;
     for (Flash& one : flashes_) one.alive = false;
     for (Puff& one : puffs_) one.alive = false;
+    for (Glint& one : glints_) one.alive = false;
+    callLit_ = 0.0f;
+}
+
+void Comet::charge(const float feet[3], float tall, float seconds) {
+    if (!bgfx::isValid(flashSheet_)) return;
+    caller_[0] = feet[0];
+    caller_[1] = feet[1] + tall * 0.6f;
+    caller_[2] = feet[2];
+    callLit_ = 1.0f;
+    glintDue_ -= std::fmin(seconds, 0.1f) * kReferenceFps;
+    while (glintDue_ <= 0.0f) {
+        glintDue_ += kGlintEvery;
+        Glint* slot = nullptr;
+        for (Glint& one : glints_) {
+            if (!one.alive) {
+                slot = &one;
+                break;
+            }
+        }
+        if (slot == nullptr) return;
+        const float turn = unit() * kTwoPi;
+        const float reach = between(kGlintReach[0], kGlintReach[1]);
+        *slot = Glint{};
+        slot->alive = true;
+        slot->at[0] = feet[0] + std::cos(turn) * reach;
+        slot->at[1] = feet[1] + tall * between(0.05f, 0.75f);
+        slot->at[2] = feet[2] + std::sin(turn) * reach;
+        slot->rise = between(kGlintRise[0], kGlintRise[1]);
+        slot->size = between(kGlintSize[0], kGlintSize[1]);
+        slot->life = between(kGlintFrames[0], kGlintFrames[1]);
+    }
 }
 
 void Comet::cast(float x, float z, uint32_t attacker, float weight, float fallSeconds) {
@@ -160,6 +192,14 @@ void Comet::update(float seconds, std::vector<Landing>& landings) {
         one.left -= frames;
         if (one.left <= 0.0f) one.alive = false;
     }
+    for (Glint& one : glints_) {
+        if (!one.alive) continue;
+        one.age += frames;
+        one.at[1] += one.rise * frames;
+        one.rise *= std::pow(kGlintQuickens, frames);
+        if (one.age >= one.life) one.alive = false;
+    }
+    callLit_ = std::fmax(0.0f, callLit_ - frames * 0.25f);
     for (Puff& one : puffs_) {
         if (!one.alive) continue;
         if (one.wait > 0.0f) {
@@ -251,6 +291,19 @@ void Comet::gather(gfx::Effects& effects, const float* eye) const {
         sprite.blend = gfx::Blend::Additive;
         if (!effects.add(sprite)) return;
     }
+    for (const Glint& one : glints_) {
+        if (!one.alive) continue;
+        const float t = one.age / one.life;
+        const float lit = std::min(1.0f, t * 6.0f) * std::clamp((1.0f - t) / 0.5f, 0.0f, 1.0f);
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
+        sprite.halfWidth = one.size * 0.5f;
+        sprite.halfHeight = one.size * 0.5f * kGlintStreak;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = kGlintTint[k] * lit;
+        sprite.sheet = flashSheet_;
+        sprite.blend = gfx::Blend::Additive;
+        if (!effects.add(sprite)) return;
+    }
     if (!bgfx::isValid(smokeSheet_)) return;
     for (const Puff& one : puffs_) {
         if (!one.alive || one.wait > 0.0f) continue;
@@ -273,6 +326,13 @@ void Comet::gather(gfx::Effects& effects, const float* eye) const {
 uint32_t Comet::lights(gfx::PointLight* out, uint32_t max) const {
     if (out == nullptr) return 0;
     uint32_t count = 0;
+    if (callLit_ > 0.0f && count < max) {
+        gfx::PointLight& light = out[count++];
+        for (int k = 0; k < 3; ++k) light.position[k] = caller_[k];
+        light.reach = kGlowTiles * metres();
+        light.height = 1.0f;
+        for (int k = 0; k < 3; ++k) light.colour[k] = kGlow[k] * kCallGlow * callLit_;
+    }
     for (const Live& one : comets_) {
         if (!one.alive || one.landed || count >= max) continue;
         gfx::PointLight& light = out[count++];
