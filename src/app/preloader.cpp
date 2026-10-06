@@ -315,14 +315,14 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                              small, gold, percent);
             // The letter: small, centred, in a faint parchment grey, laid up from the foot.
             // Wrapped again only when the window's width changes.
-            const float letterScale = 1.45f * unit;
+            const float letterScale = 1.9f * unit;
             if (w != letterWidth) {
                 letterWidth = w;
                 letterLines = wrap(ctx.curtain, letterScale,
-                                   std::min(float(w) - 64.0f * unit, 860.0f * unit), kLetter);
+                                   std::min(float(w) - 64.0f * unit, 1120.0f * unit), kLetter);
             }
             const float leading = gfx::Overlay::lineHeight(letterScale) * 1.55f;
-            const uint32_t parchment = (uint32_t(alpha * 0.42f * 255.0f) << 24) | 0x00b8c8d4u;
+            const uint32_t parchment = (uint32_t(alpha * 0.5f * 255.0f) << 24) | 0x00b8c8d4u;
             float y = float(h) - 40.0f * unit - leading * float(letterLines.size());
             for (const std::string& line : letterLines) {
                 const float wide = ctx.curtain.measure(letterScale, line);
