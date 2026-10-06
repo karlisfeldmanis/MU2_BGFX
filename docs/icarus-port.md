@@ -15,8 +15,20 @@ The passes' scratch is in
 
 ## Where it stands
 
-**Research only.** No step is built. Step 1 (cook the ground and set the lighting) waits on the
-decisions below, chiefly 1, 4 and 5.
+**Step 1 is built (2026-10-06, the user: 'lets work on that ground/flat plane').** MU's way: no
+ground drawn, the hero on the unseen plane over a navy clear. It added:
+- `source/world/icarus`: World11 through `terrain.py` (flat 2.85 m, 6 slots, 10.7% walkable, 0% safe, 670 placements of 15 kinds, none missing);
+- `terrain.py` rows for map 10: `HIDDEN_BY_MAP {0..5}` (the cloud emitters), `GRASS_BY_MAP []`, and a new `SKY_BY_MAP = {10}` that writes `"sky": true` into the world json;
+- `content::Ground`'s `sky`: the grid, heights and painted light load as on any world, and `draws()` refuses every part, so no ground is drawn, shadowed or prepassed;
+- a lighting-sheet key, `clear_colour` (`gfx::Lighting::clearColour`, black by default): the shade view clears to it through bgfx's float palette (slot 1), since the packed 8-bit clear rounds a dark linear blue away on the HDR target;
+- one decoded sheet, `ic_tilegrass01.png`, and five copies of it under the names World11's slots ask for but don't ship (`ic_tilegrass02`, `ic_tilerock01-04`; the ground pairs surfaces by sheet name, as Atlans's parked slot 5). The ground is built only because `index.py worlds()` and `Ground::load` need it;
+- the `kMaps` row `{"icarus", 10, {15, 13}, true, 2}` (arrival gate 63's middle; underground for now, so no leaves or wind until step 3; home Devias), the banner and minimap names;
+- `sheets/worlds/icarus.json`: B §6's starting sheet plus `clear_colour (0.004, 0.03, 0.07)`, which shows as (5, 30, 66) on screen against MU's (3, 25, 44): a sky, not a hole.
+
+Shot muted at the door (15,13): the hero standing on nothing over the navy, 150-190 fps with the HUD
+on, 77 draws. The only error in the log is the missing `icarus.mut` (no objects cooked yet). Tarkan
+shot after it, unchanged. Not yet judged by the user. No gates yet, so only `--world icarus` reaches
+it, and the travel window's dimmed "Icarus" card is gone until a travel row names map 10 (C §1.3 R7).
 
 ## The one thing to know first
 

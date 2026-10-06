@@ -97,6 +97,11 @@ struct Lighting {
     // tower with no torch is the only warm light (docs/lost-tower-port.md). Ours. 0 everywhere
     // else, so their water is as it was.
     float waterGlow[3] = {0.0f, 0.0f, 0.0f};
+    // What the frame shows where nothing is drawn, in the shade target's linear light before
+    // the exposure and the tonemap. Black, as MU clears every map but two: Icarus is navy,
+    // rgb (3, 25, 44)/256 (SceneManager.cpp:385), and with no ground drawn there it is the sky
+    // under the islands (docs/icarus-port.md). 0 everywhere else, so their void stays black.
+    float clearColour[3] = {0.0f, 0.0f, 0.0f};
     // Wet ground, where the sheet asks (ground_wet, 0 to 1): stone darkened as water darkens it
     // and given a low, glassy sheen for the lamps and the sun or moon to streak across; and
     // `groundPuddles`, 0 to 1, how much of it lies as standing water in patches a few metres

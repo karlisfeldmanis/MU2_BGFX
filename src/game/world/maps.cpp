@@ -37,6 +37,13 @@ constexpr MapRow kMaps[] = {
     // closed statue block. Not 0.75's: MU added it with patch 0.84. MU draws it on its black clear
     // with no leaves and no wind (MainScene.cpp:78-100), so for now it takes the underground's air.
     {"tarkan", 8, {195, 65}, true},
+    // Icarus, MU's map 10, entered from the Lost Tower's seventh floor: no spawn gate and no safe
+    // tile, so it opens on the arrival gate 63's middle, 14,13 to 16,13 (OpenMU VersionSeasonSix
+    // Gates.cs:213; docs/icarus-port.md). A death and the Town Portal go home to Devias, as
+    // WebZen sends them (user.cpp:22077-22081). Not 0.75's: MU added it with the second classes
+    // in 2003. MU draws no ground there, only its navy clear (the world json's `sky`); for now it
+    // takes the underground's air, no leaves and no wind, until its rain and aHeaven.
+    {"icarus", 10, {15, 13}, true, 2},
     // Blood Castle 1, MU's map 11: its exit gate 66, 12,5 to 14,10, in the safe court beside
     // the Archangel (OpenMU VersionSeasonSix Gates.cs:216; docs/blood-castle-port.md). Not 0.75's:
     // its first castle is Season Six's. MU draws it on its black clear with no weather

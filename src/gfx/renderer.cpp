@@ -588,6 +588,18 @@ void Renderer::cameraMatrices(const Camera& camera, float* view, float* proj) co
                 camera.farPlane, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
 }
 
+namespace {
+// The palette slot the shade view clears from. bgfx keeps the palette as floats, which is
+// what an HDR target needs; nothing else in the engine uses it.
+constexpr uint8_t kShadeClearPalette = 1;
+
+void setShadeClear(const Lighting& lighting) {
+    const float rgba[4] = {lighting.clearColour[0], lighting.clearColour[1],
+                           lighting.clearColour[2], 0.0f};
+    bgfx::setPaletteColor(kShadeClearPalette, rgba);
+}
+}  // namespace
+
 void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>& drawables, const content::Ground* ground,
                     const std::vector<Drawable>* casters, const GrassField* grass) {
@@ -975,8 +987,11 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
 
             bgfx::setViewFrameBuffer(ViewShade, shadeFb_);
             bgfx::setViewRect(ViewShade, 0, 0, uint16_t(width_), uint16_t(height_));
-            // The depth is the prepass's and is kept; only the colour is cleared.
-            bgfx::setViewClear(ViewShade, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
+            // The depth is the prepass's and is kept; only the colour is cleared, to the
+            // sheet's clear_colour (Icarus's navy sky; black elsewhere). Through the palette,
+            // because the packed 8-bit form rounds a dark linear blue on an HDR target away.
+            setShadeClear(lighting);
+            bgfx::setViewClear(ViewShade, BGFX_CLEAR_COLOR, 1.0f, 0, kShadeClearPalette);
             bgfx::setViewTransform(ViewShade, view, proj);
 
             // Kept, and set on every shade draw by bindShadeInputs rather than once here.
@@ -1122,7 +1137,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         // hand the screen a texture that has never been written.
         bgfx::setViewFrameBuffer(ViewShade, shadeFb_);
         bgfx::setViewRect(ViewShade, 0, 0, uint16_t(width_), uint16_t(height_));
-        bgfx::setViewClear(ViewShade, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
+        setShadeClear(lighting);
+        bgfx::setViewClear(ViewShade, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 1.0f, 0,
+                           kShadeClearPalette);
         bgfx::touch(ViewShade);
     }
 

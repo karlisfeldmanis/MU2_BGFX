@@ -651,6 +651,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     // A void floored (`void_floor`, below) is ground to look at, not a chasm: no abyss over it.
     if (!doc["void_floor"].stringOr("").empty()) abyssDepth_ = 0.0f;
     figureLight_ = float(doc["figure_light"].numberOr(0.0));
+    sky_ = doc["sky"].boolOr(false);
     blendKeep_.clear();
     later_.clear();
     laterShown_ = false;

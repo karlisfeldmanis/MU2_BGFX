@@ -155,7 +155,14 @@ public:
     // Whether the `later` parts are drawn: Blood Castle's gap, shown as its drawbridge lands
     // (game/world/drawbridge.h). A part the renderer skips while this is false.
     void showLater(bool shown) { laterShown_ = shown; }
-    bool draws(const GroundPart& part) const { return !part.later || laterShown_; }
+    bool draws(const GroundPart& part) const {
+        return !sky_ && (!part.later || laterShown_);
+    }
+    // A world with no ground drawn at all (the world json's `sky`): Icarus, where MU skips
+    // RenderTerrain (MainScene.cpp:463) and the hero walks an unseen plane over the clear's
+    // navy. The grid, the heights and the painted light stand for every foot, drop and click;
+    // only the drawing is gone. docs/icarus-port.md.
+    bool sky() const { return sky_; }
     // MU's caustics, where a world has them: the sheet of 32 frames (the showing's `caustic`)
     // and the slot it is laid over, TileWater01's, which MU draws as those frames added rather
     // than as a sheet (ZzzLodTerrain.cpp:1971-1975). Atlans's, set by World::open. The slot is
@@ -233,6 +240,7 @@ private:
     // ZzzObject.cpp:163). The world's `void.later`. Blood Castle's drawbridge gap.
     std::vector<std::array<int, 4>> later_;
     bool laterShown_ = false;
+    bool sky_ = false;          // the world's `sky`; see draws
     float figureLight_ = 0.0f;  // the world's `figure_light`; see figureLightAt
     // How far above the rim the void's own points read their level, in metres, so whatever
     // stands in a pit is already that far into the dark at the lip: the Dungeon's worms,

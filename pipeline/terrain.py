@@ -140,6 +140,10 @@ HIDDEN_BY_MAP = {
     # nothing places; 70, 76 and 83 the smoke vents and sand geysers, 3, 19 and 10. All emitters,
     # drawn by no mesh. docs/tarkan-port.md.
     8: {60, 63, 64, 70, 76, 83},
+    # Icarus's six (RenderObjectVisual, ZzzObject.cpp:3090-3169): Object01-06, 335 of them, each
+    # throwing 10-20 cloud puffs and then hidden. The cloud road is these and nothing else drawn
+    # under the walkers. docs/icarus-port.md.
+    10: {0, 1, 2, 3, 4, 5},
 }
 
 #: What each world draws additively, by map number and placement type.
@@ -194,6 +198,8 @@ GRASS_BY_MAP = {
     # (ZzzLodTerrain.cpp:2077-2120): the north-east town, as the rest of slot 0 is NoGround.
     # TileGrass03.OZT is empty and no tile wears slot 2. docs/tarkan-port.md.
     8: ["TileGrass01"],
+    # Icarus ships no TileGrass .OZT, and no ground is drawn there at all (SKY_BY_MAP).
+    10: [],
 }
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the
@@ -259,6 +265,13 @@ VOID_BY_MAP = {
 #: of them. What stays void is what no lava touches -- floor 7's causeways and the chasm round
 #: them, whose blending into the black the user tuned.
 LAVA_SPILL_BY_MAP = {4: 256}
+
+#: The worlds with no ground drawn (the world json's `sky`; content::Ground::draws). Icarus:
+#: MuMain skips RenderTerrain on map 10 (MainScene.cpp:463), and the hero walks an unseen plane
+#: at 2.85 m over the clear's navy, the cloud emitters' puffs round him. Every tile keeps its
+#: height and flags -- NoGround would close the road, as the walker counts 0x08 -- so the
+#: switch is the world's, not the tiles'. docs/icarus-port.md.
+SKY_BY_MAP = {10}
 
 #: Boxes of a map's grid opened at import, as (x1, y1, x2, y2, bits cleared), inclusive tiles.
 #: Ours, marked, and only until the run is built: Blood Castle's entrance, its drawbridge's gap
@@ -763,6 +776,7 @@ def main() -> None:
         **({"figure_light": FIGURE_LIGHT_BY_MAP[number - 1]} if number - 1 in FIGURE_LIGHT_BY_MAP else {}),
         **({"water_flow": WATER_FLOW_BY_MAP[number - 1]}
            if number - 1 in WATER_FLOW_BY_MAP else {}),
+        **({"sky": True} if number - 1 in SKY_BY_MAP else {}),
         "objects": placed,
     }, indent=1) + "\n")
 

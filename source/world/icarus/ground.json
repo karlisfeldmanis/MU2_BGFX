@@ -1,0 +1,30 @@
+{
+  "tileset": "icarus",
+  "mu_name": "Icarus ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "ic_tilegrass01.png",
+    "TileGrass02": "ic_tilegrass02.png",
+    "TileRock01": "ic_tilerock01.png",
+    "TileRock02": "ic_tilerock02.png",
+    "TileRock03": "ic_tilerock03.png",
+    "TileRock04": "ic_tilerock04.png"
+  },
+  "sheet_from": "Data/World11/TileGrass01.OZJ, from MuMain, decoded under an ic_ prefix. World11 ships no other tile sheet, yet its slots 1 and 7-10 (0.3% of the tiles) name five: each is parked on a copy of TileGrass01 under its own name (ic_tilegrass02, ic_tilerock01-04), as Atlans parked its slot 5, because the ground pairs every surface by its sheet's name. docs/icarus-port.md.",
+  "slot_note": "Built and never drawn. MuMain skips RenderTerrain on Icarus (MainScene.cpp:463), and the world json's `sky` (terrain.py SKY_BY_MAP) keeps this ground out of every pass: it is here because index.py lists a world by its built ground, and the heights, grid and painted light under it are read for every foot, drop and click. A flat plane at 2.85 m, 10.7% walkable, no safe tile.",
+  "sheet_materials": {
+    "TileGrass01": "sand",
+    "TileGrass02": "sand",
+    "TileRock01": "sand",
+    "TileRock02": "sand",
+    "TileRock03": "sand",
+    "TileRock04": "sand",
+    "TileGrass01_over": "sand",
+    "TileGrass02_over": "sand",
+    "TileRock01_over": "sand",
+    "TileRock02_over": "sand",
+    "TileRock03_over": "sand",
+    "TileRock04_over": "sand"
+  },
+  "material_note": "Unseen; any material serves. sand, as the plainest."
+}
