@@ -38,11 +38,12 @@ constexpr int kLastStandAt = 15;
 // a straight line between (invention), times kRaidHealthScale -- what the headless tune moves
 // (tools/raid), since an end-game party took WZD's ten-player number in a minute. 9.75 since the
 // party's weapon runes fire, the dragon shrugs off holds and the raiders pay mana for their
-// skills (2026-10-06): 142 of 240 won, the kill about 7:25, the losses its clock.
+// skills (2026-10-06); 9.875 once the swarm is held at its master (Realm::raidTick): 133 of 240
+// won, the kill about 7:34, the losses its clock.
 constexpr int kRaidPlayers = 10;
 constexpr int32_t kRaidHealthOne = 22000;
 constexpr int32_t kRaidHealthTen = 100000;
-constexpr float kRaidHealthScale = 9.75f;
+constexpr float kRaidHealthScale = 9.875f;
 inline int32_t raidHealth(int players) {
     const int n = players < 1 ? 1 : players;
     const double line =
@@ -122,6 +123,11 @@ constexpr int kHoardJewels = 3;
 constexpr int kHoardFeatherOdds = 4;
 constexpr float kHoardReach = 2.5f;
 constexpr int64_t kHoardLingerTicks = 3 * 60 * 20;
+// And excellent things of its own (the user, 2026-10-06: 'also draogn it self can drop some
+// excelent drops'): kHoardExcellents always and one more one in kHoardExcellentOdds, off the
+// Box of Kundun +3's excellent pool (sim::kKundunExcellent3) as a box gives one. Ours.
+constexpr int kHoardExcellents = 1;
+constexpr int kHoardExcellentOdds = 3;
 inline int minionsFor(int players) {
     const int n = 2 + 2 * (players < 1 ? 1 : players);
     return n > kMinionsMost ? kMinionsMost : n;

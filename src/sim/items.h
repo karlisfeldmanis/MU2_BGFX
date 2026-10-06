@@ -1082,11 +1082,15 @@ struct BagRow {
 bool boxOfLuck(const content::ItemRow& row);
 bool boxOfKundun(const content::ItemRow& row);
 constexpr int kKundunTiers = 3;
-// WebZen's shipped rates (0.99.60T commonserver.cfg, Eledorado...ItemDropRate and
-// ExItemDropRate): an item, of which an excellent one; else the Zen (EledoradoBoxOpenEven,
-// Event.cpp:603, docs/kundun-box-sources.md 2.2-2.3).
-constexpr int kKundunItemIn100[kKundunTiers] = {30, 25, 20};
-constexpr int kKundunExcellentIn100[kKundunTiers] = {5, 4, 3};
+// An item, of which an excellent one; else the Zen (EledoradoBoxOpenEven, Event.cpp:603,
+// docs/kundun-box-sources.md 2.2-2.3). **Ours, rising with the tier** (the user, 2026-10-06: 'we
+// need that there is decenet excelent drop for any drop of kundum', 'but not to crasy'): an
+// excellent in 12, 17.5 and 24 boxes in a hundred ('we need better excelent drop rate from box
+// of kundum'). WebZen's shipped rates (0.99.60T
+// commonserver.cfg) were 30/25/20 and 5/4/3 -- 1.5, 1 and 0.6 in a hundred, rarer as the box
+// got better.
+constexpr int kKundunItemIn100[kKundunTiers] = {30, 35, 40};
+constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60};
 constexpr int64_t kKundunZen[kKundunTiers] = {50000, 100000, 150000};
 // A plain row's level is the bag file's plus `rand()%addlevel` (2 for +1 to +3): +5/+6 from
 // the +1 box, +4/+5 from the +2 and +3.

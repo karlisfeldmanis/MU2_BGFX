@@ -299,7 +299,7 @@ void Realm::dragonHoard(const Body& dragon) {
         return -1;
     };
     // What it leaves, in order, laid round it evenly from a turn the dice choose.
-    Held hoard[kHoardBoxes + kHoardRunes + kHoardJewels + 1];
+    Held hoard[kHoardBoxes + kHoardRunes + kHoardJewels + 1 + kHoardExcellents + 1];
     int count = 0;
     const int32_t box = first([](const content::ItemRow& r) { return boxOfKundun(r); });
     for (int i = 0; i < kHoardBoxes && box >= 0; ++i) {
@@ -319,6 +319,10 @@ void Realm::dragonHoard(const Body& dragon) {
             if (refiningJewel(tables_->items[k]) && at-- == 0) hoard[count++] = Held{int32_t(k), 0, 1};
         }
     }
+    const int excellents = kHoardExcellents + (raidDice_.nextInt(0, kHoardExcellentOdds) == 0 ? 1 : 0);
+    for (int i = 0; i < excellents; ++i) {
+        if (excellentOf(kKundunExcellent3, std::size(kKundunExcellent3), raidDice_, &hoard[count])) ++count;
+    }
     if (raidDice_.nextInt(0, kHoardFeatherOdds) == 0) {
         const int32_t feather = first([](const content::ItemRow& r) { return lochsFeather(r); });
         if (feather >= 0) hoard[count++] = Held{feather, 0, 1};
@@ -335,8 +339,8 @@ void Realm::dragonHoard(const Body& dragon) {
         one.id = nextId_++;
         lying_.push_back(one);
         say(What::Dropped, dragon, int32_t(one.id), one.what.item, one.what.refinement);
-        core::logf("raid: the dragon leaves %s +%d", tables_->items[size_t(one.what.item)].name.c_str(),
-                   one.what.refinement);
+        core::logf("raid: the dragon leaves %s +%d%s", tables_->items[size_t(one.what.item)].name.c_str(),
+                   one.what.refinement, one.what.excellent ? ", excellent" : "");
     }
 }
 
@@ -415,6 +419,15 @@ void Realm::raidTick() {
             endInvasion();
         }
         return;
+    }
+    // The swarm's nest is its master: each minion's home is the dragon's tile, so its leash pulls
+    // it back to the fight -- ten runed fighters' pushes and the chase after a raider running
+    // back from town had walked one twenty-four tiles off (the audit, 2026-10-06).
+    for (int slot : minionSlots_) {
+        Body& minion = bodies_[size_t(slot)];
+        if (!minion.alive()) continue;
+        minion.homeColumn = dragon.column();
+        minion.homeRow = dragon.row();
     }
     if (tick_ - raid_.landedAt >= kHardEnrage) {
         raid_.departing = true;

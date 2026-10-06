@@ -56,8 +56,12 @@ void audit(const Realm& realm, Findings& findings) {
         // Peia's north road is half again the grudge from her flower bed.
         const bool rounds = one.warden >= 0 && size_t(one.warden) < tables->folk.size() &&
                             strollRow(tables->folk[size_t(one.warden)].number) != nullptr;
-        // A raid's raider has no nest: it stands up in town and runs back (Realm::raid).
-        if (!one.player && one.raider < 0 && one.alive() && !rounds) {
+        // A raid's raider has no nest: it stands up in town and runs back (Realm::raid). Nor its
+        // swarm: a Golden Budge Dragon's home is its master's tile, which moves with the fight
+        // (Realm::raidTick), so one walking after it is briefly past any fixed leash.
+        const bool swarm = one.kind >= 0 && size_t(one.kind) < tables->kinds.size() &&
+                           tables->kinds[size_t(one.kind)].number == kGoldenBudgeDragonNumber;
+        if (!one.player && one.raider < 0 && one.alive() && !rounds && !swarm) {
             const int away = std::max(std::abs(one.column() - one.homeColumn),
                                       std::abs(one.row() - one.homeRow));
             if (away > kFurthest) {

@@ -801,6 +801,9 @@ public:
     // A Box of Luck or of Kundun (`tier` its plus), already lifted from the bag: what it opens
     // into (sim::kKundunItemIn100, kLuckItemIn100).
     Cracked openBox(Cracked cracked, bool luck, int tier);
+    // An excellent item off `rows`, on `dice`, as a Box of Kundun gives one: +0, luck at a half,
+    // the option where the luck missed, NewOptionRand's options. False with none to draw.
+    bool excellentOf(const BagRow* rows, size_t count, Random& dice, Held* out);
     // The raid's dragon's hoard round its corpse (docs/golden-dragon-raid.md section 1).
     void dragonHoard(const Body& dragon);
     // The bench's, and no rule of MU's: a thing laid on the ground beside him as a kill's drop

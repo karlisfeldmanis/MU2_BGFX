@@ -2024,6 +2024,43 @@ Cracked Realm::crack(int slot) {
 // Kundun, and OpenMU's Version095d Box of Luck, in their own order: whether an item comes, then
 // for the Kundun box whether it is excellent, which row, its level, the skill, the luck and the
 // option; else Zen into the purse.
+bool Realm::excellentOf(const BagRow* rows, size_t count, Random& dice, Held* out) {
+    // Only a row that can carry the options: the pool's rings and pendants are left out here.
+    const auto rowOf = [this](const BagRow& wanted) -> int32_t {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            const content::ItemRow& row = tables_->items[i];
+            if (row.group == wanted.group && row.number == wanted.number && excellentable(row) &&
+                takesOptions(row)) {
+                return int32_t(i);
+            }
+        }
+        return -1;
+    };
+    int present = 0;
+    for (size_t i = 0; i < count; ++i) present += rowOf(rows[i]) >= 0 ? 1 : 0;
+    if (present == 0) return false;
+    int at = dice.nextInt(0, present);
+    int32_t item = -1;
+    for (size_t i = 0; i < count && item < 0; ++i) {
+        const int32_t found = rowOf(rows[i]);
+        if (found >= 0 && at-- == 0) item = found;
+    }
+    const content::ItemRow& row = tables_->items[size_t(item)];
+    Held what{item, 0, int16_t(fullDurability(row, 0))};
+    // The skill always; the luck at a half, and the option where it missed: one in five +12,
+    // else +0, +4 or +8.
+    what.luck = dice.nextInt(0, 100) < kBoxLuckIn100;
+    if (!what.luck) what.option = int8_t(dice.nextInt(0, 5) < 1 ? 3 : dice.nextInt(0, 3));
+    // NewOptionRand(0), as `leave` rolls an excellent drop's.
+    int first = dice.nextInt(0, kExcellentOptions);
+    if (first == 1 && dice.nextInt(0, 2) != 0) first = dice.nextInt(0, kExcellentOptions);
+    what.excellent = uint8_t(1u << first);
+    if (dice.nextInt(0, 4) == 0) what.excellent |= uint8_t(1u << dice.nextInt(0, kExcellentOptions));
+    what.durability = int16_t(maximumDurability(row, what));
+    *out = what;
+    return true;
+}
+
 Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
     Body& hero = bodies_[0];
     const int t = std::clamp(tier, 1, kKundunTiers) - 1;
@@ -2048,7 +2085,6 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
     };
     if (dice_.nextInt(0, 100) < (luck ? kLuckItemIn100 : kKundunItemIn100[t])) {
         int32_t item = -1;
-        bool excellent = false;
         if (luck) {
             item = pick(kLuckBag, std::size(kLuckBag));
         } else {
@@ -2059,8 +2095,20 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
             const size_t fines = t == 0 ? std::size(kKundunExcellent1)
                                  : t == 1 ? std::size(kKundunExcellent2) : std::size(kKundunExcellent3);
             if (dice_.nextInt(0, 100) < kKundunExcellentIn100[t]) {
-                item = pick(fine, fines);
-                excellent = item >= 0;
+                // An excellent one, at its feet as any (Realm::excellentOf).
+                Lying one;
+                if (excellentOf(fine, fines, dice_, &one.what)) {
+                    std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
+                    one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+                    one.id = nextId_++;
+                    lying_.push_back(one);
+                    cracked.id = one.id;
+                    cracked.item = one.what.item;
+                    cracked.column = one.column;
+                    cracked.row = one.row;
+                    say(What::Cracked, hero, int32_t(one.id), one.what.item, 0);
+                    return cracked;
+                }
             }
             if (item < 0) item = pick(plain, plains);
         }
@@ -2074,26 +2122,14 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
                 // An excellent one at +0 with the skill; a plain one at the bag's level and up to
                 // one more, the skill at a half. The luck at a half either way, and the option where
                 // the skill or the luck missed: one in five +12, else +0, +4 or +8.
-                const int plus = excellent ? 0
-                                 : luck    ? kLuckPlus
-                                           : kKundunPlainLevel[t] + dice_.nextInt(0, kKundunAddLevel);
+                const int plus = luck ? kLuckPlus : kKundunPlainLevel[t] + dice_.nextInt(0, kKundunAddLevel);
                 const int refinement = std::min(plus, kRefineCap);
                 one.what = Held{item, int16_t(refinement), int16_t(fullDurability(row, refinement))};
-                const bool skill = excellent || dice_.nextInt(0, 2) == 1;
+                const bool skill = dice_.nextInt(0, 2) == 1;
                 one.what.luck = dice_.nextInt(0, 100) < kBoxLuckIn100;
                 int option = 0;
                 if (!one.what.luck || !skill) option = dice_.nextInt(0, 5) < 1 ? 3 : dice_.nextInt(0, 3);
                 one.what.option = int8_t(option);
-                if (excellent && excellentable(row)) {
-                    // NewOptionRand(0), as `leave` rolls an excellent drop's.
-                    int first = dice_.nextInt(0, kExcellentOptions);
-                    if (first == 1 && dice_.nextInt(0, 2) != 0) first = dice_.nextInt(0, kExcellentOptions);
-                    one.what.excellent = uint8_t(1u << first);
-                    if (dice_.nextInt(0, 4) == 0) {
-                        one.what.excellent |= uint8_t(1u << dice_.nextInt(0, kExcellentOptions));
-                    }
-                    one.what.durability = int16_t(maximumDurability(row, one.what));
-                }
             }
             std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
             one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
