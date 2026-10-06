@@ -185,7 +185,9 @@ enum class EmitterKind : uint8_t {
     Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4, Vent = 5,
     Bubble = 6,  // Atlans's bubble vents, game/world/bubbles.h
     // Tarkan's hidden emitters, game/world/desert_vents.h.
-    SandFall = 7, SteamVent = 8, Geyser = 9, GlowSprite = 10, DustCloud = 11
+    SandFall = 7, SteamVent = 8, Geyser = 9, GlowSprite = 10, DustCloud = 11,
+    // Icarus's cloud banks, game/world/sky_clouds.h: Cloud0 + the box's type, 0 to 5.
+    Cloud0 = 12
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

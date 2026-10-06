@@ -1319,7 +1319,12 @@ ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
                          # arm still adds its white pulsing terrain light (ZzzObject.cpp:4095-4106):
                          # a lamp, 0.
                          "tarkan": {"Object71": 7, "Object77": 8, "Object84": 9, "Object64": 10,
-                                    "Object61": 11, "Object05": 0}}
+                                    "Object61": 11, "Object05": 0},
+                         # Icarus's cloud banks, Object01-06 (types 0-5, hidden): each throws
+                         # 20 or 10 standing BITMAP_CLOUD puffs (ZzzObject.cpp:3090-3169), drawn
+                         # by game/world/sky_clouds.h. Kind 12 + the type. None lights.
+                         "icarus": {"Object01": 12, "Object02": 13, "Object03": 14,
+                                    "Object04": 15, "Object05": 16, "Object06": 17}}
 BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
@@ -1351,7 +1356,9 @@ ANCHOR_LIGHT = {# A lamp: Tarkan's Object05, white, sin(WorldTime*0.002)*0.35+0.
                 8: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
                 9: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
                 10: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                11: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0)}
+                11: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
+                # Nor Icarus's cloud banks.
+                **{k: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0) for k in range(12, 18)}}
 
 
 # Where the town's own stone stands in the lawn, for the grass to stay out of. The .walls

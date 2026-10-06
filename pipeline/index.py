@@ -341,6 +341,11 @@ EFFECTS = {
     # Ours: the void's big clouds, four masses on a 2x2 sheet made by pipeline/cloud_sheet.py.
     # See game/world/void_clouds.h.
     "void_clouds": "effects/clouds/void_clouds.png",
+    # Icarus's: BITMAP_CLOUD, Effect/clouds.jpg, the cloud road's puff, and BITMAP_CLOUD + 1,
+    # Effect/cloudLight.jpg, a cloud's edge lit violet-white by lightning (MapManager.cpp:150-155).
+    # See game/world/sky_clouds.h.
+    "cloud": "effects/clouds/clouds.png",
+    "cloud_light": "effects/clouds/cloudlight.png",
 
     # BITMAP_SMOKE itself, which is not the dust's sheet: smoke01.jpg is a grey wisp on
     # black with no alpha, and it is what a Bull Fighter snorts. See Snort.

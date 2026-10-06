@@ -45,6 +45,14 @@ door 160 in and free out (2), home Devias (5), and WebZen's three no-wingless ru
 
 Seen in muted `--play` runs at the door (15,13): flying on Satan's wings in a faint slanted rain (406 fps), riding the Dinorant in flight (397 fps), and unwinged, sent to Devias's 207,42 within the first tick. Not yet: the travel row (step 8; `realm_travel.cpp` is held open by another session), the summon's death at the door, a Dinorant's flap wake in the clouds.
 
+**The cloud road (2026-10-06, the user: 'lets migrate other effects which icarus had for that sky
+effect').** Step 5's banks, MU's own (decision 3's first half):
+- `game/world/sky_clouds.*`: the 335 Object01-06 boxes cooked as world anchors, kinds 12-17 (`EmitterKind::Cloud0` + the box's type; `tools/cook.py` `ANCHOR_KINDS_BY_WORLD["icarus"]`, no light). Each throws MU's 20 (types 0-2) or 10 (3-5) standing `clouds.jpg` puffs: scattered +-2.5 m and 20-39 units up, Scale 1.8-2.0 of the 256-texel sheet (4.6-5.1 m), light 0.1, added, bobbing 20 units on a 31 s sine, turning about a turn in sixteen seconds one way or the other by the type (or by index for 0 and 3). 3800 puffs in all; drawn within 30 m of the camera's point (400 at the door, 730 at 55,75).
+- The lit edge: on MU's flash (one frame in fifty), one time in ten a bank in reach takes `cloudLight.jpg` at Scale 0.5 in a dim random colour, shrinking out over eight frames.
+- Effect sheets `cloud` and `cloud_light` (`source/effects/clouds/`, decoded from `Effect/clouds.OZJ` and `cloudLight.OZJ`).
+
+Shot muted at the door: a bright bank under the hero, thinning to navy at its edges, as MU's. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
+
 ## The one thing to know first
 
 **Icarus has no ground.** MuMain skips `RenderTerrain` on map 10 (`MM/Scenes/MainScene.cpp:463`).

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
+#include <ctime>
 #include <unordered_map>
 
 #include "app/options.h"
@@ -317,6 +318,11 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().meteor().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
+                // The Golden Invasion's dragons, their breath glowing MU's lightning2.
+                if (const content::EffectSheet* glow = shown.effect("lightning_2")) {
+                    world_.played().openInvasionSky(ctx.textures.load(
+                        core::join(assets, glow->path), content::TextureRole::Albedo));
+                }
                 world_.played().comet().open(assets, ctx.textures,
                                              world_.played().showing().table(), &world_.ground());
                 world_.played().bolt().open(assets, ctx.textures,
@@ -467,6 +473,9 @@ void PlayMode::runScript(Context& ctx) {
     }
     if (world_.played().isOpen() && args.castle > 0) world_.played().setCastle(args.castle);
     if (world_.played().isOpen() && args.castleOpen) world_.played().openCastleDoor();
+    if (world_.played().isOpen() && args.invasion && !world_.played().invade()) {
+        core::logError("--invasion: this map has no invasion");
+    }
     if (world_.played().isOpen() && args.castleFree) world_.played().freeCastle();
     if (world_.played().isOpen() && args.castleBridge >= 0) {
         world_.played().dropCastleBridge(args.castleBridge);
@@ -1173,6 +1182,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (world_.played().isOpen()) world_.played().meteor().stones(at[0], at[2], at[1], 1);
     });
     world_.desertVents().gather(ctx.renderer.effects());
+    // Icarus's cloud road and the lightning in it (game/world/sky_clouds.h).
+    world_.skyClouds().update(float(deltaSeconds), eye.target);
+    world_.skyClouds().gather(ctx.renderer.effects());
     world_.boids().gatherTrails(ctx.renderer.effects());
     // And its sandstorm, MU's two screen layers (game/world/sand_haze.h).
     world_.sandHaze().update(float(deltaSeconds));
@@ -1205,6 +1217,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.boids().glow(ctx.renderer.effects());
         world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),
                               viewProj, ctx.renderer);
+        // The Golden Invasion's clock, the local day as Blood Castle's is, and its storm held
+        // while it is on (sim/invasion.h, Weather::summon).
+        {
+            const time_t now = std::time(nullptr);
+            struct tm local {};
+            localtime_r(&now, &local);
+            world_.played().invasionClock(local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec);
+        }
+        world_.weather().summon(world_.played().invasionStorm());
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         // Under the open sky where the map is "underground" only for its air (Tarkan's sand).
         world_.weather().update(float(deltaSeconds), inside && !world_.leaves().openAir());
@@ -1295,6 +1316,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().wingMotes().gather(ctx.renderer.effects());
         world_.played().shadowStars().gather(ctx.renderer.effects());
         world_.played().gatherMeteor(ctx.renderer.effects(), eye.position);
+        world_.played().glowInvasion(ctx.renderer.effects());
         world_.played().gatherBolt(ctx.renderer.effects(), eye.position);
         world_.played().wave().gather(ctx.renderer.effects());
         world_.played().arrows().gather(ctx.renderer.effects());

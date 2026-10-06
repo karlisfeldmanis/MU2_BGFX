@@ -134,6 +134,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     voidClouds_.open(assetDir, name, ground_, textures);
     castleSparks_.open(assetDir, name, town_.cooked(), textures);
     desertVents_.open(assetDir, name, town_.cooked(), textures);
+    skyClouds_.open(assetDir, name, town_.cooked(), textures);
     sandHaze_.open(assetDir, name, textures);
     bubbles_.open(assetDir, name, town_.cooked(), textures);
     // And the shade MU hangs under each bridge. See game/world/shades.h.
@@ -438,6 +439,7 @@ void World::shutdown() {
     voidClouds_.shutdown();
     castleSparks_.shutdown();
     desertVents_.shutdown();
+    skyClouds_.shutdown();
     sandHaze_.shutdown();
     bubbles_.shutdown();
     shades_.shutdown();
