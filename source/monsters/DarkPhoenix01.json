@@ -1,0 +1,259 @@
+{
+  "item": "DarkPhoenix01",
+  "mu_name": "Dark Phoenix",
+  "mu_name_from": "MuMain _enum.h MONSTER_DARK_PHOENIX (77), drawn as MODEL_DARK_PHEONIX_SHIELD (MONSTER_MODEL_DARK_PHOENIX_SHIELD = 55, Monster56.bmd, the bird) with Monster57.bmd (MONSTER_MODEL_DARK_PHOENIX = 56, the rider) over it. OpenMU Version095d Maps/Icarus.cs:389 names breed 77 'Dark Phoenix'; WZO files it under bosses (Monster.txt:76). One spot, 34,238. docs/icarus-port.md.",
+  "world": "icarus",
+  "object_type": 77,
+  "monster": {
+    "model_index": 55,
+    "scale": 1.0
+  },
+  "monster_from": "ZzzCharacter.cpp:13640-13648, CreateMonster, case MONSTER_DARK_PHOENIX: OpenMonsterModel(SHIELD) and (PHOENIX); CreateCharacter(MODEL_DARK_PHEONIX_SHIELD); NotRotateOnMagicHit; Scale = 1.0f; StreamMesh = 0 on the bird. RenderCharacter's MONSTER_DARK_PHOENIX arm (:8890-8925) draws the bird's chrome pulse, the bird again as BlendMesh 0 at a breathing 0.3-0.6, then `o->Type++` -- the rider, Monster57, on its own clip at the same action and frame -- with a CPhysicsCloth mane (magic_H.tga) on the rider's bone 10. Its effects, in game/play (kDarkPhoenixFigure): its Energy Ball's bolt from the bird's head at CheckAttackTime(14), a MODEL_PIERCING + 1 and a BITMAP_JOINT_THUNDER to the target (:2108-2121), drawn as a monster's Lightning, every plain blow a bolt that pushes (sim kBoltBlowers); its boss blow, 40 BITMAP_JOINT_SPIRIT sub 3 at CheckAttackTime(2) and (6) (:1785-1800), ours one Evil Spirit release. Left out: the chrome pulse, the cloth mane, the shield's phase -- WZ's Soul Barrier every 6 s and the rider's four BITMAP_JOINT_THUNDER from her hand while it is up (:2283-2293; WZ user.cpp:25410-25430) -- and the bolt's MODEL_PIERCING + 1.",
+  "mesh_from": "Both bodies in one, made with pipeline/merge_rigs.py: MuExtract's Monster56 export (61 bones, Pnix, 1054 triangles) then Monster57's (48 bones renamed 'Rider ...', magic_BB, 646), each action's tracks the bird's then the rider's -- MU plays both at one action and frame, and their seven actions have the same keys, 8, 8, 8, 7, 7, 4, 19.",
+  "profile": "monster",
+  "rig_from": "Exported with --actions=all from both models and merged, 7 actions, 109 bones. Its death plays at 0.22 (ZzzOpenData.cpp:3782-3792, the shield's case falling through into the phoenix's), in actions.json's action_overrides for model 55.",
+  "sheets": {
+    "Pnix": "phoenix_pnix.png",
+    "magic_BB": "phoenix_magic_bb.png"
+  },
+  "sheet_from": "Data/Monster's Pnix.OZJ (256 square, a lava of red and gold, the bird) and magic_BB.OZT (64 square, the rider's dark navy, its alpha cutting 10% in slots), under a phoenix_ prefix.",
+  "sheet_materials": {
+    "Pnix": "skin",
+    "magic_BB": "cloth"
+  },
+  "sheet_materials_from": "The bird is a glow, so its material only names it; the rider's dark robe, cloth.",
+  "glow": {
+    "Pnix": {
+      "scrolls_per_second": -0.1,
+      "shadow": 0.5
+    }
+  },
+  "glow_from": "MU draws the bird solid, its mesh 0 a StreamMesh sliding V at WorldTime * 0.0001 (MoveCharacterVisual :5822-5824, a tenth of the sheet a second), then again added at BlendMesh 0 and a breathing 0.3-0.6. Ours: drawn added alone, sliding, a bird of flowing fire on Icarus's navy that still casts half a shadow.",
+  "soft_alpha": [
+    "cloth"
+  ],
+  "soft_alpha_from": "magic_BB.OZT is drawn by MU tested and blended (EnableAlphaTest).",
+  "sounds_from": "ZzzOpenData.cpp:3782-3787: SetMonsterSound(..., 183, 184, 185, 185, -1): mPhoenix1 to move (184, a second load of it), mPhoenixAttack1 to attack, and no death sound (mDarkPhoenixDie is commented out). Wired as darkphoenix_move/attack in sounds.json.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 554,
+      "area": 21898.3,
+      "along": [
+        -38.0,
+        51.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.001,
+        0.997,
+        0.992
+      ],
+      "bake_uv": [
+        0.011,
+        0.012,
+        0.936,
+        0.83
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 36,
+      "area": 1318.4,
+      "along": [
+        -11.6,
+        15.5
+      ],
+      "mu_uv": [
+        0.633,
+        0.073,
+        0.726,
+        0.35
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.89,
+        0.873
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 150.6,
+      "along": [
+        9.6,
+        23.7
+      ],
+      "mu_uv": [
+        0.34,
+        0.016,
+        0.613,
+        0.069
+      ],
+      "bake_uv": [
+        0.463,
+        0.791,
+        0.899,
+        0.953
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 137.0,
+      "along": [
+        1.8,
+        9.7
+      ],
+      "mu_uv": [
+        0.34,
+        0.016,
+        0.613,
+        0.069
+      ],
+      "bake_uv": [
+        0.011,
+        0.805,
+        0.374,
+        0.965
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 137.0,
+      "along": [
+        -10.2,
+        -0.7
+      ],
+      "mu_uv": [
+        0.34,
+        0.016,
+        0.613,
+        0.069
+      ],
+      "bake_uv": [
+        0.618,
+        0.786,
+        0.965,
+        0.914
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 36,
+      "area": 1318.4,
+      "along": [
+        -23.2,
+        3.8
+      ],
+      "mu_uv": [
+        0.633,
+        0.073,
+        0.726,
+        0.35
+      ],
+      "bake_uv": [
+        0.078,
+        0.011,
+        0.89,
+        0.863
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 137.0,
+      "along": [
+        -9.8,
+        -1.9
+      ],
+      "mu_uv": [
+        0.34,
+        0.016,
+        0.613,
+        0.069
+      ],
+      "bake_uv": [
+        0.097,
+        0.615,
+        0.974,
+        0.921
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 150.6,
+      "along": [
+        -2.0,
+        12.1
+      ],
+      "mu_uv": [
+        0.34,
+        0.016,
+        0.613,
+        0.069
+      ],
+      "bake_uv": [
+        0.313,
+        0.711,
+        0.974,
+        0.989
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 398,
+      "area": 105201.4,
+      "along": [
+        -218.4,
+        151.9
+      ],
+      "mu_uv": [
+        0.154,
+        0.159,
+        0.395,
+        0.903
+      ],
+      "bake_uv": [
+        0.011,
+        0.013,
+        0.622,
+        0.632
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 656,
+      "area": 277046.5,
+      "along": [
+        -151.8,
+        145.0
+      ],
+      "mu_uv": [
+        0.154,
+        0.226,
+        0.899,
+        0.674
+      ],
+      "bake_uv": [
+        0.073,
+        0.013,
+        0.95,
+        0.955
+      ]
+    }
+  ]
+}

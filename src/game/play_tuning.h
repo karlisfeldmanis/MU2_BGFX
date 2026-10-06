@@ -555,6 +555,15 @@ constexpr int32_t kGreatDrakanNumber = 75;
 // (fx/spirits), the wizard's own joints, at that time -- thirty-six filled the sky.
 constexpr int32_t kPhantomKnightNumber = 72;
 constexpr float kPhantomSpiritWait = 13.0f / 25.0f;  // (14 - 1) / 25 s
+// MONSTER_DARK_PHOENIX, the bird (Monster56) with its rider (Monster57) merged into one body
+// (pipeline/merge_rigs.py). Its plain blow's bolt at CheckAttackTime(14) from the bird's head
+// (ZzzCharacter.cpp:2108-2121), ours from its middle as a monster's Lightning; its boss blow's
+// forty BITMAP_JOINT_SPIRIT at CheckAttackTime(2) and (6) (:1785-1800), ours one Evil Spirit
+// release at the first.
+inline constexpr const char* kDarkPhoenixFigure = "DarkPhoenix01";
+constexpr int32_t kDarkPhoenixNumber = 77;
+constexpr float kPhoenixBoltWait = 13.0f / 25.0f;    // (14 - 1) / 25 s
+constexpr float kPhoenixSpiritWait = 1.0f / 25.0f;   // (2 - 1) / 25 s
 inline constexpr const char* kShadowJoints[] = {
     "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
     "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",

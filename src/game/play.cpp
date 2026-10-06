@@ -1064,6 +1064,7 @@ void Play::update(double seconds) {
                             blower && !blower->player && blower->kind >= 0 &&
                             size_t(blower->kind) < tables_.kinds.size() &&
                             sim::boltBlower(tables_.kinds[size_t(blower->kind)].number) &&
+                            !sim::everyBlowBolt(tables_.kinds[size_t(blower->kind)].number) &&
                             swinger->attackClip2 >= 0) {
                             swing = happening.bolt ? swinger->attackClip2 : swinger->attackClip;
                         }
@@ -1372,7 +1373,13 @@ void Play::update(double seconds) {
                         // CheckAttackTime(13), as a monster's Lightning, on the blows the realm
                         // made lightning (Happening::bolt), whose push lands with it.
                         if (happening.bolt && happening.whom != 0) {
-                            thunderCasts_.push_back({happening.who, happening.whom, attackTime(13)});
+                            // The Dark Phoenix's at CheckAttackTime(14) (kPhoenixBoltWait).
+                            const bool phoenix =
+                                body && body->kind >= 0 &&
+                                size_t(body->kind) < tables_.kinds.size() &&
+                                tables_.kinds[size_t(body->kind)].number == kDarkPhoenixNumber;
+                            thunderCasts_.push_back({happening.who, happening.whom,
+                                                     phoenix ? kPhoenixBoltWait : attackTime(13)});
                         }
                         // A Hydra's first head bolt, the swing's own beam (sim kSplitBlows): from
                         // just before its blow shows, as the Lizard King's.
@@ -1439,6 +1446,9 @@ void Play::update(double seconds) {
                             } else if (bossNumber == kPhantomKnightNumber) {
                                 // The Phantom Knight: its spirits (kPhantomSpiritWait).
                                 spiritsDue_.push_back({happening.who, kPhantomSpiritWait});
+                            } else if (bossNumber == kDarkPhoenixNumber) {
+                                // The Dark Phoenix: its spirits (kPhoenixSpiritWait).
+                                spiritsDue_.push_back({happening.who, kPhoenixSpiritWait});
                             } else if (bossNumber == 58 || bossNumber == kDrakanNumber ||
                                        bossNumber == kGreatDrakanNumber) {
                                 // The Tantallos: its blow's Inferno and nothing more; the Drakan,

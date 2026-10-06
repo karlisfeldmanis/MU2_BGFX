@@ -269,6 +269,23 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   (`kBoltBlowers` += 75); Flame of Evil one in five (kBosses += 75), showing nothing more.
   greatdrakan_* sounds, the Drakan's. Left out: the chrome-bright RENDER_EXTRA pass and the five
   MODEL_PIERCING + 1 streaks. kResistances {75, 15, 15}, kDropRates {75, 14, 3, 30}.
+- **Dark Phoenix (77)**, the boss: one spawn at 34,238, WZO's 150 s respawn, MaxItemLevel 4.
+  MU draws it as two models on one character: MODEL_DARK_PHEONIX_SHIELD, Monster56, the bird,
+  and `o->Type++`, Monster57, the rider, each on its own clip at one action and frame
+  (`ZzzCharacter.cpp:8890-8925`). Ours merges them into one body, `DarkPhoenix01`, with the new
+  `pipeline/merge_rigs.py` (61 + 48 bones, the rider's renamed "Rider ..."; their seven actions
+  have the same keys). The bird's Pnix lava drawn added and sliding V a tenth of a sheet a
+  second (its StreamMesh, `:5822-5824`), half a shadow; the rider's magic_BB robe blended by its
+  alpha. Every plain blow is a bolt that pushes (`kEveryBoltBlowers`): MU draws its Energy Ball
+  as a MODEL_PIERCING + 1 and a BITMAP_JOINT_THUNDER from the bird's head at CheckAttackTime(14)
+  (`:2108-2121`) and its shield phase's blow as Lightning, so by the user's rule every bolt
+  pushes; drawn as a monster's Lightning. Flame of Evil one in five (kBosses += 77): MU's forty
+  BITMAP_JOINT_SPIRIT at CheckAttackTime(2) and (6) (`:1785-1800`), ours one Evil Spirit
+  release. darkphoenix_move/attack, and no death sound, as MU's. Left out: the chrome pulse and
+  the bird's breathing second pass, the rider's cloth mane (magic_H.tga), the shield (WZ's
+  6-second Soul Barrier and its Lightning crackle off the rider's hand, `:2283-2293`), and the
+  boss blow's reach of every character in sight (WZ `gObjMonster.cpp:1910-1916`). kResistances
+  {77, 30, 30}, kDropRates {77, 14, 4, 150}.
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

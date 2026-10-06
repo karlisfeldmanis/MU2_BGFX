@@ -92,7 +92,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                                : -1;
     bool bolt = false;
     if (boltBlower(number) && !thrown) {
-        bolt = !flame && attacker.blowsThrown % 3 != 0;
+        bolt = !flame && (everyBlowBolt(number) || attacker.blowsThrown % 3 != 0);
         ++attacker.blowsThrown;
     }
     if (!blow.hit) {

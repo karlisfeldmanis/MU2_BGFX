@@ -317,9 +317,22 @@ constexpr int32_t kBeastPushDelay = 12;
 // on those alone and the bolt's push falls with it, as every monster's lightning pushes (the
 // user, 2026-10-06: 'if any monster is casting lighting theere has to be that push effect').
 // The push waits for the bolt: (13 - 1) / 25 s, ten ticks. Ours.
+// And the Dark Phoenix (77), whose every plain blow MU draws as a bolt -- its Energy Ball's
+// BITMAP_JOINT_THUNDER from the bird's head (ZzzCharacter.cpp:2108-2121), and while its shield is
+// up WebZen's Lightning (ObjAttack.cpp:237-243) -- so every blow but its Flame is its bolt.
 constexpr int32_t kBoltBlowers[] = {73, 75};  // the Drakan and the Great Drakan
+constexpr int32_t kEveryBoltBlowers[] = {77};  // the Dark Phoenix
 constexpr bool boltBlower(int32_t number) {
     for (const int32_t one : kBoltBlowers) {
+        if (one == number) return true;
+    }
+    for (const int32_t one : kEveryBoltBlowers) {
+        if (one == number) return true;
+    }
+    return false;
+}
+constexpr bool everyBlowBolt(int32_t number) {
+    for (const int32_t one : kEveryBoltBlowers) {
         if (one == number) return true;
     }
     return false;
@@ -362,7 +375,8 @@ constexpr int chillOdds(int32_t number) {
 // (docs/golden-dragon-raid.md).
 // And Icarus's Drakan (73), Phantom Knight (72) and Great Drakan (75), A.Type 150 (WZO
 // Monster.txt:56-66; docs/icarus-port.md A 4.2).
-constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63, 79, 73, 72, 75};
+// And the Dark Phoenix (77), WZO's boss (Monster.txt:76).
+constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63, 79, 73, 72, 75, 77};
 
 // ---- blows split into parts --------------------------------------------------------------------
 // **Ours.** MU and WebZen strike once a swing; these breeds' one blow is split into `parts`, each
@@ -458,6 +472,7 @@ constexpr Resistance kResistances[] = {
     {74, 13, 13},  // Alpha Crust
     {72, 14, 14},  // Phantom Knight
     {75, 15, 15},  // Great Drakan
+    {77, 30, 30},  // Dark Phoenix
 };
 
 // ---- what each breed leaves -------------------------------------------------------------------
@@ -498,6 +513,7 @@ constexpr DropRate kDropRates[] = {
     // Rainer and Alpha Crust, 20 for the Drakan, 30 for the Phantom Knight and Great Drakan (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built.
     {69, 14, 3, 10}, {71, 14, 3, 10}, {70, 14, 3, 10}, {73, 14, 3, 20},
     {74, 14, 3, 10}, {72, 14, 3, 30}, {75, 14, 3, 30},
+    {77, 14, 4, 150},  // the Dark Phoenix: MaxItemLevel 4, RegTime 150 (WZO Monster.txt:76)
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {

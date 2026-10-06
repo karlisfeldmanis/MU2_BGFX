@@ -316,3 +316,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | AlphaCrust01 | figure | 2026-10-06 22:17 | passed | the Crust in MU's teal BodyLight, its flames green; +9 Thunder Blade in hand; reads at noon, dusk and night |
 | PhantomKnight01 | figure | 2026-10-06 23:28 | passed | dark spiked winged knight, its runes a faint violet (0.35) after a first cut at 0.75 read as loud stripes; Dark Breaker in hand |
 | GreatDrakan01 | figure | 2026-10-06 23:40 | passed | the Drakan in MU's ExtraMon light, black with red plates, shot from 10 m; nearly gone at stage night, as MU's, its head fire marking it |
+| DarkPhoenix01 | figure | 2026-10-06 23:54 | passed | a 9.5 m bird of flowing fire, added and sliding, its dark rider on its back; shot from 14 m |

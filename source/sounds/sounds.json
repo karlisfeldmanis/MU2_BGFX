@@ -2250,6 +2250,18 @@
       ],
       "from": "As drakan_die: the Drakan model's own, ZzzOpenData.cpp:3775-3781 (Icarus's Great Drakan)."
     },
+    "darkphoenix_move": {
+      "files": [
+        "mPhoenix1.wav"
+      ],
+      "from": "Sounds[0] and [1], 183 and 184, both loaded from Data\\Sound\\mPhoenix1.wav: SetMonsterSound(..., 183, 184, 185, 185, -1), ZzzOpenData.cpp:3782-3787 (Icarus's Dark Phoenix)."
+    },
+    "darkphoenix_attack": {
+      "files": [
+        "mPhoenixAttack1.wav"
+      ],
+      "from": "Sounds[2] and [3], both 185 -- mPhoenixAttack1.wav. ZzzOpenData.cpp:3782-3787. It has no death sound (-1; mDarkPhoenixDie.wav is commented out)."
+    },
     "phantomknight_move": {
       "files": [
         "mPhantom1.wav"
