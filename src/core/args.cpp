@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <cstdio>
+#include <cctype>
 #include <cstring>
 #include <strings.h>
 #include <filesystem>
@@ -199,6 +200,10 @@ void printUsage() {
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
+        "  --raid N                  the Golden Dragon's raid, tough for N, the party around him\n"
+        "  --raid-box A|B|C          which of WebZen's Lorencia dragon boxes it is fought in\n"
+        "  --raid-stage S            the dragon laid at stage S's health (1-4) once it stands\n"
+        "  --raid-now                it lands at once, the sky's entrance skipped\n"
         "  --castle-free             Blood Castle with no run, its gates open, the statue alone\n"
         "  --castle-bridge S         Blood Castle's run on, its drawbridge falling in S seconds\n"
         "  --castle N                Blood Castle N's garrison and statue, as the Messenger sets\n"
@@ -357,6 +362,14 @@ Args parseArgs(int argc, char** argv) {
             a.castleOpen = true;
         } else if (!std::strcmp(s, "--invasion")) {
             a.invasion = true;
+        } else if (!std::strcmp(s, "--raid")) {
+            if (const char* v = next(s)) a.raid = std::max(1, std::atoi(v));
+        } else if (!std::strcmp(s, "--raid-box")) {
+            if (const char* v = next(s)) a.raidBox = char(std::toupper(static_cast<unsigned char>(v[0])));
+        } else if (!std::strcmp(s, "--raid-stage")) {
+            if (const char* v = next(s)) a.raidStage = std::atoi(v);
+        } else if (!std::strcmp(s, "--raid-now")) {
+            a.raidNow = true;
         } else if (!std::strcmp(s, "--castle-free")) {
             a.castleFree = true;
         } else if (!std::strcmp(s, "--castle")) {

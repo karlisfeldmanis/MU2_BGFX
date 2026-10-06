@@ -22,6 +22,7 @@
 #include "sim/gates.h"
 #include "sim/items.h"
 #include "sim/market.h"
+#include "sim/raid_party.h"
 #include "sim/travel.h"
 
 namespace mu::app {
@@ -32,6 +33,12 @@ namespace {
 // however often he steps in and out. Ours: MU loops them for as long as he stands there.
 constexpr double kMusicRestSeconds = 10.0 * 60.0;
 // When each track last began, in seconds of the run, across worlds and modes.
+// The raid's party (--raid), read with the save and handed to the play before it opens.
+std::vector<mu::sim::RaiderKit>& raidParty() {
+    static std::vector<mu::sim::RaiderKit> party;
+    return party;
+}
+
 std::unordered_map<std::string, double>& musicBegan() {
     static std::unordered_map<std::string, double> began;
     return began;
@@ -50,7 +57,8 @@ void PlayMode::readSave(Context& ctx) {
     // never walked. A named `--save` is still obeyed, because then the caller asked for a file
     // by name.
     const bool unsaved =
-        args.frames != 0 || !args.arena.empty() || args.questReady || !args.questsDone.empty();
+        args.frames != 0 || !args.arena.empty() || args.questReady || !args.questsDone.empty() ||
+        args.raid > 0;
     savePath_ = !args.savePath.empty() ? args.savePath
                 : !unsaved             ? game::defaultSavePath()
                                        : std::string();
@@ -91,6 +99,23 @@ void PlayMode::readSave(Context& ctx) {
         // The account's, so a new character opens it too -- and `--fresh` as well, which is a
         // new character and not a new account.
         game::loadVault(game::vaultPathBeside(savePath_), saved_);
+    }
+    // --raid: the party's first kit is who he is -- its class and level, its gear laid on him by
+    // the realm (sim::Realm::setRaid) -- whatever a save said (docs/golden-dragon-raid.md).
+    if (args.raid > 0) {
+        resumed_ = false;
+        const std::string party = ctx.paths.assets + "/../source/raid/party.json";
+        if (sim::readParty(party, &raidParty()) && !raidParty().empty()) {
+            args.kin = int(raidParty()[0].kin);
+            args.level = raidParty()[0].level;
+            args.weapon.clear();
+            args.shield.clear();
+            core::logf("raid: %zu in the party, tough for %d, box %c", raidParty().size(), args.raid,
+                       args.raidBox);
+        } else {
+            core::logError("--raid: %s did not read; no raid", party.c_str());
+            args.raid = 0;
+        }
     }
 }
 
@@ -199,7 +224,13 @@ bool PlayMode::open(Context& ctx) {
     entrance_ = args.play && (args.frames == 0 || args.entrance);
 
     if (args.atSet) world_.setFocusTile(args.atColumn, args.atRow);
-    else if (!args.arena.empty()) {
+    else if (args.raid > 0) {
+        // The middle of one of WebZen's Lorencia Dragon Event boxes (DragonEvent.cpp:103-109):
+        // where MU itself put dragons, the realm's own rule landing it near him.
+        const int box = std::clamp(args.raidBox - 'A', 0, 2);
+        constexpr float kBoxes[3][2] = {{140.5f, 65.5f}, {123.0f, 211.5f}, {72.0f, 123.5f}};
+        world_.setFocusTile(kBoxes[box][0], kBoxes[box][1]);
+    } else if (!args.arena.empty()) {
         // The arena's own patch, unless the caller named a tile. Why that one is in
         // Play::Arena beside the constants; the short of it is that it is the flattest,
         // emptiest, non-safe square on the only cooked world.
@@ -247,6 +278,7 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }
+            if (args.raid > 0) world_.played().setRaid(args.raid, raidParty());
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
         }
@@ -257,6 +289,11 @@ bool PlayMode::open(Context& ctx) {
         // `openSound` reads `bodies_[0]` for the hero's own death cry. That is a read off
         // the front of an empty vector, and it is a crash and not a missing sound.
         if (world_.played().isOpen()) {
+            // The raid's hero in his kit, and the stage asked for (play_raid.cpp).
+            if (args.raid > 0) {
+                world_.played().redress();
+                world_.played().raidSkip(args.raidStage);
+            }
             if (resumed_) {
                 game::resolveSave(*world_.played().realm().tables(), saved_);
                 world_.played().restore(saved_.hero);
@@ -314,6 +351,7 @@ bool PlayMode::open(Context& ctx) {
                                                  world_.played().showing().table());
                 world_.played().shadowStars().open(assets, ctx.textures,
                                                    world_.played().showing().table());
+                world_.played().omen().open(assets, ctx.textures);
                 world_.played().meteor().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
@@ -482,6 +520,9 @@ void PlayMode::runScript(Context& ctx) {
     if (world_.played().isOpen() && args.castleOpen) world_.played().openCastleDoor();
     if (world_.played().isOpen() && args.invasion && !world_.played().invade()) {
         core::logError("--invasion: this map has no invasion");
+    }
+    if (world_.played().isOpen() && args.raid > 0 && !world_.played().invade(args.raidNow)) {
+        core::logError("--raid: this map has no invasion");
     }
     if (world_.played().isOpen() && args.castleFree) world_.played().freeCastle();
     if (world_.played().isOpen() && args.castleBridge >= 0) {
@@ -996,7 +1037,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // which is what World::indoors asks -- and main_theme.mp3 everywhere else. Not here (the
     // user, 2026-09-27: "don't play main theme anymore in game ... but keep pub logic"), so off
     // the tavern floor the town is silent of music.
-    if (world_.played().isOpen()) {
+    // **The dragon's fight has its own music** (the user, 2026-10-06: 'lets use ... taiko-invasion
+    // ... for dragon fight scene when character is fighting dragon'): looping while he is in it
+    // (Play::raidFighting), and the map's own rule again after. The one fight with music.
+    const std::string fightTrack = ctx.paths.assets + "/music/dragon_fight.mp3";
+    if (world_.played().isOpen() && world_.played().raidFighting() && core::fileExists(fightTrack)) {
+        game::Sound& sound = world_.played().sound();
+        if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.6f, true);
+    } else if (world_.played().isOpen()) {
         bool pub = false;
         bool loops = false;  // played round and round, not once and rested
         const char* roofTrack = nullptr;
@@ -1331,6 +1379,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // Desk::overhead above has just placed on this same camera.
         world_.played().showing().gather(ctx.renderer.effects());
         world_.played().gatherMarker(ctx.renderer.effects());
+        world_.played().gatherOmen(ctx.renderer.effects());
         world_.played().gatherAura(ctx.renderer.effects(), eye.position);
         world_.played().gatherWarp(ctx.renderer.effects());
         world_.played().breath().gather(ctx.renderer.effects());

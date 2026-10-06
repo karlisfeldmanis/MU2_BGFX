@@ -65,8 +65,9 @@ void Realm::invasionRain(bool raining) {
     if (invasionDice_.nextInt(0, 100) < kInvasionChance) invade();
 }
 
-bool Realm::invade() {
+bool Realm::invade(bool now) {
     if (invaderSlot_ < 0 || invasion_.phase != InvasionPhase::Quiet) return false;
+    invasionNow_ = now;
     // Begun on the next tick, inside it, so its happening is that tick's (as castleOwed_).
     invasionOwed_ = true;
     return true;
@@ -121,7 +122,8 @@ void Realm::invasionTick() {
         dragon.facing = dragon.aim =
             std::atan2(hero.y - dragon.y, hero.x - dragon.x);
         invasion_.phase = InvasionPhase::Entering;
-        invasion_.landsAt = tick_ + kInvasionLandTicks;
+        invasion_.landsAt = tick_ + (invasionNow_ ? 1 : kInvasionLandTicks);
+        invasionNow_ = false;
         // Risen by the beasts' own loop on that tick (Realm::step, raiseBeast), its five idle
         // seconds the roar it lands with.
         dragon.risesAt = invasion_.landsAt;

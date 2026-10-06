@@ -587,8 +587,9 @@ void Realm::scorch(Body& dragon, Body& one, float share) {
     }
     one.health = std::max(0, one.health - wound);
     say(What::Hit, dragon, blow, blow, one.health, one.id);
+    // Thrown, and not a boss's Flame of Evil: the drawing shows the hazard's own fire
+    // (play_raid.cpp), and a `boss` hit is drawn as a Balrog's storm of meteors.
     happenings_.back().thrown = true;
-    happenings_.back().boss = true;
     if (one.health <= 0) kill(one, dragon);
 }
 

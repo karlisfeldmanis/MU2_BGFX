@@ -189,6 +189,13 @@ struct Args {
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
     bool castleOpen = false;    // `--castle-open`: the Messenger's door open at any hour (a test)
     bool invasion = false;      // `--invasion`: the map's Golden Invasion begun at once (a test)
+    // `--raid N`: the Golden Dragon's raid (docs/golden-dragon-raid.md) -- the party of
+    // source/raid/party.json in one of WebZen's Lorencia Dragon Event boxes, the invasion begun at
+    // once, the dragon tough for N; the hero wears the first kit. 0 for none.
+    int raid = 0;
+    char raidBox = 'A';         // `--raid-box A|B|C`: which box (DragonEvent.cpp:103-109)
+    int raidStage = 0;          // `--raid-stage S`: the dragon laid at stage S's health once it stands
+    bool raidNow = false;       // `--raid-now`: it lands on the next tick, its entrance skipped
     bool castleFree = false;    // `--castle-free`: Blood Castle with no run and every gate open (a test)
     int castleBridge = -1;      // `--castle-bridge S`: the run on, the drawbridge down in S seconds (a test)
     int castle = 0;             // `--castle N`: Blood Castle N's garrison and statue, as the Messenger sets (a test)

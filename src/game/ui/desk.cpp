@@ -82,6 +82,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
+    bossBar_.open(interface_);
     speech_.open(interface_);
     beacon_.open(interface_);
     tally_.open(interface_);
@@ -1721,6 +1722,7 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
     }
     vitals_.update(seconds, play, shown, play.pointedFolk(), takesPointer_, viewProj, width,
                    height);
+    bossBar_.update(seconds, play, viewProj, width, height);
     // After the names, so the marker rises by this frame's fade and not the last one's.
     beacon_.update(seconds, play, vitals_.namedFolk(), vitals_.folkShown(vitals_.namedFolk()),
                    viewProj, width, height);
@@ -1759,6 +1761,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // The quest marker under the names and bars, which are read at the moment of pointing.
     if (beacon_.showing()) interface_.add(beacon_.canvas());
     if (vitals_.showing()) interface_.add(vitals_.canvas());
+    if (bossBar_.showing()) interface_.add(bossBar_.canvas());
     // What the guards are saying, over the bars and names and under every window.
     if (speech_.showing()) interface_.add(speech_.canvas());
     // The blows' figures over the bar, because a number is the thing being read at that

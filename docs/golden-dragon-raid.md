@@ -1,10 +1,15 @@
 # The Golden Dragon as a raid boss — design, for the user's go
 
-Status: **sprint 1 built 2026-10-06, headless** -- the stages, the hazards, the minions, the
-raiders and `tools/raid`; switched on only by `Realm::setRaid` until sprint 2 draws it, so a
-plain invasion in play is unchanged. Sprint 2: the drawing (tells, breath, strafes, storm,
-pools, shadows, the raiders' figures, the boss bar, the camera, the music) and `--raid`. Sprint
-3: the Kundun boxes and the loot. Builds on the Golden Invasion (d3d59e2e).
+Status: **sprints 1 and 2 built 2026-10-06.** Sprint 1, the sim and `tools/raid`. Sprint 2, the
+drawing and `--raid N [--raid-box A|B|C] [--raid-stage S] [--raid-now]`: the raiders in their
+kits and wings (Figures::dress), the tells as a dark red stain on the land (fx/omen.h; meteors
+unmarked -- the user: 'dont show the meteor warning they just has to happen'), the breath from
+bone 11, the rocks, the pools' low embers, Hellfire's ring for the Inferno, the shadows darkened,
+the dragon drawn 3 m up on clip 7 while aloft, the boss bar under the herald in its grammar
+(game/ui/boss_bar.h; always up in the fight -- the user: 'always show the HP bar not only on
+hover'), the raiders' names and bars, the camera's 3 m pull (unmeasured on the frame budget yet),
+and the taiko track while he fights it. Still switched on only by --raid: a plain invasion in
+play is OpenMU's. Sprint 3: the Kundun boxes and the loot. Builds on the Golden Invasion (d3d59e2e).
 Every rule is traced (file:line) or marked **invention**.
 
 Sources: MuMain = `LEGACY/reference/MuMain/src/source`; WZ = WebZen GameServer 1.00.93

@@ -185,6 +185,7 @@ void Play::update(double seconds) {
             // ordinary run reaches it.
             if (!arena_.breed.empty()) announce(happening);
             invasionSaid(happening);
+            raidSaid(happening);
             // The marker, off the realm's own word for where the walk ends: `Walked` carries
             // the goal the route was planned to, after the router moved it out of any wall,
             // so the marker is where he will stand and not where the pointer was.
@@ -1379,7 +1380,9 @@ void Play::update(double seconds) {
                         // meteors within MU's 512 units for the length of its blow (storms_).
                         // Both were six and four until the user, 2026-10-03, asked for MU's.
                         // The blow itself shows as a swing's does.
-                        if (happening.boss && body && ground_) {
+                        // Not the Golden Dragon's: its fight has its own fire (play_raid.cpp),
+                        // and the Balrog's storm on every fifth bite buried it in meteors.
+                        if (happening.boss && body && ground_ && body != realm_.invader()) {
                             const float tile = ground_->metresPerTile();
                             const float bx = (body->x + 0.5f) * tile, bz = -(body->y + 0.5f) * tile;
                             const bool gorgon = body->kind >= 0 &&
@@ -1551,6 +1554,7 @@ void Play::update(double seconds) {
     // the key that throws it, exactly as the dragon's dust is.
     sandOnDeath();
     invasion(float(seconds));
+    raid(float(seconds));
     breath_.update(float(seconds));
     // The bones a skeleton left, on the drawing's clock like everything else here.
     bones_.update(float(seconds));

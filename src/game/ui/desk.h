@@ -34,6 +34,7 @@
 #include "game/ui/specimen.h"
 #include "game/ui/tally.h"
 #include "game/ui/speech.h"
+#include "game/ui/boss_bar.h"
 #include "game/ui/vitals.h"
 #include "game/ui/panel.h"
 #include "gfx/interface.h"
@@ -241,6 +242,7 @@ private:
     Endurance endurance_;
     Cursor cursor_;
     Vitals vitals_;
+    BossBar bossBar_;  // the Golden Dragon's bar and its party's (game/ui/boss_bar.h)
     Speech speech_;
     Beacon beacon_;
     Tally tally_;

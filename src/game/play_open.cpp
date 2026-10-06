@@ -154,6 +154,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         }
     }
 
+    // The Golden Dragon's raid, when one was asked for (--raid): handed to the realm before it
+    // is raised, as the arena's nests are (play_raid.cpp).
+    if (raidPlayers_ > 0) realm_.setRaid(raidPlayers_, raidParty_, false);
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to
@@ -316,6 +319,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             // Her summon's slot, dormant: no figure until she raises one, when the breed she
             // called is put on it (Play::update, What::Spawned). Given its placeholder kind's
             // figure here it stood as a Bull Fighter wherever the breed was not cooked.
+        } else if (body.raider >= 0) {
+            // A raider: its class body in its own kit (play_raid.cpp).
+            look = raiderLook(body);
         } else if (figures_) {
             look = figures_->body(tables_.kinds[size_t(body.kind)].figure);
         }

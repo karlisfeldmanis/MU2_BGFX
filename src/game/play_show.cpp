@@ -1301,6 +1301,8 @@ void Play::follow(float seconds) {
         const bool statue =
             !body->player && size_t(body->kind) < tables_.kinds.size() &&
             sim::castleStatue(tables_.kinds[size_t(body->kind)].number);
+        // And the Golden Dragon aloft, drawn up off the ground (play_raid.cpp).
+        lift += raidLift(*body);
         const float position[3] = {x, ground_->heightAt(x, z) + lift,
                                    statue ? z - 1.2f * metresPerTile : z};
         // The safe zone is a stance and not only a place: inside one MU carries the weapon on
@@ -1407,6 +1409,8 @@ void Play::follow(float seconds) {
             one.clipRate = 0.0f;
             continue;
         }
+        // Aloft, the dragon holds its flight clip whatever else it would play (play_raid.cpp).
+        if (raidFlies(one, *body)) continue;
         one.casting = std::max(0.0f, one.casting - seconds);
         if (one.swinging > 0.0f && body->walking &&
             (one.casting <= 0.0f || realm_.tick() >= body->castUntil)) {
@@ -1833,6 +1837,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         pets_.gather(renderer, hero->figure, scratch_, out, casters);
         wing_.gather(renderer, hero->figure, scratch_, out, casters);
     }
+    // The raid's raiders' wings, after their bodies are posed (play_raid.cpp).
+    gatherRaiders(renderer, out, casters);
     for (size_t i = 0; i < folk_.size(); ++i) {
         Standing& one = folk_[i];
         const int bones = one.figure.pose(scratch_.data());

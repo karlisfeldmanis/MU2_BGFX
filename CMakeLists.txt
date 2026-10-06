@@ -155,6 +155,7 @@ add_executable(mu2
   src/game/headless.cpp
   src/game/play.cpp
   src/game/play_invasion.cpp
+  src/game/play_raid.cpp
   src/game/play_open.cpp
   src/game/play_sound.cpp
   src/game/play_show.cpp
@@ -162,6 +163,7 @@ add_executable(mu2
   src/game/play_requests.cpp
   src/game/fx/showing.cpp
   src/game/fx/marker.cpp
+  src/game/fx/omen.cpp
   src/game/ui/arrival.cpp
   src/game/fx/aura.cpp
   src/game/fx/set_shine.cpp
@@ -221,6 +223,7 @@ add_executable(mu2
   src/game/ui/tip.cpp
   src/game/ui/tally.cpp
   src/game/ui/vitals.cpp
+  src/game/ui/boss_bar.cpp
   src/game/ui/speech.cpp
   src/game/ui/beacon.cpp
   src/game/ui/tracker.cpp

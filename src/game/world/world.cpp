@@ -374,7 +374,10 @@ void World::update(double seconds, bool still) {
     // Walk.cs's own back vector: sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch).
     const float back[3] = {std::sin(yaw) * std::cos(pitch), -std::sin(pitch),
                            std::cos(yaw) * std::cos(pitch)};
-    for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * kDistance;
+    // Drawn back near a big monster (Play::cameraPull, docs/golden-dragon-raid.md §2c): MU's
+    // TW_CAMERA_UP shape, eased, nought everywhere else.
+    const float distance = kDistance + (play_.isOpen() ? play_.cameraPull() : 0.0f);
+    for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * distance;
 
     // The ARPG framing: the played character stands above the middle of the frame, with more
     // ground ahead of him to the bottom of the screen, where the HUD's bar and orbs sit. The
@@ -382,7 +385,7 @@ void World::update(double seconds, bool still) {
     // only the picture moves. The slide is a fraction of the frame's height at the focus.
     if (play_.isOpen()) {
         const float lift = kLiftFrame * 2.0f * std::tan(kFovDegrees * 0.5f * 3.14159265f / 180.0f) *
-                           kDistance;
+                           distance;
         // Screen-up is (right x forward), with forward = -back and right = forward x world-up.
         const float fwd[3] = {-back[0], -back[1], -back[2]};
         float right[3] = {-fwd[2], 0.0f, fwd[0]};

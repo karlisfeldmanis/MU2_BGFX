@@ -978,7 +978,8 @@ public:
     // --invasion's `invade` begins one at once. Nothing on a map with no invasion, or one whose
     // dragon is not cooked.
     void invasionRain(bool raining);
-    bool invade();
+    // `now`: it lands on the next tick, its entrance skipped (--raid-now).
+    bool invade(bool now = false);
     InvasionPhase invasionPhase() const { return invasion_.phase; }
     // Ticks until the dragon lands, while it is coming; 0 otherwise.
     int64_t invasionLandsIn() const {
@@ -1013,6 +1014,10 @@ public:
     const Body* raiderAt(int index) const {
         return index >= 0 && index < raiderCount() ? &bodies_[size_t(raiderSlots_[size_t(index)])]
                                                    : nullptr;
+    }
+    // A raider's satchel, what it is reckoned and dressed from; null for none.
+    const Satchel* raiderBag(int index) const {
+        return index >= 0 && size_t(index) < raiderBags_.size() ? &raiderBags_[size_t(index)] : nullptr;
     }
     // The minions' bodies, up or down.
     int minionCount() const { return int(minionSlots_.size()); }
@@ -1567,6 +1572,7 @@ private:
         bool raining = false;  // the weather the game last said, to see a spell begin
     } invasion_;
     bool invasionOwed_ = false;  // invade()'s, begun inside the next tick
+    bool invasionNow_ = false;   // invade(true)'s: landing on the tick after it begins
     // Where the dragon comes down, so a landing moves no other roll.
     Random invasionDice_{0};
     void raiseInvader();
