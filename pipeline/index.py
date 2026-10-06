@@ -636,6 +636,10 @@ EFFECTS = {
     # both added. source/effects/comet/Blast01.json.
     "comet_trail": "effects/comet/joint_laser01.png",
     "comet_flash": "effects/comet/ring.png",
+    # Cometfall's cast, Meteorite's burn in blue (fx/meteor.h, Meteor::burn): MU's fire01 with
+    # its red and blue channels swapped and its green lifted a quarter, ours (the user,
+    # 2026-10-06: "built on meteor base effect but different color fire").
+    "comet_fire": "effects/comet/fire_blue.png",
 
     # The rain, which shares the leaves' pool in the client (CreateHeavenRain: the first
     # RainCurrent share of the slots are drops, the rest leaves). World1/rain01.OZT is

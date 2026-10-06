@@ -94,6 +94,7 @@ bool Meteor::open(const std::string& assetDir, content::Textures& textures,
     }
     blastSheet_ = cooked("explosion");
     emberSheet_ = cooked("fire");
+    blueEmberSheet_ = cooked("comet_fire");
     glowSheet_ = cooked("light");  // a soft white flare, the fireball's burning heart
     smokeSheet_ = cooked("smoke");  // Effect/smoke02, the arrows' wisps' sheet
 
@@ -254,13 +255,15 @@ void Meteor::trailSmokeAt(const Live& rock) {
     for (int c = 0; c < 3; ++c) mote->colour[c] = kTrailSmokeGrey[c];
 }
 
-void Meteor::burn(const float feet[3], float tall, float seconds) {
+void Meteor::burn(const float feet[3], float tall, float seconds, bool blue) {
     // The light on him, held a little past the last call so it does not blink between frames.
     for (int k = 0; k < 3; ++k) burnAt_[k] = feet[k];
     burnAt_[1] += tall * 0.55f;
     burnLit_ = 0.1f;
     burnRoll_ = between(kDimmestGlow, kBrightestGlow);
+    burnBlue_ = blue;
     if (!bgfx::isValid(emberSheet_)) return;
+    if (blue && !bgfx::isValid(blueEmberSheet_)) blue = false;
     burnDue_ -= seconds * kReferenceFps;
     while (burnDue_ <= 0.0f) {
         burnDue_ += kBurnEvery;
@@ -285,8 +288,10 @@ void Meteor::burn(const float feet[3], float tall, float seconds) {
         mote->left = mote->born = kEmberFrames;
         mote->rise = 0.0f;
         mote->cools = false;
+        mote->blue = blue;
         const float light = between(kDimmestGlow, kBrightestGlow);
-        for (int c = 0; c < 3; ++c) mote->colour[c] = kBurnEmber[c] * light;
+        const float* tint = blue ? kBurnBlueEmber : kBurnEmber;
+        for (int c = 0; c < 3; ++c) mote->colour[c] = tint[c] * light;
     }
 }
 
@@ -884,7 +889,7 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             continue;
         }
         if (m.kind == Mote::Kind::Ember) {
-            sprite.sheet = emberSheet_;
+            sprite.sheet = m.blue ? blueEmberSheet_ : emberSheet_;
             // A 256x64 strip of four square cells, one every six frames: MU's
             // `Frame = (23 - LifeTime) / 6`.
             const int cell = std::clamp(int((m.born - 1.0f - m.left) / float(kEmberHeld)), 0,
@@ -941,7 +946,8 @@ uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
         for (int k = 0; k < 3; ++k) light.position[k] = burnAt_[k];
         light.reach = kBurnGlowTiles;
         light.height = 1.0f;
-        for (int c = 0; c < 3; ++c) light.colour[c] = kBurnGlow[c] * burnRoll_;
+        const float* glow = burnBlue_ ? kBurnBlueGlow : kBurnGlow;
+        for (int c = 0; c < 3; ++c) light.colour[c] = glow[c] * burnRoll_;
     }
 
     // And the wizard's fireballs in the air, MU's `AddTerrainLight` on the same deep orange-red

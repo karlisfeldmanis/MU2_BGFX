@@ -92,7 +92,9 @@ public:
     // fire effect for character"), ours, as Lightning's crackle is: embers born round his body --
     // `feet` and his drawn `tall` -- rising off him and cooling as the fireball's do, and a warm
     // light flickering on him. Called every frame the cast runs.
-    void burn(const float feet[3], float tall, float seconds);
+    // `blue`: Cometfall's call, the same fire in the comet's blue -- comet_fire, fire01 with its
+    // red and blue swapped -- and a blue light (the user, 2026-10-06).
+    void burn(const float feet[3], float tall, float seconds, bool blue = false);
     // The realm said the blow missed: the fireball nearest that body flies on past and out.
     void missHurl(uint32_t target);
     // `count` of the rock's stones thrown up off the ground at `x, z` -- a Flame's kicked-up
@@ -225,6 +227,7 @@ private:
         // A fireball's ember, which cools as it goes where the meteor's holds its colour (ours):
         // born `colour`, dying toward the deep red and out.
         bool cools = false;
+        bool blue = false;  // an ember on comet_fire and not fire01 (burn's `blue`)
         enum class Kind : uint8_t { Ember, Blast, Smoke } kind = Kind::Ember;
     };
 
@@ -470,6 +473,9 @@ private:
     static constexpr float kBurnEmber[3] = {0.6f, 0.37f, 0.12f};
     static constexpr float kBurnGlowTiles = 2.0f;
     static constexpr float kBurnGlow[3] = {0.5f, 0.21f, 0.05f};
+    // Cometfall's: the ember's colour on the blue sheet and the light, in the comet's blue.
+    static constexpr float kBurnBlueEmber[3] = {1.0f, 1.1f, 1.3f};
+    static constexpr float kBurnBlueGlow[3] = {0.1f, 0.22f, 0.5f};
 
     // Pools, sized once. A thing past its pool is refused and counted, never grown -- which is
     // MU's own rule as well as this engine's.
@@ -485,6 +491,7 @@ private:
     Group stoneGroups_[2];
     bgfx::TextureHandle blastSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle emberSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle blueEmberSheet_ = BGFX_INVALID_HANDLE;  // comet_fire
     bgfx::TextureHandle glowSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle smokeSheet_ = BGFX_INVALID_HANDLE;
     const content::Ground* ground_ = nullptr;
@@ -500,6 +507,7 @@ private:
     float burnLit_ = 0.0f;     // seconds the light on him has left; 0 is off
     float burnAt_[3] = {};
     float burnRoll_ = 1.0f;
+    bool burnBlue_ = false;  // the light on him is Cometfall's blue
 
     // The drawing's own dice. Never the sim's: a rock that took a number out of the seeded
     // stream would make watching the fight change the fight.
