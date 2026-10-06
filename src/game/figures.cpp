@@ -1253,7 +1253,14 @@ void Figures::addMonster(const core::Json& entry) {
         if (!found) continue;
         // A staff skinned to the whole player rig is worn and not held, as a character's is:
         // hung off a grip it stood loose beside the Cursed Wizard, at the rig's own size.
-        if (found->isSkinned() && found->bones().size() == body->bones().size()) {
+        // The same rig by its bones' names and not only their count: the Tantalos's body has
+        // sixty bones as the player rig does, and the Zaikan's Staff of Destruction, skinned
+        // to the player's, was bound to it as a part (Bip01 L Thigh against Bip01 Spine).
+        bool sameRig = found->isSkinned() && found->bones().size() == body->bones().size();
+        for (size_t b = 0; sameRig && b < body->bones().size(); ++b) {
+            sameRig = found->bones()[b].name == body->bones()[b].name;
+        }
+        if (sameRig) {
             made->parts.push_back(found);
             continue;
         }

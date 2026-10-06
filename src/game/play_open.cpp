@@ -623,7 +623,23 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             // MODEL_GIANT's case, which is one call to MonsterDieSandSmoke. No bone and
             // no clip to find: the sand comes off the body's own position and the death
             // clip it already has.
-            if (look->name == kSandingFigure) one.sands = true;
+            for (const char* sanding : kSandingFigures) {
+                if (look->name == sanding) one.sands = true;
+            }
+            // Tarkan's: the sand while it walks, and its two eye trails by MoveEye's bones.
+            one.walkSands = false;
+            for (const char* walking : kWalkSandFigures) {
+                if (look->name == walking) one.walkSands = true;
+            }
+            one.trailBones[0] = one.trailBones[1] = -1;
+            for (const EyeTrailRow& row : kEyeTrailRows) {
+                if (look->name != row.figure || !look->skeletonMesh) continue;
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == row.right) one.trailBones[0] = int(b);
+                    if (bones[b].name == row.left) one.trailBones[1] = int(b);
+                }
+            }
             // The Stone Golem has no corpse either: `o->Live = false`, and the stones.
             if (look->name == kCrumblingFigure) {
                 one.bursts = true;

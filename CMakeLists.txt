@@ -166,6 +166,7 @@ add_executable(mu2
   src/game/fx/snort.cpp
   src/game/fx/dust.cpp
   src/game/fx/eyes.cpp
+  src/game/fx/eye_trails.cpp
   src/game/fx/staff_fire.cpp
   src/game/fx/held_lights.cpp
   src/game/fx/wing_motes.cpp

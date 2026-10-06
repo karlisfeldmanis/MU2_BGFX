@@ -96,6 +96,27 @@ void Breath::spark(const float at[3], const float along[2], float scale) {
     sparks_.push_back(one);
 }
 
+void Breath::walkSand(const float feet[3], const float along[2], float reach, float alpha) {
+    if (!open_ || !bgfx::isValid(smoke_)) return;
+    if (puffs_.size() >= kPuffs) {
+        ++refused_;
+        return;
+    }
+    Puff one;
+    // `o->Position + rand() % 200 - 100` on x and y, the height the body's own.
+    const int span = std::max(1, int(reach * 2.0f));
+    one.position[0] = feet[0] + (float(int(roll() % uint32_t(span))) - reach) * kUnit;
+    one.position[1] = feet[1];
+    one.position[2] = feet[2] + (float(int(roll() % uint32_t(span))) - reach) * kUnit;
+    const float speed = 3.0f * kUnit;
+    one.velocity[0] = along[0] * speed;
+    one.velocity[1] = along[1] * speed;
+    one.scale = float(roll() % 32 + 32) * 0.01f;
+    one.size = 1.0f;
+    one.alpha = alpha;
+    puffs_.push_back(one);
+}
+
 void Breath::puff(const float feet[3], const float along[2], float scale, float grow,
                   float alpha) {
     if (!open_ || !bgfx::isValid(smoke_)) return;

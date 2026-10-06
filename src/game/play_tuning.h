@@ -123,6 +123,8 @@ inline int32_t arenaBreed(const content::Tables& tables, const std::string& name
 constexpr int kMonsterDieSlot = 6;
 // MONSTER01_SHOCK, played on the Lich's meteor quake and nowhere else (sprint 11 step 5).
 constexpr int kMonsterShockSlot = 5;
+// MONSTER01_WALK, which MonsterMoveSandSmoke reads.
+constexpr int kMonsterWalkSlot = 2;
 // How far the quake reaches: MU's `Distance <= 200`, a hundred units to the tile.
 constexpr float kShockTiles = 2.0f;
 // PLAYER_SHOCK, for a body on the player rig that is not the hero -- the Skeleton Warrior.
@@ -330,10 +332,11 @@ inline constexpr float kSeeThroughAlpha = 0.4f;
 // clip's own clock, a third of the way into it. So this is read per frame off `keyOf`, like the
 // dragon's fire and the smith's hammer, and not from `fall`.
 //
-// MU's other three callers -- Bloody Wolf, Tantallos, Golden Wheel -- stand nowhere near
-// Lorencia, so the Giant is the only one of them this tree can draw. Same reasoning as the
-// bursting figure above, and the same answer if that ever stops being true: a field in the cook.
-inline constexpr const char* kSandingFigure = "Giant01";
+// MU's other callers are Tarkan's: the Tantallos (SubType 0 only, so not the Zaikan on its
+// body), the Golden Wheel's model (the Iron Wheel) and the plain Beam Knight (ZzzCharacter.cpp:
+// 5960-5984, :5945-5946). The Bloody Wolf's and the Mutant's calls are commented out in MuMain.
+inline constexpr const char* kSandingFigures[] = {"Giant01", "IronWheel01", "Tantalos01",
+                                                  "BeamKnight01"};
 constexpr float kSandFrom = 8.0f, kSandTo = 9.0f;
 // ONCE, on the frame the death clip crosses key 8, and not a rate. MU's window is one key wide
 // and MU advances a key a reference frame, so its twenty attempts at `rand_fps_check(1)` come
@@ -515,6 +518,33 @@ constexpr SnortWindow kSnortWindows[] = {{0, 15.0f, 20.0f}, {1, 20.0f, 25.0f},
                                          {2, 2.0f, 3.0f},   {2, 5.0f, 6.0f}};
 // RenderEye's `Vector(±5.f, 0.f, 0.f, p)`: out along the left bone and back along the right.
 constexpr float kEyeAt[2][3] = {{0.05f, 0.0f, 0.0f}, {-0.05f, 0.0f, 0.0f}};
+// Tarkan's eye trails (fx/eye_trails.h): each breed's MoveEye(o, b, Right, Left) bones, by
+// name, from MoveCharacterVisual (ZzzCharacter.cpp:5836-5984). The Zaikan and the Death Beam
+// Knight are the Tantallos's and the Beam Knight's bodies, so their bones.
+struct EyeTrailRow {
+    const char* figure;
+    const char* right;
+    const char* left;
+};
+inline constexpr EyeTrailRow kEyeTrailRows[] = {
+    {"Mutant01", "Bone03", "Bone04"},          // MoveEye(o, b, 8, 9)
+    {"BloodyWolf01", "eye01", "eye"},          // 11, 12
+    {"IronWheel01", "Bone02", "Bone01"},       // 8, 9
+    {"Tantalos01", "eye02", "eye1"},           // 24, 25
+    {"Zaikan01", "eye02", "eye1"},
+    {"BeamKnight01", "Bone06", "Bone05"},      // 8, 9
+    {"DeathBeamKnight01", "Bone06", "Bone05"},
+};
+// MonsterMoveSandSmoke: one BITMAP_SMOKE + 1 within 100 units of the body each reference frame
+// it walks (ZzzCharacter.cpp:5571-5582). Its callers: the Mutant, the Bloody Wolf, the Tantallos
+// (not the Zaikan), the Golden Wheel and the plain Beam Knight (:5836-5984).
+inline constexpr const char* kWalkSandFigures[] = {"Mutant01", "BloodyWolf01", "IronWheel01",
+                                                   "Tantalos01", "BeamKnight01"};
+constexpr float kWalkSandReach = 100.0f;  // MU's units, either way
+// Ours: under MU's full light, as the Great Bahamut's trail was turned down (the user,
+// 2026-10-04: 'that smoke is to small and to vissible') -- a puff every walking frame of a
+// whole pack is far more dust than the dragon's one in four.
+constexpr float kWalkSandAlpha = 0.35f;
 
 // Charon's light, RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268):
 // `Vector(3.5f, -12.f, 10.f, p)` on BoneTransform[20], two BITMAP_LIGHTNING+1 sprites at Scale

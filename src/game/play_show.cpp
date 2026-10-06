@@ -247,6 +247,26 @@ void Play::exhale(float seconds) {
         }
     }
 
+    // Tarkan's walking sand, MonsterMoveSandSmoke: `CurrentAction == MONSTER01_WALK` and
+    // rand_fps_check(1), one puff a reference frame within 100 units of the body.
+    for (Drawn& one : drawn_) {
+        if (!one.walkSands) continue;
+        const sim::Body* body = realm_.find(one.id);
+        if (!body || !body->alive() || !one.visible || !one.placed ||
+            slotOf(one.figure) != kMonsterWalkSlot) {
+            one.walkSandOwed = 0.0f;
+            continue;
+        }
+        const float along[2] = {std::sin(one.yaw), std::cos(one.yaw)};
+        one.walkSandOwed += frames;
+        while (one.walkSandOwed >= 1.0f) {
+            one.walkSandOwed -= 1.0f;
+            const float feet[3] = {one.crown[0], ground_->heightAt(one.crown[0], one.crown[2]),
+                                   one.crown[2]};
+            breath_.walkSand(feet, along, kWalkSandReach, kWalkSandAlpha);
+        }
+    }
+
     for (Drawn& one : drawn_) {
         if (!one.breathes) continue;
         const sim::Body* body = realm_.find(one.id);
@@ -311,6 +331,7 @@ void Play::snort(float seconds) {
     snort_.update(seconds);
     dust_.update(seconds);
     eyes_.update(seconds);
+    eyeTrails_.update(seconds);
     // The Staff of Resurrection's fire wherever it is held in hand (fx/staff_fire.h).
     staffFire_.update(seconds);
     {
@@ -356,6 +377,17 @@ void Play::snort(float seconds) {
         }
     }
     const float frames = seconds * 25.0f;
+    // Tarkan's eye trails: MoveEye runs in MoveCharacterVisual for as long as the body is drawn,
+    // its fall included, and the joints live as long as it does (fx/eye_trails.h).
+    for (Drawn& one : drawn_) {
+        if (one.trailBones[0] < 0 || one.trailBones[1] < 0 || !one.visible || !one.placed) {
+            continue;
+        }
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        float at[3];
+        if (one.figure.pointOn(one.trailBones[0], origin, at)) eyeTrails_.feed(one.id, false, at);
+        if (one.figure.pointOn(one.trailBones[1], origin, at)) eyeTrails_.feed(one.id, true, at);
+    }
     for (Drawn& one : drawn_) {
         if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;
         if (!one.visible || !one.placed) {

@@ -24,6 +24,7 @@
 #include "game/fx/bones.h"
 #include "game/fx/breath.h"
 #include "game/fx/eyes.h"
+#include "game/fx/eye_trails.h"
 #include "game/fx/staff_fire.h"
 #include "game/fx/held_lights.h"
 #include "game/fx/wing_motes.h"
@@ -562,6 +563,7 @@ public:
     Snort& snorts() { return snort_; }
     Dust& dust() { return dust_; }
     Eyes& eyes() { return eyes_; }
+    EyeTrails& eyeTrails() { return eyeTrails_; }
     StaffFire& staffFire() { return staffFire_; }
     HeldLights& heldLights() { return heldLights_; }
     WingMotes& wingMotes() { return wingMotes_; }
@@ -756,6 +758,13 @@ private:
         // 23; -1 on everything else. See Play::snort.
         int snortBone = -1;
         int eyeBones[2] = {-1, -1};
+        // A Tarkan monster's two eye trails: MoveEye's Right and Left bones, -1 on everything
+        // else (kEyeTrailRows, fx/eye_trails.h).
+        int trailBones[2] = {-1, -1};
+        // MonsterMoveSandSmoke: a puff about it every reference frame it walks
+        // (kWalkSandFigures, Play::exhale). `walkSandOwed` is what of one is left to throw.
+        bool walkSands = false;
+        float walkSandOwed = 0.0f;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
         // reference frames rather than one in two within the bull's windows.
@@ -1041,6 +1050,7 @@ private:
     float dustOwed_ = 0.0f;
     uint32_t dustSeed_ = 0x3c6ef372u;
     Eyes eyes_;
+    EyeTrails eyeTrails_;
     StaffFire staffFire_;  // the held Staff of Resurrection's spark and shaft lights
     HeldLights heldLights_;  // the Saint Crossbow's, Grand Soul Shield's and Dragon Spear's
     WingMotes wingMotes_;  // the motes off every worn wing's tips
