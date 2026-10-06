@@ -98,7 +98,6 @@ own sky, now in `game/world/sky_clouds.*`:
 - **The bolts**: one flash in five, MU's two BITMAP_JOINT_THUNDER + 1 between two points from its four fixed layouts, 3 m under him, through `Thunder::fork`.
 - **The glints** (MoveObjectSetting, BITMAP_LIGHT sub 0, `ZzzEffect.cpp:1045-1060, 6989-7000`): one frame in ten, a light 10 m under a point 25 m round him, thrown up at 70 degrees on a heading of 30, slowing 0.01 units a frame, 400 frames, shedding a flare01 spark each frame that rises, jitters and shrinks over 10-20 frames. Ours: the sparks at 0.07 of light, not MU's 0.3 (fifteen-odd overlapping summed to a white blot), and at 0.4 of MU's size (the user, 2026-10-06: 'those flying "souls" can be smaller'); thrown only within 24 m of the camera's point.
 - **The crackles** (MoveObjectOnEffect, `ZzzObject.cpp:4384-4405`; BITMAP_JOINT_THUNDER sub 6, `ZzzEffectJoint.cpp:1145-1153, 4727-4805, 4911-4915`), added 2026-10-06: with each lit edge, two scribbles out of the bank. Each waits 2-21 frames dark, then shows four, walked afresh from the bank each frame: 49 strides of 15-25 units, aimed at a point 21-23 m north-east and 100 m down and thrown 20-120 degrees off in tilt and turn; JointThunder01 twice along it, scrolling, 10-29 units wide, added in a grey of 0.1-0.7. Ours: which way "off" leans (MU's AngleMatrix signs untraced).
-- Not yet: Object11's rising motes (with the objects).
 
 Shot muted at 30,40: faint glints rising through the mist. The crackles shot muted at 30,40 with edges forced by a temporary switch (removed): thin jagged white scribbles dropping from banks; in play about one lit edge in 20 s, four frames each. Not yet judged by the user. The flash and bolts are random and unshot. **Cost unmeasured**: another
 session's texcook was at 563% CPU and the view timers summed past the frame; the runs read
@@ -128,8 +127,15 @@ Shot muted at 16,28, 32,33, 26,63 and 52,68, 280-330 fps. Not yet judged by the 
 pillars 4.5 m tall on top02_R marble, built with their 3-bone clips (Object08's 12 keys rock it,
 09's and 10's 24 bob it and turn it about its axis), played at the 0.16 every object starts with, as
 MoveObject's WD_10HEAVEN arm is empty. Shot muted at 16,31 and 26,62, two frames apart: the tipped
-pillar by the road turns. 325-335 fps. Every placed kind of Object11 now stands; left of the objects
-step: Object11's motes.
+pillar by the road turns. 325-335 fps. Every placed kind of Object11 now stands.
+
+**Object11's motes (2026-10-06, the user: 'next').** In `game/world/sky_clouds.*`: every Object11
+throws a BITMAP_LIGHT sub 0 spark at its bone 3, the statue's top, every frame (`ZzzObject.cpp:3171-3178`),
+Scale 0.5-1, 10-19 frames, rising 2.5 units and shrinking 0.05 a frame. The 180 points are turned and
+scaled with each placement at open. Every spark, glint's or mote's, now wanders MU's +-0.2 units a frame
+(`ZzzEffectParticle.cpp:7948-7958`). Ours: only those within kReach are thrown; 0.18 of MU's light
+at 0.7 of its size (the glints' 0.07 and 0.4 left them unseen); MU's particle wind left out. Shot
+muted at 30,40: faint streams rising off the statues. The objects step is done.
 
 ## The one thing to know first
 

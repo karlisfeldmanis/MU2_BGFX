@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "content/placement.h"
 #include "content/showing.h"
 #include "core/log.h"
 
@@ -40,6 +41,12 @@ constexpr float kSparkLight = 0.07f;
 // MU's Scale 1.5-3 drew each spark 1-2 m across, and a glint's pile of them read as a white
 // blob (the user, 2026-10-06: 'those flying "souls" can be smaller'). Ours: 0.4 of it.
 constexpr float kSparkSize = 0.4f;
+// The motes: Object11's bone 3 (Bone01, the statue's top) at (-139.85, 0, 500.61) MU units in its
+// own frame, which is (x, z, -y) in ours, in metres.
+constexpr float kMoteBone[3] = {-1.398526f, 5.006149f, 0.0f};
+// MU's light 1 at its full size; ours, faint, but a stream a statue reads where a glint's pile
+// would blot: 0.18 of light at 0.7 of MU's size.
+constexpr float kMoteLight = 0.18f, kMoteSize = 0.7f;
 constexpr float kFlareMetres = 0.64f;  // flare01, 64 texels
 // The flash: two reference frames; the cloud under him is ours for MU's cloud.bmd at Scale 10.
 constexpr float kFlashSeconds = 2.0f * kFrame;
@@ -139,7 +146,23 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
         bank.count = uint32_t(puffs_.size()) - bank.first;
         banks_.push_back(bank);
     }
+    // Every Object11's mote point, turned and scaled with it, as TransformPosition takes the bone.
+    for (uint32_t m = 0; m < town.models.size(); ++m) {
+        if (town.models[m].name != "Object11") continue;
+        for (const content::TownInstance& instance : town.instances) {
+            if (instance.model != m) continue;
+            float turn[16];
+            content::placementTransform(instance.pitch, instance.yaw, instance.roll, instance.scale,
+                                        instance.position, turn);
+            Mote mote;
+            for (int j = 0; j < 3; ++j)
+                mote.at[j] = kMoteBone[0] * turn[0 * 4 + j] + kMoteBone[1] * turn[1 * 4 + j] +
+                             kMoteBone[2] * turn[2 * 4 + j] + turn[3 * 4 + j];
+            motes_.push_back(mote);
+        }
+    }
     open_ = true;
+    core::logf("sky clouds: %zu motes", motes_.size());
     core::logf("sky clouds: %zu banks, %zu puffs; cloud %s, cloud light %s", banks_.size(),
                puffs_.size(), bgfx::isValid(cloud_) ? "yes" : "NO",
                bgfx::isValid(edge_) ? "yes" : "NO");
@@ -153,6 +176,7 @@ void SkyClouds::shutdown() {
     glints_.clear();
     sparks_.clear();
     crackles_.clear();
+    motes_.clear();
     flash_ = 0.0f;
     clock_ = owed_ = 0.0f;
     cloud_ = edge_ = light_ = flashCloud_ = joint_ = BGFX_INVALID_HANDLE;
@@ -181,6 +205,25 @@ void SkyClouds::update(float seconds, const float near[3], const float hero[3],
     owed_ += seconds;
     while (owed_ >= kFrame) {
         owed_ -= kFrame;
+        // Every spark is MU's BITMAP_LIGHT sub 0, which wanders +-0.2 units a frame each way
+        // (ZzzEffectParticle.cpp:7948-7958; MU's wind, g_vParticleWind, is left out: ours).
+        for (Spark& one : sparks_) {
+            one.at[0] += (unit() * 2.0f - 1.0f) * 0.2f * kUnit;
+            one.at[2] += (unit() * 2.0f - 1.0f) * 0.2f * kUnit;
+        }
+        // The motes: each Object11 in view throws one a frame at its statue's top (ZzzObject.cpp:
+        // 3171-3178), Scale 0.5-1, 10-19 frames (ZzzEffectParticle.cpp:3159-3164).
+        for (const Mote& mote : motes_) {
+            const float dx = mote.at[0] - near_[0], dz = mote.at[2] - near_[2];
+            if (dx * dx + dz * dz > kReach * kReach) continue;
+            Spark spark;
+            for (int i = 0; i < 3; ++i) spark.at[i] = mote.at[i];
+            spark.scale = 0.5f + unit() * 0.5f;
+            spark.life = 10.0f + float(int(unit() * 10.0f));
+            spark.light = kMoteLight;
+            spark.size = kMoteSize;
+            sparks_.push_back(spark);
+        }
         // The crackles: dark while LifeTime > 4, then walked afresh from the bank each frame.
         for (Crackle& one : crackles_) {
             if (one.wait > 0.0f) {
@@ -207,6 +250,8 @@ void SkyClouds::update(float seconds, const float near[3], const float hero[3],
             spark.at[2] += (unit() * 2.0f - 1.0f) * 0.4f * 0.5f * kUnit;
             spark.scale = (0.5f + unit() * 0.5f) * 3.0f;
             spark.life = 10.0f + float(int(unit() * 10.0f));
+            spark.light = kSparkLight;
+            spark.size = kSparkSize;
             sparks_.push_back(spark);
         }
         glints_.erase(std::remove_if(glints_.begin(), glints_.end(),
@@ -399,10 +444,10 @@ void SkyClouds::gather(gfx::Effects& effects) const {
             gfx::Sprite sprite;
             for (int i = 0; i < 3; ++i) {
                 sprite.position[i] = one.at[i];
-                sprite.colour[i] = kSparkLight;
+                sprite.colour[i] = one.light;
             }
             sprite.colour[3] = 1.0f;
-            sprite.halfWidth = sprite.halfHeight = 0.5f * kFlareMetres * one.scale * kSparkSize;
+            sprite.halfWidth = sprite.halfHeight = 0.5f * kFlareMetres * one.scale * one.size;
             sprite.sheet = light_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);

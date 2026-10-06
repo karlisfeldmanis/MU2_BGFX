@@ -51,6 +51,9 @@
 //   bank every one of them: 49 strides of 15-25 units, each aimed at a point 21-23 m north-east
 //   and 100 m down and thrown 20-120 degrees off in tilt and in turn; JointThunder01 twice along
 //   it, scrolling, 10-29 units wide, added in a grey of 0.1-0.7. Ours: which way "off" leans.
+//   The motes (ZzzObject.cpp:3171-3178): every Object11 throws the glints' spark at its bone 3,
+//   the statue's top, every frame, Scale 0.5-1, rising and wandering. Ours: only those within
+//   kReach, at 0.18 of MU's light and 0.7 of its size, and without MU's particle wind.
 #pragma once
 
 #include <cstdint>
@@ -120,6 +123,7 @@ private:
     struct Spark {
         float at[3] = {0, 0, 0};
         float scale = 1.0f, age = 0.0f, life = 15.0f;  // frames
+        float light = 0.0f, size = 0.0f;   // a glint's (kSparkLight, kSparkSize) or a mote's
     };
     static constexpr int kCrackleTails = 50;
     struct Crackle {  // a thunder scribble out of a lit bank
@@ -133,6 +137,10 @@ private:
     std::vector<Glint> glints_;
     std::vector<Spark> sparks_;
     std::vector<Crackle> crackles_;
+    struct Mote {  // an Object11's statue top, which throws a spark each frame
+        float at[3] = {0, 0, 0};
+    };
+    std::vector<Mote> motes_;
     void walk(Crackle& one);
     float flash_ = 0.0f;           // seconds left of the flash
     float flashAt_[3] = {0, 0, 0};
