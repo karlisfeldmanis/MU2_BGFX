@@ -237,6 +237,8 @@ struct Happening {
     // `rand() % 5 == 0` on A.Type 150, gObjMonster.cpp:1849-1925), its damage the monster's own
     // band as WebZen sends it -- the drawing's cue, nothing else changes.
     bool boss = false;
+    // A bolt blower's lightning blow (kBoltBlowers): the drawing plays its Attack 2 and bolt.
+    bool bolt = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;
@@ -490,6 +492,8 @@ struct Body {
     // goes, 0 for none, and where the beast stood when it struck.
     int64_t pushAt = 0;
     float pushFromX = 0.0f, pushFromY = 0.0f;
+    // A bolt blower's blows (kBoltBlowers), counted to pick which are its bolt.
+    uint32_t blowsThrown = 0;
     // The parts of a split blow still to land this swing (kSplitBlows), the tick the next lands
     // and whom they are aimed at. 0 none.
     int32_t beamsLeft = 0;

@@ -229,6 +229,11 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   shows are theirs alone, `:1959-1990`). Left out: the chrome-bright and chrome2-lightmap passes
   over meshes 1 and 2 (`:8882-8888`) and Attack 1's five falling MODEL_PIERCING + 1 streaks
   (`:1743-1754`). kResistances {73, 12, 12}, kDropRates {73, 14, 3, 20}.
+  Its bolt pushes, as every monster's lightning does (the user, 2026-10-06: 'if any monster is
+  casting lighting theere has to be that push effect'): the realm now picks the blow, every one
+  but each third its bolt (`kBoltBlowers`, `Happening::bolt`; MU's SwordCount % 3), pushes him a
+  tile ten ticks on, as the bolt lands (`kBoltPushDelay`), and the drawing plays Attack 2 and the
+  bolt on those blows alone. Seen at 45,69: two pushes with the bolts.
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

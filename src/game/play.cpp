@@ -1054,6 +1054,15 @@ void Play::update(double seconds) {
                         // stepped a pair 0, 2, 0, 2 -- the right hand's two blows and never the
                         // left's (the user, of the mounted pair: "only one hand attacked").
                         if (pose) ++swinger->swordCount;
+                        // A bolt blower's (sim kBoltBlowers): the realm chose the blow, Attack 2
+                        // its bolt, so the push it gave falls with what is drawn.
+                        if (const sim::Body* blower = realm_.find(happening.who);
+                            blower && !blower->player && blower->kind >= 0 &&
+                            size_t(blower->kind) < tables_.kinds.size() &&
+                            sim::boltBlower(tables_.kinds[size_t(blower->kind)].number) &&
+                            swinger->attackClip2 >= 0) {
+                            swing = happening.bolt ? swinger->attackClip2 : swinger->attackClip;
+                        }
                     }
                     // On a horse, the weapon's ride swing stands in (docs/mount.md,
                     // ZzzCharacter.cpp:1112-1153), and for an arrow skill too, which plays the
@@ -1356,11 +1365,9 @@ void Play::update(double seconds) {
                             }
                         }
                         // A Drakan's Attack 2 (kDrakanFigure): its bolt at the target at
-                        // CheckAttackTime(13), as a monster's Lightning.
-                        if (body && !body->player && body->kind >= 0 &&
-                            size_t(body->kind) < tables_.kinds.size() &&
-                            tables_.kinds[size_t(body->kind)].number == kDrakanNumber &&
-                            happening.whom != 0 && swing >= 0 && swing == swinger->attackClip2) {
+                        // CheckAttackTime(13), as a monster's Lightning, on the blows the realm
+                        // made lightning (Happening::bolt), whose push lands with it.
+                        if (happening.bolt && happening.whom != 0) {
                             thunderCasts_.push_back({happening.who, happening.whom, attackTime(13)});
                         }
                         // A Hydra's first head bolt, the swing's own beam (sim kSplitBlows): from

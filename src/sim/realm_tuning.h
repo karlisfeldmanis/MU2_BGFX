@@ -310,6 +310,21 @@ constexpr int32_t kHeroPoisonTicks = 400;
 // shows the blow with it (play.cpp, thunderCasts_), so a push at the strike slid him away before
 // there was any bolt (the user, 2026-10-01: "lich monster push back ... is not synced").
 constexpr int32_t kBeastPushDelay = 12;
+// A breed whose blow is lightning on some swings: Icarus's Drakan (73), whose Attack 2 throws its
+// bolt at CheckAttackTime(13) and Attack 1 its Inferno (ZzzCharacter.cpp:1734-1783, :2123-2138).
+// MU picks Attack 1 one swing in three (SwordCount % 3); here the realm picks, every blow but
+// each third its bolt, and says so on the blow (Happening::bolt), so the drawing plays Attack 2
+// on those alone and the bolt's push falls with it, as every monster's lightning pushes (the
+// user, 2026-10-06: 'if any monster is casting lighting theere has to be that push effect').
+// The push waits for the bolt: (13 - 1) / 25 s, ten ticks. Ours.
+constexpr int32_t kBoltBlowers[] = {73};
+constexpr bool boltBlower(int32_t number) {
+    for (const int32_t one : kBoltBlowers) {
+        if (one == number) return true;
+    }
+    return false;
+}
+constexpr int32_t kBoltPushDelay = 10;
 constexpr float kHeroPoisonShare = 0.03f;
 
 // ---- the monsters whose blow ices -------------------------------------------------------------

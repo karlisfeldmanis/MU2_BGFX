@@ -85,10 +85,21 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     const bool flame =
         !attacker.player && attacker.raider < 0 && (target.player || target.raider >= 0) &&
         bossBlow(attacker);
+    // A bolt blower's lightning, every blow but each third (kBoltBlowers), never its Flame.
+    const int32_t number = !attacker.player && attacker.kind >= 0 &&
+                                   size_t(attacker.kind) < tables_->kinds.size()
+                               ? tables_->kinds[size_t(attacker.kind)].number
+                               : -1;
+    bool bolt = false;
+    if (boltBlower(number) && !thrown) {
+        bolt = !flame && attacker.blowsThrown % 3 != 0;
+        ++attacker.blowsThrown;
+    }
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
         happenings_.back().boss = flame;
+        happenings_.back().bolt = bolt;
         elements(0);
         chillHero(attacker, target);
         // His shield's Evil Spirit, each worn rolling off the sockets' stream -- drawn only
@@ -216,6 +227,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // lightning and Meteor's rock (`callDown`, and the rock's flight in `arrive`).
     happenings_.back().rune = attacker.player && row == nullptr && !pays;
     happenings_.back().boss = flame;
+    happenings_.back().bolt = bolt;
     // The element, after the blow and only on what it left standing: 0.75's order.
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
     // A beast that strikes with Lightning -- the Thunder Lich and the Devil, whose AttackSkill is
@@ -231,10 +243,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (target.player && target.alive() && !attacker.player && attacker.kind >= 0 &&
         size_t(attacker.kind) < tables_->kinds.size() &&
         (tables_->kinds[size_t(attacker.kind)].attackSkill == skill::kLightning ||
-         split != nullptr) &&
+         split != nullptr || bolt) &&
         shoves && target.pushAt == 0 && target.pushTicks == 0 &&
         !heroResists(target.excel.lightningResistance)) {
-        target.pushAt = tick_ + (split != nullptr && thrown ? 1 : kBeastPushDelay);
+        target.pushAt = tick_ + (split != nullptr && thrown ? 1
+                                 : bolt                     ? kBoltPushDelay
+                                                            : kBeastPushDelay);
         target.pushFromX = attacker.x;
         target.pushFromY = attacker.y;
     }
