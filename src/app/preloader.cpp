@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include <miniaudio.h>
 
@@ -45,6 +46,40 @@ namespace {
 // kSeamSeconds in: the end has become the opening, and runs on into what followed it. The
 // first play still starts at the file's own quiet head. Ours.
 constexpr float kSeamSeconds = 4.0f;
+
+// The letter at the foot of every loading screen, the user's own words of 2026-10-06 ('include
+// this on loading screens at the bottom with elegant small font-size'). Ours.
+constexpr const char* kLetter =
+    "To WebZen, and to MU Online fans across the years: This is a love letter, not a business. "
+    "MU Online was part of our childhood: the first steps out of Lorencia, the nights spent "
+    "hunting in Dungeon and Devias, the friends we made and the hours we lost together in a "
+    "world that felt like our own. For many of us, those memories never faded, and this game "
+    "was made out of that love. Every character, item, monster, map, sound and name in it "
+    "belongs to WebZen Inc., who created MU and gave a whole generation those memories. This is "
+    "not our game; it's a tribute to theirs.";
+
+// `text` broken at its spaces into lines no wider than `across` at `scale`.
+std::vector<std::string> wrap(const gfx::Overlay& face, float scale, float across,
+                              const std::string& text) {
+    std::vector<std::string> lines;
+    std::string line;
+    size_t at = 0;
+    while (at < text.size()) {
+        size_t end = text.find(' ', at);
+        if (end == std::string::npos) end = text.size();
+        const std::string word = text.substr(at, end - at);
+        const std::string longer = line.empty() ? word : line + " " + word;
+        if (!line.empty() && face.measure(scale, longer) > across) {
+            lines.push_back(line);
+            line = word;
+        } else {
+            line = longer;
+        }
+        at = end + 1;
+    }
+    if (!line.empty()) lines.push_back(line);
+    return lines;
+}
 
 struct Ambient {
     ma_engine engine{};
@@ -178,6 +213,8 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
     // never goes back.
     float shown = 0.0f;
     double shownAt = 0.0;
+    int letterWidth = -1;
+    std::vector<std::string> letterLines;
     const auto spinner = [&](float alpha, double seconds) {
         {
             const float dt = float(std::max(0.0, seconds - shownAt));
@@ -276,6 +313,22 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
             const uint32_t gold = (uint32_t(alpha * 0.8f * 255.0f) << 24) | 0x0061bdffu;
             ctx.curtain.text(cx - wide * 0.5f, cy - gfx::Overlay::lineHeight(small) * 0.5f,
                              small, gold, percent);
+            // The letter: small, centred, in a faint parchment grey, laid up from the foot.
+            // Wrapped again only when the window's width changes.
+            const float letterScale = 1.45f * unit;
+            if (w != letterWidth) {
+                letterWidth = w;
+                letterLines = wrap(ctx.curtain, letterScale,
+                                   std::min(float(w) - 64.0f * unit, 860.0f * unit), kLetter);
+            }
+            const float leading = gfx::Overlay::lineHeight(letterScale) * 1.55f;
+            const uint32_t parchment = (uint32_t(alpha * 0.42f * 255.0f) << 24) | 0x00b8c8d4u;
+            float y = float(h) - 40.0f * unit - leading * float(letterLines.size());
+            for (const std::string& line : letterLines) {
+                const float wide = ctx.curtain.measure(letterScale, line);
+                ctx.curtain.text(cx - wide * 0.5f, y, letterScale, parchment, line);
+                y += leading;
+            }
             ctx.curtain.submit(gfx::ViewHud);
         }
         bgfx::frame();
