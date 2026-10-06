@@ -1,0 +1,177 @@
+{
+  "item": "Object11",
+  "mu_name": "Object11",
+  "mu_name_from": "Icarus's object slot 10, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "icarus",
+  "object_type": 10,
+  "placements": 180,
+  "profile": "world",
+  "sheets": {
+    "top02_R": "ic_top02_r.png",
+    "gyg_R": "ic_gyg_r.png"
+  },
+  "sheet_from": "Data/Object11/, from MuMain, decoded under an ic_ prefix: assets/textures is one flat pool, and top02_R names sheets in other worlds' folders too.",
+  "sheet_materials": {
+    "top02_R": "marble",
+    "gyg_R": "marble"
+  },
+  "material_note": "Read off the art: top02_R is pale frosted stone at the crown fading to black at the foot, gyg_R a card of two winged statues on black.",
+  "why_this_one": "The balustrade: a 5.4 m pillar with a pointed arch springing from it and a winged-statue card on its top, 180 of them along both edges of the cloud road, the map's silhouette. Objects batch 1 (the user, 2026-10-06: 'lets start to work with icarus objects'). docs/icarus-port.md B §1.2.",
+  "effects_note": "MuMain's WD_10HEAVEN arm of CreateObject throws a white BITMAP_LIGHT mote at bone 3 (Bone01, at -139.9, 0, 500.6 units: the statue's top) every frame (ZzzObject.cpp:3171-3178); not carried yet. Its six bones hold one key, so it is built static, without its rig. No blend mesh: MU draws gyg_R opaque.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "marble",
+      "triangles": 2,
+      "area": 10985.0,
+      "along": [
+        54.8,
+        54.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.331,
+        0.999
+      ],
+      "bake_uv": [
+        0.449,
+        0.673,
+        0.555,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "marble",
+      "triangles": 4,
+      "area": 10731.5,
+      "along": [
+        15.9,
+        15.9
+      ],
+      "mu_uv": [
+        0.34,
+        0.379,
+        0.992,
+        0.994
+      ],
+      "bake_uv": [
+        0.006,
+        0.673,
+        0.216,
+        0.87
+      ]
+    },
+    {
+      "island": 2,
+      "material": "marble",
+      "triangles": 4,
+      "area": 10731.5,
+      "along": [
+        15.9,
+        15.9
+      ],
+      "mu_uv": [
+        0.34,
+        0.379,
+        0.992,
+        0.994
+      ],
+      "bake_uv": [
+        0.227,
+        0.673,
+        0.437,
+        0.87
+      ]
+    },
+    {
+      "island": 3,
+      "material": "marble",
+      "triangles": 24,
+      "area": 1454.4,
+      "along": [
+        -20.1,
+        19.3
+      ],
+      "mu_uv": [
+        0.03,
+        0.642,
+        0.941,
+        0.947
+      ],
+      "bake_uv": [
+        0.567,
+        0.673,
+        0.861,
+        0.771
+      ]
+    },
+    {
+      "island": 4,
+      "material": "marble",
+      "triangles": 24,
+      "area": 929.4,
+      "along": [
+        -11.0,
+        9.8
+      ],
+      "mu_uv": [
+        0.03,
+        0.642,
+        0.941,
+        0.947
+      ],
+      "bake_uv": [
+        0.567,
+        0.782,
+        0.861,
+        0.881
+      ]
+    },
+    {
+      "island": 5,
+      "material": "marble",
+      "triangles": 46,
+      "area": 208268.1,
+      "along": [
+        -54.3,
+        54.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.902,
+        0.943
+      ]
+    },
+    {
+      "island": 6,
+      "material": "marble",
+      "triangles": 68,
+      "area": 68191.6,
+      "along": [
+        -9.8,
+        15.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.339,
+        0.889,
+        0.908
+      ]
+    }
+  ]
+}

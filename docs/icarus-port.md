@@ -104,6 +104,16 @@ Shot muted at 30,40: faint glints rising through the mist. The crackles shot mut
 session's texcook was at 563% CPU and the view timers summed past the frame; the runs read
 5.5-7.3 ms GPU with waiting counted. Measure quiet before the next effects. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
 
+**Objects batch 1: the balustrade (2026-10-06, the user: 'lets start to work with icarus objects
+if we are done with effects').** Object11, 180 placements, from `source/world/icarus/Object11.{json,obj}`:
+sheets `ic_top02_r` and `ic_gyg_r` (both marble), built static (its six bones hold one key; bone 3,
+Bone01 at -139.9, 0, 500.6 units, is where the motes will rise from). `tools/cook.py` `FLAT_OVER_VOID`
+takes icarus, so none of the placements, which stand 3 m under the plane as MU's, is held as buried.
+MU's height kept (decision 4). The gyg_R statue card drawn opaque, as MU; it shows as dark panels on
+the pillar faces. Shot muted at the door and at 30,40: the arches line the road with their statues on
+top, 360 fps. Not yet judged by the user. Effects still to do: the wisps, the dragons, the item bob,
+and Object11's motes.
+
 ## The one thing to know first
 
 **Icarus has no ground.** MuMain skips `RenderTerrain` on map 10 (`MM/Scenes/MainScene.cpp:463`).

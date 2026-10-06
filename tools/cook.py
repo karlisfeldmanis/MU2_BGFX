@@ -1243,7 +1243,9 @@ def read_png(path):
 #: reaches below it is hanging into the dark, not buried. See the buried test in the placements.
 # Tarkan's too: its plateaus stand over a void half the map, and the debris clouds (Object51)
 # and rock falls (Object58) MU churns up 3-5 m out of it read as buried here while MU plays them.
-FLAT_OVER_VOID = {"dungeon", "losttower", "tarkan"}
+# Icarus's: no ground is drawn at all, and MU stands every object about 3 m under the walking
+# plane (docs/icarus-port.md B §1.2), so every placement reads as buried.
+FLAT_OVER_VOID = {"dungeon", "losttower", "tarkan", "icarus"}
 
 LIGHT_REACH_BY_WORLD = {"losttower": 5}
 
