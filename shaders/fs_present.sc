@@ -185,5 +185,10 @@ void main()
 	vec3 srgb = toSrgb(c);
 	// Midtone contrast along a smoothstep, in the space the eye reads, black and white held.
 	srgb = mix(srgb, srgb * srgb * (3.0 - 2.0 * srgb), u_present.y);
+	// Half a step of the backbuffer's 8 bits either way, by pixel (Jimenez's interleaved
+	// gradient noise), so a slow dark gradient -- Icarus's navy under its thin clouds -- falls
+	// into grain and not into contour lines. Ours; invisible as noise at one 255th.
+	float grain = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+	srgb += (grain - 0.5) / 255.0;
 	gl_FragColor = vec4(srgb, 1.0);
 }

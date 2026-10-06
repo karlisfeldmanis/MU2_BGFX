@@ -21,7 +21,7 @@ constexpr int kNear = 2, kFar = 1;
 constexpr float kHalfLow = 2.6f, kHalfHigh = 4.4f;
 constexpr float kMoon[3] = {0.52f, 0.60f, 0.76f};
 constexpr float kShadeLow = 0.6f;
-constexpr float kDrift = 0.02f;
+constexpr float kDrift = 0.04f;
 // The deck under the road: one bank in kDeepOdds wears a big dark cloud kDeepLow-kDeepHigh m
 // below it, bluer and thinner, so the navy beneath the road has depth.
 constexpr int kDeepOdds = 2;
@@ -37,6 +37,17 @@ constexpr float kEdgeLife = 8.0f * kFrame;
 
 }  // namespace
 
+void SkyClouds::live(Puff& puff, float wander) {
+    puff.other = uint8_t((puff.cell + 1 + int(unit() * 7.0f)) % (kCells * kCells));
+    puff.wander = wander;
+    // Periods of 35-70 s for the wander, 15-30 s for the breath, 20-45 s for the change.
+    puff.wanderHz[0] = 1.0f / (35.0f + unit() * 35.0f);
+    puff.wanderHz[1] = 1.0f / (35.0f + unit() * 35.0f);
+    puff.breathHz = 1.0f / (15.0f + unit() * 15.0f);
+    puff.morphHz = 1.0f / (20.0f + unit() * 25.0f);
+    for (float& p : puff.phase) p = unit() * 6.2831853f;
+}
+
 float SkyClouds::unit() {
     seed_ = seed_ * 1664525u + 1013904223u;
     return float(seed_ >> 8) / 16777216.0f;
@@ -49,8 +60,11 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
     content::Showing table;
     std::string error;
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
-        if (const content::EffectSheet* sheet = table.effect("sky_clouds"))
-            cloud_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        // The clouds' own sheet, read as the PNG and not the showing's BC7: at a fifth of opaque
+        // BC7's sixteen alpha steps a block drew the thin edges as contour lines (the user,
+        // 2026-10-06: 'much more transparent'). 9 MB with its mips; index.py copies it there.
+        cloud_ = textures.load(assetDir + "/effects/clouds/sky_clouds.png",
+                               content::TextureRole::Albedo);
         if (const content::EffectSheet* sheet = table.effect("cloud_light"))
             edge_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
     }
@@ -75,8 +89,9 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             puff.half = kHalfLow + unit() * (kHalfHigh - kHalfLow);
             puff.stretch = 1.0f + unit() * 0.35f;
             puff.shade = kShadeLow + unit() * (1.0f - kShadeLow);
-            puff.alpha = 0.5f + unit() * 0.3f;
+            puff.alpha = 0.16f + unit() * 0.14f;
             puff.cell = uint8_t(unit() * float(kCells * kCells)) % uint8_t(kCells * kCells);
+            live(puff, 1.5f + unit() * 1.0f);
             puffs_.push_back(puff);
         }
         if (int(unit() * float(kDeepOdds)) == 0) {
@@ -91,8 +106,9 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             deep.half = 7.0f + unit() * 4.0f;
             deep.stretch = 1.1f + unit() * 0.4f;
             deep.shade = 0.8f + unit() * 0.2f;
-            deep.alpha = 0.35f + unit() * 0.2f;
+            deep.alpha = 0.14f + unit() * 0.1f;
             deep.cell = uint8_t(unit() * float(kCells * kCells)) % uint8_t(kCells * kCells);
+            live(deep, 3.0f + unit() * 2.0f);
             puffs_.push_back(deep);
         }
         bank.count = uint32_t(puffs_.size()) - bank.first;
@@ -153,24 +169,38 @@ void SkyClouds::gather(gfx::Effects& effects) const {
             if (dx * dx + dz * dz > kReach * kReach) continue;
             for (uint32_t i = 0; i < bank.count; ++i) {
                 const Puff& one = puffs_[bank.first + i];
-                gfx::Sprite sprite;
-                sprite.position[0] = one.at[0];
-                sprite.position[1] = one.at[1] + std::sin((ms + one.g) / 5000.0f) * 20.0f * kUnit;
-                sprite.position[2] = one.at[2];
+                constexpr float kTau = 6.2831853f;
+                const float t = clock_;
+                const float x = one.at[0] + std::sin(t * one.wanderHz[0] * kTau + one.phase[0]) * one.wander;
+                const float z = one.at[2] + std::cos(t * one.wanderHz[1] * kTau + one.phase[1]) * one.wander;
+                const float y = one.at[1] + std::sin((ms + one.g) / 5000.0f) * 20.0f * kUnit;
+                const float breath = 1.0f + 0.12f * std::sin(t * one.breathHz * kTau + one.phase[2]);
+                // The change: its own cloud and the other, weighed by a slow sine, both drawn.
+                const float mix = 0.5f + 0.5f * std::sin(t * one.morphHz * kTau + one.phase[3]);
                 const float* tint = one.deep ? kDeepTint : kMoon;
-                for (int c = 0; c < 3; ++c) sprite.colour[c] = tint[c] * one.shade;
-                sprite.colour[3] = one.alpha;
-                sprite.halfWidth = one.half * one.stretch;
-                sprite.halfHeight = one.half;
-                sprite.spin = one.start + clock_ * one.turn;
-                const int column = one.cell % kCells, row = one.cell / kCells;
-                sprite.u0 = float(column) / float(kCells);
-                sprite.u1 = float(column + 1) / float(kCells);
-                sprite.v0 = float(row) / float(kCells);
-                sprite.v1 = float(row + 1) / float(kCells);
-                sprite.sheet = cloud_;
-                sprite.blend = gfx::Blend::Alpha;
-                effects.add(sprite);
+                for (int layer = 0; layer < 2; ++layer) {
+                    const float weight = layer == 0 ? mix : 1.0f - mix;
+                    if (weight < 0.02f) continue;
+                    const int cell = layer == 0 ? one.cell : one.other;
+                    gfx::Sprite sprite;
+                    sprite.position[0] = x;
+                    sprite.position[1] = y;
+                    sprite.position[2] = z;
+                    for (int c = 0; c < 3; ++c) sprite.colour[c] = tint[c] * one.shade;
+                    sprite.colour[3] = one.alpha * weight;
+                    sprite.halfWidth = one.half * one.stretch * breath;
+                    sprite.halfHeight = one.half * breath;
+                    // The second turned a little against the first, so the change is a roll.
+                    sprite.spin = one.start + t * one.turn + (layer == 0 ? 0.0f : 0.6f);
+                    const int column = cell % kCells, row = cell / kCells;
+                    sprite.u0 = float(column) / float(kCells);
+                    sprite.u1 = float(column + 1) / float(kCells);
+                    sprite.v0 = float(row) / float(kCells);
+                    sprite.v1 = float(row + 1) / float(kCells);
+                    sprite.sheet = cloud_;
+                    sprite.blend = gfx::Blend::Alpha;
+                    effects.add(sprite);
+                }
             }
         }
     }

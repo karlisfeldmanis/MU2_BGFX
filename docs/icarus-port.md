@@ -62,7 +62,18 @@ shaded in the moon's blue-grey at 0.6-1 of it, thinned to 0.5-0.8, drifting at m
 and one bank in two hangs a big dark blue cloud 3-7 m under the road. 553 in all. A first cut at
 five and three a bank, white and near opaque, was a blanket with no navy left. Shot muted at the
 door and at 55,75: a moonlit cloud sea with depth, GPU 2.7 ms. Some banding shows in the clouds'
-gradients, likely the effect sheet's compression. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
+gradients, likely the effect sheet's compression.
+
+**Thinner and alive (2026-10-06, the user: 'clouds is much to light they have to be much more
+transparent and i think they shoould animate').** Ours: the road's clouds at 0.16-0.30 of opaque
+and the deck's at 0.14-0.24, so the navy shows through every one. Each cloud wanders 1.5-2.5 m
+(the deck's 3-5 m) about its place on two sines of 35-70 s, breathes 12% on 15-30 s, turns at
+most 0.04 rad/s, and cross-fades on 20-45 s between its own cloud and another of the nine, the
+second turned 0.6 rad against it so the change reads as a roll: two sprites a cloud, 548 clouds.
+The sheet is read as the PNG (9 MB with mips), not the showing's BC7, whose sixteen alpha steps a
+block drew the thin edges as lines; and `fs_present` now adds half an 8-bit step of interleaved
+gradient noise before the write, so slow dark gradients fall into grain, not contours (every
+world; invisible otherwise). Shot muted at 55,75, GPU 3.3 ms. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
 
 ## The one thing to know first
 
