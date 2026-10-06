@@ -241,6 +241,11 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
         leaves_.open(assetDir, *textures_, play_.showing().table(), true);
         leaves_.setSand(true);
     }
+    // And Icarus's rain, every slot of it (game/world/weather.cpp), with no ring.
+    else if (name == "icarus") {
+        leaves_.open(assetDir, *textures_, play_.showing().table());
+        leaves_.setSky(true);
+    }
     if (doors_.isOpen()) {
         doorSound_ = play_.sound().load("world_door", true);
         gateSound_ = play_.sound().load("world_gate", true);

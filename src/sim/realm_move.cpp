@@ -237,6 +237,11 @@ bool Realm::throughGate(Body& hero) {
         say(What::Barred, hero, gate->number, gate->level);
         return false;
     }
+    // And Icarus's: Barred with level -1 is the drawing's "wings or a Dinorant".
+    if (gate->fly && !canFly(*tables_, bag_)) {
+        say(What::Barred, hero, gate->number, -1);
+        return false;
+    }
     return passGate(hero, *gate);
 }
 

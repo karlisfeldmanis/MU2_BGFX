@@ -79,6 +79,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         tables_ = own_.get();
     }
     dice_.seed(seed);
+    grounded_ = false;
     // A stream of its own, off the same seed: see `wearDice_`.
     wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
     wardenDice_.seed(seed ^ 0xc2b2ae3d27d4eb4full);
@@ -886,6 +887,13 @@ void Realm::step() {
     }
     sip();
     recover(hero);
+    // Icarus holds no one who cannot fly: his Dinorant worn out with no wing on, or a save
+    // opened there without them, and he goes home -- WebZen's Devias, gate 22
+    // (user.cpp:10812-10842), the map row's home here (game/world/maps.cpp).
+    if (tables_->map == kIcarusMap && hero.alive() && !grounded_ && !canFly(*tables_, bag_)) {
+        grounded_ = true;
+        warpHome(hero);
+    }
     // The floor he stands on, opened in the travel list when this map opens floor by floor.
     reachFloor();
     // What has lain its minute goes, in the order it lies -- a fixed order, since the list is

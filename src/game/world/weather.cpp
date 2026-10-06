@@ -10,6 +10,10 @@ namespace mu::game {
 namespace {
 // Tarkan's steady sandstorm: always this far into the storm's light, wind and sound. Ours.
 constexpr float kSandShare = 0.2f;
+// Icarus's rain: MU's never stops (CreateHeavenRain, RainTarget = MAX_LEAVES / 2,
+// ZzzEffectFireLeave.cpp:431-434), every leaf slot a drop; ours a faint steady share of the
+// pool, under Lorencia's drizzle (the user's 'rain faint'). docs/icarus-port.md.
+constexpr float kSkyShare = 0.25f;
 
 
 // How long each of Noria's spells lasts, in seconds, drawn afresh each time between these.
@@ -117,7 +121,8 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // (Leaves::setSand) and its light sheets/worlds/tarkan_rain.json. Ours, as Devias's is (the
     // user, 2026-10-05: 'dust effect which has devias, this is a desert style map').
     snows_ = world == "devias" || world == "tarkan";
-    rains_ = world == "noria" || world == "lorencia" || snows_;
+    sky_ = world == "icarus";
+    rains_ = world == "noria" || world == "lorencia" || snows_ || sky_;
     peak_ = world == "lorencia" ? 0.33f : snows_ ? 0.0f : 1.0f;
     jungle_ = world == "noria";
     // Tarkan's never stops, and never builds to Devias's full blizzard: the wind always up at
@@ -128,6 +133,14 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
         wet_ = true;
         steady_ = kSandShare;
         share_ = kSandShare;
+    }
+    // Icarus's never stops either, and is silent: MU plays no rain and its thunder lines are
+    // commented out (SceneManager.cpp:885-895); aHeaven is the whole of its air.
+    if (sky_ && force.empty()) {
+        forced_ = true;
+        wet_ = true;
+        steady_ = kSkyShare;
+        share_ = kSkyShare;
     }
     if (force == "rain" || force == "dry" || force == "storm") {
         forced_ = true;
@@ -150,16 +163,16 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     }
     if (sound_) {
         if (snows_) blizzardSound_ = sound_->load("world_blizzard", false);
-        if (rains_ && !snows_) rainSound_ = sound_->load("world_rain", false);
+        if (rains_ && !snows_ && !sky_) rainSound_ = sound_->load("world_rain", false);
         if (jungle_) jungleSound_ = sound_->load("world_jungle", false);
-        if (rains_ && !snows_) thunderSound_ = sound_->load("world_thunder", false);
+        if (rains_ && !snows_ && !sky_) thunderSound_ = sound_->load("world_thunder", false);
         for (int f = 0; f < sound_->files(thunderSound_); ++f) {
             flashes_.push_back(flashOf(sound_->loudness(thunderSound_, f)));
         }
     }
     if (rains_ || jungle_) {
         core::logf("weather %s: %s%s", world.c_str(),
-                   steady_ > 0.0f ? "a steady sandstorm"
+                   steady_ > 0.0f ? (sky_ ? "a steady faint rain" : "a steady sandstorm")
                    : forced_ ? (storm_ ? "a storm, held by --weather"
                            : wet_ ? (snows_ ? "a blizzard, held by --weather"
                                             : "raining, held by --weather")

@@ -29,6 +29,9 @@ namespace mu::sim {
 
 bool Realm::conjure(Body& hero, const SkillRow& row) {
     if (summonSlot_ < 0 || row.summons <= 0) return false;
+    // None in Icarus: WebZen refuses the cast there (user.cpp:29567-29571), MuMain's client too
+    // (ClassAttack.cpp:120), and one carried through the door is not raised on the other side.
+    if (tables_->map == kIcarusMap) return false;
     int32_t kindAt = -1;
     for (size_t i = 0; i < tables_->kinds.size(); ++i) {
         if (tables_->kinds[i].number == row.summons) {

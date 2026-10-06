@@ -75,6 +75,12 @@ GATE_BOXES_BY_MAP = {
     # Tarkan's way back to Atlans, its landing from it and its spawn gate 57, the safe hall
     # (WebZen's gate.txt 55, 54, 57; Season Six Gates.cs:525, 200, 198). docs/tarkan-port.md.
     8: [(246, 40, 247, 44), (248, 40, 251, 44), (187, 54, 203, 69)],
+    # The Lost Tower's door to Icarus on floor 7's south end and its landing back (WebZen's
+    # gate.txt 62 and 65; Season Six Gates.cs:526, 181). Its stairs are not here yet: they were
+    # walked open before this row. docs/icarus-port.md.
+    4: [(17, 250, 19, 250), (17, 249, 19, 249)],
+    # Icarus's way back and its arrival (gate.txt 64 and 63; Gates.cs:527, 213).
+    10: [(14, 12, 16, 12), (14, 13, 16, 13)],
 }
 
 #: What the walker actually compares, which is a threshold and not a bit test: a tile is open

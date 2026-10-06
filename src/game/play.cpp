@@ -316,6 +316,11 @@ void Play::update(double seconds) {
                 if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
                 // Risen on a map with no safe zone: owed Lorencia, as a Town Portal read there is.
                 if (happening.who == heroId && happening.c == 1) homeOwed_ = true;
+            } else if (happening.what == sim::What::Warped && happening.who == heroId &&
+                       happening.c == 1) {
+                // Sent home by the realm itself, and not by a scroll read (which useItem sees):
+                // Icarus with nothing to fly on (Realm::step). Owed his town as a portal is.
+                homeOwed_ = true;
             } else if (happening.what == sim::What::Spawned) {
                 // Her summon raised (Realm::conjure): the one body whose figure changes, to the
                 // breed she called, stood up where the realm put it. Every other Spawned is the
@@ -536,6 +541,8 @@ void Play::update(double seconds) {
                     happening.b == 0
                         ? std::string(sealed && sealed->sealed ? sealed->sealed : "The way")
                               + " is sealed. Its door will not open."
+                    : happening.b < 0
+                        ? std::string("You need wings or a Dinorant to enter Icarus.")
                         : "Only characters of level " + std::to_string(happening.b) +
                               " or higher can enter.";
                 said_.erase(std::remove_if(said_.begin(), said_.end(),

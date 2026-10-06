@@ -40,8 +40,10 @@ constexpr float kDinorantLift = 0.30f;
 // the dragon only 10 under him (GOBoid.cpp:517-520), so it is in the air at 80.
 constexpr float kDinorantFlyLift = 0.90f;
 constexpr float kDinorantFlyUnder = 0.10f;
-// Whether a world is one MU flies the Dinorant over. Tarkan; Icarus is not in this game.
-inline bool dinorantFlies(const std::string& world) { return world == "tarkan"; }
+// Whether a world is one MU flies the Dinorant over: Tarkan and Icarus.
+inline bool dinorantFlies(const std::string& world) {
+    return world == "tarkan" || world == "icarus";
+}
 
 // And how far to lift him again, metres, at `through` (0..1) of his run ride: the dragon's back
 // less his pelvis, key by key. MU plays one run ride, 36/37, on both mounts, and Uniria's leap

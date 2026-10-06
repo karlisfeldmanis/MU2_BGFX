@@ -30,6 +30,21 @@ on, 77 draws. The only error in the log is the missing `icarus.mut` (no objects 
 shot after it, unchanged. Not yet judged by the user. No gates yet, so only `--world icarus` reaches
 it, and the travel window's dimmed "Icarus" card is gone until a travel row names map 10 (C §1.3 R7).
 
+**Steps 2 and 3 are built (2026-10-06, the user: 'continue with basic stuff before walls and
+monsters').** The decisions taken are the passes' recommendations, until the user says otherwise:
+door 160 in and free out (2), home Devias (5), and WebZen's three no-wingless rules (8).
+- **Gates**: `src/sim/gates.cpp` enter 62 (Lost Tower 7, 17-19,250, level 160, `fly`) to exit 63 (Icarus 14-16,13, facing east), and enter 64 (Icarus 14-16,12, free) to exit 65 (floor 7, 17-19,249, facing west). `index.py` `GATE_BOXES_BY_MAP[4]` and `[10]`; both worlds' tables recooked.
+- **The flight rule**, one test, `sim::canFly(tables, bag)`: a wing worn (its presence, as WebZen asks), or a Horn of Dinorant with life, and never the Horn of Uniria worn.
+  - Gate 62 asks it: Barred with level -1, said as "You need wings or a Dinorant to enter Icarus."
+  - In Icarus, `Realm::moveItem` refuses any move that would leave him unable to fly (tried on a copy of the bag): the last wing or Dinorant coming off, Uniria going on.
+  - In Icarus, one who cannot fly is sent home at once (`Realm::step`, once, `grounded_`), through `warpHome`, the Town Portal's warp moved out of `useItem`. The game now hears a realm-made `Warped` home in the happenings loop, so the mode takes him to Devias.
+  - No summons in Icarus (`Realm::conjure`).
+- **The air**: `world_heaven` (aHeaven.wav, -25.2 dB, on the same -44 dB bed as the desert and the water), looped over the whole map, the room Open. `dinorantFlies` takes Icarus: the rider at 90 cm, the dragon 10 under him.
+- **The rain**: `Weather` holds a steady faint share there (`kSkyShare` 0.25, ours, under Lorencia's drizzle; MU rains always), silent: no rain loop and no thunder, as MU. `Leaves::setSky`: open air though the map is "underground", no leaves while it rains, and no ring where a drop dies at the unseen plane.
+- `sim_test` `testIcarusGates`: in at 160 winged and on a Dinorant alone, Barred at 159, Barred unwinged and with Uniria over wings, back free from 15,12, the wings locked on in Icarus and freed once a Dinorant is worn, Uniria refused, an unwinged knight sent home, no safe box. 6371 checks, the standing 17 failing.
+
+Seen in muted `--play` runs at the door (15,13): flying on Satan's wings in a faint slanted rain (406 fps), riding the Dinorant in flight (397 fps), and unwinged, sent to Devias's 207,42 within the first tick. Not yet: the travel row (step 8; `realm_travel.cpp` is held open by another session), the summon's death at the door, a Dinorant's flap wake in the clouds.
+
 ## The one thing to know first
 
 **Icarus has no ground.** MuMain skips `RenderTerrain` on map 10 (`MM/Scenes/MainScene.cpp:463`).

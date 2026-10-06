@@ -633,8 +633,52 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
     return slot;
 }
 
+// What a Town Portal does once it is spent, and what Icarus does to one who can no longer fly:
+// he is taken out of everything he was doing and set down in the map's safe zone, or, on a map
+// with none of its own, sent home (`Warped`'s c, the mode's to carry out).
+void Realm::warpHome(Body& hero) {
+    rise(hero);
+    dropBlow(hero);
+    order_ = Request{};
+    pending_ = Request{};
+    wants_ = skill::kNone;
+    trading_ = -1;
+    banking_ = -1;
+    closeMachine();
+    gating_ = -1;
+    angeling_ = -1;
+    const std::pair<int, int> landing = haven();
+    setDown(hero, landing.first, landing.second);
+    hero.facing = hero.aim;
+    hero.turning = false;
+    for (Body& one : bodies_) {
+        if (one.player || one.quarry != hero.id) continue;
+        one.quarry = 0;
+        one.provoked = false;
+    }
+    // Her summon does not come along: a warp dismisses it, as her death does (the user,
+    // 2026-09-29). OpenMU places it at her landing gate instead (PlayerSummon.PlaceAtGate).
+    if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
+    // A map with no safe box of its own -- the Dungeon, which has no spawn gate -- sends him
+    // to Lorencia's: OpenMU's SafezoneMapNumber falls back to Lorencia for a map with no
+    // spawn gate (BaseMapInitializer.cs:91). He is not set down here; `c` says the map
+    // change is owed, and it is the mode's, as a gate's is (Play::takeHome).
+    // And Blood Castle's: a scroll read in a castle leaves it, for Devias.
+    const int32_t* box = tables_->safeGate;
+    const bool home = !(box[2] > box[0] && box[3] > box[1]) || tables_->map == kBloodCastleMap;
+    say(What::Warped, hero, landing.first, landing.second, home ? 1 : 0);
+}
+
 bool Realm::moveItem(int from, int to) {
     if (!tables_ || !bodies_[0].alive()) return false;
+    // In Icarus, nothing that would leave him unable to fly: the last wing or Dinorant off, or
+    // the Horn of Uniria on. WebZen refuses taking off either without the other worn
+    // (protocol.cpp:5356-5375, user.cpp:16879-16925), MuMain will not equip Uniria there
+    // (NewUIMyInventory.cpp:351-354). Tried on a copy, so a refusal changes nothing.
+    if (tables_->map == kIcarusMap) {
+        Satchel trial = bag_;
+        if (!move(*tables_, wearer(), trial, from, to) || !canFly(*tables_, trial)) return false;
+    }
     if (!move(*tables_, wearer(), bag_, from, to)) return false;
     if (wearable(from) || wearable(to)) rearm(bodies_[0]);
     return true;
@@ -717,36 +761,7 @@ bool Realm::useItem(int slot) {
     if (portal(row)) {
         if (tables_->grid.safe(hero.column(), hero.row())) return false;
         spendOne();
-        rise(hero);
-        dropBlow(hero);
-        order_ = Request{};
-        pending_ = Request{};
-        wants_ = skill::kNone;
-        trading_ = -1;
-        banking_ = -1;
-        closeMachine();
-        gating_ = -1;
-        angeling_ = -1;
-        const std::pair<int, int> landing = haven();
-        setDown(hero, landing.first, landing.second);
-        hero.facing = hero.aim;
-        hero.turning = false;
-        for (Body& one : bodies_) {
-            if (one.player || one.quarry != hero.id) continue;
-            one.quarry = 0;
-            one.provoked = false;
-        }
-        // Her summon does not come along: a warp dismisses it, as her death does (the user,
-        // 2026-09-29). OpenMU places it at her landing gate instead (PlayerSummon.PlaceAtGate).
-        if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
-        // A map with no safe box of its own -- the Dungeon, which has no spawn gate -- sends him
-        // to Lorencia's: OpenMU's SafezoneMapNumber falls back to Lorencia for a map with no
-        // spawn gate (BaseMapInitializer.cs:91). He is not set down here; `c` says the map
-        // change is owed, and it is the mode's, as a gate's is (Play::takeHome).
-        // And Blood Castle's: a scroll read in a castle leaves it, for Devias.
-        const int32_t* box = tables_->safeGate;
-        const bool home = !(box[2] > box[0] && box[3] > box[1]) || tables_->map == kBloodCastleMap;
-        say(What::Warped, hero, landing.first, landing.second, home ? 1 : 0);
+        warpHome(hero);
         return true;
     }
 

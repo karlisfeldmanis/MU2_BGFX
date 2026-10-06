@@ -5905,6 +5905,94 @@ void testTarkanGates() {
           "Tarkan's safe box is the town, 187,54 to 203,69, so a death rises there");
 }
 
+// Icarus's door (docs/icarus-port.md step 2): the Lost Tower's floor 7 to Icarus asks level 160
+// and that he can fly -- any wing, or a Horn of Dinorant, never with the Horn of Uniria on -- and
+// the way back is free. In Icarus nothing that lets him fly comes off, and one who cannot fly is
+// sent home.
+void testIcarusGates() {
+    std::printf("icarus gates\n");
+    content::Tables tower, icarus;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/losttower/losttower.mur",
+                              tower, error),
+          "the Lost Tower's tables load");
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/icarus/icarus.mur", icarus,
+                              error),
+          "Icarus's tables load");
+    struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
+    // gear: 0 nothing, 1 the Wings of Satan, 2 the Horn of Dinorant, 3 wings and Uniria.
+    const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
+                         int level, int gear) {
+        Seen seen;
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
+              "a realm raises by the gate");
+        if (gear == 1 || gear == 3) realm.give(tables.itemAt(12, 2), sim::kWings);
+        if (gear == 2) realm.give(tables.itemAt(13, 3), sim::kMount);
+        if (gear == 3) realm.give(tables.itemAt(13, 2), sim::kMount);
+        sim::Request go;
+        go.kind = sim::Request::Kind::WalkTo;
+        go.column = toC;
+        go.row = toR;
+        realm.ask(go);
+        for (int tick = 0; tick < 400 && seen.gated == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Barred && seen.barred == 0) seen.barred = one.b;
+                if (one.what == sim::What::Gated) {
+                    seen.gated = one.a;
+                    seen.column = one.b;
+                    seen.row = one.c;
+                }
+            }
+        }
+        return seen;
+    };
+    Seen s = walk(tower, 18, 249, 18, 250, 160, 1);
+    checkEqual(s.gated, 62, "a winged level 160 knight takes floor 7's south door, gate 62");
+    check(s.column >= 14 && s.column <= 16 && s.row == 13, "out on Icarus's gate 63");
+    s = walk(tower, 18, 249, 18, 250, 160, 2);
+    checkEqual(s.gated, 62, "and on a Dinorant alone");
+    s = walk(tower, 18, 249, 18, 250, 159, 1);
+    checkEqual(s.barred, 160, "a level 159 knight is told it asks level 160");
+    s = walk(tower, 18, 249, 18, 250, 160, 0);
+    checkEqual(s.gated, 0, "an unwinged knight does not go through");
+    checkEqual(s.barred, -1, "and is told he cannot fly");
+    s = walk(tower, 18, 249, 18, 250, 160, 3);
+    checkEqual(s.barred, -1, "nor with the Horn of Uniria worn over his wings");
+    s = walk(icarus, 15, 13, 15, 12, 1, 1);
+    checkEqual(s.gated, 64, "Icarus's first row, gate 64, takes him back at any level");
+    check(s.column >= 17 && s.column <= 19 && s.row == 249, "out on floor 7's gate 65");
+    {
+        sim::Realm realm;
+        check(realm.raise(&icarus, 7, 15, 13, sim::Kin::DarkKnight, 180), "a knight in Icarus");
+        check(realm.give(icarus.itemAt(12, 2), sim::kWings) == sim::kWings, "wearing his wings");
+        realm.step();
+        check(!realm.moveItem(sim::kWings, sim::kWorn), "which will not come off there");
+        const int horn = realm.give(icarus.itemAt(13, 2));
+        check(horn >= 0 && !realm.moveItem(horn, sim::kMount), "nor the Horn of Uniria go on");
+        const int dino = realm.give(icarus.itemAt(13, 3));
+        check(dino >= 0 && realm.moveItem(dino, sim::kMount), "a Dinorant may");
+        // The bag's fifth row, clear of the horn left in its first.
+        check(realm.moveItem(sim::kWings, sim::kWorn + 4 * sim::kBagColumns),
+              "and then the wings come off");
+    }
+    {
+        sim::Realm realm;
+        check(realm.raise(&icarus, 7, 15, 13, sim::Kin::DarkKnight, 180), "an unwinged knight");
+        int home = -1;
+        for (int tick = 0; tick < 3; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who == realm.hero().id && one.what == sim::What::Warped) home = one.c;
+            }
+        }
+        checkEqual(home, 1, "is sent home out of Icarus at once, as a Town Portal sends him");
+    }
+    check(icarus.safeGate[2] <= icarus.safeGate[0], "Icarus has no safe box: a death goes home");
+}
+
 void testDungeonGates(const content::Tables& lorencia) {
     std::printf("dungeon gates\n");
     struct Seen { int gated = 0, climbed = 0, barred = 0, column = 0, row = 0; };
@@ -9541,6 +9629,7 @@ int main() {
     testDungeonGates(tables);
     testAtlansGates();
     testTarkanGates();
+    testIcarusGates();
     testTraps();
     testQuests(tables);
     testDungeonRunes(tables);

@@ -111,7 +111,8 @@ enum class What : uint8_t {
     Gated,     // he stepped into an enter gate and goes through it (sim/gates.h): a: the enter
                // gate's number, b: the column he comes out on, c: the row. The realm stops him
                // there; changing the map is the game's.
-    Barred,    // an enter gate he is too low for: a: its number, b: the level it asks.
+    Barred,    // an enter gate he is too low for: a: its number, b: the level it asks (0 sealed,
+               // -1 he cannot fly: Icarus's door).
                // MuMain's "Only characters over level %d can enter".
     PetLost,   // his pet's or mount's life ran out and it is gone from its slot (Player.cs:1991-2001):
                // a: the item row
@@ -1464,6 +1465,11 @@ private:
     std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;
+    // The Town Portal's warp, shared with Icarus's sending home (realm_items.cpp).
+    void warpHome(Body& hero);
+    // Set once Icarus has sent him home for want of wings, so the warp is said once while the
+    // mode carries out the map change.
+    bool grounded_ = false;
     // A summon a restored record carried, raised on the next tick rather than in restore(), so
     // its `Spawned` reaches the drawing (step() clears the happenings first). 0 for none.
     int32_t summonOwed_ = 0;

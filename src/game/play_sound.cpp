@@ -413,7 +413,8 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // its air plays throughout, as SceneManager.cpp:859-861 loops it for the whole map.
     // Atlans's aWater the same: the map is "underground" for its air (game/world/maps.h).
     // Tarkan's desert.wav likewise, over its whole map.
-    sound_.loop(heard_.wind, !indoors || dungeonAir_ || waterAir_ || desertAir_);
+    // Icarus's aHeaven too.
+    sound_.loop(heard_.wind, !indoors || dungeonAir_ || waterAir_ || desertAir_ || heavenAir_);
     // Blood Castle's bed, from the gate opening to the run's end, won or out of time
     // (NewBloodCastleSystem.cpp:42-43, 63-64).
     sound_.loop(heard_.castleBed, realm_.castleRun().phase == sim::CastlePhase::Running);
@@ -426,6 +427,8 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
                 : waterAir_ ? Sound::Room::Water
                 // Tarkan is open desert under the sky, though "underground" for its air.
                 : desertAir_ ? Sound::Room::Open
+                // And Icarus is open sky.
+                : heavenAir_ ? Sound::Room::Open
                 : indoors   ? Sound::Room::Roofed
                             : Sound::Room::Open);
     // The walls are the rules' own line of sight on the tile grid (F). The far end is pulled a

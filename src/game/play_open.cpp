@@ -37,6 +37,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // Atlans's is aWater, the same way: the whole map, under no roof (SceneManager.cpp:879-881).
     waterAir_ = world == "atlans";
     desertAir_ = world == "tarkan";
+    // Icarus's is aHeaven, over the whole map and under no roof (SceneManager.cpp:885-895).
+    heavenAir_ = world == "icarus";
     underwater_ = world == "atlans";
     grassy_ = world == "lorencia" || world == "noria";
     snowy_ = world == "devias";
@@ -476,6 +478,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     else if (dungeonAir_) heard_.wind = sound_.load(towerAir_ ? "world_tower" : "world_dungeon", false);
     else if (waterAir_) heard_.wind = sound_.load("world_water", false);
     else if (desertAir_) heard_.wind = sound_.load("world_desert", false);
+    else if (heavenAir_) heard_.wind = sound_.load("world_heaven", false);
     // Blood Castle's match bed, looped while its run is on (Play::hear).
     heard_.castleBed = castleAir_ ? sound_.load("world_bloodcastle", false) : -1;
     heard_.fire = sound_.load("world_bonfire", false);

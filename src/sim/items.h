@@ -917,6 +917,13 @@ inline bool firecrackerMap(uint32_t map) {
 // safe tile, as MU rides (the user, 2026-10-05: 'allow to use mount in dungeons and BC', undoing
 // 2026-10-04's open maps alone).
 inline bool rideMap(uint32_t) { return true; }
+// **Icarus**, MU's map 10, the sky land (docs/icarus-port.md): entered, and stood in, only by one
+// who can fly. Any wing worn (WebZen asks its presence, not its life) or a Horn of Dinorant with
+// life left, and never with the Horn of Uniria worn (gObjMoveGate, user.cpp:27201-27220; OpenMU
+// 0.95d's CanFly, Icarus.cs:46-50; MuMain's inventory will not equip Uniria there,
+// NewUIMyInventory.cpp:351-354).
+constexpr uint32_t kIcarusMap = 10;
+bool canFly(const content::Tables& tables, const Satchel& bag);
 // **Blood Castle's ticket** (docs/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
 // (13, 16) and the Blood Bone (13, 17) of one level make the Invisibility Cloak (13, 18) of that
 // level in the Chaos Machine. The level is the castle's, carried in the refinement.

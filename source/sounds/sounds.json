@@ -1477,6 +1477,15 @@
       "gain_db": -20.4,
       "note": "desert.wav's RMS is -23.6 dBFS, so -20.4 puts it on the same -44 dB bed as world_water and world_dungeon (2026-10-05)."
     },
+    "world_heaven": {
+      "files": [
+        "aheaven.wav"
+      ],
+      "from": "SOUND_HEAVEN01, Data\\Sound\\aHeaven.wav (ZzzOpenData.cpp:4752). PlayWorldAmbientSounds plays it looping and unplaced while Icarus is the world (SceneManager.cpp:885-895) and stops it elsewhere (:960-963); the thunder beside it is commented out. Icarus's air, in place of the wind.",
+      "loop": true,
+      "gain_db": -25.2,
+      "note": "aHeaven.wav's RMS is -18.8 dBFS, so -25.2 puts it on the same -44 dB bed as world_desert and world_water (2026-10-06)."
+    },
     "boid_bat": {
       "files": [
         "abat.wav"

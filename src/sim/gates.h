@@ -8,7 +8,8 @@
 // - An EXIT gate is where he comes out: a box on the other map, a tile in it chosen at random
 //   (Player.WarpToAsync), and the way he faces there.
 //
-// Every walk this game has maps for: Lorencia, Noria, Devias, the Dungeon and the Lost Tower.
+// Every walk this game has maps for: Lorencia, Noria, Devias, the Dungeon, the Lost Tower, Atlans,
+// Tarkan and Icarus.
 // mu.db's `gates` table holds the spawn rows alone and no enter gates, so the rows are written
 // out and not cooked.
 #pragma once
@@ -40,6 +41,7 @@ struct EnterGate {
     int32_t level = 0;   // the level it asks; 0.75 has no class that pays two thirds of it
     int32_t target = 0;  // the exit gate's number; -1 sealed, a gate to a map not built
     const char* sealed = nullptr;  // a sealed gate's place, for the map and the refusal
+    bool fly = false;  // it also asks that he can fly (sim::canFly): the Lost Tower's door to Icarus
 };
 
 // The enter gate on `map` whose box holds the tile, or nullptr.

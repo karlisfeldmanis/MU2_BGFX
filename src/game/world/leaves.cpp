@@ -227,6 +227,7 @@ void Leaves::shutdown() {
     sheet_ = rainSheet_ = ringSheet_ = starSheet_ = BGFX_INVALID_HANDLE;
     snow_ = false;
     sand_ = false;
+    sky_ = false;
     motes_ = false;
     blowing_ = falling_ = 0;
 }
@@ -272,6 +273,8 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
         indoors = false;
         rain = 0.0f;
     }
+    // Nor has Icarus a roof; its rain falls.
+    if (sky_) indoors = false;
     const float factor = seconds * kReference;
     uint32_t live = 0;
 
@@ -312,7 +315,7 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
             // rain's -- half of Lorencia's drizzle -- so the ground shows the rain whatever its
             // weight (the user, 2026-09-29: "we can see drops on ground", then "rings visible
             // too much" at every one).
-            if (random01() < std::min(0.5f, 0.33f / std::max(rain, 0.33f))) {
+            if (!sky_ && random01() < std::min(0.5f, 0.33f / std::max(rain, 0.33f))) {
                 landRing(drop.position, drop.faint);
             }
             continue;

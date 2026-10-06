@@ -1004,6 +1004,7 @@ private:
     // Tarkan's: desert.wav, on the wind's slot too, the whole map and in the open, though the
     // map is "underground" for its leaves (game/world/maps.h).
     bool desertAir_ = false;
+    bool heavenAir_ = false;  // Icarus's aHeaven
     // Over Tarkan the Dinorant flies, 90 over the ground (game/pets.h dinorantFlies).
     bool flying_ = false;
     // Under the sea: off its safe zone a player swims (FigureBody::swimWalkClip), MU's Fly

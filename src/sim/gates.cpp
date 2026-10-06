@@ -54,6 +54,11 @@ constexpr ExitGate kExits[] = {
     {54, 8, {248, 40, 251, 44}, -1, 1},     // Tarkan, from Atlans
     {56, 7, {16, 225, 17, 230}, 1, -1},     // Atlans, from Tarkan
     {57, 8, {187, 54, 203, 69}, 0, 0},      // Tarkan's town: death, Town Portal
+    // Icarus's and the Lost Tower's, WebZen's gate.txt 63 and 65 (Season Six Gates.cs:213, 181;
+    // docs/icarus-port.md A §2.1). 63 is Direction.East (5), (+1,+1), onto the road; 65 is
+    // Direction.West (1), (-1,-1), into floor 7 and away from gate 62 beside it.
+    {63, 10, {14, 13, 16, 13}, 1, 1},       // Icarus, from the Lost Tower
+    {65, 4, {17, 249, 19, 249}, -1, -1},    // Lost Tower 7, from Icarus
 };
 
 // Gates.cs, CreateEnterGates: 23 on Lorencia's last rows, 25 on Noria's first, each two rows
@@ -99,6 +104,12 @@ constexpr EnterGate kEnters[] = {
     {36, 4, {132, 135, 135, 136}, 100, 37},  // Lost Tower 4 down to 5
     {38, 4, {131, 15, 132, 18}, 100, 39},    // Lost Tower 5 down to 6
     {40, 4, {6, 5, 7, 8}, 100, 41},          // Lost Tower 6 down to 7
+    // WebZen's gate.txt 62 and 64 (Season Six Gates.cs:526-527): floor 7's south end to Icarus,
+    // and Icarus's first row back. MU asks 160 in, with wings or a Dinorant (`fly`), and 50 (S6)
+    // or 80 (WebZen) out. Ours (docs/icarus-port.md, decision 2, the passes' recommendation): 160
+    // in, which the Dinorant asks anyway (source/items/pets/Helper04.json), and the way out free.
+    {62, 4, {17, 250, 19, 250}, 160, 63, nullptr, true},  // Lost Tower 7 to Icarus
+    {64, 10, {14, 12, 16, 12}, 0, 65},      // Icarus to Lost Tower 7
     // Gates.cs:185, Lorencia's stair down at DoungeonGate01, level 20, to the Dungeon's exit
     // gate 2. And the Dungeon's own, :186-192: the way out asks nothing, every stair between
     // its three floors asks level 20. Floors are regions of one map, so 5 to 15 lead to the
