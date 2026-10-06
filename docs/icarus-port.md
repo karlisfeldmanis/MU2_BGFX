@@ -165,6 +165,12 @@ points 1.5 m round it are all off screen, aimed back across him within 55 degree
 `ZzzObject.cpp:6497-6500`); built, then turned down by the user: 'dont animate droped item thay have
 to stay solid'. Not carried; don't add it back. The sky-effects phase is done; next is the monsters.
 
+**Home is the Lost Tower (2026-10-06, the user: 'if char dies in icarus i think he has to resawn in
+lost tower, because he got in to Icarus triught lost tower').** Ours, over WebZen's Devias (decision
+5): the `kMaps` row's home is 4, so a death, a Town Portal and a fall from flight all land in the
+Lost Tower's hall (208,75). Seen: a wingless hero raised in Icarus was in the Lost Tower within the
+first seconds.
+
 **Monsters, one breed at a time (2026-10-06, the user: 'lets make each moinster by each, test it how
 it looks, dont use all cores').** Each breed: its mu.db kind and spawns (OM 095d `Icarus.cs`, WZO
 respawns), its body in `source/monsters`, `cook.py --only tables` and `--only figures --monsters`,
