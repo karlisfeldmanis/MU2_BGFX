@@ -165,6 +165,15 @@ points 1.5 m round it are all off screen, aimed back across him within 55 degree
 `ZzzObject.cpp:6497-6500`); built, then turned down by the user: 'dont animate droped item thay have
 to stay solid'. Not carried; don't add it back. The sky-effects phase is done; next is the monsters.
 
+**Monsters, one breed at a time (2026-10-06, the user: 'lets make each moinster by each, test it how
+it looks, dont use all cores').** Each breed: its mu.db kind and spawns (OM 095d `Icarus.cs`, WZO
+respawns), its body in `source/monsters`, `cook.py --only tables` and `--only figures --monsters`,
+`cook_one` on the stage, then a muted shot in Icarus.
+- **Alquamos (69)**: Monster51 as `Alquamos01`, scale 1, its one mesh starp00 added (BlendMesh 0),
+  half a shadow, as the Death Beam Knight's glow; 11 spawns, ids 1483-1493, on the north road. Seen:
+  a translucent cyan star-dragon over the hero at 14,24. Not yet: its nine star lights and sparks,
+  the blow's flare joints, its sounds (mAlquamosAttack1, mAlquamosDie).
+
 **The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
 on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound
 community, 2:08, mean -22.3 dB, 5 dB under the loading ambient) loops over the whole map at the

@@ -309,3 +309,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Mutant01 | figure | 2026-10-06 11:46 | awaiting |  |
 | BloodyWolf01 | figure | 2026-10-06 11:07 | passed | hide, cloth and mane on their own materials |
 | GoldenDragon01 | figure | 2026-10-06 18:28 | awaiting |  |
+| Alquamos01 | figure | 2026-10-06 20:26 | passed | MU's translucent cyan star-dragon, all added with its star specks; reads at noon, dusk and night and over Icarus's navy |
