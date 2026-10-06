@@ -25,8 +25,8 @@
 // in the moon's blue-white, each its own cloud, size, stretch and brightness, drifting slowly
 // rather than turning at MU's rate; and under the road a sparse darker deck, so the navy has
 // depth. Thin, so the navy shows through every one (the user: 'much more transparent'), and alive:
-// each wanders a couple of metres about its place, breathes, and slowly becomes another of the
-// nine and back. Only the banks within kReach of the camera's point are drawn (MU draws what its frustum
+// each wanders a couple of metres about its place, breathes and deforms, and is always becoming
+// another of the nine. Only the banks within kReach of the camera's point are drawn (MU draws what its frustum
 // holds). Not yet: MU's two thunder crackles at the lit edge, the far bolts, the flash's cloud
 // mesh under the hero and the glints ten metres down. docs/icarus-port.md.
 #pragma once
@@ -67,7 +67,6 @@ private:
         float shade = 1.0f;  // times the moon's tint
         float alpha = 1.0f;
         uint8_t cell = 0;    // which of the sheet's nine
-        uint8_t other = 0;   // and the one it slowly turns into and back (see gather)
         bool deep = false;   // the deck under the road
         // Its life, ours (the user, 2026-10-06: 'they should animate'): a slow wander about its
         // place on two sines, a breath in its size, and a cross-fade between its two clouds.

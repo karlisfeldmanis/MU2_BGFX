@@ -73,7 +73,15 @@ second turned 0.6 rad against it so the change reads as a roll: two sprites a cl
 The sheet is read as the PNG (9 MB with mips), not the showing's BC7, whose sixteen alpha steps a
 block drew the thin edges as lines; and `fs_present` now adds half an 8-bit step of interleaved
 gradient noise before the write, so slow dark gradients fall into grain, not contours (every
-world; invisible otherwise). Shot muted at 55,75, GPU 3.3 ms. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
+world; invisible otherwise). Shot muted at 55,75, GPU 3.3 ms.
+
+**Fainter, and always changing (2026-10-06, the user: 'we need that cloud change shape and are less
+vissible more transparent').** The road's clouds at 0.08-0.15 of opaque, the deck's 0.07-0.12. The
+change no longer goes back and forth between two clouds: two layers half a cycle apart, each
+weighed sin^2 so they sum to one, each taking a new cloud of the nine (hashed by the cloud and the
+cycle) and a new turn the moment its weight is nought, every 8-16 s; and the outline deforms, the
+width and height swelling 20% out of step. Two shots 8 s apart at 55,75 show different clouds.
+GPU 4.0 ms with other sessions on the machine. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
 
 ## The one thing to know first
 

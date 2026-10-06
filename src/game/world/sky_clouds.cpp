@@ -38,13 +38,12 @@ constexpr float kEdgeLife = 8.0f * kFrame;
 }  // namespace
 
 void SkyClouds::live(Puff& puff, float wander) {
-    puff.other = uint8_t((puff.cell + 1 + int(unit() * 7.0f)) % (kCells * kCells));
     puff.wander = wander;
-    // Periods of 35-70 s for the wander, 15-30 s for the breath, 20-45 s for the change.
+    // Periods of 35-70 s for the wander, 15-30 s for the breath, 8-16 s for each change.
     puff.wanderHz[0] = 1.0f / (35.0f + unit() * 35.0f);
     puff.wanderHz[1] = 1.0f / (35.0f + unit() * 35.0f);
     puff.breathHz = 1.0f / (15.0f + unit() * 15.0f);
-    puff.morphHz = 1.0f / (20.0f + unit() * 25.0f);
+    puff.morphHz = 1.0f / (8.0f + unit() * 8.0f);
     for (float& p : puff.phase) p = unit() * 6.2831853f;
 }
 
@@ -89,7 +88,7 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             puff.half = kHalfLow + unit() * (kHalfHigh - kHalfLow);
             puff.stretch = 1.0f + unit() * 0.35f;
             puff.shade = kShadeLow + unit() * (1.0f - kShadeLow);
-            puff.alpha = 0.16f + unit() * 0.14f;
+            puff.alpha = 0.08f + unit() * 0.07f;
             puff.cell = uint8_t(unit() * float(kCells * kCells)) % uint8_t(kCells * kCells);
             live(puff, 1.5f + unit() * 1.0f);
             puffs_.push_back(puff);
@@ -106,7 +105,7 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             deep.half = 7.0f + unit() * 4.0f;
             deep.stretch = 1.1f + unit() * 0.4f;
             deep.shade = 0.8f + unit() * 0.2f;
-            deep.alpha = 0.14f + unit() * 0.1f;
+            deep.alpha = 0.07f + unit() * 0.05f;
             deep.cell = uint8_t(unit() * float(kCells * kCells)) % uint8_t(kCells * kCells);
             live(deep, 3.0f + unit() * 2.0f);
             puffs_.push_back(deep);
@@ -175,23 +174,37 @@ void SkyClouds::gather(gfx::Effects& effects) const {
                 const float z = one.at[2] + std::cos(t * one.wanderHz[1] * kTau + one.phase[1]) * one.wander;
                 const float y = one.at[1] + std::sin((ms + one.g) / 5000.0f) * 20.0f * kUnit;
                 const float breath = 1.0f + 0.12f * std::sin(t * one.breathHz * kTau + one.phase[2]);
-                // The change: its own cloud and the other, weighed by a slow sine, both drawn.
-                const float mix = 0.5f + 0.5f * std::sin(t * one.morphHz * kTau + one.phase[3]);
+                // The outline deforms: width and height swell out of step, 20% each.
+                const float wide = 1.0f + 0.2f * std::sin(t * one.breathHz * 1.3f * kTau + one.phase[0]);
+                const float tall = 1.0f + 0.2f * std::sin(t * one.breathHz * 0.9f * kTau + one.phase[1]);
+                // The change, never back and forth: two layers half a cycle apart, each weighed
+                // sin^2 of its cycle so the two sum to one, and each taking a new cloud of the
+                // nine at the moment its weight is nought -- so a cloud is always becoming
+                // another (the user, 2026-10-06: 'we need that cloud change shape').
+                const float u = t * one.morphHz + one.phase[3] / kTau;
+                const uint32_t self = bank.first + i;
                 const float* tint = one.deep ? kDeepTint : kMoon;
                 for (int layer = 0; layer < 2; ++layer) {
-                    const float weight = layer == 0 ? mix : 1.0f - mix;
+                    const float v = u + (layer == 0 ? 0.0f : 0.5f);
+                    const float cycle = std::floor(v);
+                    const float wave = std::sin(3.14159265f * (v - cycle));
+                    const float weight = wave * wave;
                     if (weight < 0.02f) continue;
-                    const int cell = layer == 0 ? one.cell : one.other;
+                    uint32_t h = self * 2654435761u ^ (uint32_t(int32_t(cycle)) * 40503u + uint32_t(layer));
+                    h ^= h >> 15;
+                    h *= 0x2c1b3c6du;
+                    h ^= h >> 12;
+                    const int cell = int(h % uint32_t(kCells * kCells));
                     gfx::Sprite sprite;
                     sprite.position[0] = x;
                     sprite.position[1] = y;
                     sprite.position[2] = z;
                     for (int c = 0; c < 3; ++c) sprite.colour[c] = tint[c] * one.shade;
                     sprite.colour[3] = one.alpha * weight;
-                    sprite.halfWidth = one.half * one.stretch * breath;
-                    sprite.halfHeight = one.half * breath;
-                    // The second turned a little against the first, so the change is a roll.
-                    sprite.spin = one.start + t * one.turn + (layer == 0 ? 0.0f : 0.6f);
+                    sprite.halfWidth = one.half * one.stretch * breath * wide;
+                    sprite.halfHeight = one.half * breath * tall;
+                    // Each new cloud at its own turn, so no two changes look alike.
+                    sprite.spin = one.start + t * one.turn + float(h % 628u) * 0.01f;
                     const int column = cell % kCells, row = cell / kCells;
                     sprite.u0 = float(column) / float(kCells);
                     sprite.u1 = float(column + 1) / float(kCells);
