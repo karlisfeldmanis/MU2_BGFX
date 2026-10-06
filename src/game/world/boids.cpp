@@ -15,12 +15,6 @@ namespace {
 // How big a bird is drawn. MU2's `bird.Node.Scale = Vector3.One * 0.8f`; the cooked mesh is
 // 0.68 m across the wings, so this flies a half-metre bird.
 constexpr float kBirdScale = 0.8f;
-// The dragons' softening (Boids::gather): five copies at 0.3 of opaque, four of them shifted
-// 12 cm along each side and up and down.
-constexpr int kSoftCopies = 5;
-constexpr float kSoftFade = 0.3f;
-constexpr float kSoftShift[kSoftCopies - 1][3] = {
-    {0.12f, 0.0f, 0.0f}, {-0.12f, 0.0f, 0.0f}, {0.0f, 0.08f, 0.12f}, {0.0f, -0.08f, -0.12f}};
 
 // What the rules ask of the world, answered with the real ground and the real camera. See
 // game/world/flight.h for why they are asked at all rather than reached for.
@@ -397,23 +391,6 @@ void Boids::gather(std::vector<gfx::Drawable>& out) const {
             out[at].light[0] = light_[i][0];
             out[at].light[1] = light_[i][1];
             out[at].light[2] = light_[i][2];
-        }
- 
-        // Icarus's dragons, softened as far things are (ours; the user, 2026-10-06: 'can we
-        // make that flying dragon more blurry to simuate that he is in far distance?'). No blur
-        // pass to put one in: the body is drawn kSoftCopies times, each a faint see-through
-        // copy shifted a few centimetres, so the overlaps sum near solid in its middle and its
-        // outline thins away.
-        if (flight_.isDragon()) {
-            const size_t last = out.size();
-            for (size_t at = first; at < last; ++at) out[at].fade = kSoftFade;
-            for (int copy = 1; copy < kSoftCopies; ++copy) {
-                for (size_t at = first; at < last; ++at) {
-                    gfx::Drawable soft = out[at];
-                    for (int k = 0; k < 3; ++k) soft.transform[12 + k] += kSoftShift[copy - 1][k];
-                    out.push_back(soft);
-                }
-            }
         }
     }
 }

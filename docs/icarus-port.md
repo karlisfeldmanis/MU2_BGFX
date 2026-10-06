@@ -160,10 +160,6 @@ head-first under the mist. boids_test passes. Then ours, the birds' arrival (the
 frame, as our birds do'): a dragon is born on a ring 18-30 m out, redrawn until its middle and four
 points 1.5 m round it are all off screen, aimed back across him within 55 degrees; it goes past
 40 m, or once it has crossed the frame, only while out of it. Shot muted over 3000 frames.
-And softened as far things are (ours; the user: 'can we make that flying dragon more blurry to
-simuate that he is in far distance?'): with no blur pass, `Boids::gather` draws each dragon five
-times at 0.3 of opaque, four copies shifted 12 cm to the sides and up and down, so the overlaps sum
-near solid in its middle and its outline thins into the sky. Shot muted: a hazy silhouette.
 
 **The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
 on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound
