@@ -201,6 +201,8 @@ const uint32_t kTakenInk = byteColour(239, 74, 60);
 const uint32_t kAbsorbedInk = byteColour(234, 160, 81);
 // A poison's pulse: MuMain's DT_POISON, pure green (WSclient.cpp's `case 5`).
 const uint32_t kPoisonInk = byteColour(40, 235, 60);
+// An Immolate burn's pulse: an ember nothing else in the fight wears, redder than ABSORBED's.
+const uint32_t kBurnInk = byteColour(255, 112, 36);
 // A rune power's blow, its own colour apart from the ramp (the user, 2026-10-01: "rune damage
 // has to be in different color"): an ice blue nothing else in the fight wears, and its critical
 // paler, as the ramp's gold is paler than its amber.
@@ -235,7 +237,10 @@ float sizeOf(Mark mark) {
         case Mark::RuneCritical: return kCriticalSize;
         case Mark::Reflected: break;
         case Mark::Miss: return kMissSize;
-        case Mark::Absorbed: return kAbsorbedSize;
+        case Mark::Absorbed:
+        case Mark::PoisonWord:
+        case Mark::BurnWord: return kAbsorbedSize;
+        case Mark::Burn:
         case Mark::Swing:
         case Mark::Poison:
         case Mark::Summon:
@@ -252,7 +257,10 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Reflected: return kReflectedInk;
         case Mark::Taken: return kTakenInk;
         case Mark::Absorbed: return kAbsorbedInk;
-        case Mark::Poison: return kPoisonInk;
+        case Mark::Poison:
+        case Mark::PoisonWord: return kPoisonInk;
+        case Mark::Burn:
+        case Mark::BurnWord: return kBurnInk;
         case Mark::Rune: return kRuneInk;
         case Mark::RuneCritical: return kRuneCriticalInk;
         case Mark::Summon: return kSummonInk;
@@ -530,14 +538,19 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
                         float(figure.slot) * kStackStep * unit;
 
         const float size = sizeOf(figure.mark) * unit * popped(u);
-        const bool word = figure.mark == Mark::Miss || figure.mark == Mark::Absorbed;
-        const std::string text = figure.mark == Mark::Miss       ? std::string("MISS")
-                                 : figure.mark == Mark::Absorbed ? std::string("ABSORBED")
+        // ABSORBED, POISON and BURN: a small word set solid, each over its figure.
+        const bool tag = figure.mark == Mark::Absorbed || figure.mark == Mark::PoisonWord ||
+                         figure.mark == Mark::BurnWord;
+        const bool word = figure.mark == Mark::Miss || tag;
+        const std::string text = figure.mark == Mark::Miss         ? std::string("MISS")
+                                 : figure.mark == Mark::Absorbed   ? std::string("ABSORBED")
+                                 : figure.mark == Mark::PoisonWord ? std::string("POISON")
+                                 : figure.mark == Mark::BurnWord   ? std::string("BURN")
                                  : std::to_string(figure.value < 0 ? 0 : figure.value);
         // A miss is a word, so it takes the lane's own tracking rather than the ramp's: set
         // solid at this size it reads as one long glyph. ABSORBED is set solid all the same,
         // the user's, 2026-10-01.
-        const float tracking = figure.mark == Mark::Absorbed ? 0.0f : word ? 0.14f : kTracking;
+        const float tracking = tag ? 0.0f : word ? 0.14f : kTracking;
         write(std::round(x), std::round(y), size, withAlpha(inkOf(figure), alpha), text, tracking,
               !word);
     }

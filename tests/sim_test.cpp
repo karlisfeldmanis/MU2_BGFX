@@ -8066,7 +8066,9 @@ void testGroupRunes(const content::Tables& tables) {
                     if (burst || spell) ++*answers;
                     ringing = ringing || spell;
                 }
-                if (h.what == sim::What::Hit && h.thrown && (h.rune || ringing)) ++*blows;
+                if (h.what == sim::What::Hit && h.thrown && (h.rune || h.burned || ringing)) {
+                    ++*blows;
+                }
             }
         }
     };

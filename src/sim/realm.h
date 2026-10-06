@@ -214,6 +214,8 @@ struct Happening {
     bool thrown = false;
     // A `Hit` that is a poison's pulse and not a blow: drawn green, as MU's DT_POISON is.
     bool poisoned = false;
+    // A `Hit` that is an Immolate burn's pulse: drawn in its ember with the word BURN.
+    bool burned = false;
     // A `Hit` a Rune of Creation's power dealt -- Stormcall's lightning, Meteor's rock, Frost
     // Arrow's second wound -- drawn in the rune's own colour (the user, 2026-10-01).
     bool rune = false;

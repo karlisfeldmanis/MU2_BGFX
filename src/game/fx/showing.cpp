@@ -148,6 +148,7 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         // A poison's pulse is green on him as on a monster: MU's DT_POISON is one colour.
         if (cue.poison) return Mark::Poison;
         if (onHero) return Mark::Taken;
+        if (cue.burn) return Mark::Burn;
         if (cue.reflected) return Mark::Reflected;
         // Her summon's, one colour whatever the roll: hers are told apart, its are its own.
         if (cue.summon) return Mark::Summon;
@@ -194,6 +195,9 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
     } else {
         raise(markOf(), cue.damage);
     }
+    // A pulse says what it is, a word over its figure.
+    if (!cue.miss && cue.poison) raise(Mark::PoisonWord, 0);
+    if (!cue.miss && cue.burn && !onHero) raise(Mark::BurnWord, 0);
 
     if (cue.miss) return;  // nothing bleeds from a blow that did not land
 

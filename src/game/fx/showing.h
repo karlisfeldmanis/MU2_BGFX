@@ -36,6 +36,11 @@ enum class Mark : uint8_t {
     Rune,      // a Rune of Creation's power, ice blue, at a skill's size
     RuneCritical,  // and its critical, paler, at a critical's size
     Summon,    // her summon's blow, its own lilac, at a swing's size
+    Burn,      // an Immolate burn's pulse, ember, at a swing's size
+    // The word under a pulse's figure, as ABSORBED is (the user, 2026-10-06: 'show also in
+    // damage numbers that monster is affected by poison or burn'): POISON green, BURN ember.
+    PoisonWord,
+    BurnWord,
 };
 
 // A blow that has landed on the tick and has not yet been shown.
@@ -76,6 +81,7 @@ struct Cue {
     // An arrow's blow, a monster archer's or hers: its hit is eMissileHit, not eMeleeHit.
     bool arrow = false;
     bool poison = false;  // a poison's pulse (Happening::poisoned)
+    bool burn = false;    // an Immolate burn's pulse (Happening::burned)
     bool rune = false;    // a rune power's blow (Happening::rune)
     bool summon = false;  // her summon's blow on a monster (Play::land fills it)
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste

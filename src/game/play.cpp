@@ -1465,6 +1465,7 @@ void Play::update(double seconds) {
                             }
                         }
                         cue.poison = happening.poisoned;
+                        cue.burn = happening.burned;
                         cue.rune = happening.rune;
                         cue.critical = happening.critical;
                         cue.excellent = happening.excellent;

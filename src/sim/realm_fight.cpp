@@ -1246,7 +1246,7 @@ void Realm::burnPulse(Body& beast) {
     beast.health -= bite;
     say(What::Hit, *by, bite, bite, beast.health, beast.id);
     happenings_.back().thrown = true;
-    happenings_.back().rune = true;
+    happenings_.back().burned = true;
     if (beast.health <= 0) kill(beast, *by);
 }
 
