@@ -63,7 +63,6 @@
 #include "game/wings.h"
 #include "game/figures.h"
 #include "game/fx/marker.h"
-#include "game/fx/omen.h"
 #include "game/fx/showing.h"
 #include "game/sound.h"
 #include "gfx/renderer.h"
@@ -297,27 +296,7 @@ public:
     // start; the sky opened once the effects are; and whether its storm should be held -- the
     // world's weather answers to that (Weather::summon).
     void invasionRain(bool raining) { realm_.invasionRain(raining); }
-    bool invade(bool now = false) { return realm_.invade(now); }
-    // ---- the Golden Dragon's raid (play_raid.cpp, docs/golden-dragon-raid.md) ---------------
-    // Set BEFORE open() or not at all, as the arena is: the raid tough for `players`, and the
-    // party of source/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
-    void setRaid(int players, std::vector<sim::RaiderKit> party) {
-        raidPlayers_ = players;
-        raidParty_ = std::move(party);
-    }
-    // --raid-stage: once it stands, its health laid at the top of that stage's band.
-    void raidSkip(int stage) { raidSkipOwed_ = stage; }
-    // Its tells on the ground, opened by the caller as the marker is (fx/omen.h).
-    Omen& omen() { return omen_; }
-    void gatherOmen(gfx::Effects& effects) const {
-        if (ground_) omen_.gather(effects, *ground_);
-    }
-    // Whether he is in the dragon's fight now: it stands, roused, and he is alive within its
-    // field. What its music plays on (the user, 2026-10-06), and the camera's pull.
-    bool raidFighting() const;
-    // How far the camera stands back past its own, in metres, eased (docs/golden-dragon-raid.md
-    // §2c): MU's TW_CAMERA_UP shape, keyed to a boss near him.
-    float cameraPull() const { return cameraPull_; }
+    bool invade() { return realm_.invade(); }
     void openInvasionSky(bgfx::TextureHandle glow, bgfx::TextureHandle haze);
     bool invasionStorm() const { return invasionStorm_; }
     void glowInvasion(gfx::Effects& effects) const { sky_.glow(effects); }
@@ -1096,46 +1075,6 @@ private:
     void roar(uint32_t who);
     void invasionSky(float seconds);
     uint32_t roarOwed_ = 0;
-    // ---- the raid's drawing (play_raid.cpp) ---------------------------------------------------
-    int raidPlayers_ = 0;
-    std::vector<sim::RaiderKit> raidParty_;
-    int raidSkipOwed_ = 0;
-    Omen omen_;
-    // A raider's body: its class body in its kit, dressed as the hero is (Figures::dress).
-    const FigureBody* raiderLook(const sim::Body& body);
-    // Its wings, one a raider, worn and beaten as the hero's (game/wings.h).
-    std::vector<WingLook> raiderWings_;
-    // What the realm said of the raid this tick: tells, strikes, the stages, aloft.
-    void raidSaid(const sim::Happening& happening);
-    // The frame's part: the omens, the rocks owed to the sky, the breath, the pools' fire, the
-    // dragon's lift, the raiders' wings, the camera's pull.
-    void raid(float seconds);
-    // Drawn aloft: how high, and whether it holds its flight clip this frame (Play::follow).
-    float raidLift(const sim::Body& body) const;
-    bool raidFlies(Drawn& one, const sim::Body& body);
-    void gatherRaiders(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
-                       std::vector<gfx::Drawable>* casters);
-    struct RockOwed {
-        float wait = 0.0f;  // seconds until it is let go from the sky
-        float x = 0.0f, z = 0.0f;
-    };
-    std::vector<RockOwed> rocksOwed_;
-    struct BreathOn {
-        float wait = 0.0f;  // until it starts
-        float left = 0.0f;  // and how long it burns
-        float yaw = 0.0f;
-        float spark = 0.0f;
-    } breathOn_;
-    struct PoolOn {
-        float x = 0.0f, z = 0.0f;
-        float left = 0.0f;
-        float relight = 0.0f;
-    };
-    std::vector<PoolOn> poolsOn_;
-    float raidLift_ = 0.0f;   // metres the dragon is drawn up, eased toward the realm's aloft
-    float cameraPull_ = 0.0f;
-    int dragonFlyClip_ = -1;
-    int dragonMouth_ = -1;    // bone "attack01", where the breath comes from
     // The wizard's Cometfall: blue comets on the ground he names. fx/comet.h.
     Comet comet_;
     Bolt bolt_;
