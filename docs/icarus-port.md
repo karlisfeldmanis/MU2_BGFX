@@ -147,6 +147,11 @@ blue (0.2, 0.2, 0.2-0.6) (the briefing's "grey 0.2" was the creation colour; the
 every frame). The crackles and wisps now share one strip drawer. Shot muted at 30,40: pale blue
 ribbons drifting round him, 258 fps. At MU's light; not yet judged.
 
+**The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
+on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound
+community, 2:08, mean -22.3 dB, 5 dB under the loading ambient) loops over the whole map at the
+themes' 0.6 (`PlayMode`'s music block, a `loops` track with no rest), under aHeaven's air.
+
 ## The one thing to know first
 
 **Icarus has no ground.** MuMain skips `RenderTerrain` on map 10 (`MM/Scenes/MainScene.cpp:463`).

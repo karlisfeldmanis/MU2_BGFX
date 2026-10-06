@@ -998,6 +998,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // the tavern floor the town is silent of music.
     if (world_.played().isOpen()) {
         bool pub = false;
+        bool loops = false;  // played round and round, not once and rested
         const char* roofTrack = nullptr;
         if (args.world == "lorencia") {
             const sim::Body& hero = world_.played().realm().hero();
@@ -1036,12 +1037,21 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             roofTrack = args.world == "atlans"   ? "/music/atlans.mp3"
                         : args.world == "tarkan" ? "/music/tarkan.mp3"
                                                  : "/music/lost_tower_a.mp3";
+        } else if (args.world == "icarus") {
+            // Ours: a horror ambient on loop over the whole map (the user, 2026-10-06: 'lets play
+            // freesound_community-horror-ambient-14590.mp3 in icarus on loop'), under which the
+            // air, aHeaven, goes on. MU plays MUSIC_ICARUS there; Icarus has no safe zone.
+            pub = true;
+            loops = true;
+            roofTrack = "/music/icarus_ambient.mp3";
         }
         // No music out on the hunt, and none for fights (the user, 2026-09-30: "we dont need
         // fight music anymore").
         const std::string path = ctx.paths.assets + (pub ? roofTrack : "");
         game::Sound& sound = world_.played().sound();
-        if (pub && core::fileExists(path) && !sound.musicPlaying(path)) {
+        if (pub && loops && core::fileExists(path) && !sound.musicPlaying(path)) {
+            sound.music(path, 0.6f, true);
+        } else if (pub && core::fileExists(path) && !sound.musicPlaying(path)) {
             // Once through, and only when it has rested since it last began.
             const double now = runSeconds();
             const auto last = musicBegan().find(path);
