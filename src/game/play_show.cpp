@@ -455,6 +455,36 @@ void Play::snort(float seconds) {
             }
         }
     }
+    // A monster an Immolate rune set burning: flames along bones drawn at random each reference
+    // frame while it burns (kEmberFlames).
+    for (Drawn& one : drawn_) {
+        const sim::Body* body = realm_.find(one.id);
+        const FigureBody* look = one.figure.body();
+        if (!body || !body->alive() || body->burnUntil <= realm_.tick() || !one.visible ||
+            !one.placed || look == nullptr || look->boneCount() < 2) {
+            one.burningOwed = 0.0f;
+            continue;
+        }
+        if (one.burningDice == 0) one.burningDice = 0x9e3779b9u ^ (one.id * 2654435761u);
+        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        one.burningOwed += frames;
+        while (one.burningOwed >= 1.0f) {
+            one.burningOwed -= 1.0f;
+            for (int f = 0; f < kEmberFlames; ++f) {
+                one.burningDice ^= one.burningDice << 13;
+                one.burningDice ^= one.burningDice >> 17;
+                one.burningDice ^= one.burningDice << 5;
+                const int b = 1 + int(one.burningDice % uint32_t(bones.size() - 1));
+                const int parent = bones[size_t(b)].parent;
+                if (parent < 0) continue;
+                float from[3], to[3];
+                if (one.figure.pointOn(parent, origin, from) && one.figure.pointOn(b, origin, to)) {
+                    bodyFlames_.segmentFlame(from, to, kEmberScale, kEmberLight);
+                }
+            }
+        }
+    }
     for (Drawn& one : drawn_) {
         if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;
         if (!one.visible || !one.placed) {
@@ -1644,6 +1674,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // And a poisoned one green, MU's `eDeBuff_Poison` (0.3, 1.0, 0.5); both, (0.3, 1.0, 0.8).
         const bool poisoned = one.venomous ||
                               (inRealm != nullptr && inRealm->poisonUntil > realm_.tick());
+        // And a burning one an ember (kEmberTint), the Immolate rune's.
+        const bool burning = inRealm != nullptr && inRealm->burnUntil > realm_.tick();
         const size_t tintFrom = out.size();
         // And where the world asks, the painted light where it stands (Ground::figureLightAt):
         // Blood Castle, whose doubled exposure lifts a dark-painted floor and drew every figure
@@ -1665,12 +1697,13 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                     for (int k = 0; k < 3; ++k) out[i].light[k] *= place[k];
                 }
             }
-            if (!soused && !iced && !poisoned && !one.murderer) return;
+            if (!soused && !iced && !poisoned && !burning && !one.murderer) return;
             // A debuff's light over a murderer's red: MU sets c->Light first and the debuff's
             // BodyLight after it.
             const float* by = poisoned && iced ? kPoisonIcedLight
                               : poisoned       ? kPoisonedLight
                               : iced           ? kIcedLight
+                              : burning        ? kEmberTint
                               : soused         ? kSousedLight
                                                : kMurdererLight;
             for (size_t i = tintFrom; i < out.size(); ++i) {

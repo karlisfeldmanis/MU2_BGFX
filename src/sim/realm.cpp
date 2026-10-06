@@ -993,6 +993,7 @@ void Realm::step() {
             continue;
         }
         poisonPulse(beast);
+        burnPulse(beast);
         beamOn(beast);
         if (beast.alive() && beast.pushTicks > 0) {
             // Pushed: it slides and does nothing else until it lands on its tile.

@@ -443,6 +443,25 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         }
         return;
     }
+    // His Immolate rune: the monster he struck set burning, while it stands; a second restarts it.
+    if (power.power == Power::Burn) {
+        if (!runeDice_.nextBool(kBurnRuneChance)) return;
+        if (!struck.alive() || !struck.monster()) return;
+        const float fire = elementForce(hero, Element::Fire);
+        // Its life's share, or on a small monster whose share is a point or two, the floor:
+        // kBurnRuneFloor of the swing that lit it.
+        const int share = int(std::max(float(struck.maxHealth) * float(kBurnRuneShare),
+                                       float(wound) * float(kBurnRuneFloor)) *
+                              fire);
+        const int most = int(float(hero.stats.maximumDamage) * fire);
+        struck.burnDamage = std::max(1, std::min(share, most));
+        struck.burnUntil = tick_ + kBurnRuneTicks;
+        struck.burnNext = tick_ + kBurnRuneEvery;
+        struck.burnBy = hero.id;
+        core::logf("immolate: tick %lld, #%u burns for %d a pulse", (long long)tick_, struck.id,
+                   struck.burnDamage);
+        return;
+    }
     // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
     // asked where he casts; left to fall through, a wizard's plain staff swing called a knight's
     // lightning.
@@ -1160,6 +1179,26 @@ void Realm::poisonPulse(Body& beast) {
     say(What::Hit, *by, said, said, beast.health, beast.id);
     happenings_.back().thrown = true;
     happenings_.back().poisoned = true;
+}
+
+void Realm::burnPulse(Body& beast) {
+    if (beast.burnUntil == 0 || tick_ < beast.burnNext) return;
+    if (beast.burnNext > beast.burnUntil || !beast.alive()) {
+        beast.burnUntil = 0;
+        return;
+    }
+    beast.burnNext += kBurnRuneEvery;
+    Body* by = body(beast.burnBy);
+    if (by == nullptr || !by->alive()) {
+        beast.burnUntil = 0;
+        return;
+    }
+    const int bite = std::min(beast.burnDamage, beast.health);
+    beast.health -= bite;
+    say(What::Hit, *by, bite, bite, beast.health, beast.id);
+    happenings_.back().thrown = true;
+    happenings_.back().rune = true;
+    if (beast.health <= 0) kill(beast, *by);
 }
 
 void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {

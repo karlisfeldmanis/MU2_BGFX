@@ -8102,6 +8102,17 @@ void testGroupRunes(const content::Tables& tables) {
             check(rate > 0.05 && rate < 0.16, "about one landed swing in ten");
         }
     }
+    // Immolate (2026-10-06): no cast, only pulses, rune-coloured, each 3% of the life of what
+    // burns -- about four a lit swing, one in seven lit.
+    int burnSwings = 0, burnCasts = 0, pulses = 0;
+    hunt(Power::Burn, &burnSwings, &burnCasts, &pulses);
+    std::printf("  Immolate: %d landed swings, %d pulses\n", burnSwings, pulses);
+    check(burnCasts == 0 && pulses > 0, "an Immolate burns with no spell");
+    if (burnSwings > 0) {
+        const double rate = double(pulses) / burnSwings;
+        // Fewer than four a lit swing in Lorencia: most of what burns dies of the next swing.
+        check(rate > 0.05 && rate < 0.65, "pulses follow about one landed swing in seven");
+    }
 }
 
 // The runes' rarity (sim::Rarity, the user, 2026-10-02: "we need also make group of rarity of

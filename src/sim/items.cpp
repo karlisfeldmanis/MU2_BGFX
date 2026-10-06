@@ -418,6 +418,8 @@ const PowerRow* powerOf(uint8_t power) {
          kKnightOnly, kInWeapon, Rarity::Epic},
         {Power::Twister, "Twister", "10% on hit: a twister walks out at the target",
          kKnightOnly, kInWeapon, Rarity::Epic},
+        {Power::Burn, "Immolate", "15% on hit: the target burns for 3% of its life a second, 4 s",
+         kKnightOnly, kInWeapon, Rarity::Epic},
         {Power::Bulwark, "Bulwark", "Defense works without a shield", kKnightOnly,
          kInWeapon, Rarity::Legendary, true},
         // Every Fairy Elf's, as Arcane Echo is every wizard's (the user, 2026-10-05: Lirien's

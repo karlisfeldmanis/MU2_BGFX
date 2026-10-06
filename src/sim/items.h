@@ -617,7 +617,8 @@ enum class Power : uint8_t {
     LesserAscendance = 37,
     GreaterAscendance = 38,
     Hellfire = 39,
-    Twister = 40
+    Twister = 40,
+    Burn = 41
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -890,6 +891,21 @@ constexpr double kHellfireRuneChance = 0.10;
 constexpr float kHellfireRuneForce = 0.9f;
 constexpr double kTwisterRuneChance = 0.10;
 constexpr float kTwisterRuneForce = 0.8f;
+// **Immolate** (the user, 2026-10-06: 'chance to burn monsters to do some % of damage of hp and
+// their has to be some burn efekt to the monster'), Epic, any knight's weapon: a swing that lands
+// has kBurnRuneChance to set the monster burning for kBurnRuneTicks, a pulse every
+// kBurnRuneEvery taking kBurnRuneShare of its maximum health (kBurnRuneFloor of the swing at the
+// least) -- never more a pulse than the top
+// of his swing, so a boss is not melted by its own size -- fire, so Inferno runes raise it. A
+// burn may kill, as a blow does; a second restarts it. Drawn as flames along its bones and an
+// ember tint (game/play_show.cpp). invention.
+constexpr double kBurnRuneChance = 0.15;
+constexpr double kBurnRuneShare = 0.03;
+// The least a pulse takes: this share of the swing that lit it, so the burn still reads on
+// Lorencia's monsters, whose 3% is a point or two (sim_test, 2026-10-06).
+constexpr double kBurnRuneFloor = 0.15;
+constexpr int32_t kBurnRuneTicks = 80;
+constexpr int32_t kBurnRuneEvery = 20;
 // **Bulwark** (the user: "allow to use defense skill without shield"), a knight's weapon's: his
 // Defense goes up with no shield on his arm -- a second weapon, a two-handed one or an empty
 // hand -- off his strength and agility alone (`guardShare` with no shield's defence in it).

@@ -793,6 +793,9 @@ private:
         bool burns = false;
         float burnOwed = 0.0f;
         uint32_t burnFrame = 0;
+        // An Immolate rune's burn on it (kEmberFlames): frames owed, and its draw of bones.
+        float burningOwed = 0.0f;
+        uint32_t burningDice = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
         // reference frames rather than one in two within the bull's windows.

@@ -520,6 +520,11 @@ struct Body {
     int64_t poisonUntil = 0, poisonNext = 0;
     int32_t poisonDamage = 0;
     uint32_t poisonBy = 0;
+    // Burning (a knight's Immolate rune, sim/items.h): until this tick, its next pulse, how much
+    // a pulse takes, and whose rune lit it. 0 for never.
+    int64_t burnUntil = 0, burnNext = 0;
+    int32_t burnDamage = 0;
+    uint32_t burnBy = 0;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
@@ -1192,6 +1197,8 @@ private:
     void burn();
     // A poisoned body's pulse, when it is due -- a monster's or the hero's.
     void poisonPulse(Body& beast);
+    // A burning monster's pulse (the Immolate rune), when it is due.
+    void burnPulse(Body& beast);
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).
     bool poisons(const Body& monster) const;
     // Whether a tile is within a guard post's clearing on the cleared map, where no nest puts a

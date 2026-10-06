@@ -591,6 +591,14 @@ constexpr int kBurnHead = 1;
 // Ours: the burn at this share of MU's light. At MU's own, ~380 one-metre flames added over each
 // other under this renderer's bloom were one white blot that hid the knight (arena, 2026-10-06).
 constexpr float kBurnLight = 0.15f;
+// A monster an Immolate rune set burning (sim kBurnRuneTicks): each reference frame
+// kEmberFlames subtype 2 flames on bone segments drawn at random off its own skeleton -- any
+// monster's, so no table of names -- at kEmberScale and kEmberLight of MU's light, and its body
+// lit kEmberTint, an ember beside the poison's green and the ice's blue. Ours.
+constexpr int kEmberFlames = 3;
+constexpr float kEmberScale = 0.6f;
+constexpr float kEmberLight = 0.35f;
+constexpr float kEmberTint[3] = {1.0f, 0.55f, 0.35f};
 // Tarkan's bosses' Flame of Evil (sim kBosses): the Zaikan's and the Death Beam Knight's
 // AT_SKILL_BOSS blow throws the ring of eighteen staffs at the attack's fourteenth frame
 // (fx/staff_ring.h), and the Death Beam Knight a MODEL_SKILL_BLAST within 400 units every frame
