@@ -1,0 +1,55 @@
+{
+  "item": "MagicBox01",
+  "mu_name": "Box of Luck",
+  "mu_name_from": "MuMain ZzzInventory.cpp:1687 -- MU's Box of Luck (14, 11, ITEM_BOX_OF_LUCK) at level 0, drawn as MODEL_EVENT (ZzzObject.cpp:6058-6066) from Data\\Item\\MagicBox01.bmd (ZzzOpenData.cpp:967), box.jpg on all 44 triangles. The Golden Budge Dragon's, always (WZ gObjMonster.cpp:4107; docs/drop-boxes.md section 2).",
+  "why_this_one": "The user, 2026-10-06: 'we need also some decent drops for small golden budge dragons' -- the raid's minions, the Golden Budge Dragons, drop MU's own box (docs/golden-dragon-raid.md section 1, Loot).",
+  "profile": "weapon",
+  "profile_note": "As the Firecracker: a small painted sheet on a made object seen close.",
+  "tells": "Throw it and you may receive some Zen or items.",
+  "tells_from": "MU's own tooltip for its boxes (docs/kundun-box-sources.md section 4.2).",
+  "cutout": false,
+  "cutout_from": "A JPEG: no alpha.",
+  "stats": {
+    "note": "MU keys every box off 14,11 by its level; here, as the Firecracker, a row per box, at a free number (invention).",
+    "group": 14,
+    "number": 51,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. Thrown once."
+  },
+  "sheets": {
+    "box": "luckbox.png"
+  },
+  "sheet_from": "Data/Item/box.OZJ (32x32) from MuMain's bin/Data/Item, which MagicBox01.bmd names box.jpg: a gilded box, a star sunk in each face.",
+  "sheet_materials": {
+    "box": "brass"
+  },
+  "material_note": "Gilt: the library's brass, a warm metal.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 44,
+      "area": 3569.5,
+      "along": [
+        -15.9,
+        15.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.758
+      ]
+    }
+  ]
+}

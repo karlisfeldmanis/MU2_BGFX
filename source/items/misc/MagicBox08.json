@@ -1,0 +1,56 @@
+{
+  "item": "MagicBox08",
+  "mu_name": "Box of Kundun",
+  "mu_name_from": "MuMain ZzzInventory.cpp:1704 -- 'Box of Kundun +N', MU's 14, 11 at levels 8-12 (N = level - 7), from Data\\Item\\MagicBox08.bmd (ZzzOpenData.cpp:979), Eldobox.jpg on all 44 triangles. Its tier is its plus here: +1 to +3 (docs/kundun-box.md section 1).",
+  "why_this_one": "The Golden Dragon's raid: it leaves five, +1 to +3, round its corpse, the 2009 renewal's (WZ gObjMonster.cpp:4183-4335; docs/golden-dragon-raid.md section 1, Loot).",
+  "profile": "weapon",
+  "profile_note": "As the Firecracker: a small painted sheet on a made object seen close.",
+  "tells": "Throw it and you may receive some Zen or items.",
+  "tells_from": "MU's own tooltip for its boxes (docs/kundun-box-sources.md section 4.2).",
+  "cutout": false,
+  "cutout_from": "A JPEG: no alpha.",
+  "stats": {
+    "note": "MU's 14,11 at levels 8-12; here a row of its own at a free number, its tier its plus (invention).",
+    "group": 14,
+    "number": 52,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. Thrown once."
+  },
+  "geometry_scale_from": "MuMain draws MODEL_EVENT + 10 at Scale 0.2 on the ground (ZzzObject.cpp:5723, ItemObjectAttribute); MagicBox08.bmd is authored a chest five times that, so its vertices are written here at 0.2 of MuExtract's export.",
+  "sheets": {
+    "Eldobox": "eldobox.png"
+  },
+  "sheet_from": "Data/Item/Eldobox.OZJ (32x32) from MuMain's bin/Data/Item, which MagicBox08.bmd names Eldobox.jpg -- WebZen's 'Eldorado box': red lacquered boards, gold studs and scrolled gold trim.",
+  "sheet_materials": {
+    "Eldobox": "hardwood"
+  },
+  "material_note": "Lacquered boards: the library's hardwood. The studs and trim are paint on the sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "hardwood",
+      "triangles": 44,
+      "area": 2463.5,
+      "along": [
+        -12.8,
+        12.8
+      ],
+      "mu_uv": [
+        0.001,
+        -0.089,
+        0.999,
+        1.089
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.947,
+        0.992
+      ]
+    }
+  ]
+}

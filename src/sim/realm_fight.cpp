@@ -1695,6 +1695,8 @@ void Realm::kill(Body& dead, Body& killer) {
     // and never stands them up again), and its death ends the invasion.
     if (invaderSlot_ >= 0 && &dead == &bodies_[size_t(invaderSlot_)]) {
         dead.risesAt = std::numeric_limits<int64_t>::max();
+        // The raid's dragon leaves its hoard first, while the raid still stands.
+        dragonHoard(dead);
         endInvasion();
     }
     // Every monster the killer is still holding as a quarry forgets it, or a chase carries on

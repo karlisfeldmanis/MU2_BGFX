@@ -9458,6 +9458,57 @@ void testWearingTakesDown(const content::Tables& tables) {
 }
 
 // A thrown Firecracker (sim/items.h, Realm::crack): WebZen's FireCrackerOpenEven.
+// The Box of Luck and the Box of Kundun (sim/items.h): thrown, each is spent and opens -- an item
+// at its rate and its levels, else its Zen.
+void testBoxes(const content::Tables& tables) {
+    std::printf("boxes\n");
+    const int luck = tables.itemAt(14, 51), kundun = tables.itemAt(14, 52);
+    check(luck >= 0 && sim::boxOfLuck(tables.items[size_t(luck)]), "the Box of Luck has a row (14, 51)");
+    check(kundun >= 0 && sim::boxOfKundun(tables.items[size_t(kundun)]),
+          "the Box of Kundun has a row (14, 52)");
+    if (luck < 0 || kundun < 0) return;
+    // tier 0 the Box of Luck, 1 to 3 the Kundun box at that plus.
+    for (int tier = 0; tier <= sim::kKundunTiers; ++tier) {
+        const int tries = 6000;
+        int items = 0, excellent = 0, badPlus = 0, badZen = 0, kept = 0;
+        auto fresh = std::make_unique<sim::Realm>();
+        for (int i = 0; i < tries; ++i) {
+            if (i % 200 == 0) {
+                fresh = std::make_unique<sim::Realm>();
+                fresh->raise(&tables, uint32_t(31 + i + tier * 7919), 138, 124, sim::Kin::DarkKnight, 50);
+            }
+            sim::Realm& realm = *fresh;
+            const int slot = realm.give(tier == 0 ? luck : kundun, -1, tier);
+            const int64_t purse = realm.money();
+            const sim::Cracked cracked = realm.crack(slot);
+            kept += !cracked.opened || !realm.satchel()[slot].empty();
+            if (cracked.id == 0) {
+                const int64_t want = tier == 0 ? sim::kLuckZen : sim::kKundunZen[tier - 1];
+                badZen += realm.money() - purse != want;
+                continue;
+            }
+            ++items;
+            const sim::Lying& lying = realm.lying().back();
+            const content::ItemRow& row = tables.items[size_t(lying.what.item)];
+            excellent += lying.what.excellent != 0;
+            if (!sim::takesOptions(row) || lying.what.excellent) continue;
+            const int plus = lying.what.refinement;
+            badPlus += tier == 0 ? plus != sim::kLuckPlus
+                                 : plus < sim::kKundunPlainLevel[tier - 1] ||
+                                       plus >= sim::kKundunPlainLevel[tier - 1] + sim::kKundunAddLevel;
+        }
+        const double rate = tier == 0 ? sim::kLuckItemIn100 / 100.0 : sim::kKundunItemIn100[tier - 1] / 100.0;
+        std::printf("  %s: %d of %d an item, %d of them excellent\n",
+                    tier == 0 ? "Box of Luck" : tier == 1 ? "Kundun +1" : tier == 2 ? "Kundun +2" : "Kundun +3",
+                    items, tries, excellent);
+        checkEqual(kept, 0, "every box thrown is spent");
+        check(std::abs(double(items) / tries - rate) < 0.025, "an item at its rate");
+        checkEqual(badZen, 0, "else its Zen into the purse");
+        checkEqual(badPlus, 0, "a plain item at its levels");
+        if (tier > 0) check(excellent > 0, "and now and then an excellent one");
+    }
+}
+
 void testFirecracker(const content::Tables& tables) {
     std::printf("firecracker\n");
     const int cracker = tables.itemAt(14, 11);
@@ -10075,6 +10126,7 @@ int main() {
     testPoisonOnce();
     testWishDropsOnWalk(tables);
     testTravelQuestLock();
+    testBoxes(tables);
     testFirecracker(tables);
     testSecondClassDrops();
     testQuestFirecrackers(tables);

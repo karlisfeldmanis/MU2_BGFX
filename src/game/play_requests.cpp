@@ -159,12 +159,18 @@ bool Play::discard(int slot) {
     // zen, we just need that there is always something"). What it gives, the item's landing or
     // the Zen's coins and sum, comes when the show is over. Ours.
     if (realm_.cracks(slot)) {
+        // A Box of Luck or of Kundun opens with no show, as MU's do (docs/drop-boxes.md section 1):
+        // what it gives is given on the next frame.
+        const int32_t thrown = realm_.satchel()[slot].item;
+        const bool box = thrown >= 0 && size_t(thrown) < tables_.items.size() &&
+                         (sim::boxOfLuck(tables_.items[size_t(thrown)]) ||
+                          sim::boxOfKundun(tables_.items[size_t(thrown)]));
         const sim::Cracked cracked = realm_.crack(slot);
         core::logf("window: %d cracked %s", slot,
                    !cracked.opened ? "refused" : cracked.id ? "into an item" : "into Zen");
         if (!cracked.opened) return false;
         uint32_t tag = 0;
-        if (ground_) {
+        if (ground_ && !box) {
             const float metres = ground_->metresPerTile();
             const float x = (float(cracked.column) + 0.5f) * metres;
             const float z = -(float(cracked.row) + 0.5f) * metres;

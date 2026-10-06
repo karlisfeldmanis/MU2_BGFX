@@ -1072,6 +1072,80 @@ struct BagRow {
     int8_t group = 0;
     int16_t number = 0;
 };
+// ---- the Box of Luck and the Box of Kundun (docs/kundun-box.md, drop-boxes.md section 2) --------
+//
+// MU's 14, 11 at level 0 and at levels 8-12; here, as the Firecracker, a row each at a free number
+// (source/items/misc/MagicBox01.json and MagicBox08.json), the Kundun box's tier its plus, +1 to
+// +3 (invention). Thrown on the ground each is spent and opens (Realm::crack), with no show, as
+// MU's open with none. The raid's: the Golden Budge Dragons' and the Golden Dragon's
+// (docs/golden-dragon-raid.md section 1, Loot).
+bool boxOfLuck(const content::ItemRow& row);
+bool boxOfKundun(const content::ItemRow& row);
+constexpr int kKundunTiers = 3;
+// WebZen's shipped rates (0.99.60T commonserver.cfg, Eledorado...ItemDropRate and
+// ExItemDropRate): an item, of which an excellent one; else the Zen (EledoradoBoxOpenEven,
+// Event.cpp:603, docs/kundun-box-sources.md 2.2-2.3).
+constexpr int kKundunItemIn100[kKundunTiers] = {30, 25, 20};
+constexpr int kKundunExcellentIn100[kKundunTiers] = {5, 4, 3};
+constexpr int64_t kKundunZen[kKundunTiers] = {50000, 100000, 150000};
+// A plain row's level is the bag file's plus `rand()%addlevel` (2 for +1 to +3): +5/+6 from
+// the +1 box, +4/+5 from the +2 and +3.
+constexpr int kKundunPlainLevel[kKundunTiers] = {5, 4, 4};
+constexpr int kKundunAddLevel = 2;
+// The Box of Luck as OpenMU's Version095d opens it (BoxOfLuck.cs): one in two an item at +6
+// off its list, else 10,000 Zen. WebZen's own eventitembag.txt is not in hand.
+constexpr int kLuckItemIn100 = 50;
+constexpr int kLuckPlus = 6;
+constexpr int64_t kLuckZen = 10000;
+// MU's own item and box choices, the skill rolled and not given as the Firecracker's.
+constexpr int kBoxLuckIn100 = 50;
+inline constexpr BagRow kLuckBag[] = {
+    {0, 3}, {0, 5}, {0, 9}, {0, 10}, {0, 13}, {4, 4}, {4, 5}, {4, 9}, {4, 11}, {4, 12}, {5, 0},
+    {5, 2}, {5, 3}, {5, 4}, {12, 15}, {14, 13}, {14, 14},
+    // Bronze, Pad, Bone, Leather, Scale, Sphinx, Brass, Vine, Silk and Wind, helm to boots
+    {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {7, 2}, {8, 2}, {9, 2}, {10, 2}, {11, 2},
+    {7, 4}, {8, 4}, {9, 4}, {10, 4}, {11, 4}, {7, 5}, {8, 5}, {9, 5}, {10, 5}, {11, 5},
+    {7, 6}, {8, 6}, {9, 6}, {10, 6}, {11, 6}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7},
+    {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 10}, {8, 10}, {9, 10}, {10, 10}, {11, 10},
+    {7, 11}, {8, 11}, {9, 11}, {10, 11}, {11, 11}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
+};
+// WebZen's eventitembag8..10.txt (0.99.60T; docs/kundun-box-sources.md 2.4), each in its two
+// pools: the plain rows (`//일반아이템`) and the excellent ones (`//엑설런트`). By name off our own
+// rows; Thunder Staff is 0.75's Lightning Staff and Katache its Katana.
+inline constexpr BagRow kKundunPlain1[] = {
+    {12, 15}, {14, 14}, {14, 13}, {13, 0}, {13, 1}, {13, 2}, {7, 5}, {8, 5}, {9, 5}, {10, 5},
+    {11, 5}, {7, 2}, {8, 2}, {9, 2}, {10, 2}, {11, 2}, {7, 10}, {8, 10}, {9, 10}, {10, 10},
+    {11, 10}, {6, 1}, {6, 2}, {6, 4}, {5, 0}, {5, 1}, {5, 2}, {0, 0}, {0, 2}, {0, 4}, {1, 1},
+    {1, 2}, {2, 0}, {2, 1}, {3, 2}, {4, 1}, {4, 2}, {4, 8}, {4, 9}, {4, 10},
+};
+inline constexpr BagRow kKundunExcellent1[] = {
+    {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 5}, {8, 5}, {9, 5}, {10, 5}, {11, 5}, {7, 2},
+    {8, 2}, {9, 2}, {10, 2}, {11, 2}, {7, 10}, {8, 10}, {9, 10}, {10, 10}, {11, 10}, {6, 1},
+    {6, 2}, {6, 4}, {0, 0}, {0, 1}, {0, 2}, {0, 4}, {1, 2}, {2, 0}, {2, 1}, {3, 2}, {4, 1},
+    {4, 8}, {4, 9}, {5, 0}, {5, 1},
+};
+inline constexpr BagRow kKundunPlain2[] = {
+    {12, 15}, {14, 14}, {14, 13}, {14, 16}, {13, 0}, {13, 1}, {7, 12}, {8, 12}, {9, 12},
+    {10, 12}, {11, 12}, {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 7}, {8, 7}, {9, 7},
+    {10, 7}, {11, 7}, {0, 10}, {0, 11}, {0, 13}, {1, 6}, {1, 7}, {2, 3}, {3, 7}, {3, 0},
+    {3, 4}, {5, 3}, {4, 4}, {4, 3}, {4, 11},
+};
+inline constexpr BagRow kKundunExcellent2[] = {
+    {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 6}, {8, 6}, {9, 6}, {10, 6}, {11, 6}, {7, 4},
+    {8, 4}, {9, 4}, {10, 4}, {11, 4}, {7, 11}, {8, 11}, {9, 11}, {10, 11}, {11, 11}, {5, 2},
+    {0, 10}, {0, 5}, {0, 13}, {1, 6}, {1, 7}, {2, 3}, {3, 7}, {3, 0}, {4, 11}, {4, 4}, {4, 12},
+};
+inline constexpr BagRow kKundunPlain3[] = {
+    {12, 15}, {14, 14}, {14, 13}, {14, 16}, {7, 3}, {8, 3}, {9, 3}, {10, 3}, {11, 3}, {7, 13},
+    {8, 13}, {9, 13}, {10, 13}, {11, 13}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7}, {0, 11},
+    {0, 15}, {0, 14}, {3, 4}, {4, 5}, {4, 12}, {5, 4},
+};
+inline constexpr BagRow kKundunExcellent3[] = {
+    {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
+    {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7},
+    {5, 3}, {0, 11}, {0, 15}, {1, 8}, {4, 12},
+};
+
 inline constexpr BagRow kFirecrackerBag[] = {
     // weapons and shields
     {0, 2}, {0, 4}, {0, 3}, {1, 1}, {1, 2}, {2, 0}, {2, 1}, {4, 8}, {4, 9}, {5, 0}, {6, 4},

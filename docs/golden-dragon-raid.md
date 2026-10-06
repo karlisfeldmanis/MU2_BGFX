@@ -104,7 +104,13 @@ corpse. This is traced, and a raid boss should feel like a pile. The minions dro
 Luck**, one each. +4/+5 stay out, since they belong to a bigger dragon we don't have, and there
 is no N-scaling of the loot: it's one hero's.
 
-**The boxes don't exist yet.** kundun-box.md is research only. Building them means:
+**Built 2026-10-06** (sprint 3): the Box of Luck (14,51, MagicBox01) and the Box of Kundun
+(14,52, MagicBox08 at MU's ground 0.2, its tier its plus), a row each as the Firecracker; thrown,
+each opens with no show (Realm::openBox) -- the Kundun box at WebZen's shipped rates over
+eventitembag8..10, the Box of Luck as OpenMU 095d's (WebZen's eventitembag.txt not in hand). The
+dragon leaves five boxes +1..+3, two runes, three jewels and a Loch's Feather one in four in a ring
+round its corpse (Realm::dragonHoard); each minion its Box of Luck, beside its jewel and rune.
+What follows was the plan:
 - items 14,11 at levels 8-10 ("Box of Kundun +1..+3", MM ZzzInventory.cpp:1704) and level 0
   (Box of Luck), with the glow at `(L-8)*2+1`;
 - opened by throwing, as the Firecracker already is (the same item, 14,11 at level 2; `Realm::crack`);

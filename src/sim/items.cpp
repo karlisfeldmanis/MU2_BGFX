@@ -567,6 +567,10 @@ bool firecracker(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 11;
 }
 
+bool boxOfLuck(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 51; }
+
+bool boxOfKundun(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 52; }
+
 bool scrollOfArchangel(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number == 16;
 }

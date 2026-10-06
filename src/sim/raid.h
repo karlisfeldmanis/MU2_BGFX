@@ -106,11 +106,22 @@ constexpr int64_t kSummonTicks = 30;
 constexpr int64_t kImmuneSayTicks = 10;
 // **What a minion leaves** beside its Zen (the user, 2026-10-06: 'we need also some decent drops
 // for small golden budge dragons'), the design's §1: a refining jewel one in kMinionJewelOdds, a
-// Rune of Creation one in kMinionRuneOdds, its power drawn for the hero at the dragon's level.
-// OpenMU's Box of Luck waits for the boxes (docs/kundun-box.md). Ours.
+// Rune of Creation one in kMinionRuneOdds, its power drawn for the hero at the dragon's level;
+// and the Golden Budge Dragon's own Box of Luck always, as MU's (WZ gObjMonster.cpp:4107). Ours
+// but the box.
 constexpr int kMinionJewelOdds = 4;
 constexpr int kMinionRuneOdds = 10;
 constexpr int64_t kSpoilsLingerTicks = 60 * 20;  // a kill's drop's minute (realm_items.cpp)
+// **Its hoard** (the design's section 1, Loot): the 2009 renewal's five Boxes of Kundun, +1 to
+// +3, scattered round its corpse (WZ gObjMonster.cpp:4183-4335), and ours beside them: two Runes
+// of Creation, three refining jewels and a Loch's Feather one in four, laid in a ring
+// kHoardReach tiles out. Three minutes on the ground, as a fight's end is busy. Ours but the boxes.
+constexpr int kHoardBoxes = 5;
+constexpr int kHoardRunes = 2;
+constexpr int kHoardJewels = 3;
+constexpr int kHoardFeatherOdds = 4;
+constexpr float kHoardReach = 2.5f;
+constexpr int64_t kHoardLingerTicks = 3 * 60 * 20;
 inline int minionsFor(int players) {
     const int n = 2 + 2 * (players < 1 ? 1 : players);
     return n > kMinionsMost ? kMinionsMost : n;

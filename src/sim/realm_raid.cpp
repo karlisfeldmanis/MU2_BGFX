@@ -268,6 +268,13 @@ void Realm::minionSpoils(const Body& dead) {
         core::logf("raid: a minion leaves %s%s", tables_->items[size_t(what.item)].name.c_str(),
                    what.powers[0] != 0 ? " with its power" : "");
     };
+    // Its own Box of Luck, always.
+    for (size_t i = 0; i < tables_->items.size(); ++i) {
+        if (boxOfLuck(tables_->items[i])) {
+            lay(Held{int32_t(i), 0, 1});
+            break;
+        }
+    }
     if (raidDice_.nextInt(0, kMinionJewelOdds) == 0) {
         const int32_t item = pick([](const content::ItemRow& r) { return refiningJewel(r); });
         if (item >= 0) lay(Held{item, 0, 1});
@@ -279,6 +286,57 @@ void Realm::minionSpoils(const Body& dead) {
             rune.powers[0] = drawRunePower(raidDice_, hero.kin, hero.second, level, false);
             lay(rune);
         }
+    }
+}
+
+void Realm::dragonHoard(const Body& dragon) {
+    if (raid_.stage == RaidStage::None || !tables_) return;
+    const Body& hero = bodies_[0];
+    const auto first = [this](auto&& admits) -> int32_t {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (admits(tables_->items[i])) return int32_t(i);
+        }
+        return -1;
+    };
+    // What it leaves, in order, laid round it evenly from a turn the dice choose.
+    Held hoard[kHoardBoxes + kHoardRunes + kHoardJewels + 1];
+    int count = 0;
+    const int32_t box = first([](const content::ItemRow& r) { return boxOfKundun(r); });
+    for (int i = 0; i < kHoardBoxes && box >= 0; ++i) {
+        hoard[count++] = Held{box, int16_t(1 + raidDice_.nextInt(0, kKundunTiers)), 1};
+    }
+    const int32_t rune = first([](const content::ItemRow& r) { return creation(r); });
+    for (int i = 0; i < kHoardRunes && rune >= 0; ++i) {
+        Held one{rune, 0, 1};
+        one.powers[0] = drawRunePower(raidDice_, hero.kin, hero.second, dragon.level, false);
+        hoard[count++] = one;
+    }
+    int jewels = 0;
+    for (const content::ItemRow& r : tables_->items) jewels += refiningJewel(r) ? 1 : 0;
+    for (int i = 0; i < kHoardJewels && jewels > 0; ++i) {
+        int at = raidDice_.nextInt(0, jewels);
+        for (size_t k = 0; k < tables_->items.size(); ++k) {
+            if (refiningJewel(tables_->items[k]) && at-- == 0) hoard[count++] = Held{int32_t(k), 0, 1};
+        }
+    }
+    if (raidDice_.nextInt(0, kHoardFeatherOdds) == 0) {
+        const int32_t feather = first([](const content::ItemRow& r) { return lochsFeather(r); });
+        if (feather >= 0) hoard[count++] = Held{feather, 0, 1};
+    }
+    const double turn = raidDice_.nextDouble() * 6.283185307179586;
+    for (int i = 0; i < count; ++i) {
+        const double angle = turn + 6.283185307179586 * double(i) / double(count);
+        const int c = int(std::lround(dragon.x + std::cos(angle) * kHoardReach));
+        const int r = int(std::lround(dragon.y + std::sin(angle) * kHoardReach));
+        Lying one;
+        one.what = hoard[i];
+        std::tie(one.column, one.row) = clearing(c, r);
+        one.vanishesAt = tick_ + kHoardLingerTicks;
+        one.id = nextId_++;
+        lying_.push_back(one);
+        say(What::Dropped, dragon, int32_t(one.id), one.what.item, one.what.refinement);
+        core::logf("raid: the dragon leaves %s +%d", tables_->items[size_t(one.what.item)].name.c_str(),
+                   one.what.refinement);
     }
 }
 

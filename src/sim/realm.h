@@ -798,6 +798,11 @@ public:
     // drop lies; else 2,004 Zen into the purse. Asked between ticks as `discard` is, so the
     // answer carries what the showing needs; says What::Cracked for the log.
     Cracked crack(int slot);
+    // A Box of Luck or of Kundun (`tier` its plus), already lifted from the bag: what it opens
+    // into (sim::kKundunItemIn100, kLuckItemIn100).
+    Cracked openBox(Cracked cracked, bool luck, int tier);
+    // The raid's dragon's hoard round its corpse (docs/golden-dragon-raid.md section 1).
+    void dragonHoard(const Body& dragon);
     // The bench's, and no rule of MU's: a thing laid on the ground beside him as a kill's drop
     // lies, from nobody's bag, for looking at a drop Lorencia never leaves. Its id, or 0.
     uint32_t lay(int32_t item, int refinement = 0, bool luck = false, int option = 0,
