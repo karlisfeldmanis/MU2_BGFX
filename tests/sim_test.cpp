@@ -8942,6 +8942,101 @@ void testEvilSpirit(const content::Tables& tables) {
         checkEqual(int(cooled), 0, "with no cooldown");
         check(blows > 0, "and they strike in his own colour");
     }
+    // Spirit Plague (2026-10-06), in a ring: about one landed spirit in five poisons what it
+    // struck, and the poison pulses.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 30);
+        realm.undying(true);
+        realm.learn(sim::skill::kEvilSpirit);
+        const uint8_t powers[3] = {uint8_t(sim::Power::Plague), 0, 0};
+        realm.give(tables.itemAt(13, 8), sim::kRingRight, 0, -1, false, 0, 0, 1, powers);
+        check(realm.hero().excel.plagues == 1, "a Spirit Plague in a ring is worn");
+        int hits = 0, lit = 0, pulses = 0;
+        std::vector<int64_t> before;
+        for (int tick = 0; tick < 20000; ++tick) {
+            const uint32_t nearest = nearestTo(realm);
+            const sim::Body* aim = realm.find(nearest);
+            if (aim && std::hypot(aim->x - realm.hero().x, aim->y - realm.hero().y) < 3.5f) {
+                realm.invoke(sim::skill::kEvilSpirit, nearest);
+            } else if (nearest != 0) {
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            before.clear();
+            for (const sim::Body& one : realm.bodies()) before.push_back(one.poisonUntil);
+            realm.step();
+            for (size_t i = 0; i < before.size() && i < realm.bodies().size(); ++i) {
+                lit += realm.bodies()[i].poisonUntil > before[i] ? 1 : 0;
+            }
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id || h.what != sim::What::Hit) continue;
+                // Only what lives through the spirit can be poisoned by it.
+                hits += h.spirit && h.c > 0 ? 1 : 0;
+                pulses += h.poisoned ? 1 : 0;
+            }
+            sim::HeroRecord again = realm.record();
+            again.mana = realm.hero().maxMana;
+            realm.restore(again);
+        }
+        std::printf("  Spirit Plague: %d spirit hits survived, %d poisoned, %d pulses\n", hits, lit,
+                    pulses);
+        const double rate = double(lit) / double(std::max(1, hits));
+        check(rate > 0.12 && rate < 0.28, "about one landed spirit in five poisons");
+        check(pulses > 0, "and the poison pulses");
+    }
+    // Plague Arrows (2026-10-06), in the elf's bow: the same on each Multi-Shot arrow that lands.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 11, 212, 198, sim::Kin::FairyElf, 30);
+        realm.undying(true);
+        realm.learn(sim::skill::kSkillshot);
+        // The hand rule's: the bow in the right, the quiver in the left.
+        const uint8_t powers[3] = {uint8_t(sim::Power::PlagueArrows), 0, 0};
+        realm.give(tables.itemAt(4, 0), sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        realm.give(tables.itemAt(4, 15), sim::kWeaponLeft, 0, 255);
+        check(realm.hero().excel.plagueArrows == 1, "Plague Arrows in her bow");
+        int hits = 0, lit = 0, fans = 0, lanes = 0;
+        std::vector<int64_t> before;
+        for (int tick = 0; tick < 6000; ++tick) {
+            if (tick % 10 == 0) {
+                if (const uint32_t nearest = nearestTo(realm); nearest != 0) {
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    request.skill = sim::skill::kSkillshot;
+                    realm.ask(request);
+                }
+            }
+            before.clear();
+            for (const sim::Body& one : realm.bodies()) before.push_back(one.poisonUntil);
+            realm.step();
+            for (size_t i = 0; i < before.size() && i < realm.bodies().size(); ++i) {
+                lit += realm.bodies()[i].poisonUntil > before[i] ? 1 : 0;
+            }
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who == realm.hero().id && h.what == sim::What::Hit && h.thrown &&
+                    !h.poisoned && h.c > 0) {
+                    ++hits;
+                }
+                if (h.who == realm.hero().id && h.what == sim::What::Loosed &&
+                    h.a == sim::skill::kSkillshot) {
+                    ++fans;
+                    for (int a = 0; a < 3; ++a) lanes += (h.plagueLanes >> a) & 1;
+                }
+            }
+            sim::HeroRecord again = realm.record();
+            again.mana = realm.hero().maxMana;
+            realm.restore(again);
+        }
+        std::printf("  Plague Arrows: %d fans, %d lanes poisoned, %d arrows survived, %d "
+                    "poisoned\n", fans, lanes, hits, lit);
+        const double rate = double(lanes) / double(std::max(1, fans * 3));
+        check(rate > 0.14 && rate < 0.26, "about one lane in five is poisoned");
+        check(lit > 0, "and what its arrows land in is poisoned");
+    }
 }
 
 // What deaths leave, counted over many of them with no hunt (Realm::dropFor): the three jewels

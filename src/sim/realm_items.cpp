@@ -355,6 +355,7 @@ void Realm::rearm(Body& hero) {
             if (power->power == Power::Frenzy) ++e.frenzies;
             if (power->power == Power::Renewal) e.renewal += kRenewalShare;
             if (power->power == Power::Spirits && (row->shield() || jewellery(*row))) ++e.spirits;
+            if (power->power == Power::Plague && (row->shield() || jewellery(*row))) ++e.plagues;
             if (power->power == Power::Ironskin) e.runeDefense += kIronskinDefense;
             if (power->power == Power::Steadfast) e.blockChance += kSteadfastBlock;
             if (power->power == Power::SecondWind) {
@@ -381,6 +382,12 @@ void Realm::rearm(Body& hero) {
                 hero.excel.kinship = true;
             }
             if (power && power->power == Power::Wrath && !jewellery(*row)) ++hero.excel.wraths;
+            // Spirit Plague in a hand here; the shield's and the jewellery's are counted above.
+            if (power && power->power == Power::Plague && !jewellery(*row)) ++hero.excel.plagues;
+            if (power && power->power == Power::PlagueArrows && !jewellery(*row) &&
+                power->takenBy(hero.kin, hero.second)) {
+                ++hero.excel.plagueArrows;
+            }
             if (power && power->power == Power::Whirlwind && !jewellery(*row) &&
                 power->takenBy(hero.kin, hero.second)) {
                 ++hero.excel.whirlwinds;

@@ -581,6 +581,29 @@ bool Realm::letSpiritsGo(Body& hero, float force, bool rune) {
 // on his swing; a wizard's is that band already. What it does to what it strikes is MU's for any
 // spell: the number, and a flinch (ReceiveAttackDamage, WSclient.cpp:3237-3300) -- no element,
 // nothing more; the spirits pass through.
+// A plague rune's poison (sim/items.h kPlagueChance): `worn` runes' chance, the Poison spell's
+// length, each pulse kPlagueShare of its life, floored and capped by the blow that carried it.
+void Realm::plague(Body& hero, Body& target, int blowDamage, int worn) {
+    if (worn <= 0 || !target.alive() || !target.monster()) return;
+    if (!runeDice_.nextBool(std::min(kPlagueMost, kPlagueChance * worn))) return;
+    envenom(hero, target, blowDamage);
+}
+
+void Realm::envenom(Body& hero, Body& target, int blowDamage) {
+    const SkillRow* poison = skillNumbered(skill::kPoison);
+    if (poison == nullptr || !target.alive() || !target.monster()) return;
+    blowDamage = std::max(1, blowDamage);
+    const int share = int(std::max(float(target.maxHealth) * float(kPlagueShare),
+                                   float(blowDamage) * float(kBurnRuneFloor)) *
+                          elementForce(hero, Element::Poison));
+    target.poisonUntil = tick_ + poison->poisonTicks;
+    target.poisonNext = tick_ + kPoisonFirst;
+    target.poisonDamage = std::max(1, std::min(share, blowDamage));
+    target.poisonBy = hero.id;
+    core::logf("plague: tick %lld, #%u poisoned for %d a pulse", (long long)tick_, target.id,
+               target.poisonDamage);
+}
+
 void Realm::spiritStrike(Body& hero, const SpiritBlow& blow) {
     const SkillRow* row = skillNumbered(skill::kEvilSpirit);
     Body* target = body(blow.target);
@@ -597,6 +620,10 @@ void Realm::spiritStrike(Body& hero, const SpiritBlow& blow) {
     if (said < happenings_.size()) {
         happenings_[said].rune = blow.rune;
         happenings_[said].spirit = happenings_[said].what == What::Hit;
+    }
+    // Spirit Plague: a spirit that landed may poison what it struck (sim/items.h kPlagueChance).
+    if (said < happenings_.size() && happenings_[said].what == What::Hit) {
+        plague(hero, *target, happenings_[said].a, hero.excel.plagues);
     }
     hero.stats.wizardMinimum = own.wizardMinimum;
     hero.stats.wizardMaximum = own.wizardMaximum;
@@ -786,6 +813,7 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
             one = Flight{tick_ + air, at, row.number, force, pays};
+            one.plague = loosingPlague_;
             return;
         }
     }
@@ -794,6 +822,9 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
         const float x = struck->x, y = struck->y;
         const size_t said = happenings_.size();
         strikeAt(hero, *struck, force, &row, true, pays);
+        if (loosingPlague_ && said < happenings_.size() && happenings_[said].what == What::Hit) {
+            envenom(hero, *struck, happenings_[said].a);
+        }
         if (row.number == skill::kFireBall && hero.player && said < happenings_.size() &&
             happenings_[said].what == What::Hit) {
             pyroblast(hero, at, x, y, force);
@@ -915,6 +946,18 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
                                : laneTiles(row);
     // One `Loosed` for the cast: the drawing fans its own arrows off it.
     say(What::Loosed, hero, row.number, 0, hero.archer, aimedAt);
+    // Plague Arrows: each lane of a fan of more than one rolls its poison as it leaves the
+    // string, so the drawing can tone that arrow green (`Happening::plagueLanes`) and every body
+    // it flies through is poisoned (sim/items.h kPlagueChance).
+    const int laneCount = lanesOf(row, hero.player ? hero.excel.volleys : 0);
+    uint8_t plagued = 0;
+    if (hero.player && hero.excel.plagueArrows > 0 && laneCount > 1) {
+        const double chance = std::min(kPlagueMost, kPlagueChance * hero.excel.plagueArrows);
+        for (int a = 0; a < laneCount && a < 8; ++a) {
+            if (runeDice_.nextBool(chance)) plagued |= uint8_t(1u << a);
+        }
+        happenings_.back().plagueLanes = plagued;
+    }
     constexpr float kRadians = 3.14159265358979f / 180.0f;
     // **Each body once a cast** (the user, 2026-10-02: "multi-shot feels very overpowered"): the
     // lanes are 1.5 tiles wide and 15 degrees apart, so all three cross anything within 2.9 tiles
@@ -970,7 +1013,9 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
                 return;
             }
             if (struckCount < kVictims) struck[struckCount++] = lane[i].id;
+            loosingPlague_ = a < 8 && (plagued & (1u << a)) != 0;
             loose(hero, row, lane[i].id, force, false, lane[i].id == aimedAt);
+            loosingPlague_ = false;
         }
     }
 }
@@ -1020,6 +1065,10 @@ void Realm::arrive() {
         // landed may burst.
         // A Pyroblaster's hop is the rune's, drawn in its colour, and flies on to the next
         // whatever it did; his own Fire Ball that landed may start a chain.
+        // A Plague Arrows lane's arrow poisons what it landed in.
+        if (flight.plague && said < happenings_.size() && happenings_[said].what == What::Hit) {
+            envenom(hero, *target, happenings_[said].a);
+        }
         if (said < happenings_.size()) {
             if (flight.hops > 0) {
                 happenings_[said].rune = true;

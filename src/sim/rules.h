@@ -76,6 +76,10 @@ struct Excellence {
     // How many Evil Spirit runes his shield, rings and pendant carry, each rolling on a miss
     // (sim::kSpiritChance).
     int spirits = 0;
+    // How many Spirit Plague runes he wears, anywhere that takes one (sim::kPlagueChance).
+    int plagues = 0;
+    // How many Plague Arrows runes her hands carry (sim::kPlagueChance, on Multi-Shot).
+    int plagueArrows = 0;
     // How many element runes his hands, rings and pendant carry, by sim::Element (sim/items.h
     // kElementRuneDamage), each adding its share to his blows of that element.
     int elementRunes[6] = {};

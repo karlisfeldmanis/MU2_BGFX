@@ -217,6 +217,8 @@ struct Happening {
     // A `Hit` a Rune of Creation's power dealt -- Stormcall's lightning, Meteor's rock, Frost
     // Arrow's second wound -- drawn in the rune's own colour (the user, 2026-10-01).
     bool rune = false;
+    // A fan's `Loosed`: which of its lanes, a bit each, Plague Arrows poisoned -- drawn green.
+    uint8_t plagueLanes = 0;
     // A `Hit` Evil Spirit's spirits dealt, the wizard's spell's or the shield rune's: the drawing
     // spins what it struck (Play, kSpiritStormTime).
     bool spirit = false;
@@ -1263,6 +1265,12 @@ private:
     // A magic rune's blow: his swing's roll with his energy's band on top (sim::kRuneEnergyLow
     // and High), at `force`, unpaid. Stormcall's lightning and the knight's fire runes.
     void runeStrike(Body& hero, Body& target, float force);
+    // Spirit Plague's and Plague Arrows' poison on what a blow of `blowDamage` struck.
+    void plague(Body& hero, Body& target, int blowDamage, int worn);
+    // That poison laid on, unrolled: a Plague Arrows lane's arrow.
+    void envenom(Body& hero, Body& target, int blowDamage);
+    // Set while a Plague Arrows lane's arrows are loosed, so their flights carry the poison.
+    bool loosingPlague_ = false;
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
     // something standable or not at all.
     void push(Body& target, const Body& from) { push(target, from.x, from.y); }
@@ -1399,6 +1407,8 @@ private:
         // A knight's Fireburst chain: each hop lands as his rune's blow (`runeStrike`), not as
         // the wizard's spell.
         bool swung = false;
+        // A Plague Arrows lane's arrow: it poisons what it lands in (Realm::envenom).
+        bool plague = false;
     };
     // A Pyroblaster's chain flying on from `off`, which it struck at (x, y): to the nearest
     // monster it has not struck yet, while it has hops left.

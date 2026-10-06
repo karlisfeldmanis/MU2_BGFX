@@ -618,7 +618,9 @@ enum class Power : uint8_t {
     GreaterAscendance = 38,
     Hellfire = 39,
     Twister = 40,
-    Burn = 41
+    Burn = 41,
+    Plague = 42,
+    PlagueArrows = 43
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -906,6 +908,22 @@ constexpr double kBurnRuneShare = 0.03;
 constexpr double kBurnRuneFloor = 0.15;
 constexpr int32_t kBurnRuneTicks = 80;
 constexpr int32_t kBurnRuneEvery = 20;
+// **Spirit Plague** (the user, 2026-10-06: 'Evil Spirits has chance to poison monster and do
+// some percentage of monster hp'), Epic, every class's, in a weapon, a shield, a ring or the
+// pendant: each blow an Evil Spirit lands -- the wizard's spell's or an Evil Spirit rune's --
+// has kPlagueChance for each worn (to kPlagueMost) to poison what it struck, as the Poison spell
+// does and for as long, each pulse kPlagueShare of its maximum health: no less than
+// kBurnRuneFloor of the spirit's blow, no more than the blow itself, so a boss is not melted.
+// The poison's own rule holds: a pulse never takes the last point. A second restarts it.
+// **Plague Arrows** (the user, 2026-10-06: 'similiar rune for multi shot for elf, where multi
+// shot has chance to poison enemy similiar like evil spirits'), Epic, the elf's weapon: each
+// lane of a fan of arrows -- Multi-Shot's three, and Penetration's under a Piercing Volley ('this
+// should also work on rune where penetration become multi-shot') -- rolls the chance as it is
+// loosed, is drawn a little green ('so user at least sees which arrows was with poison'), and
+// poisons every body it lands in at the same share. invention.
+constexpr double kPlagueChance = 0.20;
+constexpr double kPlagueMost = 0.50;
+constexpr double kPlagueShare = 0.03;
 // **Bulwark** (the user: "allow to use defense skill without shield"), a knight's weapon's: his
 // Defense goes up with no shield on his arm -- a second weapon, a two-handed one or an empty
 // hand -- off his strength and agility alone (`guardShare` with no shield's defence in it).

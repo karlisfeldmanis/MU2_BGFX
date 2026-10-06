@@ -599,6 +599,9 @@ constexpr int kEmberFlames = 3;
 constexpr float kEmberScale = 0.6f;
 constexpr float kEmberLight = 0.35f;
 constexpr float kEmberTint[3] = {1.0f, 0.55f, 0.35f};
+// A Plague Arrows lane's arrow (sim Happening::plagueLanes): its fire and streak toned a pale
+// poison green, softer than the Chaos Nature Bow's (fx/arrow.h kNatureFire). Ours.
+constexpr float kPlagueArrowTint[3] = {0.55f, 1.0f, 0.5f};
 // Tarkan's bosses' Flame of Evil (sim kBosses): the Zaikan's and the Death Beam Knight's
 // AT_SKILL_BOSS blow throws the ring of eighteen staffs at the attack's fourteenth frame
 // (fx/staff_ring.h), and the Death Beam Knight a MODEL_SKILL_BLAST within 400 units every frame
