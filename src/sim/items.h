@@ -881,7 +881,8 @@ constexpr float kFireburstForce = 0.8f;
 constexpr double kFireRingChance = 0.10;
 constexpr float kFireRingForce = 1.0f;
 // **The knight's spell runes** (the user, 2026-10-06: 'rune for DK that there is chance of
-// hellfire coming from character on hits', and the same of twister), Epic, any knight's weapon.
+// hellfire coming from character on hits', and the same of twister), Legendary (they strike a
+// crowd; Epic until the user's 'ok do it', 2026-10-06), any knight's weapon.
 // **Hellfire**: a swing that lands has kHellfireRuneChance to set the wizard's Hellfire ring
 // round him, striking every monster within its four tiles. **Twister**: a swing that lands has
 // kTwisterRuneChance to send the wizard's storm walking out from his feet toward what he struck,

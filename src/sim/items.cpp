@@ -414,10 +414,12 @@ const PowerRow* powerOf(uint8_t power) {
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::FireRing, "Ring of Fire", "10% on hit: a ring of fire bursts around you",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
+        // Legendary, as they strike a crowd, but any knight's: Ring of Fire and Fireburst stay the
+        // stronger Blade Knight pair (the user, 2026-10-06).
         {Power::Hellfire, "Hellfire", "10% on hit: hellfire erupts around you",
-         kKnightOnly, kInWeapon, Rarity::Epic},
+         kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::Twister, "Twister", "10% on hit: a twister walks out at the target",
-         kKnightOnly, kInWeapon, Rarity::Epic},
+         kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::Burn, "Immolate", "15% on hit: the target burns for 3% of its life a second, 4 s",
          kKnightOnly, kInWeapon, Rarity::Epic},
         {Power::Bulwark, "Bulwark", "Defense works without a shield", kKnightOnly,
