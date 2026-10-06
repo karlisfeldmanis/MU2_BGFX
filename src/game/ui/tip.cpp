@@ -746,18 +746,9 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
     const size_t footLines = std::max(sheet.who.size(), right.size());
     const bool hasFoot = item ? footLines > 0
                               : !sheet.wear.empty() || !sheet.price.empty() || !sheet.note.empty();
-    // **An item's wear gauge** (the user, 2026-10-06: 'durability ring very small and show
-    // percentage under the ring'): a ring at the foot's right edge, 1.7 lines across,
-    // and its percentage centred under it. The foot is as tall as the two at the least.
-    const bool gauge = item && !sheet.wear.empty();
-    const float gaugeR = std::round(footLine * 0.85f);
-    const float gaugeThick = std::max(3.0f, 4.0f * u);
-    const float gaugeTextSize = footSize;
-    const float gaugeTall = gauge ? gaugeR * 2.0f + std::round(gaugeTextSize * 1.45f) : 0.0f;
-    const float footTall =
-        !hasFoot ? 0.0f
-        : item   ? std::max(float(footLines) * footLine, gaugeTall) + railPad * 2.0f
-                 : std::round(footSize * 1.4f) + railPad * 2.0f;
+    const float footTall = !hasFoot ? 0.0f
+                           : item   ? float(footLines) * footLine + railPad * 2.0f
+                                    : std::round(footSize * 1.4f) + railPad * 2.0f;
     // A card with no foot ends on its last row with one rail's padding under it, which is less
     // air than the head carries over its name and reads as the text falling out of the bottom.
     // The difference is made up here rather than in the section, so an item card -- which always
@@ -1024,8 +1015,11 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         const float bottoms[4] = {0.0f, 0.0f, radius, radius};
         roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, fade(kFootBack));
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
-        // The wear's ring: its radius off the foot's letters, its stroke as the old bar's height.
-        const float ringR = footSize * 0.42f, ringThick = std::max(1.5f, 2.2f * u);
+        // The wear's ring before its words, "Durability: 65%" (the user, 2026-10-06: 'very small',
+        // then 'just use Durability: 100%', 'with ring'): a little taller than the letters.
+        const float ringR = std::round(footSize * 0.62f), ringThick = std::max(2.0f, 3.0f * u);
+        const uint32_t wearInk = fade(sheet.wearTone == Tone::White ? panel::kLettering
+                                                                    : colourOf(sheet.wearTone));
         if (item) {
             const auto ink = [&](const FootLine& l) {
                 return fade(l.quiet ? kFoot : colourOf(l.tone));
@@ -1037,29 +1031,16 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                 at += footLine;
             }
             at = pen + railPad;
-            float edge = box.right() - pad;
-            // The gauge at the right edge, and the column's words to its left.
-            if (gauge) {
-                const uint32_t wearInk = fade(sheet.wearTone == Tone::White
-                                                  ? panel::kLettering
-                                                  : colourOf(sheet.wearTone));
-                const float cx = edge - gaugeR, cy = pen + railPad + gaugeR;
-                wearRing(canvas, cx, cy, gaugeR, gaugeThick, sheet.worn, fade(kBarBack), wearInk);
-                const std::string share =
-                    std::to_string(int(std::lround(std::clamp(sheet.worn, 0.0f, 1.0f) * 100.0f))) +
-                    "%";
-                const float sw = face.measure(gaugeTextSize, share);
-                say(type, canvas, std::round(cx - sw * 0.5f),
-                    std::round(cy + gaugeR + gaugeTextSize * 1.15f), gaugeTextSize, wearInk, share,
-                    drop);
-                edge -= gaugeR * 2.0f + pad * 0.8f;
-            }
+            const float edge = box.right() - pad;
             for (size_t i = 0; i < right.size(); ++i) {
                 const FootLine& l = right[i];
                 const float baseline = middle(face, at, footLine, footSize);
                 const float w = face.measure(footSize, l.text);
-                if (i == 0 && gauge) {
+                // The wear's ring stands to the left of its words, in its band's colour.
+                if (i == 0 && !sheet.wear.empty()) {
                     say(type, canvas, edge - w, baseline, footSize, fade(kFoot), l.text, drop);
+                    wearRing(canvas, edge - w - pad * 0.5f - ringR, baseline - footSize * 0.33f,
+                             ringR, ringThick, sheet.worn, fade(kBarBack), wearInk);
                 } else {
                     say(type, canvas, edge - w, baseline, footSize, ink(l), l.text, drop);
                 }
@@ -1077,9 +1058,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
             const float w = say(type, canvas, left, baseline, footSize, fade(kFoot), sheet.wear, drop);
             const float cx = left + w + pad * 0.5f + ringR;
             wearRing(canvas, cx, baseline - footSize * 0.33f, ringR, ringThick, sheet.worn,
-                     fade(kBarBack),
-                     fade(sheet.wearTone == Tone::White ? panel::kLettering
-                                                        : colourOf(sheet.wearTone)));
+                     fade(kBarBack), wearInk);
             left = cx + ringR + pad;
         }
         if (!sheet.note.empty()) {

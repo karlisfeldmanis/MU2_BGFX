@@ -1035,9 +1035,13 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (sim::wears(row) && !sim::archangelWeapon(row)) {
         const int maximum = sim::maximumDurability(row, what);
         // A pet's is its Life: MU's `Life: %d` (GT 70) for ITEM_HELPER to +7 (:4656-4661).
+        // Its share left, "Durability: 65%", beside the ring (the user, 2026-10-06: 'just use
+        // Durability: 100%'), where MU writes the two figures.
         const char* word =
-            row.group == sim::kGroupPets && !sim::jewellery(row) ? "Life " : "Durability ";
-        sheet.wear = word + std::to_string(what.durability) + " / " + std::to_string(maximum);
+            row.group == sim::kGroupPets && !sim::jewellery(row) ? "Life: " : "Durability: ";
+        const int share =
+            maximum > 0 ? int(std::lround(100.0 * double(what.durability) / double(maximum))) : 0;
+        sheet.wear = word + std::to_string(share) + "%";
         sheet.worn = maximum > 0 ? float(what.durability) / float(maximum) : 0.0f;
         switch (sim::wornBand(what.durability, maximum)) {
             case sim::Worn::Broken:
