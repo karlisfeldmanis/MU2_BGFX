@@ -2232,6 +2232,24 @@
       ],
       "from": "Sounds[4], 167 -- Data\\Sound\\mDrakanDie.wav. ZzzOpenData.cpp:3775-3781."
     },
+    "greatdrakan_move": {
+      "files": [
+        "mDrakan1.wav"
+      ],
+      "from": "As drakan_move: the Drakan model's own, ZzzOpenData.cpp:3775-3781 (Icarus's Great Drakan)."
+    },
+    "greatdrakan_attack": {
+      "files": [
+        "mDrakanAttack1.wav"
+      ],
+      "from": "As drakan_attack: the Drakan model's own, ZzzOpenData.cpp:3775-3781 (Icarus's Great Drakan)."
+    },
+    "greatdrakan_die": {
+      "files": [
+        "mDrakanDie.wav"
+      ],
+      "from": "As drakan_die: the Drakan model's own, ZzzOpenData.cpp:3775-3781 (Icarus's Great Drakan)."
+    },
     "phantomknight_move": {
       "files": [
         "mPhantom1.wav"

@@ -735,10 +735,18 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.shadeBones.clear();
             const bool shadow = look->name == kShadowFigure || look->name == kPoisonShadowFigure;
             one.shadePoison = look->name == kPoisonShadowFigure;
-            one.embers = look->name == kDeathGorgonFigure || look->name == kDeathKnightFigure;
+            one.embers = look->name == kDeathGorgonFigure || look->name == kDeathKnightFigure ||
+                         look->name == kGreatDrakanFigure;
             one.emberBone = -1;
-            one.emberEvery = look->name == kDeathKnightFigure ? kKnightEmberEveryFrames
-                                                              : kEmberEveryFrames;
+            one.emberEvery = look->name == kDeathKnightFigure    ? kKnightEmberEveryFrames
+                             : look->name == kGreatDrakanFigure ? kGreatDrakanEmberEvery
+                                                                : kEmberEveryFrames;
+            if (look->name == kGreatDrakanFigure && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == kGreatDrakanFireBone) one.emberBone = int(b);
+                }
+            }
             one.handBones[0] = one.handBones[1] = -1;
             one.beams = look->name == kVeparFigure        ? Drawn::Beams::Blur
                         : look->name == kLizardKingFigure ? Drawn::Beams::Thunder

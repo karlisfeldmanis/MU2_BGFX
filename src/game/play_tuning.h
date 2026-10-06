@@ -543,6 +543,13 @@ inline constexpr const char* kDrakanArcs[][2] = {
 inline constexpr int kDrakanArcsAFrame = 2;
 constexpr float kDrakanArcHalf = 0.10f;  // 20 units wide
 constexpr int32_t kDrakanNumber = 73;
+// MONSTER_GREAT_DRAKAN, the Drakan's body in black and red: no stars and no arcs, but a
+// BITMAP_FIRE at Scale 0.3 on bone 18, stars13, each frame (ZzzCharacter.cpp:8867-8879) -- ours
+// as the Death Knight's embers, one every kGreatDrakanEmberEvery reference frames.
+inline constexpr const char* kGreatDrakanFigure = "GreatDrakan01";
+inline constexpr const char* kGreatDrakanFireBone = "stars13";
+constexpr float kGreatDrakanEmberEvery = 2.0f;
+constexpr int32_t kGreatDrakanNumber = 75;
 // MONSTER_PHANTOM_KNIGHT's boss blow: 36 BITMAP_JOINT_SPIRIT sub 1 at Scale 60 from a metre over
 // it at CheckAttackTime(14) (ZzzCharacter.cpp:1710-1732). Ours: one Evil Spirit release of eight
 // (fx/spirits), the wizard's own joints, at that time -- thirty-six filled the sky.
@@ -708,6 +715,7 @@ inline constexpr InfernoBlow kInfernoBlows[] = {
     {71, true, true, attackTime(5)},  // Mega Crust
     {74, true, true, attackTime(5)},  // Alpha Crust
     {73, true, true, attackTime(11), true},  // Drakan (ZzzCharacter.cpp:1734-1757)
+    {75, true, true, attackTime(11), true},  // Great Drakan, the same case
 };
 
 // Charon's light, RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268):

@@ -258,6 +258,17 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   metre over it at CheckAttackTime(14) (`:1710-1732`), ours one Evil Spirit release of eight
   (`fx/spirits`, `spiritsDue_`). phantomknight_move/attack/die. kResistances {72, 14, 14},
   kDropRates {72, 14, 3, 30}.
+- **Great Drakan (75)**: Monster55 again as `GreatDrakan01`, its own build of the same export,
+  scale 1.0; 12 spawns, ids 1534-1545, at the south lane's foot and the south end (OM's 30,231).
+  Drawn with its MonsterIndex as ExtraMon (`:8645-8651`), so RenderObject's MODEL_DRAKAN arm
+  lights the body BodyLight (0.1, 0.1, 0.1) and mesh 1 (1, 0.1, 0.1) (`ZzzObject.cpp:1270-1278`):
+  ours bakes that into copies of the Drakan's five sheets, a black dragon in red plates. A
+  BITMAP_FIRE on bone 18, stars13, each frame (`:8867-8879`), ours an ember every other
+  reference frame (the Death Knight's). No blue stars and no arcs, MONSTER_DRAKAN's alone. The
+  Drakan's blows: Attack 1's Inferno at CheckAttackTime(11), Attack 2's bolt, which pushes
+  (`kBoltBlowers` += 75); Flame of Evil one in five (kBosses += 75), showing nothing more.
+  greatdrakan_* sounds, the Drakan's. Left out: the chrome-bright RENDER_EXTRA pass and the five
+  MODEL_PIERCING + 1 streaks. kResistances {75, 15, 15}, kDropRates {75, 14, 3, 30}.
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

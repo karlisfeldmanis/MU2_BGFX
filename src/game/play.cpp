@@ -1439,7 +1439,8 @@ void Play::update(double seconds) {
                             } else if (bossNumber == kPhantomKnightNumber) {
                                 // The Phantom Knight: its spirits (kPhantomSpiritWait).
                                 spiritsDue_.push_back({happening.who, kPhantomSpiritWait});
-                            } else if (bossNumber == 58 || bossNumber == kDrakanNumber) {
+                            } else if (bossNumber == 58 || bossNumber == kDrakanNumber ||
+                                       bossNumber == kGreatDrakanNumber) {
                                 // The Tantallos: its blow's Inferno and nothing more; the Drakan,
                                 // its blow alone (kDrakanFigure).
                             } else if (bossNumber == 59 || bossNumber == 63) {
