@@ -1744,6 +1744,8 @@ void Realm::kill(Body& dead, Body& killer) {
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
     // it was when the blow landed.
     if (killer.player) leave(dead, killer);
+    // And a raid minion's own, whoever of the party struck it down.
+    if (partisan(killer)) minionSpoils(dead);
     // Life for the kill: its level, two seconds on (gObjMonsterDieLifePlus, sent by
     // gObjAddMsgSendDelay at 2000 ms; user.cpp:13665-13669, :14243, 1.00.93) -- the user's pick
     // of 2026-09-30. OpenMU gives nothing. Queued as a sip is, so a death before it is due spills it.

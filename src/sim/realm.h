@@ -1404,6 +1404,8 @@ private:
     // when a whole point goes.
     void wearDown(int slot, double amount);
     void leave(const Body& dead, const Body& killer);
+    // A raid minion's own spoils beside what `leave` lays (sim::kMinionJewelOdds).
+    void minionSpoils(const Body& dead);
     std::pair<int, int> clearing(int column, int row) const;
     bool bare(int column, int row) const;
     bool take(size_t index);

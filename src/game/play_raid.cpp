@@ -117,10 +117,10 @@ void Play::raidSaid(const sim::Happening& happening) {
         return;
     }
     if (event == sim::RaidEvent::Wave) {
-        // It summons its minions with its roar, played whole, and does not swing through it
-        // (the realm holds it, sim::kSummonTicks).
+        // It summons its minions with its roar, the landing's own, and does not swing through it
+        // (the realm holds it, sim::kSummonTicks). Not the clip whole: its opening reads as a
+        // wing-beat (the user, 2026-10-06: 'for some reason 1 time dragon used fly animation').
         roarOwed_ = dragon->id;
-        roarWhole_ = true;
         return;
     }
     if (event == sim::RaidEvent::Shadow) {

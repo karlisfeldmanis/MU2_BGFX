@@ -21,6 +21,7 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include <tuple>
 
 #include "core/log.h"
 #include "sim/realm_tuning.h"
@@ -236,6 +237,49 @@ void Realm::dressHero(const RaiderKit& kit) {
     core::logf("raid: the hero %s, level %d, health %d, mana %d, damage %d-%d, defence %d",
                kit.name.c_str(), hero.level, hero.maxHealth, hero.maxMana, hero.stats.minimumDamage,
                hero.stats.maximumDamage, hero.stats.defense);
+}
+
+void Realm::minionSpoils(const Body& dead) {
+    if (raid_.stage == RaidStage::None || dead.kind < 0 || size_t(dead.kind) >= tables_->kinds.size() ||
+        tables_->kinds[size_t(dead.kind)].number != kGoldenBudgeDragonNumber) {
+        return;
+    }
+    const Body& hero = bodies_[0];
+    // The rune's rarity by the dragon's level, not the little one's fifteen (a Common there).
+    const int level = invaderSlot_ >= 0 ? bodies_[size_t(invaderSlot_)].level : dead.level;
+    const auto pick = [&](auto&& admits) -> int32_t {
+        int count = 0;
+        for (const content::ItemRow& row : tables_->items) count += admits(row) ? 1 : 0;
+        if (count == 0) return -1;
+        int at = raidDice_.nextInt(0, count);
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (admits(tables_->items[i]) && at-- == 0) return int32_t(i);
+        }
+        return -1;
+    };
+    const auto lay = [&](const Held& what) {
+        Lying one;
+        one.what = what;
+        std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
+        one.vanishesAt = tick_ + kSpoilsLingerTicks;
+        one.id = nextId_++;
+        lying_.push_back(one);
+        say(What::Dropped, dead, int32_t(one.id), what.item, 0);
+        core::logf("raid: a minion leaves %s%s", tables_->items[size_t(what.item)].name.c_str(),
+                   what.powers[0] != 0 ? " with its power" : "");
+    };
+    if (raidDice_.nextInt(0, kMinionJewelOdds) == 0) {
+        const int32_t item = pick([](const content::ItemRow& r) { return refiningJewel(r); });
+        if (item >= 0) lay(Held{item, 0, 1});
+    }
+    if (raidDice_.nextInt(0, kMinionRuneOdds) == 0) {
+        const int32_t item = pick([](const content::ItemRow& r) { return creation(r); });
+        if (item >= 0) {
+            Held rune{item, 0, 1};
+            rune.powers[0] = drawRunePower(raidDice_, hero.kin, hero.second, level, false);
+            lay(rune);
+        }
+    }
 }
 
 bool Realm::shrugs(const Body& one) {

@@ -303,7 +303,8 @@ Later the same day:
   (22 for ten, at most 24), four to nine tiles out, health x12 and bite x6 for the party they meet.
 - **It summons, it does not strike** ('dragon can do summoning animations (not attacking)'): a
   wave halts it, drops any blow in hand, and holds it kSummonTicks (1.5 s) while it plays its roar
-  (Monster32's clip 1) whole.
+  (Monster32's clip 1) from where the landing's starts -- whole, its opening read as a wing-beat
+  ('for some reason 1 time dragon used fly animation').
 - **The minions are golden** ('golden budge dragon has to be with golden effect'): drawn at +9,
   Chrome01 and Shiny01 added, MuMain's RENDER_METAL | RENDER_CHROME pair (ZzzCharacter.cpp:8716-8785).
 - **The party's runes work** ('probably our raid group is too weak without runes'): each weapon
@@ -315,6 +316,9 @@ Later the same day:
   damage text immune'): no freeze, chill, push, shove or pull takes it (Realm::shrugs), and
   IMMUNE goes up over it at most twice a second. Every wound still lands. Ten runed fighters'
   Stormcall pushes had walked it out of its fight.
+- **The minions are worth killing** ('we need also some decent drops for small golden budge
+  dragons'): beside their Zen, a refining jewel 1 in 4 and a Rune of Creation 1 in 10, its power
+  drawn for the hero at the dragon's level (Realm::minionSpoils). The Box of Luck waits for the boxes.
 - **Guards leave it alone** ('guards cant attack dragon'): a guard's blow is a share of what it
   strikes and took 91,200 off it a blow; no guard takes the raid's dragon on.
 

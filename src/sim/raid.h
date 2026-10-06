@@ -104,6 +104,13 @@ constexpr int64_t kSummonTicks = 30;
 // and "Immune" goes up over it at most this often -- ten runed fighters would say it every
 // tick. Every wound still lands. Ours.
 constexpr int64_t kImmuneSayTicks = 10;
+// **What a minion leaves** beside its Zen (the user, 2026-10-06: 'we need also some decent drops
+// for small golden budge dragons'), the design's §1: a refining jewel one in kMinionJewelOdds, a
+// Rune of Creation one in kMinionRuneOdds, its power drawn for the hero at the dragon's level.
+// OpenMU's Box of Luck waits for the boxes (docs/kundun-box.md). Ours.
+constexpr int kMinionJewelOdds = 4;
+constexpr int kMinionRuneOdds = 10;
+constexpr int64_t kSpoilsLingerTicks = 60 * 20;  // a kill's drop's minute (realm_items.cpp)
 inline int minionsFor(int players) {
     const int n = 2 + 2 * (players < 1 ? 1 : players);
     return n > kMinionsMost ? kMinionsMost : n;
