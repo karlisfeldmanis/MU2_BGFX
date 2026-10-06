@@ -30,8 +30,9 @@ public:
     // A block on the body standing at `feet` (world metres), turned to `yaw` -- the caster's, as
     // MU turns it -- and its five shards. `floor` is the ground there, for the shards' bounce.
     void freeze(const float feet[3], float yaw);
-    // An Ice Monster's death: its body out and ten shards off its feet, no block.
-    void shatter(const float feet[3]);
+    // An Ice Monster's death: its body out and ten shards off its feet, no block. `scale`
+    // shrinks the shards and their throw -- Cometfall's crystals are small (fx/comet.h).
+    void shatter(const float feet[3], float scale = 1.0f);
     // **Cold on the caster** while he casts it (the user, 2026-09-28: "character need some ice
     // smoke effect on cast"), ours, as Meteorite's burn is: frosty wisps born round his body --
     // `feet` and his drawn `tall` -- rising off him. Called every frame the cast runs.
@@ -111,7 +112,7 @@ private:
     uint32_t dice_ = 0x1CE1CE1Cu;
     float unit();
     float between(float a, float b) { return a + (b - a) * unit(); }
-    void shards(const float feet[3], int count);
+    void shards(const float feet[3], int count, float scale = 1.0f);
     Wisp* puff(const float at[3]);
 };
 

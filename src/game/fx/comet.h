@@ -62,6 +62,9 @@ public:
         uint32_t attacker;
     };
     void update(float seconds, std::vector<Landing>& landings);
+    // The crystals the caller throws there, Ice's shatter at this share of an Ice Monster's
+    // shards (the user, 2026-10-06: "much smaller").
+    static constexpr float kCrystalScale = 0.35f;
 
     void gather(gfx::Effects& effects, const float* eye) const;
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
@@ -93,14 +96,15 @@ private:
     static constexpr float kFlashLift = 60.0f;
     static constexpr float kFlashFrames = 8.0f;
     static constexpr float kFlashTint[3] = {0.45f, 0.65f, 1.0f};
-    // The smoke: smoke01 as Ice's frost wisps are drawn, a few puffs a landing, opening after
-    // the glow, rising, spreading and going out.
+    // The smoke: smoke01 as Ice's frost wisps are drawn, a column from each landing (the user,
+    // 2026-10-06: "smoke has to come from each impact spot"): its puffs born on the spot one
+    // after another, each rising, spreading and going out.
     static constexpr int kPuffsALanding = 5;
-    static constexpr float kPuffWaits = 4.0f;    // reference frames after the landing
-    static constexpr float kPuffFrames = 55.0f;  // its life once open
-    static constexpr float kPuffRise = 0.012f;   // metres a reference frame
-    static constexpr float kPuffSpread = 0.45f;  // metres off the landing
-    static constexpr float kPuffSize[2] = {0.7f, 1.8f};  // across, born and gone
+    static constexpr float kPuffWaits = 3.0f;    // reference frames to the first, then between
+    static constexpr float kPuffFrames = 50.0f;  // its life once open
+    static constexpr float kPuffRise = 0.016f;   // metres a reference frame
+    static constexpr float kPuffSpread = 0.12f;  // metres off the landing
+    static constexpr float kPuffSize[2] = {0.45f, 1.5f};  // across, born and gone
     static constexpr float kPuffTint[3] = {0.34f, 0.42f, 0.56f};
     // Its light: MU's blue over two tiles while it falls, and the star's, fading with it.
     static constexpr float kGlow[3] = {0.2f, 0.4f, 1.0f};

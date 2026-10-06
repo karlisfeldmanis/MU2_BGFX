@@ -64,12 +64,14 @@ void Ice::freeze(const float feet[3], float yaw) {
 // CreateBlood's `case MODEL_ICE_MONSTER` (ZzzEffectBlurSpark.cpp:449-455): the body is put out
 // (`o->Live = false`) and ten MODEL_ICE_SMALL go up off its feet -- the same shard as the
 // block's, with no block.
-void Ice::shatter(const float feet[3]) {
+void Ice::shatter(const float feet[3], float scale) {
     if (keyCount_ == 0) return;
-    shards(feet, kShatterShards);
+    shards(feet, kShatterShards, scale);
 }
 
-void Ice::shards(const float feet[3], int count) {
+void Ice::shards(const float feet[3], int count, float scale) {
+    // A smaller shard is thrown less far, but not in proportion, or it only drops.
+    const float throwing = 0.5f + 0.5f * scale;
     for (int n = 0; n < count; ++n) {
         Shard* shard = nullptr;
         for (Shard& one : shards_) {
@@ -82,15 +84,15 @@ void Ice::shards(const float feet[3], int count) {
         *shard = Shard{};
         shard->alive = true;
         for (int k = 0; k < 3; ++k) shard->at[k] = feet[k];
-        shard->at[1] += kShardLift * kUnit;
+        shard->at[1] += kShardLift * kUnit * scale;
         shard->floor = feet[1];
-        shard->size = between(0.8f, 1.1f);
+        shard->size = between(0.8f, 1.1f) * scale;
         shard->yaw = unit() * kTwoPi;
-        const float speed = between(6.4f, 32.0f) * kFps * kUnit;
+        const float speed = between(6.4f, 32.0f) * kFps * kUnit * throwing;
         const float way = unit() * kTwoPi;
         shard->velocity[0] = std::sin(way) * speed;
         shard->velocity[2] = std::cos(way) * speed;
-        shard->rise = between(8.0f, 23.0f) * kFps * kUnit;
+        shard->rise = between(8.0f, 23.0f) * kFps * kUnit * throwing;
         shard->left = between(32.0f, 47.0f);
     }
 }

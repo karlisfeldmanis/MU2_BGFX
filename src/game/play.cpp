@@ -1546,7 +1546,7 @@ void Play::update(double seconds) {
     // smoke after"): Ice's shatter, its ten shards thrown off the ground (fx/ice.h).
     for (const Comet::Landing& one : cometLandings_) {
         const float feet[3] = {one.x, one.y, one.z};
-        ice_.shatter(feet);
+        ice_.shatter(feet, Comet::kCrystalScale);
         meteorImpacts_.push_back({one.x, one.z, one.attacker});
     }
     // The wizard's bolts and fireballs, each measured against where its target is drawn this

@@ -136,20 +136,22 @@ void Comet::update(float seconds, std::vector<Landing>& landings) {
             flash.left = kFlashFrames;
             break;
         }
-        int puffs = std::max(1, int(std::lround(kPuffsALanding * one.weight)));
+        const int count = std::max(2, int(std::lround(kPuffsALanding * one.weight)));
+        int puffs = count;
         for (Puff& puff : puffs_) {
             if (puffs == 0) break;
             if (puff.alive) continue;
+            const int nth = count - puffs;
             --puffs;
             const float turn = unit() * kTwoPi;
             const float reach = kPuffSpread * std::sqrt(unit());
             puff = Puff{};
             puff.alive = true;
             puff.at[0] = one.at[0] + std::cos(turn) * reach;
-            puff.at[1] = one.floorY + between(0.15f, 0.5f);
+            puff.at[1] = one.floorY + 0.1f;
             puff.at[2] = one.at[2] + std::sin(turn) * reach;
             puff.spin = unit() * kTwoPi;
-            puff.wait = kPuffWaits * between(0.6f, 1.4f);
+            puff.wait = kPuffWaits * (float(nth) + between(0.8f, 1.2f));
             puff.weight = one.weight;
         }
     }
