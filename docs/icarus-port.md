@@ -191,8 +191,8 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   it as `Sword19` (a monster's arm, worn by nobody: OpenMU's row is the Magic Gladiator's), at +5
   on knife_gdf, and the Legendary Shield (`Shield15`) on hand_bofdgne01 (`:11962-11965`). Its
   effects: RenderEye at twice the size on eye00/eye01 (`:11213-11215`, `fx/eyes` takes a size);
-  its blow's Inferno, bombs and mesh, at the attack's fifth key, 5/7 into the swing
-  (`:1696-1708`, `kInfernoBlows`' new `share`, `infernosDue_`); the Thunder Blade's breathing blue
+  its blow's Inferno, bombs and mesh, at CheckAttackTime(5), 4/25 s into the blow
+  (`:1696-1708`, `kInfernoBlows`' new `wait`, `infernosDue_`); the Thunder Blade's breathing blue
   Shiny02 at its guard and the Legendary Shield's spark (`:10238-10256`, `:10277-10282`,
   `fx/held_lights`, so the Cursed Wizard's shield sparks too); megacrust_move/attack/die. Left
   out: the CPhysicsCloth cape on bone 19 (no cloth here) and the blade's three
@@ -205,12 +205,30 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   BITMAP_LIGHT at 0.8 on her head (`:8815-8818`), as an Alquamos's starlight; MoveCharacterVisual's
   BITMAP_JOINT_THUNDER sub 7 along fourteen bone pairs (`:5768-5817`), ours four a reference
   frame at random as faint blue `ShadowStars::thunderBeam` streaks (kQueenArcs); her blow's
-  twenty BITMAP_BLIZZARD shards falling 5 m onto the target at the attack's fifth key
+  twenty BITMAP_BLIZZARD shards falling 5 m onto the target at CheckAttackTime(5), 4/25 s in
   (`:1681-1695`; `ZzzEffect.cpp:2974-3001`, `MoveHandlers.cpp:5019-5045`; `ShadowStars::blizzard`),
   ours at half light, without their BITMAP_FIRE + 2 trails and with one SOUND_METEORITE01 for the
   twenty; queenrainer_move/attack/die. Energy Ball (17), non-elemental as MU's until the user
   says otherwise. kResistances {70, 11, 9}, kDropRates {70, 14, 3, 10}. Seen in a muted run at
   66,65: she fights the hero, shards landing round him, no errors.
+- **MU's attack timing** (2026-10-06): CheckAttackTime(n) counts AttackTime, which starts at 1
+  with the blow and gains one a reference frame whatever the clip (`ZzzCharacter.cpp:4133-4138`,
+  `w_CharacterInfo.h:247-250`), so a blow effect fires (n - 1) / 25 s in (`play_tuning.h`
+  `attackTime`). The Crust's and the Queen's had first been timed as 5/7 of the swing, as if n
+  were a clip key; corrected with the Drakan.
+- **Drakan (73)**: Monster55 as `Drakan01`, scale 0.8, every mesh solid; 6 spawns, ids
+  1510-1515, in the middle band. drt02's black scales on chitin, drt01's blue plates on
+  painted_steel with the cast grain, the drt03 mane blended by its alpha. Its effects: a blue
+  BITMAP_LIGHT (0.1, 0.1, 1) on each of its 21 stars bones (`:8840-8865`), as starlights in its
+  blue (`ShadowStars::starlight` takes a tint); BITMAP_JOINT_THUNDER sub 7 along stars04-03-02-01
+  and stars12-11 (`:8852-8856`), ours two a reference frame (kDrakanArcs); Attack 1's Inferno at
+  CheckAttackTime(11) (`:1734-1757`; `kInfernoBlows`' new `first`); Attack 2's bolt from its head
+  at CheckAttackTime(13) (`:2123-2138`), drawn as a monster's Lightning with the Lightning's sound
+  (ours, for MU's SOUND_METEORITE01); drakan_move/attack/die. Its Flame of Evil, one blow in five
+  (kBosses += 73), shows nothing more than the blow, as MU's (the Gorgon's and the Balrog's
+  shows are theirs alone, `:1959-1990`). Left out: the chrome-bright and chrome2-lightmap passes
+  over meshes 1 and 2 (`:8882-8888`) and Attack 1's five falling MODEL_PIERCING + 1 streaks
+  (`:1743-1754`). kResistances {73, 12, 12}, kDropRates {73, 14, 3, 20}.
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

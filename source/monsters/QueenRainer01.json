@@ -10,7 +10,7 @@
   },
   "monster_from": "ZzzCharacter.cpp:13579-13586, CreateMonster, case MONSTER_QUEEN_RAINER: Scale = 1.3f; BlendMesh = -2 at BlendMeshLight 1; m_bRenderShadow = false. Its effects, in game/play (kQueenRainerFigure): a white BITMAP_LIGHT at Scale 0.8 on bone 20, Bip01 Head (:8815-8818), as an Alquamos's starlight; MoveCharacterVisual's BITMAP_JOINT_THUNDER sub 7 along fourteen bone pairs every frame (:5768-5817), ours a few a reference frame (kQueenArcs); and her blow's twenty BITMAP_BLIZZARD falling on the target at the attack's fifth key (:1681-1695; ShadowStars::blizzard), without their BITMAP_FIRE + 2 trails.",
   "profile": "monster",
-  "rig_from": "Exported with --actions=all, 7 actions, 57 bones; keys 6, 6, 7, 7, 7, 7, 7. Its death plays at 0.22 (ZzzOpenData.cpp:3762-3768), in actions.json's action_overrides.",
+  "rig_from": "Exported with --actions=all, 7 actions, 57 bones; keys 6, 6, 7, 7, 7, 7, 7. Its death plays at 0.22 (ZzzOpenData.cpp:3761-3767), in actions.json's action_overrides.",
   "sheets": {
     "kuo00": "rainer_kuo00.png",
     "kuo01": "rainer_kuo01.png",
@@ -35,7 +35,7 @@
     }
   },
   "glow_from": "BlendMesh -2: RenderMesh adds every mesh (`blendMeshIndex <= -2`, ZzzBMD.cpp:1509-1516), so the whole Queen is violet light on the dark; and m_bRenderShadow = false, so she casts none.",
-  "sounds_from": "ZzzOpenData.cpp:3762-3768: SetMonsterSound(..., 171, -1, 172, 172, 173): mRainner1 to move, mRainnerAttack1 to attack, mRainnerDie to die. Wired as queenrainer_* in sounds.json.",
+  "sounds_from": "ZzzOpenData.cpp:3761-3767: SetMonsterSound(..., 171, -1, 172, 172, 173): mRainner1 to move, mRainnerAttack1 to attack, mRainnerDie to die. Wired as queenrainer_* in sounds.json.",
   "islands": [
     {
       "island": 0,

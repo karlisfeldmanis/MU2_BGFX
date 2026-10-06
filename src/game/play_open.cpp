@@ -786,8 +786,10 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 }
             }
             one.arcBones.clear();
+            one.starTint = nullptr;
             one.blizzard = look->name == kQueenRainerFigure;
-            if (one.blizzard && look->skeletonMesh) {
+            const bool drakan = look->name == kDrakanFigure;
+            if ((one.blizzard || drakan) && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 const auto find = [&](const char* name) {
                     for (size_t b = 0; b < bones.size(); ++b) {
@@ -795,12 +797,29 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     }
                     return -1;
                 };
-                if (const int head = find(kQueenLightBone); head >= 0) one.starBones.push_back(head);
-                for (const auto& pair : kQueenArcs) {
-                    const int a = find(pair[0]), b = find(pair[1]);
-                    if (a < 0 || b < 0) continue;
-                    one.arcBones.push_back(a);
-                    one.arcBones.push_back(b);
+                const auto arcs = [&](const auto& pairs) {
+                    for (const auto& pair : pairs) {
+                        const int a = find(pair[0]), b = find(pair[1]);
+                        if (a < 0 || b < 0) continue;
+                        one.arcBones.push_back(a);
+                        one.arcBones.push_back(b);
+                    }
+                };
+                if (one.blizzard) {
+                    if (const int head = find(kQueenLightBone); head >= 0) {
+                        one.starBones.push_back(head);
+                    }
+                    arcs(kQueenArcs);
+                    one.arcsAFrame = kQueenArcsAFrame;
+                    one.arcHalf = kQueenArcHalf;
+                } else {
+                    for (const char* name : kDrakanStars) {
+                        if (const int star = find(name); star >= 0) one.starBones.push_back(star);
+                    }
+                    one.starTint = kDrakanBlue;
+                    arcs(kDrakanArcs);
+                    one.arcsAFrame = kDrakanArcsAFrame;
+                    one.arcHalf = kDrakanArcHalf;
                 }
             }
             one.auraBone = -1;

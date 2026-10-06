@@ -2182,19 +2182,37 @@
       "files": [
         "mRainner1.wav"
       ],
-      "from": "Sounds[0], 171 -- Data\\Sound\\mRainner1.wav: SetMonsterSound(..., 171, -1, 172, 172, 173), ZzzOpenData.cpp:3762-3768 (Icarus's Queen Rainer)."
+      "from": "Sounds[0], 171 -- Data\\Sound\\mRainner1.wav: SetMonsterSound(..., 171, -1, 172, 172, 173), ZzzOpenData.cpp:3761-3767 (Icarus's Queen Rainer)."
     },
     "queenrainer_attack": {
       "files": [
         "mRainnerAttack1.wav"
       ],
-      "from": "Sounds[2] and [3], both 172 -- mRainnerAttack1.wav. ZzzOpenData.cpp:3762-3768."
+      "from": "Sounds[2] and [3], both 172 -- mRainnerAttack1.wav. ZzzOpenData.cpp:3761-3767."
     },
     "queenrainer_die": {
       "files": [
         "mRainnerDie.wav"
       ],
-      "from": "Sounds[4], 173 -- Data\\Sound\\mRainnerDie.wav. ZzzOpenData.cpp:3762-3768."
+      "from": "Sounds[4], 173 -- Data\\Sound\\mRainnerDie.wav. ZzzOpenData.cpp:3761-3767."
+    },
+    "drakan_move": {
+      "files": [
+        "mDrakan1.wav"
+      ],
+      "from": "Sounds[0] and [1], both 165 -- Data\\Sound\\mDrakan1.wav: SetMonsterSound(..., 165, 165, 166, 166, 167), ZzzOpenData.cpp:3775-3781 (Icarus's Drakan and Great Drakan)."
+    },
+    "drakan_attack": {
+      "files": [
+        "mDrakanAttack1.wav"
+      ],
+      "from": "Sounds[2] and [3], both 166 -- mDrakanAttack1.wav. ZzzOpenData.cpp:3775-3781."
+    },
+    "drakan_die": {
+      "files": [
+        "mDrakanDie.wav"
+      ],
+      "from": "Sounds[4], 167 -- Data\\Sound\\mDrakanDie.wav. ZzzOpenData.cpp:3775-3781."
     },
     "ironwheel_move": {
       "files": [

@@ -721,6 +721,9 @@ private:
         std::vector<int> arcBones;
         uint32_t arcLit = 0;
         float arcStep = 0.0f;
+        int arcsAFrame = 0;
+        float arcHalf = 0.0f;
+        const float* starTint = nullptr;  // the starlights' colour, null for the Alquamos's
         bool blizzard = false;  // her blow's shower (kBlizzardShare)
         // Its faint light (kAuraLights): the bone it hangs on, -1 for none, and its colour.
         int auraBone = -1;
@@ -1208,7 +1211,7 @@ private:
         float wait = 0.0f;
     };
     std::vector<StaffDue> staffsDue_;
-    // A blow's Inferno thrown later in the swing (kInfernoBlows' `share`): the Crusts'.
+    // A blow's Inferno thrown later in the blow (kInfernoBlows' `wait`): the Crusts'.
     struct InfernoDue {
         float feet[3] = {};
         float yaw = 0.0f;

@@ -582,10 +582,13 @@ void Play::shade(float seconds) {
             const float luminosity = 0.85f + 0.15f * std::sin(folkClock_ * 3.0f + float(one.id));
             for (const int bone : one.starBones) {
                 float at[3];
-                if (one.figure.pointOn(bone, origin, at)) shadowStars_.starlight(at, fade, luminosity);
+                if (one.figure.pointOn(bone, origin, at)) {
+                    shadowStars_.starlight(at, fade, luminosity, one.starTint);
+                }
             }
         }
-        // A Queen Rainer's crackle along her bones (kQueenArcs): a fresh few each reference frame.
+        // A Queen Rainer's or a Drakan's crackle along its bones (kQueenArcs, kDrakanArcs): a
+        // fresh few each reference frame.
         if (!one.arcBones.empty() && one.deadFor < 0.0f) {
             const int pairs = int(one.arcBones.size() / 2);
             one.arcStep -= seconds * 25.0f;
@@ -593,7 +596,7 @@ void Play::shade(float seconds) {
                 one.arcStep += 1.0f;
                 if (one.arcStep <= 0.0f) one.arcStep = 1.0f;
                 one.arcLit = 0;
-                for (int k = 0; k < kQueenArcsAFrame; ++k) {
+                for (int k = 0; k < one.arcsAFrame; ++k) {
                     wanderDice_ ^= wanderDice_ << 13;
                     wanderDice_ ^= wanderDice_ >> 17;
                     wanderDice_ ^= wanderDice_ << 5;
@@ -607,7 +610,7 @@ void Play::shade(float seconds) {
                 float a[3], b[3];
                 if (one.figure.pointOn(one.arcBones[size_t(2 * p)], origin, a) &&
                     one.figure.pointOn(one.arcBones[size_t(2 * p + 1)], origin, b)) {
-                    shadowStars_.thunderBeam(a, b, kQueenArcHalf, colour);
+                    shadowStars_.thunderBeam(a, b, one.arcHalf, colour);
                 }
             }
         }
@@ -849,7 +852,7 @@ void Play::shade(float seconds) {
     staffsDue_.erase(std::remove_if(staffsDue_.begin(), staffsDue_.end(),
                                     [](const StaffDue& one) { return one.wait <= 0.0f; }),
                      staffsDue_.end());
-    // A Crust's Inferno, at its attack's fifth key (kInfernoBlows' share).
+    // A Crust's Inferno, at its CheckAttackTime(5) (kInfernoBlows' wait).
     for (InfernoDue& due : infernosDue_) {
         due.wait -= seconds;
         if (due.wait <= 0.0f) throwInferno(due.feet, due.yaw, due.bombs, due.mesh);

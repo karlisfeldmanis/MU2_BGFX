@@ -507,7 +507,7 @@ inline constexpr int kStarRibbons = 4;
 // the legs, the spine, the arms -- by name in Monster52. Ours: kQueenArcsAFrame of them a
 // reference frame, picked at random, as ShadowStars::thunderBeam streaks at kQueenArcDim; all
 // fourteen each frame was a lit wire figure. Her blow's twenty BITMAP_BLIZZARD on the target at
-// CheckAttackTime(5) (:1681-1695), 5/7 of her seven-key swing (ShadowStars::blizzard).
+// CheckAttackTime(5) (:1681-1695), 4/25 s into it (ShadowStars::blizzard).
 inline constexpr const char* kQueenRainerFigure = "QueenRainer01";
 inline constexpr const char* kQueenLightBone = "Bip01 Head";
 inline constexpr const char* kQueenArcs[][2] = {
@@ -522,7 +522,26 @@ inline constexpr int kQueenArcsAFrame = 4;
 constexpr float kQueenArcHalf = 0.07f;  // 14 units wide
 constexpr float kQueenArcColour[3] = {0.5f, 0.5f, 1.0f};
 constexpr float kQueenArcDim = 0.4f;
-constexpr float kBlizzardShare = 5.0f / 7.0f;
+constexpr float kBlizzardWait = 4.0f / 25.0f;
+// MONSTER_DRAKAN's (ZzzCharacter.cpp:8840-8865): BITMAP_LIGHT at 0.8 in (0.1, 0.1, 1) on bones
+// 13-26 and 52-58, Monster55's 21 stars bones, as starlights in kDrakanBlue; and a
+// BITMAP_JOINT_THUNDER sub 7, 20 wide, from bone i - 1 to i for i of 14-16 and 23 each frame --
+// the kDrakanArcs, ours kDrakanArcsAFrame of them a reference frame. Its Attack 2 throws its
+// bolt at CheckAttackTime(13) from bone 11, its head (:2123-2138), drawn as a monster's Lightning
+// (Play::thunderCasts_, ours with the Lightning's sound for MU's SOUND_METEORITE01). Its Flame of
+// Evil (sim kBosses) shows nothing more than its blow: MU's boss show is the Gorgon's and the
+// Balrog's alone (:1959-1990).
+inline constexpr const char* kDrakanFigure = "Drakan01";
+inline constexpr const char* kDrakanStars[] = {
+    "stars04", "stars03", "stars02", "stars01", "stars00", "stars13", "stars05",
+    "stars10", "stars09", "stars12", "stars11", "stars08", "stars07", "stars06",
+    "stars14", "stars15", "stars16", "stars17", "stars18", "stars19", "stars20"};
+constexpr float kDrakanBlue[3] = {0.1f, 0.1f, 1.0f};
+inline constexpr const char* kDrakanArcs[][2] = {
+    {"stars04", "stars03"}, {"stars03", "stars02"}, {"stars02", "stars01"}, {"stars12", "stars11"}};
+inline constexpr int kDrakanArcsAFrame = 2;
+constexpr float kDrakanArcHalf = 0.10f;  // 20 units wide
+constexpr int32_t kDrakanNumber = 73;
 inline constexpr const char* kShadowJoints[] = {
     "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
     "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",
@@ -662,20 +681,26 @@ constexpr float kStaffBlast = 0.4f;
 // one's distance and striking nothing -- the realm's blow is the one.
 inline constexpr const char* kSpreadFigure = "IronWheel01";
 constexpr float kSpreadDegrees = 20.0f;
-// `share` is how far into the swing it is thrown: 0 at once, CheckAttackTime(1); the Crusts'
-// CheckAttackTime(5) of a seven-key attack is 5/7 of it (ZzzCharacter.cpp:1696-1708).
+// `wait` is when in the blow it is thrown, seconds. MU's CheckAttackTime(n) counts AttackTime,
+// which starts at 1 with the blow and gains one a reference frame whatever the clip
+// (ZzzCharacter.cpp:4133-4138; w_CharacterInfo.h:247-250): (n - 1) / 25 s. 0 is
+// CheckAttackTime(1), at once; the Crusts' CheckAttackTime(5) (:1696-1708) is 4/25.
+constexpr float attackTime(int n) { return float(n - 1) / 25.0f; }
+// `first`: on Attack 1 alone, the Drakans' (`c->Object.CurrentAction == MONSTER01_ATTACK1`).
 struct InfernoBlow {
     int32_t number;
     bool bombs;
     bool mesh;
-    float share = 0.0f;
+    float wait = 0.0f;
+    bool first = false;
 };
 inline constexpr InfernoBlow kInfernoBlows[] = {
     {58, true, false},            // Tantallos
     {59, true, false},            // Zaikan
     {61, false, true},            // Beam Knight
     {63, true, true},             // Death Beam Knight
-    {71, true, true, 5.0f / 7.0f},  // Mega Crust
+    {71, true, true, attackTime(5)},  // Mega Crust
+    {73, true, true, attackTime(11), true},  // Drakan (ZzzCharacter.cpp:1734-1757)
 };
 
 // Charon's light, RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268):

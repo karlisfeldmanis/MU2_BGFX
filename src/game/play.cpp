@@ -1341,7 +1341,7 @@ void Play::update(double seconds) {
                             }
                         }
                         // A Queen Rainer's blow (kQueenRainerFigure): MU's twenty BITMAP_BLIZZARD
-                        // on whom she struck at the attack's fifth key, SOUND_METEORITE01 with
+                        // on whom she struck at CheckAttackTime(5), SOUND_METEORITE01 with
                         // them (ours: once for the twenty).
                         if (const Drawn* queen = drawnOf(happening.who);
                             queen && queen->blizzard && happening.whom != 0) {
@@ -1351,9 +1351,17 @@ void Play::update(double seconds) {
                                     struck->crown[0],
                                     ground_->heightAt(struck->crown[0], struck->crown[2]),
                                     struck->crown[2]};
-                                shadowStars_.blizzard(at, swinger->swinging * kBlizzardShare);
+                                shadowStars_.blizzard(at, kBlizzardWait);
                                 if (heard_.meteorite >= 0) emit(heard_.meteorite, at[0], at[2]);
                             }
+                        }
+                        // A Drakan's Attack 2 (kDrakanFigure): its bolt at the target at
+                        // CheckAttackTime(13), as a monster's Lightning.
+                        if (body && !body->player && body->kind >= 0 &&
+                            size_t(body->kind) < tables_.kinds.size() &&
+                            tables_.kinds[size_t(body->kind)].number == kDrakanNumber &&
+                            happening.whom != 0 && swing >= 0 && swing == swinger->attackClip2) {
+                            thunderCasts_.push_back({happening.who, happening.whom, attackTime(13)});
                         }
                         // A Hydra's first head bolt, the swing's own beam (sim kSplitBlows): from
                         // just before its blow shows, as the Lizard King's.
@@ -1367,21 +1375,21 @@ void Play::update(double seconds) {
                         }
                         // Tarkan's Inferno on the attack's first key (kInfernoBlows): at once,
                         // the key a tenth of a second into the swing at these breeds' speeds;
-                        // the Crusts' at the fifth, `share` of the swing later (infernosDue_).
+                        // the Crusts' at CheckAttackTime(5), `wait` later (infernosDue_).
                         if (body && !body->player && body->kind >= 0 &&
                             size_t(body->kind) < tables_.kinds.size() && ground_ &&
                             swinger->placed) {
                             const int32_t number = tables_.kinds[size_t(body->kind)].number;
                             for (const InfernoBlow& blow : kInfernoBlows) {
                                 if (blow.number != number) continue;
+                                if (blow.first && swing != swinger->attackClip) continue;
                                 const float feet[3] = {
                                     swinger->crown[0],
                                     ground_->heightAt(swinger->crown[0], swinger->crown[2]),
                                     swinger->crown[2]};
-                                if (blow.share > 0.0f) {
+                                if (blow.wait > 0.0f) {
                                     infernosDue_.push_back({{feet[0], feet[1], feet[2]},
-                                                            swinger->yaw,
-                                                            swinger->swinging * blow.share,
+                                                            swinger->yaw, blow.wait,
                                                             blow.bombs, blow.mesh});
                                 } else {
                                     throwInferno(feet, swinger->yaw, blow.bombs, blow.mesh);
@@ -1417,8 +1425,9 @@ void Play::update(double seconds) {
                                     ? tables_.kinds[size_t(body->kind)].number
                                     : -1;
                             if (hydra) {
-                            } else if (bossNumber == 58) {
-                                // The Tantallos: its blow's Inferno and nothing more.
+                            } else if (bossNumber == 58 || bossNumber == kDrakanNumber) {
+                                // The Tantallos: its blow's Inferno and nothing more; the Drakan,
+                                // its blow alone (kDrakanFigure).
                             } else if (bossNumber == 59 || bossNumber == 63) {
                                 staffsDue_.push_back(
                                     {{floor[0], floor[1], floor[2]}, swinger->yaw, kStaffRingWait});

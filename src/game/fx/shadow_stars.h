@@ -57,7 +57,8 @@ public:
     // One of an Alquamos's star lights (ZzzCharacter.cpp:8792-8801): MU's BITMAP_LIGHT at Scale
     // 0.6 on a g_chStar bone, added in Luminosity * (0.8, 0.9, 1), Luminosity rolled 0.7-1 a
     // frame. Ours at kStarlightDim of that and the luminosity passed in, steadier (play_show).
-    void starlight(const float at[3], float fade, float luminosity);
+    // `tint`, when given, is the light's colour in place of the Alquamos's: the Drakan's blue.
+    void starlight(const float at[3], float fade, float luminosity, const float* tint = nullptr);
     // An Alquamos blow's ribbon for this frame: MU's BITMAP_FLARE sub 7 joint (ZzzEffectJoint.cpp:
     // 1924-1932, 5603-5729), its tails `points` (the newest first) as a strip of Flare.jpg 30
     // units wide in (0.2, 0.2, 1), and at its head a Shiny02 and two flare01 in (0.5, 0.5, 1).
@@ -163,6 +164,7 @@ private:
     struct Starlight {
         float position[3];
         float level;
+        float tint[3];
     };
     std::vector<Starlight> starlights_;
     static constexpr int kRibbonTails = 15;

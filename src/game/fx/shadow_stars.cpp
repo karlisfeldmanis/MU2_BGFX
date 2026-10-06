@@ -309,10 +309,11 @@ uint32_t ShadowStars::lights(gfx::PointLight* out, uint32_t max, const float nea
     return count;
 }
 
-void ShadowStars::starlight(const float at[3], float fade, float luminosity) {
+void ShadowStars::starlight(const float at[3], float fade, float luminosity, const float* tint) {
     if (!open_ || fade <= 0.0f || starlights_.size() >= kStars) return;
     Starlight one;
     for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    for (int i = 0; i < 3; ++i) one.tint[i] = tint ? tint[i] : kStarlightTint[i];
     one.level = fade * luminosity;
     starlights_.push_back(one);
 }
@@ -343,7 +344,7 @@ void ShadowStars::gather(gfx::Effects& effects) const {
             gfx::Sprite sprite;
             for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
             sprite.halfWidth = sprite.halfHeight = kStarlightHalf;
-            for (int i = 0; i < 3; ++i) sprite.colour[i] = kStarlightTint[i] * kStarlightDim * one.level;
+            for (int i = 0; i < 3; ++i) sprite.colour[i] = one.tint[i] * kStarlightDim * one.level;
             sprite.sheet = light_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
