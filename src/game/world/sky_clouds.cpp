@@ -37,6 +37,9 @@ constexpr float kGlintDown = 10.0f, kGlintAround = 25.0f;
 // MU's 0.3; a glint's fifteen-odd sparks overlap, and at 0.3 each they summed to a white blot.
 // Ours, the user's faint effects: 0.07.
 constexpr float kSparkLight = 0.07f;
+// MU's Scale 1.5-3 drew each spark 1-2 m across, and a glint's pile of them read as a white
+// blob (the user, 2026-10-06: 'those flying "souls" can be smaller'). Ours: 0.4 of it.
+constexpr float kSparkSize = 0.4f;
 constexpr float kFlareMetres = 0.64f;  // flare01, 64 texels
 // The flash: two reference frames; the cloud under him is ours for MU's cloud.bmd at Scale 10.
 constexpr float kFlashSeconds = 2.0f * kFrame;
@@ -399,7 +402,7 @@ void SkyClouds::gather(gfx::Effects& effects) const {
                 sprite.colour[i] = kSparkLight;
             }
             sprite.colour[3] = 1.0f;
-            sprite.halfWidth = sprite.halfHeight = 0.5f * kFlareMetres * one.scale;
+            sprite.halfWidth = sprite.halfHeight = 0.5f * kFlareMetres * one.scale * kSparkSize;
             sprite.sheet = light_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
