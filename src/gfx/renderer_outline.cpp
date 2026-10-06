@@ -172,8 +172,23 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     bgfx::setViewRect(maskView, 0, 0, uint16_t(maskW), uint16_t(maskH));
     bgfx::setViewClear(maskView, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
     bgfx::setViewTransform(maskView, mainView, maskProj);
+    // A body drawn wholly in glow that casts nothing -- Queen Rainer, every mesh added and no
+    // shadow (BlendMesh -2) -- left nothing in the mask, so its glows are its silhouette.
+    // Only then: a solid body keeps its flames and halos out of its ring.
+    bool solid = false;
+    for (const Batch& batch : outlineBatches_) {
+        for (const content::Part& part : batch.mesh->parts()) {
+            const content::Material& material = batch.mesh->materials()[part.material];
+            if (!material.glow || material.glowShadow > 0.0f) solid = true;
+        }
+    }
+    ringGlows_ = !solid;
+    // Touched, so the clear runs even if nothing is drawn: bgfx skips an untouched view, and
+    // the mask then kept the last thing hovered, ringed where it had stood.
+    bgfx::touch(maskView);
     submitBatches(maskView, shadowProgram_, skinnedShadowProgram_, outlineBatches_, idb,
                  BGFX_STATE_WRITE_RGB, false);
+    ringGlows_ = false;
 
     // --- the ring: one screen pass, its view rect the thing's own box of the backbuffer ---
     bgfx::setViewFrameBuffer(ringView, BGFX_INVALID_HANDLE);

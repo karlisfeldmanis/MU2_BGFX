@@ -741,6 +741,7 @@ private:
     bgfx::UniformHandle sOutlineMask_ = BGFX_INVALID_HANDLE;
     bool outlineOk_ = false;
     std::vector<Batch> outlineBatches_;
+    bool ringGlows_ = false;  // the mask takes every glow: the hovered body is nothing else
 
     bgfx::UniformHandle uSunDir_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uSunColour_ = BGFX_INVALID_HANDLE;

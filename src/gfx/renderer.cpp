@@ -226,10 +226,11 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // A glow is drawn in its own pass and in no other. See the header. Except that a
             // glow that casts (Material::glowShadow) is in the sun's split as well, and in the
             // hover ring's mask, solid: the Ice Monster's body is that glow, and without it the
-            // mask held only its few solid parts and the ring cut across its body.
+            // mask held only its few solid parts and the ring cut across its body. And every
+            // glow of a body that is nothing but glow (drawOutline's ringGlows_): Queen Rainer.
             const bool casting = material.glowShadow > 0.0f && view == ViewShadow;
             const bool ringView = view >= ViewOutlineMask && view < ViewOutlineMask + kOutlineRings;
-            const bool ringed = material.glowShadow > 0.0f && ringView;
+            const bool ringed = (material.glowShadow > 0.0f || ringGlows_) && ringView;
             if (material.glow != glowPass && !casting && !ringed) continue;
             // Nor grass, flowers or leaves: hundreds of small cutout draws that, at the blur a
             // reflection is read at, are the green the ground under them already gives.
