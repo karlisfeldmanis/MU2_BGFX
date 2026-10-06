@@ -103,8 +103,27 @@ float Weather::random01() {
     return float(seed_ & 0xFFFFFFu) / float(0x1000000u);
 }
 
+void Weather::summon(bool on) {
+    if (!rains_ || snows_ || sky_ || forced_ || on == summoned_) return;
+    summoned_ = on;
+    if (on) {
+        ownPeak_ = peak_;
+        // Twice Lorencia's drizzle and no more: the user found its full pool too much
+        // (2026-09-29), and an invasion is a storm, not a flood. Ours.
+        peak_ = std::max(peak_, std::min(1.0f, 2.0f * peak_));
+        wet_ = true;
+        thunderIn_ = 2.0f;
+        core::logf("weather: the invasion's storm");
+    } else {
+        peak_ = ownPeak_;
+        wet_ = false;
+        left_ = kDryLow * 0.5f;
+        core::logf("weather: the invasion's storm passes");
+    }
+}
+
 void Weather::strikeLater() {
-    thunderIn_ = storm_ ? 8.0f + random01() * 8.0f
+    thunderIn_ = storm_ || summoned_ ? 8.0f + random01() * 8.0f
                         : kThunderLow + random01() * (kThunderHigh - kThunderLow);
 }
 
@@ -191,7 +210,7 @@ void Weather::shutdown() {
 }
 
 void Weather::update(float seconds, bool indoors) {
-    if (rains_ && !forced_) {
+    if (rains_ && !forced_ && !summoned_) {
         left_ -= seconds;
         if (left_ <= 0.0f) {
             wet_ = !wet_;

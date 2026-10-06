@@ -184,6 +184,7 @@ void Play::update(double seconds) {
             // the log before anything the drawing decides to do about it. Nothing in an
             // ordinary run reaches it.
             if (!arena_.breed.empty()) announce(happening);
+            invasionSaid(happening);
             // The marker, off the realm's own word for where the walk ends: `Walked` carries
             // the goal the route was planned to, after the router moved it out of any wall,
             // so the marker is where he will stand and not where the pointer was.
@@ -1526,6 +1527,7 @@ void Play::update(double seconds) {
     // Before the puffs are aged, so a Giant's sand is thrown on the same frame its clip reached
     // the key that throws it, exactly as the dragon's dust is.
     sandOnDeath();
+    invasion(float(seconds));
     breath_.update(float(seconds));
     // The bones a skeleton left, on the drawing's clock like everything else here.
     bones_.update(float(seconds));

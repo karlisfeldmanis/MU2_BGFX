@@ -404,6 +404,68 @@ void testDeterminism(const content::Tables& tables) {
     check(first != third, "another seed lives another life");
 }
 
+// The Golden Invasion (realm_invasion.cpp): begun, landed near him out of town, standing its
+// thirty minutes, then gone and never risen again.
+void testInvasion(const content::Tables& tables) {
+    std::printf("invasion\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, 138, 124), "the realm raises");
+    const sim::Body* dragon = realm.invader();
+    check(dragon != nullptr, "Lorencia raises a dragon for its invasion");
+    if (dragon == nullptr) return;
+    check(!dragon->alive(), "and it is down until one comes");
+    realm.invasionRain(false);
+    for (int i = 0; i < 100; ++i) realm.step();
+    check(realm.invasionPhase() == sim::InvasionPhase::Quiet, "no invasion in dry weather");
+    // Wet spells begin until one brings the dragons: kInvasionChance in 100 each, so forty
+    // spells all missing is (2/3)^40 for the 33, and a seeded run always says the same.
+    bool begun = false;
+    int column = -1, row = -1, spells = 0;
+    for (; spells < 40 && !begun; ++spells) {
+        realm.invasionRain(true);
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what == sim::What::Invasion && h.a == 1) {
+                begun = true;
+                column = h.b;
+                row = h.c;
+            }
+        }
+        // A spell held does not roll again: nothing comes on its tenth tick that did not on
+        // its first.
+        if (!begun) {
+            for (int i = 0; i < 10; ++i) realm.step();
+            begun = realm.invasionPhase() != sim::InvasionPhase::Quiet;
+            check(!begun, "a wet spell rolls once, as it begins");
+            realm.invasionRain(false);
+            realm.step();
+        }
+    }
+    check(begun, "the rain brings an invasion");
+    check(realm.invasionPhase() == sim::InvasionPhase::Entering, "and it enters");
+    for (int64_t i = 0; i < sim::kInvasionLandTicks - 2; ++i) realm.step();
+    check(!realm.invader()->alive(), "nothing stands before the landing");
+    realm.step();
+    realm.step();
+    dragon = realm.invader();
+    check(dragon->alive(), "it lands on its tick");
+    check(dragon->health == dragon->maxHealth && dragon->maxHealth == 22000,
+          "at the Golden Dragon's 22,000");
+    check(dragon->column() == column && dragon->row() == row, "on the tile it was said to");
+    check(tables.grid.open(column, row, content::kWallCharacter) && !tables.grid.safe(column, row),
+          "a standable tile out of town");
+    const int far = std::max(std::abs(column - 138), std::abs(row - 124));
+    // He stands in town at (138, 124), so its ring has widened to the fields.
+    check(far <= sim::kInvasionRings * sim::kInvasionFar + 1, "near him, just outside the town");
+    for (int64_t i = 0; i < sim::kInvasionStandTicks + 2; ++i) realm.step();
+    check(!realm.invader()->alive() && realm.invasionPhase() == sim::InvasionPhase::Quiet,
+          "gone when its thirty minutes are up");
+    // Its storm still held: no new rain began, so nothing more comes.
+    for (int i = 0; i < 400; ++i) realm.step();
+    check(!realm.invader()->alive() && realm.invasionPhase() == sim::InvasionPhase::Quiet,
+          "and not again until a new rain begins");
+}
+
 void testInvariants(const content::Tables& tables) {
     std::printf("invariants\n");
     sim::Realm realm;
@@ -412,7 +474,8 @@ void testInvariants(const content::Tables& tables) {
     // Every monster was placed somewhere it may stand, and outside the town.
     bool placed = true, outside = true;
     for (const sim::Body& one : realm.bodies()) {
-        if (!one.monster()) continue;
+        // The invasion's dragon is down and nowhere until it lands (realm_invasion.cpp).
+        if (!one.monster() || &one == realm.invader()) continue;
         placed &= tables.grid.open(one.column(), one.row(), content::kWallCharacter);
         outside &= !tables.grid.safe(one.column(), one.row());
     }
@@ -9586,6 +9649,7 @@ int main() {
     testSpamClicks(tables);
     testDeterminism(tables);
     testInvariants(tables);
+    testInvasion(tables);
     testItems(tables);
     testLoot(tables);
     testDrops(tables);

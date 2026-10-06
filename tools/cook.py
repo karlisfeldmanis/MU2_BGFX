@@ -567,7 +567,20 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
                 for axis in range(3):
                     low[axis] = min(low[axis], p[axis])
                     high[axis] = max(high[axis], p[axis])
-                vertices += struct.pack("<3f3f4f2f", *p[:3], *normals[i][:3], *tangents[i][:4],
+                tangent = tangents[i][:4]
+                # A tangent of no length -- a face whose bake UVs collapsed, four corners of the
+                # Golden Dragon's wing -- normalises to NaN in the shader and draws its
+                # triangles black. Any direction across the normal will do for a face with no UV
+                # direction of its own.
+                if sum(v * v for v in tangent[:3]) < 1e-6:
+                    n = normals[i][:3]
+                    pick = (1.0, 0.0, 0.0) if abs(n[0]) < 0.9 else (0.0, 1.0, 0.0)
+                    t = (pick[1] * n[2] - pick[2] * n[1], pick[2] * n[0] - pick[0] * n[2],
+                         pick[0] * n[1] - pick[1] * n[0])
+                    length = math.sqrt(sum(v * v for v in t)) or 1.0
+                    tangent = (t[0] / length, t[1] / length, t[2] / length,
+                               tangent[3] if len(tangent) > 3 and tangent[3] else 1.0)
+                vertices += struct.pack("<3f3f4f2f", *p[:3], *normals[i][:3], *tangent,
                                         *uvs[i][:2])
                 if bones:
                     index = [int(v) for v in joints[i][:4]]

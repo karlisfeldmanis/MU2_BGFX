@@ -42,6 +42,7 @@
 #include "sim/machine.h"
 #include "sim/gates.h"
 #include "sim/event.h"
+#include "sim/invasion.h"
 
 namespace mu::sim {
 
@@ -128,6 +129,9 @@ enum class What : uint8_t {
                // the ground, or -1 for Zen, b: that thing's item row or -1, c: the Zen or its plus
     Enlivened,  // a Jewel of Life spent on a thing: a: its slot, b: the option level it had,
                 // c: the one it has (0 when it failed)
+    Invasion,  // the map's Golden Invasion (sim/invasion.h): a: 1 begun, its dragons coming in
+               // the rain, landing kInvasionLandTicks later; 0 over, killed or gone. b and c:
+               // the column and row it lands on. `who` is the dragon's body.
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -951,6 +955,22 @@ public:
     // The wall clock, in unix seconds, which a repeating quest waits on. Handed in by the game;
     // a run that never sets it (the headless hunt) never sees a quest come back.
     void setWallClock(int64_t unixSeconds) { wall_ = unixSeconds; }
+    // The Golden Invasion (realm_invasion.cpp). The game says each frame whether it is raining
+    // over the map, and as a wet spell begins the realm rolls kInvasionChance for the dragons;
+    // --invasion's `invade` begins one at once. Nothing on a map with no invasion, or one whose
+    // dragon is not cooked.
+    void invasionRain(bool raining);
+    bool invade();
+    InvasionPhase invasionPhase() const { return invasion_.phase; }
+    // Ticks until the dragon lands, while it is coming; 0 otherwise.
+    int64_t invasionLandsIn() const {
+        return invasion_.phase == InvasionPhase::Entering ? std::max<int64_t>(0, invasion_.landsAt - tick_)
+                                                          : 0;
+    }
+    // The dragon's body, or null on a map with no invasion.
+    const Body* invader() const {
+        return invaderSlot_ >= 0 ? &bodies_[size_t(invaderSlot_)] : nullptr;
+    }
     // --castle-open's: the Messenger's entry open at any hour, for a test (Realm::castleRefusal).
     void openCastleDoor() { castleOpen_ = true; }
     bool castleDoorHeld() const { return castleOpen_; }
@@ -1465,6 +1485,22 @@ private:
     std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;
+    // The Golden Invasion's dragon: one body, raised down at the end of `bodies_` on a map with
+    // an invasion, and risen where it lands (realm_invasion.cpp); -1 elsewhere.
+    int invaderSlot_ = -1;
+    struct Invading {
+        InvasionPhase phase = InvasionPhase::Quiet;
+        int64_t landsAt = 0;
+        int64_t endsAt = 0;
+        bool raining = false;  // the weather the game last said, to see a spell begin
+    } invasion_;
+    bool invasionOwed_ = false;  // invade()'s, begun inside the next tick
+    // Where the dragon comes down, so a landing moves no other roll.
+    Random invasionDice_{0};
+    void raiseInvader();
+    void invasionTick();
+    // Laid down for good: killed (Realm::kill) or its thirty minutes up.
+    void endInvasion();
     // The Town Portal's warp, shared with Icarus's sending home (realm_items.cpp).
     void warpHome(Body& hero);
     // Set once Icarus has sent him home for want of wings, so the warp is said once while the

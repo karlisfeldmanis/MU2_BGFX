@@ -1450,6 +1450,12 @@ void Realm::kill(Body& dead, Body& killer) {
           (run_.phase != CastlePhase::Running || run_.sorcerers >= kCastleSorcerers)))) {
         dead.risesAt = std::numeric_limits<int64_t>::max();
     }
+    // The Golden Invasion's dragon is not respawned (OpenMU creates invasion monsters directly
+    // and never stands them up again), and its death ends the invasion.
+    if (invaderSlot_ >= 0 && &dead == &bodies_[size_t(invaderSlot_)]) {
+        dead.risesAt = std::numeric_limits<int64_t>::max();
+        endInvasion();
+    }
     // Every monster the killer is still holding as a quarry forgets it, or a chase carries on
     // toward a corpse.
     for (Body& one : bodies_) {

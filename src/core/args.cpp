@@ -198,6 +198,7 @@ void printUsage() {
         "  --arena-undying           a blow that would fell the arena's hero fills his health\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
+        "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
         "  --castle-free             Blood Castle with no run, its gates open, the statue alone\n"
         "  --castle-bridge S         Blood Castle's run on, its drawbridge falling in S seconds\n"
         "  --castle N                Blood Castle N's garrison and statue, as the Messenger sets\n"
@@ -354,6 +355,8 @@ Args parseArgs(int argc, char** argv) {
             a.arenaUndying = true;
         } else if (!std::strcmp(s, "--castle-open")) {
             a.castleOpen = true;
+        } else if (!std::strcmp(s, "--invasion")) {
+            a.invasion = true;
         } else if (!std::strcmp(s, "--castle-free")) {
             a.castleFree = true;
         } else if (!std::strcmp(s, "--castle")) {

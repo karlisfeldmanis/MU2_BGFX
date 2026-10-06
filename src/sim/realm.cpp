@@ -95,6 +95,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
     showerDice_.seed(seed ^ 0x6a09e667bb67ae85ull);
+    invasionDice_.seed(seed ^ 0x510e527f9b05688cull);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
@@ -277,6 +278,9 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         summonSlot_ = int(bodies_.size());
         bodies_.push_back(std::move(slot));
     }
+    // And the Golden Invasion's dragon, down until one lands (realm_invasion.cpp), after the
+    // summon so no id before it moves.
+    raiseInvader();
 
     players_.clear();
     indexOfId_.assign(bodies_.size() + 1, uint32_t(bodies_.size()));
@@ -864,6 +868,7 @@ void Realm::step() {
     ++tick_;
     happenings_.clear();
     castleTick();
+    invasionTick();
     if (castleOwed_ != 0) {
         const int castle = castleOwed_;
         castleOwed_ = 0;
@@ -1289,6 +1294,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Enlivened:
             std::snprintf(line, sizeof(line), "%6u %s put a Life on slot %d: option %d to %d",
                           happening.tick, who, happening.a, happening.b, happening.c);
+            break;
+        case What::Invasion:
+            std::snprintf(line, sizeof(line), "%6u %s invasion %s at (%d, %d)", happening.tick,
+                          who, happening.a ? "begun, landing" : "over", happening.b, happening.c);
             break;
         case What::Mixed:
             std::snprintf(line, sizeof(line), "%6u %s mixed recipe %d at %d%%: %s",

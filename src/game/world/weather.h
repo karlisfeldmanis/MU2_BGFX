@@ -56,6 +56,14 @@ public:
     void open(const std::string& world, Sound* sound, const std::string& force);
     void shutdown();
 
+    // The Golden Invasion's storm (game/invasion_sky.h): the rain brought in at once over MU's
+    // four-second walk and held, heavier than Lorencia's drizzle, with a clap close behind it
+    // and then every 8 to 16 seconds; `false` gives the world its own spells back, starting
+    // dry. Ours, the user's (2026-10-06): the dragon comes only in the rain. A world with no
+    // rain (or Devias's and Tarkan's sand and snow, Icarus's mist) is left as it is.
+    void summon(bool on);
+    bool summoned() const { return summoned_; }
+
     // One frame. `indoors` takes the rain's and the jungle's sounds off under a roof, with the
     // wind's switch.
     void update(float seconds, bool indoors);
@@ -66,6 +74,8 @@ public:
     // Lorencia's drizzle darkens the night fully with a third of Noria's drops.
     float pour() const { return share_ * peak_; }
     bool rains() const { return rains_; }
+    // Whether this is a wet spell now, its own or the invasion's (summon).
+    bool wet() const { return rains_ && wet_ && !snows_ && !sky_; }
     // Devias: the wet spell is a blizzard, and rain() is how far the storm is in.
     bool snows() const { return snows_; }
     // The lightning now, 0 none to 1 a near strike at its brightest: the playing clap's flash
@@ -85,6 +95,8 @@ private:
     bool forced_ = false;   // --weather held the spell
     bool cycle_ = false;    // --weather cycle: short spells, to watch the turn
     bool storm_ = false;    // --weather storm: claps close together, to watch the lightning
+    bool summoned_ = false;  // the invasion's storm, held (summon)
+    float ownPeak_ = 1.0f;  // the world's own peak, given back when it ends
     bool wet_ = false;      // the spell now: dry or wet
     float peak_ = 1.0f;     // the share a wet spell rises to
     float left_ = 0.0f;     // seconds of it left

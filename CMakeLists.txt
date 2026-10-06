@@ -137,6 +137,7 @@ add_executable(mu2
   src/game/world/skulls.cpp
   src/game/world/flight.cpp
   src/game/world/boids.cpp
+  src/game/invasion_sky.cpp
   src/game/world/scurry.cpp
   src/game/world/trap_show.cpp
   src/game/world/leaves.cpp
@@ -153,6 +154,7 @@ add_executable(mu2
   src/game/wings.cpp
   src/game/headless.cpp
   src/game/play.cpp
+  src/game/play_invasion.cpp
   src/game/play_open.cpp
   src/game/play_sound.cpp
   src/game/play_show.cpp
@@ -259,6 +261,7 @@ add_executable(mu2
   src/sim/realm_traps.cpp
   src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
+  src/sim/realm_invasion.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
 )
@@ -397,6 +400,7 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/realm_traps.cpp
   src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
+  src/sim/realm_invasion.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
   src/content/grid.cpp
@@ -416,7 +420,7 @@ add_executable(bot EXCLUDE_FROM_ALL
   src/sim/wear.cpp src/sim/vault.cpp src/sim/machine.cpp src/sim/realm_machine.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
   src/sim/realm_items.cpp src/sim/realm_quests.cpp src/sim/quests.cpp src/sim/realm_travel.cpp
   src/sim/realm_move.cpp src/sim/realm_fight.cpp src/sim/realm_skills.cpp src/sim/realm_watch.cpp
-  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/skills.cpp
+  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/realm_invasion.cpp src/sim/skills.cpp
   src/sim/audit.cpp src/content/grid.cpp src/content/tables.cpp src/core/files.cpp
   src/core/log.cpp
 )

@@ -308,3 +308,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | DeathBeamKnight01 | figure | 2026-10-06 11:07 | passed | pale ghost of the Beam Knight, all added |
 | Mutant01 | figure | 2026-10-06 11:46 | awaiting |  |
 | BloodyWolf01 | figure | 2026-10-06 11:07 | passed | hide, cloth and mane on their own materials |
+| GoldenDragon01 | figure | 2026-10-06 18:28 | awaiting |  |

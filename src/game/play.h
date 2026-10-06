@@ -53,6 +53,7 @@
 #include "game/fx/aqua.h"
 #include "game/fx/deathstab.h"
 #include "game/fx/firebreath.h"
+#include "game/invasion_sky.h"
 #include "game/fx/meteor.h"
 #include "game/fx/comet.h"
 #include "game/fx/gleam.h"
@@ -290,6 +291,15 @@ public:
         return row;
     }
     void setWallClock(int64_t unixSeconds) { realm_.setWallClock(unixSeconds); }
+    // The Golden Invasion (game/play_invasion.cpp, sim/invasion.h): whether it rains handed to
+    // the realm each frame, which rolls for the dragons as a wet spell begins; --invasion's
+    // start; the sky opened once the effects are; and whether its storm should be held -- the
+    // world's weather answers to that (Weather::summon).
+    void invasionRain(bool raining) { realm_.invasionRain(raining); }
+    bool invade() { return realm_.invade(); }
+    void openInvasionSky(bgfx::TextureHandle glow, bgfx::TextureHandle haze);
+    bool invasionStorm() const { return invasionStorm_; }
+    void glowInvasion(gfx::Effects& effects) const { sky_.glow(effects); }
     void openCastleDoor() { realm_.openCastleDoor(); }
     void freeCastle() { realm_.freeCastle(); }
     void dropCastleBridge(int seconds) { realm_.dropCastleBridge(seconds); }
@@ -1029,6 +1039,20 @@ private:
     Breath breath_;
     Bones bones_;
     Meteor meteor_;
+    InvasionSky sky_;
+    InvasionSky::Asks skyAsks_;
+    bool invasionStorm_ = false;
+    int invasionCry_ = -1;     // the dragons' cries: the flying ones' at him, the landed one's at it
+    int invasionChime_ = -1;
+    // What the realm said of the invasion, read in the tick's happenings: the sky begun or
+    // ended, the storm held, and the landed dragon's roar (play_invasion.cpp).
+    void invasionSaid(const sim::Happening& happening);
+    // The frame's part: the landed dragon's roar, then the sky's dragons moved and their cries,
+    // breath and fire passed on.
+    void invasion(float seconds);
+    void roar(uint32_t who);
+    void invasionSky(float seconds);
+    uint32_t roarOwed_ = 0;
     // The wizard's Cometfall: blue comets on the ground he names. fx/comet.h.
     Comet comet_;
     Bolt bolt_;

@@ -188,6 +188,7 @@ struct Args {
     int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
     bool castleOpen = false;    // `--castle-open`: the Messenger's door open at any hour (a test)
+    bool invasion = false;      // `--invasion`: the map's Golden Invasion begun at once (a test)
     bool castleFree = false;    // `--castle-free`: Blood Castle with no run and every gate open (a test)
     int castleBridge = -1;      // `--castle-bridge S`: the run on, the drawbridge down in S seconds (a test)
     int castle = 0;             // `--castle N`: Blood Castle N's garrison and statue, as the Messenger sets (a test)

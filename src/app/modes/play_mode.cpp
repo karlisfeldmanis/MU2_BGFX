@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
-#include <ctime>
 #include <unordered_map>
 
 #include "app/options.h"
@@ -318,10 +317,18 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().meteor().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
-                // The Golden Invasion's dragons, their breath glowing MU's lightning2.
-                if (const content::EffectSheet* glow = shown.effect("lightning_2")) {
-                    world_.played().openInvasionSky(ctx.textures.load(
-                        core::join(assets, glow->path), content::TextureRole::Albedo));
+                // The Golden Invasion's dragons: their breath glowing MU's lightning2, the heat
+                // off their wings its soft flare01.
+                {
+                    const content::EffectSheet* glow = shown.effect("lightning_2");
+                    const content::EffectSheet* haze = shown.effect("light");
+                    world_.played().openInvasionSky(
+                        glow ? ctx.textures.load(core::join(assets, glow->path),
+                                                 content::TextureRole::Albedo)
+                             : bgfx::TextureHandle BGFX_INVALID_HANDLE,
+                        haze ? ctx.textures.load(core::join(assets, haze->path),
+                                                 content::TextureRole::Albedo)
+                             : bgfx::TextureHandle BGFX_INVALID_HANDLE);
                 }
                 world_.played().comet().open(assets, ctx.textures,
                                              world_.played().showing().table(), &world_.ground());
@@ -1224,17 +1231,17 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (args.birdsNow) world_.boids().hurry();
         const bool walking = world_.played().realm().hero().walking;
         world_.boids().stepGlow(float(deltaSeconds));
-        world_.boids().glow(ctx.renderer.effects());
-        world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),
-                              viewProj, ctx.renderer);
-        // The Golden Invasion's clock, the local day as Blood Castle's is, and its storm held
-        // while it is on (sim/invasion.h, Weather::summon).
-        {
-            const time_t now = std::time(nullptr);
-            struct tm local {};
-            localtime_r(&now, &local);
-            world_.played().invasionClock(local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec);
+        // The Golden Invasion takes the birds out of the sky while it lasts: MU's ReceiveEvent
+        // calls DeleteBoids() and its slots fill with dragons (GOBoid.cpp:1275).
+        const bool birds = !world_.played().invasionStorm();
+        if (birds) world_.boids().glow(ctx.renderer.effects());
+        if (birds) {
+            world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),
+                                  viewProj, ctx.renderer);
         }
+        // The Golden Invasion comes with the rain (sim/invasion.h), and its storm is held while
+        // it is on (Weather::summon).
+        world_.played().invasionRain(world_.weather().wet());
         world_.weather().summon(world_.played().invasionStorm());
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         // Under the open sky where the map is "underground" only for its air (Tarkan's sand).
@@ -1280,8 +1287,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // The birds cast as well. MU gives every boid outside Heaven a shadow of its own:
     // RenderBoids ends each bird with RenderBodyShadow, laid on the terrain under it at a
     // fifth black (GOBoid.cpp). Here the sun's split carries it like any other caster.
-    world_.boids().gather(townDrawables_);
-    if (casters) world_.boids().gather(townCasters_);
+    if (!world_.played().invasionStorm()) {
+        world_.boids().gather(townDrawables_);
+        if (casters) world_.boids().gather(townCasters_);
+    }
     // The Dungeon's traps, posed and drawn with the scenery they stand among.
     {
         float feetX = 0.0f, feetZ = 0.0f;

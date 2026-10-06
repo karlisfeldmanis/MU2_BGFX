@@ -63,7 +63,9 @@ private:
         int64_t startAt = 0;
         int spoken = 0;
     };
-    static constexpr int kSources = 2;  // Blood Castle, Devil Square
+    static constexpr int kSources = 3;  // Blood Castle, Devil Square, the Golden Invasion
+    static constexpr int kGateSources = 2;  // the two on a timetable
+    static constexpr int kInvasionSource = 2;
     void raise(int source, float hold, bool pin);
     void rebuild(int width);
 

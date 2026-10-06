@@ -1603,6 +1603,36 @@
       ],
       "from": "As bahamut_die: 340 BAHAMUT1."
     },
+    "invasion_start": {
+      "files": [
+        "iEventStart.wav"
+      ],
+      "from": "SOUND_RING_EVENT_START, Data\\\\Sound\\\\iEventStart.wav (ZzzOpenData.cpp:5649), which MuMain plays when the server sends PlaySoundEffect 1 (0x9E, WSclient.cpp:10070-10088) -- the White Wizard's ring event. Ours for the Golden Invasion's start: neither MuMain nor WebZen's DragonEvent.cpp gives the dragons' coming a sound of its own."
+    },
+    "goldendragon_move": {
+      "files": [
+        "mYeti1.wav"
+      ],
+      "from": "Sounds[rand()%2], both slots 123 -- 333, SOUND_MONSTER_YETI1__ (DSPlaySound.h:275), which nothing loads: MONSTER_MODEL_DRAGON's arm loads mYeti1.wav into SOUND_MONSTER_YETI1 instead, the Bahamut's trap. mYeti1 is what the arm means. SetMonsterSound(..., 123, 123, 124, 124, 125) in ZzzOpenData.cpp:3616-3624; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "goldendragon_attack": {
+      "files": [
+        "mBullAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both slots 124 -- 334, SOUND_MONSTER_BULLATTACK1_, loaded as mBullAttack1.wav by the same arm. Also the cry the event's flying dragons give, one frame in 128 (GOBoid.cpp:1402), and the Golden Dragon's on appearing (AppearMonster, WSclient.cpp:2767-2772)."
+    },
+    "goldendragon_shock": {
+      "files": [
+        "mBullAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch."
+    },
+    "goldendragon_die": {
+      "files": [
+        "mYetiDie.wav"
+      ],
+      "from": "Sounds[4], slot 125 -- 335, SOUND_MONSTER_YETIDIE__, loaded as mYetiDie.wav by MONSTER_MODEL_DRAGON's arm (ZzzOpenData.cpp:3616-3624)."
+    },
     "vepar_move": {
       "files": [
         "mBepar1.wav",

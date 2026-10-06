@@ -13,6 +13,7 @@
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "sim/event.h"
+#include "sim/invasion.h"
 
 namespace mu::game {
 namespace {
@@ -263,7 +264,7 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
     const bool inside = realm.tables() && realm.tables()->map == sim::kBloodCastleMap;
 
     // ---- the gates: Blood Castle's Messenger (sim/event.h), Devil Square's Charon ------------
-    for (int g = 0; g < kSources; ++g) {
+    for (int g = 0; g < kGateSources; ++g) {
         const Gate& gate = kGates[g];
         Source& one = sources_[g];
         Call& call = calls_[g];
@@ -305,6 +306,44 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
                 // came in during it): it shows the open gate alone.
                 else if (was != 2 || queued_ == 0 || leaving_ >= 0.0f) raise(g, kLeast, true);
                 else life_ = std::max(life_, kOpenHold);
+            }
+        }
+    }
+
+    // ---- the Golden Invasion (sim/invasion.h): no timetable, it comes with the rain -----------
+    // Said as it begins, the green dot and the seconds to the landing, pinned until the dragon is
+    // down and held a moment after; said again, briefly, if it is still standing when he comes
+    // back to the map. MuMain's is a gold line across the middle of the screen, "[Lorencia]
+    // Golden invasion!" (OpenMU's GoldenCenter message); ours is the herald's.
+    {
+        Source& one = sources_[kInvasionSource];
+        Call& call = calls_[kInvasionSource];
+        const sim::InvasionPhase phase = play.isOpen() ? realm.invasionPhase()
+                                                        : sim::InvasionPhase::Quiet;
+        const int moment = phase == sim::InvasionPhase::Entering   ? 1
+                           : phase == sim::InvasionPhase::Standing ? 2
+                                                                   : 0;
+        call.name = "Golden Invasion";
+        call.place = "Lorencia";
+        call.live = moment > 0;
+        if (moment == 1) {
+            call.state = "dragons coming";
+            call.seconds = int((realm.invasionLandsIn() + 19) / 20);
+        } else {
+            call.state = "the dragon has landed";
+            call.seconds = -1;
+        }
+        if (moment == 0) {
+            one.spoken = 0;
+        } else if (moment > one.spoken) {
+            const int was = one.spoken;
+            one.spoken = moment;
+            if (moment == 1) {
+                raise(kInvasionSource, float(realm.invasionLandsIn()) / 20.0f + kOpenHold, true);
+            } else if (was != 1 || queued_ == 0 || leaving_ >= 0.0f) {
+                raise(kInvasionSource, kLeast, false);
+            } else {
+                life_ = std::max(life_, kOpenHold);
             }
         }
     }
