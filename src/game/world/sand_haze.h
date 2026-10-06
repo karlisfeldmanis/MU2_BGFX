@@ -8,7 +8,8 @@
 // so the streaks lean. Nothing else in Tarkan makes its wind.
 //
 // Here the two are placed quads half a metre in front of the eye, wider than any screen, drawn
-// in the effects pass; ours, `kLevel` of MU's colour, because the user likes these faint.
+// in the effects pass; ours, a share of MU's colour, because the user likes these faint.
+// Icarus wears the same two sheets as drifting cloud, cooler, slower and fainter (ours).
 #pragma once
 
 #include <string>
@@ -21,18 +22,21 @@
 
 namespace mu::game {
 
+struct HazeLook;
+
 class SandHaze {
 public:
-    // Opens in Tarkan: the showing's `sand` and `sand_fine`.
+    // Opens in Tarkan and Icarus: the showing's `sand` and `sand_fine`.
     void open(const std::string& assetDir, const std::string& world, content::Textures& textures);
     void shutdown();
-    bool isOpen() const { return bgfx::isValid(cloud_) || bgfx::isValid(specks_); }
+    bool isOpen() const { return look_ && (bgfx::isValid(cloud_) || bgfx::isValid(specks_)); }
 
     void update(float seconds) { clock_ += seconds; }
     void gather(gfx::Effects& effects, const gfx::Camera& camera) const;
 
 private:
     float clock_ = 0.0f;
+    const HazeLook* look_ = nullptr;  // the world's look (sand_haze.cpp), set when open
     bgfx::TextureHandle cloud_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle specks_ = BGFX_INVALID_HANDLE;
 };

@@ -1,38 +1,38 @@
 {
-  "note": "Icarus's light, laid over lighting.json while a character stands in Icarus (game/world/maps.h). MU draws no terrain here (MainScene.cpp:463): the road is additive cloud puffs (ZzzObject.cpp:3090-3169) over a navy clear colour, (3, 25, 44)/256 (SceneManager.cpp:385-386), lined by 180 pillar-arches, with no shadow anywhere and steady rain and silent lightning. So: a night above the clouds, the house's moonlit night taken literally. clear_colour (ours, the key is new with this sheet) is the frame wherever nothing is drawn, in linear light before the exposure; it is set so the void shows MU's navy, a sky and not a hole. A cool white-blue moon at the house 52 degrees; a navy sky fill; the bounce from below in the cloud's pale blue-grey, since the light under a pillar comes up off the cloud; a trace of navy dust for depth only; the shade cool, the light a touch warm (the house's little sepia, in the tints), saturation under 1 so the navy does not turn electric. No grass, no water. Invention on MU's look, docs/icarus-port.md B 6; first cut 2026-10-06.",
+  "note": "Icarus's light, laid over lighting.json while a character stands in Icarus (game/world/maps.h). MU draws no terrain here (MainScene.cpp:463): the road is additive cloud puffs (ZzzObject.cpp:3090-3169) over a navy clear colour, (3, 25, 44)/256 (SceneManager.cpp:385-386), lined by 180 pillar-arches, with no shadow anywhere and steady rain and silent lightning. So: a night above the clouds, the house's moonlit night taken literally. clear_colour (ours, the key is new with this sheet) is the frame wherever nothing is drawn, in linear light before the exposure; it is set so the void shows MU's navy, a sky and not a hole. A cool white-blue moon at the house 52 degrees; a navy sky fill; the bounce from below in the cloud's pale blue-grey, since the light under a pillar comes up off the cloud; a trace of navy dust for depth only; the shade cool, the light a touch warm (the house's little sepia, in the tints), saturation under 1 so the navy does not turn electric. No grass, no water. Invention on MU's look, docs/icarus-port.md B 6; first cut 2026-10-06. Then 2026-10-07, the user: 'fine tune tonemaping and lighting and shadows for icarus for perfect balance and great AAA look'. On the first cut the fill (1.0) stood level with the moon (2.2), so nothing cast a shadow that showed and the marble read as one milky blue-grey with the cloud void as bright as the stone. Shot at the door (15,13), 30,40, 55,75 and 26,63: a probe at moon 5 over fill 0.2 carved the stone but blacked its far faces. So the moon 3.8 over a fill of 0.55, a touch less blue (0.86, 0.9, 1.0), and the faces turned from it lifted by the cloud's bounce from below (0.62, 0.68, 0.8) rather than the flat fill; exposure 1.25, contrast 0.55, saturation 0.8 so the navy is not electric, the cool/warm split 0.5, ssao 1.1, bloom 0.4 from 0.9, the navy dust 0.002. A moon at 4.4 over 0.42 read the same, darker. And a faint screen haze, the sand sheets cool and slow (game/world/sand_haze.cpp).",
   "elevation": 52.0,
   "sun_colour": [
-    0.78,
     0.86,
+    0.9,
     1.0
   ],
-  "sun_strength": 2.2,
+  "sun_strength": 3.8,
   "sky_colour": [
-    0.1,
-    0.2,
-    0.36
+    0.12,
+    0.22,
+    0.38
   ],
   "horizon_paleness": 0.6,
   "ground_colour": [
-    0.42,
-    0.46,
-    0.55
+    0.62,
+    0.68,
+    0.8
   ],
-  "ambient_strength": 1.0,
-  "exposure": 1.35,
+  "ambient_strength": 0.55,
+  "exposure": 1.25,
   "dust_colour": [
     0.08,
     0.16,
     0.3
   ],
-  "dust_density": 0.0015,
+  "dust_density": 0.002,
   "lamp_strength": 3.14159,
   "glow_strength": 1.3,
-  "bloom_threshold": 1.0,
-  "bloom_strength": 0.35,
-  "contrast": 0.45,
-  "saturation": 0.88,
-  "split": 0.35,
+  "bloom_threshold": 0.9,
+  "bloom_strength": 0.4,
+  "contrast": 0.55,
+  "saturation": 0.8,
+  "split": 0.5,
   "tint_low": [
     0.92,
     0.97,
@@ -48,7 +48,7 @@
   "water_sheen": 0.0,
   "probe": 0.0,
   "tonemap": 1,
-  "ssao_strength": 0.8,
+  "ssao_strength": 1.1,
   "clear_colour": [
     0.004,
     0.03,
