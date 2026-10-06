@@ -195,9 +195,6 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
     } else {
         raise(markOf(), cue.damage);
     }
-    // A pulse says what it is, a word over its figure.
-    if (!cue.miss && cue.poison) raise(Mark::PoisonWord, 0);
-    if (!cue.miss && cue.burn && !onHero) raise(Mark::BurnWord, 0);
 
     if (cue.miss) return;  // nothing bleeds from a blow that did not land
 

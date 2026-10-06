@@ -239,9 +239,7 @@ float sizeOf(Mark mark) {
         case Mark::RuneCritical: return kCriticalSize;
         case Mark::Reflected: break;
         case Mark::Miss: return kMissSize;
-        case Mark::Absorbed:
-        case Mark::PoisonWord:
-        case Mark::BurnWord: return kAbsorbedSize;
+        case Mark::Absorbed: return kAbsorbedSize;
         case Mark::Burn:
         case Mark::Swing:
         case Mark::Poison:
@@ -259,10 +257,8 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Reflected: return kReflectedInk;
         case Mark::Taken: return kTakenInk;
         case Mark::Absorbed: return kAbsorbedInk;
-        case Mark::Poison:
-        case Mark::PoisonWord: return kPoisonInk;
-        case Mark::Burn:
-        case Mark::BurnWord: return kBurnInk;
+        case Mark::Poison: return kPoisonInk;
+        case Mark::Burn: return kBurnInk;
         case Mark::Rune: return kRuneInk;
         case Mark::RuneCritical: return kRuneCriticalInk;
         case Mark::Summon: return kSummonInk;
@@ -540,14 +536,12 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
                         float(figure.slot) * kStackStep * unit;
 
         const float size = sizeOf(figure.mark) * unit * popped(u);
-        // ABSORBED, POISON and BURN: a small word set solid, each over its figure.
-        const bool tag = figure.mark == Mark::Absorbed || figure.mark == Mark::PoisonWord ||
-                         figure.mark == Mark::BurnWord;
+        // A pulse is told by its colour alone, no word (the user, 2026-10-06: 'dont shoe burn, or
+        // poison text just color').
+        const bool tag = figure.mark == Mark::Absorbed;
         const bool word = figure.mark == Mark::Miss || tag;
-        const std::string text = figure.mark == Mark::Miss         ? std::string("MISS")
-                                 : figure.mark == Mark::Absorbed   ? std::string("ABSORBED")
-                                 : figure.mark == Mark::PoisonWord ? std::string("POISON")
-                                 : figure.mark == Mark::BurnWord   ? std::string("BURN")
+        const std::string text = figure.mark == Mark::Miss       ? std::string("MISS")
+                                 : figure.mark == Mark::Absorbed ? std::string("ABSORBED")
                                  : std::to_string(figure.value < 0 ? 0 : figure.value);
         // A miss is a word, so it takes the lane's own tracking rather than the ramp's: set
         // solid at this size it reads as one long glyph. ABSORBED is set solid all the same,

@@ -36,11 +36,7 @@ enum class Mark : uint8_t {
     Rune,      // a Rune of Creation's power, ice blue, at a skill's size
     RuneCritical,  // and its critical, paler, at a critical's size
     Summon,    // her summon's blow, its own lilac, at a swing's size
-    Burn,      // an Immolate burn's pulse, ember, at a swing's size
-    // The word under a pulse's figure, as ABSORBED is (the user, 2026-10-06: 'show also in
-    // damage numbers that monster is affected by poison or burn'): POISON green, BURN ember.
-    PoisonWord,
-    BurnWord,
+    Burn,      // an Immolate or Scorch burn's pulse, orange, at a swing's size
 };
 
 // A blow that has landed on the tick and has not yet been shown.
