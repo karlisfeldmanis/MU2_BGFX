@@ -3494,7 +3494,14 @@ def cook_wardrobe(out_dir, texcook, threads):
     triangles = vertices = 0
     for name, path in sorted(models.items()):
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
+        # An item glow that slides, as RenderPartObjectBody slides a mesh's BlendMeshTexCoord
+        # (the Dragon Spear's swirl, the two second-class shields' streaks): the asset's glow
+        # entry says `scrolls_per_second` and its `axis`, and cook_mesh finds it by the glow
+        # material's name, which export_gltf writes as glow_<sheet>, lower case.
+        glows = {f"glow_{sheet.lower()}": one
+                 for sheet, one in (rows[name][0].get("glow") or {}).items()}
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
+                                              scrolls=glows,
                                               soft=set(rows[name][0].get("soft_alpha", [])),
                                               no_chrome=set(rows[name][0].get("no_chrome", [])))
         # A weapon with a rig of its own -- a bow's or a crossbow's string -- carries its one

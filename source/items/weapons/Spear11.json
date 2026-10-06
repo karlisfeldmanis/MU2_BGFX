@@ -50,9 +50,12 @@
   },
   "material_overrides_note": "As every built blade: steel's own 0.2 mirrors the scene.",
   "glow": {
-    "Drax_R": {}
+    "Drax_R": {
+      "scrolls_per_second": -0.5,
+      "axis": "v"
+    }
   },
-  "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5284-5286) hides mesh 1, Drax_R, from the body (HiddenMesh 1), and RenderPartObjectBody (:7114-7118) draws it again as its own BlendMesh -- added, at light 1 -- with its UVs sliding (WorldTime*0.0001, *0.0005): a blue swirl over the dragon's head. Drawn added and steady here; an item's glow cannot slide (cook_wardrobe passes no scroll), so the swirl stands still.",
+  "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5284-5286) hides mesh 1, Drax_R, from the body (HiddenMesh 1), and RenderPartObjectBody (:7114-7118) draws it again as its own BlendMesh -- added, at light 1 -- with its UVs sliding (WorldTime*0.0001, *0.0005): a blue swirl over the dragon's head. Slides since 2026-10-06: V at MU's WorldTime*0.0005, half a sheet a second (scrolls_per_second -0.5, the renderer's offset being minus the rate, as the waterspout's); MU's U drift of 0.0001 a millisecond is left out, the renderer sliding one axis.",
   "rig_note": "Spear11.rig.json from export-rig --actions=all: ten bones, one action of one key, nothing moves. Not here: the eight blue BITMAP_LIGHT sprites MuMain hangs on bones 1-8 held (ZzzCharacter.cpp:7723-7731), its own swing blur (BlurType 1, :3864-3867), and its item-glow colour 9 in the inventory (ZzzObject.cpp:6580), client effects.",
   "islands": [
     {

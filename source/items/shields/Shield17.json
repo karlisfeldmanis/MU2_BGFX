@@ -55,12 +55,15 @@
   },
   "material_note": "The frame and the gold gradient are gilt: brass at 0.6, as the Dragon Shield. WD_a, the green face, is MU's paint, painted_steel. Set per island (asset.sh's sheet_materials is the tiled path's, not an item's).",
   "glow": {
-    "wdn_r": {},
+    "wdn_r": {
+      "scrolls_per_second": -0.5,
+      "axis": "u"
+    },
     "WD_a_glow": {
       "jitter": 0.1
     }
   },
-  "glow_note": "RenderPartObjectBody (ZzzObject.cpp:8037-8048), mesh by mesh: mesh 1 (WD_R) at 0.8 alpha, mesh 3 (WD_a) at 0.5, mesh 0 (WDn, the frame) solid, mesh 2 (wdn_r) added with its U sliding (WorldTime*0.0005), and mesh 3 again added with its UVs jumping each frame. Here WD_R and WD_a are drawn solid (the 0.8 and 0.5 alphas are not carried, ours), wdn_r is a steady glow (an item's glow cannot slide), and WD_a_glow, a copy of mesh 3's faces, is the jumping added layer at jitter 0.1. ItemObjectAttribute's HiddenMesh 2 (:5275-5277) is for the other draw paths; this arm draws mesh 2 itself.",
+  "glow_note": "RenderPartObjectBody (ZzzObject.cpp:8037-8048), mesh by mesh: mesh 1 (WD_R) at 0.8 alpha, mesh 3 (WD_a) at 0.5, mesh 0 (WDn, the frame) solid, mesh 2 (wdn_r) added with its U sliding (WorldTime*0.0005), and mesh 3 again added with its UVs jumping each frame. Here WD_R and WD_a are drawn solid (the 0.8 and 0.5 alphas are not carried, ours), wdn_r is a glow, and WD_a_glow, a copy of mesh 3's faces, is the jumping added layer at jitter 0.1. ItemObjectAttribute's HiddenMesh 2 (:5275-5277) is for the other draw paths; this arm draws mesh 2 itself. Slides since 2026-10-06: U at MU's WorldTime*0.0005 (scrolls_per_second -0.5, axis u), as MU slides it.",
   "separate_meshes": true,
   "separate_meshes_why": "WD_a_glow is mesh 3's own faces again; welded across meshes the two shells become duplicate faces and Blender keeps one (Wing05's trap).",
   "rig_note": "export-rig --actions=all: one bone, one action of one key; nothing moves, no rig kept. MuMain holds it at its own angle (ZzzCharacter.cpp:6875-6882), and colours its inventory glow 6 (ZzzObject.cpp:6576).",

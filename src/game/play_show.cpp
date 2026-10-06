@@ -325,6 +325,20 @@ void Play::snort(float seconds) {
             staffFire_.feed(worldHead, worldSparks, worldShaft);
         }
     }
+    // The Saint Crossbow's, the Grand Soul Shield's and the Dragon Spear's lights wherever one
+    // is held in hand (fx/held_lights.h).
+    heldLights_.update(seconds);
+    for (const HeldLights::Item item : HeldLights::kItems) {
+        float local[HeldLights::kMostPoints][3], world[HeldLights::kMostPoints][3];
+        const int count = HeldLights::points(item, local);
+        for (Drawn& one : drawn_) {
+            if (!one.visible || !one.placed) continue;
+            int at = 0;
+            while (at < count && one.figure.heldPoint(HeldLights::mesh(item), local[at], world[at]))
+                ++at;
+            if (at == count) heldLights_.feed(item, world, count);
+        }
+    }
     // The motes off a worn wing's tips, his and the envoy's (fx/wing_motes.h), at last frame's
     // pose, as the staff's points are.
     wingMotes_.update(seconds);

@@ -62,10 +62,12 @@
         0.4,
         0.6
       ],
-      "pulse_rate": "slow"
+      "pulse_rate": "slow",
+      "scrolls_per_second": 0.5,
+      "axis": "v"
     }
   },
-  "glow_note": "RenderPartObjectBody (ZzzObject.cpp:8015-8034), which draws the shield mesh by mesh: mesh 2 (MMsSs_r) first in flat colour at 0.3 of the body light, then a chrome pass over it, then mesh 0 (jh03, the frame) solid, mesh 1 (jh01) added with its UVs jumping each frame (rand()%10*0.1, the Legendary Shield's shimmer), and last mesh 2 again added at sin(WorldTime*0.001)*0.4 + 0.6 of the light with its UVs sliding. Here: the flat colour is MMsSs_r_back, a copy of mesh 2's faces on a 0.3 grey (ours); jh01 a glow with jitter 0.1; MMsSs_r a glow at pulse [0.4, 0.6], the slow rate (content::Material::slowPulse). Not carried: the chrome pass and the lightning's slide (an item's glow cannot slide), and the blue BITMAP_SHINY+1 and BITMAP_LIGHT sprites MuMain hangs at bone 1 held (ZzzCharacter.cpp:7560-7567).",
+  "glow_note": "RenderPartObjectBody (ZzzObject.cpp:8015-8034), which draws the shield mesh by mesh: mesh 2 (MMsSs_r) first in flat colour at 0.3 of the body light, then a chrome pass over it, then mesh 0 (jh03, the frame) solid, mesh 1 (jh01) added with its UVs jumping each frame (rand()%10*0.1, the Legendary Shield's shimmer), and last mesh 2 again added at sin(WorldTime*0.001)*0.4 + 0.6 of the light with its UVs sliding. Here: the flat colour is MMsSs_r_back, a copy of mesh 2's faces on a 0.3 grey (ours); jh01 a glow with jitter 0.1; MMsSs_r a glow at pulse [0.4, 0.6], the slow rate (content::Material::slowPulse). Not carried: the chrome pass, and the blue BITMAP_SHINY+1 and BITMAP_LIGHT sprites MuMain hangs at bone 1 held (ZzzCharacter.cpp:7560-7567). Slides since 2026-10-06: V at MU's -WorldTime*0.0005 (scrolls_per_second 0.5); MU's U drift of 0.0001 a millisecond is left out, the renderer sliding one axis.",
   "separate_meshes": true,
   "separate_meshes_why": "MMsSs_r_back is mesh 2's own faces again; welded across meshes the two shells become duplicate faces and Blender keeps one (Wing05's trap).",
   "rig_note": "export-rig --actions=all: two bones, one action of one key; nothing moves, no rig kept (the held sprites at bone 1 are not built, and a rig would have to describe the MMsSs_r_back copy too). MuMain holds it as the Legendary Shield (ZzzCharacter.cpp:6883-6890).",

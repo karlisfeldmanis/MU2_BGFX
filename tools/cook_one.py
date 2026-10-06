@@ -252,6 +252,7 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
         # index entry (a wing's), as cook.py's figure and wardrobe steps read them.
         soft = set()
         bare = set()   # and the glows a levelled item's chrome stays off, as cook.py's wardrobe
+        glows = {}     # and an item glow's slide, keyed by its glb material as cook.py's wardrobe
         for row in extra.get("monsters", []) if kind == "figure" else []:
             if row.get("mesh", "").split("~", 1)[0] == mesh_name.split("~", 1)[0]:
                 soft |= set(row.get("soft_alpha", []))
@@ -259,11 +260,14 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
             if one.get("name") == mesh_name.split("~", 1)[0]:
                 soft |= set(one.get("soft_alpha", []))
                 bare |= set(one.get("no_chrome", []))
+                glows = {f"glow_{sheet.lower()}": glow
+                         for sheet, glow in (one.get("glow") or {}).items()}
         tris, _verts, _size, bones = cook_mesh(mesh_name, path, out_path, manifest,
                                                hidden.get(mesh_name),
                                                scroll_per_second=scroll,
                                                scrolls=extra.get("scrolls") if kind == "world"
-                                               else None, soft=soft, no_chrome=bare)
+                                               else glows if area == "wardrobe" else None,
+                                               soft=soft, no_chrome=bare)
         cooked[mesh_name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,
                              "triangles": tris}
         # A held weapon's own rig and clip (a bow's string): see cook.py's wardrobe step.

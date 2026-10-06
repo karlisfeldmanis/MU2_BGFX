@@ -25,6 +25,7 @@
 #include "game/fx/breath.h"
 #include "game/fx/eyes.h"
 #include "game/fx/staff_fire.h"
+#include "game/fx/held_lights.h"
 #include "game/fx/wing_motes.h"
 #include "game/fx/shadow_stars.h"
 #include "game/fx/snort.h"
@@ -562,6 +563,7 @@ public:
     Dust& dust() { return dust_; }
     Eyes& eyes() { return eyes_; }
     StaffFire& staffFire() { return staffFire_; }
+    HeldLights& heldLights() { return heldLights_; }
     WingMotes& wingMotes() { return wingMotes_; }
     // The Shadows' stars: opened by the caller as the eyes are; fed in `shade`.
     ShadowStars& shadowStars() { return shadowStars_; }
@@ -1040,6 +1042,7 @@ private:
     uint32_t dustSeed_ = 0x3c6ef372u;
     Eyes eyes_;
     StaffFire staffFire_;  // the held Staff of Resurrection's spark and shaft lights
+    HeldLights heldLights_;  // the Saint Crossbow's, Grand Soul Shield's and Dragon Spear's
     WingMotes wingMotes_;  // the motes off every worn wing's tips
     ShadowStars shadowStars_;
     // The Shadows' stars, off the same posed frame as the eyes. fx/shadow_stars.h.
