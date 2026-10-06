@@ -771,6 +771,28 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 183, .sound = "", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 70,
      .flies = 15.0f, .fallTicks = 7, .splash = 4.0f},
+
+    // ---- Impale 47, the spear's, after Cometfall so no save's learned bit moves ---------------
+    //
+    // **0.95d's**: `CreateSkill(Impale, ..., DarkKnight | MagicGladiator, Physical, 15, 3,
+    // manaConsumption: 8, levelRequirement: 28)` (Version095d/SkillsInitializer.cs:79). MU throws it
+    // with a spear in the right hand (`SkillWarrior`, SkillCast.cpp:149-155) and from a Uniria or a
+    // Dinorant alone (NewUIMainFrameWindow.cpp:2131-2135); it plays PLAYER_ATTACK_SKILL_SPEAR,
+    // player.muc's 70, at 0.30 (ZzzCharacter.cpp:926), and SOUND_RIDINGSPEAR on AttackTime 10
+    // (:2703-2712). Its look is game/fx/impale.h.
+    //
+    // **Ours** (the user, 2026-10-06: "lets make that orb, only for spears", and "DK orbs work only
+    // close range"): taught by the Orb of Impale, thrown with a spear on foot or ridden, at the
+    // knight's own reach of one tile where MU's is three. 70 is a seated clip -- the hips a metre
+    // and a half up, the thighs bent over a mount -- so on foot it plays Death Stab's standing
+    // thrust, 71, and on a horse MU's own 70 (Play, where the ride cast is chosen). The spear's
+    // early blow, under Death Stab: 1.9 on a four-second wait, Falling Slash's, where Death Stab
+    // is 2.3 on 5.5. Learned at 56, twice its 28 as the ladder asks (the orb's level_from).
+    {.number = skill::kImpale, .name = "Impale", .mana = 8, .reach = 1.0f, .force = 1.9f,
+     .forcePerStrength = 1.0f / 1000.0f, .coolTicks = 80, .spread = Spread::One,
+     .tells = "A spear driven through one body, and ghosts of it after. Thrown with a spear.",
+     .clip = 71, .sound = "riding_spear", .built = true, .families = arms::kSpear,
+     .needLevel = 56},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

@@ -52,6 +52,7 @@
 #include "game/fx/inferno.h"
 #include "game/fx/aqua.h"
 #include "game/fx/deathstab.h"
+#include "game/fx/impale.h"
 #include "game/fx/firebreath.h"
 #include "game/invasion_sky.h"
 #include "game/fx/meteor.h"
@@ -571,6 +572,8 @@ public:
     Aqua& aqua() { return aqua_; }
     // The knight's Death Stab: its streaks, cones and the wound it leaves. fx/deathstab.h.
     DeathStab& deathStab() { return deathStab_; }
+    // The spear's Impale: its sound and its ghosts. fx/impale.h.
+    Impale& impale() { return impale_; }
     // The Dinorant's Fire Breath: its sprays, its haze and its burst. fx/firebreath.h.
     FireBreath& fireBreath() { return fireBreath_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
@@ -1182,6 +1185,7 @@ private:
     Inferno inferno_;
     Aqua aqua_;
     DeathStab deathStab_;
+    Impale impale_;
     FireBreath fireBreath_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.

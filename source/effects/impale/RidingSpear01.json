@@ -1,0 +1,16 @@
+{
+  "item": "RidingSpear01",
+  "mu_name_from": "Data/Skill/RidingSpear01.bmd, MODEL_SPEARSKILL (ZzzOpenData.cpp:4285-4286, its sheets from Data/Skill), made by Impale's thrust (ZzzCharacter.cpp:2735-2757).",
+  "kind": "skill",
+  "why_this_one": "Impale (AT_SKILL_IMPALE): on AttackTime 13 and 14, three a frame, 145 units along his facing and 110 up, each moved up to 30 units on every axis; each lives twenty frames, Scale 1.5, driven five units a frame along his facing (ZzzEffect.cpp:641-645, MoveParticle), drawn RENDER_BRIGHT at Light (0.3, 0.3, 0.3) x LifeTime x 0.05 (RenderSkillSpear, ZzzEffect.cpp:8683-8693). game/fx/impale.h draws them.",
+  "mesh": "RidingSpear01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/RidingSpear01.bmd: one mesh, 12 triangles, 124 units down its own Z. Its one bone, Box01, turns it 90 degrees about X (quaternion 0.707, 0, 0, 0.707) and sets it 89 units off along its Y; the export is the bare vertices, so game/fx/impale.h lays the Z along his facing.",
+  "parts": [
+    {
+      "group": "MMn2",
+      "sheet": "MMn2.png",
+      "blend": "additive",
+      "note": "Data/Skill/MMn2.OZJ, 64 x 32: a blue streak, bright at its head."
+    }
+  ]
+}

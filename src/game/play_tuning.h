@@ -237,10 +237,11 @@ inline bool twoHandedStance(const std::string& stance) {
 }
 
 // MU's own ride clips, which seat themselves: the stop and run rides, the ride swings, the rider
-// skill and the ride cast. Anything else played on a horse is a standing clip and is seated.
+// skill, Impale's ride thrust (70) and the ride cast. Anything else played on a horse is a
+// standing clip and is seated.
 inline bool rideAction(int slot) {
     return slot == 13 || slot == 14 || slot == 36 || slot == 37 || (slot >= 54 && slot <= 59) ||
-           slot == 68 || slot == 69 || slot == 155;
+           slot == 68 || slot == 69 || slot == 70 || slot == 155;
 }
 
 // An angle folded into a half turn either side of nothing, so that a body a few degrees the

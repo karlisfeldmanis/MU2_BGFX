@@ -200,6 +200,7 @@ add_executable(mu2
   src/game/fx/comet.cpp
   src/game/fx/aqua.cpp
   src/game/fx/deathstab.cpp
+  src/game/fx/impale.cpp
   src/game/fx/firebreath.cpp
   src/game/fx/bolt.cpp
   src/game/sound.cpp

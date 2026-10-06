@@ -141,6 +141,8 @@ void Play::exhale(float seconds) {
         // blur the skill rung laid over its thrust was a pink-white smear MU never draws
         // (2026-10-02, the user: "still buggy"). Its own look is fx/deathstab.h.
         if (skill && one.swingSkill == sim::skill::kDeathStab) continue;
+        // Nor Impale, on the same thrust or MU's ride one, which is on neither list either.
+        if (skill && one.swingSkill == sim::skill::kImpale) continue;
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the

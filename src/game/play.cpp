@@ -1023,8 +1023,11 @@ void Play::update(double seconds) {
                                 // which the ride swing below replaces.
                                 if (happening.who == realm_.hero().id && realm_.hero().riding &&
                                     row->arrows == 0) {
+                                    // Impale has MU's own ride thrust, 70 (sim/skills.cpp).
                                     const int ridden = swinger->figure.body()->library->find(
-                                        realm_.hero().kin == sim::Kin::DarkWizard ? 155 : 68);
+                                        realm_.hero().kin == sim::Kin::DarkWizard ? 155
+                                        : row->number == sim::skill::kImpale      ? 70
+                                                                                  : 68);
                                     if (ridden >= 0) swinger->castClip = ridden;
                                 }
                             }
@@ -1162,6 +1165,8 @@ void Play::update(double seconds) {
                             if (spell && spell->wizardry) cry = -1;
                             // Death Stab's on AttackTime 8, cued by fx/deathstab.h.
                             if (swinger->castSkill == sim::skill::kDeathStab) cry = -1;
+                            // Impale's on AttackTime 10, cued by fx/impale.h.
+                            if (swinger->castSkill == sim::skill::kImpale) cry = -1;
                             // Fire Breath's with the breath, at the release (`Loosed`).
                             if (swinger->castSkill == sim::skill::kFireBreath) cry = -1;
                             // Twisting Slash's goes with its wheel, fifteen frames in.
@@ -1199,6 +1204,10 @@ void Play::update(double seconds) {
                         // (fx/deathstab.h).
                         if (cast && happening.a == sim::skill::kDeathStab) {
                             deathStab_.begin(happening.who, happening.whom, swinger->swinging);
+                        }
+                        // Impale's sound and ghosts (fx/impale.h).
+                        if (cast && happening.a == sim::skill::kImpale) {
+                            impale_.begin(happening.who, happening.whom, swinger->swinging);
                         }
 
                         // What this swing was thrown with, kept until the blow settles -- for a
@@ -1860,40 +1869,42 @@ void Play::update(double seconds) {
     inferno_.update(float(seconds));
     // Aqua Beam's line (fx/aqua.h).
     aqua_.update(float(seconds));
-    // Death Stab's streaks, cones and wound (fx/deathstab.h): where a body is drawn, its weapon's
-    // link bone, and the thin bolts of the wound -- Thunder's.
+    // The two spear skills' shared questions: where a body is drawn, its weapon's link bone,
+    // and a skill's own wave cued at the body -- Death Stab's and Impale's, on their AttackTime.
+    const auto bodyAt = [&](uint32_t id, float* feet, float* tall, float* yaw) {
+        const Drawn* drawn = drawnOf(id);
+        if (drawn == nullptr || !drawn->placed || !ground_) return false;
+        const FigureBody* look = drawn->figure.body();
+        feet[0] = drawn->crown[0];
+        feet[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
+        feet[2] = drawn->crown[2];
+        *tall = look ? look->height * look->scale : 1.8f;
+        *yaw = drawn->yaw;
+        return true;
+    };
+    const auto gripOf = [&](uint32_t id, float* out) {
+        const Drawn* drawn = drawnOf(id);
+        const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
+        if (look == nullptr) return false;
+        for (const HeldItem& held : look->held) {
+            if (held.kind != "weapon" || held.bone < 0) continue;
+            const float grip[3] = {0.0f, 0.0f, 0.0f};
+            return drawn->figure.pointOn(held.bone, grip, out);
+        }
+        return false;
+    };
+    const auto skillWave = [&](int32_t skill, uint32_t id) {
+        const int index = sim::skillIndexOf(skill);
+        const Drawn* drawn = drawnOf(id);
+        if (index >= 0 && heard_.skill[index] >= 0 && drawn != nullptr && drawn->placed) {
+            emit(heard_.skill[index], drawn->crown[0], drawn->crown[2], id);
+        }
+    };
+    // Death Stab's streaks, cones and wound (fx/deathstab.h), the wound's thin bolts Thunder's.
     deathStab_.update(
-        float(seconds),
-        [&](uint32_t id, float* feet, float* tall, float* yaw) {
-            const Drawn* drawn = drawnOf(id);
-            if (drawn == nullptr || !drawn->placed || !ground_) return false;
-            const FigureBody* look = drawn->figure.body();
-            feet[0] = drawn->crown[0];
-            feet[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
-            feet[2] = drawn->crown[2];
-            *tall = look ? look->height * look->scale : 1.8f;
-            *yaw = drawn->yaw;
-            return true;
-        },
-        [&](uint32_t id, float* out) {
-            const Drawn* drawn = drawnOf(id);
-            const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
-            if (look == nullptr) return false;
-            for (const HeldItem& held : look->held) {
-                if (held.kind != "weapon" || held.bone < 0) continue;
-                const float grip[3] = {0.0f, 0.0f, 0.0f};
-                return drawn->figure.pointOn(held.bone, grip, out);
-            }
-            return false;
-        },
+        float(seconds), bodyAt, gripOf,
         [&](const float* from, const float* to) { thunder_.fork(from, to); },
-        [&](uint32_t id) {
-            const int index = sim::skillIndexOf(sim::skill::kDeathStab);
-            const Drawn* drawn = drawnOf(id);
-            if (index >= 0 && heard_.skill[index] >= 0 && drawn != nullptr && drawn->placed) {
-                emit(heard_.skill[index], drawn->crown[0], drawn->crown[2], id);
-            }
-        },
+        [&](uint32_t id) { skillWave(sim::skill::kDeathStab, id); },
         [&](uint32_t id, float (*pairs)[2][3], int most) {
             // Each bone and its parent where the figure is posed now -- MU's wound runs along them.
             const Drawn* drawn = drawnOf(id);
@@ -1911,6 +1922,9 @@ void Play::update(double seconds) {
             }
             return found;
         });
+    // Impale's sound and ghosts (fx/impale.h).
+    impale_.update(float(seconds), bodyAt,
+                   [&](uint32_t id) { skillWave(sim::skill::kImpale, id); });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts

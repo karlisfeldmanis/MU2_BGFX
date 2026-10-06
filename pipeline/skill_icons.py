@@ -124,6 +124,10 @@ SKILLS = {
     # Cometfall"): 0.95d's (Version095d/SkillsInitializer.cs:57), off the Scroll of Cometfall,
     # group 15 number 12. Below 57 and not use-type 4, so the arithmetic above finds its cell.
     13: ("Dark Wizard", "Cometfall"),
+    # And Impale, cut on 2026-10-06 because the game now has it (the user: "lets make that orb,
+    # only for spears"): 0.95d's (Version095d/SkillsInitializer.cs:79), off the Orb of Impale,
+    # group 12 number 18. Below 57 and not use-type 4, so the arithmetic above finds its cell.
+    47: ("Dark Knight", "Impale"),
 }
 
 

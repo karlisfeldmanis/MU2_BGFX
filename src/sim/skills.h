@@ -120,6 +120,11 @@ constexpr int32_t kPenetration = 52;
 // knight's; MuMain prints it on the horn as his own skill (ZzzInventory.cpp:5174). Known while
 // the horn is worn and its life lasts (Realm::knows), thrown only while it is ridden.
 constexpr int32_t kFireBreath = 49;
+// `AT_SKILL_IMPALE`, the spear's thrust: 0.95d's and not 0.75's (Version095d/
+// SkillsInitializer.cs:79, the knight's and the Magic Gladiator's). MU throws it only with a
+// spear and only from a Uniria or a Dinorant (SkillCast.cpp:135-155); here it is taught by the
+// Orb of Impale and thrown with a spear on foot or ridden (the user, 2026-10-06).
+constexpr int32_t kImpale = 47;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -444,13 +449,14 @@ struct SkillRow {
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
 // Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, Evil Spirit, Hellfire, Twister,
-// Inferno and Aqua Beam, on the end past the elf's, and Cometfall past the Dinorant's. The
+// Inferno and Aqua Beam, on the end past the elf's, Cometfall past the Dinorant's, and Impale
+// past Cometfall. The
 // learned mask is sixty-four bits since
 // Inferno, the thirty-third (`Body::learned`, and the save writes it whole); past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 37;
+constexpr int kSkills = 38;
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing

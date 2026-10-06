@@ -2071,6 +2071,12 @@
       ],
       "from": "SOUND_HELLFIRE, played as the wizard's Hellfire lays its MODEL_CIRCLE and MODEL_CIRCLE_LIGHT at his feet (ZzzCharacter.cpp:4424-4435)."
     },
+    "riding_spear": {
+      "files": [
+        "eRidingSpear.wav"
+      ],
+      "from": "SOUND_RIDINGSPEAR, Data\\Sound\\eRidingSpear.wav (ZzzOpenData.cpp:4826). Impale's, on AttackTime 10 (ZzzCharacter.cpp:2703-2712); cued by game/fx/impale.h."
+    },
     "rage_blow_1": {
       "files": [
         "eRageBlow_1.wav"

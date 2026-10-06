@@ -1874,8 +1874,8 @@ void testCastLock(const content::Tables& tables) {
                   aqua.spread == sim::Spread::Beam && aqua.reach == 6.0f && aqua.clip == 152 &&
                   aqua.kin == sim::Kin::DarkWizard,
               "Aqua Beam is a no-cooldown beam of eighty damage and a hundred and forty mana");
-        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 4 && sim::kSkills == 37,
-              "and its row is the last but Penetration's, Fire Breath's and Cometfall's");
+        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 5 && sim::kSkills == 38,
+              "and its row is the last but Penetration's, Fire Breath's, Cometfall's and Impale's");
         const int32_t aquaScroll = tables.itemAt(15, 11);
         check(aquaScroll >= 0 &&
                   tables.items[size_t(aquaScroll)].teaches == sim::skill::kAquaBeam &&
@@ -2388,8 +2388,8 @@ void testCastLock(const content::Tables& tables) {
               "and a comet strikes over half again as hard as a rock");
         check(sim::skillElement(sim::skill::kCometfall) == sim::Element::Lightning,
               "and it is lightning");
-        check(sim::skillIndexOf(sim::skill::kCometfall) == sim::skillCount() - 1,
-              "and its row is the table's last, so no save's learned bit moves");
+        check(sim::skillIndexOf(sim::skill::kCometfall) == sim::skillCount() - 2,
+              "and its row is the last but Impale's, so no save's learned bit moves");
         const int32_t cometScroll = tables.itemAt(15, 12);
         check(cometScroll >= 0 &&
                   tables.items[size_t(cometScroll)].teaches == sim::skill::kCometfall &&
@@ -2421,6 +2421,85 @@ void testCastLock(const content::Tables& tables) {
         check(casts >= 1, "he calls it down on bare ground");
         checkEqual(comets, casts * sim::kShowerRocks, "six comets a cast");
         checkEqual(outside, 0, "and none past four tiles of the tile");
+    }
+
+    // ---- Impale: the spear's thrust, off its own orb (the user, 2026-10-06) ------------------
+    {
+        const sim::SkillRow& impale = *sim::skillNumbered(sim::skill::kImpale);
+        check(impale.kin == sim::Kin::DarkKnight && !impale.wizardry && impale.mana == 8 &&
+                  impale.families == sim::arms::kSpear && impale.reach == 1.0f &&
+                  impale.spread == sim::Spread::One && impale.needLevel == 56,
+              "Impale is the knight's, eight mana, a spear's alone, at his own reach");
+        check(sim::skillIndexOf(sim::skill::kImpale) == sim::skillCount() - 1,
+              "and its row is the table's last, so no save's learned bit moves");
+        const int32_t orb = tables.itemAt(12, 18);
+        check(orb >= 0 && tables.items[size_t(orb)].teaches == sim::skill::kImpale &&
+                  tables.items[size_t(orb)].teachesLevel == 56 &&
+                  tables.items[size_t(orb)].dropLevel == 28,
+              "the Orb of Impale (12, 18) teaches skill 47 at level 56 and drops from 28");
+
+        sim::Realm young;
+        check(young.raise(&tables, 11, 190, 110, sim::Kin::DarkKnight, 55), "a knight of 55");
+        const int early = orb >= 0 ? young.give(orb) : -1;
+        check(early >= sim::kWorn && !young.useItem(early) && !young.knows(sim::skill::kImpale),
+              "cannot read it");
+        sim::Realm wizard;
+        check(wizard.raise(&tables, 11, 190, 110, sim::Kin::DarkWizard, 80), "nor a wizard");
+        const int his = orb >= 0 ? wizard.give(orb) : -1;
+        check(his >= sim::kWorn && !wizard.useItem(his), "whatever his level");
+
+        // Thrown at the nearest with a spear in hand, and never with a sword.
+        const auto hunt = [&](const char* weapon) {
+            sim::Realm realm;
+            check(realm.raise(&tables, 11, 190, 110, sim::Kin::DarkKnight, 60), "a knight of 60");
+            const int at = orb >= 0 ? realm.give(orb) : -1;
+            check(at >= sim::kWorn && realm.useItem(at) && realm.knows(sim::skill::kImpale),
+                  "reads the orb");
+            check(realm.equip(tables.armNamed(weapon), -1, true), "and takes up his weapon");
+            int casts = 0, far = 0;
+            for (int tick = 0; tick < 3000 && realm.hero().alive(); ++tick) {
+                uint32_t nearest = 0;
+                float closest = 1e30f;
+                for (const sim::Body& b : realm.bodies()) {
+                    if (!b.monster() || !b.alive()) continue;
+                    const float off = std::hypot(b.x - realm.hero().x, b.y - realm.hero().y);
+                    if (off < closest) {
+                        closest = off;
+                        nearest = b.id;
+                    }
+                }
+                // Walked in on a plain attack, thrown once he stands beside it.
+                if (nearest != 0 && tick % 10 == 0) {
+                    if (closest > 1.5f) {
+                        sim::Request request;
+                        request.kind = sim::Request::Kind::Attack;
+                        request.target = nearest;
+                        realm.ask(request);
+                    } else {
+                        realm.invoke(sim::skill::kImpale, nearest);
+                    }
+                }
+                realm.step();
+                for (const sim::Happening& h : realm.happenings()) {
+                    if (h.who != realm.hero().id || h.what != sim::What::Cast ||
+                        h.a != sim::skill::kImpale) {
+                        continue;
+                    }
+                    ++casts;
+                    const sim::Body* struck = realm.find(h.whom);
+                    if (struck && std::hypot(struck->x - realm.hero().x,
+                                             struck->y - realm.hero().y) > 2.0f) {
+                        ++far;
+                    }
+                }
+            }
+            std::printf("  impale with %s: %d casts, %d from afar\n", weapon, casts, far);
+            return std::make_pair(casts, far);
+        };
+        const auto spear = hunt("Spear01");
+        check(spear.first > 0, "with a spear he throws it");
+        checkEqual(spear.second, 0, "and only from beside what he strikes");
+        checkEqual(hunt("Sword01").first, 0, "with a sword, never");
     }
 
     // ---- Lightning: a channel -- a chain leaping body to body while his arm is up ------------
