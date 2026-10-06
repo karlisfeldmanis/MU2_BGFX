@@ -48,13 +48,16 @@
     }
   },
   "material_overrides_note": "Steel's own 0.2 mirrored the grass: in the studio the head went black from above and the shaft flared white at grazing sun, the Gladius's fault (black at 0.2, right at 0.55) and the Salamander's in this batch.",
-  "pose": "action 1, key 0",
-  "pose_from": "MuMain plays the flail's own rig: action 1 at rest and action 2 in a sword swing (ZzzCharacter.cpp:10107-10118). Held items here are rigid, so the mesh is frozen at action 1's first key -- the head dropped ~90 units off the grip on its chain. Action 0, the bind pose MuExtract takes by default, folds the ball back onto the handle with a chain link floating free, a shape MU never shows. Export with `export-obj ... --action=1 --key=0`.",
-  "chain_note": "Mace03.obj is not MuExtract's output as it stands: the two chain cards were cut into 9 and 10 segments by hand after export, because their v runs -4.6..4.7 and a baked atlas cannot repeat. Re-export with `--action=1 --key=0` and redo that cut, or the chain comes back as one floating ring.",
+  "chain_note": "Mace03.obj is not MuExtract's output as it stands: the two chain cards were cut into 9 and 10 segments by hand after export, because their v runs -4.6..4.7 and a baked atlas cannot repeat. Since 2026-10-06 it is at MU's bind pose, as a rigged model must be: flail02 is export-obj's own bind, and the cut chain was carried back from action 1's first key by bone 2's rigid transform (fitted on the card's 8 original vertices, error 6e-6). The chain is all bone 2, so Mace03.rig.json lists the 42 cut vertices Blender imports (of the OBJ's 50, eight used by no face) on bone 2 where export-rig wrote 8.",
   "bake_share": {
     "flail00": 0.05
   },
   "bake_share_note": "The chain's nineteen rings are one 16-px ring drawn nineteen times; clean_lowpoly.match_density counted each at full weight and gave them four fifths of the map, squeezing the head and grip into a strip. At 0.05 the chain claims about one tile's room, as MU's sheet does.",
+  "held_clip": 1,
+  "held_loop": 1.0,
+  "swing_clip": 2,
+  "held_from": "MuMain plays the Flail's own rig (ZzzCharacter.cpp:10107-10118): action 1 while held, at PLAYER_STOP_MALE's PlaySpeed 0.28 -- 7 keys a second round its 7 keys, one cycle a second (held_clip 1, held_loop 1) -- and action 2 in a sword swing, PLAYER_ATTACK_SWORD_RIGHT1 and 2, at that attack's own PlaySpeed, so keyed to the swing (swing_clip 2, Figure::poseHeld). Action 0 is the bind, the ball folded back onto the grip, which MU never shows held. Until 2026-10-06 the flail was built rigid, frozen at action 1's first key; the user: 'some of crosbows and bows was kind of \"alive\"'.",
+  "rig_note": "Mace03.rig.json from export-rig --actions=all: five bones, three 7-key actions (0 the bind, 1 held, 2 the swing); bones 1 and 2 are the chain and the ball. Its flail00 entry edited, see chain_note. Slung on the back MU draws it frozen on action 0's first key (ZzzCharacter.cpp:15326-15334); here too, the ball folded against the grip (Figure::poseHeld), on the generic sword placement (RenderLinkObject's (70, 0, 90) and (-20, 5, 40), :6826-6829 and :6906-6910; kWeaponOnBack) -- MU has no case of its own for it. Run on, the chain swung out from the back with the ball in the air beside him; frozen on action 1 it hung out to his side; turned end over end and moved it was ours, and the user chose MU's (2026-10-06: 'something looked wierd on that flail weapon on back', then \"MU's: generic placement, ball folded up over the shoulder\").",
   "islands": [
     {
       "island": 0,
@@ -62,8 +65,8 @@
       "triangles": 18,
       "area": 180.5,
       "along": [
-        38.8,
-        60.7
+        -1.9,
+        58.5
       ],
       "mu_uv": [
         0.001,
@@ -85,8 +88,8 @@
       "triangles": 20,
       "area": 230.5,
       "along": [
-        37.8,
-        61.1
+        -3.3,
+        58.6
       ],
       "mu_uv": [
         0.016,
@@ -108,8 +111,8 @@
       "triangles": 10,
       "area": 529.8,
       "along": [
-        20.6,
-        57.7
+        10.8,
+        47.9
       ],
       "mu_uv": [
         0.001,
@@ -131,8 +134,8 @@
       "triangles": 12,
       "area": 778.0,
       "along": [
-        -14.4,
-        20.6
+        -24.2,
+        10.9
       ],
       "mu_uv": [
         0.728,
@@ -154,8 +157,8 @@
       "triangles": 98,
       "area": 3380.9,
       "along": [
-        13.8,
-        57.3
+        -39.2,
+        5.0
       ],
       "mu_uv": [
         0.023,
