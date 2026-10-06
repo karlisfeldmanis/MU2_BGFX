@@ -39,7 +39,7 @@ kept for exactly this.
 - The trial's hunt: 40 Death Gorgons and 30 Death Knights on LT7, plus 30 Lizard Kings, 40 Great
   Bahamuts and 40 Silver Valkyries in Atlans once it is hunted. Its pay is a proposal: 1,000,000
   experience, 500,000 Zen, 5 Bless and 2 Soul.
-- The drop: one kill in about 150 (`kTreasureIn10000` 67), on LT7 or in Atlans, only while the
+- The drop: one kill in 50 (`kTreasureIn10000` 200, 2%, the user's of 2026-10-06), on LT7 or in Atlans, only while the
   class's quest stands and he neither carries one nor has one lying. It uses its own dice
   (`treasureDice_`), so a seeded hunt without the quest is unchanged. It lies 120 s, twice an
   ordinary drop. It can never be sold. Sold or lost before the hand-in, its step opens again and

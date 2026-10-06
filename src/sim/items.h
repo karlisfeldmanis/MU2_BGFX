@@ -931,9 +931,10 @@ bool archangelWeapon(const content::ItemRow& row);
 // **Sevina's treasures** (sim/quests.cpp, docs/class-change-quest.md): MU's Broken Sword (14, 24),
 // Tear of Elf (14, 25) and Soul of Wizard (14, 26), each a class's, carried back to her and
 // never sold. They fall on the Lost Tower's last floor and in Atlans (Realm::treasure), one kill
-// in about 150 while the class's quest stands -- the rate a proposal, ours.
+// in 50 while the class's quest stands -- the rate ours (the user, 2026-10-06: 1 in 150 was too
+// low, "at 2%").
 bool classTreasure(const content::ItemRow& row);
-constexpr int kTreasureIn10000 = 67;
+constexpr int kTreasureIn10000 = 200;
 constexpr uint32_t kLostTowerMap = 4, kAtlansMap = 7;
 // A treasure lies twice the time an ordinary drop does, so it is not lost to a fight. Ours.
 constexpr int kTreasureLingerSeconds = 120;
