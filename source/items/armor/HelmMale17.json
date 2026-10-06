@@ -1,0 +1,118 @@
+{
+  "item": "HelmMale17",
+  "mu_name": "Black Dragon Helm",
+  "mu_name_from": "MuMain loads MODEL_BLACK_DRAGON_HELM from Data/Player/HelmMale17.bmd (ZzzOpenData.cpp:159-163: AccessModel(..., \"HelmMale\", 17); the set at index 16 is file 17). MU's group 7 number 16.",
+  "why_this_one": "The knight's Tarkan set (KR 0.84 patch note, docs/tarkan-port.md), which WebZen's item(Kor).txt flags as a monster drop at levels Tarkan's and Blood Castle 6's monsters reach; it was not built (the user, 2026-10-06: 'lets skip Storm Crow set, but make all others').",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.95d's Armors.cs stops at index 14, before Black Dragon); WebZen's 1.00m item(Kor).txt carries the set.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:80.",
+    "call": "CreateArmor(16, 2, 2, 2, \"Black Dragon Helm\", 82, 30, 74, 0, 170, 60, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 16,
+    "drop_level": 82,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 30,
+    "durability": 74,
+    "requires": {
+      "level": 0,
+      "strength": 170,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "darkKnightClassLevel 1 and every other class 0 in Season 6, the Magic Gladiator too: a first-class knight's set."
+  },
+  "sheets": [
+    "head_bd.png",
+    "level_man01.png"
+  ],
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: near-black lacquered plate with gold trim; hide is MU's black cap over the openings.",
+  "material_note": "painted_steel, as Dark Phoenix: Black Dragon is black lacquer with gold trim painted on, and plate_steel reads such paint as polished black metal with white blowouts in the fire (studio, 2026-10-04, on Dark Phoenix). MU's paint is the look.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no ItemObjectAttribute or RenderPartObject arm for MODEL_BLACK_DRAGON_*: a plain painted set.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 148,
+      "area": 4879.5,
+      "along": [
+        -26.8,
+        19.3
+      ],
+      "mu_uv": [
+        -0.002,
+        0.012,
+        0.99,
+        1.0
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.987,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 284.2,
+      "along": [
+        3.6,
+        12.0
+      ],
+      "mu_uv": [
+        0.694,
+        0.863,
+        0.805,
+        0.985
+      ],
+      "bake_uv": [
+        0.604,
+        0.594,
+        0.672,
+        0.668
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 12,
+      "area": 348.8,
+      "along": [
+        -5.3,
+        8.6
+      ],
+      "mu_uv": [
+        0.628,
+        0.758,
+        0.871,
+        0.838
+      ],
+      "bake_uv": [
+        0.538,
+        0.172,
+        0.685,
+        0.22
+      ]
+    }
+  ]
+}

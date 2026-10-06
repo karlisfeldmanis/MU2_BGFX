@@ -1,0 +1,189 @@
+{
+  "item": "Staff09",
+  "mu_name": "Staff of Destruction",
+  "mu_name_from": "_enum.h:1602 MODEL_STAFF_OF_DESTRUCTION = MODEL_STAFF + 8, loaded from Item/Staff09.bmd; OpenMU Version095d Weapons.cs:169.",
+  "why_this_one": "Tarkan's drop: WebZen's item(Kor).txt flags it as a monster drop at a level Tarkan's and Blood Castle 6's monsters reach, and it was not built (the user, 2026-10-06: 'lets skip Storm Crow set, but make all others' -- the MU items in those two drop windows that were missing). Also the Zaikan's staff and the bosses' ring of eighteen (docs/tarkan-port.md).",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row from OpenMU's 0.95d initialiser; Season 6's Weapons.cs:250 agrees in every number.",
+    "from": "openmu/src/Persistence/Initialization/Version095d/Items/Weapons.cs:169.",
+    "call": "CreateWeapon(5, 8, 0, 0, 2, 4, true, \"Staff of Destruction\", 90, 50, 54, 30, 85, 101, 0, 60, 10, 0, 0, 1, 0, 0, 1)",
+    "call_note": "The 0.95d CreateWeapon: ..., magicPower 101, ..., darkWizardClass 1, darkKnightClass 0, elfClass 0, magicGladiatorClass 1.",
+    "group": 5,
+    "number": 8,
+    "drop_level": 90,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 50,
+    "maximum_damage": 54,
+    "attack_speed": 30,
+    "durability": 85,
+    "magic_power": 101,
+    "requires": {
+      "level": 0,
+      "strength": 60,
+      "agility": 10,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The wizard's and the Magic Gladiator's (flags 1, 1); this game has no Gladiator."
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:389-394: a staff that is TwoHand (width 2) stands PLAYER_STOP_SCYTHE, as the Thunder and Gorgon Staves.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; MuMain's ItemAttribute TwoHand.",
+  "sheets": {
+    "wand10": "wand10.png"
+  },
+  "sheet_from": "Data/Item/wand10.OZJ (64x32: a cyan blade of light on black), from MuMain with pipeline/decode_texture.py; 72 triangles, one mesh. The .bmd names wand10.jpg, so the .OZJ and not the .OZT beside it.",
+  "glow": {
+    "wand10": {
+      "pulse": [
+        0.2,
+        0.9
+      ]
+    }
+  },
+  "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5229-5233): `case MODEL_STAFF_OF_DESTRUCTION: BlendMesh = -2; BlendMeshLight = sin(WorldTime*0.004)*0.2 + 0.9` -- the one mesh drawn added and breathing (ZzzBMD.cpp:1509): the whole staff is a cyan ghost, as the Staff of Resurrection is red.",
+  "material_note": "No baked material: MU draws its one mesh added (see glow_note), so the staff ships as a glow part on MU's raw sheet; the islands' materials go unused.",
+  "rig_note": "Staff09.rig.json from export-rig --actions=all: two bones, one action of one key, nothing moves. Kept so asset.sh does not borrow the player's rig (the trap Staff06 records). Not here: MuMain's held offset for it (ZzzCharacter.cpp:6867-6872, the bow's -10, 5, 10) and the boss's ring of eighteen flying staves (:1832, :1897; ZzzEffect.cpp:1330, MoveHandlers.cpp:4342), client effects.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 12,
+      "area": 3173.1,
+      "along": [
+        -132.6,
+        134.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.146,
+        0.003,
+        0.211,
+        0.997
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 12,
+      "area": 3173.1,
+      "along": [
+        -132.6,
+        134.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.068,
+        0.997
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 12,
+      "area": 3173.1,
+      "along": [
+        -132.6,
+        134.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.289,
+        0.003,
+        0.354,
+        0.997
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 12,
+      "area": 3173.1,
+      "along": [
+        -132.6,
+        134.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.36,
+        0.003,
+        0.425,
+        0.997
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 12,
+      "area": 3173.1,
+      "along": [
+        -132.6,
+        134.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.217,
+        0.003,
+        0.283,
+        0.997
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 12,
+      "area": 3173.1,
+      "along": [
+        -132.6,
+        134.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.074,
+        0.003,
+        0.14,
+        0.997
+      ]
+    }
+  ]
+}

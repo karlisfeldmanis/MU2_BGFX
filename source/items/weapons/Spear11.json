@@ -1,0 +1,147 @@
+{
+  "item": "Spear11",
+  "mu_name": "Dragon Spear",
+  "mu_name_from": "_enum.h:1567 MODEL_DRAGON_SPEAR = MODEL_SPEAR + 10, loaded from Item/Spear11.bmd (ZzzOpenData.cpp:658). Group 3 number 10 in OpenMU S6 Weapons.cs:213; WebZen's 1.00m item(Kor).txt carries the row.",
+  "why_this_one": "Tarkan's drop: WebZen's item(Kor).txt flags it as a monster drop at a level Tarkan's and Blood Castle 6's monsters reach, and it was not built (the user, 2026-10-06: 'lets skip Storm Crow set, but make all others' -- the MU items in those two drop windows that were missing). The Blade Knight's spear.",
+  "profile": "weapon",
+  "stats": {
+    "from": "OpenMU S6 Weapons.cs:213. 0.75 and 0.95d have no second-class arms.",
+    "call": "CreateWeapon(3, 10, 0, 22, 2, 4, true, \"Dragon Spear\", 92, 112, 140, 35, 85, 0, 0, 170, 60, 0, 0, 0, 2, 0, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: ..., darkWizardClassLevel 0, darkKnightClassLevel 2, elfClassLevel 0, ...",
+    "group": 3,
+    "number": 10,
+    "drop_level": 92,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 112,
+    "maximum_damage": 140,
+    "attack_speed": 35,
+    "durability": 85,
+    "skill": 22,
+    "requires": {
+      "level": 0,
+      "strength": 170,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2 (docs/second-class-gear.md)."
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:371-383: only MODEL__SPEAR and MODEL_DRAGON_LANCE take PLAYER_STOP_SPEAR; the rest of the spear group, two-handed, stands PLAYER_STOP_SCYTHE.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; MuMain's ItemAttribute TwoHand.",
+  "sheets": {
+    "Drax": "drax.png",
+    "Drax_R": "drax_r.png",
+    "Drax_n": "drax_n.png"
+  },
+  "sheet_from": "Data/Item/Drax.OZJ (64x128: grey steel with gold inlay), Drax_R.OZJ (32x32, a blue-white swirl on black) and Drax_N.OZJ (32x64, a steel gradient), from MuMain with pipeline/decode_texture.py; 162 triangles over three meshes.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every built blade: steel's own 0.2 mirrors the scene.",
+  "glow": {
+    "Drax_R": {}
+  },
+  "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5284-5286) hides mesh 1, Drax_R, from the body (HiddenMesh 1), and RenderPartObjectBody (:7114-7118) draws it again as its own BlendMesh -- added, at light 1 -- with its UVs sliding (WorldTime*0.0001, *0.0005): a blue swirl over the dragon's head. Drawn added and steady here; an item's glow cannot slide (cook_wardrobe passes no scroll), so the swirl stands still.",
+  "rig_note": "Spear11.rig.json from export-rig --actions=all: ten bones, one action of one key, nothing moves. Not here: the eight blue BITMAP_LIGHT sprites MuMain hangs on bones 1-8 held (ZzzCharacter.cpp:7723-7731), its own swing blur (BlurType 1, :3864-3867), and its item-glow colour 9 in the inventory (ZzzObject.cpp:6580), client effects.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 33,
+      "area": 8558.8,
+      "along": [
+        67.8,
+        216.3
+      ],
+      "mu_uv": [
+        0.063,
+        0.016,
+        0.932,
+        0.964
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.852,
+        0.791
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 66,
+      "area": 2973.8,
+      "along": [
+        50.6,
+        112.1
+      ],
+      "mu_uv": [
+        0.263,
+        0.067,
+        0.99,
+        0.419
+      ],
+      "bake_uv": [
+        0.437,
+        0.471,
+        0.787,
+        0.82
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 46,
+      "area": 2745.3,
+      "along": [
+        -92.3,
+        63.0
+      ],
+      "mu_uv": [
+        0.035,
+        0.042,
+        0.312,
+        0.958
+      ],
+      "bake_uv": [
+        0.797,
+        0.005,
+        0.995,
+        0.912
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 17,
+      "area": 4196.9,
+      "along": [
+        75.6,
+        216.9
+      ],
+      "mu_uv": [
+        0.008,
+        0.005,
+        0.461,
+        0.951
+      ],
+      "bake_uv": [
+        0.005,
+        0.801,
+        0.076,
+        0.865
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "item": "Shield16",
+  "mu_name": "Grand Soul Shield",
+  "mu_name_from": "_enum.h:1638 MODEL_GRAND_SOUL_SHIELD = MODEL_SHIELD + 15, loaded from Item/Shield16.bmd (ZzzOpenData.cpp:667). Group 6 number 15 in OpenMU S6 Armors.cs:56; WebZen's 1.00m item(Kor).txt carries the row.",
+  "why_this_one": "Tarkan's and Blood Castle 6's drop: WebZen's item(Kor).txt flags it as a monster drop at a level their monsters reach, and it was not built (the user, 2026-10-06: 'lets skip Storm Crow set, but make all others'). The Soul Master's shield, the Grand Soul set's.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as every built shield uses.",
+  "stats": {
+    "from": "OpenMU S6 Armors.cs:56. 0.75 and 0.95d have no second-class gear.",
+    "call": "CreateShield(15, 1, 0, 2, 3, \"Grand Soul Shield\", 74, 12, 55, 55, 0, 70, 23, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel); the group is slot + 5, 6.",
+    "group": 6,
+    "number": 15,
+    "drop_level": 74,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 3,
+    "defense": 12,
+    "defense_rate": 55,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "durability": 55,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 23,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2 (docs/second-class-gear.md)."
+  },
+  "sheets": {
+    "jh03": "jh03.tga.png",
+    "jh01": "jh01.png",
+    "MMsSs_r": "mmsss_r.png",
+    "MMsSs_r_back": "mmsss_back.png"
+  },
+  "sheet_from": "Data/Item/jh03.OZT (64x128: a gilded frame with root-like scrollwork, its alpha cutting 36% away), jh01.OZJ (64x64, blue noise) and MMsSs_r.OZJ (64x64, blue lightning on black), from MuMain with pipeline/decode_texture.py; 96 triangles over three meshes. mmsss_back.png is ours, a flat 0.3 grey: the dark fill (see glow_note).",
+  "cutout": [
+    "jh03"
+  ],
+  "cutout_alpha": [
+    "jh03"
+  ],
+  "cutout_alpha_from": "jh03.OZT's alpha is the frame's openings; keyed off the sheet's own alpha, not its brightness.",
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_note": "The frame is gilt scrollwork: brass, as the Dragon Shield, at 0.6. The dark fill under the lightning is MU's flat colour pass; painted_steel, so it reads as a dark lacquered face. Set per island (asset.sh's sheet_materials is the tiled path's, not an item's).",
+  "glow": {
+    "jh01": {
+      "jitter": 0.1
+    },
+    "MMsSs_r": {
+      "pulse": [
+        0.4,
+        0.6
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "RenderPartObjectBody (ZzzObject.cpp:8015-8034), which draws the shield mesh by mesh: mesh 2 (MMsSs_r) first in flat colour at 0.3 of the body light, then a chrome pass over it, then mesh 0 (jh03, the frame) solid, mesh 1 (jh01) added with its UVs jumping each frame (rand()%10*0.1, the Legendary Shield's shimmer), and last mesh 2 again added at sin(WorldTime*0.001)*0.4 + 0.6 of the light with its UVs sliding. Here: the flat colour is MMsSs_r_back, a copy of mesh 2's faces on a 0.3 grey (ours); jh01 a glow with jitter 0.1; MMsSs_r a glow at pulse [0.4, 0.6], the slow rate (content::Material::slowPulse). Not carried: the chrome pass and the lightning's slide (an item's glow cannot slide), and the blue BITMAP_SHINY+1 and BITMAP_LIGHT sprites MuMain hangs at bone 1 held (ZzzCharacter.cpp:7560-7567).",
+  "separate_meshes": true,
+  "separate_meshes_why": "MMsSs_r_back is mesh 2's own faces again; welded across meshes the two shells become duplicate faces and Blender keeps one (Wing05's trap).",
+  "rig_note": "export-rig --actions=all: two bones, one action of one key; nothing moves, no rig kept (the held sprites at bone 1 are not built, and a rig would have to describe the MMsSs_r_back copy too). MuMain holds it as the Legendary Shield (ZzzCharacter.cpp:6883-6890).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 12,
+      "area": 2327.2,
+      "along": [
+        -17.0,
+        17.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.176,
+        0.687,
+        0.991
+      ],
+      "bake_uv": [
+        0.322,
+        0.071,
+        0.42,
+        0.135
+      ],
+      "note": "jh01, the blue noise: a glow."
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 36,
+      "area": 5613.7,
+      "along": [
+        -26.0,
+        25.3
+      ],
+      "mu_uv": [
+        0.023,
+        0.001,
+        0.999,
+        1.002
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.994,
+        0.996
+      ],
+      "note": "jh03, the gilt frame (36 triangles)."
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 2852.6,
+      "along": [
+        0.1,
+        25.8
+      ],
+      "mu_uv": [
+        0.052,
+        -0.207,
+        0.999,
+        1.793
+      ],
+      "bake_uv": [
+        0.382,
+        0.027,
+        0.524,
+        0.63
+      ],
+      "note": "MMsSs_r_back, the dark fill."
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 1877.8,
+      "along": [
+        -25.7,
+        17.9
+      ],
+      "mu_uv": [
+        0.052,
+        -0.495,
+        0.999,
+        1.793
+      ],
+      "bake_uv": [
+        0.452,
+        0.005,
+        0.591,
+        0.179
+      ],
+      "note": "MMsSs_r_back, the dark fill."
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 2852.6,
+      "along": [
+        0.1,
+        25.8
+      ],
+      "mu_uv": [
+        0.052,
+        -0.207,
+        0.999,
+        1.793
+      ],
+      "bake_uv": [
+        0.326,
+        0.194,
+        0.572,
+        0.647
+      ],
+      "note": "MMsSs_r_back, the dark fill."
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 1877.8,
+      "along": [
+        -25.7,
+        17.9
+      ],
+      "mu_uv": [
+        0.052,
+        -0.495,
+        0.999,
+        1.793
+      ],
+      "bake_uv": [
+        0.5,
+        0.172,
+        0.639,
+        0.345
+      ],
+      "note": "MMsSs_r_back, the dark fill."
+    }
+  ]
+}

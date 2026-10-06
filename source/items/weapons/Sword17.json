@@ -1,0 +1,251 @@
+{
+  "item": "Sword17",
+  "mu_name": "Sword of Destruction",
+  "mu_name_from": "_enum.h:1511 MODEL_SWORD_OF_DESTRUCTION = MODEL_SWORD + 16, loaded from Item/Sword17.bmd (ZzzOpenData.cpp loads the swords as Sword{i+1}); OpenMU Version095d Weapons.cs:110.",
+  "why_this_one": "Tarkan's drop: WebZen's item(Kor).txt flags it as a monster drop at a level Tarkan's and Blood Castle 6's monsters reach, and it was not built (the user, 2026-10-06: 'lets skip Storm Crow set, but make all others' -- the MU items in those two drop windows that were missing). Also the Tantalos's blade (docs/tarkan-port.md: Monster43 holds it).",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row from OpenMU's 0.95d initialiser, where it first appears (0.75 has no Tarkan); Season 6's Weapons.cs:153 agrees in every number.",
+    "from": "openmu/src/Persistence/Initialization/Version095d/Items/Weapons.cs:110.",
+    "call": "CreateWeapon(0, 16, 0, 22, 1, 4, true, \"Sword of Destruction\", 82, 82, 90, 35, 84, 0, 0, 160, 60, 0, 0, 0, 1, 0, 1)",
+    "call_note": "The 0.95d CreateWeapon: ..., energyRequirement, vitalityRequirement, darkWizardClass, darkKnightClass, elfClass, magicGladiatorClass.",
+    "group": 0,
+    "number": 16,
+    "drop_level": 82,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 82,
+    "maximum_damage": 90,
+    "attack_speed": 35,
+    "durability": 84,
+    "skill": 22,
+    "requires": {
+      "level": 0,
+      "strength": 160,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The knight's and the Magic Gladiator's (flags 1, 1); this game has no Gladiator."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed sword, PLAYER_STOP_SWORD (ZzzCharacter.cpp).",
+  "two_handed": false,
+  "sheets": {
+    "sword077": "sword077.png"
+  },
+  "sheet_from": "Data/Item/sword077.OZJ (64x32: a silver blade, a black guard, a small bronze plate), from MuMain with pipeline/decode_texture.py; 242 triangles, one mesh.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every flat blade passed in the studio: steel's own 0.2 mirrors the grass black.",
+  "glow_note": "No ItemObjectAttribute arm and no RenderPartObject arm for MODEL_SWORD_OF_DESTRUCTION in MuMain: a plain solid sword. No swing blur of its own (ZzzCharacter.cpp's blur cases do not name it).",
+  "rig_note": "export-rig --actions=all: one bone, one action of one key; nothing moves, no rig kept.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 38,
+      "area": 5852.7,
+      "along": [
+        6.2,
+        208.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.986,
+        0.938
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 38,
+      "area": 5750.9,
+      "along": [
+        6.2,
+        208.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.122,
+        0.014,
+        0.956,
+        0.949
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 26,
+      "area": 809.5,
+      "along": [
+        -24.7,
+        30.0
+      ],
+      "mu_uv": [
+        0.01,
+        0.724,
+        0.549,
+        0.98
+      ],
+      "bake_uv": [
+        0.427,
+        0.801,
+        0.757,
+        0.868
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 16,
+      "area": 194.9,
+      "along": [
+        -33.3,
+        -15.1
+      ],
+      "mu_uv": [
+        0.648,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.368,
+        0.111,
+        0.964,
+        0.967
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 16,
+      "area": 194.9,
+      "along": [
+        -33.3,
+        -15.1
+      ],
+      "mu_uv": [
+        0.648,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.016,
+        0.127,
+        0.89,
+        0.971
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 16,
+      "area": 194.9,
+      "along": [
+        -33.3,
+        -15.1
+      ],
+      "mu_uv": [
+        0.648,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.015,
+        0.016,
+        0.978,
+        0.916
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 16,
+      "area": 194.9,
+      "along": [
+        -33.3,
+        -15.1
+      ],
+      "mu_uv": [
+        0.648,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.055,
+        0.033,
+        0.978,
+        0.982
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 38,
+      "area": 2814.8,
+      "along": [
+        2.8,
+        157.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.202,
+        0.015,
+        0.986,
+        0.986
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 38,
+      "area": 2814.8,
+      "along": [
+        2.8,
+        157.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.98,
+        0.982
+      ]
+    }
+  ]
+}

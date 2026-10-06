@@ -1,0 +1,299 @@
+{
+  "item": "Shield17",
+  "mu_name": "Elemental Shield",
+  "mu_name_from": "_enum.h:1639 MODEL_ELEMENTAL_SHIELD = MODEL_SHIELD + 16, loaded from Item/Shield17.bmd (ZzzOpenData.cpp:668). Group 6 number 16 in OpenMU S6 Armors.cs:57; WebZen's 1.00m item(Kor).txt carries the row.",
+  "why_this_one": "Tarkan's and Blood Castle 6's drop: WebZen's item(Kor).txt flags it as a monster drop at a level their monsters reach, and it was not built (the user, 2026-10-06: 'lets skip Storm Crow set, but make all others'). The Muse Elf's shield.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as every built shield uses.",
+  "stats": {
+    "from": "OpenMU S6 Armors.cs:57. 0.75 and 0.95d have no second-class gear.",
+    "call": "CreateShield(16, 1, 0, 2, 2, \"Elemental Shield\", 66, 11, 28, 51, 0, 30, 60, 30, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel); the group is slot + 5, 6.",
+    "group": 6,
+    "number": 16,
+    "drop_level": 66,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 11,
+    "defense_rate": 28,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "durability": 51,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 60,
+      "energy": 30,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2 (docs/second-class-gear.md)."
+  },
+  "sheets": {
+    "WDn": "wdn.tga.png",
+    "WD_R": "wd_r.png",
+    "wdn_r": "wdn_r.png",
+    "WD_a": "wd_a.png",
+    "WD_a_glow": "wd_a.png"
+  },
+  "sheet_from": "Data/Item/WDn.OZT (64x128: a gilded frame over blue, its alpha cutting 21% away), WD_R.OZJ (16x32, a gold gradient), wdn_R.OZJ (32x16, a cyan comet streak on black) and WD_a.OZJ (16x32, green noise), from MuMain with pipeline/decode_texture.py; 224 triangles over four meshes.",
+  "cutout": [
+    "WDn"
+  ],
+  "cutout_alpha": [
+    "WDn"
+  ],
+  "cutout_alpha_from": "WDn.OZT's alpha is the frame's openings; keyed off the sheet's own alpha, not its brightness.",
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_note": "The frame and the gold gradient are gilt: brass at 0.6, as the Dragon Shield. WD_a, the green face, is MU's paint, painted_steel. Set per island (asset.sh's sheet_materials is the tiled path's, not an item's).",
+  "glow": {
+    "wdn_r": {},
+    "WD_a_glow": {
+      "jitter": 0.1
+    }
+  },
+  "glow_note": "RenderPartObjectBody (ZzzObject.cpp:8037-8048), mesh by mesh: mesh 1 (WD_R) at 0.8 alpha, mesh 3 (WD_a) at 0.5, mesh 0 (WDn, the frame) solid, mesh 2 (wdn_r) added with its U sliding (WorldTime*0.0005), and mesh 3 again added with its UVs jumping each frame. Here WD_R and WD_a are drawn solid (the 0.8 and 0.5 alphas are not carried, ours), wdn_r is a steady glow (an item's glow cannot slide), and WD_a_glow, a copy of mesh 3's faces, is the jumping added layer at jitter 0.1. ItemObjectAttribute's HiddenMesh 2 (:5275-5277) is for the other draw paths; this arm draws mesh 2 itself.",
+  "separate_meshes": true,
+  "separate_meshes_why": "WD_a_glow is mesh 3's own faces again; welded across meshes the two shells become duplicate faces and Blender keeps one (Wing05's trap).",
+  "rig_note": "export-rig --actions=all: one bone, one action of one key; nothing moves, no rig kept. MuMain holds it at its own angle (ZzzCharacter.cpp:6875-6882), and colours its inventory glow 6 (ZzzObject.cpp:6576).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1426.4,
+      "along": [
+        -27.4,
+        -1.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.186,
+        0.186,
+        0.446,
+        0.446
+      ],
+      "note": "WD_a, the green face."
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1426.5,
+      "along": [
+        1.6,
+        27.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.265,
+        0.265
+      ],
+      "note": "WD_a, the green face."
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1426.4,
+      "along": [
+        -27.4,
+        -1.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.06,
+        0.042,
+        0.097
+      ],
+      "note": "WD_a, the green face."
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1426.5,
+      "along": [
+        1.6,
+        27.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.058,
+        0.068,
+        0.095,
+        0.105
+      ],
+      "note": "WD_a, the green face."
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 60,
+      "area": 1885.2,
+      "along": [
+        -14.7,
+        14.8
+      ],
+      "mu_uv": [
+        0.058,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.359,
+        0.995,
+        0.989
+      ],
+      "note": "WD_R, the gold gradient (60 triangles)."
+    },
+    {
+      "island": 5,
+      "material": "brass",
+      "triangles": 40,
+      "area": 3517.5,
+      "along": [
+        0.0,
+        28.3
+      ],
+      "mu_uv": [
+        0.041,
+        0.014,
+        0.974,
+        0.988
+      ],
+      "bake_uv": [
+        0.429,
+        0.005,
+        0.843,
+        0.433
+      ],
+      "note": "WDn, the gilt frame."
+    },
+    {
+      "island": 6,
+      "material": "brass",
+      "triangles": 40,
+      "area": 3539.6,
+      "along": [
+        -28.4,
+        0.0
+      ],
+      "mu_uv": [
+        0.041,
+        0.014,
+        0.974,
+        0.988
+      ],
+      "bake_uv": [
+        0.229,
+        0.567,
+        0.821,
+        0.861
+      ],
+      "note": "WDn, the gilt frame."
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 12,
+      "area": 583.6,
+      "along": [
+        -15.2,
+        15.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.202,
+        0.006,
+        0.239,
+        0.042
+      ],
+      "note": "wdn_r, the comet streak: a glow."
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 12,
+      "area": 502.8,
+      "along": [
+        -10.4,
+        12.5
+      ],
+      "mu_uv": [
+        0.208,
+        0.01,
+        1.207,
+        1.009
+      ],
+      "bake_uv": [
+        0.137,
+        0.218,
+        0.174,
+        0.255
+      ],
+      "note": "wdn_r: a glow."
+    },
+    {
+      "island": 9,
+      "material": "steel",
+      "triangles": 12,
+      "area": 502.9,
+      "along": [
+        -12.5,
+        10.3
+      ],
+      "mu_uv": [
+        -0.488,
+        0.001,
+        0.511,
+        0.999
+      ],
+      "bake_uv": [
+        0.188,
+        0.246,
+        0.224,
+        0.283
+      ],
+      "note": "wdn_r: a glow."
+    }
+  ]
+}
