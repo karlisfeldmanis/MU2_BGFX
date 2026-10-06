@@ -8060,8 +8060,11 @@ void testGroupRunes(const content::Tables& tables) {
                 if (h.what == sim::What::Hit && !h.thrown) ++*swings;
                 if (h.what == sim::What::Loosed && h.rune) {
                     const bool burst = h.a == sim::skill::kFireBall && h.c == int32_t(fighting);
-                    if (burst || h.a == sim::skill::kInferno) ++*answers;
-                    ringing = ringing || h.a == sim::skill::kInferno;
+                    const bool spell = h.a == sim::skill::kInferno ||
+                                       h.a == sim::skill::kHellfire ||
+                                       h.a == sim::skill::kTwister;
+                    if (burst || spell) ++*answers;
+                    ringing = ringing || spell;
                 }
                 if (h.what == sim::What::Hit && h.thrown && (h.rune || ringing)) ++*blows;
             }
@@ -8083,6 +8086,21 @@ void testGroupRunes(const content::Tables& tables) {
     if (ringSwings > 0) {
         const double rate = double(rings) / ringSwings;
         check(rate > 0.05 && rate < 0.16, "about one landed swing in ten");
+    }
+    // The spell runes (2026-10-06): Hellfire round him, Twister walked out at what he struck,
+    // any knight's. A storm's strikes come on later ticks, rune-coloured on their own.
+    for (const Power power : {Power::Hellfire, Power::Twister}) {
+        check(sets(power, sword, Kin::DarkKnight) && !sets(power, sword, Kin::DarkWizard),
+              "a knight's spell rune goes in his sword alone");
+        int spellSwings = 0, casts = 0, spellBlows = 0;
+        hunt(power, &spellSwings, &casts, &spellBlows);
+        std::printf("  %s: %d landed swings, %d casts, %d blows\n",
+                    sim::powerOf(uint8_t(power))->name, spellSwings, casts, spellBlows);
+        check(casts > 0 && spellBlows >= casts, "it goes off and strikes");
+        if (spellSwings > 0) {
+            const double rate = double(casts) / spellSwings;
+            check(rate > 0.05 && rate < 0.16, "about one landed swing in ten");
+        }
     }
 }
 

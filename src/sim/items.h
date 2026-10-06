@@ -615,7 +615,9 @@ enum class Power : uint8_t {
     LesserInsight = 35,
     GreaterInsight = 36,
     LesserAscendance = 37,
-    GreaterAscendance = 38
+    GreaterAscendance = 38,
+    Hellfire = 39,
+    Twister = 40
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -875,6 +877,19 @@ constexpr double kFireburstChance = 0.10;
 constexpr float kFireburstForce = 0.8f;
 constexpr double kFireRingChance = 0.10;
 constexpr float kFireRingForce = 1.0f;
+// **The knight's spell runes** (the user, 2026-10-06: 'rune for DK that there is chance of
+// hellfire coming from character on hits', and the same of twister), Epic, any knight's weapon.
+// **Hellfire**: a swing that lands has kHellfireRuneChance to set the wizard's Hellfire ring
+// round him, striking every monster within its four tiles. **Twister**: a swing that lands has
+// kTwisterRuneChance to send the wizard's storm walking out from his feet toward what he struck,
+// its three strikes on everything within a tile and a half of it then. Each blow is his rune's
+// (runeStrike), Hellfire fire and Twister wind, so Inferno and Tempest runes raise them; each a
+// little under Ring of Fire's, as the wizard's ladder puts both spells under Inferno.
+// invention, all of it.
+constexpr double kHellfireRuneChance = 0.10;
+constexpr float kHellfireRuneForce = 0.9f;
+constexpr double kTwisterRuneChance = 0.10;
+constexpr float kTwisterRuneForce = 0.8f;
 // **Bulwark** (the user: "allow to use defense skill without shield"), a knight's weapon's: his
 // Defense goes up with no shield on his arm -- a second weapon, a two-handed one or an empty
 // hand -- off his strength and agility alone (`guardShare` with no shield's defence in it).

@@ -405,6 +405,44 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         }
         return;
     }
+    // His Hellfire rune: the wizard's Hellfire ring round him, said as Hellfire let go so the
+    // drawing lights its sigil and wall at his feet, and his rune's blow on everything in it.
+    if (power.power == Power::Hellfire) {
+        if (!runeDice_.nextBool(kHellfireRuneChance)) return;
+        const SkillRow* ring = skillNumbered(skill::kHellfire);
+        if (ring == nullptr) return;
+        uint32_t victims[kVictims];
+        const int found = gather(hero, *ring, victims, kVictims);
+        say(What::Loosed, hero, skill::kHellfire, 0, 0, 0);
+        happenings_.back().rune = true;
+        core::logf("hellfire rune: tick %lld, %d round him", (long long)tick_, found);
+        const float force = kHellfireRuneForce * elementForce(hero, Element::Fire);
+        for (int i = 0; i < found && hero.alive(); ++i) {
+            if (Body* victim = body(victims[i]); victim && victim->alive()) {
+                runeStrike(hero, *victim, force);
+            }
+        }
+        return;
+    }
+    // His Twister rune: the wizard's storm stood at his feet and walked toward the monster he
+    // struck, striking on its own clock as the spell's does (Realm::burn), each strike his rune's.
+    if (power.power == Power::Twister) {
+        if (!runeDice_.nextBool(kTwisterRuneChance)) return;
+        const SkillRow* storm = skillNumbered(skill::kTwister);
+        if (storm == nullptr) return;
+        const float way = std::atan2(struck.y - hero.y, struck.x - hero.x);
+        for (Fire& one : fires_) {
+            if (one.next != 0) continue;
+            one = Fire{tick_ + kStormFirst, hero.x, hero.y, storm->number, storm->burns,
+                       kTwisterRuneForce * elementForce(hero, Element::Wind), 0,
+                       std::cos(way) * storm->walks, std::sin(way) * storm->walks, true};
+            say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), 0);
+            happenings_.back().rune = true;
+            core::logf("twister rune: tick %lld, a storm toward #%u", (long long)tick_, struck.id);
+            return;
+        }
+        return;
+    }
     // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
     // asked where he casts; left to fall through, a wizard's plain staff swing called a knight's
     // lightning.
@@ -1332,7 +1370,12 @@ void Realm::burn() {
         }
         for (int i = 0; i < found; ++i) {
             if (Body* struck = body(victims[i]); struck && struck->alive()) {
-                strikeAt(hero, *struck, fire.force, row, true, first && victims[i] == fire.aimed);
+                if (fire.rune) {
+                    runeStrike(hero, *struck, fire.force);
+                } else {
+                    strikeAt(hero, *struck, fire.force, row, true,
+                             first && victims[i] == fire.aimed);
+                }
             }
         }
         if (--fire.left > 0) {
