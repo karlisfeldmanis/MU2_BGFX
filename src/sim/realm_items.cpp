@@ -357,6 +357,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (power->power == Power::Renewal) e.renewal += kRenewalShare;
             if (power->power == Power::Spirits && (row->shield() || jewellery(*row))) ++e.spirits;
             if (power->power == Power::Plague && (row->shield() || jewellery(*row))) ++e.plagues;
+            if (power->power == Power::Wisp && (row->shield() || jewellery(*row))) ++e.wisps;
             if (power->power == Power::Ironskin) e.runeDefense += kIronskinDefense;
             if (power->power == Power::Steadfast) e.blockChance += kSteadfastBlock;
             if (power->power == Power::SecondWind) {
@@ -383,6 +384,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
                 hero.excel.kinship = true;
             }
             if (power && power->power == Power::Wrath && !jewellery(*row)) ++hero.excel.wraths;
+            if (power && power->power == Power::Spite && !jewellery(*row)) ++hero.excel.spites;
             // Spirit Plague in a hand here; the shield's and the jewellery's are counted above.
             if (power && power->power == Power::Plague && !jewellery(*row)) ++hero.excel.plagues;
             if (power && power->power == Power::Scorch && !jewellery(*row) &&
@@ -1222,7 +1224,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         return (r.jewel() || (r.group == kGroupPotions && r.number == 9)) &&
                !refiningJewel(r);
     };
-    const double creationChance = level >= kCreationLevel ? kCreationChance : 0.0;
+    // Below kCreationLevel too since the Common runes (2026-10-06): such a rune is a Common.
+    const double creationChance = level >= kRuneRarityLevel[int(Rarity::Common)] ? kCreationChance : 0.0;
     if (roll < creationChance) {
         const int32_t item = draw([](const content::ItemRow& r) { return creation(r); });
         if (item < 0) return;
@@ -2041,29 +2044,30 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     return one.id;
 }
 
-uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level) {
+uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons) {
     const auto drawable = [&](const PowerRow& row) {
+        if (!commons && row.rarity == Rarity::Common) return false;
         const Element element = elementOf(row.power);
         if (element != Element::None) return elementServes(element, kin);
         return row.takenBy(kin, second);
     };
-    int count[3] = {};
+    int count[kRarities] = {};
     double held = 0.0;
     for (int p = 1; powerOf(uint8_t(p)); ++p) {
         const int r = int(powerOf(uint8_t(p))->rarity);
         if (drawable(*powerOf(uint8_t(p))) && level >= kRuneRarityLevel[r]) ++count[r];
     }
-    for (int r = 0; r < 3; ++r) held += count[r] > 0 ? kRuneRarityShare[r] : 0.0;
+    for (int r = 0; r < kRarities; ++r) held += count[r] > 0 ? kRuneRarityShare[r] : 0.0;
     int rarity = -1;
     if (held > 0.0) {
         double roll = dice.nextDouble() * held;
-        for (int r = 0; r < 3 && rarity < 0; ++r) {
+        for (int r = 0; r < kRarities && rarity < 0; ++r) {
             if (count[r] == 0) continue;
             if (roll < kRuneRarityShare[r]) rarity = r;
             roll -= kRuneRarityShare[r];
         }
-        // The last rarity holding one, should rounding carry the roll past all three.
-        for (int r = 2; rarity < 0 && r >= 0; --r) rarity = count[r] > 0 ? r : -1;
+        // The last rarity holding one, should rounding carry the roll past them all.
+        for (int r = kRarities - 1; rarity < 0 && r >= 0; --r) rarity = count[r] > 0 ? r : -1;
     }
     int pick = rarity >= 0 ? dice.nextInt(0, count[rarity]) : -1;
     for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {

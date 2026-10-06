@@ -154,8 +154,11 @@ void runeColour(const sim::Held& what, float out[3]) {
     const sim::PowerRow* power = sim::powerOf(what.powers[0]);
     const sim::Rarity rarity = power ? power->rarity : sim::Rarity::Legendary;
     const float rare[3] = {0.3f, 0.55f, 1.0f}, epic[3] = {0.7f, 0.35f, 1.0f},
-                legendary[3] = {1.0f, 0.5f, 0.0f};
-    const float* c = rarity == sim::Rarity::Rare ? rare : rarity == sim::Rarity::Epic ? epic : legendary;
+                legendary[3] = {1.0f, 0.5f, 0.0f}, common[3] = {0.9f, 0.9f, 0.9f};
+    const float* c = rarity == sim::Rarity::Rare     ? rare
+                     : rarity == sim::Rarity::Epic   ? epic
+                     : rarity == sim::Rarity::Common ? common
+                                                     : legendary;
     for (int k = 0; k < 3; ++k) out[k] = c[k];
 }
 

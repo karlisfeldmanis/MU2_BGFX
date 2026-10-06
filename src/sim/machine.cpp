@@ -475,11 +475,11 @@ void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& 
         j.title = "The runes must share a rarity";
         return;
     }
-    if (rarity >= int(Rarity::Legendary)) {
+    if (rarity == int(Rarity::Legendary)) {
         j.title = "Legendary runes fuse no higher";
         return;
     }
-    const char* next = rarityName(Rarity(rarity + 1));
+    const char* next = rarityName(nextRarity(Rarity(rarity)));
     j.title = std::string("Fuse into ") + next;
     j.success = std::string("A random ") + next + " rune";
     j.ready = s.runes == kFuseCount && s.others == 0 && s.chaos == 1 && s.bless == 0 &&

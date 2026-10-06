@@ -220,6 +220,7 @@ uint32_t moneyColour(long long zen) {
 static Tone rarityTone(sim::Rarity rarity) {
     return rarity == sim::Rarity::Legendary ? Tone::RuneLegendary
            : rarity == sim::Rarity::Epic    ? Tone::Epic
+           : rarity == sim::Rarity::Common  ? Tone::White  // the Common runes' white
                                             : Tone::Rare;
 }
 

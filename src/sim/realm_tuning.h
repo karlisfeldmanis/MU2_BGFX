@@ -512,7 +512,9 @@ inline float elementForce(const Body& hero, Element element) {
 
 // What his Wraths multiply every blow of his by (sim::kWrathDamage): 1 for none, or a monster's.
 inline float wrathForce(const Body& hero) {
-    return hero.player ? float(1.0 + kWrathDamage * hero.excel.wraths) : 1.0f;
+    return hero.player
+               ? float(1.0 + kWrathDamage * hero.excel.wraths + kSpiteDamage * hero.excel.spites)
+               : 1.0f;
 }
 
 }  // namespace mu::sim

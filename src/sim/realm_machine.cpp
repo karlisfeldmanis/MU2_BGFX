@@ -327,7 +327,7 @@ bool Realm::mix(Service service, int socket) {
                 const PowerRow* power =
                     machine_[cell].empty() ? nullptr : powerOf(machine_[cell].powers[0]);
                 if (power && creation(tables_->items[size_t(machine_[cell].item)])) {
-                    rarity = int(power->rarity) + 1;
+                    rarity = int(nextRarity(power->rarity));
                 }
             }
             const auto drawable = [&](const PowerRow& row) {

@@ -167,7 +167,8 @@ constexpr bool byRecipe(Service service) {
 const char* serviceName(Service service);  // the row: "Combine", "Remove Rune", ...
 const char* serviceVerb(Service service);  // the button: "Combine", "Remove", "Add Socket", "Fuse"
 
-constexpr int64_t kRemoveRuneZen[3] = {500000, 1000000, 1500000};  // Rare, Epic, Legendary
+// Rare, Epic, Legendary, and a Common's (Rarity's order).
+constexpr int64_t kRemoveRuneZen[4] = {500000, 1000000, 1500000, 100000};
 constexpr int kAddSocketRate[3] = {50, 35, 20};                     // for the 1st, 2nd, 3rd
 constexpr int64_t kAddSocketZen = 1000000;
 constexpr int kAddSocketLife = 1, kAddSocketChaos = 1, kAddSocketSoul = 2, kAddSocketBless = 2;

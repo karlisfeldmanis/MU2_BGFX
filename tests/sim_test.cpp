@@ -8295,6 +8295,36 @@ void testGroupRunes(const content::Tables& tables) {
         const double rate = double(lit) / double(std::max(1, hits));
         check(rate > 0.08 && rate < 0.24, "about one surviving fire ball in seven lights a burn");
     }
+    // The Common runes (2026-10-06): first-class, white, each a Legendary at a fraction.
+    for (const Power power : {Power::Cinder, Power::Gust, Power::Chill, Power::FaintEcho,
+                              Power::Spite, Power::Wisp}) {
+        const sim::PowerRow* row = sim::powerOf(uint8_t(power));
+        check(row != nullptr && row->rarity == sim::Rarity::Common && !row->second,
+              "a Common rune, any first-class hero's");
+    }
+    check(sets(Power::Cinder, sword, Kin::DarkKnight) && sets(Power::Spite, sword, Kin::FairyElf) &&
+              sets(Power::Wisp, ring, Kin::DarkWizard) && !sets(Power::Wisp, sword, Kin::DarkWizard),
+          "Commons go where their Legendaries go");
+    check(sim::nextRarity(sim::Rarity::Common) == sim::Rarity::Rare,
+          "three Commons fuse into a Rare");
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
+        const float bare = sim::wrathForce(realm.hero());
+        const uint8_t powers[3] = {uint8_t(Power::Spite), 0, 0};
+        realm.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        check(std::abs(sim::wrathForce(realm.hero()) - bare - float(sim::kSpiteDamage)) < 1e-4f,
+              "a Spite adds its 5% to every blow");
+    }
+    int cinderSwings = 0, cinders = 0, cinderBlows = 0;
+    hunt(Power::Cinder, &cinderSwings, &cinders, &cinderBlows);
+    std::printf("  Cinder: %d landed swings, %d rings, %d blows\n", cinderSwings, cinders,
+                cinderBlows);
+    check(cinders > 0 && cinderBlows >= cinders, "a Cinder lights its faint ring");
+    if (cinderSwings > 0) {
+        const double rate = double(cinders) / cinderSwings;
+        check(rate > 0.02 && rate < 0.09, "about one landed swing in twenty");
+    }
 }
 
 // The runes' rarity (sim::Rarity, the user, 2026-10-02: "we need also make group of rarity of
@@ -8308,10 +8338,10 @@ void testRuneRarity(const content::Tables& tables) {
     check(rune >= 0, "the Rune of Creation");
     if (rune < 0) return;
     for (const sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf}) {
-        for (const int level : {70, 40, 30}) {
+        for (const int level : {70, 40, 30, 8}) {
             sim::Realm realm;
             realm.raise(&tables, 11, 138, 124, kin, 50);
-            int tally[3] = {}, runes = 0, unsettable = 0;
+            int tally[sim::kRarities] = {}, runes = 0, unsettable = 0;
             for (int i = 0; i < 1000000 && runes < 1500; ++i) {
                 realm.dropFor(level);
                 if (realm.lying().empty() || realm.lying().back().what.item != rune) continue;
@@ -8321,13 +8351,13 @@ void testRuneRarity(const content::Tables& tables) {
                 ++tally[int(power->rarity)];
                 unsettable += !power->takenBy(kin, false);
             }
-            std::printf("  kin %d, level %d: %d runes, %d rare, %d epic, %d legendary\n", int(kin),
-                        level, runes, tally[0], tally[1], tally[2]);
+            std::printf("  kin %d, level %d: %d runes, %d common, %d rare, %d epic, %d legendary\n",
+                        int(kin), level, runes, tally[3], tally[0], tally[1], tally[2]);
             checkEqual(unsettable, 0, "every rune drawn is one his class may set");
             double reachable = 0.0;
-            for (int r = 0; r < 3; ++r)
+            for (int r = 0; r < sim::kRarities; ++r)
                 reachable += level >= sim::kRuneRarityLevel[r] ? sim::kRuneRarityShare[r] : 0.0;
-            for (int r = 0; r < 3; ++r) {
+            for (int r = 0; r < sim::kRarities; ++r) {
                 const double share = runes > 0 ? double(tally[r]) / runes : 0.0;
                 const double want =
                     level >= sim::kRuneRarityLevel[r] ? sim::kRuneRarityShare[r] / reachable : 0.0;
@@ -9284,7 +9314,8 @@ void testDrops(const content::Tables& tables) {
         check(hasBless ? near(b, each, 0.15) : b == 0, said("the Bless at its share"));
         check(hasSoul ? near(s, each, 0.15) : s == 0, said("the Soul at its share"));
         check(hasChaos ? near(c, each, 0.15) : c == 0, said("the Chaos at its share"));
-        check(level >= sim::kCreationLevel ? near(r, kDeaths * sim::kCreationChance, 0.25) : r == 0,
+        // From the first monster since the Common runes, a Common alone below kCreationLevel.
+        check(near(r, kDeaths * sim::kCreationChance, 0.25),
               said("the Rune of Creation at its chance"));
         checkEqual((long long)unsettable, 0LL, said("every dropped rune holds a power he may set"));
         check(near(items, (kDeaths - tickets) * 0.1, 0.05), said("the item chance is untouched"));

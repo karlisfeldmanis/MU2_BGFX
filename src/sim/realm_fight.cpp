@@ -100,6 +100,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                 if (letSpiritsGo(target, 1.0f, true)) happenings_.back().whom = attacker.id;
                 break;
             }
+            // And a Wisp's, its faint copy, while the spirits are not already out.
+            for (int i = 0; i < target.excel.wisps && !spiritsGoing(); ++i) {
+                if (!runeDice_.nextBool(kWispChance)) continue;
+                core::logf("wisp rune: tick %lld, off #%u's miss", (long long)tick_, attacker.id);
+                if (letSpiritsGo(target, kWispForce, true)) happenings_.back().whom = attacker.id;
+                break;
+            }
         }
         return;
     }
@@ -303,13 +310,15 @@ void Realm::stormcall(Body& hero, Body& struck, int wound) {
 void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound) {
     // Frost Arrow takes the monster her arrow struck: frozen where it stands, and wounded again
     // for half the arrow, said as the wizard's Ice let go at it so the drawing freezes it there.
-    if (power.power == Power::Frost) {
-        if (!runeDice_.nextBool(kFrostChance)) return;
+    // Chill is its faint copy: a shorter freeze and half the wound.
+    if (power.power == Power::Frost || power.power == Power::Chill) {
+        const bool faint = power.power == Power::Chill;
+        if (!runeDice_.nextBool(faint ? kChillChance : kFrostChance)) return;
         if (!struck.alive() || !struck.monster()) return;
         // The Statue of Saint (fixed) takes the wound and not the freeze, nor its ice drawn
         // (the user, 2026-10-05: 'immune to slow').
         if (!fixed(struck)) {
-            struck.frozenUntil = tick_ + kFrostTicks;
+            struck.frozenUntil = tick_ + (faint ? kChillTicks : kFrostTicks);
             // And its walk ended where it stands: `advance` skips a frozen body, but one left
             // walking was drawn striding on the spot for the whole freeze (the user: "when
             // monsters is frozen he suppost to not walk"). It plans again when it thaws.
@@ -332,7 +341,8 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                      : std::max(1, int(float(wound) * kFrostWound)) +
                            int(float(runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1)) *
                                wrath);
-        const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice)));
+        const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice) *
+                                          (faint ? kChillWound : 1.0f)));
         struck.health = std::max(0, struck.health - bite);
         say(What::Hit, hero, bite, bite, struck.health, struck.id);
         happenings_.back().critical = critical;
@@ -408,8 +418,10 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     }
     // His Ring of Fire: the wizard's Inferno ring round him, said as Inferno let go so the
     // drawing lights it at his feet, and his rune's blow on everything it gathers.
-    if (power.power == Power::FireRing) {
-        if (!runeDice_.nextBool(kFireRingChance)) return;
+    // Cinder is its faint copy.
+    if (power.power == Power::FireRing || power.power == Power::Cinder) {
+        const bool faint = power.power == Power::Cinder;
+        if (!runeDice_.nextBool(faint ? kCinderChance : kFireRingChance)) return;
         const SkillRow* ring = skillNumbered(skill::kInferno);
         if (ring == nullptr) return;
         uint32_t victims[kVictims];
@@ -417,7 +429,8 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         say(What::Loosed, hero, skill::kInferno, 0, 0, 0);
         happenings_.back().rune = true;
         core::logf("ring of fire: tick %lld, %d round him", (long long)tick_, found);
-        const float force = kFireRingForce * elementForce(hero, Element::Fire);
+        const float force =
+            (faint ? kCinderForce : kFireRingForce) * elementForce(hero, Element::Fire);
         for (int i = 0; i < found && hero.alive(); ++i) {
             if (Body* victim = body(victims[i]); victim && victim->alive()) {
                 runeStrike(hero, *victim, force);
@@ -446,15 +459,19 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     }
     // His Twister rune: the wizard's storm stood at his feet and walked toward the monster he
     // struck, striking on its own clock as the spell's does (Realm::burn), each strike his rune's.
-    if (power.power == Power::Twister) {
-        if (!runeDice_.nextBool(kTwisterRuneChance)) return;
+    // Gust is its faint copy.
+    if (power.power == Power::Twister || power.power == Power::Gust) {
+        const bool faint = power.power == Power::Gust;
+        if (!runeDice_.nextBool(faint ? kGustChance : kTwisterRuneChance)) return;
         const SkillRow* storm = skillNumbered(skill::kTwister);
         if (storm == nullptr) return;
         const float way = std::atan2(struck.y - hero.y, struck.x - hero.x);
         for (Fire& one : fires_) {
             if (one.next != 0) continue;
             one = Fire{tick_ + kStormFirst, hero.x, hero.y, storm->number, storm->burns,
-                       kTwisterRuneForce * elementForce(hero, Element::Wind), 0,
+                       (faint ? kGustForce : kTwisterRuneForce) *
+                           elementForce(hero, Element::Wind),
+                       0,
                        std::cos(way) * storm->walks, std::sin(way) * storm->walks, true};
             say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), 0);
             happenings_.back().rune = true;
@@ -709,11 +726,13 @@ bool Realm::echoes(Body& hero) {
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            if (power == nullptr || power->power != Power::Echo ||
+            if (power == nullptr ||
+                (power->power != Power::Echo && power->power != Power::FaintEcho) ||
                 !power->takenBy(hero.kin, hero.second)) {
                 continue;
             }
-            if (runeDice_.nextBool(kEchoChance)) return true;
+            const bool faint = power->power == Power::FaintEcho;
+            if (runeDice_.nextBool(faint ? kFaintEchoChance : kEchoChance)) return true;
         }
     }
     return false;

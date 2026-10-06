@@ -485,6 +485,18 @@ const PowerRow* powerOf(uint8_t power) {
          kInWeapon, Rarity::Epic},
         {Power::GreaterAscendance, "Greater Ascendance", "+30% all stats", kEveryClass,
          kInWeapon, Rarity::Legendary},
+        // The Common runes (sim/items.h kCinderChance...), each a Legendary's faint copy.
+        {Power::Cinder, "Cinder", "5% on hit: a faint ring of fire around you", kKnightOnly,
+         kInWeapon, Rarity::Common},
+        {Power::Gust, "Gust", "5% on hit: a small twister walks out at the target", kKnightOnly,
+         kInWeapon, Rarity::Common},
+        {Power::Chill, "Chill", "8% on hit: freezes the target for 1 s", kElfOnly, kInWeapon,
+         Rarity::Common},
+        {Power::FaintEcho, "Faint Echo", "7% chance a spell casts twice", kWizardOnly, kInWeapon,
+         Rarity::Common},
+        {Power::Spite, "Spite", "+5% damage", kEveryClass, kInWeapon, Rarity::Common},
+        {Power::Wisp, "Wisp", "5% when missed: faint spirits strike monsters around you",
+         kEveryClass, kInShield | kInJewellery, Rarity::Common},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -511,6 +523,7 @@ const char* rarityName(Rarity rarity) {
         case Rarity::Rare: return "Rare";
         case Rarity::Epic: return "Epic";
         case Rarity::Legendary: return "Legendary";
+        case Rarity::Common: return "Common";
     }
     return "";
 }

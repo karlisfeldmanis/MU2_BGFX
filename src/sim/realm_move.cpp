@@ -767,7 +767,8 @@ void Realm::castleTick() {
             run_.phase = CastlePhase::Won;
             // The runes' powers drawn now, for his page to show; the pay waits for Complete.
             for (int i = 0; i < kCastleRunes[c]; ++i) {
-                run_.paidRunes[i] = drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c]);
+                run_.paidRunes[i] =
+                    drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c], false);
             }
             // And the castle is theirs again: every monster in it gone on the tick, out of the
             // picture without a fall, and none rises for the rest of the run (the user,

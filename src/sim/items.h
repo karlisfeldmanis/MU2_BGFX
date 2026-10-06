@@ -621,7 +621,14 @@ enum class Power : uint8_t {
     Burn = 41,
     Plague = 42,
     PlagueArrows = 43,
-    Scorch = 44
+    Scorch = 44,
+    // The Common runes (kCommon*), each a faint copy of a Legendary.
+    Cinder = 45,
+    Gust = 46,
+    Chill = 47,
+    FaintEcho = 48,
+    Spite = 49,
+    Wisp = 50
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -644,8 +651,20 @@ constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
 // in a fight (Stormcall and Meteor, a proc on one more monster; Renewal and Kinship, which the
 // user rates above a stat); Legendary strikes a crowd or opens a build no other rune does
 // (Bulwark's shieldless guard). A quest's rune is the quest's. invention.
-enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2 };
-constexpr double kRuneRarityShare[3] = {0.60, 0.30, 0.10};
+// **Common**, white, below them all (the user, 2026-10-06: 'super early game runes also which is
+// like super light version of legendary runes', 'green runes lets say', 'or white'): a Legendary's
+// power at a fraction, the only rune a monster under kCreationLevel lets fall. White and not
+// green, as green is a legendary item's. Last in the enum so the rest keep their numbers.
+enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2, Common = 3 };
+constexpr int kRarities = 4;
+// The rarity a fuse of three makes (sim/machine.h): Common to Rare, Rare to Epic, Epic to
+// Legendary; a Legendary is the top and gives itself back.
+constexpr Rarity nextRarity(Rarity rarity) {
+    return rarity == Rarity::Common ? Rarity::Rare
+           : rarity == Rarity::Rare ? Rarity::Epic
+                                    : Rarity::Legendary;
+}
+constexpr double kRuneRarityShare[kRarities] = {0.60, 0.30, 0.10, 0.25};
 const char* rarityName(Rarity rarity);
 struct PowerRow {
     Power power;
@@ -759,13 +778,15 @@ constexpr int kCreationLevel = 15;
 // down, Devias's Ice Queen -- and a Legendary from 60, the Lost Tower's fifth floor (Devil 60,
 // Death Knight 62) and anything harder after it. A rarity a kill cannot reach is out of the
 // draw, and kRuneRarityShare is shared among the rest. invention.
-constexpr int kRuneRarityLevel[3] = {kCreationLevel, 40, 60};
+// A Common from the first monster, and the only rune below kCreationLevel.
+constexpr int kRuneRarityLevel[kRarities] = {kCreationLevel, 40, 60, 1};
 // A rune's power as a drop draws it, for a monster of `level` and a hero of `kin`: one his class
 // may set -- an element rune only where his class throws something of its element
 // (elementServes) -- its rarity drawn first at kRuneRarityShare among the rarities `level`
 // reaches that hold one, then one of that rarity evenly. 0 when none can be drawn.
 class Random;
-uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level);
+// `commons` false leaves the Common runes out: a reward's rune (Blood Castle) is never one.
+uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons = true);
 // The Bless (14, 13), the Soul (14, 14), the Life (14, 16) and the Chaos (12, 15): the
 // kJewelChance draws. The Life falls from 72 (OpenMU Version095d Jewels.cs:43), past Devias.
 bool refiningJewel(const content::ItemRow& row);
@@ -895,6 +916,22 @@ constexpr double kHellfireRuneChance = 0.10;
 constexpr float kHellfireRuneForce = 0.9f;
 constexpr double kTwisterRuneChance = 0.10;
 constexpr float kTwisterRuneForce = 0.8f;
+// **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
+// **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
+// freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second
+// cast, the wizard's; **Spite** a quarter of Wrath, any weapon; **Wisp** Evil Spirit off a miss at
+// half its blow, any shield or jewellery. invention, all of it.
+constexpr double kCinderChance = 0.05;
+constexpr float kCinderForce = 0.4f;
+constexpr double kGustChance = 0.05;
+constexpr float kGustForce = 0.35f;
+constexpr double kChillChance = 0.08;
+constexpr int64_t kChillTicks = 20;
+constexpr float kChillWound = 0.5f;  // of Frost Arrow's second wound
+constexpr double kFaintEchoChance = 0.07;
+constexpr double kSpiteDamage = 0.05;
+constexpr double kWispChance = 0.05;
+constexpr float kWispForce = 0.5f;
 // **Immolate** (the user, 2026-10-06: 'chance to burn monsters to do some % of damage of hp and
 // their has to be some burn efekt to the monster'), Epic, any knight's weapon: a swing that lands
 // has kBurnRuneChance to set the monster burning for kBurnRuneTicks, a pulse every
