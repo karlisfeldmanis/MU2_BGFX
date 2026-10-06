@@ -105,6 +105,24 @@ void Play::raidSaid(const sim::Happening& happening) {
         roarOwed_ = dragon->id;
         return;
     }
+    if (event == sim::RaidEvent::Immune) {
+        // A hold it shrugged off: the word over it, as a miss is (the user, 2026-10-06: 'there
+        // has to be damage text immune').
+        // Where its numbers stand (Play::update's landing): over its crown, from the ground.
+        const Drawn* drawn = drawnOf(dragon->id);
+        const float cx = drawn && drawn->placed ? drawn->crown[0] : x;
+        const float cz = drawn && drawn->placed ? drawn->crown[2] : z;
+        const float feet[3] = {cx, ground_->heightAt(cx, cz), cz};
+        showing_.word(Mark::Immune, feet);
+        return;
+    }
+    if (event == sim::RaidEvent::Wave) {
+        // It summons its minions with its roar, played whole, and does not swing through it
+        // (the realm holds it, sim::kSummonTicks).
+        roarOwed_ = dragon->id;
+        roarWhole_ = true;
+        return;
+    }
     if (event == sim::RaidEvent::Shadow) {
         // Not drawn: no warning of the dragon's moves at all (the user, 2026-10-06: 'dont show
         // spell warning from dragon spell just happend and players will learn that').
@@ -193,7 +211,8 @@ void Play::raidCircle(const sim::Body& body, float* x, float* z, float* yaw) con
 
 float Play::raidLift(const sim::Body& body) const {
     const sim::Body* dragon = realm_.invader();
-    return dragon != nullptr && &body == dragon ? raidLift_ : 0.0f;
+    if (dragon != nullptr && &body == dragon) return raidLift_;
+    return 0.0f;
 }
 
 bool Play::raidFlies(Drawn& one, const sim::Body& body) {

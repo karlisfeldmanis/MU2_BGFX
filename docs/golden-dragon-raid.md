@@ -298,6 +298,29 @@ The user played it and asked, and the fight now does this:
 Retuned with respawns (build/raid --runs 60): health x9.5 (950,000 for ten), bite x15 (4,500-5,250,
 on the way to WZD's 6,000-8,000): about 55% won, the kill at 7:30, near its clock.
 
+Later the same day:
+- **A swarm** ('i never saw stage with massive golden budge dragon spawn'): 2 + 2 a player minions
+  (22 for ten, at most 24), four to nine tiles out, health x12 and bite x6 for the party they meet.
+- **It summons, it does not strike** ('dragon can do summoning animations (not attacking)'): a
+  wave halts it, drops any blow in hand, and holds it kSummonTicks (1.5 s) while it plays its roar
+  (Monster32's clip 1) whole.
+- **The minions are golden** ('golden budge dragon has to be with golden effect'): drawn at +9,
+  Chrome01 and Shiny01 added, MuMain's RENDER_METAL | RENDER_CHROME pair (ZzzCharacter.cpp:8716-8785).
+- **The party's runes work** ('probably our raid group is too weak without runes'): each weapon
+  carries its class's (knights Stormcall/Meteor/Ice or Fireburst/Ring of Fire/Hellfire, elves
+  Frost Arrow, wizards Arcane Echo and Stormcall, Wrath in every one), and a raider's procs roll
+  from its own kit on the raiders' dice (Realm::stormcall, Realm::echoes), so the hero's runs are
+  unchanged.
+- **The boss is immune to crowd control** ('bosses has to be immune to CC', 'and there has to be
+  damage text immune'): no freeze, chill, push, shove or pull takes it (Realm::shrugs), and
+  IMMUNE goes up over it at most twice a second. Every wound still lands. Ten runed fighters'
+  Stormcall pushes had walked it out of its fight.
+- **Guards leave it alone** ('guards cant attack dragon'): a guard's blow is a share of what it
+  strikes and took 91,200 off it a blow; no guard takes the raid's dragon on.
+
+Retuned with all of that (build/raid --runs 120, two seed blocks): health x11.0 (1,100,000 for
+ten), bite x15: 149 of 240 won (62%), the kill about 7:25, every loss its clock.
+
 ### 2b. Where it happens: where the dragon actually lands
 
 (the user, 2026-10-06: 'fight has to happen in place where dragon actualy could land')

@@ -61,12 +61,13 @@ void Play::invasion(float seconds) {
     if (roarOwed_ != 0) {
         const uint32_t who = roarOwed_;
         roarOwed_ = 0;
-        roar(who);
+        roar(who, roarWhole_);
+        roarWhole_ = false;
     }
     invasionSky(seconds);
 }
 
-void Play::roar(uint32_t who) {
+void Play::roar(uint32_t who, bool whole) {
     Drawn* risen = drawnOf(who);
     const sim::Body* body = realm_.find(who);
     if (risen == nullptr || body == nullptr || risen->figure.body() == nullptr ||
@@ -78,9 +79,10 @@ void Play::roar(uint32_t who) {
     const int clip = risen->figure.body()->library->find(1);  // MONSTER01_STOP2
     if (clip >= 0) {
         risen->figure.play(clip, true, 0.0f, true);
-        risen->figure.setClock(kRoarTaken);
+        const float from = whole ? 0.0f : kRoarTaken;
+        risen->figure.setClock(from);
         // Held as a swing is, so the idle does not take it back on the next frame.
-        risen->swinging = std::max(0.0f, risen->figure.length() - kRoarTaken);
+        risen->swinging = std::max(0.0f, risen->figure.length() - from);
         risen->swingPace = 1.0f;
         ++risen->swingToken;
     }

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <utility>
 
 #include "core/log.h"
 #include "sim/realm_tuning.h"
@@ -52,7 +53,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     const auto elements = [&](int damage) {
         // Never the Statue of Saint (fixed): stone takes no chill (the user, 2026-10-05).
         if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster() &&
-            !fixed(target) && target.chilledUntil <= tick_ && !resists(target, true, dice)) {
+            !fixed(target) && target.chilledUntil <= tick_ && !shrugs(target) &&
+            !resists(target, true, dice)) {
             target.chilledUntil = tick_ + row->chillTicks;
         }
         if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster() &&
@@ -272,7 +274,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // shot") -- every other skill's blow calls nothing, and the lightning and the rock a power
     // throws are unpaid with no row (`pays` false), so it cannot call itself.
     const bool fanned = row != nullptr && row->arrows > 0;
-    if (attacker.player && ((row == nullptr && pays) || fanned)) {
+    // A raider's too, from its own kit (Realm::kitOf).
+    if ((attacker.player || attacker.raider >= 0) && ((row == nullptr && pays) || fanned)) {
         stormcall(attacker, target, blow.damage);
     }
     // A wizard's Scorch: his Fire Ball, Flame, Meteorite and Inferno may set what they land on
@@ -286,13 +289,34 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     }
 }
 
+namespace {
+
+// A raider's runes roll on the raiders' own dice, swapped in for the call, so every roll beneath
+// it -- callDown's, a chain's, a ring's -- leaves the hero's stream, and each run without a raid,
+// as it was with them worn or not.
+struct RaiderRunes {
+    Random& runes;
+    Random& raiders;
+    bool on;
+    RaiderRunes(Random& r, Random& d, bool swap) : runes(r), raiders(d), on(swap) {
+        if (on) std::swap(runes, raiders);
+    }
+    ~RaiderRunes() {
+        if (on) std::swap(runes, raiders);
+    }
+};
+
+}  // namespace
+
 void Realm::stormcall(Body& hero, Body& struck, int wound) {
     if (!tables_) return;
+    const Satchel& kit = kitOf(hero);
+    const RaiderRunes dice(runeDice_, raiderDice_, hero.raider >= 0);
     // Either hand: a sword is in the right, and MU puts a bow in the LEFT with the arrows in the
     // right (a crossbow the other way round). Only a weapon takes a weapon's power, so a shield
     // in the left carries none.
     for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
-        const Held& hand = bag_[slot];
+        const Held& hand = kit[slot];
         if (hand.empty()) continue;
         // Each socket's power rolls on its own, in socket order.
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
@@ -316,7 +340,9 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (!struck.alive() || !struck.monster()) return;
         // The Statue of Saint (fixed) takes the wound and not the freeze, nor its ice drawn
         // (the user, 2026-10-05: 'immune to slow').
-        if (!fixed(struck)) {
+        // Nor the raid's dragon: two archers' arrows held it frozen the whole fight
+        // (sim::kImmuneSayTicks). The wound lands all the same.
+        if (!fixed(struck) && !shrugs(struck)) {
             struck.frozenUntil = tick_ + (faint ? kChillTicks : kFrostTicks);
             // And its walk ended where it stands: `advance` skips a frozen body, but one left
             // walking was drawn striding on the spot for the whole freeze (the user: "when
@@ -362,7 +388,8 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         const SkillRow* spell = skillNumbered(ice ? skill::kIce : skill::kPoison);
         if (spell == nullptr) return;
         if (ice) {
-            struck.chilledUntil = tick_ + spell->chillTicks;
+            // The raid's dragon takes the frost below and not the chill.
+            if (!shrugs(struck)) struck.chilledUntil = tick_ + spell->chillTicks;
         } else {
             struck.poisonUntil = tick_ + spell->poisonTicks;
             struck.poisonNext = tick_ + kPoisonEvery;
@@ -720,8 +747,10 @@ void Realm::land(Body& hero) {
 
 bool Realm::echoes(Body& hero) {
     if (!tables_) return false;
+    const Satchel& kit = kitOf(hero);
+    const RaiderRunes dice(runeDice_, raiderDice_, hero.raider >= 0);
     for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
-        const Held& hand = bag_[slot];
+        const Held& hand = kit[slot];
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);

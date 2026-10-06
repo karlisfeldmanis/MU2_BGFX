@@ -642,7 +642,9 @@ void Realm::keepBoon(Body& hero) {
 }
 
 void Realm::shove(Body& target) {
-    if (fixed(target)) return;
+    // Nor the raid's dragon: ten runed fighters shoved it tile by tile out of its fight and into
+    // a guard's reach (sim/raid.h's bulk). Ours.
+    if (fixed(target) || shrugs(target)) return;
     // One tile at random, and only onto something standable: OpenMU's `MoveRandomlyAsync` picks
     // a neighbour and a blocked one is simply not taken, which is what the grid test is. The
     // draw happens whether or not the tile is free, so the seeded log does not depend on the
@@ -825,7 +827,7 @@ void Realm::blink(Body& hero) {
 constexpr int32_t kPushTicks = 6;
 
 void Realm::push(Body& target, float fromX, float fromY) {
-    if (fixed(target)) return;
+    if (fixed(target) || shrugs(target)) return;  // nor the raid's dragon (Realm::shove)
     // Not again while it is still sliding: a push restarted mid-slide begins off the tile's
     // centre and can go two tiles in five ticks. The next strike finds it landed.
     if (target.pushTicks > 0) return;
@@ -867,6 +869,7 @@ float Realm::whirl(Body& hero, const SkillRow& row, float force) {
         if (!one.monster() || !one.alive() || fixed(one) || one.pushTicks > 0) continue;
         if (within(hero, one, row.reach) || !within(hero, one, kWhirlwindReach)) continue;
         if (tables_->grid.safe(one.column(), one.row()) || !seen(hero, one)) continue;
+        if (shrugs(one)) continue;  // nor the raid's dragon (sim::kImmuneSayTicks)
         pulled[count++] = one.id;
     }
     core::logf("whirlwind: tick %lld, %d to pull in", (long long)tick_, count);

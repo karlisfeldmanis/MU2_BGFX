@@ -238,7 +238,8 @@ float sizeOf(Mark mark) {
         case Mark::Rune: return kSkillSize;
         case Mark::RuneCritical: return kCriticalSize;
         case Mark::Reflected: break;
-        case Mark::Miss: return kMissSize;
+        case Mark::Miss:
+        case Mark::Immune: return kMissSize;
         case Mark::Absorbed: return kAbsorbedSize;
         case Mark::Burn:
         case Mark::Swing:
@@ -263,6 +264,7 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::RuneCritical: return kRuneCriticalInk;
         case Mark::Summon: return kSummonInk;
         case Mark::Miss: return figure.onHero ? kMissOnHeroInk : kMissInk;
+        case Mark::Immune: return kMissInk;
         case Mark::Swing: break;
     }
     return kSwingInk;
@@ -539,8 +541,9 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         // A pulse is told by its colour alone, no word (the user, 2026-10-06: 'dont shoe burn, or
         // poison text just color').
         const bool tag = figure.mark == Mark::Absorbed;
-        const bool word = figure.mark == Mark::Miss || tag;
+        const bool word = figure.mark == Mark::Miss || figure.mark == Mark::Immune || tag;
         const std::string text = figure.mark == Mark::Miss       ? std::string("MISS")
+                                 : figure.mark == Mark::Immune   ? std::string("IMMUNE")
                                  : figure.mark == Mark::Absorbed ? std::string("ABSORBED")
                                  : std::to_string(figure.value < 0 ? 0 : figure.value);
         // A miss is a word, so it takes the lane's own tracking rather than the ramp's: set

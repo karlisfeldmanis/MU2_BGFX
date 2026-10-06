@@ -1,5 +1,5 @@
 {
- "from": "docs/golden-dragon-raid.md \u00a72a: ten end-game characters in proper gear -- second class, levels 250-360, the best sets and arms built (source/items), +9 to +11, excellent options, runes in sockets, the 2nd wings and a pet. Invention, all of it; the user, 2026-10-06: 'make realistic \"end game\" characters', 'with some proper gear'. The first is the hero's. Slots are sim/items.h's worn slots by name; skills are MU's numbers in the order thrown; excellent is the option bits; sockets are sim::Power numbers (7 Undying, 11 Renewal, 29-36 the stat runes).",
+ "from": "docs/golden-dragon-raid.md \u00a72a: ten end-game characters in proper gear -- second class, levels 250-360, the best sets and arms built (source/items), +9 to +11, excellent options, runes in sockets, the 2nd wings and a pet. Invention, all of it; the user, 2026-10-06: 'make realistic \"end game\" characters', 'with some proper gear'. The first is the hero's. Slots are sim/items.h's worn slots by name; skills are MU's numbers in the order thrown; excellent is the option bits; sockets are sim::Power numbers (7 Undying, 11 Renewal, 29-36 the stat runes; in the weapons 1 Stormcall, 2 Meteor, 3 Ice, 5 Frost Arrow, 6 Arcane Echo, 19 Fireburst, 20 Ring of Fire, 23 Wrath, 39 Hellfire -- the user, 2026-10-06: 'probably our raid group is too weak without runes').",
  "party": [
   {
    "name": "Aldric",
@@ -68,7 +68,12 @@
      "plus": 9,
      "luck": true,
      "option": 3,
-     "excellent": 5
+     "excellent": 5,
+     "sockets": [
+      1,
+      3,
+      23
+     ]
     },
     {
      "slot": "left",
@@ -172,7 +177,11 @@
      "luck": true,
      "option": 3,
      "excellent": 5,
-     "sockets": []
+     "sockets": [
+      19,
+      2,
+      23
+     ]
     },
     {
      "slot": "wings",
@@ -271,7 +280,11 @@
      "luck": true,
      "option": 3,
      "excellent": 5,
-     "sockets": []
+     "sockets": [
+      39,
+      1,
+      23
+     ]
     },
     {
      "slot": "wings",
@@ -370,7 +383,11 @@
      "luck": true,
      "option": 3,
      "excellent": 5,
-     "sockets": []
+     "sockets": [
+      20,
+      2,
+      23
+     ]
     },
     {
      "slot": "wings",
@@ -467,7 +484,11 @@
      "item": "Mace08",
      "plus": 9,
      "luck": true,
-     "option": 2
+     "option": 2,
+     "sockets": [
+      1,
+      23
+     ]
     },
     {
      "slot": "left",
@@ -570,7 +591,12 @@
      "item": "Bow18",
      "plus": 6,
      "luck": true,
-     "option": 3
+     "option": 3,
+     "sockets": [
+      5,
+      1,
+      23
+     ]
     },
     {
      "slot": "wings",
@@ -666,7 +692,12 @@
      "item": "CrossBow20",
      "plus": 5,
      "luck": true,
-     "option": 3
+     "option": 3,
+     "sockets": [
+      5,
+      1,
+      23
+     ]
     },
     {
      "slot": "wings",
@@ -763,7 +794,12 @@
      "plus": 9,
      "luck": true,
      "option": 3,
-     "excellent": 5
+     "excellent": 5,
+     "sockets": [
+      6,
+      1,
+      23
+     ]
     },
     {
      "slot": "wings",
@@ -867,7 +903,12 @@
      "plus": 9,
      "luck": true,
      "option": 3,
-     "excellent": 5
+     "excellent": 5,
+     "sockets": [
+      6,
+      1,
+      23
+     ]
     },
     {
      "slot": "wings",
@@ -964,7 +1005,12 @@
      "plus": 8,
      "luck": true,
      "option": 3,
-     "excellent": 5
+     "excellent": 5,
+     "sockets": [
+      6,
+      1,
+      23
+     ]
     },
     {
      "slot": "wings",

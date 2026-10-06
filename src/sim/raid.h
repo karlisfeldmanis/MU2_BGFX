@@ -36,11 +36,13 @@ constexpr int kLastStandAt = 15;
 // **How tough, for how many** (§2). `players` is fixed when it lands; play's is kRaidPlayers.
 // The health runs from OpenMU's 22,000 for one to WebZen's 100,000 for ten (WZD Monster.txt:287),
 // a straight line between (invention), times kRaidHealthScale -- what the headless tune moves
-// (tools/raid), since an end-game party took WZD's ten-player number in a minute.
+// (tools/raid), since an end-game party took WZD's ten-player number in a minute. 11.0 since the
+// party's weapon runes fire and the dragon shrugs off holds (2026-10-06): 149 of 240 won, the
+// kill about 7:25, the losses its clock.
 constexpr int kRaidPlayers = 10;
 constexpr int32_t kRaidHealthOne = 22000;
 constexpr int32_t kRaidHealthTen = 100000;
-constexpr float kRaidHealthScale = 9.5f;
+constexpr float kRaidHealthScale = 11.0f;
 inline int32_t raidHealth(int players) {
     const int n = players < 1 ? 1 : players;
     const double line =
@@ -85,10 +87,25 @@ constexpr int64_t kImpactTell = 30;
 constexpr int64_t kImpactGap = 4;
 constexpr float kImpactReach = 1.0f;
 constexpr float kStrafeShare = 0.25f;
-// How many minions a wave: 2 + players / 2, at most kMinionsMost (slots raised at the start).
-constexpr int kMinionsMost = 7;
+// How many minions a wave: 2 + 2 a player, at most kMinionsMost (slots raised at the start) --
+// a swarm, the user, 2026-10-06: 'i never saw stage with massive golden budge dragon spawn'.
+// And scaled for the party that meets them, as the dragon is: OpenMU's 2,500 health and
+// 120-125 bite died to an end-game party in a second. Ours.
+constexpr int kMinionsMost = 24;
+constexpr float kMinionHealthScale = 12.0f;
+constexpr float kMinionBlowScale = 6.0f;
+// A wave is summoned, not struck: it halts, drops any blow in hand and stands through its roar
+// (Monster32's clip 1, 16 keys at MU's 0.8, about 0.8 s) and a breath after it, so no swing
+// lands on the wave (the user, 2026-10-06: 'dragon can do summoning animations (not
+// attacking)'). Ours.
+constexpr int64_t kSummonTicks = 30;
+// **A boss is immune to crowd control** (the user, 2026-10-06: 'bosses has to be immune to CC',
+// 'and there has to be damage text immune'): no freeze, chill, push or pull takes the dragon,
+// and "Immune" goes up over it at most this often -- ten runed fighters would say it every
+// tick. Every wound still lands. Ours.
+constexpr int64_t kImmuneSayTicks = 10;
 inline int minionsFor(int players) {
-    const int n = 2 + (players < 1 ? 1 : players) / 2;
+    const int n = 2 + 2 * (players < 1 ? 1 : players);
     return n > kMinionsMost ? kMinionsMost : n;
 }
 // The enraged swing: its band's clock times this.
@@ -127,6 +144,7 @@ enum class RaidEvent : int32_t {
     Aloft = 4,   // b: 1 up, 0 down
     Shadow = 5,  // a shadow laid for an Inferno; x, y
     Raider = 6,  // a raider's own: b: the RaiderAct, c: a skill's number or a potion's worth
+    Immune = 7,  // what would hold or move it shrugged off (Realm::shrugs)
 };
 
 enum class RaiderAct : int32_t {

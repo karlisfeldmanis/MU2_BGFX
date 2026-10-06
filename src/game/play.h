@@ -1104,9 +1104,11 @@ private:
     // The frame's part: the landed dragon's roar, then the sky's dragons moved and their cries,
     // breath and fire passed on.
     void invasion(float seconds);
-    void roar(uint32_t who);
+    // `whole`: from the clip's start, a raid's summoning, not carried on from the dive.
+    void roar(uint32_t who, bool whole = false);
     void invasionSky(float seconds);
     uint32_t roarOwed_ = 0;
+    bool roarWhole_ = false;
     // ---- the raid's drawing (play_raid.cpp) ---------------------------------------------------
     int raidPlayers_ = 0;
     std::vector<sim::RaiderKit> raidParty_;

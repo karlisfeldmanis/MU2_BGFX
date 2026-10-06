@@ -104,7 +104,7 @@ void Realm::watch(Body& guard) {
     const uint32_t had = guard.quarry;
     const Body* held = find(guard.quarry);
     const uint32_t heroId = bodies_[0].id;
-    const bool keep = held != nullptr && held->alive() && held->monster() &&
+    const bool keep = held != nullptr && held->alive() && held->monster() && !isBoss(*held) &&
                       fromPost(guard, *held) <= watches;
     // Looked for again whenever what he holds is not on the hero, so a monster that turns on the
     // hero takes him off one that is only at the gate.
@@ -112,7 +112,9 @@ void Realm::watch(Body& guard) {
         guard.quarry = keep ? had : 0;
         float closest = 1e30f;
         for (const Body& one : bodies_) {
-            if (!one.monster() || !one.alive()) continue;
+            // Never the raid's dragon: a guard's blow is a share of what it strikes, and took
+            // 91,200 off it a blow (the user, 2026-10-06: 'guards cant attack dragon').
+            if (!one.monster() || !one.alive() || isBoss(one)) continue;
             // Awake only: a monster asleep is one nobody is near enough to see, and a guard
             // fighting it would be a fight in an empty street -- and would clear what spawns at
             // his gate before the hero ever walked out to it.

@@ -130,6 +130,34 @@ void Showing::advance(float seconds, std::vector<Cue>& due) {
     }
 }
 
+void Showing::raise(Mark mark, int32_t value, const float feet[3], bool onHero) {
+    if (figures_.size() >= figures_.capacity()) return;
+    Figure figure;
+    // FLAT, not scaled by `like`: see kNumberHeight.
+    figure.world[0] = feet[0];
+    figure.world[1] = feet[1] + kNumberHeight / kPerMetre;
+    figure.world[2] = feet[2];
+    figure.value = value;
+    figure.mark = mark;
+    figure.onHero = onHero;
+    figure.life =
+        mark == Mark::Critical || mark == Mark::RuneCritical ? kCriticalLife : kFigureLife;
+    // Which row over the body: how many are already standing there, just put up.
+    int stacked = 0;
+    for (const Figure& other : figures_) {
+        if (other.age > kStackWindow) continue;
+        const float dx = other.world[0] - figure.world[0];
+        const float dy = other.world[1] - figure.world[1];
+        const float dz = other.world[2] - figure.world[2];
+        if (dx * dx + dy * dy + dz * dz < kStackNear * kStackNear) ++stacked;
+    }
+    figure.slot = uint8_t(std::min(stacked, kStackHighest));
+    // The lean, so two blows a fifth of a second apart are not one figure drawn twice.
+    // Drawn from the picture's own xorshift and never from the sim's dice.
+    figure.lean = unit() * 2.0f - 1.0f;
+    figures_.push_back(figure);
+}
+
 void Showing::land(const Cue& cue, const float feet[3], float height, float man,
                     float attackerYaw, bool onHero, bool told) {
     // Units of the target against the hero's own drawn height, not MU's 120-unit box: the
@@ -159,31 +187,7 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         return cue.skill != 0 ? Mark::Skill : Mark::Swing;
     };
     const auto raise = [&](Mark mark, int32_t value) {
-        if (!told || figures_.size() >= figures_.capacity()) return;
-        Figure figure;
-        // FLAT, not scaled by `like`: see kNumberHeight.
-        figure.world[0] = feet[0];
-        figure.world[1] = feet[1] + kNumberHeight / kPerMetre;
-        figure.world[2] = feet[2];
-        figure.value = value;
-        figure.mark = mark;
-        figure.onHero = onHero;
-        figure.life =
-            mark == Mark::Critical || mark == Mark::RuneCritical ? kCriticalLife : kFigureLife;
-        // Which row over the body: how many are already standing there, just put up.
-        int stacked = 0;
-        for (const Figure& other : figures_) {
-            if (other.age > kStackWindow) continue;
-            const float dx = other.world[0] - figure.world[0];
-            const float dy = other.world[1] - figure.world[1];
-            const float dz = other.world[2] - figure.world[2];
-            if (dx * dx + dy * dy + dz * dz < kStackNear * kStackNear) ++stacked;
-        }
-        figure.slot = uint8_t(std::min(stacked, kStackHighest));
-        // The lean, so two blows a fifth of a second apart are not one figure drawn twice.
-        // Drawn from the picture's own xorshift and never from the sim's dice.
-        figure.lean = unit() * 2.0f - 1.0f;
-        figures_.push_back(figure);
+        if (told) this->raise(mark, value, feet, onHero);
     };
     // What his shield ate of it is a word and not a figure -- the user, 2026-10-01: "show
     // Absorbed text not damage number" -- and the red beside it is then only what reached his

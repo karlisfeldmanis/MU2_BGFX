@@ -1598,6 +1598,7 @@ private:
         // The threat each fighter holds on it, by the party's index (0 the hero, then the
         // raiders), and the summon's after them.
         float threat[kRaidersMost + 2] = {};
+        int64_t immuneSaidAt = -kImmuneSayTicks;  // the last "Immune" said (Realm::shrugs)
     } raid_;
     int raidPlayers_ = kRaidPlayers;
     // Whether a raid was asked for (setRaid). Until the drawing shows the raid (sprint 2 of
@@ -1641,6 +1642,9 @@ private:
         return invaderSlot_ >= 0 && &one == &bodies_[size_t(invaderSlot_)] &&
                raid_.stage != RaidStage::None;
     }
+    // A boss shrugs off what would hold or move it -- a freeze, a chill, a push, a pull -- and
+    // says so (RaidEvent::Immune). True for the boss; asked where each would be laid.
+    bool shrugs(const Body& one);
     // Whether a body fights on the party's side: the hero, a raider, her summon.
     bool partisan(const Body& one) const {
         return one.player || one.raider >= 0 || one.summoner != 0;

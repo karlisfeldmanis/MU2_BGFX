@@ -514,7 +514,7 @@ void testRaid(const content::Tables& tables) {
           "70% begins the second stage, and it stays on its legs");
     int up = 0;
     for (int i = 0; i < realm.minionCount(); ++i) up += realm.minionAt(i)->alive() ? 1 : 0;
-    checkEqual(up, sim::minionsFor(10), "a wave of 2 + 10/2 minions");
+    checkEqual(up, sim::minionsFor(10), "a swarm of 2 + 2 a player minions");
     bool swung = false;
     for (int i = 0; i < 400 && !swung; ++i) {
         realm.step();

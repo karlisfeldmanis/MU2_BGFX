@@ -134,14 +134,14 @@ void Realm::raiseRaid() {
             minion.id = nextId_++;
             minion.kind = minionKind;
             minion.level = kind.level;
-            minion.maxHealth = kind.health;
+            minion.maxHealth = int(float(kind.health) * kMinionHealthScale);
             minion.health = 0;
             minion.stats.level = kind.level;
             minion.stats.attackRate = kind.attackRate;
             minion.stats.defenseRate = kind.defenseRate;
             minion.stats.defense = kind.defense;
-            minion.stats.minimumDamage = kind.minimumDamage;
-            minion.stats.maximumDamage = kind.maximumDamage;
+            minion.stats.minimumDamage = int(float(kind.minimumDamage) * kMinionBlowScale);
+            minion.stats.maximumDamage = int(float(kind.maximumDamage) * kMinionBlowScale);
             minion.swingTicks = kind.attackTicks;
             minion.speed = 1.0f / float(std::max(1, kind.moveTicks));
             minion.nest = -1;
@@ -234,6 +234,15 @@ void Realm::dressHero(const RaiderKit& kit) {
     core::logf("raid: the hero %s, level %d, health %d, damage %d-%d, defence %d",
                kit.name.c_str(), hero.level, hero.maxHealth, hero.stats.minimumDamage,
                hero.stats.maximumDamage, hero.stats.defense);
+}
+
+bool Realm::shrugs(const Body& one) {
+    if (!isBoss(one)) return false;
+    if (tick_ - raid_.immuneSaidAt >= kImmuneSayTicks) {
+        raid_.immuneSaidAt = tick_;
+        say(What::Raid, one, int32_t(RaidEvent::Immune));
+    }
+    return true;
 }
 
 const Satchel& Realm::kitOf(const Body& one) const {
@@ -550,11 +559,11 @@ void Realm::minionWave(Body& dragon) {
         if (came >= want) break;
         Body& minion = bodies_[size_t(slot)];
         if (minion.alive() || minion.risesAt == tick_) continue;
-        // Down round it, three to six tiles out, on a tile a body may stand on.
+        // Down round it, four to nine tiles out, on a tile a body may stand on.
         int column = -1, row = -1;
         for (int attempt = 0; attempt < 12 && column < 0; ++attempt) {
             const double angle = raidDice_.nextDouble() * 6.283185307179586;
-            const double out = 3.0 + raidDice_.nextDouble() * 3.0;
+            const double out = 4.0 + raidDice_.nextDouble() * 5.0;
             const int c = int(std::lround(dragon.x + std::cos(angle) * out));
             const int r = int(std::lround(dragon.y + std::sin(angle) * out));
             if (tables_->grid.open(c, r, content::kWallCharacter) && !tables_->grid.safe(c, r)) {
@@ -570,6 +579,10 @@ void Realm::minionWave(Body& dragon) {
         minion.risesAt = tick_;
         ++came;
     }
+    halt(dragon);
+    dropBlow(dragon);
+    raid_.busyUntil = std::max(raid_.busyUntil, tick_ + kSummonTicks);
+    dragon.swingsAt = std::max(dragon.swingsAt, raid_.busyUntil);
     say(What::Raid, dragon, int32_t(RaidEvent::Wave), came);
     core::logf("raid: %d minions at tick %lld", came, (long long)tick_);
 }
@@ -1054,6 +1067,16 @@ void Realm::raid(Body& one, int index) {
         raidNext_[index] = (at + 1) % count;
         cast(*row, *target);
         raiderStrike(one, *target, row);
+        // Its runes answer a spell as the hero's do (Realm::land): Stormcall once a cast, and an
+        // Arcane Echo throws it again, free.
+        if (row->wizardry && one.alive()) {
+            stormcall(one, *target, 0);
+            if (target->alive() && echoes(one)) {
+                core::logf("echo rune: tick %lld, raider %d's %d again", (long long)tick_,
+                           one.raider, row->number);
+                raiderStrike(one, *target, row);
+            }
+        }
         return;
     }
     one.swingsAt = tick_ + one.swingTicks;

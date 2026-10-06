@@ -37,6 +37,7 @@ enum class Mark : uint8_t {
     RuneCritical,  // and its critical, paler, at a critical's size
     Summon,    // her summon's blow, its own lilac, at a swing's size
     Burn,      // an Immolate or Scorch burn's pulse, orange, at a swing's size
+    Immune,    // the word, over a boss that shrugged off a hold (sim::RaidEvent::Immune)
 };
 
 // A blow that has landed on the tick and has not yet been shown.
@@ -130,6 +131,8 @@ public:
     // (the user, 2026-09-28: only his damage is his to read).
     void land(const Cue& cue, const float feet[3], float height, float man, float attackerYaw,
               bool onHero, bool told = true);
+    // A word put up over `feet` with no blow under it: "Immune" over the raid's dragon.
+    void word(Mark mark, const float feet[3]) { raise(mark, 0, feet, false); }
 
     // Ages everything alive, on the same scaled clock as the fuses.
     void update(float seconds);
@@ -197,6 +200,8 @@ public:
     static constexpr float kLandingPoint = 0.5f;
 
 private:
+    // A figure put up over `feet`, in the row above any just put up there.
+    void raise(Mark mark, int32_t value, const float feet[3], bool onHero);
     // One blood splash. MU's own particle, in metres, with its lengths already scaled by the
     // target it came off.
     struct Particle {
