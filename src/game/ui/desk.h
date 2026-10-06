@@ -181,6 +181,10 @@ public:
     void allowSwitch(bool on) { menu_.allowSwitch(on); }
     // Whether Escape is the game's: in a played world it opens the menu rather than quitting.
     void holdEscape(bool held) { holdEscape_ = held; }
+    // Watched, not played (--raid-watch): none of the hero's own interface is drawn -- the plate,
+    // his windows, his wear, his quest -- only what reads the scene (the user, 2026-10-06: 'when
+    // we are on specator mode we dont need to show character UI').
+    void setWatching(bool watching) { watching_ = watching; }
     // What Options edits: filled by PlayMode from the window and the run, and applied back when
     // `settingsChanged` says so.
     Menu::Settings& settings() { return menu_.settings(); }
@@ -320,6 +324,7 @@ private:
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;
+    bool watching_ = false;
     Specimen specimen_;
     bool specimenOpen_ = false;
     bool takesPointer_ = false;

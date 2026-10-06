@@ -28,8 +28,6 @@ constexpr float kBarWide = 560.0f, kBarTall = 16.0f;
 constexpr float kNameSize = 20.0f, kNameTrack = 0.14f;
 constexpr float kFigureSize = 17.0f;
 constexpr float kLineSize = 16.0f;
-constexpr float kGap = 18.0f;
-constexpr float kRuleTall = 14.0f;
 constexpr float kToldTall = 2.0f;
 // The band, as the herald's: black across, clear at the ends.
 constexpr float kBandAt[5] = {0.0f, 0.22f, 0.5f, 0.78f, 1.0f};
@@ -84,16 +82,6 @@ void hairline(gfx::Canvas& canvas, const Box& band, float y, float thick, float 
     for (int i = 0; i + 1 < kStops; ++i) {
         const float x0 = band.x + band.w * at[i], x1 = band.x + band.w * at[i + 1];
         canvas.shade({x0, y, x1 - x0, thick}, ink[i], ink[i + 1], ink[i + 1], ink[i]);
-    }
-}
-
-const char* stageName(sim::RaidStage stage) {
-    switch (stage) {
-        case sim::RaidStage::Ground: return "stage one";
-        case sim::RaidStage::Flight: return "stage two \xB7 flight";
-        case sim::RaidStage::Enraged: return "stage three \xB7 enraged";
-        case sim::RaidStage::LastStand: return "stage four \xB7 last stand";
-        default: return "";
     }
 }
 
@@ -182,8 +170,8 @@ void BossBar::update(float seconds, const Play& play, const float* viewProj, int
         figures.centred(canvas_, bar.midX(), bar.midY(), style::kBoneHi, 0.92f * a, reading);
     }
 
-    // Under it: the stage in small capitals, an upright iron rule, the enrage's clock -- or, while
-    // a move is told, its name as a danger word over a hairline filling to the blow.
+    // Under it: the enrage's clock -- or, while a move is told, its name as a danger word over a
+    // hairline filling to the blow.
     const Type word{controls::wordFace(), controls::wordTexture(), kLineSize * u, 0.0f, 'x'};
     const Type figure{controls::labelFace(), controls::labelTexture(), kLineSize * u, 0.0f, '0'};
     const float lineMid = bar.bottom() + 16.0f * u;
@@ -211,19 +199,11 @@ void BossBar::update(float seconds, const Play& play, const float* viewProj, int
         const int64_t left = std::max<int64_t>(0, sim::kHardEnrage - (realm.tick() - realm.raidLandedAt()));
         char clock[24];
         std::snprintf(clock, sizeof(clock), "%lld:%02lld", (long long)(left / 20 / 60), (long long)(left / 20 % 60));
-        const std::string stage = stageName(realm.raidStage());
-        const float gap = kGap * u;
-        const float wide = word.width(stage) + gap + hair + gap + figure.width(clock);
-        float x = bar.midX() - wide * 0.5f;
-        word.draw(canvas_, x, lineMid, style::kBone2, a, stage);
-        x += word.width(stage) + gap;
-        const float top = std::round(lineMid - kRuleTall * u * 0.5f), half = kRuleTall * u * 0.5f;
-        const uint32_t clear = faded(style::kIron, 0.0f), iron = faded(style::kIron, a);
-        canvas_.shade({std::round(x), top, hair, half}, clear, clear, iron, iron);
-        canvas_.shade({std::round(x), top + half, hair, half}, iron, iron, clear, clear);
-        x += hair + gap;
-        // The last minute in the danger word's ink.
-        figure.draw(canvas_, x, lineMid, left > 60 * 20 ? style::kAshInk : style::kDanger, a, clock);
+        // The clock alone: no stage named, the bar's marks are the stages (the user, 2026-10-06:
+        // 'dont show stage:1 in UI, keep it clean, we alredy have indicator of stages'). The last
+        // minute in the danger word's ink.
+        figure.centred(canvas_, bar.midX(), lineMid, left > 60 * 20 ? style::kAshInk : style::kDanger, a,
+                       clock);
     }
 }
 

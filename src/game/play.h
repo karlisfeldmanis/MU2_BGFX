@@ -301,9 +301,11 @@ public:
     // ---- the Golden Dragon's raid (play_raid.cpp, docs/golden-dragon-raid.md) ---------------
     // Set BEFORE open() or not at all, as the arena is: the raid tough for `players`, and the
     // party of source/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
-    void setRaid(int players, std::vector<sim::RaiderKit> party) {
+    // `watched`: the hero is the raiders' mind's too and the player only watches (--raid-watch).
+    void setRaid(int players, std::vector<sim::RaiderKit> party, bool watched = false) {
         raidPlayers_ = players;
         raidParty_ = std::move(party);
+        raidWatched_ = watched;
     }
     const std::vector<sim::RaiderKit>& raidParty() const { return raidParty_; }
     // --raid-stage: once it stands, its health laid at the top of that stage's band.
@@ -1111,6 +1113,7 @@ private:
     bool roarWhole_ = false;
     // ---- the raid's drawing (play_raid.cpp) ---------------------------------------------------
     int raidPlayers_ = 0;
+    bool raidWatched_ = false;
     std::vector<sim::RaiderKit> raidParty_;
     int raidSkipOwed_ = 0;
     Omen omen_;

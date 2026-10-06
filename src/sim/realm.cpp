@@ -985,6 +985,8 @@ void Realm::step() {
         // The headless raid's hand (Realm::setRaid): the raiders' mind plays him too.
         if (raidHand_ && raid_.stage != RaidStage::None) {
             raid(hero, 0);
+            // A click made while it was watched is not carried out after the fight ends.
+            pending_ = Request{};
         } else {
             press();
         }

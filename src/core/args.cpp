@@ -204,6 +204,7 @@ void printUsage() {
         "  --raid-box A|B|C          which of WebZen's Lorencia dragon boxes it is fought in\n"
         "  --raid-stage S            the dragon laid at stage S's health (1-4) once it stands\n"
         "  --raid-now                it lands at once, the sky's entrance skipped\n"
+        "  --raid-watch              watched, not played: the hero fights on his own too\n"
         "  --castle-free             Blood Castle with no run, its gates open, the statue alone\n"
         "  --castle-bridge S         Blood Castle's run on, its drawbridge falling in S seconds\n"
         "  --castle N                Blood Castle N's garrison and statue, as the Messenger sets\n"
@@ -370,6 +371,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.raidStage = std::atoi(v);
         } else if (!std::strcmp(s, "--raid-now")) {
             a.raidNow = true;
+        } else if (!std::strcmp(s, "--raid-watch")) {
+            a.raidWatch = true;
         } else if (!std::strcmp(s, "--castle-free")) {
             a.castleFree = true;
         } else if (!std::strcmp(s, "--castle")) {

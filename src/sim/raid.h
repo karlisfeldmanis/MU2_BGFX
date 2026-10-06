@@ -36,13 +36,13 @@ constexpr int kLastStandAt = 15;
 // **How tough, for how many** (§2). `players` is fixed when it lands; play's is kRaidPlayers.
 // The health runs from OpenMU's 22,000 for one to WebZen's 100,000 for ten (WZD Monster.txt:287),
 // a straight line between (invention), times kRaidHealthScale -- what the headless tune moves
-// (tools/raid), since an end-game party took WZD's ten-player number in a minute. 11.0 since the
-// party's weapon runes fire and the dragon shrugs off holds (2026-10-06): 149 of 240 won, the
-// kill about 7:25, the losses its clock.
+// (tools/raid), since an end-game party took WZD's ten-player number in a minute. 9.75 since the
+// party's weapon runes fire, the dragon shrugs off holds and the raiders pay mana for their
+// skills (2026-10-06): 142 of 240 won, the kill about 7:25, the losses its clock.
 constexpr int kRaidPlayers = 10;
 constexpr int32_t kRaidHealthOne = 22000;
 constexpr int32_t kRaidHealthTen = 100000;
-constexpr float kRaidHealthScale = 11.0f;
+constexpr float kRaidHealthScale = 9.75f;
 inline int32_t raidHealth(int players) {
     const int n = players < 1 ? 1 : players;
     const double line =

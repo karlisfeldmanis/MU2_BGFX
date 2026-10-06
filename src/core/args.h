@@ -196,6 +196,9 @@ struct Args {
     char raidBox = 'A';         // `--raid-box A|B|C`: which box (DragonEvent.cpp:103-109)
     int raidStage = 0;          // `--raid-stage S`: the dragon laid at stage S's health once it stands
     bool raidNow = false;       // `--raid-now`: it lands on the next tick, its entrance skipped
+    // `--raid-watch`: watched, not played -- the raiders' mind plays the hero too (the user,
+    // 2026-10-06: 'we need a spectator mode that we watch 10 man raid, not that we are character').
+    bool raidWatch = false;
     bool castleFree = false;    // `--castle-free`: Blood Castle with no run and every gate open (a test)
     int castleBridge = -1;      // `--castle-bridge S`: the run on, the drawbridge down in S seconds (a test)
     int castle = 0;             // `--castle N`: Blood Castle N's garrison and statue, as the Messenger sets (a test)

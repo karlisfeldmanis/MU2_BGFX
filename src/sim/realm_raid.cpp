@@ -206,9 +206,10 @@ void Realm::raiseRaid() {
         Body& one = bodies_[size_t(raiderSlots_[i])];
         rearm(one, raiderBags_[i]);
         one.health = one.maxHealth;
-        core::logf("raid: raider %zu %s, level %d, health %d, damage %d-%d, defence %d", i + 1,
-                   party_[i + 1].name.c_str(), one.level, one.maxHealth, one.stats.minimumDamage,
-                   one.stats.maximumDamage, one.stats.defense);
+        one.mana = one.maxMana;
+        core::logf("raid: raider %zu %s, level %d, health %d, mana %d, damage %d-%d, defence %d",
+                   i + 1, party_[i + 1].name.c_str(), one.level, one.maxHealth, one.maxMana,
+                   one.stats.minimumDamage, one.stats.maximumDamage, one.stats.defense);
     }
 }
 
@@ -231,8 +232,9 @@ void Realm::dressHero(const RaiderKit& kit) {
     }
     rearm(hero);
     hero.health = hero.maxHealth;
-    core::logf("raid: the hero %s, level %d, health %d, damage %d-%d, defence %d",
-               kit.name.c_str(), hero.level, hero.maxHealth, hero.stats.minimumDamage,
+    hero.mana = hero.maxMana;
+    core::logf("raid: the hero %s, level %d, health %d, mana %d, damage %d-%d, defence %d",
+               kit.name.c_str(), hero.level, hero.maxHealth, hero.maxMana, hero.stats.minimumDamage,
                hero.stats.maximumDamage, hero.stats.defense);
 }
 
@@ -754,6 +756,7 @@ void Realm::reviveRaider(Body& one) {
     one.x = float(column);
     one.y = float(row);
     one.health = one.maxHealth;
+    one.mana = one.maxMana;
     one.temper = Temper::Wandering;
     one.risesAt = 0;
     one.castUntil = 0;
@@ -895,6 +898,14 @@ void Realm::raid(Body& one, int index) {
         drinkAt_[index] = tick_ + kDrinkEvery;
         say(What::Raid, one, int32_t(RaidEvent::Raider), int32_t(RaiderAct::Drink), worth);
     }
+    // Its mana back as the hero's comes back (Realm::recover): 1/27.5 of the pool every three
+    // seconds, anywhere. The hero's own recover() runs for him.
+    if (one.raider >= 0 && tick_ % kRecoverEveryTicks == 0 && one.mana < one.maxMana) {
+        one.manaCarry += float(one.maxMana) * kManaRecoveryShare;
+        const int whole = int(one.manaCarry);
+        one.manaCarry -= float(whole);
+        one.mana = std::min(one.maxMana, one.mana + whole);
+    }
     if (dodge(one, index)) return;
     if (tick_ < one.castUntil || tick_ < one.swingsAt) return;
 
@@ -909,6 +920,7 @@ void Realm::raid(Body& one, int index) {
             one.cools[skillAt] =
                 tick_ + cooldownTicks(row, one.totalPoints().agility, floorTicksFor(row, clip));
         }
+        one.mana = std::max(0, one.mana - row.mana);
         one.castUntil = tick_ + clip;
         one.swingsAt = tick_ + std::max(clip, one.swingTicks);
         say(What::Raid, one, int32_t(RaidEvent::Raider), int32_t(RaiderAct::Cast), row.number, at.id);
@@ -916,15 +928,18 @@ void Realm::raid(Body& one, int index) {
         // shows what it throws (Play::update, What::Cast and What::Loosed).
         say(What::Cast, one, row.number, skillAt >= 0 ? int32_t(one.cools[skillAt] - tick_) : 0, 0, at.id);
     };
-    // Off its cooldown, its class's, and what his hands can throw it with -- `armed`'s gates
-    // less the mana, which a raider is not reckoned in (sim/raid.h) -- the shield's family for a
-    // guard on himself, the weapon's for the rest.
+    // Off its cooldown, its class's, paid for, and what his hands can throw it with -- `armed`'s
+    // gates -- the shield's family for a guard on himself, the weapon's for the rest. Its mana is
+    // its own pool, paid on the cast and back at the hero's rate (above), so a knight is not
+    // throwing Twisting Slash on every blow (the user, 2026-10-06: 'they cant use twisting slash
+    // all the time or other spells'); dry, he swings.
     const auto armAt = [&](int32_t at) -> const content::Arm* {
         return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
     };
     const auto ready = [&](const SkillRow& row) {
         const int skillAt = skillIndexOf(row.number);
         if (skillAt < 0 || one.cools[skillAt] > tick_ || row.kin != one.kin) return false;
+        if (one.mana < row.mana) return false;
         return row.onSelf() ? row.suits(armFamily(one, armAt(one.shield)))
                             : row.suits(familyOf(armAt(one.weapon)));
     };

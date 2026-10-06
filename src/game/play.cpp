@@ -1034,8 +1034,12 @@ void Play::update(double seconds) {
                     // what flies and what a channel strikes -- and a channel's pulse read as a
                     // monster's one-part blow restarted his attack clip over the held stance on
                     // every pulse, until the first swing of the session latched `landing`.
+                    // Watched (--raid-watch), he is a raider: his blows land with no `Swung`, and
+                    // were drawn standing still (the user, 2026-10-06: 'char has to act like
+                    // member of raid not just stand there').
                     const bool pose =
-                        begun || (!swinger->landing && happening.who != realm_.hero().id);
+                        begun || (!swinger->landing &&
+                                  (happening.who != realm_.hero().id || raidWatched_));
                     // MU's SwordCount % 3: one in three is Attack 1, the rest Attack 2.
                     // A breed with no Attack 2 keeps attackClip2 == -1 and always swings
                     // Attack 1 -- the counter still counts, harmlessly.

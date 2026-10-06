@@ -278,7 +278,7 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }
-            if (args.raid > 0) world_.played().setRaid(args.raid, raidParty());
+            if (args.raid > 0) world_.played().setRaid(args.raid, raidParty(), args.raidWatch);
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
         }
@@ -440,6 +440,7 @@ bool PlayMode::open(Context& ctx) {
             if (args.windows != "off" && !desk_.open(ctx.paths.shaders, assets, &ctx.textures)) {
                 core::logError("the windows did not open; playing without a HUD");
             }
+            desk_.setWatching(args.raid > 0 && args.raidWatch);
             if (resumed_) {
                 for (int key = 0; key < 5; ++key) desk_.setQuick(key, saved_.quick[key]);
                 desk_.restoreBar(saved_.bar, 6);

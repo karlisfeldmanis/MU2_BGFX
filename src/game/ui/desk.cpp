@@ -1769,15 +1769,22 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (tally_.showing()) interface_.add(tally_.canvas());
     // The map's name, a reading on the scene as well, and under every window.
     if (arrival_.showing()) interface_.add(arrival_.canvas());
-    if (tracker_.showing()) interface_.add(tracker_.canvas());
-    if (tracker_.announcing()) interface_.add(tracker_.banner());
+    if (tracker_.showing() && !watching_) interface_.add(tracker_.canvas());
+    if (tracker_.announcing() && !watching_) interface_.add(tracker_.banner());
     // Go Back! over the HUD's middle: chrome, under every window.
-    if (goBack_.showing()) interface_.add(goBack_.canvas());
+    if (goBack_.showing() && !watching_) interface_.add(goBack_.canvas());
     // The herald at the top centre: a reading, under every window.
     if (herald_.showing()) interface_.add(herald_.canvas());
     // Chrome like the plate, under every window that might open over its corner.
     if (minimap_.showing()) interface_.add(minimap_.canvas());
     if (travel_.up()) interface_.add(travel_.canvas());
+    // Watched: the scene's readings above and the menu and pointer below, and nothing of his.
+    if (watching_) {
+        if (menu_.up()) interface_.add(menu_.canvas());
+        interface_.add(cursor_.canvas());
+        interface_.submit(view);
+        return;
+    }
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
