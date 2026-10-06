@@ -51,7 +51,18 @@ effect').** Step 5's banks, MU's own (decision 3's first half):
 - The lit edge: on MU's flash (one frame in fifty), one time in ten a bank in reach takes `cloudLight.jpg` at Scale 0.5 in a dim random colour, shrinking out over eight frames.
 - Effect sheets `cloud` and `cloud_light` (`source/effects/clouds/`, decoded from `Effect/clouds.OZJ` and `cloudLight.OZJ`).
 
-Shot muted at the door: a bright bank under the hero, thinning to navy at its edges, as MU's. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
+Shot muted at the door: a bright bank under the hero, thinning to navy at its edges, as MU's.
+
+**The clouds reworked (2026-10-06, the user: 'clouds needs more work', 'look repetetive and not
+realistical').** MU's clouds.jpg has one hot white spot at its foot; stamped 400 times and turning,
+that is what repeated. Ours, marked in `sky_clouds.h`: MU's 335 banks stand where they were, but
+each wears 2 (types 0-2) or 1 (3-5) of nine lit clouds seen from above, a 3x3 `sky_clouds` sheet
+from `pipeline/cloud_sheet.py` under Icarus's seed (10), alpha-blended, 3-5 m across, stretched,
+shaded in the moon's blue-grey at 0.6-1 of it, thinned to 0.5-0.8, drifting at most 0.02 rad/s;
+and one bank in two hangs a big dark blue cloud 3-7 m under the road. 553 in all. A first cut at
+five and three a bank, white and near opaque, was a blanket with no navy left. Shot muted at the
+door and at 55,75: a moonlit cloud sea with depth, GPU 2.7 ms. Some banding shows in the clouds'
+gradients, likely the effect sheet's compression. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
 
 ## The one thing to know first
 

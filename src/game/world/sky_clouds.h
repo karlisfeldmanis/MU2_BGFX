@@ -18,10 +18,15 @@
 // sprite (cloudLight.jpg, a violet-white lit edge) at Scale 0.5 in a random dim colour, which
 // shrinks away over a few frames.
 //
-// Ours: only the banks within kReach of the camera's point are drawn (MU draws what its frustum
-// holds), and the puffs at kCloudLevel of MU's light. Not yet: MU's two thunder crackles at the
-// lit edge, the far bolts, the flash's cloud mesh under the hero and the glints ten metres down.
-// docs/icarus-port.md.
+// Ours, the look (the user, 2026-10-06, of MU's puffs: 'look repetetive and not realistical'): MU's
+// banks stand where MU put them, but each wears a few of nine lit clouds seen from above
+// (`sky_clouds`, pipeline/cloud_sheet.py) in place of clouds.jpg -- whose one hot white spot,
+// stamped four hundred times and turning, is what read as repetition -- alpha-blended and shaded
+// in the moon's blue-white, each its own cloud, size, stretch and brightness, drifting slowly
+// rather than turning at MU's rate; and under the road a sparse darker deck, so the navy has
+// depth. Only the banks within kReach of the camera's point are drawn (MU draws what its frustum
+// holds). Not yet: MU's two thunder crackles at the lit edge, the far bolts, the flash's cloud
+// mesh under the hero and the glints ten metres down. docs/icarus-port.md.
 #pragma once
 
 #include <cstdint>
@@ -53,9 +58,14 @@ private:
     struct Puff {
         float at[3] = {0, 0, 0};
         float g = 0.0f;      // MU's Gravity, rand() % 1000: its own phase, ms
-        float start = 0.0f;  // MU's StartPosition[1], the turn's offset, degrees
-        float turn = 0.0f;   // degrees a millisecond, signed
-        float scale = 1.9f;
+        float start = 0.0f;  // its turn at the start, radians
+        float turn = 0.0f;   // radians a second, signed
+        float half = 3.0f;   // the quad's half width, metres
+        float stretch = 1.0f;
+        float shade = 1.0f;  // times the moon's tint
+        float alpha = 1.0f;
+        uint8_t cell = 0;    // which of the sheet's nine
+        bool deep = false;   // the deck under the road
     };
     struct Bank {
         float at[3] = {0, 0, 0};
@@ -76,7 +86,7 @@ private:
     float owed_ = 0.0f;   // seconds towards the next of MU's frames
     float near_[3] = {0, 0, 0};
     uint32_t seed_ = 0x1CA705u;
-    bgfx::TextureHandle cloud_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle cloud_ = BGFX_INVALID_HANDLE;  // sky_clouds, the nine
     bgfx::TextureHandle edge_ = BGFX_INVALID_HANDLE;
 };
 

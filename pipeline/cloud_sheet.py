@@ -9,6 +9,10 @@ side by the density's own slope, so the tops billow and the hollows sit in shade
 colour, the cloud in the alpha, nothing at a cell's border. Ours, not MU's.
 
     python3 pipeline/cloud_sheet.py [out.png]    default source/effects/clouds/void_clouds.png
+    python3 pipeline/cloud_sheet.py out.png SEED GRID   GRID x GRID clouds on one sheet
+
+Icarus's road clouds are nine of these under its own seed (10, its map number), a 3x3 sheet:
+source/effects/clouds/sky_clouds.png, game/world/sky_clouds.h.
 """
 import os
 import sys
@@ -110,11 +114,13 @@ def cloud(rng):
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
         ROOT, "source/effects/clouds/void_clouds.png")
-    rng = np.random.default_rng(11)  # Blood Castle's map number
-    rgba = np.zeros((CELL * 2, CELL * 2, 4), dtype=np.uint8)
-    for k in range(4):
+    seed = int(sys.argv[2]) if len(sys.argv) > 2 else 11  # Blood Castle's map number
+    grid = int(sys.argv[3]) if len(sys.argv) > 3 else 2
+    rng = np.random.default_rng(seed)
+    rgba = np.zeros((CELL * grid, CELL * grid, 4), dtype=np.uint8)
+    for k in range(grid * grid):
         shade, alpha = cloud(rng)
-        row, col = divmod(k, 2)
+        row, col = divmod(k, grid)
         tile = rgba[row * CELL:(row + 1) * CELL, col * CELL:(col + 1) * CELL]
         grey = (shade * 255.0 + 0.5).astype(np.uint8)
         tile[..., 0] = grey
@@ -123,7 +129,7 @@ def main():
         tile[..., 3] = (alpha * 255.0 + 0.5).astype(np.uint8)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     Image.fromarray(rgba, "RGBA").save(out)
-    print(f"cloud_sheet: {out}, {CELL * 2}x{CELL * 2}, four clouds")
+    print(f"cloud_sheet: {out}, {CELL * grid}x{CELL * grid}, {grid * grid} clouds")
 
 
 if __name__ == "__main__":

@@ -346,6 +346,10 @@ EFFECTS = {
     # See game/world/sky_clouds.h.
     "cloud": "effects/clouds/clouds.png",
     "cloud_light": "effects/clouds/cloudlight.png",
+    # Ours: nine lit clouds seen from above, a 3x3 sheet by pipeline/cloud_sheet.py under Icarus's
+    # seed, which the road's banks wear in place of clouds.jpg (the user, 2026-10-06: 'look
+    # repetetive and not realistical').
+    "sky_clouds": "effects/clouds/sky_clouds.png",
 
     # BITMAP_SMOKE itself, which is not the dust's sheet: smoke01.jpg is a grey wisp on
     # black with no alpha, and it is what a Bull Fighter snorts. See Snort.
