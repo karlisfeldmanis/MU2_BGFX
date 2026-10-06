@@ -1248,6 +1248,9 @@ private:
     void burn();
     // A poisoned body's pulse, when it is due -- a monster's or the hero's.
     void poisonPulse(Body& beast);
+    // Immolate's or Scorch's roll, and the burn it lights on `struck` off a blow of `wound`;
+    // whether it lit.
+    bool ignite(Body& hero, Body& struck, int wound);
     // A burning monster's pulse (the Immolate rune), when it is due.
     void burnPulse(Body& beast);
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).

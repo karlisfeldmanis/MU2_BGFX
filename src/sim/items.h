@@ -620,7 +620,8 @@ enum class Power : uint8_t {
     Twister = 40,
     Burn = 41,
     Plague = 42,
-    PlagueArrows = 43
+    PlagueArrows = 43,
+    Scorch = 44
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -901,7 +902,10 @@ constexpr float kTwisterRuneForce = 0.8f;
 // least) -- never more a pulse than the top
 // of his swing, so a boss is not melted by its own size -- fire, so Inferno runes raise it. A
 // burn may kill, as a blow does; a second restarts it. Drawn as flames along its bones and an
-// ember tint (game/play_show.cpp). invention.
+// ember tint (game/play_show.cpp). **Scorch** is the wizard's own (the user, 2026-10-06: 'burn
+// rune also can be used for DW, but in context that inferno, fireball, meteor, flame has a chance
+// to burn', then 'its different rune for DW'), Epic, in his staff: the same burn, rolled by each
+// blow of those four spells, his staff's swing never. invention.
 constexpr double kBurnRuneChance = 0.15;
 constexpr double kBurnRuneShare = 0.03;
 // The least a pulse takes: this share of the swing that lit it, so the burn still reads on

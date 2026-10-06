@@ -8245,6 +8245,56 @@ void testGroupRunes(const content::Tables& tables) {
         // Fewer than four a lit swing in Lorencia: most of what burns dies of the next swing.
         check(rate > 0.05 && rate < 0.65, "pulses follow about one landed swing in seven");
     }
+    // Scorch (2026-10-06), the wizard's: his Fire Ball lights the burn, his staff's swing never.
+    {
+        const auto nearestTo = [](const sim::Realm& realm) {
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float closest = 1e30f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
+                if (off <= 8.0f && off < closest) {
+                    closest = off;
+                    nearest = one.id;
+                }
+            }
+            return nearest;
+        };
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, Kin::DarkWizard, 6);
+        realm.undying(true);
+        realm.learn(sim::skill::kFireBall);
+        const uint8_t powers[3] = {uint8_t(Power::Scorch), 0, 0};
+        realm.give(tables.itemAt(5, 3), sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        check(realm.hero().excel.ignitions == 1, "a Scorch in his staff");
+        check(!sets(Power::Scorch, sword, Kin::DarkKnight), "and in no knight's sword");
+        int hits = 0, lit = 0;
+        std::vector<int64_t> before;
+        for (int tick = 0; tick < 8000; ++tick) {
+            if (const uint32_t nearest = nearestTo(realm); nearest != 0 && tick % 10 == 0) {
+                realm.invoke(sim::skill::kFireBall, nearest);
+            }
+            before.clear();
+            for (const sim::Body& one : realm.bodies()) before.push_back(one.burnUntil);
+            realm.step();
+            for (size_t i = 0; i < before.size() && i < realm.bodies().size(); ++i) {
+                lit += realm.bodies()[i].burnUntil > before[i] ? 1 : 0;
+            }
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who == realm.hero().id && h.what == sim::What::Hit && !h.burned &&
+                    h.c > 0) {
+                    ++hits;
+                }
+            }
+            sim::HeroRecord again = realm.record();
+            again.mana = realm.hero().maxMana;
+            realm.restore(again);
+        }
+        std::printf("  Scorch: %d fire balls survived, %d lit\n", hits, lit);
+        const double rate = double(lit) / double(std::max(1, hits));
+        check(rate > 0.08 && rate < 0.24, "about one surviving fire ball in seven lights a burn");
+    }
 }
 
 // The runes' rarity (sim::Rarity, the user, 2026-10-02: "we need also make group of rarity of

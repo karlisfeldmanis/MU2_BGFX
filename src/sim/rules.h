@@ -80,6 +80,8 @@ struct Excellence {
     int plagues = 0;
     // How many Plague Arrows runes her hands carry (sim::kPlagueChance, on Multi-Shot).
     int plagueArrows = 0;
+    // How many Scorch runes a wizard's hands carry, each rolling on a fire spell's blow.
+    int ignitions = 0;
     // How many element runes his hands, rings and pendant carry, by sim::Element (sim/items.h
     // kElementRuneDamage), each adding its share to his blows of that element.
     int elementRunes[6] = {};

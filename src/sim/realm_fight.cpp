@@ -269,6 +269,15 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (attacker.player && ((row == nullptr && pays) || fanned)) {
         stormcall(attacker, target, blow.damage);
     }
+    // A wizard's Scorch: his Fire Ball, Flame, Meteorite and Inferno may set what they land on
+    // burning, each blow rolling once for each he holds until one lights (sim/items.h).
+    if (attacker.player && row != nullptr && attacker.excel.ignitions > 0 && blow.damage > 0 &&
+        (row->number == skill::kFireBall || row->number == skill::kFlame ||
+         row->number == skill::kMeteorite || row->number == skill::kInferno)) {
+        for (int i = 0; i < attacker.excel.ignitions; ++i) {
+            if (ignite(attacker, target, blow.damage)) break;
+        }
+    }
 }
 
 void Realm::stormcall(Body& hero, Body& struck, int wound) {
@@ -456,21 +465,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     }
     // His Immolate rune: the monster he struck set burning, while it stands; a second restarts it.
     if (power.power == Power::Burn) {
-        if (!runeDice_.nextBool(kBurnRuneChance)) return;
-        if (!struck.alive() || !struck.monster()) return;
-        const float fire = elementForce(hero, Element::Fire);
-        // Its life's share, or on a small monster whose share is a point or two, the floor:
-        // kBurnRuneFloor of the swing that lit it.
-        const int share = int(std::max(float(struck.maxHealth) * float(kBurnRuneShare),
-                                       float(wound) * float(kBurnRuneFloor)) *
-                              fire);
-        const int most = int(float(hero.stats.maximumDamage) * fire);
-        struck.burnDamage = std::max(1, std::min(share, most));
-        struck.burnUntil = tick_ + kBurnRuneTicks;
-        struck.burnNext = tick_ + kBurnRuneEvery;
-        struck.burnBy = hero.id;
-        core::logf("immolate: tick %lld, #%u burns for %d a pulse", (long long)tick_, struck.id,
-                   struck.burnDamage);
+        ignite(hero, struck, wound);
         return;
     }
     // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
@@ -1239,6 +1234,30 @@ void Realm::poisonPulse(Body& beast) {
     say(What::Hit, *by, said, said, beast.health, beast.id);
     happenings_.back().thrown = true;
     happenings_.back().poisoned = true;
+}
+
+// Immolate's or Scorch's roll and its burn (sim/items.h kBurnRuneChance), off a knight's swing
+// or a wizard's fire spell that landed for `wound`.
+bool Realm::ignite(Body& hero, Body& struck, int wound) {
+    if (!runeDice_.nextBool(kBurnRuneChance)) return false;
+    if (!struck.alive() || !struck.monster()) return false;
+    const float fire = elementForce(hero, Element::Fire);
+    // Its life's share, or on a small monster whose share is a point or two, the floor:
+    // kBurnRuneFloor of the blow that lit it.
+    const int share = int(std::max(float(struck.maxHealth) * float(kBurnRuneShare),
+                                   float(wound) * float(kBurnRuneFloor)) *
+                          fire);
+    // Never past his top swing or the blow itself, whichever is more: a wizard's staff swing is
+    // small beside his spell.
+    const int most =
+        int(std::max(float(hero.stats.maximumDamage), float(std::max(1, wound))) * fire);
+    struck.burnDamage = std::max(1, std::min(share, most));
+    struck.burnUntil = tick_ + kBurnRuneTicks;
+    struck.burnNext = tick_ + kBurnRuneEvery;
+    struck.burnBy = hero.id;
+    core::logf("immolate: tick %lld, #%u burns for %d a pulse", (long long)tick_, struck.id,
+               struck.burnDamage);
+    return true;
 }
 
 void Realm::burnPulse(Body& beast) {

@@ -385,6 +385,10 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (power && power->power == Power::Wrath && !jewellery(*row)) ++hero.excel.wraths;
             // Spirit Plague in a hand here; the shield's and the jewellery's are counted above.
             if (power && power->power == Power::Plague && !jewellery(*row)) ++hero.excel.plagues;
+            if (power && power->power == Power::Scorch && !jewellery(*row) &&
+                power->takenBy(hero.kin, hero.second)) {
+                ++hero.excel.ignitions;
+            }
             if (power && power->power == Power::PlagueArrows && !jewellery(*row) &&
                 power->takenBy(hero.kin, hero.second)) {
                 ++hero.excel.plagueArrows;
