@@ -161,6 +161,10 @@ frame, as our birds do'): a dragon is born on a ring 18-30 m out, redrawn until 
 points 1.5 m round it are all off screen, aimed back across him within 55 degrees; it goes past
 40 m, or once it has crossed the frame, only while out of it. Shot muted over 3000 frames.
 
+**Drops lie still (2026-10-06).** MU bobs every lying item +-10 cm in Icarus (RenderItems,
+`ZzzObject.cpp:6497-6500`); built, then turned down by the user: 'dont animate droped item thay have
+to stay solid'. Not carried; don't add it back. The sky-effects phase is done; next is the monsters.
+
 **The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
 on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound
 community, 2:08, mean -22.3 dB, 5 dB under the loading ambient) loops over the whole map at the
