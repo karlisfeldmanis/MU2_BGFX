@@ -199,10 +199,12 @@ const uint32_t kReflectedInk = byteColour(255, 0, 255);
 const uint32_t kTakenInk = byteColour(239, 74, 60);
 // The SD bar's own orange (hud_bar_shield.png's bright end), so the word reads as the pool.
 const uint32_t kAbsorbedInk = byteColour(234, 160, 81);
-// A poison's pulse: MuMain's DT_POISON, pure green (WSclient.cpp's `case 5`).
-const uint32_t kPoisonInk = byteColour(40, 235, 60);
-// An Immolate burn's pulse: an ember nothing else in the fight wears, redder than ABSORBED's.
-const uint32_t kBurnInk = byteColour(255, 112, 36);
+// A poison's pulse: MuMain's DT_POISON was pure green (WSclient.cpp's `case 5`), here a toxic
+// lime, so it is not read as an excellent hit's DT_EXCELLENT green beside it, and an Immolate or
+// Scorch burn's a clear orange, not the red of a blow on him (the user, 2026-10-06: 'differne
+// tcolor for burning and poison damages'). Ours.
+const uint32_t kPoisonInk = byteColour(170, 255, 40);
+const uint32_t kBurnInk = byteColour(255, 150, 20);
 // A rune power's blow, its own colour apart from the ramp (the user, 2026-10-01: "rune damage
 // has to be in different color"): an ice blue nothing else in the fight wears, and its critical
 // paler, as the ramp's gold is paler than its amber.
