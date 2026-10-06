@@ -225,8 +225,8 @@ static Tone rarityTone(sim::Rarity rarity) {
 }
 
 tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
-    // MU's rungs kept in its order (excellent over a socket over +7 over an option, the socket
-    // ours from 2026-09-28: "item drop with +socket is rare"), each in WoW's colour for its tier.
+    // MU's rungs kept in its order (excellent over +7 over an option), each in WoW's colour for its
+    // tier; a socket had its own blue rung from 2026-09-28 to 2026-10-06.
     // A Rune of Creation is its rune's rarity (sim::Rarity), legendary while it carries none.
     if (sim::creation(row)) {
         const sim::PowerRow* power = sim::powerOf(powerAt(what, 0));
@@ -234,12 +234,11 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     }
     // A powered ring or pendant is its count of powers (sim::affixCount): one green, two blue,
     // three purple, four legendary -- the user's ladder of 2026-10-03. Being excellent lifts it to
-    // purple at least and a socket to blue, as either does anything else.
+    // purple at least. A socket lifts nothing (below).
     if (sim::powered(row)) {
         static const Tone kByCount[4] = {Tone::Uncommon, Tone::Rare, Tone::Epic, Tone::Legendary};
         Tone tone = kByCount[std::clamp(sim::affixCount(row, what), 1, 4) - 1];
         if (what.excellent != 0 && tone < Tone::Epic) tone = Tone::Epic;
-        if (socketsOf(what) > 0 && tone < Tone::Rare) tone = Tone::Rare;
         return tone;
     }
     // An excellent thing is MU's green (the user, 2026-10-04: 'excelent has to be green'), MuMain's
@@ -259,7 +258,9 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row)) {
         return Tone::Artifact;
     }
-    if (socketsOf(what) > 0) return Tone::Rare;
+    // A socket no longer lifts the name to blue (the user, 2026-10-06: '+socket is not so special
+    // thing because its also pretty cheap to add sockets in chaos machine', 'its not super common,
+    // but its not a super big thing'): the label's "+Socket" says it, as "+Luck" does.
     if ((row.jewel() && row.group != sim::kGroupPets) || what.refinement >= kRefinedFrom) {
         return Tone::Artifact;
     }
