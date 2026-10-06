@@ -1,0 +1,420 @@
+{
+  "item": "Dragon01",
+  "mu_name": "Monster32",
+  "mu_name_from": "MODEL_DRAGON_, MuMain's MONSTER_MODEL_DRAGON (31), Data/Monster/Monster32.bmd: the Red Dragon's body, which CreateDragon opens for Icarus's boids (GOBoid.cpp:824-851). Named Dragon01 here as a boid, as Bird01 and Fish02 are; tools/cook.py's AIRS cooks it.",
+  "world": "icarus",
+  "profile": "world",
+  "sheets": {
+    "drr_01": "ic_drr_01.png",
+    "drr_02": "ic_drr_02.png",
+    "drr_03": "ic_drr_03.png"
+  },
+  "sheet_from": "Data/Monster/drr_01-03, from MuMain, decoded under Icarus's ic_ prefix.",
+  "sheet_materials": {
+    "drr_01": "chitin",
+    "drr_02": "chitin",
+    "drr_03": "chitin"
+  },
+  "material_note": "Read off the art: a red dragon's scaled hide and wings; drawn near black-blue in Icarus whatever it is.",
+  "why_this_one": "Icarus's three dark dragons gliding far under the road (the user, 2026-10-06: 'next'). docs/icarus-port.md.",
+  "actions_from": "Only action 7, MONSTER01_DIE + 1, the one CreateDragon sets (GOBoid.cpp:845-846): the boids play clip 0.",
+  "effects_note": "No effect of its own; RenderObject's WD_10HEAVEN arm sets its BodyLight to (0.02, 0.05, 0.15) (ZzzObject.cpp:487-493), carried as game/world/boids' Icarus tint.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 806,
+      "area": 418056.7,
+      "along": [
+        -501.4,
+        185.7
+      ],
+      "mu_uv": [
+        -0.003,
+        -0.01,
+        1.005,
+        0.999
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.984,
+        0.987
+      ]
+    },
+    {
+      "island": 1,
+      "material": "chitin",
+      "triangles": 148,
+      "area": 19525.0,
+      "along": [
+        98.0,
+        179.9
+      ],
+      "mu_uv": [
+        0.061,
+        0.073,
+        0.99,
+        1.001
+      ],
+      "bake_uv": [
+        0.013,
+        0.014,
+        0.93,
+        0.896
+      ]
+    },
+    {
+      "island": 2,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 41.3,
+      "along": [
+        165.3,
+        173.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.014,
+        0.271,
+        0.524,
+        0.602
+      ]
+    },
+    {
+      "island": 3,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 37.4,
+      "along": [
+        163.5,
+        170.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.303,
+        0.171,
+        0.602,
+        0.477
+      ]
+    },
+    {
+      "island": 4,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 96.0,
+      "along": [
+        156.0,
+        163.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.014,
+        0.366,
+        0.416,
+        0.646
+      ]
+    },
+    {
+      "island": 5,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 34.6,
+      "along": [
+        161.1,
+        166.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.268,
+        0.266,
+        0.663,
+        0.504
+      ]
+    },
+    {
+      "island": 6,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 41.6,
+      "along": [
+        167.1,
+        175.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.043,
+        0.454,
+        0.107,
+        0.626
+      ]
+    },
+    {
+      "island": 7,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 41.3,
+      "along": [
+        165.3,
+        173.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.014,
+        0.224,
+        0.2,
+        0.615
+      ]
+    },
+    {
+      "island": 8,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 37.4,
+      "along": [
+        163.5,
+        170.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.235,
+        0.014,
+        0.622,
+        0.416
+      ]
+    },
+    {
+      "island": 9,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 96.0,
+      "along": [
+        156.0,
+        163.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.472,
+        0.214,
+        0.636,
+        0.465
+      ]
+    },
+    {
+      "island": 10,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 34.6,
+      "along": [
+        161.1,
+        166.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.237,
+        0.549,
+        0.456,
+        0.653
+      ]
+    },
+    {
+      "island": 11,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 41.6,
+      "along": [
+        167.1,
+        175.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.081,
+        0.034,
+        0.164
+      ],
+      "bake_uv": [
+        0.168,
+        0.417,
+        0.385,
+        0.646
+      ]
+    },
+    {
+      "island": 12,
+      "material": "chitin",
+      "triangles": 1,
+      "area": 559.0,
+      "along": [
+        -59.5,
+        -39.2
+      ],
+      "mu_uv": [
+        0.587,
+        0.01,
+        0.676,
+        0.195
+      ],
+      "bake_uv": [
+        0.15,
+        0.274,
+        0.171,
+        0.317
+      ]
+    },
+    {
+      "island": 13,
+      "material": "chitin",
+      "triangles": 36,
+      "area": 9326.4,
+      "along": [
+        46.0,
+        136.3
+      ],
+      "mu_uv": [
+        0.581,
+        0.203,
+        0.996,
+        0.501
+      ],
+      "bake_uv": [
+        0.16,
+        0.149,
+        0.886,
+        0.757
+      ]
+    },
+    {
+      "island": 14,
+      "material": "chitin",
+      "triangles": 1,
+      "area": 559.0,
+      "along": [
+        -59.5,
+        -39.2
+      ],
+      "mu_uv": [
+        0.587,
+        0.01,
+        0.676,
+        0.195
+      ],
+      "bake_uv": [
+        0.307,
+        0.481,
+        0.328,
+        0.524
+      ]
+    },
+    {
+      "island": 15,
+      "material": "chitin",
+      "triangles": 2,
+      "area": 211.9,
+      "along": [
+        126.1,
+        147.9
+      ],
+      "mu_uv": [
+        0.746,
+        0.74,
+        0.853,
+        0.872
+      ],
+      "bake_uv": [
+        0.885,
+        0.592,
+        0.91,
+        0.622
+      ]
+    },
+    {
+      "island": 16,
+      "material": "chitin",
+      "triangles": 36,
+      "area": 11584.1,
+      "along": [
+        4.7,
+        91.4
+      ],
+      "mu_uv": [
+        0.581,
+        0.203,
+        0.996,
+        0.501
+      ],
+      "bake_uv": [
+        0.381,
+        0.504,
+        0.977,
+        0.896
+      ]
+    },
+    {
+      "island": 17,
+      "material": "chitin",
+      "triangles": 36,
+      "area": 12343.7,
+      "along": [
+        -16.7,
+        64.1
+      ],
+      "mu_uv": [
+        0.581,
+        0.203,
+        0.996,
+        0.501
+      ],
+      "bake_uv": [
+        0.014,
+        0.179,
+        0.987,
+        0.906
+      ]
+    }
+  ]
+}

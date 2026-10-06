@@ -147,6 +147,17 @@ blue (0.2, 0.2, 0.2-0.6) (the briefing's "grey 0.2" was the creation colour; the
 every frame). The crackles and wisps now share one strip drawer. Shot muted at 30,40: pale blue
 ribbons drifting round him, 258 fps. At MU's light; not yet judged.
 
+**The dragons (2026-10-06, the user: 'next').** MU's Monster32 (MODEL_DRAGON_, the Red Dragon's
+body) built as `source/world/icarus/Dragon01` with its one clip, action 7 (MONSTER01_DIE + 1), its
+sheets `ic_drr_01-03` (chitin), and cooked through `tools/cook.py` AIRS. `game/world/flight`'s new
+dragon mode is CreateDragon and MoveBoidGroup (`GOBoid.cpp:824-851, 1140-1196`): three, born again
+the frame one is gone, within 20 m of him and 6 m under him, a random heading, Scale 0.30-0.40,
+Velocity 0.2-0.38: gliding straight at Velocity x 25 units a frame (MoveBoid would turn one by
+(int)Gravity degrees, and 0.5-0.95 truncates to none), gone past 40 m; the clip played at its
+Velocity, keys a frame. `game/world/boids` draws them unlit in MU's BodyLight (0.02, 0.05, 0.15)
+(`ZzzObject.cpp:487-493`), no calls. Shot muted at 30,40 over 1500 frames: a blue-grey dragon gliding
+head-first under the mist. boids_test passes. Ours: none. Pops: MU's, a dragon is born in view.
+
 **The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
 on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound
 community, 2:08, mean -22.3 dB, 5 dB under the loading ambient) loops over the whole map at the

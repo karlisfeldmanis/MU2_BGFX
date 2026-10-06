@@ -74,6 +74,8 @@ std::string boidOf(const std::string& world) {
     // Atlans's: MODEL_FISH01 + 1 (CreateAtlanseFish, GOBoid.cpp:886-918). MU rolls + 1 or + 2;
     // Fish02 alone here until Fish03 is cooked.
     if (world == "atlans") return "Fish02";
+    // Icarus's: MODEL_DRAGON_, Monster32, the Red Dragon's body (CreateDragon, GOBoid.cpp:824).
+    if (world == "icarus") return "Dragon01";
     return std::string();
 }
 
@@ -105,6 +107,16 @@ Airs airsOf(const std::string& world) {
         airs.calls = false;
         airs.call[0] = airs.call[1] = nullptr;
     }
+    if (world == "icarus") {
+        // The dragon: lit, but RenderObject sets its BodyLight to (0.02, 0.05, 0.15) in Icarus
+        // (ZzzObject.cpp:487-493), a dark blue shape far below; it never calls.
+        airs.lit = false;
+        airs.tint[0] = 0.02f;
+        airs.tint[1] = 0.05f;
+        airs.tint[2] = 0.15f;
+        airs.calls = false;
+        airs.call[0] = airs.call[1] = nullptr;
+    }
     if (world == "bloodcastle") {
         // The crow keeps the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1324) and caws
         // SOUND_CROW alone, a frame in 128, over the court only.
@@ -129,6 +141,7 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     flight_.setButterfly(model == "Butterfly01");
     flight_.setBat(model == "Bat01");
     flight_.setFish(model == "Fish02");
+    flight_.setDragon(model == "Dragon01");
     scurry_.open(assetDir, world, crawlOf(world), textures, sound);
     if (model.empty()) return true;
 
@@ -270,7 +283,7 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         if (!standing_[i]) {
             standing_[i] = true;
             figure.stand(body_.get(), bird.position, bird.facing,
-                         flight_.isFish() ? bird.size : kBirdScale);
+                         flight_.isFish() || flight_.isDragon() ? bird.size : kBirdScale);
             figure.play(body_->idleClip);
             // Each on its own beat, or five birds flap as one wing. The client zeroes the frame
             // for every boid; MU2 gave the town's placements a seeded phase for the same reason
@@ -287,6 +300,9 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         // A fish's tail beats with its pace, and a small one's faster (ours, Flight::swim);
         // MU plays every boid at one rate.
         float flap = airs_.flap;
+        // A dragon plays its clip at its own Velocity, keys a frame (GOBoid.cpp:627), over the
+        // cook's 0.25 s a key: 6.25 times.
+        if (flight_.isDragon()) flap = 6.25f * bird.cruise;
         if (flight_.isFish() && bird.cruise > 0.0f) {
             flap *= std::clamp(0.6f + 0.55f * bird.speed / bird.cruise, 0.6f, 2.4f) *
                     (0.65f / std::max(bird.size, 0.2f)) * 0.8f;

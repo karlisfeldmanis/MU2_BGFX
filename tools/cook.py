@@ -202,7 +202,9 @@ def safe(name):
 AIRS = {"lorencia": "Bird01", "noria": "Butterfly01", "dungeon": "Bat01", "losttower": "Bat01",
         "bloodcastle": "Crow01",
         # Atlans's school fish, MODEL_FISH01 + 1 (CreateAtlanseFish, GOBoid.cpp:886-918).
-        "atlans": "Fish02"}
+        "atlans": "Fish02",
+        # Icarus's dragons, MODEL_DRAGON_ out of Monster/Monster32 (CreateDragon, GOBoid.cpp:824-851).
+        "icarus": "Dragon01"}
 # And what runs along the floor: MU's fish slot (MoveFishs), which the Dungeon fills with
 # MODEL_RAT01 (GOBoid.cpp:1720-1722). Unplaced for the same reason, so named here too; the
 # engine's pool is game/world/scurry.h.

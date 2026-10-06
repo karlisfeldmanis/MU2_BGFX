@@ -183,6 +183,10 @@ void Flight::update(float seconds, const float hero[3], bool walking, bool indoo
         school(seconds, factor, hero, sky);
         return;
     }
+    if (dragon_) {
+        glide(factor, hero);
+        return;
+    }
 
     // The next flock, once the last one has gone. Empty slots do not refill one by one: a bird
     // that sets off alone has no neighbours for the flocking rule to hold it to, and a flock
@@ -425,6 +429,44 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
 // tile is 0 or TW_CHARACTER (GOBoid.cpp:1226, :1309), and turns each live one about while it is
 // TW_SAFEZONE, dropping it on the second turn (:1459-1471). Here the school is sent off instead,
 // as in the south half.
+void Flight::glide(float factor, const float hero[3]) {
+    // MU keeps thirteen boids in Icarus and the first three are dragons (GOBoid.cpp:1235-1238,
+    // 1356-1360); a slot is filled again the frame it empties.
+    constexpr int kDragons = 3;
+    constexpr float kUnit = 0.01f;
+    uint32_t flying = 0;
+    for (int i = 0; i < kDragons; ++i) {
+        Bird& dragon = birds_[i];
+        if (!dragon.live) {
+            // CreateDragon: within 2000 units of him either way, 600 under him, a random
+            // heading; Scale (rand() % 3 + 6) * 0.05, Velocity (rand() % 10 + 10) * 0.02.
+            dragon = Bird{};
+            dragon.live = true;
+            dragon.state = State::Fly;
+            dragon.position[0] = hero[0] + float(int(random01() * 4000.0f) - 2000) * kUnit;
+            dragon.position[1] = hero[1] - 600.0f * kUnit;
+            dragon.position[2] = hero[2] + float(int(random01() * 4000.0f) - 2000) * kUnit;
+            dragon.facing = random01() * kTau;
+            dragon.size = float(int(random01() * 3.0f) + 6) * 0.05f;
+            dragon.cruise = float(int(random01() * 10.0f) + 10) * 0.02f;
+            dragon.speed = dragon.cruise;
+        }
+        // MoveBoidGroup: Velocity * 25 units a frame along its heading. MoveBoid would turn it
+        // toward a neighbour within 400 units, but by (int)Gravity degrees, and a dragon's
+        // Gravity of 0.5-0.95 truncates to none: a dragon never turns. Gone past 4000 units.
+        const float step = dragon.cruise * 25.0f * kUnit * factor;
+        dragon.position[0] += std::sin(dragon.facing) * step;
+        dragon.position[2] += std::cos(dragon.facing) * step;
+        const float dx = dragon.position[0] - hero[0], dz = dragon.position[2] - hero[2];
+        if (dx * dx + dz * dz >= 40.0f * 40.0f) {
+            dragon.live = false;
+            continue;
+        }
+        ++flying;
+    }
+    flying_ = flying;
+}
+
 void Flight::school(float seconds, float factor, const float hero[3], const Sky& sky) {
     // MU's y is the row; ours is -z, a metre a tile.
     const bool ashore = sky.dry && sky.dry(sky.context, hero[0], hero[2]);

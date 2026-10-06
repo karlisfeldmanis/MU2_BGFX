@@ -136,6 +136,11 @@ public:
     // map's north half, swimming at a height held over the floor, cruising and darting.
     void setFish(bool on) { fish_ = on; }
     bool isFish() const { return fish_; }
+    // Icarus's dragons rather than birds: CreateDragon and MoveBoidGroup (GOBoid.cpp:824-851,
+    // 1140-1196). Three, each born again the frame it is gone, gliding straight 6 m under him.
+    // A dragon's `size` is its Scale and its `cruise` MU's Velocity, its pace and its clip rate.
+    void setDragon(bool on) { dragon_ = on; }
+    bool isDragon() const { return dragon_; }
 
     // The first flock arrives on the next step rather than 20 to 90 seconds in. One-shot: a
     // caller with this in its frame loop would otherwise refill the sky the instant it empties,
@@ -156,6 +161,7 @@ public:
 private:
     void arrive(const float hero[3], const Sky& sky);
     void school(float seconds, float factor, const float hero[3], const Sky& sky);
+    void glide(float factor, const float hero[3]);
     void swim(Bird& fish, int index, const float hero[3], float seconds, float factor,
               const Sky& sky);
     void move(Bird& bird, const float hero[3], bool walking, float seconds, float factor,
@@ -174,6 +180,7 @@ private:
     bool butterfly_ = false;
     bool bat_ = false;
     bool fish_ = false;
+    bool dragon_ = false;
     float callEvery_ = 0.0f;
     int callRolls_ = 0;
     // Seconds the bats' flock has left with him before it flies off. See Flight::update.
