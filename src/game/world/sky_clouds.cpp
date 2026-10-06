@@ -47,6 +47,10 @@ constexpr int kEdgeOdds = 10;
 // cloudLight at Scale 0.5, shrinking out over about eight frames (UpdateAnimationFrame).
 constexpr float kEdgeScale = 0.5f;
 constexpr float kEdgeLife = 8.0f * kFrame;
+// The crackles: two a lit edge, BITMAP_JOINT_THUNDER sub 6 (see the header).
+constexpr int kCracklePair = 2;
+constexpr float kCrackleShown = 4.0f;  // frames: MoveJoint skips it while LifeTime > 4
+constexpr float kDegrees = 3.14159265f / 180.0f;
 
 }  // namespace
 
@@ -83,6 +87,8 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             flashCloud_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         if (const content::EffectSheet* sheet = table.effect("cloud_light"))
             edge_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        if (const content::EffectSheet* sheet = table.effect("joint_thunder"))
+            joint_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
     }
     const int first = int(content::EmitterKind::Cloud0);
     for (const content::TownEmitter& one : town.emitters) {
@@ -143,9 +149,10 @@ void SkyClouds::shutdown() {
     edges_.clear();
     glints_.clear();
     sparks_.clear();
+    crackles_.clear();
     flash_ = 0.0f;
     clock_ = owed_ = 0.0f;
-    cloud_ = edge_ = light_ = flashCloud_ = BGFX_INVALID_HANDLE;
+    cloud_ = edge_ = light_ = flashCloud_ = joint_ = BGFX_INVALID_HANDLE;
 }
 
 void SkyClouds::update(float seconds, const float near[3], const float hero[3],
@@ -171,6 +178,19 @@ void SkyClouds::update(float seconds, const float near[3], const float hero[3],
     owed_ += seconds;
     while (owed_ >= kFrame) {
         owed_ -= kFrame;
+        // The crackles: dark while LifeTime > 4, then walked afresh from the bank each frame.
+        for (Crackle& one : crackles_) {
+            if (one.wait > 0.0f) {
+                one.wait -= 1.0f;
+                if (one.wait <= 0.0f) walk(one);
+                continue;
+            }
+            one.left -= 1.0f;
+            if (one.left > 0.0f) walk(one);
+        }
+        crackles_.erase(std::remove_if(crackles_.begin(), crackles_.end(),
+                                       [](const Crackle& c) { return c.wait <= 0.0f && c.left <= 0.0f; }),
+                        crackles_.end());
         // The glints: each a frame along its arc, and a spark shed where it is.
         for (Glint& one : glints_) {
             for (int i = 0; i < 3; ++i) one.at[i] += one.velocity[i];
@@ -257,6 +277,44 @@ void SkyClouds::update(float seconds, const float near[3], const float hero[3],
             edge.colour[i] = float(int(unit() * 10.0f)) / 50.0f;
         }
         edges_.push_back(edge);
+        for (int n = 0; n < kCracklePair; ++n) {
+            Crackle one;
+            for (int i = 0; i < 3; ++i) one.from[i] = bank.at[i];
+            // LifeTime rand() % 20 + 6, shown from LifeTime 4 down; Scale rand() % 20 + 10 units;
+            // Light rand() % 10 / 15 + 0.1, grey.
+            one.wait = float(2 + int(unit() * 20.0f));
+            one.left = kCrackleShown;
+            one.width = float(10 + int(unit() * 20.0f)) * kUnit;
+            one.light = float(int(unit() * 10.0f)) / 15.0f + 0.1f;
+            crackles_.push_back(one);
+        }
+    }
+}
+
+void SkyClouds::walk(Crackle& one) {
+    // MU's sub 6 in its own units and axes (x east, y north, z up), from the bank each frame.
+    float at[3] = {one.from[0] / kUnit, -one.from[2] / kUnit, one.from[1] / kUnit};
+    for (int j = 0; j < kCrackleTails; ++j) {
+        one.path[j][0] = at[0] * kUnit;
+        one.path[j][1] = at[2] * kUnit;
+        one.path[j][2] = -at[1] * kUnit;
+        // The aim: the bank + (2050-2250, 2050-2250, -10000), rolled each stride. MoveHumming's
+        // turn of 50-150 degrees a stride all but meets it, so the heading is the aim's.
+        const float aim[3] = {one.from[0] / kUnit + 2050.0f + unit() * 200.0f,
+                              -one.from[2] / kUnit + 2050.0f + unit() * 200.0f,
+                              one.from[1] / kUnit - 10000.0f};
+        const float dx = aim[0] - at[0], dy = aim[1] - at[1], dz = aim[2] - at[2];
+        // Direction[0] and [2], rand() % 100 + 20 degrees, added to the tilt and the turn. Ours:
+        // the tilt taken as lifting the stride and the turn as anticlockwise; MU's AngleMatrix
+        // signs were not traced.
+        const float turn = std::atan2(dy, dx) + float(20 + int(unit() * 100.0f)) * kDegrees;
+        const float tilt = std::atan2(dz, std::sqrt(dx * dx + dy * dy)) +
+                           float(20 + int(unit() * 100.0f)) * kDegrees;
+        // Velocity 15 + rand() % 10 units a stride.
+        const float stride = 15.0f + float(int(unit() * 10.0f));
+        at[0] += stride * std::cos(tilt) * std::cos(turn);
+        at[1] += stride * std::cos(tilt) * std::sin(turn);
+        at[2] += stride * std::sin(tilt);
     }
 }
 
@@ -363,6 +421,61 @@ void SkyClouds::gather(gfx::Effects& effects) const {
         sprite.sheet = flashCloud_;
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
+    }
+    // The crackles, as fx/thunder draws a joint: two crossed faces a stride, JointThunder01
+    // twice along the whole (u = tails / 49 x 2), scrolling one way on one face and the other on
+    // the second, as RenderJoints.
+    if (bgfx::isValid(joint_)) {
+        const float scroll = clock_ - std::floor(clock_);
+        for (const Crackle& one : crackles_) {
+            if (one.wait > 0.0f || one.left <= 0.0f) continue;
+            const float half = one.width * 0.5f;
+            for (int j = 0; j + 1 < kCrackleTails; ++j) {
+                const float* a = one.path[j];
+                const float* b = one.path[j + 1];
+                float along[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+                const float len = std::max(1e-4f, std::sqrt(along[0] * along[0] +
+                                                            along[1] * along[1] +
+                                                            along[2] * along[2]));
+                for (float& v : along) v /= len;
+                float level[3] = {-along[2], 0.0f, along[0]};
+                const float lw = std::sqrt(level[0] * level[0] + level[2] * level[2]);
+                if (lw < 1e-3f) {
+                    level[0] = 1.0f;
+                    level[2] = 0.0f;
+                } else {
+                    level[0] /= lw;
+                    level[2] /= lw;
+                }
+                const float upright[3] = {level[1] * along[2] - level[2] * along[1],
+                                          level[2] * along[0] - level[0] * along[2],
+                                          level[0] * along[1] - level[1] * along[0]};
+                const float l0 = float(kCrackleTails - 1 - j) / float(kCrackleTails - 1) * 2.0f;
+                const float l1 = float(kCrackleTails - 2 - j) / float(kCrackleTails - 1) * 2.0f;
+                for (int face = 0; face < 2; ++face) {
+                    const float* side = face == 0 ? level : upright;
+                    const float shift = face == 0 ? -scroll : scroll;
+                    gfx::Sprite quad;
+                    quad.placed = true;
+                    quad.sheet = joint_;
+                    quad.blend = gfx::Blend::Additive;
+                    for (int i = 0; i < 3; ++i) quad.colour[i] = one.light;
+                    quad.colour[3] = 1.0f;
+                    for (int i = 0; i < 3; ++i) {
+                        quad.corner[0][i] = a[i] - side[i] * half;
+                        quad.corner[1][i] = b[i] - side[i] * half;
+                        quad.corner[2][i] = b[i] + side[i] * half;
+                        quad.corner[3][i] = a[i] + side[i] * half;
+                        quad.position[i] = (a[i] + b[i]) * 0.5f;
+                    }
+                    quad.cornerUv[0][0] = l0 + shift; quad.cornerUv[0][1] = 1.0f;
+                    quad.cornerUv[1][0] = l1 + shift; quad.cornerUv[1][1] = 1.0f;
+                    quad.cornerUv[2][0] = l1 + shift; quad.cornerUv[2][1] = 0.0f;
+                    quad.cornerUv[3][0] = l0 + shift; quad.cornerUv[3][1] = 0.0f;
+                    effects.add(quad);
+                }
+            }
+        }
     }
     if (!bgfx::isValid(edge_)) return;
     for (const Edge& one : edges_) {

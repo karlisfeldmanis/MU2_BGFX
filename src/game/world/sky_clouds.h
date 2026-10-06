@@ -45,7 +45,12 @@
 //   frame, 400 frames, dropping a BITMAP_LIGHT particle each frame (flare01, light 0.3, Scale
 //   1.5-3 shrinking 0.05 a frame, rising 2.5 units, 10-20 frames): sparks rising through the
 //   clouds. Ours: only those within kReach are thrown.
-// Not yet: MU's two thunder crackles at the lit edge. docs/icarus-port.md.
+//   The crackles (MoveObjectOnEffect, ZzzObject.cpp:4384-4405; BITMAP_JOINT_THUNDER sub 6,
+//   ZzzEffectJoint.cpp:1145-1153, 4727-4805, 4911-4915): with each lit edge, two scribbles out
+//   of the bank. Each lives 6-25 frames and is drawn only its last four, walked afresh from the
+//   bank every one of them: 49 strides of 15-25 units, each aimed at a point 21-23 m north-east
+//   and 100 m down and thrown 20-120 degrees off in tilt and in turn; JointThunder01 twice along
+//   it, scrolling, 10-29 units wide, added in a grey of 0.1-0.7. Ours: which way "off" leans.
 #pragma once
 
 #include <cstdint>
@@ -116,8 +121,19 @@ private:
         float at[3] = {0, 0, 0};
         float scale = 1.0f, age = 0.0f, life = 15.0f;  // frames
     };
+    static constexpr int kCrackleTails = 50;
+    struct Crackle {  // a thunder scribble out of a lit bank
+        float from[3] = {0, 0, 0};
+        float wait = 0.0f;              // frames before it shows
+        float left = 0.0f;              // frames it shows
+        float light = 0.5f;
+        float width = 0.2f;             // metres
+        float path[kCrackleTails][3] = {};
+    };
     std::vector<Glint> glints_;
     std::vector<Spark> sparks_;
+    std::vector<Crackle> crackles_;
+    void walk(Crackle& one);
     float flash_ = 0.0f;           // seconds left of the flash
     float flashAt_[3] = {0, 0, 0};
     float flashL_ = 0.0f;
@@ -136,6 +152,7 @@ private:
     uint32_t seed_ = 0x1CA705u;
     bgfx::TextureHandle cloud_ = BGFX_INVALID_HANDLE;  // sky_clouds, the nine
     bgfx::TextureHandle edge_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle joint_ = BGFX_INVALID_HANDLE;  // JointThunder01
 };
 
 }  // namespace mu::game

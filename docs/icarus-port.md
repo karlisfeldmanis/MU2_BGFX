@@ -97,11 +97,12 @@ own sky, now in `game/world/sky_clouds.*`:
 - **The flash** (MoveHeavenThunder, `ZzzObject.cpp:4254-4335`): one reference frame in fifty, L 0.2-0.35, a passing point light of L x (0.3, 0.3, 0.081) two tiles round a point 1.5 m from the hero, for two frames (handed to the renderer with the other transient lights), and under him, ours for MU's cloud.bmd at Scale 10, a big added clouds.jpg of the same colour.
 - **The bolts**: one flash in five, MU's two BITMAP_JOINT_THUNDER + 1 between two points from its four fixed layouts, 3 m under him, through `Thunder::fork`.
 - **The glints** (MoveObjectSetting, BITMAP_LIGHT sub 0, `ZzzEffect.cpp:1045-1060, 6989-7000`): one frame in ten, a light 10 m under a point 25 m round him, thrown up at 70 degrees on a heading of 30, slowing 0.01 units a frame, 400 frames, shedding a flare01 spark each frame that rises, jitters and shrinks over 10-20 frames. Ours: the sparks at 0.07 of light, not MU's 0.3 (fifteen-odd overlapping summed to a white blot); thrown only within 24 m of the camera's point.
-- Not yet: MU's two crackles at the lit bank edge, and Object11's rising motes (with the objects).
+- **The crackles** (MoveObjectOnEffect, `ZzzObject.cpp:4384-4405`; BITMAP_JOINT_THUNDER sub 6, `ZzzEffectJoint.cpp:1145-1153, 4727-4805, 4911-4915`), added 2026-10-06: with each lit edge, two scribbles out of the bank. Each waits 2-21 frames dark, then shows four, walked afresh from the bank each frame: 49 strides of 15-25 units, aimed at a point 21-23 m north-east and 100 m down and thrown 20-120 degrees off in tilt and turn; JointThunder01 twice along it, scrolling, 10-29 units wide, added in a grey of 0.1-0.7. Ours: which way "off" leans (MU's AngleMatrix signs untraced).
+- Not yet: Object11's rising motes (with the objects).
 
-Shot muted at 30,40: faint glints rising through the mist. The flash and bolts are random and unshot. **Cost unmeasured**: another
+Shot muted at 30,40: faint glints rising through the mist. The crackles shot muted at 30,40 with edges forced by a temporary switch (removed): thin jagged white scribbles dropping from banks; in play about one lit edge in 20 s, four frames each. Not yet judged by the user. The flash and bolts are random and unshot. **Cost unmeasured**: another
 session's texcook was at 563% CPU and the view timers summed past the frame; the runs read
-5.5-7.3 ms GPU with waiting counted. Measure quiet before the next effects. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
+5.5-7.3 ms GPU with waiting counted. Measure quiet before the next effects. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
 
 ## The one thing to know first
 
