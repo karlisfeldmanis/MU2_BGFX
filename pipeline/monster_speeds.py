@@ -76,6 +76,10 @@ def resolve(table: dict, model_index: int) -> dict[int, float]:
     if (walk := table.get("walk_overrides", {}).get(str(model_index))) is not None:
         speeds[WALK] = float(walk)
 
+    # The rest of the switch: any other slot set outright (action_overrides, keyed by model).
+    for key, speed in table.get("action_overrides", {}).get(str(model_index), {}).items():
+        speeds[int(key)] = float(speed)
+
     return speeds
 
 

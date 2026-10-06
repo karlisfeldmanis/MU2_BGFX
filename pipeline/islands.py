@@ -225,8 +225,21 @@ def main() -> None:
     found = islands_of(bm)
     islands = []
 
+    # A new island takes what the asset says its sheet is made of, where it says. The mesh's
+    # material slots are MU's groups (clean_lowpoly kept them), so an island's slot is the
+    # sheet it samples, and `sheet_materials` already answers per sheet. Without this every
+    # island of a baked monster fell to the profile's skin whatever its recipe declared:
+    # Tarkan's Mutant shipped its gold mask and rags as skin.
+    declared = {}
+    if destination.exists():
+        declared = json.loads(destination.read_text()).get("sheet_materials") or {}
+    slot_names = [one.name.split(".")[0] if one else "" for one in mesh.materials]
+
     for index, group in enumerate(found):
-        island = {"island": index, "material": default}
+        slots = [bm.faces[face].material_index for face in group]
+        slot = max(set(slots), key=slots.count) if slots else 0
+        named = slot_names[slot] if slot < len(slot_names) else ""
+        island = {"island": index, "material": declared.get(named, default)}
         island.update(describe(bm, group, layers))
         islands.append(island)
 

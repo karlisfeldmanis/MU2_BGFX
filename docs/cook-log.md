@@ -287,3 +287,10 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | CrossBow07 | arm | 2026-10-03 22:49 | awaiting |  |
 | Staff07 | arm | 2026-10-03 23:15 | awaiting |  |
 | Fish02 | world | 2026-10-04 00:24 | passed | the school reads at 184,24: small cichlids shoaling past the corals, tethered round the hero |
+| IronWheel01 | figure | 2026-10-06 11:06 | passed | steel rider, gold mask, iron wheel; no blowout noon/dusk/night |
+| Tantalos01 | figure | 2026-10-06 11:06 | passed | black plate, amber bv03 seams added |
+| Zaikan01 | figure | 2026-10-06 11:06 | passed | ember figure, all three meshes added, half shadow |
+| BeamKnight01 | figure | 2026-10-06 11:07 | passed | dark bat knight, mane cut out |
+| DeathBeamKnight01 | figure | 2026-10-06 11:07 | passed | pale ghost of the Beam Knight, all added |
+| Mutant01 | figure | 2026-10-06 11:11 | passed | blade brass blew out; painted_steel reads gold |
+| BloodyWolf01 | figure | 2026-10-06 11:07 | passed | hide, cloth and mane on their own materials |

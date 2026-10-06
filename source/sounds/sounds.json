@@ -1468,6 +1468,15 @@
       "gain_db": -23.0,
       "note": "aWater's RMS is -21.3 dBFS against aDungeon's -28.0, so -23 rather than world_dungeon's -16 puts it at the same -44 dB bed (2026-10-03)."
     },
+    "world_desert": {
+      "files": [
+        "desert.wav"
+      ],
+      "from": "SOUND_DESERT01, Data\\Sound\\desert.wav (ZzzOpenData.cpp:4737). PlayWorldAmbientSounds plays it looping and unplaced while Tarkan is the world (SceneManager.cpp:882-884) and stops it elsewhere (:956-959); SOUND_WIND01 is stopped there (:932-935). Tarkan's air.",
+      "loop": true,
+      "gain_db": -20.4,
+      "note": "desert.wav's RMS is -23.6 dBFS, so -20.4 puts it on the same -44 dB bed as world_water and world_dungeon (2026-10-05)."
+    },
     "boid_bat": {
       "files": [
         "abat.wav"
@@ -2030,6 +2039,138 @@
         "ecrow.wav"
       ],
       "from": "SOUND_CROW, Data\\Sound\\eCrow.wav. GOBoid.cpp plays it as PlayBuffer(SOUND_CROW, o) at the crow on rand_fps_check(128), and only while the tile under it is exactly TW_SAFEZONE (:1495-1501): the crows caw over Blood Castle's court."
+    },
+    "mutant_move": {
+      "files": [
+        "mutant1.wav",
+        "mutant2.wav"
+      ],
+      "from": "Sounds[rand()%2], 157 and 158 -- Data\\Sound\\mutant1.wav and mutant2.wav. SetMonsterSound(..., 157, 158, 159, 159, 159), ZzzOpenData.cpp:3711-3717 (Tarkan's Mutant)."
+    },
+    "mutant_attack": {
+      "files": [
+        "mutant_attack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both 159 -- Data\\Sound\\mutant_attack1.wav. ZzzOpenData.cpp:3711-3717."
+    },
+    "mutant_die": {
+      "files": [
+        "mutant_attack1.wav"
+      ],
+      "from": "Sounds[4], 159 again -- MU's Mutant dies on its attack cry. ZzzOpenData.cpp:3711-3717."
+    },
+    "bloodywolf_move": {
+      "files": [
+        "blood1.wav"
+      ],
+      "from": "Sounds[rand()%2], both 150 -- Data\\Sound\\blood1.wav. SetMonsterSound(..., 150, 150, 151, 152, 153), ZzzOpenData.cpp:3696-3703 (Tarkan's Bloody Wolf)."
+    },
+    "bloodywolf_attack": {
+      "files": [
+        "blood_attack1.wav",
+        "blood_attack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], 151 and 152 -- blood_attack1.wav and blood_attack2.wav. ZzzOpenData.cpp:3696-3703."
+    },
+    "bloodywolf_die": {
+      "files": [
+        "blood_die.wav"
+      ],
+      "from": "Sounds[4], 153 -- Data\\Sound\\blood_die.wav. ZzzOpenData.cpp:3696-3703."
+    },
+    "ironwheel_move": {
+      "files": [
+        "iron1.wav"
+      ],
+      "from": "Sounds[rand()%2], both 143 -- Data\\Sound\\iron1.wav. SetMonsterSound(..., 143, 143, 144, 144, 144), ZzzOpenData.cpp:3679-3684 (Tarkan's Iron Wheel)."
+    },
+    "ironwheel_attack": {
+      "files": [
+        "iron_attack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both 144 -- iron_attack1.wav. ZzzOpenData.cpp:3679-3684."
+    },
+    "ironwheel_die": {
+      "files": [
+        "iron_attack1.wav"
+      ],
+      "from": "Sounds[4], 144 again -- the Wheel dies on its attack sound. ZzzOpenData.cpp:3679-3684."
+    },
+    "tantalos_move": {
+      "files": [
+        "jaikan1.wav",
+        "jaikan2.wav"
+      ],
+      "from": "Sounds[rand()%2], 145 and 146 -- Data\\Sound\\jaikan1.wav and jaikan2.wav. SetMonsterSound(..., 145, 146, 147, 148, 149), ZzzOpenData.cpp:3685-3694 (Tarkan's Tantalos)."
+    },
+    "tantalos_attack": {
+      "files": [
+        "jaikan_attack1.wav",
+        "jaikan_attack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], 147 and 148 -- jaikan_attack1.wav and jaikan_attack2.wav. ZzzOpenData.cpp:3685-3694."
+    },
+    "tantalos_die": {
+      "files": [
+        "jaikan_die.wav"
+      ],
+      "from": "Sounds[4], 149 -- jaikan_die.wav. ZzzOpenData.cpp:3685-3694."
+    },
+    "zaikan_move": {
+      "files": [
+        "jaikan1.wav",
+        "jaikan2.wav"
+      ],
+      "from": "Sounds[rand()%2], 145 and 146 -- Data\\Sound\\jaikan1.wav and jaikan2.wav. SetMonsterSound(..., 145, 146, 147, 148, 149), ZzzOpenData.cpp:3685-3694 (the Zaikan, on the Tantalos's model)."
+    },
+    "zaikan_attack": {
+      "files": [
+        "jaikan_attack1.wav",
+        "jaikan_attack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], 147 and 148 -- jaikan_attack1.wav and jaikan_attack2.wav. ZzzOpenData.cpp:3685-3694."
+    },
+    "zaikan_die": {
+      "files": [
+        "jaikan_die.wav"
+      ],
+      "from": "Sounds[4], 149 -- jaikan_die.wav. ZzzOpenData.cpp:3685-3694."
+    },
+    "beamknight_move": {
+      "files": [
+        "death1.wav"
+      ],
+      "from": "Sounds[rand()%2], both 154 -- Data\\Sound\\death1.wav. SetMonsterSound(..., 154, 154, 155, 155, 156), ZzzOpenData.cpp:3704-3709 (Tarkan's Beam Knight)."
+    },
+    "beamknight_attack": {
+      "files": [
+        "death_attack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both 155 -- death_attack1.wav. ZzzOpenData.cpp:3704-3709."
+    },
+    "beamknight_die": {
+      "files": [
+        "death_die.wav"
+      ],
+      "from": "Sounds[4], 156 -- death_die.wav. ZzzOpenData.cpp:3704-3709."
+    },
+    "deathbeamknight_move": {
+      "files": [
+        "death1.wav"
+      ],
+      "from": "Sounds[rand()%2], both 154 -- Data\\Sound\\death1.wav. SetMonsterSound(..., 154, 154, 155, 155, 156), ZzzOpenData.cpp:3704-3709 (the Death Beam Knight, on the Beam Knight's model)."
+    },
+    "deathbeamknight_attack": {
+      "files": [
+        "death_attack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both 155 -- death_attack1.wav. ZzzOpenData.cpp:3704-3709."
+    },
+    "deathbeamknight_die": {
+      "files": [
+        "death_die.wav"
+      ],
+      "from": "Sounds[4], 156 -- death_die.wav. ZzzOpenData.cpp:3704-3709."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
