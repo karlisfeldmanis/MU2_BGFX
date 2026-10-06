@@ -47,6 +47,11 @@ constexpr float kMoteBone[3] = {-1.398526f, 5.006149f, 0.0f};
 // MU's light 1 at its full size; ours, faint, but a stream a statue reads where a glint's pile
 // would blot: 0.18 of light at 0.7 of MU's size.
 constexpr float kMoteLight = 0.18f, kMoteSize = 0.7f;
+// The wisps (see the header): MU's Velocity 2.2 units a frame, spawned within 512 units, gone past
+// 1500 units or one frame in 5120; the joint's Scale 25 units.
+constexpr float kWispSpeed = 2.2f * kUnit;
+constexpr float kWispSpawn = 5.12f, kWispGone = 15.0f;
+constexpr int kWispOdds = 5120;
 constexpr float kFlareMetres = 0.64f;  // flare01, 64 texels
 // The flash: two reference frames; the cloud under him is ours for MU's cloud.bmd at Scale 10.
 constexpr float kFlashSeconds = 2.0f * kFrame;
@@ -61,6 +66,56 @@ constexpr float kEdgeLife = 8.0f * kFrame;
 constexpr int kCracklePair = 2;
 constexpr float kCrackleShown = 4.0f;  // frames: MoveJoint skips it while LifeTime > 4
 constexpr float kDegrees = 3.14159265f / 180.0f;
+
+// A joint's tails as MU draws them: two crossed faces a stride, one level and one upright, so
+// the strip has width from any side; its sheet `along` times down the whole, from the newest
+// tail, slid by `scroll` one way on the first face and the other on the second.
+void strip(gfx::Effects& effects, bgfx::TextureHandle sheet, const float (*points)[3], int count,
+           float half, const float colour[3], float along, float scroll) {
+    for (int j = 0; j + 1 < count; ++j) {
+        const float* a = points[j];
+        const float* b = points[j + 1];
+        float dir[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+        const float len = std::max(1e-4f, std::sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]));
+        for (float& v : dir) v /= len;
+        float level[3] = {-dir[2], 0.0f, dir[0]};
+        const float lw = std::sqrt(level[0] * level[0] + level[2] * level[2]);
+        if (lw < 1e-3f) {
+            level[0] = 1.0f;
+            level[2] = 0.0f;
+        } else {
+            level[0] /= lw;
+            level[2] /= lw;
+        }
+        const float upright[3] = {level[1] * dir[2] - level[2] * dir[1],
+                                  level[2] * dir[0] - level[0] * dir[2],
+                                  level[0] * dir[1] - level[1] * dir[0]};
+        const float l0 = float(count - 1 - j) / float(count - 1) * along;
+        const float l1 = float(count - 2 - j) / float(count - 1) * along;
+        for (int face = 0; face < 2; ++face) {
+            const float* side = face == 0 ? level : upright;
+            const float shift = face == 0 ? -scroll : scroll;
+            gfx::Sprite quad;
+            quad.placed = true;
+            quad.sheet = sheet;
+            quad.blend = gfx::Blend::Additive;
+            for (int i = 0; i < 3; ++i) quad.colour[i] = colour[i];
+            quad.colour[3] = 1.0f;
+            for (int i = 0; i < 3; ++i) {
+                quad.corner[0][i] = a[i] - side[i] * half;
+                quad.corner[1][i] = b[i] - side[i] * half;
+                quad.corner[2][i] = b[i] + side[i] * half;
+                quad.corner[3][i] = a[i] + side[i] * half;
+                quad.position[i] = (a[i] + b[i]) * 0.5f;
+            }
+            quad.cornerUv[0][0] = l0 + shift; quad.cornerUv[0][1] = 1.0f;
+            quad.cornerUv[1][0] = l1 + shift; quad.cornerUv[1][1] = 1.0f;
+            quad.cornerUv[2][0] = l1 + shift; quad.cornerUv[2][1] = 0.0f;
+            quad.cornerUv[3][0] = l0 + shift; quad.cornerUv[3][1] = 0.0f;
+            effects.add(quad);
+        }
+    }
+}
 
 }  // namespace
 
@@ -99,6 +154,8 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             edge_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         if (const content::EffectSheet* sheet = table.effect("joint_thunder"))
             joint_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        if (const content::EffectSheet* sheet = table.effect("joint_spirit"))
+            spirit_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
     }
     const int first = int(content::EmitterKind::Cloud0);
     for (const content::TownEmitter& one : town.emitters) {
@@ -177,9 +234,11 @@ void SkyClouds::shutdown() {
     sparks_.clear();
     crackles_.clear();
     motes_.clear();
+    wisps_.clear();
+    frame_ = 0;
     flash_ = 0.0f;
     clock_ = owed_ = 0.0f;
-    cloud_ = edge_ = light_ = flashCloud_ = joint_ = BGFX_INVALID_HANDLE;
+    cloud_ = edge_ = light_ = flashCloud_ = joint_ = spirit_ = BGFX_INVALID_HANDLE;
 }
 
 void SkyClouds::update(float seconds, const float near[3], const float hero[3],
@@ -205,6 +264,8 @@ void SkyClouds::update(float seconds, const float near[3], const float hero[3],
     owed_ += seconds;
     while (owed_ >= kFrame) {
         owed_ -= kFrame;
+        ++frame_;
+        wisp(hero);
         // Every spark is MU's BITMAP_LIGHT sub 0, which wanders +-0.2 units a frame each way
         // (ZzzEffectParticle.cpp:7948-7958; MU's wind, g_vParticleWind, is left out: ours).
         for (Spark& one : sparks_) {
@@ -339,6 +400,57 @@ void SkyClouds::update(float seconds, const float near[3], const float hero[3],
     }
 }
 
+void SkyClouds::wisp(const float hero[3]) {
+    if (wisps_.size() < size_t(kWisps)) wisps_.resize(kWisps);
+    for (int i = 0; i < kWisps; ++i) {
+        Wisp& one = wisps_[size_t(i)];
+        const float dx = one.at[0] - hero[0], dz = one.at[2] - hero[2];
+        if (one.live && (dx * dx + dz * dz >= kWispGone * kWispGone ||
+                         int(unit() * float(kWispOdds)) == 0))
+            one.live = false;
+        if (!one.live) {
+            // CreateDragon's else: a MODEL_SPEARSKILL boid at his height within 512 units, a
+            // random heading, and a fresh MODEL_SPEARSKILL sub 1 joint on it (GOBoid.cpp:852-880).
+            one = Wisp{};
+            one.live = true;
+            one.at[0] = hero[0] + (unit() * 2.0f - 1.0f) * kWispSpawn;
+            one.at[1] = hero[1];
+            one.at[2] = hero[2] + (unit() * 2.0f - 1.0f) * kWispSpawn;
+            one.heading = unit() * 360.0f;
+            one.joint = int(unit() * 4096.0f);
+        }
+        // MoveHeavenBug (GOBoid.cpp:1009-1015), in MU's axes (x east, y north): x += v sin,
+        // y -= v cos, the heading wandering on two slow sines of the frame and the boid.
+        const float f = float(frame_);
+        one.at[0] += kWispSpeed * std::sin(one.heading);
+        one.at[2] += kWispSpeed * std::cos(one.heading);
+        one.heading += 0.01f * std::cos((34571.0f + f + float(i) * 41273.0f) * 0.0003f) *
+                       std::sin((17732.0f + f + float(i) * 5161.0f) * 0.0003f);
+        // The joint's head (ZzzEffectJoint.cpp:4476-4520, 4541-4546): round the boid, 10 units
+        // up, on a direction turning on three sines at half the shield's speeds, 70 units out and
+        // 140 up or down; lit (0.2, 0.2, 0.4 + 0.2 sin).
+        const int frameOf = ((one.joint % 2) ? int(frame_) : -int(frame_)) + one.joint * 53731;
+        const float fi = float(frameOf);
+        const float s0 = 0.048f * 0.5f, s1 = 0.0613f * 0.5f, s2 = 0.1113f * 0.5f;
+        const float t0 = std::sin((fi + 55555.0f) * s0) * std::cos(fi * s1);
+        const float t1 = std::sin((fi + 55555.0f) * s0) * std::sin(fi * s1);
+        const float t2 = std::cos((fi + 55555.0f) * s0);
+        const float sinAdd = std::sin((fi + 11111.0f) * s2), cosAdd = std::cos((fi + 11111.0f) * s2);
+        const float dir[3] = {cosAdd * t1 - sinAdd * t2, sinAdd * t1 + cosAdd * t2, t0};
+        float head[3];
+        head[0] = one.at[0] + dir[0] * 70.0f * kUnit;
+        head[1] = one.at[1] + 10.0f * kUnit + dir[2] * 140.0f * kUnit;
+        head[2] = one.at[2] - dir[1] * 70.0f * kUnit;
+        one.colour[0] = one.colour[1] = 0.2f;
+        one.colour[2] = 0.4f + 0.2f * sinAdd;
+        // CreateTail: the newest at the front, thirty kept.
+        for (int t = std::min(one.tails, kWispTails - 1); t > 0; --t)
+            for (int k = 0; k < 3; ++k) one.trail[t][k] = one.trail[t - 1][k];
+        for (int k = 0; k < 3; ++k) one.trail[0][k] = head[k];
+        one.tails = std::min(one.tails + 1, kWispTails);
+    }
+}
+
 void SkyClouds::walk(Crackle& one) {
     // MU's sub 6 in its own units and axes (x east, y north, z up), from the bank each frame.
     float at[3] = {one.from[0] / kUnit, -one.from[2] / kUnit, one.from[1] / kUnit};
@@ -470,59 +582,21 @@ void SkyClouds::gather(gfx::Effects& effects) const {
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
-    // The crackles, as fx/thunder draws a joint: two crossed faces a stride, JointThunder01
-    // twice along the whole (u = tails / 49 x 2), scrolling one way on one face and the other on
-    // the second, as RenderJoints.
+    // The crackles: JointThunder01 twice along the whole, scrolling one way on one face and the
+    // other on the second, as RenderJoints.
     if (bgfx::isValid(joint_)) {
         const float scroll = clock_ - std::floor(clock_);
         for (const Crackle& one : crackles_) {
             if (one.wait > 0.0f || one.left <= 0.0f) continue;
-            const float half = one.width * 0.5f;
-            for (int j = 0; j + 1 < kCrackleTails; ++j) {
-                const float* a = one.path[j];
-                const float* b = one.path[j + 1];
-                float along[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
-                const float len = std::max(1e-4f, std::sqrt(along[0] * along[0] +
-                                                            along[1] * along[1] +
-                                                            along[2] * along[2]));
-                for (float& v : along) v /= len;
-                float level[3] = {-along[2], 0.0f, along[0]};
-                const float lw = std::sqrt(level[0] * level[0] + level[2] * level[2]);
-                if (lw < 1e-3f) {
-                    level[0] = 1.0f;
-                    level[2] = 0.0f;
-                } else {
-                    level[0] /= lw;
-                    level[2] /= lw;
-                }
-                const float upright[3] = {level[1] * along[2] - level[2] * along[1],
-                                          level[2] * along[0] - level[0] * along[2],
-                                          level[0] * along[1] - level[1] * along[0]};
-                const float l0 = float(kCrackleTails - 1 - j) / float(kCrackleTails - 1) * 2.0f;
-                const float l1 = float(kCrackleTails - 2 - j) / float(kCrackleTails - 1) * 2.0f;
-                for (int face = 0; face < 2; ++face) {
-                    const float* side = face == 0 ? level : upright;
-                    const float shift = face == 0 ? -scroll : scroll;
-                    gfx::Sprite quad;
-                    quad.placed = true;
-                    quad.sheet = joint_;
-                    quad.blend = gfx::Blend::Additive;
-                    for (int i = 0; i < 3; ++i) quad.colour[i] = one.light;
-                    quad.colour[3] = 1.0f;
-                    for (int i = 0; i < 3; ++i) {
-                        quad.corner[0][i] = a[i] - side[i] * half;
-                        quad.corner[1][i] = b[i] - side[i] * half;
-                        quad.corner[2][i] = b[i] + side[i] * half;
-                        quad.corner[3][i] = a[i] + side[i] * half;
-                        quad.position[i] = (a[i] + b[i]) * 0.5f;
-                    }
-                    quad.cornerUv[0][0] = l0 + shift; quad.cornerUv[0][1] = 1.0f;
-                    quad.cornerUv[1][0] = l1 + shift; quad.cornerUv[1][1] = 1.0f;
-                    quad.cornerUv[2][0] = l1 + shift; quad.cornerUv[2][1] = 0.0f;
-                    quad.cornerUv[3][0] = l0 + shift; quad.cornerUv[3][1] = 0.0f;
-                    effects.add(quad);
-                }
-            }
+            const float grey[3] = {one.light, one.light, one.light};
+            strip(effects, joint_, one.path, kCrackleTails, one.width * 0.5f, grey, 2.0f, scroll);
+        }
+    }
+    // The wisps: JointSpirit01 once along the trail, still (only the thunder joints scroll).
+    if (bgfx::isValid(spirit_)) {
+        for (const Wisp& one : wisps_) {
+            if (one.tails < 2) continue;
+            strip(effects, spirit_, one.trail, one.tails, kWispWidth * 0.5f, one.colour, 1.0f, 0.0f);
         }
     }
     if (!bgfx::isValid(edge_)) return;

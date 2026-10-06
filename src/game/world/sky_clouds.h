@@ -54,6 +54,12 @@
 //   The motes (ZzzObject.cpp:3171-3178): every Object11 throws the glints' spark at its bone 3,
 //   the statue's top, every frame, Scale 0.5-1, rising and wandering. Ours: only those within
 //   kReach, at 0.18 of MU's light and 0.7 of its size, and without MU's particle wind.
+//   The wind wisps (GOBoid.cpp:852-880, 1009-1031, 1226-1240; ZzzEffectJoint.cpp:1538-1567,
+//   4476-4546): ten of Icarus's thirteen boids are unseen MODEL_SPEARSKILL bugs at his height,
+//   born within 5 m and drifting 2.2 units a frame on a slowly wandering heading, gone past 15 m
+//   or one frame in 5120 and born again; each carries a MODEL_SPEARSKILL sub 1 joint whose head
+//   turns round it on three slow sines, 0.7 m out and 1.4 m up or down, leaving thirty tails of
+//   JointSpirit01, 25 units wide, added in a blue (0.2, 0.2, 0.2-0.6).
 #pragma once
 
 #include <cstdint>
@@ -141,6 +147,20 @@ private:
         float at[3] = {0, 0, 0};
     };
     std::vector<Mote> motes_;
+    static constexpr int kWisps = 10, kWispTails = 30;
+    static constexpr float kWispWidth = 0.25f;  // the joint's Scale 25 units
+    struct Wisp {  // an unseen boid near him, trailing a spirit joint
+        bool live = false;
+        float at[3] = {0, 0, 0};
+        float heading = 0.0f;  // radians, as MU's sinf takes its degrees
+        int joint = 0;         // MU's joint index, which seeds the head's turning
+        float colour[3] = {0.2f, 0.2f, 0.4f};
+        float trail[kWispTails][3] = {};
+        int tails = 0;
+    };
+    std::vector<Wisp> wisps_;
+    uint32_t frame_ = 0;  // MU's frames since the world opened: WorldTime / 40
+    void wisp(const float hero[3]);
     void walk(Crackle& one);
     float flash_ = 0.0f;           // seconds left of the flash
     float flashAt_[3] = {0, 0, 0};
@@ -161,6 +181,7 @@ private:
     bgfx::TextureHandle cloud_ = BGFX_INVALID_HANDLE;  // sky_clouds, the nine
     bgfx::TextureHandle edge_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle joint_ = BGFX_INVALID_HANDLE;  // JointThunder01
+    bgfx::TextureHandle spirit_ = BGFX_INVALID_HANDLE;  // JointSpirit01
 };
 
 }  // namespace mu::game

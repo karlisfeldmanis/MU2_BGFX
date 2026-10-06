@@ -137,6 +137,16 @@ scaled with each placement at open. Every spark, glint's or mote's, now wanders 
 at 0.7 of its size (the glints' 0.07 and 0.4 left them unseen); MU's particle wind left out. Shot
 muted at 30,40: faint streams rising off the statues. The objects step is done.
 
+**The wind wisps (2026-10-06, the user: 'next').** In `game/world/sky_clouds.*`: ten of Icarus's
+thirteen boids (`GOBoid.cpp:1226-1240`; the other three are the dragons) are unseen MODEL_SPEARSKILL
+bugs at his height, born within 5 m, drifting 2.2 units a frame on a slowly wandering heading
+(MoveHeavenBug), gone past 15 m or one frame in 5120 and born again. Each carries a MODEL_SPEARSKILL
+sub 1 joint (`ZzzEffectJoint.cpp:1538-1567, 4476-4546`) whose head turns round it on three slow sines,
+0.7 m out and 1.4 m up or down, leaving thirty tails of JointSpirit01, 25 units wide, added in MU's
+blue (0.2, 0.2, 0.2-0.6) (the briefing's "grey 0.2" was the creation colour; the move sets the blue
+every frame). The crackles and wisps now share one strip drawer. Shot muted at 30,40: pale blue
+ribbons drifting round him, 258 fps. At MU's light; not yet judged.
+
 ## The one thing to know first
 
 **Icarus has no ground.** MuMain skips `RenderTerrain` on map 10 (`MM/Scenes/MainScene.cpp:463`).
