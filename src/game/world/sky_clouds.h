@@ -19,10 +19,12 @@
 // shrinks away over a few frames.
 //
 // Ours, the look (the user, 2026-10-06, of MU's puffs: 'look repetetive and not realistical'): MU's
-// banks stand where MU put them, but each wears a few of nine lit clouds seen from above
-// (`sky_clouds`, pipeline/cloud_sheet.py) in place of clouds.jpg -- whose one hot white spot,
-// stamped four hundred times and turning, is what read as repetition -- alpha-blended and shaded
-// in the moon's blue-white, each its own cloud, size, stretch and brightness, drifting slowly
+// banks stand where MU put them, but each wears a few of nine smoky wisps (`sky_clouds`,
+// pipeline/cloud_sheet.py's smoke(): warped streaks, blurred, no outline and no lit side; the
+// user: 'more blury and smoky, and they have to be not look like puffs') in place of clouds.jpg --
+// whose one hot white spot, stamped four hundred times and turning, is what read as repetition --
+// alpha-blended and shaded in the moon's blue-white, each its own wisp, size, stretch and
+// brightness, drifting slowly
 // rather than turning at MU's rate; and under the road a sparse darker deck, so the navy has
 // depth. Thin, so the navy shows through every one (the user: 'much more transparent'), and alive:
 // each wanders a couple of metres about its place, breathes and deforms, and is always becoming

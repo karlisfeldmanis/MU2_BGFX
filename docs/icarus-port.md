@@ -81,7 +81,17 @@ change no longer goes back and forth between two clouds: two layers half a cycle
 weighed sin^2 so they sum to one, each taking a new cloud of the nine (hashed by the cloud and the
 cycle) and a new turn the moment its weight is nought, every 8-16 s; and the outline deforms, the
 width and height swelling 20% out of step. Two shots 8 s apart at 55,75 show different clouds.
-GPU 4.0 ms with other sessions on the machine. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
+GPU 4.0 ms with other sessions on the machine.
+
+**Smoke, not clouds (2026-10-06, the user: 'we need them not shapy but more blury and smoky, and they
+have to be not look like puffs').** `sky_clouds.png` is now nine smoky wisps, `pipeline/cloud_sheet.py
+out SEED GRID smoke` (seed 10, 3x3): noise warped twice and pulled into streaks, a broad soft oval
+fade, the whole blurred, flat grey with no lit side. Each bank wears 3 (types 0-2) or 2 (3-5),
+quads 9-15 m wide at 0.07-0.13 of opaque, and the deck's 20-30 m; 863 wisps in all, so they run
+together as one smoky layer. Drawn within 24 m of the camera's point (was 30), faded over the last
+4 m. Shot at the door and 55,75: a continuous blurred mist, no puffs. **Cost unmeasured**: another
+session's texcook was at 563% CPU and the view timers summed past the frame; the runs read
+5.5-7.3 ms GPU with waiting counted. Measure quiet before the next effects. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
 
 ## The one thing to know first
 

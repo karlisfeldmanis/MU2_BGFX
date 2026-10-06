@@ -12,13 +12,15 @@ namespace {
 constexpr float kFrame = 0.04f;        // MU's reference frame, 25 a second
 constexpr float kUnit = 0.01f;         // a MU unit, in metres
 constexpr float kSheetMetres = 2.56f;  // cloudLight.jpg, 256 texels, at Scale 1
-constexpr float kReach = 30.0f;        // metres from the camera's point a bank is drawn
-// Ours, the clouds' look (see the header). A bank of MU's 20 wears kNear of the nine, one of its
-// 10 kFar; each cloud fills about half its cell, so a quad kHalfLow-kHalfHigh metres half wide
-// shows a cloud 3-5 m across, about MU's 4.6-5.1 m puff. The moon's blue-grey, each cloud at
+constexpr float kReach = 24.0f;        // metres from the camera's point a bank is drawn
+constexpr float kFadeOver = 4.0f;      // and faded out over the last of them, so none pops
+// Ours, the clouds' look (see the header). A bank of MU's 20 wears kNear of the nine smoky wisps,
+// one of its 10 kFar; a wisp fades out well inside its cell, so a quad kHalfLow-kHalfHigh metres
+// half wide draws a streak some 6-10 m long, and the banks' wisps run into one another as one
+// smoky layer rather than standing as puffs. The moon's blue-grey, each at
 // kShadeLow-1 of it; drifting at most kDrift radians a second either way.
-constexpr int kNear = 2, kFar = 1;
-constexpr float kHalfLow = 2.6f, kHalfHigh = 4.4f;
+constexpr int kNear = 3, kFar = 2;
+constexpr float kHalfLow = 4.5f, kHalfHigh = 7.5f;
 constexpr float kMoon[3] = {0.52f, 0.60f, 0.76f};
 constexpr float kShadeLow = 0.6f;
 constexpr float kDrift = 0.04f;
@@ -88,7 +90,7 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             puff.half = kHalfLow + unit() * (kHalfHigh - kHalfLow);
             puff.stretch = 1.0f + unit() * 0.35f;
             puff.shade = kShadeLow + unit() * (1.0f - kShadeLow);
-            puff.alpha = 0.08f + unit() * 0.07f;
+            puff.alpha = 0.07f + unit() * 0.06f;
             puff.cell = uint8_t(unit() * float(kCells * kCells)) % uint8_t(kCells * kCells);
             live(puff, 1.5f + unit() * 1.0f);
             puffs_.push_back(puff);
@@ -102,7 +104,7 @@ void SkyClouds::open(const std::string& assetDir, const std::string& world,
             deep.g = unit() * 1000.0f;
             deep.start = unit() * 6.2831853f;
             deep.turn = (unit() * 2.0f - 1.0f) * kDrift * 0.5f;
-            deep.half = 7.0f + unit() * 4.0f;
+            deep.half = 10.0f + unit() * 5.0f;
             deep.stretch = 1.1f + unit() * 0.4f;
             deep.shade = 0.8f + unit() * 0.2f;
             deep.alpha = 0.07f + unit() * 0.05f;
@@ -165,7 +167,9 @@ void SkyClouds::gather(gfx::Effects& effects) const {
     if (bgfx::isValid(cloud_)) {
         for (const Bank& bank : banks_) {
             const float dx = bank.at[0] - near_[0], dz = bank.at[2] - near_[2];
-            if (dx * dx + dz * dz > kReach * kReach) continue;
+            const float far2 = dx * dx + dz * dz;
+            if (far2 > kReach * kReach) continue;
+            const float edge = std::min(1.0f, (kReach - std::sqrt(far2)) / kFadeOver);
             for (uint32_t i = 0; i < bank.count; ++i) {
                 const Puff& one = puffs_[bank.first + i];
                 constexpr float kTau = 6.2831853f;
@@ -200,7 +204,7 @@ void SkyClouds::gather(gfx::Effects& effects) const {
                     sprite.position[1] = y;
                     sprite.position[2] = z;
                     for (int c = 0; c < 3; ++c) sprite.colour[c] = tint[c] * one.shade;
-                    sprite.colour[3] = one.alpha * weight;
+                    sprite.colour[3] = one.alpha * weight * edge;
                     sprite.halfWidth = one.half * one.stretch * breath * wide;
                     sprite.halfHeight = one.half * breath * tall;
                     // Each new cloud at its own turn, so no two changes look alike.
