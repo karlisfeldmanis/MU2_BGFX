@@ -286,6 +286,26 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   6-second Soul Barrier and its Lightning crackle off the rider's hand, `:2283-2293`), and the
   boss blow's reach of every character in sight (WZ `gObjMonster.cpp:1910-1916`). kResistances
   {77, 30, 30}, kDropRates {77, 14, 4, 150}.
+- **The effects audit (2026-10-07, the user: 'check if we did not missed some special attack
+  effect for icarus monsters or implemented incorrect one')**: every MuMain reference to the
+  eight breeds and their models read again.
+  - Fixed: Queen Rainer's gown. RenderObject draws her body with mesh 1 (kuo00, the star-field
+    gown) hidden, then that mesh alone at 0.5 with RENDER_WAVE (`ZzzObject.cpp:1372-1376`); ours
+    had it at full, now held at 0.5 (`pulse` [0, 0.5]), the wave's ripple left out.
+  - Right as built: the Alquamos's ribbons at CheckAttackTime(1) in its Energy Ball arm
+    (`:2140-2150`); the Queen's blizzard (`:1681-1695`) and the Crusts' Inferno (`:1696-1708`)
+    at CheckAttackTime(5); the Drakans' Attack 1 Inferno at 11 and Attack 2 bolt at 13
+    (`:1734-1783`, `:2123-2138`); the Phantom Knight's boss spirits at 14 (`:1710-1732`); the
+    Phoenix's bolt at 14 and boss spirits (`:2108-2121`, `:1785-1800`). None of the eight
+    draws an Energy Ball: MuMain's AT_SKILL_ENERGYBALL arm `break`s for all of them
+    (`:5088-5118`), and ours draws none either.
+  - Recorded, not built: the Crust's glide -- each server step plays its walk and eases it
+    0.07 of the way a frame toward the tile for fifteen frames, then sets it there
+    (`WSclient.cpp:2026-2034`, `ZzzCharacter.cpp:3145-3190`); the Drakan's Attack 2 sound is
+    SOUND_METEORITE01 (`:1760-1771`), ours the Lightning's; the Great Drakan's extra chrome pass
+    is tinted (1, 0.1, 0.1) (`ZzzObject.cpp:9037-9042`); the Phoenix's light held at a flat 0.6
+    (`ZzzObject.cpp:218-222`, `ZzzCharacter.cpp:9260-9263`) and its shield, the wizard's Soul
+    Barrier buff on itself (`:4976-4979`).
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

@@ -25,7 +25,11 @@
   "sheet_materials_from": "Every mesh is a glow, so these only name them: the gown, the wings' membrane, the body.",
   "glow": {
     "kuo00": {
-      "shadow": 0.0
+      "shadow": 0.0,
+      "pulse": [
+        0.0,
+        0.5
+      ]
     },
     "kuo01": {
       "shadow": 0.0
@@ -34,7 +38,7 @@
       "shadow": 0.0
     }
   },
-  "glow_from": "BlendMesh -2: RenderMesh adds every mesh (`blendMeshIndex <= -2`, ZzzBMD.cpp:1509-1516), so the whole Queen is violet light on the dark; and m_bRenderShadow = false, so she casts none.",
+  "glow_from": "BlendMesh -2: RenderMesh adds every mesh (`blendMeshIndex <= -2`, ZzzBMD.cpp:1509-1516), so the whole Queen is violet light on the dark; and m_bRenderShadow = false, so she casts none. And her gown, mesh 1 (kuo00), at half: RenderObject's MODEL_QUEEN_RAINER arm draws the body with mesh 1 hidden, then mesh 1 alone at 0.5 with RENDER_WAVE (ZzzObject.cpp:1372-1376) -- ours its glow held at 0.5 (`pulse` [0, 0.5]); the wave's ripple is left out.",
   "sounds_from": "ZzzOpenData.cpp:3761-3767: SetMonsterSound(..., 171, -1, 172, 172, 173): mRainner1 to move, mRainnerAttack1 to attack, mRainnerDie to die. Wired as queenrainer_* in sounds.json.",
   "islands": [
     {

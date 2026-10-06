@@ -311,7 +311,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | GoldenDragon01 | figure | 2026-10-06 18:28 | awaiting |  |
 | Alquamos01 | figure | 2026-10-06 20:26 | passed | MU's translucent cyan star-dragon, all added with its star specks; reads at noon, dusk and night and over Icarus's navy |
 | MegaCrust01 | figure | 2026-10-06 21:10 | passed | blue-grey cast plate reads as painted armour at noon, dusk and night; the flame banner glows in its wing frame; Thunder Blade in hand |
-| QueenRainer01 | figure | 2026-10-06 21:45 | passed | MU's translucent violet winged woman, every mesh added, her star-field gown and banded body read at noon, dusk and night; no shadow |
+| QueenRainer01 | figure | 2026-10-07 00:08 | passed | her star-field gown (kuo00) now at MU's half (ZzzObject.cpp:1372-1376); the rest as passed |
 | Drakan01 | figure | 2026-10-06 21:58 | passed | black scaled serpent with blue plates, red eyes and gold jaw, shot from 10 m; dark at night without MU's chrome passes, lit in Icarus by its blue stars |
 | AlphaCrust01 | figure | 2026-10-06 22:17 | passed | the Crust in MU's teal BodyLight, its flames green; +9 Thunder Blade in hand; reads at noon, dusk and night |
 | PhantomKnight01 | figure | 2026-10-06 23:28 | passed | dark spiked winged knight, its runes a faint violet (0.35) after a first cut at 0.75 read as loud stripes; Dark Breaker in hand |
