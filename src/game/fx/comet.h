@@ -8,9 +8,10 @@
 //     a blue-white head with rays streaming up behind it -- added (BlendMesh 0), scale
 //     (rand()%8 + 10) * 0.1, born 300 to 800 units over the tile and 200 to 300 aside, falling at
 //     50 to 100 units a frame turned by its Angle (0, 20, 0). Kept: the model, its sheet, its
-//     roll of scale and its slant. Ours: it lands on the realm's ground in Meteorite's seven
-//     ticks (Meteor::fallSeconds) from its own height in MU's band and its own quarter of the
-//     sky, as a shower's rock does, so the blow and the comet arrive together.
+//     roll of scale, its slant, its heading -- every comet in from the east -- and its frame,
+//     drawn at that Angle and not along its velocity. Ours: it lands on the realm's ground in
+//     Meteorite's seven ticks (Meteor::fallSeconds) from its own height in MU's band, so the
+//     blow and the comet arrive together.
 //   * **Its ribbon** (`CreateJoint(BITMAP_JOINT_ENERGY, ..., 5, o, 100.f)`, ZzzEffectJoint.cpp:
 //     210-288): ten tails following the comet, a metre across, white light, JointLaser01 added,
 //     gone when the comet lands. Turned to the eye, as MU's joints are.
@@ -68,10 +69,10 @@ public:
 private:
     static constexpr float kReferenceFps = 25.0f;
     static constexpr float kUnit = 0.01f;
-    // Born 300 to 800 units up (`rand() % 500 + 300`), slanted in at MU's twenty degrees and
-    // turned into its own quarter of the sky by up to forty either side, as a shower's rock is.
+    // Born 300 to 800 units up (`rand() % 500 + 300`), slanted in from the east at MU's
+    // twenty degrees.
     static constexpr float kLowest = 300.0f, kHighest = 800.0f;
-    static constexpr float kSlantDegrees = 20.0f, kYawDegrees = 40.0f;
+    static constexpr float kSlantDegrees = 20.0f;
     static constexpr float kSmallest = 1.0f, kLargest = 1.7f;  // (rand()%8 + 10) * 0.1
     // Its ribbon: ten tails, one a reference frame, Scale 100 across.
     static constexpr int kTails = 10;

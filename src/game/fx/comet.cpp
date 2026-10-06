@@ -66,18 +66,17 @@ void Comet::cast(float x, float z, uint32_t attacker, float weight, float fallSe
     slot->size = between(kSmallest, kLargest) / std::sqrt(2.0f) * slot->weight;
     slot->floorY = ground_->heightAt(x, z);
     slot->left = std::max(fallSeconds, 0.05f);
-    // Up in MU's band, aside along its own quarter by the slant's tangent, so it lands on the
-    // ground the realm named in the time it was given.
+    // Up in MU's band and east of the spot by the slant's tangent -- MU's comets all come in
+    // from +x, `Position[0] += rand() % 100 + 200` -- so it lands on the ground the realm named
+    // in the time it was given, along MU's own heading.
     const float lift = between(kLowest, kHighest) * kUnit;
-    const float slant = kSlantDegrees * kPi / 180.0f;
-    const float yaw = between(-kYawDegrees, kYawDegrees) * kPi / 180.0f;
-    const float side = lift * std::tan(slant);
-    slot->at[0] = x + std::cos(yaw) * side;
+    const float side = lift * std::tan(kSlantDegrees * kPi / 180.0f);
+    slot->at[0] = x + side;
     slot->at[1] = slot->floorY + lift;
-    slot->at[2] = z + std::sin(yaw) * side;
-    slot->velocity[0] = (x - slot->at[0]) / slot->left;
+    slot->at[2] = z;
+    slot->velocity[0] = -side / slot->left;
     slot->velocity[1] = -lift / slot->left;
-    slot->velocity[2] = (z - slot->at[2]) / slot->left;
+    slot->velocity[2] = 0.0f;
     for (int k = 0; k < 3; ++k) slot->tails[0][k] = slot->at[k];
     slot->tailCount = 1;
     slot->tailDue = 1.0f;
@@ -164,26 +163,17 @@ void Comet::gatherRibbon(gfx::Effects& effects, const Live& comet, const float* 
 
 void Comet::gather(gfx::Effects& effects, const float* eye) const {
     constexpr float kWhite[3] = {1.0f, 1.0f, 1.0f};
+    // MU's own frame, AngleMatrix(0, 20, 0): twenty degrees about MU's y, which is our -z.
+    // The mesh keeps its built-in lean north; built from the velocity instead, the mesh turned
+    // a quarter about its length and that lean cancelled the slant, so the rays stood upright
+    // over a slanted ribbon (2026-10-06).
+    const float slant = kSlantDegrees * kPi / 180.0f;
+    const float x[3] = {std::cos(slant), -std::sin(slant), 0.0f};
+    const float y[3] = {std::sin(slant), std::cos(slant), 0.0f};
+    const float z[3] = {0.0f, 0.0f, 1.0f};
     for (const Live& one : comets_) {
         if (!one.alive) continue;
         gatherRibbon(effects, one, eye);
-        // The model's Y laid back up along its fall, so the head leads and the rays trail.
-        float y[3] = {-one.velocity[0], -one.velocity[1], -one.velocity[2]};
-        const float n = std::sqrt(y[0] * y[0] + y[1] * y[1] + y[2] * y[2]);
-        if (n < 1e-5f) continue;
-        for (float& c : y) c /= n;
-        // Across it, in the ground plane; straight down has no across, so east.
-        float x[3] = {-y[2], 0.0f, y[0]};
-        const float xn = std::sqrt(x[0] * x[0] + x[2] * x[2]);
-        if (xn < 1e-5f) {
-            x[0] = 1.0f;
-            x[2] = 0.0f;
-        } else {
-            x[0] /= xn;
-            x[2] /= xn;
-        }
-        const float z[3] = {x[1] * y[2] - x[2] * y[1], x[2] * y[0] - x[0] * y[2],
-                            x[0] * y[1] - x[1] * y[0]};
         submitEffectAlong(effects, mesh_, sheet_, gfx::Blend::Additive, one.at, x, y, z,
                           one.size, kWhite, 1.0f);
     }
