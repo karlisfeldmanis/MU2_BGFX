@@ -280,7 +280,7 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // two that live in a blow.
     const Excellence& excel = arms.excel;
     if (excel.levelPieces > 0 || excel.damageRate != 1.0) {
-        const int byLevel = excel.levelPieces * (level / 20);
+        const int byLevel = excel.levelPieces * (level / 10);
         out->minimumDamage = int(double(out->minimumDamage + byLevel) * excel.damageRate);
         out->maximumDamage = int(double(out->maximumDamage + byLevel) * excel.damageRate);
         if (arms.dual) {
@@ -313,7 +313,7 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                      double(points.vitality) * double(row.healthPerVitality));
     // The Guardian Angel's +50, raw, so the armour's rate below takes it too.
     *maxHealth += arms.pet.health;
-    // And the excellent armour's +4% a piece on top.
+    // And the excellent armour's +8% a piece on top.
     if (excel.healthRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.healthRate);
     // And the Rune of the Undying's, on everything above.
     if (excel.undyingRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.undyingRate);

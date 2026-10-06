@@ -4301,35 +4301,35 @@ void testExcellent(const content::Tables& tables) {
     {
         sim::Realm plain, fine;
         wearing(32, leather, sim::kArmour, 0, plain);
-        wearing(32, leather, sim::kArmour, 1 << 5, fine);  // Max HP +4%
+        wearing(32, leather, sim::kArmour, 1 << 5, fine);  // Max HP +8%
         checkEqual(fine.hero().wornDefense - plain.hero().wornDefense,
                    sim::excellentDefense(leatherRow), "excellent leather is worth its defence");
-        checkEqual(fine.hero().maxHealth, int(double(plain.hero().maxHealth) * 1.04),
-                   "and its sixth option is 4% more life");
+        checkEqual(fine.hero().maxHealth, int(double(plain.hero().maxHealth) * 1.08),
+                   "and its sixth option is 8% more life");
     }
     {
         sim::Realm plain, fine;
         wearing(33, leather, sim::kArmour, 0, plain);
-        wearing(33, leather, sim::kArmour, (1 << 4) | (1 << 1), fine);  // mana +4%, rate x1.1
-        checkEqual(fine.hero().maxMana, int(double(plain.hero().maxMana) * 1.04),
-                   "its fifth is 4% more mana");
-        checkNear(fine.hero().stats.defenseRate, plain.hero().stats.defenseRate * 1.1f, 0.01,
-                  "and its second a tenth more defence rate");
+        wearing(33, leather, sim::kArmour, (1 << 4) | (1 << 1), fine);  // mana +8%, rate x1.2
+        checkEqual(fine.hero().maxMana, int(double(plain.hero().maxMana) * 1.08),
+                   "its fifth is 8% more mana");
+        checkNear(fine.hero().stats.defenseRate, plain.hero().stats.defenseRate * 1.2f, 0.01,
+                  "and its second a fifth more defence rate");
     }
     {
         sim::Realm fine;
         wearing(34, leather, sim::kArmour, (1 << 0) | (1 << 2) | (1 << 3), fine);
-        checkNear(fine.hero().excel.zenRate, 1.4, 1e-9, "the first is 40% more Zen");
-        checkNear(fine.hero().excel.reflect, 0.05, 1e-9, "the third reflects a twentieth");
-        checkNear(fine.hero().stats.damageDecrease, 0.04, 1e-9, "the fourth takes 4% off");
+        checkNear(fine.hero().excel.zenRate, 1.8, 1e-9, "the first is 80% more Zen");
+        checkNear(fine.hero().excel.reflect, 0.10, 1e-9, "the third reflects a tenth");
+        checkNear(fine.hero().stats.damageDecrease, 0.08, 1e-9, "the fourth takes 8% off");
     }
     {
         sim::Realm plain, fine;
         wearing(35, axe, sim::kWeaponRight, 0, plain);
         wearing(35, axe, sim::kWeaponRight, (1 << 2) | (1 << 5), fine);  // speed, excellent hit
         check(fine.hero().swingMs < plain.hero().swingMs, "a weapon's third swings faster");
-        checkNear(fine.hero().stats.excellentChance, 0.1, 1e-9,
-                  "and its sixth is a tenth of excellent hits");
+        checkNear(fine.hero().stats.excellentChance, 0.2, 1e-9,
+                  "and its sixth is a fifth of excellent hits");
     }
 
     // The excellent hit: 1.2 x the top of the band, over a critical.
@@ -8182,8 +8182,8 @@ void testJewellery(const content::Tables& tables) {
           "the Angel is still a pet");
     check(!sim::takesOptions(ring) && sim::excellentable(ring), "no luck, but excellent");
     checkEqual(sim::optionValue(ring, 3), 3, "its option is 3% regeneration at 3");
-    check(sim::excellentLine(ring, 5) == "Increase Max HP +4%", "a ring's family is the armour's");
-    check(sim::excellentLine(tables.items[size_t(lightning)], 3) == "Increase Wizardry Dmg +2%",
+    check(sim::excellentLine(ring, 5) == "Increase Max HP +8%", "a ring's family is the armour's");
+    check(sim::excellentLine(tables.items[size_t(lightning)], 3) == "Increase Wizardry Dmg +4%",
           "the Pendant of Lightning's is the staff's");
     checkEqual(sim::resistanceOf(ring, 0), 0, "+0 resists nothing");
     checkEqual(sim::resistanceOf(ring, 4), 4, "+4 resists four");

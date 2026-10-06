@@ -317,23 +317,24 @@ void Realm::rearm(Body& hero) {
         if (!row || bits == 0) continue;
         const auto has = [bits](int n) { return (bits >> n) & 1; };
         Excellence& e = hero.excel;
+        // Each option twice MU's (the user, 2026-10-06: an excellent thing should be felt).
         if (row->armour() || row->shield() || ring(*row)) {
-            if (has(0)) e.zenRate *= 1.4;
-            if (has(1)) e.defenseRateRate *= 1.1;
-            if (has(2)) e.reflect += 0.05;
-            if (has(3)) e.damageDecrease += 0.04;
-            if (has(4)) e.manaRate *= 1.04;
-            if (has(5)) e.healthRate *= 1.04;
+            if (has(0)) e.zenRate *= 1.8;
+            if (has(1)) e.defenseRateRate *= 1.2;
+            if (has(2)) e.reflect += 0.10;
+            if (has(3)) e.damageDecrease += 0.08;
+            if (has(4)) e.manaRate *= 1.08;
+            if (has(5)) e.healthRate *= 1.08;
         } else if ((row->weapon() && !ammunition(*row)) || pendant(*row)) {
-            if (has(0)) e.killMana += 1.0 / 8.0;
-            if (has(1)) e.killLife += 1.0 / 8.0;
-            if (has(2)) e.speed += 7;
+            if (has(0)) e.killMana += 1.0 / 4.0;
+            if (has(1)) e.killLife += 1.0 / 4.0;
+            if (has(2)) e.speed += 14;
             // A staff's 4 and 5 are wizardry damage, which nothing here reckons yet, and the
             // Pendant of Lightning's are the staff's.
             const bool wizardry = row->magicPower > 0 || elementOf(*row) == Element::Lightning;
-            if (has(3) && !wizardry) e.damageRate *= 1.02;
+            if (has(3) && !wizardry) e.damageRate *= 1.04;
             if (has(4) && !wizardry) ++e.levelPieces;
-            if (has(5)) e.excellentChance += 0.1;
+            if (has(5)) e.excellentChance += 0.2;
         }
     }
     // The Rune of the Undying, in any socket of anything worn that takes an armour's rune: the

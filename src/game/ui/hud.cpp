@@ -898,7 +898,7 @@ tip::Sheet Hud::lifeSheet() const {
     sheet.sections.push_back(now);
 
     // `reckon`'s own sum: the class's base, its rate a level and its rate a point of vitality,
-    // and the excellent armour's four percent a piece on top.
+    // and the excellent armour's eight percent a piece on top.
     const sim::ClassRow& row = sim::rowOf(hero_->kin);
     tip::Section most;
     most.kicker = "Maximum";

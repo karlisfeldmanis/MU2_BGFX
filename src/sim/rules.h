@@ -48,7 +48,7 @@ struct Excellence {
     double killLife = 0.0;        // 2: an eighth of max life
     int speed = 0;                // 3: attack speed +7
     double damageRate = 1.0;      // 4: x1.02 on the damage (PhysicalBaseDmgIncrease)
-    int levelPieces = 0;          // 5: + level / 20 on the damage, each
+    int levelPieces = 0;          // 5: + level / 10 on the damage, each
     double excellentChance = 0.0; // 6: 0.1, a blow at 1.2 x the top of the band
     // On armour and the shield.
     double zenRate = 1.0;         // 1: x1.4 on Zen picked up (MoneyAmountRate)
