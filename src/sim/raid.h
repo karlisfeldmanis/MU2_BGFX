@@ -1,0 +1,203 @@
+#pragma once
+
+// The Golden Dragon as a raid boss: its four stages, what it throws in each, and the party of
+// end-game characters who fight it. docs/golden-dragon-raid.md is the design, with every rule
+// below traced there or marked "invention" in it; the comments here say which is which.
+//
+// The realm's part (realm_raid.cpp) is the whole fight -- the stages, the telegraphs and the
+// hazards they lay, the minions, and the raiders' minds -- and says what happens as What::Raid.
+// Drawing it is the game's.
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "sim/rules.h"
+
+namespace mu::sim {
+
+// The raid minion: OpenMU Version095d's Golden Budge Dragon (InvasionMobsInitialization.cs:44-79).
+constexpr int32_t kGoldenBudgeDragonNumber = 43;
+
+enum class RaidStage : uint8_t {
+    None = 0,       // no raid: no dragon standing, or it has not landed
+    Ground = 1,     // 100 to 70%: bite, breath, roar
+    Flight = 2,     // 70 to 40%: aloft, strafes, minions
+    Enraged = 3,    // 40 to 15%: meteors and fire pools
+    LastStand = 4,  // 15 to 0%: the Golden Inferno, shadows the only shelter
+};
+
+// Where each stage begins, in percent of the dragon's health. Invention (the design's §1).
+constexpr int kFlightAt = 70;
+constexpr int kSecondWaveAt = 50;
+constexpr int kEnragedAt = 40;
+constexpr int kLastStandAt = 15;
+
+// **How tough, for how many** (§2). `players` is fixed when it lands; play's is kRaidPlayers.
+// The health runs from OpenMU's 22,000 for one to WebZen's 100,000 for ten (WZD Monster.txt:287),
+// a straight line between (invention), times kRaidHealthScale -- what the headless tune moves
+// (tools/raid), since an end-game party took WZD's ten-player number in a minute.
+constexpr int kRaidPlayers = 10;
+constexpr int32_t kRaidHealthOne = 22000;
+constexpr int32_t kRaidHealthTen = 100000;
+constexpr float kRaidHealthScale = 8.5f;
+inline int32_t raidHealth(int players) {
+    const int n = players < 1 ? 1 : players;
+    const double line =
+        double(kRaidHealthOne) + double(kRaidHealthTen - kRaidHealthOne) * double(n - 1) / 9.0;
+    return int32_t(line * double(kRaidHealthScale));
+}
+// And its blow: OpenMU's band times this, walked toward WZD's 6,000-8,000 by the tune.
+constexpr float kRaidBlowScale = 6.0f;
+
+// ---- the moves, in ticks (20 a second) and tiles. Invention unless a source is named. -------
+// Every this often, on the ground, it rears for a Breath or a Roar Shock.
+constexpr int64_t kMoveEvery = 12 * 20;
+// The Breath: three jets from the mouth at -30, 0 and +30 degrees (MuMain ZzzCharacter.cpp:
+// 1939-1948) -- a 60 degree cone, kBreathReach tiles long, told kBreathTell ahead, burning a
+// kBreathShare of max health every kBreathEvery while it lasts.
+constexpr int64_t kBreathTell = 24;
+constexpr int64_t kBreathTicks = 40;
+constexpr int64_t kBreathEvery = 5;
+constexpr float kBreathReach = 6.0f;
+constexpr float kBreathHalfAngle = 0.5235988f;  // 30 degrees
+constexpr float kBreathShare = 0.06f;
+// The Roar Shock: everyone within kShockReach shocked and shoved a tile out, as the Lightning push
+// is -- MuMain's fire landing shocks every character within 200 units (ZzzEffect.cpp:7732-7770);
+// the shove is ours.
+constexpr int64_t kShockTell = 16;
+constexpr float kShockReach = 2.0f;
+constexpr float kShockShare = 0.15f;
+// The flight: aloft, untouchable but by what flies (thrown blows); a strafe every kStrafeEvery,
+// kStrafeFires impacts along a kStrafeLength line, each marked kImpactTell ahead and kImpactGap
+// after the last; down when its minions are dead (and kFlightLeast has passed) or after kFlightMost.
+constexpr int64_t kFlightMost = 45 * 20;
+// And its least: an end-game party kills a wave in seconds, and a flight that short is no stage.
+constexpr int64_t kFlightLeast = 20 * 20;
+constexpr int64_t kStrafeEvery = 10 * 20;
+constexpr int kStrafeFires = 6;
+constexpr float kStrafeLength = 12.0f;
+constexpr int64_t kImpactTell = 30;
+constexpr int64_t kImpactGap = 4;
+constexpr float kImpactReach = 1.0f;
+constexpr float kStrafeShare = 0.25f;
+// How many minions a wave: 2 + players / 2, at most kMinionsMost (slots raised at the start).
+constexpr int kMinionsMost = 7;
+inline int minionsFor(int players) {
+    const int n = 2 + (players < 1 ? 1 : players) / 2;
+    return n > kMinionsMost ? kMinionsMost : n;
+}
+// The enraged swing: its band's clock times this.
+constexpr float kEnragedSwing = 0.8f;
+// The meteor storm, every kMeteorStormEvery: one rock a living fighter, on the tile he stood on
+// kImpactTell before; the Balrog's storm (play_show.cpp) for the look. Each leaves a pool.
+constexpr int64_t kMeteorStormEvery = 8 * 20;
+constexpr float kMeteorShare = 0.35f;
+constexpr int64_t kPoolTicks = 12 * 20;
+constexpr int64_t kPoolEvery = 20;
+constexpr float kPoolReach = 1.0f;
+constexpr float kPoolShare = 0.05f;
+// The Golden Inferno, every kInfernoEvery from the last stand: told kInfernoTell, kInfernoShare
+// of max health to all within kInfernoReach but those in a wing's shadow (kShadowReach); two
+// shadows up to five players, three above (the design's §1).
+constexpr int64_t kInfernoEvery = 30 * 20;
+constexpr int64_t kInfernoTell = 6 * 20;
+constexpr float kInfernoReach = 14.0f;
+constexpr float kInfernoShare = 0.9f;
+constexpr float kShadowReach = 2.0f;
+constexpr float kShadowOut = 4.0f;
+// The hard enrage: this long after it lands, an Inferno with no shadows over the whole field,
+// and every one after it the same; it kills.
+constexpr int64_t kHardEnrage = 8 * 60 * 20;
+constexpr float kWipeShare = 10.0f;
+constexpr float kWipeReach = 64.0f;
+
+// What::Raid's `a`. b and c are its numbers as each says; the happening's x and y its place.
+enum class RaidEvent : int32_t {
+    Stage = 0,   // b: the RaidStage begun
+    Tell = 1,    // b: the Hazard kind told, c: ticks until it lands; x, y its place, whom its aim
+    Strike = 2,  // b: the Hazard kind landing now; x, y
+    Wave = 3,    // b: how many minions came down
+    Aloft = 4,   // b: 1 up, 0 down
+    Shadow = 5,  // a shadow laid for an Inferno; x, y
+    Raider = 6,  // a raider's own: b: the RaiderAct, c: a skill's number or a potion's worth
+};
+
+enum class RaiderAct : int32_t {
+    Swing = 0,   // a plain blow or shot at whom
+    Cast = 1,    // c: the skill thrown at whom
+    Drink = 2,   // c: the health it gave
+    Dodge = 3,   // stepping out of a marked tile
+};
+
+// One thing laid on the ground by the dragon, told before it lands.
+enum class HazardKind : uint8_t { None, Breath, Shock, Impact, Pool, Inferno };
+
+struct Hazard {
+    HazardKind kind = HazardKind::None;
+    float x = 0.0f, y = 0.0f;   // tiles
+    float reach = 0.0f;
+    float facing = 0.0f;        // the Breath's
+    float share = 0.0f;
+    int64_t landsAt = 0;        // when it strikes first
+    int64_t endsAt = 0;         // and when it is over
+    int64_t nextAt = 0;         // its next pulse, for what burns
+    uint32_t serial = 0;        // which volley it is, for the raiders' reactions
+    bool pools = false;         // a meteor's: it leaves a burning pool where it lands
+    // An Inferno's shelter: the wings' shadows, kShadowReach round each. None is the hard
+    // enrage's.
+    int shades = 0;
+    float shadeX[3] = {}, shadeY[3] = {};
+};
+constexpr int kHazards = 48;
+constexpr int kShadowsMost = 3;
+
+// ---- the party (§2a) ----------------------------------------------------------------------
+enum class RaidRole : uint8_t { Tank, Melee, Healer, Archer, Wizard };
+
+// One worn thing in a kit, by the item's name in the cooked tables.
+struct KitPiece {
+    int slot = -1;                 // sim/items.h's worn slot
+    std::string item;              // the row's name
+    int refinement = 0;
+    bool luck = false;
+    int option = 0;
+    uint8_t excellent = 0;
+    uint8_t sockets = 0;
+    uint8_t powers[3] = {0, 0, 0};
+};
+
+// One character of the party: class, level, points and what he wears. Read from
+// source/raid/party.json by whoever raises a raid (tools/raid, sim_test); the realm only checks
+// it is legal (`Realm::kitRefusal`).
+struct RaiderKit {
+    std::string name;
+    RaidRole role = RaidRole::Melee;
+    Kin kin = Kin::DarkKnight;
+    bool second = false;
+    int level = 1;
+    HeroPoints points;
+    std::vector<KitPiece> pieces;
+    // The skills it throws, by MU's number, in its role's priority order.
+    std::vector<int32_t> skills;
+    int potions = 20;
+};
+
+// The raiders' reactions (§2a): a tell is stepped out of after kReactLeast..kReactMost ticks,
+// and one tell in kDodgeMissOdds is not stepped out of at all. Invention, and the difficulty's
+// two knobs. A potion below kDrinkBelow of max health, one a kDrinkEvery.
+constexpr int64_t kReactLeast = 8;
+constexpr int64_t kReactMost = 20;
+constexpr int kDodgeMissOdds = 8;
+constexpr float kDrinkBelow = 0.4f;
+constexpr int64_t kDrinkEvery = 20;
+// How far a ranged raider stands from what it fights, and a healer's reach.
+constexpr float kRangedStand = 6.0f;
+// The threat a body holds on the dragon: what it dealt, halved every kThreatHalf ticks; the
+// tank's counts kTankThreat times; a new quarry must hold kThreatMargin times the old's.
+constexpr int64_t kThreatHalf = 7 * 20;
+constexpr float kTankThreat = 3.0f;
+constexpr float kThreatMargin = 1.3f;
+constexpr int kRaidersMost = 9;
+
+}  // namespace mu::sim

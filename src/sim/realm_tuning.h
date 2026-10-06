@@ -341,7 +341,9 @@ constexpr int chillOdds(int32_t number) {
 // And Atlans's Hydra (49), A.Type 150 the same (Monster.txt:72; docs/atlans-port.md 4.2).
 // And Tarkan's Tantallos (58), Zaikan (59) and Death Beam Knight (63), A.Type 150 (WebZen
 // Monster.txt:61, :73, :74; docs/tarkan-port.md 4.2): all 63 Tantallos, not only the bosses.
-constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63};
+// And the Golden Dragon (79), A.Type 150 in WZD Monster.txt:287 -- the raid's boss
+// (docs/golden-dragon-raid.md).
+constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63, 79};
 
 // ---- blows split into parts --------------------------------------------------------------------
 // **Ours.** MU and WebZen strike once a swing; these breeds' one blow is split into `parts`, each

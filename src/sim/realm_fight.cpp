@@ -18,10 +18,18 @@ namespace mu::sim {
 void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* row,
                      bool thrown, bool pays) {
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
+    // **The dragon aloft** (sim/raid.h, the raid's flight): nothing but what flies reaches it --
+    // an arrow, a spell let go. A swing or a sweep is a miss. invention.
+    if (raid_.aloft && !thrown && isBoss(target)) {
+        say(What::Missed, attacker, 0, 0, 0, target.id);
+        return;
+    }
     // A spell rolls the wizardry sum, off energy and the staff; everything else is a swing's.
     // A guard's fight, either way round, rolls off his own stream (`wardenDice_`).
+    // And the raid's party, either way round, off theirs (`raiderDice_`).
     Random& dice = attacker.warden >= 0 || target.warden >= 0     ? wardenDice_
                    : attacker.summoner != 0 || target.summoner != 0 ? summonDice_
+                   : attacker.raider >= 0 || target.raider >= 0     ? raiderDice_
                                                                     : dice_;
     // The Imp's price: 3 of his own life on every blow that lands, and the x1.3 only while he
     // can pay it. WebZen's gObjAttack (1.00.93 ObjAttack.cpp:1045-1060) takes the 3 and, when
@@ -72,7 +80,10 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     };
     // A boss's Flame of Evil, one blow in five (realm_tuning.h kBosses): drawn from its own
     // stream, so a map without one is not moved. Hit or missed, the drawing shows the blow.
-    const bool flame = !attacker.player && target.player && bossBlow(attacker);
+    // A raider takes it as he does: the dragon's is one in five on whoever it bites.
+    const bool flame =
+        !attacker.player && attacker.raider < 0 && (target.player || target.raider >= 0) &&
+        bossBlow(attacker);
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
@@ -1499,9 +1510,10 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.provoked = false;
     say(What::Died, dead, dead.level, 0, 0, killer.id);
 
-    // Her summon: it falls and stays down -- nothing drops, nothing is earned, and it does not
-    // rise; she casts another. What fought it forgets it.
-    if (dead.summoner != 0) {
+    // Her summon, and a raider: it falls and stays down -- nothing drops, nothing is earned, and
+    // it does not rise; she casts another, and a raider is gone for the fight (sim/raid.h). What
+    // fought it forgets it.
+    if (dead.summoner != 0 || dead.raider >= 0) {
         dropBlow(dead);
         for (Body& one : bodies_) {
             if (one.quarry == dead.id) {
@@ -1624,6 +1636,12 @@ void Realm::kill(Body& dead, Body& killer) {
             leave(dead, *owner);
             gain(*owner, paid(*owner));
         }
+    }
+    // **A raider's kill is his** (the raid's party fights for him): its drop and its experience,
+    // as her summon's are. invention, with the raiders.
+    if (killer.raider >= 0 && hero.alive()) {
+        leave(dead, hero);
+        gain(hero, paid(hero));
     }
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
     // it was when the blow landed.

@@ -1,0 +1,1004 @@
+{
+ "from": "docs/golden-dragon-raid.md \u00a72a: ten end-game characters in proper gear -- second class, levels 250-360, the best sets and arms built (source/items), +9 to +11, excellent options, runes in sockets, the 2nd wings and a pet. Invention, all of it; the user, 2026-10-06: 'make realistic \"end game\" characters', 'with some proper gear'. The first is the hero's. Slots are sim/items.h's worn slots by name; skills are MU's numbers in the order thrown; excellent is the option bits; sockets are sim::Power numbers (7 Undying, 11 Renewal, 29-36 the stat runes).",
+ "party": [
+  {
+   "name": "Aldric",
+   "role": "tank",
+   "class": "knight",
+   "second": true,
+   "level": 320,
+   "points": {
+    "strength": 760,
+    "agility": 300,
+    "vitality": 520,
+    "energy": 98
+   },
+   "potions": 20,
+   "skills": [
+    41,
+    42,
+    43
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale18",
+     "plus": 9,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      34
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale18",
+     "plus": 5,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      7,
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale18",
+     "plus": 7,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale18",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Sword17",
+     "plus": 9,
+     "luck": true,
+     "option": 3,
+     "excellent": 5
+    },
+    {
+     "slot": "left",
+     "item": "Shield14",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "wings",
+     "item": "Wing06",
+     "plus": 9,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper01"
+    },
+    {
+     "slot": "amulet",
+     "item": "Necklace02",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "Ring02",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Bran",
+   "role": "melee",
+   "class": "knight",
+   "second": true,
+   "level": 260,
+   "points": {
+    "strength": 700,
+    "agility": 330,
+    "vitality": 250,
+    "energy": 98
+   },
+   "potions": 20,
+   "skills": [
+    43,
+    42,
+    41,
+    22
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale18",
+     "plus": 6,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      30
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale18",
+     "plus": 2,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale18",
+     "plus": 4,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale18",
+     "plus": 8,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale18",
+     "plus": 7,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Spear11",
+     "plus": 5,
+     "luck": true,
+     "option": 3,
+     "excellent": 5,
+     "sockets": []
+    },
+    {
+     "slot": "wings",
+     "item": "Wing06",
+     "plus": 7,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Corvin",
+   "role": "melee",
+   "class": "knight",
+   "second": true,
+   "level": 290,
+   "points": {
+    "strength": 760,
+    "agility": 370,
+    "vitality": 300,
+    "energy": 98
+   },
+   "potions": 20,
+   "skills": [
+    43,
+    42,
+    41,
+    22
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale17",
+     "plus": 10,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      29,
+      29
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale17",
+     "plus": 10,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale17",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale17",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale17",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Sword17",
+     "plus": 10,
+     "luck": true,
+     "option": 3,
+     "excellent": 5,
+     "sockets": []
+    },
+    {
+     "slot": "wings",
+     "item": "Wing06",
+     "plus": 8,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Daric",
+   "role": "melee",
+   "class": "knight",
+   "second": true,
+   "level": 340,
+   "points": {
+    "strength": 850,
+    "agility": 450,
+    "vitality": 380,
+    "energy": 98
+   },
+   "potions": 20,
+   "skills": [
+    43,
+    42,
+    41,
+    22
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      30,
+      31
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale18",
+     "plus": 1,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Sword17",
+     "plus": 9,
+     "luck": true,
+     "option": 3,
+     "excellent": 5,
+     "sockets": []
+    },
+    {
+     "slot": "wings",
+     "item": "Wing06",
+     "plus": 9,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Elowen",
+   "role": "healer",
+   "class": "elf",
+   "second": true,
+   "level": 280,
+   "points": {
+    "strength": 200,
+    "agility": 450,
+    "vitality": 250,
+    "energy": 577
+   },
+   "potions": 20,
+   "skills": [
+    26,
+    27,
+    28
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      36
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale20",
+     "plus": 1,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7,
+      11
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale20",
+     "plus": 2,
+     "luck": true,
+     "option": 3,
+     "excellent": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Mace08",
+     "plus": 9,
+     "luck": true,
+     "option": 2
+    },
+    {
+     "slot": "left",
+     "item": "Shield17",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "wings",
+     "item": "Wing04",
+     "plus": 9,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper01"
+    },
+    {
+     "slot": "amulet",
+     "item": "Necklace01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingWisdom",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Faela",
+   "role": "archer",
+   "class": "elf",
+   "second": true,
+   "level": 270,
+   "points": {
+    "strength": 200,
+    "agility": 900,
+    "vitality": 250,
+    "energy": 77
+   },
+   "potions": 20,
+   "skills": [
+    26,
+    27,
+    52,
+    24
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale20",
+     "plus": 9,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      32
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale20",
+     "plus": 1,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale20",
+     "plus": 9,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale20",
+     "plus": 9,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale20",
+     "plus": 9,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Bow18",
+     "plus": 6,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "wings",
+     "item": "Wing04",
+     "plus": 8,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Lirae",
+   "role": "archer",
+   "class": "elf",
+   "second": true,
+   "level": 330,
+   "points": {
+    "strength": 230,
+    "agility": 1100,
+    "vitality": 320,
+    "energy": 77
+   },
+   "potions": 20,
+   "skills": [
+    26,
+    27,
+    52,
+    24
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale20",
+     "plus": 10,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      32
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale20",
+     "plus": 7,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale20",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale20",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale20",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "CrossBow20",
+     "plus": 5,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "wings",
+     "item": "Wing04",
+     "plus": 9,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Morwen",
+   "role": "wizard",
+   "class": "wizard",
+   "second": true,
+   "level": 250,
+   "points": {
+    "strength": 260,
+    "agility": 120,
+    "vitality": 250,
+    "energy": 696
+   },
+   "potions": 20,
+   "skills": [
+    16,
+    14,
+    2,
+    9
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale19",
+     "plus": 7,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      36
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale19",
+     "plus": 1,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale19",
+     "plus": 9,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale19",
+     "plus": 9,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale19",
+     "plus": 9,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Staff10",
+     "plus": 9,
+     "luck": true,
+     "option": 3,
+     "excellent": 5
+    },
+    {
+     "slot": "wings",
+     "item": "Wing05",
+     "plus": 7,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "Necklace02",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingWisdom",
+     "plus": 4
+    },
+    {
+     "slot": "left",
+     "item": "Shield16",
+     "plus": 9,
+     "luck": true,
+     "option": 3
+    }
+   ]
+  },
+  {
+   "name": "Ysolde",
+   "role": "wizard",
+   "class": "wizard",
+   "second": true,
+   "level": 300,
+   "points": {
+    "strength": 280,
+    "agility": 130,
+    "vitality": 300,
+    "energy": 866
+   },
+   "potions": 20,
+   "skills": [
+    16,
+    14,
+    2,
+    9
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale19",
+     "plus": 10,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      36
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale19",
+     "plus": 0,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale19",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale19",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale19",
+     "plus": 10,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Staff09",
+     "plus": 9,
+     "luck": true,
+     "option": 3,
+     "excellent": 5
+    },
+    {
+     "slot": "wings",
+     "item": "Wing05",
+     "plus": 9,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "Necklace02",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingWisdom",
+     "plus": 4
+    }
+   ]
+  },
+  {
+   "name": "Thane",
+   "role": "wizard",
+   "class": "wizard",
+   "second": true,
+   "level": 360,
+   "points": {
+    "strength": 300,
+    "agility": 150,
+    "vitality": 360,
+    "energy": 1066
+   },
+   "potions": 20,
+   "skills": [
+    16,
+    14,
+    2,
+    9
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      36
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale19",
+     "plus": 2,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Staff10",
+     "plus": 8,
+     "luck": true,
+     "option": 3,
+     "excellent": 5
+    },
+    {
+     "slot": "wings",
+     "item": "Wing05",
+     "plus": 9,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "Necklace02",
+     "plus": 4
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 4
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingWisdom",
+     "plus": 4
+    },
+    {
+     "slot": "left",
+     "item": "Shield16",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    }
+   ]
+  }
+ ]
+}

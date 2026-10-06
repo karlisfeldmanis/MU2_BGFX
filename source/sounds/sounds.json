@@ -48,6 +48,31 @@
       ],
       "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, as it does for every monster."
     },
+    "goldenbudgedragon_attack": {
+      "files": [
+        "mBudgeAttack1.wav"
+      ],
+      "from": "The Golden Budge Dragon wears MONSTER_MODEL_BUDGE_DRAGON (ZzzCharacter.cpp:13829-13834), so its sounds are that arm's: budgedragon_attack's."
+    },
+    "goldenbudgedragon_die": {
+      "files": [
+        "mBudgeDie.wav"
+      ],
+      "from": "As budgedragon_die: the body's arm."
+    },
+    "goldenbudgedragon_move": {
+      "files": [
+        "mBudge1.wav",
+        "mBudgeAttack1.wav"
+      ],
+      "from": "As budgedragon_move: the body's arm."
+    },
+    "goldenbudgedragon_shock": {
+      "files": [
+        "mBudgeAttack1.wav"
+      ],
+      "from": "As budgedragon_shock: the body's arm."
+    },
     "bullfighter_attack": {
       "files": [
         "mBullAttack1.wav",

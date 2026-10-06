@@ -43,6 +43,7 @@
 #include "sim/gates.h"
 #include "sim/event.h"
 #include "sim/invasion.h"
+#include "sim/raid.h"
 
 namespace mu::sim {
 
@@ -132,6 +133,8 @@ enum class What : uint8_t {
     Invasion,  // the map's Golden Invasion (sim/invasion.h): a: 1 begun, its dragons coming in
                // the rain, landing kInvasionLandTicks later; 0 over, killed or gone. b and c:
                // the column and row it lands on. `who` is the dragon's body.
+    Raid,      // the Golden Dragon's raid (sim/raid.h): a: a RaidEvent, b and c as it says, x and
+               // y its place. `who` is the dragon, or the raider for RaidEvent::Raider.
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -558,8 +561,14 @@ struct Body {
     // The summon skill that raised it (30 Goblin ... 35 Bali), for the name and the recast.
     int32_t summonedBy = 0;
 
+    // ---- the Golden Dragon's raid (sim/raid.h, realm_raid.cpp) ------------------------------
+    // A raider's place in the party, -1 on everybody else: one of the end-game characters who
+    // fight the dragon beside him. Not a monster, and not the player: its blows roll off its own
+    // reckoned stats, as a guard's do, and a dead one stays down for the fight.
+    int32_t raider = -1;
+
     bool alive() const { return health > 0; }
-    bool monster() const { return !player && warden < 0 && summoner == 0; }    int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
+    bool monster() const { return !player && warden < 0 && summoner == 0 && raider < 0; }    int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
     int row() const { return int(y + (y < 0.0f ? -0.5f : 0.5f)); }
 };
 
@@ -980,6 +989,44 @@ public:
     const Body* invader() const {
         return invaderSlot_ >= 0 ? &bodies_[size_t(invaderSlot_)] : nullptr;
     }
+    // ---- the Golden Dragon's raid (sim/raid.h, realm_raid.cpp) ------------------------------
+    // Set BEFORE raise or not at all: the raid itself (never set, the invasion is the plain
+    // one), how many players the dragon is tough for, and the party that fights it -- its first kit is the hero's own, laid on
+    // him at the raise; the rest are raised as raiders. `hand` lets the raiders' mind drive the
+    // hero too, for the headless runs (tools/raid, sim_test); in play he is the player's.
+    void setRaid(int players, std::vector<RaiderKit> party = {}, bool hand = false) {
+        raidPlayers_ = players;
+        party_ = std::move(party);
+        raidHand_ = hand;
+        raidAsked_ = true;
+    }
+    // Why this kit could not be worn as it stands -- a piece unknown, refused by its class or
+    // its points, or in the wrong slot -- or empty. The real gates (sim::movable), on a scratch
+    // satchel. Asked by the raise for every kit, and by the tests.
+    std::string kitRefusal(const RaiderKit& kit) const;
+    RaidStage raidStage() const { return raid_.stage; }
+    bool raidAloft() const { return raid_.aloft; }
+    int64_t raidLandedAt() const { return raid_.landedAt; }
+    const Hazard* hazards() const { return hazards_; }
+    // The raiders, alive or dead, in party order after the hero (empty with no party).
+    int raiderCount() const { return int(raiderSlots_.size()); }
+    const Body* raiderAt(int index) const {
+        return index >= 0 && index < raiderCount() ? &bodies_[size_t(raiderSlots_[size_t(index)])]
+                                                   : nullptr;
+    }
+    // The minions' bodies, up or down.
+    int minionCount() const { return int(minionSlots_.size()); }
+    const Body* minionAt(int index) const {
+        return index >= 0 && index < minionCount() ? &bodies_[size_t(minionSlots_[size_t(index)])]
+                                                   : nullptr;
+    }
+    // Potions a body of the party has left: the hero's at [0], the raiders' after.
+    int raidPotions(int index) const {
+        return index >= 0 && index <= kRaidersMost ? raidPotions_[index] : 0;
+    }
+    // A test's and the demo's (--raid-stage): once it stands, its health laid at the top of
+    // `stage`'s band, so that stage begins on the next tick.
+    void raidSkipTo(RaidStage stage);
     // --castle-open's: the Messenger's entry open at any hour, for a test (Realm::castleRefusal).
     void openCastleDoor() { castleOpen_ = true; }
     bool castleDoorHeld() const { return castleOpen_; }
@@ -1332,7 +1379,9 @@ private:
     // The rest of a gate once it lets him through: the landing in the target's box, and the
     // map change said (Gated) or the floor of this map he is put down on.
     bool passGate(Body& hero, const EnterGate& gate);
-    void rearm(Body& hero);
+    void rearm(Body& hero) { rearm(hero, bag_); }
+    // And off another satchel: a raider's own kit (realm_raid.cpp), by the same rules.
+    void rearm(Body& hero, const Satchel& kit);
     // A blow's wear on the player's gear: `took` the health a blow took off him, which wears one
     // defending piece; `landed` a blow of his that did harm, which wears the weapon.
     // Player.DecreaseItemDurabilityAfterHitAsync and DecreaseWeaponDurabilityAfterHitAsync.
@@ -1521,6 +1570,75 @@ private:
     void invasionTick();
     // Laid down for good: killed (Realm::kill) or its thirty minutes up.
     void endInvasion();
+    // ---- the Golden Dragon's raid (realm_raid.cpp) ---------------------------------------------
+    struct RaidState {
+        RaidStage stage = RaidStage::None;
+        bool aloft = false;
+        int players = kRaidPlayers;
+        int64_t landedAt = 0;
+        int64_t nextMove = 0;      // the next Breath or Shock
+        int64_t busyUntil = 0;     // a move in hand: it neither walks nor swings
+        int64_t aloftSince = 0;
+        int64_t nextStrafe = 0;
+        int64_t nextStorm = 0;
+        int64_t nextInferno = 0;
+        bool secondWave = false;
+        bool wiped = false;        // the hard enrage's Inferno told
+        bool heroDown = false;     // the headless hand's hero has fallen: out, as a raider is
+        uint32_t serial = 0;       // tells said, for the raiders' reactions
+        // The threat each fighter holds on it, by the party's index (0 the hero, then the
+        // raiders), and the summon's after them.
+        float threat[kRaidersMost + 2] = {};
+    } raid_;
+    int raidPlayers_ = kRaidPlayers;
+    // Whether a raid was asked for (setRaid). Until the drawing shows the raid (sprint 2 of
+    // docs/golden-dragon-raid.md), an invasion with none is the plain one: no raid health, no
+    // minions, no stages.
+    bool raidAsked_ = false;
+    std::vector<RaiderKit> party_;
+    bool raidHand_ = false;
+    std::vector<int> raiderSlots_;
+    std::vector<int> minionSlots_;
+    std::vector<Satchel> raiderBags_;
+    Hazard hazards_[kHazards] = {};
+    // Each fighter's reaction to the last tell: when it steps out, or never (-1).
+    int64_t reactAt_[kRaidersMost + 1] = {};
+    uint32_t reactSerial_[kRaidersMost + 1] = {};
+    int raidPotions_[kRaidersMost + 1] = {};
+    int64_t drinkAt_[kRaidersMost + 1] = {};
+    // The dragon's own rolls, and the raiders': so a run with no raid is not moved by one.
+    Random raidDice_{0};
+    Random raiderDice_{0};
+    void raiseRaid();
+    void dressHero(const RaiderKit& kit);
+    void fitRaider(Body& one, const RaiderKit& kit, const Satchel& bag);
+    void raidTick();
+    void raidAfter();
+    void beginStage(Body& dragon, RaidStage stage);
+    void bossThink(Body& dragon);
+    void raidMove(Body& dragon);
+    void strafe(Body& dragon);
+    void storm(Body& dragon);
+    void inferno(Body& dragon, bool shadows);
+    void minionWave(Body& dragon);
+    void hazardTick(Body& dragon);
+    Hazard* layHazard(const Hazard& one);
+    void scorch(Body& dragon, Body& one, float share);
+    bool inHazard(const Hazard& h, float x, float y) const;
+    bool isBoss(const Body& one) const {
+        return invaderSlot_ >= 0 && &one == &bodies_[size_t(invaderSlot_)] &&
+               raid_.stage != RaidStage::None;
+    }
+    // Whether a body fights on the party's side: the hero, a raider, her summon.
+    bool partisan(const Body& one) const {
+        return one.player || one.raider >= 0 || one.summoner != 0;
+    }
+    int partyIndex(const Body& one) const;
+    void raid(Body& one, int index);
+    bool dodge(Body& one, int index);
+    void raiderStrike(Body& one, Body& target, const SkillRow* row);
+    // The kit's satchel a party member is reckoned from: the hero's bag, or the raider's own.
+    const Satchel& kitOf(const Body& one) const;
     // The Town Portal's warp, shared with Icarus's sending home (realm_items.cpp).
     void warpHome(Body& hero);
     // Set once Icarus has sent him home for want of wings, so the warp is said once while the

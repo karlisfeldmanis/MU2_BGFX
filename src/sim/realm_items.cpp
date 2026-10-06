@@ -252,9 +252,9 @@ bool Realm::quivered(const Body& hero) const {
 // Reads the hands and the armour off the satchel and re-reckons him. Beast.Rearm: ammunition is
 // not a weapon, the bow is the weapon wherever it is held, and the defence is the sum of the
 // pieces from the left hand to the boots, each with its plus.
-void Realm::rearm(Body& hero) {
+void Realm::rearm(Body& hero, const Satchel& kit) {
     const auto rowAt = [&](int slot) -> const content::ItemRow* {
-        const Held& h = bag_[slot];
+        const Held& h = kit[slot];
         return h.empty() ? nullptr : &tables_->items[size_t(h.item)];
     };
     const content::ItemRow* right = rowAt(kWeaponRight);
@@ -264,7 +264,7 @@ void Realm::rearm(Body& hero) {
     };
     int weaponSlot = swung(right) ? kWeaponRight : (swung(left) ? kWeaponLeft : -1);
     hero.weapon = weaponSlot >= 0 ? tables_->armNamed(rowAt(weaponSlot)->name) : -1;
-    hero.weaponBonus = weaponSlot >= 0 ? damageBonus(bag_[weaponSlot].refinement) : 0;
+    hero.weaponBonus = weaponSlot >= 0 ? damageBonus(kit[weaponSlot].refinement) : 0;
     // A bow type, by the arm's own flags. The hand rule puts both in the right hand, so the
     // left is the quiver's.
     hero.archer = 0;
@@ -272,11 +272,12 @@ void Realm::rearm(Body& hero) {
         const content::Arm& held = tables_->arms[size_t(hero.weapon)];
         hero.archer = held.bow() ? 1 : held.crossbow() ? 2 : 0;
     }
-    hero.quiverPlus = int8_t(quiverPlusOf(hero));
+    // A raider shoots without a quiver (realm_raid.cpp); the quiver read is the hero's bag.
+    hero.quiverPlus = hero.raider >= 0 ? 0 : int8_t(quiverPlusOf(hero));
     // The additional option on the weapon adds to both ends of the band, as Stats.PhysicalBaseDmg
     // does, and wears with it. A staff's is wizardry damage, which nothing here reckons yet.
     if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower == 0) {
-        hero.weaponBonus += optionValue(*rowAt(weaponSlot), bag_[weaponSlot].option);
+        hero.weaponBonus += optionValue(*rowAt(weaponSlot), kit[weaponSlot].option);
     }
     // A staff's rise: half its magic power, and its plus off one of two tables by whether that
     // power is even or odd (Version075/Items/Weapons.cs:29-30, :315). It is what a staff is FOR
@@ -288,11 +289,11 @@ void Realm::rearm(Body& hero) {
         static const float kEven[16] = {0, 3, 7, 10, 14, 17, 21, 24, 28, 31, 35, 40, 45, 50, 56, 63};
         static const float kOdd[16] = {0, 4, 7, 11, 14, 18, 21, 25, 28, 32, 36, 40, 45, 51, 57, 63};
         const int power = rowAt(weaponSlot)->magicPower;
-        const int plus = std::clamp(int(bag_[weaponSlot].refinement), 0, 15);
+        const int plus = std::clamp(int(kit[weaponSlot].refinement), 0, 15);
         hero.staffRise = float(power) / 2.0f + (power % 2 == 0 ? kEven[plus] : kOdd[plus]);
     }
     // Being excellent: the weapon's band + min x 25 / drop level + 5 (sim::excellentDamage).
-    if (weaponSlot >= 0 && bag_[weaponSlot].excellent != 0) {
+    if (weaponSlot >= 0 && kit[weaponSlot].excellent != 0) {
         hero.weaponBonus += excellentDamage(*rowAt(weaponSlot));
     }
     // A Dark Knight's second weapon (sim::offHanded): WebZen's bTwoHandWeapon, a knight with a
@@ -303,7 +304,7 @@ void Realm::rearm(Body& hero) {
                 offHanded(*left, hero.kin);
     hero.offhandBonus = 0;
     if (hero.dual) {
-        const Held& h = bag_[kWeaponLeft];
+        const Held& h = kit[kWeaponLeft];
         hero.offhandBonus = damageBonus(h.refinement) + optionValue(*left, h.option) +
                             (h.excellent != 0 ? excellentDamage(*left) : 0);
     }
@@ -313,7 +314,7 @@ void Realm::rearm(Body& hero) {
     hero.excel = Excellence{};
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
-        const uint8_t bits = bag_[slot].excellent;
+        const uint8_t bits = kit[slot].excellent;
         if (!row || bits == 0) continue;
         const auto has = [bits](int n) { return (bits >> n) & 1; };
         Excellence& e = hero.excel;
@@ -342,8 +343,8 @@ void Realm::rearm(Body& hero) {
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || (row->weapon() && !row->shield())) continue;
-        for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
-            const PowerRow* power = powerOf(bag_[slot].powers[at]);
+        for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
+            const PowerRow* power = powerOf(kit[slot].powers[at]);
             if (!power) continue;
             Excellence& e = hero.excel;
             if (power->power == Power::Undying) e.undyingRate *= kUndyingHealth;
@@ -368,8 +369,8 @@ void Realm::rearm(Body& hero) {
     for (int slot : {kWeaponRight, kWeaponLeft, kAmulet, kRingRight, kRingLeft}) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || row->shield()) continue;
-        for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
-            const PowerRow* power = powerOf(bag_[slot].powers[at]);
+        for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
+            const PowerRow* power = powerOf(kit[slot].powers[at]);
             if (power && elementOf(power->power) != Element::None) {
                 ++hero.excel.elementRunes[int(elementOf(power->power))];
             }
@@ -406,7 +407,7 @@ void Realm::rearm(Body& hero) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || !jewellery(*row)) continue;
         Excellence& e = hero.excel;
-        const int resists = resistanceOf(*row, bag_[slot].refinement);
+        const int resists = resistanceOf(*row, kit[slot].refinement);
         if (elementOf(*row) == Element::Ice) e.iceResistance = std::max(e.iceResistance, resists);
         if (elementOf(*row) == Element::Poison) {
             e.poisonResistance = std::max(e.poisonResistance, resists);
@@ -417,11 +418,11 @@ void Realm::rearm(Body& hero) {
         if (elementOf(*row) == Element::Fire) {
             e.fireResistance = std::max(e.fireResistance, resists);
         }
-        e.lifeRegen += optionValue(*row, bag_[slot].option);
+        e.lifeRegen += optionValue(*row, kit[slot].option);
         // A powered piece's signature and its further powers, every worn piece's added
         // (sim::Affix, docs/jewellery.md "Powers").
         if (!powered(*row)) continue;
-        const Held& held = bag_[slot];
+        const Held& held = kit[slot];
         const auto add = [&](Affix affix) {
             const int value = affixValue(affix, held.refinement);
             switch (affix) {
@@ -457,13 +458,13 @@ void Realm::rearm(Body& hero) {
     hero.luckyWorn = 0;
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
-        if (row && (takesOptions(*row) || jewellery(*row) || anyWing(*row)) && bag_[slot].luck) {
+        if (row && (takesOptions(*row) || jewellery(*row) || anyWing(*row)) && kit[slot].luck) {
             ++hero.luckyWorn;
         }
     }
     // What each piece's wear takes off it (sim/wear.h), read off the slot it is worn in.
     const auto cutAt = [&](int slot) {
-        const Held& h = bag_[slot];
+        const Held& h = kit[slot];
         const content::ItemRow& r = tables_->items[size_t(h.item)];
         return wearCut(h.durability, maximumDurability(r, h));
     };
@@ -481,25 +482,25 @@ void Realm::rearm(Body& hero) {
         const float cut = cutAt(slot);
         // Armour's additional option is Stats.DefenseBase, added with the piece's own; a
         // shield's is its defence rate instead (below).
-        const int option = row->shield() ? 0 : optionValue(*row, bag_[slot].option);
-        const int excellent = bag_[slot].excellent != 0 ? excellentDefense(*row) : 0;
-        const int defense = row->defense + defenseBonus(row->shield(), bag_[slot].refinement) +
+        const int option = row->shield() ? 0 : optionValue(*row, kit[slot].option);
+        const int excellent = kit[slot].excellent != 0 ? excellentDefense(*row) : 0;
+        const int defense = row->defense + defenseBonus(row->shield(), kit[slot].refinement) +
                             option + excellent;
         hero.wornDefense += defense - int(float(defense) * cut);
         // The shield's block column rises on the armour's table: _shieldDefenseRateIncreaseTable
         // is built from DefenseIncreaseByLevel. Worn down the same way (CalculateSuccessfulBlocking).
         if (row->shield()) {
             hero.shieldDefense = defense - int(float(defense) * cut);
-            const int rate = row->defenseRate + defenseBonus(false, bag_[slot].refinement) +
-                             optionValue(*row, bag_[slot].option) +
-                             (bag_[slot].excellent != 0 ? excellentBlock(*row) : 0);
+            const int rate = row->defenseRate + defenseBonus(false, kit[slot].refinement) +
+                             optionValue(*row, kit[slot].option) +
+                             (kit[slot].excellent != 0 ? excellentBlock(*row) : 0);
             hero.wornDefenseRate += rate - int(float(rate) * cut);
         }
     }
     // The wing's defence, worn down as armour is (ItemDefense, the item's m_Defense cut by its
     // m_CurrentDurabilityState).
     if (const content::ItemRow* wing = rowAt(kWings); wing && anyWing(*wing)) {
-        const int defense = wingDefense(*wing, bag_[kWings].refinement);
+        const int defense = wingDefense(*wing, kit[kWings].refinement);
         hero.wornDefense += defense - int(float(defense) * cutAt(kWings));
     }
     // The pet in slot 8 and the mount in its own, each while it has life (ItemPowerUpFactory.cs:
@@ -507,7 +508,7 @@ void Realm::rearm(Body& hero) {
     hero.pet = PetPower{};
     for (int slot : {kPet, kMount}) {
         const content::ItemRow* row = rowAt(slot);
-        if (!row || bag_[slot].durability <= 0) continue;
+        if (!row || kit[slot].durability <= 0) continue;
         const PetPower one = petPower(*row);
         hero.pet.taken *= one.taken;
         hero.pet.dealt *= one.dealt;
@@ -525,8 +526,8 @@ void Realm::rearm(Body& hero) {
     // rings', Heaven's wizardry, Satan's damage (docs/wings.md).
     hero.wingDamage = hero.wingWizardry = 0;
     if (const content::ItemRow* wing = rowAt(kWings);
-        wing && anyWing(*wing) && bag_[kWings].durability > 0) {
-        const Held& worn = bag_[kWings];
+        wing && anyWing(*wing) && kit[kWings].durability > 0) {
+        const Held& worn = kit[kWings];
         const PetPower power = wingPower(*wing, worn.refinement);
         hero.pet.taken *= power.taken;
         hero.pet.dealt *= power.dealt;
@@ -549,8 +550,8 @@ void Realm::rearm(Body& hero) {
     hero.runeShare = HeroPoints{};
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         if (!rowAt(slot)) continue;
-        for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
-            const PowerRow* power = powerOf(bag_[slot].powers[at]);
+        for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
+            const PowerRow* power = powerOf(kit[slot].powers[at]);
             if (!power) continue;
             const HeroPoints share = statShareOf(power->power);
             hero.runeShare.strength += share.strength;

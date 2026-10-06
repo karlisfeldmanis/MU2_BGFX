@@ -96,6 +96,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
     showerDice_.seed(seed ^ 0x6a09e667bb67ae85ull);
     invasionDice_.seed(seed ^ 0x510e527f9b05688cull);
+    raidDice_.seed(seed ^ 0x1f83d9ab5be0cd19ull);
+    raiderDice_.seed(seed ^ 0x5be0cd19137e2179ull);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
@@ -281,12 +283,15 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // And the Golden Invasion's dragon, down until one lands (realm_invasion.cpp), after the
     // summon so no id before it moves.
     raiseInvader();
+    // And the raid's minions and party, after it, so no id before them moves (realm_raid.cpp).
+    raiseRaid();
 
     players_.clear();
     indexOfId_.assign(bodies_.size() + 1, uint32_t(bodies_.size()));
     for (uint32_t i = 0; i < bodies_.size(); ++i) {
         indexOfId_[bodies_[i].id] = i;
-        if (bodies_[i].player) players_.push_back(i);
+        // A raider is fought as he is: what a monster notices and chases (realm_raid.cpp).
+        if (bodies_[i].player || bodies_[i].raider >= 0) players_.push_back(i);
     }
 
     // Blood Castle's garrison is not there in the court's wait: WebZen raises it as the run
@@ -869,6 +874,7 @@ void Realm::step() {
     happenings_.clear();
     castleTick();
     invasionTick();
+    raidTick();
     if (castleOwed_ != 0) {
         const int castle = castleOwed_;
         castleOwed_ = 0;
@@ -976,7 +982,12 @@ void Realm::step() {
         } else {
             advance(hero);
         }
-        press();
+        // The headless raid's hand (Realm::setRaid): the raiders' mind plays him too.
+        if (raidHand_ && raid_.stage != RaidStage::None && !raid_.heroDown) {
+            raid(hero, 0);
+        } else {
+            press();
+        }
         fireTraps();
     } else if (tick_ >= hero.risesAt) {
         reviveHero();
@@ -990,6 +1001,10 @@ void Realm::step() {
         }
         if (beast.summoner != 0) {
             tend(beast);
+            continue;
+        }
+        if (beast.raider >= 0) {
+            raid(beast, beast.raider + 1);
             continue;
         }
         poisonPulse(beast);
@@ -1018,7 +1033,11 @@ void Realm::step() {
             rouse(beast);
             if (beast.temper != Temper::Asleep) {
                 advance(beast);
-                think(beast);
+                if (isBoss(beast)) {
+                    bossThink(beast);
+                } else {
+                    think(beast);
+                }
             } else if (beast.walking) {
                 // Asleep, but not until it has come to a stand. A monster whose walk ended on
                 // the tick nobody was left near it would otherwise keep that tick's pace for as
@@ -1029,6 +1048,8 @@ void Realm::step() {
             raiseBeast(beast);
         }
     }
+    // What the tick's blows on the dragon were worth to its threat (realm_raid.cpp).
+    raidAfter();
 }
 
 // ---- the log ---------------------------------------------------------------------------
@@ -1044,6 +1065,7 @@ std::string describe(const Happening& happening, const Realm& realm) {
         if (one->summoner != 0) {
             return realm.tables()->kinds[size_t(one->kind)].label + " of hero#" + std::to_string(id);
         }
+        if (one->raider >= 0) return "raider" + std::to_string(one->raider) + "#" + std::to_string(id);
         return realm.tables()->kinds[size_t(one->kind)].label + "#" + std::to_string(id);
     };
     char line[512];
@@ -1299,6 +1321,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Invasion:
             std::snprintf(line, sizeof(line), "%6u %s invasion %s at (%d, %d)", happening.tick,
                           who, happening.a ? "begun, landing" : "over", happening.b, happening.c);
+            break;
+        case What::Raid:
+            std::snprintf(line, sizeof(line), "%6u %s raid %d %d %d at %.3f,%.3f", happening.tick,
+                          who, happening.a, happening.b, happening.c, happening.x, happening.y);
             break;
         case What::Mixed:
             std::snprintf(line, sizeof(line), "%6u %s mixed recipe %d at %d%%: %s",

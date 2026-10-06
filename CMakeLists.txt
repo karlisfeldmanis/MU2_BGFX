@@ -262,6 +262,8 @@ add_executable(mu2
   src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
   src/sim/realm_invasion.cpp
+  src/sim/realm_raid.cpp
+  src/sim/raid_party.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
 )
@@ -401,12 +403,15 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
   src/sim/realm_invasion.cpp
+  src/sim/realm_raid.cpp
+  src/sim/raid_party.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
   src/content/grid.cpp
   src/content/tables.cpp
   src/core/files.cpp
   src/core/log.cpp
+  src/core/json.cpp
 )
 target_include_directories(sim_test PRIVATE src)
 target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
@@ -420,13 +425,32 @@ add_executable(bot EXCLUDE_FROM_ALL
   src/sim/wear.cpp src/sim/vault.cpp src/sim/machine.cpp src/sim/realm_machine.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
   src/sim/realm_items.cpp src/sim/realm_quests.cpp src/sim/quests.cpp src/sim/realm_travel.cpp
   src/sim/realm_move.cpp src/sim/realm_fight.cpp src/sim/realm_skills.cpp src/sim/realm_watch.cpp
-  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/realm_invasion.cpp src/sim/skills.cpp
+  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/realm_invasion.cpp src/sim/realm_raid.cpp src/sim/raid_party.cpp src/sim/skills.cpp
   src/sim/audit.cpp src/content/grid.cpp src/content/tables.cpp src/core/files.cpp
   src/core/log.cpp
+  src/core/json.cpp
 )
 target_include_directories(bot PRIVATE src)
 target_compile_definitions(bot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(bot PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# The raid, headless: the Golden Dragon against source/raid/party.json, played to a kill or a
+# wipe as many times as asked (tools/raid/raid.cpp, docs/golden-dragon-raid.md §2a).
+add_executable(raid EXCLUDE_FROM_ALL
+  tools/raid/raid.cpp
+  src/sim/rules.cpp src/sim/swings.cpp src/sim/route.cpp src/sim/items.cpp src/sim/market.cpp
+  src/sim/wear.cpp src/sim/vault.cpp src/sim/machine.cpp src/sim/realm_machine.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
+  src/sim/realm_items.cpp src/sim/realm_quests.cpp src/sim/quests.cpp src/sim/realm_travel.cpp
+  src/sim/realm_move.cpp src/sim/realm_fight.cpp src/sim/realm_skills.cpp src/sim/realm_watch.cpp
+  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/realm_invasion.cpp src/sim/realm_raid.cpp src/sim/raid_party.cpp src/sim/skills.cpp
+  src/sim/audit.cpp src/content/grid.cpp src/content/tables.cpp src/core/files.cpp
+  src/core/log.cpp
+  src/core/json.cpp
+)
+target_include_directories(raid PRIVATE src)
+target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
+                                        MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # ---- checks ---------------------------------------------------------------------------------
 # One target that runs everything which can say "no" without a window: the three tests, the

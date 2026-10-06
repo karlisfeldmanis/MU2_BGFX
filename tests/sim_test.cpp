@@ -19,6 +19,7 @@
 #include "sim/audit.h"
 #include "sim/event.h"
 #include "sim/items.h"
+#include "sim/raid_party.h"
 #include "sim/random.h"
 #include "sim/realm_tuning.h"
 #include "sim/realm.h"
@@ -449,6 +450,7 @@ void testInvasion(const content::Tables& tables) {
     realm.step();
     dragon = realm.invader();
     check(dragon->alive(), "it lands on its tick");
+    // With no raid asked for (Realm::setRaid), OpenMU's own.
     check(dragon->health == dragon->maxHealth && dragon->maxHealth == 22000,
           "at the Golden Dragon's 22,000");
     check(dragon->column() == column && dragon->row() == row, "on the tile it was said to");
@@ -466,6 +468,131 @@ void testInvasion(const content::Tables& tables) {
           "and not again until a new rain begins");
 }
 
+// The Golden Dragon's raid (realm_raid.cpp, docs/golden-dragon-raid.md): the party legal and
+// raised, each stage begun at its health, nothing but what flies reaching it aloft, the storm's
+// rocks and their pools, the Inferno's shadows, the dead staying down, and one seed one fight.
+void testRaid(const content::Tables& tables) {
+    std::printf("raid\n");
+    std::vector<sim::RaiderKit> party;
+    check(sim::readParty(std::string(MU2_ASSET_DIR) + "/../source/raid/party.json", &party),
+          "source/raid/party.json reads");
+    checkEqual((long long)party.size(), 10, "ten in the party");
+    if (party.size() != 10) return;
+    {
+        sim::Realm plain;
+        plain.raise(&tables, 5, 140, 65);
+        bool legal = true;
+        for (const sim::RaiderKit& kit : party) legal &= plain.kitRefusal(kit).empty();
+        check(legal, "every kit passes the gates its wearer would (sim::movable)");
+        check(plain.raiderCount() == 0 && plain.minionCount() == 0,
+              "a realm with no raid asked for raises no raiders and no minions");
+    }
+    const auto raised = [&](sim::Realm& realm, uint64_t seed) {
+        realm.setRaid(10, party, true);
+        realm.raise(&tables, seed, 140, 65, party[0].kin, party[0].level);
+        realm.invade();
+        for (int i = 0; i < 40 * 20 && realm.raidStage() == sim::RaidStage::None; ++i) realm.step();
+    };
+    sim::Realm realm;
+    raised(realm, 7);
+    checkEqual(realm.raiderCount(), 9, "nine raiders beside him");
+    bool notMonsters = true, standing = true;
+    for (int i = 0; i < realm.raiderCount(); ++i) {
+        notMonsters &= !realm.raiderAt(i)->monster();
+        standing &= realm.raiderAt(i)->alive();
+    }
+    check(notMonsters && standing, "none of them a monster, all of them up");
+    check(realm.hero().level == party[0].level, "the hero wears the first kit's level");
+    check(realm.raidStage() == sim::RaidStage::Ground, "it lands into the ground stage");
+    const sim::Body* dragon = realm.invader();
+    check(dragon->maxHealth == sim::raidHealth(10), "at ten players' health");
+
+    // The flight: aloft, its wave down, and no swing reaches it.
+    realm.raidSkipTo(sim::RaidStage::Flight);
+    realm.step();
+    check(realm.raidStage() == sim::RaidStage::Flight && realm.raidAloft(), "70% takes it up");
+    int up = 0;
+    for (int i = 0; i < realm.minionCount(); ++i) up += realm.minionAt(i)->alive() ? 1 : 0;
+    checkEqual(up, sim::minionsFor(10), "a wave of 2 + 10/2 minions");
+    bool swungAloft = false;
+    int64_t flown = 0;
+    while (realm.raidAloft() && flown < sim::kFlightMost + 40) {
+        realm.step();
+        ++flown;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what == sim::What::Hit && h.whom == dragon->id && !h.thrown && realm.raidAloft()) {
+                swungAloft = true;
+            }
+        }
+    }
+    check(!swungAloft, "nothing but what flies strikes it aloft");
+    check(!realm.raidAloft() && flown >= sim::kFlightLeast && flown <= sim::kFlightMost + 1,
+          "and it comes down between its least and its most");
+
+    // The storm: a rock told on each fighter, and pools where they land.
+    realm.raidSkipTo(sim::RaidStage::Enraged);
+    realm.step();
+    check(realm.raidStage() == sim::RaidStage::Enraged, "40% enrages it");
+    int rocks = 0;
+    bool pooled = false;
+    for (int64_t i = 0; i < sim::kMeteorStormEvery + sim::kImpactTell + 80; ++i) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what == sim::What::Raid && h.a == int32_t(sim::RaidEvent::Tell) &&
+                h.b == int32_t(sim::HazardKind::Impact)) {
+                ++rocks;
+            }
+        }
+        for (int k = 0; k < sim::kHazards; ++k) pooled |= realm.hazards()[k].kind == sim::HazardKind::Pool;
+    }
+    check(rocks > 0 && pooled, "the storm tells its rocks and leaves pools");
+
+    // The last stand: the Inferno told with three shadows for ten.
+    realm.raidSkipTo(sim::RaidStage::LastStand);
+    realm.step();
+    check(realm.raidStage() == sim::RaidStage::LastStand, "15% is the last stand");
+    int shades = -1;
+    for (int64_t i = 0; i < 200 && shades < 0; ++i) {
+        realm.step();
+        for (int k = 0; k < sim::kHazards; ++k) {
+            if (realm.hazards()[k].kind == sim::HazardKind::Inferno) shades = realm.hazards()[k].shades;
+        }
+    }
+    checkEqual(shades, 3, "its Inferno shelters under three shadows for ten");
+
+    // To the end: killed or wiped inside its thirty minutes, and the fallen stay down.
+    std::vector<uint32_t> fallen;
+    for (int64_t i = 0; i < 30 * 60 * 20 && realm.invader()->alive(); ++i) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what != sim::What::Died) continue;
+            for (int r = 0; r < realm.raiderCount(); ++r) {
+                if (realm.raiderAt(r)->id == h.who) fallen.push_back(h.who);
+            }
+        }
+        bool any = realm.hero().alive();
+        for (int r = 0; r < realm.raiderCount(); ++r) any |= realm.raiderAt(r)->alive();
+        if (!any) break;
+    }
+    bool stayed = true;
+    for (int i = 0; i < 200; ++i) realm.step();
+    for (uint32_t id : fallen) stayed &= realm.find(id) && !realm.find(id)->alive();
+    check(stayed, "a fallen raider stays down");
+
+    // One seed, one fight.
+    sim::Realm a, b;
+    raised(a, 11);
+    raised(b, 11);
+    uint64_t ha = 0, hb = 0;
+    for (int i = 0; i < 2400; ++i) {
+        a.step();
+        b.step();
+        for (const sim::Happening& h : a.happenings()) ha = ha * 1099511628211ull + uint64_t(h.what) * 31u + h.who + uint64_t(uint32_t(h.a));
+        for (const sim::Happening& h : b.happenings()) hb = hb * 1099511628211ull + uint64_t(h.what) * 31u + h.who + uint64_t(uint32_t(h.a));
+    }
+    check(ha == hb, "the same seed fights the same fight");
+}
+
 void testInvariants(const content::Tables& tables) {
     std::printf("invariants\n");
     sim::Realm realm;
@@ -474,8 +601,11 @@ void testInvariants(const content::Tables& tables) {
     // Every monster was placed somewhere it may stand, and outside the town.
     bool placed = true, outside = true;
     for (const sim::Body& one : realm.bodies()) {
-        // The invasion's dragon is down and nowhere until it lands (realm_invasion.cpp).
-        if (!one.monster() || &one == realm.invader()) continue;
+        // The invasion's dragon is down and nowhere until it lands (realm_invasion.cpp), and so
+        // are its raid's minions until a wave (realm_raid.cpp).
+        bool minion = false;
+        for (int i = 0; i < realm.minionCount(); ++i) minion |= &one == realm.minionAt(i);
+        if (!one.monster() || &one == realm.invader() || minion) continue;
         placed &= tables.grid.open(one.column(), one.row(), content::kWallCharacter);
         outside &= !tables.grid.safe(one.column(), one.row());
     }
@@ -9776,6 +9906,7 @@ int main() {
     testDeterminism(tables);
     testInvariants(tables);
     testInvasion(tables);
+    testRaid(tables);
     testItems(tables);
     testLoot(tables);
     testDrops(tables);
