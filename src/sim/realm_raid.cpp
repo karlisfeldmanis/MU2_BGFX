@@ -1034,6 +1034,11 @@ void Realm::raid(Body& one, int index) {
         if (skillAt >= 0) {
             one.cools[skillAt] =
                 tick_ + cooldownTicks(row, one.totalPoints().agility, floorTicksFor(row, clip));
+            // A guard or a buff waits on its cast alone, not on its own five minutes as the
+            // hero's does (cooldownTicks): MU's elf buffed as her mana let her, and a raid's elves
+            // keep every knight covered, each knight his Defense after he stands up again (the
+            // user, 2026-10-06: 'give always buffs', 'every class shoudl use defense auras'). Ours.
+            if (row.boonTicks > 0 || row.mightTicks > 0) one.cools[skillAt] = tick_ + clip;
         }
         one.mana = std::max(0, one.mana - row.mana);
         one.castUntil = tick_ + clip;
@@ -1070,15 +1075,16 @@ void Realm::raid(Body& one, int index) {
             cast(*row, one);
             return;
         }
-        // **Every elf keeps the tank up** (the user, 2026-10-06: 'can we don that elfs can heal and
-        // buff tanks?'). The healer heals the tank first, below nine tenths, else the lowest of
-        // the party below four fifths; puts Greater Defense on the tank and Greater Damage on the
-        // knights. An archer heals the tank when it is below half and keeps Greater Defense on
-        // it when the healer has not. Each within her reach. invention, with the party.
+        // **Every elf keeps the knights up** (the user, 2026-10-06: 'can we don that elfs can heal
+        // and buff tanks?', then 'elfs should try to heal DKs and give always buffs'). Each elf --
+        // the healer and the archers alike -- heals the most hurt in reach, the knights before the
+        // rest and the tank before them: the healer anyone below four fifths, an archer a knight
+        // below three fifths. And keeps Greater Defense and Greater Damage standing, the tank's
+        // first, then every knight's, then anyone's. invention, with the party.
         if (one.kin != Kin::FairyElf) continue;
         const bool healer = kit.role == RaidRole::Healer;
         Body* pick = nullptr;
-        float low = healer ? 0.8f : 0.0f;
+        float best = 0.0f;
         for (Body& other : bodies_) {
             // Cast on another from her stand's reach: this game's Heal and guards are thrown on
             // oneself (reach 1), and a raid's elf keeps a tank up from six tiles. invention.
@@ -1090,19 +1096,21 @@ void Realm::raid(Body& one, int index) {
             const RaidRole role =
                 at >= 0 && at < int(party_.size()) ? party_[size_t(at)].role : RaidRole::Melee;
             const bool tank = role == RaidRole::Tank;
+            const bool knight = other.kin == Kin::DarkKnight;
+            // Who comes first: the tank, then a knight, then anyone.
+            const float rank = tank ? 3.0f : knight ? 2.0f : 1.0f;
+            float score = 0.0f;
             if (row->mends) {
-                // The tank's share counts as if a tenth lower for the healer, so it comes first;
-                // an archer looks at the tank alone, below half.
-                const float share = shareOf(other) - (tank && healer ? 0.1f : 0.0f);
-                const float bar = healer ? low : (tank ? 0.5f : 0.0f);
-                if (share < bar && (pick == nullptr || share < low)) {
-                    low = share;
-                    pick = &other;
-                }
-            } else if (number == skill::kGreaterDefense && tank && other.boonUntil <= tick_) {
-                pick = &other;
-            } else if (number == skill::kGreaterDamage && healer && pick == nullptr &&
-                       other.mightUntil <= tick_ && (role == RaidRole::Melee || tank)) {
+                const float bar = healer ? 0.8f : (knight ? 0.6f : 0.0f);
+                const float share = shareOf(other);
+                if (share < bar) score = (1.0f - share) + rank * 0.1f;
+            } else if (number == skill::kGreaterDefense && other.boonUntil <= tick_) {
+                score = rank;
+            } else if (number == skill::kGreaterDamage && other.mightUntil <= tick_) {
+                score = rank;
+            }
+            if (score > best) {
+                best = score;
                 pick = &other;
             }
         }

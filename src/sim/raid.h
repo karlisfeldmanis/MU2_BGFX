@@ -38,12 +38,13 @@ constexpr int kLastStandAt = 15;
 // a straight line between (invention), times kRaidHealthScale -- what the headless tune moves
 // (tools/raid), since an end-game party took WZD's ten-player number in a minute. 9.75 since the
 // party's weapon runes fire, the dragon shrugs off holds and the raiders pay mana for their
-// skills (2026-10-06); 9.875 once the swarm is held at its master (Realm::raidTick): 133 of 240
-// won, the kill about 7:34, the losses its clock.
+// skills (2026-10-06); 9.25 once the swarm is held at its master, the elves keep every knight
+// buffed (Realm::raid) and the party goes out from the town to its field (kRaidLandings): 139 of
+// 240 won, the kill about 7:39, the losses its clock.
 constexpr int kRaidPlayers = 10;
 constexpr int32_t kRaidHealthOne = 22000;
 constexpr int32_t kRaidHealthTen = 100000;
-constexpr float kRaidHealthScale = 9.875f;
+constexpr float kRaidHealthScale = 9.25f;
 inline int32_t raidHealth(int players) {
     const int n = players < 1 ? 1 : players;
     const double line =
@@ -158,6 +159,24 @@ constexpr int64_t kDepartTicks = 100;
 // What an Inferno without its shadows would be; none is thrown since the dragon leaves instead.
 constexpr float kWipeShare = 10.0f;
 constexpr float kWipeReach = 64.0f;
+
+// **Where it lands** (the user, 2026-10-06: 'when dragon lands he has some potential landing
+// positions near lorencia city'): one of five fields just outside the town, each 9 to 14 tiles
+// from its safe zone and open round about (attributes.png: every tile within eight open and none
+// safe, but the north-east's nine in ten), chosen by the invasion's dice or by --raid-box. The
+// party starts in the town square, kRaidTown, and goes out to it. Ours; WebZen's Dragon Event
+// boxes (DragonEvent.cpp:103-109) lie 60 to 90 tiles out in the fields.
+struct RaidLanding {
+    char name;
+    int column, row;
+    const char* where;
+};
+inline constexpr RaidLanding kRaidLandings[] = {
+    {'A', 141, 75, "north"},  {'B', 170, 91, "north-east"}, {'C', 183, 111, "east"},
+    {'D', 145, 175, "south"}, {'E', 86, 111, "west"},
+};
+constexpr int kRaidLandingCount = int(sizeof(kRaidLandings) / sizeof(kRaidLandings[0]));
+constexpr int kRaidTownColumn = 138, kRaidTownRow = 124;
 
 // What::Raid's `a`. b and c are its numbers as each says; the happening's x and y its place.
 enum class RaidEvent : int32_t {

@@ -156,7 +156,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
 
     // The Golden Dragon's raid, when one was asked for (--raid): handed to the realm before it
     // is raised, as the arena's nests are (play_raid.cpp).
-    if (raidPlayers_ > 0) realm_.setRaid(raidPlayers_, raidParty_, raidWatched_);
+    if (raidPlayers_ > 0) {
+        realm_.setRaid(raidPlayers_, raidParty_, raidWatched_);
+        realm_.setRaidLanding(raidLanding_);
+    }
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to

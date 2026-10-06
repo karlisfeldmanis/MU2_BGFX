@@ -201,7 +201,7 @@ void printUsage() {
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
         "  --raid N                  the Golden Dragon's raid, tough for N, the party around him\n"
-        "  --raid-box A|B|C          which of WebZen's Lorencia dragon boxes it is fought in\n"
+        "  --raid-box A-E            which field outside the town it lands on (else the dice's)\n"
         "  --raid-stage S            the dragon laid at stage S's health (1-4) once it stands\n"
         "  --raid-now                it lands at once, the sky's entrance skipped\n"
         "  --raid-watch              watched, not played: the hero fights on his own too\n"

@@ -489,6 +489,7 @@ void testRaid(const content::Tables& tables) {
     }
     const auto raised = [&](sim::Realm& realm, uint64_t seed) {
         realm.setRaid(10, party, true);
+        realm.setRaidLanding(0);  // the north field (141, 75), ten tiles from where they stand
         realm.raise(&tables, seed, 140, 65, party[0].kin, party[0].level);
         realm.invade();
         for (int i = 0; i < 40 * 20 && realm.raidStage() == sim::RaidStage::None; ++i) realm.step();
@@ -556,10 +557,11 @@ void testRaid(const content::Tables& tables) {
     checkEqual(shades, 3, "its Inferno shelters under three shadows for ten");
 
     // A whole fight from its landing: killed or gone inside its clock, and whoever falls stands
-    // up again in town (Realm::reviveRaider).
-    {
+    // up again in town (Realm::reviveRaider). The first of a few seeds with a death in it: a
+    // party kept healed and buffed may come through one whole.
+    for (uint64_t seed = 21; seed < 27; ++seed) {
         sim::Realm whole;
-        raised(whole, 21);
+        raised(whole, seed);
         std::vector<uint32_t> fallen;
         int64_t fellAt = 0;
         for (int64_t i = 0; i < sim::kHardEnrage + sim::kDepartTicks + 40 &&
@@ -577,7 +579,9 @@ void testRaid(const content::Tables& tables) {
             }
         }
         check(whole.raidStage() == sim::RaidStage::None, "a whole fight ends inside its clock");
-        std::printf("  raid: %zu raider deaths in a whole fight\n", fallen.size());
+        std::printf("  raid: %zu raider deaths in a whole fight, seed %llu\n", fallen.size(),
+                    (unsigned long long)seed);
+        if (fallen.empty() && seed + 1 < 27) continue;
         for (int i = 0; i < sim::kRiseTicks + 2; ++i) whole.step();
         bool rose = !fallen.empty();
         for (uint32_t id : fallen) {
@@ -585,6 +589,7 @@ void testRaid(const content::Tables& tables) {
             rose &= one != nullptr && (one->alive() || whole.tick() - fellAt < sim::kRiseTicks);
         }
         check(rose, "a fallen raider stands up again in town");
+        break;
     }
 
     // Not killed in time, it flies away: the invasion over (and its storm with it).

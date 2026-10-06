@@ -2,13 +2,13 @@
 // or its thirty minutes, as many times as asked, and what happened (docs/golden-dragon-raid.md
 // §2a, "how tough is measured").
 //
-// Each run raises Lorencia with the party standing in one of WebZen's three Dragon Event boxes
-// (DragonEvent.cpp:103-109), the boxes taken in turn, begins the invasion, and lets the dragon
-// land by the realm's own rule. Every one of the ten is played by the raiders' mind
+// Each run raises Lorencia with the party in the town square, begins the invasion, and lets the
+// dragon land on one of its five fields outside the town (sim::kRaidLandings), the fields taken
+// in turn, the party going out to it. Every one of the ten is played by the raiders' mind
 // (Realm::setRaid's hand); whoever falls stands up in town and runs back, and a run reaching
 // the hard enrage is lost.
 //
-//   build/raid [--runs N] [--seed S] [--party PATH] [--players N] [--box A|B|C]
+//   build/raid [--runs N] [--seed S] [--party PATH] [--players N] [--box A-E]
 //              [--stage 1-4] [--verbose]
 #include <algorithm>
 #include <cstdio>
@@ -26,17 +26,6 @@
 using namespace mu;
 
 namespace {
-
-struct Box {
-    char name;
-    int x1, y1, x2, y2;
-};
-// WebZen's Lorencia boxes for its Dragon Event (DragonEvent.cpp:103-109).
-constexpr Box kBoxes[3] = {
-    {'A', 135, 61, 146, 70},
-    {'B', 120, 204, 126, 219},
-    {'C', 67, 116, 77, 131},
-};
 
 const char* roleName(sim::RaidRole role) {
     switch (role) {
@@ -66,7 +55,7 @@ struct Death {
 
 struct Outcome {
     uint64_t seed = 0;
-    char box = '?';
+    char box = '?';  // the landing (sim::kRaidLandings)
     bool won = false;
     bool wiped = false;
     int64_t ticks = 0;        // landing to the end
@@ -88,14 +77,15 @@ std::string clock(int64_t ticks) {
 }
 
 Outcome runOnce(const content::Tables& tables, const std::vector<sim::RaiderKit>& party,
-                const Options& options, uint64_t seed, const Box& box) {
+                const Options& options, uint64_t seed, int landing) {
     Outcome out;
     out.seed = seed;
-    out.box = box.name;
+    out.box = sim::kRaidLandings[landing].name;
     sim::Realm realm;
     realm.setRaid(options.players, party, true);
-    const int column = (box.x1 + box.x2) / 2, row = (box.y1 + box.y2) / 2;
-    if (!realm.raise(&tables, seed, column, row, party[0].kin, party[0].level)) {
+    // The party in the town square, the dragon on its field outside (sim::kRaidLandings).
+    realm.setRaidLanding(landing);
+    if (!realm.raise(&tables, seed, sim::kRaidTownColumn, sim::kRaidTownRow, party[0].kin, party[0].level)) {
         std::printf("raid: the realm would not raise\n");
         return out;
     }
@@ -207,12 +197,12 @@ int main(int argc, char** argv) {
         else if (!std::strcmp(argv[i], "--seed")) options.seed = std::strtoull(next(), nullptr, 10);
         else if (!std::strcmp(argv[i], "--party")) options.party = next();
         else if (!std::strcmp(argv[i], "--players")) options.players = std::max(1, std::atoi(next()));
-        else if (!std::strcmp(argv[i], "--box")) options.box = std::max(0, std::min(2, next()[0] - 'A'));
+        else if (!std::strcmp(argv[i], "--box")) options.box = std::max(0, std::min(sim::kRaidLandingCount - 1, next()[0] - 'A'));
         else if (!std::strcmp(argv[i], "--stage")) options.stage = std::atoi(next());
         else if (!std::strcmp(argv[i], "--verbose")) options.verbose = true;
         else {
             std::printf("usage: raid [--runs N] [--seed S] [--party PATH] [--players N] "
-                        "[--box A|B|C] [--stage 1-4] [--verbose]\n");
+                        "[--box A-E] [--stage 1-4] [--verbose]\n");
             return 2;
         }
     }
@@ -247,9 +237,12 @@ int main(int argc, char** argv) {
     std::vector<Outcome> outcomes;
     for (int run = 0; run < options.runs; ++run) {
         const uint64_t seed = options.seed + uint64_t(run);
-        const Box& box = kBoxes[options.box >= 0 ? options.box : run % 3];
-        if (options.verbose) std::printf("run %d, seed %llu, box %c\n", run, (unsigned long long)seed, box.name);
-        const Outcome one = runOnce(tables, party, options, seed, box);
+        const int landing = options.box >= 0 ? options.box : run % sim::kRaidLandingCount;
+        if (options.verbose) {
+            std::printf("run %d, seed %llu, landing %c\n", run, (unsigned long long)seed,
+                        sim::kRaidLandings[landing].name);
+        }
+        const Outcome one = runOnce(tables, party, options, seed, landing);
         outcomes.push_back(one);
         std::printf("seed %-4llu box %c  %-5s %6s  stage %d  dragon %6d  deaths %zu  potions %3d ",
                     (unsigned long long)one.seed, one.box,

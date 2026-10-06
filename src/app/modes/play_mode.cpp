@@ -110,8 +110,8 @@ void PlayMode::readSave(Context& ctx) {
             args.level = raidParty()[0].level;
             args.weapon.clear();
             args.shield.clear();
-            core::logf("raid: %zu in the party, tough for %d, box %c", raidParty().size(), args.raid,
-                       args.raidBox);
+            core::logf("raid: %zu in the party, tough for %d, landing %c", raidParty().size(), args.raid,
+                       args.raidBox ? args.raidBox : '?');
         } else {
             core::logError("--raid: %s did not read; no raid", party.c_str());
             args.raid = 0;
@@ -225,11 +225,8 @@ bool PlayMode::open(Context& ctx) {
 
     if (args.atSet) world_.setFocusTile(args.atColumn, args.atRow);
     else if (args.raid > 0) {
-        // The middle of one of WebZen's Lorencia Dragon Event boxes (DragonEvent.cpp:103-109):
-        // where MU itself put dragons, the realm's own rule landing it near him.
-        const int box = std::clamp(args.raidBox - 'A', 0, 2);
-        constexpr float kBoxes[3][2] = {{140.5f, 65.5f}, {123.0f, 211.5f}, {72.0f, 123.5f}};
-        world_.setFocusTile(kBoxes[box][0], kBoxes[box][1]);
+        // The party in the town square; the dragon lands on a field outside it (sim::kRaidLandings).
+        world_.setFocusTile(float(sim::kRaidTownColumn), float(sim::kRaidTownRow));
     } else if (!args.arena.empty()) {
         // The arena's own patch, unless the caller named a tile. Why that one is in
         // Play::Arena beside the constants; the short of it is that it is the flattest,
@@ -278,7 +275,10 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }
-            if (args.raid > 0) world_.played().setRaid(args.raid, raidParty(), args.raidWatch);
+            if (args.raid > 0) {
+                world_.played().setRaid(args.raid, raidParty(), args.raidWatch,
+                                        args.raidBox ? std::clamp(args.raidBox - 'A', 0, sim::kRaidLandingCount - 1) : -1);
+            }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
         }

@@ -302,10 +302,12 @@ public:
     // Set BEFORE open() or not at all, as the arena is: the raid tough for `players`, and the
     // party of source/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
     // `watched`: the hero is the raiders' mind's too and the player only watches (--raid-watch).
-    void setRaid(int players, std::vector<sim::RaiderKit> party, bool watched = false) {
+    // `landing`: which of sim::kRaidLandings, or -1 for the invasion's dice (--raid-box).
+    void setRaid(int players, std::vector<sim::RaiderKit> party, bool watched = false, int landing = -1) {
         raidPlayers_ = players;
         raidParty_ = std::move(party);
         raidWatched_ = watched;
+        raidLanding_ = landing;
     }
     const std::vector<sim::RaiderKit>& raidParty() const { return raidParty_; }
     // --raid-stage: once it stands, its health laid at the top of that stage's band.
@@ -1114,6 +1116,7 @@ private:
     // ---- the raid's drawing (play_raid.cpp) ---------------------------------------------------
     int raidPlayers_ = 0;
     bool raidWatched_ = false;
+    int raidLanding_ = -1;
     std::vector<sim::RaiderKit> raidParty_;
     int raidSkipOwed_ = 0;
     Omen omen_;

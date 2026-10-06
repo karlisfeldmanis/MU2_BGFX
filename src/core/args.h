@@ -193,7 +193,7 @@ struct Args {
     // source/raid/party.json in one of WebZen's Lorencia Dragon Event boxes, the invasion begun at
     // once, the dragon tough for N; the hero wears the first kit. 0 for none.
     int raid = 0;
-    char raidBox = 'A';         // `--raid-box A|B|C`: which box (DragonEvent.cpp:103-109)
+    char raidBox = 0;           // `--raid-box A-E`: which field it lands on (sim::kRaidLandings), else the dice's
     int raidStage = 0;          // `--raid-stage S`: the dragon laid at stage S's health once it stands
     bool raidNow = false;       // `--raid-now`: it lands on the next tick, its entrance skipped
     // `--raid-watch`: watched, not played -- the raiders' mind plays the hero too (the user,

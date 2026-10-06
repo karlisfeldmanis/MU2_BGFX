@@ -87,6 +87,25 @@ void Realm::invasionTick() {
         const auto standable = [&](int c, int r) {
             return tables_->grid.open(c, r, content::kWallCharacter) && !tables_->grid.safe(c, r);
         };
+        // The raid's dragon on one of its fields outside the town (sim::kRaidLandings), or the
+        // nearest standable tile to it.
+        if (raidAsked_) {
+            const int at = raidLanding_ >= 0 && raidLanding_ < kRaidLandingCount
+                               ? raidLanding_
+                               : invasionDice_.nextInt(0, kRaidLandingCount);
+            const RaidLanding& landing = kRaidLandings[at];
+            for (int out = 0; out <= 3 && column < 0; ++out) {
+                for (int dr = -out; dr <= out && column < 0; ++dr) {
+                    for (int dc = -out; dc <= out && column < 0; ++dc) {
+                        if (standable(landing.column + dc, landing.row + dr)) {
+                            column = landing.column + dc;
+                            row = landing.row + dr;
+                        }
+                    }
+                }
+            }
+            core::logf("raid: it lands to the %s of the town (%c)", landing.where, landing.name);
+        }
         for (int far = kInvasionFar; far <= kInvasionRings * kInvasionFar && column < 0;
              far += kInvasionFar) {
             const int near = far == kInvasionFar ? kInvasionNear : far - kInvasionFar;

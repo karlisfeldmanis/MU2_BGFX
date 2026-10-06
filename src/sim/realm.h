@@ -1013,6 +1013,8 @@ public:
         raidHand_ = hand;
         raidAsked_ = true;
     }
+    // Which of sim::kRaidLandings it comes down on, or -1 for the invasion's dice to choose.
+    void setRaidLanding(int index) { raidLanding_ = index; }
     // Why this kit could not be worn as it stands -- a piece unknown, refused by its class or
     // its points, or in the wrong slot -- or empty. The real gates (sim::movable), on a scratch
     // satchel. Asked by the raise for every kit, and by the tests.
@@ -1619,6 +1621,7 @@ private:
     // docs/golden-dragon-raid.md), an invasion with none is the plain one: no raid health, no
     // minions, no stages.
     bool raidAsked_ = false;
+    int raidLanding_ = -1;
     std::vector<RaiderKit> party_;
     bool raidHand_ = false;
     std::vector<int> raiderSlots_;
