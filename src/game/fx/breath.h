@@ -58,6 +58,10 @@ public:
     // One BITMAP_FIRE, subtype 1, born at `at` (world metres) and thrown along `along`, the
     // monster's facing on the ground plane, unit length.
     void spark(const float at[3], const float along[2], float scale);
+    // One BITMAP_FIRE at sub-type 0, the Zaikan's at each foot (ZzzCharacter.cpp:5960-5975):
+    // sub-type 1's life and drift at Scale 1.28-1.91, shrinking 0.04 a frame where 1 grows
+    // (ZzzEffectParticle.cpp:385-397, :4537-4549).
+    void footFire(const float at[3], const float along[2]);
     // One BITMAP_SMOKE + 1 round a body standing at `feet`, drifting along `along`.
     void puff(const float feet[3], const float along[2], float scale, float grow = 1.0f,
               float alpha = 1.0f);
@@ -92,6 +96,7 @@ private:
         float gravity = 0.0f;        // MU's Gravity, which grows by 0.004 every frame
         float life = 24.0f;          // reference frames left
         float size = 1.0f;           // the animal's scale
+        bool shrinks = false;        // sub-type 0: Scale loses 0.04 a frame instead
     };
     struct Puff {
         float position[3] = {0, 0, 0};  // x and z; y is pinned to the ground each frame

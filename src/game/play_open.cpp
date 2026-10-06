@@ -641,6 +641,27 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     }
                 }
             }
+            one.footFireBones[0] = one.footFireBones[1] = -1;
+            one.burns = false;
+            if (look->skeletonMesh &&
+                (look->name == kFootFireFigure || look->name == kBurningFigure)) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                const bool burning = look->name == kBurningFigure;
+                int found = 0;
+                for (int i = 0; i < 35; ++i) one.burnBones[i] = -1;
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    for (int f = 0; f < 2 && !burning; ++f) {
+                        if (bones[b].name == kFootFireBones[f]) one.footFireBones[f] = int(b);
+                    }
+                    for (int i = 0; i < 35 && burning; ++i) {
+                        if (bones[b].name == kBurningBones[i]) {
+                            one.burnBones[i] = int(b);
+                            ++found;
+                        }
+                    }
+                }
+                one.burns = burning && found == 35;
+            }
             one.trailBones[0] = one.trailBones[1] = -1;
             for (const EyeTrailRow& row : kEyeTrailRows) {
                 if (look->name != row.figure || !look->skeletonMesh) continue;

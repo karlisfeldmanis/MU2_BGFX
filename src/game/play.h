@@ -771,6 +771,14 @@ private:
         // hand's root and claw, -1 on everything else, and what of a reference frame is owed.
         int handFlameBones[4] = {-1, -1, -1, -1};
         float handFlameOwed = 0.0f;
+        // The Zaikan's two feet (kFootFireBones) and the Death Beam Knight's 35 burning bones
+        // (kBurningBones), -1 on everything else; `burnFrame` counts reference frames for its
+        // every-other-frame spine and head.
+        int footFireBones[2] = {-1, -1};
+        int burnBones[35] = {};
+        bool burns = false;
+        float burnOwed = 0.0f;
+        uint32_t burnFrame = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
         // reference frames rather than one in two within the bull's windows.

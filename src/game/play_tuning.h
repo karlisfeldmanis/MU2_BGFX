@@ -553,6 +553,44 @@ constexpr float kWalkSandAlpha = 0.35f;
 inline constexpr const char* kHandFlameFigure = "BeamKnight01";
 inline constexpr const char* kHandFlameBones[4] = {"Box03", "Bone02", "Box27", "Bone01"};
 constexpr float kHandFlameScale = 0.2f;
+// The Zaikan's foot fires (Breath::footFire): SubType 1's BITMAP_FIRE at bones 6 and 13 each
+// reference frame (ZzzCharacter.cpp:5960-5975). Its -1.3 terrain light under it is not carried:
+// this renderer only adds light.
+inline constexpr const char* kFootFireFigure = "Zaikan01";
+inline constexpr const char* kFootFireBones[2] = {"Bip01 L Foot", "Bip01 R Foot"};
+// The Death Beam Knight's burning body (fx/body_flames.h): MU's vec_list of 35 bones, by name,
+// and its segments as pairs of indices into it (ZzzCharacter.cpp:138-162, :5843-5925). Its
+// -1.3 terrain light is not carried either.
+inline constexpr const char* kBurningFigure = "DeathBeamKnight01";
+inline constexpr const char* kBurningBones[35] = {
+    "Bip01 Neck", "Bip01 Head", "Bip01 R UpperArm", "Box12", "Bip01 R Hand",
+    "Bip01 R Finger31", "Bip01 R Finger32", "Bip01 R Finger21", "Bip01 R Finger22",
+    "Bip01 R Finger11", "Bip01 R Finger12", "Bip01 R Finger01", "Bip01 R Finger02",
+    "Bip01 L UpperArm", "Box11", "Bip01 L Hand", "Bip01 L Finger31", "Bip01 L Finger32",
+    "Bip01 L Finger21", "Bip01 L Finger22", "Bip01 L Finger11", "Bip01 L Finger12",
+    "Bip01 L Finger01", "Bip01 L Finger02", "Box01", "Box03", "Bone02", "Box26", "Box27",
+    "Bone01", "Bip01 Pelvis", "Bip01 L Calf", "Bip01 L Toe0", "Bip01 R Calf", "Bip01 R Toe0"};
+struct BurnSegment {
+    int8_t from, to;
+    float scale;
+};
+// wingLeft and wingRight (their last four at 0.5), then arm_leg_Left and arm_leg_Right at 0.6.
+inline constexpr BurnSegment kBurnSegments[] = {
+    {0, 2, 1.0f},   {2, 3, 1.0f},   {2, 4, 1.0f},   {4, 5, 1.0f},   {5, 6, 1.0f},
+    {4, 7, 1.0f},   {7, 8, 1.0f},   {4, 9, 1.0f},   {9, 10, 1.0f},  {4, 11, 1.0f},
+    {11, 12, 1.0f}, {6, 5, 0.5f},   {8, 7, 0.5f},   {10, 9, 0.5f},  {12, 11, 0.5f},
+    {0, 13, 1.0f},  {13, 14, 1.0f}, {13, 15, 1.0f}, {15, 16, 1.0f}, {16, 17, 1.0f},
+    {15, 18, 1.0f}, {18, 19, 1.0f}, {15, 20, 1.0f}, {20, 21, 1.0f}, {15, 22, 1.0f},
+    {22, 23, 1.0f}, {17, 16, 0.5f}, {19, 18, 0.5f}, {21, 20, 0.5f}, {23, 22, 0.5f},
+    {29, 28, 0.6f}, {28, 27, 0.6f}, {34, 33, 0.6f}, {33, 30, 0.6f},
+    {26, 25, 0.6f}, {25, 24, 0.6f}, {32, 31, 0.6f}, {31, 30, 0.6f},
+};
+// And every other frame `body` {30, 0} at 1.3 and a subtype 3 at `head` 1 at 0.5.
+constexpr int kBurnBody[2] = {30, 0};
+constexpr int kBurnHead = 1;
+// Ours: the burn at this share of MU's light. At MU's own, ~380 one-metre flames added over each
+// other under this renderer's bloom were one white blot that hid the knight (arena, 2026-10-06).
+constexpr float kBurnLight = 0.15f;
 struct InfernoBlow {
     int32_t number;
     bool bombs;

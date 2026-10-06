@@ -415,6 +415,46 @@ void Play::snort(float seconds) {
             }
         }
     }
+    // The Zaikan's foot fires and the Death Beam Knight's burning body, each reference frame it
+    // lives (MoveCharacterVisual, gated on c->Dead as the dragon's dust is).
+    for (Drawn& one : drawn_) {
+        if (one.footFireBones[1] < 0 && !one.burns) continue;
+        const sim::Body* body = realm_.find(one.id);
+        if (!body || !body->alive() || !one.visible || !one.placed) {
+            one.burnOwed = 0.0f;
+            continue;
+        }
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        one.burnOwed += frames;
+        while (one.burnOwed >= 1.0f) {
+            one.burnOwed -= 1.0f;
+            ++one.burnFrame;
+            if (one.footFireBones[1] >= 0) {
+                const float along[2] = {std::sin(one.yaw), std::cos(one.yaw)};
+                for (int f = 0; f < 2; ++f) {
+                    float at[3];
+                    if (one.figure.pointOn(one.footFireBones[f], origin, at)) {
+                        breath_.footFire(at, along);
+                    }
+                }
+            }
+            if (!one.burns) continue;
+            float points[35][3];
+            bool posed = true;
+            for (int i = 0; i < 35 && posed; ++i) {
+                posed = one.figure.pointOn(one.burnBones[i], origin, points[i]);
+            }
+            if (!posed) continue;
+            for (const BurnSegment& s : kBurnSegments) {
+                bodyFlames_.segmentFlame(points[s.from], points[s.to], s.scale, kBurnLight);
+            }
+            if (one.burnFrame % 2 == 0) {
+                bodyFlames_.segmentFlame(points[kBurnBody[0]], points[kBurnBody[1]], 1.3f,
+                                         kBurnLight);
+                bodyFlames_.stillFlame(points[kBurnHead], 0.5f, kBurnLight);
+            }
+        }
+    }
     for (Drawn& one : drawn_) {
         if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;
         if (!one.visible || !one.placed) {

@@ -8,6 +8,14 @@
 // (0, 0.6-1.05, 0) along the Angle; at LifeTime 10 the Velocity gains 6.4 and the Scale loses
 // 0.15; every frame each light channel loses 0.05.
 //
+// Subtypes 2 and 3, the Death Beam Knight's burning body (ZzzCharacter.cpp:5843-5925): every
+// reference frame a subtype 2 along each of its 23 bone segments -- its two wings' fifteen, its
+// arms' and legs' eight -- and, every other frame, one along its spine at 1.3 and a subtype 3 at
+// its head at 0.5. Subtype 2: LifeTime 10, Scale += 0.32-0.63, born a random 0-79% of the way
+// along the segment, then drifting the rest of it over fifteen frames, its (L, L/2, L/2) losing
+// 0.05 a frame. Subtype 3: the same but still and unfading. MU aims it with MoveHumming from the
+// segment's end to its start; ours lays it from start to end, along the bone.
+//
 // The caller finds the bones by name and feeds the points; this owns the particles.
 #pragma once
 
@@ -31,6 +39,11 @@ public:
     void update(float seconds);
     // One subtype 1 flame at `at`, drifting along `along` (unit), at MU's `scale`.
     void handFlame(const float at[3], const float along[3], float scale);
+    // One subtype 2 along the segment `from` to `to`, at MU's `scale`.
+    // `share` scales its light (ours: see kBurnLight).
+    void segmentFlame(const float from[3], const float to[3], float scale, float share = 1.0f);
+    // One subtype 3 at `at`.
+    void stillFlame(const float at[3], float scale, float share = 1.0f);
     // MoveCharacterVisual's `sinf(WorldTime * 0.002f) * 0.3f + 0.7f`.
     float luminosity() const;
     void gather(gfx::Effects& effects) const;
@@ -45,7 +58,9 @@ private:
         float light[3] = {};
         float left = 0.0f;  // reference frames
         float spin = 0.0f;
+        int subtype = 1;
     };
+    Flame* slot();
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
     std::vector<Flame> flames_;
     float clock_ = 0.0f;  // seconds, wrapped at the sine's period

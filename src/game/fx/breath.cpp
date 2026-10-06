@@ -96,6 +96,22 @@ void Breath::spark(const float at[3], const float along[2], float scale) {
     sparks_.push_back(one);
 }
 
+void Breath::footFire(const float at[3], const float along[2]) {
+    if (!open_ || !bgfx::isValid(fire_)) return;
+    if (sparks_.size() >= kSparks) {
+        ++refused_;
+        return;
+    }
+    Spark one;
+    for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    const float speed = float(roll() % 16 + 32) * 0.1f * kUnit;
+    one.velocity[0] = along[0] * speed;
+    one.velocity[1] = along[1] * speed;
+    one.scale = float(roll() % 64 + 128) * 0.01f;
+    one.shrinks = true;
+    sparks_.push_back(one);
+}
+
 void Breath::walkSand(const float feet[3], const float along[2], float reach, float alpha) {
     if (!open_ || !bgfx::isValid(smoke_)) return;
     if (puffs_.size() >= kPuffs) {
@@ -190,7 +206,11 @@ void Breath::update(float seconds) {
         // Gravity gains a constant and Scale gains Gravity: the second integral, which is why
         // a spark catches slowly and then flares. Taken a frame's worth at a time.
         one.gravity += 0.004f * frames;
-        one.scale += one.gravity * frames;
+        if (one.shrinks) {
+            one.scale = std::max(0.0f, one.scale - 0.04f * frames);
+        } else {
+            one.scale += one.gravity * frames;
+        }
         one.position[1] += one.gravity * 10.0f * kUnit * one.size * frames;
     }
     sparks_.erase(std::remove_if(sparks_.begin(), sparks_.end(),
