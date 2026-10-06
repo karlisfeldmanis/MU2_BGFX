@@ -1,6 +1,7 @@
 #include "game/fx/held_lights.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "core/log.h"
 
@@ -29,6 +30,9 @@ const char* HeldLights::mesh(Item item) {
         case Item::SaintCrossbow: return "CrossBow17";
         case Item::GrandSoulShield: return "Shield16";
         case Item::DragonSpear: return "Spear11";
+        case Item::DragonSoulStaff: return "Staff10";
+        case Item::ElementalMace: return "Mace08";
+        case Item::GreatReignCrossbow: return "CrossBow20";
     }
     return "";
 }
@@ -66,6 +70,31 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
             }
             return 8;
         }
+        case Item::DragonSoulStaff:
+            // Ours: the hand's (0, -120, 5) and (0, 100, 10) at the head and the foot, as the
+            // Staff of Resurrection's (0, -145, 0) is its glb's (0, 0, 1.45) (fx/staff_fire).
+            out[0][0] = out[0][1] = 0.0f;
+            out[0][2] = 120.0f * kUnit;
+            out[1][0] = out[1][1] = 0.0f;
+            out[1][2] = -100.0f * kUnit;
+            return 2;
+        case Item::ElementalMace:
+            // Bone02 of Mace08.bmd at rest, in the head.
+            out[0][0] = 0.0f;
+            out[0][1] = 2.6f * kUnit;
+            out[0][2] = 80.9f * kUnit;
+            return 1;
+        case Item::GreatReignCrossbow: {
+            // (0, 0, 10) on Bone02 to Bone06 of CrossBow20.bmd at rest: the four limb tips and
+            // the nose.
+            static const float kBones[5][3] = {{59.7f, -41.9f, 25.2f},  {-67.2f, -40.4f, 25.2f},
+                                               {92.1f, -59.6f, 5.0f},   {-99.1f, -58.1f, 5.0f},
+                                               {-2.4f, -119.5f, 21.0f}};
+            for (int i = 0; i < 5; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 5;
+        }
     }
     return 0;
 }
@@ -94,6 +123,7 @@ void HeldLights::shutdown() {
 
 void HeldLights::update(float seconds) {
     held_.clear();
+    clock_ = std::fmod(clock_ + seconds, 3600.0f);
     step_ -= seconds;
     if (step_ <= 0.0f) {
         step_ += kFrame;
@@ -149,6 +179,33 @@ void HeldLights::gather(gfx::Effects& effects) const {
                 const float l = linkLuminosity_;
                 for (int i = 0; i < one.count; ++i) {
                     put(light_, one.at[i], halfOf(1.3f), 0.2f * l, 0.1f * l, 0.8f * l);
+                }
+                break;
+            }
+            case Item::DragonSoulStaff: {
+                const float l = handLuminosity_;
+                put(shiny_, one.at[0], halfOf(1.5f), 0.6f * l, 0.6f * l, 2.0f * l);
+                put(light_, one.at[0], halfOf(l + 1.0f), 0.6f * l, 0.6f * l, 2.0f * l);
+                put(light_, one.at[1], halfOf(l + 1.0f), 0.6f * l, 0.6f * l, 2.0f * l);
+                break;
+            }
+            case Item::ElementalMace: {
+                const float l = linkLuminosity_;
+                put(light_, one.at[0], halfOf(2.0f), l, 0.9f * l, 0.0f);
+                // MU's second light, sin(WorldTime*0.002) + 0.5 across: nothing while negative.
+                const float grey = std::sin(clock_ * 2.0f) + 0.5f;
+                if (grey > 0.0f) put(light_, one.at[0], halfOf(grey), 0.5f, 0.5f, 0.5f);
+                break;
+            }
+            case Item::GreatReignCrossbow: {
+                const float l = linkLuminosity_;
+                for (int i = 0; i < one.count; ++i) {
+                    put(shiny_, one.at[i], halfOf(1.0f), 0.5f * l, 0.5f * l, 0.8f * l);
+                    if (i == 4) {
+                        put(light_, one.at[i], halfOf(2.0f), 1.0f, 1.0f, 1.0f);
+                    } else {
+                        put(light_, one.at[i], halfOf(2.0f), 0.5f * l, 0.5f * l, 0.8f * l);
+                    }
                 }
                 break;
             }

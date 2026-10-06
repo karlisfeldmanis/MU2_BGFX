@@ -13,8 +13,18 @@
 //     case MODEL_DRAGON_SPEAR:  for i in 1..8: its bone i
 //         CreateSprite(BITMAP_LIGHT, p, 1.3f, L*(0.2, 0.1, 0.8));
 //
-// A blue string of lights down the crossbow, a blue spark on the shield's face, and eight
-// violet-blue lights along the spear's swirl.
+//   And the early wave's last three (2026-10-06):
+//     RenderCharacter's MODEL_DRAGON_SOUL_STAFF (:10261-10271): at (0, -120, 5) in the hand
+//         BITMAP_SHINY + 1 at 1.5 and BITMAP_LIGHT at L + 1, L*(0.6, 0.6, 2); at (0, 100, 10)
+//         BITMAP_LIGHT at L + 1.
+//     RenderLinkObject's MODEL_ELEMENTAL_MACE (:7568-7576): on bone 1 BITMAP_LIGHT at 2,
+//         L*(1, 0.9, 0), and a grey one at sin(WorldTime*0.002) + 0.5.
+//     RenderLinkObject's MODEL_GREAT_REIGN_CROSSBOW (:7541-7558): (0, 0, 10) on bones 1-5,
+//         BITMAP_SHINY + 1 at 1 and BITMAP_LIGHT at 2, L*(0.5, 0.5, 0.8), the fifth light white.
+//
+// A blue string of lights down the crossbow, a blue spark on the shield's face, eight
+// violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
+// head, and lights at the Great Reign's four limb tips and nose.
 //
 // **Ours, marked.** Kept subtle (fx/staff_fire.h: the user, 2026-10-04, 'Yes, subtle'): a
 // quarter of MU's size and under half its light. The spear's and the shield's bones are dummies with no
@@ -35,10 +45,18 @@ namespace mu::game {
 
 class HeldLights {
 public:
-    enum class Item : uint8_t { SaintCrossbow, GrandSoulShield, DragonSpear };
+    enum class Item : uint8_t {
+        SaintCrossbow,
+        GrandSoulShield,
+        DragonSpear,
+        DragonSoulStaff,
+        ElementalMace,
+        GreatReignCrossbow,
+    };
     static constexpr int kMostPoints = 8;
-    static constexpr Item kItems[3] = {Item::SaintCrossbow, Item::GrandSoulShield,
-                                       Item::DragonSpear};
+    static constexpr Item kItems[6] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+                                       Item::DragonSpear,     Item::DragonSoulStaff,
+                                       Item::ElementalMace,   Item::GreatReignCrossbow};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
@@ -67,6 +85,7 @@ private:
     // MU's per-frame rolls, held between its frames: RenderCharacter's and RenderLinkObject's.
     float handLuminosity_ = 0.85f;
     float linkLuminosity_ = 0.42f;
+    float clock_ = 0.0f;  // seconds, for the mace's sin(WorldTime*0.002) light
     float step_ = 0.0f;
     uint32_t seed_ = 0x4E1D5u;
     bool open_ = false;

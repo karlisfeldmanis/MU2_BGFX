@@ -23,6 +23,12 @@ Breaker, Imperial Staff and their kind); not taken.
 
 **The user's pick (2026-10-04): the three early sets**, fifteen pieces.
 
+**The early arms, built 2026-10-06**, all seven: the Dragon Spear (`Spear11`), Grand Soul Shield
+(`Shield16`) and Elemental Shield (`Shield17`) with the Tarkan batch (the user: 'make all
+others'), then the Dragon Soul Staff (`Staff10`), Elemental Mace (`Mace08`) and Great Reign
+Crossbow (`CrossBow20`) ('do next items'), the Celestial Bow (`Bow18`) before them. Their held
+lights are fx/held_lights. The later sets and arms are not built.
+
 ## How the gate is carried
 
 A recipe's `stats.class_level: 2` rides index.py into the index, and cook.py sets the class's

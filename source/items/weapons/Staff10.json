@@ -1,0 +1,167 @@
+{
+  "item": "Staff10",
+  "mu_name": "Dragon Soul Staff",
+  "mu_name_from": "_enum.h:1603 MODEL_DRAGON_SOUL_STAFF = MODEL_STAFF + 9, loaded from Item/Staff10.bmd (ZzzOpenData.cpp:677). Group 5 number 9 in OpenMU S6 Weapons.cs:251; WebZen's 1.00m item(Kor).txt carries the row.",
+  "why_this_one": "The last of the early wave's arms (docs/second-class-gear.md: the early sets were the user's pick on 2026-10-04, and five of their arms were built 2026-10-06), and a Blood Castle 6 drop (the user, 2026-10-06: 'do next items'). Drop 100: Blood Castle 6's deepest monsters only.",
+  "profile": "weapon",
+  "stats": {
+    "from": "OpenMU S6 Weapons.cs:251. 0.75 and 0.95d have no second-class arms.",
+    "call": "CreateWeapon(5, 9, 0, 0, 1, 4, true, \"Dragon Soul Staff\", 100, 46, 48, 30, 91, 92, 0, 52, 16, 0, 0, 2, 0, 0, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: ..., energyRequirement, vitalityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 5,
+    "number": 9,
+    "drop_level": 100,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 46,
+    "maximum_damage": 48,
+    "attack_speed": 30,
+    "durability": 91,
+    "magic_power": 92,
+    "requires": {
+      "level": 0,
+      "strength": 52,
+      "agility": 16,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2 (docs/second-class-gear.md)."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed staff stands as a sword does (ZzzCharacter.cpp:389-394), as the Staff of Resurrection.",
+  "two_handed": false,
+  "sheets": {
+    "Dstic": "dstic.png",
+    "Ds_B": "ds_b.png"
+  },
+  "sheet_from": "Data/Item/Dstic.OZJ (64x128, violet steel with gold) and Ds_B.OZJ (16x16, a blue tile), from MuMain with pipeline/decode_texture.py; 468 triangles over two meshes.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As the Devias staves': steel's own 0.2 mirrors the scene.",
+  "glow": {
+    "Ds_B": {}
+  },
+  "glow_note": "ItemObjectAttribute (ZzzObject.cpp:5287-5289): `case MODEL_DRAGON_SOUL_STAFF: BlendMesh = 1` -- mesh 1, Ds_B's blue, drawn added and steady.",
+  "rig_note": "export-rig --actions=all: one bone, one action of one key; nothing moves, no rig kept. MuMain hangs a blue BITMAP_SHINY+1 and BITMAP_LIGHT at (0, -120, 5) in the hand and a BITMAP_LIGHT at (0, 100, 10) while it is held (ZzzCharacter.cpp:10261-10271; fx/held_lights).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 48,
+      "area": 1164.5,
+      "along": [
+        99.3,
+        143.6
+      ],
+      "mu_uv": [
+        0.01,
+        0.013,
+        0.979,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.971,
+        0.971
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 48,
+      "area": 397.4,
+      "along": [
+        -103.9,
+        -79.4
+      ],
+      "mu_uv": [
+        0.01,
+        0.013,
+        0.979,
+        0.999
+      ],
+      "bake_uv": [
+        0.06,
+        0.061,
+        0.988,
+        0.984
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 84,
+      "area": 1579.0,
+      "along": [
+        -40.0,
+        37.1
+      ],
+      "mu_uv": [
+        0.155,
+        0.018,
+        0.98,
+        0.746
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.726,
+        0.988
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 146,
+      "area": 7082.0,
+      "along": [
+        -7.9,
+        122.5
+      ],
+      "mu_uv": [
+        0.021,
+        0.062,
+        0.985,
+        1.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.967,
+        0.865
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 142,
+      "area": 2774.2,
+      "along": [
+        -93.0,
+        -25.0
+      ],
+      "mu_uv": [
+        0.018,
+        0.184,
+        0.936,
+        0.994
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.79,
+        0.979
+      ]
+    }
+  ]
+}

@@ -1,0 +1,298 @@
+{
+  "item": "CrossBow20",
+  "mu_name": "Great Reign Crossbow",
+  "mu_name_from": "_enum.h:1588 MODEL_GREAT_REIGN_CROSSBOW = MODEL_BOW + 19, loaded from Item/CrossBow20.bmd (ZzzOpenData.cpp:700). Group 4 number 19 in OpenMU S6 Weapons.cs:235; WebZen's 1.00m item(Kor).txt carries the row.",
+  "why_this_one": "The last of the early wave's arms (docs/second-class-gear.md: the early sets were the user's pick on 2026-10-04, and five of their arms were built 2026-10-06), and a Blood Castle 6 drop (the user, 2026-10-06: 'do next items'). Drop 100: Blood Castle 6's deepest monsters only.",
+  "profile": "weapon",
+  "stats": {
+    "from": "OpenMU S6 Weapons.cs:235. 0.75 and 0.95d have no second-class arms.",
+    "call": "CreateWeapon(4, 19, 0, 24, 2, 3, true, \"Great Reign Crossbow\", 100, 150, 172, 40, 80, 0, 0, 61, 285, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: ..., energyRequirement, vitalityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 4,
+    "number": 19,
+    "drop_level": 100,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 150,
+    "maximum_damage": 172,
+    "attack_speed": 40,
+    "durability": 80,
+    "skill": 24,
+    "requires": {
+      "level": 0,
+      "strength": 61,
+      "agility": 285,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2 (docs/second-class-gear.md)."
+  },
+  "stance": "crossbow",
+  "stance_from": "CharacterManager.cpp:81 counts MODEL_GREAT_REIGN_CROSSBOW with the crossbows, two-handed as every crossbow here.",
+  "two_handed": true,
+  "fires_note": "ZzzEffectMagicSkill.cpp:234: MODEL_ARROW_DRILL. Not built: the missiles are an arrow and a bolt (the user, 2026-10-03), so the steel bolt flies.",
+  "sheets": {
+    "Eccross": "eccross.tga.png"
+  },
+  "sheet_from": "Data/Item/Eccross.OZT (128x256: violet plate with magenta lines and gold, its alpha cutting 10% away), from MuMain with pipeline/decode_texture.py; 324 triangles, one mesh. The .bmd names Eccross.tga, so the .OZT.",
+  "cutout": [
+    "Eccross"
+  ],
+  "cutout_alpha": [
+    "Eccross"
+  ],
+  "cutout_alpha_from": "The sheet's own alpha, not its brightness: the paint is dark.",
+  "material_note": "painted_steel: violet lacquer with magenta and gold lines painted on, as the Dark Phoenix's blue.",
+  "chrome_note": "Not carried: RenderPartObjectBody (ZzzObject.cpp:7065-7075) draws the one mesh twice more over itself, a violet (0.8, 0, 0.8) lightmap of BITMAP_CHROME sliding along U and a bright BITMAP_CHROME+1 chrome pass, before the body: a violet sheen running over the plate. Nothing here draws an item mesh three times.",
+  "rig_note": "CrossBow20.rig.json from export-rig --actions=all: six bones, one action of one key, nothing moves; kept for bones 1-5, where MuMain hangs a blue BITMAP_SHINY+1 and a BITMAP_LIGHT (the fifth white) while it is held (ZzzCharacter.cpp:7541-7558; fx/held_lights).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 92,
+      "area": 8989.9,
+      "along": [
+        2.3,
+        25.3
+      ],
+      "mu_uv": [
+        0.013,
+        0.003,
+        0.975,
+        0.976
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.991,
+        0.951
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1988.3,
+      "along": [
+        15.3,
+        19.6
+      ],
+      "mu_uv": [
+        0.45,
+        0.492,
+        0.899,
+        0.84
+      ],
+      "bake_uv": [
+        0.011,
+        0.31,
+        0.868,
+        0.92
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 963.4,
+      "along": [
+        15.2,
+        21.4
+      ],
+      "mu_uv": [
+        0.041,
+        0.603,
+        0.294,
+        0.867
+      ],
+      "bake_uv": [
+        0.387,
+        0.148,
+        0.935,
+        0.529
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 36,
+      "area": 1133.4,
+      "along": [
+        16.2,
+        34.3
+      ],
+      "mu_uv": [
+        0.468,
+        0.019,
+        0.822,
+        0.524
+      ],
+      "bake_uv": [
+        0.064,
+        0.032,
+        0.768,
+        0.766
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1988.3,
+      "along": [
+        15.2,
+        19.5
+      ],
+      "mu_uv": [
+        0.45,
+        0.492,
+        0.899,
+        0.84
+      ],
+      "bake_uv": [
+        0.201,
+        0.62,
+        0.868,
+        0.955
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 34,
+      "area": 3565.9,
+      "along": [
+        -4.9,
+        12.7
+      ],
+      "mu_uv": [
+        0.326,
+        0.442,
+        0.91,
+        0.984
+      ],
+      "bake_uv": [
+        0.353,
+        0.01,
+        0.721,
+        0.601
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 963.4,
+      "along": [
+        15.2,
+        21.4
+      ],
+      "mu_uv": [
+        0.041,
+        0.603,
+        0.294,
+        0.867
+      ],
+      "bake_uv": [
+        0.722,
+        0.509,
+        0.892,
+        0.951
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 34,
+      "area": 3565.8,
+      "along": [
+        -4.9,
+        12.7
+      ],
+      "mu_uv": [
+        0.326,
+        0.442,
+        0.91,
+        0.984
+      ],
+      "bake_uv": [
+        0.154,
+        0.492,
+        0.689,
+        0.847
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 713.4,
+      "along": [
+        -20.5,
+        9.3
+      ],
+      "mu_uv": [
+        0.43,
+        0.075,
+        0.866,
+        0.303
+      ],
+      "bake_uv": [
+        0.671,
+        0.011,
+        0.923,
+        0.383
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 9,
+      "area": 216.0,
+      "along": [
+        12.0,
+        16.0
+      ],
+      "mu_uv": [
+        0.814,
+        0.411,
+        0.992,
+        0.644
+      ],
+      "bake_uv": [
+        0.011,
+        0.087,
+        0.446,
+        0.683
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 9,
+      "area": 216.0,
+      "along": [
+        12.0,
+        16.0
+      ],
+      "mu_uv": [
+        0.814,
+        0.411,
+        0.992,
+        0.644
+      ],
+      "bake_uv": [
+        0.656,
+        0.46,
+        0.979,
+        0.975
+      ]
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+{
+  "item": "Mace08",
+  "mu_name": "Elemental Mace",
+  "mu_name_from": "_enum.h:1545 MODEL_ELEMENTAL_MACE = MODEL_MACE + 7, loaded from Item/Mace08.bmd (ZzzOpenData.cpp:643). Group 2 number 7 in OpenMU S6 Weapons.cs:189; WebZen's 1.00m item(Kor).txt carries the row.",
+  "why_this_one": "The last of the early wave's arms (docs/second-class-gear.md: the early sets were the user's pick on 2026-10-04, and five of their arms were built 2026-10-06), and a Blood Castle 6 drop (the user, 2026-10-06: 'do next items'). Drop 90: Tarkan's Zaikan and Death Beam Knight reach it too.",
+  "profile": "weapon",
+  "stats": {
+    "from": "OpenMU S6 Weapons.cs:189. 0.75 and 0.95d have no second-class arms.",
+    "call": "CreateWeapon(2, 7, 0, 0, 1, 3, true, \"Elemental Mace\", 90, 62, 80, 50, 50, 0, 0, 15, 42, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: ..., energyRequirement, vitalityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 2,
+    "number": 7,
+    "drop_level": 90,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 3,
+    "minimum_damage": 62,
+    "maximum_damage": 80,
+    "attack_speed": 50,
+    "durability": 50,
+    "requires": {
+      "level": 0,
+      "strength": 15,
+      "agility": 42,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2 (docs/second-class-gear.md)."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed mace stands PLAYER_STOP_SWORD.",
+  "two_handed": false,
+  "sheets": {
+    "Estic": "estic.png",
+    "Estic2": "estic2.png",
+    "Estic2_R": "estic2_r.png"
+  },
+  "sheet_from": "Data/Item/Estic.OZJ (32x64, pale green jade-like metal), Estic2.OZJ (32x32, green with a gold orb) and Estic2_R.OZJ (32x32, green veins on black), from MuMain with pipeline/decode_texture.py; 268 triangles over three meshes.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every built blade: steel's own 0.2 mirrors the scene.",
+  "glow": {
+    "Estic2_R": {
+      "pulse": [
+        0.5,
+        0.3
+      ],
+      "pulse_rate": "slow",
+      "scrolls_per_second": -1.0,
+      "axis": "u"
+    }
+  },
+  "glow_note": "ItemObjectAttribute hides mesh 2, Estic2_R, from the body (HiddenMesh 2, ZzzObject.cpp:5278-5280), and RenderPartObjectBody draws it again added (BlendMesh 2) at sin(WorldTime*0.001)*0.5 + 0.3 of the light, its U sliding at WorldTime*0.001 and its V at -WorldTime*0.0005 (:7119-7128): green veins breathing slowly over the head. Here pulse [0.5, 0.3] at the slow rate and U sliding a sheet a second (scrolls_per_second -1, the renderer's offset being minus the rate); the V slide is left out, the renderer sliding one axis. MU's 0.3 - 0.5 dips below nought, so the veins go dark for a part of each breath, as here.",
+  "rig_note": "Mace08.rig.json from export-rig --actions=all: two bones, one action of one key, nothing moves; kept for bone 1, where MuMain hangs a yellow BITMAP_LIGHT and a pulsing white one while it is held (ZzzCharacter.cpp:7568-7576; fx/held_lights).",
+  "material_note": "Estic, the head's flanges, is steel at 0.45. Estic2, the shaft and the orb, is pale green paint: as steel it mirrored the grass and read black under the veins (studio, 2026-10-06), so painted_steel, as the Dark Phoenix's lacquer.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 42,
+      "area": 666.3,
+      "along": [
+        45.8,
+        99.8
+      ],
+      "mu_uv": [
+        0.275,
+        0.036,
+        0.976,
+        0.988
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.484,
+        0.362
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 42,
+      "area": 666.3,
+      "along": [
+        45.8,
+        99.8
+      ],
+      "mu_uv": [
+        0.275,
+        0.036,
+        0.976,
+        0.988
+      ],
+      "bake_uv": [
+        0.077,
+        0.248,
+        0.604,
+        0.651
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 42,
+      "area": 666.3,
+      "along": [
+        45.8,
+        99.8
+      ],
+      "mu_uv": [
+        0.275,
+        0.036,
+        0.976,
+        0.988
+      ],
+      "bake_uv": [
+        0.536,
+        0.071,
+        0.857,
+        0.799
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 42,
+      "area": 666.3,
+      "along": [
+        45.8,
+        99.8
+      ],
+      "mu_uv": [
+        0.275,
+        0.036,
+        0.976,
+        0.988
+      ],
+      "bake_uv": [
+        0.196,
+        0.537,
+        0.991,
+        0.994
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 48,
+      "area": 1461.4,
+      "along": [
+        -36.1,
+        59.6
+      ],
+      "mu_uv": [
+        -0.561,
+        0.025,
+        0.192,
+        0.852
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.646,
+        0.736
+      ],
+      "note": "Estic2, the shaft and its gold orb: MU's pale green paint."
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 125.3,
+      "along": [
+        67.7,
+        81.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.007,
+        0.008
+      ],
+      "note": "Estic2, the shaft and its gold orb: MU's pale green paint."
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 208.5,
+      "along": [
+        86.0,
+        103.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.018,
+        0.013,
+        0.018
+      ],
+      "note": "Estic2, the shaft and its gold orb: MU's pale green paint."
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 36,
+      "area": 2019.0,
+      "along": [
+        -22.9,
+        72.9
+      ],
+      "mu_uv": [
+        -0.011,
+        -0.982,
+        0.989,
+        1.992
+      ],
+      "bake_uv": [
+        0.585,
+        0.345,
+        0.638,
+        0.502
+      ],
+      "note": "Estic2, the shaft and its gold orb: MU's pale green paint."
+    }
+  ]
+}
