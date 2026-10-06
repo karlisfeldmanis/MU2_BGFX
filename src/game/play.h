@@ -716,6 +716,12 @@ private:
         // An Alquamos: its star bones (kStarlightBones) and whether its blow throws ribbons.
         std::vector<int> starBones;
         bool starRibbons = false;
+        // A Queen Rainer's crackle (kQueenArcs): bone pairs, flattened, and which are lit this
+        // reference frame, a bit each.
+        std::vector<int> arcBones;
+        uint32_t arcLit = 0;
+        float arcStep = 0.0f;
+        bool blizzard = false;  // her blow's shower (kBlizzardShare)
         // Its faint light (kAuraLights): the bone it hangs on, -1 for none, and its colour.
         int auraBone = -1;
         float auraColour[3] = {0.0f, 0.0f, 0.0f};

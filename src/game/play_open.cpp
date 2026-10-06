@@ -785,6 +785,24 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     }
                 }
             }
+            one.arcBones.clear();
+            one.blizzard = look->name == kQueenRainerFigure;
+            if (one.blizzard && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                const auto find = [&](const char* name) {
+                    for (size_t b = 0; b < bones.size(); ++b) {
+                        if (bones[b].name == name) return int(b);
+                    }
+                    return -1;
+                };
+                if (const int head = find(kQueenLightBone); head >= 0) one.starBones.push_back(head);
+                for (const auto& pair : kQueenArcs) {
+                    const int a = find(pair[0]), b = find(pair[1]);
+                    if (a < 0 || b < 0) continue;
+                    one.arcBones.push_back(a);
+                    one.arcBones.push_back(b);
+                }
+            }
             one.auraBone = -1;
             for (const AuraLight& aura : kAuraLights) {
                 if (look->name != aura.figure || !look->skeletonMesh) continue;

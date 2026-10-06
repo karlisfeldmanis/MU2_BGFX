@@ -78,6 +78,13 @@ constexpr float kWispRise = 0.5f;     // metres a second
 constexpr float kWispDrift = 0.25f;   // metres a second
 constexpr float kWispLife = 1.1f;     // seconds
 constexpr float kWispDim = 0.5f;
+// A Queen Rainer's blizzard (ShadowStars::blizzard). Ours: at half of MU's grey, twenty shards
+// summed over one body being a white blot at its own.
+constexpr int kBlizzardShards = 20;
+constexpr float kBlizzardFall = 15.0f;   // reference frames
+constexpr float kBlizzardDim = 0.5f;
+constexpr float kBlizzardShinyHalf = 32.0f * kUnit * 0.5f;
+constexpr float kBlizzardLightHalf = 64.0f * kUnit * 0.5f;
 constexpr size_t kWisps = 96;
 
 }  // namespace
@@ -146,6 +153,16 @@ void ShadowStars::update(float seconds) {
     wisps_.erase(std::remove_if(wisps_.begin(), wisps_.end(),
                                 [](const Wisp& one) { return one.age >= kWispLife; }),
                  wisps_.end());
+    for (Shard& one : shards_) {
+        if (one.wait > 0.0f) {
+            one.wait -= seconds;
+            continue;
+        }
+        one.frames += seconds * 25.0f;
+    }
+    shards_.erase(std::remove_if(shards_.begin(), shards_.end(),
+                                 [](const Shard& one) { return one.frames >= kBlizzardFall; }),
+                  shards_.end());
     for (Ember& one : embers_) {
         one.age += seconds * 25.0f;
         one.position[1] += kEmberRise * seconds;
@@ -185,9 +202,29 @@ void ShadowStars::blurBeam(const float from[3], const float to[3], float half) {
     beams_.push_back(one);
 }
 
+void ShadowStars::blizzard(const float at[3], float wait) {
+    if (!open_ || shards_.size() >= 8 * kBlizzardShards) return;
+    const auto roll = [&]() {
+        dice_ = dice_ * 1664525u + 1013904223u;
+        return dice_ >> 8;
+    };
+    for (int i = 0; i < kBlizzardShards; ++i) {
+        Shard one;
+        one.start[0] = at[0] + (float(roll() % 200u) - 100.0f + 100.0f) * kUnit;
+        one.start[1] = at[1] + 500.0f * kUnit;
+        one.start[2] = at[2] + (float(roll() % 200u) - 100.0f) * kUnit;
+        // LifeTime rand() % 15 + 15, the last fifteen frames the fall.
+        one.wait = wait + float(roll() % 15u) / 25.0f;
+        one.frames = 0.0f;
+        one.scale = float(roll() % 4u + 4u) * 0.2f;
+        one.spin = float(roll() % 360u) * 0.0174533f;
+        shards_.push_back(one);
+    }
+}
+
 void ShadowStars::thunderBeam(const float from[3], const float to[3], float half,
                               const float colour[3]) {
-    if (!open_ || !bgfx::isValid(thunder_) || beams_.size() >= 32) return;
+    if (!open_ || !bgfx::isValid(thunder_) || beams_.size() >= 64) return;
     Beam one;
     for (int i = 0; i < 3; ++i) {
         one.from[i] = from[i];
@@ -487,6 +524,27 @@ void ShadowStars::gather(gfx::Effects& effects) const {
         sprite.sheet = smoke_;
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
+    }
+    for (const Shard& one : shards_) {
+        if (one.wait > 0.0f) continue;
+        // After f frames: 20 f + f (f - 1) units down, 10 f west; the grey 0.1 a frame.
+        const float f = one.frames;
+        const float at[3] = {one.start[0] - 10.0f * f * kUnit,
+                             one.start[1] - (20.0f * f + f * (f - 1.0f)) * kUnit, one.start[2]};
+        const float grey = 0.1f * (f + 1.0f) * kBlizzardDim;
+        for (int pass = 0; pass < 2; ++pass) {
+            const bgfx::TextureHandle sheet = pass == 0 ? shinyAdded_ : light_;
+            if (!bgfx::isValid(sheet)) continue;
+            gfx::Sprite sprite;
+            for (int i = 0; i < 3; ++i) sprite.position[i] = at[i];
+            sprite.halfWidth = sprite.halfHeight =
+                pass == 0 ? kBlizzardShinyHalf * one.scale : kBlizzardLightHalf;
+            sprite.spin = one.spin;
+            for (int i = 0; i < 3; ++i) sprite.colour[i] = grey;
+            sprite.sheet = sheet;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
     }
     for (const Ember& one : embers_) {
         gfx::Sprite sprite;

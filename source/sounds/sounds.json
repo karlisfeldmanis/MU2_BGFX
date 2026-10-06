@@ -2178,6 +2178,24 @@
       ],
       "from": "Sounds[4], 182 -- Data\\Sound\\mMegaCrustDie.wav. ZzzOpenData.cpp:3738-3745."
     },
+    "queenrainer_move": {
+      "files": [
+        "mRainner1.wav"
+      ],
+      "from": "Sounds[0], 171 -- Data\\Sound\\mRainner1.wav: SetMonsterSound(..., 171, -1, 172, 172, 173), ZzzOpenData.cpp:3762-3768 (Icarus's Queen Rainer)."
+    },
+    "queenrainer_attack": {
+      "files": [
+        "mRainnerAttack1.wav"
+      ],
+      "from": "Sounds[2] and [3], both 172 -- mRainnerAttack1.wav. ZzzOpenData.cpp:3762-3768."
+    },
+    "queenrainer_die": {
+      "files": [
+        "mRainnerDie.wav"
+      ],
+      "from": "Sounds[4], 173 -- Data\\Sound\\mRainnerDie.wav. ZzzOpenData.cpp:3762-3768."
+    },
     "ironwheel_move": {
       "files": [
         "iron1.wav"

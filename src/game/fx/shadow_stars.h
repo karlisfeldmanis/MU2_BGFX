@@ -84,6 +84,13 @@ public:
     // 11216-11219, 8453-8463) -- lightning2 at scale 1 and Shiny03's streak at 4, added in
     // (1, 0.6, 0.4) times sin(WorldTime*0.002)*0.3 + 0.7. `pulse` is that luminosity.
     void flare(const float at[3], float fade, float pulse);
+    // A Queen Rainer's blow (ZzzCharacter.cpp:1681-1695): twenty BITMAP_BLIZZARD on whom it struck
+    // (ZzzEffect.cpp:2974-3001; MoveHandlers.cpp:5019-5045). Each is born 500 units over `at`,
+    // within 100 either way and 100 east, waits LifeTime - 15 of its 15-29 frames, then falls 15
+    // frames, 20 units and 2 more each frame, drifting 10 west a frame, a Shiny02 at Scale
+    // 0.8-1.4 and a flare01 at 1 turned at random, in a grey that rises 0.1 a frame. `wait` holds
+    // the whole shower back, seconds. Ours: no BITMAP_FIRE + 2 trail, no jitter, at kBlizzardDim.
+    void blizzard(const float at[3], float wait);
     // What a monster's lightning leaves where it struck (the user, 2026-10-04: 'lightings always
     // has to leave some minimal smoke for every monster which uses lighting'): a few faint grey
     // wisps of MU's smoke01 rising off `at` and gone in about a second. Ours.
@@ -165,6 +172,15 @@ private:
         float fade;
     };
     std::vector<Ribbon> ribbons_;
+    struct Shard {
+        float start[3];
+        float wait;     // seconds before it falls
+        float frames;   // reference frames it has fallen, to 15
+        float scale;    // the Shiny02's
+        float spin;
+    };
+    std::vector<Shard> shards_;
+    uint32_t dice_ = 0x5A17u;
     bool open_ = false;
 };
 

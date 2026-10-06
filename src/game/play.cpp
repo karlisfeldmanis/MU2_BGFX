@@ -1340,6 +1340,21 @@ void Play::update(double seconds) {
                                 emit(heard_.meteorite, struck->crown[0], struck->crown[2]);
                             }
                         }
+                        // A Queen Rainer's blow (kQueenRainerFigure): MU's twenty BITMAP_BLIZZARD
+                        // on whom she struck at the attack's fifth key, SOUND_METEORITE01 with
+                        // them (ours: once for the twenty).
+                        if (const Drawn* queen = drawnOf(happening.who);
+                            queen && queen->blizzard && happening.whom != 0) {
+                            const Drawn* struck = drawnOf(happening.whom);
+                            if (struck && struck->placed && ground_) {
+                                const float at[3] = {
+                                    struck->crown[0],
+                                    ground_->heightAt(struck->crown[0], struck->crown[2]),
+                                    struck->crown[2]};
+                                shadowStars_.blizzard(at, swinger->swinging * kBlizzardShare);
+                                if (heard_.meteorite >= 0) emit(heard_.meteorite, at[0], at[2]);
+                            }
+                        }
                         // A Hydra's first head bolt, the swing's own beam (sim kSplitBlows): from
                         // just before its blow shows, as the Lizard King's.
                         if (Drawn* hydra = drawnOf(happening.who);

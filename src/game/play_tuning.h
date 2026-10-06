@@ -500,6 +500,29 @@ inline constexpr const char* kAlquamosFigure = "Alquamos01";
 inline constexpr const char* kStarlightBones[] = {"stt07", "stt06", "stt05", "stt04", "stt",
                                                   "stt01", "stt09", "stt02", "stt03"};
 inline constexpr int kStarRibbons = 4;
+// MONSTER_QUEEN_RAINER's: a BITMAP_LIGHT at Scale 0.8 on bone 20, Bip01 Head, white
+// (ZzzCharacter.cpp:8815-8818; Light is RenderCharacter's (1, 1, 1), :8498), drawn as an
+// Alquamos's starlight. MoveCharacterVisual's crackle (:5768-5817): every frame a
+// BITMAP_JOINT_THUNDER sub 7, 14 wide, in (0.5, 0.5, 1), along each of these bone pairs --
+// the legs, the spine, the arms -- by name in Monster52. Ours: kQueenArcsAFrame of them a
+// reference frame, picked at random, as ShadowStars::thunderBeam streaks at kQueenArcDim; all
+// fourteen each frame was a lit wire figure. Her blow's twenty BITMAP_BLIZZARD on the target at
+// CheckAttackTime(5) (:1681-1695), 5/7 of her seven-key swing (ShadowStars::blizzard).
+inline constexpr const char* kQueenRainerFigure = "QueenRainer01";
+inline constexpr const char* kQueenLightBone = "Bip01 Head";
+inline constexpr const char* kQueenArcs[][2] = {
+    {"Bip01 Pelvis", "Bip01 L Thigh"},       {"Bip01 L Thigh", "Bip01 L Calf"},
+    {"Bip01 L Calf", "Bip01 L Foot"},        {"Bip01 Pelvis", "Bip01 R Thigh"},
+    {"Bip01 R Thigh", "Bip01 R Calf"},       {"Bip01 Pelvis", "Bip01 Spine1"},
+    {"Bip01 Spine1", "Bip01 R Clavicle"},    {"Bip01 R Clavicle", "Bip01 R UpperArm"},
+    {"Bip01 R UpperArm", "Bip01 R Forearm"}, {"Bip01 R Forearm", "Bip01 R Hand"},
+    {"Bip01 Spine1", "Bip01 L Clavicle"},    {"Bip01 L Clavicle", "Bip01 L UpperArm"},
+    {"Bip01 L UpperArm", "Bip01 L Forearm"}, {"Bip01 L Forearm", "Bip01 L Hand"}};
+inline constexpr int kQueenArcsAFrame = 4;
+constexpr float kQueenArcHalf = 0.07f;  // 14 units wide
+constexpr float kQueenArcColour[3] = {0.5f, 0.5f, 1.0f};
+constexpr float kQueenArcDim = 0.4f;
+constexpr float kBlizzardShare = 5.0f / 7.0f;
 inline constexpr const char* kShadowJoints[] = {
     "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
     "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",

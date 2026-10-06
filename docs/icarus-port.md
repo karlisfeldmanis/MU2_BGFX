@@ -199,6 +199,18 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   BITMAP_JOINT_THUNDER. kResistances {71, 9, 9}, kDropRates {71, 14, 3, 10}, and the Alquamos's
   {69, 9, 9} and {69, 14, 3, 10}, which its commit left out. Seen in a muted run at 58,39: two
   Crusts on the hero, blade and banners lit, no errors.
+- **Queen Rainer (70)**: Monster52 as `QueenRainer01`, scale 1.3; 6 spawns, ids 1504-1509, on
+  the east turn and the middle band. BlendMesh -2: all three kuo sheets added, a translucent
+  violet winged woman, and no shadow (`ZzzCharacter.cpp:13579-13586`). Its effects: the white
+  BITMAP_LIGHT at 0.8 on her head (`:8815-8818`), as an Alquamos's starlight; MoveCharacterVisual's
+  BITMAP_JOINT_THUNDER sub 7 along fourteen bone pairs (`:5768-5817`), ours four a reference
+  frame at random as faint blue `ShadowStars::thunderBeam` streaks (kQueenArcs); her blow's
+  twenty BITMAP_BLIZZARD shards falling 5 m onto the target at the attack's fifth key
+  (`:1681-1695`; `ZzzEffect.cpp:2974-3001`, `MoveHandlers.cpp:5019-5045`; `ShadowStars::blizzard`),
+  ours at half light, without their BITMAP_FIRE + 2 trails and with one SOUND_METEORITE01 for the
+  twenty; queenrainer_move/attack/die. Energy Ball (17), non-elemental as MU's until the user
+  says otherwise. kResistances {70, 11, 9}, kDropRates {70, 14, 3, 10}. Seen in a muted run at
+  66,65: she fights the hero, shards landing round him, no errors.
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

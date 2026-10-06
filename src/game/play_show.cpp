@@ -585,6 +585,32 @@ void Play::shade(float seconds) {
                 if (one.figure.pointOn(bone, origin, at)) shadowStars_.starlight(at, fade, luminosity);
             }
         }
+        // A Queen Rainer's crackle along her bones (kQueenArcs): a fresh few each reference frame.
+        if (!one.arcBones.empty() && one.deadFor < 0.0f) {
+            const int pairs = int(one.arcBones.size() / 2);
+            one.arcStep -= seconds * 25.0f;
+            if (one.arcStep <= 0.0f) {
+                one.arcStep += 1.0f;
+                if (one.arcStep <= 0.0f) one.arcStep = 1.0f;
+                one.arcLit = 0;
+                for (int k = 0; k < kQueenArcsAFrame; ++k) {
+                    wanderDice_ ^= wanderDice_ << 13;
+                    wanderDice_ ^= wanderDice_ >> 17;
+                    wanderDice_ ^= wanderDice_ << 5;
+                    one.arcLit |= 1u << (wanderDice_ % uint32_t(pairs));
+                }
+            }
+            float colour[3];
+            for (int k = 0; k < 3; ++k) colour[k] = kQueenArcColour[k] * kQueenArcDim * fade;
+            for (int p = 0; p < pairs; ++p) {
+                if (!(one.arcLit & (1u << p))) continue;
+                float a[3], b[3];
+                if (one.figure.pointOn(one.arcBones[size_t(2 * p)], origin, a) &&
+                    one.figure.pointOn(one.arcBones[size_t(2 * p + 1)], origin, b)) {
+                    shadowStars_.thunderBeam(a, b, kQueenArcHalf, colour);
+                }
+            }
+        }
         // A Death Gorgon: an ember now and then off a joint picked at random.
         if (one.embers) {
             if (one.deadFor >= 0.0f) continue;

@@ -311,3 +311,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | GoldenDragon01 | figure | 2026-10-06 18:28 | awaiting |  |
 | Alquamos01 | figure | 2026-10-06 20:26 | passed | MU's translucent cyan star-dragon, all added with its star specks; reads at noon, dusk and night and over Icarus's navy |
 | MegaCrust01 | figure | 2026-10-06 21:10 | passed | blue-grey cast plate reads as painted armour at noon, dusk and night; the flame banner glows in its wing frame; Thunder Blade in hand |
+| QueenRainer01 | figure | 2026-10-06 21:45 | passed | MU's translucent violet winged woman, every mesh added, her star-field gown and banded body read at noon, dusk and night; no shadow |
