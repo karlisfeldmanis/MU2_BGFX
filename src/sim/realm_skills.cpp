@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "core/log.h"
 #include "sim/realm_tuning.h"
@@ -200,6 +201,23 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         pending_ = Request{};
         rise(hero);
         say(What::Cast, hero, row.number, cool, 0, hero.id);
+        return true;
+    }
+
+    // **A charge** (Nova): begun here, gathered in Realm::chargeTick and let go in burstCharge.
+    // He stands where he is, nothing else thrown, until it goes.
+    if (row.chargeTicks > 0) {
+        if (charge_.skill != 0 || hero.mana < row.mana) return false;
+        hero.walking = false;
+        hero.route.clear();
+        hero.onStep = 0;
+        dropBlow(hero);
+        order_ = Request{};
+        pending_ = Request{};
+        charge_ = Charge{row.number, 0, tick_, false};
+        hero.swingsAt = hero.castUntil = std::numeric_limits<int64_t>::max();
+        hero.castBreaks = false;
+        say(What::Cast, hero, row.number, 0, 0, hero.id);
         return true;
     }
 
@@ -596,7 +614,10 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
     const bool spell = row.wizardry;
     // His aim rides in `c`, in thousandths of a radian, so Aqua Beam's is drawn down the line it
     // struck (`Spread::Beam`); the rings round him ignore it.
-    if (spell) say(What::Loosed, hero, row.number, 0, int32_t(std::lround(hero.aim * 1000.0f)), 0);
+    // Not for a charge's burst, which says its own with its stage (Realm::burstCharge).
+    if (spell && row.chargeTicks == 0) {
+        say(What::Loosed, hero, row.number, 0, int32_t(std::lround(hero.aim * 1000.0f)), 0);
+    }
     // Cyclone's and Twisting Slash's wind, under his element runes (realm_tuning.h).
     if (!spell) force *= elementForce(hero, skillElement(row.number));
     for (int i = 0; i < found; ++i) {
@@ -914,6 +935,49 @@ float Realm::whirl(Body& hero, const SkillRow& row, float force) {
         say(What::Shoved, *target, column, rowAt);
     }
     return force;
+}
+
+void Realm::chargeTick(Body& hero) {
+    if (charge_.skill == 0) return;
+    const SkillRow* row = skillNumbered(charge_.skill);
+    if (row == nullptr || !hero.alive()) {
+        // Dead, or the row gone: nothing goes off.
+        charge_ = Charge{};
+        hero.swingsAt = hero.castUntil = tick_;
+        return;
+    }
+    // A stage every chargeTicks while there is mana for it; short, it holds where it is.
+    if (tick_ >= charge_.nextAt && charge_.stage < row->chargeStages && hero.mana >= row->mana) {
+        hero.mana -= row->mana;
+        ++charge_.stage;
+        charge_.nextAt = tick_ + row->chargeTicks;
+    }
+    // Let go, or full: it bursts (OpenMU's loop ends on its twelfth stage and strikes).
+    if (charge_.letGo || charge_.stage >= row->chargeStages) burstCharge(hero);
+}
+
+void Realm::burstCharge(Body& hero) {
+    const SkillRow* row = skillNumbered(charge_.skill);
+    const int stage = charge_.stage;
+    charge_ = Charge{};
+    if (row == nullptr) return;
+    // Let go before a stage gathered, nothing goes.
+    if (stage <= 0) {
+        hero.swingsAt = hero.castUntil = tick_;
+        return;
+    }
+    const int index = skillIndexOf(row->number);
+    const int32_t clip = clipTicksOf(hero, *row);
+    const int32_t cool = cooldownTicks(*row, hero.totalPoints().agility, floorTicksFor(*row, clip));
+    if (index >= 0) hero.cools[size_t(index)] = tick_ + cool;
+    hero.swingsAt = hero.castUntil = tick_ + clip;
+    say(What::Loosed, hero, row->number, 0, stage, 0);
+    // Its stages and the strength's half on the blow (OpenMU's SkillBaseDamageBonus), for this
+    // burst alone.
+    chargeDamage_ = kNovaStageDamage[std::clamp(stage, 0, 12)] + hero.totalPoints().strength / 2;
+    strikeAround(hero, *row, row->force);
+    chargeDamage_ = 0;
+    core::logf("nova: tick %lld, burst at stage %d", (long long)tick_, stage);
 }
 
 }  // namespace mu::sim

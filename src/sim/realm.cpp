@@ -90,6 +90,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     mixDice_.seed(seed ^ 0x85ebca6b2c1b3c6dull);
     crackerDice_.seed(seed ^ 0xd6e8feb86659fd93ull);
     featherDice_.seed(seed ^ 0x8c3b1e4f5a7d2961ull);
+    novaScrollDice_.seed(seed ^ 0x3f9d2a7c51e8b604ull);
     gearDice_.seed(seed ^ 0x2f6a9c1d7e4b5803ull);
     ticketDice_.seed(seed ^ 0x9fb21c651e98df25ull);
     treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
@@ -897,6 +898,7 @@ void Realm::step() {
         summonOwed_ = 0;
     }
     sip();
+    chargeTick(hero);
     recover(hero);
     // Icarus holds no one who cannot fly: his Dinorant worn out with no wing on, or a save
     // opened there without them, and he goes home -- WebZen's Devias, gate 22

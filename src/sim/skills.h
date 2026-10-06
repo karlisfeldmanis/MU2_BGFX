@@ -125,6 +125,11 @@ constexpr int32_t kFireBreath = 49;
 // spear and only from a Uniria or a Dinorant (SkillCast.cpp:135-155); here it is taught by the
 // Orb of Impale and thrown with a spear on foot or ridden (the user, 2026-10-06).
 constexpr int32_t kImpale = 47;
+// `AT_SKILL_NOVA`, the Soul Master's: held, it gathers in stages, and let go it bursts round him
+// (Season 2's, not 0.75's; OpenMU VersionSeasonSix/SkillsInitializer.cs:158, MuMain's
+// AT_SKILL_NOVA_BEGIN and AT_SKILL_NOVA). Taught by the Scroll of Nova (Book19); the user,
+// 2026-10-07: 'lets first make that nova for soul master, than use it for dragon'.
+constexpr int32_t kNova = 40;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -402,6 +407,10 @@ struct SkillRow {
     // (`Body::riding`, so never on a safe tile), with any weapon or none
     // -- it is the dragon that breathes.
     bool mounted = false;
+    // **A charge** (Nova): held, it gathers a stage every `chargeTicks`, paying `mana` a stage, to
+    // `chargeStages`; let go -- or full -- it bursts (Realm::burstCharge). 0 for every other.
+    int32_t chargeTicks = 0;
+    int32_t chargeStages = 0;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -435,7 +444,8 @@ struct SkillRow {
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
     // slot is his auto-attack (the user, 2026-09-28), paced by its own clip and nothing else,
     // and like a swing it can be walked out of and a hit pays mana back.
-    bool primary() const { return coolTicks <= 0 && !onSelf(); }
+    // Not a charge: Nova is held on a key and let go, never thrown on the right button's swing.
+    bool primary() const { return coolTicks <= 0 && !onSelf() && chargeTicks == 0; }
     // Whether it flies to what it is thrown at, rather than being struck at arm's length.
     bool thrown() const { return reach > 1.5f && channelTicks == 0; }
     bool channelled() const { return channelTicks > 0; }
@@ -452,11 +462,16 @@ struct SkillRow {
 // Inferno and Aqua Beam, on the end past the elf's, Cometfall past the Dinorant's, and Impale
 // past Cometfall. The
 // learned mask is sixty-four bits since
-// Inferno, the thirty-third (`Body::learned`, and the save writes it whole); past sixty-four it needs widening
+// Inferno, the thirty-third (`Body::learned`, and the save writes it whole), and Nova past
+// Impale; past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 38;
+constexpr int kSkills = 39;
+
+// What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
+// stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
+constexpr int32_t kNovaStageDamage[13] = {0, 20, 50, 99, 160, 225, 325, 425, 550, 700, 880, 1090, 1320};
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing

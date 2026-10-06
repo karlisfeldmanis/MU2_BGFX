@@ -123,6 +123,10 @@ inline int32_t arenaBreed(const content::Tables& tables, const std::string& name
 constexpr int kMonsterDieSlot = 6;
 // MONSTER01_SHOCK, played on the Lich's meteor quake and nowhere else (sprint 11 step 5).
 constexpr int kMonsterShockSlot = 5;
+// Nova's two (MuMain's _enum.h): PLAYER_SKILL_HELL_BEGIN held while it gathers and
+// PLAYER_SKILL_HELL_START as it goes (WSclient.cpp:4754-4762).
+constexpr int kNovaChargeAction = 72;
+constexpr int kNovaBurstAction = 73;
 // MONSTER01_WALK, which MonsterMoveSandSmoke reads.
 constexpr int kMonsterWalkSlot = 2;
 // How far the quake reaches: MU's `Distance <= 200`, a hundred units to the tile.

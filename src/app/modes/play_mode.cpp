@@ -394,6 +394,7 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().spirits().open(assets, ctx.textures,
                                                world_.played().showing().table(),
                                                &world_.ground());
+                world_.played().nova().open(assets, ctx.textures, world_.played().showing().table());
                 world_.played().firework().open(assets, ctx.textures,
                                                 world_.played().showing().table(),
                                                 &world_.ground());
@@ -882,6 +883,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             }
             for (const auto& [f, k] : args.uiSkills) {
                 if (at.index == f) desk_.scriptSkill(k - 1);
+            }
+            for (const core::Args::Hold& hold : args.uiHolds) {
+                if (at.index == hold.frame) desk_.scriptSkill(hold.key - 1);
+                if (at.index >= hold.frame && at.index < hold.frame + hold.frames) desk_.scriptHold(hold.key - 1);
             }
             if (args.boltEvery > 40 && at.index % args.boltEvery == args.boltEvery - 40) {
                 world_.played().benchFace(view[0], view[8]);
@@ -1407,6 +1412,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().poison().gather(ctx.renderer.effects());
         world_.played().flame().gather(ctx.renderer.effects());
         world_.played().spirits().gather(ctx.renderer.effects());
+        world_.played().nova().gather(ctx.renderer.effects());
         world_.played().firework().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherFolkLights(ctx.renderer.effects());

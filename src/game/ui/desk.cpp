@@ -1244,6 +1244,16 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         play.castSkill(bound_[key], play.pointedAt());
     }
     scriptedSkill_ = -1;
+    // **Nova let go with its key** (the user, 2026-10-07: 'Hold, let go'): while the realm holds a
+    // charge, the first frame no key bound to it is down lets it go (Realm::letGo).
+    if (const int32_t held = play.realm().chargeSkill(); held != 0) {
+        bool down = false;
+        for (int key = 0; key < Hud::kSkillKeys; ++key) {
+            if (bound_[key] == held && (window.down(keys[key]) || scriptedHold_ == key)) down = true;
+        }
+        if (!down) play.letGo();
+    }
+    scriptedHold_ = -1;
     // What a right-click on a monster throws: the realm is asked with it on the Attack order.
     play.setQuickSkill(bound_[Hud::kRightSlot]);
     // The box rings on the realm's throw, not on the key: a press held until he is in reach

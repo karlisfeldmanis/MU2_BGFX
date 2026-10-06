@@ -1874,8 +1874,8 @@ void testCastLock(const content::Tables& tables) {
                   aqua.spread == sim::Spread::Beam && aqua.reach == 6.0f && aqua.clip == 152 &&
                   aqua.kin == sim::Kin::DarkWizard,
               "Aqua Beam is a no-cooldown beam of eighty damage and a hundred and forty mana");
-        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 5 && sim::kSkills == 38,
-              "and its row is the last but Penetration's, Fire Breath's, Cometfall's and Impale's");
+        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 6 && sim::kSkills == 39,
+              "and its row is the last but Penetration's, Fire Breath's, Cometfall's, Impale's and Nova's");
         const int32_t aquaScroll = tables.itemAt(15, 11);
         check(aquaScroll >= 0 &&
                   tables.items[size_t(aquaScroll)].teaches == sim::skill::kAquaBeam &&
@@ -2388,8 +2388,8 @@ void testCastLock(const content::Tables& tables) {
               "and a comet strikes over half again as hard as a rock");
         check(sim::skillElement(sim::skill::kCometfall) == sim::Element::Lightning,
               "and it is lightning");
-        check(sim::skillIndexOf(sim::skill::kCometfall) == sim::skillCount() - 2,
-              "and its row is the last but Impale's, so no save's learned bit moves");
+        check(sim::skillIndexOf(sim::skill::kCometfall) == sim::skillCount() - 3,
+              "and its row is the last but Impale's and Nova's, so no save's learned bit moves");
         const int32_t cometScroll = tables.itemAt(15, 12);
         check(cometScroll >= 0 &&
                   tables.items[size_t(cometScroll)].teaches == sim::skill::kCometfall &&
@@ -2430,8 +2430,8 @@ void testCastLock(const content::Tables& tables) {
                   impale.families == sim::arms::kSpear && impale.reach == 1.0f &&
                   impale.spread == sim::Spread::One && impale.needLevel == 56,
               "Impale is the knight's, eight mana, a spear's alone, at his own reach");
-        check(sim::skillIndexOf(sim::skill::kImpale) == sim::skillCount() - 1,
-              "and its row is the table's last, so no save's learned bit moves");
+        check(sim::skillIndexOf(sim::skill::kImpale) == sim::skillCount() - 2,
+              "and its row is the last but Nova's, so no save's learned bit moves");
         const int32_t orb = tables.itemAt(12, 18);
         check(orb >= 0 && tables.items[size_t(orb)].teaches == sim::skill::kImpale &&
                   tables.items[size_t(orb)].teachesLevel == 56 &&
@@ -9542,6 +9542,74 @@ void testWearingTakesDown(const content::Tables& tables) {
 }
 
 // A thrown Firecracker (sim/items.h, Realm::crack): WebZen's FireCrackerOpenEven.
+// Nova (sim::skill::kNova): the Soul Master's scroll, the charge held in stages, the burst let go.
+void testNova(const content::Tables& tables) {
+    std::printf("nova\n");
+    const int scroll = tables.itemAt(15, 18);
+    check(scroll >= 0 && sim::scrollOfNova(tables.items[size_t(scroll)]), "the Scroll of Nova has a row (15, 18)");
+    const sim::SkillRow* nova = sim::skillNumbered(sim::skill::kNova);
+    check(nova != nullptr && nova->chargeTicks == 10 && nova->chargeStages == 12 && nova->mana == 15 &&
+              nova->reach == 6.0f && nova->kin == sim::Kin::DarkWizard,
+          "Nova gathers a stage every half second to twelve, fifteen mana a stage, six tiles");
+    if (scroll < 0 || nova == nullptr) return;
+    const auto wizard = [&](sim::Realm& realm, uint64_t seed) {
+        realm.raise(&tables, seed, 200, 160, sim::Kin::DarkWizard, 150);
+        sim::HeroRecord record = realm.record();
+        record.points.energy = 1100;
+        realm.restore(record);
+    };
+    {
+        sim::Realm realm;
+        wizard(realm, 5);
+        const int slot = realm.give(scroll);
+        check(!realm.useItem(slot), "a wizard not yet a Soul Master cannot read it");
+        promote(realm);
+        check(realm.useItem(slot), "a Soul Master reads it");
+        check(realm.knows(sim::skill::kNova), "and knows Nova");
+    }
+    sim::Realm realm;
+    wizard(realm, 6);
+    promote(realm);
+    realm.learn(sim::skill::kNova);
+    const int64_t full = realm.hero().mana;
+    realm.invoke(sim::skill::kNova, 0);
+    realm.step();
+    check(realm.chargeSkill() == sim::skill::kNova, "pressed, it gathers");
+    for (int i = 0; i < 25; ++i) realm.step();
+    const int stage = realm.chargeStage();
+    check(stage == 3, "three stages in a second and a quarter");
+    checkEqual(realm.hero().mana, full - 15 * stage, "fifteen mana a stage");
+    // Let go: the burst on the next tick, at the stage it reached, on every monster in six tiles.
+    int burst = -1, struck = 0;
+    realm.letGo();
+    realm.step();
+    for (const sim::Happening& h : realm.happenings()) {
+        if (h.what == sim::What::Loosed && h.who == realm.hero().id && h.a == sim::skill::kNova) burst = std::max(burst, h.c);
+        if (h.what == sim::What::Hit && h.who == realm.hero().id) {
+            const sim::Body* one = realm.find(h.whom);
+            if (one && std::max(std::fabs(one->x - realm.hero().x), std::fabs(one->y - realm.hero().y)) > 6.5f) burst = -100;
+            ++struck;
+        }
+    }
+    checkEqual(burst, 3, "let go, it bursts at the stage it held, nothing beyond six tiles");
+    check(realm.chargeSkill() == 0, "and the charge is spent");
+    std::printf("  nova: a stage-three burst struck %d\n", struck);
+    // Held to the end it goes by itself, at twelve.
+    sim::Realm held;
+    wizard(held, 7);
+    promote(held);
+    held.learn(sim::skill::kNova);
+    held.invoke(sim::skill::kNova, 0);
+    int last = -1;
+    for (int i = 0; i < 200 && last < 0; ++i) {
+        held.step();
+        for (const sim::Happening& h : held.happenings()) {
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kNova) last = std::max(last, h.c);
+        }
+    }
+    checkEqual(last, 12, "held, it goes off by itself at its twelfth stage");
+}
+
 // The Box of Luck and the Box of Kundun (sim/items.h): thrown, each is spent and opens -- an item
 // at its rate and its levels, else its Zen.
 void testBoxes(const content::Tables& tables) {
@@ -9895,7 +9963,9 @@ void testSecondClassDrops() {
             }
             at->dropFor(level);
             for (const sim::Lying& one : at->lying()) {
-                found += sim::secondClassOnly(map.items[size_t(one.what.item)]) ? 1 : 0;
+                // Gear: the Soul Master's Scroll of Nova falls here on a roll of its own.
+                const content::ItemRow& row = map.items[size_t(one.what.item)];
+                found += sim::secondClassOnly(row) && !sim::scrollOfNova(row) ? 1 : 0;
             }
         }
         return found;
@@ -10211,6 +10281,7 @@ int main() {
     testWishDropsOnWalk(tables);
     testTravelQuestLock();
     testBoxes(tables);
+    testNova(tables);
     testFirecracker(tables);
     testSecondClassDrops();
     testQuestFirecrackers(tables);

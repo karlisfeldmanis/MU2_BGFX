@@ -40,7 +40,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     const bool impPaid = impCost > 0 && attacker.health > impCost;
     const double dealt = attacker.stats.damageDealt;
     if (impCost > 0 && !impPaid) attacker.stats.damageDealt = 1.0;
-    Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats, row->damage, dice)
+    // A charge's stages ride on the skill's damage for its burst (Realm::burstCharge).
+    Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats,
+                                            row->damage + (attacker.player ? chargeDamage_ : 0), dice)
                                      : strike(attacker.stats, target.stats, dice);
     attacker.stats.damageDealt = dealt;
     if (blow.hit && impPaid) attacker.health -= impCost;

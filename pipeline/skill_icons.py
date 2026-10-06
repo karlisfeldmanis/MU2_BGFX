@@ -128,6 +128,11 @@ SKILLS = {
     # only for spears"): 0.95d's (Version095d/SkillsInitializer.cs:79), off the Orb of Impale,
     # group 12 number 18. Below 57 and not use-type 4, so the arithmetic above finds its cell.
     47: ("Dark Knight", "Impale"),
+    # And Nova, cut on 2026-10-07 because the game now has it (the user: "lets first make that
+    # nova for soul master"): Season 2's (VersionSeasonSix/SkillsInitializer.cs:158), off the
+    # Scroll of Nova, group 15 number 18. Below 57 and not use-type 4, so the arithmetic above
+    # finds its cell.
+    40: ("Dark Wizard", "Nova"),
 }
 
 

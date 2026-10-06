@@ -567,6 +567,8 @@ bool firecracker(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 11;
 }
 
+bool scrollOfNova(const content::ItemRow& row) { return row.group == 15 && row.number == 18; }
+
 bool boxOfLuck(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 51; }
 
 bool boxOfKundun(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 52; }

@@ -1,0 +1,44 @@
+{
+ "item": "Book19",
+ "mu_name": "Scroll of Nova",
+ "mu_name_from": "ZzzOpenData.cpp loads item group ITEM_ETC number i from Book{i+1:02}.bmd, so number 18 is Book19.bmd; MuMain's _enum.h names it ITEM_SCROLL_OF_NOVA = ITEM_ETC + 18 (and MODEL_SCROLL_OF_NOVA), and OpenMU's VersionSeasonSix/Items/Scrolls.cs carries it for the Soul Master. Season 2's, not 0.75's: the Soul Master's own spell (docs/golden-dragon-raid.md, Nova).",
+ "why_this_one": "The user, 2026-10-07: 'lets first make that nova for soul master, than use it for dragon', then 'Scroll of Nova drop'. The scroll falls rarely in the Lost Tower and Atlans (sim::kNovaScrollOdds), read by a Soul Master alone.",
+ "mesh": "Book01",
+ "mesh_note": "No geometry of its own. Book01.bmd through Book19.bmd are byte-identical in MuMain's Data/Item -- one md5 across all nineteen -- so this names the one the pipeline has built, as Book02 through Book12 do.",
+ "stats": {
+  "note": "A scroll's row, in the shape of Book16's, at OpenMU's Season 6 numbers.",
+  "group": 15,
+  "number": 18,
+  "drop_level": 0,
+  "drops_from_monsters": false,
+  "width": 1,
+  "height": 2,
+  "durability": 1,
+  "classes": [
+   "wizard"
+  ],
+  "class_level": 2,
+  "classes_from": "OpenMU's CharacterClasses.SoulMasterAndGrandMaster (VersionSeasonSix/SkillsInitializer.cs:158): the wizard's second alone.",
+  "requires": {
+   "level": 100,
+   "strength": 0,
+   "agility": 0,
+   "energy": 1052,
+   "vitality": 0
+  },
+  "requires_note": "OpenMU's Nova: level 100, energy 1,052 (VersionSeasonSix/SkillsInitializer.cs:158). The same numbers are on the skill block below, which is what Realm::useItem checks.",
+  "drops_from_monsters_note": "Not off the ordinary pools: its own roll in the Lost Tower and Atlans (Realm::leave, sim::kNovaScrollOdds), ours."
+ },
+ "skill": {
+  "note": "What the scroll teaches. Read once and gone.",
+  "number": 40,
+  "name": "Nova",
+  "tells": "Hold to gather power, up to twelve stages; let go and it bursts round him, striking every monster within six tiles, harder the longer he held.",
+  "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the scroll's tooltip and the skill's card say the same thing.",
+  "level_requirement": 100,
+  "energy_requirement": 1052,
+  "energy_from": "OpenMU's Season 6 row (VersionSeasonSix/SkillsInitializer.cs:158).",
+  "value": 300,
+  "level_from": "OpenMU's level 100; the Soul Master is reached at 200 (Sevina, docs/class-change.md), so the level asks nothing more of him."
+ }
+}

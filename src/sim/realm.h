@@ -1173,6 +1173,12 @@ public:
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which
     // does not draw a destination marker for a walk that is not going to happen.
     bool casting() const { return tick_ < bodies_[0].castUntil; }
+    // **Nova's charge** (SkillRow::chargeTicks): the skill he is holding, 0 for none, and the stage
+    // it has gathered. `letGo` is the key released -- asked between ticks as `ask` is, the burst
+    // is the next tick's (Realm::chargeTick).
+    int32_t chargeSkill() const { return charge_.skill; }
+    int chargeStage() const { return charge_.stage; }
+    void letGo() { charge_.letGo = true; }
     // A hold a click to move cannot end -- Teleport's. Every other cast is broken by the click
     // (Realm::accept), so the pointer lets the walk through.
     bool held() const { return casting() && !bodies_[0].castBreaks; }
@@ -1504,6 +1510,17 @@ private:
         float spot[2] = {};
     };
     Echo echo_;
+    // The charge held (Realm::chargeTick) and, while it bursts, its stages' blow on the skill's.
+    struct Charge {
+        int32_t skill = 0;
+        int stage = 0;
+        int64_t nextAt = 0;
+        bool letGo = false;
+    };
+    Charge charge_;
+    int32_t chargeDamage_ = 0;
+    void chargeTick(Body& hero);
+    void burstCharge(Body& hero);
     // Evil Spirit's blows held, his spell's or his shield's rune's (WebZen's SkillEvil): each on
     // one monster at its own tick, at the cast's force. Room for a crowd in ten tiles and a cast
     // or two over it, as the spell has no cooldown; a blow that finds no room is not held.
@@ -1564,6 +1581,7 @@ private:
     Random crackerDice_{0};
     // Whether a kill in Atlans or the Lost Tower leaves a Loch's Feather (sim::kFeatherOdds).
     Random featherDice_{0};
+    Random novaScrollDice_{0};
     // And whether Atlans's strongest leave a piece of the second class's gear
     // (sim::kAtlansGearOdds), the piece and its options off the same stream.
     Random gearDice_{0};

@@ -659,6 +659,15 @@ Args parseArgs(int argc, char** argv) {
                 logError("--ui-skill is FRAME:KEY with KEY 1 to 5 (Q W E R T)");
                 a.valid = false;
             }
+        } else if (!std::strcmp(s, "--ui-hold")) {
+            int f = 0, k = 0, n = 0;
+            const char* v = next(s);
+            if (v && std::sscanf(v, "%d:%d:%d", &f, &k, &n) == 3 && k >= 1 && k <= 5 && n > 0) {
+                a.uiHolds.push_back({f, k, n});
+            } else {
+                logError("--ui-hold is FRAME:KEY:FRAMES with KEY 1 to 5 (Q W E R T)");
+                a.valid = false;
+            }
         } else if (!std::strcmp(s, "--give")) {
             if (const char* v = next(s)) a.give = v;
         } else if (!std::strcmp(s, "--lay")) {

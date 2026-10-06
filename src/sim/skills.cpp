@@ -793,6 +793,22 @@ constexpr SkillRow kRows[kSkills] = {
      .tells = "A spear driven through one body, and ghosts of it after. Thrown with a spear.",
      .clip = 71, .sound = "riding_spear", .built = true, .families = arms::kSpear,
      .needLevel = 56},
+
+    // ---- Nova 40, the Soul Master's, past Impale -------------------------------------------------
+    //
+    // OpenMU's Season 6 row (VersionSeasonSix/SkillsInitializer.cs:158): wizardry, fire, distance
+    // six, 180 mana over twelve stages -- fifteen a stage -- level 100 and 1,052 energy, the Soul
+    // Master's and the Grand Master's. Its charge is OpenMU's NovaSkillStartPlugin: a stage every
+    // 500 ms to twelve, each adding kNovaStageDamage to the blow, and full it goes off by itself.
+    // The clips are MuMain's: PLAYER_SKILL_HELL_BEGIN (72, looped) held, PLAYER_SKILL_HELL_START
+    // (73) let go (WSclient.cpp:4754-4762). No skill damage of its own: the stages are its blow.
+    {.number = skill::kNova, .name = "Nova", .mana = 15, .reach = 6.0f, .force = 1.0f,
+     .spread = Spread::Ring,
+     .tells = "Hold to gather power, up to twelve stages; let go and it bursts round him, striking "
+              "every monster within six tiles, harder the longer he held.",
+     .clip = 73, .sound = "spell_hellfire", .built = true, .families = arms::kNone,
+     .needLevel = 100, .kin = Kin::DarkWizard, .wizardry = true, .damage = 0,
+     .chargeTicks = 10, .chargeStages = 12},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

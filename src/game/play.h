@@ -43,6 +43,7 @@
 #include "game/fx/poison.h"
 #include "game/fx/flame.h"
 #include "game/fx/spirits.h"
+#include "game/fx/nova.h"
 #include "game/fx/firework.h"
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
@@ -228,6 +229,8 @@ public:
     // silently, so this returns nothing: the box's own sweep is what tells the player it is
     // cooling, and the plate reads that from the realm like everything else.
     void castSkill(int32_t skill, uint32_t at = 0);
+    // A held charge's key let go (Realm::letGo): Nova bursts on the next tick.
+    void letGo() { realm_.letGo(); }
     // Re-dresses the hero over the realm's own idea of what his hands and his back hold, so
     // the figure never shows a weapon the bag no longer does. Called after anything that can
     // change a worn slot; a no-op where `open` was given no `bare` to dress over.
@@ -556,6 +559,8 @@ public:
     Flame& flame() { return flame_; }
     // And Evil Spirit's spirits round him, the spell's and the shield rune's. fx/spirits.h.
     Spirits& spirits() { return spirits_; }
+    // And Nova's charge and burst, the Soul Master's. fx/nova.h.
+    Nova& nova() { return nova_; }
     // And a thrown Firecracker's firework over the tile it opened on. fx/firework.h.
     Firework& firework() { return firework_; }
     // The knight's Twisting Slash: his weapon flung round him. fx/wheel.h.
@@ -1177,6 +1182,8 @@ private:
     Poison poison_;
     Flame flame_;
     Spirits spirits_;
+    Nova nova_;
+    bool novaHeld_ = false;  // a charge was being drawn last frame (Play::update)
     Firework firework_;
     Wheel wheel_;
     Fury fury_;

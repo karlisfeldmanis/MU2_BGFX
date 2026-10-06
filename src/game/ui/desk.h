@@ -78,6 +78,8 @@ public:
     // A skill key pressed by a script: 0 is Q. `--press q` in a headless run, so the cast path is
     // reachable without a window.
     void scriptSkill(int key) { scriptedSkill_ = key; }
+    // And a skill key held down this frame (--ui-hold), as a charge asks after it.
+    void scriptHold(int key) { scriptedHold_ = key; }
     // The camera this frame, for the names over what lies on the ground.
     void setView(const float* viewProj) {
         for (int i = 0; i < 16; ++i) viewProj_[i] = viewProj[i];
@@ -317,6 +319,7 @@ private:
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int liftedQuick_ = -1;    // the potion box the pointer is holding, or -1
     int scriptedSkill_ = -1;
+    int scriptedHold_ = -1;
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
     // No `why` any more: the card carries every refusal as one of its own rows (2026-09-23), so
     // there is nothing left for a sentence to add.

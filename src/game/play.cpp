@@ -368,6 +368,25 @@ void Play::update(double seconds) {
             // A cast, said by the realm BEFORE the blow it throws, which is what lets the hit
             // below be drawn with the skill's own clip instead of the weapon's. Nothing else is
             // done here: the damage, the death and the cooldown all resolved on the tick.
+            // Nova let go (Realm::burstCharge): PLAYER_SKILL_HELL_START once, and the burst at his
+            // feet for the stages it held (`c`), in MU's blue (fx/nova.h).
+            if (happening.what == sim::What::Loosed && happening.a == sim::skill::kNova) {
+                if (Drawn* caster = drawnOf(happening.who); caster && ground_) {
+                    const FigureBody* look = caster->figure.body();
+                    const int burst = look && look->library ? look->library->find(kNovaBurstAction) : -1;
+                    if (burst >= 0) {
+                        caster->figure.play(burst, true, -1.0f, true);
+                        caster->swinging = caster->casting = caster->figure.length();
+                        caster->swingPace = 1.0f;
+                        ++caster->swingToken;
+                    }
+                    const float feet[3] = {caster->crown[0],
+                                           ground_->heightAt(caster->crown[0], caster->crown[2]),
+                                           caster->crown[2]};
+                    nova_.release(feet, happening.c, Nova::kBlue);
+                    if (heard_.hellfire >= 0) emit(heard_.hellfire, feet[0], feet[2]);
+                }
+            }
             if (happening.what == sim::What::Cast) {
                 if (happening.who == heroId) heroCast_ = happening.a;
                 // And held past this frame, for what hangs off the whole cast (the burn).
@@ -1812,6 +1831,33 @@ void Play::update(double seconds) {
     crackerOwed_.erase(std::remove_if(crackerOwed_.begin(), crackerOwed_.end(),
                                       [](const CrackerOwed& owed) { return owed.tag == 0; }),
                        crackerOwed_.end());
+    nova_.update(float(seconds));
+    // Nova held (Realm::chargeSkill): PLAYER_SKILL_HELL_BEGIN looped at half its pace, as MU
+    // halves it while it gathers (ZzzCharacter.cpp:2523-2526), and the lights gathering on every
+    // second of his first forty bones (fx/nova.h).
+    if (realm_.chargeSkill() != 0) {
+        if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->figure.body() && hero->figure.body()->library) {
+            const int held = hero->figure.body()->library->find(kNovaChargeAction);
+            if (held >= 0 && hero->figure.clip() != held) hero->figure.play(held, true);
+            hero->swinging = hero->casting = 1e9f;
+            hero->swingPace = 0.5f;
+            float points[20 * 3];
+            int count = 0;
+            const float zero[3] = {0.0f, 0.0f, 0.0f};
+            for (int bone = 0; bone < 40 && count < 20; bone += 2) {
+                if (hero->figure.pointOn(bone, zero, &points[count * 3])) ++count;
+            }
+            nova_.charge(points, count, realm_.chargeStage(), Nova::kBlue);
+        }
+        novaHeld_ = true;
+    } else if (novaHeld_) {
+        // Let go before it gathered a stage: nothing bursts, and the pose is given back.
+        novaHeld_ = false;
+        if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->swinging > 1e8f) {
+            hero->swinging = hero->casting = 0.0f;
+            hero->swingPace = 1.0f;
+        }
+    }
     spirits_.update(float(seconds), [&](uint32_t id, float* feet) {
         const Drawn* drawn = drawnOf(id);
         if (drawn == nullptr || !drawn->placed || !ground_) return false;

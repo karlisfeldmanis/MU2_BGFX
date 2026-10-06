@@ -720,6 +720,8 @@ bool Realm::useItem(int slot) {
         // mu.db's class enumeration, as `fits` reads it: bit 0 wizard, 1 elf, 2 knight, and none
         // named is anybody. OpenMU asks this of an orb at the moment it is read, not worn.
         if (row.classes != 0 && (row.classes & (1 << int(hero.kin))) == 0) return false;
+        // And its second's alone where it asks one: the Scroll of Nova is the Soul Master's.
+        if (secondClassOnly(row) && !hero.second) return false;
         if (hero.level < std::max(row.teachesLevel, asks(row, potion.refinement).level)) {
             return false;
         }
@@ -1108,6 +1110,21 @@ void Realm::leave(const Body& dead, const Body& killer) {
             feather.id = nextId_++;
             lying_.push_back(feather);
             say(What::Dropped, dead, int32_t(feather.id), int32_t(i), 0);
+            break;
+        }
+    }
+    // The Scroll of Nova in the same two, the same way (sim::kNovaScrollOdds).
+    if (level >= kNovaScrollFromLevel && featherMap(tables_->map) &&
+        novaScrollDice_.nextInt(0, kNovaScrollOdds) == 0) {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (!scrollOfNova(tables_->items[i])) continue;
+            Lying scroll;
+            scroll.what = Held{int32_t(i), 0, 1};
+            std::tie(scroll.column, scroll.row) = clearing(dead.column(), dead.row());
+            scroll.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            scroll.id = nextId_++;
+            lying_.push_back(scroll);
+            say(What::Dropped, dead, int32_t(scroll.id), int32_t(i), 0);
             break;
         }
     }
