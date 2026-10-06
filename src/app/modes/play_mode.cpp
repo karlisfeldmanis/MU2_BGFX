@@ -1117,6 +1117,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And the Dinorant's breath, MU's cool blue under it (fx/firebreath.h).
         count += world_.played().fireBreath().lights(falling + count,
                                                      gfx::Renderer::kMaxTransientLights - count);
+        // And Icarus's flash, MU's dim yellow under him (game/world/sky_clouds.h).
+        count += world_.skyClouds().lights(falling + count,
+                                           gfx::Renderer::kMaxTransientLights - count);
         // And Aqua Beam's line, three blue lights along it (fx/aqua.h).
         count += world_.played().aqua().lights(falling + count,
                                                gfx::Renderer::kMaxTransientLights - count);
@@ -1183,7 +1186,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     });
     world_.desertVents().gather(ctx.renderer.effects());
     // Icarus's cloud road and the lightning in it (game/world/sky_clouds.h).
-    world_.skyClouds().update(float(deltaSeconds), eye.target);
+    {
+        // The camera's point is the hero's: MU throws the flash and the glints round him.
+        world_.skyClouds().update(float(deltaSeconds), eye.target, eye.target,
+                                  [&](const float* from, const float* to) {
+                                      if (world_.played().isOpen())
+                                          world_.played().thunder().fork(from, to);
+                                  });
+    }
     world_.skyClouds().gather(ctx.renderer.effects());
     world_.boids().gatherTrails(ctx.renderer.effects());
     // And its sandstorm, MU's two screen layers (game/world/sand_haze.h).

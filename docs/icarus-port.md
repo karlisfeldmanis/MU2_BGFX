@@ -89,7 +89,17 @@ out SEED GRID smoke` (seed 10, 3x3): noise warped twice and pulled into streaks,
 fade, the whole blurred, flat grey with no lit side. Each bank wears 3 (types 0-2) or 2 (3-5),
 quads 9-15 m wide at 0.07-0.13 of opaque, and the deck's 20-30 m; 863 wisps in all, so they run
 together as one smoky layer. Drawn within 24 m of the camera's point (was 30), faded over the last
-4 m. Shot at the door and 55,75: a continuous blurred mist, no puffs. **Cost unmeasured**: another
+4 m. Shot at the door and 55,75: a continuous blurred mist, no puffs. The user, 2026-10-06: 'clouds is nice now'.
+
+**The sky's light (2026-10-06, the user: 'lets now work on light and fire emiters').** MU's Icarus
+has no fire and no object light: MoveObject's WD_10HEAVEN arm is empty. All of its light is MU's
+own sky, now in `game/world/sky_clouds.*`:
+- **The flash** (MoveHeavenThunder, `ZzzObject.cpp:4254-4335`): one reference frame in fifty, L 0.2-0.35, a passing point light of L x (0.3, 0.3, 0.081) two tiles round a point 1.5 m from the hero, for two frames (handed to the renderer with the other transient lights), and under him, ours for MU's cloud.bmd at Scale 10, a big added clouds.jpg of the same colour.
+- **The bolts**: one flash in five, MU's two BITMAP_JOINT_THUNDER + 1 between two points from its four fixed layouts, 3 m under him, through `Thunder::fork`.
+- **The glints** (MoveObjectSetting, BITMAP_LIGHT sub 0, `ZzzEffect.cpp:1045-1060, 6989-7000`): one frame in ten, a light 10 m under a point 25 m round him, thrown up at 70 degrees on a heading of 30, slowing 0.01 units a frame, 400 frames, shedding a flare01 spark each frame that rises, jitters and shrinks over 10-20 frames. Ours: the sparks at 0.07 of light, not MU's 0.3 (fifteen-odd overlapping summed to a white blot); thrown only within 24 m of the camera's point.
+- Not yet: MU's two crackles at the lit bank edge, and Object11's rising motes (with the objects).
+
+Shot muted at 30,40: faint glints rising through the mist. The flash and bolts are random and unshot. **Cost unmeasured**: another
 session's texcook was at 563% CPU and the view timers summed past the frame; the runs read
 5.5-7.3 ms GPU with waiting counted. Measure quiet before the next effects. **Unmeasured**: the run gave a 7.4 ms GPU frame, but two other `mu2` runs and Siri were on the machine; measure quiet before tuning the reach or the count. Not yet: the in-bank crackles and the far bolts, the flash's cloud mesh, the glints ten metres down, Object11's motes (an object step), the wisps and the dragons.
 
