@@ -1,0 +1,78 @@
+{
+  "note": "Tarkan's light, laid over lighting.json while a character stands in Tarkan (game/world/maps.h). MU draws it on its default black clear and fog (SceneManager.cpp:371-402), half the map NoGround and undrawn (ZzzLodTerrain.cpp:2178), the plateaus lit by a near-white, neutral TerrainLight (walkable mean 138, 135, 135, the brightest paint ported) with the warmth all in the sand sheets, and a faint additive sandstorm streamed across the screen (ZzzInterface.cpp:3677-3687, colour 0.3, 0.3, 0.25). So: a strong gold-white noon sun at the house 52 degrees with hard shadows, a pale dusty sky fill and a warm sand bounce so the shade stays brown, exposure under Noria's because bright paint times bright sand clips, a trace of sand-coloured dust (the storm is its own layer, not yet built), the grade warm and a little under full saturation. Slot 5's sand ripples slide as MU slides them here, one sheet in forty seconds (ZzzLodTerrain.cpp:3583-3596), with no wet sheen. The grass is desert straw in round tufts on bare sand (grass_tufts 0.5: half the metre cells stand bare), regraded whole from the sward's green to a tan root and a pale straw tip (the sheet's mean value is 0.0625, so the colours are the wanted linear albedo over that, as Devias's frost), short, uneven, with a few taller seed stalks; the user, 2026-10-05: 'procedual grass has to be more desert style'. Invention on MU's look; first cut 2026-10-05 from docs/tarkan-port.md B \u00a76. The tone and the dust after the user, 2026-10-05: 'lets also work on tonemaping and dust effect which has devias, this is a desert style map we need that vibe': Hill's ACES (tonemap 1) so the bright sand rolls off golden rather than clipping, exposure up to match, a warm sand haze at 0.006 in the calm, a warmer gold in the light. The sandstorm is sheets/worlds/tarkan_rain.json. Then 'reduce little bit wind effect, make sun little bit stronger becasue its desert': sun 4.4 to 5.2, the steady storm 0.4 to 0.3, and the storm sheet's sun 2.0 to 2.8. Then 'reduce storm effect little bit': the steady storm 0.3 to 0.2. Then 'reduce sun strenght little bit': 5.2 to 4.8. Then 'keep working on stronger shadows, and some better balance between lighting and shadows': the fill 0.65 to 0.45 and the sand bounce darker, so the shade under a rock goes deeper against the same sunlit sand (exposure 1.3 to 1.36), contrast 0.5 to 0.56, contact shadow 1.2.",
+  "elevation": 52.0,
+  "sun_colour": [
+    1.0,
+    0.92,
+    0.76
+  ],
+  "sun_strength": 4.8,
+  "sky_colour": [
+    0.46,
+    0.52,
+    0.6
+  ],
+  "horizon_paleness": 0.85,
+  "ground_colour": [
+    0.32,
+    0.25,
+    0.17
+  ],
+  "ambient_strength": 0.45,
+  "exposure": 1.36,
+  "dust_colour": [
+    0.92,
+    0.78,
+    0.58
+  ],
+  "dust_density": 0.004,
+  "lamp_strength": 3.14159,
+  "glow_strength": 1.2,
+  "bloom_threshold": 1.0,
+  "bloom_strength": 0.3,
+  "contrast": 0.56,
+  "saturation": 0.95,
+  "split": 0.3,
+  "tint_low": [
+    1.02,
+    0.96,
+    0.9
+  ],
+  "tint_high": [
+    1.1,
+    1.02,
+    0.84
+  ],
+  "water_flow": 0.5,
+  "water_sheen": 0.0,
+  "probe": 0.0,
+  "grass_colour": 1.0,
+  "grass_root_colour": [
+    3.6,
+    2.4,
+    1.0
+  ],
+  "grass_tip_colour": [
+    9.0,
+    7.0,
+    3.8
+  ],
+  "grass_root_ao": 0.7,
+  "grass_through_colour": [
+    1.1,
+    0.95,
+    0.6
+  ],
+  "grass_through": 0.3,
+  "grass_dry": 0.2,
+  "grass_vary": 0.0,
+  "grass_meadow": 0.0,
+  "grass_density": 1.0,
+  "grass_tufts": 0.5,
+  "grass_height": 0.32,
+  "grass_length_spread": 1.4,
+  "grass_rank": 0.1,
+  "grass_rank_height": 1.6,
+  "tonemap": 1,
+  "ssao_strength": 1.2
+}

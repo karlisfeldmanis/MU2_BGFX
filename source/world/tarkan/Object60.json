@@ -1,0 +1,66 @@
+{
+  "item": "Object60",
+  "mu_name": "Object60",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 59,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "casket": "tk_casket.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "casket": "hardwood"
+  },
+  "material_note": "Read off the art: casket hardwood.",
+  "why_this_one": "The coffin-thrones, their lids moving. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "play_speed_from": "No WD_8TARKAN arm sets its Velocity, so its clip plays at the 0.16 every object starts with.",
+  "effects_note": "No MoveObject or RenderObjectVisual arm beyond its clip.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 44,
+      "area": 84174.9,
+      "along": [
+        -118.0,
+        119.7
+      ],
+      "mu_uv": [
+        -0.001,
+        0.001,
+        0.995,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.007,
+        0.972,
+        0.993
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 53524.1,
+      "along": [
+        -121.8,
+        123.4
+      ],
+      "mu_uv": [
+        -0.004,
+        -0.001,
+        0.996,
+        1.0
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.847,
+        0.56
+      ]
+    }
+  ]
+}

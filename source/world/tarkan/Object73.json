@@ -1,0 +1,55 @@
+{
+  "item": "Object73",
+  "mu_name": "Object73",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 72,
+  "placements": 12,
+  "profile": "world",
+  "sheets": {
+    "sf3": "tk_sf3.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "sf3": "lamplight"
+  },
+  "additive": [
+    "sf3"
+  ],
+  "additive_from": "BlendMesh 0 on type 72 (MoveObject, ZzzObject.cpp:4160-4166): the whole flow added, its V slid a sheet every five seconds; mesh 0 is a StreamMesh too (MapManager.cpp:1135-1143).",
+  "glow": {
+    "sf3": {
+      "low": 1.0,
+      "high": 1.0,
+      "scrolls_per_second": 0.2
+    }
+  },
+  "glow_from": "MU's light 1, steady, and V slid a sheet every five seconds.",
+  "material_note": "sf3: glowing red-orange lava veins under a black crust.",
+  "why_this_one": "The red lava flows, 12 of them, in the forge corner. Lights batch (the user, 2026-10-05: 'now work on tarkan light and fire emiters'). docs/tarkan-port.md.",
+  "effects_note": "MoveObject's type-72 arm is its whole effect.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 112,
+      "area": 51666.5,
+      "along": [
+        -73.5,
+        74.4
+      ],
+      "mu_uv": [
+        -0.127,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        -0.127,
+        0.001,
+        1.0,
+        0.999
+      ]
+    }
+  ]
+}

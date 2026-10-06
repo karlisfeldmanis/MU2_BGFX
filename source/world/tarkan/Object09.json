@@ -1,0 +1,49 @@
+{
+  "item": "Object09",
+  "mu_name": "Object09",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 8,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "cl": "tk_cl.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "cl": "cloth"
+  },
+  "cutout": [
+    "cl"
+  ],
+  "cutout_from": "Each carries a real alpha channel, as decode_texture reports it.",
+  "material_note": "Read off the art: cl cloth.",
+  "why_this_one": "Cloth rags strung in pairs about 1.7 m up, flapping fast. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "play_speed": 0.64,
+  "play_speed_from": "MU plays type 8 at Velocity times four (ZzzObject.cpp:3727-3735): 0.16 times 4, the rag flapping fast in the wind.",
+  "effects_note": "No MoveObject or RenderObjectVisual arm beyond its clip.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 36,
+      "area": 2539.4,
+      "along": [
+        -8.6,
+        1.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.498,
+        0.998
+      ]
+    }
+  ]
+}

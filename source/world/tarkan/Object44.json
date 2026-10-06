@@ -1,0 +1,131 @@
+{
+  "item": "Object44",
+  "mu_name": "Object44",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 43,
+  "placements": 8,
+  "profile": "world",
+  "sheets": {
+    "test24": "tk_test24.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "test24": "rock"
+  },
+  "material_note": "test24: pale cracked sandstone: rock.",
+  "why_this_one": "a mesa slab, as Object42. The canyon walls first, so the void reads as Devias's deep chasms (the user, 2026-10-05: 'they should looks devias i think, those deep canions not just black holes'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 22,
+      "area": 129114.0,
+      "along": [
+        -117.2,
+        170.9
+      ],
+      "mu_uv": [
+        0.711,
+        0.05,
+        0.988,
+        0.31
+      ],
+      "bake_uv": [
+        0.038,
+        0.731,
+        0.313,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 11,
+      "area": 53580.1,
+      "along": [
+        -130.3,
+        170.9
+      ],
+      "mu_uv": [
+        0.698,
+        0.05,
+        0.988,
+        0.31
+      ],
+      "bake_uv": [
+        0.597,
+        0.485,
+        0.973,
+        0.98
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 14,
+      "area": 61315.0,
+      "along": [
+        -170.7,
+        170.9
+      ],
+      "mu_uv": [
+        0.658,
+        0.05,
+        0.988,
+        0.31
+      ],
+      "bake_uv": [
+        0.532,
+        0.004,
+        0.897,
+        0.569
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 1,
+      "area": 6440.4,
+      "along": [
+        -170.7,
+        -39.3
+      ],
+      "mu_uv": [
+        0.658,
+        0.05,
+        0.788,
+        0.156
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.173,
+        0.113
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 6,
+      "area": 114315.5,
+      "along": [
+        -130.3,
+        170.9
+      ],
+      "mu_uv": [
+        0.697,
+        0.378,
+        0.994,
+        0.971
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.523,
+        0.818
+      ]
+    }
+  ]
+}

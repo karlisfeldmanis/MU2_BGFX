@@ -1,0 +1,43 @@
+{
+  "item": "Object28",
+  "mu_name": "Object28",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 27,
+  "placements": 318,
+  "profile": "world",
+  "sheets": {
+    "test16": "tk_test16.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "test16": "rock"
+  },
+  "material_note": "test16: pale sandstone: rock.",
+  "why_this_one": "Large sandstone rocks, 318 of them, 1.7-1.9 m, often sunk (median -0.5 m). Scenery batch 1 (the user, 2026-10-05: 'do it'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 48,
+      "area": 87722.2,
+      "along": [
+        -80.0,
+        78.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.996,
+        0.991
+      ]
+    }
+  ]
+}

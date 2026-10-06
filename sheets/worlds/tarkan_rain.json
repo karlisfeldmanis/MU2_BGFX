@@ -1,0 +1,45 @@
+{
+  "note": "Tarkan in a sandstorm, laid over sheets/worlds/tarkan.json and blended in by the weather's share (app/context.cpp, TimeOfDay::rain), which Tarkan walks between a calm and a storm as Devias does its blizzard (game/world/weather.cpp). MU has no sandstorm weather; ours, after Devias's (the user, 2026-10-05: 'lets also work on tonemaping and dust effect which has devias, this is a desert style map we need that vibe'). The sun dimmed and warmed through dust, the sky and fill gone ochre, a thick warm haze that closes the distance without a whiteout, the colour drawn down towards a sepia, contrast eased, and the lava glows kept so they burn through it.",
+  "sun_colour": [
+    1.0,
+    0.82,
+    0.58
+  ],
+  "sun_strength": 2.8,
+  "sky_colour": [
+    0.62,
+    0.48,
+    0.32
+  ],
+  "horizon_paleness": 0.6,
+  "ground_colour": [
+    0.42,
+    0.32,
+    0.2
+  ],
+  "ambient_strength": 0.85,
+  "exposure": 1.05,
+  "dust_colour": [
+    0.86,
+    0.68,
+    0.46
+  ],
+  "dust_density": 0.016,
+  "saturation": 0.8,
+  "contrast": 0.32,
+  "split": 0.3,
+  "tint_low": [
+    1.02,
+    0.95,
+    0.86
+  ],
+  "tint_high": [
+    1.06,
+    0.98,
+    0.86
+  ],
+  "bloom_strength": 0.32,
+  "lamp_strength": 4.0,
+  "glow_strength": 1.4,
+  "grass_wind_strength": 0.3
+}

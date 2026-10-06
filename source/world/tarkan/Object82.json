@@ -1,0 +1,43 @@
+{
+  "item": "Object82",
+  "mu_name": "Object82",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 81,
+  "placements": 2,
+  "profile": "world",
+  "sheets": {
+    "DDD": "tk_ddd.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "DDD": "brass"
+  },
+  "material_note": "DDD: a faceted gold gem pattern: brass.",
+  "why_this_one": "The golden orbs, 2 of them, floating 3 m over the sun-gears at the shrine. Lights batch (the user, 2026-10-05: 'now work on tarkan light and fire emiters'). docs/tarkan-port.md.",
+  "effects_note": "RenderObject draws mesh 0 again in RENDER_CHROME | RENDER_BRIGHT (ZzzObject.cpp:1067-1073), an environment shine; carried here as polished brass, its own reflection.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 30,
+      "area": 3792.0,
+      "along": [
+        -6.9,
+        6.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.992
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.992
+      ]
+    }
+  ]
+}

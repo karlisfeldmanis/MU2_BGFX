@@ -1,0 +1,92 @@
+{
+  "item": "Object31",
+  "mu_name": "Object31",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 30,
+  "placements": 88,
+  "profile": "world",
+  "sheets": {
+    "test1": "tk_test1.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "test1": "foliage"
+  },
+  "cutout": [
+    "test1"
+  ],
+  "cutout_from": "The .OZT carries a real alpha channel, as decode_texture reports it.",
+  "material_note": "test1: a dark grey-green fern frond, cut out: foliage.",
+  "why_this_one": "Dark fern shrubs, 88 of them, swaying on their own 8-bone clip. Scenery batch 2 (the user, 2026-10-05: 'do it'). docs/tarkan-port.md.",
+  "play_speed_from": "No WD_8TARKAN arm sets its Velocity, so its clip plays at the 0.16 every object starts with.",
+  "effects_note": "No MoveObject or RenderObjectVisual arm: its clip is its whole effect.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 6,
+      "area": 2313.2,
+      "along": [
+        -10.6,
+        19.4
+      ],
+      "mu_uv": [
+        -0.0,
+        0.03,
+        1.0,
+        0.97
+      ],
+      "bake_uv": [
+        0.003,
+        0.513,
+        0.507,
+        0.985
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 6,
+      "area": 2396.1,
+      "along": [
+        -62.5,
+        8.9
+      ],
+      "mu_uv": [
+        0.009,
+        -0.0,
+        0.991,
+        1.0
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.507
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1366.5,
+      "along": [
+        -1.2,
+        35.6
+      ],
+      "mu_uv": [
+        0.009,
+        -0.0,
+        0.991,
+        1.0
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.507
+      ]
+    }
+  ]
+}

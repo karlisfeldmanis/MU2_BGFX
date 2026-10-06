@@ -1,0 +1,106 @@
+{
+  "item": "Object62",
+  "mu_name": "Object62",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 61,
+  "placements": 2,
+  "profile": "world",
+  "sheets": {
+    "gear": "tk_gear.png",
+    "gearB": "tk_gearb.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "gear": "rock",
+    "gearB": "lamplight"
+  },
+  "cutout": [
+    "gear"
+  ],
+  "cutout_from": "gear.OZT carries a real alpha channel: the veins and the hub are cut through.",
+  "material_note": "gear: a carved stone gear disc with its veins cut through: rock. gearB: a teal light strip, the glow that runs along the veins.",
+  "why_this_one": "The sun-gear discs, 2 of them, floating 2.9 m over the gear-and-orb shrine (67-74, 182-189). Lights batch (the user, 2026-10-05: 'now work on tarkan light and fire emiters'). docs/tarkan-port.md.",
+  "additive": [
+    "gearB"
+  ],
+  "additive_from": "BlendMesh 1 on this type (MoveObject, ZzzObject.cpp:4134-4156): mesh 1, gearB, added, its V slid a sheet a second.",
+  "glow": {
+    "gearB": {
+      "low": 0.3,
+      "high": 1.0,
+      "hz": 0.32,
+      "smooth_seconds": 1.0,
+      "scrolls_per_second": 1.0
+    }
+  },
+  "glow_from": "MU's BlendMeshLight sin(WorldTime*0.002)*0.35+0.65, 0.3 to 1.0 on a 3.1 s period, as the glow's slow wander; and its V slid a sheet a second.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1.0,
+        0.6,
+        0.2
+      ],
+      "low": 0.3,
+      "high": 1.0,
+      "range_tiles": 2,
+      "flicker_hz": 0.32,
+      "smooth_seconds": 1.0
+    }
+  ],
+  "emitters_from": "MU's own: AddTerrainLight at the gear, (L, 0.6L, 0.2L) over 2 tiles with L the pulse above (ZzzObject.cpp:4134-4156).",
+  "effects_note": "MoveObject's arm is its whole effect: the added, sliding, pulsing strip and the light.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 118,
+      "area": 34757.9,
+      "along": [
+        -93.6,
+        93.0
+      ],
+      "mu_uv": [
+        0.004,
+        0.007,
+        0.991,
+        1.003
+      ],
+      "bake_uv": [
+        0.003,
+        0.002,
+        0.989,
+        0.998
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 7525.2,
+      "along": [
+        -53.0,
+        51.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.143,
+        0.143
+      ]
+    }
+  ]
+}

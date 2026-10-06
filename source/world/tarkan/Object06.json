@@ -1,0 +1,245 @@
+{
+  "item": "Object06",
+  "mu_name": "Object06",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 5,
+  "placements": 5,
+  "profile": "world",
+  "sheets": {
+    "hand1": "tk_hand1.png",
+    "finger1": "tk_finger1.png",
+    "finger": "tk_finger.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "hand1": "rock",
+    "finger1": "rock",
+    "finger": "rock"
+  },
+  "material_note": "Read off the art: hand1 rock; finger1 rock; finger rock.",
+  "why_this_one": "Giant stone hands, as Object02, 3.1 m. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 28,
+      "area": 4579.4,
+      "along": [
+        50.4,
+        92.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.118,
+        0.198,
+        0.729,
+        0.63
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 28,
+      "area": 6664.0,
+      "along": [
+        63.0,
+        114.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.809,
+        0.671
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 28,
+      "area": 6956.5,
+      "along": [
+        38.8,
+        88.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.011,
+        0.411,
+        0.821,
+        0.898
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 28,
+      "area": 6709.1,
+      "along": [
+        -20.9,
+        23.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.011,
+        0.413,
+        0.925,
+        0.87
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 28,
+      "area": 7067.8,
+      "along": [
+        56.4,
+        107.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.103,
+        0.171,
+        0.692,
+        0.95
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 222,
+      "area": 100041.5,
+      "along": [
+        -45.5,
+        86.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.023,
+        0.999,
+        0.995
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.913,
+        0.974
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 28,
+      "area": 5024.5,
+      "along": [
+        17.3,
+        56.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.241,
+        0.656,
+        0.939,
+        0.983
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 28,
+      "area": 7480.3,
+      "along": [
+        21.3,
+        70.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.62,
+        0.011,
+        0.977,
+        0.983
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 28,
+      "area": 7706.7,
+      "along": [
+        -4.4,
+        48.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.316,
+        0.113,
+        0.977,
+        0.987
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 28,
+      "area": 7480.3,
+      "along": [
+        -31.7,
+        9.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.022,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.471,
+        0.216,
+        0.99,
+        0.956
+      ]
+    }
+  ]
+}

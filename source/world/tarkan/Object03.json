@@ -1,0 +1,100 @@
+{
+  "item": "Object03",
+  "mu_name": "Object03",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 2,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "R": "tk_r.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "R": "lamplight"
+  },
+  "additive": [
+    "R"
+  ],
+  "additive_from": "BlendMesh 0 on type 2 (MoveObject, ZzzObject.cpp:4090-4094): the whole ring added, its U slid a sheet a second.",
+  "glow": {
+    "R": {
+      "low": 1.0,
+      "high": 1.0,
+      "axis": "u",
+      "scrolls_per_second": 1.0
+    }
+  },
+  "glow_from": "MU's light 1, steady, and its U slid a sheet a second.",
+  "material_note": "R: a cyan streak fading out, on black.",
+  "why_this_one": "A 2.1 m broken ring of cyan light, 4 of them. Lights batch (the user, 2026-10-05: 'now work on tarkan light and fire emiters'). docs/tarkan-port.md.",
+  "effects_note": "MoveObject's type-2 arm is its whole effect.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 24,
+      "area": 5839.4,
+      "along": [
+        -87.8,
+        104.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.497
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 24,
+      "area": 6401.5,
+      "along": [
+        -99.7,
+        63.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.503,
+        0.497,
+        0.997
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 24,
+      "area": 1667.7,
+      "along": [
+        -19.5,
+        64.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.497
+      ]
+    }
+  ]
+}

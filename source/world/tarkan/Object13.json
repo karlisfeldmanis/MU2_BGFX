@@ -1,0 +1,51 @@
+{
+  "item": "Object13",
+  "mu_name": "Object13",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 12,
+  "placements": 5,
+  "profile": "world",
+  "sheets": {
+    "sf2": "tk_sf2.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "sf2": "sand"
+  },
+  "material_note": "Read off the art: sf2 sand.",
+  "why_this_one": "Sunk sand whirlpool bowls, 3.9 m. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "effects_note": "MU makes mesh 0 a StreamMesh, unlit and slid (MapManager.cpp:1135-1143). Here it slides, lit.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 84,
+      "area": 149764.6,
+      "along": [
+        -193.1,
+        192.4
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.999
+      ]
+    }
+  ],
+  "glow": {
+    "sf2": {
+      "scrolls_per_second": 0.05,
+      "stream": true,
+      "axis": "uv"
+    }
+  },
+  "glow_from": "MU's StreamMesh: mesh 0 slid by MoveObject, U and V (WorldTime % 50000) * 0.00005, 0.05 sheet a second along both: the whirlpool turning (:4129-4133); carried as an opaque slide (`stream`). MU draws it unlit; here it stays lit by the sun, ours."
+}

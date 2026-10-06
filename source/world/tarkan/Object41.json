@@ -1,0 +1,43 @@
+{
+  "item": "Object41",
+  "mu_name": "Object41",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 40,
+  "placements": 427,
+  "profile": "world",
+  "sheets": {
+    "test23": "tk_test23.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "test23": "rock"
+  },
+  "material_note": "test23: dark cracked rock face, rust stains at the top: rock.",
+  "why_this_one": "the cliff face: a 4.7 by 3.7 m rock wall, 367 of them standing on NoGround sunk a median 3.5 m; the plateaus' edge, as Devias's Object12 ice walls are its chasms'. The canyon walls first, so the void reads as Devias's deep chasms (the user, 2026-10-05: 'they should looks devias i think, those deep canions not just black holes'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 130,
+      "area": 263805.1,
+      "along": [
+        -115.9,
+        29.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "item": "Object57",
+  "mu_name": "Object57",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 56,
+  "placements": 135,
+  "profile": "world",
+  "sheets": {
+    "test37": "tk_test37.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "test37": "rock"
+  },
+  "material_note": "Read off the art: test37 rock.",
+  "why_this_one": "Pebble and rock litter. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 34,
+      "area": 1491.0,
+      "along": [
+        -9.9,
+        9.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.788,
+        0.339
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 34,
+      "area": 2983.5,
+      "along": [
+        -20.2,
+        15.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.913,
+        0.967
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1471.3,
+      "along": [
+        -24.3,
+        -2.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.029,
+        0.008,
+        0.982,
+        0.985
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 30,
+      "area": 1413.0,
+      "along": [
+        -3.2,
+        18.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.184,
+        0.993,
+        0.917
+      ]
+    }
+  ]
+}

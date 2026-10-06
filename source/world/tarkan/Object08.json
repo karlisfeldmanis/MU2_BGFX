@@ -1,0 +1,77 @@
+{
+  "item": "Object08",
+  "mu_name": "Object08",
+  "mu_name_from": "Tarkan's object slot 7, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 7,
+  "placements": 98,
+  "profile": "world",
+  "sheets": {
+    "redB": "tk_redb.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "redB": "lamplight"
+  },
+  "why_this_one": "The lava glows, 98 of them: a flat 3 m quad of orange light lying on the ground, most in the south-west forge and the south lobes. Scenery batch 3, the lights (the user, 2026-10-05: 'do it'). docs/tarkan-port.md.",
+  "material_note": "redB: a soft orange-red glow on black, the whole quad added.",
+  "additive": [
+    "redB"
+  ],
+  "additive_from": "BlendMesh 0 on type 7 (MoveObject, ZzzObject.cpp:4108-4119): the whole mesh added.",
+  "glow": {
+    "redB": {
+      "low": 0.3,
+      "high": 1.0,
+      "hz": 0.32,
+      "smooth_seconds": 1.0
+    }
+  },
+  "glow_from": "MU's BlendMeshLight sin((WorldTime + Angle.z*100)*0.002)*0.35+0.65, 0.3 to 1.0 on a 3.1 s period with a phase by its turn, as the glow's slow wander between the two: not MU's sine.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        0,
+        50
+      ],
+      "colour": [
+        1.0,
+        0.6,
+        0.2
+      ],
+      "low": 0.3,
+      "high": 1.0,
+      "range_tiles": 3,
+      "flicker_hz": 0.32,
+      "smooth_seconds": 1.0
+    }
+  ],
+  "emitters_from": "MU's own: AddTerrainLight at the glow, (L, 0.6L, 0.2L) over 3 tiles with L the pulse above (ZzzObject.cpp:4108-4119), carried as a lamp half a metre up breathing with the glow.",
+  "effects_note": "MoveObject's type-7 arm is its whole effect: the added pulse and the light. No RenderObjectVisual arm.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 90000.0,
+      "along": [
+        -149.7,
+        150.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

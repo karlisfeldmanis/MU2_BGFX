@@ -1,0 +1,43 @@
+{
+  "item": "Object11",
+  "mu_name": "Object11",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 10,
+  "placements": 23,
+  "profile": "world",
+  "sheets": {
+    "col": "tk_col.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "col": "rock"
+  },
+  "material_note": "Read off the art: col rock.",
+  "why_this_one": "Carved totem pillars, 2.5 m. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 120,
+      "area": 70324.3,
+      "along": [
+        -49.2,
+        47.0
+      ],
+      "mu_uv": [
+        0.122,
+        0.001,
+        0.878,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.004,
+        0.997,
+        0.884
+      ]
+    }
+  ]
+}

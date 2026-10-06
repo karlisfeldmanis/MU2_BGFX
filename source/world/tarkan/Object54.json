@@ -1,0 +1,157 @@
+{
+  "item": "Object54",
+  "mu_name": "Object54",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 53,
+  "placements": 9,
+  "profile": "world",
+  "sheets": {
+    "Dr": "tk_dr.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "Dr": "foliage"
+  },
+  "cutout": [
+    "Dr"
+  ],
+  "cutout_from": "Each carries a real alpha channel, as decode_texture reports it.",
+  "material_note": "Read off the art: Dr foliage.",
+  "why_this_one": "Spiky star plants. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 2246.8,
+      "along": [
+        -0.7,
+        -0.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.329,
+        0.329
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 2246.8,
+      "along": [
+        -23.7,
+        23.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.337,
+        0.004,
+        0.663,
+        0.329
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 2246.8,
+      "along": [
+        -23.7,
+        23.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.337,
+        0.337,
+        0.663,
+        0.663
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 2,
+      "area": 2246.8,
+      "along": [
+        0.1,
+        0.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.671,
+        0.329,
+        0.996
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 2,
+      "area": 2246.8,
+      "along": [
+        -23.7,
+        23.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.337,
+        0.329,
+        0.663
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 2,
+      "area": 2246.8,
+      "along": [
+        -23.7,
+        23.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.337,
+        0.671,
+        0.663,
+        0.996
+      ]
+    }
+  ]
+}

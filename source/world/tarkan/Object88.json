@@ -1,0 +1,43 @@
+{
+  "item": "Object88",
+  "mu_name": "Object88",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 87,
+  "placements": 2,
+  "profile": "world",
+  "sheets": {
+    "cho_gate_c": "tk_cho_gate_c.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "cho_gate_c": "rock"
+  },
+  "material_note": "Read off the art: dark carved stone with a gold key pattern.",
+  "why_this_one": "The gate's steps and plinths. Season content: the door to Kanturu (OpenMU VersionSeasonSix gate 125/128 at 6-7,199-201), which no 0.97 Tarkan had; built as MU's client draws it, a sealed ruin with no gate behind it (the user, 2026-10-05: 'continoy to migrate world obejcts and effects'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 50,
+      "area": 13275.5,
+      "along": [
+        -29.4,
+        29.4
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        0.995,
+        0.991
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.853
+      ]
+    }
+  ]
+}

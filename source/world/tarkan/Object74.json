@@ -1,0 +1,55 @@
+{
+  "item": "Object74",
+  "mu_name": "Object74",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 73,
+  "placements": 13,
+  "profile": "world",
+  "sheets": {
+    "sf4": "tk_sf4.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "sf4": "lamplight"
+  },
+  "additive": [
+    "sf4"
+  ],
+  "additive_from": "A departure, marked, as the Dungeon's tentacle glow: MU makes mesh 0 of type 73 a StreamMesh (MapManager.cpp:1135-1143), drawn unlit at full light with its V slid a sheet every five seconds (MoveObject, ZzzObject.cpp:4167-4172), and not added. This engine slides only a glow, and sf4 is bright fire with no black in it, so added it reads as the lit flow.",
+  "glow": {
+    "sf4": {
+      "low": 0.8,
+      "high": 0.8,
+      "scrolls_per_second": 0.2
+    }
+  },
+  "glow_from": "Steady, and V slid a sheet every five seconds; 0.8 so bright sand under it does not burn white.",
+  "material_note": "sf4: bright orange-yellow fire and molten rock.",
+  "why_this_one": "The orange lava falls, 13 of them. Lights batch (the user, 2026-10-05: 'now work on tarkan light and fire emiters'). docs/tarkan-port.md.",
+  "effects_note": "The slide is its whole effect in MU.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 112,
+      "area": 28413.8,
+      "along": [
+        -51.1,
+        51.9
+      ],
+      "mu_uv": [
+        -0.127,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        -0.127,
+        0.001,
+        1.0,
+        0.999
+      ]
+    }
+  ]
+}

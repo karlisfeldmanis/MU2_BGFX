@@ -135,6 +135,11 @@ HIDDEN_BY_MAP = {
     # Atlans's two (ZzzObject.cpp:4059, 4772): 22, the bubble vents, 845 of them, and 39 the
     # lean box. docs/atlans-port.md.
     7: {22, 39},
+    # Tarkan's six (RenderObjectVisual, ZzzObject.cpp:2994-3065): 60 the dust burst, 82 of
+    # them, hidden after its first puff; 63 the cyan glow sprite, 18, and 64 its red twin, which
+    # nothing places; 70, 76 and 83 the smoke vents and sand geysers, 3, 19 and 10. All emitters,
+    # drawn by no mesh. docs/tarkan-port.md.
+    8: {60, 63, 64, 70, 76, 83},
 }
 
 #: What each world draws additively, by map number and placement type.
@@ -157,6 +162,10 @@ BLEND_MESH_BY_MAP = {
     # Atlans's (MoveObject, ZzzObject.cpp:4067-4083): the light shafts, the glyph stones and
     # arches, the magic circles and the caustic sheets. docs/atlans-port.md.
     7: {23: 0, 32: 1, 34: 1, 38: 0, 40: 0},
+    # Tarkan's (MoveObject, ZzzObject.cpp:4087-4179): the cyan ring, the white pulse, the 98
+    # lava glows, the sun-gear and forge gears, the red lava flow and the light shafts.
+    # docs/tarkan-port.md.
+    8: {2: 0, 4: 0, 7: 0, 61: 1, 65: 1, 66: 1, 72: 0, 82: 0},
 }
 
 #: Where a world's grass grows, by map number, where its slots' recipes would say otherwise.
@@ -181,6 +190,10 @@ GRASS_BY_MAP = {
     # Atlans ships no TileGrass .OZT and MU turns grass off by map (ZzzLodTerrain.cpp:3619);
     # its TileGrass01 is the sea floor's sand. docs/atlans-port.md.
     7: [],
+    # Tarkan ships TileGrass01.OZT, a strip of dry straw blades, and MU grows it on slot 0
+    # (ZzzLodTerrain.cpp:2077-2120): the north-east town, as the rest of slot 0 is NoGround.
+    # TileGrass03.OZT is empty and no tile wears slot 2. docs/tarkan-port.md.
+    8: ["TileGrass01"],
 }
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the
@@ -216,7 +229,17 @@ VOID_BY_MAP = {
     11: {"rim": True, "blend": 1.5,
          "blend_keep": [[0, 16, 12, 75], [16, 16, 35, 75], [13, 70, 15, 75]],
          "later": [[13, 70, 15, 75]]},
+    # Tarkan: Devias's way (the user, 2026-10-05: 'we need similiar tehniq which we used on
+    # devias to blend deep clifs with void'), MU's cut with the cliff walls hanging into the
+    # dark, but its walls are Object41's 3.7 m faces sunk about 3.5 m, not Devias's 7.8 m ice:
+    # at the default 1.5 m to 6.5 m they ended lit. From 0.3 m under the rim, black by 3.3 m.
+    8: {"start": 0.3, "depth": 3.0},
 }
+#: Tarkan was Devias's way (the user, 2026-10-05: 'in tarkan there is same tehniq
+#: which was in devias which make the deep canions/voids'). Pale plateaus over a NoGround void
+#: that is half the map, MU's cut at the edge, and Object41's 427 cliff faces hanging from the
+#: rims into it as Devias's ice walls do, taken to black by the abyss's default depth. Blood
+#: Castle's rim and blend sloped the lips and would hide the walls behind them.
 #: Blood Castle tried the tower's (the user, 2026-10-02: 'we need to add some nice void gradients
 #: to ground edges'), blend 2 and then 0.7 tiles: the three-tile bridge went dark from side to
 #: side, then a hard dark band ran down its open side ('something dont look correct it was kind
@@ -370,6 +393,7 @@ OPERABLE_BY_MAP = {
     2: {22, 25, 40, 45, 55, 73, 91},
     3: {8, 38},
     7: {39},  # Atlans's lean box, ZzzInterface.cpp:1736-1742
+    8: {78},  # Tarkan's stump seats, Sit, ZzzInterface.cpp:1743-1748
 }
 
 #: Types a character walks onto and poses against, for Lorencia.

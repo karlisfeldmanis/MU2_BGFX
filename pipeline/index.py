@@ -47,6 +47,7 @@ OPERABLE_BY_MAP = {
     2: {22, 25, 40, 45, 55, 73, 91},
     3: {8, 38},
     7: {39},
+    8: {78},
 }
 
 #: The gates' boxes, by the server's map number: OpenMU Version075 Gates.cs, enter and exit
@@ -67,7 +68,13 @@ GATE_BOXES_BY_MAP = {
         # The way to Atlans and its landing, Gates.cs:135 and 205. docs/atlans-port.md.
         (242, 240, 245, 243), (240, 240, 241, 243)],
     # Atlans's way back to Noria and its landing, Gates.cs:149 and 206. docs/atlans-port.md.
-    7: [(9, 9, 11, 12), (14, 12, 15, 13)],
+    7: [(9, 9, 11, 12), (14, 12, 15, 13),
+        # The door to Tarkan and its landing back, Season Six Gates.cs:524 and 194 (WebZen's
+        # gate.txt 53 and 56). docs/tarkan-port.md.
+        (14, 225, 15, 230), (16, 225, 17, 230)],
+    # Tarkan's way back to Atlans, its landing from it and its spawn gate 57, the safe hall
+    # (WebZen's gate.txt 55, 54, 57; Season Six Gates.cs:525, 200, 198). docs/tarkan-port.md.
+    8: [(246, 40, 247, 44), (248, 40, 251, 44), (187, 54, 203, 69)],
 }
 
 #: What the walker actually compares, which is a threshold and not a bit test: a tile is open
@@ -609,6 +616,14 @@ EFFECTS = {
     "caustic": "effects/atlans/caustic.png",
     "bubble": "effects/atlans/drop01.png",
     "mote": "effects/atlans/mote01.png",
+    # Tarkan's BITMAP_IMPACT, Object9/Impack03.jpg (MapManager.cpp:146): a white-violet star on
+    # black, the glow sprite its hidden Object64s pulse (game/world/desert_vents.h).
+    "impact": "effects/tarkan/impack03.png",
+    # Tarkan's sandstorm, BITMAP_CHROME + 2 and + 3 (MapManager.cpp:143-145): sand01 a soft grey
+    # cloud and sand02 sparse white specks, both on black, which RenderOutSides lays over the
+    # whole screen added (ZzzInterface.cpp:3677-3689; game/world/sand_haze.h).
+    "sand": "effects/tarkan/sand01.png",
+    "sand_fine": "effects/tarkan/sand02.png",
     # Cometfall's (game/fx/comet.h): BITMAP_JOINT_ENERGY, Effect/JointLaser01.jpg, the ribbon each
     # comet drags down (sub-type 5, ZzzEffectJoint.cpp:485-491), and BITMAP_SHINY + 4,
     # Effect/ring.jpg, the blue star where it lands (MoveHandlers.cpp:2550-2580). Both on black,
@@ -2361,6 +2376,10 @@ def main() -> None:
                 if document.get("slung"):
                     entry["slung"] = True
 
+                # The wing on her back, by its built name: the Atlans envoy's Wings of Spirits.
+                if (wings := document.get("wings")):
+                    entry["wings"] = wings
+
                 # Whether anybody can *be* this one.
                 #
                 # A townsperson is assembled exactly like a player — a base rig with pieces
@@ -2590,6 +2609,13 @@ def main() -> None:
             # the Staff of Resurrection's spinning swirl.
             if (loop := document.get("held_loop")):
                 entry["held_loop"] = float(loop)
+            # Which of its own clips runs so, and which plays instead in a sword swing, as
+            # MuMain plays the Flail's action 1 held and its action 2 in PLAYER_ATTACK_SWORD
+            # (ZzzCharacter.cpp:10107-10118): indices into its clips, in the rig's order.
+            if (rest := document.get("held_clip")) is not None:
+                entry["held_clip"] = int(rest)
+            if (swing := document.get("swing_clip")) is not None:
+                entry["swing_clip"] = int(swing)
 
             # And the bone the missile leaves from, for a weapon whose rig marks one.
             #

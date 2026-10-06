@@ -1,0 +1,91 @@
+{
+  "item": "Object83",
+  "mu_name": "Object83",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 82,
+  "placements": 60,
+  "profile": "world",
+  "sheets": {
+    "light01": "tk_light01.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "light01": "lamplight"
+  },
+  "additive": [
+    "light01"
+  ],
+  "additive_from": "BlendMesh 0 on type 82 at light 1 (MoveObject, ZzzObject.cpp:4174-4178): crossed planes of light01 added.",
+  "material_note": "light01: a soft shaft of light on black.",
+  "why_this_one": "The light shafts, 60 of them, crossed 3.4 by 4.6 m planes; 37 stand on walkable floor. Lights batch (the user, 2026-10-05: 'now work on tarkan light and fire emiters'). docs/tarkan-port.md.",
+  "effects_note": "MoveObject's type-82 arm is its whole effect: MU's shaft lights no one.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 34468.7,
+      "along": [
+        -11.5,
+        133.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.497
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 34468.7,
+      "along": [
+        -183.9,
+        1.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.503,
+        0.497,
+        0.997
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 12719.7,
+      "along": [
+        -22.2,
+        45.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.497
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "item": "Object68",
+  "mu_name": "Object68",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 67,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "gear": "tk_gear.png",
+    "gearB": "tk_gearb.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "gear": "rock",
+    "gearB": "lamplight"
+  },
+  "cutout": [
+    "gear"
+  ],
+  "cutout_from": "gear.OZT carries a real alpha channel: the veins and the hub are cut through.",
+  "material_note": "gear: a carved stone gear disc with its veins cut through: rock. gearB: a teal light strip, the glow that runs along the veins.",
+  "why_this_one": "The forge's smaller gears, 6 of them, turning on their own 20-key clip. Lights batch (the user, 2026-10-05: 'now work on tarkan light and fire emiters'). docs/tarkan-port.md.",
+  "effects_note": "No WD_8TARKAN arm for this type: drawn plain, gearB unlit and not added.",
+  "play_speed_from": "No WD_8TARKAN arm sets its Velocity, so its clip plays at the 0.16 every object starts with.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 118,
+      "area": 46770.3,
+      "along": [
+        -108.5,
+        108.0
+      ],
+      "mu_uv": [
+        0.004,
+        0.007,
+        0.991,
+        1.003
+      ],
+      "bake_uv": [
+        0.403,
+        0.459,
+        0.936,
+        0.998
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 10125.9,
+      "along": [
+        -60.1,
+        60.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.542,
+        0.542
+      ]
+    }
+  ]
+}

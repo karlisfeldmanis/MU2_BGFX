@@ -1,0 +1,195 @@
+{
+  "item": "Bug02",
+  "mu_name": "Bug02",
+  "mu_name_from": "Object9/Bug02.bmd, which is not a placement: MoveFishs gives the fish slot MODEL_BUG01 + 1 in Tarkan (GOBoid.cpp:1726-1733; MapManager.cpp:143-148) and keeps ten around whoever is playing, on floor tiles only. Named in tools/cook.py's CRAWLS.",
+  "world": "tarkan",
+  "object_type": -1,
+  "why_this_one": "Tarkan's scarabs: 19 triangles, 6 bones, a 3-key run, a 35 cm black beetle with spiked legs. Ten of them dash at 2.5/scale units a frame, scale 0.8 to 1.1, turning 9 degrees a frame, and turn back at the void (GOBoid.cpp:1664-1760). The user, 2026-10-05: 'continou'. docs/tarkan-port.md.",
+  "profile": "world",
+  "sheets": {
+    "bug": "tk_bug.png"
+  },
+  "sheet_from": "Object9/bug.OZJ, decoded under the tk_ prefix.",
+  "sheet_materials": {
+    "bug": "chitin"
+  },
+  "sheet_materials_from": "Chitin, the whole beetle on one sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 466.1,
+      "along": [
+        -14.2,
+        8.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.013,
+        0.715,
+        0.996
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.682
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 1,
+      "area": 21.6,
+      "along": [
+        -6.5,
+        -3.0
+      ],
+      "mu_uv": [
+        0.718,
+        0.134,
+        0.965,
+        0.313
+      ],
+      "bake_uv": [
+        0.183,
+        0.822,
+        0.353,
+        0.945
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 1,
+      "area": 21.6,
+      "along": [
+        -2.7,
+        0.7
+      ],
+      "mu_uv": [
+        0.718,
+        0.134,
+        0.965,
+        0.313
+      ],
+      "bake_uv": [
+        0.183,
+        0.69,
+        0.353,
+        0.813
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 1,
+      "area": 21.6,
+      "along": [
+        1.4,
+        4.8
+      ],
+      "mu_uv": [
+        0.718,
+        0.134,
+        0.965,
+        0.313
+      ],
+      "bake_uv": [
+        0.004,
+        0.69,
+        0.174,
+        0.813
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 1,
+      "area": 21.6,
+      "along": [
+        -20.7,
+        -8.2
+      ],
+      "mu_uv": [
+        0.683,
+        0.618,
+        0.969,
+        0.737
+      ],
+      "bake_uv": [
+        0.361,
+        0.822,
+        0.558,
+        0.904
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 1,
+      "area": 21.6,
+      "along": [
+        -6.5,
+        -3.0
+      ],
+      "mu_uv": [
+        0.718,
+        0.134,
+        0.965,
+        0.313
+      ],
+      "bake_uv": [
+        0.718,
+        0.69,
+        0.888,
+        0.813
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 1,
+      "area": 21.6,
+      "along": [
+        -2.7,
+        0.7
+      ],
+      "mu_uv": [
+        0.718,
+        0.134,
+        0.965,
+        0.313
+      ],
+      "bake_uv": [
+        0.361,
+        0.69,
+        0.531,
+        0.813
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 1,
+      "area": 21.6,
+      "along": [
+        1.4,
+        4.8
+      ],
+      "mu_uv": [
+        0.718,
+        0.134,
+        0.965,
+        0.313
+      ],
+      "bake_uv": [
+        0.54,
+        0.69,
+        0.71,
+        0.813
+      ]
+    }
+  ]
+}

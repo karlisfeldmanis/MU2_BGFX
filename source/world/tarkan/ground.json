@@ -1,0 +1,42 @@
+{
+  "tileset": "tarkan",
+  "mu_name": "Tarkan ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "tk_tilegrass01.png",
+    "TileGrass02": "tk_tilegrass02.png",
+    "TileGround02": "tk_tileground02.png",
+    "TileGround03": "tk_tileground03.png",
+    "TileWater01": "tk_tilewater01.png",
+    "TileWood01": "tk_tilewood01.png",
+    "TileRock01": "tk_tilerock01.png",
+    "TileRock02": "tk_tilerock02.png",
+    "TileRock03": "tk_tilerock03.png",
+    "TileRock04": "tk_tilerock04.png"
+  },
+  "sheet_from": "Data/World9/Tile*.OZJ, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool and every name is another world's too. TileGround01 is in World9 but no tile wears it, so it is not decoded. docs/tarkan-port.md.",
+  "slot_note": "World9 ships TileGrass01.OZT, dry straw blades, which MU grows on slot 0 (terrain.py GRASS_BY_MAP[8]): only the north-east town, since the rest of slot 0 is NoGround. Pale desert plateaus at about 1.8 m over a NoGround void that is half the map (51.6%), walled by Object41's cliff faces; the safe town in the north-east (155-251, 28-97).",
+  "sheet_materials": {
+    "TileGrass01": "sand",
+    "TileGrass02": "sand",
+    "TileGround02": "rock",
+    "TileGround03": "sand",
+    "TileWater01": "water",
+    "TileWood01": "rock",
+    "TileRock01": "sand",
+    "TileRock02": "rock",
+    "TileRock03": "sand",
+    "TileRock04": "rock",
+    "TileGrass01_over": "sand",
+    "TileGrass02_over": "sand",
+    "TileGround02_over": "rock",
+    "TileGround03_over": "sand",
+    "TileWater01_over": "water",
+    "TileWood01_over": "rock",
+    "TileRock01_over": "sand",
+    "TileRock02_over": "rock",
+    "TileRock03_over": "sand",
+    "TileRock04_over": "rock"
+  },
+  "material_note": "Read off the art; the names lie. TileRock01 is the pale cracked sandstone of the desert floor, 59% of the ground: sand. TileGrass01 is straw over sand (the town), TileGrass02 fine tan gravel, TileGround03 dark ochre earth, TileRock03 pale sand with bone-white rubble: sand. TileGround02 is the grey cracked stone of the middle square, TileWood01 pale bleached rock, TileRock02 grey crust with orange lava veins (unwalkable, 0.1%), TileRock04 the darker brown cracked earth of the rock islands and edges: rock. TileWater01 is sand ripples, not water: it takes water only so it slides as MU slides it, one sheet every forty seconds here (ZzzLodTerrain.cpp:3583-3596; the sheet's water_flow 0.5), and the world sheet gives it no wet sheen, as the Lost Tower's lava."
+}

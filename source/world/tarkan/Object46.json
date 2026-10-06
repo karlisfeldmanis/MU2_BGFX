@@ -1,0 +1,43 @@
+{
+  "item": "Object46",
+  "mu_name": "Object46",
+  "mu_name_from": "Tarkan's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "tarkan",
+  "object_type": 45,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "ston": "tk_ston.png"
+  },
+  "sheet_from": "Data/Object9/, from MuMain, decoded under a tk_ prefix: assets/textures is one flat pool; an .OZJ and .OZT under one stem are decoded apart, the .OZT as _tga.",
+  "sheet_materials": {
+    "ston": "rock"
+  },
+  "material_note": "Read off the art: ston rock.",
+  "why_this_one": "Rock arches. Scenery batch 4, the rest of Tarkan's placed kinds (the user, 2026-10-05: 'continou'). docs/tarkan-port.md.",
+  "effects_note": "No arm in MuMain's WD_8TARKAN switches for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 88,
+      "area": 194039.6,
+      "along": [
+        -88.9,
+        88.9
+      ],
+      "mu_uv": [
+        0.389,
+        0.028,
+        0.999,
+        0.976
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.998,
+        0.858
+      ]
+    }
+  ]
+}
