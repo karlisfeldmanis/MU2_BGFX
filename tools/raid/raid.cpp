@@ -5,7 +5,8 @@
 // Each run raises Lorencia with the party standing in one of WebZen's three Dragon Event boxes
 // (DragonEvent.cpp:103-109), the boxes taken in turn, begins the invasion, and lets the dragon
 // land by the realm's own rule. Every one of the ten is played by the raiders' mind
-// (Realm::setRaid's hand); the hero once down stays down, as a raider does.
+// (Realm::setRaid's hand); whoever falls stands up in town and runs back, and a run reaching
+// the hard enrage is lost.
 //
 //   build/raid [--runs N] [--seed S] [--party PATH] [--players N] [--box A|B|C]
 //              [--stage 1-4] [--verbose]
@@ -144,7 +145,7 @@ Outcome runOnce(const content::Tables& tables, const std::vector<sim::RaiderKit>
             if (h.what == sim::What::Hit && h.who == dragonId && partyOf.count(h.whom) && !h.thrown) {
                 ++out.bitten[party[size_t(partyOf[h.whom])].name];
             }
-            if (h.what == sim::What::Died && partyOf.count(h.who) && !down[h.who]) {
+            if (h.what == sim::What::Died && partyOf.count(h.who)) {
                 down[h.who] = true;
                 out.deaths.push_back({party[size_t(partyOf[h.who])].name, lastHurt[h.who],
                                       realm.tick() - began});
@@ -181,7 +182,9 @@ Outcome runOnce(const content::Tables& tables, const std::vector<sim::RaiderKit>
             }
             std::printf("\n");
         }
-        if (int(down.size()) >= int(partyOf.size())) {
+        // The fallen stand up in town and come back (Realm::reviveRaider), so a fight is lost
+        // when the hard enrage's Inferno has landed on it.
+        if (realm.tick() - realm.raidLandedAt() > sim::kHardEnrage + sim::kInfernoTell) {
             out.wiped = true;
             break;
         }

@@ -102,6 +102,7 @@ const char* moveName(sim::HazardKind kind) {
         case sim::HazardKind::Breath: return "fire breath";
         case sim::HazardKind::Shock: return "roar";
         case sim::HazardKind::Inferno: return "golden inferno";
+        case sim::HazardKind::Hellfire: return "hellfire";
         default: return nullptr;
     }
 }
@@ -186,8 +187,10 @@ void BossBar::update(float seconds, const Play& play, const float* viewProj, int
     const Type word{controls::wordFace(), controls::wordTexture(), kLineSize * u, 0.0f, 'x'};
     const Type figure{controls::labelFace(), controls::labelTexture(), kLineSize * u, 0.0f, '0'};
     const float lineMid = bar.bottom() + 16.0f * u;
+    // No move is named before it lands (the user, 2026-10-06: 'dont show spell warning from
+    // dragon spell just happend and players will learn that').
     const sim::Hazard* told = nullptr;
-    for (int k = 0; k < sim::kHazards; ++k) {
+    for (int k = 0; k < sim::kHazards && false; ++k) {
         const sim::Hazard& one = realm.hazards()[k];
         if (one.kind == sim::HazardKind::None || moveName(one.kind) == nullptr || realm.tick() >= one.landsAt) continue;
         if (told == nullptr || one.landsAt < told->landsAt) told = &one;
@@ -195,9 +198,10 @@ void BossBar::update(float seconds, const Play& play, const float* viewProj, int
     if (told != nullptr) {
         const std::string move = moveName(told->kind);
         word.centred(canvas_, bar.midX(), lineMid, style::kDanger, a, move);
-        const float whole = told->kind == sim::HazardKind::Breath  ? float(sim::kBreathTell)
-                            : told->kind == sim::HazardKind::Shock ? float(sim::kShockTell)
-                                                                   : float(sim::kInfernoTell);
+        const float whole = told->kind == sim::HazardKind::Breath     ? float(sim::kBreathTell)
+                            : told->kind == sim::HazardKind::Shock    ? float(sim::kShockTell)
+                            : told->kind == sim::HazardKind::Hellfire ? float(sim::kHellfireTell)
+                                                                      : float(sim::kInfernoTell);
         const float done = std::clamp(1.0f - float(told->landsAt - realm.tick()) / whole, 0.0f, 1.0f);
         const float tw = std::round(word.width(move) + 24.0f * u), th = std::max(1.0f, std::round(kToldTall * u));
         const Box cast{std::round(bar.midX() - tw * 0.5f), std::round(lineMid + 10.0f * u), tw, th};

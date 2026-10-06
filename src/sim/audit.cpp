@@ -56,7 +56,8 @@ void audit(const Realm& realm, Findings& findings) {
         // Peia's north road is half again the grudge from her flower bed.
         const bool rounds = one.warden >= 0 && size_t(one.warden) < tables->folk.size() &&
                             strollRow(tables->folk[size_t(one.warden)].number) != nullptr;
-        if (!one.player && one.alive() && !rounds) {
+        // A raid's raider has no nest: it stands up in town and runs back (Realm::raid).
+        if (!one.player && one.raider < 0 && one.alive() && !rounds) {
             const int away = std::max(std::abs(one.column() - one.homeColumn),
                                       std::abs(one.row() - one.homeRow));
             if (away > kFurthest) {
@@ -116,8 +117,11 @@ void audit(const Realm& realm, Findings& findings) {
                     note(findings, "tick %lld: body %u cast skill %d without learning it",
                          (long long)realm.tick(), happening.who, happening.a);
                 }
+                // The cooldown clock kept here is the hero's: a raid's raiders keep their own
+                // (Realm::raid), and two of them may throw one skill on one tick.
+                const bool hero = caster == &realm.hero();
                 const int64_t ready = findings.castAt[index] + findings.castFor[index];
-                if (findings.castFor[index] > 0 && realm.tick() < ready) {
+                if (hero && findings.castFor[index] > 0 && realm.tick() < ready) {
                     ++findings.castEarly;
                     note(findings,
                          "tick %lld: skill %d thrown again %lld ticks into a %d tick cooldown",
@@ -133,8 +137,10 @@ void audit(const Realm& realm, Findings& findings) {
                     note(findings, "tick %lld: skill %d guards for %d ticks and cools for %d",
                          (long long)realm.tick(), happening.a, row->boonTicks, happening.b);
                 }
-                findings.castAt[index] = realm.tick();
-                findings.castFor[index] = happening.b;
+                if (hero) {
+                    findings.castAt[index] = realm.tick();
+                    findings.castFor[index] = happening.b;
+                }
             }
         }
         if (happening.what == What::Levelled) {

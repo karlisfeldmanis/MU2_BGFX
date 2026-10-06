@@ -22,7 +22,7 @@ constexpr int32_t kGoldenBudgeDragonNumber = 43;
 enum class RaidStage : uint8_t {
     None = 0,       // no raid: no dragon standing, or it has not landed
     Ground = 1,     // 100 to 70%: bite, breath, roar
-    Flight = 2,     // 70 to 40%: aloft, strafes, minions
+    Flight = 2,     // 70 to 40%: on its legs still -- minions, and fire from the sky in lines
     Enraged = 3,    // 40 to 15%: meteors and fire pools
     LastStand = 4,  // 15 to 0%: the Golden Inferno, shadows the only shelter
 };
@@ -40,7 +40,7 @@ constexpr int kLastStandAt = 15;
 constexpr int kRaidPlayers = 10;
 constexpr int32_t kRaidHealthOne = 22000;
 constexpr int32_t kRaidHealthTen = 100000;
-constexpr float kRaidHealthScale = 8.5f;
+constexpr float kRaidHealthScale = 9.5f;
 inline int32_t raidHealth(int players) {
     const int n = players < 1 ? 1 : players;
     const double line =
@@ -48,7 +48,7 @@ inline int32_t raidHealth(int players) {
     return int32_t(line * double(kRaidHealthScale));
 }
 // And its blow: OpenMU's band times this, walked toward WZD's 6,000-8,000 by the tune.
-constexpr float kRaidBlowScale = 6.0f;
+constexpr float kRaidBlowScale = 15.0f;
 
 // ---- the moves, in ticks (20 a second) and tiles. Invention unless a source is named. -------
 // Every this often, on the ground, it rears for a Breath or a Roar Shock.
@@ -68,12 +68,16 @@ constexpr float kBreathShare = 0.06f;
 constexpr int64_t kShockTell = 16;
 constexpr float kShockReach = 2.0f;
 constexpr float kShockShare = 0.15f;
-// The flight: aloft, untouchable but by what flies (thrown blows); a strafe every kStrafeEvery,
-// kStrafeFires impacts along a kStrafeLength line, each marked kImpactTell ahead and kImpactGap
-// after the last; down when its minions are dead (and kFlightLeast has passed) or after kFlightMost.
-constexpr int64_t kFlightMost = 45 * 20;
-// And its least: an end-game party kills a wave in seconds, and a flight that short is no stage.
-constexpr int64_t kFlightLeast = 20 * 20;
+// **Hellfire**, from the enraged stage on, in the Roar's place when two or more crowd it (the
+// user, 2026-10-06: 'dragon also has to usee helfire oon some stages'): MU's wizard's Hellfire
+// round it -- the sigil four tiles out and the wall of fire three (fx/hellfire.h,
+// ZzzEffect.cpp:2137-2164) -- told kHellfireTell ahead, kHellfireShare of max health to all
+// within kHellfireReach. On the dragon it is ours.
+constexpr int64_t kHellfireTell = 20;
+constexpr float kHellfireReach = 3.0f;
+constexpr float kHellfireShare = 0.3f;
+// The second stage, on its legs: fire from the sky every kStrafeEvery, kStrafeFires impacts
+// along a kStrafeLength line, each kImpactTell after it is let go and kImpactGap after the last.
 constexpr int64_t kStrafeEvery = 10 * 20;
 constexpr int kStrafeFires = 6;
 constexpr float kStrafeLength = 12.0f;
@@ -106,9 +110,11 @@ constexpr float kInfernoReach = 14.0f;
 constexpr float kInfernoShare = 0.9f;
 constexpr float kShadowReach = 2.0f;
 constexpr float kShadowOut = 4.0f;
-// The hard enrage: this long after it lands, an Inferno with no shadows over the whole field,
-// and every one after it the same; it kills.
+// The fight's clock: this long after it lands, not dead, it takes off and is gone kDepartTicks
+// later -- the invasion over and the weather clearing (the user, 2026-10-06). Ours.
 constexpr int64_t kHardEnrage = 8 * 60 * 20;
+constexpr int64_t kDepartTicks = 100;
+// What an Inferno without its shadows would be; none is thrown since the dragon leaves instead.
 constexpr float kWipeShare = 10.0f;
 constexpr float kWipeReach = 64.0f;
 
@@ -131,7 +137,7 @@ enum class RaiderAct : int32_t {
 };
 
 // One thing laid on the ground by the dragon, told before it lands.
-enum class HazardKind : uint8_t { None, Breath, Shock, Impact, Pool, Inferno };
+enum class HazardKind : uint8_t { None, Breath, Shock, Impact, Pool, Inferno, Hellfire };
 
 struct Hazard {
     HazardKind kind = HazardKind::None;

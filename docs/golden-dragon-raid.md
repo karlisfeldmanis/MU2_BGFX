@@ -277,6 +277,27 @@ fight twice.
 What a raider is not, yet: its weapon's runes and its excellent options' procs are the player's
 alone (they read his bag), it spends no mana, and its potion lands at once.
 
+### 2a''. After the first look in game (2026-10-06)
+
+The user played it and asked, and the fight now does this:
+- **It never flies in the fight** ('dragon never flies again during the fight, if he landed he
+  fights on legs'). Stage two stays on the ground: the minions and the lines of fire from the sky,
+  every blow reaching it. It flies to come and to go.
+- **Not killed by its clock, it leaves** ('only when dragons is not killed on time they fly away
+  and weather clears'): at 8:00 it rises, untouchable, and is gone 5 s later; the invasion ends and
+  the storm, held all the fight, passes. No wipe.
+- **The fallen come back** ('if chars died they probably respawn at citty and they have to return
+  to fight'): up in Lorencia's spawn box after the hero's 3 s, running back.
+- **No warnings at all** ('dont show spell warning from dragon spell just happend and players will
+  learn that'): nothing on the ground, no move named on the bar.
+- **Hellfire** from the enraged stage on, in the roar's place when two or more crowd it.
+- **A melee reach**: bulk 2 (sim::bulkOf), knights strike from its edge.
+- The raiders throw their whole kits in turn (raidNext_), say their casts and shots as the hero's
+  are said, and so are drawn; the healer fights with her mace when nobody needs her.
+
+Retuned with respawns (build/raid --runs 60): health x9.5 (950,000 for ten), bite x15 (4,500-5,250,
+on the way to WZD's 6,000-8,000): about 55% won, the kill at 7:30, near its clock.
+
 ### 2b. Where it happens: where the dragon actually lands
 
 (the user, 2026-10-06: 'fight has to happen in place where dragon actualy could land')

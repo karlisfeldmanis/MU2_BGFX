@@ -17,18 +17,21 @@ constexpr int kMostCells = 24;
 // A stain, not a light: a dark red laid over the land with the alpha blend, and a char for a
 // pool. Additive, the ember of the first cut blew out to near white in this HDR frame (the
 // user, 2026-10-06: 'very bright nit polished'). And a dark one for the shadows. All ours.
-constexpr float kEmber[3] = {0.55f, 0.08f, 0.03f};
+// Then, the same day: 'dont dimm the ground with dragon spells'. So a light again, but red
+// alone and faint -- a rim for a disc, a breath of red for the cone -- and the shelters a faint
+// cool light: nothing laid on the land darkens it.
+constexpr float kEmber[3] = {0.75f, 0.06f, 0.02f};
 constexpr float kChar[3] = {0.08f, 0.03f, 0.02f};
-constexpr float kShade[3] = {0.55f, 0.5f, 0.45f};
+constexpr float kShade[3] = {0.18f, 0.26f, 0.42f};
 // How strong: faint as it is told, plain as it lands, a flash, and the fade after. Halved on
 // 2026-10-06 (the user: 'very bright'), and it must stay under the fire it warns of.
-constexpr float kFirst = 0.10f;
-constexpr float kLast = 0.38f;
-constexpr float kFlash = 0.45f;
+constexpr float kFirst = 0.06f;
+constexpr float kLast = 0.22f;
+constexpr float kFlash = 0.3f;
 constexpr float kFlashSeconds = 0.12f;
 constexpr float kFadeSeconds = 0.4f;
 constexpr float kBurning = 0.3f;
-constexpr float kShadeStrength = 0.7f;
+constexpr float kShadeStrength = 0.35f;
 // The Inferno's field at this share of a mark's strength, a deep red dimming.
 constexpr float kFieldShare = 0.35f;
 constexpr float kField[3] = {0.25f, 0.03f, 0.02f};
@@ -91,7 +94,7 @@ void Omen::disc(gfx::Effects& effects, const content::Ground& ground, const Mark
     gfx::Sprite sprite;
     sprite.placed = true;
     sprite.sheet = sheet;
-    sprite.blend = dark ? gfx::Blend::Minus : gfx::Blend::Alpha;
+    sprite.blend = gfx::Blend::Additive;
     const float* tint = dark                         ? kShade
                         : mark.shape == Shape::Pool  ? kChar
                         : mark.shape == Shape::Field ? kField
@@ -128,7 +131,7 @@ void Omen::cone(gfx::Effects& effects, const content::Ground& ground, const Mark
     gfx::Sprite sprite;
     sprite.placed = true;
     sprite.sheet = blot_;
-    sprite.blend = gfx::Blend::Alpha;
+    sprite.blend = gfx::Blend::Additive;
     for (int i = 0; i < 3; ++i) sprite.colour[i] = kEmber[i];
     // The drawing's yaw looks down (sin yaw, cos yaw) in x and z (Play::follow).
     const auto place = [&](float out, float turn, float* at) {
@@ -142,7 +145,7 @@ void Omen::cone(gfx::Effects& effects, const content::Ground& ground, const Mark
         const float o0 = mark.radius * float(r) / kRings, o1 = mark.radius * float(r + 1) / kRings;
         // Soft at both ends: in from the mouth and out to its reach.
         const float t = (float(r) + 0.5f) / kRings;
-        sprite.colour[3] = alpha * std::min(1.0f, t * 4.0f) * (1.0f - 0.55f * t);
+        sprite.colour[3] = 0.6f * alpha * std::min(1.0f, t * 4.0f) * (1.0f - 0.55f * t);
         for (int s = 0; s < kSlices; ++s) {
             const float t0 = -mark.half + 2.0f * mark.half * float(s) / kSlices;
             const float t1 = -mark.half + 2.0f * mark.half * float(s + 1) / kSlices;

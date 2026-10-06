@@ -1007,6 +1007,7 @@ public:
     std::string kitRefusal(const RaiderKit& kit) const;
     RaidStage raidStage() const { return raid_.stage; }
     bool raidAloft() const { return raid_.aloft; }
+    bool raidDeparting() const { return raid_.departing; }
     int64_t raidLandedAt() const { return raid_.landedAt; }
     const Hazard* hazards() const { return hazards_; }
     // The raiders, alive or dead, in party order after the hero (empty with no party).
@@ -1587,13 +1588,12 @@ private:
         int64_t landedAt = 0;
         int64_t nextMove = 0;      // the next Breath or Shock
         int64_t busyUntil = 0;     // a move in hand: it neither walks nor swings
-        int64_t aloftSince = 0;
         int64_t nextStrafe = 0;
         int64_t nextStorm = 0;
         int64_t nextInferno = 0;
         bool secondWave = false;
-        bool wiped = false;        // the hard enrage's Inferno told
-        bool heroDown = false;     // the headless hand's hero has fallen: out, as a raider is
+        bool departing = false;    // not killed in time: up and leaving (kDepartTicks)
+        int64_t departsAt = 0;
         uint32_t serial = 0;       // tells said, for the raiders' reactions
         // The threat each fighter holds on it, by the party's index (0 the hero, then the
         // raiders), and the summon's after them.
@@ -1614,6 +1614,9 @@ private:
     int64_t reactAt_[kRaidersMost + 1] = {};
     uint32_t reactSerial_[kRaidersMost + 1] = {};
     int raidPotions_[kRaidersMost + 1] = {};
+    // Where each one's kit is read from next: the skill after the last thrown, so a raider uses
+    // the whole of its kit and not the first ready skill over and over.
+    int raidNext_[kRaidersMost + 1] = {};
     int64_t drinkAt_[kRaidersMost + 1] = {};
     // The dragon's own rolls, and the raiders': so a run with no raid is not moved by one.
     Random raidDice_{0};
@@ -1644,6 +1647,8 @@ private:
     }
     int partyIndex(const Body& one) const;
     void raid(Body& one, int index);
+    // A fallen raider up again in the map's spawn box, whole, on the raiders' own dice.
+    void reviveRaider(Body& one);
     bool dodge(Body& one, int index);
     void raiderStrike(Body& one, Body& target, const SkillRow* row);
     // The kit's satchel a party member is reckoned from: the hero's bag, or the raider's own.

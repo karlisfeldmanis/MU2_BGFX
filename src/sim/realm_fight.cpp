@@ -18,9 +18,8 @@ namespace mu::sim {
 void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* row,
                      bool thrown, bool pays) {
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
-    // **The dragon aloft** (sim/raid.h, the raid's flight): nothing but what flies reaches it --
-    // an arrow, a spell let go. A swing or a sweep is a miss. invention.
-    if (raid_.aloft && !thrown && isBoss(target)) {
+    // **The dragon aloft** (sim/raid.h): leaving, nothing reaches it. invention.
+    if (raid_.aloft && (!thrown || raid_.departing) && isBoss(target)) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         return;
     }
@@ -1548,10 +1547,28 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.provoked = false;
     say(What::Died, dead, dead.level, 0, 0, killer.id);
 
-    // Her summon, and a raider: it falls and stays down -- nothing drops, nothing is earned, and
-    // it does not rise; she casts another, and a raider is gone for the fight (sim/raid.h). What
-    // fought it forgets it.
-    if (dead.summoner != 0 || dead.raider >= 0) {
+    // A raider stands up in town as he does, kRiseTicks on, and runs back to the fight (the
+    // user, 2026-10-06: 'if chars died they probably respawn at citty and they have to return
+    // to fight'; Realm::raid). Nothing drops and nothing is earned.
+    if (dead.raider >= 0) {
+        dead.risesAt = tick_ + kRiseTicks;
+        dead.boonUntil = 0;
+        dead.mightUntil = 0;
+        dead.might = 0;
+        dead.boonDamageTaken = 1.0f;
+        dead.stats.damageTaken = dead.pet.taken;
+        dropBlow(dead);
+        for (Body& one : bodies_) {
+            if (one.quarry == dead.id) {
+                one.quarry = 0;
+                one.provoked = false;
+            }
+        }
+        return;
+    }
+    // Her summon: it falls and stays down -- nothing drops, nothing is earned, and it does not
+    // rise; she casts another. What fought it forgets it.
+    if (dead.summoner != 0) {
         dropBlow(dead);
         for (Body& one : bodies_) {
             if (one.quarry == dead.id) {

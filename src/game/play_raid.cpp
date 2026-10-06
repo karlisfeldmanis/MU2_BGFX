@@ -28,8 +28,10 @@ namespace {
 // How high it flies while aloft, in metres, and how fast it climbs or comes down. Ours: high
 // enough to read as up and out of a sword's reach, low enough to stay in MU's frame -- at 6 m
 // it rose to the camera's own height and left the picture.
-constexpr float kAloft = 3.0f;
-constexpr float kClimb = 3.0f;  // metres a second
+constexpr float kAloft = 30.0f;  // leaving: up and out of the frame
+constexpr float kClimb = 5.0f;   // metres a second
+// And away along its facing, gathering pace: metres a second, a second. Ours.
+constexpr float kDepartPace = 6.0f;
 // The camera's pull near a boss (§2c): MU's TW_CAMERA_UP eases 10 units a frame at 25 frames,
 // 2.5 m a second (DefaultCamera.cpp:703-724); ours reaches 3 m, within 14 tiles of a roused
 // boss and held to 18.
@@ -104,6 +106,9 @@ void Play::raidSaid(const sim::Happening& happening) {
         return;
     }
     if (event == sim::RaidEvent::Shadow) {
+        // Not drawn: no warning of the dragon's moves at all (the user, 2026-10-06: 'dont show
+        // spell warning from dragon spell just happend and players will learn that').
+        return;
         // A wing's shelter, dark until the Inferno's fire has passed.
         float tell = 0.0f;
         for (int k = 0; k < sim::kHazards; ++k) {
@@ -120,15 +125,14 @@ void Play::raidSaid(const sim::Happening& happening) {
             case sim::HazardKind::Breath: {
                 // Its facing as the realm turned it, as the drawing yaws a body (Play::gather).
                 const float yaw = std::atan2(std::cos(dragon->facing), -std::sin(dragon->facing));
-                omen_.tell(Omen::Shape::Cone, x, z, sim::kBreathReach * metresPerTile, tell,
-                           ticksToSeconds(sim::kBreathTicks), yaw, sim::kBreathHalfAngle);
                 breathOn_.wait = tell;
                 breathOn_.left = ticksToSeconds(sim::kBreathTicks);
                 breathOn_.yaw = yaw;
                 break;
             }
             case sim::HazardKind::Shock:
-                omen_.tell(Omen::Shape::Disc, x, z, (sim::kShockReach + 0.5f) * metresPerTile, tell, 0.0f);
+                break;
+            case sim::HazardKind::Hellfire:
                 break;
             case sim::HazardKind::Impact:
                 // No mark for a rock: it just falls (the user, 2026-10-06: 'dont show the meteor
@@ -136,16 +140,10 @@ void Play::raidSaid(const sim::Happening& happening) {
                 // the realm strikes.
                 rocksOwed_.push_back({std::max(0.0f, tell - Meteor::fallSeconds()), x, z});
                 break;
-            case sim::HazardKind::Inferno: {
-                // The field: the realm's square, drawn as the disc it reaches round its corners.
-                float reach = sim::kInfernoReach;
-                for (int k = 0; k < sim::kHazards; ++k) {
-                    const sim::Hazard& h = realm_.hazards()[k];
-                    if (h.kind == sim::HazardKind::Inferno) reach = h.reach;
-                }
-                omen_.tell(Omen::Shape::Field, x, z, (std::min(reach, 24.0f) + 0.5f) * metresPerTile, tell, 0.0f);
+            case sim::HazardKind::Inferno:
+                // No field laid on the ground (the user: 'dont dimm the ground'): its shadows are
+                // the mark, and the bar names it.
                 break;
-            }
             default:
                 break;
         }
@@ -157,22 +155,40 @@ void Play::raidSaid(const sim::Happening& happening) {
         if (kind == sim::HazardKind::Shock) {
             meteor_.blast(at, kShockBlast);
             meteor_.stones(x, z, at[1], 2);
-        } else if (kind == sim::HazardKind::Inferno) {
+        } else if (kind == sim::HazardKind::Hellfire) {
+            // MU's Hellfire round it: the sigil and the wall of fire, and its sound.
             const float yaw = std::atan2(std::cos(dragon->facing), -std::sin(dragon->facing));
             hellfire_.cast(at, yaw);
+            if (heard_.hellfire >= 0) emit(heard_.hellfire, x, z);
+        } else if (kind == sim::HazardKind::Inferno) {
+            // The wizard's Inferno ring of bombs round it (fx/inferno.h), and a burst.
+            const float yaw = std::atan2(std::cos(dragon->facing), -std::sin(dragon->facing));
+            inferno_.cast(at, yaw, [&](const float* stone) { meteor_.stones(stone[0], stone[2], stone[1], 2); });
             meteor_.blast(at, kInfernoBlast);
+            if (heard_.explosion >= 0) emit(heard_.explosion, x, z);
         } else if (kind == sim::HazardKind::Impact) {
             // A storm rock's pool: the realm lays it now, a burning tile for its twelve seconds.
             for (int k = 0; k < sim::kHazards; ++k) {
                 const sim::Hazard& h = realm_.hazards()[k];
                 if (h.kind != sim::HazardKind::Pool) continue;
                 if (std::fabs(h.x - happening.x) > 0.01f || std::fabs(h.y - happening.y) > 0.01f) continue;
+                // Its embers alone: no char laid on the ground.
                 const float burns = ticksToSeconds(h.endsAt - realm_.tick());
-                omen_.tell(Omen::Shape::Pool, x, z, (sim::kPoolReach + 0.5f) * metresPerTile, 0.0f, burns);
                 poolsOn_.push_back({x, z, burns, 0.0f});
             }
         }
     }
+}
+
+void Play::raidCircle(const sim::Body& body, float* x, float* z, float* yaw) const {
+    const sim::Body* dragon = realm_.invader();
+    if (dragon == nullptr || &body != dragon || raidLift_ <= 0.0f) return;
+    // Leaving: away along the way it faced as it rose, faster as it climbs (raidOrbit_ is the
+    // seconds it has been going). It flies only to come and to go (the user, 2026-10-06).
+    const float out = kDepartPace * raidOrbit_ * raidOrbit_ * 0.5f;
+    *x += std::sin(departYaw_) * out;
+    *z += std::cos(departYaw_) * out;
+    *yaw = departYaw_;
 }
 
 float Play::raidLift(const sim::Body& body) const {
@@ -226,6 +242,13 @@ void Play::raid(float seconds) {
     const float want = realm_.raidAloft() && dragon->alive() ? kAloft : 0.0f;
     raidLift_ = want > raidLift_ ? std::min(want, raidLift_ + kClimb * seconds)
                                  : std::max(want, raidLift_ - kClimb * seconds);
+    // Its facing as it rose, kept for the whole of its going.
+    if (raidLift_ > 0.0f) {
+        if (raidOrbit_ == 0.0f && drawn) departYaw_ = drawn->yaw;
+        raidOrbit_ += seconds;
+    } else {
+        raidOrbit_ = 0.0f;
+    }
     // The rocks owed to the sky.
     for (RockOwed& rock : rocksOwed_) {
         rock.wait -= seconds;

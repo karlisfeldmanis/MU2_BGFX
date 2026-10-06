@@ -983,7 +983,7 @@ void Realm::step() {
             advance(hero);
         }
         // The headless raid's hand (Realm::setRaid): the raiders' mind plays him too.
-        if (raidHand_ && raid_.stage != RaidStage::None && !raid_.heroDown) {
+        if (raidHand_ && raid_.stage != RaidStage::None) {
             raid(hero, 0);
         } else {
             press();
@@ -1004,6 +1004,10 @@ void Realm::step() {
             continue;
         }
         if (beast.raider >= 0) {
+            if (!beast.alive()) {
+                if (beast.risesAt > 0 && tick_ >= beast.risesAt) reviveRaider(beast);
+                continue;
+            }
             raid(beast, beast.raider + 1);
             continue;
         }

@@ -470,7 +470,7 @@ void testInvasion(const content::Tables& tables) {
 
 // The Golden Dragon's raid (realm_raid.cpp, docs/golden-dragon-raid.md): the party legal and
 // raised, each stage begun at its health, nothing but what flies reaching it aloft, the storm's
-// rocks and their pools, the Inferno's shadows, the dead staying down, and one seed one fight.
+// rocks and their pools, the Inferno's shadows, the fallen rising in town, and one seed one fight.
 void testRaid(const content::Tables& tables) {
     std::printf("raid\n");
     std::vector<sim::RaiderKit> party;
@@ -507,27 +507,22 @@ void testRaid(const content::Tables& tables) {
     const sim::Body* dragon = realm.invader();
     check(dragon->maxHealth == sim::raidHealth(10), "at ten players' health");
 
-    // The flight: aloft, its wave down, and no swing reaches it.
+    // The second stage: on its legs still, its wave down, and a swing lands on it.
     realm.raidSkipTo(sim::RaidStage::Flight);
     realm.step();
-    check(realm.raidStage() == sim::RaidStage::Flight && realm.raidAloft(), "70% takes it up");
+    check(realm.raidStage() == sim::RaidStage::Flight && !realm.raidAloft(),
+          "70% begins the second stage, and it stays on its legs");
     int up = 0;
     for (int i = 0; i < realm.minionCount(); ++i) up += realm.minionAt(i)->alive() ? 1 : 0;
     checkEqual(up, sim::minionsFor(10), "a wave of 2 + 10/2 minions");
-    bool swungAloft = false;
-    int64_t flown = 0;
-    while (realm.raidAloft() && flown < sim::kFlightMost + 40) {
+    bool swung = false;
+    for (int i = 0; i < 400 && !swung; ++i) {
         realm.step();
-        ++flown;
         for (const sim::Happening& h : realm.happenings()) {
-            if (h.what == sim::What::Hit && h.whom == dragon->id && !h.thrown && realm.raidAloft()) {
-                swungAloft = true;
-            }
+            swung |= h.what == sim::What::Hit && h.whom == dragon->id && !h.thrown;
         }
     }
-    check(!swungAloft, "nothing but what flies strikes it aloft");
-    check(!realm.raidAloft() && flown >= sim::kFlightLeast && flown <= sim::kFlightMost + 1,
-          "and it comes down between its least and its most");
+    check(swung, "and a swing still reaches it");
 
     // The storm: a rock told on each fighter, and pools where they land.
     realm.raidSkipTo(sim::RaidStage::Enraged);
@@ -560,24 +555,55 @@ void testRaid(const content::Tables& tables) {
     }
     checkEqual(shades, 3, "its Inferno shelters under three shadows for ten");
 
-    // To the end: killed or wiped inside its thirty minutes, and the fallen stay down.
-    std::vector<uint32_t> fallen;
-    for (int64_t i = 0; i < 30 * 60 * 20 && realm.invader()->alive(); ++i) {
-        realm.step();
-        for (const sim::Happening& h : realm.happenings()) {
-            if (h.what != sim::What::Died) continue;
-            for (int r = 0; r < realm.raiderCount(); ++r) {
-                if (realm.raiderAt(r)->id == h.who) fallen.push_back(h.who);
+    // A whole fight from its landing: killed or gone inside its clock, and whoever falls stands
+    // up again in town (Realm::reviveRaider).
+    {
+        sim::Realm whole;
+        raised(whole, 21);
+        std::vector<uint32_t> fallen;
+        int64_t fellAt = 0;
+        for (int64_t i = 0; i < sim::kHardEnrage + sim::kDepartTicks + 40 &&
+                            whole.raidStage() != sim::RaidStage::None;
+             ++i) {
+            whole.step();
+            for (const sim::Happening& h : whole.happenings()) {
+                if (h.what != sim::What::Died) continue;
+                for (int r = 0; r < whole.raiderCount(); ++r) {
+                    if (whole.raiderAt(r)->id == h.who) {
+                        fallen.push_back(h.who);
+                        fellAt = whole.tick();
+                    }
+                }
             }
         }
-        bool any = realm.hero().alive();
-        for (int r = 0; r < realm.raiderCount(); ++r) any |= realm.raiderAt(r)->alive();
-        if (!any) break;
+        check(whole.raidStage() == sim::RaidStage::None, "a whole fight ends inside its clock");
+        std::printf("  raid: %zu raider deaths in a whole fight\n", fallen.size());
+        for (int i = 0; i < sim::kRiseTicks + 2; ++i) whole.step();
+        bool rose = !fallen.empty();
+        for (uint32_t id : fallen) {
+            const sim::Body* one = whole.find(id);
+            rose &= one != nullptr && (one->alive() || whole.tick() - fellAt < sim::kRiseTicks);
+        }
+        check(rose, "a fallen raider stands up again in town");
     }
-    bool stayed = true;
-    for (int i = 0; i < 200; ++i) realm.step();
-    for (uint32_t id : fallen) stayed &= realm.find(id) && !realm.find(id)->alive();
-    check(stayed, "a fallen raider stays down");
+
+    // Not killed in time, it flies away: the invasion over (and its storm with it).
+    {
+        sim::Realm idle;
+        idle.setRaid(10, {}, false);
+        idle.raise(&tables, 13, 140, 65);
+        idle.invade(true);
+        for (int i = 0; i < 40 && idle.raidStage() == sim::RaidStage::None; ++i) idle.step();
+        bool left = false;
+        for (int64_t i = 0; i < sim::kHardEnrage + sim::kDepartTicks + 40 && !left; ++i) {
+            idle.step();
+            for (const sim::Happening& h : idle.happenings()) {
+                left |= h.what == sim::What::Dismissed && h.who == idle.invader()->id;
+            }
+        }
+        check(left && idle.invasionPhase() == sim::InvasionPhase::Quiet,
+              "not killed in its time, it flies away and the invasion ends");
+    }
 
     // One seed, one fight.
     sim::Realm a, b;

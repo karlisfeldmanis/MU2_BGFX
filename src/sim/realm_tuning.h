@@ -133,8 +133,10 @@ constexpr int kArcherReach = 6;
 // distance is incorrect for char because monster is big'): MU reaches the tile alone and
 // lets him stand inside a Hydra, whose body runs 2.8 m out from its tile, front and back. At 2
 // he stood clear of it; 1 keeps him close against it ('little but closer').
+// And the Golden Dragon (79): two tiles, its body and wings a long way out from its tile (the
+// user, 2026-10-06: 'we need some minimal attack distance for melee attack for dragon').
 constexpr int bulkOf(int32_t number) {
-    return number == 49 ? 1 : 0;  // Hydra: a tile in, close against its body
+    return number == 49 ? 1 : number == 79 ? 2 : 0;  // Hydra: a tile in, close against its body
 }
 // An arrow's flight: MU's `Direction[1] = -70` units a reference frame at 25, 1750 units -- 17.5
 // tiles -- a second, stopping a tile short of the body as a spell does (MU2 Realm.cs:79).

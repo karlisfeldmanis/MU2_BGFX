@@ -1113,6 +1113,10 @@ private:
     void raid(float seconds);
     // Drawn aloft: how high, and whether it holds its flight clip this frame (Play::follow).
     float raidLift(const sim::Body& body) const;
+    // And where it is drawn on its circle, and which way it faces there, while aloft.
+    void raidCircle(const sim::Body& body, float* x, float* z, float* yaw) const;
+    float raidOrbit_ = 0.0f;  // seconds since it began to leave
+    float departYaw_ = 0.0f;  // the way it faced as it rose
     bool raidFlies(Drawn& one, const sim::Body& body);
     void gatherRaiders(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
                        std::vector<gfx::Drawable>* casters);

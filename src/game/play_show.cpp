@@ -1301,10 +1301,13 @@ void Play::follow(float seconds) {
         const bool statue =
             !body->player && size_t(body->kind) < tables_.kinds.size() &&
             sim::castleStatue(tables_.kinds[size_t(body->kind)].number);
-        // And the Golden Dragon aloft, drawn up off the ground (play_raid.cpp).
+        // And the Golden Dragon aloft, drawn up off the ground and round its circle
+        // (play_raid.cpp).
         lift += raidLift(*body);
-        const float position[3] = {x, ground_->heightAt(x, z) + lift,
-                                   statue ? z - 1.2f * metresPerTile : z};
+        float flyX = x, flyZ = z;
+        raidCircle(*body, &flyX, &flyZ, &one.yaw);
+        const float position[3] = {flyX, ground_->heightAt(flyX, flyZ) + lift,
+                                   statue ? flyZ - 1.2f * metresPerTile : flyZ};
         // The safe zone is a stance and not only a place: inside one MU carries the weapon on
         // the back and stands in the unarmed idle, and steps out of it with the weapon drawn.
         // `place` moves the weapon; the clip below is the other half of the same rule, and the

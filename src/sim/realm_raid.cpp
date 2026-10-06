@@ -109,6 +109,7 @@ void Realm::raiseRaid() {
         reactSerial_[i] = 0;
         raidPotions_[i] = 0;
         drinkAt_[i] = 0;
+        raidNext_[i] = 0;
     }
     if (invaderSlot_ < 0 || !raidAsked_) return;
     {
@@ -191,6 +192,11 @@ void Realm::raiseRaid() {
         one.temper = Temper::Wandering;
         one.speed = 1.0f / float(kHeroMoveTicks);
         one.route.reserve(64);
+        // It knows what its kit throws.
+        for (const int32_t skill : kit.skills) {
+            const int at = skillIndexOf(skill);
+            if (at >= 0) one.learned |= uint64_t(1) << at;
+        }
         raidPotions_[k] = kit.potions;
         raiderBags_.push_back(bag);
         raiderSlots_.push_back(int(bodies_.size()));
@@ -213,6 +219,11 @@ void Realm::dressHero(const RaiderKit& kit) {
     hero.points = kit.points;
     hero.pointsInHand = 0;
     hero.second = kit.second;
+    // And the skills of his kit, learned, for the bar.
+    for (const int32_t skill : kit.skills) {
+        const int at = skillIndexOf(skill);
+        if (at >= 0) hero.learned |= uint64_t(1) << at;
+    }
     for (const KitPiece& piece : kit.pieces) {
         const int32_t item = itemNamed(*tables_, piece.item);
         if (item < 0) continue;
@@ -267,51 +278,61 @@ void Realm::raidTick() {
         for (Hazard& one : hazards_) one = Hazard{};
         return;
     }
+    // **Not killed in time, it leaves** (the user, 2026-10-06: 'only when dragons is not killed
+    // on time they fly away and weather clears'): up, untouchable, and gone kDepartTicks later,
+    // the invasion over and the storm with it. It flies only to come and to go -- 'dragon never
+    // flies again during the fight, if he landed he fights on legs'.
+    if (raid_.departing) {
+        if (tick_ >= raid_.departsAt) {
+            dragon.health = 0;
+            dragon.quarry = 0;
+            halt(dragon);
+            dropBlow(dragon);
+            for (Body& one : bodies_) {
+                if (one.quarry == dragon.id) {
+                    one.quarry = 0;
+                    one.provoked = false;
+                }
+            }
+            say(What::Dismissed, dragon);
+            core::logf("raid: the dragon flies away at tick %lld", (long long)tick_);
+            raid_.stage = RaidStage::None;
+            raid_.aloft = false;
+            for (Hazard& one : hazards_) one = Hazard{};
+            endInvasion();
+        }
+        return;
+    }
+    if (tick_ - raid_.landedAt >= kHardEnrage) {
+        raid_.departing = true;
+        raid_.departsAt = tick_ + kDepartTicks;
+        raid_.aloft = true;
+        halt(dragon);
+        dropBlow(dragon);
+        for (Hazard& one : hazards_) one = Hazard{};
+        say(What::Raid, dragon, int32_t(RaidEvent::Aloft), 1);
+        return;
+    }
     const int percent = int(int64_t(dragon.health) * 100 / std::max(1, dragon.maxHealth));
     if (raid_.stage == RaidStage::Ground && percent <= kFlightAt) {
         beginStage(dragon, RaidStage::Flight);
     }
-    if (raid_.stage == RaidStage::Flight && raid_.aloft) {
-        if (!raid_.secondWave && percent <= kSecondWaveAt) {
-            raid_.secondWave = true;
-            minionWave(dragon);
-        }
-        bool minions = false;
-        for (int slot : minionSlots_) minions = minions || bodies_[size_t(slot)].alive();
-        // Down when its minions are dead -- given a wave's five idle seconds to come down first --
-        // or when it has flown its longest.
-        const bool cleared = !minions && tick_ - raid_.aloftSince >= kFlightLeast;
-        if (cleared || tick_ - raid_.aloftSince >= kFlightMost) {
-            raid_.aloft = false;
-            raid_.nextMove = tick_ + kMoveEvery / 2;
-            say(What::Raid, dragon, int32_t(RaidEvent::Aloft), 0);
-        }
+    if (raid_.stage == RaidStage::Flight && !raid_.secondWave && percent <= kSecondWaveAt) {
+        raid_.secondWave = true;
+        minionWave(dragon);
     }
     if (raid_.stage <= RaidStage::Flight && percent <= kEnragedAt) {
-        if (raid_.aloft) {
-            raid_.aloft = false;
-            say(What::Raid, dragon, int32_t(RaidEvent::Aloft), 0);
-        }
         beginStage(dragon, RaidStage::Enraged);
     }
     if (raid_.stage == RaidStage::Enraged && percent <= kLastStandAt) {
         beginStage(dragon, RaidStage::LastStand);
     }
-    if (!raid_.wiped && tick_ - raid_.landedAt >= kHardEnrage) {
-        raid_.wiped = true;
-        inferno(dragon, false);
-    }
-    if (raid_.aloft) {
-        if (tick_ >= raid_.nextStrafe) strafe(dragon);
-    } else {
-        if (raid_.stage >= RaidStage::Enraged && tick_ >= raid_.nextStorm) storm(dragon);
-        // After the hard enrage every Inferno is its: no shadows, and the whole field.
-        if ((raid_.stage == RaidStage::LastStand || raid_.wiped) && tick_ >= raid_.nextInferno) {
-            inferno(dragon, !raid_.wiped);
-        }
-        if (tick_ >= raid_.nextMove && tick_ >= raid_.busyUntil && tick_ >= dragon.wakesAt) {
-            raidMove(dragon);
-        }
+    // The second stage's fire from the sky, in lines, while it fights on.
+    if (raid_.stage == RaidStage::Flight && tick_ >= raid_.nextStrafe) strafe(dragon);
+    if (raid_.stage >= RaidStage::Enraged && tick_ >= raid_.nextStorm) storm(dragon);
+    if (raid_.stage == RaidStage::LastStand && tick_ >= raid_.nextInferno) inferno(dragon, true);
+    if (tick_ >= raid_.nextMove && tick_ >= raid_.busyUntil && tick_ >= dragon.wakesAt) {
+        raidMove(dragon);
     }
     hazardTick(dragon);
 }
@@ -323,12 +344,8 @@ void Realm::beginStage(Body& dragon, RaidStage stage) {
                dragon.health, dragon.maxHealth);
     switch (stage) {
         case RaidStage::Flight:
-            raid_.aloft = true;
-            raid_.aloftSince = tick_;
+            // On its legs still: it roars its minions down and fire rains in lines.
             raid_.nextStrafe = tick_ + 60;
-            halt(dragon);
-            dropBlow(dragon);
-            say(What::Raid, dragon, int32_t(RaidEvent::Aloft), 1);
             minionWave(dragon);
             break;
         case RaidStage::Enraged:
@@ -401,7 +418,13 @@ void Realm::raidMove(Body& dragon) {
     Hazard move;
     move.x = dragon.x;
     move.y = dragon.y;
-    if (under >= 2) {
+    if (under >= 2 && raid_.stage >= RaidStage::Enraged) {
+        move.kind = HazardKind::Hellfire;
+        move.reach = kHellfireReach;
+        move.share = kHellfireShare;
+        move.landsAt = tick_ + kHellfireTell;
+        move.endsAt = move.landsAt;
+    } else if (under >= 2) {
         move.kind = HazardKind::Shock;
         move.reach = kShockReach;
         move.share = kShockShare;
@@ -607,8 +630,10 @@ void Realm::hazardTick(Body& dragon) {
             for (Body& one : bodies_) {
                 if (!partisan(one) || !one.alive() || !inHazard(h, one.x, one.y)) continue;
                 scorch(dragon, one, h.share);
-                // The roar's shove: a tile straight away from it, as the Lightning push is.
-                if (h.kind == HazardKind::Shock && one.alive() && one.pushTicks == 0) {
+                // The roar's shove, and Hellfire's: a tile straight away from it, as the
+                // Lightning push is.
+                if ((h.kind == HazardKind::Shock || h.kind == HazardKind::Hellfire) && one.alive() &&
+                    one.pushTicks == 0) {
                     push(one, h.x, h.y);
                 }
             }
@@ -679,7 +704,6 @@ void Realm::raidAfter() {
     const float keep = std::pow(0.5f, 1.0f / float(kThreatHalf));
     for (float& one : raid_.threat) one *= keep;
     for (const Happening& one : happenings_) {
-        if (one.what == What::Died && one.who == bodies_[0].id && raidHand_) raid_.heroDown = true;
         // A minion killed stays down until the next wave calls it: the kill's own respawn
         // (Realm::kill, its breed's regen) would stand it up again in seconds.
         if (one.what == What::Died) {
@@ -699,6 +723,32 @@ void Realm::raidAfter() {
 }
 
 // ---- the raiders' mind --------------------------------------------------------------------------
+
+void Realm::reviveRaider(Body& one) {
+    // A tile in the town's spawn box as Realm::haven draws the hero's, off raiderDice_.
+    const int32_t* gate = tables_->safeGate;
+    int column = one.column(), row = one.row();
+    if (gate[2] > gate[0] && gate[3] > gate[1]) {
+        column = raiderDice_.nextInt(gate[0], gate[2] + 1);
+        row = raiderDice_.nextInt(gate[1], gate[3] + 1);
+        int open = column, openRow = row;
+        if (router_.nearestOpen(column, row, content::kWallCharacter, 8, &open, &openRow)) {
+            column = open;
+            row = openRow;
+        }
+    }
+    halt(one);
+    one.x = float(column);
+    one.y = float(row);
+    one.health = one.maxHealth;
+    one.temper = Temper::Wandering;
+    one.risesAt = 0;
+    one.castUntil = 0;
+    one.swingsAt = tick_;
+    one.pushTicks = 0;
+    one.pushAt = 0;
+    say(What::Rose, one, one.level, one.health);
+}
 
 bool Realm::dodge(Body& one, int index) {
     // The newest volley told: judged once -- when it steps out, or that it does not.
@@ -746,6 +796,17 @@ void Realm::raiderStrike(Body& one, Body& target, const SkillRow* row) {
                         one.kin == Kin::DarkWizard;
     const float hit = row != nullptr ? force(*row, one.totalPoints()) : 1.0f;
     one.aim = std::atan2(target.y - one.y, target.x - one.x);
+    // What the drawing shows of it, said as the hero's are: an arrow or a fan let go (`Loosed`,
+    // Realm::looseArrow and looseFan), a spell's rock or ring (`Loosed`), Evil Spirit's spirits
+    // round him (`Spirits`). Its blows land now, on the tick, as a raider's always do.
+    const int32_t flight = std::max<int32_t>(1, int32_t(std::ceil(reach(one, target) / 0.875f)));
+    if (row == nullptr && one.archer > 0) {
+        say(What::Loosed, one, 0, flight, 0, target.id);
+    } else if (row != nullptr && row->number == skill::kEvilSpirit) {
+        say(What::Spirits, one, int32_t(kSpiritDelayTicks), 0, 0, target.id);
+    } else if (row != nullptr && (row->wizardry || row->spread == Spread::Fan)) {
+        say(What::Loosed, one, row->number, row->showers() ? row->fallTicks : flight, 0, target.id);
+    }
     if (row == nullptr || row->spread == Spread::One) {
         strikeAt(one, target, hit, row, ranged);
         return;
@@ -805,6 +866,10 @@ void Realm::raid(Body& one, int index) {
             }
             return;
         }
+        // Back from town at the hero's run (sim::kRunFactor), walking within the fight.
+        const Body* landed = invaderSlot_ >= 0 ? &bodies_[size_t(invaderSlot_)] : nullptr;
+        const bool far = landed != nullptr && !within(one, *landed, 12.0f);
+        one.speed = (far ? kRunFactor : 1.0f) / float(kHeroMoveTicks);
         advance(one);
     }
     const RaiderKit& kit = party_[size_t(index)];
@@ -834,6 +899,9 @@ void Realm::raid(Body& one, int index) {
         one.castUntil = tick_ + clip;
         one.swingsAt = tick_ + std::max(clip, one.swingTicks);
         say(What::Raid, one, int32_t(RaidEvent::Raider), int32_t(RaiderAct::Cast), row.number, at.id);
+        // And as the hero's cast is said (Realm::throwSkill), so the drawing plays its clip and
+        // shows what it throws (Play::update, What::Cast and What::Loosed).
+        say(What::Cast, one, row.number, skillAt >= 0 ? int32_t(one.cools[skillAt] - tick_) : 0, 0, at.id);
     };
     // Off its cooldown, its class's, and what his hands can throw it with -- `armed`'s gates
     // less the mana, which a raider is not reckoned in (sim/raid.h) -- the shield's family for a
@@ -926,8 +994,17 @@ void Realm::raid(Body& one, int index) {
     if (melee) {
         const bool takeMinion = minion != nullptr && (raid_.aloft || kit.role == RaidRole::Melee);
         target = takeMinion ? minion : (dragon != nullptr && !raid_.aloft ? dragon : minion);
+        // Aloft with no minion standing: under it, ready for its landing, not idle far off.
+        if (target == nullptr && dragon != nullptr) {
+            if (!within(one, *dragon, 3.0f)) approach(one, *dragon, 2, false);
+            return;
+        }
     } else if (kit.role != RaidRole::Healer) {
         target = dragon != nullptr ? dragon : minion;
+    } else if (dragon != nullptr && !raid_.aloft) {
+        // The healer, nobody to mend: her mace on the dragon, beside the tank (the user,
+        // 2026-10-06: 'some of chars is not even fighting boss').
+        target = dragon;
     }
     // The healer stands by the tank, four tiles off, while the tank stands in the fight -- not
     // after him into town when he has fallen and stood up there.
@@ -950,23 +1027,31 @@ void Realm::raid(Body& one, int index) {
         return;
     }
     const float armsReach = 1.0f + float(bulkOf(numberOf(*target)));
-    const float range = melee ? armsReach : kRangedStand;
-    if (!within(one, *target, range) || (!melee && !seen(one, *target))) {
-        approach(one, *target, int(range), !melee);
+    // The healer's mace is a melee weapon too.
+    const bool close = melee || kit.role == RaidRole::Healer;
+    const float range = close ? armsReach : kRangedStand;
+    if (!within(one, *target, range) || (!close && !seen(one, *target))) {
+        approach(one, *target, int(range), !close);
         return;
     }
     engage(one, *target);
-    for (const int32_t number : kit.skills) {
+    // Round the kit from after the last skill thrown (raidNext_).
+    const int count = int(kit.skills.size());
+    for (int step = 0; step < count; ++step) {
+        const int at = (raidNext_[index] + step) % count;
+        const int32_t number = kit.skills[size_t(at)];
         const SkillRow* row = skillNumbered(number);
         if (row == nullptr || !ready(*row) || row->boonTicks > 0 || row->mends || row->mightTicks > 0) {
             continue;
         }
         // What is aimed at a body flies its reach or the stand's; what sweeps round him (a ring,
         // an arc, a line) only reaches its own -- Inferno from six tiles catches nothing.
-        const bool aimed = row->spread == Spread::One || row->showers() ||
-                           row->number == skill::kEvilSpirit;
+        const bool aimed = row->spread == Spread::One || row->spread == Spread::Fan ||
+                           row->spread == Spread::Line || row->spread == Spread::Beam ||
+                           row->showers() || row->number == skill::kEvilSpirit;
         const float bulk = float(bulkOf(numberOf(*target)));
         if (!within(one, *target, aimed ? std::max(row->reach, range) : row->reach + bulk)) continue;
+        raidNext_[index] = (at + 1) % count;
         cast(*row, *target);
         raiderStrike(one, *target, row);
         return;
