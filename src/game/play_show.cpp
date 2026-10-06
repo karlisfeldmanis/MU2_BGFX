@@ -1172,7 +1172,7 @@ void Play::follow(float seconds) {
             const sim::Held& worn = realm_.satchel()[sim::kMount];
             if (!worn.empty() && size_t(worn.item) < tables_.items.size() &&
                 tables_.items[size_t(worn.item)].number == 3) {
-                lift = kDinorantLift;
+                lift = flying_ ? kDinorantFlyLift : kDinorantLift;
                 // On its run, his seat follows the dragon's back (dinorantBob).
                 const FigureBody* seatOn = one.figure.body();
                 const int riding = one.figure.clip();

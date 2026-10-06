@@ -44,6 +44,8 @@ private:
     };
     bool spawn(Wisp& wisp, const float near[3], bool anyAge);
     bool lavaAt(float x, float z) const;
+    // Whether the ground under a sheet `half` across from (x, z) stays under `height`.
+    bool clear(float x, float z, float half, float height) const;
     float unit();
 
     const content::Ground* ground_ = nullptr;

@@ -219,25 +219,34 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
         if (cell >= 0 && cell != dragging_ && !moving.empty()) {
             const content::ItemRow& row = tables.items[size_t(moving.item)];
             // Or a stack of its kind with room, which Realm::rearrange pours into.
+            // Or a thing a jewel works, lit whole, which Realm::rearrange applies it to.
             const int under = vault.holder(tables, cell);
-            const bool fits = vault.room(tables, cell, row.width, row.height, dragging_) ||
+            const bool working = under >= 0 && under != dragging_ &&
+                                 realm.worksOn(moving, vault[under]);
+            const bool fits = working ||
+                              vault.room(tables, cell, row.width, row.height, dragging_) ||
                               (under >= 0 && under != dragging_ &&
                                sim::tops(tables, vault[under], moving));
-            const int column = cell % sim::kVaultColumns, line = cell / sim::kVaultColumns;
-            const int w = std::min<int>(row.width, sim::kVaultColumns - column);
-            const int h = std::min<int>(row.height, sim::kVaultRows - line);
-            panel::cell(canvas_, x, y, cellBox(cell, w, h),
+            const int at = working ? under : cell;
+            const content::ItemRow& shape = working ? tables.items[size_t(vault[under].item)] : row;
+            const int column = at % sim::kVaultColumns, line = at / sim::kVaultColumns;
+            const int w = std::min<int>(shape.width, sim::kVaultColumns - column);
+            const int h = std::min<int>(shape.height, sim::kVaultRows - line);
+            panel::cell(canvas_, x, y, cellBox(at, w, h),
                         fits ? sheet::Cell::Fits : sheet::Cell::Blocked);
         }
     }
     // And a bag piece carried over the vault, by Realm::deposit's gate: onto a stack of its
-    // kind with room, or where its footprint is free; a worn piece nowhere.
+    // kind with room, onto a thing it works if it is a jewel (Realm::refineAcross), or where its
+    // footprint is free; a worn piece nowhere.
     if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
         const int cell = cellAt((now_.dragX - x) / k, (now_.dragY - y) / k);
         if (cell >= 0) {
             const content::ItemRow& row = tables.items[size_t(incoming_.item)];
             const int under = vault.holder(tables, cell);
-            const bool topping = incomingTakes_ && under >= 0 && sim::tops(tables, vault[under], incoming_);
+            const bool topping = incomingTakes_ && under >= 0 &&
+                                 (sim::tops(tables, vault[under], incoming_) ||
+                                  realm.worksOn(incoming_, vault[under]));
             const int at = topping ? under : cell;
             const content::ItemRow& shape = topping ? tables.items[size_t(vault[under].item)] : row;
             const bool fits =

@@ -84,7 +84,7 @@ bool Card::Sheet::operator==(const Sheet& o) const {
     return who == o.who && second == o.second && width == o.width && height == o.height && top == o.top &&
            level == o.level &&
            points == o.points && experience == o.experience && strength == o.strength &&
-           agility == o.agility && vitality == o.vitality && energy == o.energy &&
+           agility == o.agility && vitality == o.vitality && energy == o.energy && raised == o.raised &&
            minimum == o.minimum && maximum == o.maximum && attackRate == o.attackRate &&
            defense == o.defense && defenseRate == o.defenseRate && health == o.health &&
            maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
@@ -153,10 +153,16 @@ void Card::update(float width, float height, const sim::Body* hero, const Pointe
         now_.level = hero->level;
         now_.points = hero->pointsInHand;
         now_.experience = hero->experience;
-        now_.strength = hero->points.strength;
-        now_.agility = hero->points.agility;
-        now_.vitality = hero->points.vitality;
-        now_.energy = hero->points.energy;
+        // With the stat runes in, as everything below them reads them; a raised one in blue.
+        const sim::HeroPoints total = hero->totalPoints();
+        now_.strength = total.strength;
+        now_.agility = total.agility;
+        now_.vitality = total.vitality;
+        now_.energy = total.energy;
+        now_.raised = (total.strength != hero->points.strength ? 1 : 0) |
+                      (total.agility != hero->points.agility ? 2 : 0) |
+                      (total.vitality != hero->points.vitality ? 4 : 0) |
+                      (total.energy != hero->points.energy ? 8 : 0);
         // Both hands' bands together while a knight holds two weapons: what one blow rolls.
         now_.minimum = hero->stats.minimumDamage + hero->stats.offhandMinimumDamage;
         now_.maximum = hero->stats.maximumDamage + hero->stats.offhandMaximumDamage;
@@ -229,7 +235,8 @@ void Card::rebuild() {
         const float baseline = panel::centredBaseline(face, well, figureSize);
         controls::label(canvas_, x + kLeft * k, baseline, size * 1.1f, kPlain, row.label);
         const float figureRight = now_.points > 0 ? kFigureRight : kRight;
-        controls::ranged(canvas_, x + figureRight * k, baseline, figureSize * 1.1f, kHeading,
+        controls::ranged(canvas_, x + figureRight * k, baseline, figureSize * 1.1f,
+                         (now_.raised >> row.stat) & 1 ? panel::kOptioned : kHeading,
                          std::to_string(values[row.stat]));
 
         // What the attribute buys, in the gap under its well: MU's own lines and strings. MU2
@@ -246,9 +253,9 @@ void Card::rebuild() {
                 lines[count++] = std::to_string(now_.attackRate);
                 break;
             case 1:
-                labels[count] = "Defence";
+                labels[count] = "Defense";
                 lines[count++] = std::to_string(now_.defense);
-                labels[count] = "Defence rate";
+                labels[count] = "Defense rate";
                 lines[count++] = std::to_string(now_.defenseRate);
                 break;
             case 2:

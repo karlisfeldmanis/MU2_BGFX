@@ -183,7 +183,9 @@ static_assert(sizeof(TownInstance) == 36, "the town instance layout drifted from
 // Vent: the Lost Tower's Flame vents, dark but for a burst (game/world/lamps.h).
 enum class EmitterKind : uint8_t {
     Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4, Vent = 5,
-    Bubble = 6  // Atlans's bubble vents, game/world/bubbles.h
+    Bubble = 6,  // Atlans's bubble vents, game/world/bubbles.h
+    // Tarkan's hidden emitters, game/world/desert_vents.h.
+    SandFall = 7, SteamVent = 8, Geyser = 9, GlowSprite = 10, DustCloud = 11
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

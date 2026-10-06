@@ -156,8 +156,11 @@ public:
     // A track of music, looping, streamed from `path` at `gain`: PlayMp3. Asking again for the
     // track already playing does nothing, as MU's PlayMp3 no-ops; another track replaces it.
     // Under the whole mix's level, so the menu's volume turns it down too.
-    void music(const std::string& path, float gain = 0.6f);
+    // `loop` false plays it once through: a town's theme, rested between hearings (PlayMode).
+    void music(const std::string& path, float gain = 0.6f, bool loop = true);
     void stopMusic();
+    // Whether this track is sounding now: started and not stopped or run to its end.
+    bool musicPlaying(const std::string& path) const;
 
     // A spoken line, `relative` to the assets, played once and unplaced: a quest giver reading
     // his page. One at a time: a new line cuts the last.
@@ -167,8 +170,8 @@ public:
 
     // A short piece of music, `relative` to the assets, played once at `gain` and unplaced, in
     // its own slot: a quest handed in. Streamed at the file's own quality, where an event is
-    // cooked to mono 22 kHz; it neither cuts a voice nor replaces the track. A new one cuts the
-    // last. Ours, like the voice.
+    // cooked to mono 22 kHz; it neither cuts a voice nor replaces the track: the track fades
+    // out under it and back in once it ends. A new one cuts the last. Ours, like the voice.
     void stinger(const std::string& relative, float gain = 0.7f);
 
     // The whole mix's level, 0 to 1: the game menu's volume. A muted run stays silent.

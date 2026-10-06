@@ -347,7 +347,9 @@ uint32_t colourOf(Tone tone) {
         case Tone::Red: return gfx::rgba(1.0f, 0.2f, 0.1f);
         case Tone::Yellow: return gfx::rgba(1.0f, 0.8f, 0.1f);
         case Tone::Green: return gfx::rgba(0.1f, 1.0f, 0.5f);
-        case Tone::Gray: return gfx::rgba(0.4f, 0.4f, 0.4f);
+        // Lifted from MU's 0.4 to the card's own quiet ink: on the see-through glass 0.4 could not
+        // be read (the tooltip audit, 2026-10-05).
+        case Tone::Gray: return gfx::rgba(0.588f, 0.600f, 0.557f);
         case Tone::Violet: return gfx::rgba(0.7f, 0.4f, 1.0f);
         case Tone::RedPurple: return gfx::rgba(0.8f, 0.5f, 0.8f);
         case Tone::Orange: return gfx::rgba(0.9f, 0.42f, 0.04f);
@@ -931,7 +933,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                         px += value ? heavy(type, canvas, px, baseline, rowSize, fade(brighter(tone)),
                                             piece, drop, u)
                                     : say(type, canvas, px, baseline, rowSize,
-                                              fade(key ? colourOf(Tone::White) : tone), piece,
+                                              fade(key ? colourOf(row.keywordTone) : tone), piece,
                                               drop);
                         at = stop;
                     }

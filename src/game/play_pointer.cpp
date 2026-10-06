@@ -545,9 +545,31 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     const float wayX = at[0] - from->crown[0], wayZ = at[2] - from->crown[2];
     const float flat = std::max(1e-4f, std::sqrt(wayX * wayX + wayZ * wayZ));
     const float fx = wayX / flat, fz = wayZ / flat;
-    // MU's muzzle, (-10, -60, 135) turned by its facing, as shootArrow's.
-    const float muzzle[3] = {from->crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
-                             from->crown[2] + fz * 0.6f - fx * 0.1f};
+    // MU's muzzle, (-10, -60, 135) turned by its facing, as shootArrow's -- for a shooter with
+    // nothing in hand to read it off.
+    float muzzle[3] = {from->crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
+                       from->crown[2] + fz * 0.6f - fx * 0.1f};
+    // Off the weapon, as shootArrow's: the drawn string's arrow, else the muzzle bone, else the
+    // bow or crossbow in hand at its grip. A fixed 1.35 m left the Silver Valkyrie's, drawn at
+    // 1.4, flying from her legs (the user, 2026-10-05: 'penetration bow is not coming from
+    // weapon but somewhere from legs'); her Bluewing Crossbow has no muzzle bone.
+    const char* origin = "chest";
+    float tail[3], tip[3], rail[3];
+    if (from->figure.nocked(at, tail, tip)) {
+        for (int k = 0; k < 3; ++k) muzzle[k] = 0.5f * (tail[k] + tip[k]);
+        origin = "string";
+    } else if (from->figure.muzzle(muzzle, rail)) {
+        origin = "muzzle";
+    } else if (const FigureBody* held = from->figure.body()) {
+        static const float kGrip[3] = {0.0f, 0.0f, 0.0f};
+        for (const HeldItem& item : held->held) {
+            if (!item.mesh || (item.stance != "crossbow" && item.stance != "bow")) continue;
+            if (from->figure.heldPoint(item.mesh->name(), kGrip, muzzle)) {
+                origin = "weapon";
+                break;
+            }
+        }
+    }
     // The Silver Valkyrie's are Penetration's, wound in MODEL_PIERCING's gold bands and flying
     // on past what they strike (the user, 2026-10-04: 'silver vylket has to shoot penetration').
     // Ours; MU's Silver Valkyrie shoots the Valkyrie's plain arrow.
@@ -565,8 +587,9 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     }
     // Read afterwards, as the meteor's line is: an arrow at two tiles is in the air for a tenth
     // of a second, and no shot schedule proves it flew.
-    core::logf("arrow: tick %lld, #%u looses at #%u from %.1f m", (long long)realm_.tick(),
-               shooter, target, double(flat));
+    core::logf("arrow: tick %lld, #%u looses at #%u from %.1f m, off the %s %.2f m up",
+               (long long)realm_.tick(), shooter, target, double(flat), origin,
+               double(muzzle[1] - feet));
 }
 
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {

@@ -121,7 +121,7 @@ struct GrassField {
     float card[4] = {0.42f, 0.30f, 0.10f, 1.3f};  // height m, width over height, lean, widening
     float wind[4] = {1.0f, 0.0f, 0.10f, 0.0f};    // direction xz, strength, seconds
     float through[4] = {0.78f, 1.28f, 0.58f, 0.75f};  // back-lit tint, and how far
-    float shape[4] = {1.0f, 1.85f, 0.0f, 0.0f};        // length spread, rank height
+    float shape[4] = {1.0f, 1.85f, 0.0f, 0.0f};        // length spread, rank height, tufts
     float root[4] = {0.54f, 0.72f, 0.40f, 0.62f}; // the colour at the root, then the AO there
     float tip[4] = {0.94f, 1.12f, 0.58f, 0.45f};  // the colour at the top, then the roughness
     float colour = 0.26f;  // how far the sheet is graded towards those two

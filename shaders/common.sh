@@ -15,7 +15,7 @@ uniform vec4 u_edge;        // xy: the map's far corner in metres (+x and -z). z
                             // to keep, which is every bench. See dusty().
 uniform vec4 u_camPos;      // xyz: the eye, world space. w: the far plane
 uniform vec4 u_params;      // x: ssao radius  y: ssao strength  z: exposure  w: pixels per unit at unit depth
-uniform vec4 u_sway;        // x: the play clock, seconds  y: the sheet's sway, metres at a metre's height
+uniform vec4 u_sway;        // x: the play clock, seconds  y: the sheet's sway, metres at a metre's height  z: an opaque stream's slide  w: its axis, 0 V, 1 U, 2 both
 uniform vec4 u_material;    // x: cutout threshold (<0 is no cutout)  y: two-sided
                             // z: roughness factor  w: metal factor, both glTF's, both multiply the ORM
 

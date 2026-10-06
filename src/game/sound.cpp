@@ -246,6 +246,11 @@ struct Sound::Impl {
     bool voiceReady = false;
     ma_sound stingerLine{};
     bool stingerReady = false;
+    // The track held silent under a stinger, to come back when it ends (Sound::stinger).
+    bool musicHeld = false;
+    bool stingerSounding() {
+        return stingerReady && ma_sound_is_playing(&stingerLine) && !ma_sound_at_end(&stingerLine);
+    }
 
     // The room: the world's bus split into the dry and the reverb's send.
     ma_splitter_node split{};
@@ -675,12 +680,14 @@ namespace {
 // tile he leaves the safe zone on, and the user asked for a fade (2026-09-28).
 constexpr ma_uint64 kMusicOutMs = 2000;
 constexpr ma_uint64 kMusicInMs = 1000;
+// How quickly the track gets out of a stinger's way: under the jingle's first note.
+constexpr ma_uint64 kMusicHoldMs = 300;
 }  // namespace
 
-void Sound::music(const std::string& path, float gain) {
+void Sound::music(const std::string& path, float gain, bool loop) {
     if (!impl_ || !impl_->open) return;
     Impl& im = *impl_;
-    if (im.musicLive && im.musicPath == path) return;
+    if (musicPlaying(path)) return;
     stopMusic();
     // Into the other slot, so the track fading out keeps its own. Whatever was left there from
     // two changes ago has faded by now or is let go.
@@ -701,11 +708,19 @@ void Sound::music(const std::string& path, float gain) {
     im.musicSlot = slot;
     im.musicLive = true;
     im.musicPath = path;
-    ma_sound_set_looping(&im.music[slot], MA_TRUE);
+    ma_sound_set_looping(&im.music[slot], loop ? MA_TRUE : MA_FALSE);
     ma_sound_set_volume(&im.music[slot], std::clamp(gain, 0.0f, 1.0f));
-    ma_sound_set_fade_in_milliseconds(&im.music[slot], 0.0f, 1.0f, kMusicInMs);
+    // A track that begins under a stinger waits silent for it to end (Sound::listen).
+    im.musicHeld = im.stingerSounding();
+    ma_sound_set_fade_in_milliseconds(&im.music[slot], 0.0f, im.musicHeld ? 0.0f : 1.0f,
+                                      kMusicInMs);
     ma_sound_start(&im.music[slot]);
     core::logf("sound: music %s", path.c_str());
+}
+
+bool Sound::musicPlaying(const std::string& path) const {
+    if (!impl_ || !impl_->musicLive || impl_->musicPath != path) return false;
+    return !ma_sound_at_end(&impl_->music[impl_->musicSlot]);
 }
 
 void Sound::stopMusic() {
@@ -767,6 +782,14 @@ void Sound::stinger(const std::string& relative, float gain) {
     im.stingerReady = true;
     ma_sound_set_volume(&im.stingerLine, std::clamp(gain, 0.0f, 1.0f));
     ma_sound_start(&im.stingerLine);
+    // **The track steps aside for it and comes back after** (the user, 2026-10-05: 'if there
+    // is safemode music playing, and character finish the quest which also play little music,
+    // we need to play quest music and after that go back to safezone music'). Faded to silence
+    // and left running, so it returns where it would have been; Sound::listen brings it back.
+    if (im.musicLive) {
+        ma_sound_set_fade_in_milliseconds(&im.music[im.musicSlot], -1.0f, 0.0f, kMusicHoldMs);
+        im.musicHeld = true;
+    }
     core::logf("sound: stinger %s", relative.c_str());
 }
 
@@ -1069,6 +1092,13 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
     if (!impl_->open) return;
     Impl& im = *impl_;
     im.hero = hero;
+    // A stinger over: the track it held comes back in (Sound::stinger).
+    if (im.musicHeld && !im.stingerSounding()) {
+        if (im.musicLive) {
+            ma_sound_set_fade_in_milliseconds(&im.music[im.musicSlot], -1.0f, 1.0f, kMusicInMs);
+        }
+        im.musicHeld = false;
+    }
     for (int i = 0; i < 3; ++i) im.ear[i] = at[i];
     for (int i = 0; i < 16; ++i) im.shot[i] = shot[i];
     im.shotKnown = true;

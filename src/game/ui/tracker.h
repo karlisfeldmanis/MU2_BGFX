@@ -19,6 +19,9 @@
 namespace mu::sim {
 class Realm;
 }
+namespace mu::content {
+struct Tables;
+}
 
 namespace mu::game {
 
@@ -35,6 +38,12 @@ void mark(gfx::Canvas& canvas, StepMark kind, float cx, float cy, float u, float
 uint32_t faded(uint32_t abgr, float alpha);
 // "11h 42m", "42m", "under a minute".
 std::string wait(int64_t seconds);
+// The order a quest's steps are listed in, by index into its steps: its breeds by their level,
+// the weakest at the top and the strongest at the bottom (the user, 2026-10-05: 'order monster
+// list by their lvl on all kill quests', 'top lower, bottom highest'), ties in the table's
+// order; then its finds, then the return. Shown only: the counts stay by the table's index,
+// which saves carry. Into `order` (kQuestSteps long); how many.
+int byLevel(const sim::QuestRow& row, const content::Tables* tables, int* order);
 }  // namespace quest_marks
 
 class Tracker {
@@ -131,6 +140,7 @@ private:
         // Blood Castle's run, when he is in one (sim/event.h): its phase, the seconds left of
         // its wait or its time, and the two quotas. Shown in the quest's place.
         int eventPhase = 0, eventSeconds = 0, eventKills = 0, eventSorcerers = 0, eventShown = 0;
+        int eventCastle = 1;  // which castle the run is, 1 to 6, for the title
         bool eventStatue = false;  // the statue broken (sim::CastleRun::statueBroken)
         bool operator==(const Drawn& o) const;
     };

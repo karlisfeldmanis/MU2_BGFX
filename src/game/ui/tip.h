@@ -72,6 +72,9 @@ struct Row {
     // the gutter beside the row's first line in `markTone` -- the mark says what KIND of line
     // it is (a rolled option, an excellent one), so the text can keep MU's own blue.
     std::string keyword;
+    // The keyword's own ink: white, or a rune's name in its rarity's colour while its effect
+    // reads white beside it (the user, 2026-10-05: 'cleaner and more understandable').
+    Tone keywordTone = Tone::White;
     std::string tail;
     Mark mark = Mark::None;
     Tone markTone = Tone::Gray;
@@ -110,8 +113,10 @@ namespace ink {
 // and iron (game/ui/style.h) since 2026-09-28, where it was a cool black under a warm hairline.
 // A little see-through since the same day, on the user's word: the world moves behind a card,
 // and the words keep their own drop shadow to hold an edge on it.
-constexpr uint32_t kBodyTop = gfx::rgba(0.051f, 0.039f, 0.031f, 0.84f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.012f, 0.012f, 0.80f);
+// Denser since the tooltip audit of 2026-10-05 (0.84 and 0.80): over a window the bag's grid and
+// its labels read through the card's words.
+constexpr uint32_t kBodyTop = gfx::rgba(0.051f, 0.039f, 0.031f, 0.92f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.012f, 0.012f, 0.90f);
 constexpr uint32_t kRing = gfx::rgba(0.420f, 0.337f, 0.271f, 1.0f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
 constexpr uint32_t kLabel = gfx::rgba(0.769f, 0.757f, 0.706f);

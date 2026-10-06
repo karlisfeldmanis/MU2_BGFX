@@ -2352,7 +2352,10 @@ void testCastLock(const content::Tables& tables) {
               "and a channel strikes up to eleven times");
         check(earliest >= sim::skillNumbered(sim::skill::kLightning)->strikeFrom,
               "and never before his arm is up");
-        check(closest >= sim::skillNumbered(sim::skill::kLightning)->channelTicks,
+        // Quickened by his casting speed since 2026-10-05 (Realm::throwSkill), never under the
+        // window its eleven strikes need.
+        check(closest > sim::kLightningBodies &&
+                  closest <= sim::skillNumbered(sim::skill::kLightning)->channelTicks + 40,
               "and never twice inside one channel");
         // One body a strike, and round the ring: a channel with company strikes more than one.
         checkEqual(widest, 1, "and each strike goes to one body");
@@ -5354,7 +5357,9 @@ void testDeviasFolk() {
 void testVault(const content::Tables& tables) {
     std::printf("vault\n");
     sim::Realm realm;
-    check(realm.raise(&tables, 11, 144, 112), "the realm raises by the vault");
+    // A knight of 50, who may wear the sword the test carries across the counter.
+    check(realm.raise(&tables, 11, 144, 112, sim::Kin::DarkKnight, 50),
+          "the realm raises by the vault");
     int baz = -1;
     for (size_t i = 0; i < tables.folk.size() && baz < 0; ++i) {
         if (tables.folk[i].number == sim::kVaultKeeper) baz = int(i);
@@ -5377,7 +5382,18 @@ void testVault(const content::Tables& tables) {
     check(realm.banking() == baz, "walked to Baz and the vault opened");
     check(realm.trading() < 0, "and no counter with it");
 
-    check(realm.deposit(sim::kWeaponRight) < 0, "what is worn does not go in");
+    // Worn gear crosses the counter too (the user, 2026-10-05): off him into the vault, and
+    // from the vault back into his hand.
+    check(realm.spend(60, 60, 0, 0), "the strength and agility the Kris asks");
+    check(realm.give(sword, sim::kWeaponRight) == sim::kWeaponRight, "a sword in his hand");
+    if (const sim::Held wornWas = realm.satchel()[sim::kWeaponRight]; !wornWas.empty()) {
+        check(realm.deposit(sim::kWeaponRight, 40) == 40 &&
+                  realm.satchel()[sim::kWeaponRight].empty(),
+              "a worn weapon goes straight into the vault");
+        check(realm.withdraw(40, sim::kWeaponRight) == sim::kWeaponRight &&
+                  realm.satchel()[sim::kWeaponRight].item == wornWas.item && realm.vault()[40].empty(),
+              "and from the vault back into his hand");
+    }
     const int cell = realm.deposit(slot, (sim::kVaultRows - tall + 1) * sim::kVaultColumns);
     check(cell < 0 && !realm.satchel()[slot].empty(), "a sword does not start where it runs off the foot");
     const int kept = realm.deposit(slot, 10);
@@ -5410,6 +5426,26 @@ void testVault(const content::Tables& tables) {
     check(realm.withdraw(stored, spill) == spill && realm.satchel()[spill].durability == 20 &&
               realm.vault()[stored].durability == 7,
           "and a stack let go on a bag stack tops it up and leaves the rest");
+
+    // A jewel across the counter (the user, 2026-10-05): from the bag onto a thing in the vault,
+    // and from the vault onto a thing in the bag, as `refine` does it inside the bag.
+    const int32_t bless = tables.itemAt(14, 13);
+    check(bless >= 0, "the Jewel of Bless is in the tables");
+    if (bless >= 0) {
+        const int blade = realm.give(sword);
+        const int kept2 = realm.deposit(blade, 64);
+        checkEqual(kept2, 64, "a sword into the vault");
+        const int jewel = realm.give(bless);
+        check(realm.deposit(jewel, 64) == 64 && realm.vault()[64].refinement == 1 &&
+                  realm.satchel()[jewel].empty(),
+              "a Bless let go on it in the vault raises it there and is spent");
+        const int out = realm.withdraw(64);
+        check(out >= sim::kWorn && realm.satchel()[out].refinement == 1, "it comes out at +1");
+        const int stored2 = realm.deposit(realm.give(bless), 70);
+        check(stored2 == 70 && realm.withdraw(70, out) == out &&
+                  realm.satchel()[out].refinement == 2 && realm.vault()[70].empty(),
+              "and a Bless from the vault let go on it in the bag raises it again");
+    }
 
     sim::Request walk;
     walk.kind = sim::Request::Kind::WalkTo;
@@ -5808,6 +5844,65 @@ void testAtlansGates() {
     check(atlans.safeGate[0] == 15 && atlans.safeGate[1] == 11 && atlans.safeGate[2] == 27 &&
               atlans.safeGate[3] == 23,
           "Atlans's safe box is the basin, 15,11 to 27,23, so a death rises there");
+}
+
+void testTarkanGates() {
+    std::printf("tarkan gates\n");
+    struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
+    const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
+                         int level) {
+        Seen seen;
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
+              "a realm raises by the gate");
+        sim::Request go;
+        go.kind = sim::Request::Kind::WalkTo;
+        go.column = toC;
+        go.row = toR;
+        realm.ask(go);
+        for (int tick = 0; tick < 400 && seen.gated == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Barred && seen.barred == 0) seen.barred = one.b;
+                if (one.what == sim::What::Gated) {
+                    seen.gated = one.a;
+                    seen.column = one.b;
+                    seen.row = one.c;
+                }
+            }
+        }
+        return seen;
+    };
+    content::Tables atlans, tarkan;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/atlans/atlans.mur", atlans,
+                              error),
+          "Atlans's tables load");
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/tarkan/tarkan.mur", tarkan,
+                              error),
+          "Tarkan's tables load");
+    // Atlans's lagoon door, gate 53, column 15 open and 14 rock; in asks 100, ours (MU's 130).
+    // A tile from it on its top row: two tiles south the lagoon's Hydras kill him first.
+    Seen s = walk(atlans, 16, 225, 15, 225, 100);
+    checkEqual(s.gated, 53, "a level 100 knight takes Atlans's lagoon door to Tarkan, gate 53");
+    check(s.column >= 248 && s.column <= 251 && s.row >= 40 && s.row <= 44,
+          "out on Tarkan's gate 54 by its north-east corner");
+    s = walk(atlans, 16, 225, 15, 225, 99);
+    checkEqual(s.gated, 0, "a level 99 knight does not");
+    checkEqual(s.barred, 100, "and is told it asks level 100");
+    // Tarkan's way back, gate 55, asks 70, Atlans's own way in.
+    s = walk(tarkan, 249, 42, 246, 42, 70);
+    checkEqual(s.gated, 55, "Tarkan's corner, gate 55, takes him back");
+    check(s.column >= 16 && s.column <= 17 && s.row >= 225 && s.row <= 230,
+          "out on Atlans's gate 56 in the lagoon");
+    s = walk(tarkan, 249, 42, 246, 42, 69);
+    checkEqual(s.barred, 70, "and asks level 70");
+    // A death in Tarkan rises in its own town, spawn gate 57 (WebZen's gate.txt, mu.db gates
+    // 57), not in Lorencia: the Devias gate-22 lesson (docs/lost-tower-port.md).
+    check(tarkan.safeGate[0] == 187 && tarkan.safeGate[1] == 54 && tarkan.safeGate[2] == 203 &&
+              tarkan.safeGate[3] == 69,
+          "Tarkan's safe box is the town, 187,54 to 203,69, so a death rises there");
 }
 
 void testDungeonGates(const content::Tables& lorencia) {
@@ -6272,6 +6367,98 @@ void testChaosMachine() {
             low.put(8, sim::Held{chaos, 0, 1});
             check(sim::judge(noria, low).recipe == sim::Recipe::None, "a +3 Chaos weapon is not enough");
 
+            // The Wings service (2026-10-05): the same box on a page of its own, and the 1st
+            // wings' needs on it before a thing is put in.
+            const sim::Judged page = sim::judge(noria, wings, sim::Service::FirstWings);
+            check(page.recipe == sim::Recipe::Wings && page.ready, "the 1st Wings page reads the box as wings");
+            check(sim::judge(noria, wings, sim::Service::SecondWings).recipe == sim::Recipe::None,
+                  "and the 2nd Wings page does not");
+            check(sim::judge(noria, sim::Machine{}, sim::Service::SecondWings).title ==
+                      "2nd Level Wings, not ready",
+                  "empty, the 2nd Wings page names its own mix");
+            const sim::Judged bare0 = sim::judge(noria, sim::Machine{}, sim::Service::FirstWings);
+            check(bare0.nearest == sim::Recipe::Wings && !bare0.ready && bare0.needCount >= 2,
+                  "empty, the Wings page lists the 1st wings' needs");
+            check(bare0.title == "1st Level Wings, not ready", "and names the mix it waits for");
+            sim::Machine weapon;
+            weapon.put(0, optioned);
+            weapon.put(8, sim::Held{chaos, 0, 1});
+            check(sim::judge(noria, weapon).recipe == sim::Recipe::ChaosWeapon &&
+                      sim::judge(noria, weapon, sim::Service::FirstWings).recipe == sim::Recipe::None,
+                  "a Chaos Weapon box is Combine's, not the Wings page's");
+            // Every mix a page of its own, and no plain Combine on the row (the user, 2026-10-05).
+            bool combineShown = false;
+            for (sim::Service one : sim::kRowServices) combineShown |= one == sim::Service::Combine;
+            check(!combineShown && sim::kRowCount == 9, "nine pages, Combine on none");
+            check(sim::judge(noria, weapon, sim::Service::ChaosWeapon).recipe ==
+                      sim::Recipe::ChaosWeapon,
+                  "the Chaos Weapon page makes the Chaos weapon");
+            check(sim::judge(noria, weapon, sim::Service::Upgrade).recipe == sim::Recipe::None,
+                  "and the Upgrade page does not");
+            // A socket counts as the option does (the user, 2026-10-05).
+            sim::Held socketed = optioned;
+            socketed.option = 0;
+            socketed.sockets = 1;
+            sim::Machine bySocket;
+            bySocket.put(0, socketed);
+            bySocket.put(8, sim::Held{chaos, 0, 1});
+            check(sim::judge(noria, bySocket, sim::Service::ChaosWeapon).ready,
+                  "a +4 with a socket and no option makes a Chaos weapon");
+            sim::Held socketedAxe{axe, 4, 20};
+            socketedAxe.sockets = 1;
+            sim::Machine wingBySocket;
+            wingBySocket.put(0, socketedAxe);
+            wingBySocket.put(8, sim::Held{chaos, 0, 1});
+            check(sim::judge(noria, wingBySocket, sim::Service::FirstWings).ready,
+                  "and a +4 Chaos weapon with a socket makes wings");
+            sim::Held plain = optioned;
+            plain.option = 0;
+            sim::Machine neither;
+            neither.put(0, plain);
+            neither.put(8, sim::Held{chaos, 0, 1});
+            check(!sim::judge(noria, neither, sim::Service::ChaosWeapon).ready,
+                  "with neither, it does not");
+            const struct {
+                sim::Service page;
+                const char* title;
+            } empties[] = {{sim::Service::Upgrade, "+10 Item, not ready"},
+                           {sim::Service::ChaosWeapon, "Chaos Weapon, not ready"},
+                           {sim::Service::Dinorant, "Dinorant, not ready"},
+                           {sim::Service::Cloak, "Invisibility Cloak, not ready"}};
+            for (const auto& one : empties) {
+                const sim::Judged e = sim::judge(noria, sim::Machine{}, one.page);
+                check(e.title == one.title && e.needCount > 0,
+                      (std::string("empty, the ") + sim::serviceName(one.page) +
+                       " page names its mix and lists its needs")
+                          .c_str());
+            }
+
+            // Wings take sockets at Add Socket, and then an armour's rune (the user, 2026-10-05).
+            {
+                const int32_t satanRow = noria.itemAt(12, 2);
+                const int32_t life = noria.itemAt(14, 16), soul = noria.itemAt(14, 14);
+                sim::Machine sock;
+                sock.put(0, sim::Held{satanRow, 0, 200});
+                sock.put(16, sim::Held{life, 0, 1});
+                sock.put(17, sim::Held{chaos, 0, 1});
+                sock.put(18, sim::Held{soul, 0, 1});
+                sock.put(19, sim::Held{soul, 0, 1});
+                sock.put(20, sim::Held{bless, 0, 1});
+                sock.put(21, sim::Held{bless, 0, 1});
+                check(sim::judge(noria, sock, sim::Service::AddSocket).ready,
+                      "a 1st wing takes a socket at Add Socket");
+                sim::Held socketedWing{satanRow, 0, 200};
+                socketedWing.sockets = 1;
+                const int32_t rune = noria.itemAt(14, 22);
+                sim::Held undying{rune, 0, 1};
+                undying.powers[0] = uint8_t(sim::Power::Undying);
+                sim::Held storm{rune, 0, 1};
+                storm.powers[0] = uint8_t(sim::Power::Stormcall);
+                check(sim::settable(noria, undying, socketedWing, sim::Kin::DarkKnight, false),
+                      "and a socketed wing takes an armour's rune");
+                check(!sim::settable(noria, storm, socketedWing, sim::Kin::DarkKnight, false),
+                      "but not a weapon's");
+            }
             // At the Goblin, a box worth 100%: the knight is handed the Wings of Satan at +0.
             const int32_t satan = noria.itemAt(12, 2);
             check(satan >= 0, "the Wings of Satan are in Noria's tables");
@@ -6280,13 +6467,32 @@ void testChaosMachine() {
             smith.ask(talk);
             for (int tick = 0; tick < 400 && smith.mixing() < 0; ++tick) smith.step();
             smith.earn(50000000);
+            // A jewel on a thing in the box (the user, 2026-10-05: 'allow to upgrade items with
+            // jewels while item is inside chaos machine'), and the thing taken out again.
+            {
+                const int32_t bless = noria.itemAt(14, 13);
+                const int inBox = smith.putIn(smith.give(noria.itemNamed("Sword01")));
+                const int jewel = smith.give(bless);
+                check(inBox >= 0 && smith.putIn(jewel, inBox) == inBox &&
+                          smith.machine()[inBox].refinement == 1 && smith.satchel()[jewel].empty(),
+                      "a Bless let go on a sword in the box raises it there");
+                check(smith.takeOut(inBox) >= 0, "and the sword comes back out");
+                // A worn wing straight into the box, for the 2nd wings (the user, 2026-10-05).
+                const int32_t wingRow = noria.itemAt(12, 2);
+                check(smith.give(wingRow, sim::kWings) == sim::kWings, "the Wings of Satan worn");
+                const int boxed = smith.putIn(sim::kWings, 10);
+                check(boxed == 10 && smith.satchel()[sim::kWings].empty() &&
+                          smith.machine()[10].item == wingRow,
+                      "a worn wing goes straight into the box");
+                check(smith.takeOut(10) >= sim::kWorn, "and comes back out into the bag");
+            }
             check(smith.putIn(smith.give(axe, -1, 4, -1, true, 3)) >= 0, "a +4 Chaos axe goes in");
             check(smith.putIn(smith.give(chaos)) >= 0, "and a Chaos");
             for (int i = 0; i < 16; ++i) smith.putIn(smith.give(bless));
             const sim::Judged sure = smith.judged();
             check(sure.recipe == sim::Recipe::Wings, "the box is wings");
             checkEqual(sure.rate, 100, "at 100% with sixteen Bless");
-            check(smith.mix(), "the Goblin runs it");
+            check(smith.mix(sim::Service::FirstWings), "the Goblin runs it on the Wings page");
             int got = -1;
             for (int cell = 0; cell < sim::kMachineCells; ++cell) {
                 if (!smith.machine()[cell].empty()) got = cell;
@@ -6834,9 +7040,64 @@ void testRunes(const content::Tables& tables) {
                     again += sim::questPays(what, kin, false) ? 1 : 0;
                 }
                 checkEqual(runes, 1, "Devin's first clear pays every class one Renewal");
+                int lifts = 0;
+                for (int i = 0; i < row.paidCount; ++i) {
+                    const sim::QuestItem& what = row.paid[i];
+                    if (what.power == uint8_t(sim::Power::LesserAscendance) &&
+                        sim::questPays(what, kin, true) && !sim::questPays(what, kin, false)) {
+                        ++lifts;
+                    }
+                }
+                checkEqual(lifts, 1, "and one Lesser Ascendance, the first clear only");
                 checkEqual(again, 0, "and a repeat pays none");
             }
         }
+    }
+    // The stat runes (2026-10-05): every class's, in any socket -- a weapon, armour, a ring --
+    // summed into Body::runeShare, raising what the points buy and not what an item asks.
+    {
+        const sim::Held might = held(rune, 0, uint8_t(sim::Power::GreaterMight));
+        const int ring = tables.itemAt(13, 8);
+        for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
+            check(sim::settable(tables, might, held(plate, 1, 0), kin, false),
+                  "Greater Might goes in anyone's socketed armour");
+        }
+        check(sim::settable(tables, might, held(serpent, 1, 0), dk, false) && ring >= 0 &&
+                  sim::settable(tables, might, held(ring, 1, 0), dk, false),
+              "and in a weapon and a ring");
+        const sim::Held ascend = held(rune, 0, uint8_t(sim::Power::GreaterAscendance));
+        check(sim::settable(tables, ascend, held(serpent, 1, 0), dk, false) &&
+                  !sim::settable(tables, ascend, held(plate, 1, 0), dk, false) &&
+                  !(ring >= 0 && sim::settable(tables, ascend, held(ring, 1, 0), dk, false)),
+              "Ascendance goes in a weapon alone, not armour or a ring");
+        const sim::HeroPoints all = sim::statShareOf(sim::Power::GreaterAscendance);
+        check(all.strength == 30 && all.agility == 30 && all.vitality == 30 && all.energy == 30,
+              "Greater Ascendance is +30% on all four");
+        check(sim::statShareOf(sim::Power::LesserGrace).agility == 10 &&
+                  sim::statShareOf(sim::Power::LesserGrace).strength == 0,
+              "Lesser Grace is +10% agility alone");
+        check(sim::statShareOf(sim::Power::Wrath).strength == 0, "and Wrath is no stat rune");
+        for (int p = int(sim::Power::LesserMight); p <= int(sim::Power::GreaterAscendance); ++p) {
+            check(sim::powerOf(uint8_t(p)) != nullptr, "every stat rune has its row");
+        }
+        sim::Realm realm;
+        realm.raise(&tables, 3, 200, 160, dk, 60);
+        const sim::HeroPoints spent = realm.hero().points;
+        const int health = realm.hero().maxHealth;
+        const uint8_t powers[3] = {uint8_t(sim::Power::GreaterMight),
+                                   uint8_t(sim::Power::LesserVigor), 0};
+        realm.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 2, powers);
+        const sim::HeroPoints total = realm.hero().totalPoints();
+        std::printf("  stat runes: strength %d -> %d, vitality %d -> %d, health %d -> %d\n",
+                    spent.strength, total.strength, spent.vitality, total.vitality, health,
+                    realm.hero().maxHealth);
+        checkEqual(total.strength, spent.strength + spent.strength * 30 / 100,
+                   "Greater Might in his sword is +30% strength");
+        checkEqual(total.vitality, spent.vitality + spent.vitality * 10 / 100,
+                   "and Lesser Vigor beside it +10% vitality");
+        checkEqual(realm.hero().points.strength, spent.strength,
+                   "while the spent points an item asks against stay as they were");
+        check(realm.hero().maxHealth > health, "and the vitality raises his life");
     }
     // The four of 2026-10-04: Ironskin and Steadfast in anyone's armour or shield, Second Wind in
     // anything worn, Whirlwind in a knight's weapon alone; what each does to the numbers; and a
@@ -8796,6 +9057,126 @@ void testFirecracker(const content::Tables& tables) {
 
 // Every quest pays three Firecrackers besides its own reward (the user, 2026-10-04), and they
 // stack five a cell.
+// Peia's 'The Drowned Song' (2026-10-05): taken in Noria from level 70, met and handed in to
+// Lirien in Atlans's basin, and never to Peia herself.
+void testDrownedSong() {
+    std::printf("the drowned song\n");
+    const auto load = [](const char* world, content::Tables& out) {
+        std::string error;
+        return content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world +
+                                       ".mur",
+                                   out, error);
+    };
+    content::Tables noria, atlans;
+    check(load("noria", noria) && load("atlans", atlans), "Noria's and Atlans's tables load");
+    const auto folkOf = [](const content::Tables& tables, int32_t number) {
+        for (size_t i = 0; i < tables.folk.size(); ++i) {
+            if (tables.folk[i].number == number) return int(i);
+        }
+        return -1;
+    };
+    const int peia = folkOf(noria, 257), lirien = folkOf(atlans, sim::kLirienNumber);
+    check(peia >= 0 && lirien >= 0, "Peia stands in Noria and Lirien in Atlans");
+    if (peia < 0 || lirien < 0) return;
+    const sim::QuestRow& row = sim::questAt(sim::kDrownedSong);
+    check(row.giver == 257 && sim::questReceiver(row) == sim::kLirienNumber,
+          "Peia gives it and Lirien takes it back");
+    check(sim::questReceives(sim::kLirienNumber) && !sim::questReceives(257),
+          "Lirien is the one who takes a quest back");
+    const auto talkTo = [](sim::Realm& realm, int folk, bool* offered, bool* greeted) {
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(folk);
+        realm.ask(talk);
+        *offered = *greeted = false;
+        for (int tick = 0; tick < 400 && !*offered && !*greeted; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                *offered |= one.what == sim::What::Offered;
+                *greeted |= one.what == sim::What::Shouted &&
+                            one.a == int32_t(sim::Shout::Greet) && one.c == folk;
+            }
+        }
+    };
+    bool offered = false, greeted = false;
+    const content::Townsperson& p = noria.folk[size_t(peia)];
+    sim::Realm young;
+    check(young.raise(&noria, 11, p.x, p.y + 2, sim::Kin::FairyElf, 60), "an elf of 60 by Peia");
+    check(young.questUnderLevel(sim::kDrownedSong), "below 70 it waits on her level");
+
+    sim::Realm realm;
+    check(realm.raise(&noria, 11, p.x, p.y + 2, sim::Kin::FairyElf, 70), "an elf of 70 by Peia");
+    check(realm.questOffered(sim::kDrownedSong), "at 70 Peia offers it");
+    talkTo(realm, peia, &offered, &greeted);
+    check(offered, "her window opens");
+    check(realm.questListed(257), "on her list, beside Noria's Song");
+    check(realm.acceptQuest(sim::kDrownedSong), "and it is taken");
+    checkEqual(int(realm.quest(sim::kDrownedSong).state), int(sim::QuestState::Active),
+               "under way: Lirien is still to find");
+    check(!realm.completeQuest(sim::kDrownedSong, -1), "Peia cannot take it back");
+
+    const content::Townsperson& l = atlans.folk[size_t(lirien)];
+    sim::Realm sea;
+    check(sea.raise(&atlans, 11, l.x - 2, l.y, sim::Kin::FairyElf, 70), "the elf in Atlans's basin");
+    sea.restore(realm.record());
+    check(sea.questLocked(sim::kDrownedHalls), "her own quest waits on the meeting");
+    // Atlans on the travel list once he has met her (the user, 2026-10-05).
+    int atlansRow = -1;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (sim::travelAt(i).map == int32_t(sim::kAtlansMap)) atlansRow = i;
+    }
+    check(atlansRow >= 0, "Atlans has a travel row");
+    checkEqual(int(sea.travelRefusal(atlansRow)), int(sim::TravelRefusal::Unknown),
+               "walked in by the gate, Atlans is not yet a trip");
+    talkTo(sea, lirien, &offered, &greeted);
+    check(offered && !greeted, "found, Lirien's window opens");
+    check(sea.travelRefusal(atlansRow) != sim::TravelRefusal::Unknown,
+          "and meeting her opens Atlans on the travel list");
+    checkEqual(int(sea.quest(sim::kDrownedSong).state), int(sim::QuestState::Ready),
+               "and the quest is ready to hand in to her");
+    checkEqual(sea.questHere(sim::kLirienNumber), sim::kDrownedSong, "as hers");
+    const uint64_t before = sea.hero().experience;
+    const int64_t zen = sea.money();
+    check(sea.completeQuest(sim::kDrownedSong, -1), "handed in to Lirien");
+    check(sea.hero().experience > before && sea.money() == zen + row.zen, "and paid");
+    checkEqual(int(sea.quest(sim::kDrownedSong).state), int(sim::QuestState::Resting),
+               "once, for good");
+    {
+        // A save that met her before the row was here: the hand-in opens it.
+        sim::HeroRecord saved = sea.record();
+        saved.found = 0;
+        sim::Realm home;
+        check(home.raise(&noria, 11, p.x, p.y + 2, sim::Kin::FairyElf, 70), "back in Noria");
+        home.restore(saved);
+        check(home.travelRefusal(atlansRow) != sim::TravelRefusal::Unknown,
+              "an old save with the Drowned Song handed in has Atlans open");
+    }
+    sea.closeQuest();
+    check(!sea.questLocked(sim::kDrownedHalls) && sea.questOffered(sim::kDrownedHalls),
+          "met, she offers her own: the Drowned Halls");
+    checkEqual(sea.questHere(sim::kLirienNumber), sim::kDrownedHalls, "as what she has now");
+    talkTo(sea, lirien, &offered, &greeted);
+    check(offered && !greeted, "and her window opens on it");
+    check(sea.acceptQuest(sim::kDrownedHalls), "it is taken");
+    const sim::QuestRow& halls = sim::questAt(sim::kDrownedHalls);
+    int breeds = 0;
+    for (int s = 0; s < halls.stepCount; ++s) {
+        if (halls.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        ++breeds;
+        bool here = false;
+        for (const content::MonsterNest& nest : atlans.nests) {
+            here = here || (nest.kind < atlans.kinds.size() &&
+                            atlans.kinds[nest.kind].number == halls.steps[s].target);
+        }
+        check(here, "every breed it asks spawns in Atlans");
+    }
+    checkEqual(breeds, 7, "all seven of Atlans's breeds, the Hydra among them");
+    int kills = 0;
+    for (int s = 0; s < halls.stepCount; ++s) kills += sea.questGoal(sim::kDrownedHalls, s) *
+                                                     (halls.steps[s].kind == sim::QuestStepKind::Clear);
+    checkEqual(kills, 184, "184 kills, on Marlon's ladder with the Hydra's four");
+}
+
 void testQuestFirecrackers(const content::Tables& tables) {
     std::printf("quest firecrackers\n");
     const int32_t cracker = tables.itemNamed("MagicBox03");
@@ -9159,6 +9540,7 @@ int main() {
     testGates(tables);
     testDungeonGates(tables);
     testAtlansGates();
+    testTarkanGates();
     testTraps();
     testQuests(tables);
     testDungeonRunes(tables);
@@ -9179,6 +9561,7 @@ int main() {
     testFirecracker(tables);
     testSecondClassDrops();
     testQuestFirecrackers(tables);
+    testDrownedSong();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

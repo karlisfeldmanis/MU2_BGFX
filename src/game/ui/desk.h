@@ -253,8 +253,7 @@ private:
     // The names over the drops, Diablo IV's way since 2026-10-06: a serif name on a dark strip
     // that fades out at both ends. Rebuilt when one moves on screen, or the pointer moves on one.
     gfx::Canvas ground_;
-    // Their face, Alegreya Medium, baked here: null-textured when it failed, and the canvas's
-    // own face stands in.
+    // Their face, Amarante, baked here; the canvas's own face stands in when it failed.
     gfx::Face groundFace_;
     bgfx::TextureHandle groundTexture_ = BGFX_INVALID_HANDLE;
     uint32_t groundLit_ = 0;  // the drop whose strip was drawn lit, under the pointer

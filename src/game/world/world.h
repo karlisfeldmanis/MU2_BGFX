@@ -16,6 +16,8 @@
 #include "game/world/void_clouds.h"
 #include "game/world/bubbles.h"
 #include "game/world/castle_sparks.h"
+#include "game/world/desert_vents.h"
+#include "game/world/sand_haze.h"
 #include "game/world/leaves.h"
 #include "game/world/portal.h"
 #include "game/world/weather.h"
@@ -76,6 +78,8 @@ public:
     LavaSmoke& lavaSmoke() { return lavaSmoke_; }
     VoidClouds& voidClouds() { return voidClouds_; }
     CastleSparks& castleSparks() { return castleSparks_; }
+    DesertVents& desertVents() { return desertVents_; }
+    SandHaze& sandHaze() { return sandHaze_; }
     Bubbles& bubbles() { return bubbles_; }
     const Shades& shades() const { return shades_; }
     Boids& boids() { return boids_; }
@@ -112,6 +116,8 @@ private:
     LavaSmoke lavaSmoke_;
     VoidClouds voidClouds_;
     CastleSparks castleSparks_;
+    DesertVents desertVents_;
+    SandHaze sandHaze_;
     Bubbles bubbles_;
     Shades shades_;
     Boids boids_;

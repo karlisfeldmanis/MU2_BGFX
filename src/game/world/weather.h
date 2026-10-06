@@ -88,6 +88,7 @@ private:
     float peak_ = 1.0f;     // the share a wet spell rises to
     float left_ = 0.0f;     // seconds of it left
     float share_ = 0.0f;    // RainCurrent, as a share
+    float steady_ = 0.0f;   // a world whose storm holds at one share: Tarkan's (weather.cpp)
     float thunderIn_ = 0.0f;  // seconds of full rain to the next clap
     float flash_ = 0.0f;
     int rainSound_ = -1;

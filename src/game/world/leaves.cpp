@@ -132,6 +132,12 @@ constexpr float kStormLift = 8.0f;
 // user, 2026-09-30, three times) at full strength and 450 of them: half and 300, 0.3 and 220,
 // then 0.15 and 180 with the streak half as wide -- and "little bit better visible", 0.25.
 constexpr float kStormShown = 0.25f;
+// Tarkan's sand on the same pool (setSand), ours: a dozen motes in the calm, borne 0.1-1.8 m over
+// the ground rather than the snow's 2-4 m, settling slowly, in the sand's own colour.
+constexpr int kSandCalm = 12;
+constexpr float kSandLow = 0.1f, kSandHigh = 1.8f;
+constexpr float kSandSlow = 0.12f, kSandFast = 0.35f;
+constexpr float kSandColour[3] = {0.92f, 0.78f, 0.56f};
 // Past this speed a flake is drawn as a streak along its flight, this many seconds of it long.
 constexpr float kStreakFrom = 2.5f;
 constexpr float kStreakSeconds = 0.035f;
@@ -220,6 +226,7 @@ void Leaves::shutdown() {
     for (Ring& ring : rings_) ring = Ring();
     sheet_ = rainSheet_ = ringSheet_ = starSheet_ = BGFX_INVALID_HANDLE;
     snow_ = false;
+    sand_ = false;
     motes_ = false;
     blowing_ = falling_ = 0;
 }
@@ -260,7 +267,8 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
                     const content::Ground& ground, float rain) {
     if (!bgfx::isValid(sheet_)) return;
     // The sea has no roof over it and no rain in it: the map is "underground" for its air.
-    if (motes_) {
+    // Nor has Tarkan's desert, "underground" only for its leaves.
+    if (motes_ || sand_) {
         indoors = false;
         rain = 0.0f;
     }
@@ -331,8 +339,9 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
     const bool raining = rain > 0.0f;
     // A blizzard fills a larger pool; every slot still moves, so what the storm raised above
     // the calm's count finishes its flight as the storm goes, and is not refilled.
+    const int calm = sand_ ? kSandCalm : kFlakes;
     const int count =
-        snow_ ? kFlakes + int(storm_ * float(kStormFlakes - kFlakes)) : leafCount_;
+        snow_ ? calm + int(storm_ * float(kStormFlakes - calm)) : leafCount_;
     const int slots = snow_ ? kStormFlakes : std::max(kCount, leafCount_);
     for (int i = 0; i < slots; ++i) {
         Leaf& leaf = leaves_[i];
@@ -401,14 +410,16 @@ void Leaves::spawnFlake(Leaf& flake, const float hero[3], const content::Ground&
     // The leaves' own field, CreateDeviasSnow's -800..799 by -500..899 units.
     flake.position[0] = hero[0] + between(-8.0f, 7.99f);
     flake.position[2] = hero[2] - between(-5.0f, 8.99f);
-    flake.position[1] = ground.heightAt(hero[0], hero[2]) + between(kFlakeLow, kFlakeHigh);
+    flake.position[1] = ground.heightAt(hero[0], hero[2]) +
+                        (sand_ ? between(kSandLow, kSandHigh) : between(kFlakeLow, kFlakeHigh));
     // In a blizzard, falling faster and already on the wind, and set back upwind by a random
     // share of the way it will be carried before it lands, so its flight passes over the spot
     // drawn in the field: the stream then covers the whole view. A fixed 11 m back, most
     // flakes landed before the middle and only one side of the screen had snow (the user,
     // 2026-09-30: "covering only right side of screen").
     const float windX = -std::cos(windHeading_), windZ = std::sin(windHeading_);
-    const float fall = between(kFlakeSlow, kFlakeFast) + storm_ * between(0.5f, 1.0f) * kStormFall;
+    const float fall = sand_ ? between(kSandSlow, kSandFast) + storm_ * between(0.2f, 0.5f)
+                             : between(kFlakeSlow, kFlakeFast) + storm_ * between(0.5f, 1.0f) * kStormFall;
     const float blow = storm_ * kStormWind * windStrength_ * stormGust(gust_);
     const float aloft = flake.position[1] - ground.heightAt(flake.position[0], flake.position[2]);
     const float carried =
@@ -419,7 +430,7 @@ void Leaves::spawnFlake(Leaf& flake, const float hero[3], const content::Ground&
     flake.velocity[1] = -fall;
     flake.velocity[2] = fall * kFlakeSlant + windZ * blow;
     // rand_fps_check(10): one in ten a glint.
-    flake.star = random01() < 0.1f;
+    flake.star = !sand_ && random01() < 0.1f;
     // Squared, as the rain's is: most flakes are barely there, a few catch the light.
     const float catchLight = random01();
     flake.faint = 0.3f + 0.7f * catchLight * catchLight;
@@ -562,6 +573,9 @@ void Leaves::gather(gfx::Effects& effects, const float eye[3]) const {
             sprite.sheet = flake.star ? starSheet_ : sheet_;
             sprite.blend = gfx::Blend::Alpha;
             sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = 1.0f;
+            if (sand_) {
+                for (int a = 0; a < 3; ++a) sprite.colour[a] = kSandColour[a];
+            }
             sprite.colour[3] = kFlakeAlpha * flake.faint * flake.light *
                                (1.0f - (1.0f - kStormShown) * storm_);
             // A blizzard's flake is a streak along its flight, as a drop is, facing the eye.

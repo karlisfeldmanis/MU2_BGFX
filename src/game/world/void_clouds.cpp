@@ -84,6 +84,9 @@ constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
 // The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
 // 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
 constexpr float kDungeonColour[3] = {0.33f, 0.31f, 0.29f};
+// And Tarkan's, a warm sand-dust grey under its plateaus (the user, 2026-10-05: 'also use BC
+// clouds in voids'), 2.4 times the castle's light for an exposure of 1.36 against its 3.3.
+constexpr float kTarkanColour[3] = {0.96f, 0.82f, 0.65f};
 
 // Value noise on a lattice, smoothly interpolated, 0-1: the banks' pattern.
 float lattice(int x, int z, uint32_t salt) {
@@ -103,7 +106,9 @@ float valueNoise(float x, float z, uint32_t salt) {
     return (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * tz;
 }
 
-bool wanted(const std::string& world) { return world == "bloodcastle" || world == "dungeon"; }
+bool wanted(const std::string& world) {
+    return world == "bloodcastle" || world == "dungeon" || world == "tarkan";
+}
 
 }  // namespace
 
@@ -134,7 +139,14 @@ void VoidClouds::open(const std::string& assetDir, const std::string& world,
     std::nth_element(heights.begin(), heights.begin() + heights.size() / 2, heights.end());
     floor_ = heights[heights.size() / 2];
     ground_ = &ground;
-    for (int k = 0; k < 3; ++k) colour_[k] = world == "dungeon" ? kDungeonColour[k] : kColour[k];
+    for (int k = 0; k < 3; ++k)
+        colour_[k] = world == "dungeon" ? kDungeonColour[k] : world == "tarkan" ? kTarkanColour[k] : kColour[k];
+    // Tarkan's void is drawn barely under its plateaus (the abyss's sunk edge tiles sit about
+    // half a metre down), so a cloud at the castle's depths lay under it unseen. There its top
+    // layer alone, just under the rim, and only over void the whole cloud's width: the wide
+    // voids and not the gaps between lands (the user, 2026-10-06: 'lets use cloud in tarkan
+    // only when void is taking a lot of screen not between lands').
+    shallow_ = world == "tarkan";
     const std::string path = assetDir + "/effects/clouds/void_clouds.png";
     if (core::fileExists(path)) sheet_ = textures.load(path, content::TextureRole::Albedo);
     wisps_.clear();
@@ -181,7 +193,7 @@ bool VoidClouds::voidAt(float x, float z) const {
 // The deeper layers ask less of it: they lie well under any floor's edge.
 bool VoidClouds::clearUnder(float x, float z, float half, int layer) const {
     if (!voidAt(x, z)) return false;
-    const float r = half * kLayers[layer].clear;
+    const float r = half * (shallow_ ? 1.0f : kLayers[layer].clear);
     for (int k = 0; k < 8; ++k) {
         const float a = 0.785398f * float(k);
         if (!voidAt(x + std::cos(a) * r, z + std::sin(a) * r)) return false;
@@ -203,7 +215,8 @@ bool VoidClouds::spawn(Wisp& wisp, const float near[3], bool anyAge) {
         if (!clearUnder(x, z, size, wisp.layer)) continue;
         wisp.at[0] = x;
         wisp.at[2] = z;
-        wisp.at[1] = floor_ - (layer.depthMin + (layer.depthMax - layer.depthMin) * unit());
+        wisp.at[1] = shallow_ ? floor_ - (0.05f + 0.25f * unit())
+                              : floor_ - (layer.depthMin + (layer.depthMax - layer.depthMin) * unit());
         const float dx = kDrift[0] + (unit() - 0.5f) * 2.0f * kScatter;
         const float dz = kDrift[1] + (unit() - 0.5f) * 2.0f * kScatter;
         const float cv = std::cos(layer.veer), sv = std::sin(layer.veer);
@@ -247,7 +260,7 @@ void VoidClouds::update(float seconds, const float near[3]) {
             }
             if (wisp.age >= wisp.life || (wisp.leaving && wisp.fade <= 0.0f)) wisp.alive = false;
         }
-        if (!wisp.alive) spawn(wisp, near, wisp.life == 0.0f);
+        if (!wisp.alive && !(shallow_ && wisp.layer > 0)) spawn(wisp, near, wisp.life == 0.0f);
     }
 }
 

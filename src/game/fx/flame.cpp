@@ -33,12 +33,13 @@ bool Flame::open(const std::string& assetDir, content::Textures& textures,
     return bgfx::isValid(sheet_);
 }
 
-void Flame::light(const float at[3], float yaw, bool glows) {
+void Flame::light(const float at[3], float yaw, bool glows, float strength) {
     for (Fire& one : fires_) {
         if (one.alive) continue;
         one = Fire{};
         one.alive = true;
         one.glows = glows;
+        one.strength = strength;
         for (int k = 0; k < 3; ++k) one.at[k] = at[k];
         one.yaw = yaw;
         one.left = kFrames;
@@ -74,7 +75,9 @@ void Flame::update(float seconds) {
                 slot->at[1] = fire.at[1];
                 slot->at[2] = fire.at[2] + between(-kSpread, kSpread) * kUnit;
                 slot->rise = between(kSlowest, kFastest) * kUnit * kFps;
-                slot->size = between(kSmallest, kLargest) * kSheetUnits * kUnit;
+                slot->size = between(kSmallest, kLargest) * kSheetUnits * kUnit *
+                             (fire.strength < 1.0f ? 0.65f : 1.0f);
+                slot->strength = fire.strength;
                 slot->spin = unit() * kTwoPi;
                 slot->left = kPlumeFrames;
             }
@@ -118,7 +121,7 @@ void Flame::layScorch(gfx::Effects& effects, const Fire& fire) const {
     sprite.blend = gfx::Blend::Additive;
     // What is left of its life dims nothing: MU draws the scorch at full shimmer to its last
     // frame, and the fire simply goes.
-    for (int k = 0; k < 3; ++k) sprite.colour[k] = fire.scorch;
+    for (int k = 0; k < 3; ++k) sprite.colour[k] = fire.scorch * fire.strength;
     sprite.colour[3] = 1.0f;
     const float inv = 1.0f / float(cells);
     for (int j = 0; j < cells; ++j) {
@@ -150,7 +153,9 @@ void Flame::gather(gfx::Effects& effects) const {
         sprite.spin = one.spin;
         sprite.sheet = sheet_;
         sprite.blend = gfx::Blend::Additive;
-        for (int layer = 0; layer < kPlumeLayers; ++layer) effects.add(sprite);
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = one.strength;
+        const int layers = one.strength < 1.0f ? 1 : kPlumeLayers;
+        for (int layer = 0; layer < layers; ++layer) effects.add(sprite);
     }
 }
 

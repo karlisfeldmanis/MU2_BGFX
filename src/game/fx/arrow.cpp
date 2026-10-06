@@ -106,6 +106,8 @@ Arrows::Model Arrows::modelFor(int32_t group, int32_t number) {
             return Saw;
         case 11:  // Light Crossbow
             return Laser;
+        case 17:  // Celestial Bow: a bow past the crossbows' numbers
+            return Wood;
         default:
             // Ours: the Serpent, Bluewing and Aquagold crossbows throw bolts not built here.
             return number >= 8 ? Steel : Wood;

@@ -144,6 +144,10 @@ private:
     // What runs along the floor under them: the Dungeon's rats, MU's fish slot. Opened, stepped
     // and drawn with the birds, and empty on every other map (game/world/scurry.h).
     Scurry scurry_;
+public:
+    // Tarkan's scarabs' trails (Scurry::gatherTrails), into the effects pass.
+    void gatherTrails(gfx::Effects& effects) const { scurry_.gatherTrails(effects); }
+private:
     std::unique_ptr<content::Mesh> mesh_;
     std::unique_ptr<ClipLibrary> library_;
     std::unique_ptr<FigureBody> body_;

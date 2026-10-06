@@ -206,7 +206,8 @@ AIRS = {"lorencia": "Bird01", "noria": "Butterfly01", "dungeon": "Bat01", "lostt
 # And what runs along the floor: MU's fish slot (MoveFishs), which the Dungeon fills with
 # MODEL_RAT01 (GOBoid.cpp:1720-1722). Unplaced for the same reason, so named here too; the
 # engine's pool is game/world/scurry.h.
-CRAWLS = {"dungeon": "Rat01"}
+# And Tarkan's, MODEL_BUG01 + 1 out of Object9 (GOBoid.cpp:1726-1733).
+CRAWLS = {"dungeon": "Rat01", "tarkan": "Bug02"}
 # And what a trap throws: the Lance Trap's saw (MODEL_SAW), and the ceiling's falling pebble
 # (MODEL_DUNGEON_STONE01), drawn by game/world/trap_show.h and placed by nothing.
 TRAP_MODELS = {"dungeon": ("Saw01", "DungeonStone01")}
@@ -444,6 +445,12 @@ def shot_of(one):
     # Resurrection's swirl (figures.h HeldItem::heldLoop).
     if one.get("held_loop"):
         out["held_loop"] = float(one["held_loop"])
+    # Which of its clips that is, and the one a sword swing plays instead: the Flail's
+    # actions 1 and 2 (figures.h HeldItem::heldClip, swingClip).
+    if one.get("held_clip") is not None:
+        out["held_clip"] = int(one["held_clip"])
+    if one.get("swing_clip") is not None:
+        out["swing_clip"] = int(one["swing_clip"])
     return out
 
 
@@ -633,7 +640,8 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         # this reads the same as it always did.
         rate = scroll_per_second
         mode = 0
-        if scrolls and any(("axis" in one or "mask_held" in one or "water_frames" in one)
+        if scrolls and any(("axis" in one or "mask_held" in one or "water_frames" in one
+                            or "stream" in one)
                            for one in scrolls.values()):
             own = scrolls.get(material.get("name", ""))
             rate = float(own.get("scrolls_per_second", 0.0)) if own else 0.0
@@ -644,6 +652,15 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
                         | (4 if own.get("water_frames") else 0))
         if flags & 2 and rate:
             flags |= 16
+        # And an opaque sheet that slides: MU's StreamMesh, which MoveObject slides by
+        # BlendMeshTexCoordU/V though it is no glow -- Tarkan's sand falls and whirlpool
+        # (MapManager.cpp:1135-1143). The asset's glow entry says `stream`; the renderer passes
+        # the offset to vs_static (u_sway.zw). Axis "uv" slides both, mode bit 6.
+        own_stream = (scrolls or {}).get(material.get("name", "")) or {}
+        if not flags & 2 and rate and own_stream.get("stream"):
+            flags |= 16
+            if own_stream.get("axis") == "uv":
+                mode |= 64
         # Mode bit 4, on a cut-out that is not a glow: soft alpha. MU draws every sheet with an
         # alpha channel tested AND blended -- EnableAlphaTest sets GL_SRC_ALPHA,
         # GL_ONE_MINUS_SRC_ALPHA as well as the alpha func (ZzzOpenglUtil.cpp:366-393) -- so a
@@ -1211,7 +1228,9 @@ def read_png(path):
 #: every world takes, wider where the painted light jumps between neighbours. See `lit`.
 #: Worlds whose ground is one flat sheet over a black void, where a swaying placement that
 #: reaches below it is hanging into the dark, not buried. See the buried test in the placements.
-FLAT_OVER_VOID = {"dungeon", "losttower"}
+# Tarkan's too: its plateaus stand over a void half the map, and the debris clouds (Object51)
+# and rock falls (Object58) MU churns up 3-5 m out of it read as buried here while MU plays them.
+FLAT_OVER_VOID = {"dungeon", "losttower", "tarkan"}
 
 LIGHT_REACH_BY_WORLD = {"losttower": 5}
 
@@ -1221,7 +1240,16 @@ LIGHT_REACH_BY_WORLD = {"losttower": 5}
 #: little bit less baked in'. 1 (all of it) everywhere else.
 OBJECT_LIGHT_DEPTH_BY_WORLD = {"losttower": 0.6}
 
-GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
+GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28),
+                  # Tarkan's plants: the dry tufts (6), creepers (15, 16), thorn and fern bushes
+                  # (17-19), cacti (20, 21, 24, 25), grass clump (22), ferns (26, 30) and star
+                  # plants (53). MU perches 71 of them on rocks, trees and cliff tops, up to 3 m
+                  # over the ground, and here they read as hanging in the air (the user,
+                  # 2026-10-05: 'there is some flaoting grass objects'). Ours: laid on the
+                  # terrain, where one beside a rock tucks into its foot. And the rags (8,
+                  # Object09), which MU hangs 2-3 m up in the open with nothing to hang from (the
+                  # user's shot at 90,71): laid down, they flap on the sand as blown cloth.
+                  "tarkan": {6, 7, 8, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 30, 53}}
 
 # OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
 # data. The heightmap is MuMain's TerrainHeight.OZB byte for byte, heights are bytes x 1.5 in
@@ -1235,7 +1263,15 @@ GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
 # pools (Object24) lie 0.5 cm over the sea floor, and the floor fought them for the depth --
 # they flickered and cut (the user, 2026-10-03: 'its not smooth its like it cuttent something
 # wrong').
-LIFTED_BY_WORLD = {"atlans": {"Object24": 0.06}}
+# Tarkan's lava glows, flat 3 m quads MU lays 0-0.4 m over a ground that rises and falls by
+# about that much under them: at MU's height they showed as orange streaks where they cut it, and
+# 0.3 m over MU's height they floated (the user, 2026-10-05: 'floating lava decals'). Now laid on
+# the terrain (GROUNDED_TYPES, type 7) and 0.1 m over it.
+LIFTED_BY_WORLD = {"atlans": {"Object24": 0.06}, "tarkan": {"Object08": 0.1}}
+# Placements MU draws a second time in RENDER_CHROME | RENDER_BRIGHT: Tarkan's golden orbs,
+# Object82 (RenderObject, ZzzObject.cpp:1067-1073). Cooked with instance bit 5; the town draws
+# them at the +7 chrome in white, as the Silver Valkyrie's second pass is carried.
+CHROMED_BY_WORLD = {"tarkan": {"Object82"}}
 LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
            ("Stone03", 2708.711, 13432.253): 1.55,
            ("Stone01", 2430.678, 13666.117): 0.82,
@@ -1273,7 +1309,17 @@ ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
                          # WD_7ATLANSE arm throws a BITMAP_BUBBLE a frame for half of every
                          # four seconds (ZzzObject.cpp:4055-4063). Kind 6, a bubble vent: no
                          # light; game/world/bubbles.h rolls them.
-                         "atlans": {"Object23": 6}}
+                         "atlans": {"Object23": 6},
+                         # Tarkan's hidden emitters (RenderObjectVisual's WD_8TARKAN arm,
+                         # ZzzObject.cpp:2994-3065), drawn by game/world/desert_vents.h: 7 the
+                         # falling sand of Object71, 8 the steam vents of Object77, 9 the sand
+                         # geysers of Object84, 10 the cyan glow sprites of Object64. None lights.
+                         # 11 Object61's standing dust clouds (SubType 6, which never dies).
+                         # And Object05, whose .bmd the client does not ship, but whose MoveObject
+                         # arm still adds its white pulsing terrain light (ZzzObject.cpp:4095-4106):
+                         # a lamp, 0.
+                         "tarkan": {"Object71": 7, "Object77": 8, "Object84": 9, "Object64": 10,
+                                    "Object61": 11, "Object05": 0}}
 BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
@@ -1290,13 +1336,22 @@ HIDDEN_BY_WORLD = {"charscene": {"Object80", "Object81", "Object83", "Object84",
 # What each throws: CreateFire(0)'s own (ZzzEffectFireLeave.cpp:61) -- L = rand[0.6, 1.1),
 # colour (L, 0.6L, 0.4L), range 4 -- with index.json's flicker for every other fire. Smoke
 # throws no light. Colour, low, high, reach, hz, smoothing.
-ANCHOR_LIGHT = {1: ((1.0, 0.6, 0.4), 0.6, 1.1, 4.0, 3.0, 0.12),
+ANCHOR_LIGHT = {# A lamp: Tarkan's Object05, white, sin(WorldTime*0.002)*0.35+0.65 over three tiles,
+                # carried as a slow wander between 0.3 and 1, as Object08's.
+                0: ((1.0, 1.0, 1.0), 0.3, 1.0, 3.0, 0.32, 1.0),
+                1: ((1.0, 0.6, 0.4), 0.6, 1.1, 4.0, 3.0, 0.12),
                 4: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
                 # A vent's light is the Flame's, (1, 0.4, 0) over three tiles (MoveHandlers.cpp:
                 # 1815-1816), and dark until it burns: Lamps drives its level.
                 5: ((1.0, 0.4, 0.0), 0.0, 0.0, 3.0, 0.0, 0.0),
                 # A bubble vent throws no light.
-                6: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0)}
+                6: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
+                # Nor do Tarkan's sand, steam, geysers and glow sprites.
+                7: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
+                8: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
+                9: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
+                10: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
+                11: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0)}
 
 
 # Where the town's own stone stands in the lawn, for the grass to stay out of. The .walls
@@ -1462,9 +1517,12 @@ def cook_placements(world, out_dir, chunk_tiles):
     # placement here, so the game needs no table of names.
     with open(os.path.join(ASSETS, "index.json")) as handle:
         listed = json.load(handle).get("objects", [])
-    roofs = {one["name"] for one in listed if one.get("roof_fade")}
+    # This world's own: a name is not a model across worlds, and Devias's roofs Object82 and
+    # Object83 made Tarkan's golden orbs and light shafts roofs too (2026-10-05).
+    own = [one for one in listed if one.get("world") in (world, None)]
+    roofs = {one["name"] for one in own if one.get("roof_fade")}
     # Bit 4: a still model that sways in the water anyway (the recipe's `sway`, vs_static).
-    in_the_water = {one["name"] for one in listed if one.get("sway")}
+    in_the_water = {one["name"] for one in own if one.get("sway")}
     # The models that sway, which the mesh cook wrote down just before this runs: only
     # those can be held still for being buried. See `flags |= 4` below.
     try:
@@ -1629,6 +1687,8 @@ def cook_placements(world, out_dir, chunk_tiles):
         y += LIFTED_BY_WORLD.get(world, {}).get(one["model"], 0.0)
         if one["model"] in in_the_water:
             flags |= 16
+        if one["model"] in CHROMED_BY_WORLD.get(world, ()):
+            flags |= 32
         if one["model"] in roofs:
             flags |= 2
             roofed += 1
@@ -1831,7 +1891,9 @@ def figure_set(world):
                  # turns it into a shine once it has the item table. Empty is +0.
                  "plus": one.get("plus", {}),
                  # On the back wherever he stands: the Golden Archer's crossbow.
-                 "slung": bool(one.get("slung"))}
+                 "slung": bool(one.get("slung")),
+                 # The wing on the back, by name (Wing04): the game draws it as the hero's.
+                 "wings": one.get("wings", "")}
         entry["parts"] = [p for p in entry["parts"] if p]
         characters.append(entry)
 
@@ -2065,6 +2127,10 @@ FOLK_VERSION075 = {
         # Ours: Potion Girl Amy, the repack's (WZD MonsterSetBase.txt:48, 16,24), a tile east
         # of hers because 16,24 is a lean box; without her the nearest potions are in Noria.
         (253, "Potion Girl Amy", "PotionGirlAmy", 17, 24, 4),
+        # Ours: Lirien, the elf envoy who stayed when Atlans sank (source/npc/ElfEnvoy.json),
+        # whom Peia's 'The Drowned Song' sends the hero to meet; by the arch at the basin's edge
+        # where the user stood and said 'put her here' (2026-10-05). 700 is ours, no MU NPC's.
+        (700, "Lirien", "ElfEnvoy", 25, 24, 3),
     ],
     11: [  # Blood Castle 1: OpenMU VersionSeasonSix BloodCastleBase.cs:51, the safe court.
         # The Archangel (232), to whom the Divine Staff of Archangel is carried back from the
@@ -2112,6 +2178,11 @@ PERCHES = {
           # on RenderCursor's lean list (:4051-4055) and given no tall box. The four lean boxes at
           # the safe basin. The user, 2026-10-03: 'do: two hidden ones ... and Object22'.
         39: (3, True, False, False),    # Object40, the lean box, invisible
+    },
+    8: {  # Tarkan: MOVEMENT_OPERATE's WD_8TARKAN arm, `case 78: Sit = true` with no turn
+          # (ZzzInterface.cpp:1743-1748); CreateOperate (ZzzObject.cpp:4778-4786). The 13 stumps,
+          # at 39-44,53-56 and in the town. docs/tarkan-port.md.
+        78: (2, False, False, False),   # Object79, the stump seat
     },
 }
 
@@ -2520,12 +2591,20 @@ def resample(samples, rate, target):
 #: of its peak, mid-wave, and a sample that stops mid-wave is a click. The reverb hid it in
 #: the open; the Lost Tower's dry steps did not (the user, 2026-10-03: 'when i step on LT the
 #: sound is glitchy'). Four milliseconds is under anything heard as a fade. Ours.
-TAIL_FADE_SECONDS = 0.004
+#:
+#: Thirty since 2026-10-05, a fifth of the sound at most: four was not enough for a tail cut at
+#: three fifths of its peak -- the soil step still chopped (the user: 'when i step on lost tower
+#: bricks sound feels buggy/shuttering'), and the melee hit, cut at a quarter, ticked after every
+#: Evil Spirit strike ('i can see little ticks when evil spirit sound ended'). A thirty-millisecond
+#: ramp on a tail is heard as the sound ending, not as a fade.
+TAIL_FADE_SECONDS = 0.030
 
 
 def fade_tail(samples, rate):
-    """The last TAIL_FADE_SECONDS ramped to zero. Not for a loop, whose tail meets its head."""
-    count = min(len(samples), max(1, int(rate * TAIL_FADE_SECONDS)))
+    """The last TAIL_FADE_SECONDS, or a fifth of a short sound, ramped to zero. Not for a loop,
+    whose tail meets its head."""
+    count = min(len(samples) // 5, int(rate * TAIL_FADE_SECONDS))
+    count = max(1, min(len(samples), count))
     start = len(samples) - count
     for i in range(count):
         samples[start + i] = int(samples[start + i] * (count - 1 - i) / count)

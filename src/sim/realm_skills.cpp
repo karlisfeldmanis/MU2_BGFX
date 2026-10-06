@@ -100,7 +100,7 @@ int32_t Realm::coolsFor(int32_t skill) const {
     const SkillRow* row = skillNumbered(skill);
     if (!row) return 0;
     const Body& hero = bodies_[0];
-    return cooldownTicks(*row, hero.points.agility, floorTicksFor(*row, clipTicksOf(hero, *row)));
+    return cooldownTicks(*row, hero.totalPoints().agility, floorTicksFor(*row, clipTicksOf(hero, *row)));
 }
 
 int32_t Realm::clipTicksOf(const Body& hero, const SkillRow& row) const {
@@ -113,7 +113,7 @@ int32_t Realm::clipTicksOf(const Body& hero, const SkillRow& row) const {
     const content::Arm* left = hero.shield >= 0 && size_t(hero.shield) < tables_->arms.size()
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
-    return castTicks(*tables_, hero.kin, hero.points.agility, right, left, row,
+    return castTicks(*tables_, hero.kin, hero.totalPoints().agility, right, left, row,
                      hero.frenzySpeed(tick_));
 }
 
@@ -183,7 +183,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         }
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
-        const int32_t cool = cooldownTicks(row, hero.points.agility,
+        const int32_t cool = cooldownTicks(row, hero.totalPoints().agility,
                                            floorTicksFor(row, clipTicksOf(hero, row)));
         hero.cools[size_t(index)] = tick_ + cool;
         hero.blinkAt = tick_ + kBlinkFadeTicks;
@@ -237,11 +237,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             }
         } else if (row.mends) {
             // Heal: health back at once, never past the most he has.
-            hero.health = std::min(hero.maxHealth, hero.health + healOf(hero.points));
+            hero.health = std::min(hero.maxHealth, hero.health + healOf(hero.totalPoints()));
         } else if (row.mightTicks > 0) {
             // Greater Damage: reckoned off her energy now and held for the minute; a second cast
             // replaces the first rather than stacking, as MU's magic effects do.
-            hero.might = mightOf(hero.points);
+            hero.might = mightOf(hero.totalPoints());
             hero.mightUntil = tick_ + row.mightTicks;
             rearm(hero);
         } else {
@@ -250,7 +250,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // whole length: `guardShare` in sim/skills.h, where the numbers are argued -- or the
             // wizard's `barrierShare`, off energy where the knight's is off his body, or the
             // elf's `wardShare`, off agility with no shield at all.
-            hero.boonDamageTaken = 1.0f - boonShare(row, hero.points, hero.shieldDefense);
+            hero.boonDamageTaken = 1.0f - boonShare(row, hero.totalPoints(), hero.shieldDefense);
             hero.boonUntil = tick_ + row.boonTicks;
             hero.stats.damageTaken = double(hero.boonDamageTaken) * hero.pet.taken;
         }
@@ -372,7 +372,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // over every Energy Ball would say there was a wait where there is none.
     const int32_t cool =
         row.primary() ? 0
-                      : cooldownTicks(row, hero.points.agility,
+                      : cooldownTicks(row, hero.totalPoints().agility,
                                       floorTicksFor(row, clipTicksOf(hero, row)));
     hero.cools[size_t(index)] = tick_ + cool;
     // **A summon cools every summon** (the user, 2026-10-02: "give elf summon a 1 min cooldown
@@ -390,7 +390,22 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // A spell pays its own clip and not the weapon's: its rhythm is MagicSpeed's and has nothing
     // to do with how fast the staff in his hand would swing.
     const int32_t clip = clipTicksOf(hero, row);
-    hero.swingsAt = tick_ + (row.channelled() ? row.channelTicks
+    // **A channel quickened with the clip** (the user, 2026-10-05: 'lighting is not scaling with
+    // attack speed ... hands was moving much faster than actual lighting cast speed'): its length
+    // and its strike window by the share his casting speed takes off the clip's authored length,
+    // the window never fewer ticks than the chain has bodies, so a quick wizard strikes as many.
+    const int32_t authored = authoredCastTicks(*tables_, row);
+    const float haste = row.channelled() && authored > 0 && clip > 0
+                            ? std::min(1.0f, float(clip) / float(authored))
+                            : 1.0f;
+    const auto quicken = [&](int32_t ticks) {
+        return std::max<int32_t>(1, int32_t(std::lround(float(ticks) * haste)));
+    };
+    const int32_t strikeFrom = quicken(row.strikeFrom);
+    const int32_t strikeUntil =
+        std::max(quicken(row.strikeUntil), strikeFrom + int32_t(kLightningBodies) - 1);
+    const int32_t channelTicks = std::max(quicken(row.channelTicks), strikeUntil + 1);
+    hero.swingsAt = tick_ + (row.channelled() ? channelTicks
                              : row.wizardry  ? std::max<int32_t>(1, clip)
                                              : std::max(hero.swingTicks, clip));
     // And he is locked where he stands for the length of the animation: no turn, no re-path, no
@@ -425,7 +440,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     const int32_t held = row.wizardry || row.primary()
                              ? clip
                              : std::max(clip, authoredCastTicks(*tables_, row));
-    hero.castUntil = row.channelled() ? tick_ + row.channelTicks
+    hero.castUntil = row.channelled() ? tick_ + channelTicks
                      : row.primary()  ? tick_
                                       : tick_ + held;
     hero.swingsAt = std::max(hero.swingsAt, hero.castUntil);
@@ -436,9 +451,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     if (row.channelled()) {
         hero.channelSkill = row.number;
         hero.channelFrom = tick_;
-        hero.channelUntil = tick_ + row.channelTicks;
+        hero.channelUntil = tick_ + channelTicks;
+        hero.channelStrikeFrom = strikeFrom;
+        hero.channelStrikeUntil = strikeUntil;
         // The first strike when his arm is up in the clip.
-        hero.channelNext = tick_ + row.strikeFrom;
+        hero.channelNext = tick_ + strikeFrom;
         // The sweep starts where he is facing, and nobody has been struck yet.
         hero.channelTurn = hero.aim;
         hero.channelAim = at;
@@ -475,7 +492,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // at half the quickened `clip` the blow came long before the thrust -- a level-150
         // knight's Death Stab struck while the spear still pointed behind him (2026-10-02, the
         // user: "effect looked buggy"). For a spell and a primary `held` is `clip`, unchanged.
-        begin(hero, at, force(row, hero.points), row.number, held);
+        begin(hero, at, force(row, hero.totalPoints()), row.number, held);
         // Thrown at the pointer's ground: that way, whatever turns him before it is let go.
         hero.blowAimed = wantsColumn_ >= 0 && row.aimsAtPointer();
         hero.blowAim = hero.aim;
@@ -655,8 +672,8 @@ void Realm::channel(Body& hero) {
         if (row != nullptr && !hero.channelEcho && echoes(hero)) {
             hero.channelEcho = true;
             hero.channelNext = tick_ + kEchoTicks;
-            hero.channelFrom = hero.channelNext - row->strikeFrom;
-            hero.channelUntil = hero.channelFrom + row->strikeUntil + 1;
+            hero.channelFrom = hero.channelNext - hero.channelStrikeFrom;
+            hero.channelUntil = hero.channelFrom + hero.channelStrikeUntil + 1;
             hero.channelLast = 0;
             hero.channelStruckCount = 0;
             core::logf("arcane echo: tick %lld, %s sweeps again", (long long)tick_, row->name);
@@ -673,7 +690,7 @@ void Realm::channel(Body& hero) {
         return;
     }
     // Past the window, his arm is coming down: the channel runs out without striking.
-    if (tick_ > hero.channelFrom + row->strikeUntil) return;
+    if (tick_ > hero.channelFrom + hero.channelStrikeUntil) return;
     hero.channelNext += std::max<int32_t>(1, row->pulseTicks);
     // **A chain** (the user, 2026-10-03: "lightning also is a chain spell like pyroblast rune";
     // until then it went round him, the first body clockwise from the last strike). The first
@@ -762,7 +779,7 @@ void Realm::channel(Body& hero) {
     hero.channelLast = next->id;
     hero.channelLastX = next->x;
     hero.channelLastY = next->y;
-    strikeAt(hero, *next, force(*row, hero.points), row, true);
+    strikeAt(hero, *next, force(*row, hero.totalPoints()), row, true);
 }
 
 bool Realm::blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,

@@ -91,6 +91,9 @@ struct Material {
     // U rather than V; `maskHeld` samples the sheet's alpha at its own place while its colour
     // slides, so the stream moves and the band it shows through does not. The cook's bit 7.
     bool scrollAlongU = false;
+    // And along both, for an opaque stream (MU's StreamMesh sliding U and V at once: Tarkan's
+    // whirlpool). The cook's scroll mode bit 6.
+    bool scrollAlongUV = false;
     bool maskHeld = false;
     // MU's BITMAP_WATER instead of a slide: a mesh whose sheet is wt00 steps through the 32
     // caustic frames one a reference frame, as the ground's pools do (ZzzBMD.cpp:1322-1325) --

@@ -144,7 +144,7 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
     float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
     if (mounted_ == 3) {
-        ground[1] -= kDinorantLift;
+        ground[1] -= flying_ ? kDinorantFlyUnder : kDinorantLift;
         if (action == 2) ground[1] -= dinorantBob(hero.through());
     }
     horseIn_ = std::clamp(horseIn_ + (riding ? seconds : -seconds) / kHorseFade, 0.0f, 1.0f);

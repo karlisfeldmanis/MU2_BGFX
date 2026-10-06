@@ -11,6 +11,7 @@
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "game/ui/tracker.h"
+#include "sim/items.h"
 #include "sim/quests.h"
 #include "sim/wear.h"
 
@@ -422,7 +423,11 @@ void QuestDialog::layout(const Play& play) {
         } else {
             y += kSection * 0.5f + 24.0f;
             if (underLevel_) y += kStepRow;  // the level it asks, over the steps
-            for (int s = 0; s < row.stepCount; ++s) {
+            // In the order they are drawn: the weakest breed first (quest_marks::byLevel).
+            int order[sim::kQuestSteps];
+            const int listed = quest_marks::byLevel(row, &tables, order);
+            for (int i = 0; i < listed; ++i) {
+                const int s = order[i];
                 const sim::QuestStepRow& want = row.steps[s];
                 if (!sim::questCounted(want.kind)) continue;
                 const int32_t item = want.kind == sim::QuestStepKind::Find && want.item
@@ -574,7 +579,14 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     Mode mode = Mode::Offer;
     if (progress.state == sim::QuestState::Active) mode = Mode::Underway;
     // Read from the journal, away from him, a quest ready to hand in is still under way.
-    else if (progress.state == sim::QuestState::Ready) mode = reading_ ? Mode::Underway : Mode::HandIn;
+    // And at its giver, one another takes back (sim::QuestRow::receiver) is under way until then.
+    else if (progress.state == sim::QuestState::Ready) {
+        const bool atReceiver =
+            quest_ < kGate && realm.questing() >= 0 &&
+            realm.tables()->folk[size_t(realm.questing())].number ==
+                sim::questReceiver(sim::questAt(quest_));
+        mode = reading_ || !atReceiver ? Mode::Underway : Mode::HandIn;
+    }
     else if (progress.state == sim::QuestState::Resting && !realm.questOffered(quest_)) {
         mode = Mode::Resting;
     }
@@ -932,16 +944,29 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     // name in its tone, and under it whether he carries it -- green, or red. The Messenger's
     // ticket, the Archangel's weapon and Sevina's treasures.
     const auto needRow = [&](const Cell& one, const std::string& name, bool met,
-                             const std::string& status, uint32_t statusInk = 0) {
+                             const std::string& status, uint32_t statusInk = 0,
+                             bool questItem = false) {
         const Box box = cellBox(one);
         const Box icon{box.x, box.y, box.h, box.h};
         const int at = int(&one - cells_.data());
         controls::cell(body_, icon, over_ == 10 + at ? controls::Cell::Over : controls::Cell::Rest, u);
         const float nx = sx(one.box.x + kIcon + kNameGap);
         const float ly = one.box.y + kIcon * 0.5f;
-        controls::label(body_, nx, by(ly - 3.0f), kName * u, one.ink ? one.ink : kItemWhite, name);
-        controls::label(body_, nx, by(ly + 15.0f), kName * u,
-                        statusInk ? statusInk : met ? style::kFits : style::kDanger, status);
+        // A quest item says so under its name, quiet and grey, as its card's second line does
+        // (describe.cpp kindOf; the user, 2026-10-06: 'under the item show "Quest item"').
+        // Not yet found, it says no more than that (the user, 2026-10-06: 'dont show not in bag
+        // text for quest items'); found, "in your bag" under it in green.
+        const bool said = !questItem || met;
+        const float drop = questItem && said ? 6.0f : 0.0f;
+        controls::label(body_, nx, by(ly - 3.0f - drop), kName * u, one.ink ? one.ink : kItemWhite, name);
+        if (questItem) {
+            controls::label(body_, nx, by(ly + (said ? 7.0f : 13.0f)), 12.0f * u, style::kAshInk,
+                            "Quest item");
+        }
+        if (said) {
+            controls::label(body_, nx, by(ly + 15.0f + drop), kName * u,
+                            statusInk ? statusInk : met ? style::kFits : style::kDanger, status);
+        }
     };
     // A reward in its cell: the picture's frame, the chosen one's rim, the name beside it.
     const auto rewardCell = [&](size_t i) {
@@ -980,7 +1005,10 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                    list    ? std::string("What ") + row.giverName + " has for you"
                    : gate  ? std::string("Messenger of Archangel of Devias")
                    : angel ? std::string("Archangel of Blood Castle")
-                           : std::string(row.giverName) + " of " + row.place);
+                   // Her hand-in, in Lirien's words: hers is the name over them.
+                   : mode_ == Mode::HandIn && sim::questElsewhere(row)
+                       ? std::string(row.receiverName) + " of " + row.receiverPlace
+                       : std::string(row.giverName) + " of " + row.place);
     cy += 16.0f;
     for (const std::string& one : lines_) {
         if (one.empty()) {
@@ -1002,8 +1030,11 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             const sim::QuestProgress& at = realm.quest(one.quest);
             const bool again = at.completions > 0;
             const bool low = realm.questUnderLevel(one.quest);
-            const bool ready = at.state == sim::QuestState::Ready;
-            const bool underway = at.state == sim::QuestState::Active;
+            // Ready to hand in here only; at a giver whose quest another takes back, under way.
+            const bool here = sim::questReceiver(quest) == giver_;
+            const bool ready = at.state == sim::QuestState::Ready && here;
+            const bool underway = at.state == sim::QuestState::Active ||
+                                  (at.state == sim::QuestState::Ready && !here);
             const bool offer = realm.questOffered(one.quest);
             const char* glyph = ready || underway ? "?" : "!";
             const uint32_t lit = again ? kRepeatBlue : kZenGold;
@@ -1136,7 +1167,11 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                                  style::kDanger, std::to_string(realm.hero().level));
                 cy += kStepRow;
             }
-            for (int s = 0; s < row.stepCount; ++s) {
+            // The weakest breed at the top, the strongest at the bottom (quest_marks::byLevel).
+            int order[sim::kQuestSteps];
+            const int listed = quest_marks::byLevel(row, &tables, order);
+            for (int i = 0; i < listed; ++i) {
+                const int s = order[i];
                 const sim::QuestStepRow& want = row.steps[s];
                 if (!sim::questCounted(want.kind)) continue;
                 const int goal = realm.questGoal(quest_, s);
@@ -1155,8 +1190,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                     }
                     for (const Cell& one : cells_) {
                         if (one.need && one.item == item) {
-                            needRow(one, tables.items[size_t(item)].label, carried,
-                                    bagWords(carried));
+                            const content::ItemRow& thing = tables.items[size_t(item)];
+                            needRow(one, thing.label, carried, bagWords(carried), 0u,
+                                    sim::classTreasure(thing) || sim::archangelWeapon(thing));
                         }
                     }
                     cy += kIcon + kCellGap;

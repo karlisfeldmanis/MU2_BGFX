@@ -307,7 +307,13 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                              glowPass ? scrollOffset : material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
             // The water's sway (common.sh's swayed), for the still plants marked to take it.
-            const float swayParams[4] = {elapsed_, sway_, 0.0f, 0.0f};
+            // z and w: an opaque stream's slide (MU's StreamMesh) and its axis, 0 V, 1 U, 2 both,
+            // which vs_static adds to the uv. Nought on everything else.
+            const bool stream = !material.glow && material.scrollPerSecond != 0.0f;
+            const float swayParams[4] = {elapsed_, sway_, stream ? scrollOffset : 0.0f,
+                                         material.scrollAlongUV ? 2.0f
+                                         : material.scrollAlongU ? 1.0f
+                                                                 : 0.0f};
             bgfx::setUniform(uSway_, swayParams);
             // The albedo is bound even in the depth passes, because the cutout reads its alpha.
             const bool waterSheet =

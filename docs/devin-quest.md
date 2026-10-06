@@ -82,6 +82,8 @@ against the gaps before playing. The script is source/voice/devin/recorded_with.
   0.75 set, a goal a little past the hunt's end (about level 48-50 from 30, at kExperienceRate 10):
   Dragon Armor (knight; 59, asks 232 str 73 agi), Legendary Armor (wizard; 56, 87 str), Guardian
   Armor (elf; 57, 88 str 157 agi) -- OpenMU Version075 Armors.cs:71,73,84 through `asks`.
+- 2026-10-05: the first clear also pays a second Rune of Creation, Lesser Ascendance (+10% to
+  all four stats, a weapon's socket only since the same day), to every class.
   Dragon and Legendary were not cooked in MU2_BGFX; Guardian (ArmorElf05) was. No potions.
   Amounts are proposals, not yet agreed: 3 Bless, 100,000 Zen, 60,000 experience; the first
   clear 250,000.

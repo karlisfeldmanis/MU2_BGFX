@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "game/crowd.h"
@@ -35,6 +36,12 @@ namespace mu::game {
 // How far the Dinorant lifts its rider, metres: on a ground map MU sets him 30 over the terrain
 // (ZzzCharacter.cpp:6381-6390) and draws the dragon 30 under him (GOBoid.cpp:517-523).
 constexpr float kDinorantLift = 0.30f;
+// And over Tarkan (and Icarus) he flies: 90 over the terrain (ZzzCharacter.cpp:6387-6390) with
+// the dragon only 10 under him (GOBoid.cpp:517-520), so it is in the air at 80.
+constexpr float kDinorantFlyLift = 0.90f;
+constexpr float kDinorantFlyUnder = 0.10f;
+// Whether a world is one MU flies the Dinorant over. Tarkan; Icarus is not in this game.
+inline bool dinorantFlies(const std::string& world) { return world == "tarkan"; }
 
 // And how far to lift him again, metres, at `through` (0..1) of his run ride: the dragon's back
 // less his pelvis, key by key. MU plays one run ride, 36/37, on both mounts, and Uniria's leap
@@ -57,6 +64,9 @@ namespace mu::game {
 class Pets {
 public:
     void open(const Figures& figures);
+    // Over a world where the Dinorant flies (dinorantFlies), the dragon is drawn 10 under him,
+    // not 30.
+    void setFlying(bool flying) { flying_ = flying; }
     // `pet` is the row's number in group 13 -- 0 the Angel, 1 the Imp -- or -1 for none worn.
     // `hero` is his drawn figure, `alive` whether he stands.
     void update(float seconds, const Figure& hero, int pet, bool alive);
@@ -82,6 +92,7 @@ private:
     const FigureBody* horseOf_ = nullptr;  // which of the two `horse_` stands as
     Figure angel_, imp_, horse_;
     bool horseUp_ = false;
+    bool flying_ = false;  // setFlying
     float horseIn_ = 0.0f;  // 0 gone, 1 there: the fade at a safe zone's edge
     int shown_ = -1;    // the pet's number
     int mounted_ = -1;  // the mount's

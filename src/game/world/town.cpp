@@ -211,6 +211,12 @@ bool Town::drawableOf(const content::TownInstance& instance, gfx::Drawable& draw
     // way from the day the cook started writing them skinned. See Renderer::kBindRow.
     drawable.paletteRow = paletteRows_[index];
     drawable.sway = (instance.flags & 16) != 0;
+    // Bit 5: MU draws it again in RENDER_CHROME | RENDER_BRIGHT (tools/cook.py CHROMED_BY_WORLD,
+    // Tarkan's golden orbs) -- the +7 chrome in white, as a figure's `plus` carries it.
+    if ((instance.flags & 32) != 0) {
+        drawable.refine = 7;
+        drawable.refineColour[0] = drawable.refineColour[1] = drawable.refineColour[2] = 1.0f;
+    }
     return true;
 }
 

@@ -648,6 +648,8 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     abyssRim_ = chasm["rim"].boolOr(false);
     abyssBlend_ = float(chasm["blend"].numberOr(0.0));
     abyssLift_ = float(chasm["lift"].numberOr(0.0));
+    // A void floored (`void_floor`, below) is ground to look at, not a chasm: no abyss over it.
+    if (!doc["void_floor"].stringOr("").empty()) abyssDepth_ = 0.0f;
     figureLight_ = float(doc["figure_light"].numberOr(0.0));
     blendKeep_.clear();
     later_.clear();
@@ -791,6 +793,61 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         } else {
             core::logError("%s is %dx%d, and the world says %d tiles a side -- no baked light",
                            lightFile.c_str(), w, h, size_);
+        }
+    }
+
+    // **A void floored with a sheet** (`void_floor`, a slot's name): every tile at the map's
+    // bottom that nobody walks -- NoGround, or blocked at the lowest height -- wears it whole,
+    // lit as the tiles already floored with it are, and the abyss is off (above). Ours, the
+    // user, 2026-10-05, of the Lost Tower's black void under its floors: 'maybe its not bad idea
+    // to actualy put lava there? not void?' -- MU's void there is the lava pits' own height,
+    // painted black by its light, so the tower stands in the lava. Only the look: the tiles keep
+    // their attributes, so nothing walks or drops there. Ground::splat lights the vertices.
+    floored_.clear();
+    {
+        const std::string voidFloor = doc["void_floor"].stringOr("");
+        int slot = -1;
+        // Unnamed is none: a world's unused slots are named "" too, and matching one floored
+        // Blood Castle's whole void in brick.
+        for (size_t i = 0; i < slotNames_.size() && !voidFloor.empty(); ++i) {
+            if (slotNames_[i] == voidFloor) slot = int(i);
+        }
+        const size_t all = size_t(size_) * size_t(size_);
+        if (slot >= 0 && floors_.size() == all && overlays_.size() == all &&
+            blends_.size() == all && height_.size() == all) {
+            const float lowest = *std::min_element(height_.begin(), height_.end());
+            voidLevel_ = lowest;
+            // The light the sheet already lies under, averaged: the pits' own, where MU lit them
+            // (its tiles under the void are painted black too, and took the mean to 0.05).
+            double sum[3] = {0, 0, 0};
+            int lit = 0;
+            for (size_t i = 0; i < all && light_.size() == all * 3; ++i) {
+                if (floors_[i] != slot) continue;
+                if (int(light_[i * 3]) + light_[i * 3 + 1] + light_[i * 3 + 2] < 3 * 60) continue;
+                for (int k = 0; k < 3; ++k) sum[k] += light_[i * 3 + size_t(k)];
+                ++lit;
+            }
+            for (int k = 0; k < 3; ++k) voidLight_[k] = lit > 0 ? float(sum[k] / lit) / 255.0f : 0.6f;
+            floored_.assign(all, 0);
+            int floored = 0;
+            for (int r = 0; r < size_; ++r) {
+                for (int c = 0; c < size_; ++c) {
+                    const size_t i = size_t(r) * size_t(size_) + size_t(c);
+                    const uint16_t bits = grid_.at(c, r);
+                    const bool bottom = height_[i] <= lowest + 0.05f;
+                    if ((bits & kNoGround) == 0 && !((bits & kNoMove) != 0 && bottom)) continue;
+                    floored_[i] = 1;
+                    floors_[i] = uint8_t(slot);
+                    overlays_[i] = 255;
+                    blends_[i] = 0;
+                    ++floored;
+                }
+            }
+            core::logf("ground: %d void tiles floored with %s, lit %.2f %.2f %.2f", floored,
+                       voidFloor.c_str(), double(voidLight_[0]), double(voidLight_[1]),
+                       double(voidLight_[2]));
+        } else if (!voidFloor.empty()) {
+            core::logError("ground: void_floor names %s, which no slot wears", voidFloor.c_str());
         }
     }
 
@@ -1227,6 +1284,26 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         return false;
     }
     if (vertices.size() % 4 != 0 || indices.size() != vertices.size() / 4 * 6) return false;
+    // A floored void's corners take the light its sheet lies under elsewhere (`void_floor`):
+    // MU painted them black, and a sheet at black reads as the void still.
+    if (floored_.size() == size_t(n) * size_t(n)) {
+        for (GroundVertex& vertex : vertices) {
+            const int c = int(std::floor(vertex.position[0] / metresPerTile_ + 0.5f));
+            const int r = int(std::floor(-vertex.position[2] / metresPerTile_ + 0.5f));
+            bool touches = false;
+            for (int tr = r - 1; tr <= r && !touches; ++tr) {
+                for (int tc = c - 1; tc <= c && !touches; ++tc) {
+                    if (tc < 0 || tr < 0 || tc >= n || tr >= n) continue;
+                    touches = floored_[size_t(tr) * size_t(n) + size_t(tc)] != 0;
+                }
+            }
+            // Down at the sheet's own level: a floor's corner at the top of the cliff keeps its own.
+            if (!touches || vertex.position[1] > voidLevel_ + 0.1f) continue;
+            for (int k = 0; k < 3; ++k) {
+                vertex.colour[k] = std::max(vertex.colour[k], voidLight_[k]);
+            }
+        }
+    }
     auto known = [&](int slot) {
         return slot >= 0 && slot < slots && bgfx::isValid(slotLayers[size_t(slot)].albedo);
     };
@@ -1415,7 +1492,9 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         // banks, and the depth is the dark. So the quad goes into no draw once all four of its
         // corners have sunk past the abyss's black (above); before then it is the edge's slope.
         const bool later = isVoid(tc, tr) && isLater(tc, tr);
-        if (isVoid(tc, tr) && !later) {
+        // A floored void (`void_floor`) is drawn: it is the sheet now, not the clear's black.
+        const bool floored = !floored_.empty() && floored_[size_t(quadTile[q])] != 0;
+        if (isVoid(tc, tr) && !later && !floored) {
             const auto at = [&](int c, int r) { return sink[size_t(r) * size_t(side) + size_t(c)]; };
             const float black = std::min(voidSink_, abyssStart_ + std::max(abyssDepth_, 0.0f));
             if (voidFade_ <= 0.0f || std::min(std::min(at(tc, tr), at(tc + 1, tr)),

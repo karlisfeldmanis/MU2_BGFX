@@ -272,7 +272,11 @@ QuestRow devin() {
                    .firstOnly = true};  // Rune of Creation, Renewal
     row.paid[5] = {.item = "RingWisdom", .plus = 2, .firstOnly = true,
                    .affixes = {uint8_t(Affix::Wealth)}};  // Ring of Wisdom, blue
-    row.paidCount = 6;
+    // And a second rune, the first clear only, every class's (the user, 2026-10-05: 'add tier-1
+    // all stats to devias quest line for all classes'): +10% to all four stats.
+    row.paid[6] = {.item = "Jewel22", .power = uint8_t(Power::LesserAscendance),
+                   .firstOnly = true};  // Rune of Creation, Lesser Ascendance
+    row.paidCount = 7;
     return row;
 }
 
@@ -963,13 +967,142 @@ QuestRow demoQuest(const char* title, int32_t minLevel) {
     return row;
 }
 
+// The Drowned Song, the hook to Atlans: Peia's second, at level 70, handed in to Lirien in
+// Atlans's safe basin (the user, 2026-10-05: 'first quest is just to go to atlans and meet other
+// elf, not killing something', then 'perfect, impplement'). All ours, from the Atlans lore of
+// 2026-10-04; MuMain's own facts under it: Kantur built Atlans, and Noria's north-east gate,
+// at level 70, is the way in.
+QuestRow drownedSong() {
+    QuestRow row;
+    row.giver = 257;  // Peia
+    row.giverName = "Peia";
+    row.place = "Noria";
+    row.receiver = kLirienNumber;
+    row.receiverName = "Lirien";
+    row.receiverPlace = "Atlans";
+    row.title = "The Drowned Song";
+    row.offer[0] =
+        "\"When Atlans still stood above the waves, the elves of Noria traded spirit stones with "
+        "the people of Kantur, and our queen kept her envoy, Lirien, in their city.\"";
+    row.offer[1] =
+        "\"When the sea took it, Lirien stayed. For three hundred years her song has come up "
+        "through the lake, faint, every night.\"";
+    row.offer[2] =
+        "\"Three nights ago it stopped. Go through the north-east gate. Find her, or find what "
+        "silenced her.\"";
+    row.underway = "\"The lake is still quiet. Go through the north-east gate and find her.\"";
+    // Lirien's, at her shrine by the arch; what silenced her is her own quest's offer, which
+    // opens as this closes (lirienHalls).
+    row.handIn[0] =
+        "\"Someone from Noria, down here, under the sea? Then Peia still listens for me. Forgive "
+        "the silence, traveller. I did not stop singing. I was made to.\"";
+    row.resting = "\"Her song carries again. Thank you, traveller.\"";
+    // Peia's voice (tools/voice.py, VOICES["peia"] by the stem) on her offer, Lirien's own on the
+    // hand-in (VOICES["lirien"]).
+    row.voice = "peia_2";
+    row.receiverVoice = "lirien";
+    // No hunt: the errand is the meeting. One uncounted step, met by talking to her.
+    row.steps[0] = {QuestStepKind::Return, 0, 1, "Find Lirien in Atlans"};
+    row.stepCount = 1;
+    row.repeatSeconds = 0;  // once
+    row.minLevel = 70;      // Atlans's own gate
+    row.natives = 0x7;
+    row.strangers = true;
+    row.experience = 60000;
+    row.zen = 40000;
+    return row;
+}
+
+// Atlans's own clear, Lirien's (the user, 2026-10-05: 'its a complete map kill quest similiar
+// like noria and lorencia devias', with 'small intro that noria elf sent you and the to the quest
+// it self'). Offered once Peia's 'The Drowned Song' is handed in to her. Ours, as Devin's: every
+// breed of the map weakest first on Marlon's ladder (40, 35, 30, 30, 25, 20), and the Hydra, the
+// boss, all four of it last -- 184 kills, between Devin's 170 and Marlon's 210 (the user,
+// 'calculate number of kill which chars has to do'; docs/lirien-quest.md). The first
+// clear pays each class a weapon of Atlans's band (drop 70-72) with a socket, as Devin pays an
+// armour; every clear two Jewels of Soul.
+QuestRow lirienHalls() {
+    QuestRow row;
+    row.giver = kLirienNumber;
+    row.giverName = "Lirien";
+    row.place = "Atlans";
+    row.title = "The Drowned Halls";
+    row.offer[0] =
+        "\"So Peia sent you. Then her song still reaches the surface, and mine will too, once "
+        "these halls are quiet.\"";
+    row.offer[1] =
+        "\"Kundun's creatures took Atlans while I kept to my shrine of air. Bahamuts and Vepars "
+        "in the shallows, Valkyries on the walls, Lizard Kings in the old streets.\"";
+    row.offer[2] =
+        "\"Deeper are the Great Bahamuts, and my own guard, the maidens who drowned with me. "
+        "Kundun made them Silver Valkyries. Free them. Do not let them suffer longer.\"";
+    row.offer[3] =
+        "\"And in the deep trench, the Hydra. While it lives, nothing here is ours. Clear the "
+        "halls, then bring it down.\"";
+    row.underway = "\"Not yet. I can still hear them in the halls.\"";
+    row.handIn[0] =
+        "\"The halls are quiet. For the first time in three hundred years, I hear the sea and "
+        "nothing else.\"";
+    row.handIn[1] =
+        "\"Take these, with the thanks of Noria's envoy. They will gather again. When they do, "
+        "come back to me.\"";
+    row.resting = "\"Rest. The Hydra's brood will rise again by morning.\"";
+    // Her own voice (tools/voice.py, VOICES["lirien"] by the stem).
+    row.voice = "lirien_1";
+    row.steps[0] = {QuestStepKind::Clear, 45, 40, "Bahamuts"};          // level 43
+    row.steps[1] = {QuestStepKind::Clear, 46, 35, "Vepars"};            // 45
+    row.steps[2] = {QuestStepKind::Clear, 47, 30, "Valkyries"};         // 46
+    row.steps[3] = {QuestStepKind::Clear, 51, 30, "Great Bahamuts"};    // 66
+    row.steps[4] = {QuestStepKind::Clear, 52, 25, "Silver Valkyries"};  // 68
+    row.steps[5] = {QuestStepKind::Clear, 48, 20, "Lizard Kings"};      // 70
+    row.steps[6] = {QuestStepKind::Clear, 49, 4, "Hydras"};             // 74, the boss
+    row.steps[7] = {QuestStepKind::Return, 0, 1, "Return to Lirien"};
+    row.stepCount = 8;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.minLevel = 70;
+    row.afterAny = 1u << kDrownedSong;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // Every class's, as Devin's: no 0.75 class is born in Atlans.
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    row.experience = 120000;
+    row.firstExperience = 500000;
+    row.zen = 200000;
+    // The weapons, the user's of 2026-10-05, held against the Balrog's (Bill of Balrog, Legendary
+    // Staff, Chaos Nature Bow, two sockets each), since both are hunted from about 70: the
+    // knight's and the wizard's are better and take two; the elf's crossbow deals less than her
+    // Chaos Nature Bow and takes a third socket for it. The Chaos weapons wait for the machine.
+    int n = 0;
+    row.paid[n++] = {.item = "Mace06", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Crystal Sword
+    row.paid[n++] = {.item = "Staff07", .kin = wizard, .sockets = 2,
+                     .firstOnly = true};  // Staff of Resurrection
+    row.paid[n++] = {.item = "CrossBow07", .kin = elf, .sockets = 3,
+                     .firstOnly = true};  // Aquagold Crossbow
+    // A rune each, those no quest paid before: the knight's Ice, the wizard's Thunder (his
+    // Lightning and his Stormcall), and the elf's Frost Arrow, hers before the Muse Elf since this
+    // day as Arcane Echo is the wizard's -- an elf's gift to an elf. And Second Wind for everyone.
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Thunder),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind), .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul (Jewel03 is Life)
+    row.paidCount = n;
+    return row;
+}
+
 const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),        catacombs(),
                                   halls(),       pit(),         tersiaDoor(),   tersiaSecond(),
                                   tersiaThird(),  tersiaFourth(), tersiaFifth(),  tersiaSixth(),
                                   tersiaBalrog(), sevinaTrial(), brokenSword(),  soulOfWizard(),
                                   tearOfElf(),
                                   demoQuest("Whispers in the Roots (demo)", 0),
-                                  demoQuest("The Golem's Heart (demo)", 60)};
+                                  drownedSong(), lirienHalls()};
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every
 // class (the user, 2026-10-04: 'give fireccracker on all quests', then 'give 3 firecrackers in
@@ -1001,6 +1134,13 @@ const QuestRow& questAt(int index) { return kTable[index]; }
 
 void enableQuestDemo() {
     for (int index : kDemoQuests) kQuestTable.rows[index].giver = 257;
+}
+
+bool questReceives(int32_t number) {
+    for (int i = 0; i < kQuests; ++i) {
+        if (questElsewhere(kTable[i]) && kTable[i].receiver == number) return true;
+    }
+    return false;
 }
 
 int questOf(int32_t giver) {

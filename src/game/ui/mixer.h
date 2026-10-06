@@ -61,7 +61,8 @@ public:
     void spark() { sparks_ = kSparkSeconds; }
 
     // What a run asks of the realm: the service on the row and Remove Rune's socket.
-    sim::Service service() const { return sim::Service(service_); }
+    // `service_` is a place on the row (sim::kRowServices), not the enum.
+    sim::Service service() const { return sim::kRowServices[service_]; }
     int socket() const { return socket_; }
 
     bool covers(float x, float y) const;

@@ -56,6 +56,9 @@ private:
     int size_ = 0;
     float metresPerTile_ = 1.0f;
     float floor_ = 0.0f;  // the walkable ground's median height, metres
+    // Tarkan's (open): its void is drawn barely under its plateaus, so its clouds lie just under
+    // the rim, its top layer alone, and only where the whole cloud is over void.
+    bool shallow_ = false;
     float colour_[3] = {1.0f, 1.0f, 1.0f};
     std::vector<Wisp> wisps_;
     uint32_t seed_ = 0xC10D5u;

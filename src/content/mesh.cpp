@@ -400,6 +400,7 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.translucency = from.translucency;
         out.scrollPerSecond = from.scrollPerSecond;
         out.scrollAlongU = (from.scrollMode & 1) != 0;
+        out.scrollAlongUV = (from.scrollMode & 64) != 0;
         out.maskHeld = (from.scrollMode & 2) != 0;
         out.waterFrames = (from.scrollMode & 4) != 0;
         out.pulse[0] = from.pulse[0];

@@ -9,8 +9,9 @@
 // **Opening a row is ours** (the user, 2026-09-30, claude.ai/artifact/CeRcbNmeWq31yAA2WUL15X): a
 // town's row opens the first time he speaks to its quest giver, and a map with no giver -- the
 // Dungeon -- opens every row of itself the first time he stands in it. Lorencia and Noria are open
-// from the start, at any level (the user, 2026-10-04). 0.75 asks only the level and the Zen, of
-// anybody, anywhere.
+// from the start, at any level (the user, 2026-10-04). Atlans opens as he meets Lirien, its giver,
+// which Peia's Drowned Song sends him to do (the user, 2026-10-05). 0.75 asks only the level and
+// the Zen, of anybody, anywhere.
 #pragma once
 
 #include <cstdint>
@@ -26,7 +27,7 @@ struct TravelRow {
     int8_t dx, dy;         // that gate's facing, as sim/gates.h stores one
 };
 
-inline constexpr int kTravels = 13;
+inline constexpr int kTravels = 15;
 const TravelRow& travelAt(int index);
 
 // Why a trip is refused, first reason first. `Here` is a row landing in a safe zone of the map he

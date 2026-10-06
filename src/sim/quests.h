@@ -23,7 +23,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 19;
+inline constexpr int kQuests = 20;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 12;
@@ -81,6 +81,15 @@ struct QuestRow {
     int32_t giver = 0;          // the giver's MU NPC number (Tables::folk)
     const char* giverName = "";
     const char* place = "";     // the giver's town, for the dialog's "Marlon of Lorencia"
+    // Who takes it back, when that is not the giver: Lirien in Atlans for Peia's 'The Drowned
+    // Song' (the user, 2026-10-05: 'first quest is just to go to atlans and meet other elf').
+    // Her number, name and map; 0 for the giver himself. Talking to her settles it (its steps
+    // all counted, Realm::questMet) and her window opens on the hand-in, in her words.
+    int32_t receiver = 0;
+    const char* receiverName = "";
+    const char* receiverPlace = "";
+    // Her voice for the hand-in page, as `voice` is the giver's: assets/voice/<it>/<it>_handin.wav.
+    const char* receiverVoice = "";
     const char* title = "";
     // What he says: offering it, while it is under way, taking it back done, and while it is
     // not yet his to give again. Each a paragraph; unused ones are null.
@@ -131,6 +140,13 @@ struct QuestRow {
 };
 
 inline bool questNative(const QuestRow& row, int kin) { return (row.natives >> kin) & 1u; }
+// Who takes it back: its receiver, or the giver himself.
+inline int32_t questReceiver(const QuestRow& row) { return row.receiver ? row.receiver : row.giver; }
+inline const char* questReceiverName(const QuestRow& row) {
+    return row.receiver ? row.receiverName : row.giverName;
+}
+// Whether someone other than its giver takes it back.
+inline bool questElsewhere(const QuestRow& row) { return row.receiver && row.receiver != row.giver; }
 // Whether a class may take the quest at all.
 inline bool questOpen(const QuestRow& row, int kin) { return row.strangers || questNative(row, kin); }
 // Whether the clear after `completions` is the one that pays the first clear's rewards.
@@ -142,13 +158,23 @@ inline int64_t questExperience(const QuestRow& row, bool first) {
 }
 
 const QuestRow& questAt(int index);
-// Two demo quests of Peia's, given by nobody until --quest-demo hands them to her, so her window
+// A demo quest of Peia's, given by nobody until --quest-demo hands it to her, so her window
 // opens on its list (QuestDialog::kList): the user, 2026-10-04, 'show me demo for noria quest
-// giver which has multiple quests'. The second asks level 60, to show a locked row.
-inline constexpr int kDemoQuests[2] = {17, 18};
+// giver which has multiple quests'. Its fellow at 18 became 'The Drowned Song', hers for good
+// (2026-10-05).
+inline constexpr int kDemoQuests[1] = {17};
+// Peia's 'The Drowned Song', handed in to Lirien in Atlans.
+inline constexpr int kDrownedSong = 18;
+// Lirien, the elf envoy in Atlans's safe basin: our own NPC number, no MU NPC's (tools/cook.py's
+// Atlans folk, source/npc/ElfEnvoy.json).
+inline constexpr int32_t kLirienNumber = 700;
+// Lirien's own: Atlans cleared, the Hydra last, offered once 'The Drowned Song' is handed in.
+inline constexpr int kDrownedHalls = 19;
 void enableQuestDemo();
 // The quest a giver hands out, by NPC number, or -1. One a giver.
 int questOf(int32_t giver);
+// Whether this NPC takes back a quest someone else gave (QuestRow::receiver): Lirien.
+bool questReceives(int32_t number);
 
 
 enum class QuestState : uint8_t {

@@ -48,7 +48,7 @@ struct Sorted {
     // The 2nd wings' box: the 1st wings in it, the feathers, the excellent things at +4 or more
     // that raise the rate, and any 2nd wing, which spoils it (MixSystem.cpp:2494-2508).
     int firstWings = 0, firstWingCell = -1, feathers = 0, excellents = 0, secondWings = 0;
-    int optioned = 0;   // things at +4 or better with the additional option: the Chaos Weapon's
+    int optioned = 0;   // things at +4 or better with the additional option or a socket: the Chaos Weapon's
     int chaosWeapons = 0;  // and of them the Chaos weapons, which make it the wings' box
     int chaosWeaponCell = -1;
     int at[2] = {};     // raisable things at +9 and at +10
@@ -110,7 +110,9 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
             } else if (what.excellent != 0 && what.refinement >= 4) {
                 ++s.excellents;  // `IsExtItem() && m_Level >= 4` (:2557-2562)
             }
-            if (what.refinement >= 4 && what.option > 0) {
+            // A socket counts as the option does (the user, 2026-10-05: 'for making chaos item
+            // also item + socket works same as +opti'). Ours; MU asks the option alone.
+            if (what.refinement >= 4 && (what.option > 0 || what.sockets > 0)) {
                 ++s.optioned;
                 if (chaosWeapon(*row)) {
                     ++s.chaosWeapons;
@@ -127,7 +129,7 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 ++s.runed;
                 s.runedCell = cell;
             }
-            if (takesSockets(*row) && what.sockets < mostSocketsOf(*row)) {
+            if (socketsFit(*row) && what.sockets < mostSocketsOf(*row)) {
                 ++s.socketable;
                 s.socketCell = cell;
             }
@@ -241,10 +243,23 @@ std::string labelAt(const content::Tables& tables, const Machine& box, int cell)
     return row ? row->label : std::string();
 }
 
+// `service`: Combine reads the box as any recipe; the Wings and Chaos Weapon services as theirs
+// alone, and when it is like none of them, as the one its contents point to.
 void combine(const content::Tables& tables, const Machine& box, const Sorted& s, Kin kin,
-             Judged& j) {
+             Judged& j, Service service = Service::Combine) {
+    const auto offered = [&](Recipe one) {
+        switch (service) {
+            case Service::FirstWings: return one == Recipe::Wings;
+            case Service::SecondWings: return one == Recipe::SecondWings;
+            case Service::ChaosWeapon: return one == Recipe::ChaosWeapon;
+            case Service::Upgrade: return one == Recipe::PlusTen || one == Recipe::PlusEleven;
+            case Service::Dinorant: return one == Recipe::Dinorant;
+            case Service::Cloak: return one == Recipe::Cloak;
+            default: return true;
+        }
+    };
     for (Recipe one : kOrder) {
-        if (exactly(one, s)) {
+        if (offered(one) && exactly(one, s)) {
             j.recipe = one;
             break;
         }
@@ -254,10 +269,25 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
     } else {
         int best = 0;
         for (Recipe one : kOrder) {
+            if (!offered(one)) continue;
             const int points = likeness(one, s);
             if (points > best) {
                 best = points;
                 j.nearest = one;
+            }
+        }
+        // A page like none of its mixes reads as the one its contents point to.
+        if (j.nearest == Recipe::None) {
+            switch (service) {
+                case Service::FirstWings: j.nearest = Recipe::Wings; break;
+                case Service::SecondWings: j.nearest = Recipe::SecondWings; break;
+                case Service::ChaosWeapon: j.nearest = Recipe::ChaosWeapon; break;
+                case Service::Upgrade:
+                    j.nearest = s.at[1] > 0 ? Recipe::PlusEleven : Recipe::PlusTen;
+                    break;
+                case Service::Dinorant: j.nearest = Recipe::Dinorant; break;
+                case Service::Cloak: j.nearest = Recipe::Cloak; break;
+                default: break;
             }
         }
     }
@@ -292,9 +322,9 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
         case Recipe::ChaosWeapon:
         case Recipe::Wings: {
             if (j.nearest == Recipe::Wings) {
-                need(j, "Chaos weapon +4 with an option", std::min(s.chaosWeapons, 1), 1);
+                need(j, "Chaos weapon +4 with an option or socket", std::min(s.chaosWeapons, 1), 1);
             } else {
-                need(j, "Item +4 with an option", s.optioned, 1);
+                need(j, "Item +4 with an option or socket", s.optioned, 1);
             }
             need(j, "Jewel of Chaos", s.chaos, 1);
             need(j, "Jewel of Bless", s.bless, 0);
@@ -365,7 +395,8 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             break;
     }
     if (j.ready) j.title = recipeName(j.recipe);
-    else if (j.empty) j.title = "Put items in the box";
+    // A one-mix page names its mix even before a thing is in: what it waits for.
+    else if (j.empty && service == Service::Combine) j.title = "Put items in the box";
     else if (j.nearest != Recipe::None) j.title = std::string(recipeName(j.nearest)) + ", not ready";
     else j.title = "Improper items for combination";
 }
@@ -407,7 +438,7 @@ void addSocket(const content::Tables& tables, const Machine& box, const Sorted& 
     need(j, "Jewels of Bless", s.bless, kAddSocketBless);
     j.zen = kAddSocketZen;
     if (s.socketable != 1) {
-        j.title = s.socketable == 0 ? "Put in a weapon, armour or shield" : "One item at a time";
+        j.title = s.socketable == 0 ? "Put in a weapon, armour, shield or wings" : "One item at a time";
         j.rate = kAddSocketRate[0];
         return;
     }
@@ -557,6 +588,12 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
         case Service::RemoveRune: removeRune(tables, box, s, socket, j); break;
         case Service::AddSocket: addSocket(tables, box, s, j); break;
         case Service::FuseRunes: fuseRunes(tables, box, s, j); break;
+        case Service::FirstWings:
+        case Service::SecondWings:
+        case Service::ChaosWeapon:
+        case Service::Upgrade:
+        case Service::Dinorant:
+        case Service::Cloak: combine(tables, box, s, kin, j, service); break;
     }
     return j;
 }
@@ -617,6 +654,12 @@ const char* serviceName(Service service) {
         case Service::RemoveRune: return "Remove Rune";
         case Service::AddSocket: return "Add Socket";
         case Service::FuseRunes: return "Fuse Runes";
+        case Service::FirstWings: return "1st Wings";
+        case Service::SecondWings: return "2nd Wings";
+        case Service::ChaosWeapon: return "Chaos Weapon";
+        case Service::Upgrade: return "Upgrade";
+        case Service::Dinorant: return "Dinorant";
+        case Service::Cloak: return "Invisibility Cloak";
     }
     return "";
 }
@@ -627,6 +670,12 @@ const char* serviceVerb(Service service) {
         case Service::RemoveRune: return "Remove";
         case Service::AddSocket: return "Add Socket";
         case Service::FuseRunes: return "Fuse";
+        case Service::FirstWings:
+        case Service::SecondWings: return "Create Wings";
+        case Service::ChaosWeapon: return "Create";
+        case Service::Upgrade: return "Upgrade";
+        case Service::Dinorant: return "Create";
+        case Service::Cloak: return "Create";
     }
     return "";
 }

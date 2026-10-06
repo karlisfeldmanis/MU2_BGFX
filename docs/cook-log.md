@@ -17,7 +17,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword02 | arm | 2026-09-21 19:13 | passed | steel 0.4 on this flat blade: grey steel with MU's paint legible, soft sheen at noon; no longer black |
 | Leather | set | 2026-09-21 18:56 | passed | dark olive-black hide with MU's painted pale ridges, dielectric at 0.75; face and bare arms in skin; rebuilt after the flip fix |
 | Sword03 | arm | 2026-09-21 18:59 | passed | thin blade bright steel at noon, cup guard catches a highlight into dusk, wrap grip reads |
-| Sword04 | arm | 2026-09-21 19:01 | passed | polished blade bright at noon, warm at dusk, still reads at night; red wrap and tassel |
+| Sword04 | arm | 2026-10-06 10:25 | awaiting |  |
 | Sword05 | arm | 2026-09-21 19:05 | passed | curved blade bright steel with its edge band, banded grip; reads at night |
 | Bone | set | 2026-09-21 19:07 | passed | pale grey bone over dark hide, dielectric at 0.58 so the mid-tones carry between MU's painted highlights; skull mask and crest read; rebuilt after the flip fix |
 | Sword06 | arm | 2026-09-21 19:09 | passed | royal blue is MU's own paint (sword07.png); winged guard and green-banded grip read; bright at noon |
@@ -287,10 +287,24 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | CrossBow07 | arm | 2026-10-03 22:49 | awaiting |  |
 | Staff07 | arm | 2026-10-03 23:15 | awaiting |  |
 | Fish02 | world | 2026-10-04 00:24 | passed | the school reads at 184,24: small cichlids shoaling past the corals, tethered round the hero |
-| IronWheel01 | figure | 2026-10-06 11:06 | passed | steel rider, gold mask, iron wheel; no blowout noon/dusk/night |
-| Tantalos01 | figure | 2026-10-06 11:06 | passed | black plate, amber bv03 seams added |
+| Bow18 | arm | 2026-10-05 10:28 | awaiting |  |
+| Wing02 | figure | 2026-10-05 19:42 | awaiting |  |
+| Wing03 | figure | 2026-10-05 19:42 | awaiting |  |
+| Sword17 | arm | 2026-10-06 00:13 | awaiting |  |
+| Staff09 | arm | 2026-10-06 00:17 | awaiting |  |
+| CrossBow17 | arm | 2026-10-06 00:22 | awaiting |  |
+| Spear11 | arm | 2026-10-06 00:28 | awaiting |  |
+| Shield16 | arm | 2026-10-06 00:39 | awaiting |  |
+| Shield17 | arm | 2026-10-06 00:44 | awaiting |  |
+| Black Dragon | set | 2026-10-06 07:01 | awaiting |  |
+| Mace08 | arm | 2026-10-06 10:08 | awaiting |  |
+| Staff10 | arm | 2026-10-06 09:53 | awaiting |  |
+| CrossBow20 | arm | 2026-10-06 09:56 | awaiting |  |
+| Mace03 | arm | 2026-10-06 10:27 | awaiting |  |
+| IronWheel01 | figure | 2026-10-06 11:42 | awaiting |  |
+| Tantalos01 | figure | 2026-10-06 11:44 | awaiting |  |
 | Zaikan01 | figure | 2026-10-06 11:06 | passed | ember figure, all three meshes added, half shadow |
 | BeamKnight01 | figure | 2026-10-06 11:07 | passed | dark bat knight, mane cut out |
 | DeathBeamKnight01 | figure | 2026-10-06 11:07 | passed | pale ghost of the Beam Knight, all added |
-| Mutant01 | figure | 2026-10-06 11:11 | passed | blade brass blew out; painted_steel reads gold |
+| Mutant01 | figure | 2026-10-06 11:46 | awaiting |  |
 | BloodyWolf01 | figure | 2026-10-06 11:07 | passed | hide, cloth and mane on their own materials |

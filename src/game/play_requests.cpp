@@ -520,8 +520,20 @@ bool Play::repairAll() {
 // The vault's moves. The item ones are heard by the desk, as the bag's are (the pickup for a
 // move taken, the refusal for one refused); the Zen is heard here as the coins of a sale,
 // placed at the hero for the same reason.
+// A vault or box move that was a jewel applied (Realm::refineAcross): its answer rung as
+// Play::refine rings it, and the figure dressed again, since a worn thing may have changed.
+void Play::jewelRung() {
+    if (!realm_.takeJeweled()) return;
+    if (const Drawn* hero = drawnOf(realm_.hero().id)) {
+        emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
+    }
+    redress();
+}
+
 bool Play::deposit(int bagSlot, int cell) {
     const int at = realm_.deposit(bagSlot, cell);
+    jewelRung();
+    if (at >= 0 && sim::wearable(bagSlot)) redress();
     core::logf("window: vault deposit slot %d -> cell %d %s", bagSlot, at,
                at >= 0 ? "taken" : "refused");
     return at >= 0;
@@ -529,6 +541,8 @@ bool Play::deposit(int bagSlot, int cell) {
 
 bool Play::withdraw(int cell, int bagSlot) {
     const int at = realm_.withdraw(cell, bagSlot);
+    jewelRung();
+    if (at >= 0 && sim::wearable(bagSlot)) redress();
     core::logf("window: vault withdraw cell %d -> slot %d %s", cell, at,
                at >= 0 ? "taken" : "refused");
     return at >= 0;
@@ -536,12 +550,15 @@ bool Play::withdraw(int cell, int bagSlot) {
 
 bool Play::rearrange(int from, int to) {
     const bool moved = realm_.rearrange(from, to);
+    jewelRung();
     core::logf("window: vault move %d -> %d %s", from, to, moved ? "taken" : "refused");
     return moved;
 }
 
 bool Play::putIn(int bagSlot, int cell) {
     const int at = realm_.putIn(bagSlot, cell);
+    jewelRung();
+    if (at >= 0 && sim::wearable(bagSlot)) redress();
     core::logf("window: machine takes slot %d -> cell %d %s", bagSlot, at,
                at >= 0 ? "taken" : "refused");
     if (at >= 0) mixAnswer_ = -1;
@@ -550,6 +567,7 @@ bool Play::putIn(int bagSlot, int cell) {
 
 bool Play::takeOut(int cell, int bagSlot) {
     const int at = realm_.takeOut(cell, bagSlot);
+    jewelRung();
     core::logf("window: machine gives cell %d -> slot %d %s", cell, at,
                at >= 0 ? "taken" : "refused");
     return at >= 0;
@@ -557,6 +575,7 @@ bool Play::takeOut(int cell, int bagSlot) {
 
 bool Play::shuffle(int from, int to) {
     const bool moved = realm_.shuffle(from, to);
+    jewelRung();
     core::logf("window: machine move %d -> %d %s", from, to, moved ? "taken" : "refused");
     return moved;
 }

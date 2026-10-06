@@ -69,7 +69,7 @@ std::string kindOf(const content::ItemRow& row) {
     if (row.group == 12) return "Orb";
     switch (row.group) {
         case sim::kGroupHelms: return "Helm";
-        case sim::kGroupArmours: return "Armour";
+        case sim::kGroupArmours: return "Armor";
         case sim::kGroupPants: return "Pants";
         case sim::kGroupGloves: return "Gloves";
         case sim::kGroupBoots: return "Boots";
@@ -130,7 +130,7 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
     // The band it rolls in, `sim::cast`'s own two lines: energy over nine and over four, the
     // spell's damage on the bottom and half again on the top, times the staff and the spell's own
     // multiplier (one but on Lightning, Ice and Poison's half again and Meteorite's twice).
-    const double times = double(sim::force(row, who.points));
+    const double times = double(sim::force(row, who.totals));
     const int low = int((who.wizardMinimum + double(row.damage)) * who.wizardryRate * times);
     const int high = int((who.wizardMaximum + double(row.damage + row.damage / 2)) *
                          who.wizardryRate * times);
@@ -143,10 +143,10 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
                        tone(Tone::Yellow)));
     char sum[64];
     if (who.staffRise > 0.0f) {
-        std::snprintf(sum, sizeof(sum), "%d ene, staff +%d%%", who.points.energy,
+        std::snprintf(sum, sizeof(sum), "%d ene, staff +%d%%", who.totals.energy,
                       int(who.staffRise + 0.5f));
     } else {
-        std::snprintf(sum, sizeof(sum), "%d ene, no staff", who.points.energy);
+        std::snprintf(sum, sizeof(sum), "%d ene, no staff", who.totals.energy);
     }
     note(sum);
     // **Whom it strikes** (the user, 2026-09-28: "update tooltip for this spell, because it's
@@ -367,15 +367,15 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.markTone = tone;
             does.rows.push_back(line);
         };
+        // One line (the tooltip audit, 2026-10-05): what he holds now, or the rule in short.
         const std::string mine = kKinds[row.group];
         if (other && sim::offHanded(*other, who.kin) && other->group == row.group) {
-            say(std::string("two ") + kPairs[row.group] + ", each hand deals", "100%",
-                Tone::Green);
+            say(std::string("two ") + kPairs[row.group] + ",", "100% each", Tone::Green);
         } else if (other && sim::offHanded(*other, who.kin)) {
-            say(mine + " and " + kKinds[other->group] + ", each hand deals", share, Tone::Red);
+            say(mine + " and " + kKinds[other->group] + ",", share + " each", Tone::Red);
         } else {
-            say("with another " + mine + ", each hand deals", "100%", Tone::White);
-            say("with another weapon type, each hand deals", share, Tone::Gray);
+            say(std::string("100% with two ") + kPairs[row.group] + ",", share + " mixed",
+                Tone::White);
         }
     }
     const bool worn = row.armour() || row.shield();
@@ -440,9 +440,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (sim::jewellery(row) && sim::elementOf(row) != sim::Element::None) {
         static const char* const kElement[] = {"", "Ice resistance", "Poison resistance",
                                                "Lightning resistance", "Fire resistance"};
+        // None printed at +0, where it read as a broken line (the tooltip audit, 2026-10-05).
         const int resists = sim::resistanceOf(row, what.refinement);
-        does.rows.push_back(stat(kElement[int(sim::elementOf(row))], "+" + std::to_string(resists),
-                                 resists > 0 ? Tone::White : Tone::Gray));
+        if (resists > 0) {
+            does.rows.push_back(stat(kElement[int(sim::elementOf(row))],
+                                     "+" + std::to_string(resists), Tone::White));
+        }
     }
     // A powered piece's powers at its plus (sim::affixValue): its signature first, white, and the
     // ones the drop added after it in the name's colour.
@@ -481,8 +484,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // The Horn of Uniria. MuMain's card has only its Life; "Moving speed" is GT 68, the line
         // later mounts print (ZzzInventory.cpp:4081). Ours, so the card says what the horn is for.
         if (power.mount) {
-            say("Moving speed: ride outside town, faster than running");
-            say("Ridden in Lorencia, Devias, Noria and Atlans, never in a dungeon");
+            say("Faster than running, outside town and dungeons");
         }
         if (power.dealt > 1.0) {
             say("Increase " + std::to_string(int(std::lround((power.dealt - 1.0) * 100.0))) +
@@ -586,10 +588,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             const sim::SkillRow* skill = sim::skillNumbered(row.skill);
             rolled("Skill", skill && skill->name[0] ? skill->name : "carried");
         }
-        if (what.luck) {
-            rolled("Luck", "Critical damage rate +5%");
-            rolled("Luck", "Jewel of Soul success rate +25%");
-        }
+        // One line (the tooltip audit, 2026-10-05), where MU prints two.
+        if (what.luck) rolled("Luck", "+5% critical, +25% Jewel of Soul success");
         if (what.option > 0) {
             const std::string value = std::to_string(sim::optionValue(row, what.option));
             // A ring's and a pendant's is AT_LIFE_REGENERATION, MuMain's "Automatic HP recovery".
@@ -644,9 +644,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             Row line;
             if (const sim::PowerRow* power = sim::powerOf(powerAt(what, at))) {
                 sheet.rune = runeRow(tables);
+                // The name in its rarity, the effect white (the tooltip audit, 2026-10-05).
                 line.keyword = power->name;
+                line.keywordTone = rarityTone(power->rarity);
                 line.free = power->tells ? power->tells : "";
-                line.freeTone = rarityTone(power->rarity);
+                line.freeTone = Tone::White;
                 line.mark = tip::Mark::RingSet;
                 line.markTone = rarityTone(power->rarity);
                 socket.rows.push_back(line);
@@ -667,25 +669,17 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                                    tables.arms[size_t(arm)].missile();
                     sim::Fighter swing;
                     int health = 0;
-                    sim::reckon(who.kin, who.level, who.points, arms, &swing, &health);
+                    sim::reckon(who.kin, who.level, who.totals, arms, &swing, &health);
                     const float share = storm ? sim::kStormcallForce : sim::kFrostWound;
-                    const int energy = who.points.energy;
+                    const int energy = who.totals.energy;
                     const int eLow = int(energy * sim::kRuneEnergyLow);
                     const int eHigh = int(energy * sim::kRuneEnergyHigh);
                     const int low = std::max(1, int(float(swing.minimumDamage) * share)) + eLow;
                     const int high = std::max(1, int(float(swing.maximumDamage) * share)) + eHigh;
+                    // The figure alone; the sum under it was noise (the tooltip audit).
                     socket.rows.push_back(stat(storm ? "Lightning" : "Frost wound",
                                                std::to_string(low) + " ~ " + std::to_string(high),
                                                Tone::Yellow));
-                    char sum[96];
-                    std::snprintf(sum, sizeof(sum), "%s %d ~ %d, +%d ~ %d from %d ene",
-                                  storm ? "his swing" : arrow ? "half the arrow" : "half his swing",
-                                  int(float(swing.minimumDamage) * share),
-                                  int(float(swing.maximumDamage) * share), eLow, eHigh, energy);
-                    Row how;
-                    how.free = sum;
-                    how.freeTone = Tone::Gray;
-                    socket.rows.push_back(how);
                 }
                 // Evil Spirit's blow as Realm::spiritStrike rolls it: the spell's 45 through
                 // `sim::cast`, on his wizardry band, or his energy's where his class has none.
@@ -693,9 +687,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                     const sim::SkillRow* spell = sim::skillNumbered(sim::skill::kEvilSpirit);
                     const bool band = who.wizardMinimum > 0.0 || who.wizardMaximum > 0.0;
                     const double bandLow = band ? who.wizardMinimum
-                                                : double(who.points.energy) * sim::kRuneEnergyLow;
+                                                : double(who.totals.energy) * sim::kRuneEnergyLow;
                     const double bandHigh = band ? who.wizardMaximum
-                                                 : double(who.points.energy) * sim::kRuneEnergyHigh;
+                                                 : double(who.totals.energy) * sim::kRuneEnergyHigh;
                     const int damage = spell ? spell->damage : 0;
                     const int low = int((bandLow + double(damage)) * who.wizardryRate);
                     const int high =
@@ -703,14 +697,6 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                     socket.rows.push_back(stat("Each spirit",
                                                std::to_string(low) + " ~ " + std::to_string(high),
                                                Tone::Yellow));
-                    char sum[96];
-                    std::snprintf(sum, sizeof(sum), "spell %d ~ %d, +%d ~ %d from %d ene", damage,
-                                  damage + damage / 2, int(bandLow), int(bandHigh),
-                                  who.points.energy);
-                    Row how;
-                    how.free = sum;
-                    how.freeTone = Tone::Gray;
-                    socket.rows.push_back(how);
                 }
                 continue;
             } else {
@@ -732,25 +718,41 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         pieces.framed = true;
         const size_t space = row.label.rfind(' ');
         pieces.kicker = (space == std::string::npos ? row.label : row.label.substr(0, space)) + " Set";
+        // Folded (the tooltip audit, 2026-10-05): the count in the heading, then what he wears
+        // in green and what he lacks in gray, a line each, where it was a line a piece.
         bool all = true, excellent = true;
+        int on = 0;
+        std::string wearing, lacking;
+        static const char* const kPiece[5] = {"Helm", "Armor", "Pants", "Gloves", "Boots"};
         for (int slot = sim::kHelm; slot <= sim::kBoots; ++slot) {
             const int group = slot - sim::kHelm + sim::kGroupHelms;
-            const content::ItemRow* piece = nullptr;
-            for (const content::ItemRow& r : tables.items) {
-                if (r.group == group && r.number == set) piece = &r;
-            }
             const sim::Held& worn = bag[slot];
-            const bool on = !worn.empty() && size_t(worn.item) < tables.items.size() &&
-                            tables.items[size_t(worn.item)].group == group &&
-                            tables.items[size_t(worn.item)].number == set;
-            all = all && on;
-            excellent = excellent && on && worn.excellent != 0;
-            if (!piece) continue;
-            Row line;
-            line.free = piece->label;
-            line.freeTone = on ? Tone::Green : Tone::Gray;
-            pieces.rows.push_back(line);
+            const bool has = !worn.empty() && size_t(worn.item) < tables.items.size() &&
+                             tables.items[size_t(worn.item)].group == group &&
+                             tables.items[size_t(worn.item)].number == set;
+            all = all && has;
+            excellent = excellent && has && worn.excellent != 0;
+            on += has ? 1 : 0;
+            std::string& list = has ? wearing : lacking;
+            list += (list.empty() ? "" : ", ") + std::string(kPiece[slot - sim::kHelm]);
         }
+        // A framed block draws no kicker, so the name and the count are its first line.
+        {
+            Row head;
+            head.free = pieces.kicker;
+            head.tail = std::to_string(on) + "/5";
+            head.freeTone = on == 5 ? Tone::Green : Tone::White;
+            pieces.rows.push_back(head);
+        }
+        const auto listed = [&](const std::string& words, Tone tone) {
+            if (words.empty()) return;
+            Row line;
+            line.free = words;
+            line.freeTone = tone;
+            pieces.rows.push_back(line);
+        };
+        listed(wearing, Tone::Green);
+        listed(lacking, Tone::Gray);
         const auto step = [&](const std::string& when, double rate, bool stands) {
             Row line;
             line.free = when + ": Defense";
@@ -758,49 +760,70 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.freeTone = stands ? Tone::Green : Tone::Gray;
             pieces.rows.push_back(line);
         };
-        step("Complete set", sim::kSetDefense, all && !excellent);
-        step("Excellent set", sim::kExcellentSetDefense, excellent);
+        step("Full set", sim::kSetDefense, all && !excellent);
+        // The excellent step only on an excellent piece (the user, 2026-10-05: 'dont show all
+        // excelence def bonus, there is no point if user does not have the item').
+        if (what.excellent != 0) step("All excellent", sim::kExcellentSetDefense, excellent);
         sheet.sections.push_back(pieces);
     }
     // A Rune of Creation: the power it carries, what that does, and whose and where it goes.
     if (sim::creation(row)) {
         if (const sim::PowerRow* power = sim::powerOf(powerAt(what, 0))) {
             sheet.rune = runeRow(tables);
-            Section carries;
-            Row line;
-            line.keyword = power->name;
-            line.mark = tip::Mark::RingSet;
-            line.markTone = rarityTone(power->rarity);
-            line.free = power->tells ? power->tells : "";
-            line.freeTone = rarityTone(power->rarity);
-            carries.rows.push_back(line);
-            // Its group (sim::PowerRow): the classes, and the sockets that take it.
+            // **Named for its power** (the tooltip audit, 2026-10-05): every rune was titled
+            // "Rune of Creation" and the power was a line under it, so two in the bag read alike.
+            // The name is the power in its rarity, the type line its rarity and whose it is.
             const bool everyone = power->classes == sim::kEveryClass;
-            std::string classes = everyone ? "Every class" : "";
+            std::string classes = everyone ? "every class" : "";
             // A second class's rune names the second: 'Blade Knight' (sim::PowerRow::second).
             for (size_t i = 0; !everyone && i < 3; ++i) {
                 if (!power->takenBy(sim::Kin(i), true)) continue;
                 classes += (classes.empty() ? "" : " / ") +
                            std::string(power->second ? sim::className(int(i), true) : kNames[i]);
             }
-            std::vector<const char*> kinds;
-            if (power->slots & sim::kInWeapon) kinds.push_back("weapon's");
-            if (power->slots & sim::kInArmour) kinds.push_back("armour's");
-            if (power->slots & sim::kInShield) kinds.push_back("shield's");
-            if (power->slots & sim::kInJewellery) {
-                kinds.push_back("ring's");
-                kinds.push_back("pendant's");
+            sheet.name = power->name;
+            sheet.base = std::string(sim::rarityName(power->rarity)) + " rune \xC2\xB7 " + classes;
+            Section carries;
+            // A rune that is a number ("+10% all stats") has it as the card's headline, as a
+            // weapon has its damage; one that does something is a line with its stone.
+            const std::string tells = power->tells ? power->tells : "";
+            const size_t space = tells.find(' ');
+            if (!tells.empty() && tells[0] == '+' && space != std::string::npos) {
+                sheet.hero.value = tells.substr(0, space);
+                sheet.hero.tone = rarityTone(power->rarity);
+                sheet.hero.word = tells.substr(space + 1);
+            } else {
+                Row line;
+                line.mark = tip::Mark::RingSet;
+                line.markTone = rarityTone(power->rarity);
+                line.free = tells;
+                line.freeTone = Tone::White;
+                carries.rows.push_back(line);
             }
-            std::string sockets = kinds.empty() || kinds[0][0] != 'a' ? "a " : "an ";
-            for (size_t k = 0; k < kinds.size(); ++k) {
-                sockets += k == 0 ? "" : k + 1 == kinds.size() ? " or " : ", ";
-                sockets += kinds[k];
+            // **Which equipment it goes in** (the user, 2026-10-05: 'we need to show on rune
+            // tooltips for which equipment slot is usable'), as few words as say it.
+            constexpr uint8_t kAll =
+                sim::kInWeapon | sim::kInShield | sim::kInArmour | sim::kInJewellery;
+            std::string fits;
+            const auto add = [&fits](const char* piece) {
+                fits += (fits.empty() ? "" : ", ") + std::string(piece);
+            };
+            if (power->slots == kAll) {
+                // 'if rune can be used for all slots, just say all'
+                fits = "All slots";
+            } else if (power->slots == (kAll & ~sim::kInWeapon)) {
+                fits = "All but weapons";
+            } else {
+                if (power->slots & sim::kInWeapon) add("Weapon");
+                if (power->slots & sim::kInShield) add("Shield");
+                if (power->slots & sim::kInArmour) add("Helm to Boots, Wings");
+                if (power->slots & sim::kInJewellery) add("Ring, Pendant");
             }
-            Row where;
-            where.free = std::string(sim::rarityName(power->rarity)) + " \xC2\xB7 " + classes +
-                         " \xC2\xB7 " + sockets + " socket";
-            where.freeTone = Tone::Gray;
-            carries.rows.push_back(where);
+            carries.rows.push_back(stat("Fits", fits, Tone::White));
+            Row how;
+            how.free = "Drop it on an item with an empty socket";
+            how.freeTone = Tone::Gray;
+            carries.rows.push_back(how);
             sheet.sections.push_back(carries);
         }
     }
@@ -862,7 +885,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             if (skill->onSelf()) {
                 teaches.rows.push_back(
                     stat("Absorbs",
-                         sim::absorbed(sim::boonShare(*skill, who.points, who.shieldDefense)) +
+                         sim::absorbed(sim::boonShare(*skill, who.totals, who.shieldDefense)) +
                              " of every blow",
                          known ? Tone::Gray : Tone::Green));
                 teaches.rows.push_back(stat("Lasts",
@@ -875,7 +898,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             } else {
                 char sum[64];
                 std::snprintf(sum, sizeof sum, "%.2f of a swing",
-                              double(sim::force(*skill, who.points)));
+                              double(sim::force(*skill, who.totals)));
                 teaches.rows.push_back(
                     stat("Damage", "x" + std::string(sum), known ? Tone::Gray : Tone::Yellow));
                 // And the sum that made it, grey and on one line, exactly as the skill card
@@ -883,7 +906,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 // It is what argues for spending a point on strength, and on a shelf it is
                 // what tells one orb's ceiling from another's.
                 std::snprintf(sum, sizeof sum, "%.2f + %d str / %d", double(skill->force),
-                              who.points.strength,
+                              who.totals.strength,
                               skill->forcePerStrength > 0.0f
                                   ? int(1.0f / skill->forcePerStrength + 0.5f)
                                   : 0);

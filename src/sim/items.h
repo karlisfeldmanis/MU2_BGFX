@@ -376,6 +376,9 @@ struct Wearer {
     uint32_t hand = 0, offHand = 0;
     // Whether he is his class's second (Body::second, Sevina's): what a 2nd level wing asks.
     bool second = false;
+    // His points with the stat runes in (Body::totalPoints): what a card's damage reads.
+    // `points` stays the spent ones, which is what an item's asks are met by.
+    HeroPoints totals;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
@@ -599,7 +602,18 @@ enum class Power : uint8_t {
     Steadfast = 25,
     SecondWind = 26,
     Whirlwind = 27,
-    Volley = 28
+    Volley = 28,
+    // The stat runes (sim::statShareOf), two tiers of each.
+    LesserMight = 29,
+    GreaterMight = 30,
+    LesserGrace = 31,
+    GreaterGrace = 32,
+    LesserVigor = 33,
+    GreaterVigor = 34,
+    LesserInsight = 35,
+    GreaterInsight = 36,
+    LesserAscendance = 37,
+    GreaterAscendance = 38
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -612,7 +626,7 @@ constexpr uint8_t kKnightOnly = classBit(Kin::DarkKnight);
 constexpr uint8_t kEveryClass = kWizardOnly | kElfOnly | kKnightOnly;
 constexpr uint8_t kInWeapon = 1;     // either hand's weapon, never a shield
 constexpr uint8_t kInShield = 2;
-constexpr uint8_t kInArmour = 4;     // helm, armour, pants, gloves, boots
+constexpr uint8_t kInArmour = 4;     // helm, armour, pants, gloves, boots, and wings (2026-10-05)
 constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
 // **A rune's rarity** (the user, 2026-10-02: "we need also make group of rarity of runes"), on
 // WoW's ladder as the item names are (game/ui describe's qualityOf): Rare blue, Epic purple,
@@ -687,6 +701,17 @@ constexpr double kSpiritChance = 0.15;
 constexpr float kSpiritReach = 10.0f;      // `< 10`: a tile short of it
 constexpr double kSpiritOdds = 2.0 / 3.0;  // rand()%3 < 2
 constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty ticks a second
+// **The stat runes** (the user, 2026-10-05: "+10% all stats ... +10% agility, energy, vitality,
+// str"), then 'lets keep only +10 and +30': Might is strength, Grace agility, Vigor vitality,
+// Insight energy, Ascendance all four, at 10 percent (Lesser) and 30 (Greater). Every class's, in
+// any socket -- Ascendance a weapon's alone (the user, 2026-10-05: 'runes which increase all
+// stats only on weapons'). The share is of
+// the points he has spent, summed over every rune worn, and is added on top of them for all that
+// a point buys (Body::totalPoints) but never for what an item asks to be worn: a rune that let
+// the piece it sits in be worn would hold itself up. The tiers are mine: a single stat at 10 is
+// Rare, at 30 Epic; all four at 10 Epic, at 30 Legendary. invention.
+// Percent of each stat this power adds, all zero for a power that is not a stat rune.
+HeroPoints statShareOf(Power power);
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
 // The Rune of Creation's row: 14, 22.
@@ -696,6 +721,10 @@ bool creation(const content::ItemRow& row);
 inline bool takesSockets(const content::ItemRow& row) {
     return takesOptions(row) || jewellery(row);
 }
+// What may hold sockets at all: all of those, and the wings, which roll none as a drop but take
+// them at the Chaos Machine's Add Socket (the user, 2026-10-05: 'allow to add sockets to wings
+// on chaos machine') and then an armour's rune (settable).
+inline bool socketsFit(const content::ItemRow& row) { return takesSockets(row) || anyWing(row); }
 constexpr int kMostSockets = 3;
 // A ring holds one socket at most (the user, 2026-10-02: "maximum amount of sockets for rings
 // is 1"); everything else kMostSockets. Every way in caps it here: a drop, a quest, a debug lay.

@@ -39,9 +39,17 @@ bool Realm::questOffered(int index) const {
 int Realm::questHere(int32_t giver) const {
     int ready = -1, active = -1, untaken = -1, back = -1, rested = -1, first = -1;
     for (int i = 0; i < kQuests; ++i) {
-        if (questAt(i).giver != giver) continue;
+        const QuestRow& row = questAt(i);
+        // One someone else gave, which this one takes back: only its hand-in is hers.
+        if (questElsewhere(row) && row.receiver == giver) {
+            if (quests_[i].state == QuestState::Ready && ready < 0) ready = i;
+            continue;
+        }
+        if (row.giver != giver) continue;
         if (first < 0) first = i;
-        const QuestState state = quests_[i].state;
+        QuestState state = quests_[i].state;
+        // And at its giver, one handed in elsewhere is under way until it is.
+        if (questElsewhere(row) && state == QuestState::Ready) state = QuestState::Active;
         if (state == QuestState::Ready && ready < 0) ready = i;
         if (state == QuestState::Active && active < 0) active = i;
         if (state == QuestState::Untaken && untaken < 0 && questOffered(i)) untaken = i;
@@ -77,8 +85,13 @@ int Realm::questsAt(int32_t giver, int* out) const {
     int n = 0;
     for (int i = 0; i < kQuests; ++i) {
         const QuestRow& row = questAt(i);
-        if (row.giver != giver || !questOpen(row, int(bodies_[0].kin))) continue;
         const QuestState state = quests_[i].state;
+        // Its receiver lists it while it waits to be handed in to her.
+        if (questElsewhere(row) && row.receiver == giver) {
+            if (state == QuestState::Ready) out[n++] = i;
+            continue;
+        }
+        if (row.giver != giver || !questOpen(row, int(bodies_[0].kin))) continue;
         // A link of a chain handed in for good is gone from the list; a repeat waits there.
         const bool listed = state == QuestState::Active || state == QuestState::Ready ||
                             questOffered(i) || questUnderLevel(i) ||
@@ -150,6 +163,15 @@ void Realm::countKill(const Body& dead) {
             say(What::QuestStep, bodies_[0], index, one.counts[step], step);
         }
         if (counted) questSettle(index);
+    }
+}
+
+// Met: every quest under way whose receiver is this one, and not its giver, settles -- its only
+// uncounted step was finding her, so a quest with no counts left is ready to hand in to her.
+void Realm::questMet(int32_t number) {
+    for (int index = 0; index < kQuests; ++index) {
+        const QuestRow& row = questAt(index);
+        if (questElsewhere(row) && row.receiver == number) questSettle(index);
     }
 }
 
@@ -245,7 +267,8 @@ void Realm::treasure(const Body& dead) {
 bool Realm::completeQuest(int index, int choice) {
     if (index < 0 || index >= kQuests || questing_ < 0 || !serving(questing_)) return false;
     const QuestRow& row = questAt(index);
-    if (tables_->folk[size_t(questing_)].number != row.giver) return false;
+    // Handed in to whoever takes it back: Lirien for Peia's 'The Drowned Song'.
+    if (tables_->folk[size_t(questing_)].number != questReceiver(row)) return false;
     QuestProgress& one = quests_[index];
     if (one.state != QuestState::Ready) return false;
     // A Find's thing must still be in the bag: sold or thrown away, the step is open again and

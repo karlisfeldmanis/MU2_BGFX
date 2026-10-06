@@ -86,7 +86,7 @@ void Realm::reswing(Body& hero) {
     const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
                       hero.frenzySpeed(tick_);
     const int milliseconds =
-        swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left, extra);
+        swingMilliseconds(*tables_, hero.kin, hero.totalPoints().agility, right, left, extra);
     hero.swingMs = milliseconds;
     const int32_t ticks = swingTicks(milliseconds);
     hero.swingTicks = ticks > 0 ? ticks : kHeroSwingTicks;
@@ -210,7 +210,7 @@ bool Realm::nock(Body& hero) {
     // A quiver of another plus came into the hand, or the last one left it: the band follows.
     if (quiverPlusOf(hero) != hero.quiverPlus) {
         hero.quiverPlus = int8_t(quiverPlusOf(hero));
-        reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+        reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
     }
     return true;
 }
@@ -537,8 +537,22 @@ void Realm::rearm(Body& hero) {
             if (worn.wing & kWingIgnoreDefense) hero.excel.ignoreDefense += kWingIgnoreChance;
         }
     }
+    // The stat runes, in any socket of anything worn, summed (sim::statShareOf).
+    hero.runeShare = HeroPoints{};
+    for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
+        if (!rowAt(slot)) continue;
+        for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
+            const PowerRow* power = powerOf(bag_[slot].powers[at]);
+            if (!power) continue;
+            const HeroPoints share = statShareOf(power->power);
+            hero.runeShare.strength += share.strength;
+            hero.runeShare.agility += share.agility;
+            hero.runeShare.vitality += share.vitality;
+            hero.runeShare.energy += share.energy;
+        }
+    }
     const int was = hero.maxHealth;
-    reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
     // **A guard stands only behind the shield that raised it.** Taking the shield off ends
     // Defense or Soul Barrier on the spot, aura and all (the user, 2026-09-28): the skill asks for
     // a shield to be cast, and a guard that outlived the shield would be the one way round that.
@@ -576,6 +590,7 @@ Wearer Realm::wearer() const {
                   familyOf(armAt(hero.weapon)),
                   armFamily(hero, armAt(hero.shield))};
     who.second = hero.second;
+    who.totals = hero.totalPoints();
     return who;
 }
 
@@ -1618,11 +1633,13 @@ void unstack(Grid& grid, int at, int went) {
 }  // namespace
 
 int Realm::deposit(int bagSlot, int cell) {
-    if (!banked() || !baggable(bagSlot) || bag_[bagSlot].empty()) return -1;
+    if (!banked() || bagSlot < 0 || bagSlot >= kSlots || bag_[bagSlot].empty()) return -1;
     const content::ItemRow& row = tables_->items[size_t(bag_[bagSlot].item)];
+    const bool worn = wearable(bagSlot);
     if (cell < 0) {
         cell = pour(*tables_, vault_, 0, kVaultCells, bag_[bagSlot]);
         if (cell >= 0) bag_.lift(bagSlot);
+        if (cell >= 0 && worn) rearm(bodies_[0]);
         return cell;
     }
     const int onto = vault_.holder(*tables_, cell);
@@ -1630,14 +1647,33 @@ int Realm::deposit(int bagSlot, int cell) {
         unstack(bag_, bagSlot, went);
         return onto;
     }
+    // A jewel let go on a thing it works: applied, not stored.
+    if (onto >= 0 && worksOn(bag_[bagSlot], vault_[onto])) {
+        return refineAcross(Store::Bag, bagSlot, Store::Vault, onto) ? onto : -1;
+    }
     if (!vault_.room(*tables_, cell, row.width, row.height)) return -1;
     vault_.put(cell, bag_.lift(bagSlot));
+    if (worn) rearm(bodies_[0]);
     return cell;
 }
 
 int Realm::withdraw(int cell, int bagSlot) {
-    if (!banked() || vault_[cell].empty()) return -1;
+    if (!banked() || cell < 0 || cell >= kVaultCells || vault_[cell].empty()) return -1;
     const content::ItemRow& row = tables_->items[size_t(vault_[cell].item)];
+    // Onto what he wears: a jewel onto it, or the thing put on.
+    if (bagSlot >= 0 && wearable(bagSlot)) {
+        if (worksOn(vault_[cell], bag_[bagSlot])) {
+            return refineAcross(Store::Vault, cell, Store::Bag, bagSlot) ? bagSlot : -1;
+        }
+        return wearFromVault(cell, bagSlot);
+    }
+    if (bagSlot >= 0 && baggable(bagSlot)) {
+        const int under = bag_.holder(*tables_, bagSlot);
+        // A jewel never works on a jewel, so this never takes a stack's top-up from it.
+        if (under >= 0 && worksOn(vault_[cell], bag_[under])) {
+            return refineAcross(Store::Vault, cell, Store::Bag, under) ? under : -1;
+        }
+    }
     if (bagSlot < 0) {
         bagSlot = pour(*tables_, bag_, kWorn, kSlots, vault_[cell]);
         if (bagSlot >= 0) vault_.lift(cell);
@@ -1653,9 +1689,143 @@ int Realm::withdraw(int cell, int bagSlot) {
     return bagSlot;
 }
 
+// Put on from the vault: `move`'s gates on a trial bag holding nothing carried but the thing,
+// then what that took off goes back to the vault -- into this cell first -- or the bag.
+int Realm::wearFromVault(int cell, int worn) {
+    Satchel trial = bag_;
+    for (int s = kWorn; s < kSlots; ++s) {
+        if (!trial[s].empty()) trial.lift(s);
+    }
+    trial.put(kWorn, vault_[cell]);
+    if (!move(*tables_, wearer(), trial, kWorn, worn)) return -1;
+    const Vault vaultWas = vault_;
+    const Satchel bagWas = bag_;
+    vault_.lift(cell);
+    bool first = true;
+    for (int s = kWorn; s < kSlots; ++s) {
+        if (trial[s].empty()) continue;
+        const Held off = trial[s];
+        const content::ItemRow& row = tables_->items[size_t(off.item)];
+        int into = first && vault_.room(*tables_, cell, row.width, row.height)
+                       ? cell
+                       : vault_.free(*tables_, row.width, row.height);
+        first = false;
+        if (into >= 0) {
+            vault_.put(into, off);
+            continue;
+        }
+        into = bag_.free(*tables_, row.width, row.height);
+        if (into < 0) {
+            vault_ = vaultWas;
+            bag_ = bagWas;
+            refusal_ = "no room for what it would take off";
+            return -1;
+        }
+        bag_.put(into, off);
+    }
+    for (int s = 0; s < kWorn; ++s) {
+        if (bag_[s].empty() && trial[s].empty()) continue;
+        if (trial[s].empty()) bag_.lift(s);
+        else bag_.put(s, trial[s]);
+    }
+    rearm(bodies_[0]);
+    return worn;
+}
+
+bool Realm::worksOn(const Held& jewel, const Held& thing) const {
+    if (!tables_ || jewel.empty() || thing.empty()) return false;
+    const Body& hero = bodies_[0];
+    return settable(*tables_, jewel, thing, hero.kin, hero.second) ||
+           refinable(*tables_, jewel, thing);
+}
+
+bool Realm::refineAcross(Store jewelIn, int jewelAt, Store thingIn, int thingAt) {
+    if (!tables_) return false;
+    if (jewelIn == Store::Bag && thingIn == Store::Bag) return refine(jewelAt, thingAt);
+    const auto open = [&](Store s, int at) {
+        switch (s) {
+            case Store::Bag: return at >= 0 && at < kSlots;
+            case Store::Vault: return banked() && at >= 0 && at < kVaultCells;
+            case Store::Machine: return atMachine() && !mixed_ && at >= 0 && at < kMachineCells;
+        }
+        return false;
+    };
+    if (!open(jewelIn, jewelAt) || !open(thingIn, thingAt)) return false;
+    const auto held = [&](Store s, int at) -> Held {
+        return s == Store::Bag ? bag_[at] : s == Store::Vault ? vault_[at] : machine_[at];
+    };
+    const auto keep = [&](Store s, int at, const Held& what) {
+        if (s == Store::Bag) {
+            if (what.empty()) bag_.lift(at);
+            else bag_.put(at, what);
+        } else if (s == Store::Vault) {
+            if (what.empty()) vault_.lift(at);
+            else vault_.put(at, what);
+        } else {
+            if (what.empty()) machine_.lift(at);
+            else machine_.put(at, what);
+        }
+    };
+    const Held jewel = held(jewelIn, jewelAt);
+    const Held thing = held(thingIn, thingAt);
+    if (!worksOn(jewel, thing)) return false;
+    const content::ItemRow& thingRow = tables_->items[size_t(thing.item)];
+    const content::ItemRow& jewelRow = tables_->items[size_t(jewel.item)];
+    const bool wornThing = thingIn == Store::Bag && wearable(thingAt);
+    // A worn thing a plus could outgrow comes off into the bag: room for it there, asked first.
+    if (wornThing && bag_.free(*tables_, thingRow.width, thingRow.height) < 0) {
+        refusal_ = "no room in the bag for what he could no longer wear";
+        return false;
+    }
+    // The stage: what he wears, the jewel and the thing, and nothing else carried.
+    Satchel stage = bag_;
+    for (int s = kWorn; s < kSlots; ++s) {
+        if (!stage[s].empty()) stage.lift(s);
+    }
+    int j = jewelAt, t = thingAt;
+    if (jewelIn == Store::Bag) stage.put(j, jewel);
+    if (thingIn == Store::Bag && !wornThing) stage.put(t, thing);
+    if (thingIn != Store::Bag) {
+        t = stage.free(*tables_, thingRow.width, thingRow.height);
+        if (t < 0) return false;
+        stage.put(t, thing);
+    }
+    if (jewelIn != Store::Bag) {
+        j = stage.free(*tables_, jewelRow.width, jewelRow.height);
+        if (j < 0) return false;
+        stage.put(j, jewel);
+    }
+    const Satchel real = bag_;
+    bag_ = stage;
+    const bool done = refine(j, t);
+    const Satchel after = bag_;
+    bag_ = real;
+    if (!done) return false;
+    // Back where each came from: the jewel's remainder, then the thing.
+    keep(jewelIn, jewelAt, after[j]);
+    if (wornThing && after[t].empty()) {
+        // Outgrown: off him and into the bag (refine's own rule), wherever it landed on the stage.
+        for (int s = kWorn; s < kSlots; ++s) {
+            if (s == j || after[s].empty()) continue;
+            const int into = bag_.free(*tables_, thingRow.width, thingRow.height);
+            bag_.lift(t);
+            bag_.put(into, after[s]);
+            break;
+        }
+    } else {
+        keep(thingIn, thingAt, after[t]);
+    }
+    if (wornThing) rearm(bodies_[0]);
+    jeweled_ = true;
+    return true;
+}
+
 bool Realm::rearrange(int from, int to) {
     if (!banked() || from == to || vault_[from].empty()) return false;
     const int onto = vault_.holder(*tables_, to);
+    if (onto >= 0 && onto != from && worksOn(vault_[from], vault_[onto])) {
+        return refineAcross(Store::Vault, from, Store::Vault, onto);
+    }
     if (onto >= 0 && onto != from) {
         if (const int went = topUp(*tables_, vault_, onto, vault_[from])) {
             unstack(vault_, from, went);

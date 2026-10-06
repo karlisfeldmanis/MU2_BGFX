@@ -296,7 +296,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             halt(struck);
             say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
         }
-        const int energy = hero.points.energy;
+        const int energy = hero.totalPoints().energy;
         // It may land critical as his swing may (the user, 2026-10-01: "they can critical
         // hit"), off his own chance and the sockets' stream: the top of the energy band, as a
         // critical is the maximum in `strike`, and the whole arrow where a plain one takes
@@ -349,7 +349,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         // -- kFrostWound of his swing and his energy's band, critical off his own chance at the
         // swing whole and the top of the band. ours.
         if (ice) {
-            const int energy = hero.points.energy;
+            const int energy = hero.totalPoints().energy;
             const bool critical = hero.stats.criticalChance > 0.0 &&
                                   runeDice_.nextBool(hero.stats.criticalChance);
             const int high = int(energy * kRuneEnergyHigh);
@@ -470,8 +470,8 @@ void Realm::runeStrike(Body& hero, Body& target, float force) {
     // lays its rate for one in strikeAt. The first hand's band only: a second hand's is summed
     // in anyway, and raising an empty one would roll a weapon he does not hold.
     const Fighter swing = hero.stats;
-    const int low = int(hero.points.energy * kRuneEnergyLow);
-    const int high = int(hero.points.energy * kRuneEnergyHigh);
+    const int low = int(hero.totalPoints().energy * kRuneEnergyLow);
+    const int high = int(hero.totalPoints().energy * kRuneEnergyHigh);
     hero.stats.minimumDamage += low;
     hero.stats.maximumDamage += high;
     strikeAt(hero, target, force, nullptr, true, false);
@@ -530,8 +530,8 @@ void Realm::spiritStrike(Body& hero, const SpiritBlow& blow) {
     if (row == nullptr || target == nullptr || !target->alive()) return;
     const Fighter own = hero.stats;
     if (hero.stats.wizardMinimum <= 0.0 && hero.stats.wizardMaximum <= 0.0) {
-        hero.stats.wizardMinimum = double(hero.points.energy) * kRuneEnergyLow;
-        hero.stats.wizardMaximum = double(hero.points.energy) * kRuneEnergyHigh;
+        hero.stats.wizardMinimum = double(hero.totalPoints().energy) * kRuneEnergyLow;
+        hero.stats.wizardMaximum = double(hero.totalPoints().energy) * kRuneEnergyHigh;
     }
     const size_t said = happenings_.size();
     strikeAt(hero, *target, blow.force, row, true, false);
@@ -1552,7 +1552,7 @@ void Realm::gain(Body& hero, int32_t award) {
         hero.pointsInHand += kPointsPerLevel;
         // Re-reckoned and then refilled, in that order: the health a level gives is part of
         // the maximum it is refilled to.
-        reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+        reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
         keepBoon(hero);
         restoreMana(hero);
         reswing(hero);

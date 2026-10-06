@@ -91,7 +91,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     specimen_.open(interface_);
     interface_.adopt(ground_);
     // Baked at 48 as the controls' faces are, larger than a label is ever drawn, and minified.
-    if (groundFace_.bake(MU2_ROOT_DIR "/extern/Alegreya-Medium.ttf", 48.0f, 512, 4, 1, 0)) {
+    if (groundFace_.bake(MU2_ROOT_DIR "/extern/Amarante-Regular.ttf", 48.0f, 512, 4, 1, 0)) {
         groundTexture_ = gfx::uploadFace(groundFace_, "ground labels");
         groundFace_.dropPixels();
     } else {
@@ -254,7 +254,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (page >= 0 && !reading) {
             static const char* const kPage[4] = {"offer", "underway", "handin", "resting"};
             const char* who = sim::questAt(quest).voice;
-            if (who && *who) voiced = std::string("voice/") + who + "/" + who + "_" + kPage[page] + ".wav";
+            // A hand-in another takes back is in her words, read in her own voice: Lirien's.
+            const bool theirs = page == 2 && sim::questElsewhere(sim::questAt(quest));
+            if (theirs) who = sim::questAt(quest).receiverVoice;
+            if (who && *who) {
+                voiced = std::string("voice/") + who + "/" + who + "_" + kPage[page] + ".wav";
+            }
         }
         if (voiced != voiced_) {
             voiced_ = voiced;
@@ -605,8 +610,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         ChestRequests asked;
         // The bag's drag as it stood last frame: the bag updates after the vault.
         const bool fromBag = inventoryOpen_ && bag_.dragging();
-        chest_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr,
-                        fromBag && sim::baggable(bag_.dragged()));
+        // A worn piece too, straight off him (Realm::deposit, 2026-10-05).
+        chest_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr, fromBag);
         chest_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
                       shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
@@ -651,7 +656,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         MixerRequests asked;
         const bool fromBag = inventoryOpen_ && bag_.dragging();
         mixer_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr,
-                        fromBag && sim::baggable(bag_.dragged()) && !play.realm().mixed());
+                        fromBag && !play.realm().mixed());
         mixer_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(),
                       play.mixAnswer(), play.mixWords(), pointer, shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
@@ -1411,7 +1416,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         // is asked. It was "x0.50 for 4.0 s", which left the player to do the sum.
         facts.rows.push_back(
             line("Absorbs",
-                 sim::absorbed(sim::boonShare(row, hero.points, hero.shieldDefense)) + " of every blow",
+                 sim::absorbed(sim::boonShare(row, hero.totalPoints(), hero.shieldDefense)) + " of every blow",
                  tip::Tone::Green));
         // And what it is made of, grey and on one line as an attack's sum is: the points off the
         // shield, the main stat and agility, and the cap they climb towards. Each names only
@@ -1420,11 +1425,11 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         char sum[96];
         if (row.number == sim::skill::kSoulBarrier) {
             std::snprintf(sum, sizeof(sum), "%d shield, %d ene, %d agi (max %d%%)",
-                          hero.shieldDefense, hero.points.energy, hero.points.agility,
+                          hero.shieldDefense, hero.totalPoints().energy, hero.totalPoints().agility,
                           int(sim::kGuardCap * 100.0f + 0.5f));
         } else {
             std::snprintf(sum, sizeof(sum), "%d shield, %d str, %d agi (max %d%%)",
-                          hero.shieldDefense, hero.points.strength, hero.points.agility,
+                          hero.shieldDefense, hero.totalPoints().strength, hero.totalPoints().agility,
                           int(sim::kGuardCap * 100.0f + 0.5f));
         }
         tip::Row how;
@@ -1434,7 +1439,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         facts.rows.push_back(line("Lasts", sim::spoken(float(row.boonTicks) * 0.05f),
                                   tip::Tone::White));
     } else {
-        facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.points), 2) +
+        facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.totalPoints()), 2) +
                                                 " of a swing",
                                   tip::Tone::Yellow));
         // And the sum that made it, on one grey line: the row's own base plus strength over the
@@ -1443,7 +1448,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         // line rather than the two labelled rows it was before.
         char sum[64];
         std::snprintf(sum, sizeof(sum), "%.2f + %d str / %d", double(row.force),
-                      hero.points.strength,
+                      hero.totalPoints().strength,
                       row.forcePerStrength > 0.0f ? int(1.0f / row.forcePerStrength + 0.5f) : 0);
         tip::Row how;
         how.free = sum;
@@ -1518,11 +1523,17 @@ void Desk::labelGround(const Play& play, int width, int height) {
     // a see-through dark strip padded past the words and fading out at both ends, lit grey under
     // the pointer, and a pile's names settling round it rather than in one tower. The name's
     // grammar is ours and unchanged. MU's own was the text's box in opaque black.
-    const bool serif = groundFace_.ready() && bgfx::isValid(groundTexture_);
-    const gfx::Face& face = serif ? groundFace_ : ground_.face();
+    // The face is Amarante, a medieval roman with a gothic hand in its capitals (the user, same
+    // day: 'font needs to be more gothic and little bit smaller label', then of Cinzel, all
+    // capitals, 'this font hard reads', and 'amarante' off a sheet of nineteen faces drawn over
+    // Lorencia's ground). Alegreya, Cinzel and Grenze before it, the same day.
+    const bool gothic = groundFace_.ready() && bgfx::isValid(groundTexture_);
+    const bgfx::TextureHandle texture = groundTexture_;
+    const gfx::Face& face = gothic ? groundFace_ : ground_.face();
     const float u = panel::unit();
-    // Diablo's names are about 19 px of em at 1080 lines; the tooltip's 16 read small beside it.
-    const float size = 9.5f * u;
+    // Under Alegreya's 9.5, as the user asked for a smaller label.
+    const float size = 8.5f * u;
+    const float track = 0.0f;  // Amarante sets its letters apart already
     // The strip's air: each end as wide as its fade, so the dark is whole where the words start.
     const float padX = 0.8f * size, padY = 0.2f * size;
     struct Label {
@@ -1564,7 +1575,8 @@ void Desk::labelGround(const Play& play, int width, int height) {
         }
         // g_hFontBold for a jewel, which is a point up here, as a tip's bold line is.
         const float set = boldOf(tables, *one) ? size + u : size;
-        const float w = face.measure(set, name) + padX * 2.0f, h = face.height(set) + padY * 2.0f;
+        const float w = face.measure(set, name) + track * float(name.size()) + padX * 2.0f;
+        const float h = face.height(set) + padY * 2.0f;
         labels.push_back({at.id, std::move(name), set, tintOf(tables, *one),
                           {at.x - w * 0.5f, at.y - h, w, h}});
     }
@@ -1641,20 +1653,33 @@ void Desk::labelGround(const Play& play, int width, int height) {
     // thinner: over a legendary's column at 0.62 a green name went into the green.
     const uint32_t body = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
     const uint32_t litBody = gfx::rgba(0.24f, 0.22f, 0.20f, 0.86f);
-    const uint32_t clear = gfx::rgba(0.0f, 0.0f, 0.0f, 0.0f);
     const float drop = std::max(1.0f, u);
+    // A minimal outline (the user, 2026-10-06: 'also use some minimal outline for label and
+    // hover effect'): a hairline along the strip's top and bottom in a bronze a little over the
+    // card's ring -- the ring's own went into the strip -- faded out across the ends as the
+    // strip is, so the ends stay open. Under the pointer the hairlines take the name's own
+    // colour and the strip lifts to warm grey.
+    const float hair = std::max(1.0f, u * 0.5f);
+    const uint32_t rim = gfx::rgba(0.58f, 0.47f, 0.35f, 0.8f);
+    const auto band = [&](const gfx::Box& b, float y, float tall, uint32_t ink) {
+        const uint32_t none = ink & 0x00FFFFFFu;
+        ground_.shade({b.x, y, padX, tall}, none, ink, ink, none);
+        ground_.rect({b.x + padX, y, b.w - padX * 2.0f, tall}, ink);
+        ground_.shade({b.x + b.w - padX, y, padX, tall}, ink, none, none, ink);
+    };
     for (const Label& l : labels) {
         const gfx::Box& b = l.plate;
-        const uint32_t ink = l.id == lit ? litBody : body;
-        ground_.shade({b.x, b.y, padX, b.h}, clear, ink, ink, clear);
-        ground_.rect({b.x + padX, b.y, b.w - padX * 2.0f, b.h}, ink);
-        ground_.shade({b.x + b.w - padX, b.y, padX, b.h}, ink, clear, clear, ink);
+        const bool on = l.id == lit;
+        band(b, b.y, b.h, on ? litBody : body);
+        const uint32_t edge = on ? l.tint : rim;
+        band(b, b.y, hair, edge);
+        band(b, b.y + b.h - hair, hair, edge);
         plates_.push_back({l.id, b});
         const float x = b.x + padX, baseline = b.y + padY + face.ascent(l.set);
-        if (serif) {
-            ground_.lettered(face, groundTexture_, x + drop, baseline + drop, l.set, 0.0f,
+        if (gothic) {
+            ground_.lettered(face, texture, x + drop, baseline + drop, l.set, track,
                              tip::ink::kDrop, l.name);
-            ground_.lettered(face, groundTexture_, x, baseline, l.set, 0.0f, l.tint, l.name);
+            ground_.lettered(face, texture, x, baseline, l.set, track, l.tint, l.name);
         } else {
             ground_.shadowed(x, baseline, l.set, l.tint, tip::ink::kDrop, drop, l.name);
         }

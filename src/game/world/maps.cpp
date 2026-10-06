@@ -31,6 +31,12 @@ constexpr MapRow kMaps[] = {
     // Portal land too. The sea floor, open water over it; MU draws it on its black clear with
     // no weather, so for now it takes the underground's air: no wind, no leaves.
     {"atlans", 7, {21, 17}, true},
+    // Tarkan, MU's map 8, entered from Atlans's south-west lagoon: its spawn gate 57, 187,54 to
+    // 203,69, the safe town in the north-east (WebZen's gate.txt 57; docs/tarkan-port.md), where
+    // a death and the Town Portal land too. 195,65 rather than the box's middle: 195,61 is a
+    // closed statue block. Not 0.75's: MU added it with patch 0.84. MU draws it on its black clear
+    // with no leaves and no wind (MainScene.cpp:78-100), so for now it takes the underground's air.
+    {"tarkan", 8, {195, 65}, true},
     // Blood Castle 1, MU's map 11: its exit gate 66, 12,5 to 14,10, in the safe court beside
     // the Archangel (OpenMU VersionSeasonSix Gates.cs:216; docs/blood-castle-port.md). Not 0.75's:
     // its first castle is Season Six's. MU draws it on its black clear with no weather

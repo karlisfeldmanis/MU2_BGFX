@@ -110,6 +110,20 @@ float wetNoise(vec2 p)
 	           mix(wetHash(i + vec2(0.0, 1.0)), wetHash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
+// How level the face under this pixel stands, 0 a wall to 1 flat, off the position's
+// derivatives. Guarded: a sliver triangle edge-on far up the screen extrapolates v_wpos to its
+// helper pixels, its derivatives come back infinite, and a plain normalize(cross()) was NaN --
+// lone white pixels on the land, bloomed into yellow dots that flashed for a frame as he walked
+// (Lorencia's bridge at 166-168,128, 2026-10-06). Clamped, a NaN falls to the bound on Metal;
+// a face with no area reads as level.
+float facetLevel(vec3 wpos)
+{
+	vec3 facet = cross(clamp(dFdx(wpos), vec3_splat(-64.0), vec3_splat(64.0)),
+	                   clamp(dFdy(wpos), vec3_splat(-64.0), vec3_splat(64.0)));
+	float area = dot(facet, facet);
+	return area > 1e-12 ? saturate(abs(facet.y) * inversesqrt(area)) : 1.0;
+}
+
 void main()
 {
 	vec3 isWater = mod(floor(vec3_splat(u_groundRelief.w) / vec3(1.0, 2.0, 4.0)), 2.0);
@@ -231,6 +245,23 @@ void main()
 		w *=vec3_splat(1.0) + isWater * (3.0 * v_weight.w - 1.0);
 		w /= max(w.x + w.y + w.z, 1e-5);
 	}
+	// No water sheet up a cliff. The Lost Tower's lava ran up its walls, its glowing sheet
+	// stretched along the face from the tile at their foot (the user, 2026-10-05: 'at LT on wall
+	// edges lava is pretty active'). The water layers fade out as the ground stands up, into
+	// whatever else the corner holds; a face that holds nothing else keeps them.
+	// How much water a steep face still holds where nothing else was there to take its place:
+	// dimmed below to crust and kept from glowing, so a lava cliff's foot is not a sheet hung on
+	// the wall.
+	float cliffWater = 0.0;
+	{
+		// The face's own slope, off the position's derivatives: the mesh's normals are smoothed
+		// over the tile beside, and on a one-tile cliff they still read nearly level.
+		float level = smoothstep(0.45, 0.8, facetLevel(v_wpos));
+		vec3 kept = w * (vec3_splat(1.0) - isWater * (1.0 - level));
+		float left = kept.x + kept.y + kept.z;
+		if (left > 0.05) w = kept / left;
+		cliffWater = saturate(dot(w, isWater) * (1.0 - level));
+	}
 	// Each layer's relief measured from its own mean, which is its last mip. Measured from
 	// nought, a dark sheet is low everywhere and loses every fade it is in: water is the
 	// darkest sheet on the map and was eaten along its whole shore. MU2 got away with it
@@ -243,6 +274,7 @@ void main()
 	w /= max(w.x + w.y + w.z, 1e-5);
 
 	vec3 albedo = albedo0 * w.x + albedo1 * w.y + albedo2 * w.z;
+	albedo *= 1.0 - 0.9 * cliffWater;
 	vec3 orm0 = LAYER(s_orm, uv0, uv0b, run0).rgb;
 	vec3 orm = orm0 * w.x;
 	vec3 nm0 = unpackNormal(LAYER(s_normal, uv0, uv0b, run0).xy);
@@ -353,8 +385,11 @@ void main()
 	// The lamps, diffuse only, for the same reason the sun is. The eye is needed for their
 	// falloff's direction and nothing else, since the specular is switched off.
 	vec3 v = normalize(u_camPos.xyz - v_wpos);
+	// A sheet that glows of itself (water_glow, the Lost Tower's lava) takes a fifth of a lamp:
+	// lit like stone, a fire left over the lava burned a white hole in it (2026-10-05).
+	float lampTaken = 1.0 - 0.8 * dot(w, isWater) * step(0.001, dot(u_waterGlow.rgb, vec3_splat(1.0)));
 	colour += lampLight(v_wpos, n, v, ownAlbedo * (1.0 - metal), vec3_splat(0.0), roughness,
-	                    saturate(dot(n, v)) + 1e-5, 0.0) * mix(1.0, sunLit, u_lampParams.w);
+	                    saturate(dot(n, v)) + 1e-5, 0.0) * mix(1.0, sunLit, u_lampParams.w) * lampTaken;
 
 	// And the wet ground's sheen: the lamps' highlight through the water's own low GGX, broad
 	// on wet stone and nearly a mirror on a puddle, whose normal is the ground's and not the
@@ -415,7 +450,29 @@ void main()
 	// The water sheet's own light in its own colours, where the sheet asks for one
 	// (water_glow): the Lost Tower's lava. Ours; zero on every other world.
 	colour += (albedo0 * (isWater.x * w.x) + albedo1 * (isWater.y * w.y)
-	         + albedo2 * (isWater.z * w.z)) * u_waterGlow.rgb;
+	         + albedo2 * (isWater.z * w.z)) * u_waterGlow.rgb * (1.0 - cliffWater);
+	// **The cliff's foot in the lava's heat** (the user, 2026-10-05, of a wall over the lava:
+	// 'can we somehow better blend this parts where wall joins lava?'): where a face meets the
+	// sheet it glows with the sheet's own mean colour, which is what the lava beside it averages
+	// to, and fades up the wall with the water the face holds. The seam has one brightness on
+	// both sides; above it the rock goes dark smoothly instead of at a line.
+	if (dot(u_waterGlow.rgb, vec3_splat(1.0)) > 0.001)
+	{
+		// By height over the sheet and the face's steepness, both smooth, where the layer
+		// weights step from tile to tile: a hand over the lava hot, gone by a metre. The
+		// Lost Tower's lava lies at the map's floor, nought. The sheet sampled across the wall
+		// rather than down it, so it is not drawn out into streaks.
+		float steep = 1.0 - smoothstep(0.45, 0.8, facetLevel(v_wpos));
+		float heat = steep * (1.0 - smoothstep(0.0, 1.0, v_wpos.y));
+		if (heat > 0.001)
+		{
+			vec2 across = vec2(v_wpos.x + v_wpos.z, v_wpos.y) * 0.35;
+			vec3 lava = isWater.x > 0.5 ? texture2D(s_albedo, across).rgb
+			          : isWater.y > 0.5 ? texture2D(s_albedo2, across).rgb
+			                            : texture2D(s_albedo3, across).rgb;
+			colour += lava * u_waterGlow.rgb * heat * heat;
+		}
+	}
 
 	// MU's caustics, added: frame u_caustic.x of the 8 by 4 sheet, one 64-texel frame across
 	// four tiles (FaceTexture's Scale, ZzzLodTerrain.cpp:1715-1719), times the TerrainLight as

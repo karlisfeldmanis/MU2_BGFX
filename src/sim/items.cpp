@@ -389,90 +389,93 @@ const PowerRow* powerOf(uint8_t power) {
     // wizard's, every class's armour and shield, and every class's weapon and jewellery.
     constexpr uint8_t kWorn = kInArmour | kInShield | kInJewellery;
     constexpr uint8_t kHeld = kInWeapon | kInJewellery;
+    constexpr uint8_t kAny = kInWeapon | kWorn;
     static const PowerRow kPowers[] = {
-        {Power::Stormcall, "Stormcall",
-         "A swing or arrow that lands, or a spell you cast, has a 20% chance to call lightning "
-         "down on a monster near you, another where there is one, its damage raised by your energy",
+        {Power::Stormcall, "Stormcall", "20% on hit: lightning strikes a nearby monster",
          kEveryClass, kInWeapon, Rarity::Epic},
-        {Power::Meteor, "Meteor",
-         "A swing that lands has a 15% chance to bring a burning rock down on a monster near him, "
-         "another where there is one",
+        {Power::Meteor, "Meteor", "15% on hit: a meteor falls on a nearby monster",
          kKnightOnly, kInWeapon, Rarity::Epic},
-        {Power::Ice, "Ice",
-         "A swing that lands has a 15% chance to freeze the monster he struck, slowing it to half "
-         "its pace and wounding it for half the swing, raised by his energy",
+        {Power::Ice, "Ice", "15% on hit: freezes the target to half speed and wounds it",
          kKnightOnly, kInWeapon, Rarity::Epic},
-        {Power::Poison, "Poison",
-         "A swing that lands has a 15% chance to poison the monster he struck, hurting it for "
-         "twenty seconds",
+        {Power::Poison, "Poison", "15% on hit: poisons the target for 20 s",
          kKnightOnly, kInWeapon, Rarity::Epic},
-        {Power::Fireburst, "Fireburst",
-         "A swing that lands has a 10% chance to burst into four fire balls, each flying at a "
-         "monster near the one before, raised by his energy",
+        {Power::Fireburst, "Fireburst", "10% on hit: four fireballs chain from the target",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
-        {Power::FireRing, "Ring of Fire",
-         "A swing that lands has a 10% chance to let a ring of fire burst round him, striking "
-         "every monster within four tiles, raised by his energy",
+        {Power::FireRing, "Ring of Fire", "10% on hit: a ring of fire bursts around you",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
-        {Power::Bulwark, "Bulwark", "Defense can be raised without a shield", kKnightOnly,
+        {Power::Bulwark, "Bulwark", "Defense works without a shield", kKnightOnly,
          kInWeapon, Rarity::Legendary, true},
-        {Power::Frost, "Frost Arrow",
-         "An arrow that lands has a 20% chance to freeze the monster it struck for two seconds "
-         "and wound it again for half the arrow's damage, raised by her energy",
-         kElfOnly, kInWeapon, Rarity::Legendary, true},
+        // Every Fairy Elf's, as Arcane Echo is every wizard's (the user, 2026-10-05: Lirien's
+        // Atlans clear pays it to the first-class elf).
+        {Power::Frost, "Frost Arrow", "20% on hit: freezes the target for 2 s and wounds it",
+         kElfOnly, kInWeapon, Rarity::Legendary},
         // Every Dark Wizard's, not the Soul Master's alone (the user, 2026-10-04: "remove 2nd
         // class requirement for that rune, because we give this rune on lorencia quest for DW").
-        {Power::Echo, "Arcane Echo",
-         "A spell he casts has a 20% chance to be cast a second time, for no mana", kWizardOnly,
-         kInWeapon, Rarity::Legendary},
-        {Power::Pyroblast, "Pyroblaster",
-         "Fire Ball strikes 50% harder, and one that lands has a 20% chance to burst into four "
-         "more, each flying at a monster near the one it struck",
+        {Power::Echo, "Arcane Echo", "20% chance a spell casts twice, the second free",
+         kWizardOnly, kInWeapon, Rarity::Legendary},
+        {Power::Pyroblast, "Pyroblaster", "Fire Ball +50% damage, 20% to burst into four more",
          kWizardOnly, kInWeapon, Rarity::Legendary, true},
-        {Power::Undying, "Undying", "+20% maximum health", kEveryClass, kWorn, Rarity::Epic},
-        {Power::KeenEye, "Keen Eye", "+10% critical hit chance", kEveryClass, kWorn, Rarity::Rare},
-        {Power::Bloodwell, "Bloodwell",
-         "3% of the damage you deal comes back as life, and 5% of your mana after a kill",
+        {Power::Undying, "Undying", "+20% max life", kEveryClass, kWorn, Rarity::Epic},
+        {Power::KeenEye, "Keen Eye", "+10% critical chance", kEveryClass, kWorn, Rarity::Rare},
+        {Power::Bloodwell, "Bloodwell", "Heal 3% of damage dealt, 5% mana per kill",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Frenzy, "Frenzy",
-         "A blow that lands has a 15% chance to raise attack and casting speed by 20 for three "
-         "seconds",
+        {Power::Frenzy, "Frenzy", "Each hit: +8 attack speed for 4 s, stacks to +40",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
+        {Power::Renewal, "Renewal", "Restore 3% life every 3 s",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Spirits, "Evil Spirit",
-         "A blow that misses you has a 15% chance to release evil spirits around you, which "
-         "strike most of the monsters within ten tiles, raised by your energy",
+        {Power::Spirits, "Evil Spirit", "15% when missed: evil spirits strike monsters around you",
          kEveryClass, kInShield | kInJewellery, Rarity::Legendary},
-        {Power::Kinship, "Kinship",
-         "Your Guardian Angel no longer lowers your damage, and your Imp and Dinorant take no "
-         "life for their blows",
-         kEveryClass, kInJewellery, Rarity::Epic},
+        {Power::Kinship, "Kinship", "Your pets lose their drawbacks", kEveryClass, kInJewellery, Rarity::Epic},
         {Power::Wrath, "Wrath", "+20% damage", kEveryClass, kInWeapon, Rarity::Legendary},
         {Power::Ironskin, "Ironskin", "+10% defense", kEveryClass, kInArmour | kInShield,
          Rarity::Rare},
-        {Power::Steadfast, "Steadfast", "+5% chance to block a blow, to 25% at the most",
+        {Power::Steadfast, "Steadfast", "+5% block chance, up to 25%",
          kEveryClass, kInArmour | kInShield, Rarity::Rare},
-        {Power::SecondWind, "Second Wind", "A kill restores 5% of your health and mana",
+        {Power::SecondWind, "Second Wind", "Kills restore 5% life and mana",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Whirlwind, "Whirlwind",
-         "Twisting Slash strikes 50% harder, and has a 25% chance to pull every monster within "
-         "six tiles in to you first",
+        {Power::Whirlwind, "Whirlwind", "Twisting Slash +50% damage, 25% to pull monsters in",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
-        {Power::Volley, "Piercing Volley",
-         "Penetration is loosed as three arrows in a fan, each flying on through everything in "
-         "its line",
+        {Power::Volley, "Piercing Volley", "Penetration fires three piercing arrows in a fan",
          kElfOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Thunder, "Thunder", "+20% lightning damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Tempest, "Tempest", "+20% wind damage", kEveryClass, kHeld, Rarity::Rare},
+        // The stat runes (sim::statShareOf), every class's and every socket's -- but the all-stats
+        // pair, a weapon's socket alone (the user, 2026-10-05).
+        {Power::LesserMight, "Lesser Might", "+10% strength", kEveryClass, kAny, Rarity::Rare},
+        {Power::GreaterMight, "Greater Might", "+30% strength", kEveryClass, kAny, Rarity::Epic},
+        {Power::LesserGrace, "Lesser Grace", "+10% agility", kEveryClass, kAny, Rarity::Rare},
+        {Power::GreaterGrace, "Greater Grace", "+30% agility", kEveryClass, kAny, Rarity::Epic},
+        {Power::LesserVigor, "Lesser Vigor", "+10% vitality", kEveryClass, kAny, Rarity::Rare},
+        {Power::GreaterVigor, "Greater Vigor", "+30% vitality", kEveryClass, kAny, Rarity::Epic},
+        {Power::LesserInsight, "Lesser Insight", "+10% energy", kEveryClass, kAny, Rarity::Rare},
+        {Power::GreaterInsight, "Greater Insight", "+30% energy", kEveryClass, kAny,
+         Rarity::Epic},
+        {Power::LesserAscendance, "Lesser Ascendance", "+10% all stats", kEveryClass,
+         kInWeapon, Rarity::Epic},
+        {Power::GreaterAscendance, "Greater Ascendance", "+30% all stats", kEveryClass,
+         kInWeapon, Rarity::Legendary},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
     }
     return nullptr;
+}
+
+HeroPoints statShareOf(Power power) {
+    const int p = int(power);
+    if (p < int(Power::LesserMight) || p > int(Power::GreaterAscendance)) return {};
+    // Two tiers a stat, in the enum's order: Might, Grace, Vigor, Insight, Ascendance.
+    const int share = (p - int(Power::LesserMight)) % 2 == 0 ? 10 : 30;
+    switch ((p - int(Power::LesserMight)) / 2) {
+        case 0: return {share, 0, 0, 0};
+        case 1: return {0, share, 0, 0};
+        case 2: return {0, 0, share, 0};
+        case 3: return {0, 0, 0, share};
+        default: return {share, share, share, share};
+    }
 }
 
 const char* rarityName(Rarity rarity) {
@@ -562,7 +565,7 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     const PowerRow* power = powerOf(jewel.powers[0]);
     if (power == nullptr || !power->takenBy(kin, second)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
-    if (!takesSockets(row) || freeSocket(target) < 0) return false;
+    if (!socketsFit(row) || freeSocket(target) < 0) return false;
     // Its group's sockets (sim::PowerRow::slots): a ring's and a pendant's take the armour runes
     // and the element runes (the user, 2026-10-02: "allow to put runes on jewels and pendants"),
     // and a weapon's power is read off the hands only, so it stays out of them.

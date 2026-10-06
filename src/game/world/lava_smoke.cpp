@@ -81,7 +81,7 @@ void LavaSmoke::shutdown() {
 // A wisp over a lava tile near `near`, or false when the tries found none. `anyAge` starts it
 // part way through its life, so a layer raised at once does not fade in all together.
 bool LavaSmoke::spawn(Wisp& wisp, const float near[3], bool anyAge) {
-    for (int attempt = 0; attempt < 8; ++attempt) {
+    for (int attempt = 0; attempt < 16; ++attempt) {
         const float angle = 6.2831853f * unit();
         const float reach = kReach * std::sqrt(unit());
         const float x = near[0] + std::cos(angle) * reach;
@@ -91,20 +91,51 @@ bool LavaSmoke::spawn(Wisp& wisp, const float near[3], bool anyAge) {
         const int r = int(std::floor(-z / metresPerTile_));
         if (c < 0 || r < 0 || c >= size_ || r >= size_) continue;
         if (!lava_[size_t(r) * size_t(size_) + size_t(c)]) continue;
+        const float height =
+            ground_->heightAt(x, z) + kHeightMin + (kHeightMax - kHeightMin) * unit();
+        const float drift[2] = {kDrift[0] + (unit() - 0.5f) * 2.0f * kScatter,
+                                kDrift[1] + (unit() - 0.5f) * 2.0f * kScatter};
+        const float life = kLifeMin + (kLifeMax - kLifeMin) * unit();
+        float size = kSizeMin + (kSizeMax - kSizeMin) * unit();
+        // **Clear of the walls, all its life** (the user, 2026-10-05: 'smoke effect above the
+        // lava is making vissible crops'): a sheet whose centre is on the lava still reached into
+        // the rock at the lava's edge, and the wall cut it along a straight line. The ground
+        // under its whole square, grown, where it starts and where its drift ends.
+        // Smaller where the lava is a narrow channel, down to a third, so a strip between two
+        // walls still has its smoke.
+        const auto fits = [&](float sized) {
+            const float half = sized * (1.0f + kGrowth) * 0.8f;  // the disc is gone by the edge
+            return clear(x, z, half, height) &&
+                   clear(x + drift[0] * life, z + drift[1] * life, half, height);
+        };
+        while (size > kSizeMin * 0.34f && !fits(size)) size *= 0.75f;
+        if (!fits(size)) continue;
         wisp.at[0] = x;
         wisp.at[2] = z;
-        wisp.at[1] = ground_->heightAt(x, z) + kHeightMin + (kHeightMax - kHeightMin) * unit();
-        wisp.drift[0] = kDrift[0] + (unit() - 0.5f) * 2.0f * kScatter;
-        wisp.drift[1] = kDrift[1] + (unit() - 0.5f) * 2.0f * kScatter;
-        wisp.life = kLifeMin + (kLifeMax - kLifeMin) * unit();
+        wisp.at[1] = height;
+        wisp.drift[0] = drift[0];
+        wisp.drift[1] = drift[1];
+        wisp.life = life;
         wisp.age = anyAge ? wisp.life * unit() : 0.0f;
-        wisp.size = kSizeMin + (kSizeMax - kSizeMin) * unit();
+        wisp.size = size;
         wisp.turn = 6.2831853f * unit();
         wisp.spin = (unit() - 0.5f) * 2.0f * kSpin;
         wisp.alive = true;
         return true;
     }
     return false;
+}
+
+bool LavaSmoke::clear(float x, float z, float half, float height) const {
+    // A 5 x 5 lattice over the square, and a hand's breadth of air under the sheet at each.
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            const float px = x + (float(i) / 2.0f - 1.0f) * half;
+            const float pz = z + (float(j) / 2.0f - 1.0f) * half;
+            if (ground_->heightAt(px, pz) > height - 0.1f) return false;
+        }
+    }
+    return true;
 }
 
 bool LavaSmoke::lavaAt(float x, float z) const {

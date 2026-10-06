@@ -12,7 +12,9 @@ void main()
 	vec3 p = i_data5.x < 0.0 ? swayed(a_position, i_data3.xyz) : a_position;
 	vec4 wpos = mul(model, vec4(p, 1.0));
 	v_wpos = wpos.xyz;
-	v_texcoord0 = a_texcoord0;
+	// An opaque stream slides its sheet (MU's StreamMesh; renderer.cpp, u_sway.zw).
+	v_texcoord0 = a_texcoord0 + (u_sway.w > 1.5 ? vec2_splat(u_sway.z)
+	                             : u_sway.w > 0.5 ? vec2(u_sway.z, 0.0) : vec2(0.0, u_sway.z));
 	// MU's baked terrain light where this instance stands, as World.cs's Lit() reads it: a
 	// lit result already, so it multiplies the albedo and is not lit again.
 	// w is MU's glow flicker, unless this instance is fading -- a weapon in a fading figure's

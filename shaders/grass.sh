@@ -29,7 +29,7 @@ uniform vec4 u_grassWind;   // xy: the wind's direction  z: its strength  w: tim
 uniform vec4 u_grassRoot;   // rgb: what the sheet is tinted towards at the root  w: the AO at the root
 uniform vec4 u_grassTip;    // rgb: and at the tip  w: roughness
 uniform vec4 u_grassThrough; // rgb: what a blade lit from behind is pushed towards  w: how far
-uniform vec4 u_grassShape;   // x: how far a card's own length strays from the mean  y: a rank tuft's height over the sward
+uniform vec4 u_grassShape;   // x: how far a card's own length strays from the mean  y: a rank tuft's height over the sward  z: the share of bunches left bare (grass_tufts)
 uniform vec4 u_grassVary;   // x: cards a patch  y: the stratification's side  z: the rank share  w: how dry a dry tuft goes
 uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: 1 the meadow; the sward's grass_vary times 0.2 (0 to 2.4), so under 0.5 is still the sward
 uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  z: a scale on the patch's density  w: how far the colour grade goes
@@ -226,6 +226,23 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	float wallShift = wallBit < 18.0 ? wallBit : wallBit - 18.0;
 	alive *= 1.0 - mod(floor(wallWord / exp2(wallShift)), 2.0);
 
+	// A desert's tufts (`grass_tufts`, 0 the sward everywhere). A grid of metre cells of their
+	// own; one in so many grows, and in it only the cards near a centre jittered off the cell's
+	// middle stand, about two dozen in a disc some 40 cm across, so the field is round tufts on
+	// bare sand rather than a lawn with holes. A card stands taller the nearer it is to its
+	// tuft's centre, so each tuft is a dome. The sward only; the meadow is Lorencia's. Ours.
+	float tuftDome = 1.0;
+	if (!meadow && u_grassShape.z > 0.0)
+	{
+		vec2 tuftCell = floor(c.base.xz);
+		vec2 tuftCentre = tuftCell + 0.5
+			+ (vec2(grassHash(vec3(tuftCell, 23.0)), grassHash(vec3(tuftCell, 29.0))) - 0.5) * 0.3;
+		float tuftAt = length(c.base.xz - tuftCentre) * 2.0;   // 0 the centre, 1 half a cell out
+		float grows = step(grassHash(vec3(tuftCell, 31.0)), 1.0 - u_grassShape.z);
+		alive *= grows * (1.0 - smoothstep(0.6, 0.9, tuftAt));
+		tuftDome = saturate(1.25 - tuftAt * 0.8);
+	}
+
 	// And the field's end, as a height and never an alpha. Over the last metres before the
 	// reach a card shrinks into the turf, so the far edge of the field is a sward getting
 	// shorter into the painted grass tile under it rather than a line of cards. At MU's 8 m
@@ -280,6 +297,7 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	float rank = step(1.0 - u_grassVary.z, grassHash(id + 13.9));
 	float scale = own * (0.84 + bunch * 0.32) * (0.84 + vigour * 0.36);
 	scale *= mix(1.0, meadow ? 1.85 : u_grassShape.y, rank);
+	scale *= tuftDome;
 	float height = u_grassCard.x * scale * alive;
 
 	c.tint = grassHash(id + 11.3);

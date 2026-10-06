@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
+#include <unordered_map>
 
 #include "app/options.h"
 #include "app/preloader.h"
@@ -24,6 +25,22 @@
 #include "sim/travel.h"
 
 namespace mu::app {
+namespace {
+// **A town's theme rests between hearings** (the user, 2026-10-05: 'we need some timeout rule
+// for all safezone musics so its not played to often which is anoying'): each plays once
+// through as he comes into its place, and not again until this long after it last began,
+// however often he steps in and out. Ours: MU loops them for as long as he stands there.
+constexpr double kMusicRestSeconds = 10.0 * 60.0;
+// When each track last began, in seconds of the run, across worlds and modes.
+std::unordered_map<std::string, double>& musicBegan() {
+    static std::unordered_map<std::string, double> began;
+    return began;
+}
+double runSeconds() {
+    return double(bx::getHPCounter()) / double(bx::getHPFrequency());
+}
+}  // namespace
+
 void PlayMode::readSave(Context& ctx) {
     core::Args& args = ctx.args;
     if (!args.play) return;
@@ -983,12 +1000,42 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.characterAt(&feetX, &feetZ);
             pub = world_.indoors(feetX, feetZ);
             roofTrack = "/music/Devias.mp3";
+        } else if (args.world == "noria") {
+            // MUSIC_NORIA in its safe zone, as MU plays it (SceneManager.cpp:1028-1036: `if
+            // (Hero->SafeZone)`) -- the user, 2026-10-05: 'play noria music on safezone', where
+            // it had been left off since 2026-09-30.
+            const sim::Body& hero = world_.played().realm().hero();
+            const content::Tables* tables = world_.played().realm().tables();
+            pub = tables && tables->grid.safe(hero.column(), hero.row());
+            roofTrack = "/music/Noria.mp3";
+        } else if (args.world == "atlans" || args.world == "losttower" || args.world == "tarkan") {
+            // Their themes in their safe zones -- Atlans's basin, the Lost Tower's hall -- and
+            // silence out on the hunt. MU plays MUSIC_ATLANS and MUSIC_LOSTTOWER_A on the whole
+            // map (SceneManager.cpp:1047-1073); ours, the user's (2026-10-05: 'lost tower music
+            // and atlans music has to play in safe zones'). Atlans's water bed stays everywhere.
+            const sim::Body& hero = world_.played().realm().hero();
+            const content::Tables* tables = world_.played().realm().tables();
+            pub = tables && tables->grid.safe(hero.column(), hero.row());
+            // And Tarkan's MUSIC_TARKAN in its town (SceneManager.cpp:1061-1066), the same way.
+            roofTrack = args.world == "atlans"   ? "/music/atlans.mp3"
+                        : args.world == "tarkan" ? "/music/tarkan.mp3"
+                                                 : "/music/lost_tower_a.mp3";
         }
         // No music out on the hunt, and none for fights (the user, 2026-09-30: "we dont need
-        // fight music anymore"); Noria's MUSIC_NORIA in its safe zone is not played either.
+        // fight music anymore").
         const std::string path = ctx.paths.assets + (pub ? roofTrack : "");
-        if (pub && core::fileExists(path)) world_.played().sound().music(path);
-        else if (!pub) world_.played().sound().stopMusic();
+        game::Sound& sound = world_.played().sound();
+        if (pub && core::fileExists(path) && !sound.musicPlaying(path)) {
+            // Once through, and only when it has rested since it last began.
+            const double now = runSeconds();
+            const auto last = musicBegan().find(path);
+            if (last == musicBegan().end() || now - last->second >= kMusicRestSeconds) {
+                sound.music(path, 0.6f, false);
+                musicBegan()[path] = now;
+            }
+        } else if (!pub) {
+            sound.stopMusic();
+        }
     }
     // The ears, onto the camera just placed: its heading is what the stereo field turns by.
     if (world_.played().isOpen()) {
@@ -1010,7 +1057,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // the vent's own lamp rather than a transient slot.
         if (world_.played().isOpen()) {
             for (const game::Lamps::VentStart& vent : world_.lamps().ventsLit()) {
-                world_.played().flame().light(vent.at, vent.yaw, false);
+                world_.played().flame().light(vent.at, vent.yaw, false, game::Flame::kVentStrength);
             }
         }
         // What the day gives an unlit puff of smoke: the ambient and the sun on a flat
@@ -1120,6 +1167,16 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     world_.voidClouds().gather(ctx.renderer.effects());
     world_.castleSparks().update(float(deltaSeconds), eye.target);
     world_.castleSparks().gather(ctx.renderer.effects());
+    // Tarkan's steam vents, sand geysers (their stones the meteor's), falling sand and glow
+    // sprites (game/world/desert_vents.h).
+    world_.desertVents().update(float(deltaSeconds), eye.target, [&](const float* at) {
+        if (world_.played().isOpen()) world_.played().meteor().stones(at[0], at[2], at[1], 1);
+    });
+    world_.desertVents().gather(ctx.renderer.effects());
+    world_.boids().gatherTrails(ctx.renderer.effects());
+    // And its sandstorm, MU's two screen layers (game/world/sand_haze.h).
+    world_.sandHaze().update(float(deltaSeconds));
+    world_.sandHaze().gather(ctx.renderer.effects(), eye);
     world_.bubbles().update(float(deltaSeconds), eye.target);
     world_.bubbles().gather(ctx.renderer.effects());
     world_.portal().update(float(deltaSeconds));
@@ -1149,7 +1206,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),
                               viewProj, ctx.renderer);
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
-        world_.weather().update(float(deltaSeconds), inside);
+        // Under the open sky where the map is "underground" only for its air (Tarkan's sand).
+        world_.weather().update(float(deltaSeconds), inside && !world_.leaves().openAir());
         ctx.time.rain(world_.weather().rain(), world_.weather().flash());
         // Devias's blizzard drives the snow; everywhere else the storm is nought.
         world_.leaves().setStorm(world_.weather().snows() ? world_.weather().rain() : 0.0f);

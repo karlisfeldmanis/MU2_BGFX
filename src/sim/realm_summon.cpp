@@ -71,8 +71,8 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
 void Realm::fitSummon(Body& summon, const Body& hero) {
     const content::MonsterKind& kind = tables_->kinds[size_t(summon.kind)];
     const int level = summonLevel(kind.level, hero.level, summon.summonedBy);
-    const float lasts = summonHealthRate(hero.points);
-    const float bites = summonForceRate(hero.points);
+    const float lasts = summonHealthRate(hero.totalPoints());
+    const float bites = summonForceRate(hero.totalPoints());
     const auto climb = [&](Ladder column) { return summonClimb(column, kind.level, level); };
     const int maxHealth =
         std::max(1, int(float(kind.health) * climb(Ladder::Health) * lasts));

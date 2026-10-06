@@ -416,7 +416,14 @@ void Play::update(double seconds) {
                     // cast to play it, so it is played here. The thunder is the pulses' (below),
                     // not the cast's.
                     if (row && row->channelled() && caster->castClip >= 0) {
-                        const float lasts = float(row->channelTicks) * float(kTickSeconds);
+                        // The realm's own length for it, quickened by his casting speed
+                        // (Realm::throwSkill), so the arm and the bolts keep together.
+                        const sim::Body* channeller = realm_.find(happening.who);
+                        const int64_t ticks =
+                            channeller && channeller->channelUntil > channeller->channelFrom
+                                ? channeller->channelUntil - channeller->channelFrom
+                                : int64_t(row->channelTicks);
+                        const float lasts = float(ticks) * float(kTickSeconds);
                         caster->figure.play(caster->castClip, true, kCastBlend);
                         core::logf("channel: %s plays clip %d, %.3f s long", row->name, row->clip,
                                    double(caster->figure.length()));
@@ -856,7 +863,8 @@ void Play::update(double seconds) {
                         // 30 over the ground on it -- at the body, in the air as long as the realm
                         // holds the blow, with SOUND_SKILL_SWORD3 as MU makes the BITMAP_SHOTGUN
                         // (ZzzCharacter.cpp:4406-4409). fx/firebreath.h.
-                        const float rider[3] = {caster->crown[0], feet + kDinorantLift,
+                        const float rider[3] = {caster->crown[0],
+                                                feet + (flying_ ? kDinorantFlyLift : kDinorantLift),
                                                 caster->crown[2]};
                         fireBreath_.cast(rider, caster->yaw, to,
                                          float(happening.b) * float(kTickSeconds));
@@ -1085,13 +1093,15 @@ void Play::update(double seconds) {
                         // A primary's does the same at AttackSpeed, every class's: the realm
                         // holds Twisting Slash and Skillshot for their quickened clip
                         // (Realm::throwSkill), so the spin has to end when the hold does.
-                        if (spell && (spell->wizardry || spell->primary()) && body) {
+                        // A channel is paced by its own length where it starts, above.
+                        if (spell && (spell->wizardry || spell->primary()) &&
+                            !spell->channelled() && body) {
                             const auto armAt = [&](int32_t at) -> const content::Arm* {
                                 return at >= 0 && size_t(at) < tables_.arms.size()
                                            ? &tables_.arms[size_t(at)] : nullptr;
                             };
                             const int32_t ticks =
-                                sim::castTicks(tables_, body->kin, body->points.agility,
+                                sim::castTicks(tables_, body->kin, body->totalPoints().agility,
                                                armAt(body->weapon), armAt(body->shield), *spell,
                                                body->frenzySpeed(realm_.tick()));
                             const float fits = float(ticks) * float(kTickSeconds);
@@ -1489,6 +1499,7 @@ void Play::update(double seconds) {
     }
     for (Standing& one : folk_) {
         one.figure.update(float(seconds));
+        one.wing.update(float(seconds), false);
         // A clip that has come round is a clip that has finished: the next is rolled then,
         // so the town's people are never in step with each other or with themselves.
         if (one.cycles && one.figure.clock() < one.lastClock) {
@@ -2263,6 +2274,13 @@ void Play::speak(const sim::Happening& happening) {
             "The gate under the blue lightning leads to the tower. I do not take it anymore.",
             "It was a shrine once, that tower. Kundun's creatures hold every floor of it now.",
         };
+        // Lirien, in Atlans's basin, with no quest of hers to take back: before Peia sends the
+        // hero, and after (ours, 2026-10-05).
+        static const char* const kLirien[] = {
+            "Atlans shone brighter than Kantur ever did. I remember every street of it.",
+            "Peia's song still reaches me through the lake, faint. I listen for it every night.",
+            "Mind the Valkyries beyond the basin. They were mine, once.",
+        };
         static const char* const kTersiaNotYet[] = {
             "Guild business. I have no contract for you. Not while the storms still hold Devias.",
             "Who sent you? Nobody? Then go back down the road while you still can.",
@@ -2273,6 +2291,7 @@ void Play::speak(const sim::Happening& happening) {
                                    : number == sim::kThompson  ? kThompson
                                    : number == sim::kTersia    ? kTersiaNotYet
                                    : number == sim::kCharon    ? kCharon
+                                   : number == sim::kLirienNumber ? kLirien
                                    : sim::questOf(number) >= 0 ? kDevinNotYet
                                                                : kGuildMaster;
         one.line = lines[realm_.tick() % 3];

@@ -125,8 +125,45 @@ const char* firstWingName(Kin kin);
 //     second and third; failure takes the jewels only.
 //   * **Fuse Runes**: three runes of one rarity below Legendary and one Chaos make one random
 //     rune of the next rarity, one his class may set; 100%.
-enum class Service : uint8_t { Combine = 0, RemoveRune = 1, AddSocket = 2, FuseRunes = 3 };
-constexpr int kServices = 4;
+//   * **1st Wings** and **2nd Wings** (the user, 2026-10-05: 'chaos machine missing wings
+//     creations', 'it has to be a service', then a page each): the box read as that one wing mix
+//     and nothing else, so its needs stand on the page before a thing is put in. Run as Combine
+//     runs the same recipe.
+//   * **Chaos Weapon** (the user, the same day: 'also we need that chaos weapon is a service'):
+//     the box read as MU's Chaos Weapon mix alone, the same way.
+//   * **Upgrade**, **Dinorant** and **Invisibility Cloak**, the rest of MU's recipes, each a
+//     page of its own: 'we need that plain combine is not existed, everything has to be service'
+//     (the user, 2026-10-05). Upgrade is +10 and +11.
+// Combine, any recipe the box makes, stays as the judging underneath -- the tests read the box
+// through it -- but is on no page (kRowServices).
+enum class Service : uint8_t {
+    Combine = 0,
+    RemoveRune = 1,
+    AddSocket = 2,
+    FuseRunes = 3,
+    // 1st and 2nd Level Wings, a page each: their recipes differ (the user, 2026-10-05: 'we need
+    // seperated services for first wings and second wings because its different recipes').
+    FirstWings = 4,
+    ChaosWeapon = 5,
+    Upgrade = 6,
+    Dinorant = 7,
+    Cloak = 8,
+    SecondWings = 9,
+};
+constexpr int kServices = 10;
+// The window's service row, in its order: a page a mix, then the rune services.
+constexpr Service kRowServices[] = {
+    Service::Upgrade,  Service::ChaosWeapon, Service::FirstWings, Service::SecondWings,
+    Service::Dinorant, Service::Cloak,       Service::RemoveRune, Service::AddSocket,
+    Service::FuseRunes};
+constexpr int kRowCount = int(sizeof(kRowServices) / sizeof(kRowServices[0]));
+// Whether a service runs one of MU's recipes, and so reports by it.
+constexpr bool byRecipe(Service service) {
+    return service == Service::Combine || service == Service::FirstWings ||
+           service == Service::SecondWings ||
+           service == Service::ChaosWeapon || service == Service::Upgrade ||
+           service == Service::Dinorant || service == Service::Cloak;
+}
 const char* serviceName(Service service);  // the row: "Combine", "Remove Rune", ...
 const char* serviceVerb(Service service);  // the button: "Combine", "Remove", "Add Socket", "Fuse"
 

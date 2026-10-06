@@ -133,6 +133,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     lavaSmoke_.open(assetDir, name, ground_, textures);
     voidClouds_.open(assetDir, name, ground_, textures);
     castleSparks_.open(assetDir, name, town_.cooked(), textures);
+    desertVents_.open(assetDir, name, town_.cooked(), textures);
+    sandHaze_.open(assetDir, name, textures);
     bubbles_.open(assetDir, name, town_.cooked(), textures);
     // And the shade MU hangs under each bridge. See game/world/shades.h.
     if (town_.isOpen()) shades_.open(assetDir, town_, textures);
@@ -234,6 +236,11 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
     if (!underground_) leaves_.open(assetDir, *textures_, play_.showing().table(), name == "devias");
     // Atlans is "underground" for its air, but its motes drift everywhere (leaves.h).
     else if (name == "atlans") leaves_.open(assetDir, *textures_, play_.showing().table(), false, true);
+    // And Tarkan's sand rides the snow's pool, blown by its storm (Leaves::setSand, ours).
+    else if (name == "tarkan") {
+        leaves_.open(assetDir, *textures_, play_.showing().table(), true);
+        leaves_.setSand(true);
+    }
     if (doors_.isOpen()) {
         doorSound_ = play_.sound().load("world_door", true);
         gateSound_ = play_.sound().load("world_gate", true);
@@ -425,6 +432,8 @@ void World::shutdown() {
     lavaSmoke_.shutdown();
     voidClouds_.shutdown();
     castleSparks_.shutdown();
+    desertVents_.shutdown();
+    sandHaze_.shutdown();
     bubbles_.shutdown();
     shades_.shutdown();
     boids_.shutdown();

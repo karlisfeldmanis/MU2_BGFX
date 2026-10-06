@@ -257,6 +257,28 @@ std::string wait(int64_t seconds) {
     return text;
 }
 
+int byLevel(const sim::QuestRow& row, const content::Tables* tables, int* order) {
+    const auto levelOf = [&](int s) {
+        const sim::QuestStepRow& want = row.steps[s];
+        if (want.kind != sim::QuestStepKind::Clear || tables == nullptr) return 1 << 20;
+        for (const content::MonsterKind& kind : tables->kinds) {
+            if (kind.number == want.target) return int(kind.level);
+        }
+        return 1 << 20;
+    };
+    const auto rank = [&](int s) {
+        const sim::QuestStepKind kind = row.steps[s].kind;
+        return kind == sim::QuestStepKind::Clear ? 0 : kind == sim::QuestStepKind::Find ? 1 : 2;
+    };
+    int n = 0;
+    for (int s = 0; s < row.stepCount && s < sim::kQuestSteps; ++s) order[n++] = s;
+    std::stable_sort(order, order + n, [&](int a, int b) {
+        if (rank(a) != rank(b)) return rank(a) < rank(b);
+        return rank(a) == 0 && levelOf(a) < levelOf(b);
+    });
+    return n;
+}
+
 }  // namespace quest_marks
 
 bool Tracker::Drawn::operator==(const Drawn& o) const {
@@ -264,7 +286,7 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
         minutesLeft != o.minutesLeft || pointing != o.pointing || pointX != o.pointX ||
         pointY != o.pointY || pointMetres != o.pointMetres ||
         focus != o.focus || progress.state != o.progress.state ||
-        eventPhase != o.eventPhase || eventSeconds != o.eventSeconds ||
+        eventPhase != o.eventPhase || eventCastle != o.eventCastle || eventSeconds != o.eventSeconds ||
         eventKills != o.eventKills || eventSorcerers != o.eventSorcerers ||
         eventStatue != o.eventStatue ||
         eventShown != o.eventShown) {
@@ -345,7 +367,9 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                 bannerHold_ = 2.2f;
                 bannerAge_ = 0.0f;
                 for (int s = 0; s < sim::kQuestSteps; ++s) counts_[s] = float(now.counts[s]);
-            } else if (now.state == sim::QuestState::Ready && was.state == sim::QuestState::Active) {
+            } else if (now.state == sim::QuestState::Ready && was.state == sim::QuestState::Active &&
+                       !sim::questElsewhere(row)) {
+                // Not for one met at its receiver: her window is already open on its hand-in.
                 bannerKicker_ = row.title;
                 bannerTitle_ = std::string("Return to ") + row.giverName;
                 bannerLine_.clear();
@@ -475,7 +499,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         const sim::QuestRow& row = sim::questAt(quest_);
         const content::Tables* tables = realm.tables();
         for (size_t f = 0; tables && f < tables->folk.size(); ++f) {
-            if (tables->folk[f].number != row.giver) continue;
+            if (tables->folk[f].number != sim::questReceiver(row)) continue;
             float x = 0.0f, y = 0.0f;
             if (!play.folkCrownOf(int(f), viewProj, width, height, &x, &y)) break;
             const float inset = kEdgeInset * u;
@@ -523,6 +547,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     Drawn now;
     if (eventShown_ > 0.0f) {
         now.eventPhase = int(run.phase);
+        now.eventCastle = run.castle;
         now.eventSeconds = realm.castleSecondsLeft();
         now.eventKills = run.kills;
         now.eventSorcerers = run.sorcerers;
@@ -585,7 +610,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
         canvas_.polygon(shade, cs, 3);
         // His name and the distance, on the side of the pointer away from the edge.
         const bool left = pointX_ > float(width) * 0.5f;
-        const std::string name = sim::questAt(std::max(0, drawn_.quest)).giverName;
+        const std::string name = sim::questReceiverName(sim::questAt(std::max(0, drawn_.quest)));
         const std::string metres = std::to_string(drawn_.pointMetres) + " m";
         const float nameSize = 14.0f * pu, metreSize = 13.0f * pu;
         const float gap = 16.0f * pu;
@@ -670,7 +695,11 @@ void Tracker::rebuild(const Play& play, int width, int height) {
     y += kRuleGap * u;
 
     const bool ready = now.state == sim::QuestState::Ready;
-    for (int s = 0; s < row.stepCount; ++s) {
+    // Weakest breed at the top (quest_marks::byLevel); each row still keyed by its step.
+    int order[sim::kQuestSteps];
+    const int listed = quest_marks::byLevel(row, realm.tables(), order);
+    for (int i = 0; i < listed; ++i) {
+        const int s = order[i];
         const sim::QuestStepRow& want = row.steps[s];
         const int goal = realm.questGoal(q, s);
         const bool counted = sim::questCounted(want.kind);
@@ -686,7 +715,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
             ink = ready ? style::kBloodHi : style::kAshInk;
         }
         const float rowTall = kStep * u;
-        if (s > 0 && !counted) y += kTurnInGap * u * standing(float(drawn_.struck[s]) / 60.0f);
+        if (i > 0 && !counted) y += kTurnInGap * u * standing(float(drawn_.struck[s]) / 60.0f);
         // Struck off and folded away: gone from the list, the rows under it closed up.
         const float struck = float(drawn_.struck[s]) / 60.0f;
         const float keep = standing(struck);
@@ -754,7 +783,7 @@ void Tracker::rebuildEvent(int width) {
                    faded(style::kAshInk, alpha), "Event");
     y += 24.0f * u;
     title(canvas_, left, y + kTitle * u, kTitle * u, kTitleTrack, style::kBoneHi, alpha,
-          "Blood Castle 1");
+          "Blood Castle " + std::to_string(drawn_.eventCastle));
     // The clock on the title's line, ranged right: gold counting down to the start, then the
     // run's time in bone, red in its last minute.
     {

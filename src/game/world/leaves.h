@@ -107,6 +107,11 @@ public:
     // blows sideways at up to a storm wind in gusts, falls faster, fills a larger pool and
     // streaks, and what lands is blown on rather than lying. docs/devias-blizzard.md.
     void setStorm(float share) { storm_ = share; }
+    // Tarkan's sand, on the snow's pool (opened with `snow`): the flakes tinted sand and blown
+    // low, a few motes in the calm and no glints. Ours (docs/tarkan-port.md).
+    void setSand(bool sand) { sand_ = sand; }
+    // Whether its air is open though the map is "underground": Atlans's motes, Tarkan's sand.
+    bool openAir() const { return motes_ || sand_; }
     // The wind the snow is flying on now, for the grass to bow to (gfx::GrassField::storm):
     // how hard, 0 calm to 1 a full storm's gust at its strongest, and which way on the level
     // (world x and z). Nought and still outside a blizzard.
@@ -195,6 +200,7 @@ private:
     }
 
     bool snow_ = false;
+    bool sand_ = false;  // setSand
     bool motes_ = false;
     float storm_ = 0.0f;  // setStorm: how far Devias's blizzard is in, 0 to 1
     // The blizzard's wind, which wanders: its heading off the leaves' -x in radians and its

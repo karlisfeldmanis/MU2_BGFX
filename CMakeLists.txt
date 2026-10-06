@@ -127,6 +127,8 @@ add_executable(mu2
   src/game/world/lava_smoke.cpp
   src/game/world/void_clouds.cpp
   src/game/world/castle_sparks.cpp
+  src/game/world/desert_vents.cpp
+  src/game/world/sand_haze.cpp
   src/game/world/bubbles.cpp
   src/game/world/sway.cpp
   src/game/world/doors.cpp

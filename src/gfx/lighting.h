@@ -262,6 +262,11 @@ struct Lighting {
     // and how much taller a rank tuft stands. Devias's frosted grass mixes stubble and stalks.
     float grassLengthSpread = 1.0f;
     float grassRankHeight = 1.85f;
+    // A desert's habit: the share of the field's bunches (its 0.6 m cells) that stand bare,
+    // 0 the sward everywhere. Each bunch that grows is a round tuft round a centre of its own,
+    // tallest in the middle, with sand between. Ours; Tarkan's straw (the user, 2026-10-05:
+    // 'procedual grass has to be more desert style').
+    float grassTufts = 0.0f;
     float grassRoughness = 0.45f;   // at the top; the root is rougher by a fixed 0.35
     // And the wind on top of the lean, not instead of it. At 0.22 a gust moved a card
     // further than its own habit ever did, which put the whole field on its side twice a

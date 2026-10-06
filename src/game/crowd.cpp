@@ -435,11 +435,18 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
     // then, ZzzCharacter.cpp:10160-10166), so the weapon's key IS the body's key, wrapped
     // round the weapon's seven: the string draws with the arm and looses at key 4 with it.
     float key = -1.0f;
+    // And in a sword swing, Attack sword right 1 and 2 (slots 39 and 40 here), the key a Flail
+    // plays its swing at: MU runs its action 2 at that attack's own PlaySpeed
+    // (ZzzCharacter.cpp:10107-10113), so its key is the body's, as a bow's is.
+    float swingKey = -1.0f;
     if (body_->library && clip_ >= 0 && size_t(clip_) < body_->library->clips.clips.size()) {
         const content::CookedClip& one = body_->library->clips.clips[size_t(clip_)];
         // PLAYER_ATTACK_BOW, _CROSSBOW, _FLY_BOW, _FLY_CROSSBOW: MuMain's enum, 50 to 53.
         if (one.slot >= 50 && one.slot <= 53 && one.duration > 0.0f && one.frames > 1) {
             key = time_ / one.duration * float(one.frames - 1);
+        }
+        if (one.slot >= 39 && one.slot <= 40 && one.duration > 0.0f && one.frames > 1) {
+            swingKey = time_ / one.duration * float(one.frames - 1);
         }
     }
 
@@ -447,7 +454,21 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
         const HeldItem& item = body_->held[i];
         if (!item.clip || !item.mesh || !item.mesh->isSkinned()) continue;
         const content::CookedClips& clips = *item.clip;
-        const content::CookedClip& one = clips.clips.front();
+        // Slung, still: MU draws a weapon on the back on a part copied at key 0 with no play
+        // speed (ZzzCharacter.cpp:15326-15334). Run on, the Flail's chain swung out sideways
+        // from the back and its ball hung in the air beside him (the user, 2026-10-06:
+        // 'something looked wierd on that flail weapon on back'). Action 0's first key, as MU's:
+        // the Flail's held key there still hung its ball out beside him; its bind folds the
+        // ball against the grip.
+        const bool onBack = slung() || item.alwaysSlung;
+        // Its swing in a sword swing, where it has one; the clip it holds otherwise.
+        const bool swinging = !onBack && swingKey >= 0.0f && item.swingClip >= 0 &&
+                              size_t(item.swingClip) < clips.clips.size();
+        const size_t which = onBack     ? 0
+                             : swinging ? size_t(item.swingClip)
+                             : size_t(item.heldClip) < clips.clips.size() ? size_t(item.heldClip)
+                                                                         : 0;
+        const content::CookedClip& one = clips.clips[which];
         const std::vector<content::Bone>& bones = item.mesh->bones();
         const size_t count = std::min({bones.size(), size_t(clips.bones), kHeldBones,
                                        size_t(gfx::Renderer::kMaxBones)});
@@ -456,7 +477,11 @@ void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
         // A looping clip's last key is its first again (content::CookedClip), so the cycle
         // is frames - 1 keys long.
         float where = 0.0f;
-        if (key >= 0.0f && item.onShot && one.frames > 1) {
+        if (onBack) {
+            where = 0.0f;
+        } else if (swinging && one.frames > 1) {
+            where = std::fmod(swingKey, float(one.frames - 1));
+        } else if (key >= 0.0f && item.onShot && one.frames > 1) {
             const float period = float(one.frames - 1);
             where = std::fmod(key, period);
         } else if (item.heldLoop > 0.0f && one.frames > 1) {

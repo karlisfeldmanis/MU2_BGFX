@@ -93,13 +93,13 @@ if [ ! -f extern/AlegreyaSans-Medium.ttf ]; then
   curl -sSL -o extern/AlegreyaSans-Medium.ttf $ALEGREYA_URL
   echo "$ALEGREYA_SHA256  extern/AlegreyaSans-Medium.ttf" | shasum -a 256 -c - || { rm -f extern/AlegreyaSans-Medium.ttf; exit 1; }
 fi
-# The names over the drops: Alegreya Medium, the serif the two sans above are cut from, mixed
-# case as Diablo IV sets its ground labels (the user's reference, 2026-10-06). Static 500.
-ALEGREYA_SERIF_URL=https://fonts.gstatic.com/s/alegreya/v41/4UacrEBBsBhlBjvfkQjt71kZfyBzPgNGxBUI_A.ttf
-ALEGREYA_SERIF_SHA256=3ae790f5b3f70bf2a9d990c07bbbfc22af476fb5835f309128f5978baf7a9bd6
-if [ ! -f extern/Alegreya-Medium.ttf ]; then
-  curl -sSL -o extern/Alegreya-Medium.ttf $ALEGREYA_SERIF_URL
-  echo "$ALEGREYA_SERIF_SHA256  extern/Alegreya-Medium.ttf" | shasum -a 256 -c - || { rm -f extern/Alegreya-Medium.ttf; exit 1; }
+# The names over the drops: Amarante, a medieval roman with a gothic hand in its capitals and
+# an open lowercase -- the user's pick on 2026-10-06 off a sheet of nineteen faces. Its one weight.
+AMARANTE_URL=https://fonts.gstatic.com/s/amarante/v30/xMQXuF1KTa6EvGx9bq-3.ttf
+AMARANTE_SHA256=76cbeaae692f03153654c3cf2c79252ea61ac6bdf6dcb192c491cb8e3c0dfca7
+if [ ! -f extern/Amarante-Regular.ttf ]; then
+  curl -sSL -o extern/Amarante-Regular.ttf $AMARANTE_URL
+  echo "$AMARANTE_SHA256  extern/Amarante-Regular.ttf" | shasum -a 256 -c - || { rm -f extern/Amarante-Regular.ttf; exit 1; }
 fi
 
 # glfw is the one PLAN.md point 12 names that is NOT pinned here, and saying so is better

@@ -279,7 +279,16 @@ struct Body {
     // And whether he is its second -- Blade Knight, Soul Master, Muse Elf -- Sevina's treasure
     // handed in (sim::promoted, kept in step by Realm::restore and completeQuest).
     bool second = false;
-    HeroPoints points;          // likewise
+    HeroPoints points;          // likewise: the points he spent, which an item's asks are met by
+    // The stat runes worn, percent of each (sim::statShareOf summed, Realm::rearm), and the points
+    // with them in, which is what every point buys -- damage, defence, life, mana, spells.
+    HeroPoints runeShare;
+    HeroPoints totalPoints() const {
+        return {points.strength + points.strength * runeShare.strength / 100,
+                points.agility + points.agility * runeShare.agility / 100,
+                points.vitality + points.vitality * runeShare.vitality / 100,
+                points.energy + points.energy * runeShare.energy / 100};
+    }
     // What is in his hands, as indices into Tables::arms, or -1. A monster's weapon is part of
     // its row and not an item: `monster_kinds` carries the damage band whole. `shield` is the
     // LEFT hand's arm: a shield, or a Dark Knight's second weapon (`dual`), which the swing
@@ -478,6 +487,9 @@ struct Body {
     // its next pulse. 0 for none. The interface reads the first three for its bar.
     int32_t channelSkill = 0;
     int64_t channelFrom = 0, channelUntil = 0, channelNext = 0;
+    // Its strike window in ticks from `channelFrom`, the row's quickened by his casting speed as
+    // the clip is (Realm::throwSkill): the hand and the bolts keep together.
+    int32_t channelStrikeFrom = 0, channelStrikeUntil = 0;
     // Where the last strike went, as a bearing from him in radians: the next goes to the body
     // clockwise from it, so the channel sweeps round.
     float channelTurn = 0.0f;
@@ -879,7 +891,8 @@ public:
     void closeGate() { gating_ = -1; }
     void closeMachine();
     const Machine& machine() const { return machine_; }
-    // Bag to box: a bag slot (never a worn one) to a cell, or -1 for the first it fits in. The
+    // Bag to box: a bag slot, or a worn one straight off him (2026-10-05), to a cell, or -1 for
+    // the first it fits in. A jewel let go on a thing in the box it works is applied there. The
     // cell, or -1 refused. Refused while the last mix's answer is still in it -- MuMain locks
     // the box at MIX_FINISHED until it is reopened, and here until it is emptied.
     int putIn(int bagSlot, int cell = -1);
@@ -1005,11 +1018,32 @@ public:
 
     // Laid on the realm from the save, or emptied. Never refused: it is the account's.
     void restoreVault(const Vault& saved) { vault_ = saved; }
-    // Bag to vault: a bag slot (never a worn one, as a sale is never a worn one) to a vault
-    // cell, or -1 for the first cell it fits. The cell, or -1 refused.
+    // Bag to vault: a bag slot -- or a worn one, straight off him (the user, 2026-10-05: 'allow
+    // to put items from equipment to warehouse and reverse') -- to a vault cell, or -1 for the
+    // first cell it fits. A jewel let go on a thing it works is applied there instead
+    // (refineAcross). The cell, or -1 refused.
     int deposit(int bagSlot, int cell = -1);
-    // Vault to bag: a cell to a bag slot, or -1 for the first slot it fits. The slot, or -1.
+    // Vault to bag: a cell to a bag slot, or -1 for the first slot it fits; or onto a worn slot,
+    // put on as the bag puts it on (`move`'s gates), what it takes off going back to the vault.
+    // A jewel onto a thing it works is applied. The slot, or -1.
     int withdraw(int cell, int bagSlot = -1);
+    // **A jewel across the windows** (the user, 2026-10-05: 'allow me to upgrade item from
+    // warehouse to inventory and reverse', 'allow to upgrade items with jewels while item is
+    // inside chaos machine'): a Bless, Soul, Life or Rune of Creation in the bag, the vault or the
+    // Goblin's box, onto a thing carried, worn, in the vault or in the box -- `refine`'s own roll
+    // and rules, run on a stage of the bag and written back where each came from. False refused.
+    enum class Store : uint8_t { Bag, Vault, Machine };
+    bool refineAcross(Store jewelIn, int jewelAt, Store thingIn, int thingAt);
+    // Whether this jewel would work on this thing: set, refined or enlivened.
+    bool worksOn(const Held& jewel, const Held& thing) const;
+    int wearFromVault(int cell, int worn);
+    // Whether the last vault or box move was a jewel applied (refineAcross), once: the game rings
+    // the jewel's sound off it, as Play::refine rings its own.
+    bool takeJeweled() {
+        const bool was = jeweled_;
+        jeweled_ = false;
+        return was;
+    }
     // Inside the vault: from one cell to another, onto a clear rectangle.
     bool rearrange(int from, int to);
     // Zen across the counter, refused whole where there is not that much to move.
@@ -1445,6 +1479,7 @@ private:
     std::vector<Sale> sold_;  // oldest first, at most kBuybacks
     int banking_ = -1;
     Vault vault_;
+    bool jeweled_ = false;
     int mixing_ = -1;
     int gating_ = -1;  // see gating()
     // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
@@ -1472,6 +1507,7 @@ private:
     // The quests' inner steps (realm_quests.cpp): Ready once every count is met; a thing come
     // into the bag counted; the bag slot holding an item; a kill's treasure.
     void questSettle(int index);
+    void questMet(int32_t number);
     void questFound(int32_t item);
     int carried(int32_t item) const;
     void treasure(const Body& dead);

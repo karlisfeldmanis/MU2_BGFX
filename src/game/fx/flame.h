@@ -37,7 +37,13 @@ public:
     // caster's `yaw`. `glows` false keeps it out of lights(): a Lost Tower vent, whose light is
     // its own lamp in the static grid (Lamps), so ninety-five of them leave the transient slots
     // to the spells.
-    void light(const float at[3], float yaw, bool glows = true);
+    // `strength` scales its plumes and scorch: 1 for a wizard's, kVentStrength for a vent.
+    void light(const float at[3], float yaw, bool glows = true, float strength = 1.0f);
+    // **A vent burns softer than a spell** (the user, 2026-10-05, of the Lost Tower's vents once
+    // lava filled the void they stood over: 'that flame effect' was too much; at 0.4, 'also make
+    // that effect little bit subtle'). One layer, at this share of the colour, and the plumes
+    // two thirds the size. Ours.
+    static constexpr float kVentStrength = 0.25f;
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
@@ -52,6 +58,7 @@ private:
         float scorch = 1.0f;  // this frame's shimmer on the ground
         float glow = 1.0f;    // and on the light
         bool glows = true;    // lights() hands it on
+        float strength = 1.0f;
     };
     struct Plume {
         bool alive = false;
@@ -60,6 +67,7 @@ private:
         float size = 0.5f;  // metres across
         float spin = 0.0f;
         float left = 0.0f;  // reference frames
+        float strength = 1.0f;  // its fire's
     };
 
     static constexpr float kFps = 25.0f;

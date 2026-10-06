@@ -518,16 +518,26 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             }
         }
     }
-    // The same for a vault piece carried over the bag, by Realm::withdraw's gate: onto a stack
-    // of its kind with room, or into the satchel where its footprint is free. A worn slot
-    // takes nothing from the vault.
+    // The same for a vault piece carried over the bag, by Realm::withdraw's gate: a jewel onto a
+    // thing it works, carried or worn (Realm::refineAcross), red over a socketed piece a rune
+    // cannot go in; onto a stack of its kind with room; a piece onto the worn slot it goes in
+    // (Realm::wearFromVault); or into the satchel where its footprint is free.
     if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
         const int cell = slotAt(ux, uy);
         if (cell >= 0) {
             const content::ItemRow& row = tables.items[size_t(incoming_.item)];
-            const int under = sim::baggable(cell) ? bag.holder(tables, cell) : -1;
+            const int under = bag.holder(tables, cell);
             int cells[sim::kSlots];
-            if (under >= 0 && sim::tops(tables, bag[under], incoming_)) {
+            const bool works = under >= 0 && realm.worksOn(incoming_, bag[under]);
+            if (works || (under >= 0 && creationJewel(tables, incoming_) &&
+                          socketsOf(bag[under]) > 0)) {
+                const content::ItemRow& target = tables.items[size_t(bag[under].item)];
+                const int covering = bag.covered(under, target.width, target.height, cells);
+                light(cells, covering, works);
+            } else if (sim::wearable(cell)) {
+                light(&cell, 1, sim::placesIn(row, realm.wearer().kin, cell) &&
+                                    sim::fits(tables, realm.wearer(), incoming_));
+            } else if (under >= 0 && sim::tops(tables, bag[under], incoming_)) {
                 const content::ItemRow& target = tables.items[size_t(bag[under].item)];
                 const int covering = bag.covered(under, target.width, target.height, cells);
                 light(cells, covering, true);

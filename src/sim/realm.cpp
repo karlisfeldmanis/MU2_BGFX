@@ -137,7 +137,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // exactly what a level-20 knight who has never opened the window is.
     hero.experience = neededExperience(hero.level);
     hero.pointsInHand = (hero.level - 1) * kPointsPerLevel;
-    reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
     keepBoon(hero);
     restoreMana(hero);
     hero.health = hero.maxHealth;
@@ -396,7 +396,7 @@ void Realm::restore(const HeroRecord& saved) {
     // now, also before rearm, which is what carries it into her blows.
     if (const SkillRow* row = skillNumbered(skill::kGreaterDamage);
         row != nullptr && saved.might > 0 && saved.mightTicksLeft > 0) {
-        hero.might = std::min(saved.might, int32_t(mightOf(hero.points)));
+        hero.might = std::min(saved.might, int32_t(mightOf(hero.totalPoints())));
         hero.mightUntil = tick_ + std::min<int64_t>(saved.mightTicksLeft, row->mightTicks);
     }
     rearm(hero);
@@ -429,7 +429,7 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
     hero.points.energy += energy;
     hero.pointsInHand -= asked;
     const int was = hero.maxHealth;
-    reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
     keepBoon(hero);
     restoreMana(hero);
     // Agility buys attack speed, so spending a point can change how often he swings.
@@ -713,6 +713,8 @@ void Realm::press() {
             // A quest giver spoken to opens his town on the travel list (sim/travel.h), whatever
             // he has to say, even that he is not ready for him yet.
             if (questOf(one.number) >= 0) discover(int32_t(tables_->map));
+            // Found: a quest that asked for her is ready to hand in to her.
+            if (questReceives(one.number)) questMet(one.number);
             if (sells(one.number)) {
                 trading_ = int(order_.target);
                 say(What::Served, hero, trading_, one.number);
@@ -740,7 +742,7 @@ void Realm::press() {
                 say(What::Served, hero, gating_, one.number);
             } else if (one.number == kGuildMaster || one.number == kCharon ||
                        one.number == kThompson ||
-                       questOf(one.number) >= 0) {
+                       questOf(one.number) >= 0 || questReceives(one.number)) {
                 // Ours (the user, 2026-09-29): MU opens the guild window here, which a single
                 // player game has no use for, so he answers with a line instead of nothing.
                 // Charon likewise, whose Devil Square window has nothing behind it yet.

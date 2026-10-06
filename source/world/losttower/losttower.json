@@ -21,6 +21,7 @@
   "10": "TileRock04"
  },
  "grass_slots": [],
+ "void_floor": "TileWater01",
  "void": {
   "start": 0.1,
   "depth": 1.6,

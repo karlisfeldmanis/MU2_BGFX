@@ -8,6 +8,9 @@
 
 namespace mu::game {
 namespace {
+// Tarkan's steady sandstorm: always this far into the storm's light, wind and sound. Ours.
+constexpr float kSandShare = 0.2f;
+
 
 // How long each of Noria's spells lasts, in seconds, drawn afresh each time between these.
 // Invention, judged: long enough that a spell is a mood and not a flicker, short enough that a
@@ -110,10 +113,22 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // visible"), a drizzle under the moon rather than Noria's downpour.
     // Devias's wet spell is the blizzard: no drops (its peak is nought, so pour() is), no
     // thunder, and its own loop; its light is sheets/worlds/devias_rain.json like any wet spell.
-    snows_ = world == "devias";
+    // Tarkan's sandstorm is Devias's blizzard's shape too, its sand blown by the same pool
+    // (Leaves::setSand) and its light sheets/worlds/tarkan_rain.json. Ours, as Devias's is (the
+    // user, 2026-10-05: 'dust effect which has devias, this is a desert style map').
+    snows_ = world == "devias" || world == "tarkan";
     rains_ = world == "noria" || world == "lorencia" || snows_;
     peak_ = world == "lorencia" ? 0.33f : snows_ ? 0.0f : 1.0f;
     jungle_ = world == "noria";
+    // Tarkan's never stops, and never builds to Devias's full blizzard: the wind always up at
+    // kSandShare, no calm and no spell (the user, 2026-10-05: 'tarkan storm has to happpen all the
+    // time but not so strong like its in devias'). Held as a forced spell; --weather still wins.
+    if (world == "tarkan" && force.empty()) {
+        forced_ = true;
+        wet_ = true;
+        steady_ = kSandShare;
+        share_ = kSandShare;
+    }
     if (force == "rain" || force == "dry" || force == "storm") {
         forced_ = true;
         rains_ = force != "dry";
@@ -127,7 +142,7 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
         cycle_ = rains_;
         wet_ = false;
         left_ = 20.0f;
-    } else {
+    } else if (steady_ <= 0.0f) {
         // A world that rains starts dry, with its first spell short, so a walk in finds leaves
         // and does not wait the whole of a long dry spell to see the rain.
         wet_ = false;
@@ -144,7 +159,8 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     }
     if (rains_ || jungle_) {
         core::logf("weather %s: %s%s", world.c_str(),
-                   forced_ ? (storm_ ? "a storm, held by --weather"
+                   steady_ > 0.0f ? "a steady sandstorm"
+                   : forced_ ? (storm_ ? "a storm, held by --weather"
                            : wet_ ? (snows_ ? "a blizzard, held by --weather"
                                             : "raining, held by --weather")
                                   : "dry, held by --weather")
@@ -178,7 +194,7 @@ void Weather::update(float seconds, bool indoors) {
             if (wet_) thunderIn_ = 30.0f + random01() * 60.0f;
         }
     }
-    const float target = rains_ && wet_ ? 1.0f : 0.0f;
+    const float target = rains_ && wet_ ? (steady_ > 0.0f ? steady_ : 1.0f) : 0.0f;
     const float step = seconds / (snows_ ? kBuildSeconds : kTurnSeconds);
     share_ = share_ < target ? std::min(target, share_ + step) : std::max(target, share_ - step);
 

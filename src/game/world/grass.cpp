@@ -625,6 +625,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.through[3] = look.grassThrough;
     field.shape[0] = look.grassLengthSpread;
     field.shape[1] = look.grassRankHeight;
+    field.shape[2] = look.grassTufts;
 
     field.vary[0] = float(kCardsPerPatch);
     field.vary[1] = float(kStratification);

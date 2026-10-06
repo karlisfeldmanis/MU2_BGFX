@@ -34,3 +34,9 @@ saves/
 
 # A crash or a freeze report (src/core/watch.h).
 crashes/
+
+# A stray cmake configure at the root, the empty mu.db a tool made there (the real one is
+# source/mu.db), and downloaded third-party sound kept for picking from.
+/CMakeFiles/
+/mu.db
+/downloads/

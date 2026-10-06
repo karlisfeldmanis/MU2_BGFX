@@ -46,6 +46,14 @@ constexpr ExitGate kExits[] = {
     {48, 3, {240, 240, 241, 243}, -1, 1},   // Noria, from Atlans
     {46, 7, {14, 12, 15, 13}, 1, -1},       // Atlans, from Noria
     {49, 7, {15, 11, 27, 23}, 0, 0},        // Atlans's basin: death, Town Portal
+    // Tarkan's and Atlans's, WebZen's gate.txt 54, 56 and 57 (Season Six Gates.cs:200, 194, 198;
+    // docs/tarkan-port.md A §2.1). 54 is Direction.North (7), (-1,+1), into Tarkan's safe
+    // corridor and away from gate 55 beside it; 56 is Direction.South (3), (+1,-1), into Atlans's
+    // south-west lagoon and away from gate 53; 57 is the spawn gate, the town, WebZen's box
+    // (Season Six's starts at row 63), with no direction: a death and the Town Portal land there.
+    {54, 8, {248, 40, 251, 44}, -1, 1},     // Tarkan, from Atlans
+    {56, 7, {16, 225, 17, 230}, 1, -1},     // Atlans, from Tarkan
+    {57, 8, {187, 54, 203, 69}, 0, 0},      // Tarkan's town: death, Town Portal
 };
 
 // Gates.cs, CreateEnterGates: 23 on Lorencia's last rows, 25 on Noria's first, each two rows
@@ -69,6 +77,14 @@ constexpr EnterGate kEnters[] = {
     // in asks 70, ours, Season Six's Atlans warp level; the way out keeps MU's 60.
     {45, 3, {242, 240, 245, 243}, 70, 46},  // Noria to Atlans
     {47, 7, {9, 9, 11, 12}, 60, 48},        // Atlans to Noria
+    // WebZen's gate.txt 53 and 55 (Season Six Gates.cs:524-525): Atlans's south-west lagoon by
+    // the Hydras to Tarkan, and Tarkan's north-east corner back, both level 130 in every source
+    // that has them (140 at Tarkan's launch). Ours: the way in asks 100, just over Tarkan's
+    // breeds' 72-93 as Atlans's 70 sits over its 43-74, and the way back 70, Atlans's own way
+    // in (docs/tarkan-port.md, decision 2). Gate 53's box is half rock (column 14); the walker
+    // tests its own tile, as in the Lost Tower's niches.
+    {53, 7, {14, 225, 15, 230}, 100, 54},   // Atlans to Tarkan
+    {55, 8, {246, 40, 247, 44}, 70, 56},    // Tarkan to Atlans
     // Gates.cs:197, Devias's far corner under the Lost Tower's beacon, level 40, to exit gate 29.
     {28, 2, {2, 248, 3, 249}, 80, 29},      // Devias to the Lost Tower
     // The Lost Tower's, Gates.cs:198-204 (docs/lost-tower-port.md §2.2): the door out asks 15,

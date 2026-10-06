@@ -40,6 +40,8 @@ private:
         int level = 0, points = 0;
         unsigned long long experience = 0;
         int strength = 0, agility = 0, vitality = 0, energy = 0;
+        // Which of the four the stat runes raise, a bit each (Body::runeShare).
+        int raised = 0;
         int minimum = 0, maximum = 0, attackRate = 0, defense = 0, defenseRate = 0;
         int health = 0, maxHealth = 0, mana = 0, maxMana = 0;
         int pushed = -1, over = -1;

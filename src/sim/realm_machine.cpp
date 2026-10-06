@@ -53,11 +53,17 @@ void Realm::closeMachine() {
 }
 
 int Realm::putIn(int bagSlot, int cell) {
-    if (!atMachine() || mixed_ || !baggable(bagSlot) || bag_[bagSlot].empty()) return -1;
+    // A worn thing too, straight off him -- the 1st wing for the 2nd (the user, 2026-10-05:
+    // 'tried to drag 1st wings to chaos machine straight from inventory was not able').
+    if (!atMachine() || mixed_ || bagSlot < 0 || bagSlot >= kSlots || bag_[bagSlot].empty()) {
+        return -1;
+    }
     const content::ItemRow& row = tables_->items[size_t(bag_[bagSlot].item)];
+    const bool worn = wearable(bagSlot);
     if (cell < 0) {
         cell = pour(*tables_, machine_, 0, kMachineCells, bag_[bagSlot]);
         if (cell >= 0) bag_.lift(bagSlot);
+        if (cell >= 0 && worn) rearm(bodies_[0]);
         return cell;
     }
     const int onto = machine_.holder(*tables_, cell);
@@ -65,8 +71,13 @@ int Realm::putIn(int bagSlot, int cell) {
         unstack(bag_, bagSlot, went);
         return onto;
     }
+    // A jewel let go on a thing in the box it works: applied there (Realm::refineAcross).
+    if (onto >= 0 && worksOn(bag_[bagSlot], machine_[onto])) {
+        return refineAcross(Store::Bag, bagSlot, Store::Machine, onto) ? onto : -1;
+    }
     if (!machine_.room(*tables_, cell, row.width, row.height)) return -1;
     machine_.put(cell, bag_.lift(bagSlot));
+    if (worn) rearm(bodies_[0]);
     return cell;
 }
 
@@ -77,6 +88,12 @@ int Realm::takeOut(int cell, int bagSlot) {
     if (bagSlot < 0) {
         landed = pour(*tables_, bag_, kWorn, kSlots, machine_[cell]);
         if (landed >= 0) machine_.lift(cell);
+    } else if (const int under = baggable(bagSlot)           ? bag_.holder(*tables_, bagSlot)
+                                 : bagSlot >= 0 && bagSlot < kSlots ? bagSlot
+                                                                    : -1;
+               !mixed_ && under >= 0 && worksOn(machine_[cell], bag_[under])) {
+        // A jewel from the box onto a thing carried or worn.
+        if (refineAcross(Store::Machine, cell, Store::Bag, under)) landed = under;
     } else {
         const int onto = baggable(bagSlot) ? bag_.holder(*tables_, bagSlot) : -1;
         if (const int went = onto >= 0 ? topUp(*tables_, bag_, onto, machine_[cell]) : 0) {
@@ -99,6 +116,9 @@ bool Realm::shuffle(int from, int to) {
         if (const int went = topUp(*tables_, machine_, onto, machine_[from])) {
             unstack(machine_, from, went);
             return true;
+        }
+        if (!mixed_ && worksOn(machine_[from], machine_[onto])) {
+            return refineAcross(Store::Machine, from, Store::Machine, onto);
         }
     }
     const content::ItemRow& row = tables_->items[size_t(machine_[from].item)];
@@ -180,7 +200,15 @@ bool Realm::mix(Service service, int socket) {
         }
     };
     switch (service) {
+        // The one-mix services -- Upgrade, Chaos Weapon, 1st and 2nd Wings, Dinorant, Cloak -- are
+        // Combine's own mixes, judged to them alone.
         case Service::Combine:
+        case Service::FirstWings:
+        case Service::SecondWings:
+        case Service::ChaosWeapon:
+        case Service::Upgrade:
+        case Service::Dinorant:
+        case Service::Cloak:
             if (j.recipe == Recipe::PlusTen || j.recipe == Recipe::PlusEleven) {
                 // The thing is Reference 1: StaysAsIs and up one on success, Disappear on
                 // failure. The jewels Disappear either way.
@@ -329,9 +357,13 @@ bool Realm::mix(Service service, int socket) {
     }
     mixed_ = !machine_.empty();
     core::logf("machine: %s at %d%% for %lld zen -- %s",
-               service == Service::Combine ? recipeName(j.recipe) : serviceName(service), j.rate,
+               sim::byRecipe(service) ? recipeName(j.recipe)
+                                                                         : serviceName(service),
+               j.rate,
                static_cast<long long>(j.zen), made ? "made" : "failed");
-    say(What::Mixed, hero, service == Service::Combine ? int32_t(j.recipe) : 100 + int(service),
+    say(What::Mixed, hero,
+        sim::byRecipe(service) ? int32_t(j.recipe)
+                                                                 : 100 + int(service),
         made ? 1 : 0, j.rate);
     return true;
 }

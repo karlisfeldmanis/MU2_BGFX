@@ -148,6 +148,8 @@ ItemRow itemRowOf(const core::Json& entry) {
     ItemRow row{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
     row.release = float(entry["release"].numberOr(0.0));
     row.heldLoop = float(entry["held_loop"].numberOr(0.0));
+    row.heldClip = int(entry["held_clip"].numberOr(0.0));
+    row.swingClip = int(entry["swing_clip"].numberOr(-1.0));
     row.muzzleBone = entry["muzzle_bone"].stringOr("");
     row.muzzleAxis = entry["muzzle_axis"].stringOr("");
     const core::Json& offset = entry["muzzle_offset"];
@@ -229,6 +231,8 @@ void Figures::bind(FigureBody& body) {
             for (int k = 0; k < 3; ++k) item.muzzleOffset[k] = row->second.muzzleOffset[k] * 0.01f;
             item.release = row->second.release;
             item.heldLoop = row->second.heldLoop;
+            item.heldClip = row->second.heldClip;
+            item.swingClip = row->second.swingClip;
         }
         const auto& materials = item.mesh->materials();
         for (size_t m = 0; m < materials.size(); ++m) {
@@ -1061,6 +1065,8 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         ItemRow row = itemRowOf(entry);
         if (auto had = items_.find(name); had != items_.end() && row.heldLoop <= 0.0f) {
             row.heldLoop = had->second.heldLoop;
+            row.heldClip = had->second.heldClip;
+            row.swingClip = had->second.swingClip;
         }
         if (auto had = items_.find(name); had != items_.end() && row.muzzleBone.empty()) {
             row.release = had->second.release;
@@ -1124,6 +1130,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         // On the back at rest wherever he stands, drawn only to fight (the recipe's "slung"): the
         // Golden Archer's Golden Crossbow, which MU slings for an NPC skeleton in Lorencia.
         made->slungAtRest = entry["slung"].boolOr(false);
+        made->wings = entry["wings"].stringOr("");
         bind(*made);
         posture(*made, entry["idle"].stringOr(""));
         bodies_[made->name] = std::move(made);

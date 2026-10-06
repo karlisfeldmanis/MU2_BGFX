@@ -125,6 +125,12 @@ std::string question(sim::Service service, const sim::Judged& j) {
         case sim::Service::RemoveRune: return j.title + "?";
         case sim::Service::AddSocket: return "Add the socket?";
         case sim::Service::FuseRunes: return "Fuse the three runes?";
+        case sim::Service::FirstWings:
+        case sim::Service::SecondWings: return "Do you want to create the wings?";
+        case sim::Service::ChaosWeapon: return "Do you want to create a Chaos weapon?";
+        case sim::Service::Upgrade: return "Do you want to upgrade the item?";
+        case sim::Service::Dinorant: return "Do you want to create the Dinorant?";
+        case sim::Service::Cloak: return "Do you want to create the cloak?";
     }
     return "";
 }
@@ -136,6 +142,12 @@ const char* madeHead(sim::Service service) {
         case sim::Service::RemoveRune: return "Rune removed";
         case sim::Service::AddSocket: return "Socket added";
         case sim::Service::FuseRunes: return "Runes fused";
+        case sim::Service::FirstWings:
+        case sim::Service::SecondWings: return "Wings created";
+        case sim::Service::ChaosWeapon: return "Chaos weapon created";
+        case sim::Service::Upgrade: return "Upgraded";
+        case sim::Service::Dinorant: return "Dinorant created";
+        case sim::Service::Cloak: return "Cloak created";
     }
     return "";
 }
@@ -190,7 +202,7 @@ int Mixer::hitAt(float ux, float uy, const sim::Realm& realm) const {
     }
     if (kPrevBox.grown(3.0f).has(ux, uy)) return kPrev;
     if (kNextBox.grown(3.0f).has(ux, uy)) return kNext;
-    if (sim::Service(service_) == sim::Service::RemoveRune && turn_ >= 1.0f) {
+    if (service() == sim::Service::RemoveRune && turn_ >= 1.0f) {
         const sim::Judged j = realm.judged(sim::Service::RemoveRune, socket_);
         if (j.target >= 0) {
             const sim::Held& thing = realm.machine()[j.target];
@@ -271,7 +283,7 @@ void Mixer::update(float seconds, float width, float height, int column, const s
                 if (pressing_ == kPrev || pressing_ == kNext) {
                     const int step = pressing_ == kNext ? 1 : -1;
                     const int from = pending_ >= 0 ? pending_ : service_;
-                    pending_ = (from + step + sim::kServices) % sim::kServices;
+                    pending_ = (from + step + sim::kRowCount) % sim::kRowCount;
                     turnDir_ = step;
                     if (turn_ >= 0.0f) turn_ = -std::min(1.0f, turn_);
                     confirming_ = false;

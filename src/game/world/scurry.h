@@ -31,20 +31,38 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "gfx/effects.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {
 
 class Sound;
 
-// What a world runs along its floor, by the model name tools/cook.py's CRAWLS cooks it under.
-// Only the Dungeon: MoveFishs' other arms are Lorencia's fish (not built, see boids.h) and maps
-// this game does not have.
+// What a world runs along its floor, by the model name tools/cook.py's CRAWLS cooks it under:
+// the Dungeon's rats and Tarkan's scarabs. MoveFishs' other arms are Lorencia's fish (not built,
+// see boids.h) and maps this game does not have.
 std::string crawlOf(const std::string& world);
+
+// MoveFishs' numbers for one world's crawler (GOBoid.cpp:1700-1735).
+struct CrawlRow {
+    int most = 3;            // slots filled: 3, or all ten on Atlans and Tarkan (:1668-1675)
+    int scaleLeast = 4;      // Scale (rand() % 4 + least) * 0.1
+    float speed = 0.6f;      // Velocity = speed / Scale
+    float turn = 13.0f;      // Gravity, degrees a frame
+    int life = -1;           // LifeTime: -1 is rand() % 128
+    bool squeaks = false;    // aMouse.wav, the rat's
+    // A BITMAP_JOINT_ENERGY trail behind each (Tarkan's SubType 4, ZzzEffectJoint.cpp:262-288,
+    // 445): 20 tails, Scale 30, dull brown (0.3, 0.15, 0.1), added. False: none.
+    bool trail = false;
+    // Drawn at this of MU's Scale, its motion still MU's. Ours: Tarkan's scarabs at 0.55, about
+    // 20 cm for MU's 35 (the user, 2026-10-05: 'make thos bugs smaller').
+    float drawn = 1.0f;
+};
+CrawlRow crawlRowOf(const std::string& world);
 
 class Scurry {
 public:
-    static constexpr int kMaxRats = 3;
+    static constexpr int kMaxRats = 10;
 
     // Opens the pool over a world. An empty `model`, or one not cooked, opens nothing and is not
     // an error. `cooked/<world>/meshes/<model>.mum` and `clips/<model>.muc`, as the birds'.
@@ -56,8 +74,11 @@ public:
     void update(float seconds, const float hero[3], const content::Ground& ground,
                 gfx::Renderer& renderer);
     void gather(std::vector<gfx::Drawable>& out) const;
+    // The trails, where the world's row has them (CrawlRow::trail).
+    void gatherTrails(gfx::Effects& effects) const;
 
 private:
+    static constexpr int kTails = 20;
     struct Rat {
         float position[3] = {0.0f, 0.0f, 0.0f};
         // Where it will be three reference frames on, which the others steer by (MoveBoid reads
@@ -70,6 +91,9 @@ private:
         int strikes = 0;       // SubType
         bool live = false;
         bool leaving = false;
+        float tails[kTails][3] = {};  // where it was, a reference frame apart, newest first
+        int tailCount = 0;
+        float tailClock = 0.0f;
     };
 
     void spawn(Rat& rat, const float hero[3], const content::Ground& ground);
@@ -82,7 +106,9 @@ private:
     std::unique_ptr<ClipLibrary> library_;
     std::unique_ptr<FigureBody> body_;
     Figure figures_[kMaxRats];
-    int paletteRows_[kMaxRats] = {-1, -1, -1};
+    int paletteRows_[kMaxRats] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    CrawlRow row_;
+    bgfx::TextureHandle trailSheet_ = BGFX_INVALID_HANDLE;
     bool standing_[kMaxRats] = {};
     float light_[kMaxRats][3] = {};
     std::vector<float> scratch_;

@@ -31,6 +31,16 @@ constexpr TravelRow kRows[kTravels] = {
     {"Lost Tower 5", 4, 120, 7000, 129, 53, -1, -1},
     {"Lost Tower 6", 4, 140, 7500, 53, 53, -1, -1},
     {"Lost Tower 7", 4, 140, 8000, 8, 86, -1, -1},
+    // Atlans, last so a save's bits keep their rows. 0.75's list has none; ours (the user,
+    // 2026-10-05: 'if char already did meet the quest giver quest from noria allow to use fast
+    // travel to atlans'): Season Six's warp, level 70 as the Noria gate asks and 4,000 Zen, on the
+    // safe basin's spawn gate 49, facing nowhere (game/world/maps.cpp's arrival tile).
+    {"Atlans", 7, 70, 4000, 21, 17, 0, 0},
+    // Tarkan, after it for the same reason. 0.95d's list has none; Season Six's "Tarkan" is 8,000
+    // Zen at 140 on spawn gate 57 (Gates.cs:67). Ours: level 100 as the Atlans door asks, landing
+    // on the town at 195,65 (WZ's middle, 195,61, is a closed statue block), facing nowhere. With
+    // no giver on the map it opens the first time he stands there. docs/tarkan-port.md.
+    {"Tarkan", 8, 100, 8000, 195, 65, 0, 0},
 };
 
 // A chained map's floors, every floor a link and its row open once the link is taken: the
@@ -105,6 +115,9 @@ void Realm::settleFound(uint32_t saved) {
     found_ = saved & ((uint32_t(1) << kTravels) - 1);
     // Both towns from the start, whichever he was born in (the user, 2026-10-04).
     found_ |= travelRowsOf(0) | travelRowsOf(3);
+    // Atlans once he has met Lirien: speaking to her opens it (Realm::discover), and a save from
+    // before her row was here has the Drowned Song handed in to show for it.
+    if (quests_[kDrownedSong].completions > 0) found_ |= travelRowsOf(int32_t(kAtlansMap));
     // A map nobody gives a quest on opens as he stands in it. Silently: a raise logs the same
     // lines on every run.
     bool giver = false;

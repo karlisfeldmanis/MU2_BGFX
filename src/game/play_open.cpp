@@ -36,6 +36,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     castleAir_ = world == "bloodcastle";
     // Atlans's is aWater, the same way: the whole map, under no roof (SceneManager.cpp:879-881).
     waterAir_ = world == "atlans";
+    desertAir_ = world == "tarkan";
     underwater_ = world == "atlans";
     grassy_ = world == "lorencia" || world == "noria";
     snowy_ = world == "devias";
@@ -50,6 +51,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // hand: Marlon's plate at +7 and Berdysh at +8.
     if (figures_) figures_->shine(tables_.items);
     if (figures_) pets_.open(*figures_);
+    flying_ = dinorantFlies(world);
+    pets_.setFlying(flying_);
 
     // The two copies of the attribute grid, compared -- the one the cook wrote into the tables
     // and the one the ground read out of attributes.png. This is the only run in which both
@@ -336,7 +339,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
         // Whoever hands out a quest (sim/quests.cpp): Marlon, Peia, Devin, Sevina and the rest.
         const int32_t number = tables_.folk[i].number;
-        if (sim::questOf(number) >= 0) questGivers_.push_back(int(i));
+        // And Lirien, who takes back Peia's 'The Drowned Song'.
+        if (sim::questOf(number) >= 0 || sim::questReceives(number)) questGivers_.push_back(int(i));
     }
     const float metresPerTile = ground_ ? ground_->metresPerTile() : 1.0f;
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
@@ -373,6 +377,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         const float scale = look->scale * (person.number == sim::kTersia ? 0.93f : 1.0f);
         one.figure.stand(look, at, yaw, scale, tables_.grid.safe(person.x, person.y));
         settle(one);
+        if (!look->wings.empty()) one.wing.wear(figures_->body(look->wings), one.figure);
         bones = std::max(bones, look->boneCount());
         folk_.push_back(std::move(one));
     }
@@ -470,6 +475,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     // The tower's is aTower (SceneManager.cpp:873-875), the same way.
     else if (dungeonAir_) heard_.wind = sound_.load(towerAir_ ? "world_tower" : "world_dungeon", false);
     else if (waterAir_) heard_.wind = sound_.load("world_water", false);
+    else if (desertAir_) heard_.wind = sound_.load("world_desert", false);
     // Blood Castle's match bed, looped while its run is on (Play::hear).
     heard_.castleBed = castleAir_ ? sound_.load("world_bloodcastle", false) : -1;
     heard_.fire = sound_.load("world_bonfire", false);

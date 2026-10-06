@@ -107,10 +107,16 @@ struct HeldItem {
     int nockedMaterial = -1;
     // The fraction of its own clip at which the string goes (its asset's `release`), 0 for none.
     float release = 0.0f;
-    // Times a second its own clip runs through, always, held or not (its asset's `held_loop`), 0
+    // Times a second its own clip runs through while it is in hand (its asset's `held_loop`), 0
     // for none: the Staff of Resurrection's swirl, which MuMain spins at fifteen times the
-    // stand's speed (ZzzCharacter.cpp:10125-10128). See Figure::poseHeld.
+    // stand's speed (ZzzCharacter.cpp:10125-10128). Slung it stands on its first clip's first key,
+    // as MU's back does. See Figure::poseHeld.
     float heldLoop = 0.0f;
+    // Which of its own clips that is (its asset's `held_clip`), and the one a sword swing plays
+    // instead, keyed to the swing (`swing_clip`, -1 for none): MuMain's Flail, action 1 held
+    // and action 2 in PLAYER_ATTACK_SWORD_RIGHT1..2 (ZzzCharacter.cpp:10107-10118).
+    int heldClip = 0;
+    int swingClip = -1;
 };
 
 // Whether it hangs off the right grip: MU's `Weapon[0]`, what a skill that draws the weapon
@@ -204,6 +210,9 @@ struct FigureBody {
     // Whether he carries his weapon on the back, and stands in the safe idle, whenever he is not
     // fighting, safe tile or not: the Golden Archer, who draws his crossbow only to shoot.
     bool slungAtRest = false;
+    // The wing a townsperson wears on her back, by its body's name (the recipe's "wings"): the
+    // Atlans envoy's Wing04. Empty for none; drawn by Play's WingLook as the hero's.
+    std::string wings;
     // And what it WALKS in there. The same chain, one row over: `c->SafeZone` gives
     // PLAYER_WALK_MALE (action 15, 16 for a woman) whatever is carried, so a knight crossing the
     // town square walks empty-handed with the axe on his back rather than in the axe's own
@@ -271,6 +280,8 @@ struct ItemRow {
     // on everything that does not shoot, and on the three whose rig marks none.
     float release = 0.0f;
     float heldLoop = 0.0f;  // its asset's `held_loop`: its own clip run always, cycles a second
+    int heldClip = 0;       // its asset's `held_clip`: which clip that is
+    int swingClip = -1;     // its asset's `swing_clip`: the clip a sword swing plays, -1 none
     std::string muzzleBone;
     std::string muzzleAxis;
     float muzzleOffset[3] = {0.0f, 0.0f, 0.0f};

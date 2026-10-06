@@ -49,7 +49,7 @@ public:
     // The vault cell being dragged, or -1.
     int dragged() const { return dragging_; }
     // A thing dragged out of the bag and over this window, or null, and whether the vault takes
-    // it at all (a worn piece it does not): the cells it would land on are lit by
+    // it at all (a worn piece too, since 2026-10-05): the cells it would land on are lit by
     // Realm::deposit's gate. Set before update.
     void carrying(const sim::Held* what, bool takes) {
         incoming_ = what ? *what : sim::Held{};

@@ -213,6 +213,8 @@ public:
     // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
     // this is heard and re-dressed. See Realm::refine.
     bool refine(int jewelSlot, int targetSlot);
+    // Rings a jewel the vault or the box applied (Realm::takeJeweled).
+    void jewelRung();
     // A drag let go over the world: the thing is thrown on the ground at his feet, where the
     // same Pick order that takes a kill's drop takes it back. The realm's to refuse, and the
     // figure is re-dressed when what was thrown came off him.
@@ -999,6 +1001,11 @@ private:
     bool castleAir_ = false;  // Blood Castle: its run bed (heard_.castleBed)
     // Atlans's: aWater, on the wind's slot too, the whole map and in the open.
     bool waterAir_ = false;
+    // Tarkan's: desert.wav, on the wind's slot too, the whole map and in the open, though the
+    // map is "underground" for its leaves (game/world/maps.h).
+    bool desertAir_ = false;
+    // Over Tarkan the Dinorant flies, 90 over the ground (game/pets.h dinorantFlies).
+    bool flying_ = false;
     // Under the sea: off its safe zone a player swims (FigureBody::swimWalkClip), MU's Fly
     // stance for Atlans (ZzzCharacter.cpp:298-301).
     bool underwater_ = false;
@@ -1223,6 +1230,8 @@ private:
     // where MU faced them, and those it leaves to the town's placements, as those stand them.
     struct Standing {
         Figure figure;
+        // Her wing, for the one whose recipe names one (FigureBody::wings): the Atlans envoy.
+        WingLook wing;
         int folk = -1;
         // Whether it takes turns among its clips, MuMain's way: see Play::fidget. A guard does
         // not -- he wears the player's 283 and MU stands him in one stop action for good.

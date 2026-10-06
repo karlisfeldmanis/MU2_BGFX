@@ -803,7 +803,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     if (row == nullptr) return {};
     sheet.name = row->name;
     sheet.nameTone = tip::Tone::Blue;
-    const sim::HeroPoints& has = hero_->points;
+    const sim::HeroPoints& has = hero_->totalPoints();
     if (row->mightTicks > 0) {
         // The elf's Greater Damage: `3 + energy / 7` on every blow after the defence
         // (sim::mightOf), held at the cast.
@@ -906,8 +906,8 @@ tip::Sheet Hud::lifeSheet() const {
     most.rows.push_back(said("Level  " + times(hero_->level, row.healthPerLevel),
                              std::to_string(int(float(hero_->level) * row.healthPerLevel)),
                              tip::Tone::White));
-    most.rows.push_back(said("Vitality  " + times(hero_->points.vitality, row.healthPerVitality),
-                             std::to_string(int(float(hero_->points.vitality) *
+    most.rows.push_back(said("Vitality  " + times(hero_->totalPoints().vitality, row.healthPerVitality),
+                             std::to_string(int(float(hero_->totalPoints().vitality) *
                                                 row.healthPerVitality)),
                              tip::Tone::White));
     if (hero_->excel.healthRate != 1.0) {
@@ -939,18 +939,18 @@ tip::Sheet Hud::manaSheet() const {
 
     // `maximumMana`'s three parts, found by asking it with each input taken away: its rates are
     // its own and are not copied here.
-    const sim::HeroPoints bare{hero_->points.strength, hero_->points.agility,
-                               hero_->points.vitality, 0};
+    const sim::HeroPoints bare{hero_->totalPoints().strength, hero_->totalPoints().agility,
+                               hero_->totalPoints().vitality, 0};
     const int base = sim::maximumMana(hero_->kin, 0, {});
     const int byLevel = sim::maximumMana(hero_->kin, hero_->level, {}) - base;
-    const int byEnergy = sim::maximumMana(hero_->kin, hero_->level, hero_->points) -
+    const int byEnergy = sim::maximumMana(hero_->kin, hero_->level, hero_->totalPoints()) -
                          sim::maximumMana(hero_->kin, hero_->level, bare);
     tip::Section most;
     most.kicker = "Maximum";
     if (base > 0) most.rows.push_back(said("Base", std::to_string(base), tip::Tone::White));
     most.rows.push_back(said("Level  " + std::to_string(hero_->level), std::to_string(byLevel),
                              tip::Tone::White));
-    most.rows.push_back(said("Energy  " + std::to_string(hero_->points.energy),
+    most.rows.push_back(said("Energy  " + std::to_string(hero_->totalPoints().energy),
                              std::to_string(byEnergy), tip::Tone::White));
     if (hero_->excel.manaRate != 1.0) {
         most.rows.push_back(said("Excellent armour", "+" + percent(float(hero_->excel.manaRate - 1.0)),
@@ -982,7 +982,7 @@ tip::Sheet Hud::shieldSheet() const {
     sheet.sections.push_back(now);
 
     // `maximumShield`: 1.2 a point of all four stats, the defence, and the level squared over 30.
-    const sim::HeroPoints& has = hero_->points;
+    const sim::HeroPoints& has = hero_->totalPoints();
     const int stats = has.strength + has.agility + has.vitality + has.energy;
     tip::Section most;
     most.kicker = "Maximum";

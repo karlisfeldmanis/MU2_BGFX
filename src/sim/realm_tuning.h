@@ -30,11 +30,11 @@ namespace mu::sim {
 inline void restoreMana(Body& hero) {
     const int was = hero.maxMana;
     // And the excellent armour's +4% a piece (Excellence::manaRate).
-    hero.maxMana = int(double(maximumMana(hero.kin, hero.level, hero.points) + hero.excel.moreMana) *
+    hero.maxMana = int(double(maximumMana(hero.kin, hero.level, hero.totalPoints()) + hero.excel.moreMana) *
                        hero.excel.manaRate);
     hero.mana = std::min(hero.maxMana, hero.mana + std::max(0, hero.maxMana - was));
     const int wasSd = hero.maxSd;
-    hero.maxSd = maximumShield(hero.level, hero.points, hero.stats.defense);
+    hero.maxSd = maximumShield(hero.level, hero.totalPoints(), hero.stats.defense);
     hero.sd = std::min(hero.maxSd, hero.sd + std::max(0, hero.maxSd - wasSd));
 }
 
@@ -419,6 +419,15 @@ constexpr Resistance kResistances[] = {
     {49, 12, 12},  // Hydra
     {51, 6, 6},    // Great Bahamut
     {52, 7, 7},    // Silver Valkyrie
+    // Tarkan's seven (WZO Monster.txt:55-74, = OpenMU Version095d Maps/Tarkan.cs read the same
+    // way; docs/tarkan-port.md A 4.2). The two bosses' fire 15 and 17 is not carried.
+    {57, 9, 9},    // Iron Wheel
+    {58, 9, 9},    // Tantalos
+    {59, 13, 13},  // Zaikan
+    {60, 8, 8},    // Bloody Wolf
+    {61, 10, 10},  // Beam Knight
+    {62, 8, 8},    // Mutant
+    {63, 13, 13},  // Death Beam Knight
 };
 
 // ---- what each breed leaves -------------------------------------------------------------------
@@ -450,6 +459,11 @@ constexpr DropRate kDropRates[] = {
     // 15 for the elite and 150 for the Hydra (WZO Monster.txt:39-72; docs/atlans-port.md 4.2).
     {45, 14, 3, 8}, {46, 14, 3, 8}, {47, 14, 3, 8}, {48, 14, 3, 15}, {49, 14, 3, 150},
     {51, 14, 3, 15}, {52, 14, 3, 15},
+    // Tarkan's: MoneyRate 30 for all seven, twice the others', and MaxItemLevel 3; RegTime 10
+    // for the three weakest, 20 for the Tantalos and the Beam Knight, 150 for the two bosses
+    // (WZO Monster.txt:55-74; docs/tarkan-port.md A 4.2).
+    {57, 30, 3, 10}, {58, 30, 3, 20}, {59, 30, 3, 150}, {60, 30, 3, 10}, {61, 30, 3, 20},
+    {62, 30, 3, 10}, {63, 30, 3, 150},
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {
