@@ -32,6 +32,11 @@ public:
     void cast(const float feet[3], float yaw);
     // Fumes on the caster while he casts it: `feet` and his drawn `tall`. Every frame it runs.
     void fume(const float feet[3], float tall, float seconds);
+    // **Sickness on a poisoned body** (the user, 2026-10-06: 'beter green smoke effect on monster
+    // mesh to show poison efect not just simple tint'), ours: one slow green smoke puff born at
+    // `at`, a point on its skeleton the caller draws at random, rising and opening as it fades.
+    // `scale` its size for the body's (its height over a man's).
+    void sicken(const float at[3], float scale = 1.0f);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
@@ -54,6 +59,7 @@ private:
         float full = 50.0f;
         float spin = 0.0f;
         bool fume = false;
+        bool sick = false;  // `sicken`'s
     };
 
     static constexpr float kFps = 25.0f;
@@ -70,9 +76,17 @@ private:
     static constexpr float kFumeEvery = 1.5f;
     static constexpr float kFumeRadius = 0.35f;
     static constexpr float kCasterFume[3] = {0.25f, 0.6f, 0.3f};
+    // A poisoned body's smoke: a deeper green than the spell's, rising slower and living
+    // longer, 0.4-0.65 m on a man and opening as it goes. smoke01 is dark (its brightest texel
+    // 71 of 255) and added, so it is lit past 1 to read on a lit body: 0.55 did not show on a
+    // Stone Golem, 2.2 was 'little bit to much green smoke' (the user, 2026-10-06).
+    static constexpr float kSick[3] = {0.40f, 1.0f, 0.35f};
+    static constexpr float kSickBright = 1.4f;
+    static constexpr float kSickRise = 0.35f;  // metres a second
+    static constexpr float kSickFrames = 40.0f;
 
     static constexpr int kClouds = 24;  // the spell's 24 bodies at most (sim kVictims)
-    static constexpr int kMaxPuffs = 288;
+    static constexpr int kMaxPuffs = 512;  // 288 before a crowd could be poisoned (2026-10-06)
 
     std::vector<EffectCorner> flat_[11], lit_[11];
     int keyCount_ = 0;

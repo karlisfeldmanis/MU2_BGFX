@@ -795,6 +795,7 @@ private:
         uint32_t burnFrame = 0;
         // An Immolate rune's burn on it (kEmberFlames): frames owed, and its draw of bones.
         float burningOwed = 0.0f;
+        float sickOwed = 0.0f;  // a poisoned body's smoke (kSickPuffs), frames owed
         uint32_t burningDice = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
