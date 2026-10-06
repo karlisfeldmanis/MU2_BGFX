@@ -554,6 +554,15 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     const FigureBody* shooterLook = from->figure.body();
     const bool pierce = shooterLook != nullptr && shooterLook->name == kPenetratingFigure;
     arrows_.loose(muzzle, at, target, model, shooter, nullptr, 0.0f, pierce);
+    if (shooterLook != nullptr && shooterLook->name == kSpreadFigure) {
+        const float dx = at[0] - muzzle[0], dz = at[2] - muzzle[2];
+        for (const float side : {1.0f, -1.0f}) {
+            const float turn = side * kSpreadDegrees * 3.14159265f / 180.0f;
+            const float c = std::cos(turn), s = std::sin(turn);
+            const float wide[3] = {muzzle[0] + dx * c - dz * s, at[1], muzzle[2] + dx * s + dz * c};
+            arrows_.loose(muzzle, wide, 0, model, shooter, nullptr, 0.0f, false);
+        }
+    }
     // Read afterwards, as the meteor's line is: an arrow at two tiles is in the air for a tenth
     // of a second, and no shot schedule proves it flew.
     core::logf("arrow: tick %lld, #%u looses at #%u from %.1f m", (long long)realm_.tick(),

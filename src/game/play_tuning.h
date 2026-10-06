@@ -591,6 +591,25 @@ constexpr int kBurnHead = 1;
 // Ours: the burn at this share of MU's light. At MU's own, ~380 one-metre flames added over each
 // other under this renderer's bloom were one white blot that hid the knight (arena, 2026-10-06).
 constexpr float kBurnLight = 0.15f;
+// Tarkan's bosses' Flame of Evil (sim kBosses): the Zaikan's and the Death Beam Knight's
+// AT_SKILL_BOSS blow throws the ring of eighteen staffs at the attack's fourteenth frame
+// (fx/staff_ring.h), and the Death Beam Knight a MODEL_SKILL_BLAST within 400 units every frame
+// of it -- Cometfall's comet (ZzzCharacter.cpp:1816-1834, :1887-1897). The Tantallos's draws
+// nothing more than its blow: its client case gives the ring to the Zaikan alone.
+constexpr float kStaffRingWait = 14.0f / 25.0f;
+constexpr float kBlastRainReach = 4.0f;    // metres either way: rand() % 800 - 400
+// Ours: one every third reference frame. At MU's one a frame two knights' boss blows were some
+// forty comets in a second and the fight a white screen (arena, 2026-10-06), as the wizard's
+// Inferno blasts were once ('explosions are to crazy').
+constexpr float kBlastRainEvery = 3.0f / 25.0f;
+constexpr float kBlastRainFall = 0.3f;     // seconds: 300-800 units at 50-100 a frame
+// The landing's BITMAP_EXPLOTION. Ours: under Cometfall's 0.72, since eighteen land at once.
+constexpr float kStaffBlast = 0.4f;
+// The Iron Wheel's three MODEL_ARROW_BOMBs: one at its target and one 20 degrees either side
+// (ZzzCharacter.cpp:1859-1878). Ours: drawn as its crossbow's bolt, the sides flying the aimed
+// one's distance and striking nothing -- the realm's blow is the one.
+inline constexpr const char* kSpreadFigure = "IronWheel01";
+constexpr float kSpreadDegrees = 20.0f;
 struct InfernoBlow {
     int32_t number;
     bool bombs;

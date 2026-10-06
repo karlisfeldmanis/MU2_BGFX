@@ -26,6 +26,7 @@
 #include "game/fx/eyes.h"
 #include "game/fx/eye_trails.h"
 #include "game/fx/body_flames.h"
+#include "game/fx/staff_ring.h"
 #include "game/fx/staff_fire.h"
 #include "game/fx/held_lights.h"
 #include "game/fx/wing_motes.h"
@@ -566,6 +567,7 @@ public:
     Eyes& eyes() { return eyes_; }
     EyeTrails& eyeTrails() { return eyeTrails_; }
     BodyFlames& bodyFlames() { return bodyFlames_; }
+    StaffRing& staffRing() { return staffRing_; }
     StaffFire& staffFire() { return staffFire_; }
     HeldLights& heldLights() { return heldLights_; }
     WingMotes& wingMotes() { return wingMotes_; }
@@ -922,6 +924,10 @@ private:
     std::vector<RockDue> rocksDue_;
     struct MeteorStorm {
         float x = 0.0f, z = 0.0f, left = 0.0f, next = 0.0f;
+        // The Death Beam Knight's: a comet (MODEL_SKILL_BLAST) a reference frame within 400
+        // units, not the Balrog's meteor (kBlastRain*).
+        bool comets = false;
+        uint32_t who = 0;
     };
     std::vector<MeteorStorm> storms_;
     // Whether a body's blow is drawn as a missile, and in which model: the Hunter's saw bolt,
@@ -1066,6 +1072,15 @@ private:
     Eyes eyes_;
     EyeTrails eyeTrails_;
     BodyFlames bodyFlames_;
+    StaffRing staffRing_;
+    std::vector<StaffRing::Landing> staffLandings_;
+    // A Tarkan boss's ring of staffs, thrown when `wait` (seconds) is up: CheckAttackTime(14).
+    struct StaffDue {
+        float at[3] = {};
+        float yaw = 0.0f;
+        float wait = 0.0f;
+    };
+    std::vector<StaffDue> staffsDue_;
     StaffFire staffFire_;  // the held Staff of Resurrection's spark and shaft lights
     HeldLights heldLights_;  // the Saint Crossbow's, Grand Soul Shield's and Dragon Spear's
     WingMotes wingMotes_;  // the motes off every worn wing's tips

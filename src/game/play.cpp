@@ -1352,7 +1352,25 @@ void Play::update(double seconds) {
                             const bool hydra = body->kind >= 0 &&
                                                size_t(body->kind) < tables_.kinds.size() &&
                                                tables_.kinds[size_t(body->kind)].number == kHydraNumber;
+                            const int32_t bossNumber =
+                                body->kind >= 0 && size_t(body->kind) < tables_.kinds.size()
+                                    ? tables_.kinds[size_t(body->kind)].number
+                                    : -1;
                             if (hydra) {
+                            } else if (bossNumber == 58) {
+                                // The Tantallos: its blow's Inferno and nothing more.
+                            } else if (bossNumber == 59 || bossNumber == 63) {
+                                staffsDue_.push_back(
+                                    {{floor[0], floor[1], floor[2]}, swinger->yaw, kStaffRingWait});
+                                if (bossNumber == 63) {
+                                    MeteorStorm rain;
+                                    rain.x = bx;
+                                    rain.z = bz;
+                                    rain.left = std::max(swinger->swinging, kBlastRainEvery);
+                                    rain.comets = true;
+                                    rain.who = happening.who;
+                                    storms_.push_back(rain);
+                                }
                             } else if (gorgon) {
                                 for (int i = 0; i < 18; ++i) {
                                     const float turn = float(i) * 6.2831853f / 18.0f;
@@ -1500,6 +1518,18 @@ void Play::update(double seconds) {
     // the explosion, the shock round it and the blow's cue (MoveHandlers.cpp:2550-2573).
     cometLandings_.clear();
     comet_.update(float(seconds), cometLandings_);
+    // A Tarkan boss's staffs: each under the ground an explosion 80 units up and six stones
+    // (MoveHandlers.cpp:4342-4363), the eighteen heard as one.
+    staffLandings_.clear();
+    staffRing_.update(float(seconds), staffLandings_);
+    for (const StaffRing::Landing& one : staffLandings_) {
+        meteor_.stones(one.x, one.z, one.y, 6);
+        const float at[3] = {one.x, one.y + 0.8f, one.z};
+        meteor_.blast(at, kStaffBlast);
+    }
+    if (!staffLandings_.empty() && heard_.explosion >= 0) {
+        emit(heard_.explosion, staffLandings_.front().x, staffLandings_.front().z);
+    }
     for (const Comet::Landing& one : cometLandings_) {
         meteor_.stones(one.x, one.z, one.y, std::max(2, int(std::lround(6.0f * one.weight))));
         const float at[3] = {one.x, one.y + 0.8f, one.z};

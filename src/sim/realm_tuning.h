@@ -339,7 +339,9 @@ constexpr int chillOdds(int32_t number) {
 // 1738-1752) -- with one player, the blow on him, at the monster's own damage band. OpenMU 075
 // never creates its skill 150, so there they only melee; WebZen's, docs/lost-tower-port.md.
 // And Atlans's Hydra (49), A.Type 150 the same (Monster.txt:72; docs/atlans-port.md 4.2).
-constexpr int32_t kBosses[] = {35, 38, 49};
+// And Tarkan's Tantallos (58), Zaikan (59) and Death Beam Knight (63), A.Type 150 (WebZen
+// Monster.txt:61, :73, :74; docs/tarkan-port.md 4.2): all 63 Tantallos, not only the bosses.
+constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63};
 
 // ---- blows split into parts --------------------------------------------------------------------
 // **Ours.** MU and WebZen strike once a swing; these breeds' one blow is split into `parts`, each

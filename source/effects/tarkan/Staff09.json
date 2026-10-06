@@ -1,0 +1,21 @@
+{
+  "item": "Staff09",
+  "mu_name": "The Staff of Destruction, thrown",
+  "mu_name_from": "MODEL_STAFF_OF_DESTRUCTION, Item/Staff09.bmd: the Zaikan's own weapon, and the effect its and the Death Beam Knight's boss blow throws eighteen of (ZzzCharacter.cpp:1816-1834, :1887-1897).",
+  "kind": "staff_ring",
+  "why_this_one": "game/fx/staff_ring.h draws it: the ring of eighteen, every mesh added.",
+  "mesh": "Staff09.obj",
+  "mesh_from": "muextract export-obj on Data/Item/Staff09.bmd, the item's own export (source/items/weapons/Staff09.obj): one mesh, 72 triangles on wand10, 267 units long down its Z.",
+  "parts": [
+    {
+      "group": "wand10",
+      "sheet": "wand10.png",
+      "blend": "additive",
+      "note": "Data/Item/wand10.OZJ, the item's sheet (source/textures/wand10.png). BlendMesh -2 adds every mesh (ZzzEffect.cpp:1330-1336)."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "`o->Scale = 1.f`.",
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30`; it is gone the frame it is under the ground (Move_MODEL_STAFF_OF_DESTRUCTION, MoveHandlers.cpp:4342-4363)."
+}

@@ -686,12 +686,30 @@ void Play::shade(float seconds) {
             handDice_ ^= handDice_ << 13;
             handDice_ ^= handDice_ >> 17;
             handDice_ ^= handDice_ << 5;
+            if (storm.comets) {
+                // The Death Beam Knight's: a comet within 400 units, every frame of its blow.
+                storm.next += kBlastRainEvery - kBalrogStormEvery;
+                const float x =
+                    storm.x + (float(handDice_ % 800) * 0.01f - kBlastRainReach);
+                const float z =
+                    storm.z + (float((handDice_ >> 10) % 800) * 0.01f - kBlastRainReach);
+                comet_.cast(x, z, storm.who, 1.0f, kBlastRainFall);
+                continue;
+            }
             const float x = storm.x + (float(handDice_ % 1024) - 512.0f) * 0.01f;
             const float z = storm.z + (float((handDice_ >> 10) % 1024) - 512.0f) * 0.01f;
             meteor_.cast(x, z, 0);
             if ((handDice_ >> 20) & 1 && heard_.meteorite >= 0) emit(heard_.meteorite, x, z);
         }
     }
+    // A Tarkan boss's ring of staffs, at its fourteenth frame (fx/staff_ring.h).
+    for (StaffDue& due : staffsDue_) {
+        due.wait -= seconds;
+        if (due.wait <= 0.0f) staffRing_.cast(due.at, due.yaw);
+    }
+    staffsDue_.erase(std::remove_if(staffsDue_.begin(), staffsDue_.end(),
+                                    [](const StaffDue& one) { return one.wait <= 0.0f; }),
+                     staffsDue_.end());
     // The fight's coins, once its Zen has stopped coming (takeZen), with the lane's sum.
     if (zenQuiet_ > 0.0f && !zenOwed_) {
         zenQuiet_ -= seconds;
