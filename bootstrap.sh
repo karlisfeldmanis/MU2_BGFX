@@ -93,6 +93,14 @@ if [ ! -f extern/AlegreyaSans-Medium.ttf ]; then
   curl -sSL -o extern/AlegreyaSans-Medium.ttf $ALEGREYA_URL
   echo "$ALEGREYA_SHA256  extern/AlegreyaSans-Medium.ttf" | shasum -a 256 -c - || { rm -f extern/AlegreyaSans-Medium.ttf; exit 1; }
 fi
+# The names over the drops: Alegreya Medium, the serif the two sans above are cut from, mixed
+# case as Diablo IV sets its ground labels (the user's reference, 2026-10-06). Static 500.
+ALEGREYA_SERIF_URL=https://fonts.gstatic.com/s/alegreya/v41/4UacrEBBsBhlBjvfkQjt71kZfyBzPgNGxBUI_A.ttf
+ALEGREYA_SERIF_SHA256=3ae790f5b3f70bf2a9d990c07bbbfc22af476fb5835f309128f5978baf7a9bd6
+if [ ! -f extern/Alegreya-Medium.ttf ]; then
+  curl -sSL -o extern/Alegreya-Medium.ttf $ALEGREYA_SERIF_URL
+  echo "$ALEGREYA_SERIF_SHA256  extern/Alegreya-Medium.ttf" | shasum -a 256 -c - || { rm -f extern/Alegreya-Medium.ttf; exit 1; }
+fi
 
 # glfw is the one PLAN.md point 12 names that is NOT pinned here, and saying so is better
 # than the file implying otherwise: it comes from Homebrew, as a built dylib, and pinning it

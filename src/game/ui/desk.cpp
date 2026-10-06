@@ -90,6 +90,13 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     controls::open();
     specimen_.open(interface_);
     interface_.adopt(ground_);
+    // Baked at 48 as the controls' faces are, larger than a label is ever drawn, and minified.
+    if (groundFace_.bake(MU2_ROOT_DIR "/extern/Alegreya-Medium.ttf", 48.0f, 512, 4, 1, 0)) {
+        groundTexture_ = gfx::uploadFace(groundFace_, "ground labels");
+        groundFace_.dropPixels();
+    } else {
+        core::logError("interface: the ground label face did not bake; drops keep the body face");
+    }
     return true;
 }
 
@@ -110,6 +117,9 @@ void Desk::shutdown() {
     arrival_.shutdown();
     tally_.shutdown();
     beacon_.close();
+    if (bgfx::isValid(groundTexture_)) bgfx::destroy(groundTexture_);
+    groundTexture_ = BGFX_INVALID_HANDLE;
+    groundFace_ = gfx::Face{};
     interface_.shutdown();
 }
 
@@ -1490,20 +1500,31 @@ static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one) {
 
 void Desk::labelGround(const Play& play, int width, int height) {
     play.dropsOnScreen(viewProj_, width, height, onScreen_);
-    bool same = onScreen_.size() == drawnOnScreen_.size();
+    const uint32_t lit = play.pointedLying();
+    bool same = onScreen_.size() == drawnOnScreen_.size() && lit == groundLit_;
     for (size_t i = 0; same && i < onScreen_.size(); ++i) {
         same = onScreen_[i].id == drawnOnScreen_[i].id && onScreen_[i].x == drawnOnScreen_[i].x &&
                onScreen_[i].y == drawnOnScreen_[i].y;
     }
     if (same && groundRebuilds_ > 0) return;
     drawnOnScreen_ = onScreen_;
+    groundLit_ = lit;
     ++groundRebuilds_;
     ground_.clear();
     plates_.clear();
     const content::Tables& tables = *play.realm().tables();
-    const gfx::Face& face = ground_.face();
-    // The tooltip's size: MU's labels are its small type, and the two read as one family.
-    const float size = 8.0f * panel::unit();
+    // **Diablo IV's ground labels** (the user's reference, 2026-10-06: 'analyse item labels, and
+    // make similiar design'): a mixed-case serif in the quality's colour with its own shadow, on
+    // a see-through dark strip padded past the words and fading out at both ends, lit grey under
+    // the pointer, and a pile's names settling round it rather than in one tower. The name's
+    // grammar is ours and unchanged. MU's own was the text's box in opaque black.
+    const bool serif = groundFace_.ready() && bgfx::isValid(groundTexture_);
+    const gfx::Face& face = serif ? groundFace_ : ground_.face();
+    const float u = panel::unit();
+    // Diablo's names are about 19 px of em at 1080 lines; the tooltip's 16 read small beside it.
+    const float size = 9.5f * u;
+    // The strip's air: each end as wide as its fade, so the dark is whole where the words start.
+    const float padX = 0.8f * size, padY = 0.2f * size;
     struct Label {
         uint32_t id;
         std::string name;
@@ -1541,11 +1562,9 @@ void Desk::labelGround(const Play& play, int width, int height) {
                 name += n == 1 ? " +Socket" : " +" + std::to_string(n) + " Sockets";
             }
         }
-        // RenderGroundItemLabelTexture: the plate is the text's own box, opaque black, and no
-        // padding anywhere in it.
         // g_hFontBold for a jewel, which is a point up here, as a tip's bold line is.
-        const float set = boldOf(tables, *one) ? size + panel::unit() : size;
-        const float w = face.measure(set, name), h = face.height(set);
+        const float set = boldOf(tables, *one) ? size + u : size;
+        const float w = face.measure(set, name) + padX * 2.0f, h = face.height(set) + padY * 2.0f;
         labels.push_back({at.id, std::move(name), set, tintOf(tables, *one),
                           {at.x - w * 0.5f, at.y - h, w, h}});
     }
@@ -1582,34 +1601,63 @@ void Desk::labelGround(const Play& play, int width, int height) {
     }
     stacked_.clear();
     for (size_t i : order) stacked_.push_back(labels[i].id);
-    const float gap = panel::unit();
+    // Diablo's strips nearly touch: a pile reads as one list.
+    const float gap = u * 0.5f;
     const auto crosses = [gap](const gfx::Box& a, const gfx::Box& b) {
         return a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap &&
                b.y < a.y + a.h + gap;
     };
+    // **Nearest free place, either side** (Diablo's pile, which spreads above and below its
+    // drops): each name tries its own place, then just over or just under every plate it would
+    // share a column with, and takes the nearest that crosses none -- under counted half again
+    // as far, so a pile still leans upward off its things. Over the highest plate in its column
+    // is always free, and there is no loop to freeze on rounding (crashes/hang-2026-10-04).
     std::vector<size_t> placed;
     placed.reserve(order.size());
+    std::vector<float> tries;
     for (size_t i : order) {
         gfx::Box& plate = labels[i].plate;
-        for (bool moved = true; moved;) {
-            moved = false;
-            for (size_t p : placed) {
-                // Only ever up: just over p sits on crosses' own edge, and float rounding can
-                // still call it crossing -- set to the same y forever, it froze the game on a
-                // pile of drops (2026-10-04, crashes/hang-2026-10-04_22-07-25.txt).
-                const float over = labels[p].plate.y - plate.h - gap;
-                if (crosses(plate, labels[p].plate) && over < plate.y) {
-                    plate.y = over;
-                    moved = true;
-                }
+        const float home = plate.y;
+        tries.assign(1, home);
+        for (size_t p : placed) {
+            const gfx::Box& b = labels[p].plate;
+            if (plate.x < b.x + b.w + gap && b.x < plate.x + plate.w + gap) {
+                tries.push_back(b.y - plate.h - gap * 1.01f);
+                tries.push_back(b.y + b.h + gap * 1.01f);
             }
+        }
+        const auto far = [home](float y) { return y > home ? (y - home) * 1.5f : home - y; };
+        std::stable_sort(tries.begin(), tries.end(),
+                         [&](float a, float b) { return far(a) < far(b); });
+        for (float y : tries) {
+            plate.y = y;
+            bool free = true;
+            for (size_t p : placed) free = free && !crosses(plate, labels[p].plate);
+            if (free) break;
         }
         placed.push_back(i);
     }
+    // The strip: Diablo's dark glass, its ends faded to nothing across the padding. 0.7 and no
+    // thinner: over a legendary's column at 0.62 a green name went into the green.
+    const uint32_t body = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
+    const uint32_t litBody = gfx::rgba(0.24f, 0.22f, 0.20f, 0.86f);
+    const uint32_t clear = gfx::rgba(0.0f, 0.0f, 0.0f, 0.0f);
+    const float drop = std::max(1.0f, u);
     for (const Label& l : labels) {
-        ground_.rect(l.plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
-        plates_.push_back({l.id, l.plate});
-        ground_.text(l.plate.x, l.plate.y + face.ascent(l.set), l.set, l.tint, l.name);
+        const gfx::Box& b = l.plate;
+        const uint32_t ink = l.id == lit ? litBody : body;
+        ground_.shade({b.x, b.y, padX, b.h}, clear, ink, ink, clear);
+        ground_.rect({b.x + padX, b.y, b.w - padX * 2.0f, b.h}, ink);
+        ground_.shade({b.x + b.w - padX, b.y, padX, b.h}, ink, clear, clear, ink);
+        plates_.push_back({l.id, b});
+        const float x = b.x + padX, baseline = b.y + padY + face.ascent(l.set);
+        if (serif) {
+            ground_.lettered(face, groundTexture_, x + drop, baseline + drop, l.set, 0.0f,
+                             tip::ink::kDrop, l.name);
+            ground_.lettered(face, groundTexture_, x, baseline, l.set, 0.0f, l.tint, l.name);
+        } else {
+            ground_.shadowed(x, baseline, l.set, l.tint, tip::ink::kDrop, drop, l.name);
+        }
     }
 }
 
