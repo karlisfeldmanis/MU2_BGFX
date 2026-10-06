@@ -95,9 +95,11 @@ void InvasionSky::open(const FigureBody* dragon, bgfx::TextureHandle glow,
     diver_.live = false;
 }
 
-void InvasionSky::begin(float x, float z, float yaw, float rainSeconds, float landSeconds) {
+void InvasionSky::begin(float x, float z, float yaw, float rainSeconds, float landSeconds,
+                        bool crossings) {
     if (!body_) return;
     on_ = true;
+    crossings_ = crossings;
     clock_ = 0.0f;
     rainSeconds_ = rainSeconds;
     landSeconds_ = landSeconds;
@@ -155,7 +157,7 @@ void InvasionSky::update(float seconds, const float hero[3], const content::Grou
     clock_ += seconds;
     const float diveFrom = landSeconds_ - kDiveSeconds;
     // The crossings, while it is on and before the dive.
-    if (on_ && clock_ >= nextLaunch_ && clock_ < diveFrom - 1.0f) {
+    if (on_ && crossings_ && clock_ >= nextLaunch_ && clock_ < diveFrom - 1.0f) {
         // Three at once as the rain is in, then one a slot as it comes free.
         int launched = 0;
         for (Wyrm& one : wyrms_) {

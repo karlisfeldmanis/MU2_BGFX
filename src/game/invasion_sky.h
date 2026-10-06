@@ -67,8 +67,11 @@ public:
     bool isOpen() const { return body_ != nullptr; }
 
     // Begun: the rain comes in for `rainSeconds`, then the dragons; the dive lands at (x, z), in
-    // world metres, facing `yaw`, `landSeconds` from now.
-    void begin(float x, float z, float yaw, float rainSeconds, float landSeconds);
+    // world metres, facing `yaw`, `landSeconds` from now. Without `crossings` the dive alone: the
+    // raid's one dragon (the user, 2026-10-06: 'we need that only 1 dragon boss spawnes on
+    // lorencia').
+    void begin(float x, float z, float yaw, float rainSeconds, float landSeconds,
+               bool crossings = true);
     // Over: no more come; those in the air fly on out.
     void end();
     bool flying() const;
@@ -117,6 +120,7 @@ private:
     Wyrm wyrms_[kDragons];
     Wyrm diver_;
     bool on_ = false;
+    bool crossings_ = true;
     float clock_ = 0.0f;  // seconds since begin
     float rainSeconds_ = 0.0f, landSeconds_ = 0.0f;
     float landAt_[2] = {0, 0};

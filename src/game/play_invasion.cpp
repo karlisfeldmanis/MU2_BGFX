@@ -39,8 +39,9 @@ void Play::invasionSaid(const sim::Happening& happening) {
             const float z = -(float(happening.c) + 0.5f) * metresPerTile;
             // The sim's facing turned into a model's yaw, as Play::gather turns every body's.
             const float yaw = std::atan2(std::cos(dragon->facing), -std::sin(dragon->facing));
+            // The raid's dragon comes alone: no crossings, only its own dive.
             sky_.begin(x, z, yaw, float(sim::kInvasionRainTicks) * float(kTickSeconds),
-                       float(sim::kInvasionLandTicks) * float(kTickSeconds));
+                       float(sim::kInvasionLandTicks) * float(kTickSeconds), raidPlayers_ == 0);
             invasionStorm_ = true;
             if (invasionCry_ < 0) invasionCry_ = sound_.load("goldendragon_attack", true, true);
             if (invasionChime_ < 0) invasionChime_ = sound_.load("invasion_start", false);
@@ -54,7 +55,12 @@ void Play::invasionSaid(const sim::Happening& happening) {
     }
     // Its roar waits for the frame's own pass (Play::invasion): the loop that said this stands
     // every risen body in its idle after asking here.
-    if (happening.what == sim::What::Rose) roarOwed_ = happening.who;
+    if (happening.what == sim::What::Rose) {
+        roarOwed_ = happening.who;
+        // Risen, the raid's dragon is the only one: a dive not yet down -- --raid-now lands it at
+        // once -- is never flown, so a second does not come down onto the fight.
+        if (raidPlayers_ > 0) sky_.end();
+    }
 }
 
 void Play::invasion(float seconds) {
