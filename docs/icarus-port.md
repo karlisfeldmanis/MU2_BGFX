@@ -122,8 +122,14 @@ Object07 and 16 (35 floor plates, the sheet's dark foot and white crown), Object
 miniatures off the road), Object14 (11 shard scatters) and Object15 (39 stair-platforms), all
 top02_R marble and built static (their bones hold one key), at MU's heights. Object14 takes
 `sheet_roughness` 0.65 (ours): at marble's 0.35 every shallow shard flashed a white spot at its apex.
-Shot muted at 16,28, 32,33, 26,63 and 52,68, 280-330 fps. Not yet judged by the user. Left: the
-floating pillars (Object08-10, rigged) and the motes.
+Shot muted at 16,28, 32,33, 26,63 and 52,68, 280-330 fps. Not yet judged by the user.
+
+**Objects batch 3: the floating pillars (2026-10-06, the user: 'do next objects').** Object08-10, 39
+pillars 4.5 m tall on top02_R marble, built with their 3-bone clips (Object08's 12 keys rock it,
+09's and 10's 24 bob it and turn it about its axis), played at the 0.16 every object starts with, as
+MoveObject's WD_10HEAVEN arm is empty. Shot muted at 16,31 and 26,62, two frames apart: the tipped
+pillar by the road turns. 325-335 fps. Every placed kind of Object11 now stands; left of the objects
+step: Object11's motes.
 
 ## The one thing to know first
 

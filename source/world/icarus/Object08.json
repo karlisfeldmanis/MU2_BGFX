@@ -1,0 +1,44 @@
+{
+  "item": "Object08",
+  "mu_name": "Object08",
+  "mu_name_from": "Icarus's object slot 7, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "icarus",
+  "object_type": 7,
+  "placements": 13,
+  "profile": "world",
+  "sheets": {
+    "top02_R": "ic_top02_r.png"
+  },
+  "sheet_from": "Data/Object11/, from MuMain, decoded under an ic_ prefix (Object11's).",
+  "sheet_materials": {
+    "top02_R": "marble"
+  },
+  "material_note": "Read off the art: pale frosted stone at the crown of the sheet fading to black at its foot.",
+  "why_this_one": "A floating pillar, 4.5 m, white at the top fading black; 13 of them, mostly in the south half, a few tipped. Its 3-bone clip (12 keys) bobs bone 0 about 10 cm and rocks on its clip, without turning: the only animated placements in Icarus. Objects batch 3 (the user, 2026-10-06: 'do next objects'). docs/icarus-port.md B §1.2.",
+  "play_speed_from": "MoveObject's WD_10HEAVEN arm is empty (docs/icarus-port.md B §2), so its clip plays at the 0.16 every object starts with.",
+  "effects_note": "No MoveObject or RenderObjectVisual arm: its clip is its whole effect. MU's height kept (decision 4).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "marble",
+      "triangles": 46,
+      "area": 172122.4,
+      "along": [
+        -49.4,
+        49.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.777,
+        0.996
+      ]
+    }
+  ]
+}
