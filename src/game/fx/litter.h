@@ -41,10 +41,6 @@ public:
         ground_ = ground;
         beam_ = beam;
     }
-    // Icarus's drops float on the cloud: RenderItems lifts each 10 units times
-    // sin((i * 1237 + WorldTime) * 0.002) there (ZzzObject.cpp:6497-6500), +-10 cm on a 3.1 s
-    // swing, each item on its own phase; `i` is MU's item slot, ours the drop's id.
-    void setBob(bool on) { bob_ = on; }
     // **A quest item lying down is seen from across the screen** (the user, 2026-10-04: 'quest
     // items needs to be well vissible'). Ours: MU drops a quest item as any other. Sevina's
     // treasures (sim::classTreasure) stand under a violet column of light -- MU's chasellight, the
@@ -107,8 +103,6 @@ private:
     bgfx::TextureHandle beam_ = BGFX_INVALID_HANDLE;
     std::vector<uint32_t> settled_;
     float clock_ = 0.0f;  // seconds, wrapped: the glow's breath
-    bool bob_ = false;
-    float bob(uint32_t id) const;
     ItemModels* models_ = nullptr;
     const content::Ground* ground_ = nullptr;
     std::vector<Drop> drops_;
