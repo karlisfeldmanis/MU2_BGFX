@@ -109,8 +109,10 @@ if we are done with effects').** Object11, 180 placements, from `source/world/ic
 sheets `ic_top02_r` and `ic_gyg_r` (both marble), built static (its six bones hold one key; bone 3,
 Bone01 at -139.9, 0, 500.6 units, is where the motes will rise from). `tools/cook.py` `FLAT_OVER_VOID`
 takes icarus, so none of the placements, which stand 3 m under the plane as MU's, is held as buried.
-MU's height kept (decision 4). The gyg_R statue card drawn opaque, as MU; it shows as dark panels on
-the pillar faces. Shot muted at the door and at 30,40: the arches line the road with their statues on
+MU's height kept (decision 4). MU draws the gyg_R statue card opaque (a 0.65 x 1.7 m card on the
+pillar's face, two on the arch's spandrels); in our light they read as photographs in black boxes
+(the user: 'this looks wrong'), so ours cuts the black to alpha and the statues stand on the stone
+as dark reliefs. Shot muted at the door and at 30,40: the arches line the road with their statues on
 top, 360 fps. Not yet judged by the user. Effects still to do: the wisps, the dragons, the item bob,
 and Object11's motes.
 
