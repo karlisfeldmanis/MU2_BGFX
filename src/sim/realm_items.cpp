@@ -1432,6 +1432,11 @@ int64_t Realm::sellValue(int slot) const {
     if (wears(row)) {
         paid = wornSellingPrice(paid, thing.durability, maximumDurability(row, thing));
     }
+    // A Common rune is a sliver of the Jewel of Creation's price (sim/items.h kCommonRuneSale).
+    if (const PowerRow* power = powerOf(thing.powers[0]);
+        creation(row) && power != nullptr && power->rarity == Rarity::Common) {
+        paid = int64_t(double(paid) * kCommonRuneSale);
+    }
     return paid > 0 ? paid : -1;
 }
 

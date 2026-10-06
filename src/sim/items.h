@@ -657,6 +657,9 @@ constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
 // green, as green is a legendary item's. Last in the enum so the rest keep their numbers.
 enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2, Common = 3 };
 constexpr int kRarities = 4;
+// What a Common rune sells for, of the Jewel of Creation's 12,000,000 every other rune fetches:
+// 120,000, so a Lorencia kill does not pay a fortune (seen on the card, 2026-10-06). Ours.
+constexpr double kCommonRuneSale = 0.01;
 // The rarity a fuse of three makes (sim/machine.h): Common to Rare, Rare to Epic, Epic to
 // Legendary; a Legendary is the top and gives itself back.
 constexpr Rarity nextRarity(Rarity rarity) {
