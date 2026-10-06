@@ -860,6 +860,20 @@ void Play::shade(float seconds) {
     infernosDue_.erase(std::remove_if(infernosDue_.begin(), infernosDue_.end(),
                                       [](const InfernoDue& one) { return one.wait <= 0.0f; }),
                        infernosDue_.end());
+    // A Phantom Knight's spirits, at its boss blow's CheckAttackTime(14).
+    for (SpiritDue& due : spiritsDue_) {
+        due.wait -= seconds;
+        if (due.wait > 0.0f || ground_ == nullptr) continue;
+        if (const Drawn* knight = drawnOf(due.who); knight != nullptr && knight->placed) {
+            const float feet[3] = {knight->crown[0],
+                                   ground_->heightAt(knight->crown[0], knight->crown[2]),
+                                   knight->crown[2]};
+            spirits_.release(due.who, feet);
+        }
+    }
+    spiritsDue_.erase(std::remove_if(spiritsDue_.begin(), spiritsDue_.end(),
+                                     [](const SpiritDue& one) { return one.wait <= 0.0f; }),
+                      spiritsDue_.end());
     // The fight's coins, once its Zen has stopped coming (takeZen), with the lane's sum.
     if (zenQuiet_ > 0.0f && !zenOwed_) {
         zenQuiet_ -= seconds;

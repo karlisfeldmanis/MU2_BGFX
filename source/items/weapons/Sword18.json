@@ -1,0 +1,147 @@
+{
+  "item": "Sword18",
+  "mu_name": "Dark Breaker",
+  "mu_name_from": "_enum.h:1512 MODEL_DARK_BREAKER = MODEL_SWORD + 17, loaded from Item/Sword18.bmd (ZzzOpenData.cpp:621); OpenMU Version095d Weapons.cs:111.",
+  "why_this_one": "Icarus's Phantom Knight carries it at +5 (ZzzCharacter.cpp:13613-13619), and it is the Blade Knight's: OpenMU's row gives the knight class level 2, a drop from monsters at level 104 -- within reach of Icarus's last breeds. docs/icarus-port.md Part A 4.3.",
+  "profile": "weapon",
+  "stats": {
+    "from": "OpenMU Version095d Weapons.cs:111.",
+    "call": "CreateWeapon(0, 17, 0, 23, 2, 4, true, \"Dark Breaker\", 104, 128, 153, 40, 89, 0, 0, 180, 50, 0, 0, 0, 2, 0)",
+    "call_note": "The 0.95d CreateWeapon: ..., energy 0, vitality 0, wizardClass 0, knightClass 2, elfClass 0, the Magic Gladiator's left at its default 0.",
+    "group": 0,
+    "number": 17,
+    "drop_level": 104,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 128,
+    "maximum_damage": 153,
+    "attack_speed": 40,
+    "durability": 89,
+    "skill": 23,
+    "requires": {
+      "level": 0,
+      "strength": 180,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's knightClass 2 (docs/second-class-gear.md)."
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "Width 2: MuMain's ItemAttribute TwoHand, PLAYER_STOP_TWO_HAND_SWORD.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call.",
+  "sheets": {
+    "Ksword": "ksword.png",
+    "Ksword2": "ksword2.png"
+  },
+  "sheet_from": "Data/Item/Ksword.OZJ (64x128, a black blade ridged in gold, 136 triangles; the sheet the Broken Sword, Quest01, already wears) and Ksword2.OZJ (16x16, a small blue and amber gem, 96), decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "Ksword": "steel",
+    "Ksword2": "steel"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every flat blade passed in the studio: steel's own 0.2 mirrors the grass black.",
+  "glow_note": "No ItemObjectAttribute and no RenderPartObject arm: a solid sword. Held, MuMain lays two BITMAP_FLARE + 1 sub 4 streaks along it every frame, white, sinf(WorldTime*0.004)*10 + 20 wide, from (0, -20, -40) to (0, -160, -10) and from (0, -10, 28) to (0, -145, 18) in the hand (ZzzCharacter.cpp:10218-10236; ZzzEffectJoint.cpp:2103-2115), built in fx/held_lights; and its swing blur takes BlurMapping 6 (:3837-3839), not built.",
+  "rig_note": "export-rig --actions=all: one bone, one action of one key; nothing moves, no rig kept.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 70,
+      "area": 12327.2,
+      "along": [
+        5.7,
+        193.1
+      ],
+      "mu_uv": [
+        0.103,
+        0.025,
+        0.983,
+        0.919
+      ],
+      "bake_uv": [
+        0.698,
+        0.005,
+        0.995,
+        0.618
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 66,
+      "area": 3469.0,
+      "along": [
+        -43.5,
+        41.0
+      ],
+      "mu_uv": [
+        -0.0,
+        0.524,
+        0.297,
+        0.989
+      ],
+      "bake_uv": [
+        0.005,
+        0.627,
+        0.799,
+        0.855
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 48,
+      "area": 937.2,
+      "along": [
+        59.9,
+        79.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.689,
+        0.342
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 48,
+      "area": 708.7,
+      "along": [
+        87.8,
+        105.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.351,
+        0.689,
+        0.689
+      ]
+    }
+  ]
+}

@@ -543,6 +543,11 @@ inline constexpr const char* kDrakanArcs[][2] = {
 inline constexpr int kDrakanArcsAFrame = 2;
 constexpr float kDrakanArcHalf = 0.10f;  // 20 units wide
 constexpr int32_t kDrakanNumber = 73;
+// MONSTER_PHANTOM_KNIGHT's boss blow: 36 BITMAP_JOINT_SPIRIT sub 1 at Scale 60 from a metre over
+// it at CheckAttackTime(14) (ZzzCharacter.cpp:1710-1732). Ours: one Evil Spirit release of eight
+// (fx/spirits), the wizard's own joints, at that time -- thirty-six filled the sky.
+constexpr int32_t kPhantomKnightNumber = 72;
+constexpr float kPhantomSpiritWait = 13.0f / 25.0f;  // (14 - 1) / 25 s
 inline constexpr const char* kShadowJoints[] = {
     "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
     "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",

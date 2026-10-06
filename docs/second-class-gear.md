@@ -27,7 +27,11 @@ Breaker, Imperial Staff and their kind); not taken.
 (`Shield16`) and Elemental Shield (`Shield17`) with the Tarkan batch (the user: 'make all
 others'), then the Dragon Soul Staff (`Staff10`), Elemental Mace (`Mace08`) and Great Reign
 Crossbow (`CrossBow20`) ('do next items'), the Celestial Bow (`Bow18`) before them. Their held
-lights are fx/held_lights. The later sets and arms are not built.
+lights are fx/held_lights. The later sets and arms are not built, but for **Dark Breaker**
+(`Sword18`, 0/17, built 2026-10-06 for Icarus's Phantom Knight, which carries it at +5): OpenMU
+0.95d Weapons.cs:111, drop 104, 128-153, speed 40, 180 strength and 50 agility, two-handed, the
+knight at class level 2; its two held Flare02 streaks are fx/held_lights'. Cooked into the
+wardrobe and every world's tables.
 
 ## How the gate is carried
 

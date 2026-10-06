@@ -2232,6 +2232,24 @@
       ],
       "from": "Sounds[4], 167 -- Data\\Sound\\mDrakanDie.wav. ZzzOpenData.cpp:3775-3781."
     },
+    "phantomknight_move": {
+      "files": [
+        "mPhantom1.wav"
+      ],
+      "from": "Sounds[0] and [1], both 168 -- Data\\Sound\\mPhantom1.wav: SetMonsterSound(..., 168, 168, 169, 169, 170), ZzzOpenData.cpp:3768-3774 (Icarus's Phantom Knight)."
+    },
+    "phantomknight_attack": {
+      "files": [
+        "mPhantomAttack1.wav"
+      ],
+      "from": "Sounds[2] and [3], both 169 -- mPhantomAttack1.wav. ZzzOpenData.cpp:3768-3774."
+    },
+    "phantomknight_die": {
+      "files": [
+        "mPhantomDie.wav"
+      ],
+      "from": "Sounds[4], 170 -- Data\\Sound\\mPhantomDie.wav. ZzzOpenData.cpp:3768-3774."
+    },
     "ironwheel_move": {
       "files": [
         "iron1.wav"

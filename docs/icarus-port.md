@@ -245,6 +245,19 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   found in the same arm, not built: with ExtraMon 0, MU first draws the Crust's body once more in
   iui03.jpg (BITMAP_JANUSEXT), its mesh 0 streamed, at BodyLight (0.4, 0.3, 0.5), under the plate
   (`ZzzObject.cpp:1326-1340`), so a violet stream shows through the rim's cut alpha.
+- **Phantom Knight (72)**: Monster54 as `PhantomKnight01`, scale 1.45; 12 spawns, ids
+  1522-1533, down the south lane. Its lpo01 is black armour whose alpha cuts rune-shaped slots;
+  MU draws the body first in chrome (bab2.jpg, BITMAP_CHROME + 1) at BodyLight (0.9, 0.8, 1) and
+  the armour over it (`ZzzObject.cpp:1361-1369`), so the runes shine. Ours bakes that into the
+  sheet: the runes filled pale violet, (0.9, 0.8, 1) at 0.35, the chrome sheet's own mean (at
+  0.75 they were loud stripes), the sheet opaque, on painted_steel with the cast grain; the
+  chrome's slide left out. Its arm: Dark Breaker, built as `Sword18` (a real drop, the Blade
+  Knight's, see docs/second-class-gear.md), at +5 on knife_gdf (`:11966-11969`), with its two
+  white Flare02 streaks along the blade, breathing 10-30 wide (`:10218-10236`, `fx/held_lights`).
+  Its boss blow, Flame of Evil one in five (kBosses += 72): MU's 36 BITMAP_JOINT_SPIRIT from a
+  metre over it at CheckAttackTime(14) (`:1710-1732`), ours one Evil Spirit release of eight
+  (`fx/spirits`, `spiritsDue_`). phantomknight_move/attack/die. kResistances {72, 14, 14},
+  kDropRates {72, 14, 3, 30}.
 - **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
   for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 

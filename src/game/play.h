@@ -1224,6 +1224,12 @@ private:
         bool bombs = true, mesh = true;
     };
     std::vector<InfernoDue> infernosDue_;
+    // A Phantom Knight's boss blow, its spirits let go when `wait` is up (kPhantomSpiritWait).
+    struct SpiritDue {
+        uint32_t who = 0;
+        float wait = 0.0f;
+    };
+    std::vector<SpiritDue> spiritsDue_;
     void throwInferno(const float feet[3], float yaw, bool bombs, bool mesh);
     StaffFire staffFire_;  // the held Staff of Resurrection's spark and shaft lights
     HeldLights heldLights_;  // the Saint Crossbow's, Grand Soul Shield's and Dragon Spear's

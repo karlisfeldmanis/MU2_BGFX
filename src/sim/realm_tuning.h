@@ -360,8 +360,9 @@ constexpr int chillOdds(int32_t number) {
 // Monster.txt:61, :73, :74; docs/tarkan-port.md 4.2): all 63 Tantallos, not only the bosses.
 // And the Golden Dragon (79), A.Type 150 in WZD Monster.txt:287 -- the raid's boss
 // (docs/golden-dragon-raid.md).
-// And Icarus's Drakan (73), A.Type 150 (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2).
-constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63, 79, 73};
+// And Icarus's Drakan (73) and Phantom Knight (72), A.Type 150 (WZO Monster.txt:56-66;
+// docs/icarus-port.md A 4.2).
+constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63, 79, 73, 72};
 
 // ---- blows split into parts --------------------------------------------------------------------
 // **Ours.** MU and WebZen strike once a swing; these breeds' one blow is split into `parts`, each
@@ -455,6 +456,7 @@ constexpr Resistance kResistances[] = {
     {70, 11, 9},   // Queen Rainer
     {73, 12, 12},  // Drakan
     {74, 13, 13},  // Alpha Crust
+    {72, 14, 14},  // Phantom Knight
 };
 
 // ---- what each breed leaves -------------------------------------------------------------------
@@ -492,9 +494,9 @@ constexpr DropRate kDropRates[] = {
     {57, 30, 3, 10}, {58, 30, 3, 20}, {59, 30, 3, 150}, {60, 30, 3, 10}, {61, 30, 3, 20},
     {62, 30, 3, 10}, {63, 30, 3, 150},
     // Icarus's: MoneyRate 14 and MaxItemLevel 3, RegTime 10 for the Alquamos, Mega Crust and Queen
-    // Rainer and Alpha Crust, 20 for the Drakan (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built.
+    // Rainer and Alpha Crust, 20 for the Drakan, 30 for the Phantom Knight (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built.
     {69, 14, 3, 10}, {71, 14, 3, 10}, {70, 14, 3, 10}, {73, 14, 3, 20},
-    {74, 14, 3, 10},
+    {74, 14, 3, 10}, {72, 14, 3, 30},
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {

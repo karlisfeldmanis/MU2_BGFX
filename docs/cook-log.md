@@ -314,3 +314,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | QueenRainer01 | figure | 2026-10-06 21:45 | passed | MU's translucent violet winged woman, every mesh added, her star-field gown and banded body read at noon, dusk and night; no shadow |
 | Drakan01 | figure | 2026-10-06 21:58 | passed | black scaled serpent with blue plates, red eyes and gold jaw, shot from 10 m; dark at night without MU's chrome passes, lit in Icarus by its blue stars |
 | AlphaCrust01 | figure | 2026-10-06 22:17 | passed | the Crust in MU's teal BodyLight, its flames green; +9 Thunder Blade in hand; reads at noon, dusk and night |
+| PhantomKnight01 | figure | 2026-10-06 23:28 | passed | dark spiked winged knight, its runes a faint violet (0.35) after a first cut at 0.75 read as loud stripes; Dark Breaker in hand |

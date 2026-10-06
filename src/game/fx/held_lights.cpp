@@ -35,6 +35,7 @@ const char* HeldLights::mesh(Item item) {
         case Item::GreatReignCrossbow: return "CrossBow20";
         case Item::ThunderBlade: return "Sword19";
         case Item::LegendaryShield: return "Shield15";
+        case Item::DarkBreaker: return "Sword18";
     }
     return "";
 }
@@ -108,6 +109,17 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
             out[0][0] = 20.0f * kUnit;
             out[0][1] = out[0][2] = 0.0f;
             return 1;
+        case Item::DarkBreaker: {
+            // The hand's (0, -y, z) as the glb's (0, z, y): up the blade, and across its width.
+            static const float kEnds[4][2] = {{-40.0f, 20.0f}, {-10.0f, 160.0f},
+                                              {28.0f, 10.0f},  {18.0f, 145.0f}};
+            for (int i = 0; i < 4; ++i) {
+                out[i][0] = 0.0f;
+                out[i][1] = kEnds[i][0] * kUnit;
+                out[i][2] = kEnds[i][1] * kUnit;
+            }
+            return 4;
+        }
     }
     return 0;
 }
@@ -125,6 +137,7 @@ bool HeldLights::open(const std::string& assetDir, content::Textures& textures,
     };
     light_ = take("light");
     shiny_ = take("shiny_02");
+    flare_ = take("pierce");
     open_ = bgfx::isValid(light_);
     return open_;
 }
@@ -230,6 +243,43 @@ void HeldLights::gather(gfx::Effects& effects) const {
             case Item::LegendaryShield: {
                 const float l = handLuminosity_;
                 put(shiny_, one.at[0], halfOf(1.5f), 0.4f * l, 0.6f * l, 1.5f * l);
+                break;
+            }
+            case Item::DarkBreaker: {
+                if (!bgfx::isValid(flare_) || one.count < 4) break;
+                // Two crossed faces a streak, as MU's joint lays a band across and one up.
+                const float half = (std::sin(clock_ * 4.0f) * 10.0f + 20.0f) * kUnit * 0.5f;
+                for (int s = 0; s < 2; ++s) {
+                    const float* a = one.at[2 * s];
+                    const float* b = one.at[2 * s + 1];
+                    const float d[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+                    const float flat = std::sqrt(d[0] * d[0] + d[2] * d[2]);
+                    const float across[2][3] = {
+                        {flat > 1e-4f ? -d[2] / flat * half : half, 0.0f,
+                         flat > 1e-4f ? d[0] / flat * half : 0.0f},
+                        {0.0f, half, 0.0f}};
+                    for (const auto& side : across) {
+                        gfx::Sprite sprite;
+                        for (int k = 0; k < 3; ++k) sprite.position[k] = 0.5f * (a[k] + b[k]);
+                        sprite.placed = true;
+                        for (int k = 0; k < 3; ++k) {
+                            sprite.corner[0][k] = a[k] - side[k];
+                            sprite.corner[1][k] = b[k] - side[k];
+                            sprite.corner[2][k] = b[k] + side[k];
+                            sprite.corner[3][k] = a[k] + side[k];
+                        }
+                        const float uv[4][2] = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+                        for (int k = 0; k < 4; ++k) {
+                            sprite.cornerUv[k][0] = uv[k][0];
+                            sprite.cornerUv[k][1] = uv[k][1];
+                        }
+                        for (int k = 0; k < 3; ++k) sprite.colour[k] = kLight;
+                        sprite.colour[3] = 1.0f;
+                        sprite.sheet = flare_;
+                        sprite.blend = gfx::Blend::Additive;
+                        effects.add(sprite);
+                    }
+                }
                 break;
             }
         }

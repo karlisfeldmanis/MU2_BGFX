@@ -28,6 +28,9 @@
 //         BITMAP_JOINT_THUNDER sub 10 from there to (0, -133, 7), not carried.
 //     MODEL_LEGENDARY_SHIELD (:10277-10282): at (20, 0, 0) BITMAP_SHINY + 1 at 1.5,
 //         L*(0.4, 0.6, 1.5).
+//     MODEL_DARK_BREAKER (:10218-10236): two BITMAP_FLARE + 1 sub 4 streaks every frame,
+//         white, sin(WorldTime*0.004)*10 + 20 wide (ZzzEffectJoint.cpp:2103-2115), from
+//         (0, -20, -40) to (0, -160, -10) and from (0, -10, 28) to (0, -145, 18).
 //
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
@@ -61,12 +64,14 @@ public:
         GreatReignCrossbow,
         ThunderBlade,
         LegendaryShield,
+        DarkBreaker,
     };
     static constexpr int kMostPoints = 8;
-    static constexpr Item kItems[8] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[9] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                        Item::DragonSpear,     Item::DragonSoulStaff,
                                        Item::ElementalMace,   Item::GreatReignCrossbow,
-                                       Item::ThunderBlade,    Item::LegendaryShield};
+                                       Item::ThunderBlade,    Item::LegendaryShield,
+                                       Item::DarkBreaker};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
@@ -91,6 +96,7 @@ private:
 
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;  // BITMAP_LIGHT
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;  // BITMAP_SHINY + 1
+    bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;  // Flare02, BITMAP_FLARE + 1
     std::vector<Held> held_;
     // MU's per-frame rolls, held between its frames: RenderCharacter's and RenderLinkObject's.
     float handLuminosity_ = 0.85f;

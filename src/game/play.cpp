@@ -1436,6 +1436,9 @@ void Play::update(double seconds) {
                                     ? tables_.kinds[size_t(body->kind)].number
                                     : -1;
                             if (hydra) {
+                            } else if (bossNumber == kPhantomKnightNumber) {
+                                // The Phantom Knight: its spirits (kPhantomSpiritWait).
+                                spiritsDue_.push_back({happening.who, kPhantomSpiritWait});
                             } else if (bossNumber == 58 || bossNumber == kDrakanNumber) {
                                 // The Tantallos: its blow's Inferno and nothing more; the Drakan,
                                 // its blow alone (kDrakanFigure).
