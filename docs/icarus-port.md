@@ -156,7 +156,10 @@ Velocity 0.2-0.38: gliding straight at Velocity x 25 units a frame (MoveBoid wou
 (int)Gravity degrees, and 0.5-0.95 truncates to none), gone past 40 m; the clip played at its
 Velocity, keys a frame. `game/world/boids` draws them unlit in MU's BodyLight (0.02, 0.05, 0.15)
 (`ZzzObject.cpp:487-493`), no calls. Shot muted at 30,40 over 1500 frames: a blue-grey dragon gliding
-head-first under the mist. boids_test passes. Ours: none. Pops: MU's, a dragon is born in view.
+head-first under the mist. boids_test passes. Then ours, the birds' arrival (the user: 'make them arrive from outside the
+frame, as our birds do'): a dragon is born on a ring 18-30 m out, redrawn until its middle and four
+points 1.5 m round it are all off screen, aimed back across him within 55 degrees; it goes past
+40 m, or once it has crossed the frame, only while out of it. Shot muted over 3000 frames.
 
 **The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
 on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound

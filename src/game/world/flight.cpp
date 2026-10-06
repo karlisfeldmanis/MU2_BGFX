@@ -36,6 +36,9 @@ constexpr float kBatAwayMin = 30.0f;
 constexpr float kBatAwayMax = 90.0f;
 // How far off a bearing straight at the player the flock may set out, in degrees.
 constexpr float kAimSpread = 55.0f;
+// Where a dragon is born, ours: off screen 6 m down is farther out than a bird's ring.
+constexpr float kDragonRingMin = 18.0f;
+constexpr float kDragonRingMax = 30.0f;
 
 // How long the sky stays empty between flocks, and how long before the first one.
 constexpr float kRespawnMin = 15.0f;
@@ -184,7 +187,7 @@ void Flight::update(float seconds, const float hero[3], bool walking, bool indoo
         return;
     }
     if (dragon_) {
-        glide(factor, hero);
+        glide(factor, hero, sky);
         return;
     }
 
@@ -429,7 +432,18 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
 // tile is 0 or TW_CHARACTER (GOBoid.cpp:1226, :1309), and turns each live one about while it is
 // TW_SAFEZONE, dropping it on the second turn (:1459-1471). Here the school is sent off instead,
 // as in the south half.
-void Flight::glide(float factor, const float hero[3]) {
+bool Flight::seen(const float at[3], const Sky& sky) const {
+    // A dragon is a point to inFrame and a body on screen some 2.4 m across: its middle and
+    // four points 1.5 m round it, so no wing pokes into the frame.
+    static constexpr float kAround[5][2] = {{0, 0}, {1.5f, 0}, {-1.5f, 0}, {0, 1.5f}, {0, -1.5f}};
+    for (const auto& off : kAround) {
+        const float p[3] = {at[0] + off[0], at[1], at[2] + off[1]};
+        if (sky.inFrame(sky.context, p)) return true;
+    }
+    return false;
+}
+
+void Flight::glide(float factor, const float hero[3], const Sky& sky) {
     // MU keeps thirteen boids in Icarus and the first three are dragons (GOBoid.cpp:1235-1238,
     // 1356-1360); a slot is filled again the frame it empties.
     constexpr int kDragons = 3;
@@ -438,15 +452,29 @@ void Flight::glide(float factor, const float hero[3]) {
     for (int i = 0; i < kDragons; ++i) {
         Bird& dragon = birds_[i];
         if (!dragon.live) {
-            // CreateDragon: within 2000 units of him either way, 600 under him, a random
-            // heading; Scale (rand() % 3 + 6) * 0.05, Velocity (rand() % 10 + 10) * 0.02.
+            // CreateDragon: 600 units under him, Scale (rand() % 3 + 6) * 0.05, Velocity
+            // (rand() % 10 + 10) * 0.02. MU puts it anywhere within 2000 units either way on a
+            // random heading, which is often in view; ours, as a bird's arrival (Flight::arrive,
+            // the user, 2026-10-06: 'make them arrive from outside the frame, as our birds do'):
+            // on a ring 18-30 m out, redrawn until it lands off screen, and aimed back across
+            // him within kAimSpread, so it glides in.
+            float spot[3] = {0.0f, hero[1] - 600.0f * kUnit, 0.0f};
+            bool found = false;
+            for (int attempt = 0; attempt < 12 && !found; ++attempt) {
+                const float bearing = random01() * kTau;
+                const float range = kDragonRingMin + random01() * (kDragonRingMax - kDragonRingMin);
+                spot[0] = hero[0] + std::cos(bearing) * range;
+                spot[2] = hero[2] + std::sin(bearing) * range;
+                found = !seen(spot, sky);
+            }
+            if (!found) continue;  // tried again next step
             dragon = Bird{};
             dragon.live = true;
             dragon.state = State::Fly;
-            dragon.position[0] = hero[0] + float(int(random01() * 4000.0f) - 2000) * kUnit;
-            dragon.position[1] = hero[1] - 600.0f * kUnit;
-            dragon.position[2] = hero[2] + float(int(random01() * 4000.0f) - 2000) * kUnit;
-            dragon.facing = random01() * kTau;
+            std::memcpy(dragon.position, spot, sizeof(spot));
+            const float inward = std::atan2(hero[0] - spot[0], hero[2] - spot[2]);
+            dragon.facing =
+                wrapPi(inward + (random01() * 2.0f - 1.0f) * kAimSpread * kPi / 180.0f);
             dragon.size = float(int(random01() * 3.0f) + 6) * 0.05f;
             dragon.cruise = float(int(random01() * 10.0f) + 10) * 0.02f;
             dragon.speed = dragon.cruise;
@@ -458,7 +486,12 @@ void Flight::glide(float factor, const float hero[3]) {
         dragon.position[0] += std::sin(dragon.facing) * step;
         dragon.position[2] += std::cos(dragon.facing) * step;
         const float dx = dragon.position[0] - hero[0], dz = dragon.position[2] - hero[2];
-        if (dx * dx + dz * dz >= 40.0f * 40.0f) {
+        if (seen(dragon.position, sky)) dragon.wasSeen = true;
+        // Gone past 40 m (FlyDistance 4000), but only out of the frame (ours, as a bird); and
+        // one that has crossed the frame and left it is let go at once.
+        const bool far = dx * dx + dz * dz >= 40.0f * 40.0f;
+        if ((far || (dragon.wasSeen && dx * dx + dz * dz > kDragonRingMin * kDragonRingMin)) &&
+            !seen(dragon.position, sky)) {
             dragon.live = false;
             continue;
         }

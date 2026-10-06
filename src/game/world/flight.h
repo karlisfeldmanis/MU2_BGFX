@@ -137,7 +137,8 @@ public:
     void setFish(bool on) { fish_ = on; }
     bool isFish() const { return fish_; }
     // Icarus's dragons rather than birds: CreateDragon and MoveBoidGroup (GOBoid.cpp:824-851,
-    // 1140-1196). Three, each born again the frame it is gone, gliding straight 6 m under him.
+    // 1140-1196). Three, each born again as it is gone, gliding straight 6 m under him; born out
+    // of the frame and aimed back across him, and gone only out of it, as a bird (ours).
     // A dragon's `size` is its Scale and its `cruise` MU's Velocity, its pace and its clip rate.
     void setDragon(bool on) { dragon_ = on; }
     bool isDragon() const { return dragon_; }
@@ -161,7 +162,8 @@ public:
 private:
     void arrive(const float hero[3], const Sky& sky);
     void school(float seconds, float factor, const float hero[3], const Sky& sky);
-    void glide(float factor, const float hero[3]);
+    void glide(float factor, const float hero[3], const Sky& sky);
+    bool seen(const float at[3], const Sky& sky) const;
     void swim(Bird& fish, int index, const float hero[3], float seconds, float factor,
               const Sky& sky);
     void move(Bird& bird, const float hero[3], bool walking, float seconds, float factor,
