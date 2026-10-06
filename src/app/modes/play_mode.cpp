@@ -286,6 +286,8 @@ bool PlayMode::open(Context& ctx) {
                                             world_.played().showing().table());
                 world_.played().eyeTrails().open(assets, ctx.textures,
                                                  world_.played().showing().table());
+                world_.played().bodyFlames().open(assets, ctx.textures,
+                                                  world_.played().showing().table());
                 world_.played().staffFire().open(assets, ctx.textures,
                                                  world_.played().showing().table());
                 world_.played().heldLights().open(assets, ctx.textures,
@@ -1227,6 +1229,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().dust().gather(ctx.renderer.effects());
         world_.played().eyes().gather(ctx.renderer.effects());
         world_.played().eyeTrails().gather(ctx.renderer.effects(), eye.position);
+        world_.played().bodyFlames().gather(ctx.renderer.effects());
         world_.played().staffFire().gather(ctx.renderer.effects());
         world_.played().heldLights().gather(ctx.renderer.effects());
         world_.played().wingMotes().gather(ctx.renderer.effects());

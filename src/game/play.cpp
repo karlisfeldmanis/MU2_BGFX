@@ -1309,6 +1309,27 @@ void Play::update(double seconds) {
                             bolt.head = hydra->nextHead++ % 4;
                             laserCasts_.push_back(bolt);
                         }
+                        // Tarkan's Inferno on the attack's first key (kInfernoBlows): at once,
+                        // the key a tenth of a second into the swing at these breeds' speeds.
+                        if (body && !body->player && body->kind >= 0 &&
+                            size_t(body->kind) < tables_.kinds.size() && ground_ &&
+                            swinger->placed) {
+                            const int32_t number = tables_.kinds[size_t(body->kind)].number;
+                            for (const InfernoBlow& blow : kInfernoBlows) {
+                                if (blow.number != number) continue;
+                                const float feet[3] = {
+                                    swinger->crown[0],
+                                    ground_->heightAt(swinger->crown[0], swinger->crown[2]),
+                                    swinger->crown[2]};
+                                inferno_.cast(feet, swinger->yaw, [&](const float* at) {
+                                    meteor_.stones(at[0], at[2], at[1], 2);
+                                }, blow.bombs, blow.mesh);
+                                // A bomb's SOUND_EXPLOTION01, the eight heard as one.
+                                if (blow.bombs && heard_.explosion >= 0) {
+                                    emit(heard_.explosion, feet[0], feet[2]);
+                                }
+                            }
+                        }
                         // A boss's Flame of Evil, one blow in five (sim kBosses). MU throws the
                         // Death Gorgon's as a ring of eighteen MODEL_FIRE rolling out from it and
                         // the Balrog's as its Hellfire circle with meteors raining round it

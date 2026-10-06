@@ -545,6 +545,25 @@ constexpr float kWalkSandReach = 100.0f;  // MU's units, either way
 // 2026-10-04: 'that smoke is to small and to vissible') -- a puff every walking frame of a
 // whole pack is far more dust than the dragon's one in four.
 constexpr float kWalkSandAlpha = 0.35f;
+// Tarkan's blows that throw an Inferno (fx/inferno.h): CheckAttackTime(1), the attack's first key
+// (ZzzCharacter.cpp:1808-1846, :1880-1886). `bombs` is CreateInferno, `mesh` MODEL_SKILL_INFERNO;
+// the plain Beam Knight's CreateInferno is commented out in MuMain.
+// The plain Beam Knight's hand flames (fx/body_flames.h): MoveHumming from bone 55 to 62 and from
+// 70 to 77, a BITMAP_FLAME subtype 1 at Scale 0.2 on each claw (ZzzCharacter.cpp:5925-5946).
+inline constexpr const char* kHandFlameFigure = "BeamKnight01";
+inline constexpr const char* kHandFlameBones[4] = {"Box03", "Bone02", "Box27", "Bone01"};
+constexpr float kHandFlameScale = 0.2f;
+struct InfernoBlow {
+    int32_t number;
+    bool bombs;
+    bool mesh;
+};
+inline constexpr InfernoBlow kInfernoBlows[] = {
+    {58, true, false},  // Tantallos
+    {59, true, false},  // Zaikan
+    {61, false, true},  // Beam Knight
+    {63, true, true},   // Death Beam Knight
+};
 
 // Charon's light, RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268):
 // `Vector(3.5f, -12.f, 10.f, p)` on BoneTransform[20], two BITMAP_LIGHTNING+1 sprites at Scale

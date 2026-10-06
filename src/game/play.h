@@ -25,6 +25,7 @@
 #include "game/fx/breath.h"
 #include "game/fx/eyes.h"
 #include "game/fx/eye_trails.h"
+#include "game/fx/body_flames.h"
 #include "game/fx/staff_fire.h"
 #include "game/fx/held_lights.h"
 #include "game/fx/wing_motes.h"
@@ -564,6 +565,7 @@ public:
     Dust& dust() { return dust_; }
     Eyes& eyes() { return eyes_; }
     EyeTrails& eyeTrails() { return eyeTrails_; }
+    BodyFlames& bodyFlames() { return bodyFlames_; }
     StaffFire& staffFire() { return staffFire_; }
     HeldLights& heldLights() { return heldLights_; }
     WingMotes& wingMotes() { return wingMotes_; }
@@ -765,6 +767,10 @@ private:
         // (kWalkSandFigures, Play::exhale). `walkSandOwed` is what of one is left to throw.
         bool walkSands = false;
         float walkSandOwed = 0.0f;
+        // The plain Beam Knight's two hand flames (kHandFlameBones, fx/body_flames.h): each
+        // hand's root and claw, -1 on everything else, and what of a reference frame is owed.
+        int handFlameBones[4] = {-1, -1, -1, -1};
+        float handFlameOwed = 0.0f;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
         // reference frames rather than one in two within the bull's windows.
@@ -1051,6 +1057,7 @@ private:
     uint32_t dustSeed_ = 0x3c6ef372u;
     Eyes eyes_;
     EyeTrails eyeTrails_;
+    BodyFlames bodyFlames_;
     StaffFire staffFire_;  // the held Staff of Resurrection's spark and shaft lights
     HeldLights heldLights_;  // the Saint Crossbow's, Grand Soul Shield's and Dragon Spear's
     WingMotes wingMotes_;  // the motes off every worn wing's tips

@@ -150,7 +150,7 @@ void Inferno::update(float seconds) {
 void Inferno::gatherEffects(gfx::Effects& effects) const {
     const float up[3] = {0.0f, 1.0f, 0.0f};
     for (const Ring& ring : rings_) {
-        if (!ring.alive || keyCount_ == 0) continue;
+        if (!ring.alive || !ring.mesh || keyCount_ == 0) continue;
         const int from = std::clamp(int(ring.key), 0, keyCount_ - 1);
         const int to = std::min(from + 1, keyCount_ - 1);
         const float t = ring.key - float(from);
@@ -251,7 +251,7 @@ uint32_t Inferno::lights(gfx::PointLight* out, uint32_t max) const {
     if (out == nullptr) return 0;
     uint32_t count = 0;
     for (const Ring& ring : rings_) {
-        if (!ring.alive || count >= max) continue;
+        if (!ring.alive || !ring.bombs || count >= max) continue;
         // With the blasts: whole at the burst, dimmed over their last third, gone with them.
         const float lit = std::clamp(ring.left / (kBlastFrames * kBlastFadeShare), 0.0f, 1.0f);
         gfx::PointLight& one = out[count++];

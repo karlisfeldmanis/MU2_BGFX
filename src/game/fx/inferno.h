@@ -70,9 +70,13 @@ public:
               const content::Showing& table, const content::Ground* ground);
 
     // The ring at `feet`, turned to `yaw`, as the spell is let go. `stones(at)` is called for
-    // each of the eight bombs: the meteor's stones.
+    // each of the eight bombs: the meteor's stones. The spell is both halves; a Tarkan monster's
+    // blow asks for one: `bombs`, MU's CreateInferno (the eight bombs, their blasts, sparks,
+    // smoke and light), and `mesh`, MODEL_SKILL_INFERNO (the wall and floor of fire). The
+    // Tantallos and Zaikan throw the bombs alone, the Beam Knight the mesh alone and the Death
+    // Beam Knight both (ZzzCharacter.cpp:1808-1846, :1880-1886).
     template <typename Stones>
-    void cast(const float feet[3], float yaw, Stones stones);
+    void cast(const float feet[3], float yaw, Stones stones, bool bombs = true, bool mesh = true);
 
     void update(float seconds);
     void gatherEffects(gfx::Effects& effects) const;
@@ -141,6 +145,8 @@ private:
         float yaw = 0.0f;
         float left = 0.0f;  // LifeTime, reference frames
         float key = 0.0f;
+        bool bombs = true;  // its light is the blasts'
+        bool mesh = true;   // the wall and floor are drawn
     };
     struct Spark {
         bool alive = false;
@@ -196,7 +202,7 @@ private:
 };
 
 template <typename Stones>
-void Inferno::cast(const float feet[3], float yaw, Stones stones) {
+void Inferno::cast(const float feet[3], float yaw, Stones stones, bool bombs, bool mesh) {
     for (Ring& ring : rings_) {
         if (ring.alive) continue;
         ring = Ring{};
@@ -204,8 +210,11 @@ void Inferno::cast(const float feet[3], float yaw, Stones stones) {
         for (int k = 0; k < 3; ++k) ring.at[k] = feet[k];
         ring.yaw = yaw;
         ring.left = kFrames;
+        ring.bombs = bombs;
+        ring.mesh = mesh;
         break;
     }
+    if (!bombs) return;
     // A tile is a hundred of MU's units.
     const float perUnit = metres() / 100.0f;
     for (int j = 0; j < kBombs; ++j) {

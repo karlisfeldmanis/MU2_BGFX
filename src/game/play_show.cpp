@@ -332,6 +332,7 @@ void Play::snort(float seconds) {
     dust_.update(seconds);
     eyes_.update(seconds);
     eyeTrails_.update(seconds);
+    bodyFlames_.update(seconds);
     // The Staff of Resurrection's fire wherever it is held in hand (fx/staff_fire.h).
     staffFire_.update(seconds);
     {
@@ -387,6 +388,32 @@ void Play::snort(float seconds) {
         float at[3];
         if (one.figure.pointOn(one.trailBones[0], origin, at)) eyeTrails_.feed(one.id, false, at);
         if (one.figure.pointOn(one.trailBones[1], origin, at)) eyeTrails_.feed(one.id, true, at);
+    }
+    // The plain Beam Knight's hand flames, one a claw each reference frame while it is drawn.
+    for (Drawn& one : drawn_) {
+        if (one.handFlameBones[3] < 0) continue;
+        if (!one.visible || !one.placed) {
+            one.handFlameOwed = 0.0f;
+            continue;
+        }
+        one.handFlameOwed += frames;
+        while (one.handFlameOwed >= 1.0f) {
+            one.handFlameOwed -= 1.0f;
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            for (int h = 0; h < 4; h += 2) {
+                float root[3], claw[3];
+                if (!one.figure.pointOn(one.handFlameBones[h], origin, root) ||
+                    !one.figure.pointOn(one.handFlameBones[h + 1], origin, claw)) {
+                    continue;
+                }
+                float along[3] = {claw[0] - root[0], claw[1] - root[1], claw[2] - root[2]};
+                const float n =
+                    std::sqrt(along[0] * along[0] + along[1] * along[1] + along[2] * along[2]);
+                if (n < 1e-5f) continue;
+                for (float& a : along) a /= n;
+                bodyFlames_.handFlame(claw, along, kHandFlameScale);
+            }
+        }
     }
     for (Drawn& one : drawn_) {
         if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;

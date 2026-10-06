@@ -631,6 +631,16 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             for (const char* walking : kWalkSandFigures) {
                 if (look->name == walking) one.walkSands = true;
             }
+            one.handFlameBones[0] = one.handFlameBones[1] = one.handFlameBones[2] =
+                one.handFlameBones[3] = -1;
+            if (look->name == kHandFlameFigure && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    for (int h = 0; h < 4; ++h) {
+                        if (bones[b].name == kHandFlameBones[h]) one.handFlameBones[h] = int(b);
+                    }
+                }
+            }
             one.trailBones[0] = one.trailBones[1] = -1;
             for (const EyeTrailRow& row : kEyeTrailRows) {
                 if (look->name != row.figure || !look->skeletonMesh) continue;
