@@ -1542,8 +1542,9 @@ void Play::update(double seconds) {
     if (!staffLandings_.empty() && heard_.explosion >= 0) {
         emit(heard_.explosion, staffLandings_.front().x, staffLandings_.front().z);
     }
+    // Three stones at most, not MU's six (the user, 2026-10-06: a more subtle landing).
     for (const Comet::Landing& one : cometLandings_) {
-        meteor_.stones(one.x, one.z, one.y, std::max(2, int(std::lround(6.0f * one.weight))));
+        meteor_.stones(one.x, one.z, one.y, std::max(1, int(std::lround(3.0f * one.weight))));
         meteorImpacts_.push_back({one.x, one.z, one.attacker});
     }
     // The wizard's bolts and fireballs, each measured against where its target is drawn this

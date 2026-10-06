@@ -164,7 +164,7 @@ void Comet::gatherRibbon(gfx::Effects& effects, const Live& comet, const float* 
             sprite.cornerUv[c][1] = s < 0.0f ? 0.0f : 1.0f;
         }
         for (int k = 0; k < 3; ++k) sprite.position[k] = (a[k] + b[k]) * 0.5f;
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = fade;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = fade * kRibbonTint[k];
         sprite.sheet = trailSheet_;
         sprite.blend = gfx::Blend::Additive;
         if (!effects.add(sprite)) return;
@@ -198,7 +198,7 @@ void Comet::gather(gfx::Effects& effects, const float* eye) const {
         for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
         sprite.halfWidth = sprite.halfHeight = one.size * (1.4f - 0.4f * fade) * 0.5f;
         sprite.spin = one.spin;
-        for (int k = 0; k < 3; ++k) sprite.colour[k] = fade;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = fade * kFlashPeak;
         sprite.sheet = flashSheet_;
         sprite.blend = gfx::Blend::Additive;
         if (!effects.add(sprite)) return;
@@ -225,7 +225,7 @@ uint32_t Comet::lights(gfx::PointLight* out, uint32_t max) const {
         for (int k = 0; k < 3; ++k) light.position[k] = one.at[k];
         light.reach = kGlowTiles * metres();
         light.height = 1.0f;
-        for (int k = 0; k < 3; ++k) light.colour[k] = kGlow[k] * fade;
+        for (int k = 0; k < 3; ++k) light.colour[k] = kGlow[k] * kFlashGlow * fade;
     }
     return count;
 }

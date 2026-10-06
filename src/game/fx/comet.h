@@ -75,17 +75,24 @@ private:
     static constexpr float kLowest = 300.0f, kHighest = 800.0f;
     static constexpr float kSlantDegrees = 20.0f;
     static constexpr float kSmallest = 1.0f, kLargest = 1.7f;  // (rand()%8 + 10) * 0.1
-    // Its ribbon: ten tails, one a reference frame, Scale 100 across.
+    // Its ribbon: ten tails, one a reference frame. Ours (the user, 2026-10-06: the teal
+    // trail looked wrong): MU's Scale 100 narrowed to 65, and JointLaser01's teal tinted to
+    // the comet's own blue and dimmed by this, so the trail is the head's and not a stripe.
     static constexpr int kTails = 10;
-    static constexpr float kRibbonUnits = 100.0f;
-    // The star where it lands: ring.jpg, ours at this many units across and frames of life.
-    static constexpr float kFlashUnits = 220.0f;
+    static constexpr float kRibbonUnits = 65.0f;
+    static constexpr float kRibbonTint[3] = {0.55f, 0.42f, 0.75f};
+    // The star where it lands: ring.jpg, ours at this many units across, this bright at its
+    // birth and these frames of life. Smaller and dimmer than it was (the user, 2026-10-06:
+    // "more subtle comet explosion").
+    static constexpr float kFlashUnits = 150.0f;
+    static constexpr float kFlashPeak = 0.6f;
     static constexpr float kFlashLift = 80.0f;
-    static constexpr float kFlashFrames = 12.0f;
+    static constexpr float kFlashFrames = 10.0f;
     static constexpr float kFlashSpin = 0.08f;  // radians a reference frame
     // Its light: MU's blue over two tiles while it falls, and the star's, fading with it.
     static constexpr float kGlow[3] = {0.2f, 0.4f, 1.0f};
     static constexpr float kGlowTiles = 2.0f;
+    static constexpr float kFlashGlow = 0.5f;  // the star's light, of the falling comet's
 
     static constexpr int kMaxComets = 32;  // a cast and an echo's, twelve, and room
     static constexpr int kMaxFlashes = 32;
