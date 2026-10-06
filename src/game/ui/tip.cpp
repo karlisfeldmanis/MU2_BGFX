@@ -82,6 +82,33 @@ constexpr uint32_t kPlateEdge = ink::kPlateEdge;
 constexpr uint32_t kPlateBack = ink::kPlateBack;
 constexpr uint32_t kBarBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
 
+// **The wear as a ring** (the user, 2026-10-06: 'use circle style durability not bar'): a faint
+// whole circle, and over it what is left as an arc from the top, clockwise. As quads -- the canvas
+// has no circle (ui/controls.cpp's ring).
+void wearRing(gfx::Canvas& canvas, float cx, float cy, float r, float thick, float share,
+              uint32_t back, uint32_t ink) {
+    constexpr int kSteps = 32;
+    constexpr float kTurn = 6.28318531f;
+    const float in = r - thick;
+    const auto arc = [&](float from, float to, uint32_t abgr) {
+        const int steps = std::max(1, int(std::ceil(float(kSteps) * (to - from))));
+        for (int i = 0; i < steps; ++i) {
+            // From the top (-90 degrees), clockwise on a screen whose y runs down.
+            const float a = kTurn * (from + (to - from) * float(i) / float(steps)) - kTurn * 0.25f;
+            const float b =
+                kTurn * (from + (to - from) * float(i + 1) / float(steps)) - kTurn * 0.25f;
+            const float xy[8] = {cx + std::cos(a) * r,  cy + std::sin(a) * r,
+                                 cx + std::cos(b) * r,  cy + std::sin(b) * r,
+                                 cx + std::cos(b) * in, cy + std::sin(b) * in,
+                                 cx + std::cos(a) * in, cy + std::sin(a) * in};
+            canvas.polygon(nullptr, xy, nullptr, 4, abgr);
+        }
+    };
+    share = std::clamp(share, 0.0f, 1.0f);
+    if (share < 1.0f) arc(share, 1.0f, back);
+    if (share > 0.0f) arc(0.0f, share, ink);
+}
+
 // Everything the card draws goes through this: the colour with its alpha taken down by the
 // card's own opacity.
 constexpr uint32_t fade(uint32_t abgr) {
@@ -988,7 +1015,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         const float bottoms[4] = {0.0f, 0.0f, radius, radius};
         roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, fade(kFootBack));
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
-        const float barWide = 46.0f * u, barTall = std::max(2.0f, 3.0f * u);
+        // The wear's ring: its radius off the foot's letters, its stroke as the old bar's height.
+        const float ringR = footSize * 0.42f, ringThick = std::max(1.5f, 2.2f * u);
         if (item) {
             const auto ink = [&](const FootLine& l) {
                 return fade(l.quiet ? kFoot : colourOf(l.tone));
@@ -1005,15 +1033,13 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                 const FootLine& l = right[i];
                 const float baseline = middle(face, at, footLine, footSize);
                 const float w = face.measure(footSize, l.text);
-                // The wear's bar stands to the left of its words, in its band's colour.
+                // The wear's ring stands to the left of its words, in its band's colour.
                 if (i == 0 && !sheet.wear.empty()) {
                     say(type, canvas, edge - w, baseline, footSize, fade(kFoot), l.text, drop);
-                    const gfx::Box bar{edge - w - pad * 0.5f - barWide,
-                                       baseline - footSize * 0.35f, barWide, barTall};
-                    canvas.rect(bar, fade(kBarBack));
-                    canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
-                                fade(sheet.wearTone == Tone::White ? panel::kLettering
-                                                                   : colourOf(sheet.wearTone)));
+                    wearRing(canvas, edge - w - pad * 0.5f - ringR, baseline - footSize * 0.33f,
+                             ringR, ringThick, sheet.worn, fade(kBarBack),
+                             fade(sheet.wearTone == Tone::White ? panel::kLettering
+                                                                : colourOf(sheet.wearTone)));
                 } else {
                     say(type, canvas, edge - w, baseline, footSize, ink(l), l.text, drop);
                 }
@@ -1029,12 +1055,12 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         float left = box.x + pad;
         if (!sheet.wear.empty()) {
             const float w = say(type, canvas, left, baseline, footSize, fade(kFoot), sheet.wear, drop);
-            const gfx::Box bar{left + w + pad * 0.5f, baseline - footSize * 0.35f, barWide, barTall};
-            canvas.rect(bar, fade(kBarBack));
-            canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
-                        fade(sheet.wearTone == Tone::White ? panel::kLettering
-                                                           : colourOf(sheet.wearTone)));
-            left = bar.right() + pad;
+            const float cx = left + w + pad * 0.5f + ringR;
+            wearRing(canvas, cx, baseline - footSize * 0.33f, ringR, ringThick, sheet.worn,
+                     fade(kBarBack),
+                     fade(sheet.wearTone == Tone::White ? panel::kLettering
+                                                        : colourOf(sheet.wearTone)));
+            left = cx + ringR + pad;
         }
         if (!sheet.note.empty()) {
             say(type, canvas, left, baseline, footSize, fade(colourOf(sheet.noteTone)), sheet.note,

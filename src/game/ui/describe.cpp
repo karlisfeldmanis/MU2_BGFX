@@ -959,8 +959,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     const auto require = [&](const char* name, int wants, int lacking) {
         if (wants <= 0) return;
-        std::string text = std::string(name) + " " + std::to_string(wants);
-        if (lacking > 0) text += " \xB7 lacking " + std::to_string(lacking);
+        // The need alone, red while he falls short (the user, 2026-10-06: 'dont show lacking').
+        const std::string text = std::string(name) + " " + std::to_string(wants);
         sheet.who.push_back({text, lacking > 0 ? Tone::Red : Tone::White, lacking <= 0});
     };
     // **One level line, whichever of the two says it.** A row can ask for a level twice over: the
