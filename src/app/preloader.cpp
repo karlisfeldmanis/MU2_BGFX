@@ -297,12 +297,8 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         }
         if (ctx.curtain.ready() && alpha > 0.0f) {
             ctx.curtain.begin(w, h);
-            const float scale = 2.2f * unit;
-            const std::string stage = core::Loading::what();
-            const std::string word = stage.empty() ? "Loading" : "Loading " + stage;
-            const float across = ctx.curtain.measure(scale, word);
-            const uint32_t ink = (uint32_t(alpha * 0.5f * 255.0f) << 24) | 0x00c8d8e6u;
-            ctx.curtain.text(cx - across * 0.5f, cy + radius + 24.0f * unit, scale, ink, word);
+            // No word for the stage under it any more (the user, 2026-10-06: 'dont show anymore
+            // what is loading, just preloader'): the ring, its number and the letter.
             // The share done, in the ring. Held under 100 until the worker has actually
             // finished, which is when the spinner goes.
             char percent[8];
