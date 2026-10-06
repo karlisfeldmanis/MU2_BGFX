@@ -117,6 +117,14 @@ frosted stone, shaded softly by MU's figure: a faint carving, seen up close. Sho
 top, 360 fps. Not yet judged by the user. Effects still to do: the wisps, the dragons, the item bob,
 and Object11's motes.
 
+**Objects batch 2: the rest of the static stone (2026-10-06, the user: 'perfect do next objects').**
+Object07 and 16 (35 floor plates, the sheet's dark foot and white crown), Object13 (31 domed temples,
+miniatures off the road), Object14 (11 shard scatters) and Object15 (39 stair-platforms), all
+top02_R marble and built static (their bones hold one key), at MU's heights. Object14 takes
+`sheet_roughness` 0.65 (ours): at marble's 0.35 every shallow shard flashed a white spot at its apex.
+Shot muted at 16,28, 32,33, 26,63 and 52,68, 280-330 fps. Not yet judged by the user. Left: the
+floating pillars (Object08-10, rigged) and the motes.
+
 ## The one thing to know first
 
 **Icarus has no ground.** MuMain skips `RenderTerrain` on map 10 (`MM/Scenes/MainScene.cpp:463`).

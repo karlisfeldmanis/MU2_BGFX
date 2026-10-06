@@ -1,0 +1,43 @@
+{
+  "item": "Object07",
+  "mu_name": "Object07",
+  "mu_name_from": "Icarus's object slot 6, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "icarus",
+  "object_type": 6,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "top02_R": "ic_top02_r.png"
+  },
+  "sheet_from": "Data/Object11/, from MuMain, decoded under an ic_ prefix (Object11's).",
+  "sheet_materials": {
+    "top02_R": "marble"
+  },
+  "material_note": "Read off the art: pale frosted stone at the crown of the sheet fading to black at its foot.",
+  "why_this_one": "A floor plate, 1.7 by 1.5 m and 6 cm thick, wearing the dark foot of top02_R; 17 in the north-west and north-east corners, 2.7 m under the road, some tipped 40-90 degrees: the ruins seen through the cloud. Objects batch 2, the rest of the static stone (the user, 2026-10-06: 'perfect do next objects'). docs/icarus-port.md B §1.2.",
+  "effects_note": "No arm in MuMain's WD_10HEAVEN switches for this type: one static mesh (its bones hold one key, so it is built without its rig), no light, no blend mesh. MU's height kept (decision 4).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "marble",
+      "triangles": 10,
+      "area": 28739.1,
+      "along": [
+        -76.1,
+        75.7
+      ],
+      "mu_uv": [
+        -0.447,
+        0.007,
+        0.498,
+        0.503
+      ],
+      "bake_uv": [
+        -0.447,
+        0.007,
+        0.498,
+        0.503
+      ]
+    }
+  ]
+}

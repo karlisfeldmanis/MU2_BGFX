@@ -1,0 +1,1385 @@
+{
+  "item": "Object15",
+  "mu_name": "Object15",
+  "mu_name_from": "Icarus's object slot 14, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "icarus",
+  "object_type": 14,
+  "placements": 39,
+  "profile": "world",
+  "sheets": {
+    "top02_R": "ic_top02_r.png"
+  },
+  "sheet_from": "Data/Object11/, from MuMain, decoded under an ic_ prefix (Object11's).",
+  "sheet_materials": {
+    "top02_R": "marble"
+  },
+  "material_note": "Read off the art: pale frosted stone at the crown of the sheet fading to black at its foot.",
+  "why_this_one": "A stair-platform, a stepped stone landing 5.2 by 6.2 m and 1.1 m tall; 39 along the middle of the road, 2.7 m under it. Objects batch 2, the rest of the static stone (the user, 2026-10-06: 'perfect do next objects'). docs/icarus-port.md B §1.2.",
+  "effects_note": "No arm in MuMain's WD_10HEAVEN switches for this type: one static mesh (its bones hold one key, so it is built without its rig), no light, no blend mesh. MU's height kept (decision 4).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.586,
+        0.192,
+        0.7,
+        0.259
+      ]
+    },
+    {
+      "island": 1,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.562,
+        0.677,
+        0.676,
+        0.744
+      ]
+    },
+    {
+      "island": 2,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.01,
+        0.475,
+        0.25
+      ],
+      "bake_uv": [
+        0.424,
+        0.496,
+        0.539,
+        0.563
+      ]
+    },
+    {
+      "island": 3,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.749,
+        0.475,
+        0.989
+      ],
+      "bake_uv": [
+        0.012,
+        0.496,
+        0.126,
+        0.563
+      ]
+    },
+    {
+      "island": 4,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.41,
+        0.966,
+        0.603
+      ],
+      "bake_uv": [
+        0.562,
+        0.857,
+        0.676,
+        0.911
+      ]
+    },
+    {
+      "island": 5,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.211,
+        0.966,
+        0.405
+      ],
+      "bake_uv": [
+        0.723,
+        0.282,
+        0.837,
+        0.336
+      ]
+    },
+    {
+      "island": 6,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.011,
+        0.966,
+        0.205
+      ],
+      "bake_uv": [
+        0.699,
+        0.857,
+        0.814,
+        0.911
+      ]
+    },
+    {
+      "island": 7,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.607,
+        0.966,
+        0.801
+      ],
+      "bake_uv": [
+        0.837,
+        0.496,
+        0.951,
+        0.55
+      ]
+    },
+    {
+      "island": 8,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.699,
+        0.496,
+        0.814,
+        0.563
+      ]
+    },
+    {
+      "island": 9,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.723,
+        0.012,
+        0.837,
+        0.079
+      ]
+    },
+    {
+      "island": 10,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.01,
+        0.475,
+        0.25
+      ],
+      "bake_uv": [
+        0.562,
+        0.586,
+        0.676,
+        0.653
+      ]
+    },
+    {
+      "island": 11,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -21.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.749,
+        0.475,
+        0.989
+      ],
+      "bake_uv": [
+        0.012,
+        0.586,
+        0.126,
+        0.653
+      ]
+    },
+    {
+      "island": 12,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.41,
+        0.966,
+        0.603
+      ],
+      "bake_uv": [
+        0.837,
+        0.573,
+        0.951,
+        0.627
+      ]
+    },
+    {
+      "island": 13,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.211,
+        0.966,
+        0.405
+      ],
+      "bake_uv": [
+        0.723,
+        0.36,
+        0.837,
+        0.414
+      ]
+    },
+    {
+      "island": 14,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.011,
+        0.966,
+        0.205
+      ],
+      "bake_uv": [
+        0.837,
+        0.767,
+        0.951,
+        0.821
+      ]
+    },
+    {
+      "island": 15,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        4.4,
+        10.7
+      ],
+      "mu_uv": [
+        0.556,
+        0.607,
+        0.966,
+        0.801
+      ],
+      "bake_uv": [
+        0.837,
+        0.69,
+        0.951,
+        0.744
+      ]
+    },
+    {
+      "island": 16,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -221.1,
+        -179.6
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.586,
+        0.282,
+        0.7,
+        0.349
+      ]
+    },
+    {
+      "island": 17,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -284.1,
+        -242.6
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.699,
+        0.586,
+        0.814,
+        0.653
+      ]
+    },
+    {
+      "island": 18,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -212.7,
+        -178.3
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.586,
+        0.373,
+        0.7,
+        0.44
+      ]
+    },
+    {
+      "island": 19,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        -297.6,
+        -229.6
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.012,
+        0.767,
+        0.126,
+        0.834
+      ]
+    },
+    {
+      "island": 20,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        226.5,
+        268.0
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.012,
+        0.677,
+        0.126,
+        0.744
+      ]
+    },
+    {
+      "island": 21,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        285.1,
+        326.6
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.149,
+        0.767,
+        0.263,
+        0.834
+      ]
+    },
+    {
+      "island": 22,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        228.7,
+        263.1
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.149,
+        0.677,
+        0.263,
+        0.744
+      ]
+    },
+    {
+      "island": 23,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        246.9,
+        315.0
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.287,
+        0.767,
+        0.401,
+        0.834
+      ]
+    },
+    {
+      "island": 24,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.287,
+        0.677,
+        0.401,
+        0.744
+      ]
+    },
+    {
+      "island": 25,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.424,
+        0.767,
+        0.539,
+        0.834
+      ]
+    },
+    {
+      "island": 26,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.01,
+        0.475,
+        0.25
+      ],
+      "bake_uv": [
+        0.149,
+        0.586,
+        0.263,
+        0.653
+      ]
+    },
+    {
+      "island": 27,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.749,
+        0.475,
+        0.989
+      ],
+      "bake_uv": [
+        0.149,
+        0.496,
+        0.263,
+        0.563
+      ]
+    },
+    {
+      "island": 28,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.41,
+        0.966,
+        0.603
+      ],
+      "bake_uv": [
+        0.837,
+        0.857,
+        0.951,
+        0.911
+      ]
+    },
+    {
+      "island": 29,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.211,
+        0.966,
+        0.405
+      ],
+      "bake_uv": [
+        0.012,
+        0.857,
+        0.126,
+        0.911
+      ]
+    },
+    {
+      "island": 30,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.011,
+        0.966,
+        0.205
+      ],
+      "bake_uv": [
+        0.861,
+        0.012,
+        0.975,
+        0.066
+      ]
+    },
+    {
+      "island": 31,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.607,
+        0.966,
+        0.801
+      ],
+      "bake_uv": [
+        0.861,
+        0.102,
+        0.975,
+        0.156
+      ]
+    },
+    {
+      "island": 32,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.562,
+        0.767,
+        0.676,
+        0.834
+      ]
+    },
+    {
+      "island": 33,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.723,
+        0.102,
+        0.837,
+        0.169
+      ]
+    },
+    {
+      "island": 34,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.01,
+        0.475,
+        0.25
+      ],
+      "bake_uv": [
+        0.586,
+        0.012,
+        0.7,
+        0.079
+      ]
+    },
+    {
+      "island": 35,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        9.4,
+        35.5
+      ],
+      "mu_uv": [
+        0.066,
+        0.749,
+        0.475,
+        0.989
+      ],
+      "bake_uv": [
+        0.287,
+        0.586,
+        0.401,
+        0.653
+      ]
+    },
+    {
+      "island": 36,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.41,
+        0.966,
+        0.603
+      ],
+      "bake_uv": [
+        0.861,
+        0.192,
+        0.975,
+        0.246
+      ]
+    },
+    {
+      "island": 37,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.211,
+        0.966,
+        0.405
+      ],
+      "bake_uv": [
+        0.149,
+        0.857,
+        0.263,
+        0.911
+      ]
+    },
+    {
+      "island": 38,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.011,
+        0.966,
+        0.205
+      ],
+      "bake_uv": [
+        0.861,
+        0.282,
+        0.975,
+        0.336
+      ]
+    },
+    {
+      "island": 39,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        35.5,
+        41.8
+      ],
+      "mu_uv": [
+        0.556,
+        0.607,
+        0.966,
+        0.801
+      ],
+      "bake_uv": [
+        0.861,
+        0.36,
+        0.975,
+        0.414
+      ]
+    },
+    {
+      "island": 40,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.424,
+        0.677,
+        0.539,
+        0.744
+      ]
+    },
+    {
+      "island": 41,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.699,
+        0.767,
+        0.814,
+        0.834
+      ]
+    },
+    {
+      "island": 42,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.01,
+        0.475,
+        0.25
+      ],
+      "bake_uv": [
+        0.424,
+        0.586,
+        0.539,
+        0.653
+      ]
+    },
+    {
+      "island": 43,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.749,
+        0.475,
+        0.989
+      ],
+      "bake_uv": [
+        0.287,
+        0.496,
+        0.401,
+        0.563
+      ]
+    },
+    {
+      "island": 44,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.41,
+        0.966,
+        0.603
+      ],
+      "bake_uv": [
+        0.562,
+        0.934,
+        0.676,
+        0.988
+      ]
+    },
+    {
+      "island": 45,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.211,
+        0.966,
+        0.405
+      ],
+      "bake_uv": [
+        0.287,
+        0.857,
+        0.401,
+        0.911
+      ]
+    },
+    {
+      "island": 46,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.011,
+        0.966,
+        0.205
+      ],
+      "bake_uv": [
+        0.699,
+        0.934,
+        0.814,
+        0.988
+      ]
+    },
+    {
+      "island": 47,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.607,
+        0.966,
+        0.801
+      ],
+      "bake_uv": [
+        0.837,
+        0.934,
+        0.951,
+        0.988
+      ]
+    },
+    {
+      "island": 48,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.504,
+        0.475,
+        0.744
+      ],
+      "bake_uv": [
+        0.699,
+        0.677,
+        0.814,
+        0.744
+      ]
+    },
+    {
+      "island": 49,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.259,
+        0.475,
+        0.498
+      ],
+      "bake_uv": [
+        0.723,
+        0.192,
+        0.837,
+        0.259
+      ]
+    },
+    {
+      "island": 50,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.01,
+        0.475,
+        0.25
+      ],
+      "bake_uv": [
+        0.586,
+        0.102,
+        0.7,
+        0.169
+      ]
+    },
+    {
+      "island": 51,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        40.8,
+        66.9
+      ],
+      "mu_uv": [
+        0.066,
+        0.749,
+        0.475,
+        0.989
+      ],
+      "bake_uv": [
+        0.562,
+        0.496,
+        0.676,
+        0.563
+      ]
+    },
+    {
+      "island": 52,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.41,
+        0.966,
+        0.603
+      ],
+      "bake_uv": [
+        0.012,
+        0.934,
+        0.126,
+        0.988
+      ]
+    },
+    {
+      "island": 53,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.211,
+        0.966,
+        0.405
+      ],
+      "bake_uv": [
+        0.424,
+        0.857,
+        0.539,
+        0.911
+      ]
+    },
+    {
+      "island": 54,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.011,
+        0.966,
+        0.205
+      ],
+      "bake_uv": [
+        0.149,
+        0.934,
+        0.263,
+        0.988
+      ]
+    },
+    {
+      "island": 55,
+      "material": "marble",
+      "triangles": 10,
+      "area": 2373.5,
+      "along": [
+        66.9,
+        73.2
+      ],
+      "mu_uv": [
+        0.556,
+        0.607,
+        0.966,
+        0.801
+      ],
+      "bake_uv": [
+        0.287,
+        0.934,
+        0.401,
+        0.988
+      ]
+    },
+    {
+      "island": 56,
+      "material": "marble",
+      "triangles": 10,
+      "area": 28286.5,
+      "along": [
+        -174.5,
+        -23.3
+      ],
+      "mu_uv": [
+        -0.448,
+        0.506,
+        0.497,
+        1.001
+      ],
+      "bake_uv": [
+        0.012,
+        0.173,
+        0.275,
+        0.311
+      ]
+    },
+    {
+      "island": 57,
+      "material": "marble",
+      "triangles": 10,
+      "area": 28286.5,
+      "along": [
+        -174.7,
+        -23.5
+      ],
+      "mu_uv": [
+        -0.447,
+        0.007,
+        0.498,
+        0.503
+      ],
+      "bake_uv": [
+        0.012,
+        0.335,
+        0.275,
+        0.473
+      ]
+    },
+    {
+      "island": 58,
+      "material": "marble",
+      "triangles": 10,
+      "area": 28286.5,
+      "along": [
+        -174.7,
+        -23.5
+      ],
+      "mu_uv": [
+        -0.447,
+        0.007,
+        0.498,
+        0.503
+      ],
+      "bake_uv": [
+        0.299,
+        0.173,
+        0.562,
+        0.311
+      ]
+    },
+    {
+      "island": 59,
+      "material": "marble",
+      "triangles": 10,
+      "area": 28286.5,
+      "along": [
+        71.1,
+        222.3
+      ],
+      "mu_uv": [
+        0.502,
+        0.506,
+        1.447,
+        1.001
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.275,
+        0.15
+      ]
+    },
+    {
+      "island": 60,
+      "material": "marble",
+      "triangles": 10,
+      "area": 28286.5,
+      "along": [
+        70.9,
+        222.1
+      ],
+      "mu_uv": [
+        0.503,
+        0.007,
+        1.448,
+        0.503
+      ],
+      "bake_uv": [
+        0.299,
+        0.012,
+        0.562,
+        0.15
+      ]
+    },
+    {
+      "island": 61,
+      "material": "marble",
+      "triangles": 10,
+      "area": 28286.5,
+      "along": [
+        70.9,
+        222.1
+      ],
+      "mu_uv": [
+        0.503,
+        0.007,
+        1.448,
+        0.503
+      ],
+      "bake_uv": [
+        0.299,
+        0.335,
+        0.562,
+        0.473
+      ]
+    }
+  ]
+}
