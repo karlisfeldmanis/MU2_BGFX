@@ -182,6 +182,10 @@ struct Sheet {
     std::string name;
     Tone nameTone = Tone::White;
     std::string base;  // "TWO-HANDED SWORD · DARK KNIGHT"
+    // Under the type line, as WoW's "Soulbound" stands under the name (the user, 2026-10-06:
+    // 'need better place to show cannot droped'): "Cannot be dropped", its own tone.
+    std::string bound;
+    Tone boundTone = Tone::RedPurple;
     std::vector<Section> sections;
     // The foot. `wear` is drawn with a bar; either may be empty.
     std::string wear;

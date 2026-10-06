@@ -693,7 +693,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
     const float baseSize = (item ? kTypeSize : kBaseSize) * u;
     const float baseTall =
         sheet.base.empty() ? 0.0f : std::round(baseSize * (item ? 1.6f : 1.5f));
-    const float headTall = std::max(plate, titleTall + baseTall) + pad * 2.0f;
+    const float boundTall = sheet.bound.empty() ? 0.0f : std::round(baseSize * 1.5f);
+    const float headTall = std::max(plate, titleTall + baseTall + boundTall) + pad * 2.0f;
 
     // The headline and its rail, under the name with no rule between: the number is the second
     // thing read, after what the thing is called.
@@ -836,7 +837,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         canvas.region(sheet.picture, {box.right() - pad * 0.5f - art, box.y + artTop, art, art},
                       sheet.from, fade(0xFFFFFFFFu));
     }
-    float headPen = pen + (std::max(plate, titleTall + baseTall) - titleTall - baseTall) * 0.5f;
+    const float headText = titleTall + baseTall + boundTall;
+    float headPen = pen + (std::max(plate, headText) - headText) * 0.5f;
     for (const std::string& words : title) {
         const float baseline = middle(nameFace, headPen, titleLine, nameSize);
         if (gothic) {
@@ -860,6 +862,11 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
             spaced(type, canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
                     kBaseTrack, fade(kQuiet), sheet.base, drop);
         }
+        headPen += baseTall;
+    }
+    if (!sheet.bound.empty()) {
+        say(type, canvas, box.x + headTextX, middle(face, headPen, boundTall, baseSize), baseSize,
+            fade(colourOf(sheet.boundTone)), sheet.bound, drop);
     }
     pen = box.y + headTall;
 

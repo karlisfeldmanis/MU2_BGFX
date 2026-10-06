@@ -1020,7 +1020,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // Too dear to throw away: MuMain's IsHighValueItem, in its RedPurple, where the concept put
     // "Account Bound". The window refuses the drop either way; this says so before it is tried.
     if (sim::expensive(tables, what)) {
-        sheet.keep.push_back({"Cannot be dropped", Tone::RedPurple, false});
+        sheet.bound = "Cannot be dropped";
     }
 
     // ---- the foot -----------------------------------------------------------------------------
