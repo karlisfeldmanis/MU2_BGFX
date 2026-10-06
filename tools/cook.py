@@ -1976,6 +1976,10 @@ def figure_set(world):
             # Monster's BlendMeshTexCoordV. 0 for every other breed.
             "scroll": next((float(g.get("scrolls_per_second", 0.0))
                             for g in (one.get("glow") or {}).values()), 0.0),
+            # And the whole table where a glow slides along U: the Crusts' flames
+            # (BlendMeshTexCoordU, ZzzCharacter.cpp:5819-5821). cook_mesh's `scrolls`.
+            **({"scrolls": one["glow"]} if any("axis" in g for g in (one.get("glow") or {}).values())
+               else {}),
             "spawns": [s for s in one.get("spawns", []) if s["map"] == number]})
 
     # The four standalone town figures -- Smith01, Wizard01 and two Storage01 -- are whole
@@ -3304,13 +3308,14 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
     for name, path in sorted(models.items()):
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
         scroll = next((one.get("scroll", 0.0) for one in monsters if one["mesh"] == name), 0.0)
+        scrolls = next((one.get("scrolls") for one in monsters if one["mesh"] == name), None)
         soft = next((one.get("soft_alpha", []) for one in monsters if one["mesh"] == name), [])
         # A worn model's own (a wing's), off its index entry.
         soft = soft or next((one.get("soft_alpha", []) for one in index.get("objects", [])
                              if one.get("name") == name), [])
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
                                               hidden_of.get(name), scroll_per_second=scroll,
-                                              soft=set(soft))
+                                              scrolls=scrolls, soft=set(soft))
         triangles += tris
         vertices += verts
         mesh_table[name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,

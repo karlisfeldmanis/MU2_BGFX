@@ -1,0 +1,343 @@
+{
+  "item": "MegaCrust01",
+  "mu_name": "Mega Crust",
+  "mu_name_from": "MuMain _enum.h MONSTER_MEGA_CRUST (71), drawn as MONSTER_MODEL_CRUST = 52 (_enum.h:4202), so Monster53.bmd. OpenMU Version095d Maps/Icarus.cs:193 names breed 71 'Mega Crust'. docs/icarus-port.md.",
+  "world": "icarus",
+  "object_type": 71,
+  "monster": {
+    "model_index": 52,
+    "scale": 1.1
+  },
+  "monster_from": "ZzzCharacter.cpp:13588-13611, CreateMonster, case MONSTER_MEGA_CRUST: Scale = 1.1f; Weapon[0] = MODEL_THUNDER_BLADE at Level 5, Weapon[1] = MODEL_LEGENDARY_SHIELD at Level 0; BlendMesh = 1 at BlendMeshLight 1. Its effects, in game/play: RenderEye(o, 26, 27, 2.0f) on eye00 and eye01 (:11213-11215, fx/eyes); its blow's Inferno at the attack's fifth key, CreateInferno and MODEL_SKILL_INFERNO (:1696-1708, kInfernoBlows); the Thunder Blade's and the shield's held sparks (:10238-10256, :10277-10282, fx/held_lights). Left out: the CPhysicsCloth cape on bone 19 in iui02.tga (:8820-8838) -- this renderer has no cloth.",
+  "right_hand": "Sword19",
+  "right_hand_bone": "knife_gdf",
+  "left_hand": "Shield15",
+  "left_hand_bone": "hand_bofdgne01",
+  "plus": {
+    "right_hand": 5
+  },
+  "right_hand_from": "MODEL_THUNDER_BLADE is Item/Sword19.bmd (built for it) at +5, and MODEL_LEGENDARY_SHIELD our Shield15 at +0. Their bones are CreateCharacter's weapon switch: `case MODEL_CRUST: c->Weapon[0].LinkBone = 36; c->Weapon[1].LinkBone = 45` (ZzzCharacter.cpp:11962-11965) -- knife_gdf and hand_bofdgne01 in Monster53.",
+  "profile": "monster",
+  "rig_from": "Exported with --actions=all, 7 actions, 55 bones; keys 6, 6, 7, 7, 7, 7, 7. Its death plays at 0.22 (ZzzOpenData.cpp:3738-3745), in actions.json's action_overrides.",
+  "sheets": {
+    "iui01": "crust_iui01.png",
+    "iui02": "crust_iui02.png"
+  },
+  "sheet_from": "Data/Monster's iui01.OZT (256 square, blue-grey riveted plate with a frosted rim, its alpha cutting the rim's feathers, 932 triangles) and iui02.OZJ (64 square, flames, 32 triangles: the stream mesh), under a crust_ prefix.",
+  "sheet_materials": {
+    "iui01": "painted_steel",
+    "iui02": "skin"
+  },
+  "sheet_materials_from": "iui01 is painted plate, painted_steel; iui02 is drawn as a glow, so its material only names it.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V and striping plate; the armour sets' cast grain instead, as the Tarkan monsters.",
+  "soft_alpha": [
+    "painted_steel"
+  ],
+  "soft_alpha_from": "iui01.OZT is drawn by MU tested and blended (EnableAlphaTest): the plate's frosted rim feathers out.",
+  "glow": {
+    "iui02": {
+      "scrolls_per_second": 0.4,
+      "axis": "u"
+    }
+  },
+  "glow_from": "BlendMesh 1 at light 1: mesh 1, the flames (iui02), drawn added (ZzzBMD.cpp:1509-1516), and MoveCharacterVisual slides its U: `o->BlendMeshTexCoordU = -(float)((int)(WorldTime) % 10000) * 0.0004f` (ZzzCharacter.cpp:5819-5821), 0.4 of the sheet a second.",
+  "sounds_from": "ZzzOpenData.cpp:3738-3745: SetMonsterSound(..., 180, 180, 181, 181, 182): mMegaCrust1 to move, mMegaCrustAttack1 to attack, mMegaCrustDie to die. Wired as megacrust_* in sounds.json.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 296,
+      "area": 29967.2,
+      "along": [
+        -14.4,
+        64.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.923,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.937,
+        0.978
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 96,
+      "area": 3485.2,
+      "along": [
+        -21.9,
+        15.6
+      ],
+      "mu_uv": [
+        0.638,
+        0.043,
+        0.972,
+        0.43
+      ],
+      "bake_uv": [
+        0.064,
+        0.01,
+        0.341,
+        0.945
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 2576.7,
+      "along": [
+        -15.5,
+        23.4
+      ],
+      "mu_uv": [
+        0.406,
+        0.73,
+        0.652,
+        0.912
+      ],
+      "bake_uv": [
+        0.048,
+        0.327,
+        0.686,
+        0.536
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 26,
+      "area": 3473.4,
+      "along": [
+        -16.2,
+        36.0
+      ],
+      "mu_uv": [
+        0.602,
+        0.425,
+        0.867,
+        0.637
+      ],
+      "bake_uv": [
+        0.012,
+        0.05,
+        0.937,
+        0.77
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 155,
+      "area": 12920.1,
+      "along": [
+        -72.0,
+        -7.3
+      ],
+      "mu_uv": [
+        0.429,
+        0.424,
+        0.999,
+        0.849
+      ],
+      "bake_uv": [
+        0.38,
+        0.011,
+        0.715,
+        0.752
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 36,
+      "area": 4529.1,
+      "along": [
+        -24.0,
+        -6.3
+      ],
+      "mu_uv": [
+        0.477,
+        0.256,
+        0.647,
+        0.5
+      ],
+      "bake_uv": [
+        0.373,
+        0.287,
+        0.941,
+        0.871
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 96,
+      "area": 3450.2,
+      "along": [
+        -17.4,
+        23.0
+      ],
+      "mu_uv": [
+        0.638,
+        0.043,
+        0.972,
+        0.43
+      ],
+      "bake_uv": [
+        0.01,
+        0.092,
+        0.571,
+        0.945
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 26,
+      "area": 3473.4,
+      "along": [
+        -17.9,
+        42.6
+      ],
+      "mu_uv": [
+        0.602,
+        0.425,
+        0.867,
+        0.637
+      ],
+      "bake_uv": [
+        0.012,
+        0.108,
+        0.961,
+        0.52
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 155,
+      "area": 12920.1,
+      "along": [
+        -72.0,
+        -7.2
+      ],
+      "mu_uv": [
+        0.429,
+        0.424,
+        0.999,
+        0.849
+      ],
+      "bake_uv": [
+        0.201,
+        0.221,
+        0.879,
+        0.885
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 8,
+      "area": 3033.1,
+      "along": [
+        -62.9,
+        -34.9
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.991,
+        0.999
+      ],
+      "bake_uv": [
+        0.877,
+        0.919,
+        0.947,
+        0.99
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 8,
+      "area": 3033.1,
+      "along": [
+        -64.0,
+        -36.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        0.991,
+        0.999
+      ],
+      "bake_uv": [
+        0.778,
+        0.907,
+        0.848,
+        0.978
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 8,
+      "area": 3033.1,
+      "along": [
+        -62.6,
+        -34.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.991,
+        0.999
+      ],
+      "bake_uv": [
+        0.394,
+        0.911,
+        0.464,
+        0.982
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 8,
+      "area": 3033.1,
+      "along": [
+        -63.7,
+        -35.6
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        0.991,
+        0.999
+      ],
+      "bake_uv": [
+        0.903,
+        0.794,
+        0.974,
+        0.865
+      ]
+    }
+  ]
+}

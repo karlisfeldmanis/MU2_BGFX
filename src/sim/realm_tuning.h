@@ -432,6 +432,10 @@ constexpr Resistance kResistances[] = {
     {61, 10, 10},  // Beam Knight
     {62, 8, 8},    // Mutant
     {63, 13, 13},  // Death Beam Knight
+    // Icarus's (WZO Monster.txt:56-66, = OpenMU Version095d Maps/Icarus.cs read the same way;
+    // docs/icarus-port.md A 4.2), each breed as it is built.
+    {69, 9, 9},    // Alquamos
+    {71, 9, 9},    // Mega Crust
 };
 
 // ---- what each breed leaves -------------------------------------------------------------------
@@ -468,6 +472,9 @@ constexpr DropRate kDropRates[] = {
     // (WZO Monster.txt:55-74; docs/tarkan-port.md A 4.2).
     {57, 30, 3, 10}, {58, 30, 3, 20}, {59, 30, 3, 150}, {60, 30, 3, 10}, {61, 30, 3, 20},
     {62, 30, 3, 10}, {63, 30, 3, 150},
+    // Icarus's: MoneyRate 14 and MaxItemLevel 3, RegTime 10 for the Alquamos and the Mega Crust
+    // (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built.
+    {69, 14, 3, 10}, {71, 14, 3, 10},
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {

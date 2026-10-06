@@ -41,10 +41,11 @@ void Eyes::update(float seconds) {
     clock_ = std::fmod(clock_ + seconds, 3.14159265f);
 }
 
-void Eyes::feed(const float at[3]) {
+void Eyes::feed(const float at[3], float size) {
     if (!open_ || eyes_.size() >= kEyes) return;
     Eye one;
     for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    one.size = size;
     eyes_.push_back(one);
 }
 
@@ -55,8 +56,8 @@ void Eyes::gather(gfx::Effects& effects) const {
     for (const Eye& one : eyes_) {
         gfx::Sprite sprite;
         for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
-        sprite.halfWidth = kWidth * kUnit * 0.5f;
-        sprite.halfHeight = kHeight * kUnit * 0.5f;
+        sprite.halfWidth = kWidth * kUnit * 0.5f * one.size;
+        sprite.halfHeight = kHeight * kUnit * 0.5f * one.size;
         sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = light;
         sprite.colour[3] = 1.0f;
         sprite.sheet = sheet_;

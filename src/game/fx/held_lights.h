@@ -22,6 +22,13 @@
 //     RenderLinkObject's MODEL_GREAT_REIGN_CROSSBOW (:7541-7558): (0, 0, 10) on bones 1-5,
 //         BITMAP_SHINY + 1 at 1 and BITMAP_LIGHT at 2, L*(0.5, 0.5, 0.8), the fifth light white.
 //
+//   And Icarus's Crusts' two (2026-10-06), RenderCharacter's held switch:
+//     MODEL_THUNDER_BLADE (:10238-10256): S = sin(WorldTime*0.004)*0.3 + 0.3, at (0, -20, 15)
+//         in the hand BITMAP_SHINY + 1 at S + 1, S*(0.2, 0.2, 1); and three
+//         BITMAP_JOINT_THUNDER sub 10 from there to (0, -133, 7), not carried.
+//     MODEL_LEGENDARY_SHIELD (:10277-10282): at (20, 0, 0) BITMAP_SHINY + 1 at 1.5,
+//         L*(0.4, 0.6, 1.5).
+//
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
 // head, and lights at the Great Reign's four limb tips and nose.
@@ -52,11 +59,14 @@ public:
         DragonSoulStaff,
         ElementalMace,
         GreatReignCrossbow,
+        ThunderBlade,
+        LegendaryShield,
     };
     static constexpr int kMostPoints = 8;
-    static constexpr Item kItems[6] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[8] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                        Item::DragonSpear,     Item::DragonSoulStaff,
-                                       Item::ElementalMace,   Item::GreatReignCrossbow};
+                                       Item::ElementalMace,   Item::GreatReignCrossbow,
+                                       Item::ThunderBlade,    Item::LegendaryShield};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

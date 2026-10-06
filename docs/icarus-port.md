@@ -183,6 +183,24 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
   four BITMAP_FLARE sub 7 ribbons round the target with eMeteorite (ours at 0.6), and its sounds
   (alquamos_move/attack/die). Left out, ours: three sparks a frame off random bones. Seen in a
   muted fight at 14,24, where the pack killed the hero and he woke in the Lost Tower.
+- **Mega Crust (71)**: Monster53 as `MegaCrust01`, scale 1.1; 10 spawns, ids 1494-1503, on the
+  north road and the east turn. Its iui01 plate on painted_steel with the cast grain, its rim
+  blended by the sheet's alpha; mesh 1, the iui02 flames, added (BlendMesh 1) and slid along U at
+  0.4 a second (BlendMeshTexCoordU, `ZzzCharacter.cpp:5819-5821`; `cook.py` now hands a monster's
+  glow table to `cook_mesh` when a glow names an `axis`). Its arms: the Thunder Blade, built for
+  it as `Sword19` (a monster's arm, worn by nobody: OpenMU's row is the Magic Gladiator's), at +5
+  on knife_gdf, and the Legendary Shield (`Shield15`) on hand_bofdgne01 (`:11962-11965`). Its
+  effects: RenderEye at twice the size on eye00/eye01 (`:11213-11215`, `fx/eyes` takes a size);
+  its blow's Inferno, bombs and mesh, at the attack's fifth key, 5/7 into the swing
+  (`:1696-1708`, `kInfernoBlows`' new `share`, `infernosDue_`); the Thunder Blade's breathing blue
+  Shiny02 at its guard and the Legendary Shield's spark (`:10238-10256`, `:10277-10282`,
+  `fx/held_lights`, so the Cursed Wizard's shield sparks too); megacrust_move/attack/die. Left
+  out: the CPhysicsCloth cape on bone 19 (no cloth here) and the blade's three
+  BITMAP_JOINT_THUNDER. kResistances {71, 9, 9}, kDropRates {71, 14, 3, 10}, and the Alquamos's
+  {69, 9, 9} and {69, 14, 3, 10}, which its commit left out. Seen in a muted run at 58,39: two
+  Crusts on the hero, blade and banners lit, no errors.
+- **Every Icarus death at 0.22** (`ZzzOpenData.cpp:3741-3786`): `actions.json` `action_overrides`
+  for models 50-56. The Alquamos had played its at the default 0.55; rebuilt and recooked.
 
 **The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
 on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound

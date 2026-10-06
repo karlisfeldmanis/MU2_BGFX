@@ -1351,7 +1351,8 @@ void Play::update(double seconds) {
                             laserCasts_.push_back(bolt);
                         }
                         // Tarkan's Inferno on the attack's first key (kInfernoBlows): at once,
-                        // the key a tenth of a second into the swing at these breeds' speeds.
+                        // the key a tenth of a second into the swing at these breeds' speeds;
+                        // the Crusts' at the fifth, `share` of the swing later (infernosDue_).
                         if (body && !body->player && body->kind >= 0 &&
                             size_t(body->kind) < tables_.kinds.size() && ground_ &&
                             swinger->placed) {
@@ -1362,12 +1363,13 @@ void Play::update(double seconds) {
                                     swinger->crown[0],
                                     ground_->heightAt(swinger->crown[0], swinger->crown[2]),
                                     swinger->crown[2]};
-                                inferno_.cast(feet, swinger->yaw, [&](const float* at) {
-                                    meteor_.stones(at[0], at[2], at[1], 2);
-                                }, blow.bombs, blow.mesh);
-                                // A bomb's SOUND_EXPLOTION01, the eight heard as one.
-                                if (blow.bombs && heard_.explosion >= 0) {
-                                    emit(heard_.explosion, feet[0], feet[2]);
+                                if (blow.share > 0.0f) {
+                                    infernosDue_.push_back({{feet[0], feet[1], feet[2]},
+                                                            swinger->yaw,
+                                                            swinger->swinging * blow.share,
+                                                            blow.bombs, blow.mesh});
+                                } else {
+                                    throwInferno(feet, swinger->yaw, blow.bombs, blow.mesh);
                                 }
                             }
                         }
@@ -2548,6 +2550,15 @@ void Play::flinch(Drawn& struck, bool isHero) {
     const int cry = !isHero ? (silent ? -1 : struck.cryAttack)
                             : (look && look->female ? heard_.shockFemale : heard_.shock);
     if (cry >= 0) emit(cry, struck.crown[0], struck.crown[2], struck.id);
+}
+
+// A blow's Inferno (kInfernoBlows), with the meteor's stones and, for bombs, a bomb's
+// SOUND_EXPLOTION01, the eight heard as one.
+void Play::throwInferno(const float feet[3], float yaw, bool bombs, bool mesh) {
+    inferno_.cast(feet, yaw, [&](const float* at) {
+        meteor_.stones(at[0], at[2], at[1], 2);
+    }, bombs, mesh);
+    if (bombs && heard_.explosion >= 0) emit(heard_.explosion, feet[0], feet[2]);
 }
 
 }  // namespace mu::game

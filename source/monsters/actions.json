@@ -111,7 +111,28 @@
       "3": 0.5,
       "4": 0.7,
       "7": 0.5
+    },
+    "50": {
+      "6": 0.22
+    },
+    "51": {
+      "6": 0.22
+    },
+    "52": {
+      "6": 0.22
+    },
+    "53": {
+      "6": 0.22
+    },
+    "54": {
+      "6": 0.22
+    },
+    "55": {
+      "6": 0.22
+    },
+    "56": {
+      "6": 0.22
     }
   },
-  "action_overrides_note": "The rest of OpenMonsterModel's switch: slots other than the walk set outright, after the multiplier as the walks are. MONSTER_MODEL_TANTALLOS (42, Monster43) attacks at 0.35 though its idles, walk and shock take the 0.4 multiplier; MONSTER_MODEL_BEAM_KNIGHT (44, Monster45) dies at 0.3 (ZzzOpenData.cpp:2633-2639). The Iron Wheel's 0.18 walk (41) is in walk_overrides. MONSTER_MODEL_DRAGON (31, Monster32, the Golden Dragon): the roar 0.8, the bite 0.5, the breath 0.7 (ZzzOpenData.cpp:3616-3624); its flight (7, MONSTER01_DIE + 1) is 0.8 there but plays at the 0.5 MoveBoids hands PlayAnimation for the event's flying dragons (GOBoid.cpp:1389-1394), the only thing that plays it here."
+  "action_overrides_note": "The rest of OpenMonsterModel's switch: slots other than the walk set outright, after the multiplier as the walks are. MONSTER_MODEL_TANTALLOS (42, Monster43) attacks at 0.35 though its idles, walk and shock take the 0.4 multiplier; MONSTER_MODEL_BEAM_KNIGHT (44, Monster45) dies at 0.3 (ZzzOpenData.cpp:2633-2639). The Iron Wheel's 0.18 walk (41) is in walk_overrides. MONSTER_MODEL_DRAGON (31, Monster32, the Golden Dragon): the roar 0.8, the bite 0.5, the breath 0.7 (ZzzOpenData.cpp:3616-3624); its flight (7, MONSTER01_DIE + 1) is 0.8 there but plays at the 0.5 MoveBoids hands PlayAnimation for the event's flying dragons (GOBoid.cpp:1389-1394), the only thing that plays it here. Icarus's seven, MONSTER_MODEL_ALQUAMOS (50) to MONSTER_MODEL_DARK_PHOENIX (56), each die at 0.22 (ZzzOpenData.cpp:3741-3786; the shield, 55, falls through into the phoenix's case)."
 }

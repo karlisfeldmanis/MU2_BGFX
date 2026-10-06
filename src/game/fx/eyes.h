@@ -41,13 +41,14 @@ public:
 
     // Forgets the last frame's eyes and moves the pulse on. Called before the feed.
     void update(float seconds);
-    // One eye, in world metres, for this frame only.
-    void feed(const float at[3]);
+    // One eye, in world metres, for this frame only, at RenderEye's fSize.
+    void feed(const float at[3], float size = 1.0f);
     void gather(gfx::Effects& effects) const;
 
 private:
     struct Eye {
         float position[3];
+        float size = 1.0f;
     };
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
     std::vector<Eye> eyes_;

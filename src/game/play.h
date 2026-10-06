@@ -799,6 +799,7 @@ private:
         // 23; -1 on everything else. See Play::snort.
         int snortBone = -1;
         int eyeBones[2] = {-1, -1};
+        float eyeSize = 1.0f;  // RenderEye's fSize: the Crusts' 2
         // A Tarkan monster's two eye trails: MoveEye's Right and Left bones, -1 on everything
         // else (kEyeTrailRows, fx/eye_trails.h).
         int trailBones[2] = {-1, -1};
@@ -1201,6 +1202,15 @@ private:
         float wait = 0.0f;
     };
     std::vector<StaffDue> staffsDue_;
+    // A blow's Inferno thrown later in the swing (kInfernoBlows' `share`): the Crusts'.
+    struct InfernoDue {
+        float feet[3] = {};
+        float yaw = 0.0f;
+        float wait = 0.0f;
+        bool bombs = true, mesh = true;
+    };
+    std::vector<InfernoDue> infernosDue_;
+    void throwInferno(const float feet[3], float yaw, bool bombs, bool mesh);
     StaffFire staffFire_;  // the held Staff of Resurrection's spark and shaft lights
     HeldLights heldLights_;  // the Saint Crossbow's, Grand Soul Shield's and Dragon Spear's
     WingMotes wingMotes_;  // the motes off every worn wing's tips

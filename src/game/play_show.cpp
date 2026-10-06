@@ -521,7 +521,7 @@ void Play::snort(float seconds) {
         if (one.eyeBones[0] >= 0 && one.eyeBones[1] >= 0) {
             for (int e = 0; e < 2; ++e) {
                 float at[3];
-                if (one.figure.pointOn(one.eyeBones[e], kEyeAt[e], at)) eyes_.feed(at);
+                if (one.figure.pointOn(one.eyeBones[e], kEyeAt[e], at)) eyes_.feed(at, one.eyeSize);
             }
         }
         if (one.snortBone < 0) continue;
@@ -823,6 +823,14 @@ void Play::shade(float seconds) {
     staffsDue_.erase(std::remove_if(staffsDue_.begin(), staffsDue_.end(),
                                     [](const StaffDue& one) { return one.wait <= 0.0f; }),
                      staffsDue_.end());
+    // A Crust's Inferno, at its attack's fifth key (kInfernoBlows' share).
+    for (InfernoDue& due : infernosDue_) {
+        due.wait -= seconds;
+        if (due.wait <= 0.0f) throwInferno(due.feet, due.yaw, due.bombs, due.mesh);
+    }
+    infernosDue_.erase(std::remove_if(infernosDue_.begin(), infernosDue_.end(),
+                                      [](const InfernoDue& one) { return one.wait <= 0.0f; }),
+                       infernosDue_.end());
     // The fight's coins, once its Zen has stopped coming (takeZen), with the lane's sum.
     if (zenQuiet_ > 0.0f && !zenOwed_) {
         zenQuiet_ -= seconds;

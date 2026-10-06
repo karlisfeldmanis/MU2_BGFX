@@ -304,6 +304,10 @@ inline constexpr const char* kCrumblingFigure = "StoneGolem01";
 // (ZzzCharacter.cpp:1480-1486), the skeletons' burst on its own model. And RenderEye(o, 22, 23)
 // always (:11209-11211), the Elite Bull Fighter's eyes, on the same bone names.
 inline constexpr const char* kDeathCowFigure = "DeathCow01";
+// MODEL_CRUST, Icarus's Mega Crust: RenderEye(o, 26, 27, 2.0f) always (ZzzCharacter.cpp:
+// 11213-11215), on eye00 and eye01, at twice the sprite's size.
+inline constexpr const char* kCrustFigure = "MegaCrust01";
+constexpr float kCrustEyeSize = 2.0f;
 // MODEL_ICE_MONSTER, which has no corpse either, but only once its death clip has played: the
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
 // it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).
@@ -635,16 +639,20 @@ constexpr float kStaffBlast = 0.4f;
 // one's distance and striking nothing -- the realm's blow is the one.
 inline constexpr const char* kSpreadFigure = "IronWheel01";
 constexpr float kSpreadDegrees = 20.0f;
+// `share` is how far into the swing it is thrown: 0 at once, CheckAttackTime(1); the Crusts'
+// CheckAttackTime(5) of a seven-key attack is 5/7 of it (ZzzCharacter.cpp:1696-1708).
 struct InfernoBlow {
     int32_t number;
     bool bombs;
     bool mesh;
+    float share = 0.0f;
 };
 inline constexpr InfernoBlow kInfernoBlows[] = {
-    {58, true, false},  // Tantallos
-    {59, true, false},  // Zaikan
-    {61, false, true},  // Beam Knight
-    {63, true, true},   // Death Beam Knight
+    {58, true, false},            // Tantallos
+    {59, true, false},            // Zaikan
+    {61, false, true},            // Beam Knight
+    {63, true, true},             // Death Beam Knight
+    {71, true, true, 5.0f / 7.0f},  // Mega Crust
 };
 
 // Charon's light, RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268):

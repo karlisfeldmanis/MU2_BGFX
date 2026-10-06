@@ -1,0 +1,83 @@
+{
+  "item": "Sword19",
+  "mu_name": "Thunder Blade",
+  "mu_name_from": "_enum.h:1513 MODEL_THUNDER_BLADE = MODEL_SWORD + 18, loaded from Item/Sword19.bmd (ZzzOpenData.cpp:622); OpenMU Version095d Weapons.cs:112.",
+  "why_this_one": "Icarus's Crusts carry it: the Mega Crust at +5 and the Alpha Crust at +9, each with a Legendary Shield (ZzzCharacter.cpp:13588-13611), as the Golden Crust does (:14895-14904). docs/icarus-port.md Part A 4.3.",
+  "profile": "weapon",
+  "stats": {
+    "from": "OpenMU Version095d Weapons.cs:112: CreateWeapon(0, 18, 0, 23, 2, 3, true, \"Thunder Blade\", 105, 140, 168, 40, 86, 0, 0, 180, 50, 0, 0, 0, 0, 0, 1) -- drop 105, 140-168, speed 40, durability 86, 180 strength and 50 agility, the Magic Gladiator's alone.",
+    "group": 0,
+    "number": 18,
+    "drop_level": 105,
+    "drops_from_monsters": false,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "durability": 86,
+    "note": "Built as a monster's arm, as the statue weapons are: OpenMU's row is the Magic Gladiator's only, a class we do not have (the Storm Crow set was skipped for the same reason, the user 2026-10-06), so nobody wears it and it does not drop. Its damage, requirements and class are left out so the card says none."
+  },
+  "stance": "sword",
+  "stance_from": "Held in the right hand with the Legendary Shield in the left (Weapon[0] and Weapon[1], ZzzCharacter.cpp:13595-13597), so held as a one-handed sword.",
+  "two_handed": false,
+  "sheets": {
+    "Msword": "msword.png"
+  },
+  "sheet_from": "Data/Item/Msword.OZJ (128x256: a steel blade in a blue-black serrated sheath, a grey ridged hilt), its one sheet, 194 triangles in one mesh. Decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "Msword": "steel"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every flat blade passed in the studio: steel's own 0.2 mirrors the grass black.",
+  "glow_note": "No ItemObjectAttribute and no RenderPartObject arm: a solid sword. PartObjectColor2 gives it Color 0 (ZzzObject.cpp:6838-6841), the refinement tint's. Held, MuMain hangs a breathing blue BITMAP_SHINY + 1 at (0, -20, 15) in the hand, Scale sin(WorldTime*0.004)*0.3+0.3 (+1), lit (0.2, 0.2, 1) times it, and three BITMAP_JOINT_THUNDER sub 10 from there to (0, -133, 7), 20-32 wide (ZzzCharacter.cpp:10238-10256); the spark is built in fx/held_lights, the thunder is not.",
+  "rig_note": "export-rig --actions=all: one bone, one action of one key; nothing moves, no rig kept.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 60,
+      "area": 6252.7,
+      "along": [
+        -15.5,
+        144.6
+      ],
+      "mu_uv": [
+        0.028,
+        0.094,
+        0.936,
+        0.992
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.819,
+        0.647
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 134,
+      "area": 2230.4,
+      "along": [
+        -32.0,
+        28.2
+      ],
+      "mu_uv": [
+        0.011,
+        0.002,
+        0.872,
+        0.946
+      ],
+      "bake_uv": [
+        0.007,
+        0.028,
+        0.994,
+        0.914
+      ]
+    }
+  ]
+}

@@ -33,6 +33,8 @@ const char* HeldLights::mesh(Item item) {
         case Item::DragonSoulStaff: return "Staff10";
         case Item::ElementalMace: return "Mace08";
         case Item::GreatReignCrossbow: return "CrossBow20";
+        case Item::ThunderBlade: return "Sword19";
+        case Item::LegendaryShield: return "Shield15";
     }
     return "";
 }
@@ -95,6 +97,17 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
             }
             return 5;
         }
+        case Item::ThunderBlade:
+            // Ours: the hand's (0, -20, 15) as 20 up the blade from the grip, at its guard, as
+            // the Staff of Resurrection's (0, -145, 0) is its glb's (0, 0, 1.45).
+            out[0][0] = out[0][1] = 0.0f;
+            out[0][2] = 20.0f * kUnit;
+            return 1;
+        case Item::LegendaryShield:
+            // Ours: the hand's (20, 0, 0) as 20 out of the grip along the glb's x, on the face.
+            out[0][0] = 20.0f * kUnit;
+            out[0][1] = out[0][2] = 0.0f;
+            return 1;
     }
     return 0;
 }
@@ -207,6 +220,16 @@ void HeldLights::gather(gfx::Effects& effects) const {
                         put(light_, one.at[i], halfOf(2.0f), 0.5f * l, 0.5f * l, 0.8f * l);
                     }
                 }
+                break;
+            }
+            case Item::ThunderBlade: {
+                const float s = std::sin(clock_ * 4.0f) * 0.3f + 0.3f;
+                put(shiny_, one.at[0], halfOf(s + 1.0f), 0.2f * s, 0.2f * s, s);
+                break;
+            }
+            case Item::LegendaryShield: {
+                const float l = handLuminosity_;
+                put(shiny_, one.at[0], halfOf(1.5f), 0.4f * l, 0.6f * l, 1.5f * l);
                 break;
             }
         }
