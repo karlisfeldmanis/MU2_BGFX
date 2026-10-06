@@ -8,7 +8,7 @@
     "model_index": 50,
     "scale": 1.0
   },
-  "monster_from": "ZzzCharacter.cpp:13573-13578, CreateMonster, case MONSTER_ALQUAMOS: Scale = 1.f; BlendMesh = 0. Not drawn yet: its nine star lights on g_chStar's bones and the sparks off random bones (:8792-8813), the four flare joints of its blow (:2140-2150).",
+  "monster_from": "ZzzCharacter.cpp:13573-13578, CreateMonster, case MONSTER_ALQUAMOS: Scale = 1.f; BlendMesh = 0. Its effects, in game/play (kAlquamosFigure): nine star lights, BITMAP_LIGHT at Scale 0.6 on g_chStar's bones (:165-168, 8792-8801), ours at half light on a slow swing; a faint aura light (kAuraLights); its blow's four BITMAP_FLARE sub 7 ribbons round the target with SOUND_METEORITE01 (:2140-2150; ZzzEffectJoint.cpp:1924-1932, 5603-5729), ours at 0.6 of MU's light. Left out, ours: the three sparks a frame off random bones (:8805-8812), by the subtle-aura rule.",
   "profile": "monster",
   "rig_from": "Exported with --actions=all, 7 actions, 69 bones. Its death plays at 0.22 (ZzzOpenData.cpp:3754-3755).",
   "sheets": {
@@ -25,7 +25,7 @@
     }
   },
   "glow_from": "BlendMesh 0: RenderMesh adds the mesh whose texture is index 0 (ZzzBMD.cpp:1509-1516), which is its one mesh, starp00: the whole Alquamos is drawn added, a creature of starlight. Ours as the Death Beam Knight's: a glow that still casts half a shadow.",
-  "sounds_from": "SetMonsterSound(..., 175, 175, 175, 175, 176), ZzzOpenData.cpp:3754-3760: mAlquamosAttack1 to move and attack, mAlquamosDie to die (its mAlquamos1 is commented out). Not wired yet.",
+  "sounds_from": "SetMonsterSound(..., 175, 175, 175, 175, 176), ZzzOpenData.cpp:3754-3760: mAlquamosAttack1 to move and attack, mAlquamosDie to die (its mAlquamos1 is commented out). Wired as alquamos_* in sounds.json.",
   "islands": [
     {
       "island": 0,

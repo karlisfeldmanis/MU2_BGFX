@@ -1318,6 +1318,27 @@ void Play::update(double seconds) {
                                                        kDevilBeamSeconds});
                             }
                         }
+                        // An Alquamos's blow (kAlquamosFigure): MU's four BITMAP_FLARE sub 7
+                        // ribbons round whom it swung at, on the attack's first frame
+                        // (ZzzCharacter.cpp:2140-2150), and SOUND_METEORITE01 with them.
+                        if (const Drawn* star = drawnOf(happening.who);
+                            star && star->starRibbons && happening.whom != 0) {
+                            for (int r = 0; r < kStarRibbons; ++r) {
+                                ribbonDice_ ^= ribbonDice_ << 13;
+                                ribbonDice_ ^= ribbonDice_ >> 17;
+                                ribbonDice_ ^= ribbonDice_ << 5;
+                                StarRibbon ribbon;
+                                ribbon.target = happening.whom;
+                                ribbon.index = int(ribbonDice_ % 4096u);
+                                ribbon.multi = int((ribbonDice_ >> 12) % 10u);
+                                ribbon.life = float(30 + ribbon.multi);
+                                starRibbons_.push_back(ribbon);
+                            }
+                            const Drawn* struck = drawnOf(happening.whom);
+                            if (heard_.meteorite >= 0 && struck && struck->placed) {
+                                emit(heard_.meteorite, struck->crown[0], struck->crown[2]);
+                            }
+                        }
                         // A Hydra's first head bolt, the swing's own beam (sim kSplitBlows): from
                         // just before its blow shows, as the Lizard King's.
                         if (Drawn* hydra = drawnOf(happening.who);

@@ -177,8 +177,12 @@ respawns), its body in `source/monsters`, `cook.py --only tables` and `--only fi
 `cook_one` on the stage, then a muted shot in Icarus.
 - **Alquamos (69)**: Monster51 as `Alquamos01`, scale 1, its one mesh starp00 added (BlendMesh 0),
   half a shadow, as the Death Beam Knight's glow; 11 spawns, ids 1483-1493, on the north road. Seen:
-  a translucent cyan star-dragon over the hero at 14,24. Not yet: its nine star lights and sparks,
-  the blow's flare joints, its sounds (mAlquamosAttack1, mAlquamosDie).
+  a translucent cyan star-dragon over the hero at 14,24. Then its effects (the user: 'when you cook
+  monsters ... check if there is no some special effects for that monsters'): nine star lights on
+  its `stt` bones (BITMAP_LIGHT 0.6, ours at half on a slow swing), a faint aura light, its blow's
+  four BITMAP_FLARE sub 7 ribbons round the target with eMeteorite (ours at 0.6), and its sounds
+  (alquamos_move/attack/die). Left out, ours: three sparks a frame off random bones. Seen in a
+  muted fight at 14,24, where the pack killed the hero and he woke in the Lost Tower.
 
 **The ambient (2026-10-06, the user: 'lets play freesound_community-horror-ambient-14590.mp3 in icarus
 on loop').** Ours, in place of MU's MUSIC_ICARUS: `source/music/icarus_ambient.mp3` (freesound

@@ -769,6 +769,16 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     if (beams && bones[b].name == "hand_bofdgne01") one.handBones[1] = int(b);
                 }
             }
+            one.starBones.clear();
+            one.starRibbons = look->name == kAlquamosFigure;
+            if (one.starRibbons && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (const char* name : kStarlightBones) {
+                    for (size_t b = 0; b < bones.size(); ++b) {
+                        if (bones[b].name == name) one.starBones.push_back(int(b));
+                    }
+                }
+            }
             one.auraBone = -1;
             for (const AuraLight& aura : kAuraLights) {
                 if (look->name != aura.figure || !look->skeletonMesh) continue;

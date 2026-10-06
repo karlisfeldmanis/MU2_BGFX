@@ -20,6 +20,19 @@ constexpr float kGreen[3] = {0.2f, 0.7f, 0.1f};
 // rings summed past white in HDR, where its 8-bit framebuffer clipped them green.
 constexpr float kRingDim = 0.08f;
 constexpr float kStarDim = 0.5f;
+// The Alquamos's star lights: flare01 (64 texels) at MU's Scale 0.6, in (0.8, 0.9, 1). Ours at
+// half of MU's light, the Shadows' kStarDim, for the user's subtle auras.
+constexpr float kStarlightHalf = 64.0f * 0.6f * kUnit * 0.5f;
+constexpr float kStarlightTint[3] = {0.8f, 0.9f, 1.0f};
+constexpr float kStarlightDim = 0.5f;
+// Its blow's ribbons: Scale 30 units wide in (0.2, 0.2, 1); the head's Shiny02 (32 texels) at
+// 0.85 and flare01 at 1.5, in (0.5, 0.5, 1). Ours at 0.6 of MU's light.
+constexpr float kRibbonHalf = 30.0f * kUnit * 0.5f;
+constexpr float kRibbonTint[3] = {0.2f, 0.2f, 1.0f};
+constexpr float kRibbonHead[3] = {0.5f, 0.5f, 1.0f};
+constexpr float kRibbonShinyHalf = 32.0f * 0.85f * kUnit * 0.5f;
+constexpr float kRibbonLightHalf = 64.0f * 1.5f * kUnit * 0.5f;
+constexpr float kRibbonDim = 0.6f;
 // A dozen joints a Shadow; room for a pack of them in sight.
 constexpr size_t kStars = 12 * 32;
 // A monster's faint light (play_tuning.h kAuraLights): its colour at this much -- for the Poison
@@ -90,6 +103,9 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     smoke_ = load("smoke01");
     wisps_.reserve(kWisps);
     streak_ = load("shiny_03");
+    light_ = load("light");
+    flare_ = load("flare");
+    shinyAdded_ = load("shiny_02");
     flares_.reserve(8);
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
@@ -104,6 +120,8 @@ void ShadowStars::shutdown() {
 
 void ShadowStars::update(float seconds) {
     stars_.clear();
+    starlights_.clear();
+    ribbons_.clear();
     glows_.clear();
     beams_.clear();
     flares_.clear();
@@ -254,6 +272,24 @@ uint32_t ShadowStars::lights(gfx::PointLight* out, uint32_t max, const float nea
     return count;
 }
 
+void ShadowStars::starlight(const float at[3], float fade, float luminosity) {
+    if (!open_ || fade <= 0.0f || starlights_.size() >= kStars) return;
+    Starlight one;
+    for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    one.level = fade * luminosity;
+    starlights_.push_back(one);
+}
+
+void ShadowStars::ribbon(const float (*points)[3], int count, float fade) {
+    if (!open_ || fade <= 0.0f || count < 2 || ribbons_.size() >= 16) return;
+    Ribbon one;
+    one.count = std::min(count, kRibbonTails);
+    for (int t = 0; t < one.count; ++t)
+        for (int i = 0; i < 3; ++i) one.points[t][i] = points[t][i];
+    one.fade = fade;
+    ribbons_.push_back(one);
+}
+
 void ShadowStars::star(const float at[3], bool poison, float fade) {
     if (!open_ || stars_.size() >= kStars || fade <= 0.0f) return;
     Star one;
@@ -265,6 +301,79 @@ void ShadowStars::star(const float at[3], bool poison, float fade) {
 
 void ShadowStars::gather(gfx::Effects& effects) const {
     if (!open_) return;
+    if (bgfx::isValid(light_)) {
+        for (const Starlight& one : starlights_) {
+            gfx::Sprite sprite;
+            for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
+            sprite.halfWidth = sprite.halfHeight = kStarlightHalf;
+            for (int i = 0; i < 3; ++i) sprite.colour[i] = kStarlightTint[i] * kStarlightDim * one.level;
+            sprite.sheet = light_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    for (const Ribbon& one : ribbons_) {
+        // The tails as MU's joints are drawn: two crossed faces a stride, the sheet once down
+        // the whole from the newest tail (RenderJoints).
+        if (bgfx::isValid(flare_)) {
+            for (int j = 0; j + 1 < one.count; ++j) {
+                const float* a = one.points[j];
+                const float* b = one.points[j + 1];
+                float dir[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+                const float len = std::sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
+                if (len < 1e-4f) continue;
+                for (float& v : dir) v /= len;
+                float level[3] = {-dir[2], 0.0f, dir[0]};
+                const float lw = std::sqrt(level[0] * level[0] + level[2] * level[2]);
+                if (lw < 1e-3f) {
+                    level[0] = 1.0f;
+                    level[2] = 0.0f;
+                } else {
+                    level[0] /= lw;
+                    level[2] /= lw;
+                }
+                const float upright[3] = {level[1] * dir[2] - level[2] * dir[1],
+                                          level[2] * dir[0] - level[0] * dir[2],
+                                          level[0] * dir[1] - level[1] * dir[0]};
+                const float u0 = float(j) / float(kRibbonTails - 1);
+                const float u1 = float(j + 1) / float(kRibbonTails - 1);
+                for (int face = 0; face < 2; ++face) {
+                    const float* side = face == 0 ? level : upright;
+                    gfx::Sprite quad;
+                    quad.placed = true;
+                    quad.sheet = flare_;
+                    quad.blend = gfx::Blend::Additive;
+                    for (int i = 0; i < 3; ++i) quad.colour[i] = kRibbonTint[i] * kRibbonDim * one.fade;
+                    quad.colour[3] = 1.0f;
+                    for (int i = 0; i < 3; ++i) {
+                        quad.corner[0][i] = a[i] - side[i] * kRibbonHalf;
+                        quad.corner[1][i] = b[i] - side[i] * kRibbonHalf;
+                        quad.corner[2][i] = b[i] + side[i] * kRibbonHalf;
+                        quad.corner[3][i] = a[i] + side[i] * kRibbonHalf;
+                        quad.position[i] = (a[i] + b[i]) * 0.5f;
+                    }
+                    quad.cornerUv[0][0] = u0; quad.cornerUv[0][1] = 1.0f;
+                    quad.cornerUv[1][0] = u1; quad.cornerUv[1][1] = 1.0f;
+                    quad.cornerUv[2][0] = u1; quad.cornerUv[2][1] = 0.0f;
+                    quad.cornerUv[3][0] = u0; quad.cornerUv[3][1] = 0.0f;
+                    effects.add(quad);
+                }
+            }
+        }
+        // Its head: Shiny02 at 0.8-0.9 and two flare01 at 1.44-1.62, as one each here.
+        const bgfx::TextureHandle heads[2] = {shinyAdded_, light_};
+        const float halves[2] = {kRibbonShinyHalf, kRibbonLightHalf};
+        for (int h = 0; h < 2; ++h) {
+            if (!bgfx::isValid(heads[h])) continue;
+            gfx::Sprite sprite;
+            for (int i = 0; i < 3; ++i) sprite.position[i] = one.points[0][i];
+            sprite.halfWidth = sprite.halfHeight = halves[h];
+            for (int i = 0; i < 3; ++i) sprite.colour[i] = kRibbonHead[i] * kRibbonDim * one.fade;
+            sprite.sheet = heads[h];
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
     for (const Star& one : stars_) {
         gfx::Sprite sprite;
         for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];

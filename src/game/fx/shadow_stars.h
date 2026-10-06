@@ -54,6 +54,14 @@ public:
     // light in `colour` at a monster's effect -- a Poison Shadow's green, a Death Gorgon's
     // orange, a Death Knight's sword (game/play_tuning.h kAuraLights).
     void glow(const float at[3], float fade, const float colour[3]);
+    // One of an Alquamos's star lights (ZzzCharacter.cpp:8792-8801): MU's BITMAP_LIGHT at Scale
+    // 0.6 on a g_chStar bone, added in Luminosity * (0.8, 0.9, 1), Luminosity rolled 0.7-1 a
+    // frame. Ours at kStarlightDim of that and the luminosity passed in, steadier (play_show).
+    void starlight(const float at[3], float fade, float luminosity);
+    // An Alquamos blow's ribbon for this frame: MU's BITMAP_FLARE sub 7 joint (ZzzEffectJoint.cpp:
+    // 1924-1932, 5603-5729), its tails `points` (the newest first) as a strip of Flare.jpg 30
+    // units wide in (0.2, 0.2, 1), and at its head a Shiny02 and two flare01 in (0.5, 0.5, 1).
+    void ribbon(const float (*points)[3], int count, float fade);
     // One of a Death Gorgon's embers: MU's ten BITMAP_FIRE a frame on random bones (:6064-6071),
     // ours as one now and then, rising and burning out through Fire01's four frames.
     void ember(const float at[3]);
@@ -142,6 +150,21 @@ private:
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;      // smoke01, a grey wisp on black
     bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;  // lightning_2, BITMAP_LIGHTNING + 1
     bgfx::TextureHandle streak_ = BGFX_INVALID_HANDLE;     // shiny_03, BITMAP_SHINY + 2
+    bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;      // light, flare01, BITMAP_LIGHT
+    bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;      // flare, Flare.jpg, BITMAP_FLARE
+    bgfx::TextureHandle shinyAdded_ = BGFX_INVALID_HANDLE; // shiny_02, BITMAP_SHINY + 1
+    struct Starlight {
+        float position[3];
+        float level;
+    };
+    std::vector<Starlight> starlights_;
+    static constexpr int kRibbonTails = 15;
+    struct Ribbon {
+        float points[kRibbonTails][3];
+        int count;
+        float fade;
+    };
+    std::vector<Ribbon> ribbons_;
     bool open_ = false;
 };
 

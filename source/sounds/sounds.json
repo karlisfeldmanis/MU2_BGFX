@@ -2142,6 +2142,24 @@
       ],
       "from": "Sounds[4], 153 -- Data\\Sound\\blood_die.wav. ZzzOpenData.cpp:3696-3703."
     },
+    "alquamos_move": {
+      "files": [
+        "mAlquamosAttack1.wav"
+      ],
+      "from": "Sounds[0] and [1], both 175 -- Data\\Sound\\mAlquamosAttack1.wav: SetMonsterSound(..., 175, 175, 175, 175, 176), ZzzOpenData.cpp:3754-3760 (Icarus's Alquamos). Its own mAlquamos1.wav is commented out there, so MU's walk cry is the attack's."
+    },
+    "alquamos_attack": {
+      "files": [
+        "mAlquamosAttack1.wav"
+      ],
+      "from": "Sounds[2] and [3], both 175 -- mAlquamosAttack1.wav. ZzzOpenData.cpp:3754-3760."
+    },
+    "alquamos_die": {
+      "files": [
+        "mAlquamosDie.wav"
+      ],
+      "from": "Sounds[4], 176 -- Data\\Sound\\mAlquamosDie.wav. ZzzOpenData.cpp:3754-3760."
+    },
     "ironwheel_move": {
       "files": [
         "iron1.wav"

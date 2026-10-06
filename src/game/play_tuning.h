@@ -477,6 +477,8 @@ inline constexpr AuraLight kAuraLights[] = {
     // The Vepar's hands, which MU always lights with a lightning, a spark and a shiny sprite
     // (ZzzCharacter.cpp:11220-11227): a pale blue, on its right hand's link bone.
     {"Vepar01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
+    // The Alquamos's star lights' own (0.8, 0.9, 1) (ZzzCharacter.cpp:8794-8795).
+    {"Alquamos01", {0.8f, 0.9f, 1.0f}, "Bip01 Spine"},
     // The Lizard King's four sparks and shinies (ZzzCharacter.cpp:11228-11238): a pale light on
     // the first of their bones.
     {"LizardKing01", {0.7f, 0.8f, 1.0f}, "Box27"},
@@ -485,6 +487,15 @@ inline constexpr AuraLight kAuraLights[] = {
     {"Hydra01", {0.5f, 0.6f, 1.0f}, "Cone01"},
 };
 inline constexpr const char* kPoisonShadowFigure = "PoisonShadow01";
+// MONSTER_ALQUAMOS's stars: g_chStar's first nine bones (ZzzCharacter.cpp:165-168, 8797-8801),
+// 10, 18, 37, 38, 51, 52, 58, 59, 66 in Monster51, by name. Its sparks off random bones, three a
+// frame (:8805-8812), are left out, ours, by the subtle-aura rule. Its blow throws four
+// BITMAP_FLARE sub 7 ribbons round the target (:2140-2150): kStarRibbons a blow, each living
+// 30-39 reference frames, SOUND_METEORITE01 once a blow (MU's four plays at LifeTime 30).
+inline constexpr const char* kAlquamosFigure = "Alquamos01";
+inline constexpr const char* kStarlightBones[] = {"stt07", "stt06", "stt05", "stt04", "stt",
+                                                  "stt01", "stt09", "stt02", "stt03"};
+inline constexpr int kStarRibbons = 4;
 inline constexpr const char* kShadowJoints[] = {
     "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
     "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",
