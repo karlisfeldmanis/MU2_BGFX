@@ -10585,9 +10585,9 @@ void testCommands(const content::Tables& tables) {
     check(bag[2].c == 22 && bag[2].a == int(sim::Command::Kind::Discard) && bag[2].b == -1,
           "an empty slot thrown, refused as a Discard");
 
-    // Batch 3, the road and the giver: Go Back! sets him down in the tick and says Climbed before
-    // its answer; a quest accepted with no giver's dialog open and a trip to a row never opened
-    // are refused.
+    // Batch 3, the road and the giver: Go Back! with no way back is refused, whatever tile the ask
+    // names -- the way back is the realm's (sim::WayBack, testGoBack) -- and a quest accepted with
+    // no giver's dialog open and a trip to a row never opened are refused.
     int tc = -1, tr = -1;
     for (int r = 120; r < 150 && tc < 0; ++r) {
         for (int c = 120; c < 150 && tc < 0; ++c) {
@@ -10598,21 +10598,19 @@ void testCommands(const content::Tables& tables) {
     for (int i = 0; i < sim::kTravels && unopened < 0; ++i) {
         if (((realm.found() >> i) & 1u) == 0) unopened = i;
     }
+    const int wasColumn = realm.hero().column(), wasRow = realm.hero().row();
     realm.command({.kind = sim::Command::Kind::GoBack, .ticket = 30, .a = tc, .b = tr, .c = 100, .d = 0});
     realm.command({.kind = sim::Command::Kind::AcceptQuest, .ticket = 31, .a = 0});
     realm.command({.kind = sim::Command::Kind::Travel, .ticket = 32, .a = unopened});
     realm.step();
     std::vector<sim::Happening> road;
-    bool climbedFirst = false;
     for (const sim::Happening& one : realm.happenings()) {
-        if (one.what == sim::What::Climbed && road.empty()) climbedFirst = true;
         if (one.what == sim::What::Answered) road.push_back(one);
     }
     checkEqual(int(road.size()), 3, "the road's three asks answered");
     if (road.size() != 3) return;
-    check(road[0].c == 30 && road[0].b == 1 && climbedFirst, "Go Back! taken, its Climbed said first");
-    check(std::abs(realm.hero().column() - tc) <= 1 && std::abs(realm.hero().row() - tr) <= 1,
-          "and he stands where it set him");
+    check(road[0].c == 30 && road[0].b == -1, "Go Back! with no way back refused, the tile it named or not");
+    check(realm.hero().column() == wasColumn && realm.hero().row() == wasRow, "and he stays where he was");
     check(road[1].c == 31 && road[1].b == -1, "a quest with no giver's dialog open, refused");
     check(unopened >= 0 && road[2].c == 32 && road[2].b == -1, "a trip never opened, refused");
 }
@@ -11003,6 +11001,49 @@ void testSnapshot(const content::Tables& tables) {
     check(agreed == 1500 && kills > 0, "the mirror steps as the server does, tick for tick");
 }
 
+// Go Back! is the realm's (sim::WayBack): a Town Portal read in the Dungeon's field leaves a way
+// back there, it goes with him to Lorencia as the server carries him, and taken it says where --
+// the tile the server puts him down on (What::WentBack), never one the client chose.
+void testGoBack(const content::Tables& lorencia) {
+    std::printf("go back\n");
+    content::Tables dungeon;
+    std::string error;
+    if (!content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur", dungeon, error)) {
+        check(false, "the Dungeon's tables load");
+        return;
+    }
+    int32_t scroll = -1;
+    for (size_t i = 0; i < dungeon.items.size() && scroll < 0; ++i) {
+        if (sim::portal(dungeon.items[i])) scroll = int32_t(i);
+    }
+    sim::Realm field;
+    check(field.raise(&dungeon, 3, 108, 230, sim::Kin::DarkKnight, 60) && scroll >= 0, "a knight in the Dungeon");
+    const int slot = field.give(scroll, -1, 0, 1);
+    const int column = field.hero().column(), row = field.hero().row();
+    field.command({.kind = sim::Command::Kind::Use, .player = field.hero().id, .a = slot});
+    field.step();
+    check(field.wayBack().open() && field.wayBack().map == int32_t(dungeon.map) &&
+              field.wayBack().column == column && field.wayBack().row == row,
+          "a Town Portal read in its field leaves the way back where he read it");
+
+    // Home in Lorencia at once, carried as the server carries him; its clock runs there, and then
+    // he asks, with nothing in the ask.
+    sim::Realm town;
+    check(town.raise(&lorencia, 4, 140, 125, sim::Kin::DarkKnight, 60), "Lorencia");
+    town.restoreKept(field.keptOf(field.hero().id));
+    check(town.wayBack().open(), "the way back comes with him");
+    const int64_t left = town.wayBack().ticksLeft;
+    for (int t = 0; t < 100; ++t) town.step();
+    checkEqual((long long)town.wayBack().ticksLeft, (long long)(left - 100), "its clock runs");
+    town.command({.kind = sim::Command::Kind::GoBack, .player = town.hero().id, .a = 1, .b = 1});
+    town.step();
+    bool said = false;
+    for (const sim::Happening& h : town.happenings()) {
+        if (h.what == sim::What::WentBack) said = h.a == int32_t(dungeon.map) && h.b == column && h.c == row;
+    }
+    check(said && !town.wayBack().open(), "taken, the realm says where -- the tile it kept, not the ask's");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -11026,6 +11067,7 @@ int main() {
     testTwoHeroes(tables);
     testKept(tables);
     testSnapshot(tables);
+    testGoBack(tables);
     testCommands(tables);
     testInvariants(tables);
     testInvasion(tables);

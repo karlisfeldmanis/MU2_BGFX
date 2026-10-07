@@ -182,9 +182,16 @@ void putKept(Out& o, const sim::Kept& k) {
     for (int cell = 0; cell < sim::kVaultCells; ++cell) putHeld(o, k.vault[cell]);
     o.i64(k.vault.zen());
     for (int cell = 0; cell < sim::kMachineCells; ++cell) putHeld(o, k.machine[cell]);
+    const sim::WayBack& way = r.wayBack;
+    o.i32(way.map);
+    o.i32(way.column);
+    o.i32(way.row);
+    o.u32(bitsOf(way.facing));
+    o.i64(way.ticksLeft);
+    o.i64(way.closedTicks);
 }
 
-sim::Kept takeKept(In& in) {
+sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     sim::Kept k;
     sim::HeroRecord& r = k.hero;
     r.kin = sim::Kin(std::min<int>(in.u8(), int(sim::Kin::MagicGladiator)));
@@ -230,6 +237,15 @@ sim::Kept takeKept(In& in) {
         const sim::Held h = takeHeld(in);
         if (!h.empty()) k.machine.put(cell, h);
     }
+    if (layout >= 4) {
+        sim::WayBack& way = r.wayBack;
+        way.map = in.i32();
+        way.column = in.i32();
+        way.row = in.i32();
+        way.facing = floatOf(in.u32());
+        way.ticksLeft = in.i64();
+        way.closedTicks = in.i64();
+    }
     return k;
 }
 
@@ -264,7 +280,6 @@ void put(std::vector<uint8_t>& out, const Hello& one) {
         o.str(one.weapon);
         o.str(one.shield);
         o.u64(one.token);
-        o.u8(one.arriving ? 1 : 0);
     });
 }
 
@@ -293,6 +308,7 @@ void put(std::vector<uint8_t>& out, const Welcome& one) {
         o.u64(one.token);
         o.u8(one.kept ? 1 : 0);
         if (one.kept) putKept(o, one.first);
+        o.i32(one.castle);
         o.u32(uint32_t(one.snapshot.size()));
         o.bytes.insert(o.bytes.end(), one.snapshot.begin(), one.snapshot.end());
     });
@@ -354,7 +370,6 @@ bool parse(const std::vector<uint8_t>& body, Hello& out) {
     out.weapon = in.str();
     out.shield = in.str();
     out.token = in.u64();
-    out.arriving = in.u8() != 0;
     return in.done();
 }
 
@@ -383,6 +398,7 @@ bool parse(const std::vector<uint8_t>& body, Welcome& out) {
     out.token = in.u64();
     out.kept = in.u8() != 0;
     if (out.kept) out.first = takeKept(in);
+    out.castle = in.i32();
     const uint32_t snapshot = in.u32();
     out.snapshot.clear();
     if (!in.need(snapshot)) return false;
@@ -441,9 +457,9 @@ void putKept(std::vector<uint8_t>& out, const sim::Kept& one) {
     putKept(o, one);
 }
 
-bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out) {
+bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out, int layout) {
     In in{bytes};
-    out = takeKept(in);
+    out = takeKept(in, layout);
     return in.done();
 }
 

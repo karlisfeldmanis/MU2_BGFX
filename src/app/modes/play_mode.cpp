@@ -84,13 +84,14 @@ void PlayMode::readSave(Context& ctx) {
             // 2026-10-03: "after restart there is option to Go Back!"). One already in hand is
             // this session's own, carried across a map change, and the newer. One saved before
             // Go Back! was kept to the dungeons of floors is let go.
+            // Into the record the realm restores (sim::WayBack): its clock is the realm's.
             const game::MapRow* backTo = game::mapOf(saved_.goBackWorld);
-            if (ctx.goBack.world.empty() && !saved_.goBackWorld.empty() &&
-                saved_.goBackLeft > 0.0 && backTo != nullptr && backTo->floors) {
-                ctx.goBack.arm(saved_.goBackWorld, saved_.goBackColumn, saved_.goBackRow,
-                               saved_.goBackFacing);
-                ctx.goBack.left = std::min(saved_.goBackLeft, GoBack::kSeconds);
-                core::logf("go back: kept, %.0f s left, to %s %d,%d", ctx.goBack.left,
+            if (!saved_.goBackWorld.empty() && saved_.goBackLeft > 0.0 && backTo != nullptr &&
+                backTo->floors) {
+                saved_.hero.wayBack = {int32_t(backTo->number), saved_.goBackColumn, saved_.goBackRow,
+                                       saved_.goBackFacing,
+                                       std::min(int64_t(saved_.goBackLeft * 20.0), sim::kGoBackTicks), 0};
+                core::logf("go back: kept, %.0f s left, to %s %d,%d", saved_.goBackLeft,
                            saved_.goBackWorld.c_str(), saved_.goBackColumn, saved_.goBackRow);
             }
         } else {
@@ -127,8 +128,15 @@ void PlayMode::readSave(Context& ctx) {
 void PlayMode::keep(Context& ctx) {
     if (savePath_.empty() || !world_.played().isOpen()) return;
     // On a server the character is the server's (docs/sprints/18-the-wire.md): nothing played
-    // there is written over the characters kept here.
-    if (world_.played().remote()) return;
+    // there is written over the characters kept here -- but his windows' layout is the client's
+    // own, kept beside the save (game::writeLayout).
+    if (world_.played().remote()) {
+        int32_t quick[5], bar[6];
+        for (int key = 0; key < 5; ++key) quick[key] = desk_.quick(key);
+        for (int key = 0; key < 6; ++key) bar[key] = desk_.bound(key);
+        game::writeLayout(savePath_, *world_.played().realm().tables(), quick, bar, desk_.followedQuest());
+        return;
+    }
     game::Saved now;
     now.name = saved_.name;
     now.slot = saved_.slot;
@@ -157,12 +165,14 @@ void PlayMode::keep(Context& ctx) {
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);
     now.followed = desk_.followedQuest();
-    if (ctx.goBack.open()) {
-        now.goBackWorld = ctx.goBack.world;
-        now.goBackColumn = ctx.goBack.column;
-        now.goBackRow = ctx.goBack.row;
-        now.goBackFacing = ctx.goBack.facing;
-        now.goBackLeft = ctx.goBack.left;
+    if (const sim::WayBack& way = now.hero.wayBack; way.open()) {
+        if (const game::MapRow* to = game::mapNumbered(way.map)) {
+            now.goBackWorld = to->world;
+            now.goBackColumn = way.column;
+            now.goBackRow = way.row;
+            now.goBackFacing = way.facing;
+            now.goBackLeft = double(way.ticksLeft) / 20.0;
+        }
     }
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
     game::writeVault(game::vaultPathBeside(savePath_), *world_.played().realm().tables(),
@@ -309,7 +319,7 @@ bool PlayMode::open(Context& ctx) {
                 if (args.serverToken == 0 && !savePath_.empty() && !args.fresh) {
                     args.serverToken = game::loadServerToken(savePath_, server);
                 }
-                world_.played().useServer(host, port, args.serverToken, args.serverArriving);
+                world_.played().useServer(host, port, args.serverToken);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
@@ -326,7 +336,6 @@ bool PlayMode::open(Context& ctx) {
             }
             // The server's token for him, for the next world's Hello and the next run.
             if (world_.played().remote()) {
-                args.serverArriving = true;
                 args.serverToken = world_.played().serverToken();
                 if (!savePath_.empty() && args.serverToken != 0) {
                     game::keepServerToken(savePath_, server, args.serverToken);
@@ -497,7 +506,11 @@ bool PlayMode::open(Context& ctx) {
                 core::logError("the windows did not open; playing without a HUD");
             }
             desk_.setWatching(args.raid > 0 && args.raidWatch);
-            if (resumed_) {
+            // On a server, his windows' layout from beside his save (game::loadLayout).
+            const bool laidOut = world_.played().isOpen() && world_.played().remote() &&
+                                 !savePath_.empty() && !args.fresh &&
+                                 game::loadLayout(savePath_, *world_.played().realm().tables(), saved_);
+            if (resumed_ || laidOut) {
                 for (int key = 0; key < 5; ++key) desk_.setQuick(key, saved_.quick[key]);
                 desk_.restoreBar(saved_.bar, 6);
                 desk_.followQuest(saved_.followed);
@@ -821,8 +834,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
             const game::MapRow* map = out ? game::mapNumbered(int(out->map)) : nullptr;
             if (map != nullptr) {
-                // Walked out through a gate: the way back by magic is given up.
-                ctx.goBack.clear();
                 // And the Messenger's: which castle, for the castle's realm (Realm::setCastle).
                 ctx.castleNext = number == sim::kCastleEnterGate
                                      ? world_.played().realm().castlePassed()
@@ -835,17 +846,16 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
 
-    // Go Back!'s way back is opened by a Town Portal Scroll read in the field -- a scroll is
-    // refused in a safe zone -- before the Dungeon's below takes him to another map. Only from a
-    // dungeon of floors (MapRow floors): read anywhere else, the scroll is a way home and no more.
-    if (world_.played().isOpen()) {
-        int column = 0, row = 0;
-        float facing = 0.0f;
-        const game::MapRow* here = game::mapOf(args.world);
-        if (world_.played().takePortalFrom(&column, &row, &facing) && here && here->floors) {
-            ctx.goBack.arm(args.world, column, row, facing);
-            core::logf("go back: open for %.0f s, to %s %d,%d", GoBack::kSeconds,
-                       args.world.c_str(), column, row);
+    // Go Back! to another map, which the realm said (What::WentBack): there, by magic, as a gate's
+    // map change. The way back itself -- opened by a Town Portal or a Tab trip out of a dungeon's
+    // field, its clock, its closing -- is the realm's (sim::WayBack).
+    if (world_.played().isOpen() && travelTo_.empty()) {
+        int map = -1, column = 0, row = 0;
+        if (world_.played().takeWentBack(&map, &column, &row)) {
+            if (const game::MapRow* to = game::mapNumbered(map)) {
+                ctx.goBack.landing = true;
+                travel(ctx, to->world, column, row, 0.0f, true);
+            }
         }
     }
 
@@ -882,21 +892,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const sim::TravelRow* to = row >= 0 ? &sim::travelAt(row) : nullptr;
         const game::MapRow* map = to ? game::mapNumbered(int(to->map)) : nullptr;
         if (map != nullptr) {
-            // Left from the field of a dungeon of floors, the way back opens; left from anywhere
-            // else -- a town, or the field of Lorencia, Devias, Noria, Atlans or Tarkan -- one
-            // already open is given up: he chose to go elsewhere. Either way he goes by magic and
-            // is heard landing (the user, 2026-10-01: 'we need also teleport sound effect when we
-            // use TAB teleport').
-            const sim::Body& hero = world_.played().realm().hero();
-            const content::Tables* tables = world_.played().realm().tables();
-            const game::MapRow* here = game::mapOf(args.world);
-            if (here && here->floors && tables && !tables->grid.safe(hero.column(), hero.row())) {
-                ctx.goBack.arm(args.world, hero.column(), hero.row(), hero.facing);
-                core::logf("go back: open for %.0f s, to %s %d,%d", GoBack::kSeconds,
-                           args.world.c_str(), hero.column(), hero.row());
-            } else {
-                ctx.goBack.clear();
-            }
+            // By magic, and heard landing (the user, 2026-10-01: 'we need also teleport sound
+            // effect when we use TAB teleport'). The way back it opens or gives up is the realm's.
             ctx.goBack.landing = true;
             const bool faced = to->dx != 0 || to->dy != 0;
             travel(ctx, map->world, to->column, to->row,
@@ -1745,17 +1742,12 @@ void PlayMode::travel(Context& ctx, const std::string& world, int column, int ro
 }
 
 void PlayMode::goBack(Context& ctx, double seconds) {
-    GoBack& back = ctx.goBack;
     if (!world_.played().isOpen()) return;
-    const sim::Body& hero = world_.played().realm().hero();
-
-    // Come into this world by magic: the warp's sound and ring as he stands in it. And a way
-    // back that has brought him somewhere with no safe ground under him -- a Tab trip to the
-    // Dungeon -- is not a town to sell in, so it closes quietly.
+    // Come into this world by magic: the warp's sound and ring as he stands in it.
     if (!landed_) {
         landed_ = true;
-        if (back.landing) world_.played().landed();
-        back.landing = false;
+        if (ctx.goBack.landing) world_.played().landed();
+        ctx.goBack.landing = false;
         // Home from a Blood Castle won: "Event complete" over the quest's stinger, as a quest's
         // hand-in is heard (the user, 2026-10-05: 'char has to be teleported back to devias and
         // play quest done music but with window event done').
@@ -1767,53 +1759,27 @@ void PlayMode::goBack(Context& ctx, double seconds) {
             core::logf("event: home from Blood Castle %d, its banner and stinger", ctx.castleDone);
             ctx.castleDone = 0;
         }
-        const content::Tables* tables = world_.played().realm().tables();
-        if (back.open() && tables && !tables->grid.safe(hero.column(), hero.row())) back.clear();
     }
-    if (back.world.empty()) {
+    sinceLanded_ += seconds;
+    // His way back, as the realm keeps it (sim::WayBack): open with its seconds, or the closed line.
+    const sim::WayBack& way = world_.played().realm().wayBack();
+    const game::MapRow* to = game::mapNumbered(way.map);
+    if (way.map < 0 || to == nullptr) {
         desk_.goBack(false, 0, false, {});
         return;
     }
-    // Dead in town, the way back goes with him.
-    if (!hero.alive()) {
-        back.clear();
+    if (desk_.takeGoBack() && way.open()) {
+        world_.played().goBack();
         desk_.goBack(false, 0, false, {});
         return;
     }
-    if (back.open()) {
-        back.left = std::max(0.0, back.left - seconds);
-        if (back.left <= 0.0) core::logf("go back: closed");
-    } else {
-        back.closed += seconds;
-        if (back.closed >= GoBack::kClosedSeconds) {
-            back.clear();
-            desk_.goBack(false, 0, false, {});
-            return;
-        }
-    }
-
-    if (desk_.takeGoBack() && back.open()) {
-        const std::string world = back.world;
-        const int column = back.column, row = back.row;
-        const float facing = back.facing;
-        back.clear();
-        if (world == ctx.args.world) {
-            world_.played().goBack(column, row, facing);
-        } else {
-            back.landing = true;
-            travel(ctx, world, column, row, facing);
-        }
-        desk_.goBack(false, 0, false, {});
-        return;
-    }
-
     // Up once the map's name has come and gone (game/ui/arrival.h's 5.4 s), so the two never
     // stand on the screen together; the clock is running from the landing all the same.
-    std::string where = game::placeName(back.world, back.column, back.row);
+    std::string where = game::placeName(to->world, way.column, way.row);
     if (!where.empty()) where[0] = char(std::toupper(static_cast<unsigned char>(where[0])));
-    where += " " + std::to_string(back.column) + ", " + std::to_string(back.row);
-    const bool shown = !back.open() || GoBack::kSeconds - back.left >= kGoBackWaits;
-    desk_.goBack(shown, int(std::ceil(back.left)), !back.open(), where);
+    where += " " + std::to_string(way.column) + ", " + std::to_string(way.row);
+    const bool shown = !way.open() || sinceLanded_ >= kGoBackWaits;
+    desk_.goBack(shown, int((way.ticksLeft + 19) / 20), !way.open(), where);
 }
 
 void PlayMode::shutdown(Context& ctx) {
@@ -1821,7 +1787,6 @@ void PlayMode::shutdown(Context& ctx) {
     // gives it back when he is played again, and out of the session. On to another world it
     // comes along.
     keep(ctx);
-    if (travelTo_.empty()) ctx.goBack.clear();
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
     ctx.time.setScene("");
     ctx.time.setWet("");

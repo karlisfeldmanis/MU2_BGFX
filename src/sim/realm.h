@@ -142,6 +142,8 @@ enum class What : uint8_t {
                // ticket. `who` is the player who asked.
     Left,      // a player gone from the world (Realm::depart): `who`. His body stays where it was,
                // gone, so every id and index after it holds; nothing draws it again.
+    WentBack,  // Go Back! to another map (Realm::goBack): a: its map number, b: the column, c: the
+               // row. He is stopped where he is; changing the map is the game's, as a gate's.
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -597,6 +599,22 @@ struct Body {
 // what is worn (Realm::rearm), so they are not here; health and mana ARE, because a hero who
 // quits hurt comes back hurt. Where he stands and his class go to raise(), which already
 // finds a free tile and dresses the class -- this is the rest, laid on top.
+// Go Back! (the user's, 2026-10-03; docs/sprints/22-go-back.md): a Town Portal read in the field
+// of a dungeon of floors, or a Tab trip out of one, leaves a way back there for five minutes of
+// play. The realm's, so it goes with him between worlds and to the server's disk, and the server
+// sees where it takes him. 0 ticks left with a map set is the closed line, shown for three
+// seconds and then gone.
+constexpr int64_t kGoBackTicks = 300 * 20;
+constexpr int64_t kGoBackClosedTicks = 3 * 20;
+struct WayBack {
+    int32_t map = -1;  // MU's map number it leads to, -1 for none
+    int32_t column = 0, row = 0;
+    float facing = 0.0f;
+    int64_t ticksLeft = 0;
+    int64_t closedTicks = 0;
+    bool open() const { return map >= 0 && ticksLeft > 0; }
+};
+
 struct HeroRecord {
     Kin kin = Kin::DarkKnight;
     int32_t column = 0, row = 0;
@@ -636,6 +654,7 @@ struct HeroRecord {
     // she lands in raises it dormant.
     int32_t summonSkill = 0;
     int32_t summonHealth = 0;
+    WayBack wayBack;
 };
 
 // A character between worlds (docs/sprints/20-the-world-host.md): all of him the server keeps
@@ -1116,6 +1135,11 @@ public:
     // Which castle the Messenger last passed him into, or 0: carried by the mode to the
     // castle's own realm (Realm::setCastle).
     int castlePassed() const { return me().castlePassed; }
+    // And any player's, by his body's id, 0 for none: which castle the server raises for him.
+    int castlePassedOf(uint32_t id) const {
+        const int at = playerOfId(id);
+        return at >= 0 ? heroes_[size_t(at)].castlePassed : 0;
+    }
     // The Archangel weapon this run's Statue of Saint holds -- the staff, the sword or the
     // crossbow -- as an item index, or -1: what his page asks for and pictures.
     int32_t castleWeaponItem() const;
@@ -1163,6 +1187,11 @@ public:
     // Pays for it and puts down whatever he had open; the map change is the game's. Refused whole
     // for any reason travelRefusal gives.
     bool travel(int index);
+    // Go Back!: his way back, open or just closed (WayBack), and taking it -- on this map, set
+    // down there at once; to another, stopped where he stands and `WentBack` said, the map change
+    // the game's and the server's, as a gate's. False with no open way back, or dead.
+    const WayBack& wayBack() const { return me().wayBack; }
+    bool goBack();
     // Put him down on another floor of the map he is on -- the Dungeon's stairs, and any trip
     // that lands on this same map -- at once, as a Town Portal does: stopped, nothing selected,
     // the monsters on him losing him, her summon dismissed, facing (dx, dy) as sim/gates.h
@@ -1941,6 +1970,7 @@ private:
         QuestProgress quests[kQuests];
         int questing = -1;
         uint32_t found = 0;  // the travel rows he has opened (sim/travel.h)
+        WayBack wayBack;     // see wayBack()
         int64_t potionUntil = 0;
         Sip sips[8];
         int sipCount = 0;

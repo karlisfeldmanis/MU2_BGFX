@@ -484,6 +484,48 @@ std::string vaultPathBeside(const std::string& savePath) {
     return (folder / "vault.json").string();
 }
 
+bool loadLayout(const std::string& savePath, const content::Tables& tables, Saved& saved) {
+    const std::string path = std::filesystem::path(savePath).replace_extension(".ui").string();
+    FILE* f = std::fopen(path.c_str(), "r");
+    if (f == nullptr) return false;
+    int g[5] = {-1, -1, -1, -1, -1}, n[5] = {-1, -1, -1, -1, -1}, bar[6] = {}, followed = -1;
+    const bool ok = std::fscanf(f, "quick %d %d %d %d %d %d %d %d %d %d\n", &g[0], &n[0], &g[1], &n[1],
+                                &g[2], &n[2], &g[3], &n[3], &g[4], &n[4]) == 10 &&
+                    std::fscanf(f, "bar %d %d %d %d %d %d\n", &bar[0], &bar[1], &bar[2], &bar[3], &bar[4],
+                                &bar[5]) == 6 &&
+                    std::fscanf(f, "followed %d", &followed) == 1;
+    std::fclose(f);
+    if (!ok) {
+        core::logError("save: %s does not read as a layout", path.c_str());
+        return false;
+    }
+    for (int key = 0; key < 5; ++key) saved.quick[key] = rowOf(tables, g[key], n[key]);
+    for (int key = 0; key < 6; ++key) saved.bar[key] = bar[key];
+    saved.followed = followed >= 0 && followed < sim::kQuests ? followed : -1;
+    return true;
+}
+
+bool writeLayout(const std::string& savePath, const content::Tables& tables, const int32_t quick[5],
+                 const int32_t bar[6], int followed) {
+    const std::string path = std::filesystem::path(savePath).replace_extension(".ui").string();
+    FILE* f = std::fopen(path.c_str(), "w");
+    if (f == nullptr) {
+        core::logError("save: cannot write %s", path.c_str());
+        return false;
+    }
+    std::fprintf(f, "quick");
+    for (int key = 0; key < 5; ++key) {
+        const int32_t item = quick[key];
+        const bool known = item >= 0 && size_t(item) < tables.items.size();
+        std::fprintf(f, " %d %d", known ? tables.items[size_t(item)].group : -1,
+                     known ? tables.items[size_t(item)].number : -1);
+    }
+    std::fprintf(f, "\nbar %d %d %d %d %d %d\nfollowed %d\n", bar[0], bar[1], bar[2], bar[3], bar[4],
+                 bar[5], followed);
+    std::fclose(f);
+    return true;
+}
+
 std::string tokenPathBeside(const std::string& savePath) {
     return std::filesystem::path(savePath).replace_extension(".server").string();
 }

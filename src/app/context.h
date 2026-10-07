@@ -88,39 +88,14 @@ private:
     bool announce_ = false;
 };
 
-// Go Back!: the spot in the field he left by magic -- a Town Portal Scroll, or a Tab trip --
-// and the five minutes he has to sell, buy and come back to it. Ours: 0.75 has nothing like it.
-// Opened only from a dungeon of floors, the Dungeon and the Lost Tower (game::MapRow floors).
-//
-// The Application's and not a mode's, because a Tab trip shuts this world's mode and raises the
-// next one, and the way back has to come along. On the way to the character screen or out of
-// the game it is written into the save (game::Saved goBack*) and given back when he is played
-// again, its clock stood still while the game was shut.
+// Go Back! itself -- the way back, its five minutes, where it leads -- is the realm's
+// (sim::WayBack, docs/sprints/22-go-back.md): it goes with the character between worlds and to the
+// server's disk. What is left here is the drawing's: the next world was come into by magic, and
+// is owed the warp's sound and ring when he is in it -- a Tab trip, a Town Portal to another map,
+// or Go Back! itself. The Application's and not a mode's, because a map change shuts this world's
+// mode and raises the next one.
 struct GoBack {
-    static constexpr double kSeconds = 300.0;
-    static constexpr double kClosedSeconds = 3.0;  // "Go Back! has closed", then nothing
-    std::string world;  // where it goes, empty for none
-    int column = -1, row = -1;
-    float facing = 0.0f;
-    double left = 0.0;    // seconds of play left; 0 with `world` set is the closed line
-    double closed = 0.0;  // how long the closed line has shown
-    // The next world was come into by magic, and is owed the warp's sound and ring when he is
-    // in it: a Tab trip, a Town Portal to another map, or Go Back! itself.
     bool landing = false;
-
-    bool open() const { return !world.empty() && left > 0.0; }
-    void arm(const std::string& to, int c, int r, float f) {
-        world = to;
-        column = c;
-        row = r;
-        facing = f;
-        left = kSeconds;
-        closed = 0.0;
-    }
-    void clear() {
-        world.clear();
-        left = closed = 0.0;
-    }
 };
 
 struct Context {

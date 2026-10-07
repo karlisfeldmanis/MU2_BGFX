@@ -7,6 +7,20 @@
 
 namespace mu::sim {
 
+const char* cradleWeapon(Kin kin) {
+    switch (kin) {
+        case Kin::DarkWizard: return "Staff01";  // the Skull Staff: ours, see game/roster.h
+        case Kin::FairyElf: return "Bow01";
+        case Kin::DarkKnight: return "Axe01";
+        // The Short Sword (the user, 2026-10-07: 'mg will start with short sword').
+        case Kin::MagicGladiator: return "Sword02";
+    }
+    return "";
+}
+
+const char* homeWorld(Kin kin) { return kin == Kin::FairyElf ? "noria" : "lorencia"; }
+
+
 namespace {
 
 const content::Arm* armAt(const content::Tables& tables, int32_t index) {

@@ -66,6 +66,7 @@ private:
     // come into by magic given its landing. Every frame, before the pointer.
     void goBack(Context& ctx, double seconds);
     bool landed_ = false;  // this world's first frame has been through goBack()
+    double sinceLanded_ = 0.0;  // seconds in this world, for when Go Back! may show
     static constexpr double kGoBackWaits = 5.4;  // the map name's time on screen (game/ui/arrival.h)
     int arriveColumn_ = 0, arriveRow_ = 0;
     float arriveFacing_ = 0.0f;

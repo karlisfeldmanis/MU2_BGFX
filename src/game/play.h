@@ -207,13 +207,11 @@ public:
 
     const sim::Realm& realm() const { return realm_; }
     // Play on a server (docs/sprints/18-the-wire.md): set BEFORE open(), which then joins it and
-    // raises the mirror from its Welcome. `--server host:port`. `arriving`: come by a map change
-    // of this run (net::Hello::arriving).
-    void useServer(const std::string& host, int port, uint64_t token = 0, bool arriving = false) {
+    // raises the mirror from its Welcome. `--server host:port`.
+    void useServer(const std::string& host, int port, uint64_t token = 0) {
         serverHost_ = host;
         serverPort_ = port;
         serverToken_ = token;
-        serverArriving_ = arriving;
     }
     // When open() failed because the server has his character in another world: which, and the
     // tile, for the mode to open instead (net::Elsewhere).
@@ -602,7 +600,17 @@ public:
     }
     // Go Back!: put down on a tile of this same map as a Town Portal lands, facing `facing` --
     // the realm's setHeroDown, and the landing drawn and heard as a warp's (`warped`).
-    void goBack(int column, int row, float facing);
+    // Go Back!: the realm's way back taken (Realm::goBack); the realm knows where.
+    void goBack();
+    // Go Back! to another map, which the realm said (What::WentBack), once.
+    bool takeWentBack(int* map, int* column, int* row) {
+        if (wentBack_ < 0) return false;
+        *map = wentBack_;
+        *column = wentColumn_;
+        *row = wentRow_;
+        wentBack_ = -1;
+        return true;
+    }
     // The performance sweep's (app/sweep.h): the realm's setHeroDown and nothing drawn or heard,
     // so the warp's ring and sound are not in the frames being measured.
     void setDown(int column, int row) { if (here("the sweep")) local_.setHeroDown(column, row, 0, 100); }
@@ -1185,7 +1193,6 @@ private:
     const sim::Realm& realm_ = realmHeld_;
     std::string serverHost_;
     uint64_t serverToken_ = 0;
-    bool serverArriving_ = false;
     net::Elsewhere elsewhere_;
     std::unique_ptr<sim::Kept> keptFirst_;  // the Welcome's, for the raise (Play::open)
     int serverPort_ = 0;
@@ -1339,6 +1346,7 @@ private:
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;
     int32_t gated_ = 0;
+    int32_t wentBack_ = -1, wentColumn_ = 0, wentRow_ = 0;  // takeWentBack's
     int gatedColumn_ = 0, gatedRow_ = 0;
     int travelled_ = -1;
     int32_t quickSkill_ = 0;

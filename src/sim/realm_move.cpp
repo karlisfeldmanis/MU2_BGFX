@@ -280,6 +280,8 @@ bool Realm::passGate(Body& hero, const EnterGate& through) {
         return true;
     }
     setDown(hero, hero.column(), hero.row());
+    // Walked out through a gate: the way back by magic is given up.
+    me().wayBack = WayBack{};
     say(What::Gated, hero, gate->number, column, row);
     return true;
 }

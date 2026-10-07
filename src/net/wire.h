@@ -44,7 +44,13 @@ namespace mu::net {
 // 5: Ping, echoed at once, for a readout of the line alone; a Tick's `early`.
 // 6: the Welcome's snapshot: the world as it stood, and only the ticks after it
 //    (docs/sprints/21-the-snapshot.md).
-constexpr uint32_t kVersion = 6;
+// 7: the Welcome's castle: which Blood Castle the world is, set on the raise.
+// 8: a Kept carries his way back (Go Back!, sim::WayBack); the Hello's `arriving` is gone, since
+//    every way between worlds is now the server's to see.
+constexpr uint32_t kVersion = 8;
+// The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
+// keeps beside each row. 3 is protocol 3's; 4 adds the way back.
+constexpr int kKeptLayout = 4;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of
@@ -66,10 +72,6 @@ struct Hello {
     // The server's word for his character, from his last Welcome, or 0 for a new one: a map
     // change reconnects with it, and the server brings him back whole (sim::Kept).
     uint64_t token = 0;
-    // Come by a map change of this run, rather than the run's first world. A first world that
-    // is not the one his character is in is answered Elsewhere; an arrival keeps the world it
-    // names, since the server does not yet see every way between worlds (Go Back!).
-    bool arriving = false;
 };
 
 struct Elsewhere {
@@ -95,6 +97,8 @@ struct Welcome {
     sim::Kept first;
     // The world as it stood when the server last snapshot it (Realm::snapshot), empty for none:
     // the mirror raised from the rest is laid with it, and `backlog` is the ticks since.
+    // Blood Castle's number when the world is one (Realm::setCastle, straight after the raise), or 0.
+    int32_t castle = 0;
     std::vector<uint8_t> snapshot;
 };
 
@@ -152,7 +156,7 @@ bool parse(const std::vector<uint8_t>& body, Ping& out);
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.
 void putKept(std::vector<uint8_t>& out, const sim::Kept& one);
-bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out);
+bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out, int layout = kKeptLayout);
 
 // The realm after a step, as one number: what the tick said (every happening's bytes, which
 // Realm::say zeroes padding and all), the dice drawn so far, and where each player stands. Two

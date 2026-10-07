@@ -56,6 +56,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // (docs/sprints/18-the-wire.md). Nothing below may then change the realm in a way the server
     // does not: the nests are the table's own, and no arena, raid or roads are set up.
     std::string held = weapon, worn = shield;
+    int castle = 0;  // the server's Blood Castle, set on the raise as it set it
     if (!serverHost_.empty()) {
         auto remote = std::make_unique<RemoteLink>(realmHeld_);
         net::Hello hello;
@@ -67,7 +68,6 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         hello.weapon = weapon;
         hello.shield = shield;
         hello.token = serverToken_;
-        hello.arriving = serverArriving_;
         net::Welcome welcome;
         elsewhere_ = {};
         if (!remote->join(serverHost_, serverPort_, hello, welcome, &elsewhere_)) return false;
@@ -75,6 +75,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         keptFirst_.reset();
         if (welcome.kept) keptFirst_ = std::make_unique<sim::Kept>(welcome.first);
         seed = welcome.seed;
+        castle = welcome.castle;
         kin = welcome.kin;
         level = welcome.level;
         column = welcome.column;
@@ -200,6 +201,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     }
     local_.configure(realmConfig_);
     if (!local_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
+    if (castle > 0) local_.setCastle(castle);
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to
     // use roads"): a tile whose painted slot -- the overlay where it is laid over half or more,

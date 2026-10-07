@@ -605,6 +605,11 @@ void Play::update(double seconds) {
                 meteor_.missHurl(happening.whom);
             }
             // Through a gate: the mode changes the map on the next frame (PlayMode::frame).
+            if (happening.what == sim::What::WentBack && happening.who == heroId && wentBack_ < 0) {
+                wentBack_ = happening.a;
+                wentColumn_ = happening.b;
+                wentRow_ = happening.c;
+            }
             if (happening.what == sim::What::Gated && happening.who == heroId && gated_ == 0) {
                 gated_ = happening.a;
                 gatedColumn_ = happening.b;

@@ -5,6 +5,7 @@
 // The rule the whole of it keeps is sprint 7's: THE REALM DECIDES. A window asks and redraws
 // from what it finds afterwards; nothing here trusts what a window believed.
 #include "sim/realm.h"
+#include "sim/maps.h"
 
 #include "sim/swings.h"
 
@@ -777,6 +778,11 @@ bool Realm::useItem(int slot) {
     if (portal(row)) {
         if (tables_->grid.safe(hero.column(), hero.row())) return false;
         spendOne();
+        // Read in the field of a dungeon of floors, it leaves Go Back! where he read it; anywhere
+        // else a scroll is a way home and no more (the user, 2026-10-07).
+        if (const MapRow* here = mapNumbered(int(tables_->map)); here != nullptr && here->floors) {
+            me().wayBack = {int32_t(tables_->map), hero.column(), hero.row(), hero.facing, kGoBackTicks, 0};
+        }
         warpHome(hero);
         return true;
     }

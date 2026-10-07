@@ -11,10 +11,10 @@ namespace mu::server {
 
 namespace {
 
-// The shape a character's bytes were written in (net::putKept), first laid out by protocol 3.
-// Bumped when putKept changes, with a reader for the old shape or a migration; a row of
-// another shape is not read as this one.
-constexpr int kLayout = 3;
+// The shape a character's bytes are written in (net::putKept). Every shape since protocol 3's is
+// still read: a row written before the way back was kept reads with none.
+constexpr int kLayout = net::kKeptLayout;
+constexpr int kOldestLayout = 3;
 
 constexpr const char* kSchema =
     "CREATE TABLE IF NOT EXISTS characters ("
@@ -95,7 +95,7 @@ bool Store::find(uint64_t token, sim::Kept& out, std::string& world) {
     const int layout = sqlite3_column_int(q.s, 0);
     const auto* bytes = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 1));
     const std::vector<uint8_t> kept(bytes, bytes + sqlite3_column_bytes(q.s, 1));
-    if (layout != kLayout || !net::keptFrom(kept, out)) {
+    if (layout < kOldestLayout || layout > kLayout || !net::keptFrom(kept, out, layout)) {
         core::logError("characters.db: %016llx was written at protocol %d and this is %d; not read",
                        (unsigned long long)token, layout, kLayout);
         return false;

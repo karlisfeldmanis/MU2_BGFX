@@ -114,6 +114,14 @@ bool writeVault(const std::string& path, const content::Tables& tables, const si
 // beside hero.json, a `host:port token` line a server -- so the next run of the game brings him
 // back as he left. 0 for a server that has never seen him.
 std::string tokenPathBeside(const std::string& savePath);
+
+// And on a server, his windows' layout -- the quick slots, the skill bar, the quest he follows --
+// is the client's own, kept beside his save as Name.ui, since nothing played there is written into
+// the save itself. loadLayout fills `saved`'s quick (as item rows of `tables`), bar and followed;
+// false when there is none.
+bool loadLayout(const std::string& savePath, const content::Tables& tables, Saved& saved);
+bool writeLayout(const std::string& savePath, const content::Tables& tables, const int32_t quick[5],
+                 const int32_t bar[6], int followed);
 uint64_t loadServerToken(const std::string& savePath, const std::string& server);
 bool keepServerToken(const std::string& savePath, const std::string& server, uint64_t token);
 

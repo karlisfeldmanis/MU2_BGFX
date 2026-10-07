@@ -51,7 +51,7 @@ struct Command {
         AcceptQuest,    // a: the quest
         CompleteQuest,  // a: the quest, b: the reward chosen, c: the QuestPath
         Travel,         // a: the travel row
-        GoBack,         // Go Back!'s return on this map: a: column, b: row, c and d: the facing
+        GoBack,         // Go Back!: his way back taken (Realm::goBack); it carries nothing
                         // as dx and dy in hundredths
         // The player's orders and skills (Realm::ask, invoke, invokeAt, letGo). Sent with ticket
         // 0, as a click is: no answer is said, the walk and the swing are the answer.

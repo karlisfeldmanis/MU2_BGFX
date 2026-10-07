@@ -4,6 +4,8 @@
 #include "core/log.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
+#include "sim/fmath.h"
+#include "sim/maps.h"
 
 namespace mu::sim {
 namespace {
@@ -219,7 +221,42 @@ bool Realm::travel(int index) {
     core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(to.zen));
     // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map
     // gate does, with no map change.
-    if (to.map == int32_t(tables_->map)) setHeroDown(to.column, to.row, to.dx, to.dy);
+    if (to.map == int32_t(tables_->map)) {
+        setHeroDown(to.column, to.row, to.dx, to.dy);
+        return true;
+    }
+    // To another map. Left from the field of a dungeon of floors, the way back opens there; left
+    // from anywhere else -- a town, or the field of Lorencia, Devias, Noria, Atlans or Tarkan --
+    // one already open is given up: he chose to go elsewhere.
+    const Body& hero = mine();
+    const MapRow* here = mapNumbered(int(tables_->map));
+    if (here != nullptr && here->floors && !tables_->grid.safe(hero.column(), hero.row())) {
+        me().wayBack = {int32_t(tables_->map), hero.column(), hero.row(), hero.facing, kGoBackTicks, 0};
+    } else {
+        me().wayBack = WayBack{};
+    }
+    return true;
+}
+
+bool Realm::goBack() {
+    Body& hero = mine();
+    const WayBack to = me().wayBack;
+    if (!hero.alive() || !to.open()) return false;
+    me().wayBack = WayBack{};
+    const int dx = int(std::lround(fm::cos(to.facing) * 100.0f));
+    const int dy = int(std::lround(fm::sin(to.facing) * 100.0f));
+    if (to.map == int32_t(tables_->map)) {
+        setHeroDown(to.column, to.row, dx, dy);
+        return true;
+    }
+    // To another map: whatever he had open stays behind, and he stops where he is, as a gate
+    // stops him; the map change is the game's and the server's (What::WentBack).
+    me().trading = me().banking = me().questing = -1;
+    closeMachine();
+    me().gating = -1;
+    me().angeling = -1;
+    halt(hero);
+    say(What::WentBack, hero, to.map, to.column, to.row);
     return true;
 }
 

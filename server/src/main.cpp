@@ -84,6 +84,7 @@ server::Store g_store;
 struct Landing {
     std::string world;
     int column = 0, row = 0;
+    int castle = 0;  // into Blood Castle: which one his ticket passed him into
 };
 std::map<uint64_t, Landing> g_due;
 
@@ -101,6 +102,7 @@ struct World {
     std::vector<net::Arrival> arriving;  // characters carried in with this tick's Joins
     uint32_t nextTicket = kJoinTickets;
     std::vector<uint32_t> orphans;  // Joins whose connection went before they were answered
+    int castle = 0;  // Blood Castle's number, 0 for any other map: one world a castle
     // Its own deadline, so one world's early tick moves no other's clock.
     Clock::time_point next = Clock::now();
     Clock::time_point earlyAt{};  // when it last took a tick early
@@ -149,9 +151,10 @@ bool worldName(const std::string& name) {
 // The world's first player: its realm raised round him, as sprint 18 raised one per connection.
 World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello& hello,
                   const std::string& assets, const sim::RealmConfig& config, uint64_t seed,
-                  const std::string& who, const sim::Kept* kept) {
+                  const std::string& who, const sim::Kept* kept, int castle) {
     auto world = std::make_unique<World>();
     world->name = hello.world;
+    world->castle = castle;
     std::string error;
     const std::string path = assets + "/cooked/" + hello.world + "/" + hello.world + ".mur";
     if (!content::loadTables(path, world->tables, error)) {
@@ -167,6 +170,9 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
         core::logError("%s: %s would not raise", who.c_str(), hello.world.c_str());
         return nullptr;
     }
+    // Which Blood Castle, before anything else is laid on it: its monsters and its statue's die,
+    // at the same moment as every mirror's (Play::open).
+    if (castle > 0) world->realm->setCastle(castle);
     // A new character's cradle, or all of one come from another world: never both.
     if (kept) {
         world->realm->restoreKept(*kept);
@@ -184,6 +190,7 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     w.shield = kept ? std::string() : hello.shield;
     w.config = config;
     w.kept = kept != nullptr;
+    w.castle = castle;
     if (kept) w.first = *kept;
     core::logf("%s: raised %s, class %d level %d at %d,%d, seed %llu", who.c_str(),
                hello.world.c_str(), int(kin), level, hello.column, hello.row,
@@ -246,27 +253,41 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     std::string keptIn;
     const bool carried = asked.token != 0 && g_store.find(asked.token, kept, keptIn);
     net::Hello said = asked;
+    int castle = 0;
     if (carried) {
         one.token = said.token;
         core::logf("%s: his character comes back, level %d with %lld Zen", one.who.c_str(),
                    kept.hero.level, (long long)kept.hero.money);
-        // Where the store has him: the world he was in or was sent to, at its tile (placeOf). A
-        // run's first Hello for another world is told where he is, and comes again there. A
-        // map change to another world is a way the realm never saw (Go Back!, a scripted
-        // trip), and the Hello's own world and tile stand until those are the server's too.
+    }
+    // Sent somewhere by the realm a moment ago -- a gate, a trip, home: taken now, whether or not
+    // this Hello goes there, so an old one never says where he is later (placeOf).
+    std::optional<Landing> sent;
+    if (const auto due = g_due.find(one.token); carried && due != g_due.end()) {
+        sent = due->second;
+        g_due.erase(due);
+    }
+    if (sent && sent->world == said.world) {
+        // There, at the tile it chose, and into the castle his ticket opened.
+        if (sent->column != said.column || sent->row != said.row) {
+            core::logf("%s: asked for %d,%d; put down at %d,%d", one.who.c_str(), said.column,
+                       said.row, sent->column, sent->row);
+        }
+        said.column = sent->column;
+        said.row = sent->row;
+        castle = sent->castle;
+    } else if (carried) {
+        // Where the store has him: the world he was in or was sent to, at its tile (placeOf).
+        // Every way between worlds is the realm's to say (a gate, a trip, home, Go Back!), so a
+        // Hello for any other world is told where he is, and comes again there.
         if (!keptIn.empty() && keptIn != said.world) {
-            if (!said.arriving) {
-                const net::Elsewhere there{keptIn, kept.hero.column, kept.hero.row};
-                std::vector<uint8_t> out;
-                net::put(out, there);
-                one.socket.send(out);
-                one.socket.flush();
-                core::logf("%s: his character is in %s at %d,%d, not %s: sent there", one.who.c_str(),
-                           keptIn.c_str(), there.column, there.row, said.world.c_str());
-                return false;
-            }
-            core::logError("%s: kept in %s, came to %s by a way the server did not see; at the "
-                           "tile he asked for", one.who.c_str(), keptIn.c_str(), said.world.c_str());
+            const net::Elsewhere there{keptIn, kept.hero.column, kept.hero.row};
+            std::vector<uint8_t> out;
+            net::put(out, there);
+            one.socket.send(out);
+            one.socket.flush();
+            core::logf("%s: his character is in %s at %d,%d, not %s: sent there", one.who.c_str(),
+                       keptIn.c_str(), there.column, there.row, said.world.c_str());
+            return false;
         } else if (!keptIn.empty()) {
             if (kept.hero.column != said.column || kept.hero.row != said.row) {
                 core::logf("%s: asked for %d,%d; put down at %d,%d", one.who.c_str(), said.column,
@@ -277,9 +298,31 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         }
     } else {
         do one.token = seeds(); while (one.token == 0 || g_store.has(one.token));
+        // A new character is the rules', not the client's: level 1, his class's weapon, at his
+        // class's town's spawn gate (sim/cradle.h). Of the Hello only the class is his to choose,
+        // as in MU's character creation. A first world elsewhere is told where he is born.
+        const sim::Kin kin = sim::Kin(std::min<int>(said.kin, int(sim::Kin::MagicGladiator)));
+        const char* home = sim::homeWorld(kin);
+        if (const sim::MapRow* born = sim::mapOf(home)) {
+            if (said.world != home) {
+                const net::Elsewhere there{home, born->arrive[0], born->arrive[1]};
+                std::vector<uint8_t> out;
+                net::put(out, there);
+                one.socket.send(out);
+                one.socket.flush();
+                core::logf("%s: a new character is born in %s, not %s: sent there", one.who.c_str(),
+                           home, said.world.c_str());
+                return false;
+            }
+            said.column = born->arrive[0];
+            said.row = born->arrive[1];
+        }
+        said.level = sim::kNewLevel;
+        said.weapon = sim::cradleWeapon(kin);
+        said.shield.clear();
     }
     for (auto& world : worlds) {
-        if (world->name != said.world) continue;
+        if (world->name != said.world || world->castle != castle) continue;
         // Into a world already running: a Join at the next tick's start, his hands by arm index
         // -- or, carried, all of him (Realm::carry) and no cradle.
         const content::Tables& tables = world->tables;
@@ -302,7 +345,8 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
                    said.world.c_str(), join.a, join.b, said.column, said.row);
         return true;
     }
-    World* world = raiseWorld(worlds, said, assets, config, seeds(), one.who, carried ? &kept : nullptr);
+    World* world = raiseWorld(worlds, said, assets, config, seeds(), one.who, carried ? &kept : nullptr,
+                              castle);
     if (world == nullptr) return false;
     one.world = world;
     return welcome(one, world->realm->hero().id);
@@ -377,7 +421,8 @@ std::optional<Landing> landingOf(const World& world, const sim::Happening& said,
             const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
             const sim::MapRow* map = out ? sim::mapNumbered(int(out->map)) : nullptr;
             if (map == nullptr) return std::nullopt;
-            return Landing{map->world, said.b, said.c};
+            const int castle = said.a == sim::kCastleEnterGate ? world.realm->castlePassedOf(said.who) : 0;
+            return Landing{map->world, said.b, said.c, castle};
         }
         case sim::What::Answered: {
             if (said.a != int32_t(sim::Command::Kind::Travel) || said.b <= 0) return std::nullopt;
@@ -394,6 +439,11 @@ std::optional<Landing> landingOf(const World& world, const sim::Happening& said,
                 return Landing{map->world, to.column, to.row};
             }
             return std::nullopt;
+        }
+        case sim::What::WentBack: {
+            const sim::MapRow* map = sim::mapNumbered(said.a);
+            if (map == nullptr) return std::nullopt;
+            return Landing{map->world, said.b, said.c};
         }
         case sim::What::Warped:
         case sim::What::Rose:
@@ -520,7 +570,6 @@ void part(Session& one) {
     if (one.world == nullptr) return;
     if (one.welcomed) {
         const server::Store::Row row = placeOf(one);
-        g_due.erase(one.token);
         if (g_store.keep(row)) {
             core::logf("%s: his character kept in %s at %d,%d, level %d with %lld Zen", one.who.c_str(),
                        row.world.c_str(), row.kept.hero.column, row.kept.hero.row,

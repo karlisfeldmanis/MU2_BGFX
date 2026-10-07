@@ -12,6 +12,7 @@
 #include "core/args.h"
 #include "core/log.h"
 #include "game/figures.h"
+#include "sim/cradle.h"
 #include "sim/quests.h"
 
 namespace mu::game {
@@ -176,7 +177,7 @@ bool makeCharacter(const std::string& folderPath, const std::vector<Seat>& roste
     // wizard in Lorencia, as in MU and as MU2's server started them (the user, 2026-09-28:
     // "created elf, spawned at lorencia not noria"). She comes in on Noria's spawn gate
     // (game/world/maps.h). The source for MU's own table is not on this machine to cite.
-    const char* home = kin == sim::Kin::FairyElf ? "noria" : "lorencia";
+    const char* home = sim::homeWorld(kin);
     std::FILE* f = std::fopen(path.string().c_str(), "wb");
     if (!f) {
         core::logError("roster: cannot write %s", path.string().c_str());
@@ -215,16 +216,7 @@ bool dropCharacter(const std::string& folderPath, const Seat& who) {
     return true;
 }
 
-const char* cradleWeapon(sim::Kin kin) {
-    switch (kin) {
-        case sim::Kin::DarkWizard: return "Staff01";  // the Skull Staff: ours, see roster.h
-        case sim::Kin::FairyElf: return "Bow01";
-        case sim::Kin::DarkKnight: return "Axe01";
-        // The Short Sword (the user, 2026-10-07: 'mg will start with short sword').
-        case sim::Kin::MagicGladiator: return "Sword02";
-    }
-    return "";
-}
+const char* cradleWeapon(sim::Kin kin) { return sim::cradleWeapon(kin); }
 
 const char* bareBody(sim::Kin kin, bool second, const Figures* figures) {
     // index.json's spellings: the elf's first body has no suffix.

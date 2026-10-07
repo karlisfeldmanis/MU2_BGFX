@@ -289,7 +289,6 @@ void LobbyMode::enter(Context& ctx, int slot) {
     args.savePath = who->path;
     // A server's word is for one character: the one chosen reads his own from beside his save.
     args.serverToken = 0;
-    args.serverArriving = false;
     args.world = who->world.empty() ? std::string("lorencia") : who->world;
     args.play = true;
     args.fresh = false;

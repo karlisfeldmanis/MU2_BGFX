@@ -1,4 +1,5 @@
 #include "sim/realm.h"
+#include "sim/maps.h"
 
 #include "sim/swings.h"
 
@@ -502,6 +503,7 @@ HeroRecord Realm::record() const {
         out.summonSkill = summon->summonedBy;
         out.summonHealth = summon->health;
     }
+    out.wayBack = me().wayBack;
     return out;
 }
 
@@ -570,6 +572,15 @@ void Realm::restore(const HeroRecord& saved) {
     const bool owed = summons != nullptr && summons->summons > 0 && knows(summons->number);
     me().summonOwed = owed ? summons->number : 0;
     me().summonOwedHealth = owed ? saved.summonHealth : 0;
+    // His way back, no longer than Go Back! lasts, to a map there is. And one that has brought him
+    // somewhere with no safe ground under him -- a Tab trip to the Dungeon -- is not a town to sell
+    // in, so it closes quietly (the user's, as the client had it).
+    WayBack way = saved.wayBack;
+    if (way.map < 0 || mapNumbered(way.map) == nullptr) way = WayBack{};
+    way.ticksLeft = std::clamp<int64_t>(way.ticksLeft, 0, kGoBackTicks);
+    way.closedTicks = std::clamp<int64_t>(way.closedTicks, 0, kGoBackClosedTicks);
+    if (way.open() && !tables_->grid.safe(hero.column(), hero.row())) way = WayBack{};
+    me().wayBack = way;
 }
 
 bool Realm::spend(int strength, int agility, int vitality, int energy) {
@@ -1145,6 +1156,13 @@ void Realm::heroBefore() {
         }
         me().summonOwed = 0;
     }
+    // Go Back!'s clock: five minutes of play, then the closed line three seconds, then nothing.
+    // Dead, the way back goes with him.
+    if (WayBack& way = me().wayBack; way.map >= 0) {
+        if (!hero.alive()) way = WayBack{};
+        else if (way.ticksLeft > 0) --way.ticksLeft;
+        else if (++way.closedTicks >= kGoBackClosedTicks) way = WayBack{};
+    }
     sip();
     chargeTick(hero);
     recover(hero);
@@ -1526,6 +1544,14 @@ std::string describe(const Happening& happening, const Realm& realm) {
             break;
         case What::Left:
             std::snprintf(line, sizeof(line), "%6u %s leaves the world", happening.tick, who);
+            break;
+        case What::WentBack:
+            std::snprintf(line, sizeof(line), "%6u %s goes back to map %d at %d,%d", happening.tick,
+                          who, happening.a, happening.b, happening.c);
+            break;
+        case What::Answered:
+            std::snprintf(line, sizeof(line), "%6u %s answered: command %d gave %d, ticket %u",
+                          happening.tick, who, happening.a, happening.b, uint32_t(happening.c));
             break;
         case What::Cracked:
             if (happening.a < 0) {

@@ -324,11 +324,9 @@ uint32_t Play::acceptQuest(int quest) {
 
 // Go Back!'s return on this map: the realm sets him down and says Climbed, which the step draws
 // as a warp's landing (Play::update), as it does a Town Portal's.
-void Play::goBack(int column, int row, float facing) {
-    core::logf("window: go back to %d,%d", column, row);
-    send({.kind = sim::Command::Kind::GoBack, .a = column, .b = row,
-          .c = int(std::lround(std::cos(facing) * 100.0f)),
-          .d = int(std::lround(std::sin(facing) * 100.0f))});
+void Play::goBack() {
+    core::logf("window: go back");
+    send({.kind = sim::Command::Kind::GoBack});
 }
 
 uint32_t Play::travel(int index) {

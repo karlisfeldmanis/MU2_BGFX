@@ -94,10 +94,7 @@ void Realm::applyCommands() {
                 answer = completeQuest(one.a, one.b, QuestPath(std::max(0, one.c))) ? 1 : -1;
                 break;
             case Kind::Travel: answer = travel(one.a) ? 1 : -1; break;
-            case Kind::GoBack:
-                setHeroDown(one.a, one.b, one.c, one.d);
-                answer = 1;
-                break;
+            case Kind::GoBack: answer = goBack() ? 1 : -1; break;
             case Kind::Order: {
                 Request request;
                 request.kind = Request::Kind(one.a);
