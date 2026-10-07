@@ -120,6 +120,7 @@ void Play::update(double seconds) {
     // This frame's gains, and only this frame's: whoever draws the lane runs after this and
     // reads them once. See Play::gains.
     gains_.clear();
+    answers_.clear();
     heroCast_ = 0;
     // A potion drunk since the last frame: asked between frames, and said here so the clear
     // above does not take it. See Play::useItem.
@@ -185,6 +186,9 @@ void Play::update(double seconds) {
             // the log before anything the drawing decides to do about it. Nothing in an
             // ordinary run reaches it.
             if (!arena_.breed.empty()) announce(happening);
+            // A command's answer, and the Mixed a Mix's answer follows (play_requests.cpp).
+            if (happening.what == sim::What::Mixed) mixMade_ = happening.b == 1;
+            if (happening.what == sim::What::Answered) answered(happening);
             invasionSaid(happening);
             raidSaid(happening);
             // The marker, off the realm's own word for where the walk ends: `Walked` carries

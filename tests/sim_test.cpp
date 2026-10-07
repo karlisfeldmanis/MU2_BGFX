@@ -10493,6 +10493,46 @@ void testCastleGrid(const content::Tables& lorencia) {
     check(town.tables() == &lorencia, "on the shared tables");
 }
 
+// Server-plan phase 1: a window's ask is a Command, applied at the start of the next tick in the
+// order asked and answered there (sim/command.h, realm_commands.cpp). Nothing moves before the
+// step; the answers come in order, each with its ticket and the method's own answer.
+void testCommands(const content::Tables& tables) {
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, 140, 125), "a realm for the commands");
+    realm.earn(1000000);
+    int lumen = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 255) lumen = int(i);
+    }
+    check(lumen >= 0, "Lumen to buy from");
+    if (lumen < 0) return;
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(lumen);
+    realm.ask(talk);
+    for (int tick = 0; tick < 3000 && realm.trading() < 0; ++tick) realm.step();
+    check(realm.trading() == lumen, "served at Lumen's counter");
+    const int64_t before = realm.money();
+    realm.command({.kind = sim::Command::Kind::Buy, .ticket = 7, .a = 0});
+    realm.command({.kind = sim::Command::Kind::Sell, .ticket = 8, .a = sim::kSlots - 1});
+    check(realm.money() == before, "nothing is bought between ticks");
+    realm.step();
+    std::vector<sim::Happening> answers;
+    for (const sim::Happening& one : realm.happenings()) {
+        if (one.what == sim::What::Answered) answers.push_back(one);
+    }
+    checkEqual(int(answers.size()), 2, "both asks answered in the next step");
+    if (answers.size() != 2) return;
+    check(answers[0].c == 7 && answers[0].a == int(sim::Command::Kind::Buy) && answers[0].b >= 0,
+          "the purchase first, with its ticket and the bag slot it went to");
+    check(realm.money() < before, "and paid for");
+    check(answers[1].c == 8 && answers[1].b == -1, "then the sale of an empty slot, refused");
+    realm.step();
+    bool again = false;
+    for (const sim::Happening& one : realm.happenings()) again = again || one.what == sim::What::Answered;
+    check(!again, "and each is answered once");
+}
+
 // Sprint 16, step 4: a body joins a realm that is already running -- what the next player
 // arriving is (docs/server-plan.md phase 2). Spawned between ticks, found by id at once, alive
 // through a thousand ticks, and the hero's id still finds the hero.
@@ -10546,6 +10586,7 @@ int main() {
     testSpamClicks(tables);
     testDeterminism(tables);
     testSpawn(tables);
+    testCommands(tables);
     testInvariants(tables);
     testInvasion(tables);
     testRaid(tables);

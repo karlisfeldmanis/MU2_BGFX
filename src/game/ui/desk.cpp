@@ -157,6 +157,34 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const auto took = [&]() {
         if (play.isOpen()) play.ui(Play::Ui::Took);
     };
+    // The answers to what this window asked, heard now (Play::answers).
+    for (const Play::Answer& one : play.answers()) {
+        const auto at = std::find_if(waiting_.begin(), waiting_.end(),
+                                     [&](const auto& w) { return w.first == one.ticket; });
+        if (at == waiting_.end()) continue;
+        const Then then = at->second;
+        waiting_.erase(at);
+        switch (then) {
+            case Then::TookOrRefused: one.ok() ? took() : refused(); break;
+            case Then::Refused: if (!one.ok()) refused(); break;
+            case Then::Spark: one.ok() ? mixer_.spark() : refused(); break;
+            case Then::ZenBox:
+                if (one.ok()) {
+                    amount_.hide();
+                    click();
+                } else {
+                    amount_.refuse();
+                    refused();
+                }
+                break;
+            case Then::Quiet: break;
+        }
+    }
+    // A play that closed (a map change) answers nothing more.
+    if (!play.isOpen()) waiting_.clear();
+    const auto expect = [&](uint32_t ticket, Then then) {
+        if (ticket != 0) waiting_.push_back({ticket, then});
+    };
     // **The number box, before anything else, and it takes everything.** It is modal, as MU's
     // message boxes are: the pointer's presses and the keys are its own while it is up, so the
     // windows under it do not hear a click on its OK and a 1 typed into it is not the first
@@ -185,13 +213,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (result.amount > 0) {
             // CZenReceiptMsgBoxLayout::ProcessOk: sent, clicked and shut -- or, short, said so.
             const bool deposit = amount_.purpose() == Amount::Purpose::Deposit;
-            if (deposit ? play.depositZen(result.amount) : play.withdrawZen(result.amount)) {
-                amount_.hide();
-                click();
-            } else {
-                amount_.refuse();
-                refused();
-            }
+            expect(deposit ? play.depositZen(result.amount) : play.withdrawZen(result.amount),
+                   Then::ZenBox);
         }
     }
     // The quest giver's window: the realm opened it when he was reached, and closes it on any other
@@ -561,7 +584,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (inventoryOpen_ && window.pressed(gfx::Window::Key::Repair) && !window.typing() &&
         !keysHeld) {
         if (mends && window.shift()) {
-            if (!play.repairAll()) refused();
+            expect(play.repairAll(), Then::Refused);
         } else if (canMend) {
             mending_ = !mending_;
             click();
@@ -579,13 +602,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                       shelfStage_, &buy, &close, &mend, &undo);
         // A purchase that goes through is heard as its coins, off the realm's Bought; one
         // refused is the interface's no.
-        if (buy >= 0 && !play.buy(buy)) refused();
+        if (buy >= 0) expect(play.buy(buy), Then::Refused);
         if (mend.toggle) {
             mending_ = !mending_;
             click();
         }
-        if (mend.all && !play.repairAll()) refused();
-        if (undo && !play.buyBack()) refused();
+        if (mend.all) expect(play.repairAll(), Then::Refused);
+        if (undo) expect(play.buyBack(), Then::Refused);
         if (close) {
             play.closeTrade();
             click();
@@ -618,14 +641,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         chest_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
                       shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
-            if (play.rearrange(asked.moveFrom, asked.moveTo)) took();
-            else refused();
+            expect(play.rearrange(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
         }
         // Let go outside: into the bag cell under the pointer, and nowhere else -- a thing in
         // the vault is not thrown on the ground from it, which MU refuses too.
         if (asked.outside >= 0) {
             const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
-            if (slot >= 0 && play.withdraw(asked.outside, slot)) took();
+            if (slot >= 0) expect(play.withdraw(asked.outside, slot), Then::TookOrRefused);
             else refused();
         }
         // MU's own answer to either coin: the box to type the sum in (CZenReceiptMsgBoxLayout,
@@ -663,38 +685,36 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         mixer_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(),
                       play.mixAnswer(), play.mixWords(), pointer, shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
-            if (play.shuffle(asked.moveFrom, asked.moveTo)) took();
-            else refused();
+            expect(play.shuffle(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
         }
         // Let go outside: into the bag cell under the pointer, and nowhere else, as the vault.
         if (asked.outside >= 0) {
             const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
-            if (slot >= 0 && play.takeOut(asked.outside, slot)) took();
+            if (slot >= 0) expect(play.takeOut(asked.outside, slot), Then::TookOrRefused);
             else refused();
         }
         if (asked.back >= 0) {
-            if (play.takeOut(asked.back, -1)) took();
-            else refused();
+            expect(play.takeOut(asked.back, -1), Then::TookOrRefused);
         }
         if (asked.click) click();
         // The service row stepped: the journal's and the map's page sound.
         if (asked.turned) play.sound().play(play.sound().load("quest_page_turn", false));
         // Take out: everything in the box back to the bag, as many right-clicks.
         if (asked.takeAll) {
-            bool any = false, all = true;
+            // Answered one by one; the last is heard for them all.
+            uint32_t last = 0;
             for (int cell = 0; cell < sim::kMachineCells; ++cell) {
                 if (play.realm().machine()[cell].empty()) continue;
-                if (play.takeOut(cell, -1)) any = true;
-                else all = false;
+                if (last != 0) expect(last, Then::Quiet);
+                last = play.takeOut(cell, -1);
             }
-            if (any && all) took();
+            if (last != 0) expect(last, Then::TookOrRefused);
             else refused();
         }
         // CMixCheckMsgBoxLayout's OK: the click, and the realm's answer is heard by Play.
         if (asked.mix) {
             click();
-            if (play.mix(mixer_.service(), mixer_.socket())) mixer_.spark();
-            else refused();
+            expect(play.mix(mixer_.service(), mixer_.socket()), Then::Spark);
         }
         if (asked.close) {
             play.closeMachine();
@@ -724,14 +744,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // At the machine a right-click puts the thing in the box instead
         // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
         if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
-            if (play.putIn(asked.use, -1)) took();
-            else refused();
+            expect(play.putIn(asked.use, -1), Then::TookOrRefused);
         } else if (asked.use >= 0 && !play.useItem(asked.use)) {
             refused();
         }
         // A click in repair mode: mended where it lies, heard as SOUND_REPAIR by Play, and a
         // refusal -- whole already, not repairable, not the Zen -- is the interface's no.
-        if (asked.repair >= 0 && !play.repair(asked.repair)) refused();
+        if (asked.repair >= 0) expect(play.repair(asked.repair), Then::Refused);
         // The foot's hammer is self repair: on or off from level 50, and the interface's no below
         // it -- at a counter too, whose own hammers are on the shelf.
         if (asked.toggleMending) {
@@ -747,23 +766,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // at his feet (SendRequestDropItem). Over the shelf it is a sale instead
         // (SendSellItemToNpcRequest), and the realm refuses a worn slot again.
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
-            if (!play.sell(asked.outside)) refused();
+            expect(play.sell(asked.outside), Then::Refused);
         } else if (asked.outside >= 0 && banking_ &&
                    chest_.covers(asked.outsideX, asked.outsideY)) {
             // Into the vault cell under the pointer; over the foot or the head, the first cell
             // it fits in.
-            if (play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY))) {
-                took();
-            } else {
-                refused();
-            }
+            expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY)),
+                   Then::TookOrRefused);
         } else if (asked.outside >= 0 && mixing_ &&
                    mixer_.covers(asked.outsideX, asked.outsideY)) {
-            if (play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY))) {
-                took();
-            } else {
-                refused();
-            }
+            expect(play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY)),
+                   Then::TookOrRefused);
         } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
             // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
             // Heard as every other drop in the window is, and a thing that will not go on the

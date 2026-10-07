@@ -393,14 +393,8 @@ bool Play::lay(const std::string& asked) {
     return true;
 }
 
-bool Play::buy(int shelfSlot) {
-    const int slot = realm_.buy(shelfSlot);
-    core::logf("window: buy shelf %d %s (slot %d, %lld Zen left)", shelfSlot,
-               slot >= 0 ? "taken" : "refused", slot, (long long)realm_.money());
-    // ReceiveBuy's SOUND_GET_ITEM01: a purchase is a thing arriving in the bag. MU2 rang coins
-    // here, which MuMain does not -- pDropMoney is only ever a heap landing.
-    if (slot >= 0) sound_.play(heard_.take);
-    return slot >= 0;
+uint32_t Play::buy(int shelfSlot) {
+    return send({.kind = sim::Command::Kind::Buy, .a = shelfSlot});
 }
 
 bool Play::acceptQuest(int quest) {
@@ -469,59 +463,15 @@ bool Play::completeQuest(int quest, int choice, sim::QuestPath path) {
     return paid;
 }
 
-bool Play::buyBack() {
-    const int slot = realm_.buyBack();
-    core::logf("window: buy back %s (slot %d, %lld Zen left)", slot >= 0 ? "taken" : "refused",
-               slot, (long long)realm_.money());
-    // The purchase's pickup: the thing is arriving in the bag again.
-    if (slot >= 0) sound_.play(heard_.take);
-    return slot >= 0;
-}
+uint32_t Play::buyBack() { return send({.kind = sim::Command::Kind::BuyBack}); }
 
-bool Play::sell(int bagSlot) {
-    const int64_t paid = realm_.sellItem(bagSlot);
-    core::logf("window: sell slot %d %s (%lld paid, %lld Zen now)", bagSlot,
-               paid >= 0 ? "taken" : "refused", (long long)paid, (long long)realm_.money());
-    // Coins, not the pickup: a sale is Zen arriving and the thing sold LEAVING the bag, so
-    // pGetItem was the one sound in the shop that described the wrong half of the trade. MU
-    // plays ReceiveSell's SOUND_GET_ITEM01 here and this deliberately does not -- the user's
-    // call, 2026-09-23. A purchase keeps the pickup, because a purchase really is a thing
-    // arriving in the bag.
-    //
-    // Placed at the hero rather than played flat, because `money_drop` is a placed event
-    // (play_open loads it that way for the heap that lands on the grass) and Sound::play
-    // refuses a placed one in silence. He is standing at the counter and the listener is on
-    // him, so there is nothing for the distance to attenuate.
-    if (paid >= 0) {
-        const Drawn* hero = drawnOf(realm_.hero().id);
-        if (heard_.moneyDrop >= 0 && hero && hero->placed) {
-            emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
-        } else {
-            sound_.play(heard_.take);
-        }
-    }
-    return paid >= 0;
-}
+uint32_t Play::sell(int bagSlot) { return send({.kind = sim::Command::Kind::Sell, .a = bagSlot}); }
 
 // The mending counter's two. ReceiveRepair plays SOUND_REPAIR on the reply that carries the new
 // Zen, and only then, so a repair refused is the desk's no and not this sound.
-bool Play::repair(int slot) {
-    const int64_t cost = realm_.repairCost(slot);
-    const bool done = realm_.repair(slot);
-    core::logf("window: repair slot %d %s (%lld Zen, %lld now)", slot,
-               done ? "taken" : "refused", (long long)cost, (long long)realm_.money());
-    if (done) sound_.play(heard_.repair);
-    return done;
-}
+uint32_t Play::repair(int slot) { return send({.kind = sim::Command::Kind::Repair, .a = slot}); }
 
-bool Play::repairAll() {
-    const int64_t before = realm_.money();
-    const int mended = realm_.repairAll();
-    core::logf("window: repair all, %d mended for %lld Zen", mended,
-               (long long)(before - realm_.money()));
-    if (mended > 0) sound_.play(heard_.repair);
-    return mended > 0;
-}
+uint32_t Play::repairAll() { return send({.kind = sim::Command::Kind::RepairAll}); }
 
 // The vault's moves. The item ones are heard by the desk, as the bag's are (the pickup for a
 // move taken, the refusal for one refused); the Zen is heard here as the coins of a sale,
@@ -536,104 +486,149 @@ void Play::jewelRung() {
     redress();
 }
 
-bool Play::deposit(int bagSlot, int cell) {
-    const int at = realm_.deposit(bagSlot, cell);
-    jewelRung();
-    if (at >= 0 && sim::wearable(bagSlot)) redress();
-    core::logf("window: vault deposit slot %d -> cell %d %s", bagSlot, at,
-               at >= 0 ? "taken" : "refused");
-    return at >= 0;
+uint32_t Play::deposit(int bagSlot, int cell) {
+    return send({.kind = sim::Command::Kind::Deposit, .a = bagSlot, .b = cell});
 }
 
-bool Play::withdraw(int cell, int bagSlot) {
-    const int at = realm_.withdraw(cell, bagSlot);
-    jewelRung();
-    if (at >= 0 && sim::wearable(bagSlot)) redress();
-    core::logf("window: vault withdraw cell %d -> slot %d %s", cell, at,
-               at >= 0 ? "taken" : "refused");
-    return at >= 0;
+uint32_t Play::withdraw(int cell, int bagSlot) {
+    return send({.kind = sim::Command::Kind::Withdraw, .a = cell, .b = bagSlot});
 }
 
-bool Play::rearrange(int from, int to) {
-    const bool moved = realm_.rearrange(from, to);
-    jewelRung();
-    core::logf("window: vault move %d -> %d %s", from, to, moved ? "taken" : "refused");
-    return moved;
+uint32_t Play::rearrange(int from, int to) {
+    return send({.kind = sim::Command::Kind::Rearrange, .a = from, .b = to});
 }
 
-bool Play::putIn(int bagSlot, int cell) {
-    const int at = realm_.putIn(bagSlot, cell);
-    jewelRung();
-    if (at >= 0 && sim::wearable(bagSlot)) redress();
-    core::logf("window: machine takes slot %d -> cell %d %s", bagSlot, at,
-               at >= 0 ? "taken" : "refused");
-    if (at >= 0) mixAnswer_ = -1;
-    return at >= 0;
+uint32_t Play::putIn(int bagSlot, int cell) {
+    return send({.kind = sim::Command::Kind::PutIn, .a = bagSlot, .b = cell});
 }
 
-bool Play::takeOut(int cell, int bagSlot) {
-    const int at = realm_.takeOut(cell, bagSlot);
-    jewelRung();
-    core::logf("window: machine gives cell %d -> slot %d %s", cell, at,
-               at >= 0 ? "taken" : "refused");
-    return at >= 0;
+uint32_t Play::takeOut(int cell, int bagSlot) {
+    return send({.kind = sim::Command::Kind::TakeOut, .a = cell, .b = bagSlot});
 }
 
-bool Play::shuffle(int from, int to) {
-    const bool moved = realm_.shuffle(from, to);
-    jewelRung();
-    core::logf("window: machine move %d -> %d %s", from, to, moved ? "taken" : "refused");
-    return moved;
+uint32_t Play::shuffle(int from, int to) {
+    return send({.kind = sim::Command::Kind::Shuffle, .a = from, .b = to});
 }
 
-bool Play::mix(sim::Service service, int socket) {
-    const sim::Judged judged = realm_.judged(service, socket);
-    if (!realm_.mix(service, socket)) {
-        core::logf("window: mix refused (%s)", realm_.refusal().c_str());
-        return false;
-    }
-    // The realm said Mixed last; its b is whether it made.
-    const auto& said = realm_.happenings();
-    const bool made = !said.empty() && said.back().what == sim::What::Mixed && said.back().b == 1;
-    mixAnswer_ = made ? 1 : 0;
-    mixWords_ = made ? judged.success : judged.failure;
-    sound_.play(heard_.mix);
-    if (made) {
-        if (const Drawn* hero = drawnOf(realm_.hero().id)) {
-            emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
-        }
-    } else {
-        sound_.play(heard_.mixBreak);
-    }
-    return true;
+// The words are judged as it is asked, off the box as the player sees it when he presses OK.
+uint32_t Play::mix(sim::Service service, int socket) {
+    mixJudged_ = realm_.judged(service, socket);
+    return send({.kind = sim::Command::Kind::Mix, .a = socket, .service = service});
 }
 
-bool Play::depositZen(int64_t zen) {
-    const bool moved = realm_.depositZen(zen);
-    core::logf("window: vault takes %lld Zen %s (%lld carried, %lld kept)", (long long)zen,
-               moved ? "taken" : "refused", (long long)realm_.money(),
-               (long long)realm_.vault().zen());
-    if (moved) {
+uint32_t Play::depositZen(int64_t zen) {
+    return send({.kind = sim::Command::Kind::DepositZen, .zen = zen});
+}
+
+uint32_t Play::withdrawZen(int64_t zen) {
+    return send({.kind = sim::Command::Kind::WithdrawZen, .zen = zen});
+}
+
+uint32_t Play::send(sim::Command command) {
+    command.player = realm_.hero().id;
+    command.ticket = nextTicket_++;
+    if (nextTicket_ == 0) nextTicket_ = 1;
+    realm_.command(command);
+    sent_.push_back(command);
+    return command.ticket;
+}
+
+// A command's answer, in the step that applied it: what MU's client does on the server's reply
+// -- the sound, the figure dressed again, the log -- and then the answer kept for the window that
+// waits on its ticket (Play::answers).
+void Play::answered(const sim::Happening& said) {
+    using Kind = sim::Command::Kind;
+    const auto at = std::find_if(sent_.begin(), sent_.end(),
+                                 [&](const sim::Command& one) { return one.ticket == uint32_t(said.c); });
+    if (at == sent_.end()) return;
+    const sim::Command asked = *at;
+    sent_.erase(at);
+    const bool ok = said.b >= 0;
+    const long long zen = (long long)realm_.money();
+    // Coins at the hero: placed, because `money_drop` is a placed event (play_open loads it that
+    // way for the heap that lands on the grass) and Sound::play refuses a placed one in silence.
+    const auto coins = [&](bool orTake) {
         const Drawn* hero = drawnOf(realm_.hero().id);
         if (heard_.moneyDrop >= 0 && hero && hero->placed) {
             emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+        } else if (orTake) {
+            sound_.play(heard_.take);
         }
-    }
-    return moved;
-}
-
-bool Play::withdrawZen(int64_t zen) {
-    const bool moved = realm_.withdrawZen(zen);
-    core::logf("window: vault gives %lld Zen %s (%lld carried, %lld kept)", (long long)zen,
-               moved ? "taken" : "refused", (long long)realm_.money(),
-               (long long)realm_.vault().zen());
-    if (moved) {
-        const Drawn* hero = drawnOf(realm_.hero().id);
-        if (heard_.moneyDrop >= 0 && hero && hero->placed) {
-            emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+    };
+    switch (asked.kind) {
+        case Kind::Buy:
+        case Kind::BuyBack:
+            core::logf("window: %s %s (slot %d, %lld Zen left)",
+                       asked.kind == Kind::Buy ? "buy" : "buy back", ok ? "taken" : "refused", said.b, zen);
+            // ReceiveBuy's SOUND_GET_ITEM01: a purchase is a thing arriving in the bag. MU2 rang
+            // coins here, which MuMain does not -- pDropMoney is only ever a heap landing.
+            if (ok) sound_.play(heard_.take);
+            break;
+        case Kind::Sell:
+            core::logf("window: sell slot %d %s (%d paid, %lld Zen now)", asked.a,
+                       ok ? "taken" : "refused", said.b, zen);
+            // Coins, not the pickup: a sale is Zen arriving and the thing sold LEAVING the bag.
+            // MU plays ReceiveSell's SOUND_GET_ITEM01 here and this deliberately does not -- the
+            // user's call, 2026-09-23.
+            if (ok) coins(true);
+            break;
+        case Kind::Repair:
+        case Kind::RepairAll:
+            core::logf("window: repair %s %s (%lld Zen now)",
+                       asked.kind == Kind::Repair ? "one" : "all", ok ? "taken" : "refused", zen);
+            if (ok) sound_.play(heard_.repair);
+            break;
+        case Kind::DepositZen:
+        case Kind::WithdrawZen:
+            core::logf("window: vault %s %lld Zen %s (%lld carried, %lld kept)",
+                       asked.kind == Kind::DepositZen ? "takes" : "gives", (long long)asked.zen,
+                       ok ? "taken" : "refused", zen, (long long)realm_.vault().zen());
+            if (ok) coins(false);
+            break;
+        case Kind::Deposit:
+        case Kind::Withdraw:
+        case Kind::Rearrange:
+        case Kind::PutIn:
+        case Kind::TakeOut:
+        case Kind::Shuffle: {
+            // The item moves are heard by the desk, as the bag's are; a jewel one of them applied
+            // (Realm::refineAcross) is rung here, and a worn thing that left him re-dresses him.
+            jewelRung();
+            const int worn = asked.kind == Kind::Deposit || asked.kind == Kind::PutIn ? asked.a
+                             : asked.kind == Kind::Withdraw ? asked.b
+                                                            : -1;
+            if (ok && worn >= 0 && sim::wearable(worn)) redress();
+            if (ok && asked.kind == Kind::PutIn) mixAnswer_ = -1;
+            core::logf("window: %s %d -> %d %s", 
+                       asked.kind == Kind::Deposit    ? "vault deposit"
+                       : asked.kind == Kind::Withdraw  ? "vault withdraw"
+                       : asked.kind == Kind::Rearrange ? "vault move"
+                       : asked.kind == Kind::PutIn     ? "machine takes"
+                       : asked.kind == Kind::TakeOut   ? "machine gives"
+                                                       : "machine move",
+                       asked.a, asked.b, ok ? "taken" : "refused");
+            break;
         }
+        case Kind::Mix:
+            if (!ok) {
+                core::logf("window: mix refused (%s)", realm_.refusal().c_str());
+                break;
+            }
+            // Heard as MU hears it: eMix, then eGem for a success and eBreak for a failure.
+            mixAnswer_ = mixMade_ ? 1 : 0;
+            mixWords_ = mixMade_ ? mixJudged_.success : mixJudged_.failure;
+            sound_.play(heard_.mix);
+            if (mixMade_) {
+                if (const Drawn* hero = drawnOf(realm_.hero().id)) {
+                    emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
+                }
+            } else {
+                sound_.play(heard_.mixBreak);
+            }
+            break;
+        case Kind::None: break;
     }
-    return moved;
+    answers_.push_back({asked.ticket, asked.kind, said.b});
 }
 
 bool Play::talkTo(const std::string& name) {

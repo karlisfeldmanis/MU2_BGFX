@@ -41,6 +41,7 @@
 #include "sim/vault.h"
 #include "sim/machine.h"
 #include "sim/gates.h"
+#include "sim/command.h"
 #include "sim/config.h"
 #include "sim/event.h"
 #include "sim/invasion.h"
@@ -136,6 +137,9 @@ enum class What : uint8_t {
                // the column and row it lands on. `who` is the dragon's body.
     Raid,      // the Golden Dragon's raid (sim/raid.h): a: a RaidEvent, b and c as it says, x and
                // y its place. `who` is the dragon, or the raider for RaidEvent::Raider.
+    Answered,  // a Command applied (sim/command.h): a: its Kind, b: what the direct method gave
+               // -- a slot, a cell, the Zen paid, a count, 1 for yes -- or -1 for refused, c: its
+               // ticket. `who` is the player who asked.
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -665,6 +669,9 @@ public:
     const RealmConfig& config() const { return config_; }
 
     void ask(const Request& request) { pending_ = request; }
+    // A window's ask (sim/command.h), applied at the start of the next step in the order asked,
+    // and answered there with What::Answered (realm_commands.cpp).
+    void command(const Command& command) { commands_.push_back(command); }
 
     // ---- skills (docs/skills-dk.md) --------------------------------------------------------
     // A key pressed: throw this skill at this body. NOT a Request, and that is the design and
@@ -1487,6 +1494,8 @@ private:
     std::vector<Happening> happenings_;
     std::vector<Step> scratch_;
     Request pending_;
+    std::vector<Command> commands_;
+    void applyCommands();
     Request order_;  // what the player is doing until told otherwise
     // The skill a key asked for and whom it was aimed at, held for a few ticks so a press inside
     // the swing it waits for is not lost. Cleared the moment it is thrown or it goes stale.

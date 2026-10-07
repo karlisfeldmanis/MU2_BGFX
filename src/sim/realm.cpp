@@ -137,6 +137,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     tick_ = 0;
     nextId_ = 1;
     pending_ = Request{};
+    commands_.clear();
     order_ = Request{};
 
     // The player first, and at index 0 for good: every loop below walks an index, and "the
@@ -886,6 +887,8 @@ void Realm::approach(Body& hero, const Body& target, int radius, bool sight) {
 void Realm::step() {
     ++tick_;
     happenings_.clear();
+    // The windows' asks first, in the order they came: nothing is decided between ticks.
+    applyCommands();
     castleTick();
     invasionTick();
     raidTick();

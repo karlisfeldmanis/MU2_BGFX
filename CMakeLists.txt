@@ -126,6 +126,7 @@ add_library(mu_sim STATIC
   src/sim/realm_items.cpp
   src/sim/realm_machine.cpp
   src/sim/realm_quests.cpp
+  src/sim/realm_commands.cpp
   src/sim/quests.cpp
   src/sim/realm_travel.cpp
   src/sim/realm_move.cpp

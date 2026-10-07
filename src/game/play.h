@@ -243,39 +243,63 @@ public:
     std::string dressedQuiver_;
     int mixAnswer_ = -1;
     std::string mixWords_;
+    // The commands sent and not yet answered, for what answered() needs to know of them; the
+    // last Mixed said (its b), which the Mix's answer follows in the same step; the mix's words
+    // as judged when it was asked.
+    uint32_t send(sim::Command command);
+    void answered(const sim::Happening& said);
+    std::vector<sim::Command> sent_;
+    uint32_t nextTicket_ = 1;
+    bool mixMade_ = false;
+    sim::Judged mixJudged_;
     // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
     // `count` is a stack's size for a potion and ignored for anything else.
     // `extras` is `+N` for a plus, `L` for luck and `O` then a digit for the option: +3LO2.
     bool give(const std::string& name, int count, const std::string& extras = "");
     // --lay's: a thing laid on the ground beside him, heard landing. See Realm::lay.
     bool lay(const std::string& name);
+    // ---- the windows' commands (sim/command.h; docs/server-plan.md phase 1) -------------------
+    // The counter's, the vault's and the machine's asks below are Commands: each is sent, applied
+    // at the start of the next tick, and answered there. Each returns its ticket -- never 0 -- and
+    // the answer comes back in answers() after the step that applied it; the sound, the redress
+    // and the log are made then, in answered(). A window waits on the ticket for its own yes or no.
+    struct Answer {
+        uint32_t ticket = 0;
+        sim::Command::Kind kind = sim::Command::Kind::None;
+        int32_t value = -1;  // what the realm's method gave, -1 refused (What::Answered's b)
+        bool ok() const { return value >= 0; }
+    };
+    // The answers heard in the last update(); cleared as the next one begins, so each is seen by
+    // exactly one Desk::update, which runs between the two.
+    const std::vector<Answer>& answers() const { return answers_; }
+    std::vector<Answer> answers_;
     // The open counter's requests: a purchase by shelf slot, a sale by bag slot, and walking
     // away. Each the realm's to refuse.
-    bool buy(int shelfSlot);
-    bool sell(int bagSlot);
+    uint32_t buy(int shelfSlot);
+    uint32_t sell(int bagSlot);
     // The shelf's undo: the newest sale taken back at what it fetched (Realm::buyBack).
-    bool buyBack();
+    uint32_t buyBack();
     // A mending counter's two: one thing by its slot, worn or in the bag, and everything.
     // Heard as MU's SOUND_REPAIR when the realm takes the Zen.
-    bool repair(int slot);
-    bool repairAll();
+    uint32_t repair(int slot);
+    uint32_t repairAll();
     void closeTrade() { realm_.closeTrade(); }
     // The vault, as the realm keeps it: each a request answered yes or no, logged and heard
     // as the bag's own moves are.
-    bool deposit(int bagSlot, int cell);
-    bool withdraw(int cell, int bagSlot);
-    bool rearrange(int from, int to);
-    bool depositZen(int64_t zen);
-    bool withdrawZen(int64_t zen);
+    uint32_t deposit(int bagSlot, int cell);
+    uint32_t withdraw(int cell, int bagSlot);
+    uint32_t rearrange(int from, int to);
+    uint32_t depositZen(int64_t zen);
+    uint32_t withdrawZen(int64_t zen);
     void closeVault() { realm_.closeVault(); }
     void restoreVault(const sim::Vault& saved) { realm_.restoreVault(saved); }
     // The Chaos Machine (sim/machine.h), as the realm keeps it: the vault's three moves, and the
     // mix, heard as MU hears its answer -- eMix with eGem for a success, with eBreak for a
     // failure (ReceiveMixExtended, ReceiveTradeInventoryExtended).
-    bool putIn(int bagSlot, int cell);
-    bool takeOut(int cell, int bagSlot);
-    bool shuffle(int from, int to);
-    bool mix(sim::Service service, int socket);
+    uint32_t putIn(int bagSlot, int cell);
+    uint32_t takeOut(int cell, int bagSlot);
+    uint32_t shuffle(int from, int to);
+    uint32_t mix(sim::Service service, int socket);
     void closeMachine() { realm_.closeMachine(); }
     void restoreMachine(const sim::Machine& saved) { realm_.restoreMachine(saved); }
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
