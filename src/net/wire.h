@@ -113,6 +113,11 @@ bool parse(const std::vector<uint8_t>& body, sim::Command& out);
 bool parse(const std::vector<uint8_t>& body, Tick& out);
 bool parse(const std::vector<uint8_t>& body, Hash& out);
 
+// A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
+// store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.
+void putKept(std::vector<uint8_t>& out, const sim::Kept& one);
+bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out);
+
 // The realm after a step, as one number: what the tick said (every happening's bytes, which
 // Realm::say zeroes padding and all), the dice drawn so far, and where each player stands. Two
 // realms that agree on it for every tick are walking the same walk.

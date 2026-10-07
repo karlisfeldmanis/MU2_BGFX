@@ -399,6 +399,17 @@ bool parse(const std::vector<uint8_t>& body, Hash& out) {
     return in.done();
 }
 
+void putKept(std::vector<uint8_t>& out, const sim::Kept& one) {
+    Out o{out};
+    putKept(o, one);
+}
+
+bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out) {
+    In in{bytes};
+    out = takeKept(in);
+    return in.done();
+}
+
 uint64_t stateHash(const sim::Realm& realm) {
     // FNV-1a, 64 bits.
     uint64_t h = 1469598103934665603ull;

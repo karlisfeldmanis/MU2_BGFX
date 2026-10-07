@@ -6,11 +6,13 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/opt/mu2/build/mu2_server --port 44406 --assets /opt/mu2/assets
+ExecStart=/opt/mu2/build/mu2_server --port 44406 --assets /opt/mu2/assets --store /var/lib/mu2/characters.db
 Restart=always
 RestartSec=2
-# Its own throwaway user, nothing writable: the server keeps no files yet.
+# Its own throwaway user, and one folder it may write: /var/lib/mu2, the characters
+# (server/src/store.h), kept across restarts and redeploys.
 DynamicUser=yes
+StateDirectory=mu2
 ProtectSystem=strict
 ProtectHome=yes
 NoNewPrivileges=yes

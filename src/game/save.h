@@ -109,4 +109,12 @@ bool loadVault(const std::string& path, Saved& saved);
 sim::Vault resolveVault(const content::Tables& tables, const Saved& saved);
 bool writeVault(const std::string& path, const content::Tables& tables, const sim::Vault& vault);
 
+// **On a server the character is the server's**, under a token it gave him (server/src/store.h).
+// Until accounts (server-plan phase 6) the client keeps that token beside his save -- hero.server
+// beside hero.json, a `host:port token` line a server -- so the next run of the game brings him
+// back as he left. 0 for a server that has never seen him.
+std::string tokenPathBeside(const std::string& savePath);
+uint64_t loadServerToken(const std::string& savePath, const std::string& server);
+bool keepServerToken(const std::string& savePath, const std::string& server, uint64_t token);
+
 }  // namespace mu::game

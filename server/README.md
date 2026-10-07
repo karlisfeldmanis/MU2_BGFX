@@ -26,7 +26,8 @@ keeps a rule from meaning one thing on the server and another in the client.
 | system | Ubuntu 26.04, x86_64, 1 vCPU, 927 MB, 2 GB swap (`/swapfile`), 18 GB disk |
 | tools | g++ 15.2, CMake 4.2, Ninja, rsync |
 | firewall | `ufw`: SSH, and 44406/tcp for the game |
-| service | `mu2-server` (systemd, `server/mu2-server.service`): `/opt/mu2/build/mu2_server --port 44406`, restarted if it stops, its own throwaway user. `systemctl status mu2-server`, `journalctl -u mu2-server -f` |
+| service | `mu2-server` (systemd, `server/mu2-server.service`): `/opt/mu2/build/mu2_server --port 44406 --store /var/lib/mu2/characters.db`, restarted if it stops, its own throwaway user whose one writable folder is `/var/lib/mu2` (systemd keeps it at `/var/lib/private/mu2`). `systemctl status mu2-server`, `journalctl -u mu2-server -f` |
+| packages | `libsqlite3-dev`, for the character store; `deploy.sh` installs it if missing |
 | code | `/opt/mu2`, put there by `deploy.sh` |
 
 ## Playing on it
@@ -43,8 +44,13 @@ the server steps (docs/sprints/18-the-wire.md). **Connections to the same world 
 
 Two players in Lorencia see each other. A map change keeps the character: the server holds it
 under the client's token as he leaves one world and brings it back whole in the next
-(docs/sprints/20-the-world-host.md, protocol 3). It lives in the server's memory only, for an hour. `server/deploy.sh` puts a new build there and restarts
-the service.
+(docs/sprints/20-the-world-host.md, protocol 3). **Characters live on the box's disk**, in
+`/var/lib/mu2/characters.db` (SQLite, `server/src/store.h`), written as a player leaves a world,
+every minute and when the service stops, so a restart or a redeploy keeps them. The client keeps
+its token beside the character's save (`saves/characters/Name.server`) and comes back with it
+next run. `sqlite3 /var/lib/private/mu2/characters.db "select printf('%016x',token), kin, level,
+money, datetime(saved,'unixepoch') from characters"` lists them. `server/deploy.sh` puts a new
+build there and restarts the service.
 
 ## Building there
 

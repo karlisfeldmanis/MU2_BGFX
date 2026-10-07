@@ -297,18 +297,29 @@ bool PlayMode::open(Context& ctx) {
                                         args.raidBox ? std::clamp(args.raidBox - 'A', 0, sim::kRaidLandingCount - 1) : -1);
             }
             // On a server: Play joins it as it opens, and raises the mirror from its answer.
+            const size_t colon = args.server.rfind(':');
+            const bool hasPort = colon != std::string::npos;
+            const std::string host = hasPort ? args.server.substr(0, colon) : args.server;
+            const int port = hasPort ? std::atoi(args.server.c_str() + colon + 1) : net::kDefaultPort;
+            const std::string server = host + ":" + std::to_string(port);
             if (!args.server.empty()) {
-                const size_t colon = args.server.rfind(':');
-                const bool hasPort = colon != std::string::npos;
-                world_.played().useServer(hasPort ? args.server.substr(0, colon) : args.server,
-                                          hasPort ? std::atoi(args.server.c_str() + colon + 1)
-                                                  : net::kDefaultPort,
-                                          args.serverToken);
+                // The game's first world on this server: his token from beside his save, kept from
+                // the last run, so the server brings him back (game::loadServerToken). A fresh run
+                // is a new character.
+                if (args.serverToken == 0 && !savePath_.empty() && !args.fresh) {
+                    args.serverToken = game::loadServerToken(savePath_, server);
+                }
+                world_.played().useServer(host, port, args.serverToken);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
-            // The server's token for him, for the next world's Hello.
-            if (world_.played().remote()) args.serverToken = world_.played().serverToken();
+            // The server's token for him, for the next world's Hello and the next run.
+            if (world_.played().remote()) {
+                args.serverToken = world_.played().serverToken();
+                if (!savePath_.empty() && args.serverToken != 0) {
+                    game::keepServerToken(savePath_, server, args.serverToken);
+                }
+            }
         }
         // And everything that hangs off a realm, only when there IS one. This used to run
         // on the answer to `args.play` alone, which is what was ASKED for and not what

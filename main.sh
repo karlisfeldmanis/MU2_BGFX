@@ -9,8 +9,9 @@
 #   ./main.sh --roster DIR        characters from DIR instead of your own folder
 #   ./main.sh --server 37.27.158.226
 #                                 play on the Hetzner server (server/README.md): the character
-#                                 you pick enters as his class and level, fresh, and nothing
-#                                 played there is written over your characters here
+#                                 you pick is the server's from his first time there, kept on
+#                                 its disk under a token beside his save (Name.server), and
+#                                 nothing played there is written over your characters here
 #
 # The game menu's Options -- fullscreen or windowed, the window's size, v-sync, volume and the
 # frame counter -- are kept in saves/options.txt in this folder and the next run

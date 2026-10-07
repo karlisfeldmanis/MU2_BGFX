@@ -1,14 +1,15 @@
 // mu2_server: MU2_BGFX's server (docs/sprints/18-the-wire.md, server/README.md).
 //
-//   mu2_server [--port N] [--assets DIR] [--castle-period S]
+//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S]
 //
 // **Connections to the same world share it** (docs/sprints/19-many-heroes.md): the first Hello
 // for a world raises its realm with him as its first player; each later one comes in by a Join
 // command at the next tick's start, and is welcomed once that tick has let him in -- with the
 // world's start and every tick since it was raised, which his mirror replays to stand where the
 // server stands. A connection that goes leaves by a Leave command, and his character (sim::Kept)
-// is kept under his token: a map change reconnects with it, and he comes into the next world as
-// he left the last (docs/sprints/20-the-world-host.md). A world nobody is in is let go. Every
+// is kept under his token in characters.db (store.h): a map change reconnects with it, and he
+// comes into the next world as he left the last -- or, next week, as he left the server
+// (docs/sprints/20-the-world-host.md). A world nobody is in is let go. Every
 // realm steps on one 20 Hz deadline: poll, step every world, flush (server-plan §3).
 // Each tick goes to everyone in the world -- the wall clock, the rain, the commands applied, each
 // with its player -- and every second its hash, which a mirror that disagrees says.
@@ -22,7 +23,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <map>
 #include <memory>
 #include <random>
 #include <string>
@@ -35,6 +35,7 @@
 #include "net/wire.h"
 #include "sim/cradle.h"
 #include "sim/realm.h"
+#include "store.h"
 
 namespace {
 
@@ -47,17 +48,12 @@ constexpr double kTickSeconds = 0.05;  // 20 Hz, the realm's own (sim/realm.h)
 constexpr int kHashEvery = 20;         // a hash a second
 // A Join's ticket, the server's own: high, so it is never one a client numbered.
 constexpr uint32_t kJoinTickets = 0x80000000u;
-// How long a character left by a connection is kept for its token to bring back: a map's load,
-// a dropped line and a reconnect, with room. Then he is gone; characters live past that only
-// once the server keeps them on disk (server-plan phase 3).
-constexpr int64_t kKeptSeconds = 3600;
+// Whoever is in a world is written this often as well as when he leaves: OpenMU's rate, and what
+// a crash of the server can cost him.
+constexpr int kKeepEvery = 60 * 20;
 
-// The characters between worlds, by token.
-struct Waiting {
-    sim::Kept kept;
-    int64_t since = 0;
-};
-std::map<uint64_t, Waiting> g_kept;
+// The characters, by token, on the server's disk.
+server::Store g_store;
 
 struct World {
     std::string name;
@@ -154,8 +150,11 @@ bool welcome(Session& one, uint32_t player) {
     return one.welcomed;
 }
 
+void part(Session& one);
+
 bool hello(Session& one, const net::Hello& said, std::vector<std::unique_ptr<World>>& worlds,
-           const std::string& assets, const sim::RealmConfig& config, std::mt19937_64& seeds) {
+           std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
+           const sim::RealmConfig& config, std::mt19937_64& seeds) {
     if (said.version != net::kVersion) {
         core::logError("%s: version %u, this server speaks %u", one.who.c_str(), said.version,
                        net::kVersion);
@@ -165,19 +164,31 @@ bool hello(Session& one, const net::Hello& said, std::vector<std::unique_ptr<Wor
         core::logError("%s: no world called '%s'", one.who.c_str(), said.world.c_str());
         return false;
     }
-    // His character, when his token names one the server kept: taken, so a token brings him
-    // back once. Anything else is a new character, and a new token.
+    // A character is in one place at a time. A connection of his that went this same poll is
+    // let go first, so he comes back as it left him; one still open keeps him, and this one is
+    // refused.
+    if (said.token != 0) {
+        for (auto& other : sessions) {
+            if (other.get() == &one || other->token != said.token || other->world == nullptr) continue;
+            if (other->socket.open()) {
+                core::logError("%s: his character is already playing (%s)", one.who.c_str(),
+                               other->who.c_str());
+                return false;
+            }
+            part(*other);
+            other->world = nullptr;
+        }
+    }
+    // His character, when his token names one the store keeps. Anything else is a new
+    // character, and a new token.
     sim::Kept kept;
-    bool carried = false;
-    if (const auto at = g_kept.find(said.token); said.token != 0 && at != g_kept.end()) {
-        kept = at->second.kept;
-        carried = true;
-        g_kept.erase(at);
+    const bool carried = said.token != 0 && g_store.find(said.token, kept);
+    if (carried) {
         one.token = said.token;
         core::logf("%s: his character comes back, level %d with %lld Zen", one.who.c_str(),
                    kept.hero.level, (long long)kept.hero.money);
     } else {
-        do one.token = seeds(); while (one.token == 0 || g_kept.count(one.token) != 0);
+        do one.token = seeds(); while (one.token == 0 || g_store.has(one.token));
     }
     for (auto& world : worlds) {
         if (world->name != said.world) continue;
@@ -210,7 +221,8 @@ bool hello(Session& one, const net::Hello& said, std::vector<std::unique_ptr<Wor
 }
 
 // Everything that arrived on one connection. False when it must go.
-bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds, const std::string& assets,
+bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
+          std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
           const sim::RealmConfig& config, std::mt19937_64& seeds) {
     if (!one.socket.receive(one.in)) return false;
     net::Kind kind{};
@@ -224,7 +236,7 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds, const std::
         }
         if (kind == net::Kind::Hello && one.world == nullptr) {
             net::Hello said;
-            if (!net::parse(body, said) || !hello(one, said, worlds, assets, config, seeds)) {
+            if (!net::parse(body, said) || !hello(one, said, worlds, sessions, assets, config, seeds)) {
                 return false;
             }
         } else if (kind == net::Kind::Command && one.welcomed) {
@@ -295,18 +307,31 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
     }
 }
 
-// A connection gone: his character kept under his token, and his player leaves the world at its
-// next tick.
+// A connection gone: his character written under his token, and his player leaves the world at
+// its next tick.
 void part(Session& one) {
     if (one.world == nullptr) return;
     if (one.welcomed) {
-        g_kept[one.token] = {one.world->realm->keptOf(one.player), int64_t(std::time(nullptr))};
-        core::logf("%s: his character kept, level %d with %lld Zen", one.who.c_str(),
-                   g_kept[one.token].kept.hero.level, (long long)g_kept[one.token].kept.hero.money);
+        const sim::Kept kept = one.world->realm->keptOf(one.player);
+        if (g_store.keep(one.token, kept)) {
+            core::logf("%s: his character kept, level %d with %lld Zen", one.who.c_str(),
+                       kept.hero.level, (long long)kept.hero.money);
+        }
         one.world->queued.push_back({.kind = sim::Command::Kind::Leave, .player = one.player});
     } else if (one.joining != 0) {
         one.world->orphans.push_back(one.joining);
     }
+}
+
+// Everyone in a world, written in one go: every minute, and as the server stops.
+void keepEveryone(std::vector<std::unique_ptr<Session>>& sessions) {
+    std::vector<std::pair<uint64_t, sim::Kept>> all;
+    for (auto& one : sessions) {
+        if (one->world != nullptr && one->welcomed) {
+            all.emplace_back(one->token, one->world->realm->keptOf(one->player));
+        }
+    }
+    if (!all.empty() && g_store.keep(all)) core::logf("characters: %zu kept", all.size());
 }
 
 }  // namespace
@@ -314,16 +339,18 @@ void part(Session& one) {
 int main(int argc, char** argv) {
     int port = net::kDefaultPort;
     std::string assets = MU2_ASSET_DIR;
+    std::string store = "characters.db";
     sim::RealmConfig config;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--port" && i + 1 < argc) port = std::atoi(argv[++i]);
         else if (a == "--assets" && i + 1 < argc) assets = argv[++i];
+        else if (a == "--store" && i + 1 < argc) store = argv[++i];
         else if (a == "--castle-period" && i + 1 < argc) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.castle = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--castle-period S]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S]\n");
             return 2;
         }
     }
@@ -334,16 +361,25 @@ int main(int argc, char** argv) {
     std::signal(SIGTERM, onSignal);
     std::signal(SIGPIPE, SIG_IGN);
 
-    net::Socket listener;
     std::string error;
+    // A server that cannot keep its characters does not open: whatever was played on it would
+    // be lost.
+    if (!g_store.open(store, error)) {
+        core::logError("%s", error.c_str());
+        return 1;
+    }
+    net::Socket listener;
     if (!listener.listen(port, error)) {
         core::logError("%s", error.c_str());
         return 1;
     }
-    core::logf("mu2_server: protocol %u, listening on %d, tables from %s", net::kVersion, port,
-               assets.c_str());
+    core::logf("mu2_server: protocol %u, listening on %d, tables from %s, %d characters in %s",
+               net::kVersion, port, assets.c_str(), g_store.count(), store.c_str());
 
-    std::mt19937_64 seeds(uint64_t(std::time(nullptr)));
+    // A token is all a character's login is until accounts: not one the clock would guess.
+    std::random_device entropy;
+    std::mt19937_64 seeds((uint64_t(entropy()) << 32) ^ entropy() ^ uint64_t(std::time(nullptr)));
+    int sinceKept = 0;
     std::vector<std::unique_ptr<World>> worlds;
     std::vector<std::unique_ptr<Session>> sessions;
     uint64_t arrivals = 0;
@@ -359,13 +395,17 @@ int main(int argc, char** argv) {
             sessions.push_back(std::move(one));
         }
         for (auto& one : sessions) {
-            if (one->socket.open() && !hear(*one, worlds, assets, config, seeds)) one->socket.close();
+            if (one->socket.open() && !hear(*one, worlds, sessions, assets, config, seeds)) one->socket.close();
         }
         // Step every world on the deadline, owing ticks rather than dropping them, and flush.
         const auto now = Clock::now();
         int owed = 0;
         while (next <= now && owed < 20) {
             for (auto& world : worlds) tick(*world, sessions);
+            if (++sinceKept >= kKeepEvery) {
+                keepEveryone(sessions);
+                sinceKept = 0;
+            }
             next += std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(kTickSeconds));
             ++owed;
         }
@@ -382,10 +422,6 @@ int main(int argc, char** argv) {
                 ++i;
             }
         }
-        // Characters nobody came back for.
-        for (auto at = g_kept.begin(); at != g_kept.end();) {
-            at = int64_t(std::time(nullptr)) - at->second.since > kKeptSeconds ? g_kept.erase(at) : std::next(at);
-        }
         // A world nobody is in, or on the way into, is let go; the next Hello raises it fresh.
         for (size_t i = 0; i < worlds.size();) {
             const World* world = worlds[i].get();
@@ -400,6 +436,7 @@ int main(int argc, char** argv) {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
+    keepEveryone(sessions);
     core::logf("mu2_server: stopped, %zu connected", sessions.size());
     return 0;
 }

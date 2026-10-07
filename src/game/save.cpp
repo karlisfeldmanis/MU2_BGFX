@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <utility>
 
 #include "core/args.h"
 #include "core/files.h"
@@ -481,6 +482,50 @@ std::string vaultPathBeside(const std::string& savePath) {
     // A roster character's save is one folder down from the account's; the vault is not.
     if (folder.filename() == "characters") folder = folder.parent_path();
     return (folder / "vault.json").string();
+}
+
+std::string tokenPathBeside(const std::string& savePath) {
+    return std::filesystem::path(savePath).replace_extension(".server").string();
+}
+
+namespace {
+
+// Every `server token` line of the file, in order.
+std::vector<std::pair<std::string, uint64_t>> readTokens(const std::string& path) {
+    std::vector<std::pair<std::string, uint64_t>> lines;
+    FILE* f = std::fopen(path.c_str(), "r");
+    if (f == nullptr) return lines;
+    char server[256];
+    unsigned long long token = 0;
+    while (std::fscanf(f, "%255s %llx", server, &token) == 2) lines.emplace_back(server, token);
+    std::fclose(f);
+    return lines;
+}
+
+}  // namespace
+
+uint64_t loadServerToken(const std::string& savePath, const std::string& server) {
+    for (const auto& [name, token] : readTokens(tokenPathBeside(savePath))) {
+        if (name == server) return token;
+    }
+    return 0;
+}
+
+bool keepServerToken(const std::string& savePath, const std::string& server, uint64_t token) {
+    std::vector<std::pair<std::string, uint64_t>> lines = readTokens(tokenPathBeside(savePath));
+    const auto at = std::find_if(lines.begin(), lines.end(), [&](const auto& l) { return l.first == server; });
+    if (at != lines.end() && at->second == token) return true;
+    if (at != lines.end()) at->second = token;
+    else lines.emplace_back(server, token);
+    const std::string path = tokenPathBeside(savePath);
+    FILE* f = std::fopen(path.c_str(), "w");
+    if (f == nullptr) {
+        core::logError("save: cannot write %s", path.c_str());
+        return false;
+    }
+    for (const auto& [name, kept] : lines) std::fprintf(f, "%s %016llx\n", name.c_str(), (unsigned long long)kept);
+    std::fclose(f);
+    return true;
 }
 
 bool loadVault(const std::string& path, Saved& saved) {

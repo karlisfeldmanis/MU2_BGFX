@@ -58,15 +58,64 @@ on the server was lost at every gate, trip and death sent home.**
     identical to before. `layercheck` and `save_test` pass.
 - **Not yet:**
   - The characters live in the server's memory: a restart, an hour away, or quitting the game
-    (the token lives only as long as the client's process) and he is new again. The server-side
-    character store, `characters.db`, is next, and with accounts (phase 6) a character is his
-    login's, not a token's.
+    (the token lives only as long as the client's process) and he is new again. Step 2.
   - The client still chooses the tile it lands on.
-  - A connection lost while its Join waits loses what it carried.
+  - A connection lost while its Join waits loses what it carried. Step 2 as well: the store
+    still has him.
+
+## 2. The character on the server's disk — done 2026-10-07
+
+- **`server::Store`** (`server/src/store.*`): `characters.db`, one row per token. The row holds
+  the `sim::Kept` in the wire's own bytes (`net::putKept`, now public with `net::keptFrom`) and
+  the protocol it was written at. His class, level, Zen and the time are beside it for whoever
+  reads the file with `sqlite3`.
+  - Uses the system's SQLite: the macOS SDK has it, and the box has it from `libsqlite3-dev`,
+    which `deploy.sh` installs. `find_package(SQLite3)`, `mu2_server` only: the client carries
+    no SQLite (foundation 11).
+  - WAL, `synchronous=NORMAL`: a server crash loses nothing written; the box losing power loses
+    at most the last write. A row written at another protocol is not read: he comes in new, and
+    the log says so. A migration comes when `Kept` first changes shape.
+  - **Why SQLite and not a file per token:** one transaction for the minute's writes, a file that
+    `sqlite3` can be asked about, and phase 6's accounts (a login's characters, names taken)
+    are queries it already answers.
+- **The server** (`main.cpp`): the in-memory hour is gone; the store is the only keeper.
+  - **Written:** as he leaves a world (`part`), every minute for everyone in one (`kKeepEvery`,
+    OpenMU's rate), and as the server stops on SIGTERM or SIGINT. The minute's and the stop's
+    writes are one transaction.
+  - **Read:** a Hello's token the store has brings him back; any other is a new character and a
+    new token. The token isn't taken off the store, so it brings him back every time.
+  - **One place at a time:** a Hello for a character whose connection is still open is refused.
+    One whose connection went in the same poll is parted first, so he comes back as it left him.
+  - `--store FILE`, `characters.db` in the working folder by default (git ignores it). The
+    service runs `--store /var/lib/mu2/characters.db` with `StateDirectory=mu2`, the one folder
+    its throwaway user may write.
+  - A store that will not open stops the server: what was played on it would be lost.
+  - Tokens are seeded from `std::random_device`, not the clock: until accounts, a token is
+    the whole of a login.
+  - A connection lost while its Join waits now loses nothing; the store still has him.
+- **The client** (`play_mode.cpp`, `game/save.*`): the token is kept beside the character's save,
+  `hero.server` beside `hero.json`, one `host:port token` line per server.
+  - The first world of a run reads it, unless the run is `--fresh`, and every Welcome writes
+    back what the server answered.
+  - A run with no save (a `--frames` review with no `--save`) keeps none, and a character
+    deleted on the roster takes his token aside with him.
+  - `sim_test` checks a character's stored bytes read back and say the same again, and that a
+    row cut short is refused (6661 checks, the standing 10 failing).
+- **Verified on loopback** (private `mu2_server --port 44599 --store` in a scratch folder, client
+  `--save` in it):
+  - **Across a restart.** A level-40 knight played and left, and the server wrote him and
+    stopped. A new server process said "1 characters", and a client asking for level 1 came back
+    as level 40 from the token beside its save. 6 of 6 hashes agreed. A `--fresh` run then came
+    in new, level 1, under a new token, and the file beside the save took it.
+  - A second copy of a playing character was refused ("already playing") while the first played
+    on.
+  - **The minute and the stop:** a client connected for 75 s was written at 60 s and again as the
+    server took SIGTERM ("characters: 1 kept" both times).
+  - `layercheck` and `save_test` pass.
 
 ## Next
 
-- The character store on the server's disk: `characters.db` (SQLite), written on leaving a world,
-  every minute and on quitting; the token kept by the client between runs until accounts come.
 - The landing tile decided by the server from the gate, trip or warp the realm said, not by the
   client's Hello.
+- Which world he is in is not stored yet: the client's Hello still names the world, and he comes
+  into whichever world it names. It goes with the landing tile.

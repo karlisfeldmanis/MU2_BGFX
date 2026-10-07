@@ -208,6 +208,9 @@ bool dropCharacter(const std::string& folderPath, const Seat& who) {
                        error.message().c_str());
         return false;
     }
+    // And his server's token with him, so a new character of the same name is not given his.
+    const fs::path token = fs::path(who.path).replace_extension(".server");
+    if (fs::exists(token, error)) fs::rename(token, fs::path(to).replace_extension(".server"), error);
     core::logf("roster: deleted %s (kept as %s)", who.name.c_str(), to.string().c_str());
     return true;
 }

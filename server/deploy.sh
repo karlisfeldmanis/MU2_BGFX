@@ -28,6 +28,9 @@ rsync -az --delete --prune-empty-dirs \
 echo "copied to $host:$dest"
 [ "$1" = "--copy" ] && exit 0
 
+# The character store's SQLite headers (server/src/store.h); the library itself is the system's.
+ssh $host "dpkg -s libsqlite3-dev >/dev/null 2>&1 || DEBIAN_FRONTEND=noninteractive apt-get install -y -q libsqlite3-dev >/dev/null"
+
 # One job: the box has one core and 1 GB (2 GB swap). sim_test.cpp is the slow one, a few minutes.
 ssh $host "cd $dest && \
   { [ -f build/build.ninja ] || cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMU2_SERVER_ONLY=ON; } && \

@@ -10861,6 +10861,18 @@ void testKept(const content::Tables& tables) {
           "the arrival reads back off the wire");
     if (back.arrivals.size() != 1) return;
 
+    // And as the server's character store keeps him (server/src/store.h): his bytes alone, read
+    // back the same, and a row cut short refused rather than half read.
+    std::vector<uint8_t> stored;
+    net::putKept(stored, kept);
+    std::vector<uint8_t> again;
+    sim::Kept read;
+    check(net::keptFrom(stored, read), "his stored bytes read back");
+    net::putKept(again, read);
+    check(again == stored, "and say the same again");
+    stored.pop_back();
+    check(!net::keptFrom(stored, read), "a stored character cut short is refused");
+
     // Into another world, by its Join.
     sim::Realm into;
     check(into.raise(&tables, 10, 138, 124, sim::Kin::DarkWizard, 1), "the world he comes into");

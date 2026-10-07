@@ -173,11 +173,15 @@ target_compile_options(mu_net PRIVATE ${MU_WARNINGS})
 
 # The server (server/src, server/README.md): every map's realm for whoever connects, no window.
 # Built in both modes, so the Mac can run one for the client beside it.
+# Its characters live in a SQLite file of its own (server/src/store.h): the system's library, which
+# the macOS SDK has and the box has from libsqlite3-dev. Never the client's (PLAN.md foundation 11).
+find_package(SQLite3 REQUIRED)
 add_executable(mu2_server
   server/src/main.cpp
+  server/src/store.cpp
 )
 target_include_directories(mu2_server PRIVATE src)
-target_link_libraries(mu2_server PRIVATE mu_net)
+target_link_libraries(mu2_server PRIVATE mu_net SQLite::SQLite3)
 target_compile_definitions(mu2_server PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(mu2_server PRIVATE ${MU_WARNINGS})
 

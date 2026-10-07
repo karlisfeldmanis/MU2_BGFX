@@ -22,6 +22,9 @@ build-trace/
 shots/
 screenshots/
 
+# A server run here keeps its characters beside it (mu2_server --store).
+characters.db*
+
 # The bench's scratch, and Python's.
 workshop/
 __pycache__/
