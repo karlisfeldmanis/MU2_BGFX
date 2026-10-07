@@ -204,7 +204,8 @@ private:
     // answered a tick later, as MU's are a round trip later, and the window hears its yes or no
     // then. Quiet for one heard with others; ZenBox shuts the number box on a yes.
     // Strike rings the quick box `key` on a yes (a potion key drunk).
-    enum class Then : uint8_t { TookOrRefused, Refused, Spark, ZenBox, Strike, Quiet };
+    // CloseQuest shuts the giver's dialog on a yes; Travel shuts the list and clicks.
+    enum class Then : uint8_t { TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Quiet };
     struct Waiting {
         uint32_t ticket = 0;
         Then then = Then::Quiet;

@@ -10560,6 +10560,37 @@ void testCommands(const content::Tables& tables) {
     check(realm.satchel()[cracker].empty(), "and gone from the bag");
     check(bag[2].c == 22 && bag[2].a == int(sim::Command::Kind::Discard) && bag[2].b == -1,
           "an empty slot thrown, refused as a Discard");
+
+    // Batch 3, the road and the giver: Go Back! sets him down in the tick and says Climbed before
+    // its answer; a quest accepted with no giver's dialog open and a trip to a row never opened
+    // are refused.
+    int tc = -1, tr = -1;
+    for (int r = 120; r < 150 && tc < 0; ++r) {
+        for (int c = 120; c < 150 && tc < 0; ++c) {
+            if (tables.grid.open(c, r) && (std::abs(c - realm.hero().column()) > 3)) tc = c, tr = r;
+        }
+    }
+    int unopened = -1;
+    for (int i = 0; i < sim::kTravels && unopened < 0; ++i) {
+        if (((realm.found() >> i) & 1u) == 0) unopened = i;
+    }
+    realm.command({.kind = sim::Command::Kind::GoBack, .ticket = 30, .a = tc, .b = tr, .c = 100, .d = 0});
+    realm.command({.kind = sim::Command::Kind::AcceptQuest, .ticket = 31, .a = 0});
+    realm.command({.kind = sim::Command::Kind::Travel, .ticket = 32, .a = unopened});
+    realm.step();
+    std::vector<sim::Happening> road;
+    bool climbedFirst = false;
+    for (const sim::Happening& one : realm.happenings()) {
+        if (one.what == sim::What::Climbed && road.empty()) climbedFirst = true;
+        if (one.what == sim::What::Answered) road.push_back(one);
+    }
+    checkEqual(int(road.size()), 3, "the road's three asks answered");
+    if (road.size() != 3) return;
+    check(road[0].c == 30 && road[0].b == 1 && climbedFirst, "Go Back! taken, its Climbed said first");
+    check(std::abs(realm.hero().column() - tc) <= 1 && std::abs(realm.hero().row() - tr) <= 1,
+          "and he stands where it set him");
+    check(road[1].c == 31 && road[1].b == -1, "a quest with no giver's dialog open, refused");
+    check(unopened >= 0 && road[2].c == 32 && road[2].b == -1, "a trip never opened, refused");
 }
 
 // Sprint 16, step 4: a body joins a realm that is already running -- what the next player

@@ -58,6 +58,15 @@ void Realm::applyCommands() {
             case Kind::Spend:
                 answer = spend(one.a == 0, one.a == 1, one.a == 2, one.a == 3) ? 1 : -1;
                 break;
+            case Kind::AcceptQuest: answer = acceptQuest(one.a) ? 1 : -1; break;
+            case Kind::CompleteQuest:
+                answer = completeQuest(one.a, one.b, QuestPath(std::max(0, one.c))) ? 1 : -1;
+                break;
+            case Kind::Travel: answer = travel(one.a) ? 1 : -1; break;
+            case Kind::GoBack:
+                setHeroDown(one.a, one.b, one.c, one.d);
+                answer = 1;
+                break;
         }
         say(What::Answered, bodies_[0], int32_t(said),
             answer < 0 ? -1 : int32_t(std::min<int64_t>(answer, INT32_MAX)), int32_t(one.ticket));

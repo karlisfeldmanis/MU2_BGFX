@@ -46,6 +46,13 @@ struct Command {
         Crack,      // only ever an answer: a Discard that opened. The answer's x and y are the
                     // tile it burst over; the Cracked said before it has the rest
         Spend,      // a: 0 strength, 1 agility, 2 vitality, 3 energy
+        // The quest giver's dialog and the road (Realm::acceptQuest, completeQuest, travel,
+        // setHeroDown).
+        AcceptQuest,    // a: the quest
+        CompleteQuest,  // a: the quest, b: the reward chosen, c: the QuestPath
+        Travel,         // a: the travel row
+        GoBack,         // Go Back!'s return on this map: a: column, b: row, c and d: the facing
+                        // as dx and dy in hundredths
     };
     Kind kind = Kind::None;
     // Who asks: a player's body id. 0 is the one hero this realm has until phase 2.
@@ -53,7 +60,7 @@ struct Command {
     // The asker's own number for it, handed back in the answer so its window knows which ask
     // was answered. The realm reads nothing into it.
     uint32_t ticket = 0;
-    int32_t a = -1, b = -1;
+    int32_t a = -1, b = -1, c = -1, d = -1;
     int64_t zen = 0;
     Service service = Service::Combine;
 };

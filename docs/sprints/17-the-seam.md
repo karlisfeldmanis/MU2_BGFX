@@ -12,7 +12,8 @@ batch: the realm still sits in the process, behind what will be phase 1's `Local
 
 1. **Commands for the counter, the vault and the machine.** Done 2026-10-07, below.
 2. Commands for the bag: `moveItem`, `useItem`, `refine`, `crack`, `discard`, `spend`. Done 2026-10-07, below.
-3. Commands for quests, travel and the debug switches (`give`, `lay`, castle, …; a `gm` flag).
+3. Commands for quests, travel and Go Back!. Done 2026-10-07, below. The debug switches (`give`,
+   `lay`, castle, …) stay direct until phase 6 makes them GM commands: they run once at start.
 4. The `Link` interface (`send`, `happenings`, `self`) and `LocalLink` around the realm.
 5. The `View`: Play and the twelve UI files read it, not the realm (~670 call sites, by file).
 6. Figures matched to bodies by id, not index; then `Realm::despawn` (sprint 16 step 4's rest).
@@ -55,3 +56,18 @@ batch: the realm still sits in the process, behind what will be phase 1's `Local
   opened and answered as a Crack after its Cracked, and an empty slot refused as a Discard. A
   muted run is clean. **For the user to try:** drag and equip, potions by click and by key, a
   jewel on a thing, a Firecracker and a box thrown, a stat point spent.
+
+## 3. The giver and the road — done
+
+- `AcceptQuest`, `CompleteQuest` (with the reward and the QuestPath), `Travel` and `GoBack`.
+  `Command` grew `c` and `d` for them.
+- An in-map trip and Go Back! say `Climbed` inside the tick now, so the step's own branch draws
+  the landing and the two `warped()` calls that stood in for it are gone. Another map's trip
+  still hands the mode `travelled_`.
+- A quest's levels are still shown one by one: the step counts the hero's `Levelled` since the
+  last answer and the rises owed before them, and the hand-in's answer owes them all.
+- The travel log's reasons gained `Quest`, which had no line and read past the end of the table.
+- Desk: the giver's dialog shuts on a yes (`Then::CloseQuest`), the travel list on a paid trip
+  (`Then::Travel`); the press is the list's either way.
+- sim_test 6606 checks, the standing 10 failing: Go Back! sets him down with its Climbed first, a
+  quest with no dialog open and a trip never opened are refused. A muted run is clean.

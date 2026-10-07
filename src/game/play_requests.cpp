@@ -299,70 +299,27 @@ uint32_t Play::buy(int shelfSlot) {
     return send({.kind = sim::Command::Kind::Buy, .a = shelfSlot});
 }
 
-bool Play::acceptQuest(int quest) {
-    const bool taken = realm_.acceptQuest(quest);
-    core::logf("window: accept quest %d %s", quest, taken ? "taken" : "refused");
-    // The user's drum hit, the quest taken; refused, the window's own no.
-    if (taken) sound_.play(sound_.load("quest_accept", false));
-    else ui(Ui::Refused);
-    return taken;
+uint32_t Play::acceptQuest(int quest) {
+    return send({.kind = sim::Command::Kind::AcceptQuest, .a = quest});
 }
 
+// Go Back!'s return on this map: the realm sets him down and says Climbed, which the step draws
+// as a warp's landing (Play::update), as it does a Town Portal's.
 void Play::goBack(int column, int row, float facing) {
     core::logf("window: go back to %d,%d", column, row);
-    realm_.setHeroDown(column, row, int(std::lround(std::cos(facing) * 100.0f)),
-                       int(std::lround(std::sin(facing) * 100.0f)));
-    // Said between ticks, so the next step clears the Climbed before update() reads it: the
-    // landing is shown here, as a Town Portal's is.
-    warped();
+    send({.kind = sim::Command::Kind::GoBack, .a = column, .b = row,
+          .c = int(std::lround(std::cos(facing) * 100.0f)),
+          .d = int(std::lround(std::sin(facing) * 100.0f))});
 }
 
-bool Play::travel(int index) {
-    static const char* const kWhy[] = {"", "not opened", "already here", "dead", "level too low",
-                                       "short of zen"};
-    const sim::TravelRefusal why = realm_.travelRefusal(index);
-    const bool paid = realm_.travel(index);
-    core::logf("window: travel to %s %s", sim::travelAt(index).name,
-               paid ? "paid" : kWhy[int(why)]);
-    // A floor of this same map was set down in place by the realm; only another map is the mode's.
-    // In place he lands as a Town Portal lands him (the user, 2026-10-02: 'use teleport effect also
-    // when travel to same map'): said between ticks, the realm's Climbed is cleared by the next
-    // step before update() reads it, so the landing is shown here, as goBack's is.
-    if (paid && sim::travelAt(index).map != int32_t(realm_.tables()->map)) travelled_ = index;
-    else if (paid) warped();
-    if (!paid) ui(Ui::Refused);
-    return paid;
+uint32_t Play::travel(int index) {
+    Asked asked;
+    asked.why = int(realm_.travelRefusal(index));
+    return send({.kind = sim::Command::Kind::Travel, .a = index}, asked);
 }
 
-bool Play::completeQuest(int quest, int choice, sim::QuestPath path) {
-    const size_t before = realm_.happenings().size();
-    const bool paid = realm_.completeQuest(quest, choice, path);
-    // The experience is paid here, between ticks, and the next step clears what the realm said
-    // before update() reads it -- so each level the quest carried is taken off its word now.
-    // Owed on no kill: the first goes up in the frame the window closes, the rest after it.
-    for (size_t i = before; i < realm_.happenings().size(); ++i) {
-        const sim::Happening& happening = realm_.happenings()[i];
-        if (happening.what == sim::What::Levelled && happening.who == realm_.hero().id) {
-            ++levelsOwed_;
-            levelOn_ = 0;
-        }
-    }
-    core::logf("window: hand in quest %d, choice %d, %s", quest, choice,
-               paid ? "paid" : "refused (not ready, no choice, or no room)");
-    // Sevina's treasure: he is his class's second, and wears its body from this frame.
-    if (paid && sim::questAt(quest).promotes) {
-        core::logf("quest: %s", sim::className(int(realm_.hero().kin), realm_.hero().second));
-        redress();
-    }
-    // The user's stinger, under the "Quest complete" banner the tracker raises this same frame,
-    // the world leaning back for it; refused, the window's own no.
-    if (paid) {
-        sound_.stinger("music/quest_complete.wav");
-        sound_.duck();
-    } else {
-        ui(Ui::Refused);
-    }
-    return paid;
+uint32_t Play::completeQuest(int quest, int choice, sim::QuestPath path) {
+    return send({.kind = sim::Command::Kind::CompleteQuest, .a = quest, .b = choice, .c = int(path)});
 }
 
 uint32_t Play::buyBack() { return send({.kind = sim::Command::Kind::BuyBack}); }
@@ -454,7 +411,9 @@ void Play::answered(const sim::Happening& said) {
     const sim::Happening* drank = lastDrank_;
     const sim::Happening* warpedTo = lastWarped_;
     const sim::Happening* cracked = lastCracked_;
+    const int levelled = levelledSince_, owedBefore = levelsBefore_;
     lastDrank_ = lastWarped_ = lastCracked_ = nullptr;
+    levelledSince_ = 0;
     // A Discard that opened is answered as a Crack.
     const sim::Command::Kind kind = sim::Command::Kind(said.a);
     const bool ok = said.b >= 0;
@@ -627,6 +586,48 @@ void Play::answered(const sim::Happening& said) {
             if (id != 0) heldIds_.push_back(id);
             break;
         }
+        case Kind::AcceptQuest:
+            core::logf("window: accept quest %d %s", asked.a, ok ? "taken" : "refused");
+            // The user's drum hit, the quest taken; refused, the window's own no.
+            if (ok) sound_.play(sound_.load("quest_accept", false));
+            else ui(Ui::Refused);
+            break;
+        case Kind::CompleteQuest:
+            core::logf("window: hand in quest %d, choice %d, %s", asked.a, asked.b,
+                       ok ? "paid" : "refused (not ready, no choice, or no room)");
+            if (!ok) {
+                ui(Ui::Refused);
+                break;
+            }
+            // Each level the quest carried is its own rise, owed on no kill: the first goes up in
+            // the frame the window closes, the rest after it.
+            if (levelled > 0) {
+                levelsOwed_ = owedBefore + levelled;
+                levelOn_ = 0;
+            }
+            // Sevina's treasure: he is his class's second, and wears its body from this frame.
+            if (sim::questAt(asked.a).promotes) {
+                core::logf("quest: %s", sim::className(int(realm_.hero().kin), realm_.hero().second));
+                redress();
+            }
+            // The user's stinger, under the "Quest complete" banner, the world leaning back for it.
+            sound_.stinger("music/quest_complete.wav");
+            sound_.duck();
+            break;
+        case Kind::Travel: {
+            // By sim::TravelRefusal; `Quest` had no line here before and read past the end.
+            static const char* const kWhy[] = {"",      "not opened",    "already here",
+                                               "dead",  "level too low", "short of zen",
+                                               "its quest not done"};
+            core::logf("window: travel to %s %s", sim::travelAt(asked.a).name,
+                       ok ? "paid" : kWhy[std::clamp(before.why, 0, 6)]);
+            // Another map is the mode's to raise; a floor of this one the realm has already set
+            // him down on, and its Climbed drew the landing (the user, 2026-10-02).
+            if (ok && sim::travelAt(asked.a).map != int32_t(realm_.tables()->map)) travelled_ = asked.a;
+            if (!ok) ui(Ui::Refused);
+            break;
+        }
+        case Kind::GoBack: break;
         case Kind::None: break;
     }
     answers_.push_back({asked.ticket, kind, said.b});

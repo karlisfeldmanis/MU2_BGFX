@@ -183,6 +183,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 }
                 break;
             case Then::Strike: if (one.ok()) hud_.strikeQuick(struck); break;
+            // The dialog shuts on a yes; Play has heard a no.
+            case Then::CloseQuest: if (one.ok()) play.closeQuest(); break;
+            case Then::Travel:
+                if (one.ok()) {
+                    travel_.hide();
+                    click();
+                }
+                break;
             case Then::Quiet: break;
         }
     }
@@ -350,9 +358,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             if (went) click();
             else refused();
         } else if (result.accept) {
-            if (play.acceptQuest(quest)) play.closeQuest();
+            expect(play.acceptQuest(quest), Then::CloseQuest);
         } else if (result.complete) {
-            if (play.completeQuest(quest, result.choice, result.path)) play.closeQuest();
+            expect(play.completeQuest(quest, result.choice, result.path), Then::CloseQuest);
         }
     }
     // A Town Portal Scroll read shuts the bag and the character window, silently: ReceiveTeleport's
@@ -490,9 +498,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     bool travelPressed = false;
     if (travel_.up() && play.isOpen()) {
         const int go = travel_.update(play, pointer, window.width(), window.height());
-        if (go >= 0 && play.travel(go)) {
-            travel_.hide();
-            click();
+        // The press is the list's whatever the answer: it was made on the list.
+        if (go >= 0) {
+            expect(play.travel(go), Then::Travel);
             travelPressed = true;
         }
     }

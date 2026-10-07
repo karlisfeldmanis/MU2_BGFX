@@ -256,6 +256,7 @@ public:
         sim::Held thing;              // a refinement's thing before the jewel
         bool worn = false;            // a discard's slot was worn
         bool box = false;             // a discard that is a Box of Luck or Kundun: no firework
+        int why = 0;                  // a trip's sim::TravelRefusal as it was asked, for the log
     };
     uint32_t send(sim::Command command, Asked asked);
     uint32_t send(sim::Command command);
@@ -267,6 +268,10 @@ public:
     const sim::Happening* lastDrank_ = nullptr;
     const sim::Happening* lastWarped_ = nullptr;
     const sim::Happening* lastCracked_ = nullptr;
+    // The hero's Levelled since the last answer, and the rises owed before them: a quest's levels
+    // are shown one by one, a kill's as one rise (the user, 2026-10-01).
+    int levelledSince_ = 0;
+    int levelsBefore_ = 0;
     uint32_t nextTicket_ = 1;
     bool mixMade_ = false;
     sim::Judged mixJudged_;
@@ -327,12 +332,12 @@ public:
     const std::string& mixWords() const { return mixWords_; }
     // A quest giver's dialog (sim/quests.h): accept, hand in with a choice, walk away. The wall
     // clock a repeating quest waits on is handed to the realm each frame (Realm::setWallClock).
-    bool acceptQuest(int quest);
-    bool completeQuest(int quest, int choice, sim::QuestPath path = sim::QuestPath::Melee);
+    uint32_t acceptQuest(int quest);
+    uint32_t completeQuest(int quest, int choice, sim::QuestPath path = sim::QuestPath::Melee);
     void closeQuest() { realm_.closeQuest(); }
     // The travel list (M, game/ui/travel.h): the realm checks the row and takes the Zen, and
     // the map change is the mode's, as a gate's is (`takeTravel`, app/modes/play_mode.cpp).
-    bool travel(int index);
+    uint32_t travel(int index);
     // The row paid for since the mode last asked, once, or -1.
     int takeTravel() {
         const int row = travelled_;

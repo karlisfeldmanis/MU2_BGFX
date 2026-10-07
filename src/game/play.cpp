@@ -182,6 +182,8 @@ void Play::update(double seconds) {
         sim::audit(realm_, findings_);
         const uint32_t heroId = realm_.hero().id;
         lastDrank_ = lastWarped_ = lastCracked_ = nullptr;
+        levelledSince_ = 0;
+        levelsBefore_ = levelsOwed_;
         for (const sim::Happening& happening : realm_.happenings()) {
             // The arena's own line first, so that what the log says happened on a tick is in
             // the log before anything the drawing decides to do about it. Nothing in an
@@ -351,6 +353,7 @@ void Play::update(double seconds) {
                 // all, and only a quest's are shown one by one (the user, 2026-10-01). A rise
                 // already owed covers this one too.
                 levelsOwed_ = std::max(levelsOwed_, 1);
+                ++levelledSince_;
             } else if (happening.what == sim::What::Rose) {
                 if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
                 // Risen on a map with no safe zone: owed Lorencia, as a Town Portal read there is.
