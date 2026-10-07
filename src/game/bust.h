@@ -13,7 +13,8 @@
 //   knight   angle (0, 0, -12), scale 6.05
 //   elf      angle (8, 0, 5), scale 9.1, nudged 4.8 aside -- once, where MU adds the nudge on
 //            every frame it draws and walks the elf out of shot
-//   actions  1, the greeting, on choosing the class; then 0, the idle, when it ends (:462)
+//   actions  1, the greeting, on choosing the class; MU then loops 0, the idle (:462) -- ours
+//            holds the greeting's last key instead
 //
 // Photographed on its own stage (gfx/stage_pass.cpp) through its own view, into a target the
 // window draws as a picture: the scene behind the window is dimmed, and the bust is not.
@@ -58,8 +59,6 @@ private:
     bool standing_ = false;
     sim::Kin kin_ = sim::Kin::DarkKnight;
     int idle_ = -1, greeting_ = -1;
-    bool greeting_now_ = false;
-    float greetingLeft_ = 0.0f;
     std::vector<float> scratch_;
     std::vector<gfx::Drawable> drawables_;
     bgfx::FrameBufferHandle target_ = BGFX_INVALID_HANDLE;

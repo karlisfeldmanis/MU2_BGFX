@@ -69,12 +69,12 @@ void Bust::show(sim::Kin kin) {
     figure_.stand(body, at, pose.turnDegrees * bx::kPi / 180.0f, body->scale * pose.scale, false);
     idle_ = body->library ? body->library->find(0) : -1;
     greeting_ = body->library ? body->library->find(1) : -1;
-    // SelectCreateCharacter: the greeting first.
+    // SelectCreateCharacter: the greeting, played through once and held on its last key. MU
+    // loops the idle after it (UpdateCreateCharacter); ours stays where the greeting ends (the
+    // user, 2026-10-07: "it has to remain on last motion without relooping"). The idle only
+    // stands a bust that has no greeting.
     if (greeting_ >= 0) {
-        figure_.play(greeting_, true, 0.0f);
-        greeting_now_ = true;
-        // Counted here: a Figure's clock wraps, so it never says a clip has ended.
-        greetingLeft_ = figure_.length();
+        figure_.play(greeting_, true, 0.0f, true);
     } else if (idle_ >= 0) {
         figure_.play(idle_, true, 0.0f);
     }
@@ -101,12 +101,6 @@ void Bust::resize(int width, int height) {
 
 void Bust::render(gfx::Renderer& renderer, float seconds, int width, int height) {
     if (!shown() || width < 8 || height < 8) return;
-    // UpdateCreateCharacter: when the greeting has played out, the idle.
-    greetingLeft_ -= seconds;
-    if (greeting_now_ && greetingLeft_ <= 0.0f) {
-        greeting_now_ = false;
-        if (idle_ >= 0) figure_.play(idle_, true);
-    }
     figure_.update(seconds);
     resize(width, height);
 
