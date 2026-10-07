@@ -4,6 +4,7 @@
 #include "content/tables.h"
 #include "core/log.h"
 #include "game/shine.h"
+#include "game/wings.h"
 #include "game/ui/browser_list.h"
 
 namespace mu::app {
@@ -93,6 +94,17 @@ bool BenchMode::open(Context& ctx) {
         if (!args.category.empty()) bench_.openCategory(args.category, ctx.textures);
         if (!args.pick.empty()) bench_.pick(args.pick, ctx.textures);
         core::logf("browser: %s", bench_.browseLine().c_str());
+        // The shine's sheets out of the showing, always: the Wings of Darkness draw their violet
+        // chrome off Chrome02 at +0 (game/shine.h kShineDarkness). Not fatal.
+        {
+            content::Showing showing;
+            std::string error;
+            if (content::loadShowing(ctx.paths.assets + "/cooked/showing/showing.mus", showing,
+                                     error)) {
+                game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
+                game::WingLook::lendSparks(showing, ctx.paths.assets, ctx.textures);
+            }
+        }
         // The refinement shine, on the subject's items: their rows out of the world's tables
         // and the two sheets out of the showing. Only when asked, since neither is otherwise
         // the viewer's business. Not fatal: the subject is still shown, at +0.

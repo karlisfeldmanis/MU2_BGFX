@@ -40,6 +40,10 @@ struct ShineLook {
 // +11 arrived (2026-10-05): a +10 quiver is drawn at 21 and read as excellent.
 constexpr int kShineExcellent = 32;
 constexpr int kShineSweep = 64;
+// And above the sweep's four, the Wings of Darkness's own pass (game/wings.cpp): MuMain draws
+// that wing twice, the second time RENDER_BRIGHT | RENDER_CHROME on Chrome02 at (0.8, 0.6, 1)
+// (ZzzObject.cpp:6970-6976). shaders/shine.sh's shineDarknessAdded.
+constexpr int kShineDarkness = 256;
 inline int shineLevelOf(int refine) { return refine % kShineExcellent; }
 inline int shineFlagsOf(int refine) { return refine - shineLevelOf(refine); }
 

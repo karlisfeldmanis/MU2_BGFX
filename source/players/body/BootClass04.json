@@ -1,0 +1,58 @@
+{
+  "item": "BootClass04",
+  "mu_name": "Magic Gladiator boots",
+  "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class04 is the Magic Gladiator, class 3.",
+  "part_note": "The boots to the knee. 136 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_special_01": "skin_special_01.png"
+  },
+  "sheet_from": "Data/Player/skin_special_01.OZJ (256x256), from MuMain. All five parts name this one sheet: the red hair, the face, and the navy outfit with its gold trim and the sun on the chest.",
+  "material_note": "Both boots are the black-and-gold column on the right: leather, as the Dark Knight's.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 68,
+      "area": 4633.7,
+      "along": [
+        -6.0,
+        30.6
+      ],
+      "mu_uv": [
+        0.652,
+        0.258,
+        0.988,
+        0.707
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.995,
+        0.899
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 68,
+      "area": 4542.8,
+      "along": [
+        -23.2,
+        20.5
+      ],
+      "mu_uv": [
+        0.652,
+        0.258,
+        0.988,
+        0.707
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.948,
+        0.811
+      ]
+    }
+  ]
+}

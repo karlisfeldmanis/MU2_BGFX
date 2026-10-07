@@ -1,0 +1,82 @@
+{
+  "item": "HelmClass04",
+  "mu_name": "Magic Gladiator head",
+  "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class04 is the Magic Gladiator, class 3.",
+  "part_note": "The head, its red hair and the high collar. 158 triangles. 37 vertices are bound to Bip01 Spine1 -- the hair and collar on the nape and shoulders, 1.54 to 1.70 m -- and 73 to Bip01 Head; MU's binding is kept, as it is the hair resting on his back (the Dark Knight's head is repaired because his seam was a ring at the neck, HelmClass02.json's rebind).",
+  "profile": "armour",
+  "sheets": {
+    "skin_special_01": "skin_special_01.png"
+  },
+  "sheet_from": "Data/Player/skin_special_01.OZJ (256x256), from MuMain. All five parts name this one sheet: the red hair, the face, and the navy outfit with its gold trim and the sun on the chest.",
+  "cull": false,
+  "cull_from": "As HelmClass02: MU's hair is flat single-sided fins, and culled they wink out as the head turns (HelmClass02.json's cull_note).",
+  "material_note": "Read off the sheet (the islands' mu_uv count V from its foot): 0 is the face, top right -- skin; 1 the red hair strip along the bottom -- hair; 2 the navy collar piece in the bottom right corner -- cloth.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 50,
+      "area": 749.5,
+      "along": [
+        -6.9,
+        11.7
+      ],
+      "mu_uv": [
+        0.528,
+        0.754,
+        0.994,
+        0.982
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.677,
+        0.335
+      ]
+    },
+    {
+      "island": 1,
+      "material": "hair",
+      "triangles": 82,
+      "area": 2005.0,
+      "along": [
+        -20.0,
+        13.8
+      ],
+      "mu_uv": [
+        0.496,
+        -0.002,
+        0.835,
+        0.187
+      ],
+      "bake_uv": [
+        0.007,
+        0.126,
+        0.803,
+        0.926
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 26,
+      "area": 1960.1,
+      "along": [
+        -16.8,
+        22.4
+      ],
+      "mu_uv": [
+        0.853,
+        0.003,
+        0.995,
+        0.24
+      ],
+      "bake_uv": [
+        0.131,
+        0.127,
+        0.992,
+        0.993
+      ]
+    }
+  ]
+}

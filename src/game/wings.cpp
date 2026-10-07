@@ -1,10 +1,12 @@
 #include "game/wings.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "content/placement.h"
 #include "core/maths.h"
+#include "game/shine.h"
 #include "sim/items.h"
 
 namespace mu::game {
@@ -33,15 +35,44 @@ constexpr float kHeavenTone = 0.82f;
 constexpr float kHeavenOpacity = 0.75f;
 constexpr WingInward kInward[] = {{"Wing04", 0.18f}, {"Wing05", 0.065f}, {"Wing06", 0.08f}};
 
+// The Wings of Darkness's sparks (ZzzObject.cpp:9981-10017). MuMain, every frame, for i 0-4: a
+// BITMAP_FLARE_BLUE at bone 22 - i and at bone 7 - i, Light (0.6, 0.3, 0.8), Scale/28 big, Scale
+// sin(WorldTime * 0.004) * 3 + 23 (20 to 26); and a BITMAP_JOINT_THUNDER from bone 30 - i, and
+// 11 + i, to it, with a BITMAP_JOINT_SPIRIT back. By name here, as the cook keeps MU's names
+// and not its order: 22-18 are Bone17, 18, 19, 20, 33; 30-26 Bone14, 13, 12, 11, 32; 7-3
+// Bone30, 29, 34, 27, 26; 11-15 Bone03-07.
+constexpr const char* kRibs[10][2] = {
+    {"Bone17", "Bone14"}, {"Bone18", "Bone13"}, {"Bone19", "Bone12"}, {"Bone20", "Bone11"},
+    {"Bone33", "Bone32"}, {"Bone30", "Bone03"}, {"Bone29", "Bone04"}, {"Bone34", "Bone05"},
+    {"Bone27", "Bone06"}, {"Bone26", "Bone07"}};
+constexpr float kRibLight[3] = {0.6f, 0.3f, 0.8f};
+// Both joints are sub-types that live one frame and lay ten tails in a straight line from where
+// they start to their target (thunder 14, ZzzEffectJoint.cpp:1239-1271; spirit 4, :688-720),
+// each at Light (0.3, 0.3, 1) -- blue, where the flare is violet -- and Scale wide: the thunder
+// Scale, the spirit Scale + 5, both added: the spirit's RENDER_TYPE_ALPHA_BLEND is MU's
+// EnableAlphaBlend, glBlendFunc(GL_ONE, GL_ONE) (ZzzOpenglUtil.cpp:402) -- drawn with true alpha
+// its JPEG, which has none, laid solid blue bands over the shards.
+constexpr float kBoltLight[3] = {0.3f, 0.3f, 1.0f};
+constexpr float kSpiritWider = 5.0f;  // MU's units
+// Ours: a flare's half-width at MU's Scale 20, in metres, and the light all three are added at,
+// faint as the monster auras are kept.
+constexpr float kRibFlare = 0.10f;
+constexpr float kRibGlow = 0.7f;
+constexpr float kUnit = 0.01f;  // metres in one of MU's units
+bgfx::TextureHandle gFlare = BGFX_INVALID_HANDLE;
+bgfx::TextureHandle gThunder = BGFX_INVALID_HANDLE;
+bgfx::TextureHandle gSpirit = BGFX_INVALID_HANDLE;
+
 }  // namespace
 
 const FigureBody* wingBody(const Figures& figures, int group, int number) {
     if (group != 12) return nullptr;
     if (number >= 0 && number <= 2) return figures.body("Wing0" + std::to_string(number + 1));
-    // And the 2nd wings, Wing04-06 (ZzzOpenData.cpp:1023, `Wing`, 4 + i), at our numbers.
+    // And the 2nd wings, Wing04-07 (ZzzOpenData.cpp:1023, `Wing`, 4 + i), at our numbers.
     if (number == sim::kSpiritsNumber) return figures.body("Wing04");
     if (number == sim::kSoulNumber) return figures.body("Wing05");
     if (number == sim::kDragonNumber) return figures.body("Wing06");
+    if (number == sim::kDarknessNumber) return figures.body("Wing07");
     return nullptr;
 }
 
@@ -66,11 +97,114 @@ void WingLook::wear(const FigureBody* wing, const Figure& bearer) {
         }
     }
     if (wing_->idleClip >= 0) figure_.play(wing_->idleClip, true, 0.0f);
+    ribs_.clear();
+    if (wing_->name == "Wing07" && wing_->skeletonMesh) {
+        const std::vector<content::Bone>& bones = wing_->skeletonMesh->bones();
+        const auto named = [&](const char* name) {
+            for (size_t i = 0; i < bones.size(); ++i) {
+                if (bones[i].name == name) return int(i);
+            }
+            return -1;
+        };
+        for (const auto& rib : kRibs) {
+            const int centre = named(rib[0]), end = named(rib[1]);
+            if (centre >= 0 && end >= 0) ribs_.push_back({centre, end});
+        }
+    }
 }
 
-void WingLook::update(float seconds, bool flying) {
+void WingLook::lendSparks(const content::Showing& table, const std::string& assetDir,
+                          content::Textures& textures) {
+    const auto take = [&](const char* name) -> bgfx::TextureHandle {
+        const content::EffectSheet* sheet = table.effect(name);
+        return sheet ? textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo)
+                     : bgfx::TextureHandle BGFX_INVALID_HANDLE;
+    };
+    gFlare = take("flare_blue");
+    gThunder = take("joint_thunder");
+    gSpirit = take("joint_spirit");
+}
+
+void WingLook::sparks(gfx::Effects& effects) {
+    if (ribs_.empty() || !posed_ || !bgfx::isValid(gFlare) || !bgfx::isValid(gThunder)) return;
+    // MU's Scale: 20 to 26 units on sin(WorldTime * 0.004).
+    const float scale = std::sin(clock_ * 4.0f) * 3.0f + 23.0f;
+    const float origin[3] = {0.0f, 0.0f, 0.0f};
+    // A joint's tail is a cross, a band flat across its run and one upright (CreateTailAxis):
+    // both drawn here, a straight strip from `from` to `to`, `width` across.
+    const auto strip = [&](const float* from, const float* to, float width,
+                           bgfx::TextureHandle sheet, gfx::Blend blend, const float* light) {
+        float run[3] = {to[0] - from[0], to[1] - from[1], to[2] - from[2]};
+        const float length = std::sqrt(run[0] * run[0] + run[1] * run[1] + run[2] * run[2]);
+        if (length < 1e-4f || !bgfx::isValid(sheet)) return;
+        for (float& r : run) r /= length;
+        float flat[3] = {run[2], 0.0f, -run[0]};
+        const float f = std::sqrt(flat[0] * flat[0] + flat[2] * flat[2]);
+        if (f < 1e-4f) {
+            flat[0] = 1.0f;
+            flat[2] = 0.0f;
+        } else {
+            flat[0] /= f;
+            flat[2] /= f;
+        }
+        const float up[3] = {run[1] * flat[2] - run[2] * flat[1],
+                             run[2] * flat[0] - run[0] * flat[2],
+                             run[0] * flat[1] - run[1] * flat[0]};
+        const float half = width * 0.5f;
+        for (const float* across : {static_cast<const float*>(flat), up}) {
+            gfx::Sprite band;
+            band.placed = true;
+            band.sheet = sheet;
+            band.blend = blend;
+            for (int k = 0; k < 3; ++k) {
+                band.colour[k] = light[k] * kRibGlow;
+                band.corner[0][k] = from[k] - across[k] * half;
+                band.corner[1][k] = from[k] + across[k] * half;
+                band.corner[2][k] = to[k] + across[k] * half;
+                band.corner[3][k] = to[k] - across[k] * half;
+                band.position[k] = (from[k] + to[k]) * 0.5f;
+            }
+            band.colour[3] = 1.0f;
+            const float uv[4][2] = {{0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}};
+            for (int c = 0; c < 4; ++c) {
+                band.cornerUv[c][0] = uv[c][0];
+                band.cornerUv[c][1] = uv[c][1];
+            }
+            effects.add(band);
+        }
+    };
+    for (const auto& [centreBone, endBone] : ribs_) {
+        float centre[3], end[3];
+        if (!figure_.pointOn(centreBone, origin, centre) || !figure_.pointOn(endBone, origin, end)) {
+            continue;
+        }
+        // The thunder from the rib's far bone to its centre, the spirit back.
+        strip(end, centre, scale * kUnit, gThunder, gfx::Blend::Additive, kBoltLight);
+        strip(centre, end, (scale + kSpiritWider) * kUnit, gSpirit, gfx::Blend::Additive, kBoltLight);
+        gfx::Sprite flare;
+        for (int k = 0; k < 3; ++k) {
+            flare.position[k] = centre[k];
+            flare.colour[k] = kRibLight[k] * kRibGlow;
+        }
+        flare.colour[3] = 1.0f;
+        flare.halfWidth = flare.halfHeight = kRibFlare * scale / 20.0f;
+        flare.sheet = gFlare;
+        flare.blend = gfx::Blend::Additive;
+        effects.add(flare);
+    }
+}
+
+void WingLook::update(float seconds, bool flying, bool safe) {
     if (!wing_) return;
+    // MuMain sets the Wings of Darkness's action to 1 while he is in a safe zone, the one wing
+    // with a second action; every other wing has the flap alone and finds no 1.
+    if (wing_->library && wing_->idleClip >= 0) {
+        const int rest = wing_->library->find(1);
+        const int wanted = safe && rest >= 0 ? rest : wing_->idleClip;
+        if (figure_.clip() != wanted) figure_.play(wanted, true, 0.2f);
+    }
     figure_.update(seconds, flying ? kWingFlyRate : kWingRestRate);
+    clock_ += seconds;
 }
 
 void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector<float>& scratch,
@@ -103,11 +237,15 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     // once self-lit -- the user, 2026-10-05: 'tone them down slightly'.
     const bool heaven = wing_->name == "Wing02";
     const float tone = heaven ? kHeavenTone : 1.0f;
+    // And the Wings of Darkness drawn twice, the second a violet chrome (game/shine.h).
+    const int darkness = wing_->name == "Wing07" ? kShineDarkness : 0;
     for (size_t i = from; i < out.size(); ++i) {
         out[i].fade = fade * (heaven ? kHeavenOpacity : 1.0f);
         out[i].light[3] = 2.0f;
         for (int k = 0; k < 3; ++k) out[i].light[k] = tone;
+        out[i].refine += darkness;
     }
+    sparks(renderer.effects());
 }
 
 int WingLook::tips(float out[][3], int most) const {

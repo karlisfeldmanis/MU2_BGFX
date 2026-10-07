@@ -70,20 +70,27 @@ damage (`0b00` / `0b10`), the 2nd wings' damage table. The model is MuMain's `MO
 1. **The class:** `Kin::MagicGladiator` (sim/rules.h), the starting points, 7 points a level,
    and his health, mana and damage rows. There are 151 `Kin::` uses in 27 files to walk, and the
    lobby's `kClasses[3]`.
-2. **Creation gate:** the lobby offers MG only when a saved hero has reached 220.
+2. **Creation gate:** open from the start for now, so he is easy to test (the user, 2026-10-07);
+   MU's 220 gate (the lobby offers MG only when a saved hero has reached 220) comes later.
 3. **Skills and gear:** the skill list above (no Teleport, no Soul Barrier); the item class
    masks gain him, Heaven and Satan wings included.
-4. **The figure:** the body and its default look (MuMain's MG class model), along with the
-   wardrobe cook.
+4. **The figure:** done 2026-10-07 for the bare body (the user: 'we need to build MG naked
+   skin character default lvl 1'): `source/players/MagicGladiatorBare.json` on HelmClass04,
+   ArmorClass04, PantClass04, GloveClass04 and BootClass04 (MODEL_BODY_* + SkinIndex, class 3),
+   all on skin_special_01 -- red hair, the navy tunic with the gold sun, the high collar.
+   Materials: face skin, hair hair, the outfit cloth, hands and boots leather as the knight's.
+   The head's 37 nape vertices stay on Spine1, MU's binding (the hair on his back). On the
+   bench's People tab as "Magic Gladiator, no armour".
 5. **Runes:** the decided rule above, along with `sim_test` rows that MG can set Meteor but not
    Hellfire.
-6. **Wings of Darkness:** cook `Wing07.bmd` as `Wing06` was cooked (docs/second-wings.md),
-   pick our group 12 number, add the row to every world's tables, and make it what the 2nd wing
-   mix gives him.
+6. **Wings of Darkness:** cooked 2026-10-07 as ours 12/22, class `gladiator` (docs/second-wings.md's
+   last section). Still to do once he exists: the 2nd wing mix's answer for him
+   (sim/machine.cpp's class switch) and the `isSecond` gate in `sim::fits`, which he must pass
+   without a class change. MU's violet chrome pass (game/shine.h kShineDarkness, Chrome02) and
+   rib sparks (game/wings.cpp) are in, and its second action on a safe tile.
 7. **His set**, if wanted: Storm Crow (no helm), asked before building.
 
 ## Open
 
 - Whether the Chaos Machine's 2nd wing mix stays the only way to get Darkness for him, as it is
   for the others.
-- Whether the creation stays tied to level 220, or is open from the start.

@@ -317,7 +317,7 @@ std::string excellentLine(const content::ItemRow& row, int bit) {
 bool firstWing(const content::ItemRow& row) { return row.group == 12 && row.number <= 2; }
 bool secondWing(const content::ItemRow& row) {
     return row.group == 12 && (row.number == kSpiritsNumber || row.number == kSoulNumber ||
-                               row.number == kDragonNumber);
+                               row.number == kDragonNumber || row.number == kDarknessNumber);
 }
 bool lochsFeather(const content::ItemRow& row) { return row.group == 13 && row.number == 14; }
 bool anyWing(const content::ItemRow& row) { return firstWing(row) || secondWing(row); }
@@ -330,6 +330,8 @@ WingOption wingOption(const content::ItemRow& row, uint8_t bits) {
         case kSpiritsNumber: return kind ? WingOption::Regeneration : WingOption::Damage;
         case kSoulNumber: return kind ? WingOption::Wizardry : WingOption::Regeneration;
         case kDragonNumber: return kind ? WingOption::Damage : WingOption::Regeneration;
+        // Darkness: wizardry or damage, never regeneration (VersionSeasonSix Wings.cs:83).
+        case kDarknessNumber: return kind ? WingOption::Damage : WingOption::Wizardry;
         default: return WingOption::Damage;
     }
 }

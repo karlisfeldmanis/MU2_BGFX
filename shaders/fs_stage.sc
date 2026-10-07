@@ -107,6 +107,7 @@ void main()
 	colour += shineAdded(plus, normalize(v_normal), v_refine.yzw);
 	colour += shineExcellentAdded(shineExcellent(v_refine.x), normalize(v_normal));
 	colour += shineSweepAdded(plus, shineSweep(v_refine.x), normalize(v_normal));
+	colour += shineDarknessAdded(shineDarkness(v_refine.x), normalize(v_normal));
 
 	gl_FragColor = vec4(toSrgb(colour), 1.0);
 }

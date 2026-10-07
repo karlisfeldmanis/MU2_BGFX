@@ -1,0 +1,36 @@
+{
+  "item": "PantClass04",
+  "mu_name": "Magic Gladiator legs",
+  "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class04 is the Magic Gladiator, class 3.",
+  "part_note": "The navy trousers and the tunic's skirt. 92 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_special_01": "skin_special_01.png"
+  },
+  "sheet_from": "Data/Player/skin_special_01.OZJ (256x256), from MuMain. All five parts name this one sheet: the red hair, the face, and the navy outfit with its gold trim and the sun on the chest.",
+  "material_note": "One island, the skirt panels and the dark trousers in the sheet's bottom left. Cloth.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 92,
+      "area": 7329.1,
+      "along": [
+        -15.5,
+        20.2
+      ],
+      "mu_uv": [
+        0.005,
+        0.003,
+        0.498,
+        0.508
+      ],
+      "bake_uv": [
+        0.005,
+        0.003,
+        0.498,
+        0.508
+      ]
+    }
+  ]
+}

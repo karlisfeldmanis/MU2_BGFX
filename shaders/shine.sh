@@ -43,7 +43,13 @@ float shinePlus(float refine)
 }
 float shineSweep(float refine)
 {
-	return floor(floor(refine + 0.5) / 64.0);
+	float sweeps = floor(floor(refine + 0.5) / 64.0);
+	return sweeps - 4.0 * floor(sweeps / 4.0);
+}
+// The Wings of Darkness's flag, 256 above the sweep's four (game/shine.h kShineDarkness).
+float shineDarkness(float refine)
+{
+	return floor(refine + 0.5) >= 256.0 ? 1.0 : 0.0;
 }
 
 // What an excellent thing adds over everything else: RenderPartObjectBodyColor2 with
@@ -119,6 +125,22 @@ vec3 shineSweepAdded(float plus, float sweep, vec3 n)
 	          : sweep < 2.5 ? vec3(0.0, 0.45, 0.9)
 	          : vec3_splat(1.0);
 	return sheet * tint * u_refine.z * (1.0 + u_refineStar.y);
+}
+
+// The Wings of Darkness's second pass: MuMain draws the wing again RENDER_BRIGHT | RENDER_CHROME
+// with BITMAP_CHROME + 1 -- Chrome02, added -- at BodyLight (0.8, 0.6, 1) (ZzzObject.cpp:
+// 6970-6976): RENDER_CHROME's UVs, the +7 chrome's (shineAdded), scrolling on the same wave, so
+// a violet sheen slides over the shards. Ours, its strength: not the excellent pass's tuned
+// fraction -- on an excellent piece the pass is a glint over its own art, here it is the wing's
+// colour, and at the excellent's 0.15 it added under 0.07 and the shards stood grey (2026-10-07,
+// the user: 'wings look not finished') -- and not MU's full one either, which added in linear
+// light turned every shard flat cyan. This much of it. Nothing when Chrome02 is missing.
+vec3 shineDarknessAdded(float dark, vec3 n)
+{
+	if (dark < 0.5 || u_refineStar.w <= 0.0) return vec3_splat(0.0);
+	float wave = u_refine.y;
+	vec2 uv = vec2(n.y * 0.5 + wave, -n.z * 0.5 + wave * 2.0);
+	return texture2DLod(s_chrome2, uv, 0.0).rgb * vec3(0.8, 0.6, 1.0) * 0.4;
 }
 
 // How much of a glow card a refined item's added passes may cover: where the card itself glows,

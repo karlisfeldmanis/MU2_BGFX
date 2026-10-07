@@ -2412,7 +2412,9 @@ def cook_tables(world, out_dir):
     # grids -- which is where this looked first, and a missing gate is not an error there, so a
     # dead character quietly stood up where he fell instead of in town.
     # Every weapon and shield with a combat row, in name order so the table is stable.
-    kClass = {"wizard": 1, "elf": 2, "knight": 4}
+    # "gladiator" is the Magic Gladiator's bit, sim::Kin 3, ahead of his class (docs/mg-port.md):
+    # an unknown name would be 0, which is every class.
+    kClass = {"wizard": 1, "elf": 2, "knight": 4, "gladiator": 8}
     # Two-handedness, a bow and a crossbow off the stance the cook already reads from the item's
     # own row. The client's ladder tests MU's model constants; the stance is what MU2's pipeline
     # wrote them down as, and it is the same fact by another name.

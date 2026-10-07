@@ -16,8 +16,12 @@
 // One drawer for the game's hero (Play) and the wardrobe's Wings tab (ModelBench).
 #pragma once
 
+#include <string>
+#include <utility>
 #include <vector>
 
+#include "content/showing.h"
+#include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "gfx/renderer.h"
@@ -33,7 +37,9 @@ public:
     // The wing's own body (Wing01..03 out of a figures table), or null for none.
     void wear(const FigureBody* wing, const Figure& bearer);
     const FigureBody* worn() const { return wing_; }
-    void update(float seconds, bool flying);
+    // `safe`: its bearer stands in a safe zone, where the Wings of Darkness take their second
+    // action instead of the flap (ZzzCharacter.cpp:6973-6976).
+    void update(float seconds, bool flying, bool safe = false);
     // After the bearer is posed this frame: the wing takes his Bone05 as it is now.
     void gather(gfx::Renderer& renderer, const Figure& bearer, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters,
@@ -42,10 +48,21 @@ public:
     // at most `most`, spread along them. 0 before its first pose or with none worn.
     int tips(float out[][3], int most) const;
 
+    // The Wings of Darkness's sparks' two sheets, BITMAP_FLARE_BLUE and BITMAP_JOINT_THUNDER, out
+    // of the showing; once, beside the shine (game/shine.h lendShine). Without them no sparks.
+    static void lendSparks(const content::Showing& table, const std::string& assetDir,
+                           content::Textures& textures);
+
 private:
+    // The Wings of Darkness's sparks (ZzzObject.cpp:9981-10017), laid after the pose.
+    void sparks(gfx::Effects& effects);
+
     const FigureBody* wing_ = nullptr;
     Figure figure_;
     std::vector<int> tipBones_;  // the chains' last bones, chosen on wear
+    // The Wings of Darkness's ten ribs: the bone a flare sits on and the one its bolt runs to.
+    std::vector<std::pair<int, int>> ribs_;
+    float clock_ = 0.0f;
     bool posed_ = false;
 };
 

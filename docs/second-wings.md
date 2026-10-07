@@ -3,7 +3,8 @@
 Started 2026-10-04. The user: "lets work on second wings, which is for second class". Wings of
 Spirits, Soul and Dragon, MU's group 12 numbers 3-5 (ours 13, 14 and 16, below), slot 7, one
 each for the Muse Elf, the Soul Master and the Blade Knight. The Magic Gladiator's Wings of
-Darkness (MU's 12/6) is not in this game.
+Darkness (MU's 12/6) is cooked as ours 12/22 (2026-10-07, below) and worn by nobody until his
+class is in (docs/mg-port.md).
 The 1st wings are docs/wings.md.
 
 Sources: WebZen 1.00.93 (github ptr0x-real/Mu-GS-Webzen-MC-10093), base 0.97d branch unless a
@@ -88,3 +89,40 @@ Drop level 150, durability 200, never dropped (OpenMU VersionSeasonSix Wings.cs,
    and the card names the second class ("Blade Knight"), red until he is one.
 4. **Draw** -- done 2026-10-04: on Bone05 as the 1st wings, the pulse, Dragon's 16
    (`sim::kFastFlyFactor`). The bench's Wings tab has all six.
+
+## The Wings of Darkness (2026-10-07)
+
+The user: 'cook MG 2nd wings'. Wing07.bmd (MODEL_WING + 6) on NDEE.OZT, a 64x32 cutout, drawn
+tested and blended as Satan's; 31 bones, the 8-key flap. The row is VersionSeasonSix
+Wings.cs:83 -- 4x2, defence 40, level 215, drop level 150 -- at **ours 12/22**
+(`sim::kDarknessNumber`), its option wizardry or damage by the kind bit (`sim::wingOption`),
+and its class `gladiator`, a bit cooked ahead of the class (tools/cook.py's kClass, Kin 3), so
+no class here may wear it: an unknown name would have cooked to 0, which is every class.
+Figures, the wardrobe (7 wings) and every world's tables (269 items) cooked. Seen on the bench's
+Wings tab.
+
+**Drawn as MU draws it** (the user, 2026-10-07: 'wings look not finished'). Without the next two
+it was grey shards.
+- **The violet pass**: MU draws it again RENDER_BRIGHT | RENDER_CHROME on Chrome02 at
+  (0.8, 0.6, 1) (ZzzObject.cpp:6970-6976). Here `game::kShineDarkness` (256, above the shine's
+  flags) on the wing's drawables, and shaders/shine.sh's `shineDarknessAdded`: the +7 chrome's
+  scrolling UVs on Chrome02, at **0.4** of MU's strength -- at the excellent pass's 0.15 it was
+  invisible, at MU's full 1.0 added in linear light every shard was flat cyan. The bench now
+  lends the shine's sheets always, not only under --plus, and keeps the flag over a --plus.
+- **The sparks** (:9981-10017): `WingLook::sparks`, every frame for ten ribs, a flare_blue at the
+  rib's centre bone, Light (0.6, 0.3, 0.8), and two straight strips out to its partner bone, as
+  MU's two joints are -- thunder 14 Scale wide and spirit 4 Scale + 5 wide, each one frame, ten
+  tails in a line, Light (0.3, 0.3, 1) (ZzzEffectJoint.cpp:1239-1271, 688-720). Scale is MU's 20
+  to 26 on sin(t * 0.004), in units. Both added: the spirit's RENDER_TYPE_ALPHA_BLEND is MU's
+  EnableAlphaBlend, glBlendFunc(GL_ONE, GL_ONE) (ZzzOpenglUtil.cpp:402); drawn with true alpha its
+  JPEG laid solid blue bands over the shards. Bones by name, as the cook keeps MU's names:
+  Bone17-20 and 33 to Bone14-11 and 32, Bone30, 29, 34, 27, 26 to Bone03-07. Ours: the flare's
+  10 cm and 0.7 of the light on all three. Sheets lent by `WingLook::lendSparks` beside the
+  shine, in play and on the bench.
+- **The safe-zone pose**: MuMain plays its action 1 (5 keys) instead of the flap while he stands
+  in a safe zone (ZzzCharacter.cpp:6973-6976), Darkness alone of the wings; the rig carries both
+  actions and `WingLook::update`'s `safe` picks it.
+- **Its black ends faded** (ours; the user, 2026-10-07: 'work on transparency for black parts on
+  wings'): NDEE's gradient runs to near-black, which MU draws solid; ndee.png's alpha is faded by
+  luminance, nothing under 12, full from 70, so the shards' dark ends vanish into the violet
+  joints behind them. Wing07.json's sheet_dark_note.

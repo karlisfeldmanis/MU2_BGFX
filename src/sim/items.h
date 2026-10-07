@@ -155,9 +155,11 @@ constexpr double kWingWearSteps = 565.0;
 // Wings of Spirits, Soul and Dragon: the Muse Elf's, the Soul Master's and the Blade Knight's
 // (OpenMU VersionSeasonSix Wings.cs, class level 2). MU's 12/3, 12/4 and 12/5, which this project
 // gave the knight's orbs (OrbDefense and its fellows, 12/3-6), so **ours** are 12/13, 12/14 and
-// 12/16, numbers 0.75 leaves empty (the user, 2026-10-04: 'Move the wings'). The Magic
-// Gladiator's Darkness (MU's 12/6) is not in this game.
-constexpr int kSpiritsNumber = 13, kSoulNumber = 14, kDragonNumber = 16;
+// 12/16, numbers 0.75 leaves empty (the user, 2026-10-04: 'Move the wings'). And the Magic
+// Gladiator's Wings of Darkness, MU's 12/6, **ours 12/22** (the user, 2026-10-07: 'cook MG 2nd
+// wings'): his alone, worn without a class change, so nobody wears it until his class is in
+// (docs/mg-port.md).
+constexpr int kSpiritsNumber = 13, kSoulNumber = 14, kDragonNumber = 16, kDarknessNumber = 22;
 bool secondWing(const content::ItemRow& row);
 // Either level: what slot 7 takes and every rule below reads.
 bool anyWing(const content::ItemRow& row);

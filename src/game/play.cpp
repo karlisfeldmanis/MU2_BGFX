@@ -2387,7 +2387,9 @@ void Play::update(double seconds) {
             const int beat = hero->figure.clip();
             const bool beating = bearer && beat >= 0 &&
                                  (beat == bearer->flyClip || beat == bearer->flyCrossbowClip);
-            wing_.update(float(seconds), beating);
+            // And on a safe tile the Wings of Darkness take their second action (game/wings.h).
+            wing_.update(float(seconds), beating,
+                         tables_.grid.safe(realm_.hero().column(), realm_.hero().row()));
             int mount = -1;
             const sim::Held& ridden = realm_.satchel()[sim::kMount];
             if (!ridden.empty() && size_t(ridden.item) < tables_.items.size()) {

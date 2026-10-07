@@ -1,0 +1,18 @@
+{
+  "item": "MagicGladiatorBare",
+  "mu_name": "Magic Gladiator, no armour",
+  "kind": "character",
+  "trade": "gladiator",
+  "trade_from": "OpenMU's ClassMagicGladiator: 26 strength, 26 agility, 26 vitality, 26 energy at level one, 7 points a level (docs/mg-port.md). Nothing reads this field yet; his class is the port's step 1.",
+  "parts": [
+    "HelmClass04",
+    "ArmorClass04",
+    "PantClass04",
+    "GloveClass04",
+    "BootClass04"
+  ],
+  "note": "The Magic Gladiator with nothing equipped, built as the other bare bodies are: MU has no naked body model, so what a class wears with no armour is a set of five parts of its own, skinned to the same rig and loaded at the origin. The user, 2026-10-07: 'we need to build MG naked skin character default lvl 1'.",
+  "parts_from": "ZzzOpenData.cpp:115-120 and ZzzCharacter.cpp:12124-12346: MODEL_BODY_* + SkinIndex, Class04 for class 3.",
+  "hands": "Empty, as the other bare bodies: this entry is to show the body.",
+  "rig": "player.bmd, the same rig the other classes are skinned to."
+}

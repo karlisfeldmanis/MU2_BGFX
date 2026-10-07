@@ -17,6 +17,7 @@
 #include "core/log.h"
 #include "game/roster.h"
 #include "game/shine.h"
+#include "game/wings.h"
 #include "game/world/maps.h"
 #include "gfx/views.h"
 #include "sim/gates.h"
@@ -427,6 +428,9 @@ bool PlayMode::open(Context& ctx) {
                 // The refinement shine's two sheets: Chrome01 for +7, Shiny01 for +9.
                 game::lendShine(world_.played().showing().table(), assets, ctx.textures,
                                 ctx.renderer);
+                // And the Wings of Darkness's sparks' two sheets (game/wings.h).
+                game::WingLook::lendSparks(world_.played().showing().table(), assets,
+                                           ctx.textures);
             }
             // Hanzo's coals, into the lamps' static set before it goes to the renderer below.
             if (args.lampsOn) world_.played().lightForges(world_.lamps());
