@@ -367,6 +367,10 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                 bannerHold_ = 2.2f;
                 bannerAge_ = 0.0f;
                 for (int s = 0; s < sim::kQuestSteps; ++s) counts_[s] = float(now.counts[s]);
+                // And followed from the moment it is taken, as a kill for it would: the Golden
+                // Archer's Catacombs taken in Lorencia, whose hunt is not on this map, lost to an
+                // earlier live quest such as Devin's (the user, 2026-10-07).
+                pinned_ = q;
             } else if (now.state == sim::QuestState::Ready && was.state == sim::QuestState::Active &&
                        !sim::questElsewhere(row)) {
                 // Not for one met at its receiver: her window is already open on its hand-in.
