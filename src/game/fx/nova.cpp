@@ -328,8 +328,9 @@ void Nova::gather(gfx::Effects& effects) const {
         for (int i = 0; i < force.tails; ++i) {
             for (int k = 0; k < 3; ++k) points[i + 1][k] = force.tail[i][k];
         }
-        ribbon(effects, points, force.tails + 1, kForceWidth * 0.5f, nullptr, force.light,
-               streak_);
+        const float dimmed[3] = {force.light[0] * kForceDim, force.light[1] * kForceDim,
+                                 force.light[2] * kForceDim};
+        ribbon(effects, points, force.tails + 1, kForceWidth * 0.5f, nullptr, dimmed, streak_);
         gfx::Sprite head;
         for (int k = 0; k < 3; ++k) head.position[k] = force.at[k];
         head.halfWidth = head.halfHeight = 0.25f;
@@ -351,7 +352,7 @@ void Nova::gather(gfx::Effects& effects) const {
             sprite.halfWidth = 0.32f * scale * 0.5f;
             sprite.halfHeight = 0.64f * scale * 0.5f;
             sprite.spin = float((joint.dice >> 12) % 360u) * kDegrees;
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = grey;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = grey * kShinyDim;
             sprite.sheet = shiny_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
@@ -366,9 +367,12 @@ void Nova::gather(gfx::Effects& effects) const {
         const float across[3] = {-joint.way[2], 0.0f, joint.way[0]};
         const float flat = std::sqrt(across[0] * across[0] + across[2] * across[2]);
         const float side[3] = {across[0] / flat, 0.0f, across[2] / flat};
-        const float colour[3] = {joint.tint[0] * kSpokeDim, joint.tint[1] * kSpokeDim,
-                                 joint.tint[2] * kSpokeDim};
-        ribbon(effects, points, joint.tails + 1, kWidth * 0.5f, side, colour, joint_);
+        // Faded out over its last frames, and the ring over its whole life (ours).
+        const float fade = joint.ring ? kRingDim * joint.left / kLife
+                                      : kSpokeDim * std::min(1.0f, joint.left / kFadeFrames);
+        const float colour[3] = {joint.tint[0] * fade, joint.tint[1] * fade, joint.tint[2] * fade};
+        const float half = kWidth * 0.5f * (joint.ring ? 1.0f : kSpokeWidth);
+        ribbon(effects, points, joint.tails + 1, half, side, colour, joint_);
     }
 }
 

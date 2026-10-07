@@ -31,11 +31,15 @@
 // Ours:
 //   * the charge's lights a bone are capped at kLightsPerBone a frame, not `m_bySkillCount + 1`,
 //     and dimmed to kLightDim: MU's sixteen stacked by stage seven read as a white figure;
-//   * of the thirty-six shinies a burst frame lays, one in kShinyEvery is drawn: stacked whole at
-//     one point they are one white blot;
+//   * of the thirty-six shinies a burst frame lays, one in kShinyEvery is drawn, at kShinyDim:
+//     stacked whole at one point they are one white blot;
 //   * the force's head lights at kForceHead of their light;
-//   * the burst's ribbons and the ring at kSpokeDim of MU's blue: every one leaves the same point
-//     and thirty-six a frame stacked there burnt white;
+//   * the burst's ribbons at kSpokeDim of MU's blue and kSpokeWidth of its width, the ring at
+//     kRingDim: every one leaves the same point and thirty-six a frame stacked there burnt white
+//     (the user, 2026-10-07: 'more polisded and more subtle');
+//   * both fade over their last kFadeFrames, and the ring over its whole life, where MU's hold
+//     their light and vanish;
+//   * the force at kForceDim of its light;
 //   * sprites are a quarter of MU's Scale for their half-width, as fx/held_lights draws
 //     BITMAP_LIGHT (MU's is Width * Scale whole, flare01 being 64 wide: 0.32 a Scale).
 // Not the Golden Dragon's: Nova is not a fire spell (the user, 2026-10-07: 'dont use nova to
@@ -95,12 +99,16 @@ private:
     static constexpr int kPerFrame = 36;
     static constexpr int kMost = 900;
     static constexpr int kShinyEvery = 9;              // ours
-    static constexpr float kSpokeDim = 0.5f;           // ours
+    static constexpr float kShinyDim = 0.6f;           // ours
+    static constexpr float kSpokeDim = 0.45f;          // ours
+    static constexpr float kSpokeWidth = 0.75f;        // ours, of MU's 60
+    static constexpr float kRingDim = 0.4f;            // ours
+    static constexpr float kFadeFrames = 6.0f;         // ours
     // The charge's lights: BITMAP_LIGHT sub-type 6.
     static constexpr float kLightLife = 2.0f;
     static constexpr float kLightRise = 2.5f * kUnit;
     static constexpr int kLightsPerBone = 2;           // ours
-    static constexpr float kLightDim = 0.6f;           // ours
+    static constexpr float kLightDim = 0.45f;          // ours
     static constexpr int kChargeMost = 160;
     // The force: BITMAP_JOINT_HEALING sub-type 8.
     static constexpr int kForcePerFrame = 3;
@@ -111,7 +119,8 @@ private:
     static constexpr float kForceLife = 17.0f;
     static constexpr float kForceWidth = 10.0f * kUnit;
     static constexpr int kForceTails = 2;              // MaxTails 3
-    static constexpr float kForceHead = 0.5f;          // ours
+    static constexpr float kForceHead = 0.3f;          // ours
+    static constexpr float kForceDim = 0.45f;          // ours
     static constexpr int kForceMost = 64;
     // Death's sparks: BITMAP_LIGHT sub-type 5, fifty frames, light 0.9 and size 0.95 a frame.
     static constexpr float kSparkLife = 50.0f;
