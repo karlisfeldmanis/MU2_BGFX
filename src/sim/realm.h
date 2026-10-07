@@ -638,6 +638,15 @@ struct HeroRecord {
     int32_t summonHealth = 0;
 };
 
+// A character between worlds (docs/sprints/20-the-world-host.md): all of him the server keeps
+// when he leaves one realm and lays on him in the next -- the record a save keeps, his vault
+// and the Chaos Machine's box -- so a gate, a trip or a death sent home costs him nothing.
+struct Kept {
+    HeroRecord hero;
+    Vault vault;
+    Machine machine;
+};
+
 // What the game asks the sim for. Nothing here is a skill, and that is on purpose: PLAN.md
 // decided the skill system is Diablo 3's shape -- learned permanently, four keys, real
 // cooldowns -- and the one thing this sprint owes it is not baking in MU's assumptions. An
@@ -1213,6 +1222,14 @@ public:
     // windows shut (the machine's box back into his bag), his things in the air spent, and
     // whatever held him forgets him. Says Left. False for no player, or one already gone.
     bool depart(uint32_t id);
+    // **A character carried in** (sim::Kept): laid on the newcomer the Join with this ticket lets
+    // in, at the next tick's start, after his cradle's hands. Asked before the step, as a command
+    // is; one no Join of that tick claims is dropped with it.
+    void carry(uint32_t ticket, const Kept& kept) { carried_.push_back({ticket, kept}); }
+    // Laid on the player the queries answer for now: the world's first, raised round him.
+    void restoreKept(const Kept& kept);
+    // And read off a player, for the server to keep as he leaves. Empty for no player.
+    Kept keptOf(uint32_t id);
     // The players, in the order they joined, which is id order; and which of them the queries
     // below answer for -- `hero()`, `satchel()`, the windows, the quests. Inside step() the
     // realm works for each in turn and comes back to this one.
@@ -1532,6 +1549,11 @@ private:
     std::vector<Happening> happenings_;
     std::vector<Step> scratch_;
     std::vector<Command> commands_;
+    struct Carried {
+        uint32_t ticket = 0;
+        Kept kept;
+    };
+    std::vector<Carried> carried_;  // see carry()
     void applyCommands();
     // Spells in the air. A fixed handful, because a wizard at speed lets the next one go before
     // the last has landed, and this runs inside a tick; one that finds no room lands at once.

@@ -6,8 +6,10 @@
 // for a world raises its realm with him as its first player; each later one comes in by a Join
 // command at the next tick's start, and is welcomed once that tick has let him in -- with the
 // world's start and every tick since it was raised, which his mirror replays to stand where the
-// server stands. A connection that goes leaves by a Leave command; a world nobody is in is let
-// go. Every realm steps on one 20 Hz deadline: poll, step every world, flush (server-plan §3).
+// server stands. A connection that goes leaves by a Leave command, and his character (sim::Kept)
+// is kept under his token: a map change reconnects with it, and he comes into the next world as
+// he left the last (docs/sprints/20-the-world-host.md). A world nobody is in is let go. Every
+// realm steps on one 20 Hz deadline: poll, step every world, flush (server-plan §3).
 // Each tick goes to everyone in the world -- the wall clock, the rain, the commands applied, each
 // with its player -- and every second its hash, which a mirror that disagrees says.
 //
@@ -20,6 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <map>
 #include <memory>
 #include <random>
 #include <string>
@@ -44,6 +47,17 @@ constexpr double kTickSeconds = 0.05;  // 20 Hz, the realm's own (sim/realm.h)
 constexpr int kHashEvery = 20;         // a hash a second
 // A Join's ticket, the server's own: high, so it is never one a client numbered.
 constexpr uint32_t kJoinTickets = 0x80000000u;
+// How long a character left by a connection is kept for its token to bring back: a map's load,
+// a dropped line and a reconnect, with room. Then he is gone; characters live past that only
+// once the server keeps them on disk (server-plan phase 3).
+constexpr int64_t kKeptSeconds = 3600;
+
+// The characters between worlds, by token.
+struct Waiting {
+    sim::Kept kept;
+    int64_t since = 0;
+};
+std::map<uint64_t, Waiting> g_kept;
 
 struct World {
     std::string name;
@@ -52,6 +66,7 @@ struct World {
     net::Welcome start;      // how it was raised: what every mirror raises from
     std::vector<net::Tick> log;  // every tick since, what a newcomer's mirror replays
     std::vector<sim::Command> queued;  // arrived since the last tick, in order
+    std::vector<net::Arrival> arriving;  // characters carried in with this tick's Joins
     uint32_t nextTicket = kJoinTickets;
     std::vector<uint32_t> orphans;  // Joins whose connection went before they were answered
 };
@@ -64,6 +79,7 @@ struct Session {
     uint32_t player = 0;   // his body's id, once welcomed
     uint32_t joining = 0;  // his Join's ticket while it waits for its tick
     bool welcomed = false;
+    uint64_t token = 0;    // his character's: kept under it when he goes
 };
 
 bool worldName(const std::string& name) {
@@ -78,7 +94,7 @@ bool worldName(const std::string& name) {
 // The world's first player: its realm raised round him, as sprint 18 raised one per connection.
 World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello& hello,
                   const std::string& assets, const sim::RealmConfig& config, uint64_t seed,
-                  const std::string& who) {
+                  const std::string& who, const sim::Kept* kept) {
     auto world = std::make_unique<World>();
     world->name = hello.world;
     std::string error;
@@ -87,15 +103,21 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
         core::logError("%s: cannot load %s: %s", who.c_str(), path.c_str(), error.c_str());
         return nullptr;
     }
-    const int level = std::clamp(hello.level, 1, sim::kMaximumLevel);
-    const sim::Kin kin = sim::Kin(std::min<int>(hello.kin, int(sim::Kin::MagicGladiator)));
+    const int level = std::clamp(kept ? kept->hero.level : hello.level, 1, sim::kMaximumLevel);
+    const sim::Kin kin =
+        kept ? kept->hero.kin : sim::Kin(std::min<int>(hello.kin, int(sim::Kin::MagicGladiator)));
     world->realm = std::make_unique<sim::Realm>();
     world->realm->configure(config);
     if (!world->realm->raise(&world->tables, seed, hello.column, hello.row, kin, level)) {
         core::logError("%s: %s would not raise", who.c_str(), hello.world.c_str());
         return nullptr;
     }
-    sim::outfit(*world->realm, hello.weapon, hello.shield);
+    // A new character's cradle, or all of one come from another world: never both.
+    if (kept) {
+        world->realm->restoreKept(*kept);
+    } else {
+        sim::outfit(*world->realm, hello.weapon, hello.shield);
+    }
     net::Welcome& w = world->start;
     w.seed = seed;
     w.world = hello.world;
@@ -103,9 +125,11 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     w.level = level;
     w.column = hello.column;
     w.row = hello.row;
-    w.weapon = hello.weapon;
-    w.shield = hello.shield;
+    w.weapon = kept ? std::string() : hello.weapon;
+    w.shield = kept ? std::string() : hello.shield;
     w.config = config;
+    w.kept = kept != nullptr;
+    if (kept) w.first = *kept;
     core::logf("%s: raised %s, class %d level %d at %d,%d, seed %llu", who.c_str(),
                hello.world.c_str(), int(kin), level, hello.column, hello.row,
                (unsigned long long)seed);
@@ -118,6 +142,7 @@ bool welcome(Session& one, uint32_t player) {
     net::Welcome w = one.world->start;
     w.you = player;
     w.backlog = uint32_t(one.world->log.size());
+    w.token = one.token;
     std::vector<uint8_t> out;
     net::put(out, w);
     for (const net::Tick& t : one.world->log) net::put(out, t);
@@ -130,7 +155,7 @@ bool welcome(Session& one, uint32_t player) {
 }
 
 bool hello(Session& one, const net::Hello& said, std::vector<std::unique_ptr<World>>& worlds,
-           const std::string& assets, const sim::RealmConfig& config, uint64_t seed) {
+           const std::string& assets, const sim::RealmConfig& config, std::mt19937_64& seeds) {
     if (said.version != net::kVersion) {
         core::logError("%s: version %u, this server speaks %u", one.who.c_str(), said.version,
                        net::kVersion);
@@ -140,29 +165,45 @@ bool hello(Session& one, const net::Hello& said, std::vector<std::unique_ptr<Wor
         core::logError("%s: no world called '%s'", one.who.c_str(), said.world.c_str());
         return false;
     }
+    // His character, when his token names one the server kept: taken, so a token brings him
+    // back once. Anything else is a new character, and a new token.
+    sim::Kept kept;
+    bool carried = false;
+    if (const auto at = g_kept.find(said.token); said.token != 0 && at != g_kept.end()) {
+        kept = at->second.kept;
+        carried = true;
+        g_kept.erase(at);
+        one.token = said.token;
+        core::logf("%s: his character comes back, level %d with %lld Zen", one.who.c_str(),
+                   kept.hero.level, (long long)kept.hero.money);
+    } else {
+        do one.token = seeds(); while (one.token == 0 || g_kept.count(one.token) != 0);
+    }
     for (auto& world : worlds) {
         if (world->name != said.world) continue;
-        // Into a world already running: a Join at the next tick's start, his hands by arm index.
+        // Into a world already running: a Join at the next tick's start, his hands by arm index
+        // -- or, carried, all of him (Realm::carry) and no cradle.
         const content::Tables& tables = world->tables;
-        const int32_t held = said.weapon.empty() ? -1 : tables.armNamed(said.weapon);
-        const int32_t worn = said.shield.empty() ? -1 : tables.armNamed(said.shield);
+        const int32_t held = carried || said.weapon.empty() ? -1 : tables.armNamed(said.weapon);
+        const int32_t worn = carried || said.shield.empty() ? -1 : tables.armNamed(said.shield);
         sim::Command join;
         join.kind = sim::Command::Kind::Join;
         join.ticket = world->nextTicket++;
-        join.a = std::min<int>(said.kin, int(sim::Kin::MagicGladiator));
-        join.b = std::clamp(said.level, 1, sim::kMaximumLevel);
+        join.a = carried ? int(kept.hero.kin) : std::min<int>(said.kin, int(sim::Kin::MagicGladiator));
+        join.b = std::clamp(carried ? kept.hero.level : said.level, 1, sim::kMaximumLevel);
         join.c = said.column;
         join.d = said.row;
         join.target = uint32_t(held + 1);
         join.zen = worn + 1;
         world->queued.push_back(join);
+        if (carried) world->arriving.push_back({join.ticket, kept});
         one.world = world.get();
         one.joining = join.ticket;
         core::logf("%s: joining %s, class %d level %d at %d,%d", one.who.c_str(),
                    said.world.c_str(), join.a, join.b, said.column, said.row);
         return true;
     }
-    World* world = raiseWorld(worlds, said, assets, config, seed, one.who);
+    World* world = raiseWorld(worlds, said, assets, config, seeds(), one.who, carried ? &kept : nullptr);
     if (world == nullptr) return false;
     one.world = world;
     return welcome(one, world->realm->hero().id);
@@ -183,7 +224,7 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds, const std::
         }
         if (kind == net::Kind::Hello && one.world == nullptr) {
             net::Hello said;
-            if (!net::parse(body, said) || !hello(one, said, worlds, assets, config, seeds())) {
+            if (!net::parse(body, said) || !hello(one, said, worlds, assets, config, seeds)) {
                 return false;
             }
         } else if (kind == net::Kind::Command && one.welcomed) {
@@ -213,9 +254,11 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
     t.wallClock = int64_t(std::time(nullptr));
     t.rain = false;  // the server has no weather yet: no rain, so no Golden Invasion
     t.commands.swap(world.queued);
+    t.arrivals.swap(world.arriving);
     sim::Realm& realm = *world.realm;
     realm.setWallClock(t.wallClock);
     realm.invasionRain(t.rain);
+    for (const net::Arrival& a : t.arrivals) realm.carry(a.ticket, a.kept);
     for (const sim::Command& c : t.commands) realm.command(c);
     realm.step();
     t.tick = uint32_t(realm.tick());
@@ -252,10 +295,14 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
     }
 }
 
-// A connection gone: his player leaves the world at its next tick.
+// A connection gone: his character kept under his token, and his player leaves the world at its
+// next tick.
 void part(Session& one) {
     if (one.world == nullptr) return;
     if (one.welcomed) {
+        g_kept[one.token] = {one.world->realm->keptOf(one.player), int64_t(std::time(nullptr))};
+        core::logf("%s: his character kept, level %d with %lld Zen", one.who.c_str(),
+                   g_kept[one.token].kept.hero.level, (long long)g_kept[one.token].kept.hero.money);
         one.world->queued.push_back({.kind = sim::Command::Kind::Leave, .player = one.player});
     } else if (one.joining != 0) {
         one.world->orphans.push_back(one.joining);
@@ -334,6 +381,10 @@ int main(int argc, char** argv) {
             } else {
                 ++i;
             }
+        }
+        // Characters nobody came back for.
+        for (auto at = g_kept.begin(); at != g_kept.end();) {
+            at = int64_t(std::time(nullptr)) - at->second.since > kKeptSeconds ? g_kept.erase(at) : std::next(at);
         }
         // A world nobody is in, or on the way into, is let go; the next Hello raises it fresh.
         for (size_t i = 0; i < worlds.size();) {

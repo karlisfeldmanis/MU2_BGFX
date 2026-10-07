@@ -25,6 +25,7 @@
 
 #include "sim/command.h"
 #include "sim/config.h"
+#include "sim/realm.h"
 
 namespace mu::sim {
 class Realm;
@@ -35,7 +36,9 @@ namespace mu::net {
 // Bumped whenever a message changes shape. A client and a server of different versions do not
 // talk: the server answers a Hello of another version by closing.
 // 2: a world shared by its connections -- the Welcome's `you` and `backlog`, Join and Leave.
-constexpr uint32_t kVersion = 2;
+// 3: the character carried between worlds -- the token, the Welcome's kept first player, a
+//    Tick's arrivals (docs/sprints/20-the-world-host.md).
+constexpr uint32_t kVersion = 3;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame either side accepts. A Tick of a hundred commands is under 5 KB.
@@ -50,6 +53,9 @@ struct Hello {
     int32_t level = 1;
     int32_t column = 0, row = 0;
     std::string weapon, shield;
+    // The server's word for his character, from his last Welcome, or 0 for a new one: a map
+    // change reconnects with it, and the server brings him back whole (sim::Kept).
+    uint64_t token = 0;
 };
 
 struct Welcome {
@@ -63,6 +69,17 @@ struct Welcome {
     sim::RealmConfig config;
     uint32_t you = 0;      // his player's body id (Realm::lookAs)
     uint32_t backlog = 0;  // Ticks that follow this frame and are the world's past
+    uint64_t token = 0;    // his character's, for the next Hello
+    // The world's first player came from another world: laid on him after the raise and the
+    // cradle (Realm::restoreKept), as the server laid it.
+    bool kept = false;
+    sim::Kept first;
+};
+
+// A character carried into the world this tick, for the Join with its ticket (Realm::carry).
+struct Arrival {
+    uint32_t ticket = 0;
+    sim::Kept kept;
 };
 
 struct Tick {
@@ -70,6 +87,7 @@ struct Tick {
     int64_t wallClock = 0;   // Realm::setWallClock before the step
     bool rain = false;       // Realm::invasionRain before the step
     std::vector<sim::Command> commands;  // Realm::command each, in order, before the step
+    std::vector<Arrival> arrivals;       // Realm::carry each, before the commands
 };
 
 struct Hash {

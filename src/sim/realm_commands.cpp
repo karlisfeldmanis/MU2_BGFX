@@ -10,8 +10,28 @@
 
 namespace mu::sim {
 
+void Realm::restoreKept(const Kept& kept) {
+    restore(kept.hero);
+    me().vault = kept.vault;
+    me().machine = kept.machine;
+}
+
+Kept Realm::keptOf(uint32_t id) {
+    Kept out;
+    const int at = playerOfId(id);
+    if (at < 0) return out;
+    For him(*this, size_t(at));
+    out.hero = record();
+    out.vault = me().vault;
+    out.machine = me().machine;
+    return out;
+}
+
 void Realm::applyCommands() {
-    if (commands_.empty()) return;
+    if (commands_.empty()) {
+        carried_.clear();
+        return;
+    }
     // Taken out first: a method below may say happenings, never ask, but the list is not walked
     // while anything could append to it.
     std::vector<Command> asked;
@@ -114,6 +134,10 @@ void Realm::applyCommands() {
                     // His hands, as sim::outfit fills the first's.
                     For him(*this, size_t(playerOfId(id)));
                     outfitArms(*this, int32_t(one.target) - 1, int32_t(one.zen) - 1);
+                    // And all of him, when he comes from another world.
+                    for (const Carried& carried : carried_) {
+                        if (carried.ticket == one.ticket) restoreKept(carried.kept);
+                    }
                     answerer = id;
                 }
                 break;
@@ -128,6 +152,7 @@ void Realm::applyCommands() {
             happenings_.back().y = burstY;
         }
     }
+    carried_.clear();
 }
 
 }  // namespace mu::sim

@@ -470,7 +470,7 @@ target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-paramete
 add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test.cpp
 )
-target_link_libraries(sim_test PRIVATE mu_sim)
+target_link_libraries(sim_test PRIVATE mu_net mu_sim)
 target_include_directories(sim_test PRIVATE src)
 target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)

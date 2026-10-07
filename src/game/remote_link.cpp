@@ -123,6 +123,7 @@ void RemoteLink::step() {
     // The same inputs, in the same order, as the server's realm took them (server/src/main.cpp).
     mirror_.setWallClock(tick.wallClock);
     mirror_.invasionRain(tick.rain);
+    for (const net::Arrival& one : tick.arrivals) mirror_.carry(one.ticket, one.kept);
     for (const sim::Command& one : tick.commands) mirror_.command(one);
     mirror_.step();
     if (uint32_t(mirror_.tick()) != tick.tick) {

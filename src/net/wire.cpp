@@ -1,5 +1,6 @@
 #include "net/wire.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "sim/realm.h"
@@ -103,6 +104,135 @@ sim::Command takeCommand(In& in) {
     return c;
 }
 
+uint32_t bitsOf(float f) {
+    uint32_t v = 0;
+    std::memcpy(&v, &f, sizeof v);
+    return v;
+}
+float floatOf(uint32_t v) {
+    float f = 0.0f;
+    std::memcpy(&f, &v, sizeof f);
+    return f;
+}
+
+void putHeld(Out& o, const sim::Held& h) {
+    o.i32(h.item);
+    o.u32(uint32_t(uint16_t(h.refinement)) | uint32_t(uint16_t(h.durability)) << 16);
+    o.u8(uint8_t((h.skill ? 1 : 0) | (h.luck ? 2 : 0)));
+    o.u8(uint8_t(h.option));
+    o.u8(h.excellent);
+    o.u8(h.sockets);
+    for (uint8_t p : h.powers) o.u8(p);
+    for (uint8_t a : h.affixes) o.u8(a);
+    o.u8(h.wing);
+}
+
+sim::Held takeHeld(In& in) {
+    sim::Held h;
+    h.item = in.i32();
+    const uint32_t both = in.u32();
+    h.refinement = int16_t(uint16_t(both));
+    h.durability = int16_t(uint16_t(both >> 16));
+    const uint8_t flags = in.u8();
+    h.skill = (flags & 1) != 0;
+    h.luck = (flags & 2) != 0;
+    h.option = int8_t(in.u8());
+    h.excellent = in.u8();
+    h.sockets = in.u8();
+    for (uint8_t& p : h.powers) p = in.u8();
+    for (uint8_t& a : h.affixes) a = in.u8();
+    h.wing = in.u8();
+    return h;
+}
+
+void putKept(Out& o, const sim::Kept& k) {
+    const sim::HeroRecord& r = k.hero;
+    o.u8(uint8_t(r.kin));
+    o.i32(r.column);
+    o.i32(r.row);
+    o.u32(bitsOf(r.facing));
+    o.i32(r.level);
+    o.u64(r.experience);
+    o.i32(r.pointsInHand);
+    o.i32(r.points.strength);
+    o.i32(r.points.agility);
+    o.i32(r.points.vitality);
+    o.i32(r.points.energy);
+    o.i32(r.health);
+    o.i32(r.mana);
+    o.i64(r.money);
+    o.u64(r.learned);
+    for (int64_t left : r.coolsLeft) o.i64(left);
+    o.i32(r.boonSkill);
+    o.u32(bitsOf(r.boonDamageTaken));
+    o.i64(r.boonTicksLeft);
+    o.i64(r.aleTicksLeft);
+    o.i32(r.might);
+    o.i64(r.mightTicksLeft);
+    for (const sim::Held& h : r.slots) putHeld(o, h);
+    for (const sim::QuestProgress& q : r.quests) {
+        o.u8(uint8_t(q.state));
+        for (uint16_t c : q.counts) o.u32(c);
+        o.i64(q.availableAt);
+        o.u32(q.completions);
+    }
+    o.u32(r.found);
+    o.i32(r.summonSkill);
+    o.i32(r.summonHealth);
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) putHeld(o, k.vault[cell]);
+    o.i64(k.vault.zen());
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) putHeld(o, k.machine[cell]);
+}
+
+sim::Kept takeKept(In& in) {
+    sim::Kept k;
+    sim::HeroRecord& r = k.hero;
+    r.kin = sim::Kin(std::min<int>(in.u8(), int(sim::Kin::MagicGladiator)));
+    r.column = in.i32();
+    r.row = in.i32();
+    r.facing = floatOf(in.u32());
+    r.level = in.i32();
+    r.experience = in.u64();
+    r.pointsInHand = in.i32();
+    r.points.strength = in.i32();
+    r.points.agility = in.i32();
+    r.points.vitality = in.i32();
+    r.points.energy = in.i32();
+    r.health = in.i32();
+    r.mana = in.i32();
+    r.money = in.i64();
+    r.learned = in.u64();
+    for (int64_t& left : r.coolsLeft) left = in.i64();
+    r.boonSkill = in.i32();
+    r.boonDamageTaken = floatOf(in.u32());
+    r.boonTicksLeft = in.i64();
+    r.aleTicksLeft = in.i64();
+    r.might = in.i32();
+    r.mightTicksLeft = in.i64();
+    for (sim::Held& h : r.slots) h = takeHeld(in);
+    for (sim::QuestProgress& q : r.quests) {
+        q.state = sim::QuestState(in.u8());
+        for (uint16_t& c : q.counts) c = uint16_t(in.u32());
+        q.availableAt = in.i64();
+        q.completions = in.u32();
+    }
+    r.found = in.u32();
+    r.summonSkill = in.i32();
+    r.summonHealth = in.i32();
+    k.vault.clear();
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+        const sim::Held h = takeHeld(in);
+        if (!h.empty()) k.vault.put(cell, h);
+    }
+    k.vault.setZen(in.i64());
+    k.machine.clear();
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+        const sim::Held h = takeHeld(in);
+        if (!h.empty()) k.machine.put(cell, h);
+    }
+    return k;
+}
+
 void putConfig(Out& o, const sim::RealmConfig& c) {
     o.i32(c.castle.period);
     o.i32(c.castle.opensAt);
@@ -133,6 +263,7 @@ void put(std::vector<uint8_t>& out, const Hello& one) {
         o.i32(one.row);
         o.str(one.weapon);
         o.str(one.shield);
+        o.u64(one.token);
     });
 }
 
@@ -150,6 +281,9 @@ void put(std::vector<uint8_t>& out, const Welcome& one) {
         putConfig(o, one.config);
         o.u32(one.you);
         o.u32(one.backlog);
+        o.u64(one.token);
+        o.u8(one.kept ? 1 : 0);
+        if (one.kept) putKept(o, one.first);
     });
 }
 
@@ -164,6 +298,11 @@ void put(std::vector<uint8_t>& out, const Tick& one) {
         o.u8(one.rain ? 1 : 0);
         o.u32(uint32_t(one.commands.size()));
         for (const sim::Command& c : one.commands) putCommand(o, c);
+        o.u32(uint32_t(one.arrivals.size()));
+        for (const Arrival& a : one.arrivals) {
+            o.u32(a.ticket);
+            putKept(o, a.kept);
+        }
     });
 }
 
@@ -198,6 +337,7 @@ bool parse(const std::vector<uint8_t>& body, Hello& out) {
     out.row = in.i32();
     out.weapon = in.str();
     out.shield = in.str();
+    out.token = in.u64();
     return in.done();
 }
 
@@ -215,6 +355,9 @@ bool parse(const std::vector<uint8_t>& body, Welcome& out) {
     out.config = takeConfig(in);
     out.you = in.u32();
     out.backlog = in.u32();
+    out.token = in.u64();
+    out.kept = in.u8() != 0;
+    if (out.kept) out.first = takeKept(in);
     return in.done();
 }
 
@@ -236,6 +379,16 @@ bool parse(const std::vector<uint8_t>& body, Tick& out) {
     out.commands.clear();
     out.commands.reserve(count);
     for (uint32_t i = 0; i < count && in.ok; ++i) out.commands.push_back(takeCommand(in));
+    // A kept character is a few KB: more than the body holds is a lie, as above.
+    const uint32_t arriving = in.u32();
+    if (!in.ok || size_t(arriving) * 1024 > body.size()) return false;
+    out.arrivals.clear();
+    for (uint32_t i = 0; i < arriving && in.ok; ++i) {
+        Arrival a;
+        a.ticket = in.u32();
+        a.kept = takeKept(in);
+        out.arrivals.push_back(std::move(a));
+    }
     return in.done();
 }
 

@@ -41,7 +41,9 @@ the server steps (docs/sprints/18-the-wire.md). **Connections to the same world 
 - one that goes leaves by a Leave;
 - an empty world is let go.
 
-Two players in Lorencia see each other. `server/deploy.sh` puts a new build there and restarts
+Two players in Lorencia see each other. A map change keeps the character: the server holds it
+under the client's token as he leaves one world and brings it back whole in the next
+(docs/sprints/20-the-world-host.md, protocol 3). It lives in the server's memory only, for an hour. `server/deploy.sh` puts a new build there and restarts
 the service.
 
 ## Building there

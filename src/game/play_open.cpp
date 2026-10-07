@@ -66,8 +66,12 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         hello.row = row;
         hello.weapon = weapon;
         hello.shield = shield;
+        hello.token = serverToken_;
         net::Welcome welcome;
         if (!remote->join(serverHost_, serverPort_, hello, welcome)) return false;
+        serverToken_ = welcome.token;
+        keptFirst_.reset();
+        if (welcome.kept) keptFirst_ = std::make_unique<sim::Kept>(welcome.first);
         seed = welcome.seed;
         kin = welcome.kin;
         level = welcome.level;
@@ -229,6 +233,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // (sim/cradle.h), so a server raising the same realm outfits him the same. The drawn
     // character is dressed from the same two names (Figures::dress, by way of World::play).
     sim::outfit(local_, held, worn);
+    // The world's first player came from another world: all of him, as the server laid it.
+    if (keptFirst_) local_.restoreKept(*keptFirst_);
     // On a shared world, everything that happened in it before he came, and the mirror turned to
     // him: from here on `realm_.hero()` is his own player (docs/sprints/19-many-heroes.md).
     if (link_) link_->catchUp();
@@ -303,6 +309,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         drawn_.push_back(drawnFor(body, heroLook, &bones));
         ++(drawn_.back().figure.body() != nullptr ? dressed : bare);
     }
+    // On a server he may have come from another world with all he carried (sim::Kept): dressed
+    // in what he wears now, not in what the lobby handed the door.
+    if (remote()) redress();
     // The townsfolk: a figure each where the cook named one, facing where MU faces them.
     //
     // NOT the Look's name read literally. MU2 measured this against a landmark (Folk.cs,

@@ -121,6 +121,9 @@ struct Args {
     // `--server host:port` (or host, for the default port): play on that server instead of a
     // realm in this process (docs/sprints/18-the-wire.md). Empty for single player.
     std::string server;
+    // The server's word for this character, from its last Welcome: carried across a map change so
+    // the next world brings him back whole (docs/sprints/20-the-world-host.md). 0 for a new one.
+    uint64_t serverToken = 0;
     // Chunk culling on the town, on by default. --no-cull is how the two are compared, and
     // the answer to whether chunking earns its keep is the difference between them.
     bool cullChunks = true;

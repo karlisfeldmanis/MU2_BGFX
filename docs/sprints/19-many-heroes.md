@@ -219,5 +219,5 @@ every hash agreeing.
 ## Next
 
 - Phase 3, the world host: one process for every map, and the map change moving a player between
-  worlds on the server instead of reconnecting.
+  worlds on the server instead of reconnecting. Begun: docs/sprints/20-the-world-host.md.
 - Another player's gear redrawn when it changes; his name over his head; chat.

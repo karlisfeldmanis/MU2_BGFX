@@ -207,10 +207,13 @@ public:
     const sim::Realm& realm() const { return realm_; }
     // Play on a server (docs/sprints/18-the-wire.md): set BEFORE open(), which then joins it and
     // raises the mirror from its Welcome. `--server host:port`.
-    void useServer(const std::string& host, int port) {
+    void useServer(const std::string& host, int port, uint64_t token = 0) {
         serverHost_ = host;
         serverPort_ = port;
+        serverToken_ = token;
     }
+    // His character's token from the server's Welcome, for the next world's Hello; 0 off a server.
+    uint64_t serverToken() const { return serverToken_; }
     bool remote() const { return link_->remote(); }
     // The line under the map's name, "Level 2-40": its whole spawn table, taken before the
     // breeds not yet cooked are held back, so a world still waiting on its figures says what it
@@ -1173,6 +1176,8 @@ private:
     sim::Realm& local_ = realmHeld_;
     const sim::Realm& realm_ = realmHeld_;
     std::string serverHost_;
+    uint64_t serverToken_ = 0;
+    std::unique_ptr<sim::Kept> keptFirst_;  // the Welcome's, for the raise (Play::open)
     int serverPort_ = 0;
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;

@@ -302,10 +302,13 @@ bool PlayMode::open(Context& ctx) {
                 const bool hasPort = colon != std::string::npos;
                 world_.played().useServer(hasPort ? args.server.substr(0, colon) : args.server,
                                           hasPort ? std::atoi(args.server.c_str() + colon + 1)
-                                                  : net::kDefaultPort);
+                                                  : net::kDefaultPort,
+                                          args.serverToken);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
+            // The server's token for him, for the next world's Hello.
+            if (world_.played().remote()) args.serverToken = world_.played().serverToken();
         }
         // And everything that hangs off a realm, only when there IS one. This used to run
         // on the answer to `args.play` alone, which is what was ASKED for and not what

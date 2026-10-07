@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "content/tables.h"
+#include "net/wire.h"
 #include "sim/audit.h"
 #include "sim/event.h"
 #include "sim/items.h"
@@ -10822,6 +10823,84 @@ void testTwoHeroes(const content::Tables& tables) {
     check(right == right2 && struck == struck2 && ids[1] == ids2[1], "and count the same both times");
 }
 
+// A character between worlds (docs/sprints/20-the-world-host.md): read off one realm as he leaves,
+// through the wire as a Tick's arrival, and laid on the newcomer another realm's Join lets in --
+// all of him, bag, purse, points, vault and box.
+void testKept(const content::Tables& tables) {
+    std::printf("kept\n");
+    sim::Realm from;
+    check(from.raise(&tables, 9, 140, 125, sim::Kin::DarkKnight, 50), "a realm he leaves");
+    from.earn(123456);
+    check(from.spend(10, 5, 3, 0), "points spent");
+    const int axe = from.give(tables.itemNamed("Axe02"), -1, 3, -1, true, 2);
+    const int potions = from.give(tables.itemNamed("Potion01"), -1, 0, 3);
+    check(axe >= 0 && potions >= 0, "an axe +3 with luck and potions in his bag");
+    sim::Vault vault;
+    sim::Held jewel;
+    jewel.item = tables.itemNamed("Jewel01");
+    vault.put(0, jewel);
+    vault.setZen(777);
+    from.restoreVault(vault);
+    sim::Machine box;
+    box.put(5, jewel);
+    from.restoreMachine(box);
+    const uint32_t id = from.hero().id;
+    const sim::Kept kept = from.keptOf(id);
+
+    // Through the wire as it goes: a Tick's arrival.
+    net::Tick tick;
+    tick.tick = 1;
+    tick.arrivals.push_back({0x80000007u, kept});
+    std::vector<uint8_t> bytes;
+    net::put(bytes, tick);
+    net::Kind kind{};
+    std::vector<uint8_t> body;
+    net::Tick back;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Tick && net::parse(body, back) &&
+              back.arrivals.size() == 1 && back.arrivals[0].ticket == 0x80000007u,
+          "the arrival reads back off the wire");
+    if (back.arrivals.size() != 1) return;
+
+    // Into another world, by its Join.
+    sim::Realm into;
+    check(into.raise(&tables, 10, 138, 124, sim::Kin::DarkWizard, 1), "the world he comes into");
+    into.carry(back.arrivals[0].ticket, back.arrivals[0].kept);
+    into.command({.kind = sim::Command::Kind::Join, .ticket = 0x80000007u, .a = int(sim::Kin::DarkKnight),
+                  .b = 50, .c = 141, .d = 126});
+    into.step();
+    uint32_t newcomer = 0;
+    for (const sim::Happening& one : into.happenings()) {
+        if (one.what == sim::What::Answered && one.c == int32_t(0x80000007u)) newcomer = uint32_t(one.b);
+    }
+    check(newcomer != 0 && into.lookAs(newcomer), "let in");
+    if (newcomer == 0) return;
+    const sim::Body& him = into.hero();
+    const sim::Body& was = from.hero();
+    check(him.kin == was.kin && him.level == was.level && him.experience == was.experience,
+          "his class, level and experience");
+    check(him.points.strength == was.points.strength && him.pointsInHand == was.pointsInHand,
+          "his points, spent and in hand");
+    checkEqual((long long)into.money(), (long long)from.money(), "his Zen");
+    check(into.satchel()[axe].item == from.satchel()[axe].item &&
+              into.satchel()[axe].refinement == 3 && into.satchel()[axe].luck &&
+              into.satchel()[axe].option == 2 && into.satchel()[potions].durability == 3,
+          "his axe +3 with luck and its option, and his three potions");
+    check(into.vault()[0].item == jewel.item && into.vault().zen() == 777, "his vault and its Zen");
+    check(into.machine()[5].item == jewel.item, "and the Goblin's box");
+    // And nothing of the first player's changed by it.
+    into.lookAs(into.playerAt(0).id);
+    check(into.hero().kin == sim::Kin::DarkWizard && into.money() == 0, "the first player untouched");
+
+    // A carried character no Join claims is dropped with its tick.
+    sim::Realm stray;
+    check(stray.raise(&tables, 11, 138, 124), "a third realm");
+    stray.carry(42, kept);
+    stray.step();
+    stray.command({.kind = sim::Command::Kind::Join, .ticket = 42, .a = 2, .b = 1, .c = 141, .d = 126});
+    stray.step();
+    check(stray.playerCount() == 2 && stray.playerAt(1).level == 1, "a Join a tick later comes in new");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -10843,6 +10922,7 @@ int main() {
     testDeterminism(tables);
     testSpawn(tables);
     testTwoHeroes(tables);
+    testKept(tables);
     testCommands(tables);
     testInvariants(tables);
     testInvasion(tables);
