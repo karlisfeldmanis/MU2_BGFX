@@ -709,7 +709,13 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     if (over < 0 && !dragging_) {
         const int cell = cellAt(ux, uy);
         if (cell >= 0 && mode_ == Mode::HandIn) over = 10 + cell;
-        if (const int entry = entryAt(ux, uy); entry >= 0) over = 20 + entry;
+        // A row waiting on his level is shown, not opened: its words and his voice wait for it
+        // too (the user, 2026-10-07: 'dont allow to open quest and read text/listen which
+        // character is under lvl').
+        if (const int entry = entryAt(ux, uy);
+            entry >= 0 && !realm.questUnderLevel(entries_[size_t(entry)].quest)) {
+            over = 20 + entry;
+        }
         if (const int path = pathAt(ux, uy); path >= 0 && !reading_) over = 30 + path;
     }
     over_ = over;

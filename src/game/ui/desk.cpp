@@ -208,6 +208,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             listFolk_ = realm.questing();
             // More than one of his, or one waiting on his level: his list, then the one picked.
             listed = realm.questListed(giver);
+            // One waiting on his level is never opened, only listed: no page, no voice.
+            if (picked_ >= 0 && realm.questUnderLevel(picked_)) picked_ = -1;
             quest = !listed ? realm.questHere(giver) : picked_ >= 0 ? picked_ : QuestDialog::kList;
             journal_ = -1;
         } else {
