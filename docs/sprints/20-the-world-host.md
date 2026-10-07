@@ -150,6 +150,9 @@ on the server was lost at every gate, trip and death sent home.**
     at 108,247", and the Welcome said 108,247.
   - sim_test's output is identical to step 2's (6661 checks, the standing 10 failing);
     `layercheck` and `save_test` pass.
+  - **On the box** (`deploy.sh`, sim_test 6661 with the standing 10): the same stair from this
+    Mac. The server said "sent to dungeon 110,247", the client came in there, 3 and 9 hashes
+    agreed, and the step-2 knight was still in `characters.db` after the redeploy.
   - Not run end to end: the Tab trip, the death and portal home and Blood Castle's send-out.
     They are read by the same code as the gate, from the happenings the client already acts on.
 
