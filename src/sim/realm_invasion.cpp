@@ -69,7 +69,7 @@ void Realm::invasionRain(bool raining) {
 bool Realm::invade(bool now) {
     if (invaderSlot_ < 0 || invasion_.phase != InvasionPhase::Quiet) return false;
     invasionNow_ = now;
-    // Begun on the next tick, inside it, so its happening is that tick's (as castleOwed_).
+    // Begun on the next tick, inside it, so its happening is that tick's (as me().castleOwed).
     invasionOwed_ = true;
     return true;
 }
@@ -79,7 +79,7 @@ void Realm::invasionTick() {
     Body& dragon = bodies_[size_t(invaderSlot_)];
     if (invasionOwed_) {
         invasionOwed_ = false;
-        const Body& hero = bodies_[0];
+        const Body& hero = mine();
         // A tile it can stand on, out of the safe zone, within sight of him: kInvasionNear to
         // kInvasionFar tiles off in any direction (ours). In town the ring is all safe, so it
         // widens until it reaches the fields -- the dragon comes down outside his walls. Failing

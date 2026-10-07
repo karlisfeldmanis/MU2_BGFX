@@ -135,7 +135,7 @@ void Realm::advance(Body& one) {
     // A chase counts only when it is close (kCombatReach): the field is full of things that
     // have seen him, and counting every one of them held him in the walk from the town gate on.
     if (one.player) {
-        const Body* foe = order_.kind == Request::Kind::Attack ? find(order_.target) : nullptr;
+        const Body* foe = me().order.kind == Request::Kind::Attack ? find(me().order.target) : nullptr;
         const char* why = foe != nullptr && foe->alive() ? "his attack"
                           : one.blowAt != 0              ? "a blow in the air"
                           : one.castUntil > tick_ || one.channelSkill != 0 ? "a cast"
@@ -150,10 +150,10 @@ void Realm::advance(Body& one) {
         }
         const bool safe = tables_->grid.safe(one.column(), one.row());
         one.riding = one.pet.mount && !safe && rideMap(tables_->map);
-        one.flying = !one.riding && !safe && !bag_[kWings].empty() && bag_[kWings].durability > 0;
-        one.flyFast = one.flying && size_t(bag_[kWings].item) < tables_->items.size() &&
-                      tables_->items[size_t(bag_[kWings].item)].group == 12 &&
-                      tables_->items[size_t(bag_[kWings].item)].number == kDragonNumber;
+        one.flying = !one.riding && !safe && !me().bag[kWings].empty() && me().bag[kWings].durability > 0;
+        one.flyFast = one.flying && size_t(me().bag[kWings].item) < tables_->items.size() &&
+                      tables_->items[size_t(me().bag[kWings].item)].group == 12 &&
+                      tables_->items[size_t(me().bag[kWings].item)].number == kDragonNumber;
         if (why != nullptr) {
             if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
             one.combatUntil = tick_ + (one.riding ? kRideCombatTicks : kCombatTicks);
@@ -239,7 +239,7 @@ bool Realm::throughGate(Body& hero) {
         return false;
     }
     // And Icarus's: Barred with level -1 is the drawing's "wings or a Dinorant".
-    if (gate->fly && !canFly(*tables_, bag_)) {
+    if (gate->fly && !canFly(*tables_, me().bag)) {
         say(What::Barred, hero, gate->number, -1);
         return false;
     }
@@ -262,14 +262,14 @@ bool Realm::passGate(Body& hero, const EnterGate& through) {
     // no attack standing, and he stops where he is. Nothing that follows in this world is his.
     rise(hero);
     dropBlow(hero);
-    order_ = Request{};
-    pending_ = Request{};
-    wants_ = skill::kNone;
-    trading_ = -1;
-    banking_ = -1;
+    me().order = Request{};
+    me().pending = Request{};
+    me().wants = skill::kNone;
+    me().trading = -1;
+    me().banking = -1;
     closeMachine();
-    gating_ = -1;
-    angeling_ = -1;
+    me().gating = -1;
+    me().angeling = -1;
     // A gate to a floor of this same map -- the Dungeon's stairs between its three floors, one
     // grid with three regions the router cannot cross -- is not a map change: he is put down
     // there now, as a Town Portal puts him down (realm_items.cpp), the monsters on him lose
@@ -284,17 +284,17 @@ bool Realm::passGate(Body& hero, const EnterGate& through) {
 }
 
 void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     rise(hero);
     dropBlow(hero);
-    order_ = Request{};
-    pending_ = Request{};
-    wants_ = skill::kNone;
-    trading_ = -1;
-    banking_ = -1;
+    me().order = Request{};
+    me().pending = Request{};
+    me().wants = skill::kNone;
+    me().trading = -1;
+    me().banking = -1;
     closeMachine();
-    gating_ = -1;
-    angeling_ = -1;
+    me().gating = -1;
+    me().angeling = -1;
     int open = column, openRow = row;
     if (router_.nearestOpen(column, row, content::kWallCharacter, 8, &open, &openRow)) {
         column = open;
@@ -308,7 +308,7 @@ void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
         one.quarry = 0;
         one.provoked = false;
     }
-    if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
+    if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     say(What::Climbed, hero, gate, column, row);
 }
 
@@ -620,8 +620,8 @@ void Realm::think(Body& beast) {
 // wall clock's (sim/event.h); a realm never handed one -- headless -- keeps the door shut.
 int Realm::cloakSlot(int castle) const {
     for (int i = kWorn; i < kSlots; ++i) {
-        if (bag_[i].empty() || !invisibilityCloak(tables_->items[size_t(bag_[i].item)])) continue;
-        if (castle == 0 || bag_[i].refinement == castle) return i;
+        if (me().bag[i].empty() || !invisibilityCloak(tables_->items[size_t(me().bag[i].item)])) continue;
+        if (castle == 0 || me().bag[i].refinement == castle) return i;
     }
     return -1;
 }
@@ -639,7 +639,7 @@ CastleRefusal Realm::castleRefusal(int castle) const {
         day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
     }
     if (!castleOpen_ && (day < 0 || config_.castle.entryLeft(day) == 0)) return CastleRefusal::NotYet;
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     // The band's floor only, ours (the user, 2026-10-04: 'allow to go to lower level BC for all
     // chars, basically we need min lvl requirments'): WebZen's ceiling, TooHigh, is never said.
     if (hero.level < kCastleBands[castle - 1][0]) return CastleRefusal::TooLow;
@@ -650,22 +650,22 @@ CastleRefusal Realm::castleRefusal(int castle) const {
 // it, so its Gated is among that tick's happenings for the mode to read -- said out here, it was
 // cleared with the rest before anyone saw it, and he stood in Devias with the window shut.
 bool Realm::enterCastle(int castle) {
-    if (gating_ < 0 || !serving(gating_)) return false;
+    if (me().gating < 0 || !serving(me().gating)) return false;
     if (castleRefusal(castle) != CastleRefusal::None) return false;
-    castleOwed_ = castle;
-    gating_ = -1;
-    angeling_ = -1;
+    me().castleOwed = castle;
+    me().gating = -1;
+    me().angeling = -1;
     return true;
 }
 
 void Realm::passCastle(int castle) {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     if (!hero.alive() || castleRefusal(castle) != CastleRefusal::None) return;
     const EnterGate* gate = enterGateNumbered(kCastleEnterGate);
     if (gate == nullptr) return;
     // "You have come to Blood Castle %d" (lMsg 1171): the cloak is spent as he goes.
-    bag_.lift(cloakSlot(castle));
-    castlePassed_ = castle;
+    me().bag.lift(cloakSlot(castle));
+    me().castlePassed = castle;
     passGate(hero, *gate);
 }
 
@@ -748,12 +748,12 @@ void Realm::freeCastle() {
 void Realm::castleTick() {
     // The staff given back, inside the tick so what it says is this tick's (as enterCastle).
     // "Ah! Great warrior..." (ServerCmd 1,23, NpcTalk.cpp:1461-1588), and GiveReward_Win.
-    if (staffOwed_) {
-        staffOwed_ = false;
+    if (me().staffOwed) {
+        me().staffOwed = false;
         const int slot = staffSlot();
         if (slot >= 0 && run_.phase == CastlePhase::Running) {
-            bag_.lift(slot);
-            Body& hero = bodies_[0];
+            me().bag.lift(slot);
+            Body& hero = mine();
             const int64_t seconds = castleSecondsLeft();
             // This castle's pay (sim/event.h): castle 1's 20,000 / 5,000 / 160 a second / 20,000
             // Zen up to castle 6's 110,000 / 30,000 / 260 / 250,000.
@@ -788,11 +788,11 @@ void Realm::castleTick() {
         }
     }
     // Complete on his thanks: the win paid, and out to Devias now rather than after the rest.
-    if (claimOwed_) {
-        claimOwed_ = false;
+    if (me().claimOwed) {
+        me().claimOwed = false;
         if (run_.phase == CastlePhase::Won && !run_.claimed) {
             payCastle();
-            angeling_ = -1;
+            me().angeling = -1;
             run_.leavesAt = tick_;
             run_.sentOut = true;
         }
@@ -839,10 +839,10 @@ void Realm::castleTick() {
 void Realm::payCastle() {
     if (run_.claimed) return;
     run_.claimed = true;
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     const int c = std::clamp(run_.castle, 1, kCastles) - 1;
     gain(hero, int32_t(std::min<int64_t>(run_.paidExperience, INT32_MAX)));
-    money_ += run_.paidZen;
+    me().money += run_.paidZen;
     // And the castle's jewels, one each (BloodCastle.dat "Reward Items"), into the bag as a
     // quest's pay goes (the user, 2026-10-04: 'when finish quest on BC put items on bag similiar
     // like receving quests'); WebZen lays them at his feet, and one the bag cannot hold still
@@ -926,8 +926,8 @@ int32_t Realm::castleWeaponItem() const {
 
 int Realm::staffSlot() const {
     for (int i = kWorn; i < kSlots; ++i) {
-        if (bag_[i].empty()) continue;
-        const content::ItemRow& row = tables_->items[size_t(bag_[i].item)];
+        if (me().bag[i].empty()) continue;
+        const content::ItemRow& row = tables_->items[size_t(me().bag[i].item)];
         if (archangelWeapon(row)) return i;
     }
     return -1;
@@ -940,16 +940,16 @@ AngelState Realm::angelState() const {
 }
 
 bool Realm::handInStaff() {
-    if (angeling_ < 0 || !serving(angeling_) || angelState() != AngelState::Ready) return false;
-    staffOwed_ = true;
+    if (me().angeling < 0 || !serving(me().angeling) || angelState() != AngelState::Ready) return false;
+    me().staffOwed = true;
     return true;
 }
 
 bool Realm::claimCastle() {
-    if (angeling_ < 0 || !serving(angeling_) || run_.phase != CastlePhase::Won || run_.claimed) {
+    if (me().angeling < 0 || !serving(me().angeling) || run_.phase != CastlePhase::Won || run_.claimed) {
         return false;
     }
-    claimOwed_ = true;
+    me().claimOwed = true;
     return true;
 }
 

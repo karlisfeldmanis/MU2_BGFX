@@ -28,9 +28,9 @@ int Realm::questGoal(int index, int step) const {
 bool Realm::questOffered(int index) const {
     if (index < 0 || index >= kQuests) return false;
     // Never to one born outside a giver's town who does not serve strangers.
-    if (!questOpen(questAt(index), int(bodies_[0].kin))) return false;
+    if (!questOpen(questAt(index), int(mine().kin))) return false;
     if (questLocked(index)) return false;
-    const QuestProgress& one = quests_[index];
+    const QuestProgress& one = me().quests[index];
     if (one.state == QuestState::Untaken) return true;
     return one.state == QuestState::Resting && questAt(index).repeatSeconds > 0 &&
            wall_ >= one.availableAt;
@@ -42,12 +42,12 @@ int Realm::questHere(int32_t giver) const {
         const QuestRow& row = questAt(i);
         // One someone else gave, which this one takes back: only its hand-in is hers.
         if (questElsewhere(row) && row.receiver == giver) {
-            if (quests_[i].state == QuestState::Ready && ready < 0) ready = i;
+            if (me().quests[i].state == QuestState::Ready && ready < 0) ready = i;
             continue;
         }
         if (questGiver(i, config_.questDemo) != giver) continue;
         if (first < 0) first = i;
-        QuestState state = quests_[i].state;
+        QuestState state = me().quests[i].state;
         // And at its giver, one handed in elsewhere is under way until it is.
         if (questElsewhere(row) && state == QuestState::Ready) state = QuestState::Active;
         if (state == QuestState::Ready && ready < 0) ready = i;
@@ -71,12 +71,12 @@ int Realm::questHere(int32_t giver) const {
 bool Realm::questUnderLevel(int index) const {
     if (index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);
-    if (!questOpen(row, int(bodies_[0].kin)) || bodies_[0].level >= row.minLevel) return false;
-    const QuestProgress& one = quests_[index];
+    if (!questOpen(row, int(mine().kin)) || mine().level >= row.minLevel) return false;
+    const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
     if (row.afterAny == 0) return true;
     for (int i = 0; i < kQuests; ++i) {
-        if (((row.afterAny >> i) & 1u) && quests_[i].completions > 0) return true;
+        if (((row.afterAny >> i) & 1u) && me().quests[i].completions > 0) return true;
     }
     return false;
 }
@@ -85,13 +85,13 @@ int Realm::questsAt(int32_t giver, int* out) const {
     int n = 0;
     for (int i = 0; i < kQuests; ++i) {
         const QuestRow& row = questAt(i);
-        const QuestState state = quests_[i].state;
+        const QuestState state = me().quests[i].state;
         // Its receiver lists it while it waits to be handed in to her.
         if (questElsewhere(row) && row.receiver == giver) {
             if (state == QuestState::Ready) out[n++] = i;
             continue;
         }
-        if (questGiver(i, config_.questDemo) != giver || !questOpen(row, int(bodies_[0].kin))) continue;
+        if (questGiver(i, config_.questDemo) != giver || !questOpen(row, int(mine().kin))) continue;
         // A link of a chain handed in for good is gone from the list; a repeat waits there.
         const bool listed = state == QuestState::Active || state == QuestState::Ready ||
                             questOffered(i) || questUnderLevel(i) ||
@@ -110,13 +110,13 @@ bool Realm::questListed(int32_t giver) const {
 bool Realm::questLocked(int index) const {
     if (index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);
-    const QuestProgress& one = quests_[index];
+    const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
     // Below its level: Sevina's, until 200 (the user, 2026-10-04).
-    if (bodies_[0].level < row.minLevel) return true;
+    if (mine().level < row.minLevel) return true;
     if (row.afterAny == 0) return false;
     for (int i = 0; i < kQuests; ++i) {
-        if (((row.afterAny >> i) & 1u) && quests_[i].completions > 0) return false;
+        if (((row.afterAny >> i) & 1u) && me().quests[i].completions > 0) return false;
     }
     return true;
 }
@@ -128,26 +128,26 @@ bool Realm::questChoiceFits(int index, int choice) const {
     const int32_t item = tables_->itemNamed(row.choices[choice].item);
     if (item < 0) return false;
     const content::ItemRow& one = tables_->items[size_t(item)];
-    return one.classes == 0 || (one.classes & (1 << int(bodies_[0].kin))) != 0;
+    return one.classes == 0 || (one.classes & (1 << int(mine().kin))) != 0;
 }
 
 bool Realm::questItemFits(const QuestItem& what) const {
     const int32_t item = tables_ && what.item ? tables_->itemNamed(what.item) : -1;
     if (item < 0) return false;
     const content::ItemRow& one = tables_->items[size_t(item)];
-    return one.classes == 0 || (one.classes & (1 << int(bodies_[0].kin))) != 0;
+    return one.classes == 0 || (one.classes & (1 << int(mine().kin))) != 0;
 }
 
 bool Realm::acceptQuest(int index) {
-    if (index < 0 || index >= kQuests || questing_ < 0 || !serving(questing_)) return false;
-    if (tables_->folk[size_t(questing_)].number != questGiver(index, config_.questDemo)) return false;
+    if (index < 0 || index >= kQuests || me().questing < 0 || !serving(me().questing)) return false;
+    if (tables_->folk[size_t(me().questing)].number != questGiver(index, config_.questDemo)) return false;
     if (!questOffered(index)) return false;
-    QuestProgress& one = quests_[index];
+    QuestProgress& one = me().quests[index];
     const uint32_t completions = one.completions;
     one = QuestProgress{};
     one.state = QuestState::Active;
     one.completions = completions;
-    say(What::QuestTaken, bodies_[0], index);
+    say(What::QuestTaken, mine(), index);
     return true;
 }
 
@@ -156,7 +156,7 @@ void Realm::countKill(const Body& dead) {
     castleKill(dead);
     const int32_t number = tables_->kinds[size_t(dead.kind)].number;
     for (int index = 0; index < kQuests; ++index) {
-        QuestProgress& one = quests_[index];
+        QuestProgress& one = me().quests[index];
         if (one.state != QuestState::Active) continue;
         const QuestRow& row = questAt(index);
         bool counted = false;
@@ -167,7 +167,7 @@ void Realm::countKill(const Body& dead) {
             if (one.counts[step] >= goal) continue;
             ++one.counts[step];
             counted = true;
-            say(What::QuestStep, bodies_[0], index, one.counts[step], step);
+            say(What::QuestStep, mine(), index, one.counts[step], step);
         }
         if (counted) questSettle(index);
     }
@@ -184,7 +184,7 @@ void Realm::questMet(int32_t number) {
 
 // Ready once every counted step is at its goal: all at once and in any order.
 void Realm::questSettle(int index) {
-    QuestProgress& one = quests_[index];
+    QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Active) return;
     const QuestRow& row = questAt(index);
     for (int step = 0; step < row.stepCount; ++step) {
@@ -193,7 +193,7 @@ void Realm::questSettle(int index) {
         }
     }
     one.state = QuestState::Ready;
-    say(What::QuestReady, bodies_[0], index);
+    say(What::QuestReady, mine(), index);
 }
 
 // A thing come into the bag: whatever Find step asks for it counts it. The treasure is picked up
@@ -201,7 +201,7 @@ void Realm::questSettle(int index) {
 void Realm::questFound(int32_t item) {
     if (!tables_ || item < 0) return;
     for (int index = 0; index < kQuests; ++index) {
-        QuestProgress& one = quests_[index];
+        QuestProgress& one = me().quests[index];
         if (one.state != QuestState::Active) continue;
         const QuestRow& row = questAt(index);
         for (int step = 0; step < row.stepCount; ++step) {
@@ -212,7 +212,7 @@ void Realm::questFound(int32_t item) {
             }
             if (one.counts[step] >= questGoal(index, step)) continue;
             ++one.counts[step];
-            say(What::QuestStep, bodies_[0], index, one.counts[step], step);
+            say(What::QuestStep, mine(), index, one.counts[step], step);
         }
         questSettle(index);
     }
@@ -221,7 +221,7 @@ void Realm::questFound(int32_t item) {
 // The bag slot holding one of `item`, or -1. Past the worn slots, as the hand-in looks.
 int Realm::carried(int32_t item) const {
     for (int slot = kWorn; slot < kSlots; ++slot) {
-        if (!bag_[slot].empty() && bag_[slot].item == item) return slot;
+        if (!me().bag[slot].empty() && me().bag[slot].item == item) return slot;
     }
     return -1;
 }
@@ -247,13 +247,13 @@ bool Realm::treasureGround(int column, int row) const {
 void Realm::treasure(const Body& dead) {
     if (!tables_ || !treasureGround(dead.column(), dead.row())) return;
     for (int index = 0; index < kQuests; ++index) {
-        if (quests_[index].state != QuestState::Active) continue;
+        if (me().quests[index].state != QuestState::Active) continue;
         const QuestRow& row = questAt(index);
-        if (!questNative(row, int(bodies_[0].kin))) continue;
+        if (!questNative(row, int(mine().kin))) continue;
         for (int step = 0; step < row.stepCount; ++step) {
             const QuestStepRow& want = row.steps[step];
             if (want.kind != QuestStepKind::Find || !want.item) continue;
-            if (quests_[index].counts[step] >= questGoal(index, step)) continue;
+            if (me().quests[index].counts[step] >= questGoal(index, step)) continue;
             const int32_t item = tables_->itemNamed(want.item);
             if (item < 0 || carried(item) >= 0) continue;
             bool lying = false;
@@ -272,11 +272,11 @@ void Realm::treasure(const Body& dead) {
 }
 
 bool Realm::completeQuest(int index, int choice, QuestPath path) {
-    if (index < 0 || index >= kQuests || questing_ < 0 || !serving(questing_)) return false;
+    if (index < 0 || index >= kQuests || me().questing < 0 || !serving(me().questing)) return false;
     const QuestRow& row = questAt(index);
     // Handed in to whoever takes it back: Lirien for Peia's 'The Drowned Song'.
-    if (tables_->folk[size_t(questing_)].number != questReceiver(row)) return false;
-    QuestProgress& one = quests_[index];
+    if (tables_->folk[size_t(me().questing)].number != questReceiver(row)) return false;
+    QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Ready) return false;
     // A Find's thing must still be in the bag: sold or thrown away, the step is open again and
     // the treasure falls again.
@@ -298,10 +298,10 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
 
     // Everything into the bag or nothing: tried on the bag itself and put back on a refusal, so
     // the check is the placing and the two cannot disagree.
-    const Satchel before = bag_;
+    const Satchel before = me().bag;
     // The treasures go to the giver first, so their cells are free for the pay.
     for (int step = 0; step < row.stepCount; ++step) {
-        if (handed[step] >= 0) bag_.lift(handed[step]);
+        if (handed[step] >= 0) me().bag.lift(handed[step]);
     }
     const auto pay = [&](const QuestItem& what, int* slotOut) {
         const int32_t item = what.item ? tables_->itemNamed(what.item) : -1;
@@ -315,7 +315,7 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
         // Gear comes whole at its plus, lucky with its option (kQuestOption) and its empty
         // sockets; a Rune of Creation with its power, the Magic Gladiator's one he may set.
         const uint8_t powers[kMostSockets] = {
-            bodies_[0].kin == Kin::MagicGladiator ? gladiatorRune(what.power) : what.power};
+            mine().kin == Kin::MagicGladiator ? gladiatorRune(what.power) : what.power};
         const bool gear = takesOptions(itemRow) || jewellery(itemRow);
         for (int piece = 0; piece < std::max(1, what.count); ++piece) {
             const int slot = give(item, -1, what.plus, fullDurability(itemRow, what.plus), gear,
@@ -328,20 +328,20 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     };
     int chosenSlot = -1;
     bool paid = true;
-    const bool first = questFirst(row, int(bodies_[0].kin), one.completions);
-    const int paidKin = questPaidKin(row, int(bodies_[0].kin), first, path);
+    const bool first = questFirst(row, int(mine().kin), one.completions);
+    const int paidKin = questPaidKin(row, int(mine().kin), first, path);
     for (int i = 0; i < row.paidCount && paid; ++i) {
         if (questPays(row.paid[i], paidKin, first) && questItemFits(row.paid[i])) {
             paid = pay(row.paid[i], nullptr);
         }
     }
     if (!paid || (anyFits && !pay(row.choices[choice], &chosenSlot))) {
-        bag_ = before;
+        me().bag = before;
         return false;
     }
 
-    money_ += row.zen;
-    Body& hero = bodies_[0];
+    me().money += row.zen;
+    Body& hero = mine();
     const int32_t chosenItem =
         anyFits ? tables_->itemNamed(row.choices[choice].item) : -1;
     say(What::QuestDone, hero, index, chosenItem, chosenSlot);
@@ -351,7 +351,7 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     one.state = QuestState::Resting;
     one.completions = completions;
     one.availableAt = wall_ + row.repeatSeconds;
-    if (row.promotes) hero.second = sim::promoted(quests_, int(hero.kin));
+    if (row.promotes) hero.second = sim::promoted(me().quests, int(hero.kin));
     return true;
 }
 

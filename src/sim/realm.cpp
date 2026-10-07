@@ -89,7 +89,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         tables_ = own_.get();
     }
     dice_.seed(seed);
-    grounded_ = false;
+    me().grounded = false;
     // A stream of its own, off the same seed: see `wearDice_`.
     wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
     wardenDice_.seed(seed ^ 0xc2b2ae3d27d4eb4full);
@@ -111,17 +111,17 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     raidDice_.seed(seed ^ 0x1f83d9ab5be0cd19ull);
     raiderDice_.seed(seed ^ 0x5be0cd19137e2179ull);
     for (int slot = 0; slot < kWorn; ++slot) {
-        wearCarry_[slot] = 0.0;
-        wearItem_[slot] = -1;
+        me().wearCarry[slot] = 0.0;
+        me().wearItem[slot] = -1;
     }
-    weaponWornAt_ = -1000000;
+    me().weaponWornAt = -1000000;
     router_.open(&tables_->grid);
     bodies_.clear();
     happenings_.clear();
     happenings_.reserve(4096);
-    castleOwed_ = 0;
-    staffOwed_ = false;
-    claimOwed_ = false;
+    me().castleOwed = 0;
+    me().staffOwed = false;
+    me().claimOwed = false;
     // Raised on a castle, the run's wait starts and the entrance is shut until it ends
     // (WebZen BloodCastle.cpp:1128-1171: the court's 60 s, the barrier lifted at :887-917).
     run_ = CastleRun{};
@@ -136,9 +136,9 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     scratch_.reserve(512);
     tick_ = 0;
     nextId_ = 1;
-    pending_ = Request{};
+    me().pending = Request{};
     commands_.clear();
-    order_ = Request{};
+    me().order = Request{};
 
     // The player first, and at index 0 for good: every loop below walks an index, and "the
     // player is bodies_[0]" is cheaper and steadier than a search.
@@ -183,7 +183,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         hero.learned |= uint64_t(1) << skillIndexOf(skill::kEnergyBall);
     }
     bodies_.push_back(std::move(hero));
-    reswing(bodies_[0]);
+    reswing(mine());
     settleFound(0);
 
     // Then every nest, in the table's own order. Placement rejects a tile the threshold
@@ -287,10 +287,10 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     {
         Body slot;
         slot.id = nextId_++;
-        slot.summoner = bodies_[0].id;
+        slot.summoner = mine().id;
         slot.kind = 0;
         slot.health = 0;
-        summonSlot_ = int(bodies_.size());
+        me().summonSlot = int(bodies_.size());
         bodies_.push_back(std::move(slot));
     }
     // And the Golden Invasion's dragon, down until one lands (realm_invasion.cpp), after the
@@ -342,7 +342,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
 
 HeroRecord Realm::record() const {
     HeroRecord out;
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     out.kin = hero.kin;
     out.column = hero.column();
     out.row = hero.row();
@@ -353,7 +353,7 @@ HeroRecord Realm::record() const {
     out.points = hero.points;
     out.health = hero.health;
     out.mana = hero.mana;
-    out.money = money_;
+    out.money = me().money;
     out.learned = hero.learned;
     if (hero.boonSkill != 0 && hero.boonUntil > tick_) {
         out.boonSkill = hero.boonSkill;
@@ -366,9 +366,9 @@ HeroRecord Realm::record() const {
         out.mightTicksLeft = hero.mightUntil - tick_;
     }
     for (int i = 0; i < kSkills; ++i) out.coolsLeft[i] = std::max<int64_t>(0, hero.cools[i] - tick_);
-    for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
-    for (int i = 0; i < kQuests; ++i) out.quests[i] = quests_[i];
-    out.found = found_;
+    for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = me().bag[slot];
+    for (int i = 0; i < kQuests; ++i) out.quests[i] = me().quests[i];
+    out.found = me().found;
     if (const Body* summon = summoned(); summon != nullptr && summon->alive()) {
         out.summonSkill = summon->summonedBy;
         out.summonHealth = summon->health;
@@ -377,7 +377,7 @@ HeroRecord Realm::record() const {
 }
 
 void Realm::restore(const HeroRecord& saved) {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     hero.level = std::max(1, std::min(saved.level, kMaximumLevel));
     hero.experience = saved.experience;
     hero.pointsInHand = std::max(0, saved.pointsInHand);
@@ -388,23 +388,23 @@ void Realm::restore(const HeroRecord& saved) {
     // becomes an assignment.
     hero.learned |= saved.learned;
     hero.facing = hero.aim = saved.facing;
-    money_ = std::max<int64_t>(0, saved.money);
+    me().money = std::max<int64_t>(0, saved.money);
     // The quests as saved, each count held to its step's goal so an edited file cannot hand in
     // a clear it never made.
     for (int i = 0; i < kQuests; ++i) {
-        quests_[i] = saved.quests[i];
-        if (int(quests_[i].state) > int(QuestState::Resting)) quests_[i] = QuestProgress{};
+        me().quests[i] = saved.quests[i];
+        if (int(me().quests[i].state) > int(QuestState::Resting)) me().quests[i] = QuestProgress{};
         for (int step = 0; step < kQuestSteps; ++step) {
-            quests_[i].counts[step] = uint16_t(std::min<int>(quests_[i].counts[step],
+            me().quests[i].counts[step] = uint16_t(std::min<int>(me().quests[i].counts[step],
                                                              questGoal(i, step)));
         }
     }
-    hero.second = sim::promoted(quests_, int(hero.kin));
-    bag_.clear();
+    hero.second = sim::promoted(me().quests, int(hero.kin));
+    me().bag.clear();
     for (int slot = 0; slot < kSlots; ++slot) {
         const Held& one = saved.slots[slot];
         if (one.empty() || size_t(one.item) >= tables_->items.size()) continue;
-        bag_.put(slot, one);
+        me().bag.put(slot, one);
     }
     // The buff he was saved with, for the ticks it had left and at the factor it was cast at --
     // a skill he knows, lasting no longer than the skill's own length, so an edited file cannot
@@ -439,13 +439,13 @@ void Realm::restore(const HeroRecord& saved) {
     // knows, or none.
     const SkillRow* summons = skillNumbered(saved.summonSkill);
     const bool owed = summons != nullptr && summons->summons > 0 && knows(summons->number);
-    summonOwed_ = owed ? summons->number : 0;
-    summonOwedHealth_ = owed ? saved.summonHealth : 0;
+    me().summonOwed = owed ? summons->number : 0;
+    me().summonOwedHealth = owed ? saved.summonHealth : 0;
 }
 
 bool Realm::spend(int strength, int agility, int vitality, int energy) {
     if (strength < 0 || agility < 0 || vitality < 0 || energy < 0) return false;
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     const int asked = strength + agility + vitality + energy;
     if (asked == 0 || asked > hero.pointsInHand) return false;
     hero.points.strength += strength;
@@ -468,7 +468,7 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
 // ---- walking ---------------------------------------------------------------------------
 
 void Realm::accept() {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     if (!hero.alive()) return;
 
     // **Every skill is walked out of**, Teleport and the auras excepted. The user, 2026-10-02: "any
@@ -485,10 +485,10 @@ void Realm::accept() {
     // there is dropped where it stands as every one was before, so he does not set off the
     // moment it ends.
     if (casting() &&
-        (pending_.kind == Request::Kind::WalkTo || pending_.kind == Request::Kind::Pick ||
-         pending_.kind == Request::Kind::Talk || pending_.kind == Request::Kind::Perch)) {
+        (me().pending.kind == Request::Kind::WalkTo || me().pending.kind == Request::Kind::Pick ||
+         me().pending.kind == Request::Kind::Talk || me().pending.kind == Request::Kind::Perch)) {
         if (!hero.castBreaks) {
-            pending_ = Request{};
+            me().pending = Request{};
         } else {
             hero.castUntil = tick_;
             if (hero.channelSkill != skill::kNone) {
@@ -503,73 +503,73 @@ void Realm::accept() {
         }
     }
 
-    if (pending_.kind != Request::Kind::None) {
+    if (me().pending.kind != Request::Kind::None) {
         // **A new order drops the blow he had not landed yet.** Walking away from a swing is how
         // an attack is cancelled -- press() has said so since sprint 5 -- and until 2026-09-23 the
         // cancel cost him the animation and not the damage, because the damage had been settled at
         // the top of the swing. Reported by the player: "cancel the attack with a click to move
         // and the damage is still done". An Attack order on the SAME body is not a cancel.
-        const bool same = pending_.kind == Request::Kind::Attack && order_.kind == pending_.kind &&
-                          pending_.target == order_.target;
+        const bool same = me().pending.kind == Request::Kind::Attack && me().order.kind == me().pending.kind &&
+                          me().pending.target == me().order.target;
         // **Nor is setting him on another body: a skill he has begun is let go** (the user,
         // 2026-10-04: "there canot be this bug when char is casting spell and spell is not
         // happening - globally, only oom is of course a thing"). Held over a pack, the right
         // button's attack moved from body to body and each move cancelled the cast his arm was
         // already raising. Walking, picking up, talking and Stop still cancel it, and the
         // drawing ends the clip with them.
-        const bool begunSkill = pending_.kind == Request::Kind::Attack && hero.blowAt != 0 &&
+        const bool begunSkill = me().pending.kind == Request::Kind::Attack && hero.blowAt != 0 &&
                                 hero.blowSkill != skill::kNone;
         if (!same && !begunSkill) dropBlow(hero);
-        order_ = pending_;
-        pending_ = Request{};
+        me().order = me().pending;
+        me().pending = Request{};
         // Any order is walking away from a counter, including another Talk -- and from the vault,
         // and from a quest giver's dialog.
-        trading_ = -1;
-        banking_ = -1;
-        questing_ = -1;
+        me().trading = -1;
+        me().banking = -1;
+        me().questing = -1;
         closeMachine();
-        gating_ = -1;
-        angeling_ = -1;
+        me().gating = -1;
+        me().angeling = -1;
         // **And a skill still waiting to be thrown is dropped by an order that moves him**: a
         // wish outlives a channel (kWishTicks), so a key pressed during Lightning threw it again
         // round him after he had walked on (the user, 2026-09-30: "when i am done with casting
         // spell, and move on it still is casted").
-        if (order_.kind == Request::Kind::WalkTo || order_.kind == Request::Kind::Pick ||
-            order_.kind == Request::Kind::Talk || order_.kind == Request::Kind::Perch) {
-            wants_ = skill::kNone;
+        if (me().order.kind == Request::Kind::WalkTo || me().order.kind == Request::Kind::Pick ||
+            me().order.kind == Request::Kind::Talk || me().order.kind == Request::Kind::Perch) {
+            me().wants = skill::kNone;
         }
-        if (order_.kind == Request::Kind::WalkTo) {
-            send(hero, order_.column, order_.row);
-        } else if (order_.kind == Request::Kind::Attack && arrowless(hero, order_)) {
+        if (me().order.kind == Request::Kind::WalkTo) {
+            send(hero, me().order.column, me().order.row);
+        } else if (me().order.kind == Request::Kind::Attack && arrowless(hero, me().order)) {
             // A bow with nothing to loose is not drawn at all: no walk in, no fight clock, no
             // stance -- only MuMain's "no more arrows" (the user, 2026-10-03: "dont even go to
             // combat stance ... but play error sound"). The swing's own nock stays the check
             // for a quiver that runs dry mid-fight.
             say(What::Arrowless, hero, hero.archer);
             halt(hero);
-            order_ = Request{};
-        } else if (order_.kind == Request::Kind::Stop) {
+            me().order = Request{};
+        } else if (me().order.kind == Request::Kind::Stop) {
             halt(hero);
-            order_ = Request{};
-        } else if (order_.kind == Request::Kind::Pick) {
+            me().order = Request{};
+        } else if (me().order.kind == Request::Kind::Pick) {
             for (const Lying& one : lying_) {
-                if (one.id == order_.target) send(hero, one.column, one.row);
+                if (one.id == me().order.target) send(hero, one.column, one.row);
             }
-        } else if (order_.kind == Request::Kind::Talk) {
-            if (order_.target >= tables_->folk.size()) {
-                order_ = Request{};
-            } else if (!serving(int(order_.target))) {
+        } else if (me().order.kind == Request::Kind::Talk) {
+            if (me().order.target >= tables_->folk.size()) {
+                me().order = Request{};
+            } else if (!serving(int(me().order.target))) {
                 // Where he stands now: a townsperson on his rounds is not at his table's tile.
                 int column = 0, row = 0;
-                folkTile(int(order_.target), &column, &row);
+                folkTile(int(me().order.target), &column, &row);
                 send(hero, column, row);
             }
-        } else if (order_.kind == Request::Kind::Perch) {
-            if (order_.target >= tables_->perches.size()) {
-                order_ = Request{};
+        } else if (me().order.kind == Request::Kind::Perch) {
+            if (me().order.target >= tables_->perches.size()) {
+                me().order = Request{};
                 return;
             }
-            const content::Perch& one = tables_->perches[order_.target];
+            const content::Perch& one = tables_->perches[me().order.target];
             // **Some of them are furniture nobody can use, and that is MU's own answer.** The
             // click is gated on the placement's TILE before any route is planned:
             // `wall == TW_HEIGHT || wall < TW_CHARACTER`, so the word must be nothing, SafeZone
@@ -577,7 +577,7 @@ void Realm::accept() {
             // one tavern bench and six logs, counted off this attribute grid on 2026-09-24 (MU2's
             // Crowd.Pose says 31, and reads the same attributes.png) -- and are not usable.
             if (!content::usable(tables_->grid, one)) {
-                order_ = Request{};
+                me().order = Request{};
                 return;
             }
             // Walked to the placement's own tile, and the pose taken once the walk is over (see
@@ -599,8 +599,8 @@ void Realm::accept() {
 // he was walking to (MU2 did that, and says so in Crowd.Perch). The one-tile slack is for the
 // bench whose own tile he cannot stand on: he sits from beside it rather than not at all.
 void Realm::perch(Body& hero) {
-    const int32_t index = int32_t(order_.target);
-    order_ = Request{};
+    const int32_t index = int32_t(me().order.target);
+    me().order = Request{};
     const content::Perch& one = tables_->perches[size_t(index)];
     if (std::max(std::abs(hero.column() - one.column), std::abs(hero.row() - one.row)) > 1) {
         return;  // stopped short -- held against a fence, or no route; the arm does not run
@@ -626,7 +626,7 @@ void Realm::rise(Body& one) {
 }
 
 void Realm::press() {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     if (!hero.alive()) return;
 
     // The key, before the order, and it does not replace it: a press spends the next swing on a
@@ -636,14 +636,14 @@ void Realm::press() {
     //
     // Thrown only when the weapon is out of its own recovery, and `throwSkill` puts the clock
     // forward itself, so the order below sees a swing already spent and does not swing twice.
-    if (wants_ != skill::kNone) {
-        if (tick_ > wantsUntil_) {
+    if (me().wants != skill::kNone) {
+        if (tick_ > me().wantsUntil) {
             // Said, because the window says nothing: the key's sweep answers a cooldown and
             // nothing answers the rest. The user pressed a Meteorite that never fell and neither
             // of us could say why.
-            const uint32_t at = wantsAt_ != 0 ? wantsAt_ : order_.target;
+            const uint32_t at = me().wantsAt != 0 ? me().wantsAt : me().order.target;
             const Body* target = find(at);
-            const SkillRow* row = skillNumbered(wants_);
+            const SkillRow* row = skillNumbered(me().wants);
             core::logf("skill: %s pressed and never thrown -- target #%u %s, %.1f tiles (reach "
                        "%.0f), cooling %lld, mana %d of %d, he is %s the safe zone",
                        row ? row->name : "?", at,
@@ -651,17 +651,17 @@ void Realm::press() {
                        : tables_->grid.safe(target->column(), target->row()) ? "sheltered"
                                                                              : "standing",
                        target ? double(reach(hero, *target)) : -1.0, row ? double(row->reach) : 0.0,
-                       (long long)cooling(wants_), hero.mana, row ? row->mana : 0,
+                       (long long)cooling(me().wants), hero.mana, row ? row->mana : 0,
                        tables_->grid.safe(hero.column(), hero.row()) ? "in" : "out of");
-            wants_ = skill::kNone;
+            me().wants = skill::kNone;
         } else if (tick_ >= hero.swingsAt) {
-            if (const SkillRow* row = skillNumbered(wants_)) {
+            if (const SkillRow* row = skillNumbered(me().wants)) {
                 // A self-cast reads its target off the caster; an attack takes the id the key
                 // named, or the one he is already fighting when the key named nobody.
                 const uint32_t at = row->onSelf()  ? hero.id
-                                    : wantsAt_ != 0 ? wantsAt_
-                                                    : order_.target;
-                if (throwSkill(hero, *row, at)) wants_ = skill::kNone;
+                                    : me().wantsAt != 0 ? me().wantsAt
+                                                    : me().order.target;
+                if (throwSkill(hero, *row, at)) me().wants = skill::kNone;
             }
         }
     }
@@ -671,7 +671,7 @@ void Realm::press() {
     // then fell on that old ground, or was refused at its wall every tick (the user,
     // 2026-10-05: "while i am holding right clikc with metero ... casting is not hapening",
     // "its while hovering monster").
-    if (wants_ == skill::kNone) wantsColumn_ = wantsRow_ = -1;
+    if (me().wants == skill::kNone) me().wantsColumn = me().wantsRow = -1;
 
     // And a boon lapsing, which is the other half of a buff: replace rather than stack, off on
     // the tick it expires, and `Fighter.damageTaken` back to 1 -- the field `sim/rules.h` has
@@ -701,21 +701,21 @@ void Realm::press() {
         rearm(hero);
     }
 
-    if (order_.kind == Request::Kind::Perch) {
+    if (me().order.kind == Request::Kind::Perch) {
         if (!hero.walking) perch(hero);
         return;
     }
 
-    if (order_.kind == Request::Kind::Pick) {
+    if (me().order.kind == Request::Kind::Pick) {
         // Taken on arrival: within a tile of it, which is standing on it or beside it -- the
         // grid may refuse the tile itself when something died against a wall. The reach is
         // this project's; MU picks up when the walk ends on the item.
         size_t at = lying_.size();
         for (size_t i = 0; i < lying_.size(); ++i) {
-            if (lying_[i].id == order_.target) at = i;
+            if (lying_[i].id == me().order.target) at = i;
         }
         if (at == lying_.size()) {
-            order_ = Request{};
+            me().order = Request{};
             return;
         }
         const Lying& one = lying_[at];
@@ -723,17 +723,17 @@ void Realm::press() {
             std::fabs(hero.y - float(one.row)) <= 1.0f) {
             halt(hero);
             take(at);
-            order_ = Request{};
+            me().order = Request{};
         }
         return;
     }
 
-    if (order_.kind == Request::Kind::Talk) {
+    if (me().order.kind == Request::Kind::Talk) {
         // Served the tick he is within reach, whether he walked there or was already there.
         // A townsperson who sells nothing and keeps nothing -- a guard -- is walked to and
         // then nothing happens, which is MU's own answer to talking to a guard.
-        if (serving(int(order_.target))) {
-            const content::Townsperson& one = tables_->folk[order_.target];
+        if (serving(int(me().order.target))) {
+            const content::Townsperson& one = tables_->folk[me().order.target];
             halt(hero);
             // A quest giver spoken to opens his town on the travel list (sim/travel.h), whatever
             // he has to say, even that he is not ready for him yet.
@@ -741,30 +741,30 @@ void Realm::press() {
             // Found: a quest that asked for her is ready to hand in to her.
             if (questReceives(one.number)) questMet(one.number);
             if (sells(one.number)) {
-                trading_ = int(order_.target);
-                say(What::Served, hero, trading_, one.number);
+                me().trading = int(me().order.target);
+                say(What::Served, hero, me().trading, one.number);
             } else if (one.number == kVaultKeeper) {
-                banking_ = int(order_.target);
-                say(What::Served, hero, banking_, one.number);
+                me().banking = int(me().order.target);
+                say(What::Served, hero, me().banking, one.number);
             } else if (one.number == kChaosGoblin) {
-                mixing_ = int(order_.target);
-                say(What::Served, hero, mixing_, one.number);
+                me().mixing = int(me().order.target);
+                say(What::Served, hero, me().mixing, one.number);
             } else if (const int quest = questHere(one.number);
                        quest >= 0 && (!questLocked(quest) || questListed(one.number))) {
                 // A quest giver: his dialog opens, whatever it has to say -- the offer, the
                 // quest under way, the hand-in, or that it is not his to give again yet; or his
                 // list, even of one quest waiting on the hero's level (questListed).
-                questing_ = int(order_.target);
-                say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
+                me().questing = int(me().order.target);
+                say(What::Offered, hero, quest, me().questing, int(me().quests[quest].state));
             } else if (one.number == kArchangel) {
                 // His page of the Event window: the staff he asks for, and Give.
-                angeling_ = int(order_.target);
-                say(What::Served, hero, angeling_, one.number);
+                me().angeling = int(me().order.target);
+                say(What::Served, hero, me().angeling, one.number);
             } else if (one.number == kMessenger) {
                 // His page of the quest window: the ticket he asks for and the door
                 // (QuestDialog::kGate).
-                gating_ = int(order_.target);
-                say(What::Served, hero, gating_, one.number);
+                me().gating = int(me().order.target);
+                say(What::Served, hero, me().gating, one.number);
             } else if (one.number == kGuildMaster || one.number == kCharon ||
                        one.number == kThompson ||
                        questOf(one.number) >= 0 || questReceives(one.number)) {
@@ -774,18 +774,18 @@ void Realm::press() {
                 // And a giver whose quest waits on another (Devin, until Lorencia or Noria is
                 // cleared) or on a level (Sevina, until 200): not ready.
                 // And Thompson, who has only his memory of the Lost Tower to tell.
-                say(What::Shouted, hero, int32_t(Shout::Greet), 0, int(order_.target));
+                say(What::Shouted, hero, int32_t(Shout::Greet), 0, int(me().order.target));
             }
-            order_ = Request{};
+            me().order = Request{};
         }
         return;
     }
 
-    if (order_.kind != Request::Kind::Attack) return;
-    const Body* target = find(order_.target);
+    if (me().order.kind != Request::Kind::Attack) return;
+    const Body* target = find(me().order.target);
     // Only a monster: a guard is a body, and not one he may raise a hand to.
     if (!target || !target->alive() || !target->monster()) {
-        order_ = Request{};
+        me().order = Request{};
         return;
     }
 
@@ -800,8 +800,8 @@ void Realm::press() {
     // which is the auto-attack floor docs/skills-dk.md §3.1a already gave him.
     const bool sheltered = tables_->grid.safe(target->column(), target->row());
     const int bulk = bulkOf(numberOf(*target));
-    if (order_.skill != skill::kNone) {
-        const SkillRow* row = skillNumbered(order_.skill);
+    if (me().order.skill != skill::kNone) {
+        const SkillRow* row = skillNumbered(me().order.skill);
         if (row && armed(hero, *row)) {
             const int index = skillIndexOf(row->number);
             const bool cooled = tick_ >= hero.cools[size_t(index)];
@@ -809,14 +809,14 @@ void Realm::press() {
                 // A guard on the slot is raised when it can be and the fight goes on under it.
                 // A summon only when none stands: a recast is a dismissal (realm_summon.cpp),
                 // and the slot re-throwing it on every cooldown would send it away each time.
-                const bool standing = row->summons > 0 && summonSlot_ >= 0 &&
-                                      bodies_[size_t(summonSlot_)].alive();
+                const bool standing = row->summons > 0 && me().summonSlot >= 0 &&
+                                      bodies_[size_t(me().summonSlot)].alive();
                 if (!standing && cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, hero.id);
             } else if (within(hero, *target, row->reach + float(bulk)) && !sheltered &&
                        seen(hero, *target)) {
                 if (row->thrown() || cooled) {
                     if (tick_ >= hero.castUntil) engage(hero, *target);
-                    if (cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, order_.target);
+                    if (cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, me().order.target);
                     return;
                 }
             } else if (row->thrown()) {
@@ -838,12 +838,12 @@ void Realm::press() {
             // stops where she stands -- ours: OpenMU lets an empty quiver shoot for nothing.
             if (!nock(hero)) {
                 say(What::Arrowless, hero, hero.archer);
-                order_ = Request{};
+                me().order = Request{};
                 halt(hero);
                 return;
             }
             hero.swingsAt = tick_ + hero.swingTicks;
-            begin(hero, order_.target, 1.0f, skill::kNone, hero.swingTicks);
+            begin(hero, me().order.target, 1.0f, skill::kNone, hero.swingTicks);
         }
         return;
     }
@@ -858,7 +858,7 @@ void Realm::press() {
     // every swing frame drawn.
     //
     // What cancels it is an order, and only an order: a click on the ground, a click on
-    // something else, or a stop, all of which arrive above as `pending_` and replace this one
+    // something else, or a stop, all of which arrive above as `me().pending` and replace this one
     // before this line is reached. So the player is never held still by his own attack -- he
     // gives it up, which is what an attack cancel is -- and the chase, which is the engine's
     // decision rather than his, waits its turn.
@@ -892,9 +892,9 @@ void Realm::step() {
     castleTick();
     invasionTick();
     raidTick();
-    if (castleOwed_ != 0) {
-        const int castle = castleOwed_;
-        castleOwed_ = 0;
+    if (me().castleOwed != 0) {
+        const int castle = me().castleOwed;
+        me().castleOwed = 0;
         passCastle(castle);
     }
 
@@ -902,16 +902,16 @@ void Realm::step() {
     // swings, then every monster is roused, thinks and moves in index order, then the dead are
     // considered for respawn. Nothing here walks a hash container, and every id came from one
     // monotonic counter.
-    Body& hero = bodies_[0];
-    if (summonOwed_ != 0) {
-        const SkillRow* row = skillNumbered(summonOwed_);
+    Body& hero = mine();
+    if (me().summonOwed != 0) {
+        const SkillRow* row = skillNumbered(me().summonOwed);
         if (hero.alive() && row != nullptr && conjure(hero, *row)) {
-            Body& summon = bodies_[size_t(summonSlot_)];
-            if (summonOwedHealth_ > 0) {
-                summon.health = std::min(summonOwedHealth_, summon.maxHealth);
+            Body& summon = bodies_[size_t(me().summonSlot)];
+            if (me().summonOwedHealth > 0) {
+                summon.health = std::min(me().summonOwedHealth, summon.maxHealth);
             }
         }
-        summonOwed_ = 0;
+        me().summonOwed = 0;
     }
     sip();
     chargeTick(hero);
@@ -919,8 +919,8 @@ void Realm::step() {
     // Icarus holds no one who cannot fly: his Dinorant worn out with no wing on, or a save
     // opened there without them, and he goes home -- WebZen's Devias, gate 22
     // (user.cpp:10812-10842), the map row's home here (game/world/maps.cpp).
-    if (tables_->map == kIcarusMap && hero.alive() && !grounded_ && !canFly(*tables_, bag_)) {
-        grounded_ = true;
+    if (tables_->map == kIcarusMap && hero.alive() && !me().grounded && !canFly(*tables_, me().bag)) {
+        me().grounded = true;
         warpHome(hero);
     }
     // The floor he stands on, opened in the travel list when this map opens floor by floor.
@@ -950,9 +950,9 @@ void Realm::step() {
             spiritStrike(hero, blow);
         }
         // An Arcane Echo's second throw, let go as the first was, paying nothing.
-        if (echo_.at != 0 && tick_ >= echo_.at) {
-            Echo echo = echo_;
-            echo_ = Echo{};
+        if (me().echo.at != 0 && tick_ >= me().echo.at) {
+            Echo echo = me().echo;
+            me().echo = Echo{};
             // The first throw may have killed what it was aimed at: the echo goes on to the
             // nearest living monster within the spell's reach, and is spent if there is none.
             const Body* aimed = body(echo.target);
@@ -1004,7 +1004,7 @@ void Realm::step() {
         if (raidHand_ && raid_.stage != RaidStage::None) {
             raid(hero, 0);
             // A click made while it was watched is not carried out after the fight ends.
-            pending_ = Request{};
+            me().pending = Request{};
         } else {
             press();
         }

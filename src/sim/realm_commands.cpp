@@ -97,7 +97,7 @@ void Realm::applyCommands() {
             case Kind::ClaimCastle: answer = claimCastle() ? 1 : -1; break;
         }
         if (one.ticket == 0) continue;
-        say(What::Answered, bodies_[0], int32_t(said),
+        say(What::Answered, mine(), int32_t(said),
             answer < 0 ? -1 : int32_t(std::min<int64_t>(answer, INT32_MAX)), int32_t(one.ticket));
         if (said == Kind::Crack) {
             happenings_.back().x = burstX;

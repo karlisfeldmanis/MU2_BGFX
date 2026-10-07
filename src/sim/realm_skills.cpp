@@ -7,7 +7,7 @@
 //   * **A press is not an order.** `invoke` remembers a wish; it never replaces the standing
 //     attack order. So the knight opens on auto-attack, presses a key, spends that swing on the
 //     skill and goes on swinging the same monster -- which is the fight the user described and is
-//     why nothing here touches `order_`.
+//     why nothing here touches `me().order`.
 //   * **A cast pays the swing timer as well as its own cooldown.** The swing clock is the length
 //     of the clip he swings with (`sim/swings.cpp`), so it is the wall that stops any amount of
 //     haste firing a skill inside its own animation. MU2's `Realm.Cast` takes the longer of the
@@ -46,25 +46,25 @@ constexpr int64_t kBlinkSettleTicks = 4;
 }  // namespace
 
 void Realm::invoke(int32_t skill, uint32_t at) {
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     if (!hero.alive()) return;
     if (skillIndexOf(skill) < 0) return;
-    wants_ = skill;
-    wantsAt_ = at;
-    wantsColumn_ = wantsRow_ = -1;
-    wantsUntil_ = tick_ + kWishTicks;
+    me().wants = skill;
+    me().wantsAt = at;
+    me().wantsColumn = me().wantsRow = -1;
+    me().wantsUntil = tick_ + kWishTicks;
 }
 
 void Realm::invokeAt(int32_t skill, int column, int row) {
     invoke(skill, 0);
-    wantsColumn_ = column;
-    wantsRow_ = row;
+    me().wantsColumn = column;
+    me().wantsRow = row;
 }
 
 bool Realm::learn(int32_t skill) {
     const int index = skillIndexOf(skill);
     if (index < 0) return false;
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     const uint64_t bit = uint64_t(1) << index;
     if ((hero.learned & bit) != 0) return false;
     hero.learned |= bit;
@@ -78,12 +78,12 @@ bool Realm::knows(int32_t skill) const {
     // A mount's skill is the horn's, as 0.75's skills were the weapon's: known while it is worn
     // and not saved -- for his class alone, as MuMain marks it the knight's on the horn.
     const SkillRow& row = skillAt(index);
-    if (row.mounted) return skillFor(row, bodies_[0].kin) && dinorantWorn();
-    return (bodies_[0].learned & (uint64_t(1) << index)) != 0;
+    if (row.mounted) return skillFor(row, mine().kin) && dinorantWorn();
+    return (mine().learned & (uint64_t(1) << index)) != 0;
 }
 
 bool Realm::dinorantWorn() const {
-    const Held& horn = bag_[kMount];
+    const Held& horn = me().bag[kMount];
     if (horn.empty() || horn.durability <= 0 || tables_ == nullptr ||
         size_t(horn.item) >= tables_->items.size()) {
         return false;
@@ -95,13 +95,13 @@ bool Realm::dinorantWorn() const {
 int64_t Realm::cooling(int32_t skill) const {
     const int index = skillIndexOf(skill);
     if (index < 0) return 0;
-    return std::max<int64_t>(0, bodies_[0].cools[index] - tick_);
+    return std::max<int64_t>(0, mine().cools[index] - tick_);
 }
 
 int32_t Realm::coolsFor(int32_t skill) const {
     const SkillRow* row = skillNumbered(skill);
     if (!row) return 0;
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     return cooldownTicks(*row, hero.totalPoints().agility, floorTicksFor(*row, clipTicksOf(hero, *row)));
 }
 
@@ -139,8 +139,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // The cooldown, which is ours and has no counterpart in 0.75. A wait rather than a refusal,
     // exactly as the swing timer is: the key does nothing and says nothing. A summon key still
     // dismisses the one standing while it cools: that costs nothing and raises nothing.
-    const bool dismisses = row.summons > 0 && summonSlot_ >= 0 &&
-                           bodies_[size_t(summonSlot_)].alive();
+    const bool dismisses = row.summons > 0 && me().summonSlot >= 0 &&
+                           bodies_[size_t(me().summonSlot)].alive();
     if (tick_ < hero.cools[size_t(index)] && !dismisses) return false;
 
     // **The hand, and now it is the RIGHT hand rather than any hand.** The user's rule of
@@ -179,8 +179,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // order walked him straight back to what he had just left.
     if (row.blinks) {
         int column = 0, where = 0;
-        if (wantsColumn_ < 0 ||
-            !blinkTo(hero, row, wantsColumn_, wantsRow_, &column, &where)) {
+        if (me().wantsColumn < 0 ||
+            !blinkTo(hero, row, me().wantsColumn, me().wantsRow, &column, &where)) {
             return false;
         }
         if (hero.mana < row.mana) return false;
@@ -198,8 +198,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.route.clear();
         hero.onStep = 0;
         dropBlow(hero);
-        order_ = Request{};
-        pending_ = Request{};
+        me().order = Request{};
+        me().pending = Request{};
         rise(hero);
         say(What::Cast, hero, row.number, cool, 0, hero.id);
         return true;
@@ -212,15 +212,15 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // charge that is held, which nothing begins now.
     if (row.chargeTicks > 0) {
         const int32_t price = row.mana * row.chargeStages;
-        if (charge_.skill != 0 || hero.mana < price) return false;
+        if (me().charge.skill != 0 || hero.mana < price) return false;
         hero.walking = false;
         hero.route.clear();
         hero.onStep = 0;
         dropBlow(hero);
-        order_ = Request{};
-        pending_ = Request{};
+        me().order = Request{};
+        me().pending = Request{};
         hero.mana -= price;
-        charge_ = Charge{row.number, row.chargeStages, tick_, true};
+        me().charge = Charge{row.number, row.chargeStages, tick_, true};
         hero.castBreaks = false;
         burstCharge(hero);
         return true;
@@ -248,7 +248,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // **A second cast dismisses the one standing**, and costs nothing: OpenMU's
             // TargetedSkillDefaultPlugin.cs:121-125, which removes the summon and returns before
             // the mana is taken. The mana was taken above, so it is handed back.
-            Body& summon = bodies_[size_t(summonSlot_)];
+            Body& summon = bodies_[size_t(me().summonSlot)];
             if (summon.alive()) {
                 hero.mana += row.mana;
                 dismiss(summon);
@@ -320,11 +320,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // **Or at the ground under the pointer**, which wins: a press of a skill with a direction
         // carries the tile the mouse is on (`invokeAt`), and he turns to it and casts that way
         // whatever stands there (SkillRow::aimsAtPointer).
-        const bool pointed = wantsColumn_ >= 0 && row.aimsAtPointer() &&
-                             (wantsColumn_ != hero.column() || wantsRow_ != hero.row());
+        const bool pointed = me().wantsColumn >= 0 && row.aimsAtPointer() &&
+                             (me().wantsColumn != hero.column() || me().wantsRow != hero.row());
         if (pointed) {
             pointedAim = true;
-            hero.aim = fm::atan2(float(wantsRow_) - hero.y, float(wantsColumn_) - hero.x);
+            hero.aim = fm::atan2(float(me().wantsRow) - hero.y, float(me().wantsColumn) - hero.x);
             if (row.wizardry) hero.facing = hero.aim;
         }
         // Cast at nothing, a storm walks the way he faces (SkillRow::castsBare).
@@ -332,10 +332,10 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // **A shower falls on the ground he named** (SkillRow::showers), his own tile too: a
         // spot past his reach is pulled back along the line to it, as Teleport's is, and one he
         // cannot see over a wall is not called down at all -- no mana, no clip.
-        const bool grounded = row.showers() && wantsColumn_ >= 0;
+        const bool grounded = row.showers() && me().wantsColumn >= 0;
         float spotX = 0.0f, spotY = 0.0f;
         if (grounded) {
-            float dx = float(wantsColumn_) - hero.x, dy = float(wantsRow_) - hero.y;
+            float dx = float(me().wantsColumn) - hero.x, dy = float(me().wantsRow) - hero.y;
             const float far = std::max(std::fabs(dx), std::fabs(dy));
             if (far > row.reach) {
                 dx *= row.reach / far;
@@ -490,7 +490,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     hero.route.clear();
     hero.onStep = 0;
     // **And the auto-attack goes on.** The user's rule, 2026-09-23, which puts back what the
-    // first pass did and takes out the `order_ = Request{}` that stood here for a day: a skill is
+    // first pass did and takes out the `me().order = Request{}` that stood here for a day: a skill is
     // a beat inside the exchange and not the end of it, so the knight spends this swing on the
     // skill and keeps hitting what he was hitting without a second click. That is the fight
     // §3.1a describes -- auto-attack is the floor, the key is the punctuation -- and it is one
@@ -517,11 +517,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // user: "effect looked buggy"). For a spell and a primary `held` is `clip`, unchanged.
         begin(hero, at, force(row, hero.totalPoints()), row.number, held);
         // Thrown at the pointer's ground: that way, whatever turns him before it is let go.
-        hero.blowAimed = wantsColumn_ >= 0 && row.aimsAtPointer();
+        hero.blowAimed = me().wantsColumn >= 0 && row.aimsAtPointer();
         hero.blowAim = hero.aim;
     }
     // The pointer's ground is spent with the press: a later throw off a click is aimed afresh.
-    wantsColumn_ = wantsRow_ = -1;
+    me().wantsColumn = me().wantsRow = -1;
     return true;
 }
 
@@ -842,7 +842,7 @@ void Realm::blink(Body& hero) {
     hero.repathsAt = 0;
     // A summon, if one stands, goes with any warp of his (the Town Portal's rule): no summoner
     // casts Teleport in 0.75, so this only keeps the rule whole.
-    if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
+    if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     say(What::Blinked, hero, hero.blinkColumn, hero.blinkRow);
 }
 
@@ -943,28 +943,28 @@ float Realm::whirl(Body& hero, const SkillRow& row, float force) {
 }
 
 void Realm::chargeTick(Body& hero) {
-    if (charge_.skill == 0) return;
-    const SkillRow* row = skillNumbered(charge_.skill);
+    if (me().charge.skill == 0) return;
+    const SkillRow* row = skillNumbered(me().charge.skill);
     if (row == nullptr || !hero.alive()) {
         // Dead, or the row gone: nothing goes off.
-        charge_ = Charge{};
+        me().charge = Charge{};
         hero.swingsAt = hero.castUntil = tick_;
         return;
     }
     // A stage every chargeTicks while there is mana for it; short, it holds where it is.
-    if (tick_ >= charge_.nextAt && charge_.stage < row->chargeStages && hero.mana >= row->mana) {
+    if (tick_ >= me().charge.nextAt && me().charge.stage < row->chargeStages && hero.mana >= row->mana) {
         hero.mana -= row->mana;
-        ++charge_.stage;
-        charge_.nextAt = tick_ + row->chargeTicks;
+        ++me().charge.stage;
+        me().charge.nextAt = tick_ + row->chargeTicks;
     }
     // Let go, or full: it bursts (OpenMU's loop ends on its twelfth stage and strikes).
-    if (charge_.letGo || charge_.stage >= row->chargeStages) burstCharge(hero);
+    if (me().charge.letGo || me().charge.stage >= row->chargeStages) burstCharge(hero);
 }
 
 void Realm::burstCharge(Body& hero) {
-    const SkillRow* row = skillNumbered(charge_.skill);
-    const int stage = charge_.stage;
-    charge_ = Charge{};
+    const SkillRow* row = skillNumbered(me().charge.skill);
+    const int stage = me().charge.stage;
+    me().charge = Charge{};
     if (row == nullptr) return;
     // Let go before a stage gathered, nothing goes.
     if (stage <= 0) {
@@ -979,9 +979,9 @@ void Realm::burstCharge(Body& hero) {
     say(What::Loosed, hero, row->number, 0, stage, 0);
     // Its stages and the strength's half on the blow (OpenMU's SkillBaseDamageBonus), for this
     // burst alone.
-    chargeDamage_ = kNovaStageDamage[std::clamp(stage, 0, 12)] + hero.totalPoints().strength / 2;
+    me().chargeDamage = kNovaStageDamage[std::clamp(stage, 0, 12)] + hero.totalPoints().strength / 2;
     strikeAround(hero, *row, row->force);
-    chargeDamage_ = 0;
+    me().chargeDamage = 0;
     core::logf("nova: tick %lld, burst at stage %d", (long long)tick_, stage);
 }
 

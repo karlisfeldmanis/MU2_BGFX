@@ -104,7 +104,7 @@ void Realm::watch(Body& guard) {
     // the lower id on a tie.
     const uint32_t had = guard.quarry;
     const Body* held = find(guard.quarry);
-    const uint32_t heroId = bodies_[0].id;
+    const uint32_t heroId = mine().id;
     const bool keep = held != nullptr && held->alive() && held->monster() && !isBoss(*held) &&
                       fromPost(guard, *held) <= watches;
     // Looked for again whenever what he holds is not on the hero, so a monster that turns on the

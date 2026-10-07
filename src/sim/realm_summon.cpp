@@ -29,7 +29,7 @@
 namespace mu::sim {
 
 bool Realm::conjure(Body& hero, const SkillRow& row) {
-    if (summonSlot_ < 0 || row.summons <= 0) return false;
+    if (me().summonSlot < 0 || row.summons <= 0) return false;
     // None in Icarus: WebZen refuses the cast there (user.cpp:29567-29571), MuMain's client too
     // (ClassAttack.cpp:120), and one carried through the door is not raised on the other side.
     if (tables_->map == kIcarusMap) return false;
@@ -49,7 +49,7 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
         return false;
     }
     const content::MonsterKind& kind = tables_->kinds[size_t(kindAt)];
-    Body& summon = bodies_[size_t(summonSlot_)];
+    Body& summon = bodies_[size_t(me().summonSlot)];
     const uint32_t id = summon.id;
     summon = Body{};
     summon.id = id;

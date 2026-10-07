@@ -83,8 +83,8 @@ uint32_t travelRowsOf(int32_t map) {
 
 void Realm::discover(int32_t map) {
     const uint32_t rows = travelRowsOf(map);
-    if ((found_ & rows) == rows) return;
-    found_ |= rows;
+    if ((me().found & rows) == rows) return;
+    me().found |= rows;
     core::logf("travel: %s opened", travelAt(__builtin_ctz(rows ? rows : 1)).name);
 }
 
@@ -120,14 +120,14 @@ void Realm::settleFound(uint32_t saved) {
         }
     }
 
-    found_ = saved & ((uint32_t(1) << kTravels) - 1);
+    me().found = saved & ((uint32_t(1) << kTravels) - 1);
     // Both towns from the start, whichever he was born in (the user, 2026-10-04).
-    found_ |= travelRowsOf(0) | travelRowsOf(3);
+    me().found |= travelRowsOf(0) | travelRowsOf(3);
     // Atlans once he has met Lirien: speaking to her opens it (Realm::discover), and a save from
     // before her row was here has the Drowned Song handed in to show for it.
-    if (quests_[kDrownedSong].completions > 0) found_ |= travelRowsOf(int32_t(kAtlansMap));
+    if (me().quests[kDrownedSong].completions > 0) me().found |= travelRowsOf(int32_t(kAtlansMap));
     // And Tarkan once he has met the Keeper, the same way (The Road of Kantur).
-    if (quests_[kRoadOfKantur].completions > 0) found_ |= travelRowsOf(int32_t(kTarkanMap));
+    if (me().quests[kRoadOfKantur].completions > 0) me().found |= travelRowsOf(int32_t(kTarkanMap));
     // A map nobody gives a quest on opens as he stands in it. Silently: a raise logs the same
     // lines on every run.
     bool giver = false;
@@ -143,20 +143,20 @@ void Realm::settleFound(uint32_t saved) {
         if (((rows >> i) & 1u) != 0 && travelQuest(i) >= 0) chained = true;
     }
     byFloor_ = !giver && (rows & (rows - 1)) != 0 && !chained;
-    if (!giver && !byFloor_) found_ |= rows;
+    if (!giver && !byFloor_) me().found |= rows;
     reachFloor();
 }
 
 void Realm::reachFloor() {
     if (!byFloor_) return;
     const int floor = travelFloor();
-    if (floor < 0 || ((found_ >> floor) & 1u) != 0) return;
-    found_ |= uint32_t(1) << floor;
+    if (floor < 0 || ((me().found >> floor) & 1u) != 0) return;
+    me().found |= uint32_t(1) << floor;
     core::logf("travel: %s opened", travelAt(floor).name);
 }
 
 int Realm::travelFloor() const {
-    return floorAt(bodies_[0].column(), bodies_[0].row());
+    return floorAt(mine().column(), mine().row());
 }
 
 int Realm::floorAt(int column, int row) const {
@@ -185,37 +185,37 @@ int Realm::travelQuest(int index) const {
 TravelRefusal Realm::travelRefusal(int index) const {
     if (index < 0 || index >= kTravels || !tables_) return TravelRefusal::Unknown;
     const TravelRow& to = kRows[index];
-    if (((found_ >> index) & 1u) == 0) return TravelRefusal::Unknown;
+    if (((me().found >> index) & 1u) == 0) return TravelRefusal::Unknown;
     // The map he is on is a trip too (the user, 2026-10-02: 'allow to travel to current map'):
     // set down at its landing in place, as another of the Dungeon's floors is. Not to a safe zone
     // from inside it, where he already is (the user: 'dont allow to use fast travel to safezone
     // to same map wher he already is'); the Lost Tower's floors from its hall still go.
-    const Body& standing = bodies_[0];
+    const Body& standing = mine();
     if (to.map == int32_t(tables_->map) && tables_->grid.safe(to.column, to.row) &&
         tables_->grid.safe(standing.column(), standing.row()))
         return TravelRefusal::Here;
     // Its link of the chain, taken at least once: under way, ready, resting or ever handed in.
     if (const int q = travelQuest(index); q >= 0) {
-        const QuestProgress& link = quests_[q];
+        const QuestProgress& link = me().quests[q];
         if (link.state == QuestState::Untaken && link.completions == 0) return TravelRefusal::Quest;
     }
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     if (!hero.alive()) return TravelRefusal::Dead;
     if (hero.level < moveLevel(to.level, hero.kin)) return TravelRefusal::Level;
-    if (money_ < to.zen) return TravelRefusal::Zen;
+    if (me().money < to.zen) return TravelRefusal::Zen;
     return TravelRefusal::None;
 }
 
 bool Realm::travel(int index) {
     if (travelRefusal(index) != TravelRefusal::None) return false;
     const TravelRow& to = kRows[index];
-    money_ -= to.zen;
+    me().money -= to.zen;
     // Whatever he had open or was doing stays behind with the map.
-    trading_ = banking_ = questing_ = -1;
+    me().trading = me().banking = me().questing = -1;
     closeMachine();
-    gating_ = -1;
-    angeling_ = -1;
-    halt(bodies_[0]);
+    me().gating = -1;
+    me().angeling = -1;
+    halt(mine());
     core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(to.zen));
     // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map
     // gate does, with no map change.

@@ -43,7 +43,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (impCost > 0 && !impPaid) attacker.stats.damageDealt = 1.0;
     // A charge's stages ride on the skill's damage for its burst (Realm::burstCharge).
     Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats,
-                                            row->damage + (attacker.player ? chargeDamage_ : 0), dice)
+                                            row->damage + (attacker.player ? me().chargeDamage : 0), dice)
                                      : strike(attacker.stats, target.stats, dice);
     attacker.stats.damageDealt = dealt;
     if (blow.hit && impPaid) attacker.health -= impCost;
@@ -748,8 +748,8 @@ void Realm::land(Body& hero) {
     // His spell, let go: an Arcane Echo may throw it again a beat later (sim/items.h). Rolled
     // before the release, whatever the release finds, as a swing's rune rolls on the landing.
     const SkillRow* spell = skillNumbered(skill);
-    if (spell && spell->wizardry && hero.player && echo_.at == 0 && echoes(hero)) {
-        echo_ = Echo{tick_ + kEchoTicks, at, skill, force, ground, {spot[0], spot[1]}};
+    if (spell && spell->wizardry && hero.player && me().echo.at == 0 && echoes(hero)) {
+        me().echo = Echo{tick_ + kEchoTicks, at, skill, force, ground, {spot[0], spot[1]}};
     }
     release(hero, at, force, skill, ground ? spot : nullptr);
     // And Stormcall answers the cast as it answers a swing (the user, 2026-10-03: "that rune
@@ -906,7 +906,7 @@ int Realm::pyroblasts(const Body& hero) const {
     if (!tables_ || !hero.player) return 0;
     int worn = 0;
     for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
-        const Held& hand = bag_[slot];
+        const Held& hand = me().bag[slot];
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
@@ -1104,7 +1104,7 @@ void Realm::looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float f
 }
 
 void Realm::arrive() {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     // In the order they were let go when two arrive together, which is the order of the array
     // only while nothing has been freed out of the middle -- so the earliest `at` goes first,
     // and a tie goes to the lower place. Fixed either way, which is what the seeded log needs.
@@ -1511,7 +1511,7 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
 }
 
 void Realm::burn() {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     for (Fire& fire : fires_) {
         if (fire.next == 0) continue;
         // A storm walks every tick, struck or not; it was stood at his feet on the let-go's tick.
@@ -1569,7 +1569,7 @@ void Realm::burn() {
 }
 
 void Realm::kill(Body& dead, Body& killer) {
-    if (dead.player && undying_) {
+    if (dead.player && me().undying) {
         dead.health = dead.maxHealth;
         core::logf("undying: tick %lld, the hero is filled again", (long long)tick_);
         return;
@@ -1635,7 +1635,7 @@ void Realm::kill(Body& dead, Body& killer) {
         // And every cooldown is spent with it, the buffs' and the potion's included: he stands
         // up in town with his whole bar ready. The user's rule, 2026-09-30.
         for (int64_t& cool : dead.cools) cool = 0;
-        potionUntil_ = 0;
+        me().potionUntil = 0;
         dead.boonUntil = 0;
         dead.mightUntil = 0;
         dead.might = 0;
@@ -1666,15 +1666,15 @@ void Realm::kill(Body& dead, Body& killer) {
             dead.frenzyStacks = 0;
             reswing(dead);
         }
-        order_ = Request{};
-        pending_ = Request{};
+        me().order = Request{};
+        me().pending = Request{};
         // And the blow he had in the air goes with him. Left, it waited out the three seconds
         // and landed the tick he stood up -- on the monster that killed him, thirty tiles away,
         // from the middle of town.
         dropBlow(dead);
         // And his spells in the air, for the same reason.
         for (Flight& one : flights_) one = Flight{};
-        echo_ = Echo{};
+        me().echo = Echo{};
         for (SpiritBlow& one : spiritBlows_) one = SpiritBlow{};
         dead.channelEcho = false;
         return;
@@ -1714,7 +1714,7 @@ void Realm::kill(Body& dead, Body& killer) {
     // go to him, as if his own blow had been the last. One the guard took alone gives nothing,
     // which is what keeps a hero from standing at the gate while the guards farm for him.
     // invention, with the guards themselves.
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     const bool helped = dead.heroStruck && hero.alive();
     // A kill's experience at the game's rate, and the Rings of Wisdom's on top (sim::Affix).
     const auto paid = [&](const Body& to) {
@@ -1755,8 +1755,8 @@ void Realm::kill(Body& dead, Body& killer) {
     // gObjAddMsgSendDelay at 2000 ms; user.cpp:13665-13669, :14243, 1.00.93) -- the user's pick
     // of 2026-09-30. OpenMU gives nothing. Queued as a sip is, so a death before it is due spills it.
     if (killer.player && killer.alive() && dead.level > 0) {
-        if (sipCount_ < 8) {
-            sips_[sipCount_++] = Sip{tick_ + kKillLifeTicks, int32_t(dead.level), false};
+        if (me().sipCount < 8) {
+            me().sips[me().sipCount++] = Sip{tick_ + kKillLifeTicks, int32_t(dead.level), false};
         } else {
             killer.health = std::min(killer.maxHealth, killer.health + int(dead.level));
         }
@@ -1785,7 +1785,7 @@ void Realm::kill(Body& dead, Body& killer) {
     // nothing.
     if (dead.monster() &&
         (killer.player || killer.summoner != 0 ||
-         (killer.warden >= 0 && dead.heroStruck && bodies_[0].alive()))) {
+         (killer.warden >= 0 && dead.heroStruck && mine().alive()))) {
         countKill(dead);
     }
 }
@@ -1825,7 +1825,7 @@ void Realm::gain(Body& hero, int32_t award) {
 }
 
 std::pair<int, int> Realm::haven() {
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     const int32_t* gate = tables_->safeGate;
     int column = hero.column(), row = hero.row();
     if (gate[2] > gate[0] && gate[3] > gate[1]) {
@@ -1857,7 +1857,7 @@ void Realm::setDown(Body& hero, int column, int row) {
 }
 
 void Realm::reviveHero() {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     const auto [column, row] = haven();
     hero.health = hero.maxHealth;
     hero.mana = hero.maxMana;
@@ -1866,11 +1866,11 @@ void Realm::reviveHero() {
     hero.healthCarry = 0.0f;
     setDown(hero, column, row);
     // Nothing the window raised while he lay dead carries over: `accept` does not run for a
-    // corpse, so a click on the ground or on his killer waited in `pending_` through the three
+    // corpse, so a click on the ground or on his killer waited in `me().pending` through the three
     // seconds and walked him straight back out of town the tick he stood up.
-    order_ = Request{};
-    pending_ = Request{};
-    wants_ = skill::kNone;
+    me().order = Request{};
+    me().pending = Request{};
+    me().wants = skill::kNone;
     // A map with no safe box of its own -- the Dungeon -- sends him home to Lorencia, as the Town
     // Portal does there: OpenMU respawns a dead player at his map's SafezoneMap, which falls back
     // to Lorencia for a map with no spawn gate (Player.cs:1559-1562, BaseMapInitializer.cs:91;
@@ -1927,7 +1927,7 @@ void Realm::raiseBeast(Body& beast) {
 // ---- the player ------------------------------------------------------------------------
 
 // The order the window raised since the last tick becomes the one he is following. Taken
-// BEFORE he moves this tick, not after: after, a click waited a whole tick in `pending_`, was
+// BEFORE he moves this tick, not after: after, a click waited a whole tick in `me().pending`, was
 // planned at the end of the next one, and was first walked on the tick after that -- 100 ms
 // of the character ignoring the mouse before the drawing's own interpolation added its 50.
 

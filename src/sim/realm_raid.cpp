@@ -162,7 +162,7 @@ void Realm::raiseRaid() {
         dressHero(party_[0]);
     }
     raidPotions_[0] = party_[0].potions;
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     const int count = std::min<int>(int(party_.size()) - 1, kRaidersMost);
     raiderBags_.reserve(size_t(count));
     for (int k = 1; k <= count; ++k) {
@@ -216,7 +216,7 @@ void Realm::raiseRaid() {
 }
 
 void Realm::dressHero(const RaiderKit& kit) {
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     hero.level = std::clamp(kit.level, 1, kMaximumLevel);
     hero.experience = neededExperience(hero.level);
     hero.points = kit.points;
@@ -230,7 +230,7 @@ void Realm::dressHero(const RaiderKit& kit) {
     for (const KitPiece& piece : kit.pieces) {
         const int32_t item = itemNamed(*tables_, piece.item);
         if (item < 0) continue;
-        bag_.put(piece.slot, kitHeld(*tables_, item, piece));
+        me().bag.put(piece.slot, kitHeld(*tables_, item, piece));
     }
     rearm(hero);
     hero.health = hero.maxHealth;
@@ -245,7 +245,7 @@ void Realm::minionSpoils(const Body& dead) {
         tables_->kinds[size_t(dead.kind)].number != kGoldenBudgeDragonNumber) {
         return;
     }
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     // The rune's rarity by the dragon's level, not the little one's fifteen (a Common there).
     const int level = invaderSlot_ >= 0 ? bodies_[size_t(invaderSlot_)].level : dead.level;
     const auto pick = [&](auto&& admits) -> int32_t {
@@ -292,7 +292,7 @@ void Realm::minionSpoils(const Body& dead) {
 
 void Realm::dragonHoard(const Body& dragon) {
     if (raid_.stage == RaidStage::None || !tables_) return;
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     const auto first = [this](auto&& admits) -> int32_t {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
             if (admits(tables_->items[i])) return int32_t(i);
@@ -356,7 +356,7 @@ bool Realm::shrugs(const Body& one) {
 
 const Satchel& Realm::kitOf(const Body& one) const {
     return one.raider >= 0 && size_t(one.raider) < raiderBags_.size() ? raiderBags_[size_t(one.raider)]
-                                                                       : bag_;
+                                                                       : me().bag;
 }
 
 int Realm::partyIndex(const Body& one) const {

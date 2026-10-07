@@ -38,7 +38,7 @@ void Realm::raiseTraps() {
 
 void Realm::fireTraps() {
     if (traps_.empty()) return;
-    Body& hero = bodies_[0];
+    Body& hero = mine();
     for (size_t i = 0; i < traps_.size(); ++i) {
         Trap& trap = traps_[i];
         if (tick_ < trap.firesAt) continue;

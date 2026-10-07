@@ -668,7 +668,7 @@ public:
     void configure(const RealmConfig& config) { config_ = config; }
     const RealmConfig& config() const { return config_; }
 
-    void ask(const Request& request) { pending_ = request; }
+    void ask(const Request& request) { me().pending = request; }
     // A window's ask (sim/command.h), applied at the start of the next step in the order asked,
     // and answered there with What::Answered (realm_commands.cpp).
     void command(const Command& command) { commands_.push_back(command); }
@@ -694,7 +694,7 @@ public:
     bool learn(int32_t skill);
     // The bench's (`--arena-undying`): a blow that would fell the hero fills his health instead,
     // so a fight runs as long as it is watched. Never set in play.
-    void undying(bool on) { undying_ = on; }
+    void undying(bool on) { me().undying = on; }
     // The demo's (`--wing-demo`): every kill in Icarus leaves the first wings. Never set in play.
     void wingDemo(bool on) { wingDemo_ = on; }
     // Whether he may throw it at all: learned, or a mount's skill and that mount worn
@@ -736,13 +736,13 @@ public:
     // through the check.
     bool equip(int32_t weapon, int32_t shield, bool given = false);
     // Why the last equip was refused, or empty.
-    const std::string& refusal() const { return refusal_; }
+    const std::string& refusal() const { return me().refusal; }
 
     // ---- the satchel (sprint 7) -----------------------------------------------------------
     // What the player carries and wears. The satchel is the truth and his hands are read off
     // it: every change to a worn slot re-reckons him (Beast.Rearm).
-    const Satchel& satchel() const { return bag_; }
-    int64_t money() const { return money_; }
+    const Satchel& satchel() const { return me().bag; }
+    int64_t money() const { return me().money; }
     Wearer wearer() const;
     // A thing put straight into a slot, with no gate but the slot being free: the cradle's
     // axe, and a purchase into the first place it fits. -1 for anywhere in the bag. The slot
@@ -760,9 +760,9 @@ public:
     // and What::Warped.
     bool useItem(int slot);
     // Whether an Ale stands on him, and the ticks it has left.
-    int64_t aleLeft() const { return std::max<int64_t>(0, bodies_[0].aleUntil - tick_); }
+    int64_t aleLeft() const { return std::max<int64_t>(0, mine().aleUntil - tick_); }
     // And a Frenzy's, the Dungeon's rune (sim::kFrenzyTicks).
-    int64_t frenzyLeft() const { return std::max<int64_t>(0, bodies_[0].frenzyUntil - tick_); }
+    int64_t frenzyLeft() const { return std::max<int64_t>(0, mine().frenzyUntil - tick_); }
     // A potion still pouring in, health or mana: the ticks to its last instalment (at most
     // kPourTicks) and what is still to come of it. For the buff strip's cell; nothing to the sim.
     static constexpr int64_t kPourTicks = 20;
@@ -772,8 +772,8 @@ public:
     };
     Pouring pouring(bool mana) const {
         Pouring out;
-        for (int i = 0; i < sipCount_; ++i) {
-            const Sip& one = sips_[i];
+        for (int i = 0; i < me().sipCount; ++i) {
+            const Sip& one = me().sips[i];
             if (!one.drunk || one.mana != mana) continue;
             out.left = std::max(out.left, one.due - tick_);
             out.amount += one.amount;
@@ -787,7 +787,7 @@ public:
     // instead (kLifeChance) and says What::Enlivened.
     bool refine(int jewelSlot, int targetSlot);
     // Zen in and out, for the merchants. `pay` refuses, whole, what he cannot afford.
-    void earn(int64_t zen) { money_ += zen; }
+    void earn(int64_t zen) { me().money += zen; }
     bool pay(int64_t zen);
     // Takes a carried thing out of the bag and hands it back: a sale. Worn things are not
     // sold (Shelf.Offer refuses a source outside the bag, and so does this).
@@ -831,8 +831,8 @@ public:
     // ---- the merchants (sprint 7) ---------------------------------------------------------
     // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a
     // Talk order arriving within `kCounter` of a merchant, closed by any other order.
-    int trading() const { return trading_; }
-    void closeTrade() { trading_ = -1; }
+    int trading() const { return me().trading; }
+    void closeTrade() { me().trading = -1; }
     // Buys whatever sits in one of the open shop's slots: priced, the room looked for at its
     // own footprint BEFORE anything is taken, then paid and placed together. The bag slot, or
     // -1 refused. Realm.Buy.
@@ -887,7 +887,7 @@ public:
     int repairAll();
     // The fraction of a point a worn slot has lost and not yet shown: what the rate is proved
     // by, since a whole point is two thousand health away.
-    double wearOwed(int slot) const { return slot >= 0 && slot < kWorn ? wearCarry_[slot] : 0.0; }
+    double wearOwed(int slot) const { return slot >= 0 && slot < kWorn ? me().wearCarry[slot] : 0.0; }
 
     // ---- the vault ------------------------------------------------------------------------
     // Baz's, opened by a Talk order arriving within `kCounter` of a vault keeper (NPC 240) and
@@ -897,9 +897,9 @@ public:
     // vault is shut, he has walked out of reach or he is dead. No swaps: a thing lands on a clear
     // rectangle or not at all, which is what a drop between two windows in MU does too
     // (CNewUIInventoryCtrl refuses a target that is not free).
-    int banking() const { return banking_; }
-    void closeVault() { banking_ = -1; }
-    const Vault& vault() const { return vault_; }
+    int banking() const { return me().banking; }
+    void closeVault() { me().banking = -1; }
+    const Vault& vault() const { return me().vault; }
 
     // ---- the Chaos Machine (sim/machine.h) -------------------------------------------------
     // The Chaos Goblin's box, opened by a Talk order arriving within `kCounter` of him and
@@ -908,10 +908,10 @@ public:
     // Closing it puts what is in it back in the bag, as MU's machine never keeps anything
     // (OpenMU's temporary storage goes back on close). What will not fit stays in the box and
     // is there the next time he opens it, and the save keeps it.
-    int mixing() const { return mixing_; }
+    int mixing() const { return me().mixing; }
     // The Messenger of Archangel's window (sim/event.h): his folk row while it is open, or -1.
     // Opened by a Talk reaching him, shut by any other order, as a counter is.
-    int gating() const { return gating_; }
+    int gating() const { return me().gating; }
     // Why he would not let him into `castle` (1 to kCastles) now, or None: what the window shows
     // and Enter asks again.
     CastleRefusal castleRefusal(int castle) const;
@@ -927,7 +927,7 @@ public:
     int castleSecondsLeft() const;
     // The Archangel's page (sim/event.h): his folk row while it is open, what it shows, and Give
     // -- checked now, the staff taken and the win paid at the next tick's start.
-    int angeling() const { return angeling_; }
+    int angeling() const { return me().angeling; }
     AngelState angelState() const;
     int staffSlot() const;
     bool handInStaff();
@@ -935,11 +935,11 @@ public:
     // tick's start (the user, 2026-10-05: 'when char clicks it we close window and take items
     // and teleport to devias'). False before the weapon is given or once paid.
     bool claimCastle();
-    void closeAngel() { angeling_ = -1; }
+    void closeAngel() { me().angeling = -1; }
     // Farewell: his window shut, as walking away shuts it.
-    void closeGate() { gating_ = -1; }
+    void closeGate() { me().gating = -1; }
     void closeMachine();
-    const Machine& machine() const { return machine_; }
+    const Machine& machine() const { return me().machine; }
     // Bag to box: a bag slot, or a worn one straight off him (2026-10-05), to a cell, or -1 for
     // the first it fits in. A jewel let go on a thing in the box it works is applied there. The
     // cell, or -1 refused. Refused while the last mix's answer is still in it -- MuMain locks
@@ -955,15 +955,15 @@ public:
     // Pays, rolls off the machine's own dice, and says What::Mixed. The answer is left in the box.
     bool mix(Service service = Service::Combine, int socket = -1);
     // Whether the box holds the last mix's answer, untouched since.
-    bool mixed() const { return mixed_; }
+    bool mixed() const { return me().mixed; }
     // Laid on the realm from the save.
-    void restoreMachine(const Machine& saved) { machine_ = saved; }
+    void restoreMachine(const Machine& saved) { me().machine = saved; }
 
     // ---- the quests (sim/quests.h) ------------------------------------------------------------
     // A giver's dialog, opened by a Talk order arriving within `kCounter` of him and closed by
     // any other order, as a counter is: his index in Tables::folk, or -1.
-    int questing() const { return questing_; }
-    void closeQuest() { questing_ = -1; }
+    int questing() const { return me().questing; }
+    void closeQuest() { me().questing = -1; }
     // Where a townsperson stands now: his body's tile when he walks rounds (realm_folk.cpp) or
     // guards a post, else his table's. False for an index off the table.
     bool folkTile(int folk, int* column, int* row) const;
@@ -974,7 +974,7 @@ public:
         roads_ = std::move(roads);
         router_.setRoads(&roads_);
     }
-    const QuestProgress& quest(int index) const { return quests_[index]; }
+    const QuestProgress& quest(int index) const { return me().quests[index]; }
     // A step's goal: its row's count, or for a Clear with none the breed's population here.
     int questGoal(int index, int step) const;
     // Whether the giver would offer it now: never taken, or resting and its time has come.
@@ -1077,7 +1077,7 @@ public:
     void setCastle(int castle);
     // Which castle the Messenger last passed him into, or 0: carried by the mode to the
     // castle's own realm (Realm::setCastle).
-    int castlePassed() const { return castlePassed_; }
+    int castlePassed() const { return me().castlePassed; }
     // The Archangel weapon this run's Statue of Saint holds -- the staff, the sword or the
     // crossbow -- as an item index, or -1: what his page asks for and pictures.
     int32_t castleWeaponItem() const;
@@ -1088,7 +1088,7 @@ public:
         if (found == nullptr || !found->monster() || !found->alive()) return;
         Body& beast = *const_cast<Body*>(found);
         beast.health = 0;
-        kill(beast, bodies_[0]);
+        kill(beast, mine());
     }
     int64_t wallClock() const { return wall_; }
     // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
@@ -1104,14 +1104,14 @@ public:
     // `path`: the Magic Gladiator's, melee or magic (sim::questPaidKin); nobody else's.
     bool completeQuest(int index, int choice, QuestPath path = QuestPath::Melee);
     // Whether he is his class's second, Sevina's treasure handed in (sim::promoted).
-    bool promoted() const { return bodies_[0].second; }
+    bool promoted() const { return mine().second; }
     // Whether a kill on this tile may leave a class's treasure: the Lost Tower's last floor, or
     // Atlans (Realm::treasure).
     bool treasureGround(int column, int row) const;
     // ---- travel (sim/travel.h) ---------------------------------------------------------------
     // The rows he has opened, a bit a row: his birth town's, each town whose giver he has spoken
     // to, each giverless map he has stood in.
-    uint32_t found() const { return found_; }
+    uint32_t found() const { return me().found; }
     // Why a trip on that row would be refused now, or None.
     TravelRefusal travelRefusal(int index) const;
     // The quest a row waits on (TravelRefusal::Quest): a Dungeon floor's link of the Golden
@@ -1133,7 +1133,7 @@ public:
     void setHeroDown(int column, int row, int dx, int dy, int gate = -1);
 
     // Laid on the realm from the save, or emptied. Never refused: it is the account's.
-    void restoreVault(const Vault& saved) { vault_ = saved; }
+    void restoreVault(const Vault& saved) { me().vault = saved; }
     // Bag to vault: a bag slot -- or a worn one, straight off him (the user, 2026-10-05: 'allow
     // to put items from equipment to warehouse and reverse') -- to a vault cell, or -1 for the
     // first cell it fits. A jewel let go on a thing it works is applied there instead
@@ -1156,8 +1156,8 @@ public:
     // Whether the last vault or box move was a jewel applied (refineAcross), once: the game rings
     // the jewel's sound off it, as Play::refine rings its own.
     bool takeJeweled() {
-        const bool was = jeweled_;
-        jeweled_ = false;
+        const bool was = me().jeweled;
+        me().jeweled = false;
         return was;
     }
     // Inside the vault: from one cell to another, onto a clear rectangle.
@@ -1184,7 +1184,7 @@ public:
     const std::vector<Trap>& traps() const { return traps_; }
     // Her summon's body, alive or dormant, or null before `raise` (realm_summon.cpp).
     const Body* summoned() const {
-        return summonSlot_ >= 0 ? &bodies_[size_t(summonSlot_)] : nullptr;
+        return me().summonSlot >= 0 ? &bodies_[size_t(me().summonSlot)] : nullptr;
     }
     const Body* find(uint32_t id) const;
     // A body joining the raised realm -- the next player, in docs/server-plan.md phase 2 -- given
@@ -1192,23 +1192,23 @@ public:
     // `bodies_` under any Body& held there. Bodies never leave yet, so an index stays the body's
     // own; despawn() waits for the client's figures to go by id (server-plan phase 1).
     uint32_t spawn(Body body);
-    const Body& hero() const { return bodies_[0]; }
+    const Body& hero() const { return mine(); }
     // A skill's clip is still running, so he is locked where he stands: no step, no re-path.
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which
     // does not draw a destination marker for a walk that is not going to happen.
-    bool casting() const { return tick_ < bodies_[0].castUntil; }
+    bool casting() const { return tick_ < mine().castUntil; }
     // **Nova's charge** (SkillRow::chargeTicks): the skill he is holding, 0 for none, and the stage
     // it has gathered. `letGo` is the key released -- asked between ticks as `ask` is, the burst
     // is the next tick's (Realm::chargeTick).
-    int32_t chargeSkill() const { return charge_.skill; }
-    int chargeStage() const { return charge_.stage; }
-    void letGo() { charge_.letGo = true; }
+    int32_t chargeSkill() const { return me().charge.skill; }
+    int chargeStage() const { return me().charge.stage; }
+    void letGo() { me().charge.letGo = true; }
     // A hold a click to move cannot end -- Teleport's. Every other cast is broken by the click
     // (Realm::accept), so the pointer lets the walk through.
-    bool held() const { return casting() && !bodies_[0].castBreaks; }
+    bool held() const { return casting() && !mine().castBreaks; }
     // What he was last told and is still doing: the drawing's flinch halts a walk and not a
     // chase, and reads which it is here.
-    const Request& order() const { return order_; }
+    const Request& order() const { return me().order; }
     const content::Tables* tables() const { return tables_; }
     // Sets or clears `bits` on a box of this realm's grid: Blood Castle's run opening its
     // entrance, bridge and door (sim/event.h). Only on a map whose tables the realm copied at
@@ -1432,7 +1432,7 @@ private:
     // The rest of a gate once it lets him through: the landing in the target's box, and the
     // map change said (Gated) or the floor of this map he is put down on.
     bool passGate(Body& hero, const EnterGate& gate);
-    void rearm(Body& hero) { rearm(hero, bag_); }
+    void rearm(Body& hero) { rearm(hero, me().bag); }
     // And off another satchel: a raider's own kit (realm_raid.cpp), by the same rules.
     void rearm(Body& hero, const Satchel& kit);
     // A blow's wear on the player's gear: `took` the health a blow took off him, which wears one
@@ -1440,7 +1440,7 @@ private:
     // Player.DecreaseItemDurabilityAfterHitAsync and DecreaseWeaponDurabilityAfterHitAsync.
     void wearOnTaken(int took);
     void wearOnLanded(int defense);
-    // Takes `amount` off one worn slot, the fraction kept in `wearCarry_`, and re-reckons him
+    // Takes `amount` off one worn slot, the fraction kept in `me().wearCarry`, and re-reckons him
     // when a whole point goes.
     void wearDown(int slot, double amount);
     void leave(const Body& dead, const Body& killer);
@@ -1493,16 +1493,8 @@ private:
     std::vector<uint32_t> indexOfId_;
     std::vector<Happening> happenings_;
     std::vector<Step> scratch_;
-    Request pending_;
     std::vector<Command> commands_;
     void applyCommands();
-    Request order_;  // what the player is doing until told otherwise
-    // The skill a key asked for and whom it was aimed at, held for a few ticks so a press inside
-    // the swing it waits for is not lost. Cleared the moment it is thrown or it goes stale.
-    int32_t wants_ = skill::kNone;
-    uint32_t wantsAt_ = 0;
-    int wantsColumn_ = -1, wantsRow_ = -1;  // a wish aimed at the ground; -1 for none
-    int64_t wantsUntil_ = 0;
     // Spells in the air. A fixed handful, because a wizard at speed lets the next one go before
     // the last has landed, and this runs inside a tick; one that finds no room lands at once.
     struct Flight {
@@ -1538,7 +1530,6 @@ private:
         bool ground = false;
         float spot[2] = {};
     };
-    Echo echo_;
     // The charge held (Realm::chargeTick) and, while it bursts, its stages' blow on the skill's.
     struct Charge {
         int32_t skill = 0;
@@ -1546,8 +1537,6 @@ private:
         int64_t nextAt = 0;
         bool letGo = false;
     };
-    Charge charge_;
-    int32_t chargeDamage_ = 0;
     void chargeTick(Body& hero);
     void burstCharge(Body& hero);
     // Evil Spirit's blows held, his spell's or his shield's rune's (WebZen's SkillEvil): each on
@@ -1579,13 +1568,10 @@ private:
     };
     static constexpr int kFires = 8;
     Fire fires_[kFires] = {};
-    bool undying_ = false;  // `undying`
     bool wingDemo_ = false;  // `wingDemo`
     int64_t tick_ = 0;
-    std::string refusal_;
     uint32_t nextId_ = 1;
 
-    Satchel bag_;
     // Wear's own dice, off the realm's seed: which piece a blow wears is a draw, and taking it
     // from `dice_` would move every roll after it, so a seeded fight would change for a rule
     // that decides nothing in it.
@@ -1627,8 +1613,6 @@ private:
     // Where a Meteorite's rocks fall (Realm::shower), so a wizard's showers move no other roll.
     Random showerDice_{0};
     std::vector<Trap> traps_;
-    // Where the one summon body sits in `bodies_`, or -1 before `raise`.
-    int summonSlot_ = -1;
     // The Golden Invasion's dragon: one body, raised down at the end of `bodies_` on a map with
     // an invasion, and risen where it lands (realm_invasion.cpp); -1 elsewhere.
     int invaderSlot_ = -1;
@@ -1726,34 +1710,7 @@ private:
     const Satchel& kitOf(const Body& one) const;
     // The Town Portal's warp, shared with Icarus's sending home (realm_items.cpp).
     void warpHome(Body& hero);
-    // Set once Icarus has sent him home for want of wings, so the warp is said once while the
-    // mode carries out the map change.
-    bool grounded_ = false;
-    // A summon a restored record carried, raised on the next tick rather than in restore(), so
-    // its `Spawned` reaches the drawing (step() clears the happenings first). 0 for none.
-    int32_t summonOwed_ = 0;
-    int32_t summonOwedHealth_ = 0;
-    // The fraction of a point each worn slot has lost and not yet shown, beside the item it
-    // was lost by: a piece moved out and back starts its fraction again, which is under a point.
-    double wearCarry_[kWorn] = {};
-    int32_t wearItem_[kWorn] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-    // The tick his weapon last wore on a landed blow (sim::kWeaponWearTicks).
-    int64_t weaponWornAt_ = -1000000;
-    int64_t money_ = 0;
-    int trading_ = -1;
-    std::vector<Sale> sold_;  // oldest first, at most kBuybacks
-    int banking_ = -1;
-    Vault vault_;
-    bool jeweled_ = false;
-    int mixing_ = -1;
-    int gating_ = -1;  // see gating()
-    // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
-    int castleOwed_ = 0;
-    int castlePassed_ = 0;  // see castlePassed()
     CastleRun run_;  // see castleRun()
-    int angeling_ = -1;     // see angeling()
-    bool staffOwed_ = false;
-    bool claimOwed_ = false;
     // The win's pay (CastleRun::paid*), into the bag, once.
     void payCastle();
     // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
@@ -1763,12 +1720,8 @@ private:
     // gObjMonster.cpp:1524-1529, ObjAttack.cpp:2713-2719; MuMain NotRotateOnMagicHit).
     bool fixed(const Body& body) const;
     void passCastle(int castle);
-    Machine machine_;
-    bool mixed_ = false;
     // The machine's own dice, off the realm's seed: a run that never mixes is not moved.
     Random mixDice_{0};
-    QuestProgress quests_[kQuests];
-    int questing_ = -1;
     // The quests' inner steps (realm_quests.cpp): Ready once every count is met; a thing come
     // into the bag counted; the bag slot holding an item; a kill's treasure.
     void questSettle(int index);
@@ -1776,7 +1729,6 @@ private:
     void questFound(int32_t item);
     int carried(int32_t item) const;
     void treasure(const Body& dead);
-    uint32_t found_ = 0;  // the travel rows he has opened (sim/travel.h)
     bool byFloor_ = false;  // this map's rows open floor by floor (reachFloor)
     // On a map of several rows, which row's floor each tile is on (row-major, -1 for none): the
     // tiles walkable from that row's landing, flood-filled once as the map is raised.
@@ -1805,10 +1757,9 @@ private:
     bool castleOpen_ = false;  // see openCastleDoor
     // A monster the hero killed, counted against every live Clear of its breed.
     void countKill(const Body& dead);
-    bool banked() const { return banking_ >= 0 && serving(banking_); }
-    bool atMachine() const { return mixing_ >= 0 && serving(mixing_); }
+    bool banked() const { return me().banking >= 0 && serving(me().banking); }
+    bool atMachine() const { return me().mixing >= 0 && serving(me().mixing); }
     std::vector<Lying> lying_;
-    int64_t potionUntil_ = 0;
     // A potion's worth arrives in three instalments, 20% 60% 20% at 200, 600 and 200 ms
     // (MU2's Realm.Consume, off OpenMU's handler). A fixed ring: a potion every half second
     // and three instalments a potion is at most six in flight.
@@ -1818,8 +1769,77 @@ private:
         bool mana = false;
         bool drunk = false;  // a potion's, and not a kill's life (kKillLifeTicks)
     };
-    Sip sips_[8];
-    int sipCount_ = 0;
+
+    // ---- the players (docs/server-plan.md phase 2) --------------------------------------------
+    // Everything that is one per hero: what he was told and wishes, what he carries, what he has
+    // open, his quests and his summon. The rest of the realm is the world's. `body` is his index
+    // in `bodies_`, which never moves (bodies do not leave). The realm is made with one, the
+    // player at bodies_[0], and keeps it across a raise as it always kept these fields.
+    struct Player {
+        uint32_t body = 0;
+        Request pending;
+        Request order;  // what the player is doing until told otherwise
+        // The skill a key asked for and whom it was aimed at, held for a few ticks so a press
+        // inside the swing it waits for is not lost. Cleared the moment it is thrown or it goes
+        // stale.
+        int32_t wants = skill::kNone;
+        uint32_t wantsAt = 0;
+        int wantsColumn = -1, wantsRow = -1;  // a wish aimed at the ground; -1 for none
+        int64_t wantsUntil = 0;
+        Echo echo;
+        Charge charge;
+        int32_t chargeDamage = 0;
+        bool undying = false;  // `undying`
+        std::string refusal;   // why his last equip was refused
+        Satchel bag;
+        // Where his summon body sits in `bodies_`, or -1 before `raise`.
+        int summonSlot = -1;
+        // Set once Icarus has sent him home for want of wings, so the warp is said once while
+        // the mode carries out the map change.
+        bool grounded = false;
+        // A summon a restored record carried, raised on the next tick rather than in restore(),
+        // so its `Spawned` reaches the drawing (step() clears the happenings first). 0 for none.
+        int32_t summonOwed = 0;
+        int32_t summonOwedHealth = 0;
+        // The fraction of a point each worn slot has lost and not yet shown, beside the item it
+        // was lost by: a piece moved out and back starts its fraction again, which is under a
+        // point.
+        double wearCarry[kWorn] = {};
+        int32_t wearItem[kWorn] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        // The tick his weapon last wore on a landed blow (sim::kWeaponWearTicks).
+        int64_t weaponWornAt = -1000000;
+        int64_t money = 0;
+        int trading = -1;
+        std::vector<Sale> sold;  // oldest first, at most kBuybacks
+        int banking = -1;
+        Vault vault;
+        bool jeweled = false;
+        int mixing = -1;
+        int gating = -1;  // see gating()
+        // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
+        int castleOwed = 0;
+        int castlePassed = 0;  // see castlePassed()
+        int angeling = -1;     // see angeling()
+        bool staffOwed = false;
+        bool claimOwed = false;
+        Machine machine;
+        bool mixed = false;
+        QuestProgress quests[kQuests];
+        int questing = -1;
+        uint32_t found = 0;  // the travel rows he has opened (sim/travel.h)
+        int64_t potionUntil = 0;
+        Sip sips[8];
+        int sipCount = 0;
+    };
+    std::vector<Player> heroes_ = std::vector<Player>(1);
+    // The player the realm is working for: each in turn inside step(), and between steps the one
+    // the queries answer for.
+    size_t me_ = 0;
+    Player& me() { return heroes_[me_]; }
+    const Player& me() const { return heroes_[me_]; }
+    // And his body.
+    Body& mine() { return bodies_[me().body]; }
+    const Body& mine() const { return bodies_[me().body]; }
 };
 
 // The one line a happening becomes in the seeded log. Fixed precision throughout: a `%g` of a

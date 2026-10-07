@@ -196,6 +196,8 @@ the `View`, most of them mechanical.
 
 ### Phase 2: many heroes in one realm
 
+Under way since 2026-10-07: `docs/sprints/19-many-heroes.md`.
+
 - A `Player` struct takes everything that is one-per-hero today:
   - the order, wishes, bag and money;
   - the open window, vault, machine, quests, summon and potions;
@@ -293,8 +295,10 @@ Each of these is a decision more than a task, and each has MU's rules in WebZen'
 1. **Do we reverse PLAN.md's "server: none"?** If not, phases 1–3 are still worth doing.
    They make the save and the map change server-owned in all but name, and that is the
    cheap part of the insurance.
-2. **Is single player still a mode?** The proposal is yes: `LocalLink` with no socket, like
-   MU2's Local.
+2. ~~**Is single player still a mode?** The proposal is yes: `LocalLink` with no socket, like
+   MU2's Local.~~ **No** (the user, 2026-10-07: *"this will not be a single player game anymore
+   but standart mmorg experience"*). `LocalLink` stays as the tests' and the headless runs'
+   harness, not a mode to keep.
 3. **Transport:** TCP, as MU used (proposed), or ENet as MU2 used.
 4. **Do we keep our own wire, or speak MU's real 0.97/S6 protocol** so that a MuMain client
    or OpenMU tools could connect? Ours is far less work. Theirs is a compatibility project of

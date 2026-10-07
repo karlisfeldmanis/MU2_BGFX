@@ -104,11 +104,11 @@ void Realm::stroll(Body& walker) {
     // **The hero talking to him holds him.** From the click -- a Talk order on his row, which
     // walks the hero to where he stands NOW -- through the quest window, and a moment after:
     // he stops, gets up if he sat, and faces the hero. Then he takes up the stop he was on.
-    const Body& hero = bodies_[0];
+    const Body& hero = mine();
     const int folk = walker.warden;
     const bool talking =
-        hero.alive() && (questing_ == folk || (order_.kind == Request::Kind::Talk &&
-                                               int(order_.target) == folk));
+        hero.alive() && (me().questing == folk || (me().order.kind == Request::Kind::Talk &&
+                                               int(me().order.target) == folk));
     if (talking) {
         if (!s.held) {
             s.held = true;
@@ -236,11 +236,11 @@ void Realm::stroll(Body& walker) {
         for (size_t i = 0; i < tables_->folk.size(); ++i) {
             if (tables_->folk[i].number == stop.with) partner = int(i);
         }
-        const bool busy = partner >= 0 && (trading_ == partner || banking_ == partner || mixing_ == partner ||
-                                            gating_ == partner ||
-                                           questing_ == partner ||
-                                           (order_.kind == Request::Kind::Talk &&
-                                            int(order_.target) == partner));
+        const bool busy = partner >= 0 && (me().trading == partner || me().banking == partner || me().mixing == partner ||
+                                            me().gating == partner ||
+                                           me().questing == partner ||
+                                           (me().order.kind == Request::Kind::Talk &&
+                                            int(me().order.target) == partner));
         if (busy) {
             ++s.leaves;
             ++s.chatAt;
