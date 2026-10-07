@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
-project(mu2 LANGUAGES C CXX OBJCXX)
+project(mu2 LANGUAGES C CXX)
+# The server's own build, on a box with no screen (docs/server-plan.md phase 4; the Hetzner
+# box): core, the content it reads, the sim and their tests, and no bgfx, glfw, shader or
+# Metal. `cmake -S . -B build-server -G Ninja -DMU2_SERVER_ONLY=ON`.
+option(MU2_SERVER_ONLY "build only what a server links: core, content data, sim, tests" OFF)
+if(APPLE AND NOT MU2_SERVER_ONLY)
+  enable_language(OBJCXX)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,6 +21,7 @@ if(CCACHE)
   set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
 endif()
 
+if(NOT MU2_SERVER_ONLY)
 # ---- bgfx, bx and bimg (extern/, fetched by bootstrap.sh) --------------------------------
 set(BGFX_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BGFX_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -70,6 +78,8 @@ foreach(out ${VS_OUT} ${FS_OUT})
   add_custom_command(OUTPUT ${out} APPEND DEPENDS ${SHADER_INCLUDES})
 endforeach()
 add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT})
+
+endif()  # NOT MU2_SERVER_ONLY: bgfx, glfw, shaders
 
 # ---- the game -----------------------------------------------------------------------------
 # The layers of docs/architecture.md, one static library each, and each linking only what is
@@ -145,6 +155,7 @@ add_library(mu_sim STATIC
 target_link_libraries(mu_sim PUBLIC mu_content_data)
 target_compile_options(mu_sim PRIVATE ${MU_WARNINGS})
 
+if(NOT MU2_SERVER_ONLY)
 # The half of content that uploads: textures, meshes and the ground, into bgfx.
 add_library(mu_content_gpu STATIC
   src/content/texture.cpp
@@ -371,6 +382,8 @@ add_executable(cookcheck EXCLUDE_FROM_ALL tools/cook/cookcheck.cpp)
 target_link_libraries(cookcheck PRIVATE bimg_decode bimg bx)
 target_compile_options(cookcheck PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+endif()  # NOT MU2_SERVER_ONLY: content_gpu, gfx, game, mu2, the cook
+
 # ---- tests --------------------------------------------------------------------------------
 # Foundation 9: what can be checked without a window is checked without one. The cooked
 # formats are parsed by the engine's own reader here, which is a different failure from the
@@ -384,6 +397,7 @@ target_include_directories(cooked_test PRIVATE src)
 target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(cooked_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+if(NOT MU2_SERVER_ONLY)
 # The birds, whose every rule is arithmetic and whose every rule is nearly impossible to review
 # from a picture: a flock arrives from off the frame, crosses in two seconds and then the sky is
 # empty for fifteen to forty-five. `game/world/flight.cpp` is the half with no window in it, so
@@ -411,6 +425,8 @@ if(APPLE)
   target_link_libraries(sound_test PRIVATE "-framework CoreAudio" "-framework AudioToolbox"
     "-framework CoreFoundation")
 endif()
+
+endif()  # NOT MU2_SERVER_ONLY: the birds and the mix
 
 # The placement transform against MU's own AngleMatrix. It was wrong twice, in the sign and
 # then in the order, and both looked right on most of the map.
@@ -465,6 +481,19 @@ target_include_directories(raid PRIVATE src)
 target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
                                         MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# The server build's own: every test that runs without a window, a sound device or the client's
+# meshes (cooked_test reads those; a server has only the tables).
+if(MU2_SERVER_ONLY)
+  add_custom_target(checks
+    DEPENDS placement_test sim_test save_test
+    COMMAND $<TARGET_FILE:placement_test>
+    COMMAND $<TARGET_FILE:sim_test>
+    COMMAND $<TARGET_FILE:save_test>
+    COMMENT "the server build's checks"
+    USES_TERMINAL)
+  return()
+endif()
 
 # ---- checks ---------------------------------------------------------------------------------
 # One target that runs everything which can say "no" without a window: the three tests, the
