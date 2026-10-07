@@ -20,17 +20,21 @@ bool Nova::open(const std::string& assetDir, content::Textures& textures,
     // summon (pipeline/index.py).
     const content::EffectSheet* streak = table.effect("joint_energy");
     const content::EffectSheet* shiny = table.effect("shiny_02");
-    if (joint == nullptr || light == nullptr || streak == nullptr || shiny == nullptr) {
-        core::logError("nova: no cooked effect named 'joint_spirit', 'light', 'joint_energy' or "
-                       "'shiny_02'");
+    // The Firecracker's soft ring (pipeline/index.py), the burst's ring here.
+    const content::EffectSheet* shock = table.effect("shockwave");
+    if (joint == nullptr || light == nullptr || streak == nullptr || shiny == nullptr ||
+        shock == nullptr) {
+        core::logError("nova: no cooked effect named 'joint_spirit', 'light', 'joint_energy', "
+                       "'shiny_02' or 'shockwave'");
         return false;
     }
+    shock_ = textures.load(assetDir + "/" + shock->path, content::TextureRole::Albedo);
     joint_ = textures.load(assetDir + "/" + joint->path, content::TextureRole::Albedo);
     light_ = textures.load(assetDir + "/" + light->path, content::TextureRole::Albedo);
     streak_ = textures.load(assetDir + "/" + streak->path, content::TextureRole::Albedo);
     shiny_ = textures.load(assetDir + "/" + shiny->path, content::TextureRole::Albedo);
     return bgfx::isValid(joint_) && bgfx::isValid(light_) && bgfx::isValid(streak_) &&
-           bgfx::isValid(shiny_);
+           bgfx::isValid(shiny_) && bgfx::isValid(shock_);
 }
 
 uint32_t Nova::roll() {
@@ -143,6 +147,16 @@ void Nova::sparkle(const float* points, int count, const float tint[3]) {
 
 void Nova::release(const float feet[3], int stage, const float tint[3]) {
     lastStage_ = stage;
+    for (Flash& flash : flashes_) {
+        if (flash.alive) continue;
+        flash = Flash{};
+        flash.alive = true;
+        flash.at[0] = feet[0];
+        flash.at[1] = feet[1] + kFlashOver;
+        flash.at[2] = feet[2];
+        for (int k = 0; k < 3; ++k) flash.tint[k] = tint[k];
+        break;
+    }
     for (Burst& burst : bursts_) {
         if (burst.alive) continue;
         burst = Burst{};
@@ -185,17 +199,38 @@ void Nova::emit(Burst& burst) {
     // spawned all the same: they draw nothing, but each lays its shiny.
     for (int i = 0; i < kPerFrame; ++i) {
         const float yaw = float(i) * float(10 + int(roll() % 10u));
-        spawn(from, yaw, kFast, roll() % 5u == 0, burst.tint);
+        const bool tailed = roll() % 5u == 0;
+        spawn(from, yaw, kFast, tailed || kAllTailed, burst.tint);
     }
-    // And on its last frame the slow ring, sub-type 7, `i * 10` exactly.
+    // And on its last frame the slow ring, sub-type 7, `i * 10` exactly, and its shock.
     if (burst.framesLeft == 1) {
         for (int i = 0; i < kPerFrame; ++i) spawn(from, float(i) * 10.0f, kSlow, true, burst.tint);
+        for (Flash& shock : shocks_) {
+            if (shock.alive) continue;
+            shock = Flash{};
+            shock.alive = true;
+            shock.at[0] = burst.feet[0];
+            shock.at[1] = burst.feet[1] + kShockOver;
+            shock.at[2] = burst.feet[2];
+            for (int k = 0; k < 3; ++k) shock.tint[k] = burst.tint[k];
+            break;
+        }
     }
     if (--burst.framesLeft <= 0) burst.alive = false;
 }
 
 void Nova::update(float seconds) {
     frames_ = seconds * kFps;
+    for (Flash& flash : flashes_) {
+        if (!flash.alive) continue;
+        flash.age += frames_;
+        if (flash.age >= kFlashLife) flash.alive = false;
+    }
+    for (Flash& shock : shocks_) {
+        if (!shock.alive) continue;
+        shock.age += frames_;
+        if (shock.age >= kShockLife) shock.alive = false;
+    }
     owed_ += frames_;
     while (owed_ >= 1.0f) {
         owed_ -= 1.0f;
@@ -338,6 +373,52 @@ void Nova::gather(gfx::Effects& effects) const {
         head.sheet = light_;
         head.blend = gfx::Blend::Additive;
         effects.add(head);
+    }
+    // The flash as he lands: swelling to kFlashSize and going out, white at its heart (a white
+    // core under the blue).
+    for (const Flash& flash : flashes_) {
+        if (!flash.alive) continue;
+        const float t = std::min(1.0f, flash.age / kFlashLife);
+        const float grow = 1.0f - (1.0f - t) * (1.0f - t);
+        const float light = (1.0f - t) * (1.0f - t);
+        const float wide = kFlashFrom + (kFlashSize - kFlashFrom) * grow;
+        const float sizes[2] = {wide, wide * 0.4f};
+        const float whites[2] = {0.0f, 0.3f};
+        for (int layer = 0; layer < 2; ++layer) {
+            gfx::Sprite sprite;
+            for (int k = 0; k < 3; ++k) sprite.position[k] = flash.at[k];
+            sprite.halfWidth = sprite.halfHeight = sizes[layer] * 0.5f;
+            for (int k = 0; k < 3; ++k) {
+                sprite.colour[k] = (flash.tint[k] + whites[layer]) * light * kFlashDim;
+            }
+            sprite.sheet = light_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    // The ring's shock, flat at his feet, going out and fading.
+    for (const Flash& shock : shocks_) {
+        if (!shock.alive) continue;
+        const float t = std::min(1.0f, shock.age / kShockLife);
+        const float grow = 1.0f - (1.0f - t) * (1.0f - t);
+        const float half = 0.5f * (kShockFrom + (kShockTo - kShockFrom) * grow);
+        const float light = (1.0f - t * t) * kShockDim;  // held, then let go
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = shock.at[k];
+        sprite.placed = true;
+        const float corner[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+        for (int c = 0; c < 4; ++c) {
+            sprite.corner[c][0] = shock.at[0] + corner[c][0] * half;
+            sprite.corner[c][1] = shock.at[1];
+            sprite.corner[c][2] = shock.at[2] + corner[c][1] * half;
+            sprite.cornerUv[c][0] = 0.5f + 0.5f * corner[c][0];
+            sprite.cornerUv[c][1] = 0.5f + 0.5f * corner[c][1];
+        }
+        // A lighter blue than the spokes', as the clip's band is (ours).
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = (shock.tint[k] + 0.1f) * light;
+        sprite.sheet = shock_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
     }
     for (const Joint& joint : joints_) {
         if (!joint.alive) continue;

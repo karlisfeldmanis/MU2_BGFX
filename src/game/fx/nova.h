@@ -28,6 +28,17 @@
 //     which draws no face at all, but the clip (MU2/docs/reference/skill-clips/dark-wizard/
 //     nova.mp4) shows the ring going out from him in the same blue: drawn here as the burst's
 //     ribbons are, all thirty-six, which at that pitch overlap into one band.
+// What the clip shows of the burst and MuMain does not say (MU2/docs/reference/skill-clips/
+// dark-wizard/nova.mp4, the same as the wiki's SM-nova.gif; the user, 2026-10-07: 'look at the
+// release explosion part we dont have that'): as he lands, a white-blue ball of light round him;
+// then a soft, wispy cloud swelling out past five metres, puffs round its rim; then a thick soft
+// ring round him, rays going out through it, and the ring going out to the edge of the screen and
+// fading. That client plainly draws every spirit's ribbon, not one in five. Drawn here:
+//   * every one of the thirty-six a frame with its tail (kAllTailed): their wisps are the cloud;
+//   * the flash, a soft light at his chest swelling from kFlashFrom to kFlashSize over
+//     kFlashLife frames and going out, a whiter heart under it;
+//   * the ring, the cooked `shockwave` sheet laid flat at his feet, from kShockFrom to kShockTo
+//     metres across over kShockLife frames, begun with the slow ring and fading as it goes.
 // Ours:
 //   * the charge's lights a bone are capped at kLightsPerBone a frame, not `m_bySkillCount + 1`,
 //     and dimmed to kLightDim: MU's sixteen stacked by stage seven read as a white figure; and
@@ -101,10 +112,22 @@ private:
     static constexpr int kMost = 900;
     static constexpr int kShinyEvery = 9;              // ours
     static constexpr float kShinyDim = 0.6f;           // ours
-    static constexpr float kSpokeDim = 0.45f;          // ours
-    static constexpr float kSpokeWidth = 0.75f;        // ours, of MU's 60
-    static constexpr float kRingDim = 0.4f;            // ours
+    static constexpr float kSpokeDim = 0.22f;          // ours
+    static constexpr float kSpokeWidth = 1.0f;         // ours, of MU's 60
+    static constexpr float kRingDim = 0.2f;            // ours
     static constexpr float kFadeFrames = 6.0f;         // ours
+    // The burst's look off the clip (above), all ours.
+    static constexpr bool kAllTailed = true;
+    static constexpr float kFlashLife = 12.0f;         // frames
+    static constexpr float kFlashFrom = 2.0f;          // metres across
+    static constexpr float kFlashSize = 9.0f;
+    static constexpr float kFlashDim = 0.5f;
+    static constexpr float kFlashOver = 1.0f;          // at his chest, over his feet
+    static constexpr float kShockLife = 30.0f;         // frames
+    static constexpr float kShockFrom = 3.0f;          // metres across
+    static constexpr float kShockTo = 12.0f;
+    static constexpr float kShockDim = 1.6f;
+    static constexpr float kShockOver = 0.15f;         // over the ground
     // The charge's lights: BITMAP_LIGHT sub-type 6.
     static constexpr float kLightLife = 2.0f;
     static constexpr float kLightRise = 2.5f * kUnit;
@@ -170,6 +193,12 @@ private:
         float tint[3] = {};
         int framesLeft = 0;  // frames still to let joints go
     };
+    struct Flash {  // and the ring's shock, the same shape
+        bool alive = false;
+        float at[3] = {};
+        float tint[3] = {};
+        float age = 0.0f;  // frames, drawn smoothly between update's whole ones
+    };
     void emit(Burst& burst);
     void spawn(const float from[3], float yaw, float speed, bool tailed, const float tint[3]);
     Glow* glowSlot(Glow* pool, int size);
@@ -182,11 +211,14 @@ private:
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle streak_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle shock_ = BGFX_INVALID_HANDLE;
     Joint joints_[kMost];
     Glow glows_[kChargeMost];
     Glow sparks_[kSparkPool];
     Force forces_[kForceMost];
     Burst bursts_[4];
+    Flash flashes_[4];
+    Flash shocks_[4];
     float owed_ = 0.0f;   // reference frames owed to update()
     float frames_ = 0.0f; // and how many this drawn frame stood for, which charge() and
                           // sparkle() shed by
