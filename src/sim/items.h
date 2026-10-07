@@ -193,15 +193,15 @@ enum : uint8_t {
 bool lochsFeather(const content::ItemRow& row);
 constexpr int kFeatherOdds = 500;
 constexpr int kFeatherFromLevel = 60;
-// **The Scroll of Nova** (15, 18; source/items/misc/Book19.json), the Soul Master's: in the Lost
-// Tower and Atlans, as Loch's Feather, a kill of kNovaScrollFromLevel or over leaves one, one in
-// kNovaScrollOdds, its own roll (the user, 2026-10-07: 'Scroll of Nova drop'). Ours: MU's comes
-// off Kanturu's bags, which are not built.
+// **The Scroll of Nova** (15, 18; source/items/misc/Book19.json), the Soul Master's: wherever
+// Loch's Feather drops (featherMap: the Lost Tower, Atlans, Tarkan and Icarus), a kill of
+// kNovaScrollFromLevel or over leaves one, one in kNovaScrollOdds, its own roll (the user,
+// 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's
+// comes off Kanturu's bags, which are not built.
 bool scrollOfNova(const content::ItemRow& row);
 constexpr int kNovaScrollOdds = 1500;
 constexpr int kNovaScrollFromLevel = 60;
 inline bool featherMap(uint32_t map) { return map == 4 || map == 7 || map == 8 || map == 10; }
-inline bool novaScrollMap(uint32_t map) { return map == 4 || map == 7 || map == 10; }
 // **The first wings** in Icarus: any kill there leaves the hero's class's wing (firstWingOf), one
 // in kIcarusWingOdds, +0 and whole, its luck as any drop's, on its own roll beside the rest.
 // INVENTION (the user, 2026-10-07: 'lets them drop'): MU's are mixed only -- WebZen's item.txt

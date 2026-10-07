@@ -1114,7 +1114,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         }
     }
     // The Scroll of Nova in the same two, the same way (sim::kNovaScrollOdds).
-    if (level >= kNovaScrollFromLevel && novaScrollMap(tables_->map) &&
+    if (level >= kNovaScrollFromLevel && featherMap(tables_->map) &&
         novaScrollDice_.nextInt(0, kNovaScrollOdds) == 0) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
             if (!scrollOfNova(tables_->items[i])) continue;
