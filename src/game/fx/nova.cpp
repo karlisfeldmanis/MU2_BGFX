@@ -181,6 +181,7 @@ void Nova::spawn(const float from[3], float yaw, float speed, bool tailed, const
         joint.alive = true;
         joint.tailed = tailed;
         joint.ring = speed < kFast;
+        joint.floor = from[1] - kOver + kFloorLift;
         const float cp = std::cos(kPitch * kDegrees);
         joint.way[0] = cp * std::cos(yaw * kDegrees);
         joint.way[1] = std::sin(kPitch * kDegrees);
@@ -261,7 +262,7 @@ void Nova::update(float seconds) {
             }
             joint.speed += kFaster;
             for (int k = 0; k < 3; ++k) joint.at[k] += joint.way[k] * joint.speed;
-            joint.left -= 1.0f;
+            joint.at[1] = std::max(joint.at[1], joint.floor);            joint.left -= 1.0f;
             if (joint.left <= 0.0f) joint.alive = false;
         }
         for (Force& force : forces_) {

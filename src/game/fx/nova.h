@@ -135,6 +135,10 @@ private:
     static constexpr float kRayPaceSpread = 0.25f;     // +- of MU's pace
     static constexpr float kRayLifeFrom = 0.75f;       // of kLife, to
     static constexpr float kRayLifeTo = 1.1f;
+    // MU lets them go a metre up and ten degrees down, so by their tenth frame they run into the
+    // ground and the land cuts them off flat (the user, 2026-10-07: 'end of spell is not cuted but
+    // has oapcity gradient to 0'). Ours: they level off this far over his feet and glide on.
+    static constexpr float kFloorLift = 0.35f;
     // The burst's look off the clip (above), all ours.
     static constexpr bool kAllTailed = true;
     static constexpr float kPuffSize = 3.2f;           // metres across
@@ -185,6 +189,7 @@ private:
         bool alive = false;
         bool tailed = false;
         bool ring = false;  // sub-type 7
+        float floor = 0.0f;  // no lower than this (kFloorLift)
         float at[3] = {};
         float from[3] = {};
         float way[3] = {};  // unit
