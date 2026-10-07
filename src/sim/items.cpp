@@ -419,7 +419,7 @@ const PowerRow* powerOf(uint8_t power) {
         // Legendary, as they strike a crowd, but any knight's: Ring of Fire and Fireburst stay the
         // stronger Blade Knight pair (the user, 2026-10-06).
         {Power::Hellfire, "Hellfire", "10% on hit: hellfire erupts around you",
-         kKnightOnly, kInWeapon, Rarity::Legendary},
+         kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Twister, "Twister", "10% on hit: a twister walks out at the target",
          kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::Burn, "Immolate", "15% on hit: the target burns for 3% of its life a second, 4 s",
@@ -450,7 +450,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Renewal, "Renewal", "Restore 3% life every 3 s",
          kEveryClass, kWorn, Rarity::Epic},
         {Power::Spirits, "Evil Spirit", "15% when missed: evil spirits strike monsters around you",
-         kEveryClass, kInShield | kInJewellery, Rarity::Legendary},
+         kEveryClass, kInShield | kInJewellery, Rarity::Legendary, true},
         {Power::Plague, "Spirit Plague",
          "Evil Spirit hits: 20% to poison for 3% of the target's life a pulse", kEveryClass,
          kInWeapon | kInShield | kInJewellery, Rarity::Epic},
@@ -488,7 +488,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::LesserAscendance, "Lesser Ascendance", "+10% all stats", kEveryClass,
          kInWeapon, Rarity::Epic},
         {Power::GreaterAscendance, "Greater Ascendance", "+30% all stats", kEveryClass,
-         kInWeapon, Rarity::Legendary},
+         kInWeapon, Rarity::Legendary, true},
         // The Common runes (sim/items.h kCinderChance...), each a Legendary's faint copy.
         {Power::Cinder, "Cinder", "5% on hit: a faint ring of fire around you", kKnightOnly,
          kInWeapon, Rarity::Common},

@@ -7479,10 +7479,17 @@ void testRunes(const content::Tables& tables) {
                   sim::settable(tables, might, held(ring, 1, 0), dk, false),
               "and in a weapon and a ring");
         const sim::Held ascend = held(rune, 0, uint8_t(sim::Power::GreaterAscendance));
-        check(sim::settable(tables, ascend, held(serpent, 1, 0), dk, false) &&
-                  !sim::settable(tables, ascend, held(plate, 1, 0), dk, false) &&
-                  !(ring >= 0 && sim::settable(tables, ascend, held(ring, 1, 0), dk, false)),
+        check(sim::settable(tables, ascend, held(serpent, 1, 0), dk, true) &&
+                  !sim::settable(tables, ascend, held(plate, 1, 0), dk, true) &&
+                  !(ring >= 0 && sim::settable(tables, ascend, held(ring, 1, 0), dk, true)),
               "Ascendance goes in a weapon alone, not armour or a ring");
+        // The second class's since 2026-10-07, with Hellfire and Evil Spirit.
+        check(!sim::settable(tables, ascend, held(serpent, 1, 0), dk, false),
+              "and only by a second class");
+        for (const sim::Power power : {sim::Power::Hellfire, sim::Power::Spirits}) {
+            check(sim::powerOf(uint8_t(power)) && sim::powerOf(uint8_t(power))->second,
+                  "Hellfire and Evil Spirit are the second class's too");
+        }
         const sim::HeroPoints all = sim::statShareOf(sim::Power::GreaterAscendance);
         check(all.strength == 30 && all.agility == 30 && all.vitality == 30 && all.energy == 30,
               "Greater Ascendance is +30% on all four");

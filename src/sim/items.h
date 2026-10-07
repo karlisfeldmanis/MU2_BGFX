@@ -692,7 +692,10 @@ struct PowerRow {
     uint8_t slots;    // what takes it, kIn* each
     Rarity rarity;
     // Set only by a class's second -- Blade Knight, Soul Master, Muse Elf (the user, 2026-10-04:
-    // 'we need that some stronger runes is for 2nd classes', then the class legendaries locked).
+    // 'we need that some stronger runes is for 2nd classes', then the class legendaries locked;
+    // and 2026-10-07, 'it make sense that most strongest runes s for 2n class': Hellfire,
+    // Greater Ascendance and Evil Spirit too). Each class keeps one legendary of its own before
+    // it -- the knight's Twister, the wizard's Arcane Echo, the elf's Frost Arrow -- and Wrath.
     bool second = false;
     // Whether a hero of this class, his second or not, may set it and have it work.
     bool takenBy(Kin kin, bool isSecond) const {

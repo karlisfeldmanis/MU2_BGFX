@@ -131,6 +131,10 @@ Breaker'. Above the Balrog's (link 7: 250k exp, 250k Zen, 5 Bless, 2 Soul, 1 Cha
   are paid by no other quest, nor is Bulwark, the wizard's since 2026-10-07 (the user: 'we need
   also for DW'). No elf-only Legendary is left unpaid, so hers repeats Piercing Volley, as Frost
   Arrow came twice in the tower.
+- **Held for the class change:** the Legendaries here are all the second class's (Evil Spirit and
+  Hellfire since 2026-10-07, the user: 'it make sense that most strongest runes s for 2n class';
+  Bulwark and Piercing Volley before), so like Kantur's Legion's runes they are earned before 200
+  and set as a Blade Knight, Soul Master or Muse Elf. The Epics work at once.
 - **The weapons:** the Dark Breaker is the Blade Knight's (class level 2), so a knight before
   Sevina's class change carries it until he can wear it. The wizard and the elf have no second-class
   weapon built; the Balrog already gave the elf the Chaos Nature Bow, so hers is the Aquagold.
