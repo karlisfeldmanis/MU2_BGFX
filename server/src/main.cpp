@@ -11,6 +11,9 @@
 // comes into the next world as he left the last -- or, next week, as he left the server
 // (docs/sprints/20-the-world-host.md). A world nobody is in is let go. Every
 // realm steps on one 20 Hz deadline: poll, step every world, flush (server-plan §3).
+// **Where he comes into the next world is the server's:** a gate, a Tab trip, a way home or the
+// end of Blood Castle is read off what the realm said, and the Hello that follows is put down
+// there, whatever tile the client asked for (landingOf).
 // Each tick goes to everyone in the world -- the wall clock, the rain, the commands applied, each
 // with its player -- and every second its hash, which a mirror that disagrees says.
 //
@@ -23,7 +26,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <map>
 #include <memory>
+#include <optional>
 #include <random>
 #include <string>
 #include <thread>
@@ -34,6 +39,9 @@
 #include "net/socket.h"
 #include "net/wire.h"
 #include "sim/cradle.h"
+#include "sim/gates.h"
+#include "sim/maps.h"
+#include "sim/travel.h"
 #include "sim/realm.h"
 #include "store.h"
 
@@ -54,6 +62,14 @@ constexpr int kKeepEvery = 60 * 20;
 
 // The characters, by token, on the server's disk.
 server::Store g_store;
+
+// Where a character is due next, by token: set when the realm sends him to another world, taken
+// by the Hello that brings him there.
+struct Landing {
+    std::string world;
+    int column = 0, row = 0;
+};
+std::map<uint64_t, Landing> g_due;
 
 struct World {
     std::string name;
@@ -152,24 +168,24 @@ bool welcome(Session& one, uint32_t player) {
 
 void part(Session& one);
 
-bool hello(Session& one, const net::Hello& said, std::vector<std::unique_ptr<World>>& worlds,
+bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<World>>& worlds,
            std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
            const sim::RealmConfig& config, std::mt19937_64& seeds) {
-    if (said.version != net::kVersion) {
-        core::logError("%s: version %u, this server speaks %u", one.who.c_str(), said.version,
+    if (asked.version != net::kVersion) {
+        core::logError("%s: version %u, this server speaks %u", one.who.c_str(), asked.version,
                        net::kVersion);
         return false;
     }
-    if (!worldName(said.world)) {
-        core::logError("%s: no world called '%s'", one.who.c_str(), said.world.c_str());
+    if (!worldName(asked.world)) {
+        core::logError("%s: no world called '%s'", one.who.c_str(), asked.world.c_str());
         return false;
     }
     // A character is in one place at a time. A connection of his that went this same poll is
     // let go first, so he comes back as it left him; one still open keeps him, and this one is
     // refused.
-    if (said.token != 0) {
+    if (asked.token != 0) {
         for (auto& other : sessions) {
-            if (other.get() == &one || other->token != said.token || other->world == nullptr) continue;
+            if (other.get() == &one || other->token != asked.token || other->world == nullptr) continue;
             if (other->socket.open()) {
                 core::logError("%s: his character is already playing (%s)", one.who.c_str(),
                                other->who.c_str());
@@ -182,11 +198,30 @@ bool hello(Session& one, const net::Hello& said, std::vector<std::unique_ptr<Wor
     // His character, when his token names one the store keeps. Anything else is a new
     // character, and a new token.
     sim::Kept kept;
-    const bool carried = said.token != 0 && g_store.find(said.token, kept);
+    const bool carried = asked.token != 0 && g_store.find(asked.token, kept);
+    net::Hello said = asked;
     if (carried) {
         one.token = said.token;
         core::logf("%s: his character comes back, level %d with %lld Zen", one.who.c_str(),
                    kept.hero.level, (long long)kept.hero.money);
+        // Sent here by the realm: put down where it sent him, not where the client says. A world
+        // he was not sent to is a way the realm never saw (Go Back!, a scripted trip), and the
+        // Hello's own tile stands until those are the server's too.
+        if (const auto due = g_due.find(one.token); due != g_due.end()) {
+            const Landing landing = due->second;
+            g_due.erase(due);
+            if (landing.world != said.world) {
+                core::logError("%s: due in %s, came to %s; at the tile he asked for", one.who.c_str(),
+                               landing.world.c_str(), said.world.c_str());
+            } else {
+                if (landing.column != said.column || landing.row != said.row) {
+                    core::logf("%s: asked for %d,%d; put down at %d,%d", one.who.c_str(), said.column,
+                               said.row, landing.column, landing.row);
+                }
+                said.column = landing.column;
+                said.row = landing.row;
+            }
+        }
     } else {
         do one.token = seeds(); while (one.token == 0 || g_store.has(one.token));
     }
@@ -259,6 +294,59 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
     }
 }
 
+// Where the realm sends one of its players with what it said, when it is another world: through a
+// gate (Gated: the exit gate's map, at the tile the realm chose), by Tab's list (an answered
+// Travel: the row's map and tile), or home from a map with no safe zone (a Town Portal read or a
+// fall from flight, Warped; a death, Rose; both with c 1) to the map row's town, at its spawn
+// gate. The same tables the client changes its map by (sim/maps.h, gates.h, travel.h).
+std::optional<Landing> landingOf(const World& world, const sim::Happening& said,
+                                 const std::vector<sim::Command>& commands) {
+    const auto home = [&]() -> std::optional<Landing> {
+        const sim::MapRow* here = sim::mapOf(world.name);
+        const sim::MapRow* town = sim::mapNumbered(here ? here->home : 0);
+        if (town == nullptr) return std::nullopt;
+        return Landing{town->world, town->arrive[0], town->arrive[1]};
+    };
+    switch (said.what) {
+        case sim::What::Gated: {
+            const sim::EnterGate* in = sim::enterGateNumbered(said.a);
+            const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
+            const sim::MapRow* map = out ? sim::mapNumbered(int(out->map)) : nullptr;
+            if (map == nullptr) return std::nullopt;
+            return Landing{map->world, said.b, said.c};
+        }
+        case sim::What::Answered: {
+            if (said.a != int32_t(sim::Command::Kind::Travel) || said.b <= 0) return std::nullopt;
+            for (const sim::Command& asked : commands) {
+                if (asked.kind != sim::Command::Kind::Travel || asked.player != said.who ||
+                    asked.ticket != uint32_t(said.c) || asked.a < 0 || asked.a >= sim::kTravels) {
+                    continue;
+                }
+                const sim::TravelRow& to = sim::travelAt(asked.a);
+                // A floor of this same map: the realm has set him down there already.
+                if (to.map == int32_t(world.tables.map)) return std::nullopt;
+                const sim::MapRow* map = sim::mapNumbered(to.map);
+                if (map == nullptr) return std::nullopt;
+                return Landing{map->world, to.column, to.row};
+            }
+            return std::nullopt;
+        }
+        case sim::What::Warped:
+        case sim::What::Rose:
+            return said.c == 1 ? home() : std::nullopt;
+        default:
+            return std::nullopt;
+    }
+}
+
+// The welcomed connection playing body `id` in `world`, or nullptr.
+Session* playing(const World& world, std::vector<std::unique_ptr<Session>>& sessions, uint32_t id) {
+    for (auto& one : sessions) {
+        if (one->world == &world && one->welcomed && one->player == id) return one.get();
+    }
+    return nullptr;
+}
+
 // One tick of one world: its inputs applied, the step, sent to everyone in it with now and then
 // its hash; then whoever it let in, welcomed.
 void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
@@ -272,8 +360,30 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
     realm.invasionRain(t.rain);
     for (const net::Arrival& a : t.arrivals) realm.carry(a.ticket, a.kept);
     for (const sim::Command& c : t.commands) realm.command(c);
+    const bool castleOut = realm.castleRun().sentOut;
     realm.step();
     t.tick = uint32_t(realm.tick());
+    // Whoever the realm sent to another world: due there.
+    for (const sim::Happening& said : realm.happenings()) {
+        if (const std::optional<Landing> landing = landingOf(world, said, t.commands)) {
+            if (Session* one = playing(world, sessions, said.who)) {
+                g_due[one->token] = *landing;
+                core::logf("%s: sent to %s %d,%d", one->who.c_str(), landing->world.c_str(),
+                           landing->column, landing->row);
+            }
+        }
+    }
+    // Blood Castle's run over and its rest out: its player to the castle's town. The run is the
+    // first player's (a known limit of sprint 19).
+    if (!castleOut && realm.castleRun().sentOut && realm.playerCount() > 0) {
+        const sim::MapRow* here = sim::mapOf(world.name);
+        const sim::MapRow* town = sim::mapNumbered(here ? here->home : 0);
+        Session* one = playing(world, sessions, realm.playerAt(0).id);
+        if (town != nullptr && one != nullptr) {
+            g_due[one->token] = {town->world, town->arrive[0], town->arrive[1]};
+            core::logf("%s: out of the castle, to %s", one->who.c_str(), town->world);
+        }
+    }
     std::vector<uint8_t> out;
     net::put(out, t);
     if (t.tick % kHashEvery == 0) net::put(out, net::Hash{t.tick, net::stateHash(realm)});

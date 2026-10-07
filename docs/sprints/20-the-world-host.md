@@ -119,9 +119,45 @@ on the server was lost at every gate, trip and death sent home.**
   - the new process said "1 characters", and a client asking for level 1 came back level 40;
   - 6 of 6 hashes agreed both times.
 
+## 3. Where he lands is the server's — done 2026-10-07
+
+- **The map table is the rules'** (`sim/maps.*`): the rows a world is, with its number, its spawn
+  gate's tile and its home, and `mapOf`/`mapNumbered`/`mapAfter`, moved from `game/world/maps.*`.
+  The game's header `using`s them, so not one call site changed. `zoneLevels`, `placeName` and
+  `mapSheet` stay the game's.
+- **The server reads where the realm sent him** (`landingOf` in `main.cpp`), after each step, from
+  the same tables the client changes its map by:
+  - `Gated`: the exit gate's map, at the tile the realm chose;
+  - an answered `Travel` (matched to its command by ticket and player): the row's map and tile,
+    unless it is a floor of this same map;
+  - `Warped` or `Rose` with c 1 (a Town Portal read, a fall from flight, a death on a map with no
+    safe zone): the map row's home, at its spawn gate;
+  - Blood Castle's `sentOut`: its first player to Devias.
+
+  He is then due there, by token, and the server says so ("sent to dungeon 108,247").
+- **The Hello that follows is put down on the server's tile**, whatever the client asked. Both a
+  raise (the Welcome's tile) and a Join (the command's c, d) carry it, so every mirror follows.
+  A Hello for another world than the one he is due in keeps its own tile and the log says so. That
+  happens on the ways the realm never sees: Go Back! to another map and `--travel-at`.
+- The game stays identical, since the client already works out the same tile. The protocol is
+  unchanged (3).
+- **Verified on loopback:**
+  - a level-40 knight put down by Lorencia's stair (`--at 122,226 --walk-to 122,233`) went down
+    it; the server said "sent to dungeon 109,247" and the client came in there, at its own
+    tile and the server's alike. 3 and 9 hashes agreed.
+  - **A client that lies about it.** A scripted one (Python, the raw protocol) walked the same
+    stair, then said Hello to the Dungeon at 50,50. The server logged "asked for 50,50; put down
+    at 108,247", and the Welcome said 108,247.
+  - sim_test's output is identical to step 2's (6661 checks, the standing 10 failing);
+    `layercheck` and `save_test` pass.
+  - Not run end to end: the Tab trip, the death and portal home and Blood Castle's send-out.
+    They are read by the same code as the gate, from the happenings the client already acts on.
+
 ## Next
 
-- The landing tile decided by the server from the gate, trip or warp the realm said, not by the
-  client's Hello.
-- Which world he is in is not stored yet: the client's Hello still names the world, and he comes
-  into whichever world it names. It goes with the landing tile.
+- **Which world he is in is not stored.** A new run of the game opens the world the local save
+  names, and he comes into it. The server should keep his world and tile with him, and answer
+  a Hello for another world by sending him to his. That means a new answer on the wire, and a
+  client that rebuilds on it.
+- Go Back! across maps and `--travel-at` are still the client's own; Go Back! becomes a realm
+  command, so the server sees it.

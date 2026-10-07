@@ -222,7 +222,8 @@ lets a later player in by a Join command and sends him the world's past to repla
 
 Under way since 2026-10-07: `docs/sprints/20-the-world-host.md`. On the wire already, the server
 is the host of every map. Its first step makes a character go with him between them (`sim::Kept`
-under a token). Its second keeps him in `characters.db` on the server's disk.
+under a token). Its second keeps him in `characters.db` on the server's disk; its third has the server put him
+down where the realm sent him.
 
 - A `World` steps every map's `Realm` on one 20 Hz deadline loop: poll, step every realm,
   flush. MU2's `Serve` is the worked example.

@@ -137,6 +137,7 @@ add_library(mu_sim STATIC
   src/sim/vault.cpp
   src/sim/machine.cpp
   src/sim/gates.cpp
+  src/sim/maps.cpp
   src/sim/traps.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
@@ -176,12 +177,18 @@ target_compile_options(mu_net PRIVATE ${MU_WARNINGS})
 # Its characters live in a SQLite file of its own (server/src/store.h): the system's library, which
 # the macOS SDK has and the box has from libsqlite3-dev. Never the client's (PLAN.md foundation 11).
 find_package(SQLite3 REQUIRED)
+# CMake 4.3 renamed its target, and the box's is 4.2.
+if(TARGET SQLite3::SQLite3)
+  set(MU_SQLITE SQLite3::SQLite3)
+else()
+  set(MU_SQLITE SQLite::SQLite3)
+endif()
 add_executable(mu2_server
   server/src/main.cpp
   server/src/store.cpp
 )
 target_include_directories(mu2_server PRIVATE src)
-target_link_libraries(mu2_server PRIVATE mu_net SQLite::SQLite3)
+target_link_libraries(mu2_server PRIVATE mu_net ${MU_SQLITE})
 target_compile_definitions(mu2_server PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(mu2_server PRIVATE ${MU_WARNINGS})
 
