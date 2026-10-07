@@ -404,6 +404,11 @@ EFFECTS = {
     # added, made for the burst's cloud and ring as the clip shows them (the wiki's SM-nova.gif).
     # **Ours**: no MU sheet is a plain soft round light -- flare01 is a hard star.
     "nova_puff": "effects/nova/puff.png",
+    # And its two soft lines (the user, 2026-10-07: 'for thos lines add some blurriness'), ours:
+    # MU's JointSpirit01 Gaussian-blurred at radius 3, faded at its long edges and at both ends
+    # (no ray stops on a hard edge), for the burst's rays; and a plain soft streak, Gaussian across and bright at its head (U 1), for the force.
+    "nova_spirit_soft": "effects/nova/spirit_soft.png",
+    "nova_streak_soft": "effects/nova/streak_soft.png",
     "explosion_mono": "effects/firecracker/explotion01mono.png",
 
     # And what the wizard's Flame burns with. See client/core/Flame.cs.

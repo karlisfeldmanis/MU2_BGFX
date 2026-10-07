@@ -46,6 +46,10 @@
 //     frames and going out, a whiter heart under it;
 //   * the cooked `shockwave` sheet laid flat at his feet under the ring, from kShockFrom to
 //     kShockTo metres across over kShockLife frames, for its rays.
+// Subtle but still the explosion (the user, 2026-10-07: 'i want the oppsite, that its not so
+// bright and more subtle but still effecetive, also for thos lines add some blurriness'): the
+// puffs, ring, flash, rays and shock at about half of the clip-matched light, and the rays and
+// the force drawn on our blurred lines (`nova_spirit_soft`, `nova_streak_soft`), the force wider.
 // Ours:
 //   * the charge's lights a bone are capped at kLightsPerBone a frame, not `m_bySkillCount + 1`,
 //     and dimmed to kLightDim: MU's sixteen stacked by stage seven read as a white figure; and
@@ -114,37 +118,44 @@ private:
     static constexpr float kOver = 100.0f * kUnit;     // let go this high
     static constexpr float kPitch = -10.0f;            // degrees
     static constexpr float kWidth = 60.0f * kUnit;     // CreateJoint's Scale 60
-    static constexpr int kTails = 4;                   // MaxTails 5: four held behind the head
+    // MU's MaxTails 5 holds four behind the head; ours seven, so a ray is one unbroken streak and
+    // not dashes (the user, 2026-10-07: 'i dont like that those spell expolodiing lines are cuted').
+    static constexpr int kTails = 7;
     static constexpr int kPerFrame = 36;
     static constexpr int kMost = 900;
     static constexpr int kShinyEvery = 9;              // ours
     static constexpr float kShinyDim = 0.6f;           // ours
-    static constexpr float kSpokeDim = 0.22f;          // ours
-    static constexpr float kSpokeWidth = 0.45f;        // ours, of MU's 60
-    static constexpr float kSpokeWhite = 0.06f;        // ours
-    static constexpr float kRingDim = 0.2f;            // ours
-    static constexpr float kFadeFrames = 6.0f;         // ours
+    static constexpr float kSpokeDim = 0.16f;          // ours
+    static constexpr float kSpokeWidth = 0.8f;         // ours, of MU's 60
+    static constexpr float kSpokeWhite = 0.0f;         // ours
+    static constexpr float kRingDim = 0.06f;           // ours
+    static constexpr float kFadeFrames = 10.0f;        // ours
+    // Each ray its own pace and life, so they end ragged and each fades out alone, where MU's all
+    // stop on one circle (ours, the same complaint).
+    static constexpr float kRayPaceSpread = 0.25f;     // +- of MU's pace
+    static constexpr float kRayLifeFrom = 0.75f;       // of kLife, to
+    static constexpr float kRayLifeTo = 1.1f;
     // The burst's look off the clip (above), all ours.
     static constexpr bool kAllTailed = true;
     static constexpr float kPuffSize = 3.2f;           // metres across
-    static constexpr float kPuffDim = 0.2f; 
+    static constexpr float kPuffDim = 0.11f;
     static constexpr float kPuffWhite = 0.0f;
     // The puffs' blue, deeper than MU's (0.3, 0.3, 1): bright, ours went lavender through the
     // tonemap where the clip's rim is a deep blue.
     static constexpr float kPuffBlue[3] = {0.16f, 0.2f, 1.0f};
     static constexpr float kRingPuffSize = 3.0f;
-    static constexpr float kRingPuffDim = 0.65f;
+    static constexpr float kRingPuffDim = 0.38f;
     static constexpr float kRingPuffWhite = 0.02f;
     static constexpr float kRingFrom = 1.2f;           // metres out it begins
     static constexpr float kFlashLife = 9.0f;          // frames
     static constexpr float kFlashFrom = 1.5f;          // metres across
     static constexpr float kFlashSize = 7.0f;
-    static constexpr float kFlashDim = 0.9f;
+    static constexpr float kFlashDim = 0.45f;
     static constexpr float kFlashOver = 1.0f;          // at his chest, over his feet
     static constexpr float kShockLife = 30.0f;         // frames
     static constexpr float kShockFrom = 3.0f;          // metres across
     static constexpr float kShockTo = 12.0f;
-    static constexpr float kShockDim = 0.7f;
+    static constexpr float kShockDim = 0.4f;
     static constexpr float kShockOver = 0.15f;         // over the ground
     // The charge's lights: BITMAP_LIGHT sub-type 6.
     static constexpr float kLightLife = 2.0f;
@@ -160,10 +171,10 @@ private:
     static constexpr float kForceAim = 100.0f * kUnit;
     static constexpr float kForceGain = 4.0f * kUnit;
     static constexpr float kForceLife = 17.0f;
-    static constexpr float kForceWidth = 10.0f * kUnit;
+    static constexpr float kForceWidth = 34.0f * kUnit;  // ours, MU's 10: soft, it wants width
     static constexpr int kForceTails = 2;              // MaxTails 3
     static constexpr float kForceHead = 0.3f;          // ours
-    static constexpr float kForceDim = 0.45f;          // ours
+    static constexpr float kForceDim = 0.35f;          // ours
     static constexpr int kForceMost = 64;
     // Death's sparks: BITMAP_LIGHT sub-type 5, fifty frames, light 0.9 and size 0.95 a frame.
     static constexpr float kSparkLife = 50.0f;

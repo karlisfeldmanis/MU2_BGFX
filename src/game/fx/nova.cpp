@@ -14,19 +14,20 @@ constexpr float kDegrees = 3.14159265f / 180.0f;
 
 bool Nova::open(const std::string& assetDir, content::Textures& textures,
                 const content::Showing& table) {
-    const content::EffectSheet* joint = table.effect("joint_spirit");
+    // The rays and the force's streaks on our blurred lines (pipeline/index.py), not MU's crisp
+    // JointSpirit01 and JointEnergy01: the user, 2026-10-07, 'for thos lines add some blurriness'.
+    const content::EffectSheet* joint = table.effect("nova_spirit_soft");
     const content::EffectSheet* light = table.effect("light");
-    // BITMAP_JOINT_HEALING (JointEnergy01) and BITMAP_SHINY + 1 (Shiny02), cooked for the elf's
-    // summon (pipeline/index.py).
-    const content::EffectSheet* streak = table.effect("joint_energy");
+    // BITMAP_SHINY + 1 (Shiny02), cooked for the elf's summon (pipeline/index.py).
+    const content::EffectSheet* streak = table.effect("nova_streak_soft");
     const content::EffectSheet* shiny = table.effect("shiny_02");
     // The Firecracker's soft ring (pipeline/index.py), the burst's ring here.
     const content::EffectSheet* shock = table.effect("shockwave");
     const content::EffectSheet* puff = table.effect("nova_puff");
     if (joint == nullptr || light == nullptr || streak == nullptr || shiny == nullptr ||
         shock == nullptr || puff == nullptr) {
-        core::logError("nova: no cooked effect named 'joint_spirit', 'light', 'joint_energy', "
-                       "'shiny_02', 'shockwave' or 'nova_puff'");
+        core::logError("nova: no cooked effect named 'nova_spirit_soft', 'light', "
+                       "'nova_streak_soft', 'shiny_02', 'shockwave' or 'nova_puff'");
         return false;
     }
     shock_ = textures.load(assetDir + "/" + shock->path, content::TextureRole::Albedo);
@@ -185,6 +186,10 @@ void Nova::spawn(const float from[3], float yaw, float speed, bool tailed, const
         joint.way[1] = std::sin(kPitch * kDegrees);
         joint.way[2] = cp * std::sin(yaw * kDegrees);
         joint.speed = speed;
+        if (!joint.ring) {
+            joint.speed *= 1.0f + kRayPaceSpread * (2.0f * unit() - 1.0f);
+            joint.left = kLife * (kRayLifeFrom + (kRayLifeTo - kRayLifeFrom) * unit());
+        }
         joint.dice = roll();
         for (int k = 0; k < 3; ++k) {
             joint.at[k] = from[k];
