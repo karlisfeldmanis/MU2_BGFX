@@ -17,7 +17,7 @@
 // in it. The realm's own log is silenced for the hours of play; BOT_LOG=1 lets it through, which
 // is where a skill pressed and never thrown says why.
 //
-//   build/bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] [--until-jewel]
+//   build/bot [--kin dk|dw|elf|mg] [--path melee|magic] [--seed N] [--runs N] [--hours H] [--until-jewel]
 //             [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]
 
 #include <algorithm>
@@ -90,6 +90,9 @@ struct Options {
     bool fights = false;  // --fights: a line every half hour on how he fights
     int build[4] = {};    // --build s,a,v,e: the weights his points are spent by, else his class's
     bool noShopSkills = false;  // --no-shop-skills: buys no orb or scroll, reads only what drops
+    // --path magic: the Magic Gladiator on the wizard's ways -- energy, a staff, spells and the
+    // wizard's potions -- where melee, the default, is the knight's. His quests pay that path.
+    bool magic = false;
 };
 
 std::string clock(int64_t tick) {
@@ -105,6 +108,7 @@ const char* kinName(sim::Kin kin) {
         case sim::Kin::DarkWizard: return "Dark Wizard";
         case sim::Kin::FairyElf: return "Fairy Elf";
         case sim::Kin::DarkKnight: return "Dark Knight";
+        case sim::Kin::MagicGladiator: return "Magic Gladiator";
     }
     return "?";
 }
@@ -114,6 +118,7 @@ const char* cradleWeapon(sim::Kin kin) {
         case sim::Kin::DarkWizard: return "Staff01";
         case sim::Kin::FairyElf: return "Bow01";
         case sim::Kin::DarkKnight: return "Axe01";
+        case sim::Kin::MagicGladiator: return "Sword02";  // the lobby's (roster.cpp)
     }
     return "";
 }
@@ -614,6 +619,17 @@ private:
     // the wizard energy -- six tenths of it, since every spell is energy/9 to energy/4 with the
     // monster's whole defence off it; at four tenths he dealt a third of the damage and killed
     // half as much (the bot's runs, 2026-10-01).
+    // The Magic Gladiator plays one of the two he stands between (--path): the wizard's rules on
+    // the magic path, the knight's on the melee one.
+    bool wizardly() const {
+        return options_.kin == sim::Kin::DarkWizard || (options_.kin == sim::Kin::MagicGladiator && options_.magic);
+    }
+    bool knightly() const {
+        return options_.kin == sim::Kin::DarkKnight || (options_.kin == sim::Kin::MagicGladiator && !options_.magic);
+    }
+
+    bool gladiatorMage() const { return options_.kin == sim::Kin::MagicGladiator && options_.magic; }
+
     void spend() {
         int points = realm_->hero().pointsInHand;
         if (points <= 0) return;
@@ -644,6 +660,9 @@ private:
         for (const content::ItemRow& row : tables_->items) {
             if (!row.armour() || row.dropLevel > hero.level) continue;
             if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) continue;
+            // The magic Magic Gladiator stops at the knight's Scale set, the rest to energy (the
+            // user, 2026-10-07: 'fully to energy and just spent enought for scale set').
+            if (gladiatorMage() && row.label.rfind("Scale ", 0) != 0) continue;
             asked = std::max(asked, sim::asks(row, 0).strength);
         }
         if (const int short_ = std::min(points, asked - hero.points.strength); short_ > 0) {
@@ -677,7 +696,8 @@ private:
         // The wizard 1/1/5/4 since 2026-10-03 ("improve DW bot"): over three seeds his quests
         // came in ~20 minutes sooner than at 1/1/2/6 and his health 574 against 368 -- a wizard
         // whose spells reach the screen is held back by what one blow costs him, not by damage.
-        if (options_.kin == sim::Kin::DarkWizard) { w[0] = 1; w[1] = 1; w[2] = 5; w[3] = 4; }
+        if (wizardly()) { w[0] = 1; w[1] = 1; w[2] = 5; w[3] = 4; }
+        if (gladiatorMage()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
         if (options_.build[0] + options_.build[1] + options_.build[2] + options_.build[3] > 0) {
             std::copy(std::begin(options_.build), std::end(options_.build), w);
@@ -689,7 +709,7 @@ private:
             give[i] = points * w[i] / sum;
             left -= give[i];
         }
-        give[options_.kin == sim::Kin::DarkWizard ? 3 : options_.kin == sim::Kin::FairyElf ? 1 : 0] += left;
+        give[wizardly() ? 3 : options_.kin == sim::Kin::FairyElf ? 1 : 0] += left;
         realm_->spend(give[0], give[1], give[2], give[3]);
     }
 
@@ -741,7 +761,7 @@ private:
     }
 
     bool casts() const {
-        if (options_.kin != sim::Kin::DarkKnight) return true;
+        if (!knightly()) return true;
         for (int i = 0; i < sim::skillCount(); ++i) {
             if (realm_->knows(sim::skillAt(i).number)) return true;
         }
@@ -773,7 +793,7 @@ private:
 
     double blow() const {
         const sim::Body& hero = realm_->hero();
-        if (options_.kin == sim::Kin::DarkWizard) {
+        if (wizardly()) {
             const sim::Wearer w = realm_->wearer();
             // The staff's rise is a percentage: the band times 1 + rise/100 (rules.cpp).
             return (w.wizardMinimum + w.wizardMaximum) / 2.0 * w.wizardryRate;
@@ -853,7 +873,7 @@ private:
             if (options_.kin == sim::Kin::FairyElf &&
                 (row.shield() || (row.weapon() && row.group != sim::kGroupBows))) continue;
             // And a wizard to his staff: his spells are its rise.
-            if (options_.kin == sim::Kin::DarkWizard && row.weapon() && row.magicPower <= 0) continue;
+            if (wizardly() && row.weapon() && row.magicPower <= 0) continue;
             if (options_.kin == sim::Kin::FairyElf && row.weapon() && archer() &&
                 sim::placeOf(row) != (ammoHand() == sim::kWeaponRight ? int(sim::kWeaponLeft) : int(sim::kWeaponRight)) &&
                 realm_->money() < 1000) continue;
@@ -863,7 +883,7 @@ private:
                 // 2026-10-03: "teach DK to use shield and defense skill", "same with DW"): a
                 // second weapon there scored its offhand blow over any shield, and Defense and
                 // Soul Barrier, drawn up behind one, were never cast.
-                if ((options_.kin == sim::Kin::DarkKnight || options_.kin == sim::Kin::DarkWizard) &&
+                if (options_.kin != sim::Kin::FairyElf &&
                     place == int(sim::kWeaponLeft) && row.weapon() && !row.shield()) continue;
                 // And a knight's weapon one-handed, so the shield always has its hand: a
                 // two-handed Berdysh outscored sword and shield and Defense went uncast again.
@@ -969,7 +989,7 @@ private:
                 // a Bloodwell, an Undying go in armour and never in a weapon (sim::settable).
                 for (const int to : {int(sim::kWeaponRight), int(sim::kWeaponLeft), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}) {
                     if (to >= sim::kWorn || realm_->satchel()[to].empty()) continue;
-                    if (!sim::settable(*tables_, jewel, realm_->satchel()[to], options_.kin)) continue;
+                    if (!sim::settable(*tables_, jewel, realm_->satchel()[to], options_.kin, realm_->hero().second)) continue;
                     // **A weapon rune waits for a weapon worth keeping** (the user, 2026-10-03:
                     // "bot saves weapon runes"): Marlon's Stormcall went into the Falchion at
                     // level 40, was sold with it, and the Double Blade's sockets stayed empty.
@@ -977,7 +997,7 @@ private:
                     // The knight's alone: the wizard's Serpent Staff and the elf's Battle Bow are the
                     // weapons they keep, and holding Arcane Echo and Frost Arrow off them cost both
                     // the Knights' Halls on two seeds of three.
-                    if (options_.kin == sim::Kin::DarkKnight && target.weapon() && !target.shield() &&
+                    if (knightly() && target.weapon() && !target.shield() &&
                         target.dropLevel < kRuneWeaponLevel) continue;
                     const std::string on = rowOf(realm_->satchel()[to]).label;
                     if (realm_->refine(slot, to)) {
@@ -1032,7 +1052,7 @@ private:
     double powerWorth(sim::Affix affix, int refinement) const {
         double weight = 1.0;
         if (affix == sim::Affix::Leech) {
-            weight = options_.kin == sim::Kin::DarkKnight ? 2.5
+            weight = knightly() ? 2.5
                      : options_.kin == sim::Kin::FairyElf ? 1.5
                                                           : 1.0;
         }
@@ -1088,7 +1108,7 @@ private:
         const content::ItemRow& row = rowOf(one);
         // A weapon rune of his class is carried for the weapon it waits for (savesRune), and
         // the Jewels of Chaos for the machine's Remove Rune, three of them.
-        if (sim::creation(row)) return options_.kin != sim::Kin::DarkKnight || !weaponRune(one);
+        if (sim::creation(row)) return !knightly() || !weaponRune(one);
         if (chaos(row)) return chaosCount() > 3;
         return sim::refiningJewel(row);
     }
@@ -1105,7 +1125,7 @@ private:
     bool weaponRune(const sim::Held& one) const {
         if (one.empty() || !sim::creation(rowOf(one))) return false;
         const sim::PowerRow* power = sim::powerOf(one.powers[0]);
-        return power != nullptr && (power->slots & sim::kInWeapon) != 0 && power->takenBy(options_.kin);
+        return power != nullptr && (power->slots & sim::kInWeapon) != 0 && power->takenBy(options_.kin, realm_->hero().second);
     }
     // What taking the runes out of a carried piece would cost, or -1 when it has none: the
     // machine's Remove Rune is one Chaos and Zen by the rune's rarity, each.
@@ -1269,7 +1289,7 @@ private:
     // not flicker as he drinks his bag down.
     double riskShare() const {
         const bool rich = realm_->money() >= 20 * potionPrice(healTier());
-        return options_.kin == sim::Kin::DarkWizard && rich ? 2.0 : 3.0;
+        return wizardly() && rich ? 2.0 : 3.0;
     }
     // The strongest breed level on a map he takes, or -1.
     int bestOn(const content::Tables& tables) const {
@@ -1531,12 +1551,21 @@ private:
     void press(uint32_t at) {
         const sim::Body& hero = realm_->hero();
         const sim::Wearer w = realm_->wearer();
+        const sim::Body* target = nullptr;
+        for (const sim::Body& b : realm_->bodies()) {
+            if (b.id == at) target = &b;
+        }
         int best = -1;
         double strongest = 0.0;
         for (int i = 0; i < sim::skillCount(); ++i) {
             const sim::SkillRow& row = sim::skillAt(i);
             if (!realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
             if (hero.mana < row.mana || row.onSelf() || !row.suits(w.hand)) continue;
+            // A storm or a ring cast at a body past its reach is cast at nothing (castsBare):
+            // the mana goes on air. A magic gladiator who had just read Twister threw 1,300 of
+            // them in an hour, killed nothing and walked to town for mana every three minutes.
+            if (row.castsBare() && (target == nullptr ||
+                                    std::hypot(target->x - hero.x, target->y - hero.y) > row.reach)) continue;
             const double base = row.wizardry
                                     ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
                                     : blow();
@@ -1560,7 +1589,7 @@ private:
         if (countOf(sim::heals) < 3 && money >= bundle) return "out of potions";
         // The wizard's alone: a knight sent home for mana potions too (2026-10-03) ended fifteen
         // levels lower in eight hours -- the trips cost more than Uppercut and Lunge gave back.
-        if (options_.kin == sim::Kin::DarkWizard && countOf(sim::restores) < 3 && money >= bundle) {
+        if (wizardly() && countOf(sim::restores) < 3 && money >= bundle) {
             return "out of mana potions";
         }
         // Only with something to sell or store: a bag full of what he keeps -- jewels, runes,
@@ -1746,9 +1775,32 @@ private:
             }
         }
         // Nothing he can reach here: on a map of floors, the next floor he may go to.
+        if (std::getenv("BOT_TRACE") && clock_ > int64_t(std::atof(std::getenv("BOT_TRACE")) * 72000) && clock_ % (20 * 30) < kThink) {
+            std::printf("TRACE %s floor %d at %.1f,%.1f hp %d engaged %d kind %d target %u\n", clock(clock_).c_str(), realm_->travelFloor(), hero.x, hero.y, hero.health, engaged, int(request.kind), request.target);
+            for (const sim::Body& b : realm_->bodies()) {
+                if (!b.monster() || !b.alive()) continue;
+                const float dx = b.x - hero.x, dy = b.y - hero.y;
+                if (dx * dx + dy * dy > 15 * 15) continue;
+                std::printf("   id %u %s lv %d at %.1f,%.1f d %.1f onme %d barred %d quarry %d floor %d\n", b.id, tables_->kinds[size_t(b.kind)].label.c_str(), tables_->kinds[size_t(b.kind)].level, b.x, b.y, std::sqrt(dx*dx+dy*dy), b.quarry == hero.id, barred(b.id), quarry(b), realm_->floorAt(b.column(), b.row()));
+            }
+        }
+        if (request.kind == sim::Request::Kind::None && nextFloor()) return;
+        // **No floor to go to: the nearest on his own** (the user, 2026-10-07: "keep testing
+        // MG"). A gladiator grinding the Lost Tower whose best breed stood on no floor he could
+        // reach stood at the stairs for an hour and three quarters, 27 he would take on his own
+        // floor out of sight -- setAside is a quest's, and grinding has none.
         if (request.kind == sim::Request::Kind::None) {
-            nextFloor();
-            return;
+            closest = 1e30f;
+            for (const sim::Body& body : realm_->bodies()) {
+                if (!quarry(body)) continue;
+                const float dx = body.x - hero.x, dy = body.y - hero.y;
+                if (dx * dx + dy * dy < closest) {
+                    closest = dx * dx + dy * dy;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = body.id;
+                }
+            }
+            if (request.kind == sim::Request::Kind::None) return;
         }
         ask(request);
         // Guarded and buffed whenever he goes to fight, not only once something is on him: the
@@ -1762,7 +1814,8 @@ private:
     // reach until he pays to be put down there (this map's travel rows) or walks its stairs (an
     // enter gate whose exit is on this same map). Toward the floor of the nearest he would go
     // after, when his own has none; a quest whose breeds he cannot reach at all is set aside.
-    void nextFloor() {
+    // True while it is taking him to another floor; false when there is none to go to.
+    bool nextFloor() {
         const int here = realm_->travelFloor();
         const sim::Body& hero = realm_->hero();
         float closest = 1e30f;
@@ -1788,7 +1841,7 @@ private:
         if (to >= 0 && to == floorLeft_ && clock_ < floorLeftAt_ + 5 * 60 * 20) to = -1;
         if (to < 0) {
             setAside();
-            return;
+            return false;
         }
         const sim::TravelRow& row = sim::travelAt(to);
         if (realm_->travelRefusal(to) == sim::TravelRefusal::None && realm_->money() >= row.zen + potionReserve()) {
@@ -1799,7 +1852,7 @@ private:
                 banned_.clear();
                 nextFloorAt_ = clock_ + 30 * 20;
             }
-            return;
+            return true;
         }
         // The stairs: a gate on his floor to this same map, the one to that floor if there is
         // one, else to any other.
@@ -1816,7 +1869,7 @@ private:
         }
         if (stair < 0) {
             setAside();
-            return;
+            return false;
         }
         if (!hero.walking) {
             const sim::EnterGate* in = sim::enterGateNumbered(stair);
@@ -1826,6 +1879,7 @@ private:
             request.row = (in->box.y1 + in->box.y2) / 2;
             realm_->ask(request);
         }
+        return true;
     }
 
     void setAside() {
@@ -1859,7 +1913,8 @@ private:
             }
             const int level = realm_->hero().level;
             const int64_t zen = realm_->money();
-            if (realm_->completeQuest(aimQuest_, choice)) {
+            if (realm_->completeQuest(aimQuest_, choice,
+                                      options_.magic ? sim::QuestPath::Magic : sim::QuestPath::Melee)) {
                 ++out_.handedIn[aimQuest_];
                 if (out_.firstHandIn[aimQuest_] < 0) out_.firstHandIn[aimQuest_] = clock_;
                 say("** hands in %s to %s: +%lld zen, level %d -> %d%s%s", row.title, row.giverName,
@@ -2168,7 +2223,7 @@ private:
         // minutes in the Dungeon and paid two trips back to Lorencia for the next. Twenty a cell,
         // so it is three cells more.
         const int deep = realm_->money() > potionPrice(tier) * 40 ? 2 : 1;
-        if (options_.kin == sim::Kin::DarkWizard) {
+        if (wizardly()) {
             heal(6 * deep);
             restore(30 * deep);
             heal(24 * deep);
@@ -2291,7 +2346,7 @@ private:
     bool promising(const content::ItemRow& row, int plus) const {
         const int place = sim::placeOf(row);
         const sim::Held& worn = realm_->satchel()[place];
-        if (options_.kin == sim::Kin::DarkWizard && row.weapon()) {
+        if (wizardly() && row.weapon()) {
             return worn.empty() || row.magicPower > rowOf(worn).magicPower;
         }
         if (worn.empty()) return true;
@@ -2360,8 +2415,11 @@ int main(int argc, char** argv) {
         const auto next = [&]() -> const char* { return i + 1 < argc ? argv[++i] : ""; };
         if (a == "--kin") {
             const std::string k = next();
-            options.kin = k == "dw" ? sim::Kin::DarkWizard : k == "elf" ? sim::Kin::FairyElf : sim::Kin::DarkKnight;
-        } else if (a == "--seed") options.seed = std::strtoull(next(), nullptr, 10);
+            options.kin = k == "dw"    ? sim::Kin::DarkWizard
+                          : k == "elf" ? sim::Kin::FairyElf
+                          : k == "mg"  ? sim::Kin::MagicGladiator
+                                       : sim::Kin::DarkKnight;
+        } else if (a == "--path") options.magic = std::string(next()) == "magic"; else if (a == "--seed") options.seed = std::strtoull(next(), nullptr, 10);
         else if (a == "--runs") options.runs = std::max(1, std::atoi(next()));
         else if (a == "--hours") options.hours = std::atof(next());
         else if (a == "--until-jewel") options.untilJewel = true;
@@ -2374,7 +2432,7 @@ int main(int argc, char** argv) {
         }
         else if (a == "--quiet") options.quiet = true;
         else {
-            std::printf("usage: bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] "
+            std::printf("usage: bot [--kin dk|dw|elf|mg] [--path melee|magic] [--seed N] [--runs N] [--hours H] "
                         "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]\n");
             return 2;
         }
@@ -2384,7 +2442,9 @@ int main(int argc, char** argv) {
     std::vector<Outcome> outcomes;
     for (int run = 0; run < options.runs; ++run) {
         const uint64_t seed = options.seed + uint64_t(run);
-        std::printf("%s, seed %llu\n", kinName(options.kin), (unsigned long long)seed);
+        std::printf("%s%s, seed %llu\n", kinName(options.kin),
+                    options.kin != sim::Kin::MagicGladiator ? "" : options.magic ? " (magic)" : " (melee)",
+                    (unsigned long long)seed);
         Bot bot(options, seed);
         if (!bot.start()) {
             std::printf("bot: the realm did not raise\n");
