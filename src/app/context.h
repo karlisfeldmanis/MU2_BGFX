@@ -90,6 +90,7 @@ private:
 
 // Go Back!: the spot in the field he left by magic -- a Town Portal Scroll, or a Tab trip --
 // and the five minutes he has to sell, buy and come back to it. Ours: 0.75 has nothing like it.
+// Opened only from a dungeon of floors, the Dungeon and the Lost Tower (game::MapRow floors).
 //
 // The Application's and not a mode's, because a Tab trip shuts this world's mode and raises the
 // next one, and the way back has to come along. On the way to the character screen or out of

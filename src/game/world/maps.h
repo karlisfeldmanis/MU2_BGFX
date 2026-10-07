@@ -31,6 +31,11 @@ struct MapRow {
     // An event map: a save never resumes inside it. He is written standing in `home`'s town, as
     // WebZen logs a player on a Blood Castle map in at Devias (user.cpp:3147-3150).
     bool event = false;
+    // A dungeon of floors -- the Dungeon's three, the Lost Tower's seven -- and the only maps
+    // Go Back! opens from (app/context.h). Left by magic from any other map, the field of a
+    // town's map, Atlans or Tarkan among them, there is no way back (the user, 2026-10-07: 'go
+    // back! only works for dungeons with floors').
+    bool floors = false;
 };
 
 // The row for `world`, or nullptr for one not in the table.

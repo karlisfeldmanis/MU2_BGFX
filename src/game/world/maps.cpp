@@ -22,10 +22,10 @@ constexpr MapRow kMaps[] = {
     {"devias", 2, {207, 42}},
     // The Dungeon has no spawn gate (Gates.cs:119-125, none marked), so it opens where Lorencia's
     // stair lets out: the middle of exit gate 2, 107,247 to 110,247, on the first floor.
-    {"dungeon", 1, {108, 247}, true},
+    {"dungeon", 1, {108, 247}, true, 0, false, true},
     // The Lost Tower's spawn gate 42, 203,70 to 213,81: the safe hall on its first floor
     // (Gates.cs:138, docs/lost-tower-port.md), where a death and the Town Portal land too.
-    {"losttower", 4, {208, 75}, true},
+    {"losttower", 4, {208, 75}, true, 0, false, true},
     // Atlans, MU's map 7: its spawn gate 49, 15,11 to 27,23, the safe basin in the north-west
     // corner (OpenMU Version075 Gates.cs:148; docs/atlans-port.md), where a death and the Town
     // Portal land too. The sea floor, open water over it; MU draws it on its black clear with

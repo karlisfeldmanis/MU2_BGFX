@@ -80,9 +80,11 @@ void PlayMode::readSave(Context& ctx) {
             args.shield.clear();
             // A way back he quit with is his again, with the seconds it had (the user,
             // 2026-10-03: "after restart there is option to Go Back!"). One already in hand is
-            // this session's own, carried across a map change, and the newer.
+            // this session's own, carried across a map change, and the newer. One saved before
+            // Go Back! was kept to the dungeons of floors is let go.
+            const game::MapRow* backTo = game::mapOf(saved_.goBackWorld);
             if (ctx.goBack.world.empty() && !saved_.goBackWorld.empty() &&
-                saved_.goBackLeft > 0.0 && game::mapOf(saved_.goBackWorld) != nullptr) {
+                saved_.goBackLeft > 0.0 && backTo != nullptr && backTo->floors) {
                 ctx.goBack.arm(saved_.goBackWorld, saved_.goBackColumn, saved_.goBackRow,
                                saved_.goBackFacing);
                 ctx.goBack.left = std::min(saved_.goBackLeft, GoBack::kSeconds);
@@ -790,11 +792,13 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     }
 
     // Go Back!'s way back is opened by a Town Portal Scroll read in the field -- a scroll is
-    // refused in a safe zone -- before the Dungeon's below takes him to another map.
+    // refused in a safe zone -- before the Dungeon's below takes him to another map. Only from a
+    // dungeon of floors (MapRow floors): read anywhere else, the scroll is a way home and no more.
     if (world_.played().isOpen()) {
         int column = 0, row = 0;
         float facing = 0.0f;
-        if (world_.played().takePortalFrom(&column, &row, &facing)) {
+        const game::MapRow* here = game::mapOf(args.world);
+        if (world_.played().takePortalFrom(&column, &row, &facing) && here && here->floors) {
             ctx.goBack.arm(args.world, column, row, facing);
             core::logf("go back: open for %.0f s, to %s %d,%d", GoBack::kSeconds,
                        args.world.c_str(), column, row);
@@ -834,13 +838,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const sim::TravelRow* to = row >= 0 ? &sim::travelAt(row) : nullptr;
         const game::MapRow* map = to ? game::mapNumbered(int(to->map)) : nullptr;
         if (map != nullptr) {
-            // Left from the field, the way back opens; left from a town, one already open is
-            // given up -- he chose to go elsewhere. Either way he goes by magic and is heard
-            // landing (the user, 2026-10-01: 'we need also teleport sound effect when we use TAB
-            // teleport').
+            // Left from the field of a dungeon of floors, the way back opens; left from anywhere
+            // else -- a town, or the field of Lorencia, Devias, Noria, Atlans or Tarkan -- one
+            // already open is given up: he chose to go elsewhere. Either way he goes by magic and
+            // is heard landing (the user, 2026-10-01: 'we need also teleport sound effect when we
+            // use TAB teleport').
             const sim::Body& hero = world_.played().realm().hero();
             const content::Tables* tables = world_.played().realm().tables();
-            if (tables && !tables->grid.safe(hero.column(), hero.row())) {
+            const game::MapRow* here = game::mapOf(args.world);
+            if (here && here->floors && tables && !tables->grid.safe(hero.column(), hero.row())) {
                 ctx.goBack.arm(args.world, hero.column(), hero.row(), hero.facing);
                 core::logf("go back: open for %.0f s, to %s %d,%d", GoBack::kSeconds,
                            args.world.c_str(), hero.column(), hero.row());
