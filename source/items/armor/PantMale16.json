@@ -35,7 +35,7 @@
   },
   "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: violet lacquered plate whose .OZT alpha cuts its engraving away (a fifth of each sheet).",
   "sheet_note": "Not a cutout: MuMain draws the piece RENDER_CHROME on Chrome02 first and its sheet over it (ZzzObject.cpp:6956-6959), so the cut texels show chrome, not holes. Drawn opaque here, their near-black RGB left in, and game/shine.h's kShineCrow lays the chrome on them (shaders/shine.sh shineCrowAdded).",
-  "material_note": "painted_steel with the cast grain, as Black Dragon's (ArmorMale17): lacquered plate, MU's paint the look.",
+  "material_note": "painted_steel with the cast grain, as Black Dragon's (ArmorMale17): lacquered plate, MU's paint the look. The islands came out plate_steel, the pipeline's default, and in the studio (2026-10-07) the violet turned polished silver with white blowouts from behind and at dusk; set to painted_steel by hand, as Black Dragon's were.",
   "material_overrides": {
     "painted_steel": {
       "grain": {
@@ -51,7 +51,7 @@
   "islands": [
     {
       "island": 0,
-      "material": "plate_steel",
+      "material": "painted_steel",
       "triangles": 94,
       "area": 8261.3,
       "along": [
