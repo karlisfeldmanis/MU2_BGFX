@@ -124,6 +124,14 @@ VOICES = {
     # echo, at her own pitch. She reads only the hand-ins she takes back (row.receiverVoice).
     "lirien": dict(ref="lirien_heart_tide.wav", exaggeration=0.4, cfg_weight=0.3,
                    polish="aecho=0.8:0.5:70|140:0.18|0.1," + POLISH),
+    # The Keeper of Kantur in Tarkan (docs/tarkan-quest.md): a real old man, not a young voice
+    # aged. Five Kokoro voices pitched down and trembled were tried first; the user asked for
+    # "actual old man voice", and picked G of six elderly men from Mozilla Common Voice (CC0),
+    # OpenSound/CommonVoice_elderly shard 0, rows 141, 142 and 144, a man in his eighties,
+    # joined and levelled as source/voice/ref/keeper_cv_eighties.wav (2026-10-06: 'lets use G').
+    # His own age is the finish: no pitch, no tremble, a faint stone hall.
+    "keeper": dict(ref="keeper_cv_eighties.wav", exaggeration=0.45, cfg_weight=0.3,
+                   polish="highpass=f=70,aecho=0.8:0.5:90|180:0.12|0.06," + POLISH),
 }
 
 # Takes read again on another seed, heard wrong by whisper on the voice's own: Sevina's trial's

@@ -1,8 +1,13 @@
 # Tarkan's quests: The Road of Kantur and Kantur's Legion
 
-Draft, 2026-10-06 (the user: 'we need a lore for atlans quest give and min lvl requirment to go
-to tarkan and meet next quest giver'). Nothing built. The shape is Atlans's (docs/lirien-quest.md):
-a hook with no kills, handed in to the next world's giver, then that giver's map clear.
+Written 2026-10-06 (the user: 'we need a lore for atlans quest give and min lvl requirment to go
+to tarkan and meet next quest giver'), **built the same day** ('lets implement it together with
+kill quests and rewards'): quests 20 and 21 in `src/sim/quests.cpp` (`roadOfKantur`,
+`kantursLegion`), the Keeper as NPC 701 (`sim::kKeeperNumber`) at 197,68, Tarkan's travel row
+opened by meeting him or by the Road handed in (`realm_travel.cpp`), voiced as `lirien_2`,
+`keeper` and `keeper_1`, and `testRoadOfKantur` in sim_test. The shape is Atlans's
+(docs/lirien-quest.md): a hook with no kills, handed in to the next world's giver, then that
+giver's map clear.
 
 ## What the lore stands on
 
@@ -41,15 +46,15 @@ Offer (Lirien's voice, `lirien_2`):
 > trench stands open."
 >
 > "Kantur left a keeper at the far end, to watch the road and their gate in the sand. If any of
-> them still lives, he is where the road comes up. Find him. Tell him Atlans is quiet again."
+> them still lives, he is where the road comes up. Find him. Tell him that Atlans is quiet again."
 
 Underway:
 > "The door is in the south-west, past the Hydra's trench. The keeper waits where the road
 > comes up."
 
 Hand-in (the Keeper's voice):
-> "Someone came up the sea road? Then the Hydra is dead, and the envoy still sings. Kantur
-> waited a long time to hear that."
+> "The Hydra is dead? And the road is open again... Kantur waited a long time to hear
+> that."
 
 Resting: "Sit, traveller. The road is long and the sand is longer."
 
@@ -76,6 +81,11 @@ Marlon's ladder, the two bosses last. Populations from Tarkan's cooked nests.
 Atlans's top at the Hydra).
 
 Offer:
+> "I did not think I would see a living face here again. Three hundred years I have watched
+> that road, and nothing came up it but sand."
+>
+> "So, Lirien still sings, and she sent you. Then hear what waits at this end of the road."
+>
 > "Kantur built a legion to keep this desert: wheels of iron, and giants in black and gold.
 > When the city drowned, the legion kept its last order. Let no one reach the gate."
 >
@@ -97,16 +107,25 @@ Hand-in:
 
 Resting: "Rest. By morning the wheels will turn again."
 
-**Rewards, proposed.** Every clear: 150,000 experience, 250,000 Zen, **1 Jewel of Life**.
-MU brought the Jewel of Life with Tarkan in the 0.84 patch, and ours never drops
-(`Jewel03`, `drops_from_monsters: false`), so a quest is its natural home. First clear:
-+600,000 experience, and a first-clear item per class, to be chosen (a second-class piece or a
-rune, as Lirien's paid weapons and runes).
+**Rewards, as built** (the user, 2026-10-06: 'lets give 2nd class rewrads and some legendary runes
+for each class', then 'jewels also, and feather'). Every clear: 150,000 experience, 250,000 Zen, a
+**Jewel of Life** (MU brought it with Tarkan in 0.84; ours never drops), 2 Jewels of Bless, 2 Jewels
+of Soul and a **Loch's Feather**, with the 3 Firecrackers every quest pays. The first clear,
+600,000 experience in place of 150,000, and each class's own, all of which ask its second class:
+
+| class | gear (two sockets) | Legendary runes |
+|---|---|---|
+| knight | Dark Phoenix Armor (`ArmorMale18`) | Whirlwind, Greater Ascendance |
+| wizard | Dragon Soul Staff (`Staff10`) | Pyroblaster, Greater Ascendance |
+| elf | Great Reign Crossbow (`CrossBow20`) | Piercing Volley, Greater Ascendance |
+
+The three pieces are drop level 100, which no Tarkan or Blood Castle 6 breed reaches: the quest is
+their only home outside Atlans's 1-in-400 gear roll. The runes are the second class's Legendaries
+no quest paid before. Eleven things paid and the Firecrackers make twelve, `kQuestPaid`.
 
 ## Decisions open
 
-1. **The gate level** (Atlans gate 53, the Tab row, the Road's `minLevel`; all three one number).
-   Built today at **100**. That's the Atlans rule, just over the breeds' 72-93, as Atlans's 70
-   sits over its 43-74. MU asks 130 (140 at launch); our doubled-gate rule would make it 260.
-2. **The Keeper's name** and the figure (NpcSenatus, or another).
-3. **The first-clear items.**
+1. **The gate level** (Atlans gate 53, the Tab row and both quests' `minLevel`; all one number):
+   **100** as built, the Atlans rule, just over the breeds' 72-93. MU asks 130 (140 at launch).
+2. **The Keeper's name.** "Keeper Aurel" in the folk row; the quests call him "the Keeper".
+3. **The Senior's scale.** MU stands him at 1.1; townsfolk here have no scale, so he is drawn at 1.0.

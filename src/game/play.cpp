@@ -2567,6 +2567,14 @@ void Play::speak(const sim::Happening& happening) {
             "Peia's song still reaches me through the lake, faint. I listen for it every night.",
             "Mind the Valkyries beyond the basin. They were mine, once.",
         };
+        // The Keeper of Kantur, in Tarkan's hall, with nothing to offer: before Lirien's road
+        // is handed in or below its level, and while his legion rests (docs/tarkan-quest.md; ours,
+        // 2026-10-06, in place of Devin's lines, which sent the hero back to Lorencia).
+        static const char* const kKeeper[] = {
+            "Three hundred years I have watched that road. A little longer will not hurt me.",
+            "The sand remembers Kantur. So do I, though little else does.",
+            "Mind the wheels beyond the hall. They do not stop for anyone.",
+        };
         static const char* const kTersiaNotYet[] = {
             "Guild business. I have no contract for you. Not while the storms still hold Devias.",
             "Who sent you? Nobody? Then go back down the road while you still can.",
@@ -2578,6 +2586,7 @@ void Play::speak(const sim::Happening& happening) {
                                    : number == sim::kTersia    ? kTersiaNotYet
                                    : number == sim::kCharon    ? kCharon
                                    : number == sim::kLirienNumber ? kLirien
+                                   : number == sim::kKeeperNumber ? kKeeper
                                    : sim::questOf(number) >= 0 ? kDevinNotYet
                                                                : kGuildMaster;
         one.line = lines[realm_.tick() % 3];

@@ -1126,14 +1126,15 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             cy += 24.0f;
             for (const Cell& one : cells_) {
                 // The run's own weapon: the staff, the sword or the crossbow. Not yet carried,
-                // it is named for what it is, in its own purple, not as a want (the user,
-                // 2026-10-05: 'show QUest item not "not in your bag"').
+                // it is named for what it is, not as a want (the user, 2026-10-05: 'show QUest
+                // item not "not in your bag"'); "Quest item" under it in grey, as Sevina's
+                // treasures show it (the user, 2026-10-06: 'quest item has to be in gray how its
+                // for 2nd class quest'), where it stood in the name's purple.
                 needRow(one,
                         one.item >= 0 && size_t(one.item) < tables.items.size()
                             ? tables.items[size_t(one.item)].label
                             : std::string("Divine Staff of Archangel"),
-                        staffHeld_, staffHeld_ ? bagWords(true) : std::string("Quest item"),
-                        staffHeld_ ? 0u : (one.ink ? one.ink : kItemWhite));
+                        staffHeld_, bagWords(true), 0u, true);
             }
         }
     } else if (gate) {

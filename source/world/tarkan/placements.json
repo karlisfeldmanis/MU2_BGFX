@@ -1,0 +1,36 @@
+{
+  "world": "tarkan",
+  "summary": "What the extraction cannot know, for Tarkan: its townspeople in the safe hall. MU's client stands nobody here (docs/tarkan-port.md §1.2); the repack stands Thompson, Baz and Amy (WZD MonsterSetBase.txt:36-38), of whom Baz and Amy stand here as in Atlans, and the Keeper of Kantur is ours (docs/tarkan-quest.md). The game stands them from tools/cook.py's FOLK_VERSION075[8]; these rows are what puts their figures in Tarkan's figure cook.",
+  "spawns": [
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [
+        197,
+        58
+      ],
+      "facing": 3,
+      "ours": "the repack's (WZD MonsterSetBase.txt:37, 240 at 197,58), not MU's client's, which stands nobody in Tarkan; beside the hall's statue, facing the camera. The user, 2026-10-06: 'add missing npc in tarkan'"
+    },
+    {
+      "model": "PotionGirlAmy",
+      "who": "Potion Girl Amy",
+      "tile": [
+        205,
+        62
+      ],
+      "facing": 3,
+      "ours": "the repack's (WZD MonsterSetBase.txt:38, 253 at 205,62): without her the nearest potions are in Atlans. Facing the camera"
+    },
+    {
+      "model": "NpcSenatus",
+      "who": "Keeper Aurel",
+      "tile": [
+        197,
+        68
+      ],
+      "facing": 3,
+      "note": "MU's Senior, the user's pick for the Keeper (2026-10-06: 'lets use sonatus as keeper in Tarkan'). Three rows past the arrival tile (195,65) on the far side from the statue block (193-196, 58-61), facing 3 as Lirien and Tersia do: the camera looks south, so this is toward it, his face to whoever comes up the road from Atlans. First stood at 195,62 facing 7, before the statue (seen 2026-10-06: half hidden by it at the screen's edge, his back turned)."
+    }
+  ]
+}

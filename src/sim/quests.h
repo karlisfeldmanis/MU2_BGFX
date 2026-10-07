@@ -25,7 +25,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 20;
+inline constexpr int kQuests = 22;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 12;
@@ -205,6 +205,14 @@ inline constexpr int kDrownedSong = 18;
 inline constexpr int32_t kLirienNumber = 700;
 // Lirien's own: Atlans cleared, the Hydra last, offered once 'The Drowned Song' is handed in.
 inline constexpr int kDrownedHalls = 19;
+// Lirien's second, the hook to Tarkan: 'The Road of Kantur', handed in to the Keeper there
+// (docs/tarkan-quest.md).
+inline constexpr int kRoadOfKantur = 20;
+// The Keeper of Kantur, in Tarkan's safe hall: our own NPC number, as Lirien's (tools/cook.py's
+// Tarkan folk, source/npc/NpcSenatus.json, MU's Senior).
+inline constexpr int32_t kKeeperNumber = 701;
+// The Keeper's own: Tarkan cleared, the Zaikan and the Death Beam Knight last.
+inline constexpr int kKantursLegion = 21;
 void enableQuestDemo();
 // The quest a giver hands out, by NPC number, or -1. One a giver.
 int questOf(int32_t giver);

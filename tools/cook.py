@@ -2160,6 +2160,18 @@ FOLK_VERSION075 = {
         # where the user stood and said 'put her here' (2026-10-05). 700 is ours, no MU NPC's.
         (700, "Lirien", "ElfEnvoy", 25, 24, 3),
     ],
+    8: [  # Tarkan: MU's client stands nobody here (docs/tarkan-port.md §1.2).
+        # The repack's Baz and Amy (WZD MonsterSetBase.txt:37-38), as Atlans has them, at its
+        # tiles in the safe hall, facing the camera (the user, 2026-10-06: 'add missing npc in
+        # tarkan'). Its Thompson (231 at 191,74) is left out, as he was taken off Devias.
+        (240, "Baz The Vault Keeper", "Storage01", 197, 58, 3),
+        (253, "Potion Girl Amy", "PotionGirlAmy", 205, 62, 3),
+        # Ours: the Keeper of Kantur (source/npc/NpcSenatus.json, MU's Senior), whom Lirien's
+        # 'The Road of Kantur' sends the hero to meet (docs/tarkan-quest.md; the user, 2026-10-06:
+        # 'lets use sonatus as keeper in Tarkan'). Past the arrival tile, facing the camera as
+        # Lirien does; source/world/tarkan/placements.json says why. 701 is ours, no MU NPC's.
+        (701, "Keeper Aurel", "NpcSenatus", 197, 68, 3),
+    ],
     11: [  # Blood Castle 1: OpenMU VersionSeasonSix BloodCastleBase.cs:51, the safe court.
         # The Archangel (232), to whom the Divine Staff of Archangel is carried back from the
         # statue -- the run's hand-in (the user, 2026-10-03; docs/blood-castle-port.md §5).

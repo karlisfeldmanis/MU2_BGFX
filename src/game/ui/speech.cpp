@@ -163,6 +163,12 @@ void Speech::update(const Play& play, const float* viewProj, int width, int heig
         // Only over a speaker on the screen: one off it -- Lumen at her bar while the hero is at
         // the gate -- has no bubble at all, rather than one pulled in from the edge far from him.
         if (!placed || x < 0.0f || x > float(width) || y < 0.0f || y > float(height)) continue;
+        // On whole pixels, the box and the words together. The crown follows the speaker's head
+        // through his idle, a fraction of a pixel a frame; the box went with it smoothly while the
+        // words, set on whole pixels, jumped a pixel at a time, and swam inside it (the user,
+        // 2026-10-06: 'speech buble text is moving when buble is active').
+        x = std::round(x);
+        y = std::round(y);
         const float scale = popped(said.age);
         if (scale <= 0.02f) continue;
         // Scaled about the tail's point, which stays on the speaker: the bubble grows out of him.
@@ -193,8 +199,9 @@ void Speech::update(const Play& play, const float* viewProj, int width, int heig
         bubble.draw(canvas_, 0.0f, kPaper);
 
         // The words, centred, in ink and with no shadow: they are on paper, not on the world.
-        // Not until it is most of the way up -- type grown from a point is a smear.
-        if (scale < 0.7f) continue;
+        // Only at their whole size, once the bubble has settled: drawn through the pop, past its
+        // overshoot and back, they grew and shrank in place.
+        if (scale != 1.0f) continue;
         const gfx::Face* face = controls::labelFace();
         const float ascent = face ? face->ascent(drawn) : drawn * 0.8f;
         float baseline = bubble.box.y + kPadY * k + ascent;

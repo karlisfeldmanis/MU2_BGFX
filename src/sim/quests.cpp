@@ -1131,13 +1131,157 @@ QuestRow lirienHalls() {
     return row;
 }
 
+// The Road of Kantur, the hook to Tarkan: Lirien's second, once her halls have been cleared,
+// handed in to the Keeper of Kantur in Tarkan's safe hall (docs/tarkan-quest.md; the user,
+// 2026-10-06: 'we need a lore for atlans quest give and min lvl requirment to go to tarkan and
+// meet next quest giver', then 'lets implement it'). As The Drowned Song: no hunt, the errand is
+// the meeting. Ours, on MU's own facts: Kantur built Atlans, WebZen calls Tarkan's golden Tantalos
+// and Wheels Kantur's underground legion, and the Atlans door to Tarkan (gate 53) stands by the
+// Hydra's lagoon. The level is the door's (sim/gates.cpp).
+QuestRow roadOfKantur() {
+    QuestRow row;
+    row.giver = kLirienNumber;
+    row.giverName = "Lirien";
+    row.place = "Atlans";
+    row.receiver = kKeeperNumber;
+    row.receiverName = "the Keeper";
+    row.receiverPlace = "Tarkan";
+    row.title = "The Road of Kantur";
+    row.offer[0] =
+        "\"Not all of Kantur's people waited for the sea. Their king's engineers cut a road under "
+        "the lagoon, south, to the desert they called Tarkan.\"";
+    row.offer[1] =
+        "\"The Hydra nested over that road for three hundred years. It is down now, and the door "
+        "by its trench stands open.\"";
+    row.offer[2] =
+        "\"Kantur left a keeper at the far end, to watch the road and their gate in the sand. If "
+        "any of them still lives, he is where the road comes up. Find him. Tell him that Atlans is "
+        "quiet again.\"";
+    row.underway =
+        "\"The door is in the south-west, past the Hydra's trench. The keeper waits where the road "
+        "comes up.\"";
+    // The Keeper's, at his post past the arrival; what Kantur's legion became is his own quest's
+    // offer, which opens as this closes (kantursLegion).
+    row.handIn[0] =
+        "\"The Hydra is dead? And the road is open again... Kantur waited a long time to hear "
+        "that.\"";
+    row.resting = "\"Sit, traveller. The road is long and the sand is longer.\"";
+    // Lirien's voice on her offer (tools/voice.py, VOICES["lirien"] by the stem), the Keeper's
+    // own on the hand-in (VOICES["keeper"], an old man out of Common Voice).
+    row.voice = "lirien_2";
+    row.receiverVoice = "keeper";
+    row.steps[0] = {QuestStepKind::Return, 0, 1, "Find the Keeper in Tarkan"};
+    row.stepCount = 1;
+    row.repeatSeconds = 0;  // once
+    row.minLevel = 100;     // the Atlans door to Tarkan's
+    row.afterAny = 1u << kDrownedHalls;
+    row.natives = 0x7;
+    row.strangers = true;
+    row.experience = 100000;
+    row.zen = 60000;
+    return row;
+}
+
+// Tarkan's own clear, the Keeper's: Kantur's legion, the Iron Wheels and the Tantalos, with
+// what Kundun brought to it. Offered once The Road of Kantur is handed in. Ours, as Lirien's:
+// every breed of the map weakest first on Marlon's ladder (40, 35, 30, 30, 25), then the two
+// bosses, one each -- 162 kills, fewer than Atlans's 184 because each is harder.
+//
+// The pay (the user, 2026-10-06: 'lets give 2nd class rewrads and some legendary runes for each
+// class', then 'jewels also, and feather'): every clear the three refining jewels -- a Jewel of
+// Life, which MU brought with Tarkan in 0.84 and no monster here drops -- and a Loch's Feather,
+// the second wings' (Atlans and the Lost Tower drop it too, sim::kFeatherOdds). The first clear
+// each class's piece of its second's gear that falls nowhere (no Tarkan or Blood Castle 6 breed
+// reaches drop level 100: the Dark Phoenix Armor, the Dragon Soul Staff, the Great Reign
+// Crossbow), with two sockets, and the Legendary runes of its second no quest paid before:
+// the Blade Knight's Whirlwind, the Soul Master's Pyroblaster, the Muse Elf's Piercing Volley,
+// and every class's Greater Ascendance. All of them ask the second class to wear or set: the
+// prize for the class change still ahead.
+QuestRow kantursLegion() {
+    QuestRow row;
+    row.giver = kKeeperNumber;
+    row.giverName = "the Keeper";
+    row.place = "Tarkan";
+    row.title = "Kantur's Legion";
+    row.offer[0] =
+        "\"I did not think I would see a living face here again. Three hundred years I have "
+        "watched that road, and nothing came up it but sand.\"";
+    row.offer[1] =
+        "\"So, Lirien still sings, and she sent you. Then hear what waits at this end of the "
+        "road.\"";
+    row.offer[2] =
+        "\"Kantur built a legion to keep this desert: wheels of iron, and giants in black and "
+        "gold. When the city drowned, the legion kept its last order. Let no one reach the "
+        "gate.\"";
+    row.offer[3] =
+        "\"Then Kundun gave it a new master. The Mutants and the Bloody Wolves came with him out "
+        "of the sand. The Beam Knights came on wings.\"";
+    row.offer[4] =
+        "\"The legion's own captain leads them now, the Zaikan, shining with what Kundun poured "
+        "into him. And past the dunes the Death Beam Knight burns, and never burns out. Break the "
+        "legion from the town outward. Then the captain. Then the burning knight.\"";
+    row.underway = "\"The legion still marches. I can hear the wheels.\"";
+    row.handIn[0] =
+        "\"The dunes are quiet. I had forgotten what wind sounds like with nothing in it.\"";
+    row.handIn[1] =
+        "\"Take these, with Kantur's thanks, what is left of it. The legion mends itself. When it "
+        "marches again, come back.\"";
+    row.resting = "\"Rest. By morning the wheels will turn again.\"";
+    // His own voice (VOICES["keeper"] by the stem), read off docs/tarkan-quest.md's six
+    // paragraphs; the window's fifth holds the last two.
+    row.voice = "keeper_1";
+    row.steps[0] = {QuestStepKind::Clear, 62, 40, "Mutants"};            // level 72
+    row.steps[1] = {QuestStepKind::Clear, 60, 35, "Bloody Wolves"};      // 76
+    row.steps[2] = {QuestStepKind::Clear, 57, 30, "Iron Wheels"};        // 80
+    row.steps[3] = {QuestStepKind::Clear, 58, 30, "Tantalos"};           // 83
+    row.steps[4] = {QuestStepKind::Clear, 61, 25, "Beam Knights"};       // 84
+    row.steps[5] = {QuestStepKind::Clear, 59, 1, "Zaikan"};              // 90, the captain
+    row.steps[6] = {QuestStepKind::Clear, 63, 1, "Death Beam Knight"};   // 93, the burning knight
+    row.steps[7] = {QuestStepKind::Return, 0, 1, "Return to the Keeper"};
+    row.stepCount = 8;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.minLevel = 100;
+    row.afterAny = 1u << kRoadOfKantur;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // Every class's, as Lirien's: no class is born in Tarkan.
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    row.experience = 150000;
+    row.firstExperience = 600000;
+    row.zen = 250000;
+    int n = 0;
+    row.paid[n++] = {.item = "ArmorMale18", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Dark Phoenix Armor
+    row.paid[n++] = {.item = "Staff10", .kin = wizard, .sockets = 2,
+                     .firstOnly = true};  // Dragon Soul Staff
+    row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 2,
+                     .firstOnly = true};  // Great Reign Crossbow
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Whirlwind),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Pyroblast),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Volley),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterAscendance),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel03"};              // a Jewel of Life
+    row.paid[n++] = {.item = "Jewel01", .count = 2};  // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
+    row.paid[n++] = {.item = "Quest04"};              // Loch's Feather
+    row.paidCount = n;
+    return row;
+}
+
 const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),        catacombs(),
                                   halls(),       pit(),         tersiaDoor(),   tersiaSecond(),
                                   tersiaThird(),  tersiaFourth(), tersiaFifth(),  tersiaSixth(),
                                   tersiaBalrog(), sevinaTrial(), brokenSword(),  soulOfWizard(),
                                   tearOfElf(),
                                   demoQuest("Whispers in the Roots (demo)", 0),
-                                  drownedSong(), lirienHalls()};
+                                  drownedSong(), lirienHalls(), roadOfKantur(),
+                                  kantursLegion()};
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every
 // class (the user, 2026-10-04: 'give fireccracker on all quests', then 'give 3 firecrackers in

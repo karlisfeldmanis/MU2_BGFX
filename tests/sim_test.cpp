@@ -10055,6 +10055,141 @@ void testDrownedSong() {
     checkEqual(kills, 184, "184 kills, on Marlon's ladder with the Hydra's four");
 }
 
+// Lirien's second and the Keeper's own (docs/tarkan-quest.md; the user, 2026-10-06): the road to
+// Tarkan from level 100 once her halls are cleared, handed in to the Keeper, which opens Tarkan's
+// travel row and his clear of the map; its first clear pays each class its second's gear and
+// Legendary runes, every clear the jewels and a Loch's Feather.
+void testRoadOfKantur() {
+    std::printf("the road of kantur\n");
+    const auto load = [](const char* world, content::Tables& out) {
+        std::string error;
+        return content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world +
+                                       ".mur",
+                                   out, error);
+    };
+    content::Tables atlans, tarkan;
+    check(load("atlans", atlans) && load("tarkan", tarkan), "Atlans's and Tarkan's tables load");
+    const auto folkOf = [](const content::Tables& tables, int32_t number) {
+        for (size_t i = 0; i < tables.folk.size(); ++i) {
+            if (tables.folk[i].number == number) return int(i);
+        }
+        return -1;
+    };
+    const int lirien = folkOf(atlans, sim::kLirienNumber), keeper = folkOf(tarkan, sim::kKeeperNumber);
+    check(lirien >= 0 && keeper >= 0, "Lirien stands in Atlans and the Keeper in Tarkan");
+    if (lirien < 0 || keeper < 0) return;
+    const sim::QuestRow& road = sim::questAt(sim::kRoadOfKantur);
+    check(road.giver == sim::kLirienNumber && sim::questReceiver(road) == sim::kKeeperNumber,
+          "Lirien gives the road and the Keeper takes it back");
+    check(sim::questOf(sim::kKeeperNumber) == sim::kKantursLegion, "the Keeper gives his own");
+    const auto talkTo = [](sim::Realm& realm, int folk) {
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(folk);
+        realm.ask(talk);
+        bool offered = false;
+        for (int tick = 0; tick < 400 && !offered; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) offered |= one.what == sim::What::Offered;
+        }
+        return offered;
+    };
+    const content::Townsperson& l = atlans.folk[size_t(lirien)];
+    sim::Realm young;
+    check(young.raise(&atlans, 11, l.x - 2, l.y, sim::Kin::DarkKnight, 100), "a knight of 100 by Lirien");
+    check(young.questLocked(sim::kRoadOfKantur), "the road waits on her halls");
+    // Her two handed in, as a save carries them.
+    const auto halls = [](sim::HeroRecord record) {
+        for (int q : {sim::kDrownedSong, sim::kDrownedHalls}) {
+            record.quests[q].completions = 1;
+            record.quests[q].state = sim::QuestState::Resting;
+        }
+        return record;
+    };
+    const sim::HeroRecord cleared = halls(young.record());
+    sim::Realm low;
+    check(low.raise(&atlans, 11, l.x - 2, l.y, sim::Kin::DarkKnight, 99), "and one of 99");
+    low.restore(halls(low.record()));
+    check(low.questUnderLevel(sim::kRoadOfKantur), "below 100 it waits on the door's level");
+    sim::Realm sea;
+    check(sea.raise(&atlans, 11, l.x - 2, l.y, sim::Kin::DarkKnight, 100), "at 100");
+    sea.restore(cleared);
+    check(sea.questOffered(sim::kRoadOfKantur), "the halls cleared, Lirien offers the road");
+    check(talkTo(sea, lirien), "her window opens");
+    check(sea.acceptQuest(sim::kRoadOfKantur), "and it is taken");
+
+    const content::Townsperson& k = tarkan.folk[size_t(keeper)];
+    sim::Realm sand;
+    check(sand.raise(&tarkan, 11, k.x - 2, k.y, sim::Kin::DarkKnight, 100), "the knight in Tarkan's hall");
+    sand.restore(sea.record());
+    int tarkanRow = -1;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (sim::travelAt(i).map == int32_t(sim::kTarkanMap)) tarkanRow = i;
+    }
+    check(tarkanRow >= 0, "Tarkan has a travel row");
+    checkEqual(int(sand.travelRefusal(tarkanRow)), int(sim::TravelRefusal::Unknown),
+               "with a giver there, standing in Tarkan does not open it");
+    check(talkTo(sand, keeper), "found, the Keeper's window opens");
+    check(sand.travelRefusal(tarkanRow) != sim::TravelRefusal::Unknown,
+          "and meeting him opens Tarkan on the travel list");
+    checkEqual(sand.questHere(sim::kKeeperNumber), sim::kRoadOfKantur, "the road his to take back");
+    const int64_t zen = sand.money();
+    check(sand.completeQuest(sim::kRoadOfKantur, -1), "handed in to the Keeper");
+    check(sand.money() == zen + road.zen, "and paid");
+    sand.closeQuest();
+    check(sand.questOffered(sim::kKantursLegion), "then he offers Kantur's Legion");
+
+    const sim::QuestRow& legion = sim::questAt(sim::kKantursLegion);
+    int breeds = 0, kills = 0;
+    for (int s = 0; s < legion.stepCount; ++s) {
+        if (legion.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        ++breeds;
+        kills += sand.questGoal(sim::kKantursLegion, s);
+        bool here = false;
+        for (const content::MonsterNest& nest : tarkan.nests) {
+            here = here || (nest.kind < tarkan.kinds.size() &&
+                            tarkan.kinds[nest.kind].number == legion.steps[s].target);
+        }
+        check(here, "every breed it asks spawns in Tarkan");
+    }
+    checkEqual(breeds, 7, "all seven of Tarkan's breeds, the two bosses among them");
+    checkEqual(kills, 162, "162 kills, on Marlon's ladder with a boss of each");
+    for (int i = 0; i < legion.paidCount; ++i) {
+        check(tarkan.itemNamed(legion.paid[i].item) >= 0, "everything it pays is an item here");
+        if (legion.paid[i].power == 0) continue;
+        const sim::PowerRow* rune = sim::powerOf(legion.paid[i].power);
+        check(rune && rune->rarity == sim::Rarity::Legendary, "and every rune it pays is Legendary");
+    }
+
+    check(talkTo(sand, keeper), "his window opens on it");
+    check(sand.acceptQuest(sim::kKantursLegion), "taken");
+    sim::HeroRecord done = sand.record();
+    for (int s = 0; s < legion.stepCount; ++s) {
+        done.quests[sim::kKantursLegion].counts[s] = uint16_t(legion.steps[s].count);
+    }
+    done.quests[sim::kKantursLegion].state = sim::QuestState::Ready;
+    sand.restore(done);
+    const auto held = [&](const char* name, uint8_t power) {
+        const int32_t item = tarkan.itemNamed(name);
+        int count = 0;
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = sand.satchel()[slot];
+            if (!one.empty() && one.item == item && (power == 0 || one.powers[0] == power)) {
+                count += sim::stackMost(tarkan.items[size_t(item)]) > 1 ? one.durability : 1;
+            }
+        }
+        return count;
+    };
+    check(sand.completeQuest(sim::kKantursLegion, -1), "cleared and handed in");
+    check(held("ArmorMale18", 0) == 1, "the knight's first clear: the Dark Phoenix Armor");
+    check(held("Staff10", 0) == 0, "and not the Soul Master's staff");
+    check(held("Jewel22", uint8_t(sim::Power::Whirlwind)) == 1, "his Whirlwind");
+    check(held("Jewel22", uint8_t(sim::Power::GreaterAscendance)) == 1, "and Greater Ascendance");
+    check(held("Jewel22", uint8_t(sim::Power::Pyroblast)) == 0, "not the wizard's rune");
+    check(held("Jewel03", 0) == 1 && held("Quest04", 0) == 1,
+          "a Jewel of Life and a Loch's Feather every clear");
+}
+
 void testQuestFirecrackers(const content::Tables& tables) {
     std::printf("quest firecrackers\n");
     const int32_t cracker = tables.itemNamed("MagicBox03");
@@ -10449,6 +10584,7 @@ int main() {
     testSecondClassDrops();
     testQuestFirecrackers(tables);
     testDrownedSong();
+    testRoadOfKantur();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

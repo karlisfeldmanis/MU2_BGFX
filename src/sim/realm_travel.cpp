@@ -38,8 +38,9 @@ constexpr TravelRow kRows[kTravels] = {
     {"Atlans", 7, 70, 4000, 21, 17, 0, 0},
     // Tarkan, after it for the same reason. 0.95d's list has none; Season Six's "Tarkan" is 8,000
     // Zen at 140 on spawn gate 57 (Gates.cs:67). Ours: level 100 as the Atlans door asks, landing
-    // on the town at 195,65 (WZ's middle, 195,61, is a closed statue block), facing nowhere. With
-    // no giver on the map it opens the first time he stands there. docs/tarkan-port.md.
+    // on the town at 195,65 (WZ's middle, 195,61, is a closed statue block), facing nowhere. It
+    // opens when he speaks to the Keeper of Kantur there, a quest giver since 2026-10-06
+    // (docs/tarkan-quest.md), or with The Road of Kantur handed in. docs/tarkan-port.md.
     {"Tarkan", 8, 100, 8000, 195, 65, 0, 0},
 };
 
@@ -118,6 +119,8 @@ void Realm::settleFound(uint32_t saved) {
     // Atlans once he has met Lirien: speaking to her opens it (Realm::discover), and a save from
     // before her row was here has the Drowned Song handed in to show for it.
     if (quests_[kDrownedSong].completions > 0) found_ |= travelRowsOf(int32_t(kAtlansMap));
+    // And Tarkan once he has met the Keeper, the same way (The Road of Kantur).
+    if (quests_[kRoadOfKantur].completions > 0) found_ |= travelRowsOf(int32_t(kTarkanMap));
     // A map nobody gives a quest on opens as he stands in it. Silently: a raise logs the same
     // lines on every run.
     bool giver = false;

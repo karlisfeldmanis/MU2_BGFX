@@ -1,0 +1,22 @@
+# Lirien's lines for The Road of Kantur (docs/tarkan-quest.md), read through tools/voice.py
+# before the quest is in quests.cpp: its pages() swapped for the doc's text.
+import sys
+sys.path.insert(0, "/Users/karlisfeldmanis/Documents/muremaster2/MU2_BGFX/tools")
+import voice
+TEXT = {
+    "offer": [
+        "Not all of Kantur's people waited for the sea. Their king's engineers cut a road under "
+        "the lagoon, south, to the desert they called Tarkan.",
+        "The Hydra nested over that road for three hundred years. It is down now, and the door "
+        "by its trench stands open.",
+        "Kantur left a keeper at the far end, to watch the road and their gate in the sand. If any "
+        "of them still lives, he is where the road comes up. Find him. Tell him that Atlans is quiet again.",
+    ],
+    "underway": [
+        "The door is in the south-west, past the Hydra's trench. The keeper waits where the road "
+        "comes up.",
+    ],
+}
+voice.pages = lambda v: TEXT
+sys.argv = ["voice.py", "lirien_2"] + sys.argv[1:]
+sys.exit(voice.main())

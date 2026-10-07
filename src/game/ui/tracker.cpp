@@ -42,7 +42,9 @@ constexpr float kBannerIn = style::kOpenSeconds, kBannerOut = 0.4f;
 // Awake: how long a kill holds the tracker up, how slowly it then goes, and the steps not just
 // counted. The user, 2026-09-29: fade out when nothing is killed, the killed row alone at full.
 constexpr float kWakeHold = 5.0f, kWakeFade = 0.8f;
-constexpr float kDim = 0.45f;
+// 0.45 read too faint over Lorencia's grass (the user, 2026-10-07: 'show all list, but use more
+// opacity').
+constexpr float kDim = 0.7f;
 // Struck off, in seconds from the count reaching its goal: the bar has filled by kFlareAt, a
 // light runs along the row and the words turn gold and are struck through, it holds, and from
 // kFoldAt the row fades and folds away, gone at kStruckSeconds.
