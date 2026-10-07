@@ -34,11 +34,16 @@
 // then a soft, wispy cloud swelling out past five metres, puffs round its rim; then a thick soft
 // ring round him, rays going out through it, and the ring going out to the edge of the screen and
 // fading. That client plainly draws every spirit's ribbon, not one in five. Drawn here:
-//   * every one of the thirty-six a frame with its tail (kAllTailed): their wisps are the cloud;
-//   * the flash, a soft light at his chest swelling from kFlashFrom to kFlashSize over
-//     kFlashLife frames and going out, a whiter heart under it;
-//   * the ring, the cooked `shockwave` sheet laid flat at his feet, from kShockFrom to kShockTo
-//     metres across over kShockLife frames, begun with the slow ring and fading as it goes.
+//   * every one of the thirty-six a frame with its tail (kAllTailed): their wisps are the rays;
+//   * every spirit's head a soft puff (`nova_puff`, our sheet), kPuffSize across at kPuffDim
+//     with a little white, fading with its life: hundreds overlapping are the cloud, white where
+//     they crowd at its heart and puffed at its rim, as the clip's;
+//   * the slow ring's heads the same at kRingPuffSize and kRingPuffDim: its thirty-six overlap
+//     into the thick soft ring, dark inside;
+//   * the flash, a puff at his chest swelling from kFlashFrom to kFlashSize over kFlashLife
+//     frames and going out, a whiter heart under it;
+//   * the cooked `shockwave` sheet laid flat at his feet under the ring, from kShockFrom to
+//     kShockTo metres across over kShockLife frames, for its rays.
 // Ours:
 //   * the charge's lights a bone are capped at kLightsPerBone a frame, not `m_bySkillCount + 1`,
 //     and dimmed to kLightDim: MU's sixteen stacked by stage seven read as a white figure; and
@@ -118,15 +123,21 @@ private:
     static constexpr float kFadeFrames = 6.0f;         // ours
     // The burst's look off the clip (above), all ours.
     static constexpr bool kAllTailed = true;
+    static constexpr float kPuffSize = 2.4f;           // metres across
+    static constexpr float kPuffDim = 0.09f;
+    static constexpr float kPuffWhite = 0.03f;
+    static constexpr float kRingPuffSize = 3.0f;
+    static constexpr float kRingPuffDim = 0.45f;
+    static constexpr float kRingPuffWhite = 0.05f;
     static constexpr float kFlashLife = 12.0f;         // frames
-    static constexpr float kFlashFrom = 2.0f;          // metres across
-    static constexpr float kFlashSize = 9.0f;
-    static constexpr float kFlashDim = 0.5f;
+    static constexpr float kFlashFrom = 1.5f;          // metres across
+    static constexpr float kFlashSize = 8.0f;
+    static constexpr float kFlashDim = 0.9f;
     static constexpr float kFlashOver = 1.0f;          // at his chest, over his feet
     static constexpr float kShockLife = 30.0f;         // frames
     static constexpr float kShockFrom = 3.0f;          // metres across
     static constexpr float kShockTo = 12.0f;
-    static constexpr float kShockDim = 1.6f;
+    static constexpr float kShockDim = 0.7f;
     static constexpr float kShockOver = 0.15f;         // over the ground
     // The charge's lights: BITMAP_LIGHT sub-type 6.
     static constexpr float kLightLife = 2.0f;
@@ -212,6 +223,7 @@ private:
     bgfx::TextureHandle streak_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle shock_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle puff_ = BGFX_INVALID_HANDLE;
     Joint joints_[kMost];
     Glow glows_[kChargeMost];
     Glow sparks_[kSparkPool];

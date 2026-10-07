@@ -400,6 +400,10 @@ EFFECTS = {
     "firework_6": "effects/firecracker/firecracker0006.png",
     "firework_7": "effects/firecracker/firecracker0007.png",
     "shockwave": "effects/firecracker/shockwave.png",
+    # Nova's puff (game/fx/nova.h): a soft, slightly lumpy round light, white on black and drawn
+    # added, made for the burst's cloud and ring as the clip shows them (the wiki's SM-nova.gif).
+    # **Ours**: no MU sheet is a plain soft round light -- flare01 is a hard star.
+    "nova_puff": "effects/nova/puff.png",
     "explosion_mono": "effects/firecracker/explotion01mono.png",
 
     # And what the wizard's Flame burns with. See client/core/Flame.cs.

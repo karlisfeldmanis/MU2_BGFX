@@ -22,19 +22,21 @@ bool Nova::open(const std::string& assetDir, content::Textures& textures,
     const content::EffectSheet* shiny = table.effect("shiny_02");
     // The Firecracker's soft ring (pipeline/index.py), the burst's ring here.
     const content::EffectSheet* shock = table.effect("shockwave");
+    const content::EffectSheet* puff = table.effect("nova_puff");
     if (joint == nullptr || light == nullptr || streak == nullptr || shiny == nullptr ||
-        shock == nullptr) {
+        shock == nullptr || puff == nullptr) {
         core::logError("nova: no cooked effect named 'joint_spirit', 'light', 'joint_energy', "
-                       "'shiny_02' or 'shockwave'");
+                       "'shiny_02', 'shockwave' or 'nova_puff'");
         return false;
     }
     shock_ = textures.load(assetDir + "/" + shock->path, content::TextureRole::Albedo);
+    puff_ = textures.load(assetDir + "/" + puff->path, content::TextureRole::Albedo);
     joint_ = textures.load(assetDir + "/" + joint->path, content::TextureRole::Albedo);
     light_ = textures.load(assetDir + "/" + light->path, content::TextureRole::Albedo);
     streak_ = textures.load(assetDir + "/" + streak->path, content::TextureRole::Albedo);
     shiny_ = textures.load(assetDir + "/" + shiny->path, content::TextureRole::Albedo);
     return bgfx::isValid(joint_) && bgfx::isValid(light_) && bgfx::isValid(streak_) &&
-           bgfx::isValid(shiny_) && bgfx::isValid(shock_);
+           bgfx::isValid(shiny_) && bgfx::isValid(shock_) && bgfx::isValid(puff_);
 }
 
 uint32_t Nova::roll() {
@@ -391,7 +393,7 @@ void Nova::gather(gfx::Effects& effects) const {
             for (int k = 0; k < 3; ++k) {
                 sprite.colour[k] = (flash.tint[k] + whites[layer]) * light * kFlashDim;
             }
-            sprite.sheet = light_;
+            sprite.sheet = puff_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }
@@ -422,6 +424,20 @@ void Nova::gather(gfx::Effects& effects) const {
     }
     for (const Joint& joint : joints_) {
         if (!joint.alive) continue;
+        // Its head, a soft puff: the cloud, and the ring's band (ours, off the clip).
+        {
+            const float life = joint.left / kLife;
+            const float dim = joint.ring ? kRingPuffDim : kPuffDim;
+            const float white = joint.ring ? kRingPuffWhite : kPuffWhite;
+            gfx::Sprite head;
+            for (int k = 0; k < 3; ++k) head.position[k] = joint.at[k];
+            head.halfWidth = head.halfHeight = 0.5f * (joint.ring ? kRingPuffSize : kPuffSize);
+            head.spin = float(joint.dice % 360u) * kDegrees;
+            for (int k = 0; k < 3; ++k) head.colour[k] = (joint.tint[k] * dim + white) * life;
+            head.sheet = puff_;
+            head.blend = gfx::Blend::Additive;
+            effects.add(head);
+        }
         // Its shiny where it was let go, in its last ten frames, grey at (6 - |LifeTime - 6|)
         // * 0.15, turned at random: one in kShinyEvery (ours).
         if (!joint.ring && joint.left <= 10.0f && joint.dice % kShinyEvery == 0) {
