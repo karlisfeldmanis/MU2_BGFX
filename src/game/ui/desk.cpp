@@ -185,6 +185,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             case Then::Strike: if (one.ok()) hud_.strikeQuick(struck); break;
             // The dialog shuts on a yes; Play has heard a no.
             case Then::CloseQuest: if (one.ok()) play.closeQuest(); break;
+            case Then::Click: one.ok() ? click() : refused(); break;
+            case Then::CloseAngel:
+                if (one.ok()) {
+                    play.closeAngel();
+                    click();
+                } else {
+                    refused();
+                }
+                break;
             case Then::Travel:
                 if (one.ok()) {
                     travel_.hide();
@@ -338,25 +347,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             else play.closeQuest();
             click();
         } else if (result.give) {
-            const bool given = play.handInStaff();
-            core::logf("event: the Divine Staff to the Archangel -- %s", given ? "given" : "refused");
-            if (given) click();
-            else refused();
+            expect(play.handInStaff(), Then::Click);
         } else if (result.claim) {
-            const bool claimed = play.claimCastle();
-            core::logf("event: Complete on the Archangel's thanks -- %s", claimed ? "to Devias" : "refused");
-            if (claimed) {
-                play.closeAngel();
-                click();
-            } else {
-                refused();
-            }
+            expect(play.claimCastle(), Then::CloseAngel);
         } else if (result.enter) {
-            const bool went = play.enterCastle(result.castle);
-            core::logf("event: Enter on Blood Castle %d -- %s", result.castle,
-                       went ? "through the gate" : "refused");
-            if (went) click();
-            else refused();
+            expect(play.enterCastle(result.castle), Then::Click);
         } else if (result.accept) {
             expect(play.acceptQuest(quest), Then::CloseQuest);
         } else if (result.complete) {

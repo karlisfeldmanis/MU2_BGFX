@@ -70,6 +70,7 @@
 #include "game/sound.h"
 #include "gfx/renderer.h"
 #include "sim/audit.h"
+#include "game/link.h"
 #include "sim/realm.h"
 
 namespace mu::game {
@@ -219,7 +220,7 @@ public:
     // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
     // this is heard and re-dressed. See Realm::refine.
     uint32_t refine(int jewelSlot, int targetSlot);
-    // Rings a jewel the vault or the box applied (Realm::takeJeweled).
+    // Rings a jewel the vault or the box applied: its answer follows the Refined it said.
     void jewelRung();
     // A drag let go over the world: the thing is thrown on the ground at his feet, where the
     // same Pick order that takes a kill's drop takes it back. The realm's to refuse, and the
@@ -232,7 +233,7 @@ public:
     // cooling, and the plate reads that from the realm like everything else.
     void castSkill(int32_t skill, uint32_t at = 0);
     // A held charge's key let go (Realm::letGo): Nova bursts on the next tick.
-    void letGo() { realm_.letGo(); }
+    void letGo() { send({.kind = sim::Command::Kind::LetGo}); }
     // Re-dresses the hero over the realm's own idea of what his hands and his back hold, so
     // the figure never shows a weapon the bag no longer does. Called after anything that can
     // change a worn slot; a no-op where `open` was given no `bare` to dress over.
@@ -260,6 +261,10 @@ public:
     };
     uint32_t send(sim::Command command, Asked asked);
     uint32_t send(sim::Command command);
+    // The hero's orders and skills, sent with no ticket: the walk and the swing are the answer.
+    void orderHero(const sim::Request& request);
+    void castHero(int32_t skill, uint32_t at);
+    void castHeroAt(int32_t skill, int column, int row);
     void answered(const sim::Happening& said);
     std::vector<Asked> sent_;
     // The happenings a command's answer follows in the same step, as the realm said them just
@@ -268,6 +273,7 @@ public:
     const sim::Happening* lastDrank_ = nullptr;
     const sim::Happening* lastWarped_ = nullptr;
     const sim::Happening* lastCracked_ = nullptr;
+    const sim::Happening* lastRefined_ = nullptr;
     // The hero's Levelled since the last answer, and the rises owed before them: a quest's levels
     // are shown one by one, a kill's as one rise (the user, 2026-10-01).
     int levelledSince_ = 0;
@@ -306,7 +312,7 @@ public:
     // Heard as MU's SOUND_REPAIR when the realm takes the Zen.
     uint32_t repair(int slot);
     uint32_t repairAll();
-    void closeTrade() { realm_.closeTrade(); }
+    void closeTrade() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Trade)}); }
     // The vault, as the realm keeps it: each a request answered yes or no, logged and heard
     // as the bag's own moves are.
     uint32_t deposit(int bagSlot, int cell);
@@ -314,8 +320,8 @@ public:
     uint32_t rearrange(int from, int to);
     uint32_t depositZen(int64_t zen);
     uint32_t withdrawZen(int64_t zen);
-    void closeVault() { realm_.closeVault(); }
-    void restoreVault(const sim::Vault& saved) { realm_.restoreVault(saved); }
+    void closeVault() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Vault)}); }
+    void restoreVault(const sim::Vault& saved) { local_.restoreVault(saved); }
     // The Chaos Machine (sim/machine.h), as the realm keeps it: the vault's three moves, and the
     // mix, heard as MU hears its answer -- eMix with eGem for a success, with eBreak for a
     // failure (ReceiveMixExtended, ReceiveTradeInventoryExtended).
@@ -323,8 +329,8 @@ public:
     uint32_t takeOut(int cell, int bagSlot);
     uint32_t shuffle(int from, int to);
     uint32_t mix(sim::Service service, int socket);
-    void closeMachine() { realm_.closeMachine(); }
-    void restoreMachine(const sim::Machine& saved) { realm_.restoreMachine(saved); }
+    void closeMachine() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Machine)}); }
+    void restoreMachine(const sim::Machine& saved) { local_.restoreMachine(saved); }
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.
     int mixAnswer() const { return realm_.mixing() >= 0 ? mixAnswer_ : -1; }
@@ -334,7 +340,7 @@ public:
     // clock a repeating quest waits on is handed to the realm each frame (Realm::setWallClock).
     uint32_t acceptQuest(int quest);
     uint32_t completeQuest(int quest, int choice, sim::QuestPath path = sim::QuestPath::Melee);
-    void closeQuest() { realm_.closeQuest(); }
+    void closeQuest() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Quest)}); }
     // The travel list (M, game/ui/travel.h): the realm checks the row and takes the Zen, and
     // the map change is the mode's, as a gate's is (`takeTravel`, app/modes/play_mode.cpp).
     uint32_t travel(int index);
@@ -344,13 +350,13 @@ public:
         travelled_ = -1;
         return row;
     }
-    void setWallClock(int64_t unixSeconds) { realm_.setWallClock(unixSeconds); }
+    void setWallClock(int64_t unixSeconds) { local_.setWallClock(unixSeconds); }
     // The Golden Invasion (game/play_invasion.cpp, sim/invasion.h): whether it rains handed to
     // the realm each frame, which rolls for the dragons as a wet spell begins; --invasion's
     // start; the sky opened once the effects are; and whether its storm should be held -- the
     // world's weather answers to that (Weather::summon).
-    void invasionRain(bool raining) { realm_.invasionRain(raining); }
-    bool invade(bool now = false) { return realm_.invade(now); }
+    void invasionRain(bool raining) { local_.invasionRain(raining); }
+    bool invade(bool now = false) { return local_.invade(now); }
     // ---- the Golden Dragon's raid (play_raid.cpp, docs/golden-dragon-raid.md) ---------------
     // Set BEFORE open() or not at all, as the arena is: the raid tough for `players`, and the
     // party of source/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
@@ -381,20 +387,20 @@ public:
     void openInvasionSky(bgfx::TextureHandle glow, bgfx::TextureHandle haze);
     bool invasionStorm() const { return invasionStorm_; }
     void glowInvasion(gfx::Effects& effects) const { sky_.glow(effects); }
-    void openCastleDoor() { realm_.openCastleDoor(); }
-    void freeCastle() { realm_.freeCastle(); }
-    void dropCastleBridge(int seconds) { realm_.dropCastleBridge(seconds); }
-    void setCastle(int castle) { realm_.setCastle(castle); }
+    void openCastleDoor() { local_.openCastleDoor(); }
+    void freeCastle() { local_.freeCastle(); }
+    void dropCastleBridge(int seconds) { local_.dropCastleBridge(seconds); }
+    void setCastle(int castle) { local_.setCastle(castle); }
     // The Messenger's page's two answers (QuestDialog::kGate).
-    bool enterCastle(int castle) { return realm_.enterCastle(castle); }
-    void closeGate() { realm_.closeGate(); }
+    uint32_t enterCastle(int castle) { return send({.kind = sim::Command::Kind::EnterCastle, .a = castle}); }
+    void closeGate() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Gate)}); }
     // The Archangel's page's answers (QuestDialog::kArchangel).
-    bool handInStaff() { return realm_.handInStaff(); }
-    bool claimCastle() { return realm_.claimCastle(); }
-    void closeAngel() { realm_.closeAngel(); }
+    uint32_t handInStaff() { return send({.kind = sim::Command::Kind::HandInStaff}); }
+    uint32_t claimCastle() { return send({.kind = sim::Command::Kind::ClaimCastle}); }
+    void closeAngel() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Angel)}); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
-    void earn(long long zen) { realm_.earn(zen); }
+    void earn(long long zen) { local_.earn(zen); }
     bool talkTo(const std::string& name);
     // ---- what he gained this frame (sprint 12) --------------------------------------------
     //
@@ -567,7 +573,7 @@ public:
     void goBack(int column, int row, float facing);
     // The performance sweep's (app/sweep.h): the realm's setHeroDown and nothing drawn or heard,
     // so the warp's ring and sound are not in the frames being measured.
-    void setDown(int column, int row) { realm_.setHeroDown(column, row, 0, 100); }
+    void setDown(int column, int row) { local_.setHeroDown(column, row, 0, 100); }
     // A warp's landing heard and seen where he stands, and nothing else: sMagic and the ring, for
     // a map come into by magic -- a Tab trip, a Town Portal to another map, Go Back! -- where the
     // world was raised around him rather than him set down in it.
@@ -1128,7 +1134,11 @@ private:
 
     content::Tables tables_;
     std::string zoneLevels_;
-    sim::Realm realm_;
+    // The realm behind the Link (game/link.h). `realm_` is what the client may see, and is const:
+    // a change goes through link_.send, or -- what only the server will do -- through local_.
+    LocalLink link_;
+    sim::Realm& local_ = link_.local();
+    const sim::Realm& realm_ = link_.realm();
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
     Figures* figures_ = nullptr;

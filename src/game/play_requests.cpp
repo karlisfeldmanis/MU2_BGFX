@@ -38,17 +38,17 @@ void Play::castSkill(int32_t skill, uint32_t at) {
     // there is nothing to aim at and nothing is asked.
     if (row != nullptr && row->blinks) {
         if (pointedColumn_ < 0) return;
-        realm_.invokeAt(skill, pointedColumn_, pointedRow_);
+        castHeroAt(skill, pointedColumn_, pointedRow_);
         core::logf("window: %s aimed at tile %d,%d from %d,%d", row->name, pointedColumn_,
                    pointedRow_, realm_.hero().column(), realm_.hero().row());
     } else if (row != nullptr && row->aimsAtPointer() && pointedColumn_ >= 0) {
         // A skill with a direction goes the way the mouse is, body or no body
         // (SkillRow::aimsAtPointer; the user, 2026-10-02).
-        realm_.invokeAt(skill, pointedColumn_, pointedRow_);
+        castHeroAt(skill, pointedColumn_, pointedRow_);
         core::logf("window: %s aimed toward tile %d,%d from %d,%d", row->name, pointedColumn_,
                    pointedRow_, realm_.hero().column(), realm_.hero().row());
     } else {
-        realm_.invoke(skill, at);
+        castHero(skill, at);
     }
     core::logf("window: %s asked (cooling %lld ticks, %d mana of %d)",
                row ? row->name : "a skill", (long long)realm_.cooling(skill),
@@ -189,7 +189,7 @@ void Play::dualSwings(Drawn& drawn, const FigureBody* look) const {
 
 void Play::restore(const sim::HeroRecord& saved) {
     if (!isOpen()) return;
-    realm_.restore(saved);
+    local_.restore(saved);
     redress();
 }
 
@@ -261,9 +261,9 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
             const sim::Held& on = realm_.satchel()[into];
             const content::ItemRow& onRow = tables_.items[size_t(on.item)];
             const int spare = realm_.satchel().free(tables_, onRow.width, onRow.height);
-            if (spare >= 0) realm_.moveItem(into, spare);
+            if (spare >= 0) local_.moveItem(into, spare);
         }
-        slot = realm_.give(item, into, plus, stacks ? durability : sim::fullDurability(row, plus),
+        slot = local_.give(item, into, plus, stacks ? durability : sim::fullDurability(row, plus),
                            luck, option, excellent, uint8_t(sockets), powers, affixes);
         if (worn && slot >= 0) redress();
         core::logf("given %s%s into slot %d", row.label.c_str(),
@@ -288,7 +288,7 @@ bool Play::lay(const std::string& asked) {
         core::logError("--lay: no item named %s", name.c_str());
         return false;
     }
-    const uint32_t id = realm_.lay(item, plus, luck, option, excellent, uint8_t(sockets));
+    const uint32_t id = local_.lay(item, plus, luck, option, excellent, uint8_t(sockets));
     core::logf("laid %s on the ground (drop %u)", tables_.items[size_t(item)].label.c_str(), id);
     if (id == 0) return false;
     landed(id);
@@ -338,7 +338,6 @@ uint32_t Play::repairAll() { return send({.kind = sim::Command::Kind::RepairAll}
 // A vault or box move that was a jewel applied (Realm::refineAcross): its answer rung as
 // Play::refine rings it, and the figure dressed again, since a worn thing may have changed.
 void Play::jewelRung() {
-    if (!realm_.takeJeweled()) return;
     if (const Drawn* hero = drawnOf(realm_.hero().id)) {
         emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
     }
@@ -385,11 +384,25 @@ uint32_t Play::withdrawZen(int64_t zen) {
 
 uint32_t Play::send(sim::Command command) { return send(command, Asked()); }
 
+void Play::orderHero(const sim::Request& request) {
+    link_.send({.kind = sim::Command::Kind::Order, .player = realm_.hero().id, .a = int(request.kind),
+                .b = request.column, .c = request.row, .d = request.skill, .target = request.target});
+}
+
+void Play::castHero(int32_t skill, uint32_t at) {
+    link_.send({.kind = sim::Command::Kind::Cast, .player = realm_.hero().id, .a = skill, .target = at});
+}
+
+void Play::castHeroAt(int32_t skill, int column, int row) {
+    link_.send({.kind = sim::Command::Kind::CastAt, .player = realm_.hero().id, .a = skill, .b = column,
+                .c = row});
+}
+
 uint32_t Play::send(sim::Command command, Asked asked) {
     command.player = realm_.hero().id;
     command.ticket = nextTicket_++;
     if (nextTicket_ == 0) nextTicket_ = 1;
-    realm_.command(command);
+    link_.send(command);
     asked.command = command;
     sent_.push_back(asked);
     return command.ticket;
@@ -411,8 +424,9 @@ void Play::answered(const sim::Happening& said) {
     const sim::Happening* drank = lastDrank_;
     const sim::Happening* warpedTo = lastWarped_;
     const sim::Happening* cracked = lastCracked_;
+    const sim::Happening* refined = lastRefined_;
     const int levelled = levelledSince_, owedBefore = levelsBefore_;
-    lastDrank_ = lastWarped_ = lastCracked_ = nullptr;
+    lastDrank_ = lastWarped_ = lastCracked_ = lastRefined_ = nullptr;
     levelledSince_ = 0;
     // A Discard that opened is answered as a Crack.
     const sim::Command::Kind kind = sim::Command::Kind(said.a);
@@ -465,8 +479,9 @@ void Play::answered(const sim::Happening& said) {
         case Kind::TakeOut:
         case Kind::Shuffle: {
             // The item moves are heard by the desk, as the bag's are; a jewel one of them applied
-            // (Realm::refineAcross) is rung here, and a worn thing that left him re-dresses him.
-            jewelRung();
+            // (Realm::refineAcross, which says Refined) is rung here, and a worn thing that left
+            // him re-dresses him.
+            if (refined) jewelRung();
             const int worn = asked.kind == Kind::Deposit || asked.kind == Kind::PutIn ? asked.a
                              : asked.kind == Kind::Withdraw ? asked.b
                                                             : -1;
@@ -627,7 +642,22 @@ void Play::answered(const sim::Happening& said) {
             if (!ok) ui(Ui::Refused);
             break;
         }
-        case Kind::GoBack: break;
+        case Kind::EnterCastle:
+            core::logf("event: Enter on Blood Castle %d -- %s", asked.a, ok ? "through the gate" : "refused");
+            break;
+        case Kind::HandInStaff:
+            core::logf("event: the Divine Staff to the Archangel -- %s", ok ? "given" : "refused");
+            break;
+        case Kind::ClaimCastle:
+            core::logf("event: Complete on the Archangel's thanks -- %s", ok ? "to Devias" : "refused");
+            break;
+        // Sent with no ticket and never answered: the walk, the swing and the window are the answer.
+        case Kind::Order:
+        case Kind::Cast:
+        case Kind::CastAt:
+        case Kind::LetGo:
+        case Kind::Close:
+        case Kind::GoBack:
         case Kind::None: break;
     }
     answers_.push_back({asked.ticket, kind, said.b});
@@ -639,7 +669,7 @@ bool Play::talkTo(const std::string& name) {
         sim::Request request;
         request.kind = sim::Request::Kind::Talk;
         request.target = uint32_t(i);
-        realm_.ask(request);
+        orderHero(request);
         core::logf("talk: walking to %s at (%d, %d)", tables_.folk[i].name.c_str(),
                    tables_.folk[i].x, tables_.folk[i].y);
         return true;

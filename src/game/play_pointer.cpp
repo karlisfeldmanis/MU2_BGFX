@@ -271,7 +271,7 @@ void Play::leftClick() {
     // (ZzzInterface.cpp:3127), and the user turned that down on 2026-09-29 -- a click to move
     // while he is struck is a click to get out, and eating it read as the game not answering.
     // The walk it starts ends the flinch's clip (play_show.cpp, the flinch hold).
-    realm_.ask(request);
+    orderHero(request);
     // Only from a stand; see Play::update for why never while walking.
     stepNow_ = !realm_.hero().walking && sinceEarly_ >= kEarlyApart &&
                (request.kind != sim::Request::Kind::WalkTo ||
@@ -301,7 +301,7 @@ void Play::fight(uint32_t id) {
     // throws his Energy Ball and a knight with an empty slot swings, as a right-click would.
     // Or with what `--arena-learn` taught him, which is what that option is for.
     request.skill = arenaLeft_ ? 0 : (arena_.learn != 0 ? arena_.learn : quickSkill_);
-    realm_.ask(request);
+    orderHero(request);
     mark_ = false;
     marker_.dismiss();
 }
@@ -311,7 +311,7 @@ bool Play::perch(int index) {
     sim::Request request;
     request.kind = sim::Request::Kind::Perch;
     request.target = uint32_t(index);
-    realm_.ask(request);
+    orderHero(request);
     mark_ = true;
     return true;
 }
@@ -330,7 +330,7 @@ void Play::rightClick() {
         request.target = pointedAt_;
         request.skill = quickSkill_;
         rightTarget_ = pointedAt_;
-        realm_.ask(request);
+        orderHero(request);
         mark_ = false;
         marker_.dismiss();
         return;
@@ -340,20 +340,20 @@ void Play::rightClick() {
         // **A skill with a direction on the right button goes the way the mouse is** over bare
         // ground too (SkillRow::aimsAtPointer; the user, 2026-10-02): a press, as a key's is,
         // and no order changes -- he casts where he stands.
-        realm_.invokeAt(quickSkill_, pointedColumn_, pointedRow_);
+        castHeroAt(quickSkill_, pointedColumn_, pointedRow_);
         mark_ = false;
         marker_.dismiss();
         return;
     } else if (quick != nullptr && quick->castsBare()) {
         // A spell cast round him goes off over bare ground too (SkillRow::castsBare).
-        realm_.invoke(quickSkill_, 0);
+        castHero(quickSkill_, 0);
         mark_ = false;
         marker_.dismiss();
         return;
     } else {
         request.kind = sim::Request::Kind::Stop;
     }
-    realm_.ask(request);
+    orderHero(request);
     mark_ = false;
     marker_.dismiss();
 }
@@ -392,14 +392,14 @@ void Play::rightHeld() {
     }
     const sim::SkillRow* quick = quickSkill_ != 0 ? sim::skillNumbered(quickSkill_) : nullptr;
     if (quick != nullptr && quick->castsBare() && !quick->aimsAtPointer()) {
-        realm_.invoke(quickSkill_, 0);
+        castHero(quickSkill_, 0);
         return;
     }
     if (pointedColumn_ < 0) return;
     if (quick == nullptr || !quick->aimsAtPointer()) return;
     // The wish is renewed every frame, aimed where the mouse is now; the realm throws it on the
     // first tick his last cast lets him (Realm::invoke), and refuses it silently while it cools.
-    realm_.invokeAt(quickSkill_, pointedColumn_, pointedRow_);
+    castHeroAt(quickSkill_, pointedColumn_, pointedRow_);
 }
 
 // Where every spell leaves a caster: the middle of his chest, a little toward what it is
@@ -653,7 +653,7 @@ void Play::benchFace(float acrossX, float acrossZ) {
     // World x is the column and world z the negated row (docs/conventions.md).
     request.column = realm_.hero().column() + int(std::lround(acrossX / flat));
     request.row = realm_.hero().row() - int(std::lround(acrossZ / flat));
-    realm_.ask(request);
+    orderHero(request);
 }
 
 void Play::walkTo(int column, int row) {
@@ -662,7 +662,7 @@ void Play::walkTo(int column, int row) {
     request.kind = sim::Request::Kind::WalkTo;
     request.column = column;
     request.row = row;
-    realm_.ask(request);
+    orderHero(request);
 }
 
 bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,

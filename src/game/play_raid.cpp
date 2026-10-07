@@ -241,7 +241,7 @@ void Play::raid(float seconds) {
     if (dragon == nullptr || ground_ == nullptr) return;
     // --raid-stage: laid once it stands.
     if (raidSkipOwed_ > 0 && realm_.raidStage() != sim::RaidStage::None) {
-        realm_.raidSkipTo(sim::RaidStage(raidSkipOwed_));
+        local_.raidSkipTo(sim::RaidStage(raidSkipOwed_));
         core::logf("raid: --raid-stage %d", raidSkipOwed_);
         raidSkipOwed_ = 0;
     }

@@ -157,11 +157,11 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // The Golden Dragon's raid, when one was asked for (--raid): handed to the realm before it
     // is raised, as the arena's nests are (play_raid.cpp).
     if (raidPlayers_ > 0) {
-        realm_.setRaid(raidPlayers_, raidParty_, raidWatched_);
-        realm_.setRaidLanding(raidLanding_);
+        local_.setRaid(raidPlayers_, raidParty_, raidWatched_);
+        local_.setRaidLanding(raidLanding_);
     }
-    realm_.configure(realmConfig_);
-    if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
+    local_.configure(realmConfig_);
+    if (!local_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to
     // use roads"): a tile whose painted slot -- the overlay where it is laid over half or more,
@@ -190,7 +190,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             }
         }
         core::logf("play: %zu road tiles for the townsfolk's rounds", paved);
-        realm_.setRoads(std::move(roads));
+        local_.setRoads(std::move(roads));
     }
 
     // A character made above level 1 arrives with his points in hand, and unspent he cannot
@@ -215,7 +215,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         const int intoAgility =
             std::min(points, std::max(0, wantsAgility - realm_.hero().points.agility));
         points -= intoAgility;
-        if (intoStrength + intoAgility > 0) realm_.spend(intoStrength, intoAgility, 0, 0);
+        if (intoStrength + intoAgility > 0) local_.spend(intoStrength, intoAgility, 0, 0);
     }
 
     // What he holds. The drawn character is dressed from the same two names (Figures::dress, by
@@ -227,14 +227,14 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         if ((!weapon.empty() && held < 0) || (!shield.empty() && worn < 0)) {
             core::logError("no arm called %s%s%s", weapon.c_str(), shield.empty() ? "" : " or ",
                            shield.c_str());
-        } else if (!realm_.equip(held, worn)) {
+        } else if (!local_.equip(held, worn)) {
             // Refused on the strength or the agility, and then given anyway: what the character
             // starts holding is the cradle's gift and the requirement belongs to the bag that
             // picks one up. See Realm::equip. The shortfall is printed rather than hidden --
             // a level-one knight is 22 strength short of his own axe, and that is the character
             // the first hour is balanced around, not a fault in the run.
             const std::string why = realm_.refusal();
-            if (!realm_.equip(held, worn, true)) {
+            if (!local_.equip(held, worn, true)) {
                 core::logError("he cannot hold that: %s", realm_.refusal().c_str());
             } else {
                 core::logf("play: %s -- given anyway, as a new character is given what his "
@@ -265,7 +265,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         const int points = realm_.hero().pointsInHand;
         const int intoForce = points / 2;
         const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
-        realm_.spend(wizard ? 0 : intoForce, 0, points - intoForce, wizard ? intoForce : 0);
+        local_.spend(wizard ? 0 : intoForce, 0, points - intoForce, wizard ? intoForce : 0);
         const sim::Body& hero = realm_.hero();
         core::logf("arena: the hero is level %d, %d points into %s and %d into vitality "
                    "-- %d to %d damage, %d health", hero.level, intoForce,
@@ -274,16 +274,16 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     }
 
     // Without --arena too: a plain run taught one skill to try by hand, on the right button.
-    if (arena_.learn != 0 && realm_.learn(arena_.learn)) {
+    if (arena_.learn != 0 && local_.learn(arena_.learn)) {
         core::logf("arena: the hero is taught skill %d", arena_.learn);
     }
     // And a plain run too, to explore a world without dying in it.
     if (arena_.undying) {
-        realm_.undying(true);
+        local_.undying(true);
         core::logf("arena: the hero is undying");
     }
     if (arena_.wingDemo) {
-        realm_.wingDemo(true);
+        local_.wingDemo(true);
         core::logf("arena: every kill in Icarus leaves the first wings");
     }
 

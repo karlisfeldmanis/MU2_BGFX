@@ -67,7 +67,36 @@ void Realm::applyCommands() {
                 setHeroDown(one.a, one.b, one.c, one.d);
                 answer = 1;
                 break;
+            case Kind::Order: {
+                Request request;
+                request.kind = Request::Kind(one.a);
+                request.column = one.b;
+                request.row = one.c;
+                request.skill = one.d;
+                request.target = one.target;
+                ask(request);
+                answer = 1;
+                break;
+            }
+            case Kind::Cast: invoke(one.a, one.target); answer = 1; break;
+            case Kind::CastAt: invokeAt(one.a, one.b, one.c); answer = 1; break;
+            case Kind::LetGo: letGo(); answer = 1; break;
+            case Kind::Close:
+                switch (Command::Window(one.a)) {
+                    case Command::Window::Trade: closeTrade(); break;
+                    case Command::Window::Vault: closeVault(); break;
+                    case Command::Window::Machine: closeMachine(); break;
+                    case Command::Window::Quest: closeQuest(); break;
+                    case Command::Window::Gate: closeGate(); break;
+                    case Command::Window::Angel: closeAngel(); break;
+                }
+                answer = 1;
+                break;
+            case Kind::EnterCastle: answer = enterCastle(one.a) ? 1 : -1; break;
+            case Kind::HandInStaff: answer = handInStaff() ? 1 : -1; break;
+            case Kind::ClaimCastle: answer = claimCastle() ? 1 : -1; break;
         }
+        if (one.ticket == 0) continue;
         say(What::Answered, bodies_[0], int32_t(said),
             answer < 0 ? -1 : int32_t(std::min<int64_t>(answer, INT32_MAX)), int32_t(one.ticket));
         if (said == Kind::Crack) {

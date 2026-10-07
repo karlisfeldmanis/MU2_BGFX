@@ -53,14 +53,30 @@ struct Command {
         Travel,         // a: the travel row
         GoBack,         // Go Back!'s return on this map: a: column, b: row, c and d: the facing
                         // as dx and dy in hundredths
+        // The player's orders and skills (Realm::ask, invoke, invokeAt, letGo). Sent with ticket
+        // 0, as a click is: no answer is said, the walk and the swing are the answer.
+        Order,      // a: the sim::Request::Kind, b: column, c: row, d: skill, target
+        Cast,       // a: the skill, target: at whom, 0 for the standing fight's
+        CastAt,     // a: the skill, b: column, c: row
+        LetGo,      // a held charge let go (Nova)
+        // A window walked away from (Realm::closeTrade, closeVault, closeMachine, closeQuest,
+        // closeGate, closeAngel). a: the Window.
+        Close,
+        // Blood Castle's (Realm::enterCastle, handInStaff, claimCastle).
+        EnterCastle,  // a: the castle
+        HandInStaff,
+        ClaimCastle,
     };
+    // Close's a.
+    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel };
     Kind kind = Kind::None;
     // Who asks: a player's body id. 0 is the one hero this realm has until phase 2.
     uint32_t player = 0;
     // The asker's own number for it, handed back in the answer so its window knows which ask
-    // was answered. The realm reads nothing into it.
+    // was answered. The realm reads nothing into it. 0 asks for no answer.
     uint32_t ticket = 0;
     int32_t a = -1, b = -1, c = -1, d = -1;
+    uint32_t target = 0;
     int64_t zen = 0;
     Service service = Service::Combine;
 };

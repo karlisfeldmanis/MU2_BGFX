@@ -14,7 +14,8 @@ batch: the realm still sits in the process, behind what will be phase 1's `Local
 2. Commands for the bag: `moveItem`, `useItem`, `refine`, `crack`, `discard`, `spend`. Done 2026-10-07, below.
 3. Commands for quests, travel and Go Back!. Done 2026-10-07, below. The debug switches (`give`,
    `lay`, castle, …) stay direct until phase 6 makes them GM commands: they run once at start.
-4. The `Link` interface (`send`, `happenings`, `self`) and `LocalLink` around the realm.
+4. The `Link` interface (`send`, `step`, `happenings`, `realm`) and `LocalLink` around the realm.
+   Done 2026-10-07, below.
 5. The `View`: Play and the twelve UI files read it, not the realm (~670 call sites, by file).
 6. Figures matched to bodies by id, not index; then `Realm::despawn` (sprint 16 step 4's rest).
 7. `layercheck`'s new arrow: `game/ui` and `game/fx` may not include `sim/realm.h`. The gate
@@ -71,3 +72,24 @@ batch: the realm still sits in the process, behind what will be phase 1's `Local
   (`Then::Travel`); the press is the list's either way.
 - sim_test 6606 checks, the standing 10 failing: Go Back! sets him down with its Climbed first, a
   quest with no dialog open and a trip never opened are refused. A muted run is clean.
+
+## 4. The Link — done
+
+- `game/link.h`: `Link` is `send(Command)`, `step()`, `happenings()` and `realm()` (what there is
+  to see; batch 5 puts the View there). `LocalLink` holds the realm, in process.
+- **Play no longer holds a writable realm.** Its `realm_` is a const reference to the link's,
+  so the compiler found every write: 37 of them.
+  - The player's own became commands: walk, attack, talk, pick and perch (`Order`), skills
+    (`Cast`, `CastAt`, `LetGo`), every window walked away from (`Close` with a `Window`), and
+    Blood Castle's three (`EnterCastle`, `HandInStaff`, `ClaimCastle`, answered; the desk clicks
+    or refuses, and shuts the Archangel's page on a claim). Orders and casts go with ticket 0
+    and are never answered: the walk and the swing are the answer.
+  - What will be the server's goes through `local_` (`LocalLink::local()`), each a line to move:
+    raise and configure, the raid's setup, the roads, the arena's set-up (`spend`, `equip`,
+    `learn`, `undying`, `wingDemo`), saves (`restore`, `restoreVault`, `restoreMachine`), the
+    wall clock, the weather's rain, and the GM switches (`give`, `lay`, `earn`, `invade`, the
+    castle's door, bridge and garrison, `raidSkipTo`, the sweep's `setDown`).
+- `Realm::takeJeweled()`, a flag the client read and cleared, is no longer read: the vault's and
+  the machine's jewel ring comes off the `Refined` said before the answer.
+- sim_test as before (6606, the standing 10). A muted `--talk Lumen` run walks there by an Order
+  command and is served.

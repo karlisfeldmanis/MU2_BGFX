@@ -165,7 +165,7 @@ void Play::update(double seconds) {
         for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
             drawn_[i].health = realm_.bodies()[i].health;
         }
-        realm_.step();
+        link_.step();
         // AFTER the step, not before it. Before, `now` held the state at the START of the tick
         // and `was` the start of the one before, so the picture trailed the sim by one whole
         // tick on top of the interpolation's own -- a figure at `through_ = 0` was 100 ms
@@ -181,7 +181,7 @@ void Play::update(double seconds) {
         }
         sim::audit(realm_, findings_);
         const uint32_t heroId = realm_.hero().id;
-        lastDrank_ = lastWarped_ = lastCracked_ = nullptr;
+        lastDrank_ = lastWarped_ = lastCracked_ = lastRefined_ = nullptr;
         levelledSince_ = 0;
         levelsBefore_ = levelsOwed_;
         for (const sim::Happening& happening : realm_.happenings()) {
@@ -195,6 +195,7 @@ void Play::update(double seconds) {
                 if (happening.what == sim::What::Drank) lastDrank_ = &happening;
                 if (happening.what == sim::What::Warped) lastWarped_ = &happening;
                 if (happening.what == sim::What::Cracked) lastCracked_ = &happening;
+                if (happening.what == sim::What::Refined) lastRefined_ = &happening;
             }
             if (happening.what == sim::What::Answered) answered(happening);
             invasionSaid(happening);
