@@ -200,6 +200,11 @@ bool scrollOfNova(const content::ItemRow& row);
 constexpr int kNovaScrollOdds = 1500;
 constexpr int kNovaScrollFromLevel = 60;
 inline bool featherMap(uint32_t map) { return map == 4 || map == 7 || map == 10; }
+// **The first wings** in Icarus: any kill there leaves the hero's class's wing (firstWingOf), one
+// in kIcarusWingOdds, +0 and whole, its luck as any drop's, on its own roll beside the rest.
+// INVENTION (the user, 2026-10-07: 'lets them drop'): MU's are mixed only -- WebZen's item.txt
+// MondownFlag 0 on 12/0-2, OpenMU's DropsFromMonsters = false.
+constexpr int kIcarusWingOdds = 1000;
 
 // ---- rings and pendants (docs/jewellery.md) ------------------------------------------------
 //

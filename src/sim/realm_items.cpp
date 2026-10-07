@@ -1128,6 +1128,22 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    // The first wings in Icarus, the hero's class's, the same way (sim::kIcarusWingOdds).
+    if (tables_->map == kIcarusMap && wingDice_.nextInt(0, kIcarusWingOdds) == 0) {
+        const int32_t item = tables_->itemAt(12, firstWingOf(bodies_[0].kin));
+        if (item >= 0) {
+            const content::ItemRow& row = tables_->items[size_t(item)];
+            Lying wing;
+            wing.what = Held{item, 0, 0};
+            wing.what.durability = int16_t(maximumDurability(row, wing.what));
+            wing.what.luck = wingDice_.nextInt(0, 100) < kLuckIn100;
+            std::tie(wing.column, wing.row) = clearing(dead.column(), dead.row());
+            wing.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            wing.id = nextId_++;
+            lying_.push_back(wing);
+            say(What::Dropped, dead, int32_t(wing.id), item, 0);
+        }
+    }
     // The second class's gear from Atlans's strongest, the same way (sim::kAtlansGearOdds).
     if (tables_->map == kAtlansMap && level >= kAtlansGearFromLevel &&
         gearDice_.nextInt(0, kAtlansGearOdds) == 0) {

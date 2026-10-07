@@ -1582,6 +1582,8 @@ private:
     // Whether a kill in Atlans or the Lost Tower leaves a Loch's Feather (sim::kFeatherOdds).
     Random featherDice_{0};
     Random novaScrollDice_{0};
+    // Whether a kill in Icarus leaves the first wings (sim::kIcarusWingOdds).
+    Random wingDice_{0};
     // And whether Atlans's strongest leave a piece of the second class's gear
     // (sim::kAtlansGearOdds), the piece and its options off the same stream.
     Random gearDice_{0};
