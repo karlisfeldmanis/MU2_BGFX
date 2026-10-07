@@ -183,9 +183,10 @@ enum : uint8_t {
     kWingOptionKind = 0x20,
 };
 // **Loch's Feather** (13/14), the 2nd wings' ingredient. MU drops it in Icarus alone
-// (gObjMonster.cpp:4620); this game has no Icarus, so a kill in Atlans or the Lost Tower of a
-// monster of kFeatherFromLevel or over leaves one in kFeatherOdds, on its own roll beside the
-// rest (the user, 2026-10-04: 'Rare drop, high maps'). The maps, the level and the rate are ours.
+// (gObjMonster.cpp:4620). Ours: a kill in Atlans, the Lost Tower or Icarus of a monster of
+// kFeatherFromLevel or over leaves one in kFeatherOdds, on its own roll beside the rest (the user,
+// 2026-10-04: 'Rare drop, high maps'; Icarus since its port, 2026-10-07). The level and the
+// rate are ours, and Atlans and the Lost Tower.
 bool lochsFeather(const content::ItemRow& row);
 constexpr int kFeatherOdds = 500;
 constexpr int kFeatherFromLevel = 60;
@@ -196,7 +197,7 @@ constexpr int kFeatherFromLevel = 60;
 bool scrollOfNova(const content::ItemRow& row);
 constexpr int kNovaScrollOdds = 1500;
 constexpr int kNovaScrollFromLevel = 60;
-inline bool featherMap(uint32_t map) { return map == 4 || map == 7; }
+inline bool featherMap(uint32_t map) { return map == 4 || map == 7 || map == 10; }
 
 // ---- rings and pendants (docs/jewellery.md) ------------------------------------------------
 //

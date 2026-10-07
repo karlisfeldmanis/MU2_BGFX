@@ -321,6 +321,9 @@ inline constexpr const char* kDeathCowFigure = "DeathCow01";
 // 11213-11215), on eye00 and eye01, at twice the sprite's size.
 inline constexpr const char* kCrustFigure = "MegaCrust01";
 inline constexpr const char* kAlphaCrustFigure = "AlphaCrust01";  // the same model, MONSTER_ALPHA_CRUST
+// How much of the way to its tile a Crust's drawn body closes a reference frame (Play's glide).
+constexpr float kGlideShare = 0.07f;
+constexpr float kGlideLag = 0.35f;  // tiles it may trail the realm by, ours
 constexpr float kCrustEyeSize = 2.0f;
 // MODEL_ICE_MONSTER, which has no corpse either, but only once its death clip has played: the
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
@@ -492,6 +495,8 @@ inline constexpr AuraLight kAuraLights[] = {
     {"DeathKnight01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
     // The Balrog's red stream mesh.
     {"Balrog01", {1.0f, 0.15f, 0.05f}, "Bip01 Spine"},
+    // The Dark Phoenix's fire, ours (the user, 2026-10-07: 'use red tone lighting for phoenix').
+    {"DarkPhoenix01", {1.0f, 0.25f, 0.08f}, "Bip01 Spine"},
     // The Vepar's hands, which MU always lights with a lightning, a spark and a shiny sprite
     // (ZzzCharacter.cpp:11220-11227): a pale blue, on its right hand's link bone.
     {"Vepar01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
@@ -542,7 +547,7 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 // BITMAP_JOINT_THUNDER sub 7, 20 wide, from bone i - 1 to i for i of 14-16 and 23 each frame --
 // the kDrakanArcs, ours kDrakanArcsAFrame of them a reference frame. Its Attack 2 throws its
 // bolt at CheckAttackTime(13) from bone 11, its head (:2123-2138), drawn as a monster's Lightning
-// (Play::thunderCasts_, ours with the Lightning's sound for MU's SOUND_METEORITE01). Its Flame of
+// (Play::thunderCasts_, with MU's SOUND_METEORITE01, :1760-1771). Its Flame of
 // Evil (sim kBosses) shows nothing more than its blow: MU's boss show is the Gorgon's and the
 // Balrog's alone (:1959-1990).
 inline constexpr const char* kDrakanFigure = "Drakan01";
@@ -577,6 +582,10 @@ inline constexpr const char* kDarkPhoenixFigure = "DarkPhoenix01";
 constexpr int32_t kDarkPhoenixNumber = 77;
 constexpr float kPhoenixBoltWait = 13.0f / 25.0f;    // (14 - 1) / 25 s
 constexpr float kPhoenixSpiritWait = 1.0f / 25.0f;   // (2 - 1) / 25 s
+// Its shield, shown only (the port's decision 7, A): WebZen toggles it every six seconds
+// (gObjSkylandBoss); each time it goes up the bird wears fx/aura's kPhoenixBarrier. The phase
+// is the realm's clock, so it needs nothing from the realm.
+constexpr int64_t kPhoenixShieldTicks = 6 * 20;
 inline constexpr const char* kShadowJoints[] = {
     "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
     "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",

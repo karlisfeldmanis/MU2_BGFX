@@ -790,6 +790,8 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             }
             one.starBones.clear();
             one.starRibbons = look->name == kAlquamosFigure;
+            one.glides = look->name == kCrustFigure || look->name == kAlphaCrustFigure;
+            one.phoenix = look->name == kDarkPhoenixFigure;
             if (one.starRibbons && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (const char* name : kStarlightBones) {

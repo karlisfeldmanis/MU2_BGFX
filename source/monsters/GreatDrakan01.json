@@ -9,6 +9,15 @@
     "scale": 1.0
   },
   "monster_from": "ZzzCharacter.cpp:13621-13638, CreateMonster, case MONSTER_GREAT_DRAKAN: Scale = 1.0f, the Drakan's meshes. RenderCharacter draws it with its MonsterIndex as ExtraMon (:8645-8651), and RenderObject's MODEL_DRAKAN arm then lights the body BodyLight (0.1, 0.1, 0.1) and mesh 1 (1, 0.1, 0.1) (ZzzObject.cpp:1270-1278): a black dragon in red plates. Its effects, in game/play: a BITMAP_FIRE at Scale 0.3 on bone 18, stars13, each frame (:8867-8879), ours one every other reference frame as the Death Knight's embers; the Drakan's blows -- Attack 1's Inferno at CheckAttackTime(11), Attack 2's bolt at CheckAttackTime(13), which pushes (kBoltBlowers) -- and its Flame of Evil one blow in five (kBosses). No blue stars and no arcs: those are MONSTER_DRAKAN's case alone. Left out: the chrome-bright RENDER_EXTRA pass (:8882-8888) and Attack 1's five MODEL_PIERCING + 1 streaks.",
+  "plus": {
+    "parts": 7,
+    "colour": [
+      1.0,
+      0.1,
+      0.1
+    ]
+  },
+  "plus_from": "Its chrome-bright pass: RenderCharacter's MONSTER_DRAKAN arm draws a Great Drakan with RENDER_CHROME | RENDER_BRIGHT | RENDER_EXTRA at Bright 1 (ZzzCharacter.cpp:8882-8883), which RenderPartObjectBodyColor lights (1, 0.1, 0.1) for MODEL_DRAKAN (ZzzObject.cpp:9037-9042): a +7 item's chrome in that red.",
   "profile": "monster",
   "rig_from": "Drakan01's export: --actions=all, 7 actions, 59 bones; keys 13, 13, 13, 7, 7, 7, 7. Its death plays at 0.22 (ZzzOpenData.cpp:3775-3781).",
   "sheets": {

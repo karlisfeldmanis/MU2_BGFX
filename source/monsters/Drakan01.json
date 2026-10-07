@@ -9,6 +9,15 @@
     "scale": 0.8
   },
   "monster_from": "ZzzCharacter.cpp:13621-13638, CreateMonster, case MONSTER_DRAKAN: Scale = 0.8f (the Great Drakan 1.0); NotRotateOnMagicHit; meshes 0, 3 and 4 NoneBlendMesh, 1 and 2 not -- which only says which meshes RenderCharacter's chrome passes run over. No BlendMesh: every mesh solid. Its effects, in game/play (kDrakanFigure): a blue BITMAP_LIGHT at 0.8 on each of its 21 stars bones (:8840-8865), as starlights in its blue; BITMAP_JOINT_THUNDER sub 7, 20 wide, along stars04-03-02-01 and stars12-11 each frame (:8852-8856), ours one or two a reference frame; Attack 1's Inferno at CheckAttackTime(11) (:1734-1757); Attack 2's bolt from its head to the target at CheckAttackTime(13) (:2123-2138), as a monster's Lightning. Left out: RenderCharacter's chrome-bright and chrome2-lightmap passes over meshes 1 and 2 (:8882-8888) and the five MODEL_PIERCING + 1 streaks Attack 1 drops round it (:1743-1754).",
+  "plus": {
+    "parts": 7,
+    "colour": [
+      0.2,
+      0.2,
+      0.8
+    ]
+  },
+  "plus_from": "Its chrome-bright pass: RenderCharacter's MONSTER_DRAKAN arm draws the body with RENDER_CHROME | RENDER_BRIGHT at Bright 1 (ZzzCharacter.cpp:8882-8883) in RenderPartObjectBodyColor's (0.2, 0.2, 0.8) for MODEL_DRAKAN (ZzzObject.cpp:9037-9047): a +7 item's chrome in that blue. Its second, RENDER_CHROME2 | RENDER_LIGHTMAP, is left out.",
   "profile": "monster",
   "rig_from": "Exported with --actions=all, 7 actions, 59 bones; keys 13, 13, 13, 7, 7, 7, 7. Its death plays at 0.22 (ZzzOpenData.cpp:3775-3781), in actions.json's action_overrides.",
   "sheets": {

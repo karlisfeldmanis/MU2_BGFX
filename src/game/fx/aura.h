@@ -109,6 +109,14 @@ inline constexpr Recipe kMending{8,    34.0f, 30.0f, 22.0f, 12.0f, 16.0f, 12.0f,
                                  true, false, false, {0.45f, 1.70f, 0.60f}};
 inline constexpr Recipe kMight{8,    44.0f, 34.0f, 16.0f, 20.0f, 22.0f, 10.0f, 0.0f,
                                true, false, false, {2.20f, 0.55f, 0.15f}};
+// The Dark Phoenix's shield going up, ours: WebZen raises it every six seconds and MuMain
+// answers with the wizard's Soul Barrier buff on the bird (ZzzCharacter.cpp:4976-4979), whose
+// look this game does not draw. Ten ember-red ribbons round a ring the bird's width, rising
+// through its body for a second, inside a red circle; in the bird's own fire (the user,
+// 2026-10-07: 'use red tone lighting for phoenix').
+inline constexpr Recipe kPhoenixBarrier{10,   90.0f, 30.0f, 28.0f, 6.0f, 9.0f, 12.0f, 0.0f,
+                                        true, false, true, {1.80f, 0.40f, 0.18f},
+                                        {1.0f, 0.30f, 0.12f}};
 
 class Aura {
 public:

@@ -1174,9 +1174,10 @@ void Realm::leave(const Body& dead, const Body& killer) {
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
 
-    // The second class's gear only where it falls (sim::kTarkanMap): Tarkan and Blood Castle 6.
-    const bool secondGearHere =
-        tables_->map == kTarkanMap || (tables_->map == kBloodCastleMap && run_.castle >= kCastles);
+    // The second class's gear only where it falls (sim::kTarkanMap): Tarkan, Icarus (ours, its
+    // port's decision 9: its south reached three drop rows or none) and Blood Castle 6.
+    const bool secondGearHere = tables_->map == kTarkanMap || tables_->map == kIcarusMap ||
+                                (tables_->map == kBloodCastleMap && run_.castle >= kCastles);
     const auto reaches = [level, secondGearHere](const content::ItemRow& row) {
         return row.dropLevel <= level &&
                (row.maximumDropLevel == 0 || level <= row.maximumDropLevel) &&

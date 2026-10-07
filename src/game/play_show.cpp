@@ -269,6 +269,22 @@ void Play::exhale(float seconds) {
         }
     }
 
+    // The Dark Phoenix's shield, each time it goes up (kPhoenixShieldTicks, kPhoenixBarrier).
+    for (Drawn& one : drawn_) {
+        if (!one.phoenix) continue;
+        const sim::Body* body = realm_.find(one.id);
+        const bool up = ((realm_.tick() / kPhoenixShieldTicks + int64_t(one.id)) & 1) == 0;
+        if (up && !one.shieldUp && body && body->alive() && one.visible && one.placed) {
+            // Round the bird where it flies, not on the plane metres under it: from a little
+            // under its middle, so the ribbons rise through it.
+            const FigureBody* look = one.figure.body();
+            const float tall = look ? look->height * look->scale : 2.0f;
+            const float under[3] = {one.crown[0], one.crown[1] - tall * 0.7f, one.crown[2]};
+            aura_.cast(kPhoenixBarrier, under, one.yaw, ground_->metresPerTile());
+        }
+        one.shieldUp = up;
+    }
+
     for (Drawn& one : drawn_) {
         if (!one.breathes) continue;
         const sim::Body* body = realm_.find(one.id);
@@ -1304,8 +1320,32 @@ void Play::follow(float seconds) {
         // `walking`, is what the walk clip answers to: the sim stops a body on a tick and the
         // drawing gets there up to a tick later.
         const bool moving = !jumped && covered > 1e-4f && through_ < arrived;
-        const float tileX = one.wasX + (one.nowX - one.wasX) * through;
-        const float tileY = one.wasY + (one.nowY - one.wasY) * through;
+        float tileX = one.wasX + (one.nowX - one.wasX) * through;
+        float tileY = one.wasY + (one.nowY - one.wasY) * through;
+        // A Crust glides: MU moves its drawn body 0.07 of the way to its tile a reference frame
+        // (WSclient.cpp:2026-2034, ZzzCharacter.cpp:3145-3190), so each step eases in and out
+        // of the last. Ours: a cap on the lag for MU's snap at the fifteenth frame; a jump is
+        // not glided.
+        if (one.glides) {
+            if (one.glideX < 0.0f || jumped) {
+                one.glideX = tileX;
+                one.glideY = tileY;
+            } else {
+                const float k = 1.0f - std::pow(1.0f - kGlideShare, seconds * 25.0f);
+                one.glideX += (tileX - one.glideX) * k;
+                one.glideY += (tileY - one.glideY) * k;
+                // Held within kGlideLag of the realm's place, as MU's snap holds it within a
+                // step: on a long walk an unbounded ease trailed it by more than a tile.
+                const float ox = one.glideX - tileX, oy = one.glideY - tileY;
+                const float off = std::sqrt(ox * ox + oy * oy);
+                if (off > kGlideLag) {
+                    one.glideX = tileX + ox * (kGlideLag / off);
+                    one.glideY = tileY + oy * (kGlideLag / off);
+                }
+            }
+            tileX = one.glideX;
+            tileY = one.glideY;
+        }
         const float x = (tileX + 0.5f) * metresPerTile;
         const float z = -(tileY + 0.5f) * metresPerTile;
         // A model looks down +z, and placementTransform negates the angle it is given, so +z
