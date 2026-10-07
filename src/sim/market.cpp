@@ -72,8 +72,9 @@ constexpr Offer kMartin[] = {
 // WAS the skill (docs/skills-dk.md §1.2), and this shelf is the route that replaces it -- in the
 // ladder's own order, the level each asks being the drop level of the first weapon that carried
 // that skill. Only Defense, Uppercut, Falling Slash and Lunge, drop level 20 and under (the user,
-// 2026-10-02: "dont sell best orbs but sell only early game orbs and scrolls"); Twisting Slash,
-// Cyclone, Slash, Death Stab and Rageful Blow drop and are not sold.
+// 2026-10-02: "dont sell best orbs but sell only early game orbs and scrolls"); Cyclone, Slash,
+// Death Stab and Rageful Blow drop and are not sold. Twisting Slash and Impale Zienna sells in
+// Devias (2026-10-07).
 //
 // **Without the source's three +S copies** (the user, 2026-10-01: "dublivated item"): the
 // Sword of Assassin, the Morning Star and the Double Axe stood twice, plain and with their skill. With the
@@ -172,12 +173,15 @@ constexpr Offer kIzabel[] = {
 
 // Zienna (shop8): arrows and bolts, Brass helm and pants, Wind gloves and boots, three shields
 // and her weapons -- without the +S copies of the two she also sells plain (the user,
-// 2026-10-01).
+// 2026-10-01). **And two knight's orbs in the free cells by the shields, ours** (the user,
+// 2026-10-07: 'sell some DK orbs on zienna vendor at devias like impale and twisting slash'):
+// Impale and Twisting Slash, past Hanzo's four early ones, which still drop as well.
 constexpr Offer kZienna[] = {
     gear(0, kBows, 7, 0), gear(1, kBows, 7, 1), gear(2, kBows, 7, 2), gear(3, kBows, 15, 0),
     gear(4, kBows, 15, 1), gear(5, kBows, 15, 2), gear(6, kHelms, 8, 0), gear(16, kPants, 8, 0),
     gear(18, kGloves, 12, 0), gear(20, kBoots, 12, 0), gear(22, kShields, 10, 0),
     gear(32, kShields, 3, 0), gear(34, kShields, 9, 0), gear(36, kBows, 3, 0),
+    gear(38, kOrbs, 18, 0), gear(39, kOrbs, 7, 0),
     gear(48, kAxes, 4, 0), gear(49, kSpears, 3, 0),
     gear(59, kAxes, 5, 0), gear(61, kSwords, 8, 0), gear(62, kBows, 11, 0, true),
     gear(80, kSwords, 9, 0), gear(84, kSwords, 5, 0, true),
