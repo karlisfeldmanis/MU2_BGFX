@@ -1081,10 +1081,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // Devias's theme under its roofs -- the planks and patterned floors World::indoors
             // reads -- and silence in the snow. MU plays MUSIC_DEVIAS on the whole map
             // (SceneManager.cpp); ours, the user's (2026-09-30: "when we go inside devias
-            // buildings play devias theme music").
+            // buildings play devias theme music"). Looped under the roof, never rested (the user,
+            // 2026-10-07: 'if character goes inside devias buildings we always play music').
             float feetX = 0.0f, feetZ = 0.0f;
             world_.characterAt(&feetX, &feetZ);
             pub = world_.indoors(feetX, feetZ);
+            loops = true;
             roofTrack = "/music/Devias.mp3";
         } else if (args.world == "noria") {
             // MUSIC_NORIA in its safe zone, as MU plays it (SceneManager.cpp:1028-1036: `if
