@@ -206,7 +206,13 @@ void Nova::emit(Burst& burst) {
     }
     // And on its last frame the slow ring, sub-type 7, `i * 10` exactly, and its shock.
     if (burst.framesLeft == 1) {
-        for (int i = 0; i < kPerFrame; ++i) spawn(from, float(i) * 10.0f, kSlow, true, burst.tint);
+        for (int i = 0; i < kPerFrame; ++i) {
+            // Begun kRingFrom out (ours, off the clip).
+            const float yaw = float(i) * 10.0f * kDegrees;
+            const float out[3] = {from[0] + std::cos(yaw) * kRingFrom, from[1],
+                                  from[2] + std::sin(yaw) * kRingFrom};
+            spawn(out, float(i) * 10.0f, kSlow, true, burst.tint);
+        }
         for (Flash& shock : shocks_) {
             if (shock.alive) continue;
             shock = Flash{};
@@ -433,7 +439,7 @@ void Nova::gather(gfx::Effects& effects) const {
             for (int k = 0; k < 3; ++k) head.position[k] = joint.at[k];
             head.halfWidth = head.halfHeight = 0.5f * (joint.ring ? kRingPuffSize : kPuffSize);
             head.spin = float(joint.dice % 360u) * kDegrees;
-            for (int k = 0; k < 3; ++k) head.colour[k] = (joint.tint[k] * dim + white) * life;
+            for (int k = 0; k < 3; ++k) head.colour[k] = (kPuffBlue[k] * dim + white) * life;
             head.sheet = puff_;
             head.blend = gfx::Blend::Additive;
             effects.add(head);
@@ -467,7 +473,9 @@ void Nova::gather(gfx::Effects& effects) const {
         // Faded out over its last frames, and the ring over its whole life (ours).
         const float fade = joint.ring ? kRingDim * joint.left / kLife
                                       : kSpokeDim * std::min(1.0f, joint.left / kFadeFrames);
-        const float colour[3] = {joint.tint[0] * fade, joint.tint[1] * fade, joint.tint[2] * fade};
+        const float white = joint.ring ? 0.0f : kSpokeWhite * fade / kSpokeDim;
+        const float colour[3] = {joint.tint[0] * fade + white, joint.tint[1] * fade + white,
+                                 joint.tint[2] * fade + white};
         const float half = kWidth * 0.5f * (joint.ring ? 1.0f : kSpokeWidth);
         ribbon(effects, points, joint.tails + 1, half, side, colour, joint_);
     }

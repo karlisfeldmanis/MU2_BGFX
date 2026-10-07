@@ -39,7 +39,9 @@
 //     with a little white, fading with its life: hundreds overlapping are the cloud, white where
 //     they crowd at its heart and puffed at its rim, as the clip's;
 //   * the slow ring's heads the same at kRingPuffSize and kRingPuffDim: its thirty-six overlap
-//     into the thick soft ring, dark inside;
+//     into the thick soft ring, dark inside; begun kRingFrom out, as the clip's ring is already
+//     round him when the middle goes dark, where MU's leave from his feet;
+//   * the rays thin and whiter (kSpokeWidth, kSpokeWhite), as the clip's streaks are;
 //   * the flash, a puff at his chest swelling from kFlashFrom to kFlashSize over kFlashLife
 //     frames and going out, a whiter heart under it;
 //   * the cooked `shockwave` sheet laid flat at his feet under the ring, from kShockFrom to
@@ -118,20 +120,25 @@ private:
     static constexpr int kShinyEvery = 9;              // ours
     static constexpr float kShinyDim = 0.6f;           // ours
     static constexpr float kSpokeDim = 0.22f;          // ours
-    static constexpr float kSpokeWidth = 1.0f;         // ours, of MU's 60
+    static constexpr float kSpokeWidth = 0.45f;        // ours, of MU's 60
+    static constexpr float kSpokeWhite = 0.06f;        // ours
     static constexpr float kRingDim = 0.2f;            // ours
     static constexpr float kFadeFrames = 6.0f;         // ours
     // The burst's look off the clip (above), all ours.
     static constexpr bool kAllTailed = true;
-    static constexpr float kPuffSize = 2.4f;           // metres across
-    static constexpr float kPuffDim = 0.09f;
-    static constexpr float kPuffWhite = 0.03f;
+    static constexpr float kPuffSize = 3.2f;           // metres across
+    static constexpr float kPuffDim = 0.2f; 
+    static constexpr float kPuffWhite = 0.0f;
+    // The puffs' blue, deeper than MU's (0.3, 0.3, 1): bright, ours went lavender through the
+    // tonemap where the clip's rim is a deep blue.
+    static constexpr float kPuffBlue[3] = {0.16f, 0.2f, 1.0f};
     static constexpr float kRingPuffSize = 3.0f;
-    static constexpr float kRingPuffDim = 0.45f;
-    static constexpr float kRingPuffWhite = 0.05f;
-    static constexpr float kFlashLife = 12.0f;         // frames
+    static constexpr float kRingPuffDim = 0.65f;
+    static constexpr float kRingPuffWhite = 0.02f;
+    static constexpr float kRingFrom = 1.2f;           // metres out it begins
+    static constexpr float kFlashLife = 9.0f;          // frames
     static constexpr float kFlashFrom = 1.5f;          // metres across
-    static constexpr float kFlashSize = 8.0f;
+    static constexpr float kFlashSize = 7.0f;
     static constexpr float kFlashDim = 0.9f;
     static constexpr float kFlashOver = 1.0f;          // at his chest, over his feet
     static constexpr float kShockLife = 30.0f;         // frames
