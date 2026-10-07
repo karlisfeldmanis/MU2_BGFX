@@ -1327,7 +1327,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         // Under the open sky where the map is "underground" only for its air (Tarkan's sand).
         world_.weather().update(float(deltaSeconds), inside && !world_.leaves().openAir());
-        ctx.time.rain(world_.weather().rain(), world_.weather().flash());
+        // Under a roof the light is the dry spell's, eased over the doorway (Weather::shelter).
+        const float open = 1.0f - world_.weather().shelter();
+        ctx.time.rain(world_.weather().rain() * open, world_.weather().flash() * open);
         // Devias's blizzard drives the snow; everywhere else the storm is nought.
         world_.leaves().setStorm(world_.weather().snows() ? world_.weather().rain() : 0.0f);
         world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground(),

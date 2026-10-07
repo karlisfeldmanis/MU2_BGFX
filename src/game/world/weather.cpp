@@ -36,7 +36,7 @@ constexpr float kTurnSeconds = 100.0f / 25.0f;
 constexpr float kStormLow = 120.0f, kStormHigh = 240.0f;
 constexpr float kBuildSeconds = 18.0f;
 // Under a roof the howl is muffled to this share rather than cut, over this long a turn, so a
-// doorway is a step into shelter and not a click.
+// doorway is a step into shelter and not a click. The light takes the same turn (shelter()).
 constexpr float kShelteredLevel = 0.25f;
 constexpr float kShelterSeconds = 0.6f;
 
@@ -229,13 +229,13 @@ void Weather::update(float seconds, bool indoors) {
     const float target = rains_ && wet_ ? (steady_ > 0.0f ? steady_ : 1.0f) : 0.0f;
     const float step = seconds / (snows_ ? kBuildSeconds : kTurnSeconds);
     share_ = share_ < target ? std::min(target, share_ + step) : std::max(target, share_ - step);
+    const float shelter = indoors ? 1.0f : 0.0f;
+    const float turn = seconds / kShelterSeconds;
+    sheltered_ = sheltered_ < shelter ? std::min(shelter, sheltered_ + turn)
+                                      : std::max(shelter, sheltered_ - turn);
 
     if (!sound_) return;
     if (blizzardSound_ >= 0) {
-        const float shelter = indoors ? 1.0f : 0.0f;
-        const float turn = seconds / kShelterSeconds;
-        sheltered_ = sheltered_ < shelter ? std::min(shelter, sheltered_ + turn)
-                                          : std::max(shelter, sheltered_ - turn);
         sound_->loop(blizzardSound_, share_ > 0.0f);
         sound_->level(blizzardSound_, share_ * (1.0f - (1.0f - kShelteredLevel) * sheltered_));
     }

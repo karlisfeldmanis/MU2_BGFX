@@ -81,6 +81,12 @@ public:
     // The lightning now, 0 none to 1 a near strike at its brightest: the playing clap's flash
     // curve where the ear is in it. update() reads it.
     float flash() const { return flash_; }
+    // How far under a roof the ear is, 0 open sky to 1 inside, eased over the doorway. The
+    // light takes the storm off by it: under a roof it is the dry spell's light, with no
+    // flash -- the user, 2026-10-07: "if there is storm (lorencia,devias) and character goes
+    // inside doors, lighting has to be same as when there is no storm". Ours. The thunder is
+    // still heard and the blizzard's howl muffled; only the light is dry.
+    float shelter() const { return sheltered_; }
 
 private:
     float random01();
@@ -89,7 +95,7 @@ private:
     Sound* sound_ = nullptr;
     bool rains_ = false;    // this world has a wet spell at all
     bool snows_ = false;    // and it is Devias's blizzard, not rain
-    float sheltered_ = 0.0f;  // how far under a roof the ear is, for the blizzard's muffle
+    float sheltered_ = 0.0f;  // how far under a roof the ear is: the howl's muffle, the light's dry
     bool jungle_ = false;   // this world has the jungle's daytime bed
     bool sky_ = false;      // Icarus: a steady faint rain, silent
     bool forced_ = false;   // --weather held the spell
