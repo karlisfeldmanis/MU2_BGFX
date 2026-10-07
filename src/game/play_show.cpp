@@ -717,6 +717,38 @@ void Play::shade(float seconds) {
         if (devil == nullptr || target == nullptr || !devil->placed || !target->placed) continue;
         const float to[3] = {target->crown[0], target->crown[1] - 0.7f, target->crown[2]};
         const float origin[3] = {0.0f, 0.0f, 0.0f};
+        // The Dark Phoenix's: its bolt in its own fire (kPhoenixBoltColour), one broad and three
+        // thin from the middle of the bird into the middle of the body, with Lightning's
+        // eThunder and a warm light where it bites in place of Lightning's blue. Ours.
+        if (devil->phoenix) {
+            const FigureBody* bird = devil->figure.body();
+            const float high = bird ? bird->height * bird->scale : 2.0f;
+            const float from[3] = {devil->crown[0], devil->crown[1] - high * 0.45f,
+                                   devil->crown[2]};
+            if (!cast.heard) {
+                cast.heard = true;
+                if (heard_.boltThunder >= 0) emit(heard_.boltThunder, from[0], from[2]);
+            }
+            const FigureBody* aim = target->figure.body();
+            const float tall = aim ? aim->height * aim->scale : 1.4f;
+            const float chest[3] = {target->crown[0], target->crown[1] - tall * 0.5f,
+                                    target->crown[2]};
+            for (int bolt = 0; bolt < 4; ++bolt) {
+                float end[3] = {chest[0], chest[1], chest[2]};
+                for (int i = 0; i < 3 && bolt > 0; ++i) {
+                    wanderDice_ = wanderDice_ * 1664525u + 1013904223u;
+                    end[i] += (float((wanderDice_ >> 8) % 1000) / 500.0f - 1.0f) * kLizardBoltWander;
+                }
+                shadowStars_.thunderBeam(from, end, kLizardBoltHalf[bolt == 0 ? 0 : 1],
+                                         kPhoenixBoltColour);
+            }
+            shadowStars_.glow(chest, 1.0f, kPhoenixBoltColour);
+            if (!cast.smoked) {
+                cast.smoked = true;
+                shadowStars_.wisp(chest);
+            }
+            continue;
+        }
         // A Hydra's: the Lizard King's red lightning, one broad bolt and three thin, from the
         // mouth of the head it left (kHydraHeads) into the middle of the body struck, with
         // Lightning's eThunder (the user, 2026-10-04: 'from heads we shoot red lightiing not

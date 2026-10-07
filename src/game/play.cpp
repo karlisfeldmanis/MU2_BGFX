@@ -1453,8 +1453,16 @@ void Play::update(double seconds) {
                                 body && body->kind >= 0 &&
                                 size_t(body->kind) < tables_.kinds.size() &&
                                 tables_.kinds[size_t(body->kind)].number == kDarkPhoenixNumber;
-                            thunderCasts_.push_back({happening.who, happening.whom,
-                                                     phoenix ? kPhoenixBoltWait : attackTime(13)});
+                            // The Phoenix's in its own fire, as the Lizard King's (Play's
+                            // laserCasts_): Lightning's blue light read wrong on a fire bird
+                            // (the user, 2026-10-07: 'lihgting from phoenix still is blue').
+                            if (phoenix) {
+                                laserCasts_.push_back({happening.who, happening.whom,
+                                                       kLizardBoltSeconds, kPhoenixBoltWait});
+                            } else {
+                                thunderCasts_.push_back(
+                                    {happening.who, happening.whom, attackTime(13)});
+                            }
                         }
                         // A Hydra's first head bolt, the swing's own beam (sim kSplitBlows): from
                         // just before its blow shows, as the Lizard King's.

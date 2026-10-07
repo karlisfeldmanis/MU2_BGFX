@@ -581,6 +581,9 @@ constexpr float kPhantomSpiritWait = 13.0f / 25.0f;  // (14 - 1) / 25 s
 inline constexpr const char* kDarkPhoenixFigure = "DarkPhoenix01";
 constexpr int32_t kDarkPhoenixNumber = 77;
 constexpr float kPhoenixBoltWait = 13.0f / 25.0f;    // (14 - 1) / 25 s
+// Its bolt's colour and the light where it bites: the bird's fire, orange-red (the user,
+// 2026-10-07: 'lihgting from phoenix still is blue not orangish/redish'). Ours.
+constexpr float kPhoenixBoltColour[3] = {0.85f, 0.26f, 0.04f};
 constexpr float kPhoenixSpiritWait = 1.0f / 25.0f;   // (2 - 1) / 25 s
 // Its shield, shown only (the port's decision 7, A): WebZen toggles it every six seconds
 // (gObjSkylandBoss); each time it goes up the bird wears fx/aura's kPhoenixBarrier. The phase
