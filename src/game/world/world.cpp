@@ -122,6 +122,12 @@ bool World::open(const std::string& assetDir, const std::string& name,
     if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures);
     core::Loading::stage("the town's lights and grass", 0.56f, 0.63f);
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
+    // Devias's bridges are decked in slot 3, the planks MU counts as a floor indoors, so a
+    // walk over one stopped the blizzard and started the town's theme (the user, 2026-10-07:
+    // 'Bridges is not in-building place its a devias open map place'). Every plank tile joined
+    // to one under a bridge model is open ground. Ours: MU's own test has the same fault.
+    bridgeDecks_.clear();
+    if (deviasFloors_ && town_.isOpen()) markBridgeDecks();
     // Devias's doors, which swing and slide as he comes near. See game/world/doors.h.
     if (town_.isOpen()) doors_.open(name, town_, ground_.metresPerTile());
     // Blood Castle's drawbridge, which falls when the run says. See game/world/drawbridge.h.
@@ -412,6 +418,41 @@ bool World::characterAt(float* x, float* z) const {
     return true;
 }
 
+void World::markBridgeDecks() {
+    const int n = ground_.size();
+    const float metresPerTile = ground_.metresPerTile();
+    if (n <= 0 || metresPerTile <= 0.0f) return;
+    bridgeDecks_.assign(size_t(n) * size_t(n), 0);
+    const auto& models = town_.cooked().models;
+    std::vector<std::pair<int, int>> open;
+    int bridges = 0, tiles = 0;
+    for (const content::TownInstance& at : town_.cooked().instances) {
+        if (at.model >= models.size()) continue;
+        const std::string& name = models[at.model].name;
+        if (name != "Object13" && name != "Object14") continue;
+        ++bridges;
+        // A span's origin can sit just off its deck, on the chasm's edge: its 3x3 seeds it.
+        const int column = int(std::floor(at.position[0] / metresPerTile));
+        const int row = int(std::floor(-at.position[2] / metresPerTile));
+        for (int dr = -1; dr <= 1; ++dr)
+            for (int dc = -1; dc <= 1; ++dc) open.push_back({column + dc, row + dr});
+    }
+    while (!open.empty()) {
+        const auto [c, r] = open.back();
+        open.pop_back();
+        if (c < 0 || r < 0 || c >= n || r >= n || ground_.floorAt(c, r) != 3) continue;
+        uint8_t& deck = bridgeDecks_[size_t(r) * size_t(n) + size_t(c)];
+        if (deck) continue;
+        deck = 1;
+        ++tiles;
+        open.push_back({c + 1, r});
+        open.push_back({c - 1, r});
+        open.push_back({c, r + 1});
+        open.push_back({c, r - 1});
+    }
+    core::logf("bridges: %d spans decking %d plank tiles, open to the sky", bridges, tiles);
+}
+
 bool World::indoors(float x, float z) const {
     // Column is +x and row is -z. docs/conventions.md.
     const float metresPerTile = ground_.metresPerTile();
@@ -420,7 +461,12 @@ bool World::indoors(float x, float z) const {
     const int floor = ground_.floorAt(column, row);
     // Devias's planks and its four patterned floors, the church's marble and carpets:
     // MuMain's HeroTile != 3 && HeroTile < 10 for WD_2DEVIAS (MainScene.cpp:81).
-    if (deviasFloors_) return floor == 3 || floor >= 10;
+    if (deviasFloors_) {
+        const size_t size = size_t(ground_.size());
+        if (floor == 3 && !bridgeDecks_.empty() && bridgeDecks_[size_t(row) * size + size_t(column)])
+            return false;
+        return floor == 3 || floor >= 10;
+    }
     // The Dungeon has no open sky to stand under, and its slot 4 is a cobble, not a floor
     // indoors. MuMain stops the wind by map there too: it never loads it (SceneManager.cpp:859).
     if (underground_) return true;

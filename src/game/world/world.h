@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "content/ground.h"
 #include "content/texture.h"
@@ -106,6 +107,7 @@ public:
     bool indoors(float x, float z) const;
 
 private:
+    void markBridgeDecks();
     // A tile to the centre of that tile in world metres, through the map's own scale.
     void tileToMetres(float column, float row, float* x, float* z) const;
 
@@ -154,6 +156,9 @@ private:
     bool deviasFloors_ = false;
     // The Dungeon is under a roof on every tile: no wind, a closed room, no leaves. See indoors().
     bool underground_ = false;
+    // Devias's plank tiles under its bridges (Object13/14), which are open ground for all that
+    // they are laid in the planks the houses are floored with. One byte a tile. See indoors().
+    std::vector<uint8_t> bridgeDecks_;
 };
 
 }  // namespace mu::game

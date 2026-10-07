@@ -909,15 +909,20 @@ void Minimap::rebuild(const Play& play) {
     }
 
     // Where he stands, MU's own "(130, 127)" (CNewUIHeroPositionInfo), under the disc, on the
-    // scrim's fading shadow just past the rim. The whole map has it beside its name instead.
+    // scrim's fading shadow just past the rim, with the map's name over it (the user,
+    // 2026-10-07: 'above the coordinates show also map name'). The whole map has it beside its
+    // name instead.
     char where[32];
     std::snprintf(where, sizeof where, "%d, %d", now_.column, now_.row);
     if (!full_) {
         const float figure = kFigure * u;
+        const float line = std::round(cy + radius_ - fade * kRimIn + 5.0f * u + figure * 0.8f);
+        const char* name = mapName(play.realm().tables()->map);
+        const float named = controls::labelWidth(figure, name);
+        controls::label(canvas_, std::round(cx - named * 0.5f), line, figure, style::kBone, name);
         const float wide = controls::labelWidth(figure, where);
-        controls::label(canvas_, std::round(cx - wide * 0.5f),
-                        std::round(cy + radius_ - fade * kRimIn + 5.0f * u + figure * 0.8f), figure,
-                        style::kBone2, where);
+        controls::label(canvas_, std::round(cx - wide * 0.5f), std::round(line + figure * 1.2f),
+                        figure, style::kBone2, where);
     }
 
     // The name of the mark under the pointer, over it and inside the screen.
