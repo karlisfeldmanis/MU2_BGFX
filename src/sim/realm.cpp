@@ -1246,7 +1246,11 @@ std::string describe(const Happening& happening, const Realm& realm) {
     const auto name = [&realm](uint32_t id) -> std::string {
         const Body* one = realm.find(id);
         if (!one) return "nobody";
-        if (one->player) return "hero";
+        // The first player is "hero", as he was when he was the one; the rest go by their ids.
+        if (one->player) {
+            return realm.playerCount() > 0 && realm.playerAt(0).id == id ? std::string("hero")
+                                                                         : "hero#" + std::to_string(id);
+        }
         if (one->warden >= 0) {
             return realm.tables()->folk[size_t(one->warden)].name + "#" + std::to_string(id);
         }

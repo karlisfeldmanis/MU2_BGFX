@@ -202,9 +202,22 @@ every hash agreeing.
   - Saves stay local, and a character on the server is fresh each time (the user: existing saves
     do not matter; the server starts with a fresh character database).
 
+## On the box — done 2026-10-07
+
+- `server/deploy.sh` put `dd95ffb8` on the Hetzner box, and the service runs protocol 2.
+  `sim_test`'s whole output there (376,118 lines) matches the Mac's, 0 lines differ.
+- **The two clients on the real server,** from this Mac over the internet, the same run as the
+  loopback's:
+  - the knight raised Lorencia as #1, and the elf was welcomed as #302 with 220 ticks of its past;
+  - each played as itself, and the knight's picture drew #302 coming in, dressed;
+  - 31 of 31 and 20 of 20 hashes agreed;
+  - the server said #302 left as his connection went, and the world was let go after 640 ticks.
+- After it, the seeded log's `describe` names the players after the first `hero#<id>`; it named
+  every player "hero", so the elf's log read the knight sitting down as his own. One player's log
+  is unchanged, and so is sim_test's output.
+
 ## Next
 
-- Deploy to the box, and check that `sim_test` there matches the Mac exactly.
 - Phase 3, the world host: one process for every map, and the map change moving a player between
   worlds on the server instead of reconnecting.
 - Another player's gear redrawn when it changes; his name over his head; chat.
