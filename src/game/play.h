@@ -1325,7 +1325,6 @@ private:
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         int evil = -1, hellfire = -1;  // the Devil's sEvil and the Balrog's sHellFire
-        int novaCharge = -1;  // SOUND_NUKE1, Nova's gathering, stopped when it bursts
         int boltThunder = -1;          // eThunder, Lightning's own, on a Hydra's and a Lizard King's bolts
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast

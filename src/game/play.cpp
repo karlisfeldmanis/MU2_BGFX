@@ -406,17 +406,11 @@ void Play::update(double seconds) {
                         caster->swingPace = 1.0f;
                         ++caster->swingToken;
                     }
-                    // Owed to the key he comes down on (kNovaBurstKey): the burst, the
-                    // gathering's sound cut and the burst's rung, and what it killed flung.
+                    // Owed to the key he comes down on (kNovaBurstKey): the burst, its sound,
+                    // and what it killed flung. Nothing is gathered first here (the user,
+                    // 2026-10-07), so SOUND_NUKE1 has nothing to sound under.
                     novaOwed_ = NovaOwed{caster->id, happening.c, 0.0f};
                     novaTick_ = int64_t(happening.tick);
-                }
-            }
-            // Begun: PlayBuffer(SOUND_NUKE1) with PLAYER_SKILL_HELL_BEGIN (WSclient.cpp:4754-4757),
-            // six and a half seconds that rise with the twelve stages.
-            if (happening.what == sim::What::Cast && happening.a == sim::skill::kNova) {
-                if (Drawn* caster = drawnOf(happening.who); caster && caster->placed) {
-                    emit(heard_.novaCharge, caster->crown[0], caster->crown[2], caster->id);
                 }
             }
             if (happening.what == sim::What::Cast) {
@@ -1927,7 +1921,6 @@ void Play::update(double seconds) {
                                        ground_->heightAt(caster->crown[0], caster->crown[2]),
                                        caster->crown[2]};
                 nova_.release(feet, novaOwed_.stage, Nova::kBlue);
-                sound_.stop(heard_.novaCharge);
                 if (novaBurstSound_ >= 0) emit(novaBurstSound_, feet[0], feet[2], caster->id);
                 core::logf("nova: burst drawn at key %.1f, %.2f s after the realm let it go",
                            double(playing ? keyOf(caster->figure) : -1.0f),
@@ -1962,8 +1955,10 @@ void Play::update(double seconds) {
             }
             const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
                                    hero->crown[2]};
-            nova_.charge(points, count, holding ? realm_.chargeStage() : nova_.lastStage(), feet,
-                         Nova::kBlue);
+            const int stage = holding          ? realm_.chargeStage()
+                              : novaOwed_.by != 0 ? novaOwed_.stage
+                                                  : nova_.lastStage();
+            nova_.charge(points, count, stage, feet, Nova::kBlue);
         }
     }
     // And what it killed sparks blue for its first thirty frames dead (Nova::sparkle).
@@ -1983,7 +1978,6 @@ void Play::update(double seconds) {
     } else if (novaHeld_) {
         // Let go before it gathered a stage: nothing bursts, and the pose is given back.
         novaHeld_ = false;
-        sound_.stop(heard_.novaCharge);
         if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->swinging > 1e8f) {
             hero->swinging = hero->casting = 0.0f;
             hero->swingPace = 1.0f;

@@ -204,20 +204,24 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         return true;
     }
 
-    // **A charge** (Nova): begun here, gathered in Realm::chargeTick and let go in burstCharge.
-    // He stands where he is, nothing else thrown, until it goes.
+    // **A charge** (Nova). **Ours: no gathering** -- the user, 2026-10-07: 'in our version of the
+    // game we skiping charging part and use only ground hitting part / release'. Pressed, the
+    // whole charge is paid at once, every stage's mana, and let go at its last stage on this
+    // tick (burstCharge): he leaps and it bursts as he lands. Realm::chargeTick is kept for a
+    // charge that is held, which nothing begins now.
     if (row.chargeTicks > 0) {
-        if (charge_.skill != 0 || hero.mana < row.mana) return false;
+        const int32_t price = row.mana * row.chargeStages;
+        if (charge_.skill != 0 || hero.mana < price) return false;
         hero.walking = false;
         hero.route.clear();
         hero.onStep = 0;
         dropBlow(hero);
         order_ = Request{};
         pending_ = Request{};
-        charge_ = Charge{row.number, 0, tick_, false};
-        hero.swingsAt = hero.castUntil = std::numeric_limits<int64_t>::max();
+        hero.mana -= price;
+        charge_ = Charge{row.number, row.chargeStages, tick_, true};
         hero.castBreaks = false;
-        say(What::Cast, hero, row.number, 0, 0, hero.id);
+        burstCharge(hero);
         return true;
     }
 

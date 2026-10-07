@@ -79,7 +79,7 @@ void Nova::charge(const float* points, int count, int stage, const float feet[3]
                   const float tint[3]) {
     // `m_bySkillCount + 1` lights at each point a frame (kLightsPerBone at most, ours); the
     // pool's oldest give way.
-    const float size = 1.3f + 0.08f * float(stage);
+    const float size = 1.3f + 0.08f * float(std::min(stage, kLightStages));
     const float each = float(std::min(stage + 1, kLightsPerBone));
     for (int p = 0; p < count; ++p) {
         for (int n = many(each); n > 0; --n) {

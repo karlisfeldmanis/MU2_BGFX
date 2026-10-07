@@ -30,7 +30,8 @@
 //     ribbons are, all thirty-six, which at that pitch overlap into one band.
 // Ours:
 //   * the charge's lights a bone are capped at kLightsPerBone a frame, not `m_bySkillCount + 1`,
-//     and dimmed to kLightDim: MU's sixteen stacked by stage seven read as a white figure;
+//     and dimmed to kLightDim: MU's sixteen stacked by stage seven read as a white figure; and
+//     they grow no further than kLightStages' size, as the twelfth's 2.26 read as blobs;
 //   * of the thirty-six shinies a burst frame lays, one in kShinyEvery is drawn, at kShinyDim:
 //     stacked whole at one point they are one white blot;
 //   * the force's head lights at kForceHead of their light;
@@ -109,6 +110,7 @@ private:
     static constexpr float kLightRise = 2.5f * kUnit;
     static constexpr int kLightsPerBone = 2;           // ours
     static constexpr float kLightDim = 0.45f;          // ours
+    static constexpr int kLightStages = 4;             // ours
     static constexpr int kChargeMost = 160;
     // The force: BITMAP_JOINT_HEALING sub-type 8.
     static constexpr int kForcePerFrame = 3;
