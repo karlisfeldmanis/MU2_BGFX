@@ -185,10 +185,11 @@ enum : uint8_t {
     kWingOptionKind = 0x20,
 };
 // **Loch's Feather** (13/14), the 2nd wings' ingredient. MU drops it in Icarus alone
-// (gObjMonster.cpp:4620). Ours: a kill in Atlans, the Lost Tower or Icarus of a monster of
-// kFeatherFromLevel or over leaves one in kFeatherOdds, on its own roll beside the rest (the user,
-// 2026-10-04: 'Rare drop, high maps'; Icarus since its port, 2026-10-07). The level and the
-// rate are ours, and Atlans and the Lost Tower.
+// (gObjMonster.cpp:4620). Ours: a kill in Atlans, the Lost Tower, Tarkan or Icarus of a monster
+// of kFeatherFromLevel or over leaves one in kFeatherOdds, on its own roll beside the rest (the
+// user, 2026-10-04: 'Rare drop, high maps'; Icarus since its port, 2026-10-07; Tarkan, where MU
+// dropped it until 0.98c, the same day: 'drop it, it makes sense'). The level and the rate are
+// ours, and Atlans and the Lost Tower.
 bool lochsFeather(const content::ItemRow& row);
 constexpr int kFeatherOdds = 500;
 constexpr int kFeatherFromLevel = 60;
@@ -199,7 +200,8 @@ constexpr int kFeatherFromLevel = 60;
 bool scrollOfNova(const content::ItemRow& row);
 constexpr int kNovaScrollOdds = 1500;
 constexpr int kNovaScrollFromLevel = 60;
-inline bool featherMap(uint32_t map) { return map == 4 || map == 7 || map == 10; }
+inline bool featherMap(uint32_t map) { return map == 4 || map == 7 || map == 8 || map == 10; }
+inline bool novaScrollMap(uint32_t map) { return map == 4 || map == 7 || map == 10; }
 // **The first wings** in Icarus: any kill there leaves the hero's class's wing (firstWingOf), one
 // in kIcarusWingOdds, +0 and whole, its luck as any drop's, on its own roll beside the rest.
 // INVENTION (the user, 2026-10-07: 'lets them drop'): MU's are mixed only -- WebZen's item.txt
