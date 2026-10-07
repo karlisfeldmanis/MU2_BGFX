@@ -149,6 +149,7 @@ void PlayMode::keep(Context& ctx) {
     }
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);
+    now.followed = desk_.followedQuest();
     if (ctx.goBack.open()) {
         now.goBackWorld = ctx.goBack.world;
         now.goBackColumn = ctx.goBack.column;
@@ -452,6 +453,7 @@ bool PlayMode::open(Context& ctx) {
             if (resumed_) {
                 for (int key = 0; key < 5; ++key) desk_.setQuick(key, saved_.quick[key]);
                 desk_.restoreBar(saved_.bar, 6);
+                desk_.followQuest(saved_.followed);
             }
             // And the pictures the windows will ask for, last of all: after restore(), so the
             // bag being warmed is the one he is carrying and not an empty one.

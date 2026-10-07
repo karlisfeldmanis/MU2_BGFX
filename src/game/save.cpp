@@ -226,6 +226,7 @@ bool loadSave(const std::string& path, Saved& out) {
     for (size_t key = 0; key < 6 && key < bar.size(); ++key) {
         saved.bar[key] = int32_t(bar.at(key).numberOr(0.0));
     }
+    saved.followed = int(doc["followed"].numberOr(-1.0));
     const core::Json& quick = doc["quick"];
     for (size_t key = 0; key < 5 && key < quick.size(); ++key) {
         saved.quickGroup[key] = int(quick.at(key)["group"].numberOr(-1));
@@ -410,6 +411,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "%s%d", key ? ", " : "", saved.bar[key]);
     }
     std::fprintf(f, "]");
+    if (saved.followed >= 0) std::fprintf(f, ",\n  \"followed\": %d", saved.followed);
     if (!saved.goBackWorld.empty() && saved.goBackLeft > 0.0) {
         std::fprintf(f,
                      ",\n  \"go_back\": {\"world\": \"%s\", \"column\": %d, \"row\": %d, "

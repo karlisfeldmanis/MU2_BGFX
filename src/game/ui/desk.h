@@ -131,6 +131,9 @@ public:
     // The game menu up on a page, for a review: --windows menu, options or graphics.
     void showMenu(Menu::Page page) { menu_.show(page); }
     bool specimenOpen() const { return specimenOpen_; }
+    // The quest the tracker is pinned to, -1 for none: what the save keeps (Tracker::pinned).
+    int followedQuest() const { return tracker_.pinned(); }
+    void followQuest(int quest) { tracker_.pin(quest); }
     // The four skill keys, by MU's skill number, 0 for empty: what the save keeps. Restoring
     // marks the arrangement as the player's, so the first-free-key convenience does not put
     // back on the next frame what he took off before he quit -- see `autoBound_`.

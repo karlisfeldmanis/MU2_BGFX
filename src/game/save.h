@@ -38,6 +38,9 @@ struct Saved {
     // The sixth is the right button's quick slot (Hud::kRightSlot); a file from before it had
     // five and reads its sixth as empty.
     int32_t bar[6] = {0, 0, 0, 0, 0, 0};
+    // The quest the tracker follows by his own doing -- the one he last took or killed for --
+    // by the table's index, -1 for none; absent in a file from before it was kept.
+    int followed = -1;
     // There was a `zoom` here, the metres the camera stood back, because the wheel could
     // change it. The camera is fixed at MU's 8 m since 2026-09-24 and there is nothing to
     // keep; an older file's own `zoom` key is read by nothing and ignored.

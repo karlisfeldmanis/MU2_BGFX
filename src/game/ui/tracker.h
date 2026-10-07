@@ -59,6 +59,11 @@ public:
     bool showing() const { return !canvas_.empty(); }
     // The quest it follows, or -1: what L opens the journal on.
     int following() const { return quest_; }
+    // The quest pinned by a kill or by taking it, -1 for none: what the save keeps, so a quest
+    // hunted on another map is still the one shown after a restart (the user, 2026-10-07).
+    // One no longer under way is let go on the next update.
+    int pinned() const { return pinned_; }
+    void pin(int quest) { pinned_ = quest >= 0 && quest < sim::kQuests ? quest : -1; }
     // Whether a quest has a step still to kill for on the map the realm stands in: one of its
     // counted breeds has a nest here.
     static bool here(const sim::Realm& realm, int quest);
