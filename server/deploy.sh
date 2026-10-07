@@ -17,7 +17,6 @@ ssh $host "mkdir -p $dest"
 rsync -az --delete --prune-empty-dirs \
   --include='/CMakeLists.txt' \
   --include='/src/' --include='/src/core/***' --include='/src/content/***' --include='/src/sim/***' \
-  --include='/src/server/***' \
   --include='/src/game/' --include='/src/game/save.cpp' --include='/src/game/save.h' \
   --include='/tests/' --include='/tests/*.cpp' --include='/tests/fixtures/***' \
   --include='/tools/' --include='/tools/bot/***' --include='/tools/raid/***' \

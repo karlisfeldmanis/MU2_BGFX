@@ -34,6 +34,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
+SERVER = os.path.join(ROOT, "server", "src")
 
 # What each layer may include. A layer may always include itself.
 ALLOWED = {
@@ -43,6 +44,10 @@ ALLOWED = {
     "gfx": {"core", "content", "gfx"},
     "game": {"core", "content", "sim", "gfx", "game"},
     "app": {"core", "content", "sim", "gfx", "game", "app"},
+    # The server program, in server/src/ and not src/ (the user, 2026-10-07: "we need that server
+    # source is also in /server folder"): the rules and what they read, never a screen or the
+    # client. Nothing under src/ may include it -- no layer above lists it.
+    "server": {"core", "content", "sim", "server"},
 }
 
 INCLUDE = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.M)
@@ -54,6 +59,8 @@ def layer_of(path):
     A file in a subfolder belongs to its top folder: src/game/ui/hud.cpp is `game`. The
     subfolders inside a layer are there to keep 67 files legible, not to add arrows.
     """
+    if os.path.commonpath([path, SERVER]) == SERVER:
+        return "server"  # server/src/, every file of it, main.cpp included
     rel = os.path.relpath(path, SRC)
     parts = rel.split(os.sep)
     return parts[0] if len(parts) > 1 else None
@@ -62,7 +69,8 @@ def layer_of(path):
 def main():
     violations = []
     counted = 0
-    for dirpath, dirnames, filenames in os.walk(SRC):
+    walked = [w for root in (SRC, SERVER) if os.path.isdir(root) for w in os.walk(root)]
+    for dirpath, dirnames, filenames in walked:
         for name in sorted(filenames):
             if not name.endswith((".h", ".hpp", ".cpp")):
                 continue

@@ -3,12 +3,18 @@
 MU2_BGFX's server runs on a Hetzner box; players run only the client (PLAN.md, the decision of
 2026-10-07). The plan is `docs/server-plan.md`; the sprint in hand is `docs/sprints/17-the-seam.md`.
 
-- **This folder** is running it: `deploy.sh` (copy, build, test on the box), and later the
-  service file and the box's settings.
-- **`src/server/`** will be the server program's code -- the world host, the wire, the
-  character store -- from server-plan phase 3. It is a layer of its own: core, content and sim
-  below it, never gfx or game (`tools/layercheck.py`).
-- The rules themselves stay in `src/sim`, which the client and the server both link.
+Everything that is the server's alone is in this folder (the user, 2026-10-07: *"we need that
+server source is also in /server folder"*):
+
+- **`server/src/`** -- the server program: the world host, the wire, the character store, from
+  server-plan phase 3. It may include core, content and sim, and never gfx or game; the layer
+  check reads it as the `server` layer.
+- **`deploy.sh`** -- copy, build and test on the box; later the service file and the box's
+  settings beside it.
+
+What the client and the server both run stays shared under `src/`: the rules (`src/sim`) and
+what they read (`src/core`, `src/content`). Both programs compile that one copy, which is what
+keeps a rule from meaning one thing on the server and another in the client.
 
 ## The box
 
