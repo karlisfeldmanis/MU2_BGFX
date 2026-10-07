@@ -726,6 +726,30 @@ void button(gfx::Canvas& canvas, const Box& box, const std::string& text, Kind k
     word(canvas, body, size, look.ink, text);
 }
 
+void tab(gfx::Canvas& canvas, const Box& box, const std::string& text, bool chosen,
+          const State& state, float u) {
+    const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
+    const float line = px(u), bar = std::round(2.0f * u);
+    // The strip's floor: one dark iron line, which tabs side by side join into one.
+    canvas.rect({b.x, b.bottom() - line, b.w, line}, style::kIronLo);
+    const Tone quiet{0.561f, 0.522f, 0.459f, 1}, lit{0.953f, 0.910f, 0.831f, 1};
+    Tone ink = quiet.mix(lit, chosen ? 1.0f : state.lift * 0.7f);
+    if (chosen) {
+        // A wash of the accent rising from the floor, and the red bar on it.
+        canvas.shade({b.x, b.y, b.w, b.h - bar}, kBloodTone.alpha(0.0f).packed(),
+                     kBloodTone.alpha(0.0f).packed(), kBloodTone.alpha(0.16f).packed(),
+                     kBloodTone.alpha(0.16f).packed());
+        canvas.rect({b.x, b.bottom() - bar, b.w, bar}, kBloodTone.packed());
+    } else if (state.lift > 0.0f) {
+        canvas.shade({b.x, b.y, b.w, b.h - line}, kWarmLight.alpha(0.0f).packed(),
+                     kWarmLight.alpha(0.0f).packed(), kWarmLight.alpha(0.05f * state.lift).packed(),
+                     kWarmLight.alpha(0.05f * state.lift).packed());
+    }
+    if (state.off && !chosen) ink = {0.361f, 0.322f, 0.286f, 1};
+    if (state.held && !chosen) ink = ink.alpha(0.8f);
+    word(canvas, {b.x, b.y, b.w, b.h - bar}, style::kButtonWordM * u, ink, text);
+}
+
 void square(gfx::Canvas& canvas, const Box& box, Glyph which, const State& state, float u,
             bool red, bool on) {
     const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};

@@ -73,6 +73,11 @@ void kicker(gfx::Canvas& canvas, float x, float baseline, const std::string& tex
 void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, Kind kind,
             const State& state, float u, float wordSize = 0.0f);
 
+// A tab over a page: its word on bare stone over a dark iron floor, the chosen one lit with a
+// red bar on the floor and a faint wash rising from it. Tabs laid edge to edge share the floor.
+void tab(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, bool chosen,
+         const State& state, float u);
+
 enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo };
 // A small square button (close, spend) or an icon square (the coins, the hammers). `red` is the
 // spend's look; `on` is a toggle held down, the repair mode.

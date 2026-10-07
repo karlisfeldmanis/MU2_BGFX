@@ -468,9 +468,9 @@ void QuestDialog::layout(const Play& play) {
         paths_ = kin == int(sim::Kin::MagicGladiator) && !row.promotes &&
                  sim::questOffersPaths(row, first);
         if (paths_) {
-            const float half = (wide - kCellGap) * 0.5f;
+            const float half = wide * 0.5f;  // edge to edge, the two tabs one strip
             pathBox_[0] = {kInset, y, half, kPathTall};
-            pathBox_[1] = {kInset + half + kCellGap, y, half, kPathTall};
+            pathBox_[1] = {kInset + half, y, wide - half, kPathTall};
             y += kPathTall + kCellGap * 2.0f;
         }
         const int paidKin = sim::questPaidKin(row, kin, first, path_);
@@ -1273,18 +1273,18 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
                              panel::commas(row.zen) + " Zen");
         }
-        // The Magic Gladiator's path, the chosen one the primary's red.
+        // The Magic Gladiator's path, two tabs over what each pays him, the chosen one lit red.
         if (paths_) {
             const char* const kWords[2] = {"Melee", "Magic"};
             for (int i = 0; i < 2; ++i) {
-                const Box at{std::round(sx(pathBox_[i].x)), std::round(by(pathBox_[i].y)),
-                             std::round(pathBox_[i].w * u), std::round(pathBox_[i].h * u)};
-                controls::button(body_, at, kWords[i],
-                                 int(path_) == i ? controls::Kind::Primary
-                                                 : controls::Kind::Secondary,
-                                 {over_ == 30 + i ? 1.0f : 0.0f,
-                                  pressing_ == 30 + i && over_ == 30 + i, reading_},
-                                 u);
+                const float left = std::round(sx(pathBox_[i].x));
+                const Box at{left, std::round(by(pathBox_[i].y)),
+                             std::round(sx(pathBox_[i].right())) - left,
+                             std::round(pathBox_[i].h * u)};
+                controls::tab(body_, at, kWords[i], int(path_) == i,
+                              {over_ == 30 + i ? 1.0f : 0.0f,
+                               pressing_ == 30 + i && over_ == 30 + i, reading_},
+                              u);
             }
         }
         // The choice's line stands over the first of its cells, under the paid grid.
