@@ -508,7 +508,7 @@ constexpr int kLifeChance = 50;
 // this expensive item". Of its list the rows this tree has are the three jewels, anything
 // below the wings at +7 or more, and anything excellent; the wings, pets and ancient are not.
 // A client rule -- OpenMU's DropItemAction takes anything -- kept in the realm so the window
-// cannot disagree with it. Ours on top: the Rune of Creation and anything with a socket.
+// cannot disagree with it. Ours on top: the Rune of Creation (a socket alone is nothing dear).
 bool expensive(const content::Tables& tables, const Held& what);
 
 // ---- luck and the additional option -------------------------------------------------------

@@ -7857,7 +7857,7 @@ void testRunes(const content::Tables& tables) {
         }
     }
     check(sim::expensive(tables, carried), "a Rune of Creation cannot be dropped");
-    check(sim::expensive(tables, held(serpent, 1, 0)), "nor a sword with an empty socket");
+    check(!sim::expensive(tables, held(serpent, 1, 0)), "but a sword with an empty socket can");
     check(!sim::expensive(tables, held(serpent, 0, 0)), "but a +0 sword without one can");
 
     {
@@ -7871,7 +7871,6 @@ void testRunes(const content::Tables& tables) {
         checkEqual(int(realm.satchel()[first].powers[0]), int(storm), "the first carries Stormcall");
         check(realm.refine(first, sword), "the first is set");
         check(realm.refine(second, sword), "and the second");
-        checkEqual(long(realm.discard(sword)), 0L, "the socketed sword will not go on the ground");
         const sim::Held& now = realm.satchel()[sword];
         check(now.powers[0] == storm && now.powers[1] == meteor && now.powers[2] == 0,
               "into the first two sockets, the third still empty");
@@ -7881,6 +7880,7 @@ void testRunes(const content::Tables& tables) {
         check(!said.empty() && said.back().what == sim::What::Set &&
                   said.back().b == int(meteor) && said.back().c == 1,
               "and the realm says the second went in socket 1");
+        check(realm.discard(sword) != 0, "and the socketed sword goes on the ground");
     }
 
     // A knight in the hunting ground, swinging at the nearest thing: with a power worn, some of

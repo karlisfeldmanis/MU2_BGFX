@@ -231,12 +231,13 @@ bool expensive(const content::Tables& tables, const Held& what) {
     const content::ItemRow& row = tables.items[size_t(what.item)];
     // `(iLevel > 6 && pItem->Type < ITEM_WING)`: every group before the wings' twelve.
     constexpr int kGroupWings = 12;
-    // And, ours, the Rune of Creation and anything with a socket: the user, 2026-09-29, "jewel of
-    // creation or item with sockets is not dropobale".
+    // And, ours, the Rune of Creation: the user, 2026-09-29, "jewel of creation or item with
+    // sockets is not dropobale" -- the sockets since let go (2026-10-07: "also allow to drop
+    // items with +socker, its nothing special that it has sockets").
     // The pets share the jewels' drop group and not their worth: IsHighValueItem names no helper.
     const bool jewel = row.jewel() && row.group != kGroupPets;
     return jewel || (what.refinement > 6 && row.group < kGroupWings) || what.excellent != 0 ||
-           creation(row) || what.sockets > 0;
+           creation(row);
 }
 
 bool takesOptions(const content::ItemRow& row) {
