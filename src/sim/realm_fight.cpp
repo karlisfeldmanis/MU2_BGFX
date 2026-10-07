@@ -1600,7 +1600,7 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.x = float(dead.column());
         dead.y = float(dead.row());
     }
-    dead.route.clear();
+    route(dead).clear();
     dead.onStep = 0;
     dead.quarry = 0;
     dead.provoked = false;
@@ -1873,7 +1873,7 @@ void Realm::setDown(Body& hero, int column, int row) {
     hero.y = float(row);
     hero.temper = Temper::Wandering;
     hero.walking = false;
-    hero.route.clear();
+    route(hero).clear();
     hero.onStep = 0;
     hero.quarry = 0;
     hero.swingsAt = tick_;
@@ -1941,7 +1941,7 @@ void Realm::raiseBeast(Body& beast) {
     beast.frozenUntil = 0;
     beast.poisonUntil = 0;
     beast.walking = false;
-    beast.route.clear();
+    route(beast).clear();
     beast.onStep = 0;
     beast.swingsAt = tick_ + kind.attackTicks;
     beast.thinksAt = tick_;

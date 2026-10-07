@@ -149,9 +149,9 @@ void Realm::raiseRaid() {
             minion.nest = -1;
             minion.temper = Temper::Dead;
             minion.risesAt = std::numeric_limits<int64_t>::max();
-            minion.route.reserve(64);
             minionSlots_.push_back(int(bodies_.size()));
             bodies_.push_back(std::move(minion));
+            route(bodies_.back()).reserve(64);
         }
     }
     if (party_.empty()) return;
@@ -193,7 +193,6 @@ void Realm::raiseRaid() {
         one.facing = one.aim = hero.facing;
         one.temper = Temper::Wandering;
         one.speed = 1.0f / float(kHeroMoveTicks);
-        one.route.reserve(64);
         // It knows what its kit throws.
         for (const int32_t skill : kit.skills) {
             const int at = skillIndexOf(skill);
@@ -203,6 +202,7 @@ void Realm::raiseRaid() {
         raiderBags_.push_back(bag);
         raiderSlots_.push_back(int(bodies_.size()));
         bodies_.push_back(std::move(one));
+        route(bodies_.back()).reserve(64);
     }
     for (size_t i = 0; i < raiderSlots_.size(); ++i) {
         Body& one = bodies_[size_t(raiderSlots_[i])];

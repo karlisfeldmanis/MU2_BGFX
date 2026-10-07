@@ -21,6 +21,22 @@
 
 namespace mu::sim {
 
+// A townsperson's row by its place in kStrollers and back, here, beside the rows the strollers
+// point at: a constexpr table in a header is each file's own copy, so only this file's addresses
+// are the strollers' (sim/realm_snapshot.cpp).
+int strollIndex(const StrollRow* row) {
+    for (size_t i = 0; i < sizeof(kStrollers) / sizeof(kStrollers[0]); ++i) {
+        if (row == &kStrollers[i]) return int(i);
+    }
+    return -1;
+}
+
+const StrollRow* strollAt(int index) {
+    return index >= 0 && size_t(index) < sizeof(kStrollers) / sizeof(kStrollers[0]) ? &kStrollers[index]
+                                                                                    : nullptr;
+}
+
+
 namespace {
 
 // The realm's ticks a second (game/play_tuning.h's kTickSeconds is its other side).
@@ -59,12 +75,12 @@ void Realm::raiseStrollers() {
         walker.homeRow = at;
         walker.post = walker.facing = walker.aim = facingOf(person.look);
         walker.temper = Temper::Wandering;
-        walker.route.reserve(64);
         Stroller one;
         one.id = walker.id;
         one.row = row;
         strollers_.push_back(one);
         bodies_.push_back(std::move(walker));
+        route(bodies_.back()).reserve(64);
         core::logf("realm: %s walks his rounds, %d stops", person.name.c_str(), row->count);
     }
 }

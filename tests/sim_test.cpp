@@ -4208,9 +4208,9 @@ void testSpamClicks(const content::Tables& tables) {
                             "route %zu onStep %zu next %d,%d\n", tick, stall, realm.hero().x,
                             realm.hero().y, realm.hero().facing * kToDegrees,
                             realm.hero().aim * kToDegrees, int(realm.hero().turning),
-                            realm.hero().route.size(), realm.hero().onStep,
-                            realm.hero().route.empty() ? -1 : realm.hero().route[realm.hero().onStep].column,
-                            realm.hero().route.empty() ? -1 : realm.hero().route[realm.hero().onStep].row);
+                            realm.routeOf(realm.hero()).size(), realm.hero().onStep,
+                            realm.routeOf(realm.hero()).empty() ? -1 : realm.routeOf(realm.hero())[realm.hero().onStep].column,
+                            realm.routeOf(realm.hero()).empty() ? -1 : realm.routeOf(realm.hero())[realm.hero().onStep].row);
             }
         } else {
             stall = 0;
@@ -10913,6 +10913,80 @@ void testKept(const content::Tables& tables) {
     check(stray.playerCount() == 2 && stray.playerAt(1).level == 1, "a Join a tick later comes in new");
 }
 
+// A snapshot (Realm::snapshot): a mirror raised as a client raises one and laid with the server
+// realm's bytes steps alike with it, tick for tick, two heroes hunting.
+void testSnapshot(const content::Tables& tables) {
+    std::printf("snapshot\n");
+    sim::Realm server;
+    check(server.raise(&tables, 7, 200, 160, sim::Kin::DarkKnight, 30), "a world raised");
+    server.command({.kind = sim::Command::Kind::Join, .ticket = 0x80000001u, .a = int(sim::Kin::DarkKnight),
+                    .b = 30, .c = 202, .d = 162});
+    server.step();
+    // Both hunt the nearest live monster, asked every ten ticks, as the same commands to both.
+    const auto hunt = [&](std::vector<sim::Command>& out) {
+        out.clear();
+        if (server.tick() % 10 != 0) return;
+        for (int p = 0; p < server.playerCount(); ++p) {
+            const sim::Body& hero = server.playerAt(p);
+            uint32_t best = 0;
+            float nearest = 30.0f * 30.0f;
+            for (const sim::Body& body : server.bodies()) {
+                if (!body.monster() || !body.alive()) continue;
+                const float dx = body.x - hero.x, dy = body.y - hero.y;
+                if (dx * dx + dy * dy < nearest) {
+                    nearest = dx * dx + dy * dy;
+                    best = body.id;
+                }
+            }
+            if (best != 0) {
+                out.push_back({.kind = sim::Command::Kind::Order, .player = hero.id,
+                               .a = int(sim::Request::Kind::Attack), .target = best});
+            }
+        }
+    };
+    std::vector<sim::Command> asked;
+    for (int t = 0; t < 1500; ++t) {
+        hunt(asked);
+        for (const sim::Command& c : asked) server.command(c);
+        server.step();
+    }
+    std::vector<uint8_t> bytes;
+    check(server.snapshot(bytes), "the realm snapshots");
+    std::printf("  %zu bytes at tick %lld, %d players, %zu bodies\n", bytes.size(),
+                (long long)server.tick(), server.playerCount(), server.bodies().size());
+
+    // The mirror: raised as a client raises from a Welcome, then laid with the bytes.
+    sim::Realm mirror;
+    check(mirror.raise(&tables, 7, 200, 160, sim::Kin::DarkKnight, 30), "the mirror raised");
+    check(mirror.restoreSnapshot(bytes), "and laid with the snapshot");
+    std::vector<uint8_t> again;
+    check(mirror.snapshot(again) && again == bytes, "which says the same bytes back");
+    bytes.pop_back();
+    sim::Realm broken;
+    broken.raise(&tables, 7, 200, 160, sim::Kin::DarkKnight, 30);
+    check(!broken.restoreSnapshot(bytes), "a snapshot cut short is refused");
+
+    int agreed = 0, firstApart = -1, kills = 0;
+    for (int t = 0; t < 1500; ++t) {
+        hunt(asked);
+        for (const sim::Command& c : asked) {
+            server.command(c);
+            mirror.command(c);
+        }
+        server.step();
+        mirror.step();
+        const bool same = net::stateHash(server) == net::stateHash(mirror) &&
+                          server.happenings().size() == mirror.happenings().size() &&
+                          std::memcmp(server.happenings().data(), mirror.happenings().data(),
+                                      server.happenings().size() * sizeof(sim::Happening)) == 0;
+        if (same) ++agreed;
+        else if (firstApart < 0) firstApart = t;
+        for (const sim::Happening& h : server.happenings()) kills += h.what == sim::What::Died;
+    }
+    std::printf("  %d of 1500 ticks alike after it (first apart: %d), %d deaths\n", agreed, firstApart, kills);
+    check(agreed == 1500 && kills > 0, "the mirror steps as the server does, tick for tick");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -10935,6 +11009,7 @@ int main() {
     testSpawn(tables);
     testTwoHeroes(tables);
     testKept(tables);
+    testSnapshot(tables);
     testCommands(tables);
     testInvariants(tables);
     testInvasion(tables);

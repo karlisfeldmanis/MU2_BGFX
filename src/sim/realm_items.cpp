@@ -93,13 +93,13 @@ void Realm::reswing(Body& hero) {
 }
 
 bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
-    me().refusal.clear();
+    refusal_.clear();
     if (!tables_) return false;
     Body& hero = mine();
     const auto allowed = [&](int32_t index, bool wantShield) {
         if (index < 0) return true;
         if (size_t(index) >= tables_->arms.size()) {
-            me().refusal = "there is no such arm";
+            refusal_ = "there is no such arm";
             return false;
         }
         const content::Arm& arm = tables_->arms[size_t(index)];
@@ -107,13 +107,13 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
         const bool second = wantShield && !arm.isShield() && hero.kin == Kin::DarkKnight &&
                             arm.group < kGroupBows && !arm.twoHanded();
         if (arm.isShield() != wantShield && !second) {
-            me().refusal = arm.label + " is " + (arm.isShield() ? "a shield" : "a weapon") +
+            refusal_ = arm.label + " is " + (arm.isShield() ? "a shield" : "a weapon") +
                        " and was asked for as the other";
             return false;
         }
         // mu.db's enumeration: bit 0 Dark Wizard, bit 1 Fairy Elf, bit 2 Dark Knight.
         if ((arm.classes & (1 << int(hero.kin))) == 0) {
-            me().refusal = arm.label + " is not for this class";
+            refusal_ = arm.label + " is not for this class";
             return false;
         }
         // The requirement is the item's own, at its base level. An item's level raises what it
@@ -125,12 +125,12 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
         // in his sword hand.
         if (given) return true;
         if (hero.points.strength < arm.wantsStrength) {
-            me().refusal = arm.label + " wants " + std::to_string(arm.wantsStrength) +
+            refusal_ = arm.label + " wants " + std::to_string(arm.wantsStrength) +
                        " strength and he has " + std::to_string(hero.points.strength);
             return false;
         }
         if (hero.points.agility < arm.wantsAgility) {
-            me().refusal = arm.label + " wants " + std::to_string(arm.wantsAgility) +
+            refusal_ = arm.label + " wants " + std::to_string(arm.wantsAgility) +
                        " agility and he has " + std::to_string(hero.points.agility);
             return false;
         }
@@ -150,7 +150,7 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
         if (index < 0) continue;
         const int32_t item = tables_->itemNamed(tables_->arms[size_t(index)].name);
         if (item < 0) {
-            me().refusal = tables_->arms[size_t(index)].label + " has no item row";
+            refusal_ = tables_->arms[size_t(index)].label + " has no item row";
             continue;
         }
         const content::ItemRow& row = tables_->items[size_t(item)];
@@ -901,7 +901,7 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
         Satchel after = me().bag;
         if (jewel.durability <= 1) after.lift(jewelSlot);
         if (after.free(*tables_, row.width, row.height) < 0) {
-            me().refusal = "no room in the bag for what he could no longer wear";
+            refusal_ = "no room in the bag for what he could no longer wear";
             return false;
         }
     }
@@ -1483,8 +1483,7 @@ int64_t Realm::sellItem(int slot) {
     const int64_t paid = std::max<int64_t>(0, sellValue(slot));
     me().bag.lift(slot);
     me().money += paid;
-    if (int(me().sold.size()) >= kBuybacks) me().sold.erase(me().sold.begin());
-    me().sold.push_back({thing, paid, slot, tick_});
+    me().sold.push({thing, paid, slot, tick_});
     say(What::Sold, mine(), thing.item, int32_t(paid), slot);
     return paid;
 }
@@ -1788,7 +1787,7 @@ int Realm::wearFromVault(int cell, int worn) {
         if (into < 0) {
             me().vault = vaultWas;
             me().bag = bagWas;
-            me().refusal = "no room for what it would take off";
+            refusal_ = "no room for what it would take off";
             return -1;
         }
         me().bag.put(into, off);
@@ -1844,7 +1843,7 @@ bool Realm::refineAcross(Store jewelIn, int jewelAt, Store thingIn, int thingAt)
     const bool wornThing = thingIn == Store::Bag && wearable(thingAt);
     // A worn thing a plus could outgrow comes off into the bag: room for it there, asked first.
     if (wornThing && me().bag.free(*tables_, thingRow.width, thingRow.height) < 0) {
-        me().refusal = "no room in the bag for what he could no longer wear";
+        refusal_ = "no room in the bag for what he could no longer wear";
         return false;
     }
     // The stage: what he wears, the jewel and the thing, and nothing else carried.

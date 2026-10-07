@@ -52,6 +52,7 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
     Body& summon = bodies_[size_t(me().summonSlot)];
     const uint32_t id = summon.id;
     summon = Body{};
+    route(summon).clear();  // a fresh body walks nothing, as one with its own route did
     summon.id = id;
     summon.summoner = hero.id;
     summon.summonedBy = row.number;
@@ -67,7 +68,7 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
     summon.aim = summon.facing = hero.facing;
     summon.temper = Temper::Wandering;
     summon.swingsAt = tick_ + kind.attackTicks;
-    summon.route.reserve(32);
+    route(summon).reserve(32);
     say(What::Spawned, summon, summon.level, summon.health);
     return true;
 }
@@ -188,7 +189,7 @@ void Realm::tend(Body& summon) {
                     blinkSummon(summon, *owner);
                 } else {
                     float x = summon.x, y = summon.y, walk = 0.0f;
-                    for (const Step& step : summon.route) {
+                    for (const Step& step : route(summon)) {
                         walk += fm::hypot(float(step.column) - x, float(step.row) - y);
                         x = float(step.column);
                         y = float(step.row);

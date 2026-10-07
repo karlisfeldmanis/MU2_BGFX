@@ -195,7 +195,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.castBreaks = false;
         hero.aim = fm::atan2(float(where) - hero.y, float(column) - hero.x);
         hero.walking = false;
-        hero.route.clear();
+        route(hero).clear();
         hero.onStep = 0;
         dropBlow(hero);
         me().order = Request{};
@@ -214,7 +214,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         const int32_t price = row.mana * row.chargeStages;
         if (me().charge.skill != 0 || hero.mana < price) return false;
         hero.walking = false;
-        hero.route.clear();
+        route(hero).clear();
         hero.onStep = 0;
         dropBlow(hero);
         me().order = Request{};
@@ -487,7 +487,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.channelEcho = false;
     }
     hero.walking = false;
-    hero.route.clear();
+    route(hero).clear();
     hero.onStep = 0;
     // **And the auto-attack goes on.** The user's rule, 2026-09-23, which puts back what the
     // first pass did and takes out the `me().order = Request{}` that stood here for a day: a skill is
@@ -685,7 +685,7 @@ void Realm::shove(Body& target) {
     target.y = float(row);
     // The walk it was on is void: it has been put somewhere its route does not start from.
     target.walking = false;
-    target.route.clear();
+    route(target).clear();
     target.onStep = 0;
     say(What::Shoved, target, column, row);
 }
@@ -837,7 +837,7 @@ void Realm::blink(Body& hero) {
     hero.y = float(hero.blinkRow);
     hero.blinkAt = 0;
     hero.walking = false;
-    hero.route.clear();
+    route(hero).clear();
     hero.onStep = 0;
     hero.repathsAt = 0;
     // A summon, if one stands, goes with any warp of his (the Town Portal's rule): no summoner
@@ -873,7 +873,7 @@ void Realm::push(Body& target, float fromX, float fromY) {
     target.pushTicks = kPushTicks;
     // The walk it was on is void, and it is not reaching anybody while it slides.
     target.walking = false;
-    target.route.clear();
+    route(target).clear();
     target.onStep = 0;
     say(What::Shoved, target, column, row);
 }
@@ -933,7 +933,7 @@ float Realm::whirl(Body& hero, const SkillRow& row, float force) {
         target->pushY = ly / float(ticks);
         target->pushTicks = ticks;
         target->walking = false;
-        target->route.clear();
+        route(*target).clear();
         target->onStep = 0;
         target->whirledBy = hero.id;
         target->whirlForce = force;

@@ -138,6 +138,7 @@ add_library(mu_sim STATIC
   src/sim/machine.cpp
   src/sim/gates.cpp
   src/sim/maps.cpp
+  src/sim/realm_snapshot.cpp
   src/sim/traps.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp

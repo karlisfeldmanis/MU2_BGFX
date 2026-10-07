@@ -391,8 +391,8 @@ struct Body {
     int32_t nest = -1;
     int64_t wakesAt = 0;
 
-    // The walk. `route` is the tiles left to cross and keeps its capacity between plans.
-    std::vector<Step> route;
+    // The walk: the tiles left to cross are the realm's (Realm::route), so a body is plain data
+    // a snapshot copies whole; `onStep` is how far along them he is.
     size_t onStep = 0;
     bool walking = false;
     float speed = 0.125f;  // tiles a tick: one over the breed's own moveTicks
@@ -756,7 +756,7 @@ public:
     // through the check.
     bool equip(int32_t weapon, int32_t shield, bool given = false);
     // Why the last equip was refused, or empty.
-    const std::string& refusal() const { return me().refusal; }
+    const std::string& refusal() const { return refusal_; }
 
     // ---- the satchel (sprint 7) -----------------------------------------------------------
     // What the player carries and wears. The satchel is the truth and his hands are read off
@@ -871,6 +871,24 @@ public:
     };
     static constexpr int kBuybackSeconds = 60;
     static constexpr int kBuybacks = 5;
+    // His sales still to buy back, oldest first: a fixed few in place, so a player is plain data
+    // a snapshot copies whole.
+    struct Sales {
+        Sale at[kBuybacks] = {};
+        int count = 0;
+        bool empty() const { return count == 0; }
+        const Sale& back() const { return at[count - 1]; }
+        void clear() { count = 0; }
+        void pop_back() { --count; }
+        // The oldest let go when it is full.
+        void push(const Sale& one) {
+            if (count == kBuybacks) {
+                for (int i = 1; i < kBuybacks; ++i) at[i - 1] = at[i];
+                --count;
+            }
+            at[count++] = one;
+        }
+    };
     // The newest sale still in its window, or nullptr. Ticks left beside it, if asked.
     const Sale* lastSale(int64_t* ticksLeft = nullptr) const;
     // Takes the newest sale back: paid for, then put where it was or the first place it fits.
@@ -1246,6 +1264,21 @@ public:
         return at < 0 ? nullptr : &heroes_[size_t(at)].bag;
     }
     const Body& hero() const { return mine(); }
+    // **The whole realm as bytes** (sim/realm_snapshot.cpp, docs/sprints/21-the-snapshot.md):
+    // every body, player, flight, die and clock, so a mirror can stand where this realm stands
+    // without stepping its past. Restored onto a realm raised from the same tables; after it,
+    // the two step alike tick for tick. Plain data is copied whole, so the same build on
+    // another machine of the same layout reads it; the sizes of the main structs head the bytes
+    // and a mismatch is refused. False for a realm a snapshot does not carry (a raid's party).
+    bool snapshot(std::vector<uint8_t>& out) const;
+    bool restoreSnapshot(const std::vector<uint8_t>& bytes);
+
+    // The tiles a body has left to cross (Realm::route), empty for none.
+    const std::vector<Step>& routeOf(const Body& one) const {
+        static const std::vector<Step> none;
+        const size_t at = size_t(&one - bodies_.data());
+        return at < routes_.size() ? routes_[at] : none;
+    }
     // A skill's clip is still running, so he is locked where he stands: no step, no re-path.
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which
     // does not draw a destination marker for a walk that is not going to happen.
@@ -1537,6 +1570,16 @@ private:
     std::vector<uint8_t> roads_;  // see setRoads
     // [0] is the player; then the monsters, in spawn order; then the town's guards.
     std::vector<Body> bodies_;
+    // Why the last equip was refused, for the log (sim/cradle.cpp): words, never a rule, so the
+    // realm's and not a player's, and no snapshot's.
+    std::string refusal_;
+    // Each body's route, by its index in bodies_: the tiles left to cross, keeping their capacity
+    // between plans. Kept beside the bodies rather than in them so a Body is plain data.
+    std::vector<std::vector<Step>> routes_;
+    std::vector<Step>& route(const Body& one) {
+        if (routes_.size() < bodies_.size()) routes_.resize(bodies_.size());
+        return routes_[size_t(&one - bodies_.data())];
+    }
     // Who is a player, by index, and where an id lives. Both are lists and not maps: an
     // unordered_map walked to produce a happening is the first thing the census warns about,
     // and ids here are handed out by one counter from 1, so the second is a plain lookup.
@@ -1862,7 +1905,6 @@ private:
         Charge charge;
         int32_t chargeDamage = 0;
         bool undying = false;  // `undying`
-        std::string refusal;   // why his last equip was refused
         Satchel bag;
         // Where his summon body sits in `bodies_`, or -1 before `raise`.
         int summonSlot = -1;
@@ -1882,7 +1924,7 @@ private:
         int64_t weaponWornAt = -1000000;
         int64_t money = 0;
         int trading = -1;
-        std::vector<Sale> sold;  // oldest first, at most kBuybacks
+        Sales sold;
         int banking = -1;
         Vault vault;
         bool jeweled = false;
@@ -1933,6 +1975,9 @@ private:
     // A new hero's body, everything raise() gives the first but his id: his class's points, the
     // level asked for, reckoned, on the nearest standable tile. False with nowhere to stand.
     bool dressNew(Body& hero, Kin kin, int level, int column, int row);
+    // Every field a snapshot carries, in its order, for writing and reading alike.
+    template <class Archive>
+    void serialize(Archive& a);
     // A player's own tick, in two halves either side of the ground's vanishing (Realm::step).
     void heroBefore();
     void heroAfter();

@@ -130,7 +130,7 @@ bool Realm::depart(uint32_t id) {
         if (one.owner == id) one = Fire{};
     }
     dropBlow(gone);
-    gone.route.clear();
+    route(gone).clear();
     gone.onStep = 0;
     gone.walking = false;
     gone.pushTicks = 0;
@@ -280,6 +280,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     me().weaponWornAt = -1000000;
     router_.open(&tables_->grid);
     bodies_.clear();
+    routes_.clear();
     happenings_.clear();
     happenings_.reserve(4096);
     me().castleOwed = 0;
@@ -395,8 +396,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
             // A route's worth of tiles, taken now rather than on the tick the animal first
             // walks. A wander is at most a few tiles and a chase across a nest is tens; 64 is
             // over the worst either has produced, and a route past it grows once.
-            beast.route.reserve(64);
             bodies_.push_back(std::move(beast));
+            route(bodies_.back()).reserve(64);
             ++placed;
         }
     }

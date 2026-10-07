@@ -76,8 +76,8 @@ void Realm::raiseWardens() {
         guard.homeRow = rowAt;
         guard.post = guard.facing = guard.aim = lookAngle(person.look);
         guard.temper = Temper::Wandering;
-        guard.route.reserve(32);
         bodies_.push_back(std::move(guard));
+        route(bodies_.back()).reserve(32);
         ++raised;
     }
     if (raised > 0) core::logf("realm: %zu guards at their posts", raised);

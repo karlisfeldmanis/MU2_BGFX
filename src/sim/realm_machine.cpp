@@ -138,7 +138,7 @@ bool Realm::mix(Service service, int socket) {
     if (!hero.alive()) return false;
     const Judged j = judge(*tables_, me().machine, service, socket, hero.kin);
     if (!j.ready) {
-        me().refusal = "the box is not ready for " + std::string(serviceName(service));
+        refusal_ = "the box is not ready for " + std::string(serviceName(service));
         return false;
     }
     int answers[3];
@@ -149,7 +149,7 @@ bool Realm::mix(Service service, int socket) {
             if (item >= 0) answers[choices++] = item;
         }
         if (choices == 0) {
-            me().refusal = "no Chaos weapon is in this world's tables";
+            refusal_ = "no Chaos weapon is in this world's tables";
             return false;
         }
     }
@@ -157,7 +157,7 @@ bool Realm::mix(Service service, int socket) {
         // The hero's class's wing alone (sim/machine.h), so the pick below has one choice.
         const int32_t wing = tables_->itemAt(12, firstWingOf(hero.kin));
         if (wing < 0) {
-            me().refusal = std::string("no ") + firstWingName(hero.kin) + " is in this world's tables";
+            refusal_ = std::string("no ") + firstWingName(hero.kin) + " is in this world's tables";
             return false;
         }
         answers[choices++] = wing;
@@ -165,28 +165,28 @@ bool Realm::mix(Service service, int socket) {
     const int32_t secondWingItem =
         j.recipe == Recipe::SecondWings ? tables_->itemAt(12, secondWingOf(hero.kin)) : -1;
     if (j.recipe == Recipe::SecondWings && secondWingItem < 0) {
-        me().refusal = std::string("no ") + secondWingName(hero.kin) + " is in this world's tables";
+        refusal_ = std::string("no ") + secondWingName(hero.kin) + " is in this world's tables";
         return false;
     }
     if (j.recipe == Recipe::Cloak && tables_->itemAt(kGroupPets, 18) < 0) {
-        me().refusal = "no Invisibility Cloak is in this world's tables";
+        refusal_ = "no Invisibility Cloak is in this world's tables";
         return false;
     }
     if (j.recipe == Recipe::Cloak && hero.level < kCloakFromLevel) {
-        me().refusal = "Must be over level 15 to combine a Cloak of Invisibility.";
+        refusal_ = "Must be over level 15 to combine a Cloak of Invisibility.";
         return false;
     }
     if (j.recipe == Recipe::Dinorant && tables_->itemAt(kGroupPets, 3) < 0) {
-        me().refusal = "no Horn of Dinorant is in this world's tables";
+        refusal_ = "no Horn of Dinorant is in this world's tables";
         return false;
     }
     const int32_t rune = tables_->itemAt(kGroupPotions, 22);
     if ((service == Service::RemoveRune || service == Service::FuseRunes) && rune < 0) {
-        me().refusal = "no Rune of Creation is in this world's tables";
+        refusal_ = "no Rune of Creation is in this world's tables";
         return false;
     }
     if (me().money < j.zen) {
-        me().refusal = "not the Zen for it";
+        refusal_ = "not the Zen for it";
         return false;
     }
     me().money -= j.zen;

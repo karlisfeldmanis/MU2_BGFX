@@ -52,9 +52,9 @@ void Realm::raiseInvader() {
     beast.nest = -1;
     beast.temper = Temper::Dead;
     beast.risesAt = std::numeric_limits<int64_t>::max();
-    beast.route.reserve(64);
     invaderSlot_ = int(bodies_.size());
     bodies_.push_back(std::move(beast));
+    route(bodies_.back()).reserve(64);
 }
 
 void Realm::invasionRain(bool raining) {

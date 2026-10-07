@@ -38,8 +38,8 @@ bool Realm::send(Body& one, int column, int row, bool byRoad) {
     // going before. Half a step back to the centre of the tile is the answer the click meant.
     if (column == one.column() && row == one.row() &&
         (std::fabs(one.x - float(column)) > 1e-3f || std::fabs(one.y - float(row)) > 1e-3f)) {
-        one.route.clear();
-        one.route.push_back(Step{int16_t(column), int16_t(row)});
+        route(one).clear();
+        route(one).push_back(Step{int16_t(column), int16_t(row)});
         one.onStep = 0;
         one.walking = true;
         rise(one);
@@ -61,7 +61,7 @@ bool Realm::send(Body& one, int column, int row, bool byRoad) {
     // tiles were -- Router::sees tests every tile a leg touches -- so nothing walks through
     // anything the plan went round. Invention against MU, which walks the staircase.
     router_.pull(one.x, one.y, wallOf(one), scratch_, byRoad);
-    one.route.assign(scratch_.begin(), scratch_.end());
+    route(one).assign(scratch_.begin(), scratch_.end());
     one.onStep = 0;
     one.walking = true;
     // On his feet before the first step, and said in that order: a drawing told of the walk
@@ -69,7 +69,7 @@ bool Realm::send(Body& one, int column, int row, bool byRoad) {
     rise(one);
     // The goal the route actually ends on, not the one asked for: the router moves a goal in a
     // wall to the nearest open tile, and the marker is put down from this event.
-    say(What::Walked, one, one.route.back().column, one.route.back().row, tiles);
+    say(What::Walked, one, route(one).back().column, route(one).back().row, tiles);
     return true;
 }
 
@@ -97,7 +97,7 @@ void Realm::settle(Body& one) {
 void Realm::halt(Body& one) {
     if (!one.walking) return;
     one.walking = false;
-    one.route.clear();
+    route(one).clear();
     one.onStep = 0;
     settle(one);
     say(What::Halted, one);
@@ -168,8 +168,8 @@ void Realm::advance(Body& one) {
         return;
     }
     // Aimed at the tile it is walking to, and turned toward it BEFORE any ground is covered.
-    if (one.onStep < one.route.size()) {
-        const Step& target = one.route[one.onStep];
+    if (one.onStep < route(one).size()) {
+        const Step& target = route(one)[one.onStep];
         const float dx = float(target.column) - one.x;
         const float dy = float(target.row) - one.y;
         if (dx * dx + dy * dy > 1e-6f) one.aim = fm::atan2(dy, dx);
@@ -181,8 +181,8 @@ void Realm::advance(Body& one) {
     const int wasColumn = one.column(), wasRow = one.row();
     // Iced, it covers half the ground a tick (`kChillFactor`); running or riding, more.
     float left = one.speed * (one.chilledUntil > tick_ ? kChillFactor : 1.0f) * strideFactor(one);
-    while (left > 0.0f && one.onStep < one.route.size()) {
-        const Step& target = one.route[one.onStep];
+    while (left > 0.0f && one.onStep < route(one).size()) {
+        const Step& target = route(one)[one.onStep];
         const float dx = float(target.column) - one.x;
         const float dy = float(target.row) - one.y;
         const float distance = std::sqrt(dx * dx + dy * dy);
@@ -206,9 +206,9 @@ void Realm::advance(Body& one) {
         say(What::Stepped, one, one.column(), one.row());
         if (one.player && throughGate(one)) return;
     }
-    if (one.onStep >= one.route.size()) {
+    if (one.onStep >= route(one).size()) {
         one.walking = false;
-        one.route.clear();
+        route(one).clear();
         one.onStep = 0;
         settle(one);
         say(What::Halted, one);
