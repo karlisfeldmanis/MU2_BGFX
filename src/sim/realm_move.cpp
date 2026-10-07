@@ -6,6 +6,7 @@
 // 7-diagonal is a SEARCH cost and counting it twice makes diagonals 41%% slow
 // (docs/conventions.md, "Time").
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include "sim/swings.h"
 
@@ -170,7 +171,7 @@ void Realm::advance(Body& one) {
         const Step& target = one.route[one.onStep];
         const float dx = float(target.column) - one.x;
         const float dy = float(target.row) - one.y;
-        if (dx * dx + dy * dy > 1e-6f) one.aim = std::atan2(dy, dx);
+        if (dx * dx + dy * dy > 1e-6f) one.aim = fm::atan2(dy, dx);
     }
     if (turn(one)) return;  // still coming round: no ground this tick
     // A tile crossed is said when the body's own tile changes, not when it reaches a point of
@@ -188,7 +189,7 @@ void Realm::advance(Body& one) {
             ++one.onStep;
             continue;
         }
-        one.aim = std::atan2(dy, dx);
+        one.aim = fm::atan2(dy, dx);
         if (distance <= left) {
             one.x = float(target.column);
             one.y = float(target.row);
@@ -300,7 +301,7 @@ void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
         row = openRow;
     }
     setDown(hero, column, row);
-    hero.facing = std::atan2(float(dy), float(dx));
+    hero.facing = fm::atan2(float(dy), float(dx));
     hero.turning = false;
     for (Body& one : bodies_) {
         if (one.player || one.quarry != hero.id) continue;
@@ -384,7 +385,7 @@ void Realm::engage(Body& one, const Body& target) {
     // is the only other thing that aims, so a fighter stopped in reach between two blows faces
     // wherever it was last walking -- MU2 measured a Skeleton Warrior 105 degrees off the
     // knight it was fighting.
-    one.aim = std::atan2(target.y - one.y, target.x - one.x);
+    one.aim = fm::atan2(target.y - one.y, target.x - one.x);
 }
 
 // Whether a chase needs planning again: the chaser has stopped, or its quarry has moved a whole

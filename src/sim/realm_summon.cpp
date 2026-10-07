@@ -18,6 +18,7 @@
 // The body is raised once, dormant, at the end of `bodies_` (Realm::raise) and reused, so casting
 // never moves a pointer into `bodies_`. Its fights roll off `summonDice_`.
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include <algorithm>
 #include <cmath>
@@ -188,7 +189,7 @@ void Realm::tend(Body& summon) {
                 } else {
                     float x = summon.x, y = summon.y, walk = 0.0f;
                     for (const Step& step : summon.route) {
-                        walk += std::hypot(float(step.column) - x, float(step.row) - y);
+                        walk += fm::hypot(float(step.column) - x, float(step.row) - y);
                         x = float(step.column);
                         y = float(step.row);
                     }
@@ -232,8 +233,8 @@ bool Realm::blinkSummon(Body& summon, const Body& owner) {
     // Two tiles behind her, against the way she faces, so it falls in at her back and not in
     // her path; else any open tile within three of that; and it must see her, or it would land
     // on the far side of the wall it was stuck behind.
-    const float backX = owner.x - std::cos(owner.facing) * 2.0f;
-    const float backY = owner.y - std::sin(owner.facing) * 2.0f;
+    const float backX = owner.x - fm::cos(owner.facing) * 2.0f;
+    const float backY = owner.y - fm::sin(owner.facing) * 2.0f;
     int column = 0, rowAt = 0;
     const bool behind =
         router_.nearestOpen(int(std::lround(backX)), int(std::lround(backY)), wallOf(summon), 3,

@@ -9,6 +9,12 @@ if(APPLE AND NOT MU2_SERVER_ONLY)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
+# No fused multiply-add, anywhere: Apple's clang fuses a*b+c into one rounding on ARM and GCC on
+# x86 does not, so the same rule gave different bits on the Mac and on the server (server/README.md).
+# The client's mirror steps the server's realm in lockstep from phase 4 and must agree with it to
+# the bit; the rules' own transcendentals are sim/fmath.h. Whole build, because a rule inlined in a
+# header is compiled into the client's files too.
+add_compile_options(-ffp-contract=off)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)

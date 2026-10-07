@@ -15,6 +15,7 @@
 // A guard takes no draw from the realm's dice: his fights, either way round, roll off a stream of
 // their own (Realm::wardenDice_), so a seeded run is moved by a guard only where he kills.
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include <algorithm>
 #include <cmath>
@@ -37,7 +38,7 @@ int fromPost(const Body& guard, const Body& one) {
 float lookAngle(int32_t look) {
     const int facing = look >= 1 && look <= 8 ? look : 3;
     const float bearing = float(((facing - 3) % 8 + 8) % 8) * (3.14159265359f / 4.0f);
-    return std::atan2(-std::cos(bearing), std::sin(bearing));
+    return fm::atan2(-fm::cos(bearing), fm::sin(bearing));
 }
 
 }  // namespace
@@ -228,7 +229,7 @@ void Realm::pointOn(Body& guard, const Body& dead) {
     // And he turns to look that way, and holds it while the line is read.
     if (more) {
         halt(guard);
-        guard.aim = std::atan2(more->y - guard.y, more->x - guard.x);
+        guard.aim = fm::atan2(more->y - guard.y, more->x - guard.x);
         guard.standsUntil = tick_ + kPointTicks;
     }
 }

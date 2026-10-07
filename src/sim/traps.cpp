@@ -1,4 +1,5 @@
 #include "sim/traps.h"
+#include "sim/fmath.h"
 
 #include <cmath>
 
@@ -248,7 +249,7 @@ int octantOf(int dx, int dy) {
     if (dx == 0 && dy == 0) return -1;
     // atan2 + pi over pi/4, rounded as Convert.ToInt32 rounds: a half to the even integer, which
     // is std::nearbyint under the default rounding mode.
-    const double eighths = (std::atan2(double(dy), double(dx)) + 3.14159265358979323846) /
+    const double eighths = (fm::atan2(double(dy), double(dx)) + 3.14159265358979323846) /
                            (3.14159265358979323846 / 4.0);
     return int(std::nearbyint(eighths)) % 8;
 }

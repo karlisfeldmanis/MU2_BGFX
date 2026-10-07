@@ -16,6 +16,7 @@
 // The rolls: the dragon's off `raidDice_`, the raiders' off `raiderDice_`, so a run with no raid
 // is not moved by one.
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include <algorithm>
 #include <cmath>
@@ -174,8 +175,8 @@ void Realm::raiseRaid() {
         // Round him in a ring of two tiles, in party order.
         const float angle = float(k) * 6.2831853f / float(std::max(1, count));
         int column = hero.column(), row = hero.row();
-        router_.nearestOpen(hero.column() + int(std::lround(std::cos(angle) * 2.0f)),
-                            hero.row() + int(std::lround(std::sin(angle) * 2.0f)),
+        router_.nearestOpen(hero.column() + int(std::lround(fm::cos(angle) * 2.0f)),
+                            hero.row() + int(std::lround(fm::sin(angle) * 2.0f)),
                             content::kWallCharacter, 6, &column, &row);
         Body one;
         one.id = nextId_++;
@@ -330,8 +331,8 @@ void Realm::dragonHoard(const Body& dragon) {
     const double turn = raidDice_.nextDouble() * 6.283185307179586;
     for (int i = 0; i < count; ++i) {
         const double angle = turn + 6.283185307179586 * double(i) / double(count);
-        const int c = int(std::lround(dragon.x + std::cos(angle) * kHoardReach));
-        const int r = int(std::lround(dragon.y + std::sin(angle) * kHoardReach));
+        const int c = int(std::lround(dragon.x + fm::cos(angle) * kHoardReach));
+        const int r = int(std::lround(dragon.y + fm::sin(angle) * kHoardReach));
         Lying one;
         one.what = hoard[i];
         std::tie(one.column, one.row) = clearing(c, r);
@@ -526,12 +527,12 @@ void Realm::raidMove(Body& dragon) {
     int crowd = -1;
     for (const Body& one : bodies_) {
         if (!partisan(one) || !one.alive()) continue;
-        const float gap = std::hypot(one.x - dragon.x, one.y - dragon.y);
+        const float gap = fm::hypot(one.x - dragon.x, one.y - dragon.y);
         if (gap <= kShockReach + 0.5f) ++under;
         if (gap > kBreathReach) continue;
         int near = 0;
         for (const Body& other : bodies_) {
-            if (partisan(other) && other.alive() && std::hypot(other.x - one.x, other.y - one.y) <= 3.0f) {
+            if (partisan(other) && other.alive() && fm::hypot(other.x - one.x, other.y - one.y) <= 3.0f) {
                 ++near;
             }
         }
@@ -559,7 +560,7 @@ void Realm::raidMove(Body& dragon) {
     } else if (aim != nullptr) {
         move.kind = HazardKind::Breath;
         move.reach = kBreathReach;
-        move.facing = std::atan2(aim->y - dragon.y, aim->x - dragon.x);
+        move.facing = fm::atan2(aim->y - dragon.y, aim->x - dragon.x);
         move.share = kBreathShare;
         move.landsAt = tick_ + kBreathTell;
         move.endsAt = move.landsAt + kBreathTicks;
@@ -583,7 +584,7 @@ void Realm::strafe(Body& dragon) {
         if (!partisan(one) || !one.alive() || !within(dragon, one, kInfernoReach)) continue;
         int near = 0;
         for (const Body& other : bodies_) {
-            if (partisan(other) && other.alive() && std::hypot(other.x - one.x, other.y - one.y) <= 3.0f) {
+            if (partisan(other) && other.alive() && fm::hypot(other.x - one.x, other.y - one.y) <= 3.0f) {
                 ++near;
             }
         }
@@ -595,7 +596,7 @@ void Realm::strafe(Body& dragon) {
     if (aim == nullptr) return;
     ++raid_.serial;
     const float bearing = float(raidDice_.nextDouble() * 6.283185307179586);
-    const float c = std::cos(bearing), s = std::sin(bearing);
+    const float c = fm::cos(bearing), s = fm::sin(bearing);
     for (int i = 0; i < kStrafeFires; ++i) {
         const float along = -kStrafeLength * 0.5f + kStrafeLength * float(i) / float(kStrafeFires - 1);
         Hazard fire;
@@ -647,8 +648,8 @@ void Realm::inferno(Body& dragon, bool shadows) {
         fire.shades = raid_.players > 5 ? 3 : 2;
         for (int i = 0; i < fire.shades; ++i) {
             int column = 0, row = 0;
-            const int c = int(std::lround(dragon.x + std::cos(bearings[i]) * kShadowOut));
-            const int r = int(std::lround(dragon.y + std::sin(bearings[i]) * kShadowOut));
+            const int c = int(std::lround(dragon.x + fm::cos(bearings[i]) * kShadowOut));
+            const int r = int(std::lround(dragon.y + fm::sin(bearings[i]) * kShadowOut));
             if (!router_.nearestOpen(c, r, content::kWallCharacter, 3, &column, &row)) {
                 column = c;
                 row = r;
@@ -681,8 +682,8 @@ void Realm::minionWave(Body& dragon) {
         for (int attempt = 0; attempt < 12 && column < 0; ++attempt) {
             const double angle = raidDice_.nextDouble() * 6.283185307179586;
             const double out = 4.0 + raidDice_.nextDouble() * 5.0;
-            const int c = int(std::lround(dragon.x + std::cos(angle) * out));
-            const int r = int(std::lround(dragon.y + std::sin(angle) * out));
+            const int c = int(std::lround(dragon.x + fm::cos(angle) * out));
+            const int r = int(std::lround(dragon.y + fm::sin(angle) * out));
             if (tables_->grid.open(c, r, content::kWallCharacter) && !tables_->grid.safe(c, r)) {
                 column = c;
                 row = r;
@@ -708,14 +709,14 @@ bool Realm::inHazard(const Hazard& h, float x, float y) const {
     const float dx = x - h.x, dy = y - h.y;
     switch (h.kind) {
         case HazardKind::Breath: {
-            const float gap = std::hypot(dx, dy);
+            const float gap = fm::hypot(dx, dy);
             if (gap > h.reach) return false;
-            return gap < 1.0f || std::fabs(wrapped(std::atan2(dy, dx) - h.facing)) <= kBreathHalfAngle;
+            return gap < 1.0f || std::fabs(wrapped(fm::atan2(dy, dx) - h.facing)) <= kBreathHalfAngle;
         }
         case HazardKind::Inferno: {
             if (std::max(std::fabs(dx), std::fabs(dy)) > h.reach) return false;
             for (int i = 0; i < h.shades; ++i) {
-                if (std::hypot(x - h.shadeX[i], y - h.shadeY[i]) <= kShadowReach) return false;
+                if (fm::hypot(x - h.shadeX[i], y - h.shadeY[i]) <= kShadowReach) return false;
             }
             return true;
         }
@@ -831,7 +832,10 @@ void Realm::bossThink(Body& dragon) {
 void Realm::raidAfter() {
     if (raid_.stage == RaidStage::None || invaderSlot_ < 0) return;
     const Body& dragon = bodies_[size_t(invaderSlot_)];
-    const float keep = std::pow(0.5f, 1.0f / float(kThreatHalf));
+    // 0.5^(1/140), the float nearest it: a literal, so no machine's powf decides it. A change to
+    // kThreatHalf needs this again (python: struct float of 0.5 ** (1 / ticks)).
+    static_assert(kThreatHalf == 140, "keep is 0.5^(1/140)");
+    constexpr float keep = 0x1.fd78a8p-1f;
     for (float& one : raid_.threat) one *= keep;
     for (const Happening& one : happenings_) {
         // A minion killed stays down until the next wave calls it: the kill's own respawn
@@ -926,7 +930,7 @@ void Realm::raiderStrike(Body& one, Body& target, const SkillRow* row) {
     const bool ranged = one.archer > 0 || (row != nullptr && row->wizardry) ||
                         one.kin == Kin::DarkWizard;
     const float hit = row != nullptr ? force(*row, one.totalPoints()) : 1.0f;
-    one.aim = std::atan2(target.y - one.y, target.x - one.x);
+    one.aim = fm::atan2(target.y - one.y, target.x - one.x);
     // What the drawing shows of it, said as the hero's are: an arrow or a fan let go (`Loosed`,
     // Realm::looseArrow and looseFan), a spell's rock or ring (`Loosed`), Evil Spirit's spirits
     // round him (`Spirits`). Its blows land now, on the tick, as a raider's always do.
@@ -953,11 +957,11 @@ void Realm::raiderStrike(Body& one, Body& target, const SkillRow* row) {
         for (int rock = 0; rock < kShowerRocks; ++rock) {
             const double angle = raiderDice_.nextDouble() * 6.283185307179586;
             const double out = std::sqrt(raiderDice_.nextDouble()) * double(row->splash);
-            const float x = target.x + float(std::cos(angle) * out);
-            const float y = target.y + float(std::sin(angle) * out);
+            const float x = target.x + float(fm::cos(angle) * out);
+            const float y = target.y + float(fm::sin(angle) * out);
             for (Body& other : bodies_) {
                 if (!other.monster() || !other.alive()) continue;
-                if (std::hypot(other.x - x, other.y - y) > kRockBlast) continue;
+                if (fm::hypot(other.x - x, other.y - y) > kRockBlast) continue;
                 strikeAt(one, other, hit, row, true);
             }
         }

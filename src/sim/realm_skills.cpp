@@ -15,6 +15,7 @@
 //   * **Every refusal is silent.** The interface asks and redraws from the realm; a no is a
 //     message that does not come back. `Swing` and `Move` already work that way.
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include <algorithm>
 #include <cmath>
@@ -192,7 +193,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.blinkRow = where;
         hero.swingsAt = hero.castUntil = hero.blinkAt + kBlinkSettleTicks;
         hero.castBreaks = false;
-        hero.aim = std::atan2(float(where) - hero.y, float(column) - hero.x);
+        hero.aim = fm::atan2(float(where) - hero.y, float(column) - hero.x);
         hero.walking = false;
         hero.route.clear();
         hero.onStep = 0;
@@ -309,7 +310,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                 if (pointed) body.aim = aim;
             }
         } unturn{hero, wasAim, wasFacing, paid, pointedAim};
-        if (aimed) hero.aim = std::atan2(target->y - hero.y, target->x - hero.x);
+        if (aimed) hero.aim = fm::atan2(target->y - hero.y, target->x - hero.x);
         // **A spell turns him at once.** A wizard's clip is cast from the tick it starts, and
         // left to the turn a body coming round from behind began it facing away -- 150 degrees
         // off, the user's "goes to the opposite direction", on two casts in 160 of a hunt. MU
@@ -323,7 +324,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                              (wantsColumn_ != hero.column() || wantsRow_ != hero.row());
         if (pointed) {
             pointedAim = true;
-            hero.aim = std::atan2(float(wantsRow_) - hero.y, float(wantsColumn_) - hero.x);
+            hero.aim = fm::atan2(float(wantsRow_) - hero.y, float(wantsColumn_) - hero.x);
             if (row.wizardry) hero.facing = hero.aim;
         }
         // Cast at nothing, a storm walks the way he faces (SkillRow::castsBare).
@@ -557,11 +558,11 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         const float dx = one.x - hero.x, dy = one.y - hero.y;
         // Clockwise from north, where north is the row decreasing -- the drawing's own negation
         // of the row, borrowed here only to give the sort a stated zero.
-        float turn = std::atan2(dx, -dy);
+        float turn = fm::atan2(dx, -dy);
         if (turn < 0.0f) turn += 6.28318530718f;
         if (row.spread == Spread::Line) {
             // Ahead of him along the aim, and within half the curtain's width of the line.
-            const float c = std::cos(hero.aim), s = std::sin(hero.aim);
+            const float c = fm::cos(hero.aim), s = fm::sin(hero.aim);
             const float ahead = dx * c + dy * s;
             const float aside = -dx * s + dy * c;
             if (ahead <= 0.0f || ahead > kLineTiles || std::fabs(aside) > kLineHalfWidth) continue;
@@ -569,11 +570,11 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         if (row.spread == Spread::Beam) {
             // Within a tile and a half of one of the four points MU strikes round, stepped along
             // the aim from his hand (skills.h kBeamStart).
-            const float c = std::cos(hero.aim), s = std::sin(hero.aim);
+            const float c = fm::cos(hero.aim), s = fm::sin(hero.aim);
             bool struck = false;
             for (int k = 1; k <= kBeamPoints && !struck; ++k) {
                 const float along = kBeamStart + kBeamStep * float(k);
-                struck = std::hypot(dx - c * along, dy - s * along) <= kBeamRadius;
+                struck = fm::hypot(dx - c * along, dy - s * along) <= kBeamRadius;
             }
             if (!struck) continue;
         }
@@ -581,7 +582,7 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
             // The facing eighth and the two beside it. `aim` and not `facing`, because the throw
             // aims him at what the key named and the body turns to it over the clip; the blow
             // belongs where he threw it.
-            const float toward = std::atan2(dy, dx);
+            const float toward = fm::atan2(dy, dx);
             if (std::fabs(wrapped(toward - hero.aim)) > kArcHalfAngle) continue;
         }
         if (found >= room) continue;

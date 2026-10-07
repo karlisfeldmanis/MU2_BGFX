@@ -6,6 +6,7 @@
 // gone without a fall. The rain, the dragons in the sky and the dive are the drawing's, paced off
 // kInvasionRainTicks and kInvasionLandTicks from the `Invasion` happening (game/invasion_sky.h).
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include <cmath>
 #include <limits>
@@ -112,8 +113,8 @@ void Realm::invasionTick() {
             for (int attempt = 0; attempt < 160 && column < 0; ++attempt) {
                 const double angle = invasionDice_.nextDouble() * 6.283185307179586;
                 const double reach = near + invasionDice_.nextDouble() * (far - near);
-                const int c = hero.column() + int(std::lround(std::cos(angle) * reach));
-                const int r = hero.row() + int(std::lround(std::sin(angle) * reach));
+                const int c = hero.column() + int(std::lround(fm::cos(angle) * reach));
+                const int r = hero.row() + int(std::lround(fm::sin(angle) * reach));
                 if (standable(c, r)) {
                     column = c;
                     row = r;
@@ -139,7 +140,7 @@ void Realm::invasionTick() {
         dragon.y = float(row);
         // Facing him as it comes down, so it lands looking at him.
         dragon.facing = dragon.aim =
-            std::atan2(hero.y - dragon.y, hero.x - dragon.x);
+            fm::atan2(hero.y - dragon.y, hero.x - dragon.x);
         invasion_.phase = InvasionPhase::Entering;
         invasion_.landsAt = tick_ + (invasionNow_ ? 1 : kInvasionLandTicks);
         invasionNow_ = false;

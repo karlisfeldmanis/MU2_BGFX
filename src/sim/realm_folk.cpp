@@ -11,6 +11,7 @@
 // (Realm::watch hands a body with no warden row here). He takes no dice: his rounds are a fixed
 // loop, so a seeded run is moved by him only in which tiles are taken when.
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -29,7 +30,7 @@ constexpr int kTicksASecond = 20;
 float facingOf(int32_t look) {
     const int facing = look >= 1 && look <= 8 ? look : 3;
     const float bearing = float(((facing - 3) % 8 + 8) % 8) * (3.14159265359f / 4.0f);
-    return std::atan2(-std::cos(bearing), std::sin(bearing));
+    return fm::atan2(-fm::cos(bearing), fm::sin(bearing));
 }
 
 }  // namespace
@@ -115,7 +116,7 @@ void Realm::stroll(Body& walker) {
             standUp();
             s.there = false;
         }
-        walker.aim = std::atan2(hero.y - walker.y, hero.x - walker.x);
+        walker.aim = fm::atan2(hero.y - walker.y, hero.x - walker.x);
         s.freeAt = tick_ + kStrollResumeTicks;
         return;
     }
@@ -195,7 +196,7 @@ void Realm::stroll(Body& walker) {
             if (stop.with != 0) {
                 for (const content::Townsperson& one : tables_->folk) {
                     if (one.number != stop.with) continue;
-                    walker.aim = std::atan2(float(one.y) - walker.y, float(one.x) - walker.x);
+                    walker.aim = fm::atan2(float(one.y) - walker.y, float(one.x) - walker.x);
                     break;
                 }
                 s.chatAt = tick_ + kChatTicks / 3;
@@ -215,12 +216,12 @@ void Realm::stroll(Body& walker) {
             // it had reached: `chatLine` is only reset when he leaves the stop.
             s.chatAt = tick_ + kChatTicks / 3;
         } else {
-            walker.aim = std::atan2(guard->y - walker.y, guard->x - walker.x);
+            walker.aim = fm::atan2(guard->y - walker.y, guard->x - walker.x);
             // The guard, when he is at his post and not in a fight: turned to him, and the salute,
             // held as a pointing is held (Realm::watch returns while `standsUntil` runs).
             if (guard->quarry == 0 && !guard->walking) {
                 halt(*guard);
-                guard->aim = std::atan2(walker.y - guard->y, walker.x - guard->x);
+                guard->aim = fm::atan2(walker.y - guard->y, walker.x - guard->x);
                 guard->standsUntil = tick_ + kSaluteTicks;
                 say(What::Shouted, *guard, int32_t(Shout::Salute), -1, -1, walker.id);
             }

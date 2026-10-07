@@ -3,6 +3,7 @@
 // The roll and the damage themselves are sim/rules.cpp, traced to OpenMU's Version075; this is
 // what the realm does with the answer.
 #include "sim/realm.h"
+#include "sim/fmath.h"
 
 #include "sim/swings.h"
 
@@ -507,14 +508,14 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (!runeDice_.nextBool(faint ? kGustChance : kTwisterRuneChance)) return;
         const SkillRow* storm = skillNumbered(skill::kTwister);
         if (storm == nullptr) return;
-        const float way = std::atan2(struck.y - hero.y, struck.x - hero.x);
+        const float way = fm::atan2(struck.y - hero.y, struck.x - hero.x);
         for (Fire& one : fires_) {
             if (one.next != 0) continue;
             one = Fire{tick_ + kStormFirst, hero.x, hero.y, storm->number, storm->burns,
                        (faint ? kGustForce : kTwisterRuneForce) *
                            elementForce(hero, Element::Wind),
                        0,
-                       std::cos(way) * storm->walks, std::sin(way) * storm->walks, true};
+                       fm::cos(way) * storm->walks, fm::sin(way) * storm->walks, true};
             say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), 0);
             happenings_.back().rune = true;
             core::logf("twister rune: tick %lld, a storm toward #%u", (long long)tick_, struck.id);
@@ -732,7 +733,7 @@ void Realm::land(Body& hero) {
         // target (ZzzInterface.cpp:1303): set on another body meanwhile, he had turned to that
         // one, and since 2026-10-04 the cast he began is let go all the same (Realm::accept).
         if (const Body* aimed = body(at); aimed != nullptr && !hero.blowGround) {
-            hero.aim = std::atan2(aimed->y - hero.y, aimed->x - hero.x);
+            hero.aim = fm::atan2(aimed->y - hero.y, aimed->x - hero.x);
             hero.facing = hero.aim;
         }
     }
@@ -1006,11 +1007,11 @@ void Realm::looseArrow(Body& hero, uint32_t at, float force) {
 void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
     const Body* aimed = body(aimedAt);
     const float centre =
-        aimed ? std::atan2(aimed->y - hero.y, aimed->x - hero.x) : hero.aim;
+        aimed ? fm::atan2(aimed->y - hero.y, aimed->x - hero.x) : hero.aim;
     // **The lanes reach the body they were aimed at**: the cast measures its reach as MU does, on
     // the larger axis (`within`), and a lane runs a straight line, so a body eight tiles off on
     // both axes was in reach and eleven tiles down the lane -- loosed at and never struck. ours.
-    const float length = aimed ? std::max(laneTiles(row), std::hypot(aimed->x - hero.x,
+    const float length = aimed ? std::max(laneTiles(row), fm::hypot(aimed->x - hero.x,
                                                                       aimed->y - hero.y))
                                : laneTiles(row);
     // One `Loosed` for the cast: the drawing fans its own arrows off it.
@@ -1046,7 +1047,7 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
         // Straight, then one either side, then the next pair out.
         const int step = (a + 1) / 2;
         const float turn = float(a % 2 == 1 ? step : -step) * kFanDegrees * kRadians;
-        const float cx = std::cos(centre + turn), cy = std::sin(centre + turn);
+        const float cx = fm::cos(centre + turn), cy = fm::sin(centre + turn);
         // Every body in the lane, nearest first and then by id, which is fixed for the log.
         struct Struck {
             float along;
@@ -1359,7 +1360,7 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
         // (the user, 2026-10-04: no cast without its spell); `arrive` lands nothing on it.
         if (!one.monster() || (!one.alive() && one.id != aimedAt)) continue;
         if (tables_->grid.safe(one.column(), one.row())) continue;
-        const float gap = std::hypot(one.x - cx, one.y - cy);
+        const float gap = fm::hypot(one.x - cx, one.y - cy);
         if (gap > row.splash || found >= kVictims) continue;
         // The splash stops at a wall, as the blow it rides on does (Realm::seen).
         if (one.id != aimed->id && !seen(cx, cy, one)) continue;
@@ -1415,7 +1416,7 @@ void Realm::shower(Body& hero, const SkillRow& row, uint32_t aimedAt, float forc
         for (int tries = 0; tries < 4; ++tries) {
             const float r = most * float(std::sqrt(showerDice_.nextDouble()));
             const float way = kTau * float(showerDice_.nextDouble());
-            const float x = cx + r * std::cos(way), y = cy + r * std::sin(way);
+            const float x = cx + r * fm::cos(way), y = cy + r * fm::sin(way);
             if (!tables_->grid.open(int(std::lround(x)), int(std::lround(y)),
                                     content::kWallNoMove) ||
                 !router_.sees(cx, cy, x, y, content::kWallNoMove)) {
@@ -1446,14 +1447,14 @@ void Realm::shower(Body& hero, const SkillRow& row, uint32_t aimedAt, float forc
         int heaviest = -1;
         for (int i = 0; i < kShowerRocks; ++i) {
             if (heaviest >= 0 && weight[i] <= weight[heaviest]) continue;
-            if (std::hypot(one.x - rocks[i][0], one.y - rocks[i][1]) > kRockBlast * std::sqrt(weight[i]) ||
+            if (fm::hypot(one.x - rocks[i][0], one.y - rocks[i][1]) > kRockBlast * std::sqrt(weight[i]) ||
                 !seen(rocks[i][0], rocks[i][1], one)) {
                 continue;
             }
             heaviest = i;
         }
         if (heaviest < 0) continue;
-        const float gap = std::hypot(one.x - cx, one.y - cy);
+        const float gap = fm::hypot(one.x - cx, one.y - cy);
         if (found == kVictims && gap >= off[found - 1]) continue;
         int at = std::min(found, kVictims - 1);
         while (at > 0 && (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
@@ -1486,7 +1487,7 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
         for (Fire& one : fires_) {
             if (one.next != 0) continue;
             one = Fire{tick_ + kStormFirst, hero.x, hero.y, row.number, row.burns, force, aimedAt,
-                       std::cos(way) * row.walks, std::sin(way) * row.walks};
+                       fm::cos(way) * row.walks, fm::sin(way) * row.walks};
             // Said once with no flight (`b` is a Loosed's air) and its heading in `c`, in
             // thousandths of a radian, so the drawing walks the storm down the same line the
             // realm strikes along.
@@ -1535,7 +1536,7 @@ void Realm::burn() {
         for (const Body& one : bodies_) {
             if (!one.monster() || !one.alive()) continue;
             if (tables_->grid.safe(one.column(), one.row())) continue;
-            const float gap = std::hypot(one.x - fire.x, one.y - fire.y);
+            const float gap = fm::hypot(one.x - fire.x, one.y - fire.y);
             if (gap > radius || found >= kVictims) continue;
             if (!seen(fire.x, fire.y, one)) continue;
             int at = found;

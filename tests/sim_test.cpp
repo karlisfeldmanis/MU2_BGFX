@@ -1808,16 +1808,22 @@ void testCastLock(const content::Tables& tables) {
                   tables.items[size_t(twisterScroll)].teachesEnergy == 180,
               "the Scroll of Twister teaches skill 8 at a hundred and eighty energy");
         {
-            sim::Realm blower;
-            check(blower.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 100),
-                  "a wizard raises to blow");
-            check(blower.learn(sim::skill::kTwister), "who knows Twister");
             struct Storm {
                 int64_t at;
                 float x, y, dx, dy;
             };
-            Storm storms[64] = {};
             int casts = 0, struck = 0, offPath = 0, offBeat = 0, thrice = 0, swung = 0;
+            // Three fights, pooled: a third-beat strike needs a body still four and a half tiles
+            // out 35 ticks after the cast, which one fight of ~29 storms (his mana's worth) may
+            // not deal. With one seed this scraped by at 1, and a last-bit change to the maths
+            // (sim/fmath.h, 2026-10-07) made it 0 -- a test of the dice, not of the storm.
+            for (const uint64_t seed : {uint64_t(7), uint64_t(11), uint64_t(19)}) {
+            sim::Realm blower;
+            check(blower.raise(&tables, seed, 190, 110, sim::Kin::DarkWizard, 100),
+                  "a wizard raises to blow");
+            check(blower.learn(sim::skill::kTwister), "who knows Twister");
+            Storm storms[64] = {};
+            const int castsBefore = casts;
             uint32_t fighting = 0;
             for (int tick = 0; tick < 4000 && blower.hero().alive(); ++tick) {
                 const uint32_t nearest = nearestTo(blower);
@@ -1851,7 +1857,7 @@ void testCastLock(const content::Tables& tables) {
                     // Which storm, by its beat: one of them must be 11, 23 or 35 ticks old and
                     // stand within a tile and a half of the body (and a step it took since).
                     bool beat = false, near = false;
-                    for (int s = std::max(0, casts - 64); s < casts; ++s) {
+                    for (int s = std::max(castsBefore, casts - 64); s < casts; ++s) {
                         const Storm& storm = storms[s % 64];
                         const int64_t age = int64_t(one.tick) - storm.at;
                         if (age != 11 && age != 23 && age != 35) continue;
@@ -1864,6 +1870,7 @@ void testCastLock(const content::Tables& tables) {
                     if (!beat) ++offBeat;
                     if (!near) ++offPath;
                 }
+            }
             }
             std::printf("  twister: %d storms, %d blows, %d on a third beat, %d of his staff\n",
                         casts, struck, thrice, swung);

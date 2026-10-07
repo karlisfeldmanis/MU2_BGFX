@@ -38,15 +38,10 @@ build takes a few minutes on the one core; `sim_test` runs in about 10 s.
 
 - Two includes Apple's library supplied by accident and Linux's does not: `<cstdint>` in
   `core/args.h`, `<ctime>` in `tests/sim_test.cpp`. Fixed.
-- **The rules are not bit-identical between this Mac and the box.** The same seeded run
-  diverges by a tick in a long fight, and one more sim_test check fails there (11 against the
-  Mac's 10: "as late as its third strike, four and a half tiles out"). Two causes:
-  - Apple's clang fuses `a*b+c` into one rounding on ARM and GCC on x86 does not. Building the
-    Mac with `-ffp-contract=off` gives the box's 11 and removes most of the difference.
-  - The rest is the maths library: `std::atan2` (24 calls in sim), `sin`/`cos` (20 each),
-    `hypot` (14) and `pow` (8) round differently in Apple's libm and glibc.
-
-  **Not fixed, on purpose.** The server is authoritative and the client draws what it is told,
-  so phases 4-7 do not need the two machines to agree. It matters only to replay a server's
-  log on the Mac. The fix, when wanted: `-ffp-contract=off` for `mu_sim` everywhere, and the
-  five functions written once in `sim` (sqrt is exact on both and stays).
+- **The rules were not bit-identical between this Mac and the box** -- a seeded fight drifted
+  by a tick, and one more check failed there. Apple's clang fuses `a*b+c` on ARM where GCC on x86
+  does not, and the two libms round `atan2`, `sin`, `cos`, `hypot` and `pow` differently.
+  **Fixed the same day**, because lockstep needs it (the user chose the network first): the build
+  has `-ffp-contract=off`, the rules use `sim/fmath.h` (fdlibm's kernels in double, fixed
+  order), and the one `pow` is a literal. sim_test's whole output, ~300,000 lines with every
+  logged tick of every fight, is now identical on the two machines (0 lines differ).
