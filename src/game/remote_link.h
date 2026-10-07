@@ -6,6 +6,7 @@
 // sends is stepped on the mirror with the same inputs -- the wall clock, the rain, the commands
 // in order -- and the server's hash, a second apart, is checked against the mirror's own.
 
+#include <chrono>
 #include <cstdint>
 #include <deque>
 #include <string>
@@ -36,6 +37,7 @@ public:
     const std::vector<sim::Happening>& happenings() const override { return mirror_.happenings(); }
     const sim::Realm& realm() const override { return mirror_; }
     bool remote() const override { return true; }
+    float rttMs() const override { return rttMs_; }
     // The world's past, every tick of the Welcome's backlog, stepped on the mirror with nothing
     // drawn; then the mirror looks at his own player (Welcome::you).
     void catchUp() override;
@@ -56,6 +58,10 @@ private:
     std::deque<std::pair<uint32_t, uint64_t>> ours_;     // the mirror's, by tick, the last few
     uint32_t agreed_ = 0, divergedAt_ = 0;
     uint32_t you_ = 0;
+    // RTT measurement: the time the last command was sent, and a smoothed round-trip in ms.
+    std::chrono::steady_clock::time_point lastSendTime_{};
+    bool pendingRtt_ = false;
+    float rttMs_ = -1.0f;
 };
 
 }  // namespace mu::game

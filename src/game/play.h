@@ -221,6 +221,7 @@ public:
     // His character's token from the server's Welcome, for the next world's Hello; 0 off a server.
     uint64_t serverToken() const { return serverToken_; }
     bool remote() const { return link_->remote(); }
+    float rttMs() const { return link_->rttMs(); }
     // The line under the map's name, "Level 2-40": its whole spawn table, taken before the
     // breeds not yet cooked are held back, so a world still waiting on its figures says what it
     // will hold. Empty for a world that spawns nothing.
@@ -1487,9 +1488,10 @@ private:
     // level; at 2 it is cut on its tail. Ours.
     static constexpr float kLevelApart = 2.0f;
     // Whether the next Walked the hero says came from a click, and so puts the marker down.
-    // Cleared by the first tick that runs after the ask, since that tick is the one the realm
-    // takes the order on. One click is one walk: holding the button does not drag the walk
-    // after the pointer (the user's call, 2026-09-21), so there is no held re-aim here.
+    // Cleared when the hero's Walked or Refused arrives, which for a local realm is the first
+    // tick after the click, and for a remote one is the tick the server sent back with the
+    // order taken. One click is one walk: holding the button does not drag the walk after the
+    // pointer (the user's call, 2026-09-21), so there is no held re-aim here.
     bool mark_ = false;
     // A click was made this frame: run the next tick now instead of waiting up to 50 ms for
     // it. See Play::update.

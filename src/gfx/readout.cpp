@@ -10,7 +10,7 @@
 
 namespace mu::gfx {
 
-void Readout::draw(Overlay& overlay, int width, int height) {
+void Readout::draw(Overlay& overlay, int width, int height, float pingMs) {
     if (!overlay.ready() || width <= 0 || height <= 0) return;
 
     const int64_t now = bx::getHPCounter();
@@ -43,6 +43,14 @@ void Readout::draw(Overlay& overlay, int width, int height) {
         // assign into the member rather than building a string: after the first call the
         // capacity is already there, so no frame allocates.
         text_.assign(buf);
+        // The server's round-trip time, when there is one and a measurement has been made.
+        if (pingMs >= 0.0f) {
+            const int ms = int(pingMs + 0.5f);
+            std::snprintf(buf, sizeof buf, "%d ms", ms > 9999 ? 9999 : ms);
+            pingText_.assign(buf);
+        } else {
+            pingText_.clear();
+        }
     }
     if (text_.empty()) return;
 
@@ -59,6 +67,20 @@ void Readout::draw(Overlay& overlay, int width, int height) {
     // to stay legible over pale grass or over night. A plate would also be the opposite of
     // unobtrusive. The ink is the same near-white the tile label uses.
     overlay.text(float(width) - across - margin, margin, scale, 0xFFE8F4FFu, text_);
+    // The ping, below the frame rate, coloured by quality: green under 60 ms, amber to 120,
+    // red above. The thresholds are LoL's own, roughly: 60 is a comfortable game, 120 is
+    // where a click feels late, and above it the wire is the bottleneck.
+    if (!pingText_.empty()) {
+        const float line = Overlay::lineHeight(scale);
+        const float pingAcross = overlay.measure(scale, pingText_);
+        // ABGR: green 0xFF40E840, yellow 0xFF40D8E8, red 0xFF4040E8.
+        const int ms = pingMs >= 0.0f ? int(pingMs + 0.5f) : 0;
+        const uint32_t colour = ms < 60  ? 0xFF40E840u
+                              : ms < 120 ? 0xFF40D8E8u
+                              :            0xFF4040E8u;
+        overlay.text(float(width) - pingAcross - margin, margin + line + 2.0f * scale, scale,
+                     colour, pingText_);
+    }
     overlay.submit(ViewHud);
 }
 

@@ -1588,7 +1588,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
     if (desk_.ready()) desk_.submit(gfx::ViewHud, ctx.window.width(), ctx.window.height());
-    if (args.fps) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height());
+    if (args.fps) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height(),
+                                    world_.played().rttMs());
     if (entrance_ && ctx.curtain.ready()) {
         if (at.index >= 2) entranceSeconds_ += float(deltaSeconds);
         const float t = std::min(1.0f, entranceSeconds_ / 0.1f);

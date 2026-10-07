@@ -1,4 +1,4 @@
-// The frame rate in the top right of a played frame, and nothing else.
+// The frame rate in the top right of a played frame, and the server's round-trip time when
 //
 // It is drawn through `Overlay` and not through `Interface`, deliberately. The interface is
 // retained -- a Canvas a window, rebuilt when what it mirrors moves -- and it carries MU2's
@@ -27,7 +27,7 @@ public:
     // time between two calls IS the frame, so this needs nothing from the Application's own clock --
     // which is capped to one 20 Hz tick for the animation's sake and overridden whole by
     // --fixed-dt, neither of which is the frame rate anybody wants to read.
-    void draw(Overlay& overlay, int width, int height);
+    void draw(Overlay& overlay, int width, int height, float pingMs = -1.0f);
 
 private:
     // Half a second at 60 fps. The MEDIAN of these is what is shown, not the mean: a frame
@@ -47,6 +47,7 @@ private:
     static constexpr double kRefreshMs = 250.0;
     double sinceText_ = kRefreshMs;  // so the first frame with a sample prints one
     std::string text_;
+    std::string pingText_;  // "42 ms", empty when off a server
 };
 
 }  // namespace mu::gfx

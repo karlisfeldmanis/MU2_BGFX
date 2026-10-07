@@ -87,6 +87,8 @@ RemoteLink::~RemoteLink() {
 
 void RemoteLink::send(const sim::Command& command) {
     if (!socket_.open()) return;
+    lastSendTime_ = std::chrono::steady_clock::now();
+    pendingRtt_ = true;
     std::vector<uint8_t> out;
     net::put(out, command);
     if (!socket_.send(out)) {
@@ -110,7 +112,23 @@ void RemoteLink::pump() {
         if (ok && kind == net::Kind::Tick) {
             net::Tick tick;
             ok = net::parse(body, tick);
-            if (ok) ticks_.push_back(std::move(tick));
+            if (ok) {
+                // RTT: if we have a pending send, check whether this tick echoes one of our
+                // commands. The time from the send to THIS arrival is the round trip.
+                if (pendingRtt_) {
+                    for (const auto& cmd : tick.commands) {
+                        if (cmd.player == you_) {
+                            const auto now = std::chrono::steady_clock::now();
+                            const float ms = std::chrono::duration<float, std::milli>(
+                                                 now - lastSendTime_).count();
+                            rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.8f + ms * 0.2f;
+                            pendingRtt_ = false;
+                            break;
+                        }
+                    }
+                }
+                ticks_.push_back(std::move(tick));
+            }
         } else if (ok && kind == net::Kind::Hash) {
             net::Hash hash;
             ok = net::parse(body, hash);

@@ -238,6 +238,9 @@ void Play::update(double seconds) {
                 const float z = -(float(happening.b) + 0.5f) * metresPerTile;
                 if (happening.what == sim::What::Walked && mark_) {
                     marker_.show(x, z);
+                    mark_ = false;
+                } else if (happening.what == sim::What::Refused) {
+                    mark_ = false;
                 } else if (happening.what == sim::What::Halted ||
                            happening.what == sim::What::Died) {
                     marker_.dismiss();
@@ -1683,8 +1686,6 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Stepped) continue;
             lastLine_ = sim::describe(happening, realm_);
         }
-        // The ask was taken on this tick, whatever became of it.
-        mark_ = false;
         accumulator_ = std::max(0.0, accumulator_ - kTickSeconds);
         ++stepped;
     }
