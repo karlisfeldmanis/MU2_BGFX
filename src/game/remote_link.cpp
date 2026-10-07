@@ -87,8 +87,6 @@ RemoteLink::~RemoteLink() {
 
 void RemoteLink::send(const sim::Command& command) {
     if (!socket_.open()) return;
-    lastSendTime_ = std::chrono::steady_clock::now();
-    pendingRtt_ = true;
     std::vector<uint8_t> out;
     net::put(out, command);
     if (!socket_.send(out)) {
@@ -99,11 +97,14 @@ void RemoteLink::send(const sim::Command& command) {
 
 void RemoteLink::ping() {
     if (!socket_.open()) return;
-    // A None command: the server's realm drops it (ticket 0, kind None), and its tick carries
-    // it back as every command is -- just enough to measure the round trip while the player
-    // stands still, so the readout stays live.
-    sim::Command nop{.kind = sim::Command::Kind::None, .player = you_};
-    send(nop);
+    pingAt_ = std::chrono::steady_clock::now();
+    pingOut_ = true;
+    std::vector<uint8_t> out;
+    net::put(out, net::Ping{++pingNonce_});
+    if (!socket_.send(out)) {
+        core::logError("server: the connection is gone");
+        socket_.close();
+    }
 }
 
 void RemoteLink::pump() {
@@ -121,26 +122,17 @@ void RemoteLink::pump() {
         if (ok && kind == net::Kind::Tick) {
             net::Tick tick;
             ok = net::parse(body, tick);
-            if (ok) {
-                // RTT: if we have a pending send, check whether this tick echoes one of our
-                // commands. The time from the send to THIS arrival is the round trip.
-                if (pendingRtt_) {
-                    for (const auto& cmd : tick.commands) {
-                        if (cmd.player == you_) {
-                            const auto now = std::chrono::steady_clock::now();
-                            const float ms = std::chrono::duration<float, std::milli>(
-                                                 now - lastSendTime_).count();
-                            // 0.7 / 0.3: more responsive than 0.8 / 0.2 -- about six samples
-                            // to reflect a 63% change, so a spike shows in under a second
-                            // and a steady shift is read in two. Still smooth enough that
-                            // the number does not flicker.
-                            rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.7f + ms * 0.3f;
-                            pendingRtt_ = false;
-                            break;
-                        }
-                    }
-                }
-                ticks_.push_back(std::move(tick));
+            if (ok) ticks_.push_back(std::move(tick));
+        } else if (ok && kind == net::Kind::Ping) {
+            net::Ping pong;
+            ok = net::parse(body, pong);
+            if (ok && pingOut_ && pong.nonce == pingNonce_) {
+                const float ms = std::chrono::duration<float, std::milli>(
+                                     std::chrono::steady_clock::now() - pingAt_).count();
+                // 0.7 / 0.3: about six samples to reflect a 63% change, so a spike shows in a
+                // few seconds and the number does not flicker.
+                rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.7f + ms * 0.3f;
+                pingOut_ = false;
             }
         } else if (ok && kind == net::Kind::Hash) {
             net::Hash hash;
@@ -155,14 +147,10 @@ void RemoteLink::pump() {
             break;
         }
     }
-    // Idle keepalive: when the player stands still no command is sent, so the RTT readout
-    // goes stale. A None command every two seconds keeps it fresh, and its round trip is the
-    // same path as any real command's.
-    if (!pendingRtt_) {
-        const auto now = std::chrono::steady_clock::now();
-        const float idle = std::chrono::duration<float>(now - lastSendTime_).count();
-        if (idle >= 2.0f) ping();
-    }
+    // A Ping a second, the next only once the last is back (or lost for five): the readout
+    // stays live whether he moves or not.
+    const float since = std::chrono::duration<float>(std::chrono::steady_clock::now() - pingAt_).count();
+    if (since >= (pingOut_ ? 5.0f : 1.0f)) ping();
     check();
 }
 

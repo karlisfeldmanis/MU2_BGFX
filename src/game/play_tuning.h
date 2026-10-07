@@ -41,6 +41,9 @@ constexpr int64_t kOwedSlack = 24;
 // debt and repaid it a little at a time; here the debt is simply forgiven, because a single
 // player game has nobody to be out of step with.
 constexpr int kMostTicks = 5;
+// Ticks owed on a server past which the mirror steps them at once rather than hurrying its
+// clock: a second behind (Play::update).
+constexpr int kSnapOwed = 20;
 // The least time between two ticks taken early for a click, in seconds. See Play::update.
 constexpr float kEarlyApart = 0.5f;
 // A Teleport's fade, each way: MU takes a tenth of the body's alpha a frame, ten frames

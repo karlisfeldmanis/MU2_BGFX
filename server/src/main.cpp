@@ -53,7 +53,18 @@ using namespace mu;
 volatile std::sig_atomic_t g_stop = 0;
 void onSignal(int) { g_stop = 1; }
 
+using Clock = std::chrono::steady_clock;
 constexpr double kTickSeconds = 0.05;  // 20 Hz, the realm's own (sim/realm.h)
+const Clock::duration kTick = std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(kTickSeconds));
+// An order that sets a standing player off takes his world's tick at once, and the world's clock
+// starts again from there: what the client does for a click on its own (game/play.cpp), done
+// where the ticks are made. It was 0 to 50 ms, 25 on average, between his order reaching the
+// server and the tick that carries it -- the one wait in the walk the line does not set.
+// Invention, and it runs the world a little fast: one interval cut short at most this often
+// per world, so never more than 1/20 faster (the user, 2026-10-08, agreed). Not when the
+// deadline is nearly here anyway (kEarlyWithin): that would cut short for nothing.
+constexpr double kEarlyApart = 1.0;
+const Clock::duration kEarlyWithin = std::chrono::milliseconds(5);
 constexpr int kHashEvery = 20;         // a hash a second
 // A Join's ticket, the server's own: high, so it is never one a client numbered.
 constexpr uint32_t kJoinTickets = 0x80000000u;
@@ -82,6 +93,10 @@ struct World {
     std::vector<net::Arrival> arriving;  // characters carried in with this tick's Joins
     uint32_t nextTicket = kJoinTickets;
     std::vector<uint32_t> orphans;  // Joins whose connection went before they were answered
+    // Its own deadline, so one world's early tick moves no other's clock.
+    Clock::time_point next = Clock::now();
+    Clock::time_point earlyAt{};  // when it last took a tick early
+    bool wantsEarly = false;      // an order this poll that set a standing player off
 
     // ---- server-side weather ------------------------------------------------------------------
     struct ServerWeather {
@@ -311,7 +326,18 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             }
             // Whatever the client wrote there, it is his own hero who asks.
             command.player = one.player;
+            if (command.kind == sim::Command::Kind::Order) {
+                const sim::Body* him = one.world->realm->find(one.player);
+                if (him != nullptr && !him->walking) one.world->wantsEarly = true;
+            }
             one.world->queued.push_back(command);
+        } else if (kind == net::Kind::Ping) {
+            // Back the moment it is read, ahead of any tick: the line's round trip alone.
+            net::Ping ping;
+            if (!net::parse(body, ping)) return false;
+            std::vector<uint8_t> out;
+            net::put(out, ping);
+            if (!one.socket.send(out)) return false;
         } else if (kind == net::Kind::Command && one.joining != 0) {
             // Asked before his Welcome: he has no body yet to ask with.
             continue;
@@ -377,8 +403,9 @@ Session* playing(const World& world, std::vector<std::unique_ptr<Session>>& sess
 
 // One tick of one world: its inputs applied, the step, sent to everyone in it with now and then
 // its hash; then whoever it let in, welcomed.
-void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
+void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions, bool early = false) {
     net::Tick t;
+    t.early = early;
     t.wallClock = int64_t(std::time(nullptr));
     world.weather.tick(float(kTickSeconds));
     t.rain = world.weather.wet;
@@ -539,12 +566,10 @@ int main(int argc, char** argv) {
     // A token is all a character's login is until accounts: not one the clock would guess.
     std::random_device entropy;
     std::mt19937_64 seeds((uint64_t(entropy()) << 32) ^ entropy() ^ uint64_t(std::time(nullptr)));
-    int sinceKept = 0;
+    auto keepAt = Clock::now() + kTick * kKeepEvery;
     std::vector<std::unique_ptr<World>> worlds;
     std::vector<std::unique_ptr<Session>> sessions;
     uint64_t arrivals = 0;
-    using Clock = std::chrono::steady_clock;
-    auto next = Clock::now();
     while (!g_stop) {
         // Poll: who arrived, what each said.
         for (net::Socket s = listener.accept(); s.open(); s = listener.accept()) {
@@ -557,19 +582,30 @@ int main(int argc, char** argv) {
         for (auto& one : sessions) {
             if (one->socket.open() && !hear(*one, worlds, sessions, assets, config, seeds)) one->socket.close();
         }
-        // Step every world on the deadline, owing ticks rather than dropping them, and flush.
+        // Step every world on its deadline, owing ticks rather than dropping them, and flush.
         const auto now = Clock::now();
-        int owed = 0;
-        while (next <= now && owed < 20) {
-            for (auto& world : worlds) tick(*world, sessions);
-            if (++sinceKept >= kKeepEvery) {
-                keepEveryone(sessions);
-                sinceKept = 0;
+        for (auto& world : worlds) {
+            const bool early = world->wantsEarly && world->next - now > kEarlyWithin &&
+                               now - world->earlyAt >= std::chrono::duration<double>(kEarlyApart);
+            world->wantsEarly = false;
+            if (early) {
+                tick(*world, sessions, true);
+                world->earlyAt = now;
+                world->next = now + kTick;
+                continue;
             }
-            next += std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(kTickSeconds));
-            ++owed;
+            int owed = 0;
+            while (world->next <= now && owed < 20) {
+                tick(*world, sessions);
+                world->next += kTick;
+                ++owed;
+            }
+            if (world->next < now) world->next = now;  // more than a second behind: start again
         }
-        if (next < now) next = now;  // more than a second behind: start the clock again
+        if (keepAt <= now) {
+            keepEveryone(sessions);
+            keepAt = now + kTick * kKeepEvery;
+        }
         for (auto& one : sessions) {
             if (one->socket.open() && !one->socket.flush()) one->socket.close();
         }

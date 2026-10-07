@@ -41,13 +41,15 @@ namespace mu::net {
 // 3: the character carried between worlds -- the token, the Welcome's kept first player, a
 //    Tick's arrivals (docs/sprints/20-the-world-host.md).
 // 4: the server keeps which world he is in -- the Hello's `arriving`, Elsewhere.
-constexpr uint32_t kVersion = 4;
+// 5: Ping, echoed at once, for a readout of the line alone; a Tick's `early`.
+constexpr uint32_t kVersion = 5;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame either side accepts. A Tick of a hundred commands is under 5 KB.
 constexpr uint32_t kMostFrame = 1u << 20;
 
-enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6 };
+enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
+                          Ping = 7 };
 
 struct Hello {
     uint32_t version = kVersion;
@@ -100,6 +102,15 @@ struct Tick {
     bool rain = false;       // Realm::invasionRain before the step
     std::vector<sim::Command> commands;  // Realm::command each, in order, before the step
     std::vector<Arrival> arrivals;       // Realm::carry each, before the commands
+    // Taken before its deadline, for an order that set a standing player off (server/src/main.cpp,
+    // kEarlyApart): a mirror steps it the frame it arrives rather than on its own 50 ms clock.
+    bool early = false;
+};
+
+// The client's, sent back by the server the moment it is read: the round trip of the line alone,
+// with no wait for a tick in it -- what the readout shows.
+struct Ping {
+    uint32_t nonce = 0;
 };
 
 struct Hash {
@@ -114,6 +125,7 @@ void put(std::vector<uint8_t>& out, const sim::Command& one);
 void put(std::vector<uint8_t>& out, const Tick& one);
 void put(std::vector<uint8_t>& out, const Hash& one);
 void put(std::vector<uint8_t>& out, const Elsewhere& one);
+void put(std::vector<uint8_t>& out, const Ping& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -126,6 +138,7 @@ bool parse(const std::vector<uint8_t>& body, sim::Command& out);
 bool parse(const std::vector<uint8_t>& body, Tick& out);
 bool parse(const std::vector<uint8_t>& body, Hash& out);
 bool parse(const std::vector<uint8_t>& body, Elsewhere& out);
+bool parse(const std::vector<uint8_t>& body, Ping& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.

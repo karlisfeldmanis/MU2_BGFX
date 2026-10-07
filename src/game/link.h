@@ -34,6 +34,9 @@ public:
     // How many ticks the server has sent that are not yet stepped: the mirror repays them a
     // few a frame rather than clamping (server-plan §3, "the client clock owes ticks").
     virtual int owed() const { return 0; }
+    // Whether the next tick due was taken early by the server (net::Tick::early): stepped the
+    // frame it arrives, not on the frame clock.
+    virtual bool earlyDue() const { return false; }
     // One tick on: what the realm said in it is in happenings() until the next.
     virtual void step() = 0;
     virtual const std::vector<sim::Happening>& happenings() const = 0;
@@ -41,7 +44,8 @@ public:
     virtual const sim::Realm& realm() const = 0;
     virtual bool remote() const { return false; }
     // The round-trip time to the server in milliseconds, smoothed; -1 when there is no server
-    // or no measurement yet. Measured from sending a command to receiving the tick that carries it.
+    // or no measurement yet. The line's alone: a Ping the server echoes the moment it reads it,
+    // with no wait for a tick in it.
     virtual float rttMs() const { return -1.0f; }
     // The server's rain state for this tick: -1 not known (local), 0 dry, 1 wet. The client's
     // visual weather follows this when remote, so that the rain a player sees matches what the

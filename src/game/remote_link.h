@@ -33,6 +33,7 @@ public:
     void pump() override;
     bool due() const override { return !ticks_.empty(); }
     int owed() const override { return int(ticks_.size()); }
+    bool earlyDue() const override { return !ticks_.empty() && ticks_.front().early; }
     void step() override;
     const std::vector<sim::Happening>& happenings() const override { return mirror_.happenings(); }
     const sim::Realm& realm() const override { return mirror_; }
@@ -60,9 +61,10 @@ private:
     std::deque<std::pair<uint32_t, uint64_t>> ours_;     // the mirror's, by tick, the last few
     uint32_t agreed_ = 0, divergedAt_ = 0;
     uint32_t you_ = 0;
-    // RTT measurement: the time the last command was sent, and a smoothed round-trip in ms.
-    std::chrono::steady_clock::time_point lastSendTime_{};
-    bool pendingRtt_ = false;
+    // The readout's round trip: the Ping out and when it went, and the smoothed result in ms.
+    std::chrono::steady_clock::time_point pingAt_{};
+    uint32_t pingNonce_ = 0;
+    bool pingOut_ = false;
     float rttMs_ = -1.0f;
     int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
 };

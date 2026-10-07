@@ -127,13 +127,20 @@ void Play::update(double seconds) {
     if (drankHealth_ > 0) gains_.push_back({Gain::Kind::Health, drankHealth_});
     if (drankMana_ > 0) gains_.push_back({Gain::Kind::Mana, drankMana_});
     drankHealth_ = drankMana_ = 0;
-    accumulator_ += seconds;
     int stepped = 0;
     // On a server the ticks are the server's: what it sent is read here, and a tick is stepped
-    // only once it has arrived. Behind by more than two, the mirror repays up to kMostTicks a
-    // frame whatever the frame clock says, and never drops one (server-plan §3).
+    // only once it has arrived, never dropped (server-plan §3). Ticks the line held up arrive
+    // together; stepped in one frame, as they were, everything walking jumped on by as many
+    // ticks' ground (the user, 2026-10-08: "bodies jump while walking"). So a backlog is repaid
+    // by running the clock faster, a quarter more for each tick owed past the first, up to
+    // twice -- ten owed are paid in half a second, and seen as a short hurry, not a hop. Only
+    // a stall past kSnapOwed is stepped at once, kMostTicks a frame: a second and more behind,
+    // catching up on the world matters more than how the catching looks.
     link_->pump();
     const bool remoteClock = link_->remote();
+    double pace = 1.0;
+    if (remoteClock && link_->owed() > 1) pace = std::min(2.0, 1.0 + 0.25 * (link_->owed() - 1));
+    accumulator_ += seconds * pace;
     const int64_t started = bx::getHPCounter();
     // A click is answered on the frame it is made. Waiting for the tick that was due anyway
     // cost 0 to 50 ms, 25 on average, between the press and the first step -- the one delay
@@ -153,24 +160,29 @@ void Play::update(double seconds) {
     // position is caught first and becomes the `was` of the new tick, and the drawing carries
     // on from exactly where it was.
     sinceEarly_ += float(seconds);
-    const bool early = stepNow_ && accumulator_ < kTickSeconds;
+    // On a server every tick is caught as an early one is: a tick stepped a little before or
+    // after its 50 ms on this clock -- it came when the line let it -- is drawn on from where
+    // each body is drawn, not from where the last tick put it, so its timing never shows.
+    // On a server, the server's early tick (net::Tick::early) is the one the click asked for:
+    // stepped the frame it arrives, caught the same way, rather than on this clock.
+    const bool early = (remoteClock ? link_->earlyDue() : stepNow_) && accumulator_ < kTickSeconds;
     stepNow_ = false;
     if (early) sinceEarly_ = 0.0f;
-    if (early) {
+    if (early || remoteClock) {
         for (Drawn& one : drawn_) {
             one.caughtX = one.wasX + (one.nowX - one.wasX) * through_;
             one.caughtY = one.wasY + (one.nowY - one.wasY) * through_;
             one.caughtFacing = one.wasFacing + wrapped(one.nowFacing - one.wasFacing) * through_;
         }
-        accumulator_ = kTickSeconds;
     }
+    if (early) accumulator_ = kTickSeconds;
     // A second pump right before the step loop: ticks that arrived during the early-tick work
     // and the frame's own accounting above are picked up now rather than waiting for the next
     // frame's pump. Costs one non-blocking recv and halves the worst-case time a tick sits in
     // the kernel buffer -- about 8 ms average at 60 fps.
     if (remoteClock) link_->pump();
     while (stepped < kMostTicks && link_->due() &&
-           (accumulator_ >= kTickSeconds || (remoteClock && link_->owed() > 2))) {
+           (accumulator_ >= kTickSeconds || (remoteClock && link_->owed() > kSnapOwed))) {
         // Each body's health going into the tick, so a blow's cue can say what it took rather
         // than what it rolled. Bodies and figures share one order (Play::open).
         for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
@@ -195,8 +207,14 @@ void Play::update(double seconds) {
         // behind what the sim had already decided. Now the two ends really are the ticks
         // either side of where the clock stands, which is what the comment below claims.
         remember();
-        if (early && stepped == 0) {
+        if ((early || remoteClock) && stepped == 0) {
             for (Drawn& one : drawn_) {
+                // Not across a warp: remember() set it down where it landed, and drawn on from
+                // where it was it would sweep the map to get there.
+                if (one.wasX == one.nowX && one.wasY == one.nowY &&
+                    std::max(std::fabs(one.nowX - one.caughtX), std::fabs(one.nowY - one.caughtY)) > 2.0f) {
+                    continue;
+                }
                 one.wasX = one.caughtX;
                 one.wasY = one.caughtY;
                 one.wasFacing = one.caughtFacing;

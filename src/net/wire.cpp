@@ -312,7 +312,12 @@ void put(std::vector<uint8_t>& out, const Tick& one) {
             o.u32(a.ticket);
             putKept(o, a.kept);
         }
+        o.u8(one.early ? 1 : 0);
     });
+}
+
+void put(std::vector<uint8_t>& out, const Ping& one) {
+    frame(out, Kind::Ping, [&](Out& o) { o.u32(one.nonce); });
 }
 
 void put(std::vector<uint8_t>& out, const Hash& one) {
@@ -329,7 +334,7 @@ int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body) {
     if (length < 1 || length > kMostFrame) return -1;
     if (buffer.size() < 4 + size_t(length)) return 0;
     const uint8_t k = buffer[4];
-    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Elsewhere)) return -1;
+    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Ping)) return -1;
     kind = Kind(k);
     body.assign(buffer.begin() + 5, buffer.begin() + 4 + long(length));
     buffer.erase(buffer.begin(), buffer.begin() + 4 + long(length));
@@ -407,6 +412,13 @@ bool parse(const std::vector<uint8_t>& body, Tick& out) {
         a.kept = takeKept(in);
         out.arrivals.push_back(std::move(a));
     }
+    out.early = in.u8() != 0;
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Ping& out) {
+    In in{body};
+    out.nonce = in.u32();
     return in.done();
 }
 
