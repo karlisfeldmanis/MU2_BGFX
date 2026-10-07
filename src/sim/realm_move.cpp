@@ -772,7 +772,7 @@ void Realm::castleTick() {
                 run_.paidZen = kCastleWinZens[c] * kCastleZenTimes;
                 run_.phase = CastlePhase::Won;
                 // The runes' powers drawn now, for his page to show; the pay waits for Complete.
-                for (int i = 0; i < kCastleRunes[c]; ++i) {
+                for (int i = 0; i < std::min(kCastleRunes[c], kCastleMostRunes); ++i) {
                     run_.paidRunes[i] =
                         drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c], false);
                 }

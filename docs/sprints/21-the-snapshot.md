@@ -49,4 +49,12 @@ and all sent on each join. A snapshot of the realm replaces that past.
     mirror was laid from the snapshot at tick 1200;
   - 24 of 24 of the elf's hashes agreed, and the knight's 89 of 89 throughout;
   - sim_test 6668 of 6668.
-- **Not on the box yet:** it still runs protocol 4. Deploying is the user's call.
+- **On the box** (deployed on the user's "deploy"; sim_test 6668 of 6668 there):
+  - a knight held Noria (1005 monsters) for 92 s;
+  - at 70 s an elf joined from this Mac, from "a 1585 KB snapshot and 197 ticks after it", taken
+    by the Linux server and laid on the Mac's mirror;
+  - 24 of 24 and 91 of 91 hashes agreed. The snapshot's plain data reads the same on both machines.
+  - GCC's one warning (a castle's rune loop it could not bound) is quieted by an explicit
+    `std::min`, and will go out with the next deploy.
+- **The cost:** a busy map's snapshot is its size, 1.6 MB for Noria's thousand monsters, sent once
+  per join. Squeezing it (most of a Body is zero) is cheap if joins on slow lines need it.
