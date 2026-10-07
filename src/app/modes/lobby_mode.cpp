@@ -296,6 +296,12 @@ void LobbyMode::enter(Context& ctx, int slot) {
     args.weapon.clear();
     args.shield.clear();
     entering_ = true;
+    // iButtonMove, the user's pick for Enter World (sounds.json's world_enter): on the
+    // preloader's engine, since this screen's own sound goes with it on the handoff.
+    const content::SoundEvent* cue = showing_.event("world_enter");
+    if (cue && !cue->files.empty()) {
+        Preloader::cue(core::join(ctx.paths.assets, cue->files.front()));
+    }
     core::logf("lobby: entering %s as %s, level %d %s", args.world.c_str(), who->name.c_str(),
                who->level, game::className(who->kin));
 }
@@ -370,7 +376,8 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         lobby_.update(seconds, w, h, game::Pointer{}, "", 0, false, false, look, nullptr);
     }
     ctx.window.setTyping(lobby_.typing());
-    if (asked.clicked) play(click_);
+    // Enter World sounds its own cue in enter(), in place of the click.
+    if (asked.clicked && asked.enter < 0) play(click_);
     if (asked.refused) play(refused_);
     if (asked.pick != -2) pedestals_.pick(asked.pick);
     if (asked.menu) menu_.show();

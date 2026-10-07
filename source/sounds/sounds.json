@@ -701,6 +701,13 @@
       "from": "iButtonError.wav, loaded as SOUND_ERROR01 by ZzzOpenData and never played: no PlayBuffer(SOUND_ERROR01) exists anywhere in MuMain. MU2 said the 0.75 client loads it by name where it is used; no 0.75 source is on hand to show it.",
       "note": "**An invention, marked.** A refused move, use, purchase or sale is silent in MuMain -- the drag snaps back and that is all. Kept from MU2, which chose to say no out loud."
     },
+    "world_enter": {
+      "files": [
+        "ibuttonmove.wav"
+      ],
+      "from": "SOUND_MENU01, which ZzzOpenData.cpp:5636 loads from Data\\Sound\\iButtonMove.wav with two voices; LoginScene.cpp:123 plays it as the delete-character request goes out.",
+      "note": "**Ours, marked.** MuMain's Connect is only SOUND_CLICK01 (Button.cpp:134, CharSelMainWin.cpp:201) before StartGame(); the user chose this one for Enter World instead (2026-10-07: 'use iButtonMove when user click Enter world'). Played through the preloader's engine (Preloader::cue), which outlives the character screen, so it runs on under the loading screen as MU's global buffers do."
+    },
     "world_wind": {
       "files": [
         "awind.wav"

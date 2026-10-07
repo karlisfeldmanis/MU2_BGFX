@@ -12,6 +12,7 @@
 #pragma once
 
 #include <functional>
+#include <string>
 
 #include "app/context.h"
 
@@ -34,6 +35,10 @@ public:
                     bool keepAmbient = false);
     // The ambient's level, 0 to 1, as the menu's volume changes; a muted run stays silent.
     static void ambientVolume(float level);
+    // One sound, once, on the ambient's engine, which outlives the mode that asked: the
+    // character screen's Enter World runs on under the loading screen. Silent until the
+    // ambient has opened, and at its volume.
+    static void cue(const std::string& path);
 };
 
 }  // namespace mu::app

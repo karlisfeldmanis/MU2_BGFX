@@ -170,6 +170,13 @@ void Preloader::ambientVolume(float level) {
     if (ambient().open) ma_engine_set_volume(&ambient().engine, std::clamp(level, 0.0f, 1.0f));
 }
 
+void Preloader::cue(const std::string& path) {
+    if (!ambient().open || !core::fileExists(path)) return;
+    if (ma_engine_play_sound(&ambient().engine, path.c_str(), nullptr) != MA_SUCCESS) {
+        core::logError("preloader: %s would not play", path.c_str());
+    }
+}
+
 bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
                     bool keepAmbient) {
     std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
