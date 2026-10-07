@@ -25,8 +25,17 @@ keeps a rule from meaning one thing on the server and another in the client.
 | login | `ssh hetzner` (root, `~/.ssh/id_ed25519`); root's password in the macOS Keychain, service "hetzner 37.27.158.226", for the web console only |
 | system | Ubuntu 26.04, x86_64, 1 vCPU, 927 MB, 2 GB swap (`/swapfile`), 18 GB disk |
 | tools | g++ 15.2, CMake 4.2, Ninja, rsync |
-| firewall | `ufw`: only SSH in. The game's port is opened at phase 4 |
+| firewall | `ufw`: SSH, and 44406/tcp for the game |
+| service | `mu2-server` (systemd, `server/mu2-server.service`): `/opt/mu2/build/mu2_server --port 44406`, restarted if it stops, its own throwaway user. `systemctl status mu2-server`, `journalctl -u mu2-server -f` |
 | code | `/opt/mu2`, put there by `deploy.sh` |
+
+## Playing on it
+
+    build/mu2 --play --server 37.27.158.226
+
+The client joins on port 44406, raises its mirror from the server's answer and plays every tick
+the server steps (docs/sprints/18-the-wire.md). One player per world for now: each connection
+gets a realm of its own. `server/deploy.sh` puts a new build there and restarts the service.
 
 ## Building there
 

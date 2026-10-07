@@ -165,6 +165,9 @@ int main(int argc, char** argv) {
             return 2;
         }
     }
+    // A line at a time: under systemd stdout is a pipe to the journal, fully buffered otherwise,
+    // and who joined would not be seen until kilobytes later.
+    std::setvbuf(stdout, nullptr, _IOLBF, 0);
     std::signal(SIGINT, onSignal);
     std::signal(SIGTERM, onSignal);
     std::signal(SIGPIPE, SIG_IGN);

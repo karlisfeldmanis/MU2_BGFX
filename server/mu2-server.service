@@ -1,0 +1,19 @@
+# mu2_server on the Hetzner box (server/README.md). Installed by server/deploy.sh to
+# /etc/systemd/system; `systemctl status mu2-server`, `journalctl -u mu2-server -f`.
+[Unit]
+Description=MU2 server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/opt/mu2/build/mu2_server --port 44406 --assets /opt/mu2/assets
+Restart=always
+RestartSec=2
+# Its own throwaway user, nothing writable: the server keeps no files yet.
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

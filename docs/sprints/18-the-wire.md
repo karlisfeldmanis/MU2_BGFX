@@ -51,6 +51,19 @@ This needs the rules to give the same bits on the Mac and on Linux.
   --talk Lumen`: joined, walked to Lumen by Order commands over the wire and was served; 12 of
   12 of the server's hashes agreed with the mirror.
 
+## 5. On the box — done 2026-10-07
+
+- `server/mu2-server.service`: systemd runs `/opt/mu2/build/mu2_server --port 44406`, restarts it
+  if it stops, as its own throwaway user with nothing writable. `server/deploy.sh` copies, builds
+  (mu2_server and the tests), installs the service, opens 44406/tcp in ufw and restarts it.
+  The server line-buffers stdout so the journal has each join as it happens.
+- **Played from this Mac:** `mu2 --play --server 37.27.158.226 --talk Lumen` joined the box,
+  walked to Lumen by commands over the internet and was served; 14 of 14 of the server's hashes
+  agreed with the mirror. 26 ms round trip to Helsinki.
+
 ## Next
 
-5. On the box: a systemd service, the port opened in ufw, and a game played on it from here.
+- The lobby (Sanctuary) choosing local or the server, so a plain launch can play on it.
+- A dropped connection said on screen, not only in the log; a reconnect.
+- Phase 2: more than one hero in a realm -- then two clients see each other.
+
