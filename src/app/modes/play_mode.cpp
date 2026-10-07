@@ -126,6 +126,9 @@ void PlayMode::readSave(Context& ctx) {
 
 void PlayMode::keep(Context& ctx) {
     if (savePath_.empty() || !world_.played().isOpen()) return;
+    // On a server the character is the server's (docs/sprints/18-the-wire.md): nothing played
+    // there is written over the characters kept here.
+    if (world_.played().remote()) return;
     game::Saved now;
     now.name = saved_.name;
     now.slot = saved_.slot;
