@@ -59,6 +59,7 @@ void Play::remember() {
 void Play::stand(Drawn& risen) {
     risen.fallOwed = false;
     risen.deadFor = -1.0f;
+    risen.novaKilled = false;
     risen.spawnFade = 0.0f;
     risen.wasX = risen.nowX;
     risen.wasY = risen.nowY;
@@ -274,7 +275,32 @@ void Play::update(double seconds) {
                 if (drawnOf(happening.who)) held_.push_back({uint32_t(happening.a), happening.who});
             }
             if (happening.what == sim::What::Died) {
-                if (Drawn* dead = drawnOf(happening.who)) dead->fallOwed = true;
+                if (Drawn* dead = drawnOf(happening.who)) {
+                    dead->fallOwed = true;
+                    // Killed by the burst on this tick: MU's die type AT_SKILL_NOVA, rolled as
+                    // ReceiveDie rolls it (WSclient.cpp:5871-5892).
+                    const Drawn* by = drawnOf(happening.whom);
+                    if (novaTick_ == int64_t(happening.tick) && by && by->placed && dead->placed) {
+                        float wx = dead->crown[0] - by->crown[0];
+                        float wz = dead->crown[2] - by->crown[2];
+                        const float far = std::sqrt(wx * wx + wz * wz);
+                        if (far > 1e-3f) {
+                            wx /= far;
+                            wz /= far;
+                        } else {
+                            wx = 0.0f;
+                            wz = 1.0f;
+                        }
+                        dead->novaKilled = true;
+                        dead->flingWay[0] = wx;
+                        dead->flingWay[1] = wz;
+                        dead->flingPush = float(40 + int(std::rand() % 15));
+                        dead->flingPace = float(10 + int(std::rand() % 5)) * 0.1f;
+                        core::logf("nova: #%u flung back from #%u, %.1f m", dead->id, by->id,
+                                   double(Nova::flung(float(Nova::kFlingFrames), dead->flingPush,
+                                                      dead->flingPace)));
+                    }
+                }
                 // The experience, and so the level, is said after the death on the same tick:
                 // the kill is what the level waits to be shown on.
                 // A guard's kill the hero helped with is his too, level and all (Realm::kill).
@@ -384,7 +410,18 @@ void Play::update(double seconds) {
                                            ground_->heightAt(caster->crown[0], caster->crown[2]),
                                            caster->crown[2]};
                     nova_.release(feet, happening.c, Nova::kBlue);
-                    if (heard_.hellfire >= 0) emit(heard_.hellfire, feet[0], feet[2]);
+                    // StopBuffer(SOUND_NUKE1) and PlayBuffer(SOUND_NUKE2) (ZzzCharacter.cpp:
+                    // 4436-4439): the gathering cut, and the row's `nova_burst` rung with the
+                    // spells' own below.
+                    sound_.stop(heard_.novaCharge);
+                    novaTick_ = int64_t(happening.tick);
+                }
+            }
+            // Begun: PlayBuffer(SOUND_NUKE1) with PLAYER_SKILL_HELL_BEGIN (WSclient.cpp:4754-4757),
+            // six and a half seconds that rise with the twelve stages.
+            if (happening.what == sim::What::Cast && happening.a == sim::skill::kNova) {
+                if (Drawn* caster = drawnOf(happening.who); caster && caster->placed) {
+                    emit(heard_.novaCharge, caster->crown[0], caster->crown[2], caster->id);
                 }
             }
             if (happening.what == sim::What::Cast) {
@@ -908,6 +945,8 @@ void Play::update(double seconds) {
                         const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
                         const float way = float(happening.c) / 1000.0f;
                         aqua_.cast(ground, std::cos(way), -std::sin(way));
+                    } else if (happening.a == sim::skill::kNova) {
+                        // Its burst is drawn above (fx/nova.h); it throws no bolt.
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -1871,25 +1910,52 @@ void Play::update(double seconds) {
     nova_.update(float(seconds));
     // Nova held (Realm::chargeSkill): PLAYER_SKILL_HELL_BEGIN looped at half its pace, as MU
     // halves it while it gathers (ZzzCharacter.cpp:2523-2526), and the lights gathering on every
-    // second of his first forty bones (fx/nova.h).
-    if (realm_.chargeSkill() != 0) {
-        if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->figure.body() && hero->figure.body()->library) {
-            const int held = hero->figure.body()->library->find(kNovaChargeAction);
-            if (held >= 0 && hero->figure.clip() != held) hero->figure.play(held, true);
-            hero->swinging = hero->casting = 1e9f;
-            hero->swingPace = 0.5f;
+    // second of his first forty bones and the force homing on him (fx/nova.h) -- and on through
+    // PLAYER_SKILL_HELL_START after he lets go, at the stage it went at (ZzzCharacter.cpp:5728).
+    {
+        Drawn* hero = drawnOf(realm_.hero().id);
+        const FigureBody* look = hero ? hero->figure.body() : nullptr;
+        const bool holding = realm_.chargeSkill() != 0;
+        const bool bursting = !holding && look && look->library && hero->swinging > 0.0f &&
+                              hero->figure.clip() >= 0 &&
+                              hero->figure.clip() == look->library->find(kNovaBurstAction);
+        if ((holding || bursting) && look && look->library && ground_) {
+            if (holding) {
+                const int held = look->library->find(kNovaChargeAction);
+                if (held >= 0 && hero->figure.clip() != held) hero->figure.play(held, true);
+                hero->swinging = hero->casting = 1e9f;
+                hero->swingPace = 0.5f;
+            }
             float points[20 * 3];
             int count = 0;
             const float zero[3] = {0.0f, 0.0f, 0.0f};
             for (int bone = 0; bone < 40 && count < 20; bone += 2) {
                 if (hero->figure.pointOn(bone, zero, &points[count * 3])) ++count;
             }
-            nova_.charge(points, count, realm_.chargeStage(), Nova::kBlue);
+            const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
+                                   hero->crown[2]};
+            nova_.charge(points, count, holding ? realm_.chargeStage() : nova_.lastStage(), feet,
+                         Nova::kBlue);
         }
+    }
+    // And what it killed sparks blue for its first thirty frames dead (Nova::sparkle).
+    for (Drawn& one : drawn_) {
+        if (!one.novaKilled || one.deadFor < 0.0f || !one.placed) continue;
+        if (one.deadFor * kStormFramesPerSecond > float(Nova::kSparkFrames)) continue;
+        float points[8 * 3];
+        int count = 0;
+        const float zero[3] = {0.0f, 0.0f, 0.0f};
+        for (int n = 0; n < 8; ++n) {
+            if (one.figure.pointOn(std::rand() % 32, zero, &points[count * 3])) ++count;
+        }
+        nova_.sparkle(points, count, Nova::kBlue);
+    }
+    if (realm_.chargeSkill() != 0) {
         novaHeld_ = true;
     } else if (novaHeld_) {
         // Let go before it gathered a stage: nothing bursts, and the pose is given back.
         novaHeld_ = false;
+        sound_.stop(heard_.novaCharge);
         if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->swinging > 1e8f) {
             hero->swinging = hero->casting = 0.0f;
             hero->swingPace = 1.0f;

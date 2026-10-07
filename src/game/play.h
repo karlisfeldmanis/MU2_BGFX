@@ -861,6 +861,12 @@ private:
         // Dead on the tick and not yet fallen on screen: the blow that killed it is still
         // being swung, and the fall waits for that blow's landing cue. See Play::fallWhenLanded.
         bool fallOwed = false;
+        // Killed by Nova: turned to its killer and flung back from it as it falls, sparking blue
+        // (fx/nova.h, Nova::flung). `flingWay` is the unit step away from him on the ground;
+        // `flingPush` and `flingPace` MU's rolled Direction[1] and Velocity, in units.
+        bool novaKilled = false;
+        float flingWay[2] = {0.0f, 0.0f};
+        float flingPush = 0.0f, flingPace = 0.0f;
         // Counted up from 0 the tick `Rose` happens, so a respawn eases in rather than popping
         // into being; left far above kSpawnFadeSeconds otherwise, which reads as "done fading".
         float spawnFade = 1e9f;
@@ -1190,6 +1196,7 @@ private:
     Flame flame_;
     Spirits spirits_;
     Nova nova_;
+    int64_t novaTick_ = -1;  // the tick Nova last burst on: what dies on it, it flung
     bool novaHeld_ = false;  // a charge was being drawn last frame (Play::update)
     Firework firework_;
     Wheel wheel_;
@@ -1310,6 +1317,7 @@ private:
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         int evil = -1, hellfire = -1;  // the Devil's sEvil and the Balrog's sHellFire
+        int novaCharge = -1;  // SOUND_NUKE1, Nova's gathering, stopped when it bursts
         int boltThunder = -1;          // eThunder, Lightning's own, on a Hydra's and a Lizard King's bolts
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast

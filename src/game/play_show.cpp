@@ -1331,6 +1331,10 @@ void Play::follow(float seconds) {
             if (std::fabs(one.spin) < 1e-3f) one.spin = 0.0f;
         }
         one.yaw += one.spin;
+        // Killed by Nova: turned to him, so it goes over backwards (ReceiveDie).
+        if (one.novaKilled && one.deadFor >= 0.0f) {
+            one.yaw = std::atan2(-one.flingWay[0], -one.flingWay[1]);
+        }
 
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;
@@ -1358,6 +1362,13 @@ void Play::follow(float seconds) {
         // (play_raid.cpp).
         lift += raidLift(*body);
         float flyX = x, flyZ = z;
+        // And flung back from him while it falls (Nova::flung).
+        if (one.novaKilled && one.deadFor >= 0.0f) {
+            const float gone = Nova::flung(one.deadFor * kStormFramesPerSecond, one.flingPush,
+                                           one.flingPace);
+            flyX += one.flingWay[0] * gone;
+            flyZ += one.flingWay[1] * gone;
+        }
         raidCircle(*body, &flyX, &flyZ, &one.yaw);
         const float position[3] = {flyX, ground_->heightAt(flyX, flyZ) + lift,
                                    statue ? flyZ - 1.2f * metresPerTile : flyZ};

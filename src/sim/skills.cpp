@@ -802,11 +802,13 @@ constexpr SkillRow kRows[kSkills] = {
     // 500 ms to twelve, each adding kNovaStageDamage to the blow, and full it goes off by itself.
     // The clips are MuMain's: PLAYER_SKILL_HELL_BEGIN (72, looped) held, PLAYER_SKILL_HELL_START
     // (73) let go (WSclient.cpp:4754-4762). No skill damage of its own: the stages are its blow.
+    // Ten seconds' wait from the burst, ours: the user, 2026-10-07, 'it make sense that nova is
+    // cooldown spell, because its strong and very impressive'.
     {.number = skill::kNova, .name = "Nova", .mana = 15, .reach = 6.0f, .force = 1.0f,
-     .spread = Spread::Ring,
+     .coolTicks = 200, .spread = Spread::Ring,
      .tells = "Hold to gather power, up to twelve stages; let go and it bursts round him, striking "
               "every monster within six tiles, harder the longer he held.",
-     .clip = 73, .sound = "spell_hellfire", .built = true, .families = arms::kNone,
+     .clip = 73, .sound = "nova_burst", .built = true, .families = arms::kNone,
      .needLevel = 100, .kin = Kin::DarkWizard, .wizardry = true, .damage = 0,
      .chargeTicks = 10, .chargeStages = 12},
 };

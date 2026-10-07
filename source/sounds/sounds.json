@@ -2071,6 +2071,18 @@
       ],
       "from": "SOUND_HELLFIRE, played as the wizard's Hellfire lays its MODEL_CIRCLE and MODEL_CIRCLE_LIGHT at his feet (ZzzCharacter.cpp:4424-4435)."
     },
+    "nova_charge": {
+      "files": [
+        "eHellFire2_1.wav"
+      ],
+      "from": "SOUND_NUKE1, Data\\Sound\\eHellFire2_1.wav (ZzzOpenData.cpp:4845). Played as Nova's gathering begins with PLAYER_SKILL_HELL_BEGIN (WSclient.cpp:4754-4757) and cut by StopBuffer when it bursts (ZzzCharacter.cpp:4438); cued by game/play.cpp."
+    },
+    "nova_burst": {
+      "files": [
+        "eHellFire2_2.wav"
+      ],
+      "from": "SOUND_NUKE2, Data\\Sound\\eHellFire2_2.wav (ZzzOpenData.cpp:4846). Played as Nova bursts, with MODEL_CIRCLE at sub-type 1 (ZzzCharacter.cpp:4436-4439): the Nova row's sound."
+    },
     "riding_spear": {
       "files": [
         "eRidingSpear.wav"

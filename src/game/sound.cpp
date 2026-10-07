@@ -969,6 +969,17 @@ void Sound::vary(int handle, float semitones, float dropDb, float darkenOctaves)
     event.darken = std::max(darkenOctaves, 0.0f);
 }
 
+void Sound::stop(int handle, float fadeMs) {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    if (!event.placed) return;
+    for (int v = 0; v < kVoices; ++v) {
+        if (!impl_->playing(event, v)) continue;
+        ma_sound_stop_with_fade_in_milliseconds(
+            &event.files[size_t(event.sounding[v])]->sound[v], ma_uint64(fadeMs));
+    }
+}
+
 void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
     Impl& im = *impl_;

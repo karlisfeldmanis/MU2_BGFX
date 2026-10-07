@@ -136,6 +136,9 @@ public:
     // to, whose position follow() keeps it on, or 0 for a blow that lands at a point and
     // belongs to nothing -- MU's NULL.
     void playAt(int event, float x, float y, float z, uint32_t following = 0);
+    // Every voice of a placed event still sounding, faded out over `fadeMs`: MU's StopBuffer, for
+    // the one sound it cuts short (Nova's gathering, SOUND_NUKE1).
+    void stop(int event, float fadeMs = 120.0f);
 
     // Where the ears are and what the screen is: `hero` is the character's body, whose own
     // sounds come first; `at` is where he stands; `shot` is the frame's view times projection
