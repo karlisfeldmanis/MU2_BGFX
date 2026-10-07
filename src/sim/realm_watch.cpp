@@ -104,12 +104,16 @@ void Realm::watch(Body& guard) {
     // the lower id on a tie.
     const uint32_t had = guard.quarry;
     const Body* held = find(guard.quarry);
-    const uint32_t heroId = mine().id;
     const bool keep = held != nullptr && held->alive() && held->monster() && !isBoss(*held) &&
                       fromPost(guard, *held) <= watches;
     // Looked for again whenever what he holds is not on the hero, so a monster that turns on the
     // hero takes him off one that is only at the gate.
-    if (!keep || held->quarry != heroId) {
+    // On a player: any of them.
+    const auto onPlayer = [&](const Body& one) {
+        const Body* on = find(one.quarry);
+        return on != nullptr && on->player;
+    };
+    if (!keep || !onPlayer(*held)) {
         guard.quarry = keep ? had : 0;
         float closest = 1e30f;
         for (const Body& one : bodies_) {
@@ -125,7 +129,7 @@ void Realm::watch(Body& guard) {
             // One that is on the hero first, whatever else is nearer: he is there to keep the
             // hero as much as the gate, and a guard hacking at a spider while a dragon eats the
             // hero beside him is no guard.
-            const bool onHero = one.quarry == heroId;
+            const bool onHero = onPlayer(one);
             // Held on to over anything but one on the hero.
             if (keep && !onHero) continue;
             const float distance = reach(guard, one) - (onHero ? 1000.0f : 0.0f);

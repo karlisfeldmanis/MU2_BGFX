@@ -20,6 +20,8 @@ namespace mu::sim {
 void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* row,
                      bool thrown, bool pays) {
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
+    // For the player in it, his blow or the one on him: his charge, his wear, his potions.
+    For side(*this, attacker.player ? attacker : target);
     // **The dragon aloft** (sim/raid.h): leaving, nothing reaches it. invention.
     if (raid_.aloft && (!thrown || raid_.departing) && isBoss(target)) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
@@ -107,7 +109,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         chillHero(attacker, target);
         // His shield's Evil Spirit, each worn rolling off the sockets' stream -- drawn only
         // when one is worn and none is going, so a run without it is not moved.
-        if (target.player && target.alive() && !attacker.player && !spiritsGoing()) {
+        if (target.player && target.alive() && !attacker.player && !spiritsGoing(target.id)) {
             for (int i = 0; i < target.excel.spirits; ++i) {
                 if (!runeDice_.nextBool(kSpiritChance)) continue;
                 core::logf("evil spirit rune: tick %lld, off #%u's miss", (long long)tick_,
@@ -116,7 +118,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                 break;
             }
             // And a Wisp's, its faint copy, while the spirits are not already out.
-            for (int i = 0; i < target.excel.wisps && !spiritsGoing(); ++i) {
+            for (int i = 0; i < target.excel.wisps && !spiritsGoing(target.id); ++i) {
                 if (!runeDice_.nextBool(kWispChance)) continue;
                 core::logf("wisp rune: tick %lld, off #%u's miss", (long long)tick_, attacker.id);
                 if (letSpiritsGo(target, kWispForce, true)) happenings_.back().whom = attacker.id;
@@ -165,7 +167,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // this is the floor that says so rather than a guard lying dead at the gate. invention.
     if (target.warden >= 0) target.health = std::max(1, target.health);
     // The hero's hand on a monster, which is what a guard asks after when it dies.
-    if (attacker.player && target.monster() && wound > 0) target.heroStruck = true;
+    if (attacker.player && target.monster() && wound > 0) target.heroStruck = attacker.id;
     // And what it cost the gear, on the health it took and nothing else: a blow the shield
     // soaked whole wears nothing, as a miss wears nothing (OpenMU reads HitInfo.HealthDamage).
     if (wound > 0) {
@@ -516,6 +518,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                            elementForce(hero, Element::Wind),
                        0,
                        fm::cos(way) * storm->walks, fm::sin(way) * storm->walks, true};
+            one.owner = hero.id;
             say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), 0);
             happenings_.back().rune = true;
             core::logf("twister rune: tick %lld, a storm toward #%u", (long long)tick_, struck.id);
@@ -574,6 +577,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
             one = Flight{tick_ + fall, struckBy->id, 0, rockForce, false};
+            one.owner = hero.id;
             return;
         }
         strikeAt(hero, *struckBy, rockForce, nullptr, true, false);
@@ -602,9 +606,9 @@ void Realm::runeStrike(Body& hero, Body& target, float force) {
     hero.stats.maximumDamage = swing.maximumDamage;
 }
 
-bool Realm::spiritsGoing() const {
+bool Realm::spiritsGoing(uint32_t owner) const {
     for (const SpiritBlow& one : spiritBlows_) {
-        if (one.at != 0) return true;
+        if (one.at != 0 && one.owner == owner) return true;
     }
     return false;
 }
@@ -631,6 +635,7 @@ bool Realm::letSpiritsGo(Body& hero, float force, bool rune) {
             if (one.at != 0) continue;
             // At least the next tick: a blow is never settled on the tick it is let go.
             one = SpiritBlow{tick_ + std::max<int64_t>(1, wait), b.id, force, rune};
+            one.owner = hero.id;
             ++held;
             break;
         }
@@ -883,6 +888,7 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
             one = Flight{tick_ + air, at, row.number, force, pays};
+            one.owner = hero.id;
             one.plague = loosingPlague_;
             return;
         }
@@ -968,6 +974,7 @@ void Realm::hop(Body& hero, const Flight& from, uint32_t off, float x, float y) 
     say(What::Loosed, hero, skill::kFireBall, air, int32_t(off), next);
     happenings_.back().rune = true;
     Flight hopping = from;
+    hopping.owner = hero.id;
     hopping.at = tick_ + air;
     hopping.target = next;
     hopping.skill = skill::kFireBall;
@@ -996,6 +1003,7 @@ void Realm::looseArrow(Body& hero, uint32_t at, float force) {
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
             one = Flight{tick_ + air, at, skill::kNone, force, true};
+            one.owner = hero.id;
             return;
         }
     }
@@ -1112,7 +1120,8 @@ void Realm::arrive() {
         int next = -1;
         for (int i = 0; i < kFlights; ++i) {
             const Flight& one = flights_[i];
-            if (one.at == 0 || one.at > tick_) continue;
+            // His own: another player's land on his tick, as his blows.
+            if (one.at == 0 || one.at > tick_ || !lands(one.owner)) continue;
             if (next < 0 || one.at < flights_[next].at) next = i;
         }
         if (next < 0) return;
@@ -1488,6 +1497,7 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
             if (one.next != 0) continue;
             one = Fire{tick_ + kStormFirst, hero.x, hero.y, row.number, row.burns, force, aimedAt,
                        fm::cos(way) * row.walks, fm::sin(way) * row.walks};
+            one.owner = hero.id;
             // Said once with no flight (`b` is a Loosed's air) and its heading in `c`, in
             // thousandths of a radian, so the drawing walks the storm down the same line the
             // realm strikes along.
@@ -1503,6 +1513,7 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
         if (one.next != 0) continue;
         one = Fire{tick_, float(aimed->column()), float(aimed->row()), row.number, row.burns,
                    force, aimedAt};
+        one.owner = hero.id;
         // Said once, at the body, with no flight: the drawing lights its fire on that body's
         // tile, and the wave with it. Its first strike is this tick's, when `step` burns.
         say(What::Loosed, hero, row.number, 0, 0, aimedAt);
@@ -1513,7 +1524,7 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
 void Realm::burn() {
     Body& hero = mine();
     for (Fire& fire : fires_) {
-        if (fire.next == 0) continue;
+        if (fire.next == 0 || !lands(fire.owner)) continue;
         // A storm walks every tick, struck or not; it was stood at his feet on the let-go's tick.
         fire.x += fire.dx;
         fire.y += fire.dy;
@@ -1569,6 +1580,8 @@ void Realm::burn() {
 }
 
 void Realm::kill(Body& dead, Body& killer) {
+    // A player's death is his: his potions, his orders, his things in the air.
+    For fallen(*this, dead);
     if (dead.player && me().undying) {
         dead.health = dead.maxHealth;
         core::logf("undying: tick %lld, the hero is filled again", (long long)tick_);
@@ -1673,9 +1686,13 @@ void Realm::kill(Body& dead, Body& killer) {
         // from the middle of town.
         dropBlow(dead);
         // And his spells in the air, for the same reason.
-        for (Flight& one : flights_) one = Flight{};
+        for (Flight& one : flights_) {
+            if (lands(one.owner)) one = Flight{};
+        }
         me().echo = Echo{};
-        for (SpiritBlow& one : spiritBlows_) one = SpiritBlow{};
+        for (SpiritBlow& one : spiritBlows_) {
+            if (lands(one.owner)) one = SpiritBlow{};
+        }
         dead.channelEcho = false;
         return;
     }
@@ -1714,8 +1731,12 @@ void Realm::kill(Body& dead, Body& killer) {
     // go to him, as if his own blow had been the last. One the guard took alone gives nothing,
     // which is what keeps a hero from standing at the gate while the guards farm for him.
     // invention, with the guards themselves.
-    Body& hero = mine();
-    const bool helped = dead.heroStruck && hero.alive();
+    // The player who had a hand in it -- the last whose blow landed on it -- and the first player
+    // when nobody did, for the raiders' kills.
+    Body* helper = dead.heroStruck != 0 ? body(dead.heroStruck) : nullptr;
+    const bool helped = helper != nullptr && helper->alive();
+    Body& hero = helper != nullptr ? *helper : bodies_[heroes_[0].body];
+    For credited(*this, killer.player ? killer : hero);
     // A kill's experience at the game's rate, and the Rings of Wisdom's on top (sim::Affix).
     const auto paid = [&](const Body& to) {
         return int32_t(double(killExperience(dead.level, to.level)) * kExperienceRate *
@@ -1736,15 +1757,18 @@ void Realm::kill(Body& dead, Body& killer) {
     // below, which asks `killer.player`.
     if (killer.summoner != 0) {
         if (Body* owner = body(killer.summoner); owner != nullptr && owner->alive()) {
+            For hers(*this, *owner);
             leave(dead, *owner);
             gain(*owner, paid(*owner));
         }
     }
     // **A raider's kill is his** (the raid's party fights for him): its drop and its experience,
     // as her summon's are. invention, with the raiders.
-    if (killer.raider >= 0 && hero.alive()) {
-        leave(dead, hero);
-        gain(hero, paid(hero));
+    if (killer.raider >= 0 && bodies_[heroes_[0].body].alive()) {
+        Body& first = bodies_[heroes_[0].body];
+        For his(*this, first);
+        leave(dead, first);
+        gain(first, paid(first));
     }
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
     // it was when the blow landed.
@@ -1782,10 +1806,10 @@ void Realm::kill(Body& dead, Body& killer) {
     }
     // And his quests count it, when the kill is his by the rules above: his own blow, her
     // summon's, or a guard's he had a hand in. A guard's own kill does not count, as it pays him
-    // nothing.
-    if (dead.monster() &&
-        (killer.player || killer.summoner != 0 ||
-         (killer.warden >= 0 && dead.heroStruck && mine().alive()))) {
+    // nothing. Counted for that player: his own, her summon's owner, or the one who helped.
+    if (dead.monster() && (killer.player || killer.summoner != 0 || (killer.warden >= 0 && helped))) {
+        const Body* owner = killer.summoner != 0 ? body(killer.summoner) : nullptr;
+        For counted(*this, killer.player ? killer : owner != nullptr ? *owner : hero);
         countKill(dead);
     }
 }
@@ -1912,7 +1936,7 @@ void Realm::raiseBeast(Body& beast) {
     beast.quarry = 0;
     beast.provoked = false;
     beast.guardedBy = 0;
-    beast.heroStruck = false;
+    beast.heroStruck = 0;
     beast.chilledUntil = 0;
     beast.frozenUntil = 0;
     beast.poisonUntil = 0;

@@ -15,6 +15,11 @@ void Realm::applyCommands() {
     std::vector<Command> asked;
     asked.swap(commands_);
     for (const Command& one : asked) {
+        // For the player who asked: 0 is the first, as it was the one. An id that is no
+        // player's -- one who left, a stale ask -- is dropped unanswered.
+        const int asker = one.player == 0 ? 0 : playerOfId(one.player);
+        if (asker < 0) continue;
+        For his(*this, size_t(asker));
         int64_t answer = -1;
         using Kind = Command::Kind;
         Kind said = one.kind;

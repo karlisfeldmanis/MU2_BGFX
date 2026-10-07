@@ -10633,6 +10633,150 @@ void testSpawn(const content::Tables& tables) {
     check(realm.find(id + 1000) == nullptr, "an id nobody holds finds nobody");
 }
 
+// Two heroes in one world (docs/sprints/19-many-heroes.md): each steps, each is asked, answered
+// and paid his own, and the same two-hero script run twice comes out the same.
+uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRight,
+                     int* gainedWrong, int* struckSecond) {
+    sim::Realm realm;
+    if (!realm.raise(&tables, 4242, 138, 124, sim::Kin::DarkKnight, 60)) return 0;
+    // The nearest two monsters to town, each hunted by one of them.
+    std::vector<const sim::Body*> near;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.monster() && one.alive()) near.push_back(&one);
+    }
+    std::stable_sort(near.begin(), near.end(), [](const sim::Body* a, const sim::Body* b) {
+        const float da = (a->x - 138) * (a->x - 138) + (a->y - 124) * (a->y - 124);
+        const float db = (b->x - 138) * (b->x - 138) + (b->y - 124) * (b->y - 124);
+        return da < db;
+    });
+    if (near.size() < 2) return 0;
+    const uint32_t preyA = near[0]->id, preyB = near[1]->id;
+    const int bColumn = near[1]->column(), bRow = near[1]->row();
+    realm.setHeroDown(near[0]->column(), near[0]->row(), 0, 1);
+    const uint32_t first = realm.hero().id;
+    const uint32_t second = realm.join(sim::Kin::DarkKnight, 60, bColumn, bRow);
+    if (second == 0) return 0;
+    ids[0] = first;
+    ids[1] = second;
+    const auto attack = [&](uint32_t player, uint32_t prey) {
+        realm.command({.kind = sim::Command::Kind::Order, .player = player,
+                       .a = int(sim::Request::Kind::Attack), .b = 0, .c = 0, .d = 0,
+                       .target = prey});
+    };
+    attack(first, preyA);
+    attack(second, preyB);
+    uint64_t hash = 0xcbf29ce484222325ull;
+    for (int tick = 0; tick < 1200; ++tick) {
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.what == sim::What::Gained) {
+                (one.audience == one.who && (one.who == first || one.who == second) ? *gainedRight
+                                                                                    : *gainedWrong)++;
+            }
+            if (one.what == sim::What::Hit && one.whom == second) {
+                const sim::Body* by = realm.find(one.who);
+                if (by != nullptr && by->monster()) ++*struckSecond;
+            }
+        }
+        const auto* at = reinterpret_cast<const unsigned char*>(realm.happenings().data());
+        for (size_t i = 0; i < realm.happenings().size() * sizeof(sim::Happening); ++i) {
+            hash ^= at[i];
+            hash *= 0x100000001b3ull;
+        }
+        // Each takes up the next monster once his is down.
+        if (tick % 40 == 39) {
+            for (int p = 0; p < 2; ++p) {
+                const sim::Body& me = realm.playerAt(p);
+                const sim::Body* best = nullptr;
+                float gap = 1e30f;
+                for (const sim::Body& one : realm.bodies()) {
+                    if (!one.monster() || !one.alive()) continue;
+                    const float d = (one.x - me.x) * (one.x - me.x) + (one.y - me.y) * (one.y - me.y);
+                    if (d < gap) {
+                        gap = d;
+                        best = &one;
+                    }
+                }
+                if (best != nullptr) attack(me.id, best->id);
+            }
+        }
+    }
+    return hash;
+}
+
+void testTwoHeroes(const content::Tables& tables) {
+    std::printf("two heroes\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, 140, 125), "a realm for two");
+    const uint32_t first = realm.hero().id;
+    const size_t bodiesBefore = realm.bodies().size();
+    const uint32_t second = realm.join(sim::Kin::DarkWizard, 1, 143, 127);
+    check(second != 0 && second != first, "a second hero joins with an id of his own");
+    checkEqual(realm.playerCount(), 2, "two players");
+    checkEqual(int(realm.bodies().size()), int(bodiesBefore + 2), "his body and his summon's added");
+    check(realm.find(second) != nullptr && realm.find(second)->player, "found at once, a player");
+    check(realm.hero().id == first, "and the queries still answer for the first");
+
+    // His own bag and purse.
+    check(realm.lookAs(second), "the queries turned to the second");
+    check(realm.hero().id == second && realm.hero().kin == sim::Kin::DarkWizard, "his body, his class");
+    const int potion = realm.give(tables.itemNamed("Potion01"), -1, 0, 3);
+    realm.earn(500);
+    check(potion >= 0 && realm.money() == 500, "a potion and 500 Zen given to him");
+    check(realm.lookAs(first), "and back to the first");
+    check(realm.satchel()[potion].empty() && realm.money() == 0, "whose bag and purse they are not");
+    check(!realm.lookAs(12345678), "an id that is no player's is refused");
+
+    // Orders and asks go to who asked.
+    const float firstX = realm.hero().x, firstY = realm.hero().y;
+    const float secondX = realm.find(second)->x;
+    realm.command({.kind = sim::Command::Kind::Order, .player = second,
+                   .a = int(sim::Request::Kind::WalkTo), .b = realm.find(second)->column() + 6,
+                   .c = realm.find(second)->row()});
+    realm.command({.kind = sim::Command::Kind::Use, .player = second, .ticket = 31, .a = potion});
+    realm.command({.kind = sim::Command::Kind::Use, .player = 999999, .ticket = 32, .a = potion});
+    realm.step();
+    const sim::Happening* answer = nullptr;
+    int answers = 0;
+    for (const sim::Happening& one : realm.happenings()) {
+        if (one.what != sim::What::Answered) continue;
+        ++answers;
+        answer = &one;
+    }
+    checkEqual(answers, 1, "one answer: an ask from no player is dropped");
+    check(answer != nullptr && answer->who == second && answer->audience == second && answer->c == 31,
+          "his potion answered to him alone");
+    for (int tick = 0; tick < 60; ++tick) realm.step();
+    check(realm.find(second)->x != secondX, "the second walked where he was told");
+    check(realm.hero().x == firstX && realm.hero().y == firstY, "and the first stood where he was");
+
+    // A kill is paid to whose it is.
+    const auto monster = [&]() -> uint32_t {
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.monster() && one.alive()) return one.id;
+        }
+        return 0;
+    };
+    const uint64_t firstBefore = realm.hero().experience;
+    const uint64_t secondBefore = realm.find(second)->experience;
+    realm.lookAs(second);
+    realm.smite(monster());
+    realm.lookAs(first);
+    check(realm.find(second)->experience > secondBefore, "his kill pays him");
+    checkEqual((long long)realm.hero().experience, (long long)firstBefore, "and not the first");
+
+    // Two heroes hunting, run twice: the same.
+    uint32_t ids[2] = {}, ids2[2] = {};
+    int right = 0, wrong = 0, struck = 0, right2 = 0, wrong2 = 0, struck2 = 0;
+    const uint64_t one = twoHeroHunt(tables, ids, &right, &wrong, &struck);
+    const uint64_t two = twoHeroHunt(tables, ids2, &right2, &wrong2, &struck2);
+    std::printf("  two heroes hunting: %d gains each to its own, %d monster blows on the second\n",
+                right, struck);
+    check(one != 0 && one == two, "two heroes hunting, run twice, say the same");
+    check(right > 0 && wrong == 0, "every Gained said to the one it paid");
+    check(struck > 0, "and the monsters fight the second as they fight the first");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -10653,6 +10797,7 @@ int main() {
     testSpamClicks(tables);
     testDeterminism(tables);
     testSpawn(tables);
+    testTwoHeroes(tables);
     testCommands(tables);
     testInvariants(tables);
     testInvasion(tables);

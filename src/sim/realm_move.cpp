@@ -135,6 +135,7 @@ void Realm::advance(Body& one) {
     // A chase counts only when it is close (kCombatReach): the field is full of things that
     // have seen him, and counting every one of them held him in the walk from the town gate on.
     if (one.player) {
+        For his(*this, one);
         const Body* foe = me().order.kind == Request::Kind::Attack ? find(me().order.target) : nullptr;
         const char* why = foe != nullptr && foe->alive() ? "his attack"
                           : one.blowAt != 0              ? "a blow in the air"
@@ -746,55 +747,60 @@ void Realm::freeCastle() {
 }
 
 void Realm::castleTick() {
-    // The staff given back, inside the tick so what it says is this tick's (as enterCastle).
-    // "Ah! Great warrior..." (ServerCmd 1,23, NpcTalk.cpp:1461-1588), and GiveReward_Win.
-    if (me().staffOwed) {
-        me().staffOwed = false;
-        const int slot = staffSlot();
-        if (slot >= 0 && run_.phase == CastlePhase::Running) {
-            me().bag.lift(slot);
-            Body& hero = mine();
-            const int64_t seconds = castleSecondsLeft();
-            // This castle's pay (sim/event.h): castle 1's 20,000 / 5,000 / 160 a second / 20,000
-            // Zen up to castle 6's 110,000 / 30,000 / 260 / 250,000.
-            const int c = std::clamp(run_.castle, 1, kCastles) - 1;
-            const int64_t experience =
-                (run_.statueBroken ? kCastleStatueExps[c] : 0) + kCastleHandInExps[c] +
-                seconds * kCastleExpPerSeconds[c];
-            // At the game's experience rate, as every kill's (rules.h kExperienceRate), and the
-            // better win's (kCastleExpTimes, kCastleZenTimes).
-            run_.paidExperience = int64_t(double(experience * kCastleExpTimes) * kExperienceRate);
-            run_.paidZen = kCastleWinZens[c] * kCastleZenTimes;
-            run_.phase = CastlePhase::Won;
-            // The runes' powers drawn now, for his page to show; the pay waits for Complete.
-            for (int i = 0; i < kCastleRunes[c]; ++i) {
-                run_.paidRunes[i] =
-                    drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c], false);
+    // Each player's hand-in and thanks, in the order they joined. The castle's run is the
+    // world's; its win goes to whoever hands the staff in.
+    for (size_t p = 0; p < heroes_.size(); ++p) {
+        For him(*this, p);
+        // The staff given back, inside the tick so what it says is this tick's (as enterCastle).
+        // "Ah! Great warrior..." (ServerCmd 1,23, NpcTalk.cpp:1461-1588), and GiveReward_Win.
+        if (me().staffOwed) {
+            me().staffOwed = false;
+            const int slot = staffSlot();
+            if (slot >= 0 && run_.phase == CastlePhase::Running) {
+                me().bag.lift(slot);
+                Body& hero = mine();
+                const int64_t seconds = castleSecondsLeft();
+                // This castle's pay (sim/event.h): castle 1's 20,000 / 5,000 / 160 a second / 20,000
+                // Zen up to castle 6's 110,000 / 30,000 / 260 / 250,000.
+                const int c = std::clamp(run_.castle, 1, kCastles) - 1;
+                const int64_t experience =
+                    (run_.statueBroken ? kCastleStatueExps[c] : 0) + kCastleHandInExps[c] +
+                    seconds * kCastleExpPerSeconds[c];
+                // At the game's experience rate, as every kill's (rules.h kExperienceRate), and the
+                // better win's (kCastleExpTimes, kCastleZenTimes).
+                run_.paidExperience = int64_t(double(experience * kCastleExpTimes) * kExperienceRate);
+                run_.paidZen = kCastleWinZens[c] * kCastleZenTimes;
+                run_.phase = CastlePhase::Won;
+                // The runes' powers drawn now, for his page to show; the pay waits for Complete.
+                for (int i = 0; i < kCastleRunes[c]; ++i) {
+                    run_.paidRunes[i] =
+                        drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c], false);
+                }
+                // And the castle is theirs again: every monster in it gone on the tick, out of the
+                // picture without a fall, and none rises for the rest of the run (the user,
+                // 2026-10-05: 'when quest is given all monsters have to desepear'). Ours.
+                for (Body& one : bodies_) {
+                    if (!one.monster()) continue;
+                    one.risesAt = std::numeric_limits<int64_t>::max();
+                    if (!one.alive()) continue;
+                    one.health = 0;
+                    one.quarry = 0;
+                    halt(one);
+                    dropBlow(one);
+                    say(What::Dismissed, one);
+                }
+                hero.quarry = 0;
             }
-            // And the castle is theirs again: every monster in it gone on the tick, out of the
-            // picture without a fall, and none rises for the rest of the run (the user,
-            // 2026-10-05: 'when quest is given all monsters have to desepear'). Ours.
-            for (Body& one : bodies_) {
-                if (!one.monster()) continue;
-                one.risesAt = std::numeric_limits<int64_t>::max();
-                if (!one.alive()) continue;
-                one.health = 0;
-                one.quarry = 0;
-                halt(one);
-                dropBlow(one);
-                say(What::Dismissed, one);
-            }
-            hero.quarry = 0;
         }
-    }
-    // Complete on his thanks: the win paid, and out to Devias now rather than after the rest.
-    if (me().claimOwed) {
-        me().claimOwed = false;
-        if (run_.phase == CastlePhase::Won && !run_.claimed) {
-            payCastle();
-            me().angeling = -1;
-            run_.leavesAt = tick_;
-            run_.sentOut = true;
+        // Complete on his thanks: the win paid, and out to Devias now rather than after the rest.
+        if (me().claimOwed) {
+            me().claimOwed = false;
+            if (run_.phase == CastlePhase::Won && !run_.claimed) {
+                payCastle();
+                me().angeling = -1;
+                run_.leavesAt = tick_;
+                run_.sentOut = true;
+            }
         }
     }
     if (run_.phase == CastlePhase::Waiting && tick_ >= run_.startsAt) {

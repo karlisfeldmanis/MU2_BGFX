@@ -104,12 +104,19 @@ void Realm::stroll(Body& walker) {
     // **The hero talking to him holds him.** From the click -- a Talk order on his row, which
     // walks the hero to where he stands NOW -- through the quest window, and a moment after:
     // he stops, gets up if he sat, and faces the hero. Then he takes up the stop he was on.
-    const Body& hero = mine();
+    // The first player, in the order they joined, who is talking to him.
     const int folk = walker.warden;
-    const bool talking =
-        hero.alive() && (me().questing == folk || (me().order.kind == Request::Kind::Talk &&
-                                               int(me().order.target) == folk));
-    if (talking) {
+    const Body* talker = nullptr;
+    for (const Player& one : heroes_) {
+        const Body& hero = bodies_[one.body];
+        if (hero.alive() && (one.questing == folk || (one.order.kind == Request::Kind::Talk &&
+                                                      int(one.order.target) == folk))) {
+            talker = &hero;
+            break;
+        }
+    }
+    if (talker != nullptr) {
+        const Body& hero = *talker;
         if (!s.held) {
             s.held = true;
             halt(walker);
@@ -236,11 +243,15 @@ void Realm::stroll(Body& walker) {
         for (size_t i = 0; i < tables_->folk.size(); ++i) {
             if (tables_->folk[i].number == stop.with) partner = int(i);
         }
-        const bool busy = partner >= 0 && (me().trading == partner || me().banking == partner || me().mixing == partner ||
-                                            me().gating == partner ||
-                                           me().questing == partner ||
-                                           (me().order.kind == Request::Kind::Talk &&
-                                            int(me().order.target) == partner));
+        // Any player at her counter, or on his way to it.
+        bool busy = false;
+        for (const Player& one : heroes_) {
+            busy = busy || (partner >= 0 &&
+                            (one.trading == partner || one.banking == partner ||
+                             one.mixing == partner || one.gating == partner ||
+                             one.questing == partner ||
+                             (one.order.kind == Request::Kind::Talk && int(one.order.target) == partner)));
+        }
         if (busy) {
             ++s.leaves;
             ++s.chatAt;

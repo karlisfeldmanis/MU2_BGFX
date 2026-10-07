@@ -34,6 +34,94 @@ uint32_t Realm::spawn(Body body) {
     return bodies_.back().id;
 }
 
+bool Realm::dressNew(Body& hero, Kin kin, int level, int playerColumn, int playerRow) {
+    hero.player = true;
+    hero.kin = kin;
+    hero.points = startingPoints(kin);
+    hero.level = std::max(1, std::min(level, kMaximumLevel));
+    // A character asked for above level 1 gets his levels and the points that came with them,
+    // and the points are spent nowhere: where they go is the player's choice and there is no
+    // player down here. It is the honest shape -- a level-20 knight with 95 unspent points is
+    // exactly what a level-20 knight who has never opened the window is.
+    hero.experience = neededExperience(hero.level);
+    hero.pointsInHand = (hero.level - 1) * pointsPerLevel(kin);
+    reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
+    keepBoon(hero);
+    restoreMana(hero);
+    hero.health = hero.maxHealth;
+    hero.speed = 1.0f / float(kHeroMoveTicks);
+    int column = playerColumn, row = playerRow;
+    if (!router_.nearestOpen(column, row, content::kWallCharacter, 16, &column, &row)) {
+        core::logError("the player has nowhere to stand near (%d, %d)", playerColumn, playerRow);
+        return false;
+    }
+    hero.x = float(column);
+    hero.y = float(row);
+    hero.homeColumn = column;
+    hero.homeRow = row;
+    hero.temper = Temper::Wandering;
+    // **And no skills.** A character is raised knowing nothing, which is the design whole at
+    // last: the orbs are cooked and Hanzo sells all nine, so a key on the bar is one that was
+    // bought or found and read (docs/skills-dk.md §3.3). Two stand-ins stood here and both are
+    // gone -- the flat hand-over of every built skill, and the ladder that handed them over by
+    // level. What replaced them is `Realm::useItem`'s own branch, and the level is asked there,
+    // off the item, where a requirement belongs.
+    // **Except the wizard's Energy Ball**, which he is born with: OpenMU's
+    // `AddEnergyBallForDarkWizard` writes it into a new wizard's list at creation, and 0.75 has
+    // no scroll for it. `restore` ORs a save's mask over this, so a wizard made before the spell
+    // existed stands up knowing it too.
+    if (hero.kin == Kin::DarkWizard) {
+        hero.learned |= uint64_t(1) << skillIndexOf(skill::kEnergyBall);
+    }
+    return true;
+}
+
+uint32_t Realm::join(Kin kin, int level, int column, int row) {
+    if (!tables_ || bodies_.empty()) return 0;
+    heroes_.emplace_back();
+    const size_t index = heroes_.size() - 1;
+    For him(*this, index);
+    Body hero;
+    if (!dressNew(hero, kin, level, column, row)) {
+        heroes_.pop_back();
+        return 0;
+    }
+    const uint32_t id = spawn(std::move(hero));
+    me().body = indexOfId_[id];
+    reswing(mine());
+    settleFound(0);
+    // His own summon body, dormant, as raise() gives the first one (realm_summon.cpp).
+    Body slot;
+    slot.summoner = id;
+    slot.kind = 0;
+    slot.health = 0;
+    const uint32_t slotId = spawn(std::move(slot));
+    me().summonSlot = int(indexOfId_[slotId]);
+    say(What::Spawned, mine(), mine().level, mine().health);
+    core::logf("realm: player #%u joined at (%d, %d), %d players", id, mine().column(),
+               mine().row(), playerCount());
+    return id;
+}
+
+bool Realm::lookAs(uint32_t id) {
+    const int at = playerOfId(id);
+    if (at < 0) return false;
+    me_ = size_t(at);
+    return true;
+}
+
+int Realm::playerOf(const Body& one) const {
+    if (!one.player) return -1;
+    return playerOfId(one.id);
+}
+
+int Realm::playerOfId(uint32_t id) const {
+    for (size_t i = 0; i < heroes_.size(); ++i) {
+        if (heroes_[i].body < bodies_.size() && bodies_[heroes_[i].body].id == id) return int(i);
+    }
+    return -1;
+}
+
 Body* Realm::body(uint32_t id) {
     return const_cast<Body*>(static_cast<const Realm*>(this)->find(id));
 }
@@ -65,6 +153,23 @@ void Realm::say(What what, const Body& who, int32_t a, int32_t b, int32_t c, uin
     happening.c = c;
     happening.x = who.x;
     happening.y = who.y;
+    // A player's own business is for him alone: what he earned, bought, drank, learned, mended,
+    // mixed and was answered, and his quest giver's words. What the street sees -- his blows,
+    // his fall, his level's flash, a thing leaving the ground -- is for everyone.
+    if (who.player) {
+        switch (what) {
+            case What::Gained: case What::Drank: case What::Served: case What::Bought:
+            case What::Sold: case What::Learned: case What::Worn: case What::Repaired:
+            case What::Refined: case What::Enlivened: case What::Set: case What::Offered:
+            case What::QuestTaken: case What::QuestStep: case What::QuestReady:
+            case What::QuestDone: case What::Arrowless: case What::Mixed: case What::Answered:
+            case What::PetLost: case What::Barred:
+                happening.audience = who.id;
+                break;
+            default:
+                break;
+        }
+    }
     happenings_.push_back(happening);
 }
 
@@ -89,6 +194,10 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         tables_ = own_.get();
     }
     dice_.seed(seed);
+    // Whoever joined the last raise is gone with its bodies; the first keeps what he carries, as
+    // he always did.
+    heroes_.resize(1);
+    me_ = 0;
     me().grounded = false;
     // A stream of its own, off the same seed: see `wearDice_`.
     wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
@@ -142,46 +251,10 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
 
     // The player first, and at index 0 for good: every loop below walks an index, and "the
     // player is bodies_[0]" is cheaper and steadier than a search.
+    me().body = 0;
     Body hero;
     hero.id = nextId_++;
-    hero.player = true;
-    hero.kin = kin;
-    hero.points = startingPoints(kin);
-    hero.level = std::max(1, std::min(level, kMaximumLevel));
-    // A character asked for above level 1 gets his levels and the points that came with them,
-    // and the points are spent nowhere: where they go is the player's choice and there is no
-    // player down here. It is the honest shape -- a level-20 knight with 95 unspent points is
-    // exactly what a level-20 knight who has never opened the window is.
-    hero.experience = neededExperience(hero.level);
-    hero.pointsInHand = (hero.level - 1) * pointsPerLevel(kin);
-    reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
-    keepBoon(hero);
-    restoreMana(hero);
-    hero.health = hero.maxHealth;
-    hero.speed = 1.0f / float(kHeroMoveTicks);
-    int column = playerColumn, row = playerRow;
-    if (!router_.nearestOpen(column, row, content::kWallCharacter, 16, &column, &row)) {
-        core::logError("the player has nowhere to stand near (%d, %d)", playerColumn, playerRow);
-        return false;
-    }
-    hero.x = float(column);
-    hero.y = float(row);
-    hero.homeColumn = column;
-    hero.homeRow = row;
-    hero.temper = Temper::Wandering;
-    // **And no skills.** A character is raised knowing nothing, which is the design whole at
-    // last: the orbs are cooked and Hanzo sells all nine, so a key on the bar is one that was
-    // bought or found and read (docs/skills-dk.md §3.3). Two stand-ins stood here and both are
-    // gone -- the flat hand-over of every built skill, and the ladder that handed them over by
-    // level. What replaced them is `Realm::useItem`'s own branch, and the level is asked there,
-    // off the item, where a requirement belongs.
-    // **Except the wizard's Energy Ball**, which he is born with: OpenMU's
-    // `AddEnergyBallForDarkWizard` writes it into a new wizard's list at creation, and 0.75 has
-    // no scroll for it. `restore` ORs a save's mask over this, so a wizard made before the spell
-    // existed stands up knowing it too.
-    if (hero.kin == Kin::DarkWizard) {
-        hero.learned |= uint64_t(1) << skillIndexOf(skill::kEnergyBall);
-    }
+    if (!dressNew(hero, kin, level, playerColumn, playerRow)) return false;
     bodies_.push_back(std::move(hero));
     reswing(mine());
     settleFound(0);
@@ -336,7 +409,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     }
     core::logf("realm: map %u raised, %zu monsters of %zu breeds in %zu nests, player at "
                "(%d, %d), seed %llu", tables_->map, placed, tables_->kinds.size(),
-               tables_->nests.size(), column, row, (unsigned long long)seed);
+               tables_->nests.size(), bodies_[0].homeColumn, bodies_[0].homeRow,
+               (unsigned long long)seed);
     return true;
 }
 
@@ -887,21 +961,123 @@ void Realm::approach(Body& hero, const Body& target, int radius, bool sight) {
 void Realm::step() {
     ++tick_;
     happenings_.clear();
+    // Whom the queries answered for before the tick, which it comes back to after it. The
+    // world's own work -- the castle, the invasion, the raid, the traps, the monsters -- runs for
+    // the first player, as it did for the one; each player's own runs for him, in id order.
+    const size_t focus = me_;
+    me_ = 0;
     // The windows' asks first, in the order they came: nothing is decided between ticks.
     applyCommands();
     castleTick();
     invasionTick();
     raidTick();
+
+    // The order is fixed and is written down because it is the behaviour: each player walks and
+    // swings, in the order they joined, then every monster is roused, thinks and moves in index
+    // order, then the dead are considered for respawn. Nothing here walks a hash container, and
+    // every id came from one monotonic counter.
+    for (size_t p = 0; p < heroes_.size(); ++p) {
+        me_ = p;
+        heroBefore();
+    }
+    me_ = 0;
+    // What has lain its minute goes, in the order it lies -- a fixed order, since the list is
+    // only ever appended to and swapped out of by the tick's own events.
+    for (size_t i = 0; i < lying_.size();) {
+        if (lying_[i].vanishesAt <= tick_) {
+            say(What::Vanished, bodies_[heroes_[0].body], int32_t(lying_[i].id));
+            lying_[i] = lying_.back();
+            lying_.pop_back();
+        } else {
+            ++i;
+        }
+    }
+    bool anyAlive = false;
+    for (size_t p = 0; p < heroes_.size(); ++p) {
+        me_ = p;
+        // Alive as his half begins: one who falls in it was still there to be caught.
+        anyAlive = anyAlive || mine().alive();
+        heroAfter();
+    }
+    me_ = 0;
+    // The traps fire on their own clock at whoever stands in their way -- a clock that stands
+    // still while nobody lives to be caught, as it did while the one hero lay dead.
+    if (anyAlive) fireTraps();
+
+    for (size_t i = 1; i < bodies_.size(); ++i) {
+        Body& beast = bodies_[i];
+        // The other players stepped above, with the first.
+        if (beast.player) continue;
+        if (beast.warden >= 0) {
+            watch(beast);
+            continue;
+        }
+        if (beast.summoner != 0) {
+            tend(beast);
+            continue;
+        }
+        if (beast.raider >= 0) {
+            if (!beast.alive()) {
+                if (beast.risesAt > 0 && tick_ >= beast.risesAt) reviveRaider(beast);
+                continue;
+            }
+            raid(beast, beast.raider + 1);
+            continue;
+        }
+        poisonPulse(beast);
+        burnPulse(beast);
+        beamOn(beast);
+        if (beast.alive() && beast.pushTicks > 0) {
+            // Pushed: it slides and does nothing else until it lands on its tile.
+            beast.x += beast.pushX;
+            beast.y += beast.pushY;
+            if (--beast.pushTicks == 0) {
+                beast.x = float(beast.column());
+                beast.y = float(beast.row());
+                // Landed from a Whirlwind's pull: the slash's blow now, if it is beside him.
+                if (beast.whirledBy != 0) {
+                    Body* by = body(beast.whirledBy);
+                    const SkillRow* slash = skillNumbered(skill::kTwistingSlash);
+                    if (by && by->alive() && slash && within(*by, beast, slash->reach)) {
+                        strikeAt(*by, beast, beast.whirlForce, nullptr, false);
+                    }
+                    beast.whirledBy = 0;
+                }
+            }
+        } else if (beast.alive() && fixed(beast)) {
+            // The statue: struck where it stands, and nothing else.
+        } else if (beast.alive()) {
+            rouse(beast);
+            if (beast.temper != Temper::Asleep) {
+                advance(beast);
+                if (isBoss(beast)) {
+                    bossThink(beast);
+                } else {
+                    think(beast);
+                }
+            } else if (beast.walking) {
+                // Asleep, but not until it has come to a stand. A monster whose walk ended on
+                // the tick nobody was left near it would otherwise keep that tick's pace for as
+                // long as it slept, and the drawing decides walk or idle from exactly that.
+                advance(beast);
+            }
+        } else if (tick_ >= beast.risesAt) {
+            raiseBeast(beast);
+        }
+    }
+    // What the tick's blows on the dragon were worth to its threat (realm_raid.cpp).
+    raidAfter();
+    me_ = focus;
+}
+
+// The first half of a player's tick: what he is owed at its start -- a castle's gate, a summon a
+// save carried -- his potions, his charge, his recovery, Icarus's wings, the floor he stands on.
+void Realm::heroBefore() {
     if (me().castleOwed != 0) {
         const int castle = me().castleOwed;
         me().castleOwed = 0;
         passCastle(castle);
     }
-
-    // The order is fixed and is written down because it is the behaviour: the player walks and
-    // swings, then every monster is roused, thinks and moves in index order, then the dead are
-    // considered for respawn. Nothing here walks a hash container, and every id came from one
-    // monotonic counter.
     Body& hero = mine();
     if (me().summonOwed != 0) {
         const SkillRow* row = skillNumbered(me().summonOwed);
@@ -925,17 +1101,12 @@ void Realm::step() {
     }
     // The floor he stands on, opened in the travel list when this map opens floor by floor.
     reachFloor();
-    // What has lain its minute goes, in the order it lies -- a fixed order, since the list is
-    // only ever appended to and swapped out of by the tick's own events.
-    for (size_t i = 0; i < lying_.size();) {
-        if (lying_[i].vanishesAt <= tick_) {
-            say(What::Vanished, hero, int32_t(lying_[i].id));
-            lying_[i] = lying_.back();
-            lying_.pop_back();
-        } else {
-            ++i;
-        }
-    }
+}
+
+// And the second: his blow landing, what he let go arriving, his order taken up and carried out --
+// or, dead, his rising.
+void Realm::heroAfter() {
+    Body& hero = mine();
     if (hero.alive()) {
         // What was begun and not cancelled lands first, before this tick's orders: the arm comes
         // down at the moment the drawing shows it coming down, and a click that arrives on this
@@ -944,7 +1115,7 @@ void Realm::step() {
         if (hero.blowAt != 0 && tick_ >= hero.blowAt) land(hero);
         // Evil Spirit's held blows, each on its own tick.
         for (SpiritBlow& one : spiritBlows_) {
-            if (one.at == 0 || tick_ < one.at || !hero.alive()) continue;
+            if (one.at == 0 || tick_ < one.at || !hero.alive() || !lands(one.owner)) continue;
             const SpiritBlow blow = one;
             one = SpiritBlow{};
             spiritStrike(hero, blow);
@@ -1008,72 +1179,10 @@ void Realm::step() {
         } else {
             press();
         }
-        fireTraps();
     } else if (tick_ >= hero.risesAt) {
         reviveHero();
     }
 
-    for (size_t i = 1; i < bodies_.size(); ++i) {
-        Body& beast = bodies_[i];
-        if (beast.warden >= 0) {
-            watch(beast);
-            continue;
-        }
-        if (beast.summoner != 0) {
-            tend(beast);
-            continue;
-        }
-        if (beast.raider >= 0) {
-            if (!beast.alive()) {
-                if (beast.risesAt > 0 && tick_ >= beast.risesAt) reviveRaider(beast);
-                continue;
-            }
-            raid(beast, beast.raider + 1);
-            continue;
-        }
-        poisonPulse(beast);
-        burnPulse(beast);
-        beamOn(beast);
-        if (beast.alive() && beast.pushTicks > 0) {
-            // Pushed: it slides and does nothing else until it lands on its tile.
-            beast.x += beast.pushX;
-            beast.y += beast.pushY;
-            if (--beast.pushTicks == 0) {
-                beast.x = float(beast.column());
-                beast.y = float(beast.row());
-                // Landed from a Whirlwind's pull: the slash's blow now, if it is beside him.
-                if (beast.whirledBy != 0) {
-                    Body* by = body(beast.whirledBy);
-                    const SkillRow* slash = skillNumbered(skill::kTwistingSlash);
-                    if (by && by->alive() && slash && within(*by, beast, slash->reach)) {
-                        strikeAt(*by, beast, beast.whirlForce, nullptr, false);
-                    }
-                    beast.whirledBy = 0;
-                }
-            }
-        } else if (beast.alive() && fixed(beast)) {
-            // The statue: struck where it stands, and nothing else.
-        } else if (beast.alive()) {
-            rouse(beast);
-            if (beast.temper != Temper::Asleep) {
-                advance(beast);
-                if (isBoss(beast)) {
-                    bossThink(beast);
-                } else {
-                    think(beast);
-                }
-            } else if (beast.walking) {
-                // Asleep, but not until it has come to a stand. A monster whose walk ended on
-                // the tick nobody was left near it would otherwise keep that tick's pace for as
-                // long as it slept, and the drawing decides walk or idle from exactly that.
-                advance(beast);
-            }
-        } else if (tick_ >= beast.risesAt) {
-            raiseBeast(beast);
-        }
-    }
-    // What the tick's blows on the dragon were worth to its threat (realm_raid.cpp).
-    raidAfter();
 }
 
 // ---- the log ---------------------------------------------------------------------------

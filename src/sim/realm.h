@@ -207,6 +207,11 @@ struct Happening {
     What what = What::Spawned;
     uint32_t who = 0;
     uint32_t whom = 0;
+    // Whom it is for: 0 for everyone who can see it, else the one player's body id -- what he
+    // gained, bought, was answered or was told by his quest giver (docs/server-plan.md phase 2).
+    // Every mirror holds every happening; a client shows another player's private ones as
+    // nothing, or as the little the rest of the world would see.
+    uint32_t audience = 0;
     int32_t a = 0, b = 0, c = 0;
     // A `Hit`'s own bit, and nothing else reads it: the blow was the top of its band.
     // Unreachable in this content version -- 0.75 grants criticalChance from the luck option
@@ -557,10 +562,11 @@ struct Body {
     // The last monster he challenged, so one that steps out of his leash and back in is not
     // challenged twice. Forgotten when he is back at his post.
     uint32_t challenged = 0;
-    // On a monster: the guard who last swung at it, 0 for none, and whether the hero has landed
-    // a blow on it. Both cleared when it rises. Together they are "the hero helped a guard".
+    // On a monster: the guard who last swung at it, 0 for none, and the player who last landed a
+    // blow on it, 0 for none. Both cleared when it rises. Together they are "a player helped a
+    // guard", and the kill is that player's.
     uint32_t guardedBy = 0;
-    bool heroStruck = false;
+    uint32_t heroStruck = 0;
 
     // ---- the elf's summon (Realm::tend, sprint 15) --------------------------------------------
     // Whose it is: the owner's id, 0 on everybody else. One body a realm, raised dormant at the
@@ -1192,6 +1198,18 @@ public:
     // `bodies_` under any Body& held there. Bodies never leave yet, so an index stays the body's
     // own; despawn() waits for the client's figures to go by id (server-plan phase 1).
     uint32_t spawn(Body body);
+    // **Another hero into the raised world** (docs/server-plan.md phase 2): raised as raise()
+    // raises the first -- class, level, the nearest standable tile to (column, row) -- with a
+    // Player of his own and his own dormant summon body, both through spawn(). His id, or 0 when
+    // he has nowhere to stand. Between ticks, or at a tick's start as a command.
+    uint32_t join(Kin kin, int level, int column, int row);
+    // The players, in the order they joined, which is id order; and which of them the queries
+    // below answer for -- `hero()`, `satchel()`, the windows, the quests. Inside step() the
+    // realm works for each in turn and comes back to this one.
+    int playerCount() const { return int(heroes_.size()); }
+    const Body& playerAt(int index) const { return bodies_[heroes_[size_t(index)].body]; }
+    // False for an id that is no player's.
+    bool lookAs(uint32_t id);
     const Body& hero() const { return mine(); }
     // A skill's clip is still running, so he is locked where he stands: no step, no re-path.
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which
@@ -1396,6 +1414,8 @@ private:
     void raiseWardens();
     void raiseTraps();
     void fireTraps();
+    // One trap's shot at one player: caught, rolled, struck.
+    void fireTrap(size_t trap, Body& hero);
     void watch(Body& guard);
     // A townsperson's rounds (realm_folk.cpp, kStrollers): raised beside the guards, as a body
     // with `warden` naming his folk row, and walked stop to stop -- standing still and turning
@@ -1512,6 +1532,9 @@ private:
         bool swung = false;
         // A Plague Arrows lane's arrow: it poisons what it lands in (Realm::envenom).
         bool plague = false;
+        // The body that let it go, last so the places above are filled as before and this set
+        // after: its arrival is his blow, landed on his tick.
+        uint32_t owner = 0;
     };
     // A Pyroblaster's chain flying on from `off`, which it struck at (x, y): to the nearest
     // monster it has not struck yet, while it has hops left.
@@ -1547,10 +1570,18 @@ private:
         uint32_t target = 0;
         float force = 1.0f;
         bool rune = false;  // his shield's, drawn in the rune's colour
+        uint32_t owner = 0;  // whose spirits, as a Flight's
     };
     static constexpr int kSpiritBlowsMost = 96;
     SpiritBlow spiritBlows_[kSpiritBlowsMost] = {};
-    bool spiritsGoing() const;
+    // Whether this body's spirits are still out.
+    bool spiritsGoing(uint32_t owner) const;
+    // Whether a pool entry let go by `owner` lands on the player the realm works for now: his
+    // own, and for the first player what no player let go -- a raider's rune chain -- which
+    // landed as the one hero's blows before there were more.
+    bool lands(uint32_t owner) const {
+        return owner == mine().id || (me_ == 0 && playerOfId(owner) < 0);
+    }
     bool letSpiritsGo(Body& hero, float force, bool rune);
     void spiritStrike(Body& hero, const SpiritBlow& blow);
     // Flames burning on the ground (`SkillRow::burns`): where, when each strikes next and how
@@ -1565,6 +1596,7 @@ private:
         uint32_t aimed = 0;  // the body it was thrown at, whose first strike pays back
         float dx = 0.0f, dy = 0.0f;  // tiles a tick it walks: Twister's storm (`SkillRow::walks`)
         bool rune = false;  // a knight's Twister rune's: each strike his rune's blow (`runeStrike`)
+        uint32_t owner = 0;  // whose fire, as a Flight's
     };
     static constexpr int kFires = 8;
     Fire fires_[kFires] = {};
@@ -1840,6 +1872,30 @@ private:
     // And his body.
     Body& mine() { return bodies_[me().body]; }
     const Body& mine() const { return bodies_[me().body]; }
+    // Which of `heroes_` a body is, or -1 for a body that is no player.
+    int playerOf(const Body& one) const;
+    int playerOfId(uint32_t id) const;
+    // The realm working for one player for a scope, and back to whom it worked for after: a blow
+    // between him and a monster, a kill paid to him, a command he asked. A body that is no
+    // player leaves it where it was. Kept by index, so `heroes_` growing under it is safe.
+    struct For {
+        Realm& realm;
+        size_t was;
+        For(Realm& realm_, const Body& one) : realm(realm_), was(realm_.me_) {
+            const int at = realm.playerOf(one);
+            if (at >= 0) realm.me_ = size_t(at);
+        }
+        For(Realm& realm_, size_t index) : realm(realm_), was(realm_.me_) { realm.me_ = index; }
+        ~For() { realm.me_ = was; }
+        For(const For&) = delete;
+        For& operator=(const For&) = delete;
+    };
+    // A new hero's body, everything raise() gives the first but his id: his class's points, the
+    // level asked for, reckoned, on the nearest standable tile. False with nowhere to stand.
+    bool dressNew(Body& hero, Kin kin, int level, int column, int row);
+    // A player's own tick, in two halves either side of the ground's vanishing (Realm::step).
+    void heroBefore();
+    void heroAfter();
 };
 
 // The one line a happening becomes in the seeded log. Fixed precision throughout: a `%g` of a

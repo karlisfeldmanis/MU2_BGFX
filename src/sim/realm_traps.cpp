@@ -38,54 +38,62 @@ void Realm::raiseTraps() {
 
 void Realm::fireTraps() {
     if (traps_.empty()) return;
-    Body& hero = mine();
     for (size_t i = 0; i < traps_.size(); ++i) {
         Trap& trap = traps_[i];
         if (tick_ < trap.firesAt) continue;
         trap.firesAt = tick_ + kTrapEvery;
-        if (!hero.alive()) continue;
-        const TrapKind& kind = *trapKind(trap.number);
-        const int dx = hero.column() - trap.column, dy = hero.row() - trap.row;
-        bool caught = false;
-        if (kind.pressed) {
-            // AttackSingleWhenPressedTrapIntelligence: on its own tile.
-            caught = dx == 0 && dy == 0;
-        } else {
-            // AttackAreaTargetInDirectionTrapIntelligence: the way it faces, within its range
-            // (IsInRange, a square), and not on a safe tile.
-            caught = octantOf(dx, dy) == octantOf(trap.dx, trap.dy) &&
-                     std::abs(dx) <= kind.attackRange && std::abs(dy) <= kind.attackRange &&
-                     !tables_->grid.safe(hero.column(), hero.row());
+        // At every player in its way, in the order they joined.
+        for (size_t p = 0; p < heroes_.size(); ++p) {
+            For him(*this, p);
+            fireTrap(i, mine());
         }
-        if (!caught) continue;
-
-        // Trap.AttackAsync: the hero's AttackByAsync, the same roll any monster's blow takes.
-        Fighter fighter;
-        fighter.level = kind.level;
-        fighter.attackRate = kind.attackRate;
-        fighter.defenseRate = kind.defenseRate;
-        fighter.minimumDamage = kind.minimumDamage;
-        fighter.maximumDamage = kind.maximumDamage;
-        const Blow blow = strike(fighter, hero.stats, trapDice_);
-        int damage = 0;
-        if (blow.hit) {
-            damage = blow.damage;
-            // The shield's nine tenths first, as every blow on him (Realm::strikeAt).
-            int wound = damage;
-            if (hero.sd > 0) {
-                const int onto = int(float(damage) * kShieldShare);
-                const int over = onto - hero.sd;
-                hero.sd = std::max(0, hero.sd - onto);
-                wound = damage - onto + std::max(0, over);
-            }
-            hero.health = std::max(0, hero.health - wound);
-            if (wound > 0) wearOnTaken(wound);
-        }
-        say(What::Trapped, hero, damage, int32_t(i), hero.health);
-        // Nobody to credit: a trap is no body, so he is his own killer, which is what the log
-        // and the fall read.
-        if (hero.health <= 0) kill(hero, hero);
     }
+}
+
+void Realm::fireTrap(size_t i, Body& hero) {
+    const Trap& trap = traps_[i];
+    if (!hero.alive()) return;
+    const TrapKind& kind = *trapKind(trap.number);
+    const int dx = hero.column() - trap.column, dy = hero.row() - trap.row;
+    bool caught = false;
+    if (kind.pressed) {
+        // AttackSingleWhenPressedTrapIntelligence: on its own tile.
+        caught = dx == 0 && dy == 0;
+    } else {
+        // AttackAreaTargetInDirectionTrapIntelligence: the way it faces, within its range
+        // (IsInRange, a square), and not on a safe tile.
+        caught = octantOf(dx, dy) == octantOf(trap.dx, trap.dy) &&
+                 std::abs(dx) <= kind.attackRange && std::abs(dy) <= kind.attackRange &&
+                 !tables_->grid.safe(hero.column(), hero.row());
+    }
+    if (!caught) return;
+
+    // Trap.AttackAsync: the hero's AttackByAsync, the same roll any monster's blow takes.
+    Fighter fighter;
+    fighter.level = kind.level;
+    fighter.attackRate = kind.attackRate;
+    fighter.defenseRate = kind.defenseRate;
+    fighter.minimumDamage = kind.minimumDamage;
+    fighter.maximumDamage = kind.maximumDamage;
+    const Blow blow = strike(fighter, hero.stats, trapDice_);
+    int damage = 0;
+    if (blow.hit) {
+        damage = blow.damage;
+        // The shield's nine tenths first, as every blow on him (Realm::strikeAt).
+        int wound = damage;
+        if (hero.sd > 0) {
+            const int onto = int(float(damage) * kShieldShare);
+            const int over = onto - hero.sd;
+            hero.sd = std::max(0, hero.sd - onto);
+            wound = damage - onto + std::max(0, over);
+        }
+        hero.health = std::max(0, hero.health - wound);
+        if (wound > 0) wearOnTaken(wound);
+    }
+    say(What::Trapped, hero, damage, int32_t(i), hero.health);
+    // Nobody to credit: a trap is no body, so he is his own killer, which is what the log
+    // and the fall read.
+    if (hero.health <= 0) kill(hero, hero);
 }
 
 }  // namespace mu::sim
