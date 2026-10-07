@@ -64,6 +64,10 @@ public:
     void summon(bool on);
     bool summoned() const { return summoned_; }
 
+    // Synchronize the client's weather cycle to the server's.
+    // -1: local (do not force), 0: server is dry, 1: server is wet.
+    void sync(int serverRain);
+
     // One frame. `indoors` takes the rain's and the jungle's sounds off under a roof, with the
     // wind's switch.
     void update(float seconds, bool indoors);

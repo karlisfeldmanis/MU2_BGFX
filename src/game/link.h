@@ -43,6 +43,10 @@ public:
     // The round-trip time to the server in milliseconds, smoothed; -1 when there is no server
     // or no measurement yet. Measured from sending a command to receiving the tick that carries it.
     virtual float rttMs() const { return -1.0f; }
+    // The server's rain state for this tick: -1 not known (local), 0 dry, 1 wet. The client's
+    // visual weather follows this when remote, so that the rain a player sees matches what the
+    // server told the sim (and what every other player sees).
+    virtual int serverRain() const { return -1; }
     // Once the realm is raised: whatever happened in it before this player came, stepped at once
     // -- a shared world's past, for a mirror (RemoteLink) -- and the realm turned to look at him.
     virtual void catchUp() {}

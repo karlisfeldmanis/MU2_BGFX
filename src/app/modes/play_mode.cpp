@@ -1368,6 +1368,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // it is on (Weather::summon).
         world_.played().invasionRain(world_.weather().wet());
         world_.weather().summon(world_.played().invasionStorm());
+        world_.weather().sync(world_.played().serverRain());
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         // Under the open sky where the map is "underground" only for its air (Tarkan's sand).
         world_.weather().update(float(deltaSeconds), inside && !world_.leaves().openAir());

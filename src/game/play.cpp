@@ -164,6 +164,11 @@ void Play::update(double seconds) {
         }
         accumulator_ = kTickSeconds;
     }
+    // A second pump right before the step loop: ticks that arrived during the early-tick work
+    // and the frame's own accounting above are picked up now rather than waiting for the next
+    // frame's pump. Costs one non-blocking recv and halves the worst-case time a tick sits in
+    // the kernel buffer -- about 8 ms average at 60 fps.
+    if (remoteClock) link_->pump();
     while (stepped < kMostTicks && link_->due() &&
            (accumulator_ >= kTickSeconds || (remoteClock && link_->owed() > 2))) {
         // Each body's health going into the tick, so a blow's cue can say what it took rather

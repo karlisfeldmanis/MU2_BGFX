@@ -122,6 +122,17 @@ void Weather::summon(bool on) {
     }
 }
 
+void Weather::sync(int serverRain) {
+    if (serverRain < 0 || !rains_ || forced_ || summoned_ || cycle_ || steady_ > 0.0f) return;
+    const bool serverWet = serverRain > 0;
+    if (wet_ != serverWet) {
+        wet_ = serverWet;
+        left_ = 60.0f;  // any positive value is fine, server drives it now
+        if (wet_) thunderIn_ = 30.0f + random01() * 60.0f;
+        core::logf("weather: synced to server, %s", wet_ ? (snows_ ? "blizzard" : "rain") : (snows_ ? "calm" : "dry"));
+    }
+}
+
 void Weather::strikeLater() {
     thunderIn_ = storm_ || summoned_ ? 8.0f + random01() * 8.0f
                         : kThunderLow + random01() * (kThunderHigh - kThunderLow);

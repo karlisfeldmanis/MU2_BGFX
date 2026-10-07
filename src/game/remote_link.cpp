@@ -97,6 +97,15 @@ void RemoteLink::send(const sim::Command& command) {
     }
 }
 
+void RemoteLink::ping() {
+    if (!socket_.open()) return;
+    // A None command: the server's realm drops it (ticket 0, kind None), and its tick carries
+    // it back as every command is -- just enough to measure the round trip while the player
+    // stands still, so the readout stays live.
+    sim::Command nop{.kind = sim::Command::Kind::None, .player = you_};
+    send(nop);
+}
+
 void RemoteLink::pump() {
     if (!socket_.open()) return;
     if (!socket_.receive(in_) || !socket_.flush()) {
@@ -121,7 +130,11 @@ void RemoteLink::pump() {
                             const auto now = std::chrono::steady_clock::now();
                             const float ms = std::chrono::duration<float, std::milli>(
                                                  now - lastSendTime_).count();
-                            rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.8f + ms * 0.2f;
+                            // 0.7 / 0.3: more responsive than 0.8 / 0.2 -- about six samples
+                            // to reflect a 63% change, so a spike shows in under a second
+                            // and a steady shift is read in two. Still smooth enough that
+                            // the number does not flicker.
+                            rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.7f + ms * 0.3f;
                             pendingRtt_ = false;
                             break;
                         }
@@ -142,6 +155,14 @@ void RemoteLink::pump() {
             break;
         }
     }
+    // Idle keepalive: when the player stands still no command is sent, so the RTT readout
+    // goes stale. A None command every two seconds keeps it fresh, and its round trip is the
+    // same path as any real command's.
+    if (!pendingRtt_) {
+        const auto now = std::chrono::steady_clock::now();
+        const float idle = std::chrono::duration<float>(now - lastSendTime_).count();
+        if (idle >= 2.0f) ping();
+    }
     check();
 }
 
@@ -151,6 +172,7 @@ void RemoteLink::step() {
     ticks_.pop_front();
     // The same inputs, in the same order, as the server's realm took them (server/src/main.cpp).
     mirror_.setWallClock(tick.wallClock);
+    serverRain_ = tick.rain ? 1 : 0;
     mirror_.invasionRain(tick.rain);
     for (const net::Arrival& one : tick.arrivals) mirror_.carry(one.ticket, one.kept);
     for (const sim::Command& one : tick.commands) mirror_.command(one);

@@ -82,6 +82,25 @@ struct World {
     std::vector<net::Arrival> arriving;  // characters carried in with this tick's Joins
     uint32_t nextTicket = kJoinTickets;
     std::vector<uint32_t> orphans;  // Joins whose connection went before they were answered
+
+    // ---- server-side weather ------------------------------------------------------------------
+    struct ServerWeather {
+        bool wet = false;
+        float left = 600.0f;  // seconds left in the current spell, starting dry (kDryLow)
+        uint32_t seed = 0x9E3779B9u;
+
+        float random01() {
+            seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
+            return float(seed & 0xFFFFu) / 65535.0f;
+        }
+        void tick(float dt) {
+            left -= dt;
+            if (left > 0.0f) return;
+            wet = !wet;
+            left = wet ? 180.0f + random01() * (300.0f - 180.0f)   // kWetLow to kWetHigh
+                       : 600.0f + random01() * (1080.0f - 600.0f); // kDryLow to kDryHigh
+        }
+    } weather;
 };
 
 struct Session {
@@ -361,7 +380,8 @@ Session* playing(const World& world, std::vector<std::unique_ptr<Session>>& sess
 void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
     net::Tick t;
     t.wallClock = int64_t(std::time(nullptr));
-    t.rain = false;  // the server has no weather yet: no rain, so no Golden Invasion
+    world.weather.tick(float(kTickSeconds));
+    t.rain = world.weather.wet;
     t.commands.swap(world.queued);
     t.arrivals.swap(world.arriving);
     sim::Realm& realm = *world.realm;
@@ -562,18 +582,8 @@ int main(int argc, char** argv) {
                 ++i;
             }
         }
-        // A world nobody is in, or on the way into, is let go; the next Hello raises it fresh.
-        for (size_t i = 0; i < worlds.size();) {
-            const World* world = worlds[i].get();
-            const bool someone = std::any_of(sessions.begin(), sessions.end(),
-                                             [&](const auto& one) { return one->world == world; });
-            if (!someone) {
-                core::logf("%s: empty after %zu ticks, let go", world->name.c_str(), world->log.size());
-                worlds.erase(worlds.begin() + long(i));
-            } else {
-                ++i;
-            }
-        }
+        // Worlds are never let go: the server is always online, and a world once raised keeps
+        // its monsters, its weather and its state for as long as the server runs.
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
     keepEveryone(sessions);

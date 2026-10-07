@@ -221,6 +221,7 @@ public:
     // His character's token from the server's Welcome, for the next world's Hello; 0 off a server.
     uint64_t serverToken() const { return serverToken_; }
     bool remote() const { return link_->remote(); }
+    int serverRain() const { return link_ ? link_->serverRain() : -1; }
     float rttMs() const { return link_->rttMs(); }
     // The line under the map's name, "Level 2-40": its whole spawn table, taken before the
     // breeds not yet cooked are held back, so a world still waiting on its figures says what it

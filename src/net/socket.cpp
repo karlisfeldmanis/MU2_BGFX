@@ -143,6 +143,26 @@ bool Socket::receive(std::vector<uint8_t>& into) {
 }
 
 bool Socket::send(const std::vector<uint8_t>& bytes) {
+    // Fast path: nothing pending, try to push straight into the kernel without copying into
+    // pending_ first. The common case for a command -- a few dozen bytes, the socket ready --
+    // saves a vector append and its memcpy.
+    if (pending_.empty() && fd_ >= 0) {
+        const ssize_t put = ::send(fd_, bytes.data(), bytes.size(), kSendFlags);
+        if (put == ssize_t(bytes.size())) return true;
+        if (put > 0) {
+            pending_.insert(pending_.end(), bytes.begin() + put, bytes.end());
+            return true;
+        }
+        if (put < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            pending_.insert(pending_.end(), bytes.begin(), bytes.end());
+            return true;
+        }
+        if (put < 0 && errno == EINTR) {
+            // Fall through to the old path.
+        } else {
+            return false;
+        }
+    }
     pending_.insert(pending_.end(), bytes.begin(), bytes.end());
     return flush();
 }

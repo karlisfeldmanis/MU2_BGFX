@@ -38,6 +38,7 @@ public:
     const sim::Realm& realm() const override { return mirror_; }
     bool remote() const override { return true; }
     float rttMs() const override { return rttMs_; }
+    int serverRain() const override { return serverRain_; }
     // The world's past, every tick of the Welcome's backlog, stepped on the mirror with nothing
     // drawn; then the mirror looks at his own player (Welcome::you).
     void catchUp() override;
@@ -49,6 +50,7 @@ public:
 
 private:
     void check();
+    void ping();
 
     sim::Realm& mirror_;
     net::Socket socket_;
@@ -62,6 +64,7 @@ private:
     std::chrono::steady_clock::time_point lastSendTime_{};
     bool pendingRtt_ = false;
     float rttMs_ = -1.0f;
+    int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
 };
 
 }  // namespace mu::game
