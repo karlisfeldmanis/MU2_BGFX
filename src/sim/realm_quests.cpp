@@ -131,6 +131,13 @@ bool Realm::questChoiceFits(int index, int choice) const {
     return one.classes == 0 || (one.classes & (1 << int(bodies_[0].kin))) != 0;
 }
 
+bool Realm::questItemFits(const QuestItem& what) const {
+    const int32_t item = tables_ && what.item ? tables_->itemNamed(what.item) : -1;
+    if (item < 0) return false;
+    const content::ItemRow& one = tables_->items[size_t(item)];
+    return one.classes == 0 || (one.classes & (1 << int(bodies_[0].kin))) != 0;
+}
+
 bool Realm::acceptQuest(int index) {
     if (index < 0 || index >= kQuests || questing_ < 0 || !serving(questing_)) return false;
     if (tables_->folk[size_t(questing_)].number != questAt(index).giver) return false;
@@ -324,7 +331,7 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     const bool first = questFirst(row, int(bodies_[0].kin), one.completions);
     const int paidKin = questPaidKin(row, int(bodies_[0].kin), first, path);
     for (int i = 0; i < row.paidCount && paid; ++i) {
-        if (questPays(row.paid[i], paidKin, first)) {
+        if (questPays(row.paid[i], paidKin, first) && questItemFits(row.paid[i])) {
             paid = pay(row.paid[i], nullptr);
         }
     }

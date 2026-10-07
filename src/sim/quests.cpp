@@ -119,7 +119,12 @@ QuestRow marlon() {
     // The first powered ring, a green one (sim::Affix; the user, 2026-10-03: "also add some
     // rings and pendants to some quest lines"). Each line deeper pays one more power.
     row.paid[6] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth
-    row.paidCount = 7;
+    // **And a skill each, the first clear only** (the user, 2026-10-07: 'give orbs and scroll
+    // to classes when they do quests'): the knight's Lunge, Hanzo's dearest, asking level 40
+    // just past the ladder's end here; the wizard's Ice, which no shop sells.
+    row.paid[7] = {.item = "OrbLunge", .kin = knight, .firstOnly = true};  // Orb of Lunge
+    row.paid[8] = {.item = "Book07", .kin = wizard, .firstOnly = true};    // Scroll of Ice
+    row.paidCount = 9;
     return row;
 }
 
@@ -191,7 +196,9 @@ QuestRow peia() {
     row.paid[2] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[3] = {.item = "Potion04", .count = 20};  // Large Healing Potions
     row.paid[4] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth, as Marlon's
-    row.paidCount = 5;
+    // And her skill, as Marlon pays his two theirs (2026-10-07): Greater Damage, level 36.
+    row.paid[5] = {.item = "Gem04", .kin = elf, .firstOnly = true};  // Orb of Greater Damage
+    row.paidCount = 6;
     return row;
 }
 
@@ -276,7 +283,12 @@ QuestRow devin() {
     // all stats to devias quest line for all classes'): +10% to all four stats.
     row.paid[6] = {.item = "Jewel22", .power = uint8_t(Power::LesserAscendance),
                    .firstOnly = true};  // Rune of Creation, Lesser Ascendance
-    row.paidCount = 7;
+    // And a skill each (2026-10-07): the knight's Cyclone and the wizard's Flame, which no shop
+    // sells, and for the elf the Orb of Summoning +3 -- the Elite Yeti she has just hunted.
+    row.paid[7] = {.item = "OrbCyclone", .kin = knight, .firstOnly = true};  // Orb of Cyclone
+    row.paid[8] = {.item = "Book05", .kin = wizard, .firstOnly = true};      // Scroll of Flame
+    row.paid[9] = {.item = "Gem05", .plus = 3, .kin = elf, .firstOnly = true};  // Elite Yeti
+    row.paidCount = 10;
     return row;
 }
 
@@ -358,7 +370,9 @@ QuestRow catacombs() {
     row.paid[6] = {.item = "Gem01", .kin = knight, .firstOnly = true};  // Orb of Twisting Slash
     row.paid[7] = {.item = "RingLeech", .plus = 2, .firstOnly = true,
                    .affixes = {uint8_t(Affix::Fury)}};  // Ring of the Leech, blue
-    row.paidCount = 8;
+    // And the wizard his crowd spell beside it (2026-10-07): Twister.
+    row.paid[8] = {.item = "Book08", .kin = wizard, .firstOnly = true};  // Scroll of Twister
+    row.paidCount = 9;
     return row;
 }
 
@@ -406,7 +420,13 @@ QuestRow halls() {
     row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
     row.paid[5] = {.item = "RingFortune", .plus = 3, .firstOnly = true,
                    .affixes = {uint8_t(Affix::Wealth)}};  // Ring of Fortune, blue
-    row.paidCount = 6;
+    // And a skill each (2026-10-07): the knight's Slash, the wizard's Evil Spirit, and in the
+    // knights' own halls the elf's Orb of Summoning +4, a Dark Knight to fight beside her --
+    // off Lala's shelf since 2026-10-03, so a quest is where she has it.
+    row.paid[6] = {.item = "OrbSlash", .kin = knight, .firstOnly = true};  // Orb of Slash
+    row.paid[7] = {.item = "Book09", .kin = wizard, .firstOnly = true};    // Scroll of Evil Spirit
+    row.paid[8] = {.item = "Gem05", .plus = 4, .kin = elf, .firstOnly = true};  // Dark Knight
+    row.paidCount = 9;
     return row;
 }
 
@@ -463,7 +483,13 @@ QuestRow pit() {
     row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
     row.paid[7] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
                    .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};  // purple
-    row.paidCount = 8;
+    // And the chain's last skills (2026-10-07): the knight's Death Stab, the wizard's Hellfire
+    // and the elf's Penetration. Death Stab is the knight's alone; the Magic Gladiator on his
+    // path is not paid it (Realm::questItemFits).
+    row.paid[8] = {.item = "OrbDeathStab", .kin = knight, .firstOnly = true};
+    row.paid[9] = {.item = "Book10", .kin = wizard, .firstOnly = true};       // Hellfire
+    row.paid[10] = {.item = "OrbPenetration", .kin = elf, .firstOnly = true};
+    row.paidCount = 11;
     return row;
 }
 
@@ -734,6 +760,8 @@ QuestRow tersiaSixth() {
                                  .power = uint8_t(Power::Frenzy), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frenzy),
                                  .firstOnly = true};
+    // And the wizard Cometfall (2026-10-07), the fire Rolling Fire is named for.
+    row.paid[row.paidCount++] = {.item = "Book13", .kin = wizard, .firstOnly = true};
     row.voice = "tersia_6";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -784,6 +812,11 @@ QuestRow tersiaBalrog() {
     row.paid[row.paidCount++] = {.item = "RingWisdom", .plus = 4, .firstOnly = true,
                                  .affixes = {uint8_t(Affix::Wealth), uint8_t(Affix::Fortune),
                                              uint8_t(Affix::Leech)}};
+    // And the tower's top skills (2026-10-07): the knight's Rageful Blow (his alone, as Death
+    // Stab), the wizard's Inferno, and the elf's Orb of Summoning +5 -- Bali, a Balrog's kin.
+    row.paid[row.paidCount++] = {.item = "OrbRagefulBlow", .kin = knight, .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Book14", .kin = wizard, .firstOnly = true};  // Inferno
+    row.paid[row.paidCount++] = {.item = "Gem05", .plus = 5, .kin = elf, .firstOnly = true};
     row.voice = "tersia_7";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -1092,6 +1125,8 @@ QuestRow lirienHalls() {
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind), .firstOnly = true};
     row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul (Jewel03 is Life)
+    // And the drowned halls' own spell for the wizard (2026-10-07): Aqua Beam.
+    row.paid[n++] = {.item = "Book12", .kin = wizard, .firstOnly = true};  // Scroll of Aqua Beam
     row.paidCount = n;
     return row;
 }

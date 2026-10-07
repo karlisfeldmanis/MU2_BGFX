@@ -1081,6 +1081,10 @@ public:
     int64_t wallClock() const { return wall_; }
     // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
     bool questChoiceFits(int index, int choice) const;
+    // Whether a thing paid is his to use by the same bits: the Magic Gladiator on the knight's
+    // path is not paid a knight's helm or the Orb of Death Stab, which he could never wear or
+    // read. A thing naming nothing cooked does not fit.
+    bool questItemFits(const QuestItem& what) const;
     // Accept, at the giver: offered, and his dialog open. Refused whole and silent otherwise.
     bool acceptQuest(int index);
     // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
