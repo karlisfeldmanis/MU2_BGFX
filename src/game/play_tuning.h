@@ -127,6 +127,14 @@ constexpr int kMonsterShockSlot = 5;
 // PLAYER_SKILL_HELL_START as it goes (WSclient.cpp:4754-4762).
 constexpr int kNovaChargeAction = 72;
 constexpr int kNovaBurstAction = 73;
+// The key of it the burst goes off on: as he lands from the leap, his root at its lowest
+// (0.54 m, from 1.47 at key 3.1), measured on our cook of the clip -- eight keys over 1.12 s.
+// MU fires MODEL_CIRCLE, StopBuffer(SOUND_NUKE1) and PlayBuffer(SOUND_NUKE2) when Nova's
+// AttackTime reaches its limit of 15 (ZzzCharacter.cpp:2846-2851, 4133-4146, 4436-4439): its
+// AnimationFrame 14 is past this clip's end, so it is the count from 1, fourteen frames, key 3.5
+// here, with him still in the air. **Ours**, the landing, the user's (2026-10-07): 'nova sound
+// has to perfectly synced with animation', 'hitting the ground'.
+constexpr float kNovaBurstKey = 4.3f;
 // MONSTER01_WALK, which MonsterMoveSandSmoke reads.
 constexpr int kMonsterWalkSlot = 2;
 // How far the quake reaches: MU's `Distance <= 200`, a hundred units to the tile.

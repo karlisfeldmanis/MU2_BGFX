@@ -1189,6 +1189,8 @@ void Play::fall(Drawn& dead) {
 
 void Play::fallWhenLanded() {
     for (Drawn& one : drawn_) {
+        // What Nova killed falls with the burst, when he comes down (novaOwed_).
+        if (one.novaKilled && novaOwed_.by != 0) continue;
         if (one.fallOwed && !showing_.awaits(one.id)) fall(one);
     }
 }

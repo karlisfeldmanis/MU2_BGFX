@@ -1197,6 +1197,14 @@ private:
     Spirits spirits_;
     Nova nova_;
     int64_t novaTick_ = -1;  // the tick Nova last burst on: what dies on it, it flung
+    // The burst the realm let go, owed to the picture until his clip reaches kNovaBurstKey: who,
+    // at what stage, and how long it has waited (a clip cut short pays it anyway).
+    struct NovaOwed {
+        uint32_t by = 0;
+        int stage = 0;
+        float waited = 0.0f;
+    } novaOwed_;
+    int novaBurstSound_ = -1;  // SOUND_NUKE2, the row's own wave, rung on the key and not the tick
     bool novaHeld_ = false;  // a charge was being drawn last frame (Play::update)
     Firework firework_;
     Wheel wheel_;

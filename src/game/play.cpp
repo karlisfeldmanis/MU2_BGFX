@@ -406,14 +406,9 @@ void Play::update(double seconds) {
                         caster->swingPace = 1.0f;
                         ++caster->swingToken;
                     }
-                    const float feet[3] = {caster->crown[0],
-                                           ground_->heightAt(caster->crown[0], caster->crown[2]),
-                                           caster->crown[2]};
-                    nova_.release(feet, happening.c, Nova::kBlue);
-                    // StopBuffer(SOUND_NUKE1) and PlayBuffer(SOUND_NUKE2) (ZzzCharacter.cpp:
-                    // 4436-4439): the gathering cut, and the row's `nova_burst` rung with the
-                    // spells' own below.
-                    sound_.stop(heard_.novaCharge);
+                    // Owed to the key he comes down on (kNovaBurstKey): the burst, the
+                    // gathering's sound cut and the burst's rung, and what it killed flung.
+                    novaOwed_ = NovaOwed{caster->id, happening.c, 0.0f};
                     novaTick_ = int64_t(happening.tick);
                 }
             }
@@ -964,7 +959,9 @@ void Play::update(double seconds) {
                     // Only a spell's: its wave is held off the wind-up for this. Anything else
                     // -- Skillshot's fan -- rang its sound on the `Swung` already, and a second
                     // here was the double shot the user heard (2026-09-29).
-                    const bool spell = loosed != nullptr && loosed->wizardry;
+                    // Nova's rings on the key it bursts on, not here (novaOwed_).
+                    const bool spell = loosed != nullptr && loosed->wizardry &&
+                                       happening.a != sim::skill::kNova;
                     if (spell && !again && index >= 0 && heard_.skill[index] >= 0) {
                         emit(heard_.skill[index], from[0], from[2], caster->id);
                     }
@@ -1850,6 +1847,14 @@ void Play::update(double seconds) {
         // And its wisp of smoke on what it struck (ShadowStars::wisp), as every monster's
         // lightning leaves one.
         shadowStars_.wisp(to);
+        // A Drakan's Attack 2 sounds SOUND_METEORITE01, not Lightning's
+        // (ZzzCharacter.cpp:1760-1771).
+        const FigureBody* thrower = caster->figure.body();
+        if (thrower != nullptr && heard_.meteorite >= 0 &&
+            (thrower->name == kDrakanFigure || thrower->name == kGreatDrakanFigure)) {
+            emit(heard_.meteorite, from[0], from[2]);
+            continue;
+        }
         const int index = sim::skillIndexOf(sim::skill::kLightning);
         if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2]);
     }
@@ -1908,6 +1913,29 @@ void Play::update(double seconds) {
                                       [](const CrackerOwed& owed) { return owed.tag == 0; }),
                        crackerOwed_.end());
     nova_.update(float(seconds));
+    // The burst owed, paid when PLAYER_SKILL_HELL_START reaches the key he comes down on -- or
+    // at once if the clip is not playing (cut short, or no clip to play).
+    if (novaOwed_.by != 0) {
+        novaOwed_.waited += float(seconds);
+        Drawn* caster = drawnOf(novaOwed_.by);
+        const FigureBody* look = caster ? caster->figure.body() : nullptr;
+        const bool playing = look && look->library && caster->figure.clip() >= 0 &&
+                             caster->figure.clip() == look->library->find(kNovaBurstAction);
+        if (!playing || keyOf(caster->figure) >= kNovaBurstKey || novaOwed_.waited > 2.0f) {
+            if (caster && caster->placed && ground_) {
+                const float feet[3] = {caster->crown[0],
+                                       ground_->heightAt(caster->crown[0], caster->crown[2]),
+                                       caster->crown[2]};
+                nova_.release(feet, novaOwed_.stage, Nova::kBlue);
+                sound_.stop(heard_.novaCharge);
+                if (novaBurstSound_ >= 0) emit(novaBurstSound_, feet[0], feet[2], caster->id);
+                core::logf("nova: burst drawn at key %.1f, %.2f s after the realm let it go",
+                           double(playing ? keyOf(caster->figure) : -1.0f),
+                           double(novaOwed_.waited));
+            }
+            novaOwed_ = NovaOwed{};
+        }
+    }
     // Nova held (Realm::chargeSkill): PLAYER_SKILL_HELL_BEGIN looped at half its pace, as MU
     // halves it while it gathers (ZzzCharacter.cpp:2523-2526), and the lights gathering on every
     // second of his first forty bones and the force homing on him (fx/nova.h) -- and on through
