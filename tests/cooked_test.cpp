@@ -60,8 +60,9 @@ int main() {
     check(town.metresPerTile == 1.0f, "one tile is one metre, as docs/conventions.md says");
     check(town.size % town.chunkTiles == 0 || town.chunks.size() > 0, "the chunk grid covers the map");
 
-    // The lamps, sprint 8a. Eleven of Lorencia's models carry thirteen lights between them
-    // (Bridge01 and DoungeonGate01 two each, the rest one), and the map hides 25 anchors:
+    // The lamps, sprint 8a. Eleven of Lorencia's models carry fifteen lights between them
+    // (Bridge01 four -- its two fires and, since 2026-09-27, two lamps -- DoungeonGate01 two,
+    // the rest one), and the map hides 25 anchors:
     // Light01 twice, Light02 eighteen times, Light03 five.
     {
         size_t carried = 0, anchors = 0, fires = 0;
@@ -77,7 +78,7 @@ int main() {
         }
         std::printf("  %zu lights carried by models, %zu hidden anchors, %zu fires, %zu glows\n",
                     carried, anchors, fires, town.glows.size());
-        check(carried == 13, "thirteen lights across Lorencia's eleven lit models");
+        check(carried == 15, "fifteen lights across Lorencia's eleven lit models");
         check(anchors == 25, "the 25 hidden Light01-03 anchors");
     }
 
@@ -162,13 +163,16 @@ int main() {
             {"Grass02", 169.74027f, -123.35218f, 0.2250f, 5.0f},
             {"Grass02", 170.27775f, -122.54788f, 0.2250f, 5.0f},
             {"Grass05", 170.78521f, -122.71168f, 0.2250f, 5.0f},
-            {"Grass01", 176.79318f, -172.96551f, 1.0706f, 30.0f},
-            {"Grass01", 181.58227f, -172.05645f, 2.3500f, 30.0f},
             {"Grass01", 209.99852f, -212.06555f, 1.4750f, 30.0f},
             {"Grass01", 210.00000f, -217.50000f, 0.2250f, 0.0f},
             {"Grass01", 226.21969f, -236.74945f, 2.2283f, -30.0f},
             {"Grass01", 227.26646f, -237.25318f, 2.2400f, -30.0f},
         };
+        // The ivy either side of the north-east bridge was kept until 2026-09-28, when the user saw
+        // both hanging over the river (placements.json's not_kept): gone, and staying gone.
+        check(find("Grass01", 176.79318f, -172.96551f) == nullptr &&
+                  find("Grass01", 181.58227f, -172.05645f) == nullptr,
+              "the two Grass01 over the river by the north-east bridge are not placed");
         std::vector<Planted> kept(std::begin(fountain), std::end(fountain));
         kept.insert(kept.end(), std::begin(checked), std::end(checked));
         for (const Planted& one : kept) {
@@ -316,7 +320,8 @@ int main() {
                             clips.clips.size(), clips.bones,
                             clips.rows.size() / (clips.bones * 7));
                 check(clips.bones == 60, "the player rig is 60 bones");
-                check(clips.clips.size() == 283, "the player library is 283 clips");
+                // MU's 283 actions and our run, action284 (tools/mixamo.py's OURS, 2026-10-01).
+                check(clips.clips.size() == 284, "the player library is 284 clips, MU's and our run");
                 // Every clip's frames lie inside the pose array, which is the one thing a
                 // player will index with without asking again.
                 for (const mu::content::CookedClip& clip : clips.clips) {
