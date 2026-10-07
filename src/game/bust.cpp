@@ -15,6 +15,7 @@ struct Pose {
     float turnDegrees;  // MU's angle[2]
     float scale;
     float nudge;        // MU units aside
+    float lift = 0.0f;  // MU units up, positionOffsetZ
 };
 
 // GetRenderParameters, CharMakeWin.cpp:97. MU's angles are for the IDLE, action 0: the
@@ -28,6 +29,8 @@ Pose poseOf(sim::Kin kin) {
         case sim::Kin::DarkWizard: return {"NewFace01", -40.0f, 5.9f, 0.0f};
         case sim::Kin::FairyElf: return {"NewFace03", 5.0f, 9.1f, 4.8f};
         case sim::Kin::DarkKnight: return {"NewFace02", -12.0f, 6.05f, 0.0f};
+        // CLASS_DARK's, and its lift (CharMakeWin.cpp:107).
+        case sim::Kin::MagicGladiator: return {"NewFace04", -13.0f, 6.0f, 0.0f, 1.8f};
     }
     return {"NewFace02", -12.0f, 6.05f, 0.0f};
 }
@@ -62,7 +65,7 @@ void Bust::show(sim::Kin kin) {
         return;
     }
     // Facing the camera, which stands down +z from it, turned by MU's own angle.
-    const float at[3] = {pose.nudge / 100.0f, 0.0f, 0.0f};
+    const float at[3] = {pose.nudge / 100.0f, pose.lift / 100.0f, 0.0f};
     figure_.stand(body, at, pose.turnDegrees * bx::kPi / 180.0f, body->scale * pose.scale, false);
     idle_ = body->library ? body->library->find(0) : -1;
     greeting_ = body->library ? body->library->find(1) : -1;

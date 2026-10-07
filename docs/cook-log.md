@@ -317,3 +317,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | PhantomKnight01 | figure | 2026-10-06 23:28 | passed | dark spiked winged knight, its runes a faint violet (0.35) after a first cut at 0.75 read as loud stripes; Dark Breaker in hand |
 | GreatDrakan01 | figure | 2026-10-06 23:40 | passed | the Drakan in MU's ExtraMon light, black with red plates, shot from 10 m; nearly gone at stage night, as MU's, its head fire marking it |
 | DarkPhoenix01 | figure | 2026-10-06 23:54 | passed | a 9.5 m bird of flowing fire, added and sliding, its dark rider on its back; shot from 14 m |
+| NewFace04 | bust | 2026-10-07 14:12 | passed | his bust in the create window: red hair, the navy and gold coat, MU's CLASS_DARK pose, framed as the knight's |

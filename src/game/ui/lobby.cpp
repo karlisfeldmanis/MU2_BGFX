@@ -184,7 +184,7 @@ void Lobby::notice(const std::string& text, bool thenCreate, bool thenName) {
 
 void Lobby::openCreate(int classRow) {
     creating_ = true;
-    classRow_ = std::clamp(classRow, 0, 2);
+    classRow_ = std::clamp(classRow, 0, kClassRows - 1);
     over_ = pressing_ = -1;
 }
 
@@ -226,6 +226,7 @@ Box Lobby::boxOf(int target) const {
         case kClass0:
         case kClass1:
         case kClass2:
+        case kClass3:
             return makeCell(w, h, 346.0f, 131.0f + float(target - kClass0) * 26.0f, 108.0f, 26.0f);
         // Inside the name bar (see the drawing), at the input's own height.
         case kMake: return makeCell(w, h, 344.0f, 322.0f, 52.0f, 28.0f);
@@ -413,7 +414,8 @@ void Lobby::update(float seconds, float width, float height, const Pointer& poin
             case kDelete: askDelete(); break;
             case kClass0:
             case kClass1:
-            case kClass2: classRow_ = fired - kClass0; break;
+            case kClass2:
+            case kClass3: classRow_ = fired - kClass0; break;
             case kMake: create(); break;
             case kCancel:
             case kShut: creating_ = false; break;
@@ -630,7 +632,7 @@ void Lobby::rebuild() {
         }
 
         // The class buttons, the chosen one the primary's red.
-        for (int row = 0; row < 3; ++row) {
+        for (int row = 0; row < kClassRows; ++row) {
             const int t = kClass0 + row;
             controls::button(canvas_, boxOf(t).grown(-std::round(1.5f * k)), className(kClasses[row]),
                              row == classRow_ ? controls::Kind::Primary : controls::Kind::Secondary,

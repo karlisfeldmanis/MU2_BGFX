@@ -67,11 +67,17 @@ damage (`0b00` / `0b10`), the 2nd wings' damage table. The model is MuMain's `MO
 
 ## Steps
 
-1. **The class:** `Kin::MagicGladiator` (sim/rules.h), the starting points, 7 points a level,
-   and his health, mana and damage rows. There are 151 `Kin::` uses in 27 files to walk, and the
-   lobby's `kClasses[3]`.
-2. **Creation gate:** open from the start for now, so he is easy to test (the user, 2026-10-07);
-   MU's 220 gate (the lobby offers MG only when a saved hero has reached 220) comes later.
+1. **The class:** done 2026-10-07. `Kin::MagicGladiator` = 3 (sim/rules.h, `kKinCount` 4), his
+   ClassRow (energy/12 to /8 added to the physical band, defence agility/5, 57 health), 26 of
+   each, `pointsPerLevel` 7, mana 7 + level + 2 energy (110 health and 60 mana at level 1,
+   OpenMU's own), the wizard's band, the knight's swing speed, half the wizard's magic speed,
+   double wield, every element for his runes, `moveLevel` (two thirds of a gate or travel), and
+   Satan / Darkness from the wing mixes. sim_test checks his numbers.
+2. **Creation:** done 2026-10-07, open from the start for now, so he is easy to test (the user,
+   2026-10-07); MU's 220 gate (the lobby offers MG only when a saved hero has reached 220) comes
+   later. The lobby's fourth class button, MU's text 1708, his bust (NewFace04 from Data/Logo,
+   CLASS_DARK's -13 / 6.0 / lift 1.8, CharMakeWin.cpp:107) and his bare body on the pedestal and
+   in the world (`--class 3`, `--lobby-create 3`). He is born in Lorencia with empty hands.
 3. **Skills and gear:** the skill list above (no Teleport, no Soul Barrier); the item class
    masks gain him, Heaven and Satan wings included.
 4. **The figure:** done 2026-10-07 for the bare body (the user: 'we need to build MG naked

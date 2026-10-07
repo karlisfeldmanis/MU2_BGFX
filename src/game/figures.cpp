@@ -843,16 +843,18 @@ namespace {
 // This is a VIEWER's choice and not a rule of the game: what a Dark Knight may pick up is
 // sprint 7's requirement check, and this only decides who is standing there holding it.
 const char* wearerFor(const core::Json& classes) {
-    bool knight = false, elf = false, wizard = false;
+    bool knight = false, elf = false, wizard = false, gladiator = false;
     for (const core::Json& one : classes.items) {
         const std::string name = one.stringOr("");
         knight = knight || name == "knight";
         elf = elf || name == "elf";
         wizard = wizard || name == "wizard";
+        gladiator = gladiator || name == "gladiator";
     }
     if (knight) return "DarkKnightBare";
     if (elf) return "FairyElf";
     if (wizard) return "DarkWizardBare";
+    if (gladiator) return "MagicGladiatorBare";
     return "DarkKnightBare";
 }
 

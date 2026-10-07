@@ -266,8 +266,9 @@ bool LobbyMode::open(Context& ctx) {
     if (args.lobbyCreate >= 0) lobby_.openCreate(args.lobbyCreate);
     if (!args.lobbyName.empty()) lobby_.setTyped(args.lobbyName);
     if (args.lobbyDelete && pedestals_.picked() >= 0) lobby_.askDelete();
-    // With nobody on the account the create window opens by itself (CCharSelMainWin).
-    if (roster_.empty()) lobby_.openCreate(1);
+    // With nobody on the account the create window opens by itself (CCharSelMainWin), on the
+    // knight unless --lobby-create opened it on another class.
+    if (roster_.empty() && !lobby_.creating()) lobby_.openCreate(1);
 
     fading_ = args.frames == 0 || args.entrance;
     fadeSeconds_ = 0.0f;

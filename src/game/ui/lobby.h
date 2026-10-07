@@ -39,9 +39,13 @@ namespace mu::game {
 
 class Lobby {
 public:
-    // The class buttons' order, which is MU's create window's (Screens.Trades).
-    static constexpr sim::Kin kClasses[3] = {sim::Kin::DarkWizard, sim::Kin::DarkKnight,
-                                             sim::Kin::FairyElf};
+    // The class buttons' order, which is MU's create window's (Screens.Trades), the Magic
+    // Gladiator fourth as MU's CLASS_DARK. He is open from the start for now, where MU asks a
+    // level 220 hero on the account (the user, 2026-10-07; docs/mg-port.md).
+    static constexpr int kClassRows = 4;
+    static constexpr sim::Kin kClasses[kClassRows] = {sim::Kin::DarkWizard, sim::Kin::DarkKnight,
+                                                      sim::Kin::FairyElf,
+                                                      sim::Kin::MagicGladiator};
 
     // What the scene behind the screen is showing this frame, handed in by the mode.
     struct View {
@@ -99,7 +103,7 @@ private:
     enum class Then : uint8_t { None, Create, Name };
     enum Target : int {
         kCreate = 0, kMenu, kEnter, kDelete,        // the bar
-        kClass0, kClass1, kClass2, kMake, kCancel, kShut,  // the create window
+        kClass0, kClass1, kClass2, kClass3, kMake, kCancel, kShut,  // the create window
         kBoxOk, kBoxCancel,                          // the box
         kTargets
     };

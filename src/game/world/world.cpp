@@ -6,6 +6,7 @@
 #include "core/files.h"
 #include "core/loading.h"
 #include "core/log.h"
+#include "game/roster.h"
 #include "game/world/maps.h"
 
 namespace mu::game {
@@ -197,11 +198,9 @@ bool World::play(const std::string& assetDir, const std::string& name, uint64_t 
     // What the character looks like, built here rather than taken off a cooked row: the naked
     // class body -- which is what a character IS before he has picked anything up -- holding
     // whatever the sim is about to be told he holds. mu.db's own class enumeration, which is
-    // what `--kin` speaks: 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight.
-    //
-    // `FairyElf` is the elf's bare body and is named without the suffix the other two carry;
-    // that is index.json's spelling and not a slip.
-    const char* bare = kin == 0 ? "DarkWizardBare" : (kin == 1 ? "FairyElf" : "DarkKnightBare");
+    // what `--kin` speaks: 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight, 3 Magic Gladiator; the
+    // names are game::bareBody's.
+    const char* bare = bareBody(sim::kinValid(kin) ? sim::Kin(kin) : sim::Kin::DarkKnight, false);
     const FigureBody* look = figures_.dress("Hero", bare, weapon, shield);
     // The character is put down where the camera was told to look, which is the town by
     // default and `--at` otherwise. The realm moves him to the nearest tile he may stand on.
