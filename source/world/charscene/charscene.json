@@ -22,6 +22,9 @@
   "10": "TileRock04",
   "11": "TileRock05"
  },
+ "grass_slots": [
+  "TileGrass01"
+ ],
  "objects": [
   {
    "type": 110,

@@ -200,6 +200,11 @@ GRASS_BY_MAP = {
     8: ["TileGrass01"],
     # Icarus ships no TileGrass .OZT, and no ground is drawn there at all (SKY_BY_MAP).
     10: [],
+    # The character screen. Its TileGround03 wears the grass recipe, but MU's sheet is
+    # BITMAP_MAPGRASS + layer1 and there are only the three TileGrass sheets, so slot 4 grows
+    # nothing in MU; asked for by recipe, it went looking for a TileGround03.png that never was.
+    # TileGrass02 here is a brown diamond floor (ground.json's material_note).
+    74: ["TileGrass01"],
 }
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the
