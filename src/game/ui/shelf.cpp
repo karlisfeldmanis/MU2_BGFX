@@ -324,6 +324,9 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
                                 int16_t(over.offer.pieces > 0 ? over.offer.pieces : row.durability),
                                 over.offer.skill};
         tip::Sheet sheet = describe(tables, carried, realm.wearer(), realm.satchel());
+        // No wear on the shelf: it is new until bought (the user, 2026-10-07). A quiver's count
+        // stays, since that is how many arrows the price buys.
+        if (!sim::ammunition(row)) sheet.wear.clear();
         sheet.price = panel::commas(over.price) + " Zen";
         // The card says whether he can pay: yellow where he can, red where he cannot.
         sheet.priceTone = realm.money() >= over.price ? tip::Tone::Yellow : tip::Tone::Red;

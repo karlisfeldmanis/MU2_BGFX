@@ -290,8 +290,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     sheet.name = sim::summoningOrb(row) ? row.label : label(row, plus);
     sheet.nameTone = qualityOf(row, what);
 
-    static const char* const kNames[sim::kKinCount] = {"Dark Wizard", "Fairy Elf", "Dark Knight",
-                                                       "Magic Gladiator"};
+    // The classes as players write them, DW, FE, DK, MG (the user, 2026-10-07: 'dont show full
+    // class names in tooltips ... use DW,DK,MG,SM'), and their second classes' SM, ME, BK.
+    static const char* const kNames[sim::kKinCount] = {"DW", "FE", "DK", "MG"};
+    static const char* const kSeconds[sim::kKinCount] = {"SM", "ME", "BK", "MG"};
     int named = 0;
     for (int i = 0; i < sim::kKinCount; ++i) named += (row.classes >> i) & 1;
     // The type line, in the name's tone. GetItemName puts `Excellent ` before the name
@@ -782,7 +784,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             for (size_t i = 0; !everyone && i < size_t(sim::kKinCount); ++i) {
                 if (!power->takenBy(sim::Kin(i), true)) continue;
                 classes += (classes.empty() ? "" : " / ") +
-                           std::string(power->second ? sim::className(int(i), true) : kNames[i]);
+                           std::string(power->second ? kSeconds[i] : kNames[i]);
             }
             sheet.name = power->name;
             sheet.base = std::string(sim::rarityName(power->rarity)) + " rune \xC2\xB7 " + classes;
@@ -953,7 +955,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             classes.clear();
             for (int i = 0; i < sim::kKinCount; ++i) {
                 if (!((row.classes >> i) & 1)) continue;
-                classes += (classes.empty() ? "" : " / ") + std::string(sim::className(i, true));
+                classes += (classes.empty() ? "" : " / ") + std::string(kSeconds[i]);
             }
             mine = mine && who.second;
         }
