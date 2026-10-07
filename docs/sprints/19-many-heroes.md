@@ -22,6 +22,7 @@ every hash agreeing.
    Done 2026-10-07, below.
 4. The server: connections to one world share its realm; the client draws other heroes; a client
    joining mid-session replays the world's input log from the Welcome; `net::kVersion` bumped.
+   Done 2026-10-07, below.
 
 ## 1. The Player — done
 
@@ -141,3 +142,69 @@ every hash agreeing.
 - **Verified:** sim_test 6643 checks, the standing 10 failing; outside the two-hero test, the
   output is identical line for line to before. `layercheck` and `save_test` pass; the client
   builds with no new warning; a loopback run was served by Lumen with 19 of 19 hashes agreeing.
+
+## 4. One world, many connections — done
+
+- **The server** (`server/src/main.cpp`) keeps a `World` per map name: its tables, its realm, its
+  start (the Welcome every mirror raises from), the commands queued for its next tick, and its
+  log, every tick since it was raised.
+  - **The first Hello** for a world raises it round him, as sprint 18 raised one per connection,
+    and welcomes him with no past.
+  - **A later Hello** queues a `Join` at the next tick's start. It carries his class, level and
+    tile, and his hands as arm indices (`target`, `zen`: index + 1), which the realm puts in them
+    as `sim::outfit` does (`sim::outfitArms`, split out of `outfit`). The ticket is the server's
+    own, from 0x80000000, so it is never one a client numbered.
+  - **When that tick has answered the Join**, which is said on the newcomer with his id, he gets
+    the world's start, his own id (`Welcome::you`) and the log up to and including that tick as
+    plain Tick frames (`Welcome::backlog` says how many).
+  - **A connection that goes queues a `Leave`.** One that goes before its Join is answered is
+    sent out by a Leave when the answer comes.
+  - **A world nobody is in is let go,** and the next Hello raises it fresh.
+  - Every tick goes to everyone in the world, every command carrying its player. A client's
+    `Join` or `Leave` is dropped, and a client's every command is stamped with his own player.
+- **The protocol is version 2** (`net/wire.*`): `Welcome::you` and `backlog`, the two new command
+  kinds. `stateHash` folds every player in join order instead of "the hero", because a mirror
+  looks at its own player and the server at the first. For one player it is the same number as
+  before.
+- **The client:**
+  - `RemoteLink::join` reads the Welcome and then its backlog of ticks. `Link::catchUp()`, which
+    Play calls right after the cradle's outfit, steps the whole past on the mirror before
+    anything is drawn, then `lookAs(you)`. From there `realm_.hero()` is his own player.
+  - **Play:** `heroAt()` replaces every `drawn_[0]` (the figures share the bodies' order, and on
+    a shared world he need not be first). `drawnFor()` is open's figure for a body, factored out
+    so that a body joining after open, another player and his summon's slot, gets one after the
+    step that added it.
+  - **Another player is dressed in his own class and gear** (`otherLook`: `redress` split into
+    `dressOf`, under the name `Player<id>`; `Realm::satchelOf(id)` reads his bag).
+  - **What the client shows:** another player's private happenings are skipped (the audience).
+    `Left` takes his figure out on the tick, and a gone body is never drawn.
+- **Two clients on one world** (loopback, a private `mu2_server --port 44599`). A knight played
+  4200 frames with `--talk Lumen`, and an elf joined 10 s later for 1800 frames:
+  - the server raised Lorencia for #1, then welcomed the elf as #302 with 219 ticks of the past;
+  - the elf's mirror replayed them at once and played as #302, an elf; the knight's mirror drew
+    #302 coming in, dressed;
+  - 31 of 31 and 21 of 21 of the server's hashes agreed with each mirror;
+  - when both had gone, the world was let go after 627 ticks.
+
+  The single-client loopback was served by Lumen with 19 of 19 hashes agreeing. sim_test's output
+  is identical to step 3's (6643 checks, the standing 10 failing). `layercheck` and `save_test`
+  pass.
+- **Known limits of this first version**, each for its own step later:
+  - A newcomer replays the world's whole past, about 20 bytes a tick, so an hour is 72,000 ticks
+    and a few seconds of stepping. A state snapshot replaces it when that starts to show
+    (server-plan phase 4).
+  - Every connection gets every tick of its world. Lockstep needs that, and there is no
+    viewport.
+  - Another player is dressed as he stands when he comes in. His gear changing later is not
+    redrawn yet.
+  - The world's start is its first player's raise. If he leaves, his body stays, gone, and the
+    world goes on.
+  - Saves stay local, and a character on the server is fresh each time (the user: existing saves
+    do not matter; the server starts with a fresh character database).
+
+## Next
+
+- Deploy to the box, and check that `sim_test` there matches the Mac exactly.
+- Phase 3, the world host: one process for every map, and the map change moving a player between
+  worlds on the server instead of reconnecting.
+- Another player's gear redrawn when it changes; his name over his head; chat.

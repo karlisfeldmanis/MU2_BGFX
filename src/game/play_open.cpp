@@ -229,6 +229,14 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // (sim/cradle.h), so a server raising the same realm outfits him the same. The drawn
     // character is dressed from the same two names (Figures::dress, by way of World::play).
     sim::outfit(local_, held, worn);
+    // On a shared world, everything that happened in it before he came, and the mirror turned to
+    // him: from here on `realm_.hero()` is his own player (docs/sprints/19-many-heroes.md).
+    if (link_) link_->catchUp();
+    if (remote()) {
+        const sim::Body& me = realm_.hero();
+        core::logf("play: playing as #%u, class %d level %d at %d,%d, %d players here", me.id,
+                   int(me.kin), me.level, me.column(), me.row(), realm_.playersHere());
+    }
 
     // And the arena hero spends what is left, which nobody else does -- after what he holds,
     // so the damage this prints is the damage he will do. The reason is that an arena is
@@ -292,37 +300,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         }
     }
     for (const sim::Body& body : realm_.bodies()) {
-        Drawn one;
-        one.id = body.id;
-        one.wasX = one.nowX = body.x;
-        one.wasY = one.nowY = body.y;
-        one.wasFacing = one.nowFacing = body.facing;
-        const FigureBody* look = nullptr;
-        if (body.player) {
-            look = heroLook;
-            if (!look && figures_) look = figures_->body(kHeroFigure);
-        } else if (body.warden >= 0) {
-            // A guard wears his townsperson's figure, and is drawn here rather than among the
-            // folk below because he walks and fights.
-            if (figures_) look = figures_->body(tables_.folk[size_t(body.warden)].figure);
-        } else if (body.summoner != 0) {
-            // Her summon's slot, dormant: no figure until she raises one, when the breed she
-            // called is put on it (Play::update, What::Spawned). Given its placeholder kind's
-            // figure here it stood as a Bull Fighter wherever the breed was not cooked.
-        } else if (body.raider >= 0) {
-            // A raider: its class body in its own kit (play_raid.cpp).
-            look = raiderLook(body);
-        } else if (figures_) {
-            look = figures_->body(tables_.kinds[size_t(body.kind)].figure);
-        }
-        if (look) {
-            bones = std::max(bones, look->boneCount());
-            ++dressed;
-            fit(one, body, look);
-        } else {
-            ++bare;
-        }
-        drawn_.push_back(std::move(one));
+        drawn_.push_back(drawnFor(body, heroLook, &bones));
+        ++(drawn_.back().figure.body() != nullptr ? dressed : bare);
     }
     // The townsfolk: a figure each where the cook named one, facing where MU faces them.
     //
@@ -869,6 +848,40 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             }
         }
     }
+}
+
+Play::Drawn Play::drawnFor(const sim::Body& body, const FigureBody* heroLook, size_t* bones) {
+    Drawn one;
+    one.id = body.id;
+    one.wasX = one.nowX = body.x;
+    one.wasY = one.nowY = body.y;
+    one.wasFacing = one.nowFacing = body.facing;
+    const FigureBody* look = nullptr;
+    if (body.player && body.id == realm_.hero().id) {
+        look = heroLook;
+        if (!look && figures_) look = figures_->body(kHeroFigure);
+    } else if (body.player) {
+        // Another player in a shared world, in his own class and gear.
+        look = otherLook(body);
+    } else if (body.warden >= 0) {
+        // A guard wears his townsperson's figure, and is drawn here rather than among the
+        // folk below because he walks and fights.
+        if (figures_) look = figures_->body(tables_.folk[size_t(body.warden)].figure);
+    } else if (body.summoner != 0) {
+        // Her summon's slot, dormant: no figure until she raises one, when the breed she
+        // called is put on it (Play::update, What::Spawned). Given its placeholder kind's
+        // figure here it stood as a Bull Fighter wherever the breed was not cooked.
+    } else if (body.raider >= 0) {
+        // A raider: its class body in its own kit (play_raid.cpp).
+        look = raiderLook(body);
+    } else if (figures_) {
+        look = figures_->body(tables_.kinds[size_t(body.kind)].figure);
+    }
+    if (look) {
+        *bones = std::max(*bones, look->boneCount());
+        fit(one, body, look);
+    }
+    return one;
 }
 
 }  // namespace mu::game

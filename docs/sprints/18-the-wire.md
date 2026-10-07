@@ -69,5 +69,6 @@ This needs the rules to give the same bits on the Mac and on Linux.
   so a session on the server never overwrites a character here. A run picking DKTest2 (level
   103) joined the box, 9 of 9 hashes agreed, and the roster's checksums did not change.
 - A dropped connection said on screen, not only in the log; a reconnect.
-- Phase 2: more than one hero in a realm -- then two clients see each other.
+- ~~Phase 2: more than one hero in a realm -- then two clients see each other.~~ Done 2026-10-07:
+  docs/sprints/19-many-heroes.md.
 

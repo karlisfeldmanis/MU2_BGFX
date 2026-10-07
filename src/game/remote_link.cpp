@@ -40,9 +40,25 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
             return false;
         }
         if (took == 1) {
-            core::logf("server: joined %s:%d -- %s, class %d level %d at %d,%d, seed %llu",
-                       host.c_str(), port, welcome.world.c_str(), int(welcome.kin), welcome.level,
-                       welcome.column, welcome.row, (unsigned long long)welcome.seed);
+            core::logf("server: joined %s:%d -- %s as #%u, raised round class %d level %d at "
+                       "%d,%d, seed %llu, %u ticks of its past", host.c_str(), port,
+                       welcome.world.c_str(), welcome.you, int(welcome.kin), welcome.level,
+                       welcome.column, welcome.row, (unsigned long long)welcome.seed,
+                       welcome.backlog);
+            you_ = welcome.you;
+            // The past follows the Welcome at once: every one of its Ticks in hand before the
+            // world is raised, so catchUp steps it whole. A long-running world's is a few MB.
+            const auto pastUntil = std::chrono::steady_clock::now() + std::chrono::seconds(60);
+            while (ticks_.size() < welcome.backlog) {
+                if (std::chrono::steady_clock::now() > pastUntil || !socket_.open()) {
+                    core::logError("server: %zu of %u ticks of the world's past came", ticks_.size(),
+                                   welcome.backlog);
+                    socket_.close();
+                    return false;
+                }
+                pump();
+                if (ticks_.size() < welcome.backlog) std::this_thread::sleep_for(std::chrono::milliseconds(2));
+            }
             return true;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -116,6 +132,20 @@ void RemoteLink::step() {
     ours_.emplace_back(uint32_t(mirror_.tick()), net::stateHash(mirror_));
     while (ours_.size() > 256) ours_.pop_front();
     check();
+}
+
+void RemoteLink::catchUp() {
+    const size_t past = ticks_.size();
+    const auto from = std::chrono::steady_clock::now();
+    while (!ticks_.empty()) step();
+    if (you_ != 0 && !mirror_.lookAs(you_)) {
+        core::logError("server: the mirror has no player #%u after the world's past", you_);
+    }
+    if (past > 0) {
+        core::logf("server: the world's past, %zu ticks, replayed in %.2f s; %d players here", past,
+                   std::chrono::duration<double>(std::chrono::steady_clock::now() - from).count(),
+                   mirror_.playersHere());
+    }
 }
 
 // Each of the server's hashes against the mirror's for the same tick, once the mirror has it.

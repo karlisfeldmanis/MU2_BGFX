@@ -89,7 +89,7 @@ sim::Command takeCommand(In& in) {
     sim::Command c;
     const uint8_t kind = in.u8();
     // An unknown kind is the realm's None and does nothing; it is never trusted further.
-    c.kind = kind <= uint8_t(sim::Command::Kind::ClaimCastle) ? sim::Command::Kind(kind)
+    c.kind = kind <= uint8_t(sim::Command::Kind::Leave) ? sim::Command::Kind(kind)
                                                                : sim::Command::Kind::None;
     c.player = in.u32();
     c.ticket = in.u32();
@@ -148,6 +148,8 @@ void put(std::vector<uint8_t>& out, const Welcome& one) {
         o.str(one.weapon);
         o.str(one.shield);
         putConfig(o, one.config);
+        o.u32(one.you);
+        o.u32(one.backlog);
     });
 }
 
@@ -211,6 +213,8 @@ bool parse(const std::vector<uint8_t>& body, Welcome& out) {
     out.weapon = in.str();
     out.shield = in.str();
     out.config = takeConfig(in);
+    out.you = in.u32();
+    out.backlog = in.u32();
     return in.done();
 }
 
@@ -256,11 +260,15 @@ uint64_t stateHash(const sim::Realm& realm) {
     if (!said.empty()) mix(said.data(), said.size() * sizeof(sim::Happening));
     const uint64_t draws = realm.draws();
     mix(&draws, sizeof draws);
+    // Every player in join order, never "the hero": a mirror looks at its own player and the
+    // server at the first, and the hash must not care which.
     if (!realm.bodies().empty()) {
-        const sim::Body& hero = realm.hero();
-        mix(&hero.x, sizeof hero.x);
-        mix(&hero.y, sizeof hero.y);
-        mix(&hero.health, sizeof hero.health);
+        for (int p = 0; p < realm.playerCount(); ++p) {
+            const sim::Body& hero = realm.playerAt(p);
+            mix(&hero.x, sizeof hero.x);
+            mix(&hero.y, sizeof hero.y);
+            mix(&hero.health, sizeof hero.health);
+        }
     }
     return h;
 }

@@ -40,6 +40,9 @@ public:
     // What there is to see: a const realm -- the realm itself, or the mirror of the server's.
     virtual const sim::Realm& realm() const = 0;
     virtual bool remote() const { return false; }
+    // Once the realm is raised: whatever happened in it before this player came, stepped at once
+    // -- a shared world's past, for a mirror (RemoteLink) -- and the realm turned to look at him.
+    virtual void catchUp() {}
 };
 
 class LocalLink final : public Link {

@@ -172,6 +172,18 @@ void Play::update(double seconds) {
             drawn_[i].health = realm_.bodies()[i].health;
         }
         link_->step();
+        // A body that joined in the tick -- another player come into a shared world, and his
+        // summon's slot -- is given its figure; bodies are only ever added at the end.
+        while (drawn_.size() < realm_.bodies().size()) {
+            size_t bones = 0;
+            const sim::Body& body = realm_.bodies()[drawn_.size()];
+            drawn_.push_back(drawnFor(body, nullptr, &bones));
+            if (body.player) {
+                core::logf("play: player #%u came into the world, class %d level %d, %s", body.id,
+                           int(body.kin), body.level,
+                           drawn_.back().figure.body() ? "dressed" : "undrawn");
+            }
+        }
         // AFTER the step, not before it. Before, `now` held the state at the START of the tick
         // and `was` the start of the one before, so the picture trailed the sim by one whole
         // tick on top of the interpolation's own -- a figure at `through_ = 0` was 100 ms
@@ -195,6 +207,17 @@ void Play::update(double seconds) {
             // the log before anything the drawing decides to do about it. Nothing in an
             // ordinary run reaches it.
             if (!arena_.breed.empty()) announce(happening);
+            // Another player's own business -- his answers, his gains, his quest giver's words --
+            // is his alone (Happening::audience): this picture shows nothing of it.
+            if (happening.audience != 0 && happening.audience != heroId) continue;
+            // Gone from the world: out of the picture on the tick, as a summon dismissed.
+            if (happening.what == sim::What::Left) {
+                if (Drawn* gone = drawnOf(happening.who)) {
+                    gone->fallOwed = false;
+                    gone->deadFor = kDeathTotal;
+                }
+                continue;
+            }
             // A command's answer, and the Mixed a Mix's answer follows (play_requests.cpp).
             if (happening.what == sim::What::Mixed) mixMade_ = happening.b == 1;
             if (happening.who == heroId) {
@@ -2274,7 +2297,7 @@ void Play::update(double seconds) {
             z = hit->crown[2];
         }
         const float feet[3] = {x, ground_->heightAt(x, z), z};
-        const FigureBody* heroLook = drawn_.empty() ? nullptr : drawn_[0].figure.body();
+        const FigureBody* heroLook = !heroDrawn() ? nullptr : drawn_[heroAt()].figure.body();
         const float man = heroLook ? heroLook->height * heroLook->scale : 1.8f;
         // How tall the thing actually is, which is what every length in the blood is taken
         // in units of. A figure with no body drawn falls back to a man's height rather than

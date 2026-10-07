@@ -67,8 +67,10 @@ struct Command {
         HandInStaff,
         ClaimCastle,
         // The world's door (docs/sprints/19-many-heroes.md), sent by the server and never by a
-        // client: a player in (Realm::join; a: the Kin, b: the level, c: column, d: row; the
-        // answer his body id) or out (Realm::depart; `player` is who leaves).
+        // client: a player in (Realm::join; a: the Kin, b: the level, c: column, d: row; target
+        // and zen: his weapon's and shield's arm index plus one, 0 for none, put in his hands as
+        // sim::outfit does; answered on HIM with his body id) or out (Realm::depart; `player` is
+        // who leaves).
         Join,
         Leave,
     };

@@ -3,6 +3,8 @@
 // the order the asks came. docs/server-plan.md phase 1.
 #include "sim/realm.h"
 
+#include "sim/cradle.h"
+
 #include <algorithm>
 #include <cstdint>
 
@@ -22,6 +24,8 @@ void Realm::applyCommands() {
             continue;
         }
         For his(*this, size_t(asker));
+        // Who the answer is said on: the asker, or the one a Join let in.
+        uint32_t answerer = mine().id;
         int64_t answer = -1;
         using Kind = Command::Kind;
         Kind said = one.kind;
@@ -103,14 +107,21 @@ void Realm::applyCommands() {
             case Kind::HandInStaff: answer = handInStaff() ? 1 : -1; break;
             case Kind::ClaimCastle: answer = claimCastle() ? 1 : -1; break;
             case Kind::Join: {
-                const uint32_t id = join(Kin(one.a), one.b, one.c, one.d);
+                const uint32_t id = join(Kin(std::clamp(one.a, 0, int(Kin::MagicGladiator))),
+                                         std::clamp(one.b, 1, kMaximumLevel), one.c, one.d);
                 answer = id != 0 ? int64_t(id) : -1;
+                if (id != 0) {
+                    // His hands, as sim::outfit fills the first's.
+                    For him(*this, size_t(playerOfId(id)));
+                    outfitArms(*this, int32_t(one.target) - 1, int32_t(one.zen) - 1);
+                    answerer = id;
+                }
                 break;
             }
             case Kind::Leave: answer = depart(mine().id) ? 1 : -1; break;
         }
         if (one.ticket == 0) continue;
-        say(What::Answered, mine(), int32_t(said),
+        say(What::Answered, *find(answerer), int32_t(said),
             answer < 0 ? -1 : int32_t(std::min<int64_t>(answer, INT32_MAX)), int32_t(one.ticket));
         if (said == Kind::Crack) {
             happenings_.back().x = burstX;

@@ -7,7 +7,11 @@
 //
 //   client -> server   Hello    who he is and where he stands: world, class, level, tile, hands
 //                      Command  a sim::Command, as the client's Link sent it
-//   server -> client   Welcome  the start: the seed, the tile, class, level, hands, the config
+//   server -> client   Welcome  the world's start -- the seed, and the first player's tile,
+//                               class, level and hands, the config -- his own body's id, and
+//                               how many Ticks follow at once: the world's past, every tick
+//                               since it was raised, which the mirror replays to stand where
+//                               the server stands (docs/sprints/19-many-heroes.md)
 //                      Tick     one tick's inputs: its number, the wall clock, the rain, and the
 //                               commands the server applied at its start, in order
 //                      Hash     the server realm's hash after a tick, for the mirror to compare
@@ -30,7 +34,8 @@ namespace mu::net {
 
 // Bumped whenever a message changes shape. A client and a server of different versions do not
 // talk: the server answers a Hello of another version by closing.
-constexpr uint32_t kVersion = 1;
+// 2: a world shared by its connections -- the Welcome's `you` and `backlog`, Join and Leave.
+constexpr uint32_t kVersion = 2;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame either side accepts. A Tick of a hundred commands is under 5 KB.
@@ -56,6 +61,8 @@ struct Welcome {
     int32_t column = 0, row = 0;
     std::string weapon, shield;
     sim::RealmConfig config;
+    uint32_t you = 0;      // his player's body id (Realm::lookAs)
+    uint32_t backlog = 0;  // Ticks that follow this frame and are the world's past
 };
 
 struct Tick {
@@ -89,7 +96,7 @@ bool parse(const std::vector<uint8_t>& body, Tick& out);
 bool parse(const std::vector<uint8_t>& body, Hash& out);
 
 // The realm after a step, as one number: what the tick said (every happening's bytes, which
-// Realm::say zeroes padding and all), the dice drawn so far, and where the hero stands. Two
+// Realm::say zeroes padding and all), the dice drawn so far, and where each player stands. Two
 // realms that agree on it for every tick are walking the same walk.
 uint64_t stateHash(const sim::Realm& realm);
 

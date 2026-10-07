@@ -35,6 +35,9 @@ public:
     const std::vector<sim::Happening>& happenings() const override { return mirror_.happenings(); }
     const sim::Realm& realm() const override { return mirror_; }
     bool remote() const override { return true; }
+    // The world's past, every tick of the Welcome's backlog, stepped on the mirror with nothing
+    // drawn; then the mirror looks at his own player (Welcome::you).
+    void catchUp() override;
 
     bool connected() const { return socket_.open(); }
     // Ticks whose hash the server sent and the mirror matched, and the first one it did not.
@@ -51,6 +54,7 @@ private:
     std::deque<net::Hash> theirs_;                       // the server's, not yet compared
     std::deque<std::pair<uint32_t, uint64_t>> ours_;     // the mirror's, by tick, the last few
     uint32_t agreed_ = 0, divergedAt_ = 0;
+    uint32_t you_ = 0;
 };
 
 }  // namespace mu::game

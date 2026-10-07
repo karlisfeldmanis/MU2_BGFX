@@ -1222,6 +1222,12 @@ public:
     const Body& playerAt(int index) const { return bodies_[heroes_[size_t(index)].body]; }
     // False for an id that is no player's.
     bool lookAs(uint32_t id);
+    // What another player carries and wears, for drawing him; null for an id that is no
+    // player's. His own business otherwise, which the queries above keep for whom they answer.
+    const Satchel* satchelOf(uint32_t id) const {
+        const int at = playerOfId(id);
+        return at < 0 ? nullptr : &heroes_[size_t(at)].bag;
+    }
     const Body& hero() const { return mine(); }
     // A skill's clip is still running, so he is locked where he stands: no step, no re-path.
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which

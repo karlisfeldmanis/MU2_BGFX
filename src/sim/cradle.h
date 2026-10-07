@@ -5,6 +5,7 @@
 // client's mirror and the server must do exactly the same to the same realm before the first
 // tick (docs/sprints/18-the-wire.md); it was Play::open's until 2026-10-07.
 
+#include <cstdint>
 #include <string>
 
 namespace mu::sim {
@@ -17,5 +18,7 @@ class Realm;
 // strength or agility, it is given anyway -- what he starts holding is the cradle's gift (see
 // Realm::equip). Logged; false only for a name no arm has.
 bool outfit(Realm& realm, const std::string& weapon, const std::string& shield);
+// The same by arm index (Tables::arms), -1 for none: what a Join command carries.
+bool outfitArms(Realm& realm, int32_t weapon, int32_t shield);
 
 }  // namespace mu::sim

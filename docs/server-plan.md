@@ -196,7 +196,9 @@ the `View`, most of them mechanical.
 
 ### Phase 2: many heroes in one realm
 
-Under way since 2026-10-07: `docs/sprints/19-many-heroes.md`.
+**Done 2026-10-07** (`docs/sprints/19-many-heroes.md`). Phase 4's wire came first (sprint 18),
+so the step that made the world shared also put several connections on one world: the server
+lets a later player in by a Join command and sends him the world's past to replay.
 
 - A `Player` struct takes everything that is one-per-hero today:
   - the order, wishes, bag and money;
@@ -211,6 +213,8 @@ Under way since 2026-10-07: `docs/sprints/19-many-heroes.md`.
   never "the hero".
 - **Determinism:** players step in id order, and a test with two scripted heroes is added to
   `sim_test`.
+- **Join and leave are commands** (`Join`, `Leave`), the server's alone, so lockstep carries the
+  world's door. A body that leaves is marked gone and never erased.
 - **Out of scope here:** party experience and loot rules, PvP and trade. They are their own
   decisions (§5).
 

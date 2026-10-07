@@ -102,9 +102,11 @@ uint32_t Play::discard(int slot) {
 // him at the door -- Realm::moveItem, "the satchel is the truth" -- and a weapon dragged out
 // of his hand went on being drawn in it, because nothing had ever told the figure to look
 // again.
-std::string Play::quiverName() const {
+std::string Play::quiverName() const { return quiverOf(realm_.satchel()); }
+
+std::string Play::quiverOf(const sim::Satchel& bag) const {
     for (int slot : {sim::kWeaponRight, sim::kWeaponLeft}) {
-        const sim::Held& held = realm_.satchel()[slot];
+        const sim::Held& held = bag[slot];
         if (held.empty() || size_t(held.item) >= tables_.items.size()) continue;
         const content::ItemRow& row = tables_.items[size_t(held.item)];
         if (sim::ammunition(row)) return row.name;
@@ -113,51 +115,14 @@ std::string Play::quiverName() const {
 }
 
 void Play::redress() {
-    if (!figures_ || bare_.empty() || drawn_.empty()) return;
+    if (!figures_ || bare_.empty() || !heroDrawn()) return;
     const sim::Body& hero = realm_.hero();
-    const std::string weapon =
-        hero.weapon >= 0 ? tables_.arms[size_t(hero.weapon)].name : std::string();
-    const std::string shield =
-        hero.shield >= 0 ? tables_.arms[size_t(hero.shield)].name : std::string();
-    // And what he wears: the five armour slots, by the asset each item row names. Without
-    // these the figure only ever changed its hands, and gloves put on stayed bare hands.
-    std::vector<std::string> worn;
-    std::vector<ShineLook> wornShine;
-    for (int slot = sim::kHelm; slot <= sim::kBoots; ++slot) {
-        const sim::Held& held = realm_.satchel()[slot];
-        if (held.empty() || size_t(held.item) >= tables_.items.size()) continue;
-        const content::ItemRow& row = tables_.items[size_t(held.item)];
-        worn.push_back(row.name);
-        wornShine.push_back(shineOf(row, held.refinement, held.excellent != 0));
-    }
-    // How each hand's plus shows: the hand slot holding the item of that name. The realm says
-    // which arm swings, not which slot it came out of.
-    const auto handShine = [&](const std::string& name) {
-        if (name.empty()) return ShineLook{};
-        for (int slot : {sim::kWeaponRight, sim::kWeaponLeft}) {
-            const sim::Held& held = realm_.satchel()[slot];
-            if (!held.empty() && size_t(held.item) < tables_.items.size() &&
-                tables_.items[size_t(held.item)].name == name) {
-                return shineOf(tables_.items[size_t(held.item)], held.refinement,
-                               held.excellent != 0);
-            }
-        }
-        return ShineLook{};
-    };
     dressedQuiver_ = quiverName();
-    // The left hand's own plus: two swords of one name are two items, each with its own.
-    const sim::Held& left = realm_.satchel()[sim::kWeaponLeft];
-    const ShineLook leftShine =
-        hero.dual && !left.empty() && size_t(left.item) < tables_.items.size()
-            ? shineOf(tables_.items[size_t(left.item)], left.refinement, left.excellent != 0)
-            : handShine(shield);
     // His bare body: the class's second once Sevina has taken his treasure (game/roster.h).
     const std::string bare = hero.second ? bareBody(hero.kin, true, figures_) : bare_;
-    const FigureBody* look = figures_->dress(kHeroDressName, bare, weapon, shield, worn,
-                                             wornShine, handShine(weapon), leftShine,
-                                             dressedQuiver_);
+    const FigureBody* look = dressOf(hero, realm_.satchel(), kHeroDressName, bare, dressedQuiver_);
     if (!look) return;
-    Drawn& drawn = drawn_[0];
+    Drawn& drawn = drawn_[heroAt()];
     drawn.figure.reskin(look);
     // The swing, found again exactly as Play::open finds it the first time: the stance a new
     // weapon stands him in picks a different attack clip out of the same library.
@@ -167,6 +132,57 @@ void Play::redress() {
         if (drawn.attackClip < 0) drawn.attackClip = look->library->find(38);
     }
     dualSwings(drawn, look);
+}
+
+const FigureBody* Play::dressOf(const sim::Body& hero, const sim::Satchel& bag,
+                                const std::string& name, const std::string& bare,
+                                const std::string& quiver) {
+    const std::string weapon =
+        hero.weapon >= 0 ? tables_.arms[size_t(hero.weapon)].name : std::string();
+    const std::string shield =
+        hero.shield >= 0 ? tables_.arms[size_t(hero.shield)].name : std::string();
+    // And what he wears: the five armour slots, by the asset each item row names. Without
+    // these the figure only ever changed its hands, and gloves put on stayed bare hands.
+    std::vector<std::string> worn;
+    std::vector<ShineLook> wornShine;
+    for (int slot = sim::kHelm; slot <= sim::kBoots; ++slot) {
+        const sim::Held& held = bag[slot];
+        if (held.empty() || size_t(held.item) >= tables_.items.size()) continue;
+        const content::ItemRow& row = tables_.items[size_t(held.item)];
+        worn.push_back(row.name);
+        wornShine.push_back(shineOf(row, held.refinement, held.excellent != 0));
+    }
+    // How each hand's plus shows: the hand slot holding the item of that name. The realm says
+    // which arm swings, not which slot it came out of.
+    const auto handShine = [&](const std::string& arm) {
+        if (arm.empty()) return ShineLook{};
+        for (int slot : {sim::kWeaponRight, sim::kWeaponLeft}) {
+            const sim::Held& held = bag[slot];
+            if (!held.empty() && size_t(held.item) < tables_.items.size() &&
+                tables_.items[size_t(held.item)].name == arm) {
+                return shineOf(tables_.items[size_t(held.item)], held.refinement,
+                               held.excellent != 0);
+            }
+        }
+        return ShineLook{};
+    };
+    // The left hand's own plus: two swords of one name are two items, each with its own.
+    const sim::Held& left = bag[sim::kWeaponLeft];
+    const ShineLook leftShine =
+        hero.dual && !left.empty() && size_t(left.item) < tables_.items.size()
+            ? shineOf(tables_.items[size_t(left.item)], left.refinement, left.excellent != 0)
+            : handShine(shield);
+    return figures_->dress(name, bare, weapon, shield, worn, wornShine, handShine(weapon), leftShine,
+                           quiver);
+}
+
+const FigureBody* Play::otherLook(const sim::Body& body) {
+    if (!figures_) return nullptr;
+    const sim::Satchel* bag = realm_.satchelOf(body.id);
+    if (bag == nullptr) return figures_->body(kHeroFigure);
+    const FigureBody* look = dressOf(body, *bag, "Player" + std::to_string(body.id),
+                                     bareBody(body.kin, body.second, figures_), quiverOf(*bag));
+    return look != nullptr ? look : figures_->body(kHeroFigure);
 }
 
 void Play::dualSwings(Drawn& drawn, const FigureBody* look) const {

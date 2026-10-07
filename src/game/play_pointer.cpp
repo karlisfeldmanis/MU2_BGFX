@@ -595,8 +595,8 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
 }
 
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
-    if (!isOpen() || drawn_.empty() || !drawn_[0].placed || !ground_) return;
-    const Drawn& hero = drawn_[0];
+    if (!isOpen() || !heroDrawn() || !drawn_[heroAt()].placed || !ground_) return;
+    const Drawn& hero = drawn_[heroAt()];
     const float feet[3] = {hero.crown[0], ground_->heightAt(hero.crown[0], hero.crown[2]),
                            hero.crown[2]};
     const float flat = std::max(1e-4f, std::sqrt(acrossX * acrossX + acrossZ * acrossZ));

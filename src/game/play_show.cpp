@@ -192,10 +192,11 @@ void Play::exhale(float seconds) {
         }
     }
 
-    // The hero's refined gear as a light source: fx/gleam.h. drawn_[0] is the hero.
+    // The hero's refined gear as a light source: fx/gleam.h.
     gleam_.update(seconds);
-    if (!drawn_.empty() && drawn_[0].visible && drawn_[0].placed && drawn_[0].figure.body()) {
-        Drawn& one = drawn_[0];
+    if (heroDrawn() && drawn_[heroAt()].visible && drawn_[heroAt()].placed &&
+        drawn_[heroAt()].figure.body()) {
+        Drawn& one = drawn_[heroAt()];
         const FigureBody* look = one.figure.body();
         {
             // The suit: the most refined piece, lighting from the body's own line, pelvis to neck.
@@ -1301,6 +1302,11 @@ void Play::follow(float seconds) {
         // reposed: the position, the clip and the pose it died in are exactly the last ones
         // `follow` ever wrote for it.
         if (!body->alive()) {
+            // A player who left the world: gone from the picture, not fallen.
+            if (body->gone) {
+                one.visible = false;
+                continue;
+            }
             // Still standing on screen until its killing blow lands: drawn where it last was,
             // in whatever it was playing.
             if (one.fallOwed) {
@@ -1812,8 +1818,8 @@ Play::Drawn* Play::drawnOf(uint32_t id) {
 }
 
 void Play::focus(float* column, float* row) const {
-    if (drawn_.empty()) return;
-    const Drawn& hero = drawn_[0];
+    if (!heroDrawn()) return;
+    const Drawn& hero = drawn_[heroAt()];
     *column = hero.wasX + (hero.nowX - hero.wasX) * through_;
     *row = hero.wasY + (hero.nowY - hero.wasY) * through_;
 }
@@ -1836,20 +1842,21 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     // they are one function and not three copies of it.
     const auto fadeOf = [&](const Drawn& one) -> float {
         // A Teleport: out over MU's ten frames, gone until he is put down, and back in.
-        if (&one == &drawn_[0] && blinkOut_ >= 0.0f) {
+        const bool himself = heroDrawn() && &one == &drawn_[heroAt()];
+        if (himself && blinkOut_ >= 0.0f) {
             const float t = std::clamp(blinkOut_ / kBlinkFadeSeconds, 0.0f, 1.0f);
             return 1.0f - t * t * (3.0f - 2.0f * t);
         }
-        if (&one == &drawn_[0] && blinkIn_ >= 0.0f) {
+        if (himself && blinkIn_ >= 0.0f) {
             const float t = std::clamp(blinkIn_ / kBlinkFadeSeconds, 0.0f, 1.0f);
             return t * t * (3.0f - 2.0f * t);
         }
-        if (&one == &drawn_[0] && appearing_) {
+        if (himself && appearing_) {
             const float t = std::clamp(appearAt_ / kAppearSeconds, 0.0f, 1.0f);
             return t * t * (3.0f - 2.0f * t);
         }
         if (one.deadFor >= 0.0f) {
-            if (one.deadFor < kDeathHold || &one == &drawn_[0]) return 1.0f;
+            if (one.deadFor < kDeathHold || himself) return 1.0f;
             const float t = std::clamp((one.deadFor - kDeathHold) / kDeathFade, 0.0f, 1.0f);
             return 1.0f - t * t * (3.0f - 2.0f * t);
         }

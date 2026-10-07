@@ -34,8 +34,15 @@ keeps a rule from meaning one thing on the server and another in the client.
     build/mu2 --play --server 37.27.158.226
 
 The client joins on port 44406, raises its mirror from the server's answer and plays every tick
-the server steps (docs/sprints/18-the-wire.md). One player per world for now: each connection
-gets a realm of its own. `server/deploy.sh` puts a new build there and restarts the service.
+the server steps (docs/sprints/18-the-wire.md). **Connections to the same world share it**
+(docs/sprints/19-many-heroes.md, protocol 2):
+- the first raises it;
+- each later one comes in by a Join at the next tick and is sent the world's past to replay;
+- one that goes leaves by a Leave;
+- an empty world is let go.
+
+Two players in Lorencia see each other. `server/deploy.sh` puts a new build there and restarts
+the service.
 
 ## Building there
 

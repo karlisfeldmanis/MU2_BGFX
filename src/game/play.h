@@ -246,9 +246,18 @@ public:
     // the figure never shows a weapon the bag no longer does. Called after anything that can
     // change a worn slot; a no-op where `open` was given no `bare` to dress over.
     void redress();
+    // A player's figure off his body and his satchel: his class body (`bare`), his arms, his
+    // five armour pieces and their shine, his quiver. Under `name`, which Figures keeps the
+    // dressed body by: the hero's own is kHeroDressName, another player's his id's.
+    const FigureBody* dressOf(const sim::Body& hero, const sim::Satchel& bag, const std::string& name,
+                              const std::string& bare, const std::string& quiver);
+    // Another player in the world (docs/sprints/19-many-heroes.md): his own class and gear,
+    // dressed as he stands when his figure is made. Null with no figures.
+    const FigureBody* otherLook(const sim::Body& body);
     // The quiver's item name, off whichever hand holds ammunition, or empty; and the one the
     // figure was last dressed in, so a shot that empties or refills the hand redresses her.
     std::string quiverName() const;
+    std::string quiverOf(const sim::Satchel& bag) const;
     std::string dressedQuiver_;
     int mixAnswer_ = -1;
     std::string mixWords_;
@@ -990,6 +999,16 @@ private:
     };
 
     Drawn* drawnOf(uint32_t id);
+    // Where the hero's figure is in `drawn_`, which shares the bodies' order: first in a world of
+    // his own, anywhere in a shared one (docs/sprints/19-many-heroes.md).
+    size_t heroAt() const {
+        const std::vector<sim::Body>& bodies = realm_.bodies();
+        return bodies.empty() ? 0 : size_t(&realm_.hero() - bodies.data());
+    }
+    bool heroDrawn() const { return !realm_.bodies().empty() && heroAt() < drawn_.size(); }
+    // A figure for a body: what Play::open makes for each, and what a body that joins after it
+    // is given (a player come into a shared world, and his summon's slot).
+    Drawn drawnFor(const sim::Body& body, const FigureBody* heroLook, size_t* bones);
     // The hero's four alternating swings into `drawn.dualClips` while he holds two weapons.
     void dualSwings(Drawn& drawn, const FigureBody* look) const;
     // Where a spell leaves a caster thrown at `to`: the middle of his chest, a little toward it.
