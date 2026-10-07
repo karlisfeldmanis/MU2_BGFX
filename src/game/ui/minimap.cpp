@@ -872,7 +872,7 @@ void Minimap::rebuild(const Play& play) {
         };
         const float line = std::max(1.0f, kRimLine * u);
         const float hair = std::max(1.0f, u);
-        band(rim, rim + hair, style::kVoid & 0x00FFFFFFu | (uint32_t(kRimShadow * 255.0f) << 24));
+        band(rim, rim + hair, (style::kVoid & 0x00FFFFFFu) | (uint32_t(kRimShadow * 255.0f) << 24));
         band(rim - line, rim, gfx::rgba(kLine[0], kLine[1], kLine[2], kRimAlpha));
     }
 

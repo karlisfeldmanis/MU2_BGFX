@@ -245,11 +245,12 @@ void testSwings(const content::Tables& tables) {
     // 11.45 frames a second and the clip is 7 / 11.45 = 0.611 s.
     const int withKris = sim::swingMilliseconds(tables, sim::Kin::DarkKnight, 30, kris, nullptr);
     checkNear(withKris, 611, 3, "a Kris swings about every 611 ms");
-    // Bare hands are the fist clip, 7 keys at 0.6, with almost no bonus: much faster and much
-    // weaker, which is 0.75's own shape.
+    // Bare hands swing the sword's pair, not MU's fist (attackActions; the user, 2026-09-28), with
+    // no weapon's speed in the bonus: 7 / ((0.25 + 2 x 0.004) x 25) = 1.085 s, slower than any
+    // weapon's swing.
     const int bare = sim::swingMilliseconds(tables, sim::Kin::DarkKnight, 30, nullptr, nullptr);
-    check(bare < withKris, "and fists are faster than any weapon");
-    checkNear(bare, 462, 3, "the fist is about 462 ms");
+    check(bare > withKris, "and an empty hand is slower than a weapon");
+    checkNear(bare, 1085, 3, "the empty hand is about 1085 ms");
     // A slow weapon is slower: the Short Sword's 20 against the Kris's 50.
     const int slow = sim::swingMilliseconds(tables, sim::Kin::DarkKnight, 30, arm("Sword02"),
                                             nullptr);
@@ -689,9 +690,12 @@ void testItems(const content::Tables& tables) {
     // of Soul Barrier on 2026-09-28, and the elf's Greater Defense, Greater Damage and Skillshot
     // orbs the same day (sprint 15), and the 25 Noria's shelves were missing: the Silk, Wind,
     // Spirit and Guardian sets, the Elven, Battle and Tiger Bows, the Golden Crossbow and the
-    // Elven Shield, and the Rune of Creation (14, 22) on 2026-09-28. A count rather than a list, because what it is guarding is the cook -- a
+    // Elven Shield, and the Rune of Creation (14, 22) on 2026-09-28. 273 since 2026-10-07: the
+    // second-class sets and arms, Blood Castle 6's and Tarkan's drops, the raid's boxes, the
+    // new orbs and scrolls, and the Magic Gladiator's sword, armour and Storm Crow set. A count
+    // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 157, "157 item rows cooked");
+    checkEqual(long(tables.items.size()), 273, "273 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -10380,7 +10384,8 @@ void testCastleGrid(const content::Tables& lorencia) {
             realm.step();
             check(!realm.claimCastle(), "once");
             check(realm.castleRun().sentOut, "and sends him out to Devias at once");
-            checkEqual(int(realm.money() - zen), int(sim::kCastleWinZen), "20,000 Zen");
+            checkEqual(int(realm.money() - zen), int(sim::kCastleWinZens[0] * sim::kCastleZenTimes),
+                       "castle 1's 20,000 Zen, five times over");
             check(realm.hero().level > level || realm.hero().experience > experience,
                   "and the experience");
             bool jewel = false, lying = false;
@@ -10429,15 +10434,26 @@ void testCastleGrid(const content::Tables& lorencia) {
         checkEqual(run.castleRun().kills, sim::kCastleKills, "the garrison's quota falls (kCastleKills)");
         for (int t = 0; t <= sim::kCastleBridgeTicks + 1; ++t) run.step();
         check(run.castleRun().bridgeDown, "the bridge is down");
-        for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < sim::kCastleSorcerers; ++t) run.step();
-        checkEqual(standing(sim::kCastleSorcerer), sim::kCastleSorcerers,
-                   "and all eight Spirit Sorcerers have risen");
+        // The castle places 8; quota 2 is kCastleSorcerers kills, the dead rising again until it is
+        // met (the user, 2026-10-05).
+        int placed = 0;
+        for (const sim::Body& one : run.bodies()) placed += one.monster() && numberOf(one) == sim::kCastleSorcerer;
+        for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < placed; ++t) run.step();
+        checkEqual(standing(sim::kCastleSorcerer), 8, "and all eight Spirit Sorcerers have risen");
         checkEqual(standing(sim::kCastleStatue), 0, "the statue not yet");
+        for (int t = 0; t < 4000 && run.castleRun().sorcerers < sim::kCastleSorcerers; ++t) {
+            for (const sim::Body& one : run.bodies()) {
+                if (run.castleRun().sorcerers >= sim::kCastleSorcerers) break;
+                if (one.monster() && one.alive() && numberOf(one) == sim::kCastleSorcerer) run.smite(one.id);
+            }
+            run.step();
+        }
+        checkEqual(run.castleRun().sorcerers, sim::kCastleSorcerers, "all counted, the dead risen again until then");
+        // Whoever had risen when the quota filled is struck down too, and none of them rises again.
         for (const sim::Body& one : run.bodies()) {
             if (one.monster() && one.alive() && numberOf(one) == sim::kCastleSorcerer) run.smite(one.id);
         }
         run.step();
-        checkEqual(run.castleRun().sorcerers, sim::kCastleSorcerers, "all counted");
         for (int t = 0; t < 100 && standing(sim::kCastleStatue) < 1; ++t) run.step();
         checkEqual(standing(sim::kCastleStatue), 1, "and the Statue of Saint rises");
         for (int t = 0; t < 200; ++t) run.step();
