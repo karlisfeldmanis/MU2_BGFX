@@ -199,6 +199,11 @@ on the server was lost at every gate, trip and death sent home.**
     50,50).
   - Step 2's file opened with its two rows, now with an empty world.
   - sim_test's output is identical to step 3's; `layercheck` and `save_test` pass.
+- **On the box** (protocol 4; `deploy.sh` now also installs `sqlite3` to read the store with).
+  The step-2 file opened with its 2 characters. From this Mac, a knight went down Lorencia's
+  stair and was "kept in dungeon at 110,247". After `systemctl restart mu2-server`, a new run
+  asking for Lorencia was told "has him in dungeon at 110,247", opened the Dungeon and played
+  there, level 40; 4, 5 and 5 hashes agreed.
 
 ## Next
 

@@ -28,8 +28,9 @@ rsync -az --delete --prune-empty-dirs \
 echo "copied to $host:$dest"
 [ "$1" = "--copy" ] && exit 0
 
-# The character store's SQLite headers (server/src/store.h); the library itself is the system's.
-ssh $host "dpkg -s libsqlite3-dev >/dev/null 2>&1 || DEBIAN_FRONTEND=noninteractive apt-get install -y -q libsqlite3-dev >/dev/null"
+# The character store's SQLite headers (server/src/store.h), and sqlite3 to read characters.db
+# with (server/README.md); the library itself is the system's.
+ssh $host "dpkg -s libsqlite3-dev sqlite3 >/dev/null 2>&1 || DEBIAN_FRONTEND=noninteractive apt-get install -y -q libsqlite3-dev sqlite3 >/dev/null"
 
 # One job: the box has one core and 1 GB (2 GB swap). sim_test.cpp is the slow one, a few minutes.
 ssh $host "cd $dest && \

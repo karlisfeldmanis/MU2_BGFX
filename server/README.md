@@ -27,7 +27,7 @@ keeps a rule from meaning one thing on the server and another in the client.
 | tools | g++ 15.2, CMake 4.2, Ninja, rsync |
 | firewall | `ufw`: SSH, and 44406/tcp for the game |
 | service | `mu2-server` (systemd, `server/mu2-server.service`): `/opt/mu2/build/mu2_server --port 44406 --store /var/lib/mu2/characters.db`, restarted if it stops, its own throwaway user whose one writable folder is `/var/lib/mu2` (systemd keeps it at `/var/lib/private/mu2`). `systemctl status mu2-server`, `journalctl -u mu2-server -f` |
-| packages | `libsqlite3-dev`, for the character store; `deploy.sh` installs it if missing |
+| packages | `libsqlite3-dev` for the character store and `sqlite3` to read it; `deploy.sh` installs them if missing |
 | code | `/opt/mu2`, put there by `deploy.sh` |
 
 ## Playing on it
