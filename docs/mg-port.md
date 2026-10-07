@@ -83,9 +83,9 @@ damage (`0b00` / `0b10`), the 2nd wings' damage table. The model is MuMain's `MO
    OpenMU's own), the wizard's band, the knight's swing speed, half the wizard's magic speed,
    double wield, every element for his runes, `moveLevel` (two thirds of a gate or travel), and
    Satan / Darkness from the wing mixes. sim_test checks his numbers.
-2. **Creation:** done 2026-10-07, open from the start for now, so he is easy to test (the user,
-   2026-10-07); MU's 220 gate (the lobby offers MG only when a saved hero has reached 220) comes
-   later. The lobby's fourth class button, MU's text 1708, his bust (NewFace04 from Data/Logo,
+2. **Creation:** done 2026-10-07. Gated as MU gates him: his button stands greyed until a
+   character on the account has reached level 220 (`Lobby::kGladiatorLevel`, OpenMU's
+   LevelRequirementByCreation; CharMakeWin disables it). The lobby's fourth class button, MU's text 1708, his bust (NewFace04 from Data/Logo,
    CLASS_DARK's -13 / 6.0 / lift 1.8, CharMakeWin.cpp:107) and his bare body on the pedestal and
    in the world (`--class 3`, `--lobby-create 3`). He is born in Lorencia with empty hands.
 3. **Skills and gear:** done 2026-10-07. Weapons: every wizard's or knight's class-level-1 weapon

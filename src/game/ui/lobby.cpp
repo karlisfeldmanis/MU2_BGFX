@@ -253,9 +253,17 @@ Box Lobby::boxOf(int target) const {
     return {};
 }
 
+bool Lobby::gladiatorOpen() const {
+    for (const Seat& one : roster_) {
+        if (one.level >= kGladiatorLevel) return true;
+    }
+    return false;
+}
+
 bool Lobby::enabled(int target) const {
     const int count = view_.roster ? int(view_.roster->size()) : 0;
     switch (target) {
+        case kClass3: return gladiatorOpen();
         case kCreate: return count < kRosterSlots;
         case kMenu: return true;
         case kEnter:
@@ -277,7 +285,7 @@ int Lobby::hitAt(float x, float y) const {
     }
     if (creating_) {
         for (int t = kClass0; t <= kShut; ++t) {
-            if (in(t)) return t;
+            if (in(t) && enabled(t)) return t;
         }
     }
     for (int t = kCreate; t <= kDelete; ++t) {
@@ -333,6 +341,13 @@ void Lobby::update(float seconds, float width, float height, const Pointer& poin
                 result.refused = true;
                 return;
             }
+        }
+        // Ours: MU never gets here, its button being off; a review that opens the window on him
+        // (--lobby-create 3) does.
+        if (kClasses[classRow_] == sim::Kin::MagicGladiator && !gladiatorOpen()) {
+            notice("A level 220 character is needed for a Magic Gladiator.", true);
+            result.refused = true;
+            return;
         }
         creating_ = false;
         result.create = true;
@@ -636,7 +651,7 @@ void Lobby::rebuild() {
             const int t = kClass0 + row;
             controls::button(canvas_, boxOf(t).grown(-std::round(1.5f * k)), className(kClasses[row]),
                              row == classRow_ ? controls::Kind::Primary : controls::Kind::Secondary,
-                             {lit(t), held(t), false}, k);
+                             {lit(t), held(t), !enabled(t)}, k);
         }
 
         // The name row, one container across the window where MU's plate and its two buttons
