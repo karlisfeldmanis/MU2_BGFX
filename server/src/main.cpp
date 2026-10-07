@@ -5,7 +5,8 @@
 // **Connections to the same world share it** (docs/sprints/19-many-heroes.md): the first Hello
 // for a world raises its realm with him as its first player; each later one comes in by a Join
 // command at the next tick's start, and is welcomed once that tick has let him in -- with the
-// world's start and every tick since it was raised, which his mirror replays to stand where the
+// world's start, its last snapshot and every tick since that (at most a minute's, sprint 21),
+// which his mirror is laid with and replays to stand where the
 // server stands. A connection that goes leaves by a Leave command, and his character (sim::Kept)
 // is kept under his token in characters.db (store.h): a map change reconnects with it, and he
 // comes into the next world as he left the last -- or, next week, as he left the server
@@ -66,6 +67,9 @@ const Clock::duration kTick = std::chrono::duration_cast<Clock::duration>(std::c
 constexpr double kEarlyApart = 1.0;
 const Clock::duration kEarlyWithin = std::chrono::milliseconds(5);
 constexpr int kHashEvery = 20;         // a hash a second
+// A world is snapshot this often, and its past before the snapshot let go: a newcomer replays at
+// most a minute (docs/sprints/21-the-snapshot.md). About half a MB a town, taken in a millisecond.
+constexpr int kSnapshotEvery = 60 * 20;
 // A Join's ticket, the server's own: high, so it is never one a client numbered.
 constexpr uint32_t kJoinTickets = 0x80000000u;
 // Whoever is in a world is written this often as well as when he leaves: OpenMU's rate, and what
@@ -88,7 +92,11 @@ struct World {
     content::Tables tables;  // owned: the realm keeps a pointer to them
     std::unique_ptr<sim::Realm> realm;
     net::Welcome start;      // how it was raised: what every mirror raises from
-    std::vector<net::Tick> log;  // every tick since, what a newcomer's mirror replays
+    // The world as it last stood in a snapshot (Realm::snapshot), empty before the first, and
+    // every tick since it: what a newcomer's mirror is laid with and then replays.
+    std::vector<uint8_t> snapshot;
+    std::vector<net::Tick> log;
+    int sinceSnapshot = 0;
     std::vector<sim::Command> queued;  // arrived since the last tick, in order
     std::vector<net::Arrival> arriving;  // characters carried in with this tick's Joins
     uint32_t nextTicket = kJoinTickets;
@@ -189,6 +197,7 @@ bool welcome(Session& one, uint32_t player) {
     net::Welcome w = one.world->start;
     w.you = player;
     w.backlog = uint32_t(one.world->log.size());
+    w.snapshot = one.world->snapshot;
     w.token = one.token;
     std::vector<uint8_t> out;
     net::put(out, w);
@@ -196,8 +205,9 @@ bool welcome(Session& one, uint32_t player) {
     one.player = player;
     one.joining = 0;
     one.welcomed = one.socket.send(out);
-    core::logf("%s: welcomed into %s as #%u, %u ticks of its past, %d here", one.who.c_str(),
-               one.world->name.c_str(), player, w.backlog, one.world->realm->playersHere());
+    core::logf("%s: welcomed into %s as #%u, a %zu KB snapshot and %u ticks after it, %d here",
+               one.who.c_str(), one.world->name.c_str(), player, w.snapshot.size() / 1024, w.backlog,
+               one.world->realm->playersHere());
     return one.welcomed;
 }
 
@@ -306,7 +316,7 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
     net::Kind kind{};
     std::vector<uint8_t> body;
     while (true) {
-        const int took = net::take(one.in, kind, body);
+        const int took = net::take(one.in, kind, body, net::kMostAsked);
         if (took == 0) return true;
         if (took < 0) {
             core::logError("%s: not our protocol", one.who.c_str());
@@ -444,6 +454,16 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions, bool ea
     net::put(out, t);
     if (t.tick % kHashEvery == 0) net::put(out, net::Hash{t.tick, net::stateHash(realm)});
     world.log.push_back(std::move(t));
+    // The world as it stands after this tick, and the past before it let go. A realm a snapshot
+    // cannot carry (a raid's) keeps its whole past, as before.
+    if (++world.sinceSnapshot >= kSnapshotEvery) {
+        world.sinceSnapshot = 0;
+        std::vector<uint8_t> now;
+        if (realm.snapshot(now)) {
+            world.snapshot.swap(now);
+            world.log.clear();
+        }
+    }
     for (auto& one : sessions) {
         if (one->world != &world || !one->welcomed || !one->socket.open()) continue;
         if (!one->socket.send(out)) one->socket.close();

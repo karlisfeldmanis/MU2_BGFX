@@ -61,6 +61,7 @@ private:
     std::deque<std::pair<uint32_t, uint64_t>> ours_;     // the mirror's, by tick, the last few
     uint32_t agreed_ = 0, divergedAt_ = 0;
     uint32_t you_ = 0;
+    std::vector<uint8_t> snapshot_;  // the Welcome's, laid on the mirror by catchUp
     // The readout's round trip: the Ping out and when it went, and the smoothed result in ms.
     std::chrono::steady_clock::time_point pingAt_{};
     uint32_t pingNonce_ = 0;

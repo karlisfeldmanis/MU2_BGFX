@@ -30,7 +30,23 @@ and all sent on each join. A snapshot of the realm replaces that past.
   same commands, and every tick's hash and happenings are alike, 8 deaths among them. A snapshot
   cut short is refused.
 
-## Next
+## 2. On the wire — done 2026-10-08
 
-- **On the wire:** the server snapshots each world every minute and keeps only the ticks since.
-  A Welcome sends the latest snapshot and those ticks.
+- **Protocol 6:**
+  - The Welcome carries `snapshot`, the world as it last stood (empty before the first), and
+    `backlog` is the ticks after it.
+  - A client accepts frames up to 16 MB (`kMostFrame`). The server reads a client's frames at
+    64 KB at most (`kMostAsked`), so a line cannot make it hold megabytes.
+- **The server** snapshots each world every minute (`kSnapshotEvery`) after the tick, and lets go
+  of the past before it. A world holds at most a minute of ticks and one snapshot, however long
+  it lives. A raid realm, which says no to a snapshot, keeps its whole past as before.
+- **The client:** `RemoteLink::catchUp` lays the mirror with the snapshot over what it raised
+  from the world's start, then steps only the ticks after it. The figures are made after that, so
+  every body the snapshot holds is drawn, other players among them.
+- **Verified on loopback:**
+  - a knight played a fresh Lorencia for 92 s;
+  - at 72 s an elf joined, welcomed with "a 482 KB snapshot and 170 ticks after it", and his
+    mirror was laid from the snapshot at tick 1200;
+  - 24 of 24 of the elf's hashes agreed, and the knight's 89 of 89 throughout;
+  - sim_test 6668 of 6668.
+- **Not on the box yet:** it still runs protocol 4. Deploying is the user's call.

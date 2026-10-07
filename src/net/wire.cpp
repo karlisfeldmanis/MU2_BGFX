@@ -293,6 +293,8 @@ void put(std::vector<uint8_t>& out, const Welcome& one) {
         o.u64(one.token);
         o.u8(one.kept ? 1 : 0);
         if (one.kept) putKept(o, one.first);
+        o.u32(uint32_t(one.snapshot.size()));
+        o.bytes.insert(o.bytes.end(), one.snapshot.begin(), one.snapshot.end());
     });
 }
 
@@ -327,11 +329,11 @@ void put(std::vector<uint8_t>& out, const Hash& one) {
     });
 }
 
-int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body) {
+int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body, uint32_t most) {
     if (buffer.size() < 5) return 0;
     uint32_t length = 0;
     for (int i = 0; i < 4; ++i) length |= uint32_t(buffer[size_t(i)]) << (8 * i);
-    if (length < 1 || length > kMostFrame) return -1;
+    if (length < 1 || length > most) return -1;
     if (buffer.size() < 4 + size_t(length)) return 0;
     const uint8_t k = buffer[4];
     if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Ping)) return -1;
@@ -381,6 +383,11 @@ bool parse(const std::vector<uint8_t>& body, Welcome& out) {
     out.token = in.u64();
     out.kept = in.u8() != 0;
     if (out.kept) out.first = takeKept(in);
+    const uint32_t snapshot = in.u32();
+    out.snapshot.clear();
+    if (!in.need(snapshot)) return false;
+    out.snapshot.assign(body.begin() + long(in.at), body.begin() + long(in.at + snapshot));
+    in.at += snapshot;
     return in.done();
 }
 

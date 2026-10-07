@@ -42,11 +42,16 @@ namespace mu::net {
 //    Tick's arrivals (docs/sprints/20-the-world-host.md).
 // 4: the server keeps which world he is in -- the Hello's `arriving`, Elsewhere.
 // 5: Ping, echoed at once, for a readout of the line alone; a Tick's `early`.
-constexpr uint32_t kVersion = 5;
+// 6: the Welcome's snapshot: the world as it stood, and only the ticks after it
+//    (docs/sprints/21-the-snapshot.md).
+constexpr uint32_t kVersion = 6;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
-// The longest frame either side accepts. A Tick of a hundred commands is under 5 KB.
-constexpr uint32_t kMostFrame = 1u << 20;
+// The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of
+// three hundred bodies. And the longest a server accepts from a client, whose frames are a
+// Hello and commands, so a line cannot make it hold megabytes.
+constexpr uint32_t kMostFrame = 16u << 20;
+constexpr uint32_t kMostAsked = 64u << 10;
 
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
                           Ping = 7 };
@@ -88,6 +93,9 @@ struct Welcome {
     // cradle (Realm::restoreKept), as the server laid it.
     bool kept = false;
     sim::Kept first;
+    // The world as it stood when the server last snapshot it (Realm::snapshot), empty for none:
+    // the mirror raised from the rest is laid with it, and `backlog` is the ticks since.
+    std::vector<uint8_t> snapshot;
 };
 
 // A character carried into the world this tick, for the Join with its ticket (Realm::carry).
@@ -129,7 +137,8 @@ void put(std::vector<uint8_t>& out, const Ping& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
-int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body);
+int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body,
+         uint32_t most = kMostFrame);
 
 // A body, parsed. False on a body of the wrong length or shape.
 bool parse(const std::vector<uint8_t>& body, Hello& out);

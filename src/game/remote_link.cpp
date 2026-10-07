@@ -57,6 +57,7 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
                        welcome.column, welcome.row, (unsigned long long)welcome.seed,
                        welcome.backlog);
             you_ = welcome.you;
+            snapshot_ = welcome.snapshot;
             // The past follows the Welcome at once: every one of its Ticks in hand before the
             // world is raised, so catchUp steps it whole. A long-running world's is a few MB.
             const auto pastUntil = std::chrono::steady_clock::now() + std::chrono::seconds(60);
@@ -177,6 +178,18 @@ void RemoteLink::step() {
 void RemoteLink::catchUp() {
     const size_t past = ticks_.size();
     const auto from = std::chrono::steady_clock::now();
+    // The world as the server last snapshot it, over the mirror raised from its start: then only
+    // the ticks after it are stepped (docs/sprints/21-the-snapshot.md).
+    if (!snapshot_.empty()) {
+        if (mirror_.restoreSnapshot(snapshot_)) {
+            core::logf("server: the world laid from a %zu KB snapshot at tick %lld", snapshot_.size() / 1024,
+                       (long long)mirror_.tick());
+        } else {
+            core::logError("server: the world's snapshot did not read; this mirror will not agree");
+        }
+        snapshot_.clear();
+        snapshot_.shrink_to_fit();
+    }
     while (!ticks_.empty()) step();
     if (you_ != 0 && !mirror_.lookAs(you_)) {
         core::logError("server: the mirror has no player #%u after the world's past", you_);
