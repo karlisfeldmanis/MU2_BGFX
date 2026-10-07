@@ -152,35 +152,47 @@ static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighte
 // zero, it is conditional on her attack mode, and her melee rate runs over strength AND agility
 // together.
 //
-//               lvl  agi   str  defRate  def    min/str max/str  min/s+a max/s+a  base lvl vit
-// DarkWizard      5  1.5  0.25    1/3    0.25     1/8     1/4       0      0        30   1   2
-// FairyElf        5  1.5  0.25    0.25   1/10      0       0       1/7    1/4       39   1   2
-// DarkKnight      5  1.5  0.25    1/3    1/3      1/6     1/4       0      0        35   2   3
+//               lvl  agi   str  defRate  def    min/str max/str  min/s+a max/s+a  min/e max/e  base lvl vit
+// DarkWizard      5  1.5  0.25    1/3    0.25     1/8     1/4       0      0        0     0    30   1   2
+// FairyElf        5  1.5  0.25    0.25   1/10      0       0       1/7    1/4       0     0    39   1   2
+// DarkKnight      5  1.5  0.25    1/3    1/3      1/6     1/4       0      0        0     0    35   2   3
+// MagicGladiator  5  1.5  0.25    1/3    1/5      1/6     1/4       0      0       1/12  1/8   57   1   2
 //
 // ClassDarkWizard.cs:51-56, :66-71, :111; ClassFairyElf.cs:56-61, :73-80, :119;
-// ClassDarkKnight.cs:51-56, :68-71, :107. The halving of the defence is shared by all three:
+// ClassDarkKnight.cs:51-56, :68-71, :107; ClassMagicGladiator.cs:53-69, :113 (Version095d's
+// class: 0.75 has no Magic Gladiator). The halving of the defence is shared by all four:
 // CharacterClasses/CharacterClassInitialization.cs:103, `Stats.DefenseFinal, 0.5f,
 // Stats.DefenseBase`.
-const ClassRow kRows[3] = {
+const ClassRow kRows[kKinCount] = {
     // Dark Wizard
-    {5.0f, 1.5f, 0.25f, 1.0f / 3.0f, 0.25f, 1.0f / 8.0f, 0.25f, 0.0f, 0.0f, 30.0f, 1.0f, 2.0f},
+    {5.0f, 1.5f, 0.25f, 1.0f / 3.0f, 0.25f, 1.0f / 8.0f, 0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 30.0f,
+     1.0f, 2.0f},
     // Fairy Elf
-    {5.0f, 1.5f, 0.25f, 0.25f, 0.1f, 0.0f, 0.0f, 1.0f / 7.0f, 0.25f, 39.0f, 1.0f, 2.0f},
+    {5.0f, 1.5f, 0.25f, 0.25f, 0.1f, 0.0f, 0.0f, 1.0f / 7.0f, 0.25f, 0.0f, 0.0f, 39.0f, 1.0f,
+     2.0f},
     // Dark Knight
-    {5.0f, 1.5f, 0.25f, 1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 6.0f, 0.25f, 0.0f, 0.0f, 35.0f, 2.0f,
-     3.0f},
+    {5.0f, 1.5f, 0.25f, 1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 6.0f, 0.25f, 0.0f, 0.0f, 0.0f, 0.0f,
+     35.0f, 2.0f, 3.0f},
+    // Magic Gladiator
+    {5.0f, 1.5f, 0.25f, 1.0f / 3.0f, 0.2f, 1.0f / 6.0f, 0.25f, 0.0f, 0.0f, 1.0f / 12.0f,
+     1.0f / 8.0f, 57.0f, 1.0f, 2.0f},
 };
 
-// ClassDarkWizard.cs:38-41, ClassFairyElf.cs:41-44, ClassDarkKnight.cs:38-41.
-const HeroPoints kStarting[3] = {
+// ClassDarkWizard.cs:38-41, ClassFairyElf.cs:41-44, ClassDarkKnight.cs:38-41,
+// ClassMagicGladiator.cs:41-44.
+const HeroPoints kStarting[kKinCount] = {
     {18, 18, 15, 30},  // Dark Wizard
     {22, 25, 20, 15},  // Fairy Elf
     {28, 20, 25, 10},  // Dark Knight
+    {26, 26, 26, 26},  // Magic Gladiator
 };
 
-const ClassRow& rowOf(Kin kin) { return kRows[int(kin) % 3]; }
+// A class number out of range reads as the knight's, as an unknown save always has.
+static int rowIndex(Kin kin) { return kinValid(int(kin)) ? int(kin) : int(Kin::DarkKnight); }
 
-HeroPoints startingPoints(Kin kin) { return kStarting[int(kin) % 3]; }
+const ClassRow& rowOf(Kin kin) { return kRows[rowIndex(kin)]; }
+
+HeroPoints startingPoints(Kin kin) { return kStarting[rowIndex(kin)]; }
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
             int* maxHealth) {
@@ -217,13 +229,18 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // up with your fists, and the damage floor is what he has instead of nothing. A weapon adds
     // its own band on top, which is Beast.cs:2057-2148's shape and OpenMU's
     // `MinimumPhysBaseDmg = strength rate + weapon minimum`.
+    // The Magic Gladiator's energy pair adds into the same band before the truncation, as
+    // OpenMU sums both relationships into MinimumPhysBaseDmg.
+    const double energy = double(points.energy);
     out->minimumDamage = int(strength * double(row.minimumDamagePerStrength) +
                              (strength + agility) *
-                                 double(row.minimumDamagePerStrengthAndAgility)) +
+                                 double(row.minimumDamagePerStrengthAndAgility) +
+                             energy * double(row.minimumDamagePerEnergy)) +
                          arms.weaponMinimumDamage;
     out->maximumDamage = int(strength * double(row.maximumDamagePerStrength) +
                              (strength + agility) *
-                                 double(row.maximumDamagePerStrengthAndAgility)) +
+                                 double(row.maximumDamagePerStrengthAndAgility) +
+                             energy * double(row.maximumDamagePerEnergy)) +
                          arms.weaponMaximumDamage;
     // A knight's second weapon is a second band of the same shape: gObjCalCharacter gives the
     // left hand strength's band as well as the right (ObjCalCharacter.cpp:386-389) and adds the
@@ -290,9 +307,10 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                 int(double(out->offhandMaximumDamage + byLevel) * excel.damageRate);
         }
     }
-    // The wizard's band and his staff (ClassDarkWizard.cs:72-73, :81). Only his class file
-    // relates energy to wizardry damage; a knight or an elf with a staff has no band to raise.
-    const bool wizard = kin == Kin::DarkWizard;
+    // The wizard's band and his staff (ClassDarkWizard.cs:72-73, :81). Only his class file and
+    // the Magic Gladiator's relate energy to wizardry damage, at the same ninth and quarter
+    // (ClassMagicGladiator.cs:70-71); a knight or an elf with a staff has no band to raise.
+    const bool wizard = kin == Kin::DarkWizard || kin == Kin::MagicGladiator;
     out->wizardMinimum = wizard ? double(points.energy) / 9.0 + arms.wingWizardry : 0.0;
     out->wizardMaximum = wizard ? double(points.energy) / 4.0 + arms.wingWizardry : 0.0;
     out->wizardryRate = 1.0 + arms.staffRise / 100.0;
@@ -320,9 +338,10 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
 }
 
 int maximumMana(Kin kin, int level, const HeroPoints& points) {
-    // Wizard, elf, knight: mu.db's own class order, as kRows.
-    static const float kMana[3][3] = {{0.0f, 2.0f, 2.0f}, {6.0f, 1.5f, 1.5f}, {10.0f, 0.5f, 1.0f}};
-    const float* m = kMana[int(kin) % 3];
+    // Wizard, elf, knight, gladiator: mu.db's own class order, as kRows.
+    static const float kMana[kKinCount][3] = {
+        {0.0f, 2.0f, 2.0f}, {6.0f, 1.5f, 1.5f}, {10.0f, 0.5f, 1.0f}, {7.0f, 1.0f, 2.0f}};
+    const float* m = kMana[rowIndex(kin)];
     // MU2's `(int)(base + level * a + energy * b)`: truncated once, at the end.
     return int(m[0] + float(level) * m[1] + float(points.energy) * m[2]);
 }

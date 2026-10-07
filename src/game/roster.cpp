@@ -42,9 +42,10 @@ void adoptOldHero(const fs::path& folder) {
     if (brace == std::string::npos) return;
     // Named for his class: he was made before characters had names. "DarkKnight" is ten
     // letters, which is exactly what the rule allows.
-    const std::string name = saved.hero.kin == sim::Kin::DarkWizard ? "DarkWizard"
-                             : saved.hero.kin == sim::Kin::FairyElf ? "FairyElf"
-                                                                    : "DarkKnight";
+    const std::string name = saved.hero.kin == sim::Kin::DarkWizard       ? "DarkWizard"
+                             : saved.hero.kin == sim::Kin::FairyElf       ? "FairyElf"
+                             : saved.hero.kin == sim::Kin::MagicGladiator ? "Gladiator"
+                                                                          : "DarkKnight";
     body.insert(brace + 1, "\n  \"name\": \"" + name + "\",\n  \"slot\": 0,");
     fs::create_directories(folder, error);
     const fs::path to = folder / (name + ".json");
@@ -216,16 +217,20 @@ const char* cradleWeapon(sim::Kin kin) {
         case sim::Kin::DarkWizard: return "Staff01";  // the Skull Staff: ours, see roster.h
         case sim::Kin::FairyElf: return "Bow01";
         case sim::Kin::DarkKnight: return "Axe01";
+        // Nothing yet: his starting kit is the port's own step (docs/mg-port.md).
+        case sim::Kin::MagicGladiator: return "";
     }
     return "";
 }
 
 const char* bareBody(sim::Kin kin, bool second, const Figures* figures) {
     // index.json's spellings: the elf's first body has no suffix.
-    const char* first = kin == sim::Kin::DarkWizard ? "DarkWizardBare"
-                        : kin == sim::Kin::FairyElf ? "FairyElf"
-                                                    : "DarkKnightBare";
-    if (!second) return first;
+    const char* first = kin == sim::Kin::DarkWizard       ? "DarkWizardBare"
+                        : kin == sim::Kin::FairyElf       ? "FairyElf"
+                        : kin == sim::Kin::MagicGladiator ? "MagicGladiatorBare"
+                                                          : "DarkKnightBare";
+    // The Magic Gladiator has no second class, and so no second body.
+    if (!second || kin == sim::Kin::MagicGladiator) return first;
     const char* promoted = kin == sim::Kin::DarkWizard ? "SoulMaster"
                            : kin == sim::Kin::FairyElf ? "MuseElf"
                                                        : "BladeKnight";
@@ -237,6 +242,7 @@ const char* className(sim::Kin kin) {
         case sim::Kin::DarkWizard: return "Dark Wizard";
         case sim::Kin::FairyElf: return "Fairy Elf";
         case sim::Kin::DarkKnight: return "Dark Knight";
+        case sim::Kin::MagicGladiator: return "Magic Gladiator";
     }
     return "Dark Knight";
 }

@@ -13,10 +13,12 @@
 
 namespace mu::sim {
 
-// MU's maximum level, and what a level pays for.
-// GameConfigurationInitializerBase.cs:42 and ClassDarkKnight.cs:37.
+// MU's maximum level, and what a level pays for: five points, and the Magic Gladiator's seven
+// (sim::pointsPerLevel). GameConfigurationInitializerBase.cs:42, ClassDarkKnight.cs:37 and
+// ClassMagicGladiator.cs:40.
 constexpr int kMaximumLevel = 400;
 constexpr int kPointsPerLevel = 5;
+constexpr int kGladiatorPointsPerLevel = 7;
 
 // Everything a blow reads off either side of it.
 // What the excellent options he wears come to (ExcellentOptions.cs), summed off his worn slots
@@ -226,15 +228,32 @@ Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Ran
 //   3. the damage roll, ONLY when maximumDamage > minimumDamage
 Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice);
 
-// The three classes, in mu.db's own enumeration (`characters.class`) rather than MU's packed
-// class byte -- MU writes a Dark Knight as 0x10 and a Blade Knight as 0x11 (Beast.cs:2460-2466),
-// and a save file that stored the wire value and a loader that read this one would make a Dark
-// Knight a Dark Wizard. Sprint 9's save writes this enumeration and says so.
+// The classes, in mu.db's own enumeration (`characters.class`) rather than MU's packed class
+// byte -- MU writes a Dark Knight as 0x10 and a Blade Knight as 0x11 (Beast.cs:2460-2466), and a
+// save file that stored the wire value and a loader that read this one would make a Dark Knight a
+// Dark Wizard. Sprint 9's save writes this enumeration and says so. The Magic Gladiator is the
+// fourth, 3, which is his class bit 8 in the cooked tables (tools/cook.py kClass) and MU's own
+// third class (CLASS_DARK_LORD is the fifth); he has no second class (docs/mg-port.md).
 enum class Kin : uint8_t {
     DarkWizard = 0,
     FairyElf = 1,
     DarkKnight = 2,
+    MagicGladiator = 3,
 };
+constexpr int kKinCount = 4;
+// A saved or asked class number that is one of the four.
+constexpr bool kinValid(int kin) { return kin >= 0 && kin < kKinCount; }
+// The points a level pays this class (kPointsPerLevel above).
+constexpr int pointsPerLevel(Kin kin) {
+    return kin == Kin::MagicGladiator ? kGladiatorPointsPerLevel : kPointsPerLevel;
+}
+// The level a gate or a travel asks of this class: the Magic Gladiator pays two thirds of it,
+// OpenMU's `level * (100 - 34) / 100` (CharacterExtensions.cs:113-125,
+// LevelWarpRequirementReductionPercent ceil(100 / 3), ClassMagicGladiator.cs:38), and a 400
+// in full.
+constexpr int moveLevel(int asked, Kin kin) {
+    return kin == Kin::MagicGladiator && asked != 400 ? asked * (100 - 34) / 100 : asked;
+}
 
 // A character's points. Each class starts with its own four, and they are the starting values
 // OpenMU's class initialisers write -- and the same triples mu.db's saved characters carry,
@@ -264,6 +283,10 @@ struct ClassRow {
     // than a bigger number in the first.
     float minimumDamagePerStrengthAndAgility;
     float maximumDamagePerStrengthAndAgility;
+    // The Magic Gladiator's blows take energy as well as strength (ClassMagicGladiator.cs:68-69),
+    // a third pair added to the first; nought for everybody else.
+    float minimumDamagePerEnergy;
+    float maximumDamagePerEnergy;
     float baseHealth;
     float healthPerLevel;
     float healthPerVitality;
@@ -333,6 +356,7 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
 //   Dark Knight  10 + 0.5 x level + 1 x energy
 //   Dark Wizard   0 + 2   x level + 2 x energy
 //   Fairy Elf     6 + 1.5 x level + 1.5 x energy
+//   Magic Gladiator 7 + 1 x level + 2 x energy -- traced: ClassMagicGladiator.cs:62-63, :114
 int maximumMana(Kin kin, int level, const HeroPoints& points);
 // The shield's maximum, the same for all three classes: 1.2 of every stat, the final defence
 // and level squared over thirty. MU2's Beast.cs, off OpenMU's Season 3 class definitions.

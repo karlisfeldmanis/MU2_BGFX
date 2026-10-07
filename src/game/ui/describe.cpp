@@ -290,9 +290,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     sheet.name = sim::summoningOrb(row) ? row.label : label(row, plus);
     sheet.nameTone = qualityOf(row, what);
 
-    static const char* const kNames[3] = {"Dark Wizard", "Fairy Elf", "Dark Knight"};
+    static const char* const kNames[sim::kKinCount] = {"Dark Wizard", "Fairy Elf", "Dark Knight",
+                                                       "Magic Gladiator"};
     int named = 0;
-    for (int i = 0; i < 3; ++i) named += (row.classes >> i) & 1;
+    for (int i = 0; i < sim::kKinCount; ++i) named += (row.classes >> i) & 1;
     // The type line, in the name's tone. GetItemName puts `Excellent ` before the name
     // (ZZ:2645-2671); the card moves it here, where Diablo's "Legendary Bow" stands, so the name
     // keeps to one line -- the user's choice of 2026-09-27. Whom it is for is in the foot.
@@ -937,10 +938,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     const sim::Needs asked = sim::asks(row, plus, what.excellent != 0);
     const sim::Needs owed = sim::shortOf(asked, who.level, who.points);
     // One class line, and none when every class may: the allowed ones in mu.db's order, the
-    // wizard, the elf, the knight -- green when yours is among them and red when it is not.
-    if (named > 0 && named < 3) {
+    // wizard, the elf, the knight, the gladiator -- green when yours is among them and red when
+    // it is not.
+    if (named > 0 && named < sim::kKinCount) {
         std::string classes;
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < sim::kKinCount; ++i) {
             if (!((row.classes >> i) & 1)) continue;
             classes += (classes.empty() ? "" : " / ") + std::string(kNames[i]);
         }
@@ -949,7 +951,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // and his once promoted.
         if (sim::secondClassOnly(row)) {
             classes.clear();
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < sim::kKinCount; ++i) {
                 if (!((row.classes >> i) & 1)) continue;
                 classes += (classes.empty() ? "" : " / ") + std::string(sim::className(i, true));
             }

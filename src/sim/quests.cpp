@@ -1154,6 +1154,7 @@ const char* className(int kin, bool second) {
     switch (Kin(kin)) {
         case Kin::DarkWizard: return second ? "Soul Master" : "Dark Wizard";
         case Kin::FairyElf: return second ? "Muse Elf" : "Fairy Elf";
+        case Kin::MagicGladiator: return "Magic Gladiator";  // no second class
         case Kin::DarkKnight: break;
     }
     return second ? "Blade Knight" : "Dark Knight";

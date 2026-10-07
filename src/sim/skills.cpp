@@ -967,8 +967,9 @@ int32_t authoredCastTicks(const content::Tables& tables, const SkillRow& row) {
 }
 
 float magicSpeedStat(Kin kin, int agility) {
-    // Only the wizard's class file relates agility to MagicSpeed at a rate this game can reach;
-    // nobody else casts a spell here.
+    // Only the wizard's class file relates agility to MagicSpeed at a rate this game can reach,
+    // and the Magic Gladiator's at half of it (ClassMagicGladiator.cs:59, a twentieth).
+    if (kin == Kin::MagicGladiator) return float(agility) / 20.0f;
     return kin == Kin::DarkWizard ? float(agility) / 10.0f : 0.0f;
 }
 

@@ -142,7 +142,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // player down here. It is the honest shape -- a level-20 knight with 95 unspent points is
     // exactly what a level-20 knight who has never opened the window is.
     hero.experience = neededExperience(hero.level);
-    hero.pointsInHand = (hero.level - 1) * kPointsPerLevel;
+    hero.pointsInHand = (hero.level - 1) * pointsPerLevel(kin);
     reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
     keepBoon(hero);
     restoreMana(hero);

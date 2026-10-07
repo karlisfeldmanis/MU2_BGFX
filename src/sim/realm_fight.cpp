@@ -1808,7 +1808,7 @@ void Realm::gain(Body& hero, int32_t award) {
         say(What::Gained, hero, int32_t(gained), int32_t(hero.experience));
         if (!levels) return;
         ++hero.level;
-        hero.pointsInHand += kPointsPerLevel;
+        hero.pointsInHand += pointsPerLevel(hero.kin);
         // Re-reckoned and then refilled, in that order: the health a level gives is part of
         // the maximum it is refilled to.
         reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);

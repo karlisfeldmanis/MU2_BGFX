@@ -309,10 +309,13 @@ void World::update(double seconds, bool still) {
     const float pitch = kPitchDegrees * 3.14159265f / 180.0f;
     const float yaw = kYawDegrees * 3.14159265f / 180.0f;
 
-    // The Lost Tower beacon's level rule: 50, a knight's two thirds of it.
+    // The Lost Tower beacon's level rule: 50, a knight's two thirds of it, and the Magic
+    // Gladiator's as every gate's (sim::moveLevel).
     if (play_.isOpen()) {
         const sim::Body& hero = play_.realm().hero();
-        ornaments_.setBeaconSeen(hero.level >= (hero.kin == sim::Kin::DarkKnight ? 33 : 50));
+        ornaments_.setBeaconSeen(hero.level >= (hero.kin == sim::Kin::DarkKnight
+                                                    ? 33
+                                                    : sim::moveLevel(50, hero.kin)));
     }
     // The doors, on his feet, before the town is gathered; and their creaks where they stand.
     if (doors_.isOpen()) {

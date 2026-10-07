@@ -123,6 +123,28 @@ void testRules() {
     checkEqual(fighter.minimumDamage, int((22 + 25) / 7.0), "the elf's melee, low");
     checkEqual(fighter.maximumDamage, int((22 + 25) / 4.0), "the elf's melee, high");
 
+    // The Magic Gladiator (ClassMagicGladiator.cs): 26 of each, and his blows take energy too.
+    const sim::HeroPoints gladiator = sim::startingPoints(sim::Kin::MagicGladiator);
+    checkEqual(gladiator.strength + gladiator.agility + gladiator.vitality + gladiator.energy,
+               104, "the gladiator's 26 of each");
+    sim::reckon(sim::Kin::MagicGladiator, 1, gladiator, sim::Arms{}, &fighter, &health);
+    // 110 and 60 are OpenMU's own CurrentHealth and CurrentMana for a new one (:45-46).
+    checkEqual(health, 57 + 1 + 52, "the gladiator's health");
+    checkEqual(sim::maximumMana(sim::Kin::MagicGladiator, 1, gladiator), 7 + 1 + 52,
+               "the gladiator's mana");
+    checkEqual(fighter.defense, 2, "the gladiator's defence is agility/5, halved");
+    checkEqual(fighter.minimumDamage, int(26 / 6.0 + 26 / 12.0), "the gladiator's fists, low");
+    checkEqual(fighter.maximumDamage, int(26 / 4.0 + 26 / 8.0), "the gladiator's fists, high");
+    check(fighter.wizardMinimum > 2.8 && fighter.wizardMaximum == 6.5,
+          "and the wizard's band off his energy");
+    checkEqual(sim::pointsPerLevel(sim::Kin::MagicGladiator), 7, "seven points a level");
+    checkEqual(sim::pointsPerLevel(sim::Kin::DarkKnight), 5, "and five for the others");
+    checkEqual(sim::moveLevel(70, sim::Kin::MagicGladiator), 46, "a gate asks him two thirds");
+    checkEqual(sim::moveLevel(400, sim::Kin::MagicGladiator), 400, "but a 400 in full");
+    checkEqual(sim::moveLevel(70, sim::Kin::DarkKnight), 70, "and the others all of it");
+    checkEqual(sim::secondWingOf(sim::Kin::MagicGladiator), sim::kDarknessNumber,
+               "his 2nd wing is Darkness");
+
     // The order of a blow is the behaviour. A defender who out-rates the attacker takes three
     // tenths, and the level floor comes after that, not before.
     sim::Fighter attacker;

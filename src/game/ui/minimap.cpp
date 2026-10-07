@@ -938,8 +938,10 @@ void Minimap::rebuild(const Play& play) {
             // A sealed gate, to a map not built (sim/gates.cpp).
             if (gate && gate->target < 0) {
                 words = std::string(gate->sealed ? gate->sealed : "Another map") + " (sealed)";
-            } else if (gate && play.realm().hero().level < gate->level) {
-                words += " (level " + std::to_string(gate->level) + ")";
+            } else if (const int asked = gate ? sim::moveLevel(gate->level, play.realm().hero().kin)
+                                              : 0;
+                       gate && play.realm().hero().level < asked) {
+                words += " (level " + std::to_string(asked) + ")";
             }
         }
         if (!words.empty()) {

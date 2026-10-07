@@ -191,7 +191,7 @@ TravelRefusal Realm::travelRefusal(int index) const {
     }
     const Body& hero = bodies_[0];
     if (!hero.alive()) return TravelRefusal::Dead;
-    if (hero.level < to.level) return TravelRefusal::Level;
+    if (hero.level < moveLevel(to.level, hero.kin)) return TravelRefusal::Level;
     if (money_ < to.zen) return TravelRefusal::Zen;
     return TravelRefusal::None;
 }

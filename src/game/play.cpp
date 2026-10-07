@@ -436,7 +436,8 @@ void Play::update(double seconds) {
                         // A wizard's aura takes his ride cast too, now that it is the seated
                         // 155 and not 156's standing crouch (the user, 2026-10-04: 'we need
                         // solution to cast defense aura on DW while on mount').
-                        const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
+                        // A spell, the wizard's row: the Magic Gladiator casts it as he does.
+                        const bool wizard = row->kin == sim::Kin::DarkWizard;
                         if (happening.who == heroId && realm_.hero().riding && !row->arrows &&
                             (!row->onSelf() || wizard)) {
                             const int ridden =
@@ -1074,9 +1075,9 @@ void Play::update(double seconds) {
                                     row->arrows == 0) {
                                     // Impale has MU's own ride thrust, 70 (sim/skills.cpp).
                                     const int ridden = swinger->figure.body()->library->find(
-                                        realm_.hero().kin == sim::Kin::DarkWizard ? 155
-                                        : row->number == sim::skill::kImpale      ? 70
-                                                                                  : 68);
+                                        row->kin == sim::Kin::DarkWizard     ? 155
+                                        : row->number == sim::skill::kImpale ? 70
+                                                                             : 68);
                                     if (ridden >= 0) swinger->castClip = ridden;
                                 }
                             }

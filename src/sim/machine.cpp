@@ -603,6 +603,9 @@ int firstWingOf(Kin kin) {
         case Kin::DarkWizard: return 1;
         case Kin::FairyElf: return 0;
         case Kin::DarkKnight: return 2;
+        // MU's 1st wing mix draws any of the three; ours answers by class, and his Satan's is
+        // the knight's (docs/mg-port.md: Heaven, Satan and Darkness are his).
+        case Kin::MagicGladiator: return 2;
     }
     return 2;
 }
@@ -612,6 +615,8 @@ int secondWingOf(Kin kin) {
         case Kin::DarkWizard: return kSoulNumber;
         case Kin::FairyElf: return kSpiritsNumber;
         case Kin::DarkKnight: return kDragonNumber;
+        // His own, without a class change (ChaosMachine's MG arm; docs/second-wings.md).
+        case Kin::MagicGladiator: return kDarknessNumber;
     }
     return kDragonNumber;
 }
@@ -621,6 +626,7 @@ const char* secondWingName(Kin kin) {
         case Kin::DarkWizard: return "Wings of Soul";
         case Kin::FairyElf: return "Wings of Spirits";
         case Kin::DarkKnight: return "Wings of Dragon";
+        case Kin::MagicGladiator: return "Wings of Darkness";
     }
     return "";
 }
@@ -629,7 +635,8 @@ const char* firstWingName(Kin kin) {
     switch (kin) {
         case Kin::DarkWizard: return "Wings of Heaven";
         case Kin::FairyElf: return "Wings of Elf";
-        case Kin::DarkKnight: return "Wings of Satan";
+        case Kin::DarkKnight:
+        case Kin::MagicGladiator: return "Wings of Satan";
     }
     return "";
 }

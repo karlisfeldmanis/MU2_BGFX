@@ -38,7 +38,7 @@ struct EnterGate {
     int32_t number = 0;
     uint32_t map = 0;
     GateBox box;
-    int32_t level = 0;   // the level it asks; 0.75 has no class that pays two thirds of it
+    int32_t level = 0;   // the level it asks; the Magic Gladiator pays two thirds (sim::moveLevel)
     int32_t target = 0;  // the exit gate's number; -1 sealed, a gate to a map not built
     const char* sealed = nullptr;  // a sealed gate's place, for the map and the refusal
     bool fly = false;  // it also asks that he can fly (sim::canFly): the Lost Tower's door to Icarus

@@ -425,8 +425,9 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--class")) {
             if (const char* v = next(s)) {
                 a.kin = std::atoi(v);
-                if (a.kin < 0 || a.kin > 2) {
-                    logError("--class is 0 Dark Wizard, 1 Fairy Elf or 2 Dark Knight, got %d",
+                if (a.kin < 0 || a.kin > 3) {
+                    logError("--class is 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight or 3 Magic "
+                             "Gladiator, got %d",
                              a.kin);
                     a.valid = false;
                 }

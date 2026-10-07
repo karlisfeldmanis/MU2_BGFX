@@ -24,7 +24,7 @@ using gfx::Box;
 constexpr const char* kDeleteAsk = "Would you like to delete %s character?";
 constexpr const char* kDeleteName = "Please type the character's name to delete it.";
 
-// The class descriptions, texts 1705-1707, as the create window's strip shows them. MU's own
+// The class descriptions, texts 1705-1708, as the create window's strip shows them. MU's own
 // spelling and spacing, "a inferior" and "Lorencia.With" included.
 const char* describe(sim::Kin kin) {
     switch (kin) {
@@ -37,6 +37,10 @@ const char* describe(sim::Kin kin) {
         case sim::Kin::DarkKnight:
             return "Kingdom of knights, descendant of Lorencia.With a powerful strength and "
                    "swordsmanship he can handle most of the close-range weapons.";
+        // Text 1708.
+        case sim::Kin::MagicGladiator:
+            return "Complex character that has a characteristics of the Dark knight and Dark "
+                   "wizard. Master in a close-range combat and can command spells freely.";
     }
     return "";
 }
