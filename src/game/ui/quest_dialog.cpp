@@ -43,6 +43,7 @@ constexpr float kCellGap = 10.0f, kIcon = 44.0f, kNameGap = 8.0f, kName = 14.0f;
 constexpr float kChoiceColumns = 2.0f;
 constexpr float kPurse = 30.0f;  // the experience and the Zen, one line over the paid grid
 constexpr float kAsk = 22.0f;    // the choice's line over its grid
+constexpr float kPathTall = 30.0f;  // the Magic Gladiator's Melee and Magic (ours)
 constexpr float kButtonW = 120.0f, kButtonWide = 180.0f;
 constexpr uint32_t kZenGold = gfx::rgba(1.0f, 0.8f, 0.102f);
 constexpr uint32_t kItemWhite = gfx::rgba(1.0f, 1.0f, 1.0f);
@@ -184,7 +185,7 @@ sim::Held rewardHeld(const content::Tables& tables, int32_t item, int plus, int 
 }  // namespace
 
 bool QuestDialog::Drawn::operator==(const Drawn& o) const {
-    if (quest != o.quest || mode != o.mode || chosen != o.chosen || over != o.over ||
+    if (quest != o.quest || mode != o.mode || chosen != o.chosen || over != o.over || path != o.path ||
         pressing != o.pressing || x != o.x || y != o.y || unit != o.unit || scroll != o.scroll ||
         overThumb != o.overThumb || dragging != o.dragging || version != o.version ||
         minutesLeft != o.minutesLeft || picture != o.picture || reading != o.reading ||
@@ -265,6 +266,15 @@ int QuestDialog::cellAt(float ux, float uy, bool anyCell) const {
     const float by = uy - paneTop() + scroll_;
     for (size_t i = 0; i < cells_.size(); ++i) {
         if ((anyCell || cells_[i].choice >= 0) && cells_[i].box.has(ux, by)) return int(i);
+    }
+    return -1;
+}
+
+int QuestDialog::pathAt(float ux, float uy) const {
+    if (!paths_ || uy < paneTop() || uy > paneTop() + paneTall()) return -1;
+    const float by = uy - paneTop() + scroll_;
+    for (int i = 0; i < 2; ++i) {
+        if (pathBox_[i].has(ux, by)) return i;
     }
     return -1;
 }
@@ -451,6 +461,19 @@ void QuestDialog::layout(const Play& play) {
             y += kStepRow + kSection;  // the return
         }
         y += 16.0f + kPurse;
+        const int kin = int(realm.hero().kin);
+        const bool first = sim::questFirst(row, kin, realm.quest(quest_).completions);
+        // The Magic Gladiator's Melee and Magic, over what each pays him, where the giver pays
+        // the knight and the wizard their own things.
+        paths_ = kin == int(sim::Kin::MagicGladiator) && !row.promotes &&
+                 sim::questOffersPaths(row, first);
+        if (paths_) {
+            const float half = (wide - kCellGap) * 0.5f;
+            pathBox_[0] = {kInset, y, half, kPathTall};
+            pathBox_[1] = {kInset + half + kCellGap, y, half, kPathTall};
+            y += kPathTall + kCellGap * 2.0f;
+        }
+        const int paidKin = sim::questPaidKin(row, kin, first, path_);
         // Two grids of the same cells: what his class is paid at this completion, then the
         // choice, when there is one, under its own line.
         const int across = int(kChoiceColumns);
@@ -465,7 +488,9 @@ void QuestDialog::layout(const Play& play) {
                 cell.count = what.count;
                 cell.plus = what.plus;
                 cell.sockets = what.sockets;
-                cell.power = what.power;
+                // The Magic Gladiator's rune as he is paid it (sim::gladiatorRune).
+                cell.power = kin == int(sim::Kin::MagicGladiator) ? sim::gladiatorRune(what.power)
+                                                                  : what.power;
                 for (int a = 0; a < 3; ++a) cell.affixes[a] = what.affixes[a];
                 // Its name in its own label's colour, as the bag shows it (the user, 2026-10-05:
                 // "not correct colors based on actual label colors"; the one legendary ink of
@@ -483,10 +508,8 @@ void QuestDialog::layout(const Play& play) {
             y += float((int(items.size()) + across - 1) / across) * (kIcon + kCellGap);
         };
         std::vector<std::pair<int, const sim::QuestItem*>> paid, fits;
-        const bool first =
-            sim::questFirst(row, int(realm.hero().kin), realm.quest(quest_).completions);
         for (int p = 0; p < row.paidCount; ++p) {
-            if (sim::questPays(row.paid[p], int(realm.hero().kin), first) &&
+            if (sim::questPays(row.paid[p], paidKin, first) &&
                 tables.itemNamed(row.paid[p].item) >= 0) {
                 paid.push_back({-1, &row.paid[p]});
             }
@@ -567,6 +590,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         quest_ = quest;
         reading_ = reading;
         chosen_ = -1;
+        path_ = sim::QuestPath::Melee;
         over_ = pressing_ = -1;
         scroll_ = 0.0f;
         lift_[0] = lift_[1] = lift_[2] = 0.0f;
@@ -686,6 +710,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         const int cell = cellAt(ux, uy);
         if (cell >= 0 && mode_ == Mode::HandIn) over = 10 + cell;
         if (const int entry = entryAt(ux, uy); entry >= 0) over = 20 + entry;
+        if (const int path = pathAt(ux, uy); path >= 0 && !reading_) over = 30 + path;
     }
     over_ = over;
     for (int which = 0; which < kButtons; ++which) {
@@ -707,6 +732,10 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             if (pressing_ == 0 && !primaryOff && !reading_) primary = true;
             else if (pressing_ == 1 && listed_) back = true;
             else if (pressing_ == 1 || pressing_ == 2) cancel = true;
+            else if (pressing_ >= 30) {
+                path_ = sim::QuestPath(pressing_ - 30);
+                chose = true;
+            }
             else if (pressing_ >= 20) pick = entries_[size_t(pressing_ - 20)].quest;
             else if (pressing_ == 3) turn = -1;
             else if (pressing_ == 4) turn = 1;
@@ -742,6 +771,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         else if (primary && mode_ == Mode::HandIn) {
             out->complete = true;
             out->choice = owed ? chosen_ : -1;
+            out->path = path_;
         }
     }
     // The standing list again, now the hover, the choice and the scroll are this frame's.
@@ -755,6 +785,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     now.quest = quest_;
     now.mode = int(mode_);
     now.chosen = chosen_;
+    now.path = int(path_);
     now.over = over_;
     now.pressing = pressing_;
     for (int i = 0; i < kButtons; ++i) now.lift[i] = int(lift_[i] * 32.0f);
@@ -1236,6 +1267,20 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                                 " experience");
             controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
                              panel::commas(row.zen) + " Zen");
+        }
+        // The Magic Gladiator's path, the chosen one the primary's red.
+        if (paths_) {
+            const char* const kWords[2] = {"Melee", "Magic"};
+            for (int i = 0; i < 2; ++i) {
+                const Box at{std::round(sx(pathBox_[i].x)), std::round(by(pathBox_[i].y)),
+                             std::round(pathBox_[i].w * u), std::round(pathBox_[i].h * u)};
+                controls::button(body_, at, kWords[i],
+                                 int(path_) == i ? controls::Kind::Primary
+                                                 : controls::Kind::Secondary,
+                                 {over_ == 30 + i ? 1.0f : 0.0f,
+                                  pressing_ == 30 + i && over_ == 30 + i, reading_},
+                                 u);
+            }
         }
         // The choice's line stands over the first of its cells, under the paid grid.
         for (const Cell& one : cells_) {

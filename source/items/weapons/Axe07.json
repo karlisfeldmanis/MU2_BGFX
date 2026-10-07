@@ -31,9 +31,10 @@
     },
     "classes": [
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are 0, 1, 1 - the Dark Knight and the Elf. MuWeapons.cs carries PlayerClasses.Knight | PlayerClasses.Elf."
+    "classes_from": "The last three ints of the call are 0, 1, 1 - the Dark Knight and the Elf. MuWeapons.cs carries PlayerClasses.Knight | PlayerClasses.Elf. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md)."
   },
   "stance": "two_hand_sword",
   "stance_from": "MuWeapons.cs: WeaponStance.TwoHandSword, TwoHanded: true. Actions 5 and 18 on a player. A monster ignores this - the Bull Fighter's swing is its own MONSTER01_ATTACK1 - and the stance is here for the day a Knight picks one up.",

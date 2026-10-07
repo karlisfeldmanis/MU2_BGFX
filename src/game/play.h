@@ -286,7 +286,7 @@ public:
     // A quest giver's dialog (sim/quests.h): accept, hand in with a choice, walk away. The wall
     // clock a repeating quest waits on is handed to the realm each frame (Realm::setWallClock).
     bool acceptQuest(int quest);
-    bool completeQuest(int quest, int choice);
+    bool completeQuest(int quest, int choice, sim::QuestPath path = sim::QuestPath::Melee);
     void closeQuest() { realm_.closeQuest(); }
     // The travel list (M, game/ui/travel.h): the realm checks the row and takes the Zen, and
     // the map change is the mode's, as a gate's is (`takeTravel`, app/modes/play_mode.cpp).

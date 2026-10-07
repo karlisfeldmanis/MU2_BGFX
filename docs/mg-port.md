@@ -56,6 +56,16 @@ soul master spells, ... only DK defense skill not DW soul barrier"):**
 - not Rageful Blow or Death Stab, which are Season skills that stay the knight's here.
 Power Slash (56) and Spiral Slash (57) are Season skills and are not in 0.95d.
 
+**Defense and Soul Barrier (the user, 2026-10-07: "MG can use shield skill, and also can use Soul
+barrier, but only 1 DEF aura is usable at same time"):** both are his, overriding the list above;
+casting one ends the other on him.
+
+**Quest rewards (the user, 2026-10-07):** born in Lorencia, he is native wherever the knight or the
+wizard is (`sim::questNative`), and where a giver pays the knight one thing and the wizard another
+he chooses Melee or Magic in the dialog (`sim::QuestPath`, `questPaidKin`). A Legendary rune he may
+not set comes as its weaker kin (`sim::gladiatorRune`: Arcane Echo as Faint Echo, Pyroblaster as
+Scorch, Whirlwind as Gust; ours).
+
 **Gear:** the weapon rows mark him on both sides (Weapons.cs:301-304): any wizard staff or knight
 weapon, plus his own blades. In MU he wears no helm; his Storm Crow set has none. Storm Crow was
 skipped for the knight (the user, 2026-10-06), so MG has no set of his own here yet.

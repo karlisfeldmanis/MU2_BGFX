@@ -28,7 +28,8 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
     "skill": 19
   },

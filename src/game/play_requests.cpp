@@ -438,9 +438,9 @@ bool Play::travel(int index) {
     return paid;
 }
 
-bool Play::completeQuest(int quest, int choice) {
+bool Play::completeQuest(int quest, int choice, sim::QuestPath path) {
     const size_t before = realm_.happenings().size();
-    const bool paid = realm_.completeQuest(quest, choice);
+    const bool paid = realm_.completeQuest(quest, choice, path);
     // The experience is paid here, between ticks, and the next step clears what the realm said
     // before update() reads it -- so each level the quest carried is taken off its word now.
     // Owed on no kill: the first goes up in the frame the window closes, the rest after it.

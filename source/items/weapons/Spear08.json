@@ -32,7 +32,8 @@
     },
     "classes": [
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
     "skill": 22,
     "skill_note": "The skillNumber of the call. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks."

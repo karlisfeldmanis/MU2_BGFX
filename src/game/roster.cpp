@@ -217,8 +217,8 @@ const char* cradleWeapon(sim::Kin kin) {
         case sim::Kin::DarkWizard: return "Staff01";  // the Skull Staff: ours, see roster.h
         case sim::Kin::FairyElf: return "Bow01";
         case sim::Kin::DarkKnight: return "Axe01";
-        // Nothing yet: his starting kit is the port's own step (docs/mg-port.md).
-        case sim::Kin::MagicGladiator: return "";
+        // The Short Sword (the user, 2026-10-07: 'mg will start with short sword').
+        case sim::Kin::MagicGladiator: return "Sword02";
     }
     return "";
 }

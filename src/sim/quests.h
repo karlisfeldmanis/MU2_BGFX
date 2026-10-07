@@ -20,6 +20,8 @@
 
 #include <cstdint>
 
+#include "sim/rules.h"
+
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
@@ -139,7 +141,40 @@ struct QuestRow {
     int choiceCount = 0;
 };
 
-inline bool questNative(const QuestRow& row, int kin) { return (row.natives >> kin) & 1u; }
+// The Magic Gladiator is native wherever the knight or the wizard is, on a quest open to
+// strangers: born in Lorencia, Marlon's is his (the user, 2026-10-07: 'mg start in lorencia, that
+// means he will do lorencia quest'). Not a class change's treasure, whose row is one class's alone.
+inline bool questNative(const QuestRow& row, int kin) {
+    if ((row.natives >> kin) & 1u) return true;
+    constexpr uint8_t kMeleeOrMagic =
+        uint8_t((1u << int(Kin::DarkKnight)) | (1u << int(Kin::DarkWizard)));
+    return kin == int(Kin::MagicGladiator) && row.strangers && (row.natives & kMeleeOrMagic) != 0;
+}
+
+// **The Magic Gladiator's path** (the user, 2026-10-07: 'MG can choose between melee & magic'):
+// where a giver pays the knight one thing and the wizard another, he chooses whose -- Melee the
+// knight's, Magic the wizard's -- and is paid that class's things. Ours.
+enum class QuestPath : uint8_t { Melee = 0, Magic = 1 };
+// Whether this hand-in pays the knight and the wizard things of their own, so he has to choose.
+inline bool questPathPays(const QuestRow& row, QuestPath path, bool first) {
+    const int kin = int(path == QuestPath::Magic ? Kin::DarkWizard : Kin::DarkKnight);
+    for (int i = 0; i < row.paidCount; ++i) {
+        if (row.paid[i].kin == kin && questPays(row.paid[i], kin, first)) return true;
+    }
+    return false;
+}
+inline bool questOffersPaths(const QuestRow& row, bool first) {
+    return questPathPays(row, QuestPath::Melee, first) && questPathPays(row, QuestPath::Magic, first);
+}
+// The class whose things this hero is paid: his own, or for the Magic Gladiator his path's --
+// whichever one the giver pays, when he pays only one of the two.
+inline int questPaidKin(const QuestRow& row, int kin, bool first, QuestPath path) {
+    if (kin != int(Kin::MagicGladiator)) return kin;
+    if (!questOffersPaths(row, first)) {
+        path = questPathPays(row, QuestPath::Magic, first) ? QuestPath::Magic : QuestPath::Melee;
+    }
+    return int(path == QuestPath::Magic ? Kin::DarkWizard : Kin::DarkKnight);
+}
 // Who takes it back: its receiver, or the giver himself.
 inline int32_t questReceiver(const QuestRow& row) { return row.receiver ? row.receiver : row.giver; }
 inline const char* questReceiverName(const QuestRow& row) {

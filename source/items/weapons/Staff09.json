@@ -29,9 +29,10 @@
       "vitality": 0
     },
     "classes": [
-      "wizard"
+      "wizard",
+      "gladiator"
     ],
-    "classes_from": "The wizard's and the Magic Gladiator's (flags 1, 1); this game has no Gladiator."
+    "classes_from": "The wizard's and the Magic Gladiator's (flags 1, 1); this game has no Gladiator. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md)."
   },
   "stance": "scythe",
   "stance_from": "ZzzCharacter.cpp:389-394: a staff that is TwoHand (width 2) stands PLAYER_STOP_SCYTHE, as the Thunder and Gorgon Staves.",

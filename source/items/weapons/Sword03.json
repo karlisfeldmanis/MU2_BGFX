@@ -30,9 +30,10 @@
     },
     "classes": [
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side."
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md)."
   },
   "stance": "sword",
   "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. Actions 4 and 17, the family the Kris, the Short Sword and the Hand Axe already walk in. A one-handed blade leaves the shield hand free, which is the whole point of it on a counter that is mostly shields.",

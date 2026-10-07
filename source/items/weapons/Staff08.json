@@ -27,7 +27,8 @@
       "vitality": 0
     },
     "classes": [
-      "wizard"
+      "wizard",
+      "gladiator"
     ],
     "skill": 0
   },

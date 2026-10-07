@@ -1085,7 +1085,8 @@ public:
     bool acceptQuest(int index);
     // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
     // him), and room in the bag for all of it before anything is given. Pays and rests it.
-    bool completeQuest(int index, int choice);
+    // `path`: the Magic Gladiator's, melee or magic (sim::questPaidKin); nobody else's.
+    bool completeQuest(int index, int choice, QuestPath path = QuestPath::Melee);
     // Whether he is his class's second, Sevina's treasure handed in (sim::promoted).
     bool promoted() const { return bodies_[0].second; }
     // Whether a kill on this tile may leave a class's treasure: the Lost Tower's last floor, or

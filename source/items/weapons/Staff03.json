@@ -31,9 +31,10 @@
       "vitality": 0
     },
     "classes": [
-      "wizard"
+      "wizard",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, on all four."
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, on all four. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md)."
   },
   "stance": "sword",
   "stance_from": "OURS, not 0.75: MuWeapons.cs has it WeaponStance.Scythe, TwoHanded: true, and this one is held one-handed by choice (2026-09-28). The mesh is 196 units long, inside the one-handed swords' reach (Sword03 is 171) and well short of the spears (230-343), so it reads as a one-handed staff. Width cannot object - OpenMU never tests width on group 5 - and the stance enum says a one-handed staff takes Sword: 'a one-handed sword, mace, or a one-handed staff'. Actions 4 and 17, and the shield hand is free, as on the Skull Staff. The Thunder Staff (288, a spear's length) stays two-handed.",

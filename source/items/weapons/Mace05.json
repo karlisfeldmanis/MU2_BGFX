@@ -28,7 +28,8 @@
     "classes": [
       "wizard",
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
     "skill": 19
   },

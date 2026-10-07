@@ -31,9 +31,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are the wizard, knight and elf flags - 0, 1, 0, the Dark Knight alone. MuWeapons.cs carries the same from the client's side: PlayerClasses.Knight.",
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags - 0, 1, 0, the Dark Knight alone. MuWeapons.cs carries the same from the client's side: PlayerClasses.Knight. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md).",
     "skill": 23,
     "skill_note": "The skillNumber of the call, and the reason this asset exists. Twenty-three is Slash, the last of the knight's six, and until this row was built nothing in the project could grant it. There are no skills in this simulation yet, so it is carried for the row to read against the call it came from - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks and docs/skills.md."
   },

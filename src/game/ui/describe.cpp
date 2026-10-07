@@ -779,7 +779,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             const bool everyone = power->classes == sim::kEveryClass;
             std::string classes = everyone ? "every class" : "";
             // A second class's rune names the second: 'Blade Knight' (sim::PowerRow::second).
-            for (size_t i = 0; !everyone && i < 3; ++i) {
+            for (size_t i = 0; !everyone && i < size_t(sim::kKinCount); ++i) {
                 if (!power->takenBy(sim::Kin(i), true)) continue;
                 classes += (classes.empty() ? "" : " / ") +
                            std::string(power->second ? sim::className(int(i), true) : kNames[i]);

@@ -33,9 +33,10 @@
     "classes": [
       "wizard",
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are 1, 1, 1, and MuWeapons.cs carries the same three flags. Seventy strength is the gate and it is the highest in the low pool - ten over the Short Sword's sixty."
+    "classes_from": "The last three ints of the call are 1, 1, 1, and MuWeapons.cs carries the same three flags. Seventy strength is the gate and it is the highest in the low pool - ten over the Short Sword's sixty. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md)."
   },
   "stance": "sword",
   "stance_from": "MuWeapons.cs: WeaponStance.Sword. One-handed axes share the sword's stance rather than having one of their own - actions 4 and 17 - which is the reason docs/items-and-armour.md's table names \"one-handed swords, axes, maces\" on the same row.",

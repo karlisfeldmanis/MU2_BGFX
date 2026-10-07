@@ -653,7 +653,11 @@ constexpr uint8_t classBit(Kin kin) { return uint8_t(1u << unsigned(kin)); }
 constexpr uint8_t kWizardOnly = classBit(Kin::DarkWizard);
 constexpr uint8_t kElfOnly = classBit(Kin::FairyElf);
 constexpr uint8_t kKnightOnly = classBit(Kin::DarkKnight);
-constexpr uint8_t kEveryClass = kWizardOnly | kElfOnly | kKnightOnly;
+// The Magic Gladiator's bit: every class's runes, and the knight's and the wizard's Common and
+// Epic ones beside them, never their Legendaries (the user, 2026-10-06: 'allow him to use same
+// weaker runes from DW and DK'; docs/mg-port.md).
+constexpr uint8_t kGladiatorOnly = classBit(Kin::MagicGladiator);
+constexpr uint8_t kEveryClass = kWizardOnly | kElfOnly | kKnightOnly | kGladiatorOnly;
 constexpr uint8_t kInWeapon = 1;     // either hand's weapon, never a shield
 constexpr uint8_t kInShield = 2;
 constexpr uint8_t kInArmour = 4;     // helm, armour, pants, gloves, boots, and wings (2026-10-05)
@@ -762,6 +766,10 @@ constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty
 HeroPoints statShareOf(Power power);
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
+// A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
+// wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
+// Pyroblaster as Scorch, Whirlwind as Gust. Ours (docs/mg-port.md). Anything else as it is.
+uint8_t gladiatorRune(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);
 // Who may carry sockets: the option-bearing set, weapons, armour and shields, and the rings and

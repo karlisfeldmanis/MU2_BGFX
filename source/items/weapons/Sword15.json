@@ -29,7 +29,8 @@
     },
     "classes": [
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
     "skill": 22
   },

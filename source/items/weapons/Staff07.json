@@ -29,9 +29,10 @@
    "vitality": 0
   },
   "classes": [
-   "wizard"
+   "wizard",
+   "gladiator"
   ],
-  "classes_from": "The last three ints of the call are the wizard, knight and elf flags."
+  "classes_from": "The last three ints of the call are the wizard, knight and elf flags. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md)."
  },
  "stance": "sword",
  "stance_from": "Width 1: a one-handed staff stands as a sword does, as Staff06 and the Divine Staff.",

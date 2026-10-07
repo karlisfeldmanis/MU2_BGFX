@@ -27,11 +27,12 @@
     },
     "classes": [
       "wizard",
-      "knight"
+      "knight",
+      "gladiator"
     ],
     "skill": 19
   },
-  "classes_from": "wizardClass 1, knightClass 1, elfClass 0 in the call: the one axe of 0.75 a Dark Wizard may carry, and the one that asks Agility beside Strength.",
+  "classes_from": "wizardClass 1, knightClass 1, elfClass 0 in the call: the one axe of 0.75 a Dark Wizard may carry, and the one that asks Agility beside Strength. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md).",
   "stance": "two_hand_sword",
   "stance_from": "ZzzCharacter.cpp:356-368: a sword, axe or mace that is TwoHand (width 2) stands PLAYER_STOP_TWO_HAND_SWORD.",
   "two_handed": true,

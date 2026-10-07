@@ -32,9 +32,10 @@
     },
     "requires_note": "Forty agility, and it is the only sword under drop level 20 that asks for any: the Kris, the Short Sword, the Rapier and the Sword of Assassin are all strength alone. A knight who has put everything into strength cannot hold the thing that grants him Lunge, which is MU making the skill cost something other than luck.",
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are the wizard, knight and elf flags - 0, 1, 0, the Dark Knight alone. MuWeapons.cs carries the same from the client's side: PlayerClasses.Knight.",
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags - 0, 1, 0, the Dark Knight alone. MuWeapons.cs carries the same from the client's side: PlayerClasses.Knight. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md).",
     "skill": 20,
     "skill_note": "The skillNumber of the call, and the reason this asset exists. Twenty is Lunge, and in 0.75 a knight does not learn a skill - the item grants it while it is held, and loses it when it is put down. See shared/Beast.cs's Player.Skills, which derives the whole list from the two weapon slots, and docs/skills.md. It is also the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half; see shared/Market's remarks."
   },

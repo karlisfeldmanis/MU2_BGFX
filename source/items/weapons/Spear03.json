@@ -32,7 +32,8 @@
     },
     "classes": [
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ]
   },
   "stance": "spear",

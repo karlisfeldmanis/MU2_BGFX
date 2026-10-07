@@ -324,7 +324,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (result.accept) {
             if (play.acceptQuest(quest)) play.closeQuest();
         } else if (result.complete) {
-            if (play.completeQuest(quest, result.choice)) play.closeQuest();
+            if (play.completeQuest(quest, result.choice, result.path)) play.closeQuest();
         }
     }
     // A Town Portal Scroll read shuts the bag and the character window, silently: ReceiveTeleport's

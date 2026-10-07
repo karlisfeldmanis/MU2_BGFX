@@ -30,9 +30,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side.",
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md).",
     "skill": 21,
     "skill_note": "The skillNumber of the call. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks."
   },

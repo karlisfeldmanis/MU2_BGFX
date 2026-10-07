@@ -397,6 +397,15 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
     return target.refinement <= highest && target.refinement < kRefineCap;
 }
 
+uint8_t gladiatorRune(uint8_t power) {
+    switch (Power(power)) {
+        case Power::Echo: return uint8_t(Power::FaintEcho);
+        case Power::Pyroblast: return uint8_t(Power::Scorch);
+        case Power::Whirlwind: return uint8_t(Power::Gust);
+        default: return power;
+    }
+}
+
 const PowerRow* powerOf(uint8_t power) {
     // Grouped by who sets them and where (sim::PowerRow): the knight's weapon, the elf's, the
     // wizard's, every class's armour and shield, and every class's weapon and jewellery.
@@ -407,11 +416,11 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Stormcall, "Stormcall", "20% on hit: lightning strikes a nearby monster",
          kEveryClass, kInWeapon, Rarity::Epic},
         {Power::Meteor, "Meteor", "15% on hit: a meteor falls on a nearby monster",
-         kKnightOnly, kInWeapon, Rarity::Epic},
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         {Power::Ice, "Ice", "15% on hit: freezes the target to half speed and wounds it",
-         kKnightOnly, kInWeapon, Rarity::Epic},
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         {Power::Poison, "Poison", "15% on hit: poisons the target for 20 s",
-         kKnightOnly, kInWeapon, Rarity::Epic},
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         {Power::Fireburst, "Fireburst", "10% on hit: four fireballs chain from the target",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::FireRing, "Ring of Fire", "10% on hit: a ring of fire bursts around you",
@@ -423,10 +432,10 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Twister, "Twister", "10% on hit: a twister walks out at the target",
          kKnightOnly, kInWeapon, Rarity::Legendary},
         {Power::Burn, "Immolate", "15% on hit: the target burns for 3% of its life a second, 4 s",
-         kKnightOnly, kInWeapon, Rarity::Epic},
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         {Power::Scorch, "Scorch",
-         "Fire spells: 15% to burn the target for 3% of its life a second, 4 s", kWizardOnly,
-         kInWeapon, Rarity::Epic},
+         "Fire spells: 15% to burn the target for 3% of its life a second, 4 s",
+         kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         // The wizard's too since 2026-10-07 (the user: 'we need also for DW'): Soul Barrier
         // with a two-handed staff, an empty hand or anything but a shield.
         {Power::Bulwark, "Bulwark", "Defense and Soul Barrier work without a shield",
@@ -490,14 +499,15 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::GreaterAscendance, "Greater Ascendance", "+30% all stats", kEveryClass,
          kInWeapon, Rarity::Legendary, true},
         // The Common runes (sim/items.h kCinderChance...), each a Legendary's faint copy.
-        {Power::Cinder, "Cinder", "5% on hit: a faint ring of fire around you", kKnightOnly,
-         kInWeapon, Rarity::Common},
-        {Power::Gust, "Gust", "5% on hit: a small twister walks out at the target", kKnightOnly,
-         kInWeapon, Rarity::Common},
+        // The knight's and the wizard's Common and Epic runes are the Magic Gladiator's too.
+        {Power::Cinder, "Cinder", "5% on hit: a faint ring of fire around you",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
+        {Power::Gust, "Gust", "5% on hit: a small twister walks out at the target",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::Chill, "Chill", "8% on hit: freezes the target for 1 s", kElfOnly, kInWeapon,
          Rarity::Common},
-        {Power::FaintEcho, "Faint Echo", "7% chance a spell casts twice", kWizardOnly, kInWeapon,
-         Rarity::Common},
+        {Power::FaintEcho, "Faint Echo", "7% chance a spell casts twice",
+         kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::Spite, "Spite", "+5% damage", kEveryClass, kInWeapon, Rarity::Common},
         {Power::Wisp, "Wisp", "5% when missed: faint spirits strike monsters around you",
          kEveryClass, kInShield | kInJewellery, Rarity::Common},

@@ -27,7 +27,8 @@
     },
     "classes": [
       "wizard",
-      "elf"
+      "elf",
+      "gladiator"
     ],
     "skill": 0
   },

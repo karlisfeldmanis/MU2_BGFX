@@ -27,9 +27,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
-    "classes_from": "The last three ints of the call are the wizard, knight and elf flags: 0, 1, 0. This row once read the call one column late -- damage 13-15, speed 21, durability 100, which is the strength -- and listed no classes, so anybody could hold it.",
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags: 0, 1, 0. This row once read the call one column late -- damage 13-15, speed 21, durability 100, which is the strength -- and listed no classes, so anybody could hold it. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md).",
     "skill": 0,
     "two_handed": false,
     "two_handed_from": "MuWeapons.cs's own row states TwoHanded: false, and width 1 (not 2) in the call above agrees - see Axe01.json's width_note for how OpenMU keeps two-handedness in that column and why the two must not disagree."

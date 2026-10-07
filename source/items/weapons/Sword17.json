@@ -29,9 +29,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
-    "classes_from": "The knight's and the Magic Gladiator's (flags 1, 1); this game has no Gladiator."
+    "classes_from": "The knight's and the Magic Gladiator's (flags 1, 1); this game has no Gladiator. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/mg-port.md)."
   },
   "stance": "sword",
   "stance_from": "Width 1: a one-handed sword, PLAYER_STOP_SWORD (ZzzCharacter.cpp).",

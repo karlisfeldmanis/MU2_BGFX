@@ -7156,6 +7156,66 @@ void testChaosMachine() {
 
 // Lorencia's one quest (sim/quests.h): Marlon offers it, a kill of his own counts, a hand-in pays
 // only what his class may take and only into room, and twelve hours of wall clock bring it back.
+// The Magic Gladiator at Marlon (the user, 2026-10-07): born in Lorencia he is native to it, and
+// he chooses Melee or Magic -- the knight's Falchion and Stormcall, or the wizard's Serpent Staff
+// and Arcane Echo as the Faint Echo he may set (sim::gladiatorRune).
+void testGladiatorPath(const content::Tables& tables) {
+    const int quest = sim::questOf(229);
+    const sim::QuestRow& row = sim::questAt(quest);
+    const int mg = int(sim::Kin::MagicGladiator);
+    check(sim::questNative(row, mg), "the gladiator is Marlon's native");
+    check(!sim::questNative(sim::questAt(sim::questOf(257)), mg), "and not Peia's, the elves'");
+    check(sim::questOffersPaths(row, true), "Marlon pays the knight and the wizard their own");
+    checkEqual(sim::questPaidKin(row, mg, true, sim::QuestPath::Magic), int(sim::Kin::DarkWizard),
+               "Magic is paid the wizard's");
+    checkEqual(sim::questPaidKin(row, int(sim::Kin::DarkKnight), true, sim::QuestPath::Magic),
+               int(sim::Kin::DarkKnight), "and a knight is paid his own whatever the path");
+    int marlon = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 229) marlon = int(i);
+    }
+    for (const sim::QuestPath path : {sim::QuestPath::Melee, sim::QuestPath::Magic}) {
+        sim::Realm realm;
+        realm.raise(&tables, 11, 131, 128, sim::Kin::MagicGladiator, 10);
+        realm.setWallClock(1000000);
+        const auto talk = [&]() {
+            sim::Request ask;
+            ask.kind = sim::Request::Kind::Talk;
+            ask.target = uint32_t(marlon);
+            realm.ask(ask);
+            for (int tick = 0; tick < 4000 && realm.questing() < 0; ++tick) realm.step();
+        };
+        talk();
+        check(realm.acceptQuest(quest), "the gladiator takes Marlon's");
+        sim::HeroRecord record = realm.record();
+        record.quests[quest].state = sim::QuestState::Ready;
+        for (int s = 0; s < sim::kQuestSteps; ++s) {
+            record.quests[quest].counts[s] = uint16_t(realm.questGoal(quest, s));
+        }
+        realm.restore(record);
+        realm.closeQuest();
+        talk();
+        check(realm.completeQuest(quest, -1, path), "and hands it in");
+        const int32_t sword = tables.itemNamed("Sword08"), staff = tables.itemNamed("Staff03");
+        const int32_t rune = tables.itemNamed("Jewel22");
+        int swords = 0, staves = 0;
+        uint8_t power = 0;
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm.satchel()[slot];
+            swords += one.item == sword ? 1 : 0;
+            staves += one.item == staff ? 1 : 0;
+            if (one.item == rune) power = one.powers[0];
+        }
+        if (path == sim::QuestPath::Melee) {
+            check(swords == 1 && staves == 0, "Melee: the Falchion, not the staff");
+            checkEqual(int(power), int(sim::Power::Stormcall), "and Stormcall");
+        } else {
+            check(swords == 0 && staves == 1, "Magic: the Serpent Staff, not the Falchion");
+            checkEqual(int(power), int(sim::Power::FaintEcho), "and Arcane Echo as Faint Echo");
+        }
+    }
+}
+
 void testQuests(const content::Tables& tables) {
     sim::Realm realm;
     check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkKnight, 60), "a quest realm raises");
@@ -10307,6 +10367,7 @@ int main() {
     testIcarusGates();
     testTraps();
     testQuests(tables);
+    testGladiatorPath(tables);
     testDungeonRunes(tables);
     testElementRunes(tables);
     testGroupRunes(tables);

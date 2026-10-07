@@ -47,6 +47,8 @@ public:
         bool accept = false;
         bool complete = false;
         int choice = -1;  // with `complete`: the quest row's choice index, or -1 for none owed
+        // With `complete`: the Magic Gladiator's path, melee or magic (sim::QuestPath).
+        sim::QuestPath path = sim::QuestPath::Melee;
         bool picked = false;  // a reward cell was chosen or unchosen this frame
         int turn = 0;         // the journal's arrows this frame: -1 the quest before, +1 the next
         bool enter = false;   // kGate's Enter: into Blood Castle `castle`
@@ -149,7 +151,14 @@ private:
     bool reading_ = false;
     Mode mode_ = Mode::Offer;
     int chosen_ = -1;
-    // buttons: 0 primary, 1 secondary, 2 close, 3 and 4 the journal's arrows; 10 + a cell
+    // The Magic Gladiator's path on a giver who pays the knight and the wizard their own things:
+    // the Melee and Magic pair over the rewards (over_ 30 and 31), in the body's units.
+    sim::QuestPath path_ = sim::QuestPath::Melee;
+    bool paths_ = false;
+    gfx::Box pathBox_[2] = {};
+    int pathAt(float ux, float uy) const;
+    // buttons: 0 primary, 1 secondary, 2 close, 3 and 4 the journal's arrows; 10 + a cell;
+    // 20 + a list entry; 30 + a path
     int over_ = -1, pressing_ = -1;
     float lift_[kButtons] = {};
     int pageAt_ = 0, pages_ = 0;
@@ -195,7 +204,7 @@ private:
     std::vector<Standing> standing_;
 
     struct Drawn {
-        int quest = -1, mode = 0, chosen = -1, over = -1, pressing = -1;
+        int quest = -1, mode = 0, chosen = -1, over = -1, pressing = -1, path = 0;
         int lift[kButtons] = {};
         int pageAt = 0, pages = 0;
         int turn = 0;

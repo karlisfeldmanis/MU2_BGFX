@@ -264,7 +264,7 @@ void Realm::treasure(const Body& dead) {
     }
 }
 
-bool Realm::completeQuest(int index, int choice) {
+bool Realm::completeQuest(int index, int choice, QuestPath path) {
     if (index < 0 || index >= kQuests || questing_ < 0 || !serving(questing_)) return false;
     const QuestRow& row = questAt(index);
     // Handed in to whoever takes it back: Lirien for Peia's 'The Drowned Song'.
@@ -306,8 +306,9 @@ bool Realm::completeQuest(int index, int choice) {
             return slot >= 0;
         }
         // Gear comes whole at its plus, lucky with its option (kQuestOption) and its empty
-        // sockets; a Rune of Creation with its power.
-        const uint8_t powers[kMostSockets] = {what.power};
+        // sockets; a Rune of Creation with its power, the Magic Gladiator's one he may set.
+        const uint8_t powers[kMostSockets] = {
+            bodies_[0].kin == Kin::MagicGladiator ? gladiatorRune(what.power) : what.power};
         const bool gear = takesOptions(itemRow) || jewellery(itemRow);
         for (int piece = 0; piece < std::max(1, what.count); ++piece) {
             const int slot = give(item, -1, what.plus, fullDurability(itemRow, what.plus), gear,
@@ -321,8 +322,9 @@ bool Realm::completeQuest(int index, int choice) {
     int chosenSlot = -1;
     bool paid = true;
     const bool first = questFirst(row, int(bodies_[0].kin), one.completions);
+    const int paidKin = questPaidKin(row, int(bodies_[0].kin), first, path);
     for (int i = 0; i < row.paidCount && paid; ++i) {
-        if (questPays(row.paid[i], int(bodies_[0].kin), first)) {
+        if (questPays(row.paid[i], paidKin, first)) {
             paid = pay(row.paid[i], nullptr);
         }
     }

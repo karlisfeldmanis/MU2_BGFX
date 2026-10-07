@@ -29,7 +29,8 @@
       "vitality": 0
     },
     "classes": [
-      "wizard"
+      "wizard",
+      "gladiator"
     ]
   },
   "stance": "sword",
