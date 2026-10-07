@@ -174,11 +174,20 @@ The goal: `game/` never sees a `Realm`.
   - `self()`: the hero's private state, meaning stats, bag, money, cooldowns, quests, open
     window, vault and machine.
   - `LocalLink` wraps a `Realm` in process.
-  - Play and every UI file read from a **client-side `View`** that the link fills, and never
-    from the realm.
+  - ~~Play and every UI file read from a **client-side `View`** that the link fills, and never
+    from the realm.~~ **Changed 2026-10-07, in sprint 17: the View is a mirror realm.** The
+    client reads 86 Realm methods, and many are rule queries over its state (`questOffered`,
+    `judged`, `repairCost`, `travelRefusal`, `knows`, the router, the hazards). A separate View
+    would have to rewrite those rules in the client -- §3's "rules that live in the drawing get
+    lost in the split". So the client reads a `const sim::Realm` the link keeps: LocalLink's is
+    the realm itself, RemoteLink's a mirror the server's stream fills, which runs the same const
+    queries. That is MU2's own `Mirror`. The 667 reads stay; what phase 4 decides is which of
+    the realm's state the stream carries.
 - **Figures by id,** not by index.
-- **`layercheck` gets the new arrow:** `game/ui` and `game/fx` may not include `sim/realm.h`.
-  Only the link may. That is the gate that says phase 1 is done.
+- ~~**`layercheck` gets the new arrow:** `game/ui` and `game/fx` may not include `sim/realm.h`.~~
+  **The gate instead: no writable `sim::Realm` in `game/` or `app/`** except at the link
+  (`game/link.h`), Play's `local_` and the scripted hand (`game/headless.cpp`); layercheck
+  refuses any other. That is the gate that says phase 1 is done.
 - **Debug switches become commands** (`Give`, `Zen`, `SetCastle`, …) behind a `gm` flag, so
   they keep working and later run on a server only for a GM account.
 

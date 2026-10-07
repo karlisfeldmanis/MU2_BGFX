@@ -52,6 +52,19 @@ ALLOWED = {
 
 INCLUDE = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.M)
 
+# The client sees the realm and never changes it (docs/server-plan.md phase 1): a writable
+# sim::Realm -- a reference, a pointer or one of its own -- in game/ or app/ is refused, except at
+# the door that holds it (game/link.h), Play's `local_` (what will be the server's, each use a line
+# to move), and the scripted hand (game/headless.cpp), which plays the server's part in a run with
+# no window. Everything else reads `const sim::Realm&`, which is what a mirror will be.
+WRITABLE_REALM = re.compile(r'(?<![\w:])(?:\w+::)*Realm\s*(?:[&*]|\s+[a-z_]\w*\s*[;{=(])')
+
+
+def writable_realm(code):
+    """Whether a line of code names a sim::Realm it could change: one not preceded by `const`."""
+    return any(not code[:m.start()].rstrip().endswith("const") for m in WRITABLE_REALM.finditer(code))
+WRITABLE_ALLOWED = {os.path.join("src", "game", "link.h"), os.path.join("src", "game", "headless.cpp")}
+
 
 def layer_of(path):
     """The layer a file under src/ belongs to, or None for src/main.cpp itself.
@@ -83,6 +96,13 @@ def main():
                 continue
             with open(path, "r", encoding="utf-8", errors="replace") as handle:
                 text = handle.read()
+            rel = os.path.relpath(path, ROOT)
+            if here in ("game", "app") and rel not in WRITABLE_ALLOWED:
+                for number, line in enumerate(text.splitlines(), 1):
+                    code = line.split("//")[0]
+                    if writable_realm(code) and "local_" not in code:
+                        violations.append(f"{rel}:{number}: a writable sim::Realm in the client "
+                                          f"(only link.h, Play's local_ and headless.cpp may hold one)")
             for target in INCLUDE.findall(text):
                 head = target.split("/")[0]
                 if head not in ALLOWED:

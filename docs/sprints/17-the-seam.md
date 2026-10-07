@@ -16,10 +16,11 @@ batch: the realm still sits in the process, behind what will be phase 1's `Local
    `lay`, castle, …) stay direct until phase 6 makes them GM commands: they run once at start.
 4. The `Link` interface (`send`, `step`, `happenings`, `realm`) and `LocalLink` around the realm.
    Done 2026-10-07, below.
-5. The `View`: Play and the twelve UI files read it, not the realm (~670 call sites, by file).
+5. ~~The `View`: Play and the twelve UI files read it, not the realm (~670 call sites).~~ **The
+   mirror and its gate**, done 2026-10-07, below: the client reads a `const sim::Realm` the link
+   keeps, and layercheck refuses a writable one.
 6. Figures matched to bodies by id, not index; then `Realm::despawn` (sprint 16 step 4's rest).
-7. `layercheck`'s new arrow: `game/ui` and `game/fx` may not include `sim/realm.h`. The gate
-   that says phase 1 is done.
+7. ~~`layercheck`'s new arrow~~: folded into 5.
 
 ## 1. The counter, the vault and the machine — done
 
@@ -93,3 +94,21 @@ batch: the realm still sits in the process, behind what will be phase 1's `Local
   the machine's jewel ring comes off the `Refined` said before the answer.
 - sim_test as before (6606, the standing 10). A muted `--talk Lumen` run walks there by an Order
   command and is served.
+
+## 5. The mirror, and the gate — done
+
+**A change to the plan.** The client reads 86 Realm methods (667 calls), and many are not data
+but rule queries over the realm's state: `questOffered`, `judged` (the machine's odds),
+`repairCost`, `travelRefusal`, `knows`, `router`, `hazards`, the quest goals. A View of its own
+would have to answer those with a second copy of the rules in the client, which is the mistake
+server-plan §3 lists first. So the View is a **mirror realm**: the client reads a
+`const sim::Realm&` that the link keeps -- LocalLink's is the realm itself; RemoteLink's will be a
+`sim::Realm` the server's stream fills, running the same const queries. MU2's `Mirror` was this.
+The reads stay where they are; phase 4 decides which of the realm's state the stream carries,
+and the list above is where it starts.
+
+**The gate:** `tools/layercheck.py` refuses a writable `sim::Realm` -- a reference, a pointer or
+one of its own -- anywhere in `game/` or `app/`, except `game/link.h`, Play's `local_` and
+`game/headless.cpp` (the scripted hand, which plays the server's part). It passes today; a probe
+with `mu::sim::Realm&`, `sim::Realm*` and `sim::Realm mine` is refused and both `const` forms are
+not.
