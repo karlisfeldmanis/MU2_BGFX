@@ -196,7 +196,7 @@ void printUsage() {
         "                            --world lorencia when no world is named\n"
         "  --arena-count N           how many of them (default 1)\n"
         "  --arena-learn N           the hero is taught skill N and the arena fights with it\n"
-        "  --arena-undying           a blow that would fell the arena's hero fills his health\n"
+        "  --arena-undying           a blow that would fell the hero fills his health, arena or not\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"

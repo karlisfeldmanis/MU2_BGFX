@@ -276,7 +276,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     if (arena_.learn != 0 && realm_.learn(arena_.learn)) {
         core::logf("arena: the hero is taught skill %d", arena_.learn);
     }
-    if (!arena_.breed.empty() && arena_.undying) {
+    // And a plain run too, to explore a world without dying in it.
+    if (arena_.undying) {
         realm_.undying(true);
         core::logf("arena: the hero is undying");
     }

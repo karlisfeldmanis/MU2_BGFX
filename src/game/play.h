@@ -962,6 +962,8 @@ private:
         bool heard = false;
         // Whether its lightning has left its wisp of smoke on what it struck (ShadowStars::wisp).
         bool smoked = false;
+        // Whether the realm said the blow missed: an Alquamos's ball flies on past (Bolt::miss).
+        bool missed = false;
     };
     std::vector<IceCast> iceCasts_;
     // An Ice Queen's Power Wave (OpenMU's AttackSkill 11): at the same fifteenth reference frame
@@ -974,6 +976,11 @@ private:
     std::vector<IceCast> thunderCasts_;
     // The Devil's swing: its beams from both hands to the hero while `wait` lasts (seconds).
     std::vector<IceCast> laserCasts_;
+    // An Alquamos's Energy Ball (OpenMU's AttackSkill 17): the hero's own bolt (fx/bolt), from its
+    // chest at the release frame, its blow shown when the ball arrives. Ours: MU's skill arm
+    // breaks for every Icarus breed and throws none (ZzzCharacter.cpp:5088-5118); the user,
+    // 2026-10-07: 'we have new cool energy ball which will perfectly fit with that monster'.
+    std::vector<IceCast> ballCasts_;
     // An Alquamos blow's ribbons round its target (kStarRibbons; ShadowStars::ribbon), stepped a
     // reference frame at a time in Play::shade by MoveJoint's BITMAP_FLARE sub 7 arm.
     struct StarRibbon {

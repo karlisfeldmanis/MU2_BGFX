@@ -1364,6 +1364,23 @@ void Play::update(double seconds) {
                         // An Alquamos's blow (kAlquamosFigure): MU's four BITMAP_FLARE sub 7
                         // ribbons round whom it swung at, on the attack's first frame
                         // (ZzzCharacter.cpp:2140-2150), and SOUND_METEORITE01 with them.
+                        // And its Energy Ball (ballCasts_), thrown at the release and the blow
+                        // shown as it lands: the flight at the bolt's own pace on top.
+                        if (const Drawn* star = drawnOf(happening.who);
+                            star && star->starRibbons && happening.whom != 0) {
+                            const float release =
+                                std::min(15.0f / 25.0f, swinger->swinging * Showing::kLandingPoint);
+                            ballCasts_.push_back({happening.who, happening.whom, release});
+                            ballCasts_.back().missed = cue.miss;
+                            if (const Drawn* aim = drawnOf(happening.whom);
+                                aim && swinger->placed && aim->placed && ground_ != nullptr) {
+                                const float dx = aim->crown[0] - swinger->crown[0];
+                                const float dz = aim->crown[2] - swinger->crown[2];
+                                cue.fuse = release + std::sqrt(dx * dx + dz * dz) /
+                                                         (Bolt::kTilesPerSecond *
+                                                          ground_->metresPerTile());
+                            }
+                        }
                         if (const Drawn* star = drawnOf(happening.who);
                             star && star->starRibbons && happening.whom != 0) {
                             for (int r = 0; r < kStarRibbons; ++r) {
@@ -1797,6 +1814,26 @@ void Play::update(double seconds) {
         const int index = sim::skillIndexOf(sim::skill::kLightning);
         if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2]);
     }
+    for (IceCast& cast : ballCasts_) {
+        cast.wait -= float(seconds);
+        if (cast.wait > 0.0f) continue;
+        const Drawn* caster = drawnOf(cast.caster);
+        const Drawn* target = drawnOf(cast.target);
+        if (caster == nullptr || target == nullptr || !caster->placed || !target->placed) continue;
+        // As the hero's own is thrown: the middle of the target, from the caster's chest.
+        const FigureBody* look = target->figure.body();
+        const float tall = look ? look->height * look->scale : 1.0f;
+        const float to[3] = {target->crown[0], target->crown[1] - tall * 0.5f, target->crown[2]};
+        float from[3];
+        const bool atHand = castFrom(*caster, to, from);
+        bolt_.cast(from, to, cast.target, atHand);
+        if (cast.missed) bolt_.miss(cast.target);
+        const int index = sim::skillIndexOf(sim::skill::kEnergyBall);
+        if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2]);
+    }
+    ballCasts_.erase(std::remove_if(ballCasts_.begin(), ballCasts_.end(),
+                                    [](const IceCast& c) { return c.wait <= 0.0f; }),
+                     ballCasts_.end());
     thunderCasts_.erase(std::remove_if(thunderCasts_.begin(), thunderCasts_.end(),
                                        [](const IceCast& c) { return c.wait <= 0.0f; }),
                         thunderCasts_.end());
