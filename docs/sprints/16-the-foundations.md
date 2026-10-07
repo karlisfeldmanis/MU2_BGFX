@@ -128,6 +128,15 @@ four the same character, the originals untouched (checksums).
 
 ### 4. Bodies may join after raise (structure-plan M3), S
 
+**Done 2026-10-07, the half the server needs now.** `Realm::spawn(Body)` gives the body the next
+id, appends it, grows `indexOfId_` and adds a player or raider to `players_`; between ticks only.
+`indexOfId_`'s "no body" is `kNoBody` now, not the vector's size, which would have come to name
+the spawned body. `testSpawn` in sim_test: a monster copied in after 100 ticks is found at once,
+counted, still found 1000 ticks on, and the hero's id still finds the hero (6584 checks, the
+standing 10 failing, determinism holding). **Not done, and why:** `despawn()` and slot ints
+turned to ids. Nothing leaves `bodies_` yet, so every index stays its body's; removal waits for
+the client's figures to be matched by id (server-plan phase 1), which is where it lands.
+
 - **Why definitely:** a second player arriving *is* a body added to a running realm.
   Server-plan phase 2 cannot start without it. Today:
   - `indexOfId_` is built once at the end of `raise()` (`realm.cpp:290`). Ids come from one
@@ -149,6 +158,9 @@ four the same character, the originals untouched (checksums).
   - the fingerprint is unchanged, because the same ids are drawn in the same order.
 
 ### 5. A size ratchet in `checks` (structure-plan M7), S
+
+**Parked 2026-10-07.** The user: *"we purley focus on actual client + server"*. Housekeeping,
+not on the road to the server; picked up when the hubs next bite.
 
 - **Why definitely:** it is the only item that stops the problem growing back.
   - Eight files are over 1,500 lines.

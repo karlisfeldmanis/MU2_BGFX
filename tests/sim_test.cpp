@@ -10493,6 +10493,39 @@ void testCastleGrid(const content::Tables& lorencia) {
     check(town.tables() == &lorencia, "on the shared tables");
 }
 
+// Sprint 16, step 4: a body joins a realm that is already running -- what the next player
+// arriving is (docs/server-plan.md phase 2). Spawned between ticks, found by id at once, alive
+// through a thousand ticks, and the hero's id still finds the hero.
+void testSpawn(const content::Tables& tables) {
+    sim::Realm realm;
+    check(realm.raise(&tables, 3, 140, 125), "a realm to spawn into");
+    for (int i = 0; i < 100; ++i) realm.step();
+    const uint32_t heroId = realm.hero().id;
+    const size_t before = realm.bodies().size();
+    const int monsters = int(realm.counts().monsters);
+    const sim::Body* model = nullptr;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.monster() && one.alive()) {
+            model = &one;
+            break;
+        }
+    }
+    check(model != nullptr, "a living monster to copy");
+    if (!model) return;
+    sim::Body joining = *model;
+    const int32_t kind = joining.kind;
+    const uint32_t id = realm.spawn(std::move(joining));
+    check(id > heroId && realm.bodies().size() == before + 1, "it takes the next id and a new place");
+    const sim::Body* found = realm.find(id);
+    check(found != nullptr && found->id == id && found->kind == kind, "find() has it at once");
+    checkEqual(int(realm.counts().monsters), monsters + 1, "and it is counted");
+    for (int i = 0; i < 1000; ++i) realm.step();
+    check(realm.find(id) != nullptr && realm.find(id)->id == id, "a thousand ticks on, it is still found");
+    check(realm.find(heroId) == &realm.bodies()[0] && realm.hero().id == heroId,
+          "and the hero's id still finds the hero");
+    check(realm.find(id + 1000) == nullptr, "an id nobody holds finds nobody");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -10512,6 +10545,7 @@ int main() {
     testRouter(tables);
     testSpamClicks(tables);
     testDeterminism(tables);
+    testSpawn(tables);
     testInvariants(tables);
     testInvasion(tables);
     testRaid(tables);

@@ -1180,6 +1180,11 @@ public:
         return summonSlot_ >= 0 ? &bodies_[size_t(summonSlot_)] : nullptr;
     }
     const Body* find(uint32_t id) const;
+    // A body joining the raised realm -- the next player, in docs/server-plan.md phase 2 -- given
+    // the next id and found by find() at once. Between ticks only, never inside step(): it grows
+    // `bodies_` under any Body& held there. Bodies never leave yet, so an index stays the body's
+    // own; despawn() waits for the client's figures to go by id (server-plan phase 1).
+    uint32_t spawn(Body body);
     const Body& hero() const { return bodies_[0]; }
     // A skill's clip is still running, so he is locked where he stands: no step, no re-path.
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which
@@ -1477,6 +1482,7 @@ private:
     // a tick, measured at 0.33 ms on Noria against Lorencia's 0.03, which is the whole budget
     // for a map with nothing happening on it.
     std::vector<uint32_t> players_;
+    static constexpr uint32_t kNoBody = 0xFFFFFFFFu;
     std::vector<uint32_t> indexOfId_;
     std::vector<Happening> happenings_;
     std::vector<Step> scratch_;

@@ -24,6 +24,16 @@ const Body* Realm::find(uint32_t id) const {
     return &bodies_[at];
 }
 
+uint32_t Realm::spawn(Body body) {
+    body.id = nextId_++;
+    const uint32_t at = uint32_t(bodies_.size());
+    if (indexOfId_.size() <= body.id) indexOfId_.resize(size_t(body.id) + 1, kNoBody);
+    indexOfId_[body.id] = at;
+    if (body.player || body.raider >= 0) players_.push_back(at);
+    bodies_.push_back(std::move(body));
+    return bodies_.back().id;
+}
+
 Body* Realm::body(uint32_t id) {
     return const_cast<Body*>(static_cast<const Realm*>(this)->find(id));
 }
@@ -289,7 +299,9 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     raiseRaid();
 
     players_.clear();
-    indexOfId_.assign(bodies_.size() + 1, uint32_t(bodies_.size()));
+    // kNoBody, not the vector's size, for an id with no body (an item's): a size would come to
+    // name a real body once spawn() grows the vector past it.
+    indexOfId_.assign(bodies_.size() + 1, kNoBody);
     for (uint32_t i = 0; i < bodies_.size(); ++i) {
         indexOfId_[bodies_[i].id] = i;
         // A raider is fought as he is: what a monster notices and chases (realm_raid.cpp).
