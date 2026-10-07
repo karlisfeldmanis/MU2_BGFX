@@ -1124,7 +1124,7 @@ void testNoMoonwalk(const content::Tables& tables) {
 }
 
 // The Magic Gladiator's skills (docs/mg-port.md): the wizard's spells and the knight's skills but
-// Teleport, Nova, Rageful Blow and Death Stab; Magic Shield his; Defense thrown without a shield.
+// Teleport, Nova, Rageful Blow and Death Stab; Magic Shield his; Defense thrown on a shield.
 void testGladiatorSkills(const content::Tables& tables) {
     const sim::Kin mg = sim::Kin::MagicGladiator;
     const auto may = [&](int32_t number) {
@@ -1156,8 +1156,9 @@ void testGladiatorSkills(const content::Tables& tables) {
     check(!reads("Book06"), "not the Scroll of Teleport");
     check(reads("OrbDefense"), "he reads the Orb of Defense");
     check(!reads("OrbRagefulBlow"), "not the Orb of Rageful Blow");
-    // Defense with nothing on his arm.
-    realm.equip(tables.armNamed("Sword02"), -1, true);
+    // Defense on a shield, as the knight's: every shield is his (MuMain's item.bmd).
+    check(realm.equip(tables.armNamed("Sword02"), tables.armNamed("Shield01"), true),
+          "a sword and a shield in his hands");
     bool thrown = false;
     realm.invoke(sim::skill::kDefense, realm.hero().id);
     for (int tick = 0; tick < 60 && !thrown; ++tick) {
@@ -1166,7 +1167,7 @@ void testGladiatorSkills(const content::Tables& tables) {
             thrown |= one.what == sim::What::Cast && one.who == realm.hero().id;
         }
     }
-    check(thrown, "and throws Defense with no shield");
+    check(thrown, "and throws Defense");
 }
 
 void testCastLock(const content::Tables& tables) {

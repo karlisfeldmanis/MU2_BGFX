@@ -33,8 +33,10 @@
     "classes": [
       "wizard",
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd gives him every shield in RequireClass[3], where OpenMU gives him none (docs/mg-port.md).",
     "classes_from": "The last three ints of the call are 1, 1, 1 - wizard, knight, elf. Seventy strength with no level requirement, which is the same gate the Hand Axe carries."
   },
   "no_arm_note": "There is deliberately no weapon row here, and the code enforces it rather than trusting the asset: Catalogue.Arming returns null for any group above Arm.Staves, so a shield cannot become an Arm however its stats block is written. That is right - a shield has no damage roll and nothing to swing - and it is the case Prize was split from Arm to allow. See the note on Prize in shared/Rows.cs, which argues it from the apple's side.",

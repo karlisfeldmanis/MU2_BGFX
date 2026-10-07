@@ -29,8 +29,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd gives him every shield in RequireClass[3], where OpenMU gives him none (docs/mg-port.md).",
     "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
   },
   "sheets": {

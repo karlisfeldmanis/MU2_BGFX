@@ -11,8 +11,8 @@ VersionSeasonSix for the 2nd wing; MuMain for the drawing.
 
 **Runes (the user, 2026-10-06: "dont make specific runes for MG, but allow him to use same weaker
 runes from DW and DK").** MG gets no rune of his own. He may set:
-- every `kEveryClass` rune, as everyone (Evil Spirit and Wisp go only into jewellery, since he
-  carries no shield);
+- every `kEveryClass` rune, as everyone (Evil Spirit and Wisp in a shield or jewellery, as
+  everyone's: MuMain lets him carry a shield);
 - the knight's and the wizard's **Common and Epic** runes: Cinder, Gust, Faint Echo (Common);
   Meteor, Ice, Poison, Immolate, Scorch (Epic);
 - **no Legendary** of either class: not Hellfire, Twister, Whirlwind, Bulwark, Fireburst, Ring
@@ -89,14 +89,14 @@ damage (`0b00` / `0b10`), the 2nd wings' damage table. The model is MuMain's `MO
    CLASS_DARK's -13 / 6.0 / lift 1.8, CharMakeWin.cpp:107) and his bare body on the pedestal and
    in the world (`--class 3`, `--lobby-create 3`). He is born in Lorencia with empty hands.
 3. **Skills and gear:** done 2026-10-07. Weapons: every wizard's or knight's class-level-1 weapon
-   (Version095d Weapons.cs:300-301), the Short Sword his to start; no shield, no second-class
-   weapon. Skills: `sim::skillFor` -- the wizard's spells and the knight's skills but Teleport,
+   (Version095d Weapons.cs:300-301), the Short Sword his to start; no second-class weapon. Skills: `sim::skillFor` -- the wizard's spells and the knight's skills but Teleport,
    Nova, Rageful Blow and Death Stab (MuMain's item.bmd RequireClass[3] on the scrolls and orbs;
    OpenMU Version095d SkillsInitializer.cs:41-80), Magic Shield (MU's Soul Barrier, renamed) his by
-   the user's word; 13 scrolls and 7 orbs take "gladiator". Defense and Magic Shield go without a
-   shield for him (`sim::armFamily`), and share one guard slot, so one replaces the other.
-   Still to do: his armour (MU: the knight's and the wizard's sets without helms), Heaven and
-   Satan wings.
+   the user's word; 13 scrolls and 7 orbs take "gladiator". Defense and Magic Shield ask a shield
+   as the knight's and the wizard's do, and share one guard slot, so one replaces the other.
+   Armour: every first-class knight's and wizard's piece but helms (OpenMU
+   ArmorInitializerBase.cs:330-336, MuMain's item.bmd); **every shield** (MuMain's RequireClass[3];
+   OpenMU gives him none, MuMain chosen); Heaven and Satan.
 4. **The figure:** done 2026-10-07 for the bare body (the user: 'we need to build MG naked
    skin character default lvl 1'): `source/players/MagicGladiatorBare.json` on HelmClass04,
    ArmorClass04, PantClass04, GloveClass04 and BootClass04 (MODEL_BODY_* + SkinIndex, class 3),

@@ -26,8 +26,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too, as every first-class knight's or wizard's piece but a helm is (OpenMU ArmorInitializerBase.cs:330-336; MuMain's item.bmd RequireClass[3]).",
     "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone.",
     "shelf_note": "On Martin's and Harold's shelf at +3 - the last column of the wandering merchants' stock, see shared/Market.cs - and until this row existed the shelf dropped the line, because a model with no row is a thing the realm cannot price. The five Plate pieces were built for the guards' bodies first and the row came second."
   },

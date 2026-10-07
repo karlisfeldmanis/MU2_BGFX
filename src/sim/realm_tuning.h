@@ -548,11 +548,9 @@ inline Element skillElement(int32_t number) {
 
 // The family on his arm as a self-cast asks it (`SkillRow::suits`): the shield's, and a
 // shield's for a knight or a wizard with a Bulwark in his hands whatever he holds there
-// (sim/items.h), and always for the Magic Gladiator, who carries none: his Defense and Soul
-// Barrier go without one (ours, 2026-10-07).
+// (sim/items.h).
 inline uint32_t armFamily(const Body& hero, const content::Arm* onArm) {
-    const bool shieldless = hero.excel.bulwark || hero.kin == Kin::MagicGladiator;
-    return familyOf(onArm) | (shieldless ? arms::kShield : arms::kNone);
+    return familyOf(onArm) | (hero.excel.bulwark ? arms::kShield : arms::kNone);
 }
 
 // What his element runes multiply a blow of `element` by: 1 for none worn, or for a monster's.

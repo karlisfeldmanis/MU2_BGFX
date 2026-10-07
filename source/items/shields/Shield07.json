@@ -33,8 +33,10 @@
     "classes": [
       "wizard",
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd gives him every shield in RequireClass[3], where OpenMU gives him none (docs/mg-port.md).",
     "classes_from": "The last three ints of the call are 1, 1, 1 - anybody may carry it. Four of the twelve shields are open to all three classes and the rest are the Dark Knight's alone."
   },
   "sheets": {

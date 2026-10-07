@@ -27,8 +27,10 @@
     },
     "classes": [
       "wizard",
-      "elf"
-    ]
+      "elf",
+      "gladiator"
+    ],
+    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd gives him every shield in RequireClass[3], where OpenMU gives him none (docs/mg-port.md)."
   },
   "sheets": {
     "shield11": "shield11.png",

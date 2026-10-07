@@ -47,8 +47,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too (MuMain's item.bmd RequireClass[3]; the user, 2026-10-06: Heaven, Satan and Darkness are his).",
     "damage_increase": 1.12,
     "damage_taken": 0.88,
     "option": "PhysDamage",

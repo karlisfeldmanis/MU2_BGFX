@@ -31,8 +31,10 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too, as every first-class knight's or wizard's piece but a helm is (OpenMU ArmorInitializerBase.cs:330-336; MuMain's item.bmd RequireClass[3]).",
     "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. Eighty strength is the highest gate in the dragon's whole pool, ten over the Hand Axe and the Small Shield."
   },
   "sheets": [
