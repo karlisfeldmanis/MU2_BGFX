@@ -18,7 +18,9 @@ void Realm::applyCommands() {
         // For the player who asked: 0 is the first, as it was the one. An id that is no
         // player's -- one who left, a stale ask -- is dropped unanswered.
         const int asker = one.player == 0 ? 0 : playerOfId(one.player);
-        if (asker < 0) continue;
+        if (asker < 0 || (one.kind != Command::Kind::Join && bodies_[heroes_[size_t(asker)].body].gone)) {
+            continue;
+        }
         For his(*this, size_t(asker));
         int64_t answer = -1;
         using Kind = Command::Kind;
@@ -100,6 +102,12 @@ void Realm::applyCommands() {
             case Kind::EnterCastle: answer = enterCastle(one.a) ? 1 : -1; break;
             case Kind::HandInStaff: answer = handInStaff() ? 1 : -1; break;
             case Kind::ClaimCastle: answer = claimCastle() ? 1 : -1; break;
+            case Kind::Join: {
+                const uint32_t id = join(Kin(one.a), one.b, one.c, one.d);
+                answer = id != 0 ? int64_t(id) : -1;
+                break;
+            }
+            case Kind::Leave: answer = depart(mine().id) ? 1 : -1; break;
         }
         if (one.ticket == 0) continue;
         say(What::Answered, mine(), int32_t(said),

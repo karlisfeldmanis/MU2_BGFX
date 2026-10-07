@@ -19,6 +19,7 @@ every hash agreeing.
    guards, traps and townsfolk per player; happenings with an audience; a two-hero `sim_test` case.
    Done 2026-10-07, below.
 3. Join and leave: a second hero by `Realm::spawn`; leaving marks the body gone, never erases it.
+   Done 2026-10-07, below.
 4. The server: connections to one world share its realm; the client draws other heroes; a client
    joining mid-session replays the world's input log from the Welcome; `net::kVersion` bumped.
 
@@ -106,3 +107,37 @@ every hash agreeing.
 - **Verified:** sim_test 6631 checks, the standing 10 failing. Outside the new test, the output
   is identical line for line to before. `layercheck` and `save_test` pass. A loopback run was
   served by Lumen with 19 of 19 hashes agreeing.
+
+## 3. Join and leave — done
+
+- **Two commands, the server's and never a client's** (`sim/command.h`):
+  - `Join` (a: the Kin, b: the level, c and d: the tile) runs `Realm::join` and answers with
+    the new body's id.
+  - `Leave` (`player`: who leaves) runs `Realm::depart`.
+
+  Applied at a tick's start like every command, so lockstep carries them for free: the server
+  puts them in a tick's inputs, and every mirror opens and shuts the same door on the same tick.
+- **`Realm::depart(id)`** marks the body `gone` and leaves it where it stands, never erased, so
+  every id and every index after it holds for the mirrors. What goes with him:
+  - his summon is dismissed;
+  - his windows shut, and the machine's box goes back into his bag;
+  - his order, his wish, his charge, his echo, his blow and his flights, fires and spirits are
+    spent;
+  - whatever held him forgets him;
+  - he leaves `players_`, so no monster wakes for him (rouse counts the dead, who still stand
+    there, but not the gone).
+
+  It says `Left`. A gone player is not stepped, and a command from him is dropped unanswered.
+  `playersHere()` counts those not gone.
+- **Not done yet:** drops have no owner, so anyone may pick anything up, as before. MU's loot
+  ownership belongs with party loot rules (server-plan phase 7).
+- `testTwoHeroes` grew:
+  - the second leaves by command: Left is said, his body keeps its place and nothing after it
+    moves, he is gone and not alive, his summon is down, nothing holds him, and his orders move
+    nothing;
+  - a Join command lets an elf in with the next id;
+  - the hunt now has the second leave at tick 600 and an elf join at 700, and both runs still
+    hash and count the same.
+- **Verified:** sim_test 6643 checks, the standing 10 failing; outside the two-hero test, the
+  output is identical line for line to before. `layercheck` and `save_test` pass; the client
+  builds with no new warning; a loopback run was served by Lumen with 19 of 19 hashes agreeing.

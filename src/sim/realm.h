@@ -140,6 +140,8 @@ enum class What : uint8_t {
     Answered,  // a Command applied (sim/command.h): a: its Kind, b: what the direct method gave
                // -- a slot, a cell, the Zen paid, a count, 1 for yes -- or -1 for refused, c: its
                // ticket. `who` is the player who asked.
+    Left,      // a player gone from the world (Realm::depart): `who`. His body stays where it was,
+               // gone, so every id and index after it holds; nothing draws it again.
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -298,6 +300,9 @@ struct Body {
     uint32_t id = 0;
     int32_t kind = -1;  // index into Tables::kinds; -1 is the player
     bool player = false;
+    // A player who has left the world (Realm::depart): his body kept, never stepped, sought or
+    // drawn again, so the ids and indices after it hold for every mirror.
+    bool gone = false;
 
     Kin kin = Kin::DarkKnight;  // the player's class; meaningless on a monster
     // And whether he is its second -- Blade Knight, Soul Master, Muse Elf -- Sevina's treasure
@@ -1203,10 +1208,17 @@ public:
     // Player of his own and his own dormant summon body, both through spawn(). His id, or 0 when
     // he has nowhere to stand. Between ticks, or at a tick's start as a command.
     uint32_t join(Kin kin, int level, int column, int row);
+    // **A player leaving**: his body marked gone and left where it stands, never erased -- the
+    // mirror's figures and every index after his stay true. His summon is dismissed, his
+    // windows shut (the machine's box back into his bag), his things in the air spent, and
+    // whatever held him forgets him. Says Left. False for no player, or one already gone.
+    bool depart(uint32_t id);
     // The players, in the order they joined, which is id order; and which of them the queries
     // below answer for -- `hero()`, `satchel()`, the windows, the quests. Inside step() the
     // realm works for each in turn and comes back to this one.
     int playerCount() const { return int(heroes_.size()); }
+    // And those not gone.
+    int playersHere() const;
     const Body& playerAt(int index) const { return bodies_[heroes_[size_t(index)].body]; }
     // False for an id that is no player's.
     bool lookAs(uint32_t id);

@@ -671,6 +671,9 @@ void Play::answered(const sim::Happening& said) {
         case Kind::LetGo:
         case Kind::Close:
         case Kind::GoBack:
+        // The server's, never a client's: the world's door.
+        case Kind::Join:
+        case Kind::Leave:
         case Kind::None: break;
     }
     answers_.push_back({asked.ticket, kind, said.b});

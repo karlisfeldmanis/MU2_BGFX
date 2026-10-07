@@ -66,6 +66,11 @@ struct Command {
         EnterCastle,  // a: the castle
         HandInStaff,
         ClaimCastle,
+        // The world's door (docs/sprints/19-many-heroes.md), sent by the server and never by a
+        // client: a player in (Realm::join; a: the Kin, b: the level, c: column, d: row; the
+        // answer his body id) or out (Realm::depart; `player` is who leaves).
+        Join,
+        Leave,
     };
     // Close's a.
     enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel };

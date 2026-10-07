@@ -10667,6 +10667,12 @@ uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRi
     attack(second, preyB);
     uint64_t hash = 0xcbf29ce484222325ull;
     for (int tick = 0; tick < 1200; ++tick) {
+        // The second leaves mid-hunt and an elf comes in after him: the door is part of the run.
+        if (tick == 600) realm.command({.kind = sim::Command::Kind::Leave, .player = second});
+        if (tick == 700) {
+            realm.command({.kind = sim::Command::Kind::Join, .a = int(sim::Kin::FairyElf), .b = 60,
+                           .c = bColumn, .d = bRow});
+        }
         realm.step();
         for (const sim::Happening& one : realm.happenings()) {
             if (one.what == sim::What::Gained) {
@@ -10685,8 +10691,9 @@ uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRi
         }
         // Each takes up the next monster once his is down.
         if (tick % 40 == 39) {
-            for (int p = 0; p < 2; ++p) {
+            for (int p = 0; p < realm.playerCount(); ++p) {
                 const sim::Body& me = realm.playerAt(p);
+                if (me.gone) continue;
                 const sim::Body* best = nullptr;
                 float gap = 1e30f;
                 for (const sim::Body& one : realm.bodies()) {
@@ -10765,6 +10772,43 @@ void testTwoHeroes(const content::Tables& tables) {
     check(realm.find(second)->experience > secondBefore, "his kill pays him");
     checkEqual((long long)realm.hero().experience, (long long)firstBefore, "and not the first");
 
+    // Leaving and joining are commands, and a body that leaves stays (step 3).
+    const sim::Body* secondBody = realm.find(second);
+    const size_t secondIndex = size_t(secondBody - realm.bodies().data());
+    const size_t count = realm.bodies().size();
+    realm.command({.kind = sim::Command::Kind::Leave, .player = second});
+    realm.step();
+    bool left = false;
+    for (const sim::Happening& one : realm.happenings()) left = left || (one.what == sim::What::Left && one.who == second);
+    check(left, "Left said for him");
+    check(realm.find(second) == &realm.bodies()[secondIndex] && realm.bodies().size() == count,
+          "his body kept where it was, nothing after it moved");
+    check(realm.find(second)->gone && !realm.find(second)->alive(), "gone, and not alive");
+    checkEqual(realm.playersHere(), 1, "one player here");
+    const sim::Body* summon = &realm.bodies()[secondIndex + 1];
+    check(summon->summoner == second && !summon->alive(), "his summon body down");
+    bool held = false;
+    for (const sim::Body& one : realm.bodies()) held = held || one.quarry == second;
+    check(!held, "and nothing holds him");
+    realm.command({.kind = sim::Command::Kind::Order, .player = second,
+                   .a = int(sim::Request::Kind::WalkTo), .b = 150, .c = 130});
+    realm.command({.kind = sim::Command::Kind::Use, .player = second, .ticket = 41, .a = 0});
+    const float goneX = realm.find(second)->x;
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    check(realm.find(second)->x == goneX, "an order from one gone moves nothing");
+    realm.command({.kind = sim::Command::Kind::Join, .ticket = 42, .a = int(sim::Kin::FairyElf),
+                   .b = 5, .c = 141, .d = 126});
+    realm.step();
+    uint32_t third = 0;
+    for (const sim::Happening& one : realm.happenings()) {
+        if (one.what == sim::What::Answered && one.c == 42 && one.b > 0) third = uint32_t(one.b);
+    }
+    check(third > second && realm.find(third) != nullptr && realm.find(third)->kin == sim::Kin::FairyElf,
+          "a Join command lets a third in, with the next id");
+    check(realm.find(second) == &realm.bodies()[secondIndex], "and the one gone keeps his place");
+    checkEqual(realm.playersHere(), 2, "two players here again");
+    check(realm.hero().id == first, "the queries still on the first");
+
     // Two heroes hunting, run twice: the same.
     uint32_t ids[2] = {}, ids2[2] = {};
     int right = 0, wrong = 0, struck = 0, right2 = 0, wrong2 = 0, struck2 = 0;
@@ -10775,6 +10819,7 @@ void testTwoHeroes(const content::Tables& tables) {
     check(one != 0 && one == two, "two heroes hunting, run twice, say the same");
     check(right > 0 && wrong == 0, "every Gained said to the one it paid");
     check(struck > 0, "and the monsters fight the second as they fight the first");
+    check(right == right2 && struck == struck2 && ids[1] == ids2[1], "and count the same both times");
 }
 
 int main() {

@@ -103,6 +103,60 @@ uint32_t Realm::join(Kin kin, int level, int column, int row) {
     return id;
 }
 
+bool Realm::depart(uint32_t id) {
+    const int at = playerOfId(id);
+    if (at < 0) return false;
+    For him(*this, size_t(at));
+    Body& gone = mine();
+    if (gone.gone) return false;
+    // His summon goes without a fall, and his windows shut as walking away shuts them.
+    if (me().summonSlot >= 0 && bodies_[size_t(me().summonSlot)].alive()) {
+        dismiss(bodies_[size_t(me().summonSlot)]);
+    }
+    closeMachine();
+    me().trading = me().banking = me().mixing = me().gating = me().angeling = me().questing = -1;
+    me().order = Request{};
+    me().pending = Request{};
+    me().wants = skill::kNone;
+    me().echo = Echo{};
+    me().charge = Charge{};
+    for (Flight& one : flights_) {
+        if (one.owner == id) one = Flight{};
+    }
+    for (SpiritBlow& one : spiritBlows_) {
+        if (one.owner == id) one = SpiritBlow{};
+    }
+    for (Fire& one : fires_) {
+        if (one.owner == id) one = Fire{};
+    }
+    dropBlow(gone);
+    gone.route.clear();
+    gone.onStep = 0;
+    gone.walking = false;
+    gone.pushTicks = 0;
+    gone.health = 0;
+    gone.temper = Temper::Dead;
+    gone.gone = true;
+    // Nothing holds him, and no monster wakes for him.
+    for (Body& one : bodies_) {
+        if (one.quarry == id) {
+            one.quarry = 0;
+            one.provoked = false;
+        }
+    }
+    const uint32_t index = indexOfId_[id];
+    players_.erase(std::remove(players_.begin(), players_.end(), index), players_.end());
+    say(What::Left, gone);
+    core::logf("realm: player #%u left, %d still here", id, playersHere());
+    return true;
+}
+
+int Realm::playersHere() const {
+    int here = 0;
+    for (const Player& one : heroes_) here += bodies_[one.body].gone ? 0 : 1;
+    return here;
+}
+
 bool Realm::lookAs(uint32_t id) {
     const int at = playerOfId(id);
     if (at < 0) return false;
@@ -978,7 +1032,7 @@ void Realm::step() {
     // every id came from one monotonic counter.
     for (size_t p = 0; p < heroes_.size(); ++p) {
         me_ = p;
-        heroBefore();
+        if (!mine().gone) heroBefore();
     }
     me_ = 0;
     // What has lain its minute goes, in the order it lies -- a fixed order, since the list is
@@ -995,6 +1049,7 @@ void Realm::step() {
     bool anyAlive = false;
     for (size_t p = 0; p < heroes_.size(); ++p) {
         me_ = p;
+        if (mine().gone) continue;
         // Alive as his half begins: one who falls in it was still there to be caught.
         anyAlive = anyAlive || mine().alive();
         heroAfter();
@@ -1463,6 +1518,9 @@ std::string describe(const Happening& happening, const Realm& realm) {
             std::snprintf(line, sizeof(line), "%6u %s mixed recipe %d at %d%%: %s",
                           happening.tick, who, happening.a, happening.c,
                           happening.b ? "made" : "failed");
+            break;
+        case What::Left:
+            std::snprintf(line, sizeof(line), "%6u %s leaves the world", happening.tick, who);
             break;
         case What::Cracked:
             if (happening.a < 0) {
