@@ -13,7 +13,8 @@
 // realm steps on one 20 Hz deadline: poll, step every world, flush (server-plan §3).
 // **Where he comes into the next world is the server's:** a gate, a Tab trip, a way home or the
 // end of Blood Castle is read off what the realm said, and the Hello that follows is put down
-// there, whatever tile the client asked for (landingOf).
+// there, whatever tile the client asked for (landingOf). And the store keeps which world he is
+// in: a run's first Hello that names another is answered Elsewhere.
 // Each tick goes to everyone in the world -- the wall clock, the rain, the commands applied, each
 // with its player -- and every second its hash, which a mirror that disagrees says.
 //
@@ -63,8 +64,8 @@ constexpr int kKeepEvery = 60 * 20;
 // The characters, by token, on the server's disk.
 server::Store g_store;
 
-// Where a character is due next, by token: set when the realm sends him to another world, taken
-// by the Hello that brings him there.
+// Where a character is due next, by token: set when the realm sends him to another world, and
+// written as where he is when his connection goes (placeOf).
 struct Landing {
     std::string world;
     int column = 0, row = 0;
@@ -198,29 +199,37 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     // His character, when his token names one the store keeps. Anything else is a new
     // character, and a new token.
     sim::Kept kept;
-    const bool carried = asked.token != 0 && g_store.find(asked.token, kept);
+    std::string keptIn;
+    const bool carried = asked.token != 0 && g_store.find(asked.token, kept, keptIn);
     net::Hello said = asked;
     if (carried) {
         one.token = said.token;
         core::logf("%s: his character comes back, level %d with %lld Zen", one.who.c_str(),
                    kept.hero.level, (long long)kept.hero.money);
-        // Sent here by the realm: put down where it sent him, not where the client says. A world
-        // he was not sent to is a way the realm never saw (Go Back!, a scripted trip), and the
-        // Hello's own tile stands until those are the server's too.
-        if (const auto due = g_due.find(one.token); due != g_due.end()) {
-            const Landing landing = due->second;
-            g_due.erase(due);
-            if (landing.world != said.world) {
-                core::logError("%s: due in %s, came to %s; at the tile he asked for", one.who.c_str(),
-                               landing.world.c_str(), said.world.c_str());
-            } else {
-                if (landing.column != said.column || landing.row != said.row) {
-                    core::logf("%s: asked for %d,%d; put down at %d,%d", one.who.c_str(), said.column,
-                               said.row, landing.column, landing.row);
-                }
-                said.column = landing.column;
-                said.row = landing.row;
+        // Where the store has him: the world he was in or was sent to, at its tile (placeOf). A
+        // run's first Hello for another world is told where he is, and comes again there. A
+        // map change to another world is a way the realm never saw (Go Back!, a scripted
+        // trip), and the Hello's own world and tile stand until those are the server's too.
+        if (!keptIn.empty() && keptIn != said.world) {
+            if (!said.arriving) {
+                const net::Elsewhere there{keptIn, kept.hero.column, kept.hero.row};
+                std::vector<uint8_t> out;
+                net::put(out, there);
+                one.socket.send(out);
+                one.socket.flush();
+                core::logf("%s: his character is in %s at %d,%d, not %s: sent there", one.who.c_str(),
+                           keptIn.c_str(), there.column, there.row, said.world.c_str());
+                return false;
             }
+            core::logError("%s: kept in %s, came to %s by a way the server did not see; at the "
+                           "tile he asked for", one.who.c_str(), keptIn.c_str(), said.world.c_str());
+        } else if (!keptIn.empty()) {
+            if (kept.hero.column != said.column || kept.hero.row != said.row) {
+                core::logf("%s: asked for %d,%d; put down at %d,%d", one.who.c_str(), said.column,
+                           said.row, kept.hero.column, kept.hero.row);
+            }
+            said.column = kept.hero.column;
+            said.row = kept.hero.row;
         }
     } else {
         do one.token = seeds(); while (one.token == 0 || g_store.has(one.token));
@@ -417,15 +426,38 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
     }
 }
 
+// Where he is, to be written: this world at the tile he stands on, or the world the realm has
+// sent him to at its tile. Never inside an event: a Blood Castle left mid-run comes back in its
+// town, at the spawn gate, as WebZen logs him in (user.cpp:3147-3150).
+server::Store::Row placeOf(const Session& one) {
+    server::Store::Row row{one.token, one.world->name, one.world->realm->keptOf(one.player)};
+    if (const auto due = g_due.find(one.token); due != g_due.end()) {
+        row.world = due->second.world;
+        row.kept.hero.column = due->second.column;
+        row.kept.hero.row = due->second.row;
+    }
+    const sim::MapRow* map = sim::mapOf(row.world);
+    if (map != nullptr && map->event) {
+        if (const sim::MapRow* town = sim::mapNumbered(map->home)) {
+            row.world = town->world;
+            row.kept.hero.column = town->arrive[0];
+            row.kept.hero.row = town->arrive[1];
+        }
+    }
+    return row;
+}
+
 // A connection gone: his character written under his token, and his player leaves the world at
 // its next tick.
 void part(Session& one) {
     if (one.world == nullptr) return;
     if (one.welcomed) {
-        const sim::Kept kept = one.world->realm->keptOf(one.player);
-        if (g_store.keep(one.token, kept)) {
-            core::logf("%s: his character kept, level %d with %lld Zen", one.who.c_str(),
-                       kept.hero.level, (long long)kept.hero.money);
+        const server::Store::Row row = placeOf(one);
+        g_due.erase(one.token);
+        if (g_store.keep(row)) {
+            core::logf("%s: his character kept in %s at %d,%d, level %d with %lld Zen", one.who.c_str(),
+                       row.world.c_str(), row.kept.hero.column, row.kept.hero.row,
+                       row.kept.hero.level, (long long)row.kept.hero.money);
         }
         one.world->queued.push_back({.kind = sim::Command::Kind::Leave, .player = one.player});
     } else if (one.joining != 0) {
@@ -435,11 +467,9 @@ void part(Session& one) {
 
 // Everyone in a world, written in one go: every minute, and as the server stops.
 void keepEveryone(std::vector<std::unique_ptr<Session>>& sessions) {
-    std::vector<std::pair<uint64_t, sim::Kept>> all;
+    std::vector<server::Store::Row> all;
     for (auto& one : sessions) {
-        if (one->world != nullptr && one->welcomed) {
-            all.emplace_back(one->token, one->world->realm->keptOf(one->player));
-        }
+        if (one->world != nullptr && one->welcomed) all.push_back(placeOf(*one));
     }
     if (!all.empty() && g_store.keep(all)) core::logf("characters: %zu kept", all.size());
 }

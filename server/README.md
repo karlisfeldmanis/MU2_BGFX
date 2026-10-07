@@ -44,12 +44,13 @@ the server steps (docs/sprints/18-the-wire.md). **Connections to the same world 
 
 Two players in Lorencia see each other. A map change keeps the character: the server holds it
 under the client's token as he leaves one world and brings it back whole in the next
-(docs/sprints/20-the-world-host.md, protocol 3). **Characters live on the box's disk**, in
+(docs/sprints/20-the-world-host.md, protocol 4). **Characters live on the box's disk**, in
 `/var/lib/mu2/characters.db` (SQLite, `server/src/store.h`), written as a player leaves a world,
 every minute and when the service stops, so a restart or a redeploy keeps them. The client keeps
 its token beside the character's save (`saves/characters/Name.server`) and comes back with it
-next run. `sqlite3 /var/lib/private/mu2/characters.db "select printf('%016x',token), kin, level,
-money, datetime(saved,'unixepoch') from characters"` lists them. `server/deploy.sh` puts a new
+next run, **in the world he left**: a run that opens another is told where he is and opens
+that one. `sqlite3 /var/lib/private/mu2/characters.db "select printf('%016x',token), kin, level,
+money, world, datetime(saved,'unixepoch') from characters"` lists them. `server/deploy.sh` puts a new
 build there and restarts the service.
 
 ## Building there

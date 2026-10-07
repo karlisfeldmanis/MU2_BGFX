@@ -264,6 +264,15 @@ void put(std::vector<uint8_t>& out, const Hello& one) {
         o.str(one.weapon);
         o.str(one.shield);
         o.u64(one.token);
+        o.u8(one.arriving ? 1 : 0);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const Elsewhere& one) {
+    frame(out, Kind::Elsewhere, [&](Out& o) {
+        o.str(one.world);
+        o.i32(one.column);
+        o.i32(one.row);
     });
 }
 
@@ -320,7 +329,7 @@ int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body) {
     if (length < 1 || length > kMostFrame) return -1;
     if (buffer.size() < 4 + size_t(length)) return 0;
     const uint8_t k = buffer[4];
-    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Hash)) return -1;
+    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Elsewhere)) return -1;
     kind = Kind(k);
     body.assign(buffer.begin() + 5, buffer.begin() + 4 + long(length));
     buffer.erase(buffer.begin(), buffer.begin() + 4 + long(length));
@@ -338,6 +347,15 @@ bool parse(const std::vector<uint8_t>& body, Hello& out) {
     out.weapon = in.str();
     out.shield = in.str();
     out.token = in.u64();
+    out.arriving = in.u8() != 0;
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Elsewhere& out) {
+    In in{body};
+    out.world = in.str();
+    out.column = in.i32();
+    out.row = in.i32();
     return in.done();
 }
 

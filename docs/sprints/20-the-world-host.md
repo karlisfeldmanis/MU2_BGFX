@@ -156,11 +156,55 @@ on the server was lost at every gate, trip and death sent home.**
   - Not run end to end: the Tab trip, the death and portal home and Blood Castle's send-out.
     They are read by the same code as the gate, from the happenings the client already acts on.
 
+## 4. He comes back in the world he left — done 2026-10-07
+
+- **The store keeps his world** (a `world` column, added to a file from step 2 by `ALTER TABLE`;
+  its old rows are empty, "wherever his Hello says"). The tile is the Kept's own column and row.
+  - **What is written** (`placeOf`): the world he stands in at his tile; once the realm has sent
+    him on (step 3's `landingOf`), the world and tile he is due in. Never inside an event: a
+    Blood Castle left mid-run is written in Devias at its spawn gate, as WebZen logs him in and
+    as the client's own save always did.
+  - `kLayout`, the Kept bytes' shape, is now its own number (3), not the protocol's, so a
+    protocol bump that leaves `putKept` alone does not orphan every row.
+  - Step 3's in-memory hand-off is gone. A map change's Hello reads the world and tile that the
+    store was given as the old connection went.
+- **Protocol 4** (`net/wire.*`):
+  - **`Hello::arriving`:** 1 when the run has played on this server already and comes by a map
+    change, 0 for the run's first world.
+  - **`Elsewhere{world, column, row}`:** the server's answer, instead of a Welcome, to a first
+    world that is not his. Then the line is shut.
+- **The server** (`hello`), for a character the store has:
+  - Hello for his world: put down at the stored tile. That is where he stood when he quit, or
+    where a gate or a trip sent him.
+  - First world another one: answered Elsewhere.
+  - Arriving in another one: let in at the Hello's tile, with a line in the log. Those are the
+    ways between worlds the realm never sees: Go Back! and `--travel-at`.
+- **The client:** `RemoteLink::join` reads an Elsewhere, and reads frames that came before a
+  close (the old loop gave up on the close first). `Play::elsewhere()` keeps it, and PlayMode
+  travels there as a map change does. The world that loaded first stands one frame with no
+  realm, the cost of a first world that was wrong. `Args::serverArriving` remembers, across the
+  rebuild, that the run has joined once.
+- **Fixed on the way:** going back to the character screen and choosing another character kept
+  the last one's token in `Args`. The server would have brought back the first character, and
+  the second's file would have taken his token. Entering from the lobby now clears it.
+- **Verified on loopback:**
+  - **Back where he left.** A level-40 knight went down Lorencia's stair and quit; the store
+    said "kept in dungeon at 108,247". The server restarted, and a new run asked for Lorencia at
+    level 1. It was told "has him in dungeon at 108,247, not lorencia", opened the Dungeon, and
+    played there as #1, level 40, with 7 of 7 hashes agreeing.
+  - A run that opens the Dungeon he is in comes in at the stored tile.
+  - `--travel-at` from the Dungeon to the Lost Tower was let in at its own tile, and the log
+    said it was a way the server did not see; 2 and 7 hashes agreed.
+  - The lying client, on protocol 4, was still put down at the server's tile (107,247 for
+    50,50).
+  - Step 2's file opened with its two rows, now with an empty world.
+  - sim_test's output is identical to step 3's; `layercheck` and `save_test` pass.
+
 ## Next
 
-- **Which world he is in is not stored.** A new run of the game opens the world the local save
-  names, and he comes into it. The server should keep his world and tile with him, and answer
-  a Hello for another world by sending him to his. That means a new answer on the wire, and a
-  client that rebuilds on it.
-- Go Back! across maps and `--travel-at` are still the client's own; Go Back! becomes a realm
-  command, so the server sees it.
+- **Go Back! across maps** is still the client's own, and so is the tile it lands on. It becomes
+  a realm command whose landing the server reads as it does a gate's, and `arriving` goes. Then
+  every way between worlds is the server's, and a Hello names nothing but who he is.
+- That is phase 3's last item. Its clock (sprint 18's mirror clock) and its population (every
+  nest raised, sprint 19) are already done. After it, the plan's phase 5 (feel) or phase 6
+  (accounts) is the user's choice.

@@ -18,6 +18,7 @@
 
 #include "content/ground.h"
 #include "content/tables.h"
+#include "net/wire.h"
 #include "game/fx/aura.h"
 #include "game/fx/set_shine.h"
 #include "game/fx/warp.h"
@@ -206,12 +207,17 @@ public:
 
     const sim::Realm& realm() const { return realm_; }
     // Play on a server (docs/sprints/18-the-wire.md): set BEFORE open(), which then joins it and
-    // raises the mirror from its Welcome. `--server host:port`.
-    void useServer(const std::string& host, int port, uint64_t token = 0) {
+    // raises the mirror from its Welcome. `--server host:port`. `arriving`: come by a map change
+    // of this run (net::Hello::arriving).
+    void useServer(const std::string& host, int port, uint64_t token = 0, bool arriving = false) {
         serverHost_ = host;
         serverPort_ = port;
         serverToken_ = token;
+        serverArriving_ = arriving;
     }
+    // When open() failed because the server has his character in another world: which, and the
+    // tile, for the mode to open instead (net::Elsewhere).
+    const net::Elsewhere* elsewhere() const { return elsewhere_.world.empty() ? nullptr : &elsewhere_; }
     // His character's token from the server's Welcome, for the next world's Hello; 0 off a server.
     uint64_t serverToken() const { return serverToken_; }
     bool remote() const { return link_->remote(); }
@@ -1177,6 +1183,8 @@ private:
     const sim::Realm& realm_ = realmHeld_;
     std::string serverHost_;
     uint64_t serverToken_ = 0;
+    bool serverArriving_ = false;
+    net::Elsewhere elsewhere_;
     std::unique_ptr<sim::Kept> keptFirst_;  // the Welcome's, for the raise (Play::open)
     int serverPort_ = 0;
     sim::Findings findings_;

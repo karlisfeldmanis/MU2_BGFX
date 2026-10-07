@@ -309,12 +309,24 @@ bool PlayMode::open(Context& ctx) {
                 if (args.serverToken == 0 && !savePath_.empty() && !args.fresh) {
                     args.serverToken = game::loadServerToken(savePath_, server);
                 }
-                world_.played().useServer(host, port, args.serverToken);
+                world_.played().useServer(host, port, args.serverToken, args.serverArriving);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
+            // His character is in another world (net::Elsewhere): that one, opened as a map
+            // change opens the next, at the tile the server keeps him on. This world, already
+            // loaded, stands for a frame with no realm in it.
+            if (const net::Elsewhere* there = world_.played().elsewhere()) {
+                if (game::mapOf(there->world) != nullptr) {
+                    travel(ctx, there->world, there->column, there->row, 0.0f, true);
+                } else {
+                    core::logError("server: he is in %s, a world this game has no row for",
+                                   there->world.c_str());
+                }
+            }
             // The server's token for him, for the next world's Hello and the next run.
             if (world_.played().remote()) {
+                args.serverArriving = true;
                 args.serverToken = world_.played().serverToken();
                 if (!savePath_.empty() && args.serverToken != 0) {
                     game::keepServerToken(savePath_, server, args.serverToken);

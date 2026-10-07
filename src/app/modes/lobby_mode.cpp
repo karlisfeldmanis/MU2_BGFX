@@ -287,6 +287,9 @@ void LobbyMode::enter(Context& ctx, int slot) {
     // StartGame(): the pick's save, its world and its class go to the world as the run's own
     // arguments. PlayMode reads the save and makes a fresh one as a new character is made.
     args.savePath = who->path;
+    // A server's word is for one character: the one chosen reads his own from beside his save.
+    args.serverToken = 0;
+    args.serverArriving = false;
     args.world = who->world.empty() ? std::string("lorencia") : who->world;
     args.play = true;
     args.fresh = false;

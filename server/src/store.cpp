@@ -11,9 +11,10 @@ namespace mu::server {
 
 namespace {
 
-// The shape a character's bytes were written in: the protocol's, since they are the wire's own
-// (net::putKept). A row of another shape is not read as this one.
-constexpr int kLayout = int(net::kVersion);
+// The shape a character's bytes were written in (net::putKept), first laid out by protocol 3.
+// Bumped when putKept changes, with a reader for the old shape or a migration; a row of
+// another shape is not read as this one.
+constexpr int kLayout = 3;
 
 constexpr const char* kSchema =
     "CREATE TABLE IF NOT EXISTS characters ("
@@ -23,7 +24,8 @@ constexpr const char* kSchema =
     " kin INTEGER NOT NULL,"
     " level INTEGER NOT NULL,"
     " money INTEGER NOT NULL,"
-    " saved INTEGER NOT NULL)";  // unix seconds
+    " saved INTEGER NOT NULL,"  // unix seconds
+    " world TEXT NOT NULL DEFAULT '')";
 
 // One statement, finalized on every way out.
 struct Statement {
@@ -67,12 +69,26 @@ bool Store::open(const std::string& path, std::string& error) {
         error = path + ": " + sqlite3_errmsg(db_);
         return false;
     }
+    // A file from before worlds were kept (sprint 20, step 2) has no world column: given one,
+    // empty, which is "wherever his next Hello names".
+    bool hasWorld = false;
+    {
+        Statement q(db_, "PRAGMA table_info(characters)");
+        while (q && sqlite3_step(q.s) == SQLITE_ROW) {
+            const auto* name = reinterpret_cast<const char*>(sqlite3_column_text(q.s, 1));
+            if (name && std::string(name) == "world") hasWorld = true;
+        }
+    }
+    if (!hasWorld && !exec(db_, "ALTER TABLE characters ADD COLUMN world TEXT NOT NULL DEFAULT ''")) {
+        error = path + ": " + sqlite3_errmsg(db_);
+        return false;
+    }
     return true;
 }
 
-bool Store::find(uint64_t token, sim::Kept& out) {
+bool Store::find(uint64_t token, sim::Kept& out, std::string& world) {
     if (db_ == nullptr) return false;
-    Statement q(db_, "SELECT layout, kept FROM characters WHERE token = ?");
+    Statement q(db_, "SELECT layout, kept, world FROM characters WHERE token = ?");
     if (!q) return false;
     sqlite3_bind_int64(q.s, 1, sqlite3_int64(token));
     if (sqlite3_step(q.s) != SQLITE_ROW) return false;
@@ -84,6 +100,8 @@ bool Store::find(uint64_t token, sim::Kept& out) {
                        (unsigned long long)token, layout, kLayout);
         return false;
     }
+    const auto* named = reinterpret_cast<const char*>(sqlite3_column_text(q.s, 2));
+    world = named ? named : "";
     return true;
 }
 
@@ -95,16 +113,16 @@ bool Store::has(uint64_t token) {
     return sqlite3_step(q.s) == SQLITE_ROW;
 }
 
-bool Store::keep(const std::vector<std::pair<uint64_t, sim::Kept>>& characters) {
+bool Store::keep(const std::vector<Row>& characters) {
     if (db_ == nullptr || characters.empty()) return db_ != nullptr;
     if (!exec(db_, "BEGIN")) return false;
     Statement q(db_,
-                "INSERT OR REPLACE INTO characters (token, layout, kept, kin, level, money, saved)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?)");
+                "INSERT OR REPLACE INTO characters (token, layout, kept, kin, level, money, saved, world)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     bool ok = bool(q);
     const int64_t now = int64_t(std::time(nullptr));
     std::vector<uint8_t> bytes;
-    for (const auto& [token, kept] : characters) {
+    for (const auto& [token, world, kept] : characters) {
         if (!ok) break;
         bytes.clear();
         net::putKept(bytes, kept);
@@ -115,6 +133,7 @@ bool Store::keep(const std::vector<std::pair<uint64_t, sim::Kept>>& characters) 
         sqlite3_bind_int(q.s, 5, kept.hero.level);
         sqlite3_bind_int64(q.s, 6, kept.hero.money);
         sqlite3_bind_int64(q.s, 7, now);
+        sqlite3_bind_text(q.s, 8, world.c_str(), -1, SQLITE_TRANSIENT);
         ok = sqlite3_step(q.s) == SQLITE_DONE;
         if (!ok) core::logError("characters.db: %s", sqlite3_errmsg(db_));
         sqlite3_reset(q.s);

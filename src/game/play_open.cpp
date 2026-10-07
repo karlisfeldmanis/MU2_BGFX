@@ -67,8 +67,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         hello.weapon = weapon;
         hello.shield = shield;
         hello.token = serverToken_;
+        hello.arriving = serverArriving_;
         net::Welcome welcome;
-        if (!remote->join(serverHost_, serverPort_, hello, welcome)) return false;
+        elsewhere_ = {};
+        if (!remote->join(serverHost_, serverPort_, hello, welcome, &elsewhere_)) return false;
         serverToken_ = welcome.token;
         keptFirst_.reset();
         if (welcome.kept) keptFirst_ = std::make_unique<sim::Kept>(welcome.first);

@@ -23,9 +23,10 @@ public:
     ~RemoteLink() override;
 
     // Connects and says Hello; waits up to `seconds` for the Welcome. False, with the reason
-    // logged, when there is no server or it will not have him.
+    // logged, when there is no server or it will not have him -- or when his character is in
+    // another world, which `elsewhere` then names (net::Elsewhere): the run opens that one.
     bool join(const std::string& host, int port, const net::Hello& hello, net::Welcome& welcome,
-              double seconds = 10.0);
+              net::Elsewhere* elsewhere = nullptr, double seconds = 10.0);
 
     void send(const sim::Command& command) override;
     void pump() override;

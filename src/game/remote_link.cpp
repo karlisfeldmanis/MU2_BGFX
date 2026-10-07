@@ -8,7 +8,7 @@
 namespace mu::game {
 
 bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello,
-                      net::Welcome& welcome, double seconds) {
+                      net::Welcome& welcome, net::Elsewhere* elsewhere, double seconds) {
     std::string error;
     if (!socket_.connect(host, port, seconds, error)) {
         core::logError("server: %s", error.c_str());
@@ -24,15 +24,26 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
     // drawn that the wait could hold up.
     const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
     while (std::chrono::steady_clock::now() < until) {
-        if (!socket_.receive(in_) || !socket_.flush()) {
+        // What came before a close is read first: an Elsewhere is said and the line shut.
+        const bool open = socket_.receive(in_) && socket_.flush();
+        net::Kind kind{};
+        std::vector<uint8_t> body;
+        const int took = net::take(in_, kind, body);
+        if (!open && took == 0) {
             core::logError("server: %s:%d would not have him (wrong version, or no such world)",
                            host.c_str(), port);
             socket_.close();
             return false;
         }
-        net::Kind kind{};
-        std::vector<uint8_t> body;
-        const int took = net::take(in_, kind, body);
+        // His character is in another world: where, for the run to open that one instead.
+        net::Elsewhere there;
+        if (took == 1 && kind == net::Kind::Elsewhere && net::parse(body, there)) {
+            core::logf("server: %s:%d has him in %s at %d,%d, not %s", host.c_str(), port,
+                       there.world.c_str(), there.column, there.row, hello.world.c_str());
+            if (elsewhere != nullptr) *elsewhere = there;
+            socket_.close();
+            return false;
+        }
         if (took < 0 || (took == 1 && (kind != net::Kind::Welcome || !net::parse(body, welcome)))) {
             core::logError("server: %s:%d does not speak protocol %u", host.c_str(), port,
                            net::kVersion);

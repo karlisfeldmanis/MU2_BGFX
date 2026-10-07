@@ -15,6 +15,8 @@
 //                      Tick     one tick's inputs: its number, the wall clock, the rain, and the
 //                               commands the server applied at its start, in order
 //                      Hash     the server realm's hash after a tick, for the mirror to compare
+//                      Elsewhere  instead of a Welcome: his character is in another world, at
+//                               this tile; the client opens that one and says Hello there
 //
 // A frame is a u32 length (of what follows), a u8 kind and the body, little-endian throughout.
 // A frame that does not parse drops that connection, never the server (server-plan §3).
@@ -38,13 +40,14 @@ namespace mu::net {
 // 2: a world shared by its connections -- the Welcome's `you` and `backlog`, Join and Leave.
 // 3: the character carried between worlds -- the token, the Welcome's kept first player, a
 //    Tick's arrivals (docs/sprints/20-the-world-host.md).
-constexpr uint32_t kVersion = 3;
+// 4: the server keeps which world he is in -- the Hello's `arriving`, Elsewhere.
+constexpr uint32_t kVersion = 4;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame either side accepts. A Tick of a hundred commands is under 5 KB.
 constexpr uint32_t kMostFrame = 1u << 20;
 
-enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5 };
+enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6 };
 
 struct Hello {
     uint32_t version = kVersion;
@@ -56,6 +59,15 @@ struct Hello {
     // The server's word for his character, from his last Welcome, or 0 for a new one: a map
     // change reconnects with it, and the server brings him back whole (sim::Kept).
     uint64_t token = 0;
+    // Come by a map change of this run, rather than the run's first world. A first world that
+    // is not the one his character is in is answered Elsewhere; an arrival keeps the world it
+    // names, since the server does not yet see every way between worlds (Go Back!).
+    bool arriving = false;
+};
+
+struct Elsewhere {
+    std::string world;
+    int32_t column = 0, row = 0;
 };
 
 struct Welcome {
@@ -101,6 +113,7 @@ void put(std::vector<uint8_t>& out, const Welcome& one);
 void put(std::vector<uint8_t>& out, const sim::Command& one);
 void put(std::vector<uint8_t>& out, const Tick& one);
 void put(std::vector<uint8_t>& out, const Hash& one);
+void put(std::vector<uint8_t>& out, const Elsewhere& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -112,6 +125,7 @@ bool parse(const std::vector<uint8_t>& body, Welcome& out);
 bool parse(const std::vector<uint8_t>& body, sim::Command& out);
 bool parse(const std::vector<uint8_t>& body, Tick& out);
 bool parse(const std::vector<uint8_t>& body, Hash& out);
+bool parse(const std::vector<uint8_t>& body, Elsewhere& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.
