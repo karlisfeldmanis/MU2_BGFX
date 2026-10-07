@@ -198,7 +198,8 @@ bool Bag::Contents::operator==(const Contents& o) const {
            closing == o.closing && overClose == o.overClose && level == o.level && strength == o.strength &&
            agility == o.agility && vitality == o.vitality && energy == o.energy && x == o.x &&
            y == o.y && scale == o.scale && picture == o.picture && mending == o.mending &&
-           canMend == o.canMend && overHammer == o.overHammer && pressingHammer == o.pressingHammer;
+           canMend == o.canMend && overHammer == o.overHammer && pressingHammer == o.pressingHammer &&
+           bare == o.bare;
 }
 
 Box Bag::slotBox(int slot) {
@@ -242,6 +243,7 @@ bool Bag::covers(float x, float y) const {
 void Bag::update(float width, float height, int column, const sim::Realm& realm,
                  const Pointer& pointer, Stage* stage, BagRequests* out) {
     up_ = realm.tables() != nullptr;
+    bare_ = realm.wearer().kin == sim::Kin::MagicGladiator;
     screenW_ = width;
     screenH_ = height;
     x_ = panel::columnX(width, column);
@@ -256,7 +258,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
 
     // Resolved to the item's own slot rather than the cell under the pointer, so a two-cell
     // potion hovered by its lower half is still the potion.
-    const int cell = inside ? slotAt(ux, uy) : -1;
+    const int cell = inside ? cellAt(ux, uy) : -1;
     hovered_ = cell >= 0 ? bag.holder(tables, cell) : -1;
     // A vault piece riding over the bag hovers nothing: no lit cell, no card under it.
     if (!incoming_.empty()) hovered_ = -1;
@@ -376,6 +378,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     now_.canMend = realm.selfMending();
     now_.overHammer = overHammer_;
     now_.pressingHammer = pressingHammer_;
+    now_.bare = bare_;
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild(realm, stage);
@@ -400,6 +403,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // full strength on leather, so an empty slot says what it is for without competing with the
     // piece in the slot beside it.
     for (int slot = 0; slot < sim::kWorn; ++slot) {
+        if (bare_ && slot == sim::kHelm) continue;
         const Box box = wellOf(wornBox(slot), true);
         panel::cell(canvas_, x, y, box,
                     slot == hovered_ && dragging_ < 0 ? sheet::Cell::Over
@@ -487,7 +491,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                     ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
     };
     if (dragging_ >= 0 && covers(now_.dragX, now_.dragY)) {
-        const int cell = slotAt(ux, uy);
+        const int cell = cellAt(ux, uy);
         const sim::Held& moving = bag[dragging_];
         if (cell >= 0 && cell != dragging_ && !moving.empty()) {
             const bool fits = sim::movable(tables, realm.wearer(), bag, dragging_, cell);
@@ -523,7 +527,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // cannot go in; onto a stack of its kind with room; a piece onto the worn slot it goes in
     // (Realm::wearFromVault); or into the satchel where its footprint is free.
     if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
-        const int cell = slotAt(ux, uy);
+        const int cell = cellAt(ux, uy);
         if (cell >= 0) {
             const content::ItemRow& row = tables.items[size_t(incoming_.item)];
             const int under = bag.holder(tables, cell);

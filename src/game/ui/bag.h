@@ -72,7 +72,7 @@ public:
     // The slot under a point on screen, or -1: where a thing dragged out of the vault lands.
     int slotUnder(float x, float y) const {
         if (!covers(x, y)) return -1;
-        return slotAt((x - x_) / panel::scale(), (y - y_) / panel::scale());
+        return cellAt((x - x_) / panel::scale(), (y - y_) / panel::scale());
     }
     // The slot whose thing is under the pointer, or -1: what a quick key binds.
     int hovered() const { return up_ ? hovered_ : -1; }
@@ -106,9 +106,15 @@ private:
         bool mending = false;
         bool canMend = false;
         bool overHammer = false, pressingHammer = false;
+        bool bare = false;
         bool operator==(const Contents& o) const;
     };
     void rebuild(const sim::Realm& realm, Stage* stage);
+    // slotAt, less the helm's slot for a wearer who has none (bare_).
+    int cellAt(float ux, float uy) const {
+        const int slot = slotAt(ux, uy);
+        return bare_ && slot == sim::kHelm ? -1 : slot;
+    }
     gfx::Box itemBox(const content::Tables& tables, int slot, const sim::Held& what) const;
 
     gfx::Canvas canvas_;
@@ -129,6 +135,10 @@ private:
     // The foot's hammer: under the pointer, and held down on.
     bool overHammer_ = false;
     bool pressingHammer_ = false;
+    // **No helm slot for the Magic Gladiator** (the user, 2026-10-07: 'remove helm equpment slot
+    // from MG then'): no helm is his (MuMain's item.bmd, RequireClass[3]), so its well is not
+    // drawn and takes no click or drop. Ours: MU draws the slot for him empty.
+    bool bare_ = false;
     std::vector<Standing> standing_;
     uint64_t rebuilds_ = 0;
 };
