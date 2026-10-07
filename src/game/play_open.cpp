@@ -4,6 +4,8 @@
 // Found ONCE, at open, and never per frame: an attack slot, a death clip or a cry looked up by
 // name while a fight is running is a string compare in the middle of the thing it is timing.
 #include "game/play.h"
+
+#include "sim/cradle.h"
 #include "sim/quests.h"
 
 #include <bx/math.h>
@@ -48,6 +50,35 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         core::logError("no rules for %s: %s (tools/cook.py --world %s --only tables)",
                        world.c_str(), error.c_str(), world.c_str());
         return false;
+    }
+    // On a server (useServer): join it, and raise the mirror from its Welcome -- the seed, the
+    // tile, the class and level, the hands and the config the server raised its realm with
+    // (docs/sprints/18-the-wire.md). Nothing below may then change the realm in a way the server
+    // does not: the nests are the table's own, and no arena, raid or roads are set up.
+    std::string held = weapon, worn = shield;
+    if (!serverHost_.empty()) {
+        auto remote = std::make_unique<RemoteLink>(realmHeld_);
+        net::Hello hello;
+        hello.world = world;
+        hello.kin = uint8_t(kin);
+        hello.level = level;
+        hello.column = column;
+        hello.row = row;
+        hello.weapon = weapon;
+        hello.shield = shield;
+        net::Welcome welcome;
+        if (!remote->join(serverHost_, serverPort_, hello, welcome)) return false;
+        seed = welcome.seed;
+        kin = welcome.kin;
+        level = welcome.level;
+        column = welcome.column;
+        row = welcome.row;
+        held = welcome.weapon;
+        worn = welcome.shield;
+        realmConfig_ = welcome.config;
+        arena_ = Arena{};
+        raidPlayers_ = 0;
+        link_ = std::move(remote);
     }
     // A townsperson's plus becomes its chrome here, the first moment the item table is in
     // hand: Marlon's plate at +7 and Berdysh at +8.
@@ -132,8 +163,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // with not one of its 16 breeds cooked. The nests come back breed by breed as each is
     // cooked (tools/cook.py --only figures), with no change here. Lorencia cooks every breed
     // it spawns, so this takes nothing from it. The headless hunt raises the whole table: it
-    // draws nothing, so there is nothing to be invisible in.
-    if (figures_) {
+    // draws nothing, so there is nothing to be invisible in. Nor on a server, whose realm has
+    // every nest: a breed not cooked here is drawn as nothing and still fought.
+    if (figures_ && !remote()) {
         uint32_t held = 0;
         std::string names;
         std::vector<content::MonsterNest> kept;
@@ -170,7 +202,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // laid as one -- its TileGround01 is turf in specks, not a path -- and Lorencia's Marlon
     // walks as he did. A world added here names its own sheets.
     static const char* const kNoriaRoads[] = {"TileRock01", "TileRock02", "TileWood01"};
-    if (world == "noria" && ground_ != nullptr && tables_.grid.size() > 0 &&
+    if (!remote() && world == "noria" && ground_ != nullptr && tables_.grid.size() > 0 &&
         ground_->floorAt(0, 0) >= 0) {
         const int size = tables_.grid.size();
         std::vector<uint8_t> roads(size_t(size) * size_t(size), 0);
@@ -193,61 +225,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         local_.setRoads(std::move(roads));
     }
 
-    // A character made above level 1 arrives with his points in hand, and unspent he cannot
-    // lift the weapon he was asked to carry. So the courtesy the headless hand does itself
-    // (game/headless.cpp): pay for what he is about to hold. The REST stays in hand since
-    // sprint 7, because the character window is where it is spent now; this used to pour it
-    // into strength for want of one. What is left of this goes when the items land and the
-    // requirement is MU's formula rather than the raw row (docs/sprints/07-the-windows.md).
-    if (realm_.hero().pointsInHand > 0) {
-        int points = realm_.hero().pointsInHand;
-        int wantsStrength = 0, wantsAgility = 0;
-        for (const std::string& name : {weapon, shield}) {
-            const int32_t index = name.empty() ? -1 : tables_.armNamed(name);
-            if (index < 0) continue;
-            const content::Arm& arm = tables_.arms[size_t(index)];
-            wantsStrength = std::max(wantsStrength, arm.wantsStrength);
-            wantsAgility = std::max(wantsAgility, arm.wantsAgility);
-        }
-        const int intoStrength =
-            std::min(points, std::max(0, wantsStrength - realm_.hero().points.strength));
-        points -= intoStrength;
-        const int intoAgility =
-            std::min(points, std::max(0, wantsAgility - realm_.hero().points.agility));
-        points -= intoAgility;
-        if (intoStrength + intoAgility > 0) local_.spend(intoStrength, intoAgility, 0, 0);
-    }
-
-    // What he holds. The drawn character is dressed from the same two names (Figures::dress, by
-    // way of World::play), so the picture and the fight agree by construction rather than by a
-    // warning -- which is what this used to have to settle for, when the cook chose the hands.
-    if (!weapon.empty() || !shield.empty()) {
-        const int32_t held = weapon.empty() ? -1 : tables_.armNamed(weapon);
-        const int32_t worn = shield.empty() ? -1 : tables_.armNamed(shield);
-        if ((!weapon.empty() && held < 0) || (!shield.empty() && worn < 0)) {
-            core::logError("no arm called %s%s%s", weapon.c_str(), shield.empty() ? "" : " or ",
-                           shield.c_str());
-        } else if (!local_.equip(held, worn)) {
-            // Refused on the strength or the agility, and then given anyway: what the character
-            // starts holding is the cradle's gift and the requirement belongs to the bag that
-            // picks one up. See Realm::equip. The shortfall is printed rather than hidden --
-            // a level-one knight is 22 strength short of his own axe, and that is the character
-            // the first hour is balanced around, not a fault in the run.
-            const std::string why = realm_.refusal();
-            if (!local_.equip(held, worn, true)) {
-                core::logError("he cannot hold that: %s", realm_.refusal().c_str());
-            } else {
-                core::logf("play: %s -- given anyway, as a new character is given what his "
-                           "class starts with", why.c_str());
-            }
-        } else {
-            core::logf("play: holding %s%s%s -- damage %d to %d, defence %d, a swing every "
-                       "%d ms (%d ticks)", weapon.c_str(), shield.empty() ? "" : " and ",
-                       shield.c_str(), realm_.hero().stats.minimumDamage,
-                       realm_.hero().stats.maximumDamage, realm_.hero().stats.defense,
-                       realm_.hero().swingMs, realm_.hero().swingTicks);
-        }
-    }
+    // His points for what he holds, and the weapon and shield in his hands: the rules' own
+    // (sim/cradle.h), so a server raising the same realm outfits him the same. The drawn
+    // character is dressed from the same two names (Figures::dress, by way of World::play).
+    sim::outfit(local_, held, worn);
 
     // And the arena hero spends what is left, which nobody else does -- after what he holds,
     // so the damage this prints is the damage he will do. The reason is that an arena is

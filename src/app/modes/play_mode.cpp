@@ -1,5 +1,7 @@
 #include "app/modes/play_mode.h"
 
+#include "net/wire.h"
+
 #include <bgfx/bgfx.h>
 #include <bx/math.h>
 #include <bx/timer.h>
@@ -290,6 +292,14 @@ bool PlayMode::open(Context& ctx) {
             if (args.raid > 0) {
                 world_.played().setRaid(args.raid, raidParty(), args.raidWatch,
                                         args.raidBox ? std::clamp(args.raidBox - 'A', 0, sim::kRaidLandingCount - 1) : -1);
+            }
+            // On a server: Play joins it as it opens, and raises the mirror from its answer.
+            if (!args.server.empty()) {
+                const size_t colon = args.server.rfind(':');
+                const bool hasPort = colon != std::string::npos;
+                world_.played().useServer(hasPort ? args.server.substr(0, colon) : args.server,
+                                          hasPort ? std::atoi(args.server.c_str() + colon + 1)
+                                                  : net::kDefaultPort);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);

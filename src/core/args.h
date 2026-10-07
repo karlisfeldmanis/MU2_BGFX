@@ -118,6 +118,9 @@ struct Args {
 
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;
+    // `--server host:port` (or host, for the default port): play on that server instead of a
+    // realm in this process (docs/sprints/18-the-wire.md). Empty for single player.
+    std::string server;
     // Chunk culling on the town, on by default. --no-cull is how the two are compared, and
     // the answer to whether chunking earns its keep is the difference between them.
     bool cullChunks = true;

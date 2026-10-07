@@ -71,6 +71,7 @@
 #include "gfx/renderer.h"
 #include "sim/audit.h"
 #include "game/link.h"
+#include "game/remote_link.h"
 #include "sim/realm.h"
 
 namespace mu::game {
@@ -204,6 +205,13 @@ public:
     bool shownAt(uint32_t id, float* column, float* row) const;
 
     const sim::Realm& realm() const { return realm_; }
+    // Play on a server (docs/sprints/18-the-wire.md): set BEFORE open(), which then joins it and
+    // raises the mirror from its Welcome. `--server host:port`.
+    void useServer(const std::string& host, int port) {
+        serverHost_ = host;
+        serverPort_ = port;
+    }
+    bool remote() const { return link_->remote(); }
     // The line under the map's name, "Level 2-40": its whole spawn table, taken before the
     // breeds not yet cooked are held back, so a world still waiting on its figures says what it
     // will hold. Empty for a world that spawns nothing.
@@ -259,6 +267,10 @@ public:
         bool box = false;             // a discard that is a Box of Luck or Kundun: no firework
         int why = 0;                  // a trip's sim::TravelRefusal as it was asked, for the log
     };
+    // Whether what only a realm in this process may do -- a save restored, a GM switch, the
+    // clock -- may be done: true for a local realm; while remote it is the server's, and the
+    // first refusal of each is logged.
+    bool here(const char* what);
     uint32_t send(sim::Command command, Asked asked);
     uint32_t send(sim::Command command);
     // The hero's orders and skills, sent with no ticket: the walk and the swing are the answer.
@@ -321,7 +333,7 @@ public:
     uint32_t depositZen(int64_t zen);
     uint32_t withdrawZen(int64_t zen);
     void closeVault() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Vault)}); }
-    void restoreVault(const sim::Vault& saved) { local_.restoreVault(saved); }
+    void restoreVault(const sim::Vault& saved) { if (here("the vault")) local_.restoreVault(saved); }
     // The Chaos Machine (sim/machine.h), as the realm keeps it: the vault's three moves, and the
     // mix, heard as MU hears its answer -- eMix with eGem for a success, with eBreak for a
     // failure (ReceiveMixExtended, ReceiveTradeInventoryExtended).
@@ -330,7 +342,7 @@ public:
     uint32_t shuffle(int from, int to);
     uint32_t mix(sim::Service service, int socket);
     void closeMachine() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Machine)}); }
-    void restoreMachine(const sim::Machine& saved) { local_.restoreMachine(saved); }
+    void restoreMachine(const sim::Machine& saved) { if (here("the machine")) local_.restoreMachine(saved); }
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.
     int mixAnswer() const { return realm_.mixing() >= 0 ? mixAnswer_ : -1; }
@@ -350,13 +362,13 @@ public:
         travelled_ = -1;
         return row;
     }
-    void setWallClock(int64_t unixSeconds) { local_.setWallClock(unixSeconds); }
+    void setWallClock(int64_t unixSeconds) { if (!remote()) local_.setWallClock(unixSeconds); }
     // The Golden Invasion (game/play_invasion.cpp, sim/invasion.h): whether it rains handed to
     // the realm each frame, which rolls for the dragons as a wet spell begins; --invasion's
     // start; the sky opened once the effects are; and whether its storm should be held -- the
     // world's weather answers to that (Weather::summon).
-    void invasionRain(bool raining) { local_.invasionRain(raining); }
-    bool invade(bool now = false) { return local_.invade(now); }
+    void invasionRain(bool raining) { if (!remote()) local_.invasionRain(raining); }
+    bool invade(bool now = false) { return here("--invasion") && local_.invade(now); }
     // ---- the Golden Dragon's raid (play_raid.cpp, docs/golden-dragon-raid.md) ---------------
     // Set BEFORE open() or not at all, as the arena is: the raid tough for `players`, and the
     // party of source/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
@@ -387,10 +399,10 @@ public:
     void openInvasionSky(bgfx::TextureHandle glow, bgfx::TextureHandle haze);
     bool invasionStorm() const { return invasionStorm_; }
     void glowInvasion(gfx::Effects& effects) const { sky_.glow(effects); }
-    void openCastleDoor() { local_.openCastleDoor(); }
-    void freeCastle() { local_.freeCastle(); }
-    void dropCastleBridge(int seconds) { local_.dropCastleBridge(seconds); }
-    void setCastle(int castle) { local_.setCastle(castle); }
+    void openCastleDoor() { if (here("--castle-open")) local_.openCastleDoor(); }
+    void freeCastle() { if (here("--castle-free")) local_.freeCastle(); }
+    void dropCastleBridge(int seconds) { if (here("--castle-bridge")) local_.dropCastleBridge(seconds); }
+    void setCastle(int castle) { if (here("--castle")) local_.setCastle(castle); }
     // The Messenger's page's two answers (QuestDialog::kGate).
     uint32_t enterCastle(int castle) { return send({.kind = sim::Command::Kind::EnterCastle, .a = castle}); }
     void closeGate() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Gate)}); }
@@ -400,7 +412,7 @@ public:
     void closeAngel() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Angel)}); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
-    void earn(long long zen) { local_.earn(zen); }
+    void earn(long long zen) { if (here("--zen")) local_.earn(zen); }
     bool talkTo(const std::string& name);
     // ---- what he gained this frame (sprint 12) --------------------------------------------
     //
@@ -573,7 +585,7 @@ public:
     void goBack(int column, int row, float facing);
     // The performance sweep's (app/sweep.h): the realm's setHeroDown and nothing drawn or heard,
     // so the warp's ring and sound are not in the frames being measured.
-    void setDown(int column, int row) { local_.setHeroDown(column, row, 0, 100); }
+    void setDown(int column, int row) { if (here("the sweep")) local_.setHeroDown(column, row, 0, 100); }
     // A warp's landing heard and seen where he stands, and nothing else: sMagic and the ring, for
     // a map come into by magic -- a Tab trip, a Town Portal to another map, Go Back! -- where the
     // world was raised around him rather than him set down in it.
@@ -1134,11 +1146,15 @@ private:
 
     content::Tables tables_;
     std::string zoneLevels_;
-    // The realm behind the Link (game/link.h). `realm_` is what the client may see, and is const:
-    // a change goes through link_.send, or -- what only the server will do -- through local_.
-    LocalLink link_;
-    sim::Realm& local_ = link_.local();
-    const sim::Realm& realm_ = link_.realm();
+    // The realm, and the Link that works on it (game/link.h). `realm_` is what the client may
+    // see, and is const: a change goes through link_->send, or -- what only the server will do --
+    // through local_, which while remote (useServer) is the mirror's and refuses (`here`).
+    sim::Realm realmHeld_;
+    std::unique_ptr<Link> link_ = std::make_unique<LocalLink>(realmHeld_);
+    sim::Realm& local_ = realmHeld_;
+    const sim::Realm& realm_ = realmHeld_;
+    std::string serverHost_;
+    int serverPort_ = 0;
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
     Figures* figures_ = nullptr;

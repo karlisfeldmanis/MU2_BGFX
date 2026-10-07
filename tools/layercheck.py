@@ -42,20 +42,22 @@ ALLOWED = {
     "content": {"core", "content"},
     "sim": {"core", "content", "sim"},
     "gfx": {"core", "content", "gfx"},
-    "game": {"core", "content", "sim", "gfx", "game"},
-    "app": {"core", "content", "sim", "gfx", "game", "app"},
+    # The wire: TCP and the protocol (docs/sprints/18-the-wire.md). A message carries a Command.
+    "net": {"core", "content", "sim", "net"},
+    "game": {"core", "content", "sim", "net", "gfx", "game"},
+    "app": {"core", "content", "sim", "net", "gfx", "game", "app"},
     # The server program, in server/src/ and not src/ (the user, 2026-10-07: "we need that server
     # source is also in /server folder"): the rules and what they read, never a screen or the
     # client. Nothing under src/ may include it -- no layer above lists it.
-    "server": {"core", "content", "sim", "server"},
+    "server": {"core", "content", "sim", "net", "server"},
 }
 
 INCLUDE = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.M)
 
 # The client sees the realm and never changes it (docs/server-plan.md phase 1): a writable
 # sim::Realm -- a reference, a pointer or one of its own -- in game/ or app/ is refused, except at
-# the door that holds it (game/link.h), Play's `local_` (what will be the server's, each use a line
-# to move), and the scripted hand (game/headless.cpp), which plays the server's part in a run with
+# the links (game/link.h, game/remote_link.*), Play's realm and its `local_` (what will be the
+# server's, each use a line to move), and the scripted hand (game/headless.cpp), which plays the server's part in a run with
 # no window. Everything else reads `const sim::Realm&`, which is what a mirror will be.
 WRITABLE_REALM = re.compile(r'(?<![\w:])(?:\w+::)*Realm\s*(?:[&*]|\s+[a-z_]\w*\s*[;{=(])')
 
@@ -63,7 +65,10 @@ WRITABLE_REALM = re.compile(r'(?<![\w:])(?:\w+::)*Realm\s*(?:[&*]|\s+[a-z_]\w*\s
 def writable_realm(code):
     """Whether a line of code names a sim::Realm it could change: one not preceded by `const`."""
     return any(not code[:m.start()].rstrip().endswith("const") for m in WRITABLE_REALM.finditer(code))
-WRITABLE_ALLOWED = {os.path.join("src", "game", "link.h"), os.path.join("src", "game", "headless.cpp")}
+WRITABLE_ALLOWED = {os.path.join("src", "game", "link.h"), os.path.join("src", "game", "remote_link.h"),
+                    os.path.join("src", "game", "remote_link.cpp"), os.path.join("src", "game", "headless.cpp")}
+# And on a line of its own: Play's realm, which the link works on (Play::realmHeld_).
+WRITABLE_MARKS = ("local_", "realmHeld_")
 
 
 def layer_of(path):
@@ -100,9 +105,9 @@ def main():
             if here in ("game", "app") and rel not in WRITABLE_ALLOWED:
                 for number, line in enumerate(text.splitlines(), 1):
                     code = line.split("//")[0]
-                    if writable_realm(code) and "local_" not in code:
+                    if writable_realm(code) and not any(mark in code for mark in WRITABLE_MARKS):
                         violations.append(f"{rel}:{number}: a writable sim::Realm in the client "
-                                          f"(only link.h, Play's local_ and headless.cpp may hold one)")
+                                          f"(only the links, Play's realmHeld_ and local_, and headless.cpp may hold one)")
             for target in INCLUDE.findall(text):
                 head = target.split("/")[0]
                 if head not in ALLOWED:

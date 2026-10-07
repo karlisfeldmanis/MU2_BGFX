@@ -1,0 +1,96 @@
+#pragma once
+
+// What goes over the wire between MU2's client and its server (docs/sprints/18-the-wire.md).
+//
+// Lockstep: the server steps the realm and the client's mirror steps the same realm from the
+// same start with the same inputs, so what crosses is the start and the inputs, never the state.
+//
+//   client -> server   Hello    who he is and where he stands: world, class, level, tile, hands
+//                      Command  a sim::Command, as the client's Link sent it
+//   server -> client   Welcome  the start: the seed, the tile, class, level, hands, the config
+//                      Tick     one tick's inputs: its number, the wall clock, the rain, and the
+//                               commands the server applied at its start, in order
+//                      Hash     the server realm's hash after a tick, for the mirror to compare
+//
+// A frame is a u32 length (of what follows), a u8 kind and the body, little-endian throughout.
+// A frame that does not parse drops that connection, never the server (server-plan §3).
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "sim/command.h"
+#include "sim/config.h"
+
+namespace mu::sim {
+class Realm;
+}
+
+namespace mu::net {
+
+// Bumped whenever a message changes shape. A client and a server of different versions do not
+// talk: the server answers a Hello of another version by closing.
+constexpr uint32_t kVersion = 1;
+// MU's GameServer listened on 55901; ours is its own.
+constexpr int kDefaultPort = 44406;
+// The longest frame either side accepts. A Tick of a hundred commands is under 5 KB.
+constexpr uint32_t kMostFrame = 1u << 20;
+
+enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5 };
+
+struct Hello {
+    uint32_t version = kVersion;
+    std::string world;
+    uint8_t kin = 0;
+    int32_t level = 1;
+    int32_t column = 0, row = 0;
+    std::string weapon, shield;
+};
+
+struct Welcome {
+    uint32_t version = kVersion;
+    uint64_t seed = 0;
+    std::string world;
+    uint8_t kin = 0;
+    int32_t level = 1;
+    int32_t column = 0, row = 0;
+    std::string weapon, shield;
+    sim::RealmConfig config;
+};
+
+struct Tick {
+    uint32_t tick = 0;       // the realm's tick after this step
+    int64_t wallClock = 0;   // Realm::setWallClock before the step
+    bool rain = false;       // Realm::invasionRain before the step
+    std::vector<sim::Command> commands;  // Realm::command each, in order, before the step
+};
+
+struct Hash {
+    uint32_t tick = 0;
+    uint64_t hash = 0;
+};
+
+// Frames, appended to `out`.
+void put(std::vector<uint8_t>& out, const Hello& one);
+void put(std::vector<uint8_t>& out, const Welcome& one);
+void put(std::vector<uint8_t>& out, const sim::Command& one);
+void put(std::vector<uint8_t>& out, const Tick& one);
+void put(std::vector<uint8_t>& out, const Hash& one);
+
+// One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
+// removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
+int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body);
+
+// A body, parsed. False on a body of the wrong length or shape.
+bool parse(const std::vector<uint8_t>& body, Hello& out);
+bool parse(const std::vector<uint8_t>& body, Welcome& out);
+bool parse(const std::vector<uint8_t>& body, sim::Command& out);
+bool parse(const std::vector<uint8_t>& body, Tick& out);
+bool parse(const std::vector<uint8_t>& body, Hash& out);
+
+// The realm after a step, as one number: what the tick said (every happening's bytes, which
+// Realm::say zeroes padding and all), the dice drawn so far, and where the hero stands. Two
+// realms that agree on it for every tick are walking the same walk.
+uint64_t stateHash(const sim::Realm& realm);
+
+}  // namespace mu::net

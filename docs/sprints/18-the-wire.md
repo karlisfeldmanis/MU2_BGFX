@@ -25,11 +25,32 @@ This needs the rules to give the same bits on the Mac and on Linux.
 - The Twister's third-beat check was one fight's luck (it scraped by at 1); it now pools three
   seeds (5 third-beat strikes in 86 storms). sim_test 6610 checks, the standing 10 failing.
 
+## 2-4. The protocol, the server and RemoteLink — done 2026-10-07
+
+- **`src/net`**, a new layer (core, content and sim below it; game, app and the server above):
+  `socket.*` (non-blocking POSIX TCP, no Nagle, IPv4 and IPv6) and `wire.*` (frames of u32
+  length, u8 kind, little-endian body; `Hello`, `Welcome`, `Command`, `Tick`, `Hash`; a frame that
+  does not parse drops that connection). Protocol version 1, port 44406.
+- **`server/src/main.cpp`, `mu2_server`**: a listener and one realm per connection on one 20 Hz
+  deadline loop (poll, step every realm, flush), owing ticks up to a second rather than dropping
+  them. Raises his world on his Hello, outfits him with the rules' own cradle, sends each tick's
+  inputs and a hash a second. A world name is letters only, so a Hello cannot name a path.
+- **`sim/cradle.*`**: a new character's points for his weapon and the weapon in his hands, moved
+  out of Play::open so the mirror and the server do the same.
+- **`game/remote_link.*`**: joins (Hello, then waits up to 10 s for the Welcome), sends commands,
+  steps the mirror per tick with the same inputs in the same order, and checks the server's
+  hashes; logs a divergence once and a summary on close.
+- **Play** owns its realm (`realmHeld_`) and holds the link by pointer: `useServer(host, port)`
+  before open makes it remote. Remote, open raises from the Welcome, keeps every nest (no
+  uncooked-figure filter), sets up no arena, raid or roads; the server's doors -- save, vault,
+  machine, clock, rain, the GM switches -- refuse and say so once each. The frame loop pumps the
+  link, steps only ticks that have arrived, and repays when more than two behind.
+- `--server HOST[:PORT]` on the client. layercheck: `net` is a layer; the links and Play's
+  realm may hold a writable realm.
+- **Loopback on the Mac:** `mu2_server --port 44599` and `mu2 --play --server 127.0.0.1:44599
+  --talk Lumen`: joined, walked to Lumen by Order commands over the wire and was served; 12 of
+  12 of the server's hashes agreed with the mirror.
+
 ## Next
 
-2. The protocol: framing, `Hello`/`Welcome` (map, seed, class, level, config), the per-tick
-   message (tick, wall clock, commands), the hash.
-3. `server/src`: `mu2_server`, a TCP listener and one realm per connection on a 20 Hz loop.
-4. `RemoteLink` in the client (`--server host:port`): raises the mirror from `Welcome`, steps on
-   each tick message, owes and repays ticks rather than clamping.
 5. On the box: a systemd service, the port opened in ufw, and a game played on it from here.

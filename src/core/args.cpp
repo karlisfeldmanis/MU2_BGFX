@@ -200,6 +200,7 @@ void printUsage() {
         "  --arena-undying           a blow that would fell the hero fills his health, arena or not\n"
         "  --wing-demo               every kill in Icarus leaves his class's first wings (a demo)\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
+        "  --server HOST[:PORT]      play on that server (mu2_server) instead of in this process\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --castle-period S         Blood Castle opens every S seconds, for S/2, not hourly (a test)\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
@@ -515,6 +516,8 @@ Args parseArgs(int argc, char** argv) {
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--server")) {
+            if (const char* v = next(s)) a.server = v;
         } else if (!std::strcmp(s, "--world")) {
             if (const char* v = next(s)) a.world = v;
         } else if (!std::strcmp(s, "--at")) {

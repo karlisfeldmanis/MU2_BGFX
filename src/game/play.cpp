@@ -129,6 +129,11 @@ void Play::update(double seconds) {
     drankHealth_ = drankMana_ = 0;
     accumulator_ += seconds;
     int stepped = 0;
+    // On a server the ticks are the server's: what it sent is read here, and a tick is stepped
+    // only once it has arrived. Behind by more than two, the mirror repays up to kMostTicks a
+    // frame whatever the frame clock says, and never drops one (server-plan §3).
+    link_->pump();
+    const bool remoteClock = link_->remote();
     const int64_t started = bx::getHPCounter();
     // A click is answered on the frame it is made. Waiting for the tick that was due anyway
     // cost 0 to 50 ms, 25 on average, between the press and the first step -- the one delay
@@ -159,13 +164,14 @@ void Play::update(double seconds) {
         }
         accumulator_ = kTickSeconds;
     }
-    while (accumulator_ >= kTickSeconds && stepped < kMostTicks) {
+    while (stepped < kMostTicks && link_->due() &&
+           (accumulator_ >= kTickSeconds || (remoteClock && link_->owed() > 2))) {
         // Each body's health going into the tick, so a blow's cue can say what it took rather
         // than what it rolled. Bodies and figures share one order (Play::open).
         for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
             drawn_[i].health = realm_.bodies()[i].health;
         }
-        link_.step();
+        link_->step();
         // AFTER the step, not before it. Before, `now` held the state at the START of the tick
         // and `was` the start of the one before, so the picture trailed the sim by one whole
         // tick on top of the interpolation's own -- a figure at `through_ = 0` was 100 ms
@@ -1656,9 +1662,11 @@ void Play::update(double seconds) {
         }
         // The ask was taken on this tick, whatever became of it.
         mark_ = false;
-        accumulator_ -= kTickSeconds;
+        accumulator_ = std::max(0.0, accumulator_ - kTickSeconds);
         ++stepped;
     }
+    // Waiting on the server, the frame clock does not run ahead of it.
+    if (remoteClock && !link_->due()) accumulator_ = std::min(accumulator_, kTickSeconds);
     marker_.update(float(seconds));
     if (appearing_) {
         appearAt_ += float(seconds);

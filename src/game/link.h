@@ -6,10 +6,13 @@
 // what is there, and changes nothing else.
 //
 // LocalLink is single player as it has always been: the realm in this process, stepped by the
-// frame clock. RemoteLink (phase 4) will be the same door over a socket, its `step` taking the
-// next tick the server sent. What only the server will do -- raise a map, keep the clock, load
-// and save a character, the GM's switches -- is LocalLink's alone, behind `local()`, so every use
-// of it is a line to move to the server and easy to find.
+// frame clock. RemoteLink (game/remote_link.h, docs/sprints/18-the-wire.md) is the same door
+// over a socket: `send` goes to the server, and `step` steps the mirror with the tick the server
+// sent. What only the server will do -- raise a map, keep the clock, load and save a character,
+// the GM's switches -- is done on Play's own `local_`, and refused while remote.
+//
+// The realm itself is Play's (Play::realmHeld_), so the references to it never move whichever
+// link is in place; a link works on it.
 
 #include <vector>
 
@@ -23,24 +26,32 @@ public:
     virtual ~Link() = default;
     // An ask, applied at the start of the next tick in the order sent.
     virtual void send(const sim::Command& command) = 0;
+    // The network's in and out, once a frame; nothing for a realm in this process.
+    virtual void pump() {}
+    // Whether a tick may be stepped now: always for a local realm (the frame clock decides),
+    // and for a remote one only once the server has sent it.
+    virtual bool due() const { return true; }
+    // How many ticks the server has sent that are not yet stepped: the mirror repays them a
+    // few a frame rather than clamping (server-plan §3, "the client clock owes ticks").
+    virtual int owed() const { return 0; }
     // One tick on: what the realm said in it is in happenings() until the next.
     virtual void step() = 0;
     virtual const std::vector<sim::Happening>& happenings() const = 0;
-    // What there is to see. The realm itself for now; batch 5 puts a client-side View here.
+    // What there is to see: a const realm -- the realm itself, or the mirror of the server's.
     virtual const sim::Realm& realm() const = 0;
+    virtual bool remote() const { return false; }
 };
 
 class LocalLink final : public Link {
 public:
+    explicit LocalLink(sim::Realm& realm) : realm_(realm) {}
     void send(const sim::Command& command) override { realm_.command(command); }
     void step() override { realm_.step(); }
     const std::vector<sim::Happening>& happenings() const override { return realm_.happenings(); }
     const sim::Realm& realm() const override { return realm_; }
-    // The server's half, in this process: raise, the clock, saves, setup and the GM's switches.
-    sim::Realm& local() { return realm_; }
 
 private:
-    sim::Realm realm_;
+    sim::Realm& realm_;
 };
 
 }  // namespace mu::game

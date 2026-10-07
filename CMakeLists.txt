@@ -143,6 +143,7 @@ add_library(mu_sim STATIC
   src/sim/realm_machine.cpp
   src/sim/realm_quests.cpp
   src/sim/realm_commands.cpp
+  src/sim/cradle.cpp
   src/sim/quests.cpp
   src/sim/realm_travel.cpp
   src/sim/realm_move.cpp
@@ -160,6 +161,25 @@ add_library(mu_sim STATIC
 )
 target_link_libraries(mu_sim PUBLIC mu_content_data)
 target_compile_options(mu_sim PRIVATE ${MU_WARNINGS})
+
+# The wire (docs/sprints/18-the-wire.md): TCP and the protocol, which the client's RemoteLink and
+# the server both speak. Above sim, because a message carries a sim::Command.
+add_library(mu_net STATIC
+  src/net/socket.cpp
+  src/net/wire.cpp
+)
+target_link_libraries(mu_net PUBLIC mu_sim)
+target_compile_options(mu_net PRIVATE ${MU_WARNINGS})
+
+# The server (server/src, server/README.md): every map's realm for whoever connects, no window.
+# Built in both modes, so the Mac can run one for the client beside it.
+add_executable(mu2_server
+  server/src/main.cpp
+)
+target_include_directories(mu2_server PRIVATE src)
+target_link_libraries(mu2_server PRIVATE mu_net)
+target_compile_definitions(mu2_server PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_options(mu2_server PRIVATE ${MU_WARNINGS})
 
 if(NOT MU2_SERVER_ONLY)
 # The half of content that uploads: textures, meshes and the ground, into bgfx.
@@ -245,6 +265,7 @@ add_library(mu_game STATIC
   src/game/play_show.cpp
   src/game/play_pointer.cpp
   src/game/play_requests.cpp
+  src/game/remote_link.cpp
   src/game/fx/showing.cpp
   src/game/fx/marker.cpp
   src/game/fx/omen.cpp
@@ -328,7 +349,7 @@ add_library(mu_game STATIC
   src/game/fx/gleam.cpp
   src/game/ui/outline.cpp
 )
-target_link_libraries(mu_game PUBLIC mu_gfx mu_sim)
+target_link_libraries(mu_game PUBLIC mu_gfx mu_sim mu_net)
 target_compile_definitions(mu_game PRIVATE ${MU_DIRS})
 target_compile_options(mu_game PRIVATE ${MU_WARNINGS})
 # miniaudio is one vendored header of tens of thousands of lines; its warnings are not ours.

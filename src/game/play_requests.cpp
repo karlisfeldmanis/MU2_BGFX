@@ -189,6 +189,7 @@ void Play::dualSwings(Drawn& drawn, const FigureBody* look) const {
 
 void Play::restore(const sim::HeroRecord& saved) {
     if (!isOpen()) return;
+    if (!here("the save")) return;
     local_.restore(saved);
     redress();
 }
@@ -232,6 +233,7 @@ static void readExtras(const std::string& extras, int* plus, bool* luck, int* op
 }
 
 bool Play::give(const std::string& name, int count, const std::string& extras) {
+    if (!here("--give")) return false;
     const int32_t item = tables_.itemNamed(name);
     if (item < 0) {
         core::logError("--give: no item named %s", name.c_str());
@@ -274,6 +276,7 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
 }
 
 bool Play::lay(const std::string& asked) {
+    if (!here("--lay")) return false;
     const size_t colon = asked.find(':');
     const std::string name = asked.substr(0, colon);
     int plus = 0, option = 0;
@@ -384,17 +387,27 @@ uint32_t Play::withdrawZen(int64_t zen) {
 
 uint32_t Play::send(sim::Command command) { return send(command, Asked()); }
 
+bool Play::here(const char* what) {
+    if (!remote()) return true;
+    static std::vector<std::string> said;
+    if (std::find(said.begin(), said.end(), what) == said.end()) {
+        said.emplace_back(what);
+        core::logf("server: %s is the server's, not this client's; not done", what);
+    }
+    return false;
+}
+
 void Play::orderHero(const sim::Request& request) {
-    link_.send({.kind = sim::Command::Kind::Order, .player = realm_.hero().id, .a = int(request.kind),
+    link_->send({.kind = sim::Command::Kind::Order, .player = realm_.hero().id, .a = int(request.kind),
                 .b = request.column, .c = request.row, .d = request.skill, .target = request.target});
 }
 
 void Play::castHero(int32_t skill, uint32_t at) {
-    link_.send({.kind = sim::Command::Kind::Cast, .player = realm_.hero().id, .a = skill, .target = at});
+    link_->send({.kind = sim::Command::Kind::Cast, .player = realm_.hero().id, .a = skill, .target = at});
 }
 
 void Play::castHeroAt(int32_t skill, int column, int row) {
-    link_.send({.kind = sim::Command::Kind::CastAt, .player = realm_.hero().id, .a = skill, .b = column,
+    link_->send({.kind = sim::Command::Kind::CastAt, .player = realm_.hero().id, .a = skill, .b = column,
                 .c = row});
 }
 
@@ -402,7 +415,7 @@ uint32_t Play::send(sim::Command command, Asked asked) {
     command.player = realm_.hero().id;
     command.ticket = nextTicket_++;
     if (nextTicket_ == 0) nextTicket_ = 1;
-    link_.send(command);
+    link_->send(command);
     asked.command = command;
     sent_.push_back(asked);
     return command.ticket;
