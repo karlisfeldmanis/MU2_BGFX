@@ -13,7 +13,7 @@ against the code, and sprints 9 to 13. Read it before opening a sprint file.
 
 | question | answer | what follows |
 |---|---|---|
-| server | **none; single player** | no socket, protocol, mirror or mirror clock. The simulation is in the process. Parties, guilds, trade and chat between players are out of scope |
+| server | ~~none; single player~~ **reversed 2026-10-07: an authoritative server, hosted** | the user: *"we need to start to build server side for our game and move server to hetzner and we only use client"*, then *"do it by phases"*. The plan is `docs/server-plan.md`, run in its order: sprint 16 (the foundations) first, then phases 1-7. The server runs on the Hetzner box (`ssh hetzner`, 37.27.158.226, Ubuntu 26.04, 1 vCPU, 1 GB) from phase 4; players run only the client. Single player stays only as phases 1-3's in-process `LocalLink`, a development path, not a product mode |
 | rules | **fresh, smaller, in C++** | written new as MU4's `sim.cpp` was, taking from 0.75 what one player needs. Smaller in scope, not looser: every number is still traced to OpenMU Version075, MuMain or `mu.db`, and every departure is marked "invention". `MU2/shared` is read one file at a time as a worked example, never ported wholesale |
 | renderer | **from scratch** | MU4 is reference only. Its README's frame table and trap list are read before sprint 1, and the traps go into `docs/conventions.md` so they are not paid for twice |
 | platform | **this Mac, Metal** | one shader target, BC7/BC5 textures, no abstraction for backends that do not exist. GLFW window, 1080p backbuffer |

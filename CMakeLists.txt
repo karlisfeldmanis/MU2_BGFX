@@ -72,32 +72,89 @@ endforeach()
 add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT})
 
 # ---- the game -----------------------------------------------------------------------------
-# The layers of docs/architecture.md, and the rule that holds them apart: gfx never includes
-# game or sim, and sim never includes gfx. tools/layercheck.py enforces it in the `checks`
-# target below -- it used to say "nothing enforces that but review", and that was true.
-add_executable(mu2
-  src/main.cpp
-  src/app/application.cpp
-  src/app/context.cpp
-  src/app/preloader.cpp
-  src/app/sweep.cpp
-  src/app/modes/play_mode.cpp
-  src/app/modes/lobby_mode.cpp
-  src/app/modes/bench_mode.cpp
+# The layers of docs/architecture.md, one static library each, and each linking only what is
+# below it. tools/layercheck.py enforces the include arrows in the `checks` target below; the
+# link enforces the rest: mu_sim cannot reach a bgfx symbol because nothing it links has one.
+# That is what the server needs -- core + content_data + sim, and no window (sprint 16, step 1,
+# and docs/server-plan.md phase 4). Each source is listed once, here; the tools link libraries.
+set(MU_WARNINGS -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
+set(MU_DIRS
+  MU2_SHADER_DIR="${SHADER_OUT}/metal"
+  MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
+  MU2_SHEET_DIR="${CMAKE_SOURCE_DIR}/sheets"
+  MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+# Logging, arguments, json, files. Depends on nothing.
+add_library(mu_core STATIC
   src/core/log.cpp
   src/core/watch.cpp
   src/core/args.cpp
   src/core/files.cpp
   src/core/json.cpp
-  src/content/texture.cpp
-  src/content/mesh.cpp
-  src/content/ground.cpp
+)
+target_include_directories(mu_core PUBLIC src)
+target_compile_definitions(mu_core PRIVATE MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_options(mu_core PRIVATE ${MU_WARNINGS})
+
+# What the cook wrote, read back, with no GPU in it: the tables, the grids, the cooked meshes'
+# bytes, the showing and the missiles. The half of content a server reads.
+add_library(mu_content_data STATIC
   src/content/cooked.cpp
   src/content/placement.cpp
   src/content/grid.cpp
   src/content/tables.cpp
   src/content/showing.cpp
   src/content/missiles.cpp
+)
+target_link_libraries(mu_content_data PUBLIC mu_core)
+target_compile_options(mu_content_data PRIVATE ${MU_WARNINGS})
+
+# The realm and its rules.
+add_library(mu_sim STATIC
+  src/sim/rules.cpp
+  src/sim/swings.cpp
+  src/sim/route.cpp
+  src/sim/items.cpp
+  src/sim/market.cpp
+  src/sim/wear.cpp
+  src/sim/vault.cpp
+  src/sim/machine.cpp
+  src/sim/gates.cpp
+  src/sim/traps.cpp
+  src/sim/realm.cpp
+  src/sim/realm_items.cpp
+  src/sim/realm_machine.cpp
+  src/sim/realm_quests.cpp
+  src/sim/quests.cpp
+  src/sim/realm_travel.cpp
+  src/sim/realm_move.cpp
+  src/sim/realm_fight.cpp
+  src/sim/realm_skills.cpp
+  src/sim/realm_watch.cpp
+  src/sim/realm_traps.cpp
+  src/sim/realm_folk.cpp
+  src/sim/realm_summon.cpp
+  src/sim/realm_invasion.cpp
+  src/sim/realm_raid.cpp
+  src/sim/raid_party.cpp
+  src/sim/skills.cpp
+  src/sim/audit.cpp
+)
+target_link_libraries(mu_sim PUBLIC mu_content_data)
+target_compile_options(mu_sim PRIVATE ${MU_WARNINGS})
+
+# The half of content that uploads: textures, meshes and the ground, into bgfx.
+add_library(mu_content_gpu STATIC
+  src/content/texture.cpp
+  src/content/mesh.cpp
+  src/content/ground.cpp
+)
+target_include_directories(mu_content_gpu PUBLIC extern)   # cgltf, miniaudio, stb
+target_link_libraries(mu_content_gpu PUBLIC mu_content_data bgfx bimg_decode)
+target_compile_options(mu_content_gpu PRIVATE ${MU_WARNINGS})
+
+add_library(mu_gfx STATIC
   src/gfx/window.cpp
   src/gfx/views.cpp
   src/gfx/stats.cpp
@@ -116,6 +173,15 @@ add_executable(mu2
   src/gfx/readout.cpp
   src/gfx/interface.cpp
   src/gfx/stage_pass.cpp
+)
+target_link_libraries(mu_gfx PUBLIC mu_content_gpu glfw)
+target_compile_definitions(mu_gfx PRIVATE ${MU_DIRS})
+target_compile_options(mu_gfx PRIVATE ${MU_WARNINGS})
+if(APPLE)
+  target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
+endif()
+
+add_library(mu_game STATIC
   src/game/bench.cpp
   src/game/world/world.cpp
   src/game/world/maps.cpp
@@ -243,47 +309,28 @@ add_executable(mu2
   src/game/fx/streak.cpp
   src/game/fx/gleam.cpp
   src/game/ui/outline.cpp
-  src/sim/rules.cpp
-  src/sim/swings.cpp
-  src/sim/route.cpp
-  src/sim/items.cpp
-  src/sim/market.cpp
-  src/sim/wear.cpp
-  src/sim/vault.cpp
-  src/sim/machine.cpp
-  src/sim/gates.cpp
-  src/sim/traps.cpp
-  src/sim/realm.cpp
-  src/sim/realm_items.cpp
-  src/sim/realm_machine.cpp
-  src/sim/realm_quests.cpp
-  src/sim/quests.cpp
-  src/sim/realm_travel.cpp
-  src/sim/realm_move.cpp
-  src/sim/realm_fight.cpp
-  src/sim/realm_skills.cpp
-  src/sim/realm_watch.cpp
-  src/sim/realm_traps.cpp
-  src/sim/realm_folk.cpp
-  src/sim/realm_summon.cpp
-  src/sim/realm_invasion.cpp
-  src/sim/realm_raid.cpp
-  src/sim/raid_party.cpp
-  src/sim/skills.cpp
-  src/sim/audit.cpp
 )
-target_include_directories(mu2 PRIVATE src extern)
-# bimg_decode reads the PNGs, bimg_encode writes the screenshots.
-target_link_libraries(mu2 PRIVATE bgfx bimg_decode bimg_encode glfw)
-target_compile_definitions(mu2 PRIVATE
-  MU2_SHADER_DIR="${SHADER_OUT}/metal"
-  MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
-  MU2_SHEET_DIR="${CMAKE_SOURCE_DIR}/sheets"
-  MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}"
-)
-target_compile_options(mu2 PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
+target_link_libraries(mu_game PUBLIC mu_gfx mu_sim)
+target_compile_definitions(mu_game PRIVATE ${MU_DIRS})
+target_compile_options(mu_game PRIVATE ${MU_WARNINGS})
 # miniaudio is one vendored header of tens of thousands of lines; its warnings are not ours.
 set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-w")
+
+add_executable(mu2
+  src/main.cpp
+  src/app/application.cpp
+  src/app/context.cpp
+  src/app/preloader.cpp
+  src/app/sweep.cpp
+  src/app/modes/play_mode.cpp
+  src/app/modes/lobby_mode.cpp
+  src/app/modes/bench_mode.cpp
+)
+target_include_directories(mu2 PRIVATE src extern)
+# bimg_encode writes the screenshots.
+target_link_libraries(mu2 PRIVATE mu_game bimg_encode)
+target_compile_definitions(mu2 PRIVATE ${MU_DIRS})
+target_compile_options(mu2 PRIVATE ${MU_WARNINGS})
 if(APPLE)
   target_compile_definitions(mu2 PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
   target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework MetalFX" "-framework QuartzCore" "-framework IOKit")
@@ -330,12 +377,8 @@ target_compile_options(cookcheck PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # cook that wrote nonsense; this one catches a reader that disagrees with the cook.
 add_executable(cooked_test EXCLUDE_FROM_ALL
   tests/cooked_test.cpp
-  src/content/cooked.cpp
-  src/content/showing.cpp
-  src/content/missiles.cpp
-  src/core/files.cpp
-  src/core/log.cpp
 )
+target_link_libraries(cooked_test PRIVATE mu_content_data)
 target_include_directories(cooked_test PRIVATE src)
 target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(cooked_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
@@ -358,10 +401,8 @@ add_executable(sound_test EXCLUDE_FROM_ALL
   tests/sound_test.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp
-  src/content/showing.cpp
-  src/core/files.cpp
-  src/core/log.cpp
 )
+target_link_libraries(sound_test PRIVATE mu_content_data)
 target_include_directories(sound_test PRIVATE src extern)
 target_compile_definitions(sound_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(sound_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
@@ -374,8 +415,8 @@ endif()
 # then in the order, and both looked right on most of the map.
 add_executable(placement_test EXCLUDE_FROM_ALL
   tests/placement_test.cpp
-  src/content/placement.cpp
 )
+target_link_libraries(placement_test PRIVATE mu_content_data)
 target_include_directories(placement_test PRIVATE src)
 target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
@@ -384,40 +425,8 @@ target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-paramete
 # a window" -- is what this target exists to keep true.
 add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test.cpp
-  src/sim/rules.cpp
-  src/sim/swings.cpp
-  src/sim/route.cpp
-  src/sim/items.cpp
-  src/sim/market.cpp
-  src/sim/wear.cpp
-  src/sim/vault.cpp
-  src/sim/machine.cpp
-  src/sim/gates.cpp
-  src/sim/traps.cpp
-  src/sim/realm.cpp
-  src/sim/realm_items.cpp
-  src/sim/realm_machine.cpp
-  src/sim/realm_quests.cpp
-  src/sim/quests.cpp
-  src/sim/realm_travel.cpp
-  src/sim/realm_move.cpp
-  src/sim/realm_fight.cpp
-  src/sim/realm_skills.cpp
-  src/sim/realm_watch.cpp
-  src/sim/realm_traps.cpp
-  src/sim/realm_folk.cpp
-  src/sim/realm_summon.cpp
-  src/sim/realm_invasion.cpp
-  src/sim/realm_raid.cpp
-  src/sim/raid_party.cpp
-  src/sim/skills.cpp
-  src/sim/audit.cpp
-  src/content/grid.cpp
-  src/content/tables.cpp
-  src/core/files.cpp
-  src/core/log.cpp
-  src/core/json.cpp
 )
+target_link_libraries(sim_test PRIVATE mu_sim)
 target_include_directories(sim_test PRIVATE src)
 target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
@@ -426,15 +435,8 @@ target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # loot, gear and the town's counters -- and what happened, when (tools/bot/bot.cpp).
 add_executable(bot EXCLUDE_FROM_ALL
   tools/bot/bot.cpp
-  src/sim/rules.cpp src/sim/swings.cpp src/sim/route.cpp src/sim/items.cpp src/sim/market.cpp
-  src/sim/wear.cpp src/sim/vault.cpp src/sim/machine.cpp src/sim/realm_machine.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
-  src/sim/realm_items.cpp src/sim/realm_quests.cpp src/sim/quests.cpp src/sim/realm_travel.cpp
-  src/sim/realm_move.cpp src/sim/realm_fight.cpp src/sim/realm_skills.cpp src/sim/realm_watch.cpp
-  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/realm_invasion.cpp src/sim/realm_raid.cpp src/sim/raid_party.cpp src/sim/skills.cpp
-  src/sim/audit.cpp src/content/grid.cpp src/content/tables.cpp src/core/files.cpp
-  src/core/log.cpp
-  src/core/json.cpp
 )
+target_link_libraries(bot PRIVATE mu_sim)
 target_include_directories(bot PRIVATE src)
 target_compile_definitions(bot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(bot PRIVATE -Wall -Wextra -Wno-unused-parameter)
@@ -443,15 +445,8 @@ target_compile_options(bot PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # wipe as many times as asked (tools/raid/raid.cpp, docs/golden-dragon-raid.md §2a).
 add_executable(raid EXCLUDE_FROM_ALL
   tools/raid/raid.cpp
-  src/sim/rules.cpp src/sim/swings.cpp src/sim/route.cpp src/sim/items.cpp src/sim/market.cpp
-  src/sim/wear.cpp src/sim/vault.cpp src/sim/machine.cpp src/sim/realm_machine.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
-  src/sim/realm_items.cpp src/sim/realm_quests.cpp src/sim/quests.cpp src/sim/realm_travel.cpp
-  src/sim/realm_move.cpp src/sim/realm_fight.cpp src/sim/realm_skills.cpp src/sim/realm_watch.cpp
-  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/realm_invasion.cpp src/sim/realm_raid.cpp src/sim/raid_party.cpp src/sim/skills.cpp
-  src/sim/audit.cpp src/content/grid.cpp src/content/tables.cpp src/core/files.cpp
-  src/core/log.cpp
-  src/core/json.cpp
 )
+target_link_libraries(raid PRIVATE mu_sim)
 target_include_directories(raid PRIVATE src)
 target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
                                         MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")

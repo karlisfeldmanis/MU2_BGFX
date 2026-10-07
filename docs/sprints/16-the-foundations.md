@@ -23,6 +23,18 @@ A step that cannot hold all three is not part of this sprint.
 
 ### 1. One library per layer (structure-plan M1), S
 
+**Done 2026-10-07.** `mu_core`, `mu_content_data`, `mu_sim`, `mu_content_gpu`, `mu_gfx` and
+`mu_game` are static libraries, each source listed once. `mu2`, `sim_test`, `cooked_test`,
+`placement_test`, `bot`, `raid` and `sound_test` link them. Checked in a private build:
+`sim_test`'s output identical line for line (6568 checks, the standing 17 failing);
+`libmu_sim`, `libmu_content_data` and `libmu_core` hold no bgfx, bimg or glfw symbol; `mu2`'s
+exported symbols identical but one, `slab::draw`, which nothing calls and the archive now
+leaves out; `cooked_test`'s 4 failures are the same 4 as before (content counts).
+Content split by what each file touches: `cooked`, `showing`, `missiles` and `placement` have
+no bgfx and went to `mu_content_data` with `tables` and `grid`; `mu_content_gpu` is `texture`,
+`mesh` and `ground`, and carries `extern/` (cgltf) for everything above it. Sim compiles once
+instead of four times, so a clean build is shorter.
+
 - **Why definitely:**
   - The server target is `core + content_data + sim + net`. Today it cannot be written
     without a fifth copy of the sim source list.
