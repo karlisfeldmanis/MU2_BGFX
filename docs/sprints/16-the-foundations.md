@@ -91,6 +91,18 @@ mutable global in `src/sim`.
 
 ### 3. Saves keyed by what a row is, not where it sits (structure-plan M2), S-M
 
+**Done 2026-10-07.** Save version 3. `QuestRow::key` is set beside each row in quests.cpp's
+table (`keyed(marlon(), "marlon")`, ...; the demo is `demo_roots`), `TravelRow::key` likewise
+(`lorencia` ... `tarkan`); quests are written `{key: [state, counts, at, done]}`, `found` as a
+list of keys, `learned` as a list of MU skill numbers, and `followed` as a key too (it was an
+index as well). A version 1 or 2 file is read once in its own shape -- every quest row until now
+was added at the end, so an old index is its row -- and written as 3; the demo needed no
+exclusion. The in-memory bitmasks are unchanged, so the realm and the fingerprint are.
+`save_test` (in `checks`): the version 2 fixture `tests/fixtures/save_v2.json` (DKTest2) reads,
+writes as 3 and reads the same; the 3 with its quests reversed and an unknown key reads the same
+again. Run on copies of the user's `saves/hero.json` and the three in `saves/characters/`: all
+four the same character, the originals untouched (checksums).
+
 - **Why definitely:** every save written today grows the migration later. Today:
   - Quests are an array in table order (`save.cpp:198-203`), with a demo quest already in the
     middle at index 17.

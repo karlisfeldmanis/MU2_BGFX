@@ -431,6 +431,19 @@ target_include_directories(sim_test PRIVATE src)
 target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# Sprint 16, step 3: a save names quests, travel rows and skills by what they are, not where
+# they sit. A version 2 character read, written as version 3 and read back the same, and read
+# the same again with its quests reordered and an unknown one in them (tests/save_test.cpp).
+# save.cpp is game's, but it reads nothing above core, content and sim.
+add_executable(save_test EXCLUDE_FROM_ALL
+  tests/save_test.cpp
+  src/game/save.cpp
+)
+target_link_libraries(save_test PRIVATE mu_sim)
+target_compile_definitions(save_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
+                                             MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_options(save_test PRIVATE ${MU_WARNINGS})
+
 # The Lorencia bot: a character played from level one with no window -- hunting, potions,
 # loot, gear and the town's counters -- and what happened, when (tools/bot/bot.cpp).
 add_executable(bot EXCLUDE_FROM_ALL
@@ -467,13 +480,14 @@ target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # review" -- was a rule with nobody keeping it. It reads every include in src/ against the
 # arrows in docs/architecture.md and fails on one that is not allowed. It costs milliseconds.
 add_custom_target(checks
-  DEPENDS cooked_test placement_test sim_test boids_test sound_test
+  DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py
   COMMAND $<TARGET_FILE:cooked_test>
   COMMAND $<TARGET_FILE:placement_test>
   COMMAND $<TARGET_FILE:sim_test>
   COMMAND $<TARGET_FILE:boids_test>
   COMMAND $<TARGET_FILE:sound_test>
+  COMMAND $<TARGET_FILE:save_test>
   COMMAND ${CMAKE_SOURCE_DIR}/tools/matcheck.py
   COMMENT "running every check that does not need a window"
   USES_TERMINAL

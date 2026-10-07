@@ -9,7 +9,9 @@
 #include "core/files.h"
 #include "core/json.h"
 #include "core/log.h"
+#include "sim/quests.h"
 #include "sim/skills.h"
+#include "sim/travel.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -20,7 +22,9 @@ namespace {
 // save the ones this reads forward (kOldest up).
 // 2: the mount's slot (sim::kMount) came in as worn slot 12, so every bag slot is one further
 //    on, and a horn worn in slot 8 is the mount's.
-constexpr int kVersion = 2;
+// 3: quests, the followed quest and the travel rows by their keys, skills by MU's number
+//    (2026-10-07, sprint 16 step 3). A 1 or 2 is read in its own shape and written as a 3.
+constexpr int kVersion = 3;
 constexpr int kOldest = 1;
 
 // A version 1 item's slot as version 2 has it.
@@ -165,11 +169,31 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.health = int(doc["health"].numberOr(0));
     hero.mana = int(doc["mana"].numberOr(0));
     hero.money = int64_t(doc["zen"].numberOr(0.0));
-    // Absent in a file written before there were skills, which reads as nought and is right.
-    hero.learned = uint64_t(doc["learned"].numberOr(0.0));
-    // The travel rows he has opened (sim/travel.h), absent in a file written before the list,
-    // which reads as nought: the realm opens his birth town over it (Realm::settleFound).
-    hero.found = uint32_t(doc["found"].numberOr(0.0));
+    // What he has learned, as MU's skill numbers, the way the cooldowns are kept: a row added to
+    // the skill table moves nobody's skills. A file from before 2026-10-07 holds a number, a bit
+    // per table row, read once that way (it went through a double, so rows past 53 were never
+    // in it). Absent in a file written before there were skills, which reads as nought.
+    const core::Json& learned = doc["learned"];
+    if (learned.type == core::Json::Type::Array) {
+        for (size_t i = 0; i < learned.size(); ++i) {
+            const int index = sim::skillIndexOf(int32_t(learned.at(i).numberOr(0.0)));
+            if (index >= 0 && index < 64) hero.learned |= uint64_t(1) << index;
+        }
+    } else {
+        hero.learned = uint64_t(learned.numberOr(0.0));
+    }
+    // The travel rows he has opened (sim/travel.h), by their keys; a file from before 2026-10-07
+    // holds a bit per row. Absent in a file written before the list, which reads as nought: the
+    // realm opens his birth town over it (Realm::settleFound).
+    const core::Json& found = doc["found"];
+    if (found.type == core::Json::Type::Array) {
+        for (size_t i = 0; i < found.size(); ++i) {
+            const int index = sim::travelIndexOf(found.at(i).stringOr(""));
+            if (index >= 0) hero.found |= uint32_t(1) << index;
+        }
+    } else {
+        hero.found = uint32_t(found.numberOr(0.0));
+    }
     // The buff standing on him, absent when none was: skill, damage factor and ticks left.
     // The realm checks all three on the way back in (Realm::restore).
     const core::Json& boon = doc["boon"];
@@ -195,12 +219,19 @@ bool loadSave(const std::string& path, Saved& out) {
         if (index >= 0) hero.coolsLeft[index] = int64_t(cooling.at(i).at(1).numberOr(0.0));
     }
 
-    // The quests, by the table's index: [state, [counts...], available at, completions].
-    // Absent in a file written before there were quests, which reads as none taken.
+    // The quests, by their keys (sim::QuestRow::key): {key: [state, [counts...], available at,
+    // completions]}. A file from before 2026-10-07 holds an array in the table's order, which is
+    // read once that way: every row until then was added at the end, so its index is its row. A
+    // key the table no longer has is dropped. Absent in a file written before there were quests,
+    // which reads as none taken.
     const core::Json& quests = doc["quests"];
-    for (size_t i = 0; i < quests.size() && i < size_t(sim::kQuests); ++i) {
-        const core::Json& one = quests.at(i);
-        sim::QuestProgress& into = hero.quests[i];
+    const bool byKey = quests.type == core::Json::Type::Object;
+    for (size_t i = 0; i < quests.size(); ++i) {
+        const int index = byKey ? sim::questIndexOf(quests.members[i].first)
+                                : i < size_t(sim::kQuests) ? int(i) : -1;
+        if (index < 0) continue;
+        const core::Json& one = byKey ? quests.members[i].second : quests.at(i);
+        sim::QuestProgress& into = hero.quests[index];
         into.state = sim::QuestState(int(one.at(0).numberOr(0.0)));
         const core::Json& counts = one.at(1);
         for (size_t step = 0; step < counts.size() && step < size_t(sim::kQuestSteps); ++step) {
@@ -226,7 +257,11 @@ bool loadSave(const std::string& path, Saved& out) {
     for (size_t key = 0; key < 6 && key < bar.size(); ++key) {
         saved.bar[key] = int32_t(bar.at(key).numberOr(0.0));
     }
-    saved.followed = int(doc["followed"].numberOr(-1.0));
+    // The followed quest by its key; a file from before 2026-10-07 holds the table's index.
+    const core::Json& followed = doc["followed"];
+    saved.followed = followed.type == core::Json::Type::String
+                         ? sim::questIndexOf(followed.string)
+                         : std::clamp(int(followed.numberOr(-1.0)), -1, sim::kQuests - 1);
     const core::Json& quick = doc["quick"];
     for (size_t key = 0; key < 5 && key < quick.size(); ++key) {
         saved.quickGroup[key] = int(quick.at(key)["group"].numberOr(-1));
@@ -342,9 +377,25 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     std::fprintf(f, "  \"health\": %d,\n  \"mana\": %d,\n  \"zen\": %lld,\n", hero.health,
                  hero.mana, static_cast<long long>(hero.money));
     if (hero.learned != 0) {
-        std::fprintf(f, "  \"learned\": %llu,\n", static_cast<unsigned long long>(hero.learned));
+        std::fprintf(f, "  \"learned\": [");
+        bool any = false;
+        for (int i = 0; i < sim::kSkills && i < 64; ++i) {
+            if (((hero.learned >> i) & 1u) == 0) continue;
+            std::fprintf(f, "%s%d", any ? ", " : "", sim::skillAt(i).number);
+            any = true;
+        }
+        std::fprintf(f, "],\n");
     }
-    if (hero.found != 0) std::fprintf(f, "  \"found\": %u,\n", hero.found);
+    if (hero.found != 0) {
+        std::fprintf(f, "  \"found\": [");
+        bool any = false;
+        for (int i = 0; i < sim::kTravels; ++i) {
+            if (((hero.found >> i) & 1u) == 0) continue;
+            std::fprintf(f, "%s\"%s\"", any ? ", " : "", sim::travelAt(i).key);
+            any = true;
+        }
+        std::fprintf(f, "],\n");
+    }
     if (hero.boonSkill != 0 && hero.boonTicksLeft > 0) {
         std::fprintf(f,
                      "  \"boon\": {\"skill\": %d, \"damage_taken\": %.4f, \"ticks_left\": %lld},\n",
@@ -363,16 +414,16 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "  \"summon\": {\"skill\": %d, \"health\": %d},\n", hero.summonSkill,
                      hero.summonHealth);
     }
-    std::fprintf(f, "  \"quests\": [");
+    std::fprintf(f, "  \"quests\": {");
     for (int i = 0; i < sim::kQuests; ++i) {
         const sim::QuestProgress& one = hero.quests[i];
-        std::fprintf(f, "%s[%d, [", i ? ", " : "", int(one.state));
+        std::fprintf(f, "%s\"%s\": [%d, [", i ? ", " : "", sim::questAt(i).key, int(one.state));
         for (int step = 0; step < sim::kQuestSteps; ++step) {
             std::fprintf(f, "%s%d", step ? ", " : "", int(one.counts[step]));
         }
         std::fprintf(f, "], %lld, %u]", static_cast<long long>(one.availableAt), one.completions);
     }
-    std::fprintf(f, "],\n");
+    std::fprintf(f, "},\n");
     bool cooling = false;
     for (int i = 0; i < sim::kSkills; ++i) {
         if (hero.coolsLeft[i] <= 0) continue;
@@ -411,7 +462,9 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "%s%d", key ? ", " : "", saved.bar[key]);
     }
     std::fprintf(f, "]");
-    if (saved.followed >= 0) std::fprintf(f, ",\n  \"followed\": %d", saved.followed);
+    if (saved.followed >= 0 && saved.followed < sim::kQuests) {
+        std::fprintf(f, ",\n  \"followed\": \"%s\"", sim::questAt(saved.followed).key);
+    }
     if (!saved.goBackWorld.empty() && saved.goBackLeft > 0.0) {
         std::fprintf(f,
                      ",\n  \"go_back\": {\"world\": \"%s\", \"column\": %d, \"row\": %d, "

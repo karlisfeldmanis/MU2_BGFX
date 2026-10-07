@@ -1274,14 +1274,35 @@ QuestRow kantursLegion() {
     return row;
 }
 
-const QuestRow kRawTable[kQuests] = {marlon(),      peia(),        devin(),        catacombs(),
-                                  halls(),       pit(),         tersiaDoor(),   tersiaSecond(),
-                                  tersiaThird(),  tersiaFourth(), tersiaFifth(),  tersiaSixth(),
-                                  tersiaBalrog(), sevinaTrial(), brokenSword(),  soulOfWizard(),
-                                  tearOfElf(),
-                                  demoQuest("Whispers in the Roots (demo)", 0),
-                                  drownedSong(), lirienHalls(), roadOfKantur(),
-                                  kantursLegion()};
+// Each row with the key a save knows it by (QuestRow::key).
+QuestRow keyed(QuestRow row, const char* key) {
+    row.key = key;
+    return row;
+}
+const QuestRow kRawTable[kQuests] = {
+    keyed(marlon(), "marlon"),
+    keyed(peia(), "peia"),
+    keyed(devin(), "devin"),
+    keyed(catacombs(), "catacombs"),
+    keyed(halls(), "halls"),
+    keyed(pit(), "pit"),
+    keyed(tersiaDoor(), "tersia_door"),
+    keyed(tersiaSecond(), "tersia_2"),
+    keyed(tersiaThird(), "tersia_3"),
+    keyed(tersiaFourth(), "tersia_4"),
+    keyed(tersiaFifth(), "tersia_5"),
+    keyed(tersiaSixth(), "tersia_6"),
+    keyed(tersiaBalrog(), "tersia_balrog"),
+    keyed(sevinaTrial(), "sevina_trial"),
+    keyed(brokenSword(), "broken_sword"),
+    keyed(soulOfWizard(), "soul_of_wizard"),
+    keyed(tearOfElf(), "tear_of_elf"),
+    keyed(demoQuest("Whispers in the Roots (demo)", 0), "demo_roots"),
+    keyed(drownedSong(), "drowned_song"),
+    keyed(lirienHalls(), "lirien_halls"),
+    keyed(roadOfKantur(), "road_of_kantur"),
+    keyed(kantursLegion(), "kanturs_legion"),
+};
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every
 // class (the user, 2026-10-04: 'give fireccracker on all quests', then 'give 3 firecrackers in
@@ -1325,6 +1346,13 @@ bool questReceives(int32_t number) {
         if (questElsewhere(kTable[i]) && kTable[i].receiver == number) return true;
     }
     return false;
+}
+
+int questIndexOf(const std::string& key) {
+    for (int i = 0; i < kQuests; ++i) {
+        if (key == kTable[i].key) return i;
+    }
+    return -1;
 }
 
 int questOf(int32_t giver) {

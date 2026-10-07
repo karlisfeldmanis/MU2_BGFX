@@ -19,6 +19,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "sim/rules.h"
 
@@ -80,6 +81,10 @@ inline bool questPays(const QuestItem& what, int kin, bool first) {
 }
 
 struct QuestRow {
+    // What a save calls it (game/save.cpp): never its index, so a row inserted later moves no
+    // character's progress onto another quest. Set beside the row in quests.cpp's table, unique,
+    // and never renamed once a save may hold it.
+    const char* key = "";
     int32_t giver = 0;          // the giver's MU NPC number (Tables::folk)
     const char* giverName = "";
     const char* place = "";     // the giver's town, for the dialog's "Marlon of Lorencia"
@@ -216,6 +221,8 @@ inline constexpr int kKantursLegion = 21;
 // Who gives quest `index`: its row's giver, or Peia for kDemoQuests when the realm's config has
 // the demo on (RealmConfig::questDemo, --quest-demo). The table itself never changes.
 int32_t questGiver(int index, bool demo);
+// The row a save's key names, or -1 for one the table no longer has.
+int questIndexOf(const std::string& key);
 // The quest a giver hands out, by NPC number, or -1. One a giver.
 int questOf(int32_t giver);
 // Whether this NPC takes back a quest someone else gave (QuestRow::receiver): Lirien.

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace mu::sim {
 
@@ -25,10 +26,13 @@ struct TravelRow {
     int64_t zen;           // and its price
     int32_t column, row;   // the middle of the exit gate it lands on
     int8_t dx, dy;         // that gate's facing, as sim/gates.h stores one
+    const char* key;       // what a save calls it (game/save.cpp), never renamed: not its index
 };
 
 inline constexpr int kTravels = 15;
 const TravelRow& travelAt(int index);
+// The row a save's key names, or -1.
+int travelIndexOf(const std::string& key);
 
 // Why a trip is refused, first reason first. `Here` is a row landing in a safe zone of the map he
 // is on, asked from inside one; from its field the row sets him down at its landing (the user,
