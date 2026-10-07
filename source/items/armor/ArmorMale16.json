@@ -1,0 +1,185 @@
+{
+  "item": "ArmorMale16",
+  "mu_name": "Storm Crow Armor",
+  "mu_name_from": "MuMain loads MODEL_STORM_CROW_ARMOR from Data/Player/ArmorMale16.bmd (ZzzOpenData.cpp:154-157: AccessModel(..., \"ArmorMale\", 16); the set at index 15 is file 16). MU's group 8 number 15.",
+  "why_this_one": "The Magic Gladiator's own set, skipped with the knight's Tarkan imports (the user, 2026-10-06) and built for him (the user, 2026-10-07: 'Both', the set and the level 220 gate). No helm: MU's gladiator wears none.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.95d's Armors.cs stops at index 14).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:132.",
+    "call": "CreateArmor(15, 3, 2, 3, \"Storm Crow Armor\", 80, 44, 80, 0, 150, 70, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "group": 8,
+    "number": 15,
+    "drop_level": 80,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 3,
+    "defense": 44,
+    "durability": 80,
+    "requires": {
+      "level": 0,
+      "strength": 150,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "classes_from": "magicGladiatorClassLevel 1 and every other class 0 in Season 6; MuMain's item.bmd RequireClass is [0, 0, 0, 1]: his alone."
+  },
+  "sheets": {
+    "upper_14": "upper_14.png",
+    "hide": "hide.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: violet lacquered plate whose .OZT alpha cuts its engraving away (a fifth of each sheet).",
+  "sheet_note": "Not a cutout: MuMain draws the piece RENDER_CHROME on Chrome02 first and its sheet over it (ZzzObject.cpp:6956-6959), so the cut texels show chrome, not holes. Drawn opaque here, their near-black RGB left in, and game/shine.h's kShineCrow lays the chrome on them (shaders/shine.sh shineCrowAdded).",
+  "material_note": "painted_steel with the cast grain, as Black Dragon's (ArmorMale17): lacquered plate, MU's paint the look.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks down the legs and the pauldrons (studio, 2026-10-04: the user, 'something wrong with pants'). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain's only arm for MODEL_STORM_CROW_* is the chrome pass above; no ItemObjectAttribute glow.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 160,
+      "area": 12613.4,
+      "along": [
+        -17.4,
+        14.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.887,
+        0.949
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 19,
+      "area": 2311.6,
+      "along": [
+        -14.8,
+        14.0
+      ],
+      "mu_uv": [
+        0.635,
+        0.44,
+        0.994,
+        0.972
+      ],
+      "bake_uv": [
+        0.271,
+        0.123,
+        0.956,
+        0.928
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 271.8,
+      "along": [
+        -4.1,
+        7.9
+      ],
+      "mu_uv": [
+        0.51,
+        0.161,
+        0.842,
+        0.391
+      ],
+      "bake_uv": [
+        0.14,
+        0.758,
+        0.341,
+        0.978
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 449.2,
+      "along": [
+        6.1,
+        16.9
+      ],
+      "mu_uv": [
+        0.702,
+        0.012,
+        0.915,
+        0.24
+      ],
+      "bake_uv": [
+        0.869,
+        0.008,
+        0.992,
+        0.873
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 19,
+      "area": 2311.5,
+      "along": [
+        -14.8,
+        14.0
+      ],
+      "mu_uv": [
+        0.635,
+        0.44,
+        0.994,
+        0.972
+      ],
+      "bake_uv": [
+        0.009,
+        0.503,
+        0.933,
+        0.798
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 271.8,
+      "along": [
+        -4.1,
+        7.9
+      ],
+      "mu_uv": [
+        0.51,
+        0.161,
+        0.842,
+        0.391
+      ],
+      "bake_uv": [
+        0.319,
+        0.797,
+        0.514,
+        0.981
+      ]
+    }
+  ]
+}

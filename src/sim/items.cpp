@@ -265,10 +265,11 @@ int setOf(const content::ItemRow& row) {
     return row.group >= kGroupHelms && row.group <= kGroupBoots ? row.number : -1;
 }
 
-double setDefense(const content::Tables& tables, const Satchel& bag) {
+double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin) {
     int set = -1;
     bool excellent = true;
-    for (int slot = kHelm; slot <= kBoots; ++slot) {
+    const bool gladiator = kin == Kin::MagicGladiator;
+    for (int slot = gladiator ? kArmour : kHelm; slot <= kBoots; ++slot) {
         const Held& worn = bag[slot];
         if (worn.empty() || size_t(worn.item) >= tables.items.size()) return 0.0;
         const int of = setOf(tables.items[size_t(worn.item)]);
@@ -276,6 +277,7 @@ double setDefense(const content::Tables& tables, const Satchel& bag) {
         set = of;
         excellent = excellent && worn.excellent != 0;
     }
+    if (gladiator && set != kGladiatorSet) return 0.0;
     return excellent ? kExcellentSetDefense : kSetDefense;
 }
 

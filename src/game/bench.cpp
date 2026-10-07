@@ -675,8 +675,9 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
         for (size_t i = first; i < drawables_.size(); ++i) {
             const auto found = shineByMesh_.find(drawables_[i].mesh->name());
             if (found == shineByMesh_.end()) continue;
-            // The Wings of Darkness's own pass rides above the plus and is kept (game/shine.h).
-            const int dark = drawables_[i].refine >= kShineDarkness ? kShineDarkness : 0;
+            // The Wings of Darkness's own pass rides above the plus and is kept (game/shine.h);
+            // the Storm Crow's comes with its look.
+            const int dark = (drawables_[i].refine / kShineDarkness) % 2 ? kShineDarkness : 0;
             wear(found->second, drawables_[i]);
             drawables_[i].refine += dark;
         }

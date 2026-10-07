@@ -108,6 +108,7 @@ void main()
 	colour += shineExcellentAdded(shineExcellent(v_refine.x), normalize(v_normal));
 	colour += shineSweepAdded(plus, shineSweep(v_refine.x), normalize(v_normal));
 	colour += shineDarknessAdded(shineDarkness(v_refine.x), normalize(v_normal));
+	colour += shineCrowAdded(shineCrow(v_refine.x), normalize(v_normal), albedoTex.rgb);
 
 	gl_FragColor = vec4(toSrgb(colour), 1.0);
 }

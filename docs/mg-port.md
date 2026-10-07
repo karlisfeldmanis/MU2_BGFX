@@ -111,7 +111,10 @@ damage (`0b00` / `0b10`), the 2nd wings' damage table. The model is MuMain's `MO
    (sim/machine.cpp's class switch) and the `isSecond` gate in `sim::fits`, which he must pass
    without a class change. MU's violet chrome pass (game/shine.h kShineDarkness, Chrome02) and
    rib sparks (game/wings.cpp) are in, and its second action on a safe tile.
-7. **His set**, if wanted: Storm Crow (no helm), asked before building.
+7. **His set:** Storm Crow, done 2026-10-07 (the user: 'Both'). MU's 8-11/15 from MuMain's
+   ArmorMale16 to BootMale16 on OpenMU's Season 6 rows, his alone, no helm. Its engraving is
+   MuMain's chrome pass under the sheet (game/shine.h kShineCrow). His full set is armour to boots
+   and only his own (sim::setDefense, kGladiatorSet; MuMain's CheckFullSet).
 
 ## Open
 

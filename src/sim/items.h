@@ -581,7 +581,12 @@ constexpr double kExcellentSetDefense = 0.10;
 // The set a row belongs to -- its number -- or -1 for anything that is not one of the five.
 int setOf(const content::ItemRow& row);
 // What the five worn pieces raise the defence by: 0, kSetDefense or kExcellentSetDefense.
-double setDefense(const content::Tables& tables, const Satchel& bag);
+// The Magic Gladiator's set is armour to boots, his head bare, and counts only when it is his own
+// -- Storm Crow, kGladiatorSet -- as MuMain's CheckFullSet has it (ZzzCharacter.cpp:5404-5466:
+// `end = EQUIPMENT_ARMOR` for CLASS_DARK, then no added defence unless the armour is
+// ITEM_STORM_CROW_ARMOR or a later set of his). A knight's set on him without its helm is none.
+constexpr int kGladiatorSet = 15;
+double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin = Kin::DarkKnight);
 
 // ---- sockets and the Rune of Creation ----------------------------------------------------
 //

@@ -4754,6 +4754,18 @@ void testSets(const content::Tables& tables) {
         checkNear(sim::setDefense(tables, fine.satchel()), sim::kExcellentSetDefense, 1e-9,
                   "five excellent are 10%");
         checkNear(sim::setDefense(tables, odd.satchel()), 0.0, 1e-9, "a stranger's helm breaks it");
+        // The Magic Gladiator's: Storm Crow's four, bare-headed, and nobody else's set.
+        sim::Realm crow;
+        crow.raise(&tables, 3, 140, 128, sim::Kin::MagicGladiator, 1);
+        for (const char* piece : {"ArmorMale16", "PantMale16", "GloveMale16", "BootMale16"}) {
+            const int32_t item = tables.itemNamed(piece);
+            const int slot = item >= 0 ? sim::placeOf(tables.items[size_t(item)]) : -1;
+            if (slot >= 0) crow.give(item, slot);
+        }
+        checkNear(sim::setDefense(tables, crow.satchel(), sim::Kin::MagicGladiator), sim::kSetDefense,
+                  1e-9, "Storm Crow's four are the gladiator's set, no helm");
+        checkNear(sim::setDefense(tables, five.satchel(), sim::Kin::MagicGladiator), 0.0, 1e-9,
+                  "and a knight's set is none of his");
     }
     // On the final defence, after the halving, truncated.
     sim::Arms arms;

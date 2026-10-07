@@ -33,6 +33,8 @@ struct ShineLook {
     // At +11 the Chrome02 sweep's colour, PartObjectColor2's number (ZzzObject.cpp:6827):
     // 0 white, 1 orange, 2 blue, 3 white at full. shaders/shine.sh's shineSweepAdded.
     int sweep = 0;
+    // The Storm Crow set's chrome under its paint (kShineCrow).
+    bool crow = false;
 };
 
 // How the three ride the one float the shader is handed: the level (a quiver's doubled plus
@@ -44,6 +46,11 @@ constexpr int kShineSweep = 64;
 // that wing twice, the second time RENDER_BRIGHT | RENDER_CHROME on Chrome02 at (0.8, 0.6, 1)
 // (ZzzObject.cpp:6970-6976). shaders/shine.sh's shineDarknessAdded.
 constexpr int kShineDarkness = 256;
+// And the Storm Crow set's (8-11/15), the Magic Gladiator's: MuMain draws each piece twice,
+// RENDER_TEXTURE | RENDER_CHROME on Chrome02 and then its sheet over it (ZzzObject.cpp:
+// 6956-6959), so where the sheet's alpha is cut the chrome shows -- its engraving. Here the sheet
+// is opaque, its cut texels near-black, and shine.sh's shineCrowAdded lays Chrome02 on those.
+constexpr int kShineCrow = 512;
 inline int shineLevelOf(int refine) { return refine % kShineExcellent; }
 inline int shineFlagsOf(int refine) { return refine - shineLevelOf(refine); }
 
@@ -52,7 +59,8 @@ ShineLook shineOf(const content::ItemRow& row, int plus, bool excellent = false)
 
 // Puts it on a drawable.
 inline void wear(const ShineLook& look, gfx::Drawable& drawable) {
-    drawable.refine = look.level + (look.excellent ? kShineExcellent : 0) + look.sweep * kShineSweep;
+    drawable.refine = look.level + (look.excellent ? kShineExcellent : 0) + look.sweep * kShineSweep +
+                      (look.crow ? kShineCrow : 0);
     drawable.refineColour[0] = look.colour[0];
     drawable.refineColour[1] = look.colour[1];
     drawable.refineColour[2] = look.colour[2];
