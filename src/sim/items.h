@@ -985,10 +985,11 @@ constexpr int32_t kBurnRuneEvery = 20;
 constexpr double kPlagueChance = 0.20;
 constexpr double kPlagueMost = 0.50;
 constexpr double kPlagueShare = 0.03;
-// **Bulwark** (the user: "allow to use defense skill without shield"), a knight's weapon's: his
-// Defense goes up with no shield on his arm -- a second weapon, a two-handed one or an empty
-// hand -- off his strength and agility alone (`guardShare` with no shield's defence in it).
-// invention.
+// **Bulwark** (the user: "allow to use defense skill without shield"), a knight's or a wizard's
+// weapon's, the second class's: his Defense or Soul Barrier goes up with no shield on his arm --
+// a second weapon, a two-handed one or an empty hand -- off his own points alone (`guardShare`
+// or `barrierShare` with no shield's defence in it). The wizard's since 2026-10-07 (the user:
+// 'we need also for DW'). invention.
 // **Kinship** (the user: "remove guardian angel or imp debuffs"), every class's, in a ring or
 // the pendant: the worn pet's price is lifted -- the Guardian Angel's x0.8 on his blows (ours,
 // sim::petPower) and the life the Imp and the Horn of Dinorant take for each blow they raise.

@@ -8208,7 +8208,7 @@ void testGroupRunes(const content::Tables& tables) {
         groupless += sim::powerOf(uint8_t(p))->classes == 0 || sim::powerOf(uint8_t(p))->slots == 0;
     }
     checkEqual(groupless, 0, "every rune names its classes and its sockets");
-    for (const Power power : {Power::Fireburst, Power::FireRing, Power::Bulwark}) {
+    for (const Power power : {Power::Fireburst, Power::FireRing}) {
         check(sets(power, sword, Kin::DarkKnight), "a knight's rune goes in his sword");
         check(!sets(power, sword, Kin::DarkWizard) && !sets(power, sword, Kin::FairyElf),
               "and in no other class's");
@@ -8226,6 +8226,29 @@ void testGroupRunes(const content::Tables& tables) {
           "Evil Spirit in a ring and not a plate");
     check(sets(Power::Inferno, ring, Kin::FairyElf) && sets(Power::Inferno, sword, Kin::FairyElf),
           "an element rune in a ring or a weapon");
+
+    // Bulwark: the knight's and the wizard's, in a weapon and nowhere else.
+    check(sets(Power::Bulwark, sword, Kin::DarkKnight) && sets(Power::Bulwark, sword, Kin::DarkWizard),
+          "Bulwark goes in a knight's or a wizard's weapon");
+    check(!sets(Power::Bulwark, sword, Kin::FairyElf), "and not an elf's");
+    check(!sets(Power::Bulwark, ring, Kin::DarkWizard) && !sets(Power::Bulwark, plate, Kin::DarkWizard),
+          "and not in a ring or armour");
+    // And the wizard's Soul Barrier up with no shield only while his weapon carries one.
+    for (const bool worn : {false, true}) {
+        sim::Realm wizard;
+        wizard.raise(&tables, 7, 190, 110, Kin::DarkWizard, 30);
+        promote(wizard);  // Bulwark is the Soul Master's
+        wizard.learn(sim::skill::kSoulBarrier);
+        const uint8_t powers[3] = {uint8_t(worn ? Power::Bulwark : Power::None), 0, 0};
+        wizard.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        wizard.invoke(sim::skill::kSoulBarrier, wizard.hero().id);
+        for (int tick = 0; tick < 60 && wizard.cooling(sim::skill::kSoulBarrier) == 0; ++tick) {
+            wizard.step();
+        }
+        const bool raised = wizard.hero().boonSkill == sim::skill::kSoulBarrier;
+        check(raised == worn, worn ? "a Bulwark weapon raises Soul Barrier with no shield"
+                                   : "and a bare one does not");
+    }
 
     // Bulwark: Defense up with a bare sword only while it carries one.
     for (const bool worn : {false, true}) {

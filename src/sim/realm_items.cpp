@@ -375,7 +375,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (power && elementOf(power->power) != Element::None) {
                 ++hero.excel.elementRunes[int(elementOf(power->power))];
             }
-            // The knight's Bulwark from his hands, Kinship from the rings and the pendant.
+            // A knight's or a wizard's Bulwark from his hands, Kinship from the rings and the pendant.
             if (power && power->power == Power::Bulwark && !jewellery(*row) &&
                 power->takenBy(hero.kin, hero.second)) {
                 hero.excel.bulwark = true;

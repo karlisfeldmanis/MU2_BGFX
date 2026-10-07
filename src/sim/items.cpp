@@ -427,8 +427,10 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Scorch, "Scorch",
          "Fire spells: 15% to burn the target for 3% of its life a second, 4 s", kWizardOnly,
          kInWeapon, Rarity::Epic},
-        {Power::Bulwark, "Bulwark", "Defense works without a shield", kKnightOnly,
-         kInWeapon, Rarity::Legendary, true},
+        // The wizard's too since 2026-10-07 (the user: 'we need also for DW'): Soul Barrier
+        // with a two-handed staff, an empty hand or anything but a shield.
+        {Power::Bulwark, "Bulwark", "Defense and Soul Barrier work without a shield",
+         kKnightOnly | kWizardOnly, kInWeapon, Rarity::Legendary, true},
         // Every Fairy Elf's, as Arcane Echo is every wizard's (the user, 2026-10-05: Lirien's
         // Atlans clear pays it to the first-class elf).
         {Power::Frost, "Frost Arrow", "20% on hit: freezes the target for 2 s and wounds it",

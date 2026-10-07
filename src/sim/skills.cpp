@@ -180,7 +180,7 @@ constexpr SkillRow kRows[kSkills] = {
     // the wave and the class is Defense's own so the two classes stand level (the user, 2026-09-28): five minutes, a
     // twelve-second cooldown floored at its own length and two, **thrown on himself only**, and
     // **only behind a shield** -- `kShield`, which the wizard wears in the Small Shield, the
-    // Buckler and the Skull Shield. MU casts it on a party member as well (`ClassAttack.cpp`,
+    // Buckler and the Skull Shield -- or a Bulwark in his staff (sim/items.h). MU casts it on a party member as well (`ClassAttack.cpp`,
     // the `SelectedCharacter` arm); there is no party here and the user ruled it self-only.
     //
     // **And it is drawn as Defense is**, the user's of 2026-09-28: the knight's stance (187) and

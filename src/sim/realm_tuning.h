@@ -547,7 +547,8 @@ inline Element skillElement(int32_t number) {
 }
 
 // The family on his arm as a self-cast asks it (`SkillRow::suits`): the shield's, and a
-// shield's for a knight with a Bulwark in his hands whatever he holds there (sim/items.h).
+// shield's for a knight or a wizard with a Bulwark in his hands whatever he holds there
+// (sim/items.h).
 inline uint32_t armFamily(const Body& hero, const content::Arm* onArm) {
     return familyOf(onArm) | (hero.excel.bulwark ? arms::kShield : arms::kNone);
 }
