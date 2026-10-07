@@ -197,6 +197,7 @@ void printUsage() {
         "  --arena-count N           how many of them (default 1)\n"
         "  --arena-learn N           the hero is taught skill N and the arena fights with it\n"
         "  --arena-undying           a blow that would fell the hero fills his health, arena or not\n"
+        "  --wing-demo               every kill in Icarus leaves his class's first wings (a demo)\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
@@ -359,6 +360,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.arenaLearn = std::atoi(v);
         } else if (!std::strcmp(s, "--arena-undying")) {
             a.arenaUndying = true;
+        } else if (!std::strcmp(s, "--wing-demo")) {
+            a.wingDemo = true;
         } else if (!std::strcmp(s, "--castle-open")) {
             a.castleOpen = true;
         } else if (!std::strcmp(s, "--invasion")) {

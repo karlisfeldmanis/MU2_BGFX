@@ -683,6 +683,8 @@ public:
     // The bench's (`--arena-undying`): a blow that would fell the hero fills his health instead,
     // so a fight runs as long as it is watched. Never set in play.
     void undying(bool on) { undying_ = on; }
+    // The demo's (`--wing-demo`): every kill in Icarus leaves the first wings. Never set in play.
+    void wingDemo(bool on) { wingDemo_ = on; }
     // Whether he may throw it at all: learned, or a mount's skill and that mount worn
     // (`SkillRow::mounted`). What the bar and the list ask, and `throwSkill` before it spends.
     bool knows(int32_t skill) const;
@@ -1551,6 +1553,7 @@ private:
     static constexpr int kFires = 8;
     Fire fires_[kFires] = {};
     bool undying_ = false;  // `undying`
+    bool wingDemo_ = false;  // `wingDemo`
     int64_t tick_ = 0;
     std::string refusal_;
     uint32_t nextId_ = 1;

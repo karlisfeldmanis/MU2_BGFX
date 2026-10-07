@@ -187,6 +187,7 @@ struct Args {
     int arenaCount = 1;
     int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
+    bool wingDemo = false;      // `--wing-demo`: every kill in Icarus leaves the first wings
     bool castleOpen = false;    // `--castle-open`: the Messenger's door open at any hour (a test)
     bool invasion = false;      // `--invasion`: the map's Golden Invasion begun at once (a test)
     // `--raid N`: the Golden Dragon's raid (docs/golden-dragon-raid.md) -- the party of

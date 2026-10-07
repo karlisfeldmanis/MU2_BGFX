@@ -281,6 +281,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         realm_.undying(true);
         core::logf("arena: the hero is undying");
     }
+    if (arena_.wingDemo) {
+        realm_.wingDemo(true);
+        core::logf("arena: every kill in Icarus leaves the first wings");
+    }
 
     // A figure for every body, made once. Bodies are never added or removed after the realm is
     // raised -- a dead monster is a body waiting for its respawn -- so this list is as fixed as

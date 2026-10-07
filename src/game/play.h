@@ -101,6 +101,8 @@ public:
         int32_t learn = 0;
         // `--arena-undying`: the hero is never felled, so a long fight can be watched.
         bool undying = false;
+        // `--wing-demo`: every kill in Icarus leaves the first wings (sim::kIcarusWingOdds at 1).
+        bool wingDemo = false;
         // `--peaceful`: no nests at all, breed or none -- a map to walk and run in with nothing
         // to rouse. For looking at locomotion.
         bool peaceful = false;

@@ -266,12 +266,14 @@ bool PlayMode::open(Context& ctx) {
             // Before the realm is raised, because all the arena is is the nest table the
             // realm is about to be handed. See Play::Arena.
             // --arena-learn alone teaches in a plain play run too, for a hand-played try.
-            if (!args.arena.empty() || args.peaceful || args.arenaLearn != 0 || args.arenaUndying) {
+            if (!args.arena.empty() || args.peaceful || args.arenaLearn != 0 || args.arenaUndying ||
+                args.wingDemo) {
                 game::Play::Arena arena;
                 arena.breed = args.arena;
                 arena.count = args.arenaCount;
                 arena.learn = args.arenaLearn;
                 arena.undying = args.arenaUndying;
+                arena.wingDemo = args.wingDemo;
                 arena.peaceful = args.peaceful;
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);

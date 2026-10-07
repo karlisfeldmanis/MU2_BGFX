@@ -1129,7 +1129,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         }
     }
     // The first wings in Icarus, the hero's class's, the same way (sim::kIcarusWingOdds).
-    if (tables_->map == kIcarusMap && wingDice_.nextInt(0, kIcarusWingOdds) == 0) {
+    if (tables_->map == kIcarusMap && (wingDice_.nextInt(0, kIcarusWingOdds) == 0 || wingDemo_)) {
         const int32_t item = tables_->itemAt(12, firstWingOf(bodies_[0].kin));
         if (item >= 0) {
             const content::ItemRow& row = tables_->items[size_t(item)];
