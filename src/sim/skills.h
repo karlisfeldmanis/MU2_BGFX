@@ -514,6 +514,12 @@ const SkillRow& skillAt(int index);
 // bit and a cooldown are keyed on -- not the skill number, so the arrays stay six wide.
 const SkillRow* skillNumbered(int32_t number);
 int skillIndexOf(int32_t number);
+// Whether this class may throw this row: its own class's, and for the Magic Gladiator the
+// wizard's spells and the knight's skills but Teleport, Nova (the Soul Master's), Rageful Blow
+// and Death Stab -- MuMain's Data/Local/item.bmd RequireClass[3] on the scrolls and orbs, and
+// OpenMU Version095d SkillsInitializer.cs:41-80 -- with Soul Barrier his (the user, 2026-10-07:
+// 'MG can use shield skill, and also can use Soul barrier').
+bool skillFor(const SkillRow& row, Kin kin);
 
 // ---- the two formulas (docs/skills-dk.md §3.2) --------------------------------------------
 

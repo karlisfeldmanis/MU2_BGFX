@@ -17,8 +17,10 @@
     "durability_note": "One. One reading, as a scroll is.",
     "value": 3000,
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd marks it in RequireClass[3], his column (docs/mg-port.md).",
     "classes_from": "CharacterClasses.DarkKnight. Every skill in this orb's family is a knight's; Prize.ReadBy refuses the other two whatever their level.",
     "requires": {
       "level": 26,

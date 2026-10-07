@@ -438,7 +438,7 @@ const PowerRow* powerOf(uint8_t power) {
          kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         // The wizard's too since 2026-10-07 (the user: 'we need also for DW'): Soul Barrier
         // with a two-handed staff, an empty hand or anything but a shield.
-        {Power::Bulwark, "Bulwark", "Defense and Soul Barrier work without a shield",
+        {Power::Bulwark, "Bulwark", "Defense and Magic Shield work without a shield",
          kKnightOnly | kWizardOnly, kInWeapon, Rarity::Legendary, true},
         // Every Fairy Elf's, as Arcane Echo is every wizard's (the user, 2026-10-05: Lirien's
         // Atlans clear pays it to the first-class elf).

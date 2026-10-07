@@ -16,8 +16,10 @@
     "height": 2,
     "durability": 1,
     "classes": [
-      "wizard"
+      "wizard",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd marks it in RequireClass[3], his column (docs/mg-port.md).",
     "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll (Version095d adds the Magic Gladiator, who is not in this game). Prize.ReadBy refuses the other two. The user calls it the Soul Master's; MU lets any wizard read it, and so does this."
   },
   "skill": {

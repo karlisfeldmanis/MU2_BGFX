@@ -17,8 +17,10 @@
     "durability_note": "One. One reading, as a scroll is.",
     "value": 500,
     "classes": [
-      "knight"
+      "knight",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too: OpenMU Version095d SkillsInitializer.cs:61 gives him Defense, and he casts it without a shield (sim::armFamily).",
     "classes_from": "CharacterClasses.DarkKnight. Every skill in this orb's family is a knight's; Prize.ReadBy refuses the other two whatever their level.",
     "requires": {
       "level": 12,

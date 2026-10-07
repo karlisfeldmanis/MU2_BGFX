@@ -77,7 +77,7 @@ bool Realm::knows(int32_t skill) const {
     // A mount's skill is the horn's, as 0.75's skills were the weapon's: known while it is worn
     // and not saved -- for his class alone, as MuMain marks it the knight's on the horn.
     const SkillRow& row = skillAt(index);
-    if (row.mounted) return row.kin == bodies_[0].kin && dinorantWorn();
+    if (row.mounted) return skillFor(row, bodies_[0].kin) && dinorantWorn();
     return (bodies_[0].learned & (uint64_t(1) << index)) != 0;
 }
 
@@ -133,7 +133,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     }
     // And his class's. Learning already asks it -- an orb or a scroll refuses the wrong class --
     // so this is the same answer asked again where the skill is spent.
-    if (row.kin != hero.kin) return false;
+    if (!skillFor(row, hero.kin)) return false;
 
     // The cooldown, which is ours and has no counterpart in 0.75. A wait rather than a refusal,
     // exactly as the swing timer is: the key does nothing and says nothing. A summon key still
@@ -650,7 +650,7 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
                     : (hero.learned & (uint64_t(1) << index)) == 0) {
         return false;
     }
-    if (row.kin != hero.kin || hero.mana < row.mana) return false;
+    if (!skillFor(row, hero.kin) || hero.mana < row.mana) return false;
     // A fan with nothing to loose falls back to the bow, which then says there are no arrows.
     if (row.arrows > 0 && !quivered(hero)) return false;
     const auto armAt = [&](int32_t at) -> const content::Arm* {

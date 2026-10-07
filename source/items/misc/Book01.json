@@ -19,8 +19,10 @@
     "durability": 1,
     "durability_note": "One. One reading.",
     "classes": [
-      "wizard"
+      "wizard",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd marks it in RequireClass[3], his column (docs/mg-port.md).",
     "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll, on all twelve. Read by Prize.ReadBy where the scroll is read; before the orbs it was a Trade test in Realm.Read."
   },
   "skill": {

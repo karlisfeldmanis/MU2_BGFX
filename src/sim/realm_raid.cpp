@@ -1058,7 +1058,7 @@ void Realm::raid(Body& one, int index) {
     };
     const auto ready = [&](const SkillRow& row) {
         const int skillAt = skillIndexOf(row.number);
-        if (skillAt < 0 || one.cools[skillAt] > tick_ || row.kin != one.kin) return false;
+        if (skillAt < 0 || one.cools[skillAt] > tick_ || !skillFor(row, one.kin)) return false;
         if (one.mana < row.mana) return false;
         return row.onSelf() ? row.suits(armFamily(one, armAt(one.shield)))
                             : row.suits(familyOf(armAt(one.weapon)));

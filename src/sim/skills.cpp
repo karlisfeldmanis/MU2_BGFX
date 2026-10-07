@@ -192,7 +192,8 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // Not `wizardry`: it throws no blow, and a spell row asks nothing of the hand, which this one
     // must.
-    {skill::kSoulBarrier, "Soul Barrier", 70, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000,
+    // Shown as Magic Shield (the user, 2026-10-07: 'rename soul barier to Magic Shield').
+    {skill::kSoulBarrier, "Magic Shield", 70, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000,
      0.50f,
      "A barrier drawn up behind the shield for five minutes. The better the shield and the "
      "keener the wizard, the more of every blow it takes.",
@@ -964,6 +965,19 @@ int32_t authoredCastTicks(const content::Tables& tables, const SkillRow& row) {
     const content::PlayerAction* clip = tables.action(row.clip);
     if (!clip || clip->keys <= 0 || clip->speed <= 0.0f) return 0;
     return swingTicks(int(float(clip->keys) / (clip->speed * 25.0f) * 1000.0f));
+}
+
+bool skillFor(const SkillRow& row, Kin kin) {
+    if (row.kin == kin) return true;
+    if (kin != Kin::MagicGladiator) return false;
+    if (row.kin != Kin::DarkWizard && row.kin != Kin::DarkKnight) return false;
+    switch (row.number) {
+        case skill::kTeleport:
+        case skill::kNova:
+        case skill::kRagefulBlow:
+        case skill::kDeathStab: return false;
+        default: return true;
+    }
 }
 
 float magicSpeedStat(Kin kin, int agility) {

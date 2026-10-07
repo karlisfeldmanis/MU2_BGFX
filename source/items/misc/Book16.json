@@ -1,6 +1,7 @@
 {
   "item": "Book16",
-  "mu_name": "Scroll of Soul Barrier",
+  "mu_name": "Scroll of Magic Shield",
+  "mu_name_ours": "MU's Scroll of Soul Barrier, named Magic Shield here (the user, 2026-10-07: 'rename soul barier to Magic Shield').",
   "mu_name_from": "ZzzOpenData.cpp loads item group ITEM_ETC number i from Book{i+1:02}.bmd for i up to 19, so number 15 is Book16.bmd; MuMain's _enum.h names it ITEM_SCROLL_OF_SOUL_BARRIER = ITEM_ETC + 15, and OpenMU's VersionSeasonSix/Items/Scrolls.cs:52 names group 15 number 15 the Scroll of Soul Barrier. Season 6 in OpenMU's tree, not 0.75 (docs/mu-scrolls-and-orbs.md SS1).",
   "why_this_one": "The wizard's answer to the knight's Orb of Defense, asked for by the user on 2026-09-28: buy the scroll, read it, cast it on himself behind a shield, and stand five minutes under a guard the knight's size. It is a late spell in MU (energy 408 in Season 6) and is brought down to the knight's level on purpose: every requirement, the drop level and the price are the Orb of Defense's, so the two classes meet their guard at the same point in the game. See docs/skills-dw.md.",
   "mesh": "Book01",
@@ -15,8 +16,10 @@
     "height": 2,
     "durability": 1,
     "classes": [
-      "wizard"
+      "wizard",
+      "gladiator"
     ],
+    "classes_gladiator": "The Magic Gladiator's too, the user's (2026-10-07: 'MG can use shield skill, and also can use Soul barrier'), where MuMain's item.bmd leaves him out.",
     "classes_from": "CreateScroll's QualifiedCharacters, the Dark Wizard's line (SoulMasterAndGrandMaster in Season 6 is the wizard's own evolution). Prize.ReadBy refuses the other two.",
     "requires": {
       "level": 12,
@@ -30,7 +33,7 @@
   "skill": {
     "note": "What the scroll teaches. Read once and gone.",
     "number": 16,
-    "name": "Soul Barrier",
+    "name": "Magic Shield",
     "tells": "A barrier drawn up behind the shield for five minutes. The better the shield and the keener the wizard, the more of every blow it takes.",
     "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the scroll's tooltip and the skill's card say the same thing.",
     "level_requirement": 12,

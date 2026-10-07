@@ -1123,6 +1123,52 @@ void testNoMoonwalk(const content::Tables& tables) {
     checkEqual(backwards, 0, "and none of them turns him from where he walks");
 }
 
+// The Magic Gladiator's skills (docs/mg-port.md): the wizard's spells and the knight's skills but
+// Teleport, Nova, Rageful Blow and Death Stab; Magic Shield his; Defense thrown without a shield.
+void testGladiatorSkills(const content::Tables& tables) {
+    const sim::Kin mg = sim::Kin::MagicGladiator;
+    const auto may = [&](int32_t number) {
+        const sim::SkillRow* row = sim::skillNumbered(number);
+        return row && sim::skillFor(*row, mg);
+    };
+    check(may(sim::skill::kEnergyBall) && may(sim::skill::kSoulBarrier) &&
+              may(sim::skill::kDefense) && may(sim::skill::kImpale),
+          "the gladiator throws a wizard's spell, Magic Shield, Defense and Impale");
+    check(!may(sim::skill::kTeleport) && !may(sim::skill::kNova) &&
+              !may(sim::skill::kRagefulBlow) && !may(sim::skill::kDeathStab),
+          "but not Teleport, Nova, Rageful Blow or Death Stab");
+    check(!sim::skillFor(*sim::skillNumbered(sim::skill::kDefense), sim::Kin::DarkWizard),
+          "and the wizard still has no Defense");
+    check(std::string(sim::skillNumbered(sim::skill::kSoulBarrier)->name) == "Magic Shield",
+          "Soul Barrier is called Magic Shield");
+
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, mg, 120), "a gladiator's realm raises");
+    sim::HeroRecord record = realm.record();
+    record.points.energy = 400;
+    realm.restore(record);
+    const auto reads = [&](const char* name) {
+        const int32_t item = tables.itemNamed(name);
+        const int slot = item >= 0 ? realm.give(item) : -1;
+        return slot >= 0 && realm.useItem(slot);
+    };
+    check(reads("Book03"), "he reads the Scroll of Lightning");
+    check(!reads("Book06"), "not the Scroll of Teleport");
+    check(reads("OrbDefense"), "he reads the Orb of Defense");
+    check(!reads("OrbRagefulBlow"), "not the Orb of Rageful Blow");
+    // Defense with nothing on his arm.
+    realm.equip(tables.armNamed("Sword02"), -1, true);
+    bool thrown = false;
+    realm.invoke(sim::skill::kDefense, realm.hero().id);
+    for (int tick = 0; tick < 60 && !thrown; ++tick) {
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            thrown |= one.what == sim::What::Cast && one.who == realm.hero().id;
+        }
+    }
+    check(thrown, "and throws Defense with no shield");
+}
+
 void testCastLock(const content::Tables& tables) {
     std::printf("a skill is walked out of\n");
     sim::Realm realm;
@@ -10368,6 +10414,7 @@ int main() {
     testTraps();
     testQuests(tables);
     testGladiatorPath(tables);
+    testGladiatorSkills(tables);
     testDungeonRunes(tables);
     testElementRunes(tables);
     testGroupRunes(tables);
