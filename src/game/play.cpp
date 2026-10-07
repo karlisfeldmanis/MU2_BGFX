@@ -181,6 +181,7 @@ void Play::update(double seconds) {
         }
         sim::audit(realm_, findings_);
         const uint32_t heroId = realm_.hero().id;
+        lastDrank_ = lastWarped_ = lastCracked_ = nullptr;
         for (const sim::Happening& happening : realm_.happenings()) {
             // The arena's own line first, so that what the log says happened on a tick is in
             // the log before anything the drawing decides to do about it. Nothing in an
@@ -188,6 +189,11 @@ void Play::update(double seconds) {
             if (!arena_.breed.empty()) announce(happening);
             // A command's answer, and the Mixed a Mix's answer follows (play_requests.cpp).
             if (happening.what == sim::What::Mixed) mixMade_ = happening.b == 1;
+            if (happening.who == heroId) {
+                if (happening.what == sim::What::Drank) lastDrank_ = &happening;
+                if (happening.what == sim::What::Warped) lastWarped_ = &happening;
+                if (happening.what == sim::What::Cracked) lastCracked_ = &happening;
+            }
             if (happening.what == sim::What::Answered) answered(happening);
             invasionSaid(happening);
             raidSaid(happening);
@@ -274,8 +280,9 @@ void Play::update(double seconds) {
                     if (sound >= 0) sound_.play(sound);
                 }
             }
-            if (happening.what == sim::What::Dropped) {
-                // Lying in the realm from this tick; shown once its dropper is down.
+            if (happening.what == sim::What::Dropped && happening.who != heroId) {
+                // Lying in the realm from this tick; shown once its dropper is down. Not his own
+                // throw: a discard's answer lands it (Play::answered, Play::landed).
                 if (drawnOf(happening.who)) held_.push_back({uint32_t(happening.a), happening.who});
             }
             if (happening.what == sim::What::Died) {

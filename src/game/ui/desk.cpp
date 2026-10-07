@@ -124,6 +124,10 @@ void Desk::shutdown() {
     interface_.shutdown();
 }
 
+void Desk::expect(uint32_t ticket, Then then, int key) {
+    if (ticket != 0) waiting_.push_back({ticket, then, key});
+}
+
 void Desk::update(float seconds, const gfx::Window& window, Play& play, float pointerX,
                   float pointerY) {
     // The store is handed in from outside, with the item rows already in it; until it is, the
@@ -160,9 +164,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // The answers to what this window asked, heard now (Play::answers).
     for (const Play::Answer& one : play.answers()) {
         const auto at = std::find_if(waiting_.begin(), waiting_.end(),
-                                     [&](const auto& w) { return w.first == one.ticket; });
+                                     [&](const Waiting& w) { return w.ticket == one.ticket; });
         if (at == waiting_.end()) continue;
-        const Then then = at->second;
+        const Then then = at->then;
+        const int struck = at->key;
         waiting_.erase(at);
         switch (then) {
             case Then::TookOrRefused: one.ok() ? took() : refused(); break;
@@ -177,14 +182,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     refused();
                 }
                 break;
+            case Then::Strike: if (one.ok()) hud_.strikeQuick(struck); break;
             case Then::Quiet: break;
         }
     }
     // A play that closed (a map change) answers nothing more.
     if (!play.isOpen()) waiting_.clear();
-    const auto expect = [&](uint32_t ticket, Then then) {
-        if (ticket != 0) waiting_.push_back({ticket, then});
-    };
     // **The number box, before anything else, and it takes everything.** It is modal, as MU's
     // message boxes are: the pointer's presses and the keys are its own while it is up, so the
     // windows under it do not hear a click on its OK and a 1 typed into it is not the first
@@ -734,19 +737,16 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // MU's equip sound is the pickup's -- and a use refused is iButtonError. A use that goes
         // through is heard as the potion going down, off the realm's Drank.
         if (asked.moveFrom >= 0) {
-            if (play.moveItem(asked.moveFrom, asked.moveTo)) took();
-            else refused();
+            expect(play.moveItem(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
         }
         // A jewel on a thing: Play rings both of its sounds, so a yes needs nothing here.
-        if (asked.refineJewel >= 0 && !play.refine(asked.refineJewel, asked.refineTarget)) {
-            refused();
-        }
+        if (asked.refineJewel >= 0) expect(play.refine(asked.refineJewel, asked.refineTarget), Then::Refused);
         // At the machine a right-click puts the thing in the box instead
         // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
         if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
             expect(play.putIn(asked.use, -1), Then::TookOrRefused);
-        } else if (asked.use >= 0 && !play.useItem(asked.use)) {
-            refused();
+        } else if (asked.use >= 0) {
+            expect(play.useItem(asked.use), Then::Refused);
         }
         // A click in repair mode: mended where it lies, heard as SOUND_REPAIR by Play, and a
         // refusal -- whole already, not repairable, not the Zen -- is the interface's no.
@@ -795,7 +795,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // takes a deliberate drag out of the window and not a click. A refusal -- a dead
             // man's drag -- is the interface's no, and the window puts the item back by
             // redrawing from a satchel that never changed.
-            if (!play.discard(asked.outside)) refused();
+            expect(play.discard(asked.outside), Then::Refused);
         }
         // Clicks as the I and V keys do. INVENTION, the user's (2026-09-30): CNewUIMyInventory's
         // exit button is silent in MU.
@@ -935,7 +935,7 @@ void Desk::quickKeys(const gfx::Window& window, Play& play, const Pointer& point
         }
         // The ring is struck on the realm's yes and not on the press: a key hit with nothing
         // left to drink must look like nothing happened, because nothing did.
-        if (best >= 0 && play.useItem(best)) hud_.strikeQuick(key);
+        if (best >= 0) expect(play.useItem(best), Then::Strike, key);
     }
     scriptedKey_ = -1;
     // And what each box shows, handed to the frame.

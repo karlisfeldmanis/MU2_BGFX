@@ -203,8 +203,15 @@ private:
     // What a window does with a command's answer (Play::answers), by its ticket: the asks are
     // answered a tick later, as MU's are a round trip later, and the window hears its yes or no
     // then. Quiet for one heard with others; ZenBox shuts the number box on a yes.
-    enum class Then : uint8_t { TookOrRefused, Refused, Spark, ZenBox, Quiet };
-    std::vector<std::pair<uint32_t, Then>> waiting_;
+    // Strike rings the quick box `key` on a yes (a potion key drunk).
+    enum class Then : uint8_t { TookOrRefused, Refused, Spark, ZenBox, Strike, Quiet };
+    struct Waiting {
+        uint32_t ticket = 0;
+        Then then = Then::Quiet;
+        int key = -1;
+    };
+    std::vector<Waiting> waiting_;
+    void expect(uint32_t ticket, Then then, int key = -1);
     gfx::Interface interface_;
     panel::Arts arts_;
     Hud hud_;

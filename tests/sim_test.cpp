@@ -10532,6 +10532,34 @@ void testCommands(const content::Tables& tables) {
     bool again = false;
     for (const sim::Happening& one : realm.happenings()) again = again || one.what == sim::What::Answered;
     check(!again, "and each is answered once");
+
+    // The bag's (batch 2): a potion used, a Firecracker thrown -- which the realm opens and answers
+    // as a Crack, its burst tile in x and y and the Cracked said just before -- and an empty slot
+    // thrown, refused as a Discard.
+    const int potion = realm.give(tables.itemNamed("Potion01"), -1, 0, 3);
+    const int cracker = realm.give(tables.itemNamed("MagicBox03"));
+    check(potion >= 0 && cracker >= 0, "a potion and a Firecracker in the bag");
+    realm.closeTrade();
+    realm.command({.kind = sim::Command::Kind::Use, .ticket = 20, .a = potion});
+    realm.command({.kind = sim::Command::Kind::Discard, .ticket = 21, .a = cracker});
+    realm.command({.kind = sim::Command::Kind::Discard, .ticket = 22, .a = sim::kSlots - 1});
+    check(!realm.satchel()[cracker].empty(), "nothing thrown between ticks");
+    realm.step();
+    std::vector<sim::Happening> bag;
+    bool crackedFirst = false;
+    for (const sim::Happening& one : realm.happenings()) {
+        if (one.what == sim::What::Cracked && bag.size() == 1) crackedFirst = true;
+        if (one.what == sim::What::Answered) bag.push_back(one);
+    }
+    checkEqual(int(bag.size()), 3, "the bag's three asks answered");
+    if (bag.size() != 3) return;
+    check(bag[0].c == 20 && bag[0].a == int(sim::Command::Kind::Use), "the potion first");
+    check(bag[1].c == 21 && bag[1].a == int(sim::Command::Kind::Crack) && bag[1].b == 1,
+          "the Firecracker opened, answered as a Crack");
+    check(crackedFirst, "with its Cracked said just before the answer");
+    check(realm.satchel()[cracker].empty(), "and gone from the bag");
+    check(bag[2].c == 22 && bag[2].a == int(sim::Command::Kind::Discard) && bag[2].b == -1,
+          "an empty slot thrown, refused as a Discard");
 }
 
 // Sprint 16, step 4: a body joins a realm that is already running -- what the next player

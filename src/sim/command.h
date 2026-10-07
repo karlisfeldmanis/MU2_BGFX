@@ -37,6 +37,15 @@ struct Command {
         TakeOut,    // a: the box cell, b: the bag slot or -1
         Shuffle,    // a: from, b: to, both box cells
         Mix,        // service, a: the socket or -1
+        // The bag (Realm::moveItem, useItem, refine, discard, crack, spend).
+        Move,       // a: from, b: to
+        Use,        // a: the slot
+        Refine,     // a: the jewel's slot, b: the thing's
+        Discard,    // a: the slot. Thrown on the ground -- or, for a Firecracker or a box, opened
+                    // (Realm::cracks), and then answered as Crack
+        Crack,      // only ever an answer: a Discard that opened. The answer's x and y are the
+                    // tile it burst over; the Cracked said before it has the rest
+        Spend,      // a: 0 strength, 1 agility, 2 vitality, 3 energy
     };
     Kind kind = Kind::None;
     // Who asks: a player's body id. 0 is the one hero this realm has until phase 2.

@@ -211,20 +211,20 @@ public:
     // itself: it asks here and redraws from the realm afterwards (sprint 7, "a mirror").
     // One point into strength (0), agility (1), vitality (2) or energy (3), refused where
     // none is in hand -- OpenMU's IncreaseStatsAction, one point a press.
-    bool spendPoint(int stat);
+    uint32_t spendPoint(int stat);
     // A drag from one slot to another, and a right-click on a carried thing. Both the realm's
     // to refuse; see sim/items.h for the gates.
-    bool moveItem(int from, int to);
-    bool useItem(int slot);
+    uint32_t moveItem(int from, int to);
+    uint32_t useItem(int slot);
     // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
     // this is heard and re-dressed. See Realm::refine.
-    bool refine(int jewelSlot, int targetSlot);
+    uint32_t refine(int jewelSlot, int targetSlot);
     // Rings a jewel the vault or the box applied (Realm::takeJeweled).
     void jewelRung();
     // A drag let go over the world: the thing is thrown on the ground at his feet, where the
     // same Pick order that takes a kill's drop takes it back. The realm's to refuse, and the
     // figure is re-dressed when what was thrown came off him.
-    bool discard(int slot);
+    uint32_t discard(int slot);
     // A skill key pressed: throw this skill at whatever the fight is on, or at `at` when the
     // window knows a target. Not an order and it does not cancel one -- the realm spends the next
     // swing on it and the knight goes on fighting (docs/skills-dk.md §3.1a). The realm refuses
@@ -246,9 +246,27 @@ public:
     // The commands sent and not yet answered, for what answered() needs to know of them; the
     // last Mixed said (its b), which the Mix's answer follows in the same step; the mix's words
     // as judged when it was asked.
+    // What a command's answer needs from before it ran: the bag and the hero as they stood.
+    struct Asked {
+        sim::Command command;
+        int32_t item = -1;            // a use's or a discard's thing, by row
+        int column = 0, row = 0;      // where he stood, for Go Back! after a Town Portal
+        float facing = 0.0f;
+        int swingMs = 0, swingTicks = 0;  // the swing before, so an Ale shows by how much
+        sim::Held thing;              // a refinement's thing before the jewel
+        bool worn = false;            // a discard's slot was worn
+        bool box = false;             // a discard that is a Box of Luck or Kundun: no firework
+    };
+    uint32_t send(sim::Command command, Asked asked);
     uint32_t send(sim::Command command);
     void answered(const sim::Happening& said);
-    std::vector<sim::Command> sent_;
+    std::vector<Asked> sent_;
+    // The happenings a command's answer follows in the same step, as the realm said them just
+    // before it (realm_commands.cpp says Answered right after the method). Cleared on each answer
+    // and at each step, so an answer never reads another's.
+    const sim::Happening* lastDrank_ = nullptr;
+    const sim::Happening* lastWarped_ = nullptr;
+    const sim::Happening* lastCracked_ = nullptr;
     uint32_t nextTicket_ = 1;
     bool mixMade_ = false;
     sim::Judged mixJudged_;

@@ -23,13 +23,9 @@
 
 namespace mu::game {
 
-bool Play::spendPoint(int stat) {
-    static const char* const kStats[4] = {"strength", "agility", "vitality", "energy"};
-    if (stat < 0 || stat > 3) return false;
-    const bool spent = realm_.spend(stat == 0, stat == 1, stat == 2, stat == 3);
-    core::logf("window: a point into %s %s", kStats[stat],
-               spent ? "spent" : "refused, none in hand");
-    return spent;
+uint32_t Play::spendPoint(int stat) {
+    if (stat < 0 || stat > 3) return 0;
+    return send({.kind = sim::Command::Kind::Spend, .a = stat});
 }
 
 void Play::castSkill(int32_t skill, uint32_t at) {
@@ -59,139 +55,45 @@ void Play::castSkill(int32_t skill, uint32_t at) {
                row ? row->mana : 0, realm_.hero().mana);
 }
 
-bool Play::moveItem(int from, int to) {
-    const bool moved = realm_.moveItem(from, to);
-    core::logf("window: move %d -> %d %s", from, to, moved ? "taken" : "refused");
-    if (moved) redress();
-    return moved;
+uint32_t Play::moveItem(int from, int to) {
+    return send({.kind = sim::Command::Kind::Move, .a = from, .b = to});
 }
 
-bool Play::useItem(int slot) {
-    const int32_t item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
-    // Where he stood, for Go Back! should this be a Town Portal that takes.
-    const int fromColumn = realm_.hero().column(), fromRow = realm_.hero().row();
-    const float fromFacing = realm_.hero().facing;
-    // The swing before and after, so a use that moves it -- the Ale -- shows by how much.
-    const int swingMs = realm_.hero().swingMs, swingTicks = realm_.hero().swingTicks;
-    const bool used = realm_.useItem(slot);
-    core::logf("window: use %d %s", slot, used ? "taken" : "refused");
-    if (used && realm_.hero().swingMs != swingMs) {
-        core::logf("window: the swing went from %d ms (%d ticks) to %d ms (%d ticks)", swingMs,
-                   swingTicks, realm_.hero().swingMs, realm_.hero().swingTicks);
-    }
-    // The potion going down, or the apple: TryConsumeItem's own split, by what was used. And
-    // the third arm, which is this project's and not MuMain's, because MuMain has no orb read
-    // from the bag to answer for: an orb is not swallowed, so the gulp is wrong on it. It is
-    // the one use that is a picture as well as a noise -- `learned` throws the ribbons and the
-    // swoosh together, where a potion is heard and not seen.
-    if (used) {
-        const content::ItemRow* row =
-            item >= 0 && size_t(item) < tables_.items.size() ? &tables_.items[size_t(item)] : nullptr;
-        const bool apple = row && row->group == 14 && row->number == 0;
-        if (row && row->teaches != 0) {
-            learned();
-        } else if (row && sim::portal(*row)) {
-            portalFrom_[0] = fromColumn;
-            portalFrom_[1] = fromRow;
-            portalFacing_ = fromFacing;
-            // Read in silence: TryConsumeItem's scroll branch sends the use and plays nothing.
-            // What it has is the arrival -- the hero put down at nought alpha, the warp's walls
-            // and circle under him, and sMagic, which is ours (see Play::warped). Or, on a map
-            // with no safe zone, the realm says he is owed Lorencia (`c`), and the mode takes him.
-            const std::vector<sim::Happening>& told = realm_.happenings();
-            if (!told.empty() && told.back().what == sim::What::Warped && told.back().c == 1)
-                homeOwed_ = true;
-            else
-                warped();
-        } else {
-            // The Ale is a potion to TryConsumeItem (`ITEM_APPLE <= Type <= ITEM_ALE`), so it
-            // goes down with SOUND_DRINK01 like the rest.
-            sound_.play(apple ? heard_.apple : heard_.drink);
-        }
-        // And what it is worth, for the lane over the HUD, off the realm's own Drank: the last
-        // thing it said, and gone at the next step, so it is held for the next frame's gains.
-        const std::vector<sim::Happening>& said = realm_.happenings();
-        if (!said.empty() && said.back().what == sim::What::Drank) {
-            (said.back().b ? drankMana_ : drankHealth_) += said.back().a;
-        }
-    }
-    return used;
+// A right-click on a carried thing. What the answer needs is taken now: the thing, where he
+// stood (Go Back!'s way back, should it be a Town Portal that takes) and the swing (an Ale moves
+// it, and the log says by how much).
+uint32_t Play::useItem(int slot) {
+    Asked asked;
+    asked.item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
+    asked.column = realm_.hero().column();
+    asked.row = realm_.hero().row();
+    asked.facing = realm_.hero().facing;
+    asked.swingMs = realm_.hero().swingMs;
+    asked.swingTicks = realm_.hero().swingTicks;
+    return send({.kind = sim::Command::Kind::Use, .a = slot}, asked);
 }
 
-// Two sounds, as MuMain makes them. The asking is ApplyJewels' own `SendRequestUse(...);
-// PlayBuffer(SOUND_GET_ITEM01)`, and the answer is ReceiveModifyItemExtended's SOUND_JEWEL01
-// (WSclient.cpp:6322) -- whether the plus went up or down, because the client has no failure
-// sound. The answer is rung here and not off What::Refined in the step for the reason a
-// purchase is: asked between ticks, and the next step clears what it said. The ring is the
-// placed `jewel_get`, which a drop already lands with, heard where the hero stands.
-bool Play::refine(int jewelSlot, int targetSlot) {
-    const sim::Held thing =
-        targetSlot >= 0 && targetSlot < sim::kSlots ? realm_.satchel()[targetSlot] : sim::Held{};
-    const bool refined = realm_.refine(jewelSlot, targetSlot);
-    // A worn thing that outgrew him is in the bag now and its slot is empty (Realm::refine); the
-    // Soul cannot miss that way, since a lower plus asks less.
-    const sim::Held& after = realm_.satchel()[targetSlot];
-    const int now = !refined ? thing.refinement
-                    : after.empty() ? thing.refinement + 1
-                                    : after.refinement;
-    core::logf("window: jewel %d on %d %s (+%d -> +%d)", jewelSlot, targetSlot,
-               refined ? "taken" : "refused", int(thing.refinement), now);
-    if (!refined) return false;
-    sound_.play(heard_.take);
-    if (const Drawn* hero = drawnOf(realm_.hero().id)) {
-        emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
-    }
-    // A worn thing changed rung, so the figure is dressed again at its new shine.
-    if (sim::wearable(targetSlot)) redress();
-    return true;
+// Two sounds, as MuMain makes them, both on the answer: ApplyJewels' SOUND_GET_ITEM01 and
+// ReceiveModifyItemExtended's SOUND_JEWEL01 (WSclient.cpp:6322) -- whether the plus went up or
+// down, because the client has no failure sound.
+uint32_t Play::refine(int jewelSlot, int targetSlot) {
+    Asked asked;
+    asked.thing = targetSlot >= 0 && targetSlot < sim::kSlots ? realm_.satchel()[targetSlot] : sim::Held{};
+    return send({.kind = sim::Command::Kind::Refine, .a = jewelSlot, .b = targetSlot}, asked);
 }
 
-// The noise belongs to the thing LANDING and is made where it lies, which is `Play::landed` --
-// the same call a kill's drop is heard through. It is rung from HERE and not from the
-// What::Dropped branch in Play::step, because a discard is asked between ticks and the next
-// step clears what it said before that loop could read it; a purchase and a sale are heard off
-// their own answers for the same reason.
-bool Play::discard(int slot) {
-    // A Firecracker is not laid down: it opens (sim::Realm::crack), and MU's firework starts
-    // over the tile in the same frame (CmdType 0; the user: "it has to be instant, as soon we
-    // drop it it has to start"). Zen goes up as a firework all the same -- MU sends none with
-    // Zen (Event.cpp:1520), which read as nothing happening (the user, 2026-10-04: "it could be
-    // zen, we just need that there is always something"). What it gives, the item's landing or
-    // the Zen's coins and sum, comes when the show is over. Ours.
-    if (realm_.cracks(slot)) {
-        // A Box of Luck or of Kundun opens with no show, as MU's do (docs/drop-boxes.md section 1):
-        // what it gives is given on the next frame.
-        const int32_t thrown = realm_.satchel()[slot].item;
-        const bool box = thrown >= 0 && size_t(thrown) < tables_.items.size() &&
-                         (sim::boxOfLuck(tables_.items[size_t(thrown)]) ||
-                          sim::boxOfKundun(tables_.items[size_t(thrown)]));
-        const sim::Cracked cracked = realm_.crack(slot);
-        core::logf("window: %d cracked %s", slot,
-                   !cracked.opened ? "refused" : cracked.id ? "into an item" : "into Zen");
-        if (!cracked.opened) return false;
-        uint32_t tag = 0;
-        if (ground_ && !box) {
-            const float metres = ground_->metresPerTile();
-            const float x = (float(cracked.column) + 0.5f) * metres;
-            const float z = -(float(cracked.row) + 0.5f) * metres;
-            const float at[3] = {x, ground_->heightAt(x, z), z};
-            tag = firework_.launch(at);
-        }
-        // What it gives waits for the show to end (Play::update); with no show it is given on
-        // the next frame -- not here, between frames, where the next frame's clear would take
-        // Zen. An item is held out of sight from now (heldIds_, rebuilt by releaseDrops).
-        crackerOwed_.push_back({tag != 0 ? tag : ~0u, cracked.zen, cracked.id,
-                                tag != 0 ? -1.0f : 0.0f});
-        if (cracked.id != 0) heldIds_.push_back(cracked.id);
-        return true;
-    }
-    const bool worn = slot >= 0 && sim::wearable(slot);
-    const uint32_t thrown = realm_.discard(slot);
-    core::logf("window: %d thrown on the ground %s", slot, thrown ? "taken" : "refused");
-    if (thrown == 0) return false;
-    if (worn) redress();
-    landed(thrown);
-    return true;
+// A drag let go over the world. The realm decides between throwing it down and opening it (a
+// Firecracker or a box, Realm::cracks); the answer says which, and the noise belongs to the thing
+// LANDING (Play::landed) or to the firework over its tile.
+uint32_t Play::discard(int slot) {
+    Asked asked;
+    asked.worn = slot >= 0 && sim::wearable(slot);
+    asked.item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
+    const content::ItemRow* row = asked.item >= 0 && size_t(asked.item) < tables_.items.size()
+                                      ? &tables_.items[size_t(asked.item)]
+                                      : nullptr;
+    asked.box = row && (sim::boxOfLuck(*row) || sim::boxOfKundun(*row));
+    return send({.kind = sim::Command::Kind::Discard, .a = slot}, asked);
 }
 
 // The satchel is the truth (docs/sprints/07-the-windows.md) and Realm::rearm already reads
@@ -524,12 +426,15 @@ uint32_t Play::withdrawZen(int64_t zen) {
     return send({.kind = sim::Command::Kind::WithdrawZen, .zen = zen});
 }
 
-uint32_t Play::send(sim::Command command) {
+uint32_t Play::send(sim::Command command) { return send(command, Asked()); }
+
+uint32_t Play::send(sim::Command command, Asked asked) {
     command.player = realm_.hero().id;
     command.ticket = nextTicket_++;
     if (nextTicket_ == 0) nextTicket_ = 1;
     realm_.command(command);
-    sent_.push_back(command);
+    asked.command = command;
+    sent_.push_back(asked);
     return command.ticket;
 }
 
@@ -538,11 +443,20 @@ uint32_t Play::send(sim::Command command) {
 // waits on its ticket (Play::answers).
 void Play::answered(const sim::Happening& said) {
     using Kind = sim::Command::Kind;
-    const auto at = std::find_if(sent_.begin(), sent_.end(),
-                                 [&](const sim::Command& one) { return one.ticket == uint32_t(said.c); });
+    const auto at = std::find_if(sent_.begin(), sent_.end(), [&](const Asked& one) {
+        return one.command.ticket == uint32_t(said.c);
+    });
     if (at == sent_.end()) return;
-    const sim::Command asked = *at;
+    const Asked before = *at;
+    const sim::Command& asked = before.command;
     sent_.erase(at);
+    // What the realm said just before this answer, and only this answer's (see lastDrank_).
+    const sim::Happening* drank = lastDrank_;
+    const sim::Happening* warpedTo = lastWarped_;
+    const sim::Happening* cracked = lastCracked_;
+    lastDrank_ = lastWarped_ = lastCracked_ = nullptr;
+    // A Discard that opened is answered as a Crack.
+    const sim::Command::Kind kind = sim::Command::Kind(said.a);
     const bool ok = said.b >= 0;
     const long long zen = (long long)realm_.money();
     // Coins at the hero: placed, because `money_drop` is a placed event (play_open loads it that
@@ -555,7 +469,7 @@ void Play::answered(const sim::Happening& said) {
             sound_.play(heard_.take);
         }
     };
-    switch (asked.kind) {
+    switch (kind) {
         case Kind::Buy:
         case Kind::BuyBack:
             core::logf("window: %s %s (slot %d, %lld Zen left)",
@@ -626,9 +540,96 @@ void Play::answered(const sim::Happening& said) {
                 sound_.play(heard_.mixBreak);
             }
             break;
+        case Kind::Spend:
+            core::logf("window: a point into %s %s",
+                       asked.a == 0 ? "strength" : asked.a == 1 ? "agility" : asked.a == 2 ? "vitality" : "energy",
+                       ok ? "spent" : "refused, none in hand");
+            break;
+        case Kind::Move:
+            core::logf("window: move %d -> %d %s", asked.a, asked.b, ok ? "taken" : "refused");
+            if (ok) redress();
+            break;
+        case Kind::Use: {
+            core::logf("window: use %d %s", asked.a, ok ? "taken" : "refused");
+            if (!ok) break;
+            if (realm_.hero().swingMs != before.swingMs) {
+                core::logf("window: the swing went from %d ms (%d ticks) to %d ms (%d ticks)",
+                           before.swingMs, before.swingTicks, realm_.hero().swingMs,
+                           realm_.hero().swingTicks);
+            }
+            // The potion going down, or the apple: TryConsumeItem's own split, by what was used.
+            // And the third arm, which is this project's and not MuMain's: an orb is not
+            // swallowed, so the gulp is wrong on it -- `learned` throws the ribbons and the swoosh.
+            const content::ItemRow* row = before.item >= 0 && size_t(before.item) < tables_.items.size()
+                                              ? &tables_.items[size_t(before.item)]
+                                              : nullptr;
+            const bool apple = row && row->group == 14 && row->number == 0;
+            if (row && row->teaches != 0) {
+                learned();
+            } else if (row && sim::portal(*row)) {
+                portalFrom_[0] = before.column;
+                portalFrom_[1] = before.row;
+                portalFacing_ = before.facing;
+                // Read in silence: TryConsumeItem's scroll branch sends the use and plays nothing.
+                // On a map with no safe zone the realm says he is owed Lorencia (`c`), which the
+                // step's own Warped branch has already taken; otherwise the arrival is drawn.
+                if (!(warpedTo && warpedTo->c == 1)) warped();
+            } else {
+                // The Ale is a potion to TryConsumeItem, so it goes down with SOUND_DRINK01.
+                sound_.play(apple ? heard_.apple : heard_.drink);
+            }
+            // And what it is worth, for the lane over the HUD, off the realm's own Drank.
+            if (drank) (drank->b ? drankMana_ : drankHealth_) += drank->a;
+            break;
+        }
+        case Kind::Refine: {
+            const sim::Held& after = realm_.satchel()[asked.b];
+            // A worn thing that outgrew him is in the bag now and its slot is empty (Realm::refine).
+            const int now = !ok ? before.thing.refinement
+                            : after.empty() ? before.thing.refinement + 1
+                                            : after.refinement;
+            core::logf("window: jewel %d on %d %s (+%d -> +%d)", asked.a, asked.b,
+                       ok ? "taken" : "refused", int(before.thing.refinement), now);
+            if (!ok) break;
+            sound_.play(heard_.take);
+            if (const Drawn* hero = drawnOf(realm_.hero().id)) {
+                emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
+            }
+            // A worn thing changed rung, so the figure is dressed again at its new shine.
+            if (sim::wearable(asked.b)) redress();
+            break;
+        }
+        case Kind::Discard:
+            core::logf("window: %d thrown on the ground %s", asked.a, ok ? "taken" : "refused");
+            if (!ok) break;
+            if (before.worn) redress();
+            landed(uint32_t(said.b));
+            break;
+        case Kind::Crack: {
+            // A Firecracker opens (sim::Realm::crack), and MU's firework starts over the tile
+            // (CmdType 0; the user: "it has to be instant"). Zen goes up as a firework all the same
+            // (the user, 2026-10-04). A Box of Luck or of Kundun opens with no show, as MU's do
+            // (docs/drop-boxes.md section 1). What it gives waits for the show to end
+            // (Play::update); an item is held out of sight from now (heldIds_).
+            const uint32_t id = cracked && cracked->a >= 0 ? uint32_t(cracked->a) : 0;
+            const int64_t zen = cracked && cracked->a < 0 ? int64_t(cracked->c) : 0;
+            core::logf("window: %d cracked %s", asked.a, !ok ? "refused" : id ? "into an item" : "into Zen");
+            if (!ok) break;
+            uint32_t tag = 0;
+            if (ground_ && !before.box) {
+                const float metres = ground_->metresPerTile();
+                const float x = (said.x + 0.5f) * metres;
+                const float z = -(said.y + 0.5f) * metres;
+                const float at3[3] = {x, ground_->heightAt(x, z), z};
+                tag = firework_.launch(at3);
+            }
+            crackerOwed_.push_back({tag != 0 ? tag : ~0u, zen, id, tag != 0 ? -1.0f : 0.0f});
+            if (id != 0) heldIds_.push_back(id);
+            break;
+        }
         case Kind::None: break;
     }
-    answers_.push_back({asked.ticket, asked.kind, said.b});
+    answers_.push_back({asked.ticket, kind, said.b});
 }
 
 bool Play::talkTo(const std::string& name) {

@@ -17,6 +17,8 @@ void Realm::applyCommands() {
     for (const Command& one : asked) {
         int64_t answer = -1;
         using Kind = Command::Kind;
+        Kind said = one.kind;
+        float burstX = 0.0f, burstY = 0.0f;
         switch (one.kind) {
             case Kind::None: continue;
             case Kind::Buy: answer = buy(one.a); break;
@@ -37,9 +39,32 @@ void Realm::applyCommands() {
             case Kind::TakeOut: answer = takeOut(one.a, one.b); break;
             case Kind::Shuffle: answer = shuffle(one.a, one.b) ? 1 : -1; break;
             case Kind::Mix: answer = mix(one.service, one.a) ? 1 : -1; break;
+            case Kind::Move: answer = moveItem(one.a, one.b) ? 1 : -1; break;
+            case Kind::Use: answer = useItem(one.a) ? 1 : -1; break;
+            case Kind::Refine: answer = refine(one.a, one.b) ? 1 : -1; break;
+            case Kind::Discard:
+            case Kind::Crack:
+                if (cracks(one.a)) {
+                    const Cracked cracked = crack(one.a);
+                    said = Kind::Crack;
+                    answer = cracked.opened ? 1 : -1;
+                    burstX = float(cracked.column);
+                    burstY = float(cracked.row);
+                } else {
+                    const uint32_t thrown = discard(one.a);
+                    answer = thrown != 0 ? int64_t(thrown) : -1;
+                }
+                break;
+            case Kind::Spend:
+                answer = spend(one.a == 0, one.a == 1, one.a == 2, one.a == 3) ? 1 : -1;
+                break;
         }
-        say(What::Answered, bodies_[0], int32_t(one.kind),
+        say(What::Answered, bodies_[0], int32_t(said),
             answer < 0 ? -1 : int32_t(std::min<int64_t>(answer, INT32_MAX)), int32_t(one.ticket));
+        if (said == Kind::Crack) {
+            happenings_.back().x = burstX;
+            happenings_.back().y = burstY;
+        }
     }
 }
 
