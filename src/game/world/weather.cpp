@@ -125,9 +125,12 @@ void Weather::summon(bool on) {
 void Weather::sync(int serverRain) {
     if (serverRain < 0 || !rains_ || forced_ || summoned_ || cycle_ || steady_ > 0.0f) return;
     const bool serverWet = serverRain > 0;
+    // The server's spell, not this client's: the local clock must never run out under it, or
+    // update() turns the weather over on its own every minute and the next frame's sync turns it
+    // back -- a frame of the wrong weather, a log line and a thunder clock rolled again each time.
+    left_ = 1.0e9f;
     if (wet_ != serverWet) {
         wet_ = serverWet;
-        left_ = 60.0f;  // any positive value is fine, server drives it now
         if (wet_) thunderIn_ = 30.0f + random01() * 60.0f;
         core::logf("weather: synced to server, %s", wet_ ? (snows_ ? "blizzard" : "rain") : (snows_ ? "calm" : "dry"));
     }
