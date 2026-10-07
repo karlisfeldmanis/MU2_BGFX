@@ -45,7 +45,7 @@ int Realm::questHere(int32_t giver) const {
             if (quests_[i].state == QuestState::Ready && ready < 0) ready = i;
             continue;
         }
-        if (row.giver != giver) continue;
+        if (questGiver(i, config_.questDemo) != giver) continue;
         if (first < 0) first = i;
         QuestState state = quests_[i].state;
         // And at its giver, one handed in elsewhere is under way until it is.
@@ -91,7 +91,7 @@ int Realm::questsAt(int32_t giver, int* out) const {
             if (state == QuestState::Ready) out[n++] = i;
             continue;
         }
-        if (row.giver != giver || !questOpen(row, int(bodies_[0].kin))) continue;
+        if (questGiver(i, config_.questDemo) != giver || !questOpen(row, int(bodies_[0].kin))) continue;
         // A link of a chain handed in for good is gone from the list; a repeat waits there.
         const bool listed = state == QuestState::Active || state == QuestState::Ready ||
                             questOffered(i) || questUnderLevel(i) ||
@@ -140,7 +140,7 @@ bool Realm::questItemFits(const QuestItem& what) const {
 
 bool Realm::acceptQuest(int index) {
     if (index < 0 || index >= kQuests || questing_ < 0 || !serving(questing_)) return false;
-    if (tables_->folk[size_t(questing_)].number != questAt(index).giver) return false;
+    if (tables_->folk[size_t(questing_)].number != questGiver(index, config_.questDemo)) return false;
     if (!questOffered(index)) return false;
     QuestProgress& one = quests_[index];
     const uint32_t completions = one.completions;

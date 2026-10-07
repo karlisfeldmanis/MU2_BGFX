@@ -168,6 +168,7 @@ private:
     sim::CastleRefusal why_ = sim::CastleRefusal::NoCloak;
     int castle_ = 1;
     int cloakPlus_ = -1, level_ = 0, doorSeconds_ = -1, opensIn_ = 0;
+    bool testClock_ = false;  // the realm's castle not on the hourly clock (--castle-period)
     // The Archangel's page, read each frame: where the run stands, and what the win paid.
     sim::AngelState angel_ = sim::AngelState::NotYet;
     int64_t paidExperience_ = 0, paidZen_ = 0;

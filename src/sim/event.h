@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "content/grid.h"
+#include "sim/config.h"
 
 namespace mu::sim {
 
@@ -15,14 +16,8 @@ namespace mu::sim {
 // grid, which the run changes as it goes.
 constexpr uint32_t kBloodCastleMap = 11;
 
-// **When it opens** (the user, 2026-10-02: 'every 1 hour BC is opened'): WebZen's hourly default.
-// The Messenger of Archangel in Devias lets a ticket holder in from hh:25 for five minutes
-// (BloodCastle.cpp:778-802, entry closed at hh:30, :1128-1171), on the local wall clock.
-// TEST CLOCK (the user, 2026-10-04: 'reduce time to 1 minute so we can test it'): every two
-// minutes, open the second one, so the wait is a minute at most. Back to 3600, 25 * 60, 5 * 60.
-constexpr int kCastlePeriod = 120;       // seconds between openings
-constexpr int kCastleOpensAt = 60;       // into the hour
-constexpr int kCastleEntry = 60;         // how long the Messenger lets him in
+// **When it opens** is a setting, not a rule: RealmConfig::castle (sim/config.h), hourly from
+// hh:25 for five minutes unless a test asks otherwise.
 // **The run, on his own clock from the moment he is in** (the user: 'when you are in there is
 // timer and BC starts'). Ours that it starts on entry; WebZen starts every castle together at
 // hh:31. Its numbers are WebZen's: 60 s in the safe court ("the quest starts in 60 s", lMsg
@@ -31,13 +26,6 @@ constexpr int kCastleEntry = 60;         // how long the Messenger lets him in
 // 2026-10-05: 'decrease BC duration to 10 minutes').
 constexpr int kCastleWait = 60;
 constexpr int kCastleRun = 10 * 60;
-
-// Seconds the Messenger has left to let him in, at `daySeconds` into the local day, or 0 when
-// the door is shut.
-constexpr int castleEntryLeft(int daySeconds) {
-    const int phase = ((daySeconds - kCastleOpensAt) % kCastlePeriod + kCastlePeriod) % kCastlePeriod;
-    return phase < kCastleEntry ? kCastleEntry - phase : 0;
-}
 
 // **The Messenger's door** (WebZen NpcTalk.cpp:1655-1753, protocol.cpp:19629-~20030): spoken to
 // with an Invisibility Cloak while the entry is open, he takes the cloak and sends him to exit gate

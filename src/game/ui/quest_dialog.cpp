@@ -646,12 +646,12 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             struct tm local {};
             localtime_r(&at, &local);
             const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
-            if (const int left = sim::castleEntryLeft(day); left > 0) {
+            const sim::GateClock& castle = realm.config().castle;
+            testClock_ = castle.period != 3600;
+            if (const int left = castle.entryLeft(day); left > 0) {
                 doorSeconds_ = left;
             } else {
-                const int phase = ((day - sim::kCastleOpensAt) % sim::kCastlePeriod +
-                                   sim::kCastlePeriod) % sim::kCastlePeriod;
-                opensIn_ = (sim::kCastlePeriod - phase + 59) / 60;
+                opensIn_ = (castle.period - castle.phase(day) + 59) / 60;
             }
         }
     } else if (!sim::questOpen(sim::questAt(quest_), int(realm.hero().kin))) {
@@ -1167,8 +1167,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             cy = one.box.y + kIcon + kCellGap;
         }
         const Need needs[kGateRows - 1] = {
-            {sim::kCastlePeriod == 3600 ? "The gate open, hh:25 to hh:30"
-                                        : "The gate open, a minute in two (test)",
+            {!testClock_ ? "The gate open, hh:25 to hh:30" : "The gate open, on the test clock",
              door, doorSeconds_ >= 0},
             {band.c_str(), std::to_string(level_), level_ >= sim::kCastleBands[castle_ - 1][0]},
         };

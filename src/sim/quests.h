@@ -213,7 +213,9 @@ inline constexpr int kRoadOfKantur = 20;
 inline constexpr int32_t kKeeperNumber = 701;
 // The Keeper's own: Tarkan cleared, the Zaikan and the Death Beam Knight last.
 inline constexpr int kKantursLegion = 21;
-void enableQuestDemo();
+// Who gives quest `index`: its row's giver, or Peia for kDemoQuests when the realm's config has
+// the demo on (RealmConfig::questDemo, --quest-demo). The table itself never changes.
+int32_t questGiver(int index, bool demo);
 // The quest a giver hands out, by NPC number, or -1. One a giver.
 int questOf(int32_t giver);
 // Whether this NPC takes back a quest someone else gave (QuestRow::receiver): Lirien.

@@ -41,6 +41,7 @@
 #include "sim/vault.h"
 #include "sim/machine.h"
 #include "sim/gates.h"
+#include "sim/config.h"
 #include "sim/event.h"
 #include "sim/invasion.h"
 #include "sim/raid.h"
@@ -658,6 +659,10 @@ public:
     // route vectors growing once to their high-water mark, nowhere else.
     bool raise(const content::Tables* tables, uint64_t seed, int playerColumn, int playerRow,
                Kin kin = Kin::DarkKnight, int level = 1);
+    // The settings it is raised under (sim/config.h): set BEFORE raise(), as setRaid is, and
+    // kept across a raise. Unset, it is the real game.
+    void configure(const RealmConfig& config) { config_ = config; }
+    const RealmConfig& config() const { return config_; }
 
     void ask(const Request& request) { pending_ = request; }
 
@@ -1454,6 +1459,8 @@ private:
              uint32_t whom = 0);
 
     const content::Tables* tables_ = nullptr;
+
+    RealmConfig config_;
     // An event map's tables, copied at raise so its grid can change under the run and a raise
     // again starts from the cooked words. Null elsewhere. On the heap, so `tables_` survives
     // the realm being moved.

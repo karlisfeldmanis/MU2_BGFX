@@ -160,6 +160,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         realm_.setRaid(raidPlayers_, raidParty_, raidWatched_);
         realm_.setRaidLanding(raidLanding_);
     }
+    realm_.configure(realmConfig_);
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to

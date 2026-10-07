@@ -1216,7 +1216,7 @@ specific count of monsters to open the gates'):**
     (WebZen's numbers; OpenMU's is 20). It starts on entry; that part is ours.
   - The entrance lifts **when the 60 s are up**, as MU's start, not on taking the quest. The
     Archangel's part is the hand-in.
-  - All of this is in `sim/event.h` (`castleEntryLeft`), and the Devias travel card counts down
+  - The door's clock is `sim::RealmConfig::castle` (`sim/config.h`), and the Devias travel card counts down
     to it.
 - The Archangel (232) takes the weapon at the end. All three gates (entrance, bridge and door) open on kill
   counts, so the Castle Gate monster (131) does not hold the door.

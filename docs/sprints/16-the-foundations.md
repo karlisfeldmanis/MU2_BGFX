@@ -59,6 +59,18 @@ instead of four times, so a clean build is shorter.
 
 ### 2. Settings out of the rule headers (structure-plan S6), S
 
+**Done 2026-10-07.** `sim::RealmConfig` (`sim/config.h`) holds the castle's `GateClock` and
+`questDemo`; `Realm::configure()` takes it before `raise()`, as `setRaid` does, and `Play`
+carries it from `app/` the same way. `kQuestTable` is `const`; the demo's giver is
+`questGiver(index, demo)`, read by the realm's four giver checks. The herald, the travel card
+and the Messenger's page read `realm.config().castle` instead of `event.h`'s constants, which are
+gone. **The castle is hourly again by default** (the user: *'BC has to happen once in 1 hour'*,
+*'BC gates is open 5 minutes'*): hh:25 to hh:30, WebZen's. The test clock is
+`--castle-period 120` (opens every S seconds for S/2, today's 120/60/60). Raid size stays in
+`setRaid`, which is already per realm. sim_test: 6576 checks, 10 failing -- the 7 castle checks
+that wanted the hourly door now pass, nothing new fails, determinism holds; `grep` finds no
+mutable global in `src/sim`.
+
 - **Why definitely:**
   - The world host steps every map's realm in one process. A mutable global (`kQuestTable`,
     flipped by `enableQuestDemo()`) is shared by all of them.

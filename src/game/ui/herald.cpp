@@ -57,7 +57,8 @@ constexpr float kOpenHold = 4.0f;  // the green dot's seconds before the line go
 struct Gate {
     const char* name;
     const char* place;
-    int period, opensAt, entry;  // seconds: between openings, into the day, held open
+    int period, opensAt, entry;  // seconds: between openings, into the day, held open; a period
+                                 // of 0 is the realm's own castle clock (sim::RealmConfig)
     const int (*bands)[2];
     int bandCount;
     int built;  // the highest numbered one there is
@@ -68,8 +69,8 @@ struct Gate {
 // travel card does.
 constexpr int kSquareBands[4][2] = {{15, 130}, {131, 180}, {181, 230}, {231, 0}};
 const Gate kGates[] = {
-    {"Blood Castle", "Devias \xB7 Messenger", sim::kCastlePeriod, sim::kCastleOpensAt,
-     sim::kCastleEntry, sim::kCastleBands, sim::kCastles, sim::kCastlesBuilt},
+    {"Blood Castle", "Devias \xB7 Messenger", 0, 0, 0, sim::kCastleBands, sim::kCastles,
+     sim::kCastlesBuilt},
     {"Devil Square", "Noria \xB7 Charon", 14400, 0, 1500, kSquareBands, 4, 4},
 };
 
@@ -270,10 +271,12 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
         Call& call = calls_[g];
         int moment = 0;
         int toStart = 0;
+        const sim::GateClock clock = gate.period ? sim::GateClock{gate.period, gate.opensAt, gate.entry}
+                                                 : realm.config().castle;
         if (day >= 0 && play.isOpen() && hero.level >= gate.bands[0][0]) {
-            const int phase = ((day - gate.opensAt) % gate.period + gate.period) % gate.period;
-            const bool open = phase < gate.entry;
-            toStart = open ? 0 : gate.period - phase;
+            const int phase = clock.phase(day);
+            const bool open = phase < clock.entry;
+            toStart = open ? 0 : clock.period - phase;
             const int64_t startAt = open ? wall - phase : wall + toStart;
             // The same opening for the second or two the clock wobbles across a frame.
             if (std::llabs(startAt - one.startAt) > 2) one = Source{startAt, 0};
@@ -292,7 +295,7 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
             call.place = gate.place;
             call.live = open;
             call.state = open ? "gate open" : "";
-            call.seconds = open ? gate.entry - phase : toStart;
+            call.seconds = open ? clock.entry - phase : toStart;
         }
         if (moment > one.spoken) {
             const int was = one.spoken;

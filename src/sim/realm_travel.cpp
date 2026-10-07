@@ -169,7 +169,7 @@ int Realm::travelQuest(int index) const {
     // And the chain's links, in the quest table's order.
     int link = 0;
     for (int q = 0; q < kQuests; ++q) {
-        if (questAt(q).giver != chain->giver) continue;
+        if (questGiver(q, config_.questDemo) != chain->giver) continue;
         if (link++ == floor) return q;
     }
     return -1;

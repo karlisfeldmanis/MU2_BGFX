@@ -281,6 +281,12 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }
+            sim::RealmConfig config;
+            if (args.castlePeriod > 0) {
+                config.castle = {args.castlePeriod, args.castlePeriod / 2, args.castlePeriod / 2};
+            }
+            config.questDemo = args.questDemo;
+            world_.played().configure(config);
             if (args.raid > 0) {
                 world_.played().setRaid(args.raid, raidParty(), args.raidWatch,
                                         args.raidBox ? std::clamp(args.raidBox - 'A', 0, sim::kRaidLandingCount - 1) : -1);
@@ -589,7 +595,6 @@ void PlayMode::runScript(Context& ctx) {
             }
             world_.played().restore(done);
         }
-        if (args.questDemo) sim::enableQuestDemo();
         if (!args.talk.empty()) world_.played().talkTo(args.talk);
         if (args.perch >= 0) world_.played().perch(args.perch);
         // Once: a gate's next world is opened on these same arguments.

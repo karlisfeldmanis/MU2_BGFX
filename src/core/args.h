@@ -189,6 +189,7 @@ struct Args {
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
     bool wingDemo = false;      // `--wing-demo`: every kill in Icarus leaves the first wings
     bool castleOpen = false;    // `--castle-open`: the Messenger's door open at any hour (a test)
+    int castlePeriod = 0;       // `--castle-period S`: the castle opens every S seconds for S/2 (a test; 0 is hourly)
     bool invasion = false;      // `--invasion`: the map's Golden Invasion begun at once (a test)
     // `--raid N`: the Golden Dragon's raid (docs/golden-dragon-raid.md) -- the party of
     // source/raid/party.json in one of WebZen's Lorencia Dragon Event boxes, the invasion begun at

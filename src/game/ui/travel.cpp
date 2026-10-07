@@ -57,12 +57,12 @@ constexpr uint32_t kAgainHi = gfx::rgba(0.56f, 0.80f, 1.00f);
 struct Event {
     const char* name;
     int32_t map;
-    int period;  // seconds between starts
+    int period;  // seconds between starts; 0 is the realm's own castle clock (sim::RealmConfig)
     int length;  // and how long one runs
     int offset = 0;  // the first start, seconds after midnight
 };
 constexpr Event kEvents[] = {
-    {"Blood Castle", 2, sim::kCastlePeriod, sim::kCastleEntry, sim::kCastleOpensAt},
+    {"Blood Castle", 2, 0, 0},
     {"Devil Square", 3, 14400, 1500}};
 constexpr int kSoonSeconds = 1800;
 
@@ -270,8 +270,10 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
         localtime_r(&at, &local);
         const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
         for (size_t p = 0; p < places_.size() && p < size_t(kPlaces); ++p) {
-            for (const Event& one : kEvents) {
-                if (one.map != places_[p].map) continue;
+            for (const Event& row : kEvents) {
+                if (row.map != places_[p].map) continue;
+                const sim::GateClock& castle = realm.config().castle;
+                const Event one = row.period ? row : Event{row.name, row.map, castle.period, castle.entry, castle.opensAt};
                 const int phase = ((day - one.offset) % one.period + one.period) % one.period;
                 if (phase < one.length) {
                     now.events[p] = 2;

@@ -1,5 +1,6 @@
 #include "core/args.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstdio>
 #include <cctype>
@@ -200,6 +201,7 @@ void printUsage() {
         "  --wing-demo               every kill in Icarus leaves his class's first wings (a demo)\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
+        "  --castle-period S         Blood Castle opens every S seconds, for S/2, not hourly (a test)\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
         "  --raid N                  the Golden Dragon's raid, tough for N, the party around him\n"
         "  --raid-box A-E            which field outside the town it lands on (else the dice's)\n"
@@ -364,6 +366,8 @@ Args parseArgs(int argc, char** argv) {
             a.wingDemo = true;
         } else if (!std::strcmp(s, "--castle-open")) {
             a.castleOpen = true;
+        } else if (!std::strcmp(s, "--castle-period")) {
+            if (const char* v = next(s)) a.castlePeriod = std::max(2, std::atoi(v));
         } else if (!std::strcmp(s, "--invasion")) {
             a.invasion = true;
         } else if (!std::strcmp(s, "--raid")) {

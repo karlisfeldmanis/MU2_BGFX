@@ -975,7 +975,7 @@ QuestRow tearOfElf() {
     return row;
 }
 
-// The demo's two (kDemoQuests): Peia's once enableQuestDemo runs, nobody's before. Ours, and
+// The demo's two (kDemoQuests): Peia's in a realm configured with questDemo, nobody's else. Ours, and
 // placeholders: short hunts in Noria, the words a sketch.
 QuestRow demoQuest(const char* title, int32_t minLevel) {
     QuestRow row;
@@ -1304,15 +1304,20 @@ QuestTable withFirecrackers() {
     }
     return table;
 }
-QuestTable kQuestTable = withFirecrackers();
+const QuestTable kQuestTable = withFirecrackers();
 const QuestRow* const kTable = kQuestTable.rows;
 
 }  // namespace
 
 const QuestRow& questAt(int index) { return kTable[index]; }
 
-void enableQuestDemo() {
-    for (int index : kDemoQuests) kQuestTable.rows[index].giver = 257;
+int32_t questGiver(int index, bool demo) {
+    if (demo) {
+        for (int one : kDemoQuests) {
+            if (one == index) return 257;
+        }
+    }
+    return kTable[index].giver;
 }
 
 bool questReceives(int32_t number) {

@@ -309,6 +309,8 @@ public:
     // party of source/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
     // `watched`: the hero is the raiders' mind's too and the player only watches (--raid-watch).
     // `landing`: which of sim::kRaidLandings, or -1 for the invasion's dice (--raid-box).
+    // The realm's settings (sim/config.h), set BEFORE open() as the raid is.
+    void configure(const sim::RealmConfig& config) { realmConfig_ = config; }
     void setRaid(int players, std::vector<sim::RaiderKit> party, bool watched = false, int landing = -1) {
         raidPlayers_ = players;
         raidParty_ = std::move(party);
@@ -1144,6 +1146,7 @@ private:
     uint32_t roarOwed_ = 0;
     bool roarWhole_ = false;
     // ---- the raid's drawing (play_raid.cpp) ---------------------------------------------------
+    sim::RealmConfig realmConfig_;
     int raidPlayers_ = 0;
     bool raidWatched_ = false;
     int raidLanding_ = -1;

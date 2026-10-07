@@ -10480,10 +10480,10 @@ void testCastleGrid(const content::Tables& lorencia) {
         checkEqual(firsts, 0, "and none of castle 1's");
         checkEqual(statueHealth, int(sim::kCastleStatueHealth[2]), "the statue at castle 3's health");
     }
-    check(sim::castleEntryLeft(10 * 3600 + 25 * 60) == 300, "the Messenger opens at hh:25");
-    check(sim::castleEntryLeft(10 * 3600 + 29 * 60 + 59) == 1, "until hh:29:59");
-    check(sim::castleEntryLeft(10 * 3600 + 30 * 60) == 0, "and is shut at hh:30");
-    check(sim::castleEntryLeft(10) == 0, "and past midnight");
+    check(sim::RealmConfig{}.castle.entryLeft(10 * 3600 + 25 * 60) == 300, "the Messenger opens at hh:25");
+    check(sim::RealmConfig{}.castle.entryLeft(10 * 3600 + 29 * 60 + 59) == 1, "until hh:29:59");
+    check(sim::RealmConfig{}.castle.entryLeft(10 * 3600 + 30 * 60) == 0, "and is shut at hh:30");
+    check(sim::RealmConfig{}.castle.entryLeft(10) == 0, "and past midnight");
     check(realm.raise(&castle, 3, 13, 8), "a raise again");
     check(!reaches(14, 85), "starts with the castle closed");
     sim::Realm town;
