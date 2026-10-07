@@ -112,6 +112,12 @@ on the server was lost at every gate, trip and death sent home.**
   - **The minute and the stop:** a client connected for 75 s was written at 60 s and again as the
     server took SIGTERM ("characters: 1 kept" both times).
   - `layercheck` and `save_test` pass.
+- **On the box:** `deploy.sh` installed `libsqlite3-dev` and built there (sim_test 6661, the
+  standing 10 failing; save_test and placement_test pass). The service opened
+  `/var/lib/mu2/characters.db` empty. Then, from this Mac over the internet:
+  - a level-40 knight played and left, and `systemctl restart mu2-server` stopped the service;
+  - the new process said "1 characters", and a client asking for level 1 came back level 40;
+  - 6 of 6 hashes agreed both times.
 
 ## Next
 
