@@ -83,6 +83,8 @@ struct Options {
     bool fights = false;  // --fights: a line every half hour on how he fights
     int build[4] = {};    // --build s,a,v,e: the weights his points are spent by, else his class's
     bool noShopSkills = false;  // --no-shop-skills: buys no orb or scroll, reads only what drops
+    // --pet angel|imp|none: the pet he keeps in slot 8, or -1 for his class's (wantedPet).
+    int pet = -1;
     // --path magic: the Magic Gladiator on the wizard's ways -- energy, a staff, spells and the
     // wizard's potions -- where melee, the default, is the knight's. His quests pay that path.
     bool magic = false;
@@ -1010,7 +1012,7 @@ private:
             // Rings and the pendant are wearJewellery's, on its own worth: scored here by their
             // sockets alone, a socketed Ring of Ice and a Ring of Fortune traded places every
             // sort, 1,600 times in six hours (knight, seed 2, 2026-10-03).
-            if (sim::jewellery(row)) continue;
+            if (sim::jewellery(row) || anyHelper(row)) continue;
             // An elf keeps to the bow: her skills and her arrows are its. And to the one she can
             // feed: a crossbow shoots bolts where a bow shoots arrows, and a switch with no
             // quiver for it and no Zen for one leaves her nothing to shoot.
@@ -1124,6 +1126,7 @@ private:
     }
 
     void useJewels() {
+        raiseChaosWeapon();
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
             const sim::Held jewel = realm_->satchel()[slot];
             if (jewel.empty()) continue;
@@ -1152,6 +1155,8 @@ private:
                 continue;
             }
             if (!sim::refiningJewel(row)) continue;
+            // Held back for the wing ladder until it is climbed (ladderJewels).
+            if (ladderOn() && countJewel(sim::jewelOf(row)) <= ladderJewels(sim::jewelOf(row))) continue;
             const bool soul = sim::jewelOf(row) == sim::Jewel::Soul;
             int best = -1;
             for (int to = 0; to < sim::kWorn; ++to) {
@@ -1236,7 +1241,298 @@ private:
         readOrbs();
         wearBest();
         wearJewellery();
+        wearHelpers();
+        wearWings();
         useJewels();
+    }
+
+    // At the Goblin: what the last box left taken out, then one mix an opening -- the machine
+    // locks after one until it is reopened -- the window shut and opened again while more is owed.
+    // True while he is busy there.
+    bool goblinVisit() {
+        const int goblin = goblinHere();
+        if (std::getenv("BOT_MIX") && clock_ % 100 == 0) {
+            std::printf("MIX visit: goblin %d since %lld mixing %d\n", goblin, (long long)(clock_ - machineSince_), realm_->mixing());
+        }
+        if (goblin < 0 || clock_ - machineSince_ > 90 * 20) {
+            machineOwed_ = false;
+            return false;
+        }
+        if (realm_->mixing() != goblin) {
+            talkTo(goblin);
+            return true;
+        }
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm_->machine()[cell].empty()) hand_.takeOut(cell);
+        }
+        bool owed = false;
+        for (int slot = sim::kWorn; slot < sim::kSlots && !owed; ++slot) owed = unruneWorth(realm_->satchel()[slot]);
+        if (owed) unrune();
+        else if (cloakWorth() > 0) makeCloak();
+        else mixWings();
+        hand_.closeMachine();
+        sortBag();
+        machineOwed_ = cloakWorth() > 0 || wingsOwed();
+        for (int slot = sim::kWorn; slot < sim::kSlots && !machineOwed_; ++slot) {
+            machineOwed_ = unruneWorth(realm_->satchel()[slot]);
+        }
+        tripSince_ = clock_;
+        return machineOwed_;
+    }
+
+    // ---- the wing ladder (docs/wings.md, sim/machine.h) -------------------------------------
+    // The user, 2026-10-08: "chaos machine". A thing at +4 or better with an option (or a socket,
+    // ours) and a Chaos make a Chaos weapon at the Goblin; that weapon raised to +4 with Bless and
+    // given an option with Life, and a Chaos, make his class's 1st wings. The rate is the box's
+    // worth over 20,000 and each percent costs 10,000 Zen (sim::judge says both); Bless and Soul
+    // in the wing box raise it.
+    static bool chaosWeaponRow(const content::ItemRow& row) {
+        return (row.group == 2 && row.number == 6) || (row.group == sim::kGroupBows && row.number == 6) ||
+               (row.group == 5 && row.number == 7);
+    }
+    bool hasWings() const {
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty()) continue;
+            const content::ItemRow& row = rowOf(one);
+            if ((sim::firstWing(row) || sim::secondWing(row)) && sim::placesIn(row, options_.kin, sim::kWings)) return true;
+        }
+        return false;
+    }
+    void wearWings() {
+        if (!realm_->satchel()[sim::kWings].empty()) return;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty()) continue;
+            const content::ItemRow& row = rowOf(one);
+            if (!(sim::firstWing(row) || sim::secondWing(row)) || !sim::placesIn(row, options_.kin, sim::kWings)) continue;
+            const std::string label = row.label;
+            if (hand_.moveItem(slot, sim::kWings)) say("** wears %s", label.c_str());
+            return;
+        }
+    }
+    // A thing the Chaos Weapon's box takes: +4 or better with an option or a socket.
+    bool optioned(const sim::Held& one) const {
+        if (one.empty()) return false;
+        const content::ItemRow& row = rowOf(one);
+        return row.group <= sim::kGroupBoots && !sim::ammunition(row) && one.refinement >= 4 &&
+               (one.option > 0 || one.sockets > 0);
+    }
+    // The Chaos weapon he has, bag or hands, the highest plus first, or -1.
+    int chaosWeaponSlot() const {
+        int best = -1;
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            if (slot >= sim::kWeaponLeft + 1 && slot < sim::kWorn) continue;
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty() || !chaosWeaponRow(rowOf(one))) continue;
+            if (best < 0 || one.refinement > realm_->satchel()[best].refinement) best = slot;
+        }
+        return best;
+    }
+    // The bag's fodder he keeps through a sale while he has no wings and the bag has room: the
+    // three worth the most to the machine, never what he wears.
+    // A fixed share of the bag, so what he keeps does not change with how full it is (a rule
+    // by free room sold the fodder at the counter and took a 10% box to the Goblin as a 2%).
+    bool fodder(int slot) const {
+        if (!ladderOn() || slot < sim::kWorn) return false;
+        const sim::Held& one = realm_->satchel()[slot];
+        if (!optioned(one) || chaosWeaponRow(rowOf(one))) return false;
+        const int64_t mine = sim::mixValue(*tables_, one);
+        if (rowOf(one).width * rowOf(one).height > 6) return false;  // three at most 12 cells, near enough
+        int better = 0;
+        for (int other = sim::kWorn; other < sim::kSlots; ++other) {
+            if (other == slot) continue;
+            const sim::Held& o = realm_->satchel()[other];
+            if (!optioned(o) || chaosWeaponRow(rowOf(o)) || rowOf(o).width * rowOf(o).height > 6) continue;
+            const int64_t theirs = sim::mixValue(*tables_, o);
+            if (theirs > mine || (theirs == mine && other < slot)) ++better;
+        }
+        return better < 3;
+    }
+    // A box of these bag slots, judged as the Goblin would for this service.
+    sim::Judged judgeBox(const std::vector<int>& slots, sim::Service service) const {
+        sim::Machine box;
+        for (const int slot : slots) {
+            const sim::Held& one = realm_->satchel()[slot];
+            const content::ItemRow& row = rowOf(one);
+            const int cell = box.free(*tables_, row.width, row.height);
+            if (cell < 0) break;
+            box.put(cell, one);
+        }
+        return sim::judge(*tables_, box, service, -1, options_.kin);
+    }
+    // The box he would mix now, and its service, or empty: the wings' when his Chaos weapon is
+    // ready, else a Chaos weapon's from his fodder -- each only at 10% or more and with the Zen
+    // over his potions twice.
+    std::vector<int> wingBox(sim::Service* service, sim::Judged* judged) const {
+        std::vector<int> box;
+        if (hasWings()) return box;
+        int jewel = -1;
+        std::vector<int> things, raisers;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty()) continue;
+            const content::ItemRow& row = rowOf(one);
+            if (chaos(row) && jewel < 0) jewel = slot;
+            if (fodder(slot)) things.push_back(slot);
+            if (sim::refiningJewel(row) && (sim::jewelOf(row) == sim::Jewel::Bless || sim::jewelOf(row) == sim::Jewel::Soul)) {
+                raisers.push_back(slot);
+            }
+        }
+        if (jewel < 0) return box;
+        const int weapon = chaosWeaponSlot();
+        if (weapon >= 0 && optioned(realm_->satchel()[weapon])) {
+            *service = sim::Service::FirstWings;
+            box = {weapon, jewel};
+            box.insert(box.end(), things.begin(), things.end());
+            box.insert(box.end(), raisers.begin(), raisers.end());
+        } else if (weapon < 0 && !things.empty()) {
+            *service = sim::Service::ChaosWeapon;
+            box = {jewel};
+            box.insert(box.end(), things.begin(), things.end());
+            box.insert(box.end(), raisers.begin(), raisers.end());
+        } else {
+            return {};
+        }
+        *judged = judgeBox(box, *service);
+        if (!judged->ready || judged->rate < 10 || realm_->money() < judged->zen + 2 * potionReserve()) return {};
+        return box;
+    }
+    bool wingsOwed() const {
+        sim::Service service;
+        sim::Judged judged;
+        return !wingBox(&service, &judged).empty();
+    }
+    // At the Goblin's box: the box in, mixed, everything out.
+    void mixWings() {
+        sim::Service service;
+        sim::Judged judged;
+        std::vector<int> box = wingBox(&service, &judged);
+        if (std::getenv("BOT_MIX")) {
+            std::printf("MIX wings: box %zu service %d ready %d rate %d zen %lld money %lld machine empty %d weapon %d\n",
+                        box.size(), int(service), judged.ready, judged.rate, (long long)judged.zen,
+                        (long long)realm_->money(), realm_->machine().empty(), chaosWeaponSlot());
+        }
+        if (box.empty()) return;
+        if (!realm_->machine().empty()) return;  // what a full bag left in it last time
+        bool in = true;
+        for (const int slot : box) in = in && hand_.putIn(slot) >= 0;
+        const bool mixed = in && hand_.mix(service);
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm_->machine()[cell].empty()) hand_.takeOut(cell);
+        }
+        if (!mixed) return;
+        const bool wings = service == sim::Service::FirstWings;
+        const bool made = wings ? hasWings() : chaosWeaponSlot() >= 0;
+        say("%s at the Chaos Goblin: %s (%d%%, %lld zen)", wings ? "the 1st wings' box" : "the Chaos Weapon's box",
+            made ? "** made" : "failed", judged.rate, (long long)judged.zen);
+        wearWings();
+    }
+    // His Chaos weapon brought up to the wings' box: Bless to +4, then Life for an option.
+    void raiseChaosWeapon() {
+        if (hasWings()) return;
+        const int weapon = chaosWeaponSlot();
+        if (weapon < 0 || optioned(realm_->satchel()[weapon])) return;
+        const sim::Held& it = realm_->satchel()[weapon];
+        const sim::Jewel want = it.refinement < 4 ? sim::Jewel::Bless : sim::Jewel::Life;
+        if (want == sim::Jewel::Life && it.sockets > 0) return;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty() || !sim::refiningJewel(rowOf(one)) || sim::jewelOf(rowOf(one)) != want) continue;
+            if (!sim::refinable(*tables_, one, it)) return;
+            const std::string label = rowOf(it).label;
+            const int was = it.refinement, option = it.option;
+            if (hand_.refine(slot, weapon)) {
+                const sim::Held& now = realm_->satchel()[weapon];
+                say("%s on his %s: +%d -> +%d, option %d -> %d", rowOf(one).label.c_str(), label.c_str(), was,
+                    int(now.refinement), option, int(now.option));
+            }
+            return;
+        }
+    }
+
+    // ---- pets and mounts (docs/pets.md, docs/mount.md) -------------------------------------
+    // The user, 2026-10-08: "satan, guardian angle use", "mounts". The Guardian Angel (13/0) takes
+    // 30% off every blow on him and adds 50 health, and his own blows lose a fifth; the Imp (13/1)
+    // adds 30% to his blows for 3 of his life each; both wear out under blows taken and are gone
+    // at nought. A mount rides its own slot beside the pet: Uniria (13/2) is speed alone, Dinorant
+    // (13/3) adds 15% to his blows and takes 10% off theirs. All four are on Lumen's shelf in
+    // Lorencia's tavern. None of it moves his blow or guard as `score` reads them, so they are
+    // chosen here and not tried on.
+    static constexpr int kAngel = 0, kImp = 1, kUniria = 2, kDinorant = 3;
+    static bool helper(const content::ItemRow& row, int number) {
+        return row.group == sim::kGroupPets && row.number == number;
+    }
+    static bool anyHelper(const content::ItemRow& row) {
+        return row.group == sim::kGroupPets && row.number >= kAngel && row.number <= kDinorant;
+    }
+    // The pet his class keeps: the Imp for every class, measured (--pet), or -1 for none.
+    int wantedPet() const {
+        if (options_.pet != -1) return options_.pet;
+        return kImp;
+    }
+    int heldHelper(int number, bool bagOnly = false) const {
+        for (int slot = bagOnly ? int(sim::kWorn) : 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && helper(rowOf(one), number) && one.durability > 0) return slot;
+        }
+        return -1;
+    }
+    // Puts on the pet he keeps and the best mount he carries; the old one back into the bag.
+    void wearHelpers() {
+        const auto wear = [&](int place, int number) {
+            const int from = heldHelper(number, true);
+            if (from < 0) return;
+            const sim::Held& on = realm_->satchel()[place];
+            if (!on.empty()) {
+                const content::ItemRow& old = rowOf(on);
+                const int spare = realm_->satchel().free(*tables_, old.width, old.height);
+                if (spare < 0 || !hand_.moveItem(place, spare)) return;
+            }
+            const std::string label = rowOf(realm_->satchel()[from]).label;
+            if (hand_.moveItem(from, place)) say("wears %s", label.c_str());
+        };
+        const int pet = wantedPet();
+        const sim::Held& onPet = realm_->satchel()[sim::kPet];
+        if (pet >= 0 && (onPet.empty() || !helper(rowOf(onPet), pet))) wear(sim::kPet, pet);
+        const sim::Held& onMount = realm_->satchel()[sim::kMount];
+        const bool dinorant = !onMount.empty() && helper(rowOf(onMount), kDinorant);
+        if (!dinorant) {
+            if (heldHelper(kDinorant, true) >= 0) wear(sim::kMount, kDinorant);
+            else if (onMount.empty()) wear(sim::kMount, kUniria);
+        }
+    }
+    int64_t helperPrice(int number) const {
+        const int item = tables_->itemAt(sim::kGroupPets, number);
+        return item < 0 ? -1 : sim::buyingPrice(tables_->items[size_t(item)], 0, 0, false);
+    }
+    // What a helper he lacks would cost now, if his purse runs to it over his potions, or -1.
+    int helperOwed() const {
+        const int64_t spare = realm_->money() - potionReserve();
+        const int pet = wantedPet();
+        if (pet >= 0 && heldHelper(pet) < 0) {
+            const int64_t price = helperPrice(pet);
+            if (price > 0 && spare >= price) return pet;
+        }
+        if (heldHelper(kDinorant) < 0) {
+            const int64_t price = helperPrice(kDinorant);
+            if (price > 0 && spare >= price * 2) return kDinorant;  // never his last Zen on it
+            if (heldHelper(kUniria) < 0 && helperPrice(kUniria) > 0 && spare >= helperPrice(kUniria)) return kUniria;
+        }
+        return -1;
+    }
+    void buyHelpers(const sim::Offer* shelf, int count) {
+        for (int pass = 0; pass < 3; ++pass) {
+            const int want = helperOwed();
+            if (want < 0) return;
+            bool bought = false;
+            for (int i = 0; i < count && !bought; ++i) {
+                if (shelf[i].group != sim::kGroupPets || shelf[i].number != want) continue;
+                bought = buyOne(shelf[i], " (a helper)") >= 0;
+            }
+            if (!bought) return;
+            wearHelpers();
+        }
     }
 
     // What he would sell, and what he would store: jewels and runes, which a sale keeps.
@@ -1254,7 +1550,33 @@ private:
         // the Jewels of Chaos for the machine's Remove Rune, three of them.
         if (sim::creation(row)) return !knightly() || !weaponRune(one);
         if (chaos(row)) return chaosCount() > 3;
+        // The wing ladder's, carried while he has none: Bless to raise the Chaos weapon, Life for
+        // its option, Soul for the wing box's rate.
+        // Not once a reward has found no room (crowded_): an elf who kept them, and her fodder,
+        // had no room for the Golden Archer's reward and asked for it for twelve hours.
+        if (ladderOn() && sim::refiningJewel(row) && countJewel(sim::jewelOf(row)) <= ladderJewels(sim::jewelOf(row))) {
+            return false;
+        }
         return sim::refiningJewel(row);
+    }
+    // What the ladder holds back while he has no wings: the Bless and Soul raise a box's rate
+    // (about 5 and 3.5 a jewel), and the Life gives the Chaos weapon its option. Three +4 things
+    // of his level make a 2-3% box alone.
+    // Whether he climbs it now: no wings, a bag with room, and the Zen for the boxes -- a knight
+    // and a wizard who held their jewels back on 50,000 Zen never mixed and fell 6-10 levels
+    // behind, their gear unrefined.
+    bool ladderOn() const { return !hasWings() && !crowded_ && realm_->money() >= kLadderZen; }
+    static constexpr int64_t kLadderZen = 400000;
+    static int ladderJewels(sim::Jewel kind) {
+        return kind == sim::Jewel::Bless ? 6 : kind == sim::Jewel::Soul ? 4 : 2;
+    }
+    int countJewel(sim::Jewel kind) const {
+        int n = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && sim::refiningJewel(rowOf(one)) && sim::jewelOf(rowOf(one)) == kind) ++n;
+        }
+        return n;
     }
     static bool chaos(const content::ItemRow& row) { return row.group == 12 && row.number == 15; }
     int chaosCount() const {
@@ -1346,6 +1668,8 @@ private:
         const sim::Held& one = realm_->satchel()[slot];
         if (slot >= sim::kWorn && nearlyFits(one)) return true;
         if (slot >= sim::kWorn && unruneWorth(one)) return true;
+        if (fodder(slot)) return true;
+        if (slot >= sim::kWorn && !one.empty() && chaosWeaponRow(rowOf(one)) && !hasWings()) return true;
         if (one.empty() || !keeps(one)) return false;
         const content::ItemRow& row = rowOf(one);
         if (sim::ammunition(row)) return archer() && feeds(row);
@@ -1488,7 +1812,22 @@ private:
         }
         if (scroll < 0 || bone < 0 || jewel < 0) return;
         const bool in = hand_.putIn(scroll) >= 0 && hand_.putIn(bone) >= 0 && hand_.putIn(jewel) >= 0;
+        if (std::getenv("BOT_MIX")) {
+            const sim::Judged j = realm_->judged(sim::Service::Cloak);
+            std::printf("MIX cloak +%d: in %d ready %d rate %d zen %lld recipe %d money %lld\n", level, in, j.ready, j.rate,
+                        (long long)j.zen, int(j.recipe), (long long)realm_->money());
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                const sim::Held& c = realm_->machine()[cell];
+                if (!c.empty()) std::printf("   cell %d: %s +%d\n", cell, rowOf(c).label.c_str(), int(c.refinement));
+            }
+        }
         const bool mixed = in && hand_.mix(sim::Service::Cloak);
+        if (std::getenv("BOT_MIX")) {
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                const sim::Held& c = realm_->machine()[cell];
+                if (!c.empty()) std::printf("   after: cell %d: %s +%d\n", cell, rowOf(c).label.c_str(), int(c.refinement));
+            }
+        }
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
             if (!realm_->machine()[cell].empty()) hand_.takeOut(cell);
         }
@@ -1987,6 +2326,11 @@ private:
         if (wornDown() >= 0 && !realm_->selfMending()) return "gear worn down";
         if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
         if (goblinHere() >= 0 && cloakWorth() > 0) return "a cloak to make";
+        if (clock_ - lastTrip_ > 10 * 60 * 20 && clock_ >= machineAwayUntil_ && (wingsOwed() || cloakWorth() > 0) &&
+            (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
+            return "the Chaos Machine";
+        }
+        if (map() == 0 && clock_ - lastTrip_ > 10 * 60 * 20 && helperOwed() >= 0) return "a pet or a mount to buy";
         // Blood Castle has no counter: an elf went in with a few hundred arrows and stood at the
         // Statue of Saint with none for twelve minutes.
         if (aim_ == Aim::Castle && archer() && ammo() < 1200 && money >= 20000) return "arrows for Blood Castle";
@@ -2313,6 +2657,7 @@ private:
             if (hand_.completeQuest(aimQuest_, choice,
                                       options_.magic ? sim::QuestPath::Magic : sim::QuestPath::Melee)) {
                 ++out_.handedIn[aimQuest_];
+                crowded_ = false;
                 if (out_.firstHandIn[aimQuest_] < 0) out_.firstHandIn[aimQuest_] = clock_;
                 say("** hands in %s to %s: +%lld zen, level %d -> %d%s%s", row.title, row.giverName,
                     (long long)(realm_->money() - zen), level, realm_->hero().level,
@@ -2322,6 +2667,7 @@ private:
                 // Refused when it is ready: the room, which a bag of scattered cells can lack
                 // with plenty free. To the counters to sell, and back.
                 say("no room for %s's reward: to the counters", row.giverName);
+                crowded_ = true;
                 hand_.closeQuest();
                 startTrip();
                 return;
@@ -2378,7 +2724,7 @@ private:
             for (int slot = sim::kWorn; slot < sim::kSlots && !machineOwed_; ++slot) {
                 machineOwed_ = unruneWorth(realm_->satchel()[slot]);
             }
-            machineOwed_ = machineOwed_ || cloakWorth() > 0;
+            machineOwed_ = machineOwed_ || cloakWorth() > 0 || wingsOwed();
         }
         machineSince_ = clock_;
         vaultSince_ = clock_;
@@ -2431,26 +2777,6 @@ private:
         // The Chaos Goblin first, when a carried piece's runes are worth taking out: into the box
         // with a Chaos, Remove Rune, everything back out; the rune goes into his weapon at the
         // next sort of the bag (useJewels).
-        if (machineOwed_) {
-            const int goblin = goblinHere();
-            if (goblin < 0 || clock_ - machineSince_ > 90 * 20) {
-                machineOwed_ = false;
-            } else if (realm_->mixing() == goblin) {
-                unrune();
-                makeCloak();
-                hand_.closeMachine();
-                machineOwed_ = false;
-                tripSince_ = clock_;
-                sortBag();
-                return;
-            } else {
-                sim::Request request;
-                request.kind = sim::Request::Kind::Talk;
-                request.target = uint32_t(goblin);
-                hand_.ask(request);
-                return;
-            }
-        }
         // The vault first, when it is owed: deposit every jewel and rune, then the counters.
         if (vaultOwed_) {
             const int keeper = vaultHere();
@@ -2474,6 +2800,17 @@ private:
                 hand_.ask(request);
                 return;
             }
+        }
+        // The Chaos Goblin stands in Noria alone: a box owed and none here, there first.
+        if (goblinHere() < 0 && awayTo_ < 0 && clock_ >= machineAwayUntil_ && (wingsOwed() || cloakWorth() > 0)) {
+            machineAwayUntil_ = clock_ + 30 * 60 * 20;
+            tripOwed_ = true;
+            if (goTo(3)) {
+                say("goes to Noria's Chaos Goblin");
+                awayTo_ = 3;
+                return;
+            }
+            tripOwed_ = false;
         }
         // On his way there: keep going -- a gate is a walk of many thinks, and the trip's own
         // errands here would take him off it.
@@ -2504,6 +2841,9 @@ private:
             }
         }
         if (errands_.empty()) {
+            // The Chaos Goblin last, once the counters have made room for what comes out: a
+            // cloak mixed into a full bag stayed in the box and spoiled the next one.
+            if (machineOwed_ && goblinVisit()) return;
             mode_ = Mode::Hunt;
             return;
         }
@@ -2574,6 +2914,7 @@ private:
         // An archer's quiver before anything: without it she cannot earn the rest.
         buyAmmo(shelf, count);
         buyGear(shelf, count);
+        buyHelpers(shelf, count);
         if (potionShelf(folk)) buyPotions(shelf, count);
     }
 
@@ -2788,7 +3129,9 @@ private:
     int64_t floorLeftAt_ = 0;
     bool vaultOwed_ = false;   // this trip calls on the vault keeper first
     bool machineOwed_ = false;
-    int owedCastle_ = 1;        // the castle his cloak opened, for the raise on the far side  // and on the Chaos Goblin, to take runes out
+    int owedCastle_ = 1;
+    int64_t machineAwayUntil_ = 0;
+    bool crowded_ = false;  // a reward found no room: the ladder keeps nothing until one is handed in  // the next trip that may go to Noria for the machine        // the castle his cloak opened, for the raise on the far side  // and on the Chaos Goblin, to take runes out
     int64_t machineSince_ = 0;
     int64_t vaultSince_ = 0;
     double guardSeen_ = 1.0;  // the share of a blow his guard lets through, once he has one  // the town he is on his way to shop in, -1 for none  // the next trip that may go to another town's counters

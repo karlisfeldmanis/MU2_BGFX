@@ -40,6 +40,10 @@ int main(int argc, char** argv) {
         else if (a == "--no-quests") options.quests = false;
         else if (a == "--fights") options.fights = true;
         else if (a == "--no-shop-skills") options.noShopSkills = true;
+        else if (a == "--pet") {
+            const std::string k = next();
+            options.pet = k == "angel" ? 0 : k == "imp" ? 1 : -2;
+        }
         else if (a == "--build") {
             std::sscanf(next(), "%d,%d,%d,%d", &options.build[0], &options.build[1], &options.build[2],
                         &options.build[3]);
