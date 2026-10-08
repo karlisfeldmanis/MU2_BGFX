@@ -16,9 +16,11 @@
 
 namespace mu::sim {
 
-// The map this clock is Lorencia's, and the breed that lands: OpenMU's Golden Dragon (79,
-// VersionSeasonSix InvasionMobsInitialization.cs:74-101), MuMain's MONSTER_MODEL_DRAGON body.
-constexpr uint32_t kInvasionMap = 0;
+// The maps it invades, each on its own clock, and the breed that lands: OpenMU's Golden Dragon
+// (79, VersionSeasonSix InvasionMobsInitialization.cs:74-101), MuMain's MONSTER_MODEL_DRAGON body.
+// Lorencia's first; Devias and Noria since 2026-10-08 (the user: "dragon can land on
+// devias,lorencia,noria") -- OpenMU's three towns too.
+constexpr bool invasionMap(uint32_t map) { return map == 0 || map == 2 || map == 3; }
 constexpr int32_t kGoldenDragonNumber = 79;
 
 // **When**: not on a clock. OpenMU's is a timetable (GenerateTimeSequence(4 hours)); **ours, the
@@ -35,17 +37,33 @@ constexpr int kInvasionChance = 33;
 constexpr int64_t kInvasionRainTicks = 4 * 20;
 constexpr int64_t kInvasionLandTicks = 30 * 20;
 
+// **The storm holds** while it is in the sky or on the ground (the user, 2026-10-08: "dragons
+// only land on storms and storm does not stop till dragon is killed or fly away"): the server's
+// spell is not turned dry while Realm::invasionPhase is not Quiet (server/src/main.cpp), nor a
+// client's own (Weather::summon).
+//
 // **How long it stays** once landed: OpenMU's TaskDuration, thirty minutes. Then it goes, out
 // of the picture without a fall (CleanUpMonstersAsync), as a summon is dismissed.
 constexpr int64_t kInvasionStandTicks = 30 * 60 * 20;
 
-// Where it comes down: a standable tile out of the safe zone, kInvasionNear to kInvasionFar
-// tiles from the hero, so he sees it land, the ring widened a ring's breadth at a time, up to
-// kInvasionRings, when he is in town (Lorencia's is forty tiles across and walled). Ours;
-// OpenMU's is anywhere walkable on the map, which is the fallback.
-constexpr int kInvasionNear = 5;
-constexpr int kInvasionFar = 9;
-constexpr int kInvasionRings = 6;
+// **Where it comes down**: one of its map's three fields, drawn at random (the user, 2026-10-08:
+// "each for 3 random spots"), on the nearest standable tile out of the safe zone within
+// kInvasionFieldReach of it. Ours: OpenMU's is anywhere walkable on the map, which is the
+// fallback. Each field is an open clearing at least nine tiles across, 35 to 60 tiles from its
+// town and reached on foot from it (read off each map's attribute grid, 2026-10-08); Lorencia's
+// are the raid's west, east and south fields (sim::kRaidLandings E, C and D). The minimap shows
+// the dragon where it stands (game/ui/minimap.cpp).
+struct InvasionField {
+    uint32_t map;
+    int column, row;
+};
+inline constexpr InvasionField kInvasionFields[] = {
+    {0, 86, 111},  {0, 183, 111}, {0, 145, 175},  // Lorencia: west, east, south
+    {2, 165, 42},  {2, 241, 87},  {2, 200, 84},   // Devias
+    {3, 211, 92},  {3, 128, 138}, {3, 199, 168},  // Noria
+};
+constexpr int kInvasionFieldCount = int(sizeof(kInvasionFields) / sizeof(kInvasionFields[0]));
+constexpr int kInvasionFieldReach = 3;
 
 enum class InvasionPhase : uint8_t {
     Quiet,     // nothing in the sky

@@ -59,14 +59,19 @@ public:
     // The Golden Invasion's storm (game/invasion_sky.h): the rain brought in at once over MU's
     // four-second walk and held, heavier than Lorencia's drizzle, with a clap close behind it
     // and then every 8 to 16 seconds; `false` gives the world its own spells back, starting
-    // dry. Ours, the user's (2026-10-06): the dragon comes only in the rain. A world with no
-    // rain (or Devias's and Tarkan's sand and snow, Icarus's mist) is left as it is.
+    // dry. Ours, the user's (2026-10-06): the dragon comes only in the rain. Devias's is its
+    // blizzard, held the same way since the dragon lands there (2026-10-08). A world with no
+    // rain (or Tarkan's sand, Icarus's mist) is left as it is.
     void summon(bool on);
     bool summoned() const { return summoned_; }
 
     // Synchronize the client's weather cycle to the server's.
-    // -1: local (do not force), 0: server is dry, 1: server is wet.
+    // -1: local (do not force), 0: server is dry, 1: server is wet. The first it is told after
+    // open() is the weather he walks into, there at once with no fade (the user, 2026-10-08:
+    // "storm actual has to happen when user connects to world where storm is happening"); a
+    // world played locally is settled from its first frame (settle), and fades as it always did.
     void sync(int serverRain);
+    void settle() { joined_ = true; }
 
     // One frame. `indoors` takes the rain's and the jungle's sounds off under a roof, with the
     // wind's switch.
@@ -80,6 +85,8 @@ public:
     bool rains() const { return rains_; }
     // Whether this is a wet spell now, its own or the invasion's (summon).
     bool wet() const { return rains_ && wet_ && !snows_ && !sky_; }
+    // Whether a wet spell is on, rain or Devias's blizzard: what the Golden Invasion comes in.
+    bool stormy() const { return rains_ && wet_ && !sky_; }
     // Devias: the wet spell is a blizzard, and rain() is how far the storm is in.
     bool snows() const { return snows_; }
     // The lightning now, 0 none to 1 a near strike at its brightest: the playing clap's flash
@@ -106,6 +113,7 @@ private:
     bool cycle_ = false;    // --weather cycle: short spells, to watch the turn
     bool storm_ = false;    // --weather storm: claps close together, to watch the lightning
     bool summoned_ = false;  // the invasion's storm, held (summon)
+    bool joined_ = false;    // the weather he walked into is known (sync): fades from here on
     float ownPeak_ = 1.0f;  // the world's own peak, given back when it ends
     bool wet_ = false;      // the spell now: dry or wet
     float peak_ = 1.0f;     // the share a wet spell rises to

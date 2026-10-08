@@ -106,7 +106,7 @@ constexpr float kWaterAlpha = 0.22f;
 
 constexpr float kCell = 20.0f;
 constexpr float kMid = kCell * 0.5f;
-constexpr int kGlyphs = 12;
+constexpr int kGlyphs = 13;
 
 float clamp01(float v) { return std::clamp(v, 0.0f, 1.0f); }
 
@@ -156,6 +156,11 @@ constexpr float kAnvil[12][2] = {
     {5.4f, 7.4f},  {14.6f, 7.4f}, {14.6f, 9.1f},  {12.5f, 9.7f}, {11.7f, 11.4f}, {13.6f, 12.9f},
     {13.6f, 13.9f}, {6.4f, 13.9f}, {6.4f, 12.9f},  {8.3f, 11.4f}, {7.5f, 9.7f},   {6.4f, 9.0f},
 };
+// The Golden Dragon, landed: its head up the cell, its wings swept out and back, its tail down.
+constexpr float kDragon[10][2] = {
+    {kMid, 2.6f},  {11.6f, 7.0f}, {18.2f, 4.6f}, {14.6f, 11.2f}, {11.5f, 12.0f},
+    {kMid, 17.6f}, {8.5f, 12.0f}, {5.4f, 11.2f}, {1.8f, 4.6f},   {8.4f, 7.0f},
+};
 // The merchant's pouch: its neck, over a round body.
 constexpr float kNeck[4][2] = {{8.4f, 6.2f}, {11.6f, 6.2f}, {10.9f, 8.4f}, {9.1f, 8.4f}};
 
@@ -188,6 +193,7 @@ float shape(Minimap::Glyph glyph, float x, float y) {
         case Glyph::Summon: return circle(x, y, kMid, kMid, 3.4f);
         // Another player: the summon's dot, a size up again.
         case Glyph::Player: return circle(x, y, kMid, kMid, 3.8f);
+        case Glyph::Dragon: return polygon(x, y, kDragon);
         // Anyone else worth a name: a head over shoulders, the townsperson himself.
         case Glyph::Folk:
             return std::min(circle(x, y, kMid, 6.6f, 2.4f),
@@ -246,6 +252,9 @@ constexpr uint32_t kHeroGreen = gfx::rgba(0.42f, 0.86f, 0.36f);
 constexpr uint32_t kSummonGreen = gfx::rgba(0.66f, 0.90f, 0.60f);
 // Another player -- for now the bots -- in orange (the user, 2026-10-08).
 constexpr uint32_t kPlayerOrange = gfx::rgba(1.00f, 0.58f, 0.12f);
+// The Golden Dragon where it has landed (the user, 2026-10-08: "show on minimap special dragon
+// dot when he lands"): its own gold, paler than a hand-in's, rimmed in ink.
+constexpr uint32_t kDragonGold = gfx::rgba(1.00f, 0.84f, 0.30f);
 
 // The tone each is drawn in: bone for what matters, the quieter inks for the rest.
 uint32_t toneOf(Minimap::Glyph glyph) {
@@ -254,6 +263,7 @@ uint32_t toneOf(Minimap::Glyph glyph) {
         case Glyph::Hero: return kHeroGreen;
         case Glyph::Summon: return kSummonGreen;
         case Glyph::Player: return kPlayerOrange;
+        case Glyph::Dragon: return kDragonGold;
         // A quest ready to hand in is gold, the user's (2026-10-01): "lets color finished quests
         // more vissible gold color". Bone sank into the lit ground. A quest not yet taken wears
         // the same gold (the user, 2026-10-02); the sign, "!" or hook, tells them apart.
@@ -338,7 +348,8 @@ bool Minimap::bake(float unit) {
             const int px = column % cell_;
             // White where the glyph is, so the tint is its tone; him with a hairline of ink round
             // him too, which the tint leaves black, so he holds his shape on the lit town.
-            const bool rimmed = glyph == Glyph::Hero || glyph == Glyph::Summon || glyph == Glyph::Player;
+            const bool rimmed = glyph == Glyph::Hero || glyph == Glyph::Summon ||
+                                glyph == Glyph::Player || glyph == Glyph::Dragon;
             float fill = 0.0f, alpha = 0.0f;
             for (int sy = 0; sy < kSamples; ++sy) {
                 for (int sx = 0; sx < kSamples; ++sx) {
@@ -701,6 +712,16 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         put(Glyph::Player, column, row, true, -1, int32_t(&other - realm.bodies().data()));
     }
 
+    // The Golden Invasion's dragon once it has landed, held to the edge so it is found from
+    // anywhere on the map (sim/invasion.h).
+    if (const sim::Body* dragon = realm.invader();
+        dragon != nullptr && dragon->alive() &&
+        realm.invasionPhase() == sim::InvasionPhase::Standing) {
+        float column = dragon->x, row = dragon->y;
+        play.shownAt(dragon->id, &column, &row);
+        put(Glyph::Dragon, column, row, true, -1, dragon->kind);
+    }
+
     // Him, last and on top: his facing as a screen direction, clockwise from up.
     {
         float fx = 0.0f, fy = 0.0f;
@@ -947,7 +968,9 @@ void Minimap::rebuild(const Play& play) {
         std::string words;
         if (mark.name >= 0) {
             words = tables.folk[size_t(mark.name)].name;
-        } else if ((mark.glyph == Glyph::Quarry || mark.glyph == Glyph::Summon) && mark.kind >= 0) {
+        } else if ((mark.glyph == Glyph::Quarry || mark.glyph == Glyph::Summon ||
+                    mark.glyph == Glyph::Dragon) &&
+                   mark.kind >= 0) {
             words = tables.kinds[size_t(mark.kind)].label;
         } else if (mark.glyph == Glyph::Player && mark.kind >= 0 &&
                    size_t(mark.kind) < play.realm().bodies().size()) {

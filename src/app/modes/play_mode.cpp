@@ -1365,7 +1365,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         // The Golden Invasion comes with the rain (sim/invasion.h), and its storm is held while
         // it is on (Weather::summon).
-        world_.played().invasionRain(world_.weather().wet());
+        world_.played().invasionRain(world_.weather().stormy());
+        if (!world_.played().remote()) world_.weather().settle();
         world_.weather().summon(world_.played().invasionStorm());
         world_.weather().sync(world_.played().serverRain());
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.

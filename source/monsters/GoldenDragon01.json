@@ -4,8 +4,8 @@
   "mu_name_from": "OpenMU VersionSeasonSix InvasionMobsInitialization.cs:74-101 names breed 79 'Golden Dragon' (MuMain's _enum.h calls 79 MONSTER_GOLDEN_DERKON and its 44 MONSTER_GOLDEN_DRAGON; both are this body, CreateMonster ZzzCharacter.cpp:13526-13530 and :13823-13827). Drawn as MONSTER_MODEL_DRAGON = 31 (_enum.h:4181), so OpenMonsterModel loads Monster32.bmd -- the same body the Golden Invasion's flying dragons wear (GOBoid.cpp:1280) and the Red Dragon at 1.3. Out of 0.75's period, like the invasion: MU2/docs/golden-invasion.md.",
   "world": "lorencia",
   "object_type": 79,
-  "summoned_in": "lorencia",
-  "summoned_in_from": "No spawn box: the Golden Invasion raises it where it lands (BaseInvasionPlugIn's CreateMonstersAsync, MU2/docs/golden-invasion.md), so it is cooked with the world it invades, as Bali with Noria.",
+  "summoned_in": ["lorencia", "devias", "noria"],
+  "summoned_in_from": "No spawn box: the Golden Invasion raises it where it lands (BaseInvasionPlugIn's CreateMonstersAsync, MU2/docs/golden-invasion.md), so it is cooked with the worlds it invades, as Bali with Noria: Lorencia, Devias and Noria since 2026-10-08 (the user: 'dragon can land on devias,lorencia,noria').",
   "monster": {
     "model_index": 31,
     "scale": 0.9

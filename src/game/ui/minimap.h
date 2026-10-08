@@ -88,7 +88,7 @@ public:
 
     // What a mark is: the glyph's cell in the baked strip.
     enum class Glyph : uint8_t { Hero, Quarry, Offer, HandIn, Vendor, Smith, Vault, Gate, Folk, Potion, Summon,
-                                 Player };
+                                 Player, Dragon };
 
 private:
     // One thing on the square, in sixteenths of a screen pixel, rounded, so two frames that would draw the same

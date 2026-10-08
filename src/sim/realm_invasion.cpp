@@ -19,7 +19,7 @@ void Realm::raiseInvader() {
     invaderSlot_ = -1;
     invasion_.phase = InvasionPhase::Quiet;
     invasionOwed_ = false;
-    if (tables_->map != kInvasionMap) return;
+    if (!invasionMap(tables_->map)) return;
     int32_t kindAt = -1;
     for (size_t i = 0; i < tables_->kinds.size(); ++i) {
         if (tables_->kinds[i].number == kGoldenDragonNumber) {
@@ -80,45 +80,42 @@ void Realm::invasionTick() {
     if (invasionOwed_) {
         invasionOwed_ = false;
         const Body& hero = mine();
-        // A tile it can stand on, out of the safe zone, within sight of him: kInvasionNear to
-        // kInvasionFar tiles off in any direction (ours). In town the ring is all safe, so it
-        // widens until it reaches the fields -- the dragon comes down outside his walls. Failing
-        // every ring, anywhere walkable, as OpenMU's RandomWalkableCoordinate.
         int column = -1, row = -1;
         const auto standable = [&](int c, int r) {
             return tables_->grid.open(c, r, content::kWallCharacter) && !tables_->grid.safe(c, r);
         };
-        // The raid's dragon on one of its fields outside the town (sim::kRaidLandings), or the
-        // nearest standable tile to it.
+        // The nearest standable tile to a field, within `reach` of it.
+        const auto near = [&](int fieldColumn, int fieldRow, int reach) {
+            for (int out = 0; out <= reach && column < 0; ++out) {
+                for (int dr = -out; dr <= out && column < 0; ++dr) {
+                    for (int dc = -out; dc <= out && column < 0; ++dc) {
+                        if (standable(fieldColumn + dc, fieldRow + dr)) {
+                            column = fieldColumn + dc;
+                            row = fieldRow + dr;
+                        }
+                    }
+                }
+            }
+        };
+        // The raid's dragon on one of its fields outside the town (sim::kRaidLandings).
         if (raidAsked_) {
             const int at = raidLanding_ >= 0 && raidLanding_ < kRaidLandingCount
                                ? raidLanding_
                                : invasionDice_.nextInt(0, kRaidLandingCount);
             const RaidLanding& landing = kRaidLandings[at];
-            for (int out = 0; out <= 3 && column < 0; ++out) {
-                for (int dr = -out; dr <= out && column < 0; ++dr) {
-                    for (int dc = -out; dc <= out && column < 0; ++dc) {
-                        if (standable(landing.column + dc, landing.row + dr)) {
-                            column = landing.column + dc;
-                            row = landing.row + dr;
-                        }
-                    }
-                }
-            }
+            near(landing.column, landing.row, 3);
             core::logf("raid: it lands to the %s of the town (%c)", landing.where, landing.name);
         }
-        for (int far = kInvasionFar; far <= kInvasionRings * kInvasionFar && column < 0;
-             far += kInvasionFar) {
-            const int near = far == kInvasionFar ? kInvasionNear : far - kInvasionFar;
-            for (int attempt = 0; attempt < 160 && column < 0; ++attempt) {
-                const double angle = invasionDice_.nextDouble() * 6.283185307179586;
-                const double reach = near + invasionDice_.nextDouble() * (far - near);
-                const int c = hero.column() + int(std::lround(fm::cos(angle) * reach));
-                const int r = hero.row() + int(std::lround(fm::sin(angle) * reach));
-                if (standable(c, r)) {
-                    column = c;
-                    row = r;
-                }
+        // The invasion's on one of its map's three fields, at random (sim::kInvasionFields).
+        if (column < 0) {
+            int fields[kInvasionFieldCount];
+            int count = 0;
+            for (int i = 0; i < kInvasionFieldCount; ++i) {
+                if (kInvasionFields[i].map == tables_->map) fields[count++] = i;
+            }
+            if (count > 0) {
+                const InvasionField& field = kInvasionFields[fields[invasionDice_.nextInt(0, count)]];
+                near(field.column, field.row, kInvasionFieldReach);
             }
         }
         const int side = int(tables_->grid.size());

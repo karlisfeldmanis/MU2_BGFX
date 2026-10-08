@@ -481,9 +481,14 @@ void testInvasion(const content::Tables& tables) {
     check(dragon->column() == column && dragon->row() == row, "on the tile it was said to");
     check(tables.grid.open(column, row, content::kWallCharacter) && !tables.grid.safe(column, row),
           "a standable tile out of town");
-    const int far = std::max(std::abs(column - 138), std::abs(row - 124));
-    // He stands in town at (138, 124), so its ring has widened to the fields.
-    check(far <= sim::kInvasionRings * sim::kInvasionFar + 1, "near him, just outside the town");
+    // On one of Lorencia's three fields (sim::kInvasionFields), within reach of it.
+    bool onField = false;
+    for (const sim::InvasionField& field : sim::kInvasionFields) {
+        onField |= field.map == 0 &&
+                   std::max(std::abs(column - field.column), std::abs(row - field.row)) <=
+                       sim::kInvasionFieldReach;
+    }
+    check(onField, "on one of Lorencia's three fields");
     for (int64_t i = 0; i < sim::kInvasionStandTicks + 2; ++i) realm.step();
     check(!realm.invader()->alive() && realm.invasionPhase() == sim::InvasionPhase::Quiet,
           "gone when its thirty minutes are up");

@@ -417,7 +417,11 @@ public:
     // §2c): MU's TW_CAMERA_UP shape, keyed to a boss near him.
     float cameraPull() const { return cameraPull_; }
     void openInvasionSky(bgfx::TextureHandle glow, bgfx::TextureHandle haze);
-    bool invasionStorm() const { return invasionStorm_; }
+    // While the realm's invasion is on: so one who joins in the middle of it, who never heard it
+    // begin, has its storm too (the snapshot carries the phase).
+    bool invasionStorm() const {
+        return invasionStorm_ || realm_.invasionPhase() != sim::InvasionPhase::Quiet;
+    }
     void glowInvasion(gfx::Effects& effects) const { sky_.glow(effects); }
     void openCastleDoor() { if (here("--castle-open")) local_.openCastleDoor(); }
     void freeCastle() { if (here("--castle-free")) local_.freeCastle(); }

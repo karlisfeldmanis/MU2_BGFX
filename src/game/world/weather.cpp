@@ -104,7 +104,7 @@ float Weather::random01() {
 }
 
 void Weather::summon(bool on) {
-    if (!rains_ || snows_ || sky_ || forced_ || on == summoned_) return;
+    if (!rains_ || sky_ || forced_ || on == summoned_) return;
     summoned_ = on;
     if (on) {
         ownPeak_ = peak_;
@@ -123,6 +123,17 @@ void Weather::summon(bool on) {
 }
 
 void Weather::sync(int serverRain) {
+    // The first word from the server: whatever is falling there is falling here already, at its
+    // full share, the invasion's storm included (summon, asked before this), and its claps soon.
+    if (serverRain >= 0 && !joined_ && rains_ && !forced_ && !cycle_) {
+        joined_ = true;
+        if (!summoned_) wet_ = serverRain > 0;
+        left_ = 1.0e9f;
+        share_ = wet_ ? (steady_ > 0.0f ? steady_ : 1.0f) : 0.0f;
+        if (wet_) thunderIn_ = summoned_ ? 2.0f : 5.0f + random01() * 10.0f;
+        core::logf("weather: joined %s", wet_ ? (snows_ ? "in a blizzard" : "in the rain") : "dry");
+        return;
+    }
     if (serverRain < 0 || !rains_ || forced_ || summoned_ || cycle_ || steady_ > 0.0f) return;
     const bool serverWet = serverRain > 0;
     // The server's spell, not this client's: the local clock must never run out under it, or

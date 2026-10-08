@@ -128,8 +128,11 @@ struct World {
             seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
             return float(seed & 0xFFFFu) / 65535.0f;
         }
-        void tick(float dt) {
+        // `held`: a Golden Invasion is in its sky or on its ground, and its storm does not pass
+        // until the dragon is killed or flies away (sim/invasion.h).
+        void tick(float dt, bool held = false) {
             left -= dt;
+            if (held && wet) left = std::max(left, 1.0f);
             if (left > 0.0f) return;
             wet = !wet;
             left = wet ? 180.0f + random01() * (300.0f - 180.0f)   // kWetLow to kWetHigh
@@ -669,7 +672,8 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions, bool ea
     net::Tick t;
     t.early = early;
     t.wallClock = int64_t(std::time(nullptr));
-    world.weather.tick(float(kTickSeconds));
+    world.weather.tick(float(kTickSeconds),
+                       world.realm->invasionPhase() != sim::InvasionPhase::Quiet);
     t.rain = world.weather.wet;
     t.commands.swap(world.queued);
     t.arrivals.swap(world.arriving);
