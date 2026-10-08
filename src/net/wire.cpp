@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 
+#include <zlib.h>
+
 #include "sim/realm.h"
 
 namespace mu::net {
@@ -367,6 +369,8 @@ void put(std::vector<uint8_t>& out, const Welcome& one) {
         o.u8(one.kept ? 1 : 0);
         if (one.kept) putKept(o, one.first);
         o.i32(one.castle);
+        o.u8(one.copy);
+        o.u64(one.udpKey);
         o.u32(uint32_t(one.snapshot.size()));
         o.bytes.insert(o.bytes.end(), one.snapshot.begin(), one.snapshot.end());
     });
@@ -533,6 +537,8 @@ bool parse(const std::vector<uint8_t>& body, Welcome& out) {
     out.kept = in.u8() != 0;
     if (out.kept) out.first = takeKept(in);
     out.castle = in.i32();
+    out.copy = in.u8();
+    out.udpKey = in.u64();
     const uint32_t snapshot = in.u32();
     out.snapshot.clear();
     if (!in.need(snapshot)) return false;
@@ -624,6 +630,85 @@ uint64_t stateHash(const sim::Realm& realm) {
         }
     }
     return h;
+}
+
+// The most a packed snapshot may say it unpacks to: a guard on a length read off the line.
+constexpr uint32_t kMostUnpacked = 256u << 20;
+
+bool pack(const std::vector<uint8_t>& raw, std::vector<uint8_t>& out) {
+    out.clear();
+    if (raw.empty()) return true;
+    uLongf size = compressBound(uLong(raw.size()));
+    out.resize(4 + size);
+    for (int i = 0; i < 4; ++i) out[size_t(i)] = uint8_t(uint32_t(raw.size()) >> (8 * i));
+    if (compress2(out.data() + 4, &size, raw.data(), uLong(raw.size()), Z_BEST_SPEED) != Z_OK) {
+        out.clear();
+        return false;
+    }
+    out.resize(4 + size);
+    return true;
+}
+
+bool unpack(const std::vector<uint8_t>& packed, std::vector<uint8_t>& out) {
+    out.clear();
+    if (packed.empty()) return true;
+    if (packed.size() < 4) return false;
+    uint32_t raw = 0;
+    for (int i = 0; i < 4; ++i) raw |= uint32_t(packed[size_t(i)]) << (8 * i);
+    if (raw > kMostUnpacked) return false;
+    out.resize(raw);
+    uLongf size = raw;
+    if (uncompress(out.data(), &size, packed.data() + 4, uLong(packed.size() - 4)) != Z_OK || size != raw) {
+        out.clear();
+        return false;
+    }
+    return true;
+}
+
+namespace {
+
+void put32(std::vector<uint8_t>& out, uint32_t v) {
+    for (int i = 0; i < 4; ++i) out.push_back(uint8_t(v >> (8 * i)));
+}
+
+uint32_t get32(const std::vector<uint8_t>& in, size_t at) {
+    uint32_t v = 0;
+    for (int i = 0; i < 4; ++i) v |= uint32_t(in[at + size_t(i)]) << (8 * i);
+    return v;
+}
+
+}  // namespace
+
+void putBind(std::vector<uint8_t>& out, uint64_t key) {
+    out.clear();
+    put32(out, kBindMagic);
+    put32(out, uint32_t(key));
+    put32(out, uint32_t(key >> 32));
+}
+
+bool takeBind(const std::vector<uint8_t>& datagram, uint64_t& key) {
+    if (datagram.size() != 12 || get32(datagram, 0) != kBindMagic) return false;
+    key = uint64_t(get32(datagram, 4)) | (uint64_t(get32(datagram, 8)) << 32);
+    return key != 0;
+}
+
+bool putTicks(std::vector<uint8_t>& out, const std::vector<const std::vector<uint8_t>*>& frames) {
+    out.clear();
+    size_t room = kMostDatagramBytes - 4, first = frames.size();
+    while (first > 0 && frames[first - 1]->size() <= room) {
+        room -= frames[first - 1]->size();
+        --first;
+    }
+    if (first == frames.size()) return false;
+    put32(out, kTicksMagic);
+    for (size_t i = first; i < frames.size(); ++i) out.insert(out.end(), frames[i]->begin(), frames[i]->end());
+    return true;
+}
+
+bool ticksOf(const std::vector<uint8_t>& datagram, std::vector<uint8_t>& frames) {
+    if (datagram.size() < 4 || get32(datagram, 0) != kTicksMagic) return false;
+    frames.assign(datagram.begin() + 4, datagram.end());
+    return true;
 }
 
 }  // namespace mu::net

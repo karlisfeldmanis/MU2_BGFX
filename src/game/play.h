@@ -13,6 +13,7 @@
 #pragma once
 
 #include <cstdint>
+#include <deque>
 #include <string>
 #include <vector>
 
@@ -227,6 +228,16 @@ public:
         serverPort_ = port;
         serverToken_ = token;
         serverAccount_ = account;
+    }
+    // Which copy of the map the server put him in, from 1: "Lorencia 2" on the minimap.
+    int mapCopy() const { return link_->mapCopy(); }
+    // A test's line to the server (`--lag MS`, `--jitter MS`, `--loss P`, `--no-udp`;
+    // RemoteLink::setLag): set BEFORE open().
+    void lagLine(double ms, double jitterMs, double loss = 0.0, bool udp = true) {
+        lagMs_ = ms;
+        jitterMs_ = jitterMs;
+        lossChance_ = loss;
+        udp_ = udp;
     }
     // When open() failed because the server has his character in another world: which, and the
     // tile, for the mode to open instead (net::Elsewhere).
@@ -1240,6 +1251,8 @@ private:
     net::Elsewhere elsewhere_;
     std::unique_ptr<sim::Kept> keptFirst_;  // the Welcome's, for the raise (Play::open)
     int serverPort_ = 0;
+    double lagMs_ = 0.0, jitterMs_ = 0.0, lossChance_ = 0.0;
+    bool udp_ = true;
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
     Figures* figures_ = nullptr;
@@ -1659,6 +1672,12 @@ private:
     int pointedPerch_ = -1;
     std::vector<float> scratch_;
     double accumulator_ = 0.0;
+    // The cushion (sprint 24, Play::update): ticks held in hand on a server, and the stalls that
+    // set it -- the one in progress, and when each felt one ended, on the cushion's own clock.
+    int cushion_ = 0;
+    double stalled_ = 0.0;
+    std::deque<double> stalls_;
+    double cushionClock_ = 0.0, calmSince_ = 0.0;
     // Play::settle's: stepping every tick owed this frame, how long it has run, and how long
     // the line has been steady.
     bool settling_ = false;

@@ -170,7 +170,9 @@ add_library(mu_net STATIC
   src/net/socket.cpp
   src/net/wire.cpp
 )
-target_link_libraries(mu_net PUBLIC mu_sim)
+# zlib packs the Welcome's snapshot (net::pack): the system's on the Mac, zlib1g-dev on the box.
+find_package(ZLIB REQUIRED)
+target_link_libraries(mu_net PUBLIC mu_sim ZLIB::ZLIB)
 target_compile_options(mu_net PRIVATE ${MU_WARNINGS})
 
 # The server (server/src, server/README.md): every map's realm for whoever connects, no window.

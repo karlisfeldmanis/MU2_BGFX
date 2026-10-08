@@ -517,6 +517,14 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--server")) {
             if (const char* v = next(s)) a.server = v;
+        } else if (!std::strcmp(s, "--lag")) {
+            if (const char* v = next(s)) a.lag = std::atof(v);
+        } else if (!std::strcmp(s, "--jitter")) {
+            if (const char* v = next(s)) a.jitter = std::atof(v);
+        } else if (!std::strcmp(s, "--loss")) {
+            if (const char* v = next(s)) a.loss = std::atof(v);
+        } else if (!std::strcmp(s, "--no-udp")) {
+            a.udp = false;
         } else if (!std::strcmp(s, "--world")) {
             if (const char* v = next(s)) a.world = v;
         } else if (!std::strcmp(s, "--at")) {

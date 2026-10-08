@@ -57,6 +57,17 @@ public:
     // Another player's name and whether he is a bot, by his body's id, as the server last said
     // (net::Who); false for one it has not named, and always on a realm of this process.
     virtual bool nameOf(uint32_t id, std::string* name, bool* bot) const { return false; }
+    // **The hero ahead** (docs/sprints/24-the-quiet-line.md): his own body as the mirror will
+    // have it a round trip from now, with the orders he has sent and the server has not yet
+    // answered already in it -- where he is drawn, so a click moves him at once rather than a
+    // round trip later. nullptr when there is nothing to lead (a realm of this process, a short
+    // line, an event map): then he is drawn where the realm has him, as everyone else is.
+    virtual const sim::Body* ahead() { return nullptr; }
+    // The ticks the drawing holds in hand against a line's jitter (Play::cushion_): the mirror is
+    // that much further behind the server, so the hero ahead is led that much further.
+    virtual void setCushion(int ticks) {}
+    // Which copy of the map the server put him in, from 1 (net::Welcome::copy).
+    virtual int mapCopy() const { return 1; }
 };
 
 class LocalLink final : public Link {

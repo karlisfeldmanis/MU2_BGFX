@@ -792,7 +792,8 @@ void Minimap::fullChart(const Play& play) {
     const float uv[8] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
     canvas_.polygon(&chart_, xy, uv, 4, gfx::rgba(1, 1, 1, kChartAlpha));
     // The map's name over it, and where he stands beside it.
-    const std::string title = std::string(mapName(play.realm().tables()->map)) + "  \xC2\xB7  " +
+    const std::string copy = play.mapCopy() > 1 ? " " + std::to_string(play.mapCopy()) : std::string();
+    const std::string title = std::string(mapName(play.realm().tables()->map)) + copy + "  \xC2\xB7  " +
                               std::to_string(now_.column) + ", " + std::to_string(now_.row);
     float top = xy[1];
     for (int i = 1; i < 4; ++i) top = std::min(top, xy[i * 2 + 1]);
@@ -953,7 +954,8 @@ void Minimap::rebuild(const Play& play) {
     if (!full_) {
         const float figure = kFigure * u;
         const float line = std::round(cy + radius_ - fade * kRimIn + 5.0f * u + figure * 0.8f);
-        const char* name = mapName(play.realm().tables()->map);
+        const std::string name = std::string(mapName(play.realm().tables()->map)) +
+                                 (play.mapCopy() > 1 ? " " + std::to_string(play.mapCopy()) : std::string());
         const float named = controls::labelWidth(figure, name);
         controls::label(canvas_, std::round(cx - named * 0.5f), line, figure, style::kBone, name);
         const float wide = controls::labelWidth(figure, where);

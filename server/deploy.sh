@@ -31,6 +31,8 @@ echo "copied to $host:$dest"
 # The character store's SQLite headers (server/src/store.h), and sqlite3 to read characters.db
 # with (server/README.md); the library itself is the system's.
 ssh $host "dpkg -s libsqlite3-dev sqlite3 >/dev/null 2>&1 || DEBIAN_FRONTEND=noninteractive apt-get install -y -q libsqlite3-dev sqlite3 >/dev/null"
+# zlib's headers, for the Welcome's packed snapshot (net::pack).
+ssh $host "dpkg -s zlib1g-dev >/dev/null 2>&1 || DEBIAN_FRONTEND=noninteractive apt-get install -y -q zlib1g-dev >/dev/null"
 
 # One job: the box has one core and 1 GB (2 GB swap). sim_test.cpp is the slow one, a few minutes.
 ssh $host "cd $dest && \
@@ -39,8 +41,9 @@ ssh $host "cd $dest && \
   ./build/sim_test > sim_test.log 2>&1; tail -1 sim_test.log; \
   ./build/save_test | tail -1; ./build/placement_test | tail -1"
 
-# The service: installed, the game's port open, restarted on the new binary.
+# The service: installed, the game's port open (the stream, and the tick datagrams since sprint 24),
+# restarted on the new binary.
 ssh $host "install -m 644 $dest/server/mu2-server.service /etc/systemd/system/mu2-server.service && \
   systemctl daemon-reload && systemctl enable --now mu2-server >/dev/null 2>&1; \
-  systemctl restart mu2-server && ufw allow 44406/tcp >/dev/null && sleep 1 && \
+  systemctl restart mu2-server && ufw allow 44406/tcp >/dev/null && ufw allow 44406/udp >/dev/null && sleep 1 && \
   systemctl is-active mu2-server && journalctl -u mu2-server -n 2 --no-pager -o cat"

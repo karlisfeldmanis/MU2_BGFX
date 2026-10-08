@@ -19,11 +19,15 @@
 namespace mu::game {
 
 void Play::remember() {
+    // On a server, the hero where the realm ahead has him (Link::ahead, sprint 24): his clicks
+    // move him at once and not a round trip later. Everyone else is where the mirror has them.
+    const sim::Body* led = link_ ? link_->ahead() : nullptr;
     for (Drawn& one : drawn_) {
         one.wasX = one.nowX;
         one.wasY = one.nowY;
         one.wasFacing = one.nowFacing;
-        if (const sim::Body* body = realm_.find(one.id)) {
+        const sim::Body* body = led != nullptr && one.id == led->id ? led : realm_.find(one.id);
+        if (body != nullptr) {
             one.nowX = body->x;
             one.nowY = body->y;
             one.nowFacing = body->facing;
@@ -166,7 +170,14 @@ void Play::update(double seconds) {
     link_->pump();
     const bool remoteClock = link_->remote();
     double pace = 1.0;
-    if (remoteClock && link_->owed() > 1) pace = std::min(2.0, 1.0 + 0.25 * (link_->owed() - 1));
+    if (remoteClock) {
+        // Hurried only past the cushion (Play::cushion_, sprint 24): those ticks are held on
+        // purpose, so that one the line holds up arrives before it is wanted. Short of it, the
+        // clock runs a tenth slow until it has filled.
+        const int spare = link_->owed() - 1 - cushion_;
+        if (spare > 0) pace = std::min(2.0, 1.0 + 0.25 * spare);
+        else if (spare < 0 && cushion_ > 0 && !settling_) pace = kCushionFill;
+    }
     accumulator_ += seconds * pace;
     const int64_t started = bx::getHPCounter();
     // A click is answered on the frame it is made. Waiting for the tick that was due anyway
@@ -1751,7 +1762,35 @@ void Play::update(double seconds) {
         accumulator_ = std::max(0.0, accumulator_ - kTickSeconds);
         ++stepped;
     }
-    // Waiting on the server, the frame clock does not run ahead of it.
+    // Waiting on the server, the frame clock does not run ahead of it -- and the wait is the
+    // stall a cushion is for (sprint 24): each body stands where the last tick put it until the
+    // next comes, then hurries. A few in a few seconds and a tick more is held in hand; a long
+    // spell with none and one less. A steady line keeps none, and nothing is drawn later for it.
+    cushionClock_ += seconds;
+    if (remoteClock && !settling_) {
+        const bool starved = !link_->due() && accumulator_ > kTickSeconds;
+        if (starved) {
+            stalled_ += accumulator_ - kTickSeconds;
+        } else if (stalled_ > 0.0) {
+            if (stalled_ > kStallFelt) stalls_.push_back(cushionClock_);
+            stalled_ = 0.0;
+        }
+        while (!stalls_.empty() && stalls_.front() < cushionClock_ - kStallWindow) stalls_.pop_front();
+        if (int(stalls_.size()) >= kStallsToCushion && cushion_ < kMostCushion) {
+            ++cushion_;
+            stalls_.clear();
+            calmSince_ = cushionClock_;
+            link_->setCushion(cushion_);
+            core::logf("play: the line stalls; %d tick(s) held in hand", cushion_);
+        } else if (!stalls_.empty()) {
+            calmSince_ = cushionClock_;
+        } else if (cushion_ > 0 && cushionClock_ - calmSince_ > kCalmToLower) {
+            --cushion_;
+            calmSince_ = cushionClock_;
+            link_->setCushion(cushion_);
+            core::logf("play: the line is calm; %d tick(s) held in hand", cushion_);
+        }
+    }
     if (remoteClock && !link_->due()) accumulator_ = std::min(accumulator_, kTickSeconds);
     marker_.update(float(seconds));
     if (appearing_) {

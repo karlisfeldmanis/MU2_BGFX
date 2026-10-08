@@ -121,6 +121,13 @@ struct Args {
     // `--server host:port` (or host, for the default port): play on that server instead of a
     // realm in this process (docs/sprints/18-the-wire.md). Empty for single player.
     std::string server;
+    // `--lag MS` and `--jitter MS`: a test's line to that server, its round trip and its jitter
+    // each way held on this Mac (docs/sprints/24-the-quiet-line.md). 0 for the line as it is.
+    double lag = 0.0, jitter = 0.0;
+    // `--loss P`: each packet lost with chance P (0.02 is 2%); `--no-udp`: the ticks by the
+    // stream alone, as before sprint 24 -- to compare.
+    double loss = 0.0;
+    bool udp = true;
     // The server's word for this character, from its last Welcome: carried across a map change so
     // the next world brings him back whole (docs/sprints/20-the-world-host.md). 0 for a new one.
     uint64_t serverToken = 0;

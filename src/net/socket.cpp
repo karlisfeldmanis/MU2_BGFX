@@ -1,5 +1,6 @@
 #include "net/socket.h"
 
+#include <algorithm>
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
@@ -42,6 +43,7 @@ Socket& Socket::operator=(Socket&& other) noexcept {
         close();
         fd_ = other.fd_;
         pending_ = std::move(other.pending_);
+        moved_ = other.moved_;
         other.fd_ = -1;
     }
     return *this;
@@ -151,10 +153,12 @@ bool Socket::send(const std::vector<uint8_t>& bytes) {
         if (put == ssize_t(bytes.size())) return true;
         if (put > 0) {
             pending_.insert(pending_.end(), bytes.begin() + put, bytes.end());
+            moved_ = std::chrono::steady_clock::now();
             return true;
         }
         if (put < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
             pending_.insert(pending_.end(), bytes.begin(), bytes.end());
+            moved_ = std::chrono::steady_clock::now();
             return true;
         }
         if (put < 0 && errno == EINTR) {
@@ -163,6 +167,7 @@ bool Socket::send(const std::vector<uint8_t>& bytes) {
             return false;
         }
     }
+    if (pending_.empty()) moved_ = std::chrono::steady_clock::now();
     pending_.insert(pending_.end(), bytes.begin(), bytes.end());
     return flush();
 }
@@ -181,7 +186,98 @@ bool Socket::flush() {
         return false;
     }
     pending_.erase(pending_.begin(), pending_.begin() + long(sent));
+    if (sent > 0) moved_ = std::chrono::steady_clock::now();
     return true;
+}
+
+double Socket::stalledSeconds() const {
+    if (pending_.empty()) return 0.0;
+    return std::chrono::duration<double>(std::chrono::steady_clock::now() - moved_).count();
+}
+
+bool Address::operator==(const Address& other) const {
+    return size == other.size && std::memcmp(bytes, other.bytes, size) == 0;
+}
+
+void Datagram::close() {
+    if (fd_ >= 0) ::close(fd_);
+    fd_ = -1;
+}
+
+bool Datagram::bind(int port, std::string& error) {
+    close();
+    const int fd = ::socket(AF_INET6, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        error = std::string("udp socket: ") + std::strerror(errno);
+        return false;
+    }
+    int zero = 0;
+    setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof zero);  // IPv4 too
+    sockaddr_in6 at{};
+    at.sin6_family = AF_INET6;
+    at.sin6_addr = in6addr_any;
+    at.sin6_port = htons(uint16_t(port));
+    if (::bind(fd, reinterpret_cast<sockaddr*>(&at), sizeof at) != 0) {
+        error = std::string("cannot bind udp ") + std::to_string(port) + ": " + std::strerror(errno);
+        ::close(fd);
+        return false;
+    }
+    nonBlocking(fd);
+    fd_ = fd;
+    return true;
+}
+
+bool Datagram::aim(const std::string& host, int port, std::string& error) {
+    close();
+    addrinfo hints{};
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    addrinfo* found = nullptr;
+    const std::string service = std::to_string(port);
+    if (const int status = getaddrinfo(host.c_str(), service.c_str(), &hints, &found); status != 0) {
+        error = std::string("cannot resolve ") + host + ": " + gai_strerror(status);
+        return false;
+    }
+    for (addrinfo* one = found; one != nullptr && fd_ < 0; one = one->ai_next) {
+        const int fd = ::socket(one->ai_family, one->ai_socktype, one->ai_protocol);
+        if (fd < 0) continue;
+        if (::connect(fd, one->ai_addr, one->ai_addrlen) == 0) {
+            nonBlocking(fd);
+            fd_ = fd;
+        } else {
+            ::close(fd);
+        }
+    }
+    freeaddrinfo(found);
+    if (fd_ < 0) error = "no udp route to " + host + ":" + service;
+    return fd_ >= 0;
+}
+
+bool Datagram::send(const uint8_t* bytes, size_t size, const Address* to) {
+    if (fd_ < 0) return false;
+    const ssize_t put = to != nullptr
+        ? ::sendto(fd_, bytes, size, kSendFlags, reinterpret_cast<const sockaddr*>(to->bytes), socklen_t(to->size))
+        : ::send(fd_, bytes, size, kSendFlags);
+    (void)put;
+    return true;
+}
+
+bool Datagram::receive(std::vector<uint8_t>& into, Address* from) {
+    if (fd_ < 0) return false;
+    uint8_t chunk[2048];
+    sockaddr_storage at{};
+    socklen_t size = sizeof at;
+    while (true) {
+        const ssize_t got = ::recvfrom(fd_, chunk, sizeof chunk, 0, reinterpret_cast<sockaddr*>(&at), &size);
+        if (got < 0 && errno == EINTR) continue;
+        if (got < 0) return false;
+        into.assign(chunk, chunk + got);
+        if (from != nullptr) {
+            from->size = std::min<uint32_t>(uint32_t(size), sizeof from->bytes);
+            std::memcpy(from->bytes, &at, from->size);
+        }
+        return true;
+    }
 }
 
 }  // namespace mu::net

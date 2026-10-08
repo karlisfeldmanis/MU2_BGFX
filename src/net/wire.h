@@ -65,7 +65,10 @@ namespace mu::net {
 // 11: Who, the players' names; the Hello's `name`, a character of no account's.
 // 12: a Tick's `invasionElsewhere`, in the rain's byte; and the raid in every invasion, so the
 //     snapshot's Body, Hazard and RaidState grew.
-constexpr uint32_t kVersion = 12;
+// 13: the Welcome's snapshot is packed (net::pack): about 1/25th of it, a Noria of 1.7 MB in 69 KB;
+//     and the Welcome carries the map's copy and the line's UDP key
+//     (docs/sprints/24-the-quiet-line.md).
+constexpr uint32_t kVersion = 13;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -181,10 +184,16 @@ struct Welcome {
     // cradle (Realm::restoreKept), as the server laid it.
     bool kept = false;
     sim::Kept first;
-    // The world as it stood when the server last snapshot it (Realm::snapshot), empty for none:
-    // the mirror raised from the rest is laid with it, and `backlog` is the ticks since.
+    // The world as it stood when the server last snapshot it (Realm::snapshot), packed (pack),
+    // empty for none: the mirror raised from the rest is laid with it, and `backlog` is the
+    // ticks since.
     // Blood Castle's number when the world is one (Realm::setCastle, straight after the raise), or 0.
     int32_t castle = 0;
+    // Which copy of the map, from 1: a map past the server's cap opens another (sprint 24).
+    uint8_t copy = 1;
+    // His key for the tick datagrams (sprint 24): the client says it from its UDP socket, and the
+    // server sends the ticks there as well as down the stream. 0 for a server without them.
+    uint64_t udpKey = 0;
     std::vector<uint8_t> snapshot;
 };
 
@@ -261,5 +270,30 @@ bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out, int layout = kK
 // Realm::say zeroes padding and all), the dice drawn so far, and where each player stands. Two
 // realms that agree on it for every tick are walking the same walk.
 uint64_t stateHash(const sim::Realm& realm);
+
+// **The tick datagrams** (sprint 24). A client says its Welcome's `udpKey` from its UDP socket
+// once a second (a Bind): the server learns where to send, and the home router keeps the way
+// open. Each tick the server then sends a Ticks datagram -- the magic, then the Tick frames of
+// the last few ticks, oldest first, as many as fit in kMostDatagram -- beside the stream. The
+// client takes each tick from whichever brings it first, so a packet the stream lost and must
+// send again is not a stall: the next datagram already carried that tick.
+constexpr uint32_t kBindMagic = 0x3142554Du;   // "MUB1"
+constexpr uint32_t kTicksMagic = 0x3154554Du;  // "MUT1"
+// Under any line's MTU, so a datagram is never cut in pieces (net::kMostDatagram's twin: the
+// wire does not include the socket).
+constexpr size_t kMostDatagramBytes = 1200;
+void putBind(std::vector<uint8_t>& out, uint64_t key);
+bool takeBind(const std::vector<uint8_t>& datagram, uint64_t& key);
+// The Ticks datagram from Tick frames (each a whole `put(out, Tick)`), newest last: the newest
+// always, then older ones while they fit. False when even the newest alone does not fit.
+bool putTicks(std::vector<uint8_t>& out, const std::vector<const std::vector<uint8_t>*>& frames);
+// Its frames, for `take` -- false if it is not one.
+bool ticksOf(const std::vector<uint8_t>& datagram, std::vector<uint8_t>& frames);
+
+// A snapshot for the line: deflated (zlib, its fastest level), behind its own length. A realm's
+// bytes are mostly zeroes and repeats -- 538 KB of Lorencia packs into 23 KB. `unpack` is false
+// for bytes that are not one.
+bool pack(const std::vector<uint8_t>& raw, std::vector<uint8_t>& out);
+bool unpack(const std::vector<uint8_t>& packed, std::vector<uint8_t>& out);
 
 }  // namespace mu::net

@@ -1,6 +1,6 @@
 // mu2_server: MU2_BGFX's server (docs/sprints/18-the-wire.md, server/README.md).
 //
-//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S]
+//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--map-cap N]
 //
 // **Connections to the same world share it** (docs/sprints/19-many-heroes.md): the first Hello
 // for a world raises its realm with him as its first player; each later one comes in by a Join
@@ -32,14 +32,16 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
 #include <ctime>
 #include <map>
 #include <memory>
 #include <optional>
 #include <random>
 #include <string>
-#include <thread>
 #include <vector>
+
+#include <poll.h>
 
 #include "content/tables.h"
 #include "core/log.h"
@@ -74,13 +76,21 @@ constexpr double kEarlyApart = 1.0;
 const Clock::duration kEarlyWithin = std::chrono::milliseconds(5);
 constexpr int kHashEvery = 20;         // a hash a second
 // A world is snapshot this often, and its past before the snapshot let go: a newcomer replays at
-// most a minute (docs/sprints/21-the-snapshot.md). About half a MB a town, taken in a millisecond.
-constexpr int kSnapshotEvery = 60 * 20;
+// most this much (docs/sprints/21-the-snapshot.md). About half a MB a town, taken in a millisecond.
+// 20 s, from a minute (sprint 24): a client stepped 1200 ticks to come in, a second and more at
+// 100 players, where now it steps 400.
+constexpr int kSnapshotEvery = 20 * 20;
 // A Join's ticket, the server's own: high, so it is never one a client numbered.
 constexpr uint32_t kJoinTickets = 0x80000000u;
 // Whoever is in a world is written this often as well as when he leaves: OpenMU's rate, and what
-// a crash of the server can cost him.
+// a crash of the server can cost him. Each on his own minute (Session::keepAt): about 20 us a
+// character on the box, so 500 at once was a 10 ms tick.
 constexpr int kKeepEvery = 60 * 20;
+// A line that has taken none of what the server owes it for this long, or owes more than this,
+// is let go: a client that stopped reading would otherwise hold a tick's bytes a tick, forever.
+// The most a healthy line owes is a Welcome, a few MB, and that keeps moving.
+constexpr double kStalledSeconds = 20.0;
+constexpr size_t kMostOwed = 64u << 20;
 
 // The characters, by token, on the server's disk.
 server::Store g_store;
@@ -102,6 +112,15 @@ std::map<uint64_t, Landing> g_due;
 // mid-invasion can be tried at once rather than after a dry spell and the dice.
 bool g_storm = false;
 bool g_invasion = false;
+// The most players in one copy of a map before the next is opened (`--map-cap N`): where the
+// client's own cost tells -- every client steps the whole map -- about 100 by the measurement of
+// 2026-10-08 (docs/sprints/24-the-quiet-line.md).
+int g_mapCap = 100;
+// The tick datagrams' socket, on the game's port; closed if it would not bind, and then the
+// stream alone carries the ticks, as before sprint 24.
+net::Datagram g_udp;
+// How many recent ticks a datagram may carry: four, a fifth of a second of a line's losses.
+constexpr size_t kRecentTicks = 4;
 
 struct World {
     std::string name;
@@ -111,6 +130,7 @@ struct World {
     // The world as it last stood in a snapshot (Realm::snapshot), empty before the first, and
     // every tick since it: what a newcomer's mirror is laid with and then replays.
     std::vector<uint8_t> snapshot;
+    std::vector<uint8_t> packed;  // `snapshot` packed for the line (net::pack), made at the first welcome after it
     std::vector<net::Tick> log;
     int sinceSnapshot = 0;
     std::vector<sim::Command> queued;  // arrived since the last tick, in order
@@ -118,6 +138,13 @@ struct World {
     uint32_t nextTicket = kJoinTickets;
     std::vector<uint32_t> orphans;  // Joins whose connection went before they were answered
     int castle = 0;  // Blood Castle's number, 0 for any other map: one world a castle
+    // Which copy of its map, from 1 (sprint 24): a map past g_mapCap players opens another, as
+    // MU's sub-servers did, because every client steps its whole map and a crowded one is slow
+    // to come into and to draw.
+    int copy = 1;
+    // The last few ticks' frames, oldest first, for the datagrams (net::putTicks): each carries
+    // as many as fit, so one datagram lost costs nothing while the next arrives.
+    std::deque<std::vector<uint8_t>> recent;
     // Its own deadline, so one world's early tick moves no other's clock.
     Clock::time_point next = Clock::now();
     Clock::time_point earlyAt{};  // when it last took a tick early
@@ -158,6 +185,14 @@ struct Session {
     std::string account;   // the character screen's, once an Account has been said
     std::string name;      // what he is called over his head (net::Who)
     bool bot = false;      // a character of no account: for now, the bots (tools/netbot)
+    // When he is written next: a minute after his welcome and every minute on, so each player's
+    // write falls on his own tick and a full server's never lands on one (sprint 24).
+    Clock::time_point keepAt{};
+    // The tick datagrams (sprint 24): his key, said in his Welcome and back from his UDP socket
+    // (net::takeBind), and where that socket is once it has said it.
+    uint64_t udpKey = 0;
+    net::Address udpAt;
+    bool udpKnown = false;
 };
 
 // Who is in a world, to everyone in it: what the hover plate over another player says. Sent
@@ -384,21 +419,34 @@ bool welcome(Session& one, uint32_t player) {
     net::Welcome w = one.world->start;
     w.you = player;
     w.backlog = uint32_t(one.world->log.size());
-    w.snapshot = one.world->snapshot;
+    if (!one.world->snapshot.empty() && one.world->packed.empty()) {
+        net::pack(one.world->snapshot, one.world->packed);
+    }
+    w.snapshot = one.world->packed;
     w.token = one.token;
+    w.udpKey = g_udp.open() ? one.udpKey : 0;
     std::vector<uint8_t> out;
     net::put(out, w);
     for (const net::Tick& t : one.world->log) net::put(out, t);
     one.player = player;
     one.joining = 0;
+    one.keepAt = Clock::now() + kTick * kKeepEvery;
     one.welcomed = one.socket.send(out);
-    core::logf("%s: welcomed into %s as #%u, a %zu KB snapshot and %u ticks after it, %d here",
-               one.who.c_str(), one.world->name.c_str(), player, w.snapshot.size() / 1024, w.backlog,
+    core::logf("%s: welcomed into %s as #%u, a %zu KB snapshot (%zu KB packed) and %u ticks after it, %d here",
+               one.who.c_str(), one.world->name.c_str(), player, one.world->snapshot.size() / 1024,
+               w.snapshot.size() / 1024, w.backlog,
                one.world->realm->playersHere());
     return one.welcomed;
 }
 
 void part(Session& one);
+
+// Who is in a world or on his way in.
+int peopleIn(const World& world, const std::vector<std::unique_ptr<Session>>& sessions) {
+    int n = 0;
+    for (const auto& one : sessions) n += one->world == &world && one->socket.open();
+    return n;
+}
 
 bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<World>>& worlds,
            std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
@@ -527,8 +575,22 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         said.weapon = sim::cradleWeapon(kin);
         said.shield.clear();
     }
+    // The fullest copy of the map with room, so players are together while they fit; a new copy
+    // when none has. A Blood Castle is its own world and is never copied.
+    World* into = nullptr;
+    int most = -1;
+    int copies = 0;
     for (auto& world : worlds) {
         if (world->name != said.world || world->castle != castle) continue;
+        copies = std::max(copies, world->copy);
+        const int here = peopleIn(*world, sessions);
+        if ((castle > 0 || here < g_mapCap) && here > most) {
+            most = here;
+            into = world.get();
+        }
+    }
+    for (auto& world : worlds) {
+        if (world.get() != into) continue;
         // Into a world already running: a Join at the next tick's start, his hands by arm index
         // -- or, carried, all of him (Realm::carry) and no cradle.
         const content::Tables& tables = world->tables;
@@ -554,6 +616,11 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     World* world = raiseWorld(worlds, said, assets, config, seeds(), one.who, carried ? &kept : nullptr,
                               castle);
     if (world == nullptr) return false;
+    if (copies > 0) {
+        world->copy = copies + 1;
+        world->start.copy = uint8_t(std::min(world->copy, 255));
+        core::logf("%s: %s is full, its copy %d raised", one.who.c_str(), said.world.c_str(), world->copy);
+    }
     one.world = world;
     if (!welcome(one, world->realm->hero().id)) return false;
     announce(*world, sessions);
@@ -741,8 +808,17 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     }
     std::vector<uint8_t> out;
     net::put(out, t);
+    // The tick's own frame, before the hash goes on: the datagram's.
+    world.recent.push_back(out);
+    while (world.recent.size() > kRecentTicks) world.recent.pop_front();
     if (t.tick % kHashEvery == 0) net::put(out, net::Hash{t.tick, net::stateHash(realm)});
     world.log.push_back(std::move(t));
+    std::vector<uint8_t> datagram;
+    if (g_udp.open()) {
+        std::vector<const std::vector<uint8_t>*> frames;
+        for (const auto& frame : world.recent) frames.push_back(&frame);
+        if (!net::putTicks(datagram, frames)) datagram.clear();  // too big a tick: the stream's alone
+    }
     // The world as it stands after this tick, and the past before it let go. A realm a snapshot
     // cannot carry (a raid's) keeps its whole past, as before.
     if (++world.sinceSnapshot >= kSnapshotEvery) {
@@ -750,12 +826,14 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
         std::vector<uint8_t> now;
         if (realm.snapshot(now)) {
             world.snapshot.swap(now);
+            world.packed.clear();
             world.log.clear();
         }
     }
     for (auto& one : sessions) {
         if (one->world != &world || !one->welcomed || !one->socket.open()) continue;
         if (!one->socket.send(out)) one->socket.close();
+        if (one->udpKnown && !datagram.empty()) g_udp.send(datagram.data(), datagram.size(), &one->udpAt);
     }
     // The Joins this tick answered: each newcomer welcomed with the past up to this tick, or,
     // with his connection already gone, sent out again.
@@ -847,11 +925,12 @@ int main(int argc, char** argv) {
         else if (a == "--store" && i + 1 < argc) store = argv[++i];
         else if (a == "--storm") g_storm = true;
         else if (a == "--invasion") g_invasion = true;
+        else if (a == "--map-cap" && i + 1 < argc) g_mapCap = std::max(1, std::atoi(argv[++i]));
         else if (a == "--castle-period" && i + 1 < argc) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.castle = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--storm] [--invasion]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--storm] [--invasion] [--map-cap N]\n");
             return 2;
         }
     }
@@ -878,27 +957,51 @@ int main(int argc, char** argv) {
         core::logError("%s", error.c_str());
         return 1;
     }
-    core::logf("mu2_server: protocol %u, listening on %d, tables from %s, %d characters in %s",
-               net::kVersion, port, assets.c_str(), g_store.count(), store.c_str());
+    if (!g_udp.bind(port, error)) core::logError("%s: the ticks go down the stream alone", error.c_str());
+    core::logf("mu2_server: protocol %u, listening on %d%s, tables from %s, %d characters in %s",
+               net::kVersion, port, g_udp.open() ? " (and udp)" : "", assets.c_str(), g_store.count(),
+               store.c_str());
 
     // A token is all a character's login is until accounts: not one the clock would guess.
     std::random_device entropy;
     std::mt19937_64 seeds((uint64_t(entropy()) << 32) ^ entropy() ^ uint64_t(std::time(nullptr)));
-    auto keepAt = Clock::now() + kTick * kKeepEvery;
     std::vector<std::unique_ptr<World>> worlds;
     std::vector<std::unique_ptr<Session>> sessions;
+    // What the last wait said of each session, in its order then: whether it has something to
+    // read (or has gone). One arrived since is read regardless.
+    std::vector<bool> ready;
+    std::vector<pollfd> watch;
     uint64_t arrivals = 0;
     while (!g_stop) {
-        // Poll: who arrived, what each said.
+        // Who arrived, and what each that spoke said.
         for (net::Socket s = listener.accept(); s.open(); s = listener.accept()) {
             auto one = std::make_unique<Session>();
             one->socket = std::move(s);
             one->who = "player " + std::to_string(++arrivals);
+            do one->udpKey = seeds(); while (one->udpKey == 0);
             core::logf("%s: connected", one->who.c_str());
             sessions.push_back(std::move(one));
         }
-        for (auto& one : sessions) {
-            if (one->socket.open() && !hear(*one, worlds, sessions, assets, config, seeds)) one->socket.close();
+        // Each UDP socket that says its key is where that player's datagrams go: said again a
+        // second later, and from a new address when his router moves him.
+        std::vector<uint8_t> datagram;
+        net::Address from;
+        while (g_udp.receive(datagram, &from)) {
+            uint64_t key = 0;
+            if (!net::takeBind(datagram, key)) continue;
+            for (auto& one : sessions) {
+                if (one->udpKey != key) continue;
+                if (!one->udpKnown || !(one->udpAt == from)) {
+                    core::logf("%s: his ticks by udp as well", one->who.c_str());
+                }
+                one->udpAt = from;
+                one->udpKnown = true;
+            }
+        }
+        for (size_t i = 0; i < sessions.size(); ++i) {
+            Session& one = *sessions[i];
+            if (i < ready.size() && !ready[i]) continue;
+            if (one.socket.open() && !hear(one, worlds, sessions, assets, config, seeds)) one.socket.close();
         }
         // Step every world on its deadline, owing ticks rather than dropping them, and flush.
         const auto now = Clock::now();
@@ -920,12 +1023,23 @@ int main(int argc, char** argv) {
             }
             if (world->next < now) world->next = now;  // more than a second behind: start again
         }
-        if (keepAt <= now) {
-            keepEveryone(sessions);
-            keepAt = now + kTick * kKeepEvery;
-        }
+        // Whoever's minute it is, written in one go.
+        std::vector<server::Store::Row> due;
         for (auto& one : sessions) {
-            if (one->socket.open() && !one->socket.flush()) one->socket.close();
+            if (one->world == nullptr || !one->welcomed || one->keepAt > now) continue;
+            due.push_back(placeOf(*one));
+            one->keepAt = now + kTick * kKeepEvery;
+        }
+        if (!due.empty()) g_store.keep(due);
+        for (auto& one : sessions) {
+            if (!one->socket.open()) continue;
+            if (!one->socket.flush()) {
+                one->socket.close();
+            } else if (one->socket.stalledSeconds() > kStalledSeconds || one->socket.waiting() > kMostOwed) {
+                core::logError("%s: has taken nothing for %.0f s, %zu KB owed: let go", one->who.c_str(),
+                               one->socket.stalledSeconds(), one->socket.waiting() / 1024);
+                one->socket.close();
+            }
         }
         for (size_t i = 0; i < sessions.size();) {
             if (!sessions[i]->socket.open()) {
@@ -938,7 +1052,31 @@ int main(int argc, char** argv) {
         }
         // Worlds are never let go: the server is always online, and a world once raised keeps
         // its monsters, its weather and its state for as long as the server runs.
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        //
+        // Then asleep until a line speaks or the next world's tick is due (sprint 24). It was a
+        // 2 ms nap and a read of every line after it, 500 times a second whether anyone spoke:
+        // ~0.5 us a line a pass, 13% of the box at 500 players, and up to 2 ms on an order
+        // before it was even read. The order that sets a player off now takes its tick at once.
+        auto wake = Clock::now() + std::chrono::milliseconds(100);
+        for (const auto& world : worlds) wake = std::min(wake, world->next);
+        watch.clear();
+        watch.push_back({listener.fd(), POLLIN, 0});
+        for (const auto& one : sessions) {
+            const short wants = short(POLLIN | (one->socket.waiting() > 0 ? POLLOUT : 0));
+            watch.push_back({one->socket.fd(), wants, 0});
+        }
+        if (g_udp.open()) watch.push_back({g_udp.fd(), POLLIN, 0});
+        const auto left = std::max<Clock::duration>(Clock::duration::zero(), wake - Clock::now());
+#ifdef __linux__
+        const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(left).count();
+        const timespec timeout{time_t(ns / 1000000000), long(ns % 1000000000)};
+        ppoll(watch.data(), nfds_t(watch.size()), &timeout, nullptr);
+#else
+        const auto us = std::chrono::duration_cast<std::chrono::microseconds>(left).count();
+        poll(watch.data(), nfds_t(watch.size()), int((us + 999) / 1000));
+#endif
+        ready.assign(sessions.size(), false);
+        for (size_t i = 0; i < sessions.size(); ++i) ready[i] = watch[i + 1].revents != 0;
     }
     keepEveryone(sessions);
     core::logf("mu2_server: stopped, %zu connected", sessions.size());

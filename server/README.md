@@ -25,7 +25,7 @@ keeps a rule from meaning one thing on the server and another in the client.
 | login | `ssh hetzner` (root, `~/.ssh/id_ed25519`); root's password in the macOS Keychain, service "hetzner 37.27.158.226", for the web console only |
 | system | Ubuntu 26.04, x86_64, 1 vCPU, 927 MB, 2 GB swap (`/swapfile`), 18 GB disk |
 | tools | g++ 15.2, CMake 4.2, Ninja, rsync |
-| firewall | `ufw`: SSH, and 44406/tcp for the game |
+| firewall | `ufw`: SSH, and 44406 for the game: tcp for the stream, udp for the tick datagrams (sprint 24) |
 | service | `mu2-server` (systemd, `server/mu2-server.service`): `/opt/mu2/build/mu2_server --port 44406 --store /var/lib/mu2/characters.db`, restarted if it stops, its own throwaway user whose one writable folder is `/var/lib/mu2` (systemd keeps it at `/var/lib/private/mu2`). `systemctl status mu2-server`, `journalctl -u mu2-server -f` |
 | packages | `libsqlite3-dev` for the character store and `sqlite3` to read it; `deploy.sh` installs them if missing |
 | code | `/opt/mu2`, put there by `deploy.sh` |

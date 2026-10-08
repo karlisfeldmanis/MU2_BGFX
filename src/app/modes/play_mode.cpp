@@ -323,6 +323,7 @@ bool PlayMode::open(Context& ctx) {
                     args.serverToken = game::loadServerToken(savePath_, server);
                 }
                 world_.played().useServer(host, port, args.serverToken, args.account);
+                world_.played().lagLine(args.lag, args.jitter, args.loss, args.udp);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);

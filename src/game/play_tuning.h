@@ -50,6 +50,17 @@ constexpr int kSnapOwed = 20;
 constexpr double kSettleSteady = 0.5;
 constexpr int kSettleOwed = 2;
 constexpr double kSettleMost = 6.0;
+// **The cushion** (Play::update, docs/sprints/24-the-quiet-line.md): ticks held in hand on a
+// server so a late one is not a stall. A stall longer than kStallFelt (half a frame at 60 fps;
+// shorter is not seen) counts; kStallsToCushion of them inside kStallWindow seconds hold one tick
+// more, up to kMostCushion; kCalmToLower seconds with none hold one fewer. While short of it the
+// clock runs at kCushionFill. All invention.
+constexpr double kStallFelt = 0.008;
+constexpr double kStallWindow = 5.0;
+constexpr int kStallsToCushion = 3;
+constexpr int kMostCushion = 3;
+constexpr double kCalmToLower = 20.0;
+constexpr double kCushionFill = 0.9;
 // The least time between two ticks taken early for a click, in seconds. See Play::update.
 constexpr float kEarlyApart = 0.5f;
 // A Teleport's fade, each way: MU takes a tenth of the body's alpha a frame, ten frames
