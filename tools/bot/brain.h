@@ -2019,6 +2019,7 @@ private:
     }
     bool keepsAt(int slot) const {
         const sim::Held& one = realm_->satchel()[slot];
+        if (slot >= sim::kWorn && questItem(one)) return true;
         if (slot >= sim::kWorn && surplusAt(slot)) return false;
         if (slot >= sim::kWorn && nearlyFits(one)) return true;
         if (slot >= sim::kWorn && unruneWorth(one)) return true;
@@ -2419,6 +2420,43 @@ private:
         }
         return out;
     }
+    // **A treasure to find** (Sevina's second part: the Broken Sword, the Soul of Wizard, the Tear
+    // of Elf): a Find step not yet done. It falls on 2 kills in 100 anywhere in Atlans or on the
+    // Lost Tower's top floor (Realm::treasureGround), so he hunts Atlans for it.
+    bool seeks(int q) const {
+        const sim::QuestRow& row = sim::questAt(q);
+        for (int s = 0; s < row.stepCount; ++s) {
+            if (row.steps[s].kind == sim::QuestStepKind::Find && row.steps[s].item &&
+                realm_->quest(q).counts[s] < row.steps[s].count) return true;
+        }
+        return false;
+    }
+    bool hasFind(int q) const {
+        const sim::QuestRow& row = sim::questAt(q);
+        for (int s = 0; s < row.stepCount; ++s) {
+            if (row.steps[s].kind == sim::QuestStepKind::Find && row.steps[s].item) return true;
+        }
+        return false;
+    }
+    // Where he looks for it: Atlans, when he takes something there.
+    int seekMap() {
+        const content::Tables* t = world(7);
+        return t && reachable(7) && bestOn(*t) >= 0 ? 7 : -1;
+    }
+    // An item a quest under way asks him to find: kept whatever a counter would give.
+    bool questItem(const sim::Held& one) const {
+        if (one.empty()) return false;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestState state = realm_->quest(q).state;
+            if (state != sim::QuestState::Active && state != sim::QuestState::Ready) continue;
+            const sim::QuestRow& row = sim::questAt(q);
+            for (int s = 0; s < row.stepCount; ++s) {
+                if (row.steps[s].kind == sim::QuestStepKind::Find && row.steps[s].item &&
+                    tables_->itemNamed(row.steps[s].item) == one.item) return true;
+            }
+        }
+        return false;
+    }
     // Where a breed lives, among the worlds: the first map with a nest of it, or -1.
     int homeOf(int breed) {
         for (const WorldRow& w : kWorlds) {
@@ -2539,8 +2577,18 @@ private:
     void choose() {
         const Aim was = aim_;
         const int wasQuest = aimQuest_;
+        // A giver he set out for is kept until he reaches him, ten minutes at most: from Atlans a
+        // knight went to Devias to take The Broken Sword, chose The Drowned Halls in Atlans the
+        // moment he landed, and paid both trips 520 times in two hours.
+        if (options_.quests && wasQuest >= 0 && clock_ - aimSince_ < 10 * 60 * 20 &&
+            ((was == Aim::Accept && realm_->questOffered(wasQuest)) ||
+             (was == Aim::HandIn && realm_->quest(wasQuest).state == sim::QuestState::Ready))) {
+            return;
+        }
+        aimSince_ = clock_;
         aim_ = Aim::Grind;
         aimQuest_ = -1;
+        seeking_ = -1;
         quarry_.clear();
         if (castleDue()) {
             aim_ = Aim::Castle;
@@ -2574,6 +2622,15 @@ private:
             for (const int q : order) {
                 if (aim_ != Aim::Grind) break;
                 if (!allowed(q) || realm_->quest(q).state != sim::QuestState::Active) continue;
+                // A treasure to find: Atlans's grind, any breed he takes there.
+                if (seeks(q) && wanted(q).empty()) {
+                    const int at = seekMap();
+                    if (at < 0) continue;
+                    seeking_ = q;
+                    aimQuest_ = q;
+                    aimMap_ = at;
+                    break;
+                }
                 std::vector<int> breeds;
                 const int where = huntable(q, &breeds);
                 if (where < 0) continue;
@@ -2588,14 +2645,18 @@ private:
                 const int at = giverMap(q);
                 std::vector<int> breeds;
                 if (at < 0 || !reachable(at)) continue;
-                // An errand -- someone to find, no breed -- once the place it sends him is reachable.
-                if (errand(q) ? !reachable(handInMap(q)) : huntable(q, &breeds) < 0) continue;
+                // An errand -- someone to find, no breed -- once the place it sends him is reachable;
+                // a treasure once he can hunt Atlans.
+                if (hasFind(q) && wanted(q).empty() ? seekMap() < 0
+                    : errand(q) ? !reachable(handInMap(q)) : huntable(q, &breeds) < 0) continue;
                 aim_ = Aim::Accept;
                 aimQuest_ = q;
                 aimMap_ = at;
             }
         }
-        if (aim_ == Aim::Grind) {
+        if (aim_ == Aim::Grind && seeking_ >= 0 && aimQuest_ == seeking_) {
+            // Grinding Atlans for the treasure (seeks): the map stays.
+        } else if (aim_ == Aim::Grind) {
             // The map with the strongest breed he takes, where he is on a tie.
             aimMap_ = map();
             int best = shunned_[map()] > clock_ ? -1 : bestOn(*tables_);
@@ -3815,6 +3876,8 @@ private:
     bool machineOwed_ = false;
     int owedCastle_ = 1;
     int64_t machineAwayUntil_ = 0;
+    int64_t aimSince_ = 0;     // when choose() last chose afresh
+    int seeking_ = -1;         // the quest whose treasure he grinds Atlans for, or -1
     int opened_ = 0;           // Firecrackers and boxes opened
     int64_t castleArrowsAt_ = -1000000;  // the last trip for Blood Castle's arrows
     bool entranceTried_ = false;  // this trip has already paid for its map's entrance
