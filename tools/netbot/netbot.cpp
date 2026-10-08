@@ -174,6 +174,9 @@ private:
     // Whether the tick sends him to another world, as the server reads it (server/src/main.cpp,
     // landingOf); and the last decision's answers heard.
     bool leaving() {
+        // Blood Castle's run over and its rest out, or his win claimed: the server has him due in
+        // Devias, and waits for the client to come (server/src/main.cpp, castleOut).
+        if (brain_->mapNow() == int(sim::kBloodCastleMap) && mirror_->castleRun().sentOut) return true;
         for (const sim::Happening& h : mirror_->happenings()) {
             if (h.what == sim::What::Answered && h.who == you_ && uint32_t(h.c) == pending_) pending_ = 0;
             if (h.who != you_) continue;
