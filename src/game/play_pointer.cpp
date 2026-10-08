@@ -669,8 +669,8 @@ void Play::walkTo(int column, int row) {
 
 bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,
                    float* y) const {
-    const size_t at = size_t(id) - 1;
-    if (!ground_ || at >= drawn_.size() || drawn_[at].id != id) return false;
+    const size_t at = drawnAt(id);
+    if (!ground_ || at >= drawn_.size()) return false;
     const Drawn& one = drawn_[at];
     float world[4] = {one.crown[0], 0.0f, one.crown[2], 1.0f};
     if (one.placed) {

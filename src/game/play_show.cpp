@@ -1811,10 +1811,8 @@ void Play::follow(float seconds) {
 }
 
 Play::Drawn* Play::drawnOf(uint32_t id) {
-    // The bodies are made once and never reordered, and ids are handed out from 1 in that same
-    // order, so this is an index and not a search.
-    const size_t at = size_t(id) - 1;
-    return at < drawn_.size() && drawn_[at].id == id ? &drawn_[at] : nullptr;
+    const size_t at = drawnAt(id);
+    return at < drawn_.size() ? &drawn_[at] : nullptr;
 }
 
 void Play::focus(float* column, float* row) const {
@@ -1825,8 +1823,8 @@ void Play::focus(float* column, float* row) const {
 }
 
 bool Play::shownAt(uint32_t id, float* column, float* row) const {
-    const size_t at = size_t(id) - 1;
-    if (at >= drawn_.size() || drawn_[at].id != id) return false;
+    const size_t at = drawnAt(id);
+    if (at >= drawn_.size()) return false;
     const Drawn& one = drawn_[at];
     *column = one.wasX + (one.nowX - one.wasX) * through_;
     *row = one.wasY + (one.nowY - one.wasY) * through_;

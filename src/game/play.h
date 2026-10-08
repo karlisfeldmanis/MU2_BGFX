@@ -1020,6 +1020,17 @@ private:
     };
 
     Drawn* drawnOf(uint32_t id);
+    // Where body `id`'s figure is in `drawn_`, which shares the bodies' order, or drawn_.size()
+    // for none. By the realm's own index of ids (Realm::find) and never as `id - 1`: a thing on
+    // the ground takes its id from the same count, so a player who joins a world after anything
+    // has dropped in it has an id ahead of his place -- and on the server that was everyone, his
+    // own figure not found, his steps and his jewels silent (the user, 2026-10-08).
+    size_t drawnAt(uint32_t id) const {
+        const sim::Body* body = realm_.find(id);
+        if (body == nullptr) return drawn_.size();
+        const size_t at = size_t(body - realm_.bodies().data());
+        return at < drawn_.size() && drawn_[at].id == id ? at : drawn_.size();
+    }
     // Where the hero's figure is in `drawn_`, which shares the bodies' order: first in a world of
     // his own, anywhere in a shared one (docs/sprints/19-many-heroes.md).
     size_t heroAt() const {
