@@ -1986,7 +1986,9 @@ private:
     // full -- one rule for the errand and the trip, which disagreed in Devias (six in a full bag
     // started a trip every minute that the vault never answered).
     bool wantsVault() const {
-        return vaultHere() >= 0 && (stash() >= 8 || (freeCells() < 6 && stash() > 0) || fetchOwed());
+        // And whenever a reward waits on room (crowded_) and anything is his to store.
+        return vaultHere() >= 0 &&
+               (stash() >= 8 || ((freeCells() < 6 || crowded_) && stash() > 0) || fetchOwed());
     }
     // The vault keeper in this town (Baz, NPC 240), or -1.
     int vaultHere() const {
@@ -3344,6 +3346,24 @@ private:
         return false;
     }
     // Whether a counter in this town sells ammunition for her hand.
+    // A town he can reach whose counters sell what her weapon shoots, or -1.
+    int ammoTown() {
+        const int hand = ammoHand();
+        if (hand < 0) return -1;
+        for (const int there : {0, 3, 2}) {
+            const content::Tables* t = world(there);
+            if (!t || !reachable(there)) continue;
+            for (const content::Townsperson& f : t->folk) {
+                int count = 0;
+                const sim::Offer* shelf = sim::stockOf(f.number, &count);
+                for (int i = 0; i < count; ++i) {
+                    const int item = t->itemAt(shelf[i].group, shelf[i].number);
+                    if (item >= 0 && feeds(t->items[size_t(item)])) return there;
+                }
+            }
+        }
+        return -1;
+    }
     bool ammoHere() const {
         const int hand = ammoHand();
         for (const int folk : sellers_) {
@@ -3358,8 +3378,19 @@ private:
     }
 
     void town() {
+        // Out of what her weapon shoots and no counter here sells it: to the town that does. Bolts
+        // are Eo's in Noria and not Lorencia's, and an elf with a crossbow went to Lorencia's
+        // counters 843 times in two days and bought none.
+        if (archer() && ammo() < 30 && !ammoHere()) {
+            const int there = ammoTown();
+            if (there >= 0 && there != map()) {
+                tripOwed_ = true;
+                if (goTo(there)) return;
+                tripOwed_ = false;
+            }
+        }
         // No counter on this map (the Dungeon), or none with the arrows she is out of: home to
-        // Lorencia's, where Amy sells both quivers.
+        // Lorencia's.
         if (sellers_.empty() || (map() != 0 && archer() && ammo() < 30 && !ammoHere()) ||
             (map() != 0 && wornDown() >= 0 && !realm_->selfMending() && !smithHere())) {
             tripOwed_ = true;
@@ -3421,7 +3452,9 @@ private:
             }
         }
         // The Chaos Goblin stands in Noria alone: a box owed and none here, there first.
-        if (goblinHere() < 0 && awayTo_ < 0 && clock_ >= machineAwayUntil_ && (wingsOwed() || cloakWorth() > 0)) {
+        // And when his box holds what a full bag left there: an elf went to Lorencia to empty it.
+        if (goblinHere() < 0 && awayTo_ < 0 && clock_ >= machineAwayUntil_ &&
+            (wingsOwed() || cloakWorth() > 0 || (boxHeld() && freeCells() >= 6))) {
             machineAwayUntil_ = clock_ + 30 * 60 * 20;
             tripOwed_ = true;
             if (goTo(3)) {
@@ -3574,6 +3607,7 @@ private:
         return slot;
     }
 
+    static constexpr int64_t kQuiverMost = 100;  // a +0 quiver: arrows 70, bolts 100
     void buyPotions(const sim::Offer* shelf, int count) {
         const int tier = healTier();
         const auto find = [&](bool (*kind)(const content::ItemRow&), int pieces, int want) -> const sim::Offer* {
@@ -3588,16 +3622,20 @@ private:
         };
         // Mana first for a wizard, whose every blow is a spell; health first for the others.
         int bought = 0, mana = 0;
+        // An archer short of what she shoots keeps two quivers' Zen: an elf whose bolts were not
+        // sold here spent her last 300 on potions, could not pay Noria's 100 for a quiver, and
+        // went to town for two days at level 39.
+        const int64_t keep = archer() && ammo() < 500 ? 2 * kQuiverMost : 0;
         const auto heal = [&](int upTo) {
             if (const sim::Offer* offer = find(sim::heals, 3, tier)) {
-                while (countOf(sim::heals) < upTo && realm_->money() >= potionPrice(tier) &&
+                while (countOf(sim::heals) < upTo && realm_->money() >= potionPrice(tier) + keep &&
                        buyOne(*offer, nullptr) >= 0) bought += 3;
             }
         };
         const auto restore = [&](int upTo) {
             if (!casts()) return;
             if (const sim::Offer* offer = find(sim::restores, 3, tier)) {
-                while (countOf(sim::restores) < upTo && realm_->money() >= potionPrice(tier) &&
+                while (countOf(sim::restores) < upTo && realm_->money() >= potionPrice(tier) + keep &&
                        buyOne(*offer, nullptr) >= 0) mana += 3;
             }
         };
