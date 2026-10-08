@@ -58,8 +58,10 @@ constexpr float kTagGuild = 11.0f;
 // The pointer's detail line under them, and its warm off-white.
 constexpr float kTagDetail_ = 10.0f;
 constexpr uint32_t kTagDetail = gfx::rgba(232 / 255.0f, 220 / 255.0f, 196 / 255.0f);
-// WoW's friendly-player blue, lifted to read on MU's dark ground, and a corpse's grey.
-constexpr float kTagBlue[4] = {84 / 255.0f, 156 / 255.0f, 1.0f, 1.0f};
+// WoW's friendly green (UnitSelectionColor's 0, 1, 0), a touch of red and blue in it so it is not
+// a screen's raw green on MU's dark ground, and a corpse's grey (the user, 2026-10-08: "make it
+// green").
+constexpr float kTagGreen[4] = {0.18f, 1.0f, 0.18f, 1.0f};
 constexpr float kTagDead[4] = {0.62f, 0.62f, 0.62f, 1.0f};
 // How far off another player is named, in tiles, and the last stretch of it faded out over.
 constexpr float kNameRange = 22.0f;
@@ -365,8 +367,12 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
             if (x < -200.0f || y < -50.0f || x > float(width) + 200.0f || y > float(height) + 50.0f) continue;
             Tag tag;
             tag.id = one.id;
-            tag.x = std::round(x);
-            tag.y = std::round(y);
+            // NOT whole pixels, as the bars are: the body slides by fractions of one under the
+            // eased camera, and a name snapped to the grid stepped a pixel to and fro against it
+            // on every walk (the user, 2026-10-08: "when character moves name label is
+            // vibrating"). The letters come off a mipped atlas, so a fraction costs no crispness.
+            tag.x = x;
+            tag.y = y;
             // In sixteenths, so a walk at the range's edge does not rebuild on every step.
             tag.alpha = std::round(std::clamp((kNameRange - d) / kNameFade, 0.0f, 1.0f) * 16.0f) / 16.0f;
             tag.lit = one.id == player_ ? playerShown_ : 0.0f;
@@ -427,10 +433,16 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
              std::round(baseline), size, 1.0f, reading);
     }
     if (!r.tags.empty()) {
-        // WoW's names: the name in the title face, the guild line under it smaller, both in a
+        // WoW's names: the name in WoW's face, the guild line under it smaller, both in a
         // hard black outline with no backing, both centred on his crown.
         const float u = tip::unit();
-        const gfx::Face* title = panel::titleFace();
+        // WoW's own face for the name, Friz Quadrata; the title face where it is missing.
+        const gfx::Face* name = controls::nameFace();
+        bgfx::TextureHandle nameTexture = controls::nameTexture();
+        if (name == nullptr) {
+            name = panel::titleFace();
+            nameTexture = panel::titleTexture();
+        }
         const gfx::Face* words = controls::wordFace();
         const float nameSize = std::round(kTagName * u), guildSize = std::round(kTagGuild * u);
         const float detailSize = std::round(kTagDetail_ * u);
@@ -439,8 +451,6 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
                                   float baseline, float size, uint32_t ink, float alpha,
                                   const std::string& text) {
             if (face == nullptr || !bgfx::isValid(texture)) return;
-            x = std::round(x);
-            baseline = std::round(baseline);
             const uint32_t halo = gfx::rgba(0, 0, 0, 0.9f * alpha);
             for (int dy = -1; dy <= 1; ++dy) {
                 for (int dx = -1; dx <= 1; ++dx) {
@@ -454,7 +464,7 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         };
         for (const Tag& t : r.tags) {
             if (t.alpha <= 0.0f) continue;
-            const float* c = t.dead ? kTagDead : kTagBlue;
+            const float* c = t.dead ? kTagDead : kTagGreen;
             const float l = t.lit * 0.55f;
             const uint32_t ink = gfx::rgba(c[0] + (1.0f - c[0]) * l, c[1] + (1.0f - c[1]) * l,
                                            c[2] + (1.0f - c[2]) * l, 1.0f);
@@ -468,8 +478,8 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             const float guildBaseline = under;
             const float nameBaseline =
                 t.bot ? guildBaseline - std::round((kTagGuild + 3.0f) * u) : guildBaseline;
-            if (title) {
-                outlined(title, panel::titleTexture(), t.x - title->measure(nameSize, t.name) * 0.5f,
+            if (name) {
+                outlined(name, nameTexture, t.x - name->measure(nameSize, t.name) * 0.5f,
                          nameBaseline, nameSize, ink, t.alpha, t.name);
             }
             // The guild's line; a bot's guild is `<Bot>` until guilds exist.

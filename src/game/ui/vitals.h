@@ -28,9 +28,10 @@
 // ends antialiased by coverage. A bar is fifteen-odd rows, so a layer is fifteen-odd quads.
 //
 // **And every player, his own included, WoW's way** (the user, 2026-10-08: "use wow style name labels for
-// players and bots"): his name always over his head while he is in range, in Cinzel with a hard
-// black outline and no backing, in a friendly player's blue; under it his guild in angle
-// brackets -- `<Bot>` for a bot, until guilds exist. Pointed at, the name lifts toward white (and
+// players and bots"): his name always over his head while he is in range, in WoW's own Friz
+// Quadrata with a hard black outline and no backing, in WoW's friendly green, sliding with him by
+// fractions of a pixel; under it his guild in angle brackets -- `<Bot>` for a bot, until guilds
+// exist. Pointed at, the name lifts toward white (and
 // he is ringed green, app/modes/play_mode.cpp); dead, it is grey. It fades out toward the edge of
 // the range, and the nearer names are drawn over the farther. No bar. Pointed at, a small line
 // under it all gives his level and class (the user chose W4 of the WoW names page, 2026-10-08).

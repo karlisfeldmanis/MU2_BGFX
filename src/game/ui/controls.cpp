@@ -20,13 +20,16 @@ using gfx::Box;
 
 constexpr const char* kWordFacePath = MU2_ROOT_DIR "/extern/AlegreyaSansSC-Bold.ttf";
 constexpr const char* kLabelFacePath = MU2_ROOT_DIR "/extern/AlegreyaSans-Medium.ttf";
+// WoW's UNIT_NAME_FONT, Fonts\\FRIZQT__.TTF: Friz Quadrata, the names over the players' heads.
+constexpr const char* kNameFacePath = MU2_ROOT_DIR "/extern/FrizQuadrata-Regular.ttf";
 // Baked once, larger than any control draws them, and minified through the mips: a word is 13
 // to 18 units, which is 22 to 30 pixels on this Mac's 1800-line backbuffer.
 constexpr float kBake = 48.0f;
 
-gfx::Face s_word, s_label;
+gfx::Face s_word, s_label, s_name;
 bgfx::TextureHandle s_wordTexture = BGFX_INVALID_HANDLE;
 bgfx::TextureHandle s_labelTexture = BGFX_INVALID_HANDLE;
+bgfx::TextureHandle s_nameTexture = BGFX_INVALID_HANDLE;
 
 bool bakeFace(gfx::Face& face, bgfx::TextureHandle& texture, const char* path, const char* name) {
     if (!face.bake(path, kBake, 512, 4, 1, 0)) return false;
@@ -37,6 +40,7 @@ bool bakeFace(gfx::Face& face, bgfx::TextureHandle& texture, const char* path, c
 
 bool wordReady() { return s_word.ready() && bgfx::isValid(s_wordTexture); }
 bool labelReady() { return s_label.ready() && bgfx::isValid(s_labelTexture); }
+bool nameReady() { return s_name.ready() && bgfx::isValid(s_nameTexture); }
 
 // ---- the stone -------------------------------------------------------------------------------
 //
@@ -456,6 +460,11 @@ bool open() {
         core::logError("controls: the label face did not bake (%s)", kLabelFacePath);
         ok = false;
     }
+    // Not a failure: without it the names keep the title face.
+    if (!bakeFace(s_name, s_nameTexture, kNameFacePath, "player names")) {
+        core::logError("controls: the name face did not bake (%s); names keep the title face",
+                       kNameFacePath);
+    }
     if (!makeStone()) {
         core::logError("controls: the stone texture did not make; surfaces are flat");
         ok = false;
@@ -466,12 +475,13 @@ bool open() {
 
 void close() {
     if (s_opens == 0 || --s_opens > 0) return;
-    for (bgfx::TextureHandle* t : {&s_wordTexture, &s_labelTexture, &s_stone}) {
+    for (bgfx::TextureHandle* t : {&s_wordTexture, &s_labelTexture, &s_nameTexture, &s_stone}) {
         if (bgfx::isValid(*t)) bgfx::destroy(*t);
         *t = BGFX_INVALID_HANDLE;
     }
     s_word = gfx::Face{};
     s_label = gfx::Face{};
+    s_name = gfx::Face{};
     s_stoneArt = {};
 }
 
@@ -496,6 +506,10 @@ float labelWidth(float size, const std::string& text) {
 const gfx::Face* wordFace() { return wordReady() ? &s_word : nullptr; }
 bgfx::TextureHandle wordTexture() {
     return wordReady() ? s_wordTexture : bgfx::TextureHandle BGFX_INVALID_HANDLE;
+}
+const gfx::Face* nameFace() { return nameReady() ? &s_name : nullptr; }
+bgfx::TextureHandle nameTexture() {
+    return nameReady() ? s_nameTexture : bgfx::TextureHandle BGFX_INVALID_HANDLE;
 }
 const gfx::Face* labelFace() { return labelReady() ? &s_label : nullptr; }
 bgfx::TextureHandle labelTexture() {

@@ -129,6 +129,10 @@ bgfx::TextureHandle labelTexture();
 // small capitals and fades its own drop; null before open() or when the face failed to bake.
 const gfx::Face* wordFace();
 bgfx::TextureHandle wordTexture();
+// The players' names over their heads, in WoW's own face (Friz Quadrata); null before open() or
+// when the face is missing from extern/.
+const gfx::Face* nameFace();
+bgfx::TextureHandle nameTexture();
 // The same ranged against `right`.
 float ranged(gfx::Canvas& canvas, float right, float baseline, float size, uint32_t ink,
              const std::string& text);
