@@ -1104,10 +1104,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // **The dragon's fight has its own music** (the user, 2026-10-06: 'lets use ... taiko-invasion
     // ... for dragon fight scene when character is fighting dragon'): looping while he is in it
     // (Play::raidFighting), and the map's own rule again after. The one fight with music.
+    // A little louder than the town's tracks (the user, 2026-10-08: "music has to be little bit
+    // louder on boss fight"): 0.8, about 2.5 dB over their 0.6.
     const std::string fightTrack = ctx.paths.assets + "/music/dragon_fight.mp3";
     if (world_.played().isOpen() && world_.played().raidFighting() && core::fileExists(fightTrack)) {
         game::Sound& sound = world_.played().sound();
-        if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.6f, true);
+        if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.8f, true);
     } else if (world_.played().isOpen()) {
         bool pub = false;
         bool loops = false;  // played round and round, not once and rested

@@ -1231,6 +1231,15 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = left * 0.05f;
         boon.share = left / float(sim::kHeroPoisonTicks);
     }
+    // And the Golden Dragon's Dragonfire, its stacks in the corner (sim/raid.h).
+    if (hero.dragonfireUntil > realm.tick() && hero.dragonfire > 0 && standing < Hud::kBoons) {
+        Hud::Boon& boon = boons[standing++];
+        boon.dragonfire = true;
+        boon.stacks = hero.dragonfire;
+        const float left = float(hero.dragonfireUntil - realm.tick());
+        boon.seconds = left * 0.05f;
+        boon.share = left / float(sim::kDragonfireTicks);
+    }
     // And iced, the Ice Monster's slow: a debuff cell of its own, its seconds counting down.
     if (hero.chilledUntil > realm.tick() && standing < Hud::kBoons) {
         Hud::Boon& boon = boons[standing++];

@@ -552,6 +552,10 @@ struct Body {
     // Poisoned (`SkillRow::poisonTicks`): until this tick, its next pulse, how much a pulse takes,
     // and who poisoned it. 0 for never.
     int64_t poisonUntil = 0, poisonNext = 0;
+    // The Golden Dragon's Dragonfire on a fighter (sim/raid.h kDragonfireMost): its stacks, and
+    // when they lapse. 0 for none.
+    int32_t dragonfire = 0;
+    int64_t dragonfireUntil = 0;
     int32_t poisonDamage = 0;
     uint32_t poisonBy = 0;
     // Burning (a knight's Immolate rune, sim/items.h): until this tick, its next pulse, how much
@@ -1803,6 +1807,8 @@ private:
         int64_t nextStrafe = 0;
         int64_t nextStorm = 0;
         int64_t nextInferno = 0;
+        int64_t nextFireball = 0;  // its Fire Ball, stages 1-3 (sim::kDragonFireballEvery)
+        int64_t nextMeteor = 0;    // its Meteorite, stages 3-4 (sim::kDragonMeteorEvery)
         bool secondWave = false;
         bool departing = false;    // not killed in time: up and leaving (kDepartTicks)
         int64_t departsAt = 0;
@@ -1845,11 +1851,20 @@ private:
     void raidMove(Body& dragon);
     void strafe(Body& dragon);
     void storm(Body& dragon);
+    // Its Fire Ball and its Meteorite (sim/raid.h kDragonFireballEvery, kDragonMeteorEvery), and
+    // the Fire Ball's burst on to the next body once it has struck one.
+    void dragonFireball(Body& dragon);
+    void dragonMeteors(Body& dragon);
+    void dragonBurst(Body& dragon, const Hazard& struck);
     void inferno(Body& dragon, bool shadows);
     void minionWave(Body& dragon);
     void hazardTick(Body& dragon);
     Hazard* layHazard(const Hazard& one);
-    void scorch(Body& dragon, Body& one, float share);
+    void scorch(Body& dragon, Body& one, float share, bool fire = true);
+    // Dragonfire (sim/raid.h): what a fire blow of the dragon's is multiplied by on `one`, his
+    // stacks through his fire resistance and the resistance's own cut, and a stack laid on.
+    float dragonfireTaken(const Body& one) const;
+    void dragonfireMark(Body& one);
     bool inHazard(const Hazard& h, float x, float y) const;
     bool isBoss(const Body& one) const {
         return invaderSlot_ >= 0 && &one == &bodies_[size_t(invaderSlot_)] &&
@@ -1858,6 +1873,14 @@ private:
     // A boss shrugs off what would hold or move it -- a freeze, a chill, a push, a pull -- and
     // says so (RaidEvent::Immune). True for the boss; asked where each would be laid.
     bool shrugs(const Body& one);
+    // The Golden Dragon resists poison whole (the user, 2026-10-08: "dragon can resist poison,
+    // that means he cant get poison effect"): no spell's, rune's, plague's or ring's poison takes
+    // on it, and it says Immune as it shrugs off a hold.
+    bool venomProof(const Body& one) {
+        if (invaderSlot_ < 0 || &one != &bodies_[size_t(invaderSlot_)]) return false;
+        shrugs(one);
+        return true;
+    }
     // Whether a body fights on the party's side: the hero, a raider, her summon.
     bool partisan(const Body& one) const {
         return one.player || one.raider >= 0 || one.summoner != 0;

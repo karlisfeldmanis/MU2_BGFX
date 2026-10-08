@@ -63,7 +63,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
             target.chilledUntil = tick_ + row->chillTicks;
         }
         if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster() &&
-            !poisoned(target) && !resists(target, false, dice)) {
+            !poisoned(target) && !venomProof(target) && !resists(target, false, dice)) {
             target.poisonUntil = tick_ + row->poisonTicks;
             target.poisonNext = tick_ + kPoisonFirst;
             target.poisonDamage = damage > 0
@@ -139,8 +139,15 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     force *= wrathForce(attacker);
     // His Fire resistance on a monster's fire blow: kResistanceCut a point off, to
     // kResistanceCutMost (sim::Affix, ours -- WebZen's fire turns nothing aside). No draw.
-    if (target.player && !attacker.player && target.excel.fireResistance > 0 &&
-        fireBlow(attacker, flame)) {
+    // The Golden Dragon's: through his Dragonfire too, which the blow then deepens (sim/raid.h);
+    // its bite is no fire, its Flame of Evil is.
+    const bool dragonFire = invaderSlot_ >= 0 && &attacker == &bodies_[size_t(invaderSlot_)] &&
+                            fireBlow(attacker, flame) && (target.player || target.raider >= 0);
+    if (dragonFire) {
+        force *= dragonfireTaken(target);
+        if (blow.hit) dragonfireMark(target);
+    } else if (target.player && !attacker.player && target.excel.fireResistance > 0 &&
+               fireBlow(attacker, flame)) {
         force *= float(1.0 - std::min(kResistanceCutMost,
                                       kResistanceCut * double(target.excel.fireResistance)));
     }
@@ -416,6 +423,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (!runeDice_.nextBool(ice ? kIceRuneChance : kPoisonRuneChance)) return;
         if (!struck.alive() || !struck.monster()) return;
         if (ice && fixed(struck)) return;  // the Statue of Saint takes no chill
+        if (!ice && venomProof(struck)) return;
         const SkillRow* spell = skillNumbered(ice ? skill::kIce : skill::kPoison);
         if (spell == nullptr) return;
         if (ice) {
@@ -711,7 +719,7 @@ void Realm::plague(Body& hero, Body& target, int blowDamage, int worn) {
 
 void Realm::envenom(Body& hero, Body& target, int blowDamage) {
     const SkillRow* poison = skillNumbered(skill::kPoison);
-    if (poison == nullptr || !target.alive() || !target.monster()) return;
+    if (poison == nullptr || !target.alive() || !target.monster() || venomProof(target)) return;
     blowDamage = std::max(1, blowDamage);
     const int share = int(std::max(float(target.maxHealth) * float(kPlagueShare),
                                    float(blowDamage) * float(kBurnRuneFloor)) *

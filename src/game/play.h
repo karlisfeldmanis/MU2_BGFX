@@ -1321,6 +1321,9 @@ private:
         float yaw = 0.0f;
         float spark = 0.0f;
     } breathOn_;
+    // Its fire at rest, the clocks to the next ember at the jaws and at the feet (play_raid.cpp).
+    float jawEmber_ = 0.0f, footEmber_ = 0.0f;
+    uint32_t emberDice_ = 0x2545F491u;
     struct PoolOn {
         float x = 0.0f, z = 0.0f;
         float left = 0.0f;
@@ -1329,6 +1332,7 @@ private:
     std::vector<PoolOn> poolsOn_;
     float raidLift_ = 0.0f;   // metres the dragon is drawn up, eased toward the realm's aloft
     float cameraPull_ = 0.0f;
+    float cameraPullSpeed_ = 0.0f;  // its spring's speed, metres a second
     int dragonFlyClip_ = -1;
     int dragonMouth_ = -1;    // bone "attack01", where the breath comes from
     // The wizard's Cometfall: blue comets on the ground he names. fx/comet.h.

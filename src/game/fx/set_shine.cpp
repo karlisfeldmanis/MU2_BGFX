@@ -99,6 +99,12 @@ void SetShine::update(float seconds, int plus, const float feet[3], float yaw,
         if (one.life <= 0.0f || one.scale <= 0.0f) one.alive = false;
     }
     ribbons_.update(seconds);
+    // Carried with him wherever he is drawn: a set's ring is his, not the ground's.
+    placed_ = feet[0] != 0.0f || feet[1] != 0.0f || feet[2] != 0.0f;
+    if (placed_) {
+        for (int k = 0; k < 3; ++k) feet_[k] = feet[k];
+        ribbons_.followAll(feet);
+    }
 
     // And new ones, a frame at a time: one frame in twenty, at +10 a flare, at +11 a ribbon one
     // time in eight and a flare the rest. Past +11 is MU's later sets, drawn here as +11.
@@ -150,9 +156,10 @@ void SetShine::gather(gfx::Effects& effects, const content::Ground& ground,
         // -z, and its height our y.
         const float count = (one.phase + one.life) * 0.1f;
         gfx::Sprite sprite;
-        sprite.position[0] = one.start[0] + std::sin(count) * kOrbit * one.per;
-        sprite.position[1] = one.start[1] + one.height * one.per;
-        sprite.position[2] = one.start[2] + std::cos(count) * kOrbit * one.per;
+        const float* at = placed_ ? feet_ : one.start;
+        sprite.position[0] = at[0] + std::sin(count) * kOrbit * one.per;
+        sprite.position[1] = at[1] + one.height * one.per;
+        sprite.position[2] = at[2] + std::cos(count) * kOrbit * one.per;
         sprite.halfWidth = sprite.halfHeight = kTexels * one.scale * one.per * 0.5f;
         sprite.spin = one.spin;
         for (int k = 0; k < 3; ++k) sprite.colour[k] = kStrength;

@@ -135,6 +135,39 @@ inline int minionsFor(int players) {
 }
 // The enraged swing: its band's clock times this.
 constexpr float kEnragedSwing = 0.8f;
+// **Its Fire Ball, the Pyroblaster's** (the user, 2026-10-08: "we need more firespell on some
+// stages for draong to do. dragon also know how to use pyroblaser fireball rune"): from the
+// ground stage to the enraged, every kDragonFireballEvery it throws the wizard's Fire Ball at one
+// of the fighters in reach -- the farthest, who thinks himself out of its bite -- for
+// kDragonFireballShare of his health wherever he has got to, and from the third stage it bursts
+// as the Pyroblaster rune's does (sim::kPyroblastReach, the nearest not struck yet in its sight),
+// up to kDragonPyroHops more, each kDragonPyroShare. On the ground stage it does not chain yet.
+// **And the wizard's Meteorite** ("he uses also DW meteorit on some stages"), the enraged and the
+// last stand: every kDragonMeteorEvery a rock on each of kDragonMeteorRocks fighters, falling the
+// spell's own fallTicks onto the tile he stood on -- stepped out of, it misses -- for
+// kDragonMeteorShare. Invention, all of it.
+constexpr int64_t kDragonFireballEvery = 7 * 20;
+constexpr float kDragonFireballShare = 0.12f;
+constexpr int kDragonPyroHops = 4;
+constexpr float kDragonPyroShare = 0.07f;
+constexpr int64_t kDragonMeteorEvery = 9 * 20;
+constexpr int kDragonMeteorRocks = 3;
+constexpr float kDragonMeteorShare = 0.18f;
+constexpr float kDragonMeteorReach = 1.0f;
+
+// **Dragonfire** (the user, 2026-10-08: "dragon need to do some debuff for all which he uses fire
+// damage. when he damage players with fire damage there is increased fire damage receiving, that
+// means that players need some fire resistance items"): every fire blow of the dragon's that
+// lands -- its breath, its fire from the sky, its rocks and their pools, its Inferno, Hellfire,
+// Fire Ball and Meteorite, and its Flame of Evil; not the roar or the bite -- lays a stack on
+// whom it struck, to kDragonfireMost, each kDragonfireTaken more of its fire taken, all of them
+// lapsing kDragonfireTicks after the last. His fire resistance takes kResistanceCut a point off
+// the fire (to kResistanceCutMost), and the same off what the stacks add: a fighter at 10 points
+// takes half the fire and half the stacks' extra. Shown on his strip as a debuff. Invention.
+constexpr int kDragonfireMost = 5;
+constexpr float kDragonfireTaken = 0.12f;
+constexpr int64_t kDragonfireTicks = 12 * 20;
+
 // The meteor storm, every kMeteorStormEvery: one rock a living fighter, on the tile he stood on
 // kImpactTell before; the Balrog's storm (play_show.cpp) for the look. Each leaves a pool.
 constexpr int64_t kMeteorStormEvery = 8 * 20;
@@ -198,7 +231,10 @@ enum class RaiderAct : int32_t {
 };
 
 // One thing laid on the ground by the dragon, told before it lands.
-enum class HazardKind : uint8_t { None, Breath, Shock, Impact, Pool, Inferno, Hellfire };
+// Fireball and Meteorite are the wizard's own spells in its claws (2026-10-08): drawn as his,
+// thrown at a body rather than told on the ground.
+enum class HazardKind : uint8_t { None, Breath, Shock, Impact, Pool, Inferno, Hellfire, Fireball,
+                                  Meteorite };
 
 struct Hazard {
     HazardKind kind = HazardKind::None;
@@ -211,6 +247,11 @@ struct Hazard {
     int64_t nextAt = 0;         // its next pulse, for what burns
     uint32_t serial = 0;        // which volley it is, for the raiders' reactions
     bool pools = false;         // a meteor's: it leaves a burning pool where it lands
+    // A Fire Ball's: the body it flies at, struck wherever he has got to, and its chain so far
+    // -- the Pyroblaster's bursts (kDragonPyroHops), never back to one it has struck.
+    uint32_t whom = 0;
+    int8_t hops = 0;
+    uint32_t chained[5] = {};
     // An Inferno's shelter: the wings' shadows, kShadowReach round each. None is the hard
     // enrage's.
     int shades = 0;

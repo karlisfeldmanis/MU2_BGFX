@@ -165,6 +165,9 @@ public:
     void guard(const float feet[3], float yaw, float metresPerTile, float seconds);
     // Where the body is now, every frame it is drawn: the one thing a following burst needs.
     void follow(const float feet[3]);
+    // Every living burst moved to where the body is now: an Aura of one body's own, as a set's
+    // ribbons are (game/fx/set_shine.h).
+    void followAll(const float feet[3]);
     // And the guard put down early -- a boon that lapsed, or a character who died.
     void release();
 

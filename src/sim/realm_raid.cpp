@@ -31,6 +31,10 @@
 namespace mu::sim {
 namespace {
 
+// A Fire Ball's flight, as realm_fight.cpp has it: a tile short of the body, at the row's pace.
+constexpr float kBoltStopsShort = 1.0f;
+constexpr float kTicksPerSecond = 20.0f;
+
 int32_t itemNamed(const content::Tables& tables, const std::string& name) {
     for (size_t i = 0; i < tables.items.size(); ++i) {
         if (tables.items[i].name == name) return int32_t(i);
@@ -393,6 +397,7 @@ void Realm::raidTick() {
         if (!dragon.alive() || invasion_.phase != InvasionPhase::Standing) return;
         raid_.landedAt = tick_;
         raid_.nextMove = tick_ + kRiseIdleTicks + kMoveEvery / 2;
+        raid_.nextFireball = tick_ + kRiseIdleTicks + kDragonFireballEvery;
         beginStage(dragon, RaidStage::Ground);
         return;
     }
@@ -465,6 +470,12 @@ void Realm::raidTick() {
     if (raid_.stage == RaidStage::Flight && tick_ >= raid_.nextStrafe) strafe(dragon);
     if (raid_.stage >= RaidStage::Enraged && tick_ >= raid_.nextStorm) storm(dragon);
     if (raid_.stage == RaidStage::LastStand && tick_ >= raid_.nextInferno) inferno(dragon, true);
+    // The wizard's fire in its claws: Fire Ball to the third stage, Meteorite from it.
+    if (raid_.stage <= RaidStage::Enraged && tick_ >= raid_.nextFireball &&
+        tick_ >= raid_.busyUntil) {
+        dragonFireball(dragon);
+    }
+    if (raid_.stage >= RaidStage::Enraged && tick_ >= raid_.nextMeteor) dragonMeteors(dragon);
     if (tick_ >= raid_.nextMove && tick_ >= raid_.busyUntil && tick_ >= dragon.wakesAt) {
         raidMove(dragon);
     }
@@ -484,6 +495,7 @@ void Realm::beginStage(Body& dragon, RaidStage stage) {
             break;
         case RaidStage::Enraged:
             raid_.nextStorm = tick_ + 60;
+            raid_.nextMeteor = tick_ + 100;
             break;
         case RaidStage::LastStand:
             raid_.nextInferno = tick_ + 100;
@@ -636,6 +648,123 @@ void Realm::storm(Body& dragon) {
     }
 }
 
+// The fighter its Fire Ball goes at: the farthest in reach and in its sight, who thinks himself
+// out of its bite; by id on a tie, so the log is fixed.
+void Realm::dragonFireball(Body& dragon) {
+    raid_.nextFireball = tick_ + kDragonFireballEvery;
+    const SkillRow* row = skillNumbered(skill::kFireBall);
+    if (row == nullptr) return;
+    const Body* aim = nullptr;
+    float far = -1.0f;
+    for (const Body& one : bodies_) {
+        if (!partisan(one) || !one.alive() || !within(dragon, one, kInfernoReach)) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        if (!router_.sees(dragon.x, dragon.y, one.x, one.y, content::kWallNoMove)) continue;
+        const float gap = fm::hypot(one.x - dragon.x, one.y - dragon.y);
+        if (gap > far) {
+            far = gap;
+            aim = &one;
+        }
+    }
+    if (aim == nullptr) return;
+    ++raid_.serial;
+    const float gap = std::max(0.0f, far - kBoltStopsShort);
+    const int32_t air = std::max<int32_t>(
+        1, int32_t(std::lround(gap / std::max(1.0f, row->flies) * kTicksPerSecond)));
+    dragon.aim = dragon.facing = fm::atan2(aim->y - dragon.y, aim->x - dragon.x);
+    say(What::Loosed, dragon, skill::kFireBall, air, 0, aim->id);
+    Hazard ball;
+    ball.kind = HazardKind::Fireball;
+    ball.x = aim->x;
+    ball.y = aim->y;
+    ball.whom = aim->id;
+    ball.chained[0] = aim->id;
+    ball.reach = 0.5f;
+    ball.share = kDragonFireballShare;
+    ball.landsAt = tick_ + air;
+    ball.endsAt = ball.landsAt;
+    layHazard(ball);
+    // A cast's moment: it stands for it, as a wizard does.
+    halt(dragon);
+    raid_.busyUntil = std::max(raid_.busyUntil, tick_ + 12);
+    dragon.swingsAt = std::max(dragon.swingsAt, raid_.busyUntil);
+    core::logf("raid: a fire ball at #%u, landing in %d ticks", aim->id, air);
+}
+
+void Realm::dragonBurst(Body& dragon, const Hazard& struck) {
+    if (raid_.stage < RaidStage::Enraged || struck.hops >= kDragonPyroHops) return;
+    const SkillRow* row = skillNumbered(skill::kFireBall);
+    if (row == nullptr) return;
+    const auto struckAlready = [&](uint32_t id) {
+        for (int i = 0; i <= struck.hops; ++i) {
+            if (struck.chained[i] == id) return true;
+        }
+        return false;
+    };
+    const Body* next = nullptr;
+    float best = kPyroblastReach * kPyroblastReach;
+    for (const Body& one : bodies_) {
+        if (!partisan(one) || !one.alive() || struckAlready(one.id)) continue;
+        const float dx = one.x - struck.x, dy = one.y - struck.y;
+        const float d2 = dx * dx + dy * dy;
+        if (d2 > best || (d2 == best && next != nullptr && one.id > next->id)) continue;
+        if (!router_.sees(struck.x, struck.y, one.x, one.y, content::kWallNoMove)) continue;
+        best = d2;
+        next = &one;
+    }
+    if (next == nullptr) return;
+    const float gap = std::max(0.0f, std::sqrt(best) - kBoltStopsShort);
+    const int32_t air = std::max<int32_t>(
+        1, int32_t(std::lround(gap / std::max(1.0f, row->flies) * kTicksPerSecond)));
+    // Said as a Pyroblaster's burst: thrown from the one it struck (`c`), `rune` set.
+    say(What::Loosed, dragon, skill::kFireBall, air, int32_t(struck.whom), next->id);
+    happenings_.back().rune = true;
+    Hazard ball = struck;
+    ball.x = next->x;
+    ball.y = next->y;
+    ball.whom = next->id;
+    ball.hops = int8_t(struck.hops + 1);
+    ball.chained[ball.hops] = next->id;
+    ball.share = kDragonPyroShare;
+    ball.landsAt = tick_ + air;
+    ball.endsAt = ball.landsAt;
+    layHazard(ball);
+}
+
+// Its Meteorite on the fighters in reach, in id order from a fighter drawn at random, each on
+// the tile he stands on now; it falls the spell's own time (sim::kDragonMeteorRocks).
+void Realm::dragonMeteors(Body& dragon) {
+    raid_.nextMeteor = tick_ + kDragonMeteorEvery;
+    const SkillRow* rock = skillNumbered(skill::kMeteorite);
+    const int32_t fall = rock != nullptr && rock->fallTicks > 0 ? rock->fallTicks : 20;
+    std::vector<const Body*> near;
+    for (const Body& one : bodies_) {
+        if (!partisan(one) || !one.alive() || !within(dragon, one, kInfernoReach)) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        near.push_back(&one);
+    }
+    if (near.empty()) return;
+    ++raid_.serial;
+    const int from = raidDice_.nextInt(0, int(near.size()));
+    const int count = std::min<int>(kDragonMeteorRocks, int(near.size()));
+    for (int i = 0; i < count; ++i) {
+        const Body& one = *near[size_t((from + i) % int(near.size()))];
+        // Said as the wizard's Meteorite let go at him, which is what the drawing drops MU's
+        // rock on; the blow is the hazard's, on his tile, when it lands.
+        say(What::Loosed, dragon, skill::kMeteorite, fall, 0, one.id);
+        Hazard hit;
+        hit.kind = HazardKind::Meteorite;
+        hit.x = float(one.column());
+        hit.y = float(one.row());
+        hit.reach = kDragonMeteorReach;
+        hit.share = kDragonMeteorShare;
+        hit.landsAt = tick_ + fall;
+        hit.endsAt = hit.landsAt;
+        layHazard(hit);
+    }
+    core::logf("raid: %d meteorites at tick %lld", count, (long long)tick_);
+}
+
 void Realm::inferno(Body& dragon, bool shadows) {
     raid_.nextInferno = tick_ + kInfernoEvery;
     ++raid_.serial;
@@ -734,11 +863,28 @@ bool Realm::inHazard(const Hazard& h, float x, float y) const {
     }
 }
 
-void Realm::scorch(Body& dragon, Body& one, float share) {
+float Realm::dragonfireTaken(const Body& one) const {
+    const double cut = std::min(kResistanceCutMost, kResistanceCut * double(one.excel.fireResistance));
+    const int stacks = one.dragonfireUntil > tick_ ? one.dragonfire : 0;
+    return float((1.0 - cut) * (1.0 + double(stacks) * double(kDragonfireTaken) * (1.0 - cut)));
+}
+
+void Realm::dragonfireMark(Body& one) {
+    if (!one.alive()) return;
+    if (one.dragonfireUntil <= tick_) one.dragonfire = 0;
+    one.dragonfire = std::min(kDragonfireMost, one.dragonfire + 1);
+    one.dragonfireUntil = tick_ + kDragonfireTicks;
+}
+
+void Realm::scorch(Body& dragon, Body& one, float share, bool fire) {
     if (!one.alive()) return;
     // A share of what it can hold, through what turns harm aside -- a guard, a barrier, a pet
-    // (Fighter::damageTaken) -- and the shield's nine tenths as a blow's (Realm::strikeAt).
-    const int blow = std::max(1, int(double(share) * double(one.maxHealth) * one.stats.damageTaken));
+    // (Fighter::damageTaken) -- and the shield's nine tenths as a blow's (Realm::strikeAt). Its
+    // fire through his resistance and his Dragonfire, which it then deepens.
+    const double burns = fire ? double(dragonfireTaken(one)) : 1.0;
+    const int blow =
+        std::max(1, int(double(share) * double(one.maxHealth) * one.stats.damageTaken * burns));
+    if (fire) dragonfireMark(one);
     int wound = blow;
     if (one.sd > 0) {
         const int onto = int(float(blow) * kShieldShare);
@@ -757,6 +903,13 @@ void Realm::scorch(Body& dragon, Body& one, float share) {
 void Realm::hazardTick(Body& dragon) {
     for (Hazard& h : hazards_) {
         if (h.kind == HazardKind::None || tick_ < h.landsAt) continue;
+        // A Fire Ball strikes the body it flew at, wherever he has got to.
+        if (h.kind == HazardKind::Fireball && tick_ == h.landsAt) {
+            if (const Body* at = body(h.whom); at != nullptr && at->alive()) {
+                h.x = at->x;
+                h.y = at->y;
+            }
+        }
         if (tick_ == h.landsAt && h.kind != HazardKind::Pool) {
             say(What::Raid, dragon, int32_t(RaidEvent::Strike), int32_t(h.kind));
             happenings_.back().x = h.x;
@@ -767,13 +920,19 @@ void Realm::hazardTick(Body& dragon) {
             if (pulse) h.nextAt = tick_ + (h.kind == HazardKind::Breath ? kBreathEvery : kPoolEvery);
             for (Body& one : bodies_) {
                 if (!partisan(one) || !one.alive() || !inHazard(h, one.x, one.y)) continue;
-                scorch(dragon, one, h.share);
+                scorch(dragon, one, h.share, h.kind != HazardKind::Shock);
                 // The roar's shove, and Hellfire's: a tile straight away from it, as the
                 // Lightning push is.
                 if ((h.kind == HazardKind::Shock || h.kind == HazardKind::Hellfire) && one.alive() &&
                     one.pushTicks == 0) {
                     push(one, h.x, h.y);
                 }
+            }
+            if (h.kind == HazardKind::Fireball && tick_ == h.landsAt) {
+                const Hazard struck = h;
+                h = Hazard{};
+                dragonBurst(dragon, struck);
+                continue;
             }
             if (h.kind == HazardKind::Impact && h.pools) {
                 Hazard pool;

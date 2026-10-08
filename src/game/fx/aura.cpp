@@ -243,6 +243,13 @@ void Aura::follow(const float feet[3]) {
     for (int k = 0; k < 3; ++k) bursts_[guarding_].feet[k] = feet[k];
 }
 
+void Aura::followAll(const float feet[3]) {
+    for (Burst& b : bursts_) {
+        if (!b.living) continue;
+        for (int k = 0; k < 3; ++k) b.feet[k] = feet[k];
+    }
+}
+
 void Aura::release() {
     if (guarding_ >= 0) bursts_[guarding_].living = false;
     guarding_ = -1;

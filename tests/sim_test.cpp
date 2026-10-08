@@ -537,6 +537,27 @@ void testRaid(const content::Tables& tables) {
         realm.invade();
         for (int i = 0; i < 40 * 20 && realm.raidStage() == sim::RaidStage::None; ++i) realm.step();
     };
+    // Dragonfire (2026-10-08): the dragon's fire lays stacks on whom it strikes, never past five,
+    // and they lapse.
+    {
+        sim::Realm burnt;
+        raised(burnt, 9);
+        int most = 0;
+        bool lapsed = false, venom = false;
+        for (int i = 0; i < 3000; ++i) {
+            burnt.step();
+            // And it resists poison whole (2026-10-08).
+            venom |= burnt.invader() != nullptr && burnt.invader()->poisonUntil != 0;
+            for (const sim::Body& one : burnt.bodies()) {
+                if (!(one.player || one.raider >= 0)) continue;
+                if (one.dragonfireUntil > burnt.tick()) most = std::max(most, int(one.dragonfire));
+                lapsed |= one.dragonfire > 0 && one.dragonfireUntil <= burnt.tick();
+            }
+        }
+        check(most > 0 && most <= sim::kDragonfireMost, "its fire lays Dragonfire, to five stacks");
+        check(lapsed, "and the stacks lapse");
+        check(!venom, "no poison ever takes on the dragon");
+    }
     sim::Realm realm;
     raised(realm, 7);
     checkEqual(realm.raiderCount(), 9, "nine raiders beside him");

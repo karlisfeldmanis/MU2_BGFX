@@ -35,8 +35,12 @@ constexpr float kDepartPace = 6.0f;
 // The camera's pull near a boss (§2c): MU's TW_CAMERA_UP eases 10 units a frame at 25 frames,
 // 2.5 m a second (DefaultCamera.cpp:703-724); ours reaches 3 m, within 14 tiles of a roused
 // boss and held to 18.
+// Eased by a critically damped spring rather than at MU's flat pace, which started and stopped
+// dead (the user, 2026-10-08: "camera zoom in / out too fast has to be more smooth and littel bit
+// slower"): kPullSettle is its time constant, about three seconds to settle where the flat 2.5 m
+// a second took 1.2.
 constexpr float kPullMost = 3.0f;
-constexpr float kPullPace = 2.5f;
+constexpr float kPullSettle = 0.75f;
 constexpr float kPullNear = 14.0f;
 constexpr float kPullHold = 18.0f;
 // The breath's sparks, a frame of MU's 25 each, three abreast for its three jets.
@@ -52,6 +56,14 @@ constexpr float kShockBlast = 0.3f;
 constexpr float kInfernoBlast = 0.45f;
 // The mouth: 50 units out along bone 11's -y, as the sky's diver breathes (invasion_sky.cpp).
 constexpr float kMouth[3] = {0.0f, -0.5f, 0.0f};
+// **Its fire at rest** (the user, 2026-10-08: "lets add some fire effects also to dragon, but
+// nothing crazy subtle but cool"): while it fights, an ember falls from its jaws every
+// kJawEmberEvery, drifting out along its facing at kJawEmberScale of the breath's spark; and
+// enraged, from the third stage, a low flame licks at a foot every kFootEmberEvery. Ours.
+constexpr float kJawEmberEvery = 0.35f;
+constexpr float kJawEmberScale = 0.6f;
+constexpr float kFootEmberEvery = 0.5f;
+constexpr float kFootEmberReach = 1.6f;  // metres round its feet
 
 float ticksToSeconds(int64_t ticks) { return float(ticks) * float(kTickSeconds); }
 
@@ -300,6 +312,35 @@ void Play::raid(float seconds) {
             }
         }
     }
+    // Its fire at rest: embers at the jaws, and enraged, flames at its feet.
+    if (drawn && drawn->placed && dragon->alive() && realm_.raidStage() != sim::RaidStage::None) {
+        const auto roll = [&]() {
+            emberDice_ ^= emberDice_ << 13;
+            emberDice_ ^= emberDice_ >> 17;
+            emberDice_ ^= emberDice_ << 5;
+            return float(emberDice_ % 10000) / 10000.0f;
+        };
+        const float yaw = std::atan2(std::cos(dragon->facing), -std::sin(dragon->facing));
+        jawEmber_ -= seconds;
+        float at[3];
+        if (jawEmber_ <= 0.0f && dragonMouth_ >= 0 && drawn->figure.pointOn(dragonMouth_, kMouth, at)) {
+            jawEmber_ = kJawEmberEvery * (0.7f + 0.6f * roll());
+            const float turn = (roll() - 0.5f) * 0.8f;
+            const float along[2] = {std::sin(yaw + turn), std::cos(yaw + turn)};
+            breath_.spark(at, along, kJawEmberScale);
+        }
+        if (realm_.raidStage() >= sim::RaidStage::Enraged) {
+            footEmber_ -= seconds;
+            if (footEmber_ <= 0.0f && ground_) {
+                footEmber_ = kFootEmberEvery * (0.6f + 0.8f * roll());
+                const float a = roll() * 6.2832f, r = kFootEmberReach * (0.4f + 0.6f * roll());
+                const float x = drawn->crown[0] + std::cos(a) * r, z = drawn->crown[2] + std::sin(a) * r;
+                const float feet[3] = {x, ground_->heightAt(x, z), z};
+                const float along[2] = {std::cos(a), std::sin(a)};
+                breath_.footFire(feet, along);
+            }
+        }
+    }
     // The pools' low fire.
     for (PoolOn& pool : poolsOn_) {
         pool.left -= seconds;
@@ -343,8 +384,11 @@ void Play::raid(float seconds) {
     const bool near = dragon->alive() && realm_.raidStage() != sim::RaidStage::None && hero.alive() &&
                       sim::within(hero, *dragon, cameraPull_ > 0.0f ? kPullHold : kPullNear);
     const float pull = near ? kPullMost : 0.0f;
-    cameraPull_ = pull > cameraPull_ ? std::min(pull, cameraPull_ + kPullPace * seconds)
-                                     : std::max(pull, cameraPull_ - kPullPace * seconds);
+    const float omega = 1.0f / kPullSettle;
+    const float step = std::min(seconds, 0.1f);  // a long frame does not fling it
+    const float accel = omega * omega * (pull - cameraPull_) - 2.0f * omega * cameraPullSpeed_;
+    cameraPullSpeed_ += accel * step;
+    cameraPull_ = std::clamp(cameraPull_ + cameraPullSpeed_ * step, 0.0f, kPullMost);
 }
 
 void Play::gatherRaiders(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,

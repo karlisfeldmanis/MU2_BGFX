@@ -67,7 +67,7 @@ public:
 private:
     struct Flare {
         bool alive = false;
-        float start[3] = {};  // where he stood, world metres
+        float start[3] = {};  // where he stood as it rose, world metres
         float per = 0.01f;    // metres in one of MU's units
         float phase = 0.0f;   // Velocity[0], -150 to 149
         float life = 0.0f;    // frames left, from kLife down
@@ -92,6 +92,10 @@ private:
     Aura ribbons_;
     Flare flares_[kFlares] = {};
     float clock_ = 0.0f;  // reference frames owed
+    // Where he stands now, so the ring and the ribbons go with him (the user, 2026-10-08:
+    // "+11 aura ring has to stay with chaarcter body"). MU's stay where he was; ours follow.
+    float feet_[3] = {};
+    bool placed_ = false;
     // Drawn only by the drawing and never seeded: the realm's log must not see it.
     uint32_t dice_ = 0x51A7E11Du;
     float unit();

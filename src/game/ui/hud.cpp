@@ -652,6 +652,8 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     sheet.wide = kCardWide;
     const char* art = one.pet >= 0 ? petArt(one.pet)
                       : one.poison ? "buff_poison"
+                      : one.dragonfire ? "buff_dragonfire"
+                      : one.chill  ? "buff_ice"
                       : one.ale    ? "buff_ale"
                       : one.frenzy ? "buff_frenzy"
                       : one.potion == 0 ? "buff_healing"
@@ -779,6 +781,25 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         what.rows.push_back(said(mana ? "Mana" : "Health", "+" + panel::grouped(one.amount),
                                  tip::Tone::Green));
         what.rows.push_back(prose("still to come, over a second"));
+        sheet.sections.push_back(what);
+        return sheet;
+    }
+    if (one.dragonfire) {
+        // The Golden Dragon's (sim/raid.h): each stack its fire bites deeper, and fire resistance
+        // takes the edge off both (the user, 2026-10-08: "players need some fire resistance items").
+        sheet.name = "Dragonfire";
+        sheet.nameTone = tip::Tone::Red;
+        sheet.base = "DEBUFF";
+        tip::Section what;
+        what.rows.push_back(said("Stacks",
+                                 std::to_string(one.stacks) + " of " +
+                                     std::to_string(sim::kDragonfireMost),
+                                 tip::Tone::Red));
+        what.rows.push_back(said("Fire damage taken", "+" + std::to_string(int(std::lround(
+                                     double(one.stacks) * sim::kDragonfireTaken * 100.0))) + "%",
+                                 tip::Tone::Red));
+        what.rows.push_back(prose("Every fire blow of the dragon's adds a stack. Fire resistance "
+                                  "lessens its fire and the stacks alike."));
         sheet.sections.push_back(what);
         return sheet;
     }
@@ -1198,6 +1219,7 @@ void Hud::rebuild() {
         const Box box = plate(s, buffPx(i));
         const char* art = one.pet >= 0          ? petArt(one.pet)
                           : one.poison           ? "buff_poison"
+                          : one.dragonfire       ? "buff_dragonfire"
                           : one.chill            ? "buff_ice"
                           : one.ale              ? "buff_ale"
                           : one.frenzy           ? "buff_frenzy"
@@ -1232,7 +1254,15 @@ void Hud::rebuild() {
             canvas_.rect({box.x, box.bottom() - std::max(1.0f, 2.0f * kUnit * s.scale),
                           box.w * left, std::max(1.0f, 2.0f * kUnit * s.scale)},
                          kDebuffLeft);
-            if (one.seconds >= 1.0f) {
+            // Dragonfire's figure is its stacks, how deep it bites; the bar under it its time.
+            if (one.dragonfire && one.stacks > 0) {
+                char figure[16];
+                std::snprintf(figure, sizeof figure, "%d", one.stacks);
+                canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.4f));
+                const float big = std::round(20.0f * kUnit * s.scale);
+                controls::label(canvas_, box.midX() - controls::labelWidth(big, figure) * 0.5f,
+                                box.midY() + big * 0.33f, big, kInk, figure);
+            } else if (one.seconds >= 1.0f) {
                 const int whole = int(one.seconds + 0.5f);
                 char figure[16];
                 if (whole >= 60) {

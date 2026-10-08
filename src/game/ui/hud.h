@@ -141,13 +141,14 @@ public:
         bool poison = false;  // or a poison on him, MU's eDeBuff_Poison
         bool chill = false;   // or iced, walking at kChillFactor: MU's eDeBuff_Freeze
         bool frenzy = false;  // or a Frenzy rune's speed, the Dungeon's (sim::kFrenzyTicks)
+        bool dragonfire = false;  // or the Golden Dragon's Dragonfire, `stacks` deep (sim/raid.h)
         // Or a potion still pouring in: 0 health, 1 mana, -1 none. Its second of three
         // instalments (Realm::pouring), and `amount` what is still to come. Ours, as the Ale's
         // cell is (the user, 2026-10-05: 'when char uses potion add little aura icon while
         // potion is active and doing its work').
         int potion = -1;
         int amount = 0;
-        int stacks = 0;       // and its stacks, 1 to sim::kFrenzyMostStacks
+        int stacks = 0;       // and its stacks, 1 to sim::kFrenzyMostStacks (Dragonfire's too)
         // Or his pet in slot 8: 0 the Guardian Angel, 1 the Imp, -1 none. It has no clock; its
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
         // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).
@@ -160,14 +161,18 @@ public:
         bool idle = false;
         float seconds = 0.0f; // what is left of it
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
-        bool empty() const { return skill == 0 && !ale && !poison && !chill && !frenzy && pet < 0 && potion < 0; }
+        bool empty() const {
+            return skill == 0 && !ale && !poison && !chill && !frenzy && !dragonfire && pet < 0 &&
+                   potion < 0;
+        }
         // Something done TO him: its cell wears a red edge, as a debuff does in WoW's strip.
-        bool debuff() const { return poison || chill; }
+        bool debuff() const { return poison || chill || dragonfire; }
         bool operator==(const Boon& o) const {
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
             return skill == o.skill && ale == o.ale && poison == o.poison &&
-                   chill == o.chill && frenzy == o.frenzy && pet == o.pet && kinship == o.kinship &&
+                   chill == o.chill && frenzy == o.frenzy && dragonfire == o.dragonfire &&
+                   stacks == o.stacks && pet == o.pet && kinship == o.kinship &&
                    potion == o.potion && amount == o.amount &&
                    idle == o.idle && life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
