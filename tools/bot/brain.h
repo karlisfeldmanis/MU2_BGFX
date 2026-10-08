@@ -837,10 +837,11 @@ private:
         // handed in all three quests soonest (50, 79, 161 min against 63, 86, 171 at 4/2/3/0) and
         // ended highest (156-161) -- agility's defence rate and pace over vitality's health.
         int w[4] = {4, 3, 2, 0};  // strength, agility, vitality, energy
-        // The wizard 1/1/5/4 since 2026-10-03 ("improve DW bot"): over three seeds his quests
-        // came in ~20 minutes sooner than at 1/1/2/6 and his health 574 against 368 -- a wizard
-        // whose spells reach the screen is held back by what one blow costs him, not by damage.
-        if (wizardly()) { w[0] = 1; w[1] = 1; w[2] = 5; w[3] = 4; }
+        // The wizard 1/1/5/4 from 2026-10-03 ("improve DW bot"), when he threw Lightning at 40
+        // mana a cast and every point of health saved a potion. **1/1/4/5 since 2026-10-08**, his
+        // spells chosen by their mana (spell): over two seeds of 12 h, levels 116 and 120 against
+        // 113 and 110 at 1/1/5/4; 1/1/3/6 swung 108-125 with more deaths, 1/1/6/3 fell to 83.
+        if (wizardly()) { w[0] = 1; w[1] = 1; w[2] = 4; w[3] = 5; }
         if (gladiatorMage()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
         if (options_.build[0] + options_.build[1] + options_.build[2] + options_.build[3] > 0) {
@@ -1931,7 +1932,7 @@ private:
         castleOn_ = target;
         if (rank <= 1) {
             // The run's own: never given up for taking long (ask's kGiveUp), only for dying.
-            if (wizardly()) request.skill = sim::skill::kEnergyBall;
+            if (wizardly()) request.skill = quickSpell();
             hand_.ask(request);
         } else {
             ask(request);
@@ -2066,7 +2067,11 @@ private:
         return -1;
     }
     // The quest's breeds he can take now, on the map they live on: the map, or -1 for none.
-    int huntable(int q, std::vector<int>* breeds, double share = 3.0) {
+    // `share` 0 is his own riskShare: a third, or a half for a wizard rich in potions -- the same
+    // the grind allows him. At a fixed third a wizard of 376 health never began the Catacombs,
+    // whose Ghosts cost him 154 a kill (2026-10-08).
+    int huntable(int q, std::vector<int>* breeds, double share = 0.0) {
+        if (share <= 0.0) share = riskShare();
         breeds->clear();
         if (aside_[q] > clock_) return -1;
         int where = -1;
@@ -2224,7 +2229,7 @@ private:
             }
         }
         if (options_.kin == sim::Kin::DarkWizard && request.kind == sim::Request::Kind::Attack) {
-            request.skill = sim::skill::kEnergyBall;
+            request.skill = quickSpell();
         }
         hand_.ask(request);
     }
@@ -2298,14 +2303,90 @@ private:
                                     ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
                                     : blow();
             const double hit = base * sim::force(row, hero.points);
+            if (wizardly()) continue;  // a spellcaster's is spell() below
             if (hit > strongest) {
                 strongest = hit;
                 best = i;
             }
         }
+        if (wizardly()) best = spell(target);
         if (best < 0) return;
         hand_.invoke(sim::skillAt(best).number, at);
         pressed_ = best;
+    }
+
+    // ---- a spellcaster's mana (the user, 2026-10-08: "DW is weak points, work on DW brains") ---
+    // Lightning is 40 mana for 1.8 of the band and Fire Ball 3 for the same 1.8: choosing by the
+    // blow alone, a wizard threw 11,273 Lightnings in twelve hours, every Zen he made went on
+    // mana potions, half his time was in town, and at level 100 he wore Pad. So a spell is worth
+    // its blow times the bodies it will strike -- the chain within six tiles, the line, the arc --
+    // a dear one must beat the best cheap one by a quarter to be thrown, and under half his mana
+    // only the cheap ones are.
+    static constexpr int kCheapMana = 5;
+    int struck(const sim::SkillRow& row, const sim::Body* target) const {
+        if (target == nullptr || row.spread == sim::Spread::One) return 1;
+        const sim::Body& hero = realm_->hero();
+        int n = 0;
+        const float dx = target->x - hero.x, dy = target->y - hero.y;
+        const float len = std::max(0.5f, std::hypot(dx, dy));
+        for (const sim::Body& b : realm_->bodies()) {
+            if (!b.monster() || !b.alive()) continue;
+            bool in = false;
+            if (row.spread == sim::Spread::Ring) {
+                in = std::hypot(b.x - target->x, b.y - target->y) <= 6.0f;
+            } else if (row.spread == sim::Spread::Line || row.spread == sim::Spread::Beam) {
+                // Within a tile and a half of the line from him through the target, inside its reach.
+                const float t = ((b.x - hero.x) * dx + (b.y - hero.y) * dy) / len;
+                const float off = std::fabs((b.x - hero.x) * dy - (b.y - hero.y) * dx) / len;
+                in = t >= 0.0f && t <= row.reach && off <= 1.5f;
+            } else {
+                // An arc or a fan: in reach and within sixty degrees of the target's bearing.
+                const float bx = b.x - hero.x, by = b.y - hero.y, d = std::hypot(bx, by);
+                in = d <= row.reach && (d < 0.5f || (bx * dx + by * dy) / (d * len) >= 0.5f);
+            }
+            if (in) ++n;
+        }
+        if (row.spread == sim::Spread::Ring) n = std::min(n, sim::kLightningBodies);
+        return std::max(1, n);
+    }
+    int spell(const sim::Body* target) const {
+        const sim::Body& hero = realm_->hero();
+        const sim::Wearer w = realm_->wearer();
+        int cheap = -1, dear = -1;
+        double cheapWorth = 0.0, dearWorth = 0.0;
+        const bool flush = hero.mana * 2 >= hero.maxMana;
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            if (!realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
+            if (hero.mana < row.mana || row.onSelf() || !row.suits(w.hand) || !row.wizardry) continue;
+            if (row.castsBare() && (target == nullptr ||
+                                    std::hypot(target->x - hero.x, target->y - hero.y) > row.reach)) continue;
+            if (target && std::hypot(target->x - hero.x, target->y - hero.y) > row.reach + 0.5f) continue;
+            const double hit = ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate *
+                               sim::force(row, hero.points);
+            const double worth = hit * struck(row, target);
+            if (row.mana <= kCheapMana) {
+                if (worth > cheapWorth) cheapWorth = worth, cheap = i;
+            } else if (flush && worth > dearWorth) {
+                dearWorth = worth, dear = i;
+            }
+        }
+        return dear >= 0 && dearWorth > cheapWorth * 1.25 ? dear : cheap;
+    }
+    // The quick slot's: the best primary of kCheapMana or less he knows -- Fire Ball once read,
+    // else Energy Ball -- thrown whenever press throws nothing.
+    int32_t quickSpell() const {
+        const sim::Wearer w = realm_->wearer();
+        int32_t best = sim::skill::kEnergyBall;
+        double strongest = 0.0;
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            if (!row.primary() || !row.wizardry || row.mana > kCheapMana || !realm_->knows(row.number)) continue;
+            if (!row.suits(w.hand) || row.spread != sim::Spread::One) continue;
+            const double f = sim::force(row, realm_->hero().points);
+            if (f > strongest) strongest = f, best = row.number;
+        }
+        return best;
     }
 
     // Whether he needs the town: potions out, the bag full, the gear worn down, or money enough
