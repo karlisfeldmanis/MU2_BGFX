@@ -63,7 +63,9 @@ namespace mu::net {
 // 9: a thing on the ground carries its owner (sim::Lying::owner), so the snapshot's lying grew.
 // 10: accounts -- Account, Roster, Create, Delete, and the Hello's `account`.
 // 11: Who, the players' names; the Hello's `name`, a character of no account's.
-constexpr uint32_t kVersion = 11;
+// 12: a Tick's `invasionElsewhere`, in the rain's byte; and the raid in every invasion, so the
+//     snapshot's Body, Hazard and RaidState grew.
+constexpr uint32_t kVersion = 12;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -196,6 +198,9 @@ struct Tick {
     uint32_t tick = 0;       // the realm's tick after this step
     int64_t wallClock = 0;   // Realm::setWallClock before the step
     bool rain = false;       // Realm::invasionRain before the step
+    // And whether the Golden Dragon is on another map of the server's now: one dragon at a time
+    // (the user, 2026-10-08), so a storm beginning here does not roll for it. In the rain's byte.
+    bool invasionElsewhere = false;
     std::vector<sim::Command> commands;  // Realm::command each, in order, before the step
     std::vector<Arrival> arrivals;       // Realm::carry each, before the commands
     // Taken before its deadline, for an order that set a standing player off (server/src/main.cpp,

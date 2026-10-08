@@ -380,7 +380,7 @@ void put(std::vector<uint8_t>& out, const Tick& one) {
     frame(out, Kind::Tick, [&](Out& o) {
         o.u32(one.tick);
         o.i64(one.wallClock);
-        o.u8(one.rain ? 1 : 0);
+        o.u8(uint8_t((one.rain ? 1 : 0) | (one.invasionElsewhere ? 2 : 0)));
         o.u32(uint32_t(one.commands.size()));
         for (const sim::Command& c : one.commands) putCommand(o, c);
         o.u32(uint32_t(one.arrivals.size()));
@@ -551,7 +551,9 @@ bool parse(const std::vector<uint8_t>& body, Tick& out) {
     In in{body};
     out.tick = in.u32();
     out.wallClock = in.i64();
-    out.rain = in.u8() != 0;
+    const uint8_t weather = in.u8();
+    out.rain = (weather & 1) != 0;
+    out.invasionElsewhere = (weather & 2) != 0;
     const uint32_t count = in.u32();
     // Each command is 35 bytes: a count past what the body holds is a lie, refused before any
     // memory is reserved for it.

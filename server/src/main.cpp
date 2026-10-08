@@ -322,6 +322,8 @@ bool worldName(const std::string& name) {
 }
 
 // The world's first player: its realm raised round him, as sprint 18 raised one per connection.
+bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<World>>& worlds);
+
 World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello& hello,
                   const std::string& assets, const sim::RealmConfig& config, uint64_t seed,
                   const std::string& who, const sim::Kept* kept, int castle) {
@@ -372,7 +374,7 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
         world->weather.wet = true;
         world->weather.left = 300.0f;
     }
-    if (g_invasion) world->realm->invade();
+    if (g_invasion && !invadedElsewhere(*world, worlds)) world->realm->invade();
     worlds.push_back(std::move(world));
     return worlds.back().get();
 }
@@ -678,18 +680,33 @@ Session* playing(const World& world, std::vector<std::unique_ptr<Session>>& sess
 
 // One tick of one world: its inputs applied, the step, sent to everyone in it with now and then
 // its hash; then whoever it let in, welcomed.
-void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions, bool early = false) {
+// Whether the Golden Dragon is in the sky or on the ground of any world but `world`: one at a
+// time on the server (the user, 2026-10-08: "if there is multiple storms on maps, that only on 1
+// storm he will land not multiple").
+bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<World>>& worlds) {
+    for (const auto& other : worlds) {
+        if (other.get() != &world && other->realm &&
+            other->realm->invasionPhase() != sim::InvasionPhase::Quiet) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
+          const std::vector<std::unique_ptr<World>>& worlds, bool early = false) {
     net::Tick t;
     t.early = early;
     t.wallClock = int64_t(std::time(nullptr));
     world.weather.tick(float(kTickSeconds),
                        world.realm->invasionPhase() != sim::InvasionPhase::Quiet);
     t.rain = world.weather.wet;
+    t.invasionElsewhere = invadedElsewhere(world, worlds);
     t.commands.swap(world.queued);
     t.arrivals.swap(world.arriving);
     sim::Realm& realm = *world.realm;
     realm.setWallClock(t.wallClock);
-    realm.invasionRain(t.rain);
+    realm.invasionRain(t.rain, t.invasionElsewhere);
     for (const net::Arrival& a : t.arrivals) realm.carry(a.ticket, a.kept);
     for (const sim::Command& c : t.commands) realm.command(c);
     const bool castleOut = realm.castleRun().sentOut;
@@ -888,14 +905,14 @@ int main(int argc, char** argv) {
                                now - world->earlyAt >= std::chrono::duration<double>(kEarlyApart);
             world->wantsEarly = false;
             if (early) {
-                tick(*world, sessions, true);
+                tick(*world, sessions, worlds, true);
                 world->earlyAt = now;
                 world->next = now + kTick;
                 continue;
             }
             int owed = 0;
             while (world->next <= now && owed < 20) {
-                tick(*world, sessions);
+                tick(*world, sessions, worlds);
                 world->next += kTick;
                 ++owed;
             }

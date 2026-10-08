@@ -57,10 +57,11 @@ void Realm::raiseInvader() {
     route(bodies_.back()).reserve(64);
 }
 
-void Realm::invasionRain(bool raining) {
+void Realm::invasionRain(bool raining, bool elsewhere) {
     const bool began = raining && !invasion_.raining;
     invasion_.raining = raining;
-    if (!began || invaderSlot_ < 0 || invasion_.phase != InvasionPhase::Quiet || invasionOwed_) {
+    if (!began || elsewhere || invaderSlot_ < 0 || invasion_.phase != InvasionPhase::Quiet ||
+        invasionOwed_) {
         return;
     }
     if (invasionDice_.nextInt(0, 100) < kInvasionChance) invade();

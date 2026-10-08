@@ -443,6 +443,16 @@ void testInvasion(const content::Tables& tables) {
     realm.invasionRain(false);
     for (int i = 0; i < 100; ++i) realm.step();
     check(realm.invasionPhase() == sim::InvasionPhase::Quiet, "no invasion in dry weather");
+    // One dragon for all three maps (2026-10-08): a spell beginning while it is elsewhere brings
+    // none, however many begin.
+    for (int spell = 0; spell < 40; ++spell) {
+        realm.invasionRain(true, true);
+        realm.step();
+        realm.invasionRain(false, true);
+        realm.step();
+    }
+    check(realm.invasionPhase() == sim::InvasionPhase::Quiet,
+          "no invasion while the dragon is on another map");
     // Wet spells begin until one brings the dragons: kInvasionChance in 100 each, so forty
     // spells all missing is (2/3)^40 for the 33, and a seeded run always says the same.
     bool begun = false;

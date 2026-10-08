@@ -1074,7 +1074,9 @@ public:
     // over the map, and as a wet spell begins the realm rolls kInvasionChance for the dragons;
     // --invasion's `invade` begins one at once. Nothing on a map with no invasion, or one whose
     // dragon is not cooked.
-    void invasionRain(bool raining);
+    // `elsewhere`: the dragon is on another of the server's maps now, and a spell beginning here
+    // brings none (one dragon at a time, the user's of 2026-10-08).
+    void invasionRain(bool raining, bool elsewhere = false);
     // `now`: it lands on the next tick, its entrance skipped (--raid-now).
     bool invade(bool now = false);
     InvasionPhase invasionPhase() const { return invasion_.phase; }
