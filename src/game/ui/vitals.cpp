@@ -9,6 +9,7 @@
 #include "game/ui/panel.h"
 #include "game/ui/tip.h"
 #include "game/play.h"
+#include "sim/quests.h"
 
 namespace mu::game {
 
@@ -54,6 +55,9 @@ constexpr float kGap = 4.0f;      // clears the shadow before it starts being a 
 // The other players' names (WoW's), in tip::unit() pixels: the name and the guild line under it.
 constexpr float kTagName = 15.0f;
 constexpr float kTagGuild = 11.0f;
+// The pointer's detail line under them, and its warm off-white.
+constexpr float kTagDetail_ = 10.0f;
+constexpr uint32_t kTagDetail = gfx::rgba(232 / 255.0f, 220 / 255.0f, 196 / 255.0f);
 // WoW's friendly-player blue, lifted to read on MU's dark ground, and a corpse's grey.
 constexpr float kTagBlue[4] = {84 / 255.0f, 156 / 255.0f, 1.0f, 1.0f};
 constexpr float kTagDead[4] = {0.62f, 0.62f, 0.62f, 1.0f};
@@ -342,7 +346,8 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         now.escortReading = play.shownHealth(summon->id);
         now.escortMaximum = summon->maxHealth;
     }
-    // Every other player in range, WoW's way: named whether pointed at or not.
+    // Every player in range, WoW's way, named whether pointed at or not -- his own name too (the
+    // user, 2026-10-08: 'also always show character label which user plays on').
     {
         const sim::Body& hero = realm.hero();
         struct Far {
@@ -351,7 +356,8 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         };
         std::vector<Far> near;
         for (const sim::Body& one : realm.bodies()) {
-            if (!one.player || one.id == hero.id || one.id == 0) continue;
+            if (!one.player || one.gone || one.id == 0) continue;
+            const bool self = one.id == hero.id;
             const float dx = one.x - hero.x, dy = one.y - hero.y;
             const float d = std::sqrt(dx * dx + dy * dy);
             if (d > kNameRange) continue;
@@ -365,7 +371,15 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
             tag.alpha = std::round(std::clamp((kNameRange - d) / kNameFade, 0.0f, 1.0f) * 16.0f) / 16.0f;
             tag.lit = one.id == player_ ? playerShown_ : 0.0f;
             tag.dead = !play.shownAlive(one.id);
-            if (!play.playerName(one.id, &tag.name, &tag.bot) || tag.name.empty()) tag.name = "Stranger";
+            if (!play.playerName(one.id, &tag.name, &tag.bot) || tag.name.empty()) {
+                // His own name only as the server gave it; off a server he has none to show.
+                if (self) continue;
+                tag.name = "Stranger";
+            }
+            if (tag.lit > 0.0f) {
+                tag.detail = "Level " + std::to_string(one.level) + " \xC2\xB7 " +
+                             sim::className(int(one.kin), one.second);
+            }
             near.push_back({d, std::move(tag)});
         }
         std::sort(near.begin(), near.end(), [](const Far& a, const Far& b) { return a.d > b.d; });
@@ -419,6 +433,7 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         const gfx::Face* title = panel::titleFace();
         const gfx::Face* words = controls::wordFace();
         const float nameSize = std::round(kTagName * u), guildSize = std::round(kTagGuild * u);
+        const float detailSize = std::round(kTagDetail_ * u);
         const float rim = std::max(1.0f, std::round(u));
         const auto outlined = [&](const gfx::Face* face, bgfx::TextureHandle texture, float x,
                                   float baseline, float size, uint32_t ink, float alpha,
@@ -443,8 +458,16 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             const float l = t.lit * 0.55f;
             const uint32_t ink = gfx::rgba(c[0] + (1.0f - c[0]) * l, c[1] + (1.0f - c[1]) * l,
                                            c[2] + (1.0f - c[2]) * l, 1.0f);
-            const float guildBaseline = t.y - std::round(kGap * u);
-            const float nameBaseline = guildBaseline - std::round((kTagGuild + 3.0f) * u);
+            // From the crown up: the pointer's detail line, the guild line, the name.
+            float under = t.y - std::round(kGap * u);
+            if (!t.detail.empty() && words) {
+                outlined(words, controls::wordTexture(), t.x - words->measure(detailSize, t.detail) * 0.5f,
+                         under, detailSize, kTagDetail, t.alpha * t.lit, t.detail);
+                under -= std::round((kTagDetail_ + 2.0f) * u);
+            }
+            const float guildBaseline = under;
+            const float nameBaseline =
+                t.bot ? guildBaseline - std::round((kTagGuild + 3.0f) * u) : guildBaseline;
             if (title) {
                 outlined(title, panel::titleTexture(), t.x - title->measure(nameSize, t.name) * 0.5f,
                          nameBaseline, nameSize, ink, t.alpha, t.name);

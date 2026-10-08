@@ -27,12 +27,13 @@
 // shape is laid down one pixel row at a time, each row cut to the rounded outline and its two
 // ends antialiased by coverage. A bar is fifteen-odd rows, so a layer is fifteen-odd quads.
 //
-// **And every other player, WoW's way** (the user, 2026-10-08: "use wow style name labels for
+// **And every player, his own included, WoW's way** (the user, 2026-10-08: "use wow style name labels for
 // players and bots"): his name always over his head while he is in range, in Cinzel with a hard
 // black outline and no backing, in a friendly player's blue; under it his guild in angle
 // brackets -- `<Bot>` for a bot, until guilds exist. Pointed at, the name lifts toward white (and
 // he is ringed green, app/modes/play_mode.cpp); dead, it is grey. It fades out toward the edge of
-// the range, and the nearer names are drawn over the farther. No bar, no level.
+// the range, and the nearer names are drawn over the farther. No bar. Pointed at, a small line
+// under it all gives his level and class (the user chose W4 of the WoW names page, 2026-10-08).
 #pragma once
 
 #include <cstdint>
@@ -80,10 +81,11 @@ private:
         float x = 0, y = 0;
         float alpha = 0, lit = 0;  // the range's fade, and the pointer's lift toward white
         std::string name;
+        std::string detail;  // "Level 82 · Dark Knight", under the pointer only
         bool bot = false, dead = false;
         bool operator==(const Tag& o) const {
             return id == o.id && x == o.x && y == o.y && alpha == o.alpha && lit == o.lit &&
-                   name == o.name && bot == o.bot && dead == o.dead;
+                   name == o.name && detail == o.detail && bot == o.bot && dead == o.dead;
         }
     };
     // Everything the canvas draws, compared whole to decide a rebuild.
