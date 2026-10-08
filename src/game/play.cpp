@@ -115,6 +115,33 @@ float Play::flashOf(uint32_t id) const {
     return 0.0f;
 }
 
+bool Play::settle(double seconds) {
+    if (!isOpen() || !link_ || !link_->remote()) return true;
+    link_->pump();
+    const int waiting = link_->owed();
+    settling_ = true;
+    update(seconds);
+    settling_ = false;
+    settleFor_ += seconds;
+    // Not the first frame, which finds the whole load's worth waiting.
+    const bool steady = settleFor_ > seconds && waiting <= kSettleOwed && link_->rttMs() >= 0.0f;
+    steadyFor_ = steady ? steadyFor_ + seconds : 0.0;
+    if (steadyFor_ < kSettleSteady && settleFor_ < kSettleMost) return false;
+    // Everybody stood where the last tick put him, and the clock at the start of the interval:
+    // the first frame drawn carries on from there at the server's own pace.
+    for (Drawn& one : drawn_) {
+        one.wasX = one.caughtX = one.nowX;
+        one.wasY = one.caughtY = one.nowY;
+        one.wasFacing = one.caughtFacing = one.nowFacing;
+    }
+    accumulator_ = 0.0;
+    through_ = 0.0f;
+    core::logf("server: settled in %.2f s under the loading screen, %s, ping %.0f ms", settleFor_,
+               steadyFor_ >= kSettleSteady ? "the line steady" : "the line still unsteady",
+               double(link_->rttMs()));
+    return true;
+}
+
 void Play::update(double seconds) {
     if (!isOpen()) return;
     // This frame's gains, and only this frame's: whoever draws the lane runs after this and
@@ -188,8 +215,8 @@ void Play::update(double seconds) {
     // frame's pump. Costs one non-blocking recv and halves the worst-case time a tick sits in
     // the kernel buffer -- about 8 ms average at 60 fps.
     if (remoteClock) link_->pump();
-    while (stepped < kMostTicks && link_->due() &&
-           (accumulator_ >= kTickSeconds || (remoteClock && link_->owed() > kSnapOwed))) {
+    while ((settling_ || stepped < kMostTicks) && link_->due() &&
+           (settling_ || accumulator_ >= kTickSeconds || (remoteClock && link_->owed() > kSnapOwed))) {
         // Each body's health going into the tick, so a blow's cue can say what it took rather
         // than what it rolled. Bodies and figures share one order (Play::open).
         for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {

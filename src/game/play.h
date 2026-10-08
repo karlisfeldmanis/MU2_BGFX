@@ -161,6 +161,15 @@ public:
     // own accumulator, and never more than a handful at once. Presentation is smoothed between
     // the two ticks either side of where the clock stands.
     void update(double seconds);
+    // The join's warm-up, a frame at a time under the loading screen, before anything is drawn
+    // (the user, 2026-10-08: "first warm up client connection and when its fine that we allow
+    // to player play"). The world loads for seconds after the server has taken him, and every
+    // tick it sent meanwhile used to be repaid in the first seconds of play -- five a frame,
+    // then a clock hurried to twice the pace -- which is the jump and the racing walk on
+    // entering. Here every tick waiting is stepped at once, unseen, and true comes back once
+    // the line has been steady for kSettleSteady with a ping answered, or after kSettleMost.
+    // Off a server it is true at once.
+    bool settle(double seconds);
 
     // The pointer, and what a click does with it. The ray is cast against the land's own
     // height field rather than against a flat plane: the town is up to two metres of relief
@@ -1650,6 +1659,10 @@ private:
     int pointedPerch_ = -1;
     std::vector<float> scratch_;
     double accumulator_ = 0.0;
+    // Play::settle's: stepping every tick owed this frame, how long it has run, and how long
+    // the line has been steady.
+    bool settling_ = false;
+    double settleFor_ = 0.0, steadyFor_ = 0.0;
     double tickMs_ = 0.0;
     float through_ = 0.0f;  // how far between the last tick and the next, 0 to 1
 

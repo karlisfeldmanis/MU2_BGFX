@@ -44,6 +44,12 @@ constexpr int kMostTicks = 5;
 // Ticks owed on a server past which the mirror steps them at once rather than hurrying its
 // clock: a second behind (Play::update).
 constexpr int kSnapOwed = 20;
+// The join's warm-up under the loading screen (Play::settle): the line counts as steady once a
+// ping has come back and, for this long, no frame found more than kSettleOwed ticks waiting;
+// and the world is let in after kSettleMost whatever the line is doing.
+constexpr double kSettleSteady = 0.5;
+constexpr int kSettleOwed = 2;
+constexpr double kSettleMost = 6.0;
 // The least time between two ticks taken early for a click, in seconds. See Play::update.
 constexpr float kEarlyApart = 0.5f;
 // A Teleport's fade, each way: MU takes a tenth of the body's alpha a frame, ten frames

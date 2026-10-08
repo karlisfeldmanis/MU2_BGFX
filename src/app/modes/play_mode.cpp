@@ -531,7 +531,17 @@ bool PlayMode::open(Context& ctx) {
         // exiting 0 is the same fault `--at 9999,9999` was fixed for.
         const bool arenaUp = args.arena.empty() || world_.played().isOpen();
         return ok && arenaUp;
-    }, &quitEarly_);
+    }, &quitEarly_, false, [&](double seconds) {
+        // On a server, the line warmed up under the spinner (Play::settle): what the server sent
+        // while the world loaded is stepped unseen, and unheard -- the mix is held silent and
+        // given back its level when the world is let in.
+        if (!world_.played().isOpen()) return true;
+        game::Sound& sound = world_.played().sound();
+        sound.setVolume(0.0f);
+        const bool done = world_.played().settle(seconds);
+        if (done) sound.setVolume(float(args.volume) / 100.0f);
+        return done;
+    });
 
     if (!up) {
         core::logError("the world did not open");

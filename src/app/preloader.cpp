@@ -178,7 +178,7 @@ void Preloader::cue(const std::string& path) {
 }
 
 bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
-                    bool keepAmbient) {
+                    bool keepAmbient, const std::function<bool(double seconds)>& settle) {
     std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
     core::Loading::reset();
     ambient().start(core::join(ctx.paths.assets, "music/loading.mp3"),
@@ -370,7 +370,21 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
     // --shot does not reach it. MU2_SPIN_SHOT=/abs/path.png takes one a second in.
     const char* spinShot = std::getenv("MU2_SPIN_SHOT");
     bool spinShotTaken = false;
-    while (loaded.load() == 0 || (spinShot != nullptr && since(spun) < 1.4)) {
+    // The load joined as soon as it is done, and then the settle on this thread, if one was
+    // given and the load came up, until it is content -- or the window is closed.
+    bool joined = false, settled = !settle;
+    double settledAt = -1.0;
+    while (!joined || !settled || (spinShot != nullptr && since(spun) < 1.4)) {
+        if (!joined && loaded.load() != 0) {
+            loader.join();
+            joined = true;
+            if (loaded.load() < 0) settled = true;
+        }
+        if (joined && !settled) {
+            const double now = since(spun);
+            settled = *quitEarly || settle(settledAt < 0.0 ? 0.0 : now - settledAt);
+            settledAt = now;
+        }
         if (!*quitEarly && (!ctx.window.pump() || ctx.window.escapePressed())) *quitEarly = true;
         if (!*quitEarly) {
             const double at = since(spun);
@@ -401,7 +415,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         while (since(spun) < due) {
         }
     }
-    loader.join();
+    if (!joined) loader.join();
     if (!keepAmbient) ambient().stop();
     ctx.window.holdVsync(false);
     if (bgfx::isValid(dot)) bgfx::destroy(dot);

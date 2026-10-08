@@ -31,8 +31,13 @@ public:
     //
     // The loading ambient plays under the spinner and fades out when it goes, unless
     // `keepAmbient`: the character screen's load, which leaves it playing on the screen.
+    //
+    // `settle`, when given, runs on THIS thread once the load has come up, a spinner frame at a
+    // time with the seconds since the last, and the spinner stays until it says true: the
+    // server's warm-up before the world is shown (Play::settle).
     static bool run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
-                    bool keepAmbient = false);
+                    bool keepAmbient = false,
+                    const std::function<bool(double seconds)>& settle = {});
     // The ambient's level, 0 to 1, as the menu's volume changes; a muted run stays silent.
     static void ambientVolume(float level);
     // One sound, once, on the ambient's engine, which outlives the mode that asked: the
