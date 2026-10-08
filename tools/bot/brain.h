@@ -1606,7 +1606,7 @@ private:
                 if (kind.level == 75 || kind.level == 96) {
                     double hit = 0.0;
                     int32_t ticks = 1;
-                    attack(&hit, &ticks);
+                    attack(&hit, &ticks, kind.defense);
                     const sim::Body& h = realm_->hero();
                     std::printf("PARTS %s hit %.0f ticks %d landed %.0f myHit%% %.0f | blow %.0f theirHit%% %.0f guard %.2f\n",
                                 kind.label.c_str(), hit, ticks, std::max(1.0, hit - kind.defense),
@@ -1773,7 +1773,7 @@ private:
         if (jewelKind(row) && vaultJewels(one) >= jewelCap(row)) return false;
         // A weapon rune of his class is carried for the weapon it waits for (savesRune), and
         // the Jewels of Chaos for the machine's Remove Rune, three of them.
-        if (sim::creation(row)) return !knightly() || !weaponRune(one);
+        if (sim::creation(row)) return !knightly() || !weaponRune(one) || weaponRunes() > kWeaponRunes;
         // All of them while he climbs the wing ladder: each is 2% in its box (wingBox).
         if (chaos(row)) return ladderOn() ? false : chaosCount() > 3;
         // The wing ladder's, carried while he has none: Bless to raise the Chaos weapon, Life for
@@ -1898,7 +1898,7 @@ private:
         const sim::Held& one = realm_->satchel()[slot];
         if (one.empty() || !jewelKind(rowOf(one))) return false;
         // The knight's weapon rune waits for its weapon (stores).
-        if (sim::creation(rowOf(one)) && knightly() && weaponRune(one)) return false;
+        if (sim::creation(rowOf(one)) && knightly() && weaponRune(one) && weaponRunes(slot) < kWeaponRunes) return false;
         return jewelsHeld(one, slot) >= jewelCap(rowOf(one));
     }
     bool fetchOwed() const {
@@ -1914,7 +1914,10 @@ private:
     // Whether he climbs it now: no wings, a bag with room, and the Zen for the boxes -- a knight
     // and a wizard who held their jewels back on 50,000 Zen never mixed and fell 6-10 levels
     // behind, their gear unrefined.
-    bool ladderOn() const { return !hasWings() && !crowded_ && realm_->money() >= kLadderZen; }
+    // Nor while the Goblin's box holds what the bag has no room for (boxStuck_): an elf whose
+    // bag was 13 Chaos held for the ladder could neither empty the box nor buy a quiver, and went
+    // to town for arrows every second for forty hours at level 142.
+    bool ladderOn() const { return !hasWings() && !crowded_ && !boxStuck_ && realm_->money() >= kLadderZen; }
     static constexpr int64_t kLadderZen = 400000;
     static int ladderJewels(sim::Jewel kind) {
         return kind == sim::Jewel::Bless ? 6 : kind == sim::Jewel::Soul ? 4 : 2;
@@ -1934,6 +1937,16 @@ private:
             const sim::Held& one = realm_->satchel()[slot];
             if (!one.empty() && chaos(rowOf(one))) ++n;
         }
+        return n;
+    }
+    // The knight's weapon runes he carries for it, bag slots before `upTo`: three, a weapon's
+    // sockets. Past them the vault and the counter take them as any rune (stores, surplusAt): a
+    // knight carried ten into Tersia's desk, and The Scythe's Bill of Balrog found no room for
+    // eight hours.
+    static constexpr int kWeaponRunes = 3;
+    int weaponRunes(int upTo = sim::kSlots) const {
+        int n = 0;
+        for (int slot = sim::kWorn; slot < upTo; ++slot) n += weaponRune(realm_->satchel()[slot]);
         return n;
     }
     // A Rune of Creation whose power goes in a weapon and is his class's.
@@ -2339,11 +2352,15 @@ private:
     // Ball, Twisting Slash, Skillshot -- and the ticks it takes, as `press` reckons a skill. The
     // swing alone said a Larva cost a wizard more than half his health, and he never went down
     // into the Dungeon.
-    void attack(double* hit, int32_t* ticks) const {
+    // **Against the breed's defence** (`defense`): a knight's quick swing of 302 every half
+    // second outran his Rageful Blow and Twisting Slash of 780 on a bare count, and against a
+    // Phantom Knight's 425 it lands 1 -- every Icarus breed read as costing him millions.
+    void attack(double* hit, int32_t* ticks, double defense = 0.0) const {
         const sim::Body& hero = realm_->hero();
         const sim::Wearer w = realm_->wearer();
         *hit = blow();
         *ticks = std::max(1, hero.swingTicks);
+        const auto landed = [&](double h) { return std::max(1.0, h - defense); };
         const auto arm = [&](int32_t at) -> const content::Arm* {
             return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
         };
@@ -2357,20 +2374,24 @@ private:
             const int32_t cast = sim::castTicks(*tables_, hero.kin, hero.points.agility, arm(hero.weapon),
                                                 arm(hero.shield), row);
             const int32_t t = std::max<int32_t>(1, row.wizardry ? cast : std::max(cast, hero.swingTicks));
-            if (one / t > *hit / *ticks) {
+            if (landed(one) / t > landed(*hit) / *ticks) {
                 *hit = one;
                 *ticks = t;
             }
         }
     }
-    double costOf(const content::MonsterKind& kind) const {
-        const sim::Body& hero = realm_->hero();
+    // The ticks a kill of this breed takes him, alone.
+    double killTicks(const content::MonsterKind& kind) const {
         double hit = 0.0;
         int32_t ticks = 1;
-        attack(&hit, &ticks);
+        attack(&hit, &ticks, kind.defense);
         const double landed = std::max(1.0, hit - kind.defense) *
-                              hitChance(hero.stats.attackRate, float(kind.defenseRate));
-        const double seconds = kind.health / landed * ticks / 20.0;
+                              hitChance(realm_->hero().stats.attackRate, float(kind.defenseRate));
+        return kind.health / landed * ticks;
+    }
+    double costOf(const content::MonsterKind& kind) const {
+        const sim::Body& hero = realm_->hero();
+        const double seconds = killTicks(kind) / 20.0;
         // And what his guard takes off a blow, as he keeps it up (guardSeen_): Defense, Soul
         // Barrier, Greater Defense.
         const double taken =
@@ -2525,7 +2546,7 @@ private:
         for (const int breed : wanted(q)) {
             const int home = homeOf(breed);
             const content::MonsterKind* kind = home >= 0 ? kindOf(home, breed) : nullptr;
-            if (!kind || !takes(*kind, share) || !reachable(home)) continue;
+            if (!kind || !(takes(*kind, share) || (home == kIcarus && drinksThrough(*kind))) || !reachable(home)) continue;
             if (const auto on = asideOn_.find({q, home}); on != asideOn_.end() && on->second > clock_) continue;
             if (where < 0) where = home;
             if (home == where) breeds->push_back(breed);
@@ -2538,6 +2559,36 @@ private:
             return map();
         }
         return where;
+    }
+
+    // **A quest's breed fought through on his potions** (the user, 2026-10-08: "bots clear
+    // Icarus"): a Large Healing Potion mends 30% of him every half second, and against that a
+    // Drakan's 4,850 health over a 68-second kill is ten potions, not a death -- held to his one
+    // bar, The Sky Door's Drakans and Queen Rainers were never hunted. Taken when the kill costs
+    // no more than his health and a third of his potions' mending, and two of its blows through
+    // his guard leave him above his drinking line. Icarus's breeds alone: let loose on every
+    // quest's, the elves died 20 times a run against 6 and four of six missed Sevina in 60 hours.
+    static constexpr int kIcarus = 10;
+    bool drinksThrough(const content::MonsterKind& kind) const {
+        const int potions = countOf(sim::heals);
+        if (potions < 20) return false;
+        const auto fear = fearUntil_.find(kind.number);
+        if (fear != fearUntil_.end() && fear->second > clock_) return false;
+        const sim::Body& hero = realm_->hero();
+        const double blow = std::max(0.0, double(kind.maximumDamage) - hero.stats.defense) * guardSeen_;
+        if (blow * 2.0 > hero.maxHealth * 0.5) return false;
+        return costOf(kind) <= hero.maxHealth + potions / 3.0 * potionMend();
+    }
+    // What one of his healing potions mends, the largest he carries (Realm::useItem's rank in
+    // tenths of his health and the flat part over it).
+    double potionMend() const {
+        int rank = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && sim::heals(rowOf(one))) rank = std::max(rank, rowOf(one).number);
+        }
+        const sim::Body& hero = realm_->hero();
+        return hero.maxHealth * rank / 10.0 + std::max(0, (rank + 1) * 50 - hero.level);
     }
 
     // Where his class is born, as the realm has it (realm_travel.cpp homeMap): an elf in Noria,
@@ -2568,8 +2619,16 @@ private:
         const int home = townQuest(homeMap()), other = townQuest(homeMap() == 0 ? 3 : 0);
         std::vector<int> out;
         for (const int q : {home, other}) if (q >= 0) out.push_back(q);
+        // **Sevina's class change next** (the user, 2026-10-08: "also bots need to finish 2nd
+        // class quest"): table order put every repeatable quest before it, and a knight who
+        // handed in her trial at hour 34 hunted The Knights' Halls and The Catacombs on their
+        // twelve-hour rounds and never once looked for the Broken Sword in 26 hours.
+        const auto sevina = [](int q) { return q == sim::kSevinaTrial || sim::questAt(q).promotes; };
         for (int q = 0; q < sim::kQuests; ++q) {
-            if (q != home && q != other) out.push_back(q);
+            if (q != home && q != other && sevina(q)) out.push_back(q);
+        }
+        for (int q = 0; q < sim::kQuests; ++q) {
+            if (q != home && q != other && !sevina(q)) out.push_back(q);
         }
         return out;
     }
@@ -2580,7 +2639,9 @@ private:
         // A giver he set out for is kept until he reaches him, ten minutes at most: from Atlans a
         // knight went to Devias to take The Broken Sword, chose The Drowned Halls in Atlans the
         // moment he landed, and paid both trips 520 times in two hours.
-        if (options_.quests && wasQuest >= 0 && clock_ - aimSince_ < 10 * 60 * 20 &&
+        // Not one set aside since: the room a reward lacked set The Scythe aside every think for
+        // ten minutes at a time, 9,452 times in a knight's day.
+        if (options_.quests && wasQuest >= 0 && clock_ - aimSince_ < 10 * 60 * 20 && aside_[wasQuest] <= clock_ &&
             ((was == Aim::Accept && realm_->questOffered(wasQuest)) ||
              (was == Aim::HandIn && realm_->quest(wasQuest).state == sim::QuestState::Ready))) {
             return;
@@ -2608,7 +2669,7 @@ private:
                     quarry_ = breeds;
                 }
             }
-            // Hand in first, then hunt what is under way, then take what is offered.
+            // Hand in first.
             const std::vector<int> order = questOrder();
             for (const int q : order) {
                 if (aim_ == Aim::HandIn) break;
@@ -2619,29 +2680,34 @@ private:
                     aimMap_ = handInMap(q);
                 }
             }
+            // Then down the order, each quest hunted if it is under way or taken if it is offered,
+            // whichever comes first (the user, 2026-10-08: "bots first has to finish [Tersia's]
+            // questline"): every hunt came before any taking, and while The Drowned Halls' Hydras
+            // stayed huntable a knight never took Knights Who Do Not Sleep, so Sevina's Death
+            // Knights stood on a floor he could not open for 37 hours.
             for (const int q : order) {
-                if (aim_ != Aim::Grind) break;
-                if (!allowed(q) || realm_->quest(q).state != sim::QuestState::Active) continue;
-                // A treasure to find: Atlans's grind, any breed he takes there.
-                if (seeks(q) && wanted(q).empty()) {
-                    const int at = seekMap();
-                    if (at < 0) continue;
-                    seeking_ = q;
+                if (aim_ != Aim::Grind || seeking_ >= 0) break;
+                if (!allowed(q)) continue;
+                if (realm_->quest(q).state == sim::QuestState::Active) {
+                    // A treasure to find: Atlans's grind, any breed he takes there.
+                    if (seeks(q) && wanted(q).empty()) {
+                        const int at = seekMap();
+                        if (at < 0) continue;
+                        seeking_ = q;
+                        aimQuest_ = q;
+                        aimMap_ = at;
+                        break;
+                    }
+                    std::vector<int> breeds;
+                    const int where = huntable(q, &breeds);
+                    if (where < 0) continue;
+                    aim_ = Aim::Hunt;
                     aimQuest_ = q;
-                    aimMap_ = at;
-                    break;
+                    aimMap_ = where;
+                    quarry_ = breeds;
+                    continue;
                 }
-                std::vector<int> breeds;
-                const int where = huntable(q, &breeds);
-                if (where < 0) continue;
-                aim_ = Aim::Hunt;
-                aimQuest_ = q;
-                aimMap_ = where;
-                quarry_ = breeds;
-            }
-            for (const int q : order) {
-                if (aim_ != Aim::Grind) break;
-                if (!allowed(q) || !realm_->questOffered(q)) continue;
+                if (!realm_->questOffered(q)) continue;
                 const int at = giverMap(q);
                 std::vector<int> breeds;
                 if (at < 0 || !reachable(at)) continue;
@@ -2700,10 +2766,34 @@ private:
 
     void ask(sim::Request request) {
         if (request.kind == sim::Request::Kind::Attack || request.kind == sim::Request::Kind::Pick) {
+            // **Twice the time a kill of it should take**, thirty seconds at least, and never
+            // thirty without taking health off it: a Hydra has 19,000, a knight of level 230 cut
+            // 350 a swing off it, and every one he reached he left at a third for five minutes --
+            // 0 of The Drowned Halls' four in 17 hours, and Sevina's trial behind it never taken.
+            // Icarus's breeds have 11,500 to 95,000. What dies in under fifteen seconds keeps the
+            // old thirty: a poor wizard of level 12 who fought on lost 44 lives to Skeletons.
+            const sim::Body* body = request.kind == sim::Request::Kind::Attack ? bodyOf(request.target) : nullptr;
             if (request.target != chasing_) {
                 chasing_ = request.target;
                 chasedSince_ = clock_;
-            } else if (clock_ - chasedSince_ > kGiveUp) {
+                woundedAt_ = clock_;
+                chasedHealth_ = body ? body->health : 0;
+                chaseFor_ = kGiveUp;
+                // Grinding, not a spellcaster's: a wizard who stayed on 9,000-health Lizard Kings
+                // instead of walking on to the next quick kill fell 15 levels in 60 hours, where
+                // a knight -- whose quarry stands in his reach and follows him if he turns --
+                // ended 10-15 higher with it (294 and 296 against 285 and 278).
+                const bool quest = aim_ == Aim::Hunt && body && body->kind >= 0 &&
+                                   std::find(quarry_.begin(), quarry_.end(),
+                                             tables_->kinds[size_t(body->kind)].number) != quarry_.end();
+                if (body && body->kind >= 0 && (quest || !wizardly())) {
+                    chaseFor_ = int64_t(std::clamp(2.0 * killTicks(tables_->kinds[size_t(body->kind)]), double(kGiveUp), 10.0 * 60 * 20));
+                }
+            } else if (body && body->health < chasedHealth_) {
+                woundedAt_ = clock_;
+                chasedHealth_ = body->health;
+            }
+            if (clock_ - chasedSince_ > chaseFor_ || clock_ - woundedAt_ > kGiveUp) {
                 banned_[chasing_] = clock_ + kForget;
                 chasing_ = 0;
                 return;
@@ -3305,6 +3395,8 @@ private:
                                       options_.magic ? sim::QuestPath::Magic : sim::QuestPath::Melee)) {
                 ++out_.handedIn[aimQuest_];
                 crowded_ = false;
+                crowdedQuest_ = -1;
+                crowdedTries_ = 0;
                 if (out_.firstHandIn[aimQuest_] < 0) out_.firstHandIn[aimQuest_] = clock_;
                 say("** hands in %s to %s: +%lld zen, level %d -> %d%s%s", row.title, row.giverName,
                     (long long)(realm_->money() - zen), level, realm_->hero().level,
@@ -3315,7 +3407,10 @@ private:
                 // with plenty free. To the counters to sell, and back.
                 // Twice running with nothing a counter would take: aside for half an hour, or an
                 // elf whose bag was potions, quivers and Chaos asked Tersia 2,208 times in a day.
-                if (crowded_ && sellable() == 0) {
+                // Three refusals since the last hand-in, now that a trip makes room (makeRoom):
+                // the first with nothing to sell still goes to the counters.
+                if (crowded_ && sellable() == 0 && ++crowdedTries_ >= 3) {
+                    crowdedTries_ = 0;
                     aside_[aimQuest_] = clock_ + 30 * 60 * 20;
                     say("sets %s aside for 30 min: no room for its reward", row.title);
                     hand_.closeQuest();
@@ -3332,6 +3427,7 @@ private:
                     std::printf("BAG %s| choices %d\n", bag.c_str(), row.choiceCount);
                 }
                 crowded_ = true;
+                crowdedQuest_ = aimQuest_;
                 hand_.closeQuest();
                 startTrip();
                 return;
@@ -3622,6 +3718,116 @@ private:
     }
     static int64_t potionPrice(int tier) { return tier == 0 ? 240 : tier == 1 ? 990 : 2200; }
 
+    // **Whether a quest's pay would go into the bag as it stands** (Realm::completeQuest places
+    // all of it or nothing): each thing paid to him laid on a copy of the bag in the table's
+    // order, the treasure he hands over lifted first. `missing` gets the first that found no room.
+    bool rewardFits(int q, const content::ItemRow** missing = nullptr) const {
+        const sim::QuestRow& row = sim::questAt(q);
+        sim::Satchel bag = realm_->satchel();
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (questItem(bag[slot])) bag.lift(slot);
+        }
+        const bool first = sim::questFirst(row, int(options_.kin), realm_->quest(q).completions);
+        const int kin = sim::questPaidKin(row, int(options_.kin), first,
+                                          options_.magic ? sim::QuestPath::Magic : sim::QuestPath::Melee);
+        const auto place = [&](const char* name, int count) {
+            const int32_t item = name ? tables_->itemNamed(name) : -1;
+            if (item < 0) return true;
+            const content::ItemRow& r = tables_->items[size_t(item)];
+            for (int n = 0; n < (sim::stacks(r) ? 1 : std::max(1, count)); ++n) {
+                const int slot = bag.free(*tables_, r.width, r.height);
+                if (slot < 0) {
+                    if (missing) *missing = &r;
+                    return false;
+                }
+                bag.put(slot, sim::Held{item, int16_t(0), int16_t(1)});
+            }
+            return true;
+        };
+        for (int i = 0; i < row.paidCount; ++i) {
+            if (!sim::questPays(row.paid[i], kin, first) || !realm_->questItemFits(row.paid[i])) continue;
+            if (!place(row.paid[i].item, row.paid[i].count)) return false;
+        }
+        for (int c = 0; c < row.choiceCount; ++c) {
+            if (realm_->questChoiceFits(q, c)) return place(row.choices[c].item, 1);
+        }
+        return true;
+    }
+    // Whether a reward still waits on room he has not made (crowded_).
+    bool roomOwed() const {
+        return crowded_ && crowdedQuest_ >= 0 && realm_->quest(crowdedQuest_).state == sim::QuestState::Ready &&
+               !rewardFits(crowdedQuest_);
+    }
+    // What giving up a bag slot to a reward costs him, or -1 for what is never given up: what a
+    // counter takes anyway nothing, a potion or quiver what buying it again costs, the rest dear.
+    double roomCost(int slot) const {
+        const sim::Held& one = realm_->satchel()[slot];
+        if (one.empty()) return 0.0;
+        const content::ItemRow& row = rowOf(one);
+        // A second Scroll, Bone or cloak of one level, bag or vault: an elf of seed 3 carried five
+        // Scrolls and three Bones to Tersia and was refused Rolling Fire's pay twelve times.
+        if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row)) {
+            int same = vaultHolds(one);
+            for (int other = sim::kWorn; other < sim::kSlots; ++other) {
+                const sim::Held& o = realm_->satchel()[other];
+                same += other != slot && !o.empty() && o.item == one.item && o.refinement == one.refinement;
+            }
+            return same > 0 ? 5.0 : -1.0;
+        }
+        if (questItem(one) || jewelKind(row) || castleTicket(row) || chaosWeaponRow(row) || anyHelper(row) ||
+            sim::firstWing(row) || sim::secondWing(row) || chaos(row)) return -1.0;
+        if (!keepsAt(slot)) return 0.1;
+        if (sim::heals(row) || sim::restores(row)) return 1.0;
+        if (sim::ammunition(row)) return 2.0;
+        return 20.0;
+    }
+    // The cheapest block of the bag a thing of this size would cover, sold (roomCost): what
+    // was sold, 0 when no block holds only what he would give up.
+    int clearFor(const content::ItemRow& need) {
+        double bestCost = 1e30;
+        std::set<int> best;
+        int cells[sim::kSlots];
+        for (int at = sim::kWorn; at < sim::kSlots; ++at) {
+            const int n = realm_->satchel().covered(at, need.width, need.height, cells);
+            if (n == 0) continue;
+            std::set<int> holders;
+            double cost = 0.0;
+            bool ok = true;
+            for (int i = 0; i < n && ok; ++i) {
+                const int h = realm_->satchel().holder(*tables_, cells[i]);
+                if (h < 0 || !holders.insert(h).second) continue;
+                const double c = roomCost(h);
+                if (c < 0.0) ok = false;
+                else cost += c;
+            }
+            if (ok && !holders.empty() && cost < bestCost) {
+                bestCost = cost;
+                best = holders;
+            }
+        }
+        int sold = 0;
+        for (const int h : best) sold += hand_.sellItem(h) >= 0;
+        return sold;
+    }
+    // **Room made for a quest's pay at the counter** (the user, 2026-10-08: "make it reliable"):
+    // free cells are not room for a bow two wide and four tall, and a bag of potions, quivers and
+    // jewels in scattered cells refused Tersia's Tiger Bow -- the elf of seed 3 set Fire from Afar
+    // aside 59,375 times in 60 hours and never reached Sevina, the knight The Scythe 9,452. The
+    // cheapest block of the bag the missing piece would cover is sold, until all of it fits.
+    void makeRoom() {
+        const int q = crowdedQuest_;
+        if (!roomOwed()) return;
+        int sold = 0;
+        for (int pass = 0; pass < 12; ++pass) {
+            const content::ItemRow* need = nullptr;
+            if (rewardFits(q, &need) || !need) break;
+            const int one = clearFor(*need);
+            if (one == 0) break;
+            sold += one;
+        }
+        if (sold) say("sells %d more to make room for %s's reward", sold, sim::questAt(q).giverName);
+    }
+
     void serve(int folk) {
         const int npc = tables_->folk[size_t(folk)].number;
         const std::string& name = tables_->folk[size_t(folk)].name;
@@ -3642,6 +3848,7 @@ private:
             out_.sold += sold;
             say("sells %d things to %s for %lld zen", sold, name.c_str(), (long long)got);
         }
+        makeRoom();
         if (realm_->mending()) {
             const int64_t cost = realm_->repairAllCost();
             if (cost > 0 && hand_.repairAll() > 0) say("repairs for %lld zen", (long long)cost);
@@ -3659,7 +3866,13 @@ private:
         const int item = tables_->itemAt(offer.group, offer.number);
         if (item < 0) return -1;
         const int64_t before = realm_->money();
+        // Nothing bought into the room a waiting reward needs (makeRoom).
+        const bool roomMade = crowded_ && !roomOwed();
         const int slot = hand_.buy(offer.slot);
+        if (slot >= 0 && roomMade && roomOwed()) {
+            hand_.buyBack();
+            return -1;
+        }
         if (slot >= 0) {
             ++out_.bought;
             if (why) say("buys %s for %lld zen%s", tables_->items[size_t(item)].label.c_str(),
@@ -3731,6 +3944,11 @@ private:
             // Fifteen hundred when she can spare it: Skillshot looses three a cast, and five
             // hundred sent her home every three minutes (126 trips in eight hours, 2026-10-03).
             const int quiver = realm_->money() > 20000 ? 1500 : 500;
+            // No cell for a quiver and nothing to shoot: room made as for a reward (clearFor).
+            if (ammo() < 30 && realm_->money() >= price && realm_->satchel().free(*tables_, row.width, row.height) < 0 &&
+                clearFor(row) > 0) {
+                say("makes room for a quiver");
+            }
             while (ammo() < quiver && realm_->money() >= price) {
                 const int slot = buyOne(shelf[i], " (ammunition)");
                 if (slot < 0) break;
@@ -3884,6 +4102,8 @@ private:
     int giverFolk_ = -1;       // the giver he is walking to, and since when (visitGiver)
     int64_t giverSince_ = 0;
     bool boxStuck_ = false;  // the Goblin's box kept something the bag had no room for
+    int crowdedQuest_ = -1;   // the quest whose reward found no room (makeRoom), and its refusals
+    int crowdedTries_ = 0;
     bool crowded_ = false;  // a reward found no room: the ladder keeps nothing until one is handed in  // the next trip that may go to Noria for the machine        // the castle his cloak opened, for the raise on the far side  // and on the Chaos Goblin, to take runes out
     int64_t machineSince_ = 0;
     int64_t vaultSince_ = 0;
@@ -3898,6 +4118,8 @@ private:
     std::map<std::string, int64_t> triedOn_;  // an item's name -> when it may be tried again
     uint32_t chasing_ = 0;
     int64_t chasedSince_ = 0;
+    int32_t chasedHealth_ = 0;  // the chased body's health when it last lost some, and when
+    int64_t woundedAt_ = 0, chaseFor_ = kGiveUp;
     int pressed_ = 0, lastLevel_ = 1, drunkAt_ = 0, healed_ = 0;
     double caution_ = 1.0;
     std::map<int, int64_t> shunned_;  // a grinding ground left until this tick (learnCaution)
