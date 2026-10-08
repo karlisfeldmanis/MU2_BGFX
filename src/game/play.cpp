@@ -169,10 +169,17 @@ void Play::update(double seconds) {
     stepNow_ = false;
     if (early) sinceEarly_ = 0.0f;
     if (early || remoteClock) {
+        // On a server, caught where THIS frame's clock puts him, not where the last frame drew
+        // him: caught at the last frame's `through_`, the frame a tick arrived on drew every
+        // body where it already stood, so at 60 fps a tick's ground was covered in two frames of
+        // three -- still, on, on, at twenty a second -- and against the evenly eased camera he
+        // and his name shook by two pixels and more (the user, 2026-10-08: "still little bit
+        // vibrating"). Measured on a local server, the hero's crown stepped +1.3, +1.2, -2.5 px.
+        const float at = remoteClock ? float(std::min(1.0, accumulator_ / kTickSeconds)) : through_;
         for (Drawn& one : drawn_) {
-            one.caughtX = one.wasX + (one.nowX - one.wasX) * through_;
-            one.caughtY = one.wasY + (one.nowY - one.wasY) * through_;
-            one.caughtFacing = one.wasFacing + wrapped(one.nowFacing - one.wasFacing) * through_;
+            one.caughtX = one.wasX + (one.nowX - one.wasX) * at;
+            one.caughtY = one.wasY + (one.nowY - one.wasY) * at;
+            one.caughtFacing = one.wasFacing + wrapped(one.nowFacing - one.wasFacing) * at;
         }
     }
     if (early) accumulator_ = kTickSeconds;
