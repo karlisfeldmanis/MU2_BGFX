@@ -110,6 +110,15 @@ std::vector<Seat> readRoster(const std::string& folderPath) {
         one.level = std::max(1, saved.hero.level);
         one.fresh = saved.fresh;
         one.items = std::move(saved.items);
+        // Played on a server, he is as the server last showed him (game::lookPathBeside).
+        if (Saved look; fs::exists(lookPathBeside(path.string()), error) &&
+                        loadSave(lookPathBeside(path.string()), look)) {
+            one.world = look.world;
+            one.kin = look.hero.kin;
+            one.second = sim::promoted(look.hero.quests, int(look.hero.kin));
+            one.level = std::max(1, look.hero.level);
+            one.items = std::move(look.items);
+        }
         if (one.slot >= 0 && one.slot < kRosterSlots && !taken[one.slot]) {
             taken[one.slot] = true;
             roster.push_back(std::move(one));
@@ -212,6 +221,9 @@ bool dropCharacter(const std::string& folderPath, const Seat& who) {
     // And his server's token with him, so a new character of the same name is not given his.
     const fs::path token = fs::path(who.path).replace_extension(".server");
     if (fs::exists(token, error)) fs::rename(token, fs::path(to).replace_extension(".server"), error);
+    // And how the server last showed him, for the same reason.
+    const fs::path look = lookPathBeside(who.path);
+    if (fs::exists(look, error)) fs::rename(look, fs::path(to).replace_extension(".look"), error);
     core::logf("roster: deleted %s (kept as %s)", who.name.c_str(), to.string().c_str());
     return true;
 }

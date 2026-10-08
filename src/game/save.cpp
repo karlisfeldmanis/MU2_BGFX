@@ -526,6 +526,10 @@ bool writeLayout(const std::string& savePath, const content::Tables& tables, con
     return true;
 }
 
+std::string lookPathBeside(const std::string& savePath) {
+    return std::filesystem::path(savePath).replace_extension(".look").string();
+}
+
 std::string tokenPathBeside(const std::string& savePath) {
     return std::filesystem::path(savePath).replace_extension(".server").string();
 }

@@ -122,6 +122,11 @@ std::string tokenPathBeside(const std::string& savePath);
 bool loadLayout(const std::string& savePath, const content::Tables& tables, Saved& saved);
 bool writeLayout(const std::string& savePath, const content::Tables& tables, const int32_t quick[5],
                  const int32_t bar[6], int followed);
+// **And how the server last showed him**, for the character screen alone: Name.look beside Name.json,
+// a save's shape -- his class, level, quests and what he wears -- written from the mirror while he
+// plays on a server, since his own save is not. The roster stands him on his pedestal from it
+// (game/roster.h); nothing played reads it.
+std::string lookPathBeside(const std::string& savePath);
 uint64_t loadServerToken(const std::string& savePath, const std::string& server);
 bool keepServerToken(const std::string& savePath, const std::string& server, uint64_t token);
 
