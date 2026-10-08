@@ -5208,7 +5208,8 @@ void testChainLevels() {
     checkEqual(realm.questLevel(3), 40, "the Catacombs from 40");
     checkEqual(realm.questLevel(5), 100, "the Pit from 100, Dungeon 3's");
     checkEqual(realm.questLevel(sim::questIndexOf("tersia_4")), 120, "the Red Floor from 120");
-    checkEqual(realm.questLevel(sim::questIndexOf("tersia_door")), 0, "Tersia's first asks nothing");
+    checkEqual(realm.questLevel(sim::questIndexOf("tersia_door")), 80, "Tersia's first at the door's 80");
+    checkEqual(realm.questLevel(sim::kTowerErrand), 80, "as Devin's errand to her");
     sim::HeroRecord record = realm.record();
     for (int q : {3, 4}) {
         record.quests[q].state = sim::QuestState::Resting;
@@ -5245,6 +5246,19 @@ void testChainLevels() {
                "with Peia's errand under way, Lirien stands behind it");
     check(sea.questMeets(sim::kDrownedSong, sim::kLirienNumber), "marked for its hand-in");
     check(!sea.questMeets(sim::kDrownedSong, 257), "and not at Peia");
+
+    // The tracker's pointer on another map: the gate toward whom it sends him (2026-10-09).
+    const auto toward = [](uint32_t from, uint32_t to, int column, int row) {
+        const sim::EnterGate* gate = sim::gateToward(from, to, column, row);
+        return gate ? gate->number : -1;
+    };
+    checkEqual(toward(3, 7, 100, 100), 45, "Noria to Atlans by its south-east gate");
+    checkEqual(toward(2, 4, 100, 100), 28, "Devias to the Lost Tower by its door");
+    checkEqual(toward(0, 4, 100, 100), 18, "Lorencia to the Lost Tower through Devias");
+    checkEqual(toward(0, 8, 100, 100), 23, "Lorencia to Tarkan through Noria");
+    checkEqual(toward(1, 0, 150, 150), 3, "out of the Dungeon to Lorencia");
+    checkEqual(toward(0, 0, 100, 100), -1, "and none on the map itself");
+    checkEqual(sim::questFolkMap(sim::kTersia), 4, "Tersia stands in the Lost Tower");
 }
 
 // A Dungeon floor's trip waits on its link of the Golden Archer's chain (ours, the user,
@@ -5511,7 +5525,11 @@ void testTowerKeeper() {
     check(shrine >= 0, "Tersia gives a quest");
     checkEqual(sim::questOf(sim::kThompson), -1, "Thompson gives none");
     if (shrine < 0) return;
-    check(sim::questAt(shrine).afterAny == (1u << 2), "hers waits on Devin's");
+    // Hers waits on Devin's errand to her since 2026-10-09, which waits on his own.
+    check(sim::questAt(shrine).afterAny == (1u << sim::kTowerErrand), "hers waits on Devin's errand");
+    checkEqual(sim::questAt(sim::kTowerErrand).giver, 406, "which Devin gives");
+    checkEqual(sim::questAt(sim::kTowerErrand).receiver, sim::kTersia, "and Tersia takes back");
+    checkEqual(sim::questAt(sim::kTowerErrand).afterAny, 1u << 2, "after his own");
     int links = 0, unmade = 0, chained = 0, before = -1;
     for (int q = 0; q < sim::kQuests; ++q) {
         const sim::QuestRow& row = sim::questAt(q);
@@ -5600,7 +5618,7 @@ void testTowerKeeper() {
     const uint32_t deeper = sim::travelRowsOf(4) & ~(uint32_t(1) << hall);
     const content::Townsperson& l = tower.folk[size_t(tersia)];
     sim::Realm early;
-    check(early.raise(&tower, 7, l.x, l.y + 2, sim::Kin::DarkKnight, 45), "a knight by Tersia");
+    check(early.raise(&tower, 7, l.x, l.y + 2, sim::Kin::DarkKnight, 80), "a knight by Tersia");
     check(((early.found() >> hall) & 1u) == 0, "standing in the hall does not open its row");
     check(early.questLocked(shrine), "before Devin's is handed in, her quest waits");
     talkTo(early, tersia, &offered, &greeted);
@@ -5616,8 +5634,18 @@ void testTowerKeeper() {
     sim::HeroRecord record = early.record();
     record.quests[2].state = sim::QuestState::Resting;
     record.quests[2].completions = 1;
+    // Devias cleared and Devin's errand under way: she is marked for its hand-in, hers still waits.
+    record.quests[sim::kTowerErrand].state = sim::QuestState::Active;
+    sim::Realm errand;
+    check(errand.raise(&tower, 7, l.x, l.y + 2, sim::Kin::DarkKnight, 80), "Devin's errand under way");
+    errand.restore(record);
+    check(errand.questLocked(shrine), "her quest waits on the errand");
+    checkEqual(errand.questHere(sim::kTersia), sim::kTowerErrand, "she stands behind the errand");
+    check(errand.questMeets(sim::kTowerErrand, sim::kTersia), "marked for its hand-in");
+    record.quests[sim::kTowerErrand].state = sim::QuestState::Resting;
+    record.quests[sim::kTowerErrand].completions = 1;
     sim::Realm later;
-    check(later.raise(&tower, 7, l.x, l.y + 2, sim::Kin::DarkKnight, 45), "and again, Devias cleared");
+    check(later.raise(&tower, 7, l.x, l.y + 2, sim::Kin::DarkKnight, 80), "and again, the errand done");
     later.restore(record);
     check(!later.questLocked(shrine) && later.questOffered(shrine), "her quest is offered");
     talkTo(later, tersia, &offered, &greeted);

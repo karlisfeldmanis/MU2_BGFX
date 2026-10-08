@@ -237,12 +237,16 @@ QuestRow devin() {
     row.offer[4] = "\"Dress for the cold, and come back alive.\"";
     row.underway = "\"Not yet. The storms still rage, and the Queens still live.\"";
     row.handIn[0] = "\"The sky over Devias is clear again. Thank you.\"";
+    // Back to him for the road on, not straight to Tersia, since his errand sends the hero there
+    // (the user, 2026-10-09: "we probaly need to update little bit Devian quest text ... because
+    // there is seperated quest for devian to go to LT to meet quest giver there").
     row.handIn[1] =
-        "\"Take these. Your road goes on to the Lost Tower. Find Tersia in its hall. She will "
-        "tell you the rest.\"";
+        "\"Take these. And when you are ready, speak with me again. Your road does not end in "
+        "Devias.\"";
     row.resting = "\"Rest now. By morning, the Queens will call the storms back.\"";
-    // The way on (the user, 2026-10-01): the Lost Tower and its keeper, Tersia's chain.
-    row.next = "Seek Tersia in the Lost Tower";
+    // The way on (the user, 2026-10-01): the Lost Tower and its keeper, Tersia's chain -- through
+    // his errand to her since 2026-10-09 (towerErrand).
+    row.next = "Apostle Devin has one more road for you";
     // Read by hand, not by voice.py's main(): source/voice/devin/recorded_with.py.txt. The
     // hand-in was read again for Tersia on 2026-10-02, both paragraphs, the same way.
     row.voice = "devin";
@@ -573,7 +577,12 @@ QuestRow tersiaDoor() {
     row.steps[1] = {QuestStepKind::Clear, 39, 15, "Poison Shadows"};
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
-    row.afterAny = 1u << 2;  // Devin's handed in: his hand-in sends the hero to her
+    // Devin's errand handed in to her (towerErrand), which his own hand-in sends the hero back
+    // to him for; until 2026-10-09 Devin's own, straight. From the tower door's level, as the
+    // errand asks.
+    row.afterAny = 1u << kTowerErrand;
+    row.minLevel = 80;
+    row.gateLevel = true;
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
@@ -1407,6 +1416,57 @@ QuestRow kantursLegion() {
     return row;
 }
 
+// The Tower's Last Keeper, the hook to the Lost Tower: Devin's second, once Devias is cleared,
+// handed in to Tersia in the tower's hall (the user, 2026-10-09: "we need seperated quest for
+// devian which asks char to go meet LT quest giver, similiar like Noria quest giver asks to go to
+// atlans, because there is lvl requirment for LT1 and it make sense"). As The Drowned Song: no
+// hunt, the errand is the meeting. Ours, on MU's facts: the tower stands past Devias's far corner
+// under the beacon, its door at the gate's level (sim/gates.cpp, gate 28), and Tersia's guild and
+// its contract are her own chain's.
+QuestRow towerErrand() {
+    QuestRow row;
+    row.giver = 406;  // Apostle Devin
+    row.giverName = "Apostle Devin";
+    row.place = "Devias";
+    row.receiver = 566;
+    row.receiverName = "Tersia";
+    row.receiverPlace = "the Lost Tower";
+    row.title = "The Tower's Last Keeper";
+    row.offer[0] =
+        "\"Past the far corner of Devias, under the old beacon, stands the Lost Tower. It was a "
+        "shrine once, before Kundun's creatures climbed into it.\"";
+    row.offer[1] =
+        "\"The Mercenary Guild took a contract to guard it. Twelve of them went up the road. Only "
+        "one still answers, and she holds the hall at the tower's door. Her name is Tersia.\"";
+    row.offer[2] =
+        "\"Go to her. Tell her Devias still stands. The tower's door does not open for the weak, so "
+        "go when you are ready.\"";
+    row.underway =
+        "\"The tower is past the far corner of Devias, under the beacon. Tersia waits in its "
+        "hall.\"";
+    // Tersia's, at her desk in the hall; what the guild's contract asks is her own quest's offer,
+    // which opens as this closes (tersiaDoor).
+    row.handIn[0] =
+        "\"A messenger from Devin? Then Devias still stands. Come in, quickly, before the walls "
+        "hear us.\"";
+    row.resting = "\"Tersia has my word now. Go, and keep her alive.\"";
+    // Devin's voice on his offer (tools/voice.py, VOICES["devin"] by the stem), Tersia's own on the
+    // hand-in (VOICES["tersia"]).
+    row.voice = "devin_2";
+    row.receiverVoice = "tersia";
+    row.steps[0] = {QuestStepKind::Return, 0, 1, "Find Tersia in the Lost Tower"};
+    row.stepCount = 1;
+    row.repeatSeconds = 0;  // once
+    row.minLevel = 80;      // the Devias door to the tower's
+    row.gateLevel = true;
+    row.afterAny = 1u << 2;  // Devin's handed in
+    row.natives = 0x7;
+    row.strangers = true;
+    row.experience = 80000;
+    row.zen = 50000;
+    return row;
+}
+
 // Each row with the key a save knows it by (QuestRow::key).
 QuestRow keyed(QuestRow row, const char* key) {
     row.key = key;
@@ -1437,6 +1497,7 @@ const QuestRow kRawTable[kQuests] = {
     keyed(kantursLegion(), "kanturs_legion"),
     keyed(tersiaSkyDoor(), "tersia_sky_door"),
     keyed(tersiaPhoenix(), "tersia_phoenix"),
+    keyed(towerErrand(), "tower_errand"),
 };
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every
@@ -1481,6 +1542,20 @@ bool questReceives(int32_t number) {
         if (questElsewhere(kTable[i]) && kTable[i].receiver == number) return true;
     }
     return false;
+}
+
+int32_t questFolkMap(int32_t number) {
+    switch (number) {
+        case 229: return 0;    // Marlon, Lorencia
+        case 236: return 0;    // the Golden Archer, at Lorencia's Dungeon stair
+        case 257: return 3;    // Peia, Noria
+        case 406: return 2;    // Apostle Devin, Devias
+        case 235: return 2;    // Sevina, Devias
+        case 566: return int32_t(kLostTowerMap);  // Tersia, the Lost Tower's hall
+        case kLirienNumber: return int32_t(kAtlansMap);
+        case kKeeperNumber: return int32_t(kTarkanMap);
+        default: return -1;
+    }
 }
 
 int questIndexOf(const std::string& key) {

@@ -28,7 +28,9 @@ constexpr TravelRow kRows[kTravels] = {
     {"Dungeon 3", 1, 100, 4000, 3, 84, 1, -1, "dungeon_3"},
     // `Gates.cs:51-57` (docs/lost-tower-port.md §2.3): LostTower lands in the safe hall, on spawn
     // gate 42, facing nowhere; LostTower2-7 on each floor's arrival gate, 31-41, as those face.
-    {"Lost Tower", 4, 100, 5000, 208, 75, 0, 0, "lost_tower"},
+    // The hall at the Devias door's 80, not 100 (the user, 2026-10-09): Devin's errand sends the
+    // hero to Tersia from 80, and speaking to her opens this row.
+    {"Lost Tower", 4, 80, 5000, 208, 75, 0, 0, "lost_tower"},
     {"Lost Tower 2", 4, 100, 5500, 242, 237, -1, -1, "lost_tower_2"},
     {"Lost Tower 3", 4, 100, 6000, 86, 167, 1, -1, "lost_tower_3"},
     {"Lost Tower 4", 4, 120, 6500, 87, 87, 1, -1, "lost_tower_4"},

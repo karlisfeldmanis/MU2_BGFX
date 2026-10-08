@@ -802,6 +802,20 @@ bool Play::folkCrownOf(int folk, const float* viewProj, int width, int height, f
     return false;
 }
 
+bool Play::tileOnScreen(float column, float row, const float* viewProj, int width, int height,
+                        float* x, float* y) const {
+    if (!ground_) return false;
+    const float metres = ground_->metresPerTile();
+    const float wx = (column + 0.5f) * metres, wz = -(row + 0.5f) * metres;
+    const float world[4] = {wx, ground_->heightAt(wx, wz) + 1.8f, wz, 1.0f};
+    float clip[4];
+    bx::vec4MulMtx(clip, world, viewProj);
+    if (clip[3] <= 0.0f) return false;
+    *x = (clip[0] / clip[3] * 0.5f + 0.5f) * float(width);
+    *y = (0.5f - clip[1] / clip[3] * 0.5f) * float(height);
+    return true;
+}
+
 void Play::dropsOnScreen(const float* viewProj, int width, int height,
                          std::vector<OnScreen>& out) const {
     out.clear();

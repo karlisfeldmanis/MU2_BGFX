@@ -26,7 +26,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 24;
+inline constexpr int kQuests = 25;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 18;
@@ -225,6 +225,9 @@ inline constexpr int kKantursLegion = 21;
 // first opens Icarus's travel row.
 inline constexpr int kSkyDoor = 22;
 inline constexpr int kPhoenixContract = 23;
+// Devin's second, 'The Tower's Last Keeper', handed in to Tersia in the Lost Tower's hall: her
+// chain waits on it (2026-10-09).
+inline constexpr int kTowerErrand = 24;
 // Who gives quest `index`: its row's giver, or Peia for kDemoQuests when the realm's config has
 // the demo on (RealmConfig::questDemo, --quest-demo). The table itself never changes.
 int32_t questGiver(int index, bool demo);
@@ -234,6 +237,9 @@ int questIndexOf(const std::string& key);
 int questOf(int32_t giver);
 // Whether this NPC takes back a quest someone else gave (QuestRow::receiver): Lirien.
 bool questReceives(int32_t number);
+// The map a quest's giver or receiver stands on (MU's number), or -1: where the tracker's pointer
+// leads, by its gates (sim::gateToward), when he is on another (the user, 2026-10-09).
+int32_t questFolkMap(int32_t number);
 
 
 enum class QuestState : uint8_t {

@@ -10,6 +10,7 @@
 #include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
+#include "sim/gates.h"
 
 namespace mu::game {
 namespace {
@@ -501,16 +502,39 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     }
 
     // ---- the edge pointer: the giver, when he is the next step and off the frame ---------------
+    // Or whom an errand sends him to, before he has met her (Realm::questMeets); and on another map
+    // than theirs, the gate toward it (the user, 2026-10-09: "when there is quest whoch asks to
+    // meet some npc by going to some gates, we need helper which show ehere to go", then "idea is
+    // that tracker also works for gates"). The metres are to the gate, then.
     pointing_ = false;
-    if (quest_ >= 0 && realm.quest(quest_).state == sim::QuestState::Ready && viewProj) {
-        const sim::QuestRow& row = sim::questAt(quest_);
-        const content::Tables* tables = realm.tables();
-        for (size_t f = 0; tables && f < tables->folk.size(); ++f) {
-            if (tables->folk[f].number != sim::questReceiver(row)) continue;
-            float x = 0.0f, y = 0.0f;
-            if (!play.folkCrownOf(int(f), viewProj, width, height, &x, &y)) break;
+    const content::Tables* tables = realm.tables();
+    const int32_t whom = quest_ >= 0 ? sim::questReceiver(sim::questAt(quest_)) : -1;
+    const bool seeking = quest_ >= 0 && (realm.quest(quest_).state == sim::QuestState::Ready ||
+                                         realm.questMeets(quest_, whom));
+    if (seeking && viewProj && tables) {
+        const sim::Body& hero = realm.hero();
+        bool found = false;
+        float x = 0.0f, y = 0.0f, column = 0.0f, row = 0.0f;
+        for (size_t f = 0; f < tables->folk.size(); ++f) {
+            if (tables->folk[f].number != whom) continue;
+            // Placed on the screen's plane, in the frame or out of it; behind the camera, not.
+            found = play.folkCrownOf(int(f), viewProj, width, height, &x, &y);
+            column = float(tables->folk[f].x);
+            row = float(tables->folk[f].y);
+            break;
+        }
+        const int32_t there = sim::questFolkMap(whom);
+        if (!found && there >= 0 && uint32_t(there) != tables->map) {
+            if (const sim::EnterGate* gate =
+                    sim::gateToward(tables->map, uint32_t(there), hero.column(), hero.row())) {
+                column = float(gate->box.x1 + gate->box.x2) * 0.5f;
+                row = float(gate->box.y1 + gate->box.y2) * 0.5f;
+                found = play.tileOnScreen(column, row, viewProj, width, height, &x, &y);
+            }
+        }
+        const bool inFrame = x >= 0.0f && x <= float(width) && y >= 0.0f && y <= float(height);
+        if (found && !inFrame) {
             const float inset = kEdgeInset * u;
-            if (x >= 0.0f && x <= float(width) && y >= 0.0f && y <= float(height)) break;
             const float cx = float(width) * 0.5f, cy = float(height) * 0.5f;
             const float dx = x - cx, dy = y - cy;
             const float sx = dx != 0.0f ? (cx - inset) / std::fabs(dx) : 1e9f;
@@ -519,11 +543,9 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
             pointX_ = cx + dx * s;
             pointY_ = cy + dy * s;
             pointAngle_ = std::atan2(dy, dx);
-            const sim::Body& hero = realm.hero();
-            const float mx = float(tables->folk[f].x) - hero.x, my = float(tables->folk[f].y) - hero.y;
+            const float mx = column - hero.x, my = row - hero.y;
             pointMetres_ = int(std::lround(std::sqrt(mx * mx + my * my)));
             pointing_ = true;
-            break;
         }
     }
 

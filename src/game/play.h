@@ -516,6 +516,10 @@ public:
     // And the same over a townsperson, by the tables' folk index: where the name goes.
     bool folkCrownOf(int folk, const float* viewProj, int width, int height, float* x,
                      float* y) const;
+    // And a tile's middle, a man's height over the ground there: a gate's, for the tracker's
+    // pointer. False behind the camera or with no ground.
+    bool tileOnScreen(float column, float row, const float* viewProj, int width, int height,
+                      float* x, float* y) const;
     // The body a townsperson is in the realm -- a guard's -- or 0 for one who stands still.
     uint32_t wardenBody(int folk) const;
     // The townsfolk with a quest to give, by the tables' folk index: the ones the quest marker

@@ -53,4 +53,11 @@ const EnterGate* enterGateNumbered(int32_t number);
 // The exit gate with that number, or nullptr.
 const ExitGate* exitGate(int32_t number);
 
+// **The gate on `from` that leads toward map `to`**, fewest gates first and nearest the tile
+// (column, row) among those, or nullptr when `to` is `from` or no road of gates reaches it. Every
+// open gate counts, whatever level it asks; sealed ones and a map's own stairs do not. For the
+// quest tracker's pointer, which aims at it when whom a quest sends him to stands on another map
+// (the user, 2026-10-09: "idea is that tracker also works for gates"). Ours.
+const EnterGate* gateToward(uint32_t from, uint32_t to, int column, int row);
+
 }  // namespace mu::sim

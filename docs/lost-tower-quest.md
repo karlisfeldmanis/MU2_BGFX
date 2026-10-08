@@ -15,6 +15,16 @@ Senatus's figure files stay in
 (The first plan had Thompson send the hero, an errand handed in to the tower's giver. The user took it back
 the same day: Devin sends the hero straight to her. Thompson stays in Devias with lines only.)
 
+**Since 2026-10-09 Devin sends the hero by an errand of his own**, "The Tower's Last Keeper"
+(`towerErrand`, quest 24, key `tower_errand`), shaped as Peia's The Drowned Song: offered once his
+Devias clear is handed in, from level 80 (the Devias door to the tower, gate 28), and handed in to
+Tersia by speaking to her. Her first contract waits on it, also from 80, and the hall's travel row
+asks 80 now, not 100. The user: "we need seperated quest for devian which asks char to go meet LT
+quest giver, similiar like Noria quest giver asks to go to atlans, because there is lvl requirment
+for LT1 and it make sense". His own hand-in no longer names Tersia: "Take these. And when you are
+ready, speak with me again. Your road does not end in Devias." Voices: `devin_2` (his offer),
+`tersia` (her hand-in), and `devin_handin` read again by `tools/voice.py`.
+
 | | Thompson the Merchant | Tersia |
 |---|---|---|
 | MU | NPC 231, `MONSTER_THOMPSON_THE_MERCHANT`, `MODEL_DEVIAS_TRADER` (`Npc/DeviasTrader01.bmd`, `ZzzCharacter.cpp:14344-14346`) | NPC 566, `MONSTER_MERCENARY_GUILD_FELICIA`, `MODEL_TERSIA` (`Npc/tersia.bmd`; MuMain's Korean ID 길드관리인 테르시아, "Guild Manager Tersia"; `ZzzCharacter.cpp:15005-15010`, scale 0.93, idles slowed to 0.35 and 0.3) |
