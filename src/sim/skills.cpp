@@ -19,8 +19,10 @@ namespace {
 //
 // The three invented columns, and the reasoning is `docs/skills-dk.md` §3.2:
 //   * `force` spreads around Falling Slash's 2.0, which is the class's own multiplier in 0.75.
-//     The two area skills are paid in coverage rather than in force, so Cyclone's 1.3 is the
-//     weakest key against one monster and the strongest against four.
+//     The two area skills were paid in coverage rather than in force (Cyclone 1.3), until
+//     Twisting Slash, a free ring at 1.7, left Cyclone nothing to be for. The user, 2026-10-08
+//     ("mayeb for some we can reduce cooldown?", "do it"): Lunge 1.6 every 1.5 s, Uppercut 1.8
+//     every 2 s, Cyclone 2.0 every 2 s, Slash every 4 s. Ours.
 //   * `forcePerStrength` is 1/K_dmg: 1/1000 on the anchor, gentler on the jab, steeper on the
 //     two-handed sweep.
 //   * `coolTicks` is at 20 Hz: 60 is three seconds.
@@ -60,17 +62,18 @@ constexpr SkillRow kRows[kSkills] = {
     // Lunge: the Gladius, and nothing else in 0.75 carried it. A one-handed sword, which is what
     // MU's own description says in as many words -- "used with weapons like Gladius and Katana
     // to execute quick stabs".
-    {skill::kLunge, "Lunge", 9, 1.0f, 1.4f, 1.0f / 1400.0f, 60, false, Spread::One, 0, 1.0f,
+    {skill::kLunge, "Lunge", 9, 1.0f, 1.6f, 1.0f / 1400.0f, 30, false, Spread::One, 0, 1.0f,
      "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
      "player_skill_sword2", true, arms::kSword1, 20},
     // Uppercut: the Sword of Assassin, the Falchion and the Serpent Sword. All one-handed.
-    {skill::kUppercut, "Uppercut", 8, 1.0f, 1.7f, 1.0f / 1200.0f, 60, false, Spread::One, 0, 1.0f,
+    {skill::kUppercut, "Uppercut", 8, 1.0f, 1.8f, 1.0f / 1200.0f, 40, false, Spread::One, 0, 1.0f,
      "A rising blow under the guard, between the jab and the overhead in force and in wait.",
      62, "player_skill_sword3", true, arms::kSword1, 12},
     // Cyclone: the Blade (a one-handed sword), the Berdysh and the Great Scythe (polearms). The
     // odd pair is MU's own, and it reads as a spin with something long or something quick.
-    {skill::kCyclone, "Cyclone", 9, 1.0f, 1.3f, 1.0f / 1400.0f, 100, false, Spread::Ring, 0, 1.0f,
-     "A spin that catches everything within a tile: weakest against one, strongest in a crowd.",
+    {skill::kCyclone, "Cyclone", 9, 1.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
+     "A spin that catches everything within a tile, harder than Twisting Slash and back in two "
+     "seconds.",
      63, "player_skill_sword4", true, arms::kSword1 | arms::kSpear, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
@@ -80,7 +83,7 @@ constexpr SkillRow kRows[kSkills] = {
     // swords and a two-handed axe, which is exactly what MU's own description says ("only works
     // with the Giant Sword, Chaos Dragon Axe, or Crystal Sword"). Of those three Lorencia cooks
     // the Giant Sword; the other two are elsewhere and the family is written for them anyway.
-    {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 120, false, Spread::Arc, 0, 1.0f,
+    {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 80, false, Spread::Arc, 0, 1.0f,
      "A wide sweep across the three tiles he faces, thrown with both hands on the haft.", 64,
      "player_skill_sword4", true, arms::kSword2 | arms::kAxe2, 52},
 
