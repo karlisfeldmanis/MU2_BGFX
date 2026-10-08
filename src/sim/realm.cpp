@@ -503,6 +503,11 @@ HeroRecord Realm::record() const {
     if (const Body* summon = summoned(); summon != nullptr && summon->alive()) {
         out.summonSkill = summon->summonedBy;
         out.summonHealth = summon->health;
+    } else if (me().summonOwed != 0) {
+        // Hidden in a safe zone (Realm::shelterSummon), or not yet raised: still hers, written
+        // as one standing is, so a quit in town finds it again outside.
+        out.summonSkill = me().summonOwed;
+        out.summonHealth = me().summonOwedHealth;
     }
     out.wayBack = me().wayBack;
     return out;
@@ -567,8 +572,8 @@ void Realm::restore(const HeroRecord& saved) {
     hero.health = saved.health > 0 ? std::min(saved.health, hero.maxHealth) : hero.maxHealth;
     hero.mana = std::max(0, std::min(saved.mana, hero.maxMana));
     settleFound(saved.found);
-    // Her summon, raised on the next tick at the health it was saved with: a summon skill she
-    // knows, or none.
+    // Her summon, raised on the next tick at the health it was saved with -- or, saved in a safe
+    // zone, on her first step out of it (Realm::shelterSummon): a summon skill she knows, or none.
     const SkillRow* summons = skillNumbered(saved.summonSkill);
     const bool owed = summons != nullptr && summons->summons > 0 && knows(summons->number);
     me().summonOwed = owed ? summons->number : 0;
@@ -1144,7 +1149,8 @@ void Realm::step() {
 }
 
 // The first half of a player's tick: what he is owed at its start -- a castle's gate, a summon a
-// save carried -- his potions, his charge, his recovery, Icarus's wings, the floor he stands on.
+// save carried or a safe zone hid -- his potions, his charge, his recovery, Icarus's wings, the
+// floor he stands on.
 void Realm::heroBefore() {
     if (me().castleOwed != 0) {
         const int castle = me().castleOwed;
@@ -1152,16 +1158,7 @@ void Realm::heroBefore() {
         passCastle(castle);
     }
     Body& hero = mine();
-    if (me().summonOwed != 0) {
-        const SkillRow* row = skillNumbered(me().summonOwed);
-        if (hero.alive() && row != nullptr && conjure(hero, *row)) {
-            Body& summon = bodies_[size_t(me().summonSlot)];
-            if (me().summonOwedHealth > 0) {
-                summon.health = std::min(me().summonOwedHealth, summon.maxHealth);
-            }
-        }
-        me().summonOwed = 0;
-    }
+    shelterSummon(hero);
     // Go Back!'s clock: five minutes of play, then the closed line three seconds, then nothing.
     // Dead, the way back goes with him.
     if (WayBack& way = me().wayBack; way.map >= 0) {

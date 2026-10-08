@@ -14,7 +14,9 @@
 //   * its kills are hers, drop and experience, as a guard's are when she helped (Realm::kill);
 //   * it goes with her death rather than standing over her body, and with any warp of hers --
 //     the Town Portal, and a map change, which raises a realm with its slot dormant (the user,
-//     2026-09-29; OpenMU carries it to her landing gate instead).
+//     2026-09-29; OpenMU carries it to her landing gate instead);
+//   * it is hidden while she stands in a safe zone and back beside her on her first step out
+//     of one (the user, 2026-10-09; Realm::shelterSummon).
 //
 // The body is raised once, dormant, at the end of `bodies_` (Realm::raise) and reused, so casting
 // never moves a pointer into `bodies_`. Its fights roll off `summonDice_`.
@@ -92,6 +94,17 @@ void Realm::fitSummon(Body& summon, const Body& hero) {
 }
 
 void Realm::dismiss(Body& summon) {
+    if (summon.summoner == 0) return;
+    // Gone for good, and one hidden in a safe zone (shelterSummon) with it: a warp, a gate, the
+    // map travel or her death leaves nothing to come back on her next step out.
+    if (const int at = playerOfId(summon.summoner); at >= 0) {
+        heroes_[size_t(at)].summonOwed = 0;
+        heroes_[size_t(at)].summonOwedHealth = 0;
+    }
+    vanish(summon);
+}
+
+void Realm::vanish(Body& summon) {
     if (summon.summoner == 0 || !summon.alive()) return;
     summon.health = 0;
     summon.quarry = 0;
@@ -105,6 +118,42 @@ void Realm::dismiss(Body& summon) {
         }
     }
     say(What::Dismissed, summon);
+}
+
+void Realm::shelterSummon(Body& hero) {
+    // **Hidden in a safe zone, shown out of it** (the user, 2026-10-09: "in safezone summons are
+    // hidden, but if summon buff is active and its not safezone we show summon"), ours: a summon
+    // is a monster, and a monster's wall is the safe zone (content::kWallMonster), so one that
+    // followed her to town stood stranded at its edge. Now the moment she stands on a safe tile it
+    // goes out of the picture, its breed and health held as `summonOwed`, and the first tick she
+    // stands off one it is raised beside her again at that health -- no mana, no cooldown, as a
+    // save's summon is raised (Realm::restore). A gate, the map travel, a Town Portal, a Teleport
+    // and her death still dismiss it for good (Realm::dismiss), as the user's rules of 2026-09-29
+    // and 2026-10-08 have them.
+    if (me().summonSlot < 0) return;
+    Body& summon = bodies_[size_t(me().summonSlot)];
+    const bool sheltered = tables_->grid.safe(hero.column(), hero.row());
+    if (summon.alive()) {
+        if (!sheltered || !hero.alive()) return;
+        me().summonOwed = summon.summonedBy;
+        me().summonOwedHealth = summon.health;
+        vanish(summon);
+        return;
+    }
+    if (me().summonOwed == 0) return;
+    // Not raised for one who lies dead, nor in Icarus (Realm::conjure refuses it there): gone.
+    if (!hero.alive() || tables_->map == kIcarusMap) {
+        me().summonOwed = 0;
+        me().summonOwedHealth = 0;
+        return;
+    }
+    if (sheltered) return;  // held until she steps out
+    const SkillRow* row = skillNumbered(me().summonOwed);
+    if (row != nullptr && conjure(hero, *row) && me().summonOwedHealth > 0) {
+        summon.health = std::min(me().summonOwedHealth, summon.maxHealth);
+    }
+    me().summonOwed = 0;
+    me().summonOwedHealth = 0;
 }
 
 void Realm::tend(Body& summon) {

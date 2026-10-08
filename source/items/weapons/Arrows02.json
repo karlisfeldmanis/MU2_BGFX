@@ -20,7 +20,8 @@
     "height": 2,
     "height_note": "Height is the fifth argument of the call above - CreateAmmunition takes group, number, slot, width, height - and was not carried when this row was transcribed. A quiver is one across and two down. See the height_note on the weapon rows.",
     "is_ammunition": true,
-    "durability": 255,
+    "durability": 1000,
+    "durability_note": "A stack of 1000 shots, ours: the user, 2026-10-09, 'sells arrow/bolts by 1000 per stack'. MU's quiver is the call's 255; the shop's price is still the quiver's, now for the whole stack (sim/market.cpp quiver).",
     "requires": {
       "level": 0,
       "strength": 0,

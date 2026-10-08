@@ -133,6 +133,7 @@ private:
     uint32_t pingNonce_ = 0;
     bool pingOut_ = false;
     float rttMs_ = -1.0f;
+    Clock::time_point pumpedAt_{};  // the last pump: a Ping's answer read later than kUnreadMost is not counted
     int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
     net::Who who_;         // the players' names, the latest the server sent
 };

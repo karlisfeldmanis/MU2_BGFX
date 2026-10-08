@@ -36,13 +36,27 @@ bool Realm::questOffered(int index) const {
            wall_ >= one.availableAt;
 }
 
+bool Realm::questMeets(int index, int32_t number) const {
+    if (index < 0 || index >= kQuests) return false;
+    const QuestRow& row = questAt(index);
+    if (!questElsewhere(row) || row.receiver != number) return false;
+    const QuestProgress& one = me().quests[index];
+    if (one.state != QuestState::Active) return false;
+    for (int step = 0; step < row.stepCount; ++step) {
+        if (questCounted(row.steps[step].kind) && one.counts[step] < questGoal(index, step)) return false;
+    }
+    return true;
+}
+
 int Realm::questHere(int32_t giver) const {
     int ready = -1, active = -1, untaken = -1, back = -1, rested = -1, first = -1;
     for (int i = 0; i < kQuests; ++i) {
         const QuestRow& row = questAt(i);
-        // One someone else gave, which this one takes back: only its hand-in is hers.
+        // One someone else gave, which this one takes back: only its hand-in is hers -- and the
+        // errand that sends him to her, before he has spoken to her (the user, 2026-10-09: Lirien
+        // stood under a grey "!" for Peia's errand, her own quest still locked behind it).
         if (questElsewhere(row) && row.receiver == giver) {
-            if (me().quests[i].state == QuestState::Ready && ready < 0) ready = i;
+            if ((me().quests[i].state == QuestState::Ready || questMeets(i, giver)) && ready < 0) ready = i;
             continue;
         }
         if (questGiver(i, config_.questDemo) != giver) continue;
@@ -71,7 +85,16 @@ int Realm::questHere(int32_t giver) const {
 int32_t Realm::questLevel(int index) const {
     if (index < 0 || index >= kQuests) return 0;
     const QuestRow& row = questAt(index);
-    return row.gateLevel ? moveLevel(row.minLevel, mine().kin) : row.minLevel;
+    int32_t level = row.gateLevel ? moveLevel(row.minLevel, mine().kin) : row.minLevel;
+    // **And a chain's link at least its floor's trip** (the user, 2026-10-09: "if LT4 has lvl
+    // requirment, that means that also Tersia quest has to be synced with specific LT floor lvl
+    // requirment"): the link opens its floor's row (openChained), so one offered below that row's
+    // level showed a trip it then refused -- the Pit from 40 under Dungeon 3's 100, the Red Floor
+    // under the fourth floor's 120. Ours.
+    for (int i = 0; i < kTravels; ++i) {
+        if (travelQuest(i) == index) level = std::max(level, int32_t(moveLevel(travelAt(i).level, mine().kin)));
+    }
+    return level;
 }
 
 bool Realm::questUnderLevel(int index) const {

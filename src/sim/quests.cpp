@@ -498,13 +498,13 @@ QuestRow pit() {
     row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
     row.paid[7] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
                    .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};  // purple
-    // And the chain's last skills (2026-10-07): the knight's Death Stab, the wizard's Hellfire
-    // and the elf's Penetration. Death Stab is the knight's alone; the Magic Gladiator on his
-    // path is not paid it (Realm::questItemFits).
+    // And the chain's last skills (2026-10-07): the knight's Death Stab and the wizard's
+    // Hellfire. Death Stab is the knight's alone; the Magic Gladiator on his path is not paid it
+    // (Realm::questItemFits). The elf's Penetration went to Tersia's sixth floor (the user,
+    // 2026-10-09: "dont give orb of penetrion at dungeonn3 as reward, its too soon").
     row.paid[8] = {.item = "OrbDeathStab", .kin = knight, .firstOnly = true};
     row.paid[9] = {.item = "Book10", .kin = wizard, .firstOnly = true};       // Hellfire
-    row.paid[10] = {.item = "OrbPenetration", .kin = elf, .firstOnly = true};
-    row.paidCount = 11;
+    row.paidCount = 10;
     return row;
 }
 
@@ -777,6 +777,9 @@ QuestRow tersiaSixth() {
                                  .firstOnly = true};
     // And the wizard Cometfall (2026-10-07), the fire Rolling Fire is named for.
     row.paid[row.paidCount++] = {.item = "Book13", .kin = wizard, .firstOnly = true};
+    // And the elf Penetration, off the Pit since 2026-10-09 ("its too soon, find other quest
+    // where to give that"): its orb asks level 130, and this floor 140.
+    row.paid[row.paidCount++] = {.item = "OrbPenetration", .kin = elf, .firstOnly = true};
     row.voice = "tersia_6";  // tools/voice.py, VOICES["tersia"]
     return row;
 }

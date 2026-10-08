@@ -1055,6 +1055,9 @@ public:
     // (the Dungeon's three floors, quests.cpp), which shows the link under way or ready, else
     // the first one offered and not handed in, else one come back round, else the last handed in.
     int questHere(int32_t giver) const;
+    // Whether `number` is the one an errand under way asks him to find, its hunting all done: the
+    // meeting hands it in (questMet), so she is marked for its hand-in before he speaks to her.
+    bool questMeets(int index, int32_t number) const;
     // Whether it waits on his level alone: one his class may take, its chain open, never handed
     // in, and he below its QuestRow::minLevel. The list shows it greyed with the level it asks.
     bool questUnderLevel(int index) const;
@@ -1551,8 +1554,15 @@ private:
     void fitSummon(Body& summon, const Body& hero);
     // Raised beside her off the row's breed, scaled by her energy; or false with no breed cooked.
     bool conjure(Body& hero, const SkillRow& row);
-    // Gone: dismissed, or with her death. Nothing drops and nothing rises.
+    // Gone: dismissed, or with her death. Nothing drops and nothing rises, and a summon hidden in
+    // a safe zone is forgotten with it.
     void dismiss(Body& summon);
+    // Out of the picture as `dismiss` puts it, said as Dismissed, but nothing forgotten.
+    void vanish(Body& summon);
+    // At the start of her tick: her summon hidden while she stands in a safe zone, and raised
+    // again, at the health it was hidden with, the first tick she stands off one (the user,
+    // 2026-10-09). Also raises the summon a restored record carried.
+    void shelterSummon(Body& hero);
     // A monster a guard fought has died with the hero's help: the guard points him on and turns to
     // look toward the nearest of its kind still standing.
     void pointOn(Body& guard, const Body& dead);
@@ -1986,7 +1996,9 @@ private:
         // the mode carries out the map change.
         bool grounded = false;
         // A summon a restored record carried, raised on the next tick rather than in restore(),
-        // so its `Spawned` reaches the drawing (step() clears the happenings first). 0 for none.
+        // so its `Spawned` reaches the drawing (step() clears the happenings first); or one
+        // hidden while she stands in a safe zone, raised on her first tick off one
+        // (Realm::shelterSummon). The skill that raises it, 0 for none.
         int32_t summonOwed = 0;
         int32_t summonOwedHealth = 0;
         // The fraction of a point each worn slot has lost and not yet shown, beside the item it

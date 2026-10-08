@@ -2887,8 +2887,13 @@ void testArchery(const content::Tables& tables) {
     check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow");
     const sim::Satchel& bag = realm.satchel();
     check(realm.hero().archer == 1, "and she is an archer");
-    check(!bag[sim::kWeaponRight].empty() && bag[sim::kWeaponLeft].durability == 255,
-          "the bow in her weapon hand and 255 arrows in her left");
+    // A full stack: 1000 since 2026-10-09 ("sells arrow/bolts by 1000 per stack"), MU's 255 before.
+    const int full = bag[sim::kWeaponLeft].empty()
+                         ? 0
+                         : tables.items[size_t(bag[sim::kWeaponLeft].item)].durability;
+    checkEqual(full, 1000, "a full stack is 1000 arrows");
+    check(!bag[sim::kWeaponRight].empty() && bag[sim::kWeaponLeft].durability == full,
+          "the bow in her weapon hand and a full stack of arrows in her left");
     // Her archery band: level-one points, agility 25 and strength 22, on the Short Bow.
     sim::Fighter melee;
     int health = 0;
@@ -2908,7 +2913,7 @@ void testArchery(const content::Tables& tables) {
         uint32_t whom;
     };
     std::vector<Due> due;
-    for (int tick = 0; tick < 40000 && arrowless == 0; ++tick) {
+    for (int tick = 0; tick < 160000 && arrowless == 0; ++tick) {
         if (tick % 10 == 0) {
             uint32_t nearest = 0;
             float closest = 1e30f;
@@ -2954,13 +2959,13 @@ void testArchery(const content::Tables& tables) {
             if (h.what == sim::What::Arrowless) ++arrowless;
         }
         if (firstShotTick == realm.tick()) {
-            check(bag[sim::kWeaponLeft].durability == 254 && bag[sim::kWorn].empty(),
+            check(bag[sim::kWeaponLeft].durability == full - 1 && bag[sim::kWorn].empty(),
                   "the first shot reloads the hand from the bag and spends one");
         }
     }
     // Drawn, not let go: a shot whose target dies before the string is released has still
     // spent its arrow, as MU spends it at the draw.
-    check(drawn == 255, "every arrow is one draw, and no draw without one");
+    check(drawn == full, "every arrow is one draw, and no draw without one");
     check(loosed <= drawn && loosed > 200, "and nearly every draw is let go");
     check(far > 0, "some are shot from past arm's length");
     check(flewAtAll > 0 && landedOnTime > 0, "and those land a flight after the let-go");
@@ -3571,6 +3576,102 @@ void testSummonKeepsUp(const content::Tables& tables) {
     check(g != nullptr && g->alive(), "and the Golem goes with her");
     check(worst <= float(sim::kSummonBlink) + 1.5f, "never left past the blink");
     check(last <= float(sim::kSummonTetherFighting) + 1.0f, "and at her side when she stops");
+}
+
+// The user, 2026-10-09: "in safezone summons are hidden, but if summon buff is active and its not
+// safezone we show summon". An elf with her Golem walks into Lorencia's town: it goes out of the
+// picture the moment she stands on a safe tile, is still hers in the save, and stands beside her
+// again, at the health it was hidden with, on her first step out. A recast is not needed.
+void testSummonShelters(const content::Tables& tables) {
+    std::printf("the summon hides in a safe zone and comes back out of it\n");
+    // The town's east edge on some row: three safe open tiles, then six open unsafe ones.
+    const content::Grid& grid = tables.grid;
+    int edge = -1, edgeRow = -1;
+    for (int r = 100; r < 200 && edge < 0; ++r) {
+        for (int c = 100; c < 200 && edge < 0; ++c) {
+            bool fits = true;
+            for (int i = 0; i < 3 && fits; ++i) fits = grid.safe(c - i, r) && grid.open(c - i, r);
+            for (int i = 1; i <= 6 && fits; ++i) fits = !grid.safe(c + i, r) && grid.open(c + i, r);
+            if (fits) {
+                edge = c;
+                edgeRow = r;
+            }
+        }
+    }
+    check(edge >= 0, "Lorencia's town has an open east edge");
+    if (edge < 0) return;
+    sim::Realm realm;
+    realm.raise(&tables, 5, edge + 6, edgeRow, sim::Kin::FairyElf, 40);
+    realm.spend(0, 0, 0, 150);
+    realm.learn(sim::skill::kSummonGolem);
+    for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    for (int tick = 0; tick < 60 && !realm.summoned()->alive(); ++tick) realm.step();
+    check(realm.summoned()->alive(), "the Golem stands beside her off the town");
+    if (!realm.summoned()->alive()) return;
+    const uint32_t golemId = realm.summoned()->id;
+    const auto walk = [&](int column) {
+        sim::Request to;
+        to.kind = sim::Request::Kind::WalkTo;
+        to.column = column;
+        to.row = edgeRow;
+        realm.ask(to);
+    };
+    walk(edge - 2);
+    bool hid = false, early = false;
+    for (int tick = 0; tick < 200; ++tick) {
+        realm.step();
+        const bool safe = grid.safe(realm.hero().column(), realm.hero().row());
+        if (!safe && !realm.summoned()->alive()) early = true;
+        for (const sim::Happening& h : realm.happenings()) {
+            hid |= h.what == sim::What::Dismissed && h.who == golemId;
+        }
+    }
+    check(grid.safe(realm.hero().column(), realm.hero().row()), "she walks into the town");
+    check(hid && !realm.summoned()->alive(), "and her Golem goes out of the picture there");
+    check(!early, "not before she stands on a safe tile");
+    const sim::HeroRecord kept = realm.record();
+    checkEqual((long long)kept.summonSkill, (long long)sim::skill::kSummonGolem,
+               "still hers in the save while hidden");
+    walk(edge + 5);
+    // Raised at the start of her tick (Realm::heroBefore): the tick after the one that walked
+    // her off the town.
+    int offFor = 0, cameAt = -1;
+    for (int tick = 0; tick < 200; ++tick) {
+        realm.step();
+        if (!grid.safe(realm.hero().column(), realm.hero().row())) ++offFor;
+        if (cameAt < 0 && realm.summoned()->alive()) cameAt = offFor;
+    }
+    checkEqual((long long)cameAt, 2LL,
+               "the tick after she stands off the town, her Golem stands again");
+    check(realm.summoned()->alive() && realm.summoned()->id == golemId &&
+              realm.summoned()->summonedBy == sim::skill::kSummonGolem,
+          "the same Golem, beside her out of the town");
+    std::printf("  hidden at %d health, back at %d of %d\n", kept.summonHealth,
+                realm.summoned()->health, realm.summoned()->maxHealth);
+    check(realm.summoned()->health >= kept.summonHealth / 2 &&
+              realm.summoned()->health <= realm.summoned()->maxHealth,
+          "at the health it was hidden with");
+    // And saved in town, restored in town: raised only once she steps out.
+    sim::Realm again;
+    again.raise(&tables, 5, edge - 1, edgeRow, sim::Kin::FairyElf, 40);
+    again.spend(0, 0, 0, 150);
+    again.learn(sim::skill::kSummonGolem);
+    sim::HeroRecord saved = again.record();
+    saved.summonSkill = sim::skill::kSummonGolem;
+    saved.summonHealth = 100;
+    again.restore(saved);
+    for (int tick = 0; tick < 20; ++tick) again.step();
+    check(!again.summoned()->alive() && again.record().summonSkill == sim::skill::kSummonGolem,
+          "a summon saved in town waits there, unraised and still hers");
+    sim::Request out;
+    out.kind = sim::Request::Kind::WalkTo;
+    out.column = edge + 5;
+    out.row = edgeRow;
+    again.ask(out);
+    for (int tick = 0; tick < 200; ++tick) again.step();
+    check(again.summoned()->alive() && again.summoned()->health == 100,
+          "and stands beside her at its saved health once she walks out");
 }
 
 // The user, 2026-10-02: "summons should get aggro if he does some damage". A monster on her
@@ -5090,6 +5191,60 @@ void testWishDropsOnWalk(const content::Tables& tables) {
         }
     }
     checkEqual(again, 0, "and a walk ordered as it ends drops the press he made during it");
+}
+
+// A chain's link asks at least its floor's trip (the user, 2026-10-09: "if LT4 has lvl requirment,
+// that means that also Tersia quest has to be synced"): the Pit at Dungeon 3's 100, the Red Floor at
+// the fourth floor's 120, the Catacombs at the stair's 40. The Orb of Penetration off the Pit, on
+// Rolling Fire. And Lirien marked for Peia's errand before she is spoken to.
+void testChainLevels() {
+    std::printf("chain levels\n");
+    content::Tables lorencia, atlans;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur",
+                              lorencia, error), "Lorencia's tables load");
+    sim::Realm realm;
+    check(realm.raise(&lorencia, 7, 140, 125, sim::Kin::DarkKnight, 90), "a knight at 90");
+    checkEqual(realm.questLevel(3), 40, "the Catacombs from 40");
+    checkEqual(realm.questLevel(5), 100, "the Pit from 100, Dungeon 3's");
+    checkEqual(realm.questLevel(sim::questIndexOf("tersia_4")), 120, "the Red Floor from 120");
+    checkEqual(realm.questLevel(sim::questIndexOf("tersia_door")), 0, "Tersia's first asks nothing");
+    sim::HeroRecord record = realm.record();
+    for (int q : {3, 4}) {
+        record.quests[q].state = sim::QuestState::Resting;
+        record.quests[q].completions = 1;
+    }
+    realm.restore(record);
+    check(realm.questLocked(5), "the Pit waits at 90");
+    sim::Realm strong;
+    check(strong.raise(&lorencia, 7, 140, 125, sim::Kin::DarkKnight, 100), "and a knight at 100");
+    sim::HeroRecord hundred = strong.record();
+    for (int q : {3, 4}) hundred.quests[q] = record.quests[q];
+    strong.restore(hundred);
+    check(strong.questOffered(5), "is offered the Pit");
+    const auto pays = [](const char* key, const char* item) {
+        const sim::QuestRow& row = sim::questAt(sim::questIndexOf(key));
+        for (int i = 0; i < row.paidCount; ++i) {
+            if (row.paid[i].item && std::string(row.paid[i].item) == item) return true;
+        }
+        return false;
+    };
+    check(!pays("pit", "OrbPenetration"), "the Pit pays no Orb of Penetration");
+    check(pays("tersia_6", "OrbPenetration"), "Rolling Fire does");
+
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/atlans/atlans.mur", atlans,
+                              error), "Atlans's tables load");
+    sim::Realm sea;
+    check(sea.raise(&atlans, 7, 21, 17, sim::Kin::FairyElf, 80), "an elf in Atlans");
+    checkEqual(sea.questHere(sim::kLirienNumber), sim::kLirienNumber >= 0 ? sim::questIndexOf("lirien_halls") : -1,
+               "before the errand, Lirien stands behind her own quest");
+    record = sea.record();
+    record.quests[sim::kDrownedSong].state = sim::QuestState::Active;
+    sea.restore(record);
+    checkEqual(sea.questHere(sim::kLirienNumber), sim::kDrownedSong,
+               "with Peia's errand under way, Lirien stands behind it");
+    check(sea.questMeets(sim::kDrownedSong, sim::kLirienNumber), "marked for its hand-in");
+    check(!sea.questMeets(sim::kDrownedSong, 257), "and not at Peia");
 }
 
 // A Dungeon floor's trip waits on its link of the Golden Archer's chain (ours, the user,
@@ -7898,7 +8053,8 @@ void testRunes(const content::Tables& tables) {
     // Catacombs again once its twelve hours are up.
     {
         sim::Realm realm;
-        check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkKnight, 40), "a chain realm raises");
+        // At 100, the Pit's own (its floor's trip, Realm::questLevel, 2026-10-09).
+        check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkKnight, 100), "a chain realm raises");
         realm.setWallClock(1000000);
         checkEqual(realm.questHere(236), 3, "the Golden Archer offers the Catacombs first");
         check(realm.questLocked(4) && realm.questLocked(5), "the Halls and the Pit wait on it");
@@ -11301,6 +11457,7 @@ int main() {
     testSummons(tables);
     testSummonAggro(tables);
     testSummonKeepsUp(tables);
+    testSummonShelters(tables);
     testSummonOnAHunt(tables);
     testGates(tables);
     testDungeonGates(tables);
@@ -11326,6 +11483,7 @@ int main() {
     testPoisonOnce();
     testWishDropsOnWalk(tables);
     testTravelQuestLock();
+    testChainLevels();
     testBoxes(tables);
     testNova(tables);
     testFirecracker(tables);

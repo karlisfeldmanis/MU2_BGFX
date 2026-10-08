@@ -649,7 +649,8 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         if (const uint32_t id = play.wardenBody(int(i)); id != 0) play.shownAt(id, &column, &row);
         Glyph glyph = Glyph::Folk;
         if (const int quest = realm.questHere(one.number); quest >= 0) {
-            const bool ready = realm.quest(quest).state == sim::QuestState::Ready;
+            const bool ready = realm.quest(quest).state == sim::QuestState::Ready ||
+                               realm.questMeets(quest, one.number);
             if (ready || realm.questOffered(quest)) {
                 giver = int(i);
                 giverGlyph = ready ? Glyph::HandIn : Glyph::Offer;

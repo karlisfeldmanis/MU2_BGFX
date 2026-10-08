@@ -248,16 +248,19 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
     for (int folk : play.questGivers()) {
         // While he has something for the hero or is waiting on him: the quest on offer, under
         // way, or its hand-in. Resting until it is his to give again, he is a townsperson.
-        const int quest = realm.questHere(realm.tables()->folk[size_t(folk)].number);
-        const bool ready = quest >= 0 && realm.quest(quest).state == sim::QuestState::Ready;
+        const int32_t number = realm.tables()->folk[size_t(folk)].number;
+        const int quest = realm.questHere(number);
+        // Ready, or the errand that only asks him to find her (Realm::questMeets): a yellow "?".
+        const bool ready = quest >= 0 && (realm.quest(quest).state == sim::QuestState::Ready ||
+                                          realm.questMeets(quest, number));
         // One who only takes a quest back (Lirien) is marked only while it waits for her.
-        if (quest < 0 && sim::questOf(realm.tables()->folk[size_t(folk)].number) < 0) continue;
+        if (quest < 0 && sim::questOf(number) < 0) continue;
         // No quest of his in the table, or his waiting on another -- Devin's, until Lorencia or
         // Noria is cleared: one still to come (Play::questGivers), a grey "!". And
         // his quest taken and under way, a grey "?", as WoW marks one not yet done (the user,
         // 2026-09-30: Devin's mark was gone once his quest was taken).
         const bool later = quest < 0 || realm.questLocked(quest);
-        const bool underway = quest >= 0 && realm.quest(quest).state == sim::QuestState::Active;
+        const bool underway = quest >= 0 && !ready && realm.quest(quest).state == sim::QuestState::Active;
         if (quest >= 0 && !realm.questOffered(quest) && !ready && !underway && !later) continue;
         // Cleared once already: its offer and hand-in in blue, a repeat (the user, 2026-10-01).
         // Under way it stays the grey "?".

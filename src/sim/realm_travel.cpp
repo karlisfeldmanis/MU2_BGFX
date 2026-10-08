@@ -21,7 +21,9 @@ constexpr TravelRow kRows[kTravels] = {
     {"Lorencia", 0, 1, 2000, 142, 126, 0, 0, "lorencia"},
     {"Noria", 3, 1, 2000, 174, 112, 0, 0, "noria"},
     {"Devias", 2, 40, 2000, 207, 42, 0, 0, "devias"},
-    {"Dungeon", 1, 60, 3000, 108, 247, -1, -1, "dungeon"},
+    // The first floor at the stair's 40, not 60 (the user, 2026-10-09): the Catacombs are offered
+    // from 40 (2026-10-08), and a link asks at least its floor's trip (Realm::questLevel).
+    {"Dungeon", 1, 40, 3000, 108, 247, -1, -1, "dungeon"},
     {"Dungeon 2", 1, 80, 3500, 232, 126, -1, -1, "dungeon_2"},
     {"Dungeon 3", 1, 100, 4000, 3, 84, 1, -1, "dungeon_3"},
     // `Gates.cs:51-57` (docs/lost-tower-port.md §2.3): LostTower lands in the safe hall, on spawn

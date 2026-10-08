@@ -113,6 +113,9 @@ constexpr int64_t kOwnForgotten = 40;
 // is drawn where it was, and the line is too poor to hide anyway.
 constexpr int kMostLead = 8;
 constexpr float kTickMs = 50.0f;  // the realm's 20 Hz (server/src/main.cpp kTickSeconds)
+// A Ping's answer read this long after the pump before it is not a round trip: it may have sat
+// unread for all of that. See RemoteLink::pump.
+constexpr auto kUnreadMost = std::chrono::milliseconds(250);
 
 }  // namespace
 
@@ -228,6 +231,17 @@ void RemoteLink::ping() {
 void RemoteLink::pump() {
     if (!socket_.open()) return;
     const auto now = Clock::now();
+    // How long what is read now may have waited unread: since the last pump. Joining a world
+    // with anyone in it, the first Ping goes out in `join`, while the world's past is fetched,
+    // and its answer is not read until the world has loaded behind the spinner -- one to five
+    // seconds later -- and was taken for the round trip: "the hero led 8 ticks (2930 ms round
+    // trip)" on a 30 ms line, and as much after every map change. Led 400 ms ahead of a server
+    // that took his click in 50, he was carried six ticks on in one the moment it did, and slid
+    // back a tick at a time as the number came down (the user, 2026-10-09: "character moves
+    // very fast ... maybe it's related with big ping when changing worlds").
+    const bool unread = pumpedAt_ != Clock::time_point{} && now - pumpedAt_ > kUnreadMost;
+    pumpedAt_ = now;
+    bool askAgain = false;
     while (!outHeld_.empty() && outHeld_.front().due <= now && socket_.open()) {
         if (!socket_.send(outHeld_.front().bytes)) {
             core::logError("server: the connection is gone");
@@ -301,7 +315,14 @@ void RemoteLink::pump() {
         } else if (ok && kind == net::Kind::Ping) {
             net::Ping pong;
             ok = net::parse(body, pong);
-            if (ok && pingOut_ && pong.nonce == pingNonce_) {
+            if (ok && pingOut_ && pong.nonce == pingNonce_ && unread) {
+                // Not counted, and asked again at once: Play::settle holds the world back until
+                // a round trip is in, so the first one counted is a true one.
+                pingOut_ = false;
+                askAgain = true;
+                core::logf("server: a Ping's answer sat up to %.0f ms unread; not counted, asked again",
+                           double(std::chrono::duration<float, std::milli>(now - pingAt_).count()));
+            } else if (ok && pingOut_ && pong.nonce == pingNonce_) {
                 const float ms = std::chrono::duration<float, std::milli>(
                                      std::chrono::steady_clock::now() - pingAt_).count();
                 // 0.7 / 0.3: about six samples to reflect a 63% change, so a spike shows in a
@@ -328,7 +349,7 @@ void RemoteLink::pump() {
     // A Ping a second, the next only once the last is back (or lost for five): the readout
     // stays live whether he moves or not.
     const float since = std::chrono::duration<float>(std::chrono::steady_clock::now() - pingAt_).count();
-    if (since >= (pingOut_ ? 5.0f : 1.0f)) ping();
+    if (askAgain || since >= (pingOut_ ? 5.0f : 1.0f)) ping();
     check();
 }
 
