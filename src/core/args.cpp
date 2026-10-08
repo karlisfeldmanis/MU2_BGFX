@@ -360,6 +360,8 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--arena-learn")) {
             if (const char* v = next(s)) a.arenaLearn = std::atoi(v);
+        } else if (!std::strcmp(s, "--arena-gap")) {
+            if (const char* v = next(s)) a.arenaGap = std::max(0, std::atoi(v));
         } else if (!std::strcmp(s, "--arena-undying")) {
             a.arenaUndying = true;
         } else if (!std::strcmp(s, "--wing-demo")) {

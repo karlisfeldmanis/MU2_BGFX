@@ -293,6 +293,7 @@ bool PlayMode::open(Context& ctx) {
                 arena.undying = args.arenaUndying;
                 arena.wingDemo = args.wingDemo;
                 arena.peaceful = args.peaceful;
+                arena.gap = args.arenaGap;
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }

@@ -195,6 +195,7 @@ struct Args {
     // spaces are ignored. A name that matches nothing lists what the map has and fails the run.
     std::string arena;
     int arenaCount = 1;
+    int arenaGap = 0;  // `--arena-gap N`: the breed N tiles east, rooted (Play::Arena::gap)
     int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
     bool wingDemo = false;      // `--wing-demo`: every kill in Icarus leaves the first wings

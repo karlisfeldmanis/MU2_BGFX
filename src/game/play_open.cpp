@@ -150,6 +150,12 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         one.x2 = column + Arena::kSpread;
         one.y1 = row - Arena::kSpread;
         one.y2 = row + Arena::kSpread;
+        if (arena_.gap > 0) {
+            // A file of them N tiles east, rooted: a walk a tile takes a minute.
+            one.x1 = one.x2 = column + arena_.gap;
+            tables_.kinds[size_t(breed)].moveTicks = 1200;
+            tables_.kinds[size_t(breed)].moveRange = 0;
+        }
         tables_.nests.clear();
         tables_.nests.push_back(one);
         core::logf("arena: %u %s on tiles %d..%d by %d..%d, and nothing else of %s's %u spawns "

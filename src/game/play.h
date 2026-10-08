@@ -109,6 +109,10 @@ public:
         // `--peaceful`: no nests at all, breed or none -- a map to walk and run in with nothing
         // to rouse. For looking at locomotion.
         bool peaceful = false;
+        // `--arena-gap N`: the breed stood N tiles east of the hero and rooted there, so her
+        // arrows and bolts are seen crossing the gap (the user, 2026-10-08: "put monsters far away
+        // from elf so we can see bolts flying"). 0 for the ordinary arena round her.
+        int gap = 0;
         // Where the fight happens, and why this tile. Lorencia is the only cooked world, and
         // this is the brightest of the flat, empty, non-safe patches on it -- the grass east of
         // the town, above the spider field. Chosen by reading four of the map's own files
