@@ -46,7 +46,7 @@ public:
     // The level a character on the account must have reached before the Magic Gladiator may be
     // made: OpenMU's LevelRequirementByCreation (ClassMagicGladiator.cs:36). Under it his button
     // stands greyed, as CharMakeWin disables a class it does not offer (CharMakeWin.cpp:292-302).
-    static constexpr int kGladiatorLevel = 220;
+    static constexpr int kGladiatorLevel = sim::kGladiatorLevel;
     bool gladiatorOpen() const;
     static constexpr sim::Kin kClasses[kClassRows] = {sim::Kin::DarkWizard, sim::Kin::DarkKnight,
                                                       sim::Kin::FairyElf,

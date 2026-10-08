@@ -208,10 +208,12 @@ public:
     const sim::Realm& realm() const { return realm_; }
     // Play on a server (docs/sprints/18-the-wire.md): set BEFORE open(), which then joins it and
     // raises the mirror from its Welcome. `--server host:port`.
-    void useServer(const std::string& host, int port, uint64_t token = 0) {
+    void useServer(const std::string& host, int port, uint64_t token = 0,
+                   const std::string& account = std::string()) {
         serverHost_ = host;
         serverPort_ = port;
         serverToken_ = token;
+        serverAccount_ = account;
     }
     // When open() failed because the server has his character in another world: which, and the
     // tile, for the mode to open instead (net::Elsewhere).
@@ -1193,6 +1195,7 @@ private:
     const sim::Realm& realm_ = realmHeld_;
     std::string serverHost_;
     uint64_t serverToken_ = 0;
+    std::string serverAccount_;  // net::Hello::account
     net::Elsewhere elsewhere_;
     std::unique_ptr<sim::Kept> keptFirst_;  // the Welcome's, for the raise (Play::open)
     int serverPort_ = 0;

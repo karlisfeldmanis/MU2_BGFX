@@ -226,7 +226,6 @@ void printUsage() {
         "(strength by default)");
     logf(
         "  --lobby                   the character screen first, then the world he is in\n"
-        "  --roster DIR              the characters in DIR, not the account's own folder\n"
         "  --lobby-pick N            pick pedestal N (0-4)\n"
         "  --lobby-create K          the create window on class K: 0 wizard, 1 knight, 2 elf, 3 MG\n"
         "  --lobby-name S            and S typed into its name\n"
@@ -399,8 +398,6 @@ Args parseArgs(int argc, char** argv) {
             a.fresh = true;
         } else if (!std::strcmp(s, "--lobby")) {
             a.lobby = true;
-        } else if (!std::strcmp(s, "--roster")) {
-            if (const char* v = next(s)) a.rosterPath = v;
         } else if (!std::strcmp(s, "--lobby-pick")) {
             if (const char* v = next(s)) a.lobbyPick = std::atoi(v);
         } else if (!std::strcmp(s, "--lobby-create")) {

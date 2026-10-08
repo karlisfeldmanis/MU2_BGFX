@@ -6,12 +6,9 @@
 #   ./main.sh --windowed          in a 1920x1080 window instead
 #   ./main.sh --no-vsync          torn rather than paced to the refresh; --cap still holds
 #   ./main.sh --scale 1           every pixel the display has, rather than 85% magnified
-#   ./main.sh --roster DIR        characters from DIR instead of your own folder
-#   ./main.sh --server 37.27.158.226
-#                                 play on the Hetzner server (server/README.md): the character
-#                                 you pick is the server's from his first time there, kept on
-#                                 its disk under a token beside his save (Name.server), and
-#                                 nothing played there is written over your characters here
+#   ./main.sh --server HOST[:PORT]
+#                                 another server than the Hetzner box (37.27.158.226), which the
+#                                 character screen asks for your characters by default
 #
 # The game menu's Options -- fullscreen or windowed, the window's size, v-sync, volume and the
 # frame counter -- are kept in saves/options.txt in this folder and the next run
@@ -27,9 +24,10 @@
 #   left click on a monster ...... go and fight it until one of you is dead
 #   right click .................. stop
 #
-# Your characters live in saves/characters in this folder, one file each. The
-# first run takes the old hero.json in as "DarkKnight" in slot 0 and leaves hero.json where it
-# is. A deleted character is moved to characters/deleted/, not erased.
+# Your characters are the server's (docs/sprints/23-the-account.md): the screen asks for them with
+# your account's key, saves/account.key, made the first time, and makes and deletes them by asking.
+# A character this machine played there before accounts (saves/characters/Name.server) is claimed
+# onto it. Nothing about a character is written here but his windows' layout, saves/layouts/.
 #
 # `--new` passes the character screen by and puts a fresh one straight into Lorencia, which is
 # what a quick try of one thing wants:

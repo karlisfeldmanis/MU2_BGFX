@@ -316,10 +316,12 @@ bool PlayMode::open(Context& ctx) {
                 // The game's first world on this server: his token from beside his save, kept from
                 // the last run, so the server brings him back (game::loadServerToken). A fresh run
                 // is a new character.
-                if (args.serverToken == 0 && !savePath_.empty() && !args.fresh) {
+                // Not a character of an account: the screen handed his token over, and the server
+                // keeps him (game/roster.h).
+                if (args.account.empty() && args.serverToken == 0 && !savePath_.empty() && !args.fresh) {
                     args.serverToken = game::loadServerToken(savePath_, server);
                 }
-                world_.played().useServer(host, port, args.serverToken);
+                world_.played().useServer(host, port, args.serverToken, args.account);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
@@ -337,7 +339,7 @@ bool PlayMode::open(Context& ctx) {
             // The server's token for him, for the next world's Hello and the next run.
             if (world_.played().remote()) {
                 args.serverToken = world_.played().serverToken();
-                if (!savePath_.empty() && args.serverToken != 0) {
+                if (args.account.empty() && !savePath_.empty() && args.serverToken != 0) {
                     game::keepServerToken(savePath_, server, args.serverToken);
                 }
             }

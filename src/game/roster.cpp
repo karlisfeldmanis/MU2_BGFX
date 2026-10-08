@@ -6,8 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <filesystem>
-#include <fstream>
-#include <sstream>
+#include <random>
 
 #include "core/args.h"
 #include "core/log.h"
@@ -20,200 +19,102 @@ namespace {
 
 namespace fs = std::filesystem;
 
-std::string lowered(const std::string& s) {
-    std::string out = s;
-    for (char& c : out) c = char(std::tolower(static_cast<unsigned char>(c)));
-    return out;
-}
-
-// The old single save, taken in as slot 0 the first time the roster is read. Copied as text
-// with the name and slot put in after the opening brace, so nothing in it passes through a
-// reader and a writer that might not agree on a field.
-void adoptOldHero(const fs::path& folder) {
-    const fs::path old = folder.parent_path() / "hero.json";
-    std::error_code error;
-    if (!fs::exists(old, error)) return;
-    Saved saved;
-    if (!loadSave(old.string(), saved)) return;
-    std::ifstream in(old);
-    std::stringstream text;
-    text << in.rdbuf();
-    std::string body = text.str();
-    const size_t brace = body.find('{');
-    if (brace == std::string::npos) return;
-    // Named for his class: he was made before characters had names. "DarkKnight" is ten
-    // letters, which is exactly what the rule allows.
-    const std::string name = saved.hero.kin == sim::Kin::DarkWizard       ? "DarkWizard"
-                             : saved.hero.kin == sim::Kin::FairyElf       ? "FairyElf"
-                             : saved.hero.kin == sim::Kin::MagicGladiator ? "Gladiator"
-                                                                          : "DarkKnight";
-    body.insert(brace + 1, "\n  \"name\": \"" + name + "\",\n  \"slot\": 0,");
-    fs::create_directories(folder, error);
-    const fs::path to = folder / (name + ".json");
-    std::ofstream out(to);
-    out << body;
-    if (!out) {
-        core::logError("roster: could not take %s in as %s", old.string().c_str(),
-                       to.string().c_str());
-        return;
-    }
-    core::logf("roster: took the old hero.json in as %s in slot 0 (the old file is kept)",
-               name.c_str());
-}
-
 }  // namespace
 
-std::string rosterFolder() {
-    return core::userFolder() + "/characters";
+std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tables) {
+    std::vector<Seat> seats;
+    for (const net::Seat& one : roster.seats) {
+        Seat seat;
+        seat.name = one.name;
+        seat.token = one.token;
+        seat.world = one.world;
+        seat.slot = one.slot;
+        seat.kin = sim::Kin(std::min<int>(one.kin, int(sim::Kin::MagicGladiator)));
+        seat.second = one.second;
+        seat.level = std::max(1, one.level);
+        for (const net::Seat::Worn& w : one.worn) {
+            const sim::Held& h = w.held;
+            if (h.empty() || size_t(h.item) >= tables.items.size()) continue;
+            const content::ItemRow& row = tables.items[size_t(h.item)];
+            Saved::Item item;
+            item.slot = w.slot;
+            item.group = row.group;
+            item.number = row.number;
+            item.plus = h.refinement;
+            item.durability = h.durability;
+            item.skill = h.skill;
+            item.luck = h.luck;
+            item.option = h.option;
+            item.excellent = h.excellent;
+            item.sockets = h.sockets;
+            for (int i = 0; i < 3; ++i) {
+                item.powers[i] = h.powers[i];
+                item.affixes[i] = h.affixes[i];
+            }
+            item.wing = h.wing;
+            item.worn = true;
+            seat.items.push_back(item);
+        }
+        seats.push_back(std::move(seat));
+    }
+    std::sort(seats.begin(), seats.end(), [](const Seat& a, const Seat& b) { return a.slot < b.slot; });
+    return seats;
 }
 
-std::vector<Seat> readRoster(const std::string& folderPath) {
-    const fs::path folder(folderPath);
-    std::error_code error;
-    const auto saves = [&]() {
-        std::vector<fs::path> found;
-        if (!fs::is_directory(folder, error)) return found;
-        for (const fs::directory_entry& entry : fs::directory_iterator(folder, error)) {
-            // The vault's own file is no character: it lives beside the account's folder, but
-            // a --roster folder of any other name has it written in among the characters
-            // (game/save.h's vaultPathBeside), where it was read as one called "vault".
-            if (entry.is_regular_file() && entry.path().extension() == ".json" &&
-                entry.path().filename() != "vault.json") {
-                found.push_back(entry.path());
-            }
-        }
-        std::sort(found.begin(), found.end());
-        return found;
-    };
-    // Taken in only while there is no folder yet: once there is one, an empty roster is one
-    // whose characters were all deleted, and the old hero coming back was a fifth undead.
-    const bool first = !fs::exists(folder, error);
-    std::vector<fs::path> files = saves();
-    if (files.empty() && first) {
-        adoptOldHero(folder);
-        files = saves();
+std::string accountKey() {
+    const fs::path path = fs::path(core::userFolder()) / "account.key";
+    std::string key;
+    if (std::FILE* f = std::fopen(path.string().c_str(), "rb")) {
+        char line[net::kMostKey + 2] = {};
+        if (std::fgets(line, sizeof line, f)) key = line;
+        std::fclose(f);
+        while (!key.empty() && (key.back() == '\n' || key.back() == '\r' || key.back() == ' ')) key.pop_back();
+        if (key.size() >= 16) return key;
     }
+    std::random_device entropy;
+    char made[33] = {};
+    for (int i = 0; i < 4; ++i) std::snprintf(made + i * 8, 9, "%08x", unsigned(entropy()));
+    key = made;
+    std::FILE* f = std::fopen(path.string().c_str(), "wb");
+    if (!f || std::fprintf(f, "%s\n", key.c_str()) < 0 || std::fclose(f) != 0) {
+        core::logError("account: cannot write %s; this run's account is its own", path.string().c_str());
+    } else {
+        core::logf("account: a new key in %s", path.string().c_str());
+    }
+    return key;
+}
 
-    std::vector<Seat> roster;
-    bool taken[kRosterSlots] = {};
-    std::vector<Seat> unplaced;
-    for (const fs::path& path : files) {
-        Saved saved;
-        if (!loadSave(path.string(), saved)) continue;
-        Seat one;
-        one.name = saved.name.empty() ? path.stem().string() : saved.name;
-        one.path = path.string();
-        one.world = saved.world;
-        one.slot = saved.slot;
-        one.kin = saved.hero.kin;
-        one.second = sim::promoted(saved.hero.quests, int(saved.hero.kin));
-        one.level = std::max(1, saved.hero.level);
-        one.fresh = saved.fresh;
-        one.items = std::move(saved.items);
-        if (one.slot >= 0 && one.slot < kRosterSlots && !taken[one.slot]) {
-            taken[one.slot] = true;
-            roster.push_back(std::move(one));
-        } else {
-            unplaced.push_back(std::move(one));
-        }
-    }
-    // A file with no slot, or one another file already holds, goes in the first free one.
-    // More than five and the rest are not shown, and the log says who.
-    for (Seat& one : unplaced) {
-        int free = -1;
-        for (int s = 0; s < kRosterSlots && free < 0; ++s) {
-            if (!taken[s]) free = s;
-        }
-        if (free < 0) {
-            core::logError("roster: %s has no pedestal left and is not shown", one.name.c_str());
+std::vector<net::Claim> claimsFor(const std::string& server) {
+    std::vector<net::Claim> claims;
+    const fs::path folder = fs::path(core::userFolder()) / "characters";
+    std::error_code error;
+    if (!fs::is_directory(folder, error)) return claims;
+    for (const fs::directory_entry& entry : fs::directory_iterator(folder, error)) {
+        if (!entry.is_regular_file() || entry.path().extension() != ".json" ||
+            entry.path().filename() == "vault.json") {
             continue;
         }
-        taken[free] = true;
-        one.slot = free;
-        roster.push_back(std::move(one));
+        const uint64_t token = loadServerToken(entry.path().string(), server);
+        if (token == 0) continue;
+        Saved saved;
+        if (!loadSave(entry.path().string(), saved)) continue;
+        claims.push_back({token, saved.name.empty() ? entry.path().stem().string() : saved.name, saved.slot});
+        if (claims.size() >= size_t(kRosterSlots)) break;
     }
-    std::sort(roster.begin(), roster.end(),
-              [](const Seat& a, const Seat& b) { return a.slot < b.slot; });
-    core::logf("roster: %zu character(s) in %s", roster.size(), folderPath.c_str());
-    return roster;
+    return claims;
 }
 
-Refusal refusalOf(const std::string& folder, const std::vector<Seat>& roster,
-                  const std::string& name) {
-    if (int(roster.size()) >= kRosterSlots) return Refusal::NoRoom;
-    if (name.size() < 4) return Refusal::TooShort;
-    if (name.size() > size_t(kNameLetters)) return Refusal::Symbols;
-    for (const char c : name) {
-        if (!std::isalnum(static_cast<unsigned char>(c))) return Refusal::Symbols;
-    }
-    const std::string low = lowered(name);
-    for (const Seat& one : roster) {
-        if (lowered(one.name) == low) return Refusal::Taken;
-    }
-    // A file of that name in the folder that the roster did not show -- a sixth character, or
-    // one that did not read -- is taken all the same, or the new one would write over it.
-    std::error_code error;
-    if (fs::exists(fs::path(folder) / (name + ".json"), error)) return Refusal::Taken;
-    return Refusal::None;
-}
-
-bool makeCharacter(const std::string& folderPath, const std::vector<Seat>& roster,
-                   const std::string& name, sim::Kin kin) {
-    if (refusalOf(folderPath, roster, name) != Refusal::None) return false;
-    bool taken[kRosterSlots] = {};
-    for (const Seat& one : roster) {
-        if (one.slot >= 0 && one.slot < kRosterSlots) taken[one.slot] = true;
-    }
-    int slot = -1;
-    for (int s = 0; s < kRosterSlots && slot < 0; ++s) {
-        if (!taken[s]) slot = s;
-    }
-    if (slot < 0) return false;
-    const fs::path folder(folderPath);
+std::string layoutBase(const std::string& name) {
+    const fs::path folder = fs::path(core::userFolder()) / "layouts";
     std::error_code error;
     fs::create_directories(folder, error);
-    const fs::path path = folder / (name + ".json");
-    // Where the class is born: the Fairy Elf in Noria, the elves' town, and the knight and the
-    // wizard in Lorencia, as in MU and as MU2's server started them (the user, 2026-09-28:
-    // "created elf, spawned at lorencia not noria"). She comes in on Noria's spawn gate
-    // (game/world/maps.h). The source for MU's own table is not on this machine to cite.
-    const char* home = sim::homeWorld(kin);
-    std::FILE* f = std::fopen(path.string().c_str(), "wb");
-    if (!f) {
-        core::logError("roster: cannot write %s", path.string().c_str());
-        return false;
-    }
-    std::fprintf(f,
-                 "{\n  \"version\": 1,\n  \"name\": \"%s\",\n  \"slot\": %d,\n  \"fresh\": true,\n"
-                 "  \"world\": \"%s\",\n  \"class\": %d,\n  \"level\": 1\n}\n",
-                 name.c_str(), slot, home, int(kin));
-    const bool ok = std::fclose(f) == 0;
-    if (ok) {
-        core::logf("roster: made %s, a %s, in slot %d, born in %s", name.c_str(), className(kin),
-                   slot, home);
-    }
-    return ok;
+    return (folder / (name + ".json")).string();
 }
 
-bool dropCharacter(const std::string& folderPath, const Seat& who) {
-    const fs::path bin = fs::path(folderPath) / "deleted";
-    std::error_code error;
-    fs::create_directories(bin, error);
-    char stamp[32];
-    const std::time_t now = std::time(nullptr);
-    std::strftime(stamp, sizeof stamp, "%Y%m%d-%H%M%S", std::localtime(&now));
-    const fs::path to = bin / (who.name + "-" + stamp + ".json");
-    fs::rename(who.path, to, error);
-    if (error) {
-        core::logError("roster: could not move %s aside: %s", who.path.c_str(),
-                       error.message().c_str());
-        return false;
-    }
-    // And his server's token with him, so a new character of the same name is not given his.
-    const fs::path token = fs::path(who.path).replace_extension(".server");
-    if (fs::exists(token, error)) fs::rename(token, fs::path(to).replace_extension(".server"), error);
-    core::logf("roster: deleted %s (kept as %s)", who.name.c_str(), to.string().c_str());
-    return true;
+Refusal refusalOf(const std::string& name) {
+    if (name.size() < size_t(sim::kNameFewest)) return Refusal::TooShort;
+    if (!sim::goodName(name)) return Refusal::Symbols;
+    return Refusal::None;
 }
 
 const char* cradleWeapon(sim::Kin kin) { return sim::cradleWeapon(kin); }

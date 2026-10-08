@@ -141,16 +141,58 @@ void gatherMist(const content::Ground& ground, bgfx::TextureHandle sheet, float 
 
 }  // namespace
 
-void LobbyMode::reread() {
-    roster_ = game::readRoster(folder_);
+void LobbyMode::answered(const net::Roster& roster) {
+    roster_ = game::seatsOf(roster, tables_);
     pedestals_.raise(roster_);
+    const bool made = !making_.empty(), dropped = deleting_;
+    const std::string name = making_;
+    making_.clear();
+    deleting_ = false;
+    switch (roster.refused) {
+        case net::Refused::None:
+            if (made) {
+                for (const game::Seat& one : roster_) {
+                    if (one.name == name) pedestals_.pick(one.slot);
+                }
+            }
+            if (dropped) {
+                pedestals_.pick(-1);
+                lobby_.notice("Character was deleted successfully.");
+            }
+            return;
+        case net::Refused::Taken:
+            lobby_.notice("Incorrect character name was entered or same character name exists.", true);
+            break;
+        case net::Refused::NoRoom:
+            lobby_.notice("No more characters can be created.");
+            break;
+        case net::Refused::BadName:
+            lobby_.notice("Cannot use symbols.", true);
+            break;
+        case net::Refused::Playing:
+            lobby_.notice("That character is still in the world.");
+            break;
+        case net::Refused::NotYours:
+            lobby_.notice("The character could not be deleted.");
+            break;
+    }
+    if (refused_ >= 0) sound_.play(refused_);
 }
 
 bool LobbyMode::open(Context& ctx) {
     core::Args& args = ctx.args;
     const std::string& assets = ctx.paths.assets;
-    folder_ = args.rosterPath.empty() ? game::rosterFolder() : args.rosterPath;
     entering_ = quitting_ = false;
+    // The server, the Hetzner box unless `--server` names another (net::kDefaultHost).
+    {
+        const std::string named = args.server.empty() ? std::string(net::kDefaultHost) : args.server;
+        const size_t colon = named.rfind(':');
+        host_ = colon == std::string::npos ? named : named.substr(0, colon);
+        port_ = colon == std::string::npos ? net::kDefaultPort : std::atoi(named.c_str() + colon + 1);
+        server_ = host_ + ":" + std::to_string(port_);
+    }
+    making_.clear();
+    deleting_ = false;
 
     world_.setFocusTile(kFocusColumn, kFocusRow);
     const bool up = Preloader::run(ctx, [&]() {
@@ -190,7 +232,15 @@ bool LobbyMode::open(Context& ctx) {
         if (!ctx.renderer.openStages(ctx.paths.shaders)) {
             core::logError("lobby: the stage programs did not open; the bust will not draw");
         }
-        roster_ = game::readRoster(folder_);
+        // The account's characters, from the server: the key made once on this machine, and any
+        // character it played there before accounts claimed onto it (game/roster.h).
+        key_ = game::accountKey();
+        net::Account account;
+        account.key = key_;
+        account.claims = game::claimsFor(server_);
+        net::Roster answer;
+        offline_ = !link_.open(host_, port_, account, answer);
+        roster_ = offline_ ? std::vector<game::Seat>{} : game::seatsOf(answer, tables_);
         pedestals_.raise(roster_);
 
         core::Loading::stage("the interface", 0.85f, 0.95f);
@@ -268,12 +318,17 @@ bool LobbyMode::open(Context& ctx) {
     if (args.lobbyDelete && pedestals_.picked() >= 0) lobby_.askDelete();
     // With nobody on the account the create window opens by itself (CCharSelMainWin), on the
     // knight unless --lobby-create opened it on another class.
-    if (roster_.empty() && !lobby_.creating()) lobby_.openCreate(1);
+    if (offline_) {
+        lobby_.notice("Cannot reach the server.", true);
+    } else if (roster_.empty() && !lobby_.creating()) {
+        lobby_.openCreate(1);
+    }
 
     fading_ = args.frames == 0 || args.entrance;
     fadeSeconds_ = 0.0f;
-    core::logf("lobby: %zu character(s) on world 74; %s", roster_.size(),
-               roster_.empty() ? "the create window is up" : "pick one and enter");
+    core::logf("lobby: %zu character(s) on world 74 from %s; %s", roster_.size(), server_.c_str(),
+               offline_ ? "the server did not answer"
+               : roster_.empty() ? "the create window is up" : "pick one and enter");
     return true;
 }
 
@@ -284,11 +339,13 @@ void LobbyMode::enter(Context& ctx, int slot) {
     }
     if (!who) return;
     core::Args& args = ctx.args;
-    // StartGame(): the pick's save, its world and its class go to the world as the run's own
-    // arguments. PlayMode reads the save and makes a fresh one as a new character is made.
-    args.savePath = who->path;
-    // A server's word is for one character: the one chosen reads his own from beside his save.
-    args.serverToken = 0;
+    // StartGame(): the pick's token, its world and its class go to the world as the run's own
+    // arguments, and the server brings him in as it keeps him -- or makes him, never played.
+    // The save path is only where his windows' layout is kept (game::layoutBase).
+    args.server = server_;
+    args.serverToken = who->token;
+    args.account = key_;
+    args.savePath = game::layoutBase(who->name);
     args.world = who->world.empty() ? std::string("lorencia") : who->world;
     args.play = true;
     args.fresh = false;
@@ -298,6 +355,7 @@ void LobbyMode::enter(Context& ctx, int slot) {
     args.weapon.clear();
     args.shield.clear();
     entering_ = true;
+    link_.close();
     // iButtonMove, the user's pick for Enter World (sounds.json's world_enter): on the
     // preloader's engine, since this screen's own sound goes with it on the handoff.
     const content::SoundEvent* cue = showing_.event("world_enter");
@@ -383,35 +441,32 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
     if (asked.refused) play(refused_);
     if (asked.pick != -2) pedestals_.pick(asked.pick);
     if (asked.menu) menu_.show();
+    // The server's answers: the roster after an ask, and a line that went.
+    {
+        net::Roster answer;
+        const bool wasUp = link_.up();
+        if (link_.poll(answer)) answered(answer);
+        if (wasUp && !link_.up()) lobby_.notice("The connection to the server is gone.", true);
+    }
     if (asked.create) {
-        // The roster's refusals, which the client could not see: the name taken, no room.
-        switch (game::refusalOf(folder_, roster_, asked.name)) {
+        // The screen's own refusals before the server's (sim::goodName); the rest are the
+        // server's to say -- the name taken, no room -- in its Roster.
+        switch (game::refusalOf(asked.name)) {
             case game::Refusal::None:
-                if (game::makeCharacter(folder_, roster_, asked.name, asked.kin)) {
-                    reread();
-                    for (const game::Seat& one : roster_) {
-                        if (one.name == asked.name) pedestals_.pick(one.slot);
-                    }
-                } else {
-                    lobby_.notice("The character could not be written.", true);
+                if (!link_.up()) {
+                    lobby_.notice("Cannot reach the server.", true);
                     play(refused_);
+                } else if (making_.empty() && !deleting_) {
+                    making_ = asked.name;
+                    link_.create(asked.name, uint8_t(asked.kin));
                 }
-                break;
-            case game::Refusal::NoRoom:
-                lobby_.notice("No more characters can be created.");
-                play(refused_);
                 break;
             case game::Refusal::TooShort:
                 lobby_.notice("Type more than 4 letters", true);
                 play(refused_);
                 break;
-            case game::Refusal::Symbols:
+            default:
                 lobby_.notice("Cannot use symbols.", true);
-                play(refused_);
-                break;
-            case game::Refusal::Taken:
-                lobby_.notice(
-                    "Incorrect character name was entered or same character name exists.", true);
                 play(refused_);
                 break;
         }
@@ -419,13 +474,12 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
     if (asked.drop >= 0) {
         for (const game::Seat& one : roster_) {
             if (one.slot != asked.drop) continue;
-            if (game::dropCharacter(folder_, one)) {
-                pedestals_.pick(-1);
-                reread();
-                lobby_.notice("Character was deleted successfully.");
-            } else {
-                lobby_.notice("The character could not be deleted.");
+            if (!link_.up()) {
+                lobby_.notice("Cannot reach the server.", true);
                 play(refused_);
+            } else if (making_.empty() && !deleting_) {
+                deleting_ = true;
+                link_.drop(one.token);
             }
             break;
         }
@@ -526,6 +580,7 @@ void LobbyMode::report(Context& ctx) {
 }
 
 void LobbyMode::shutdown(Context& ctx) {
+    link_.close();
     ctx.time.setScene("");
     bust_.shutdown();
     ctx.renderer.closeStages();

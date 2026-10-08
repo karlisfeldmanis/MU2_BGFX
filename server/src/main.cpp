@@ -19,6 +19,11 @@
 // Each tick goes to everyone in the world -- the wall clock, the rain, the commands applied, each
 // with its player -- and every second its hash, which a mirror that disagrees says.
 //
+// **The character screen is the server's too** (phase 6, docs/sprints/23-the-account.md): a
+// connection that opens with Account is answered with the account's characters (Roster), and may
+// then Create and Delete; each is answered with the Roster again. An account is a key the client
+// made once, and its characters are played only with it.
+//
 // A malformed frame drops that connection, never the server.
 
 #include <algorithm>
@@ -41,6 +46,7 @@
 #include "net/socket.h"
 #include "net/wire.h"
 #include "sim/cradle.h"
+#include "sim/quests.h"
 #include "sim/gates.h"
 #include "sim/maps.h"
 #include "sim/travel.h"
@@ -78,6 +84,10 @@ constexpr int kKeepEvery = 60 * 20;
 
 // The characters, by token, on the server's disk.
 server::Store g_store;
+// The item rows a Roster's worn things are read against, and a new character's cradle weapon
+// found in: Lorencia's, as the client's screen dresses its pedestals (an item's row is the same
+// in every world's tables).
+content::Tables g_items;
 
 // Where a character is due next, by token: set when the realm sends him to another world, and
 // written as where he is when his connection goes (placeOf).
@@ -137,7 +147,142 @@ struct Session {
     uint32_t joining = 0;  // his Join's ticket while it waits for its tick
     bool welcomed = false;
     uint64_t token = 0;    // his character's: kept under it when he goes
+    std::string account;   // the character screen's, once an Account has been said
 };
+
+// An account's key: letters and digits the client made (game/account.h), long enough not to be
+// guessed and short enough to be a key.
+bool keyShape(const std::string& key) {
+    if (key.size() < 16 || key.size() > net::kMostKey) return false;
+    for (char c : key) {
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) return false;
+    }
+    return true;
+}
+
+// Whether a token is being played on some connection now.
+bool inPlay(const std::vector<std::unique_ptr<Session>>& sessions, uint64_t token) {
+    for (const auto& other : sessions) {
+        if (other->token == token && other->world != nullptr && other->socket.open()) return true;
+    }
+    return false;
+}
+
+// The account's characters as the screen stands them: his pedestal, his name, his class and level,
+// promoted or not, the world he comes into, and what he wears. One never played is level 1 in his
+// class's town with his class's weapon, as he will be made.
+net::Roster rosterOf(const std::string& account, net::Refused refused) {
+    net::Roster roster;
+    roster.refused = refused;
+    for (const server::Store::Listed& one : g_store.list(account)) {
+        net::Seat seat;
+        seat.token = one.token;
+        seat.slot = one.slot;
+        seat.name = one.name;
+        seat.kin = uint8_t(one.kin);
+        if (one.fresh) {
+            seat.level = sim::kNewLevel;
+            seat.world = sim::homeWorld(one.kin);
+            const int32_t weapon = g_items.itemNamed(sim::cradleWeapon(one.kin));
+            if (weapon >= 0) seat.worn.push_back({uint8_t(sim::kWeaponRight), sim::Held{weapon, 0, 1}});
+        } else {
+            const sim::HeroRecord& hero = one.kept.hero;
+            seat.level = hero.level;
+            seat.second = sim::promoted(hero.quests, int(hero.kin));
+            seat.world = one.world.empty() ? sim::homeWorld(hero.kin) : one.world;
+            for (int slot = 0; slot < sim::kWorn; ++slot) {
+                if (!hero.slots[slot].empty()) seat.worn.push_back({uint8_t(slot), hero.slots[slot]});
+            }
+        }
+        roster.seats.push_back(std::move(seat));
+    }
+    return roster;
+}
+
+bool answer(Session& one, net::Refused refused) {
+    std::vector<uint8_t> out;
+    net::put(out, rosterOf(one.account, refused));
+    return one.socket.send(out);
+}
+
+// The first free pedestal of an account, or -1.
+int freeSlot(const std::string& account) {
+    bool taken[sim::kRosterSlots] = {};
+    for (const server::Store::Listed& one : g_store.list(account)) {
+        if (one.slot >= 0 && one.slot < sim::kRosterSlots) taken[one.slot] = true;
+    }
+    for (int s = 0; s < sim::kRosterSlots; ++s) {
+        if (!taken[s]) return s;
+    }
+    return -1;
+}
+
+// An Account: the key taken, the machine's old characters claimed onto it, the Roster said.
+bool account(Session& one, const net::Account& said) {
+    if (said.version != net::kVersion) {
+        core::logError("%s: version %u, this server speaks %u", one.who.c_str(), said.version, net::kVersion);
+        return false;
+    }
+    if (!keyShape(said.key)) {
+        core::logError("%s: an account key of no shape", one.who.c_str());
+        return false;
+    }
+    one.account = said.key;
+    // Characters this machine played here before accounts: put on it, under the names its saves
+    // gave them, when they are nobody's -- a name already taken, or no pedestal free, leaves him.
+    for (const net::Claim& claim : said.claims) {
+        if (claim.token == 0 || !sim::goodName(claim.name) || g_store.named(claim.name)) continue;
+        int slot = claim.slot;
+        for (const server::Store::Listed& mine : g_store.list(one.account)) {
+            if (mine.slot == slot) slot = -1;
+        }
+        if (slot < 0 || slot >= sim::kRosterSlots) slot = freeSlot(one.account);
+        if (slot < 0) continue;
+        if (g_store.claim(one.account, claim.token, claim.name, slot)) {
+            core::logf("%s: %s claimed onto his account, slot %d", one.who.c_str(), claim.name.c_str(), slot);
+        }
+    }
+    one.who += " (" + one.account.substr(0, 6) + ")";
+    core::logf("%s: at the character screen, %zu character(s)", one.who.c_str(),
+               g_store.list(one.account).size());
+    return answer(one, net::Refused::None);
+}
+
+bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds) {
+    const auto mine = g_store.list(one.account);
+    const sim::Kin kin = sim::Kin(std::min<int>(asked.kin, int(sim::Kin::MagicGladiator)));
+    bool gladiator = false;
+    for (const server::Store::Listed& m : mine) {
+        gladiator = gladiator || (!m.fresh && m.kept.hero.level >= sim::kGladiatorLevel);
+    }
+    net::Refused refused = net::Refused::None;
+    if (!sim::goodName(asked.name)) refused = net::Refused::BadName;
+    else if (kin == sim::Kin::MagicGladiator && !gladiator) refused = net::Refused::BadName;
+    else if (g_store.named(asked.name)) refused = net::Refused::Taken;
+    const int slot = freeSlot(one.account);
+    if (refused == net::Refused::None && slot < 0) refused = net::Refused::NoRoom;
+    if (refused == net::Refused::None) {
+        uint64_t token = 0;
+        do token = seeds(); while (token == 0 || g_store.has(token));
+        if (!g_store.create(token, one.account, asked.name, kin, slot, sim::homeWorld(kin))) {
+            return false;
+        }
+        core::logf("%s: made %s, class %d, slot %d", one.who.c_str(), asked.name.c_str(), int(kin), slot);
+    }
+    return answer(one, refused);
+}
+
+bool drop(Session& one, const net::Delete& asked, const std::vector<std::unique_ptr<Session>>& sessions) {
+    net::Refused refused = net::Refused::None;
+    if (inPlay(sessions, asked.token)) {
+        refused = net::Refused::Playing;
+    } else if (!g_store.remove(one.account, asked.token)) {
+        refused = net::Refused::NotYours;
+    } else {
+        core::logf("%s: deleted %016llx", one.who.c_str(), (unsigned long long)asked.token);
+    }
+    return answer(one, refused);
+}
 
 bool worldName(const std::string& name) {
     // A world's name is a folder under cooked/: letters only, so a Hello cannot name a path.
@@ -247,12 +392,29 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
             other->world = nullptr;
         }
     }
+    // Whose he is: a character of an account is played only with its key, and an account's are
+    // made on the character screen, never by a Hello (phase 6).
+    server::Store::Who whose;
+    const bool known = asked.token != 0 && g_store.who(asked.token, whose);
+    if (known && (whose.deleted || whose.account != asked.account)) {
+        core::logError("%s: %016llx is not his to play", one.who.c_str(), (unsigned long long)asked.token);
+        return false;
+    }
+    if (!known && !asked.account.empty()) {
+        core::logError("%s: no such character on his account", one.who.c_str());
+        return false;
+    }
+    if (known && !whose.name.empty()) one.who += " (" + whose.name + ")";
+    // Made on the screen and never played: made now as a new character, under his own token and
+    // in the class he was made in.
+    const bool fresh = known && whose.fresh;
     // His character, when his token names one the store keeps. Anything else is a new
     // character, and a new token.
     sim::Kept kept;
     std::string keptIn;
-    const bool carried = asked.token != 0 && g_store.find(asked.token, kept, keptIn);
+    const bool carried = asked.token != 0 && !fresh && g_store.find(asked.token, kept, keptIn);
     net::Hello said = asked;
+    if (fresh) said.kin = uint8_t(whose.kin);
     int castle = 0;
     if (carried) {
         one.token = said.token;
@@ -297,7 +459,11 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
             said.row = kept.hero.row;
         }
     } else {
-        do one.token = seeds(); while (one.token == 0 || g_store.has(one.token));
+        if (fresh) {
+            one.token = asked.token;
+        } else {
+            do one.token = seeds(); while (one.token == 0 || g_store.has(one.token));
+        }
         // A new character is the rules', not the client's: level 1, his class's weapon, at his
         // class's town's spawn gate (sim/cradle.h). Of the Hello only the class is his to choose,
         // as in MU's character creation. A first world elsewhere is told where he is born.
@@ -366,7 +532,16 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             core::logError("%s: not our protocol", one.who.c_str());
             return false;
         }
-        if (kind == net::Kind::Hello && one.world == nullptr) {
+        if (kind == net::Kind::Account && one.world == nullptr && one.account.empty()) {
+            net::Account said;
+            if (!net::parse(body, said) || !account(one, said)) return false;
+        } else if (kind == net::Kind::Create && one.world == nullptr && !one.account.empty()) {
+            net::Create asked;
+            if (!net::parse(body, asked) || !create(one, asked, seeds)) return false;
+        } else if (kind == net::Kind::Delete && one.world == nullptr && !one.account.empty()) {
+            net::Delete asked;
+            if (!net::parse(body, asked) || !drop(one, asked, sessions)) return false;
+        } else if (kind == net::Kind::Hello && one.world == nullptr) {
             net::Hello said;
             if (!net::parse(body, said) || !hello(one, said, worlds, sessions, assets, config, seeds)) {
                 return false;
@@ -623,6 +798,10 @@ int main(int argc, char** argv) {
     if (!g_store.open(store, error)) {
         core::logError("%s", error.c_str());
         return 1;
+    }
+    // The roster's item rows (g_items): a server without them stands the screen's characters bare.
+    if (!content::loadTables(assets + "/cooked/lorencia/lorencia.mur", g_items, error)) {
+        core::logError("lorencia's tables: %s; the character screen's figures go bare", error.c_str());
     }
     net::Socket listener;
     if (!listener.listen(port, error)) {

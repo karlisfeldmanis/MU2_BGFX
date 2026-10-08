@@ -1,68 +1,63 @@
 // The account's characters: who stands on the character screen's five pedestals.
 //
-// One save file a character (game/save.h), in `characters/` beside the account's vault, each
-// carrying its own name and slot. MU keeps this on the server as the account's character list
-// (OpenMU's `CharacterList075`); here there is no server and no account but the one on this
-// machine, so the list is whatever that folder holds.
+// **The server's** (server-plan phase 6, docs/sprints/23-the-account.md): the screen asks for them
+// with the account's key (net::Account) and is answered with them (net::Roster), and a character
+// is made and deleted by asking (net::Create, net::Delete). Nothing about a character is kept on
+// this machine -- the user, 2026-10-08: "we are going away from local saves, we have to use
+// server/client envorment". What is: the account's key, made once, and his windows' layout.
 //
-// The rules are OpenMU's and MuMain's, as MU2's `Screens` carried them: five characters an
-// account, and a name of letters and digits only, at most ten (`^[a-zA-Z0-9]{3,10}$`, the
-// server's), refused under four by the client before it asks ("Type more than 4 letters").
-// Names are compared without case -- the folder is on a filesystem that does not tell `Knight`
-// from `knight`, and neither should the screen.
-//
-// **A deletion is kept, not erased** -- ours, not MU's. MU's server deletes the rows; here the
-// file is moved into `characters/deleted/` with the time on it, because a character somebody
-// levelled for a week is one misread prompt away from gone and there is no server-side backup
-// to ask for him back.
+// The rules are OpenMU's and MuMain's, the server's to keep (sim/cradle.h): five characters an
+// account, and a name of letters and digits, four to ten, unique on the server without regard to
+// case. The screen refuses a short or symbolled name before it asks, as MuMain's does ("Type more
+// than 4 letters").
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
+#include "content/tables.h"
 #include "game/save.h"
+#include "net/wire.h"
+#include "sim/cradle.h"
 #include "sim/rules.h"
 
 namespace mu::game {
 
-constexpr int kRosterSlots = 5;
-constexpr int kNameLetters = 10;
+constexpr int kRosterSlots = sim::kRosterSlots;
+constexpr int kNameLetters = sim::kNameMost;
 
 // One character as the screen sees him: enough to stand him on his pedestal and name him.
 struct Seat {
     std::string name;
-    std::string path;   // his save file
-    std::string world;
+    uint64_t token = 0;  // the server's, which his Hello plays him with
+    std::string world;   // where he comes in
     int slot = 0;
     sim::Kin kin = sim::Kin::DarkKnight;
     bool second = false;  // his class's second, Sevina's treasure handed in (sim::promoted)
     int level = 1;
-    bool fresh = false;
-    std::vector<Saved::Item> items;  // as read; slots 0 to 6 are what he wears
+    std::vector<Saved::Item> items;  // what he wears, by slot below sim::kWorn
 };
 
-// saves/characters in the client folder, beside the vault and the old hero.json.
-std::string rosterFolder();
+// The server's Roster as the pedestals stand it, the worn things read by `tables`' rows.
+std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tables);
 
-// Every character in `folder`, by slot. The first time, before the folder exists, an old
-// `hero.json` beside it is copied in as slot 0 -- named for his class, since he was made before
-// names existed -- so the character somebody has been playing is on the screen the first time
-// it opens. The old file is left where it is. Only that first time: a roster emptied by
-// deleting every character stays empty (the user, 2026-10-01, "allow me to delete all chars").
-std::vector<Seat> readRoster(const std::string& folder);
+// The account's key: saves/account.key in the client folder, made the first time it is asked for
+// -- 32 hex digits off the system's entropy. It is the account until there is a login screen.
+std::string accountKey();
 
-// Why a name cannot be made, or None. MU's own words for each are the screen's.
+// The characters this machine played on `server` (host:port) before accounts: each save in
+// saves/characters with a token for it beside it (Name.server), to be claimed onto the account.
+// Read only for that; the server keeps him from then on.
+std::vector<net::Claim> claimsFor(const std::string& server);
+
+// Where a character's windows' layout is kept between runs (game::writeLayout beside it): the
+// client's own preference, saves/layouts/Name.ui. No save is ever written at the path itself.
+std::string layoutBase(const std::string& name);
+
+// Why a name cannot be asked for, or None: the screen's own refusals, before the server's.
 enum class Refusal { None, TooShort, Symbols, Taken, NoRoom };
-Refusal refusalOf(const std::string& folder, const std::vector<Seat>& roster,
-                  const std::string& name);
-
-// A new character of `kin` in the first free slot: a file that says only his name, slot and
-// class, marked fresh. False and nothing written when refusalOf says no.
-bool makeCharacter(const std::string& folder, const std::vector<Seat>& roster,
-                   const std::string& name, sim::Kin kin);
-
-// Moves his file into `folder/deleted/`. False when it could not be moved.
-bool dropCharacter(const std::string& folder, const Seat& who);
+Refusal refusalOf(const std::string& name);
 
 // What a new character is given to hold: OpenMU's Version075 by way of MU2's Cradle.cs -- a
 // Small Axe for the knight and a Short Bow for the elf -- and, OURS, the Skull Staff for the

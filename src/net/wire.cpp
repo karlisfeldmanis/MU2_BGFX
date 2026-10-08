@@ -280,7 +280,53 @@ void put(std::vector<uint8_t>& out, const Hello& one) {
         o.str(one.weapon);
         o.str(one.shield);
         o.u64(one.token);
+        o.str(one.account);
     });
+}
+
+void put(std::vector<uint8_t>& out, const Account& one) {
+    frame(out, Kind::Account, [&](Out& o) {
+        o.u32(one.version);
+        o.str(one.key);
+        o.u32(uint32_t(one.claims.size()));
+        for (const Claim& c : one.claims) {
+            o.u64(c.token);
+            o.str(c.name);
+            o.i32(c.slot);
+        }
+    });
+}
+
+void put(std::vector<uint8_t>& out, const Roster& one) {
+    frame(out, Kind::Roster, [&](Out& o) {
+        o.u8(uint8_t(one.refused));
+        o.u32(uint32_t(one.seats.size()));
+        for (const Seat& s : one.seats) {
+            o.u64(s.token);
+            o.i32(s.slot);
+            o.str(s.name);
+            o.u8(s.kin);
+            o.i32(s.level);
+            o.u8(s.second ? 1 : 0);
+            o.str(s.world);
+            o.u8(uint8_t(s.worn.size()));
+            for (const Seat::Worn& w : s.worn) {
+                o.u8(w.slot);
+                putHeld(o, w.held);
+            }
+        }
+    });
+}
+
+void put(std::vector<uint8_t>& out, const Create& one) {
+    frame(out, Kind::Create, [&](Out& o) {
+        o.str(one.name);
+        o.u8(one.kin);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const Delete& one) {
+    frame(out, Kind::Delete, [&](Out& o) { o.u64(one.token); });
 }
 
 void put(std::vector<uint8_t>& out, const Elsewhere& one) {
@@ -352,7 +398,7 @@ int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body, u
     if (length < 1 || length > most) return -1;
     if (buffer.size() < 4 + size_t(length)) return 0;
     const uint8_t k = buffer[4];
-    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Ping)) return -1;
+    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Delete)) return -1;
     kind = Kind(k);
     body.assign(buffer.begin() + 5, buffer.begin() + 4 + long(length));
     buffer.erase(buffer.begin(), buffer.begin() + 4 + long(length));
@@ -369,6 +415,65 @@ bool parse(const std::vector<uint8_t>& body, Hello& out) {
     out.row = in.i32();
     out.weapon = in.str();
     out.shield = in.str();
+    out.token = in.u64();
+    out.account = in.str();
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Account& out) {
+    In in{body};
+    out.version = in.u32();
+    out.key = in.str();
+    const uint32_t n = in.u32();
+    // A machine has five characters at most; a list longer than a screen's is not one.
+    if (n > 16) return false;
+    out.claims.clear();
+    for (uint32_t i = 0; i < n && in.ok; ++i) {
+        Claim c;
+        c.token = in.u64();
+        c.name = in.str();
+        c.slot = in.i32();
+        out.claims.push_back(std::move(c));
+    }
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Roster& out) {
+    In in{body};
+    out.refused = Refused(in.u8());
+    const uint32_t n = in.u32();
+    if (n > 16) return false;
+    out.seats.clear();
+    for (uint32_t i = 0; i < n && in.ok; ++i) {
+        Seat s;
+        s.token = in.u64();
+        s.slot = in.i32();
+        s.name = in.str();
+        s.kin = in.u8();
+        s.level = in.i32();
+        s.second = in.u8() != 0;
+        s.world = in.str();
+        const uint8_t worn = in.u8();
+        for (uint8_t w = 0; w < worn && in.ok; ++w) {
+            Seat::Worn one;
+            one.slot = in.u8();
+            one.held = takeHeld(in);
+            s.worn.push_back(one);
+        }
+        out.seats.push_back(std::move(s));
+    }
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Create& out) {
+    In in{body};
+    out.name = in.str();
+    out.kin = in.u8();
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Delete& out) {
+    In in{body};
     out.token = in.u64();
     return in.done();
 }

@@ -223,4 +223,65 @@ void RemoteLink::check() {
     }
 }
 
+bool AccountLink::open(const std::string& host, int port, const net::Account& account,
+                       net::Roster& roster, double seconds) {
+    std::string error;
+    in_.clear();
+    if (!socket_.connect(host, port, seconds, error)) {
+        core::logError("account: %s", error.c_str());
+        return false;
+    }
+    std::vector<uint8_t> out;
+    net::put(out, account);
+    put(out);
+    const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
+    while (socket_.open() && std::chrono::steady_clock::now() < until) {
+        if (poll(roster)) {
+            core::logf("account: %s:%d has %zu character(s) on it", host.c_str(), port, roster.seats.size());
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    core::logError("account: %s:%d would not have the account (wrong version, or no answer in %.0f s)",
+                   host.c_str(), port, seconds);
+    socket_.close();
+    return false;
+}
+
+void AccountLink::create(const std::string& name, uint8_t kin) {
+    std::vector<uint8_t> out;
+    net::put(out, net::Create{name, kin});
+    put(out);
+}
+
+void AccountLink::drop(uint64_t token) {
+    std::vector<uint8_t> out;
+    net::put(out, net::Delete{token});
+    put(out);
+}
+
+void AccountLink::put(const std::vector<uint8_t>& frame) {
+    if (socket_.open() && !socket_.send(frame)) {
+        core::logError("account: the connection is gone");
+        socket_.close();
+    }
+}
+
+bool AccountLink::poll(net::Roster& roster) {
+    if (!socket_.open()) return false;
+    if (!socket_.receive(in_) || !socket_.flush()) {
+        core::logError("account: the connection is gone");
+        socket_.close();
+    }
+    net::Kind kind{};
+    std::vector<uint8_t> body;
+    const int took = net::take(in_, kind, body);
+    if (took < 0 || (took == 1 && (kind != net::Kind::Roster || !net::parse(body, roster)))) {
+        core::logError("account: the server does not speak protocol %u", net::kVersion);
+        socket_.close();
+        return false;
+    }
+    return took == 1;
+}
+
 }  // namespace mu::game

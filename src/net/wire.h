@@ -18,6 +18,15 @@
 //                      Elsewhere  instead of a Welcome: his character is in another world, at
 //                               this tile; the client opens that one and says Hello there
 //
+// And the character screen's, before any world (server-plan phase 6, docs/sprints/23-the-account.md):
+//
+//   client -> server   Account  his account's key, and the characters this machine played there
+//                               before accounts, to be claimed onto it
+//                      Create   a character of a name and a class
+//                      Delete   one of his, by its token
+//   server -> client   Roster   the account's characters as the screen stands them, and how the
+//                               last ask went
+//
 // A frame is a u32 length (of what follows), a u8 kind and the body, little-endian throughout.
 // A frame that does not parse drops that connection, never the server (server-plan §3).
 
@@ -48,7 +57,10 @@ namespace mu::net {
 // 8: a Kept carries his way back (Go Back!, sim::WayBack); the Hello's `arriving` is gone, since
 //    every way between worlds is now the server's to see.
 // 9: a thing on the ground carries its owner (sim::Lying::owner), so the snapshot's lying grew.
-constexpr uint32_t kVersion = 9;
+// 10: accounts -- Account, Roster, Create, Delete, and the Hello's `account`.
+constexpr uint32_t kVersion = 10;
+// The server the game plays on when it is not told another (server/README.md): the Hetzner box.
+constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
 // keeps beside each row. 3 is protocol 3's; 4 adds the way back.
 constexpr int kKeptLayout = 4;
@@ -61,7 +73,7 @@ constexpr uint32_t kMostFrame = 16u << 20;
 constexpr uint32_t kMostAsked = 64u << 10;
 
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
-                          Ping = 7 };
+                          Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11 };
 
 struct Hello {
     uint32_t version = kVersion;
@@ -73,7 +85,60 @@ struct Hello {
     // The server's word for his character, from his last Welcome, or 0 for a new one: a map
     // change reconnects with it, and the server brings him back whole (sim::Kept).
     uint64_t token = 0;
+    // His account's key (Account), which a character of an account is played only with. Empty
+    // for the bench's door: a character of no account, as the bots and `--new` make.
+    std::string account;
 };
+
+// A character this machine played on the server before accounts, by the token kept beside his
+// save: claimed onto the account when it is nobody's yet.
+struct Claim {
+    uint64_t token = 0;
+    std::string name;
+    int32_t slot = -1;
+};
+
+struct Account {
+    uint32_t version = kVersion;
+    std::string key;  // the account's secret: kMostKey letters, made once on the machine
+    std::vector<Claim> claims;
+};
+
+struct Create {
+    std::string name;
+    uint8_t kin = 0;
+};
+
+struct Delete {
+    uint64_t token = 0;
+};
+
+// How the last ask went, in the screen's own words (game/ui/lobby.h).
+enum class Refused : uint8_t { None = 0, Taken = 1, NoRoom = 2, BadName = 3, NotYours = 4, Playing = 5 };
+
+// One character as the screen stands him: on his pedestal, in what he wears.
+struct Seat {
+    uint64_t token = 0;   // what the Hello plays him with
+    int32_t slot = 0;     // his pedestal, 0 to 4
+    std::string name;
+    uint8_t kin = 0;
+    int32_t level = 1;
+    bool second = false;  // his class's second (sim::promoted)
+    std::string world;    // where he comes in
+    struct Worn {
+        uint8_t slot = 0;  // below sim::kWorn
+        sim::Held held;
+    };
+    std::vector<Worn> worn;
+};
+
+struct Roster {
+    Refused refused = Refused::None;
+    std::vector<Seat> seats;
+};
+
+// The longest key an Account carries.
+constexpr size_t kMostKey = 64;
 
 struct Elsewhere {
     std::string world;
@@ -139,6 +204,10 @@ void put(std::vector<uint8_t>& out, const Tick& one);
 void put(std::vector<uint8_t>& out, const Hash& one);
 void put(std::vector<uint8_t>& out, const Elsewhere& one);
 void put(std::vector<uint8_t>& out, const Ping& one);
+void put(std::vector<uint8_t>& out, const Account& one);
+void put(std::vector<uint8_t>& out, const Roster& one);
+void put(std::vector<uint8_t>& out, const Create& one);
+void put(std::vector<uint8_t>& out, const Delete& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -153,6 +222,10 @@ bool parse(const std::vector<uint8_t>& body, Tick& out);
 bool parse(const std::vector<uint8_t>& body, Hash& out);
 bool parse(const std::vector<uint8_t>& body, Elsewhere& out);
 bool parse(const std::vector<uint8_t>& body, Ping& out);
+bool parse(const std::vector<uint8_t>& body, Account& out);
+bool parse(const std::vector<uint8_t>& body, Roster& out);
+bool parse(const std::vector<uint8_t>& body, Create& out);
+bool parse(const std::vector<uint8_t>& body, Delete& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.

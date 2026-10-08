@@ -20,6 +20,15 @@ const char* cradleWeapon(Kin kin) {
 
 const char* homeWorld(Kin kin) { return kin == Kin::FairyElf ? "noria" : "lorencia"; }
 
+bool goodName(const std::string& name) {
+    if (name.size() < size_t(kNameFewest) || name.size() > size_t(kNameMost)) return false;
+    for (const char c : name) {
+        const bool letter = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        if (!letter && !(c >= '0' && c <= '9')) return false;
+    }
+    return true;
+}
+
 
 namespace {
 

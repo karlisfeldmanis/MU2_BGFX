@@ -3,7 +3,9 @@
 //
 // World 74 stands behind it -- MU's own set for this scene, cooked here as `charscene` -- with
 // the account's characters on its five pedestals (game/pedestals.h) and the screen over them
-// (game/ui/lobby.h). A character picked and entered hands the run to PlayMode on his save; the
+// (game/ui/lobby.h). The characters are the server's, asked for over an AccountLink with the
+// account's key (game/roster.h). A character picked and entered hands the run to PlayMode with
+// his token; the
 // menu's Switch Character hands it back here. MuMain's StartGame() copies the pick into
 // CharacterAttribute and goes to LOADING_SCENE, and this is that: the arguments are the
 // attribute, and the preloader is the loading scene.
@@ -20,6 +22,7 @@
 #include "content/tables.h"
 #include "game/bust.h"
 #include "game/pedestals.h"
+#include "game/remote_link.h"
 #include "game/roster.h"
 #include "game/sound.h"
 #include "game/ui/cursor.h"
@@ -42,16 +45,25 @@ public:
     void shutdown(Context& ctx) override;
 
 private:
-    // Reads the folder again and stands whoever is in it. After every creation and deletion,
-    // so what is drawn is always what is on disk.
-    void reread();
+    // The server's answer stood on the pedestals, and what it said of the last ask: after every
+    // creation and deletion, so what is drawn is always what the server keeps.
+    void answered(const net::Roster& roster);
     void enter(Context& ctx, int slot);
 
     game::World world_;
     content::Tables tables_;
     game::Pedestals pedestals_;
-    std::string folder_;
     std::vector<game::Seat> roster_;
+    // The server: its host and port, as `host:port` for the run that follows, and the line to it.
+    std::string host_;
+    int port_ = 0;
+    std::string server_;
+    std::string key_;  // the account's (game::accountKey)
+    game::AccountLink link_;
+    bool offline_ = false;  // the server did not answer on the way in
+    // What was last asked, for what the next Roster says of it: a name being made, or a deletion.
+    std::string making_;
+    bool deleting_ = false;
 
     gfx::Interface interface_;
     game::panel::Arts arts_;

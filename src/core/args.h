@@ -124,6 +124,9 @@ struct Args {
     // The server's word for this character, from its last Welcome: carried across a map change so
     // the next world brings him back whole (docs/sprints/20-the-world-host.md). 0 for a new one.
     uint64_t serverToken = 0;
+    // The account's key the character screen played him with (game::accountKey), for every
+    // world's Hello; empty for the bench's characters of no account (`--new`, the bots).
+    std::string account;
     // Chunk culling on the town, on by default. --no-cull is how the two are compared, and
     // the answer to whether chunking earns its keep is the difference between them.
     bool cullChunks = true;
@@ -219,14 +222,13 @@ struct Args {
     std::string savePath;
     bool fresh = false;
     // --lobby: the character screen first (app/modes/lobby_mode.h), and the world after it on
-    // the character picked. `--roster DIR` reads and writes the characters there instead of the
-    // account's own folder, which is what a review run wants: a scripted create or delete must
-    // not touch the player's characters. The rest put the screen in a state for a still:
+    // the character picked. Its characters are the server's (`--server`, the Hetzner box when not
+    // given): a review run that creates or deletes points it at a server of its own, so the
+    // player's characters are never touched. The rest put the screen in a state for a still:
     // `--lobby-pick N` picks slot N, `--lobby-create K` opens the create window on class K
     // (0 wizard, 1 knight, 2 elf, the window's order), `--lobby-name S` types S into it, and
     // `--lobby-delete` raises the deletion's question over the pick.
     bool lobby = false;
-    std::string rosterPath;
     int lobbyPick = -1;
     int lobbyCreate = -1;
     std::string lobbyName;

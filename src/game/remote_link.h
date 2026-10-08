@@ -70,4 +70,27 @@ private:
     int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
 };
 
+// The character screen's line to the server (server-plan phase 6, docs/sprints/23-the-account.md):
+// the account's key said once, and its characters, their making and their deleting asked for over
+// it. Nothing here is a world: the screen hands the pick's token to Play, which opens a line of
+// its own with a Hello.
+class AccountLink {
+public:
+    // Connects, says Account and waits up to `seconds` for the first Roster. False, with the
+    // reason logged, when there is no server or it would not have the account.
+    bool open(const std::string& host, int port, const net::Account& account, net::Roster& roster,
+              double seconds = 10.0);
+    void create(const std::string& name, uint8_t kin);
+    void drop(uint64_t token);
+    // A Roster the server has answered since the last call, into `roster`: true once for each.
+    bool poll(net::Roster& roster);
+    bool up() const { return socket_.open(); }
+    void close() { socket_.close(); }
+
+private:
+    void put(const std::vector<uint8_t>& frame);
+    net::Socket socket_;
+    std::vector<uint8_t> in_;
+};
+
 }  // namespace mu::game
