@@ -97,6 +97,11 @@ struct Landing {
     int castle = 0;  // into Blood Castle: which one his ticket passed him into
 };
 std::map<uint64_t, Landing> g_due;
+// Tests (2026-10-08): `--storm` raises every world in a wet spell, `--invasion` begins the Golden
+// Invasion as a world is raised on a map that has one -- so a client joining mid-storm and
+// mid-invasion can be tried at once rather than after a dry spell and the dice.
+bool g_storm = false;
+bool g_invasion = false;
 
 struct World {
     std::string name;
@@ -363,6 +368,11 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     core::logf("%s: raised %s, class %d level %d at %d,%d, seed %llu", who.c_str(),
                hello.world.c_str(), int(kin), level, hello.column, hello.row,
                (unsigned long long)seed);
+    if (g_storm) {
+        world->weather.wet = true;
+        world->weather.left = 300.0f;
+    }
+    if (g_invasion) world->realm->invade();
     worlds.push_back(std::move(world));
     return worlds.back().get();
 }
@@ -810,11 +820,13 @@ int main(int argc, char** argv) {
         if (a == "--port" && i + 1 < argc) port = std::atoi(argv[++i]);
         else if (a == "--assets" && i + 1 < argc) assets = argv[++i];
         else if (a == "--store" && i + 1 < argc) store = argv[++i];
+        else if (a == "--storm") g_storm = true;
+        else if (a == "--invasion") g_invasion = true;
         else if (a == "--castle-period" && i + 1 < argc) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.castle = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--storm] [--invasion]\n");
             return 2;
         }
     }

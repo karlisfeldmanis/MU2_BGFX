@@ -327,7 +327,9 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
                            : phase == sim::InvasionPhase::Standing ? 2
                                                                    : 0;
         call.name = "Golden Invasion";
-        call.place = "Lorencia";
+        // The map it is on: Lorencia, Devias or Noria (sim::invasionMap).
+        const uint32_t map = play.isOpen() ? realm.tables()->map : 0;
+        call.place = map == 2 ? "Devias" : map == 3 ? "Noria" : "Lorencia";
         call.live = moment > 0;
         if (moment == 1) {
             call.state = "dragons coming";
