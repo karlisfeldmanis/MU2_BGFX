@@ -809,6 +809,8 @@ void Realm::castleTick() {
         // "Blood Castle 1 quest has begun" (lMsg 1161): the barrier lifted, the clock started.
         run_.phase = CastlePhase::Running;
         run_.endsAt = tick_ + int64_t(kCastleRun) * kCastleTicksPerSecond;
+        // Quota 1, by who is alive in the castle now (SetMonsterKillCount).
+        run_.killsWanted = kCastleKillsEach * std::max(1, castleLiving());
         changeGrid(kCastleEntrance.x1, kCastleEntrance.y1, kCastleEntrance.x2, kCastleEntrance.y2,
                    kCastleEntrance.bits, false);
     } else if (run_.phase == CastlePhase::Running && tick_ >= run_.endsAt) {
@@ -822,11 +824,13 @@ void Realm::castleTick() {
         for (const GridBox& box : {kCastleBridge, kCastleDoor[0], kCastleDoor[1], kCastleDoor[2]}) {
             changeGrid(box.x1, box.y1, box.x2, box.y2, box.bits, false);
         }
-        // And quota 2's Spirit Sorcerers rise in the courtyard: WebZen's 2 for one player
-        // (gObjMonster.cpp:1302-1308), raised there when the gate falls (SetBossMonster).
+        // And quota 2's Spirit Sorcerers rise in the courtyard, as many as it asks -- 2 for each
+        // player alive now, at most 10 and at most the castle's 8 -- raised there when the gate
+        // falls (gObjMonster.cpp:1302-1308, SetBossMonster).
+        run_.sorcerersWanted = std::min(kCastleMostSorcerers, kCastleSorcerersEach * std::max(1, castleLiving()));
         int raised = 0;
         for (Body& one : bodies_) {
-            if (raised >= kCastleSorcerers) break;
+            if (raised >= run_.sorcerersWanted) break;
             if (!one.monster() || one.alive()) continue;
             if (!castleSorcerer(tables_->kinds[size_t(one.kind)].number)) continue;
             one.risesAt = tick_;
@@ -899,7 +903,7 @@ void Realm::castleKill(const Body& dead) {
     } else if (castleSorcerer(number)) {
         // Quota 2 met: the Statue of Saint rises in its hall, and the dead sorcerers, this one
         // with them, rise no more (Realm::kill set them rising again).
-        if (++run_.sorcerers == kCastleSorcerers) {
+        if (++run_.sorcerers == run_.sorcerersWanted) {
             for (Body& one : bodies_) {
                 if (!one.monster() || one.alive()) continue;
                 const int32_t kind = tables_->kinds[size_t(one.kind)].number;
@@ -911,13 +915,13 @@ void Realm::castleKill(const Body& dead) {
         ++run_.kills;
     }
     // Quota 1: "monsters cleared! attack the castle gate" (lMsg 1168), and the drawbridge falls.
-    if (run_.kills >= kCastleKills && run_.bridgeAt < 0) run_.bridgeAt = tick_;
+    if (run_.kills >= run_.killsWanted && run_.bridgeAt < 0) run_.bridgeAt = tick_;
 }
 
 void Realm::dropCastleBridge(int seconds) {
     if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
     if (run_.phase == CastlePhase::Waiting) run_.startsAt = tick_;
-    run_.kills = std::max(run_.kills, kCastleKills);
+    run_.kills = std::max(run_.kills, run_.killsWanted);
     run_.bridgeAt = tick_ + int64_t(seconds) * kCastleTicksPerSecond;
 }
 
@@ -959,6 +963,15 @@ bool Realm::claimCastle() {
     }
     me().claimOwed = true;
     return true;
+}
+
+int Realm::castleLiving() const {
+    int living = 0;
+    for (const Player& one : heroes_) {
+        const Body& body = bodies_[one.body];
+        living += !body.gone && body.alive() ? 1 : 0;
+    }
+    return living;
 }
 
 int Realm::castleSecondsLeft() const {

@@ -912,7 +912,9 @@ private:
 
     void drink() {
         const sim::Body& hero = realm_->hero();
-        if (hero.health * 2 < hero.maxHealth) drinkOne(sim::heals);
+        // In Blood Castle at 70%: no town to fall back on, and what follows him in is many.
+        const int at = map() == int(sim::kBloodCastleMap) ? 7 : 5;
+        if (hero.health * 10 < hero.maxHealth * at) drinkOne(sim::heals);
         if (casts() && hero.mana * 10 < hero.maxMana * 3) drinkOne(sim::restores);
     }
 
@@ -1544,7 +1546,9 @@ private:
             return;
         }
         // Then the fight: what is on him; else the statue, the sorcerers once the bridge is down,
-        // and the garrison -- nearest first within each.
+        // and the garrison -- nearest first within each. Once the bridge is down the statue and
+        // the sorcerers come before what is on him: the garrison rises again, so something always
+        // is, and a knight stood at the court's mouth with the bridge down for seven minutes.
         uint32_t target = 0;
         int rank = 9;
         float closest = 1e30f;
@@ -1552,16 +1556,22 @@ private:
             if (!body.monster() || !body.alive() || barred(body.id) || body.kind < 0) continue;
             const int number = tables_->kinds[size_t(body.kind)].number;
             const float d = (body.x - hero.x) * (body.x - hero.x) + (body.y - hero.y) * (body.y - hero.y);
-            int r = 3;
-            if (body.quarry == hero.id && d < 36.0f) r = 0;
-            else if (sim::castleStatue(number)) r = 1;
+            int r = 4;
+            if (sim::castleStatue(number)) r = 0;
             else if (sim::castleSorcerer(number)) {
                 if (!run.bridgeDown) continue;
-                r = 2;
+                r = 1;
+            } else if (body.quarry == hero.id && d < 36.0f) {
+                // Under 60% he answers it first even past the bridge: a knight whose back was to
+                // the Red Skeleton Knights while he cut at a sorcerer died in fifteen seconds.
+                r = run.bridgeDown && hero.health * 10 >= hero.maxHealth * 6 ? 2 : -2;
             }
-            if (r < rank || (r == rank && d < closest)) {
+            // Of one rank, the one he is on, then the nearest: a sorcerer has 3,700 health, and
+            // turning to the nearest each think left every one of them half dead.
+            const float near = body.id == castleOn_ ? -1.0f : d;
+            if (r < rank || (r == rank && near < closest)) {
                 rank = r;
-                closest = d;
+                closest = near;
                 target = body.id;
             }
         }
@@ -1571,16 +1581,27 @@ private:
                         clock(clock_).c_str(), hero.x, hero.y, hero.health, hero.maxHealth, run.kills, run.sorcerers,
                         run.bridgeDown, target, rank, t ? tables_->kinds[size_t(t->kind)].label.c_str() : "-",
                         t ? t->x : 0.f, t ? t->y : 0.f, hero.walking);
+            if (t) std::printf("   landed %d missed %d target hp %d/%d quarry %u order %d floor %d/%d\n", tally_.landed,
+                               tally_.missed, t->health, t->maxHealth, hero.quarry, int(realm_->order().kind),
+                               realm_->floorAt(hero.column(), hero.row()), realm_->floorAt(t->column(), t->row()));
         }
         if (target == 0) return;
         sim::Request request;
         request.kind = sim::Request::Kind::Attack;
         request.target = target;
-        ask(request);
+        castleOn_ = target;
+        if (rank <= 1) {
+            // The run's own: never given up for taking long (ask's kGiveUp), only for dying.
+            if (wizardly()) request.skill = sim::skill::kEnergyBall;
+            hand_.ask(request);
+        } else {
+            ask(request);
+        }
         if (guard()) return;
         press(target);
     }
     sim::CastlePhase lastPhase_ = sim::CastlePhase::None;
+    uint32_t castleOn_ = 0;  // the statue or sorcerer he is on
 
     // ---- what a fight costs ---------------------------------------------------------------
     // His band and guard against the breed's, 0.75's hit chance (1 - defence rate / attack
@@ -1966,6 +1987,9 @@ private:
         if (wornDown() >= 0 && !realm_->selfMending()) return "gear worn down";
         if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
         if (goblinHere() >= 0 && cloakWorth() > 0) return "a cloak to make";
+        // Blood Castle has no counter: an elf went in with a few hundred arrows and stood at the
+        // Statue of Saint with none for twelve minutes.
+        if (aim_ == Aim::Castle && archer() && ammo() < 1200 && money >= 20000) return "arrows for Blood Castle";
         if (clock_ - lastTrip_ > 30 * 60 * 20 && money >= 5000 && const_cast<Bot*>(this)->shopWorth()) {
             return "something on a shelf";
         }

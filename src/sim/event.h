@@ -22,10 +22,10 @@ constexpr uint32_t kBloodCastleMap = 11;
 // timer and BC starts'). Ours that it starts on entry; WebZen starts every castle together at
 // hh:31. Its numbers are WebZen's: 60 s in the safe court ("the quest starts in 60 s", lMsg
 // 1163), then 15 minutes of play (BloodCastle.cpp:887-917; the client's SetMatchInfo(15 * 60),
-// MuMain NewBloodCastleSystem.cpp:46, 73). OpenMU's is 20. **Ten minutes, ours** (the user,
-// 2026-10-05: 'decrease BC duration to 10 minutes').
+// MuMain NewBloodCastleSystem.cpp:46, 73). OpenMU's is 20. Ten minutes from 2026-10-05 to
+// 2026-10-08; WebZen's fifteen again since (the user: "lets make BC how it was on webzen").
 constexpr int kCastleWait = 60;
-constexpr int kCastleRun = 10 * 60;
+constexpr int kCastleRun = 15 * 60;
 
 // **The Messenger's door** (WebZen NpcTalk.cpp:1655-1753, protocol.cpp:19629-~20030): spoken to
 // with an Invisibility Cloak while the entry is open, he takes the cloak and sends him to exit gate
@@ -68,19 +68,19 @@ enum class CastleRefusal : int32_t {
 // he waits kCastleWait in the safe court with the entrance shut, then the run's kCastleRun
 // starts and the entrance opens. WebZen's quotas for one player (SetMonsterKillCount,
 // gObjMonster.cpp:1238-1341): 40 kills of anything but the Spirit Sorcerer, then 2 of those.
-// **Four hundred kills, ours** (the user, 2026-10-05: 'we need increase amount of monsters which
-// has to be killed in BC', a hundred; then 'drastically increase ... because it will be up to 10
-// man party'): WebZen's 40 a player times its ten; the garrison rises again, so the quota is
-// always there to be met.
+// **WebZen's, by the living players** (the user, 2026-10-08: "lets make BC how it was on
+// webzen", after a fixed 400 and 20 since 2026-10-05 that no one player could meet): the road's
+// quota is 40 for each player alive in the castle as the run starts (BC_PERUSER_MONSTER_KILL,
+// BloodCastle.h:46; SetMonsterKillCount, BloodCastle.cpp:4275), the sorcerers' 2 for each alive
+// as the bridge falls, at most 10 (gObjMonster.cpp:1302-1308). Set once, kept in the run
+// (CastleRun::killsWanted, sorcerersWanted). The garrison still rises again, ours.
 enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
-constexpr int kCastleKills = 400;
-// **Every one of the castle's eight, ours** (the user, 2026-10-05: 'increase the kill count for
-// all BC monsters'): WebZen's solo 2, at most 10 in a party. Twenty since 2026-10-05 ('we ened to
-// increase umbers of spirit monsters kills on BC'), WebZen's 2 a player times ten, as the 400 is:
-// the castle places 8, and a dead one rises again as the garrison does until the quota is met
-// (Realm::kill, Realm::castleKill).
-constexpr int kCastleSorcerers = 20;
+constexpr int kCastleKillsEach = 40;
+// As many of the castle's eight as the quota asks rise as the bridge falls (SetBossMonster), and
+// a dead one rises again as the garrison does until the quota is met (Realm::kill, castleKill).
+constexpr int kCastleSorcerersEach = 2;
+constexpr int kCastleMostSorcerers = 10;
 // How long the drawbridge takes to come down: 1.18 s, landing on eDownGate's thud (game/world/
 // drawbridge.h; ours, timed to the sound), 24 ticks. MuMain's ActionObject swings it over 21 of
 // its 25 Hz frames and clears the gap's NoGround on the last (ZzzObject.cpp:86-165); WebZen
@@ -129,6 +129,11 @@ struct CastleRun {
     int64_t endsAt = 0;    // the tick the run's time is up
     int kills = 0;         // quota 1
     int sorcerers = 0;     // quota 2
+    // What each quota asks: kCastleKillsEach a living player as the run starts, and
+    // kCastleSorcerersEach one as the bridge falls, at most kCastleMostSorcerers. One player's
+    // until then, so a quota is never nought.
+    int killsWanted = kCastleKillsEach;
+    int sorcerersWanted = kCastleSorcerersEach;
     bool statueBroken = false;  // by him: the statue's bonus
     // Quota 1 met: the tick the drawbridge starts down, or -1; and whether it is down, its gap
     // walkable (Realm::castleTick, kCastleBridgeTicks after).

@@ -290,6 +290,7 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
         focus != o.focus || progress.state != o.progress.state ||
         eventPhase != o.eventPhase || eventCastle != o.eventCastle || eventSeconds != o.eventSeconds ||
         eventKills != o.eventKills || eventSorcerers != o.eventSorcerers ||
+        eventKillsWanted != o.eventKillsWanted || eventSorcerersWanted != o.eventSorcerersWanted ||
         eventStatue != o.eventStatue ||
         eventShown != o.eventShown) {
         return false;
@@ -557,6 +558,8 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         now.eventSeconds = realm.castleSecondsLeft();
         now.eventKills = run.kills;
         now.eventSorcerers = run.sorcerers;
+        now.eventKillsWanted = run.killsWanted;
+        now.eventSorcerersWanted = run.sorcerersWanted;
         now.eventStatue = run.statueBroken;
         now.eventShown = int(std::lround(eventShown_ * 64.0f));
     }
@@ -820,17 +823,17 @@ void Tracker::rebuildEvent(int width) {
         std::string figure;
         StepMark mark;
     };
-    const bool bridge = won || drawn_.eventKills >= sim::kCastleKills;
-    const bool door = won || drawn_.eventSorcerers >= sim::kCastleSorcerers;
+    const bool bridge = won || drawn_.eventKills >= drawn_.eventKillsWanted;
+    const bool door = won || drawn_.eventSorcerers >= drawn_.eventSorcerersWanted;
     const Row rows[] = {
         {waiting ? "Wait for the gate to open" : "Slay the castle's guards",
          waiting ? std::string()
-                 : std::to_string(std::min(drawn_.eventKills, sim::kCastleKills)) + " / " +
-                       std::to_string(sim::kCastleKills),
+                 : std::to_string(std::min(drawn_.eventKills, drawn_.eventKillsWanted)) + " / " +
+                       std::to_string(drawn_.eventKillsWanted),
          waiting ? StepMark::Live : bridge ? StepMark::Done : StepMark::Live},
         {"Slay the Spirit Sorcerers",
-         std::to_string(std::min(drawn_.eventSorcerers, sim::kCastleSorcerers)) + " / " +
-             std::to_string(sim::kCastleSorcerers),
+         std::to_string(std::min(drawn_.eventSorcerers, drawn_.eventSorcerersWanted)) + " / " +
+             std::to_string(drawn_.eventSorcerersWanted),
          door ? StepMark::Done : bridge && !waiting ? StepMark::Live : StepMark::Waiting},
         {"Destroy the Statue of Saint", "",
          won || drawn_.eventStatue ? StepMark::Done : door ? StepMark::Live : StepMark::Waiting},

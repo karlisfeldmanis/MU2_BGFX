@@ -1704,11 +1704,11 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.risesAt = tick_ + int64_t(dropRateOf(kind.number).regen + 1) * 20;
     // Blood Castle's statue is the run's, raised once by it and never again; its Spirit Sorcerers
     // rise again as the garrison does while the run is on and quota 2 is not met
-    // (kCastleSorcerers); castleKill lays the dead down for good as the quota fills.
+    // (CastleRun::sorcerersWanted); castleKill lays the dead down for good as the quota fills.
     if (tables_->map == kBloodCastleMap &&
         (castleStatue(kind.number) ||
          (castleSorcerer(kind.number) &&
-          (run_.phase != CastlePhase::Running || run_.sorcerers >= kCastleSorcerers)))) {
+          (run_.phase != CastlePhase::Running || run_.sorcerers >= run_.sorcerersWanted)))) {
         dead.risesAt = std::numeric_limits<int64_t>::max();
     }
     // The Golden Invasion's dragon is not respawned (OpenMU creates invasion monsters directly

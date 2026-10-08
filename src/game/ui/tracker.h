@@ -145,6 +145,7 @@ private:
         // Blood Castle's run, when he is in one (sim/event.h): its phase, the seconds left of
         // its wait or its time, and the two quotas. Shown in the quest's place.
         int eventPhase = 0, eventSeconds = 0, eventKills = 0, eventSorcerers = 0, eventShown = 0;
+        int eventKillsWanted = 0, eventSorcerersWanted = 0;  // the run's quotas (sim::CastleRun)
         int eventCastle = 1;  // which castle the run is, 1 to 6, for the title
         bool eventStatue = false;  // the statue broken (sim::CastleRun::statueBroken)
         bool operator==(const Drawn& o) const;

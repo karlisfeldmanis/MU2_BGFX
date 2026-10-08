@@ -988,6 +988,8 @@ public:
     // wait or of its time.
     const CastleRun& castleRun() const { return run_; }
     int castleSecondsLeft() const;
+    // The players alive in this world: what Blood Castle's quotas are reckoned by.
+    int castleLiving() const;
     // The Archangel's page (sim/event.h): his folk row while it is open, what it shows, and Give
     // -- checked now, the staff taken and the win paid at the next tick's start.
     int angeling() const { return me().angeling; }

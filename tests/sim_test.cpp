@@ -10330,7 +10330,7 @@ void testCastleGrid(const content::Tables& lorencia) {
     checkEqual(standing(false), 0, "and no garrison stands in the wait");
     for (int64_t t = 0; t < int64_t(sim::kCastleWait) * sim::kCastleTicksPerSecond; ++t) realm.step();
     check(realm.castleRun().phase == sim::CastlePhase::Running, "then the run starts");
-    checkEqual(realm.castleSecondsLeft(), sim::kCastleRun, "with its ten minutes");
+    checkEqual(realm.castleSecondsLeft(), sim::kCastleRun, "with its fifteen minutes");
     check(reaches(14, 40), "the road down to the bridge is open from the court");
     check(standing(false) > 0, "the garrison has risen with the gate");
     checkEqual(standing(true), 0, "but not the Statue of Saint");
@@ -10422,33 +10422,34 @@ void testCastleGrid(const content::Tables& lorencia) {
             return count;
         };
         checkEqual(standing(sim::kCastleSorcerer), 0, "no Spirit Sorcerer stands at the start");
-        for (int guard = 0; guard < 4000 && run.castleRun().kills < sim::kCastleKills; ++guard) {
+        checkEqual(run.castleRun().killsWanted, sim::kCastleKillsEach,
+                   "one player alive: WebZen's 40 kills (BC_PERUSER_MONSTER_KILL)");
+        for (int guard = 0; guard < 4000 && run.castleRun().kills < run.castleRun().killsWanted; ++guard) {
             for (const sim::Body& one : run.bodies()) {
-                if (run.castleRun().kills >= sim::kCastleKills) break;
+                if (run.castleRun().kills >= run.castleRun().killsWanted) break;
                 if (!one.monster() || !one.alive()) continue;
                 if (numberOf(one) == sim::kCastleSorcerer || numberOf(one) == sim::kCastleStatue) continue;
                 run.smite(one.id);
             }
             run.step();
         }
-        checkEqual(run.castleRun().kills, sim::kCastleKills, "the garrison's quota falls (kCastleKills)");
+        checkEqual(run.castleRun().kills, sim::kCastleKillsEach, "the garrison's quota falls (killsWanted)");
         for (int t = 0; t <= sim::kCastleBridgeTicks + 1; ++t) run.step();
         check(run.castleRun().bridgeDown, "the bridge is down");
-        // The castle places 8; quota 2 is kCastleSorcerers kills, the dead rising again until it is
-        // met (the user, 2026-10-05).
-        int placed = 0;
-        for (const sim::Body& one : run.bodies()) placed += one.monster() && numberOf(one) == sim::kCastleSorcerer;
-        for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < placed; ++t) run.step();
-        checkEqual(standing(sim::kCastleSorcerer), 8, "and all eight Spirit Sorcerers have risen");
+        // The castle places 8; quota 2 is 2 a living player, and as many rise, the dead rising again
+        // until it is met.
+        checkEqual(run.castleRun().sorcerersWanted, sim::kCastleSorcerersEach, "one player alive: 2 sorcerers");
+        for (int t = 0; t < 100 && standing(sim::kCastleSorcerer) < run.castleRun().sorcerersWanted; ++t) run.step();
+        checkEqual(standing(sim::kCastleSorcerer), sim::kCastleSorcerersEach, "and two Spirit Sorcerers have risen");
         checkEqual(standing(sim::kCastleStatue), 0, "the statue not yet");
-        for (int t = 0; t < 4000 && run.castleRun().sorcerers < sim::kCastleSorcerers; ++t) {
+        for (int t = 0; t < 4000 && run.castleRun().sorcerers < run.castleRun().sorcerersWanted; ++t) {
             for (const sim::Body& one : run.bodies()) {
-                if (run.castleRun().sorcerers >= sim::kCastleSorcerers) break;
+                if (run.castleRun().sorcerers >= run.castleRun().sorcerersWanted) break;
                 if (one.monster() && one.alive() && numberOf(one) == sim::kCastleSorcerer) run.smite(one.id);
             }
             run.step();
         }
-        checkEqual(run.castleRun().sorcerers, sim::kCastleSorcerers, "all counted, the dead risen again until then");
+        checkEqual(run.castleRun().sorcerers, sim::kCastleSorcerersEach, "all counted");
         // Whoever had risen when the quota filled is struck down too, and none of them rises again.
         for (const sim::Body& one : run.bodies()) {
             if (one.monster() && one.alive() && numberOf(one) == sim::kCastleSorcerer) run.smite(one.id);
