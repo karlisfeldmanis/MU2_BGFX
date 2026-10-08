@@ -47,7 +47,8 @@ namespace mu::net {
 // 7: the Welcome's castle: which Blood Castle the world is, set on the raise.
 // 8: a Kept carries his way back (Go Back!, sim::WayBack); the Hello's `arriving` is gone, since
 //    every way between worlds is now the server's to see.
-constexpr uint32_t kVersion = 8;
+// 9: a thing on the ground carries its owner (sim::Lying::owner), so the snapshot's lying grew.
+constexpr uint32_t kVersion = 9;
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
 // keeps beside each row. 3 is protocol 3's; 4 adds the way back.
 constexpr int kKeptLayout = 4;

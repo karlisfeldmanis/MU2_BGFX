@@ -263,6 +263,7 @@ void Realm::minionSpoils(const Body& dead) {
         one.what = what;
         std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
         one.vanishesAt = tick_ + kSpoilsLingerTicks;
+        one.owner = mine().id;
         one.id = nextId_++;
         lying_.push_back(one);
         say(What::Dropped, dead, int32_t(one.id), what.item, 0);
@@ -337,6 +338,7 @@ void Realm::dragonHoard(const Body& dragon) {
         one.what = hoard[i];
         std::tie(one.column, one.row) = clearing(c, r);
         one.vanishesAt = tick_ + kHoardLingerTicks;
+        one.owner = mine().id;
         one.id = nextId_++;
         lying_.push_back(one);
         say(What::Dropped, dragon, int32_t(one.id), one.what.item, one.what.refinement);

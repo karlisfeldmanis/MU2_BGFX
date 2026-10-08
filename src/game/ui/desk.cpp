@@ -1606,7 +1606,10 @@ void Desk::labelGround(const Play& play, int width, int height) {
         const float set = boldOf(tables, *one) ? size + u : size;
         const float w = face.measure(set, name) + track * float(name.size()) + padX * 2.0f;
         const float h = face.height(set) + padY * 2.0f;
-        labels.push_back({at.id, std::move(name), set, tintOf(tables, *one),
+        // Another player's drop in grey: his alone to pick up (sim::Lying::owner). Ours.
+        const uint32_t tint = play.realm().mayTake(*one) ? tintOf(tables, *one)
+                                                         : gfx::rgba(0.5f, 0.5f, 0.5f);
+        labels.push_back({at.id, std::move(name), set, tint,
                           {at.x - w * 0.5f, at.y - h, w, h}});
     }
     // **No label over another** (ours, the user's 2026-09-29, as Diablo and WoW stack a pile's

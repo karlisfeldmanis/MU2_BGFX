@@ -1080,6 +1080,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
                 material.what = Held{item, int16_t(castleMaterialLevel(level)), 128};
                 std::tie(material.column, material.row) = clearing(dead.column(), dead.row());
                 material.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+                material.owner = mine().id;
                 material.id = nextId_++;
                 lying_.push_back(material);
                 say(What::Dropped, dead, int32_t(material.id), item, material.what.refinement);
@@ -1098,6 +1099,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             cracker.what = Held{int32_t(i), 0, 1};
             std::tie(cracker.column, cracker.row) = clearing(dead.column(), dead.row());
             cracker.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            cracker.owner = mine().id;
             cracker.id = nextId_++;
             lying_.push_back(cracker);
             say(What::Dropped, dead, int32_t(cracker.id), int32_t(i), 0);
@@ -1113,6 +1115,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             feather.what = Held{int32_t(i), 0, 1};
             std::tie(feather.column, feather.row) = clearing(dead.column(), dead.row());
             feather.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            feather.owner = mine().id;
             feather.id = nextId_++;
             lying_.push_back(feather);
             say(What::Dropped, dead, int32_t(feather.id), int32_t(i), 0);
@@ -1128,6 +1131,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             scroll.what = Held{int32_t(i), 0, 1};
             std::tie(scroll.column, scroll.row) = clearing(dead.column(), dead.row());
             scroll.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            scroll.owner = mine().id;
             scroll.id = nextId_++;
             lying_.push_back(scroll);
             say(What::Dropped, dead, int32_t(scroll.id), int32_t(i), 0);
@@ -1145,6 +1149,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             wing.what.luck = wingDice_.nextInt(0, 100) < kLuckIn100;
             std::tie(wing.column, wing.row) = clearing(dead.column(), dead.row());
             wing.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            wing.owner = mine().id;
             wing.id = nextId_++;
             lying_.push_back(wing);
             say(What::Dropped, dead, int32_t(wing.id), item, 0);
@@ -1169,6 +1174,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             if (under < kOptionUnder[which]) gear.what.option = int8_t(kMostOptionDropped - which);
             std::tie(gear.column, gear.row) = clearing(dead.column(), dead.row());
             gear.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            gear.owner = mine().id;
             gear.id = nextId_++;
             lying_.push_back(gear);
             say(What::Dropped, dead, int32_t(gear.id), int32_t(i), 0);
@@ -1186,6 +1192,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             orb.what = Held{int32_t(i), int16_t(plus), 1};
             std::tie(orb.column, orb.row) = clearing(dead.column(), dead.row());
             orb.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            orb.owner = mine().id;
             orb.id = nextId_++;
             lying_.push_back(orb);
             say(What::Dropped, dead, int32_t(orb.id), int32_t(i), orb.what.refinement);
@@ -1355,6 +1362,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
     } else {
         return;
     }
+    one.owner = mine().id;
     one.id = nextId_++;
     lying_.push_back(one);
     say(What::Dropped, dead, int32_t(one.id), one.what.empty() ? -1 : one.what.item,
@@ -1397,9 +1405,11 @@ bool Realm::bare(int column, int row) const {
 }
 
 // Takes what lies at an index into the bag or the purse. Refused, and left lying, when the
-// bag has no room at its footprint -- MOVEMENT_GET's "the bag is full".
+// bag has no room at its footprint -- MOVEMENT_GET's "the bag is full" -- or when it is another
+// player's (Lying::owner).
 bool Realm::take(size_t index) {
     const Lying one = lying_[index];
+    if (!mayTake(one)) return false;
     int slot = -1;
     if (one.what.empty()) {
         // An excellent armour's Zen, at the picking up (MoneyDistribution, MoneyAmountRate).
@@ -2039,6 +2049,7 @@ Cracked Realm::crack(int slot) {
         }
         std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
         one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+        one.owner = mine().id;
         one.id = nextId_++;
         lying_.push_back(one);
         cracked.id = one.id;
@@ -2139,6 +2150,7 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
                 if (excellentOf(fine, fines, dice_, &one.what)) {
                     std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
                     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+                    one.owner = mine().id;
                     one.id = nextId_++;
                     lying_.push_back(one);
                     cracked.id = one.id;
@@ -2172,6 +2184,7 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
             }
             std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
             one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            one.owner = mine().id;
             one.id = nextId_++;
             lying_.push_back(one);
             cracked.id = one.id;
@@ -2218,6 +2231,7 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     }
     std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+    one.owner = mine().id;
     one.id = nextId_++;
     lying_.push_back(one);
     say(What::Dropped, hero, int32_t(one.id), one.what.item, one.what.refinement);

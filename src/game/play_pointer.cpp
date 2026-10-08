@@ -161,6 +161,8 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
         float nearest = 0.8f;
         for (const sim::Lying& one : realm_.lying()) {
             if (std::find(heldIds_.begin(), heldIds_.end(), one.id) != heldIds_.end()) continue;
+            // Another player's drop is not his to pick: a click there walks (sim::Lying::owner).
+            if (!realm_.mayTake(one)) continue;
             const float away =
                 std::max(std::fabs(float(one.column) - column), std::fabs(float(one.row) - row));
             if (away < nearest) {

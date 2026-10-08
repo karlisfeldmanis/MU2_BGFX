@@ -191,6 +191,12 @@ struct Lying {
     int64_t zen = 0;
     int32_t column = 0, row = 0;
     int64_t vanishesAt = 0;
+    // Whose it is: the body id of the player a kill's drop was left for or who opened the box,
+    // and only he may pick it up for as long as it lies. 0 for anyone's -- a thing a player
+    // threw away himself, so a drop can still be handed over. WebZen keeps m_UserIndex for its
+    // gLootingTime alone (MapClass.cpp:804); for the whole minute is ours (the user, 2026-10-08:
+    // "no other player can take my items"). Free again once its owner has left the world.
+    uint32_t owner = 0;
 };
 
 // What a thrown Firecracker gave (Realm::crack): an item lying at his feet, or Zen in the purse.
@@ -1235,6 +1241,10 @@ public:
 
     // ---- the ground (sprint 7) ------------------------------------------------------------
     const std::vector<Lying>& lying() const { return lying_; }
+    // Whether the player the realm works for may pick it up (Lying::owner).
+    bool mayTake(const Lying& one) const {
+        return one.owner == 0 || one.owner == mine().id || playerOfId(one.owner) < 0;
+    }
     void step();
 
     int64_t tick() const { return tick_; }

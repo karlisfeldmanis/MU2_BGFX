@@ -264,6 +264,7 @@ void Realm::treasure(const Body& dead) {
             found.what = Held{item, 0, 1};
             std::tie(found.column, found.row) = clearing(dead.column(), dead.row());
             found.vanishesAt = tick_ + int64_t(kTreasureLingerSeconds) * 20;
+            found.owner = mine().id;
             found.id = nextId_++;
             lying_.push_back(found);
             say(What::Dropped, dead, int32_t(found.id), item, 0);

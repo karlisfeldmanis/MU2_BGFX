@@ -10726,6 +10726,51 @@ uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRi
     return hash;
 }
 
+// A drop is its owner's: a stranger can neither walk to it nor take it, and what a player
+// throws away himself is anyone's (sim::Lying::owner).
+void testDropsAreTheirs(const content::Tables& tables) {
+    std::printf("drops are their owner's\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, 140, 125), "a realm for two");
+    const uint32_t first = realm.hero().id;
+    const uint32_t second = realm.join(sim::Kin::DarkWizard, 1, 141, 125);
+    const int32_t item = tables.itemNamed("Potion01");
+    const uint32_t laid = realm.lay(item);
+    check(laid != 0 && realm.lying().back().owner == first, "laid for the first, and his");
+    check(realm.lookAs(second) && !realm.mayTake(realm.lying().back()), "not the second's to take");
+    const auto lies = [&](uint32_t id) {
+        for (const sim::Lying& one : realm.lying()) {
+            if (one.id == id) return true;
+        }
+        return false;
+    };
+    const float secondX = realm.find(second)->x, secondY = realm.find(second)->y;
+    realm.command({.kind = sim::Command::Kind::Order, .player = second,
+                   .a = int(sim::Request::Kind::Pick), .target = laid});
+    for (int tick = 0; tick < 60; ++tick) realm.step();
+    check(lies(laid), "the second's pick refused: it still lies");
+    check(realm.find(second)->x == secondX && realm.find(second)->y == secondY,
+          "and he did not walk to it");
+    realm.command({.kind = sim::Command::Kind::Order, .player = first,
+                   .a = int(sim::Request::Kind::Pick), .target = laid});
+    for (int tick = 0; tick < 60; ++tick) realm.step();
+    check(!lies(laid), "the first picked up his own");
+
+    // Thrown away, it is anyone's.
+    realm.lookAs(first);
+    int slot = -1;
+    for (int i = 0; i < sim::kSlots; ++i) {
+        if (!realm.satchel()[i].empty() && realm.satchel()[i].item == item) slot = i;
+    }
+    check(slot >= 0, "in his bag");
+    const uint32_t thrown = slot >= 0 ? realm.discard(slot) : 0;
+    check(thrown != 0 && realm.lying().back().owner == 0, "thrown, and nobody's");
+    realm.command({.kind = sim::Command::Kind::Order, .player = second,
+                   .a = int(sim::Request::Kind::Pick), .target = thrown});
+    for (int tick = 0; tick < 60; ++tick) realm.step();
+    check(!lies(thrown), "and the second picked it up");
+}
+
 void testTwoHeroes(const content::Tables& tables) {
     std::printf("two heroes\n");
     sim::Realm realm;
@@ -11065,6 +11110,7 @@ int main() {
     testDeterminism(tables);
     testSpawn(tables);
     testTwoHeroes(tables);
+    testDropsAreTheirs(tables);
     testKept(tables);
     testSnapshot(tables);
     testGoBack(tables);

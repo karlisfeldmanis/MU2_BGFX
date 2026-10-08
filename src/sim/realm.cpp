@@ -692,9 +692,14 @@ void Realm::accept() {
             halt(hero);
             me().order = Request{};
         } else if (me().order.kind == Request::Kind::Pick) {
+            // Another player's drop is not walked to: it is his until it vanishes (Lying::owner).
+            bool walked = false;
             for (const Lying& one : lying_) {
-                if (one.id == me().order.target) send(hero, one.column, one.row);
+                if (one.id != me().order.target || !mayTake(one)) continue;
+                send(hero, one.column, one.row);
+                walked = true;
             }
+            if (!walked) me().order = Request{};
         } else if (me().order.kind == Request::Kind::Talk) {
             if (me().order.target >= tables_->folk.size()) {
                 me().order = Request{};
