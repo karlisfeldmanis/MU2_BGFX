@@ -179,6 +179,14 @@ public:
     bool repair(int slot) { return was(realm->repair(slot), sim::Command::Kind::Repair, slot); }
     int repairAll() { return was(realm->repairAll(), sim::Command::Kind::RepairAll); }
     int deposit(int slot, int cell = -1) { return was(realm->deposit(slot, cell), sim::Command::Kind::Deposit, slot, cell); }
+    // A Firecracker or a box thrown and opened (Realm::cracks).
+    // Opened as the server's Discard command opens it (Realm::crack), not merely dropped.
+    bool crack(int slot) {
+        if (!realm->cracks(slot)) return false;
+        const bool opened = realm->crack(slot).opened;
+        if (opened) note(sim::Command::Kind::Discard, slot);
+        return opened;
+    }
     int withdraw(int cell, int slot = -1) { return was(realm->withdraw(cell, slot), sim::Command::Kind::Withdraw, cell, slot); }
     int putIn(int slot, int cell = -1) { return was(realm->putIn(slot, cell), sim::Command::Kind::PutIn, slot, cell); }
     int takeOut(int cell, int slot = -1) { return was(realm->takeOut(cell, slot), sim::Command::Kind::TakeOut, cell, slot); }
@@ -1259,7 +1267,23 @@ private:
         }
     }
 
+    // Firecrackers and boxes opened where he hunts, what they leave picked up as a kill's drop
+    // (the user, 2026-10-08: "does bots open firecrackers to get better item or chaos machine
+    // materials?" -- they sold them).
+    void openBoxes() {
+        if (mode_ != Mode::Hunt) return;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (!realm_->cracks(slot)) continue;
+            const std::string label = rowOf(realm_->satchel()[slot]).label;
+            if (hand_.crack(slot)) {
+                ++opened_;
+                say("opens a %s", label.c_str());
+            }
+            return;  // one a sort: what it leaves is picked up before the next
+        }
+    }
     void sortBag() {
+        openBoxes();
         readOrbs();
         wearBest();
         wearJewellery();
@@ -1696,6 +1720,7 @@ private:
     }
     bool stores(const sim::Held& one) const {
         const content::ItemRow& row = rowOf(one);
+        if (jewelKind(row) && vaultJewels(one) >= jewelCap(row)) return false;
         // A weapon rune of his class is carried for the weapon it waits for (savesRune), and
         // the Jewels of Chaos for the machine's Remove Rune, three of them.
         if (sim::creation(row)) return !knightly() || !weaponRune(one);
@@ -1761,6 +1786,8 @@ private:
     bool fetches(const sim::Held& one) const {
         if (one.empty()) return false;
         const content::ItemRow& row = rowOf(one);
+        // Past what he keeps: out, for the counter.
+        if (jewelKind(row) && vaultJewels(one) > jewelCap(row)) return true;
         if (chaos(row)) return ladderOn() || chaosCount() < 3;
         if (sim::refiningJewel(row)) {
             const sim::Jewel kind = sim::jewelOf(row);
@@ -1777,6 +1804,52 @@ private:
             return true;
         }
         return false;
+    }
+    // **Jewels sold** (the user, 2026-10-08: "if bots will sell jewels they can earn a lot of
+    // zen"): a merchant pays a third of WebZen's value -- 3M a Bless, 2M a Soul, 15M a Life, 12M a
+    // Rune of Creation, 270k a Chaos (sim::sellingPrice) -- and a bot banked every one he had no
+    // use for. What he keeps of each, bag and vault together; the rest goes to the counter.
+    int jewelCap(const content::ItemRow& row) const {
+        if (chaos(row)) return ladderOn() ? 1000 : 4;
+        if (sim::creation(row)) return 4;
+        switch (sim::jewelOf(row)) {
+            case sim::Jewel::Bless: return 10;
+            case sim::Jewel::Soul: return 10;
+            case sim::Jewel::Life: return 4;
+            default: return 1000;
+        }
+    }
+    static bool jewelKind(const content::ItemRow& row) { return sim::refiningJewel(row) || sim::creation(row); }
+    // How many of this jewel's kind the bag (slots before `upTo`) and the vault hold.
+    int jewelsHeld(const sim::Held& one, int upTo = sim::kSlots) const {
+        int n = vaultJewels(one);
+        for (int slot = sim::kWorn; slot < upTo; ++slot) {
+            const sim::Held& o = realm_->satchel()[slot];
+            n += !o.empty() && sameJewel(o, one);
+        }
+        return n;
+    }
+    int vaultJewels(const sim::Held& one) const {
+        int n = 0;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+            const sim::Held& o = realm_->vault()[cell];
+            n += !o.empty() && sameJewel(o, one);
+        }
+        return n;
+    }
+    bool sameJewel(const sim::Held& a, const sim::Held& b) const {
+        const content::ItemRow& x = rowOf(a);
+        const content::ItemRow& y = rowOf(b);
+        if (sim::creation(x) || sim::creation(y)) return sim::creation(x) && sim::creation(y);
+        return a.item == b.item;
+    }
+    // A jewel in the bag at `slot` past what he keeps: the vault's and those before it count first.
+    bool surplusAt(int slot) const {
+        const sim::Held& one = realm_->satchel()[slot];
+        if (one.empty() || !jewelKind(rowOf(one))) return false;
+        // The knight's weapon rune waits for its weapon (stores).
+        if (sim::creation(rowOf(one)) && knightly() && weaponRune(one)) return false;
+        return jewelsHeld(one, slot) >= jewelCap(rowOf(one));
     }
     bool fetchOwed() const {
         if (vaultHere() < 0 || freeCells() < 6) return false;
@@ -1894,6 +1967,7 @@ private:
     }
     bool keepsAt(int slot) const {
         const sim::Held& one = realm_->satchel()[slot];
+        if (slot >= sim::kWorn && surplusAt(slot)) return false;
         if (slot >= sim::kWorn && nearlyFits(one)) return true;
         if (slot >= sim::kWorn && unruneWorth(one)) return true;
         if (fodder(slot)) return true;
@@ -3547,6 +3621,7 @@ private:
     bool machineOwed_ = false;
     int owedCastle_ = 1;
     int64_t machineAwayUntil_ = 0;
+    int opened_ = 0;           // Firecrackers and boxes opened
     int giverFolk_ = -1;       // the giver he is walking to, and since when (visitGiver)
     int64_t giverSince_ = 0;
     bool boxStuck_ = false;  // the Goblin's box kept something the bag had no room for
