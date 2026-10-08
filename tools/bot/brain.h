@@ -85,6 +85,8 @@ struct Options {
     bool noShopSkills = false;  // --no-shop-skills: buys no orb or scroll, reads only what drops
     // --pet angel|imp|none: the pet he keeps in slot 8, or -1 for his class's (wantedPet).
     int pet = -1;
+    // --drink-at N: the tenths of his health a wizard drinks under (65% unless asked).
+    double drinkAt = 6.5;
     // --path magic: the Magic Gladiator on the wizard's ways -- energy, a staff, spells and the
     // wizard's potions -- where melee, the default, is the knight's. His quests pay that path.
     bool magic = false;
@@ -915,9 +917,11 @@ private:
 
     void drink() {
         const sim::Body& hero = realm_->hero();
-        // In Blood Castle at 70%: no town to fall back on, and what follows him in is many.
-        const int at = map() == int(sim::kBloodCastleMap) ? 7 : 5;
-        if (hero.health * 10 < hero.maxHealth * at) drinkOne(sim::heals);
+        // In Blood Castle at 70%: no town to fall back on, and what follows him in is many. And a
+        // spellcaster at --drink-at (65%): a pack of Elite Yetis or Ghosts outran his half and
+        // killed a wizard of 400 health 43 times in three runs of a day.
+        const double at = map() == int(sim::kBloodCastleMap) ? 7.0 : wizardly() ? options_.drinkAt : 5.0;
+        if (hero.health * 10.0 < hero.maxHealth * at) drinkOne(sim::heals);
         if (casts() && hero.mana * 10 < hero.maxMana * 3) drinkOne(sim::restores);
     }
 
@@ -2524,6 +2528,11 @@ private:
             mode_ = Mode::Rest;
             return;
         }
+        // **A spellcaster's guard kept up in the field**, not only as a fight begins (the user,
+        // 2026-10-08: "does DW use Magic defense skill?"): Magic Shield takes about half of every
+        // blow off a wizard of 500 energy for five minutes, and raised only on engaging it covered
+        // ten hours of his day -- the packs caught him on the walks between.
+        if (wizardly() && !tables_->grid.safe(hero.column(), hero.row()) && guard()) return;
         sim::Request request;
         // Whatever is on him first.
         float closest = 6.0f * 6.0f;
@@ -3044,10 +3053,12 @@ private:
         // minutes in the Dungeon and paid two trips back to Lorencia for the next. Twenty a cell,
         // so it is three cells more.
         const int deep = realm_->money() > potionPrice(tier) * 40 ? 2 : 1;
+        // The wizard's mana was the dearer from 2026-10-03, when he threw Lightning at 40 a cast;
+        // since he chooses his spells by their mana (spell) he went to town for mana twice a day
+        // and for health thirty times, so health comes first as everyone's does.
         if (wizardly()) {
-            heal(6 * deep);
-            restore(30 * deep);
-            heal(24 * deep);
+            heal(30 * deep);
+            restore(18 * deep);
         } else {
             heal(30 * deep);
             restore(30 * deep);

@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
         else if (a == "--no-quests") options.quests = false;
         else if (a == "--fights") options.fights = true;
         else if (a == "--no-shop-skills") options.noShopSkills = true;
+        else if (a == "--drink-at") options.drinkAt = std::atof(next());
         else if (a == "--pet") {
             const std::string k = next();
             options.pet = k == "angel" ? 0 : k == "imp" ? 1 : -2;
