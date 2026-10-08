@@ -510,6 +510,18 @@ target_include_directories(bot PRIVATE src)
 target_compile_definitions(bot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(bot PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# The net bot: Lorencia characters played on the server as a client plays them -- a mirror of
+# the server's world and nothing asked but commands -- for a world with people in it
+# (tools/netbot/netbot.cpp). RemoteLink is the client's own, compiled in without the renderer.
+add_executable(netbot EXCLUDE_FROM_ALL
+  tools/netbot/netbot.cpp
+  src/game/remote_link.cpp
+)
+target_link_libraries(netbot PRIVATE mu_net)
+target_include_directories(netbot PRIVATE src)
+target_compile_definitions(netbot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_options(netbot PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
 # The raid, headless: the Golden Dragon against source/raid/party.json, played to a kill or a
 # wipe as many times as asked (tools/raid/raid.cpp, docs/golden-dragon-raid.md §2a).
 add_executable(raid EXCLUDE_FROM_ALL
