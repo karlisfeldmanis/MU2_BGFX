@@ -3079,6 +3079,11 @@ private:
         // Not the elf's: over three seeds she ended 15 levels lower with it (172-174 against
         // 187-190), the knight 30 lower without it (140-145 against 175-180).
         const int cap = (aim_ == Aim::Hunt || options_.kin == sim::Kin::FairyElf) ? -1 : bestOn(*tables_);
+        // The nearest on a floor whose trip is open first: a knight in the Lost Tower's hall for
+        // Fire from Afar went for its breeds on floor 4, which The Red Floor opens, and set the
+        // quest aside 600 times while the same breeds stood on floor 3, which it had opened.
+        float closestOpen = 1e30f;
+        int toOpen = -1;
         for (const sim::Body& body : realm_->bodies()) {
             if (here < 0 || !quarry(body, true)) continue;
             if (cap >= 0 && body.level != cap) continue;
@@ -3089,7 +3094,12 @@ private:
                 closest = dx * dx + dy * dy;
                 to = floor;
             }
+            if (realm_->travelRefusal(floor) == sim::TravelRefusal::None && dx * dx + dy * dy < closestOpen) {
+                closestOpen = dx * dx + dy * dy;
+                toOpen = floor;
+            }
         }
+        if (toOpen >= 0) to = toOpen;
         // And never straight back to the floor he has just left.
         if (to >= 0 && to == floorLeft_ && clock_ < floorLeftAt_ + 5 * 60 * 20) to = -1;
         if (to < 0 && std::getenv("BOT_LADDER")) {
@@ -3131,6 +3141,10 @@ private:
             if (lands == to) break;
         }
         if (stair < 0) {
+            if (std::getenv("BOT_LADDER")) {
+                std::printf("NOSTAIR map %d here %d to %d (%s) refusal %d at %d,%d\n", map(), here, to, row.name,
+                            int(realm_->travelRefusal(to)), hero.column(), hero.row());
+            }
             setAside();
             return false;
         }
