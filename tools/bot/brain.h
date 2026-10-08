@@ -13,6 +13,7 @@
 #include <cstring>
 #include <ctime>
 #include <map>
+#include <set>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -1286,6 +1287,16 @@ private:
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
             if (!realm_->machine()[cell].empty()) hand_.takeOut(cell);
         }
+        // What the bag has no room for stays in the box, and nothing new goes in beside it: a
+        // wizard's cloak +1 stayed there and he put a scroll, a bone and a Chaos in beside it
+        // every 90 seconds for 60 hours. Short of room (boxStuck_), so the counters sell.
+        boxStuck_ = boxHeld();
+        if (boxStuck_) {
+            say("the Goblin's box holds what his bag has no room for");
+            hand_.closeMachine();
+            machineOwed_ = false;
+            return false;
+        }
         bool owed = false;
         for (int slot = sim::kWorn; slot < sim::kSlots && !owed; ++slot) owed = unruneWorth(realm_->satchel()[slot]);
         if (owed) unrune();
@@ -1440,7 +1451,9 @@ private:
             }
             raisers.push_back(slot);
         }
-        const int64_t purse = realm_->money() - 2 * potionReserve();
+        // A hundred potions of his size kept back: a knight who drinks ~190 an hour spent all but
+        // seven on a 30% box and spent the next 18 hours short of potions, 22 levels behind.
+        const int64_t purse = realm_->money() - 100 * potionPrice(healTier());
         *judged = judgeBox(box, *service);
         for (const int slot : raisers) {
             if (!judged->ready || judged->rate >= 100) break;
@@ -1497,6 +1510,42 @@ private:
         std::string list;
         for (const auto& [name, n] : in) list += name + " " + std::to_string(n) + ", ";
         std::printf("VAULTED %s\n", list.c_str());
+        std::string bag;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty()) bag += rowOf(one).label + "+" + std::to_string(one.refinement) + (keepsAt(slot) ? "* " : " ");
+        }
+        std::printf("BAGNOW %s\n", bag.c_str());
+        const sim::Body& me = realm_->hero();
+        std::printf("STATE mode %d aim %d quest %d aimMap %d map %d at %d,%d walking %d kills %d chasing %u awayTo %d owedMap %d trip %d rest %d\n",
+                    int(mode_), int(aim_), aimQuest_, aimMap_, map(), me.column(), me.row(), me.walking,
+                    out_.kills, chasing_, awayTo_, owedMap_, tripOwed_, restOwed_);
+        if (const content::Tables* sky = const_cast<Bot*>(this)->world(10)) {
+            std::string costs;
+            std::set<int> seen;
+            for (const content::MonsterNest& nest : sky->nests) {
+                const content::MonsterKind& kind = sky->kinds[nest.kind];
+                if (!seen.insert(kind.number).second) continue;
+                char one[96];
+                std::snprintf(one, sizeof one, "%s(%d) %.0f, ", kind.label.c_str(), kind.level, costOf(kind));
+                costs += one;
+                if (kind.level == 75 || kind.level == 96) {
+                    double hit = 0.0;
+                    int32_t ticks = 1;
+                    attack(&hit, &ticks);
+                    const sim::Body& h = realm_->hero();
+                    std::printf("PARTS %s hit %.0f ticks %d landed %.0f myHit%% %.0f | blow %.0f theirHit%% %.0f guard %.2f\n",
+                                kind.label.c_str(), hit, ticks, std::max(1.0, hit - kind.defense),
+                                100 * hitChance(h.stats.attackRate, float(kind.defenseRate)),
+                                std::max(0.0, (kind.minimumDamage + kind.maximumDamage) / 2.0 - h.stats.defense),
+                                100 * hitChance(float(kind.attackRate), h.stats.defenseRate), guardSeen_);
+                }
+            }
+            const sim::Body& hero = realm_->hero();
+            std::printf("ICARUS hp %d def %.0f rate %.0f dmg %.0f-%.0f fly %d | %s\n", hero.maxHealth,
+                        double(hero.stats.defense), double(hero.stats.defenseRate), double(hero.stats.minimumDamage),
+                        double(hero.stats.maximumDamage), sim::canFly(*tables_, realm_->satchel()), costs.c_str());
+        }
     }
     bool wingsOwed() const {
         sim::Service service;
@@ -1665,7 +1714,12 @@ private:
         // vault, or whose castle he may not enter yet. `fetches` brings each back when it is wanted.
         if (helper(row, kAngel) && wantedPet() != kAngel) return vaultHolds(one) < 1;
         if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) {
-            return !cloakHalfWanted(one, false) && vaultHolds(one) < 2;
+            int carried = 0;
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                const sim::Held& o = realm_->satchel()[slot];
+                carried += !o.empty() && o.item == one.item && o.refinement == one.refinement;
+            }
+            return (carried > 1 || !cloakHalfWanted(one, false)) && vaultHolds(one) < 2;
         }
         return sim::refiningJewel(row);
     }
@@ -1789,6 +1843,8 @@ private:
         for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) runes += one.powers[k] ? 1 : 0;
         return chaosCount() >= runes;
     }
+    // Whether the Goblin's box still holds something of his (sim::Kept keeps it between visits).
+    bool boxHeld() const { return !realm_->machine().empty(); }
     int goblinHere() const {
         for (size_t i = 0; i < tables_->folk.size(); ++i) {
             if (tables_->folk[i].number == sim::kChaosGoblin) return int(i);
@@ -1851,6 +1907,14 @@ private:
         if (one.empty() || !keeps(one)) return false;
         const content::ItemRow& row = rowOf(one);
         if (sim::ammunition(row)) return archer() && feeds(row);
+        // One of each half a level in the bag: an elf whose pets' rule no longer sold the second
+        // carried twelve of each at +1 and bought no arrows for hours.
+        if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) {
+            for (int other = sim::kWorn; other < slot; ++other) {
+                const sim::Held& was = realm_->satchel()[other];
+                if (!was.empty() && was.item == one.item && was.refinement == one.refinement) return false;
+            }
+        }
         // A castle's Scroll or Bone the vault already holds two of: sold. A wizard's vault filled
         // with 28 Bones and 23 Scrolls and he went to it 313 times.
         if ((sim::scrollOfArchangel(row) || sim::bloodBone(row)) && !cloakHalfWanted(one, false) &&
@@ -1860,8 +1924,10 @@ private:
         // The pet he does not keep, once the vault holds one: sold (nine Angels piled up there).
         if (helper(row, kAngel) && wantedPet() != kAngel && vaultHolds(one) >= 1) return false;
         // A reward waiting on room: the healing potions smaller than he drinks go to the counter.
-        if (crowded_ && potionTier(row) >= 0 && potionTier(row) < healTier()) return false;
-        if (row.group == sim::kGroupPets) {
+        if ((crowded_ || boxStuck_) && potionTier(row) >= 0 && potionTier(row) < healTier()) return false;
+        // A second of a pet or mount is sold -- the helpers alone: a cloak, scroll or bone is
+        // group 13 too, and a Cloak +1 was sold beside a +2 four times in a day, a Chaos each.
+        if (anyHelper(row)) {
             for (int other = 0; other < slot; ++other) {
                 const sim::Held& was = realm_->satchel()[other];
                 if (!was.empty() && was.item == one.item) return false;
@@ -1963,7 +2029,7 @@ private:
     // The level of a Scroll and Bone pair he can make a cloak of now -- a castle he may enter, a
     // Chaos to spend and the Zen over his potions, no such cloak already -- or 0.
     int cloakWorth() const {
-        if (realm_->hero().level < sim::kCloakFromLevel) return 0;
+        if (realm_->hero().level < sim::kCloakFromLevel || boxHeld()) return 0;
         bool chaosHeld = false;
         int scrolls = 0, bones = 0;  // a bit a level
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
@@ -1999,6 +2065,10 @@ private:
             if (jewel < 0 && chaos(row)) jewel = slot;
         }
         if (scroll < 0 || bone < 0 || jewel < 0) return;
+        if (std::getenv("BOT_MIX")) {
+            std::printf("MIX cloak puts: scroll %d bone %d jewel %d atMachine-mixing %d machine-empty %d\n", scroll, bone, jewel,
+                        realm_->mixing(), realm_->machine().empty());
+        }
         const bool in = hand_.putIn(scroll) >= 0 && hand_.putIn(bone) >= 0 && hand_.putIn(jewel) >= 0;
         if (std::getenv("BOT_MIX")) {
             const sim::Judged j = realm_->judged(sim::Service::Cloak);
@@ -2601,6 +2671,10 @@ private:
         if (wornDown() >= 0 && !realm_->selfMending()) return "gear worn down";
         if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
         if (goblinHere() >= 0 && cloakWorth() > 0) return "a cloak to make";
+        if (boxHeld() && freeCells() >= 6 && clock_ - lastTrip_ > 10 * 60 * 20 &&
+            (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
+            return "the Goblin's box to empty";
+        }
         if (clock_ - lastTrip_ > 10 * 60 * 20 && clock_ >= machineAwayUntil_ && (wingsOwed() || cloakWorth() > 0) &&
             (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
             return "the Chaos Machine";
@@ -2919,12 +2993,29 @@ private:
         }
         if (folk < 0) return;
         if (realm_->questing() != folk) {
+            // A giver he cannot walk to -- Tersia in the Lost Tower's hall from its second floor,
+            // where a knight stood for 18 hours to hand in Bad Air -- is reached by the trip to
+            // this map, which lands at its entrance (a trip may land on the map he is on).
+            if (giverFolk_ != folk) {
+                giverFolk_ = folk;
+                giverSince_ = clock_;
+            } else if (clock_ - giverSince_ > 60 * 20) {
+                giverSince_ = clock_;
+                for (int i = 0; i < sim::kTravels; ++i) {
+                    const sim::TravelRow& trip = sim::travelAt(i);
+                    if (trip.map != map() || realm_->travelRefusal(i) != sim::TravelRefusal::None) continue;
+                    if (realm_->money() < trip.zen + 500) continue;
+                    if (hand_.travel(i)) say("cannot walk to %s: the trip to %s's entrance", row.giverName, trip.name);
+                    return;
+                }
+            }
             sim::Request request;
             request.kind = sim::Request::Kind::Talk;
             request.target = uint32_t(folk);
             hand_.ask(request);
             return;
         }
+        giverFolk_ = -1;  // reached: the next walk to a giver is timed afresh
         if (aim_ == Aim::Accept) {
             if (hand_.acceptQuest(aimQuest_)) say("takes %s from %s", row.title, row.giverName);
         } else {
@@ -3021,7 +3112,7 @@ private:
             for (int slot = sim::kWorn; slot < sim::kSlots && !machineOwed_; ++slot) {
                 machineOwed_ = unruneWorth(realm_->satchel()[slot]);
             }
-            machineOwed_ = machineOwed_ || cloakWorth() > 0 || wingsOwed();
+            machineOwed_ = machineOwed_ || cloakWorth() > 0 || wingsOwed() || boxHeld();
         }
         machineSince_ = clock_;
         vaultSince_ = clock_;
@@ -3139,7 +3230,7 @@ private:
         // Not while a box is owed at the Goblin he stands beside: an elf with a 47% Chaos
         // Weapon box walked to Noria every half hour from level 157, was sent on to Devias's
         // counters the moment she arrived, and never mixed it.
-        const bool goblinOwed = goblinHere() >= 0 && (wingsOwed() || cloakWorth() > 0);
+        const bool goblinOwed = goblinHere() >= 0 && (wingsOwed() || cloakWorth() > 0 || (boxHeld() && freeCells() >= 6));
         if (goblinOwed) machineOwed_ = true;
         if (!goblinOwed && errands_.size() == sellers_.size() && clock_ >= awayShopUntil_ && !shopWorth()) {
             for (const int there : {0, 3, 2}) {
@@ -3456,6 +3547,9 @@ private:
     bool machineOwed_ = false;
     int owedCastle_ = 1;
     int64_t machineAwayUntil_ = 0;
+    int giverFolk_ = -1;       // the giver he is walking to, and since when (visitGiver)
+    int64_t giverSince_ = 0;
+    bool boxStuck_ = false;  // the Goblin's box kept something the bag had no room for
     bool crowded_ = false;  // a reward found no room: the ladder keeps nothing until one is handed in  // the next trip that may go to Noria for the machine        // the castle his cloak opened, for the raise on the far side  // and on the Chaos Goblin, to take runes out
     int64_t machineSince_ = 0;
     int64_t vaultSince_ = 0;
