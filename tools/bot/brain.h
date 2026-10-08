@@ -62,6 +62,12 @@ constexpr WorldRow kWorlds[] = {
     {2, "devias", {207, 42}},
     {3, "noria", {174, 112}},
     {4, "losttower", {208, 75}},
+    // The deeper maps (the user, 2026-10-08: "keep pushing DW" -- a wizard of level 150 still
+    // ground the Dungeon and Devias, the only grounds he knew): Atlans, Tarkan, and Icarus for
+    // one who can fly (canFly), each where sim/maps.cpp puts a newcomer.
+    {7, "atlans", {21, 17}},
+    {8, "tarkan", {195, 65}},
+    {10, "icarus", {15, 13}},
     // Blood Castle: reached only by the Messenger's door (sim/event.h), never chosen to grind.
     {11, "bloodcastle", {13, 8}},
 };
@@ -512,6 +518,8 @@ private:
     }
 
     bool reachable(int to) const {
+        // Icarus's gate refuses a hero without wings or a Dinorant (sim::canFly): never routed to.
+        if (to == 10 && !sim::canFly(*tables_, realm_->satchel())) return false;
         int gate, travel;
         return to == map() || way(to, &gate, &travel);
     }
@@ -1445,11 +1453,12 @@ private:
             const sim::Held& one = realm_->satchel()[slot];
             if (one.empty() || !sim::refiningJewel(rowOf(one)) || sim::jewelOf(rowOf(one)) != want) continue;
             if (!sim::refinable(*tables_, one, it)) return;
-            const std::string label = rowOf(it).label;
+            // Both names copied first: the jewel's slot is empty once it is spent.
+            const std::string label = rowOf(it).label, jewel = rowOf(one).label;
             const int was = it.refinement, option = it.option;
             if (hand_.refine(slot, weapon)) {
                 const sim::Held& now = realm_->satchel()[weapon];
-                say("%s on his %s: +%d -> +%d, option %d -> %d", rowOf(one).label.c_str(), label.c_str(), was,
+                say("%s on his %s: +%d -> +%d, option %d -> %d", jewel.c_str(), label.c_str(), was,
                     int(now.refinement), option, int(now.option));
             }
             return;
@@ -2074,8 +2083,15 @@ private:
     // `share` 0 is his own riskShare: a third, or a half for a wizard rich in potions -- the same
     // the grind allows him. At a fixed third a wizard of 376 health never began the Catacombs,
     // whose Ghosts cost him 154 a kill (2026-10-08).
+    // **And with twenty healing potions on him, a quest's breed may cost him his whole health**
+    // (the user, 2026-10-08: "there is also quests for atlans,tarkan"): Devin's White Silence asks
+    // ten Ice Queens, each a full bar of health to every class at level 150-170, and it opens
+    // Tersia's tower and the Atlans and Tarkan chains behind her -- held at a third or a half,
+    // no bot of any class ever handed it in. He drinks through the fight, as a player does.
     int huntable(int q, std::vector<int>* breeds, double share = 0.0) {
-        if (share <= 0.0) share = riskShare();
+        // Not a wizard's: on 360-480 health the Ice Queens killed him 38 times a day and he
+        // ended 10-30 levels lower; the knight went from 168 to 182 with it.
+        if (share <= 0.0) share = !wizardly() && countOf(sim::heals) >= 20 ? 1.0 : riskShare();
         breeds->clear();
         if (aside_[q] > clock_) return -1;
         int where = -1;
