@@ -106,7 +106,7 @@ constexpr float kWaterAlpha = 0.22f;
 
 constexpr float kCell = 20.0f;
 constexpr float kMid = kCell * 0.5f;
-constexpr int kGlyphs = 11;
+constexpr int kGlyphs = 12;
 
 float clamp01(float v) { return std::clamp(v, 0.0f, 1.0f); }
 
@@ -186,6 +186,8 @@ float shape(Minimap::Glyph glyph, float x, float y) {
         case Glyph::Quarry: return circle(x, y, kMid, kMid, 2.7f);
         // Her summon: a dot a size up from a quarry's, rimmed as he is.
         case Glyph::Summon: return circle(x, y, kMid, kMid, 3.4f);
+        // Another player: the summon's dot, a size up again.
+        case Glyph::Player: return circle(x, y, kMid, kMid, 3.8f);
         // Anyone else worth a name: a head over shoulders, the townsperson himself.
         case Glyph::Folk:
             return std::min(circle(x, y, kMid, 6.6f, 2.4f),
@@ -242,6 +244,8 @@ constexpr uint32_t kAgainBlue = gfx::rgba(0.56f, 0.80f, 1.00f);
 constexpr uint32_t kHeroGreen = gfx::rgba(0.42f, 0.86f, 0.36f);
 // Her summon, his green paled toward bone, so it reads as his and not as him.
 constexpr uint32_t kSummonGreen = gfx::rgba(0.66f, 0.90f, 0.60f);
+// Another player -- for now the bots -- in orange (the user, 2026-10-08).
+constexpr uint32_t kPlayerOrange = gfx::rgba(1.00f, 0.58f, 0.12f);
 
 // The tone each is drawn in: bone for what matters, the quieter inks for the rest.
 uint32_t toneOf(Minimap::Glyph glyph) {
@@ -249,6 +253,7 @@ uint32_t toneOf(Minimap::Glyph glyph) {
     switch (glyph) {
         case Glyph::Hero: return kHeroGreen;
         case Glyph::Summon: return kSummonGreen;
+        case Glyph::Player: return kPlayerOrange;
         // A quest ready to hand in is gold, the user's (2026-10-01): "lets color finished quests
         // more vissible gold color". Bone sank into the lit ground. A quest not yet taken wears
         // the same gold (the user, 2026-10-02); the sign, "!" or hook, tells them apart.
@@ -333,7 +338,7 @@ bool Minimap::bake(float unit) {
             const int px = column % cell_;
             // White where the glyph is, so the tint is its tone; him with a hairline of ink round
             // him too, which the tint leaves black, so he holds his shape on the lit town.
-            const bool rimmed = glyph == Glyph::Hero || glyph == Glyph::Summon;
+            const bool rimmed = glyph == Glyph::Hero || glyph == Glyph::Summon || glyph == Glyph::Player;
             float fill = 0.0f, alpha = 0.0f;
             for (int sy = 0; sy < kSamples; ++sy) {
                 for (int sx = 0; sx < kSamples; ++sx) {
@@ -686,6 +691,16 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         put(Glyph::Summon, column, row, true, -1, summon->kind);
     }
 
+    // Every other player in the world, held to the edge so one far off is found: for now the bots.
+    // Named by his body's index (`kind`), read back below.
+    for (int p = 0; p < realm.playerCount(); ++p) {
+        const sim::Body& other = realm.playerAt(p);
+        if (other.id == realm.hero().id || !other.alive()) continue;
+        float column = other.x, row = other.y;
+        play.shownAt(other.id, &column, &row);
+        put(Glyph::Player, column, row, true, -1, int32_t(&other - realm.bodies().data()));
+    }
+
     // Him, last and on top: his facing as a screen direction, clockwise from up.
     {
         float fx = 0.0f, fy = 0.0f;
@@ -934,6 +949,11 @@ void Minimap::rebuild(const Play& play) {
             words = tables.folk[size_t(mark.name)].name;
         } else if ((mark.glyph == Glyph::Quarry || mark.glyph == Glyph::Summon) && mark.kind >= 0) {
             words = tables.kinds[size_t(mark.kind)].label;
+        } else if (mark.glyph == Glyph::Player && mark.kind >= 0 &&
+                   size_t(mark.kind) < play.realm().bodies().size()) {
+            const sim::Body& other = play.realm().bodies()[size_t(mark.kind)];
+            words = "Bot, level " + std::to_string(other.level) + " " +
+                    sim::className(int(other.kin), other.second);
         } else if (mark.glyph == Glyph::Gate) {
             const sim::EnterGate* gate = sim::enterGateNumbered(mark.kind);
             const sim::ExitGate* to = gate ? sim::exitGate(gate->target) : nullptr;
