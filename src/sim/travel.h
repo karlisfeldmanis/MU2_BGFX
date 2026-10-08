@@ -29,7 +29,7 @@ struct TravelRow {
     const char* key;       // what a save calls it (game/save.cpp), never renamed: not its index
 };
 
-inline constexpr int kTravels = 15;
+inline constexpr int kTravels = 16;
 const TravelRow& travelAt(int index);
 // The row a save's key names, or -1.
 int travelIndexOf(const std::string& key);
@@ -40,7 +40,8 @@ int travelIndexOf(const std::string& key);
 // `Quest` is ours (the user, 2026-09-30: "dont allow to teleport to dungeon 1,2,3 if quest line is
 // not started"): a Dungeon floor's row asks its own link of the Golden Archer's chain taken once
 // -- the first floor The Catacombs, the second the next, the third the last (travelQuest).
-enum class TravelRefusal : uint8_t { None, Unknown, Here, Dead, Level, Zen, Quest };
+// `Wings` is MU's door rule on the Icarus row: wings or a Dinorant worn (sim::canFly).
+enum class TravelRefusal : uint8_t { None, Unknown, Here, Dead, Level, Zen, Quest, Wings };
 
 // The rows of `map`, a bit a row.
 uint32_t travelRowsOf(int32_t map);

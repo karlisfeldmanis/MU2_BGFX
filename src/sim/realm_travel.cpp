@@ -44,6 +44,11 @@ constexpr TravelRow kRows[kTravels] = {
     // opens when he speaks to the Keeper of Kantur there, a quest giver since 2026-10-06
     // (docs/tarkan-quest.md), or with The Road of Kantur handed in. docs/tarkan-port.md.
     {"Tarkan", 8, 100, 8000, 195, 65, 0, 0, "tarkan"},
+    // Icarus, after it for the same reason (docs/icarus-port.md step 8, decision 1): Season Six's
+    // 10,000 Zen, landing at the door, 15,13, facing nowhere; level 160 as the door asks (gate
+    // 62), and refused without wings or a Dinorant worn, as the door refuses (Wings). It opens
+    // when Tersia's The Sky Door is taken (docs/icarus-quest.md), or as he stands in Icarus.
+    {"Icarus", 10, 160, 10000, 15, 13, 0, 0, "icarus"},
 };
 
 // A chained map's floors, every floor a link and its row open once the link is taken: the
@@ -130,6 +135,9 @@ void Realm::settleFound(uint32_t saved) {
     if (me().quests[kDrownedSong].completions > 0) me().found |= travelRowsOf(int32_t(kAtlansMap));
     // And Tarkan once he has met the Keeper, the same way (The Road of Kantur).
     if (me().quests[kRoadOfKantur].completions > 0) me().found |= travelRowsOf(int32_t(kTarkanMap));
+    // And Icarus once The Sky Door is taken (Realm::acceptQuest opens it then).
+    if (me().quests[kSkyDoor].state != QuestState::Untaken || me().quests[kSkyDoor].completions > 0)
+        me().found |= travelRowsOf(int32_t(kIcarusMap));
     // A map nobody gives a quest on opens as he stands in it. Silently: a raise logs the same
     // lines on every run.
     bool giver = false;
@@ -205,6 +213,7 @@ TravelRefusal Realm::travelRefusal(int index) const {
     if (!hero.alive()) return TravelRefusal::Dead;
     if (hero.level < moveLevel(to.level, hero.kin)) return TravelRefusal::Level;
     if (me().money < to.zen) return TravelRefusal::Zen;
+    if (to.map == int32_t(kIcarusMap) && !canFly(*tables_, me().bag)) return TravelRefusal::Wings;
     return TravelRefusal::None;
 }
 

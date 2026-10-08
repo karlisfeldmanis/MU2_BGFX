@@ -660,9 +660,9 @@ void Play::answered(const sim::Happening& said) {
             // By sim::TravelRefusal; `Quest` had no line here before and read past the end.
             static const char* const kWhy[] = {"",      "not opened",    "already here",
                                                "dead",  "level too low", "short of zen",
-                                               "its quest not done"};
+                                               "its quest not done", "needs wings"};
             core::logf("window: travel to %s %s", sim::travelAt(asked.a).name,
-                       ok ? "paid" : kWhy[std::clamp(before.why, 0, 6)]);
+                       ok ? "paid" : kWhy[std::clamp(before.why, 0, 7)]);
             // Another map is the mode's to raise; a floor of this one the realm has already set
             // him down on, and its Climbed drew the landing (the user, 2026-10-02).
             if (ok && sim::travelAt(asked.a).map != int32_t(realm_.tables()->map)) travelled_ = asked.a;

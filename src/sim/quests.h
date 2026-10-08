@@ -26,10 +26,10 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 22;
+inline constexpr int kQuests = 24;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
-inline constexpr int kQuestPaid = 12;
+inline constexpr int kQuestPaid = 18;
 
 enum class QuestStepKind : uint8_t {
     // Kill `count` of breed `target` (MU's monster number); a count of 0 is the breed's whole
@@ -221,6 +221,10 @@ inline constexpr int kRoadOfKantur = 20;
 inline constexpr int32_t kKeeperNumber = 701;
 // The Keeper's own: Tarkan cleared, the Zaikan and the Death Beam Knight last.
 inline constexpr int kKantursLegion = 21;
+// Tersia's Icarus links (docs/icarus-quest.md): the door held, then the Dark Phoenix. Taking the
+// first opens Icarus's travel row.
+inline constexpr int kSkyDoor = 22;
+inline constexpr int kPhoenixContract = 23;
 // Who gives quest `index`: its row's giver, or Peia for kDemoQuests when the realm's config has
 // the demo on (RealmConfig::questDemo, --quest-demo). The table itself never changes.
 int32_t questGiver(int index, bool demo);

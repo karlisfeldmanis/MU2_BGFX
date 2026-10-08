@@ -5312,16 +5312,24 @@ void testTowerKeeper() {
     checkEqual(sim::questOf(sim::kThompson), -1, "Thompson gives none");
     if (shrine < 0) return;
     check(sim::questAt(shrine).afterAny == (1u << 2), "hers waits on Devin's");
-    int links = 0, unmade = 0, chained = 0;
+    int links = 0, unmade = 0, chained = 0, before = -1;
     for (int q = 0; q < sim::kQuests; ++q) {
         const sim::QuestRow& row = sim::questAt(q);
         if (row.giver != sim::kTersia) continue;
-        if (links > 0) chained += row.afterAny == (1u << (q - 1)) ? 1 : 0;
+        if (links > 0) chained += row.afterAny == (1u << before) ? 1 : 0;
         ++links;
+        before = q;
         for (int i = 0; i < row.paidCount; ++i) unmade += tower.itemNamed(row.paid[i].item) < 0;
     }
-    checkEqual(links, 7, "seven links, a floor each");
-    checkEqual(chained, 6, "each after the one before");
+    // A floor each, then Icarus's two above the tower (docs/icarus-quest.md).
+    checkEqual(links, 9, "seven links, a floor each, and Icarus's two");
+    checkEqual(chained, 8, "each after the one before");
+    checkEqual(sim::questAt(sim::kSkyDoor).giver, sim::kTersia, "The Sky Door is Tersia's");
+    checkEqual(sim::questAt(sim::kSkyDoor).minLevel, 160, "at the door's level");
+    checkEqual(sim::questAt(sim::kPhoenixContract).afterAny, 1u << sim::kSkyDoor,
+               "the Phoenix after the door");
+    checkEqual(sim::questAt(sim::kPhoenixContract).steps[3].target, 77, "ending on the Phoenix");
+    checkEqual(sim::travelAt(sim::travelIndexOf("icarus")).map, 10, "Icarus has a travel row");
     checkEqual(unmade, 0, "and every thing she pays is a cooked item");
     // Links 2-7's first clears (2026-10-02): every class a rune it may set, in what that link pays
     // it where the link pays a socketed piece; a repeat pays neither.

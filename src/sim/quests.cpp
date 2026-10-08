@@ -827,6 +827,117 @@ QuestRow tersiaBalrog() {
     return row;
 }
 
+// Icarus's two (docs/icarus-quest.md, the user's of 2026-10-07: 'there will be not quest giver in
+// icarus, but there will be quest in LT quest giver'): links 8 and 9 of Tersia's chain, taken and
+// handed in at her desk, since Icarus has no safe tile and no NPC. The door above the seventh
+// floor, the wings or Dinorant it asks, the Phoenix ruling the sky and Loch's Feather falling
+// there are MU's; the guild's contracts and every word she says are ours. The pay is the user's:
+// 'dont give 2nd wings but give feathers, jewels, epic & legendary runes, Dark Breaker'. The
+// Legendaries are all the second class's, earned before Sevina and set after.
+QuestRow tersiaSkyDoor() {
+    QuestRow row = tersiaLink("The Sky Door", 300000, 1200000, 300000, 5, 2);
+    row.offer[0] =
+        "\"Since the Balrog fell, something comes down through the roof at night. I hear wings "
+        "over the hall.\"";
+    row.offer[1] =
+        "\"The shrine's records say there is a door above the last floor, and beyond it only "
+        "sky. The keepers called it Icarus. The first of them went through and never came "
+        "back.\"";
+    row.offer[2] =
+        "\"The guild wants that door held. Clear the things on the cloud road -- the Alquamos, "
+        "the Crusts, the Queens -- and push them back from the tower.\"";
+    row.offer[3] =
+        "\"You cannot walk on cloud. Wear wings, or ride a Dinorant, or the door will not let "
+        "you through.\"";
+    row.underway = "\"I still hear them on the roof. The road is not clear yet.\"";
+    row.handIn[0] = "\"Quiet. For the first time since the Balrog fell, the roof is quiet.\"";
+    row.handIn[1] =
+        "\"The guild pays for a held door. And the records say something else falls up there -- "
+        "Loch's Feather, the thing the wing-makers want. Keep what you find.\"";
+    row.resting =
+        "\"The sky does not stay empty. When the wings come back, so does the contract.\"";
+    row.next = "Tersia has another contract: the Dark Phoenix";
+    row.steps[0] = {QuestStepKind::Clear, 69, 20, "Alquamos"};
+    row.steps[1] = {QuestStepKind::Clear, 71, 15, "Mega Crusts"};
+    row.steps[2] = {QuestStepKind::Clear, 70, 8, "Queen Rainers"};
+    row.steps[3] = {QuestStepKind::Clear, 73, 8, "Drakans"};
+    row.steps[4] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 5;
+    // The door's own level (gate 62), which a Magic Gladiator passes at two thirds.
+    row.minLevel = 160;
+    row.gateLevel = true;
+    row.afterAny = 1u << 12;  // The Scythe
+    row.paid[row.paidCount++] = {.item = "Jewel03"};  // a Jewel of Life
+    row.paid[row.paidCount++] = {.item = "Quest04", .count = 2, .firstOnly = true};  // Loch's Feathers
+    // Only an Epic: Evil Spirit, its Legendary in the doc, went to the Phoenix on 2026-10-08 (the
+    // user: 'ok do it'), so the boss pays the bigger rune and the door no more than the Balrog.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Plague),
+                                 .firstOnly = true};  // Spirit Plague, Epic
+    row.voice = "tersia_8";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
+QuestRow tersiaPhoenix() {
+    QuestRow row = tersiaLink("The Phoenix's Contract", 400000, 1600000, 400000, 6, 3);
+    row.offer[0] =
+        "\"The things on the road were sent. Something at the far end of the sky rules them.\"";
+    row.offer[1] =
+        "\"The records call it the Dark Phoenix: a bird of fire, with a rider on its back. "
+        "Everything up there answers to it.\"";
+    row.offer[2] =
+        "\"Its guard walks the south lane -- Phantom Knights, and Drakans black and red. Go "
+        "through them and bring the bird down.\"";
+    row.offer[3] =
+        "\"No guild hand has been that far. If you come back, you will be the first name in a "
+        "new book.\"";
+    row.underway = "\"The bird still flies. I can see its fire from the roof at night.\"";
+    row.handIn[0] = "\"The fire is gone from the sky. I watched it go out from the roof.\"";
+    row.handIn[1] = "\"First name in the new book. The guild pays its best for this one.\"";
+    row.resting =
+        "\"A new bird always rises where the old one burned. When it does, come back.\"";
+    row.steps[0] = {QuestStepKind::Clear, 74, 10, "Alpha Crusts"};
+    row.steps[1] = {QuestStepKind::Clear, 72, 20, "Phantom Knights"};
+    row.steps[2] = {QuestStepKind::Clear, 75, 15, "Great Drakans"};
+    row.steps[3] = {QuestStepKind::Clear, 77, 1, "The Dark Phoenix"};
+    row.steps[4] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
+    row.stepCount = 5;
+    row.minLevel = 180;  // the first wings' level
+    row.afterAny = 1u << kSkyDoor;
+    row.paid[row.paidCount++] = {.item = "Jewel15"};  // a Jewel of Chaos
+    row.paid[row.paidCount++] = {.item = "Jewel03"};  // a Jewel of Life
+    row.paid[row.paidCount++] = {.item = "Quest04"};  // Loch's Feather, every clear
+    row.paid[row.paidCount++] = {.item = "Quest04", .count = 2, .firstOnly = true};
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // The knight's the Phantom Knights' own blade, worn as a Blade Knight; the wizard and the elf
+    // have no second-class weapon built, and the Balrog already gave her the Chaos Nature Bow.
+    row.paid[row.paidCount++] = {.item = "Sword18", .kin = knight, .sockets = 2,
+                                 .firstOnly = true};  // Dark Breaker
+    row.paid[row.paidCount++] = {.item = "Staff08", .kin = wizard, .sockets = 2,
+                                 .firstOnly = true};  // Chaos Lightning Staff
+    row.paid[row.paidCount++] = {.item = "CrossBow07", .kin = elf, .sockets = 2,
+                                 .firstOnly = true};  // Aquagold Crossbow
+    // A Legendary each, the second class's, and an Epic that works at once.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
+                                 .power = uint8_t(Power::Hellfire), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
+                                 .power = uint8_t(Power::Bulwark), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Volley),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
+                                 .firstOnly = true};  // Immolate
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
+                                 .power = uint8_t(Power::Scorch), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf,
+                                 .power = uint8_t(Power::PlagueArrows), .firstOnly = true};
+    // And every class's Evil Spirit, moved here from The Sky Door.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Spirits),
+                                 .firstOnly = true};
+    row.voice = "tersia_9";  // tools/voice.py, VOICES["tersia"]
+    return row;
+}
+
 // Sevina's class change (docs/class-change-quest.md), the user's of 2026-10-04: "this quest first
 // part will be kill quest on lt7 and atlans, and it starts at lvl 200. second part is quest item
 // drop which can drop in lt7 or atlans". MU's own giver (Sevina the Priestess, 235, Devias) and
@@ -1312,6 +1423,8 @@ const QuestRow kRawTable[kQuests] = {
     keyed(lirienHalls(), "lirien_halls"),
     keyed(roadOfKantur(), "road_of_kantur"),
     keyed(kantursLegion(), "kanturs_legion"),
+    keyed(tersiaSkyDoor(), "tersia_sky_door"),
+    keyed(tersiaPhoenix(), "tersia_phoenix"),
 };
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every

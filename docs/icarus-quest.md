@@ -2,7 +2,11 @@
 
 Written 2026-10-07. The user: 'there will be not quest giver in icarus, but there will be quest in LT
 quest giver. we need lore for her why char has to go to icarus, what lvl and what is required'.
-**Not built.** Tersia, the Lost Tower's giver (docs/lost-tower-quest.md), gets two more contracts,
+**Built 2026-10-08** (the user: 'do it'): `tersiaSkyDoor` and `tersiaPhoenix` in
+src/sim/quests.cpp, keys `tersia_sky_door` and `tersia_phoenix`, sim::kSkyDoor and
+kPhoenixContract; Icarus's travel row ("icarus", level 160, 10,000 Zen, landing 15,13), opened by
+taking link 8 and refused without wings or a Dinorant (TravelRefusal::Wings); her voice as
+`tersia_8` and `tersia_9`. Link 9 asks 180 as written, not the class change. Tersia, the Lost Tower's giver (docs/lost-tower-quest.md), gets two more contracts,
 links 8 and 9 of her chain. Icarus has no safe tile and no NPC (icarus-port §0), so both are
 taken and handed in at her desk in the tower's hall.
 
@@ -122,8 +126,8 @@ Breaker'. Above the Balrog's (link 7: 250k exp, 250k Zen, 5 Bless, 2 Soul, 1 Cha
 
 | # | every clear (12 h) | first clear |
 |---|---|---|
-| 8. The Sky Door | 300k exp, 300k Zen, 5 Bless, 2 Soul, 1 Life | 1.2M exp; **2 Loch's Feathers**; Rune: **Evil Spirit** (Legendary, every class, shield or jewellery); Rune: **Spirit Plague** (Epic, every class), the pair |
-| 9. The Phoenix's Contract | 400k exp, 400k Zen, 6 Bless, 3 Soul, 1 Chaos, 1 Life, **1 Loch's Feather** | 1.6M exp; **2 Loch's Feathers**; a two-socket weapon (knight **Dark Breaker**, the Phantom Knights' own blade, worn as a Blade Knight; wizard Chaos Lightning Staff; elf Aquagold Crossbow); a Legendary rune (knight **Hellfire**; wizard **Bulwark**, Soul Barrier with his two-handed staff; elf Piercing Volley) and an Epic one (knight **Immolate**, wizard **Scorch**, elf **Plague Arrows**) |
+| 8. The Sky Door | 300k exp, 300k Zen, 5 Bless, 2 Soul, 1 Life | 1.2M exp; **2 Loch's Feathers**; Rune: **Spirit Plague** (Epic, every class) |
+| 9. The Phoenix's Contract | 400k exp, 400k Zen, 6 Bless, 3 Soul, 1 Chaos, 1 Life, **1 Loch's Feather** | 1.6M exp; **2 Loch's Feathers**; a two-socket weapon (knight **Dark Breaker**, the Phantom Knights' own blade, worn as a Blade Knight; wizard Chaos Lightning Staff; elf Aquagold Crossbow); a Legendary rune (knight **Hellfire**; wizard **Bulwark**, Soul Barrier with his two-handed staff; elf Piercing Volley) and an Epic one (knight **Immolate**, wizard **Scorch**, elf **Plague Arrows**); Rune: **Evil Spirit** (Legendary, every class), moved here from link 8 on 2026-10-08 |
 
 - **No wings.** The feathers are the way: four from the first clears and one a Phoenix repeat, beside
   the one in 500 that drops; the wings are still made in the Chaos Machine.
@@ -141,5 +145,4 @@ Breaker'. Above the Balrog's (link 7: 250k exp, 250k Zen, 5 Bless, 2 Soul, 1 Cha
 
 ## Open
 
-- Voice: `tersia_8` and `tersia_9` in Tersia's own voice (tools/voice.py `VOICES["tersia"]`).
 - Whether link 9 should ask the class change (Sevina's, from 200) instead of 180.
