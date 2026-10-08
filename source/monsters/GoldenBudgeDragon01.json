@@ -45,7 +45,7 @@
     "parts": 9
   },
   "plus_from": "The golden monsters' pair, RENDER_METAL | RENDER_BRIGHT and RENDER_CHROME | RENDER_BRIGHT at Bright 1 over the whole body (ZzzCharacter.cpp:8716-8785): Shiny01 and Chrome01 both added, which is the +9 pass pair in shaders/shine.sh. It was +7, the chrome alone, and the red hide read through it (the user, 2026-10-06: 'golden budge dragon has to be with golden effect').",
-  "summoned_in": "lorencia",
+  "summoned_in": ["lorencia", "devias", "noria"],
   "summoned_in_from": "No spawn box: the Golden Dragon raises it in its flight (docs/golden-dragon-raid.md), so it is cooked with the world it is raised in, as GoldenDragon01.",
   "islands": [
     {

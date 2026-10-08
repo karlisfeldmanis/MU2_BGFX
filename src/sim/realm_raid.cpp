@@ -113,7 +113,12 @@ void Realm::raiseRaid() {
         drinkAt_[i] = 0;
         raidNext_[i] = 0;
     }
-    if (invaderSlot_ < 0 || !raidAsked_) return;
+    // **Every invasion is the raid** (the user, 2026-10-08: "i really hope if single char goes
+    // to check on dragon he also will see same experience as in raid"): its stages, its storm of
+    // rocks, its Inferno, its swarm and its boxes, with or without a party. setRaid only names
+    // the players it is tough for and brings the party; without it, its health is laid as it
+    // comes, for the players on the map then (Realm::invasionTick).
+    if (invaderSlot_ < 0) return;
     {
         // Its health and its blow as the raid's (sim/raid.h), laid on before it ever rises.
         Body& dragon = bodies_[size_t(invaderSlot_)];
@@ -382,7 +387,7 @@ void Realm::raidSkipTo(RaidStage stage) {
 // ---- the dragon's clock -----------------------------------------------------------------------
 
 void Realm::raidTick() {
-    if (invaderSlot_ < 0 || !raidAsked_) return;
+    if (invaderSlot_ < 0) return;
     Body& dragon = bodies_[size_t(invaderSlot_)];
     if (raid_.stage == RaidStage::None) {
         if (!dragon.alive() || invasion_.phase != InvasionPhase::Standing) return;

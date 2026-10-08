@@ -475,9 +475,10 @@ void testInvasion(const content::Tables& tables) {
     realm.step();
     dragon = realm.invader();
     check(dragon->alive(), "it lands on its tick");
-    // With no raid asked for (Realm::setRaid), OpenMU's own.
-    check(dragon->health == dragon->maxHealth && dragon->maxHealth == 22000,
-          "at the Golden Dragon's 22,000");
+    // With no raid asked for (Realm::setRaid), the raid's for the one player on the map
+    // (2026-10-08: every invasion is the raid).
+    check(dragon->health == dragon->maxHealth && dragon->maxHealth == sim::raidHealth(1),
+          "at the raid's health for one");
     check(dragon->column() == column && dragon->row() == row, "on the tile it was said to");
     check(tables.grid.open(column, row, content::kWallCharacter) && !tables.grid.safe(column, row),
           "a standable tile out of town");
@@ -514,11 +515,23 @@ void testRaid(const content::Tables& tables) {
         bool legal = true;
         for (const sim::RaiderKit& kit : party) legal &= plain.kitRefusal(kit).empty();
         check(legal, "every kit passes the gates its wearer would (sim::movable)");
-        check(plain.raiderCount() == 0 && plain.minionCount() == 0,
-              "a realm with no raid asked for raises no raiders and no minions");
+        // Every invasion is the raid now (2026-10-08): its swarm stands ready with no party.
+        check(plain.raiderCount() == 0 && plain.minionCount() == sim::kMinionsMost,
+              "a realm with no raid asked for raises no raiders, and the swarm all the same");
     }
-    const auto raised = [&](sim::Realm& realm, uint64_t seed) {
-        realm.setRaid(10, party, true);
+    // The fallen-raider test's own party, its weapons alone and no armour: the party at level
+    // 400 and +11 (2026-10-08, 'make raid group stronger') comes through whole.
+    std::vector<sim::RaiderKit> weaker = party;
+    for (sim::RaiderKit& kit : weaker) {
+        std::vector<sim::KitPiece> arms;
+        for (const sim::KitPiece& piece : kit.pieces) {
+            if (piece.slot == sim::kWeaponRight || piece.slot == sim::kWeaponLeft) arms.push_back(piece);
+        }
+        kit.pieces = arms;
+    }
+    const auto raised = [&](sim::Realm& realm, uint64_t seed,
+                            const std::vector<sim::RaiderKit>* with = nullptr) {
+        realm.setRaid(10, with ? *with : party, true);
         realm.setRaidLanding(0);  // the north field (141, 75), ten tiles from where they stand
         realm.raise(&tables, seed, 140, 65, party[0].kin, party[0].level);
         realm.invade();
@@ -591,7 +604,7 @@ void testRaid(const content::Tables& tables) {
     // party kept healed and buffed may come through one whole.
     for (uint64_t seed = 21; seed < 27; ++seed) {
         sim::Realm whole;
-        raised(whole, seed);
+        raised(whole, seed, &weaker);
         std::vector<uint32_t> fallen;
         int64_t fellAt = 0;
         for (int64_t i = 0; i < sim::kHardEnrage + sim::kDepartTicks + 40 &&

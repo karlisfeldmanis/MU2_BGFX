@@ -97,8 +97,9 @@ void Realm::invasionTick() {
                 }
             }
         };
-        // The raid's dragon on one of its fields outside the town (sim::kRaidLandings).
-        if (raidAsked_) {
+        // The raid's dragon on one of its fields outside the town (sim::kRaidLandings), when one
+        // was asked for in Lorencia (--raid).
+        if (raidAsked_ && tables_->map == 0) {
             const int at = raidLanding_ >= 0 && raidLanding_ < kRaidLandingCount
                                ? raidLanding_
                                : invasionDice_.nextInt(0, kRaidLandingCount);
@@ -130,6 +131,14 @@ void Realm::invasionTick() {
         if (column < 0) {
             core::logError("invasion: no standable tile on map %u", tables_->map);
             return;
+        }
+        // Tough for the players on the map as it comes, when no raid named how many (setRaid):
+        // a lone hero meets the one-player raid, ten meet the ten's (sim::raidHealth).
+        if (!raidAsked_) {
+            raid_.players = std::max(1, playerCount());
+            dragon.maxHealth = raidHealth(raid_.players);
+            core::logf("invasion: the dragon is tough for %d, %d health", raid_.players,
+                       dragon.maxHealth);
         }
         dragon.homeColumn = column;
         dragon.homeRow = row;

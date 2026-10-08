@@ -693,7 +693,13 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions, bool ea
     for (const net::Arrival& a : t.arrivals) realm.carry(a.ticket, a.kept);
     for (const sim::Command& c : t.commands) realm.command(c);
     const bool castleOut = realm.castleRun().sentOut;
+    const bool invaded = realm.invasionPhase() != sim::InvasionPhase::Quiet;
     realm.step();
+    // The dragon killed or flown away: its storm goes with it, the next tick dry (the user,
+    // 2026-10-08: "go kill dragon and weather clears").
+    if (invaded && realm.invasionPhase() == sim::InvasionPhase::Quiet && world.weather.wet) {
+        world.weather.left = 0.0f;
+    }
     t.tick = uint32_t(realm.tick());
     // Whoever the realm sent to another world: due there.
     for (const sim::Happening& said : realm.happenings()) {
