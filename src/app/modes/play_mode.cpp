@@ -135,14 +135,6 @@ void PlayMode::keep(Context& ctx) {
         for (int key = 0; key < 5; ++key) quick[key] = desk_.quick(key);
         for (int key = 0; key < 6; ++key) bar[key] = desk_.bound(key);
         game::writeLayout(savePath_, *world_.played().realm().tables(), quick, bar, desk_.followedQuest());
-        // And how the server shows him, for the character screen's pedestal (game::lookPathBeside):
-        // a geared knight stood there bare, as his save had last seen him (the user, 2026-10-08).
-        game::Saved look;
-        look.name = saved_.name;
-        look.slot = saved_.slot;
-        look.world = ctx.args.world;
-        look.hero = world_.played().record();
-        game::writeSave(game::lookPathBeside(savePath_), *world_.played().realm().tables(), look);
         return;
     }
     game::Saved now;
