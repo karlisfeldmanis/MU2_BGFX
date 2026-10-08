@@ -1770,6 +1770,8 @@ private:
     Random treasureDice_{0};
     // The Orb of Summoning's own roll on every kill (sim/items.h), so the rest draw as they did.
     Random orbDice_{0};
+    // The Jewel of Life's own roll on every kill (sim::kLifeOdds), so the rest draw as they did.
+    Random lifeDice_{0};
     // Where a Meteorite's rocks fall (Realm::shower), so a wizard's showers move no other roll.
     Random showerDice_{0};
     std::vector<Trap> traps_;

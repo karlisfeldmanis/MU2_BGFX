@@ -123,9 +123,13 @@ on what carries the option and on wings, below `kMostOption` (+16): WebZen's
 pendant. Half the time (`kLifeChance`, WebZen's `m_iLifeRate`) the option goes up a level;
 otherwise it is back to none. **A lucky thing always takes it** -- ours, the user's
 (2026-10-04); WebZen's roll never asks luck. A 2nd wing at no option draws which of its two
-kinds the option is, as WebZen does. Drop level 72 (OpenMU 0.95d), on the jewels' draw: past
-every monster we have, so for now it comes from Blood Castle 6, and it is the Chaos Machine's
-Add Socket's (docs/chaos-machine.md). WebZen's own cap is level 7 (+28); ours stays 0.75's 4.
+kinds the option is, as WebZen does. **Its drop** (2026-10-08, the user: "we need to fix jewel of life
+drops", its own roll as the Rune's, "rare but not too rare"): not on the jewels' draw (OpenMU
+0.95d's drop level 72 made it a quarter of one kill in 200 from Atlans down, about one in four
+bot-days) but its own roll on its own dice, one kill in `kLifeOdds` (2,500) from any monster of
+level `kLifeFromLevel` (50) up -- about two a day of a bot's hunting, half the Soul's. Ours. It is
+also Blood Castle 6's, Kantur's Legion's and the Chaos Machine's Add Socket's
+(docs/chaos-machine.md). WebZen's own cap is level 7 (+28); ours stays 0.75's 4.
 
 ## Excellent
 

@@ -178,6 +178,7 @@ public:
     bool repair(int slot) { return was(realm->repair(slot), sim::Command::Kind::Repair, slot); }
     int repairAll() { return was(realm->repairAll(), sim::Command::Kind::RepairAll); }
     int deposit(int slot, int cell = -1) { return was(realm->deposit(slot, cell), sim::Command::Kind::Deposit, slot, cell); }
+    int withdraw(int cell, int slot = -1) { return was(realm->withdraw(cell, slot), sim::Command::Kind::Withdraw, cell, slot); }
     int putIn(int slot, int cell = -1) { return was(realm->putIn(slot, cell), sim::Command::Kind::PutIn, slot, cell); }
     int takeOut(int cell, int slot = -1) { return was(realm->takeOut(cell, slot), sim::Command::Kind::TakeOut, cell, slot); }
     bool mix(sim::Service service, int socket = -1) {
@@ -298,6 +299,7 @@ public:
             guardSeen_ = std::min(guardSeen_, double(realm_->hero().stats.damageTaken));
         }
         if (clock_ % kThink == 0) play();
+        if (std::getenv("BOT_LADDER") && clock_ % (3600 * 20) == 0) ladderTrace();
         if (realm_->hero().alive()) {
             ++tally_.alive;
             if (realm_->hero().mana < 3) ++tally_.dry;
@@ -433,7 +435,13 @@ private:
         if (!realm->raise(next, seed_ + uint64_t(++out_.maps) * 7919u, column, row, options_.kin, record.level)) return;
         // Into Blood Castle: which one his cloak opened, before anything else, as the server sets it.
         if (map == int(sim::kBloodCastleMap)) realm->setCastle(owedCastle_);
-        realm->restore(record);
+        // And his vault and the Goblin's box, the account's as a server keeps them (sim::Kept):
+        // the record alone lost every jewel he banked at the next gate.
+        sim::Kept kept;
+        kept.hero = record;
+        kept.vault = realm_->vault();
+        kept.machine = realm_->machine();
+        realm->restoreKept(kept);
         own_ = std::move(realm);
         realm_ = own_.get();
         hand_.realm = realm_;
@@ -1346,8 +1354,10 @@ private:
     // three worth the most to the machine, never what he wears.
     // A fixed share of the bag, so what he keeps does not change with how full it is (a rule
     // by free room sold the fodder at the counter and took a 10% box to the Goblin as a 2%).
+    // Held whatever his purse: a knight below 400,000 Zen most of the day sold every +4 piece
+    // with an option and was never once ready to mix; the box's own Zen is asked at the Goblin.
     bool fodder(int slot) const {
-        if (!ladderOn() || slot < sim::kWorn) return false;
+        if (hasWings() || crowded_ || slot < sim::kWorn) return false;
         const sim::Held& one = realm_->satchel()[slot];
         if (!optioned(one) || chaosWeaponRow(rowOf(one))) return false;
         const int64_t mine = sim::mixValue(*tables_, one);
@@ -1398,18 +1408,95 @@ private:
             *service = sim::Service::FirstWings;
             box = {weapon, jewel};
             box.insert(box.end(), things.begin(), things.end());
-            box.insert(box.end(), raisers.begin(), raisers.end());
         } else if (weapon < 0 && !things.empty()) {
             *service = sim::Service::ChaosWeapon;
             box = {jewel};
             box.insert(box.end(), things.begin(), things.end());
-            box.insert(box.end(), raisers.begin(), raisers.end());
+            // Four Bless kept back for the weapon it makes, which goes to the wings' box at +4.
+            int keep = 4;
+            for (auto it = raisers.begin(); it != raisers.end() && keep > 0;) {
+                if (sim::jewelOf(rowOf(realm_->satchel()[*it])) == sim::Jewel::Bless) {
+                    it = raisers.erase(it);
+                    --keep;
+                } else {
+                    ++it;
+                }
+            }
         } else {
             return {};
         }
+        // Then the jewels, while his Zen runs to the rate they make: a Chaos is 40,000 of the
+        // box's worth, 2% (sim::mixValue), and only jewels are lost when it fails, so a full box
+        // is the cheaper road to wings -- an elf mixed four boxes of one Chaos at 12-26% with
+        // seventeen more in the vault, and failed all four. One Chaos is held back for a cloak
+        // whose Scroll and Bone he carries.
+        int spare = cloakPairHeld() ? 1 : 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (slot == jewel || one.empty() || !chaos(rowOf(one))) continue;
+            if (spare > 0) {
+                --spare;
+                continue;
+            }
+            raisers.push_back(slot);
+        }
+        const int64_t purse = realm_->money() - 2 * potionReserve();
         *judged = judgeBox(box, *service);
-        if (!judged->ready || judged->rate < 10 || realm_->money() < judged->zen + 2 * potionReserve()) return {};
+        for (const int slot : raisers) {
+            if (!judged->ready || judged->rate >= 100) break;
+            box.push_back(slot);
+            const sim::Judged more = judgeBox(box, *service);
+            if (more.zen > purse) {
+                box.pop_back();
+                break;
+            }
+            *judged = more;
+        }
+        if (!judged->ready || judged->rate < kMixAt || purse < judged->zen) return {};
         return box;
+    }
+    // The rate a wing-ladder box is mixed at: below it he waits for more jewels and Zen.
+    static constexpr int kMixAt = 30;
+    // Whether he carries a Scroll and Bone of one level he would make a cloak of.
+    bool cloakPairHeld() const {
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && sim::scrollOfArchangel(rowOf(one)) && cloakHalfWanted(one, true)) return true;
+        }
+        return false;
+    }
+    void ladderTrace() const {
+        int optionedBag = 0, fod = 0, bless = countJewel(sim::Jewel::Bless), soul = countJewel(sim::Jewel::Soul);
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            optionedBag += optioned(realm_->satchel()[slot]);
+            fod += fodder(slot);
+        }
+        sim::Service service = sim::Service::ChaosWeapon;
+        sim::Judged judged;
+        const std::vector<int> box = wingBox(&service, &judged);
+        std::printf("LADDER level %d zen %lld on %d crowded %d wings %d chaos %d bless %d soul %d optioned %d fodder %d "
+                    "weapon %d box %zu rate %d free %d\n",
+                    realm_->hero().level, (long long)realm_->money(), ladderOn(), crowded_, hasWings(), chaosCount(),
+                    bless, soul, optionedBag, fod, chaosWeaponSlot(), box.size(), box.empty() ? -1 : judged.rate,
+                    realm_->satchel().free(*tables_, 2, 2));
+        int vb = 0, vs = 0, vc = 0, vf = 0;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+            const sim::Held& one = realm_->vault()[cell];
+            if (one.empty()) continue;
+            const content::ItemRow& row = rowOf(one);
+            if (chaos(row)) ++vc;
+            else if (sim::refiningJewel(row) && sim::jewelOf(row) == sim::Jewel::Bless) ++vb;
+            else if (sim::refiningJewel(row) && sim::jewelOf(row) == sim::Jewel::Soul) ++vs;
+            vf += fetches(one);
+        }
+        std::printf("VAULT bless %d soul %d chaos %d fetch %d owed %d freecells %d\n", vb, vs, vc, vf, fetchOwed(), freeCells());
+        std::map<std::string, int> in;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+            if (!realm_->vault()[cell].empty()) ++in[rowOf(realm_->vault()[cell]).label];
+        }
+        std::string list;
+        for (const auto& [name, n] : in) list += name + " " + std::to_string(n) + ", ";
+        std::printf("VAULTED %s\n", list.c_str());
     }
     bool wingsOwed() const {
         sim::Service service;
@@ -1563,7 +1650,8 @@ private:
         // A weapon rune of his class is carried for the weapon it waits for (savesRune), and
         // the Jewels of Chaos for the machine's Remove Rune, three of them.
         if (sim::creation(row)) return !knightly() || !weaponRune(one);
-        if (chaos(row)) return chaosCount() > 3;
+        // All of them while he climbs the wing ladder: each is 2% in its box (wingBox).
+        if (chaos(row)) return ladderOn() ? false : chaosCount() > 3;
         // The wing ladder's, carried while he has none: Bless to raise the Chaos weapon, Life for
         // its option, Soul for the wing box's rate.
         // Not once a reward has found no room (crowded_): an elf who kept them, and her fodder,
@@ -1571,7 +1659,77 @@ private:
         if (ladderOn() && sim::refiningJewel(row) && countJewel(sim::jewelOf(row)) <= ladderJewels(sim::jewelOf(row))) {
             return false;
         }
+        // **The warehouse** (the user, 2026-10-08: "teach bots also to use warehouse"): what he
+        // carries for no use yet goes to the vault -- the pet he does not keep, and a Scroll of
+        // Archangel or Blood Bone whose other half of that level is neither in the bag nor the
+        // vault, or whose castle he may not enter yet. `fetches` brings each back when it is wanted.
+        if (helper(row, kAngel) && wantedPet() != kAngel) return vaultHolds(one) < 1;
+        if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) {
+            return !cloakHalfWanted(one, false) && vaultHolds(one) < 2;
+        }
         return sim::refiningJewel(row);
+    }
+    // How many of this thing at this plus the vault holds.
+    int vaultHolds(const sim::Held& one) const {
+        int n = 0;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+            const sim::Held& o = realm_->vault()[cell];
+            n += !o.empty() && o.item == one.item && o.refinement == one.refinement;
+        }
+        return n;
+    }
+    // Whether a Scroll or Bone is half of a cloak he would make: a castle of its level he may
+    // enter, no such cloak already, and the other half of that level in the bag or (`bagOnly`
+    // false) the vault.
+    bool cloakHalfWanted(const sim::Held& one, bool bagOnly) const {
+        const content::ItemRow& row = rowOf(one);
+        const int level = one.refinement;
+        if (level < 1 || level > sim::kCastlesBuilt || realm_->hero().level < sim::kCastleBands[level - 1][0]) return false;
+        if (realm_->cloakSlot(level) >= 0) return false;
+        const bool scroll = sim::scrollOfArchangel(row);
+        const auto partner = [&](const sim::Held& o) {
+            if (o.empty() || o.refinement != level) return false;
+            const content::ItemRow& r = rowOf(o);
+            return scroll ? sim::bloodBone(r) : sim::scrollOfArchangel(r);
+        };
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (partner(realm_->satchel()[slot])) return true;
+        }
+        if (bagOnly) return false;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+            if (partner(realm_->vault()[cell])) return true;
+        }
+        return false;
+    }
+    // Whether a thing in the vault is wanted back now: the wing ladder's jewels to its count,
+    // Chaos to three (the machine's), a Scroll or Bone whose other half he has, or the castle's
+    // pair both in the vault once he may make it.
+    bool fetches(const sim::Held& one) const {
+        if (one.empty()) return false;
+        const content::ItemRow& row = rowOf(one);
+        if (chaos(row)) return ladderOn() || chaosCount() < 3;
+        if (sim::refiningJewel(row)) {
+            const sim::Jewel kind = sim::jewelOf(row);
+            return ladderOn() && (kind == sim::Jewel::Bless || kind == sim::Jewel::Soul || kind == sim::Jewel::Life) &&
+                   countJewel(kind) < ladderJewels(kind);
+        }
+        if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) {
+            if (!cloakHalfWanted(one, false)) return false;
+            // Not a second of the same half and level.
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                const sim::Held& o = realm_->satchel()[slot];
+                if (!o.empty() && o.item == one.item && o.refinement == one.refinement) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+    bool fetchOwed() const {
+        if (vaultHere() < 0 || freeCells() < 6) return false;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+            if (fetches(realm_->vault()[cell])) return true;
+        }
+        return false;
     }
     // What the ladder holds back while he has no wings: the Bless and Soul raise a box's rate
     // (about 5 and 3.5 a jewel), and the Life gives the Chaos weapon its option. Three +4 things
@@ -1649,7 +1807,7 @@ private:
     // full -- one rule for the errand and the trip, which disagreed in Devias (six in a full bag
     // started a trip every minute that the vault never answered).
     bool wantsVault() const {
-        return vaultHere() >= 0 && (stash() >= 8 || (freeCells() < 6 && stash() > 0));
+        return vaultHere() >= 0 && (stash() >= 8 || (freeCells() < 6 && stash() > 0) || fetchOwed());
     }
     // The vault keeper in this town (Baz, NPC 240), or -1.
     int vaultHere() const {
@@ -1684,9 +1842,25 @@ private:
         if (slot >= sim::kWorn && unruneWorth(one)) return true;
         if (fodder(slot)) return true;
         if (slot >= sim::kWorn && !one.empty() && chaosWeaponRow(rowOf(one)) && !hasWings()) return true;
+        // His class's wings, until he is level enough to wear them: an elf of 166 mixed the
+        // Wings of Elf at 43% and sold them to the blacksmith for 18 million Zen.
+        if (slot >= sim::kWorn && !one.empty() && (sim::firstWing(rowOf(one)) || sim::secondWing(rowOf(one))) &&
+            sim::placesIn(rowOf(one), options_.kin, sim::kWings)) {
+            return true;
+        }
         if (one.empty() || !keeps(one)) return false;
         const content::ItemRow& row = rowOf(one);
         if (sim::ammunition(row)) return archer() && feeds(row);
+        // A castle's Scroll or Bone the vault already holds two of: sold. A wizard's vault filled
+        // with 28 Bones and 23 Scrolls and he went to it 313 times.
+        if ((sim::scrollOfArchangel(row) || sim::bloodBone(row)) && !cloakHalfWanted(one, false) &&
+            vaultHolds(one) >= 2) {
+            return false;
+        }
+        // The pet he does not keep, once the vault holds one: sold (nine Angels piled up there).
+        if (helper(row, kAngel) && wantedPet() != kAngel && vaultHolds(one) >= 1) return false;
+        // A reward waiting on room: the healing potions smaller than he drinks go to the counter.
+        if (crowded_ && potionTier(row) >= 0 && potionTier(row) < healTier()) return false;
         if (row.group == sim::kGroupPets) {
             for (int other = 0; other < slot; ++other) {
                 const sim::Held& was = realm_->satchel()[other];
@@ -1699,7 +1873,7 @@ private:
     bool keeps(const sim::Held& one) const {
         const content::ItemRow& row = rowOf(one);
         return sim::refiningJewel(row) || sim::creation(row) || sim::heals(row) ||
-               sim::restores(row) || sim::ammunition(row) || row.group == sim::kGroupPets ||
+               sim::restores(row) || sim::ammunition(row) || (row.group == sim::kGroupPets && !sim::jewellery(row)) ||
                castleTicket(row);
     }
 
@@ -2167,7 +2341,7 @@ private:
             const std::vector<int> order = questOrder();
             for (const int q : order) {
                 if (aim_ == Aim::HandIn) break;
-                if (realm_->quest(q).state == sim::QuestState::Ready && reachable(giverMap(q))) {
+                if (realm_->quest(q).state == sim::QuestState::Ready && aside_[q] <= clock_ && reachable(giverMap(q))) {
                     aim_ = Aim::HandIn;
                     aimQuest_ = q;
                     aimMap_ = giverMap(q);
@@ -2772,7 +2946,24 @@ private:
             } else {
                 // Refused when it is ready: the room, which a bag of scattered cells can lack
                 // with plenty free. To the counters to sell, and back.
+                // Twice running with nothing a counter would take: aside for half an hour, or an
+                // elf whose bag was potions, quivers and Chaos asked Tersia 2,208 times in a day.
+                if (crowded_ && sellable() == 0) {
+                    aside_[aimQuest_] = clock_ + 30 * 60 * 20;
+                    say("sets %s aside for 30 min: no room for its reward", row.title);
+                    hand_.closeQuest();
+                    nextAim_ = clock_;
+                    return;
+                }
                 say("no room for %s's reward: to the counters", row.giverName);
+                if (std::getenv("BOT_LADDER")) {
+                    std::string bag;
+                    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                        const sim::Held& one = realm_->satchel()[slot];
+                        if (!one.empty()) bag += rowOf(one).label + std::string(keepsAt(slot) ? "* " : " ");
+                    }
+                    std::printf("BAG %s| choices %d\n", bag.c_str(), row.choiceCount);
+                }
                 crowded_ = true;
                 hand_.closeQuest();
                 startTrip();
@@ -2893,8 +3084,25 @@ private:
                 for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
                     const sim::Held one = realm_->satchel()[slot];
                     if (!one.empty() && stores(one) && hand_.deposit(slot) >= 0) ++stored;
+                    else if (!one.empty() && stores(one) && std::getenv("BOT_LADDER")) {
+                        std::printf("REFUSED %s +%d\n", rowOf(one).label.c_str(), int(one.refinement));
+                    }
+                }
+                int taken = 0;
+                std::string what;
+                for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+                    const sim::Held one = realm_->vault()[cell];
+                    if (!fetches(one)) continue;
+                    const std::string label = rowOf(one).label;
+                    if (hand_.withdraw(cell) < 0) continue;
+                    ++taken;
+                    what += (what.empty() ? "" : ", ") + label;
                 }
                 say("stores %d jewels and runes with %s", stored, tables_->folk[size_t(keeper)].name.c_str());
+                if (taken > 0) {
+                    say("takes %d out of the vault: %s", taken, what.c_str());
+                    sortBag();
+                }
                 hand_.closeVault();
                 vaultOwed_ = false;
                 tripSince_ = clock_;
@@ -2928,7 +3136,12 @@ private:
                 awayTo_ = -1;
             }
         }
-        if (errands_.size() == sellers_.size() && clock_ >= awayShopUntil_ && !shopWorth()) {
+        // Not while a box is owed at the Goblin he stands beside: an elf with a 47% Chaos
+        // Weapon box walked to Noria every half hour from level 157, was sent on to Devias's
+        // counters the moment she arrived, and never mixed it.
+        const bool goblinOwed = goblinHere() >= 0 && (wingsOwed() || cloakWorth() > 0);
+        if (goblinOwed) machineOwed_ = true;
+        if (!goblinOwed && errands_.size() == sellers_.size() && clock_ >= awayShopUntil_ && !shopWorth()) {
             for (const int there : {0, 3, 2}) {
                 if (there == map() || !reachable(there)) continue;
                 const content::Tables* town = world(there);
@@ -2988,6 +3201,10 @@ private:
     int healTier() const {
         const int maxHealth = realm_->hero().maxHealth;
         return maxHealth < 400 ? 0 : maxHealth < 1200 ? 1 : 2;
+    }
+    // A healing potion's size as healTier counts it (Small 0, Medium 1, Large 2), or -1.
+    static int potionTier(const content::ItemRow& row) {
+        return sim::heals(row) && row.number >= 1 ? row.number - 1 : -1;
     }
     static int64_t potionPrice(int tier) { return tier == 0 ? 240 : tier == 1 ? 990 : 2200; }
 

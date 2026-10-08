@@ -333,6 +333,15 @@ bool summoningOrb(const content::ItemRow& row);
 constexpr int kSummonOrbOdds = 150;
 constexpr int kSummonOrbLevelsAPlus = 12;
 constexpr int kSummonOrbMostPlus = 4;
+// **The Jewel of Life's drop** (the user, 2026-10-08: "we need to fix jewel of life drops", its
+// own roll as the Rune's, "rare but not too rare"). On the jewels' draw from drop level 72 it was a
+// quarter of one kill in 200 from Atlans, Tarkan and deeper: a bot killed 0-350 such a day and
+// found one in four days, and the wing ladder's Chaos weapon asks one for its option. Now its own
+// roll on its own dice beside whatever else the kill leaves, from kLifeFromLevel: about two a day
+// of a bot's hunting, half the Soul's. Out of the jewels' draw, so the Bless, Soul and Chaos are
+// drawn as they were. invention.
+constexpr int kLifeOdds = 2500;
+constexpr int kLifeFromLevel = 50;
 content::ItemRow asRead(const content::ItemRow& row, int refinement);
 constexpr int kAleSpeed = 20;
 constexpr int64_t kAleTicks = 80 * 20;

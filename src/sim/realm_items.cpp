@@ -1214,6 +1214,22 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    // The Jewel of Life, its own roll the same way (sim::kLifeOdds).
+    if (level >= kLifeFromLevel && lifeDice_.nextInt(0, kLifeOdds) == 0) {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            const content::ItemRow& row = tables_->items[i];
+            if (!refiningJewel(row) || jewelOf(row) != Jewel::Life) continue;
+            Lying life;
+            life.what = Held{int32_t(i), 0, 1};
+            std::tie(life.column, life.row) = clearing(dead.column(), dead.row());
+            life.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            life.owner = mine().id;
+            life.id = nextId_++;
+            lying_.push_back(life);
+            say(What::Dropped, dead, int32_t(life.id), int32_t(i), 0);
+            break;
+        }
+    }
     Lying one;
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
@@ -1296,7 +1312,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         one.what.powers[0] = drawRunePower(dice_, killer.kin, killer.second, level);
     } else if ((roll -= creationChance) < kJewelChance) {
         const int32_t item =
-            draw([&](const content::ItemRow& r) { return refiningJewel(r) && reaches(r); });
+            draw([&](const content::ItemRow& r) { return refiningJewel(r) && jewelOf(r) != Jewel::Life && reaches(r); });
         if (item < 0) return;
         one.what = Held{item, 0, 1};
     } else if ((roll -= kJewelChance) <= kJewel) {

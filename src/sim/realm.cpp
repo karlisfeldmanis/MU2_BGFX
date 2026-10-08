@@ -270,6 +270,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     ticketDice_.seed(seed ^ 0x9fb21c651e98df25ull);
     treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
+    lifeDice_.seed(seed ^ 0x9b05688c2b3e6c1full);
     showerDice_.seed(seed ^ 0x6a09e667bb67ae85ull);
     invasionDice_.seed(seed ^ 0x510e527f9b05688cull);
     raidDice_.seed(seed ^ 0x1f83d9ab5be0cd19ull);

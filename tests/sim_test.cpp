@@ -9613,16 +9613,19 @@ void testDrops(const content::Tables& tables) {
     };
     for (const int level : {10, 14, 26, 40, 70}) {
         int b = 0, s = 0, c = 0, r = 0, others = 0, items = 0, unsettable = 0, orbs = 0, orbPlus = -1,
-            tickets = 0;
+            tickets = 0, lives = 0;
         for (int i = 0; i < kDeaths; ++i) {
             realm.dropFor(level);
             // The Orb of Summoning rolls beside the rest (sim::kSummonOrbOdds), so it is counted
             // apart and the kill's own drop is whatever else lies there.
             const sim::Held* own = nullptr;
             for (const sim::Lying& one : realm.lying()) {
-                if (sim::summoningOrb(tables.items[size_t(one.what.item)])) {
+                const content::ItemRow& lies = tables.items[size_t(one.what.item)];
+                if (sim::summoningOrb(lies)) {
                     ++orbs;
                     orbPlus = std::max(orbPlus, int(one.what.refinement));
+                } else if (sim::refiningJewel(lies) && sim::jewelOf(lies) == sim::Jewel::Life) {
+                    ++lives;  // the Jewel of Life rolls beside the rest too (sim::kLifeOdds)
                 } else {
                     own = &one.what;
                 }
@@ -9666,6 +9669,8 @@ void testDrops(const content::Tables& tables) {
         check(near(tickets, kDeaths * 0.02, 0.25), said("a scroll or a bone in fifty"));
         check(near(orbs, double(kDeaths) / sim::kSummonOrbOdds, 0.1),
               said("the Orb of Summoning at its own chance"));
+        check(level >= sim::kLifeFromLevel ? near(lives, double(kDeaths) / sim::kLifeOdds, 0.2) : lives == 0,
+              said("the Jewel of Life at its own chance, from its level"));
         checkEqual((long long)orbPlus,
                    (long long)std::min((level - 3) / sim::kSummonOrbLevelsAPlus, sim::kSummonOrbMostPlus),
                    said("the Orb of Summoning's plus by the monster's level"));

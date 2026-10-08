@@ -131,7 +131,7 @@ void Realm::serialize(Archive& a) {
     for (Random* dice : {&wearDice_, &wardenDice_, &summonDice_, &runeDice_, &trapDice_, &bossDice_,
                          &chillDice_, &crackerDice_, &featherDice_, &novaScrollDice_, &wingDice_,
                          &gearDice_, &ticketDice_, &treasureDice_, &orbDice_, &showerDice_,
-                         &invasionDice_, &raidDice_, &raiderDice_, &mixDice_}) {
+                         &invasionDice_, &raidDice_, &raiderDice_, &mixDice_, &lifeDice_}) {
         a.pod(*dice);
     }
     a.vec(traps_);
