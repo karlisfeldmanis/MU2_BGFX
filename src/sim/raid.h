@@ -33,24 +33,21 @@ constexpr int kSecondWaveAt = 50;
 constexpr int kEnragedAt = 40;
 constexpr int kLastStandAt = 15;
 
-// **How tough, for how many** (§2). `players` is fixed when it lands; play's is kRaidPlayers.
-// The health runs from OpenMU's 22,000 for one to WebZen's 100,000 for ten (WZD Monster.txt:287),
-// a straight line between (invention), times kRaidHealthScale -- what the headless tune moves
-// (tools/raid), since an end-game party took WZD's ten-player number in a minute. 9.75 since the
-// party's weapon runes fire, the dragon shrugs off holds and the raiders pay mana for their
-// skills (2026-10-06); 9.25 once the swarm is held at its master, the elves keep every knight
-// buffed (Realm::raid) and the party goes out from the town to its field (kRaidLandings): 139 of
-// 240 won, the kill about 7:39, the losses its clock.
+// **How tough** (§2). It was a line from OpenMU's 22,000 for one to WebZen's 100,000 for ten
+// (WZD Monster.txt:287) times a tuned scale, 9.25 at the end (139 of 240 won by the level 250-360
+// party, the kill about 7:39); since 2026-10-08 it is one number for any count.
+// **Its health is one number** (the user, 2026-10-08: "boss always has same amount of hp"),
+// however many come: "only very stroung group can kill him", and "before first reset strong group
+// can kill him". Tuned against source/raid/party.json, ten bots at level 400 and +11 -- the best a
+// character is before any reset -- killing it inside its clock (kHardEnrage) most fights, and the
+// strongest of them alone never: ten bots strike only about a third more than the best one alone
+// (their walks, their dodges, the healer), so the window is narrow. Real players do better than
+// the bots. `players` is kept for the swarm and the shadows (minionsFor, inferno). build/raid,
+// 12 seeds: 7 won, the kill 7:29 median (7:04-7:48), 1.7 deaths a win, most to its fire; the
+// party's elf alone 0 of 4, the clock run out.
 constexpr int kRaidPlayers = 10;
-constexpr int32_t kRaidHealthOne = 22000;
-constexpr int32_t kRaidHealthTen = 100000;
-constexpr float kRaidHealthScale = 9.25f;
-inline int32_t raidHealth(int players) {
-    const int n = players < 1 ? 1 : players;
-    const double line =
-        double(kRaidHealthOne) + double(kRaidHealthTen - kRaidHealthOne) * double(n - 1) / 9.0;
-    return int32_t(line * double(kRaidHealthScale));
-}
+constexpr int32_t kRaidHealth = 1800000;
+inline int32_t raidHealth(int /*players*/) { return kRaidHealth; }
 // And its blow: OpenMU's band times this, walked toward WZD's 6,000-8,000 by the tune.
 constexpr float kRaidBlowScale = 15.0f;
 
