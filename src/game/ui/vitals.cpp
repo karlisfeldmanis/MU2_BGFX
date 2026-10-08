@@ -418,6 +418,25 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         const float levelW = words ? words->measure(numberSize, level) : 0.0f;
         const float tagW = std::round(levelW + pad * 2.0f), tagH = std::round(13.0f * u);
         const gfx::Box tag{std::round(r.playerX - tagW * 0.5f), r.playerY - tagH - std::round(2.0f * u), tagW, tagH};
+        // The name and what stands over it, measured first: the backing is sized to the plate.
+        const float nameSize = std::round(16.0f * u);
+        const float nameBaseline = tag.y - std::round(3.0f * u);
+        const float overBaseline = nameBaseline - std::round(13.0f * u);
+        const float nameW = title ? title->measure(nameSize, r.playerName) : 0.0f;
+        const float botSize = std::round(10.0f * u), botTrack = 0.14f * botSize;
+        const float botW = words ? words->measure(botSize, "bot") + botTrack * 2.0f : 0.0f;
+        // **The backing** (the user, 2026-10-08: 'we need some kind container or background
+        // shadow'): a see-through dark field behind the whole plate, no rim -- strokes were
+        // refused -- its edge fading out as the ground labels' strips do, so the words hold on
+        // lit ground and the plate reads as one thing.
+        {
+            const float top = (r.playerBot ? overBaseline - std::round(9.0f * u) : nameBaseline - std::round(13.0f * u)) -
+                              std::round(5.0f * u);
+            const float wide = std::round(std::max({nameW, botW, tagW}) + 20.0f * u);
+            const gfx::Box back{std::round(r.playerX - wide * 0.5f), top, wide, tag.bottom() + std::round(5.0f * u) - top};
+            cast(canvas_, back, 4.0f * u, 7.0f * u, 0.32f * alpha);
+            flat(canvas_, back, 4.0f * u, 1e9f, gfx::rgba(0.020f, 0.012f, 0.012f, 0.42f * alpha));
+        }
         {
             gfx::Box shade = tag;
             shade.y += u;
@@ -433,20 +452,14 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
                      style::kBone2, alpha, level);
         }
         // The name, 2 over the tag: the one thing on the plate that reads.
-        const float nameSize = std::round(16.0f * u);
-        const float nameBaseline = tag.y - std::round(3.0f * u);
         if (title) {
-            lettered(canvas_, title, panel::titleTexture(),
-                     r.playerX - title->measure(nameSize, r.playerName) * 0.5f, nameBaseline, nameSize,
+            lettered(canvas_, title, panel::titleTexture(), r.playerX - nameW * 0.5f, nameBaseline, nameSize,
                      0.0f, style::kBoneHi, alpha, r.playerName);
         }
         // Over the name, set tight on its capitals: a bot says so where a guild will stand.
-        const float overBaseline = nameBaseline - std::round(13.0f * u);
         if (r.playerBot && words) {
-            const float size = std::round(10.0f * u), track = 0.14f * size;
-            const float wide = words->measure(size, "bot") + track * 2.0f;
-            lettered(canvas_, words, controls::wordTexture(), r.playerX - wide * 0.5f, overBaseline, size, track,
-                     style::kAshInk, alpha, "bot");
+            lettered(canvas_, words, controls::wordTexture(), r.playerX - botW * 0.5f, overBaseline, botSize,
+                     botTrack, style::kAshInk, alpha, "bot");
         }
         (void)labels;  // the guild's face, for when guilds come
     }
