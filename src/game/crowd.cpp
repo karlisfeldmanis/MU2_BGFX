@@ -734,7 +734,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         // (no clip cooked, or poseHeld not called) the renderer's bind row, its own rest.
         drawable.paletteRow = index < heldRows_.size() ? heldRows_[index] : -1;
         // Its arrow gone from the string between the loose and the next draw (nock).
-        if (nockGone_ && !slung) drawable.hiddenMaterial = item.nockedMaterial;
+        if ((nockGone_ || nockHeld_) && !slung) drawable.hiddenMaterial = item.nockedMaterial;
 
         float local[16];
         if (slung) {

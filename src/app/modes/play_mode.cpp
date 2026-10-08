@@ -1121,6 +1121,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.characterAt(&feetX, &feetZ);
             pub = tables && tables->grid.safe(hero.column(), hero.row()) &&
                   world_.indoors(feetX, feetZ);
+            // Looped while he is inside, never rested, as Devias's roofs are (the user,
+            // 2026-10-08: "lorencia tavern always has to play music when inside, same as devias
+            // in-doors rules").
+            loops = true;
             roofTrack = "/music/Pub.mp3";
         } else if (args.world == "devias") {
             // Devias's theme under its roofs -- the planks and patterned floors World::indoors

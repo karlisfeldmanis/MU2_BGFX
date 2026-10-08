@@ -299,7 +299,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
     for (int at = 0; at < sim::kVaultCells; ++at) {
         const sim::Held& held = vault[at];
         if (held.empty() || held.durability <= 1 || at == dragging_) continue;
-        if (!sim::stacks(tables.items[size_t(held.item)])) continue;
+        if (sim::poursMost(tables.items[size_t(held.item)]) <= 0) continue;
         const Box box = panel::scaled(x, y, itemBox(tables, at, held));
         canvas_.shadowed(box.x, box.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
                          gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),

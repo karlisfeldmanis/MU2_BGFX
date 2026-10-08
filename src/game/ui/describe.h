@@ -61,5 +61,11 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what);
 // read already.
 void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
                 std::vector<tip::Row>& out);
+// **And what a self-cast skill does**: a guard's share and how long, Greater Damage's bonus, Heal's
+// health, a summon's level, health and bite as it would stand now (sim::summonFit). The skill's
+// card and its orb's, as `spellLines` is. `tables` may be null, which leaves a summon's numbers
+// out.
+void selfLines(const sim::SkillRow& row, const content::Tables* tables, const sim::Wearer& who,
+               bool dim, std::vector<tip::Row>& out);
 
 }  // namespace mu::game

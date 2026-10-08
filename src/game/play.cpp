@@ -1961,6 +1961,15 @@ void Play::update(double seconds) {
                         thunderCasts_.end());
     arrows_.update(float(seconds), middle);
     for (uint32_t shooter : arrows_.landed()) showing_.rush(shooter);
+    // The arrow on each string out while one of its own is in the air (Figure::holdNock).
+    for (uint32_t id : nockHeld_) {
+        if (Drawn* one = drawnOf(id)) one->figure.holdNock(false);
+    }
+    nockHeld_.clear();
+    arrows_.owners(nockHeld_);
+    for (uint32_t id : nockHeld_) {
+        if (Drawn* one = drawnOf(id)) one->figure.holdNock(true);
+    }
     meteor_.fly(float(seconds), standing, middle);
     wave_.update(float(seconds));
     blink_.update(float(seconds));

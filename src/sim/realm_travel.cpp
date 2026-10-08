@@ -155,6 +155,21 @@ void Realm::settleFound(uint32_t saved) {
     byFloor_ = !giver && (rows & (rows - 1)) != 0 && !chained;
     if (!giver && !byFloor_) me().found |= rows;
     reachFloor();
+    openChained();
+}
+
+void Realm::openChained() {
+    // **A chain's floor opens with its link** (the user, 2026-10-08: "if char picks catacombs
+    // quest 2, then also map travel has to be avaible at dungeon 2"): taken at the Golden Archer,
+    // not waiting for him to have stood in the Dungeon first. Ours.
+    for (int i = 0; i < kTravels; ++i) {
+        const int q = travelQuest(i);
+        if (q < 0 || ((me().found >> i) & 1u) != 0) continue;
+        const QuestProgress& link = me().quests[q];
+        if (link.state == QuestState::Untaken && link.completions == 0) continue;
+        me().found |= uint32_t(1) << i;
+        core::logf("travel: %s opened", kRows[i].name);
+    }
 }
 
 void Realm::reachFloor() {
@@ -237,6 +252,9 @@ bool Realm::travel(int index) {
     // To another map. Left from the field of a dungeon of floors, the way back opens there; left
     // from anywhere else -- a town, or the field of Lorencia, Devias, Noria, Atlans or Tarkan --
     // one already open is given up: he chose to go elsewhere.
+    // Her summon stays behind and is gone (the user, 2026-10-08: "we need to dismiss pet when
+    // use map travel"), as a gate and a Town Portal dismiss it.
+    if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     const Body& hero = mine();
     const MapRow* here = mapNumbered(int(tables_->map));
     if (here != nullptr && here->floors && !tables_->grid.safe(hero.column(), hero.row())) {
@@ -265,6 +283,7 @@ bool Realm::goBack() {
     me().gating = -1;
     me().angeling = -1;
     halt(hero);
+    if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     say(What::WentBack, hero, to.map, to.column, to.row);
     return true;
 }

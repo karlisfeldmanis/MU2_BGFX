@@ -392,6 +392,10 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
                 power->takenBy(hero.kin, hero.second)) {
                 ++hero.excel.ignitions;
             }
+            if (power && barrageShare(power->power) > 0.0 && !jewellery(*row) &&
+                power->takenBy(hero.kin, hero.second)) {
+                hero.excel.barrage += barrageShare(power->power);
+            }
             if (power && power->power == Power::PlagueArrows && !jewellery(*row) &&
                 power->takenBy(hero.kin, hero.second)) {
                 ++hero.excel.plagueArrows;

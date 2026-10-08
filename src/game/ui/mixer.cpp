@@ -618,7 +618,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
     for (int cell = 0; cell < sim::kMachineCells; ++cell) {
         const sim::Held& held = box[cell];
         if (held.empty() || held.durability <= 1 || cell == dragging_) continue;
-        if (!sim::stacks(tables.items[size_t(held.item)])) continue;
+        if (sim::poursMost(tables.items[size_t(held.item)]) <= 0) continue;
         const Box to = P(itemBox(tables, cell, held));
         canvas_.shadowed(to.x, to.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
                          gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),

@@ -518,11 +518,26 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Spite, "Spite", "+5% damage", kEveryClass, kInWeapon, Rarity::Common},
         {Power::Wisp, "Wisp", "5% when missed: faint spirits strike monsters around you",
          kEveryClass, kInShield | kInJewellery, Rarity::Common},
+        // Multi-Shot's three tiers (sim::kBarrageDamage...), the elf's weapon alone.
+        {Power::LesserBarrage, "Lesser Barrage", "Multi-Shot +15% damage", kElfOnly, kInWeapon,
+         Rarity::Rare},
+        {Power::Barrage, "Barrage", "Multi-Shot +30% damage", kElfOnly, kInWeapon, Rarity::Epic},
+        {Power::GreaterBarrage, "Greater Barrage", "Multi-Shot +50% damage", kElfOnly, kInWeapon,
+         Rarity::Legendary},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
     }
     return nullptr;
+}
+
+double barrageShare(Power power) {
+    switch (power) {
+        case Power::LesserBarrage: return kLesserBarrageDamage;
+        case Power::Barrage: return kBarrageDamage;
+        case Power::GreaterBarrage: return kGreaterBarrageDamage;
+        default: return 0.0;
+    }
 }
 
 HeroPoints statShareOf(Power power) {
@@ -726,10 +741,15 @@ int stackMost(const content::ItemRow& row) {
 
 bool stacks(const content::ItemRow& row) { return stackMost(row) > 0; }
 
+int poursMost(const content::ItemRow& row) {
+    if (ammunition(row)) return std::max<int>(1, row.durability);
+    return stackMost(row);
+}
+
 bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
     if (onto.empty() || onto.item != what.item || onto.refinement != what.refinement) return false;
     if (size_t(onto.item) >= tables.items.size()) return false;
-    return onto.durability < stackMost(tables.items[size_t(onto.item)]);
+    return onto.durability < poursMost(tables.items[size_t(onto.item)]);
 }
 
 // ---- the satchel ------------------------------------------------------------------------------

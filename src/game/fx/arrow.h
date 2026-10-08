@@ -99,9 +99,11 @@ public:
     // `seconds`, when above 0, is how long it has to reach `to`: an arrow held for its string
     // flies faster to land when the realm says it lands (Play::nocking_).
     // `pierce` winds MODEL_PIERCING's bands round it: Penetration's arrow (see the top).
+    // `owner` is whose weapon it left, landing reported or not: while any of hers is in the air
+    // the one on her string stays gone (owners, Figure::holdNock).
     void loose(const float from[3], const float to[3], uint32_t whom, Model model,
                uint32_t shooter = 0, const float* tint = nullptr, float seconds = 0.0f,
-               bool pierce = false);
+               bool pierce = false, uint32_t owner = 0);
     const std::vector<uint32_t>& landed() const { return landed_; }
 
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
@@ -113,6 +115,8 @@ public:
     uint32_t flying() const;
     // Whether `shooter`'s arrow at `whom` is still in the air: her blow waits for it to land.
     bool flyingAt(uint32_t shooter, uint32_t whom) const;
+    // Whose arrows are in the air, an id each, appended to `out` (Play::holdNocks).
+    void owners(std::vector<uint32_t>& out) const;
 
 private:
     std::vector<uint32_t> landed_;  // this update's shooters whose arrow reached its body
@@ -136,6 +140,7 @@ private:
         Model model = Wood;
         uint32_t whom = 0;
         uint32_t shooter = 0;
+        uint32_t owner = 0;
         float at[3];
         float along[3];  // unit, the way it is going
         float to[3];     // where the body's middle was last seen

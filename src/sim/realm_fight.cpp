@@ -1081,6 +1081,10 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
                                : laneTiles(row);
     // One `Loosed` for the cast: the drawing fans its own arrows off it.
     say(What::Loosed, hero, row.number, 0, hero.archer, aimedAt);
+    // Her Barrage runes on Multi-Shot's arrows (sim::barrageShare).
+    if (hero.player && row.number == skill::kSkillshot && hero.excel.barrage > 0.0) {
+        force *= float(1.0 + hero.excel.barrage);
+    }
     // Plague Arrows: each lane of a fan of more than one rolls its poison as it leaves the
     // string, so the drawing can tone that arrow green (`Happening::plagueLanes`) and every body
     // it flies through is poisoned (sim/items.h kPlagueChance).
@@ -1107,7 +1111,19 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
         return false;
     };
     // Penetration's one lane, or three with a Piercing Volley in her bow (sim::lanesOf).
-    const int lanes = lanesOf(row, hero.player ? hero.excel.volleys : 0);
+    //
+    // **An arrow a lane, spent as the fan leaves the string** (the user, 2026-10-08: "elf
+    // multishot has to use 3 arrows"), where it was an arrow a body struck -- so a fan at a lone
+    // body cost one. The quiver running dry looses the lanes it had arrows for. Ours.
+    int lanes = 0;
+    for (const int most = lanesOf(row, hero.player ? hero.excel.volleys : 0); lanes < most;
+         ++lanes) {
+        if (!nock(hero)) break;
+    }
+    if (lanes == 0) {
+        say(What::Arrowless, hero, hero.archer);
+        return;
+    }
     for (int a = 0; a < lanes; ++a) {
         // Straight, then one either side, then the next pair out.
         const int step = (a + 1) / 2;
@@ -1142,11 +1158,6 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
             lane[at] = Struck{along, one.id};
         }
         for (int i = 0; i < found; ++i) {
-            // An arrow a body struck; the quiver running dry mid-fan ends the fan.
-            if (!nock(hero)) {
-                say(What::Arrowless, hero, hero.archer);
-                return;
-            }
             if (struckCount < kVictims) struck[struckCount++] = lane[i].id;
             loosingPlague_ = a < 8 && (plagued & (1u << a)) != 0;
             loose(hero, row, lane[i].id, force, false, lane[i].id == aimedAt);

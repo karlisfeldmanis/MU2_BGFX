@@ -280,8 +280,12 @@ bool Realm::passGate(Body& hero, const EnterGate& through) {
         return true;
     }
     setDown(hero, hero.column(), hero.row());
-    // Walked out through a gate: the way back by magic is given up.
+    // Walked out through a gate: the way back by magic is given up. And her summon with it: a
+    // map change dismisses it here as it does in the save (PlayMode::keep), where the server
+    // carried it and raised it on the far side as a health bar with no body (the user,
+    // 2026-10-08).
     me().wayBack = WayBack{};
+    if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     say(What::Gated, hero, gate->number, column, row);
     return true;
 }

@@ -793,6 +793,8 @@ server::Store::Row placeOf(const Session& one) {
         row.world = due->second.world;
         row.kept.hero.column = due->second.column;
         row.kept.hero.row = due->second.row;
+        // And without her summon: a map change dismisses it (realm_summon.cpp).
+        row.kept.hero.summonSkill = 0;
     }
     const sim::MapRow* map = sim::mapOf(row.world);
     if (map != nullptr && map->event) {

@@ -154,6 +154,7 @@ bool Realm::acceptQuest(int index) {
     one.state = QuestState::Active;
     one.completions = completions;
     if (index == kSkyDoor) discover(int32_t(kIcarusMap));
+    openChained();
     say(What::QuestTaken, mine(), index);
     return true;
 }

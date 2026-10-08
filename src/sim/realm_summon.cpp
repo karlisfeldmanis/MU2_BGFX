@@ -10,6 +10,7 @@
 //   * **it holds aggro**: what it has struck stays on it though she shoots it too
 //     (Realm::strikeAt), and it takes a monster that is on her before any other, so it peels
 //     them off her -- the guard's "one on the hero first" (realm_watch.cpp);
+//   * **it is passive**: it fights only what is on her, on itself, or what she shoots;
 //   * its kills are hers, drop and experience, as a guard's are when she helped (Realm::kill);
 //   * it goes with her death rather than standing over her body, and with any warp of hers --
 //     the Town Portal, and a map change, which raises a realm with its slot dormant (the user,
@@ -75,25 +76,19 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
 
 void Realm::fitSummon(Body& summon, const Body& hero) {
     const content::MonsterKind& kind = tables_->kinds[size_t(summon.kind)];
-    const int level = summonLevel(kind.level, hero.level, summon.summonedBy);
-    const float lasts = summonHealthRate(hero.totalPoints());
-    const float bites = summonForceRate(hero.totalPoints());
-    const auto climb = [&](Ladder column) { return summonClimb(column, kind.level, level); };
-    const int maxHealth =
-        std::max(1, int(float(kind.health) * climb(Ladder::Health) * lasts));
+    const SummonFit fit = summonFit(kind, hero.level, hero.totalPoints(), summon.summonedBy);
     // A refit while it stands (she levelled, or spent a point) keeps its share of health.
-    if (summon.maxHealth > 0 && summon.maxHealth != maxHealth) {
-        summon.health = std::max(1, int(int64_t(summon.health) * maxHealth / summon.maxHealth));
+    if (summon.maxHealth > 0 && summon.maxHealth != fit.health) {
+        summon.health = std::max(1, int(int64_t(summon.health) * fit.health / summon.maxHealth));
     }
-    summon.maxHealth = maxHealth;
-    summon.level = level;
-    summon.stats.level = level;
-    summon.stats.attackRate = float(kind.attackRate) * climb(Ladder::AttackRate) * bites;
-    summon.stats.defenseRate = float(kind.defenseRate) * climb(Ladder::DefenseRate) * bites;
-    summon.stats.defense = int(float(kind.defense) * climb(Ladder::Defense) * bites);
-    const float damage = climb(Ladder::Damage) * bites * kSummonDamageShare;
-    summon.stats.minimumDamage = int(float(kind.minimumDamage) * damage);
-    summon.stats.maximumDamage = int(float(kind.maximumDamage) * damage);
+    summon.maxHealth = fit.health;
+    summon.level = fit.level;
+    summon.stats.level = fit.level;
+    summon.stats.attackRate = fit.attackRate;
+    summon.stats.defenseRate = fit.defenseRate;
+    summon.stats.defense = fit.defense;
+    summon.stats.minimumDamage = fit.minimumDamage;
+    summon.stats.maximumDamage = fit.maximumDamage;
 }
 
 void Realm::dismiss(Body& summon) {
@@ -132,7 +127,14 @@ void Realm::tend(Body& summon) {
     const int attackRange = std::max(1, kind.attackRange);
 
     // The one it is on, while it lives and stays within the hunt round her; else a monster on
-    // her, nearest first; else the nearest awake one within the hunt. The lower id on a tie.
+    // her, nearest first; else one on itself or the one she is shooting. The lower id on a tie.
+    //
+    // **Passive** (the user, 2026-10-08: "elf summon has to be passive, and only attack if elf
+    // is attacked or elf is attacking"), ours, where OpenMU's hunts whatever stands within
+    // eight tiles of her: a monster minding its own business is left to it.
+    const auto wanted = [&](const Body& one) {
+        return one.quarry == owner->id || one.quarry == summon.id || one.id == owner->blowTarget;
+    };
     const Body* held = find(summon.quarry);
     const bool keep = held != nullptr && held->alive() && held->monster() &&
                       within(*owner, *held, float(kSummonHunt)) &&
@@ -144,9 +146,7 @@ void Realm::tend(Body& summon) {
             if (!one.monster() || !one.alive()) continue;
             if (tables_->grid.safe(one.column(), one.row())) continue;
             if (!within(*owner, one, float(kSummonHunt))) continue;
-            // Asleep or not: a sleeping monster is only one no player is near enough to wake,
-            // and OpenMU's summon hunts whatever stands within eight tiles of her. Its blow
-            // wakes what it strikes.
+            if (!wanted(one)) continue;
             const bool onHer = one.quarry == owner->id;
             if (!onHer && keep) continue;
             const float distance = reach(summon, one) - (onHer ? 1000.0f : 0.0f);

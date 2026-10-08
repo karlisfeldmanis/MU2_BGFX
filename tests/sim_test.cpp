@@ -3375,9 +3375,10 @@ void testSummons(const content::Tables& tables) {
           "and a Golem stays well over a Goblin, further up the ladder as she levels");
     checkEqual((long long)golem->maxHealth,
                (long long)int(float(kind.health) *
-                              sim::summonClimb(sim::Ladder::Health, kind.level, level) *
+                              std::sqrt(sim::summonClimb(sim::Ladder::Health, kind.level, level)) *
                               sim::summonHealthRate(realm.hero().points)),
-               "its health is the breed's, up the ladder to its level and scaled by her points");
+               "its health is the breed's, up the ladder's square root to its level and scaled "
+               "by her points");
     // Up the ladder: a Golem at 60 stands near the ladder's own 60 before her points.
     check(std::fabs(sim::summonClimb(sim::Ladder::Health, 18, 60) * 465.0f / 5000.0f - 1.0f) <
               0.15f,
@@ -7645,12 +7646,17 @@ void testRunes(const content::Tables& tables) {
                 int lifts = 0;
                 for (int i = 0; i < row.paidCount; ++i) {
                     const sim::QuestItem& what = row.paid[i];
-                    if (what.power == uint8_t(sim::Power::LesserAscendance) &&
-                        sim::questPays(what, kin, true) && !sim::questPays(what, kin, false)) {
+                    // The elf's is a Barrage in its place (2026-10-08).
+                    const uint8_t wanted = kin == int(sim::Kin::FairyElf)
+                                               ? uint8_t(sim::Power::Barrage)
+                                               : uint8_t(sim::Power::LesserAscendance);
+                    if (what.power == wanted && sim::questPays(what, kin, true) &&
+                        !sim::questPays(what, kin, false)) {
                         ++lifts;
                     }
                 }
-                checkEqual(lifts, 1, "and one Lesser Ascendance, the first clear only");
+                checkEqual(lifts, 1, "and one Lesser Ascendance (the elf a Barrage), the first "
+                                     "clear only");
                 checkEqual(again, 0, "and a repeat pays none");
             }
         }
@@ -9586,6 +9592,45 @@ void testEvilSpirit(const content::Tables& tables) {
         const double rate = double(lit) / double(std::max(1, hits));
         check(rate > 0.12 && rate < 0.28, "about one landed spirit in five poisons");
         check(pulses > 0, "and the poison pulses");
+    }
+    // Barrage (2026-10-08), the elf's Multi-Shot runes: three tiers in her bow add, a knight's
+    // sword takes none, and three arrows leave the quiver a cast.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 11, 212, 198, sim::Kin::FairyElf, 30);
+        realm.undying(true);
+        realm.learn(sim::skill::kSkillshot);
+        const uint8_t powers[3] = {uint8_t(sim::Power::LesserBarrage), uint8_t(sim::Power::Barrage),
+                                   uint8_t(sim::Power::GreaterBarrage)};
+        realm.give(tables.itemAt(4, 0), sim::kWeaponRight, 0, -1, false, 0, 0, 3, powers);
+        realm.give(tables.itemAt(4, 15), sim::kWeaponLeft, 0, 255);
+        check(std::fabs(realm.hero().excel.barrage - 0.95) < 1e-9,
+              "Lesser Barrage, Barrage and Greater Barrage in her bow add to +95%");
+        const sim::PowerRow* greater = sim::powerOf(uint8_t(sim::Power::GreaterBarrage));
+        check(greater && greater->weapon() && greater->slots == sim::kInWeapon &&
+                  greater->takenBy(sim::Kin::FairyElf, false) &&
+                  !greater->takenBy(sim::Kin::DarkKnight, true),
+              "and Greater Barrage is the elf's, a weapon's socket alone");
+        int spent = -1;
+        for (int tick = 0; tick < 2000 && spent < 0; ++tick) {
+            if (tick % 10 == 0) {
+                if (const uint32_t nearest = nearestTo(realm); nearest != 0) {
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    request.skill = sim::skill::kSkillshot;
+                    realm.ask(request);
+                }
+            }
+            const int before = realm.satchel()[sim::kWeaponLeft].durability;
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kSkillshot) {
+                    spent = before - realm.satchel()[sim::kWeaponLeft].durability;
+                }
+            }
+        }
+        checkEqual((long long)spent, 3LL, "a Multi-Shot spends three arrows");
     }
     // Plague Arrows (2026-10-06), in the elf's bow: the same on each Multi-Shot arrow that lands.
     {

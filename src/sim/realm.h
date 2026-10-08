@@ -1926,6 +1926,8 @@ private:
     void settleFound(uint32_t saved);
     // A floor-split map's row, opened as he stands on its floor (settleFound's byFloor_).
     void reachFloor();
+    // A chained floor's row, opened once its link of the chain is taken (travelQuest).
+    void openChained();
     // The walkers on their rounds, by body id: which stop, and when he leaves it.
     struct Stroller {
         uint32_t id = 0;

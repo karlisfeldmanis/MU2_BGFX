@@ -146,6 +146,11 @@ public:
     // Model.Nock). **Ours** -- MU draws every bow loaded, always, because it never plays the
     // weapon's own clip and so nobody saw the two disagree.
     void nock(bool shown) { nockGone_ = !shown; }
+    // **And gone while any arrow of hers is in the air** (the user, 2026-10-08: "when arrow/bolt
+    // is release from weapon it has to disepear while that arrow/bolt is flying"): a quick bow's
+    // next draw began with its arrow back on the string beside the one still flying. Ours;
+    // Play::holdNocks sets it a frame from Arrows::owners.
+    void holdNock(bool held) { nockHeld_ = held; }
     // One material of the body's own parts left undrawn, or -1: the Hydra's breath beams,
     // which its red head lightning stands in for (play_open.cpp, Drawn::beamMaterial).
     void hideBodyMaterial(int material) { bodyHidden_ = material; }
@@ -235,6 +240,7 @@ private:
     bool mounted_ = false;  // drawn in mount_'s frame; see mount
     bool emptyHand_ = false;  // the right hand's weapon left out; see emptyHand
     bool nockGone_ = false;   // the weapon's nocked missile left out; see nock
+    bool nockHeld_ = false;   // and out while one of hers flies; see holdNock
     int bodyHidden_ = -1;     // see hideBodyMaterial
     void placement(float transform[16]) const;  // where it stands, as gather draws it
     float mount_[16] = {};

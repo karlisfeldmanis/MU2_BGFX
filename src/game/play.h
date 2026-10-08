@@ -1092,6 +1092,12 @@ private:
         bool plague = false;
     };
     std::vector<Nocking> nocking_;
+    // Where a shot leaves a bow or crossbow that carries no nocked missile and no muzzle bone: a
+    // bow's middle, a crossbow's front end toward `toward` less half a bolt; false with none in
+    // hand or none posed.
+    bool weaponFront(const Drawn& shooter, const float toward[3], float out[3]) const;
+    // Whose string is held empty this frame because an arrow of theirs is flying (Arrows::owners).
+    std::vector<uint32_t> nockHeld_;
     // An Ice Monster's blow casts Ice on its target (OpenMU's AttackSkill 7, shown on every
     // swing): MU's ReceiveMagic starts AttackTime at 1 and at 15 reference frames the skill arm
     // drops MODEL_ICE and five shards on the target and plays SOUND_ICE

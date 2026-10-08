@@ -364,6 +364,11 @@ constexpr int kFirecrackerStackMost = 5;
 int stackMost(const content::ItemRow& row);
 // Whether a row's pieces stack.
 bool stacks(const content::ItemRow& row);
+// How many one cell may hold when two of a kind are poured together: `stackMost`, and for a
+// quiver its full count (the user, 2026-10-08: "allow to stack arrow and bolts in inventory"),
+// ours where MU keeps each quiver whole. A quiver is not `stacks`: it is bought, given and
+// mixed whole, its count in its durability as MU keeps it. 0 for a row that never pours.
+int poursMost(const content::ItemRow& row);
 // Whether `what` may pour into `onto`: the same stacking row at the same plus, and room left.
 bool tops(const content::Tables& tables, const Held& onto, const Held& what);
 
@@ -463,7 +468,7 @@ template <class Grid>
 int topUp(const content::Tables& tables, Grid& grid, int at, const Held& what) {
     if (!tops(tables, grid[at], what)) return 0;
     Held onto = grid[at];
-    const int most = stackMost(tables.items[size_t(onto.item)]);
+    const int most = poursMost(tables.items[size_t(onto.item)]);
     const int went = std::min<int>(what.durability, most - onto.durability);
     onto.durability = int16_t(onto.durability + went);
     grid.put(at, onto);
@@ -478,7 +483,7 @@ template <class Grid>
 int pour(const content::Tables& tables, Grid& grid, int first, int last, Held what) {
     if (what.item < 0 || size_t(what.item) >= tables.items.size()) return -1;
     const content::ItemRow& row = tables.items[size_t(what.item)];
-    if (!stacks(row)) {
+    if (poursMost(row) <= 0) {
         const int at = grid.free(tables, row.width, row.height);
         if (at >= 0) grid.put(at, what);
         return at;
@@ -495,7 +500,7 @@ int pour(const content::Tables& tables, Grid& grid, int first, int last, Held wh
         const int at = after.free(tables, row.width, row.height);
         if (at < 0) return -1;
         Held stack = what;
-        stack.durability = int16_t(std::min<int>(what.durability, stackMost(row)));
+        stack.durability = int16_t(std::min<int>(what.durability, poursMost(row)));
         after.put(at, stack);
         what.durability = int16_t(what.durability - stack.durability);
         if (landed < 0) landed = at;
@@ -680,7 +685,11 @@ enum class Power : uint8_t {
     Chill = 47,
     FaintEcho = 48,
     Spite = 49,
-    Wisp = 50
+    Wisp = 50,
+    // Multi-Shot's own, three tiers (sim::barrageShare).
+    LesserBarrage = 51,
+    Barrage = 52,
+    GreaterBarrage = 53
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -998,6 +1007,15 @@ constexpr float kChillWound = 0.5f;  // of Frost Arrow's second wound
 constexpr double kFaintEchoChance = 0.07;
 constexpr double kSpiteDamage = 0.05;
 constexpr double kWispChance = 0.05;
+// **Barrage** (the user, 2026-10-08: "make a new rune withc increase multi-shot damage, only
+// attached to weapon socket, make multiple tires of that rune"): the elf's, in a weapon alone,
+// each Multi-Shot arrow harder by its share -- Lesser Rare, Barrage Epic, Greater Legendary --
+// and every one in her hands adds, as Wraths do. Not Penetration's fan. invention.
+constexpr double kLesserBarrageDamage = 0.15;
+constexpr double kBarrageDamage = 0.30;
+constexpr double kGreaterBarrageDamage = 0.50;
+// What one rune of these three adds to Multi-Shot, 0 for any other.
+double barrageShare(Power power);
 constexpr float kWispForce = 0.5f;
 // **Immolate** (the user, 2026-10-06: 'chance to burn monsters to do some % of damage of hp and
 // their has to be some burn efekt to the monster'), Epic, any knight's weapon: a swing that lands

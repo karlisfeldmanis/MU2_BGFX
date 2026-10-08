@@ -615,7 +615,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
         if (held.empty() || held.durability <= 1 || slot == dragging_) continue;
-        if (!sim::stacks(tables.items[size_t(held.item)])) continue;
+        if (sim::poursMost(tables.items[size_t(held.item)]) <= 0) continue;
         const Box box = panel::scaled(x, y, itemBox(tables, slot, held));
         canvas_.shadowed(box.x, box.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
                          gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),

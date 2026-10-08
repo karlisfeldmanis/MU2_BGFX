@@ -208,6 +208,71 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
     }
 }
 
+void selfLines(const sim::SkillRow& row, const content::Tables* tables, const sim::Wearer& who,
+               bool dim, std::vector<Row>& out) {
+    const auto tone = [&](Tone lit) { return dim ? Tone::Gray : lit; };
+    const auto note = [&](const std::string& text) {
+        Row one;
+        one.free = text;
+        one.freeTone = Tone::Gray;
+        out.push_back(one);
+    };
+    const sim::HeroPoints& has = who.totals;
+    char sum[96];
+    if (row.boonTicks > 0) {
+        // A guard: what it takes off a blow, what that is made of, and how long it stands. Each
+        // sum names only what its formula reads (`guardPoints`, `barrierPoints`, `wardPoints`).
+        out.push_back(stat("Absorbs",
+                           sim::absorbed(sim::boonShare(row, has, who.shieldDefense)) +
+                               " of every blow",
+                           tone(Tone::Green)));
+        const int cap = int(sim::kGuardCap * 100.0f + 0.5f);
+        if (row.number == sim::skill::kGreaterDefense) {
+            std::snprintf(sum, sizeof sum, "%d agi, %d ene, no shield (max %d%%)", has.agility,
+                          has.energy, cap);
+        } else if (row.number == sim::skill::kSoulBarrier) {
+            std::snprintf(sum, sizeof sum, "%d shield, %d ene, %d agi (max %d%%)",
+                          who.shieldDefense, has.energy, has.agility, cap);
+        } else {
+            std::snprintf(sum, sizeof sum, "%d shield, %d str, %d agi (max %d%%)",
+                          who.shieldDefense, has.strength, has.agility, cap);
+        }
+        note(sum);
+        out.push_back(
+            stat("Lasts", sim::spoken(float(row.boonTicks) * 0.05f), tone(Tone::White)));
+    } else if (row.mightTicks > 0) {
+        // Greater Damage: `3 + energy / 7` on every blow, after the defence (sim::mightOf).
+        out.push_back(stat("Damage", "+" + std::to_string(sim::mightOf(has)) + " every blow",
+                           tone(Tone::Green)));
+        std::snprintf(sum, sizeof sum, "3 + %d ene / 7, arrows and spells too", has.energy);
+        note(sum);
+        out.push_back(
+            stat("Lasts", sim::spoken(float(row.mightTicks) * 0.05f), tone(Tone::White)));
+    } else if (row.mends) {
+        // Heal: `5 + energy / 5` at once (sim::healOf).
+        out.push_back(stat("Heals", std::to_string(sim::healOf(has)), tone(Tone::Green)));
+        std::snprintf(sum, sizeof sum, "5 + %d ene / 5, at once", has.energy);
+        note(sum);
+    } else if (row.summons > 0) {
+        // A summon as it would stand beside her now (sim::summonFit), and what it scales with.
+        const content::MonsterKind* kind = tables ? sim::summonKind(*tables, row) : nullptr;
+        if (kind != nullptr) {
+            const sim::SummonFit fit = sim::summonFit(*kind, who.level, has, row.number);
+            out.push_back(stat("Level", std::to_string(fit.level), tone(Tone::White)));
+            out.push_back(stat("Health", std::to_string(fit.health), tone(Tone::Green)));
+            out.push_back(stat("Damage",
+                               std::to_string(fit.minimumDamage) + " - " +
+                                   std::to_string(fit.maximumDamage),
+                               tone(Tone::Yellow)));
+            out.push_back(stat("Defense", std::to_string(fit.defense), tone(Tone::White)));
+        }
+        std::snprintf(sum, sizeof sum, "your level, %d ene, %d vit, %d agi", has.energy,
+                      has.vitality, has.agility);
+        note(sum);
+        note("fights only what is on you or what you attack");
+    }
+}
+
 uint32_t moneyColour(long long zen) {
     if (zen >= 10000000) return gfx::rgba(0.0f, 0.0f, 1.0f);
     if (zen >= 1000000) return gfx::rgba(0.0f, 150.0f / 255.0f, 1.0f);
@@ -898,14 +963,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // claim the same blow.
         if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches)) {
             if (skill->onSelf()) {
-                teaches.rows.push_back(
-                    stat("Absorbs",
-                         sim::absorbed(sim::boonShare(*skill, who.totals, who.shieldDefense)) +
-                             " of every blow",
-                         known ? Tone::Gray : Tone::Green));
-                teaches.rows.push_back(stat("Lasts",
-                                            sim::spoken(float(skill->boonTicks) * 0.05f),
-                                            known ? Tone::Gray : Tone::White));
+                // A guard, a buff, a heal or a summon: the lines its own card prints
+                // (`selfLines`), in his hands.
+                selfLines(*skill, &tables, who, known, teaches.rows);
             } else if (skill->wizardry) {
                 // A spell: the lines its own card prints, in his hands (`spellLines`). The
                 // knight's "x1.00 of a swing" and its strength sum said nothing true of one.
@@ -931,9 +991,15 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 teaches.rows.push_back(how);
             }
         }
-        if (!row.teachesTells.empty()) {
+        // The skill's own sentence where the build has the skill, so the orb and the key cannot
+        // drift: Greater Damage's orb still said "for a minute" after the skill was made five
+        // (the user, 2026-10-08: "elf greater damage wrong tooltip info").
+        const sim::SkillRow* told = sim::skillNumbered(row.teaches);
+        const std::string tells =
+            told != nullptr && told->tells[0] != '\0' ? std::string(told->tells) : row.teachesTells;
+        if (!tells.empty()) {
             Row line;
-            line.free = row.teachesTells;
+            line.free = tells;
             // Dimmed once he knows it: the sentence is still worth having -- it is what the
             // skill DOES, and he may be checking -- but it is no longer an offer.
             line.freeTone = known ? Tone::Gray : Tone::White;
@@ -987,10 +1053,13 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     require("Strength", asked.strength, owed.strength);
     require("Agility", asked.agility, owed.agility);
     require("Vitality", asked.vitality, owed.vitality);
-    require("Energy", asked.energy, owed.energy);
     // A scroll's energy is asked by the SKILL, not by the row, and it is not scaled the way a
     // worn thing's requirement is: ItemExtensions.GetRequirement hands back the minimum
-    // unchanged for anything without a slot.
+    // unchanged for anything without a slot. **One energy line, the skill's**: the recipes
+    // carry the same number raw in the row, which the wear formula scaled to a second, lower
+    // line nothing asks -- "Energy 86, Energy 92" on the Orb of Greater Damage (the user,
+    // 2026-10-08: "dublicated energy in tooltip"). Realm::useItem asks the skill's alone.
+    if (!(row.teaches > 0 && row.teachesEnergy > 0)) require("Energy", asked.energy, owed.energy);
     if (row.teaches > 0 && row.teachesEnergy > 0) {
         require("Energy", row.teachesEnergy, std::max(0, row.teachesEnergy - who.points.energy));
     }

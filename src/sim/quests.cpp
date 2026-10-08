@@ -283,14 +283,23 @@ QuestRow devin() {
                    .affixes = {uint8_t(Affix::Wealth)}};  // Ring of Wisdom, blue
     // And a second rune, the first clear only, every class's (the user, 2026-10-05: 'add tier-1
     // all stats to devias quest line for all classes'): +10% to all four stats.
-    row.paid[6] = {.item = "Jewel22", .power = uint8_t(Power::LesserAscendance),
+    // **The elf's is Barrage** (the user, 2026-10-08: "replace some rune reward in devias for
+    // multi-shot icnrease damage rune"): Multi-Shot +30% in her bow's socket, where the others
+    // keep Lesser Ascendance. Its weapon-socket slot, so her armour still takes Renewal.
+    row.paid[6] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::LesserAscendance),
                    .firstOnly = true};  // Rune of Creation, Lesser Ascendance
+    row.paid[10] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::LesserAscendance),
+                    .firstOnly = true};
+    row.paid[11] = {.item = "Jewel22", .kin = int8_t(Kin::MagicGladiator),
+                    .power = uint8_t(Power::LesserAscendance), .firstOnly = true};
+    row.paid[12] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Barrage),
+                    .firstOnly = true};  // Rune of Creation, Barrage
     // And a skill each (2026-10-07): the knight's Cyclone and the wizard's Flame, which no shop
     // sells, and for the elf the Orb of Summoning +3 -- the Elite Yeti she has just hunted.
     row.paid[7] = {.item = "OrbCyclone", .kin = knight, .firstOnly = true};  // Orb of Cyclone
     row.paid[8] = {.item = "Book05", .kin = wizard, .firstOnly = true};      // Scroll of Flame
     row.paid[9] = {.item = "Gem05", .plus = 3, .kin = elf, .firstOnly = true};  // Elite Yeti
-    row.paidCount = 10;
+    row.paidCount = 13;
     return row;
 }
 

@@ -1440,7 +1440,11 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     weapon.values.push_back({sim::familiesListed(row.families), met, false, "", 0});
     // A spell asks nothing of the hand, so it has no such row. Nor does a mount's skill, which
     // asks for the mount under him instead: white while he rides it, red off it.
-    if (!row.wizardry && !row.mounted) facts.rows.push_back(weapon);
+    // Nor one any hand throws -- a buff or a summon -- whose list is empty.
+    if (!row.wizardry && !row.mounted && !(row.anyHand && row.onSelf()) &&
+        !sim::familiesListed(row.families).empty()) {
+        facts.rows.push_back(weapon);
+    }
     if (row.mounted) {
         facts.rows.push_back(line("Mount", "Horn of Dinorant",
                                   hero.riding ? tip::Tone::White : tip::Tone::Red));
@@ -1450,32 +1454,11 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         // (`spellLines`, game/ui/describe.cpp).
         spellLines(row, realm.wearer(), false, facts.rows);
     } else if (row.onSelf()) {
-        // What it takes off a blow, as a share, and for how long -- the two questions a guard
-        // is asked. It was "x0.50 for 4.0 s", which left the player to do the sum.
-        facts.rows.push_back(
-            line("Absorbs",
-                 sim::absorbed(sim::boonShare(row, hero.totalPoints(), hero.shieldDefense)) + " of every blow",
-                 tip::Tone::Green));
-        // And what it is made of, grey and on one line as an attack's sum is: the points off the
-        // shield, the main stat and agility, and the cap they climb towards. Each names only
-        // what its formula reads (`guardPoints`, `barrierPoints`): a stat on the line that does
-        // not move the number is a lie by listing.
-        char sum[96];
-        if (row.number == sim::skill::kSoulBarrier) {
-            std::snprintf(sum, sizeof(sum), "%d shield, %d ene, %d agi (max %d%%)",
-                          hero.shieldDefense, hero.totalPoints().energy, hero.totalPoints().agility,
-                          int(sim::kGuardCap * 100.0f + 0.5f));
-        } else {
-            std::snprintf(sum, sizeof(sum), "%d shield, %d str, %d agi (max %d%%)",
-                          hero.shieldDefense, hero.totalPoints().strength, hero.totalPoints().agility,
-                          int(sim::kGuardCap * 100.0f + 0.5f));
-        }
-        tip::Row how;
-        how.free = sum;
-        how.freeTone = tip::Tone::Gray;
-        facts.rows.push_back(how);
-        facts.rows.push_back(line("Lasts", sim::spoken(float(row.boonTicks) * 0.05f),
-                                  tip::Tone::White));
+        // A guard, a buff, a heal or a summon, in the lines its orb prints (`selfLines`,
+        // game/ui/describe.cpp). Greater Damage and the summons were read as guards until the
+        // user's of 2026-10-08 ("elf greater damage wrong tooltip info", "summon orb tooltip
+        // info is bugs, it show some kind of absorb").
+        selfLines(row, tables, realm.wearer(), false, facts.rows);
     } else {
         facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.totalPoints()), 2) +
                                                 " of a swing",

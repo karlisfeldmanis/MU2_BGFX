@@ -625,8 +625,11 @@ float wardShare(const HeroPoints& points);
 // at 300 energy the Golem has 5 500 and 181-198 (kSummonDamageShare's, 0.6 of what they were). One knob each, here.
 // The minute every summon key cools for after one is raised (skills.cpp, the summons' rows).
 constexpr int32_t kSummonCool = 1200;
-constexpr float kSummonHealthPerEnergy = 1.0f / 100.0f;
-constexpr float kSummonHealthPerVitality = 1.0f / 200.0f;
+// Halved, and the ladder's health climb taken at its square root (Realm::fitSummon), the
+// user's of 2026-10-08: "elf summon hp is scaling way to much". A level-200 elf of 250 energy
+// has a Golem of some 3 300 and a Bali of 34 000, where they were 17 000 and 174 000.
+constexpr float kSummonHealthPerEnergy = 1.0f / 200.0f;
+constexpr float kSummonHealthPerVitality = 1.0f / 400.0f;
 constexpr float kSummonForcePerEnergy = 1.0f / 200.0f;
 constexpr float kSummonForcePerAgility = 1.0f / 800.0f;
 constexpr float kSummonLevelShare = 0.1f;      // the Goblin's share of her level
@@ -640,6 +643,16 @@ int summonLevel(int breedLevel, int heroLevel, int32_t skill);
 // What one of the ladder's columns grows by from the breed's level to `level`: 1 at its own.
 enum class Ladder : uint8_t { Health, Damage, Defense, AttackRate, DefenseRate };
 float summonClimb(Ladder column, int breedLevel, int level);
+// A summon as it would stand beside her now: Realm::fitSummon's numbers, for the realm and for the
+// cards that describe the summon (its key, its orb), so they cannot say different things.
+struct SummonFit {
+    int level = 0, health = 0, minimumDamage = 0, maximumDamage = 0, defense = 0;
+    float attackRate = 0.0f, defenseRate = 0.0f;
+};
+SummonFit summonFit(const content::MonsterKind& kind, int heroLevel, const HeroPoints& points,
+                    int32_t skill);
+// The breed a summon skill raises in these tables, or nullptr.
+const content::MonsterKind* summonKind(const content::Tables& tables, const SkillRow& row);
 // How far from her it hunts, and how far it strays before it walks back: OpenMU's
 // SummonedMonsterIntelligence -- eight tiles round the owner, two tiles idle, five fighting.
 constexpr int kSummonHunt = 8;

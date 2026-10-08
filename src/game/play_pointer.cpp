@@ -459,6 +459,7 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
     float rail[3];
     float tail[3], tip[3];
     const bool fromString = shooter.figure.nocked(to, tail, tip);
+    bool fromMiddle = false;
     bool fromWeapon = fromString;
     if (fromString) {
         for (int k = 0; k < 3; ++k) muzzle[k] = 0.5f * (tail[k] + tip[k]);
@@ -474,6 +475,12 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
         if (length > 1e-4f) {
             for (int k = 0; k < 3; ++k) muzzle[k] -= way[k] / length * Arrows::kHalfLength;
         }
+    } else if ((fromWeapon = fromMiddle = weaponFront(shooter, to, muzzle))) {
+        // Neither a nocked missile nor a muzzle bone -- the Crossbow, the Bluewing, Aquagold,
+        // Saint and Great Reign crossbows, the Divine Crossbow: off the front of what is in her
+        // hands (weaponFront), where it flew from a fixed point 1.35 m up and 0.6 m ahead of her, off the
+        // weapon (the user, 2026-10-08: "bols from crosbows come from perfect position top of
+        // weapon, offset issue").
     }
     if (Drawn* own = drawnOf(shooter.id)) own->figure.nock(false);
     if (whom != 0 || shooter.id == realm_.hero().id) {
@@ -481,7 +488,7 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
         if (!fromWeapon) core::logf("arrow: no muzzle, %s", shooter.figure.noMuzzle());
         core::logf("arrow: from the %s %.2f across, %.2f up, %.2f on from her feet, her clip "
                    "%d at key %.2f",
-                   fromString ? "string" : fromWeapon ? "weapon" : "chest",
+                   fromString ? "string" : fromMiddle ? "weapon's front" : fromWeapon ? "weapon" : "chest",
                    double((muzzle[0] - shooter.crown[0]) * fz - (muzzle[2] - shooter.crown[2]) * fx),
                    double(muzzle[1] - feet),
                    double((muzzle[0] - shooter.crown[0]) * fx + (muzzle[2] - shooter.crown[2]) * fz),
@@ -498,7 +505,8 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
     // A Plague Arrows lane's arrow, a little green over whatever her bow tones it.
     if (plague) tint = kPlagueArrowTint;
     // A shot at a body says when it lands, and her blow is shown then (Play's arrow cue).
-    arrows_.loose(muzzle, to, whom, model, whom != 0 ? shooter.id : 0, tint, seconds, pierce);
+    arrows_.loose(muzzle, to, whom, model, whom != 0 ? shooter.id : 0, tint, seconds, pierce,
+                  shooter.id);
 }
 
 bool Play::shoots(uint32_t id, Arrows::Model* model) {
@@ -542,6 +550,48 @@ bool Play::shoots(uint32_t id, Arrows::Model* model) {
     return false;
 }
 
+bool Play::weaponFront(const Drawn& shooter, const float toward[3], float out[3]) const {
+    const FigureBody* held = shooter.figure.body();
+    if (held == nullptr) return false;
+    for (const HeldItem& item : held->held) {
+        if (!item.mesh || (item.stance != "crossbow" && item.stance != "bow")) continue;
+        // Its box's long axis, end to end through the middle: a crossbow's rail, a bow's stave.
+        const content::Bounds& box = item.mesh->bounds();
+        int axis = 0;
+        for (int k = 1; k < 3; ++k) {
+            if (box.max[k] - box.min[k] > box.max[axis] - box.min[axis]) axis = k;
+        }
+        float ends[2][3], middle[3];
+        for (int e = 0; e < 2; ++e) {
+            float local[3] = {box.centre[0], box.centre[1], box.centre[2]};
+            local[axis] = e == 0 ? box.min[axis] : box.max[axis];
+            if (!shooter.figure.heldPoint(item.mesh->name(), local, ends[e])) return false;
+        }
+        if (!shooter.figure.heldPoint(item.mesh->name(), box.centre, middle)) return false;
+        // A bow's middle is its grip, where the arrow rests. A crossbow's bolt leaves its front:
+        // the end leaning toward what it is shot at, the bolt's point there and its middle half
+        // a bolt back, no further back than the middle (the user, 2026-10-08: "it came from
+        // bottom of crosbow close to elf body").
+        if (item.stance == "bow") {
+            std::memcpy(out, middle, sizeof(middle));
+            return true;
+        }
+        float lean = 0.0f;
+        for (int k = 0; k < 3; ++k) lean += (ends[0][k] - ends[1][k]) * (toward[k] - middle[k]);
+        const float* front = ends[lean >= 0.0f ? 0 : 1];
+        float back[3], length = 0.0f;
+        for (int k = 0; k < 3; ++k) {
+            back[k] = middle[k] - front[k];
+            length += back[k] * back[k];
+        }
+        length = std::sqrt(length);
+        const float step = length > 1e-4f ? std::min(Arrows::kHalfLength, length) / length : 0.0f;
+        for (int k = 0; k < 3; ++k) out[k] = front[k] + back[k] * step;
+        return true;
+    }
+    return false;
+}
+
 void Play::volleyShot(uint32_t shooter, uint32_t target) {
     const Drawn* from = drawnOf(shooter);
     const Drawn* to = drawnOf(target);
@@ -571,15 +621,8 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
         origin = "string";
     } else if (from->figure.muzzle(muzzle, rail)) {
         origin = "muzzle";
-    } else if (const FigureBody* held = from->figure.body()) {
-        static const float kGrip[3] = {0.0f, 0.0f, 0.0f};
-        for (const HeldItem& item : held->held) {
-            if (!item.mesh || (item.stance != "crossbow" && item.stance != "bow")) continue;
-            if (from->figure.heldPoint(item.mesh->name(), kGrip, muzzle)) {
-                origin = "weapon";
-                break;
-            }
-        }
+    } else if (weaponFront(*from, at, muzzle)) {
+        origin = "weapon";
     }
     // The Silver Valkyrie's are Penetration's, wound in MODEL_PIERCING's gold bands and flying
     // on past what they strike (the user, 2026-10-04: 'silver vylket has to shoot penetration').

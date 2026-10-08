@@ -131,7 +131,8 @@ float Arrows::roll() {
 }
 
 void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model model,
-                   uint32_t shooter, const float* tint, float seconds, bool pierce) {
+                   uint32_t shooter, const float* tint, float seconds, bool pierce,
+                   uint32_t owner) {
     Shot* shot = nullptr;
     for (Shot& one : shots_) {
         if (!one.alive) {
@@ -145,6 +146,7 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     shot->model = model;
     shot->whom = whom;
     shot->shooter = shooter;
+    shot->owner = owner != 0 ? owner : shooter;
     for (int k = 0; k < 3; ++k) {
         shot->at[k] = from[k];
         shot->to[k] = to[k];
@@ -687,6 +689,13 @@ bool Arrows::flyingAt(uint32_t shooter, uint32_t whom) const {
         }
     }
     return false;
+}
+
+void Arrows::owners(std::vector<uint32_t>& out) const {
+    for (const Shot& one : shots_) {
+        if (!one.alive || one.owner == 0) continue;
+        if (std::find(out.begin(), out.end(), one.owner) == out.end()) out.push_back(one.owner);
+    }
 }
 
 uint32_t Arrows::flying() const {

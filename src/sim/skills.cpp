@@ -452,10 +452,17 @@ constexpr SkillRow kRows[kSkills] = {
     // **Nine tiles and not six** (the user, 2026-09-28: "lets increase range in our game for
     // multishot"), ours, as the wizard's Energy Ball and Fire Ball were raised to nine. Her plain
     // shot keeps MuMain's six.
-    {.number = skill::kSkillshot, .name = "Skillshot", .mana = 5, .reach = 9.0f, .force = 1.0f,
+    //
+    // **Three quarters of a plain shot an arrow, and three arrows a cast** (the user, 2026-10-08:
+    // "need to nerft elf multishot", "elf multishot has to use 3 arrows"): each body is struck
+    // once a cast already, so on a lone body the fan is now the weaker blow and her plain shot
+    // the single-target one; on a crowd it is still every body in nine tiles of three lanes.
+    // Ours.
+    {.number = skill::kSkillshot, .name = "Skillshot", .mana = 5, .reach = 9.0f, .force = 0.75f,
      .spread = Spread::Fan,
      .tells = "Three arrows loosed in a fan at a body up to nine tiles off, each flying on "
-              "through everything in its way. One arrow is spent for every body struck.",
+              "through everything in its way, at three quarters of a plain shot. Each body is "
+              "struck once. Three arrows are spent a cast.",
      .clip = 50, .sound = "player_bow", .built = true, .families = arms::kMissiles,
      .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3},
     // Heal 26: twenty mana, `5 + energy / 5` health at once (HealEffectInitializer). MU casts it
@@ -1076,6 +1083,34 @@ float summonClimb(Ladder column, int breedLevel, int level) {
     if (level <= breedLevel) return 1.0f;
     const int at = int(column);
     return rung(at, float(level)) / std::max(1.0f, rung(at, float(breedLevel)));
+}
+
+SummonFit summonFit(const content::MonsterKind& kind, int heroLevel, const HeroPoints& points,
+                    int32_t skill) {
+    SummonFit fit;
+    fit.level = summonLevel(kind.level, heroLevel, skill);
+    const float lasts = summonHealthRate(points);
+    const float bites = summonForceRate(points);
+    const auto climb = [&](Ladder column) { return summonClimb(column, kind.level, fit.level); };
+    // The health ladder's square root (the user, 2026-10-08: "elf summon hp is scaling way to
+    // much"): 0.75's health climbs some two hundredfold from level 2 to 64 and runs on past it,
+    // so a level-200 elf's Bali stood at 170 000. Ours, as kSummonHealthPer* are.
+    fit.health = std::max(1, int(float(kind.health) * std::sqrt(climb(Ladder::Health)) * lasts));
+    fit.attackRate = float(kind.attackRate) * climb(Ladder::AttackRate) * bites;
+    fit.defenseRate = float(kind.defenseRate) * climb(Ladder::DefenseRate) * bites;
+    fit.defense = int(float(kind.defense) * climb(Ladder::Defense) * bites);
+    const float damage = climb(Ladder::Damage) * bites * kSummonDamageShare;
+    fit.minimumDamage = int(float(kind.minimumDamage) * damage);
+    fit.maximumDamage = int(float(kind.maximumDamage) * damage);
+    return fit;
+}
+
+const content::MonsterKind* summonKind(const content::Tables& tables, const SkillRow& row) {
+    if (row.summons <= 0) return nullptr;
+    for (const content::MonsterKind& kind : tables.kinds) {
+        if (kind.number == row.summons) return &kind;
+    }
+    return nullptr;
 }
 
 int healOf(const HeroPoints& points) { return 5 + std::max(0, points.energy) / 5; }
