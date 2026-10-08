@@ -281,6 +281,18 @@ void put(std::vector<uint8_t>& out, const Hello& one) {
         o.str(one.shield);
         o.u64(one.token);
         o.str(one.account);
+        o.str(one.name);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const Who& one) {
+    frame(out, Kind::Who, [&](Out& o) {
+        o.u32(uint32_t(one.players.size()));
+        for (const Who::One& p : one.players) {
+            o.u32(p.id);
+            o.str(p.name);
+            o.u8(p.bot ? 1 : 0);
+        }
     });
 }
 
@@ -398,7 +410,7 @@ int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body, u
     if (length < 1 || length > most) return -1;
     if (buffer.size() < 4 + size_t(length)) return 0;
     const uint8_t k = buffer[4];
-    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Delete)) return -1;
+    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Who)) return -1;
     kind = Kind(k);
     body.assign(buffer.begin() + 5, buffer.begin() + 4 + long(length));
     buffer.erase(buffer.begin(), buffer.begin() + 4 + long(length));
@@ -417,6 +429,23 @@ bool parse(const std::vector<uint8_t>& body, Hello& out) {
     out.shield = in.str();
     out.token = in.u64();
     out.account = in.str();
+    out.name = in.str();
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Who& out) {
+    In in{body};
+    const uint32_t n = in.u32();
+    // A world of a few hundred players at the most; a count past that is not one.
+    if (n > 4096) return false;
+    out.players.clear();
+    for (uint32_t i = 0; i < n && in.ok; ++i) {
+        Who::One p;
+        p.id = in.u32();
+        p.name = in.str();
+        p.bot = in.u8() != 0;
+        out.players.push_back(std::move(p));
+    }
     return in.done();
 }
 

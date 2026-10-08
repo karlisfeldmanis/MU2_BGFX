@@ -26,9 +26,16 @@
 // Godot drew the rounded pieces with StyleBoxFlat; the canvas has no such thing, so every
 // shape is laid down one pixel row at a time, each row cut to the rounded outline and its two
 // ends antialiased by coverage. A bar is fifteen-odd rows, so a layer is fifteen-odd quads.
+//
+// **And another player, on hover** (the user, 2026-10-08, from the Player Plates page's N2): his
+// name in Cinzel as the one thing that reads, over it his guild -- or `bot` -- small, under it a
+// small tag of his level and his resets, and a green ring round him (app/modes/play_mode.cpp). No
+// bar: "lets not show also HP bar". On the monster's fade and linger. Guilds and resets do not
+// exist yet; their places stay empty until they do.
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "gfx/interface.h"
 
@@ -54,7 +61,7 @@ public:
 
     bool showing() const {
         return (on_ != 0 && shown_ > 0.0f) || (folk_ >= 0 && folkShown_ > 0.0f) ||
-               drawn_.escort != 0;
+               drawn_.escort != 0 || (player_ != 0 && playerShown_ > 0.0f);
     }
     // How far a townsperson's name is shown this frame, 0 to 1, on its own fade and linger: what
     // the quest marker over him rises by, so the two move as one.
@@ -78,13 +85,22 @@ private:
         uint32_t escort = 0;
         float escortX = 0, escortY = 0, escortHealth = 0;
         int escortReading = 0, escortMaximum = 0;
+        // Another player's plate, 0 for none showing.
+        uint32_t player = 0;
+        float playerX = 0, playerY = 0, playerShown = 0;
+        int playerLevel = 0;
+        std::string playerName;
+        bool playerBot = false;
         bool operator==(const Readout& o) const {
             return on == o.on && x == o.x && y == o.y && shown == o.shown && lag == o.lag &&
                    health == o.health && reading == o.reading && maximum == o.maximum &&
                    unit == o.unit && folk == o.folk && folkX == o.folkX && folkY == o.folkY &&
                    folkShown == o.folkShown && escort == o.escort && escortX == o.escortX &&
                    escortY == o.escortY && escortHealth == o.escortHealth &&
-                   escortReading == o.escortReading && escortMaximum == o.escortMaximum;
+                   escortReading == o.escortReading && escortMaximum == o.escortMaximum &&
+                   player == o.player && playerX == o.playerX && playerY == o.playerY &&
+                   playerShown == o.playerShown && playerLevel == o.playerLevel &&
+                   playerName == o.playerName && playerBot == o.playerBot;
         }
     };
 
@@ -101,6 +117,8 @@ private:
     float holding_ = 0.0f; // seconds before the trail starts closing
     int folk_ = -1;        // the townsperson named, by the tables' folk index
     float folkLeft_ = 0.0f, folkShown_ = 0.0f;
+    uint32_t player_ = 0;  // the other player named, by his body's id
+    float playerLeft_ = 0.0f, playerShown_ = 0.0f;
     Readout drawn_;
     uint64_t rebuilds_ = 0;
 };

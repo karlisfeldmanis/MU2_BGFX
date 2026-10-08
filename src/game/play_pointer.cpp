@@ -24,6 +24,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
                  float pixelY, int width, int height) {
     pointedColumn_ = pointedRow_ = -1;
     pointedAt_ = 0;
+    pointedPlayer_ = 0;
     pointedFolk_ = -1;
     pointedLying_ = 0;
     pointedPerch_ = -1;
@@ -139,7 +140,10 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
         // Nor her own summon: it is never fought, so it gets no attack pointer and no hover
         // bar, and the pointer passes through it to the monster behind -- where it stood
         // in front of her quarry, a click took the summon and she attacked nothing.
-        if (body.player || body.summoner != 0) continue;
+        // **Another player is pointed at, never fought** (no PvP): his name over his head and a
+        // green ring (the user, 2026-10-08: 'show that only with hover and use green hover
+        // outline when hovering players'). Not pointedAt_, so a click on him walks.
+        if (body.summoner != 0 || body.id == realm_.hero().id) continue;
         const Drawn* drawn = drawnOf(body.id);
         if (drawn == nullptr || !drawn->visible) continue;
         // Standing on screen, not alive in the realm: a monster killed on this tick is still
@@ -151,13 +155,14 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
         if (away < closest) {
             closest = away;
             // A guard is pointed at as the townsperson he is: his name, and no bar or attack.
-            pointedAt_ = body.warden >= 0 ? 0 : body.id;
-            pointedFolk_ = body.warden;
+            pointedAt_ = body.warden >= 0 || body.player ? 0 : body.id;
+            pointedPlayer_ = body.player ? body.id : 0;
+            pointedFolk_ = body.player ? -1 : body.warden;
         }
     }
     // What lies on the ground, only where nothing living is closer: a click on a drop next
     // to a monster is a click on the monster, as MU's own picking orders it.
-    if (pointedAt_ == 0 && pointedFolk_ < 0) {
+    if (pointedAt_ == 0 && pointedPlayer_ == 0 && pointedFolk_ < 0) {
         float nearest = 0.8f;
         for (const sim::Lying& one : realm_.lying()) {
             if (std::find(heldIds_.begin(), heldIds_.end(), one.id) != heldIds_.end()) continue;
@@ -180,6 +185,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
         if (away < closest) {
             closest = away;
             pointedAt_ = 0;
+            pointedPlayer_ = 0;
             pointedFolk_ = standing.folk;
         }
     }
@@ -193,7 +199,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     // **Only the perches MU's gate lets through** (content::usable). MU picks all of them and
     // shows the sit pointer over a log it will then refuse -- a pointer promising what the rules
     // have said no to. Invention: an unusable one is skipped and the click walks instead.
-    if (pointedAt_ == 0 && pointedFolk_ < 0 && pointedLying_ == 0) {
+    if (pointedAt_ == 0 && pointedPlayer_ == 0 && pointedFolk_ < 0 && pointedLying_ == 0) {
         constexpr float kHalf = 0.25f;  // tiles; MU2's PickRadius, 25 units
         const std::vector<content::Perch>& perches = tables_.perches;
         float nearest = 1e9f;
@@ -238,6 +244,7 @@ void Play::pointAtLabel(uint32_t lying) {
     if (std::find(heldIds_.begin(), heldIds_.end(), lying) != heldIds_.end()) return;
     pointedLying_ = lying;
     pointedAt_ = 0;
+    pointedPlayer_ = 0;
     pointedFolk_ = -1;
     pointedPerch_ = -1;
 }

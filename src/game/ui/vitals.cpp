@@ -4,7 +4,10 @@
 #include <cmath>
 #include <string>
 
+#include "game/ui/controls.h"
 #include "game/ui/panel.h"
+#include "game/ui/style.h"
+#include "game/ui/tip.h"
 #include "game/play.h"
 
 namespace mu::game {
@@ -185,6 +188,31 @@ void type(gfx::Canvas& canvas, float x, float baseline, float size, float alpha,
     canvas.text(x, baseline, size, colour(kInk, alpha), text);
 }
 
+// A line in one of the interface's faces, lifted off the world as the plate's spec lifts it: a
+// ring of ink a pixel out at `halo` and a pixel's drop under it, then the letters.
+void lettered(gfx::Canvas& canvas, const gfx::Face* face, bgfx::TextureHandle texture, float x,
+              float baseline, float size, float track, uint32_t ink, float alpha,
+              const std::string& text) {
+    if (face == nullptr || !bgfx::isValid(texture)) return;
+    x = std::round(x);
+    baseline = std::round(baseline);
+    const uint32_t halo = gfx::rgba(0, 0, 0, 0.45f * alpha);
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            if (dx != 0 || dy != 0) canvas.lettered(*face, texture, x + float(dx), baseline + float(dy), size, track, halo, text);
+        }
+    }
+    canvas.lettered(*face, texture, x, baseline + 1.0f, size, track, gfx::rgba(0, 0, 0, 0.9f * alpha), text);
+    const float a = float(ink >> 24) / 255.0f;
+    canvas.lettered(*face, texture, x, baseline, size, track,
+                    (ink & 0x00FFFFFFu) | (gfx::rgbaByte(a * alpha) << 24), text);
+}
+
+uint32_t faded(uint32_t abgr, float alpha) {
+    const float a = float(abgr >> 24) / 255.0f;
+    return (abgr & 0x00FFFFFFu) | (gfx::rgbaByte(a * alpha) << 24);
+}
+
 }  // namespace
 
 void Vitals::dismiss() {
@@ -274,6 +302,23 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         }
     }
 
+    // Another player's plate: the townsperson's show, linger and fade.
+    if (const uint32_t pointedPlayer = play.pointedPlayer(); pointedPlayer != 0 && !paneled) {
+        if (player_ != pointedPlayer) playerShown_ = 0.0f;
+        player_ = pointedPlayer;
+        playerLeft_ = kLinger;
+    }
+    if (player_ != 0) {
+        playerLeft_ -= seconds;
+        if (playerLeft_ <= 0.0f || realm.find(player_) == nullptr) {
+            player_ = 0;
+            playerShown_ = 0.0f;
+        } else {
+            playerShown_ = playerLeft_ > kLinger - kFadeIn ? std::min(1.0f, playerShown_ + seconds / kFadeIn)
+                                                           : std::min(1.0f, playerLeft_ / kFadeOut);
+        }
+    }
+
     Readout now;
     now.unit = panel::unit();
     float fx = 0.0f, fy = 0.0f;
@@ -307,6 +352,17 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         now.escortHealth = std::round(fraction(summon->id) * 100.0f) / 100.0f;
         now.escortReading = play.shownHealth(summon->id);
         now.escortMaximum = summon->maxHealth;
+    }
+    if (player_ != 0 && play.crownOf(player_, viewProj, width, height, &x, &y)) {
+        const sim::Body* other = realm.find(player_);
+        now.player = player_;
+        now.playerX = std::round(x);
+        now.playerY = std::round(y);
+        now.playerShown = playerShown_;
+        now.playerLevel = other ? other->level : 0;
+        if (!play.playerName(player_, &now.playerName, &now.playerBot) || now.playerName.empty()) {
+            now.playerName = "Stranger";
+        }
     }
     if (now == drawn_ && rebuilds_ > 0) return;
     drawn_ = now;
@@ -348,6 +404,51 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         const float baseline = bar.midY() + (face.ascent(size) - face.descent(size)) * 0.5f;
         type(canvas_, std::round(bar.midX() - face.measure(size, reading) * 0.5f),
              std::round(baseline), size, 1.0f, reading);
+    }
+    if (r.player != 0 && r.playerShown > 0.0f) {
+        // The plate, from the bottom up, in the 1080-line pixels its spec is written in.
+        const float u = tip::unit(), alpha = r.playerShown;
+        const gfx::Face* words = controls::wordFace();
+        const gfx::Face* labels = controls::labelFace();
+        const gfx::Face* title = panel::titleFace();
+        // The tag: 13 tall, a hand over his crown, the level 4 in from each side.
+        const std::string level = std::to_string(r.playerLevel);
+        const float numberSize = std::round(9.0f * u);
+        const float pad = std::round(4.0f * u);
+        const float levelW = words ? words->measure(numberSize, level) : 0.0f;
+        const float tagW = std::round(levelW + pad * 2.0f), tagH = std::round(13.0f * u);
+        const gfx::Box tag{std::round(r.playerX - tagW * 0.5f), r.playerY - tagH - std::round(2.0f * u), tagW, tagH};
+        {
+            gfx::Box shade = tag;
+            shade.y += u;
+            cast(canvas_, shade, 2.0f * u, 2.0f * u, 0.6f * alpha);
+        }
+        flat(canvas_, tag, 2.0f * u, 1e9f, faded(style::kIronLo, alpha));
+        const float edge = std::max(1.0f, std::round(u));
+        flat(canvas_, tag.grown(-edge), std::max(0.0f, 2.0f * u - edge), 1e9f,
+             faded(style::kAsh1, 0.88f * alpha));
+        if (words) {
+            const float baseline = tag.midY() + (words->ascent(numberSize) - words->descent(numberSize)) * 0.5f;
+            lettered(canvas_, words, controls::wordTexture(), tag.x + pad, baseline, numberSize, 0.0f,
+                     style::kBone2, alpha, level);
+        }
+        // The name, 2 over the tag: the one thing on the plate that reads.
+        const float nameSize = std::round(16.0f * u);
+        const float nameBaseline = tag.y - std::round(3.0f * u);
+        if (title) {
+            lettered(canvas_, title, panel::titleTexture(),
+                     r.playerX - title->measure(nameSize, r.playerName) * 0.5f, nameBaseline, nameSize,
+                     0.0f, style::kBoneHi, alpha, r.playerName);
+        }
+        // Over the name, set tight on its capitals: a bot says so where a guild will stand.
+        const float overBaseline = nameBaseline - std::round(13.0f * u);
+        if (r.playerBot && words) {
+            const float size = std::round(10.0f * u), track = 0.14f * size;
+            const float wide = words->measure(size, "bot") + track * 2.0f;
+            lettered(canvas_, words, controls::wordTexture(), r.playerX - wide * 0.5f, overBaseline, size, track,
+                     style::kAshInk, alpha, "bot");
+        }
+        (void)labels;  // the guild's face, for when guilds come
     }
     if (r.on == 0 || r.shown <= 0.0f) return;
     const sim::Body* beast = play.realm().find(r.on);

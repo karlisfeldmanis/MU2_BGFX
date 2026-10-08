@@ -64,6 +64,8 @@ public:
             hello.world = world;
             hello.kin = uint8_t(kin_);
             hello.token = token_;
+            // What everyone else's hover plate calls him (net::Who).
+            hello.name = name_;
             net::Welcome welcome;
             net::Elsewhere elsewhere;
             if (!link_->join(host_, port_, hello, welcome, &elsewhere)) {

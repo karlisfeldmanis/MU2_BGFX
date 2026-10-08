@@ -459,6 +459,13 @@ public:
     int pointedColumn() const { return pointedColumn_; }
     int pointedRow() const { return pointedRow_; }
     uint32_t pointedAt() const { return pointedAt_; }
+    // Another player under the pointer, by his body's id, or 0: named and ringed green, never
+    // fought (Play::point).
+    uint32_t pointedPlayer() const { return pointedPlayer_; }
+    // His name and whether he is a bot, as the server said them (net::Who); false off a server.
+    bool playerName(uint32_t id, std::string* name, bool* bot) const {
+        return link_ && link_->nameOf(id, name, bot);
+    }
     // The townsperson under the pointer, as an index into the tables' folk, or -1.
     int pointedFolk() const { return pointedFolk_; }
     // The thing on the ground under the pointer, by its id, or 0.
@@ -1630,6 +1637,7 @@ private:
 
     int pointedColumn_ = -1, pointedRow_ = -1;
     uint32_t pointedAt_ = 0;  // the body under the pointer, or 0
+    uint32_t pointedPlayer_ = 0;  // another player under it, or 0 (pointedPlayer)
     std::string lastLine_;
 
     // The red flash round a monster the frame it turns on him: its quarry becoming the hero,

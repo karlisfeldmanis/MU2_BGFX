@@ -135,6 +135,8 @@ void RemoteLink::pump() {
                 rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.7f + ms * 0.3f;
                 pingOut_ = false;
             }
+        } else if (ok && kind == net::Kind::Who) {
+            ok = net::parse(body, who_);
         } else if (ok && kind == net::Kind::Hash) {
             net::Hash hash;
             ok = net::parse(body, hash);
@@ -153,6 +155,16 @@ void RemoteLink::pump() {
     const float since = std::chrono::duration<float>(std::chrono::steady_clock::now() - pingAt_).count();
     if (since >= (pingOut_ ? 5.0f : 1.0f)) ping();
     check();
+}
+
+bool RemoteLink::nameOf(uint32_t id, std::string* name, bool* bot) const {
+    for (const net::Who::One& one : who_.players) {
+        if (one.id != id) continue;
+        if (name) *name = one.name;
+        if (bot) *bot = one.bot;
+        return true;
+    }
+    return false;
 }
 
 void RemoteLink::step() {

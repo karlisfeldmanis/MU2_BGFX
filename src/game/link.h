@@ -54,6 +54,9 @@ public:
     // Once the realm is raised: whatever happened in it before this player came, stepped at once
     // -- a shared world's past, for a mirror (RemoteLink) -- and the realm turned to look at him.
     virtual void catchUp() {}
+    // Another player's name and whether he is a bot, by his body's id, as the server last said
+    // (net::Who); false for one it has not named, and always on a realm of this process.
+    virtual bool nameOf(uint32_t id, std::string* name, bool* bot) const { return false; }
 };
 
 class LocalLink final : public Link {

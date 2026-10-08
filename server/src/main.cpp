@@ -148,7 +148,27 @@ struct Session {
     bool welcomed = false;
     uint64_t token = 0;    // his character's: kept under it when he goes
     std::string account;   // the character screen's, once an Account has been said
+    std::string name;      // what he is called over his head (net::Who)
+    bool bot = false;      // a character of no account: for now, the bots (tools/netbot)
 };
+
+// Who is in a world, to everyone in it: what the hover plate over another player says. Sent
+// after every welcome, so a newcomer learns the rest and the rest learn him.
+void announce(const World& world, const std::vector<std::unique_ptr<Session>>& sessions) {
+    net::Who who;
+    for (const auto& one : sessions) {
+        if (one->world == &world && one->welcomed && one->player != 0) {
+            who.players.push_back({one->player, one->name, one->bot});
+        }
+    }
+    std::vector<uint8_t> out;
+    net::put(out, who);
+    for (const auto& one : sessions) {
+        if (one->world == &world && one->welcomed && one->socket.open() && !one->socket.send(out)) {
+            one->socket.close();
+        }
+    }
+}
 
 // An account's key: letters and digits the client made (game/account.h), long enough not to be
 // guessed and short enough to be a key.
@@ -405,6 +425,11 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         return false;
     }
     if (known && !whose.name.empty()) one.who += " (" + whose.name + ")";
+    // His name over his head: the account's for its characters, the Hello's for one of none.
+    one.bot = asked.account.empty();
+    one.name = known && !whose.name.empty() ? whose.name
+               : one.bot && sim::goodName(asked.name) ? asked.name
+                                                      : std::string();
     // Made on the screen and never played: made now as a new character, under his own token and
     // in the class he was made in.
     const bool fresh = known && whose.fresh;
@@ -515,7 +540,9 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
                               castle);
     if (world == nullptr) return false;
     one.world = world;
-    return welcome(one, world->realm->hero().id);
+    if (!welcome(one, world->realm->hero().id)) return false;
+    announce(*world, sessions);
+    return true;
 }
 
 // Everything that arrived on one connection. False when it must go.
@@ -713,6 +740,8 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions, bool ea
                 one->socket.close();
             } else if (!welcome(*one, uint32_t(said.b))) {
                 one->socket.close();
+            } else {
+                announce(world, sessions);
             }
         }
     }

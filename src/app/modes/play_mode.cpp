@@ -1567,9 +1567,13 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     if (!hoverDrawables_.empty()) {
         float outlineView[16], outlineProj[16];
         ctx.renderer.cameraMatrices(eye, outlineView, outlineProj);
-        const bool shadow = world_.played().pointedFolk() < 0 && world_.played().pointedAt() == 0;
+        const bool player = world_.played().pointedPlayer() != 0;
+        const bool shadow = world_.played().pointedFolk() < 0 && world_.played().pointedAt() == 0 && !player;
+        // Another player in green, not the gold a thing to fight or take wears: Sanctuary's live
+        // green (style::kLive), as his plate is his (the user, 2026-10-08).
+        const float green[4] = {0.498f, 0.839f, 0.416f, 1.0f};
         outline_.show(ctx.renderer, eye, outlineView, outlineProj, ctx.window.width(),
-                      ctx.window.height(), hoverDrawables_, shadow);
+                      ctx.window.height(), hoverDrawables_, shadow, 0, player ? green : nullptr);
     }
     // And a monster that has just turned on him flashes red, in rings of its own after the
     // gold, so a hovered one blinks red over its gold and back (Play::watchAggro). A halo

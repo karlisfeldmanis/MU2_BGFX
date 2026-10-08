@@ -27,6 +27,10 @@
 //   server -> client   Roster   the account's characters as the screen stands them, and how the
 //                               last ask went
 //
+// And in a world: Who, the players in it by their bodies' ids -- each one's name and whether he is
+// a bot -- sent to everyone there whenever someone is welcomed. What the hover plate over another
+// player says (game/ui/vitals.h); the realm knows no names, so nothing of it is in the lockstep.
+//
 // A frame is a u32 length (of what follows), a u8 kind and the body, little-endian throughout.
 // A frame that does not parse drops that connection, never the server (server-plan §3).
 
@@ -58,7 +62,8 @@ namespace mu::net {
 //    every way between worlds is now the server's to see.
 // 9: a thing on the ground carries its owner (sim::Lying::owner), so the snapshot's lying grew.
 // 10: accounts -- Account, Roster, Create, Delete, and the Hello's `account`.
-constexpr uint32_t kVersion = 10;
+// 11: Who, the players' names; the Hello's `name`, a character of no account's.
+constexpr uint32_t kVersion = 11;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -73,7 +78,7 @@ constexpr uint32_t kMostFrame = 16u << 20;
 constexpr uint32_t kMostAsked = 64u << 10;
 
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
-                          Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11 };
+                          Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12 };
 
 struct Hello {
     uint32_t version = kVersion;
@@ -88,6 +93,19 @@ struct Hello {
     // His account's key (Account), which a character of an account is played only with. Empty
     // for the bench's door: a character of no account, as the bots and `--new` make.
     std::string account;
+    // What a character of no account is called over his head (net::Who): a bot's name. An
+    // account's character is called what the account made him, and this is not read.
+    std::string name;
+};
+
+// The players in a world, by body id (net::Who).
+struct Who {
+    struct One {
+        uint32_t id = 0;
+        std::string name;
+        bool bot = false;
+    };
+    std::vector<One> players;
 };
 
 // A character this machine played on the server before accounts, by the token kept beside his
@@ -208,6 +226,7 @@ void put(std::vector<uint8_t>& out, const Account& one);
 void put(std::vector<uint8_t>& out, const Roster& one);
 void put(std::vector<uint8_t>& out, const Create& one);
 void put(std::vector<uint8_t>& out, const Delete& one);
+void put(std::vector<uint8_t>& out, const Who& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -226,6 +245,7 @@ bool parse(const std::vector<uint8_t>& body, Account& out);
 bool parse(const std::vector<uint8_t>& body, Roster& out);
 bool parse(const std::vector<uint8_t>& body, Create& out);
 bool parse(const std::vector<uint8_t>& body, Delete& out);
+bool parse(const std::vector<uint8_t>& body, Who& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.

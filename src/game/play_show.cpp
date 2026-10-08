@@ -1885,7 +1885,9 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // guard amounted to. Gated on no townsperson winning the same pick, or a guard closer
         // than a monster behind him would ring both at once -- leftClick's own ladder, which
         // this has to agree with since the ring is meant to show what a click would answer.
-        if (hover && pointedFolk_ < 0 && one.id == pointedAt_) one.figure.gather(palette, *hover);
+        if (hover && pointedFolk_ < 0 && one.id != 0 && (one.id == pointedAt_ || one.id == pointedPlayer_)) {
+            one.figure.gather(palette, *hover);
+        }
         // And its red flash, the same way, if it has just turned on him (Play::watchAggro).
         if (flashed && flashes && !aggro_.empty()) {
             if (const float strength = flashOf(one.id); strength > 0.0f) {
