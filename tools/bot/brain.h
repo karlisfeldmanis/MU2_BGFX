@@ -172,7 +172,12 @@ public:
         return ok;
     }
     bool useItem(int slot) { return was(realm->useItem(slot), sim::Command::Kind::Use, slot); }
-    bool moveItem(int from, int to) { return was(realm->moveItem(from, to), sim::Command::Kind::Move, from, to); }
+    bool moveItem(int from, int to) {
+        if (std::getenv("BOT_MOVES") && (from == sim::kWeaponRight || to == sim::kWeaponRight)) {
+            std::printf("MOVE %d -> %d (%s)\n", from, to, std::getenv("BOT_MOVES"));
+        }
+        return was(realm->moveItem(from, to), sim::Command::Kind::Move, from, to);
+    }
     int buy(int shelf) { return was(realm->buy(shelf), sim::Command::Kind::Buy, shelf); }
     int64_t sellItem(int slot) { return was(realm->sellItem(slot), sim::Command::Kind::Sell, slot); }
     int buyBack() { return was(realm->buyBack(), sim::Command::Kind::BuyBack); }
@@ -512,26 +517,56 @@ private:
                 return true;
             }
         }
-        // Breadth first over the gates, from this map, each a hop he has the level for.
-        std::map<int, int> firstGate;  // map -> the gate on this map that starts the way there
-        std::vector<int> frontier{map()};
-        firstGate[map()] = -1;
+        // **The map travel first, then the gates** (the user, 2026-10-08: "bots has to use map
+        // travel with M, fast travel to noria then go to" Atlans): with no trip to the map
+        // itself, the trip to the map whose gates reach it in the fewest hops, when that is
+        // fewer than walking from here -- a knight walked Devias, Lorencia, Noria and Atlans's
+        // gates, nine minutes, where the trip to Noria and its one gate would do.
+        int hopsHere = -1;
+        const int gateHere = firstGateTo(map(), to, &hopsHere);
+        int bestTrip = -1, bestHops = hopsHere < 0 ? 1 << 20 : hopsHere;
+        for (int i = 0; i < sim::kTravels; ++i) {
+            const sim::TravelRow& row = sim::travelAt(i);
+            if (row.map == map() || !worldOf(row.map)) continue;
+            if (realm_->travelRefusal(i) != sim::TravelRefusal::None || realm_->money() < row.zen + 500) continue;
+            int hops = -1;
+            firstGateTo(row.map, to, &hops);
+            if (hops >= 0 && hops < bestHops) {
+                bestHops = hops;
+                bestTrip = i;
+            }
+        }
+        if (bestTrip >= 0) {
+            *travel = bestTrip;
+            return true;
+        }
+        if (gateHere < 0) return false;
+        *gate = gateHere;
+        return true;
+    }
+    // Breadth first over the gates from `from` to `to`, each a hop he has the level for: the gate
+    // on `from` that starts the way, or -1 (none, or `to` is `from`); `hops` the gates walked.
+    int firstGateTo(int from, int to, int* hops) const {
+        *hops = from == to ? 0 : -1;
+        std::map<int, std::pair<int, int>> first;  // map -> (the gate on `from` starting the way, hops)
+        std::vector<int> frontier{from};
+        first[from] = {-1, 0};
         for (size_t at = 0; at < frontier.size(); ++at) {
-            const int from = frontier[at];
+            const int here = frontier[at];
             for (int n = 0; n < 512; ++n) {
                 const sim::EnterGate* in = sim::enterGateNumbered(n);
-                if (!in || int(in->map) != from || in->target < 0) continue;
+                if (!in || int(in->map) != here || in->target < 0) continue;
                 if (in->level > realm_->hero().level) continue;
                 const sim::ExitGate* out = sim::exitGate(in->target);
-                if (!out || !worldOf(int(out->map)) || firstGate.count(int(out->map))) continue;
-                firstGate[int(out->map)] = from == map() ? n : firstGate[from];
+                if (!out || !worldOf(int(out->map)) || first.count(int(out->map))) continue;
+                first[int(out->map)] = {here == from ? n : first[here].first, first[here].second + 1};
                 frontier.push_back(int(out->map));
             }
         }
-        const auto it = firstGate.find(to);
-        if (it == firstGate.end() || it->second < 0) return false;
-        *gate = it->second;
-        return true;
+        const auto it = first.find(to);
+        if (it == first.end() || it->second.first < 0) return -1;
+        *hops = it->second.second;
+        return it->second.first;
     }
 
     bool reachable(int to) const {
@@ -1050,6 +1085,11 @@ private:
                 (row.shield() || (row.weapon() && row.group != sim::kGroupBows))) continue;
             // And a wizard to his staff: his spells are its rise.
             if (wizardly() && row.weapon() && row.magicPower <= 0) continue;
+            // No shield while a two-hander is in his right hand: a wizard's Chaos Lightning Staff
+            // put his Small Shield in the bag, the shield took the staff off again, and the two
+            // traded places a hundred times a minute.
+            if (row.shield() && !realm_->satchel()[sim::kWeaponRight].empty() &&
+                rowOf(realm_->satchel()[sim::kWeaponRight]).twoHanded()) continue;
             if (options_.kin == sim::Kin::FairyElf && row.weapon() && archer() &&
                 sim::placeOf(row) != (ammoHand() == sim::kWeaponRight ? int(sim::kWeaponLeft) : int(sim::kWeaponRight)) &&
                 realm_->money() < 1000) continue;
@@ -1408,13 +1448,20 @@ private:
         return better < 3;
     }
     // A box of these bag slots, judged as the Goblin would for this service.
-    sim::Judged judgeBox(const std::vector<int>& slots, sim::Service service) const {
+    // `fits` false when a thing found no room in the 8 x 4 box: what fits is judged, but a box
+    // that does not all go in is never mixed (a wizard's staff and forty jewels went in and came
+    // back out twice a second for hours).
+    sim::Judged judgeBox(const std::vector<int>& slots, sim::Service service, bool* fits = nullptr) const {
         sim::Machine box;
+        if (fits) *fits = true;
         for (const int slot : slots) {
             const sim::Held& one = realm_->satchel()[slot];
             const content::ItemRow& row = rowOf(one);
             const int cell = box.free(*tables_, row.width, row.height);
-            if (cell < 0) break;
+            if (cell < 0) {
+                if (fits) *fits = false;
+                break;
+            }
             box.put(cell, one);
         }
         return sim::judge(*tables_, box, service, -1, options_.kin);
@@ -1482,14 +1529,17 @@ private:
         for (const int slot : raisers) {
             if (!judged->ready || judged->rate >= 100) break;
             box.push_back(slot);
-            const sim::Judged more = judgeBox(box, *service);
-            if (more.zen > purse) {
+            bool fits = true;
+            const sim::Judged more = judgeBox(box, *service, &fits);
+            if (!fits || more.zen > purse) {
                 box.pop_back();
                 break;
             }
             *judged = more;
         }
-        if (!judged->ready || judged->rate < kMixAt || purse < judged->zen) return {};
+        bool fits = true;
+        judgeBox(box, *service, &fits);
+        if (!fits || !judged->ready || judged->rate < kMixAt || purse < judged->zen) return {};
         return box;
     }
     // The rate a wing-ladder box is mixed at: below it he waits for more jewels and Zen.
@@ -2386,6 +2436,24 @@ private:
         }
         return nullptr;
     }
+    // Which map a townsperson of this number stands on, or -1.
+    int folkMap(int number) {
+        for (const WorldRow& w : kWorlds) {
+            const content::Tables* t = world(w.map);
+            if (!t) continue;
+            for (const content::Townsperson& f : t->folk) {
+                if (f.number == number) return w.map;
+            }
+        }
+        return -1;
+    }
+    // **A quest handed in to someone else** (the user, 2026-10-08: "atlans quest giver is on
+    // noria, starting at lvl 60 i think"): Peia's The Drowned Song is taken in Noria at level 70
+    // and handed in to Lirien in Atlans, and asks nothing but finding her -- no breed to hunt, so
+    // the brain never took it, and Lirien's chain behind it never opened. Where it is handed in.
+    int handInMap(int q) { return folkMap(sim::questReceiver(sim::questAt(q))); }
+    // A quest whose only step is to find whom it is handed in to.
+    bool errand(int q) const { return sim::questElsewhere(sim::questAt(q)) && wanted(q).empty(); }
     // Which map a giver stands on, or -1.
     int giverMap(int q) {
         for (const WorldRow& w : kWorlds) {
@@ -2413,12 +2481,21 @@ private:
         breeds->clear();
         if (aside_[q] > clock_) return -1;
         int where = -1;
+        std::vector<int> here;
         for (const int breed : wanted(q)) {
             const int home = homeOf(breed);
             const content::MonsterKind* kind = home >= 0 ? kindOf(home, breed) : nullptr;
             if (!kind || !takes(*kind, share) || !reachable(home)) continue;
+            if (const auto on = asideOn_.find({q, home}); on != asideOn_.end() && on->second > clock_) continue;
             if (where < 0) where = home;
             if (home == where) breeds->push_back(breed);
+            if (home == map()) here.push_back(breed);
+        }
+        // The map he is on first, when it has any: a knight walked nine minutes to Atlans for
+        // Sevina's trial and turned back for the Lost Tower the moment he arrived, all day.
+        if (!here.empty()) {
+            *breeds = here;
+            return map();
         }
         return where;
     }
@@ -2485,10 +2562,11 @@ private:
             const std::vector<int> order = questOrder();
             for (const int q : order) {
                 if (aim_ == Aim::HandIn) break;
-                if (realm_->quest(q).state == sim::QuestState::Ready && aside_[q] <= clock_ && reachable(giverMap(q))) {
+                // To whom it is handed in, where he stands: Lirien in Atlans for Peia's Drowned Song.
+                if (realm_->quest(q).state == sim::QuestState::Ready && aside_[q] <= clock_ && reachable(handInMap(q))) {
                     aim_ = Aim::HandIn;
                     aimQuest_ = q;
-                    aimMap_ = giverMap(q);
+                    aimMap_ = handInMap(q);
                 }
             }
             for (const int q : order) {
@@ -2507,7 +2585,9 @@ private:
                 if (!allowed(q) || !realm_->questOffered(q)) continue;
                 const int at = giverMap(q);
                 std::vector<int> breeds;
-                if (at < 0 || !reachable(at) || huntable(q, &breeds) < 0) continue;
+                if (at < 0 || !reachable(at)) continue;
+                // An errand -- someone to find, no breed -- once the place it sends him is reachable.
+                if (errand(q) ? !reachable(handInMap(q)) : huntable(q, &breeds) < 0) continue;
                 aim_ = Aim::Accept;
                 aimQuest_ = q;
                 aimMap_ = at;
@@ -2756,7 +2836,11 @@ private:
         if (map() == 0 && clock_ - lastTrip_ > 10 * 60 * 20 && helperOwed() >= 0) return "a pet or a mount to buy";
         // Blood Castle has no counter: an elf went in with a few hundred arrows and stood at the
         // Statue of Saint with none for twelve minutes.
-        if (aim_ == Aim::Castle && archer() && ammo() < 1200 && money >= 20000) return "arrows for Blood Castle";
+        // Once in ten minutes: a bag with no room for the quivers sent an elf back 800 times a day.
+        if (aim_ == Aim::Castle && archer() && ammo() < 1200 && money >= 20000 && clock_ - castleArrowsAt_ > 10 * 60 * 20) {
+            const_cast<Bot*>(this)->castleArrowsAt_ = clock_;
+            return "arrows for Blood Castle";
+        }
         if (clock_ - lastTrip_ > 30 * 60 * 20 && money >= 5000 && const_cast<Bot*>(this)->shopWorth()) {
             return "something on a shelf";
         }
@@ -3008,6 +3092,16 @@ private:
         }
         // And never straight back to the floor he has just left.
         if (to >= 0 && to == floorLeft_ && clock_ < floorLeftAt_ + 5 * 60 * 20) to = -1;
+        if (to < 0 && std::getenv("BOT_LADDER")) {
+            std::map<int, int> byFloor;
+            for (const sim::Body& body : realm_->bodies()) {
+                if (quarry(body, true)) ++byFloor[realm_->floorAt(body.column(), body.row())];
+            }
+            std::printf("NOFLOOR map %d here %d at %d,%d left %d aim %d quest %d quarry:", map(), here, hero.column(),
+                        hero.row(), floorLeft_, int(aim_), aimQuest_);
+            for (const auto& [f, n] : byFloor) std::printf(" floor %d x%d (refusal %d)", f, n, f >= 0 ? int(realm_->travelRefusal(f)) : -9);
+            std::printf("\n");
+        }
         if (to < 0) {
             setAside();
             return false;
@@ -3051,19 +3145,56 @@ private:
         return true;
     }
 
+    // The trip to the map he is on, which lands at its entrance -- the Lost Tower's hall from its
+    // floors, which no walk reaches. True when he paid for it.
+    bool toEntrance(const char* whom) {
+        for (int i = 0; i < sim::kTravels; ++i) {
+            const sim::TravelRow& trip = sim::travelAt(i);
+            if (trip.map != map() || realm_->travelRefusal(i) != sim::TravelRefusal::None) continue;
+            if (!tables_->grid.safe(trip.column, trip.row) || realm_->money() < trip.zen + 500) continue;
+            if (!hand_.travel(i)) continue;
+            say("cannot walk to %s: the trip to %s's entrance", whom, trip.name);
+            return true;
+        }
+        return false;
+    }
+
     void setAside() {
         if (aim_ != Aim::Hunt || aimQuest_ < 0) return;
+        // Its breeds on this map, not the whole quest: Sevina's trial was set aside whenever the
+        // Lost Tower's Death Gorgons were on a floor he could not reach, and its three Atlans
+        // breeds, which he took on, were never hunted. The quest itself only when no map is left.
+        asideOn_[{aimQuest_, map()}] = clock_ + 10 * 60 * 20;
+        std::vector<int> others;
+        if (huntable(aimQuest_, &others) >= 0) {
+            say("sets %s's breeds in %s aside for 10 min: out of reach", sim::questAt(aimQuest_).title,
+                worldOf(map())->name);
+            nextAim_ = clock_;
+            return;
+        }
         aside_[aimQuest_] = clock_ + 10 * 60 * 20;
         say("sets %s aside for 10 min: its breeds are out of reach", sim::questAt(aimQuest_).title);
+        if (std::getenv("BOT_LADDER")) {
+            for (const int breed : wanted(aimQuest_)) {
+                const int home = homeOf(breed);
+                const content::MonsterKind* kind = home >= 0 ? kindOf(home, breed) : nullptr;
+                const auto fear = fearUntil_.find(breed);
+                std::printf("ASIDE breed %d home %d cost %.0f hp %d heals %d takes1 %d reach %d feared %d\n", breed, home,
+                            kind ? costOf(*kind) : -1.0, realm_->hero().maxHealth, countOf(sim::heals),
+                            kind ? takes(*kind, 1.0) : -1, home >= 0 ? reachable(home) : -1,
+                            fear != fearUntil_.end() && fear->second > clock_);
+            }
+        }
         nextAim_ = clock_;
     }
 
     // The giver's dialog: walked to and opened by a Talk, and then the quest taken or handed in.
     void visitGiver() {
         const sim::QuestRow& row = sim::questAt(aimQuest_);
+        const int32_t whom = aim_ == Aim::HandIn ? sim::questReceiver(row) : row.giver;
         int folk = -1;
         for (size_t i = 0; i < tables_->folk.size(); ++i) {
-            if (tables_->folk[i].number == row.giver) folk = int(i);
+            if (tables_->folk[i].number == whom) folk = int(i);
         }
         if (folk < 0) return;
         if (realm_->questing() != folk) {
@@ -3075,13 +3206,7 @@ private:
                 giverSince_ = clock_;
             } else if (clock_ - giverSince_ > 60 * 20) {
                 giverSince_ = clock_;
-                for (int i = 0; i < sim::kTravels; ++i) {
-                    const sim::TravelRow& trip = sim::travelAt(i);
-                    if (trip.map != map() || realm_->travelRefusal(i) != sim::TravelRefusal::None) continue;
-                    if (realm_->money() < trip.zen + 500) continue;
-                    if (hand_.travel(i)) say("cannot walk to %s: the trip to %s's entrance", row.giverName, trip.name);
-                    return;
-                }
+                if (toEntrance(row.giverName)) return;
             }
             sim::Request request;
             request.kind = sim::Request::Kind::Talk;
@@ -3174,6 +3299,7 @@ private:
     // ---- town -----------------------------------------------------------------------------
     void startTrip(bool fresh = true) {
         errands_.clear();
+        entranceTried_ = false;
         // Every counter in town; each after the first is asked again on the way whether it is
         // worth the walk (`town`), since the first one's sales are what pay for the rest.
         errands_ = sellers_;
@@ -3346,7 +3472,22 @@ private:
             return;
         }
         if (clock_ - tripSince_ > 90 * 20) {  // could not reach him: the next one
+            // Once a trip, the entrance first: a knight on the Lost Tower's second floor could not
+            // walk to its hall's counters and turned back with a full bag 400 times in a day.
+            if (!entranceTried_ && toEntrance(tables_->folk[size_t(folk)].name.c_str())) {
+                entranceTried_ = true;
+                tripSince_ = clock_;
+                return;
+            }
             say("could not reach %s", tables_->folk[size_t(folk)].name.c_str());
+            if (std::getenv("BOT_LADDER")) {
+                int fc = 0, fr = 0;
+                realm_->folkTile(folk, &fc, &fr);
+                std::printf("UNREACH map %d at %d,%d floor %d folk at %d,%d safe %d walking %d\n", map(),
+                            realm_->hero().column(), realm_->hero().row(),
+                            realm_->floorAt(realm_->hero().column(), realm_->hero().row()), fc, fr,
+                            tables_->grid.safe(realm_->hero().column(), realm_->hero().row()), realm_->hero().walking);
+            }
             errands_.erase(errands_.begin());
             tripSince_ = clock_;
             return;
@@ -3610,6 +3751,7 @@ private:
     int aimQuest_ = -1, aimMap_ = 0, lastQuest_ = -2, lastMap_ = -1;
     std::vector<int> quarry_;
     int64_t aside_[sim::kQuests] = {};
+    std::map<std::pair<int, int>, int64_t> asideOn_;  // a quest's breeds on one map, set aside until
     int owedMap_ = -1, owedColumn_ = 0, owedRow_ = 0, walkingTo_ = -1;
     std::vector<int> errands_, sellers_;
     bool safe_ = true, tripOwed_ = false, restOwed_ = false;
@@ -3622,6 +3764,8 @@ private:
     int owedCastle_ = 1;
     int64_t machineAwayUntil_ = 0;
     int opened_ = 0;           // Firecrackers and boxes opened
+    int64_t castleArrowsAt_ = -1000000;  // the last trip for Blood Castle's arrows
+    bool entranceTried_ = false;  // this trip has already paid for its map's entrance
     int giverFolk_ = -1;       // the giver he is walking to, and since when (visitGiver)
     int64_t giverSince_ = 0;
     bool boxStuck_ = false;  // the Goblin's box kept something the bag had no room for
