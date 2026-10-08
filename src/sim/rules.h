@@ -95,6 +95,9 @@ struct Excellence {
     // A Bulwark in his hands, which lets Defense up with no shield on his arm, and a Kinship in a
     // ring or the pendant, which lifts his pet's price (sim/items.h).
     bool bulwark = false;
+    // And the share of a shield's guard it lets up: 1 for a Bulwark, less for a Buckler or a
+    // Brace (sim::kBucklerGuard...), the largest worn.
+    float bulwarkShare = 0.0f;
     bool kinship = false;
     // How many Wraths his hands carry, each adding sim::kWrathDamage to every blow he deals.
     int wraths = 0;
@@ -103,8 +106,17 @@ struct Excellence {
     double runeDefense = 0.0;
     double blockChance = 0.0;
     int whirlwinds = 0;
+    // Their Twisting Slash share and pull chance, summed and the largest, Eddies and Swirls
+    // among them (sim::kWhirlwindDamage, kEddyDamage...).
+    double whirlDamage = 0.0;
+    double whirlPull = 0.0;
     // And Piercing Volleys in a Muse Elf's hands, which fan her Penetration (sim::lanesOf).
     int volleys = 0;
+    // The side arrows' share of the straight one's force: 1 with a Piercing Volley, less with
+    // only a Scatter Volley or a Split Arrow (sim::kScatterVolleySide...), counted in `volleys`.
+    float volleySide = 0.0f;
+    // A wizard's Kindles, each raising his Fire Ball by sim::kKindleForce.
+    int kindles = 0;
     // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
     // resistance worn in each element and the resistance powers on top: Ice and Poison each turn
     // the element aside r times in r + 1, as Lightning does a beast's push; Fire cuts a fire blow

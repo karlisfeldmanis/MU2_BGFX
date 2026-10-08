@@ -132,6 +132,10 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         pyroblasts(attacker) > 0) {
         force *= kPyroblastForce;
     }
+    // His Kindles on it, each its own (sim::kKindleForce).
+    if (row != nullptr && row->number == skill::kFireBall && attacker.player) {
+        for (int i = 0; i < attacker.excel.kindles; ++i) force *= kKindleForce;
+    }
     // His element runes on a spell or a skill of their element; the sweeps' are laid in
     // strikeAround and the runes' own blows where each is let go.
     if (row != nullptr) force *= elementForce(attacker, skillElement(row->number));
@@ -471,13 +475,26 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     // The knight's Fireburst: the Pyroblaster's chain off the monster he struck, each hop his
     // rune's blow and fire (sim/items.h). Thrown whether or not the swing killed it, as a
     // Pyroblaster's chain is off a Fire Ball that did.
-    if (power.power == Power::Fireburst) {
-        if (!runeDice_.nextBool(kFireburstChance)) return;
+    // Sparkburst and Ember are its weaker kin: fewer hops, less force.
+    if (power.power == Power::Fireburst || power.power == Power::Sparkburst ||
+        power.power == Power::Ember) {
+        const bool spark = power.power == Power::Sparkburst, ember = power.power == Power::Ember;
+        if (!runeDice_.nextBool(spark   ? kSparkburstChance
+                                : ember ? kEmberChance
+                                        : kFireburstChance)) {
+            return;
+        }
         core::logf("fireburst: tick %lld, a chain off #%u", (long long)tick_, struck.id);
         Flight from;
-        from.force = kFireburstForce * elementForce(hero, Element::Fire);
+        from.force = (spark ? kSparkburstForce : ember ? kEmberForce : kFireburstForce) *
+                     elementForce(hero, Element::Fire);
         from.chained[0] = struck.id;
         from.swung = true;
+        // A shorter chain starts with hops already spent, so `hop` stops it at kPyroblastChain;
+        // the places it skips in `chained` hold no monster.
+        from.hops = int8_t(spark ? kPyroblastChain - kSparkburstHops
+                           : ember ? kPyroblastChain - kEmberHops
+                                   : 0);
         hop(hero, from, struck.id, struck.x, struck.y);
         return;
     }
@@ -505,8 +522,15 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     }
     // His Hellfire rune: the wizard's Hellfire ring round him, said as Hellfire let go so the
     // drawing lights its sigil and wall at his feet, and his rune's blow on everything in it.
-    if (power.power == Power::Hellfire) {
-        if (!runeDice_.nextBool(kHellfireRuneChance)) return;
+    // Brimstone and Ashfall are its weaker kin.
+    if (power.power == Power::Hellfire || power.power == Power::Brimstone ||
+        power.power == Power::Ashfall) {
+        const bool brim = power.power == Power::Brimstone, ash = power.power == Power::Ashfall;
+        if (!runeDice_.nextBool(brim  ? kBrimstoneChance
+                                : ash ? kAshfallChance
+                                      : kHellfireRuneChance)) {
+            return;
+        }
         const SkillRow* ring = skillNumbered(skill::kHellfire);
         if (ring == nullptr) return;
         uint32_t victims[kVictims];
@@ -514,7 +538,8 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         say(What::Loosed, hero, skill::kHellfire, 0, 0, 0);
         happenings_.back().rune = true;
         core::logf("hellfire rune: tick %lld, %d round him", (long long)tick_, found);
-        const float force = kHellfireRuneForce * elementForce(hero, Element::Fire);
+        const float force = (brim ? kBrimstoneForce : ash ? kAshfallForce : kHellfireRuneForce) *
+                            elementForce(hero, Element::Fire);
         for (int i = 0; i < found && hero.alive(); ++i) {
             if (Body* victim = body(victims[i]); victim && victim->alive()) {
                 runeStrike(hero, *victim, force);
@@ -1160,7 +1185,11 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
         for (int i = 0; i < found; ++i) {
             if (struckCount < kVictims) struck[struckCount++] = lane[i].id;
             loosingPlague_ = a < 8 && (plagued & (1u << a)) != 0;
-            loose(hero, row, lane[i].id, force, false, lane[i].id == aimedAt);
+            // A side arrow of a Scatter Volley's or a Split Arrow's fan strikes at its share.
+            const float side = a > 0 && row.number == skill::kPenetration && hero.player
+                                   ? hero.excel.volleySide
+                                   : 1.0f;
+            loose(hero, row, lane[i].id, force * side, false, lane[i].id == aimedAt);
             loosingPlague_ = false;
         }
     }

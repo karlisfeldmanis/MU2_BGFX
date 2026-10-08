@@ -14,7 +14,9 @@ runes from DW and DK").** MG gets no rune of his own. He may set:
 - every `kEveryClass` rune, as everyone (Evil Spirit and Wisp in a shield or jewellery, as
   everyone's: MuMain lets him carry a shield);
 - the knight's and the wizard's **Common and Epic** runes: Cinder, Gust, Faint Echo (Common);
-  Meteor, Ice, Poison, Immolate, Scorch (Epic);
+  Meteor, Ice, Poison, Immolate, Scorch (Epic); and since 2026-10-09 the weaker kin of the lone
+  Legendaries: Ember, Ashfall, Swirl, Brace, Kindle (Common); Sparkburst, Brimstone, Eddy,
+  Buckler (Epic);
 - **no Legendary** of either class: not Hellfire, Twister, Whirlwind, Bulwark, Fireburst, Ring
   of Fire, Arcane Echo or Pyroblaster.
 
@@ -64,7 +66,8 @@ casting one ends the other on him.
 wizard is (`sim::questNative`), and where a giver pays the knight one thing and the wizard another
 he chooses Melee or Magic in the dialog (`sim::QuestPath`, `questPaidKin`). A Legendary rune he may
 not set comes as its weaker kin (`sim::gladiatorRune`: Arcane Echo as Faint Echo, Pyroblaster as
-Scorch, Whirlwind as Gust; ours).
+Scorch, Whirlwind as Eddy -- Gust until 2026-10-09 --, Fireburst as Sparkburst, Hellfire as
+Brimstone, Bulwark as Buckler; ours).
 
 **Gear:** the weapon rows mark him on both sides (Weapons.cs:301-304): any wizard staff or knight
 weapon, plus his own blades. In MU he wears no helm; his Storm Crow set has none. Storm Crow was

@@ -408,7 +408,10 @@ uint8_t gladiatorRune(uint8_t power) {
     switch (Power(power)) {
         case Power::Echo: return uint8_t(Power::FaintEcho);
         case Power::Pyroblast: return uint8_t(Power::Scorch);
-        case Power::Whirlwind: return uint8_t(Power::Gust);
+        case Power::Whirlwind: return uint8_t(Power::Eddy);
+        case Power::Fireburst: return uint8_t(Power::Sparkburst);
+        case Power::Hellfire: return uint8_t(Power::Brimstone);
+        case Power::Bulwark: return uint8_t(Power::Buckler);
         default: return power;
     }
 }
@@ -524,6 +527,32 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Barrage, "Barrage", "Multi-Shot +30% damage", kElfOnly, kInWeapon, Rarity::Epic},
         {Power::GreaterBarrage, "Greater Barrage", "Multi-Shot +50% damage", kElfOnly, kInWeapon,
          Rarity::Legendary},
+        // The weaker kin of the lone Legendaries (sim/items.h kSparkburst...), every one
+        // first-class, and the knight's and the wizard's the Magic Gladiator's too.
+        {Power::Sparkburst, "Sparkburst", "7% on hit: two fireballs chain from the target",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
+        {Power::Ember, "Ember", "5% on hit: a fireball leaps from the target",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
+        {Power::Brimstone, "Brimstone", "7% on hit: a lesser hellfire erupts around you",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
+        {Power::Ashfall, "Ashfall", "5% on hit: a faint hellfire around you",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
+        {Power::Eddy, "Eddy", "Twisting Slash +25% damage, 12% to pull monsters in",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
+        {Power::Swirl, "Swirl", "Twisting Slash +10% damage, 5% to pull monsters in",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
+        {Power::ScatterVolley, "Scatter Volley",
+         "Penetration fires two more piercing arrows at half damage", kElfOnly, kInWeapon,
+         Rarity::Epic},
+        {Power::SplitArrow, "Split Arrow",
+         "Penetration fires two more piercing arrows at a quarter damage", kElfOnly, kInWeapon,
+         Rarity::Common},
+        {Power::Buckler, "Buckler", "Defense and Magic Shield work without a shield, at 60%",
+         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
+        {Power::Brace, "Brace", "Defense and Magic Shield work without a shield, at 30%",
+         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
+        {Power::Kindle, "Kindle", "Fire Ball +15% damage", kWizardOnly | kGladiatorOnly,
+         kInWeapon, Rarity::Common},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;

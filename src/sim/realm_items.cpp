@@ -377,9 +377,16 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
                 ++hero.excel.elementRunes[int(elementOf(power->power))];
             }
             // A knight's or a wizard's Bulwark from his hands, Kinship from the rings and the pendant.
-            if (power && power->power == Power::Bulwark && !jewellery(*row) &&
-                power->takenBy(hero.kin, hero.second)) {
-                hero.excel.bulwark = true;
+            // Buckler and Brace let it up at less (sim::kBucklerGuard).
+            if (power && !jewellery(*row) && power->takenBy(hero.kin, hero.second)) {
+                const float guard = power->power == Power::Bulwark   ? 1.0f
+                                    : power->power == Power::Buckler ? kBucklerGuard
+                                    : power->power == Power::Brace   ? kBraceGuard
+                                                                     : 0.0f;
+                if (guard > 0.0f) {
+                    hero.excel.bulwark = true;
+                    hero.excel.bulwarkShare = std::max(hero.excel.bulwarkShare, guard);
+                }
             }
             if (power && power->power == Power::Kinship && jewellery(*row)) {
                 hero.excel.kinship = true;
@@ -400,13 +407,32 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
                 power->takenBy(hero.kin, hero.second)) {
                 ++hero.excel.plagueArrows;
             }
-            if (power && power->power == Power::Whirlwind && !jewellery(*row) &&
-                power->takenBy(hero.kin, hero.second)) {
-                ++hero.excel.whirlwinds;
-            }
-            if (power && power->power == Power::Volley && !jewellery(*row) &&
-                power->takenBy(hero.kin, hero.second)) {
-                ++hero.excel.volleys;
+            // Whirlwind and its Eddy and Swirl: their shares summed, the likeliest pull.
+            if (power && !jewellery(*row) && power->takenBy(hero.kin, hero.second)) {
+                const Power p = power->power;
+                const double damage = p == Power::Whirlwind ? kWhirlwindDamage
+                                      : p == Power::Eddy    ? kEddyDamage
+                                      : p == Power::Swirl   ? kSwirlDamage
+                                                            : 0.0;
+                if (damage > 0.0) {
+                    ++hero.excel.whirlwinds;
+                    hero.excel.whirlDamage += damage;
+                    hero.excel.whirlPull = std::max(
+                        hero.excel.whirlPull, p == Power::Whirlwind ? kWhirlwindChance
+                                              : p == Power::Eddy    ? kEddyChance
+                                                                    : kSwirlChance);
+                }
+                // Piercing Volley and its Scatter Volley and Split Arrow: the fan, its side
+                // arrows at the strongest share worn.
+                const float side = p == Power::Volley          ? 1.0f
+                                   : p == Power::ScatterVolley ? kScatterVolleySide
+                                   : p == Power::SplitArrow    ? kSplitArrowSide
+                                                               : 0.0f;
+                if (side > 0.0f) {
+                    ++hero.excel.volleys;
+                    hero.excel.volleySide = std::max(hero.excel.volleySide, side);
+                }
+                if (p == Power::Kindle) ++hero.excel.kindles;
             }
         }
     }

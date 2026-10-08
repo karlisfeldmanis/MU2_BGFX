@@ -273,7 +273,14 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // whole length: `guardShare` in sim/skills.h, where the numbers are argued -- or the
             // wizard's `barrierShare`, off energy where the knight's is off his body, or the
             // elf's `wardShare`, off agility with no shield at all.
-            hero.boonDamageTaken = 1.0f - boonShare(row, hero.totalPoints(), hero.shieldDefense);
+            // A Buckler or a Brace with no shield on his arm lets it up at its share.
+            float guard = boonShare(row, hero.totalPoints(), hero.shieldDefense);
+            if (row.number != skill::kGreaterDefense && hero.excel.bulwark &&
+                hero.excel.bulwarkShare < 1.0f &&
+                (familyOf(shield) & arms::kShield) == 0) {
+                guard *= hero.excel.bulwarkShare;
+            }
+            hero.boonDamageTaken = 1.0f - guard;
             hero.boonUntil = tick_ + row.boonTicks;
             hero.stats.damageTaken = double(hero.boonDamageTaken) * hero.pet.taken;
         }
@@ -883,9 +890,10 @@ void Realm::push(Body& target, float fromX, float fromY) {
 constexpr float kWhirlTicksPerTile = 3.0f;
 
 float Realm::whirl(Body& hero, const SkillRow& row, float force) {
-    force *= float(1.0 + kWhirlwindDamage * hero.excel.whirlwinds);
+    // Eddies and Swirls ride in the same sums at their own numbers (sim/items.h kEddyDamage).
+    force *= float(1.0 + hero.excel.whirlDamage);
     // One draw a cast, and only while one is carried, so nobody else's dice move.
-    if (!dice_.nextBool(kWhirlwindChance)) return force;
+    if (!dice_.nextBool(hero.excel.whirlPull)) return force;
     // Those beyond the slash's reach and within the pull's, seen from him and off sheltered
     // ground, gathered first: a body the strike below kills must not move the list under it.
     uint32_t pulled[kVictims];

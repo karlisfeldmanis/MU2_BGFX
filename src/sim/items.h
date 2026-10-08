@@ -689,7 +689,21 @@ enum class Power : uint8_t {
     // Multi-Shot's own, three tiers (sim::barrageShare).
     LesserBarrage = 51,
     Barrage = 52,
-    GreaterBarrage = 53
+    GreaterBarrage = 53,
+    // The weaker kin of the Legendaries that had none (kSparkburst...): an Epic and a Common under
+    // each of Fireburst, Hellfire, Whirlwind, Piercing Volley and Bulwark, and a Common under
+    // Pyroblaster, whose Epic is Scorch.
+    Sparkburst = 54,
+    Ember = 55,
+    Brimstone = 56,
+    Ashfall = 57,
+    Eddy = 58,
+    Swirl = 59,
+    ScatterVolley = 60,
+    SplitArrow = 61,
+    Buckler = 62,
+    Brace = 63,
+    Kindle = 64
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -814,7 +828,8 @@ HeroPoints statShareOf(Power power);
 const PowerRow* powerOf(uint8_t power);
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
-// Pyroblaster as Scorch, Whirlwind as Gust. Ours (docs/mg-port.md). Anything else as it is.
+// Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,
+// Bulwark as Buckler. Ours (docs/mg-port.md). Anything else as it is.
 uint8_t gladiatorRune(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);
@@ -1017,6 +1032,36 @@ constexpr double kGreaterBarrageDamage = 0.50;
 // What one rune of these three adds to Multi-Shot, 0 for any other.
 double barrageShare(Power power);
 constexpr float kWispForce = 0.5f;
+// **The weaker kin** (the user, 2026-10-09: "we need weaker version of some runes which only has
+// legendary versions", then "also common versions"): every Legendary that stood alone gets an Epic
+// and a Common beneath it, first-class all and, the knight's and the wizard's, the Magic
+// Gladiator's too (docs/mg-port.md), each its Legendary's own blow at less. **Sparkburst** and
+// **Ember** Fireburst's chain, two hops and one; **Brimstone** and **Ashfall** the Hellfire ring;
+// **Eddy** and **Swirl** Whirlwind's harder Twisting Slash and its pull; **Scatter Volley** and
+// **Split Arrow** Piercing Volley's fan, the two side arrows at a share of the straight one's
+// force; **Buckler** and **Brace** Bulwark's shieldless guard at a share of what it takes off;
+// **Kindle** Pyroblaster's harder Fire Ball without its burst. invention, all of it.
+constexpr double kSparkburstChance = 0.07;
+constexpr float kSparkburstForce = 0.6f;
+constexpr int kSparkburstHops = 2;
+constexpr double kEmberChance = 0.05;
+constexpr float kEmberForce = 0.4f;
+constexpr int kEmberHops = 1;
+constexpr double kBrimstoneChance = 0.07;
+constexpr float kBrimstoneForce = 0.6f;
+constexpr double kAshfallChance = 0.05;
+constexpr float kAshfallForce = 0.35f;
+constexpr double kEddyDamage = 0.25;
+constexpr double kEddyChance = 0.12;
+constexpr double kSwirlDamage = 0.10;
+constexpr double kSwirlChance = 0.05;
+// Of the straight arrow's force, each side arrow; a Piercing Volley's are whole.
+constexpr float kScatterVolleySide = 0.5f;
+constexpr float kSplitArrowSide = 0.25f;
+// Of the guard a shield would let him raise, with no shield on his arm; a Bulwark's is whole.
+constexpr float kBucklerGuard = 0.6f;
+constexpr float kBraceGuard = 0.3f;
+constexpr float kKindleForce = 1.15f;
 // **Immolate** (the user, 2026-10-06: 'chance to burn monsters to do some % of damage of hp and
 // their has to be some burn efekt to the monster'), Epic, any knight's weapon: a swing that lands
 // has kBurnRuneChance to set the monster burning for kBurnRuneTicks, a pulse every

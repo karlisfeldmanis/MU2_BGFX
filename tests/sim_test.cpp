@@ -8866,6 +8866,85 @@ void testGroupRunes(const content::Tables& tables) {
         const double rate = double(cinders) / cinderSwings;
         check(rate > 0.02 && rate < 0.09, "about one landed swing in twenty");
     }
+    // The weaker kin of the lone Legendaries (2026-10-09): an Epic and a Common under each,
+    // first-class, the knight's and the wizard's the Magic Gladiator's too.
+    for (const Power power : {Power::Sparkburst, Power::Brimstone, Power::Eddy,
+                              Power::ScatterVolley, Power::Buckler}) {
+        const sim::PowerRow* row = sim::powerOf(uint8_t(power));
+        check(row != nullptr && row->rarity == sim::Rarity::Epic && !row->second,
+              "an Epic kin, any first-class hero's");
+    }
+    for (const Power power : {Power::Ember, Power::Ashfall, Power::Swirl, Power::SplitArrow,
+                              Power::Brace, Power::Kindle}) {
+        const sim::PowerRow* row = sim::powerOf(uint8_t(power));
+        check(row != nullptr && row->rarity == sim::Rarity::Common && !row->second,
+              "a Common kin, any first-class hero's");
+    }
+    check(sets(Power::Sparkburst, sword, Kin::DarkKnight) &&
+              sets(Power::Sparkburst, sword, Kin::MagicGladiator) &&
+              !sets(Power::Sparkburst, sword, Kin::DarkWizard) &&
+              sets(Power::Buckler, sword, Kin::DarkWizard) &&
+              !sets(Power::Buckler, sword, Kin::FairyElf) &&
+              sets(Power::SplitArrow, sword, Kin::FairyElf) &&
+              !sets(Power::SplitArrow, sword, Kin::DarkKnight) &&
+              !sets(Power::Kindle, plate, Kin::DarkWizard),
+          "each kin goes where its Legendary goes");
+    for (const Power legend : {Power::Whirlwind, Power::Fireburst, Power::Hellfire,
+                               Power::Bulwark}) {
+        const sim::PowerRow* paid = sim::powerOf(sim::gladiatorRune(uint8_t(legend)));
+        check(paid != nullptr && paid->takenBy(Kin::MagicGladiator, false) &&
+                  paid->rarity == sim::Rarity::Epic,
+              "a Legendary paid to the Gladiator comes as its Epic kin");
+    }
+    {
+        sim::Realm knight;
+        knight.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
+        const uint8_t powers[3] = {uint8_t(Power::Eddy), uint8_t(Power::Swirl), 0};
+        knight.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 2, powers);
+        const sim::Excellence& e = knight.hero().excel;
+        check(e.whirlwinds == 2 &&
+                  std::abs(e.whirlDamage - (sim::kEddyDamage + sim::kSwirlDamage)) < 1e-9 &&
+                  e.whirlPull == sim::kEddyChance,
+              "an Eddy and a Swirl: their shares summed, the likelier pull");
+    }
+    {
+        sim::Realm elf;
+        elf.raise(&tables, 7, 190, 110, Kin::FairyElf, 30);
+        const uint8_t powers[3] = {uint8_t(Power::ScatterVolley), 0, 0};
+        elf.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        check(elf.hero().excel.volleys == 1 &&
+                  elf.hero().excel.volleySide == sim::kScatterVolleySide,
+              "a Scatter Volley fans Penetration, its side arrows at half");
+    }
+    // A Buckler raises Defense with no shield, at its share of the guard.
+    {
+        sim::Realm knight;
+        knight.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
+        knight.learn(sim::skill::kDefense);
+        const uint8_t powers[3] = {uint8_t(Power::Buckler), 0, 0};
+        knight.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        knight.invoke(sim::skill::kDefense, knight.hero().id);
+        for (int tick = 0; tick < 60 && knight.cooling(sim::skill::kDefense) == 0; ++tick) {
+            knight.step();
+        }
+        const sim::Body& hero = knight.hero();
+        const float whole = sim::guardShare(hero.totalPoints(), hero.shieldDefense);
+        check(hero.boonSkill == sim::skill::kDefense &&
+                  std::abs((1.0f - hero.boonDamageTaken) - whole * sim::kBucklerGuard) < 1e-4f,
+              "a Buckler sword raises Defense with no shield, at 60%");
+    }
+    for (const Power power : {Power::Sparkburst, Power::Ember, Power::Brimstone,
+                              Power::Ashfall}) {
+        int kinSwings = 0, kinCasts = 0, kinBlows = 0;
+        hunt(power, &kinSwings, &kinCasts, &kinBlows);
+        std::printf("  %s: %d landed swings, %d casts, %d blows\n",
+                    sim::powerOf(uint8_t(power))->name, kinSwings, kinCasts, kinBlows);
+        check(kinCasts > 0 && kinBlows > 0, "it goes off and strikes");
+        if (kinSwings > 0) {
+            const double rate = double(kinCasts) / kinSwings;
+            check(rate > 0.02 && rate < 0.12, "about one landed swing in fifteen or twenty");
+        }
+    }
 }
 
 // The runes' rarity (sim::Rarity, the user, 2026-10-02: "we need also make group of rarity of
