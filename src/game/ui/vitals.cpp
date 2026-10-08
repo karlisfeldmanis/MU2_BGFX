@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <vector>
 
 #include "game/ui/controls.h"
 #include "game/ui/panel.h"
-#include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "game/play.h"
 
@@ -51,6 +51,15 @@ constexpr float kCastSpread = 1.75f;
 constexpr float kNameTall = 8.0f;
 constexpr float kReadingTall = 5.0f;
 constexpr float kGap = 4.0f;      // clears the shadow before it starts being a gap
+// The other players' names (WoW's), in tip::unit() pixels: the name and the guild line under it.
+constexpr float kTagName = 15.0f;
+constexpr float kTagGuild = 11.0f;
+// WoW's friendly-player blue, lifted to read on MU's dark ground, and a corpse's grey.
+constexpr float kTagBlue[4] = {84 / 255.0f, 156 / 255.0f, 1.0f, 1.0f};
+constexpr float kTagDead[4] = {0.62f, 0.62f, 0.62f, 1.0f};
+// How far off another player is named, in tiles, and the last stretch of it faded out over.
+constexpr float kNameRange = 22.0f;
+constexpr float kNameFade = 4.0f;
 
 // ---- time, in seconds --------------------------------------------------------------------
 constexpr float kChipHold = 0.28f;
@@ -186,26 +195,6 @@ void type(gfx::Canvas& canvas, float x, float baseline, float size, float alpha,
         }
     }
     canvas.text(x, baseline, size, colour(kInk, alpha), text);
-}
-
-// A line in one of the interface's faces, lifted off the world as the plate's spec lifts it: a
-// ring of ink a pixel out at `halo` and a pixel's drop under it, then the letters.
-void lettered(gfx::Canvas& canvas, const gfx::Face* face, bgfx::TextureHandle texture, float x,
-              float baseline, float size, float track, uint32_t ink, float alpha,
-              const std::string& text) {
-    if (face == nullptr || !bgfx::isValid(texture)) return;
-    x = std::round(x);
-    baseline = std::round(baseline);
-    const uint32_t halo = gfx::rgba(0, 0, 0, 0.45f * alpha);
-    for (int dy = -1; dy <= 1; ++dy) {
-        for (int dx = -1; dx <= 1; ++dx) {
-            if (dx != 0 || dy != 0) canvas.lettered(*face, texture, x + float(dx), baseline + float(dy), size, track, halo, text);
-        }
-    }
-    canvas.lettered(*face, texture, x, baseline + 1.0f, size, track, gfx::rgba(0, 0, 0, 0.9f * alpha), text);
-    const float a = float(ink >> 24) / 255.0f;
-    canvas.lettered(*face, texture, x, baseline, size, track,
-                    (ink & 0x00FFFFFFu) | (gfx::rgbaByte(a * alpha) << 24), text);
 }
 
 uint32_t faded(uint32_t abgr, float alpha) {
@@ -353,16 +342,34 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         now.escortReading = play.shownHealth(summon->id);
         now.escortMaximum = summon->maxHealth;
     }
-    if (player_ != 0 && play.crownOf(player_, viewProj, width, height, &x, &y)) {
-        const sim::Body* other = realm.find(player_);
-        now.player = player_;
-        now.playerX = std::round(x);
-        now.playerY = std::round(y);
-        now.playerShown = playerShown_;
-        now.playerLevel = other ? other->level : 0;
-        if (!play.playerName(player_, &now.playerName, &now.playerBot) || now.playerName.empty()) {
-            now.playerName = "Stranger";
+    // Every other player in range, WoW's way: named whether pointed at or not.
+    {
+        const sim::Body& hero = realm.hero();
+        struct Far {
+            float d;
+            Tag tag;
+        };
+        std::vector<Far> near;
+        for (const sim::Body& one : realm.bodies()) {
+            if (!one.player || one.id == hero.id || one.id == 0) continue;
+            const float dx = one.x - hero.x, dy = one.y - hero.y;
+            const float d = std::sqrt(dx * dx + dy * dy);
+            if (d > kNameRange) continue;
+            if (!play.crownOf(one.id, viewProj, width, height, &x, &y)) continue;
+            if (x < -200.0f || y < -50.0f || x > float(width) + 200.0f || y > float(height) + 50.0f) continue;
+            Tag tag;
+            tag.id = one.id;
+            tag.x = std::round(x);
+            tag.y = std::round(y);
+            // In sixteenths, so a walk at the range's edge does not rebuild on every step.
+            tag.alpha = std::round(std::clamp((kNameRange - d) / kNameFade, 0.0f, 1.0f) * 16.0f) / 16.0f;
+            tag.lit = one.id == player_ ? playerShown_ : 0.0f;
+            tag.dead = !play.shownAlive(one.id);
+            if (!play.playerName(one.id, &tag.name, &tag.bot) || tag.name.empty()) tag.name = "Stranger";
+            near.push_back({d, std::move(tag)});
         }
+        std::sort(near.begin(), near.end(), [](const Far& a, const Far& b) { return a.d > b.d; });
+        for (Far& one : near) now.tags.push_back(std::move(one.tag));
     }
     if (now == drawn_ && rebuilds_ > 0) return;
     drawn_ = now;
@@ -405,63 +412,50 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         type(canvas_, std::round(bar.midX() - face.measure(size, reading) * 0.5f),
              std::round(baseline), size, 1.0f, reading);
     }
-    if (r.player != 0 && r.playerShown > 0.0f) {
-        // The plate, from the bottom up, in the 1080-line pixels its spec is written in.
-        const float u = tip::unit(), alpha = r.playerShown;
-        const gfx::Face* words = controls::wordFace();
-        const gfx::Face* labels = controls::labelFace();
+    if (!r.tags.empty()) {
+        // WoW's names: the name in the title face, the guild line under it smaller, both in a
+        // hard black outline with no backing, both centred on his crown.
+        const float u = tip::unit();
         const gfx::Face* title = panel::titleFace();
-        // The tag: 13 tall, a hand over his crown, the level 4 in from each side.
-        const std::string level = std::to_string(r.playerLevel);
-        const float numberSize = std::round(9.0f * u);
-        const float pad = std::round(4.0f * u);
-        const float levelW = words ? words->measure(numberSize, level) : 0.0f;
-        const float tagW = std::round(levelW + pad * 2.0f), tagH = std::round(13.0f * u);
-        const gfx::Box tag{std::round(r.playerX - tagW * 0.5f), r.playerY - tagH - std::round(2.0f * u), tagW, tagH};
-        // The name and what stands over it, measured first: the backing is sized to the plate.
-        const float nameSize = std::round(16.0f * u);
-        const float nameBaseline = tag.y - std::round(3.0f * u);
-        const float overBaseline = nameBaseline - std::round(13.0f * u);
-        const float nameW = title ? title->measure(nameSize, r.playerName) : 0.0f;
-        const float botSize = std::round(10.0f * u), botTrack = 0.14f * botSize;
-        const float botW = words ? words->measure(botSize, "bot") + botTrack * 2.0f : 0.0f;
-        // **The backing** (the user, 2026-10-08: 'we need some kind container or background
-        // shadow'): a see-through dark field behind the whole plate, no rim -- strokes were
-        // refused -- its edge fading out as the ground labels' strips do, so the words hold on
-        // lit ground and the plate reads as one thing.
-        {
-            const float top = (r.playerBot ? overBaseline - std::round(9.0f * u) : nameBaseline - std::round(13.0f * u)) -
-                              std::round(5.0f * u);
-            const float wide = std::round(std::max({nameW, botW, tagW}) + 20.0f * u);
-            const gfx::Box back{std::round(r.playerX - wide * 0.5f), top, wide, tag.bottom() + std::round(5.0f * u) - top};
-            cast(canvas_, back, 4.0f * u, 7.0f * u, 0.32f * alpha);
-            flat(canvas_, back, 4.0f * u, 1e9f, gfx::rgba(0.020f, 0.012f, 0.012f, 0.42f * alpha));
+        const gfx::Face* words = controls::wordFace();
+        const float nameSize = std::round(kTagName * u), guildSize = std::round(kTagGuild * u);
+        const float rim = std::max(1.0f, std::round(u));
+        const auto outlined = [&](const gfx::Face* face, bgfx::TextureHandle texture, float x,
+                                  float baseline, float size, uint32_t ink, float alpha,
+                                  const std::string& text) {
+            if (face == nullptr || !bgfx::isValid(texture)) return;
+            x = std::round(x);
+            baseline = std::round(baseline);
+            const uint32_t halo = gfx::rgba(0, 0, 0, 0.9f * alpha);
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    if (dx != 0 || dy != 0) {
+                        canvas_.lettered(*face, texture, x + float(dx) * rim, baseline + float(dy) * rim,
+                                         size, 0.0f, halo, text);
+                    }
+                }
+            }
+            canvas_.lettered(*face, texture, x, baseline, size, 0.0f, faded(ink, alpha), text);
+        };
+        for (const Tag& t : r.tags) {
+            if (t.alpha <= 0.0f) continue;
+            const float* c = t.dead ? kTagDead : kTagBlue;
+            const float l = t.lit * 0.55f;
+            const uint32_t ink = gfx::rgba(c[0] + (1.0f - c[0]) * l, c[1] + (1.0f - c[1]) * l,
+                                           c[2] + (1.0f - c[2]) * l, 1.0f);
+            const float guildBaseline = t.y - std::round(kGap * u);
+            const float nameBaseline = guildBaseline - std::round((kTagGuild + 3.0f) * u);
+            if (title) {
+                outlined(title, panel::titleTexture(), t.x - title->measure(nameSize, t.name) * 0.5f,
+                         nameBaseline, nameSize, ink, t.alpha, t.name);
+            }
+            // The guild's line; a bot's guild is `<Bot>` until guilds exist.
+            if (t.bot && words) {
+                const std::string guild = "<Bot>";
+                outlined(words, controls::wordTexture(), t.x - words->measure(guildSize, guild) * 0.5f,
+                         guildBaseline, guildSize, ink, t.alpha * 0.9f, guild);
+            }
         }
-        {
-            gfx::Box shade = tag;
-            shade.y += u;
-            cast(canvas_, shade, 2.0f * u, 2.0f * u, 0.6f * alpha);
-        }
-        flat(canvas_, tag, 2.0f * u, 1e9f, faded(style::kIronLo, alpha));
-        const float edge = std::max(1.0f, std::round(u));
-        flat(canvas_, tag.grown(-edge), std::max(0.0f, 2.0f * u - edge), 1e9f,
-             faded(style::kAsh1, 0.88f * alpha));
-        if (words) {
-            const float baseline = tag.midY() + (words->ascent(numberSize) - words->descent(numberSize)) * 0.5f;
-            lettered(canvas_, words, controls::wordTexture(), tag.x + pad, baseline, numberSize, 0.0f,
-                     style::kBone2, alpha, level);
-        }
-        // The name, 2 over the tag: the one thing on the plate that reads.
-        if (title) {
-            lettered(canvas_, title, panel::titleTexture(), r.playerX - nameW * 0.5f, nameBaseline, nameSize,
-                     0.0f, style::kBoneHi, alpha, r.playerName);
-        }
-        // Over the name, set tight on its capitals: a bot says so where a guild will stand.
-        if (r.playerBot && words) {
-            lettered(canvas_, words, controls::wordTexture(), r.playerX - botW * 0.5f, overBaseline, botSize,
-                     botTrack, style::kAshInk, alpha, "bot");
-        }
-        (void)labels;  // the guild's face, for when guilds come
     }
     if (r.on == 0 || r.shown <= 0.0f) return;
     const sim::Body* beast = play.realm().find(r.on);

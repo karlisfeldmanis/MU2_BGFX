@@ -27,15 +27,17 @@
 // shape is laid down one pixel row at a time, each row cut to the rounded outline and its two
 // ends antialiased by coverage. A bar is fifteen-odd rows, so a layer is fifteen-odd quads.
 //
-// **And another player, on hover** (the user, 2026-10-08, from the Player Plates page's N2): his
-// name in Cinzel as the one thing that reads, over it his guild -- or `bot` -- small, under it a
-// small tag of his level and his resets, and a green ring round him (app/modes/play_mode.cpp). No
-// bar: "lets not show also HP bar". On the monster's fade and linger. Guilds and resets do not
-// exist yet; their places stay empty until they do.
+// **And every other player, WoW's way** (the user, 2026-10-08: "use wow style name labels for
+// players and bots"): his name always over his head while he is in range, in Cinzel with a hard
+// black outline and no backing, in a friendly player's blue; under it his guild in angle
+// brackets -- `<Bot>` for a bot, until guilds exist. Pointed at, the name lifts toward white (and
+// he is ringed green, app/modes/play_mode.cpp); dead, it is grey. It fades out toward the edge of
+// the range, and the nearer names are drawn over the farther. No bar, no level.
 #pragma once
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "gfx/interface.h"
 
@@ -61,7 +63,7 @@ public:
 
     bool showing() const {
         return (on_ != 0 && shown_ > 0.0f) || (folk_ >= 0 && folkShown_ > 0.0f) ||
-               drawn_.escort != 0 || (player_ != 0 && playerShown_ > 0.0f);
+               drawn_.escort != 0 || !drawn_.tags.empty();
     }
     // How far a townsperson's name is shown this frame, 0 to 1, on its own fade and linger: what
     // the quest marker over him rises by, so the two move as one.
@@ -72,6 +74,18 @@ public:
     uint64_t rebuilds() const { return rebuilds_; }
 
 private:
+    // One player's name over his head.
+    struct Tag {
+        uint32_t id = 0;
+        float x = 0, y = 0;
+        float alpha = 0, lit = 0;  // the range's fade, and the pointer's lift toward white
+        std::string name;
+        bool bot = false, dead = false;
+        bool operator==(const Tag& o) const {
+            return id == o.id && x == o.x && y == o.y && alpha == o.alpha && lit == o.lit &&
+                   name == o.name && bot == o.bot && dead == o.dead;
+        }
+    };
     // Everything the canvas draws, compared whole to decide a rebuild.
     struct Readout {
         uint32_t on = 0;
@@ -85,12 +99,8 @@ private:
         uint32_t escort = 0;
         float escortX = 0, escortY = 0, escortHealth = 0;
         int escortReading = 0, escortMaximum = 0;
-        // Another player's plate, 0 for none showing.
-        uint32_t player = 0;
-        float playerX = 0, playerY = 0, playerShown = 0;
-        int playerLevel = 0;
-        std::string playerName;
-        bool playerBot = false;
+        // The other players' names, farthest first.
+        std::vector<Tag> tags;
         bool operator==(const Readout& o) const {
             return on == o.on && x == o.x && y == o.y && shown == o.shown && lag == o.lag &&
                    health == o.health && reading == o.reading && maximum == o.maximum &&
@@ -98,9 +108,7 @@ private:
                    folkShown == o.folkShown && escort == o.escort && escortX == o.escortX &&
                    escortY == o.escortY && escortHealth == o.escortHealth &&
                    escortReading == o.escortReading && escortMaximum == o.escortMaximum &&
-                   player == o.player && playerX == o.playerX && playerY == o.playerY &&
-                   playerShown == o.playerShown && playerLevel == o.playerLevel &&
-                   playerName == o.playerName && playerBot == o.playerBot;
+                   tags == o.tags;
         }
     };
 
