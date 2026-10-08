@@ -695,7 +695,7 @@ void testItems(const content::Tables& tables) {
     // new orbs and scrolls, and the Magic Gladiator's sword, armour and Storm Crow set. A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 273, "273 item rows cooked");
+    checkEqual(long(tables.items.size()), 276, "276 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -7835,7 +7835,7 @@ void testRunes(const content::Tables& tables) {
     // Catacombs again once its twelve hours are up.
     {
         sim::Realm realm;
-        check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkKnight, 30), "a chain realm raises");
+        check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkKnight, 40), "a chain realm raises");
         realm.setWallClock(1000000);
         checkEqual(realm.questHere(236), 3, "the Golden Archer offers the Catacombs first");
         check(realm.questLocked(4) && realm.questLocked(5), "the Halls and the Pit wait on it");
@@ -9448,6 +9448,41 @@ void testEvilSpirit(const content::Tables& tables) {
         checkEqual(int(cooled), 0, "with no cooldown");
         check(blows > 0, "and they strike in his own colour");
     }
+    // The Golden Archer from the Dungeon stair's level (2026-10-08): a knight of 39 is not
+    // offered the Catacombs, one of 40 is, and a Magic Gladiator at the stair's 26 as the gate.
+    {
+        for (const auto& [kin, level, open] :
+             {std::tuple{sim::Kin::DarkKnight, 39, false}, std::tuple{sim::Kin::DarkKnight, 40, true},
+              std::tuple{sim::Kin::MagicGladiator, 25, false},
+              std::tuple{sim::Kin::MagicGladiator, 26, true}}) {
+            sim::Realm realm;
+            realm.raise(&tables, 11, 131, 128, kin, level);
+            check(realm.questLocked(3) != open && realm.questUnderLevel(3) != open,
+                  "the Catacombs ask the Dungeon stair's level");
+            checkEqual(realm.questLevel(3), sim::moveLevel(40, kin), "and say so");
+        }
+    }
+    // The rings' stings (2026-10-08): each element's ring worn sets its own, and only rings.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 60);
+        realm.give(tables.itemAt(13, 9), sim::kRingRight, 2);   // Poison +2
+        realm.give(tables.itemAt(13, 28), sim::kRingLeft, 0);   // Wind +0
+        realm.give(tables.itemAt(13, 12), sim::kAmulet, 4);     // a pendant stings nothing
+        const sim::Excellence& e = realm.hero().excel;
+        check(e.poisonRing == 3 && e.windRing == 1 && e.lightningRing == 0,
+              "a worn ring stings in its element, a pendant does not");
+        check(e.poisonResistance == 2 && e.lightningResistance == 4,
+              "and resists as MU's does, a point a plus");
+        const auto element = [&](int number) {
+            return sim::elementOf(tables.items[size_t(tables.itemAt(13, number))]);
+        };
+        check(element(26) == sim::Element::Lightning && element(27) == sim::Element::Fire &&
+                  element(28) == sim::Element::Wind,
+              "the Rings of Lightning, Fire and Wind carry their elements");
+        checkNear(sim::ringStingChance(0), 0.05, 1e-9, "a sting is 5% at +0");
+        checkNear(sim::ringStingChance(11), 0.30, 1e-9, "and no more than 30%");
+    }
     // Spirit Plague (2026-10-06), in a ring: about one landed spirit in five poisons what it
     // struck, and the poison pulses.
     {
@@ -9456,7 +9491,9 @@ void testEvilSpirit(const content::Tables& tables) {
         realm.undying(true);
         realm.learn(sim::skill::kEvilSpirit);
         const uint8_t powers[3] = {uint8_t(sim::Power::Plague), 0, 0};
-        realm.give(tables.itemAt(13, 8), sim::kRingRight, 0, -1, false, 0, 0, 1, powers);
+        // In a Ring of Wealth: an element's ring would sting beside the spirits (ringStings) and
+        // kill some of what the plague is measured on.
+        realm.give(tables.itemAt(13, 22), sim::kRingRight, 0, -1, false, 0, 0, 1, powers);
         check(realm.hero().excel.plagues == 1, "a Spirit Plague in a ring is worn");
         int hits = 0, lit = 0, pulses = 0;
         std::vector<int64_t> before;

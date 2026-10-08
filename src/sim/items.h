@@ -229,6 +229,27 @@ inline int resistanceOf(const content::ItemRow& row, int refinement) {
     return jewellery(row) ? std::max(0, refinement) : 0;
 }
 constexpr int kJewelleryMostPlus = 4;
+// **A ring's sting** (the user, 2026-10-08: "ring of poison need poison resistance and poison
+// damage", then "ring of lighting with same logic, ring of fire with same logic, and ring of wind
+// with same logic"): besides its resistance, a blow its wearer lands on a monster has this chance
+// to deal the ring's element as well -- the Ring of Poison poisons it (Realm::envenom, Spirit
+// Plague's poison), the Ring of Fire sets it burning (Realm::ignite, Immolate's burn), the Ring
+// of Lightning throws a bolt on it at kRingBoltForce that pushes it as Lightning does, and the
+// Ring of Wind a gust at kRingGustForce that knocks it back a tile. Each element's largest worn
+// ring counts, as for the resistance, and the element runes' force lies on each. The Ring of Ice
+// chills it as Ice does and bites at kRingFrostForce ("and of course ring of ice with same
+// logic"). invention: WebZen's rings resist and do no more;
+// Lightning (26), Fire (27) and Wind (28) are ours in group 13's free numbers.
+constexpr double kRingStingChance = 0.05;
+constexpr double kRingStingChancePerPlus = 0.025;
+constexpr double kRingStingChanceMost = 0.30;
+inline double ringStingChance(int refinement) {
+    return std::min(kRingStingChanceMost,
+                    kRingStingChance + kRingStingChancePerPlus * std::max(0, refinement));
+}
+constexpr float kRingFrostForce = 0.5f;
+constexpr float kRingBoltForce = 0.5f;
+constexpr float kRingGustForce = 0.5f;
 constexpr int64_t kJewelleryRegenTicks = 7 * 20;  // m_LifeFillCount > 6, once a second
 
 // ---- powered rings and pendants (docs/jewellery.md, "Powers") -----------------------------

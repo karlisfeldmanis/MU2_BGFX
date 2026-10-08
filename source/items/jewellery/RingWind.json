@@ -1,0 +1,93 @@
+{
+  "item": "RingWind",
+  "mu_name": "Ring of Wind",
+  "mu_name_from": "OURS. Group 13 number 28 is free in 0.75. Named for its element. docs/jewellery.md, 'Stings'.",
+  "why_this_one": "The rings of every element (the user, 2026-10-08: 'ring of poison need poison resistance and poison damage', 'we need also ring of lighting with same logic, ring of fire with same logic, and ring of wind with same logic'). It resists wind (cuts a monster's wind blow), and a chance on a landed blow to strike a gust that knocks the monster back a tile (sim::ringStingChance).",
+  "profile": "weapon",
+  "profile_note": "As Gem05: a small painted sheet on a made object seen close.",
+  "stats": {
+    "note": "Ours, on MU's Ring of Poison row: a 1x1 piece, durability 50, every class, level asked its drop level.",
+    "from": "sim/items.h, 'A ring's sting'; docs/jewellery.md.",
+    "group": 13,
+    "number": 28,
+    "drop_level": 24,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 50,
+    "slot": 10,
+    "requires": {
+      "level": 24,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_note": "Every class (CreateJewelery :176-179).",
+    "resistance": "wind",
+    "resistance_note": "1 a plus in this element, the largest of the worn pieces counting (sim/items.h, jewellery).",
+    "sting": "5% at +0, 2.5% more a plus, to 30%."
+  },
+  "sheets": {
+    "ring": "ring_wind.png"
+  },
+  "sheet_from": "source/textures/ring_wind.png: MuMain's ring.OZJ with both painted stones re-hued jade green, each pixel's lightness kept (2026-10-08).",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "sheet_materials": {
+    "ring": "steel"
+  },
+  "sheet_materials_from": "ring.OZJ is silver set with two painted stones: a green one in the top-left cell and a violet one under it, and a silver ramp down the right half. The metal stays the weapon profile's steel; an island wholly on a stone's cell is glass, as Gem05's painted ball (judged from the sheet's pixels).",
+  "mesh_from": "Ring01's geometry, copied: the same MuMain model, with the stones re-hued jade green on its own copy of ring.png.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 42,
+      "area": 845.0,
+      "along": [
+        -9.7,
+        8.4
+      ],
+      "mu_uv": [
+        0.612,
+        0.001,
+        0.988,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.984,
+        0.638
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 10,
+      "area": 299.4,
+      "along": [
+        -1.3,
+        10.1
+      ],
+      "mu_uv": [
+        0.03,
+        0.018,
+        0.579,
+        0.567
+      ],
+      "bake_uv": [
+        0.005,
+        0.647,
+        0.71,
+        0.995
+      ]
+    }
+  ]
+}

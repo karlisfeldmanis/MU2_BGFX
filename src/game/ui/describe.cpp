@@ -444,12 +444,22 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // card says it as "Ice Resistance +%d" and the rest alike.
     if (sim::jewellery(row) && sim::elementOf(row) != sim::Element::None) {
         static const char* const kElement[] = {"", "Ice resistance", "Poison resistance",
-                                               "Lightning resistance", "Fire resistance"};
+                                               "Lightning resistance", "Fire resistance",
+                                               "Wind resistance"};
         // None printed at +0, where it read as a broken line (the tooltip audit, 2026-10-05).
         const int resists = sim::resistanceOf(row, what.refinement);
         if (resists > 0) {
             does.rows.push_back(stat(kElement[int(sim::elementOf(row))],
                                      "+" + std::to_string(resists), Tone::White));
+        }
+        // And a ring's sting, at every plus (sim::ringStingChance).
+        if (sim::ring(row)) {
+            static const char* const kSting[] = {"", "Ice damage", "Poison damage",
+                                                 "Lightning damage", "Fire damage", "Wind damage"};
+            const int chance =
+                int(std::lround(sim::ringStingChance(what.refinement) * 100.0));
+            does.rows.push_back(stat(kSting[int(sim::elementOf(row))],
+                                     std::to_string(chance) + "% chance on hit", Tone::White));
         }
     }
     // A powered piece's powers at its plus (sim::affixValue): its signature first, white, and the

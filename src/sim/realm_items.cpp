@@ -425,6 +425,21 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         if (elementOf(*row) == Element::Fire) {
             e.fireResistance = std::max(e.fireResistance, resists);
         }
+        if (elementOf(*row) == Element::Wind) {
+            e.windResistance = std::max(e.windResistance, resists);
+        }
+        // A ring's sting (sim::ringStingChance), not a pendant's.
+        if (ring(*row)) {
+            const int sting = kit[slot].refinement + 1;
+            switch (elementOf(*row)) {
+                case Element::Ice: e.iceRing = std::max(e.iceRing, sting); break;
+                case Element::Poison: e.poisonRing = std::max(e.poisonRing, sting); break;
+                case Element::Lightning: e.lightningRing = std::max(e.lightningRing, sting); break;
+                case Element::Fire: e.fireRing = std::max(e.fireRing, sting); break;
+                case Element::Wind: e.windRing = std::max(e.windRing, sting); break;
+                default: break;
+            }
+        }
         e.lifeRegen += optionValue(*row, kit[slot].option);
         // A powered piece's signature and its further powers, every worn piece's added
         // (sim::Affix, docs/jewellery.md "Powers").

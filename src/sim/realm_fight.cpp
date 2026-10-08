@@ -144,6 +144,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         force *= float(1.0 - std::min(kResistanceCutMost,
                                       kResistanceCut * double(target.excel.fireResistance)));
     }
+    // And his Wind resistance on a monster's wind blow, the same way (the Ring of Wind's).
+    if (target.player && !attacker.player && target.excel.windResistance > 0 &&
+        attacker.kind >= 0 && size_t(attacker.kind) < tables_->kinds.size() &&
+        skillElement(tables_->kinds[size_t(attacker.kind)].attackSkill) == Element::Wind) {
+        force *= float(1.0 - std::min(kResistanceCutMost,
+                                      kResistanceCut * double(target.excel.windResistance)));
+    }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
@@ -258,6 +265,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         target.pushFromY = attacker.y;
     }
     elements(blow.damage);
+    // The rings' stings on a landed blow (sim::ringStingChance), never on a rune's or a ring's
+    // own blow, which would sting again.
+    if (attacker.player && target.monster() && wound > 0 && !(row == nullptr && !pays)) {
+        ringStings(attacker, target, blow.damage);
+    }
     // An Ice Monster's: iced, whatever the blow did.
     chillHero(attacker, target);
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent
@@ -590,6 +602,43 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                struckBy->id, struck.id);
     runeStrike(hero, *struckBy, kStormcallForce * elementForce(hero, Element::Lightning));
     if (struckBy->alive()) push(*struckBy, hero);
+}
+
+// Each worn ring's roll, an element at a time, off the sockets' stream and only while that ring
+// is worn, so a run without one is not moved. One that finds its element already on the monster
+// -- poisoned, burning, chilled -- does not roll.
+void Realm::ringStings(Body& hero, Body& struck, int wound) {
+    const Excellence& e = hero.excel;
+    const auto rolls = [&](int ring) {
+        return ring > 0 && struck.alive() && runeDice_.nextBool(ringStingChance(ring - 1));
+    };
+    if (e.poisonRing > 0 && !poisoned(struck) && rolls(e.poisonRing)) envenom(hero, struck, wound);
+    if (e.fireRing > 0 && struck.burnUntil < tick_ && rolls(e.fireRing)) {
+        ignite(hero, struck, wound, 1.0);
+    }
+    // Ice: Ice's chill on it, and a frost bite beside it; never the Statue of Saint, which takes
+    // no chill (the raid's dragon takes the bite and not the chill).
+    if (e.iceRing > 0 && !fixed(struck) && struck.chilledUntil <= tick_ && rolls(e.iceRing)) {
+        const SkillRow* ice = skillNumbered(skill::kIce);
+        if (ice != nullptr && !shrugs(struck)) struck.chilledUntil = tick_ + ice->chillTicks;
+        say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
+        core::logf("ring of ice: tick %lld, on #%u", (long long)tick_, struck.id);
+        runeStrike(hero, struck, kRingFrostForce * elementForce(hero, Element::Ice));
+    }
+    // Lightning: a bolt on it, said as Lightning let go at it, which pushes as Lightning does.
+    if (e.lightningRing > 0 && rolls(e.lightningRing)) {
+        say(What::Loosed, hero, skill::kLightning, 0, 0, struck.id);
+        core::logf("ring of lightning: tick %lld, on #%u", (long long)tick_, struck.id);
+        runeStrike(hero, struck, kRingBoltForce * elementForce(hero, Element::Lightning));
+        if (struck.alive() && !fixed(struck)) push(struck, hero);
+    }
+    // Wind: a gust, said as Twister let go at it, that knocks it back a tile.
+    if (e.windRing > 0 && rolls(e.windRing)) {
+        say(What::Loosed, hero, skill::kTwister, 0, 0, struck.id);
+        core::logf("ring of wind: tick %lld, on #%u", (long long)tick_, struck.id);
+        runeStrike(hero, struck, kRingGustForce * elementForce(hero, Element::Wind));
+        if (struck.alive() && !fixed(struck)) push(struck, hero);
+    }
 }
 
 void Realm::runeStrike(Body& hero, Body& target, float force) {
@@ -1311,8 +1360,8 @@ void Realm::poisonPulse(Body& beast) {
 
 // Immolate's or Scorch's roll and its burn (sim/items.h kBurnRuneChance), off a knight's swing
 // or a wizard's fire spell that landed for `wound`.
-bool Realm::ignite(Body& hero, Body& struck, int wound) {
-    if (!runeDice_.nextBool(kBurnRuneChance)) return false;
+bool Realm::ignite(Body& hero, Body& struck, int wound, double chance) {
+    if (chance < 1.0 && !runeDice_.nextBool(chance)) return false;
     if (!struck.alive() || !struck.monster()) return false;
     const float fire = elementForce(hero, Element::Fire);
     // Its life's share, or on a small monster whose share is a point or two, the floor:

@@ -156,11 +156,13 @@ QuestRow peia() {
         "Monsters, the Hunters, the Forest Monsters, Agon and the Golems. Enough of each that "
         "the trees can sing again. Come back to me when it is done.\"";
     row.underway = "\"Not yet. Listen -- the forest is still silent.\"";
+    // Every class's words, not the bow's (the user, 2026-10-08: a knight, a wizard or a
+    // gladiator clears it too, "and they dont use bow").
     row.handIn[0] =
-        "\"Already? I did not think a stranger's bow could do so much, so soon. Listen -- the "
+        "\"Already? I did not think one pair of hands could do so much, so soon. Listen -- the "
         "forest is singing again.\"";
     row.handIn[1] =
-        "\"Take these, with the elves' blessing. May they guide your arrows, until all of MU "
+        "\"Take these, with the elves' blessing. May they guide your hand, until all of MU "
         "is free of Kundun's darkness. When you are ready, go to Devias, beyond Lorencia. "
         "Apostle Devin waits there; he will know what must be done next.\"";
     row.resting =
@@ -312,6 +314,10 @@ QuestRow archer() {
     // Every class's, as Devin's: the Dungeon is under Lorencia, but all three go down.
     row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
     row.strangers = true;
+    // From the Dungeon stair's own level (sim/gates.cpp, gate 1), every link: there is nothing
+    // for him to do down there before he may go down (the user, 2026-10-08).
+    row.minLevel = 40;
+    row.gateLevel = true;
     return row;
 }
 
@@ -1039,6 +1045,7 @@ QuestRow drownedSong() {
     row.stepCount = 1;
     row.repeatSeconds = 0;  // once
     row.minLevel = 70;      // Atlans's own gate
+    row.gateLevel = true;
     row.natives = 0x7;
     row.strangers = true;
     row.experience = 60000;
@@ -1093,6 +1100,7 @@ QuestRow lirienHalls() {
     row.stepCount = 8;
     row.repeatSeconds = 12 * 60 * 60;
     row.minLevel = 70;
+    row.gateLevel = true;
     row.afterAny = 1u << kDrownedSong;
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
@@ -1174,6 +1182,7 @@ QuestRow roadOfKantur() {
     row.stepCount = 1;
     row.repeatSeconds = 0;  // once
     row.minLevel = 100;     // the Atlans door to Tarkan's
+    row.gateLevel = true;
     row.afterAny = 1u << kDrownedHalls;
     row.natives = 0x7;
     row.strangers = true;
@@ -1241,6 +1250,7 @@ QuestRow kantursLegion() {
     row.stepCount = 8;
     row.repeatSeconds = 12 * 60 * 60;
     row.minLevel = 100;
+    row.gateLevel = true;
     row.afterAny = 1u << kRoadOfKantur;
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);

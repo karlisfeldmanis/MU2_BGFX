@@ -1135,16 +1135,38 @@ def cook_clips(document, binary, out_path, names, travel, holds, cloth=False):
         spreads = (not hold and not closes and len(poses) > 1 and prop_gap < 0.5 and gap < 0.5
                    and ((cloth and body_gap < 0.05) or (not cloth and repeat)))
 
+        # The drift spread as a rotation, a share of it after each frame, and never as a
+        # difference of components: a bone that turns a whole circle ends on -q (the flip above),
+        # and q to -q taken component by component is 2q, not the few degrees it is. The Chain
+        # Scorpion's walk is a hoop that rolls 360 degrees a cycle on Box01; spread by components
+        # its steps of 60, 65, 85, 80 and 65 degrees became 42, 27, 21, 21 and 69, and it rocked
+        # a quarter turn and back where MU's rolls (the user, 2026-10-08: "chain scorpion rolling
+        # aniamtion does not look correct"). The same Staff of Resurrection trap as `turned`.
+        def qmul(a, b):
+            ax, ay, az, aw = a
+            bx, by, bz, bw = b
+            return (aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
+                    aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz)
+
+        def qpow(q, power):  # q to a power, the short way round
+            if q[3] < 0.0:
+                q = tuple(-v for v in q)
+            angle = math.acos(min(1.0, q[3]))
+            if angle < 1e-6:
+                return (0.0, 0.0, 0.0, 1.0)
+            k = math.sin(power * angle) / math.sin(angle)
+            return (q[0] * k, q[1] * k, q[2] * k, math.cos(power * angle))
+
         if spreads:
             span = float(len(poses) - 1)
             for bone in range(len(joints)):
                 (ra, ta), (rb, tb) = first[bone], last[bone]
-                dr = [b - a for a, b in zip(ra, rb)]
+                fix = qmul((-rb[0], -rb[1], -rb[2], rb[3]), ra)  # the last frame back to the first
                 dt = [b - a for a, b in zip(ta, tb)]
                 for frame in range(1, len(poses)):
                     share = frame / span
                     r, t = poses[frame][bone]
-                    r = [v - d * share for v, d in zip(r, dr)]
+                    r = qmul(r, qpow(fix, share))
                     norm = math.sqrt(sum(v * v for v in r)) or 1.0
                     r = tuple(v / norm for v in r)
                     t = tuple(v - d * share for v, d in zip(t, dt))

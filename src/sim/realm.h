@@ -1054,6 +1054,8 @@ public:
     // Whether it waits on his level alone: one his class may take, its chain open, never handed
     // in, and he below its QuestRow::minLevel. The list shows it greyed with the level it asks.
     bool questUnderLevel(int index) const;
+    // The level quest `index` asks of him: its QuestRow::minLevel, a gate's at his class's share.
+    int32_t questLevel(int index) const;
     // What a giver's window lists, in table order (QuestDialog::kList): each quest of his this
     // class may take that is under way or ready, offered, waiting on his level alone, or a
     // repeat resting. Into `out` (kQuests long); how many. Ours, as WoW's gossip list.
@@ -1427,7 +1429,9 @@ private:
     void poisonPulse(Body& beast);
     // Immolate's or Scorch's roll, and the burn it lights on `struck` off a blow of `wound`;
     // whether it lit.
-    bool ignite(Body& hero, Body& struck, int wound);
+    bool ignite(Body& hero, Body& struck, int wound, double chance = kBurnRuneChance);
+    // The worn rings' stings on a blow he landed for `wound` (sim::ringStingChance).
+    void ringStings(Body& hero, Body& struck, int wound);
     // A burning monster's pulse (the Immolate rune), when it is due.
     void burnPulse(Body& beast);
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).

@@ -113,6 +113,7 @@ struct Excellence {
     int poisonResistance = 0;
     int lightningResistance = 0;
     int fireResistance = 0;
+    int windResistance = 0;  // the Ring of Wind's; cuts a monster's wind blow as fire's does
     int lifeRegen = 0;
     // The powered rings' and pendant's (sim::Affix), every worn piece's summed, in percent but
     // the Leech's: more experience a kill, more Zen, a likelier item, life on a landed blow, and
@@ -122,6 +123,13 @@ struct Excellence {
     int itemFind = 0;
     int lifeOnHit = 0;
     int criticalDamage = 0;
+    // The rings' stings (sim::ringStingChance), each element's: the largest worn one's plus,
+    // plus one, so +0 still counts. 0 for none worn.
+    int iceRing = 0;
+    int poisonRing = 0;
+    int lightningRing = 0;
+    int fireRing = 0;
+    int windRing = 0;
 };
 
 struct Fighter {

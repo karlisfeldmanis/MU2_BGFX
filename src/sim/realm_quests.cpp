@@ -68,10 +68,16 @@ int Realm::questHere(int32_t giver) const {
     return rested >= 0 ? rested : first;
 }
 
+int32_t Realm::questLevel(int index) const {
+    if (index < 0 || index >= kQuests) return 0;
+    const QuestRow& row = questAt(index);
+    return row.gateLevel ? moveLevel(row.minLevel, mine().kin) : row.minLevel;
+}
+
 bool Realm::questUnderLevel(int index) const {
     if (index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);
-    if (!questOpen(row, int(mine().kin)) || mine().level >= row.minLevel) return false;
+    if (!questOpen(row, int(mine().kin)) || mine().level >= questLevel(index)) return false;
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
     if (row.afterAny == 0) return true;
@@ -113,7 +119,7 @@ bool Realm::questLocked(int index) const {
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
     // Below its level: Sevina's, until 200 (the user, 2026-10-04).
-    if (mine().level < row.minLevel) return true;
+    if (mine().level < questLevel(index)) return true;
     if (row.afterAny == 0) return false;
     for (int i = 0; i < kQuests; ++i) {
         if (((row.afterAny >> i) & 1u) && me().quests[i].completions > 0) return false;

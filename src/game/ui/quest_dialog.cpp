@@ -1078,7 +1078,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             std::string status;
             uint32_t statusInk = style::kAshInk;
             if (low) {
-                status = "Level " + std::to_string(quest.minLevel);
+                status = "Level " + std::to_string(realm.questLevel(one.quest));
                 statusInk = style::kDanger;
             } else if (ready) {
                 status = "Complete";
@@ -1198,7 +1198,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                 // The level it asks, as the Messenger's band is shown: his own, red, at the right.
                 quest_marks::mark(body_, StepMark::Live, sx(kInset + 7.0f), by(cy + 8.0f), u);
                 controls::label(body_, sx(kInset + 24.0f), by(cy + 13.0f), kBody * u,
-                                style::kBoneHi, "Level " + std::to_string(row.minLevel) + " and over");
+                                style::kBoneHi, "Level " + std::to_string(realm.questLevel(quest_)) + " and over");
                 controls::ranged(body_, sx(kInset + columnWide), by(cy + 13.0f), kBody * u,
                                  style::kDanger, std::to_string(realm.hero().level));
                 cy += kStepRow;

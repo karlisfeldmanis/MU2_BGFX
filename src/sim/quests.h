@@ -120,6 +120,9 @@ struct QuestRow {
     uint32_t afterAny = 0;
     // The level it asks; below it the giver says he is not ready (Realm::questLocked). 0 none.
     int32_t minLevel = 0;
+    // That level is a gate's, which a Magic Gladiator passes at two thirds of it (sim::moveLevel),
+    // so the giver asks him the same: the Golden Archer's 40 is the Dungeon's stair.
+    bool gateLevel = false;
     // Handed in, it makes him his class's second: Blade Knight, Soul Master, Muse Elf
     // (Realm::promoted). Sevina's treasures; `boon` is what the dialog's rewards say of it.
     bool promotes = false;

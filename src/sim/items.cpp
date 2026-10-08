@@ -136,9 +136,10 @@ PetPower petPower(const content::ItemRow& row) {
 }
 
 bool ring(const content::ItemRow& row) {
-    // MU's two, and the four powered rings (sim::Affix).
+    // MU's two, the four powered rings (sim::Affix), and the Rings of Lightning, Fire and Wind.
     return row.group == kGroupPets &&
-           (row.number == 8 || row.number == 9 || (row.number >= 21 && row.number <= 24));
+           (row.number == 8 || row.number == 9 || (row.number >= 21 && row.number <= 24) ||
+            (row.number >= 26 && row.number <= 28));
 }
 
 bool pendant(const content::ItemRow& row) {
@@ -208,6 +209,9 @@ Element elementOf(const content::ItemRow& row) {
         case 9: return Element::Poison;
         case 12: return Element::Lightning;
         case 13: return Element::Fire;
+        case 26: return Element::Lightning;  // ours, sim::ringStingChance
+        case 27: return Element::Fire;
+        case 28: return Element::Wind;
         default: return Element::None;
     }
 }

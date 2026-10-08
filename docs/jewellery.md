@@ -130,3 +130,23 @@ Monster.txt's A.Type, which agrees with our mu.db `attack_skill` for every breed
 Every other breed swings and has no spell; Icarus's Mega Crust (71) and Alpha Crust (74) among them (WZO A.Type 0). Open: the Ice Queen's is Power Wave in both WebZen and
 OpenMU, so she neither chills nor answers to Ice resistance; making her ice would be ours.
 
+
+## Stings (ours, 2026-10-08)
+
+The user: "ring of poison need poison resistance and poison damage", then the same for
+lightning, fire, wind "and of course ring of ice". Every elemental **ring** (not a pendant) keeps
+MU's resistance -- a point a plus, the largest worn counting -- and adds a sting: a blow its
+wearer lands on a monster has `sim::ringStingChance` (5% at +0, 2.5% more a plus, to 30%) to deal
+its element too. Each element's largest worn ring counts; the element runes' force lies on each.
+
+| ring | 13/n | resistance | sting |
+|---|---|---|---|
+| Ring of Ice | 8 | ice (the Ice Monster's chill) | Ice's chill, and a frost bite at 0.5 of a rune blow |
+| Ring of Poison | 9 | poison | Spirit Plague's poison (`Realm::envenom`) |
+| Ring of Lightning | 26 | lightning (the push) | a bolt at 0.5, which pushes as Lightning does |
+| Ring of Fire | 27 | fire (cuts a fire blow) | Immolate's burn (`Realm::ignite`) |
+| Ring of Wind | 28 | wind (cuts a wind blow, as fire's) | a gust at 0.5 that knocks it back a tile |
+
+26-28 are new pieces on Ring01's mesh, their stones re-hued (electric yellow, ruby, jade), drop
+levels 22, 19 and 24. No 0.75 monster strikes with wind, so the Ring of Wind's resistance waits
+for one. A rune's or a ring's own blow never stings again (`Realm::ringStings`).
