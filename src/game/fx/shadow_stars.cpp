@@ -58,7 +58,11 @@ constexpr size_t kEmbers = 1200;
 // each cell scaled to a whole flame, and the heat cooling it from yellow to a dying red as its
 // light goes -- added plain, the cells' own dark red read as smoke round the body.
 constexpr float kEmberCellGain[4] = {1.0f, 8.8f, 19.0f, 19.0f};
-constexpr float kEmberHeat = 1.0f, kEmberCool = 0.7f;
+// Through the dragon's softened ramp (Blend::Breath, fs_effect's breath: the sheet averaged over
+// five taps and its edge a bell), not cooler than an ember, at this much of the light: MU's
+// whole, ten a frame, was "too crazy", then "need be more subtle and blurry" (the user).
+constexpr float kEmberHeat = 0.7f, kEmberCool = 0.6f;
+constexpr float kEmberDim = 0.45f;
 // The Devil's beam: MU's 50-unit joint, ours at this half width and light.
 constexpr float kBeamHalf = 0.18f;
 constexpr float kBeamDim = 0.5f;
@@ -578,9 +582,9 @@ void ShadowStars::gather(gfx::Effects& effects) const {
         sprite.colour[0] = kEmberCellGain[cell] / 20.0f;
         sprite.colour[1] = kEmberHeat * (1.0f - kEmberCool * (1.0f - left));
         sprite.colour[2] = 0.0f;
-        sprite.colour[3] = left;
+        sprite.colour[3] = left * kEmberDim;
         sprite.sheet = fire_;
-        sprite.blend = gfx::Blend::Flame;
+        sprite.blend = gfx::Blend::Breath;
         effects.add(sprite);
     }
 }
