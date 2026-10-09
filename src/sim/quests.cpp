@@ -314,12 +314,15 @@ QuestRow devin() {
     int n = 0;
     row.paid[n++] = {.item = "Sword14", .kin = knight, .sockets = 2,
                      .firstOnly = true};  // Double Blade
-    // The wizard's one-handed Legendary Staff, and a shield for the other hand, so his Magic
-    // Shield works from here on (2026-10-09: the two-handed Thunder Staff left him without it).
+    // The wizard's one-handed Legendary Staff, and the Legendary Shield for the other hand, his
+    // class's best first-class shield, so his Magic Shield works from here on (2026-10-09: the
+    // two-handed Thunder Staff left him without it; then the user, of the Small Shield it first
+    // paid: "feels kind of weak rewards for hard quest line for DW"). It asks 149 strength, the
+    // staff 108; the shield is his for the whole first class, raised again on the fifth floor.
     row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
                      .firstOnly = true};  // Legendary Staff
-    row.paid[n++] = {.item = "Shield01", .kin = wizard, .sockets = 1,
-                     .firstOnly = true};  // Small Shield
+    row.paid[n++] = {.item = "Shield15", .kin = wizard, .sockets = 1,
+                     .firstOnly = true};  // Legendary Shield
     row.paid[n++] = {.item = "Bow05", .kin = elf, .sockets = 2, .firstOnly = true};  // Tiger Bow
     // Its two runes, the first Epic of the ladder (the Ice Queen is 52): +10% all stats (the
     // user, 2026-10-05: 'add tier-1 all stats to devias quest line for all classes') -- **the
@@ -835,8 +838,10 @@ QuestRow tersiaFifth() {
                                  .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Shield14", .kin = knight, .sockets = 1,
                                  .firstOnly = true};  // Dragon Shield
-    row.paid[row.paidCount++] = {.item = "Shield15", .kin = wizard, .sockets = 1,
-                                 .firstOnly = true};  // Legendary Shield
+    // The wizard's Legendary Shield again, raised to +5 with two sockets over Devias's, as the
+    // weapons climb by their plus where no better one is built (2026-10-09).
+    row.paid[row.paidCount++] = {.item = "Shield15", .plus = 5, .kin = wizard, .sockets = 2,
+                                 .firstOnly = true};  // Legendary Shield +5
     row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                                  .firstOnly = true};

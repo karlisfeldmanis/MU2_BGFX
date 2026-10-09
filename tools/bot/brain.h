@@ -1197,33 +1197,57 @@ private:
 
     void useJewels() {
         raiseChaosWeapon();
+        // **The runes rarest first** (the quest ladder, 2026-10-09): Devias pays the knight a
+        // two-socket Double Blade and two Epics while Marlon's Common Gust is still in his bag, and
+        // in bag order the Gust could take a socket an Epic was paid for. A Legendary, then an
+        // Epic, a Rare, a Common.
+        const auto rank = [&](const sim::Held& one) {
+            const sim::PowerRow* power = sim::powerOf(one.powers[0]);
+            if (!power) return 0;
+            switch (power->rarity) {
+                case sim::Rarity::Legendary: return 4;
+                case sim::Rarity::Epic: return 3;
+                case sim::Rarity::Rare: return 2;
+                case sim::Rarity::Common: return 1;
+            }
+            return 0;
+        };
+        std::vector<int> runes;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && sim::creation(rowOf(one))) runes.push_back(slot);
+        }
+        std::stable_sort(runes.begin(), runes.end(), [&](int a, int b) {
+            return rank(realm_->satchel()[a]) > rank(realm_->satchel()[b]);
+        });
+        for (const int slot : runes) {
+            const sim::Held jewel = realm_->satchel()[slot];
+            if (jewel.empty() || !sim::creation(rowOf(jewel))) continue;
+            const content::ItemRow& row = rowOf(jewel);
+            // Any worn piece it may be set in, the weapon and shield first: a Keen Eye,
+            // a Bloodwell, an Undying go in armour and never in a weapon (sim::settable).
+            for (const int to : {int(sim::kWeaponRight), int(sim::kWeaponLeft), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}) {
+                if (to >= sim::kWorn || realm_->satchel()[to].empty()) continue;
+                if (!sim::settable(*tables_, jewel, realm_->satchel()[to], options_.kin, realm_->hero().second)) continue;
+                // **A weapon rune waits for a weapon worth keeping** (the user, 2026-10-03:
+                // "bot saves weapon runes"): Marlon's rune went into the Falchion at level 40,
+                // was sold with it, and the Double Blade's sockets stayed empty. The knight's
+                // alone: the wizard's and the elf's home weapons are the ones they keep.
+                const content::ItemRow& target = rowOf(realm_->satchel()[to]);
+                if (knightly() && target.weapon() && !target.shield() &&
+                    target.dropLevel < kRuneWeaponLevel) continue;
+                const std::string on = rowOf(realm_->satchel()[to]).label;
+                if (hand_.refine(slot, to)) {
+                    say("sets %s into his %s", row.label.c_str(), on.c_str());
+                    break;
+                }
+            }
+        }
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
             const sim::Held jewel = realm_->satchel()[slot];
             if (jewel.empty()) continue;
             const content::ItemRow& row = rowOf(jewel);
-            if (sim::creation(row)) {
-                // Any worn piece it may be set in, the weapon and shield first: a Keen Eye,
-                // a Bloodwell, an Undying go in armour and never in a weapon (sim::settable).
-                for (const int to : {int(sim::kWeaponRight), int(sim::kWeaponLeft), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}) {
-                    if (to >= sim::kWorn || realm_->satchel()[to].empty()) continue;
-                    if (!sim::settable(*tables_, jewel, realm_->satchel()[to], options_.kin, realm_->hero().second)) continue;
-                    // **A weapon rune waits for a weapon worth keeping** (the user, 2026-10-03:
-                    // "bot saves weapon runes"): Marlon's Stormcall went into the Falchion at
-                    // level 40, was sold with it, and the Double Blade's sockets stayed empty.
-                    const content::ItemRow& target = rowOf(realm_->satchel()[to]);
-                    // The knight's alone: the wizard's Serpent Staff and the elf's Battle Bow are the
-                    // weapons they keep, and holding Arcane Echo and Frost Arrow off them cost both
-                    // the Knights' Halls on two seeds of three.
-                    if (knightly() && target.weapon() && !target.shield() &&
-                        target.dropLevel < kRuneWeaponLevel) continue;
-                    const std::string on = rowOf(realm_->satchel()[to]).label;
-                    if (hand_.refine(slot, to)) {
-                        say("sets %s into his %s", row.label.c_str(), on.c_str());
-                        break;
-                    }
-                }
-                continue;
-            }
+            if (sim::creation(row)) continue;
             if (!sim::refiningJewel(row)) continue;
             // Held back for the wing ladder until it is climbed (ladderJewels).
             if (ladderOn() && countJewel(sim::jewelOf(row)) <= ladderJewels(sim::jewelOf(row))) continue;
