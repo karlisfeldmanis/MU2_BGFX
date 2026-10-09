@@ -65,6 +65,13 @@ public:
     // oldest first, appended to `into`. Nothing on a realm of this process: no one to hear.
     virtual void say(const net::Say& said) {}
     virtual void takeHeard(std::vector<net::Heard>& into) {}
+    // **The party** (docs/party.md, net::PartyAsk, net::PartyState): an ask of it, and his party
+    // as the server last said it -- empty for none. Nothing on a realm of this process.
+    virtual void askParty(const net::PartyAsk& asked) {}
+    virtual const net::PartyState& party() const {
+        static const net::PartyState none;
+        return none;
+    }
     // **The hero ahead** (docs/sprints/24-the-quiet-line.md): his own body as the mirror will
     // have it a round trip from now, with the orders he has sent and the server has not yet
     // answered already in it -- where he is drawn, so a click moves him at once rather than a

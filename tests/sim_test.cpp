@@ -11657,6 +11657,41 @@ void testTwoHeroes(const content::Tables& tables) {
 // through the wire as a Tick's arrival, and laid on the newcomer another realm's Join lets in --
 // all of him, bag, purse, points, vault and box.
 // The chat's frames (net::Say, net::Heard): both ways through one Kind, and a said line made fit.
+// The party's wire (docs/party.md): an ask and a state back whole, and a tick's PartySet reaching
+// the mirror as itself -- capped at Leave, it was read as None and every mirror parted from the
+// server at the first hash after a party formed.
+void testPartyWire() {
+    std::printf("party wire\n");
+    std::vector<uint8_t> bytes;
+    net::put(bytes, net::PartyAsk{net::PartyWhat::Kick, "Valeria"});
+    net::PartyState state;
+    state.members.push_back({"Ragnar", uint8_t(sim::Kin::DarkKnight), 140, "devias", 12, 80, 40, true});
+    state.members.push_back({"Valeria", uint8_t(sim::Kin::FairyElf), 120, "noria", 0, 100, 90, false});
+    net::put(bytes, state);
+    net::Tick tick;
+    tick.tick = 9;
+    tick.commands.push_back({.kind = sim::Command::Kind::PartySet, .player = 12, .a = 3, .target = 12});
+    net::put(bytes, tick);
+
+    net::Kind kind{};
+    std::vector<uint8_t> body;
+    net::PartyAsk ask;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::PartyAsk && net::parse(body, ask) &&
+              ask.what == net::PartyWhat::Kick && ask.name == "Valeria",
+          "a party ask parses back whole");
+    net::PartyState back;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::PartyState && net::parse(body, back) &&
+              back.members.size() == 2 && back.members[0].name == "Ragnar" && back.members[0].level == 140 &&
+              back.members[0].world == "devias" && back.members[0].here == 12 &&
+              back.members[0].health == 80 && back.members[0].bot && back.members[1].here == 0,
+          "a party's state parses back whole");
+    net::Tick read;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Tick && net::parse(body, read) &&
+              read.commands.size() == 1 && read.commands[0].kind == sim::Command::Kind::PartySet &&
+              read.commands[0].a == 3 && read.commands[0].target == 12,
+          "a tick's PartySet reaches the mirror as itself");
+}
+
 void testChatWire() {
     std::printf("chat wire\n");
     std::vector<uint8_t> bytes;
@@ -11923,6 +11958,7 @@ int main() {
     testTwoHeroes(tables);
     testDropsAreTheirs(tables);
     testChatWire();
+    testPartyWire();
     testKept(tables);
     testSnapshot(tables);
     testGoBack(tables);

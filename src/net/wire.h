@@ -79,7 +79,9 @@ namespace mu::net {
 //     (docs/sprints/24-the-quiet-line.md).
 // 14: a Kept carries 25 quests, Devin's errand to Tersia the 25th (layout 5).
 // 15: Chat, a Say up and a Heard down.
-constexpr uint32_t kVersion = 15;
+// 16: the party (docs/party.md): a PartyAsk up and a PartyState down, and the realm's
+//     Command::Kind::PartySet and Body::party (snapshot shape 2).
+constexpr uint32_t kVersion = 16;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -96,9 +98,9 @@ constexpr uint32_t kMostAsked = 64u << 10;
 
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
                           Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12,
-                          Chat = 13 };
+                          Chat = 13, PartyAsk = 14, PartyState = 15 };
 // The last kind there is: a frame of a higher one is not our protocol (take).
-constexpr Kind kLastKind = Kind::Chat;
+constexpr Kind kLastKind = Kind::PartyState;
 
 struct Hello {
     uint32_t version = kVersion;
@@ -154,6 +156,32 @@ struct Heard {
     std::string to;
     std::string text;
     bool bot = false;
+};
+
+// ---- the party (docs/party.md) ---------------------------------------------------------------
+// Up: what a player asks of the party. Invite and Kick name a player, Accept and Decline the one
+// who invited him (empty for the latest invite), Leave nobody. The server keeps the parties: they
+// span maps, and a map is a realm.
+enum class PartyWhat : uint8_t { Invite = 0, Accept = 1, Decline = 2, Leave = 3, Kick = 4 };
+struct PartyAsk {
+    PartyWhat what = PartyWhat::Invite;
+    std::string name;
+};
+// Down: his party as it stands, to every member when it changes and each second for the bar;
+// no members when he is in none. The leader first. `here` is the member's body in the hearer's
+// own world, 0 when he is on another map.
+struct PartyState {
+    struct Member {
+        std::string name;
+        uint8_t kin = 0;
+        int32_t level = 1;
+        std::string world;
+        uint32_t here = 0;
+        uint8_t health = 0;  // percent
+        uint8_t mana = 0;    // percent
+        bool bot = false;
+    };
+    std::vector<Member> members;
 };
 
 // A said line made fit to pass on: control bytes gone, spaces trimmed, cut to kMostSaid at a
@@ -290,6 +318,8 @@ void put(std::vector<uint8_t>& out, const Delete& one);
 void put(std::vector<uint8_t>& out, const Who& one);
 void put(std::vector<uint8_t>& out, const Say& one);
 void put(std::vector<uint8_t>& out, const Heard& one);
+void put(std::vector<uint8_t>& out, const PartyAsk& one);
+void put(std::vector<uint8_t>& out, const PartyState& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -312,6 +342,8 @@ bool parse(const std::vector<uint8_t>& body, Who& out);
 // A Chat frame is a Say on the server and a Heard on a client.
 bool parse(const std::vector<uint8_t>& body, Say& out);
 bool parse(const std::vector<uint8_t>& body, Heard& out);
+bool parse(const std::vector<uint8_t>& body, PartyAsk& out);
+bool parse(const std::vector<uint8_t>& body, PartyState& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.

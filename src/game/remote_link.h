@@ -50,6 +50,8 @@ public:
     bool nameOf(uint32_t id, std::string* name, bool* bot) const override;
     void say(const net::Say& said) override;
     void takeHeard(std::vector<net::Heard>& into) override;
+    void askParty(const net::PartyAsk& asked) override;
+    const net::PartyState& party() const override { return party_; }
     const sim::Body* ahead() override;
     int mapCopy() const override { return copy_; }
     void setCushion(int ticks) override;
@@ -146,6 +148,7 @@ private:
     net::Who who_;         // the players' names, the latest the server sent
     // Chat lines heard and not yet taken; the oldest dropped past kHeardMost, if nobody takes them.
     std::deque<net::Heard> heard_;
+    net::PartyState party_;  // his party, the latest the server sent
 };
 
 // The character screen's line to the server (server-plan phase 6, docs/sprints/23-the-account.md):

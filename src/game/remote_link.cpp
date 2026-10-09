@@ -364,6 +364,8 @@ void RemoteLink::pump() {
             ok = net::parse(body, line);
             if (ok) heard_.push_back(std::move(line));
             if (heard_.size() > kHeardMost) heard_.pop_front();
+        } else if (ok && kind == net::Kind::PartyState) {
+            ok = net::parse(body, party_);
         } else if (ok && kind == net::Kind::Hash) {
             net::Hash hash;
             ok = net::parse(body, hash);
@@ -392,6 +394,12 @@ void RemoteLink::pump() {
 void RemoteLink::say(const net::Say& said) {
     std::vector<uint8_t> out;
     net::put(out, said);
+    put(out);
+}
+
+void RemoteLink::askParty(const net::PartyAsk& asked) {
+    std::vector<uint8_t> out;
+    net::put(out, asked);
     put(out);
 }
 

@@ -92,7 +92,9 @@ sim::Command takeCommand(In& in) {
     sim::Command c;
     const uint8_t kind = in.u8();
     // An unknown kind is the realm's None and does nothing; it is never trusted further.
-    c.kind = kind <= uint8_t(sim::Command::Kind::Leave) ? sim::Command::Kind(kind)
+    // PartySet is the last (docs/party.md): capped at Leave, a mirror read it as None and parted
+    // from the server at the first hash after a party formed.
+    c.kind = kind <= uint8_t(sim::Command::Kind::PartySet) ? sim::Command::Kind(kind)
                                                                : sim::Command::Kind::None;
     c.player = in.u32();
     c.ticket = in.u32();
@@ -320,6 +322,29 @@ void put(std::vector<uint8_t>& out, const Heard& one) {
     });
 }
 
+void put(std::vector<uint8_t>& out, const PartyAsk& one) {
+    frame(out, Kind::PartyAsk, [&](Out& o) {
+        o.u8(uint8_t(one.what));
+        o.str(one.name);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const PartyState& one) {
+    frame(out, Kind::PartyState, [&](Out& o) {
+        o.u8(uint8_t(one.members.size()));
+        for (const PartyState::Member& m : one.members) {
+            o.str(m.name);
+            o.u8(m.kin);
+            o.i32(m.level);
+            o.str(m.world);
+            o.u32(m.here);
+            o.u8(m.health);
+            o.u8(m.mana);
+            o.u8(m.bot ? 1 : 0);
+        }
+    });
+}
+
 std::string saidText(const std::string& text) {
     std::string kept;
     kept.reserve(text.size());
@@ -514,6 +539,36 @@ bool parse(const std::vector<uint8_t>& body, Heard& out) {
     out.bot = in.u8() != 0;
     if (channel >= kChannels) return false;
     out.channel = Channel(channel);
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, PartyAsk& out) {
+    In in{body};
+    const uint8_t what = in.u8();
+    out.name = in.str();
+    if (what > uint8_t(PartyWhat::Kick)) return false;
+    out.what = PartyWhat(what);
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, PartyState& out) {
+    In in{body};
+    const uint8_t n = in.u8();
+    // Five at most (sim::kPartyMost); a count past that is not one.
+    if (n > 5) return false;
+    out.members.clear();
+    for (uint8_t i = 0; i < n && in.ok; ++i) {
+        PartyState::Member m;
+        m.name = in.str();
+        m.kin = in.u8();
+        m.level = in.i32();
+        m.world = in.str();
+        m.here = in.u32();
+        m.health = in.u8();
+        m.mana = in.u8();
+        m.bot = in.u8() != 0;
+        out.members.push_back(std::move(m));
+    }
     return in.done();
 }
 

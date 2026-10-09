@@ -17,10 +17,13 @@
 // Each bot keeps its character's token in --dir (saves/bots by default), so a bot run again comes
 // back as the same character, at the level it left.
 //
-//   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] NAME:CLASS ...
+//   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] [--party] NAME:CLASS ...
 //
-// CLASS is dk, dw or elf (a new elf is born in Noria).
+// CLASS is dk, dw, elf or mg (a new elf is born in Noria). --party makes the run's bots one party
+// (docs/party.md), the first named its leader. --claude DIR makes the first named the Claude
+// bot (claude.h): his chat and his choice of ground are the model's, through files in DIR.
 
+#include <algorithm>
 #include <chrono>
 #include <csignal>
 #include <ctime>
@@ -29,6 +32,7 @@
 #include <thread>
 
 #include "../bot/brain.h"
+#include "claude.h"
 #include "talk.h"
 #include "game/remote_link.h"
 #include "net/wire.h"
@@ -120,7 +124,8 @@ public:
         while (link_->due()) {
             link_->step();
             brain_->heardOn(*mirror_);
-            talk_.happened(*mirror_, you_, brain_->clockNow());
+            if (!claude_) talk_.happened(*mirror_, you_, brain_->clockNow());
+            if (claude_ && brain_->clockNow() % 20 == 0) drive();
             if (leaving()) {
                 link_.reset();  // closes the line; the next connect asks where he is
                 return false;
@@ -136,6 +141,15 @@ public:
 
     void report() {
         if (mirror_ && link_) brain_->status();
+    }
+
+    // **The party** (docs/party.md), --party: the bots of this run are one party, the first named
+    // its leader. A first cut, for the server's party to be tried end to end: the leader invites
+    // whoever of them is not in yet, every twenty seconds, and each takes an invite from one of
+    // them. Forming a party for a quest it cannot take alone is the brain's, later.
+    void partyWith(std::vector<std::string> mates, bool leads) {
+        mates_ = std::move(mates);
+        leads_ = leads;
     }
 
 private:
@@ -162,12 +176,45 @@ private:
         return (tables_[world] = std::move(tables)).get();
     }
 
+    // His party as the server says it: logged as it changes; and the leader's invites.
+    void party() {
+        const net::PartyState& state = link_->party();
+        std::string said;
+        for (const net::PartyState::Member& m : state.members) {
+            said += (said.empty() ? "" : ", ") + m.name + " (" + std::to_string(m.level) + ", " + m.world +
+                    (m.here != 0 ? ", here" : "") + ")";
+        }
+        if (said != partySaid_) {
+            line("party: %s", said.empty() ? "none" : said.c_str());
+            partySaid_ = said;
+        }
+        const int64_t now = brain_->clockNow();
+        if (!leads_ || mates_.empty() || now - invitedAt_ < 20 * 20) return;
+        invitedAt_ = now;
+        for (const std::string& mate : mates_) {
+            bool in = false;
+            for (const net::PartyState::Member& m : state.members) in |= m.name == mate;
+            if (in || mate == name_) continue;
+            link_->askParty({net::PartyWhat::Invite, mate});
+        }
+    }
+
     // The chat: what he heard since the last pump, and what he has to say by now.
     void chat() {
         heard_.clear();
         link_->takeHeard(heard_);
         const int64_t now = brain_->clockNow();
+        party();
         for (const net::Heard& one : heard_) {
+            // An invite from one of his own party's bots, taken (--party).
+            constexpr const char* kInvites = " invites you to a party.";
+            if (one.name.empty() && one.channel == net::Channel::Party && !mates_.empty()) {
+                const size_t at = one.text.find(kInvites);
+                const std::string from = at != std::string::npos ? one.text.substr(0, at) : "";
+                if (std::find(mates_.begin(), mates_.end(), from) != mates_.end()) {
+                    link_->askParty({net::PartyWhat::Accept, from});
+                }
+            }
             if (one.name.empty()) {
                 line("~ %s", one.text.c_str());
             } else if (one.name != name_) {
@@ -272,6 +319,10 @@ private:
     uint32_t pending_ = 0;
     int64_t pendingSince_ = 0;
     bool divergenceSaid_ = false;
+    std::vector<std::string> mates_;  // --party: the run's bots, his party
+    bool leads_ = false;
+    int64_t invitedAt_ = -1000000;
+    std::string partySaid_;
 };
 
 }  // namespace
@@ -283,6 +334,7 @@ int main(int argc, char** argv) {
     double hours = 0.0;  // 0: until stopped
     bool quests = true;
     bool chatty = false;
+    bool party = false;
     std::vector<std::pair<std::string, sim::Kin>> wanted;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
@@ -292,18 +344,20 @@ int main(int argc, char** argv) {
         else if (a == "--hours" && i + 1 < argc) hours = std::atof(argv[++i]);
         else if (a == "--no-quests") quests = false;
         else if (a == "--chatty") chatty = true;
+        else if (a == "--party") party = true;
         else if (a.find(':') != std::string::npos) {
             const std::string name = a.substr(0, a.find(':')), cls = a.substr(a.find(':') + 1);
             if (cls == "dk") wanted.emplace_back(name, sim::Kin::DarkKnight);
             else if (cls == "dw") wanted.emplace_back(name, sim::Kin::DarkWizard);
             else if (cls == "elf") wanted.emplace_back(name, sim::Kin::FairyElf);
+            else if (cls == "mg") wanted.emplace_back(name, sim::Kin::MagicGladiator);
             else {
-                std::fprintf(stderr, "netbot: %s: the class is dk, dw or elf\n", a.c_str());
+                std::fprintf(stderr, "netbot: %s: the class is dk, dw, elf or mg\n", a.c_str());
                 return 2;
             }
         } else {
             std::fprintf(stderr, "usage: netbot [--server HOST] [--port N] [--dir DIR] [--hours H] "
-                                 "[--no-quests] [--chatty] NAME:dk|dw|elf ...\n");
+                                 "[--no-quests] [--chatty] [--party] NAME:dk|dw|elf|mg ...\n");
             return 2;
         }
     }
@@ -317,6 +371,11 @@ int main(int argc, char** argv) {
     std::vector<std::unique_ptr<NetBot>> bots;
     for (const auto& [name, kin] : wanted) {
         bots.push_back(std::make_unique<NetBot>(name, kin, host, port, dir, quests, chatty));
+    }
+    if (party) {
+        std::vector<std::string> names;
+        for (const auto& one : wanted) names.push_back(one.first);
+        for (size_t i = 0; i < bots.size(); ++i) bots[i]->partyWith(names, i == 0);
     }
     std::vector<bool> up(bots.size(), false);
     std::vector<std::chrono::steady_clock::time_point> retryAt(bots.size());
