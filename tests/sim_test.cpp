@@ -3732,6 +3732,47 @@ void testSummonTravels(const content::Tables& tables) {
           "the world she lands in raises it beside her off safe ground");
 }
 
+// The user, 2026-10-09: "i summoned elf monsster in LT1 than uses afst travel to LT5, but summon
+// was not there". Another floor of the map she is on: no map change, set down in place, and her
+// Dark Knight beside her there.
+void testSummonTravelsAFloor() {
+    std::printf("the summon goes with her to another floor of the Lost Tower\n");
+    content::Tables tower;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/losttower/losttower.mur", tower, error),
+          "the Lost Tower's tables load");
+    int fifth = -1;
+    for (int i = 0; i < sim::kTravels && fifth < 0; ++i) {
+        if (std::string(sim::travelAt(i).name) == "Lost Tower 5") fifth = i;
+    }
+    check(fifth >= 0, "Lost Tower 5 has a travel row");
+    if (fifth < 0) return;
+    sim::Realm realm;
+    check(realm.raise(&tower, 5, 208, 85, sim::Kin::FairyElf, 150), "an elf on the first floor");
+    realm.spend(0, 0, 0, 400);
+    realm.learn(sim::skill::kSummonKnight);
+    realm.earn(1000000);
+    sim::HeroRecord record = realm.record();
+    record.found = ~0u;
+    if (const int q = realm.travelQuest(fifth); q >= 0) record.quests[q].state = sim::QuestState::Active;
+    realm.restore(record);
+    for (int wait = 0; wait < 6000 && realm.hero().mana < 250; ++wait) realm.step();
+    realm.invoke(sim::skill::kSummonKnight, realm.hero().id);
+    for (int tick = 0; tick < 60 && !realm.summoned()->alive(); ++tick) realm.step();
+    std::printf("  at 208,85 (safe %d) the summon stands: %d\n", int(tower.grid.safe(208, 85)),
+                int(realm.summoned()->alive()));
+    for (int tick = 0; tick < 10; ++tick) realm.step();
+    check(realm.travel(fifth), "she takes the trip to the fifth floor");
+    std::printf("  landed at %d,%d (safe %d)\n", realm.hero().column(), realm.hero().row(),
+                int(tower.grid.safe(realm.hero().column(), realm.hero().row())));
+    for (int tick = 0; tick < 5; ++tick) realm.step();
+    check(realm.summoned()->alive() && realm.summoned()->summonedBy == sim::skill::kSummonKnight,
+          "her Dark Knight stands beside her on the fifth floor");
+    if (realm.summoned()->alive()) {
+        std::printf("  it stands at %.0f,%.0f\n", realm.summoned()->x, realm.summoned()->y);
+    }
+}
+
 // The user, 2026-10-02: "summons should get aggro if he does some damage". A monster on her
 // that her summon wounds (a miss draws nothing, as hers does not) turns on the summon and stays there while she shoots it: counted over
 // a long hunt, every turn and every blow the monster throws after it.
@@ -11624,6 +11665,7 @@ int main() {
     testSummonKeepsUp(tables);
     testSummonShelters(tables);
     testSummonTravels(tables);
+    testSummonTravelsAFloor();
     testSummonOnAHunt(tables);
     testGates(tables);
     testDungeonGates(tables);

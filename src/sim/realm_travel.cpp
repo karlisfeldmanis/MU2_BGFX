@@ -263,7 +263,12 @@ bool Realm::travel(int index) {
     // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map
     // gate does, with no map change.
     if (to.map == int32_t(tables_->map)) {
+        // setHeroDown is a same-map gate's too, and a gate dismisses the summon for good: held
+        // again after it, or LT1 to LT5 left her Dark Knight behind (the user, 2026-10-09).
+        const int32_t owed = me().summonOwed, owedHealth = me().summonOwedHealth;
         setHeroDown(to.column, to.row, to.dx, to.dy);
+        me().summonOwed = owed;
+        me().summonOwedHealth = owedHealth;
         return true;
     }
     // To another map. Left from the field of a dungeon of floors, the way back opens there; left
