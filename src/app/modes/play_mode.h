@@ -70,6 +70,7 @@ private:
     static constexpr double kGoBackWaits = 5.4;  // the map name's time on screen (game/ui/arrival.h)
     int arriveColumn_ = 0, arriveRow_ = 0;
     float arriveFacing_ = 0.0f;
+    bool arriveSummon_ = false;  // a Tab trip: her summon is written with him (Realm::travel)
     bool arriveFaced_ = false;
     // How much colour is out of the world, and where it is going: the game greys while he is
     // down and comes back as he gets up. The message that says so is the interface's

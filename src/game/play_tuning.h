@@ -44,6 +44,8 @@ constexpr int kMostTicks = 5;
 // Ticks owed on a server past which the mirror steps them at once rather than hurrying its
 // clock: a second behind (Play::update).
 constexpr int kSnapOwed = 20;
+// A play frame on a server longer than this is logged (Play::update): about three missed at 60 Hz.
+constexpr double kLongFrame = 0.05;
 // The join's warm-up under the loading screen (Play::settle): the line counts as steady once a
 // ping has come back and, for this long, no frame found more than kSettleOwed ticks waiting;
 // and the world is let in after kSettleMost whatever the line is doing.

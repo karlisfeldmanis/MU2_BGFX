@@ -13,8 +13,9 @@
 //   * **it is passive**: it fights only what is on her, on itself, or what she shoots;
 //   * its kills are hers, drop and experience, as a guard's are when she helped (Realm::kill);
 //   * it goes with her death rather than standing over her body, and with any warp of hers --
-//     the Town Portal, and a map change, which raises a realm with its slot dormant (the user,
-//     2026-09-29; OpenMU carries it to her landing gate instead);
+//     the Town Portal, and a gate to another map, which raises a realm with its slot dormant
+//     (the user, 2026-09-29; OpenMU carries it to her landing gate instead) -- but a Tab trip
+//     carries it, hidden and raised beside her off safe ground (Realm::travel, 2026-10-09);
 //   * it is hidden while she stands in a safe zone and back beside her on her first step out
 //     of one (the user, 2026-10-09; Realm::shelterSummon).
 //
@@ -95,8 +96,8 @@ void Realm::fitSummon(Body& summon, const Body& hero) {
 
 void Realm::dismiss(Body& summon) {
     if (summon.summoner == 0) return;
-    // Gone for good, and one hidden in a safe zone (shelterSummon) with it: a warp, a gate, the
-    // map travel or her death leaves nothing to come back on her next step out.
+    // Gone for good, and one hidden in a safe zone (shelterSummon) with it: a warp, a gate or
+    // her death leaves nothing to come back on her next step out.
     if (const int at = playerOfId(summon.summoner); at >= 0) {
         heroes_[size_t(at)].summonOwed = 0;
         heroes_[size_t(at)].summonOwedHealth = 0;
@@ -127,9 +128,9 @@ void Realm::shelterSummon(Body& hero) {
     // followed her to town stood stranded at its edge. Now the moment she stands on a safe tile it
     // goes out of the picture, its breed and health held as `summonOwed`, and the first tick she
     // stands off one it is raised beside her again at that health -- no mana, no cooldown, as a
-    // save's summon is raised (Realm::restore). A gate, the map travel, a Town Portal, a Teleport
-    // and her death still dismiss it for good (Realm::dismiss), as the user's rules of 2026-09-29
-    // and 2026-10-08 have them.
+    // save's summon is raised (Realm::restore). A gate, a Town Portal, Go Back!, a Teleport and
+    // her death still dismiss it for good (Realm::dismiss), as the user's rules of 2026-09-29 and
+    // 2026-10-08 have them; a Tab trip holds it the same way as here (Realm::travel, 2026-10-09).
     if (me().summonSlot < 0) return;
     Body& summon = bodies_[size_t(me().summonSlot)];
     const bool sheltered = tables_->grid.safe(hero.column(), hero.row());

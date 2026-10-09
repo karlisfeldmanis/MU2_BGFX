@@ -112,6 +112,8 @@ constexpr int64_t kOwnForgotten = 40;
 // The longest lead: a 400 ms round trip. Past it the hero would run far ahead of a world that
 // is drawn where it was, and the line is too poor to hide anyway.
 constexpr int kMostLead = 8;
+// An order whose tick the mirror steps later than this after the click is logged (RemoteLink::step).
+constexpr float kSlowAnswerMs = 200.0f;
 constexpr float kTickMs = 50.0f;  // the realm's 20 Hz (server/src/main.cpp kTickSeconds)
 // A Ping's answer read this long after the pump before it is not a round trip: it may have sat
 // unread for all of that. See RemoteLink::pump.
@@ -121,7 +123,7 @@ constexpr auto kUnreadMost = std::chrono::milliseconds(250);
 
 void RemoteLink::send(const sim::Command& command) {
     if (!socket_.open()) return;
-    if (leads(command.kind)) own_.push_back({command, mirror_.tick()});
+    if (leads(command.kind)) own_.push_back({command, mirror_.tick(), Clock::now()});
     std::vector<uint8_t> out;
     net::put(out, command);
     put(out);
@@ -387,6 +389,15 @@ void RemoteLink::step() {
         if (one.player != you_ || !leads(one.kind)) continue;
         for (auto at = own_.begin(); at != own_.end(); ++at) {
             if (same(at->command, one)) {
+                // A click the mirror had back late, and why: the line's round trip and the tick's
+                // wait are ~80 ms; more is ticks held in hand or a frame that did not come (the
+                // user, 2026-10-09: "sometimes when ... i switch between maps and start to use
+                // click to move there is some lag").
+                const float ms = std::chrono::duration<float, std::milli>(Clock::now() - at->sent).count();
+                if (ms > kSlowAnswerMs) {
+                    core::logf("server: an order answered in %.0f ms, %zu ticks still owed, ping %.0f ms, "
+                               "led %d, held %d", double(ms), ticks_.size(), double(rttMs_), lead_, cushion_);
+                }
                 own_.erase(at);
                 break;
             }

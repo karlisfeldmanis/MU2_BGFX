@@ -3674,6 +3674,64 @@ void testSummonShelters(const content::Tables& tables) {
           "and stands beside her at its saved health once she walks out");
 }
 
+// The user, 2026-10-09: "if summon is active for elf and i use fast travel, we need that summon is
+// also active". A Tab trip to another map takes her Golem out of this one but writes it with her,
+// at its health, and the world she lands in raises it beside her once she stands off safe ground.
+void testSummonTravels(const content::Tables& tables) {
+    std::printf("the summon goes with her on a Tab trip\n");
+    int noria = -1;
+    for (int i = 0; i < sim::kTravels && noria < 0; ++i) {
+        if (sim::travelAt(i).map == 3) noria = i;
+    }
+    check(noria >= 0, "Noria has a travel row");
+    if (noria < 0) return;
+    // Open field, off the town, with room round it for the Golem.
+    int column = -1, row = -1;
+    for (int r = 100; r < 220 && column < 0; ++r) {
+        for (int c = 100; c < 220 && column < 0; ++c) {
+            bool fits = true;
+            for (int dr = -2; dr <= 2 && fits; ++dr) {
+                for (int dc = -2; dc <= 2 && fits; ++dc) {
+                    fits = tables.grid.open(c + dc, r + dr) && !tables.grid.safe(c + dc, r + dr);
+                }
+            }
+            if (fits) {
+                column = c;
+                row = r;
+            }
+        }
+    }
+    check(column >= 0, "Lorencia has open field");
+    if (column < 0) return;
+    sim::Realm realm;
+    realm.raise(&tables, 5, column, row, sim::Kin::FairyElf, 60);
+    realm.spend(0, 0, 0, 150);
+    realm.learn(sim::skill::kSummonGolem);
+    realm.earn(1000000);
+    sim::HeroRecord record = realm.record();
+    record.found = ~0u;
+    realm.restore(record);
+    for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    for (int tick = 0; tick < 60 && !realm.summoned()->alive(); ++tick) realm.step();
+    check(realm.summoned()->alive(), "the Golem stands beside her");
+    if (!realm.summoned()->alive()) return;
+    const int health = realm.summoned()->health;
+    check(realm.travel(noria), "she takes the trip to Noria");
+    check(!realm.summoned()->alive(), "her Golem leaves this map with her");
+    const sim::HeroRecord carried = realm.record();
+    checkEqual((long long)carried.summonSkill, (long long)sim::skill::kSummonGolem,
+               "and is written with her");
+    checkEqual((long long)carried.summonHealth, (long long)health, "at its health");
+    sim::Realm there;
+    there.raise(&tables, 5, column, row, sim::Kin::FairyElf, 60);
+    there.learn(sim::skill::kSummonGolem);
+    there.restore(carried);
+    for (int tick = 0; tick < 5; ++tick) there.step();
+    check(there.summoned()->alive() && there.summoned()->summonedBy == sim::skill::kSummonGolem,
+          "the world she lands in raises it beside her off safe ground");
+}
+
 // The user, 2026-10-02: "summons should get aggro if he does some damage". A monster on her
 // that her summon wounds (a miss draws nothing, as hers does not) turns on the summon and stays there while she shoots it: counted over
 // a long hunt, every turn and every blow the monster throws after it.
@@ -11565,6 +11623,7 @@ int main() {
     testSummonAggro(tables);
     testSummonKeepsUp(tables);
     testSummonShelters(tables);
+    testSummonTravels(tables);
     testSummonOnAHunt(tables);
     testGates(tables);
     testDungeonGates(tables);

@@ -105,6 +105,7 @@ struct Landing {
     std::string world;
     int column = 0, row = 0;
     int castle = 0;  // into Blood Castle: which one his ticket passed him into
+    bool summon = false;  // her summon comes too: a Tab trip's (Realm::travel), no gate's
 };
 std::map<uint64_t, Landing> g_due;
 // Tests (2026-10-08): `--storm` raises every world in a wet spell, `--invasion` begins the Golden
@@ -720,7 +721,7 @@ std::optional<Landing> landingOf(const World& world, const sim::Happening& said,
                 if (to.map == int32_t(world.tables.map)) return std::nullopt;
                 const sim::MapRow* map = sim::mapNumbered(to.map);
                 if (map == nullptr) return std::nullopt;
-                return Landing{map->world, to.column, to.row};
+                return Landing{map->world, to.column, to.row, 0, true};
             }
             return std::nullopt;
         }
@@ -871,8 +872,8 @@ server::Store::Row placeOf(const Session& one) {
         row.world = due->second.world;
         row.kept.hero.column = due->second.column;
         row.kept.hero.row = due->second.row;
-        // And without her summon: a map change dismisses it (realm_summon.cpp).
-        row.kept.hero.summonSkill = 0;
+        // And without her summon: a gate dismisses it (realm_summon.cpp). A Tab trip carries it.
+        if (!due->second.summon) row.kept.hero.summonSkill = 0;
     }
     const sim::MapRow* map = sim::mapOf(row.world);
     if (map != nullptr && map->event) {

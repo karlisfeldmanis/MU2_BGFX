@@ -83,6 +83,7 @@ private:
     struct Own {
         sim::Command command;
         int64_t at = 0;
+        Clock::time_point sent{};  // for the slow answer's line (RemoteLink::step)
     };
     std::deque<Own> own_;
     std::unique_ptr<sim::Realm> ahead_;  // raised once from the mirror's tables, laid each tick

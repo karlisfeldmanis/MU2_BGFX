@@ -149,8 +149,8 @@ void PlayMode::keep(Context& ctx) {
         now.hero.column = arriveColumn_;
         now.hero.row = arriveRow_;
         if (arriveFaced_) now.hero.facing = arriveFacing_;
-        // And without her summon: a map change dismisses it (realm_summon.cpp).
-        now.hero.summonSkill = 0;
+        // And without her summon: a gate dismisses it (realm_summon.cpp). A Tab trip carries it.
+        if (!arriveSummon_) now.hero.summonSkill = 0;
     }
     // Inside an event he is written in its town, at the spawn gate: a quit or a crash in Blood
     // Castle comes back in Devias (WebZen user.cpp:3147-3150), the run lost.
@@ -918,6 +918,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             const bool faced = to->dx != 0 || to->dy != 0;
             travel(ctx, map->world, to->column, to->row,
                    faced ? std::atan2(float(to->dy), float(to->dx)) : 0.0f, !faced);
+            arriveSummon_ = true;  // her summon comes too (Realm::travel)
         }
     }
 
@@ -1756,6 +1757,7 @@ void PlayMode::travel(Context& ctx, const std::string& world, int column, int ro
     arriveColumn_ = column >= 0 ? column : map->arrive[0];
     arriveRow_ = column >= 0 ? row : map->arrive[1];
     arriveFacing_ = facing;
+    arriveSummon_ = false;
     core::logf("travel: %s to %s, coming in at %d,%d", args.world.c_str(), world.c_str(),
                arriveColumn_, arriveRow_);
     travelTo_ = world;

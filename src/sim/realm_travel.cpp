@@ -246,6 +246,19 @@ bool Realm::travel(int index) {
     me().gating = -1;
     me().angeling = -1;
     halt(mine());
+    // Her summon goes with her (the user, 2026-10-09: "if summon is active for elf and i use fast
+    // travel, we need that summon is also active"; it was dismissed since 2026-10-08): held as one
+    // hidden in a safe zone is (Realm::shelterSummon), and raised beside her at its health on the
+    // first tick she stands off safe ground -- the new map's, or this one's next floor. A gate, a
+    // Town Portal and Go Back! still dismiss it.
+    if (me().summonSlot >= 0) {
+        Body& summon = bodies_[size_t(me().summonSlot)];
+        if (summon.alive()) {
+            me().summonOwed = summon.summonedBy;
+            me().summonOwedHealth = summon.health;
+            vanish(summon);
+        }
+    }
     core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(to.zen));
     // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map
     // gate does, with no map change.
@@ -256,9 +269,6 @@ bool Realm::travel(int index) {
     // To another map. Left from the field of a dungeon of floors, the way back opens there; left
     // from anywhere else -- a town, or the field of Lorencia, Devias, Noria, Atlans or Tarkan --
     // one already open is given up: he chose to go elsewhere.
-    // Her summon stays behind and is gone (the user, 2026-10-08: "we need to dismiss pet when
-    // use map travel"), as a gate and a Town Portal dismiss it.
-    if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     const Body& hero = mine();
     const MapRow* here = mapNumbered(int(tables_->map));
     if (here != nullptr && here->floors && !tables_->grid.safe(hero.column(), hero.row())) {

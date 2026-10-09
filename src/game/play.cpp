@@ -170,6 +170,12 @@ void Play::update(double seconds) {
     walkBench(float(seconds));
     link_->pump();
     const bool remoteClock = link_->remote();
+    // A frame long enough to feel in the walk, and what the line owed at it: a hitch of this
+    // client's own, told from a late line by RemoteLink's slow order line.
+    if (remoteClock && !settling_ && seconds > kLongFrame) {
+        core::logf("play: a %.0f ms frame at tick %lld, %d ticks owed", seconds * 1000.0,
+                   (long long)realm_.tick(), link_->owed());
+    }
     double pace = 1.0;
     if (remoteClock) {
         // Hurried only past the cushion (Play::cushion_, sprint 24): those ticks are held on
