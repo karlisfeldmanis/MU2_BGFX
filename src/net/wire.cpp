@@ -475,10 +475,11 @@ bool parse(const std::vector<uint8_t>& body, Account& out) {
 }
 
 bool parse(const std::vector<uint8_t>& body, Roster& out) {
-    In in{body};
-    out.refused = Refused(in.u8());
-    const uint32_t n = in.u32();
-    if (n > 16) return false;
+    try {
+        In in{body};
+        out.refused = Refused(in.u8());
+        const uint32_t n = in.u32();
+        if (n > 16) return false;
     out.seats.clear();
     for (uint32_t i = 0; i < n && in.ok; ++i) {
         Seat s;
@@ -499,6 +500,10 @@ bool parse(const std::vector<uint8_t>& body, Roster& out) {
         out.seats.push_back(std::move(s));
     }
     return in.done();
+    } catch (const std::bad_alloc& e) {
+        printf("CRASH CAUGHT IN PARSE ROSTER! body size: %zu\n", body.size());
+        throw;
+    }
 }
 
 bool parse(const std::vector<uint8_t>& body, Create& out) {
