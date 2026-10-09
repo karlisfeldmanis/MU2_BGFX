@@ -532,6 +532,12 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     // SWORD4 for Cyclone and for Slash alike.
     for (int i = 0; i < sim::skillCount(); ++i) {
         const sim::SkillRow& row = sim::skillAt(i);
+        // Silent until loaded: the header's list of -1s is shorter than kSkills, and the rest
+        // were 0 -- a sound -- for any row with none of its own.
+        heard_.skill[i] = -1;
+        // Penetration's SOUND_PIERCING is not heard: its bow or crossbow is (the user,
+        // 2026-10-09: "dont play penetration sound for penetration skill, crossbow is enough").
+        if (row.number == sim::skill::kPenetration) continue;
         if (row.sound[0] != '\0') heard_.skill[i] = sound_.load(row.sound, true);
     }
     heard_.explosion = sound_.load("explosion", true);
