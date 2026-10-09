@@ -8010,6 +8010,20 @@ void testRunes(const content::Tables& tables) {
         sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &twice);
         checkEqual(once, int(double(bare) * 1.2), "one Undying is x1.2 on maximum health");
         checkEqual(twice, int(double(bare) * 1.44), "and two are x1.44");
+        // Every quest that pays an Undying pays mana's Wellspring beside it (2026-10-09).
+        int undyings = 0, unmatched = 0;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestRow& row = sim::questAt(q);
+            int hp = 0, mana = 0;
+            for (int i = 0; i < row.paidCount; ++i) {
+                hp += row.paid[i].power == undying ? 1 : 0;
+                mana += row.paid[i].power == uint8_t(sim::Power::Wellspring) ? 1 : 0;
+            }
+            undyings += hp;
+            unmatched += hp != mana ? 1 : 0;
+        }
+        check(undyings > 0, "quests pay the Undying");
+        checkEqual(unmatched, 0, "and a Wellspring beside every one");
         const int devin = sim::questOf(406);
         check(devin >= 0, "Devin gives a quest");
         if (devin >= 0) {

@@ -561,6 +561,9 @@ QuestRow pit() {
     row.paid[n++] = {.item = "ArmorMale08", .kin = wizard, .sockets = 1, .firstOnly = true};  // Sphinx
     row.paid[n++] = {.item = "ArmorElf04", .kin = elf, .sockets = 1, .firstOnly = true};  // Spirit
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Undying), .firstOnly = true};
+    // And mana's Wellspring beside every Undying paid (the user, 2026-10-09: "when you give hp
+    // rune as reward give also mana rune"), of its rarity.
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Wellspring), .firstOnly = true};
     // The first powered pendant, purple, three powers.
     row.paid[n++] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};
@@ -835,6 +838,8 @@ QuestRow tersiaFifth() {
     row.paid[row.paidCount++] = {.item = "ArmorElf05", .kin = elf, .sockets = 1,
                                  .firstOnly = true};  // Guardian
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Wellspring),
                                  .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Shield14", .kin = knight, .sockets = 1,
                                  .firstOnly = true};  // Dragon Shield
@@ -1180,6 +1185,7 @@ QuestRow sevinaTrial() {
     // Steadfast and Greater Vigor, which the Catacombs, the Halls and the tower pay now.
     row.paid[row.paidCount++] = {.item = "Jewel15", .count = 3};  // Jewels of Chaos
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying)};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Wellspring)};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal)};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind)};
     return row;
