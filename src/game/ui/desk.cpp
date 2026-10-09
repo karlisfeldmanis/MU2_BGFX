@@ -1857,6 +1857,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         interface_.add(chat_.lines());
     }
     interface_.add(hud_.canvas());
+    // A party invite, centred over the plate where a fight's Zen is said.
+    if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
     // The window something is dragged out of goes over the other, so what rides the pointer is

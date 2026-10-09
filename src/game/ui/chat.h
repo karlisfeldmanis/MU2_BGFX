@@ -14,6 +14,9 @@
 //     inside, on a slider of their own at the right.
 //   * **Closed**, the last six lines stay over the world a while and fade, the cloud under them
 //     half as dark, with "Enter to chat" and the whispers waiting.
+//   * **A party invite** stands in the middle over the HUD, above where a fight's Zen is said
+//     (game/ui/tally.h), with Accept and Decline, open or shut ("party invites has to be middle
+//     of center similiar position where zen is gained"). The log keeps its line.
 //
 // Enter opens it with the keyboard (Desk::typing, so I and C and Q type and do nothing else);
 // Enter again says the line and shuts it, Escape shuts it, the draft kept. A line starting with
@@ -50,6 +53,9 @@ public:
     bool covers(float x, float y) const;
 
     bool showing() const { return showing_; }
+    // The open invite in the middle (its own canvas, over the plate), while there is one.
+    bool inviting() const { return inviting_; }
+    const gfx::Canvas& invite() const { return inviteDrawn_; }
     const gfx::Canvas& back() const { return back_; }    // the cloud, the rules, the input
     const gfx::Canvas& tabs() const { return tabsDrawn_; }  // the tab row, clipped to it
     const gfx::Canvas& lines() const { return lines_; }   // the log, clipped to its well
@@ -73,7 +79,6 @@ private:
     struct Row {
         size_t line = 0;
         bool first = true;
-        bool buttons = false;  // an open invite's Accept and Decline
         std::string text;  // this row's part of the line's text
     };
     struct Tab {
@@ -95,11 +100,13 @@ private:
     void layRows(float u, float wide, const std::string& tab, size_t from);
     void build(float u, const Pointer& pointer);
     void buildClosed(float u);
+    void buildInvite(float u, float width, float bottom, const Pointer& pointer);
+    long pendingInvite() const;  // the newest open invite's line, or -1
     void cloud(gfx::Canvas& canvas, float middle, float tall, float strength, float u);
     std::string channelWord() const;
     uint32_t channelInk(net::Channel channel) const;
 
-    gfx::Canvas back_, tabsDrawn_, lines_;
+    gfx::Canvas back_, tabsDrawn_, lines_, inviteDrawn_;
     bool open_ = false;
     bool showing_ = false;
     std::string me_;  // his own name, as the server says it
@@ -133,6 +140,8 @@ private:
     // What the canvases were last built from: rebuilt only when it changes (a caret's blink, a
     // line, the pointer over it, a closed line fading), as every window here is.
     uint64_t built_ = 0;
+    bool inviting_ = false;
+    gfx::Box inviteCard_;
 
     // A drag: the grip, the tabs' slider or the log's.
     enum class Drag : uint8_t { None, Grip, TabSlider, LogSlider };

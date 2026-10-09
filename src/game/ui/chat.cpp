@@ -48,6 +48,11 @@ constexpr int kClosedLines = 6;
 constexpr float kClosedRamp[kClosedLines] = {0.3f, 0.45f, 0.6f, 0.78f, 0.92f, 1.0f};
 constexpr float kStays = 20.0f, kFades = 4.0f;
 constexpr size_t kKept = 400;  // lines kept, oldest dropped
+// The invite in the middle: how long it stands unanswered (the log's line and /accept stay),
+// its fade in and out, and how far its foot stands over the chat's own foot -- above where a
+// fight's Zen is said (game/ui/tally.cpp, kZenAboveHud).
+constexpr float kInviteLife = 60.0f, kInviteIn = 0.15f, kInviteOut = 1.0f;
+constexpr float kInviteAbove = 44.0f, kInviteWide = 440.0f, kInviteTall = 118.0f;
 
 // A line in a face over its drop, the drop faded with the ink; its advance.
 float set(gfx::Canvas& canvas, const gfx::Face* face, bgfx::TextureHandle texture, float x,
@@ -109,12 +114,13 @@ std::string lower(std::string s) {
 
 void Chat::open(const gfx::Interface& interface) {
     interface.adopt(back_);
+    interface.adopt(inviteDrawn_);
     interface.adopt(tabsDrawn_);
     interface.adopt(lines_);
 }
 
 bool Chat::covers(float x, float y) const {
-    return open_ && (panel_.has(x, y) || grip_.has(x, y));
+    return (open_ && (panel_.has(x, y) || grip_.has(x, y))) || (inviting_ && inviteCard_.has(x, y));
 }
 
 uint32_t Chat::channelInk(net::Channel channel) const {
@@ -429,14 +435,6 @@ void Chat::layRows(float u, float wide, const std::string& tab, size_t from) {
             row.first = false;
             room = wide - indent;
         }
-        if (!line.inviter.empty() && line.answer == 0) {
-            Row buttons;
-            buttons.line = i;
-            buttons.first = false;
-            buttons.buttons = true;
-            rows_.push_back(buttons);
-            rows_.push_back(buttons);  // they stand two rows tall
-        }
     }
     logTall_ = float(rows_.size()) * kRow * u;
 }
@@ -463,7 +461,6 @@ void Chat::cloud(gfx::Canvas& canvas, float middle, float tall, float strength, 
 void Chat::update(float seconds, float width, float height, float bottom, float right,
                   const Pointer& pointer, float wheel, const std::string& typed, int backspaces,
                   bool enter, bool escape, bool toggle, Play& play) {
-    (void)width;
     (void)height;
     clock_ += seconds;
     for (Line& line : log_) line.age += seconds;
@@ -520,7 +517,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     // The pointer, open only.
     const bool over = open_ && covers(pointer.x, pointer.y);
     bool chosen = false;
-    if (open_ && pointer.pressed) {
+    if (pointer.pressed) {
         for (const Choice& choice : choices_) {
             if (!choice.box.has(pointer.x, pointer.y) || choice.line >= log_.size() ||
                 log_[choice.line].inviter.empty()) {
@@ -589,12 +586,24 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     logScroll_ = std::clamp(logScroll_, 0.0f, std::max(0.0f, logTall_ - logBox_.h));
     tabScroll_ = std::clamp(tabScroll_, 0.0f, std::max(0.0f, tabsWide_ - tabRow_.w));
 
-    const uint64_t key = signature(u, pointer);
+    const long pending = pendingInvite();
+    inviting_ = pending >= 0;
+    inviteCard_ = {width * 0.5f - kInviteWide * 0.5f * u, bottom - (kInviteAbove + kInviteTall) * u,
+                   kInviteWide * u, kInviteTall * u};
+    const uint64_t key = signature(u, pointer) ^ (uint64_t(pending + 1) * 0x9E3779B97F4A7C15ull) ^
+                         (inviting_ && inviteCard_.has(pointer.x, pointer.y)
+                              ? uint64_t(std::lround(pointer.x)) * 31 + uint64_t(std::lround(pointer.y))
+                              : 0) ^
+                         (inviting_ ? uint64_t(std::min(log_[size_t(pending)].age, kInviteIn) * 100.0f) +
+                                          (uint64_t(std::max(0.0f, log_[size_t(pending)].age -
+                                                                       (kInviteLife - kInviteOut)) * 30.0f) << 8)
+                                    : 0);
     if (key == built_) return;
     built_ = key;
     back_.clear();
     tabsDrawn_.clear();
     lines_.clear();
+    inviteDrawn_.clear();
     choices_.clear();
     if (open_) {
         build(u, pointer);
@@ -602,6 +611,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     } else {
         buildClosed(u);
     }
+    if (inviting_) buildInvite(u, width, bottom, pointer);
 }
 
 void Chat::build(float u, const Pointer& pointer) {
@@ -684,23 +694,6 @@ void Chat::build(float u, const Pointer& pointer) {
         const float top = y;
         y += kRow * u;
         const Line& line = log_[row.line];
-        if (row.buttons) {
-            // An open invite's answers, on the first of their two rows.
-            if (r > 0 && rows_[r - 1].buttons) continue;
-            const float bx = logBox_.x + 14.0f * u, by = top + 6.0f * u, bw = 96.0f * u, bh = 34.0f * u;
-            for (const bool accept : {true, false}) {
-                const Box box{accept ? bx : bx + bw + 8.0f * u, by, bw, bh};
-                if (box.bottom() < logBox_.y || box.y > logBox_.bottom()) continue;
-                controls::State state;
-                state.lift = box.has(pointer.x, pointer.y) ? 1.0f : 0.0f;
-                controls::button(lines_, box, accept ? "Accept" : "Decline",
-                                 accept ? controls::Kind::Primary : controls::Kind::Secondary, state, u, 15.0f * u);
-                // Pressable only where the well shows it.
-                const float shownTop = std::max(box.y, logBox_.y), shownFoot = std::min(box.bottom(), logBox_.bottom());
-                choices_.push_back({{box.x, shownTop, box.w, shownFoot - shownTop}, row.line, accept});
-            }
-            continue;
-        }
         if (y < logBox_.y || top > logBox_.bottom()) continue;
         const float base = top + kRow * u * 0.74f;
         float x = logBox_.x + (row.first ? 0.0f : 14.0f * u);
@@ -756,6 +749,58 @@ void Chat::build(float u, const Pointer& pointer) {
     rule(back_, input_.x, input_.bottom() + 2.0f * u, input_.w, u);
     body(back_, panel_.x + 12.0f * u, panel_.bottom() - 9.0f * u, kHint * u, kHintInk,
          "/p party  \xC2\xB7  /g guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /invite name  \xC2\xB7  /leave", u);
+}
+
+long Chat::pendingInvite() const {
+    for (size_t i = log_.size(); i-- > 0;) {
+        const Line& line = log_[i];
+        if (!line.inviter.empty() && line.answer == 0 && line.age < kInviteLife) return long(i);
+    }
+    return -1;
+}
+
+void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointer) {
+    (void)width;
+    (void)bottom;
+    const long index = pendingInvite();
+    if (index < 0) return;
+    const Line& line = log_[size_t(index)];
+    const float alpha = std::min(line.age / kInviteIn, 1.0f) *
+                        std::clamp((kInviteLife - line.age) / kInviteOut, 0.0f, 1.0f);
+    const Box& card = inviteCard_;
+    // The arrival's soft cloud, a Gaussian each way about the card: no edge anywhere.
+    const float sx = card.w * 0.42f, sy = card.h * 0.55f;
+    constexpr int kColumns = 14, kRows = 8;
+    const auto at = [&](int i, int j) {
+        const float gx = -3.0f + 6.0f * float(i) / kColumns, gy = -3.0f + 6.0f * float(j) / kRows;
+        return faded(kVoid, 0.85f * alpha * std::exp(-0.5f * (gx * gx + gy * gy)));
+    };
+    for (int j = 0; j < kRows; ++j) {
+        for (int i = 0; i < kColumns; ++i) {
+            inviteDrawn_.shade({card.midX() + sx * (-3.0f + 6.0f * float(i) / kColumns),
+                                card.midY() + sy * (-3.0f + 6.0f * float(j) / kRows), sx * 6.0f / kColumns,
+                                sy * 6.0f / kRows},
+                               at(i, j), at(i + 1, j), at(i + 1, j + 1), at(i, j + 1));
+        }
+    }
+    // "Party", the question, and the two answers.
+    const std::string kicker = "Party";
+    word(inviteDrawn_, card.midX() - wordWidth(kTag * u, kicker) * 0.5f, card.y + 18.0f * u, kTag * u,
+         faded(kPartyInk, alpha), kicker, u);
+    const std::string question = line.inviter + " invites you to a party.";
+    body(inviteDrawn_, card.midX() - bodyWidth(21.0f * u, question) * 0.5f, card.y + 50.0f * u, 21.0f * u,
+         faded(hex(0xf3e8d4), alpha), question, u);
+    const float bw = 112.0f * u, bh = 36.0f * u, gap = 12.0f * u;
+    for (const bool accept : {true, false}) {
+        const Box box{card.midX() + (accept ? -gap * 0.5f - bw : gap * 0.5f), card.bottom() - bh - 6.0f * u, bw, bh};
+        controls::State state;
+        state.lift = box.has(pointer.x, pointer.y) ? 1.0f : 0.0f;
+        const size_t mark = inviteDrawn_.mark();
+        controls::button(inviteDrawn_, box, accept ? "Accept" : "Decline",
+                         accept ? controls::Kind::Primary : controls::Kind::Secondary, state, u, 16.0f * u);
+        if (alpha < 1.0f) inviteDrawn_.fadeSince(mark, alpha, 0.0f);
+        choices_.push_back({box, size_t(index), accept});
+    }
 }
 
 void Chat::buildClosed(float u) {
