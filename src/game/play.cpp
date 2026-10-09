@@ -79,7 +79,9 @@ void Play::stand(Drawn& risen) {
     const sim::Body* body = realm_.find(risen.id);
     if (look == nullptr || body == nullptr) return;
     const bool safe = tables_.grid.safe(body->column(), body->row());
-    const int idle = (safe && look->idleSafeClip >= 0) ? look->idleSafeClip : look->idleClip;
+    const int idle = (safe && look->idleSafeClip >= 0) ? look->idleSafeClip
+                     : (body->player && look->combatIdleClip >= 0) ? look->combatIdleClip
+                                                                   : look->idleClip;
     if (idle >= 0) risen.figure.play(idle, true, 0.0f);
 }
 

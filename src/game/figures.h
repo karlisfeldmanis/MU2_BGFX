@@ -207,6 +207,9 @@ struct FigureBody {
     // branch of the stance code. An NPC with an idle named in index.json keeps it either way
     // -- that is MU's own table for that figure and not a stance this engine picks.
     int idleSafeClip = -1;
+    // A player's stand off a safe zone, whatever he holds: the Mixamo combat idle, action285.
+    // -1 where the library lacks it, and then idleClip stands in.
+    int combatIdleClip = -1;
     // Whether he carries his weapon on the back, and stands in the safe idle, whenever he is not
     // fighting, safe tile or not: the Golden Archer, who draws his crossbow only to shoot.
     bool slungAtRest = false;

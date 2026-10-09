@@ -98,6 +98,11 @@ std::pair<int, int> stanceActions(const std::string& stance, bool female) {
 // The one run, whatever is carried: it is run with the weapon on the back (sim::kRunFactor), so
 // the stance has nothing to say. A Mixamo clip put on Bip01 by tools/mixamo.py, not MU's.
 constexpr int kRunAction = 284;
+// And the one stand off a safe zone, whatever is drawn (the user, 2026-10-09: "use
+// Idle_combat when character is not in safe zone"). A Mixamo clip too, its quiet drawn out so
+// he looks about once in some thirteen seconds (tools/mixamo.py OURS). A player's only (Play
+// asks sim::Body::player): the guards share this rig and keep MU's stances and named idles.
+constexpr int kCombatIdleAction = 285;
 
 int boneNamed(const content::Mesh& mesh, const std::string& name) {
     if (name.empty()) return -1;
@@ -575,6 +580,7 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.walkSafeClip = body.library->find(bareWalk);
     if (body.idleClip < 0) body.idleClip = body.library->find(0);
     if (body.idleSafeClip < 0) body.idleSafeClip = body.idleClip;
+    body.combatIdleClip = body.library->find(kCombatIdleAction);
     if (body.walkSafeClip < 0) body.walkSafeClip = body.walkClip;
     // And how fast the earth has to pass under each walk for its feet to hold still.
     body.plantSpeed = measurePlant(body, body.walkClip);

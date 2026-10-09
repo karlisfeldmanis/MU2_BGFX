@@ -17,6 +17,7 @@ everywhere by evening), so now pipeline/export_actions.py puts every clip in OUR
 and tools/cook.py refuses a player library missing one of them. A new clip goes in OURS.
 
     action284  source/players/rig/mixamo/SlowRun.fbx --even  the out-of-combat run, weapon on the back
+    action285  source/players/rig/mixamo/CombatIdle.fbx --calm=109:7 --hold=10  the stand off a safe zone
 
 This is MU3's tools/retarget.py by way of MU4's tools/mixamo.py (its account of the retarget is
 below): a new clip's channels are cloned from MU's own walk (action15) and every one of them is
@@ -133,6 +134,8 @@ NEUTRAL_CLIP = "action15"
 # a re-export, and by tools/cook.py, which refuses a library missing one.
 OURS = [
     ("action284", "source/players/rig/mixamo/SlowRun.fbx", ["--even"]),  # the run
+    # The stand off a safe zone, looking about once in some thirteen seconds and not every four.
+    ("action285", "source/players/rig/mixamo/CombatIdle.fbx", ["--calm=109:7", "--hold=10"]),
 ]
 
 #: Bones whose long axis is stood upright after posing, however the clip left them.
@@ -426,6 +429,28 @@ def read_mixamo(path: Path) -> dict:
     return {"fps": bpy.context.scene.render.fps, "rest": rest, "frames": frames}
 
 
+def rested(clip: dict, calm: str, seconds: float) -> dict:
+    """The clip with its quiet stretch drawn out to `seconds` before the rest of it plays.
+
+    An idle that looks about every four seconds reads as a nervous man (the user, 2026-10-09:
+    "less look around animation (bigger timer for that)"). `calm` is FROM:TO, the .fbx frame
+    numbers of the stretch where he stands still, which may run over the loop's seam (109:7
+    on Idle_combat: frames 109 to the end and on round to 7). The cycle is turned to start at
+    FROM, the stretch is played forward and back until `seconds` are filled -- a mirrored pass
+    and not a frozen key, so he still breathes -- and the whole cycle follows once, look and
+    all. It still loops: the last key is the first.
+    """
+    frames = clip["frames"]
+    cycle = frames[:-1]                            # the last key is the first pose again
+    start, end = (int(v) - 1 for v in calm.split(":"))
+    turned = cycle[start:] + cycle[:start]
+    length = (end - start) % len(cycle) + 1
+    there_and_back = turned[:length] + turned[length - 2:0:-1]
+    rounds = max(1, round(seconds * clip["fps"] / len(there_and_back)))
+    out = there_and_back * rounds + turned + [turned[0]]
+    return {**clip, "frames": out}
+
+
 def even(clip: dict) -> dict:
     """The clip made the same on both feet: each frame half-way to its own mirror image half
     a cycle on.
@@ -603,6 +628,8 @@ def main(argv=None) -> None:
     clip = read_mixamo(clip_path)
     if "--even" in argv:
         clip = even(clip)
+    if option("--hold") is not None:
+        clip = rested(clip, option("--calm"), float(option("--hold")))
 
     keys = len(clip["frames"])
     if seconds_wanted is not None:

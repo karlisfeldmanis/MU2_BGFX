@@ -1684,6 +1684,13 @@ void Play::follow(float seconds) {
             clip = flyIdle;
         } else if (swims) {
             clip = swimIdle;
+        } else if (body->player && look->combatIdleClip >= 0 &&
+                   !tables_.grid.safe(body->column(), body->row())) {
+            // Off a safe tile a player stands in the combat idle, in a fight or out of one; out
+            // of one his weapon is on his back (`safe` above), in one it is drawn. The user,
+            // 2026-10-09: "weapons has to be on back when there is no combat on idle outside
+            // safezone".
+            clip = look->combatIdleClip;
         } else if (safe && look->idleSafeClip >= 0) {
             clip = look->idleSafeClip;
         }
