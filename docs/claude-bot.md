@@ -60,6 +60,21 @@ The first runs, 2026-10-09, Claude (dw) and Tavik (dk), fresh, on a local server
   both. Paid trips are now kept until answered (4e4cb791). Four bots over 8 game hours:
   74 double payments → 0.
 
+- *A rich elf walked home for arrows every 15 minutes.* A quiver is 1000 shots and she stocked
+  1500 at most. Over 100k zen she now stocks 4000 (04c94c8d). Offline, four 10-hour seeds:
+  town trips 230 → 190, levels the same or higher.
+- *A wizard paid to go and paid straight back.* The trip's price took his purse under
+  `riskShare`'s "rich" line, so on landing the breed he came for was too dear. A map behind a
+  paid trip is now weighed with the purse he lands with (7a67dd41). Six seeds: such round trips
+  37 → 17, levels unchanged. That removes bouncing; it doesn't make him faster.
+- *The server charged every repeated trip.* A client behind its server asked again before it
+  saw the first answer: a gladiator paid 3000 zen every 10 seconds, 2.9M zen in 18 game hours.
+  A connection the server has sent to another world now has its commands dropped (6db1c5be).
+- *A late answer stranded a bot.* The earlier trip fix cleared its record when the wait ran
+  out, so an answer 45 s late matched nothing and the bot stayed while the server held him due
+  elsewhere. Trips are now kept until answered, and the wait is wall time (fbc40c4b). With
+  both fixes, 4 game hours: 64 trips charged, 64 answered, every bot sent elsewhere arrived.
+
 **Seen, left as they are**
 
 - *Flipping between two quests on two maps.* The White Silence (Devias) ↔ The Catacombs
@@ -74,6 +89,17 @@ The first runs, 2026-10-09, Claude (dw) and Tavik (dk), fresh, on a local server
   nothing. That's by design today (talk.h never answers a bot's whisper; only `--party` mates
   accept invites). A bot that accepts an invite from a nearby player or bot of its level band
   would let parties form on their own.
+
+## Lessons from running it
+
+- **Brain changes are judged offline.** `build/bot --kin K --seed N --hours 10` runs 10 game
+  hours in about 25 s, against 3-5 minutes on a server at 100×. The server is for what only the
+  network has: trips, reconnects, chat, party.
+- **Four bots at --speed 100 lag one netbot** by 25-50 game seconds, and more when the Mac is
+  loaded. That lag is what found the two trip bugs, but levels and deaths from a loaded run
+  mean nothing. Check `uptime` first.
+- **Never copy a binary over one that is running.** macOS kills the new launch. Give each run
+  its own directory of binaries.
 
 ## How to judge a run
 
