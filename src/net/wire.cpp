@@ -301,6 +301,44 @@ void put(std::vector<uint8_t>& out, const Who& one) {
     });
 }
 
+void put(std::vector<uint8_t>& out, const Say& one) {
+    frame(out, Kind::Chat, [&](Out& o) {
+        o.u8(uint8_t(one.channel));
+        o.str(one.to);
+        o.str(one.text);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const Heard& one) {
+    frame(out, Kind::Chat, [&](Out& o) {
+        o.u8(uint8_t(one.channel));
+        o.u32(one.from);
+        o.str(one.name);
+        o.str(one.to);
+        o.str(one.text);
+        o.u8(one.bot ? 1 : 0);
+    });
+}
+
+std::string saidText(const std::string& text) {
+    std::string kept;
+    kept.reserve(text.size());
+    for (const char c : text) {
+        const auto b = uint8_t(c);
+        kept.push_back(b < 0x20 || b == 0x7F ? ' ' : c);
+    }
+    const size_t first = kept.find_first_not_of(' ');
+    if (first == std::string::npos) return {};
+    kept = kept.substr(first, kept.find_last_not_of(' ') - first + 1);
+    if (kept.size() > kMostSaid) {
+        size_t cut = kMostSaid;
+        // Back off a continuation byte (10xxxxxx) to the letter's start, so none is cut in half.
+        while (cut > 0 && (uint8_t(kept[cut]) & 0xC0) == 0x80) --cut;
+        kept.resize(cut);
+    }
+    return kept;
+}
+
 void put(std::vector<uint8_t>& out, const Account& one) {
     frame(out, Kind::Account, [&](Out& o) {
         o.u32(one.version);
@@ -417,7 +455,7 @@ int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body, u
     if (length < 1 || length > most) return -1;
     if (buffer.size() < 4 + size_t(length)) return 0;
     const uint8_t k = buffer[4];
-    if (k < uint8_t(Kind::Hello) || k > uint8_t(Kind::Who)) return -1;
+    if (k < uint8_t(Kind::Hello) || k > uint8_t(kLastKind)) return -1;
     kind = Kind(k);
     body.assign(buffer.begin() + 5, buffer.begin() + 4 + long(length));
     buffer.erase(buffer.begin(), buffer.begin() + 4 + long(length));
@@ -453,6 +491,29 @@ bool parse(const std::vector<uint8_t>& body, Who& out) {
         p.bot = in.u8() != 0;
         out.players.push_back(std::move(p));
     }
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Say& out) {
+    In in{body};
+    const uint8_t channel = in.u8();
+    out.to = in.str();
+    out.text = in.str();
+    if (channel >= kChannels) return false;
+    out.channel = Channel(channel);
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Heard& out) {
+    In in{body};
+    const uint8_t channel = in.u8();
+    out.from = in.u32();
+    out.name = in.str();
+    out.to = in.str();
+    out.text = in.str();
+    out.bot = in.u8() != 0;
+    if (channel >= kChannels) return false;
+    out.channel = Channel(channel);
     return in.done();
 }
 

@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "net/wire.h"
 #include "sim/command.h"
 #include "sim/realm.h"
 
@@ -60,6 +61,10 @@ public:
     // Another player's name and whether he is a bot, by his body's id, as the server last said
     // (net::Who); false for one it has not named, and always on a realm of this process.
     virtual bool nameOf(uint32_t id, std::string* name, bool* bot) const { return false; }
+    // **The chat** (net::Say, net::Heard): a line said, and the lines heard since the last take,
+    // oldest first, appended to `into`. Nothing on a realm of this process: no one to hear.
+    virtual void say(const net::Say& said) {}
+    virtual void takeHeard(std::vector<net::Heard>& into) {}
     // **The hero ahead** (docs/sprints/24-the-quiet-line.md): his own body as the mirror will
     // have it a round trip from now, with the orders he has sent and the server has not yet
     // answered already in it -- where he is drawn, so a click moves him at once rather than a

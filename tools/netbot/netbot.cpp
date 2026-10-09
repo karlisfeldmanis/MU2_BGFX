@@ -11,10 +11,13 @@
 // death far from a town is followed as the client follows it: the line closes and he comes again
 // with his token, and the server says where he is.
 //
+// And each says a little on the chat, and answers a whisper (talk.h): what he hears and says is
+// in his log.
+//
 // Each bot keeps its character's token in --dir (saves/bots by default), so a bot run again comes
 // back as the same character, at the level it left.
 //
-//   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] NAME:CLASS ...
+//   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] NAME:CLASS ...
 //
 // CLASS is dk, dw or elf (a new elf is born in Noria).
 
@@ -26,6 +29,7 @@
 #include <thread>
 
 #include "../bot/brain.h"
+#include "talk.h"
 #include "game/remote_link.h"
 #include "net/wire.h"
 #include "sim/cradle.h"
@@ -41,12 +45,15 @@ constexpr int64_t kAnswerWait = 2 * 20; // a decision's answers not heard in two
 
 class NetBot {
 public:
-    NetBot(std::string name, sim::Kin kin, std::string host, int port, std::string dir, bool quests)
-        : name_(std::move(name)), kin_(kin), host_(std::move(host)), port_(port), dir_(std::move(dir)) {
+    NetBot(std::string name, sim::Kin kin, std::string host, int port, std::string dir, bool quests,
+           bool chatty)
+        : name_(std::move(name)), kin_(kin), host_(std::move(host)), port_(port), dir_(std::move(dir)),
+          talk_(name_) {
         Options options;
         options.kin = kin;
         options.quests = quests;
         options.tag = name_ + " ";
+        talk_.setChatty(chatty);
         brain_ = std::make_unique<Bot>(options, 0);
         loadToken();
     }
@@ -109,9 +116,11 @@ public:
     bool update() {
         if (!link_ || !link_->connected()) return false;
         link_->pump();
+        chat();
         while (link_->due()) {
             link_->step();
             brain_->heardOn(*mirror_);
+            talk_.happened(*mirror_, you_, brain_->clockNow());
             if (leaving()) {
                 link_.reset();  // closes the line; the next connect asks where he is
                 return false;
@@ -151,6 +160,29 @@ private:
             return nullptr;
         }
         return (tables_[world] = std::move(tables)).get();
+    }
+
+    // The chat: what he heard since the last pump, and what he has to say by now.
+    void chat() {
+        heard_.clear();
+        link_->takeHeard(heard_);
+        const int64_t now = brain_->clockNow();
+        for (const net::Heard& one : heard_) {
+            if (one.name.empty()) {
+                line("~ %s", one.text.c_str());
+            } else if (one.name != name_) {
+                line("~ hears %s%s: %s", one.channel == net::Channel::Whisper ? "a whisper from " : "",
+                     one.name.c_str(), one.text.c_str());
+            }
+            talk_.heard(one, now);
+        }
+        talk_.idle(now);
+        says_.clear();
+        talk_.take(now, says_);
+        for (const net::Say& one : says_) {
+            line("~ says%s%s: %s", one.to.empty() ? "" : " to ", one.to.c_str(), one.text.c_str());
+            link_->say(one);
+        }
     }
 
     // A decision on the scratch, laid from the mirror as it stands, once the last one's answers
@@ -226,6 +258,9 @@ private:
     std::string dir_;
     uint64_t token_ = 0;
     std::string world_;
+    bot::Talk talk_;
+    std::vector<net::Heard> heard_;
+    std::vector<net::Say> says_;
 
     std::unique_ptr<Bot> brain_;
     std::map<std::string, std::unique_ptr<content::Tables>> tables_;
@@ -247,6 +282,7 @@ int main(int argc, char** argv) {
     std::string dir = std::string(MU2_ASSET_DIR) + "/../saves/bots";
     double hours = 0.0;  // 0: until stopped
     bool quests = true;
+    bool chatty = false;
     std::vector<std::pair<std::string, sim::Kin>> wanted;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
@@ -255,6 +291,7 @@ int main(int argc, char** argv) {
         else if (a == "--dir" && i + 1 < argc) dir = argv[++i];
         else if (a == "--hours" && i + 1 < argc) hours = std::atof(argv[++i]);
         else if (a == "--no-quests") quests = false;
+        else if (a == "--chatty") chatty = true;
         else if (a.find(':') != std::string::npos) {
             const std::string name = a.substr(0, a.find(':')), cls = a.substr(a.find(':') + 1);
             if (cls == "dk") wanted.emplace_back(name, sim::Kin::DarkKnight);
@@ -266,7 +303,7 @@ int main(int argc, char** argv) {
             }
         } else {
             std::fprintf(stderr, "usage: netbot [--server HOST] [--port N] [--dir DIR] [--hours H] "
-                                 "[--no-quests] NAME:dk|dw|elf ...\n");
+                                 "[--no-quests] [--chatty] NAME:dk|dw|elf ...\n");
             return 2;
         }
     }
@@ -279,7 +316,7 @@ int main(int argc, char** argv) {
 
     std::vector<std::unique_ptr<NetBot>> bots;
     for (const auto& [name, kin] : wanted) {
-        bots.push_back(std::make_unique<NetBot>(name, kin, host, port, dir, quests));
+        bots.push_back(std::make_unique<NetBot>(name, kin, host, port, dir, quests, chatty));
     }
     std::vector<bool> up(bots.size(), false);
     std::vector<std::chrono::steady_clock::time_point> retryAt(bots.size());

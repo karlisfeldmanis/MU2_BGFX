@@ -125,6 +125,8 @@ constexpr auto kUnreadMost = std::chrono::milliseconds(250);
 // show disconnect window for players"). A server that restarts closes the line and is caught
 // at once; this is for one that went quiet -- the box down, or the way to it.
 constexpr auto kSilentMost = std::chrono::seconds(5);
+// Chat lines held for a taker (Link::takeHeard); a client that never takes them keeps the last few.
+constexpr size_t kHeardMost = 256;
 
 }  // namespace
 
@@ -357,6 +359,11 @@ void RemoteLink::pump() {
             }
         } else if (ok && kind == net::Kind::Who) {
             ok = net::parse(body, who_);
+        } else if (ok && kind == net::Kind::Chat) {
+            net::Heard line;
+            ok = net::parse(body, line);
+            if (ok) heard_.push_back(std::move(line));
+            if (heard_.size() > kHeardMost) heard_.pop_front();
         } else if (ok && kind == net::Kind::Hash) {
             net::Hash hash;
             ok = net::parse(body, hash);
@@ -380,6 +387,17 @@ void RemoteLink::pump() {
                        double(std::chrono::duration<float>(now - heardAt_).count()), ticks_.size());
         socket_.close();
     }
+}
+
+void RemoteLink::say(const net::Say& said) {
+    std::vector<uint8_t> out;
+    net::put(out, said);
+    put(out);
+}
+
+void RemoteLink::takeHeard(std::vector<net::Heard>& into) {
+    for (net::Heard& line : heard_) into.push_back(std::move(line));
+    heard_.clear();
 }
 
 bool RemoteLink::nameOf(uint32_t id, std::string* name, bool* bot) const {

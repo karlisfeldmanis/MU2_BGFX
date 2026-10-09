@@ -11922,6 +11922,7 @@ int main() {
     testSpawn(tables);
     testTwoHeroes(tables);
     testDropsAreTheirs(tables);
+    testChatWire();
     testKept(tables);
     testSnapshot(tables);
     testGoBack(tables);

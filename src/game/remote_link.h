@@ -48,6 +48,8 @@ public:
     // drawn; then the mirror looks at his own player (Welcome::you).
     void catchUp() override;
     bool nameOf(uint32_t id, std::string* name, bool* bot) const override;
+    void say(const net::Say& said) override;
+    void takeHeard(std::vector<net::Heard>& into) override;
     const sim::Body* ahead() override;
     int mapCopy() const override { return copy_; }
     void setCushion(int ticks) override;
@@ -142,6 +144,8 @@ private:
     Clock::time_point pumpedAt_{};  // the last pump: a Ping's answer read later than kUnreadMost is not counted
     int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
     net::Who who_;         // the players' names, the latest the server sent
+    // Chat lines heard and not yet taken; the oldest dropped past kHeardMost, if nobody takes them.
+    std::deque<net::Heard> heard_;
 };
 
 // The character screen's line to the server (server-plan phase 6, docs/sprints/23-the-account.md):

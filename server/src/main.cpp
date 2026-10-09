@@ -27,6 +27,7 @@
 // A malformed frame drops that connection, never the server.
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <csignal>
 #include <cstdio>
@@ -194,6 +195,9 @@ struct Session {
     uint64_t udpKey = 0;
     net::Address udpAt;
     bool udpKnown = false;
+    // The chat's allowance (sayAllowed): lines he may say at once, refilled with time.
+    float sayAllowance = 0.0f;
+    Clock::time_point saidAt{};
 };
 
 // Who is in a world, to everyone in it: what the hover plate over another player says. Sent
@@ -211,6 +215,118 @@ void announce(const World& world, const std::vector<std::unique_ptr<Session>>& s
         if (one->world == &world && one->welcomed && one->socket.open() && !one->socket.send(out)) {
             one->socket.close();
         }
+    }
+}
+
+// ---- the chat ---------------------------------------------------------------------------------
+// Lines said on a channel (net::Say) passed on as net::Heard, outside the lockstep as Who is: the
+// realm knows no names. Each line goes to the server's log too.
+
+// A burst of five lines, then one each 1.5 s: enough to talk, too little to flood a town.
+constexpr float kSayBurst = 5.0f, kSayEvery = 1.5f;
+
+void hearLine(Session& one, const net::Heard& line) {
+    if (!one.welcomed || !one.socket.open()) return;
+    std::vector<uint8_t> out;
+    net::put(out, line);
+    if (!one.socket.send(out)) one.socket.close();
+}
+
+// The server's own line to one player, on a channel: "Valeria has joined the party." on Party.
+void chatSystem(Session& one, net::Channel channel, const std::string& text) {
+    net::Heard line;
+    line.channel = channel;
+    line.text = text;
+    hearLine(one, line);
+}
+
+// The welcomed sessions in his party, himself first, on any map. The party's section owns this
+// (docs/party.md); until a party exists he is a party of one.
+std::vector<Session*> partyMates(Session& one, std::vector<std::unique_ptr<Session>>& sessions) {
+    (void)sessions;
+    return {&one};
+}
+
+// The welcomed player called `name` on any map, in any case, or nullptr.
+Session* playerNamed(const std::string& name, std::vector<std::unique_ptr<Session>>& sessions) {
+    const auto lower = [](std::string s) {
+        for (char& c : s) c = char(std::tolower(uint8_t(c)));
+        return s;
+    };
+    const std::string wanted = lower(name);
+    for (auto& one : sessions) {
+        if (one->welcomed && one->socket.open() && lower(one->name) == wanted) return one.get();
+    }
+    return nullptr;
+}
+
+// Whether he may say another line now: the allowance refilled since his last, and one spent.
+bool sayAllowed(Session& one) {
+    const Clock::time_point now = Clock::now();
+    if (one.saidAt == Clock::time_point{}) one.sayAllowance = kSayBurst;
+    const float since = std::chrono::duration<float>(now - one.saidAt).count();
+    one.sayAllowance = std::min(kSayBurst, one.sayAllowance + since / kSayEvery);
+    one.saidAt = now;
+    if (one.sayAllowance < 1.0f) return false;
+    one.sayAllowance -= 1.0f;
+    return true;
+}
+
+// One Say: to whom it goes, and as what each hears it.
+void say(Session& one, const net::Say& said, std::vector<std::unique_ptr<Session>>& sessions) {
+    const std::string text = net::saidText(said.text);
+    if (text.empty() || one.player == 0) return;
+    if (!sayAllowed(one)) {
+        chatSystem(one, net::Channel::Server, "You are speaking too quickly.");
+        return;
+    }
+    net::Heard line;
+    line.channel = said.channel;
+    line.name = one.name;
+    line.text = text;
+    line.bot = one.bot;
+    // Who hears it, and the speaker's body where the hearer can see him.
+    const auto tell = [&](Session& hearer) {
+        line.from = hearer.world == one.world ? one.player : 0;
+        hearLine(hearer, line);
+    };
+    switch (said.channel) {
+        case net::Channel::Map:
+            for (auto& other : sessions) {
+                if (other->world == one.world) tell(*other);
+            }
+            core::logf("chat %s/%d %s: %s", one.world->name.c_str(), one.world->copy, one.name.c_str(),
+                       text.c_str());
+            break;
+        case net::Channel::Party: {
+            const std::vector<Session*> mates = partyMates(one, sessions);
+            if (mates.size() < 2) {
+                chatSystem(one, net::Channel::Party, "You are not in a party.");
+                return;
+            }
+            for (Session* mate : mates) tell(*mate);
+            core::logf("chat party %s: %s", one.name.c_str(), text.c_str());
+            break;
+        }
+        case net::Channel::Guild:
+            // No guilds yet (docs/server-plan.md phase 7).
+            chatSystem(one, net::Channel::Guild, "You are not in a guild.");
+            return;
+        case net::Channel::Whisper: {
+            Session* to = playerNamed(said.to, sessions);
+            if (to == nullptr) {
+                chatSystem(one, net::Channel::Whisper, net::saidText(said.to).substr(0, 16) + " is not here.");
+                return;
+            }
+            if (to == &one) return;
+            tell(*to);
+            line.to = to->name;  // and his own copy back: "To Valeria"
+            tell(one);
+            core::logf("chat whisper %s > %s: %s", one.name.c_str(), to->name.c_str(), text.c_str());
+            break;
+        }
+        case net::Channel::Server:
+            return;  // the server's alone
     }
 }
 
@@ -670,6 +786,10 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
                 if (him != nullptr && !him->walking) one.world->wantsEarly = true;
             }
             one.world->queued.push_back(command);
+        } else if (kind == net::Kind::Chat && one.welcomed) {
+            net::Say said;
+            if (!net::parse(body, said)) return false;
+            say(one, said, sessions);
         } else if (kind == net::Kind::Ping) {
             // Back the moment it is read, ahead of any tick: the line's round trip alone.
             net::Ping ping;

@@ -31,6 +31,15 @@
 // a bot -- sent to everyone there whenever someone is welcomed. What the hover plate over another
 // player says (game/ui/vitals.h); the realm knows no names, so nothing of it is in the lockstep.
 //
+// And the chat, outside the lockstep as Who is (the chat mockup,
+// claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX): one kind both ways, Chat --
+//
+//   client -> server   Say    a line on a channel: the map he is on, his party, his guild, or
+//                             a whisper to a player by name, wherever he is
+//   server -> client   Heard  a line to show: who said it on which channel, or, with no one's
+//                             name, the server's own line on that channel ("Valeria has joined
+//                             the party.", "Brakka is not here.")
+//
 // A frame is a u32 length (of what follows), a u8 kind and the body, little-endian throughout.
 // A frame that does not parse drops that connection, never the server (server-plan §3).
 
@@ -69,7 +78,8 @@ namespace mu::net {
 //     and the Welcome carries the map's copy and the line's UDP key
 //     (docs/sprints/24-the-quiet-line.md).
 // 14: a Kept carries 25 quests, Devin's errand to Tersia the 25th (layout 5).
-constexpr uint32_t kVersion = 14;
+// 15: Chat, a Say up and a Heard down.
+constexpr uint32_t kVersion = 15;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -85,7 +95,10 @@ constexpr uint32_t kMostFrame = 16u << 20;
 constexpr uint32_t kMostAsked = 64u << 10;
 
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
-                          Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12 };
+                          Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12,
+                          Chat = 13 };
+// The last kind there is: a frame of a higher one is not our protocol (take).
+constexpr Kind kLastKind = Kind::Chat;
 
 struct Hello {
     uint32_t version = kVersion;
@@ -114,6 +127,38 @@ struct Who {
     };
     std::vector<One> players;
 };
+
+// **The chat** (Kind::Chat). Where a line goes: everyone on his map (the world and its copy), his
+// party, his guild, or one player by name. A line with no speaker is the server's on that
+// channel; Server is its own notices, which belong to no channel.
+enum class Channel : uint8_t { Map = 0, Party = 1, Guild = 2, Whisper = 3, Server = 4 };
+constexpr uint8_t kChannels = 5;
+// The longest line said, in bytes: about two lines of the chat window. The server cuts a longer
+// one (saidText), so the wire's 255-byte strings always carry it whole.
+constexpr size_t kMostSaid = 200;
+
+// Up: what he said, and for a whisper to whom.
+struct Say {
+    Channel channel = Channel::Map;
+    std::string to;
+    std::string text;
+};
+
+// Down: a line to show. `from` is the speaker's body in the hearer's own world, 0 when he is
+// elsewhere or it is the server's line; `to`, on a whisper's copy back to its sayer, whom it went
+// to ("To Valeria").
+struct Heard {
+    Channel channel = Channel::Map;
+    uint32_t from = 0;
+    std::string name;
+    std::string to;
+    std::string text;
+    bool bot = false;
+};
+
+// A said line made fit to pass on: control bytes gone, spaces trimmed, cut to kMostSaid at a
+// whole UTF-8 letter. Empty when nothing is left.
+std::string saidText(const std::string& text);
 
 // A character this machine played on the server before accounts, by the token kept beside his
 // save: claimed onto the account when it is nobody's yet.
@@ -243,6 +288,8 @@ void put(std::vector<uint8_t>& out, const Roster& one);
 void put(std::vector<uint8_t>& out, const Create& one);
 void put(std::vector<uint8_t>& out, const Delete& one);
 void put(std::vector<uint8_t>& out, const Who& one);
+void put(std::vector<uint8_t>& out, const Say& one);
+void put(std::vector<uint8_t>& out, const Heard& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -262,6 +309,9 @@ bool parse(const std::vector<uint8_t>& body, Roster& out);
 bool parse(const std::vector<uint8_t>& body, Create& out);
 bool parse(const std::vector<uint8_t>& body, Delete& out);
 bool parse(const std::vector<uint8_t>& body, Who& out);
+// A Chat frame is a Say on the server and a Heard on a client.
+bool parse(const std::vector<uint8_t>& body, Say& out);
+bool parse(const std::vector<uint8_t>& body, Heard& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.
