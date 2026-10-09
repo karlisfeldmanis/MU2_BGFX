@@ -153,8 +153,10 @@ ICONS = {
                              ((6, 7, 32, 35), (6, 7, 32, 35), (7, 9, 33, 37), (7, 9, 33, 37))),
     "hud_button_inventory": ("../newui_menu_Bt02.jdream", (38, 168), 4, (0, 1, 2, 3),
                              ((6, 7, 32, 35), (6, 7, 32, 35), (7, 9, 33, 37), (7, 9, 33, 37))),
-    "hud_button_chat": ("../newui_Bt_Chat_normal.jdream", (27, 52), 2, (0, 1),
-                        ((6, 5, 21, 21), (7, 6, 22, 22))),
+    # (1, 0) as the menu's: the sheet's first state is the lit bubble, and the HUD reads the
+    # first it keeps as the rest (the user, 2026-10-09: "i think you used wrong states").
+    "hud_button_chat": ("../newui_Bt_Chat_normal.jdream", (27, 52), 2, (1, 0),
+                        ((7, 6, 22, 22), (6, 5, 21, 21))),
     "hud_button_menu": ("../newui_chat_btn_size.jdream", (27, 52), 2, (1, 0),
                         ((7, 6, 22, 22), (6, 5, 21, 21))),
 }
