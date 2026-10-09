@@ -27,6 +27,7 @@
 #include "sim/market.h"
 #include "sim/quests.h"
 #include "sim/random.h"
+#include "sim/swings.h"
 #include "sim/realm.h"
 #include "sim/skills.h"
 #include "sim/travel.h"
@@ -2521,7 +2522,8 @@ private:
         const sim::Body& hero = realm_->hero();
         const sim::Wearer w = realm_->wearer();
         *hit = blow();
-        *ticks = std::max(1, hero.swingTicks);
+        const int32_t swing = steadySwing();
+        *ticks = std::max(1, swing);
         const auto landed = [&](double h) { return std::max(1.0, h - defense); };
         const auto arm = [&](int32_t at) -> const content::Arm* {
             return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
@@ -2535,12 +2537,27 @@ private:
             const double one = base * sim::force(row, hero.points);
             const int32_t cast = sim::castTicks(*tables_, hero.kin, hero.points.agility, arm(hero.weapon),
                                                 arm(hero.shield), row);
-            const int32_t t = std::max<int32_t>(1, row.wizardry ? cast : std::max(cast, hero.swingTicks));
+            const int32_t t = std::max<int32_t>(1, row.wizardry ? cast : std::max(cast, swing));
             if (landed(one) / t > landed(*hit) / *ticks) {
                 *hit = one;
                 *ticks = t;
             }
         }
+    }
+    // **His swing as it stays** (the Claude bot's runs, 2026-10-09): what his arms, agility and
+    // excellent options give, without a Frenzy rune's stacks or an Ale, which a fight builds and
+    // a trip or a rest lets go. Read as it stood, an elf's swing went 10 ticks to 14 with her
+    // stacks on landing, The Last Contract's breed cost 429 then 600 of her 465, and she paid
+    // the Lost Tower and the Dungeon back and forth every thirty seconds: 1,022 trips and 3.6
+    // million Zen in a day, ending with 906.
+    int32_t steadySwing() const {
+        const sim::Body& hero = realm_->hero();
+        const auto arm = [&](int32_t at) -> const content::Arm* {
+            return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
+        };
+        const int32_t ticks = sim::swingTicks(sim::swingMilliseconds(
+            *tables_, hero.kin, hero.totalPoints().agility, arm(hero.weapon), arm(hero.shield), hero.excel.speed));
+        return ticks > 0 ? ticks : hero.swingTicks;
     }
     // The ticks a kill of this breed takes him, alone.
     double killTicks(const content::MonsterKind& kind) const {
