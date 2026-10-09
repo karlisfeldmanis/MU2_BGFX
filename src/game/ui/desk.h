@@ -16,6 +16,7 @@
 #include "game/ui/bag.h"
 #include "game/ui/beacon.h"
 #include "game/ui/card.h"
+#include "game/ui/chat.h"
 #include "game/ui/chest.h"
 #include "game/ui/mixer.h"
 #include "game/ui/endurance.h"
@@ -37,6 +38,7 @@
 #include "game/ui/boss_bar.h"
 #include "game/ui/vitals.h"
 #include "game/ui/panel.h"
+#include "game/ui/party_bar.h"
 #include "gfx/interface.h"
 #include "gfx/window.h"
 #include "game/play.h"
@@ -72,7 +74,7 @@ public:
     }
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
     // rather than quitting the game.
-    bool typing() const { return amount_.up(); }
+    bool typing() const { return amount_.up() || chat_.typing(); }
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
     // A skill key pressed by a script: 0 is Q. `--press q` in a headless run, so the cast path is
@@ -251,6 +253,10 @@ private:
     int listFolk_ = -1, picked_ = -1;
     std::string voiced_;  // the voice clip last started, or empty
     Tracker tracker_;
+    // The chat, bottom left over the HUD's wing (game/ui/chat.h).
+    Chat chat_;
+    // The other members of his party, top left (game/ui/party_bar.h).
+    PartyBar partyBar_;
     // The map around him, top right over the tracker, always up in a played world (game/ui/minimap.h).
     Minimap minimap_;
     Menu menu_;

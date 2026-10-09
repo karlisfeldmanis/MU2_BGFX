@@ -867,6 +867,12 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     one.name = known && !whose.name.empty() ? whose.name
                : one.bot && sim::goodName(asked.name) ? asked.name
                                                       : std::string();
+    // A character of no account and no name (a bench's `--play --server`) is still someone on
+    // the chat: whispered to, invited, never taken for the server's own line.
+    if (one.name.empty()) {
+        static int strangers = 0;
+        one.name = "Stranger" + std::to_string(++strangers);
+    }
     // Made on the screen and never played: made now as a new character, under his own token and
     // in the class he was made in.
     const bool fresh = known && whose.fresh;

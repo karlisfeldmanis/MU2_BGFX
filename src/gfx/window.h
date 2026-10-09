@@ -113,9 +113,11 @@ public:
         Map,     // Tab, held: the whole map over the middle of the screen (game/ui/minimap.h)
         Count
     };
-    bool pressed(Key key) const { return keyPressed_[size_t(key)]; }
+    // Neither while a box has the keyboard (setTyping): an I typed into the chat is a letter,
+    // not the bag.
+    bool pressed(Key key) const { return !typing_ && keyPressed_[size_t(key)]; }
     // And whether it is down now, pressed this frame or before: a key held to go on casting.
-    bool down(Key key) const { return keyHeld_[size_t(key)]; }
+    bool down(Key key) const { return !typing_ && keyHeld_[size_t(key)]; }
     bool shift() const { return shift_; }
 
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.

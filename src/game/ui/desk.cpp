@@ -8,6 +8,7 @@
 #include "core/log.h"
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"
+#include "game/ui/tip.h"
 #include "game/world/maps.h"
 
 namespace mu::game {
@@ -78,6 +79,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     goBack_.open(interface_);
     herald_.open(interface_);
     minimap_.open(interface_);
+    chat_.open(interface_);
+    partyBar_.open(interface_);
     menu_.open(interface_);
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
@@ -211,6 +214,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // potion drunk. `typing` is taken before the box answers, so the frame Return closes it on
     // does not hand the same keys on either. The cursor is still drawn where the pointer is.
     const bool typing = amount_.up();
+    // The chat's keyboard, taken before the box spends the script's: it types only while it is
+    // open and no box is up, and its Enter and Escape are then its own.
+    const bool chatTyping = chat_.typing() && !typing;
+    const std::string typedNow = window.typed() + scriptTyped_;
+    const bool enterNow = window.entered() || scriptEnter_;
+    const bool escapeNow = window.escaped() || scriptEscape_;
     const Pointer real = pointer;
     // Escape this frame, taken before the box below spends the script's: the box has it first
     // while it is up, and only otherwise is it the menu's. A scripted one always is, so a review
@@ -218,7 +227,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // And a quest giver's window, which is answered as the box is and takes Escape before the menu.
     const bool questing = play.isOpen() && (play.realm().questing() >= 0 || journal_ >= 0);
     const bool escape =
-        !typing && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
+        !typing && !chatTyping && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
     {
         Amount::Result result;
         const std::string typed = window.typed() + scriptTyped_;
@@ -438,7 +447,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         pointer.pressed = pointer.released = pointer.rightPressed = pointer.held = false;
         pointer.x = pointer.y = -1.0f;
     }
-    const bool keysHeld = typing || menuHeld;
+    const bool keysHeld = typing || menuHeld || chatTyping;
 
     if (!keysHeld && window.pressed(gfx::Window::Key::Inventory)) {
         inventoryOpen_ = !inventoryOpen_;
@@ -532,10 +541,22 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
-    bool toggleQuest = false;
+    bool toggleQuest = false, toggleChat = false;
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
                 characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu, journal_ >= 0,
-                &toggleQuest);
+                &toggleQuest, &toggleChat);
+    // The chat: Enter opens it when nothing else has the keyboard, and then it has it.
+    if (!watching_ && play.isOpen()) {
+        const float u = tip::unit();
+        const bool free = !typing && !menuHeld && !questing;
+        chat_.update(seconds, float(window.width()), float(window.height()), hud_.plateTop() - 18.0f * u,
+                     hud_.buffsLeft() - 16.0f * u, pointer,
+                     chat_.covers(pointer.x, pointer.y) ? window.scroll() : 0.0f,
+                     chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
+                     (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play);
+        if (toggleChat) click();
+        partyBar_.update(play);
+    }
     // Read by the journal's L on the next frame, which runs ahead of the HUD.
     if (toggleQuest) questButton_ = true;
     if (toggleMenu) {
@@ -850,6 +871,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
+                    chat_.covers(pointer.x, pointer.y) ||
                     minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
                     travelPressed || travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
@@ -1826,6 +1848,13 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         interface_.add(cursor_.canvas());
         interface_.submit(view);
         return;
+    }
+    if (partyBar_.showing() && !watching_) interface_.add(partyBar_.canvas());
+    // The chat under the plate, whose left wing its cloud runs behind.
+    if (chat_.showing()) {
+        interface_.add(chat_.back());
+        interface_.add(chat_.tabs());
+        interface_.add(chat_.lines());
     }
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());

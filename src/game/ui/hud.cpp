@@ -65,14 +65,14 @@ struct ButtonRow {
 };
 // Menu and chat left of the life gem, inventory, character and quests right of the mana gem. The
 // menu is live since 2026-09-27 and raises the game menu (game/ui/menu.h), as Escape does; the
-// chat is drawn dim, there being no chat in a game for one. The quests' opens the journal, as L
-// does (the user, 2026-10-05: "we need to find icon for quests button which to put on right side
-// of hud where is inventiry and character buttons").
+// chat's, since 2026-10-09, opens the chat (game/ui/chat.h) as Enter does. The quests' opens
+// the journal, as L does (the user, 2026-10-05: "we need to find icon for quests button which to
+// put on right side of hud where is inventiry and character buttons").
 constexpr int kButtonCount = 5;
 constexpr int kQuestButton = 4;
 constexpr ButtonRow kButtons[kButtonCount] = {
     {"hud_button_menu", true, true},
-    {"hud_button_chat", true, false},
+    {"hud_button_chat", true, true},
     {"hud_button_inventory", false, true},
     {"hud_button_character", false, true},
     {"hud_button_quest", false, true},
@@ -393,6 +393,7 @@ void Hud::follow(const sim::Body* hero) {
 }
 
 float Hud::plateTop() const { return plate(screen_, {0.0f, 0.0f, kPlateW, kPlateH}).y; }
+float Hud::buffsLeft() const { return plate(screen_, kBuffsAt).x; }
 
 gfx::Box Hud::wornCell(int i) const {
     // Right-aligned to the belt's last box, so the row stands over the potions as the buffs stand
@@ -523,7 +524,8 @@ bool Hud::covers(float x, float y) const {
 
 void Hud::update(float seconds, float width, float height, const Pointer& pointer,
                  bool inventoryOpen, bool characterOpen, bool* toggleInventory,
-                 bool* toggleCharacter, bool* toggleMenu, bool questOpen, bool* toggleQuest) {
+                 bool* toggleCharacter, bool* toggleMenu, bool questOpen, bool* toggleQuest,
+                 bool* toggleChat) {
     clock_ += double(seconds);
     screen_ = panel::screenOf(width, height);
     slide(seconds);
@@ -532,6 +534,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         // On the press, as Hud.Hit answers: a button here is a toggle and not a commitment.
         const int over = hoveredAt(pointer.x, pointer.y);
         if (over == 100 && toggleMenu) *toggleMenu = true;
+        if (over == 101 && toggleChat) *toggleChat = true;
         if (over == 102 && toggleInventory) *toggleInventory = true;
         if (over == 103 && toggleCharacter) *toggleCharacter = true;
         if (over == 100 + kQuestButton && toggleQuest) *toggleQuest = true;

@@ -294,6 +294,8 @@ add_library(mu_game STATIC
   src/game/fx/marker.cpp
   src/game/fx/omen.cpp
   src/game/ui/arrival.cpp
+  src/game/ui/chat.cpp
+  src/game/ui/party_bar.cpp
   src/game/fx/aura.cpp
   src/game/fx/set_shine.cpp
   src/game/fx/warp.cpp

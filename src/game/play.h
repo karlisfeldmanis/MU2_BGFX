@@ -506,6 +506,24 @@ public:
     bool playerName(uint32_t id, std::string* name, bool* bot) const {
         return link_ && link_->nameOf(id, name, bot);
     }
+    // The chat (game/ui/chat.h) and the party, through the link: nothing off a server.
+    void say(const net::Say& said) {
+        if (link_) link_->say(said);
+    }
+    void takeHeard(std::vector<net::Heard>& into) {
+        if (link_) link_->takeHeard(into);
+    }
+    void askParty(const net::PartyAsk& asked) {
+        if (link_) link_->askParty(asked);
+    }
+    // His party as the server last said it; no members when he is in none.
+    const net::PartyState& party() const {
+        static const net::PartyState none;
+        return link_ ? link_->party() : none;
+    }
+    // A line over a body's head, as a guard's is put up (said()): a player's Map line, as MU's
+    // chat went up over the speaker (CreateChat). It replaces his last.
+    void bubble(uint32_t who, const std::string& line);
     // The townsperson under the pointer, as an index into the tables' folk, or -1.
     int pointedFolk() const { return pointedFolk_; }
     // The thing on the ground under the pointer, by its id, or 0.

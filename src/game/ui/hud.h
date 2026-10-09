@@ -254,6 +254,8 @@ public:
     // The top edge of the plate in backbuffer pixels: what the gain lane stacks up from, so it
     // sits over the HUD at every window size without a second copy of the plate's arithmetic.
     float plateTop() const;
+    // The left edge of the buffs' strip over the plate: as far right as the chat may reach.
+    float buffsLeft() const;
     // The worn-gear warning's `i`th cell (game/ui/endurance.h), in backbuffer pixels: the buff
     // strip's mirror over the plate's other half, a square for a round container a little under
     // a buff cell's width, packed right to left from the end of the potion belt.
@@ -264,7 +266,7 @@ public:
     void update(float seconds, float width, float height, const Pointer& pointer,
                 bool inventoryOpen, bool characterOpen, bool* toggleInventory,
                 bool* toggleCharacter, bool* toggleMenu = nullptr, bool questOpen = false,
-                bool* toggleQuest = nullptr);
+                bool* toggleQuest = nullptr, bool* toggleChat = nullptr);
 
     // Whether a point is over the frame -- plate, rail or a side button -- so a click there
     // is the frame's and not the ground's. The plate's transparent corners count: a click in

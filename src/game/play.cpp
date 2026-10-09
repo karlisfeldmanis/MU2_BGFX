@@ -119,6 +119,13 @@ float Play::flashOf(uint32_t id) const {
     return 0.0f;
 }
 
+void Play::bubble(uint32_t who, const std::string& line) {
+    said_.erase(std::remove_if(said_.begin(), said_.end(),
+                               [&](const Said& one) { return one.who == who && one.folk < 0; }),
+                said_.end());
+    said_.push_back({who, line, 0.0f});
+}
+
 bool Play::settle(double seconds) {
     if (!isOpen() || !link_ || !link_->remote()) return true;
     link_->pump();
