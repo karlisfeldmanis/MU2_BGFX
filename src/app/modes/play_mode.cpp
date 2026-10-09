@@ -1328,9 +1328,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
     world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
-    // The smoke lying on the Lost Tower's lava, round the point the camera follows.
-    world_.lavaSmoke().update(float(deltaSeconds), eye.target);
-    world_.lavaSmoke().gather(ctx.renderer.effects());
     world_.voidClouds().update(float(deltaSeconds), eye.target);
     world_.voidClouds().gather(ctx.renderer.effects());
     world_.castleSparks().update(float(deltaSeconds), eye.target);

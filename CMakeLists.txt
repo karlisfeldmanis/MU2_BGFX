@@ -252,7 +252,6 @@ add_library(mu_game STATIC
   src/game/world/town.cpp
   src/game/world/grass.cpp
   src/game/world/lamps.cpp
-  src/game/world/lava_smoke.cpp
   src/game/world/void_clouds.cpp
   src/game/world/castle_sparks.cpp
   src/game/world/desert_vents.cpp

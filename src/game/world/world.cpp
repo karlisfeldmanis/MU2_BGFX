@@ -136,8 +136,6 @@ bool World::open(const std::string& assetDir, const std::string& name,
     if (town_.isOpen()) skulls_.open(name, town_, ground_.metresPerTile());
     // And what rides the swaying bones: the fountain's spray, the lanterns; and the mill's fall.
     if (town_.isOpen()) ornaments_.open(assetDir, name, town_, ground_, textures);
-    // The Lost Tower's smoke over its lava (ours). See game/world/lava_smoke.h.
-    lavaSmoke_.open(assetDir, name, ground_, textures);
     voidClouds_.open(assetDir, name, ground_, textures);
     castleSparks_.open(assetDir, name, town_.cooked(), textures);
     desertVents_.open(assetDir, name, town_.cooked(), textures);
@@ -486,7 +484,6 @@ void World::shutdown() {
     skulls_.shutdown();
     skullSound_ = -1;
     ornaments_.shutdown();
-    lavaSmoke_.shutdown();
     voidClouds_.shutdown();
     castleSparks_.shutdown();
     desertVents_.shutdown();

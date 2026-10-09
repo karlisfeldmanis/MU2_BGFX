@@ -6,8 +6,8 @@
 // Three decks since 2026-10-05, each gathered into banks with open sky between them: big cloud
 // masses from our own sheet (pipeline/cloud_sheet.py), 36-56 m across under the floor, wider and
 // darker on the two decks below it, out to 165 m, over NoGround tiles round the camera, drifting
-// and turning slowly, forming and thinning away over a minute. Cold grey, as the castle's light. Lava smoke's shape
-// (game/world/lava_smoke.h); nothing here flickers.
+// and turning slowly, forming and thinning away over a minute. Cold grey, as the castle's light;
+// nothing here flickers.
 #pragma once
 
 #include <cstdint>

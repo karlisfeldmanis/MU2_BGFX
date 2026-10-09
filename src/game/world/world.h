@@ -13,7 +13,6 @@
 #include "game/world/drawbridge.h"
 #include "game/world/grass.h"
 #include "game/world/lamps.h"
-#include "game/world/lava_smoke.h"
 #include "game/world/void_clouds.h"
 #include "game/world/bubbles.h"
 #include "game/world/castle_sparks.h"
@@ -77,7 +76,6 @@ public:
     Sway& sway() { return sway_; }
     const Sway& sway() const { return sway_; }
     Ornaments& ornaments() { return ornaments_; }
-    LavaSmoke& lavaSmoke() { return lavaSmoke_; }
     VoidClouds& voidClouds() { return voidClouds_; }
     CastleSparks& castleSparks() { return castleSparks_; }
     DesertVents& desertVents() { return desertVents_; }
@@ -117,7 +115,6 @@ private:
     Lamps lamps_;
     Sway sway_;
     Ornaments ornaments_;
-    LavaSmoke lavaSmoke_;
     VoidClouds voidClouds_;
     CastleSparks castleSparks_;
     DesertVents desertVents_;
