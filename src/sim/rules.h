@@ -405,6 +405,21 @@ double killExperience(int killedLevel, int killerLevel);
 constexpr int kPartyMost = 5;
 constexpr float kPartyReach = 10.0f;
 constexpr double kFullPartyBonus = 1.1;
+// **Threat** (docs/party.md, the user's of 2026-10-09: "how tank will be able to hold threat if
+// DW does more damage?", "what about MG, he also can be tank"), ours: a tank's blow -- a knight
+// or a Magic Gladiator with his Defense guard up -- counts three times; his first on a monster
+// adds a tenth of its health; a monster turns to another only when he holds this much more than
+// its target, less from one beside it than from one at range (kThreatNear tiles); a heal adds
+// this share of what it mended.
+constexpr int32_t kPartyTankThreat = 3;
+constexpr int32_t kTankOpener = 10;  // a tenth of the monster's health
+constexpr double kThreatMarginNear = 1.1;
+constexpr double kThreatMarginFar = 1.3;
+constexpr float kThreatNear = 2.5f;
+constexpr double kHealThreat = 0.5;
+// How far off an elf's Heal, Greater Defense and Greater Damage reach a party member (docs/party.md;
+// MU casts them on a player): ours, about a screen's middle.
+constexpr float kPartyAidReach = 8.0f;
 // What a kill pays a party with `inView` members in view whose levels sum to `totalLevel`,
 // before it is shared by level and before the rate (Realm::payKill): one kill reckoned at the
 // mean level, times WebZen's party percent -- the MODIFY_GETTING_EXP_RATE_20060214 branch of

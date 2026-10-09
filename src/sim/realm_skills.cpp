@@ -241,7 +241,19 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // one question -- does this hand suit this row -- rather than two rules that can drift.
         // A Bulwark answers for the shield (sim::armFamily).
         if (!row.suits(armFamily(hero, shield))) return false;
-        // A self-cast has no target to be far from and reads its victim off the caster.
+        // A self-cast has no target to be far from and reads its victim off the caster -- but for
+        // **an elf's Heal, Greater Defense and Greater Damage on one of her party** (docs/party.md,
+        // the user's of 2026-10-09: "elfs can heal"), aimed at him and within kPartyAidReach;
+        // reckoned off her own energy and agility, as on herself.
+        Body* aid = nullptr;
+        if (at != 0 && at != hero.id && hero.party != 0 && row.kin == Kin::FairyElf &&
+            (row.mends || row.mightTicks > 0 || row.number == skill::kGreaterDefense)) {
+            Body* one = body(at);
+            if (one != nullptr && one->player && !one->gone && one->alive() && one->party == hero.party &&
+                within(hero, *one, kPartyAidReach)) {
+                aid = one;
+            }
+        }
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
         if (row.summons > 0) {
@@ -259,14 +271,27 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                 return false;
             }
         } else if (row.mends) {
-            // Heal: health back at once, never past the most he has.
-            hero.health = std::min(hero.maxHealth, hero.health + healOf(hero.totalPoints()));
+            // Heal: health back at once, never past the most he has. And its threat, on the
+            // monsters after him, when she is of a party (Realm::healThreat).
+            Body& to = aid != nullptr ? *aid : hero;
+            const int before = to.health;
+            to.health = std::min(to.maxHealth, to.health + healOf(hero.totalPoints()));
+            healThreat(hero, to, to.health - before);
         } else if (row.mightTicks > 0) {
             // Greater Damage: reckoned off her energy now and held for the minute; a second cast
             // replaces the first rather than stacking, as MU's magic effects do.
-            hero.might = mightOf(hero.totalPoints());
-            hero.mightUntil = tick_ + row.mightTicks;
-            rearm(hero);
+            Body& to = aid != nullptr ? *aid : hero;
+            to.might = mightOf(hero.totalPoints());
+            to.mightUntil = tick_ + row.mightTicks;
+            For theirs(*this, to);
+            rearm(to);
+        } else if (aid != nullptr) {
+            // Greater Defense on one of her party: her ward, off her own agility, on him. It takes
+            // the one boon he has -- a knight's Defense guard among them.
+            aid->boonSkill = row.number;
+            aid->boonDamageTaken = 1.0f - boonShare(row, hero.totalPoints(), hero.shieldDefense);
+            aid->boonUntil = tick_ + row.boonTicks;
+            aid->stats.damageTaken = double(aid->boonDamageTaken) * aid->pet.taken;
         } else {
             hero.boonSkill = row.number;
             // The guard's share off his shield and stats as they stand at the cast, held for its

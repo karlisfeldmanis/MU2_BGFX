@@ -307,7 +307,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         const Body* holder = find(target.quarry);
         const bool held = attacker.player && holder != nullptr && holder->alive() &&
                           holder->summoner == attacker.id;
-        if (!held) target.quarry = attacker.id;
+        // **A party member's blow builds threat** (docs/party.md): the monster turns to whoever
+        // holds the most, past the margin, so a knight with his guard up keeps it off the
+        // wizard. Anyone else's turns it, as it always did.
+        if (!held && attacker.player && attacker.party != 0) {
+            partyBlow(target, attacker, blow.damage);
+        } else if (!held) {
+            target.quarry = attacker.id;
+        }
         if (target.temper == Temper::Asleep) target.temper = Temper::Wandering;
     }
     if (target.health <= 0) kill(target, attacker);
@@ -1705,6 +1712,7 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.onStep = 0;
     dead.quarry = 0;
     dead.provoked = false;
+    for (int i = 0; i < Body::kThreatSlots; ++i) dead.threatBy[i] = 0, dead.threat[i] = 0;
     say(What::Died, dead, dead.level, 0, 0, killer.id);
 
     // A raider stands up in town as he does, kRiseTicks on, and runs back to the fight (the

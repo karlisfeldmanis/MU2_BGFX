@@ -11497,6 +11497,50 @@ void testParty(const content::Tables& tables) {
     checkEqual(int(realm.quest(quest).counts[0]), 1, "and the kill counts on the wizard's Marlon quest");
 }
 
+// **Threat** (docs/party.md): a knight with his guard up holds a monster against a wizard of his
+// party dealing three times his damage, and loses it only past the margin.
+void testThreat(const content::Tables& tables) {
+    std::printf("threat\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 150), "a threat realm raises");
+    check(realm.equip(tables.armNamed("Sword03"), tables.armNamed("Shield01"), true), "sword and board");
+    check(realm.learn(sim::skill::kDefense), "the guard learned");
+    realm.invoke(sim::skill::kDefense, realm.hero().id);
+    for (int tick = 0; tick < 60 && !realm.tanking(realm.hero()); ++tick) realm.step();
+    check(realm.tanking(realm.hero()), "his guard up: he tanks");
+    const uint32_t knight = realm.hero().id;
+    const sim::Body* beast = nullptr;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.monster() && one.alive() && (beast == nullptr || one.maxHealth > beast->maxHealth)) beast = &one;
+    }
+    check(beast != nullptr, "a monster to fight over");
+    if (beast == nullptr) return;
+    const uint32_t prey = beast->id;
+    // The wizard stands well off it, at range.
+    const uint32_t wizard = realm.join(sim::Kin::DarkWizard, 150, beast->column() + 6, beast->row());
+    check(wizard != 0, "a wizard joins");
+    for (uint32_t one : {knight, wizard}) {
+        realm.command({.kind = sim::Command::Kind::PartySet, .player = one, .a = 4, .target = one});
+    }
+    realm.step();
+    check(!realm.tanking(*realm.find(wizard)), "a wizard never tanks");
+    const int32_t opener = realm.find(prey)->maxHealth / sim::kTankOpener;
+    realm.threatBlow(prey, knight, 100);
+    checkEqual(realm.threatOf(*realm.find(prey), knight), 300 + opener, "a tank's blow counts three times, and opens a tenth");
+    checkEqual(realm.find(prey)->quarry, knight, "it turns to him");
+    realm.threatBlow(prey, wizard, 300);
+    checkEqual(realm.threatOf(*realm.find(prey), wizard), 300, "the wizard's counts once");
+    checkEqual(realm.find(prey)->quarry, knight, "three times his damage does not take it");
+    // Past the far margin: 1.3 of the knight's.
+    const int32_t held = 300 + opener;
+    realm.threatBlow(prey, wizard, int32_t(double(held) * sim::kThreatMarginFar) - 300 - 1);
+    checkEqual(realm.find(prey)->quarry, knight, "nor up to the margin");
+    realm.threatBlow(prey, wizard, 2);
+    checkEqual(realm.find(prey)->quarry, wizard, "past it, it turns to the wizard");
+    realm.threatBlow(prey, knight, held);
+    checkEqual(realm.find(prey)->quarry, knight, "and back to the knight as he outdoes it");
+}
+
 // A drop is its owner's: a stranger can neither walk to it nor take it, and what a player
 // throws away himself is anyone's (sim::Lying::owner).
 void testDropsAreTheirs(const content::Tables& tables) {
@@ -12039,6 +12083,7 @@ int main() {
     testFirecracker(tables);
     testSecondClassDrops();
     testParty(tables);
+    testThreat(tables);
     testQuestLadder(tables);
     testQuestFirecrackers(tables);
     testDrownedSong();

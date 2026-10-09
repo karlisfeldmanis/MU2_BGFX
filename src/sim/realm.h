@@ -423,6 +423,12 @@ struct Body {
 
     Temper temper = Temper::Asleep;
     uint32_t quarry = 0;  // an id, 0 for nobody
+    // **Its threat** (docs/party.md): who of a party has struck or healed against it and how
+    // much, by id, 0 an empty slot. Kept only for party members' blows; a blow from one in no
+    // party turns it as it always did. Cleared as it dies.
+    static constexpr int kThreatSlots = 6;
+    uint32_t threatBy[kThreatSlots] = {};
+    int32_t threat[kThreatSlots] = {};
     bool provoked = false;
     int64_t provokedUntil = 0;  // how long a hit's chase holds past its eyesight (kGrudgeTicks)
     int64_t swingsAt = 0;
@@ -1312,6 +1318,16 @@ public:
     // **A body's party** (docs/party.md, Command::Kind::PartySet): the server's number for it, 0
     // for none. False for no player of that id.
     bool setParty(uint32_t id, uint32_t party);
+    // **Threat** (realm_party.cpp, docs/party.md): whether he is a party's tank -- a knight or a
+    // Magic Gladiator with his Defense guard up -- and what he holds on a monster. And for the
+    // tests, a party member's blow of `damage` on a monster as the fight lands it (partyBlow).
+    bool tanking(const Body& one) const;
+    int32_t threatOf(const Body& beast, uint32_t id) const;
+    void threatBlow(uint32_t beast, uint32_t by, int32_t damage) {
+        Body* it = body(beast);
+        const Body* who = find(by);
+        if (it != nullptr && who != nullptr) partyBlow(*it, *who, damage);
+    }
     // **A character carried in** (sim::Kept): laid on the newcomer the Join with this ticket lets
     // in, at the next tick's start, after his cradle's hands. Asked before the step, as a command
     // is; one no Join of that tick claims is dropped with it.
@@ -1596,6 +1612,14 @@ private:
     void payKill(const Body& dead, Body& earner);
     // And its quest count, for each of them in view who has the step.
     void countPartyKill(const Body& dead, const Body& earner);
+    // His threat added, and the monster turned to whoever holds the most, past the margin.
+    void addThreat(Body& beast, const Body& by, int32_t amount);
+    void retarget(Body& beast);
+    // A party member's blow on a monster: his threat, the tank's tripled and his first blow a
+    // tenth of its health more.
+    void partyBlow(Body& beast, const Body& attacker, int32_t damage);
+    // A heal's threat: half of it, to the healer, on every monster after the healed.
+    void healThreat(const Body& healer, const Body& healed, int32_t healed_);
     void raiseBeast(Body& beast);
     void reviveHero();
     // A standable tile in the map's spawn box, drawn off the dice: where a death rises and where
