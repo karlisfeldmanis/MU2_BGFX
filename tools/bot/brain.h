@@ -2588,7 +2588,20 @@ private:
         const double taken =
             std::max(0.0, (kind.minimumDamage + kind.maximumDamage) / 2.0 - hero.stats.defense) *
             hitChance(float(kind.attackRate), hero.stats.defenseRate) * guardSeen_;
-        return caution_ * taken * seconds * 20.0 / std::max(1, kind.attackTicks);
+        return reckoned() * caution_ * taken * seconds * 20.0 / std::max(1, kind.attackTicks);
+    }
+    // **Half of it for the elf and the gladiator** (the user, 2026-10-09: "we need to teach bots
+    // to farm better monsters"): costOf counts the breed on him for the whole kill, one at a time,
+    // with no first shots from range and no summon taking the blows -- so at level 150-230 they
+    // made 3-21% of their kills on breeds of level 50 and over, where the Jewel of Life falls,
+    // and none made wings in a day. Halved, four seeds of 24 h offline each: the elf
+    // 166/172/194/178 -> 221/230/196/252, wings on all four (none before); the gladiator
+    // 157/220/219/175 -> 222/230/221/229, deaths 139 -> 79. Not the knight (213/202/213/210 ->
+    // 225/212/191/212, deaths 44 -> 79) nor the wizard (died three times as often, no higher):
+    // theirs stays whole.
+    double reckoned() const {
+        return options_.kin == sim::Kin::FairyElf || (options_.kin == sim::Kin::MagicGladiator && !wizardly()) ? 0.5
+                                                                                                                 : 1.0;
     }
     // Whether he takes this breed on: a kill costs him under a third of his health (a half to
     // keep at a quest already under way, or while he can pay for the potions: riskShare), and it
