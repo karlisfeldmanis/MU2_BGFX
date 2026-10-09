@@ -4515,6 +4515,47 @@ void testPerches(const content::Tables& tables) {
           "on the box's own tile");
     checkNear(realm.hero().facing, box.aim, 1e-4, "facing the way the box does");
 
+    // A logout on the box comes back on it: through the store's bytes and a Join into another
+    // realm, leaning, turned to the box, with no Posed said (no thud at login).
+    {
+        const sim::Kept kept = realm.keptOf(realm.hero().id);
+        checkEqual(int64_t(kept.hero.perch), 22, "his record keeps the box he leans on");
+        std::vector<uint8_t> stored;
+        net::putKept(stored, kept);
+        sim::Kept read;
+        check(net::keptFrom(stored, read) && read.hero.perch == 22, "and the store reads it back");
+        sim::Realm back;
+        check(back.raise(&tables, 8, 125, 112), "the realm he logs back into");
+        back.carry(0x80000009u, read);
+        back.command({.kind = sim::Command::Kind::Join, .ticket = 0x80000009u,
+                      .a = int(read.hero.kin), .b = read.hero.level, .c = read.hero.column,
+                      .d = read.hero.row});
+        back.step();
+        uint32_t him = 0;
+        bool posed = false;
+        for (const sim::Happening& one : back.happenings()) {
+            if (one.what == sim::What::Answered && one.c == int32_t(0x80000009u)) him = uint32_t(one.b);
+            posed |= one.what == sim::What::Posed;
+        }
+        check(him != 0 && back.lookAs(him), "let back in");
+        check(back.hero().pose == sim::Pose::Leaning && back.hero().perch == 22,
+              "leaning on the box again");
+        checkNear(back.hero().facing, box.aim, 1e-4, "turned to it");
+        check(!posed, "and nothing said of it");
+        // Somewhere else, the same record stands him up.
+        sim::Realm away;
+        check(away.raise(&tables, 8, 125, 112), "a realm he lands far from the box in");
+        away.carry(0x8000000Au, read);
+        away.command({.kind = sim::Command::Kind::Join, .ticket = 0x8000000Au,
+                      .a = int(read.hero.kin), .b = read.hero.level, .c = 140, .d = 125});
+        away.step();
+        for (const sim::Happening& one : away.happenings()) {
+            if (one.what == sim::What::Answered && one.c == int32_t(0x8000000Au)) him = uint32_t(one.b);
+        }
+        check(away.lookAs(him) && away.hero().pose == sim::Pose::Standing,
+              "a perch not beside him is not taken");
+    }
+
     sim::Request walk;
     walk.kind = sim::Request::Kind::WalkTo;
     walk.column = 126;

@@ -510,6 +510,7 @@ HeroRecord Realm::record() const {
         out.summonHealth = me().summonOwedHealth;
     }
     out.wayBack = me().wayBack;
+    if (hero.pose != Pose::Standing) out.perch = hero.perch;
     return out;
 }
 
@@ -525,6 +526,19 @@ void Realm::restore(const HeroRecord& saved) {
     // becomes an assignment.
     hero.learned |= saved.learned;
     hero.facing = hero.aim = saved.facing;
+    // Back on the perch he left on, posed as Realm::perch poses him: only one that is still
+    // there, still usable and within the arm's one tile of where he stands. Said with no
+    // Posed, so a login does not land with the sit's thud.
+    if (saved.perch >= 0 && size_t(saved.perch) < tables_->perches.size() && hero.alive()) {
+        const content::Perch& one = tables_->perches[size_t(saved.perch)];
+        if (content::usable(tables_->grid, one) &&
+            std::max(std::abs(hero.column() - one.column), std::abs(hero.row() - one.row)) <= 1) {
+            if (one.turns) hero.facing = hero.aim = one.aim;
+            hero.turning = false;
+            hero.pose = Pose(one.pose);
+            hero.perch = saved.perch;
+        }
+    }
     me().money = std::max<int64_t>(0, saved.money);
     // The quests as saved, each count held to its step's goal so an edited file cannot hand in
     // a clear it never made.

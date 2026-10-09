@@ -212,6 +212,8 @@ bool loadSave(const std::string& path, Saved& out) {
     const core::Json& summon = doc["summon"];
     hero.summonSkill = int32_t(summon["skill"].numberOr(0.0));
     hero.summonHealth = int32_t(summon["health"].numberOr(0.0));
+    // The perch he sat or leant on, absent when he stood. The realm asks it is still beside him.
+    hero.perch = int32_t(doc["perch"].numberOr(-1.0));
     // The cooldowns running, as [skill number, ticks left] pairs, absent when none was. By MU's
     // number and not the table's index, as the bar is, so a row appended later lands on its own.
     const core::Json& cooling = doc["cooling"];
@@ -415,6 +417,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "  \"summon\": {\"skill\": %d, \"health\": %d},\n", hero.summonSkill,
                      hero.summonHealth);
     }
+    if (hero.perch >= 0) std::fprintf(f, "  \"perch\": %d,\n", hero.perch);
     std::fprintf(f, "  \"quests\": {");
     for (int i = 0; i < sim::kQuests; ++i) {
         const sim::QuestProgress& one = hero.quests[i];

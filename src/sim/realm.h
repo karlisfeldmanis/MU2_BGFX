@@ -676,6 +676,10 @@ struct HeroRecord {
     int32_t summonSkill = 0;
     int32_t summonHealth = 0;
     WayBack wayBack;
+    // The perch he was sitting or leaning on, by its index in Tables::perches, -1 for none.
+    // Saved so a logout on a bench comes back on the bench (the user, 2026-10-09: "he has to be
+    // at that pose when login back to world"); the realm asks it is still beside him.
+    int32_t perch = -1;
 };
 
 // A character between worlds (docs/sprints/20-the-world-host.md): all of him the server keeps

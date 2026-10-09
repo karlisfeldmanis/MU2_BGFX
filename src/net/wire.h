@@ -81,13 +81,14 @@ namespace mu::net {
 // 15: Chat, a Say up and a Heard down.
 // 16: the party (docs/party.md): a PartyAsk up and a PartyState down, and the realm's
 //     Command::Kind::PartySet and Body::party (snapshot shape 2).
-constexpr uint32_t kVersion = 16;
+// 17: a Kept carries the perch he sat or leant on (layout 6).
+constexpr uint32_t kVersion = 17;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
 // keeps beside each row. 3 is protocol 3's; 4 adds the way back; 5 a 25th quest (Devin's errand to
-// Tersia, 2026-10-09), where 3 and 4 carry 24.
-constexpr int kKeptLayout = 5;
+// Tersia, 2026-10-09), where 3 and 4 carry 24; 6 the perch he logged out on (2026-10-09).
+constexpr int kKeptLayout = 6;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

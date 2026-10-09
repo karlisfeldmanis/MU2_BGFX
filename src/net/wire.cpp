@@ -193,6 +193,7 @@ void putKept(Out& o, const sim::Kept& k) {
     o.u32(bitsOf(way.facing));
     o.i64(way.ticksLeft);
     o.i64(way.closedTicks);
+    o.i32(r.perch);
 }
 
 sim::Kept takeKept(In& in, int layout = kKeptLayout) {
@@ -253,6 +254,7 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
         way.ticksLeft = in.i64();
         way.closedTicks = in.i64();
     }
+    if (layout >= 6) r.perch = in.i32();
     return k;
 }
 
