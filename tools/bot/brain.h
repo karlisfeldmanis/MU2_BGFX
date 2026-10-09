@@ -296,6 +296,28 @@ public:
     uint32_t lastTicket() const { return hand_.ticket; }
     int64_t clockNow() const { return clock_; }
     int mapNow() const { return map(); }
+    // **Ordered** (tools/netbot, --claude): the map he grinds on whatever his own choice, or -1
+    // for his own again. A map he cannot reach yet is not taken.
+    bool order(int map) {
+        if (map >= 0 && !reachable(map)) return false;
+        ordered_ = map;
+        nextAim_ = 0;
+        return true;
+    }
+    int ordered() const { return ordered_; }
+    // What he is after, in a line: "hunts for The Broken Sword (devias)".
+    std::string aimLine() const {
+        const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to"};
+        const char* modes[] = {"hunting", "resting", "in town"};
+        const WorldRow* at = worldOf(aimMap_);
+        std::string out = names[int(aim_)];
+        if (aim_ == Aim::Castle) out += " Blood Castle";
+        else if (aimQuest_ >= 0) out += std::string(" ") + sim::questAt(aimQuest_).title;
+        out += std::string(" in ") + (at ? at->name : "?") + ", " + modes[int(mode_)];
+        return out;
+    }
+    int kills() const { return out_.kills; }
+    int deaths() const { return out_.deaths; }
     // One line on how he stands, for the netbot's minute report.
     void status() {
         const sim::Body& hero = realm_->hero();
@@ -2672,7 +2694,7 @@ private:
         // moment he landed, and paid both trips 520 times in two hours.
         // Not one set aside since: the room a reward lacked set The Scythe aside every think for
         // ten minutes at a time, 9,452 times in a knight's day.
-        if (options_.quests && wasQuest >= 0 && clock_ - aimSince_ < 10 * 60 * 20 && aside_[wasQuest] <= clock_ &&
+        if (ordered_ < 0 && options_.quests && wasQuest >= 0 && clock_ - aimSince_ < 10 * 60 * 20 && aside_[wasQuest] <= clock_ &&
             ((was == Aim::Accept && realm_->questOffered(wasQuest)) ||
              (was == Aim::HandIn && realm_->quest(wasQuest).state == sim::QuestState::Ready))) {
             return;
@@ -2773,6 +2795,14 @@ private:
                     aimMap_ = w.map;
                 }
             }
+        }
+        // Ordered (order()): that map's grind, over all of the above.
+        if (ordered_ >= 0 && reachable(ordered_)) {
+            aim_ = Aim::Grind;
+            aimQuest_ = -1;
+            seeking_ = -1;
+            quarry_.clear();
+            aimMap_ = ordered_;
         }
         if (aim_ != lastAim_ || aimQuest_ != lastQuest_ || aimMap_ != lastMap_) {
             const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to"};
@@ -4111,6 +4141,7 @@ private:
     Outcome out_;
     Mode mode_ = Mode::Hunt;
     Aim aim_ = Aim::Grind, lastAim_ = Aim::Grind;
+    int ordered_ = -1;  // order(): the map he was told to grind, or -1
     int aimQuest_ = -1, aimMap_ = 0, lastQuest_ = -2, lastMap_ = -1;
     std::vector<int> quarry_;
     int64_t aside_[sim::kQuests] = {};

@@ -17,7 +17,8 @@
 // Each bot keeps its character's token in --dir (saves/bots by default), so a bot run again comes
 // back as the same character, at the level it left.
 //
-//   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] [--party] NAME:CLASS ...
+//   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] [--party]
+//                [--claude DIR] NAME:CLASS ...
 //
 // CLASS is dk, dw, elf or mg (a new elf is born in Noria). --party makes the run's bots one party
 // (docs/party.md), the first named its leader. --claude DIR makes the first named the Claude
@@ -152,7 +153,127 @@ public:
         leads_ = leads;
     }
 
+    // --claude DIR: he is the Claude bot (claude.h).
+    void driveFrom(const std::string& dir) { claude_ = std::make_unique<bot::Claude>(dir); }
+
 private:
+    // **The Claude bot**, each second: the model's orders carried out, and the state it reads.
+    void drive() {
+        const int64_t now = brain_->clockNow();
+        for (const std::string& order : claude_->orders()) {
+            claude_->note(clock(now), "> " + order);
+            const size_t space = order.find(' ');
+            const std::string verb = order.substr(0, space);
+            const std::string rest = space == std::string::npos ? "" : order.substr(space + 1);
+            const size_t space2 = rest.find(' ');
+            const std::string first = rest.substr(0, space2);
+            const std::string after = space2 == std::string::npos ? "" : rest.substr(space2 + 1);
+            std::string answer;
+            if (verb == "say" && !rest.empty()) {
+                link_->say({net::Channel::Map, {}, rest});
+            } else if (verb == "party" && !rest.empty()) {
+                link_->say({net::Channel::Party, {}, rest});
+            } else if (verb == "whisper" && !after.empty()) {
+                link_->say({net::Channel::Whisper, first, after});
+            } else if (verb == "invite" && !first.empty()) {
+                link_->askParty({net::PartyWhat::Invite, first});
+            } else if (verb == "accept" && !first.empty()) {
+                link_->askParty({net::PartyWhat::Accept, first});
+            } else if (verb == "decline" && !first.empty()) {
+                link_->askParty({net::PartyWhat::Decline, first});
+            } else if (verb == "kick" && !first.empty()) {
+                link_->askParty({net::PartyWhat::Kick, first});
+            } else if (verb == "leave") {
+                link_->askParty({net::PartyWhat::Leave, {}});
+            } else if (verb == "auto") {
+                brain_->order(-1);
+                answer = "the brain chooses again";
+            } else if (verb == "go") {
+                int map = -1;
+                for (const WorldRow& w : kWorlds) {
+                    if (first == w.name) map = w.map;
+                }
+                answer = map < 0 ? "no world " + first
+                         : brain_->order(map) ? "grinds " + first
+                                              : first + " is out of his reach";
+            } else {
+                answer = "not an order: " + order;
+            }
+            if (!answer.empty()) claude_->note(clock(now), "  " + answer);
+        }
+        claude_->state(stateText());
+    }
+
+    std::string stateText() const {
+        const sim::Body& me = mirror_->hero();
+        const content::Tables& tables = *tables_.at(world_);
+        std::string out;
+        char text[512];
+        const auto put = [&](const char* fmt, auto... args) {
+            std::snprintf(text, sizeof(text), fmt, args...);
+            out += text;
+        };
+        put("%s, %s level %d -- clock %s\n", name_.c_str(), kinName(me.kin), me.level, clock(brain_->clockNow()).c_str());
+        put("health %d/%d  mana %d/%d  zen %lld  points to spend %d\n", me.health, me.maxHealth, me.mana,
+            me.maxMana, (long long)mirror_->money(), me.pointsInHand);
+        put("in %s at %d,%d%s\n", world_.c_str(), me.column(), me.row(), me.alive() ? "" : " -- DEAD");
+        put("brain: %s%s; %d kills, %d deaths this run\n", brain_->aimLine().c_str(),
+            brain_->ordered() >= 0 ? " (ordered)" : "", brain_->kills(), brain_->deaths());
+        int potions = 0, carried = 0;
+        out += "wears:";
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = mirror_->satchel()[slot];
+            if (one.empty()) continue;
+            if (slot >= sim::kWorn) ++carried;
+            const content::ItemRow& row = tables.items[size_t(one.item)];
+            if (slot < sim::kWorn) put(" %s%s", row.label.c_str(), one.refinement > 0 ? ("+" + std::to_string(one.refinement)).c_str() : "");
+            else if (sim::heals(row)) ++potions;
+        }
+        put("\nbag: %d things, %d of them healing potions\n", carried, potions);
+        // What is near: players by name, monsters by breed, nearest first.
+        struct Near {
+            float d;
+            std::string what;
+        };
+        std::vector<Near> near;
+        for (const sim::Body& b : mirror_->bodies()) {
+            if (b.id == me.id || !b.alive()) continue;
+            const float dx = b.x - me.x, dy = b.y - me.y, d = std::sqrt(dx * dx + dy * dy);
+            if (d > 20.0f) continue;
+            if (b.player) {
+                std::string who;
+                bool isBot = false;
+                if (!link_->nameOf(b.id, &who, &isBot)) who = "#" + std::to_string(b.id);
+                near.push_back({d, "player " + who + (isBot ? " (bot)" : "") + " level " + std::to_string(b.level)});
+            } else if (b.monster() && b.kind >= 0) {
+                const content::MonsterKind& kind = tables.kinds[size_t(b.kind)];
+                near.push_back({d, kind.label + " level " + std::to_string(kind.level) + " " +
+                                       std::to_string(b.health) + "/" + std::to_string(b.maxHealth)});
+            }
+        }
+        std::sort(near.begin(), near.end(), [](const Near& a, const Near& b) { return a.d < b.d; });
+        out += "near (20 tiles):\n";
+        for (size_t i = 0; i < near.size() && i < 10; ++i) put("  %4.1f  %s\n", near[i].d, near[i].what.c_str());
+        if (near.size() > 10) put("  ... %zu more\n", near.size() - 10);
+        put("players on this map: %d\n", mirror_->playersHere());
+        out += "quests:\n";
+        const char* states[] = {"untaken", "active", "ready to hand in", "resting"};
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestProgress& p = mirror_->quest(q);
+            if (p.state == sim::QuestState::Active || p.state == sim::QuestState::Ready) {
+                put("  %s: %s\n", sim::questAt(q).title, states[std::min(int(p.state), 3)]);
+            }
+        }
+        const net::PartyState& party = link_->party();
+        out += "party:";
+        if (party.members.empty()) out += " none";
+        for (const net::PartyState::Member& m : party.members) {
+            put(" %s (%d, %s)", m.name.c_str(), m.level, m.world.c_str());
+        }
+        out += "\n";
+        return out;
+    }
+
     void line(const char* fmt, ...) const __attribute__((format(printf, 2, 3))) {
         char text[512];
         va_list args;
@@ -221,8 +342,17 @@ private:
                 line("~ hears %s%s: %s", one.channel == net::Channel::Whisper ? "a whisper from " : "",
                      one.name.c_str(), one.text.c_str());
             }
+            if (claude_) {
+                const char* channels[] = {"map", "party", "guild", "whisper", "server"};
+                claude_->note(clock(now), std::string(channels[std::min(int(one.channel), 4)]) + " " +
+                                              (one.name.empty() ? "(server)" : one.name) +
+                                              (one.bot ? " (bot)" : "") + (one.to.empty() ? "" : " to " + one.to) +
+                                              ": " + one.text);
+                continue;
+            }
             talk_.heard(one, now);
         }
+        if (claude_) return;
         talk_.idle(now);
         says_.clear();
         talk_.take(now, says_);
@@ -323,6 +453,7 @@ private:
     bool leads_ = false;
     int64_t invitedAt_ = -1000000;
     std::string partySaid_;
+    std::unique_ptr<bot::Claude> claude_;  // --claude: the model drives him
 };
 
 }  // namespace
@@ -335,6 +466,7 @@ int main(int argc, char** argv) {
     bool quests = true;
     bool chatty = false;
     bool party = false;
+    std::string claude;
     std::vector<std::pair<std::string, sim::Kin>> wanted;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
@@ -345,6 +477,7 @@ int main(int argc, char** argv) {
         else if (a == "--no-quests") quests = false;
         else if (a == "--chatty") chatty = true;
         else if (a == "--party") party = true;
+        else if (a == "--claude" && i + 1 < argc) claude = argv[++i];
         else if (a.find(':') != std::string::npos) {
             const std::string name = a.substr(0, a.find(':')), cls = a.substr(a.find(':') + 1);
             if (cls == "dk") wanted.emplace_back(name, sim::Kin::DarkKnight);
@@ -357,7 +490,7 @@ int main(int argc, char** argv) {
             }
         } else {
             std::fprintf(stderr, "usage: netbot [--server HOST] [--port N] [--dir DIR] [--hours H] "
-                                 "[--no-quests] [--chatty] [--party] NAME:dk|dw|elf|mg ...\n");
+                                 "[--no-quests] [--chatty] [--party] [--claude DIR] NAME:dk|dw|elf|mg ...\n");
             return 2;
         }
     }
@@ -372,6 +505,7 @@ int main(int argc, char** argv) {
     for (const auto& [name, kin] : wanted) {
         bots.push_back(std::make_unique<NetBot>(name, kin, host, port, dir, quests, chatty));
     }
+    if (!claude.empty()) bots.front()->driveFrom(claude);
     if (party) {
         std::vector<std::string> names;
         for (const auto& one : wanted) names.push_back(one.first);
