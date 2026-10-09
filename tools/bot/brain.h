@@ -3984,6 +3984,11 @@ private:
         // since he chooses his spells by their mana (spell) he went to town for mana twice a day
         // and for health thirty times, so health comes first as everyone's does.
         if (wizardly()) {
+            // The bundle he came for first, when he came for mana (needsTown): health first spent
+            // a poor wizard's last Zen, he walked out with none, and was sent back -- 14 trips in
+            // a game hour at level 10-18, "buys 3 healing and 0 mana" each (the Claude bot's run,
+            // 2026-10-09).
+            restore(3);
             heal(30 * deep);
             restore(18 * deep);
         } else {
