@@ -1882,16 +1882,14 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     }
     if (poseRows_.size() < posing_.size() * kRowsEach) poseRows_.resize(posing_.size() * kRowsEach);
     poseBones_.resize(posing_.size());
-    core::parallelFor(posing_.size(), [&](size_t k) {
+    // Each one's palette and draws are taken here in order as soon as its own pose is done
+    // (core::parallelForInOrder), beside the poses still out rather than after the slowest.
+    const auto poseOne = [&](size_t k) {
         poseBones_[k] = drawn_[posing_[k]].figure.pose(&poseRows_[k * kRowsEach]);
-    });
-    size_t posedAt = 0;
-    for (Drawn& one : drawn_) {
-        if (!one.visible || !one.figure.body()) continue;
+    };
+    const auto takeOne = [&](size_t k) {
+        Drawn& one = drawn_[posing_[k]];
         const float fade = fadeOf(one) * one.seeThrough;
-        if (fade <= 0.0f) continue;
-        // Its pose from the pass above: the same test, in the same order.
-        const size_t k = posedAt++;
         const int bones = poseBones_[k];
         const int palette = bones > 0 ? renderer.addPalette(&poseRows_[k * kRowsEach], bones) : -1;
         // And its bow's or crossbow's own clip, on her key: the string drawn and let go with the
@@ -1983,7 +1981,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                 for (size_t i = castFrom; i < casters->size(); ++i) (*casters)[i].fade = fade;
             }
             tint();
-            continue;
+            return;
         }
         // The sun's list is every figure, as the town's is: a body behind the camera still
         // casts into the frame, and culling the shadow pass with the camera's frustum is the
@@ -1993,7 +1991,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
         tint();
-    }
+    };
+    core::parallelForInOrder(posing_.size(), poseOne, takeOne);
     // Twisting Slash's copies of his weapon, the camera's alone.
     wheel_.gather(out);
     // And Rageful Blow's weapon in the air.
@@ -2012,10 +2011,10 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     constexpr size_t kFolkRows = size_t(gfx::Renderer::kMaxBones) * 12;
     if (poseRows_.size() < folk_.size() * kFolkRows) poseRows_.resize(folk_.size() * kFolkRows);
     poseBones_.resize(folk_.size());
-    core::parallelFor(folk_.size(), [&](size_t i) {
+    const auto poseFolk = [&](size_t i) {
         poseBones_[i] = folk_[i].figure.pose(&poseRows_[i * kFolkRows]);
-    });
-    for (size_t i = 0; i < folk_.size(); ++i) {
+    };
+    const auto takeFolk = [&](size_t i) {
         Standing& one = folk_[i];
         const int bones = poseBones_[i];
         const int palette = bones > 0 ? renderer.addPalette(&poseRows_[i * kFolkRows], bones) : -1;
@@ -2032,7 +2031,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         one.figure.gather(palette, out);
         // After her pose, which the wing takes her Bone05 from (game/wings.h).
         if (one.wing.worn()) one.wing.gather(renderer, one.figure, scratch_, out, casters);
-    }
+    };
+    core::parallelForInOrder(folk_.size(), poseFolk, takeFolk);
 }
 
 void Play::settle(Standing& one) {

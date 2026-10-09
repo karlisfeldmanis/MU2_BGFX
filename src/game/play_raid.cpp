@@ -432,7 +432,7 @@ void Play::otherWings(float seconds) {
 
 void Play::gatherOtherWings(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
                             std::vector<gfx::Drawable>* casters) {
-    // Posed on all the cores, as the bodies are (Play::gather), then drawn in order here.
+    // Posed on all the cores, as the bodies are (Play::gather), and drawn in order as they come.
     constexpr size_t kRowsEach = size_t(gfx::Renderer::kMaxBones) * 12;
     posing_.clear();
     for (size_t i = 0; i < otherWings_.size() && i < drawn_.size(); ++i) {
@@ -440,15 +440,17 @@ void Play::gatherOtherWings(gfx::Renderer& renderer, std::vector<gfx::Drawable>&
     }
     if (poseRows_.size() < posing_.size() * kRowsEach) poseRows_.resize(posing_.size() * kRowsEach);
     poseBones_.resize(posing_.size());
-    core::parallelFor(posing_.size(), [&](size_t k) {
-        const size_t i = posing_[k];
-        poseBones_[k] = otherWings_[i].pose(drawn_[i].figure, &poseRows_[k * kRowsEach]);
-    });
-    for (size_t k = 0; k < posing_.size(); ++k) {
-        if (poseBones_[k] < 0) continue;
-        otherWings_[posing_[k]].gatherPosed(renderer, &poseRows_[k * kRowsEach], poseBones_[k],
-                                            out, casters);
-    }
+    core::parallelForInOrder(
+        posing_.size(),
+        [&](size_t k) {
+            const size_t i = posing_[k];
+            poseBones_[k] = otherWings_[i].pose(drawn_[i].figure, &poseRows_[k * kRowsEach]);
+        },
+        [&](size_t k) {
+            if (poseBones_[k] < 0) return;
+            otherWings_[posing_[k]].gatherPosed(renderer, &poseRows_[k * kRowsEach],
+                                                poseBones_[k], out, casters);
+        });
 }
 
 }  // namespace mu::game

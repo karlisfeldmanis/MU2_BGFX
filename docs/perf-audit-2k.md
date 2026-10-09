@@ -389,6 +389,60 @@ bit-identical.
 Found on the way, not ours to chase here: the fight breaks an invariant at tick 50, "body 4 stands
 on blocked tile (32, 210)", the same before the patch -- a Balrog put on a blocked tile.
 
+Then **the main thread's wait on the poses**, the same day. Of its samples in the pool, most were
+the frame's thread yielding for the last few poses, and a profile of the wings showed why: it
+posed six samples' worth and waited 107 on a worker the kernel had parked mid-item. Kept:
+
+- `core::parallelForInOrder`: the work on every core, and each result taken on the frame's thread
+  in order **as soon as its own item is done**, the frame's thread posing while the next one it
+  takes is still out. Play::gather's bodies and townsfolk, the other players' wings and the town's
+  Crowd take their palettes and draws this way, beside the poses still running rather than after
+  the slowest of them.
+- The pool is **a worker a performance core but one** (seven on the M1 Pro, not nine), at the
+  frame's own QoS class (USER_INTERACTIVE), and a round with no worker asleep wakes nobody.
+- **The sprites' corners on every core** (Effects::draw): each sprite's sheet slot and the runs
+  are found in one pass in order, then the corners written in chunks of 256. The distances stay
+  on the frame's thread: 8,192 subtractions are cheaper than a hand-off.
+
+Main-thread samples a thousand frames, a 6 s `sample` of each build in the fight (load ~7):
+PlayMode::frame 1268 to 1099 (-13%), Play::gather 342 to 157, the yields 156 to 26,
+Effects::draw 157 to 134. The wall frame did not move -- 7.10-7.15 against 7.12-7.20 ms over 600
+frames x3, interleaved -- because at 1080p this fight is now the GPU's (~8.5 ms of GPU a frame,
+the 77 fps this section opened with measured under heavier machine load). `--render-thread`
+measured the same again (7.15-7.18) and stays off; bgfx's Metal encode (renderFrame, ~900 of
+those samples) is now the main thread's largest piece and is what it would take off, where a
+slower CPU makes the frame the CPU's. Play::update's share is the sim's step (Realm::heroAfter),
+which stays on one thread.
+
+Pictures: Lorencia's play scene at --fixed-dt 16.667 --seed 1 matches the old build outside the
+corner readout, and with the sprites forced into 16-sprite chunks (75 rounds of the pool) differs
+only where a dropped item lands -- which differs between two runs of the old build as well, so
+that scene is deterministic save its loot.
+
+Tried and reverted: **workers spinning 300 us before they sleep**, so a frame's burst of rounds
+found them awake. Nine USER_INTERACTIVE threads spinning on a loaded ten-core machine had the
+kernel park the very worker holding the last item: the sprites' wait went 38 to 115 samples, and
+the wings' wait was the 107 above.
+
+**What holds the fight's frame, for 160 fps at High** (the user: "can we push more to get
+160fps?", then "withotu changing max graphics"). It is the GPU's: 2 ms of extra busy work on
+the frame's thread a frame moved the frame by nothing, and a Metal System Trace (xctrace
+--attach, run outside the sandbox) has the GPU 98% busy. Per frame, the encoders labelled by
+view for the trace: the shade target 4.1 ms of fragment (the shade view and the transparent one
+share it), the sun 0.88 fragment + 0.43 vertex, a compute 0.57 in the prepass's view, the
+present 0.46, the prepass 0.35. Knocked out one at a time against a 7.05-7.25 baseline: SSAO
+-0.25; the sprites all but 16 -0.6; the figures' own shade draws -1.65, but the figures out of the
+prepass as well only -0.16, since the ground is then shaded in their place -- a pixel of a +11
+knight costs about what a pixel of floor does. --msaa 1 or 2, --shadow-size 2048, --no-bloom and
+--cpu-scenery moved nothing; --scale 0.85 (MetalFX) is 6.2 ms but is not High.
+
+The machine moves this floor by itself: the same binary measured 6.76-6.79 and 7.10-7.30 ms
+within the hour, and the present 1.0 ms of GPU in one trace and 0.46 in another. A present that
+tone-mapped its five sharpen taps through one choice of curve was 0.48 against the old 1.0 in
+one trace, and the old present was 0.455 in the next: not kept. 160 fps (6.25 ms) is 0.5-0.9 ms
+of the shade target's 4.1 ms away; the next step is fs_shade's own cost per pixel, in Xcode's
+GPU capture with its shader profiler, which these traces did not carry.
+
 ## Looked at and left out
 
 - **Clustered or tiled light culling.** The lamp grid already bins static lights per 2 m

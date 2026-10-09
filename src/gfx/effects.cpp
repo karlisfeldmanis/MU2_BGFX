@@ -6,6 +6,7 @@
 
 #include <bx/sort.h>
 
+#include "core/jobs.h"
 #include "core/log.h"
 #include "gfx/program.h"
 
@@ -37,6 +38,10 @@ float kindOf(Blend blend) {
     }
     return 0.0f;
 }
+
+// Sprites a chunk when the corners are split across the cores: small, so the last chunk out is
+// never long to wait for.
+constexpr uint32_t kChunk = 256;
 
 uint32_t packAbgr(const float* rgba) {
     const auto byteOf = [](float v) {
@@ -77,6 +82,8 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
     orderSpare_.reserve(capacity);
     keys_.reserve(capacity);
     keysSpare_.reserve(capacity);
+    slots_.reserve(capacity);
+    runs_.reserve(capacity);
     core::logf("effects: transparent pass ready, %u sprites reserved", capacity);
     return true;
 }
@@ -98,6 +105,10 @@ void Effects::shutdown() {
         v->clear();
         v->shrink_to_fit();
     }
+    slots_.clear();
+    slots_.shrink_to_fit();
+    runs_.clear();
+    runs_.shrink_to_fit();
 }
 
 void Effects::begin() {
@@ -209,95 +220,114 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
     // One draw per run of sprites in depth order that needs no more than kSheetSlots sheets
     // and one blend. The runs come out of the depth order and are NOT regrouped, because
     // regrouping by sheet is exactly the thing that would put a near sprite behind a far one.
-    bgfx::TextureHandle bound[kSheetSlots];
-    uint32_t boundCount = 0;
-    bool runMinus = false;
+    // Found first, in order, with each sprite's slot among its run's sheets: the corners are
+    // then written on every core and the runs submitted after.
+    slots_.resize(quads);
+    runs_.clear();
+    {
+        Run run;
+        uint32_t runStart = 0;
+        for (uint32_t n = 0; n < quads; ++n) {
+            const Sprite& s = sprites_[order_[n]];
+            const bool isMinus = s.blend == Blend::Minus;
+            uint32_t slot = 0;
+            while (slot < run.boundCount && run.bound[slot].idx != s.sheet.idx) ++slot;
+            if (n > runStart && (isMinus != run.minus || slot == kSheetSlots)) {
+                run.end = n;
+                runs_.push_back(run);
+                run = Run{};
+                runStart = n;
+                slot = 0;
+            }
+            if (n == runStart) run.minus = isMinus;
+            if (slot == run.boundCount) run.bound[run.boundCount++] = s.sheet;
+            slots_[n] = uint8_t(slot);
+        }
+        run.end = quads;
+        runs_.push_back(run);
+    }
+
+    // The corners in chunks on every core (core::parallelFor): a full fight's 8,192 sprites
+    // were 4% of the main thread one after another. A chunk writes only its own range, so the
+    // result is the same whichever core wrote it.
+    core::parallelFor((quads + kChunk - 1) / kChunk, [&](size_t chunk) {
+        const uint32_t last = std::min(quads, uint32_t(chunk + 1) * kChunk);
+        for (uint32_t n = uint32_t(chunk) * kChunk; n < last; ++n) {
+            const Sprite& s = sprites_[order_[n]];
+            const float cosine = std::cos(s.spin);
+            const float sine = std::sin(s.spin);
+            // The quad's own two axes, the camera's basis turned by the spin.
+            const float ax[3] = {(right[0] * cosine + up[0] * sine) * s.halfWidth,
+                                 (right[1] * cosine + up[1] * sine) * s.halfWidth,
+                                 (right[2] * cosine + up[2] * sine) * s.halfWidth};
+            const float ay[3] = {(up[0] * cosine - right[0] * sine) * s.halfHeight,
+                                 (up[1] * cosine - right[1] * sine) * s.halfHeight,
+                                 (up[2] * cosine - right[2] * sine) * s.halfHeight};
+
+            const uint32_t abgr = packAbgr(s.colour);
+            const float kind = kindOf(s.blend);
+            const float slot = float(slots_[n]);
+
+            const float corners[4][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}};
+            // v runs down the sheet while the quad's y runs up it, so the BOTTOM corners take
+            // the rectangle's larger v.
+            const float vs[4] = {s.v1, s.v1, s.v0, s.v0};
+            const float us[4] = {s.u0, s.u1, s.u1, s.u0};
+            for (int c = 0; c < 4; ++c) {
+                Vertex& out = vertices[n * 4 + c];
+                if (s.placed) {
+                    out.x = s.corner[c][0];
+                    out.y = s.corner[c][1];
+                    out.z = s.corner[c][2];
+                    out.u = s.cornerUv[c][0];
+                    out.v = s.cornerUv[c][1];
+                } else {
+                    out.x = s.position[0] + ax[0] * corners[c][0] + ay[0] * corners[c][1];
+                    out.y = s.position[1] + ax[1] * corners[c][0] + ay[1] * corners[c][1];
+                    out.z = s.position[2] + ax[2] * corners[c][0] + ay[2] * corners[c][1];
+                    out.u = us[c];
+                    out.v = vs[c];
+                }
+                out.abgr = abgr;
+                out.slot = slot;
+                out.kind = kind;
+            }
+            const uint16_t base = uint16_t(n * 4);
+            uint16_t* tri = &indices[n * 6];
+            tri[0] = base;
+            tri[1] = uint16_t(base + 1);
+            tri[2] = uint16_t(base + 2);
+            tri[3] = base;
+            tri[4] = uint16_t(base + 2);
+            tri[5] = uint16_t(base + 3);
+        }
+    });
+
     uint32_t runStart = 0;
-    const auto submitRun = [&](uint32_t runEnd) {
-        bgfx::setState(common | (runMinus ? minus : over));
+    for (const Run& run : runs_) {
+        bgfx::setState(common | (run.minus ? minus : over));
         // The WHOLE vertex buffer, and the run selected by the index range alone.
         //
         // Not `setVertexBuffer(0, &tvb, runStart * 4, runQuads * 4)`, which is the obvious
         // thing to write and is wrong: bgfx ADDS the start vertex to every index, and the
-        // indices written below are already absolute. The first run starts at zero so it
+        // indices written above are already absolute. The first run starts at zero so it
         // draws correctly and every run after it reads vertices runStart*4 too far along --
         // so a quad takes its corners from other sprites entirely. On the digits that showed
         // as one glyph stretched across eight, reading "01234567" where the damage was 10,
         // and on the blood as splashes smeared into one cloud. A single-run frame looked
         // perfect throughout, which is what kept it hidden.
         bgfx::setVertexBuffer(0, &tvb);
-        bgfx::setIndexBuffer(&tib, runStart * 6, (runEnd - runStart) * 6);
+        bgfx::setIndexBuffer(&tib, runStart * 6, (run.end - runStart) * 6);
         // A slot the run did not fill is given its first sheet, so no stage the shader
         // declares is ever left unbound.
         for (uint32_t i = 0; i < kSheetSlots; ++i) {
-            bgfx::setTexture(kSheetStages[i], sSheet_[i], bound[i < boundCount ? i : 0]);
+            bgfx::setTexture(kSheetStages[i], sSheet_[i], run.bound[i < run.boundCount ? i : 0]);
         }
         bgfx::setUniform(uFlame_, flame_);
         bgfx::submit(view, program_);
         ++drawCount_;
-        runStart = runEnd;
-        boundCount = 0;
-    };
-
-    for (uint32_t n = 0; n < quads; ++n) {
-        const Sprite& s = sprites_[order_[n]];
-        const bool isMinus = s.blend == Blend::Minus;
-        uint32_t slot = 0;
-        while (slot < boundCount && bound[slot].idx != s.sheet.idx) ++slot;
-        if (n > runStart && (isMinus != runMinus || slot == kSheetSlots)) {
-            submitRun(n);
-            slot = 0;
-        }
-        if (n == runStart) runMinus = isMinus;
-        if (slot == boundCount) bound[boundCount++] = s.sheet;
-
-        const float cosine = std::cos(s.spin);
-        const float sine = std::sin(s.spin);
-        // The quad's own two axes, the camera's basis turned by the spin.
-        const float ax[3] = {(right[0] * cosine + up[0] * sine) * s.halfWidth,
-                             (right[1] * cosine + up[1] * sine) * s.halfWidth,
-                             (right[2] * cosine + up[2] * sine) * s.halfWidth};
-        const float ay[3] = {(up[0] * cosine - right[0] * sine) * s.halfHeight,
-                             (up[1] * cosine - right[1] * sine) * s.halfHeight,
-                             (up[2] * cosine - right[2] * sine) * s.halfHeight};
-
-        const uint32_t abgr = packAbgr(s.colour);
-        const float kind = kindOf(s.blend);
-
-        const float corners[4][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}};
-        // v runs down the sheet while the quad's y runs up it, so the BOTTOM corners take the
-        // rectangle's larger v.
-        const float vs[4] = {s.v1, s.v1, s.v0, s.v0};
-        const float us[4] = {s.u0, s.u1, s.u1, s.u0};
-        for (int c = 0; c < 4; ++c) {
-            Vertex& out = vertices[n * 4 + c];
-            if (s.placed) {
-                out.x = s.corner[c][0];
-                out.y = s.corner[c][1];
-                out.z = s.corner[c][2];
-                out.u = s.cornerUv[c][0];
-                out.v = s.cornerUv[c][1];
-            } else {
-                out.x = s.position[0] + ax[0] * corners[c][0] + ay[0] * corners[c][1];
-                out.y = s.position[1] + ax[1] * corners[c][0] + ay[1] * corners[c][1];
-                out.z = s.position[2] + ax[2] * corners[c][0] + ay[2] * corners[c][1];
-                out.u = us[c];
-                out.v = vs[c];
-            }
-            out.abgr = abgr;
-            out.slot = float(slot);
-            out.kind = kind;
-        }
-        const uint16_t base = uint16_t(n * 4);
-        uint16_t* tri = &indices[n * 6];
-        tri[0] = base;
-        tri[1] = uint16_t(base + 1);
-        tri[2] = uint16_t(base + 2);
-        tri[3] = base;
-        tri[4] = uint16_t(base + 2);
-        tri[5] = uint16_t(base + 3);
+        runStart = run.end;
     }
-    submitRun(quads);
 }
 
 }  // namespace mu::gfx

@@ -937,15 +937,15 @@ void Crowd::gather(gfx::Renderer& renderer, const float* viewProj,
     const float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     const Frustum frustum(viewProj ? viewProj : identity);
 
-    // Every figure posed on all the cores first (core::parallelFor), each into a slot of its own;
-    // the palette, the held items and the draws stay in order below.
+    // Every figure posed on all the cores (core::parallelForInOrder), each into a slot of its own;
+    // the palette, the held items and the draws taken in order below as each pose is done.
     constexpr size_t kRowsEach = size_t(gfx::Renderer::kMaxBones) * 12;
     if (poseRows_.size() < figures_.size() * kRowsEach) poseRows_.resize(figures_.size() * kRowsEach);
     poseBones_.resize(figures_.size());
-    core::parallelFor(figures_.size(), [&](size_t i) {
+    const auto poseOne = [&](size_t i) {
         poseBones_[i] = figures_[i].pose(&poseRows_[i * kRowsEach]);
-    });
-    for (size_t i = 0; i < figures_.size(); ++i) {
+    };
+    const auto takeOne = [&](size_t i) {
         Figure& figure = figures_[i];
         const int bones = poseBones_[i];
         const int row = bones > 0 ? renderer.addPalette(&poseRows_[i * kRowsEach], bones) : -1;
@@ -964,12 +964,13 @@ void Crowd::gather(gfx::Renderer& renderer, const float* viewProj,
                                figure.position()[2]};
             if (!frustum.holds(centre, figure.radius())) {
                 ++culled_;
-                continue;
+                return;
             }
         }
         ++drawn_;
         figure.gather(row, out);
-    }
+    };
+    core::parallelForInOrder(figures_.size(), poseOne, takeOne);
     poseMs_ = double(bx::getHPCounter() - started) * 1000.0 / double(bx::getHPFrequency());
 }
 

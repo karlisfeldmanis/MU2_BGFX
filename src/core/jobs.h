@@ -19,4 +19,22 @@ void parallelFor(size_t count, Work&& work) {
                 &work);
 }
 
+// work(i) on every core as parallelFor's, and take(i) on the calling thread in index order, each
+// as soon as its own work(i) is done -- the caller lending a hand with the work while the next
+// one it takes is still out. What a frame does in order with each result (a pose's palette and
+// draws) then runs beside the rest of the work rather than after the slowest item of it.
+void parallelForInOrder(size_t count, void (*work)(void* context, size_t index),
+                        void (*take)(void* context, size_t index), void* context);
+
+template <typename Work, typename Take>
+void parallelForInOrder(size_t count, Work&& work, Take&& take) {
+    struct Both {
+        Work& work;
+        Take& take;
+    } both{work, take};
+    parallelForInOrder(
+        count, [](void* context, size_t index) { static_cast<Both*>(context)->work(index); },
+        [](void* context, size_t index) { static_cast<Both*>(context)->take(index); }, &both);
+}
+
 }  // namespace mu::core

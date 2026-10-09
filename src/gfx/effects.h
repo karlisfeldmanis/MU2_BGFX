@@ -142,6 +142,16 @@ private:
     std::vector<uint32_t> orderSpare_;
     std::vector<uint32_t> keys_;
     std::vector<uint32_t> keysSpare_;
+    // Each sprite's slot among its run's sheets, in depth order, worked out before its corners
+    // are written on every core; and each run, where it ends, its blend and its sheets.
+    std::vector<uint8_t> slots_;
+    struct Run {
+        uint32_t end = 0;
+        bool minus = false;
+        uint32_t boundCount = 0;
+        bgfx::TextureHandle bound[kSheetSlots];
+    };
+    std::vector<Run> runs_;
     // Reserved to capacity at init and reused. `bgfx::allocTransientVertexBuffer` owns the
     // per-frame vertex memory, which is bgfx's own ring and not an allocation of ours.
     uint32_t drawCount_ = 0;
