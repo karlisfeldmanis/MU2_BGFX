@@ -341,7 +341,7 @@ bool Hud::Face::operator==(const Face& o) const {
     return width == o.width && height == o.height && health == o.health &&
            maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
            shield == o.shield && maxShield == o.maxShield &&
-           level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
+           level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory && chat == o.chat &&
            character == o.character && quest == o.quest && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(boons, boons + kBoons, o.boons) && fanOpen == o.fanOpen &&
@@ -558,6 +558,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.inventory = inventoryOpen;
         now_.character = characterOpen;
         now_.quest = questOpen;
+        now_.chat = chatOpen_;
         now_.hovered = hoveredAt(pointer.x, pointer.y);
         now_.tip = tipAt(pointer.x, pointer.y);
         now_.pointerX = pointer.x;
@@ -1390,8 +1391,8 @@ void Hud::rebuild() {
         const ButtonRow& row = kButtons[i];
         const Box box = plate(s, buttonPx(i));
         const bool hovered = now_.hovered == 100 + i;
-        const bool open = (i == 2 && now_.inventory) || (i == 3 && now_.character) ||
-                          (i == kQuestButton && now_.quest);
+        const bool open = (i == 1 && now_.chat) || (i == 2 && now_.inventory) ||
+                          (i == 3 && now_.character) || (i == kQuestButton && now_.quest);
         // Brightened under the pointer in MU2, by a modulate of 1.35; a byte cannot go past
         // white, so here the icon's own lit state is the whole of the hover. A departure.
         canvas_.image(disc, box, row.live ? 0xFFFFFFFFu : kDeadIcon);

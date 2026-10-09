@@ -542,6 +542,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
     bool toggleQuest = false, toggleChat = false;
+    hud_.setChatOpen(chat_.typing());
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
                 characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu, journal_ >= 0,
                 &toggleQuest, &toggleChat);

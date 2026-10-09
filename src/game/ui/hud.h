@@ -254,6 +254,8 @@ public:
     // The top edge of the plate in backbuffer pixels: what the gain lane stacks up from, so it
     // sits over the HUD at every window size without a second copy of the plate's arithmetic.
     float plateTop() const;
+    // The chat open (game/ui/chat.h): its button is drawn lit, as the bag's is while the bag is up.
+    void setChatOpen(bool open) { chatOpen_ = open; }
     // The left edge of the buffs' strip over the plate: as far right as the chat may reach.
     float buffsLeft() const;
     // The worn-gear warning's `i`th cell (game/ui/endurance.h), in backbuffer pixels: the buff
@@ -289,7 +291,7 @@ private:
             level = 0;
         int gem = 0;
         float slid = 0;
-        bool inventory = false, character = false, quest = false;
+        bool inventory = false, character = false, quest = false, chat = false;
         int hovered = -1;  // which button or slot is lit
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;
@@ -353,6 +355,7 @@ private:
     tip::Sheet experienceSheet() const;
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;
+    bool chatOpen_ = false;
 };
 
 }  // namespace mu::game
