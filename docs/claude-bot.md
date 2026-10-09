@@ -54,16 +54,32 @@ The first runs, 2026-10-09, Claude (dw) and Tavik (dk), fresh, on a local server
   decision sent him back: 11 mana trips in 4 game hours. He now buys the bundle he came for
   first (3d5a38d2). Result: 0 mana trips, 23 → 14 trips overall, level 59 → 69 at 4 h.
 
-**Open (handed to the party's brain work, mu2-bgfx-64)**
+- *A paid trip bought twice.* A trip whose answer took longer than netbot's two-second
+  `kAnswerWait` was decided again. The brain, still on the old map in the scratch, paid again,
+  and the first answer's ticket had gone with the last decision's commands. The server charged
+  both. Paid trips are now kept until answered (4e4cb791). Four bots over 8 game hours:
+  74 double payments → 0.
 
-- *Flipping between two quests on two maps.* From 4:07 to 4:35 the aim alternated between
-  The White Silence (Devias) and The Catacombs (Lorencia), at 2000 zen per trip:
-  Devias → Lorencia → Noria → Lorencia → Devias → Lorencia → Devias. `choose()` keeps a giver
-  he set out for, but not a hunt against another hunt on a different map. A hunt under way
-  should hold until its quest is done, or until its map has gone dry for a while.
-- *A paid trip bought twice.* "pays 2000 zen to travel to Noria" at 4:15:06 and again at
-  4:15:08, two seconds apart.
+**Seen, left as they are**
+
+- *Flipping between two quests on two maps.* The White Silence (Devias) ↔ The Catacombs
+  (Lorencia or the Dungeon): seven paid trips in 28 game minutes for one wizard, and 12-17 flips
+  in 8 hours for the knight and the gladiator. Mostly fear: he dies to an Elite Yeti or Ice
+  Queen, the brain "leaves them for 15 min", the quest is no longer huntable, and he goes to
+  the other quest until the fear passes. A hold-and-restock change for the
+  potion-short case (drinksThrough's floor of 20) fired twice in 8 hours and changed nothing
+  measurable, so it was not kept. The trips cost little zen. The real cost is time, and the
+  fix belongs to the threat and party work in `choose()`.
 - *Bots never take an invite or answer a bot.* Tavik heard Claude's invite and whisper and did
   nothing. That's by design today (talk.h never answers a bot's whisper; only `--party` mates
   accept invites). A bot that accepts an invite from a nearby player or bot of its level band
   would let parties form on their own.
+
+## How to judge a run
+
+`python3 tools/netbot/judge.py NETBOT_LOG HOURS`. For
+each bot, within the first HOURS game hours, it reports level, deaths, paid trips and their
+zen, trips paid twice within 5 s, and hunt flips. Compare two builds of the same HEAD on two
+servers, one class per bot, at most two server+netbot pairs at a time (about 6 of the Mac's 10
+cores). With four bots, netbot lags a --speed 100 server by about a fifth, and a loaded Mac
+skews deaths and levels.
