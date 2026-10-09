@@ -228,7 +228,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         }
         if (attacker.excel.frenzies > 0) {
             if (attacker.frenzyUntil <= tick_) attacker.frenzyStacks = 0;
-            const bool more = attacker.frenzyStacks < kFrenzyMostStacks;
+            const bool more = attacker.frenzyStacks < frenzyMost(attacker.excel.frenzies);
             if (more) {
                 ++attacker.frenzyStacks;
                 core::logf("frenzy rune: tick %lld, stack %d, +%d speed for %lld ticks",

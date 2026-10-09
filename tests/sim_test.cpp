@@ -9156,12 +9156,12 @@ void testDungeonRunes(const content::Tables& tables) {
     };
     // testPets' fight: the knight on the nearest monster, the ticks he lands and is not struck
     // (and does not level, which fills him) counted for what they give back.
-    const auto fight = [&](int item, int slot, sim::Power power, Tally* t) {
+    const auto fight = [&](int item, int slot, sim::Power power, Tally* t, int runes = 1) {
         sim::Realm realm;
         realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
         if (item >= 0) {
-            const uint8_t powers[3] = {uint8_t(power), 0, 0};
-            realm.give(item, slot, 0, -1, false, 0, 0, 1, powers);
+            const uint8_t powers[3] = {uint8_t(power), runes > 1 ? uint8_t(power) : uint8_t(0), 0};
+            realm.give(item, slot, 0, -1, false, 0, 0, uint8_t(runes), powers);
         }
         t->swingBare = realm.hero().swingTicks;
         t->critChance = realm.hero().stats.criticalChance;
@@ -9228,11 +9228,12 @@ void testDungeonRunes(const content::Tables& tables) {
             }
         }
     };
-    Tally bare, keen, blood, frenzy;
+    Tally bare, keen, blood, frenzy, frenzy2;
     fight(-1, 0, sim::Power::None, &bare);
     fight(helm, sim::kHelm, sim::Power::KeenEye, &keen);
     fight(pants, sim::kPants, sim::Power::Bloodwell, &blood);
     fight(boots, sim::kBoots, sim::Power::Frenzy, &frenzy);
+    fight(boots, sim::kBoots, sim::Power::Frenzy, &frenzy2, 2);
     const auto rate = [](int n, int of) { return double(n) / double(std::max(1, of)); };
     std::printf("  bare: %d blows, %.3f crit; keen eye: %d blows, %.3f crit\n", bare.blows,
                 rate(bare.crits, bare.blows), keen.blows, rate(keen.crits, keen.blows));
@@ -9285,6 +9286,11 @@ void testDungeonRunes(const content::Tables& tables) {
     check(frenzy.fastest < frenzy.swingBare, "and his swing is shorter while it stands");
     // Diablo 3's shape: a stack a wound, up to five, never more.
     checkEqual(frenzy.mostStacks, sim::kFrenzyMostStacks, "and it stacks to five in a fight");
+    // Two runes stack (the user, 2026-10-09): each its own five, so past five and never past ten.
+    checkEqual(frenzy2.excel.frenzies, 2, "two Frenzy runes in the boots both count");
+    check(frenzy2.mostStacks > sim::kFrenzyMostStacks && frenzy2.mostStacks <= sim::frenzyMost(2),
+          "and two stack past five, up to ten");
+    check(frenzy2.fastest <= frenzy.fastest, "and his swing is at least as quick under them");
     // And the cast: a wizard's Energy Ball under five stacks is quicker.
     if (const sim::SkillRow* ball = sim::skillNumbered(sim::skill::kEnergyBall)) {
         const int agility = sim::startingPoints(sim::Kin::DarkWizard).agility;

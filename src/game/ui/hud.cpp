@@ -813,7 +813,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         const std::string speed = "+" + std::to_string(one.stacks * sim::kFrenzyStackSpeed);
         what.rows.push_back(said("Stacks",
                                  std::to_string(one.stacks) + " of " +
-                                     std::to_string(sim::kFrenzyMostStacks),
+                                     std::to_string(one.stacksMost),
                                  tip::Tone::Green));
         what.rows.push_back(said("Attack speed", speed, tip::Tone::Green));
         what.rows.push_back(said("Casting speed", speed, tip::Tone::Green));

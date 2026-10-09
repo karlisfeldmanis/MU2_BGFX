@@ -787,9 +787,12 @@ constexpr double kBloodwellMana = 0.05;
 // of kFrenzyStackSpeed attack speed and spell MagicSpeed, up to kFrenzyMostStacks, and sets the
 // time left back to kFrenzyTicks; when it runs out the stacks go together. D3's is +15% a stack,
 // five, four seconds; this speed is MU's points (the Ale's twenty rides beside it), so a stack is
-// eight and the five are forty. One stack a wound however many runes he wears. invention.
+// eight and the five are forty. One stack a wound however many runes he wears, but each rune
+// worn raises the ceiling by its own five (the user, 2026-10-09: "allow to stack frenzy runes"),
+// so two are up to eighty. invention.
 constexpr int kFrenzyStackSpeed = 8;
-constexpr int kFrenzyMostStacks = 5;
+constexpr int kFrenzyMostStacks = 5;  // a rune's
+constexpr int frenzyMost(int runes) { return kFrenzyMostStacks * runes; }
 constexpr int64_t kFrenzyTicks = 80;  // four seconds of the realm's twenty ticks
 // **Renewal**, Devin's since 2026-09-30, in the Undying's place (the user: "life regeneration
 // rune which is much more important i think than just max hp"): this share of maximum health

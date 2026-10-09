@@ -1214,6 +1214,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         Hud::Boon& boon = boons[standing++];
         boon.frenzy = true;
         boon.stacks = hero.frenzyStacks;
+        boon.stacksMost = sim::frenzyMost(hero.excel.frenzies);
         boon.seconds = float(left) * 0.05f;
         boon.share = float(left) / float(sim::kFrenzyTicks);
     }
