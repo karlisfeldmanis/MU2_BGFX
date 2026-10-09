@@ -4010,7 +4010,10 @@ private:
             const int64_t price = sim::buyingPrice(row, 0, shelf[i].pieces, shelf[i].skill);
             // Fifteen hundred when she can spare it: Skillshot looses three a cast, and five
             // hundred sent her home every three minutes (126 trips in eight hours, 2026-10-03).
-            const int quiver = realm_->money() > 20000 ? 1500 : 500;
+            // And four thousand once rich: a quiver is a thousand shots, and at 1500 an elf with
+            // 447,000 Zen still walked home every 15 minutes, 25 times in ten hours (the Claude
+            // bot's run, 2026-10-09) -- seventy Zen a quiver against the walk.
+            const int quiver = realm_->money() > 100000 ? 4000 : realm_->money() > 20000 ? 1500 : 500;
             // No cell for a quiver and nothing to shoot: room made as for a reward (clearFor).
             if (ammo() < 30 && realm_->money() >= price && realm_->satchel().free(*tables_, row.width, row.height) < 0 &&
                 clearFor(row) > 0) {
