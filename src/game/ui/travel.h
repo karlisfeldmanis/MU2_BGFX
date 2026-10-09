@@ -6,7 +6,8 @@
 // buttons all one height; each a thin iron rim, the name and the monster levels on its first
 // line and on its second the marks for a quest giver and merchants, or a dungeon's floors. The
 // map he is on is gold. A map he cannot use -- not opened, or out of his reach -- is its name
-// alone, dimmed, under a rule. Nothing is hidden behind a hover.
+// alone, dimmed, under a rule. Nothing is hidden behind a hover. Beside each button, on the dark,
+// what the trip costs in Zen; red, and the button stays above the rule, when he is short of it.
 //
 // Ours: 0.75 has no Move window at all, only the `/move` command.
 #pragma once

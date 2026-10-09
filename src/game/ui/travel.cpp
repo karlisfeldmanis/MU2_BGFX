@@ -11,6 +11,7 @@
 #include "core/log.h"
 #include "game/play.h"
 #include "game/ui/controls.h"
+#include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "game/world/maps.h"
@@ -37,7 +38,9 @@ constexpr float kLineTall = 20.0f;
 constexpr float kNameSize = 16.0f;
 constexpr float kLevelSize = 13.0f;
 constexpr float kChipSize = 11.5f;
-constexpr float kScrim = 360.0f;  // how far in from the left edge the dark reaches
+constexpr float kScrim = 420.0f;  // how far in from the left edge the dark reaches
+constexpr float kPriceGap = 12.0f;  // from a button's right edge to its trip's price
+constexpr float kPriceSize = 16.0f;
 
 // **Gold for the map he is on**, on the user's word (2026-09-30), though style.h keeps gold for
 // loot: the quest marker's own old gold (game/ui/beacon.cpp), so it reads as the giver's.
@@ -332,10 +335,15 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
     // The layout, every frame (a handful of boxes): the maps he can use first, in the list's own
     // order, then under the rule the ones he cannot.
     hits_.clear();
+    // A trip refused only for its Zen stays above the rule, its price in red: open to him, not
+    // paid for (the user, 2026-10-09: "fast travel is not free, it costs zen").
     const auto usable = [&](const Place& place) {
         if (place.map == now.here) return true;
         for (int row : place.rows) {
-            if (now.refusals[row] == uint8_t(sim::TravelRefusal::None)) return true;
+            if (now.refusals[row] == uint8_t(sim::TravelRefusal::None) ||
+                now.refusals[row] == uint8_t(sim::TravelRefusal::Zen)) {
+                return true;
+            }
         }
         return false;
     };
@@ -395,6 +403,10 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
             for (int row : place.rows) {
                 if (asked < 0 && now.refusals[row] == uint8_t(sim::TravelRefusal::None)) asked = row;
             }
+            // One he is short of is asked all the same, and its refusal heard (Play's Travel).
+            for (int row : place.rows) {
+                if (asked < 0 && now.refusals[row] == uint8_t(sim::TravelRefusal::Zen)) asked = row;
+            }
         }
     }
     if (!built_ || !(now == drawn_)) {
@@ -415,8 +427,8 @@ void Travel::rebuild(const Drawn& now) {
     // the buttons, fading out rightward past them and above and below them.
     {
         const float s = kScrim * u, feather = 72.0f * u;
-        const float xs[4] = {0.0f, s * 0.50f, s * 0.78f, s};
-        const float ax[4] = {0.42f, 0.30f, 0.10f, 0.0f};
+        const float xs[4] = {0.0f, s * 0.50f, s * 0.80f, s};
+        const float ax[4] = {0.42f, 0.34f, 0.18f, 0.0f};
         const float ys[4] = {column_.y - feather, column_.y, column_.bottom(), column_.bottom() + feather};
         const float ay[4] = {0.0f, 1.0f, 1.0f, 0.0f};
         const auto dark = [](float a) { return gfx::rgba(0.020f, 0.012f, 0.012f, a); };
@@ -454,6 +466,31 @@ void Travel::rebuild(const Drawn& now) {
             continue;
         }
         if (over) b.y -= line;
+        // The trip's price, beside the button on the dark: the floor under the pointer's, else
+        // the row a press on the button takes, else the first he is short of. Red when his purse
+        // is short of it; none where a press goes nowhere (his own safe zone).
+        {
+            int priced = -1;
+            if (hit.place == now.hoverPlace && now.hoverFloor >= 0) priced = hit.chipRow[now.hoverFloor];
+            for (int row : place.rows) {
+                if (priced < 0 && now.refusals[row] == uint8_t(sim::TravelRefusal::None)) priced = row;
+            }
+            for (int row : place.rows) {
+                if (priced < 0 && now.refusals[row] == uint8_t(sim::TravelRefusal::Zen)) priced = row;
+            }
+            const uint8_t why = priced >= 0 ? now.refusals[priced] : uint8_t(sim::TravelRefusal::Unknown);
+            if (why == uint8_t(sim::TravelRefusal::None) || why == uint8_t(sim::TravelRefusal::Zen)) {
+                const bool short_ = why == uint8_t(sim::TravelRefusal::Zen);
+                const gfx::Face* label = controls::labelFace();
+                const float mid = b.midY();
+                float px = b.right() + kPriceGap * u;
+                px += inked(canvas_, label, controls::labelTexture(), px, mid, kPriceSize * u, '0',
+                            short_ ? style::kBloodHi : style::kBoneHi,
+                            panel::commas(sim::travelAt(priced).zen)) + 4.0f * u;
+                inked(canvas_, label, controls::labelTexture(), px, mid, 12.5f * u, 'Z',
+                      short_ ? style::kBlood : style::kAshInk, "Zen");
+            }
+        }
         tip::shadowUnder(canvas_, b, u * (over ? 0.7f : 0.45f), r);
         const uint32_t rim = here ? kGoldDk : over ? style::kIronHi : style::kIronLo;
         tip::panel(canvas_, b, r, rim, rim);
