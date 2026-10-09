@@ -581,6 +581,9 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     if (body.idleClip < 0) body.idleClip = body.library->find(0);
     if (body.idleSafeClip < 0) body.idleSafeClip = body.idleClip;
     body.combatIdleClip = body.library->find(kCombatIdleAction);
+    body.combatWalkClip = armed ? -1 : body.library->find(stanceActions("sword", false).second);
+    body.plantSpeedCombat =
+        body.combatWalkClip >= 0 ? measurePlant(body, body.combatWalkClip) : 0.0f;
     if (body.walkSafeClip < 0) body.walkSafeClip = body.walkClip;
     // And how fast the earth has to pass under each walk for its feet to hold still.
     body.plantSpeed = measurePlant(body, body.walkClip);

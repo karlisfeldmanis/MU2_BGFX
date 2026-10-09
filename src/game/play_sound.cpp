@@ -62,7 +62,8 @@ void Play::steps() {
                           (clip == look->swimWalkClip || clip == look->swimRunClip);
     const bool walking = hero && look && him.alive() && hero->visible && clip >= 0 &&
                          (clip == look->walkClip || clip == look->walkSafeClip ||
-                          clip == look->runClip || riding || swimming);
+                          clip == look->combatWalkClip || clip == look->runClip || riding ||
+                          swimming);
     if (!walking || ground_ == nullptr) {
         // Not walking, so the next cycle starts fresh: the client clears both latches the
         // moment the animation is not running.

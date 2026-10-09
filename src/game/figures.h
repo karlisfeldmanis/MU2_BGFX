@@ -223,6 +223,10 @@ struct FigureBody {
     // town in combat stance. Its own plant speed, because it is its own clip with its own feet.
     int walkSafeClip = -1;
     float plantSpeedSafe = 0.0f;
+    // A bare-handed player's walk in a fight: the sword's, MU's 17, as MU has no unarmed combat
+    // walk. -1 on an armed body, which walks its weapon's own; and its plant speed.
+    int combatWalkClip = -1;
+    float plantSpeedCombat = 0.0f;
     // And what it runs in, once the realm says it is running (sim::Body::running): action284,
     // one clip for every stance, -1 on a rig without it. Its own plant speed for the same reason.
     int runClip = -1;

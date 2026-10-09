@@ -1621,12 +1621,17 @@ void Play::follow(float seconds) {
         const int swimIdle = look->stance == "crossbow" && look->swimIdleCrossbowClip >= 0
                                  ? look->swimIdleCrossbowClip
                                  : look->swimIdleClip;
+        // And a bare-handed player in a fight walks the sword's walk: MU has no unarmed combat
+        // walk, and its PLAYER_WALK_MALE reads as a stroll (the user, 2026-10-09: "comabt wal
+        // without wepaon is not implemented ... use same which you use when there is weapon").
         const int walkHere = riding                                ? rideRun
                              : flies                               ? flyMove
                              : swims                               ? swimMove
                              : (body->running && look->runClip >= 0) ? look->runClip
                              : (safe && look->walkSafeClip >= 0)   ? look->walkSafeClip
-                                                                   : look->walkClip;
+                             : (body->player && look->combatWalkClip >= 0)
+                                 ? look->combatWalkClip
+                                 : look->walkClip;
         // The fly is one of the rides here: seated in the air, it plants nothing and plays at the
         // run ride's own 0.34 (ZzzOpenData.cpp:511-516), slowed with the ground he covers.
         const auto isRide = [&](int c) {
@@ -1638,6 +1643,7 @@ void Play::follow(float seconds) {
         };
         const auto isWalk = [&](int c) {
             return c >= 0 && (c == look->walkClip || c == look->walkSafeClip ||
+                              c == look->combatWalkClip ||
                               c == look->runClip || isRide(c) || isSwim(c));
         };
         // Walking is what the drawn body is doing, and nothing else sets a walk going: a body
@@ -1803,6 +1809,7 @@ void Play::follow(float seconds) {
             const float plant =
                 (one.figure.clip() == look->runClip
                      ? look->plantSpeedRun
+                 : one.figure.clip() == look->combatWalkClip ? look->plantSpeedCombat
                  : one.figure.clip() == look->walkSafeClip && look->walkSafeClip != look->walkClip
                      ? look->plantSpeedSafe
                      : look->plantSpeed) *
