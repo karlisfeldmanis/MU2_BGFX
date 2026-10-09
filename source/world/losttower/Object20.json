@@ -17,10 +17,10 @@
   },
   "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix.",
   "sheet_materials": {
-    "t17": "flagstone",
-    "t18": "flagstone",
-    "taa01_body": "flagstone",
-    "taa03_body": "flagstone",
+    "t17": "rock",
+    "t18": "rock",
+    "taa01_body": "rock",
+    "taa03_body": "rock",
     "taa01": "lamplight",
     "taa03": "lamplight",
     "t20": "lamplight"
@@ -56,7 +56,7 @@
   "glow_from": "MoveObject's BlendMeshTexCoordU, -(WorldTime % 1000) * 0.001: one sheet a second along U (ZzzObject.cpp:4003-4009). The stream's sheet carries Chrome01 tinted (1, 0.2, 0.1) whole in its colour and the band in its alpha, and the alpha is held while the colour slides (mask_held), so the red streams behind a slot that does not move, as MU's chrome pass does under the painted one. t20, the cyan orb, slides whole, BlendMesh 4 in both passes. taa03's red centre is not the StreamMesh and stands still, as in MU. Built 2026-10-01 (the user: 'i think most of lost tower orb obhecst was amianted. check if we missed some animation on objects'); before it the red held still, this engine sliding a glow only along V.",
   "echo_from": "RenderObject draws types 19 and 20 twice (ZzzObject.cpp:1035-1059): the whole body in Chrome01 at a flat red BodyLight (1, 0.2, 0.1), mesh 2 (taa01) sliding along U, and then as painted, where taa01's two rings and taa03's round centre are transparent and that red shows through. As the walls' slot (Object04): each such sheet drawn opaque with its holes black (_body), and added over it Chrome01 tinted red inside the holes alone (_slot).",
   "sheet_grade_from": "Ours, as the walls' re_05 (Object04): the housing's grey t17, t18 and panel stone graded to the main walls' warm re_04 and their relief at 0.35, so the machine stands in the same masonry rather than going blue under the cold key.",
-  "material_note": "t17 and t18 are carved stone scrollwork, flagstone; the panels the same. The holes, the pistons' faces and the orb are light.",
+  "material_note": "t17 and t18 are carved stone scrollwork, flagstone; the panels the same. The holes, the pistons' faces and the orb are light. Then rock and not flagstone, the floor's own (the user, 2026-10-09, of the ramp: 'those gates really stand out', 'its the material not lighting'): at flagstone's 0.72 the machine's big tilted faces took the cold sky's sheen and stood pale blue over a matte floor; and its taa01 stone at two thirds and the red in its rings at half (source/textures/lt_taa01_body.png, lt_taa01_slot.png), MU's thin red lines rather than broad patches.",
   "islands": [
     {
       "island": 0,

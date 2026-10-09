@@ -104,6 +104,14 @@ struct Lighting {
     // it reaches, fading to nothing there. Ours. 0 everywhere else: no world but the tower's
     // TileWater01 burns.
     float lavaLight[3] = {0.0f, 0.0f, 0.0f};
+    // How much of a non-metal's highlight is kept, 0 to 1: the share of its 0.04 reflectance,
+    // the sun's sheen and the sky's both. The ground takes none (fs_ground), and MU draws none
+    // anywhere, so in the Lost Tower a dark stone face turned to the cold key stood pale blue
+    // over the matte floor round it -- its sheen outweighing its own colour (the user,
+    // 2026-10-09, of the floor machine's ramp: "those gates really stand out", "its the
+    // material not lighting", "gates still look glossy"). Ours. 1 everywhere else; metal keeps
+    // its own.
+    float stoneSheen = 1.0f;
     float lavaRise = 3.0f;
     // What the frame shows where nothing is drawn, in the shade target's linear light before
     // the exposure and the tonemap. Black, as MU clears every map but two: Icarus is navy,

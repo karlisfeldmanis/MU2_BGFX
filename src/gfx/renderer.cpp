@@ -628,6 +628,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     caustic_ = lighting.caustic;
     sway_ = lighting.sway;
     causticSheet_ = ground ? ground->caustic() : bgfx::TextureHandle{bgfx::kInvalidHandle};
+    edge_[3] = 1.0f - std::clamp(lighting.stoneSheen, 0.0f, 1.0f);
     // The lava's light: the ground's map, lit only where the sheet gives it a colour.
     lava_ = ground ? ground->lava() : bgfx::TextureHandle{bgfx::kInvalidHandle};
     const bool lavaLit = bgfx::isValid(lava_) &&

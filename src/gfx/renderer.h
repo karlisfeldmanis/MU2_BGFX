@@ -271,7 +271,6 @@ public:
         edge_[0] = extentX;
         edge_[1] = extentZ;
         edge_[2] = band;
-        edge_[3] = 0.0f;
     }
 
     // The whole frame. `drawables` may hold the same mesh many times; `ground` may be null.
@@ -614,6 +613,7 @@ private:
     // The map's far corner and the width of the dark at its border; setMapEdge. Not in
     // ShadeUniforms because it is the WORLD's and not the sheet's: it is set once when a map
     // is raised, and nothing in the lighting can move it.
+    // w: one less the sheet's stone_sheen, so 0 is the whole of it (Lighting::stoneSheen).
     float edge_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     // The chasms' dark, taken off the ground each frame and borrowed, not owned: the level
     // texture and u_abyss. content::Ground::abyss; y at 0 is off.

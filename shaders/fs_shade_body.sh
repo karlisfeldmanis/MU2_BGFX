@@ -116,7 +116,9 @@ void main()
 	// lifted the armour twice.
 	float peak = max(max(albedo.r, albedo.g), max(albedo.b, 1e-4));
 	float gain = mix(u_probe.w, 1.0, calibrated);
-	vec3 f0 = mix(vec3_splat(0.04), albedo * min(gain, 1.0 / peak), metal);
+	// A non-metal's 0.04, times the sheet's stone_sheen (u_edge.w, one less it): the Lost
+	// Tower's stone as matte as its ground. Metal keeps its own.
+	vec3 f0 = mix(vec3_splat(0.04 * (1.0 - u_edge.w)), albedo * min(gain, 1.0 / peak), metal);
 	vec3 diffuseColour = albedo * (1.0 - metal);
 
 	vec3 l = normalize(u_sunDir.xyz);

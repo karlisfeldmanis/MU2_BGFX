@@ -13,6 +13,8 @@ uniform vec4 u_dust;        // rgb: the dust's own colour, an albedo. w: its den
 uniform vec4 u_edge;        // xy: the map's far corner in metres (+x and -z). z: how many
                             // metres of dark stand at its border. 0 is a world with no border
                             // to keep, which is every bench. See dusty().
+                            // w: one less the stone_sheen, a non-metal's share of its 0.04
+                            // reflectance kept (fs_shade_body); 0 keeps it whole.
 uniform vec4 u_camPos;      // xyz: the eye, world space. w: the far plane
 uniform vec4 u_params;      // x: ssao radius  y: ssao strength  z: exposure  w: pixels per unit at unit depth
 uniform vec4 u_sway;        // x: the play clock, seconds  y: the sheet's sway, metres at a metre's height  z: an opaque stream's slide  w: its axis, 0 V, 1 U, 2 both
