@@ -746,6 +746,10 @@ public:
     void undying(bool on) { me().undying = on; }
     // The demo's (`--wing-demo`): every kill in Icarus leaves the first wings. Never set in play.
     void wingDemo(bool on) { wingDemo_ = on; }
+    // The crowd bench's fight (`--bench-fight`): a blow that would fell a monster or a player
+    // fills its health instead, so a hundred players on a few Balrogs is a fight that goes on.
+    // Never set in play.
+    void benchUndying(bool on) { benchUndying_ = on; }
     // Whether he may throw it at all: learned, or a mount's skill and that mount worn
     // (`SkillRow::mounted`). What the bar and the list ask, and `throwSkill` before it spends.
     bool knows(int32_t skill) const;
@@ -1287,6 +1291,9 @@ public:
     // Player of his own and his own dormant summon body, both through spawn(). His id, or 0 when
     // he has nowhere to stand. Between ticks, or at a tick's start as a command.
     uint32_t join(Kin kin, int level, int column, int row);
+    // A joined hero in a raid kit's gear and points, for a crowd to draw (--bench-players):
+    // join() and then dressHero() on him. His id, or 0 as join() says.
+    uint32_t benchHero(const RaiderKit& kit, int column, int row);
     // **A player leaving**: his body marked gone and left where it stands, never erased -- the
     // mirror's figures and every index after his stay true. His summon is dismissed, his
     // windows shut (the machine's box back into his bag), his things in the air spent, and
@@ -1745,6 +1752,7 @@ private:
     static constexpr int kFires = 8;
     Fire fires_[kFires] = {};
     bool wingDemo_ = false;  // `wingDemo`
+    bool benchUndying_ = false;
     int64_t tick_ = 0;
     uint32_t nextId_ = 1;
 

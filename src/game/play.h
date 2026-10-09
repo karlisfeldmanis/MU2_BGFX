@@ -427,6 +427,14 @@ public:
         raidLanding_ = landing;
     }
     const std::vector<sim::RaiderKit>& raidParty() const { return raidParty_; }
+    // --bench-players: `players` more heroes joined round him when the world opens, each in
+    // one of `kits` in turn with its plus varied, half walking to and fro and half standing.
+    // A crowd of other players drawn as a server's are, to measure the frame by. Not remote.
+    void setBench(int players, std::vector<sim::RaiderKit> kits, bool fight = false) {
+        benchPlayers_ = players;
+        benchKits_ = std::move(kits);
+        benchFight_ = fight;
+    }
     // --raid-stage: once it stands, its health laid at the top of that stage's band.
     void raidSkip(int stage) { raidSkipOwed_ = stage; }
     // Its tells on the ground, opened by the caller as the marker is (fx/omen.h).
@@ -1326,12 +1334,30 @@ private:
     bool raidWatched_ = false;
     int raidLanding_ = -1;
     std::vector<sim::RaiderKit> raidParty_;
+    // --bench-players (setBench): who was joined, where each stands, and the walkers' clock.
+    int benchPlayers_ = 0;
+    std::vector<sim::RaiderKit> benchKits_;
+    std::vector<uint32_t> benchIds_;
+    std::vector<int> benchHome_;  // column, row a hero
+    std::vector<int32_t> benchSkill_;  // each one's kit's first skill, thrown in a fight
+    bool benchFight_ = false;
+    float benchClock_ = 0.0f;
+    bool benchOut_ = false;
+    void raiseBench(int column, int row);
+    void walkBench(float seconds);
     int raidSkipOwed_ = 0;
     Omen omen_;
     // A raider's body: its class body in its kit, dressed as the hero is (Figures::dress).
     const FigureBody* raiderLook(const sim::Body& body);
     // Its wings, one a raider, worn and beaten as the hero's (game/wings.h).
     std::vector<WingLook> raiderWings_;
+    // Every other player's wings, a slot a body in drawn_'s order (empty where none is worn).
+    // Until 2026-10-09 only the hero's and the raiders' were drawn, and another player on a
+    // server stood wingless whatever he wore. play_raid.cpp, beside the raiders'.
+    std::vector<WingLook> otherWings_;
+    void otherWings(float seconds);
+    void gatherOtherWings(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
+                          std::vector<gfx::Drawable>* casters);
     // What the realm said of the raid this tick: tells, strikes, the stages, aloft.
     void raidSaid(const sim::Happening& happening);
     // The frame's part: the omens, the rocks owed to the sky, the breath, the pools' fire, the
@@ -1675,6 +1701,11 @@ private:
     uint32_t pointedLying_ = 0;
     int pointedPerch_ = -1;
     std::vector<float> scratch_;
+    // Play::gather's figures posed side by side (core::parallelFor): which of drawn_, each one's
+    // rows in a slot of its own, and how many bones each wrote.
+    std::vector<uint32_t> posing_;
+    std::vector<float> poseRows_;
+    std::vector<int> poseBones_;
     double accumulator_ = 0.0;
     // The cushion (sprint 24, Play::update): ticks held in hand on a server, and the stalls that
     // set it -- the one in progress, and when each felt one ended, on the cushion's own clock.

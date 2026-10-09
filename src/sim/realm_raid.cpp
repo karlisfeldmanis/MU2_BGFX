@@ -249,6 +249,14 @@ void Realm::dressHero(const RaiderKit& kit) {
                hero.stats.maximumDamage, hero.stats.defense);
 }
 
+uint32_t Realm::benchHero(const RaiderKit& kit, int column, int row) {
+    const uint32_t id = join(kit.kin, kit.level, column, row);
+    if (id == 0) return 0;
+    For him(*this, heroes_.size() - 1);
+    dressHero(kit);
+    return id;
+}
+
 void Realm::minionSpoils(const Body& dead) {
     if (raid_.stage == RaidStage::None || dead.kind < 0 || size_t(dead.kind) >= tables_->kinds.size() ||
         tables_->kinds[size_t(dead.kind)].number != kGoldenBudgeDragonNumber) {

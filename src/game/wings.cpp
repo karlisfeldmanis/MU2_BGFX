@@ -210,9 +210,15 @@ void WingLook::update(float seconds, bool flying, bool safe) {
 void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector<float>& scratch,
                       std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters,
                       float fade) {
-    if (!wing_ || !bearer.body() || bearer.body()->backBone < 0) return;
+    const int bones = pose(bearer, scratch.data());
+    if (bones < 0) return;
+    gatherPosed(renderer, scratch.data(), bones, out, casters, fade);
+}
+
+int WingLook::pose(const Figure& bearer, float* rows12) {
+    if (!wing_ || !bearer.body() || bearer.body()->backBone < 0) return -1;
     float bone[16];
-    if (!bearer.boneWorld(bearer.body()->backBone, bone)) return;
+    if (!bearer.boneWorld(bearer.body()->backBone, bone)) return -1;
     // In the bone's own frame, moved along it by MU's offset, as the Imp is (game/pets.cpp).
     float offset[3] = {kWingOffset[0], kWingOffset[1], kWingOffset[2]};
     for (const WingInward& in : kInward) {
@@ -223,9 +229,15 @@ void WingLook::gather(gfx::Renderer& renderer, const Figure& bearer, std::vector
     float parent[16];
     core::mulMatrix(local, bone, parent);
     figure_.mount(parent);
-    const int bones = figure_.pose(scratch.data());
+    const int bones = figure_.pose(rows12);
     posed_ = bones > 0;
-    const int palette = bones > 0 ? renderer.addPalette(scratch.data(), bones) : -1;
+    return bones;
+}
+
+void WingLook::gatherPosed(gfx::Renderer& renderer, const float* rows12, int bones,
+                           std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters,
+                           float fade) {
+    const int palette = bones > 0 ? renderer.addPalette(rows12, bones) : -1;
     const size_t from = out.size();
     if (casters) figure_.gather(palette, *casters);
     figure_.gather(palette, out);

@@ -1,5 +1,5 @@
 diff --git a/src/renderer_mtl.cpp b/src/renderer_mtl.cpp
-index f758e733b..a5c45c5d0 100644
+index f758e733b..abe119735 100644
 --- a/src/renderer_mtl.cpp
 +++ b/src/renderer_mtl.cpp
 @@ -864,6 +864,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
@@ -26,7 +26,23 @@ index f758e733b..a5c45c5d0 100644
  	static uint32_t getBufferBindOffset(const Binding& _bind, uint32_t _size)
  	{
  		const uint32_t offset = bx::min(_bind.m_offset, _size);
-@@ -3629,6 +3646,227 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -1196,6 +1213,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
+ 
+ 			m_uniformScratchBuffer.createUniform(2<<20, BGFX_CONFIG_MAX_FRAME_LATENCY);
++			m_stagingScratch.create(kStagingChunk, BGFX_CONFIG_MAX_FRAME_LATENCY, 16);
+ 
+ 			const char* vshSource =
+ 				"using namespace metal;\n"
+@@ -1302,6 +1320,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 				m_cmd.shutdown();
+ 
+ 				m_uniformScratchBuffer.destroy();
++				m_stagingScratch.destroy();
+ 
+ 				MTL_RELEASE_I(m_device);
+ 
+@@ -3629,8 +3648,258 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  		bool m_hasVSync;
  		bool m_hasMaximumDrawableCount;
  
@@ -253,8 +269,80 @@ index f758e733b..a5c45c5d0 100644
 +
  		ChunkedScratchBufferMtl m_uniformScratchBuffer;
  
++		// MU2_BGFX: a staging ring for buffer updates (BufferMtl::update). bgfx made a new
++		// MTLBuffer for every update, copied the data in, blitted it and released it; a crowd
++		// fight in the Lost Tower spent ~28% of the main thread there. The data now goes into
++		// this persistently mapped ring, a frame in flight a slot, as the uniforms do, and the
++		// blit reads it from there. An update past a chunk still takes the old way.
++		ChunkedScratchBufferMtl m_stagingScratch;
++		bool m_stagingBegun = false;
++
++		MTL::Buffer* stage(const void* _data, uint32_t _size, uint32_t& _offset)
++		{
++			if (_size + 256 >= kStagingChunk)
++			{
++				return NULL;
++			}
++
++			if (!m_stagingBegun)
++			{
++				m_stagingScratch.begin();
++				m_stagingBegun = true;
++			}
++
++			ChunkedScratchBufferOffset sbo;
++			m_stagingScratch.write(sbo, _data, _size);
++			_offset = sbo.offsets[0];
++			return sbo.buffer;
++		}
++
++		static constexpr uint32_t kStagingChunk = 16<<20;
++
  		uint8_t  m_vsScratch[64<<10];
-@@ -6144,6 +6382,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 		uint8_t  m_fsScratch[64<<10];
+ 
+@@ -4035,6 +4304,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 			const uint32_t start = _offset & ~3;
+ 			const uint32_t end   = bx::strideAlign(_offset + _size, 4);
+ 
++			uint32_t staged = 0;
++			if (MTL::Buffer* ring = s_renderMtl->stage(m_dynamic + start, end - start, staged) )
++			{
++				bce->copyFromBuffer(ring, staged, m_ptr, start, end - start);
++				return;
++			}
++
+ 			MTL::Buffer* temp = s_renderMtl->m_device->newBuffer(
+ 				  m_dynamic + start
+ 				, end - start
+@@ -4047,6 +4323,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 		}
+ 		else
+ 		{
++			uint32_t staged = 0;
++			if (MTL::Buffer* ring = s_renderMtl->stage(_data, _size, staged) )
++			{
++				bce->copyFromBuffer(ring, staged, m_ptr, _offset, _size);
++				return;
++			}
++
+ 			MTL::Buffer* temp = s_renderMtl->m_device->newBuffer(_data, _size, MTL::ResourceCPUCacheModeDefaultCache);
+ 			bce->copyFromBuffer(temp, 0, m_ptr, _offset, _size);
+ 			s_renderMtl->m_cmd.release(temp);
+@@ -6067,6 +6350,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 
+ 		m_uniformScratchBuffer.begin();
+ 
++		if (!m_stagingBegun)
++		{
++			m_stagingScratch.begin();
++			m_stagingBegun = true;
++		}
++
+ 		if (0 < _render->m_iboffset)
+ 		{
+ 			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
+@@ -6144,6 +6433,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  
  		m_occlusionQuery.resolve(_render);
  
@@ -266,7 +354,7 @@ index f758e733b..a5c45c5d0 100644
  		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
  		{
  			viewState.m_rect = _render->m_view[0].m_rect;
-@@ -6155,6 +6398,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -6155,6 +6449,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
  				statsKeyType[isCompute]++;
  
@@ -283,7 +371,7 @@ index f758e733b..a5c45c5d0 100644
  				const bool viewChanged = 0
  					|| key.m_view != view
  					|| item == numItems
-@@ -6194,6 +6447,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -6194,6 +6498,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  
  					submitBlit(bs, view);
  
@@ -305,7 +393,7 @@ index f758e733b..a5c45c5d0 100644
  					if (!isCompute)
  					{
  						const FrameBufferHandle viewFbh = _render->m_view[view].m_fbh;
-@@ -6370,6 +6638,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -6370,6 +6689,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  								}
  							}
  
@@ -314,7 +402,16 @@ index f758e733b..a5c45c5d0 100644
  							if (m_variableRateShadingSupported)
  							{
  								MTL::RasterizationRateLayerDescriptor* rrld = newRasterizationRateLayerDescriptor(s_shadingRate[_render->m_view[view].m_shadingRate]);
-@@ -7361,6 +7631,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+@@ -7350,6 +7671,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
+ 		}
+ 
+ 		m_uniformScratchBuffer.end();
++		m_stagingScratch.end();
++		m_stagingBegun = false;
+ 		m_bufferIndex = (m_bufferIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
+ 
+ 		if (NULL != m_commandBuffer)
+@@ -7361,6 +7684,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
  		}
  	}
  

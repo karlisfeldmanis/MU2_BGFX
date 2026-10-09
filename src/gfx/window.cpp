@@ -145,7 +145,13 @@ bool Window::open(const WindowDesc& desc) {
     // same at 2560x1273 (6.34 and 6.31 ms against 6.31 and 6.93, interleaved) and 0.08 ms
     // faster at half scale. The frame is the GPU's, not the encoder's, and a render thread
     // costs a frame of latency, so it stays on this thread. docs/budget.md.
-    bgfx::renderFrame();
+    //
+    // Unless asked (--render-thread, 2026-10-09): a hundred players in Noria put the frame back
+    // on the CPU, with 43% of the main thread in bgfx's Metal encoding. On its own thread that
+    // runs beside the game's next frame. MetalFX goes with it -- it is a view hook bgfx calls
+    // from its renderer (gfx/metalfx.mm) -- and the preloader's worker already creates through
+    // bgfx's resource lock.
+    if (!desc.renderThread) bgfx::renderFrame();
     if (!bgfx::init(init)) {
         core::logError("bgfx did not start");
         return false;

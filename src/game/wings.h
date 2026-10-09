@@ -41,6 +41,14 @@ public:
     // action instead of the flap (ZzzCharacter.cpp:6973-6976).
     void update(float seconds, bool flying, bool safe = false);
     // After the bearer is posed this frame: the wing takes his Bone05 as it is now.
+    // gather in two halves, for posing many on all the cores (Play::gatherOtherWings): pose()
+    // touches only this wing and reads its bearer's finished pose, so it may run beside other
+    // wings'; gatherPosed adds the palette and the draws, on the frame's own thread. pose()
+    // returns the bones written into `rows12`, or -1 when there is nothing to draw.
+    int pose(const Figure& bearer, float* rows12);
+    void gatherPosed(gfx::Renderer& renderer, const float* rows12, int bones,
+                     std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters,
+                     float fade = 1.0f);
     void gather(gfx::Renderer& renderer, const Figure& bearer, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters,
                 float fade = 1.0f);

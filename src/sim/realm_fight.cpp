@@ -1684,6 +1684,10 @@ void Realm::kill(Body& dead, Body& killer) {
         core::logf("undying: tick %lld, the hero is filled again", (long long)tick_);
         return;
     }
+    if (benchUndying_ && (dead.player || dead.monster())) {
+        dead.health = dead.maxHealth;
+        return;
+    }
     // Out of the pose before the death, so a body that was sitting falls rather than going on
     // sitting through it.
     rise(dead);

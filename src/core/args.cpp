@@ -103,6 +103,7 @@ void printUsage() {
         "  --metalfx                 the default: under --scale, upscale by MetalFX\n"
         "  --no-metalfx              under --scale, the present stretches the world itself,\n"
         "                            sharply: faster, and a little softer\n"
+        "  --render-thread           bgfx encodes the frame on its own thread, beside the next (a frame of latency)\n"
         "  --cpu-scenery             the town's scenery as a draw a model part, not the "
         "GPU's cull\n"
         "  --graphics P              the Options page's preset: low, medium or high\n"
@@ -206,6 +207,8 @@ void printUsage() {
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --castle-period S         Blood Castle opens every S seconds, for S/2, not hourly (a test)\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
+        "  --bench-players N         N other heroes in end-game gear round him, half walking (a busy screen)\n"
+        "  --bench-fight             and they fight the nearest monsters, nobody falling (with --arena)\n"
         "  --raid N                  the Golden Dragon's raid, tough for N, the party around him\n"
         "  --raid-box A-E            which field outside the town it lands on (else the dice's)\n"
         "  --raid-stage S            the dragon laid at stage S's health (1-4) once it stands\n"
@@ -329,6 +332,12 @@ Args parseArgs(int argc, char** argv) {
             a.airOn = false;
         } else if (!std::strcmp(s, "--safe")) {
             a.safe = true;
+        } else if (!std::strcmp(s, "--render-thread")) {
+            a.renderThread = true;
+        } else if (!std::strcmp(s, "--bench-fight")) {
+            a.benchFight = true;
+        } else if (!std::strcmp(s, "--bench-players")) {
+            if (const char* v = next(s)) a.benchPlayers = std::max(0, std::atoi(v));
         } else if (!std::strcmp(s, "--crowd")) {
             if (const char* v = next(s)) a.crowd = std::atoi(v);
         } else if (!std::strcmp(s, "--figure")) {

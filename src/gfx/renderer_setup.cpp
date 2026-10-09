@@ -134,11 +134,13 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     // rows is 1.6 MB resident and holds Lorencia's whole crowd -- 290 monsters and the
     // fourteen townsfolk -- with room over; what is uploaded each frame is the rows that
     // were written, not the texture.
-    palette_ = bgfx::createTexture2D(uint16_t(kMaxBones * 3), uint16_t(kMaxPaletteRows), false,
-                                     1, bgfx::TextureFormat::RGBA32F,
-                                     BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP |
-                                         BGFX_SAMPLER_V_CLAMP);
-    paletteCpu_.assign(size_t(kMaxPaletteRows) * kMaxBones * 12, 0.0f);
+    //
+    // A buffer since 2026-10-09, read by the skinned vertex shaders (shaders/skin.sh): updated
+    // as a texture, the driver twiddled it into its tiled layout on the CPU every frame.
+    paletteLayout_.begin().add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float).end();
+    palette_ = bgfx::createDynamicVertexBuffer(uint32_t(kPaletteVec4s), paletteLayout_,
+                                               BGFX_BUFFER_COMPUTE_READ);
+    paletteCpu_.assign(size_t(kPaletteVec4s) * 4, 0.0f);
     if (!bgfx::isValid(palette_)) {
         core::logError("the bone palette did not survive creation; no figure will be posed");
     }

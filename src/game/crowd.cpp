@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include "content/placement.h"
+#include "core/jobs.h"
 #include "core/log.h"
 #include "core/maths.h"
 #include "game/frustum.h"
@@ -936,9 +937,18 @@ void Crowd::gather(gfx::Renderer& renderer, const float* viewProj,
     const float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     const Frustum frustum(viewProj ? viewProj : identity);
 
-    for (Figure& figure : figures_) {
-        const int bones = figure.pose(scratch_.data());
-        const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+    // Every figure posed on all the cores first (core::parallelFor), each into a slot of its own;
+    // the palette, the held items and the draws stay in order below.
+    constexpr size_t kRowsEach = size_t(gfx::Renderer::kMaxBones) * 12;
+    if (poseRows_.size() < figures_.size() * kRowsEach) poseRows_.resize(figures_.size() * kRowsEach);
+    poseBones_.resize(figures_.size());
+    core::parallelFor(figures_.size(), [&](size_t i) {
+        poseBones_[i] = figures_[i].pose(&poseRows_[i * kRowsEach]);
+    });
+    for (size_t i = 0; i < figures_.size(); ++i) {
+        Figure& figure = figures_[i];
+        const int bones = poseBones_[i];
+        const int row = bones > 0 ? renderer.addPalette(&poseRows_[i * kRowsEach], bones) : -1;
         figure.poseHeld(renderer, scratch_.data());
 
         // The sun's list is every figure, as the town's is: a figure behind the camera still

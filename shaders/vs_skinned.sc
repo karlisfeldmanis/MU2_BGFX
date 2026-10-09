@@ -8,6 +8,7 @@ $output v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_
 // no message but "the frame is missing a program" -- which is how adding v_light to
 // vs_static broke fs_prepass in sprint 3.
 #include "common.sh"
+#include "skin.sh"
 
 void main()
 {

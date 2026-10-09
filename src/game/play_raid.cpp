@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "core/jobs.h"
 #include "core/log.h"
 #include "game/play.h"
 #include "game/play_tuning.h"
@@ -398,6 +399,55 @@ void Play::gatherRaiders(gfx::Renderer& renderer, std::vector<gfx::Drawable>& ou
         Drawn* figure = raider ? drawnOf(raider->id) : nullptr;
         if (!figure || !figure->visible || !raiderWings_[size_t(i)].worn()) continue;
         raiderWings_[size_t(i)].gather(renderer, figure->figure, scratch_, out, casters);
+    }
+}
+
+// The other players' wings, as the raiders' above and the hero's in Play::update: worn while
+// the wing has life left, beating fast only on a fly clip, the Wings of Darkness' second action
+// on a safe tile. Not the hero (wing_) and not a raider (raiderWings_).
+void Play::otherWings(float seconds) {
+    if (!figures_) return;
+    const std::vector<sim::Body>& bodies = realm_.bodies();
+    if (otherWings_.size() < drawn_.size()) otherWings_.resize(drawn_.size());
+    const uint32_t hero = realm_.hero().id;
+    for (size_t i = 0; i < drawn_.size() && i < bodies.size(); ++i) {
+        const sim::Body& body = bodies[i];
+        WingLook& look = otherWings_[i];
+        const sim::Satchel* bag = body.player && body.id != hero && body.raider < 0
+                                      ? realm_.satchelOf(body.id) : nullptr;
+        const sim::Held* wing = bag ? &(*bag)[sim::kWings] : nullptr;
+        const content::ItemRow* row = wing && !wing->empty() && wing->durability > 0 &&
+                                              size_t(wing->item) < tables_.items.size()
+                                          ? &tables_.items[size_t(wing->item)]
+                                          : nullptr;
+        if (!row && !look.worn()) continue;
+        Figure& bearer = drawn_[i].figure;
+        look.wear(row ? wingBody(*figures_, row->group, row->number) : nullptr, bearer);
+        const FigureBody* rig = bearer.body();
+        const int beat = bearer.clip();
+        const bool beating = rig && beat >= 0 && (beat == rig->flyClip || beat == rig->flyCrossbowClip);
+        look.update(seconds, beating, tables_.grid.safe(body.column(), body.row()));
+    }
+}
+
+void Play::gatherOtherWings(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
+                            std::vector<gfx::Drawable>* casters) {
+    // Posed on all the cores, as the bodies are (Play::gather), then drawn in order here.
+    constexpr size_t kRowsEach = size_t(gfx::Renderer::kMaxBones) * 12;
+    posing_.clear();
+    for (size_t i = 0; i < otherWings_.size() && i < drawn_.size(); ++i) {
+        if (otherWings_[i].worn() && drawn_[i].visible) posing_.push_back(uint32_t(i));
+    }
+    if (poseRows_.size() < posing_.size() * kRowsEach) poseRows_.resize(posing_.size() * kRowsEach);
+    poseBones_.resize(posing_.size());
+    core::parallelFor(posing_.size(), [&](size_t k) {
+        const size_t i = posing_[k];
+        poseBones_[k] = otherWings_[i].pose(drawn_[i].figure, &poseRows_[k * kRowsEach]);
+    });
+    for (size_t k = 0; k < posing_.size(); ++k) {
+        if (poseBones_[k] < 0) continue;
+        otherWings_[posing_[k]].gatherPosed(renderer, &poseRows_[k * kRowsEach], poseBones_[k],
+                                            out, casters);
     }
 }
 

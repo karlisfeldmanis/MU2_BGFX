@@ -34,6 +34,7 @@ bool Application::boot() {
     desc.vsync = args_.vsync;
     desc.profileViews =
         args_.views || !args_.statsPath.empty() || !args_.budgetOverrides.empty();
+    desc.renderThread = args_.renderThread;
     if (!window_.open(desc)) return false;
 
     textures_.createDefaults();

@@ -167,6 +167,7 @@ void Play::update(double seconds) {
     // twice -- ten owed are paid in half a second, and seen as a short hurry, not a hop. Only
     // a stall past kSnapOwed is stepped at once, kMostTicks a frame: a second and more behind,
     // catching up on the world matters more than how the catching looks.
+    walkBench(float(seconds));
     link_->pump();
     const bool remoteClock = link_->remote();
     double pace = 1.0;
@@ -1838,6 +1839,7 @@ void Play::update(double seconds) {
     sandOnDeath();
     invasion(float(seconds));
     raid(float(seconds));
+    otherWings(float(seconds));
     breath_.update(float(seconds));
     // The bones a skeleton left, on the drawing's clock like everything else here.
     bones_.update(float(seconds));

@@ -278,6 +278,8 @@ public:
 private:
     std::vector<Figure> figures_;
     std::vector<float> scratch_;
+    std::vector<float> poseRows_;  // gather's figures posed side by side, a slot each
+    std::vector<int> poseBones_;
     uint32_t drawn_ = 0;
     uint32_t culled_ = 0;
     double poseMs_ = 0.0;

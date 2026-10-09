@@ -397,8 +397,12 @@ public:
     // `rows12` is `bones` lots of twelve floats -- three rows of a 4x3, already transposed by
     // core::writePaletteRows. Returns the row, or -1 when the palette is full, which the
     // caller must treat as "draw this in bind pose" rather than as a reason to stop.
+    //
+    // Since 2026-10-09 "the row" is where the figure's pose begins in the palette's buffer, in
+    // vec4s (shaders/skin.sh): poses are packed, so a figure takes the bones it has. It is the
+    // same opaque number to every caller, 0 is still the bind pose and -1 still none.
     int addPalette(const float* rows12, int bones);
-    int paletteRowsUsed() const { return paletteWritten_; }
+    int paletteRowsUsed() const { return paletteFigures_; }
     // How many figures asked for a row this frame and were refused one. They draw in bind
     // pose, which is a picture, so nothing fails -- but a frame where the crowd quietly
     // stopped being posed must be visible in a number, as foundation 7 says of culling.
@@ -881,9 +885,13 @@ private:
     bgfx::UniformHandle uTransientColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uTransientTo_ = BGFX_INVALID_HANDLE;
 
-    bgfx::TextureHandle palette_ = BGFX_INVALID_HANDLE;
-    std::vector<float> paletteCpu_;  // kMaxPaletteRows x kMaxBones x 12
-    int paletteWritten_ = 0;
+    bgfx::DynamicVertexBufferHandle palette_ = BGFX_INVALID_HANDLE;  // shaders/skin.sh
+    std::vector<float> paletteCpu_;  // kPaletteVec4s x 4
+    int paletteWritten_ = 0;         // vec4s
+    int paletteFigures_ = 0;         // poses, the bind pose included
+    // The buffer's size: what the 512 rows of 128 bones held as a texture.
+    static constexpr int kPaletteVec4s = kMaxPaletteRows * kMaxBones * 3;
+    bgfx::VertexLayout paletteLayout_;
     int paletteRefused_ = 0;
 
     bgfx::VertexBufferHandle screenVb_ = BGFX_INVALID_HANDLE;

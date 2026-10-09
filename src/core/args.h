@@ -217,6 +217,13 @@ struct Args {
     // source/raid/party.json in one of WebZen's Lorencia Dragon Event boxes, the invasion begun at
     // once, the dragon tough for N; the hero wears the first kit. 0 for none.
     int raid = 0;
+    // --bench-players N: N other heroes in the raid party's gear joined round him, half walking
+    // (game::Play::setBench). For measuring a crowded screen. 0 none.
+    int benchPlayers = 0;
+    // --bench-fight: the bench's heroes fight the map's monsters, and nobody falls.
+    bool benchFight = false;
+    // --render-thread: bgfx encodes on a thread of its own (gfx::WindowDesc::renderThread).
+    bool renderThread = false;
     char raidBox = 0;           // `--raid-box A-E`: which field it lands on (sim::kRaidLandings), else the dice's
     int raidStage = 0;          // `--raid-stage S`: the dragon laid at stage S's health once it stands
     bool raidNow = false;       // `--raid-now`: it lands on the next tick, its entrance skipped

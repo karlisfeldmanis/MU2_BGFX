@@ -303,6 +303,12 @@ bool PlayMode::open(Context& ctx) {
             }
             config.questDemo = args.questDemo;
             world_.played().configure(config);
+            if (args.benchPlayers > 0) {
+                std::vector<sim::RaiderKit> kits;
+                const std::string party = ctx.paths.assets + "/../source/raid/party.json";
+                if (!sim::readParty(party, &kits)) core::logError("--bench-players: %s did not read", party.c_str());
+                world_.played().setBench(args.benchPlayers, std::move(kits), args.benchFight);
+            }
             if (args.raid > 0) {
                 world_.played().setRaid(args.raid, raidParty(), args.raidWatch,
                                         args.raidBox ? std::clamp(args.raidBox - 'A', 0, sim::kRaidLandingCount - 1) : -1);

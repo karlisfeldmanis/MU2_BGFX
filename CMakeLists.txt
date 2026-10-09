@@ -112,6 +112,7 @@ set(MU_DIRS
 add_library(mu_core STATIC
   src/core/log.cpp
   src/core/watch.cpp
+  src/core/jobs.cpp
   src/core/args.cpp
   src/core/files.cpp
   src/core/json.cpp

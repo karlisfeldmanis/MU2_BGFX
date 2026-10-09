@@ -151,6 +151,7 @@ void Renderer::resetPalettes() {
     // the upload below sends only the rows this frame wrote: a row written once at start-up
     // would never be uploaded at all.
     paletteWritten_ = 0;
+    paletteFigures_ = 0;
     paletteRefused_ = 0;
     float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     float rows[12];
@@ -160,25 +161,26 @@ void Renderer::resetPalettes() {
     for (int bone = 0; bone < kMaxBones; ++bone) {
         std::memcpy(&paletteCpu_[size_t(bone) * 12], rows, sizeof(rows));
     }
-    paletteWritten_ = 1;
+    paletteWritten_ = kMaxBones * 3;
+    paletteFigures_ = 1;
 }
 
 int Renderer::addPalette(const float* rows12, int bones) {
-    if (paletteWritten_ >= kMaxPaletteRows) {
+    // A rig too big for a pose is clamped rather than refused: the bones past the end draw in
+    // whatever the buffer held, which is visible, where a silent return of -1 would put the
+    // whole figure in bind pose and look like a missing clip. Nothing in this content has more
+    // than 69; the lobby's faces, at 100 to 115, would be the first past 64.
+    if (bones > kMaxBones) bones = kMaxBones;
+    if (bones < 0) bones = 0;
+    if (paletteWritten_ + bones * 3 > kPaletteVec4s) {
         ++paletteRefused_;
         return -1;
     }
-    const int row = paletteWritten_++;
-    // A rig too big for the palette is clamped rather than refused: the bones past the end
-    // stay whatever the row held, which is visible, where a silent return of -1 would put
-    // the whole figure in bind pose and look like a missing clip. Nothing in this content
-    // has more than 60; the lobby's faces, at 100 to 115, would be the first.
-    // A caller that hands over more rows than fit is clamped here as well as at the pose,
-    // because this is the one that owns the texture's width.
-    if (bones > kMaxBones) bones = kMaxBones;
-    std::memcpy(&paletteCpu_[size_t(row) * kMaxBones * 12], rows12,
-                size_t(bones) * 12 * sizeof(float));
-    return row;
+    const int at = paletteWritten_;
+    std::memcpy(&paletteCpu_[size_t(at) * 4], rows12, size_t(bones) * 12 * sizeof(float));
+    paletteWritten_ += bones * 3;
+    ++paletteFigures_;
+    return at;
 }
 
 void Renderer::packInstance(const Drawable& d, float out[kInstanceFloats]) {
@@ -363,7 +365,7 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // bgfx::submit discards its bindings, so a palette bound once a view reaches
             // the first figure and leaves every other one reading an unbound stage -- which
             // is a pose of zeroes, and a figure collapsed into a point at the origin.
-            if (skinned) bgfx::setTexture(12, sBones_, palette_);
+            if (skinned) bgfx::setBuffer(12, palette_, bgfx::Access::Read);
 
             bgfx::setVertexBuffer(0, mesh.vertexBuffer());
             bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);
@@ -630,14 +632,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
 
-    // The frame's poses go up in one upload, and only the rows the game actually filled:
-    // thirty-one figures at sixty bones is 95 kB, where the whole texture is 1.6 MB. Every
+    // The frame's poses go up in one upload, and only what the game filled, packed: thirty-one
+    // figures at sixty bones is 30 kB, where the whole buffer is 3 MB. Every
     // pass that follows reads them, the shadow pass included -- a figure casts the pose it
     // is in, not the pose it was bound in.
     if (bgfx::isValid(palette_) && paletteWritten_ > 0) {
-        const uint32_t bytes = uint32_t(paletteWritten_) * kMaxBones * 12 * uint32_t(sizeof(float));
-        bgfx::updateTexture2D(palette_, 0, 0, 0, 0, uint16_t(kMaxBones * 3),
-                              uint16_t(paletteWritten_), bgfx::copy(paletteCpu_.data(), bytes));
+        const uint32_t bytes = uint32_t(paletteWritten_) * 4 * uint32_t(sizeof(float));
+        bgfx::update(palette_, 0, bgfx::copy(paletteCpu_.data(), bytes));
     }
 
     // The lights' flicker, when it moved: the three rows of the 256-wide texture, 12 kB.

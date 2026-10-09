@@ -212,6 +212,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     local_.configure(realmConfig_);
     if (!local_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
     if (castle > 0) local_.setCastle(castle);
+    if (benchPlayers_ > 0 && !remote()) raiseBench(column, row);
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to
     // use roads"): a tile whose painted slot -- the overlay where it is laid over half or more,
@@ -911,6 +912,78 @@ Play::Drawn Play::drawnFor(const sim::Body& body, const FigureBody* heroLook, si
         fit(one, body, look);
     }
     return one;
+}
+
+
+// --bench-players: a ten-wide square of heroes two tiles apart round him, each in a party kit in
+// turn -- the raid's end-game characters, +11 sets, +11 weapons and wings. join() puts each on
+// the nearest standable tile.
+void Play::raiseBench(int column, int row) {
+    if (benchKits_.empty()) {
+        core::logError("--bench-players: no kits to dress them in; none raised");
+        return;
+    }
+    for (int i = 0; i < benchPlayers_; ++i) {
+        const sim::RaiderKit& kit = benchKits_[size_t(i) % benchKits_.size()];
+        const int c = column + (i % 10 - 5) * 2 + 1;
+        const int r = row + (i / 10 - 5) * 2 + 1;
+        const uint32_t id = local_.benchHero(kit, c, r);
+        if (id == 0) continue;
+        benchIds_.push_back(id);
+        benchHome_.push_back(c);
+        benchHome_.push_back(r);
+        benchSkill_.push_back(kit.skills.empty() ? 0 : kit.skills.front());
+    }
+    if (benchFight_) local_.benchUndying(true);
+    core::logf("bench: %zu heroes raised round %d,%d, %s", benchIds_.size(), column, row,
+               benchFight_ ? "every one fighting the nearest monster, nobody falling"
+                           : "every other one walking");
+}
+
+// Every four seconds the walkers -- every other bench hero -- are sent five tiles east of
+// where they stand, or back again. In a fight (--bench-fight), every hero is sent at the monster
+// nearest him with his kit's first skill instead, every two seconds, which keeps the crowd on
+// the pack as it moves.
+void Play::walkBench(float seconds) {
+    if (benchIds_.empty()) return;
+    benchClock_ += seconds;
+    if (benchFight_) {
+        if (benchClock_ < 2.0f && benchClock_ != seconds) return;
+        benchClock_ = 0.0f;
+        const std::vector<sim::Body>& bodies = local_.bodies();
+        for (size_t i = 0; i < benchIds_.size(); ++i) {
+            const sim::Body* hero = local_.find(benchIds_[i]);
+            if (!hero) continue;
+            const sim::Body* nearest = nullptr;
+            float best = 0.0f;
+            for (const sim::Body& one : bodies) {
+                if (!one.monster() || !one.alive() || one.kind < 0) continue;
+                const float dx = one.x - hero->x, dy = one.y - hero->y;
+                const float d = dx * dx + dy * dy;
+                if (!nearest || d < best) {
+                    nearest = &one;
+                    best = d;
+                }
+            }
+            if (!nearest) continue;
+            local_.command({.kind = sim::Command::Kind::Order,
+                            .player = benchIds_[i],
+                            .a = int32_t(sim::Request::Kind::Attack),
+                            .d = benchSkill_[i],
+                            .target = nearest->id});
+        }
+        return;
+    }
+    if (benchClock_ < 4.0f && benchClock_ != seconds) return;
+    benchClock_ = 0.0f;
+    benchOut_ = !benchOut_;
+    for (size_t i = 1; i < benchIds_.size(); i += 2) {
+        local_.command({.kind = sim::Command::Kind::Order,
+                        .player = benchIds_[i],
+                        .a = int32_t(sim::Request::Kind::WalkTo),
+                        .b = benchHome_[i * 2] + (benchOut_ ? 5 : 0),
+                        .c = benchHome_[i * 2 + 1]});
+    }
 }
 
 }  // namespace mu::game

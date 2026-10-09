@@ -19,6 +19,9 @@ struct WindowDesc {
     bool vsync = false;
     // bgfx's per-view GPU timers. core::Args::views says what they cost and who asks.
     bool profileViews = false;
+    // bgfx's own render thread (--render-thread): the Metal encoding of frame N runs beside the
+    // game's frame N+1, for a frame of latency. Off, rendering stays on this thread.
+    bool renderThread = false;
     const char* title = "MU2";
 };
 

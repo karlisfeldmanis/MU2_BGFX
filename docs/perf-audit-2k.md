@@ -328,6 +328,67 @@ does not skip its taps unless its neighbours do too. And **the SSAO's taps on a 
 the SSAO view before its draw), so that eleven of its thirteen reads leave the 104 MB
 multisampled prepass. No change (8.53 against 8.51, under load): the cache already held them.
 
+### A crowd: a hundred players in Noria, 2026-10-09
+
+The user: "we need to create very busy screen with a lot of bots walking, standing, so we can
+see how GPU can help us", in Noria, with wings, +11 sets and weapons. `--bench-players N` joins N
+heroes round him in the raid party's kits (`source/raid/party.json`: every class, +11 throughout,
+wings), half walking to and fro (game::Play::raiseBench, walkBench); they are drawn exactly as a
+server's other players are. Other players' wings were never drawn before this (Play::otherWings):
+only the hero's and the raiders'.
+
+At 1080p 100 of them took the CPU from 3.75 to 5.88 ms a frame against a 6.06 wall frame: the
+crowd makes the frame the CPU's again. They add only ~136 draws (476 to 612): figures wearing the
+same part are one instanced draw already, so **instancing the crowd buys nothing**. A profile of
+the main thread: the bone palette's upload 14% (the Metal driver twiddling the RGBA32F texture
+into its tiled layout on the CPU, every update), `Figure::pose` 15%, the wings 7%.
+
+Kept: **the palette is a buffer** (`shaders/skin.sh`), packed a figure's own bones at a time
+rather than rows of 128. CPU 5.88 to 5.48; Lorencia's town bit-identical against the texture.
+
+Tried and reverted: **the hierarchy walk on the GPU** (a compute step on the sun's view, the CPU
+still sampling and blending the clips, bone world matrices worked out lazily for what rides a
+bone). A thread a figure and then a thread a bone: CPU -0.15 to -0.2 ms, but the wall frame
++0.25 (6.30-6.37 against 6.03-6.13), the shadow pass waiting on the compute pass and three buffers
+uploaded a frame. Most of a pose is the sampling and the crossfade, which stays on the CPU
+whichever way the walk goes. A pose on the GPU pays only if the clips go up too, and the frame
+has a GPU-side gap to put it in.
+
+Then **the poses on all the cores** (`core/jobs.h`, a worker a core but one; the user: "we need
+to use mutiple cores that the point of smooth gameplay"). Play::gather poses every visible figure
+side by side into a slot of its own, then adds the palettes, the held items and the draws in order
+on the frame's thread; Play::gatherOtherWings does the same for the wings (WingLook::pose and
+gatherPosed), and the townsfolk and the town's Crowd the same way ("so monsters has their
+threads": the monsters were already in the bodies' pass). Bit-identical in Lorencia's town, in play
+and in the crowd view. The first pool waited for every worker to wake and
+check in, twice a frame, and the crowd's frame was slower for it; it now waits only for the work.
+The hundred players' frame is the same, 6.13 against 6.12 ms at 1080p: with them the GPU is the
+slower side. What threading buys is the main thread's share, where the CPU is the limit -- a
+slower CPU, or a bigger crowd.
+
+And **bgfx's render thread again, as `--render-thread`** (gfx::WindowDesc::renderThread): with
+the crowd's poses threaded and its palette a buffer, the hundred players measured 6.07 against
+6.07 and 6.13 against 6.15 ms at 1080p. The crowd's frame is the GPU's on this M1 Pro. Kept as a
+flag, off: it is a frame of latency that pays only where the CPU is the limit.
+
+### A fight: sixty players on thirty Balrogs in the Lost Tower, 2026-10-09
+
+The user: "lets make another scene where multiple players are fighting in LT belrogs".
+`--world losttower --at 30,212 --arena Balrog --arena-count 30 --arena-undying --bench-players 60
+--bench-fight`: the bench's heroes attack the nearest monster with their kit's first skill every
+two seconds, and with `--bench-fight` a blow that would fell a monster or a player fills it again
+(Realm::benchUndying), so the fight goes on. 77 fps at 1080p, the effects' 8,192 sprites full.
+
+The main thread's profile: **bgfx made a new MTLBuffer for every buffer update** (BufferMtl::update:
+newBuffer, copy, blit, release), 141 of 991 samples in `newBufferWithBytes` and as many again in
+the copies. patches/bgfx-metal.patch now stages updates in a persistently mapped ring a frame in
+flight a slot (ChunkedScratchBufferMtl, as bgfx's uniforms are), and blits from there; an update
+past 16 MB takes the old way. 141 samples to 0, bgfx's renderFrame 451 to 376; Lorencia's town
+bit-identical.
+
+Found on the way, not ours to chase here: the fight breaks an invariant at tick 50, "body 4 stands
+on blocked tile (32, 210)", the same before the patch -- a Balrog put on a blocked tile.
+
 ## Looked at and left out
 
 - **Clustered or tiled light culling.** The lamp grid already bins static lights per 2 m

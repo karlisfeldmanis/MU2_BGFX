@@ -5,6 +5,7 @@ $output v_texcoord0, v_light
 // rather than the pose it was bound in. The texcoord is here for the same reason it is in
 // vs_depth -- a cutout has to discard in this pass too.
 #include "common.sh"
+#include "skin.sh"
 
 void main()
 {

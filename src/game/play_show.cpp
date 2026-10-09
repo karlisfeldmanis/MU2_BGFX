@@ -14,6 +14,7 @@
 #include <cctype>
 #include <cmath>
 
+#include "core/jobs.h"
 #include "core/files.h"
 #include "core/log.h"
 #include "game/frustum.h"
@@ -1868,12 +1869,31 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     // bodies and NOT with the casters -- eleven small shadows on the frame a fight is busiest
     // are not worth the shadow map's time, which is MU2's call and is recorded as one.
     bones_.gather(out);
+    // Every figure's pose first, on all the cores (core::parallelFor): a pose touches only its
+    // own figure, and a hundred players in Noria spent 15% of the main thread here one after
+    // another. The palette, the held items and the draws stay in order on this thread below.
+    constexpr size_t kRowsEach = size_t(gfx::Renderer::kMaxBones) * 12;
+    posing_.clear();
+    for (size_t i = 0; i < drawn_.size(); ++i) {
+        const Drawn& one = drawn_[i];
+        if (one.visible && one.figure.body() && fadeOf(one) * one.seeThrough > 0.0f) {
+            posing_.push_back(uint32_t(i));
+        }
+    }
+    if (poseRows_.size() < posing_.size() * kRowsEach) poseRows_.resize(posing_.size() * kRowsEach);
+    poseBones_.resize(posing_.size());
+    core::parallelFor(posing_.size(), [&](size_t k) {
+        poseBones_[k] = drawn_[posing_[k]].figure.pose(&poseRows_[k * kRowsEach]);
+    });
+    size_t posedAt = 0;
     for (Drawn& one : drawn_) {
         if (!one.visible || !one.figure.body()) continue;
         const float fade = fadeOf(one) * one.seeThrough;
         if (fade <= 0.0f) continue;
-        const int bones = one.figure.pose(scratch_.data());
-        const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        // Its pose from the pass above: the same test, in the same order.
+        const size_t k = posedAt++;
+        const int bones = poseBones_[k];
+        const int palette = bones > 0 ? renderer.addPalette(&poseRows_[k * kRowsEach], bones) : -1;
         // And its bow's or crossbow's own clip, on her key: the string drawn and let go with the
         // arm (Figure::poseHeld). Never called here before 2026-10-03, so in play every bow
         // stood strung and still -- only the town's crowd, the lobby and the bench played it.
@@ -1987,10 +2007,18 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     }
     // The raid's raiders' wings, after their bodies are posed (play_raid.cpp).
     gatherRaiders(renderer, out, casters);
+    gatherOtherWings(renderer, out, casters);
+    // The townsfolk posed on all the cores first, as the bodies above are.
+    constexpr size_t kFolkRows = size_t(gfx::Renderer::kMaxBones) * 12;
+    if (poseRows_.size() < folk_.size() * kFolkRows) poseRows_.resize(folk_.size() * kFolkRows);
+    poseBones_.resize(folk_.size());
+    core::parallelFor(folk_.size(), [&](size_t i) {
+        poseBones_[i] = folk_[i].figure.pose(&poseRows_[i * kFolkRows]);
+    });
     for (size_t i = 0; i < folk_.size(); ++i) {
         Standing& one = folk_[i];
-        const int bones = one.figure.pose(scratch_.data());
-        const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        const int bones = poseBones_[i];
+        const int palette = bones > 0 ? renderer.addPalette(&poseRows_[i * kFolkRows], bones) : -1;
         // And its bow's or crossbow's own clip, on her key: the string drawn and let go with the
         // arm (Figure::poseHeld). Never called here before 2026-10-03, so in play every bow
         // stood strung and still -- only the town's crowd, the lobby and the bench played it.
