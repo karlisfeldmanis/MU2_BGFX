@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 #include "core/log.h"
 #include "game/play.h"
@@ -152,6 +153,14 @@ void Chat::hear(const net::Heard& heard) {
     line.to = heard.to;
     line.text = heard.text;
     line.bot = heard.bot;
+    // The server's invite (server/src/main.cpp, partyAsk): its asker, and the line without the
+    // typing it asks for, since the line wears its own buttons.
+    constexpr const char* kInvites = " invites you to a party.";
+    const size_t at = line.text.find(kInvites);
+    if (line.channel == net::Channel::Party && line.name.empty() && at != std::string::npos && at > 0) {
+        line.inviter = line.text.substr(0, at);
+        line.text = line.inviter + kInvites;
+    }
     log_.push_back(line);
     if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
     if (line.name.empty()) return;
@@ -267,6 +276,10 @@ void Chat::send(Play& play) {
                 system(net::Channel::Server, "No one is here to party with: this world is not on a server.");
                 return;
             }
+            if (asked.what == net::PartyWhat::Accept || asked.what == net::PartyWhat::Decline) {
+                answer(play, -1, asked.name, asked.what == net::PartyWhat::Accept);
+                return;
+            }
             play.askParty(asked);
             return;
         } else {
@@ -289,6 +302,57 @@ void Chat::send(Play& play) {
     said.to = channel_ == net::Channel::Whisper ? target_ : std::string();
     said.text = text;
     play.say(said);
+}
+
+void Chat::answer(Play& play, long index, const std::string& name, bool accept) {
+    // The line it answers: the one pressed, or the latest open one from `name` (any, for none).
+    if (index < 0) {
+        for (size_t i = log_.size(); i-- > 0;) {
+            if (!log_[i].inviter.empty() && log_[i].answer == 0 && (name.empty() || log_[i].inviter == name)) {
+                index = long(i);
+                break;
+            }
+        }
+    }
+    net::PartyAsk asked;
+    asked.what = accept ? net::PartyWhat::Accept : net::PartyWhat::Decline;
+    asked.name = index >= 0 ? log_[size_t(index)].inviter : name;
+    if (index >= 0) log_[size_t(index)].answer = accept ? 1 : -1;
+    play.askParty(asked);
+}
+
+uint64_t Chat::signature(float u, const Pointer& pointer) const {
+    uint64_t h = 1469598103934665603ull;
+    const auto mix = [&](uint64_t v) { h = (h ^ v) * 1099511628211ull; };
+    const auto mixf = [&](float f) { mix(uint64_t(int64_t(std::lround(f * 4.0f)))); };
+    const auto mixs = [&](const std::string& s) {
+        for (const char c : s) mix(uint8_t(c));
+        mix(0xFF);
+    };
+    mix(open_);
+    mixf(u);
+    mixf(panel_.x), mixf(panel_.y), mixf(panel_.w), mixf(panel_.h);
+    mix(log_.size());
+    mix(log_.empty() ? 0 : std::hash<std::string>{}(log_.back().text));
+    for (const Line& line : log_) mix(uint64_t(line.answer + 1));
+    for (const auto& [key, count] : unread_) mixs(key), mix(uint64_t(count));
+    mixs(tab_), mixs(me_), mixs(target_), mix(uint8_t(channel_));
+    for (const std::string& name : whispers_) mixs(name);
+    if (open_) {
+        mixs(draft_);
+        mix(std::fmod(clock_, 1.0f) < 0.6f);
+        mixf(logScroll_), mixf(tabScroll_), mix(uint8_t(drag_));
+        // The pointer only where it lights something: on the panel or dragging.
+        if (covers(pointer.x, pointer.y) || drag_ != Drag::None) mixf(pointer.x), mixf(pointer.y);
+    } else {
+        // Closed, the fading lines: each one's step down its fade.
+        size_t n = 0;
+        for (size_t i = log_.size(); i-- > 0 && n < size_t(kClosedLines); ++n) {
+            const float age = log_[i].age;
+            mix(age < kStays ? 0 : age < kStays + kFades ? uint64_t((age - kStays) * 16.0f) + 1 : 1000);
+        }
+    }
+    return h;
 }
 
 void Chat::layTabs(float u) {
@@ -364,6 +428,14 @@ void Chat::layRows(float u, float wide, const std::string& tab, size_t from) {
             rest = rest.substr(std::min(rest.size(), cut + (cut < rest.size() && rest[cut] == ' ' ? 1 : 0)));
             row.first = false;
             room = wide - indent;
+        }
+        if (!line.inviter.empty() && line.answer == 0) {
+            Row buttons;
+            buttons.line = i;
+            buttons.first = false;
+            buttons.buttons = true;
+            rows_.push_back(buttons);
+            rows_.push_back(buttons);  // they stand two rows tall
         }
     }
     logTall_ = float(rows_.size()) * kRow * u;
@@ -447,7 +519,19 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
 
     // The pointer, open only.
     const bool over = open_ && covers(pointer.x, pointer.y);
-    if (open_ && pointer.pressed && over) {
+    bool chosen = false;
+    if (open_ && pointer.pressed) {
+        for (const Choice& choice : choices_) {
+            if (!choice.box.has(pointer.x, pointer.y) || choice.line >= log_.size() ||
+                log_[choice.line].inviter.empty()) {
+                continue;
+            }
+            answer(play, long(choice.line), {}, choice.accept);
+            chosen = true;
+            break;
+        }
+    }
+    if (open_ && pointer.pressed && over && !chosen) {
         if (grip_.has(pointer.x, pointer.y)) {
             drag_ = Drag::Grip;
             dragFrom_ = pointer.y;
@@ -505,9 +589,13 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     logScroll_ = std::clamp(logScroll_, 0.0f, std::max(0.0f, logTall_ - logBox_.h));
     tabScroll_ = std::clamp(tabScroll_, 0.0f, std::max(0.0f, tabsWide_ - tabRow_.w));
 
+    const uint64_t key = signature(u, pointer);
+    if (key == built_) return;
+    built_ = key;
     back_.clear();
     tabsDrawn_.clear();
     lines_.clear();
+    choices_.clear();
     if (open_) {
         build(u, pointer);
         showing_ = true;
@@ -591,11 +679,29 @@ void Chat::build(float u, const Pointer& pointer) {
     lines_.clip(logBox_);
     const float size = kText * u;
     float y = logBox_.bottom() - logTall_ + logScroll_;
-    for (const Row& row : rows_) {
+    for (size_t r = 0; r < rows_.size(); ++r) {
+        const Row& row = rows_[r];
         const float top = y;
         y += kRow * u;
-        if (y < logBox_.y || top > logBox_.bottom()) continue;
         const Line& line = log_[row.line];
+        if (row.buttons) {
+            // An open invite's answers, on the first of their two rows.
+            if (r > 0 && rows_[r - 1].buttons) continue;
+            const float bx = logBox_.x + 14.0f * u, by = top + 6.0f * u, bw = 96.0f * u, bh = 34.0f * u;
+            for (const bool accept : {true, false}) {
+                const Box box{accept ? bx : bx + bw + 8.0f * u, by, bw, bh};
+                if (box.bottom() < logBox_.y || box.y > logBox_.bottom()) continue;
+                controls::State state;
+                state.lift = box.has(pointer.x, pointer.y) ? 1.0f : 0.0f;
+                controls::button(lines_, box, accept ? "Accept" : "Decline",
+                                 accept ? controls::Kind::Primary : controls::Kind::Secondary, state, u, 15.0f * u);
+                // Pressable only where the well shows it.
+                const float shownTop = std::max(box.y, logBox_.y), shownFoot = std::min(box.bottom(), logBox_.bottom());
+                choices_.push_back({{box.x, shownTop, box.w, shownFoot - shownTop}, row.line, accept});
+            }
+            continue;
+        }
+        if (y < logBox_.y || top > logBox_.bottom()) continue;
         const float base = top + kRow * u * 0.74f;
         float x = logBox_.x + (row.first ? 0.0f : 14.0f * u);
         if (line.name.empty()) {

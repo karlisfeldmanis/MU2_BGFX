@@ -64,11 +64,16 @@ private:
         std::string name, to, text;
         bool bot = false;
         float age = 0.0f;  // seconds since heard
+        // A party invite, the server's line on Party: who asks, and how it was answered (0 not
+        // yet, 1 accepted, -1 declined). An open one wears Accept and Decline under it.
+        std::string inviter;
+        int answer = 0;
     };
     // One row of the log as it is set: a line wraps into several.
     struct Row {
         size_t line = 0;
         bool first = true;
+        bool buttons = false;  // an open invite's Accept and Decline
         std::string text;  // this row's part of the line's text
     };
     struct Tab {
@@ -79,6 +84,9 @@ private:
     };
 
     void send(Play& play);
+    // An invite answered, by its line, or the latest open one for `index` -1 and `name` empty.
+    void answer(Play& play, long index, const std::string& name, bool accept);
+    uint64_t signature(float u, const Pointer& pointer) const;
     void select(const std::string& key);
     void closeTab(const std::string& key);
     void system(net::Channel channel, const std::string& text);
@@ -115,6 +123,16 @@ private:
     float logTall_ = 0.0f;     // the whole log as set
     std::vector<Row> rows_;
     std::vector<size_t> closedLines_;  // the lines shown while it is shut, newest last
+    // The invites' buttons as last drawn, for the next press.
+    struct Choice {
+        gfx::Box box;
+        size_t line = 0;
+        bool accept = false;
+    };
+    std::vector<Choice> choices_;
+    // What the canvases were last built from: rebuilt only when it changes (a caret's blink, a
+    // line, the pointer over it, a closed line fading), as every window here is.
+    uint64_t built_ = 0;
 
     // A drag: the grip, the tabs' slider or the log's.
     enum class Drag : uint8_t { None, Grip, TabSlider, LogSlider };
