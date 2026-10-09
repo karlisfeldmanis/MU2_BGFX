@@ -26,20 +26,15 @@ uint32_t faded(uint32_t abgr, float alpha) {
     return (abgr & 0xFFFFFFu) | (uint32_t(a * 255.0f + 0.5f) << 24);
 }
 
-// Two neutral tones and little else (the user, 2026-10-09: "dont use to much colors on chats
-// because its bad UX"): what is said in bone; the channel's word, the server's lines, the channel
-// button and the counts in one quiet ash. Colour is kept for the few things he asked to find at a
-// glance -- the chosen tab's gold, the names' green -- and the primary button's red. Each channel
-// keeps its own constant, so one may be given a hue again without a hunt.
-constexpr uint32_t kQuietInk = hex(0xa39888);
-constexpr uint32_t kMapInk = kQuietInk, kPartyInk = kQuietInk, kGuildInk = kQuietInk;
-constexpr uint32_t kWhisperInk = kQuietInk, kSystemInk = kQuietInk;
+// The channels' inks (the mockup's): told apart by lightness as well as hue.
+constexpr uint32_t kMapInk = hex(0xd9cfbd), kPartyInk = hex(0x7fb6f2), kGuildInk = hex(0x93d67e);
+constexpr uint32_t kWhisperInk = hex(0xe7a0e4), kSystemInk = hex(0xd6ad5c);
 // A speaker's name, on every channel: the green of the name over a player's head (vitals.cpp,
 // kTagGreen), apart from the line's own ink (the user, 2026-10-09: "color char name differnet
 // color", "use green", "same as label"). The channel is in the small word before it.
 constexpr uint32_t kNameInk = gfx::rgba(0.18f, 1.0f, 0.18f);
-constexpr uint32_t kBody = hex(0xd9cfbd), kWhisperBody = kBody, kQuiet = hex(0x8f8575);
-constexpr uint32_t kTabIdle = hex(0x7d7366), kTabWhisper = kTabIdle, kTabLit = hex(0xfbe3a4);
+constexpr uint32_t kBody = hex(0xd9cfbd), kWhisperBody = hex(0xefd3ee), kQuiet = hex(0x8f8575);
+constexpr uint32_t kTabIdle = hex(0x7d7366), kTabWhisper = hex(0xa77ea4), kTabLit = hex(0xfbe3a4);
 constexpr uint32_t kGoldBar = hex(0xe0b65c), kGoldGlow = hex(0xc8a258);
 constexpr uint32_t kIron = hex(0x6b5645), kIronLit = hex(0xa8843c), kGripInk = hex(0x8a7560);
 constexpr uint32_t kHintInk = hex(0x6f665b), kPlaceholder = hex(0x5c5249), kDraft = hex(0xf3e8d4);
