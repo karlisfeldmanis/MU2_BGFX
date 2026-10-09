@@ -2462,7 +2462,7 @@ private:
     // was the same either way, so theirs stays a third. Off the purse alone, so the choice does
     // not flicker as he drinks his bag down.
     double riskShare() const {
-        const bool rich = realm_->money() >= 20 * potionPrice(healTier());
+        const bool rich = realm_->money() - spent_ >= 20 * potionPrice(healTier());
         return wizardly() && rich ? 2.0 : 3.0;
     }
     // The strongest breed level on a map he takes, or -1.
@@ -2789,7 +2789,14 @@ private:
                 const content::Tables* t = world(w.map);
                 if (!t || !reachable(w.map) || (!open && w.map != 0 && w.map != 3)) continue;
                 if (shunned_[w.map] > clock_) continue;
+                // **Weighed with the purse he lands with**: the trip there paid, a wizard's
+                // purse fell under riskShare's line, the breed he went for was too dear on
+                // landing, and he paid back -- Lorencia -> Noria -> Lorencia two seconds apart,
+                // nine trips in 45 minutes at 4,880 Zen (the Claude bot's runs, 2026-10-09).
+                int gate, travel;
+                spent_ = w.map != map() && way(w.map, &gate, &travel) && travel >= 0 ? sim::travelAt(travel).zen : 0;
                 const int b = bestOn(*t);
+                spent_ = 0;
                 if (b > best) {
                     best = b;
                     aimMap_ = w.map;
@@ -4150,6 +4157,7 @@ private:
     Mode mode_ = Mode::Hunt;
     Aim aim_ = Aim::Grind, lastAim_ = Aim::Grind;
     int ordered_ = -1;  // order(): the map he was told to grind, or -1
+    mutable int64_t spent_ = 0;  // a trip's price, off the purse riskShare reads (choose)
     int aimQuest_ = -1, aimMap_ = 0, lastQuest_ = -2, lastMap_ = -1;
     std::vector<int> quarry_;
     int64_t aside_[sim::kQuests] = {};
