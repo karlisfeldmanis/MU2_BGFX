@@ -464,7 +464,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::KeenEye, "Keen Eye", "+10% critical chance", kEveryClass, kWorn, Rarity::Rare},
         {Power::Bloodwell, "Bloodwell", "Heal 3% of damage dealt, 5% mana per kill",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Frenzy, "Frenzy", "Each hit: +8 attack speed for 4 s, stacks to +40 per rune",
+        {Power::Frenzy, "Frenzy", "Each hit: +8 attack speed for 4 s, stacks to +40",
          kEveryClass, kWorn, Rarity::Epic},
         {Power::Renewal, "Renewal", "Restore 3% life every 3 s",
          kEveryClass, kWorn, Rarity::Epic},
@@ -680,6 +680,14 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || !power->takenBy(kin, second)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!socketsFit(row) || freeSocket(target) < 0) return false;
+    // One Frenzy a thing: two in one pair of boots stacked to more speed than the game can
+    // carry (the user, 2026-10-09: "stacking is to op, lets just allow to put only 1 frenzy
+    // rune"). And however many he wears, the stacks stop at kFrenzyMostStacks.
+    if (power->power == Power::Frenzy) {
+        for (int at = 0; at < std::min<int>(target.sockets, kMostSockets); ++at) {
+            if (target.powers[at] == uint8_t(Power::Frenzy)) return false;
+        }
+    }
     // Its group's sockets (sim::PowerRow::slots): a ring's and a pendant's take the armour runes
     // and the element runes (the user, 2026-10-02: "allow to put runes on jewels and pendants"),
     // and a weapon's power is read off the hands only, so it stays out of them.

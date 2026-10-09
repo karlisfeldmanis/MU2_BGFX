@@ -148,8 +148,7 @@ public:
         // potion is active and doing its work').
         int potion = -1;
         int amount = 0;
-        int stacks = 0;       // and its stacks, 1 to `stacksMost` (Dragonfire's too)
-        int stacksMost = 0;   // a Frenzy's ceiling, sim::frenzyMost of the runes worn
+        int stacks = 0;       // and its stacks, 1 to sim::kFrenzyMostStacks (Dragonfire's too)
         // Or his pet in slot 8: 0 the Guardian Angel, 1 the Imp, -1 none. It has no clock; its
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
         // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).
