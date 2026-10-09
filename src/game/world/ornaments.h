@@ -96,6 +96,10 @@ private:
         bool steady = false;
         bool swells = false;  // its size breathes with Luminosity too: the merchant animal's
         int sheet = 0;
+        // Its sheet's width in texels, which MU's RenderSprite sizes it by (zzzeffectsprite.cpp:
+        // `pBitmap->Width * Scale`): 64 for the lamps' flare01, 128 for Magic_Ground2 and
+        // lightning2, the Lost Tower's machines'.
+        float texels = 64.0f;
         float spin = 0.0f;
         // Blood Castle's: the level is `sin(phase + t) * amp + base` on a sine of t seconds,
         // where WorldTime * 0.001 is, and with `breathSize` the size is that level + 0.5.

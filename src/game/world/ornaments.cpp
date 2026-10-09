@@ -123,6 +123,7 @@ constexpr TowerGlow kTowerGlows[] = {
 };
 constexpr int kTowerBones[3] = {15, 19, 21};
 constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
+constexpr float kTowerTexels = 128.0f;
 
 // ---- Blood Castle's: RenderObjectVisual, case WD_11BLOODCASTLE1 to +6 ----------------------
 //
@@ -284,6 +285,12 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                         star.anchor = anchor(i, mesh, kTowerBones[b], kOrigin, kNoAcross);
                         for (int a = 0; a < 3; ++a) star.anchor.point[a] = 0.0f;
                         star.scale = kTowerScales[b];
+                        // MU's Magic_Ground2 and lightning2 are 128 texels: drawn on the 64 rule
+                        // the eye filled half the ring and the two small rings were specks the
+                        // orb's cyan showed through, read as flames (the user, 2026-10-09, with
+                        // a shot of MU's: "there is some flames on that gates but they are well
+                        // integrated on that object").
+                        star.texels = kTowerTexels;
                         for (int a = 0; a < 3; ++a) star.colour[a] = glow.colour[a];
                         star.sheet = glow.sheet;
                         star.spin = way * kStarDegreesPerSecond;
@@ -678,7 +685,8 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
                     : 0.0f;
             const float size = lantern.breathSize ? breath + 0.5f : lantern.scale;
             sprite.halfWidth = sprite.halfHeight =
-                0.5f * kSheetMetres * size * (lantern.swells ? luminosity_ : 1.0f);
+                0.5f * kSheetMetres * (lantern.texels / 64.0f) * size *
+                (lantern.swells ? luminosity_ : 1.0f);
             float level = lantern.breathes ? breath : lantern.steady ? 1.0f : luminosity_;
             // Each on its own beat, two quick sines off its phase: the shared roll would flicker
             // all of them together.
