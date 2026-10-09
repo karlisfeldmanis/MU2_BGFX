@@ -927,6 +927,7 @@ void Play::update(double seconds) {
                             nocked.sound = a == 0;
                             nocked.pierce = happening.a == sim::skill::kPenetration;
                             nocked.plague = a < 8 && ((happening.plagueLanes >> a) & 1) != 0;
+                            nocked.unlit = true;
                             nocking_.push_back(nocked);
                         }
                     } else if (happening.a == sim::skill::kFireBall && happening.rune &&
@@ -1945,7 +1946,7 @@ void Play::update(double seconds) {
         // At MU's own speed: her blow waits for it to land (kArrowOwed), where it was once
         // hurried into what was left of the realm's flight -- across in a twentieth of a second
         // near a body, too quick to see leave the string.
-        shootArrow(*from, to, shot.whom, 0.0f, shot.pierce, shot.plague);
+        shootArrow(*from, to, shot.whom, 0.0f, shot.pierce, shot.plague, shot.unlit);
         shot.air = -1.0f;
     }
     nocking_.erase(std::remove_if(nocking_.begin(), nocking_.end(),

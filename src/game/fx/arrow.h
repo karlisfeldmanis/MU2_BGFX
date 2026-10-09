@@ -103,7 +103,7 @@ public:
     // the one on her string stays gone (owners, Figure::holdNock).
     void loose(const float from[3], const float to[3], uint32_t whom, Model model,
                uint32_t shooter = 0, const float* tint = nullptr, float seconds = 0.0f,
-               bool pierce = false, uint32_t owner = 0);
+               bool pierce = false, uint32_t owner = 0, bool unlit = false);
     const std::vector<uint32_t>& landed() const { return landed_; }
 
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
@@ -159,6 +159,9 @@ private:
         // only the thin smoke, where MU's wooden arrow keeps them (the user, 2026-10-04: 'better but without
         // fire'). ours.
         bool pierce;
+        // Casts no light whatever the bolt: a Skillshot's (the user, 2026-10-09: "remove light
+        // emiter from multi-shot"). ours.
+        bool unlit;
         // Reference frames left of its fade, once its flight is over: Penetration's flies on as
         // it goes (the user, 2026-10-04: 'penetraiton arrow cant just stoped and fadeout, it has
         // to fadeout in movement'). 0 while it flies. ours.

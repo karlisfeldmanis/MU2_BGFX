@@ -132,7 +132,7 @@ float Arrows::roll() {
 
 void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model model,
                    uint32_t shooter, const float* tint, float seconds, bool pierce,
-                   uint32_t owner) {
+                   uint32_t owner, bool unlit) {
     Shot* shot = nullptr;
     for (Shot& one : shots_) {
         if (!one.alive) {
@@ -171,6 +171,7 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     for (int k = 0; k < 3; ++k) shot->tint[k] = tint ? tint[k] : 1.0f;
     shot->glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
     shot->pierce = pierce;
+    shot->unlit = unlit;
     if (pierce) wind(int(shot - shots_));
 }
 
@@ -662,7 +663,7 @@ uint32_t Arrows::lights(gfx::PointLight* out, uint32_t max) const {
         if (!shot.alive || count >= max) continue;
         // Penetration's casts no light (the user, 2026-10-09: "remove light emiter effect from
         // penetration skill"), whatever the bow.
-        if (shot.pierce) continue;
+        if (shot.pierce || shot.unlit) continue;
         if (shot.model != Steel && shot.model != Saw) continue;
         gfx::PointLight& light = out[count++];
         for (int k = 0; k < 3; ++k) light.position[k] = shot.at[k];

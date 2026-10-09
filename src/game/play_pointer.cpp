@@ -445,7 +445,7 @@ bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const 
 // 1.35 m up, 0.6 m toward the target, a hand's width to the side (fx/arrow.h) -- for a weapon
 // that marks none. The model is her weapon's. The arrow on the string goes with it.
 void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, float seconds,
-                      bool pierce, bool plague) {
+                      bool pierce, bool plague, bool unlit) {
     const float feet = ground_ ? ground_->heightAt(shooter.crown[0], shooter.crown[2]) : 0.0f;
     const float wayX = to[0] - shooter.crown[0], wayZ = to[2] - shooter.crown[2];
     const float flat = std::max(1e-4f, std::sqrt(wayX * wayX + wayZ * wayZ));
@@ -506,7 +506,7 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
     if (plague) tint = kPlagueArrowTint;
     // A shot at a body says when it lands, and her blow is shown then (Play's arrow cue).
     arrows_.loose(muzzle, to, whom, model, whom != 0 ? shooter.id : 0, tint, seconds, pierce,
-                  shooter.id);
+                  shooter.id, unlit);
 }
 
 bool Play::shoots(uint32_t id, Arrows::Model* model) {
