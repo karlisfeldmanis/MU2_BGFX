@@ -35,7 +35,9 @@ public:
     void pump() override;
     bool due() const override { return !ticks_.empty(); }
     int owed() const override { return int(ticks_.size()); }
-    bool earlyDue() const override { return !ticks_.empty() && ticks_.front().early; }
+    // The server's early tick, when it is for his own click: an early tick for another player's
+    // is stepped on this clock like any other (Play::update catches up on it gently).
+    bool earlyDue() const override;
     void step() override;
     const std::vector<sim::Happening>& happenings() const override { return mirror_.happenings(); }
     const sim::Realm& realm() const override { return mirror_; }
@@ -134,6 +136,7 @@ private:
     std::chrono::steady_clock::time_point pingAt_{};
     uint32_t pingNonce_ = 0;
     bool pingOut_ = false;
+    bool pingUnread_ = false;  // the Ping out has waited past a gap between pumps
     float rttMs_ = -1.0f;
     Clock::time_point heardAt_{};   // the last byte from the server, by stream or datagram
     Clock::time_point pumpedAt_{};  // the last pump: a Ping's answer read later than kUnreadMost is not counted

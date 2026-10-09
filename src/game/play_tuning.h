@@ -58,6 +58,9 @@ constexpr double kSettleMost = 6.0;
 // more, up to kMostCushion; kCalmToLower seconds with none hold one fewer. While short of it the
 // clock runs at kCushionFill. All invention.
 constexpr double kStallFelt = 0.008;
+// The clock's pace while the server is ahead of it by part of a tick (Play::update): another
+// player's early tick, ~25 ms, is caught up in about half a second. Invention.
+constexpr double kAheadPace = 1.06;
 constexpr double kStallWindow = 5.0;
 constexpr int kStallsToCushion = 3;
 constexpr int kMostCushion = 3;

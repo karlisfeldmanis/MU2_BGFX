@@ -192,6 +192,12 @@ void Play::update(double seconds) {
         const int spare = link_->owed() - 1 - cushion_;
         if (spare > 0) pace = std::min(2.0, 1.0 + 0.25 * spare);
         else if (spare < 0 && cushion_ > 0 && !settling_) pace = kCushionFill;
+        // A tick in hand before this clock wants it: the server is ahead of the drawing, by
+        // another player's early tick (RemoteLink::earlyDue) most often. Caught up a little
+        // faster until it is wanted, not in the one tick: stepped on arrival, the interval's
+        // rest was drawn in the next 50 ms and everybody walking hurried at up to 1.8 times
+        // his pace once a second (the user, 2026-10-09: "minimal walking lag hikups").
+        else if (spare == 0 && accumulator_ < kTickSeconds && !settling_) pace = kAheadPace;
     }
     accumulator_ += seconds * pace;
     const int64_t started = bx::getHPCounter();

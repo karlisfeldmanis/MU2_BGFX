@@ -128,6 +128,14 @@ constexpr auto kSilentMost = std::chrono::seconds(5);
 
 }  // namespace
 
+bool RemoteLink::earlyDue() const {
+    if (ticks_.empty() || !ticks_.front().early) return false;
+    for (const sim::Command& one : ticks_.front().commands) {
+        if (one.player == you_ && leads(one.kind)) return true;
+    }
+    return false;
+}
+
 void RemoteLink::send(const sim::Command& command) {
     if (!socket_.open()) return;
     if (leads(command.kind)) own_.push_back({command, mirror_.tick(), Clock::now()});
@@ -232,6 +240,7 @@ void RemoteLink::ping() {
     if (!socket_.open()) return;
     pingAt_ = std::chrono::steady_clock::now();
     pingOut_ = true;
+    pingUnread_ = false;
     std::vector<uint8_t> out;
     net::put(out, net::Ping{++pingNonce_});
     put(out);
@@ -248,7 +257,10 @@ void RemoteLink::pump() {
     // that took his click in 50, he was carried six ticks on in one the moment it did, and slid
     // back a tick at a time as the number came down (the user, 2026-10-09: "character moves
     // very fast ... maybe it's related with big ping when changing worlds").
-    const bool unread = pumpedAt_ != Clock::time_point{} && now - pumpedAt_ > kUnreadMost;
+    // Kept until the Ping is answered: under setLag its answer is held past the gap, and read
+    // on a later pump that by itself looked prompt ("the hero led 8 ticks (1888 ms round trip)").
+    if (pumpedAt_ != Clock::time_point{} && now - pumpedAt_ > kUnreadMost && pingOut_) pingUnread_ = true;
+    const bool unread = pingUnread_;
     pumpedAt_ = now;
     bool askAgain = false;
     while (!outHeld_.empty() && outHeld_.front().due <= now && socket_.open()) {
