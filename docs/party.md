@@ -63,6 +63,17 @@ mockup, claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX); the party rides on its chann
 
 - 2026-10-09, a9f28b19: the realm's half (Body::party, Command::Kind::PartySet, payKill,
   countPartyKill, testParty).
+- 2026-10-09, 05495abc: the server's half (protocol 16: PartyAsk, PartyState; the server's party
+  section; Link::askParty/party; netbot --party). Run locally: four bots, one party, no
+  divergence. The client's bar and the chat's /invite, /leave, /kick, /accept, /decline are the
+  chat session's (src/game/ui/chat.*), reading Link::party().
+- **Threat, decided 2026-10-09** (the user: "how tank will be able to hold threat if DW does more
+  damage?", then "what about MG, he also can be tank"): x3 threat while the Defense guard is up
+  -- a knight's or a Magic Gladiator's, so the tank is whoever raises it; a monster turns to
+  another only past +10% (in melee) or +30% (at range) of its target's; a tank's first blow
+  adds a tenth of the monster's health; his area skills put threat on all they strike; a heal
+  adds half of it to each monster on the healed. Bots' damage dealers ease off at 90% of the
+  tank's. A taunt only if this is not enough.
 
 ## The plan, a sprint each
 
