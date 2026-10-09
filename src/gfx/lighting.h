@@ -97,6 +97,14 @@ struct Lighting {
     // tower with no torch is the only warm light (docs/lost-tower-port.md). Ours. 0 everywhere
     // else, so their water is as it was.
     float waterGlow[3] = {0.0f, 0.0f, 0.0f};
+    // The light that lava throws on what stands beside it, linear, on the albedo: the walls of
+    // the Lost Tower's pits and whoever walks their edge (the user, 2026-10-09: "lavas need some
+    // minimal light emiter whole lava is light emiter those bright parts because its almost
+    // fire"). Read through content::Ground::lava; `lavaRise` is how many metres over the lava
+    // it reaches, fading to nothing there. Ours. 0 everywhere else: no world but the tower's
+    // TileWater01 burns.
+    float lavaLight[3] = {0.0f, 0.0f, 0.0f};
+    float lavaRise = 3.0f;
     // What the frame shows where nothing is drawn, in the shade target's linear light before
     // the exposure and the tonemap. Black, as MU clears every map but two: Icarus is navy,
     // rgb (3, 25, 44)/256 (SceneManager.cpp:385), and with no ground drawn there it is the sky

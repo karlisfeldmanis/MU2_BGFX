@@ -21,6 +21,27 @@ uniform vec4 u_lampParams;  // x: lamp_strength  y: 1 when any light is set  z: 
 SAMPLER2D(s_lamps, 13);
 SAMPLER2D(s_lampGrid, 14);
 
+// The lava's light on what stands beside it (gfx::Lighting::lavaLight, content::Ground::lava):
+// the share of the lava round a point, filtered, times the colour, fading to nothing u_lava.w
+// metres over the lava's level and taken more by a face turned down or aside -- the lava is
+// below -- than by one turned up. On the albedo, as a lamp's is. Only where a shader asks for
+// it, since its stage is another's elsewhere; ours (the user, 2026-10-09: "lavas need some
+// minimal light emiter").
+#ifdef MU2_LAVA_LIGHT
+SAMPLER2D(s_lava, MU2_LAVA_LIGHT);
+uniform vec4 u_lava;     // rgb: the light, linear  w: metres over the lava it reaches, 0 off
+uniform vec4 u_lavaMap;  // x: the lava's level  zw: the map's uv as world x and -z times z plus w
+vec3 lavaLight(vec3 wpos, vec3 n, vec3 diffuseColour)
+{
+	if (u_lava.w <= 0.0) return vec3_splat(0.0);
+	float near = texture2D(s_lava, vec2(wpos.x, -wpos.z) * u_lavaMap.z + u_lavaMap.w).r;
+	float rise = saturate((wpos.y - u_lavaMap.x) / u_lava.w);
+	float up = (1.0 - rise) * (1.0 - rise);
+	float facing = 0.35 + 0.65 * saturate(0.5 - 0.5 * n.y);
+	return diffuseColour * u_lava.rgb * (near * up * facing);
+}
+#endif
+
 // The transient lights: at most four, they MOVE, and they are not in the grid above. The grid
 // is binned once when a world opens because the lamps never move; a falling meteor would have
 // it walked again every frame, for four lights. So these ride in a uniform array every lit
@@ -161,6 +182,9 @@ vec3 lampLight(vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0, float rou
 	// the lamp grid" may switch it off. The grid is exactly the map (game/lamps.cpp:175), so
 	// anything standing off the edge of it would otherwise go dark under a meteor overhead.
 	vec3 sum = transientLight(wpos, n, v, diffuseColour, f0, roughness, ndotv, specular);
+#ifdef MU2_LAVA_LIGHT
+	sum += lavaLight(wpos, n, diffuseColour);
+#endif
 	if (u_lampParams.y < 0.5) return sum;
 
 	vec2 cellF = floor((wpos.xz - u_lampGrid.xy) * u_lampGrid.z);

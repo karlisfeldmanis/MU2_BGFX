@@ -93,6 +93,12 @@ void Renderer::bindShadeInputs() {
     }
     bgfx::setTexture(13, sLamps_, lamps_);
     bgfx::setTexture(14, sLampGrid_, lampGrid_);
+    // Stage 8, which fs_shade leaves free (lights.sh's MU2_LAVA_LIGHT); the ground and the
+    // bloom bind their own over it afterwards.
+    bgfx::setUniform(uLava_, lavaLight_);
+    bgfx::setUniform(uLavaMap_, lavaMap_);
+    bgfx::setTexture(8, sLava_, bgfx::isValid(lava_) && lavaLight_[3] > 0.0f ? lava_ : whiteAo_,
+                     BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 }
 
 void Renderer::fitSplit(const Camera& camera, const Lighting& lighting, const float* worldAxes,
@@ -622,6 +628,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     caustic_ = lighting.caustic;
     sway_ = lighting.sway;
     causticSheet_ = ground ? ground->caustic() : bgfx::TextureHandle{bgfx::kInvalidHandle};
+    // The lava's light: the ground's map, lit only where the sheet gives it a colour.
+    lava_ = ground ? ground->lava() : bgfx::TextureHandle{bgfx::kInvalidHandle};
+    const bool lavaLit = bgfx::isValid(lava_) &&
+                         lighting.lavaLight[0] + lighting.lavaLight[1] + lighting.lavaLight[2] > 0.0f;
+    for (int i = 0; i < 3; ++i) lavaLight_[i] = lighting.lavaLight[i];
+    lavaLight_[3] = lavaLit ? std::max(0.01f, lighting.lavaRise) : 0.0f;
+    if (lavaLit) std::memcpy(lavaMap_, ground->lavaParams(), sizeof(lavaMap_));
     // The chasms' dark, which is the world's and not the sheet's. content::Ground::abyss.
     abyss_ = ground ? ground->abyss() : bgfx::TextureHandle{bgfx::kInvalidHandle};
     if (bgfx::isValid(abyss_)) {

@@ -4,6 +4,8 @@
 // written back, so no pixel here is shaded twice.
 // Stage 6 is the prepass's, which this pass never reads. abyss() in common.sh.
 #define MU2_ABYSS 6
+// Stage 8, s_colour's elsewhere and never read here: the lava's light (lights.sh).
+#define MU2_LAVA_LIGHT 8
 #include "common.sh"
 
 #include "shadow.sh"

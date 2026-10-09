@@ -152,6 +152,10 @@ public:
     // zw the texture's uv as world x and -z times z plus w. abyss() in common.sh.
     bgfx::TextureHandle abyss() const { return abyss_; }
     const float* abyssParams() const { return abyssParams_; }
+    // How near each tile is to lava (TileWater01), filtered, R8, and u_lavaMap: x the lava's
+    // level, zw the uv as world x and -z times z plus w. Invalid with no TileWater01. buildLava.
+    bgfx::TextureHandle lava() const { return lava_; }
+    const float* lavaParams() const { return lavaParams_; }
     // Whether the `later` parts are drawn: Blood Castle's gap, shown as its drawbridge lands
     // (game/world/drawbridge.h). A part the renderer skips while this is false.
     void showLater(bool shown) { laterShown_ = shown; }
@@ -249,6 +253,9 @@ private:
     float abyssLift_ = 0.0f;
     bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
     float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    void buildLava();
+    bgfx::TextureHandle lava_ = BGFX_INVALID_HANDLE;
+    float lavaParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     bgfx::TextureHandle caustic_ = BGFX_INVALID_HANDLE;  // setCaustic
     int causticSlot_ = -1;
     std::vector<float> height_;  // metres, [row * size + column]

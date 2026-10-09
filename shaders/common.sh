@@ -70,7 +70,9 @@ vec4 prepassAt(vec2 uv)
 	return texture2D(s_prepass, uv);
 #endif
 }
+#ifndef MU2_LAVA_LIGHT
 SAMPLER2D(s_colour,  8);
+#endif
 
 // The sky, in closed form, from the same two colours the ambient uses. No cubemap and no
 // pass: MU2 measured a probe grid at 2.7 ms for a faint sheen on painted art. A prefiltered

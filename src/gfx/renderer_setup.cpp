@@ -39,6 +39,9 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uAbyss_ = bgfx::createUniform("u_abyss", bgfx::UniformType::Vec4);
     uGrassStorm_ = bgfx::createUniform("u_grassStorm", bgfx::UniformType::Vec4);
     sAbyss_ = bgfx::createUniform("s_abyss", bgfx::UniformType::Sampler);
+    uLava_ = bgfx::createUniform("u_lava", bgfx::UniformType::Vec4);
+    uLavaMap_ = bgfx::createUniform("u_lavaMap", bgfx::UniformType::Vec4);
+    sLava_ = bgfx::createUniform("s_lava", bgfx::UniformType::Sampler);
     uCamPos_ = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
     uParams_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
     uMaterial_ = bgfx::createUniform("u_material", bgfx::UniformType::Vec4);
@@ -463,7 +466,7 @@ void Renderer::shutdown() {
         *p = BGFX_INVALID_HANDLE;
     }
     for (bgfx::UniformHandle* u :
-         {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uAbyss_, &sAbyss_, &uGrassStorm_, &uCamPos_, &uParams_,
+         {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uAbyss_, &sAbyss_, &uLava_, &uLavaMap_, &sLava_, &uGrassStorm_, &uCamPos_, &uParams_,
           &uMaterial_, &uCast_, &uCastPlanes_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,

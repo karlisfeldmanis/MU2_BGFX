@@ -1095,6 +1095,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         }
         core::logf("grass grows on slot(s) %s", grassy.empty() ? "none" : grassy.c_str());
     }
+    buildLava();
     core::logf("ground %s: %zu surfaces, %u triangles, %zu vertices (%.1f MB), %zu of them water",
                worldName.c_str(), parts_.size(), triangleCount(), vertices.size(),
                double(vertices.size() * sizeof(GroundVertex)) / 1e6, waterParts);
@@ -1256,6 +1257,73 @@ void Ground::buildAbyss() {
                "the void lifted %.1f m",
                source.size() - touching, source.size(), double(abyssStart_),
                double(abyssStart_ + abyssDepth_), double(abyssLift_));
+}
+
+// How near each tile is to lava, for the light it throws on what stands beside it (the user,
+// 2026-10-09: "lavas need some minimal light emiter whole lava is light emiter"). A tile floored
+// TileWater01 is lava where the sheet makes it glow (Lighting::lavaLight, the Lost Tower's); the
+// renderer reads this only there. Each tile is the share of a kLavaRadius-tile disc round it
+// that is lava, weighted (1 - d^2/R^2)^2 as a lamp falls off, so a wall at the pit's edge takes
+// about half and one three tiles off none, and it is sampled filtered: no step at a tile's edge.
+// The level is the lava's mean height, which the light rises from (u_lavaMap.x). Ours.
+void Ground::buildLava() {
+    constexpr int kLavaRadius = 3;
+    const int n = size_;
+    if (n <= 0 || floors_.size() != size_t(n) * size_t(n)) return;
+    int lavaSlot = -1;
+    for (size_t i = 0; i < slotNames_.size(); ++i) {
+        if (slotNames_[i] == "TileWater01") lavaSlot = int(i);
+    }
+    if (lavaSlot < 0) return;
+    std::vector<uint8_t> lava(size_t(n) * size_t(n), 0);
+    double level = 0.0;
+    int tiles = 0;
+    for (int r = 0; r < n; ++r) {
+        for (int c = 0; c < n; ++c) {
+            if (floors_[size_t(r) * size_t(n) + size_t(c)] != lavaSlot) continue;
+            lava[size_t(r) * size_t(n) + size_t(c)] = 1;
+            level += heightAt((float(c) + 0.5f) * metresPerTile_, -(float(r) + 0.5f) * metresPerTile_);
+            ++tiles;
+        }
+    }
+    if (tiles == 0) return;
+    float weights[2 * kLavaRadius + 1][2 * kLavaRadius + 1];
+    float total = 0.0f;
+    for (int dr = -kLavaRadius; dr <= kLavaRadius; ++dr) {
+        for (int dc = -kLavaRadius; dc <= kLavaRadius; ++dc) {
+            const float t = 1.0f - float(dc * dc + dr * dr) / float((kLavaRadius + 1) * (kLavaRadius + 1));
+            const float w = t > 0.0f ? t * t : 0.0f;
+            weights[dr + kLavaRadius][dc + kLavaRadius] = w;
+            total += w;
+        }
+    }
+    std::vector<uint8_t> texels(size_t(n) * size_t(n), 0);
+    for (int r = 0; r < n; ++r) {
+        for (int c = 0; c < n; ++c) {
+            float sum = 0.0f;
+            for (int dr = -kLavaRadius; dr <= kLavaRadius; ++dr) {
+                const int rr = r + dr;
+                if (rr < 0 || rr >= n) continue;
+                for (int dc = -kLavaRadius; dc <= kLavaRadius; ++dc) {
+                    const int cc = c + dc;
+                    if (cc < 0 || cc >= n || !lava[size_t(rr) * size_t(n) + size_t(cc)]) continue;
+                    sum += weights[dr + kLavaRadius][dc + kLavaRadius];
+                }
+            }
+            texels[size_t(r) * size_t(n) + size_t(c)] =
+                uint8_t(std::lround(std::clamp(sum / total, 0.0f, 1.0f) * 255.0f));
+        }
+    }
+    lava_ = bgfx::createTexture2D(uint16_t(n), uint16_t(n), false, 1, bgfx::TextureFormat::R8,
+                                  BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+                                  bgfx::copy(texels.data(), uint32_t(texels.size())));
+    // Texel (c, r) is tile (c, r), its centre at x = c + 0.5 tiles and z = -(r + 0.5).
+    lavaParams_[0] = float(level / double(tiles));
+    lavaParams_[1] = 0.0f;
+    lavaParams_[2] = 1.0f / (metresPerTile_ * float(n));
+    lavaParams_[3] = 0.0f;
+    core::logf("lava: %d tiles, at %.2f m on average, their light %d tiles round", tiles,
+               double(lavaParams_[0]), kLavaRadius);
 }
 
 // The land by material, not by pair.
@@ -1812,6 +1880,8 @@ void Ground::shutdown() {
     if (bgfx::isValid(abyss_)) bgfx::destroy(abyss_);
     abyss_ = BGFX_INVALID_HANDLE;
     abyssParams_[1] = 0.0f;
+    if (bgfx::isValid(lava_)) bgfx::destroy(lava_);
+    lava_ = BGFX_INVALID_HANDLE;
     light_.clear();
     grassSlots_.clear();
     slotNames_.clear();

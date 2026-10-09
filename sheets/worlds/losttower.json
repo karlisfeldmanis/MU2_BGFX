@@ -56,5 +56,11 @@
     0.8,
     0.45
   ],
+  "lava_light": [
+    3.0,
+    1.0,
+    0.22
+  ],
+  "lava_rise": 4.0,
   "water_variety": 1.0
 }
