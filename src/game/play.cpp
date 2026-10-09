@@ -498,7 +498,10 @@ void Play::update(double seconds) {
                         }
                         drawn->cryAttack = sound_.load(named + "_attack", true, true);
                         drawn->cryDie = sound_.load(named + "_die", true, true);
-                        drawn->cryMove = sound_.load(named + "_move", true, true);
+                        // No walking-about noise: a summon is heard fighting and nothing else
+                        // (the user, 2026-10-09: "dont play idle sound for elf summon, only
+                        // attack sounds").
+                        drawn->cryMove = -1;
                         drawn->wasX = drawn->nowX = summon->x;
                         drawn->wasY = drawn->nowY = summon->y;
                         drawn->deadFor = -1.0f;

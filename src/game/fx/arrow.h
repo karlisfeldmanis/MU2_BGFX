@@ -225,14 +225,9 @@ private:
     // share at the spiral's back end.
     static constexpr float kBandHeadRadius = 0.35f;
     static constexpr float kBandTailRadius = 1.4f;
-    // **Ours: a faint cool light on the arrow** ('some minimal light emiter'), off MU's gathering's
-    // (0.2, 0.4, 1.0) (MoveHandlers.cpp:1638), dimmer than the bolts' and fading with the arrow.
-    // Gold since the bands went gold (below), where MU's gathering is blue.
-    static constexpr float kPierceLight[3] = {0.50f, 0.36f, 0.14f};
     // **Ours: gold tones** (the user, 2026-10-04: 'can we add some gold tones for penetration'):
     // two of the four bands, the first and the third, are drawn in this gold over MU's white.
     static constexpr float kBandGold[3] = {1.0f, 0.72f, 0.30f};
-    static constexpr float kPierceLightReach = 1.8f;  // metres on the ground
     struct Band {
         bool alive = false;
         int shot = -1;       // its arrow in shots_, -1 once the arrow is gone

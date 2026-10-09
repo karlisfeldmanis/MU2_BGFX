@@ -660,15 +660,9 @@ uint32_t Arrows::lights(gfx::PointLight* out, uint32_t max) const {
     uint32_t count = 0;
     for (const Shot& shot : shots_) {
         if (!shot.alive || count >= max) continue;
-        if (shot.pierce) {
-            gfx::PointLight& light = out[count++];
-            for (int k = 0; k < 3; ++k) light.position[k] = shot.at[k];
-            light.reach = kPierceLightReach;
-            light.height = kBoltLightHeight;
-            const float fade = shot.fading > 0.0f ? shot.fading / kPierceFade : 1.0f;
-            for (int k = 0; k < 3; ++k) light.colour[k] = kPierceLight[k] * shot.glow * fade;
-            continue;
-        }
+        // Penetration's casts no light (the user, 2026-10-09: "remove light emiter effect from
+        // penetration skill"), whatever the bow.
+        if (shot.pierce) continue;
         if (shot.model != Steel && shot.model != Saw) continue;
         gfx::PointLight& light = out[count++];
         for (int k = 0; k < 3; ++k) light.position[k] = shot.at[k];

@@ -96,6 +96,12 @@ uint32_t Play::discard(int slot) {
     return send({.kind = sim::Command::Kind::Discard, .a = slot}, asked);
 }
 
+uint32_t Play::discardFromVault(int cell) {
+    Asked asked;
+    asked.item = cell >= 0 && cell < sim::kVaultCells ? realm_.vault()[cell].item : -1;
+    return send({.kind = sim::Command::Kind::Discard, .a = cell, .b = 1}, asked);
+}
+
 // The satchel is the truth (docs/sprints/07-the-windows.md) and Realm::rearm already reads
 // `hero.weapon` and `hero.shield` off it on every move that touches a worn slot; this is that
 // same rule kept for the picture. Without it the figure kept whatever `Figures::dress` gave

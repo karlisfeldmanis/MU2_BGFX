@@ -857,6 +857,8 @@ public:
     // step clears the What::Dropped it says before the showing could read it. What rings the
     // thing landing is the caller, off this id (Play::discard).
     uint32_t discard(int slot);
+    // The same throw from a vault cell, while the vault is open (`deposit`'s gate). The id, or 0.
+    uint32_t discardFromVault(int cell);
     // Whether the thing in `slot` opens when it is thrown rather than lying where it falls: a
     // Firecracker (sim/items.h). The window's drag out asks this before it asks `discard`.
     bool cracks(int slot) const;
@@ -1497,6 +1499,8 @@ private:
     // learned, his class's, the right hand, the mana. What a right-click falls back to the
     // weapon on.
     bool armed(const Body& hero, const SkillRow& row) const;
+    // A thing laid at his feet as `discard` lays it: the clearing, the linger, What::Dropped.
+    uint32_t throwDown(const Body& hero, const Held& what);
     void dropBlow(Body& hero) { hero.blowAt = 0; hero.blowTarget = 0; hero.blowGround = false; }
     // A skill thrown, with the refusals in OpenMU's own order. False and silent for each.
     bool throwSkill(Body& hero, const SkillRow& row, uint32_t at);

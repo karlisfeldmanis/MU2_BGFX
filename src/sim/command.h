@@ -41,8 +41,9 @@ struct Command {
         Move,       // a: from, b: to
         Use,        // a: the slot
         Refine,     // a: the jewel's slot, b: the thing's
-        Discard,    // a: the slot. Thrown on the ground -- or, for a Firecracker or a box, opened
-                    // (Realm::cracks), and then answered as Crack
+        Discard,    // a: the slot, b: 1 for a vault cell. Thrown on the ground -- or, for a
+                    // Firecracker or a box from the bag, opened (Realm::cracks), and then
+                    // answered as Crack
         Crack,      // only ever an answer: a Discard that opened. The answer's x and y are the
                     // tile it burst over; the Cracked said before it has the rest
         Spend,      // a: 0 strength, 1 agility, 2 vitality, 3 energy

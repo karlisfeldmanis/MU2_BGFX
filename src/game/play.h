@@ -269,6 +269,8 @@ public:
     // same Pick order that takes a kill's drop takes it back. The realm's to refuse, and the
     // figure is re-dressed when what was thrown came off him.
     uint32_t discard(int slot);
+    // The same from a vault cell, with the vault open.
+    uint32_t discardFromVault(int cell);
     // A skill key pressed: throw this skill at whatever the fight is on, or at `at` when the
     // window knows a target. Not an order and it does not cancel one -- the realm spends the next
     // swing on it and the knight goes on fighting (docs/skills-dk.md §3.1a). The realm refuses

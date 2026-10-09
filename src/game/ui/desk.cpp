@@ -649,11 +649,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.moveFrom >= 0) {
             expect(play.rearrange(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
         }
-        // Let go outside: into the bag cell under the pointer, and nowhere else -- a thing in
-        // the vault is not thrown on the ground from it, which MU refuses too.
+        // Let go outside: into the bag cell under the pointer; over the world, thrown on the
+        // ground at his feet as the bag throws (the user, 2026-10-09: "allow to drop items to
+        // ground from warehouse" -- MU refuses it). Over the bag's frame or the bar, the no.
         if (asked.outside >= 0) {
             const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
+            const bool overWindow = (inventoryOpen_ && bag_.covers(asked.outsideX, asked.outsideY)) ||
+                                    hud_.covers(asked.outsideX, asked.outsideY);
             if (slot >= 0) expect(play.withdraw(asked.outside, slot), Then::TookOrRefused);
+            else if (!overWindow) expect(play.discardFromVault(asked.outside), Then::Refused);
             else refused();
         }
         // MU's own answer to either coin: the box to type the sum in (CZenReceiptMsgBoxLayout,

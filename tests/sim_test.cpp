@@ -6216,6 +6216,23 @@ void testVault(const content::Tables& tables) {
               "and a Bless from the vault let go on it in the bag raises it again");
     }
 
+    // Thrown on the ground straight from the vault (the user, 2026-10-09), and a jewel is not.
+    const int tossed = realm.deposit(realm.give(sword), 88);
+    checkEqual(tossed, 88, "a sword into the vault to throw");
+    const size_t lyingBefore = realm.lying().size();
+    const uint32_t thrown = realm.discardFromVault(tossed);
+    check(thrown != 0 && realm.vault()[tossed].empty() &&
+              realm.lying().size() == lyingBefore + 1 && realm.lying().back().id == thrown &&
+              realm.lying().back().what.item == sword,
+          "from the vault it lies on the ground at his feet");
+    check(realm.discardFromVault(tossed) == 0, "an empty cell throws nothing");
+    if (bless >= 0) {
+        const int jewelCell = realm.deposit(realm.give(bless), 96);
+        check(jewelCell == 96 && realm.discardFromVault(jewelCell) == 0 &&
+                  !realm.vault()[jewelCell].empty(),
+              "a jewel stays in the vault");
+    }
+
     sim::Request walk;
     walk.kind = sim::Request::Kind::WalkTo;
     walk.column = 140;
@@ -6224,6 +6241,8 @@ void testVault(const content::Tables& tables) {
     realm.step();
     check(realm.banking() < 0, "walking off shuts it");
     check(!realm.withdrawZen(100) && realm.vault().zen() == 300, "and what is kept stays kept");
+    check(realm.discardFromVault(96) == 0 && !realm.vault()[96].empty(),
+          "nothing is thrown from a shut vault");
 }
 
 // Health comes back in a safe zone alone: a hundredth of the pool every three seconds on a safe

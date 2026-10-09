@@ -2024,9 +2024,25 @@ uint32_t Realm::discard(int slot) {
     // Nor a jewel or a +7, which MuMain will not let go of (sim::expensive).
     if (expensive(*tables_, me().bag[slot])) return 0;
 
-    Lying one;
-    one.what = me().bag.lift(slot);
+    const Held what = me().bag.lift(slot);
     if (wearable(slot)) rearm(hero);
+    return throwDown(hero, what);
+}
+
+// From the vault, with Baz's window open: the same gates and the same landing as the bag's.
+// INVENTION, the user's (2026-10-09: "allow to drop items to ground from warehouse") -- MU
+// only throws from the bag.
+uint32_t Realm::discardFromVault(int cell) {
+    if (!tables_ || !banked() || cell < 0 || cell >= kVaultCells) return 0;
+    Body& hero = mine();
+    if (!hero.alive() || me().vault[cell].empty()) return 0;
+    if (expensive(*tables_, me().vault[cell])) return 0;
+    return throwDown(hero, me().vault.lift(cell));
+}
+
+uint32_t Realm::throwDown(const Body& hero, const Held& what) {
+    Lying one;
+    one.what = what;
     std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
     one.id = nextId_++;

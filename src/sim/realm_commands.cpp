@@ -75,7 +75,10 @@ void Realm::applyCommands() {
             case Kind::Refine: answer = refine(one.a, one.b) ? 1 : -1; break;
             case Kind::Discard:
             case Kind::Crack:
-                if (cracks(one.a)) {
+                if (one.b == 1) {
+                    const uint32_t thrown = discardFromVault(one.a);
+                    answer = thrown != 0 ? int64_t(thrown) : -1;
+                } else if (cracks(one.a)) {
                     const Cracked cracked = crack(one.a);
                     said = Kind::Crack;
                     answer = cracked.opened ? 1 : -1;
