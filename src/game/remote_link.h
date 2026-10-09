@@ -66,6 +66,7 @@ public:
     uint32_t ticksByStream() const { return byStream_; }
 
     bool connected() const { return socket_.open(); }
+    bool cut() const override { return !socket_.open(); }
     // Ticks whose hash the server sent and the mirror matched, and the first one it did not.
     uint32_t agreed() const { return agreed_; }
     uint32_t divergedAt() const { return divergedAt_; }
@@ -134,6 +135,7 @@ private:
     uint32_t pingNonce_ = 0;
     bool pingOut_ = false;
     float rttMs_ = -1.0f;
+    Clock::time_point heardAt_{};   // the last byte from the server, by stream or datagram
     Clock::time_point pumpedAt_{};  // the last pump: a Ping's answer read later than kUnreadMost is not counted
     int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
     net::Who who_;         // the players' names, the latest the server sent

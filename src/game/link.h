@@ -43,6 +43,9 @@ public:
     // What there is to see: a const realm -- the realm itself, or the mirror of the server's.
     virtual const sim::Realm& realm() const = 0;
     virtual bool remote() const { return false; }
+    // Whether the line to the server is gone: closed, or silent past RemoteLink's kSilentMost.
+    // It stays gone -- nothing reopens it -- and Play freezes on it. Never for a local realm.
+    virtual bool cut() const { return false; }
     // The round-trip time to the server in milliseconds, smoothed; -1 when there is no server
     // or no measurement yet. The line's alone: a Ping the server echoes the moment it reads it,
     // with no wait for a tick in it.

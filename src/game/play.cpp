@@ -169,6 +169,14 @@ void Play::update(double seconds) {
     // catching up on the world matters more than how the catching looks.
     walkBench(float(seconds));
     link_->pump();
+    // The line gone, the game stands still where the server last had it: nothing stepped and no
+    // figure moved on, under the desk's Disconnected window (Menu::Page::Lost). Nothing reopens
+    // it; the window's Reconnect goes back to the character screen, which joins afresh.
+    if (link_->cut()) {
+        if (!cutSaid_) core::logf("play: the line is gone at tick %lld; the game holds", (long long)realm_.tick());
+        cutSaid_ = true;
+        return;
+    }
     const bool remoteClock = link_->remote();
     // A frame long enough to feel in the walk, and what the line owed at it: a hitch of this
     // client's own, told from a late line by RemoteLink's slow order line.

@@ -35,13 +35,16 @@ namespace mu::game {
 
 class Menu {
 public:
-    enum class Page : uint8_t { Main, Options, Graphics };
+    // Lost: the server's line is gone (Play::cut) -- Disconnected, Reconnect and Exit Game, with
+    // no close and no Escape out of it.
+    enum class Page : uint8_t { Main, Options, Graphics, Lost };
     struct Result {
         bool closed = false;    // Resume: the menu went down this frame
         bool quit = false;      // Exit Game, which is instant: the user, 2026-09-27
         bool clicked = false;   // a button answered, for the interface's click
         bool settings = false;  // something on the Options page changed
         bool switched = false;  // Switch Character: back to the character screen
+        bool reconnect = false; // the Lost page's Reconnect: the character screen, which joins afresh
     };
 
     // What Options edits. The caller fills it from the window and the run, and applies it back
@@ -85,6 +88,7 @@ public:
     void allowSwitch(bool on) { switchable_ = on; }
     void hide() { up_ = false; }
     bool up() const { return up_; }
+    bool lost() const { return up_ && page_ == Page::Lost; }
 
     Settings& settings() { return settings_; }
     const Settings& settings() const { return settings_; }

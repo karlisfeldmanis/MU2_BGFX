@@ -245,6 +245,8 @@ public:
     // His character's token from the server's Welcome, for the next world's Hello; 0 off a server.
     uint64_t serverToken() const { return serverToken_; }
     bool remote() const { return link_->remote(); }
+    // The server's line is gone (Link::cut): the game holds, and the desk says so.
+    bool cut() const { return link_ && link_->cut(); }
     int serverRain() const { return link_ ? link_->serverRain() : -1; }
     float rttMs() const { return link_->rttMs(); }
     // The line under the map's name, "Level 2-40": its whole spawn table, taken before the
@@ -1257,6 +1259,7 @@ private:
     // through local_, which while remote (useServer) is the mirror's and refuses (`here`).
     sim::Realm realmHeld_;
     std::unique_ptr<Link> link_ = std::make_unique<LocalLink>(realmHeld_);
+    bool cutSaid_ = false;  // the cut logged once
     sim::Realm& local_ = realmHeld_;
     const sim::Realm& realm_ = realmHeld_;
     std::string serverHost_;

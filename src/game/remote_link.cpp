@@ -65,6 +65,7 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
             copy_ = std::max<int>(1, welcome.copy);
             udpKey_ = welcome.udpKey;
             snapshot_ = welcome.snapshot;
+            heardAt_ = std::chrono::steady_clock::now();
             // The past follows the Welcome at once: every one of its Ticks in hand before the
             // world is raised, so catchUp steps it whole. A long-running world's is a few MB.
             const auto pastUntil = std::chrono::steady_clock::now() + std::chrono::seconds(60);
@@ -118,6 +119,12 @@ constexpr float kTickMs = 50.0f;  // the realm's 20 Hz (server/src/main.cpp kTic
 // A Ping's answer read this long after the pump before it is not a round trip: it may have sat
 // unread for all of that. See RemoteLink::pump.
 constexpr auto kUnreadMost = std::chrono::milliseconds(250);
+// A line this long with nothing on it is taken for gone (RemoteLink::cut): the server sends
+// twenty ticks a second and answers a Ping each second, so five quiet seconds is no slow line.
+// Ours, the user's (2026-10-09: "if there is server disconect ... we need to freeze game and
+// show disconnect window for players"). A server that restarts closes the line and is caught
+// at once; this is for one that went quiet -- the box down, or the way to it.
+constexpr auto kSilentMost = std::chrono::seconds(5);
 
 }  // namespace
 
@@ -253,10 +260,12 @@ void RemoteLink::pump() {
     }
     const bool lagged = halfLagMs_ > 0.0 || jitterMs_ > 0.0 || lossChance_ > 0.0;
     std::vector<uint8_t> fresh;
+    const size_t had = in_.size();
     if (!socket_.receive(lagged ? fresh : in_) || !socket_.flush()) {
         core::logError("server: the connection is gone (%zu ticks unstepped)", ticks_.size());
         socket_.close();
     }
+    if (in_.size() > had || !fresh.empty()) heardAt_ = now;
     if (lagged) {
         if (!fresh.empty()) {
             double ms = heldMs();
@@ -288,6 +297,7 @@ void RemoteLink::pump() {
         }
         std::vector<uint8_t> datagram;
         while (udp_.receive(datagram)) {
+            heardAt_ = now;
             if (lost()) continue;
             if (lagged) {
                 udpHeld_.push_back({now + std::chrono::microseconds(int64_t(heldMs() * 1000.0)), datagram});
@@ -353,6 +363,11 @@ void RemoteLink::pump() {
     const float since = std::chrono::duration<float>(std::chrono::steady_clock::now() - pingAt_).count();
     if (askAgain || since >= (pingOut_ ? 5.0f : 1.0f)) ping();
     check();
+    if (socket_.open() && heardAt_ != Clock::time_point{} && now - heardAt_ > kSilentMost) {
+        core::logError("server: nothing heard in %.0f s; the line is taken for gone (%zu ticks unstepped)",
+                       double(std::chrono::duration<float>(now - heardAt_).count()), ticks_.size());
+        socket_.close();
+    }
 }
 
 bool RemoteLink::nameOf(uint32_t id, std::string* name, bool* bot) const {

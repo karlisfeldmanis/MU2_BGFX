@@ -380,6 +380,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             place += (place.empty() ? "" : "  \xC2\xB7  ") + std::to_string(hero->column()) +
                      ", " + std::to_string(hero->row());
         }
+        // The server's line gone (Play::cut): the game holds and the Disconnected page is up
+        // over it, with every other window shut, and stays up -- Escape does not take it down.
+        if (play.isOpen() && play.cut() && !menu_.lost()) {
+            inventoryOpen_ = characterOpen_ = false;
+            travel_.hide();
+            amount_.hide();
+            mending_ = false;
+            fanLatched_ = false;
+            menu_.show(Menu::Page::Lost);
+            core::logf("window: disconnected");
+        }
         const bool wasUp = menu_.up();
         if (!wasUp && escape) {
             if (mending_) {
@@ -414,6 +425,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.switched) {
             switchAsked_ = true;
             core::logf("window: switch character asked from the menu");
+        }
+        if (asked.reconnect) {
+            switchAsked_ = true;
+            core::logf("window: reconnect asked: back to the character screen");
         }
     }
     // Modal, as the box is: the menu has the pointer and the keys while it is up, and the frame

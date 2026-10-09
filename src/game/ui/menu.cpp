@@ -37,6 +37,14 @@ constexpr float kMainExit = kMainRule + 14.0f;
 constexpr float kMainFoot = kMainExit + style::kButtonL + 16.0f;
 constexpr float kMainTall = kMainFoot + kFootTall;
 
+// Disconnected: two lines of word, Reconnect, a rule, Exit Game, and the foot.
+constexpr float kLostWords = style::kHead + 34.0f;
+constexpr float kLostFirst = kLostWords + 58.0f;
+constexpr float kLostRule = kLostFirst + style::kButtonL + 14.0f;
+constexpr float kLostExit = kLostRule + 14.0f;
+constexpr float kLostFoot = kLostExit + style::kButtonL + 16.0f;
+constexpr float kLostTall = kLostFoot + kFootTall;
+
 // Options: the Display group's four rows, the Sound group's one, a rule, Graphics, Back, and
 // the foot.
 constexpr float kRowStep = style::kRow + 8.0f;
@@ -74,7 +82,7 @@ float unit() { return tip::unit() * kScale; }
 constexpr float kCentreShare = 0.46f;
 
 enum Target : int {
-    kOptions = 0, kSwitch = 1, kExit = 2, kBack = 4, kGraphics = 5, kClose = 9,
+    kOptions = 0, kSwitch = 1, kExit = 2, kReconnect = 3, kBack = 4, kGraphics = 5, kClose = 9,
     // The Options page's own: two chevrons a stepped row, two halves a switch, and the slider.
     kDisplayDown = 10, kDisplayUp, kSizeDown, kSizeUp, kVsyncOff, kVsyncOn, kCounterOff,
     kCounterOn, kVolume,
@@ -173,11 +181,12 @@ std::string wordOf(int row, const Menu::Settings& set) {
 }
 
 float wideOf(Menu::Page page) {
-    return page == Menu::Page::Main ? kMainWide
+    return page == Menu::Page::Main || page == Menu::Page::Lost ? kMainWide
          : page == Menu::Page::Options ? kOptionsWide : kGraphicsWide;
 }
 float tallOf(Menu::Page page) {
     return page == Menu::Page::Main ? kMainTall
+         : page == Menu::Page::Lost ? kLostTall
          : page == Menu::Page::Options ? kOptionsTall : kGraphicsTall;
 }
 
@@ -198,6 +207,12 @@ Box rowBox(int row) {
 // has no such target. The close is where controls::frame puts it.
 Box boxOf(Menu::Page page, int target) {
     const float wide = wideOf(page);
+    if (page == Menu::Page::Lost) {
+        const float inner = wide - kMainInset * 2.0f;
+        if (target == kReconnect) return {kMainInset, kLostFirst, inner, style::kButtonL};
+        if (target == kExit) return {kMainInset, kLostExit, inner, style::kButtonL};
+        return {};
+    }
     if (target == kClose) {
         const float side = style::kSmallSquare;
         return {wide - 12.0f - side, (style::kHead - side) * 0.5f, side, side};
@@ -316,7 +331,15 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
             std::fill(std::begin(lift_), std::end(lift_), 0.0f);
             result.clicked = true;
         };
-        if (escape) {
+        if (page_ == Page::Lost) {
+            // Nothing backs out of it: the game behind it is not there to go back to.
+            if (fired == kReconnect) {
+                up_ = false;
+                result.reconnect = result.clicked = true;
+            } else if (fired == kExit) {
+                result.quit = result.clicked = true;
+            }
+        } else if (escape) {
             if (page_ == Page::Main) {
                 up_ = false;
                 result.closed = result.clicked = true;
@@ -436,6 +459,26 @@ void Menu::rebuild() {
     canvas_.shade({0.0f, 0.0f, w * 0.26f, h}, edge, none, none, edge);
     canvas_.shade({w * 0.74f, 0.0f, w * 0.26f, h}, none, edge, edge, none);
 
+    if (page_ == Page::Lost) {
+        const Box sheet = at(x_, y_, {0.0f, 0.0f, kMainWide, kLostTall});
+        controls::frame(canvas_, sheet, u, "Disconnected");
+        const float px = style::kBodySize * u;
+        const auto line = [&](float top, const char* words, uint32_t ink) {
+            const float wide = controls::labelWidth(px, words);
+            controls::label(canvas_, std::round(sheet.x + (sheet.w - wide) * 0.5f),
+                            std::round(y_ + top * u), px, ink, words);
+        };
+        line(kLostWords, "The connection to the server was lost.", style::kBoneHi);
+        line(kLostWords + 24.0f, "Your character is kept on the server.", style::kAshInk);
+        controls::button(canvas_, at(x_, y_, boxOf(page_, kReconnect)), "Reconnect",
+                         Kind::Secondary, state(kReconnect), u);
+        controls::rule(canvas_, sheet.x + kMainInset * u, y_ + kLostRule * u,
+                       (kMainWide - kMainInset * 2.0f) * u, u);
+        controls::button(canvas_, at(x_, y_, boxOf(page_, kExit)), "Exit Game", Kind::Danger,
+                         state(kExit), u);
+        controls::foot(canvas_, sheet, y_ + kLostFoot * u, u);
+        return;
+    }
     const bool main = page_ == Page::Main;
     const bool graphics = page_ == Page::Graphics;
     const Box sheet = at(x_, y_, {0.0f, 0.0f, wideOf(page_), tallOf(page_)});
