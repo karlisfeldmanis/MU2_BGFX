@@ -20,7 +20,8 @@
 //   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] [--party]
 //                [--parties] [--threads N] [--claude DIR] NAME:CLASS ...
 //
-// CLASS is dk, dw, elf or mg (a new elf is born in Noria). --party makes the run's bots one party
+// CLASS is dk, dw, elf, eelf (the energy elf, her points to energy for heals and buffs) or mg (a
+// new elf is born in Noria). --party makes the run's bots one party
 // (docs/party.md), the first named its leader; --parties lets them form their own, for the quests
 // they cannot take alone (Board). --claude DIR makes the first named the Claude
 // bot (claude.h): his chat and his choice of ground are the model's, through files in DIR.
@@ -65,12 +66,13 @@ constexpr auto kTripWait = std::chrono::seconds(10);
 class NetBot {
 public:
     NetBot(std::string name, sim::Kin kin, std::string host, int port, std::string dir, bool quests,
-           bool chatty)
+           bool chatty, bool support = false)
         : name_(std::move(name)), kin_(kin), host_(std::move(host)), port_(port), dir_(std::move(dir)),
           talk_(name_) {
         Options options;
         options.kin = kin;
         options.quests = quests;
+        options.support = support;
         options.tag = name_ + " ";
         talk_.setChatty(chatty);
         brain_ = std::make_unique<Bot>(options, 0);
@@ -577,8 +579,11 @@ private:
         const auto it = byName_.find(name);
         return it == byName_.end() ? nullptr : it->second;
     }
-    // Stuck: a breed he would take beside a party and not alone.
-    static bool stuck(const Bot::Need& n) { return n.together && !n.alone; }
+    // Stuck: a breed he would take beside a party and not alone -- past the towns' own quests
+    // (the user, 2026-10-09: "it make sense they go together on dungeons"). At level 1 every
+    // breed reads too hard alone, and parties for Marlon's and Peia's held five bots 40-80 levels
+    // under the same five solo; a knight made their tank at level 1 died broke and ended at 17.
+    static bool stuck(const Bot::Need& n) { return n.together && !n.alone && !n.town; }
     static bool tankish(sim::Kin kin) { return kin == sim::Kin::DarkKnight || kin == sim::Kin::MagicGladiator; }
     bool grouped(const std::string& name) const {
         for (const Group& g : groups_) {
@@ -746,8 +751,12 @@ private:
         for (const std::string& m : g.members) {
             NetBot* one = bot(m);
             if (!one) continue;
-            if (!in(m)) {
-                one->lead(Bot::Lead{}, "", "");  // not in yet: his own way until he is
+            // Not in yet, or a breed he cannot stand even beside them: his own way, in the
+            // party still. The board opens a breed to the party when the tank and half of them
+            // stand it; led there all the same, a wizard of the party died 140 times in 24 game
+            // hours against 29 alone.
+            if (!in(m) || (g.map >= 0 && !one->helps(g.map, g.breed))) {
+                one->lead(Bot::Lead{}, "", "");
                 continue;
             }
             Bot::Lead lead;
@@ -1003,6 +1012,7 @@ int main(int argc, char** argv) {
     int threads = 0;  // --threads N: 0, up to four
     std::string claude;
     std::vector<std::pair<std::string, sim::Kin>> wanted;
+    std::set<std::string> energy;  // eelf: the energy elves (Options::support)
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--server" && i + 1 < argc) host = argv[++i];
@@ -1020,14 +1030,18 @@ int main(int argc, char** argv) {
             if (cls == "dk") wanted.emplace_back(name, sim::Kin::DarkKnight);
             else if (cls == "dw") wanted.emplace_back(name, sim::Kin::DarkWizard);
             else if (cls == "elf") wanted.emplace_back(name, sim::Kin::FairyElf);
+            else if (cls == "eelf") {
+                wanted.emplace_back(name, sim::Kin::FairyElf);
+                energy.insert(name);
+            }
             else if (cls == "mg") wanted.emplace_back(name, sim::Kin::MagicGladiator);
             else {
-                std::fprintf(stderr, "netbot: %s: the class is dk, dw, elf or mg\n", a.c_str());
+                std::fprintf(stderr, "netbot: %s: the class is dk, dw, elf, eelf or mg\n", a.c_str());
                 return 2;
             }
         } else {
             std::fprintf(stderr, "usage: netbot [--server HOST] [--port N] [--dir DIR] [--hours H] "
-                                 "[--no-quests] [--chatty] [--party | --parties] [--threads N] [--claude DIR] NAME:dk|dw|elf|mg ...\n");
+                                 "[--no-quests] [--chatty] [--party | --parties] [--threads N] [--claude DIR] NAME:dk|dw|elf|eelf|mg ...\n");
             return 2;
         }
     }
@@ -1045,7 +1059,7 @@ int main(int argc, char** argv) {
 
     std::vector<std::unique_ptr<NetBot>> bots;
     for (const auto& [name, kin] : wanted) {
-        bots.push_back(std::make_unique<NetBot>(name, kin, host, port, dir, quests, chatty));
+        bots.push_back(std::make_unique<NetBot>(name, kin, host, port, dir, quests, chatty, energy.count(name) > 0));
     }
     if (!claude.empty()) bots.front()->driveFrom(claude);
     Board board(parties);

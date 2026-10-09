@@ -17,7 +17,7 @@
 // in it. The realm's own log is silenced for the hours of play; BOT_LOG=1 lets it through, which
 // is where a skill pressed and never thrown says why.
 //
-//   build/bot [--kin dk|dw|elf|mg] [--path melee|magic] [--seed N] [--runs N] [--hours H] [--until-jewel]
+//   build/bot [--kin dk|dw|elf|mg] [--path melee|magic|energy] [--seed N] [--runs N] [--hours H] [--until-jewel]
 //             [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]
 
 #include "brain.h"
@@ -33,7 +33,12 @@ int main(int argc, char** argv) {
                           : k == "elf" ? sim::Kin::FairyElf
                           : k == "mg"  ? sim::Kin::MagicGladiator
                                        : sim::Kin::DarkKnight;
-        } else if (a == "--path") options.magic = std::string(next()) == "magic"; else if (a == "--seed") options.seed = std::strtoull(next(), nullptr, 10);
+        } else if (a == "--path") {
+            // magic: the gladiator on the wizard's ways; energy: the energy elf (Options::support).
+            const std::string path = next();
+            options.magic = path == "magic";
+            options.support = path == "energy";
+        } else if (a == "--seed") options.seed = std::strtoull(next(), nullptr, 10);
         else if (a == "--runs") options.runs = std::max(1, std::atoi(next()));
         else if (a == "--hours") options.hours = std::atof(next());
         else if (a == "--until-jewel") options.untilJewel = true;
@@ -51,7 +56,7 @@ int main(int argc, char** argv) {
         }
         else if (a == "--quiet") options.quiet = true;
         else {
-            std::printf("usage: bot [--kin dk|dw|elf|mg] [--path melee|magic] [--seed N] [--runs N] [--hours H] "
+            std::printf("usage: bot [--kin dk|dw|elf|mg] [--path melee|magic|energy] [--seed N] [--runs N] [--hours H] "
                         "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]\n");
             return 2;
         }

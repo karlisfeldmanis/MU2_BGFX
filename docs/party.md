@@ -183,3 +183,22 @@ are made one (`Board::merge`; a free bot stuck on a party's quest joins it).
    holds the target, the damage dealers strike the knight's target; the party breaks up when
    the step is done. Three new netbots (an elf, a Magic Gladiator, a second knight). Measured
    as the Ice Queens were: the level each class hands in Devias's quest, and the deaths.
+
+### Later the same evening
+
+- No party for the towns' own quests (Marlon's, Peia's): at level 1 every breed reads too hard
+  alone, and those parties held five bots 40-80 levels under the same five solo; a knight made
+  their tank at level 1 died broke and ended at 17. And a broke bot no longer goes to town for
+  gear it cannot pay to mend.
+- A member who cannot stand the party's breed goes his own way, in the party still (a wizard led
+  into Atlans died to Bahamuts 81 times); a quest to take is a short errand the party's hunt no
+  longer overrides.
+- **The energy elf** (the user: "maybe create a elf which is energy elf which can give best buffs
+  and heals"): `netbot NAME:eelf`, `bot --kin elf --path energy` -- points 1/2/2/5, energy last;
+  costOf whole for her (not the elf's half) and quests on a caster's share. Offline, 3 seeds of
+  24 h: levels 106-133, 31-64 deaths. In a party her four partners ended 112-134 against 91-116
+  solo, with a third of the deaths.
+- Checked (the user: "also check if elf is buffing and healing party memebers, also check if DW
+  is using magic shield"): netbot's minute line now counts her casts on others -- Greater Damage
+  1,463, Greater Defense 549, Heal 50 in one party's 35 game hours -- and the wizard's Magic
+  Shield, 359 times.

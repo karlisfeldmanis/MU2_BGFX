@@ -98,6 +98,10 @@ struct Options {
     // --path magic: the Magic Gladiator on the wizard's ways -- energy, a staff, spells and the
     // wizard's potions -- where melee, the default, is the knight's. His quests pay that path.
     bool magic = false;
+    // **The energy elf** (the user, 2026-10-09: "maybe create a elf which is energy elf which can
+    // give best buffs and heals"): her points to energy -- Heal is 5 + energy/5, Greater Damage
+    // 3 + energy/7 -- and enough agility and vitality to stand beside a party. netbot's `eelf`.
+    bool support = false;
     // Said before every line: the netbot's name for him, so two bots' lines tell apart.
     std::string tag;
 };
@@ -343,6 +347,7 @@ public:
     struct Need {
         int quest = -1, breed = -1, map = -1, left = 0, level = 0;
         bool taken = false, alone = false, together = false;
+        bool town = false;  // a town's own quest, Marlon's or Peia's
         std::string label;  // the breed's name
     };
     std::vector<Need> needs() {
@@ -373,6 +378,7 @@ public:
                 one.left = left;
                 one.level = kind->level;
                 one.taken = taken;
+                one.town = row.afterAny == 0;
                 one.label = kind->label;
                 partyScale_ = 1.0;
                 one.alone = soloTakes(q, *kind, home);
@@ -427,6 +433,14 @@ public:
         say("level %d, %d/%d hp, %lld zen, %d kills, %d deaths, %d potions -- %s in %s at %d,%d", hero.level,
             hero.health, hero.maxHealth, (long long)realm_->money(), out_.kills, out_.deaths, countOf(sim::heals),
             modes[int(mode_)], worldOf(map()) ? worldOf(map())->name : "?", hero.column(), hero.row());
+        // The user, 2026-10-09: "also check if elf is buffing and healing party memebers, also
+        // check if DW is using magic shield".
+        std::string aids;
+        for (const auto& [name, n] : aidsOf_) aids += (aids.empty() ? "" : ", ") + name + " " + std::to_string(n);
+        if (!aids.empty()) say("  on her party: %s", aids.c_str());
+        if (const auto shield = castsOf_.find("Magic Shield"); shield != castsOf_.end()) {
+            say("  Magic Shield %d times", shield->second);
+        }
     }
 
     // One tick: a decision when one is due, the realm's step, what came of it, and a map change
@@ -1050,6 +1064,7 @@ private:
         if (wizardly()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
         if (gladiatorMage()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
+        if (options_.kin == sim::Kin::FairyElf && options_.support) { w[0] = 1; w[1] = 2; w[2] = 2; w[3] = 5; }
         if (options_.build[0] + options_.build[1] + options_.build[2] + options_.build[3] > 0) {
             std::copy(std::begin(options_.build), std::end(options_.build), w);
         }
@@ -1060,7 +1075,7 @@ private:
             give[i] = points * w[i] / sum;
             left -= give[i];
         }
-        give[wizardly() ? 3 : options_.kin == sim::Kin::FairyElf ? 1 : 0] += left;
+        give[wizardly() || options_.support ? 3 : options_.kin == sim::Kin::FairyElf ? 1 : 0] += left;
         hand_.spend(give[0], give[1], give[2], give[3]);
     }
 
@@ -1795,12 +1810,14 @@ private:
         }
     }
     bool wingsOwed() const {
+        if (runesWaiting() > 0 && chaosCount() <= runesWaiting()) return false;
         sim::Service service;
         sim::Judged judged;
         return !wingBox(&service, &judged).empty();
     }
     // At the Goblin's box: the box in, mixed, everything out.
     void mixWings() {
+        if (runesWaiting() > 0 && chaosCount() <= runesWaiting()) return;
         sim::Service service;
         sim::Judged judged;
         std::vector<int> box = wingBox(&service, &judged);
@@ -2145,6 +2162,36 @@ private:
     // Whether a carried, unworn piece with runes set is worth the machine now: the Zen over his
     // potions, a Chaos for each rune, and a Chaos Goblin in this town (the user, 2026-10-03: "bot
     // removes runes when rich").
+    // **A good rune is saved** (the user, 2026-10-09: "frenzy is very good rune, which needs to
+    // save it, remove that rune and attach to next weapon when there is upgrade", then "basically
+    // any good rune has to be saved and attach to upgrade"): a carried piece with a Rare, Epic or
+    // Legendary rune of his class set -- the weapon or boots he has just bettered -- is kept until
+    // the Chaos Goblin takes the rune out, whatever his purse or Chaos say now; a Chaos is held
+    // back from cloaks and wings for it; and the rune, back in the bag, goes into the upgrade
+    // (useJewels, the weapon first). Sold with the old piece before, whenever he was short of a
+    // Chaos that day. A Common is not kept for: the quests and the drops replace it.
+    bool holdsGoodRune(const sim::Held& one) const {
+        if (one.empty() || sim::creation(rowOf(one))) return false;
+        for (int k = 0; k < std::min<int>(one.sockets, 3); ++k) {
+            const sim::PowerRow* power = one.powers[k] ? sim::powerOf(one.powers[k]) : nullptr;
+            if (power && power->rarity != sim::Rarity::Common && power->takenBy(options_.kin, realm_->hero().second)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    int runesWaiting() const {
+        int n = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) n += holdsGoodRune(realm_->satchel()[slot]);
+        return n;
+    }
+    // A good rune he can take out now, at the Goblin.
+    bool runeOwed() const {
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (holdsGoodRune(realm_->satchel()[slot]) && unruneWorth(realm_->satchel()[slot])) return true;
+        }
+        return false;
+    }
     bool unruneWorth(const sim::Held& one) const {
         const int64_t zen = unruneCost(one);
         if (zen < 0 || realm_->money() < zen + potionReserve()) return false;
@@ -2209,6 +2256,7 @@ private:
         if (slot >= sim::kWorn && surplusAt(slot)) return false;
         if (slot >= sim::kWorn && nearlyFits(one)) return true;
         if (slot >= sim::kWorn && unruneWorth(one)) return true;
+        if (slot >= sim::kWorn && holdsGoodRune(one)) return true;
         if (fodder(slot)) return true;
         if (slot >= sim::kWorn && !one.empty() && chaosWeaponRow(rowOf(one)) && !hasWings()) return true;
         // His class's wings, until he is level enough to wear them: an elf of 166 mixed the
@@ -2357,6 +2405,8 @@ private:
             if (sim::bloodBone(row)) bones |= 1 << one.refinement;
         }
         if (!chaosHeld) return 0;
+        // A Chaos held back for a rune to save (holdsGoodRune).
+        if (chaosCount() <= runesWaiting()) return 0;
         for (int level = sim::kCloakMostLevel; level >= 1; --level) {
             if (!(scrolls & bones & (1 << level))) continue;
             if (level > sim::kCastlesBuilt || realm_->hero().level < sim::kCastleBands[level - 1][0]) continue;
@@ -2599,7 +2649,10 @@ private:
     // 157/220/219/175 -> 222/230/221/229, deaths 139 -> 79. Not the knight (213/202/213/210 ->
     // 225/212/191/212, deaths 44 -> 79) nor the wizard (died three times as often, no higher):
     // theirs stays whole.
+    // Not the energy elf (Options::support): her bow is an energy build's, and halved she took
+    // Noria's Agons and Lorencia's Skeleton Warriors alone and died 255 times in 18 game hours.
     double reckoned() const {
+        if (options_.support) return 1.0;
         return options_.kin == sim::Kin::FairyElf || (options_.kin == sim::Kin::MagicGladiator && !wizardly()) ? 0.5
                                                                                                                  : 1.0;
     }
@@ -2747,7 +2800,9 @@ private:
     int huntable(int q, std::vector<int>* breeds, double share = 0.0) {
         // Not a wizard's: on 360-480 health the Ice Queens killed him 38 times a day and he
         // ended 10-30 levels lower; the knight went from 168 to 182 with it.
-        if (share <= 0.0) share = !wizardly() && countOf(sim::heals) >= 20 ? 1.0 : riskShare();
+        // Nor the energy elf's (Options::support): on 20 potions she drank through Peia's Stone
+        // Golems and Agons at a full bar and died 90 times in five hours.
+        if (share <= 0.0) share = !wizardly() && !options_.support && countOf(sim::heals) >= 20 ? 1.0 : riskShare();
         breeds->clear();
         if (aside_[q] > clock_) return -1;
         int where = -1;
@@ -2801,7 +2856,7 @@ private:
     // riskShare, his whole bar for a knight or an elf with twenty potions, and Icarus's breeds and
     // the White Silence's drunk through.
     bool soloTakes(int q, const content::MonsterKind& kind, int home) const {
-        const double share = !wizardly() && countOf(sim::heals) >= 20 ? 1.0 : riskShare();
+        const double share = !wizardly() && !options_.support && countOf(sim::heals) >= 20 ? 1.0 : riskShare();
         const bool drinks = home == kIcarus || q == sim::questOf(406);
         return takes(kind, share) || (drinks && drinksThrough(kind));
     }
@@ -2996,10 +3051,12 @@ private:
                 }
             }
         }
-        // **The party's hunt** (lead()), over his own -- but a quest to hand in comes first, and
-        // the party's quest offered him is taken on the way (he would not take it alone, which
-        // is why the party is there).
-        if (lead_.map >= 0 && options_.quests && aim_ != Aim::HandIn && aim_ != Aim::Castle && reachable(lead_.map)) {
+        // **The party's hunt** (lead()), over his own -- but a quest to hand in or to take comes
+        // first, a short errand: led past them, partied knights handed in half the quests solo
+        // ones did and ended 40 levels lower. And the party's quest offered him is taken on the
+        // way (he would not take it alone, which is why the party is there).
+        if (lead_.map >= 0 && options_.quests && aim_ != Aim::HandIn && aim_ != Aim::Accept && aim_ != Aim::Castle &&
+            reachable(lead_.map)) {
             const int q = lead_.quest;
             if (q >= 0 && realm_->quest(q).state != sim::QuestState::Active && realm_->questOffered(q) &&
                 giverMap(q) >= 0 && reachable(giverMap(q))) {
@@ -3098,8 +3155,12 @@ private:
         const sim::Wearer w = realm_->wearer();
         const int64_t now = realm_->tick();
         bool summoned = false;
+        int standing = -1;  // the breed of hers that stands
         for (const sim::Body& b : realm_->bodies()) {
-            if (b.summoner == hero.id && b.alive()) summoned = true;
+            if (b.summoner == hero.id && b.alive()) {
+                summoned = true;
+                if (b.kind >= 0) standing = tables_->kinds[size_t(b.kind)].number;
+            }
         }
         int summon = -1;
         for (int i = 0; i < sim::skillCount(); ++i) {
@@ -3122,8 +3183,25 @@ private:
                 return true;
             }
             // The last summon in the table she knows: the later breeds are the stronger.
-            if (row.summons > 0 && !summoned) summon = i;
+            if (row.summons > 0) summon = i;
         }
+        // **Her best summon stands, not an old one** (the user, 2026-10-09: "also elfs has to use
+        // their summons which is very strong also"): one standing that is not her best is sent
+        // away -- a second cast dismisses it, for nothing (Realm::conjure) -- and the best raised
+        // at the next think. A Goblin stood until it died after she had read the Assassin.
+        // Only when the best is ready and paid for now, so it is raised at once.
+        int best = -1;
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            if (row.summons > 0 && realm_->knows(row.number) && row.suits(w.offHand)) best = i;
+        }
+        if (best >= 0 && best == summon && summoned && standing >= 0 && standing != sim::skillAt(best).summons &&
+            realm_->cooling(sim::skillAt(best).number) == 0 && hero.mana >= sim::skillAt(best).mana) {
+            hand_.invoke(sim::skillAt(best).number, hero.id);
+            say("sends her %s away for her best summon", tables_->kinds[size_t(kindIndex(standing))].label.c_str());
+            return true;
+        }
+        if (summoned) summon = -1;
         if (summon >= 0) {
             guardTried_[sim::skillAt(summon).number] = clock_ + 100;
             hand_.invoke(sim::skillAt(summon).number, hero.id);
@@ -3132,6 +3210,12 @@ private:
         return false;
     }
     std::map<int32_t, int64_t> guardTried_;
+    int kindIndex(int number) const {
+        for (size_t i = 0; i < tables_->kinds.size(); ++i) {
+            if (tables_->kinds[i].number == number) return int(i);
+        }
+        return 0;
+    }
 
     // ---- his part in a party (lead()) ------------------------------------------------------
     // A body of his party on this map, alive, other than himself.
@@ -3170,6 +3254,7 @@ private:
             if (tried > clock_) return false;
             tried = clock_ + (row.mends ? 20 : 100);
             hand_.invoke(row.number, at);
+            if (at != hero.id) ++aidsOf_[row.name];
             return true;
         };
         for (const int pass : {0, 1, 2}) {
@@ -3190,6 +3275,7 @@ private:
         return false;
     }
     std::map<std::pair<int32_t, uint32_t>, int64_t> aidTried_;
+    std::map<std::string, int> aidsOf_;  // her casts on the others of her party, by skill (status)
     // **A damage dealer's target** (docs/party.md, the threat): what the tank has struck, so the
     // monster stays on him -- the one closest to dying, among those his own threat on is under
     // kEaseOff of the tank's. None struck yet: he waits for the tank's first blow. 0 for none.
@@ -3356,12 +3442,19 @@ private:
         // Only with something to sell or store: a bag full of what he keeps -- jewels, runes,
         // potions, quivers -- sent an elf back to town every thirty-six seconds for three hours.
         if (freeCells() < 6 && (sellable() > 0 || wantsVault())) return "bag full";
-        if (wornDown() >= 0 && !realm_->selfMending()) return "gear worn down";
+        // When he can pay for it: a knight of 19 Zen went to town for his worn gear every three
+        // minutes for 36 game hours, never long enough out to earn the mending (level 17).
+        if (const int worn = wornDown(); worn >= 0 && !realm_->selfMending() && money >= realm_->repairCost(worn)) {
+            return "gear worn down";
+        }
         if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
         if (goblinHere() >= 0 && cloakWorth() > 0) return "a cloak to make";
         if (boxHeld() && freeCells() >= 6 && clock_ - lastTrip_ > 10 * 60 * 20 &&
             (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
             return "the Goblin's box to empty";
+        }
+        if (runeOwed() && clock_ - lastTrip_ > 2 * 60 * 20 && (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
+            return "a rune to save";
         }
         if (clock_ - lastTrip_ > 10 * 60 * 20 && clock_ >= machineAwayUntil_ && (wingsOwed() || cloakWorth() > 0) &&
             (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
@@ -4031,8 +4124,9 @@ private:
         }
         // The Chaos Goblin stands in Noria alone: a box owed and none here, there first.
         // And when his box holds what a full bag left there: an elf went to Lorencia to empty it.
+        // And a good rune to take out of a piece he has bettered (runeOwed).
         if (goblinHere() < 0 && awayTo_ < 0 && clock_ >= machineAwayUntil_ &&
-            (wingsOwed() || cloakWorth() > 0 || (boxHeld() && freeCells() >= 6))) {
+            (wingsOwed() || cloakWorth() > 0 || runeOwed() || (boxHeld() && freeCells() >= 6))) {
             machineAwayUntil_ = clock_ + 30 * 60 * 20;
             tripOwed_ = true;
             if (goTo(3)) {
