@@ -51,7 +51,9 @@ constexpr int64_t kAnswerWait = 2 * 20; // a decision's answers not heard in two
 // still on the old map in the scratch -- paid the trip a second time, and the first's answer,
 // its ticket gone with the last decision's commands, was never read as the trip (the Claude bot's
 // run at --speed 100: 7 trips paid twice in six game hours, 2000-3000 zen each).
-constexpr int64_t kTripWait = 10 * 20;
+// Wall time, not ticks: under mu2_server --speed N ten game seconds are 10/N real ones, under
+// one round trip on a loaded Mac (mu2-bgfx-64's note, as for kAnswerWait).
+constexpr auto kTripWait = std::chrono::seconds(10);
 
 class NetBot {
 public:
@@ -112,6 +114,7 @@ public:
             link_->catchUp();
             you_ = mirror_->hero().id;
             pending_ = 0;
+            trips_.clear();  // a new line, a new world: the old one's tickets answer nothing here
             brain_->attach(*mirror_, tables);
             const sim::Body& me = mirror_->hero();
             line("in %s as #%u, %s level %d with %lld zen, %d players here", world_.c_str(), me.id,
@@ -372,8 +375,10 @@ private:
     void think() {
         const int64_t now = brain_->clockNow();
         if (pending_ != 0 && now - pendingSince_ < kAnswerWait) return;
-        if (!trips_.empty() && now - tripSince_ < kTripWait) return;
-        trips_.clear();
+        // Every one kept until its answer, however late: cleared at the wait's end, an answer 45
+        // s late (a net bot behind its server) found no trip of his and he stayed, the server
+        // holding him due elsewhere (the Claude bot's runs, 2026-10-09).
+        if (!trips_.empty() && std::chrono::steady_clock::now() - tripSince_ < kTripWait) return;
         if (!mirror_->snapshot(bytes_) || !scratch_->restoreSnapshot(bytes_) || !scratch_->lookAs(you_)) {
             line("the scratch would not lay");
             return;
@@ -386,7 +391,7 @@ private:
             link_->send(one);
             if (one.kind == sim::Command::Kind::Travel) {
                 trips_.push_back(one);
-                tripSince_ = now;
+                tripSince_ = std::chrono::steady_clock::now();
             }
         }
         if (brain_->lastTicket() != before) {
@@ -461,7 +466,7 @@ private:
     std::vector<uint8_t> bytes_;
     std::vector<sim::Command> asked_;
     std::vector<sim::Command> trips_;  // paid trips not yet answered (kTripWait)
-    int64_t tripSince_ = 0;
+    std::chrono::steady_clock::time_point tripSince_{};
     uint32_t you_ = 0;
     uint32_t pending_ = 0;
     int64_t pendingSince_ = 0;
