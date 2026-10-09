@@ -177,9 +177,9 @@ private:
                 link_->say({net::Channel::Whisper, first, after});
             } else if (verb == "invite" && !first.empty()) {
                 link_->askParty({net::PartyWhat::Invite, first});
-            } else if (verb == "accept" && !first.empty()) {
+            } else if (verb == "accept") {  // no name: the latest invite
                 link_->askParty({net::PartyWhat::Accept, first});
-            } else if (verb == "decline" && !first.empty()) {
+            } else if (verb == "decline") {  // no name: the latest invite
                 link_->askParty({net::PartyWhat::Decline, first});
             } else if (verb == "kick" && !first.empty()) {
                 link_->askParty({net::PartyWhat::Kick, first});

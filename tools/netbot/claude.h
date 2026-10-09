@@ -12,7 +12,7 @@
 //     say TEXT              to his map
 //     party TEXT            to his party
 //     whisper NAME TEXT     to one player
-//     invite NAME | accept NAME | decline NAME | leave | kick NAME
+//     invite NAME | accept [NAME] | decline [NAME] | leave | kick NAME
 //     go WORLD              grind WORLD (lorencia, dungeon, devias, noria, losttower, atlans,
 //                           tarkan, icarus) whatever the brain would choose
 //     auto                  the brain's own choice again
