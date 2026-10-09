@@ -12,8 +12,9 @@
 //     quests", "gradient has to be darker"). The chosen tab lit gold and rising from its bar.
 //   * **Its height** the player's: an up-and-down grip on its top edge; and the lines scroll
 //     inside, on a slider of their own at the right.
-//   * **Closed**, the last six lines stay over the world a while and fade, the cloud under them
-//     half as dark, with "Enter to chat" and the whispers waiting.
+//   * **Closed**, the last lines stay over the world a while and fade -- as many as his height
+//     for it holds -- the cloud under them half as dark, with "Enter to chat" and the whispers
+//     waiting.
 //   * **A party invite** stands in the middle over the HUD, above where a fight's Zen is said
 //     (game/ui/tally.h), with Accept and Decline, open or shut ("party invites has to be middle
 //     of center similiar position where zen is gained"). The log keeps its line.
@@ -106,6 +107,7 @@ private:
     void layRows(float u, float wide, const std::string& tab, size_t from);
     void build(float u, const Pointer& pointer);
     void buildClosed(float u);
+    int closedRows(float u) const;  // the lines shown while it is shut, from its height
     void buildInvite(float u, float width, float bottom, const Pointer& pointer);
     long pendingInvite() const;  // the newest open invite's line, or -1
     void cloud(gfx::Canvas& canvas, float middle, float tall, float strength, float u);
@@ -124,6 +126,9 @@ private:
     net::Channel channel_ = net::Channel::Map;  // where the next line goes, as the tab says (update)
     // The channel's word pressed on All: Map, Party or Guild in its place until the tab changes.
     bool chipSet_ = false;
+    // Party and Guild show as tabs only while he is in one (the user, 2026-10-09: "dont show
+    // guild, party tabs if there is no guild or party"). No guilds yet: never in one.
+    bool inParty_ = false, inGuild_ = false;
     net::Channel chipChannel_ = net::Channel::Map;
     std::string target_;    // a whisper's
     std::string lastFrom_;  // the last who whispered him: /r's

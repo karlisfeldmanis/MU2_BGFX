@@ -50,10 +50,11 @@ constexpr float kGrip = 26.0f, kTabRow = 44.0f, kInput = 44.0f, kFoot = 30.0f;
 constexpr float kRow = 24.0f, kText = 18.0f, kTag = 14.0f, kWord = 18.0f, kHint = 14.0f;
 // The cloud's peak, and closed, what is left of it under the fading lines.
 constexpr float kCloud = 0.97f, kCloudClosed = 0.55f;
-// Closed: the lines shown, their fall in strength from the newest up, and how long each stays.
-constexpr int kClosedLines = 6;
-constexpr float kClosedRamp[kClosedLines] = {0.3f, 0.45f, 0.6f, 0.78f, 0.92f, 1.0f};
+// Closed: how long each line stays, and the fewest it shows; as many more as the height he gave
+// it holds (the user, 2026-10-09: "if i chancge chant heoght i exptect that also closed chat will
+// be woth more messages"), Chat::closedRows.
 constexpr float kStays = 20.0f, kFades = 4.0f;
+constexpr int kClosedLeast = 3;
 constexpr size_t kKept = 400;  // lines kept, oldest dropped
 // The invite in the middle: how long it stands unanswered (the log's line and /accept stay),
 // its fade in and out, and how far its foot stands over the chat's own foot -- above where a
@@ -347,6 +348,7 @@ uint64_t Chat::signature(float u, const Pointer& pointer) const {
     for (const Line& line : log_) mix(uint64_t(line.answer + 1));
     for (const auto& [key, count] : unread_) mixs(key), mix(uint64_t(count));
     mixs(tab_), mixs(me_), mixs(target_), mix(uint8_t(channel_));
+    mix(inParty_), mix(inGuild_);
     for (const std::string& name : whispers_) mixs(name);
     if (open_) {
         mixs(draft_);
@@ -357,7 +359,7 @@ uint64_t Chat::signature(float u, const Pointer& pointer) const {
     } else {
         // Closed, the fading lines: each one's step down its fade.
         size_t n = 0;
-        for (size_t i = log_.size(); i-- > 0 && n < size_t(kClosedLines); ++n) {
+        for (size_t i = log_.size(); i-- > 0 && n < size_t(closedRows(u)); ++n) {
             const float age = log_[i].age;
             mix(age < kStays ? 0 : age < kStays + kFades ? uint64_t((age - kStays) * 16.0f) + 1 : 1000);
         }
@@ -376,8 +378,8 @@ void Chat::layTabs(float u) {
     };
     add("all", "All", false);
     add("map", "Map", false);
-    add("party", "Party", false);
-    add("guild", "Guild", false);
+    if (inParty_) add("party", "Party", false);
+    if (inGuild_) add("guild", "Guild", false);
     for (const std::string& name : whispers_) add("w:" + name, name, true);
     float x = 4.0f * u;
     for (Tab& tab : tabs_) {
@@ -502,6 +504,10 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         open_ = true;
     }
 
+    // A party or guild he is no longer in takes its tab with it.
+    inParty_ = play.party().members.size() > 1;
+    if ((tab_ == "party" && !inParty_) || (tab_ == "guild" && !inGuild_)) select("all");
+
     // Where the next line goes: the tab's channel; on All his party's when he has one, else his
     // map's, or the word he pressed in their place.
     if (tab_.rfind("w:", 0) == 0) {
@@ -514,9 +520,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     } else if (tab_ == "guild") {
         channel_ = net::Channel::Guild;
     } else {
-        channel_ = chipSet_ ? chipChannel_
-                   : play.party().members.size() > 1 ? net::Channel::Party
-                                                     : net::Channel::Map;
+        channel_ = chipSet_ ? chipChannel_ : inParty_ ? net::Channel::Party : net::Channel::Map;
     }
 
     // Where it stands: its foot over the HUD's plate, as wide as there is room for.
@@ -571,10 +575,13 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 break;
             }
         } else if (chip_.has(pointer.x, pointer.y)) {
-            // On All, the next of Map, Party and Guild in its place; elsewhere, the next tab.
-            const net::Channel next = channel_ == net::Channel::Map     ? net::Channel::Party
-                                      : channel_ == net::Channel::Party ? net::Channel::Guild
-                                                                        : net::Channel::Map;
+            // On All, the next of Map, Party and Guild in its place; elsewhere, the next tab. Only
+            // those he is in: a party's or a guild's when he has one.
+            std::vector<net::Channel> open{net::Channel::Map};
+            if (inParty_) open.push_back(net::Channel::Party);
+            if (inGuild_) open.push_back(net::Channel::Guild);
+            const auto here = std::find(open.begin(), open.end(), channel_);
+            const net::Channel next = here == open.end() || here + 1 == open.end() ? open.front() : *(here + 1);
             if (tab_ == "all") {
                 chipSet_ = true;
                 chipChannel_ = next;
@@ -840,11 +847,17 @@ void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointe
     }
 }
 
+int Chat::closedRows(float u) const {
+    // The open well's rows, less one for the key line under them.
+    return std::max(kClosedLeast, int(logBox_.h / (kRow * u)) - 1);
+}
+
 void Chat::buildClosed(float u) {
     // The last lines on All, each as long as it has been up allows, the newest at full.
     lines_.clip({0.0f, 0.0f, 0.0f, 0.0f});
+    const int rows = closedRows(u);
     std::vector<size_t> last;
-    for (size_t i = log_.size(); i-- > 0 && last.size() < size_t(kClosedLines);) {
+    for (size_t i = log_.size(); i-- > 0 && last.size() < size_t(rows);) {
         if (log_[i].age < kStays + kFades) last.push_back(i);
         else break;
     }
@@ -863,7 +876,9 @@ void Chat::buildClosed(float u) {
     for (size_t k = 0; k < last.size(); ++k) {
         const float age = log_[last[k]].age;
         const float life = age < kStays ? 1.0f : std::max(0.0f, 1.0f - (age - kStays) / kFades);
-        const float alpha = kClosedRamp[kClosedLines - int(last.size()) + int(k)] * life;
+        // The newest at full, each older one fainter, down to 0.3 at the top of the height.
+        const float place = float(last.size() - 1 - k);  // 0 for the newest
+        const float alpha = (1.0f - 0.7f * place / std::max(1.0f, float(rows - 1))) * life;
         alphas.push_back(alpha);
         strongest = std::max(strongest, alpha);
     }
