@@ -23,12 +23,13 @@ mockup, claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX); the party rides on its chann
   monster** are "in view". Their levels sum to `totallevel`, and `partylevel` is its mean. The
   kill's experience is reckoned once, at `partylevel`, then multiplied by `viewpercent` and
   shared **by level**: a member gets `total * viewpercent * hisLevel / totallevel / 100`.
-  `viewpercent` by members in view, the NEW_FORSKYLAND3 branch (0.97d has Icarus):
+  `viewpercent` by members in view, the MODIFY_GETTING_EXP_RATE_20060214 branch, because our
+  solo kill (sim::killExperience, `(level + 25) * level / 3`) is that branch's:
 
   | in view | 2 | 3 | 4 | 5 |
   |---|---|---|---|---|
-  | plain party | 120 | 150 | 170 | 190 |
-  | **set party** (a wizard, a knight and an elf in view) | 120 | 200 | 230 | 260 |
+  | plain party | 160 | 180 | 200 | 220 |
+  | **set party** (a wizard, a knight and an elf in view) | -- | 230 | 270 | 300 |
 
   Ours on top: **x1.1 when all five are in view**. A member out of view gets nothing; a party
   of one in view is paid as a solo kill. A member's share is capped at his own level's
@@ -45,6 +46,23 @@ mockup, claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX); the party rides on its chann
   fighting the healed one. A monster changes target only to one holding 10% more than the
   current. Off a party, nothing changes: a monster with one attacker attacks him.
 - **The +10%** for five.
+
+## The user's further asks (2026-10-09)
+
+- "it make sense they go together on dungeons": bots party for the Dungeon's and the Lost
+  Tower's chains, not only for one hard breed.
+- "we need to be smart about how they will fill quests, because some will need more kill some
+  already will be finished some kills": a shared kill counts only for members who still want
+  that breed (countKill skips a finished step). The party's brain picks the breed the most
+  members still want; a member whose steps are done may leave, or stay as the party's support.
+- "when you will finish party and chat implementation, lets launch server with 50 bots and lets
+  see how this evolves". Each netbot steps its own mirror of its map on the Mac, so the load of
+  fifty is measured first (docs/server-capacity: ~14 us a player a tick on the box).
+
+## Done
+
+- 2026-10-09, a9f28b19: the realm's half (Body::party, Command::Kind::PartySet, payKill,
+  countPartyKill, testParty).
 
 ## The plan, a sprint each
 
