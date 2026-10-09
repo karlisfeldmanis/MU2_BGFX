@@ -465,7 +465,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Bloodwell, "Bloodwell", "Heal 3% of damage dealt, 5% mana per kill",
          kEveryClass, kWorn, Rarity::Epic},
         {Power::Frenzy, "Frenzy", "Each hit: +8 attack speed for 4 s, stacks to +40",
-         kEveryClass, kWorn, Rarity::Epic},
+         kEveryClass, kWorn, Rarity::Epic, false, true},
         {Power::Renewal, "Renewal", "Restore 3% life every 3 s",
          kEveryClass, kWorn, Rarity::Epic},
         {Power::Spirits, "Evil Spirit", "15% when missed: evil spirits strike monsters around you",
@@ -680,12 +680,11 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || !power->takenBy(kin, second)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!socketsFit(row) || freeSocket(target) < 0) return false;
-    // One Frenzy a thing: two in one pair of boots stacked to more speed than the game can
-    // carry (the user, 2026-10-09: "stacking is to op, lets just allow to put only 1 frenzy
-    // rune"). And however many he wears, the stacks stop at kFrenzyMostStacks.
-    if (power->power == Power::Frenzy) {
+    // One of a `once` rune a thing (PowerRow::once): Frenzy, which two in one pair of boots
+    // stacked past what the game can carry. However many he wears, its stacks stop at five.
+    if (power->once) {
         for (int at = 0; at < std::min<int>(target.sockets, kMostSockets); ++at) {
-            if (target.powers[at] == uint8_t(Power::Frenzy)) return false;
+            if (target.powers[at] == uint8_t(power->power)) return false;
         }
     }
     // Its group's sockets (sim::PowerRow::slots): a ring's and a pendant's take the armour runes

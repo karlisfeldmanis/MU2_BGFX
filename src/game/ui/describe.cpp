@@ -900,6 +900,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 if (power->slots & sim::kInJewellery) add("Ring, Pendant");
             }
             carries.rows.push_back(stat("Fits", fits, Tone::White));
+            // A rune set only once in a thing says so before it is refused (PowerRow::once).
+            if (power->once) carries.rows.push_back(stat("Limit", "One per item", Tone::Yellow));
             Row how;
             how.free = "Drop it on an item with an empty socket";
             how.freeTone = Tone::Gray;

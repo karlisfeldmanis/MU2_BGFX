@@ -761,6 +761,10 @@ struct PowerRow {
     // Greater Ascendance and Evil Spirit too). Each class keeps one legendary of its own before
     // it -- the knight's Twister, the wizard's Arcane Echo, the elf's Frost Arrow -- and Wrath.
     bool second = false;
+    // One in a thing at most: `settable` refuses a second of it where one is set, and its tooltip
+    // says so (the user, 2026-10-09: "stacking is to op, lets just allow to put only 1 frenzy
+    // rune", then "we need some kind of tooltip that specific runes can used only once").
+    bool once = false;
     // Whether a hero of this class, his second or not, may set it and have it work.
     bool takenBy(Kin kin, bool isSecond) const {
         return (classes & classBit(kin)) != 0 && (!second || isSecond);
