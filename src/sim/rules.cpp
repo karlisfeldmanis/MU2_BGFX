@@ -361,6 +361,18 @@ uint64_t neededExperience(int level) {
     return needed;
 }
 
+int partyPercent(int inView, bool set) {
+    if (set) return inView >= 5 ? 300 : inView == 4 ? 270 : inView == 3 ? 230 : 120;
+    return inView >= 5 ? 220 : inView == 4 ? 200 : inView == 3 ? 180 : inView == 2 ? 160 : 100;
+}
+
+double partyExperience(int killedLevel, int totalLevel, int inView, bool set) {
+    if (inView <= 0) return 0.0;
+    double total = killExperience(killedLevel, totalLevel / inView) * partyPercent(inView, set) / 100.0;
+    if (inView >= kPartyMost) total *= kFullPartyBonus;
+    return total;
+}
+
 double killExperience(int killedLevel, int killerLevel) {
     const double killed = double(killedLevel);
     double worth = (killed + 25.0) * killed / 3.0;

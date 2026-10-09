@@ -398,6 +398,20 @@ uint64_t neededExperience(int level);
 // `killerLevel` is a float in the original and the division is float division: an integer port
 // gives 0 for every kill more than ten levels down and silently stops all low-level farming.
 double killExperience(int killedLevel, int killerLevel);
+// **The party** (docs/party.md): five at most (WebZen's MAX_PARTYUSER); a member shares a kill
+// within ten tiles of it (`gObjCalDistance < 10`, gObjExpParty); and a full five in view is
+// paid a tenth more, ours (the user, 2026-10-09: "if there is 5-man party lets give 10% exp
+// boost").
+constexpr int kPartyMost = 5;
+constexpr float kPartyReach = 10.0f;
+constexpr double kFullPartyBonus = 1.1;
+// What a kill pays a party with `inView` members in view whose levels sum to `totalLevel`,
+// before it is shared by level and before the rate (Realm::payKill): one kill reckoned at the
+// mean level, times WebZen's party percent -- the MODIFY_GETTING_EXP_RATE_20060214 branch of
+// gObjExpParty, whose solo rate killExperience is -- and the full party's tenth. `set`: a
+// wizard, a knight and an elf in view.
+int partyPercent(int inView, bool set);
+double partyExperience(int killedLevel, int totalLevel, int inView, bool set);
 
 // How much of that a kill actually pays. **Ours, and the one rate in the sim**: every number
 // above is OpenMU's, and this is the server multiplier a live MU server has always had, stated

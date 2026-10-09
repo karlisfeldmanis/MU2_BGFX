@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -11424,6 +11425,78 @@ uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRi
     return hash;
 }
 
+// **The party** (docs/party.md, realm_party.cpp): WebZen's party experience, ours on a full
+// five, and a kill's quest count for every member near it.
+void testParty(const content::Tables& tables) {
+    std::printf("party\n");
+    // The formula: a kill reckoned at the mean level, times the party's percent.
+    const double solo = sim::killExperience(20, 100);
+    checkEqual(sim::partyPercent(2, false), 160, "two in view: 160%");
+    checkEqual(sim::partyPercent(3, true), 230, "a wizard, a knight and an elf: the set's 230%");
+    checkEqual(sim::partyPercent(3, false), 180, "three of no set: 180%");
+    check(std::abs(sim::partyExperience(20, 300, 3, true) - solo * 2.3) < 1e-6,
+          "three of level 100 share 2.3 kills");
+    check(std::abs(sim::partyExperience(20, 500, 5, true) - solo * 3.0 * sim::kFullPartyBonus) < 1e-6,
+          "a full set party of five, 300% and the tenth on top");
+    check(std::abs(sim::partyExperience(20, 500, 5, false) - solo * 2.2 * sim::kFullPartyBonus) < 1e-6,
+          "a full party of no set, 220% and the tenth");
+
+    // Through the realm: a knight kills a Spider beside a wizard of his party, who is on Marlon's
+    // quest; a stranger stands beside them, and a member stands far off.
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkWizard, 100), "a party realm raises");
+    const sim::Body* spider = nullptr;
+    for (const sim::Body& one : realm.bodies()) {
+        if (!one.monster() || !one.alive() || tables.kinds[size_t(one.kind)].number != 3) continue;
+        const float d = (one.x - 131) * (one.x - 131) + (one.y - 128) * (one.y - 128);
+        if (spider == nullptr || d < (spider->x - 131) * (spider->x - 131) + (spider->y - 128) * (spider->y - 128)) {
+            spider = &one;
+        }
+    }
+    check(spider != nullptr, "a Spider to kill");
+    if (spider == nullptr) return;
+    const uint32_t prey = spider->id;
+    const int col = spider->column(), row = spider->row();
+    realm.setHeroDown(col, row, 1, 0);
+    const uint32_t wizard = realm.hero().id;
+    const uint32_t knight = realm.join(sim::Kin::DarkKnight, 150, col, row);
+    const uint32_t stranger = realm.join(sim::Kin::FairyElf, 100, col, row);
+    const uint32_t far = realm.join(sim::Kin::FairyElf, 100, 131, 128);
+    check(knight && stranger && far, "three more join");
+    const int quest = sim::questOf(229);
+    sim::HeroRecord record = realm.record();
+    record.quests[quest].state = sim::QuestState::Active;
+    realm.restore(record);
+    for (uint32_t one : {wizard, knight, far}) {
+        realm.command({.kind = sim::Command::Kind::PartySet, .a = 7, .target = one});
+    }
+    realm.command({.kind = sim::Command::Kind::Order, .player = knight,
+                   .a = int(sim::Request::Kind::Attack), .target = prey});
+    std::map<uint32_t, int64_t> gained;
+    for (int tick = 0; tick < 400; ++tick) {
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.what == sim::What::Gained && one.audience == one.who) gained[one.who] += one.a;
+        }
+        const sim::Body* it = realm.find(prey);
+        if (it == nullptr || !it->alive()) break;
+    }
+    const sim::Body* it = realm.find(prey);
+    check(it != nullptr && !it->alive(), "the knight kills it");
+    checkEqual(realm.find(wizard)->party, 7u, "PartySet sets the party");
+    check(gained[knight] > 0 && gained[wizard] > 0, "the knight and the wizard beside him share it");
+    checkEqual(gained[stranger], int64_t(0), "a stranger beside them gets nothing");
+    checkEqual(gained[far], int64_t(0), "and a member out of view nothing");
+    // Shared by level: the knight's 150 to the wizard's 100.
+    check(gained[knight] > gained[wizard], "the higher level the larger share");
+    // Two in view, of no set: 160% of a kill at their mean level, 125.
+    const double total = sim::partyExperience(it->level, 250, 2, false);
+    checkEqual(gained[wizard], int64_t(int32_t(total * 100.0 / 250.0 * sim::kExperienceRate)),
+               "the wizard's share, by level, at the game's rate");
+    // The Spider is counted on the wizard's quest, though the knight's blow killed it.
+    checkEqual(int(realm.quest(quest).counts[0]), 1, "and the kill counts on the wizard's Marlon quest");
+}
+
 // A drop is its owner's: a stranger can neither walk to it nor take it, and what a player
 // throws away himself is anyone's (sim::Lying::owner).
 void testDropsAreTheirs(const content::Tables& tables) {
@@ -11583,6 +11656,46 @@ void testTwoHeroes(const content::Tables& tables) {
 // A character between worlds (docs/sprints/20-the-world-host.md): read off one realm as he leaves,
 // through the wire as a Tick's arrival, and laid on the newcomer another realm's Join lets in --
 // all of him, bag, purse, points, vault and box.
+// The chat's frames (net::Say, net::Heard): both ways through one Kind, and a said line made fit.
+void testChatWire() {
+    std::printf("chat wire\n");
+    std::vector<uint8_t> bytes;
+    net::Say say;
+    say.channel = net::Channel::Whisper;
+    say.to = "Valeria";
+    say.text = "yes! 15 Bless ok?";
+    net::put(bytes, say);
+    net::Heard heard;
+    heard.channel = net::Channel::Party;
+    heard.from = 7;
+    heard.name = "Kaelis";
+    heard.text = "boss is up, east side";
+    heard.bot = true;
+    net::put(bytes, heard);
+
+    net::Kind kind{};
+    std::vector<uint8_t> body;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Chat, "a Say is a Chat frame");
+    net::Say said;
+    check(net::parse(body, said) && said.channel == net::Channel::Whisper && said.to == "Valeria" &&
+              said.text == say.text, "and parses back whole");
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Chat, "a Heard is one too");
+    net::Heard back;
+    check(net::parse(body, back) && back.channel == net::Channel::Party && back.from == 7 &&
+              back.name == "Kaelis" && back.to.empty() && back.text == heard.text && back.bot,
+          "and parses back whole");
+    body.back() = 0;
+    body.insert(body.begin(), 9);  // a channel past the last, the rest shifted on
+    check(!net::parse(body, back), "a frame of no channel is refused");
+
+    check(net::saidText("  hi\tthere\n ") == "hi there", "control bytes become spaces, ends trimmed");
+    check(net::saidText(" \n ").empty(), "nothing said is empty");
+    std::string longest(net::kMostSaid - 1, 'a');
+    longest += "\xC3\xA9\xC3\xA9";  // two two-byte letters across the cut
+    const std::string cut = net::saidText(longest);
+    check(cut.size() == net::kMostSaid - 1, "a line past kMostSaid is cut before a letter it would halve");
+}
+
 void testKept(const content::Tables& tables) {
     std::printf("kept\n");
     sim::Realm from;
@@ -11888,6 +12001,7 @@ int main() {
     testNova(tables);
     testFirecracker(tables);
     testSecondClassDrops();
+    testParty(tables);
     testQuestLadder(tables);
     testQuestFirecrackers(tables);
     testDrownedSong();

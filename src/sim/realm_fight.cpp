@@ -1845,7 +1845,7 @@ void Realm::kill(Body& dead, Body& killer) {
     };
     if (killer.warden >= 0 && helped) {
         leave(dead, hero);
-        gain(hero, paid(hero));
+        payKill(dead, hero);
     }
     // And the guard who fought it points him on to the rest, whoever landed the last blow.
     if (helped && dead.guardedBy != 0) {
@@ -1860,7 +1860,7 @@ void Realm::kill(Body& dead, Body& killer) {
         if (Body* owner = body(killer.summoner); owner != nullptr && owner->alive()) {
             For hers(*this, *owner);
             leave(dead, *owner);
-            gain(*owner, paid(*owner));
+            payKill(dead, *owner);
         }
     }
     // **A raider's kill is his** (the raid's party fights for him): its drop and its experience,
@@ -1903,15 +1903,17 @@ void Realm::kill(Body& dead, Body& killer) {
         // (PlayerExperience.cs:105), then the server's rate -- which this note used to say
         // there was none of, and the replica's answer is still the formula above: the rate is
         // one number at one place, stated, the way a live server states one. See kExperienceRate.
-        gain(killer, paid(killer));
+        // Shared with his party in view (realm_party.cpp), his alone without one.
+        payKill(dead, killer);
     }
     // And his quests count it, when the kill is his by the rules above: his own blow, her
     // summon's, or a guard's he had a hand in. A guard's own kill does not count, as it pays him
     // nothing. Counted for that player: his own, her summon's owner, or the one who helped.
     if (dead.monster() && (killer.player || killer.summoner != 0 || (killer.warden >= 0 && helped))) {
         const Body* owner = killer.summoner != 0 ? body(killer.summoner) : nullptr;
-        For counted(*this, killer.player ? killer : owner != nullptr ? *owner : hero);
-        countKill(dead);
+        // And for each of his party in view who still wants that breed (the user, 2026-10-09:
+        // "everyone nearby"); countKill skips a step already done.
+        countPartyKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);
     }
 }
 

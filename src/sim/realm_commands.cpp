@@ -143,6 +143,7 @@ void Realm::applyCommands() {
                 break;
             }
             case Kind::Leave: answer = depart(mine().id) ? 1 : -1; break;
+            case Kind::PartySet: answer = setParty(one.target, uint32_t(std::max(0, one.a))) ? 1 : -1; break;
         }
         if (one.ticket == 0) continue;
         say(What::Answered, *find(answerer), int32_t(said),

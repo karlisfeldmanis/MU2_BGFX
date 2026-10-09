@@ -74,6 +74,10 @@ struct Command {
         // who leaves).
         Join,
         Leave,
+        // **A body's party** (docs/party.md), sent by the server and never by a client, as the
+        // door is: a the party's number, 0 for none; target the body. Parties are the server's,
+        // since a party spans maps and a map is a realm (Realm::setParty).
+        PartySet,
     };
     // Close's a.
     enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel };

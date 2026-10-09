@@ -164,6 +164,7 @@ add_library(mu_sim STATIC
   src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
   src/sim/realm_invasion.cpp
+  src/sim/realm_party.cpp
   src/sim/realm_raid.cpp
   src/sim/raid_party.cpp
   src/sim/skills.cpp

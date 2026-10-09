@@ -598,6 +598,11 @@ struct Body {
     // fight the dragon beside him. Not a monster, and not the player: its blows roll off its own
     // reckoned stats, as a guard's do, and a dead one stays down for the fight.
     int32_t raider = -1;
+    // **His party** (docs/party.md): the server's number for it, 0 for none. The server keeps the
+    // parties -- they span maps, and a map is a realm -- and says each change into every world a
+    // member stands in (Command::Kind::PartySet); the realm reads it to share a kill's
+    // experience and its quest count among the members near it (Realm::kill).
+    uint32_t party = 0;
 
     bool alive() const { return health > 0; }
     bool monster() const { return !player && warden < 0 && summoner == 0 && raider < 0; }    int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
@@ -1304,6 +1309,9 @@ public:
     // windows shut (the machine's box back into his bag), his things in the air spent, and
     // whatever held him forgets him. Says Left. False for no player, or one already gone.
     bool depart(uint32_t id);
+    // **A body's party** (docs/party.md, Command::Kind::PartySet): the server's number for it, 0
+    // for none. False for no player of that id.
+    bool setParty(uint32_t id, uint32_t party);
     // **A character carried in** (sim::Kept): laid on the newcomer the Join with this ticket lets
     // in, at the next tick's start, after his cradle's hands. Asked before the step, as a command
     // is; one no Join of that tick claims is dropped with it.
@@ -1581,6 +1589,13 @@ private:
     // look toward the nearest of its kind still standing.
     void pointOn(Body& guard, const Body& dead);
     void gain(Body& hero, int32_t award);
+    // **A kill paid to a party** (realm_party.cpp, docs/party.md): `earner` is whom the kill is
+    // paid to by Realm::kill's rules; with no party, or none of it in view, it is his alone, as
+    // it was. In view: the members alive on this map within kPartyReach of the dead.
+    void partyInView(const Body& dead, const Body& earner, std::vector<Body*>* out);
+    void payKill(const Body& dead, Body& earner);
+    // And its quest count, for each of them in view who has the step.
+    void countPartyKill(const Body& dead, const Body& earner);
     void raiseBeast(Body& beast);
     void reviveHero();
     // A standable tile in the map's spawn box, drawn off the dice: where a death rises and where
