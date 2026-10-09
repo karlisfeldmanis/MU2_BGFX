@@ -305,7 +305,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // **Her summons' breeds, on any map** (the user, 2026-09-28): a Goblin is Noria's figure,
     // and a world's table carries its own breeds alone, so the ones a summon raises are borrowed
     // from whichever world has them (Figures::borrow). Counted into the pose buffer as well.
-    if (figures_ && realm_.hero().kin == sim::Kin::FairyElf) {
+    // On a server for every class, not only hers: another elf's summon walks the same map, and
+    // a knight who came in beside one saw it as a bare health bar (the user, 2026-10-09).
+    if (figures_ && (realm_.hero().kin == sim::Kin::FairyElf || remote())) {
         for (int i = 0; i < sim::skillCount(); ++i) {
             const sim::SkillRow& row = sim::skillAt(i);
             if (row.summons <= 0 || !row.built) continue;
