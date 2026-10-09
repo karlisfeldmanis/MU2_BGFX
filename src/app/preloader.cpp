@@ -16,6 +16,7 @@
 
 #include <miniaudio.h>
 
+#include "build_version.h"
 #include "core/loading.h"
 #include "core/log.h"
 #include "core/files.h"
@@ -332,6 +333,12 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                 ctx.curtain.text(cx - wide * 0.5f, y, letterScale, parchment, line);
                 y += leading;
             }
+            // The build, small in the bottom left corner (the user, 2026-10-09: "show build
+            // version on loading screen on small font bottom left side").
+            const float versionScale = 1.2f * unit;
+            ctx.curtain.text(16.0f * unit, float(h) - 16.0f * unit -
+                                               gfx::Overlay::lineHeight(versionScale),
+                             versionScale, parchment, MU2_BUILD_VERSION);
             ctx.curtain.submit(gfx::ViewHud);
         }
         bgfx::frame();

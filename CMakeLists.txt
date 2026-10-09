@@ -389,7 +389,19 @@ add_executable(mu2
   src/app/modes/lobby_mode.cpp
   src/app/modes/bench_mode.cpp
 )
-target_include_directories(mu2 PRIVATE src extern)
+target_include_directories(mu2 PRIVATE src extern ${CMAKE_BINARY_DIR}/generated)
+# The game's version, MAJOR.MINOR.PATCH in VERSION (1.0.0 is the finished game; until then the
+# 0.x line), and the commit this build was made from: the loading screen's corner
+# (app/preloader.cpp) and the bundle's version.
+file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION MU2_VERSION LIMIT_COUNT 1)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/VERSION)
+add_custom_target(build_version
+  COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_SOURCE_DIR} -DVERSION=${MU2_VERSION}
+          -DOUT=${CMAKE_BINARY_DIR}/generated/build_version.h
+          -P ${CMAKE_SOURCE_DIR}/tools/cmake/build_version.cmake
+  BYPRODUCTS ${CMAKE_BINARY_DIR}/generated/build_version.h
+  VERBATIM)
+add_dependencies(mu2 build_version)
 # bimg_encode writes the screenshots.
 target_link_libraries(mu2 PRIVATE mu_game bimg_encode)
 target_compile_definitions(mu2 PRIVATE ${MU_DIRS})
@@ -407,7 +419,7 @@ if(APPLE)
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/src/app/Info.plist.in
     MACOSX_BUNDLE_BUNDLE_NAME MU2
     MACOSX_BUNDLE_GUI_IDENTIFIER com.mu2.game
-    MACOSX_BUNDLE_SHORT_VERSION_STRING 0.1
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${MU2_VERSION}
     MACOSX_BUNDLE_BUNDLE_VERSION 1)
   add_custom_command(TARGET mu2 POST_BUILD
     COMMAND ln -sfh MU2.app/Contents/MacOS/MU2 ${CMAKE_BINARY_DIR}/mu2
