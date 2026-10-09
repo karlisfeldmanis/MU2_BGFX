@@ -412,9 +412,15 @@ inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
 // 2026-10-01: "still to active it has to be more elegant and subtle").
 inline constexpr const char* kShadowFigure = "Shadow01";
 // The Death Gorgon, the Gorgon at Level 2: embers off random bones and an orange light
-// (fx/shadow_stars.h), one ember every this many reference frames -- ours; MU throws ten a frame.
+// (fx/shadow_stars.h), one ember every this many reference frames: MU's ten a frame
+// (ZzzCharacter.cpp:6064-6071), since the user, 2026-10-09: "death gorgon has this red tint and
+// overall flame effect around them".
 inline constexpr const char* kDeathGorgonFigure = "DeathGorgon01";
-constexpr float kEmberEveryFrames = 3.0f;
+constexpr float kEmberEveryFrames = 0.1f;
+// And its red: MU lights a body by the terrain light where it stands, and the Gorgon's own
+// AddTerrainLight (1, 0.2, 0) at about 0.65 over the tower's grey floor is about 2.6 : 1.3 : 1
+// on the body. Ours, that hue at about its own brightness, on its light as an Ale's is.
+constexpr float kDeathGorgonLight[3] = {2.2f, 0.85f, 0.6f};
 // The Death Knight: MU's BITMAP_FIRE at bone 2, Bip01 Pelvis, one reference frame in two
 // (ZzzCharacter.cpp:6007-6011); ours, the same embers, one in four.
 inline constexpr const char* kDeathKnightFigure = "DeathKnight01";

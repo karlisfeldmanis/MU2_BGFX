@@ -1944,8 +1944,13 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         if (darkLevel) {
             for (float& k : place) k *= kLevelOneLight;
         }
+        // And a Death Gorgon in its own red light (kDeathGorgonLight).
+        const bool aflame = lookNow != nullptr && lookNow->name == kDeathGorgonFigure;
+        if (aflame) {
+            for (int k = 0; k < 3; ++k) place[k] *= kDeathGorgonLight[k];
+        }
         const auto tint = [&] {
-            if (placeLit || darkLevel) {
+            if (placeLit || darkLevel || aflame) {
                 for (size_t i = tintFrom; i < out.size(); ++i) {
                     for (int k = 0; k < 3; ++k) out[i].light[k] *= place[k];
                 }

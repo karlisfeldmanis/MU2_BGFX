@@ -42,13 +42,23 @@ constexpr float kGlowDim = 0.3f;
 constexpr float kGlowReach = 2.5f;
 constexpr float kGlowHeight = 1.5f;
 constexpr uint32_t kGlowsMost = 2;
-// Its embers: a 64-unit Fire01 cell, burning through the strip's four cells over this many
-// reference frames while rising this fast, at this much of full light. Ours.
-constexpr float kEmberHalf = 0.64f * 0.5f * 0.6f;
-constexpr float kEmberLife = 12.0f;
-constexpr float kEmberRise = 0.6f;   // metres a second
-constexpr float kEmberDim = 0.45f;
-constexpr size_t kEmbers = 96;
+// Its embers, MU's BITMAP_FIRE SubType 0 (ZzzEffectParticle.cpp:385-396, 4537-4545): a 64-unit
+// Fire01 cell at Scale 1.28 to 1.92, losing 0.04 a frame, through the strip's four cells over
+// its 24 frames of life, its light the life left, and rising by a Gravity that gains 0.004 a
+// frame, ten units of it. MU's own since the user, 2026-10-09, with MU's Lost Tower 7: "death
+// gorgon has this red tint and overall flame effect around them" -- the faint few of
+// 2026-10-01 (a 0.38 m cell, twelve frames, 0.45 of the light) read as a spark or two.
+// The cap is ten a frame of five Gorgons, 24 frames each.
+constexpr float kEmberCell = 0.64f;   // metres at Scale 1
+constexpr float kEmberLife = 24.0f;
+constexpr float kEmberScaleMin = 1.28f, kEmberScaleSpread = 0.64f, kEmberShrink = 0.04f;
+constexpr float kEmberGravity = 0.004f;  // MU units a frame, gained each frame, times ten
+constexpr size_t kEmbers = 1200;
+// Drawn as the lamps draw Fire01 (game/world/lamps.cpp kCellGain): through fs_flame's heat ramp,
+// each cell scaled to a whole flame, and the heat cooling it from yellow to a dying red as its
+// light goes -- added plain, the cells' own dark red read as smoke round the body.
+constexpr float kEmberCellGain[4] = {1.0f, 8.8f, 19.0f, 19.0f};
+constexpr float kEmberHeat = 1.0f, kEmberCool = 0.7f;
 // The Devil's beam: MU's 50-unit joint, ours at this half width and light.
 constexpr float kBeamHalf = 0.18f;
 constexpr float kBeamDim = 0.5f;
@@ -163,12 +173,15 @@ void ShadowStars::update(float seconds) {
     shards_.erase(std::remove_if(shards_.begin(), shards_.end(),
                                  [](const Shard& one) { return one.frames >= kBlizzardFall; }),
                   shards_.end());
+    const float frames = seconds * 25.0f;
     for (Ember& one : embers_) {
-        one.age += seconds * 25.0f;
-        one.position[1] += kEmberRise * seconds;
+        one.age += frames;
+        one.scale -= kEmberShrink * frames;
+        one.gravity += kEmberGravity * frames;
+        one.position[1] += one.gravity * 10.0f * frames / 100.0f;
     }
     embers_.erase(std::remove_if(embers_.begin(), embers_.end(),
-                                 [](const Ember& one) { return one.age >= kEmberLife; }),
+                                 [](const Ember& one) { return one.age >= kEmberLife || one.scale <= 0.0f; }),
                   embers_.end());
 }
 
@@ -282,6 +295,11 @@ void ShadowStars::ember(const float at[3]) {
     Ember one;
     for (int i = 0; i < 3; ++i) one.position[i] = at[i];
     one.age = 0.0f;
+    one.gravity = 0.0f;
+    dice_ = dice_ * 1664525u + 1013904223u;
+    one.scale = kEmberScaleMin + kEmberScaleSpread * float((dice_ >> 8) & 1023u) / 1023.0f;
+    dice_ = dice_ * 1664525u + 1013904223u;
+    one.spin = float((dice_ >> 8) % 360u);
     embers_.push_back(one);
 }
 
@@ -550,14 +568,19 @@ void ShadowStars::gather(gfx::Effects& effects) const {
     for (const Ember& one : embers_) {
         gfx::Sprite sprite;
         for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
-        sprite.halfWidth = sprite.halfHeight = kEmberHalf;
-        const int cell = std::min(3, int(one.age / kEmberLife * 4.0f));
+        sprite.halfWidth = sprite.halfHeight = 0.5f * kEmberCell * one.scale;
+        // MU's `Frame = (23 - LifeTime) / 6`: a cell each six frames.
+        const int cell = std::min(3, int(one.age / 6.0f));
         sprite.u0 = float(cell) * 0.25f;
         sprite.u1 = sprite.u0 + 0.25f;
+        sprite.spin = one.spin;
         const float left = 1.0f - one.age / kEmberLife;
-        for (int i = 0; i < 3; ++i) sprite.colour[i] = kEmberDim * left;
+        sprite.colour[0] = kEmberCellGain[cell] / 20.0f;
+        sprite.colour[1] = kEmberHeat * (1.0f - kEmberCool * (1.0f - left));
+        sprite.colour[2] = 0.0f;
+        sprite.colour[3] = left;
         sprite.sheet = fire_;
-        sprite.blend = gfx::Blend::Additive;
+        sprite.blend = gfx::Blend::Flame;
         effects.add(sprite);
     }
 }

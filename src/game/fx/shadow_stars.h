@@ -63,8 +63,8 @@ public:
     // 1924-1932, 5603-5729), its tails `points` (the newest first) as a strip of Flare.jpg 30
     // units wide in (0.2, 0.2, 1), and at its head a Shiny02 and two flare01 in (0.5, 0.5, 1).
     void ribbon(const float (*points)[3], int count, float fade);
-    // One of a Death Gorgon's embers: MU's ten BITMAP_FIRE a frame on random bones (:6064-6071),
-    // ours as one now and then, rising and burning out through Fire01's four frames.
+    // One of a Death Gorgon's embers: MU's BITMAP_FIRE SubType 0 (:6064-6071), its size, life,
+    // rise and light; the caller says how often.
     void ember(const float at[3]);
     // The Devil's beam for this frame only: MU's BITMAP_JOINT_LASER + 1 from a hand to the hero
     // (ZzzCharacter.cpp:2300-2311), ours as one faint strip a hand, drawn as two crossed quads.
@@ -119,7 +119,10 @@ private:
     std::vector<Glow> glows_;
     struct Ember {
         float position[3];
-        float age;   // reference frames
+        float age;      // reference frames
+        float scale;    // MU's o->Scale, losing kEmberShrink a frame
+        float gravity;  // MU's o->Gravity, MU units a frame
+        float spin;     // degrees, MU's random Rotation
     };
     std::vector<Ember> embers_;
     bgfx::TextureHandle fire_ = BGFX_INVALID_HANDLE;
