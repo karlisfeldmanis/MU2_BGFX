@@ -29,10 +29,13 @@ uint32_t faded(uint32_t abgr, float alpha) {
 // The channels' inks (the mockup's): told apart by lightness as well as hue.
 constexpr uint32_t kMapInk = hex(0xd9cfbd), kPartyInk = hex(0x7fb6f2), kGuildInk = hex(0x93d67e);
 constexpr uint32_t kWhisperInk = hex(0xe7a0e4), kSystemInk = hex(0xd6ad5c);
-// A speaker's name, on every channel: the green of the name over a player's head (vitals.cpp,
-// kTagGreen), apart from the line's own ink (the user, 2026-10-09: "color char name differnet
-// color", "use green", "same as label"). The channel is in the small word before it.
-constexpr uint32_t kNameInk = gfx::rgba(0.18f, 1.0f, 0.18f);
+// A speaker's name, on every channel: a brighter bone than what he said, one tone apart and no
+// hue (the user, 2026-10-09: "dont use green for usenames in chat, only on special exections like
+// labels or party invites"). The channel is in the small word before it.
+constexpr uint32_t kNameInk = hex(0xf3e8d4);
+// And the one exception in the chat: an invite's asker, in the green of the name over a player's
+// head (vitals.cpp, kTagGreen), on the card in the middle and on the log's line.
+constexpr uint32_t kInviterInk = gfx::rgba(0.18f, 1.0f, 0.18f);
 constexpr uint32_t kBody = hex(0xd9cfbd), kWhisperBody = hex(0xefd3ee), kQuiet = hex(0x8f8575);
 constexpr uint32_t kTabIdle = hex(0x7d7366), kTabWhisper = hex(0xa77ea4), kTabLit = hex(0xfbe3a4);
 constexpr uint32_t kGoldBar = hex(0xe0b65c), kGoldGlow = hex(0xc8a258);
@@ -725,7 +728,7 @@ void Chat::build(float u, const Pointer& pointer) {
         if (line.name.empty()) {
             // An invite's asker in the players' green, the rest in the server's gold.
             if (row.first && !line.inviter.empty() && row.text.rfind(line.inviter, 0) == 0) {
-                x += body(lines_, x, base, size, kNameInk, line.inviter, u);
+                x += body(lines_, x, base, size, kInviterInk, line.inviter, u);
                 body(lines_, x, base, size, kSystemInk, row.text.substr(line.inviter.size()), u);
             } else {
                 body(lines_, x, base, size, kSystemInk, row.text, u);
@@ -822,7 +825,7 @@ void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointe
     const std::string asks = " invites you to a party.";
     const float wide = bodyWidth(21.0f * u, line.inviter) + bodyWidth(21.0f * u, asks);
     const float qx = card.midX() - wide * 0.5f;
-    const float named = body(inviteDrawn_, qx, card.y + 50.0f * u, 21.0f * u, faded(kNameInk, alpha), line.inviter, u);
+    const float named = body(inviteDrawn_, qx, card.y + 50.0f * u, 21.0f * u, faded(kInviterInk, alpha), line.inviter, u);
     body(inviteDrawn_, qx + named, card.y + 50.0f * u, 21.0f * u, faded(hex(0xf3e8d4), alpha), asks, u);
     const float bw = 112.0f * u, bh = 36.0f * u, gap = 12.0f * u;
     for (const bool accept : {true, false}) {
@@ -880,7 +883,7 @@ void Chat::buildClosed(float u) {
         if (line.name.empty()) {
             while (!text.empty() && bodyWidth(size, text) > wide) text.pop_back();
             if (!line.inviter.empty() && text.rfind(line.inviter, 0) == 0) {
-                x += body(lines_, x, base, size, faded(kNameInk, a), line.inviter, u);
+                x += body(lines_, x, base, size, faded(kInviterInk, a), line.inviter, u);
                 text = text.substr(line.inviter.size());
             }
             body(lines_, x, base, size, faded(kSystemInk, a), text, u);
