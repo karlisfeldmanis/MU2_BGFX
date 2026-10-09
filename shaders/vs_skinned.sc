@@ -1,5 +1,5 @@
 $input a_position, a_normal, a_tangent, a_texcoord0, a_indices, a_weight, i_data0, i_data1, i_data2, i_data3, i_data4, i_data5
-$output v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
+$output v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine, v_material
 
 // vs_static with a skin on it, and deliberately nothing else: it declares the same varyings
 // in the same order so that it can be paired with fs_prepass and fs_shade exactly as
@@ -37,5 +37,8 @@ void main()
 	v_vpos = vpos.xyz;
 	v_vnormal = normalize(mul(u_view, vec4(v_normal, 0.0)).xyz);
 
+	// vs_static's seventh vec4, which a figure has no use for: the fragment shaders it shares
+	// with vs_static take it in.
+	v_material = vec4(0.0, 0.0, 1.0, 1.0);
 	gl_Position = mul(u_viewProj, wpos);
 }

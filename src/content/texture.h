@@ -92,6 +92,16 @@ public:
     // picture's own pixels -- the windows do, because MU2's tables are written that way.
     // False for a handle this did not load.
     bool sizeOf(bgfx::TextureHandle handle, uint32_t* width, uint32_t* height) const;
+    // Everything it was made with, for a caller that copies it into a texture array
+    // (gfx/scenery.h): only textures alike in all of this can share one. False as sizeOf.
+    struct Info {
+        uint32_t width = 0;
+        uint32_t height = 0;
+        bgfx::TextureFormat::Enum format = bgfx::TextureFormat::Unknown;
+        uint8_t mips = 1;
+        uint64_t flags = 0;
+    };
+    bool infoOf(bgfx::TextureHandle handle, Info* info) const;
 
     size_t count() const { return byPath_.size(); }
 
@@ -100,7 +110,7 @@ public:
 
 private:
     std::unordered_map<std::string, bgfx::TextureHandle> byPath_;
-    std::unordered_map<uint16_t, std::pair<uint32_t, uint32_t>> sizes_;
+    std::unordered_map<uint16_t, Info> sizes_;
     bgfx::TextureHandle white_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle flatNormal_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle black_ = BGFX_INVALID_HANDLE;

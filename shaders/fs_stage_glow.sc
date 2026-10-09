@@ -1,4 +1,4 @@
-$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine, v_material
 
 // An item's BlendMesh on a window's picture: fs_glow's added sheet, written as sRGB the way
 // fs_stage writes the rest of the item. The stage pass draws it with its colour ADDED and the

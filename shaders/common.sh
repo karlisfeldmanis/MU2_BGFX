@@ -19,9 +19,23 @@ uniform vec4 u_sway;        // x: the play clock, seconds  y: the sheet's sway, 
 uniform vec4 u_material;    // x: cutout threshold (<0 is no cutout)  y: two-sided
                             // z: roughness factor  w: metal factor, both glTF's, both multiply the ORM
 
+// The town's merged scenery (gfx/scenery.h) reads its sheets out of arrays, a layer a part,
+// and its material out of the instance (v_material: layer, u_material.y's flags, roughness
+// and metal factors) rather than out of u_material: one draw is many parts. Defined by
+// the fs_*_merged shaders, and by nothing else.
+#ifdef MU2_MATERIAL_ARRAYS
+SAMPLER2DARRAY(s_albedo, 0);
+SAMPLER2DARRAY(s_normal, 1);
+SAMPLER2DARRAY(s_orm,    2);
+#define materialSample(_sampler, _uv) texture2DArray(_sampler, vec3(_uv, v_material.x))
+#define MATERIAL vec4(-1.0, v_material.yzw)
+#else
 SAMPLER2D(s_albedo,   0);
 SAMPLER2D(s_normal,   1);
 SAMPLER2D(s_orm,      2);
+#define materialSample(_sampler, _uv) texture2D(_sampler, _uv)
+#define MATERIAL u_material
+#endif
 SAMPLER2D(s_emissive, 3);
 
 // The shadow map is read twice, which Metal allows: once through the compare sampler for

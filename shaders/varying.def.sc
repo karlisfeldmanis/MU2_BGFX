@@ -26,6 +26,9 @@ vec4 v_weight    : TEXCOORD5 = vec4(1.0, 0.0, 0.0, 0.0);
 // An item's plus and its chrome's colour, the same at every vertex of an instance: x from
 // i_data5.z, yzw unpacked from i_data5.w (gfx::packRefineColour). vs_static, vs_skinned.
 vec4 v_refine    : TEXCOORD6 = vec4(0.0, 1.0, 0.5, 0.0);
+// A merged part's material, the same at every vertex: its sheets' layer, u_material.y's flags,
+// its roughness and metal factors. From i_data6. vs_static; gfx/scenery.h.
+vec4 v_material  : TEXCOORD7 = vec4(0.0, 0.0, 1.0, 1.0);
 
 // The skin: four joint indices and their weights. uvec4 and not ivec4, for the reason
 // common.sh's skinMatrix states.
@@ -36,3 +39,5 @@ vec4  a_weight   : BLENDWEIGHT;
 // Static draws leave it unread; the stride is what the buffer is walked by, not what a
 // shader reads.
 vec4 i_data5 : TEXCOORD26;
+// A seventh, the merged scenery's alone: the part's material, which v_material carries.
+vec4 i_data6 : TEXCOORD25;

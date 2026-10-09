@@ -211,7 +211,7 @@ bool Renderer::loadPrograms(const std::string& dir) {
     if (!bgfx::isValid(glowProgram_) || !bgfx::isValid(skinnedGlowProgram_)) {
         core::logError("the glow programs did not link; MU's BlendMeshes will not draw");
     }
-    // Not required: without them the sun draws the town's casters as batches (gfx/casters.h).
+    // Not required: without them the town's scenery draws as batches (gfx/scenery.h).
     auto compute = [&](const char* name) {
         bgfx::ShaderHandle cs = loadShader(dir, name);
         return bgfx::isValid(cs) ? bgfx::createProgram(cs, true)
@@ -220,9 +220,19 @@ bool Renderer::loadPrograms(const std::string& dir) {
     castClearProgram_ = compute("cs_cast_clear");
     castCullProgram_ = compute("cs_cast_cull");
     castArgsProgram_ = compute("cs_cast_args");
+    sceneRankProgram_ = compute("cs_scene_rank");
+    sceneCullProgram_ = compute("cs_scene_cull");
+    sceneArgsProgram_ = compute("cs_scene_args");
+    mergedPrepassProgram_ = loadProgram(dir, "vs_static", "fs_prepass_merged");
+    mergedShadeProgram_ = loadProgram(dir, "vs_static", "fs_shade_merged");
     if (!bgfx::isValid(castClearProgram_) || !bgfx::isValid(castCullProgram_) ||
         !bgfx::isValid(castArgsProgram_)) {
         core::logError("the casters' compute programs did not load; the sun draws them as batches");
+    }
+    if (!bgfx::isValid(sceneRankProgram_) || !bgfx::isValid(sceneCullProgram_) ||
+        !bgfx::isValid(sceneArgsProgram_) ||
+        !bgfx::isValid(mergedPrepassProgram_) || !bgfx::isValid(mergedShadeProgram_)) {
+        core::logError("the camera's scenery programs did not load; the town draws as batches");
     }
     {
         const std::pair<const char*, bgfx::ProgramHandle> all[] = {
@@ -444,7 +454,9 @@ void Renderer::shutdown() {
                                    &skinnedShadeProgram_, &glowProgram_, &skinnedGlowProgram_,
                                    &grassShadeProgram_,
                                    &bloomDownProgram_, &bloomUpProgram_,
-                                   &castClearProgram_, &castCullProgram_, &castArgsProgram_}) {
+                                   &castClearProgram_, &castCullProgram_, &castArgsProgram_,
+                                   &sceneRankProgram_, &sceneCullProgram_, &sceneArgsProgram_,
+                                   &mergedPrepassProgram_, &mergedShadeProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }

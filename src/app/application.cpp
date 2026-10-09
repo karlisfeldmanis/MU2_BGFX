@@ -45,7 +45,7 @@ bool Application::boot() {
         window_.close();
         return false;
     }
-    renderer_.setGpuCasting(args_.gpuCasters);
+    renderer_.setGpuSceneryOn(args_.gpuScenery);
     // The viewer announces its time of day on every change; a play run does not.
     const int daytime = args_.time == "dusk" ? 1 : (args_.time == "night" ? 2 : 0);
     time_.open(&paths_, &lighting_, daytime, args_.browse);

@@ -352,13 +352,15 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
             core::logf("texture %s %ux%u %s %u mips %.1f KB (+%.1f KB of mips)", name.c_str(),
                        width, height, roleName, levels, double(topLevel) / 1024.0,
                        double(total - topLevel) / 1024.0);
-            sizes_[handle.idx] = {width, height};
+            sizes_[handle.idx] = {width, height, bgfx::TextureFormat::RGBA8, levels, flags};
         }
         byPath_[name] = handle;
         return handle;
     }
 
     // --- no chain: a grid, or an image that arrived with one --------------------------
+    const bgfx::TextureFormat::Enum format = bgfx::TextureFormat::Enum(image->m_format);
+    const uint8_t mips = image->m_numMips;
     const bgfx::Memory* mem = bgfx::makeRef(image->m_data, image->m_size, releaseImage, image);
     bgfx::TextureHandle handle = bgfx::createTexture2D(
         uint16_t(width), uint16_t(height), image->m_numMips > 1, image->m_numLayers,
@@ -370,7 +372,7 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
         bytes_ += image->m_size;
         core::logf("texture %s %ux%u %s mips %u %.1f KB", name.c_str(), width, height, roleName,
                    image->m_numMips, double(image->m_size) / 1024.0);
-        sizes_[handle.idx] = {width, height};
+        sizes_[handle.idx] = {width, height, format, mips, flags};
     }
     byPath_[name] = handle;
     return handle;
@@ -380,8 +382,16 @@ bool Textures::sizeOf(bgfx::TextureHandle handle, uint32_t* width, uint32_t* hei
     if (!bgfx::isValid(handle)) return false;
     auto found = sizes_.find(handle.idx);
     if (found == sizes_.end()) return false;
-    *width = found->second.first;
-    *height = found->second.second;
+    *width = found->second.width;
+    *height = found->second.height;
+    return true;
+}
+
+bool Textures::infoOf(bgfx::TextureHandle handle, Info* info) const {
+    if (!bgfx::isValid(handle)) return false;
+    auto found = sizes_.find(handle.idx);
+    if (found == sizes_.end()) return false;
+    *info = found->second;
     return true;
 }
 

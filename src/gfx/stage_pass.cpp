@@ -51,7 +51,7 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
 
     // One instance each: a bag holds a few dozen things at most, and grouping them into
     // batches would save nothing a stage drawn on change only could measure.
-    const uint32_t stride = 96;
+    const uint32_t stride = kInstanceStride;
     const uint32_t total = uint32_t(drawables.size());
     if (bgfx::getAvailInstanceDataBuffer(total, stride) < total) {
         core::logError("stage: the instance buffer is full; %u items not drawn", total);
@@ -66,6 +66,7 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
         const float skin[4] = {float(d.paletteRow < 0 ? kBindRow : d.paletteRow), 1.0f,
                                float(d.refine), packRefineColour(d.refineColour)};
         std::memcpy(idb.data + i * stride + sizeof(float) * 20, skin, sizeof(skin));
+        std::memset(idb.data + i * stride + sizeof(float) * 24, 0, sizeof(float) * 4);
     }
 
     const uint64_t base = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z |

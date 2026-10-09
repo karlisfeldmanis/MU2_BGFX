@@ -137,7 +137,7 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
 
     uint32_t total = 0;
     for (const auto& g : groups) total += uint32_t(g.size());
-    const uint32_t stride = 96;
+    const uint32_t stride = kInstanceStride;
     const uint32_t available = bgfx::getAvailInstanceDataBuffer(total, stride);
     if (available < total) total = available;
     if (total == 0) return;
@@ -161,6 +161,7 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
             const float skin[4] = {float(d->paletteRow < 0 ? kBindRow : d->paletteRow), 1.0f, 0.0f,
                                    0.0f};
             std::memcpy(idb.data + written * stride + sizeof(float) * 20, skin, sizeof(skin));
+            std::memset(idb.data + written * stride + sizeof(float) * 24, 0, sizeof(float) * 4);
             ++written;
             ++count;
         }

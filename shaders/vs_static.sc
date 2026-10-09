@@ -1,6 +1,5 @@
-$input a_position, a_normal, a_tangent, a_texcoord0, i_data0, i_data1, i_data2, i_data3, i_data4, i_data5
-$output v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
-
+$input a_position, a_normal, a_tangent, a_texcoord0, i_data0, i_data1, i_data2, i_data3, i_data4, i_data5, i_data6
+$output v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine, v_material
 // The one vertex shader for anything static: the shade and prepass passes both use it, and
 // the instance's model matrix is the same four vec4s every pass reads.
 #include "common.sh"
@@ -39,4 +38,10 @@ void main()
 	v_vnormal = normalize(mul(u_view, vec4(v_normal, 0.0)).xyz);
 
 	gl_Position = mul(u_viewProj, wpos);
+	// The seventh vec4: a merged part's material (gfx/scenery.h), zero on everything else.
+	// Passed on by THIS shader for every static draw, merged or not, rather than by a twin:
+	// a glow lies exactly on its body and is tested against the body's depth, and two
+	// compiled shaders that compute the same position do not land on the same bits -- Noria's
+	// mushrooms lost their purple to a twin (2026-10-09).
+	v_material = i_data6;
 }

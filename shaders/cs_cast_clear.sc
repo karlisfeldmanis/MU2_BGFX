@@ -1,5 +1,5 @@
 // The town's casters on the GPU, step one of three: every model's count of placements in the
-// sun's split back to nought. gfx/casters.h.
+// sun's split back to nought. gfx/scenery.h.
 #include "bgfx_compute.sh"
 
 BUFFER_WO(s_castCounts, uint, 0);

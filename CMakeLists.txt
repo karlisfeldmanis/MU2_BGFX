@@ -74,7 +74,7 @@ if(FS_FILES)
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
     OUT_FILES_VAR FS_OUT PROFILES metal)
 endif()
-# Compute: the town's casters culled and drawn by the GPU itself (gfx/casters.h).
+# Compute: the town's scenery culled and drawn by the GPU itself (gfx/scenery.h).
 file(GLOB CS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/cs_*.sc)
 if(CS_FILES)
   bgfx_compile_shaders(TYPE COMPUTE SHADERS ${CS_FILES}
@@ -224,8 +224,8 @@ add_library(mu_gfx STATIC
   src/gfx/metalfx.mm
   src/gfx/window_mac.mm
   src/gfx/renderer_probe.cpp
-  src/gfx/renderer_casters.cpp
-  src/gfx/casters.cpp
+  src/gfx/renderer_scenery.cpp
+  src/gfx/scenery.cpp
   src/gfx/renderer_outline.cpp
   src/gfx/renderer_lights.cpp
   src/gfx/effects.cpp

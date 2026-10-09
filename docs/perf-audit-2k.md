@@ -198,7 +198,7 @@ fp16 runs at the same rate as fp32. The benefit is fewer registers (more threads
 and smaller varyings, not double speed. It would mean twin shaders to maintain for fs_shade
 and fs_ground. Not recommended before everything in A and B is done.
 
-### C4. The sun's solid casters culled and drawn by the GPU, built 2026-10-09
+### C4. The town's scenery culled and drawn by the GPU, built 2026-10-09
 
 The user: "we want to try to move more processes to gpu". A Release profile of Lorencia's
 town first (`sample`, 8 s at ~190 fps): the main thread waited on the GPU for about 1% of
@@ -209,12 +209,12 @@ would buy nothing), and bgfx making a new MTLBuffer for every buffer update ~5%.
 mesh draws a frame: shadow 280 (161 of them solid static parts of the resident casters),
 prepass 195, shade 195, probe 88 on its frames, sprites ~300.
 
-`gfx/casters.h` takes the 161: every static town model's vertices and indices in one buffer
+`gfx/scenery.h` takes the 161: every static town model's vertices and indices in one buffer
 pair, three compute steps on the sun's view (`shaders/cs_cast_*.sc`: nought a count a
 model, test each placement's sphere against the split and copy the ones inside into their
 model's run, write one indirect draw a solid part), then two submits that Metal runs back to
 back with nothing bound between them. Cutouts, casting glows and skinned models keep their
-own draws. `--cpu-casters` is the old way, for A/B.
+own draws. `--cpu-scenery` is the old way, for A/B.
 
 **The picture is identical**: shots with and without, bit for bit, in Lorencia, Atlans (the
 swaying plants), Devias, Noria, the Lost Tower and the Dungeon. Measured in Lorencia's town,
@@ -229,11 +229,51 @@ swaying plants), Devias, Noria, the Lost Tower and the Dungeon. Measured in Lore
 
 **Small, and why.** The shadow pass is the cheap end of the encoding: one texture a draw,
 against four and the shine in the prepass and shade. And the frame is near even between the
-CPU and the GPU at 1080p, so taking work off one shows little until the other is cut too. The
-same machinery reaches the CPU's real share only when the prepass, shade and probe can draw a
-model's parts without binding each one's textures -- the materials in texture arrays, read by
-an index the merged vertices carry. That is the next sprint's question, and it changes how
-every material is loaded.
+CPU and the GPU at 1080p, so taking work off one shows little until the other is cut too.
+
+**The camera's prepass and shade, the same day** (the user: "do next"). Lorencia's 142 solid
+static parts use only 12 sizes of sheet, and a part's albedo, normal and ORM always share one,
+so each size's three sheets become texture arrays (blitted on the GPU at load, over a few
+frames: a frame holds 1,024 blits and Lorencia wants ~1,750), a layer a part. The instance grew
+a seventh vec4 (`Renderer::kInstanceFloats` 28, 112 bytes) that carries a merged part's layer
+and material numbers, and `fs_*_merged` read their sheets by it (`common.sh`'s
+`MU2_MATERIAL_ARRAYS`). Each frame, on the prepass's view: `cs_scene_rank` (a thread a model)
+walks the model's placements in the cook's order and ranks the ones in the camera's frustum,
+`cs_scene_cull` copies each to its rank in each of its parts' runs, `cs_scene_args` writes a
+draw a part. Lorencia: 137 part draws become 9 groups, two submits each in the prepass and the
+shade.
+
+Three things found on the way, each now in the code:
+- **One vertex shader, not a twin.** A `vs_static_merged` drew the merged bodies, and Noria's
+  mushrooms lost their purple: a glow lies exactly on its body and is depth-tested against it,
+  and two compiled shaders computing the same position do not land on the same bits. vs_static
+  passes the seventh vec4 on for every static draw instead (and vs_skinned a constant, as the
+  fragment shaders are shared).
+- **Never a one-layer array.** bgfx makes one layer a plain 2D texture, which an array sampler
+  reads as nothing; a size with one part is padded to two layers.
+- **Ranked, never atomic.** An atomic append put a run's placements in a different order every
+  frame, and where two parts meet at equal depth the order decides the pixel: two GPU runs of
+  the same command differed by ~2,600 pixels, a shimmer on a still screen. Ranked, the GPU path
+  is identical run to run.
+
+Against `--cpu-scenery`, the picture differs only at seams where two parts meet at the same
+depth, which is now settled in a different (fixed) order: shot at frame 150, pixels off by
+more than 32 of 255 -- Lorencia 4, Noria 21, Devias 28, Atlans 83, the Lost Tower 121, Tarkan
+414 (thin lines along the dead trees' seams, invisible at 1:1), the Dungeon 0.
+
+Measured in a private worktree at HEAD (the shared tree held another session's crash), Lorencia's
+town, two rounds each:
+
+| | GPU | batches | |
+|---|---|---|---|
+| CPU time a frame (process user+sys, 3,000 frames less 600) | 3.187, 3.162 | 3.425, 3.420 | -0.25 (7%) |
+| wall frame, 1080p, `--repeat 3` | 5.022, 5.024 | 5.112, 5.127 | -0.10 |
+| wall frame, `--scale 0.5 --no-metalfx` | 2.681, 2.689 | 2.744, 2.704 | -0.04 |
+
+**The CPU is no longer what holds the frame.** It spends ~3.2 ms of the 5.0 at 1080p; the rest
+is the GPU and the drawable. What is left on the CPU's encoding is the figures (skinned, a
+palette row each), the cutouts (foliage reads its alpha), the glows and the sprites. The next
+CPU saving is the sprites' 270-380 draws; the next frame saving is GPU work.
 
 ## Looked at and left out
 

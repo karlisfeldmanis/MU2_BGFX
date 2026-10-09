@@ -103,7 +103,7 @@ void printUsage() {
         "  --metalfx                 the default: under --scale, upscale by MetalFX\n"
         "  --no-metalfx              under --scale, the present stretches the world itself,\n"
         "                            sharply: faster, and a little softer\n"
-        "  --cpu-casters             the sun's town casters as a draw a model part, not the "
+        "  --cpu-scenery             the town's scenery as a draw a model part, not the "
         "GPU's cull\n"
         "  --graphics P              the Options page's preset: low, medium or high\n"
         "  --no-ssao, --no-bloom, --no-reflections   the Graphics page's switches, off\n"
@@ -289,8 +289,8 @@ Args parseArgs(int argc, char** argv) {
             a.bloom = false;
         } else if (!std::strcmp(s, "--no-reflections")) {
             a.reflections = false;
-        } else if (!std::strcmp(s, "--cpu-casters")) {
-            a.gpuCasters = false;
+        } else if (!std::strcmp(s, "--cpu-scenery")) {
+            a.gpuScenery = false;
         } else if (!std::strcmp(s, "--no-metalfx")) {
             a.metalfx = false;
         } else if (!std::strcmp(s, "--metalfx")) {

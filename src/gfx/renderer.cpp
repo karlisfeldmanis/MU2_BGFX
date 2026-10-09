@@ -11,7 +11,7 @@
 
 #include "core/files.h"
 #include "core/log.h"
-#include "gfx/casters.h"
+#include "gfx/scenery.h"
 #include "gfx/views.h"
 
 namespace mu::gfx {
@@ -190,6 +190,7 @@ void Renderer::packInstance(const Drawable& d, float out[kInstanceFloats]) {
     out[21] = d.fade;
     out[22] = float(d.refine);
     out[23] = packRefineColour(d.refineColour);
+    out[24] = out[25] = out[26] = out[27] = 0.0f;
 }
 
 const bgfx::VertexLayout& Renderer::instanceLayout() {
@@ -202,6 +203,7 @@ const bgfx::VertexLayout& Renderer::instanceLayout() {
             .add(bgfx::Attrib::TexCoord3, 4, bgfx::AttribType::Float)
             .add(bgfx::Attrib::TexCoord4, 4, bgfx::AttribType::Float)
             .add(bgfx::Attrib::TexCoord5, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord6, 4, bgfx::AttribType::Float)
             .end();
         return l;
     }();
@@ -219,8 +221,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
         for (const content::Part& part : mesh.parts()) {
             if (int(part.material) == batch.hiddenMaterial) continue;
             const content::Material& material = mesh.materials()[part.material];
-            // Drawn already, by the GPU's own cull (drawGpuCasters).
-            if (skipMerged_ && batch.merged && !skinned && GpuCasters::takes(material)) continue;
+            // Drawn already, by the GPU's own cull (drawGpuCasters, drawGpuScenery).
+            if (skipMerged_ && batch.merged && !skinned && GpuScenery::castsWhole(material)) continue;
+            const size_t partIndex = size_t(&part - mesh.parts().data());
+            if (skipCamera_ && partIndex < 64 && ((batch.cameraParts >> partIndex) & 1) != 0) continue;
             // Soft alpha (content::Material::softAlpha): out of the opaque prepass and shade,
             // and alone in its own blended pass after them. Every other view takes it as the
             // plain cut-out it also is.
@@ -681,8 +685,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // Taken by this draw alone (setResidentCasters).
     const std::vector<ResidentBatch>* resident = residentCasters_;
     residentCasters_ = nullptr;
-    const GpuCasters* gpuCasters = gpuCasters_;
-    gpuCasters_ = nullptr;
+    GpuScenery* scenery = gpuScenery_;
+    gpuScenery_ = nullptr;
+    if (!gpuSceneryOn_) scenery = nullptr;
     const std::vector<Drawable>& casterList = casters ? *casters : drawables;
     const bool anything = !drawables.empty() || !casterList.empty() || ground != nullptr;
     if (anything) {
@@ -727,13 +732,29 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         group(drawables, groups_, batches_, Take::Solid);
         group(drawables, fadeGroups_, fadeBatches_, Take::Fading);
         const bool separateCasters = casters != nullptr;
+        // The camera's scenery off the GPU's own cull (gfx/scenery.h): its arrays filled on the
+        // first frame, by blits on the sun's view, which runs before every view that reads them.
+        bool cameraGpu = false;
+        if (scenery != nullptr && separateCasters && resident != nullptr && scenery->ready() &&
+            bgfx::isValid(sceneRankProgram_) && bgfx::isValid(sceneCullProgram_) &&
+            bgfx::isValid(sceneArgsProgram_) &&
+            bgfx::isValid(castClearProgram_) && bgfx::isValid(mergedPrepassProgram_) &&
+            bgfx::isValid(mergedShadeProgram_)) {
+            scenery->copyArrays(ViewShadow);
+            cameraGpu = scenery->cameraReady();
+        }
+        if (cameraGpu) {
+            for (Batch& b : batches_) {
+                if (!b.mesh->isSkinned()) b.cameraParts = scenery->cameraParts(b.mesh);
+            }
+        }
         if (separateCasters) group(casterList, casterGroups_, casterBatches_, Take::All);
 
         // A 4x4 matrix, the instance's baked light, and the row its pose occupies in the
         // bone palette. The depth passes read the matrix and the row and skip the light,
         // which costs them nothing: the stride is what the buffer is walked by, not what
         // each shader reads.
-        const uint32_t stride = 96;
+        const uint32_t stride = kInstanceStride;
         uint32_t total = groups_.count() + fadeGroups_.count() + casterGroups_.count();
 
         // bgfx will hand back fewer than asked for if the transient buffer is full. Asking
@@ -874,9 +895,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setUniform(uMaterial_, noCutout);
             if (ground) submitGround(ViewShadow, groundShadowProgram_, *ground, depthState, false);
             // The resident casters' solid parts, culled to the split and drawn by the GPU
-            // (gfx/casters.h); the batches then draw the rest of themselves.
-            skipMerged_ = separateCasters && resident != nullptr && gpuCasters != nullptr &&
-                          drawGpuCasters(*gpuCasters, lightViewProj, depthState);
+            // (gfx/scenery.h); the batches then draw the rest of themselves.
+            skipMerged_ = separateCasters && resident != nullptr && scenery != nullptr &&
+                          drawGpuCasters(*scenery, lightViewProj, depthState);
             if (!shadowBatches.empty()) {
                 submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, shadowBatches,
                               idb, depthState, false);
@@ -900,10 +921,20 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                           BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
             bgfx::setUniform(uMaterial_, noCutout);
             if (ground) submitGround(ViewPrepass, groundPrepassProgram_, *ground, prepassState, false);
+            // The town's solid parts, culled to the camera and drawn by the GPU; the batches
+            // draw the rest of themselves. The shade pass below draws the same records.
+            if (cameraGpu) {
+                float viewProj[16];
+                bx::mtxMul(viewProj, view, proj);
+                cullGpuScenery(*scenery, viewProj);
+                drawGpuScenery(*scenery, ViewPrepass, mergedPrepassProgram_, prepassState, false);
+            }
             if (total > 0) {
                 softSelect_ = SoftSelect::Skip;
+                skipCamera_ = cameraGpu;
                 submitBatches(ViewPrepass, prepassProgram_, skinnedPrepassProgram_, batches_, idb,
                               prepassState, false);
+                skipCamera_ = false;
                 softSelect_ = SoftSelect::All;
             }
 
@@ -1075,10 +1106,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                         (msaa_ > 1 ? BGFX_STATE_BLEND_ALPHA_TO_COVERAGE : 0);
             if (grass) submitGrass(ViewShade, grassShadeProgram_, *grass, grassState);
             if (ground) submitGround(ViewShade, groundShadeProgram_, *ground, shadeState, true);
+            if (cameraGpu) drawGpuScenery(*scenery, ViewShade, mergedShadeProgram_, shadeState, true);
             if (total > 0) {
                 softSelect_ = SoftSelect::Skip;
+                skipCamera_ = cameraGpu;
                 submitBatches(ViewShade, shadeProgram_, skinnedShadeProgram_, batches_, idb,
                               shadeState, true);
+                skipCamera_ = false;
                 softSelect_ = SoftSelect::All;
             }
 

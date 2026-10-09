@@ -1,5 +1,5 @@
 // Step three: one indirect draw a solid part, as many instances as its model kept in the
-// split, starting at its model's run. gfx/casters.h.
+// split, starting at its model's run. gfx/scenery.h.
 #include "bgfx_compute.sh"
 
 BUFFER_RO(s_castDraws, vec4, 0);   // index count, first index, base vertex, model
