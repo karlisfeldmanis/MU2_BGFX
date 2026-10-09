@@ -1126,7 +1126,7 @@ private:
         // Hers to sound: the string, eBow or eCrossbow, started its onset ahead of the release
         // so it is heard as the arrow leaves (MU2's Crowd.Shot). One of a fan's three.
         bool sound = false;
-        // Penetration's: wound in MODEL_PIERCING's bands (fx/arrow.h), with its SOUND_FLASH.
+        // Penetration's: wound in MODEL_PIERCING's bands (fx/arrow.h).
         bool pierce = false;
         // A Plague Arrows lane's: toned kPlagueArrowTint (sim Happening::plagueLanes).
         bool plague = false;

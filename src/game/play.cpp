@@ -1926,13 +1926,10 @@ void Play::update(double seconds) {
                                                             : 0.0f;
             const float left = from->figure.toRelease() / std::max(from->swingPace, 0.01f);
             if (left <= onset || from->figure.released() || shot.waited >= kNockHold) {
+                // Penetration is heard by the string alone: MODEL_PIERCING's SOUND_FLASH
+                // (sAquaFlash, ZzzEffect.cpp:1541) is not rung over it (the user, 2026-10-09:
+                // "dont play penetration sound for penetration skill, crossbow is enough").
                 if (string >= 0) emit(string, from->crown[0], from->crown[2], from->id);
-                // And MODEL_PIERCING's SOUND_FLASH, sAquaFlash, as its bands are made
-                // (ZzzEffect.cpp:1541) -- Aqua Beam's row's wave.
-                const int flash = sim::skillIndexOf(sim::skill::kAquaBeam);
-                if (shot.pierce && flash >= 0 && heard_.skill[flash] >= 0) {
-                    emit(heard_.skill[flash], from->crown[0], from->crown[2], from->id);
-                }
                 shot.sound = false;
             }
         }
