@@ -179,8 +179,9 @@ public:
         line("~ says: %s", text.c_str());
         link_->say({channel, {}, text});
     }
-    // The leader whose invite he takes, "" for none.
+    // The leader whose invite he takes, "" for none; and whether, with none, he takes anyone's.
     void expect(const std::string& leader) { expected_ = leader; }
+    void openToAll(bool open) { openToAll_ = open; }
     // The party's hunt, its leader and tank by name: found on his own map, else none.
     void lead(Bot::Lead lead, const std::string& leader, const std::string& tank) {
         lead.leader = idOf(leader);
@@ -365,12 +366,14 @@ private:
         const int64_t now = brain_->clockNow();
         party();
         for (const net::Heard& one : heard_) {
-            // The invite the board told him to wait for, taken.
+            // The invite the board told him to wait for, taken; and, while the board has him in
+            // no party of its own, anyone's -- a player's /invite is answered (Board::follow).
             constexpr const char* kInvites = " invites you to a party.";
-            if (one.name.empty() && one.channel == net::Channel::Party && !expected_.empty()) {
+            if (one.name.empty() && one.channel == net::Channel::Party) {
                 const size_t at = one.text.find(kInvites);
-                if (at != std::string::npos && one.text.substr(0, at) == expected_) {
-                    link_->askParty({net::PartyWhat::Accept, expected_});
+                const std::string from = at != std::string::npos ? one.text.substr(0, at) : "";
+                if (!from.empty() && (from == expected_ || (expected_.empty() && openToAll_ && link_->party().members.empty()))) {
+                    link_->askParty({net::PartyWhat::Accept, from});
                 }
             }
             if (one.name.empty()) {
@@ -501,6 +504,7 @@ private:
     std::chrono::steady_clock::time_point pendingSince_{};
     bool divergenceSaid_ = false;
     std::string expected_;  // the board's: whose invite he takes
+    bool openToAll_ = false;  // ... and, with none, anyone's (Board::follow)
     std::string partySaid_;
     std::unique_ptr<bot::Claude> claude_;  // --claude: the model drives him
 };
@@ -549,6 +553,7 @@ public:
         std::erase_if(groups_, [](const Group& g) { return g.gone; });
         merge();
         std::erase_if(groups_, [](const Group& g) { return g.gone; });
+        follow();
         loose(now);
         if (forms_) form(now);
     }
@@ -809,9 +814,38 @@ private:
     }
 
     // A bot in a party the board did not make leaves it: it was a run before this one's.
+    // **A party with someone not of this run** -- a player who /invited him, a bot of another
+    // netbot -- is his to keep: he goes where its leader is, grinds there, and keeps near him.
+    bool outsiders(NetBot& one) const {
+        for (const net::PartyState::Member& m : one.partyState().members) {
+            if (!byName_.count(m.name)) return true;
+        }
+        return false;
+    }
+    void follow() {
+        for (const auto& [name, one] : byName_) {
+            one->openToAll(!grouped(name));
+            if (grouped(name)) continue;
+            if (!outsiders(*one)) {
+                one->lead(Bot::Lead{}, "", "");  // his own way again, the player gone
+                continue;
+            }
+            const net::PartyState& state = one->partyState();
+            const net::PartyState::Member& head = state.members.front();
+            Bot::Lead lead;
+            for (const WorldRow& w : kWorlds) {
+                if (head.world == w.name) lead.map = w.map;
+            }
+            lead.size = int(state.members.size());
+            lead.role = Bot::roleOf(one->kin(), false);
+            for (const net::PartyState::Member& m : state.members) lead.healer |= m.kin == uint8_t(sim::Kin::FairyElf);
+            one->lead(std::move(lead), head.name == name ? "" : head.name, "");
+        }
+    }
+
     void loose(std::chrono::steady_clock::time_point now) {
         for (const auto& [name, one] : byName_) {
-            if (grouped(name) || one->partyState().members.empty()) continue;
+            if (grouped(name) || one->partyState().members.empty() || outsiders(*one)) continue;
             auto& at = leftAt_[name];
             if (at != 0 && one->clockNow() - at < 10 * 20) continue;
             at = one->clockNow();
