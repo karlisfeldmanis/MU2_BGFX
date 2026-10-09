@@ -75,6 +75,97 @@ mockup, claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX); the party rides on its chann
   adds half of it to each monster on the healed. Bots' damage dealers ease off at 90% of the
   tank's. A taunt only if this is not enough.
 
+## The bots' party (sprint 4, 2026-10-09)
+
+Two halves, so the brain stays one brain offline and on the server:
+
+- **The board** (`tools/netbot/netbot.cpp`, `Board`, `netbot --parties`): once a second it reads
+  each bot's quests (`Bot::needs`: every Clear step still short, under way or offered, with
+  whether he takes that breed `alone` and whether he would `together`, a kill's cost to him
+  at `kTogether`, a quarter) and the server's party state.
+  - *Forming*: bots **stuck** on a quest (a breed they would take together but not alone) are
+    put with the others stuck on it; a free knight or melee gladiator to tank and a free elf to
+    heal are recruited if missing and they can stand there (`Bot::helps`), then any free hand up
+    to three. The tank leads, else the highest level; he invites, the others take his invite. A
+    bot stuck with no one says `LFG <quest>, <breed> in <map>, level N` on his map, once in ten
+    minutes.
+  - *Leading*: the party hunts the breed the most members still want -- a quest under way
+    weighs twice an offered one, a stuck breed twice again, then the leader's map, then the
+    kills left -- and, there, every breed any member still wants. A breed is open to the party
+    when the tank and half the members stand it. The leader says each change on Party: "Next:
+    Ice Queen in devias, Brann tanks." A member done with it stays as support.
+  - *Breaking up*: ten game minutes with no member stuck (stuck turns on purse and potions; a
+    party broken the moment it was not, re-formed a minute later). `--party` (one fixed party
+    of the run's bots, the first named its leader) never breaks up.
+  - The board sees only its own process's bots: a party is of bots run together.
+- **The brain** (`tools/bot/brain.h`, `Bot::Lead` / `lead()`): the board's hunt over his own --
+  except a quest to hand in, and the party's quest offered him is taken on the way. His part:
+  - *Tank*: Defense kept up (`guard`), and whatever is on a member near him is his first target.
+  - *Damage dealers and the elf*: strike what the tank holds -- the one closest to dying among
+    those whose threat they hold under 90% of the tank's (`tanksTarget`, `kEaseOff`); nothing
+    held, they keep by him and pull nothing; a knight beside the tank leaves Defense to him.
+  - *The elf* (`aid`): Heal on the lowest under 60% within 8 tiles, herself among them; Greater
+    Damage on whoever's has lapsed; Greater Defense on a member whose guard has lapsed, never
+    the tank.
+  - *Together*: the party's map is his aim, so he follows across maps; on it, whoever is not the
+    leader keeps within 8 tiles of him.
+  - *Cost*: a kill's cost to him is scaled by `partyScale` -- one over the members within 20
+    tiles, half again beside a tank, half again beside an elf -- so a partied bot takes, and
+    drinks through, what he would not alone.
+- **The Lost Tower's floors** (the user, 2026-10-09: "can they clear also some of LT floors and
+  maybe start atlans quest line? an dmaybe go to bc together?"): a member on another floor than
+  the one he keeps near takes the trip or the stairs to it (`goFloor`, split off `nextFloor`).
+  Tersia's floors and Lirien's Atlans chain are Clear steps like any other, so the board forms
+  for them as for Devias.
+- **Blood Castle together**: the board gives a party the highest castle two or more of its
+  members hold a cloak for and have the band's floor for (`Bot::castlesOpen`), and each who can
+  goes into that one at the door's time (`Lead::castle`, `castleChoice`), the party's cost scale
+  holding inside; free bots due at the same door are made a party for it. The party holds while
+  any of them is due there or inside.
+- The server's roster (`netbot` with no names): Ragnar (DK), Elora (DW), Ilaria (Elf), Varkas
+  (MG), Hrothgar (DK).
+- `netbot --threads N` (up to four by default): each bot's mirror and brain are his own, so a
+  thread plays a share of them; the board and the minute's report hold every bot's lock. The
+  user: "cant we speed up this things? we can control server thics" -- one thread kept five bots
+  at a full core at `mu2_server --speed 200`, and a netbot behind its server stepped its ticks
+  late (its bots reacting late, 100-190 deaths a run). With three threads, `--speed 100` runs
+  about 170x (the server's tick is not exact), every bot in step.
+
+### Measured (2026-10-09)
+
+A local server at `--speed 100`, five fresh bots (DK, Elf, DW, MG, DK), `--threads 3`, to 35-40
+game hours: `--parties` against the same roster solo, the same build.
+
+| | final level | deaths (all five) | The White Silence handed in at |
+|---|---|---|---|
+| parties | 135-144 | 264 | DW 111, DK 111, Elf 128, MG 132, DK 133 |
+| solo | 149-178 | 617 | DK 97, DK 104, MG 121, Elf 127, DW 143 |
+
+Parties more than halve the deaths and bring the wizard's White Silence 32 levels sooner; they
+level 15-35 slower all told, and the knights hand it in later -- the party's time on the road
+and waiting is not yet paid back. Earlier runs found and fixed: a knight landing on another map
+read as out of his party (his line had not heard it yet) and paid 2,000 zen back; the hunt
+flipped on a tie of maps and on purses; an elf led to breeds she could not take alone stood
+idle till her knight came; the board's timers were the wall's, so at `--speed 200` a party was
+given up before its invite was heard.
+
+The second pair (the same roster, ~35 game hours), after `mu2_server --speed N` ran the wall
+clock N times as fast too (Blood Castle's door and the quests' twelve-hour rests kept real time,
+so castle parties stood at the Messenger for game hours): parties went into Blood Castle
+together (castles 1 and 2), formed for the Catacombs, the Knights' Halls, The Drowned Halls in
+Atlans and the tower's Bad Air, and hunted Atlans 44 times and the Lost Tower 15.
+
+| | final level | deaths | The White Silence handed in at |
+|---|---|---|---|
+| parties | 141-185 | 271 (the wizard 142) | DW 93, DK 99, MG 100, Elf 113, DK 124 |
+| solo | 151-223 | 193 | DK 97, DK 98, MG 113, Elf 118, DW 143 |
+
+Its parties lost hours to a netbot fault, since fixed: a decision's answer was waited for 40
+game ticks, 20 ms at `--speed 100`, under a round trip, so a bot asked again on a mirror that had
+not heard it -- an elf "handed in" Noria's Song 82 times and a knight 111, each refused, the
+party standing by. `kAnswerWait` is two seconds of the wall now. And two parties at one quest
+are made one (`Board::merge`; a free bot stuck on a party's quest joins it).
+
 ## The plan, a sprint each
 
 1. **The realm's party** (`src/sim`): parties of up to five, the commands Invite, Accept,

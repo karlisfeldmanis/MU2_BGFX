@@ -305,6 +305,107 @@ public:
         return true;
     }
     int ordered() const { return ordered_; }
+
+    // ---- the party (docs/party.md; tools/netbot's board) ------------------------------------
+    // The user, 2026-10-09: "lets implement party system, so bots can form 5-man party when they
+    // can kill some quest monsters, elfs can heal, dk can tank, and 2 dps", and "we need to be
+    // smart about how they will fill quests, because some will need more kill some already will
+    // be finished some kills". The board (netbot) forms the party and says what it hunts; the
+    // brain plays his part in it: the tank holds what the party fights, the damage dealers strike
+    // what the tank holds, the elf heals and buffs them, and all of them keep together.
+    enum class Role : uint8_t { None, Tank, Damage, Healer };
+    struct Lead {
+        int map = -1;             // where the party hunts; -1, no party to play in
+        int quest = -1;           // his own quest it hunts for there, or -1 (he is its support)
+        std::vector<int> breeds;  // what it hunts there: every breed a member still wants
+        Role role = Role::None;
+        uint32_t leader = 0;      // bodies on his map, 0 when elsewhere (or himself)
+        uint32_t tank = 0;
+        int size = 1;             // members, all maps
+        bool healer = false;      // an elf among them
+        int castle = 0;           // the Blood Castle they go into together, 0 for their own
+    };
+    void lead(Lead l) {
+        if (l.map != lead_.map || l.quest != lead_.quest || l.breeds != lead_.breeds || l.castle != lead_.castle) {
+            nextAim_ = 0;
+        }
+        lead_ = std::move(l);
+    }
+    const Lead& led() const { return lead_; }
+    static Role roleOf(sim::Kin kin, bool tanks) {
+        if (tanks) return Role::Tank;
+        return kin == sim::Kin::FairyElf ? Role::Healer : Role::Damage;
+    }
+    // What his quests still want, breed by breed: a quest under way, or one offered him he may
+    // take; `alone` whether he takes that breed by himself, `together` whether he would with a
+    // party about him (kTogether of a kill's cost to him).
+    struct Need {
+        int quest = -1, breed = -1, map = -1, left = 0, level = 0;
+        bool taken = false, alone = false, together = false;
+        std::string label;  // the breed's name
+    };
+    std::vector<Need> needs() {
+        std::vector<Need> out;
+        if (!options_.quests) return out;
+        const double was = partyScale_;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            if (!allowed(q) || aside_[q] > clock_) continue;
+            const sim::QuestState state = realm_->quest(q).state;
+            const bool taken = state == sim::QuestState::Active;
+            if (!taken) {
+                const int at = giverMap(q);
+                if (!realm_->questOffered(q) || at < 0 || !reachable(at)) continue;
+            }
+            const sim::QuestRow& row = sim::questAt(q);
+            for (int s = 0; s < row.stepCount; ++s) {
+                const sim::QuestStepRow& step = row.steps[s];
+                if (step.kind != sim::QuestStepKind::Clear) continue;
+                const int left = step.count - (taken ? realm_->quest(q).counts[s] : 0);
+                if (left <= 0) continue;
+                const int home = homeOf(step.target);
+                const content::MonsterKind* kind = home >= 0 ? kindOf(home, step.target) : nullptr;
+                if (!kind || !reachable(home)) continue;
+                Need one;
+                one.quest = q;
+                one.breed = step.target;
+                one.map = home;
+                one.left = left;
+                one.level = kind->level;
+                one.taken = taken;
+                one.label = kind->label;
+                partyScale_ = 1.0;
+                one.alone = soloTakes(q, *kind, home);
+                partyScale_ = kTogether;
+                one.together = one.alone || soloTakes(q, *kind, home);
+                out.push_back(one);
+            }
+        }
+        partyScale_ = was;
+        return out;
+    }
+    // Whether he can stand beside a party on this breed: he reaches its map and, with the party
+    // about him, a kill of it is one he would take.
+    bool helps(int map, int breed) {
+        const content::MonsterKind* kind = reachable(map) ? kindOf(map, breed) : nullptr;
+        if (!kind) return false;
+        const double was = partyScale_;
+        partyScale_ = kTogether;
+        const bool ok = takes(*kind, 1.0) || drinksThrough(*kind);
+        partyScale_ = was;
+        return ok;
+    }
+    // **Blood Castle together** (the user, 2026-10-09: "and maybe go to bc together?"): the
+    // castles he could go into, a bit each (1 << c) -- its cloak held and its band's floor
+    // reached -- and whether it is his time at the Messenger now.
+    int castlesOpen() const {
+        int out = 0;
+        for (int c = 1; c <= sim::kCastlesBuilt; ++c) {
+            if (realm_->cloakSlot(c) >= 0 && realm_->hero().level >= sim::kCastleBands[c - 1][0]) out |= 1 << c;
+        }
+        return out;
+    }
+    bool castleTime() const { return castleDue(); }
+    bool inCastle() const { return map() == int(sim::kBloodCastleMap); }
     // What he is after, in a line: "hunts for The Broken Sword (devias)".
     std::string aimLine() const {
         const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to"};
@@ -594,9 +695,21 @@ private:
     bool reachable(int to) const {
         // Icarus's gate refuses a hero without wings or a Dinorant (sim::canFly): never routed to.
         if (to == 10 && !sim::canFly(*tables_, realm_->satchel())) return false;
+        if (to == map()) return true;
+        // Kept for the tick, on the map he stands on: the party's board asks it many times a
+        // second, and his way off a map changes only with his level, purse or map.
+        if (reachTick_ != clock_ || reachMap_ != map()) {
+            reachTick_ = clock_;
+            reachMap_ = map();
+            reach_.clear();
+        }
+        if (const auto known = reach_.find(to); known != reach_.end()) return known->second;
         int gate, travel;
-        return to == map() || way(to, &gate, &travel);
+        return reach_[to] = way(to, &gate, &travel);
     }
+    mutable int64_t reachTick_ = -1;
+    mutable int reachMap_ = -1;
+    mutable std::map<int, bool> reach_;
 
     // A step toward another map: pays for the trip, or walks into the gate. True while he is
     // on his way.
@@ -819,6 +932,7 @@ private:
             errands_.clear();
             return;
         }
+        partyScale_ = partyScale();
         spend();
         drink();
         mend();
@@ -2152,6 +2266,8 @@ private:
     // whose garrison he takes on as he would out in the world (takes), or 0. A knight let in at
     // level 54 killed three Chief Skeletons in three minutes and died there.
     int castleChoice() const {
+        // His party's castle, when he can go in: they fight its garrison together.
+        if (const int c = lead_.castle; c > 0 && (castlesOpen() & (1 << c))) return c;
         for (int c = sim::kCastlesBuilt; c >= 1; --c) {
             if (realm_->cloakSlot(c) >= 0 && realm_->hero().level >= sim::kCastleBands[c - 1][0] &&
                 castleTaken(c)) {
@@ -2452,7 +2568,7 @@ private:
         if (share <= 0.0) share = riskShare();
         const auto fear = fearUntil_.find(kind.number);
         if (fear != fearUntil_.end() && fear->second > clock_) return false;
-        return costOf(kind) * share <= realm_->hero().maxHealth;
+        return costOf(kind) * partyScale_ * share <= realm_->hero().maxHealth;
     }
     // **What share of his health a kill may cost** (the user, 2026-10-03: "its wierd that bots
     // are not ending with good gears", then "push to harder maps"): a third, and for the wizard
@@ -2525,16 +2641,21 @@ private:
         return false;
     }
     // Where a breed lives, among the worlds: the first map with a nest of it, or -1.
+    // Kept once found: the tables never change, and the party's board asks it of every breed of
+    // every bot's quests each second.
     int homeOf(int breed) {
+        if (const auto known = homes_.find(breed); known != homes_.end()) return known->second;
+        int home = -1;
         for (const WorldRow& w : kWorlds) {
             const content::Tables* t = world(w.map);
-            if (!t) continue;
+            if (!t || home >= 0) continue;
             for (const content::MonsterNest& nest : t->nests) {
-                if (t->kinds[nest.kind].number == breed) return w.map;
+                if (t->kinds[nest.kind].number == breed) home = w.map;
             }
         }
-        return -1;
+        return homes_[breed] = home;
     }
+    std::map<int, int> homes_;
     const content::MonsterKind* kindOf(int map, int breed) {
         const content::Tables* t = world(map);
         if (!t) return nullptr;
@@ -2629,8 +2750,38 @@ private:
         if (fear != fearUntil_.end() && fear->second > clock_) return false;
         const sim::Body& hero = realm_->hero();
         const double blow = std::max(0.0, double(kind.maximumDamage) - hero.stats.defense) * guardSeen_;
-        if (blow * 2.0 > hero.maxHealth * 0.5) return false;
-        return costOf(kind) <= hero.maxHealth + potions / 3.0 * potionMend();
+        // Beside a party's tank its blows are his, not this one's.
+        const bool shielded = partyScale_ < 1.0 && lead_.role != Role::Tank;
+        if (!shielded && blow * 2.0 > hero.maxHealth * 0.5) return false;
+        return costOf(kind) * partyScale_ <= hero.maxHealth + potions / 3.0 * potionMend();
+    }
+    // **Whether he takes a quest's breed on by himself**, huntable's test for one breed: his
+    // riskShare, his whole bar for a knight or an elf with twenty potions, and Icarus's breeds and
+    // the White Silence's drunk through.
+    bool soloTakes(int q, const content::MonsterKind& kind, int home) const {
+        const double share = !wizardly() && countOf(sim::heals) >= 20 ? 1.0 : riskShare();
+        const bool drinks = home == kIcarus || q == sim::questOf(406);
+        return takes(kind, share) || (drinks && drinksThrough(kind));
+    }
+    // **A kill's cost to him in a party** (docs/party.md): the party's blows shorten the kill by
+    // its members, and the tank takes its blows -- a damage dealer's cost is half again under it,
+    // and the elf's heals halve what is left. kTogether is what the board weighs a party by
+    // before it is formed: three or more about him, a tank and an elf among them.
+    static constexpr double kTogether = 0.25;
+    double partyScale() const {
+        const bool castle = lead_.castle > 0 && map() == int(sim::kBloodCastleMap);
+        if ((lead_.map != map() && !castle) || lead_.size < 2) return 1.0;
+        int here = 1;
+        const sim::Body& hero = realm_->hero();
+        for (const sim::Body& b : realm_->bodies()) {
+            if (b.id == hero.id || !b.player || !b.alive() || hero.party == 0 || b.party != hero.party) continue;
+            if (std::hypot(b.x - hero.x, b.y - hero.y) <= sim::kPartyReach * 2.0f) ++here;
+        }
+        if (here < 2) return 1.0;
+        double scale = 1.0 / here;
+        if (lead_.tank != 0 && lead_.role != Role::Tank) scale *= 0.5;
+        if (lead_.healer && lead_.role != Role::Healer) scale *= 0.5;
+        return std::max(scale, 0.05);
     }
     // What one of his healing potions mends, the largest he carries (Realm::useItem's rank in
     // tenths of his health and the flat part over it).
@@ -2803,6 +2954,24 @@ private:
                 }
             }
         }
+        // **The party's hunt** (lead()), over his own -- but a quest to hand in comes first, and
+        // the party's quest offered him is taken on the way (he would not take it alone, which
+        // is why the party is there).
+        if (lead_.map >= 0 && options_.quests && aim_ != Aim::HandIn && aim_ != Aim::Castle && reachable(lead_.map)) {
+            const int q = lead_.quest;
+            if (q >= 0 && realm_->quest(q).state != sim::QuestState::Active && realm_->questOffered(q) &&
+                giverMap(q) >= 0 && reachable(giverMap(q))) {
+                aim_ = Aim::Accept;
+                aimQuest_ = q;
+                aimMap_ = giverMap(q);
+            } else {
+                aim_ = lead_.breeds.empty() ? Aim::Grind : Aim::Hunt;
+                aimQuest_ = q >= 0 && realm_->quest(q).state == sim::QuestState::Active ? q : -1;
+                aimMap_ = lead_.map;
+                quarry_ = lead_.breeds;
+                seeking_ = -1;
+            }
+        }
         // Ordered (order()): that map's grind, over all of the above.
         if (ordered_ >= 0 && reachable(ordered_)) {
             aim_ = Aim::Grind;
@@ -2817,6 +2986,8 @@ private:
                 say("%s Blood Castle %d: its door opens in Devias", names[int(aim_)], castleChoice());
             } else if (aimQuest_ >= 0) {
                 say("%s %s (%s)", names[int(aim_)], sim::questAt(aimQuest_).title, worldOf(aimMap_)->name);
+            } else if (aim_ == Aim::Hunt) {
+                say("hunts beside his party in %s", worldOf(aimMap_)->name);
             } else {
                 say("grinds in %s", worldOf(aimMap_)->name);
             }
@@ -2898,6 +3069,8 @@ private:
             // realm tick kept here barred every self-cast for the rest of the run.
             if (guardTried_[row.number] > clock_) continue;
             if (hero.mana < row.mana || !row.suits(w.offHand)) continue;
+            // A knight beside his party's tank leaves the guard to him: it is what holds them.
+            if (row.number == sim::skill::kDefense && tankHere() != nullptr) continue;
             const bool wanted = (row.boonTicks > 0 && hero.boonUntil <= now) ||
                                 (row.mightTicks > 0 && hero.mightUntil <= now) ||
                                 (row.mends && hero.health * 2 < hero.maxHealth);
@@ -2917,6 +3090,104 @@ private:
         return false;
     }
     std::map<int32_t, int64_t> guardTried_;
+
+    // ---- his part in a party (lead()) ------------------------------------------------------
+    // A body of his party on this map, alive, other than himself.
+    bool mate(uint32_t id) const {
+        const sim::Body& hero = realm_->hero();
+        if (id == 0 || id == hero.id || hero.party == 0) return false;
+        const sim::Body* one = bodyOf(id);
+        return one && one->player && one->alive() && one->party == hero.party;
+    }
+    const sim::Body* tankHere() const {
+        const sim::Body* tank = lead_.tank != 0 && lead_.tank != realm_->hero().id ? bodyOf(lead_.tank) : nullptr;
+        return tank && tank->alive() && mate(tank->id) ? tank : nullptr;
+    }
+    // **The elf's aid** (the user, 2026-10-09: "elfs can heal"): Heal on the lowest of them
+    // under 60% within her reach, herself among them; then Greater Damage on whoever's has
+    // lapsed; then Greater Defense on a member whose guard has lapsed -- never on the tank, whose
+    // Defense guard it would take the place of (one boon a body, and the tank's x3 threat is
+    // the guard's). True when she cast.
+    static constexpr double kHealUnder = 0.6;
+    bool aid() {
+        const sim::Body& hero = realm_->hero();
+        if (hero.party == 0) return false;
+        const int64_t now = realm_->tick();
+        const sim::Wearer w = realm_->wearer();
+        const float reach = sim::kPartyAidReach - 0.5f;
+        const sim::Body* low = nullptr;
+        double lowest = kHealUnder;
+        for (const sim::Body& b : realm_->bodies()) {
+            if (b.id != hero.id && !mate(b.id)) continue;
+            if (std::hypot(b.x - hero.x, b.y - hero.y) > reach || b.maxHealth <= 0) continue;
+            const double share = double(b.health) / b.maxHealth;
+            if (share < lowest) lowest = share, low = &b;
+        }
+        const auto cast = [&](const sim::SkillRow& row, uint32_t at) {
+            int64_t& tried = aidTried_[{row.number, at}];
+            if (tried > clock_) return false;
+            tried = clock_ + (row.mends ? 20 : 100);
+            hand_.invoke(row.number, at);
+            return true;
+        };
+        for (const int pass : {0, 1, 2}) {
+            for (int i = 0; i < sim::skillCount(); ++i) {
+                const sim::SkillRow& row = sim::skillAt(i);
+                if (!row.onSelf() || !realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
+                if (hero.mana < row.mana || !row.suits(w.offHand)) continue;
+                if (pass == 0 && row.mends && low && cast(row, low->id)) return true;
+                if (pass == 0) continue;
+                for (const sim::Body& b : realm_->bodies()) {
+                    if (!mate(b.id) || std::hypot(b.x - hero.x, b.y - hero.y) > reach) continue;
+                    if (pass == 1 && row.mightTicks > 0 && b.mightUntil <= now && cast(row, b.id)) return true;
+                    if (pass == 2 && row.number == sim::skill::kGreaterDefense && b.id != lead_.tank &&
+                        b.boonUntil <= now && cast(row, b.id)) return true;
+                }
+            }
+        }
+        return false;
+    }
+    std::map<std::pair<int32_t, uint32_t>, int64_t> aidTried_;
+    // **A damage dealer's target** (docs/party.md, the threat): what the tank has struck, so the
+    // monster stays on him -- the one closest to dying, among those his own threat on is under
+    // kEaseOff of the tank's. None struck yet: he waits for the tank's first blow. 0 for none.
+    static constexpr double kEaseOff = 0.9;
+    uint32_t tanksTarget(const sim::Body& tank) const {
+        const sim::Body& hero = realm_->hero();
+        uint32_t best = 0;
+        double weakest = 2.0;
+        for (const sim::Body& b : realm_->bodies()) {
+            if (!b.monster() || !b.alive() || barred(b.id)) continue;
+            if (std::hypot(b.x - hero.x, b.y - hero.y) > kSight) continue;
+            const int32_t held = realm_->threatOf(b, tank.id);
+            if (held <= 0 || realm_->threatOf(b, hero.id) >= held * kEaseOff) continue;
+            const double share = double(b.health) / std::max(1, b.maxHealth);
+            if (share < weakest) weakest = share, best = b.id;
+        }
+        return best;
+    }
+    // His step toward a body of his party, when he is more than `apart` tiles from it: true
+    // while he walks.
+    bool keepNear(const sim::Body& one, float apart) {
+        const sim::Body& hero = realm_->hero();
+        if (std::hypot(one.x - hero.x, one.y - hero.y) <= apart) return false;
+        // **On another floor** (the user, 2026-10-09: "can they clear also some of LT floors"):
+        // the Lost Tower's and the Dungeon's floors are one map no walk crosses -- his trip or
+        // his stairs to the floor the other stands on.
+        const int here = realm_->travelFloor();
+        const int there = here >= 0 ? realm_->floorAt(one.column(), one.row()) : -1;
+        if (here >= 0 && there >= 0 && there != here) {
+            chasing_ = 0;
+            return goFloor(there, here, false);
+        }
+        sim::Request request;
+        request.kind = sim::Request::Kind::WalkTo;
+        request.column = one.column();
+        request.row = one.row();
+        hand_.ask(request);
+        chasing_ = 0;
+        return true;
+    }
 
     // Presses the strongest skill that is ready on the body he fights: a blow's force times
     // what it rolls on (a spell adds its own damage to the band), the guards and buffs aside.
@@ -3135,6 +3406,10 @@ private:
         if (!anyFloor && floor >= 0 && realm_->floorAt(body.column(), body.row()) != floor) return false;
         const content::MonsterKind& kind = tables_->kinds[size_t(body.kind)];
         if (aim_ == Aim::Hunt && aimMap_ == map()) {
+            // **The party's hunt with no party about him** (lead(), partyScale): what he takes
+            // alone, till they come -- its breeds are ones he would not, and an elf led to Noria's
+            // Elite Goblins before her knight came stood idle there for an hour at level 7.
+            if (lead_.map == map() && partyScale_ >= 1.0) return takes(kind);
             return std::find(quarry_.begin(), quarry_.end(), kind.number) != quarry_.end();
         }
         // **Grinding, nothing far under the best he takes here**, so a floor of weaklings sends
@@ -3176,12 +3451,17 @@ private:
         // blow off a wizard of 500 energy for five minutes, and raised only on engaging it covered
         // ten hours of his day -- the packs caught him on the walks between.
         if (wizardly() && !tables_->grid.safe(hero.column(), hero.row()) && guard()) return;
+        // The party's elf: her members first, out of town.
+        if (lead_.role == Role::Healer && !tables_->grid.safe(hero.column(), hero.row()) && aid()) return;
         sim::Request request;
-        // Whatever is on him first.
+        // Whatever is on him first -- and the party's tank whatever is on one of them near him,
+        // so it turns to him.
         float closest = 6.0f * 6.0f;
         bool engaged = false;
+        const bool peels = lead_.role == Role::Tank && hero.party != 0;
         for (const sim::Body& body : realm_->bodies()) {
-            if (!body.monster() || !body.alive() || body.quarry != hero.id || barred(body.id)) continue;
+            if (!body.monster() || !body.alive() || barred(body.id)) continue;
+            if (body.quarry != hero.id && !(peels && mate(body.quarry))) continue;
             const float dx = body.x - hero.x, dy = body.y - hero.y;
             if (dx * dx + dy * dy < closest) {
                 closest = dx * dx + dy * dy;
@@ -3227,6 +3507,30 @@ private:
                     request.kind = sim::Request::Kind::Pick;
                     request.target = one.id;
                 }
+            }
+        }
+        // **In a party** (lead()): a damage dealer or the elf strikes what the tank holds, and
+        // with nothing held keeps by him rather than pulling anything of his own; whoever is
+        // not the leader keeps near him. Only on the party's map: elsewhere he is on his way.
+        if (request.kind == sim::Request::Kind::None && lead_.map == map() && hero.party != 0) {
+            if (const sim::Body* tank = lead_.role != Role::Tank ? tankHere() : nullptr;
+                tank && std::hypot(tank->x - hero.x, tank->y - hero.y) <= 2.0f * kSight) {
+                if (const uint32_t at = tanksTarget(*tank)) {
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = at;
+                } else {
+                    if (keepNear(*tank, 4.0f)) return;
+                    if (chasing_ != 0) {
+                        sim::Request stop;
+                        stop.kind = sim::Request::Kind::Stop;
+                        hand_.ask(stop);
+                        chasing_ = 0;
+                    }
+                    return;
+                }
+            } else if (lead_.leader != 0 && lead_.leader != hero.id && mate(lead_.leader) &&
+                       keepNear(*bodyOf(lead_.leader), 8.0f)) {
+                return;
             }
         }
         // Then the nearest he would go after, in sight, and then anywhere on the map: the
@@ -3337,6 +3641,13 @@ private:
             setAside();
             return false;
         }
+        return goFloor(to, here, true);
+    }
+    // **To another floor of this map** -- paid for when its trip is open and he can spare it,
+    // else by the stairs of his floor -- true while on his way. `quest`: a hunt's, which sets
+    // its breeds aside when no way is found (nextFloor); a party's keeps trying (keepNear).
+    bool goFloor(int to, int here, bool quest) {
+        const sim::Body& hero = realm_->hero();
         const sim::TravelRow& row = sim::travelAt(to);
         if (realm_->travelRefusal(to) == sim::TravelRefusal::None && realm_->money() >= row.zen + potionReserve()) {
             if (clock_ >= nextFloorAt_ && hand_.travel(to)) {
@@ -3366,7 +3677,7 @@ private:
                 std::printf("NOSTAIR map %d here %d to %d (%s) refusal %d at %d,%d\n", map(), here, to, row.name,
                             int(realm_->travelRefusal(to)), hero.column(), hero.row());
             }
-            setAside();
+            if (quest) setAside();
             return false;
         }
         if (!hero.walking) {
@@ -4202,6 +4513,8 @@ private:
     int pressed_ = 0, lastLevel_ = 1, drunkAt_ = 0, healed_ = 0;
     double caution_ = 1.0;
     std::map<int, int64_t> shunned_;  // a grinding ground left until this tick (learnCaution)
+    Lead lead_;                 // the party's hunt and his part in it (lead())
+    double partyScale_ = 1.0;   // what a kill costs him beside his party (partyScale), this think
     int64_t cautionAt_ = 0;
 };
 

@@ -18,10 +18,11 @@
 // back as the same character, at the level it left.
 //
 //   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] [--party]
-//                [--claude DIR] NAME:CLASS ...
+//                [--parties] [--threads N] [--claude DIR] NAME:CLASS ...
 //
 // CLASS is dk, dw, elf or mg (a new elf is born in Noria). --party makes the run's bots one party
-// (docs/party.md), the first named its leader. --claude DIR makes the first named the Claude
+// (docs/party.md), the first named its leader; --parties lets them form their own, for the quests
+// they cannot take alone (Board). --claude DIR makes the first named the Claude
 // bot (claude.h): his chat and his choice of ground are the model's, through files in DIR.
 
 #include <algorithm>
@@ -30,6 +31,8 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <atomic>
+#include <mutex>
 #include <thread>
 
 #include "../bot/brain.h"
@@ -46,7 +49,11 @@ volatile std::sig_atomic_t g_stop = 0;
 void onSignal(int) { g_stop = 1; }
 
 constexpr int kThinkNet = 5;            // ticks between decisions, as offline
-constexpr int64_t kAnswerWait = 2 * 20; // a decision's answers not heard in two seconds: think anyway
+// A decision's answers not heard in two seconds: think anyway. **The wall's seconds, not the
+// game's** (mu2_server --speed): at --speed 100 the game's two were 20 ms, under a round trip, and
+// a bot asked again on a mirror that had not heard the answer -- one elf handed Noria's Song in
+// 82 times and opened its Box of Luck as often, every ask after the first refused.
+constexpr auto kAnswerWait = std::chrono::seconds(2);
 // But a paid trip's answer is waited for this long: thought again after two seconds, the brain --
 // still on the old map in the scratch -- paid the trip a second time, and the first's answer,
 // its ticket gone with the last decision's commands, was never read as the trip (the Claude bot's
@@ -152,19 +159,51 @@ public:
         if (mirror_ && link_) brain_->status();
     }
 
-    // **The party** (docs/party.md), --party: the bots of this run are one party, the first named
-    // its leader. A first cut, for the server's party to be tried end to end: the leader invites
-    // whoever of them is not in yet, every twenty seconds, and each takes an invite from one of
-    // them. Forming a party for a quest it cannot take alone is the brain's, later.
-    void partyWith(std::vector<std::string> mates, bool leads) {
-        mates_ = std::move(mates);
-        leads_ = leads;
+    // ---- the party (docs/party.md): what the board (Board, below) reads and says ----------
+    const std::string& name() const { return name_; }
+    sim::Kin kin() const { return kin_; }
+    bool up() const { return link_ && link_->connected() && mirror_; }
+    // The Claude bot plays his own party (claude.h): the board leaves him be.
+    bool driven() const { return claude_ != nullptr; }
+    int level() const { return mirror_->hero().level; }
+    int64_t clockNow() const { return brain_->clockNow(); }
+    const std::string& world() const { return world_; }
+    std::vector<Bot::Need> needs() { return brain_->needs(); }
+    bool helps(int map, int breed) { return brain_->helps(map, breed); }
+    int castlesOpen() const { return brain_->castlesOpen(); }
+    bool castleTime() const { return brain_->castleTime(); }
+    bool inCastle() const { return brain_->inCastle(); }
+    const net::PartyState& partyState() const { return link_->party(); }
+    void askParty(net::PartyWhat what, const std::string& whom) { link_->askParty({what, whom}); }
+    void sayOn(net::Channel channel, const std::string& text) {
+        line("~ says: %s", text.c_str());
+        link_->say({channel, {}, text});
+    }
+    // The leader whose invite he takes, "" for none.
+    void expect(const std::string& leader) { expected_ = leader; }
+    // The party's hunt, its leader and tank by name: found on his own map, else none.
+    void lead(Bot::Lead lead, const std::string& leader, const std::string& tank) {
+        lead.leader = idOf(leader);
+        lead.tank = idOf(tank);
+        brain_->lead(std::move(lead));
     }
 
     // --claude DIR: he is the Claude bot (claude.h).
     void driveFrom(const std::string& dir) { claude_ = std::make_unique<bot::Claude>(dir); }
 
 private:
+    // A player's body on his mirror by the name the server gave it, or 0.
+    uint32_t idOf(const std::string& who) const {
+        if (who.empty()) return 0;
+        if (who == name_) return you_;
+        for (const sim::Body& b : mirror_->bodies()) {
+            std::string name;
+            bool isBot = false;
+            if (b.player && link_->nameOf(b.id, &name, &isBot) && name == who) return b.id;
+        }
+        return 0;
+    }
+
     // **The Claude bot**, each second: the model's orders carried out, and the state it reads.
     void drive() {
         const int64_t now = brain_->clockNow();
@@ -310,21 +349,12 @@ private:
         const net::PartyState& state = link_->party();
         std::string said;
         for (const net::PartyState::Member& m : state.members) {
-            said += (said.empty() ? "" : ", ") + m.name + " (" + std::to_string(m.level) + ", " + m.world +
-                    (m.here != 0 ? ", here" : "") + ")";
+            // Not the levels: a line each level of each member drowned the log.
+            said += (said.empty() ? "" : ", ") + m.name + " (" + m.world + (m.here != 0 ? ", here" : "") + ")";
         }
         if (said != partySaid_) {
             line("party: %s", said.empty() ? "none" : said.c_str());
             partySaid_ = said;
-        }
-        const int64_t now = brain_->clockNow();
-        if (!leads_ || mates_.empty() || now - invitedAt_ < 20 * 20) return;
-        invitedAt_ = now;
-        for (const std::string& mate : mates_) {
-            bool in = false;
-            for (const net::PartyState::Member& m : state.members) in |= m.name == mate;
-            if (in || mate == name_) continue;
-            link_->askParty({net::PartyWhat::Invite, mate});
         }
     }
 
@@ -335,13 +365,12 @@ private:
         const int64_t now = brain_->clockNow();
         party();
         for (const net::Heard& one : heard_) {
-            // An invite from one of his own party's bots, taken (--party).
+            // The invite the board told him to wait for, taken.
             constexpr const char* kInvites = " invites you to a party.";
-            if (one.name.empty() && one.channel == net::Channel::Party && !mates_.empty()) {
+            if (one.name.empty() && one.channel == net::Channel::Party && !expected_.empty()) {
                 const size_t at = one.text.find(kInvites);
-                const std::string from = at != std::string::npos ? one.text.substr(0, at) : "";
-                if (std::find(mates_.begin(), mates_.end(), from) != mates_.end()) {
-                    link_->askParty({net::PartyWhat::Accept, from});
+                if (at != std::string::npos && one.text.substr(0, at) == expected_) {
+                    link_->askParty({net::PartyWhat::Accept, expected_});
                 }
             }
             if (one.name.empty()) {
@@ -374,7 +403,7 @@ private:
     // are in; what it asked, to the server.
     void think() {
         const int64_t now = brain_->clockNow();
-        if (pending_ != 0 && now - pendingSince_ < kAnswerWait) return;
+        if (pending_ != 0 && std::chrono::steady_clock::now() - pendingSince_ < kAnswerWait) return;
         // Every one kept until its answer, however late: cleared at the wait's end, an answer 45
         // s late (a net bot behind its server) found no trip of his and he stayed, the server
         // holding him due elsewhere (the Claude bot's runs, 2026-10-09).
@@ -396,7 +425,7 @@ private:
         }
         if (brain_->lastTicket() != before) {
             pending_ = brain_->lastTicket();
-            pendingSince_ = now;
+            pendingSince_ = std::chrono::steady_clock::now();
         }
     }
 
@@ -469,13 +498,462 @@ private:
     std::chrono::steady_clock::time_point tripSince_{};
     uint32_t you_ = 0;
     uint32_t pending_ = 0;
-    int64_t pendingSince_ = 0;
+    std::chrono::steady_clock::time_point pendingSince_{};
     bool divergenceSaid_ = false;
-    std::vector<std::string> mates_;  // --party: the run's bots, his party
-    bool leads_ = false;
-    int64_t invitedAt_ = -1000000;
+    std::string expected_;  // the board's: whose invite he takes
     std::string partySaid_;
     std::unique_ptr<bot::Claude> claude_;  // --claude: the model drives him
+};
+
+// **The board** (docs/party.md): the run's bots' parties, formed and led. The user, 2026-10-09:
+// "lets implement party system, so bots can form 5-man party when they can kill some quest
+// monsters, elfs can heal, dk can tank, and 2 dps", "it make sense they go together on
+// dungeons", "we need to be smart about how they will fill quests, because some will need more
+// kill some already will be finished some kills".
+//
+// Once a second it reads every bot's quests (Bot::needs) and the server's party state.
+//  - **Forming** (--parties): a bot stuck on a quest's breed -- one he would take with a party
+//    about him but not alone -- is put with the others stuck on that quest, a knight (or a melee
+//    Magic Gladiator) to tank and an elf to heal if they are free and can stand there, and more
+//    hands up to three. The tank leads; else the highest level. The leader invites, the others
+//    take his invite. A bot stuck with no one to party says so on his map, now and then.
+//  - **Leading**: the party hunts the breed the most of its members still want, on its map, and
+//    every breed there that any still wants; a member done with it stays as the party's support.
+//  - **Breaking up**: once no member is stuck on anything, each leaves (--party's one party,
+//    the run's bots with the first named its leader, never breaks up).
+// The board sees only this process's bots: a party is of bots run together.
+class Board {
+public:
+    explicit Board(bool forms) : forms_(forms) {}
+    // --party: these bots are one party, the first its leader, for as long as the run.
+    void fix(std::vector<std::string> names) {
+        Group g;
+        g.members = std::move(names);
+        g.leader = g.members.front();
+        g.fixed = true;
+        groups_.push_back(std::move(g));
+    }
+
+    void tick(std::vector<std::unique_ptr<NetBot>>& bots) {
+        const auto now = std::chrono::steady_clock::now();
+        if (now < next_) return;
+        next_ = now + std::chrono::milliseconds(500);
+        byName_.clear();
+        needs_.clear();
+        for (auto& bot : bots) {
+            if (!bot->up() || bot->driven()) continue;
+            byName_[bot->name()] = bot.get();
+            needs_[bot->name()] = bot->needs();
+        }
+        for (Group& g : groups_) lead(g, now);
+        std::erase_if(groups_, [](const Group& g) { return g.gone; });
+        merge();
+        std::erase_if(groups_, [](const Group& g) { return g.gone; });
+        loose(now);
+        if (forms_) form(now);
+    }
+
+private:
+    struct Group {
+        std::string leader, tank;
+        std::vector<std::string> members;  // the leader first
+        bool fixed = false, gone = false;
+        int map = -1, breed = -1;
+        int64_t invited = -1000000;  // the leader's clock at his last invites
+        int64_t clearSince = -1;  // the leader's clock when no member was stuck any more
+        int64_t emptySince = -1;  // ... and when his party was last heard empty
+        int64_t chosenAt = 0;     // ... and when the hunt was last changed
+        int castle = 0;           // the Blood Castle they go into together, 0 for none
+        bool forCastle = false;   // formed for it, at the door
+        int saidCastle = 0;       // the castle last said on Party
+    };
+
+    NetBot* bot(const std::string& name) const {
+        const auto it = byName_.find(name);
+        return it == byName_.end() ? nullptr : it->second;
+    }
+    // Stuck: a breed he would take beside a party and not alone.
+    static bool stuck(const Bot::Need& n) { return n.together && !n.alone; }
+    static bool tankish(sim::Kin kin) { return kin == sim::Kin::DarkKnight || kin == sim::Kin::MagicGladiator; }
+    bool grouped(const std::string& name) const {
+        for (const Group& g : groups_) {
+            if (std::find(g.members.begin(), g.members.end(), name) != g.members.end()) return true;
+        }
+        return false;
+    }
+
+    // A party's hunt chosen and given to each member; invites sent; broken up when done.
+    void lead(Group& g, std::chrono::steady_clock::time_point now) {
+        NetBot* leader = bot(g.leader);
+        if (!leader) return;  // his line is down: the party waits for him
+        // Invites, every twenty seconds, to whoever is not in yet.
+        const net::PartyState& state = leader->partyState();
+        const auto in = [&](const std::string& name) {
+            for (const net::PartyState::Member& m : state.members) {
+                if (m.name == name) return true;
+            }
+            return false;
+        };
+        // **On the game's clock, not the wall's** (mu2_server --speed): at --speed 200 the
+        // wall's ten minutes are fifty game hours, and a party was given up before its invite
+        // was heard.
+        if (leader->clockNow() - g.invited > 20 * 20) {
+            g.invited = leader->clockNow();
+            for (const std::string& m : g.members) {
+                if (m == g.leader || in(m)) continue;
+                if (NetBot* one = bot(m)) one->expect(g.leader);
+                leader->askParty(net::PartyWhat::Invite, m);
+            }
+        }
+        // No party heard: none has taken his invite yet, or he has just come to another map and
+        // his line has not heard it -- nothing changes (a knight landing in Noria read as out of
+        // his own party, dropped its hunt and paid 2,000 zen back to Lorencia). One no one has
+        // joined in ten game minutes is given up.
+        if (state.members.empty()) {
+            if (g.emptySince < 0) g.emptySince = leader->clockNow();
+            if (!g.fixed && leader->clockNow() - g.emptySince > kSettles) {
+                std::printf("  [board] no one joined %s: given up\n", g.leader.c_str());
+                for (const std::string& m : g.members) {
+                    if (NetBot* one = bot(m)) one->expect("");
+                }
+                g.gone = true;
+            }
+            return;
+        }
+        g.emptySince = -1;
+        // The breed the most still want, counted by members -- a quest under way twice an offered
+        // one, so a quest is finished before the next is begun, and a stuck breed twice again --
+        // then the leader's map, then the kills left. Only a breed the tank and half of them can
+        // stand: the party's lowest is not left out of it, nor made to fail the rest.
+        // The tank: the leader if he is one, else the first knight, else the first gladiator.
+        g.tank.clear();
+        for (const sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::MagicGladiator}) {
+            for (const std::string& m : g.members) {
+                NetBot* one = bot(m);
+                if (g.tank.empty() && one && one->kin() == kin) g.tank = m;
+            }
+        }
+        if (tankish(leader->kin())) g.tank = g.leader;
+        std::map<std::pair<int, int>, std::pair<int, int>> want;  // (map, breed) -> (weight, left)
+        std::map<std::pair<int, int>, std::string> label;
+        bool anyStuck = false;
+        stands_.clear();
+        for (const std::string& m : g.members) {
+            const auto it = needs_.find(m);
+            if (it == needs_.end()) continue;
+            std::set<std::pair<int, int>> counted;
+            for (const Bot::Need& n : it->second) {
+                if (!n.together) continue;
+                anyStuck |= stuck(n);
+                if (!counted.insert({n.map, n.breed}).second) continue;
+                const auto open = stands_.find({n.map, n.breed});
+                if (open == stands_.end()) {
+                    int can = 0, up = 0;
+                    bool tankCan = true;
+                    for (const std::string& o : g.members) {
+                        NetBot* one = bot(o);
+                        if (!one) continue;
+                        ++up;
+                        const bool helps = one->helps(n.map, n.breed);
+                        can += helps;
+                        if (o == g.tank) tankCan = helps;
+                    }
+                    stands_[{n.map, n.breed}] = tankCan && can * 2 >= up;
+                }
+                if (!stands_[{n.map, n.breed}]) continue;
+                auto& w = want[{n.map, n.breed}];
+                w.first += (n.taken ? 2 : 1) * (stuck(n) ? 2 : 1);
+                w.second += n.left;
+                label[{n.map, n.breed}] = n.label;
+            }
+        }
+        std::pair<int, int> best{-1, -1};
+        std::tuple<int, int, int> most{0, 0, 0};
+        const int home = leaderMap(*leader);
+        for (const auto& [key, w] : want) {
+            const std::tuple<int, int, int> score{w.first, key.first == home ? 1 : 0, w.second};
+            if (score > most) {
+                most = score;
+                best = key;
+            }
+        }
+        // **The hunt under way holds** until another outweighs it by members: a tie broken by
+        // the leader's map flipped the party between Lorencia and Noria each time he landed,
+        // 2,000 zen a trip.
+        // And twenty game minutes at least, whatever: the weights turn on purses and potions,
+        // and a party went between Devias's Ice Queens and the Dungeon's Skeleton Archers every
+        // ten minutes.
+        if (const auto now = want.find({g.map, g.breed});
+            now != want.end() && (now->second.first >= std::get<0>(most) || leader->clockNow() - g.chosenAt < kHolds)) {
+            best = now->first;
+        }
+        // **Blood Castle together** (the user, 2026-10-09: "and maybe go to bc together?"): the
+        // highest castle two or more of them can go into; each who can is sent into it at the
+        // door's time, and the party holds while any of them is due there or inside.
+        int castle = 0;
+        bool castleBusy = false;
+        for (int c = sim::kCastlesBuilt; c >= 1 && castle == 0; --c) {
+            int can = 0;
+            for (const std::string& m : g.members) {
+                if (NetBot* one = bot(m); one && in(m) && (one->castlesOpen() & (1 << c))) ++can;
+            }
+            if (can >= 2) castle = c;
+        }
+        for (const std::string& m : g.members) {
+            if (NetBot* one = bot(m); one && castle > 0 && (one->castleTime() || one->inCastle())) castleBusy = true;
+        }
+        // Said once a castle: a cloak spent or made turned it off and on all evening.
+        if (castle > 0 && castle != g.saidCastle) {
+            say(*leader, "Blood Castle " + std::to_string(castle) + " together at its door.");
+            g.saidCastle = castle;
+        }
+        g.castle = castle;
+        // Ten game minutes with no one stuck, or nothing the party can stand: "stuck" turns on a
+        // purse and a bag of potions, and a party broken up the moment it was not formed again
+        // a minute later, all day.
+        if ((anyStuck && best.first >= 0) || g.fixed || castleBusy) g.clearSince = -1;
+        else if (g.clearSince < 0) g.clearSince = leader->clockNow();
+        if (g.clearSince >= 0 && leader->clockNow() - g.clearSince > kSettles) {
+            say(*leader, "Thanks all, we're done here.");
+            for (const std::string& m : g.members) {
+                if (NetBot* one = bot(m)) {
+                    one->askParty(net::PartyWhat::Leave, "");
+                    one->expect("");
+                    one->lead(Bot::Lead{}, "", "");
+                }
+            }
+            std::printf("  [board] the party of %s breaks up\n", g.leader.c_str());
+            g.gone = true;
+            return;
+        }
+        bool healer = false;
+        for (const std::string& m : g.members) {
+            if (NetBot* one = bot(m); one && one->kin() == sim::Kin::FairyElf && in(m)) healer = true;
+        }
+        if (best != std::pair<int, int>{g.map, g.breed} && best.first >= 0) {
+            const WorldRow* at = worldOf(best.first);
+            say(*leader, "Next: " + label[best] + " in " + (at ? at->name : "?") +
+                             (g.tank.empty() ? "" : ", " + g.tank + " tanks") + ".");
+        }
+        if (best != std::pair<int, int>{g.map, g.breed}) g.chosenAt = leader->clockNow();
+        g.map = best.first;
+        g.breed = best.second;
+        for (const std::string& m : g.members) {
+            NetBot* one = bot(m);
+            if (!one) continue;
+            if (!in(m)) {
+                one->lead(Bot::Lead{}, "", "");  // not in yet: his own way until he is
+                continue;
+            }
+            Bot::Lead lead;
+            lead.map = g.map;
+            lead.size = int(state.members.size());
+            lead.healer = healer;
+            lead.role = Bot::roleOf(one->kin(), m == g.tank);
+            lead.castle = g.castle > 0 && (one->castlesOpen() & (1 << g.castle)) ? g.castle : 0;
+            // Every breed on that map any member still wants (and can stand).
+            for (const auto& [key, w] : want) {
+                if (key.first == g.map) lead.breeds.push_back(key.second);
+            }
+            // His own quest among them: the chosen breed's first.
+            for (const Bot::Need& n : needs_[m]) {
+                if (n.map != g.map || std::find(lead.breeds.begin(), lead.breeds.end(), n.breed) == lead.breeds.end()) continue;
+                if (lead.quest < 0 || n.breed == g.breed) lead.quest = n.quest;
+                if (n.breed == g.breed) break;
+            }
+            one->lead(std::move(lead), g.leader, g.tank);
+        }
+    }
+    int leaderMap(NetBot& leader) const {
+        for (const WorldRow& w : kWorlds) {
+            if (leader.world() == w.name) return w.map;
+        }
+        return -1;
+    }
+    void say(NetBot& leader, const std::string& text) { leader.sayOn(net::Channel::Party, text); }
+
+    // The quests the members of a party are stuck on.
+    std::set<int> stuckOn(const Group& g) {
+        std::set<int> out;
+        for (const std::string& m : g.members) {
+            for (const Bot::Need& n : needs_[m]) {
+                if (stuck(n)) out.insert(n.quest);
+            }
+        }
+        return out;
+    }
+    // **Two parties at one quest are one** (a run had Dorrak and Sylwen at the Catacombs' Cyclops
+    // and Brann, Maelis and Corvin beside them): the smaller's members leave it and are invited
+    // into the larger, when five hold them all.
+    void merge() {
+        for (Group& a : groups_) {
+            for (Group& b : groups_) {
+                if (&a == &b || a.gone || b.gone || a.fixed || b.fixed || a.forCastle || b.forCastle) continue;
+                if (a.members.size() < b.members.size() || a.members.size() + b.members.size() > size_t(sim::kPartyMost)) continue;
+                const std::set<int> mine = stuckOn(a), theirs = stuckOn(b);
+                bool shared = false;
+                for (const int q : theirs) shared |= mine.count(q) > 0;
+                if (!shared) continue;
+                for (const std::string& m : b.members) {
+                    if (NetBot* one = bot(m)) {
+                        one->askParty(net::PartyWhat::Leave, "");
+                        one->expect(a.leader);
+                    }
+                    a.members.push_back(m);
+                }
+                a.invited = -1000000;
+                std::printf("  [board] the party of %s joins %s's\n", b.leader.c_str(), a.leader.c_str());
+                b.gone = true;
+            }
+        }
+    }
+
+    // A bot in a party the board did not make leaves it: it was a run before this one's.
+    void loose(std::chrono::steady_clock::time_point now) {
+        for (const auto& [name, one] : byName_) {
+            if (grouped(name) || one->partyState().members.empty()) continue;
+            auto& at = leftAt_[name];
+            if (at != 0 && one->clockNow() - at < 10 * 20) continue;
+            at = one->clockNow();
+            one->askParty(net::PartyWhat::Leave, "");
+        }
+    }
+
+    // Parties formed from the stuck, a quest at a time, the most stuck first.
+    void form(std::chrono::steady_clock::time_point now) {
+        std::map<int, std::vector<std::string>> byQuest;
+        std::map<int, Bot::Need> first;
+        std::set<std::string> free;
+        for (const auto& [name, one] : byName_) {
+            if (grouped(name) || !one->partyState().members.empty()) continue;
+            free.insert(name);
+            std::set<int> quests;
+            for (const Bot::Need& n : needs_[name]) {
+                if (!stuck(n) || !quests.insert(n.quest).second) continue;
+                byQuest[n.quest].push_back(name);
+                if (!first.count(n.quest)) first[n.quest] = n;
+            }
+        }
+        // Free bots due at the same castle's door go in together.
+        for (int c = sim::kCastlesBuilt; c >= 1; --c) {
+            std::vector<std::string> members;
+            for (const std::string& name : free) {
+                NetBot& one = *bot(name);
+                if (one.castleTime() && (one.castlesOpen() & (1 << c)) && members.size() < size_t(sim::kPartyMost)) {
+                    members.push_back(name);
+                }
+            }
+            if (members.size() < 2) continue;
+            std::stable_sort(members.begin(), members.end(), [&](const std::string& a, const std::string& b) {
+                return tankish(bot(a)->kin()) > tankish(bot(b)->kin());
+            });
+            Group g;
+            g.members = members;
+            g.leader = members.front();
+            g.forCastle = true;
+            std::string said;
+            for (const std::string& m : members) {
+                free.erase(m);
+                said += (said.empty() ? "" : ", ") + m;
+            }
+            std::printf("  [board] a party for Blood Castle %d: %s\n", c, said.c_str());
+            groups_.push_back(std::move(g));
+        }
+        std::vector<std::pair<size_t, int>> order;
+        for (const auto& [q, names] : byQuest) order.push_back({names.size(), q});
+        std::sort(order.rbegin(), order.rend());
+        for (const auto& [count, q] : order) {
+            const Bot::Need& need = first[q];
+            std::vector<std::string> members;
+            for (const std::string& name : byQuest[q]) {
+                if (free.count(name) && members.size() < size_t(sim::kPartyMost)) members.push_back(name);
+            }
+            if (members.empty()) continue;
+            // A party at this quest with room takes them in.
+            bool joined = false;
+            for (Group& g : groups_) {
+                if (g.fixed || g.forCastle || !stuckOn(g).count(q)) continue;
+                for (const std::string& m : members) {
+                    if (g.members.size() >= size_t(sim::kPartyMost)) break;
+                    g.members.push_back(m);
+                    free.erase(m);
+                    g.invited = -1000000;
+                    std::printf("  [board] %s joins %s's party for %s\n", m.c_str(), g.leader.c_str(), sim::questAt(q).title);
+                    joined = true;
+                }
+                if (joined) break;
+            }
+            if (joined) continue;
+            const auto has = [&](auto test) {
+                for (const std::string& m : members) {
+                    if (test(*bot(m))) return true;
+                }
+                return false;
+            };
+            const auto recruit = [&](auto test) {
+                for (const std::string& name : free) {
+                    if (members.size() >= size_t(sim::kPartyMost)) return;
+                    if (std::find(members.begin(), members.end(), name) != members.end()) continue;
+                    NetBot& one = *bot(name);
+                    if (test(one) && one.helps(need.map, need.breed)) {
+                        members.push_back(name);
+                        return;
+                    }
+                }
+            };
+            const auto isTank = [](NetBot& b) { return tankish(b.kin()); };
+            const auto isElf = [](NetBot& b) { return b.kin() == sim::Kin::FairyElf; };
+            if (!has(isTank)) recruit(isTank);
+            if (!has(isElf)) recruit(isElf);
+            while (members.size() < 3) {
+                const size_t was = members.size();
+                recruit([](NetBot&) { return true; });
+                if (members.size() == was) break;
+            }
+            if (members.size() < 2) {
+                // Alone with it: said on his map, once in ten minutes.
+                NetBot& one = *bot(members.front());
+                auto& at = lfgAt_[one.name()];
+                if (at == 0 || one.clockNow() - at > 10 * 60 * 20) {
+                    at = one.clockNow();
+                    const WorldRow* w = worldOf(need.map);
+                    one.sayOn(net::Channel::Map, "LFG " + std::string(sim::questAt(q).title) + ", " + need.label +
+                                                     " in " + (w ? w->name : "?") + ", level " +
+                                                     std::to_string(one.level()));
+                }
+                continue;
+            }
+            // The tank leads -- a knight before a gladiator -- else the highest level.
+            std::stable_sort(members.begin(), members.end(), [&](const std::string& a, const std::string& b) {
+                const auto rank = [&](const std::string& n) {
+                    const sim::Kin k = bot(n)->kin();
+                    return k == sim::Kin::DarkKnight ? 0 : k == sim::Kin::MagicGladiator ? 1 : 2;
+                };
+                if (rank(a) != rank(b)) return rank(a) < rank(b);
+                return bot(a)->level() > bot(b)->level();
+            });
+            Group g;
+            g.members = members;
+            g.leader = members.front();
+            std::string said;
+            for (const std::string& m : members) {
+                free.erase(m);
+                said += (said.empty() ? "" : ", ") + m;
+            }
+            std::printf("  [board] a party for %s (%s): %s\n", sim::questAt(q).title, need.label.c_str(), said.c_str());
+            groups_.push_back(std::move(g));
+        }
+    }
+
+    static constexpr int64_t kSettles = 10 * 60 * 20;
+    static constexpr int64_t kHolds = 20 * 60 * 20;
+    bool forms_;
+    std::vector<Group> groups_;
+    std::map<std::string, NetBot*> byName_;
+    std::map<std::string, std::vector<Bot::Need>> needs_;
+    std::map<std::pair<int, int>, bool> stands_;  // this group: (map, breed) the party can stand
+    std::map<std::string, int64_t> leftAt_, lfgAt_;  // each bot's clock
+    std::chrono::steady_clock::time_point next_{};
 };
 
 }  // namespace
@@ -487,7 +965,8 @@ int main(int argc, char** argv) {
     double hours = 0.0;  // 0: until stopped
     bool quests = true;
     bool chatty = false;
-    bool party = false;
+    bool party = false, parties = false;
+    int threads = 0;  // --threads N: 0, up to four
     std::string claude;
     std::vector<std::pair<std::string, sim::Kin>> wanted;
     for (int i = 1; i < argc; ++i) {
@@ -499,6 +978,8 @@ int main(int argc, char** argv) {
         else if (a == "--no-quests") quests = false;
         else if (a == "--chatty") chatty = true;
         else if (a == "--party") party = true;
+        else if (a == "--parties") parties = true;
+        else if (a == "--threads" && i + 1 < argc) threads = std::atoi(argv[++i]);
         else if (a == "--claude" && i + 1 < argc) claude = argv[++i];
         else if (a.find(':') != std::string::npos) {
             const std::string name = a.substr(0, a.find(':')), cls = a.substr(a.find(':') + 1);
@@ -512,11 +993,16 @@ int main(int argc, char** argv) {
             }
         } else {
             std::fprintf(stderr, "usage: netbot [--server HOST] [--port N] [--dir DIR] [--hours H] "
-                                 "[--no-quests] [--chatty] [--party] [--claude DIR] NAME:dk|dw|elf|mg ...\n");
+                                 "[--no-quests] [--chatty] [--party | --parties] [--threads N] [--claude DIR] NAME:dk|dw|elf|mg ...\n");
             return 2;
         }
     }
-    if (wanted.empty()) wanted = {{"Ragnar", sim::Kin::DarkKnight}, {"Elora", sim::Kin::DarkWizard}};
+    // The server's own bots (docs/party.md, the user's of 2026-10-09: "DK, Elf, DW, MG and a
+    // second DK"): Ragnar and Elora, and an elf, a gladiator and a second knight beside them.
+    if (wanted.empty()) {
+        wanted = {{"Ragnar", sim::Kin::DarkKnight}, {"Elora", sim::Kin::DarkWizard}, {"Ilaria", sim::Kin::FairyElf},
+                  {"Varkas", sim::Kin::MagicGladiator}, {"Hrothgar", sim::Kin::DarkKnight}};
+    }
     // The realm's own log is every blow; the bots say what matters themselves.
     if (!std::getenv("BOT_LOG")) core::logSilence(true);
     std::setvbuf(stdout, nullptr, _IOLBF, 0);  // the brain's lines as they come, into a file too
@@ -528,38 +1014,70 @@ int main(int argc, char** argv) {
         bots.push_back(std::make_unique<NetBot>(name, kin, host, port, dir, quests, chatty));
     }
     if (!claude.empty()) bots.front()->driveFrom(claude);
+    Board board(parties);
     if (party) {
         std::vector<std::string> names;
         for (const auto& one : wanted) names.push_back(one.first);
-        for (size_t i = 0; i < bots.size(); ++i) bots[i]->partyWith(names, i == 0);
+        board.fix(names);
     }
-    std::vector<bool> up(bots.size(), false);
-    std::vector<std::chrono::steady_clock::time_point> retryAt(bots.size());
+    // **The bots on --threads N threads** (the user, 2026-10-09: "cant we speed up this things?
+    // we can control server thics"): each bot's mirror and brain are his own, so a thread plays a
+    // share of them; one thread kept five bots at a full core at mu2_server --speed 200. The
+    // board and the minute's report hold every bot's lock while they read and lead them.
+    if (threads <= 0) threads = int(std::min<size_t>(bots.size(), 4));
+    threads = std::clamp<int>(threads, 1, int(bots.size()));
+    std::vector<std::mutex> locks(bots.size());
+    std::atomic<bool> done{false};
     const auto start = std::chrono::steady_clock::now();
+    const auto play = [&](int t) {
+        std::vector<bool> up(bots.size(), false);
+        std::vector<std::chrono::steady_clock::time_point> retryAt(bots.size());
+        while (!done) {
+            const auto now = std::chrono::steady_clock::now();
+            for (size_t i = size_t(t); i < bots.size(); i += size_t(threads)) {
+                std::lock_guard<std::mutex> hold(locks[i]);
+                if (!up[i]) {
+                    if (now < retryAt[i]) continue;
+                    up[i] = bots[i]->connect();
+                    if (!up[i]) retryAt[i] = now + std::chrono::seconds(10);
+                    continue;
+                }
+                // A line gone -- another world, or the server restarted: he comes back with his
+                // token, and the server says where he is.
+                if (!bots[i]->update()) {
+                    up[i] = false;
+                    retryAt[i] = now + std::chrono::milliseconds(500);
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    };
+    std::vector<std::thread> players;
+    for (int t = 0; t < threads; ++t) players.emplace_back(play, t);
+    const auto all = [&](auto fn) {
+        std::vector<std::unique_lock<std::mutex>> held;
+        for (std::mutex& one : locks) held.emplace_back(one);
+        fn();
+    };
     auto reportAt = start + std::chrono::minutes(1);
+    auto boardAt = start;
     while (!g_stop) {
         const auto now = std::chrono::steady_clock::now();
         if (hours > 0 && now - start > std::chrono::duration<double>(hours * 3600.0)) break;
-        for (size_t i = 0; i < bots.size(); ++i) {
-            if (!up[i]) {
-                if (now < retryAt[i]) continue;
-                up[i] = bots[i]->connect();
-                if (!up[i]) retryAt[i] = now + std::chrono::seconds(10);
-                continue;
-            }
-            // A line gone -- another world, or the server restarted: he comes back with his
-            // token, and the server says where he is.
-            if (!bots[i]->update()) {
-                up[i] = false;
-                retryAt[i] = now + std::chrono::milliseconds(500);
-            }
+        if ((party || parties) && now >= boardAt) {
+            all([&] { board.tick(bots); });
+            boardAt = now + std::chrono::seconds(1);
         }
         if (now >= reportAt) {
-            for (const auto& bot : bots) bot->report();
+            all([&] {
+                for (const auto& bot : bots) bot->report();
+            });
             reportAt = now + std::chrono::minutes(1);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
+    done = true;
+    for (std::thread& one : players) one.join();
     for (const auto& bot : bots) bot->report();
     return 0;
 }

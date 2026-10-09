@@ -69,6 +69,12 @@ constexpr double kTickSeconds = 0.05;  // 20 Hz, the realm's own (sim/realm.h)
 // Claude bot's, tools/netbot/claude.h: "you need to find a way how massively to speed up
 // things"). The clients follow whatever ticks come; nothing in the realm reads the wall.
 Clock::duration g_tick = std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(kTickSeconds));
+// **And the wall clock the ticks carry, N times as fast** from the server's start: Blood Castle's
+// door and a quest's twelve-hour rest read it (Realm::wallClock), and at --speed 100 a castle
+// party stood at the Messenger for game hours while the door kept real minutes.
+int g_speed = 1;
+const int64_t g_wallStart = int64_t(std::time(nullptr));
+int64_t wallNow() { return g_wallStart + (int64_t(std::time(nullptr)) - g_wallStart) * g_speed; }
 // An order that sets a standing player off takes his world's tick at once, and the world's clock
 // starts again from there: what the client does for a click on its own (game/play.cpp), done
 // where the ticks are made. It was 0 to 50 ms, 25 on average, between his order reaching the
@@ -1163,7 +1169,7 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
           const std::vector<std::unique_ptr<World>>& worlds, bool early = false) {
     net::Tick t;
     t.early = early;
-    t.wallClock = int64_t(std::time(nullptr));
+    t.wallClock = wallNow();
     world.weather.tick(float(kTickSeconds),
                        world.realm->invasionPhase() != sim::InvasionPhase::Quiet);
     t.rain = world.weather.wet;
@@ -1324,7 +1330,10 @@ int main(int argc, char** argv) {
         if (a == "--port" && i + 1 < argc) port = std::atoi(argv[++i]);
         else if (a == "--assets" && i + 1 < argc) assets = argv[++i];
         else if (a == "--store" && i + 1 < argc) store = argv[++i];
-        else if (a == "--speed" && i + 1 < argc) g_tick /= std::max(1, std::atoi(argv[++i]));
+        else if (a == "--speed" && i + 1 < argc) {
+            g_speed = std::max(1, std::atoi(argv[++i]));
+            g_tick /= g_speed;
+        }
         else if (a == "--storm") g_storm = true;
         else if (a == "--invasion") g_invasion = true;
         else if (a == "--map-cap" && i + 1 < argc) g_mapCap = std::max(1, std::atoi(argv[++i]));
