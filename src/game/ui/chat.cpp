@@ -29,6 +29,10 @@ uint32_t faded(uint32_t abgr, float alpha) {
 // The channels' inks (the mockup's): told apart by lightness as well as hue.
 constexpr uint32_t kMapInk = hex(0xd9cfbd), kPartyInk = hex(0x7fb6f2), kGuildInk = hex(0x93d67e);
 constexpr uint32_t kWhisperInk = hex(0xe7a0e4), kSystemInk = hex(0xd6ad5c);
+// A speaker's name, on every channel: the green of the name over a player's head (vitals.cpp,
+// kTagGreen), apart from the line's own ink (the user, 2026-10-09: "color char name differnet
+// color", "use green", "same as label"). The channel is in the small word before it.
+constexpr uint32_t kNameInk = gfx::rgba(0.18f, 1.0f, 0.18f);
 constexpr uint32_t kBody = hex(0xd9cfbd), kWhisperBody = hex(0xefd3ee), kQuiet = hex(0x8f8575);
 constexpr uint32_t kTabIdle = hex(0x7d7366), kTabWhisper = hex(0xa77ea4), kTabLit = hex(0xfbe3a4);
 constexpr uint32_t kGoldBar = hex(0xe0b65c), kGoldGlow = hex(0xc8a258);
@@ -698,7 +702,13 @@ void Chat::build(float u, const Pointer& pointer) {
         const float base = top + kRow * u * 0.74f;
         float x = logBox_.x + (row.first ? 0.0f : 14.0f * u);
         if (line.name.empty()) {
-            body(lines_, x, base, size, kSystemInk, row.text, u);
+            // An invite's asker in the players' green, the rest in the server's gold.
+            if (row.first && !line.inviter.empty() && row.text.rfind(line.inviter, 0) == 0) {
+                x += body(lines_, x, base, size, kNameInk, line.inviter, u);
+                body(lines_, x, base, size, kSystemInk, row.text.substr(line.inviter.size()), u);
+            } else {
+                body(lines_, x, base, size, kSystemInk, row.text, u);
+            }
             continue;
         }
         const uint32_t ink = channelInk(line.channel);
@@ -709,7 +719,7 @@ void Chat::build(float u, const Pointer& pointer) {
                                     : line.channel == net::Channel::Party ? "Party"
                                                                           : "Guild";
             x += word(lines_, x, base, kTag * u, faded(ink, 0.75f), tag, u) + 6.0f * u;
-            x += body(lines_, x, base, size, ink, out ? line.to : line.name, u);
+            x += body(lines_, x, base, size, kNameInk, out ? line.to : line.name, u);
             x += body(lines_, x, base, size, kQuiet, ": ", u);
         }
         body(lines_, x, base, size, line.channel == net::Channel::Whisper ? kWhisperBody : kBody, row.text, u);
@@ -787,9 +797,12 @@ void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointe
     const std::string kicker = "Party";
     word(inviteDrawn_, card.midX() - wordWidth(kTag * u, kicker) * 0.5f, card.y + 18.0f * u, kTag * u,
          faded(kPartyInk, alpha), kicker, u);
-    const std::string question = line.inviter + " invites you to a party.";
-    body(inviteDrawn_, card.midX() - bodyWidth(21.0f * u, question) * 0.5f, card.y + 50.0f * u, 21.0f * u,
-         faded(hex(0xf3e8d4), alpha), question, u);
+    // The asker's name in the players' green, the rest in bone, the whole centred.
+    const std::string asks = " invites you to a party.";
+    const float wide = bodyWidth(21.0f * u, line.inviter) + bodyWidth(21.0f * u, asks);
+    const float qx = card.midX() - wide * 0.5f;
+    const float named = body(inviteDrawn_, qx, card.y + 50.0f * u, 21.0f * u, faded(kNameInk, alpha), line.inviter, u);
+    body(inviteDrawn_, qx + named, card.y + 50.0f * u, 21.0f * u, faded(hex(0xf3e8d4), alpha), asks, u);
     const float bw = 112.0f * u, bh = 36.0f * u, gap = 12.0f * u;
     for (const bool accept : {true, false}) {
         const Box box{card.midX() + (accept ? -gap * 0.5f - bw : gap * 0.5f), card.bottom() - bh - 6.0f * u, bw, bh};
@@ -845,6 +858,10 @@ void Chat::buildClosed(float u) {
         std::string text = line.text;
         if (line.name.empty()) {
             while (!text.empty() && bodyWidth(size, text) > wide) text.pop_back();
+            if (!line.inviter.empty() && text.rfind(line.inviter, 0) == 0) {
+                x += body(lines_, x, base, size, faded(kNameInk, a), line.inviter, u);
+                text = text.substr(line.inviter.size());
+            }
             body(lines_, x, base, size, faded(kSystemInk, a), text, u);
             continue;
         }
@@ -856,7 +873,7 @@ void Chat::buildClosed(float u) {
                                 : line.channel == net::Channel::Guild ? "Guild"
                                                                       : "";
         if (!tag.empty()) x += word(lines_, x, base, kTag * u, faded(ink, a), tag, u) + 6.0f * u;
-        x += body(lines_, x, base, size, faded(ink, a), out ? line.to : line.name, u);
+        x += body(lines_, x, base, size, faded(kNameInk, a), out ? line.to : line.name, u);
         x += body(lines_, x, base, size, faded(kQuiet, a), ": ", u);
         const float room = panel_.x + 12.0f * u + wide - x;
         bool cut = false;
