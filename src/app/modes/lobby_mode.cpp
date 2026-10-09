@@ -317,9 +317,12 @@ bool LobbyMode::open(Context& ctx) {
     if (!args.lobbyName.empty()) lobby_.setTyped(args.lobbyName);
     if (args.lobbyDelete && pedestals_.picked() >= 0) lobby_.askDelete();
     // With nobody on the account the create window opens by itself (CCharSelMainWin), on the
-    // knight unless --lobby-create opened it on another class.
+    // knight unless --lobby-create opened it on another class. Not with no server: an empty
+    // roster then says nothing about the account, and its OK leaves the screen as it is (the
+    // user, 2026-10-09: "when you are not connected to server and go to char screen it show to
+    // create new character which is not correct").
     if (offline_) {
-        lobby_.notice("Cannot reach the server.", true);
+        lobby_.notice("Cannot reach the server.");
     } else if (roster_.empty() && !lobby_.creating()) {
         lobby_.openCreate(1);
     }
@@ -422,6 +425,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
     game::Lobby::View look;
     look.roster = &roster_;
     look.picked = pedestals_.picked();
+    look.offline = !link_.up();
     const bool figuresHear = !menuWasUp && !lobby_.takesPointer() && !lobby_.creating();
     look.hovered = figuresHear ? pedestals_.hover(viewProj, w, h, px, py) : -1;
     for (int slot = 0; slot < game::kRosterSlots; ++slot) {
@@ -446,7 +450,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         net::Roster answer;
         const bool wasUp = link_.up();
         if (link_.poll(answer)) answered(answer);
-        if (wasUp && !link_.up()) lobby_.notice("The connection to the server is gone.", true);
+        if (wasUp && !link_.up()) lobby_.notice("The connection to the server is gone.");
     }
     if (asked.create) {
         // The screen's own refusals before the server's (sim::goodName); the rest are the
@@ -475,7 +479,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         for (const game::Seat& one : roster_) {
             if (one.slot != asked.drop) continue;
             if (!link_.up()) {
-                lobby_.notice("Cannot reach the server.", true);
+                lobby_.notice("Cannot reach the server.");
                 play(refused_);
             } else if (making_.empty() && !deleting_) {
                 deleting_ = true;

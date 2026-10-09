@@ -150,7 +150,7 @@ void field(gfx::Canvas& canvas, const Box& box, float u, const std::string& text
 
 bool Lobby::Drawn::operator==(const Drawn& o) const {
     if (width != o.width || height != o.height || picked != o.picked || hovered != o.hovered ||
-        names != o.names || creating != o.creating || classRow != o.classRow ||
+        names != o.names || creating != o.creating || offline != o.offline || classRow != o.classRow ||
         typed != o.typed || box != o.box || said != o.said || caret != o.caret ||
         bust != o.bust ||
         over != o.over || pressing != o.pressing) {
@@ -264,7 +264,7 @@ bool Lobby::enabled(int target) const {
     const int count = view_.roster ? int(view_.roster->size()) : 0;
     switch (target) {
         case kClass3: return gladiatorOpen();
-        case kCreate: return count < kRosterSlots;
+        case kCreate: return count < kRosterSlots && !view_.offline;
         case kMenu: return true;
         case kEnter:
         case kDelete: return view_.picked >= 0 && view_.picked < kRosterSlots;
@@ -476,6 +476,7 @@ void Lobby::update(float seconds, float width, float height, const Pointer& poin
     std::copy(&view_.plate[0][0], &view_.plate[0][0] + kRosterSlots * 2, &now_.plate[0][0]);
     std::copy(view_.plateSeen, view_.plateSeen + kRosterSlots, now_.plateSeen);
     now_.creating = creating_;
+    now_.offline = view_.offline;
     now_.classRow = classRow_;
     now_.typed = typed_;
     now_.box = box_;

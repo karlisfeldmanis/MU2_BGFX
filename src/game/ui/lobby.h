@@ -60,6 +60,8 @@ public:
         // Each slot's plate anchor in pixels, and whether it is on screen.
         float plate[kRosterSlots][2] = {};
         bool plateSeen[kRosterSlots] = {};
+        // No line to the server: nothing can be made, so Create stands inactive.
+        bool offline = false;
     };
 
     struct Result {
@@ -146,6 +148,7 @@ private:
         float plate[kRosterSlots][2] = {};
         bool plateSeen[kRosterSlots] = {};
         bool creating = false;
+        bool offline = false;
         int classRow = 1;
         std::string typed;
         Ask box = Ask::None;
