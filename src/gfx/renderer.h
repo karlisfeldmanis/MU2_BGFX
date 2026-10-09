@@ -18,6 +18,8 @@
 
 namespace mu::gfx {
 
+class GpuCasters;
+
 struct Camera {
     float position[3] = {0, 0, 0};
     float target[3] = {0, 0, 0};
@@ -304,10 +306,17 @@ public:
         uint32_t first = 0;
         uint32_t count = 0;
         bool posed = false;  // Batch::posed: any of them in a pose of its own this frame
+        // Its solid parts are drawn by the GPU's own cull (gfx/casters.h) in the sun's split.
+        bool merged = false;
     };
     void setResidentCasters(const std::vector<ResidentBatch>* batches) {
         residentCasters_ = batches;
     }
+    // The same casters' solid parts culled and drawn by the GPU (gfx/casters.h), handed in
+    // beside setResidentCasters and taken by the same draw. Null, not ready, or switched off
+    // (setGpuCasting, --cpu-casters) draws them as resident batches like the rest.
+    void setGpuCasters(const GpuCasters* casters) { gpuCasters_ = casters; }
+    void setGpuCasting(bool on) { gpuCasting_ = on; }
 
     // --- the shadow probe -------------------------------------------------------------
     // Where the sun's split stood this frame, measured against a grid fixed to the WORLD --
@@ -512,6 +521,7 @@ private:
         int hiddenMaterial = -1;  // Drawable::hiddenMaterial, the batch's own
         // A resident buffer's run (ResidentBatch) instead of the frame's instance buffer.
         bgfx::DynamicVertexBufferHandle resident = BGFX_INVALID_HANDLE;
+        bool merged = false;  // ResidentBatch::merged
     };
 
     bool createTargets(int width, int height);
@@ -537,6 +547,19 @@ private:
     // those alone (their own blended pass). Set around a call and put back to All.
     enum class SoftSelect : uint8_t { All, Skip, Only };
     SoftSelect softSelect_ = SoftSelect::All;
+    // Set around the sun's submitBatches when the GPU drew the merged batches' solid parts:
+    // those parts are left out, everything else of the batch drawn as ever.
+    bool skipMerged_ = false;
+    // The GPU's casters (gfx/casters.h): the three compute steps on the sun's view, then its
+    // two indirect draws. False when it drew nothing, and the batches must draw themselves.
+    bool drawGpuCasters(const GpuCasters& casters, const float* lightViewProj, uint64_t state);
+    const GpuCasters* gpuCasters_ = nullptr;  // this draw's, then cleared
+    bool gpuCasting_ = true;
+    bgfx::ProgramHandle castClearProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle castCullProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle castArgsProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uCast_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uCastPlanes_ = BGFX_INVALID_HANDLE;
     void submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                        bgfx::ProgramHandle skinnedProgram, const std::vector<Batch>& batches,
                        const bgfx::InstanceDataBuffer& idb, uint64_t state, bool bindMaterial,

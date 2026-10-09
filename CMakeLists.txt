@@ -74,16 +74,23 @@ if(FS_FILES)
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
     OUT_FILES_VAR FS_OUT PROFILES metal)
 endif()
+# Compute: the town's casters culled and drawn by the GPU itself (gfx/casters.h).
+file(GLOB CS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/cs_*.sc)
+if(CS_FILES)
+  bgfx_compile_shaders(TYPE COMPUTE SHADERS ${CS_FILES}
+    VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
+    OUT_FILES_VAR CS_OUT PROFILES metal)
+endif()
 # And the includes. bgfx_compile_shaders makes each shader depend on its own .sc and on
 # varying.def.sc and on nothing else, so an edit to common.sh, shadow.sh or lights.sh rebuilt
 # no shader at all and the run drew with the old one -- found in sprint 8a, when a falloff
 # changed in lights.sh measured identical to the one it replaced. Every shader depends on every
 # include: there are few of both and a rebuild of all of them takes seconds.
 file(GLOB SHADER_INCLUDES CONFIGURE_DEPENDS ${SHADER_DIR}/*.sh)
-foreach(out ${VS_OUT} ${FS_OUT})
+foreach(out ${VS_OUT} ${FS_OUT} ${CS_OUT})
   add_custom_command(OUTPUT ${out} APPEND DEPENDS ${SHADER_INCLUDES})
 endforeach()
-add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT})
+add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT} ${CS_OUT})
 
 endif()  # NOT MU2_SERVER_ONLY: bgfx, glfw, shaders
 
@@ -217,6 +224,8 @@ add_library(mu_gfx STATIC
   src/gfx/metalfx.mm
   src/gfx/window_mac.mm
   src/gfx/renderer_probe.cpp
+  src/gfx/renderer_casters.cpp
+  src/gfx/casters.cpp
   src/gfx/renderer_outline.cpp
   src/gfx/renderer_lights.cpp
   src/gfx/effects.cpp

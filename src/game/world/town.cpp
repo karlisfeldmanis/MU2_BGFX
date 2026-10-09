@@ -72,7 +72,7 @@ bool Town::readTable(const std::string& assetDir, const std::string& world) {
 }
 
 size_t Town::loadMeshes(const std::string& assetDir, const std::vector<bool>& wanted,
-                        content::Textures& textures) {
+                        content::Textures& textures, bool forGpu) {
     glowLevels_.assign(town_.instances.size(), 1.0f);
     paletteRows_.assign(town_.instances.size(), -1);
     meshes_.resize(town_.models.size());
@@ -94,6 +94,13 @@ size_t Town::loadMeshes(const std::string& assetDir, const std::vector<bool>& wa
             ++failed;
             continue;
         }
+        // The same 48 bytes in the same order (content/mesh.h asserts it of both).
+        if (forGpu && !cooked.isSkinned()) {
+            casters_.addMesh(&meshes_[i],
+                             reinterpret_cast<const content::Vertex*>(cooked.vertices.data()),
+                             uint32_t(cooked.vertices.size()), cooked.indices.data(),
+                             uint32_t(cooked.indices.size()));
+        }
         triangles_ += meshes_[i].triangleCount() * model.instances;
     }
     return failed;
@@ -103,7 +110,7 @@ bool Town::open(const std::string& assetDir, const std::string& world,
                 content::Textures& textures) {
     const int64_t started = bx::getHPCounter();
     if (!readTable(assetDir, world)) return false;
-    const size_t failed = loadMeshes(assetDir, {}, textures);
+    const size_t failed = loadMeshes(assetDir, {}, textures, true);
 
     loadSeconds_ = double(bx::getHPCounter() - started) / double(bx::getHPFrequency());
     core::logf("town %s: %zu placements of %zu models in %zu chunks of %u tiles, "
@@ -162,6 +169,7 @@ bool Town::openStage(const std::string& assetDir, const std::string& world,
 }
 
 void Town::shutdown() {
+    casters_.shutdown();
     for (content::Mesh& mesh : meshes_) mesh.shutdown();
     meshes_.clear();
     town_ = content::CookedTown();
@@ -261,10 +269,12 @@ void Town::buildResident() {
             gfx::Renderer::packInstance(d, &records_[size_t(residentSlot_[i]) * gfx::Renderer::kInstanceFloats]);
         }
     }
+    // Compute-read as well: the GPU's cull reads it (gfx/casters.h).
     resident_ = bgfx::createDynamicVertexBuffer(
         bgfx::copy(records_.data(), uint32_t(records_.size() * sizeof(float))),
-        gfx::Renderer::instanceLayout());
+        gfx::Renderer::instanceLayout(), BGFX_BUFFER_COMPUTE_READ);
     for (auto& b : residentBatches_) b.buffer = resident_;
+    casters_.build(residentBatches_, resident_, slots);
 }
 
 const std::vector<gfx::Renderer::ResidentBatch>& Town::residentCasters() {

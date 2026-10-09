@@ -55,6 +55,10 @@ struct Args {
     // and the default for a few hours on 2026-10-05, until the user played it: "i think its was
     // pretties before". MetalFX is the look.
     bool metalfx = true;
+    // The sun draws the town's solid casters off the GPU's own cull and two indirect draws
+    // (gfx/casters.h). --cpu-casters has them drawn as one batch a model part, as before
+    // 2026-10-09: the baseline the GPU's cull is measured against.
+    bool gpuCasters = true;
     // Frames a second to hold the picture to, 0 for as fast as it will go. A pace, not a
     // limit on the work: it waits after the present and the wait is kept out of the
     // statistics. Every measurement is taken at 0. See the remark in application.cpp.

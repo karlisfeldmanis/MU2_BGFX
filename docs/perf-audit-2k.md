@@ -198,6 +198,43 @@ fp16 runs at the same rate as fp32. The benefit is fewer registers (more threads
 and smaller varyings, not double speed. It would mean twin shaders to maintain for fs_shade
 and fs_ground. Not recommended before everything in A and B is done.
 
+### C4. The sun's solid casters culled and drawn by the GPU, built 2026-10-09
+
+The user: "we want to try to move more processes to gpu". A Release profile of Lorencia's
+town first (`sample`, 8 s at ~190 fps): the main thread waited on the GPU for about 1% of
+its time, and **about 54% of it was bgfx's Metal encoding**: per draw, textures, samplers and
+pipeline state bound again and the draw issued, for 1,100-1,500 draws a frame. Renderer::draw
+built the batches in another ~15%, posing the crowd ~5% (0.13 ms, so animation on the GPU
+would buy nothing), and bgfx making a new MTLBuffer for every buffer update ~5%. By pass, in
+mesh draws a frame: shadow 280 (161 of them solid static parts of the resident casters),
+prepass 195, shade 195, probe 88 on its frames, sprites ~300.
+
+`gfx/casters.h` takes the 161: every static town model's vertices and indices in one buffer
+pair, three compute steps on the sun's view (`shaders/cs_cast_*.sc`: nought a count a
+model, test each placement's sphere against the split and copy the ones inside into their
+model's run, write one indirect draw a solid part), then two submits that Metal runs back to
+back with nothing bound between them. Cutouts, casting glows and skinned models keep their
+own draws. `--cpu-casters` is the old way, for A/B.
+
+**The picture is identical**: shots with and without, bit for bit, in Lorencia, Atlans (the
+swaying plants), Devias, Noria, the Lost Tower and the Dungeon. Measured in Lorencia's town,
+1080p, interleaved, two rounds each, load 12 (other sessions on the machine):
+
+| | GPU cull | batches | |
+|---|---|---|---|
+| draws a frame | ~1040 | ~1140 | |
+| frame, 1080p, `--repeat 3` | 5.098, 5.098 | 5.113, 5.114 | -0.015 |
+| frame, `--scale 0.5 --no-metalfx` (the CPU's share) | 2.685, 2.657 | 2.746, 2.700 | -0.05 |
+| shadow view timer, `--views` | 2.168, 2.171 | 2.272, 2.277 | -0.10 |
+
+**Small, and why.** The shadow pass is the cheap end of the encoding: one texture a draw,
+against four and the shine in the prepass and shade. And the frame is near even between the
+CPU and the GPU at 1080p, so taking work off one shows little until the other is cut too. The
+same machinery reaches the CPU's real share only when the prepass, shade and probe can draw a
+model's parts without binding each one's textures -- the materials in texture arrays, read by
+an index the merged vertices carry. That is the next sprint's question, and it changes how
+every material is loaded.
+
 ## Looked at and left out
 
 - **Clustered or tiled light culling.** The lamp grid already bins static lights per 2 m

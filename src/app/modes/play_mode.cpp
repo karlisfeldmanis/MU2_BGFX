@@ -1425,6 +1425,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // On the GPU: the town's casters stand in a buffer of their own and only what
             // changed is uploaded (Town::residentCasters). townCasters_ carries the rest.
             ctx.renderer.setResidentCasters(&world_.town().residentCasters());
+            ctx.renderer.setGpuCasters(&world_.town().gpuCasters());
             casters = &townCasters_;
         } else {
             world_.town().gatherAll(townDrawables_);

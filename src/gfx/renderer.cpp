@@ -11,6 +11,7 @@
 
 #include "core/files.h"
 #include "core/log.h"
+#include "gfx/casters.h"
 #include "gfx/views.h"
 
 namespace mu::gfx {
@@ -218,6 +219,8 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
         for (const content::Part& part : mesh.parts()) {
             if (int(part.material) == batch.hiddenMaterial) continue;
             const content::Material& material = mesh.materials()[part.material];
+            // Drawn already, by the GPU's own cull (drawGpuCasters).
+            if (skipMerged_ && batch.merged && !skinned && GpuCasters::takes(material)) continue;
             // Soft alpha (content::Material::softAlpha): out of the opaque prepass and shade,
             // and alone in its own blended pass after them. Every other view takes it as the
             // plain cut-out it also is.
@@ -678,6 +681,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // Taken by this draw alone (setResidentCasters).
     const std::vector<ResidentBatch>* resident = residentCasters_;
     residentCasters_ = nullptr;
+    const GpuCasters* gpuCasters = gpuCasters_;
+    gpuCasters_ = nullptr;
     const std::vector<Drawable>& casterList = casters ? *casters : drawables;
     const bool anything = !drawables.empty() || !casterList.empty() || ground != nullptr;
     if (anything) {
@@ -768,7 +773,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             if (separateCasters && resident != nullptr) {
                 for (const ResidentBatch& r : *resident) {
                     if (r.mesh == nullptr || r.count == 0 || !bgfx::isValid(r.buffer)) continue;
-                    casterBatches_.push_back(Batch{r.mesh, r.first, r.count, r.posed, -1, r.buffer});
+                    casterBatches_.push_back(
+                        Batch{r.mesh, r.first, r.count, r.posed, -1, r.buffer, r.merged});
                 }
             }
             // Without a list of its own, the sun draws what the camera draws.
@@ -867,10 +873,15 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const uint64_t depthState = BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
             bgfx::setUniform(uMaterial_, noCutout);
             if (ground) submitGround(ViewShadow, groundShadowProgram_, *ground, depthState, false);
+            // The resident casters' solid parts, culled to the split and drawn by the GPU
+            // (gfx/casters.h); the batches then draw the rest of themselves.
+            skipMerged_ = separateCasters && resident != nullptr && gpuCasters != nullptr &&
+                          drawGpuCasters(*gpuCasters, lightViewProj, depthState);
             if (!shadowBatches.empty()) {
                 submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, shadowBatches,
                               idb, depthState, false);
             }
+            skipMerged_ = false;
             // A fading figure still casts, dithered by fs_shadow. It is in the casters' own
             // list already when the camera culls separately (group() takes that list whole);
             // when it does not, that list IS the camera's, which is the one it was kept out of.

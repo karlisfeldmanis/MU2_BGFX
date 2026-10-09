@@ -13,6 +13,7 @@
 #include "content/cooked.h"
 #include "content/mesh.h"
 #include "content/texture.h"
+#include "gfx/casters.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {
@@ -141,6 +142,9 @@ public:
     // CPU every frame, which the lobby and the benches still use. A placement hidden (a roof,
     // a held-back piece) is a zero matrix in its slot, which draws nothing.
     const std::vector<gfx::Renderer::ResidentBatch>& residentCasters();
+    // And their solid parts culled and drawn by the GPU (gfx/casters.h), built with them on
+    // residentCasters()'s first call. For Renderer::setGpuCasters, after residentCasters().
+    const gfx::GpuCasters& gpuCasters() const { return casters_; }
 
     const TownCounts& counts() const { return counts_; }
     const TownCounts& casterCounts() const { return casterCounts_; }
@@ -153,8 +157,10 @@ public:
 private:
     bool readTable(const std::string& assetDir, const std::string& world);
     // Builds the meshes of the models `wanted` marks, or of every model when it is empty.
+    // `forGpu` hands each static model's geometry to casters_ as well: the map's town, and
+    // not a stage's.
     size_t loadMeshes(const std::string& assetDir, const std::vector<bool>& wanted,
-                      content::Textures& textures);
+                      content::Textures& textures, bool forGpu = false);
     void append(const content::TownInstance& instance, std::vector<gfx::Drawable>& out);
     // The drawable a placement is this frame, or false when it is not drawn at all.
     bool drawableOf(const content::TownInstance& instance, gfx::Drawable& out) const;
@@ -185,6 +191,7 @@ private:
     std::vector<float> records_;
     std::vector<uint32_t> dirty_;
     std::vector<uint8_t> isDirty_;
+    gfx::GpuCasters casters_;
 };
 
 }  // namespace mu::game

@@ -42,6 +42,8 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uCamPos_ = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
     uParams_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
     uMaterial_ = bgfx::createUniform("u_material", bgfx::UniformType::Vec4);
+    uCast_ = bgfx::createUniform("u_cast", bgfx::UniformType::Vec4);
+    uCastPlanes_ = bgfx::createUniform("u_castPlanes", bgfx::UniformType::Vec4, 6);
     uTranslucency_ = bgfx::createUniform("u_translucency", bgfx::UniformType::Vec4);
     uRefine_ = bgfx::createUniform("u_refine", bgfx::UniformType::Vec4);
     uRefineStar_ = bgfx::createUniform("u_refineStar", bgfx::UniformType::Vec4);
@@ -208,6 +210,19 @@ bool Renderer::loadPrograms(const std::string& dir) {
     skinnedGlowProgram_ = loadProgram(dir, "vs_skinned", "fs_glow");
     if (!bgfx::isValid(glowProgram_) || !bgfx::isValid(skinnedGlowProgram_)) {
         core::logError("the glow programs did not link; MU's BlendMeshes will not draw");
+    }
+    // Not required: without them the sun draws the town's casters as batches (gfx/casters.h).
+    auto compute = [&](const char* name) {
+        bgfx::ShaderHandle cs = loadShader(dir, name);
+        return bgfx::isValid(cs) ? bgfx::createProgram(cs, true)
+                                 : bgfx::ProgramHandle{bgfx::kInvalidHandle};
+    };
+    castClearProgram_ = compute("cs_cast_clear");
+    castCullProgram_ = compute("cs_cast_cull");
+    castArgsProgram_ = compute("cs_cast_args");
+    if (!bgfx::isValid(castClearProgram_) || !bgfx::isValid(castCullProgram_) ||
+        !bgfx::isValid(castArgsProgram_)) {
+        core::logError("the casters' compute programs did not load; the sun draws them as batches");
     }
     {
         const std::pair<const char*, bgfx::ProgramHandle> all[] = {
@@ -428,13 +443,14 @@ void Renderer::shutdown() {
                                    &skinnedShadowProgram_, &skinnedPrepassProgram_,
                                    &skinnedShadeProgram_, &glowProgram_, &skinnedGlowProgram_,
                                    &grassShadeProgram_,
-                                   &bloomDownProgram_, &bloomUpProgram_}) {
+                                   &bloomDownProgram_, &bloomUpProgram_,
+                                   &castClearProgram_, &castCullProgram_, &castArgsProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uAbyss_, &sAbyss_, &uGrassStorm_, &uCamPos_, &uParams_,
-          &uMaterial_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uCast_, &uCastPlanes_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
