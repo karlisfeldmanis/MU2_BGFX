@@ -209,16 +209,7 @@ void Chat::select(const std::string& key) {
     tab_ = key;
     unread_[key] = 0;
     logScroll_ = 0.0f;
-    if (key.rfind("w:", 0) == 0) {
-        channel_ = net::Channel::Whisper;
-        target_ = key.substr(2);
-    } else if (key == "map") {
-        channel_ = net::Channel::Map;
-    } else if (key == "party") {
-        channel_ = net::Channel::Party;
-    } else if (key == "guild") {
-        channel_ = net::Channel::Guild;
-    }
+    chipSet_ = false;
 }
 
 void Chat::closeTab(const std::string& key) {
@@ -226,10 +217,12 @@ void Chat::closeTab(const std::string& key) {
     whispers_.erase(std::remove(whispers_.begin(), whispers_.end(), name), whispers_.end());
     unread_.erase(key);
     if (tab_ == key) select("all");
-    if (channel_ == net::Channel::Whisper && target_ == name) channel_ = net::Channel::Map;
 }
 
 void Chat::send(Play& play) {
+    // The tab's channel, unless the line's slash says another.
+    net::Channel channel = channel_;
+    std::string to = target_;
     std::string text = net::saidText(draft_);
     draft_.clear();
     open_ = false;
@@ -238,12 +231,15 @@ void Chat::send(Play& play) {
         const size_t space = text.find(' ');
         const std::string command = lower(text.substr(1, space == std::string::npos ? std::string::npos : space - 1));
         std::string rest = space == std::string::npos ? std::string() : net::saidText(text.substr(space + 1));
-        if (command == "p" || command == "party") {
-            channel_ = net::Channel::Party;
-        } else if (command == "g" || command == "guild") {
-            channel_ = net::Channel::Guild;
-        } else if (command == "m" || command == "map" || command == "s" || command == "say") {
-            channel_ = net::Channel::Map;
+        // A channel for this line alone; with nothing to say, its tab instead.
+        if (command == "p" || command == "party" || command == "g" || command == "guild" || command == "m" ||
+            command == "map" || command == "s" || command == "say") {
+            const char kind = command[0];
+            if (rest.empty()) {
+                select(kind == 'p' ? "party" : kind == 'g' ? "guild" : "map");
+                return;
+            }
+            channel = kind == 'p' ? net::Channel::Party : kind == 'g' ? net::Channel::Guild : net::Channel::Map;
         } else if (command == "w" || command == "whisper" || command == "t" || command == "tell") {
             const size_t gap = rest.find(' ');
             const std::string name = rest.substr(0, gap);
@@ -251,22 +247,23 @@ void Chat::send(Play& play) {
                 system(net::Channel::Server, "Whisper whom? /w and a name.");
                 return;
             }
-            channel_ = net::Channel::Whisper;
-            target_ = name;
+            channel = net::Channel::Whisper;
+            to = name;
             rest = gap == std::string::npos ? std::string() : net::saidText(rest.substr(gap + 1));
             if (rest.empty()) {
                 if (std::find(whispers_.begin(), whispers_.end(), name) == whispers_.end()) {
                     whispers_.push_back(name);
                 }
                 select("w:" + name);
+                return;
             }
         } else if (command == "r" || command == "reply") {
             if (lastFrom_.empty()) {
                 system(net::Channel::Server, "No one has whispered you.");
                 return;
             }
-            channel_ = net::Channel::Whisper;
-            target_ = lastFrom_;
+            channel = net::Channel::Whisper;
+            to = lastFrom_;
         } else if (command == "invite" || command == "leave" || command == "kick" || command == "accept" ||
                    command == "decline") {
             // The party's asks (docs/party.md): the server answers on the Party channel.
@@ -297,9 +294,9 @@ void Chat::send(Play& play) {
             return;
         }
         text = rest;
-        if (text.empty()) return;  // the channel changed, nothing said
+        if (text.empty()) return;
     }
-    if (channel_ == net::Channel::Whisper && target_.empty()) {
+    if (channel == net::Channel::Whisper && to.empty()) {
         system(net::Channel::Server, "Whisper whom? /w and a name.");
         return;
     }
@@ -308,8 +305,8 @@ void Chat::send(Play& play) {
         return;
     }
     net::Say said;
-    said.channel = channel_;
-    said.to = channel_ == net::Channel::Whisper ? target_ : std::string();
+    said.channel = channel;
+    said.to = channel == net::Channel::Whisper ? to : std::string();
     said.text = text;
     play.say(said);
 }
@@ -502,6 +499,23 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         open_ = true;
     }
 
+    // Where the next line goes: the tab's channel; on All his party's when he has one, else his
+    // map's, or the word he pressed in their place.
+    if (tab_.rfind("w:", 0) == 0) {
+        channel_ = net::Channel::Whisper;
+        target_ = tab_.substr(2);
+    } else if (tab_ == "map") {
+        channel_ = net::Channel::Map;
+    } else if (tab_ == "party") {
+        channel_ = net::Channel::Party;
+    } else if (tab_ == "guild") {
+        channel_ = net::Channel::Guild;
+    } else {
+        channel_ = chipSet_ ? chipChannel_
+                   : play.party().members.size() > 1 ? net::Channel::Party
+                                                     : net::Channel::Map;
+    }
+
     // Where it stands: its foot over the HUD's plate, as wide as there is room for.
     const float left = kLeft * u;
     const float wide = std::max(240.0f * u, std::min(kWide * u, right - left));
@@ -554,9 +568,16 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 break;
             }
         } else if (chip_.has(pointer.x, pointer.y)) {
-            channel_ = channel_ == net::Channel::Map     ? net::Channel::Party
-                       : channel_ == net::Channel::Party ? net::Channel::Guild
-                                                         : net::Channel::Map;
+            // On All, the next of Map, Party and Guild in its place; elsewhere, the next tab.
+            const net::Channel next = channel_ == net::Channel::Map     ? net::Channel::Party
+                                      : channel_ == net::Channel::Party ? net::Channel::Guild
+                                                                        : net::Channel::Map;
+            if (tab_ == "all") {
+                chipSet_ = true;
+                chipChannel_ = next;
+            } else {
+                select(next == net::Channel::Map ? "map" : next == net::Channel::Party ? "party" : "guild");
+            }
         } else if (logTall_ > logBox_.h && pointer.x >= logBox_.right() - 10.0f * u &&
                    logBox_.has(pointer.x, pointer.y)) {
             drag_ = Drag::LogSlider;

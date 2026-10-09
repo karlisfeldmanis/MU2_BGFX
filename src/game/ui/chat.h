@@ -19,8 +19,14 @@
 //     of center similiar position where zen is gained"). The log keeps its line.
 //
 // Enter opens it with the keyboard (Desk::typing, so I and C and Q type and do nothing else);
-// Enter again says the line and shuts it, Escape shuts it, the draft kept. A line starting with
-// a slash is a command: /p /g /m change the channel and say what follows, /w NAME and /r whisper.
+// Enter again says the line and shuts it, Escape shuts it, the draft kept.
+//
+// **Where a line goes** (the user, 2026-10-09: "default chat channel has to be /all and only when
+// char is inside part it should go to party not provates messages", "whispering is something
+// whuch need addiitonal click"): on All, to his party when he has one and to his map when not; on
+// Map, Party or Guild, there; a whisper only on its player's tab. A whisper heard never moves it.
+// A slash is a command for one line, the default left as it was: /p /g /m TEXT, /w NAME TEXT, /r
+// TEXT; one with nothing after it goes to that tab instead.
 // A Map line said by someone in view goes up over his head too, as MU's did (Play::bubble).
 #pragma once
 
@@ -115,7 +121,10 @@ private:
     std::vector<std::string> whispers_;  // the open whisper tabs, by name, in the order opened
     std::map<std::string, int> unread_;  // by tab key
     std::string tab_ = "all";
-    net::Channel channel_ = net::Channel::Map;
+    net::Channel channel_ = net::Channel::Map;  // where the next line goes, as the tab says (update)
+    // The channel's word pressed on All: Map, Party or Guild in its place until the tab changes.
+    bool chipSet_ = false;
+    net::Channel chipChannel_ = net::Channel::Map;
     std::string target_;    // a whisper's
     std::string lastFrom_;  // the last who whispered him: /r's
     std::string draft_;
