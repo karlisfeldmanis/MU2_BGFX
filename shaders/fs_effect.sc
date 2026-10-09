@@ -170,7 +170,11 @@ vec4 breath(float slot, vec2 uv, vec4 particle)
 	float shape = painted * particle.r * 20.0;
 	// Soft round edges: the sheet's own cell is a flame painted to its borders, and a quad edge
 	// is not a shape fire has.
-	float r = length(uv * 2.0 - 1.0);
+	// Measured in the CELL, not the strip: both of breath's sheets are Fire01's four cells, and
+	// on the strip's uv the bell sat off every cell, so each flame was cut away on one side (the
+	// Death Gorgon's smoulder, the user, 2026-10-09).
+	vec2 local = vec2(fract(uv.x * 4.0), uv.y);
+	float r = length(local * 2.0 - 1.0);
 	// Wide and gentle: full out to a third, gone at the corner. Squared, it took the fire with
 	// it -- a spark is only a few dozen pixels and most of its shape lives off centre.
 	float bell = 1.0 - smoothstep(0.35, 1.05, r);

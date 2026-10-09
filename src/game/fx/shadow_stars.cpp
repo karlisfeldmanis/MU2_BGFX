@@ -63,10 +63,15 @@ constexpr float kEmberCellGain[4] = {1.0f, 8.8f, 19.0f, 19.0f};
 // five taps and its edge a bell), not cooler than an ember, at this much of the light: MU's
 // whole, ten a frame, was "too crazy", then "need be more subtle and blurry" (the user).
 constexpr float kEmberHeat = 0.65f, kEmberCool = 0.6f;
-constexpr float kEmberDim = 0.28f;
+constexpr float kEmberDim = 0.2f;
 // And larger than MU's, so the few there are run together into one smoulder round the body
 // rather than standing apart as spots (the user: "keep finetuning that effect").
 constexpr float kEmberGrow = 1.4f;
+// Taller than wide, as the lamps' flames are (lamps.cpp's 0.85 by 1.3), so each reads as a tongue
+// of fire and not a disc; and lifted this much a second over MU's slow Gravity, so the smoulder
+// rises as fire does.
+constexpr float kEmberWide = 0.8f, kEmberTall = 1.25f;
+constexpr float kEmberLift = 0.35f;  // metres a second
 // The Devil's beam: MU's 50-unit joint, ours at this half width and light.
 constexpr float kBeamHalf = 0.18f;
 constexpr float kBeamDim = 0.5f;
@@ -186,7 +191,7 @@ void ShadowStars::update(float seconds) {
         one.age += frames;
         one.scale -= kEmberShrink * frames;
         one.gravity += kEmberGravity * frames;
-        one.position[1] += one.gravity * 10.0f * frames / 100.0f;
+        one.position[1] += one.gravity * 10.0f * frames / 100.0f + kEmberLift * seconds;
     }
     embers_.erase(std::remove_if(embers_.begin(), embers_.end(),
                                  [](const Ember& one) { return one.age >= kEmberLife || one.scale <= 0.0f; }),
@@ -576,12 +581,13 @@ void ShadowStars::gather(gfx::Effects& effects) const {
     for (const Ember& one : embers_) {
         gfx::Sprite sprite;
         for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
-        sprite.halfWidth = sprite.halfHeight = 0.5f * kEmberCell * one.scale * kEmberGrow;
+        const float half = 0.5f * kEmberCell * one.scale * kEmberGrow;
+        sprite.halfWidth = half * kEmberWide;
+        sprite.halfHeight = half * kEmberTall;
         // MU's `Frame = (23 - LifeTime) / 6`: a cell each six frames.
         const int cell = std::min(3, int(one.age / 6.0f));
         sprite.u0 = float(cell) * 0.25f;
         sprite.u1 = sprite.u0 + 0.25f;
-        sprite.spin = one.spin;
         const float left = 1.0f - one.age / kEmberLife;
         sprite.colour[0] = kEmberCellGain[cell] / 20.0f;
         sprite.colour[1] = kEmberHeat * (1.0f - kEmberCool * (1.0f - left));
