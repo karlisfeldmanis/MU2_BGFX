@@ -47,6 +47,11 @@ void onSignal(int) { g_stop = 1; }
 
 constexpr int kThinkNet = 5;            // ticks between decisions, as offline
 constexpr int64_t kAnswerWait = 2 * 20; // a decision's answers not heard in two seconds: think anyway
+// But a paid trip's answer is waited for this long: thought again after two seconds, the brain --
+// still on the old map in the scratch -- paid the trip a second time, and the first's answer,
+// its ticket gone with the last decision's commands, was never read as the trip (the Claude bot's
+// run at --speed 100: 7 trips paid twice in six game hours, 2000-3000 zen each).
+constexpr int64_t kTripWait = 10 * 20;
 
 class NetBot {
 public:
@@ -367,6 +372,8 @@ private:
     void think() {
         const int64_t now = brain_->clockNow();
         if (pending_ != 0 && now - pendingSince_ < kAnswerWait) return;
+        if (!trips_.empty() && now - tripSince_ < kTripWait) return;
+        trips_.clear();
         if (!mirror_->snapshot(bytes_) || !scratch_->restoreSnapshot(bytes_) || !scratch_->lookAs(you_)) {
             line("the scratch would not lay");
             return;
@@ -375,7 +382,13 @@ private:
         const uint32_t before = brain_->lastTicket();
         brain_->thinkOn(*scratch_, asked_);
         brain_->look(*mirror_);
-        for (const sim::Command& one : asked_) link_->send(one);
+        for (const sim::Command& one : asked_) {
+            link_->send(one);
+            if (one.kind == sim::Command::Kind::Travel) {
+                trips_.push_back(one);
+                tripSince_ = now;
+            }
+        }
         if (brain_->lastTicket() != before) {
             pending_ = brain_->lastTicket();
             pendingSince_ = now;
@@ -400,12 +413,14 @@ private:
                     break;
                 case sim::What::Answered:
                     if (h.a == int32_t(sim::Command::Kind::Travel) && h.b > 0) {
-                        for (const sim::Command& one : asked_) {
+                        for (const sim::Command& one : trips_) {
                             if (one.kind != sim::Command::Kind::Travel || one.ticket != uint32_t(h.c)) continue;
                             const sim::TravelRow& to = sim::travelAt(one.a);
                             if (to.map != int32_t(brain_->mapNow())) return true;
                         }
                     }
+                    // Answered, and not a trip away: no longer waited for.
+                    std::erase_if(trips_, [&](const sim::Command& one) { return one.ticket == uint32_t(h.c); });
                     break;
                 default: break;
             }
@@ -445,6 +460,8 @@ private:
     std::unique_ptr<game::RemoteLink> link_;
     std::vector<uint8_t> bytes_;
     std::vector<sim::Command> asked_;
+    std::vector<sim::Command> trips_;  // paid trips not yet answered (kTripWait)
+    int64_t tripSince_ = 0;
     uint32_t you_ = 0;
     uint32_t pending_ = 0;
     int64_t pendingSince_ = 0;
