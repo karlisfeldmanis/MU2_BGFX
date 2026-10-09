@@ -18,6 +18,26 @@ namespace {
 // art. Nothing in MU comes close: a busy fight is tens.
 constexpr uint32_t kMaxSprites = 65536 / 4;
 
+// The bound sheets' samplers and stages, fs_effect's: s_albedo is common.sh's stage 0, and
+// the other six sit on stages common.sh leaves free.
+constexpr const char* kSheetNames[] = {"s_albedo", "s_sheet1", "s_sheet2", "s_sheet3",
+                                       "s_sheet4", "s_sheet5", "s_sheet6"};
+constexpr uint8_t kSheetStages[] = {0, 9, 10, 11, 13, 14, 15};
+
+// fs_effect's kind, a sprite's look: which of its functions it takes.
+float kindOf(Blend blend) {
+    switch (blend) {
+        case Blend::Additive: return 1.0f;
+        case Blend::Flame: return 2.0f;
+        case Blend::Smoke: return 3.0f;
+        case Blend::Dust: return 4.0f;
+        case Blend::Breath: return 5.0f;
+        case Blend::Alpha:
+        case Blend::Minus: break;
+    }
+    return 0.0f;
+}
+
 uint32_t packAbgr(const float* rgba) {
     const auto byteOf = [](float v) {
         const float clamped = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
@@ -39,20 +59,15 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
         core::logError("effects: the transparent pass has no program; nothing will draw");
         return false;
     }
-    sSheet_ = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
-    // Fire and smoke, sprint 8b. Not required: without them a fire draws as plain added sprites.
-    flameProgram_ = loadProgramFiles(shaderDir, "vs_effect", "fs_flame");
-    smokeProgram_ = loadProgramFiles(shaderDir, "vs_effect", "fs_smoke");
-    dustProgram_ = loadProgramFiles(shaderDir, "vs_effect", "fs_dust");
-    breathProgram_ = loadProgramFiles(shaderDir, "vs_effect", "fs_breath");
-    uFlame_ = bgfx::createUniform("u_flame", bgfx::UniformType::Vec4);
-    if (!bgfx::isValid(flameProgram_) || !bgfx::isValid(smokeProgram_)) {
-        core::logError("effects: the flame or smoke program did not link; they draw plain");
+    for (uint32_t i = 0; i < kSheetSlots; ++i) {
+        sSheet_[i] = bgfx::createUniform(kSheetNames[i], bgfx::UniformType::Sampler);
     }
+    uFlame_ = bgfx::createUniform("u_flame", bgfx::UniformType::Vec4);
     layout_.begin()
         .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+        .add(bgfx::Attrib::TexCoord1, 2, bgfx::AttribType::Float)
         .end();
 
     // The whole point of the sprint's proving sentence: both arrays are sized once, here,
@@ -68,15 +83,13 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
 
 void Effects::shutdown() {
     if (bgfx::isValid(program_)) bgfx::destroy(program_);
-    if (bgfx::isValid(sSheet_)) bgfx::destroy(sSheet_);
-    for (bgfx::ProgramHandle* p : {&flameProgram_, &smokeProgram_, &dustProgram_, &breathProgram_}) {
-        if (bgfx::isValid(*p)) bgfx::destroy(*p);
-        *p = BGFX_INVALID_HANDLE;
+    for (bgfx::UniformHandle& u : sSheet_) {
+        if (bgfx::isValid(u)) bgfx::destroy(u);
+        u = BGFX_INVALID_HANDLE;
     }
     if (bgfx::isValid(uFlame_)) bgfx::destroy(uFlame_);
     uFlame_ = BGFX_INVALID_HANDLE;
     program_ = BGFX_INVALID_HANDLE;
-    sSheet_ = BGFX_INVALID_HANDLE;
     sprites_.clear();
     sprites_.shrink_to_fit();
     order_.clear();
@@ -172,8 +185,72 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
     auto* vertices = reinterpret_cast<Vertex*>(tvb.data);
     auto* indices = reinterpret_cast<uint16_t*>(tib.data);
 
+    // Depth TEST against what the prepass laid down, and no depth WRITE. An effect is
+    // occluded by the wall in front of it and never occludes the effect behind it, which is
+    // what makes the sort above the thing that decides the picture.
+    //
+    // No cull: the quads face the camera already, and a spin past a right angle would turn a
+    // culled one invisible for half its life.
+    //
+    // Every kind is PREMULTIPLIED, which is what fs_effect writes and why neither blend is
+    // bgfx's own BGFX_STATE_BLEND_ALPHA or _ADD. The reason is in that shader's header: _ADD is
+    // (ONE, ONE) and never reads alpha, so with straight alpha an additive sprite could not
+    // fade. Premultiplied, an added kind is (ONE, INV_SRC_ALPHA) with an alpha of 0, so mixed
+    // and added sprites share one blend and one draw. `Minus` is MU's own (ZERO,
+    // ONE_MINUS_SRC_COLOR) (ZzzOpenglUtil.cpp:423-431): premultiplied, the fade dims the
+    // darkening with the rest, and it is the one blend that ends a run.
+    const uint64_t common = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LESS;
+    const uint64_t over = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+    const uint64_t minus = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_INV_SRC_COLOR);
+    // The order the draws are submitted in is the order they are drawn, whatever the frame
+    // drew in this view before them.
+    bgfx::setViewMode(view, bgfx::ViewMode::Sequential);
+
+    // One draw per run of sprites in depth order that needs no more than kSheetSlots sheets
+    // and one blend. The runs come out of the depth order and are NOT regrouped, because
+    // regrouping by sheet is exactly the thing that would put a near sprite behind a far one.
+    bgfx::TextureHandle bound[kSheetSlots];
+    uint32_t boundCount = 0;
+    bool runMinus = false;
+    uint32_t runStart = 0;
+    const auto submitRun = [&](uint32_t runEnd) {
+        bgfx::setState(common | (runMinus ? minus : over));
+        // The WHOLE vertex buffer, and the run selected by the index range alone.
+        //
+        // Not `setVertexBuffer(0, &tvb, runStart * 4, runQuads * 4)`, which is the obvious
+        // thing to write and is wrong: bgfx ADDS the start vertex to every index, and the
+        // indices written below are already absolute. The first run starts at zero so it
+        // draws correctly and every run after it reads vertices runStart*4 too far along --
+        // so a quad takes its corners from other sprites entirely. On the digits that showed
+        // as one glyph stretched across eight, reading "01234567" where the damage was 10,
+        // and on the blood as splashes smeared into one cloud. A single-run frame looked
+        // perfect throughout, which is what kept it hidden.
+        bgfx::setVertexBuffer(0, &tvb);
+        bgfx::setIndexBuffer(&tib, runStart * 6, (runEnd - runStart) * 6);
+        // A slot the run did not fill is given its first sheet, so no stage the shader
+        // declares is ever left unbound.
+        for (uint32_t i = 0; i < kSheetSlots; ++i) {
+            bgfx::setTexture(kSheetStages[i], sSheet_[i], bound[i < boundCount ? i : 0]);
+        }
+        bgfx::setUniform(uFlame_, flame_);
+        bgfx::submit(view, program_);
+        ++drawCount_;
+        runStart = runEnd;
+        boundCount = 0;
+    };
+
     for (uint32_t n = 0; n < quads; ++n) {
         const Sprite& s = sprites_[order_[n]];
+        const bool isMinus = s.blend == Blend::Minus;
+        uint32_t slot = 0;
+        while (slot < boundCount && bound[slot].idx != s.sheet.idx) ++slot;
+        if (n > runStart && (isMinus != runMinus || slot == kSheetSlots)) {
+            submitRun(n);
+            slot = 0;
+        }
+        if (n == runStart) runMinus = isMinus;
+        if (slot == boundCount) bound[boundCount++] = s.sheet;
+
         const float cosine = std::cos(s.spin);
         const float sine = std::sin(s.spin);
         // The quad's own two axes, the camera's basis turned by the spin.
@@ -185,6 +262,7 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
                              (up[2] * cosine - right[2] * sine) * s.halfHeight};
 
         const uint32_t abgr = packAbgr(s.colour);
+        const float kind = kindOf(s.blend);
 
         const float corners[4][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}};
         // v runs down the sheet while the quad's y runs up it, so the BOTTOM corners take the
@@ -207,6 +285,8 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
                 out.v = vs[c];
             }
             out.abgr = abgr;
+            out.slot = float(slot);
+            out.kind = kind;
         }
         const uint16_t base = uint16_t(n * 4);
         uint16_t* tri = &indices[n * 6];
@@ -217,69 +297,7 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
         tri[4] = uint16_t(base + 2);
         tri[5] = uint16_t(base + 3);
     }
-
-    // Depth TEST against what the prepass laid down, and no depth WRITE. An effect is
-    // occluded by the wall in front of it and never occludes the effect behind it, which is
-    // what makes the sort above the thing that decides the picture.
-    //
-    // No cull: the quads face the camera already, and a spin past a right angle would turn a
-    // culled one invisible for half its life.
-    const uint64_t common = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LESS;
-
-    // One draw per run of sprites that share a sheet and a blend. The runs come out of the
-    // depth order and are NOT regrouped, because regrouping by sheet is exactly the thing
-    // that would put a near sprite behind a far one.
-    uint32_t runStart = 0;
-    while (runStart < quads) {
-        const Sprite& first = sprites_[order_[runStart]];
-        uint32_t runEnd = runStart + 1;
-        while (runEnd < quads) {
-            const Sprite& next = sprites_[order_[runEnd]];
-            if (next.sheet.idx != first.sheet.idx || next.blend != first.blend) break;
-            ++runEnd;
-        }
-        const uint32_t runQuads = runEnd - runStart;
-
-        // Both modes are PREMULTIPLIED, which is what fs_effect.sc writes and why neither is
-        // bgfx's own BGFX_STATE_BLEND_ALPHA or _ADD. The reason is in that shader's header:
-        // _ADD is (ONE, ONE) and never reads alpha, so with straight alpha an additive sprite
-        // could not fade, and the tint's alpha would silently do nothing on half of MU's
-        // effects. Premultiplied, the fade lives in the rgb and both modes honour it.
-        const bool added = first.blend == Blend::Additive || first.blend == Blend::Flame ||
-                           first.blend == Blend::Breath;
-        // `Minus` is MU's own (ZERO, ONE_MINUS_SRC_COLOR): premultiplied, the fade dims the
-        // darkening with the rest.
-        const uint64_t blend =
-            first.blend == Blend::Minus
-                ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_INV_SRC_COLOR)
-            : added ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-                    : BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
-        bgfx::setState(common | blend);
-        // The WHOLE vertex buffer, and the run selected by the index range alone.
-        //
-        // Not `setVertexBuffer(0, &tvb, runStart * 4, runQuads * 4)`, which is the obvious
-        // thing to write and is wrong: bgfx ADDS the start vertex to every index, and the
-        // indices written above are already absolute. The first run starts at zero so it
-        // draws correctly and every run after it reads vertices runStart*4 too far along --
-        // so a quad takes its corners from other sprites entirely. On the digits that showed
-        // as one glyph stretched across eight, reading "01234567" where the damage was 10,
-        // and on the blood as splashes smeared into one cloud. A single-run frame looked
-        // perfect throughout, which is what kept it hidden.
-        bgfx::setVertexBuffer(0, &tvb);
-        bgfx::setIndexBuffer(&tib, runStart * 6, runQuads * 6);
-        bgfx::setTexture(0, sSheet_, first.sheet);
-        bgfx::ProgramHandle program = program_;
-        if (first.blend == Blend::Flame && bgfx::isValid(flameProgram_)) program = flameProgram_;
-        if (first.blend == Blend::Smoke && bgfx::isValid(smokeProgram_)) program = smokeProgram_;
-        if (first.blend == Blend::Dust && bgfx::isValid(dustProgram_)) program = dustProgram_;
-        if (first.blend == Blend::Breath && bgfx::isValid(breathProgram_)) program = breathProgram_;
-        if (first.blend == Blend::Flame || first.blend == Blend::Breath) {
-            bgfx::setUniform(uFlame_, flame_);
-        }
-        bgfx::submit(view, program);
-        ++drawCount_;
-        runStart = runEnd;
-    }
+    submitRun(quads);
 }
 
 }  // namespace mu::gfx

@@ -21,9 +21,9 @@ namespace mu::gfx {
 // There is deliberately no `Opaque`: an opaque effect is a mesh and belongs in the shade
 // pass with the rest of the world's material model, which docs/conventions.md keeps closed.
 //
-// Sprint 8b added two that are a blend AND a program: `Flame` is added like `Additive` but read
+// Sprint 8b added two that are a blend AND a look: `Flame` is added like `Additive` but read
 // through fs_flame's heat ramp, so its colour carries the particle rather than a tint (see that
-// shader); `Smoke` is mixed like `Alpha` with a soft disc cut into the sheet.
+// function in fs_effect.sc); `Smoke` is mixed like `Alpha` with a soft disc cut into the sheet.
 // `Dust` is mixed like `Alpha` through fs_dust: the Budge Dragon's smoke02, drawn as a soft
 // cloud. `Breath` is added through fs_breath, which is fs_flame's heat ramp softened -- the
 // same dragon's fire, which is bigger and further off than the town's candles.
@@ -112,20 +112,26 @@ private:
     // four vertices a sprite against a vertex shader that would have to be handed the
     // camera's basis and rebuild them per vertex. At a few hundred sprites the CPU cost is
     // nothing and it keeps the shader to a transform and a fetch.
+    //
+    // `slot` is which of the draw's bound sheets the quad reads and `kind` which of
+    // fs_effect's looks it takes, so sprites of different sheets and kinds share a draw.
     struct Vertex {
         float x, y, z;
         float u, v;
         uint32_t abgr;
+        float slot, kind;
     };
 
+    // How many sheets one draw binds: s_albedo and fs_effect's s_sheet1..6.
+    static constexpr uint32_t kSheetSlots = 7;
+
     bgfx::ProgramHandle program_ = BGFX_INVALID_HANDLE;
-    bgfx::ProgramHandle flameProgram_ = BGFX_INVALID_HANDLE;
-    bgfx::ProgramHandle smokeProgram_ = BGFX_INVALID_HANDLE;
-    bgfx::ProgramHandle dustProgram_ = BGFX_INVALID_HANDLE;
-    bgfx::ProgramHandle breathProgram_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uFlame_ = BGFX_INVALID_HANDLE;
     float flame_[4] = {6.0f, 0.0f, 0.0f, 0.0f};
-    bgfx::UniformHandle sSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sSheet_[kSheetSlots] = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
+                                                BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
+                                                BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
+                                                BGFX_INVALID_HANDLE};
     bgfx::VertexLayout layout_;
 
     std::vector<Sprite> sprites_;

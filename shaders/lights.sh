@@ -101,12 +101,20 @@ vec3 lampAt(vec4 at, vec4 lit, vec4 side, vec3 wpos, vec3 n, vec3 v, vec3 diffus
 }
 
 // One of the map's own lights, read out of its column of the lamp texture.
+//
+// The reach is tested on the first two rows before the third is read: a cell lists every light
+// that reaches any of its two metres, so most pixels are out of reach of most of the lights
+// they walk, and those now cost two reads and a distance, not three reads. lampAt tests the
+// same distance again, which is a few ALU against a fetch saved.
 vec3 lampOne(int index, vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0, float roughness,
              float ndotv, float specular)
 {
-	return lampAt(texelFetch(s_lamps, ivec2(index, 0), 0),
-	              texelFetch(s_lamps, ivec2(index, 1), 0),
-	              texelFetch(s_lamps, ivec2(index, 2), 0),
+	vec4 at = texelFetch(s_lamps, ivec2(index, 0), 0);
+	vec4 lit = texelFetch(s_lamps, ivec2(index, 1), 0);
+	vec3 d = at.xyz - wpos;
+	float over = max(-d.y, 0.0) + max(d.y - lit.w, 0.0);
+	if (d.x * d.x + d.z * d.z + over * over >= at.w * at.w) return vec3_splat(0.0);
+	return lampAt(at, lit, texelFetch(s_lamps, ivec2(index, 2), 0),
 	              wpos, n, v, diffuseColour, f0, roughness, ndotv, specular);
 }
 

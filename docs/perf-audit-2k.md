@@ -275,6 +275,59 @@ is the GPU and the drawable. What is left on the CPU's encoding is the figures (
 palette row each), the cutouts (foliage reads its alpha), the glows and the sprites. The next
 CPU saving is the sprites' 270-380 draws; the next frame saving is GPU work.
 
+**The sprites, the same day: 375 draws to 1, and no CPU to show for it.** Counted first: of the
+run breaks in the town's sorted list, four in five were a change of blend or program (a lamp's
+flame beside its glow), one in five a change of sheet, and the town has only six sheets. So
+texture arrays alone would have taken a fifth. Instead `fs_effect` is now the only program,
+the old fs_flame, fs_smoke, fs_dust and fs_breath its functions, picked by a kind on the
+vertex; each draw binds seven sheets (s_albedo and s_sheet1..6 on stages 9-11 and 13-15) and
+the vertex says which; and every kind but Minus shares (ONE, INV_SRC_ALPHA), an added kind
+writing alpha 0, which is exactly (ONE, ONE). A run ends only at a Minus sprite or an eighth
+sheet. The town's ~1,200 sprites are one draw, a Meteorite shower's 300 draws one, the frame
+941 draws to 563.
+
+The picture is the same: shots against HEAD at 1280x720 under `--fixed-dt` are identical in the
+Meteorite and Fire Ball benches (Fire Ball's smoke is Dust), and off by one level in 1-2 pixels
+in the town; the Budge Dragon and Lost Tower Shadow arenas (Breath, Minus) differ only as much
+as HEAD differs from itself there, the Devil Square clock and a few drifting pixels.
+
+But the time: CPU a frame (3,000 frames less 600, three rounds interleaved, load 9-14) 3.20 ms
+against 3.16, inside the spread; the wall frame 5.32 both. A sprite draw bound one sheet on
+the frame's transient buffers, which bgfx encodes for next to nothing -- unlike a scenery draw
+with four sheets, the shine and its instance data. **Draw count is not the CPU's cost; what a
+draw binds is.** What is left on the CPU's encoding is the figures and the cutouts, each with a
+material's worth of sheets, and the next frame saving is GPU work.
+
+### At 2K, after C4: what the frame's pixels cost, and two cuts, 2026-10-09
+
+The user, on the sprites: "on 2k it will be improvement". It was not: 6.51 ms before and after at
+2560x1273, since a draw saved is CPU and the CPU waits on the GPU. So the GPU's own accounts,
+priced by switching each off (Lorencia 140,126, `--still`, 2560x1273, `--repeat 3`, two rounds,
+load 9-14): SSAO ~0.5 ms, the PCSS taps (`--shadow-noise screen`) ~0.45, the reflections ~0.4,
+the lamps ~0.4, bloom ~0.3. And **Hi-Z occlusion culling is not worth building**: skipping
+every one of the camera's GPU-culled scenery draws, seen or hidden, moved the frame by nothing
+(7.34 against 7.31 and 7.37), and occlusion could only ever take the hidden part of that.
+
+Kept, against the build before, three rounds each:
+- **A lamp's reach is tested before its third row is read** (`lights.sh` lampOne): a cell lists
+  every light reaching any of its two metres, so most of the lights a pixel walks miss it, and
+  each now costs two fetches, not three. 7.335 to 7.273, 7.338 to 7.274; 1-2 pixels off by one.
+- **The probe turns every eighth frame while its eye stands still** (`drawProbe`), every other
+  while it moves or before the first cube is whole: a cube three times a second at 180 fps,
+  which still carries a lamp's flicker or a passer-by. 7.31-7.34 to 7.08 standing; no pixel off
+  by more than one level. Walking costs what it did.
+
+- **The turned shadow taps are the default** (`app/options.h`), 5+8 turned by screen noise for
+  the still 9+16: the user, shown both at 2560x1273, "this is good". The Shadows row is the
+  map's side alone now, Low 1024, Medium 2048, High 4096; `--shadow-noise none` is the still
+  taps. 7.04 to 6.62. With the two above, the town at 2K is **7.34 to 6.62 ms**, 136 fps to 151.
+
+Tried and reverted: **a PCSS early out**, one compare where all nine search taps found a blocker,
+for the sixteen filter taps: 7.04 to 7.08-7.09, slower in all three rounds -- a pixel in shade
+does not skip its taps unless its neighbours do too. And **the SSAO's taps on a half-resolution R16F depth copy** (a compute step on
+the SSAO view before its draw), so that eleven of its thirteen reads leave the 104 MB
+multisampled prepass. No change (8.53 against 8.51, under load): the cache already held them.
+
 ## Looked at and left out
 
 - **Clustered or tiled light culling.** The lamp grid already bins static lights per 2 m

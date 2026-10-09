@@ -960,7 +960,7 @@ private:
     bool probePass_ = false;     // the draws being submitted are a probe face's
     bool probeFilterDue_ = false;  // six new faces wait for the filter, next frame
     int probeNextFace_ = 0;
-    uint32_t probeTick_ = 0;     // the probe works on even frames only; see drawProbe
+    uint32_t probeTick_ = 0;     // the probe works on even frames only, every 8th still; see drawProbe
     int probeFacesDrawn_ = 0;
     float probeAt_[3] = {0.0f, 0.0f, 0.0f};     // this face's eye
     float probeTaken_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // the eye when the copy was last filtered

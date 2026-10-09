@@ -152,7 +152,15 @@ void Renderer::drawProbe(const Camera& camera, const content::Ground* ground,
     // Every other frame only. The faces were a quarter of a millisecond of wall frame drawn
     // every frame, and a cube round a man walking 2.5 m/s loses nothing it can show by moving
     // on at thirteen times a second instead of twenty-six at 180 fps.
-    if ((++probeTick_ & 1) != 0) return;
+    //
+    // And every eighth while the eye stands still (2026-10-09, the 2K frame): the cube then sees
+    // the same town from the same point, and only a lamp's flicker, a passer-by or a fire moves
+    // in it, so a fresh cube three times a second at 180 fps keeps those alive at a quarter of
+    // the cost. Moving, or before the first cube is whole, it is every other frame as before.
+    // Still means within a centimetre of the eye the last face was drawn from.
+    const float dx = at[0] - probeAt_[0], dy = at[1] - probeAt_[1], dz = at[2] - probeAt_[2];
+    const bool still = probeReady_ && dx * dx + dy * dy + dz * dz < 1e-4f;
+    if ((++probeTick_ % (still ? 8u : 2u)) != 0) return;
 
     if (probeFilterDue_) {
         filterProbe();

@@ -97,11 +97,15 @@ inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
 // same values again cost a compare, a changed scale, MSAA or shadow map rebuilds the targets
 // between frames. --shadow-size and --shadow-noise outrank the Shadows row, for measuring.
 inline void applyGraphics(gfx::Renderer& renderer, const core::Args& args) {
+    // Every level the turned taps since 2026-10-09: High's still 9+16 cost ~0.45 ms at 2K, and
+    // the user, shown the two at 2560x1273, took the turned ("this is good"). So the levels are
+    // the map's side alone. The still taps are --shadow-noise none.
+    static constexpr uint16_t kSides[] = {1024, 2048, 4096};
     const uint16_t side = args.shadowAsked ? uint16_t(args.shadowSize)
-                                           : uint16_t(args.shadows == 0 ? 2048 : 4096);
+                                           : kSides[std::clamp(args.shadows, 0, 2)];
     renderer.setQuality(args.scale, args.msaa, side);
     // 0 the turned taps, 2 the still ones (shadow.sh); -1 leaves the renderer's own.
-    const int noise = args.shadowAsked ? args.shadowNoise : (args.shadows == 2 ? 2 : 0);
+    const int noise = args.shadowAsked ? args.shadowNoise : 0;
     renderer.setShadowDebug(args.shadowView ? 1 : 0, noise);
 }
 

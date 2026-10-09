@@ -109,9 +109,9 @@ struct Args {
     float fixedDtMs = 0.0f;
     int msaa = 4;            // samples on the prepass, depth and shade targets
     // The Options page's Graphics rows (app/options.h), kept in options.txt with `scale`,
-    // `msaa` and `cap`. `shadows` is the map's side and the penumbra's taps together: 0 a
-    // 2048 map with the turned taps, 1 a 4096 with the turned, 2 a 4096 with the still -- the
-    // two costliest knobs on the 2K table in docs/budget.md. --shadow-size and --shadow-noise
+    // `msaa` and `cap`. `shadows` is the map's side: 0 1024, 1 2048, 2 4096, all
+    // with the turned taps since 2026-10-09 (app/options.h); it was the side and the taps
+    // together, 2048 turned, 4096 turned and 4096 still. --shadow-size and --shadow-noise
     // name their own and outrank it.
     int shadows = 2;
     bool shadowAsked = false;
