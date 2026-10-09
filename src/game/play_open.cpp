@@ -843,8 +843,18 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 }
                 for (int i = 0; i < 3; ++i) one.auraColour[i] = aura.colour[i];
             }
+            // Off the body's own joints: MU's rand() % NumBones takes every bone, and the
+            // Gorgon's ground marker (Bip01 Footsteps), its end dummies past the toes, fingers
+            // and head and its `boss` threw them wide of the body (the user, 2026-10-09: "keep
+            // finetuning that effect"). Ours.
             if (one.embers && look->skeletonMesh) {
-                for (size_t b = 0; b < look->skeletonMesh->bones().size(); ++b) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    const std::string& name = bones[b].name;
+                    if (name == "Bip01" || name == "Bip01 Footsteps" || name == "boss" ||
+                        name.rfind("dummy", 0) == 0) {
+                        continue;
+                    }
                     one.shadeBones.push_back(int(b));
                 }
             }

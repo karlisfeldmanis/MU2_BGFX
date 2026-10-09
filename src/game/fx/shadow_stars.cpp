@@ -50,7 +50,8 @@ constexpr uint32_t kGlowsMost = 2;
 // 2026-10-01 (a 0.38 m cell, twelve frames, 0.45 of the light) read as a spark or two.
 // The cap is ten a frame of five Gorgons, 24 frames each.
 constexpr float kEmberCell = 0.64f;   // metres at Scale 1
-constexpr float kEmberLife = 24.0f;
+// MU's 24, cut so that a walking Gorgon trails less of it (the user: "keep finetuning").
+constexpr float kEmberLife = 18.0f;
 constexpr float kEmberScaleMin = 1.28f, kEmberScaleSpread = 0.64f, kEmberShrink = 0.04f;
 constexpr float kEmberGravity = 0.004f;  // MU units a frame, gained each frame, times ten
 constexpr size_t kEmbers = 1200;
@@ -61,8 +62,11 @@ constexpr float kEmberCellGain[4] = {1.0f, 8.8f, 19.0f, 19.0f};
 // Through the dragon's softened ramp (Blend::Breath, fs_effect's breath: the sheet averaged over
 // five taps and its edge a bell), not cooler than an ember, at this much of the light: MU's
 // whole, ten a frame, was "too crazy", then "need be more subtle and blurry" (the user).
-constexpr float kEmberHeat = 0.7f, kEmberCool = 0.6f;
-constexpr float kEmberDim = 0.45f;
+constexpr float kEmberHeat = 0.65f, kEmberCool = 0.6f;
+constexpr float kEmberDim = 0.28f;
+// And larger than MU's, so the few there are run together into one smoulder round the body
+// rather than standing apart as spots (the user: "keep finetuning that effect").
+constexpr float kEmberGrow = 1.4f;
 // The Devil's beam: MU's 50-unit joint, ours at this half width and light.
 constexpr float kBeamHalf = 0.18f;
 constexpr float kBeamDim = 0.5f;
@@ -572,7 +576,7 @@ void ShadowStars::gather(gfx::Effects& effects) const {
     for (const Ember& one : embers_) {
         gfx::Sprite sprite;
         for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
-        sprite.halfWidth = sprite.halfHeight = 0.5f * kEmberCell * one.scale;
+        sprite.halfWidth = sprite.halfHeight = 0.5f * kEmberCell * one.scale * kEmberGrow;
         // MU's `Frame = (23 - LifeTime) / 6`: a cell each six frames.
         const int cell = std::min(3, int(one.age / 6.0f));
         sprite.u0 = float(cell) * 0.25f;

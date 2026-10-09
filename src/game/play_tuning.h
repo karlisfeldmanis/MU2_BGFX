@@ -416,7 +416,7 @@ inline constexpr const char* kShadowFigure = "Shadow01";
 // (ZzzCharacter.cpp:6064-6071). The user, 2026-10-09: "death gorgon has this red tint and
 // overall flame effect around them", and at MU's ten, "flames are too crazy": a quarter of it.
 inline constexpr const char* kDeathGorgonFigure = "DeathGorgon01";
-constexpr float kEmberEveryFrames = 0.4f;
+constexpr float kEmberEveryFrames = 0.25f;
 // And its red: MU lights a body by the terrain light where it stands, and the Gorgon's own
 // AddTerrainLight (1, 0.2, 0) at about 0.65 over the tower's grey floor is about 2.6 : 1.3 : 1
 // on the body. Ours, that hue at about its own brightness, on its light as an Ale's is.
