@@ -981,6 +981,10 @@ tip::Sheet Hud::manaSheet() const {
         most.rows.push_back(said("Excellent armour", "+" + percent(float(hero_->excel.manaRate - 1.0)),
                                  tip::Tone::Green));
     }
+    if (hero_->excel.runeMana > 0.0) {
+        most.rows.push_back(said("Wellspring runes", "+" + percent(float(hero_->excel.runeMana)),
+                                 tip::Tone::Green));
+    }
     sheet.sections.push_back(most);
 
     tip::Section back;

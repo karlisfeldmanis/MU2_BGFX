@@ -32,6 +32,8 @@ inline void restoreMana(Body& hero) {
     // And the excellent armour's +8% a piece (Excellence::manaRate).
     hero.maxMana = int(double(maximumMana(hero.kin, hero.level, hero.totalPoints()) + hero.excel.moreMana) *
                        hero.excel.manaRate);
+    // And the Wellspring runes' on everything above.
+    if (hero.excel.runeMana > 0.0) hero.maxMana = int(double(hero.maxMana) * (1.0 + hero.excel.runeMana));
     hero.mana = std::min(hero.maxMana, hero.mana + std::max(0, hero.maxMana - was));
     const int wasSd = hero.maxSd;
     hero.maxSd = maximumShield(hero.level, hero.totalPoints(), hero.stats.defense);

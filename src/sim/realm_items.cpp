@@ -339,8 +339,9 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (has(5)) e.excellentChance += 0.2;
         }
     }
-    // The Rune of the Undying, in any socket of anything worn that takes an armour's rune: the
-    // armour, the shield, the rings and the pendant, not a weapon. sim::kUndyingHealth each.
+    // The armour runes, in any socket of anything worn that takes one: the armour, the shield,
+    // the rings and the pendant, not a weapon. The Undying, sim::kUndyingHealth each, is the
+    // rings' and the pendant's alone (2026-10-09).
     for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || (row->weapon() && !row->shield())) continue;
@@ -348,7 +349,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             const PowerRow* power = powerOf(kit[slot].powers[at]);
             if (!power) continue;
             Excellence& e = hero.excel;
-            if (power->power == Power::Undying) e.undyingRate *= kUndyingHealth;
+            if (power->power == Power::Undying && jewellery(*row)) e.undyingRate *= kUndyingHealth;
             if (power->power == Power::KeenEye) e.runeCritical += kKeenEyeCritical;
             if (power->power == Power::Bloodwell) {
                 e.lifeSteal += kBloodwellLife;
@@ -391,6 +392,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (power && power->power == Power::Kinship && jewellery(*row)) {
                 hero.excel.kinship = true;
             }
+            if (power && jewellery(*row)) hero.excel.runeMana += wellspringShare(power->power);
             if (power && power->power == Power::Wrath && !jewellery(*row)) ++hero.excel.wraths;
             if (power && power->power == Power::Spite && !jewellery(*row)) ++hero.excel.spites;
             // Spirit Plague in a hand here; the shield's and the jewellery's are counted above.

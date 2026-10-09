@@ -67,6 +67,9 @@ struct Excellence {
     // (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
     // character window can say which is which.
     double undyingRate = 1.0;
+    // The Wellspring runes' shares of max mana in the rings and the pendant, summed
+    // (sim::wellspringShare), laid on after manaRate.
+    double runeMana = 0.0;
     // The Dungeon's runes, each set in anything worn (sim/items.h): Keen Eye's critical chance,
     // Bloodwell's share of a wound back as life (its mana after a kill rides `killMana`), and how
     // many Frenzies he wears, each rolling on its own.

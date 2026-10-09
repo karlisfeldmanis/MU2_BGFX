@@ -7369,7 +7369,7 @@ void testChaosMachine() {
                 socketedWing.sockets = 1;
                 const int32_t rune = noria.itemAt(14, 22);
                 sim::Held undying{rune, 0, 1};
-                undying.powers[0] = uint8_t(sim::Power::Undying);
+                undying.powers[0] = uint8_t(sim::Power::Renewal);
                 sim::Held storm{rune, 0, 1};
                 storm.powers[0] = uint8_t(sim::Power::Stormcall);
                 check(sim::settable(noria, undying, socketedWing, sim::Kin::DarkKnight, false),
@@ -7983,19 +7983,23 @@ void testRunes(const content::Tables& tables) {
         check(bare > 0 && std::abs(wrathful - int(bare * 1.2f)) <= 1,
               "and a swing with Wrath strikes 20% harder");
     }
-    // The Undying, every class's armour power: in armour or a shield by anyone, never a weapon;
-    // x1.2 on maximum health each; and Devin's first clear pays it to every class.
+    // The Undying, every class's: in a ring or the pendant by anyone (2026-10-09), never armour,
+    // a shield or a weapon; x1.2 on maximum health each; and Devin's first clear pays it to every
+    // class.
     {
         const uint8_t undying = uint8_t(sim::Power::Undying);
         const sim::Held hardy = held(rune, 0, undying);
         const int shield = tables.itemAt(6, 0);
+        const int ring = tables.itemAt(13, 8);
         for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
-            check(sim::settable(tables, hardy, held(plate, 1, 0), kin, true),
-                  "the Undying goes in socketed armour, whoever wears it");
+            check(ring < 0 || sim::settable(tables, hardy, held(ring, 1, 0), kin, true),
+                  "the Undying goes in a socketed ring, whoever wears it");
+            check(!sim::settable(tables, hardy, held(plate, 1, 0), kin, true),
+                  "and never in armour");
         }
-        check(shield < 0 || sim::settable(tables, hardy, held(shield, 1, 0), dk, true),
-              "and in a socketed shield");
-        check(!sim::settable(tables, hardy, held(serpent, 1, 0), dk, true), "but not in a weapon");
+        check(shield < 0 || !sim::settable(tables, hardy, held(shield, 1, 0), dk, true),
+              "nor a shield");
+        check(!sim::settable(tables, hardy, held(serpent, 1, 0), dk, true), "nor a weapon");
         sim::Fighter fighter;
         int bare = 0, once = 0, twice = 0;
         sim::Arms arms;
@@ -8825,8 +8829,16 @@ void testGroupRunes(const content::Tables& tables) {
         check(!sets(Power::Kinship, sword, kin) && !sets(Power::Kinship, plate, kin),
               "and not in a weapon or armour");
     }
-    check(sets(Power::Undying, plate, Kin::FairyElf) && !sets(Power::Undying, sword, Kin::FairyElf),
-          "the old groups hold: the Undying in armour and not a weapon");
+    check(sets(Power::Undying, ring, Kin::FairyElf) && !sets(Power::Undying, plate, Kin::FairyElf) &&
+              !sets(Power::Undying, sword, Kin::FairyElf),
+          "the Undying in a ring, not armour or a weapon");
+    for (const Power power : {Power::FaintWellspring, Power::LesserWellspring, Power::Wellspring,
+                              Power::GreaterWellspring}) {
+        check(sets(power, ring, Kin::DarkWizard) && sets(power, ring, Kin::DarkKnight),
+              "a Wellspring goes in any class's ring");
+        check(!sets(power, plate, Kin::DarkWizard) && !sets(power, sword, Kin::DarkWizard),
+              "and not in armour or a weapon");
+    }
     check(sets(Power::Spirits, ring, Kin::DarkWizard) && !sets(Power::Spirits, plate, Kin::DarkWizard),
           "Evil Spirit in a ring and not a plate");
     check(sets(Power::Inferno, ring, Kin::FairyElf) && sets(Power::Inferno, sword, Kin::FairyElf),
@@ -10069,6 +10081,22 @@ void testEvilSpirit(const content::Tables& tables) {
         const double rate = double(lit) / double(std::max(1, hits));
         check(rate > 0.12 && rate < 0.28, "about one landed spirit in five poisons");
         check(pulses > 0, "and the poison pulses");
+    }
+    // Wellspring (2026-10-09), max mana's four tiers in the rings and the pendant: two in the
+    // pendant add, laid on the maximum; and the Undying, moved to the same sockets, still lifts life.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 0, 135, 128, sim::Kin::DarkWizard, 30);
+        const int bareMana = realm.hero().maxMana, bareLife = realm.hero().maxHealth;
+        const uint8_t powers[3] = {uint8_t(sim::Power::GreaterWellspring),
+                                   uint8_t(sim::Power::FaintWellspring),
+                                   uint8_t(sim::Power::Undying)};
+        realm.give(tables.itemAt(13, 12), sim::kAmulet, 0, -1, false, 0, 0, 3, powers);
+        check(std::fabs(realm.hero().excel.runeMana - 0.35) < 1e-9,
+              "a Greater and a Faint Wellspring in a pendant add to +35% mana");
+        checkEqual(realm.hero().maxMana, int(double(bareMana) * 1.35),
+                   "and the wizard's maximum mana rises by it");
+        check(realm.hero().maxHealth > bareLife, "and the Undying beside them lifts his life");
     }
     // Barrage (2026-10-08), the elf's Multi-Shot runes: three tiers in her bow add, a knight's
     // sword takes none, and three arrows leave the quiver a cast.

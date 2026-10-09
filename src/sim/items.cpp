@@ -466,7 +466,9 @@ const PowerRow* powerOf(uint8_t power) {
          kWizardOnly, kInWeapon, Rarity::Legendary},
         {Power::Pyroblast, "Pyroblaster", "Fire Ball +50% damage, 20% to burst into four more",
          kWizardOnly, kInWeapon, Rarity::Legendary, true},
-        {Power::Undying, "Undying", "+20% max life", kEveryClass, kWorn, Rarity::Epic},
+        // The rings' and the pendant's alone since 2026-10-09 (the user: "also HP runes has to go
+        // to jewelry only"), as Wellspring is mana's.
+        {Power::Undying, "Undying", "+20% max life", kEveryClass, kInJewellery, Rarity::Epic},
         {Power::KeenEye, "Keen Eye", "+10% critical chance", kEveryClass, kWorn, Rarity::Rare},
         {Power::Bloodwell, "Bloodwell", "Heal 3% of damage dealt, 5% mana per kill",
          kEveryClass, kWorn, Rarity::Epic},
@@ -559,6 +561,15 @@ const PowerRow* powerOf(uint8_t power) {
          kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::Kindle, "Kindle", "Fire Ball +15% damage", kWizardOnly | kGladiatorOnly,
          kInWeapon, Rarity::Common},
+        // Max mana's four tiers (sim::kFaintWellspringMana...), every class's, jewellery alone.
+        {Power::FaintWellspring, "Faint Wellspring", "+5% max mana", kEveryClass, kInJewellery,
+         Rarity::Common},
+        {Power::LesserWellspring, "Lesser Wellspring", "+10% max mana", kEveryClass,
+         kInJewellery, Rarity::Rare},
+        {Power::Wellspring, "Wellspring", "+20% max mana", kEveryClass, kInJewellery,
+         Rarity::Epic},
+        {Power::GreaterWellspring, "Greater Wellspring", "+30% max mana", kEveryClass,
+         kInJewellery, Rarity::Legendary},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -571,6 +582,16 @@ double barrageShare(Power power) {
         case Power::LesserBarrage: return kLesserBarrageDamage;
         case Power::Barrage: return kBarrageDamage;
         case Power::GreaterBarrage: return kGreaterBarrageDamage;
+        default: return 0.0;
+    }
+}
+
+double wellspringShare(Power power) {
+    switch (power) {
+        case Power::FaintWellspring: return kFaintWellspringMana;
+        case Power::LesserWellspring: return kLesserWellspringMana;
+        case Power::Wellspring: return kWellspringMana;
+        case Power::GreaterWellspring: return kGreaterWellspringMana;
         default: return 0.0;
     }
 }

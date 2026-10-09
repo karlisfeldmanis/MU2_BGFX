@@ -707,7 +707,12 @@ enum class Power : uint8_t {
     SplitArrow = 61,
     Buckler = 62,
     Brace = 63,
-    Kindle = 64
+    Kindle = 64,
+    // Max mana, four tiers in a ring's or the pendant's socket (sim::wellspringShare).
+    FaintWellspring = 65,
+    LesserWellspring = 66,
+    Wellspring = 67,
+    GreaterWellspring = 68
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1040,6 +1045,16 @@ constexpr double kBarrageDamage = 0.30;
 constexpr double kGreaterBarrageDamage = 0.50;
 // What one rune of these three adds to Multi-Shot, 0 for any other.
 double barrageShare(Power power);
+// **Wellspring** (the user, 2026-10-09: "make new rune. a % of mana increased, used on jewels
+// only with different tires"): every class's, in a ring's or the pendant's socket alone, a share
+// more maximum mana -- Faint Common, Lesser Rare, Wellspring Epic, Greater Legendary -- each one
+// worn adding, laid on after the excellent armour's rate. invention.
+constexpr double kFaintWellspringMana = 0.05;
+constexpr double kLesserWellspringMana = 0.10;
+constexpr double kWellspringMana = 0.20;
+constexpr double kGreaterWellspringMana = 0.30;
+// What one rune of these four adds to maximum mana, 0 for any other.
+double wellspringShare(Power power);
 constexpr float kWispForce = 0.5f;
 // **The weaker kin** (the user, 2026-10-09: "we need weaker version of some runes which only has
 // legendary versions", then "also common versions"): every Legendary that stood alone gets an Epic
