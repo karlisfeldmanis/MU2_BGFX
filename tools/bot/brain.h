@@ -2570,7 +2570,14 @@ private:
         for (const int breed : wanted(q)) {
             const int home = homeOf(breed);
             const content::MonsterKind* kind = home >= 0 ? kindOf(home, breed) : nullptr;
-            if (!kind || !(takes(*kind, share) || (home == kIcarus && drinksThrough(*kind))) || !reachable(home)) continue;
+            // And the White Silence's breeds, its Elite Yetis and Ice Queens (2026-10-09): Devias's
+            // quest pays the second weapon and opens the tower, Atlans and Tarkan behind it, and
+            // held to his health bar no bot handed it in before level 121-184. Drinking through
+            // them, three seeds of 30 h: the knight 95-98, the elf 114-120, the wizard 125-133.
+            // Still later than a player (the user: "with elf it was very easy"): costOf counts
+            // no summons tanking for her and no skill's multiplier.
+            const bool drinks = kind && (home == kIcarus || q == sim::questOf(406));
+            if (!kind || !(takes(*kind, share) || (drinks && drinksThrough(*kind))) || !reachable(home)) continue;
             if (const auto on = asideOn_.find({q, home}); on != asideOn_.end() && on->second > clock_) continue;
             if (where < 0) where = home;
             if (home == where) breeds->push_back(breed);
