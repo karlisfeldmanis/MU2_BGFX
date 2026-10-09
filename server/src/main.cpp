@@ -1,6 +1,6 @@
 // mu2_server: MU2_BGFX's server (docs/sprints/18-the-wire.md, server/README.md).
 //
-//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--map-cap N]
+//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--map-cap N] [--speed N]
 //
 // **Connections to the same world share it** (docs/sprints/19-many-heroes.md): the first Hello
 // for a world raises its realm with him as its first player; each later one comes in by a Join
@@ -65,7 +65,10 @@ void onSignal(int) { g_stop = 1; }
 
 using Clock = std::chrono::steady_clock;
 constexpr double kTickSeconds = 0.05;  // 20 Hz, the realm's own (sim/realm.h)
-const Clock::duration kTick = std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(kTickSeconds));
+// A tick's wall time: 50 ms, or less under --speed N, a test's world run N times as fast (the
+// Claude bot's, tools/netbot/claude.h: "you need to find a way how massively to speed up
+// things"). The clients follow whatever ticks come; nothing in the realm reads the wall.
+Clock::duration g_tick = std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(kTickSeconds));
 // An order that sets a standing player off takes his world's tick at once, and the world's clock
 // starts again from there: what the client does for a click on its own (game/play.cpp), done
 // where the ticks are made. It was 0 to 50 ms, 25 on average, between his order reaching the
@@ -801,7 +804,7 @@ bool welcome(Session& one, uint32_t player) {
     for (const net::Tick& t : one.world->log) net::put(out, t);
     one.player = player;
     one.joining = 0;
-    one.keepAt = Clock::now() + kTick * kKeepEvery;
+    one.keepAt = Clock::now() + g_tick * kKeepEvery;
     one.welcomed = one.socket.send(out);
     core::logf("%s: welcomed into %s as #%u, a %zu KB snapshot (%zu KB packed) and %u ticks after it, %d here",
                one.who.c_str(), one.world->name.c_str(), player, one.world->snapshot.size() / 1024,
@@ -1303,6 +1306,7 @@ int main(int argc, char** argv) {
         if (a == "--port" && i + 1 < argc) port = std::atoi(argv[++i]);
         else if (a == "--assets" && i + 1 < argc) assets = argv[++i];
         else if (a == "--store" && i + 1 < argc) store = argv[++i];
+        else if (a == "--speed" && i + 1 < argc) g_tick /= std::max(1, std::atoi(argv[++i]));
         else if (a == "--storm") g_storm = true;
         else if (a == "--invasion") g_invasion = true;
         else if (a == "--map-cap" && i + 1 < argc) g_mapCap = std::max(1, std::atoi(argv[++i]));
@@ -1310,7 +1314,7 @@ int main(int argc, char** argv) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.castle = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--storm] [--invasion] [--map-cap N]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
             return 2;
         }
     }
@@ -1392,13 +1396,13 @@ int main(int argc, char** argv) {
             if (early) {
                 tick(*world, sessions, worlds, true);
                 world->earlyAt = now;
-                world->next = now + kTick;
+                world->next = now + g_tick;
                 continue;
             }
             int owed = 0;
             while (world->next <= now && owed < 20) {
                 tick(*world, sessions, worlds);
-                world->next += kTick;
+                world->next += g_tick;
                 ++owed;
             }
             if (world->next < now) world->next = now;  // more than a second behind: start again
@@ -1414,7 +1418,7 @@ int main(int argc, char** argv) {
         for (auto& one : sessions) {
             if (one->world == nullptr || !one->welcomed || one->keepAt > now) continue;
             due.push_back(placeOf(*one));
-            one->keepAt = now + kTick * kKeepEvery;
+            one->keepAt = now + g_tick * kKeepEvery;
         }
         if (!due.empty()) g_store.keep(due);
         for (auto& one : sessions) {
