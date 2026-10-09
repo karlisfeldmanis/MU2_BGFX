@@ -894,6 +894,10 @@ Play::Drawn Play::drawnFor(const sim::Body& body, const FigureBody* heroLook, si
         // Her summon's slot, dormant: no figure until she raises one, when the breed she
         // called is put on it (Play::update, What::Spawned). Given its placeholder kind's
         // figure here it stood as a Bull Fighter wherever the breed was not cooked.
+        // One already standing -- raised on the server before this picture came up, so its
+        // Spawned was never seen here -- wears its breed now, or it fought as a bare health bar
+        // (the user, 2026-10-09, "summons is invissible, only hp bar is there").
+        if (body.alive() && figures_) look = figures_->body(tables_.kinds[size_t(body.kind)].figure);
     } else if (body.raider >= 0) {
         // A raider: its class body in its own kit (play_raid.cpp).
         look = raiderLook(body);
