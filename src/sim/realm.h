@@ -1786,7 +1786,7 @@ private:
     // Whether a dungeon's kill leaves a Firecracker (sim/items.h), so a seeded hunt there rolls
     // its loot as it always did.
     Random crackerDice_{0};
-    // Whether a kill in Atlans or the Lost Tower leaves a Loch's Feather (sim::kFeatherOdds).
+    // Whether a kill in Tarkan, Icarus or Blood Castle 6 leaves a Loch's Feather (sim::kFeatherOdds).
     Random featherDice_{0};
     Random novaScrollDice_{0};
     // Whether a kill in Icarus leaves the first wings (sim::kIcarusWingOdds).

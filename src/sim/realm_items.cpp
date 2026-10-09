@@ -1151,8 +1151,10 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
-    // Loch's Feather in Atlans, the Lost Tower, Tarkan and Icarus, the same way (sim::kFeatherOdds).
-    if (level >= kFeatherFromLevel && featherMap(tables_->map) &&
+    // Loch's Feather in Tarkan, Icarus and Blood Castle 6, the same way (sim::kFeatherOdds).
+    const bool featherHere = featherMap(tables_->map) ||
+                             (tables_->map == kBloodCastleMap && run_.castle == kFeatherCastle);
+    if (level >= kFeatherFromLevel && featherHere &&
         featherDice_.nextInt(0, kFeatherOdds) == 0) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
             if (!lochsFeather(tables_->items[i])) continue;
@@ -1168,7 +1170,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         }
     }
     // The Scroll of Nova in the same two, the same way (sim::kNovaScrollOdds).
-    if (level >= kNovaScrollFromLevel && featherMap(tables_->map) &&
+    if (level >= kNovaScrollFromLevel && novaScrollMap(tables_->map) &&
         novaScrollDice_.nextInt(0, kNovaScrollOdds) == 0) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
             if (!scrollOfNova(tables_->items[i])) continue;

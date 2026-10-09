@@ -185,23 +185,27 @@ enum : uint8_t {
     kWingOptionKind = 0x20,
 };
 // **Loch's Feather** (13/14), the 2nd wings' ingredient. MU drops it in Icarus alone
-// (gObjMonster.cpp:4620). Ours: a kill in Atlans, the Lost Tower, Tarkan or Icarus of a monster
-// of kFeatherFromLevel or over leaves one in kFeatherOdds, on its own roll beside the rest (the
+// (gObjMonster.cpp:4620). Ours: a kill in Tarkan, Icarus or Blood Castle 6 of a monster of
+// kFeatherFromLevel or over leaves one in kFeatherOdds, on its own roll beside the rest (the
 // user, 2026-10-04: 'Rare drop, high maps'; Icarus since its port, 2026-10-07; Tarkan, where MU
-// dropped it until 0.98c, the same day: 'drop it, it makes sense'). The level and the rate are
-// ours, and Atlans and the Lost Tower.
+// dropped it until 0.98c, the same day: 'drop it, it makes sense'; and 2026-10-09, "feather is
+// late game item, tarkan, icarus, bc6" -- out of Atlans and the Lost Tower). The level, the rate
+// and Blood Castle 6 are ours; Realm::leave asks featherMap and, in a castle, which one.
 bool lochsFeather(const content::ItemRow& row);
 constexpr int kFeatherOdds = 500;
 constexpr int kFeatherFromLevel = 60;
-// **The Scroll of Nova** (15, 18; source/items/misc/Book19.json), the Soul Master's: wherever
-// Loch's Feather drops (featherMap: the Lost Tower, Atlans, Tarkan and Icarus), a kill of
+// **The Scroll of Nova** (15, 18; source/items/misc/Book19.json), the Soul Master's: in the
+// Lost Tower, Atlans, Tarkan and Icarus (novaScrollMap), a kill of
 // kNovaScrollFromLevel or over leaves one, one in kNovaScrollOdds, its own roll (the user,
 // 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's
 // comes off Kanturu's bags, which are not built.
 bool scrollOfNova(const content::ItemRow& row);
 constexpr int kNovaScrollOdds = 1500;
 constexpr int kNovaScrollFromLevel = 60;
-inline bool featherMap(uint32_t map) { return map == 4 || map == 7 || map == 8 || map == 10; }
+inline bool novaScrollMap(uint32_t map) { return map == 4 || map == 7 || map == 8 || map == 10; }
+// Tarkan and Icarus; Blood Castle (11) only in castle 6, which the caller asks itself.
+inline bool featherMap(uint32_t map) { return map == 8 || map == 10; }
+constexpr int kFeatherCastle = 6;
 // **The first wings** in Icarus: any kill there leaves the hero's class's wing (firstWingOf), one
 // in kIcarusWingOdds, +0 and whole, its luck as any drop's, on its own roll beside the rest.
 // INVENTION (the user, 2026-10-07: 'lets them drop'): MU's are mixed only -- WebZen's item.txt

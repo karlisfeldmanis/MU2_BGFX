@@ -59,6 +59,8 @@ std::string kindOf(const content::ItemRow& row) {
     // Before the pets: the rings and pendants share their group 13 (docs/jewellery.md).
     if (sim::ring(row)) return "Ring";
     if (sim::pendant(row)) return "Pendant";
+    // In the pets' group 13 too, and no pet: what the 2nd wings are made of.
+    if (sim::lochsFeather(row)) return "Wing material";
     // Before the jewel: the pets ride in the jewel drop group and are not jewels.
     if (row.group == sim::kGroupPets) return "Pet";
     if (row.jewel()) return "Jewel";

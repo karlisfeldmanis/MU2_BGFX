@@ -10306,6 +10306,15 @@ void testNova(const content::Tables& tables) {
     std::printf("nova\n");
     const int scroll = tables.itemAt(15, 18);
     check(scroll >= 0 && sim::scrollOfNova(tables.items[size_t(scroll)]), "the Scroll of Nova has a row (15, 18)");
+    // Where each drops (the user, 2026-10-09: "feather is late game item, tarkan, icarus, bc6"):
+    // the Scroll in the Lost Tower, Atlans, Tarkan and Icarus; Loch's Feather in Tarkan and
+    // Icarus, and in Blood Castle only castle 6, which Realm::leave asks itself.
+    check(sim::novaScrollMap(4) && sim::novaScrollMap(7) && sim::novaScrollMap(8) &&
+              sim::novaScrollMap(10),
+          "the Scroll of Nova drops in the Lost Tower, Atlans, Tarkan and Icarus");
+    check(!sim::featherMap(4) && !sim::featherMap(7) && sim::featherMap(8) && sim::featherMap(10) &&
+              !sim::featherMap(sim::kBloodCastleMap) && sim::kFeatherCastle == 6,
+          "Loch's Feather in Tarkan and Icarus, not the Lost Tower or Atlans, and castle 6 alone");
     const sim::SkillRow* nova = sim::skillNumbered(sim::skill::kNova);
     check(nova != nullptr && nova->chargeStages == 12 && nova->mana == 15 && nova->reach == 6.0f &&
               nova->kin == sim::Kin::DarkWizard && nova->coolTicks > 0,
