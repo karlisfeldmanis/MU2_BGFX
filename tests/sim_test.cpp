@@ -5362,6 +5362,38 @@ void testChainLevels() {
 
 // A Dungeon floor's trip waits on its link of the Golden Archer's chain (ours, the user,
 // 2026-09-30): refused for the quest until the link is taken, then not for that.
+// The user, 2026-10-09: "if char needs to go to LT6 to kill monsters fast travel should be
+// activated for that map if char meets the lvl requirments". Sevina's trial hunts the Death
+// Gorgons and Death Knights: under way, it opens the floors they stand on and Atlans, and not the
+// floors below, nor a floor whose level he lacks.
+void testQuestHuntOpensTravel(const content::Tables& tables) {
+    std::printf("a quest's hunt opens the trip to its ground\n");
+    int refusal = -1;
+    const auto opened = [&](int level) {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 142, 126, sim::Kin::FairyElf, level);
+        realm.earn(1000000);
+        sim::HeroRecord record = realm.record();
+        record.level = level;
+        record.quests[sim::kSevinaTrial].state = sim::QuestState::Active;
+        realm.restore(record);
+        refusal = int(realm.travelRefusal(sim::travelIndexOf("lost_tower_6")));
+        return realm.found();
+    };
+    const auto bit = [](const char* key) { return uint32_t(1) << sim::travelIndexOf(key); };
+    const uint32_t at200 = opened(200);
+    check((at200 & bit("lost_tower_5")) && (at200 & bit("lost_tower_6")) && (at200 & bit("lost_tower_7")) &&
+              (at200 & bit("atlans")),
+          "under way at 200, the fifth to seventh floors and Atlans open");
+    check(!(at200 & bit("lost_tower")) && !(at200 & bit("lost_tower_2")) && !(at200 & bit("lost_tower_4")),
+          "and not the floors where nothing it hunts stands");
+    checkEqual(refusal, int(sim::TravelRefusal::None),
+               "and the trip to the sixth is not refused for Tersia's link he never took");
+    const uint32_t at130 = opened(130);
+    check((at130 & bit("lost_tower_5")) && !(at130 & bit("lost_tower_6")),
+          "at 130 the fifth floor (120) opens and the sixth (140) waits on his level");
+}
+
 void testTravelQuestLock() {
     std::printf("travel and the chain\n");
     content::Tables dungeon;
@@ -11666,6 +11698,7 @@ int main() {
     testSummonShelters(tables);
     testSummonTravels(tables);
     testSummonTravelsAFloor();
+    testQuestHuntOpensTravel(tables);
     testSummonOnAHunt(tables);
     testGates(tables);
     testDungeonGates(tables);

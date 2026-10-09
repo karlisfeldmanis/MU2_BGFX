@@ -1945,6 +1945,11 @@ void Realm::gain(Body& hero, int32_t award) {
         hero.mana = hero.maxMana;
         hero.sd = hero.maxSd;
         say(What::Levelled, hero, hero.level, hero.pointsInHand);
+        // A trip a quest's hunt waited on his level for (Realm::openChained).
+        if (const int at = playerOfId(hero.id); at >= 0) {
+            For him(*this, size_t(at));
+            openChained();
+        }
         remaining -= int32_t(gained);
     }
 }

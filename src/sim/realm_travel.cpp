@@ -66,6 +66,24 @@ struct Chain {
 };
 constexpr Chain kChains[] = {{1, 236, 0}, {4, 566, 1}};
 
+// Where a quest's hunt is: the breeds standing on a row's ground, by MU number, so a quest that
+// sends him to hunt them opens the trip there (Realm::openChained). The Lost Tower's floors as
+// docs/lost-tower-port.md's spawn count has them; Atlans's seven (docs/atlans-port.md).
+struct Hunted {
+    const char* row;
+    int32_t breeds[8];
+};
+constexpr Hunted kHunted[] = {
+    {"lost_tower", {36, 39}},
+    {"lost_tower_2", {39, 34}},  // and one stray Shadow
+    {"lost_tower_3", {34, 41}},
+    {"lost_tower_4", {41, 37}},
+    {"lost_tower_5", {37, 40}},
+    {"lost_tower_6", {37, 40, 35}},
+    {"lost_tower_7", {37, 40, 35, 38}},
+    {"atlans", {45, 46, 47, 48, 49, 51, 52}},
+};
+
 const Chain* chainOf(int32_t map) {
     for (const Chain& chain : kChains) {
         if (chain.map == map) return &chain;
@@ -174,6 +192,42 @@ void Realm::openChained() {
         me().found |= uint32_t(1) << i;
         core::logf("travel: %s opened", kRows[i].name);
     }
+    // **And any quest's hunt opens the trip to its ground** once he has the row's level (the
+    // user, 2026-10-09: "if char needs to go to LT6 to kill monsters fast travel should be
+    // activated for that map if char meets the lvl requirments") -- Sevina's trial on the Death
+    // Gorgons and Death Knights of the fifth to seventh floors, which only Tersia's links opened.
+    // Under way or ready to hand in, and never a chain's link; ours.
+    const Body& hero = mine();
+    for (int i = 0; i < kTravels; ++i) {
+        if (((me().found >> i) & 1u) != 0) continue;
+        if (hero.level < moveLevel(kRows[i].level, hero.kin) || !huntedAt(i)) continue;
+        me().found |= uint32_t(1) << i;
+        core::logf("travel: %s opened for a quest's hunt", kRows[i].name);
+    }
+}
+
+bool Realm::huntedAt(int index) const {
+    const Hunted* ground = nullptr;
+    for (const Hunted& one : kHunted) {
+        if (travelIndexOf(one.row) == index) ground = &one;
+    }
+    if (ground == nullptr) return false;
+    for (int q = 0; q < kQuests; ++q) {
+        const QuestState state = me().quests[q].state;
+        if (state != QuestState::Active && state != QuestState::Ready) continue;
+        const QuestRow& row = questAt(q);
+        // A chain's links open their own floors, one at a time (openChained).
+        bool link = false;
+        for (const Chain& chain : kChains) link |= row.giver == chain.giver;
+        if (link) continue;
+        for (int k = 0; k < row.stepCount; ++k) {
+            if (row.steps[k].kind != QuestStepKind::Clear) continue;
+            for (const int32_t breed : ground->breeds) {
+                if (breed != 0 && breed == row.steps[k].target) return true;
+            }
+        }
+    }
+    return false;
 }
 
 void Realm::reachFloor() {
@@ -224,7 +278,9 @@ TravelRefusal Realm::travelRefusal(int index) const {
         tables_->grid.safe(standing.column(), standing.row()))
         return TravelRefusal::Here;
     // Its link of the chain, taken at least once: under way, ready, resting or ever handed in.
-    if (const int q = travelQuest(index); q >= 0) {
+    // Or a quest's hunt there (huntedAt): Sevina's trial goes to the sixth floor whatever link of
+    // Tersia's he stands at.
+    if (const int q = travelQuest(index); q >= 0 && !huntedAt(index)) {
         const QuestProgress& link = me().quests[q];
         if (link.state == QuestState::Untaken && link.completions == 0) return TravelRefusal::Quest;
     }

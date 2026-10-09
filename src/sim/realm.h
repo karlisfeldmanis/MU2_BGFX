@@ -1210,6 +1210,9 @@ public:
     // Pays for it and puts down whatever he had open; the map change is the game's. Refused whole
     // for any reason travelRefusal gives.
     bool travel(int index);
+    // Whether a quest under way hunts a breed standing on travel row `index`'s ground (not a
+    // chain's link): the row opens for it at his level, and a chain's lock gives way to it.
+    bool huntedAt(int index) const;
     // Go Back!: his way back, open or just closed (WayBack), and taking it -- on this map, set
     // down there at once; to another, stopped where he stands and `WentBack` said, the map change
     // the game's and the server's, as a gate's. False with no open way back, or dead.
