@@ -166,6 +166,34 @@ OURS = [
 #: somewhere else.
 UPRIGHT = {"Bip01 Head"}
 
+#: The limbs, each as (upper bone, hinge bone, end bone), rebuilt on MU's hinge after posing.
+#:
+#: **MU's elbows and knees are hinges.** Every MU clip turns `Forearm` and `Calf` about the
+#: bone's own -Y and nothing else; actions 15 and 25 measure exactly (0, -1, 0) on every key,
+#: and the Biped skin is weighted for that. The minimal-arc alignment gets each bone's direction
+#: right and leaves its roll to chance, and on Slow Run chance bent the elbow about an axis 40
+#: to 55 degrees off the hinge and the knee 25 to 30, and rolled the upper arm some 55 degrees
+#: the other way from anything MU does with it (-33..-17 against MU's +20..+65). On the mesh
+#: that is the shoulder wringing and the elbow shearing sideways as the arms swing -- the
+#: user's "tiny distortions with shoulders and arms" (2026-10-09).
+#:
+#: So the directions are kept and the roll is rebuilt, as a two-bone solve would: the upper
+#: bone is rolled until the bend lies in its hinge plane, the hinge bone turns about that
+#: shared -Y alone, and nothing twists. The end bone is the third entry: a hand is put back to
+#: the wrist MU carries on NEUTRAL_CLIP (MU never moves a hand on a walk or run, 45 degrees of
+#: twist on every key), and a foot, None here, keeps Mixamo's world rotation, which is what
+#: puts it flat on the ground.
+LIMBS = [
+    ("Bip01 R UpperArm", "Bip01 R Forearm", "Bip01 R Hand"),
+    ("Bip01 L UpperArm", "Bip01 L Forearm", "Bip01 L Hand"),
+    ("Bip01 R Thigh", "Bip01 R Calf", None),
+    ("Bip01 L Thigh", "Bip01 L Calf", None),
+]
+
+#: Under this much bend, in sine, a limb is straight enough that its bend plane is noise, and the
+#: upper bone keeps the roll the alignment gave it.
+STRAIGHT = 0.05
+
 #: The root, which holds the body's height and, on a walk or run, its pinned travel.
 ROOT = "Bip01"
 
@@ -232,6 +260,31 @@ def between(a, b):
     w = 1 + dot
     length = (sum(c * c for c in cross) + w * w) ** 0.5
     return [cross[0] / length, cross[1] / length, cross[2] / length, w / length]
+
+
+def framed(x, y, z):
+    """The rotation whose local axes land on the orthonormal x, y and z, as xyzw."""
+    m00, m11, m22 = x[0], y[1], z[2]
+    trace = m00 + m11 + m22
+
+    if trace > 0:
+        s = 2 * (trace + 1) ** 0.5
+        q = [(y[2] - z[1]) / s, (z[0] - x[2]) / s, (x[1] - y[0]) / s, s / 4]
+    elif m00 > m11 and m00 > m22:
+        s = 2 * (1 + m00 - m11 - m22) ** 0.5
+        q = [s / 4, (y[0] + x[1]) / s, (z[0] + x[2]) / s, (y[2] - z[1]) / s]
+    elif m11 > m22:
+        s = 2 * (1 + m11 - m00 - m22) ** 0.5
+        q = [(y[0] + x[1]) / s, s / 4, (z[1] + y[2]) / s, (z[0] - x[2]) / s]
+    else:
+        s = 2 * (1 + m22 - m00 - m11) ** 0.5
+        q = [(z[0] + x[2]) / s, (z[1] + y[2]) / s, s / 4, (x[1] - y[0]) / s]
+
+    return unit(q)
+
+
+def cross(a, b):
+    return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
 
 
 def to_zup(value):
@@ -609,6 +662,40 @@ def main(argv=None) -> None:
 
         return turned
 
+    # The wrist MU carries, as the hand's rotation within its forearm on NEUTRAL_CLIP.
+    wrist = {}
+    for _upper, hinge, end in LIMBS:
+        if end in named and named[hinge] in standing and named[end] in standing:
+            wrist[end] = multiply(inverse(standing[named[hinge]]), standing[named[end]])
+
+    def frame_pose(frame: dict) -> dict:
+        """Every driven bone's world rotation on this frame, the limbs put on MU's hinges."""
+        pose = {bone: posed(bone, frame) for bone in corrections}
+
+        for upper, hinge, end in LIMBS:
+            if upper not in pose or hinge not in pose:
+                continue
+            along = unit(turn(pose[upper], AXIS))
+            below = unit(turn(pose[hinge], AXIS))
+            # The hinge turns about -Y in glTF, which is -Z here, and that carries +X toward
+            # -Y: the bend is the upper bone's -Y, and the hinge axis is its Z.
+            reach = sum(a * b for a, b in zip(along, below))
+            bend = [below[i] - reach * along[i] for i in range(3)]
+            if sum(c * c for c in bend) ** 0.5 < STRAIGHT:
+                bend = turn(pose[upper], [0.0, -1.0, 0.0])
+                bend = [bend[i] - sum(a * b for a, b in zip(bend, along)) * along[i]
+                        for i in range(3)]
+            bend = unit(bend)
+            hinge_axis = cross(bend, along)
+            pose[upper] = framed(along, [-c for c in bend], hinge_axis)
+            pose[hinge] = framed(below, cross(hinge_axis, below), hinge_axis)
+            if end in wrist and end in pose:
+                pose[end] = multiply(pose[hinge], wrist[end])
+
+        return pose
+
+    poses = [frame_pose(frame) for frame in clip["frames"]]
+
     hip_rest = clip["rest"]["mixamorig:Hips"]["head"][2]
     rise_scale = world[named["Bip01 Pelvis"]][0][2] / hip_rest
     root_rest = nodes[named[ROOT]].get("translation", [0.0, 0.0, 0.0])
@@ -641,13 +728,13 @@ def main(argv=None) -> None:
 
         if path == "rotation" and bone in corrections:
             values = []
-            for frame in clip["frames"]:
+            for pose in poses:
                 above = parent.get(node)
-                up = (posed(nodes[above]["name"], frame)
+                up = (pose[nodes[above]["name"]]
                       if above is not None and nodes[above].get("name") in corrections
                       else world[above][1] if above is not None and "name" in nodes[above]
                       else [0.0, 0.0, 0.0, 1.0])
-                values.append(to_gltf(multiply(inverse(up), posed(bone, frame))))
+                values.append(to_gltf(multiply(inverse(up), pose[bone])))
             sampler["output"] = add_accessor(document, extra, "VEC4", values)
             driven += 1
             continue
