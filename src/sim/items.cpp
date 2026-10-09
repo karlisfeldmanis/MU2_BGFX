@@ -412,6 +412,12 @@ uint8_t gladiatorRune(uint8_t power) {
         case Power::Fireburst: return uint8_t(Power::Sparkburst);
         case Power::Hellfire: return uint8_t(Power::Brimstone);
         case Power::Bulwark: return uint8_t(Power::Buckler);
+        // And the three a giver now pays him on a path or to every class (2026-10-09): the
+        // knight's Twister as Gust, the second classes' Greater Ascendance and Evil Spirit as
+        // Lesser Ascendance and Wisp.
+        case Power::Twister: return uint8_t(Power::Gust);
+        case Power::GreaterAscendance: return uint8_t(Power::LesserAscendance);
+        case Power::Spirits: return uint8_t(Power::Wisp);
         default: return power;
     }
 }

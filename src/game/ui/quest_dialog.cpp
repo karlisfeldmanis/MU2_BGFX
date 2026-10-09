@@ -509,7 +509,8 @@ void QuestDialog::layout(const Play& play) {
         };
         std::vector<std::pair<int, const sim::QuestItem*>> paid, fits;
         for (int p = 0; p < row.paidCount; ++p) {
-            if (sim::questPays(row.paid[p], paidKin, first) && realm.questItemFits(row.paid[p])) {
+            if (sim::questPaysHero(row.paid[p], kin, paidKin, first) &&
+                realm.questItemFits(row.paid[p])) {
                 paid.push_back({-1, &row.paid[p]});
             }
         }

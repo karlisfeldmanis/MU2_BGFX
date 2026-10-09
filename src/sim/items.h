@@ -837,7 +837,8 @@ const PowerRow* powerOf(uint8_t power);
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,
-// Bulwark as Buckler. Ours (docs/mg-port.md). Anything else as it is.
+// Bulwark as Buckler, Twister as Gust, Greater Ascendance as Lesser, Evil Spirit as Wisp. Ours
+// (docs/mg-port.md). Anything else as it is.
 uint8_t gladiatorRune(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);

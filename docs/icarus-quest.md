@@ -121,6 +121,9 @@ The card font has no em dash: "--" prints literally.
 
 ## Rewards
 
+Superseded 2026-10-09 by docs/quest-rewards.md (the reward ladder): Icarus now pays the second
+class's set and weapon, and the Magic Gladiator his Storm Crow.
+
 The user, 2026-10-07: 'dont give 2nd wings but give feathers, jewels, epic & legendary runes, Dark
 Breaker'. Above the Balrog's (link 7: 250k exp, 250k Zen, 5 Bless, 2 Soul, 1 Chaos a clear).
 

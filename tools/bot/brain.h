@@ -3745,7 +3745,8 @@ private:
             return true;
         };
         for (int i = 0; i < row.paidCount; ++i) {
-            if (!sim::questPays(row.paid[i], kin, first) || !realm_->questItemFits(row.paid[i])) continue;
+            if (!sim::questPaysHero(row.paid[i], int(options_.kin), kin, first) ||
+                !realm_->questItemFits(row.paid[i])) continue;
             if (!place(row.paid[i].item, row.paid[i].count)) return false;
         }
         for (int c = 0; c < row.choiceCount; ++c) {

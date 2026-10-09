@@ -363,7 +363,8 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     const bool first = questFirst(row, int(mine().kin), one.completions);
     const int paidKin = questPaidKin(row, int(mine().kin), first, path);
     for (int i = 0; i < row.paidCount && paid; ++i) {
-        if (questPays(row.paid[i], paidKin, first) && questItemFits(row.paid[i])) {
+        if (questPaysHero(row.paid[i], int(mine().kin), paidKin, first) &&
+            questItemFits(row.paid[i])) {
             paid = pay(row.paid[i], nullptr);
         }
     }

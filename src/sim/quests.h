@@ -29,7 +29,7 @@ namespace mu::sim {
 inline constexpr int kQuests = 25;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
-inline constexpr int kQuestPaid = 18;
+inline constexpr int kQuestPaid = 24;
 
 enum class QuestStepKind : uint8_t {
     // Kill `count` of breed `target` (MU's monster number); a count of 0 is the breed's whole
@@ -78,6 +78,13 @@ constexpr int kQuestOption = 1;
 // in the giver's town.
 inline bool questPays(const QuestItem& what, int kin, bool first) {
     return what.item && (what.kin < 0 || what.kin == kin) && (!what.firstOnly || first);
+}
+// Whether this hero is paid it: his paid class's things (questPays, `paidKin` his path's for the
+// Magic Gladiator), and for the Magic Gladiator also a row of his own -- his Storm Crow set, which
+// no knight's or wizard's row could pay him (2026-10-09). Ours.
+inline bool questPaysHero(const QuestItem& what, int heroKin, int paidKin, bool first) {
+    if (heroKin == int(Kin::MagicGladiator) && what.kin == heroKin) return questPays(what, heroKin, first);
+    return questPays(what, paidKin, first);
 }
 
 struct QuestRow {

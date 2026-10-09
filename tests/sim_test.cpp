@@ -7671,10 +7671,10 @@ void testGladiatorPath(const content::Tables& tables) {
         }
         if (path == sim::QuestPath::Melee) {
             check(swords == 1 && staves == 0, "Melee: the Falchion, not the staff");
-            checkEqual(int(power), int(sim::Power::Stormcall), "and Stormcall");
+            checkEqual(int(power), int(sim::Power::Gust), "and Gust, the knight's Common");
         } else {
             check(swords == 0 && staves == 1, "Magic: the Serpent Staff, not the Falchion");
-            checkEqual(int(power), int(sim::Power::FaintEcho), "and Arcane Echo as Faint Echo");
+            checkEqual(int(power), int(sim::Power::FaintEcho), "and the wizard's Faint Echo");
         }
     }
 }
@@ -7752,7 +7752,8 @@ void testQuests(const content::Tables& tables) {
     talk();
     checkEqual(realm.questing(), marlon, "back at Marlon with the clear done");
     // The knight's reward, and no choice: a lucky Falchion with its option and a socket, a Rune of Creation
-    // carrying Stormcall, three Jewels of Bless, twenty large potions and the purse.
+    // carrying Gust (a Common, the ladder's first rune), three Jewels of Bless, twenty large potions
+    // and the purse.
     const auto tally = [&](const sim::Realm& r, bool* falchion, int* runes, int* bless, int* potions) {
         const int32_t sword = tables.itemNamed("Sword08"), rune = tables.itemNamed("Jewel22");
         const int32_t jewel = tables.itemNamed("Jewel01"), potion = tables.itemNamed("Potion04");
@@ -7764,7 +7765,7 @@ void testQuests(const content::Tables& tables) {
                 one.sockets == 1 && one.powers[0] == 0) {
                 *falchion = true;
             }
-            if (one.item == rune && one.powers[0] == uint8_t(sim::Power::Stormcall)) ++*runes;
+            if (one.item == rune && one.powers[0] == uint8_t(sim::Power::Gust)) ++*runes;
             if (one.item == jewel) *bless += sim::stacks(tables.items[size_t(jewel)]) ? one.durability : 1;
             if (one.item == potion) *potions += one.durability;
         }
@@ -7795,7 +7796,7 @@ void testQuests(const content::Tables& tables) {
     checkEqual(levelsSaid(0), 0, "and the next step clears them, so the drawing reads them at once");
     tally(realm, &falchion, &runes, &bless, &potions);
     check(falchion, "a lucky Falchion with an empty socket is in his bag");
-    checkEqual(runes, 1, "and a Rune of Creation carrying Stormcall");
+    checkEqual(runes, 1, "and a Rune of Creation carrying Gust");
     checkEqual(bless - blessBefore, 3, "three Jewels of Bless");
     checkEqual(potions - potionsBefore, 20, "and twenty large potions");
     check(realm.quest(quest).state == sim::QuestState::Resting, "the quest rests");
@@ -8160,28 +8161,42 @@ void testRunes(const content::Tables& tables) {
             }
             check(!sim::settable(tables, one, held(serpent, 1, 0), dk, true), "but not in a weapon");
         }
-        const sim::Power chain[3] = {sim::Power::KeenEye, sim::Power::Bloodwell, sim::Power::Frenzy};
-        for (int link = 0; link < 3; ++link) {
-            const sim::QuestRow& row = sim::questAt(3 + link);
-            checkEqual(int(row.giver), 236, "the chain is the Golden Archer's");
-            for (int kin = 0; kin < 3; ++kin) {
-                int runes = 0, pieces = 0, again = 0;
+        // **One whole set over the chain** (the ladder, 2026-10-09): each class's five pieces of a
+        // single set, a socket each and two on the boots, each paid once, never on a repeat; and a
+        // rune for the pieces: Keen Eye and Ironskin, then Bloodwell and Frenzy, then the Undying.
+        const sim::Power chain[3][2] = {{sim::Power::KeenEye, sim::Power::Ironskin},
+                                        {sim::Power::Bloodwell, sim::Power::Frenzy},
+                                        {sim::Power::Undying, sim::Power::None}};
+        for (int kin = 0; kin < 3; ++kin) {
+            int set = -1, pieces = 0, mixed = 0, again = 0;
+            for (int link = 0; link < 3; ++link) {
+                const sim::QuestRow& row = sim::questAt(3 + link);
+                checkEqual(int(row.giver), 236, "the chain is the Golden Archer's");
+                int runes = 0;
                 for (int i = 0; i < row.paidCount; ++i) {
                     const sim::QuestItem& what = row.paid[i];
                     const bool first = sim::questPays(what, kin, true);
-                    if (what.power == uint8_t(chain[link])) runes += first ? 1 : 0;
-                    if (what.sockets > 0) pieces += first ? 1 : 0;
+                    for (sim::Power one : chain[link]) {
+                        if (one != sim::Power::None && what.power == uint8_t(one)) runes += first;
+                    }
                     if (what.item == std::string("Jewel22") || what.sockets > 0) {
                         again += sim::questPays(what, kin, false) ? 1 : 0;
                     }
+                    const int item = tables.itemNamed(what.item);
+                    if (!first || item < 0 || sim::setOf(tables.items[size_t(item)]) < 0) continue;
+                    const content::ItemRow& piece = tables.items[size_t(item)];
+                    if (set < 0) set = sim::setOf(piece);
+                    mixed += sim::setOf(piece) != set ? 1 : 0;
+                    ++pieces;
+                    checkEqual(int(what.sockets), piece.group == sim::kGroupBoots ? 2 : 1,
+                               "each piece with its socket, the boots two");
                 }
-                checkEqual(runes, 1, "each link's first clear pays every class its rune");
-                // The Pit's two: its boots, and the ring (2026-10-01). And the Catacombs' knight
-                // two: his helm and the Double Blade (2026-10-03).
-                const bool blade = link == 0 && kin == int(sim::Kin::DarkKnight);
-                checkEqual(pieces, link == 2 || blade ? 2 : 1, "and one socketed piece of his own");
-                checkEqual(again, 0, "and a repeat pays neither");
+                checkEqual(runes, chain[link][1] == sim::Power::None ? 1 : 2,
+                           "each link's first clear pays every class its pieces' runes");
             }
+            checkEqual(pieces, 5, "the chain pays every class five pieces");
+            checkEqual(mixed, 0, "all of one set");
+            checkEqual(again, 0, "and a repeat pays none of them");
         }
         // Evil Spirit: every class's, in a shield and nothing else, and the Pit pays it.
         const sim::Held spirit = held(rune, 0, uint8_t(sim::Power::Spirits));
@@ -8208,22 +8223,12 @@ void testRunes(const content::Tables& tables) {
         }
         const sim::QuestRow& pit = sim::questAt(5);
         for (int kin = 0; kin < 3; ++kin) {
-            int spirits = 0, shields = 0, boots = 0;
+            int spirits = 0;
             for (int i = 0; i < pit.paidCount; ++i) {
                 const sim::QuestItem& what = pit.paid[i];
-                if (!sim::questPays(what, kin, true)) continue;
-                if (what.power == uint8_t(sim::Power::Spirits)) ++spirits;
-                const int item = tables.itemNamed(what.item);
-                if (item >= 0 && sim::ring(tables.items[size_t(item)]) && what.sockets == 1) ++shields;
-                if (item >= 0 && tables.items[size_t(item)].shield()) shields += 100;
-                if (item >= 0 && tables.items[size_t(item)].group == sim::kGroupBoots &&
-                    what.sockets == 2) {
-                    ++boots;
-                }
+                if (sim::questPays(what, kin, true) && what.power == uint8_t(sim::Power::Spirits)) ++spirits;
             }
             checkEqual(spirits, 0, "the Pit's first clear pays no Evil Spirit (2026-10-02)");
-            checkEqual(shields, 1, "and a ring with one socket to set it in, and no shield");
-            checkEqual(boots, 1, "and boots with two sockets");
         }
     }
     // The Golden Archer's chain in order (Realm::questHere): the Catacombs first, the Halls and
@@ -10753,8 +10758,10 @@ void testRoadOfKantur() {
     for (int i = 0; i < legion.paidCount; ++i) {
         check(tarkan.itemNamed(legion.paid[i].item) >= 0, "everything it pays is an item here");
         if (legion.paid[i].power == 0) continue;
+        // The first class's runes, worn at once: none waits a hundred levels for Sevina
+        // (2026-10-09).
         const sim::PowerRow* rune = sim::powerOf(legion.paid[i].power);
-        check(rune && rune->rarity == sim::Rarity::Legendary, "and every rune it pays is Legendary");
+        check(rune && !rune->second, "and every rune it pays the first class may set");
     }
 
     check(talkTo(sand, keeper), "his window opens on it");
@@ -10777,13 +10784,93 @@ void testRoadOfKantur() {
         return count;
     };
     check(sand.completeQuest(sim::kKantursLegion, -1), "cleared and handed in");
-    check(held("ArmorMale18", 0) == 1, "the knight's first clear: the Dark Phoenix Armor");
-    check(held("Staff10", 0) == 0, "and not the Soul Master's staff");
-    check(held("Jewel22", uint8_t(sim::Power::Whirlwind)) == 1, "his Whirlwind");
-    check(held("Jewel22", uint8_t(sim::Power::GreaterAscendance)) == 1, "and Greater Ascendance");
-    check(held("Jewel22", uint8_t(sim::Power::Pyroblast)) == 0, "not the wizard's rune");
+    check(held("Sword17", 0) == 1, "the knight's first clear: the Sword of Destruction");
+    check(held("Staff09", 0) == 0, "and not the wizard's staff");
+    check(held("Jewel22", uint8_t(sim::Power::Burn)) == 1, "his Immolate");
+    check(held("Jewel22", uint8_t(sim::Power::Ice)) == 1, "and Ice");
+    check(held("Jewel22", uint8_t(sim::Power::Plague)) == 0, "not the wizard's rune");
     check(held("Jewel03", 0) == 1 && held("Quest04", 0) == 1,
           "a Jewel of Life and a Loch's Feather every clear");
+}
+
+// **The reward ladder** (sim/quests.cpp, 2026-10-09): a first clear's rune never rarer than its
+// map's monsters let fall, a second class's only from Icarus on, no class paid the same rune
+// twice but the worn ones a second set asks again, and the Magic Gladiator his own Storm Crow.
+void testQuestLadder(const content::Tables& tables) {
+    std::printf("quest ladder\n");
+    // The rarest each quest may pay: its hardest monster against kRuneRarityLevel.
+    const std::pair<const char*, sim::Rarity> caps[] = {
+        {"marlon", sim::Rarity::Rare},     {"peia", sim::Rarity::Rare},
+        {"devin", sim::Rarity::Epic},      {"catacombs", sim::Rarity::Rare},
+        {"halls", sim::Rarity::Epic},      {"pit", sim::Rarity::Epic},
+        {"tersia_door", sim::Rarity::Epic}, {"tersia_2", sim::Rarity::Epic},
+        {"tersia_3", sim::Rarity::Epic},
+    };
+    const auto rank = [](sim::Rarity r) {
+        return r == sim::Rarity::Common ? 0 : r == sim::Rarity::Rare ? 1
+               : r == sim::Rarity::Epic ? 2 : 3;
+    };
+    for (const auto& [key, cap] : caps) {
+        const sim::QuestRow& row = sim::questAt(sim::questIndexOf(key));
+        for (int i = 0; i < row.paidCount; ++i) {
+            const sim::PowerRow* rune = sim::powerOf(row.paid[i].power);
+            if (!rune) continue;
+            check(rank(rune->rarity) <= rank(cap), "a quest's rune is never rarer than its map");
+        }
+    }
+    for (int q = 0; q < sim::kQuests; ++q) {
+        const sim::QuestRow& row = sim::questAt(q);
+        const bool late = row.minLevel >= 160 || row.promotes;
+        for (int i = 0; i < row.paidCount; ++i) {
+            const sim::PowerRow* rune = sim::powerOf(row.paid[i].power);
+            if (rune && rune->second) check(late, "a second class's rune waits for Icarus");
+            const int item = tables.itemNamed(row.paid[i].item);
+            if (item >= 0 && sim::secondClassOnly(tables.items[size_t(item)])) {
+                check(late, "and so does its gear");
+            }
+        }
+    }
+    // A class's first-clear runes, every quest: none twice but the worn ones.
+    for (int kin = 0; kin < 3; ++kin) {
+        int seen[256] = {};
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestRow& row = sim::questAt(q);
+            if (row.promotes && row.natives != (1u << kin)) continue;
+            for (int i = 0; i < row.paidCount; ++i) {
+                const sim::QuestItem& what = row.paid[i];
+                if (what.power == 0 || !what.firstOnly || !sim::questPays(what, kin, true)) continue;
+                ++seen[what.power];
+            }
+        }
+        for (int p = 1; p < 256; ++p) {
+            const sim::PowerRow* rune = sim::powerOf(uint8_t(p));
+            if (!rune || seen[p] < 2) continue;
+            check(!rune->weapon(), "no weapon rune is paid a class twice");
+            check(seen[p] <= 2, "and a worn one at most twice, once a set");
+        }
+    }
+    // The Magic Gladiator's Storm Crow, four pieces over Icarus, and no knight's or wizard's set.
+    const int mg = int(sim::Kin::MagicGladiator);
+    int crow = 0;
+    for (int q : {sim::kSkyDoor, sim::kPhoenixContract}) {
+        const sim::QuestRow& row = sim::questAt(q);
+        for (const sim::QuestPath path : {sim::QuestPath::Melee, sim::QuestPath::Magic}) {
+            const int paid = sim::questPaidKin(row, mg, true, path);
+            for (int i = 0; i < row.paidCount; ++i) {
+                const int item = tables.itemNamed(row.paid[i].item);
+                if (item < 0 || !sim::questPaysHero(row.paid[i], mg, paid, true)) continue;
+                const content::ItemRow& one = tables.items[size_t(item)];
+                if (sim::setOf(one) == sim::kGladiatorSet) crow += path == sim::QuestPath::Melee;
+            }
+        }
+        for (int i = 0; i < row.paidCount; ++i) {
+            check(!sim::questPaysHero(row.paid[i], int(sim::Kin::DarkKnight),
+                                      int(sim::Kin::DarkKnight), true) ||
+                      row.paid[i].kin != mg,
+                  "and the knight is never paid the gladiator's");
+        }
+    }
+    checkEqual(crow, 4, "the Magic Gladiator's Storm Crow, whole over Icarus");
 }
 
 void testQuestFirecrackers(const content::Tables& tables) {
@@ -11774,6 +11861,7 @@ int main() {
     testNova(tables);
     testFirecracker(tables);
     testSecondClassDrops();
+    testQuestLadder(tables);
     testQuestFirecrackers(tables);
     testDrownedSong();
     testRoadOfKantur();

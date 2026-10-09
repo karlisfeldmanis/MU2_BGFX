@@ -5,6 +5,31 @@
 namespace mu::sim {
 namespace {
 
+// **The reward ladder** (the user, 2026-10-09: "very logical and make sense progression, so
+// character can understand all new runes and they are not given too soon or too late"; "make
+// armor sets, get weapon upgrades, shields, jewels, firecrackers and other stuff").
+// docs/quest-rewards.md has it as a table. Its rules, ours:
+//  - A first clear's rune is never rarer than its own map's monsters let fall (kRuneRarityLevel):
+//    Common and Rare at home, Epic from Devias (the Ice Queen, 52), Legendary from the Hydra and
+//    the Lost Tower's fourth floor (60). A second class's rune waits for Icarus, the class change's
+//    eve, and its signature one comes with the class change itself.
+//  - A rune comes with the socket it fits: a weapon's with a weapon, an armour's with a piece.
+//  - A rune family is taught weak first: the Common at home (Gust, Faint Echo, Chill), its
+//    Legendary in Atlans (Twister, Arcane Echo, Frost Arrow); Eddy before Whirlwind, Scatter
+//    Volley before Piercing Volley, Buckler before Bulwark.
+//  - A weapon an act, each better than the last and its sockets rising 1, 2, 2, 3, 3, 3: home,
+//    Devias, Atlans, the Balrog, Tarkan, the Phoenix.
+//  - A whole set a chain, one piece a link, so its five-piece bonus (sim::setDefense) is earned:
+//    the Golden Archer's (Plate, Sphinx, Spirit), Tersia's floors (Dragon, Legendary, Guardian),
+//    and the second class's over Icarus and the class change (Dark Phoenix, Grand Soul, Divine;
+//    the Magic Gladiator's Storm Crow). Never a piece of a set a link before it.
+//  - Jewellery and pets climb too: a green ring at home, a pendant, the Angel and the Imp, a blue
+//    then purple ring, the Kinship that frees the pets, Uniria at the tower and the Dinorant at
+//    the Balrog -- the key to Icarus's door at 160, where wings ask 180.
+//  - Every clear's jewels rise: Bless at home, Soul from Devias, Chaos from the Halls (the
+//    machine), Life from Atlans (Add Socket); a Box of Luck early, a Box of Kundun off each boss.
+//  - A skill's orb or scroll comes at about the level it asks.
+
 // Marlon's, and Lorencia's only: clear the map. The eight breeds are Lorencia's own (mu.db's
 // spawns for map 0), weakest first, which is the order a character meets them walking out of
 // town.
@@ -104,27 +129,30 @@ QuestRow marlon() {
     // where the repeat's 25,000 is most of one.
     row.firstExperience = 100000;
     row.zen = 50000;
-    row.paid[0] = {.item = "Sword08", .kin = knight, .sockets = 1,
-                   .firstOnly = true};  // Falchion
-    row.paid[1] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Stormcall),
-                   .firstOnly = true};  // Rune of Creation, Stormcall's lightning
-    // The wizard's (the user, 2026-09-29): a lucky Serpent Staff with a socket, and the rune
-    // that echoes his spells -- every Dark Wizard's again since 2026-10-04, for this.
-    row.paid[2] = {.item = "Staff03", .kin = wizard, .sockets = 1,
-                   .firstOnly = true};  // Serpent Staff
-    row.paid[3] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
-                   .firstOnly = true};  // Rune of Creation, Arcane Echo
-    row.paid[4] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
-    row.paid[5] = {.item = "Potion04", .count = 20};  // Large Healing Potions
+    int n = 0;
+    row.paid[n++] = {.item = "Sword08", .kin = knight, .sockets = 1,
+                     .firstOnly = true};  // Falchion
+    row.paid[n++] = {.item = "Staff03", .kin = wizard, .sockets = 1,
+                     .firstOnly = true};  // Serpent Staff
+    // The weapon's rune a Common (the ladder, above): the faint kin of the Legendary Lirien pays
+    // in Atlans -- the knight's Gust, a little Twister; the wizard's Faint Echo, a little Arcane
+    // Echo. They were Stormcall (Epic) and Arcane Echo itself (Legendary) until 2026-10-09.
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Gust),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::FaintEcho),
+                     .firstOnly = true};
     // The first powered ring, a green one (sim::Affix; the user, 2026-10-03: "also add some
     // rings and pendants to some quest lines"). Each line deeper pays one more power.
-    row.paid[6] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth
+    row.paid[n++] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth
     // **And a skill each, the first clear only** (the user, 2026-10-07: 'give orbs and scroll
     // to classes when they do quests'): the knight's Lunge, Hanzo's dearest, asking level 40
     // just past the ladder's end here; the wizard's Ice, which no shop sells.
-    row.paid[7] = {.item = "OrbLunge", .kin = knight, .firstOnly = true};  // Orb of Lunge
-    row.paid[8] = {.item = "Book07", .kin = wizard, .firstOnly = true};    // Scroll of Ice
-    row.paidCount = 9;
+    row.paid[n++] = {.item = "OrbLunge", .kin = knight, .firstOnly = true};  // Orb of Lunge
+    row.paid[n++] = {.item = "Book07", .kin = wizard, .firstOnly = true};    // Scroll of Ice
+    row.paid[n++] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
+    row.paid[n++] = {.item = "Potion04", .count = 20};  // Large Healing Potions
+    row.paid[n++] = {.item = "MagicBox01"};             // a Box of Luck, every clear
+    row.paidCount = n;
     return row;
 }
 
@@ -190,17 +218,20 @@ QuestRow peia() {
     row.experience = 25000;
     row.firstExperience = 100000;  // Marlon's, for the same ladder
     row.zen = 50000;
-    row.paid[0] = {.item = "Bow04", .kin = elf, .sockets = 1,
-                   .firstOnly = true};  // Battle Bow
-    // Stormcall for her bow: Frost Arrow is the Muse Elf's since 2026-10-04.
-    row.paid[1] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Stormcall),
-                   .firstOnly = true};  // Rune of Creation, Stormcall
-    row.paid[2] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
-    row.paid[3] = {.item = "Potion04", .count = 20};  // Large Healing Potions
-    row.paid[4] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth, as Marlon's
+    int n = 0;
+    row.paid[n++] = {.item = "Bow04", .kin = elf, .sockets = 1,
+                     .firstOnly = true};  // Battle Bow
+    // Chill for her bow, the Common under the Frost Arrow Lirien pays her (the ladder, above);
+    // Stormcall, an Epic, until 2026-10-09.
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Chill),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth, as Marlon's
     // And her skill, as Marlon pays his two theirs (2026-10-07): Greater Damage, level 36.
-    row.paid[5] = {.item = "Gem04", .kin = elf, .firstOnly = true};  // Orb of Greater Damage
-    row.paidCount = 6;
+    row.paid[n++] = {.item = "Gem04", .kin = elf, .firstOnly = true};  // Orb of Greater Damage
+    row.paid[n++] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
+    row.paid[n++] = {.item = "Potion04", .count = 20};  // Large Healing Potions
+    row.paid[n++] = {.item = "MagicBox01"};             // a Box of Luck, as Marlon's
+    row.paidCount = n;
     return row;
 }
 
@@ -211,11 +242,9 @@ QuestRow peia() {
 // Devias.cs's populations in the doc); the Elite Yeti stands for "Yetis", as Devias's plain Yeti
 // is a single camp.
 //
-// The reward is the doc's proposal, not yet agreed: every clear 3 Jewels of Bless, 100,000 Zen and
-// 60,000 experience, the first 250,000 and each class's top 0.75 armour with an empty socket --
-// Dragon (knight), Legendary (wizard), Guardian (elf) -- and, the first time too, the rune for
-// its socket: a Rune of Creation carrying Renewal (health back anywhere, sim/items.h; it was the
-// Undying's +20% maximum health until 2026-09-30), the same for every class.
+// The reward: every clear jewels, 100,000 Zen and 60,000 experience, the first 250,000 and the
+// ladder's second act (2026-10-09, above): a two-socket weapon and its Epics, a pendant and
+// Renewal, the Guardian Angel. It paid each class's top 0.75 armour until then.
 QuestRow devin() {
     QuestRow row;
     row.giver = 406;
@@ -271,39 +300,47 @@ QuestRow devin() {
     row.experience = 60000;
     row.firstExperience = 250000;
     row.zen = 100000;
-    row.paid[0] = {.item = "ArmorMale02", .kin = knight, .sockets = 1,
-                   .firstOnly = true};  // Dragon Armor
-    row.paid[1] = {.item = "ArmorMale04", .kin = wizard, .sockets = 1,
-                   .firstOnly = true};  // Legendary Armor
-    row.paid[2] = {.item = "ArmorElf05", .kin = elf, .sockets = 1,
-                   .firstOnly = true};  // Guardian Armor
-    row.paid[3] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    // And the rune for that socket, the same for every class (the user, 2026-09-30): Renewal,
-    // health back anywhere, in the Undying's place since the same day ("life regeneration rune
-    // which is much more important i think than just max hp").
-    row.paid[4] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
-                   .firstOnly = true};  // Rune of Creation, Renewal
-    row.paid[5] = {.item = "RingWisdom", .plus = 2, .firstOnly = true,
-                   .affixes = {uint8_t(Affix::Wealth)}};  // Ring of Wisdom, blue
-    // And a second rune, the first clear only, every class's (the user, 2026-10-05: 'add tier-1
-    // all stats to devias quest line for all classes'): +10% to all four stats.
-    // **The elf's is Barrage** (the user, 2026-10-08: "replace some rune reward in devias for
-    // multi-shot icnrease damage rune"): Multi-Shot +30% in her bow's socket, where the others
-    // keep Lesser Ascendance. Its weapon-socket slot, so her armour still takes Renewal.
-    row.paid[6] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::LesserAscendance),
-                   .firstOnly = true};  // Rune of Creation, Lesser Ascendance
-    row.paid[10] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::LesserAscendance),
-                    .firstOnly = true};
-    row.paid[11] = {.item = "Jewel22", .kin = int8_t(Kin::MagicGladiator),
-                    .power = uint8_t(Power::LesserAscendance), .firstOnly = true};
-    row.paid[12] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Barrage),
-                    .firstOnly = true};  // Rune of Creation, Barrage
-    // And a skill each (2026-10-07): the knight's Cyclone and the wizard's Flame, which no shop
-    // sells, and for the elf the Orb of Summoning +3 -- the Elite Yeti she has just hunted.
-    row.paid[7] = {.item = "OrbCyclone", .kin = knight, .firstOnly = true};  // Orb of Cyclone
-    row.paid[8] = {.item = "Book05", .kin = wizard, .firstOnly = true};      // Scroll of Flame
-    row.paid[9] = {.item = "Gem05", .plus = 3, .kin = elf, .firstOnly = true};  // Elite Yeti
-    row.paidCount = 13;
+    // **The second weapon, two sockets** (the ladder, 2026-10-09), each class's next past the
+    // shops: the knight's one-handed Double Blade, the Catacombs' until this day, the wizard's
+    // Thunder Staff and the elf's Tiger Bow, Tersia's third floor's. Devias paid each class's top
+    // 0.75 armour until this day, a piece of the Lost Tower's set two maps early.
+    int n = 0;
+    row.paid[n++] = {.item = "Sword14", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Double Blade
+    row.paid[n++] = {.item = "Staff04", .kin = wizard, .sockets = 2,
+                     .firstOnly = true};  // Thunder Staff
+    row.paid[n++] = {.item = "Bow05", .kin = elf, .sockets = 2, .firstOnly = true};  // Tiger Bow
+    // Its two runes, the first Epic of the ladder (the Ice Queen is 52): +10% all stats (the
+    // user, 2026-10-05: 'add tier-1 all stats to devias quest line for all classes') -- **the
+    // elf's Barrage** in its place (2026-10-08: "replace some rune reward in devias for
+    // multi-shot icnrease damage rune") -- and a Rare on the class's own stat.
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::LesserAscendance),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::LesserAscendance),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Barrage),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::LesserMight),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::LesserInsight),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::LesserGrace),
+                     .firstOnly = true};
+    // The first pendant, with a socket, and Renewal for it, every class's (the user, 2026-09-30:
+    // "life regeneration rune which is much more important i think than just max hp").
+    row.paid[n++] = {.item = "Necklace02", .sockets = 1, .firstOnly = true};  // Pendant of Fire
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal), .firstOnly = true};
+    // And the first pet, the Guardian Angel, for the first road away from home.
+    row.paid[n++] = {.item = "Helper01", .firstOnly = true};
+    // And a skill (2026-10-07): the wizard's Flame, which no shop sells, and for the elf the Orb
+    // of Summoning +3 -- the Elite Yeti she has just hunted. The knight's Cyclone asks level 72
+    // and went to the Pit (2026-10-09).
+    row.paid[n++] = {.item = "Book05", .kin = wizard, .firstOnly = true};      // Scroll of Flame
+    row.paid[n++] = {.item = "Gem05", .plus = 3, .kin = elf, .firstOnly = true};  // Elite Yeti
+    row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel02"};              // a Jewel of Soul
+    row.paid[n++] = {.item = "MagicBox01"};           // a Box of Luck
+    row.paidCount = n;
     return row;
 }
 
@@ -312,9 +349,9 @@ QuestRow devin() {
 // item and a rune (the user, 2026-09-30). MU's NPC 236, a gold skeleton at the Dungeon's arch;
 // the story is ours: the knights' archer, the last of the oath's last company, who fell to the
 // Gorgon and keeps the gate. The steps are each floor's breeds weakest first (dungeon-port.md
-// A §1.6), counts the doc's proposals. The rewards are the user's of 2026-09-30: a socketed helm,
-// pants and boots with the Dungeon's three runes (sim/items.h), three Bless each, a Soul at the Pit;
-// the Zen and experience are proposals.
+// A §1.6), counts the doc's proposals. The rewards were the user's of 2026-09-30, a socketed helm,
+// pants and boots with the Dungeon's three runes; since 2026-10-09 the chain pays one whole set,
+// a piece or two a link, with a rune for every socket (the ladder, above).
 QuestRow archer() {
     QuestRow row;
     row.giver = 236;
@@ -368,30 +405,30 @@ QuestRow catacombs() {
     row.experience = 50000;
     row.firstExperience = 150000;
     row.zen = 60000;
-    // The user's (2026-09-30): a helm with a socket, and Keen Eye for it, every class's rune;
-    // three Jewels of Bless. The helms are each class's near the floor's level.
-    row.paid[0] = {.item = "HelmMale09", .kin = knight, .sockets = 1, .firstOnly = true};  // Brass
-    row.paid[1] = {.item = "HelmMale08", .kin = wizard, .sockets = 1, .firstOnly = true};  // Sphinx
-    row.paid[2] = {.item = "HelmElf03", .kin = elf, .sockets = 1, .firstOnly = true};      // Wind
-    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::KeenEye), .firstOnly = true};
-    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    // **And the knight a Double Blade with two sockets** (the user, 2026-10-03: "we probably
-    // need to give some better weapon from some quest for DK with sockets so he can perform
-    // better"): the bots showed him past level 150 in a Blade -- the shops stop at it and the
-    // only one-handed swords above it were Tersia's. One-handed, so his shield and Defense stay;
-    // Stormcall and Keen Eye fill its sockets. Tersia's third floor pays three sockets now.
-    row.paid[5] = {.item = "Sword14", .kin = knight, .sockets = 2, .firstOnly = true};  // Double Blade
+    // **The chain's set, a piece or two a link** (the ladder, 2026-10-09): each class's set one
+    // below its top 0.75 one -- the knight's Plate, the oath-knights' own; the wizard's Sphinx;
+    // the elf's Spirit -- whole by the Pit, so its five-piece bonus is his. Here the helm and the
+    // gloves, a socket each, and a Rare for each (the user, 2026-09-30: Keen Eye for the helm):
+    // Keen Eye and Ironskin, every class's. The Catacombs' monsters stop at 34, under the Epics.
+    int n = 0;
+    row.paid[n++] = {.item = "HelmMale10", .kin = knight, .sockets = 1, .firstOnly = true};  // Plate
+    row.paid[n++] = {.item = "GloveMale10", .kin = knight, .sockets = 1, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmMale08", .kin = wizard, .sockets = 1, .firstOnly = true};  // Sphinx
+    row.paid[n++] = {.item = "GloveMale08", .kin = wizard, .sockets = 1, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmElf04", .kin = elf, .sockets = 1, .firstOnly = true};  // Spirit
+    row.paid[n++] = {.item = "GloveElf04", .kin = elf, .sockets = 1, .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::KeenEye), .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Ironskin), .firstOnly = true};
     // **And his crowd skill** (the user, 2026-10-03, of the bots' knight: "Twisting Slash from a
     // quest"): the wizard's spells reach the screen and the elf has Skillshot from Lala, but the
     // knight's Twisting Slash is drop-only (the shops sell early orbs alone, 2026-10-02) and in
-    // three eight-hour runs it never fell -- he struck one body at a time. Its orb asks level
-    // 60; the Catacombs come at about 105.
-    row.paid[6] = {.item = "Gem01", .kin = knight, .firstOnly = true};  // Orb of Twisting Slash
-    row.paid[7] = {.item = "RingLeech", .plus = 2, .firstOnly = true,
-                   .affixes = {uint8_t(Affix::Fury)}};  // Ring of the Leech, blue
+    // three eight-hour runs it never fell -- he struck one body at a time. Its orb asks level 60.
+    // His Double Blade went to Devias, a map earlier (2026-10-09).
+    row.paid[n++] = {.item = "Gem01", .kin = knight, .firstOnly = true};  // Orb of Twisting Slash
     // And the wizard his crowd spell beside it (2026-10-07): Twister.
-    row.paid[8] = {.item = "Book08", .kin = wizard, .firstOnly = true};  // Scroll of Twister
-    row.paidCount = 9;
+    row.paid[n++] = {.item = "Book08", .kin = wizard, .firstOnly = true};  // Scroll of Twister
+    row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paidCount = n;
     return row;
 }
 
@@ -430,22 +467,39 @@ QuestRow halls() {
     row.experience = 70000;
     row.firstExperience = 250000;
     row.zen = 80000;
-    // The user's: pants with a socket, and Bloodwell for them; three Jewels of Bless. The knight's
-    // are Plate, the oath-knights' own set.
-    row.paid[0] = {.item = "PantMale10", .kin = knight, .sockets = 1, .firstOnly = true};  // Plate
-    row.paid[1] = {.item = "PantMale04", .kin = wizard, .sockets = 1, .firstOnly = true};  // Legendary
-    row.paid[2] = {.item = "PantElf04", .kin = elf, .sockets = 1, .firstOnly = true};      // Spirit
-    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell), .firstOnly = true};
-    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    row.paid[5] = {.item = "RingFortune", .plus = 3, .firstOnly = true,
-                   .affixes = {uint8_t(Affix::Wealth)}};  // Ring of Fortune, blue
-    // And a skill each (2026-10-07): the knight's Slash, the wizard's Evil Spirit, and in the
-    // knights' own halls the elf's Orb of Summoning +4, a Dark Knight to fight beside her --
-    // off Lala's shelf since 2026-10-03, so a quest is where she has it.
-    row.paid[6] = {.item = "OrbSlash", .kin = knight, .firstOnly = true};  // Orb of Slash
-    row.paid[7] = {.item = "Book09", .kin = wizard, .firstOnly = true};    // Scroll of Evil Spirit
-    row.paid[8] = {.item = "Gem05", .plus = 4, .kin = elf, .firstOnly = true};  // Dark Knight
-    row.paidCount = 9;
+    // The set's pants and boots (the ladder, 2026-10-09; Bloodwell for the pants, the user's of
+    // 2026-09-30), the boots with two sockets (2026-10-02: "give 2 sockets for boots. same for all
+    // classes") and Frenzy, the Pit's until this day, with a Rare on vitality beside it -- the
+    // Halls' Poison Bulls reach 46, so its Epics are the ladder's second.
+    int n = 0;
+    row.paid[n++] = {.item = "PantMale10", .kin = knight, .sockets = 1, .firstOnly = true};  // Plate
+    row.paid[n++] = {.item = "BootMale10", .kin = knight, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "PantMale08", .kin = wizard, .sockets = 1, .firstOnly = true};  // Sphinx
+    row.paid[n++] = {.item = "BootMale08", .kin = wizard, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "PantElf04", .kin = elf, .sockets = 1, .firstOnly = true};  // Spirit
+    row.paid[n++] = {.item = "BootElf04", .kin = elf, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell), .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::LesserVigor), .firstOnly = true};
+    // **The knight's first shield**, with a socket and Steadfast for it: his Double Blade is
+    // one-handed. The wizard's staff and the elf's bow take both hands, so theirs wait for the
+    // tower (tersiaFifth) and the ring below is everyone's.
+    row.paid[n++] = {.item = "Shield12", .kin = knight, .sockets = 1,
+                     .firstOnly = true};  // Serpent Shield
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Steadfast),
+                     .firstOnly = true};
+    // The second ring, blue, two powers -- the Catacombs' until 2026-10-09.
+    row.paid[n++] = {.item = "RingLeech", .plus = 2, .firstOnly = true,
+                     .affixes = {uint8_t(Affix::Fury)}};  // Ring of the Leech, blue
+    // And a skill (2026-10-07): the wizard's Evil Spirit, and in the knights' own halls the elf's
+    // Orb of Summoning +4, a Dark Knight to fight beside her -- off Lala's shelf since
+    // 2026-10-03, so a quest is where she has it. The knight's Slash asks level 104 and went to
+    // Tersia's fourth floor (2026-10-09).
+    row.paid[n++] = {.item = "Book09", .kin = wizard, .firstOnly = true};    // Scroll of Evil Spirit
+    row.paid[n++] = {.item = "Gem05", .plus = 4, .kin = elf, .firstOnly = true};  // Dark Knight
+    row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel15"};              // a Jewel of Chaos: the machine opens
+    row.paidCount = n;
     return row;
 }
 
@@ -485,30 +539,29 @@ QuestRow pit() {
     row.experience = 100000;
     row.firstExperience = 400000;
     row.zen = 120000;
-    // The user's: boots with a socket, and Frenzy for them; three Jewels of Bless and a Jewel of
-    // Soul on top, the chain's last. Each class's top set, about the Gorgon's level. Two sockets
-    // since 2026-10-02 ("give 2 sockets for boots. same for all classes").
-    row.paid[0] = {.item = "BootMale02", .kin = knight, .sockets = 2, .firstOnly = true};  // Dragon
-    row.paid[1] = {.item = "BootMale04", .kin = wizard, .sockets = 2, .firstOnly = true};  // Legendary
-    row.paid[2] = {.item = "BootElf05", .kin = elf, .sockets = 2, .firstOnly = true};      // Guardian
-    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
-    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    row.paid[5] = {.item = "Jewel02"};              // Jewel of Soul
-    // And for every class a Ring of Ice with one socket, a ring's most (sim::mostSocketsOf; the
-    // user, 2026-10-02: "keep only 1 socket for the rings"). It came with Evil Spirit, the
-    // legendary rune, to set in it, until the user, 2026-10-02: "in this quest we give to much.
-    // we dont give epic runes so early, but we can give that ring with +socket", then "keep 1
-    // rune, but not the legendary one".
-    row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
-    row.paid[7] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
-                   .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};  // purple
-    // And the chain's last skills (2026-10-07): the knight's Death Stab and the wizard's
-    // Hellfire. Death Stab is the knight's alone; the Magic Gladiator on his path is not paid it
-    // (Realm::questItemFits). The elf's Penetration went to Tersia's sixth floor (the user,
-    // 2026-10-09: "dont give orb of penetrion at dungeonn3 as reward, its too soon").
-    row.paid[8] = {.item = "OrbDeathStab", .kin = knight, .firstOnly = true};
-    row.paid[9] = {.item = "Book10", .kin = wizard, .firstOnly = true};       // Hellfire
-    row.paidCount = 10;
+    // The set's armour, which makes it whole (the ladder, 2026-10-09), and the Undying for it
+    // (the user, 2026-10-02, of this quest: "we dont give epic runes so early ... keep 1 rune, but
+    // not the legendary one"). Its socket ring went to Tersia's second floor with Kinship.
+    int n = 0;
+    row.paid[n++] = {.item = "ArmorMale10", .kin = knight, .sockets = 1, .firstOnly = true};  // Plate
+    row.paid[n++] = {.item = "ArmorMale08", .kin = wizard, .sockets = 1, .firstOnly = true};  // Sphinx
+    row.paid[n++] = {.item = "ArmorElf04", .kin = elf, .sockets = 1, .firstOnly = true};  // Spirit
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Undying), .firstOnly = true};
+    // The first powered pendant, purple, three powers.
+    row.paid[n++] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
+                     .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};
+    // And the second pet, the Imp, for the Angel's other shoulder of the game: the damage one.
+    row.paid[n++] = {.item = "Helper02", .firstOnly = true};
+    // And the chain's last skills (2026-10-07): the knight's Cyclone, Devias's until 2026-10-09
+    // (its orb asks 72; Death Stab's 120 went to Tersia's sixth floor), and the wizard's
+    // Hellfire. The elf's Penetration went to Tersia's sixth floor too (the user, 2026-10-09:
+    // "dont give orb of penetrion at dungeonn3 as reward, its too soon").
+    row.paid[n++] = {.item = "OrbCyclone", .kin = knight, .firstOnly = true};
+    row.paid[n++] = {.item = "Book10", .kin = wizard, .firstOnly = true};  // Hellfire
+    row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel02"};              // Jewel of Soul
+    row.paid[n++] = {.item = "MagicBox08", .plus = 1};  // a Box of Kundun +1, off the Gorgon
+    row.paidCount = n;
     return row;
 }
 
@@ -528,11 +581,11 @@ QuestRow pit() {
 // handed in until 2026-10-03); the hall's opens as she is spoken to; the stairs ask only their levels. Every class's, each link repeatable every twelve hours.
 // What she says of the tower is Webzen's (above) or the game's own (the Cursed Wizards' reach,
 // the Devils' push, the Gorgons' rolling fire, the burning plates); the rest is ours. The rewards
-// are proposals: every clear experience, Zen and jewels rising floor by floor; the first clear of
-// the first link each class's top gloves with a socket and the Undying (no quest has paid it since
-// Devin's became Renewal); the Balrog's a Jewel of Chaos on top.
+// are proposals: every clear experience, Zen and jewels rising floor by floor; the first clears the
+// tower's set, a piece a floor to the fifth (2026-10-09), the sixth's skills and the Balrog's
+// three-socket weapon, Wrath and the Dinorant (the ladder, above).
 QuestRow tersiaLink(const char* title, int64_t experience, int64_t first, int64_t zen, int bless,
-                   int soul) {
+                   int soul, int chaos = 0) {
     QuestRow row;
     row.giver = 566;
     row.giverName = "Tersia";
@@ -549,6 +602,7 @@ QuestRow tersiaLink(const char* title, int64_t experience, int64_t first, int64_
     row.zen = zen;
     row.paid[row.paidCount++] = {.item = "Jewel01", .count = bless};  // Jewels of Bless
     if (soul > 0) row.paid[row.paidCount++] = {.item = "Jewel02", .count = soul};  // of Soul
+    if (chaos > 0) row.paid[row.paidCount++] = {.item = "Jewel15", .count = chaos};  // of Chaos
     return row;
 }
 
@@ -586,20 +640,25 @@ QuestRow tersiaDoor() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    row.paid[row.paidCount++] = {.item = "GloveMale02", .kin = knight, .sockets = 1,
+    // **The tower's set, a piece a floor** (the ladder, 2026-10-09): each class's top 0.75 set
+    // -- Dragon, Legendary, Guardian -- whole on the fifth floor. Here its helm, and Greater Vigor
+    // for it; her floors to the third stop under the Legendaries (the Cursed Wizards, 54).
+    row.paid[row.paidCount++] = {.item = "HelmMale02", .kin = knight, .sockets = 1,
                                  .firstOnly = true};  // Dragon
-    row.paid[row.paidCount++] = {.item = "GloveMale04", .kin = wizard, .sockets = 1,
+    row.paid[row.paidCount++] = {.item = "HelmMale04", .kin = wizard, .sockets = 1,
                                  .firstOnly = true};  // Legendary
-    row.paid[row.paidCount++] = {.item = "GloveElf05", .kin = elf, .sockets = 1,
+    row.paid[row.paidCount++] = {.item = "HelmElf05", .kin = elf, .sockets = 1,
                                  .firstOnly = true};  // Guardian
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterVigor),
                                  .firstOnly = true};
+    // And the guild's horse: the Horn of Uniria, level 60, the first mount.
+    row.paid[row.paidCount++] = {.item = "Helper03", .firstOnly = true};
     row.voice = "tersia_1";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
 
 QuestRow tersiaSecond() {
-    QuestRow row = tersiaLink("Bad Air", 110000, 350000, 110000, 2, 0);
+    QuestRow row = tersiaLink("Bad Air", 110000, 350000, 110000, 2, 1);
     row.offer[0] =
         "\"Brann held the second floor. A big man who laughed at everything. The poison took "
         "him slowly.\"";
@@ -624,7 +683,23 @@ QuestRow tersiaSecond() {
     // need to also armors or weapons/shield/rings also for rewards"; "lets do it we can always
     // change rewards later"): what the set from Devin and the Dungeon lacks -- a second ring, a
     // better weapon, the pendant, a shield, the class runes, and the Balrog's top weapon. Ours.
-    // Here the second ring, and the rune for a pet's keeper.
+    // Here the set's gloves and the class's own Greater stat for them (2026-10-09), and the
+    // socket ring and Kinship for it, which frees the Angel and the Imp of their drawbacks.
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.paid[row.paidCount++] = {.item = "GloveMale02", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Dragon
+    row.paid[row.paidCount++] = {.item = "GloveMale04", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};  // Legendary
+    row.paid[row.paidCount++] = {.item = "GloveElf05", .kin = elf, .sockets = 1,
+                                 .firstOnly = true};  // Guardian
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
+                                 .power = uint8_t(Power::GreaterMight), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
+                                 .power = uint8_t(Power::GreaterInsight), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf,
+                                 .power = uint8_t(Power::GreaterGrace), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Ring02", .sockets = 1, .firstOnly = true};  // of Poison
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Kinship),
                                  .firstOnly = true};
@@ -655,26 +730,25 @@ QuestRow tersiaThird() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // A better weapon, two sockets, and a rune for it: the knight's one-handed, so a shield fits.
-    // His Double Blade with three, since the Catacombs pay one with two (2026-10-03).
-    row.paid[row.paidCount++] = {.item = "Sword14", .kin = knight, .sockets = 3,
-                                 .firstOnly = true};  // Double Blade
-    row.paid[row.paidCount++] = {.item = "Staff04", .kin = wizard, .sockets = 2,
-                                 .firstOnly = true};  // Thunder Staff
-    row.paid[row.paidCount++] = {.item = "Bow05", .kin = elf, .sockets = 2,
-                                 .firstOnly = true};  // Tiger Bow
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
-                                 .power = uint8_t(Power::Meteor), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
-                                 .power = uint8_t(Power::Inferno), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Glacier),
+    // The set's boots, two sockets as the Halls' (2026-10-09), and the tower's own pair for
+    // them: Frenzy again, one a thing, and Second Wind. Its weapons went to Devias, a map lower;
+    // the tower's weapon is the Balrog's.
+    row.paid[row.paidCount++] = {.item = "BootMale02", .kin = knight, .sockets = 2,
+                                 .firstOnly = true};  // Dragon
+    row.paid[row.paidCount++] = {.item = "BootMale04", .kin = wizard, .sockets = 2,
+                                 .firstOnly = true};  // Legendary
+    row.paid[row.paidCount++] = {.item = "BootElf05", .kin = elf, .sockets = 2,
+                                 .firstOnly = true};  // Guardian
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind),
                                  .firstOnly = true};
     row.voice = "tersia_3";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
 
 QuestRow tersiaFourth() {
-    QuestRow row = tersiaLink("The Red Floor", 150000, 450000, 150000, 3, 1);
+    QuestRow row = tersiaLink("The Red Floor", 150000, 450000, 150000, 3, 1, 1);
     row.offer[0] =
         "\"Nobody from my company came back from the fourth floor. Nobody.\"";
     row.offer[1] =
@@ -694,19 +768,28 @@ QuestRow tersiaFourth() {
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 8;
-    // The pendant, every class's.
-    row.paid[row.paidCount++] = {.item = "Necklace01", .sockets = 1,
-                                 .firstOnly = true};  // Pendant of Lightning
+    // The set's pants and Bloodwell for them (2026-10-09), and the purple ring, three powers.
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.paid[row.paidCount++] = {.item = "PantMale02", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Dragon
+    row.paid[row.paidCount++] = {.item = "PantMale04", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};  // Legendary
+    row.paid[row.paidCount++] = {.item = "PantElf05", .kin = elf, .sockets = 1,
+                                 .firstOnly = true};  // Guardian
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell),
                                  .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "RingWealth", .plus = 3, .firstOnly = true,
                                  .affixes = {uint8_t(Affix::Wisdom), uint8_t(Affix::Fortune)}};
+    // And the knight's Slash, the Halls' until 2026-10-09: its orb asks level 104, this floor's.
+    row.paid[row.paidCount++] = {.item = "OrbSlash", .kin = knight, .firstOnly = true};
     row.voice = "tersia_4";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
 
 QuestRow tersiaFifth() {
-    QuestRow row = tersiaLink("Knights Who Do Not Sleep", 170000, 500000, 170000, 4, 1);
+    QuestRow row = tersiaLink("Knights Who Do Not Sleep", 170000, 500000, 170000, 4, 1, 1);
     row.offer[0] =
         "\"A Death Knight came down the stairs once, from the fifth floor. It wore armour like "
         "ours. Some of it was ours.\"";
@@ -727,20 +810,31 @@ QuestRow tersiaFifth() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // A shield; the elf's bow takes both hands, so hers is a Ring of Ice.
-    row.paid[row.paidCount++] = {.item = "Shield12", .kin = knight, .sockets = 1,
-                                 .firstOnly = true};  // Serpent Shield
+    // The set's armour, which makes it whole, and the Undying for it (2026-10-09). And a shield
+    // of its set's own -- the knight's Dragon Shield, the wizard's Legendary, for his one-handed
+    // Staff of Resurrection from Atlans -- and Renewal for it; the elf's bow takes both hands, so
+    // hers is a Ring of Ice.
+    row.paid[row.paidCount++] = {.item = "ArmorMale02", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Dragon
+    row.paid[row.paidCount++] = {.item = "ArmorMale04", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};  // Legendary
+    row.paid[row.paidCount++] = {.item = "ArmorElf05", .kin = elf, .sockets = 1,
+                                 .firstOnly = true};  // Guardian
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Shield14", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Dragon Shield
     row.paid[row.paidCount++] = {.item = "Shield15", .kin = wizard, .sockets = 1,
                                  .firstOnly = true};  // Legendary Shield
     row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                                  .firstOnly = true};
     row.voice = "tersia_5";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
 
 QuestRow tersiaSixth() {
-    QuestRow row = tersiaLink("Rolling Fire", 200000, 600000, 200000, 4, 3);
+    QuestRow row = tersiaLink("Rolling Fire", 200000, 600000, 200000, 4, 2, 1);
     row.offer[0] =
         "\"I know the sixth floor only from the shrine's old records. The Death Gorgons live "
         "there, and they roll fire along the ground.\"";
@@ -762,39 +856,31 @@ QuestRow tersiaSixth() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // A weapon with three sockets, a weapon's most (the user, 2026-10-03: "lets give some weapons
-    // with +3 sockets, and ligting rune chance"; "also give jewel of soul", a third), each between
-    // the fifth's and the Balrog's: the knight's one-handed, so the shield still fits. The elf's
-    // the Balrog's old crossbow (the user: "we need some stronger bow or crosbow").
-    row.paid[row.paidCount++] = {.item = "Sword15", .kin = knight, .sockets = 3,
-                                 .firstOnly = true};  // Lighting Sword
-    row.paid[row.paidCount++] = {.item = "Staff05", .kin = wizard, .sockets = 3,
-                                 .firstOnly = true};  // Gorgon Staff
-    row.paid[row.paidCount++] = {.item = "CrossBow06", .kin = elf, .sockets = 3,
-                                 .firstOnly = true};  // Bluewing Crossbow
-    // The lightning rune, Stormcall, every class's since this day: a swing, arrow or cast may
-    // call lightning down (the user: "that rune which has chance to cast lightnings on monsters").
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Stormcall),
-                                 .firstOnly = true};
-    // And an epic each: the class legendaries are the second classes' since 2026-10-04 (the user
-    // chose an epic in their place) -- the knight's Meteor for his sword, Frenzy for the others.
+    // **The skills' floor** (the ladder, 2026-10-09): its weapons, three sockets, went to the
+    // Balrog a floor up, and their runes start here -- an Epic each for the skill this floor
+    // teaches or for the Balrog's weapon: the knight's Meteor beside Death Stab, the wizard's
+    // Buckler (his shield's guard kept with the Balrog's two-handed staff, a taste of the Soul
+    // Master's Bulwark), the elf's Scatter Volley beside Penetration.
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
                                  .power = uint8_t(Power::Meteor), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
-                                 .power = uint8_t(Power::Frenzy), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frenzy),
-                                 .firstOnly = true};
+                                 .power = uint8_t(Power::Buckler), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf,
+                                 .power = uint8_t(Power::ScatterVolley), .firstOnly = true};
+    // The knight's Death Stab, the Pit's until 2026-10-09: its orb asks 120.
+    row.paid[row.paidCount++] = {.item = "OrbDeathStab", .kin = knight, .firstOnly = true};
     // And the wizard Cometfall (2026-10-07), the fire Rolling Fire is named for.
     row.paid[row.paidCount++] = {.item = "Book13", .kin = wizard, .firstOnly = true};
     // And the elf Penetration, off the Pit since 2026-10-09 ("its too soon, find other quest
     // where to give that"): its orb asks level 130, and this floor 140.
     row.paid[row.paidCount++] = {.item = "OrbPenetration", .kin = elf, .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 1};  // a Box of Kundun +1
     row.voice = "tersia_6";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
 
 QuestRow tersiaBalrog() {
-    QuestRow row = tersiaLink("The Scythe", 250000, 1000000, 250000, 5, 2);
+    QuestRow row = tersiaLink("The Scythe", 250000, 1000000, 250000, 5, 3);
     // Webzen's words for the Balrog, as near as she says them.
     row.offer[0] =
         "\"The last floor. Kundun left his Balrog there, a foul beast with a scythe.\"";
@@ -823,18 +909,28 @@ QuestRow tersiaBalrog() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // The top weapon, two sockets -- the knight's the Balrog's own Bill -- and a legendary rune.
-    row.paid[row.paidCount++] = {.item = "Spear10", .kin = knight, .sockets = 2,
+    // **The tower's weapon, three sockets** (the user, 2026-10-03: "lets give some weapons with
+    // +3 sockets"; the ladder, 2026-10-09): the knight's the Balrog's own Bill, the wizard's the
+    // Chaos Lightning Staff (the Phoenix's until this day; the Legendary Staff was weaker than
+    // Atlans's), the elf's the Chaos Nature Bow.
+    row.paid[row.paidCount++] = {.item = "Spear10", .kin = knight, .sockets = 3,
                                  .firstOnly = true};  // Bill of Balrog
-    row.paid[row.paidCount++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
-                                 .firstOnly = true};  // Legendary Staff
-    // The elf's the Chaos Nature Bow since the sixth took the Bluewing (2026-10-03).
-    row.paid[row.paidCount++] = {.item = "Bow07", .kin = elf, .sockets = 2,
+    row.paid[row.paidCount++] = {.item = "Staff08", .kin = wizard, .sockets = 3,
+                                 .firstOnly = true};  // Chaos Lightning Staff
+    row.paid[row.paidCount++] = {.item = "Bow07", .kin = elf, .sockets = 3,
                                  .firstOnly = true};  // Chaos Nature Bow
     // The rune, every class's Wrath since 2026-10-03 (the user: "LT7 has to be +20% damage rune
-    // for all classes, create that rune its legendary"), in place of Fireburst, Echo and Frost.
+    // for all classes, create that rune its legendary"), and Stormcall beside it, Rolling Fire's
+    // until 2026-10-09 (the user, 2026-10-03: "that rune which has chance to cast lightnings on
+    // monsters"); the sixth floor's Epic is the third.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Wrath),
                                  .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Stormcall),
+                                 .firstOnly = true};
+    // **And the Horn of Dinorant** (2026-10-09): Icarus's door above this floor asks 160 and
+    // wings or a Dinorant, and the first wings ask 180, so this is the key to the next contract.
+    row.paid[row.paidCount++] = {.item = "Helper04", .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 2};  // a Box of Kundun +2
     // And the one legendary ring a quest pays: four powers.
     row.paid[row.paidCount++] = {.item = "RingWisdom", .plus = 4, .firstOnly = true,
                                  .affixes = {uint8_t(Affix::Wealth), uint8_t(Affix::Fortune),
@@ -890,10 +986,36 @@ QuestRow tersiaSkyDoor() {
     row.afterAny = 1u << 12;  // The Scythe
     row.paid[row.paidCount++] = {.item = "Jewel03"};  // a Jewel of Life
     row.paid[row.paidCount++] = {.item = "Quest04", .count = 2, .firstOnly = true};  // Loch's Feathers
-    // Only an Epic: Evil Spirit, its Legendary in the doc, went to the Phoenix on 2026-10-08 (the
-    // user: 'ok do it'), so the boss pays the bigger rune and the door no more than the Balrog.
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Plague),
-                                 .firstOnly = true};  // Spirit Plague, Epic
+    // **The second class's set begins** (the ladder, 2026-10-09): its gloves and boots, the boots'
+    // two sockets as every set's, earned here and worn once Sevina makes him his class's second
+    // -- Dark Phoenix, Grand Soul, Divine -- the rest at the Phoenix and the class change. The
+    // Magic Gladiator, who has no second, has his own Storm Crow's instead, the set MU counts for
+    // him (sim::kGladiatorSet).
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    constexpr int8_t gladiator = int8_t(Kin::MagicGladiator);
+    row.paid[row.paidCount++] = {.item = "GloveMale18", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Dark Phoenix
+    row.paid[row.paidCount++] = {.item = "BootMale18", .kin = knight, .sockets = 2,
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "GloveMale19", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};  // Grand Soul
+    row.paid[row.paidCount++] = {.item = "BootMale19", .kin = wizard, .sockets = 2,
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "GloveMale20", .kin = elf, .sockets = 1,
+                                 .firstOnly = true};  // Divine
+    row.paid[row.paidCount++] = {.item = "BootMale20", .kin = elf, .sockets = 2,
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "GloveMale16", .kin = gladiator, .sockets = 1,
+                                 .firstOnly = true};  // Storm Crow
+    row.paid[row.paidCount++] = {.item = "BootMale16", .kin = gladiator, .sockets = 2,
+                                 .firstOnly = true};
+    // And the first second-class Legendary, every class's: Greater Ascendance, +30% all stats,
+    // Tarkan's until this day (the Magic Gladiator's its Lesser, sim::gladiatorRune). Spirit
+    // Plague, the Epic it had, is the wizard's at Tarkan now.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterAscendance),
+                                 .firstOnly = true};
     row.voice = "tersia_8";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -931,30 +1053,45 @@ QuestRow tersiaPhoenix() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // The knight's the Phantom Knights' own blade, worn as a Blade Knight; the wizard and the elf
-    // have no second-class weapon built, and the Balrog already gave her the Chaos Nature Bow.
-    row.paid[row.paidCount++] = {.item = "Sword18", .kin = knight, .sockets = 2,
+    constexpr int8_t gladiator = int8_t(Kin::MagicGladiator);
+    // **The second class's weapon, three sockets** (the ladder, 2026-10-09): the knight's the
+    // Phantom Knights' own Dark Breaker (the user, 2026-10-07: 'Dark Breaker'), the wizard's the
+    // one-handed Dragon Soul Staff, the elf's the Celestial Bow -- Tarkan's best is the first
+    // class's, these the second's. And the set's helm and pants; the Magic Gladiator his Storm
+    // Crow's pants and armour, which make his four whole.
+    row.paid[row.paidCount++] = {.item = "Sword18", .kin = knight, .sockets = 3,
                                  .firstOnly = true};  // Dark Breaker
-    row.paid[row.paidCount++] = {.item = "Staff08", .kin = wizard, .sockets = 2,
-                                 .firstOnly = true};  // Chaos Lightning Staff
-    row.paid[row.paidCount++] = {.item = "CrossBow07", .kin = elf, .sockets = 2,
-                                 .firstOnly = true};  // Aquagold Crossbow
-    // A Legendary each, the second class's, and an Epic that works at once.
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
-                                 .power = uint8_t(Power::Hellfire), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
-                                 .power = uint8_t(Power::Bulwark), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Volley),
+    row.paid[row.paidCount++] = {.item = "Staff10", .kin = wizard, .sockets = 3,
+                                 .firstOnly = true};  // Dragon Soul Staff
+    row.paid[row.paidCount++] = {.item = "Bow18", .kin = elf, .sockets = 3,
+                                 .firstOnly = true};  // Celestial Bow
+    row.paid[row.paidCount++] = {.item = "HelmMale18", .kin = knight, .sockets = 1,
+                                 .firstOnly = true};  // Dark Phoenix
+    row.paid[row.paidCount++] = {.item = "PantMale18", .kin = knight, .sockets = 1,
                                  .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
-                                 .firstOnly = true};  // Immolate
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
-                                 .power = uint8_t(Power::Scorch), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf,
-                                 .power = uint8_t(Power::PlagueArrows), .firstOnly = true};
-    // And every class's Evil Spirit, moved here from The Sky Door.
+    row.paid[row.paidCount++] = {.item = "HelmMale19", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};  // Grand Soul
+    row.paid[row.paidCount++] = {.item = "PantMale19", .kin = wizard, .sockets = 1,
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "HelmMale20", .kin = elf, .sockets = 1,
+                                 .firstOnly = true};  // Divine
+    row.paid[row.paidCount++] = {.item = "PantMale20", .kin = elf, .sockets = 1,
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "PantMale16", .kin = gladiator, .sockets = 1,
+                                 .firstOnly = true};  // Storm Crow
+    row.paid[row.paidCount++] = {.item = "ArmorMale16", .kin = gladiator, .sockets = 1,
+                                 .firstOnly = true};
+    // Every class's Evil Spirit (moved here from The Sky Door on 2026-10-08), and Bulwark for the
+    // knight's two-handed blade and the wizard's staff -- the second class's guard without a
+    // shield, after the Buckler of the sixth floor. Hellfire, Immolate, Scorch and Plague Arrows,
+    // paid here until 2026-10-09, are Tarkan's, Atlans's, or the drops'.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Spirits),
                                  .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
+                                 .power = uint8_t(Power::Bulwark), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
+                                 .power = uint8_t(Power::Bulwark), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3
     row.voice = "tersia_9";  // tools/voice.py, VOICES["tersia"]
     return row;
 }
@@ -1021,11 +1158,13 @@ QuestRow sevinaTrial() {
     row.paid[row.paidCount++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
     // And Jewels of Chaos and runes every class sets (the user, 2026-10-06: 'add some jewel of
     // chaos and firecrackers and some all class runes for this quest also'; the Firecrackers are
-    // withFirecrackers'): the two armour runes no quest paid before, and an epic for any socket.
+    // withFirecrackers'): since 2026-10-09 the three worn Epics for the second class's set the
+    // Phoenix and the treasure finish -- Undying, Renewal and Second Wind; they were Ironskin,
+    // Steadfast and Greater Vigor, which the Catacombs, the Halls and the tower pay now.
     row.paid[row.paidCount++] = {.item = "Jewel15", .count = 3};  // Jewels of Chaos
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Ironskin)};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Steadfast)};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterVigor)};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying)};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal)};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind)};
     return row;
 }
 
@@ -1056,6 +1195,10 @@ QuestRow sevinaTreasure(Kin kin, const char* title, const char* item, const char
 QuestRow brokenSword() {
     QuestRow row = sevinaTreasure(Kin::DarkKnight, "The Broken Sword", "Quest01",
                                   "Find the Broken Sword", "Become a Blade Knight");
+    // The set's armour, which makes it whole, and the Blade Knight's own Legendary: Whirlwind for
+    // his Twisting Slash, after the Swirl and Eddy kin (the ladder, 2026-10-09; Tarkan's before).
+    row.paid[row.paidCount++] = {.item = "ArmorMale18", .sockets = 1};  // Dark Phoenix
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Whirlwind)};
     row.voice = "sevina_2";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Seek out the 'Broken Sword' that the ancient dark knights offered at the "
@@ -1077,6 +1220,11 @@ QuestRow brokenSword() {
 QuestRow soulOfWizard() {
     QuestRow row = sevinaTreasure(Kin::DarkWizard, "The Soul of Wizard", "Quest03",
                                   "Find the Soul of Wizard", "Become a Soul Master");
+    // The set's armour and its shield, for the Phoenix's one-handed Dragon Soul Staff, and the
+    // Soul Master's own Legendary: Pyroblaster, after Kindle and Scorch (2026-10-09).
+    row.paid[row.paidCount++] = {.item = "ArmorMale19", .sockets = 1};  // Grand Soul
+    row.paid[row.paidCount++] = {.item = "Shield16", .sockets = 1};     // Grand Soul Shield
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Pyroblast)};
     row.voice = "sevina_3";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Go find the 'Soul of Wizard'. According to the ancient dark wizards, it was last "
@@ -1096,6 +1244,10 @@ QuestRow soulOfWizard() {
 QuestRow tearOfElf() {
     QuestRow row = sevinaTreasure(Kin::FairyElf, "The Tear of Elf", "Quest02",
                                   "Find the Tear of Elf", "Become a Muse Elf");
+    // The set's armour, and the Muse Elf's own Legendary: Piercing Volley for her Penetration,
+    // after Split Arrow and Scatter Volley (2026-10-09).
+    row.paid[row.paidCount++] = {.item = "ArmorMale20", .sockets = 1};  // Divine
+    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Volley)};
     row.voice = "sevina_4";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Go find the crystal 'Tear of Elf', made by the ancient elves with the strength of the "
@@ -1191,8 +1343,8 @@ QuestRow drownedSong() {
 // breed of the map weakest first on Marlon's ladder (40, 35, 30, 30, 25, 20), and the Hydra, the
 // boss, all four of it last -- 184 kills, between Devin's 170 and Marlon's 210 (the user,
 // 'calculate number of kill which chars has to do'; docs/lirien-quest.md). The first
-// clear pays each class a weapon of Atlans's band (drop 70-72) with a socket, as Devin pays an
-// armour; every clear two Jewels of Soul.
+// clear pays each class its third weapon and its first Legendary (below); every clear two Jewels
+// of Soul and a Jewel of Life.
 QuestRow lirienHalls() {
     QuestRow row;
     row.giver = kLirienNumber;
@@ -1247,26 +1399,39 @@ QuestRow lirienHalls() {
     // Staff, Chaos Nature Bow, two sockets each), since both are hunted from about 70: the
     // knight's and the wizard's are better and take two; the elf's crossbow deals less than her
     // Chaos Nature Bow and takes a third socket for it. The Chaos weapons wait for the machine.
+    //
+    // **The third weapon, and the first Legendary** (the ladder, 2026-10-09): the Hydra is 74,
+    // past the Legendaries' 60. Each class's one-handed or its bow, two sockets, and its own
+    // first-class Legendary for one -- the knight's Twister, the wizard's Arcane Echo, the elf's
+    // Frost Arrow, each the big kin of the Common his home paid him (Gust, Faint Echo, Chill) --
+    // and an Epic for the other: the knight's Eddy for his Twisting Slash, the wizard's Scorch for
+    // his fire, the elf's Plague Arrows for her Multi-Shot. The wizard's one hand is for the
+    // Legendary Shield of Tersia's fifth floor. The knight's was the two-handed Crystal Sword.
     int n = 0;
-    row.paid[n++] = {.item = "Mace06", .kin = knight, .sockets = 2,
-                     .firstOnly = true};  // Crystal Sword
+    row.paid[n++] = {.item = "Sword15", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Lighting Sword
     row.paid[n++] = {.item = "Staff07", .kin = wizard, .sockets = 2,
                      .firstOnly = true};  // Staff of Resurrection
-    row.paid[n++] = {.item = "CrossBow07", .kin = elf, .sockets = 3,
+    row.paid[n++] = {.item = "CrossBow07", .kin = elf, .sockets = 2,
                      .firstOnly = true};  // Aquagold Crossbow
-    // A rune each, those no quest paid before: the knight's Ice, the wizard's Thunder (his
-    // Lightning and his Stormcall), and the elf's Frost Arrow, hers before the Muse Elf since this
-    // day as Arcane Echo is the wizard's -- an elf's gift to an elf. And Second Wind for everyone.
-    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Twister),
                      .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Thunder),
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
                      .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind), .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul (Jewel03 is Life)
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Eddy),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Scorch),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::PlagueArrows),
+                     .firstOnly = true};
     // And the drowned halls' own spell for the wizard (2026-10-07): Aqua Beam.
     row.paid[n++] = {.item = "Book12", .kin = wizard, .firstOnly = true};  // Scroll of Aqua Beam
+    row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
+    // The first Jewel of Life, which falls from 72 and the Chaos Machine's Add Socket asks.
+    row.paid[n++] = {.item = "Jewel03"};
+    row.paid[n++] = {.item = "MagicBox08", .plus = 2};  // a Box of Kundun +2, off the Hydra
     row.paidCount = n;
     return row;
 }
@@ -1328,16 +1493,11 @@ QuestRow roadOfKantur() {
 // every breed of the map weakest first on Marlon's ladder (40, 35, 30, 30, 25), then the two
 // bosses, one each -- 162 kills, fewer than Atlans's 184 because each is harder.
 //
-// The pay (the user, 2026-10-06: 'lets give 2nd class rewrads and some legendary runes for each
-// class', then 'jewels also, and feather'): every clear the three refining jewels -- a Jewel of
-// Life, which MU brought with Tarkan in 0.84 and no monster here drops -- and a Loch's Feather,
-// the second wings' (Atlans and the Lost Tower drop it too, sim::kFeatherOdds). The first clear
-// each class's piece of its second's gear that falls nowhere (no Tarkan or Blood Castle 6 breed
-// reaches drop level 100: the Dark Phoenix Armor, the Dragon Soul Staff, the Great Reign
-// Crossbow), with two sockets, and the Legendary runes of its second no quest paid before:
-// the Blade Knight's Whirlwind, the Soul Master's Pyroblaster, the Muse Elf's Piercing Volley,
-// and every class's Greater Ascendance. All of them ask the second class to wear or set: the
-// prize for the class change still ahead.
+// The pay (the user, 2026-10-06: 'jewels also, and feather'): every clear the refining jewels --
+// a Jewel of Life, which MU brought with Tarkan in 0.84 -- and a Loch's Feather, the second
+// wings' (Atlans and the Lost Tower drop it too, sim::kFeatherOdds). The first clear paid the
+// second class's gear and Legendaries (the user, the same day: 'lets give 2nd class rewrads')
+// until 2026-10-09, when they moved to Icarus and the class change (below).
 QuestRow kantursLegion() {
     QuestRow row;
     row.giver = kKeeperNumber;
@@ -1393,25 +1553,42 @@ QuestRow kantursLegion() {
     row.experience = 150000;
     row.firstExperience = 600000;
     row.zen = 250000;
+    //
+    // **Changed 2026-10-09** (the ladder: "not given too soon or too late"): the second class's
+    // gear and Legendaries above wait a hundred levels for Sevina, so they went to Icarus and the
+    // class change, and Tarkan pays **the first class's best weapon, three sockets**, worn at once
+    // -- the knight's one-handed Sword of Destruction, the wizard's Staff of Destruction, the elf's
+    // Saint Crossbow -- with two runes each for it: the knight's Immolate and Ice, the wizard's
+    // Spirit Plague (for his Evil Spirit) and Inferno, the elf's Greater Barrage and Glacier. And
+    // the legendary pendant, four powers, beside the Balrog's legendary ring.
     int n = 0;
-    row.paid[n++] = {.item = "ArmorMale18", .kin = knight, .sockets = 2,
-                     .firstOnly = true};  // Dark Phoenix Armor
-    row.paid[n++] = {.item = "Staff10", .kin = wizard, .sockets = 2,
-                     .firstOnly = true};  // Dragon Soul Staff
-    row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 2,
-                     .firstOnly = true};  // Great Reign Crossbow
-    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Whirlwind),
+    row.paid[n++] = {.item = "Sword17", .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Sword of Destruction
+    row.paid[n++] = {.item = "Staff09", .kin = wizard, .sockets = 3,
+                     .firstOnly = true};  // Staff of Destruction
+    row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
+                     .firstOnly = true};  // Saint Crossbow
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
+                     .firstOnly = true};  // Immolate
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
                      .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Pyroblast),
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Plague),
+                     .firstOnly = true};  // Spirit Plague
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Inferno),
                      .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Volley),
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::GreaterBarrage),
                      .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterAscendance),
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Glacier),
                      .firstOnly = true};
+    row.paid[n++] = {.item = "NecklaceFury", .plus = 4, .firstOnly = true,
+                     .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom),
+                                 uint8_t(Affix::Wealth)}};  // Pendant of Fury, legendary
     row.paid[n++] = {.item = "Jewel03"};              // a Jewel of Life
     row.paid[n++] = {.item = "Jewel01", .count = 2};  // Jewels of Bless
     row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
+    row.paid[n++] = {.item = "Jewel15"};              // a Jewel of Chaos
     row.paid[n++] = {.item = "Quest04"};              // Loch's Feather
+    row.paid[n++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3, off the legion
     row.paidCount = n;
     return row;
 }
