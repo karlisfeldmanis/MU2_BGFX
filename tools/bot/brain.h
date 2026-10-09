@@ -1040,7 +1040,14 @@ private:
         // mana a cast and every point of health saved a potion. **1/1/4/5 since 2026-10-08**, his
         // spells chosen by their mana (spell): over two seeds of 12 h, levels 116 and 120 against
         // 113 and 110 at 1/1/5/4; 1/1/3/6 swung 108-125 with more deaths, 1/1/6/3 fell to 83.
-        if (wizardly()) { w[0] = 1; w[1] = 1; w[2] = 4; w[3] = 5; }
+        // **All of it energy since 2026-10-09**, after the strength his armour asks (above): the
+        // user, "dw should prioritise put points on energy becuase it give damage and defense,
+        // but he also needs to think about strength to wear better items". 1/1/4/5 was tuned
+        // while he could not afford his dear spells (drink: mana at three tenths) and threw Fire
+        // Ball; with his mana kept over half, four seeds of 24 h: 1/1/4/5 153/154/177/186,
+        // 0/0/3/7 666 summed, 0/0/2/8 679, 0/0/1/9 187/179/188/181, 0/0/0/1 188/179/188/192
+        // with 42 quests handed in against 39.
+        if (wizardly()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
         if (gladiatorMage()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
         if (options_.build[0] + options_.build[1] + options_.build[2] + options_.build[3] > 0) {
@@ -1119,7 +1126,12 @@ private:
         // killed a wizard of 400 health 43 times in three runs of a day.
         const double at = map() == int(sim::kBloodCastleMap) ? 7.0 : wizardly() ? options_.drinkAt : 5.0;
         if (hero.health * 10.0 < hero.maxHealth * at) drinkOne(sim::heals);
-        if (casts() && hero.mana * 10 < hero.maxMana * 3) drinkOne(sim::restores);
+        // A wizard under half, where spell() throws his dear spells (`flush`): at three tenths
+        // his mana sat between the two on Fire Ball's five, never drank and never cast -- a day's
+        // wizard bought 3,360 healing potions and 39 mana, and threw Fire Ball 24,103 times
+        // against Meteorite, Ice and Flame's none at level 153 (the Claude bot's runs, 2026-10-09).
+        const int manaAt = wizardly() ? 5 : 3;
+        if (casts() && hero.mana * 10 < hero.maxMana * manaAt) drinkOne(sim::restores);
     }
 
     // ---- the bag --------------------------------------------------------------------------
