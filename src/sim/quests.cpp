@@ -18,7 +18,14 @@ namespace {
 //    Legendary in Atlans (Twister, Arcane Echo, Frost Arrow); Eddy before Whirlwind, Scatter
 //    Volley before Piercing Volley, Buckler before Bulwark.
 //  - A weapon an act, each better than the last and its sockets rising 1, 2, 2, 3, 3, 3: home,
-//    Devias, Atlans, the Balrog, Tarkan, the Phoenix.
+//    Devias, Atlans, the Balrog, Tarkan, the Phoenix. **The knight's and the wizard's one-handed**
+//    (the user, 2026-10-09: "giving two hand weapon is pretty useless because without magic
+//    defense DW will be very weaks same as DK" -- Defense and Magic Shield ask a shield): past
+//    Atlans no better one-hander is built, so the Balrog pays the top one at +0 and Tarkan the
+//    same at +7 (the user's pick). One two-hander, the Blade Knight's Dark Breaker, paid with
+//    Bulwark, which keeps his guard without a shield (the user: "only point to give good
+//    two-handers when chars has rune for using defense auras without shields"). The Serpent
+//    Staff at home is held one-handed here (its stance), as the Legendary and Resurrection are.
 //  - A whole set a chain, one piece a link, so its five-piece bonus (sim::setDefense) is earned:
 //    the Golden Archer's (Plate, Sphinx, Spirit), Tersia's floors (Dragon, Legendary, Guardian),
 //    and the second class's over Icarus and the class change (Dark Phoenix, Grand Soul, Divine;
@@ -302,13 +309,17 @@ QuestRow devin() {
     row.zen = 100000;
     // **The second weapon, two sockets** (the ladder, 2026-10-09), each class's next past the
     // shops: the knight's one-handed Double Blade, the Catacombs' until this day, the wizard's
-    // Thunder Staff and the elf's Tiger Bow, Tersia's third floor's. Devias paid each class's top
+    // one-handed Legendary Staff and the elf's Tiger Bow. Devias paid each class's top
     // 0.75 armour until this day, a piece of the Lost Tower's set two maps early.
     int n = 0;
     row.paid[n++] = {.item = "Sword14", .kin = knight, .sockets = 2,
                      .firstOnly = true};  // Double Blade
-    row.paid[n++] = {.item = "Staff04", .kin = wizard, .sockets = 2,
-                     .firstOnly = true};  // Thunder Staff
+    // The wizard's one-handed Legendary Staff, and a shield for the other hand, so his Magic
+    // Shield works from here on (2026-10-09: the two-handed Thunder Staff left him without it).
+    row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
+                     .firstOnly = true};  // Legendary Staff
+    row.paid[n++] = {.item = "Shield01", .kin = wizard, .sockets = 1,
+                     .firstOnly = true};  // Small Shield
     row.paid[n++] = {.item = "Bow05", .kin = elf, .sockets = 2, .firstOnly = true};  // Tiger Bow
     // Its two runes, the first Epic of the ladder (the Ice Queen is 52): +10% all stats (the
     // user, 2026-10-05: 'add tier-1 all stats to devias quest line for all classes') -- **the
@@ -859,12 +870,13 @@ QuestRow tersiaSixth() {
     // **The skills' floor** (the ladder, 2026-10-09): its weapons, three sockets, went to the
     // Balrog a floor up, and their runes start here -- an Epic each for the skill this floor
     // teaches or for the Balrog's weapon: the knight's Meteor beside Death Stab, the wizard's
-    // Buckler (his shield's guard kept with the Balrog's two-handed staff, a taste of the Soul
-    // Master's Bulwark), the elf's Scatter Volley beside Penetration.
+    // Spirit Plague for the Evil Spirit he has had since the Halls (Tarkan's until 2026-10-09;
+    // Buckler, a shieldless guard, went with the two-handed staves), the elf's Scatter Volley
+    // beside Penetration.
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
                                  .power = uint8_t(Power::Meteor), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
-                                 .power = uint8_t(Power::Buckler), .firstOnly = true};
+                                 .power = uint8_t(Power::Plague), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf,
                                  .power = uint8_t(Power::ScatterVolley), .firstOnly = true};
     // The knight's Death Stab, the Pit's until 2026-10-09: its orb asks 120.
@@ -910,13 +922,14 @@ QuestRow tersiaBalrog() {
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
     // **The tower's weapon, three sockets** (the user, 2026-10-03: "lets give some weapons with
-    // +3 sockets"; the ladder, 2026-10-09): the knight's the Balrog's own Bill, the wizard's the
-    // Chaos Lightning Staff (the Phoenix's until this day; the Legendary Staff was weaker than
-    // Atlans's), the elf's the Chaos Nature Bow.
-    row.paid[row.paidCount++] = {.item = "Spear10", .kin = knight, .sockets = 3,
-                                 .firstOnly = true};  // Bill of Balrog
-    row.paid[row.paidCount++] = {.item = "Staff08", .kin = wizard, .sockets = 3,
-                                 .firstOnly = true};  // Chaos Lightning Staff
+    // +3 sockets"; the ladder, 2026-10-09): the top one-handers, as two hands leave Defense and
+    // Magic Shield behind -- the knight's Sword of Destruction, the wizard's Staff of Resurrection
+    // again, raised to +4 over Atlans's -- and the elf's Chaos Nature Bow. The Bill of Balrog and
+    // the Chaos Lightning Staff, two-handed, were these until the same day.
+    row.paid[row.paidCount++] = {.item = "Sword17", .kin = knight, .sockets = 3,
+                                 .firstOnly = true};  // Sword of Destruction
+    row.paid[row.paidCount++] = {.item = "Staff07", .plus = 4, .kin = wizard, .sockets = 3,
+                                 .firstOnly = true};  // Staff of Resurrection +4
     row.paid[row.paidCount++] = {.item = "Bow07", .kin = elf, .sockets = 3,
                                  .firstOnly = true};  // Chaos Nature Bow
     // The rune, every class's Wrath since 2026-10-03 (the user: "LT7 has to be +20% damage rune
@@ -1082,14 +1095,13 @@ QuestRow tersiaPhoenix() {
     row.paid[row.paidCount++] = {.item = "ArmorMale16", .kin = gladiator, .sockets = 1,
                                  .firstOnly = true};
     // Every class's Evil Spirit (moved here from The Sky Door on 2026-10-08), and Bulwark for the
-    // knight's two-handed blade and the wizard's staff -- the second class's guard without a
-    // shield, after the Buckler of the sixth floor. Hellfire, Immolate, Scorch and Plague Arrows,
+    // knight's two-handed Dark Breaker: his Defense without a shield, so the two-hander costs him
+    // nothing (the user, 2026-10-09: "keep, Bulwark makes it work"). The wizard's staff is
+    // one-handed with a shield, so he needs none. Hellfire, Immolate, Scorch and Plague Arrows,
     // paid here until 2026-10-09, are Tarkan's, Atlans's, or the drops'.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Spirits),
                                  .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
-                                 .power = uint8_t(Power::Bulwark), .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
                                  .power = uint8_t(Power::Bulwark), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3
     row.voice = "tersia_9";  // tools/voice.py, VOICES["tersia"]
@@ -1557,24 +1569,26 @@ QuestRow kantursLegion() {
     // **Changed 2026-10-09** (the ladder: "not given too soon or too late"): the second class's
     // gear and Legendaries above wait a hundred levels for Sevina, so they went to Icarus and the
     // class change, and Tarkan pays **the first class's best weapon, three sockets**, worn at once
-    // -- the knight's one-handed Sword of Destruction, the wizard's Staff of Destruction, the elf's
-    // Saint Crossbow -- with two runes each for it: the knight's Immolate and Ice, the wizard's
-    // Spirit Plague (for his Evil Spirit) and Inferno, the elf's Greater Barrage and Glacier. And
-    // the legendary pendant, four powers, beside the Balrog's legendary ring.
+    // -- the knight's Sword of Destruction and the wizard's Staff of Resurrection, both one-handed
+    // and at +7, over the Balrog's (the user, 2026-10-09: two hands leave Defense and Magic Shield
+    // behind, and no better one-hander is built; "same weapon, higher plus"), the elf's Saint
+    // Crossbow -- with two runes each for it: the knight's Immolate and Ice, the wizard's Inferno
+    // and Thunder (his Spirit Plague went to Tersia's sixth floor), the elf's Greater Barrage and
+    // Glacier. And the legendary pendant, four powers, beside the Balrog's legendary ring.
     int n = 0;
-    row.paid[n++] = {.item = "Sword17", .kin = knight, .sockets = 3,
-                     .firstOnly = true};  // Sword of Destruction
-    row.paid[n++] = {.item = "Staff09", .kin = wizard, .sockets = 3,
-                     .firstOnly = true};  // Staff of Destruction
+    row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Sword of Destruction +7
+    row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
+                     .firstOnly = true};  // Staff of Resurrection +7
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
                      .firstOnly = true};  // Saint Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
                      .firstOnly = true};  // Immolate
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
                      .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Plague),
-                     .firstOnly = true};  // Spirit Plague
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Inferno),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Thunder),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::GreaterBarrage),
                      .firstOnly = true};

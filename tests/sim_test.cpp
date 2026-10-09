@@ -10849,6 +10849,33 @@ void testQuestLadder(const content::Tables& tables) {
             check(seen[p] <= 2, "and a worn one at most twice, once a set");
         }
     }
+    // The knight's and the wizard's weapons one-handed, so Defense and Magic Shield keep their
+    // shield (the user, 2026-10-09): "only point to give good two-handers when chars has rune for
+    // using defense auras without shields" -- the Blade Knight's Dark Breaker, paid with Bulwark.
+    int twoHanders = 0;
+    for (int kin : {int(sim::Kin::DarkKnight), int(sim::Kin::DarkWizard)}) {
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestRow& row = sim::questAt(q);
+            for (int i = 0; i < row.paidCount; ++i) {
+                const int item = tables.itemNamed(row.paid[i].item);
+                if (item < 0 || !sim::questPays(row.paid[i], kin, true)) continue;
+                const content::ItemRow& one = tables.items[size_t(item)];
+                if (!one.weapon() || !one.twoHanded()) continue;
+                const bool allowed = one.name == "Sword18";
+                check(allowed, "a knight's or a wizard's quest weapon is one-handed");
+                ++twoHanders;
+            }
+        }
+    }
+    checkEqual(twoHanders, 1, "the one two-hander is the Dark Breaker");
+    // And the Dark Breaker comes with the rune that keeps his guard without a shield.
+    bool bulwark = false;
+    const sim::QuestRow& phoenix = sim::questAt(sim::kPhoenixContract);
+    for (int i = 0; i < phoenix.paidCount; ++i) {
+        bulwark |= phoenix.paid[i].power == uint8_t(sim::Power::Bulwark) &&
+                   sim::questPays(phoenix.paid[i], int(sim::Kin::DarkKnight), true);
+    }
+    check(bulwark, "the Dark Breaker is paid with Bulwark");
     // The Magic Gladiator's Storm Crow, four pieces over Icarus, and no knight's or wizard's set.
     const int mg = int(sim::Kin::MagicGladiator);
     int crow = 0;
