@@ -190,6 +190,10 @@ struct Session {
     std::string account;   // the character screen's, once an Account has been said
     std::string name;      // what he is called over his head (net::Who)
     bool bot = false;      // a character of no account: for now, the bots (tools/netbot)
+    // The realm sent him to another world (g_due) and this line has not gone yet: what he asks
+    // here now is a lagging client's, and dropped. His next line, to the world he is due in, is
+    // a new Session.
+    bool sentAway = false;
     // When he is written next: a minute after his welcome and every minute on, so each player's
     // write falls on his own tick and a full server's never lands on one (sprint 24).
     Clock::time_point keepAt{};
@@ -1043,6 +1047,12 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
                 command.kind == sim::Command::Kind::PartySet) {
                 continue;
             }
+            // Sent to another world already (sentAway): nothing more of his here. A client behind
+            // the server asked a paid trip again before it saw the first one's answer, and each
+            // was paid -- a net bot 25 s behind at --speed 100 paid 3000 Zen every 10 s, 952
+            // times in 18 game hours (the Claude bot's runs, 2026-10-09). A player on a slow
+            // line who clicks twice is the same.
+            if (one.sentAway) continue;
             // Whatever the client wrote there, it is his own hero who asks.
             command.player = one.player;
             if (command.kind == sim::Command::Kind::Order) {
@@ -1179,6 +1189,7 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
         if (const std::optional<Landing> landing = landingOf(world, said, t.commands)) {
             if (Session* one = playing(world, sessions, said.who)) {
                 g_due[one->token] = *landing;
+                one->sentAway = true;
                 core::logf("%s: sent to %s %d,%d", one->who.c_str(), landing->world.c_str(),
                            landing->column, landing->row);
             }
@@ -1192,6 +1203,7 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
         Session* one = playing(world, sessions, realm.playerAt(0).id);
         if (town != nullptr && one != nullptr) {
             g_due[one->token] = {town->world, town->arrive[0], town->arrive[1]};
+            one->sentAway = true;
             core::logf("%s: out of the castle, to %s", one->who.c_str(), town->world);
         }
     }
