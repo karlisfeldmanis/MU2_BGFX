@@ -83,6 +83,13 @@ struct Recipe {
     // tiles across over its twenty ticks. A learned skill's is half as wide.
     float ring[3] = {0.4f, 0.6f, 1.0f};
     float ringOpens = 0.15f;
+    // MU's PKKey: count = (Direction[1] + LifeTime) / key, so the ring turns 1/key radians a
+    // tick. 2 is the level-up's; a joint made without one turns at count * 0.1, a key of 10.
+    float key = 2.0f;
+    // MU units a tick the ring opens by and the cross widens by as it lives: the +12 set's
+    // ribbon (subtype 18, ZzzEffectJoint.cpp:5385-5390), Velocity += 0.1 and Scale += 0.2.
+    float orbitGrows = 0.0f;
+    float wideGrows = 0.0f;
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is

@@ -19,7 +19,6 @@ constexpr float kPerTile = 100.0f;
 // LifeTime 50, Velocity 40 (the ring's radius) and Scale 40 (the cross is -/+ half of it) are
 // the level-up's own and now live in `kRising`, the recipe; what is left here is what both
 // recipes share.
-constexpr float kKey = 2.0f;             // PKKey: count = (Direction[1] + LifeTime) / 2
 constexpr float kPhases = 250.0f;        // rand() % 500 - 250
 constexpr float kDims = 10.0f;           // the last ten ticks...
 constexpr float kDim = 1.0f / 1.3f;      // ...take the light by this each
@@ -122,10 +121,12 @@ void Aura::at(const Burst& b, const Joint& j, float back, float out[3]) {
     // and has climbed Direction[2] for every tick since it was made. `back` ticks ago LifeTime
     // was that much higher and the climb that much shorter. MU's Y is this world's -z, so its
     // -sin arrives as +sin and the ring turns MU's way.
-    const float count = (j.phase + (b.r.ticks - b.age) + back) / kKey;
-    out[0] = std::cos(count) * b.r.orbit * b.per;
-    out[1] = j.height + j.rise * std::max(0.0f, b.age - back);
-    out[2] = std::sin(count) * b.r.orbit * b.per;
+    const float count = (j.phase + (b.r.ticks - b.age) + back) / b.r.key;
+    const float lived = std::max(0.0f, b.age - back);
+    const float orbit = (b.r.orbit + b.r.orbitGrows * lived) * b.per;
+    out[0] = std::cos(count) * orbit;
+    out[1] = j.height + j.rise * lived;
+    out[2] = std::sin(count) * orbit;
 }
 
 Aura::Burst* Aura::throwOne(const Recipe& recipe, const float feet[3], float yaw,
@@ -154,8 +155,8 @@ Aura::Burst* Aura::throwOne(const Recipe& recipe, const float feet[3], float yaw
         Joint& j = b.joints[k];
         // Drawn for the level-up, where where a flare starts on its ring is not a fact; laid
         // evenly for the guard, where five ribbons standing at five even angles IS the shape.
-        // `count` divides the phase by kKey, so an even step round the ring is that much wider.
-        j.phase = b.r.spread ? float(k) * 6.28318530718f * kKey / float(b.r.joints)
+        // `count` divides the phase by the key, so an even step round the ring is that much wider.
+        j.phase = b.r.spread ? float(k) * 6.28318530718f * b.r.key / float(b.r.joints)
                              : unit() * 2.0f * kPhases - kPhases;
         j.rise = (b.r.slowRise + (b.r.spread ? 0.0f : unit() * (b.r.fastRise - b.r.slowRise))) *
                  b.per;
@@ -334,7 +335,7 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
         const float length = std::min(b.age, b.r.trail);
         if (length <= 0.0f) continue;
         const int steps = std::max(1, int(std::ceil(length * float(kSamples))));
-        const float half = b.r.wide * 0.5f * b.per;
+        const float half = (b.r.wide + b.r.wideGrows * b.age) * 0.5f * b.per;
         const float up[3] = {0.0f, 1.0f, 0.0f};
 
         gfx::Sprite sprite;

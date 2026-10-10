@@ -1,5 +1,5 @@
 // A complete set at +10 or +11: flares circling up out of the ground around whoever wears it,
-// and at +11 a ribbon among them now and then -- the user, 2026-10-06: 'i remember their was some
+// and at +11 a pair of ribbons now and then, winding feet to head -- the user, 2026-10-06: 'i remember their was some
 // sparkles or ribbons flying when char had completed +11 set'.
 //
 // MuMain's (ZzzCharacter.cpp:11094-11115), for a player whose five pieces are one set and every
@@ -93,6 +93,8 @@ private:
         float feet[3] = {};
         float yaw = 0.0f;
         float clock = 0.0f;  // reference frames owed
+        // Reference frames since the last ribbon was thrown; high, so a new wearer's goes up at once.
+        float sinceRings = 1.0e6f;
         Aura ribbons;
         float lightAt[6][3] = {};
         int lights = 0;

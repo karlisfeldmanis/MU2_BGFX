@@ -655,9 +655,36 @@ const std::vector<gfx::Drawable>& ModelBench::gather(gfx::Renderer& renderer) {
 
 void ModelBench::setPlus(int plus, const std::vector<content::ItemRow>& items) {
     shineByMesh_.clear();
+    plus_ = plus;
     if (plus <= 0) return;
     for (const content::ItemRow& row : items) shineByMesh_[row.name] = shineOf(row, plus);
     core::logf("bench: every item at +%d, %zu rows", plus, shineByMesh_.size());
+}
+
+bool ModelBench::setSubject(int& plus, float feet[3], float (*arms)[3], int& lit,
+                            float colour[3]) const {
+    lit = 0;
+    if (!haveFigure_ || plus_ < 9 || categories_.empty() ||
+        categories_[category_].label != "Armour sets") {
+        return false;
+    }
+    const FigureBody* body = figure_.body();
+    if (!body) return false;
+    plus = plus_;
+    std::copy(stand_, stand_ + 3, feet);
+    const float origin[3] = {0.0f, 0.0f, 0.0f};
+    for (int k = 0; k < 6; ++k) {
+        if (body->armBones[k] >= 0 && figure_.pointOn(body->armBones[k], origin, arms[lit])) ++lit;
+    }
+    // MU's BodyPart[5]: the boots' chrome colour, by the part's mesh name.
+    colour[0] = 1.0f, colour[1] = 0.5f, colour[2] = 0.0f;
+    for (const content::Mesh* part : body->parts) {
+        if (!part || part->name().rfind("Boot", 0) != 0) continue;
+        const auto found = shineByMesh_.find(part->name());
+        if (found != shineByMesh_.end()) std::copy(found->second.colour, found->second.colour + 3, colour);
+        break;
+    }
+    return true;
 }
 
 const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& renderer) {

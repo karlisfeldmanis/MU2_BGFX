@@ -83,6 +83,10 @@ public:
     // in `items` by the mesh's own name. The bare body's parts are not items and stay as they
     // are. --plus; docs/sprints/14-the-shine.md.
     void setPlus(int plus, const std::vector<content::ItemRow>& items);
+    // The Armour sets tab's suit as a complete set, for its light (game/fx/set_shine.h): false
+    // on every other subject or below +9. `plus` the asked one, `feet` where it stands,
+    // `arms` its six arm points this frame (FigureBody::armBones), `colour` its boots' chrome.
+    bool setSubject(int& plus, float feet[3], float (*arms)[3], int& lit, float colour[3]) const;
     bool hasStage() const { return stageTown_.isOpen(); }
     Town& stageTown() { return stageTown_; }
     Lamps& stageLamps() { return stageLamps_; }
@@ -240,6 +244,7 @@ private:
     float turn_ = 0.0f;
     // setPlus: each item mesh's look at the asked plus, by mesh name. Empty draws +0.
     std::unordered_map<std::string, ShineLook> shineByMesh_;
+    int plus_ = 0;
     Figures figures_;
     Figure figure_;
     WingLook wing_;  // the Wings tab's: what the standing body wears on its back

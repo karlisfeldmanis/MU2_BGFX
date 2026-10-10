@@ -10,7 +10,8 @@
 #define MU_SHINE_SH
 
 // x: MU's g_Luminosity, sin(WorldTime * 0.004) * 0.15 + 0.6, the +3 and +5 pulse (0.45 to 0.75)
-// y: MU's wave, WorldTime % 10000 * 0.0001, a ten-second sawtooth the chrome scrolls by
+// y: MU's wave, WorldTime % 10000 * 0.0001, the chrome's scroll -- run on to 5 (fifty seconds,
+//    gfx/renderer.cpp) so it wraps where every sheet it moves has moved whole sheets
 // z: how strongly the chrome and the star are added; 0 when their sheets are missing
 // w: how much of the +3/+5/+7/+9 tint the lit colour takes, 1 being MuMain's own
 uniform vec4 u_refine;
@@ -118,13 +119,16 @@ vec3 shineAdded(float plus, vec3 n, vec3 colour)
 // Chrome02, added, swept across the piece on a five-second clock (ZzzBMD.cpp:1631-1640):
 //   u = (n.z + n.x) * 0.8 + Wave2 * 2     v = (n.y + n.x) + Wave2 * 3
 //   Wave2 = WorldTime % 5000 * 0.00024 - 0.4
-// in MU's axes; here MU's n.z is our n.y and MU's n.y our -n.z. Wave2 is our ten-second wave
-// doubled. Its colour is PartObjectColor2's on the 0.9 light the tier draws in: white, orange,
+// in MU's axes; here MU's n.z is our n.y and MU's n.y our -n.z. Its colour is PartObjectColor2's on the 0.9 light the tier draws in: white, orange,
 // blue, or white at full (`sweep` 0-3). +10 has none of it: MuMain draws +9 and +10 alike.
+// Ours: Wave2 does not fall back every five seconds. MU's sawtooth jumps the sheet 2.4 across and
+// 3.6 down at the wrap, a visible reset on a lit suit (the user, 2026-10-10: 'there is somekind
+// of animations resets which is vissible'); here it runs on at MU's rate and wraps with u_refine.y
+// at fifty seconds, where it has moved 24 and 36 whole sheets.
 vec3 shineSweepAdded(float plus, float sweep, vec3 n)
 {
 	if (plus < 11.0 || u_refineStar.w <= 0.0) return vec3_splat(0.0);
-	float wave2 = fract(u_refine.y * 2.0) * 1.2 - 0.4;
+	float wave2 = u_refine.y * 2.4 - 0.4;
 	vec2 uv = vec2((n.y + n.x) * 0.8 + wave2 * 2.0, (n.x - n.z) + wave2 * 3.0);
 	vec3 sheet = texture2DLod(s_chrome2, uv, 0.0).rgb;
 	vec3 tint = sweep < 0.5 ? vec3_splat(0.9)

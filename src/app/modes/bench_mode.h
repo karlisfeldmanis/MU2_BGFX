@@ -21,6 +21,7 @@
 
 #include "app/mode.h"
 #include "game/bench.h"
+#include "game/fx/set_shine.h"
 #include "game/world/world.h"
 
 namespace mu::app {
@@ -59,6 +60,9 @@ private:
     float studioStand_[3] = {0.0f, 0.0f, 0.0f};
     float studioFire_[3] = {0.0f, 0.0f, 0.0f};
     std::vector<gfx::Drawable> townDrawables_;
+    // The Armour sets tab's suit at --plus 9 and up, lit as a complete set is in play: its arm
+    // lights from +9, its flares and ribbons at +10 and +11 (game/fx/set_shine.h).
+    game::SetShine setShine_;
 };
 
 }  // namespace mu::app

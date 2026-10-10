@@ -9,22 +9,38 @@
 namespace mu::game {
 namespace {
 
-// The ribbon: CreateJoint(BITMAP_FLARE, ..., 0, o) at its default scale of ten
-// (ZzzEffectJoint.cpp:1669-1688): one joint on a ring of forty, a cross ten units wide, a
-// hundred frames, climbing 0 to 1.5 units a frame (Direction[2] = rand() % 150 / 100), twenty
-// tails, in his white light.
-constexpr Recipe kSetRibbon{1,     40.0f, 10.0f, 100.0f, 0.0f, 1.5f, 19.0f, 0.0f,
-                            false, false, false, {1.0f, 1.0f, 1.0f}};
+// The ribbon: MuMain's +11, CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o)
+// (ZzzCharacter.cpp:11105-11110; ZzzEffectJoint.cpp:1669-1690, 5374-5386): one joint on a ring
+// of forty turning at count = (Direction[1] + LifeTime) * 0.1 -- PK -1, a key of 10, a tenth of a
+// radian a frame, about one and a half turns in its hundred frames -- a cross ten units wide,
+// twenty tails, white on Flare's gold (o->Light set to 1 before it is thrown). Round him once,
+// rising, with its tail -- the user, 2026-10-10: 'in MuMai there was single ribbon which was going
+// around body on 1 go with some tail'. Ours, two things: MU's climb is rand() % 150 / 100, 0 to
+// 1.5 units a frame, and most of them stall at his knees; here every one climbs 1.6, feet to
+// head in its life. And MU throws one by chance now and then (one frame in 160); here the next
+// goes up a breath after the last is gone, so one is nearly always round him. At 0.9 of the
+// level-up's light ('subtle but very nice'). And its ring is 58 and its cross 12, not MU's 40 and
+// 10: on our second-class suits, broad at the chest and spiked at the shoulder, a ring of 40 ran
+// inside the armour from the waist up and only its turn round the feet was seen.
+constexpr Recipe kSetRibbon{1,     58.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+                            false, false, false, {0.9f, 0.9f, 0.9f}, {0.4f, 0.6f, 1.0f}, 0.15f,
+                            10.0f};
+// A new one this many reference ticks after the last was thrown: its hundred, and a pause.
+constexpr float kRibbonEvery = 120.0f;
+// A flare one frame in four (ours; MU's one in twenty -- 'sparkles has to be more').
+constexpr float kFlareChance = 1.0f / 4.0f;
 // Invention, the level-up's (game/fx/aura.cpp kStrength): Flare added at 1 burned white in this
 // engine's light.
 constexpr float kStrength = 0.65f;
 // Invention: the arms' lights at twice MU's half. MU adds 0.5 into 8-bit colour, where it shows
 // as a glow; in this engine's light it vanished on the gold of a lit suit even at night. Four
-// times was a yellow blaze; two is judged on the night shot of a +11 Brass set.
-constexpr float kArmGain = 2.0f;
-// Invention: the climbing flares at 0.6 of MU's 0.19 -- the user, 2026-10-10: 'make +11
-// sparkles smaller'. At MU's own they read as blobs round a lit suit.
-constexpr float kFlareSize = 0.6f;
+// times was a yellow blaze; two was judged on the night shot of a +11 Brass set, and 1.6 in the
+// studio by the bonfire, to sit subtler under the rings.
+constexpr float kArmGain = 1.6f;
+// Invention: the climbing flares at 0.18 of MU's 0.19 -- the user, 2026-10-10: 'make +11
+// sparkles smaller', then 'much smaller', then 'smaller' again. At MU's own they read as blobs
+// round a lit suit; here they are motes.
+constexpr float kFlareSize = 0.18f;
 
 }  // namespace
 
@@ -166,8 +182,8 @@ void SetShine::update(float seconds, float metresPerTile) {
         one.seen = false;
         // Carried with him wherever he is drawn: a set's ring is his, not the ground's.
         one.ribbons.followAll(one.feet);
-        // And new ones, a frame at a time: one frame in twenty, at +10 a flare, at +11 a ribbon
-        // one time in eight and a flare the rest. Past +11 is MU's later sets, drawn as +11.
+        // And new ones, a frame at a time: from +10 the flares, at +11 the ribbon pair as well.
+        // Past +11 is drawn as +11.
         if (one.plus < 10) {
             one.clock = 0.0f;
             continue;
@@ -175,11 +191,13 @@ void SetShine::update(float seconds, float metresPerTile) {
         one.clock += frames;
         while (one.clock >= 1.0f) {
             one.clock -= 1.0f;
-            if (unit() >= 1.0f / 20.0f) continue;
-            if (one.plus >= 11 && unit() < 1.0f / 8.0f) {
+            if (unit() < kFlareChance) throwFlare(w);
+        }
+        if (one.plus >= 11) {
+            one.sinceRings += frames;
+            if (one.sinceRings >= kRibbonEvery) {
+                one.sinceRings = 0.0f;
                 one.ribbons.cast(kSetRibbon, one.feet, one.yaw, metresPerTile);
-            } else {
-                throwFlare(w);
             }
         }
     }

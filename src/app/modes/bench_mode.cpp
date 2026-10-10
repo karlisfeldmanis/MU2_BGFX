@@ -73,6 +73,7 @@ bool BenchMode::open(Context& ctx) {
         core::logError("the viewer opened without its list; the names are in the log");
     }
     if (kind_ == Kind::Studio && !openStudioWorld(ctx, benchWorld)) return false;
+    if (kind_ == Kind::Studio) setShine_.open(ctx.paths.assets, ctx.textures);
 
     if (browsing) {
         // The stage is the browser with the world's own lamps, fire and objects stood round
@@ -245,6 +246,14 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
         if (world_.town().isOpen()) world_.town().gatherAll(townDrawables_);
         const std::vector<gfx::Drawable>& subject = bench_.gather(ctx.renderer);
         townDrawables_.insert(townDrawables_.end(), subject.begin(), subject.end());
+        // After the gather, which posed it: the suit's set light, round where it stands.
+        int plus = 0, lit = 0;
+        float feet[3], arms[6][3], colour[3];
+        if (bench_.setSubject(plus, feet, arms, lit, colour)) {
+            setShine_.wear(1, plus, feet, 0.0f, arms, lit, colour);
+        }
+        setShine_.update(float(at.deltaSeconds), world_.ground().metresPerTile());
+        setShine_.gather(ctx.renderer.effects(), world_.ground(), bench_.camera().position);
         ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_, &world_.ground());
         drawList(ctx);
         return;
@@ -275,6 +284,7 @@ void BenchMode::report(Context& ctx) {
 
 void BenchMode::shutdown(Context& ctx) {
     bench_.shutdown();
+    setShine_.shutdown();
     ctx.renderer.closeStages();
     world_.shutdown();
 }

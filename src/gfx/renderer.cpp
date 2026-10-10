@@ -24,7 +24,11 @@ void Renderer::bindShine(bool stage) {
     const bool sheets = bgfx::isValid(shineChrome_) && bgfx::isValid(shineShiny_);
     const float strength = stage ? shineStageStrength_ : shineStrength_;
     const float refine[4] = {std::sin(elapsed_ * 4.0f) * 0.15f + 0.6f,
-                             std::fmod(elapsed_, 10.0f) * 0.1f, sheets ? strength : 0.0f,
+                             // MU's wave, WorldTime % 10000 * 0.0001, run on to fifty seconds:
+                             // every sheet that scrolls by it moves a whole number of times its
+                             // own width in fifty, so the wrap is unseen, and +11's sweep, which
+                             // MU wraps every five seconds mid-sheet, runs without the jump.
+                             std::fmod(elapsed_, 50.0f) * 0.1f, sheets ? strength : 0.0f,
                              shineTint_};
     bgfx::setUniform(uRefine_, refine);
     // The excellent pass's L: WorldTime is milliseconds, so sin(WorldTime * 0.002) is two
