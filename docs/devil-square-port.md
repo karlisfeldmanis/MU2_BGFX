@@ -97,6 +97,14 @@ and paid by rank: 1st, top 30%, top 50%, the rest, each row exp and zen (WZ `Dev
   carry). `Weather::dry` lets the held rain ease out as the time is up. The held rain had been dried
   four seconds after arrival by the "a raining world starts dry" branch; fixed the same day.
   `testSquareResult` in sim_test; `--square-at` works headless too.
+- **Built 2026-10-10 (5be5a945): Charon's door, the ticket, the drop.** Charon opens the
+  Messenger's page for squares 1-4 (2-4 sealed): an invitation of the square's level or a +0, the
+  gate open (RealmConfig::square, five minutes before every odd hour), WebZen 0.97d's band both
+  ends; Enter spends it and lands in gate 58's box, the fight waiting out the gate (setSquare). The
+  Eye and Key drop 1 in 100 each anywhere but the square, levelled by WebZen 0.97d's table; the
+  Goblin's Devil's Invitation page mixes them at WebZen 0.97d's prices and rates. The herald and
+  travel list use the square clock and bands. The square's light is the Lost Tower's, eased
+  (sheets/worlds/devilsquare.json). Not yet: the server's square worlds, squares 2-4, bots.
 
 ## Decisions for the user
 
