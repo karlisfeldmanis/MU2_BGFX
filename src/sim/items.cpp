@@ -938,7 +938,9 @@ int Satchel::free(const content::Tables& tables, int width, int height) const {
 
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     const content::ItemRow* row = rowOf(tables, what);
-    if (!row || placeOf(*row) < 0 || archangelWeapon(*row)) return false;
+    // The Archangel's three are weapons like any since 2026-10-10 (they drop in Icarus): no longer
+    // kept off every body as the castle's quest pieces.
+    if (!row || placeOf(*row) < 0) return false;
     // mu.db's class enumeration, bit 0 wizard, bit 1 elf, bit 2 knight; none named is anybody.
     if (row->classes != 0 && (row->classes & (1 << int(who.kin))) == 0) return false;
     // A 2nd level wing and the second class's gear are its class's second's: OpenMU's class

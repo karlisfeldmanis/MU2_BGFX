@@ -2,19 +2,34 @@
  "item": "Sword20",
  "mu_name": "Divine Sword of Archangel",
  "mu_name_from": "_enum.h:1514 MODEL_DIVINE_SWORD_OF_ARCHANGEL = MODEL_SWORD + 19, loaded from Item/Sword20.bmd (ZzzOpenData.cpp:623); group 0 number 19 in OpenMU S6 Weapons.cs:156.",
- "why_this_one": "The second Statue of Saint (133) carries it over its coffin (ZzzCharacter.cpp:8952-8966; WebZen raises one of the three statues at random, BC_SAINT_STATUE_1 + rand()%3, BloodCastle.cpp:2216) and gives it up when broken; carried back to the Archangel it wins the castle, as the Divine Staff does. A quest item, worn by nobody. docs/blood-castle-port.md.",
+ "why_this_one": "The second Statue of Saint (133) carries it over its coffin (ZzzCharacter.cpp:8952-8966; WebZen raises one of the three statues at random, BC_SAINT_STATUE_1 + rand()%3, BloodCastle.cpp:2216) and gives it up when broken; carried back to the Archangel it wins the castle, as the Divine Staff does. A weapon that drops in Icarus as well (stats.note). docs/blood-castle-port.md.",
  "profile": "weapon",
  "stats": {
   "from": "OpenMU S6 Weapons.cs:156: CreateWeapon(0, 19, 0, 22, 1, 4, false, \"Divine Sword of Archangel\", 86, 220, 230, 45, 168, 0, 0, 140, 50, 0, 0, 0, 1, 0, 1, 1, 0, 0) -- drop 86, 220-230, speed 45, knight.",
   "group": 0,
   "number": 19,
   "drop_level": 86,
-  "drops_from_monsters": false,
+  "drops_from_monsters": true,
   "slot": 0,
   "width": 1,
   "height": 4,
   "durability": 168,
-  "note": "A quest item here, as the Divine Staff of Archangel (Staff11): the statue gives it up and the Archangel takes it back; nobody wears it, and its damage, requirements and class are left out so the card says none. OpenMU's row was drop 86, 220-230, knight; it does not drop from monsters."
+  "note": "A real weapon again since 2026-10-10 (the user: 'allow to drops archangel weapons, i guess starting on icarus', 'make theam dropable items and place there drop there they logciallly can start to drop'), replacing the quest-item rule of 2026-10-03: MU's own row, wearable by its classes, sold and dropped as any weapon. It drops from its drop level up, which puts it in Icarus (Drakan 86, Great Drakan 100, the Dark Phoenix 108) and Tarkan's deepest. Blood Castle's Statue of Saint still gives one up and the Archangel still takes a plain one back (Realm::staffSlot). drops_from_monsters is ours: OpenMU and WebZen keep it off the drop table.",
+  "minimum_damage": 220,
+  "maximum_damage": 230,
+  "attack_speed": 45,
+  "requires": {
+   "level": 0,
+   "strength": 140,
+   "agility": 50,
+   "energy": 0,
+   "vitality": 0
+  },
+  "classes": [
+   "knight",
+   "gladiator"
+  ],
+  "skill": 22
  },
  "stance": "sword",
  "stance_from": "Width 1: a one-handed sword.",
@@ -36,7 +51,6 @@
   }
  },
  "material_overrides_note": "As the Divine Staff's: steel's own 0.2 mirrors the scene.",
- "tells": "Reward received when returned to the Archangel",
  "tells_from": "MU's own sentence for the Archangel's weapon, Game.en.resx:3049; the 'Quest item' line over it is ours (game/ui/describe.cpp).",
  "chrome": [
   {

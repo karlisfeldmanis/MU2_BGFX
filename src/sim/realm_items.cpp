@@ -1561,8 +1561,9 @@ int64_t Realm::sellValue(int slot) const {
     if (!baggable(slot) || me().bag[slot].empty()) return -1;
     const Held& thing = me().bag[slot];
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
-    // A quest item is the Archangel's, not a merchant's (sim::divineStaff).
-    if (archangelWeapon(row) || classTreasure(row)) return -1;
+    // A quest item is not a merchant's: the class treasure. The Archangel's weapons are sold as any
+    // since they drop (2026-10-10).
+    if (classTreasure(row)) return -1;
     const bool stacks = row.group == kGroupPotions;
     int64_t paid = sellingPrice(row, thing.refinement,
                                 stacks ? std::max<int>(1, thing.durability) : 1, thing.skill,
@@ -1582,9 +1583,9 @@ int64_t Realm::sellValue(int slot) const {
 
 int64_t Realm::sellItem(int slot) {
     if (me().trading < 0 || !serving(me().trading) || !baggable(slot) || me().bag[slot].empty()) return -1;
-    // A quest item is not sold (sim::divineStaff).
+    // A quest item is not sold: the class treasure.
     const content::ItemRow& selling = tables_->items[size_t(me().bag[slot].item)];
-    if (archangelWeapon(selling) || classTreasure(selling)) return -1;
+    if (classTreasure(selling)) return -1;
     const Held thing = me().bag[slot];
     const int64_t paid = std::max<int64_t>(0, sellValue(slot));
     me().bag.lift(slot);

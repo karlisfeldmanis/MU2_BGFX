@@ -11258,8 +11258,9 @@ void testCastleGrid(const content::Tables& lorencia) {
         const int32_t staff = castle.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
         check(staff >= 0, "and the Divine Staff of Archangel is an item");
         if (staff >= 0) {
-            check(!sim::fits(castle, realm.wearer(), sim::Held{staff, 0, 1}),
-                  "a quest item, worn by nobody");
+            // A weapon like any since 2026-10-10 (the user: 'make theam dropable items'): it drops
+            // in Icarus, and the statue's copy is still what the Archangel takes back.
+            check(castle.items[size_t(staff)].dropsFromMonsters(), "a weapon that drops");
             check(sim::divineStaff(castle.items[size_t(staff)]), "and known as the quest item");
         }
         if (archangel >= 0 && staff >= 0) {

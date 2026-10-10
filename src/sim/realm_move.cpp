@@ -926,10 +926,18 @@ int32_t Realm::castleWeaponItem() const {
 }
 
 int Realm::staffSlot() const {
+    // The one this castle's statue held, and a plain one -- unrefined and not excellent, as the
+    // statue gives it -- since the three drop as weapons (2026-10-10): a hero's own +9 Divine
+    // Sword carried in is not what the Archangel takes back.
+    const int32_t wanted = castleWeaponItem();
     for (int i = kWorn; i < kSlots; ++i) {
-        if (me().bag[i].empty()) continue;
-        const content::ItemRow& row = tables_->items[size_t(me().bag[i].item)];
-        if (archangelWeapon(row)) return i;
+        const Held& held = me().bag[i];
+        if (held.empty()) continue;
+        const content::ItemRow& row = tables_->items[size_t(held.item)];
+        if (!archangelWeapon(row)) continue;
+        if (wanted >= 0 && held.item != wanted) continue;
+        if (held.refinement != 0 || held.excellent != 0) continue;
+        return i;
     }
     return -1;
 }
