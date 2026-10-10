@@ -12226,6 +12226,36 @@ void testTwoHeroes(const content::Tables& tables) {
 // The party's wire (docs/party.md): an ask and a state back whole, and a tick's PartySet reaching
 // the mirror as itself -- capped at Leave, it was read as None and every mirror parted from the
 // server at the first hash after a party formed.
+// Devil Square on the wire (protocol 19): the Welcome's square and its wait, the config's square
+// clock, and Charon's Enter and Claim as themselves.
+void testSquareWire() {
+    std::printf("square wire\n");
+    std::vector<uint8_t> bytes;
+    net::Welcome w;
+    w.world = "devilsquare";
+    w.square = 2;
+    w.squareWait = 173;
+    w.config.square = {600, 300, 300};
+    net::put(bytes, w);
+    net::Tick tick;
+    tick.tick = 4;
+    tick.commands.push_back({.kind = sim::Command::Kind::EnterSquare, .player = 7, .a = 2});
+    tick.commands.push_back({.kind = sim::Command::Kind::ClaimSquare, .player = 7});
+    net::put(bytes, tick);
+    net::Kind kind{};
+    std::vector<uint8_t> body;
+    net::Welcome back;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Welcome && net::parse(body, back) &&
+              back.square == 2 && back.squareWait == 173 && back.config.square.period == 600 &&
+              back.config.square.entry == 300,
+          "a Welcome carries its square, its wait and the square clock");
+    net::Tick read;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Tick && net::parse(body, read) &&
+              read.commands.size() == 2 && read.commands[0].kind == sim::Command::Kind::EnterSquare &&
+              read.commands[0].a == 2 && read.commands[1].kind == sim::Command::Kind::ClaimSquare,
+          "Charon's Enter and the Claim reach the mirror as themselves");
+}
+
 void testPartyWire() {
     std::printf("party wire\n");
     std::vector<uint8_t> bytes;
@@ -12622,6 +12652,7 @@ int main() {
     testDropsAreTheirs(tables);
     testChatWire();
     testPartyWire();
+    testSquareWire();
     testKept(tables);
     testSnapshot(tables);
     testGoBack(tables);

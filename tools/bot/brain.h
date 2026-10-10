@@ -341,9 +341,11 @@ public:
         int size = 1;             // members, all maps
         bool healer = false;      // an elf among them
         int castle = 0;           // the Blood Castle they go into together, 0 for their own
+        int square = 0;           // and the Devil Square, 0 for their own
     };
     void lead(Lead l) {
-        if (l.map != lead_.map || l.quest != lead_.quest || l.breeds != lead_.breeds || l.castle != lead_.castle) {
+        if (l.map != lead_.map || l.quest != lead_.quest || l.breeds != lead_.breeds || l.castle != lead_.castle ||
+            l.square != lead_.square) {
             nextAim_ = 0;
         }
         lead_ = std::move(l);
@@ -455,6 +457,18 @@ public:
     }
     bool castleTime() const { return castleDue(); }
     bool inCastle() const { return map() == int(sim::kBloodCastleMap); }
+    // **Devil Square together**, the same way (docs/devil-square-port.md C 4.6): the squares he
+    // could go into (his invitation and his band, a bit each), whether Charon's gate is due, and
+    // whether he is in one.
+    int squaresOpen() const {
+        int out = 0;
+        for (int s = 1; s <= sim::kSquaresBuilt; ++s) {
+            if (realm_->invitationSlot(s) >= 0 && inSquareBand(s)) out |= 1 << s;
+        }
+        return out;
+    }
+    bool squareTime() const { return squareGateSoon(); }
+    bool inSquare() const { return map() == int(sim::kDevilSquareMap); }
     // What he is after, in a line: "hunts for The Broken Sword (devias)".
     std::string aimLine() const {
         const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to", "goes to"};
@@ -2760,6 +2774,8 @@ private:
     // The square he would go into: the one his band holds, built, whose waves he takes on as he
     // would out in the world, with an invitation for it -- or 0.
     int squareChoice() const {
+        // His party's square, when he can go in: MU's numbers are a party's (decision 8).
+        if (const int s = lead_.square; s > 0 && (squaresOpen() & (1 << s))) return s;
         const int s = sim::squareFor(squareBandLevel());
         if (s > sim::kSquaresBuilt || !inSquareBand(s) || realm_->invitationSlot(s) < 0 || !squareTaken(s)) return 0;
         return s;
@@ -2801,7 +2817,11 @@ private:
             }
             std::printf("\n");
         }
-        if (squareChoice() <= 0 || realm_->wallClock() <= 0) return false;
+        return squareChoice() > 0 && squareGateSoon();
+    }
+    // Whether Charon's gate is open now, or opens within the walk.
+    bool squareGateSoon() const {
+        if (realm_->wallClock() <= 0) return false;
         const time_t at = time_t(realm_->wallClock());
         struct tm local {};
         localtime_r(&at, &local);
@@ -3280,7 +3300,8 @@ private:
     // before it is formed: three or more about him, a tank and an elf among them.
     static constexpr double kTogether = 0.25;
     double partyScale() const {
-        const bool castle = lead_.castle > 0 && map() == int(sim::kBloodCastleMap);
+        const bool castle = (lead_.castle > 0 && map() == int(sim::kBloodCastleMap)) ||
+                            (lead_.square > 0 && map() == int(sim::kDevilSquareMap));
         if ((lead_.map != map() && !castle) || lead_.size < 2) return 1.0;
         int here = 1;
         const sim::Body& hero = realm_->hero();

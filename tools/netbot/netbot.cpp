@@ -178,6 +178,9 @@ public:
     const std::vector<Bot::Ground>& grounds() { return brain_->grounds(); }
     bool castleTime() const { return brain_->castleTime(); }
     bool inCastle() const { return brain_->inCastle(); }
+    int squaresOpen() const { return brain_->squaresOpen(); }
+    bool squareTime() const { return brain_->squareTime(); }
+    bool inSquare() const { return brain_->inSquare(); }
     const net::PartyState& partyState() const { return link_->party(); }
     void askParty(net::PartyWhat what, const std::string& whom) { link_->askParty({what, whom}); }
     void sayOn(net::Channel channel, const std::string& text) {
@@ -576,6 +579,9 @@ private:
         int castle = 0;           // the Blood Castle they go into together, 0 for none
         bool forCastle = false;   // formed for it, at the door
         int saidCastle = 0;       // the castle last said on Party
+        int square = 0;           // the Devil Square they go into together, 0 for none
+        bool forSquare = false;   // formed for it, at Charon's gate
+        int saidSquare = 0;
         bool forFarm = false;     // formed to farm for wings (Board::farm)
         std::pair<int, int> said{-1, -1};  // the hunt last said on Party
     };
@@ -789,6 +795,23 @@ private:
             g.saidCastle = castle;
         }
         g.castle = castle;
+        // **Devil Square together**, the same way: the square two or more of them can go into.
+        int square = 0;
+        for (int s = sim::kSquaresBuilt; s >= 1 && square == 0; --s) {
+            int can = 0;
+            for (const std::string& m : g.members) {
+                if (NetBot* one = bot(m); one && in(m) && (one->squaresOpen() & (1 << s))) ++can;
+            }
+            if (can >= 2) square = s;
+        }
+        for (const std::string& m : g.members) {
+            if (NetBot* one = bot(m); one && square > 0 && (one->squareTime() || one->inSquare())) castleBusy = true;
+        }
+        if (square > 0 && square != g.saidSquare) {
+            say(*leader, "Devil Square " + std::to_string(square) + " together at Charon's gate.");
+            g.saidSquare = square;
+        }
+        g.square = square;
         // Ten game minutes with no one stuck, or nothing the party can stand: "stuck" turns on a
         // purse and a bag of potions, and a party broken up the moment it was not formed again
         // a minute later, all day.
@@ -838,6 +861,7 @@ private:
             lead.healer = healer;
             lead.role = Bot::roleOf(one->kin(), m == g.tank);
             lead.castle = g.castle > 0 && (one->castlesOpen() & (1 << g.castle)) ? g.castle : 0;
+            lead.square = g.square > 0 && (one->squaresOpen() & (1 << g.square)) ? g.square : 0;
             // Every breed on that map any member still wants (and can stand) -- or, farming,
             // every one there they stand together.
             if (!farmBreeds.empty()) lead.breeds = farmBreeds;
@@ -877,7 +901,10 @@ private:
     void merge() {
         for (Group& a : groups_) {
             for (Group& b : groups_) {
-                if (&a == &b || a.gone || b.gone || a.fixed || b.fixed || a.forCastle || b.forCastle) continue;
+                if (&a == &b || a.gone || b.gone || a.fixed || b.fixed || a.forCastle || b.forCastle ||
+                    a.forSquare || b.forSquare) {
+                    continue;
+                }
                 if (a.members.size() < b.members.size() || a.members.size() + b.members.size() > size_t(sim::kPartyMost)) continue;
                 const std::set<int> mine = stuckOn(a), theirs = stuckOn(b);
                 bool shared = false;
@@ -1012,6 +1039,31 @@ private:
             std::printf("  [board] a party for Blood Castle %d: %s\n", c, said.c_str());
             groups_.push_back(std::move(g));
         }
+        // And free bots due at the same Devil Square's gate.
+        for (int s = sim::kSquaresBuilt; s >= 1; --s) {
+            std::vector<std::string> members;
+            for (const std::string& name : free) {
+                NetBot& one = *bot(name);
+                if (one.squareTime() && (one.squaresOpen() & (1 << s)) && members.size() < size_t(sim::kPartyMost)) {
+                    members.push_back(name);
+                }
+            }
+            if (members.size() < 2) continue;
+            std::stable_sort(members.begin(), members.end(), [&](const std::string& a, const std::string& b) {
+                return tankish(bot(a)->kin()) > tankish(bot(b)->kin());
+            });
+            Group g;
+            g.members = members;
+            g.leader = members.front();
+            g.forSquare = true;
+            std::string said;
+            for (const std::string& m : members) {
+                free.erase(m);
+                said += (said.empty() ? "" : ", ") + m;
+            }
+            std::printf("  [board] a party for Devil Square %d: %s\n", s, said.c_str());
+            groups_.push_back(std::move(g));
+        }
         std::vector<std::pair<size_t, int>> order;
         for (const auto& [q, names] : byQuest) order.push_back({names.size(), q});
         std::sort(order.rbegin(), order.rend());
@@ -1025,7 +1077,7 @@ private:
             // A party at this quest with room takes them in.
             bool joined = false;
             for (Group& g : groups_) {
-                if (g.fixed || g.forCastle || !stuckOn(g).count(q)) continue;
+                if (g.fixed || g.forCastle || g.forSquare || !stuckOn(g).count(q)) continue;
                 for (const std::string& m : members) {
                     if (g.members.size() >= size_t(sim::kPartyMost)) break;
                     g.members.push_back(m);
