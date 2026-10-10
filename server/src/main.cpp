@@ -130,6 +130,11 @@ std::map<uint64_t, Landing> g_due;
 // mid-invasion can be tried at once rather than after a dry spell and the dice.
 bool g_storm = false;
 bool g_invasion = false;
+// A test (2026-10-11, Devil Square's server path): `--kit LEVEL:STEM[+N],...` makes every new
+// character at that level with those things in his bag, carried in as one from another world is,
+// so Charon's door can be played on a server without a day of levelling first. 0 for none.
+int g_kitLevel = 0;
+std::vector<std::pair<std::string, int>> g_kitItems;  // stem, plus
 // The most players in one copy of a map before the next is opened (`--map-cap N`): where the
 // client's own cost tells -- every client steps the whole map -- about 100 by the measurement of
 // 2026-10-08 (docs/sprints/24-the-quiet-line.md).
@@ -974,7 +979,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     // character, and a new token.
     sim::Kept kept;
     std::string keptIn;
-    const bool carried = asked.token != 0 && !fresh && g_store.find(asked.token, kept, keptIn);
+    bool carried = asked.token != 0 && !fresh && g_store.find(asked.token, kept, keptIn);
     net::Hello said = asked;
     if (fresh) said.kin = uint8_t(whose.kin);
     int castle = 0, square = 0, squareWait = 0;
@@ -1050,6 +1055,24 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         said.level = sim::kNewLevel;
         said.weapon = sim::cradleWeapon(kin);
         said.shield.clear();
+        // --kit: made at the kit's level with its things, and let in as carried (a test).
+        if (g_kitLevel > 0) {
+            sim::Realm scratch;
+            if (scratch.raise(&g_items, seeds(), said.column, said.row, kin, g_kitLevel)) {
+                sim::outfit(scratch, said.weapon, said.shield);
+                for (const auto& [stem, plus] : g_kitItems) {
+                    const int32_t item = g_items.itemNamed(stem);
+                    if (item < 0 || scratch.give(item, -1, plus) < 0) {
+                        core::logError("--kit: %s not given", stem.c_str());
+                    }
+                }
+                kept = scratch.keptOf(scratch.hero().id);
+                kept.hero.column = said.column;
+                kept.hero.row = said.row;
+                carried = true;
+                core::logf("%s: a new character from the kit, level %d", one.who.c_str(), g_kitLevel);
+            }
+        }
     }
     // The fullest copy of the map with room, so players are together while they fit; a new copy
     // when none has. A Blood Castle is its own world and is never copied.
@@ -1477,12 +1500,29 @@ int main(int argc, char** argv) {
         else if (a == "--castle-period" && i + 1 < argc) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.castle = {s, s / 2, s / 2};
+        } else if (a == "--kit" && i + 1 < argc) {
+            // LEVEL:STEM[+N],STEM... -- every new character made so (a test).
+            const std::string kit = argv[++i];
+            const size_t colon = kit.find(':');
+            g_kitLevel = std::clamp(std::atoi(kit.c_str()), 1, sim::kMaximumLevel);
+            for (size_t at = colon == std::string::npos ? kit.size() : colon + 1; at < kit.size();) {
+                size_t comma = kit.find(',', at);
+                if (comma == std::string::npos) comma = kit.size();
+                std::string one = kit.substr(at, comma - at);
+                int plus = 0;
+                if (const size_t p = one.find('+'); p != std::string::npos) {
+                    plus = std::atoi(one.c_str() + p + 1);
+                    one.resize(p);
+                }
+                if (!one.empty()) g_kitItems.push_back({one, plus});
+                at = comma + 1;
+            }
         } else if (a == "--square-period" && i + 1 < argc) {
             // Charon's gate every S seconds for S/2, not two-hourly (a test).
             const int s = std::max(2, std::atoi(argv[++i]));
             config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--square-period S] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
             return 2;
         }
     }
