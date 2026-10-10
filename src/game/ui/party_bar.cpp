@@ -25,13 +25,14 @@ constexpr float kLeft = 16.0f, kAboveMiddle = 188.0f, kWide = 240.0f;
 constexpr size_t kRaidMost = 15;  // raid lines, then "+N more"
 
 // A capsule's make: its three bands top to foot, its corner, the gap under it, and its words.
+// The gaps 12 and 8, from 7 and 4: the user, 2026-10-10, "increae gaps between labels".
 struct Make {
     float shield, life, mana, radius, gap;
     float name, tag, number;  // the name's size, the level tag's, the number's
     float band;               // the dark band behind the name, a share of the width
 };
-constexpr Make kPlate{3.0f, 18.0f, 4.0f, 5.0f, 7.0f, 15.0f, 9.0f, 13.0f, 0.6f};  // a party member
-constexpr Make kLine{2.0f, 14.0f, 3.0f, 4.0f, 4.0f, 12.5f, 0.0f, 11.0f, 0.55f};  // a raider
+constexpr Make kPlate{3.0f, 18.0f, 4.0f, 5.0f, 12.0f, 15.0f, 9.0f, 13.0f, 0.6f};  // a party member
+constexpr Make kLine{2.0f, 14.0f, 3.0f, 4.0f, 8.0f, 12.5f, 0.0f, 11.0f, 0.55f};  // a raider
 
 constexpr uint32_t kGold = gfx::rgba(0.878f, 0.714f, 0.361f);  // the leader: the tracker's gold
 constexpr uint32_t kWell = gfx::rgba(0.024f, 0.016f, 0.016f, 0.78f);
