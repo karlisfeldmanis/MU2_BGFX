@@ -53,6 +53,7 @@ struct Saved {
         bool skill = false;
         // Luck and the additional option's level; absent in a file from before drops rolled them.
         bool luck = false;
+        bool bound = false;  // sim::Held::bound
         int option = 0;
         int excellent = 0;  // its excellent options, a bit each
         // Its sockets and the power set in each, or a Rune of Creation's own in the first

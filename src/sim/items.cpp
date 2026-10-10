@@ -864,6 +864,9 @@ int poursMost(const content::ItemRow& row) {
 
 bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
     if (onto.empty() || onto.item != what.item || onto.refinement != what.refinement) return false;
+    // A bound stack and a free one never pour together: a free one would come out bound, or a
+    // quest's Firecrackers free.
+    if (onto.bound != what.bound) return false;
     if (size_t(onto.item) >= tables.items.size()) return false;
     return onto.durability < poursMost(tables.items[size_t(onto.item)]);
 }

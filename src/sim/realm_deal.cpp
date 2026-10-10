@@ -154,7 +154,10 @@ int Realm::dealPut(int bagSlot, int cell) {
     if (!mine().alive()) return -1;
     const Held& what = me().bag[bagSlot];
     const content::ItemRow& row = tables_->items[size_t(what.item)];
-    if (kept(row)) return -1;
+    // Never traded: Sevina's and the Archangel's (MuMain's IsTradeBan), and whatever a quest paid
+    // (Held::bound, the user's of 2026-10-10). Everything else trades, the tickets and what makes
+    // them as in MU.
+    if (kept(row) || what.bound) return -1;
     Machine& box = me().offer;
     if (cell < 0) cell = box.free(*tables_, row.width, row.height);
     if (cell < 0 || cell >= kMachineCells || !box.room(*tables_, cell, row.width, row.height)) return -1;

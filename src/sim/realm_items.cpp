@@ -684,13 +684,14 @@ Wearer Realm::wearer() const {
 
 int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,
                 uint8_t excellent, uint8_t sockets, const uint8_t* powers,
-                const uint8_t* affixes) {
+                const uint8_t* affixes, bool bound) {
     if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return -1;
     const content::ItemRow& row = tables_->items[size_t(item)];
     // A stack asked for anywhere pours into what he carries, twenty a cell.
     if (slot < 0 && stacks(row)) {
-        return pour(*tables_, me().bag, kWorn, kSlots,
-                    Held{item, int16_t(refinement), int16_t(std::max(1, durability))});
+        Held stack{item, int16_t(refinement), int16_t(std::max(1, durability))};
+        stack.bound = bound;
+        return pour(*tables_, me().bag, kWorn, kSlots, stack);
     }
     if (slot < 0) slot = me().bag.free(*tables_, row.width, row.height);
     if (slot < 0 || !me().bag[slot].empty() ||
@@ -699,6 +700,7 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
     }
     if (durability < 0) durability = fullDurability(row, refinement);
     Held put{item, int16_t(refinement), int16_t(durability)};
+    put.bound = bound;
     if (takesOptions(row) || jewellery(row)) {
         // Luck on a ring or a pendant too, since they refine: ours (2026-10-03); MU's
         // CItem::Convert reads none there.
@@ -2098,6 +2100,8 @@ uint32_t Realm::throwDown(const Body& hero, const Held& what) {
     std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
     one.id = nextId_++;
+    // A bound thing thrown down is still his alone (Held::bound, Realm::mayTake).
+    if (what.bound) one.owner = hero.id;
     lying_.push_back(one);
     // Said for the log and for anything reading the realm within the same tick; the showing
     // does NOT hear it -- see the note on discard() in realm.h.

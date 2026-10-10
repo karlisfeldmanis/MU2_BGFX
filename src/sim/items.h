@@ -98,6 +98,11 @@ struct Held {
     // A 2nd level wing's extras, MU's m_NewOption on it (sim::kWingMaxLife and its fellows): 0 on
     // everything else. Its own field, since `excellent` would make the wing read as excellent.
     uint8_t wing = 0;
+    // Bound to whoever earned it: a quest's pay (the user, 2026-10-10: quest rewards are "bound to
+    // the earner"). Worn, sold, kept in the vault or thrown down, never traded, and on the ground
+    // his alone (Realm::mayTake). WoW's "binds when picked up"; MU had nothing of the kind.
+    // Last, so the brace lists that fill the fields in order are untouched.
+    bool bound = false;
     bool empty() const { return item < 0; }
 };
 

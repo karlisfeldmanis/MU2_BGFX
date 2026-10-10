@@ -340,7 +340,8 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
         if (item < 0) return true;  // a row naming nothing cooked pays nothing, and says so below
         const content::ItemRow& itemRow = tables_->items[size_t(item)];
         if (stacks(itemRow)) {
-            const int slot = give(item, -1, 0, std::max(1, what.count));
+            // Bound to him, as everything a quest pays (Held::bound).
+            const int slot = give(item, -1, 0, std::max(1, what.count), false, 0, 0, 0, nullptr, nullptr, true);
             if (slotOut) *slotOut = slot;
             return slot >= 0;
         }
@@ -352,7 +353,7 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
         for (int piece = 0; piece < std::max(1, what.count); ++piece) {
             const int slot = give(item, -1, what.plus, fullDurability(itemRow, what.plus), gear,
                                   gear ? kQuestOption : 0, 0, what.sockets,
-                                  creation(itemRow) ? powers : nullptr, what.affixes);
+                                  creation(itemRow) ? powers : nullptr, what.affixes, true);
             if (slot < 0) return false;
             if (slotOut && piece == 0) *slotOut = slot;
         }

@@ -1131,6 +1131,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (sim::expensive(tables, what)) {
         sheet.bound = "Cannot be dropped";
     }
+    // What never changes hands: a quest's pay (sim::Held::bound) and the quest items MuMain will
+    // not trade (IsTradeBan), WoW's "Soulbound" in the same place.
+    if (what.bound || sim::archangelWeapon(row) || sim::classTreasure(row)) {
+        sheet.bound = sheet.bound.empty() ? std::string("Cannot be traded") : "Cannot be traded or dropped";
+    }
 
     // ---- the foot -----------------------------------------------------------------------------
     // Ammunition's durability is its shots, and MU draws it the same way.

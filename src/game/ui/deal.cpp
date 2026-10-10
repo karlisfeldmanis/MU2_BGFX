@@ -59,7 +59,8 @@ bool same(const sim::Held& a, const sim::Held& b) {
     return a.item == b.item && a.refinement == b.refinement && a.durability == b.durability && a.skill == b.skill &&
            a.luck == b.luck && a.option == b.option && a.excellent == b.excellent && a.sockets == b.sockets &&
            std::equal(std::begin(a.powers), std::end(a.powers), std::begin(b.powers)) &&
-           std::equal(std::begin(a.affixes), std::end(a.affixes), std::begin(b.affixes)) && a.wing == b.wing;
+           std::equal(std::begin(a.affixes), std::end(a.affixes), std::begin(b.affixes)) && a.wing == b.wing &&
+           a.bound == b.bound;
 }
 
 uint64_t mixed(uint64_t h, uint64_t v) { return (h ^ v) * 1099511628211ull; }

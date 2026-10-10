@@ -70,6 +70,7 @@ Saved::Item readItem(const core::Json& one) {
     item.durability = int(one["durability"].numberOr(0));
     item.skill = one["skill"].boolOr(false);
     item.luck = one["luck"].boolOr(false);
+    item.bound = one["bound"].boolOr(false);
     item.option = std::clamp(int(one["option"].numberOr(0)), 0, sim::kMostOption);
     item.excellent = int(one["excellent"].numberOr(0)) & 63;
     item.sockets = std::clamp(int(one["sockets"].numberOr(0)), 0, sim::kMostSockets);
@@ -95,12 +96,12 @@ void writeHeld(std::FILE* f, const content::Tables& tables, int slot, const sim:
     std::fprintf(f,
                  ", \"plus\": %d, \"durability\": %d, \"wear\": true, \"skill\": %s, "
                  "\"luck\": %s, \"option\": %d, \"excellent\": %d, \"sockets\": %d, "
-                 "\"powers\": [%d, %d, %d], \"affixes\": [%d, %d, %d], \"wing\": %d}",
+                 "\"powers\": [%d, %d, %d], \"affixes\": [%d, %d, %d], \"wing\": %d, \"bound\": %s}",
                  int(held.refinement), int(held.durability), held.skill ? "true" : "false",
                  held.luck ? "true" : "false", int(held.option), int(held.excellent),
                  int(held.sockets), int(held.powers[0]), int(held.powers[1]),
                  int(held.powers[2]), int(held.affixes[0]), int(held.affixes[1]),
-                 int(held.affixes[2]), int(held.wing));
+                 int(held.affixes[2]), int(held.wing), held.bound ? "true" : "false");
     *first = false;
 }
 
@@ -315,6 +316,7 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
+        held.bound = item.bound;
         capSockets(tables.items[size_t(row)], held);
     }
     // Bows and crossbows went to the weapon slot and every quiver to the left hand (2026-10-02,
@@ -350,6 +352,7 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
+        held.bound = item.bound;
         capSockets(*r, held);
         saved.machine.put(item.slot, held);
     }
@@ -612,6 +615,7 @@ sim::Vault resolveVault(const content::Tables& tables, const Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
+        held.bound = item.bound;
         capSockets(*r, held);
         vault.put(item.slot, held);
     }

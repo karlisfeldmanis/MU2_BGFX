@@ -11988,6 +11988,34 @@ void testDeal(const content::Tables& tables) {
     // Asked from afar: refused.
     run({.kind = Kind::DealAsk, .player = b, .target = a});
     check(saw(b, sim::DealEvent::Refused), "an ask from beyond reach is refused");
+
+    // **Bound** (Held::bound): what a quest pays never changes hands.
+    const int32_t cracker = tables.itemNamed("Jewel01");
+    const int freeAt = realm.give(cracker, -1, 0, 1);
+    const int boundAt = realm.give(cracker, -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
+    check(boundAt >= 0 && boundAt != freeAt && realm.satchel()[boundAt].bound,
+          "a bound jewel does not pour into a free one");
+    realm.lookAs(a);
+    realm.setHeroDown(131, 128, 1, 0);
+    realm.lookAs(b);
+    run({.kind = Kind::DealAsk, .player = b, .target = a});
+    run({.kind = Kind::DealAnswer, .player = a, .a = 1, .target = b});
+    realm.lookAs(b);
+    check(realm.dealing() == a, "a trade opens again beside him");
+    checkEqual(realm.dealPut(boundAt, -1), -1, "a bound thing is refused in a trade");
+    check(realm.dealPut(freeAt, -1) >= 0, "and a free one of the same kind is taken");
+    realm.closeDeal();
+    // Thrown down, it is his alone: the other may not take it. A potion: a jewel is too dear to drop.
+    const int potionAt = realm.give(tables.itemNamed("Potion01"), -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
+    const uint32_t thrown = realm.discard(potionAt);
+    const sim::Lying* lying = nullptr;
+    for (const sim::Lying& one : realm.lying()) if (one.id == thrown) lying = &one;
+    check(lying != nullptr && lying->owner == b, "thrown down, it lies as hers");
+    if (lying != nullptr) {
+        check(realm.mayTake(*lying), "she may take it back");
+        realm.lookAs(a);
+        check(!realm.mayTake(*lying), "and nobody else may, party or not");
+    }
 }
 
 // **Threat** (docs/party.md): a knight with his guard up holds a monster against a wizard of his

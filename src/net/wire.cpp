@@ -122,7 +122,7 @@ float floatOf(uint32_t v) {
 void putHeld(Out& o, const sim::Held& h) {
     o.i32(h.item);
     o.u32(uint32_t(uint16_t(h.refinement)) | uint32_t(uint16_t(h.durability)) << 16);
-    o.u8(uint8_t((h.skill ? 1 : 0) | (h.luck ? 2 : 0)));
+    o.u8(uint8_t((h.skill ? 1 : 0) | (h.luck ? 2 : 0) | (h.bound ? 4 : 0)));
     o.u8(uint8_t(h.option));
     o.u8(h.excellent);
     o.u8(h.sockets);
@@ -140,6 +140,8 @@ sim::Held takeHeld(In& in) {
     const uint8_t flags = in.u8();
     h.skill = (flags & 1) != 0;
     h.luck = (flags & 2) != 0;
+    // Bound to its earner (Held::bound), in a bit the older layouts left nought: no layout bump.
+    h.bound = (flags & 4) != 0;
     h.option = int8_t(in.u8());
     h.excellent = in.u8();
     h.sockets = in.u8();

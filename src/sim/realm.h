@@ -868,7 +868,7 @@ public:
     // it went to, or -1 when there was nowhere. A durability of -1 is whole at its plus.
     int give(int32_t item, int slot = -1, int refinement = 0, int durability = -1,
              bool luck = false, int option = 0, uint8_t excellent = 0, uint8_t sockets = 0,
-             const uint8_t* powers = nullptr, const uint8_t* affixes = nullptr);
+             const uint8_t* powers = nullptr, const uint8_t* affixes = nullptr, bool bound = false);
     // A drag from one slot to another, equipping and unequipping included. Refused, whole,
     // where `movable` says no -- the same answer the window colours the cell by.
     bool moveItem(int from, int to);
@@ -1417,6 +1417,8 @@ public:
     // party's (the user, 2026-10-10: 'if char is on party he can pick items from ground which
     // drops from party kills'). Ours, as the owner's minute is.
     bool mayTake(const Lying& one) const {
+        // A bound thing (Held::bound) is its earner's, and nobody else's even once he has left.
+        if (one.what.bound) return one.owner == mine().id;
         if (one.owner == 0 || one.owner == mine().id || playerOfId(one.owner) < 0) return true;
         const Body* owner = find(one.owner);
         return owner != nullptr && mine().party != 0 && owner->party == mine().party;
