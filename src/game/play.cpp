@@ -422,6 +422,18 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Died) {
                 if (Drawn* dead = drawnOf(happening.who)) {
                     dead->fallOwed = true;
+                    // A death in sight whose killer is not drawn: poison or a rune ticking after
+                    // its caster walked on, or one he should have seen (the user, 2026-10-10: "i
+                    // saw monsters die again without any bot or me to kill him").
+                    if (const Drawn* killer = drawnOf(happening.whom);
+                        dead->visible && (killer == nullptr || !killer->visible)) {
+                        const sim::Body* d = realm_.find(happening.who);
+                        const sim::Body* k = realm_.find(happening.whom);
+                        core::logf("unseen kill: tick %lld, #%u dies to #%u, %.0f tiles from it",
+                                   (long long)happening.tick, happening.who, happening.whom,
+                                   d && k ? double(std::max(std::fabs(d->x - k->x), std::fabs(d->y - k->y)))
+                                          : -1.0);
+                    }
                     // Killed by the burst on this tick: MU's die type AT_SKILL_NOVA, rolled as
                     // ReceiveDie rolls it (WSclient.cpp:5871-5892).
                     const Drawn* by = drawnOf(happening.whom);
