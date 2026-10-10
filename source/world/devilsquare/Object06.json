@@ -1,0 +1,44 @@
+{
+  "item": "Object06",
+  "mu_name": "Object06",
+  "mu_name_from": "Devil Square's object slot 5, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123); World10/Object10 serves all four squares, and squares 5-7 too (MapManager.cpp:1178-1181).",
+  "world": "devilsquare",
+  "object_type": 5,
+  "placements": 44,
+  "profile": "world",
+  "sheets": {
+    "bacc00": "ds_bacc00.png",
+    "bacc01": "ds_bacc01.png"
+  },
+  "sheet_from": "Data/Object10/, from MuMain, decoded under a ds_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "bacc00": "flagstone",
+    "bacc01": "rock"
+  },
+  "why_this_one": "A broken stone block, dressed on its faces and rough where it split: rubble. docs/devil-square-port.md, Part B section 1.2.",
+  "material_note": "Read off the art: bacc00 is dark green-grey dressed blocks laid in courses with mortar joints, laid stone: flagstone; bacc01 is rough pale broken stone with no joints: rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 28,
+      "area": 29168.5,
+      "along": [
+        -33.6,
+        32.1
+      ],
+      "mu_uv": [
+        0.023,
+        0.067,
+        0.783,
+        0.76
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.789
+      ]
+    }
+  ]
+}

@@ -1,0 +1,570 @@
+{
+  "item": "Object01",
+  "mu_name": "Object01",
+  "mu_name_from": "Devil Square's object slot 0, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123); World10/Object10 serves all four squares, and squares 5-7 too (MapManager.cpp:1178-1181).",
+  "world": "devilsquare",
+  "object_type": 0,
+  "placements": 52,
+  "profile": "world",
+  "sheets": {
+    "bacc00": "ds_bacc00.png"
+  },
+  "sheet_from": "Data/Object10/, from MuMain, decoded under a ds_ prefix: assets/textures is one flat pool.",
+  "sheet_materials": {
+    "bacc00": "flagstone"
+  },
+  "why_this_one": "The stepped wall section, 5.9 by 6.8 m and 4.1 m high, that lines each arena's north and west rims, turned 0 or 90 degrees. docs/devil-square-port.md, Part B section 1.2.",
+  "material_note": "Read off the art: bacc00 is dark green-grey dressed blocks laid in courses with mortar joints, laid stone: flagstone; bacc01 is rough pale broken stone with no joints: rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6855.1,
+      "along": [
+        13.4,
+        134.0
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.009,
+        0.498,
+        0.108,
+        0.544
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6266.0,
+      "along": [
+        -35.2,
+        65.8
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.571,
+        0.773,
+        0.67,
+        0.82
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7481.8,
+      "along": [
+        -102.5,
+        11.8
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.134,
+        0.498,
+        0.233,
+        0.544
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 44,
+      "area": 849794.1,
+      "along": [
+        -204.6,
+        204.6
+      ],
+      "mu_uv": [
+        -0.275,
+        -0.759,
+        1.334,
+        2.186
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.974
+      ]
+    },
+    {
+      "island": 4,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6843.7,
+      "along": [
+        65.9,
+        186.5
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.051,
+        0.56,
+        0.15,
+        0.607
+      ]
+    },
+    {
+      "island": 5,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 8431.9,
+      "along": [
+        10.7,
+        129.7
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.17,
+        0.563,
+        0.269,
+        0.609
+      ]
+    },
+    {
+      "island": 6,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6182.9,
+      "along": [
+        51.5,
+        162.5
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.696,
+        0.773,
+        0.795,
+        0.82
+      ]
+    },
+    {
+      "island": 7,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7448.2,
+      "along": [
+        -50.0,
+        64.3
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.049,
+        0.814,
+        0.148,
+        0.86
+      ]
+    },
+    {
+      "island": 8,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7716.8,
+      "along": [
+        -19.1,
+        15.7
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.504,
+        0.563,
+        0.603,
+        0.609
+      ]
+    },
+    {
+      "island": 9,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 8431.9,
+      "along": [
+        9.5,
+        44.9
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.009,
+        0.625,
+        0.108,
+        0.672
+      ]
+    },
+    {
+      "island": 10,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7684.6,
+      "along": [
+        -108.2,
+        -72.3
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.134,
+        0.625,
+        0.233,
+        0.672
+      ]
+    },
+    {
+      "island": 11,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7762.6,
+      "along": [
+        -48.1,
+        -15.4
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.519,
+        0.625,
+        0.618,
+        0.672
+      ]
+    },
+    {
+      "island": 12,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7716.8,
+      "along": [
+        -19.1,
+        15.7
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.051,
+        0.688,
+        0.15,
+        0.735
+      ]
+    },
+    {
+      "island": 13,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 8431.9,
+      "along": [
+        9.5,
+        44.9
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.172,
+        0.688,
+        0.271,
+        0.735
+      ]
+    },
+    {
+      "island": 14,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7684.6,
+      "along": [
+        -77.4,
+        -41.5
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.535,
+        0.688,
+        0.634,
+        0.735
+      ]
+    },
+    {
+      "island": 15,
+      "material": "flagstone",
+      "triangles": 6,
+      "area": 5582.3,
+      "along": [
+        -48.1,
+        -15.4
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.636,
+        0.581,
+        0.735,
+        0.627
+      ]
+    },
+    {
+      "island": 16,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 4713.4,
+      "along": [
+        135.4,
+        154.6
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.654,
+        0.643,
+        0.753,
+        0.69
+      ]
+    },
+    {
+      "island": 17,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 5315.9,
+      "along": [
+        162.8,
+        182.1
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.654,
+        0.711,
+        0.753,
+        0.757
+      ]
+    },
+    {
+      "island": 18,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6855.1,
+      "along": [
+        13.4,
+        134.0
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.77,
+        0.583,
+        0.869,
+        0.629
+      ]
+    },
+    {
+      "island": 19,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6266.0,
+      "along": [
+        -35.2,
+        65.8
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.009,
+        0.751,
+        0.108,
+        0.797
+      ]
+    },
+    {
+      "island": 20,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7481.7,
+      "along": [
+        -102.5,
+        11.8
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.168,
+        0.827,
+        0.267,
+        0.874
+      ]
+    },
+    {
+      "island": 21,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6843.7,
+      "along": [
+        65.9,
+        186.5
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.293,
+        0.827,
+        0.392,
+        0.874
+      ]
+    },
+    {
+      "island": 22,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 8431.9,
+      "along": [
+        10.7,
+        129.7
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.775,
+        0.65,
+        0.874,
+        0.697
+      ]
+    },
+    {
+      "island": 23,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 6182.9,
+      "along": [
+        51.5,
+        162.5
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.132,
+        0.751,
+        0.231,
+        0.797
+      ]
+    },
+    {
+      "island": 24,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 7448.2,
+      "along": [
+        -50.0,
+        64.3
+      ],
+      "mu_uv": [
+        0.255,
+        0.005,
+        0.78,
+        0.253
+      ],
+      "bake_uv": [
+        0.25,
+        0.764,
+        0.349,
+        0.811
+      ]
+    }
+  ]
+}
