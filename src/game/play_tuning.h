@@ -245,6 +245,7 @@ constexpr float kFastestClip = 4.0f;
 inline int attackSlotFor(const std::string& stance) {
     if (stance == "sword") return 39;
     if (stance == "two_hand_sword") return 43;
+    if (stance == "two_hand_sword_two") return 146;  // PLAYER_ATTACK_TWO_HAND_SWORD_TWO
     if (stance == "spear") return 46;
     if (stance == "scythe") return 47;
     if (stance == "bow") return 50;
@@ -257,7 +258,7 @@ inline int attackSlotFor(const std::string& stance) {
 // And the same swing on a horse: MU's PLAYER_ATTACK_RIDE_* (ZzzCharacter.cpp:1112-1153) --
 // the one-hand sword's for a fist or a staff, as MU gives them.
 inline int rideSlotFor(const std::string& stance) {
-    if (stance == "two_hand_sword") return 55;
+    if (stance == "two_hand_sword" || stance == "two_hand_sword_two") return 55;
     if (stance == "spear") return 56;
     if (stance == "scythe") return 57;
     if (stance == "bow") return 58;
@@ -270,7 +271,8 @@ inline int rideSlotFor(const std::string& stance) {
 // "we need also two hand weapon stance on mount", "not only two hand stance bt also two hand
 // attack"). **ours**.
 inline bool twoHandedStance(const std::string& stance) {
-    return stance == "two_hand_sword" || stance == "spear" || stance == "scythe";
+    return stance == "two_hand_sword" || stance == "two_hand_sword_two" || stance == "spear" ||
+           stance == "scythe";
 }
 
 // MU's own ride clips, which seat themselves: the stop and run rides, the ride swings, the rider

@@ -800,11 +800,12 @@ void Realm::begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t o
     // not drift apart: this is the number that decides when the damage is real. A skill whose
     // row lets it go elsewhere in its clip -- Hellfire on its landing -- is let go there; the
     // half stays the integer half, so nothing else moves.
+    // A plain blow comes down where its weapon's swing does (sim::swingLanding): the Dark Reign
+    // Blade's overhead cut later than the half.
     const SkillRow* row = skillNumbered(skill);
+    const float lands = row != nullptr ? row->release : hero.swingLands;
     const int64_t release =
-        row != nullptr && row->release != 0.5f
-            ? int64_t(std::lround(float(overTicks) * row->release))
-            : int64_t(overTicks / 2);
+        lands != 0.5f ? int64_t(std::lround(float(overTicks) * lands)) : int64_t(overTicks / 2);
     hero.blowAt = tick_ + std::max<int64_t>(1, release);
     hero.blowTarget = at;
     hero.blowForce = force;

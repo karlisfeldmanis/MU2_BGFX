@@ -444,6 +444,7 @@ struct Body {
     // sake of what the screen shows.
     int64_t standsUntil = 0;
     int32_t swingTicks = 20;  // how often he may swing: the length of the clip he swings with
+    float swingLands = 0.5f;  // where in that clip a plain blow comes down (sim::swingLanding)
     int32_t swingMs = 0;      // the same before it was rounded to ticks, for the log
     // Where the quarry was when this chase was last planned, in tiles and NOT in whole tiles.
     // See Realm::drifted.

@@ -94,6 +94,7 @@ void Realm::reswing(Body& hero) {
     hero.swingMs = milliseconds;
     const int32_t ticks = swingTicks(milliseconds);
     hero.swingTicks = ticks > 0 ? ticks : kHeroSwingTicks;
+    hero.swingLands = swingLanding(right, left);
 }
 
 bool Realm::equip(int32_t weapon, int32_t shield, bool given) {

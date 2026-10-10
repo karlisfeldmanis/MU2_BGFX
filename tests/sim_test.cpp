@@ -221,6 +221,14 @@ void testSwings(const content::Tables& tables) {
     checkEqual(actions[1], 40, "right 2");
     checkEqual(sim::attackActions(giant, nullptr, actions), 3, "a two-handed sword has three");
     checkEqual(actions[0], 43, "two hand sword 1");
+    // The Dark Reign Blade has its own swing, PLAYER_ATTACK_TWO_HAND_SWORD_TWO (ZzzCharacter.cpp:
+    // 1179-1182), and only the one.
+    if (const content::Arm* reign = arm("Sword22")) {
+        checkEqual(sim::attackActions(reign, nullptr, actions), 1, "the Dark Reign Blade has one");
+        checkEqual(actions[0], 146, "two hand sword two");
+    } else {
+        check(false, "the Dark Reign Blade is in the arms");
+    }
     // The ladder's whole point: an axe is caught by the sword test three rungs above the
     // axe-shaped one anybody would write, because there is no axe action in the rig.
     sim::attackActions(smallAxe, nullptr, actions);

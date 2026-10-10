@@ -52,8 +52,14 @@ int attackActions(const content::Arm* right, const content::Arm* left, int32_t* 
     // Swords, axes and maces together.
     if (rightSwings) {
         if (right->twoHanded()) {
-            // 43, 44, 45 by the client's own counter. The four two-handed blades that play
-            // something else instead are all Season 3 and later.
+            // The Dark Reign Blade (0, 21), the gladiator's, swings PLAYER_ATTACK_TWO_HAND_SWORD_TWO,
+            // 146, alone (ZzzCharacter.cpp:1179-1182). The other three blades that do -- Rune,
+            // Explosion, Sword Dancer -- are later than anything built here.
+            if (right->group == 0 && right->number == 21) {
+                out[0] = 146;
+                return 1;
+            }
+            // 43, 44, 45 by the client's own counter.
             out[0] = 43;
             out[1] = 44;
             out[2] = 45;
@@ -153,6 +159,12 @@ int swingMilliseconds(const content::Tables& tables, Kin kin, int agility,
     // its three actions happened to be written down first.
     if (counted == 0) return 0;
     return int(total / float(counted) * 1000.0f);
+}
+
+float swingLanding(const content::Arm* right, const content::Arm* left) {
+    int32_t actions[4] = {};
+    const int count = attackActions(right, left, actions);
+    return count == 1 && actions[0] == 146 ? 0.65f : 0.5f;
 }
 
 int32_t swingTicks(int milliseconds) {

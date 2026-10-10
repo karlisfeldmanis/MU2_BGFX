@@ -56,4 +56,12 @@ int swingMilliseconds(const content::Tables& tables, Kin kin, int agility,
 // MU2 measured a realm ordering a blow every second while the clip needed 1.097 of one.
 int32_t swingTicks(int milliseconds);
 
+// Where in the swing a plain blow comes down, as a share of the clip: half, which is where the
+// two-handed sweeps and the sword's cuts meet their mark -- but for the Dark Reign Blade, whose
+// PLAYER_ATTACK_TWO_HAND_SWORD_TWO raises the blade overhead to the half and brings it down
+// through key 3.9 of its six (measured on the bench, 2026-10-10: the arms highest at 0.5, level
+// at 0.65). At the half its number and its blood came with the blade still in the air (the user:
+// 'did not look correct the hitting part'). **Ours**: MU lands every blow on the server's word.
+float swingLanding(const content::Arm* right, const content::Arm* left);
+
 }  // namespace mu::sim
