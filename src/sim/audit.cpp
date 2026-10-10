@@ -31,6 +31,13 @@ void audit(const Realm& realm, Findings& findings) {
     const content::Tables* tables = realm.tables();
     if (!tables) return;
 
+    if (realm.hero().id != findings.heroId || realm.tick() < findings.lastTick) {
+        std::fill(std::begin(findings.castAt), std::end(findings.castAt), 0);
+        std::fill(std::begin(findings.castFor), std::end(findings.castFor), 0);
+        findings.heroId = realm.hero().id;
+    }
+    findings.lastTick = realm.tick();
+
     for (const Body& one : realm.bodies()) {
         // A body standing where the grid refuses it. The dead are exempt: a corpse lies where
         // it fell and is not standing anywhere.

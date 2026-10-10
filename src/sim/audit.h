@@ -44,6 +44,13 @@ struct Findings {
     // on its own.
     int64_t castAt[kSkills] = {};
     int32_t castFor[kSkills] = {};
+    // Whose clock that is, and the tick last audited. A hero laid again from his record -- a
+    // join, a gate, a line come back after a death online -- has his waits re-laid by
+    // Realm::restore, each no longer than the skill's cooldown at his agility then, so the clock
+    // above is forgotten when either changes (the user's log, 2026-10-10: Soul Barrier "thrown
+    // again 6021 ticks into a 6040 tick cooldown" every second after a death).
+    uint32_t heroId = 0;
+    int64_t lastTick = -1;
 };
 
 // Every check that can be made from one tick's happenings and the state they left behind.
