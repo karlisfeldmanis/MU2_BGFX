@@ -204,6 +204,7 @@ void printUsage() {
         "  --wing-demo               every kill in Icarus leaves his class's first wings (a demo)\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --server HOST[:PORT]      play on that server (mu2_server) instead of in this process\n"
+        "  --invite A,B              on a server, ask them into his party until they are in\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --castle-period S         Blood Castle opens every S seconds, for S/2, not hourly (a test)\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
@@ -532,6 +533,15 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--server")) {
             if (const char* v = next(s)) a.server = v;
+        } else if (!std::strcmp(s, "--invite")) {
+            if (const char* v = next(s)) {
+                std::string list = v;
+                for (size_t at = 0; at <= list.size();) {
+                    const size_t comma = std::min(list.find(',', at), list.size());
+                    if (comma > at) a.invite.push_back(list.substr(at, comma - at));
+                    at = comma + 1;
+                }
+            }
         } else if (!std::strcmp(s, "--lag")) {
             if (const char* v = next(s)) a.lag = std::atof(v);
         } else if (!std::strcmp(s, "--jitter")) {

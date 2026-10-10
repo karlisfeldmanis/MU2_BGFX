@@ -148,6 +148,7 @@ private:
     size_t findingsSaid_ = 0;  // the audit's first lines already in the log
     bool quitEarly_ = false;
     bool backNow_ = false;  // --lobby-back's frame has come
+    double invited_ = 0.0;  // --invite: seconds since the last round of asks
 };
 
 }  // namespace mu::app

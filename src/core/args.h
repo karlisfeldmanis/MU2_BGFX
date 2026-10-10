@@ -128,6 +128,9 @@ struct Args {
     // `--lag MS` and `--jitter MS`: a test's line to that server, its round trip and its jitter
     // each way held on this Mac (docs/sprints/24-the-quiet-line.md). 0 for the line as it is.
     double lag = 0.0, jitter = 0.0;
+    // `--invite A,B`: on a server, these players asked into his party every few seconds until
+    // they are in -- a review run's party, from bots that take a player's invite (netbot).
+    std::vector<std::string> invite;
     // `--loss P`: each packet lost with chance P (0.02 is 2%); `--no-udp`: the ticks by the
     // stream alone, as before sprint 24 -- to compare.
     double loss = 0.0;

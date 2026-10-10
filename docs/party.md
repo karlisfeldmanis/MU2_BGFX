@@ -225,3 +225,21 @@ Parties now cost a little levelling (4-10%) and pay it back in safety and progre
 deaths, Devias's quest for every class and seven levels sooner, the wizards' only in a party,
 and a quarter more Blood Castles. Fewer quests all told -- the party's hunt still holds a
 member off his own repeatable ones.
+
+## The bar moved, and the raid's rows (2026-10-10)
+
+The user: "party memeber blocks is blocking experience gains and top left corner". From the
+proposals (claude.ai/artifact/WzzAH1XVgYyqk7zTQJht67) the user chose R2, "with some minimal
+container for each player", then "we need to see who is party/raid leader":
+
+- The party down the left side at middle height (top at 352 in 1080-line units), the exp lane
+  keeping the corner. Each member on a soft dark plate, no stroke.
+- In the Golden Dragon's fight, the rest of the raid under the party, a line each on its own
+  plate: a name and a hairline of health, hot under 30%, dimmed when dead; fifteen at most.
+  The --raid harness's raiders, or on a server every other player in the dragon's field not
+  of his party.
+- A heading over each, "Party" and "Raid N", with a small gold crown and who leads ("You lead",
+  "Ragnar leads"); the leader's plate carries the crown before his gold name. A server has no
+  raid of parties yet, so there the raid's leader is his party's.
+- `--invite A,B` asks them into his party until they are in: a review run's party from local
+  netbots (`--parties` takes a player's invite).

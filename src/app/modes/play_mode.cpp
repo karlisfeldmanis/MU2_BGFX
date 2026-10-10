@@ -846,6 +846,18 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     const double deltaSeconds = at.deltaSeconds;
     if (args.lobby && args.lobbyBack >= 0 && at.index >= args.lobbyBack) backNow_ = true;
 
+    // --invite: whoever named is not in his party yet is asked again, every three seconds.
+    if (!args.invite.empty() && world_.played().isOpen() && world_.played().remote() &&
+        (invited_ += deltaSeconds) >= 3.0) {
+        invited_ = 0.0;
+        const net::PartyState& party = world_.played().party();
+        for (const std::string& name : args.invite) {
+            const bool in = std::any_of(party.members.begin(), party.members.end(),
+                                        [&](const net::PartyState::Member& m) { return m.name == name; });
+            if (!in) world_.played().askParty({net::PartyWhat::Invite, name});
+        }
+    }
+
     // Through a gate on the last tick: on to the map it leads to, at the tile the realm chose
     // there, facing the way the exit gate says (sim/gates.h).
     int gateColumn = 0, gateRow = 0;
