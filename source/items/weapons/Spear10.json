@@ -51,10 +51,8 @@
       "f0_desaturation": 1.0
     }
   },
-  "cutout": [
-    "af"
-  ],
-  "cutout_from": "Declared, not detected. af.tga's alpha cuts 7% away, and what it cuts is the veins drawn through the blade and a thin line down the haft - MU alpha-tests a .tga, so the Balrog's bill is cracked through.",
+  "cutout": false,
+  "cutout_from": "Declared, not detected, and declared solid. af.tga's alpha cuts 7% away -- the veins drawn through the blade and a thin line down the haft -- and MU alpha-tests a .tga, but it never shows those as holes: its chrome stream is drawn solid under the body first (ZzzObject.cpp:9682-9688), so the cracks are filled with sliding blue chrome. Cut here, the haft, four units thick with its line cut along it, went see-through from the side (the user, 2026-10-10: 'trunk become kind of transparent from that angle'). Solid instead: the cut texels keep the sheet's own dull red under them, and the chrome pass is added over them (chrome, where 'cut' -- tools/chrome_sheets.py reads the alpha all the same).",
   "material_note": "Six islands on af, sampled per triangle. Island 0 (50) is the bill's blade, silver-white washed red at (138, 99, 96): steel at 0.45. Island 1 (32) is the haft, dark red-brown (93, 35, 11), 2 and 3 (16 each) the black spikes (90, 21, 0), 4 and 5 (12 each) the butt: plate_steel at 0.5 as the Gorgon Staff's pole, with desaturation 1.0 so the red haft does not go grey. MU scrolls this model's BlendMeshTexCoordV (ZzzObject.cpp:5267) and sets no BlendMesh: the scroll moves the chrome pass under the body (chrome_from), and no glow.",
   "chrome": [
     {
