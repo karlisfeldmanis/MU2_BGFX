@@ -69,15 +69,17 @@ Box wellOf(const Box& slot, bool worn) {
 
 // The ghost in an empty worn slot: MU's own silhouette, cut out of its plate by
 // pipeline/slot_ghosts.py as a white mask. MU names the art for the side of the SCREEN: the
-// right-hand slot takes weapon(L). Bag.GhostFor.
-const char* ghostFor(int slot) {
+// right-hand slot takes weapon(L). Bag.GhostFor. An archer's left hand holds her arrows or bolts
+// (sim::placeOf), not a shield, so hers is a quiver: MU's Arrows, rendered by
+// pipeline/quiver_ghost.py (the user, 2026-10-10: "she is wearing arrrow/bolts there").
+const char* ghostFor(int slot, bool archer = false) {
     switch (slot) {
         case sim::kPet: return "bag_ghost_pet";
         case sim::kMount: return "bag_ghost_mount";
         case sim::kHelm: return "bag_ghost_helm";
         case sim::kWings: return "bag_ghost_wings";
         case sim::kWeaponRight: return "bag_ghost_weapon_left";
-        case sim::kWeaponLeft: return "bag_ghost_weapon_right";
+        case sim::kWeaponLeft: return archer ? "bag_ghost_quiver" : "bag_ghost_weapon_right";
         case sim::kArmour: return "bag_ghost_armour";
         case sim::kPants: return "bag_ghost_pants";
         case sim::kGloves: return "bag_ghost_gloves";
@@ -187,7 +189,7 @@ void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t colour) {
 
 }  // namespace
 
-const char* ghostArt(int slot) { return ghostFor(slot); }
+const char* ghostArt(int slot, bool archer) { return ghostFor(slot, archer); }
 
 bool Bag::Contents::operator==(const Contents& o) const {
     return version == o.version && money == o.money && dragging == o.dragging &&
@@ -199,7 +201,7 @@ bool Bag::Contents::operator==(const Contents& o) const {
            agility == o.agility && vitality == o.vitality && energy == o.energy && x == o.x &&
            y == o.y && scale == o.scale && picture == o.picture && mending == o.mending &&
            canMend == o.canMend && overHammer == o.overHammer && pressingHammer == o.pressingHammer &&
-           bare == o.bare;
+           bare == o.bare && archer == o.archer;
 }
 
 Box Bag::slotBox(int slot) {
@@ -244,6 +246,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                  const Pointer& pointer, Stage* stage, BagRequests* out) {
     up_ = realm.tables() != nullptr;
     bare_ = realm.wearer().kin == sim::Kin::MagicGladiator;
+    archer_ = realm.wearer().kin == sim::Kin::FairyElf;
     screenW_ = width;
     screenH_ = height;
     x_ = panel::columnX(width, column);
@@ -379,6 +382,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     now_.overHammer = overHammer_;
     now_.pressingHammer = pressingHammer_;
     now_.bare = bare_;
+    now_.archer = archer_;
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild(realm, stage);
@@ -409,7 +413,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                     slot == hovered_ && dragging_ < 0 ? sheet::Cell::Over
                     : slot == dragging_              ? sheet::Cell::Held
                                                      : sheet::Cell::Rest);
-        const gfx::Art& ghost = arts.get(ghostFor(slot));
+        const gfx::Art& ghost = arts.get(ghostFor(slot, archer_));
         if (ghost.valid()) {
             // **The shape alone, faint.** `bag_slot_*` was a plate -- leather, a gold rim, and
             // the shape painted a little lighter on it -- and drawn over the flat skin at any

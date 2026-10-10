@@ -215,6 +215,8 @@ EFFECTS = {
     "bag_ghost_wings": "interface/win_ghost_wings.png",
     "bag_ghost_weapon_left": "interface/win_ghost_weapon_left.png",
     "bag_ghost_weapon_right": "interface/win_ghost_weapon_right.png",
+    # Ours: the elf's left hand holds a quiver, rendered off MU's Arrows by quiver_ghost.py.
+    "bag_ghost_quiver": "interface/win_ghost_quiver.png",
     "bag_ghost_armour": "interface/win_ghost_armour.png",
     "bag_ghost_pants": "interface/win_ghost_pants.png",
     "bag_ghost_gloves": "interface/win_ghost_gloves.png",

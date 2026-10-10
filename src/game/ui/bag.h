@@ -31,8 +31,8 @@ namespace mu::game {
 // What a frame of the bag asks the realm for. All requests; the desk answers them.
 // The art key of a worn slot's silhouette -- `bag_ghost_helm` and its fellows -- as the bag draws
 // it in an empty slot. Shared so anything else that names a slot draws the same shape (the
-// worn-gear warning, game/ui/endurance.h).
-const char* ghostArt(int slot);
+// worn-gear warning, game/ui/endurance.h). An archer's left hand is a quiver.
+const char* ghostArt(int slot, bool archer = false);
 
 struct BagRequests {
     int moveFrom = -1, moveTo = -1;  // a drag let go over a slot
@@ -107,6 +107,7 @@ private:
         bool canMend = false;
         bool overHammer = false, pressingHammer = false;
         bool bare = false;
+        bool archer = false;
         bool operator==(const Contents& o) const;
     };
     void rebuild(const sim::Realm& realm, Stage* stage);
@@ -139,6 +140,8 @@ private:
     // from MG then'): no helm is his (MuMain's item.bmd, RequireClass[3]), so its well is not
     // drawn and takes no click or drop. Ours: MU draws the slot for him empty.
     bool bare_ = false;
+    // The Fairy Elf's left hand holds her quiver, and its ghost is one (ghostArt).
+    bool archer_ = false;
     std::vector<Standing> standing_;
     uint64_t rebuilds_ = 0;
 };
