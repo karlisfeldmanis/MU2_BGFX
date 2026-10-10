@@ -93,6 +93,19 @@ void main()
 	float roughness = clamp(orm.g * MATERIAL.z, 0.04, 1.0);
 	float metal = orm.b * MATERIAL.w;
 
+	// Specular anti-aliasing (Tokuyoshi and Kaplanyan, "Improved Geometric Specular
+	// Antialiasing", 2019): where the normal turns faster than a pixel can hold -- a normal
+	// map's engraving seen from across the square, a railing's round bar -- the highlight lands
+	// on one pixel in a frame and its neighbour in the next, and MSAA, which shades once per
+	// pixel, does nothing for it. The normal's spread under the pixel widens the lobe instead,
+	// in alpha squared, capped so a flat surface keeps the sharpness it was given.
+	vec3 dndx = dFdx(n);
+	vec3 dndy = dFdy(n);
+	float spread = min(0.5 * (dot(dndx, dndx) + dot(dndy, dndy)), 0.18);
+	float a2 = roughness * roughness;
+	a2 *= a2;
+	roughness = max(roughness, sqrt(sqrt(saturate(a2 + spread))));
+
 	// The screen-space AO multiplies the baked one. gl_FragCoord is in pixels; the AO target
 	// is half resolution but is sampled by uv, so the halving needs no arithmetic here.
 	vec2 pixel = gl_FragCoord.xy;
@@ -124,6 +137,21 @@ void main()
 	vec3 l = normalize(u_sunDir.xyz);
 	float ndotl = saturate(dot(n, l));
 	float ndotv = saturate(dot(n, v)) + 1e-5;
+
+	// Multiple scattering (Fdez-Aguera, "A Multiple-Scattering Microfacet Model for Real-Time
+	// Image-Based Lighting", 2019, in Filament's form): one bounce of GGX loses the light that
+	// strikes a second microfacet, and a rough surface loses a great deal of it -- a white metal
+	// at roughness 0.7 returns about two thirds. That loss is what made rough plate read as grey
+	// card. The split sum's white response says how much went missing, and every specular term
+	// below is scaled up by it in proportion to f0, so a dielectric's 0.04 is all but untouched.
+	vec2 envAB = envBRDFApproxAB(roughness, ndotv);
+	vec3 energy = vec3_splat(1.0) + f0 * (1.0 / max(envAB.x + envAB.y, 1e-3) - 1.0);
+
+	// Micro-shadowing (Chan, "Material Advances in Call of Duty: WWII", 2018): the baked AO
+	// is a cone of open sky, and a light outside that cone is hidden too. Without it the AO
+	// darkened only the ambient, and a crease of engraving in full sun shone as bright as the
+	// plate round it. Off the baked AO alone: the SSAO's halos would print on lit ground.
+	float microShadow = saturate(abs(dot(n, l)) + 2.0 * orm.r * orm.r - 1.0);
 
 	vec3 colour = vec3_splat(0.0);
 
@@ -160,9 +188,9 @@ void main()
 		vec3 f = fresnelSchlick(f0, vdoth);
 		float d = distributionGGX(ndoth, roughness);
 		float g = geometrySmith(ndotv, ndotl, roughness);
-		vec3 spec = f * d * g / max(4.0 * ndotv * ndotl, 1e-5);
+		vec3 spec = f * d * g / max(4.0 * ndotv * ndotl, 1e-5) * energy;
 		vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
-		colour += (kd + spec) * u_sunColour.rgb * u_sunDir.w * ndotl * shadow;
+		colour += (kd + spec) * u_sunColour.rgb * u_sunDir.w * ndotl * shadow * microShadow;
 	}
 
 	// The hemisphere ambient: sky above, bounced turf below, occluded by the AO.
@@ -192,13 +220,15 @@ void main()
 	// under the surface it belongs to, where it would reflect the inside of the mesh.
 	float specAo = saturate(pow(ndotv + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao);
 	float horizon = saturate(1.0 + 1.1 * dot(r, ng));
-	colour += env * envBRDFApprox(f0, roughness, ndotv) * specAo * horizon * horizon;
+	colour += env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon;
 
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.
 	// On refined steel the lamps' share is coloured by the chrome first: shine.sh's shineLamps.
 	float plus = shinePlus(v_refine.x);
-	vec3 lamps = lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0)
+	// The lamps take the energy as a scalar on their Fresnel: their specular argument.
+	vec3 lamps = lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv,
+	                       dot(energy, vec3_splat(1.0 / 3.0)))
 	           * mix(1.0, sunLit, u_lampParams.w);
 	colour += shineLamps(plus, v_refine.yzw, lamps);
 
