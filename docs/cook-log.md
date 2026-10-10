@@ -239,7 +239,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Worm01 | figure | 2026-09-30 09:22 | passed | pale shaggy hide, red maw and fangs read at noon, dusk and night; fur, no sheen |
 | Assassin01 | figure | 2026-09-30 09:37 | passed | black robes with silver trim, a Katache in each hand with red grips; blades steel without blowout, readable at night |
 | Staff06 | arm | 2026-09-30 09:57 | passed | fixed by dropping Staff06.rig.json (static 4-bone rig borrowed player.rig.json and 'Mesh01' matched the player's hand bone, tearing 40 verts off); re-shot at 2.0 and 3.2 m: cyan orb head, blue-gold wings at the foot, knot mid-shaft, MU's added shield11_a shimmer as the shaft between -- continuous, no gaps |
-| Sword15 | arm | 2026-09-30 09:45 | passed | steel 0.45 blade with sword15_2's blue lightning added and breathing over it, ornate guard and grip whole; no blowout |
+| Sword15 | arm | 2026-10-10 19:31 | passed | lightning jumps along U alone |
 | Hommerd01 | figure | 2026-09-30 09:47 | passed | blue painted plate with silver trim, crested helm, dark greaves; metallic 0 keeps it paint, not chrome; axe and shield judged in the arena |
 | Sword13 | arm | 2026-09-30 09:50 | passed | silver blade with cut-out serrated teeth along both edges, brass 0.6 winged guard and pommel; whole, teeth solid not rectangles |
 | Spear10 | arm | 2026-10-10 18:35 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
@@ -293,11 +293,11 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword17 | arm | 2026-10-06 00:13 | awaiting |  |
 | Staff09 | arm | 2026-10-06 00:17 | awaiting |  |
 | CrossBow17 | arm | 2026-10-06 00:22 | awaiting |  |
-| Spear11 | arm | 2026-10-06 00:28 | awaiting |  |
+| Spear11 | arm | 2026-10-10 19:29 | passed | bench at dusk: blue swirl drawn, sliding U and V at MU's two rates |
 | Shield16 | arm | 2026-10-06 00:39 | awaiting |  |
 | Shield17 | arm | 2026-10-06 00:44 | awaiting |  |
 | Black Dragon | set | 2026-10-06 07:01 | awaiting |  |
-| Mace08 | arm | 2026-10-06 10:08 | awaiting |  |
+| Mace08 | arm | 2026-10-10 19:28 | passed | bench at dusk: green veins drawn, sliding U and V at MU's two rates |
 | Staff10 | arm | 2026-10-06 09:53 | awaiting |  |
 | CrossBow20 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Mace03 | arm | 2026-10-06 10:27 | awaiting |  |
@@ -326,4 +326,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword21 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Sword22 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Staff12 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
-| Bow20 | arm | 2026-10-10 15:50 | passed | studio, 8 angles at noon/dusk/night: red lacquered limbs, the pink and violet _R waves breathing added, the nocked arrow and string card in place |
+| Bow20 | arm | 2026-10-10 19:27 | passed | glows at MU's 0.002 breath |

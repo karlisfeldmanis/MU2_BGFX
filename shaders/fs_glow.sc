@@ -43,9 +43,12 @@ void main()
 	// +16: both axes by the one offset (the Dark Reign Blade's blade); +32 times a weapon's
 	// chrome pass, 1 to 3 (content::Material::chromePass, shine.sh's chromePassUv).
 	float both = mod(floor(mode * 0.0625), 2.0);
-	float pass = floor(mode / 32.0);
+	float pass = floor(mod(mode, 256.0) / 32.0);
+	// +256: a second slide along V at its own rate, in x; w then slides U alone.
+	float two = floor(mode / 256.0);
 	vec2 along = both > 0.5 ? vec2_splat(1.0) : vec2(alongU, 1.0 - alongU);
-	vec2 uv = v_texcoord0 + u_material.w * along;
+	vec2 uv = two > 0.5 ? v_texcoord0 + vec2(u_material.w, u_material.x)
+	                    : v_texcoord0 + u_material.w * along;
 	// A chrome pass: the tinted chrome image at its coordinates, added where its mask (the
 	// emissive, in the mesh's own UVs) says, at its brightness. Its w is the slide for its own
 	// UVs and MU's WorldTime * 0.001 for RENDER_CHROME4. No refinement over it: it is a chrome.
@@ -64,7 +67,7 @@ void main()
 	// +4: MU's water frames (content::Material::waterFrames). u_material.w is the frame,
 	// 0 to 31, of the 8 by 4 caustic atlas; the frame's cell is cut half a texel in, and the
 	// mip read off the unwrapped coordinate, as fs_ground's caustics are.
-	if (water > 0.5)
+	if (water > 0.5 && two < 0.5)
 	{
 		vec2 cell = fract(v_texcoord0) * (62.0 / 64.0) + vec2_splat(1.0 / 64.0);
 		vec2 frame = vec2(mod(u_material.w, 8.0), floor(u_material.w / 8.0));

@@ -721,6 +721,20 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         jitter = float(said.get("jitter") or 0.0)
         if flags & 2 and (said.get("item") or said.get("pulse") or jitter):
             flags |= 32
+        # And what the mode's bit 7 byte carries beside a chrome pass (content::Material): bit 3
+        # a second slide, along V at its own rate, a float after the byte -- the Elemental Mace's
+        # and the Dragon Spear's MU slide both ways at two rates (`scrolls_v_per_second`); bit 4
+        # a pulse at MU's WorldTime*0.002 (`pulse_rate` "half", the Arrow Viper's). And a jump
+        # along U keeps its axis though nothing slides (the Lighting Sword's, U alone in MU).
+        own_glow = (scrolls or {}).get(name) or {}
+        v_rate = float(own_glow.get("scrolls_v_per_second", 0.0)) if flags & 2 else 0.0
+        half = bool(flags & 2 and said.get("pulse_rate") == "half")
+        if v_rate or half:
+            mode |= 128
+            flags |= 128
+        if jitter and mode & 1:
+            flags |= 128
+        extra = chrome_pass | (8 if v_rate else 0) | (16 if half else 0)
         # Bit 6: a glow that casts the sun's shadow all the same, at a strength (1 full) --
         # one float after bit 5's. Ours: the Ice Monster, whose additive body is seen on
         # Devias's snow by the shadow under it.
@@ -749,7 +763,9 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         if flags & 128:
             materials += struct.pack("<B", mode)
             if mode & 128:
-                materials += struct.pack("<B", chrome_pass)
+                materials += struct.pack("<B", extra)
+                if extra & 8:
+                    materials += struct.pack("<f", v_rate)
     # The fallback a primitive with no material of its own draws with, as content/mesh.cpp
     # appends it. Rough and not metal, for the reason orm_factors gives.
     materials += struct.pack("<fB", -1.0, 0) + write_string("none")

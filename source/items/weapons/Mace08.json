@@ -55,10 +55,11 @@
       ],
       "pulse_rate": "slow",
       "scrolls_per_second": -1.0,
-      "axis": "u"
+      "axis": "u",
+      "scrolls_v_per_second": 0.5
     }
   },
-  "glow_note": "ItemObjectAttribute hides mesh 2, Estic2_R, from the body (HiddenMesh 2, ZzzObject.cpp:5278-5280), and RenderPartObjectBody draws it again added (BlendMesh 2) at sin(WorldTime*0.001)*0.5 + 0.3 of the light, its U sliding at WorldTime*0.001 and its V at -WorldTime*0.0005 (:7119-7128): green veins breathing slowly over the head. Here pulse [0.5, 0.3] at the slow rate and U sliding a sheet a second (scrolls_per_second -1, the renderer's offset being minus the rate); the V slide is left out, the renderer sliding one axis. MU's 0.3 - 0.5 dips below nought, so the veins go dark for a part of each breath, as here.",
+  "glow_note": "ItemObjectAttribute hides mesh 2, Estic2_R, from the body (HiddenMesh 2, ZzzObject.cpp:5278-5280), and RenderPartObjectBody draws it again added (BlendMesh 2) at sin(WorldTime*0.001)*0.5 + 0.3 of the light, its U sliding at WorldTime*0.001 and its V at -WorldTime*0.0005 (:7119-7128): green veins breathing slowly over the head. Here pulse [0.5, 0.3] at the slow rate and U sliding a sheet a second (scrolls_per_second -1, the renderer's offset being minus the rate); and since 2026-10-10 its V too, at MU's -WorldTime*0.0005 (scrolls_v_per_second 0.5, the second rate). MU's 0.3 - 0.5 dips below nought, so the veins go dark for a part of each breath, as here.",
   "rig_note": "Mace08.rig.json from export-rig --actions=all: two bones, one action of one key, nothing moves; kept for bone 1, where MuMain hangs a yellow BITMAP_LIGHT and a pulsing white one while it is held (ZzzCharacter.cpp:7568-7576; fx/held_lights).",
   "material_note": "Estic, the head's flanges, is steel at 0.45. Estic2, the shaft and the orb, is pale green paint: as steel it mirrored the grass and read black under the veins (studio, 2026-10-06), so painted_steel, as the Dark Phoenix's lacquer.",
   "islands": [

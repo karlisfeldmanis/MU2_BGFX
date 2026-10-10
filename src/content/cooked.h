@@ -60,6 +60,10 @@ struct CookedMaterial {
     // The mode's bit 7 and a byte after it: a chrome pass, 1 at its own UVs, 2 RENDER_CHROME's,
     // 3 RENDER_CHROME4's. See content::Material::chromePass.
     uint8_t chromePass = 0;
+    // The same byte's bit 3, a float after it: a second slide along V at its own rate; and bit 4,
+    // a pulse at MU's WorldTime*0.002. See content::Material.
+    float scrollVPerSecond = 0.0f;
+    bool halfPulse = false;
     // An item glow's pulse and jump (bit 5): MU's ItemObjectAttribute. See content::Material.
     float pulse[2] = {0.0f, 1.0f};
     float jitter = 0.0f;

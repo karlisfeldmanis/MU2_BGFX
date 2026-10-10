@@ -25,7 +25,7 @@ vec3 toSrgb(vec3 c)
 void main()
 {
 	// A weapon's chrome pass, as fs_glow draws it, standing still (u_material.y's 32 times it).
-	float pass = floor(u_material.y / 32.0);
+	float pass = floor(mod(u_material.y, 256.0) / 32.0);
 	if (pass > 0.5)
 	{
 		vec2 at = chromePassUv(pass, normalize(v_normal), v_texcoord0, vec2_splat(0.0), 0.0);

@@ -127,6 +127,11 @@ struct Material {
     // (sliding, RENDER_TEXTURE with BITMAP_CHROME bound), 2 at RENDER_CHROME's off the normal,
     // 3 at RENDER_CHROME4's (ZzzBMD.cpp:1608-1660). fs_glow.
     uint8_t chromePass = 0;
+    // A glow sliding both ways at two rates, MU's BlendMeshTexCoordU and V apart: the main slide
+    // along U (scrollPerSecond) and this along V -- the Elemental Mace's veins, the Dragon Spear's
+    // swirl. 0 elsewhere. And a pulse at MU's WorldTime*0.002, the Arrow Viper's (halfPulse).
+    float scrollVPerSecond = 0.0f;
+    bool halfPulse = false;
     float jitter = 0.0f;
     // An item's glow rather than a lamp's: drawn at MU's BlendMeshLight alone, without the
     // world sheet's glow_strength, which is tuned for fires and windows (2.0 in Lorencia).

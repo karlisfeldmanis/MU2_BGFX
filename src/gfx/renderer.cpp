@@ -288,7 +288,9 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 h ^= h >> 13;
                 glowLevel *= float(h % 10u) * 0.1f * -material.pulse[1];
             } else if (glowPass) {
-                glowLevel *= std::sin(elapsed_ * (material.slowPulse ? 1.0f : 4.0f)) *
+                glowLevel *= std::sin(elapsed_ * (material.slowPulse   ? 1.0f
+                                                  : material.halfPulse ? 2.0f
+                                                                       : 4.0f)) *
                                  material.pulse[0] +
                              material.pulse[1];
                 if (material.jitter > 0.0f) {
@@ -303,13 +305,22 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // In the glow pass y is how the scroll runs instead, which fs_glow alone reads: 1
             // along U, 2 with the sheet's alpha held still (content::Material::maskHeld); and
             // 8 for a glow a levelled item's chrome stays off (content::Material::noChrome).
-            const float materialParams[4] = {material.cutout,
+            // A glow's second slide, along V at its own rate, rides x, which fs_glow does not
+            // otherwise read (content::Material::scrollVPerSecond).
+            const float secondSlide =
+                -std::fmod(elapsed_ * material.scrollVPerSecond, 1.0f);
+            const float materialParams[4] = {glowPass && material.scrollVPerSecond != 0.0f
+                                                 ? secondSlide
+                                                 : material.cutout,
                                              glowPass ? (material.scrollAlongU ? 1.0f : 0.0f) +
                                                             (material.maskHeld ? 2.0f : 0.0f) +
                                                             (material.waterFrames ? 4.0f : 0.0f) +
                                                             (material.noChrome ? 8.0f : 0.0f) +
                                                             (material.scrollAlongUV ? 16.0f : 0.0f) +
-                                                            32.0f * float(material.chromePass)
+                                                            32.0f * float(material.chromePass) +
+                                                            // +256: x is a second slide, along V
+                                                            (material.scrollVPerSecond != 0.0f
+                                                                 ? 256.0f : 0.0f)
                                              : (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f) +
                                                  // Not in the hover ring's mask, which

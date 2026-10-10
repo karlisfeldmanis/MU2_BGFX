@@ -49,10 +49,17 @@
         0.3,
         0.7
       ],
-      "jitter": 0.1
+      "jitter": 0.1,
+      "axis": "u"
     }
   },
-  "glow_note": "MU's ItemObjectAttribute (ZzzObject.cpp:5304): `case MODEL_LIGHTING_SWORD: BlendMesh = 1; BlendMeshTexCoordU = (rand()%10)*0.1; BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7` - sword15_2's lightning drawn added, breathing, and jumping along U. The glow's jitter moves U and V together here; MU moves U alone.",
+  "glow_note": "MU's ItemObjectAttribute (ZzzObject.cpp:5304): `case MODEL_LIGHTING_SWORD: BlendMesh = 1; BlendMeshTexCoordU = (rand()%10)*0.1; BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7` - sword15_2's lightning drawn added, breathing, and jumping along U. The jump along U alone, as MU's (axis u, since 2026-10-10; it jumped V before).",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_note": "Islands 0 to 2 on sword15: the blade and its ornate guard share island 0 (62 triangles, mean (130, 118, 100)), and islands 1 and 2 are the grey grip (69, 70, 79). Steel on all, at 0.45 as the Legendary Sword was passed, so the flat blade does not mirror the grass or go black. The bronze guard lies inside the blade island and cannot take brass. Islands 3 to 6 are sword15_2, the glow.",
   "islands": [
     {
       "island": 0,
@@ -208,11 +215,5 @@
         0.176
       ]
     }
-  ],
-  "material_overrides": {
-    "steel": {
-      "roughness": 0.45
-    }
-  },
-  "material_note": "Islands 0 to 2 on sword15: the blade and its ornate guard share island 0 (62 triangles, mean (130, 118, 100)), and islands 1 and 2 are the grey grip (69, 70, 79). Steel on all, at 0.45 as the Legendary Sword was passed, so the flat blade does not mirror the grass or go black. The bronze guard lies inside the blade island and cannot take brass. Islands 3 to 6 are sword15_2, the glow."
+  ]
 }

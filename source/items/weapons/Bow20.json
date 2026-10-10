@@ -78,16 +78,18 @@
       "pulse": [
         0.3,
         0.5
-      ]
+      ],
+      "pulse_rate": "half"
     },
     "nfb_R": {
       "pulse": [
         0.3,
         0.5
-      ]
+      ],
+      "pulse_rate": "half"
     }
   },
-  "glow_note": "RenderPartObjectBody's MODEL_ARROW_VIPER_BOW arm (ZzzObject.cpp:7939-7953): meshes 0, 1, 2 and 6 solid, 5 (Ebow4) solid in white, and 3 and 4 (nfb2_R, nfb_R) added at sin(WorldTime*0.002)*0.3+0.5 -- here at the item rate, 0.004. PartObjectColor2 gives it Color 16 (:6604-6607).",
+  "glow_note": "RenderPartObjectBody's MODEL_ARROW_VIPER_BOW arm (ZzzObject.cpp:7939-7953): meshes 0, 1, 2 and 6 solid, 5 (Ebow4) solid in white, and 3 and 4 (nfb2_R, nfb_R) added at sin(WorldTime*0.002)*0.3+0.5 -- here at the item rate, 0.004. PartObjectColor2 gives it Color 16 (:6604-6607). Since 2026-10-10 at MU's own rate, sin(WorldTime*0.002) (ZzzObject.cpp:7939-7953): pulse_rate 'half', where it breathed at the item's 0.004.",
   "release": 0.571,
   "release_from": "Key 4 of this rig's seven, as the Chaos Nature Bow's: Bone10, the arrow's root, runs -46.6, -23.4, -8.2, +4.4 and then -54.5 on key 4. 4/7.",
   "muzzle_bone": "Bone10",
