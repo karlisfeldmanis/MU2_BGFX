@@ -173,6 +173,8 @@ public:
     std::vector<Bot::Need> needs() { return brain_->needs(); }
     bool helps(int map, int breed) { return brain_->helps(map, breed); }
     int castlesOpen() const { return brain_->castlesOpen(); }
+    bool wantsWings() const { return brain_->wantsWings(); }
+    const std::vector<Bot::Ground>& grounds() { return brain_->grounds(); }
     bool castleTime() const { return brain_->castleTime(); }
     bool inCastle() const { return brain_->inCastle(); }
     const net::PartyState& partyState() const { return link_->party(); }
@@ -573,6 +575,8 @@ private:
         int castle = 0;           // the Blood Castle they go into together, 0 for none
         bool forCastle = false;   // formed for it, at the door
         int saidCastle = 0;       // the castle last said on Party
+        bool forFarm = false;     // formed to farm for wings (Board::farm)
+        std::pair<int, int> said{-1, -1};  // the hunt last said on Party
     };
 
     NetBot* bot(const std::string& name) const {
@@ -693,9 +697,75 @@ private:
         // And twenty game minutes at least, whatever: the weights turn on purses and potions,
         // and a party went between Devias's Ice Queens and the Dungeon's Skeleton Archers every
         // ten minutes.
+        // And past them, until another outweighs it by kOutweighs -- a member's stuck quest under
+        // way: by a point, a party went between the Balrog, the Ice Queens and the Lizard Kings
+        // every twenty minutes, paying the trip each time.
         if (const auto now = want.find({g.map, g.breed});
-            now != want.end() && (now->second.first >= std::get<0>(most) || leader->clockNow() - g.chosenAt < kHolds)) {
+            now != want.end() && (now->second.first + kOutweighs > std::get<0>(most) || leader->clockNow() - g.chosenAt < kHolds)) {
             best = now->first;
+        }
+        // **Farming for wings** (the user, 2026-10-10: "can party get to the icarus?", "and get
+        // wings?"): a party formed for it, with no quest stuck, hunts the strongest breed the
+        // tank and half of them stand together -- where the Jewel of Life falls, Icarus's when
+        // enough of them fly -- and every such breed on that map. It holds while two want wings.
+        std::vector<int> farmBreeds;
+        bool farmBusy = false;
+        if (g.forFarm) {
+            int wanting = 0, up = 0;
+            std::map<std::pair<int, int>, int> have;
+            std::set<std::pair<int, int>> tankHas;
+            for (const std::string& m : g.members) {
+                NetBot* one = bot(m);
+                if (!one || !in(m)) continue;
+                ++up;
+                wanting += one->wantsWings();
+                for (const Bot::Ground& gr : one->grounds()) {
+                    ++have[{gr.map, gr.breed}];
+                    if (m == g.tank) tankHas.insert({gr.map, gr.breed});
+                    label[{gr.map, gr.breed}] = gr.label;
+                }
+            }
+            farmBusy = wanting >= 2;
+            std::map<std::pair<int, int>, int> levelOf;
+            for (const std::string& m : g.members) {
+                if (NetBot* one = bot(m); one && in(m)) {
+                    for (const Bot::Ground& gr : one->grounds()) levelOf[{gr.map, gr.breed}] = gr.level;
+                }
+            }
+            const auto common = [&](const std::pair<int, int>& key) {
+                return (g.tank.empty() || tankHas.count(key)) && have[key] * 2 >= up;
+            };
+            if (farmBusy && !(anyStuck && best.first >= 0)) {
+                std::pair<int, int> top{-1, -1};
+                std::pair<int, int> topScore{-1, -1};
+                for (const auto& [key, n] : have) {
+                    if (!common(key)) continue;
+                    const std::pair<int, int> score{levelOf[key], n};
+                    if (score > topScore) topScore = score, top = key;
+                }
+                // The ground under way holds its twenty minutes, as a quest's hunt does.
+                if (g.map >= 0 && have.count({g.map, g.breed}) && common({g.map, g.breed}) &&
+                    leader->clockNow() - g.chosenAt < kHolds) {
+                    top = {g.map, g.breed};
+                }
+                if (std::getenv("BOARD_TRACE") && top != std::pair<int, int>{g.map, g.breed}) {
+                    std::printf("  [board] farm pick for %s: map %d breed %d (%s, level %d), tank %s\n", g.leader.c_str(),
+                                top.first, top.second, label[top].c_str(), levelOf[top], g.tank.c_str());
+                    for (const std::string& m : g.members) {
+                        NetBot* one = bot(m);
+                        if (!one) continue;
+                        std::vector<Bot::Ground> gs = one->grounds();
+                        std::sort(gs.begin(), gs.end(), [](const Bot::Ground& a, const Bot::Ground& b) { return a.level > b.level; });
+                        std::printf("    %s (%zu grounds):", m.c_str(), gs.size());
+                        for (size_t i = 0; i < gs.size() && i < 6; ++i) std::printf(" %s/%d@%d", gs[i].label.c_str(), gs[i].level, gs[i].map);
+                        std::printf("\n");
+                    }
+                }
+                best = top;
+                for (const auto& [key, n] : have) {
+                    if (key.first == best.first && common(key)) farmBreeds.push_back(key.second);
+                }
+            }
         }
         // **Blood Castle together** (the user, 2026-10-09: "and maybe go to bc together?"): the
         // highest castle two or more of them can go into; each who can is sent into it at the
@@ -721,7 +791,7 @@ private:
         // Ten game minutes with no one stuck, or nothing the party can stand: "stuck" turns on a
         // purse and a bag of potions, and a party broken up the moment it was not formed again
         // a minute later, all day.
-        if ((anyStuck && best.first >= 0) || g.fixed || castleBusy) g.clearSince = -1;
+        if ((anyStuck && best.first >= 0) || g.fixed || castleBusy || farmBusy) g.clearSince = -1;
         else if (g.clearSince < 0) g.clearSince = leader->clockNow();
         if (g.clearSince >= 0 && leader->clockNow() - g.clearSince > kSettles) {
             say(*leader, "Thanks all, we're done here.");
@@ -740,7 +810,9 @@ private:
         for (const std::string& m : g.members) {
             if (NetBot* one = bot(m); one && one->kin() == sim::Kin::FairyElf && in(m)) healer = true;
         }
-        if (best != std::pair<int, int>{g.map, g.breed} && best.first >= 0) {
+        // Said once a hunt: a pick blinking off for a tick said the same "Next" four times.
+        if (best != g.said && best.first >= 0) {
+            g.said = best;
             const WorldRow* at = worldOf(best.first);
             say(*leader, "Next: " + label[best] + " in " + (at ? at->name : "?") +
                              (g.tank.empty() ? "" : ", " + g.tank + " tanks") + ".");
@@ -765,9 +837,11 @@ private:
             lead.healer = healer;
             lead.role = Bot::roleOf(one->kin(), m == g.tank);
             lead.castle = g.castle > 0 && (one->castlesOpen() & (1 << g.castle)) ? g.castle : 0;
-            // Every breed on that map any member still wants (and can stand).
+            // Every breed on that map any member still wants (and can stand) -- or, farming,
+            // every one there they stand together.
+            if (!farmBreeds.empty()) lead.breeds = farmBreeds;
             for (const auto& [key, w] : want) {
-                if (key.first == g.map) lead.breeds.push_back(key.second);
+                if (key.first == g.map && farmBreeds.empty()) lead.breeds.push_back(key.second);
             }
             // His own quest among them: the chosen breed's first.
             for (const Bot::Need& n : needs_[m]) {
@@ -819,6 +893,41 @@ private:
                 std::printf("  [board] the party of %s joins %s's\n", b.leader.c_str(), a.leader.c_str());
                 b.gone = true;
             }
+        }
+    }
+
+    // **A party to farm for wings** (Group::forFarm): free bots that want wings and are stuck on
+    // no quest, two to five, a knight or gladiator first to tank and lead.
+    void farm(std::set<std::string>& free, const std::map<int, std::vector<std::string>>& byQuest) {
+        std::vector<std::string> farmers;
+        for (const std::string& name : free) {
+            bool stuckHere = false;
+            for (const auto& [q, names] : byQuest) {
+                stuckHere |= std::find(names.begin(), names.end(), name) != names.end();
+            }
+            if (!stuckHere && bot(name)->wantsWings()) farmers.push_back(name);
+        }
+        std::stable_sort(farmers.begin(), farmers.end(), [&](const std::string& a, const std::string& b) {
+            return tankish(bot(a)->kin()) > tankish(bot(b)->kin());
+        });
+        while (farmers.size() >= 2) {
+            Group g;
+            const size_t n = std::min<size_t>(farmers.size(), size_t(sim::kPartyMost));
+            g.members.assign(farmers.begin(), farmers.begin() + long(n));
+            farmers.erase(farmers.begin(), farmers.begin() + long(n));
+            if (farmers.size() == 1) {  // never one left alone
+                farmers.insert(farmers.begin(), g.members.back());
+                g.members.pop_back();
+            }
+            g.leader = g.members.front();
+            g.forFarm = true;
+            std::string said;
+            for (const std::string& m : g.members) {
+                free.erase(m);
+                said += (said.empty() ? "" : ", ") + m;
+            }
+            std::printf("  [board] a party to farm for wings: %s\n", said.c_str());
+            groups_.push_back(std::move(g));
         }
     }
 
@@ -986,10 +1095,13 @@ private:
             std::printf("  [board] a party for %s (%s): %s\n", sim::questAt(q).title, need.label.c_str(), said.c_str());
             groups_.push_back(std::move(g));
         }
+        // Then the free who want wings (the quests' parties first).
+        farm(free, byQuest);
     }
 
     static constexpr int64_t kSettles = 10 * 60 * 20;
     static constexpr int64_t kHolds = 20 * 60 * 20;
+    static constexpr int kOutweighs = 2;
     bool forms_;
     std::vector<Group> groups_;
     std::map<std::string, NetBot*> byName_;

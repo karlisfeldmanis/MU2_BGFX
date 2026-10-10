@@ -401,6 +401,36 @@ public:
         partyScale_ = was;
         return ok;
     }
+    // **Farming for wings together** (the user, 2026-10-10: "can party get to the icarus?", "and
+    // get wings?"): no bot made wings in 28 game hours, party or solo -- the Jewel of Life falls
+    // only from breeds of level 50 and up, and alone they kill what is easy. A bot without wings
+    // from kWingFarmFrom wants them; the board makes a party of such bots and leads it to the
+    // strongest breed they can stand together -- Icarus's, when enough of them fly.
+    static constexpr int kWingFarmFrom = 100;
+    bool wantsWings() const { return !hasWings() && realm_->hero().level >= kWingFarmFrom; }
+    // The breeds he could stand beside a party, on every map he reaches: map, breed, its level.
+    // Kept ten game minutes, as the board asks it each second.
+    struct Ground {
+        int map = -1, breed = -1, level = 0;
+        std::string label;
+    };
+    const std::vector<Ground>& grounds() {
+        if (groundsAt_ >= 0 && clock_ - groundsAt_ < 10 * 60 * 20) return grounds_;
+        groundsAt_ = clock_;
+        grounds_.clear();
+        for (const WorldRow& w : kWorlds) {
+            if (w.map == int(sim::kBloodCastleMap)) continue;
+            const content::Tables* t = world(w.map);
+            if (!t || !reachable(w.map)) continue;
+            std::set<int> seen;
+            for (const content::MonsterNest& nest : t->nests) {
+                const content::MonsterKind& kind = t->kinds[nest.kind];
+                if (!seen.insert(kind.number).second) continue;
+                if (helps(w.map, kind.number)) grounds_.push_back({w.map, kind.number, kind.level, kind.label});
+            }
+        }
+        return grounds_;
+    }
     // **Blood Castle together** (the user, 2026-10-09: "and maybe go to bc together?"): the
     // castles he could go into, a bit each (1 << c) -- its cloak held and its band's floor
     // reached -- and whether it is his time at the Messenger now.
@@ -4671,6 +4701,8 @@ private:
     double caution_ = 1.0;
     std::map<int, int64_t> shunned_;  // a grinding ground left until this tick (learnCaution)
     Lead lead_;                 // the party's hunt and his part in it (lead())
+    std::vector<Ground> grounds_;  // grounds(), and when it was last reckoned
+    int64_t groundsAt_ = -1;
     double partyScale_ = 1.0;   // what a kill costs him beside his party (partyScale), this think
     int64_t cautionAt_ = 0;
 };
