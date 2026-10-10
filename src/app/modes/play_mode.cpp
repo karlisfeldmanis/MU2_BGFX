@@ -30,6 +30,34 @@
 
 namespace mu::app {
 namespace {
+// The moving lights gathered each frame before the renderer's four are chosen from them.
+constexpr uint32_t kGatheredLights = 32;
+
+// Keeps the `keep` moving lights that reach nearest `target`, the hero's ground, in front, and
+// returns how many that is. A light is as near as the edge of its pool: a wide wall of fire
+// three metres out outranks a bolt's faint blue one metre out only when its edge comes closer.
+// A line light is measured from the nearer of its ends. Ties go to the brighter.
+uint32_t keepNearest(gfx::PointLight* lights, uint32_t count, uint32_t keep, const float target[3]) {
+    if (count <= keep) return count;
+    auto gap = [&](const gfx::PointLight& one) {
+        auto flat = [&](const float at[3]) {
+            const float dx = at[0] - target[0], dz = at[2] - target[2];
+            return std::sqrt(dx * dx + dz * dz);
+        };
+        const float d = one.line ? std::min(flat(one.position), flat(one.to)) : flat(one.position);
+        return std::max(0.0f, d - one.reach);
+    };
+    auto bright = [](const gfx::PointLight& one) {
+        return std::max(one.colour[0], std::max(one.colour[1], one.colour[2]));
+    };
+    std::partial_sort(lights, lights + keep, lights + count,
+                      [&](const gfx::PointLight& a, const gfx::PointLight& b) {
+                          const float ga = gap(a), gb = gap(b);
+                          return ga != gb ? ga < gb : bright(a) > bright(b);
+                      });
+    return keep;
+}
+
 // **A town's theme rests between hearings** (the user, 2026-10-05: 'we need some timeout rule
 // for all safezone musics so its not played to often which is anoying'): each plays once
 // through as he comes into its place, and not again until this long after it last began,
@@ -1272,68 +1300,73 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // And after them, in what slots are left, the light a +7 or +9 hero carries at night
     // (fx/gleam.h; ours, not MU's).
     {
-        gfx::PointLight falling[gfx::Renderer::kMaxTransientLights];
+        // Gathered into a pool larger than the four the renderer takes, and the four that matter to
+        // the hero chosen after (keepNearest): filled first come, first served, a far bot's
+        // meteor took a slot before the hero's own bolt, and with twenty bots fighting the
+        // lights round him popped in and out with whatever happened to be cast first.
+        gfx::PointLight falling[kGatheredLights];
         uint32_t count =
-            world_.played().meteor().lights(falling, gfx::Renderer::kMaxTransientLights);
+            world_.played().meteor().lights(falling, kGatheredLights);
         // And Cometfall's comets, MU's blue under each as it falls and where it lands.
         count += world_.played().comet().lights(falling + count,
-                                                gfx::Renderer::kMaxTransientLights - count);
+                                                kGatheredLights - count);
         // And the wizard's bolts, the blue each throws on the ground it crosses.
         count += world_.played().bolt().lights(falling + count,
-                                               gfx::Renderer::kMaxTransientLights - count);
+                                               kGatheredLights - count);
         // And Power Wave's, three tiles of blue.
         count += world_.played().wave().lights(falling + count,
-                                               gfx::Renderer::kMaxTransientLights - count);
+                                               kGatheredLights - count);
         count += world_.played().thunder().lights(falling + count,
-                                                  gfx::Renderer::kMaxTransientLights - count);
+                                                  kGatheredLights - count);
         // And a Poison cloud's green miasma, two tiles.
         count += world_.played().poison().lights(falling + count,
-                                                 gfx::Renderer::kMaxTransientLights - count);
+                                                 kGatheredLights - count);
         // And a Flame's orange, three tiles.
         count += world_.played().flame().lights(falling + count,
-                                                gfx::Renderer::kMaxTransientLights - count);
+                                                kGatheredLights - count);
         // And Twisting Slash's wheel, the grey MU lays under each copy, as one.
         count += world_.played().wheel().lights(falling + count,
-                                                gfx::Renderer::kMaxTransientLights - count);
+                                                kGatheredLights - count);
         // And Rageful Blow's broken ground, MU's red under its fires, as one.
         count += world_.played().fury().lights(falling + count,
-                                               gfx::Renderer::kMaxTransientLights - count);
+                                               kGatheredLights - count);
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
-                                                   gfx::Renderer::kMaxTransientLights - count);
+                                                   kGatheredLights - count);
         // And Twister's storm, a faint cool light under it -- ours (fx/storm.h).
         count += world_.played().storm().lights(falling + count,
-                                                gfx::Renderer::kMaxTransientLights - count);
+                                                kGatheredLights - count);
         // And Inferno's ring, one warm light for its blasts (fx/inferno.h).
         count += world_.played().inferno().lights(falling + count,
-                                                  gfx::Renderer::kMaxTransientLights - count);
+                                                  kGatheredLights - count);
         // And the Dinorant's breath, MU's cool blue under it (fx/firebreath.h).
         count += world_.played().fireBreath().lights(falling + count,
-                                                     gfx::Renderer::kMaxTransientLights - count);
+                                                     kGatheredLights - count);
         // And Icarus's flash, MU's dim yellow under him (game/world/sky_clouds.h).
         count += world_.skyClouds().lights(falling + count,
-                                           gfx::Renderer::kMaxTransientLights - count);
+                                           kGatheredLights - count);
         // And Aqua Beam's line, three blue lights along it (fx/aqua.h).
         count += world_.played().aqua().lights(falling + count,
-                                               gfx::Renderer::kMaxTransientLights - count);
+                                               kGatheredLights - count);
         // And a steel or saw bolt's faint cold light (fx/arrow.h; ours).
         count += world_.played().arrows().lights(falling + count,
-                                                 gfx::Renderer::kMaxTransientLights - count);
+                                                 kGatheredLights - count);
         // And a Fire Trap's burst on the floor, two tiles.
         count += world_.played().trapShow().lights(falling + count,
-                                                   gfx::Renderer::kMaxTransientLights - count);
+                                                   kGatheredLights - count);
         // And the nearest Poison Shadows' faint green (fx/shadow_stars.h; ours).
         count += world_.played().shadowStars().lights(
-            falling + count, gfx::Renderer::kMaxTransientLights - count, eye.target);
+            falling + count, kGatheredLights - count, eye.target);
         // And the Heliacal Sword's warm pool round whoever holds it (fx/held_lights.h).
         count += world_.played().heldLights().lights(falling + count,
-                                                     gfx::Renderer::kMaxTransientLights - count);
+                                                     kGatheredLights - count);
         count += world_.played().gleam().lights(falling + count,
-                                                gfx::Renderer::kMaxTransientLights - count,
+                                                kGatheredLights - count,
                                                 daylightOf(ctx.lighting));
         // And last, what is left to the nearest jewels lying down (fx/litter.h; ours).
-        count += litter_.lights(falling + count, gfx::Renderer::kMaxTransientLights - count,
+        count += litter_.lights(falling + count, kGatheredLights - count,
                                 eye.target);
+        count = keepNearest(falling, count, gfx::Renderer::kMaxTransientLights, eye.target);
         ctx.renderer.setTransientLights(falling, count);
         // And the refined gear's own glow, the other half of it being a light source.
         ctx.renderer.setShineGlow(game::Gleam::nightOf(daylightOf(ctx.lighting)) *

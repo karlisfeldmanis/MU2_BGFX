@@ -23,21 +23,39 @@ SAMPLER2D(s_lampGrid, 14);
 
 // The lava's light on what stands beside it (gfx::Lighting::lavaLight, content::Ground::lava):
 // the share of the lava round a point, filtered, times the colour, fading to nothing u_lava.w
-// metres over the lava's level and taken more by a face turned down or aside -- the lava is
-// below -- than by one turned up. On the albedo, as a lamp's is. Only where a shader asks for
-// it, since its stage is another's elsewhere; ours (the user, 2026-10-09: "lavas need some
-// minimal light emiter").
+// metres over the lava's level. It comes FROM the lava: the way to it is up the map's slope,
+// where the share grows, and down, since the lava lies below; a face turned that way takes it
+// and one turned from it keeps only a little, the heat thrown back off the stone round it. Over
+// the middle of a pool there is no slope and the light is straight up from under. On the
+// albedo, as a lamp's is. Only where a shader asks for it, since its stage is another's
+// elsewhere; ours (the user, 2026-10-09: "lavas need some minimal light emiter"; 2026-10-10,
+// "Faces the lava").
 #ifdef MU2_LAVA_LIGHT
 SAMPLER2D(s_lava, MU2_LAVA_LIGHT);
 uniform vec4 u_lava;     // rgb: the light, linear  w: metres over the lava it reaches, 0 off
-uniform vec4 u_lavaMap;  // x: the lava's level  zw: the map's uv as world x and -z times z plus w
+uniform vec4 u_lavaMap;  // x: the lava's level  y: a tile in the map's uv  zw: uv as world x and -z times z plus w
 vec3 lavaLight(vec3 wpos, vec3 n, vec3 diffuseColour)
 {
 	if (u_lava.w <= 0.0) return vec3_splat(0.0);
-	float near = texture2D(s_lava, vec2(wpos.x, -wpos.z) * u_lavaMap.z + u_lavaMap.w).r;
+	vec2 uv = vec2(wpos.x, -wpos.z) * u_lavaMap.z + u_lavaMap.w;
+	float near = texture2D(s_lava, uv).r;
+	if (near <= 0.0) return vec3_splat(0.0);
 	float rise = saturate((wpos.y - u_lavaMap.x) / u_lava.w);
 	float up = (1.0 - rise) * (1.0 - rise);
-	float facing = 0.35 + 0.65 * saturate(0.5 - 0.5 * n.y);
+
+	// The slope over two tiles, in world x and z (the map's v runs down -z).
+	float t = u_lavaMap.y;
+	vec2 slope = vec2(texture2D(s_lava, uv + vec2(t, 0.0)).r - texture2D(s_lava, uv - vec2(t, 0.0)).r,
+	                  texture2D(s_lava, uv - vec2(0.0, t)).r - texture2D(s_lava, uv + vec2(0.0, t)).r);
+	// How much of the light comes from the side: none over the pool's middle, all at its shore.
+	// A shore steps the share by about 0.3 over two tiles.
+	float aside = saturate(length(slope) * 4.0);
+	vec2 across = slope / max(length(slope), 1e-4);
+	// From the side the lava is still below, more so the higher the point stands over it.
+	vec3 toLava = normalize(mix(vec3(0.0, -1.0, 0.0), vec3(across.x, -0.3 - rise, across.y), aside));
+	// Wrapped, so the light rolls round a body rather than cutting off at its silhouette, and
+	// a floor of a sixth for what the hot stone round about throws back.
+	float facing = 0.15 + 0.85 * saturate((dot(n, toLava) + 0.35) / 1.35);
 	return diffuseColour * u_lava.rgb * (near * up * facing);
 }
 #endif

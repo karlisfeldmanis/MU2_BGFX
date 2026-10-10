@@ -1319,7 +1319,7 @@ void Ground::buildLava() {
                                   bgfx::copy(texels.data(), uint32_t(texels.size())));
     // Texel (c, r) is tile (c, r), its centre at x = c + 0.5 tiles and z = -(r + 0.5).
     lavaParams_[0] = float(level / double(tiles));
-    lavaParams_[1] = 0.0f;
+    lavaParams_[1] = 1.0f / float(n);  // one tile in the map's uv, for the way to the lava
     lavaParams_[2] = 1.0f / (metresPerTile_ * float(n));
     lavaParams_[3] = 0.0f;
     core::logf("lava: %d tiles, at %.2f m on average, their light %d tiles round", tiles,
