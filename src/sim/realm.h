@@ -196,7 +196,8 @@ struct Lying {
     // and only he may pick it up for as long as it lies. 0 for anyone's -- a thing a player
     // threw away himself, so a drop can still be handed over. WebZen keeps m_UserIndex for its
     // gLootingTime alone (MapClass.cpp:804); for the whole minute is ours (the user, 2026-10-08:
-    // "no other player can take my items"). Free again once its owner has left the world.
+    // "no other player can take my items"). Free again once its owner has left the world, and
+    // his party's all along (Realm::mayTake).
     uint32_t owner = 0;
 };
 
@@ -1301,9 +1302,14 @@ public:
 
     // ---- the ground (sprint 7) ------------------------------------------------------------
     const std::vector<Lying>& lying() const { return lying_; }
-    // Whether the player the realm works for may pick it up (Lying::owner).
+    // Whether the player the realm works for may pick it up (Lying::owner): anyone's, his own,
+    // one whose owner has left, or his party's -- a drop from a party member's kill is the
+    // party's (the user, 2026-10-10: 'if char is on party he can pick items from ground which
+    // drops from party kills'). Ours, as the owner's minute is.
     bool mayTake(const Lying& one) const {
-        return one.owner == 0 || one.owner == mine().id || playerOfId(one.owner) < 0;
+        if (one.owner == 0 || one.owner == mine().id || playerOfId(one.owner) < 0) return true;
+        const Body* owner = find(one.owner);
+        return owner != nullptr && mine().party != 0 && owner->party == mine().party;
     }
     void step();
 
