@@ -295,6 +295,8 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
         readExtras(extras, &plus, &luck, &option, &excellent, &worn, &sockets, powers, &offhand,
                    affixes, &down);
         const int into = offhand ? int(sim::kWeaponLeft) : worn ? sim::placeOf(row) : -1;
+        // B: bound to him, as a quest's pay is (sim::Held::bound) -- for a review run of the card.
+        const bool bound = extras.find_first_of("Bb") != std::string::npos;
         // Whatever he wears there already goes into the bag first -- the arena's own sword.
         if (into >= 0 && !realm_.satchel()[into].empty()) {
             const sim::Held& on = realm_.satchel()[into];
@@ -307,7 +309,7 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
                                   : shots ? std::min(count, sim::fullDurability(row, plus))
                                   : down >= 0 ? std::min(down, sim::fullDurability(row, plus))
                                               : sim::fullDurability(row, plus),
-                           luck, option, excellent, uint8_t(sockets), powers, affixes);
+                           luck, option, excellent, uint8_t(sockets), powers, affixes, bound);
         if (worn && slot >= 0) redress();
         core::logf("given %s%s into slot %d", row.label.c_str(),
                    stacks ? (" x" + std::to_string(durability)).c_str() : "", slot);

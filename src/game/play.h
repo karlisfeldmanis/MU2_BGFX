@@ -345,6 +345,7 @@ public:
     // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
     // `count` is a stack's size for a potion and ignored for anything else.
     // `extras` is `+N` for a plus, `L` for luck and `O` then a digit for the option: +3LO2.
+    // `B` makes it bound to him, as a quest's pay is: ArmorMale01::+7B.
     bool give(const std::string& name, int count, const std::string& extras = "");
     // --lay's: a thing laid on the ground beside him, heard landing. See Realm::lay.
     bool lay(const std::string& name);
