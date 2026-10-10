@@ -469,6 +469,16 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
                               : run_.startsAt;
         }
     }
+    // Devil Square's monsters are not there before their wave: each is raised down and held, and
+    // the run calls its wave up as its minute comes (Realm::squareTick). A breed of no wave of
+    // this square never rises.
+    if (square_.phase == SquarePhase::Waiting) {
+        for (Body& one : bodies_) {
+            if (!one.monster()) continue;
+            one.health = 0;
+            one.risesAt = std::numeric_limits<int64_t>::max();
+        }
+    }
     for (const Body& one : bodies_) {
         if (one.summoner == 0) say(What::Spawned, one, one.level, one.health);
     }

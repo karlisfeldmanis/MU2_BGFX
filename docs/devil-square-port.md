@@ -74,6 +74,12 @@ and paid by rank: 1st, top 30%, top 50%, the rest, each row exp and zen (WZ `Dev
 - **Built 2026-10-10:** `sim/square.h` and `realm_square.cpp` (the run's clock, waves and points,
   `a.pod(square_)`, a kill scored once in `Realm::kill`), the tracker's panel and banners, and the
   test flag `--square-at S` (the fight S seconds in). The result window is still to come.
+- **The waves, square 1, built 2026-10-10:** OpenMU's seven rows in mu.db (map 9, the arena's box
+  119-150 x 80-115: Cyclops and Skeleton Archer, Hell Hound and Hell Spider, Poison Bull and Shadow,
+  35 each; 5 Gorgons), `kSquareBreeds` and `kSquareBoss` for squares 1-4 (sim/square.h). Every
+  monster raised down and held; each wave called up once at its minute (`SquareRun::called`), its
+  dead rising again only while it lasts; the bosses once at 15:00; the square cleared at the end.
+  Played whole headless and in the game; a death inside goes home to Noria by the map row's home.
 - **The result window at the end**, MU's rank table (`RenderMatchResult`, `CSEventMatch.cpp:222-320`)
   in our style: rank, name, points, exp and zen for everyone in the square, his own row marked, one
   button to claim, as Blood Castle's Archangel pays ("Complete", `Realm::claimCastle`). Unclaimed, it

@@ -1826,6 +1826,16 @@ void Realm::kill(Body& dead, Body& killer) {
           (run_.phase != CastlePhase::Running || run_.sorcerers >= run_.sorcerersWanted)))) {
         dead.risesAt = std::numeric_limits<int64_t>::max();
     }
+    // Devil Square's: a wave's monster rises again only while its wave lasts, and a boss never
+    // (OpenMU's AutomaticDuringWave and OnceAtWaveStart, sim/square.h); out of the fight none.
+    if (tables_->map == kDevilSquareMap && square_.phase != SquarePhase::None) {
+        const int wave = squareWaveOf(square_.square, kind.number);
+        const int64_t start = square_.endsAt - int64_t(kSquarePlay) * kSquareTicksPerSecond;
+        const bool rises = square_.phase == SquarePhase::Running && wave >= 1 && wave <= kSquareWaves &&
+                           dead.risesAt < start + int64_t(kSquareWaveMinutes[wave - 1][1]) * 60 *
+                                                      kSquareTicksPerSecond;
+        if (!rises) dead.risesAt = std::numeric_limits<int64_t>::max();
+    }
     // The Golden Invasion's dragon is not respawned (OpenMU creates invasion monsters directly
     // and never stands them up again), and its death ends the invasion.
     if (invaderSlot_ >= 0 && &dead == &bodies_[size_t(invaderSlot_)]) {
