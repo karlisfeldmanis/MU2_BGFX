@@ -1,6 +1,6 @@
 {
-  "item": "Devil01",
-  "mu_name": "Devil's Key",
+  "item": "EventDevilSquare00",
+  "mu_name": "Devil's Eye",
   "mu_name_from": "Loaded as MODEL_DEVILS_EYE + i (MODEL_POTION + 17 + i) from Data\\\\Item\\\\Devil0i.bmd for i < 3 (ZzzOpenData.cpp:915-916, _enum.h:2087-2089): Devil00 the Eye, Devil01 the Key, Devil02 the Invitation. Names as OpenMU's, Version095d/Items/EventTicketItems.cs:29-31 (WebZen's item.txt calls the third 'Ticket to Devil Square').",
   "why_this_one": "Devil Square's ticket. The Devil's Eye and the Devil's Key of one level with a Jewel of Chaos make the Devil's Invitation of that level in the Chaos Machine; the Invitation lets him in through Charon in Noria. The level is the square's, carried in the refinement, +1 to +4 in 0.95d (OpenMU MaximumItemLevel 4). docs/devil-square-port.md.",
   "profile": "weapon",
@@ -11,7 +11,7 @@
     "note": "Group, number and size are WebZen's row and OpenMU's; durability is OpenMU's 1 (group 14 in item.txt carries no durability column: Value, Level). Not in the ordinary drop -- the eye and the key fall on their own roll, to be built separately (OpenMU makes a DropItemGroup per level at 1%: +1 from monster level 2, +2 from 36, +3 from 47, +4 from 60).",
     "from": "OpenMU Version095d/Items/EventTicketItems.cs:29-31, CreateEventItem (Durability = 1, MaximumItemLevel = 4, DropsFromMonsters = false); WebZen 1.00.93 Data/lang/main/item.txt group 14 rows 17-19 (1x1, Drop 0).",
     "group": 14,
-    "number": 18,
+    "number": 17,
     "drop_level": 0,
     "drops_from_monsters": false,
     "width": 1,
@@ -22,70 +22,83 @@
     "item_txt_level": 1,
     "value_by_level": [
       30000,
-      15000,
-      75000,
-      150000,
-      450000,
-      750000,
-      1200000,
-      1500000
+      10000,
+      50000,
+      100000,
+      300000,
+      500000,
+      800000,
+      1000000
     ],
     "value_from": "ZzzInfomation.cpp:1693-1707, by level 0..7"
   },
   "sheets": {
-    "devilkey": "devilkey.png"
+    "devileye": "devileye.png",
+    "devileye2": "devileye2.png"
   },
-  "sheet_from": "Data/Item/devilkey.OZJ (64x32): a gold key, its bow a skull with red eyes and a spiked collar, the bit two gold teeth.",
+  "sheet_from": "Data/Item/devileye.OZJ (32x32): a slit-pupilled eye in a ring of fire, orange to red; devileye2.OZJ (16x16): a dark red and orange crackle, the burning shell round it.",
   "sheet_materials": {
-    "devilkey": "brass"
+    "devileye": "glass",
+    "devileye2": "glass"
   },
   "cutout": false,
-  "cutout_from": "The .OZJ has no alpha.",
-  "material_note": "Gold: brass, the library's yellow metal.",
-  "open_question": "Not built: MU's two red sparks (BITMAP_SPARK + 1, light (2, 0.32, 0.32) x sin(WorldTime*0.002)*0.35 + 0.65, scale 0.8 of that) on bones 1 and 2, the skull's eyes (ZzzObject.cpp:9895-9911); and the ground pose Angle (270, 0, 270) (ZzzObject.cpp:5764-5767).",
+  "cutout_from": "Both .OZJ, no alpha.",
+  "material_note": "The eyeball: glass, a wet polished dielectric, as the jewels.",
+  "glow": {
+    "devileye2": {
+      "pulse": [
+        10.0,
+        15.65
+      ],
+      "pulse_rate": "half"
+    }
+  },
+  "glow_note": "MU makes mesh 1, devileye2, the BlendMesh: drawn added at BlendMeshLight = sin(WorldTime*0.002)*10 + 15.65, its V sliding (WorldTime % 2000 * 0.0005, one pass in 2 s), Alpha 2.0, and lights the eye by the same sine / 5 (ZzzObject.cpp:9883-9894). The light is MU's own, far past 1: the shell burns out to its brightest. Not built: the V slide.",
+  "upright": true,
+  "upright_from": "MU turns MODEL_DEVILS_EYE by Angle[0] = 90 on the ground (ZzzObject.cpp:5744-5747), as MODEL_EVENT + 5; shown as authored here.",
   "islands": [
     {
       "island": 0,
-      "material": "brass",
-      "triangles": 34,
-      "area": 721.3,
+      "material": "glass",
+      "triangles": 48,
+      "area": 1295.1,
       "along": [
-        -0.8,
-        0.7
+        -9.4,
+        9.4
       ],
       "mu_uv": [
-        0.367,
-        0.116,
-        0.998,
-        0.728
+        0.001,
+        0.001,
+        0.999,
+        0.999
       ],
       "bake_uv": [
-        0.005,
-        0.005,
-        0.995,
-        0.93
+        0.004,
+        0.004,
+        0.994,
+        0.996
       ]
     },
     {
       "island": 1,
-      "material": "brass",
-      "triangles": 48,
-      "area": 832.9,
+      "material": "glass",
+      "triangles": 16,
+      "area": 739.9,
       "along": [
-        -4.7,
-        4.7
+        -0.0,
+        -0.0
       ],
       "mu_uv": [
-        -0.002,
-        0.038,
-        0.431,
-        0.915
+        0.001,
+        0.013,
+        0.984,
+        0.999
       ],
       "bake_uv": [
         0.005,
         0.005,
-        0.688,
-        0.687
+        0.657,
+        0.657
       ]
     }
   ]

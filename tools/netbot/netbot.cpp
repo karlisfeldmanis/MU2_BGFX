@@ -117,6 +117,7 @@ public:
                     return false;
                 }
                 if (welcome.castle > 0) realm->setCastle(welcome.castle);
+                if (welcome.square > 0) realm->setSquare(welcome.square, welcome.squareWait);
                 sim::outfit(*realm, welcome.weapon, welcome.shield);
                 if (welcome.kept) realm->restoreKept(welcome.first);
             }

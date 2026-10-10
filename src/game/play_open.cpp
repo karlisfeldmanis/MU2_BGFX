@@ -57,6 +57,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // does not: the nests are the table's own, and no arena, raid or roads are set up.
     std::string held = weapon, worn = shield;
     int castle = 0;  // the server's Blood Castle, set on the raise as it set it
+    int square = 0, squareWait = 0;  // and its Devil Square
     if (!serverHost_.empty()) {
         auto remote = std::make_unique<RemoteLink>(realmHeld_);
         remote->setLag(lagMs_, jitterMs_);
@@ -80,6 +81,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         if (welcome.kept) keptFirst_ = std::make_unique<sim::Kept>(welcome.first);
         seed = welcome.seed;
         castle = welcome.castle;
+        square = welcome.square;
+        squareWait = welcome.squareWait;
         kin = welcome.kin;
         level = welcome.level;
         column = welcome.column;
@@ -212,6 +215,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     local_.configure(realmConfig_);
     if (!local_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
     if (castle > 0) local_.setCastle(castle);
+    if (square > 0) local_.setSquare(square, squareWait);
     if (benchPlayers_ > 0 && !remote()) raiseBench(column, row);
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to

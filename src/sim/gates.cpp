@@ -42,6 +42,9 @@ constexpr ExitGate kExits[] = {
     // Devil Square 1's, OpenMU 0.95d Gates.cs:141: the arena's box, with no direction. Reached
     // only through Charon (sim/square.h).
     {58, 9, {133, 91, 141, 99}, 0, 0},
+    {59, 9, {135, 162, 142, 170}, 0, 0},  // Devil Square 2, Gates.cs:142
+    {60, 9, {62, 150, 70, 158}, 0, 0},    // 3, :143
+    {61, 9, {66, 84, 74, 92}, 0, 0},      // 4, :144
     // Atlans's and Noria's, Gates.cs:135 and 148-149 (docs/atlans-port.md A §2.1). 48 is
     // Direction.North (7), (-1,+1), into Noria and away from gate 45 beside it; 46 is
     // Direction.South (3), (+1,-1), into the basin and away from gate 47; 49 is the spawn gate,
@@ -130,6 +133,9 @@ constexpr EnterGate kEnters[] = {
     {1066, 2, {-1, -1, -1, -1}, 0, 66},
     // And Charon's into Devil Square 1 (sim/square.h kSquareEnterGate), from Noria.
     {1058, 3, {-1, -1, -1, -1}, 0, 58},
+    {1059, 3, {-1, -1, -1, -1}, 0, 59},
+    {1060, 3, {-1, -1, -1, -1}, 0, 60},
+    {1061, 3, {-1, -1, -1, -1}, 0, 61},
 };
 
 }  // namespace

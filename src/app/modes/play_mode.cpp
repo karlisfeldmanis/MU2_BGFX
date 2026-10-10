@@ -881,7 +881,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 ctx.castleNext = number == sim::kCastleEnterGate
                                      ? world_.played().realm().castlePassed()
                                      : 0;
-                if (number == sim::kSquareEnterGate) {
+                if (sim::squareEnterGateNumbered(number)) {
                     ctx.squareNext = world_.played().realm().squarePassed();
                     ctx.squareNextWait = world_.played().realm().squarePassedWait();
                 }

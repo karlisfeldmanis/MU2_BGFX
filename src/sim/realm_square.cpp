@@ -54,7 +54,7 @@ void Realm::squareTick() {
             if (elapsed >= to) continue;
             int rising = 0;
             for (Body& one : bodies_) {
-                if (!one.monster() || one.alive()) continue;
+                if (!one.monster() || one.alive() || !ownSquare(one)) continue;
                 if (squareWaveOf(square_.square, tables_->kinds[size_t(one.kind)].number) == w + 1) {
                     one.risesAt = tick_;
                     ++rising;
@@ -183,7 +183,7 @@ bool Realm::enterSquare(int square) {
 void Realm::passSquare(int square) {
     Body& hero = mine();
     if (!hero.alive() || squareRefusal(square) != SquareRefusal::None) return;
-    const EnterGate* gate = enterGateNumbered(kSquareEnterGate);
+    const EnterGate* gate = enterGateNumbered(squareEnterGate(square));
     if (gate == nullptr) return;
     // The invitation is spent as he goes (protocol.cpp:18894-18896), and the fight waits for
     // what is left of the gate (sim/square.h), the whole of a held one's kSquareWait.
@@ -199,6 +199,12 @@ void Realm::setSquare(int square, int wait) {
     if (tables_ == nullptr || tables_->map != kDevilSquareMap || square_.phase != SquarePhase::Waiting) return;
     square_.square = std::clamp(square, 1, kSquares);
     if (wait > 0) square_.startsAt = tick_ + int64_t(wait) * kSquareTicksPerSecond;
+}
+
+bool Realm::ownSquare(const Body& one) const {
+    if (one.nest < 0 || size_t(one.nest) >= tables_->nests.size()) return false;
+    const content::MonsterNest& nest = tables_->nests[size_t(one.nest)];
+    return inSquareArena(square_.square, (nest.x1 + nest.x2) / 2, (nest.y1 + nest.y2) / 2);
 }
 
 void Realm::squareKill(const Body& dead, const Body& scorer) {

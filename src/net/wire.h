@@ -84,7 +84,9 @@ namespace mu::net {
 // 17: a Kept carries the perch he sat or leant on (layout 6).
 // 18: the trade between players (sim/realm_deal.cpp): Command::Kind::DealAsk and its fellows, and
 //     a Player's trade in the snapshot (shape 4).
-constexpr uint32_t kVersion = 18;
+// 19: Devil Square on the server: the Welcome's square and its wait (Realm::setSquare), the
+//     config's square clock (RealmConfig::square), Command::Kind::EnterSquare.
+constexpr uint32_t kVersion = 19;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -276,6 +278,9 @@ struct Welcome {
     // ticks since.
     // Blood Castle's number when the world is one (Realm::setCastle, straight after the raise), or 0.
     int32_t castle = 0;
+    // And Devil Square's number and its wait in seconds when the world is one (Realm::setSquare,
+    // straight after the raise), or 0: one world a square's run, everyone through Charon's gate.
+    int32_t square = 0, squareWait = 0;
     // Which copy of the map, from 1: a map past the server's cap opens another (sprint 24).
     uint8_t copy = 1;
     // His key for the tick datagrams (sprint 24): the client says it from its UDP socket, and the

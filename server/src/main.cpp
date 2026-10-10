@@ -1,6 +1,6 @@
 // mu2_server: MU2_BGFX's server (docs/sprints/18-the-wire.md, server/README.md).
 //
-//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--map-cap N] [--speed N]
+//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--square-period S] [--map-cap N] [--speed N]
 //
 // **Connections to the same world share it** (docs/sprints/19-many-heroes.md): the first Hello
 // for a world raises its realm with him as its first player; each later one comes in by a Join
@@ -116,6 +116,7 @@ struct Landing {
     int column = 0, row = 0;
     int castle = 0;  // into Blood Castle: which one his ticket passed him into
     bool summon = false;  // her summon comes too: a Tab trip's (Realm::travel), no gate's
+    int square = 0, squareWait = 0;  // into Devil Square: which, and the seconds of Charon's gate left
 };
 std::map<uint64_t, Landing> g_due;
 // Tests (2026-10-08): `--storm` raises every world in a wet spell, `--invasion` begins the Golden
@@ -149,6 +150,9 @@ struct World {
     uint32_t nextTicket = kJoinTickets;
     std::vector<uint32_t> orphans;  // Joins whose connection went before they were answered
     int castle = 0;  // Blood Castle's number, 0 for any other map: one world a castle
+    // Devil Square's number, 0 for any other map: one world a square's run, which everyone
+    // through Charon's gate joins while it waits, and the next run a new one (sim/square.h).
+    int square = 0;
     // Which copy of its map, from 1 (sprint 24): a map past g_mapCap players opens another, as
     // MU's sub-servers did, because every client steps its whole map and a crowded one is slow
     // to come into and to draw.
@@ -766,10 +770,12 @@ bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<Worl
 
 World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello& hello,
                   const std::string& assets, const sim::RealmConfig& config, uint64_t seed,
-                  const std::string& who, const sim::Kept* kept, int castle) {
+                  const std::string& who, const sim::Kept* kept, int castle, int square = 0,
+                  int squareWait = 0) {
     auto world = std::make_unique<World>();
     world->name = hello.world;
     world->castle = castle;
+    world->square = square;
     std::string error;
     const std::string path = assets + "/cooked/" + hello.world + "/" + hello.world + ".mur";
     if (!content::loadTables(path, world->tables, error)) {
@@ -788,6 +794,7 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     // Which Blood Castle, before anything else is laid on it: its monsters and its statue's die,
     // at the same moment as every mirror's (Play::open).
     if (castle > 0) world->realm->setCastle(castle);
+    if (square > 0) world->realm->setSquare(square, squareWait);
     // A new character's cradle, or all of one come from another world: never both.
     if (kept) {
         world->realm->restoreKept(*kept);
@@ -806,6 +813,8 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     w.config = config;
     w.kept = kept != nullptr;
     w.castle = castle;
+    w.square = square;
+    w.squareWait = squareWait;
     if (kept) w.first = *kept;
     core::logf("%s: raised %s, class %d level %d at %d,%d, seed %llu", who.c_str(),
                hello.world.c_str(), int(kin), level, hello.column, hello.row,
@@ -914,7 +923,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     const bool carried = asked.token != 0 && !fresh && g_store.find(asked.token, kept, keptIn);
     net::Hello said = asked;
     if (fresh) said.kin = uint8_t(whose.kin);
-    int castle = 0;
+    int castle = 0, square = 0, squareWait = 0;
     if (carried) {
         one.token = said.token;
         core::logf("%s: his character comes back, level %d with %lld Zen", one.who.c_str(),
@@ -936,6 +945,8 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         said.column = sent->column;
         said.row = sent->row;
         castle = sent->castle;
+        square = sent->square;
+        squareWait = sent->squareWait;
     } else if (carried) {
         // Where the store has him: the world he was in or was sent to, at its tile (placeOf).
         // Every way between worlds is the realm's to say (a gate, a trip, home, Go Back!), so a
@@ -992,10 +1003,13 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     int most = -1;
     int copies = 0;
     for (auto& world : worlds) {
-        if (world->name != said.world || world->castle != castle) continue;
+        if (world->name != said.world || world->castle != castle || world->square != square) continue;
+        // A square's run takes newcomers only while it waits for its fight: the next run is a
+        // new world (WebZen lets no one in after the gate shuts).
+        if (square > 0 && world->realm->squareRun().phase != sim::SquarePhase::Waiting) continue;
         copies = std::max(copies, world->copy);
         const int here = peopleIn(*world, sessions);
-        if ((castle > 0 || here < g_mapCap) && here > most) {
+        if ((castle > 0 || square > 0 || here < g_mapCap) && here > most) {
             most = here;
             into = world.get();
         }
@@ -1025,7 +1039,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         return true;
     }
     World* world = raiseWorld(worlds, said, assets, config, seeds(), one.who, carried ? &kept : nullptr,
-                              castle);
+                              castle, square, squareWait);
     if (world == nullptr) return false;
     if (copies > 0) {
         world->copy = copies + 1;
@@ -1132,7 +1146,13 @@ std::optional<Landing> landingOf(const World& world, const sim::Happening& said,
             const sim::MapRow* map = out ? sim::mapNumbered(int(out->map)) : nullptr;
             if (map == nullptr) return std::nullopt;
             const int castle = said.a == sim::kCastleEnterGate ? world.realm->castlePassedOf(said.who) : 0;
-            return Landing{map->world, said.b, said.c, castle};
+            Landing landing{map->world, said.b, said.c, castle};
+            // And Charon's: which square, and what was left of his gate as he went.
+            if (sim::squareEnterGateNumbered(said.a)) {
+                landing.square = world.realm->squarePassedOf(said.who);
+                landing.squareWait = world.realm->squarePassedWaitOf(said.who);
+            }
+            return landing;
         }
         case sim::What::Answered: {
             if (said.a != int32_t(sim::Command::Kind::Travel) || said.b <= 0) return std::nullopt;
@@ -1367,8 +1387,12 @@ int main(int argc, char** argv) {
         else if (a == "--castle-period" && i + 1 < argc) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.castle = {s, s / 2, s / 2};
+        } else if (a == "--square-period" && i + 1 < argc) {
+            // Charon's gate every S seconds for S/2, not two-hourly (a test).
+            const int s = std::max(2, std::atoi(argv[++i]));
+            config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--square-period S] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
             return 2;
         }
     }

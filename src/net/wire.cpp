@@ -264,6 +264,9 @@ void putConfig(Out& o, const sim::RealmConfig& c) {
     o.i32(c.castle.period);
     o.i32(c.castle.opensAt);
     o.i32(c.castle.entry);
+    o.i32(c.square.period);
+    o.i32(c.square.opensAt);
+    o.i32(c.square.entry);
     o.u8(c.questDemo ? 1 : 0);
 }
 
@@ -272,9 +275,13 @@ sim::RealmConfig takeConfig(In& in) {
     c.castle.period = in.i32();
     c.castle.opensAt = in.i32();
     c.castle.entry = in.i32();
+    c.square.period = in.i32();
+    c.square.opensAt = in.i32();
+    c.square.entry = in.i32();
     c.questDemo = in.u8() != 0;
     // A period of nought would divide by it.
     if (c.castle.period <= 0) c.castle = sim::RealmConfig{}.castle;
+    if (c.square.period <= 0) c.square = sim::RealmConfig{}.square;
     return c;
 }
 
@@ -444,6 +451,8 @@ void put(std::vector<uint8_t>& out, const Welcome& one) {
         o.u8(one.kept ? 1 : 0);
         if (one.kept) putKept(o, one.first);
         o.i32(one.castle);
+        o.i32(one.square);
+        o.i32(one.squareWait);
         o.u8(one.copy);
         o.u64(one.udpKey);
         o.u32(uint32_t(one.snapshot.size()));
@@ -681,6 +690,8 @@ bool parse(const std::vector<uint8_t>& body, Welcome& out) {
     out.kept = in.u8() != 0;
     if (out.kept) out.first = takeKept(in);
     out.castle = in.i32();
+    out.square = in.i32();
+    out.squareWait = in.i32();
     out.copy = in.u8();
     out.udpKey = in.u64();
     const uint32_t snapshot = in.u32();

@@ -1,8 +1,8 @@
 #pragma once
 
 // Devil Square's run: its clock, its waves, each player's points, and the ranks and pay at its end
-// (docs/devil-square-port.md, "The goal and how it is shown"). Square 1 only for now; squares 2-4
-// are rooms of the same map 9 and differ in their breeds and their pay.
+// (docs/devil-square-port.md, "The goal and how it is shown"). Squares 1-4 are rooms of the same
+// map 9 and differ in their breeds, their arena and their pay.
 
 #include <cstdint>
 
@@ -14,16 +14,28 @@ constexpr uint32_t kDevilSquareMap = 9;
 // **Charon's door** (docs/devil-square-port.md A 2.1-2.2; WebZen NpcRusipher, NpcTalk.cpp:
 // 1005-1048, and GCReqmoveDevilSquare, protocol.cpp:18587-18923): spoken to with a Devil's
 // Invitation while the gate is open, he takes it and sends him to the square's gate -- 58 for
-// square 1, the arena's box (OpenMU 0.95d Gates.cs:141). MU has no enter gate for it;
-// kSquareEnterGate is ours, a row with no box, as Blood Castle's kCastleEnterGate is.
+// square 1, 59 to 61 for the rest, each in its arena (OpenMU 0.95d Gates.cs:141-144). MU has no
+// enter gate for them; 1058-1061 are ours, rows with no box, as Blood Castle's kCastleEnterGate.
 constexpr int32_t kSquareGate = 58;
 constexpr int32_t kSquareEnterGate = 1058;
+constexpr int32_t squareEnterGate(int square) { return kSquareEnterGate + square - 1; }
+constexpr bool squareEnterGateNumbered(int32_t gate) {
+    return gate >= kSquareEnterGate && gate < kSquareEnterGate + 4;
+}
 // The squares at 0.97d and how many are built (square 1 alone: its nests are in mu.db), each with
 // WebZen 0.97d's band (protocol.cpp:18789-18832; the fourth "250+", 0 for no ceiling). Both ends
 // are asked, as WebZen asks them: too high is "You're underestimating yourself", too low "If you
 // wish to stay alive" (texts 686, 687).
 constexpr int kSquares = 4;
-constexpr int kSquaresBuilt = 1;
+constexpr int kSquaresBuilt = 2;
+// Each square's arena, where its nests lie (OpenMU 0.95d Maps/DevilSquare1-4.cs): x1, y1, x2, y2.
+// The realm raises every square's monsters on map 9 and a wave calls up only its own square's.
+constexpr int kSquareArena[4][4] = {
+    {119, 80, 150, 115}, {121, 152, 151, 184}, {49, 138, 79, 173}, {53, 74, 83, 109}};
+constexpr bool inSquareArena(int square, int column, int row) {
+    const int* a = kSquareArena[square < 1 ? 0 : square > 4 ? 3 : square - 1];
+    return column >= a[0] && column <= a[2] && row >= a[1] && row <= a[3];
+}
 constexpr int kSquareBands[kSquares][2] = {{10, 99}, {100, 179}, {180, 249}, {250, 0}};
 // The level a band is read against: his own, but the Magic Gladiator's ((L + 1) / 2) * 3
 // (protocol.cpp:18714-18723), since his levels count for more.

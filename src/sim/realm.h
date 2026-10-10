@@ -1112,6 +1112,15 @@ public:
     // carried by the mode to the square's own realm (setSquare), as castlePassed is.
     int squarePassed() const { return me().squarePassed; }
     int squarePassedWait() const { return me().squarePassedWait; }
+    // And any player's, by his body's id: which square the server raises for him.
+    int squarePassedOf(uint32_t id) const {
+        const int at = playerOfId(id);
+        return at >= 0 ? heroes_[size_t(at)].squarePassed : 0;
+    }
+    int squarePassedWaitOf(uint32_t id) const {
+        const int at = playerOfId(id);
+        return at >= 0 ? heroes_[size_t(at)].squarePassedWait : 0;
+    }
     // Into square `square` with `wait` seconds to the fight (Charon's gate's last seconds), so
     // everyone who came through it starts together on the odd hour; 0 keeps kSquareWait.
     void setSquare(int square, int wait);
@@ -2130,6 +2139,8 @@ private:
     // Devil Square's clock, once a tick, and a kill scored to whoever's it is (realm_square.cpp).
     void squareTick();
     void squareKill(const Body& dead, const Body& scorer);
+    // Whether a monster's nest is in this run's square's arena (sim/square.h kSquareArena).
+    bool ownSquare(const Body& one) const;
     // Every player's rank and row reckoned once, as the time is up; and one row paid, once.
     void rankSquare();
     void paySquare();

@@ -7171,7 +7171,8 @@ void testCharon() {
     checkEqual(ask(1, at(10, 57), 120), int(sim::SquareRefusal::TooHigh), "120 is over it");
     checkEqual(ask(1, at(10, 57), 70, 1, sim::Kin::MagicGladiator), int(sim::SquareRefusal::TooHigh),
                "a Magic Gladiator of 70 counts as 105");
-    checkEqual(ask(1, at(10, 57), 50, 2), int(sim::SquareRefusal::NotBuilt), "square 2 is not built");
+    checkEqual(ask(3, at(10, 57), 50, 3), int(sim::SquareRefusal::NotBuilt), "square 3 is not built");
+    checkEqual(ask(2, at(10, 57), 150, 2), -1, "square 2 lets a +2 in at 150");
     checkEqual(ask(0, at(10, 57), 50), -1, "a +0 invitation fits square 1");
     checkEqual(ask(1, at(10, 57), 50), -1, "a +1 at 10:57, level 50, goes in");
     {
@@ -12518,6 +12519,22 @@ void testSquareResult() {
                               square, error),
           "Devil Square's tables load");
     if (!error.empty()) return;
+    // Square 2: its first wave rises in its own arena and nowhere else (sim/square.h kSquareArena).
+    {
+        sim::Realm two;
+        check(two.raise(&square, 7, 138, 166, sim::Kin::DarkKnight, 150), "square 2 raised");
+        two.setSquare(2, 0);
+        two.jumpSquare(1);
+        for (int tick = 0; tick < 5; ++tick) two.step();
+        int risen = 0, astray = 0;
+        for (const sim::Body& one : two.bodies()) {
+            if (!one.monster() || !one.alive()) continue;
+            ++risen;
+            astray += sim::inSquareArena(2, one.column(), one.row()) ? 0 : 1;
+        }
+        checkEqual(risen, 70, "square 2's first wave: 35 Dark Knights and 35 Poison Shadows");
+        checkEqual(astray, 0, "all of them in square 2's arena");
+    }
     sim::Realm realm;
     check(realm.raise(&square, 7, 137, 95, sim::Kin::DarkKnight, 200), "a square raised");
     const uint32_t first = realm.hero().id;

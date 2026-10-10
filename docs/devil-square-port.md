@@ -860,7 +860,7 @@ How MuMain shows them:
   - The Invitation lies at 270/90 (`:5768-5771`). It has the same red sparks at bones 9 and 10 (`:9912-9928`).
 - Level glow: a level of 6 or less is halved; above that it shows as +13 (`ZzzObject.cpp:9592-9604`).
 - The name is drawn in **yellow** (`MM/Engine/Object/ZzzInventory.cpp:2186-2189`).
-- **MU2_BGFX has none of the three.** `source/items/misc` has `EventBloodCastle00-02` (the BC pattern to copy) but no Devil00-02. `src/sim/market.cpp:30` notes "no Devil Square here".
+- **Built** as `source/items/misc/EventDevilSquare00-02` (Eye, Key, Invitation), after Blood Castle's `EventBloodCastle00-02`; not `Devil00-02`, whose stem `Devil01` is the monster's (`source/monsters/Devil01.json`).
 - `Item/devil_wing.OZT` is a wing sheet, unrelated.
 
 ---
@@ -933,7 +933,7 @@ How MuMain shows them:
 - the 7 Object10 models
 - Monster49 (Cursed King) with king09/king08 and its three sounds
 - json variants for 64, 65 and 67 on existing bodies
-- Item Devil00-02 with devileye/devileye2/devilkey/visitor/visitor2
+- Item Devil00-02.bmd as EventDevilSquare00-02, with devileye/devileye2/devilkey/visitor/visitor2
 - `rain03.OZT` for the splash, if `source/effects/rain` (rain01/rain02 only) lacks it
 - optionally `devilsquare.OZT` and the two DS mp3s
 - DS5-7 is a separate, larger import (12 bodies, §3.2)

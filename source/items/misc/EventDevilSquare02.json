@@ -1,5 +1,5 @@
 {
-  "item": "Devil02",
+  "item": "EventDevilSquare02",
   "mu_name": "Devil's Invitation",
   "mu_name_from": "Loaded as MODEL_DEVILS_EYE + i (MODEL_POTION + 17 + i) from Data\\\\Item\\\\Devil0i.bmd for i < 3 (ZzzOpenData.cpp:915-916, _enum.h:2087-2089): Devil00 the Eye, Devil01 the Key, Devil02 the Invitation. Names as OpenMU's, Version095d/Items/EventTicketItems.cs:29-31 (WebZen's item.txt calls the third 'Ticket to Devil Square').",
   "why_this_one": "Devil Square's ticket. The Devil's Eye and the Devil's Key of one level with a Jewel of Chaos make the Devil's Invitation of that level in the Chaos Machine; the Invitation lets him in through Charon in Noria. The level is the square's, carried in the refinement, +1 to +4 in 0.95d (OpenMU MaximumItemLevel 4). docs/devil-square-port.md.",
