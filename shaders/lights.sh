@@ -139,6 +139,40 @@ vec3 lampAt(vec4 at, vec4 lit, vec4 side, vec3 wpos, vec3 n, vec3 v, vec3 diffus
 	return (kd + spec) * lit.rgb * (u_lampParams.x * ndotl * fall * facing);
 }
 
+// The nearest lamp's own shadow (Renderer::chooseCastingLamp, views ViewLampFace): five faces
+// of a cube round it, below and to its four sides, in their column of the sun's map, so they
+// are read through the sun's compare sampler and the land, with no stage left, reads them too.
+// The face is the one the way from the lamp points along most; above the lamp is lit. Moved
+// out along the normal by a texel and a half of that face at that distance, and a little
+// towards the lamp, then four taps a texel apart on the compare sampler's own bilinear.
+// Ours (the user, 2026-10-10: "One shadowed lamp"); MU's lamps cast nothing.
+uniform vec4 u_lampCastAt;      // xyz: the lamp  w: its index in the lamp table plus one, 0 none
+uniform vec4 u_lampCastParams;  // x: how dark  y: normal bias per metre  z: a texel in uv  w: towards it, metres
+uniform mat4 u_lampCastMtx[5];
+float lampCast(vec3 wpos, vec3 n)
+{
+	vec3 d = wpos - u_lampCastAt.xyz;
+	vec3 a = abs(d);
+	int face;
+	if (a.y >= a.x && a.y >= a.z)
+	{
+		if (d.y > 0.0) return 1.0;
+		face = 0;
+	}
+	else if (a.x >= a.z) face = d.x > 0.0 ? 1 : 2;
+	else face = d.z > 0.0 ? 3 : 4;
+	float dist = length(d);
+	vec3 p = wpos + n * (u_lampCastParams.y * dist) - d * (u_lampCastParams.w / max(dist, 1e-3));
+	vec4 sc = mul(u_lampCastMtx[face], vec4(p, 1.0));
+	sc.xyz /= sc.w;
+	float t = u_lampCastParams.z;
+	float lit = 0.25 * (shadow2D(s_shadowCompare, vec3(sc.xy + vec2(-t, -t), sc.z))
+	                  + shadow2D(s_shadowCompare, vec3(sc.xy + vec2( t, -t), sc.z))
+	                  + shadow2D(s_shadowCompare, vec3(sc.xy + vec2(-t,  t), sc.z))
+	                  + shadow2D(s_shadowCompare, vec3(sc.xy + vec2( t,  t), sc.z)));
+	return mix(1.0, lit, u_lampCastParams.x);
+}
+
 // One of the map's own lights, read out of its column of the lamp texture.
 //
 // The reach is tested on the first two rows before the third is read: a cell lists every light
@@ -153,8 +187,10 @@ vec3 lampOne(int index, vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0, 
 	vec3 d = at.xyz - wpos;
 	float over = max(-d.y, 0.0) + max(d.y - lit.w, 0.0);
 	if (d.x * d.x + d.z * d.z + over * over >= at.w * at.w) return vec3_splat(0.0);
-	return lampAt(at, lit, texelFetch(s_lamps, ivec2(index, 2), 0),
-	              wpos, n, v, diffuseColour, f0, roughness, ndotv, specular);
+	vec3 light = lampAt(at, lit, texelFetch(s_lamps, ivec2(index, 2), 0),
+	                    wpos, n, v, diffuseColour, f0, roughness, ndotv, specular);
+	if (float(index + 1) == u_lampCastAt.w) light *= lampCast(wpos, n);
+	return light;
 }
 
 // The four that move. No grid and no cell test: the count is small enough that every lit pixel

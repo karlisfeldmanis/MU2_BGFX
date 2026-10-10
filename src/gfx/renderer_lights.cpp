@@ -155,4 +155,31 @@ void Renderer::setTransientLights(const PointLight* lights, uint32_t count) {
     lampParams_[2] = float(transientCount_);
 }
 
+int Renderer::chooseCastingLamp(const float target[3], float* amount) const {
+    // The colour before the flicker, so the choice and its fade hold still under a torch.
+    int best = -1;
+    float first = 0.0f, second = 0.0f;
+    for (uint32_t i = 0; i < lightCount_; ++i) {
+        const float* at = &lampCpu_[size_t(i) * 4];
+        const float dx = at[0] - target[0], dz = at[2] - target[2];
+        const float reach2 = at[3] * at[3];
+        const float d2 = dx * dx + dz * dz;
+        if (reach2 <= 0.0f || d2 >= reach2) continue;
+        const float* colour = &lampColour_[size_t(i) * 3];
+        float fall = 1.0f - d2 / reach2;
+        fall *= fall;
+        const float light = std::max(colour[0], std::max(colour[1], colour[2])) * fall;
+        if (light > first) {
+            second = first;
+            first = light;
+            best = int(i);
+        } else if (light > second) {
+            second = light;
+        }
+    }
+    // Whole while it gives three quarters of the two's light, and nothing when they are level.
+    *amount = best < 0 ? 0.0f : std::clamp((first / (first + second) - 0.5f) * 4.0f, 0.0f, 1.0f);
+    return *amount > 0.0f ? best : -1;
+}
+
 }  // namespace mu::gfx

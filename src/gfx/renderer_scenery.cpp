@@ -40,7 +40,8 @@ uint32_t groupsOf(uint32_t n) { return uint32_t((n + 63) / 64); }
 
 }  // namespace
 
-bool Renderer::drawGpuCasters(const GpuScenery& c, const float* m, uint64_t state) {
+bool Renderer::drawGpuCasters(const GpuScenery& c, const float* m, uint64_t state,
+                              bgfx::ViewId view) {
     if (!c.ready() || !bgfx::isValid(castClearProgram_) ||
         !bgfx::isValid(castCullProgram_) || !bgfx::isValid(castArgsProgram_) ||
         !bgfx::isValid(whiteAo_)) {
@@ -50,30 +51,32 @@ bool Renderer::drawGpuCasters(const GpuScenery& c, const float* m, uint64_t stat
     float planes[6][4];
     frustumPlanes(m, planes);
 
-    // Three steps on the sun's own view. bgfx sorts a view's compute ahead of its draws, and
+    // Three steps on the sun's own view, or a lamp face's (each face culls again, after the
+    // view before it has drawn what the last cull left). bgfx sorts a view's compute ahead of its draws, and
     // Metal runs one encoder's dispatches in order, each seeing what the last one wrote.
     const float cast[4] = {float(c.slotCount()), float(c.modelCount()), float(c.drawCount()), 0.0f};
     auto groups = groupsOf;
 
     bgfx::setUniform(uCast_, cast);
     bgfx::setBuffer(0, c.counts(), bgfx::Access::Write);
-    bgfx::dispatch(ViewShadow, castClearProgram_, groups(c.modelCount()), 1, 1);
+    bgfx::dispatch(view, castClearProgram_, groups(c.modelCount()), 1, 1);
 
     bgfx::setUniform(uCast_, cast);
     bgfx::setUniform(uCastPlanes_, planes, 6);
+    bgfx::setUniform(uCastSkip_, castSkip_);
     bgfx::setBuffer(0, c.resident(), bgfx::Access::Read);
     bgfx::setBuffer(1, c.slotModel(), bgfx::Access::Read);
     bgfx::setBuffer(2, c.models(), bgfx::Access::Read);
     bgfx::setBuffer(3, c.counts(), bgfx::Access::ReadWrite);
     bgfx::setBuffer(4, c.out(), bgfx::Access::Write);
-    bgfx::dispatch(ViewShadow, castCullProgram_, groups(c.slotCount()), 1, 1);
+    bgfx::dispatch(view, castCullProgram_, groups(c.slotCount()), 1, 1);
 
     bgfx::setUniform(uCast_, cast);
     bgfx::setBuffer(0, c.draws(), bgfx::Access::Read);
     bgfx::setBuffer(1, c.counts(), bgfx::Access::Read);
     bgfx::setBuffer(2, c.models(), bgfx::Access::Read);
     bgfx::setBuffer(3, c.indirect(), bgfx::Access::ReadWrite);
-    bgfx::dispatch(ViewShadow, castArgsProgram_, groups(c.drawCount()), 1, 1);
+    bgfx::dispatch(view, castArgsProgram_, groups(c.drawCount()), 1, 1);
 
     // And the draws: vs_depth and fs_shadow as every static caster, with nothing to cut
     // (u_material.x -1) or thin. The albedo is bound because fs_shadow reads its alpha either
@@ -89,7 +92,7 @@ bool Renderer::drawGpuCasters(const GpuScenery& c, const float* m, uint64_t stat
         bgfx::setIndexBuffer(c.indices());
         bgfx::setInstanceDataBuffer(c.out(), 0, c.slotCount());
         bgfx::setState(state | cull);
-        bgfx::submit(ViewShadow, shadowProgram_, c.indirect(), uint32_t(first), uint32_t(count));
+        bgfx::submit(view, shadowProgram_, c.indirect(), uint32_t(first), uint32_t(count));
         ++drawCount_;
     };
     draw(0, c.oneSided(), cullBit_);

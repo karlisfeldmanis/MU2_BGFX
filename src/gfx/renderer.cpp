@@ -70,6 +70,11 @@ void Renderer::bindShadeInputs() {
     bgfx::setUniform(uShadowParams_, shade_.shadowParams);
     bgfx::setUniform(uShadowDebug_, shade_.shadowDebug);
     bgfx::setUniform(uShadowReach_, shade_.shadowReach);
+    bgfx::setUniform(uLampCastAt_, lampCastAt_);
+    if (lampCastAt_[3] > 0.0f) {
+        bgfx::setUniform(uLampCastParams_, lampCastParams_);
+        bgfx::setUniform(uLampCastMtx_, lampCastMtx_, kLampFaces);
+    }
     bgfx::setTexture(4, sShadowCompare_, shadowMap_,
                      BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(5, sShadowDepth_, shadowMap_,
@@ -629,6 +634,11 @@ void Renderer::cameraMatrices(const Camera& camera, float* view, float* proj) co
 }
 
 namespace {
+// How near the casting lamp's foot, flat, a thing's origin stands to be its holder -- the block
+// a brazier burns on, a street lamp's post -- and cast none of its shadow: the flame sits a hand
+// over the block, which otherwise threw a square of night over the ground before it.
+constexpr float kHolderReach = 0.75f;
+
 // The palette slot the shade view clears from. bgfx keeps the palette as floats, which is
 // what an HDR target needs; nothing else in the engine uses it.
 constexpr uint8_t kShadeClearPalette = 1;
@@ -644,6 +654,23 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>& drawables, const content::Ground* ground,
                     const std::vector<Drawable>* casters, const GrassField* grass) {
     drawCount_ = 0;
+    // The views run in number order but for the lamp's (views.h): its clear of the whole map
+    // ahead of the sun's split, which draws into a corner of it, and its faces after the split
+    // and before anything reads the map.
+    {
+        // bgfx's table is by place: the view that runs at each (Frame::sort, SortKey::decode).
+        static bgfx::ViewId order[ViewCount];
+        static bool built = false;
+        if (!built) {
+            int n = 0;
+            order[n++] = ViewLampClear;
+            order[n++] = ViewShadow;
+            for (int f = 0; f < kLampFaces; ++f) order[n++] = bgfx::ViewId(ViewLampFace + f);
+            for (int v = ViewShadow + 1; v < ViewLampClear; ++v) order[n++] = bgfx::ViewId(v);
+            built = true;
+        }
+        bgfx::setViewOrder(0, ViewCount, order);
+    }
     waterFlow_ = lighting.waterFlow;
     for (int i = 0; i < 3; ++i) waterGlow_[i] = lighting.waterGlow[i];
     waterGlow_[3] = lighting.waterVariety;
@@ -722,6 +749,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // been culled -- a chunk behind the camera still casts into the frame.
     batches_.clear();
     casterBatches_.clear();
+    lampBatches_.clear();
     // Taken by this draw alone (setResidentCasters).
     const std::vector<ResidentBatch>* resident = residentCasters_;
     residentCasters_ = nullptr;
@@ -789,13 +817,39 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             }
         }
         if (separateCasters) group(casterList, casterGroups_, casterBatches_, Take::All);
+        // The nearest lamp's casters: whatever of the sun's list stands within its reach.
+        lampGroups_.clear();
+        lampList_.clear();
+        float lampAmount = 0.0f;
+        const int castingLamp = lighting.lampCast > 0.0f && bgfx::isValid(uLampCastMtx_)
+                                    ? chooseCastingLamp(camera.target, &lampAmount)
+                                    : -1;
+        lampCastAt_[3] = 0.0f;
+        if (castingLamp >= 0) {
+            const float* at = &lampCpu_[size_t(castingLamp) * 4];
+            // A figure's origin is at its feet and a building's at its middle: two metres past
+            // the reach keeps what leans into the pool.
+            // What stands at its very foot is its holder and casts none of it (kHolderReach).
+            const float reach = at[3] + 2.0f;
+            for (const Drawable& d : casterList) {
+                if (!d.mesh) continue;
+                const float dx = d.transform[12] - at[0], dz = d.transform[14] - at[2];
+                const float d2 = dx * dx + dz * dz;
+                if (d2 < reach * reach && d2 >= kHolderReach * kHolderReach) lampList_.push_back(d);
+            }
+            group(lampList_, lampGroups_, lampBatches_, Take::All);
+            for (int i = 0; i < 3; ++i) lampCastAt_[i] = at[i];
+            lampCastAt_[3] = float(castingLamp + 1);
+            lampCastParams_[0] = std::clamp(lighting.lampCast, 0.0f, 1.0f) * lampAmount;
+        }
 
         // A 4x4 matrix, the instance's baked light, and the row its pose occupies in the
         // bone palette. The depth passes read the matrix and the row and skip the light,
         // which costs them nothing: the stride is what the buffer is walked by, not what
         // each shader reads.
         const uint32_t stride = kInstanceStride;
-        uint32_t total = groups_.count() + fadeGroups_.count() + casterGroups_.count();
+        uint32_t total = groups_.count() + fadeGroups_.count() + casterGroups_.count() +
+                         lampGroups_.count();
 
         // bgfx will hand back fewer than asked for if the transient buffer is full. Asking
         // first and checking is the difference between a short frame and a corrupt one.
@@ -830,6 +884,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             fill(groups_, batches_);
             fill(fadeGroups_, fadeBatches_);
             if (separateCasters) fill(casterGroups_, casterBatches_);
+            fill(lampGroups_, lampBatches_);
             // And the scenery that lives on the GPU, after the list's own casters.
             if (separateCasters && resident != nullptr) {
                 for (const ResidentBatch& r : *resident) {
@@ -951,6 +1006,85 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                               idb, depthState, false);
             }
 
+            // --- views 73..78: the nearest lamp's shadow --------------------------------
+            // The whole shared map cleared first (setViewOrder runs this view before the sun's),
+            // so the gutter and a face no lamp drew read as lit. Then the five faces of a cube
+            // round the lamp, below it and to its four sides, each in its square of the column
+            // beside the sun's split; nothing over a lamp is in its light for long enough to
+            // want a sixth. Drawn with the sun's own programs, so a cutout, a dithered fade and
+            // a posed figure cast as they do for the sun.
+            bgfx::setViewFrameBuffer(ViewLampClear, shadowFb_);
+            bgfx::setViewRect(ViewLampClear, 0, 0, shadowAtlas_, shadowAtlas_);
+            bgfx::setViewClear(ViewLampClear, BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
+            bgfx::touch(ViewLampClear);
+            if (lampCastAt_[3] > 0.0f) {
+                const float* at = &lampCpu_[size_t(lampCastAt_[3] - 1.0f) * 4];
+                const bx::Vec3 eye(at[0], at[1], at[2]);
+                // Over the reach, and as far down as the light hangs plus a figure's height.
+                const float lit = lampCpu_[size_t(kMaxPointLights + 1) * 4 +
+                                           size_t(lampCastAt_[3] - 1.0f) * 4 + 3];
+                const float far = std::sqrt(at[3] * at[3] + (lit + 2.0f) * (lit + 2.0f)) + 1.0f;
+                // Wider than a cube's ninety degrees, so a face reaches past the edge where the
+                // shader turns to the next one and a filter tap there still reads this face.
+                constexpr float kFaceFov = 100.0f;
+                // Nothing nearer than this casts: the basket round a flame, a lantern's frame.
+                const float near = 0.25f;
+                float faceProj[16];
+                bx::mtxProj(faceProj, kFaceFov, 1.0f, near, far, homogeneous,
+                            bx::Handedness::Right);
+                static const float kAxis[kLampFaces][3] = {
+                    {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
+                    {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}};
+                const float m = float(shadowAtlas_);
+                for (int f = 0; f < kLampFaces; ++f) {
+                    const bgfx::ViewId faceView = bgfx::ViewId(ViewLampFace + f);
+                    const bx::Vec3 up = f == 0 ? bx::Vec3(0.0f, 0.0f, 1.0f) : bx::Vec3(0.0f, 1.0f, 0.0f);
+                    float faceView16[16];
+                    bx::mtxLookAt(faceView16, eye,
+                                  bx::Vec3(eye.x + kAxis[f][0], eye.y + kAxis[f][1], eye.z + kAxis[f][2]),
+                                  up, bx::Handedness::Right);
+                    float faceViewProj[16];
+                    bx::mtxMul(faceViewProj, faceView16, faceProj);
+                    const uint16_t x = lampColumn_, y = uint16_t(f * lampFace_);
+                    bgfx::setViewFrameBuffer(faceView, shadowFb_);
+                    bgfx::setViewRect(faceView, x, y, lampFace_, lampFace_);
+                    bgfx::setViewClear(faceView, BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
+                    bgfx::setViewTransform(faceView, faceView16, faceProj);
+                    bgfx::touch(faceView);
+                    if (separateCasters && scenery != nullptr && resident != nullptr) {
+                        castSkip_[0] = at[0];
+                        castSkip_[2] = at[2];
+                        castSkip_[3] = kHolderReach * kHolderReach;
+                        drawGpuCasters(*scenery, faceViewProj, depthState, faceView);
+                        castSkip_[3] = 0.0f;
+                    }
+                    if (!lampBatches_.empty()) {
+                        submitBatches(faceView, shadowProgram_, skinnedShadowProgram_, lampBatches_,
+                                      idb, depthState, false);
+                    }
+                    // NDC to this face's square of the map, as the sun's bias below does to its.
+                    float faceBias[16];
+                    bx::mtxIdentity(faceBias);
+                    faceBias[0] = 0.5f * float(lampFace_) / m;
+                    faceBias[5] = -0.5f * float(lampFace_) / m;
+                    faceBias[12] = (float(x) + 0.5f * float(lampFace_)) / m;
+                    faceBias[13] = (float(y) + 0.5f * float(lampFace_)) / m;
+                    if (homogeneous) {
+                        faceBias[10] = 0.5f;
+                        faceBias[14] = 0.5f;
+                    }
+                    bx::mtxMul(&lampCastMtx_[f * 16], faceViewProj, faceBias);
+                }
+                // A face's texel at a metre out is 2 tan(50) / lampFace_ metres; the receiver is
+                // pushed out along its normal by a texel and a half of that, and towards the
+                // lamp by a hand's width less a little.
+                const float texelPerMetre = 2.0f * std::tan(kFaceFov * 0.5f * 3.14159265f / 180.0f) /
+                                            float(lampFace_);
+                lampCastParams_[1] = 1.5f * texelPerMetre;
+                lampCastParams_[2] = 1.0f / m;
+                lampCastParams_[3] = 0.03f;
+            }
+
             // --- view 1: the prepass -------------------------------------------------
             bgfx::setViewFrameBuffer(ViewPrepass, prepassFb_);
             bgfx::setViewRect(ViewPrepass, 0, 0, uint16_t(width_), uint16_t(height_));
@@ -1037,10 +1171,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // is the top left. z is already [0,1] where homogeneousDepth is false.
             float bias[16];
             bx::mtxIdentity(bias);
-            bias[0] = 0.5f;
-            bias[5] = -0.5f;
-            bias[12] = 0.5f;
-            bias[13] = 0.5f;
+            // Into the top-left shadowSize_ square of the shared map (shadowAtlas_), which the
+            // sun's view rect draws: every uv the split's shader reads is a share of the map.
+            const float corner = float(shadowSize_) / float(shadowAtlas_);
+            bias[0] = 0.5f * corner;
+            bias[5] = -0.5f * corner;
+            bias[12] = 0.5f * corner;
+            bias[13] = 0.5f * corner;
             if (homogeneous) {
                 bias[10] = 0.5f;
                 bias[14] = 0.5f;
@@ -1060,12 +1197,12 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // out on the second review. A comment is not a fix.
             const float tanHalfAngle =
                 std::tan(lighting.sunAngleDegrees * 0.5f * 3.14159265f / 180.0f);
-            const float penumbraScale = tanHalfAngle * depthRange / side;
+            const float penumbraScale = tanHalfAngle * depthRange / side * corner;
             // The bias is a distance too. Held in the sheet in metres and turned into the
             // split's own 0..1 depth here, because 0.0015 of an NDC over a 120 m range is
             // 18 cm of peter-panning on a map whose D16 quantum is under 2 mm.
             const float depthBias = lighting.shadowBiasMetres / depthRange;
-            const float shadowParams[4] = {depthBias, penumbraScale, 1.0f / float(shadowSize_),
+            const float shadowParams[4] = {depthBias, penumbraScale, 1.0f / float(shadowAtlas_),
                                            lighting.shadowNormalBias};
 
             bgfx::setViewFrameBuffer(ViewShade, shadeFb_);
@@ -1101,8 +1238,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // map looked cheaper because fewer pixels found a blocker at all.
             constexpr float kSearchMetres = 0.176f;
             constexpr float kWidestPenumbraMetres = 0.703f;
-            shade_.shadowReach[0] = kSearchMetres / side;
-            shade_.shadowReach[1] = kWidestPenumbraMetres / side;
+            shade_.shadowReach[0] = kSearchMetres / side * corner;
+            shade_.shadowReach[1] = kWidestPenumbraMetres / side * corner;
             shade_.shadowReach[2] = shade_.shadowReach[3] = 0.0f;
             bgfx::setTexture(4, sShadowCompare_, shadowMap_,
                              BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP |
