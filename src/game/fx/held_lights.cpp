@@ -23,7 +23,73 @@ uint32_t roll(uint32_t& seed) {
     return seed >> 8;
 }
 
+// A joint's tail as MU lays it, a band flat across its run and one upright (CreateTailAxis),
+// from `from` to `to`, `half` either side, added in `r, g, b` at the held lights' kLight.
+void band(gfx::Effects& effects, const float from[3], const float to[3], float half,
+          bgfx::TextureHandle sheet, float r, float g, float b) {
+    float run[3] = {to[0] - from[0], to[1] - from[1], to[2] - from[2]};
+    const float length = std::sqrt(run[0] * run[0] + run[1] * run[1] + run[2] * run[2]);
+    if (length < 1e-5f) return;
+    for (float& one : run) one /= length;
+    float flat[3] = {run[2], 0.0f, -run[0]};
+    const float f = std::sqrt(flat[0] * flat[0] + flat[2] * flat[2]);
+    if (f < 1e-4f) {
+        flat[0] = 1.0f;
+        flat[2] = 0.0f;
+    } else {
+        flat[0] /= f;
+        flat[2] /= f;
+    }
+    const float up[3] = {run[1] * flat[2] - run[2] * flat[1], run[2] * flat[0] - run[0] * flat[2],
+                         run[0] * flat[1] - run[1] * flat[0]};
+    const float colour[3] = {r, g, b};
+    for (const float* across : {static_cast<const float*>(flat), up}) {
+        gfx::Sprite sprite;
+        sprite.placed = true;
+        sprite.sheet = sheet;
+        sprite.blend = gfx::Blend::Additive;
+        for (int k = 0; k < 3; ++k) {
+            sprite.colour[k] = colour[k] * kLight;
+            sprite.corner[0][k] = from[k] - across[k] * half;
+            sprite.corner[1][k] = from[k] + across[k] * half;
+            sprite.corner[2][k] = to[k] + across[k] * half;
+            sprite.corner[3][k] = to[k] - across[k] * half;
+            sprite.position[k] = 0.5f * (from[k] + to[k]);
+        }
+        sprite.colour[3] = 1.0f;
+        const float uv[4][2] = {{0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}};
+        for (int c = 0; c < 4; ++c) {
+            sprite.cornerUv[c][0] = uv[c][0];
+            sprite.cornerUv[c][1] = uv[c][1];
+        }
+        effects.add(sprite);
+    }
+}
+
+// The Heliacal Sword's ground light: MU's (0.8, 0.64, 0.4) over three tiles (ZzzCharacter.cpp:
+// 5659-5663), at full -- MU's own colour, as the wizard's Flame's is (fx/flame.h). A tile is a
+// metre here. Hung at the hilt, which a hand holds about a metre up (gfx::PointLight::height).
+constexpr float kHeliacalLight[3] = {0.8f, 0.64f, 0.4f};
+constexpr float kHeliacalReach = 3.0f;
+constexpr float kHeliacalHeight = 1.0f;
+
 }  // namespace
+
+uint32_t HeldLights::lights(gfx::PointLight* out, uint32_t max) const {
+    uint32_t count = 0;
+    for (const Held& one : held_) {
+        if (one.item != Item::HeliacalSword || one.count < 2 || count >= max) continue;
+        gfx::PointLight& light = out[count++];
+        light = gfx::PointLight{};
+        for (int k = 0; k < 3; ++k) {
+            light.position[k] = one.at[1][k];
+            light.colour[k] = kHeliacalLight[k];
+        }
+        light.reach = kHeliacalReach;
+        light.height = kHeliacalHeight;
+    }
+    return count;
+}
 
 const char* HeldLights::mesh(Item item) {
     switch (item) {
@@ -39,6 +105,8 @@ const char* HeldLights::mesh(Item item) {
         case Item::KnightBlade: return "Sword21";
         case Item::StaffOfKundun: return "Staff12";
         case Item::ArrowViperBow: return "Bow20";
+        case Item::GorgonStaff: return "Staff05";
+        case Item::HeliacalSword: return "Sword13";
     }
     return "";
 }
@@ -103,10 +171,25 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
         }
         case Item::ThunderBlade:
             // Ours: the hand's (0, -20, 15) as 20 up the blade from the grip, at its guard, as
-            // the Staff of Resurrection's (0, -145, 0) is its glb's (0, 0, 1.45).
+            // the Staff of Resurrection's (0, -145, 0) is its glb's (0, 0, 1.45); and the
+            // thunder's end, (0, -133, 7), as 133 up it, short of the tip at 145.
             out[0][0] = out[0][1] = 0.0f;
             out[0][2] = 20.0f * kUnit;
+            out[1][0] = out[1][1] = 0.0f;
+            out[1][2] = 133.0f * kUnit;
+            return 2;
+        case Item::GorgonStaff:
+            // The hand's (0, -90, 0) as 90 up the staff, under its head (the model reaches 138).
+            out[0][0] = out[0][1] = 0.0f;
+            out[0][2] = 90.0f * kUnit;
             return 1;
+        case Item::HeliacalSword:
+            // The tip, MU's (0, -160, 0), 160 up a blade that reaches 177; and the hilt, where
+            // its ground light hangs.
+            out[0][0] = out[0][1] = 0.0f;
+            out[0][2] = 160.0f * kUnit;
+            out[1][0] = out[1][1] = out[1][2] = 0.0f;
+            return 2;
         case Item::LegendaryShield:
             // Ours: the hand's (20, 0, 0) as 20 out of the grip along the glb's x, on the face.
             out[0][0] = 20.0f * kUnit;
@@ -169,6 +252,7 @@ bool HeldLights::open(const std::string& assetDir, content::Textures& textures,
     light_ = take("light");
     shiny_ = take("shiny_02");
     flare_ = take("pierce");
+    thunder_ = take("joint_thunder");
     open_ = bgfx::isValid(light_);
     return open_;
 }
@@ -185,6 +269,7 @@ void HeldLights::update(float seconds) {
     if (step_ <= 0.0f) {
         step_ += kFrame;
         if (step_ < 0.0f) step_ = kFrame;
+        ++crackleFrame_;
         handLuminosity_ = float(roll(seed_) % 30u + 70u) * 0.01f;
         linkLuminosity_ = float(roll(seed_) % 30u + 70u) * 0.005f;
     }
@@ -269,6 +354,41 @@ void HeldLights::gather(gfx::Effects& effects) const {
             case Item::ThunderBlade: {
                 const float s = std::sin(clock_ * 4.0f) * 0.3f + 0.3f;
                 put(shiny_, one.at[0], halfOf(s + 1.0f), 0.2f * s, 0.2f * s, s);
+                if (one.count < 2 || !bgfx::isValid(thunder_)) break;
+                // Three joints, each a line of ten steps from the guard to the end, every inner
+                // step nudged up to four units across (MU's x and y, the ground's two axes), at
+                // S*20 + 20 wide. Seeded by the frame and the blade, so it crackles at MU's 25 a
+                // second and two blades do not crackle alike.
+                uint32_t seed = crackleFrame_ * 2654435761u ^
+                                uint32_t(std::lround(one.at[0][0] * 1000.0f));
+                // At the held lights' quarter (kSize): at MU's full width the three lay as two
+                // solid blue bars across the blade (shot, 2026-10-10).
+                const float half = (s * 20.0f + 20.0f) * kUnit * 0.5f * kSize;
+                const float* a = one.at[0];
+                const float* b = one.at[1];
+                for (int joint = 0; joint < 3; ++joint) {
+                    float from[3] = {a[0], a[1], a[2]};
+                    for (int step = 1; step <= 10; ++step) {
+                        float to[3];
+                        for (int k = 0; k < 3; ++k) to[k] = a[k] + (b[k] - a[k]) * float(step) / 10.0f;
+                        if (step < 10) {
+                            to[0] += (float(roll(seed) % 8u) - 4.0f) * kUnit;
+                            to[2] += (float(roll(seed) % 8u) - 4.0f) * kUnit;
+                        }
+                        band(effects, from, to, half, thunder_, 0.3f, 0.3f, 1.0f);
+                        for (int k = 0; k < 3; ++k) from[k] = to[k];
+                    }
+                }
+                break;
+            }
+            case Item::GorgonStaff: {
+                const float l = handLuminosity_;
+                put(shiny_, one.at[0], halfOf(2.0f), 0.4f * l, 0.8f * l, 0.6f * l);
+                break;
+            }
+            case Item::HeliacalSword: {
+                const float l = handLuminosity_;
+                put(light_, one.at[0], halfOf(1.4f), l, l, l);
                 break;
             }
             case Item::LegendaryShield: {

@@ -1288,6 +1288,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And the nearest Poison Shadows' faint green (fx/shadow_stars.h; ours).
         count += world_.played().shadowStars().lights(
             falling + count, gfx::Renderer::kMaxTransientLights - count, eye.target);
+        // And the Heliacal Sword's warm pool round whoever holds it (fx/held_lights.h).
+        count += world_.played().heldLights().lights(falling + count,
+                                                     gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));
