@@ -594,7 +594,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.attackClip = look->library->find(attackSlotFor(look->stance));
             if (one.attackClip < 0) one.attackClip = look->library->find(38);
             one.attackClip2 = -1;
-            if (body.player) dualSwings(one, look);
+            if (body.player) playerSwings(one, look, body);
             // A monster on the player rig whose blow is a spell casts it as a player does: MU
             // hands a MODEL_PLAYER the skill's SetPlayerMagic, PLAYER_SKILL_HAND1 + rand() % 2
             // (ZzzCharacter.cpp:1339) -- the Lost Tower's Cursed Wizard and his Meteorite --
@@ -613,9 +613,8 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     }
                 }
             }
-            // And no second swing: the 1-in-3 SwordCount alternation is the MONSTER
-            // branch's, and the player branch picks one clip by the stance. Left as
-            // -1, `swordCount` counts on and always chooses this one.
+            // And no second swing for a monster on this rig: the 1-in-3 SwordCount alternation
+            // is the MONSTER branch's. A player's own cycle is in swingClips (playerSwings).
             one.deathClip = look->library->find(kPlayerDieSlot);
             // A body on the player rig that is NOT the hero still flinches in a
             // meteor's quake: MU's loop excludes the hero alone and gives everything

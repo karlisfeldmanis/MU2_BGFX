@@ -238,6 +238,21 @@ void testSwings(const content::Tables& tables) {
     checkEqual(actions[0], 46, "the Spear is named individually");
     checkEqual(sim::attackActions(scythe, nullptr, actions), 3, "the Great Scythe is not");
     checkEqual(actions[0], 47, "and falls to the scythe rung");
+    // A staff: one-handed like a sword, two-handed MU's Skill weapon 1 and 2 (ZzzCharacter.cpp:
+    // 1188-1194).
+    if (const content::Arm* skull = arm("Staff01"); skull && !skull->twoHanded()) {
+        sim::attackActions(skull, nullptr, actions);
+        checkEqual(actions[0], 39, "a one-handed staff swings a sword");
+    } else {
+        check(false, "the Skull Staff is one-handed in the arms");
+    }
+    if (const content::Arm* thunder = arm("Staff04"); thunder && thunder->twoHanded()) {
+        checkEqual(sim::attackActions(thunder, nullptr, actions), 2, "a two-handed staff has two");
+        checkEqual(actions[0], 149, "skill weapon 1");
+        checkEqual(actions[1], 150, "skill weapon 2");
+    } else {
+        check(false, "the Thunder Staff is two-handed in the arms");
+    }
     // A shield alone is the client's final else, the fist, which is the empty hand's swing here.
     sim::attackActions(nullptr, shield, actions);
     checkEqual(actions[0], 39, "a shield in the off hand swings as an empty hand does");

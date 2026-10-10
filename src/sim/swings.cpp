@@ -81,11 +81,13 @@ int attackActions(const content::Arm* right, const content::Arm* left, int32_t* 
         return 2;
     }
 
-    // A one-handed staff swings like a sword. A two-handed one falls to MU's fist, and the fist
-    // is the empty hand's swing here (above), so it swings the sword's pair as well.
+    // A one-handed staff swings like a sword. A two-handed one swings MU's Skill weapon 1 and 2,
+    // 149 and 150, the staff brought round in both hands (ZzzCharacter.cpp:1188-1194: a coin
+    // there, the counter here). It once swung the sword's pair, on the reading that MU gave it
+    // the fist, and was drawn with the scythe's first cut.
     if (right && right->group == kStaves) {
-        out[0] = 39;
-        out[1] = 40;
+        out[0] = right->twoHanded() ? 149 : 39;
+        out[1] = right->twoHanded() ? 150 : 40;
         return 2;
     }
 

@@ -137,7 +137,7 @@ void Play::redress() {
         drawn.attackClip = look->library->find(attackSlotFor(look->stance));
         if (drawn.attackClip < 0) drawn.attackClip = look->library->find(38);
     }
-    dualSwings(drawn, look);
+    playerSwings(drawn, look, hero);
 }
 
 const FigureBody* Play::dressOf(const sim::Body& hero, const sim::Satchel& bag,
@@ -191,22 +191,30 @@ const FigureBody* Play::otherLook(const sim::Body& body) {
     return look != nullptr ? look : figures_->body(kHeroFigure);
 }
 
-void Play::dualSwings(Drawn& drawn, const FigureBody* look) const {
-    for (int& clip : drawn.dualClips) clip = -1;
-    const sim::Body& hero = realm_.hero();
-    if (!hero.dual || !look || !look->library) return;
+void Play::playerSwings(Drawn& drawn, const FigureBody* look, const sim::Body& body) const {
+    for (int& clip : drawn.swingClips) clip = -1;
+    drawn.swingCount = 0;
+    drawn.dualSwing = false;
+    if (!look || !look->library) return;
     const auto armAt = [&](int32_t at) -> const content::Arm* {
         return at >= 0 && size_t(at) < tables_.arms.size() ? &tables_.arms[size_t(at)] : nullptr;
     };
+    // The same ladder the realm times his blows by, so the clips drawn are the clips counted.
+    // MU steps most of it by SwordCount and throws a coin for two rungs -- a sword in the off
+    // hand alone, and a two-handed staff's Skill weapon 1 or 2 -- where the counter steps them
+    // too. **ours**, and only in the order they come.
     int32_t actions[4] = {};
-    if (sim::attackActions(armAt(hero.weapon), armAt(hero.shield), actions) != 4) return;
-    for (int i = 0; i < 4; ++i) {
-        drawn.dualClips[i] = look->library->find(actions[i]);
-        if (drawn.dualClips[i] < 0) {
-            for (int& clip : drawn.dualClips) clip = -1;
+    const int count = sim::attackActions(armAt(body.weapon), armAt(body.shield), actions);
+    for (int i = 0; i < count; ++i) {
+        drawn.swingClips[i] = look->library->find(actions[i]);
+        if (drawn.swingClips[i] < 0) {
+            // A rig without the whole cycle keeps the stance's one swing (attackClip).
+            for (int& clip : drawn.swingClips) clip = -1;
             return;
         }
     }
+    drawn.swingCount = count;
+    drawn.dualSwing = count == 4;
 }
 
 void Play::restore(const sim::HeroRecord& saved) {

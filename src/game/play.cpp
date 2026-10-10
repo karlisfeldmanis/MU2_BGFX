@@ -1256,8 +1256,8 @@ void Play::update(double seconds) {
                     const bool cast = swinger->castSkill != 0 && swinger->castClip >= 0;
                     int swing = swinger->castClip;
                     if (!cast) {
-                        swing = swinger->dualClips[0] >= 0
-                                    ? swinger->dualClips[swinger->swordCount % 4]
+                        swing = swinger->swingCount > 0
+                                    ? swinger->swingClips[swinger->swordCount % swinger->swingCount]
                                 : (swinger->attackClip2 >= 0 && swinger->swordCount % 3 != 0)
                                     ? swinger->attackClip2 : swinger->attackClip;
                         // Counted on the happening that plays the clip and on no other: the
@@ -1284,12 +1284,30 @@ void Play::update(double seconds) {
                     // A pair and a two-handed weapon keep their standing blows, seated by the
                     // drawing (Figure::seat).
                     if (happening.who == realm_.hero().id && realm_.hero().riding &&
-                        (!cast || arrowCast) && swinger->dualClips[0] < 0 &&
+                        (!cast || arrowCast) && !swinger->dualSwing &&
                         swinger->figure.body() && swinger->figure.body()->library &&
                         !twoHandedStance(swinger->figure.body()->stance)) {
                         const FigureBody* look = swinger->figure.body();
                         const int ridden = look->library->find(rideSlotFor(look->stance));
                         if (ridden >= 0) swing = ridden;
+                    }
+                    // On wings, a bow or crossbow shoots MU's fly shot: PLAYER_ATTACK_FLY_BOW 52
+                    // and _FLY_CROSSBOW 53 for 50 and 51 (ZzzCharacter.cpp:1196-1209), an arrow
+                    // skill too. MU asks only whether wings are worn; here whether he flies
+                    // (sim::Body::flying), which is what stands him in the fly stance it is cut
+                    // from. The same keys and play speed, so the realm's timing holds.
+                    if (const sim::Body* flier = realm_.find(happening.who);
+                        flier && flier->flying && swing >= 0 && swinger->figure.body() &&
+                        swinger->figure.body()->library) {
+                        const content::CookedClips& clips =
+                            swinger->figure.body()->library->clips;
+                        if (size_t(swing) < clips.clips.size()) {
+                            const int slot = clips.clips[size_t(swing)].slot;
+                            if (slot == 50 || slot == 51) {
+                                const int shot = swinger->figure.body()->library->find(slot + 2);
+                                if (shot >= 0) swing = shot;
+                            }
+                        }
                     }
                     if (pose && swing >= 0 && swinger->figure.body()) {
                         // A skill blends in longer than a swing does. An ordinary blow is a jab

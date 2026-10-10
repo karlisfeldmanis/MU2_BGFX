@@ -875,10 +875,15 @@ private:
         bool visible = false;
         int attackClip = -1;     // Attack 1, this body's first swing, found once at open
         int attackClip2 = -1;    // Attack 2, the second swing; -1 for breeds that have none
-        // A knight with a weapon in each hand swings both, right 1, left 1, right 2, left 2 by
-        // the swing counter (sim::attackActions, MuMain ZzzCharacter.cpp:1166-1173). -1 when he
-        // holds fewer than two, and then attackClip is his swing as before.
-        int dualClips[4] = {-1, -1, -1, -1};
+        // A player's swings in the order the swing counter steps through them
+        // (sim::attackActions, MuMain ZzzCharacter.cpp:1154-1212): a sword's two cuts, a
+        // two-handed blade's or a scythe's three, a knight's four with a weapon in each hand
+        // (right 1, left 1, right 2, left 2). swingCount 0 for a body that is not a player, and
+        // then attackClip and attackClip2 are its swing as before. `dualSwing` while he holds
+        // two weapons, whose swings keep their standing blows on a horse.
+        int swingClips[4] = {-1, -1, -1, -1};
+        int swingCount = 0;
+        bool dualSwing = false;
         int deathClip = -1;      // MONSTER01_DIE, found once at open the same way
         // How much of it is there at its fullest: MU's AlphaTarget, 1 but for the Ghost's 0.4.
         float seeThrough = 1.0f;
@@ -1110,8 +1115,8 @@ private:
     // A figure for a body: what Play::open makes for each, and what a body that joins after it
     // is given (a player come into a shared world, and his summon's slot).
     Drawn drawnFor(const sim::Body& body, const FigureBody* heroLook, size_t* bones);
-    // The hero's four alternating swings into `drawn.dualClips` while he holds two weapons.
-    void dualSwings(Drawn& drawn, const FigureBody* look) const;
+    // A player's cycle of swings into `drawn.swingClips`, by what is in his hands.
+    void playerSwings(Drawn& drawn, const FigureBody* look, const sim::Body& body) const;
     // Where a spell leaves a caster thrown at `to`: the middle of his chest, a little toward it.
     // False when there is no figure to measure, and `out` is then his feet.
     bool castFrom(const Drawn& caster, const float to[3], float out[3]) const;
