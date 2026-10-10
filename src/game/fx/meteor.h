@@ -31,6 +31,7 @@
 #include "content/showing.h"
 #include "content/texture.h"
 #include "game/fx/effect_mesh.h"
+#include "game/fx/quake.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
 
@@ -138,6 +139,8 @@ public:
     // of tilted, as this was first written, it is four millimetres on a camera six metres out,
     // which is nothing at all.
     float quakeDegrees() const { return quake_; }
+    // Where the hero stands, set each frame before update: what shakes him (fx/quake.h).
+    QuakeFor quakeFor;
 
     uint32_t liveMeteors() const;
     uint32_t liveStones() const;

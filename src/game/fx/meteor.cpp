@@ -576,9 +576,12 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
             // one global does.
             const float jolt = float(int(roll() % 4) - 4) * 0.1f;
             // A shower's pebbles land without one; past kQuakeFrom it grows to MU's whole.
-            if (!m.shower) quake_ = jolt;
-            else if (m.weight > kQuakeFrom) {
-                quake_ = jolt * std::min(1.0f, (m.weight - kQuakeFrom) / (kQuakeFull - kQuakeFrom));
+            // And only one that reaches him (fx/quake.h).
+            if (quakeFor.shakes(m.attacker, m.x, m.z)) {
+                if (!m.shower) quake_ = jolt;
+                else if (m.weight > kQuakeFrom) {
+                    quake_ = jolt * std::min(1.0f, (m.weight - kQuakeFrom) / (kQuakeFull - kQuakeFrom));
+                }
             }
             m.alive = false;
         }

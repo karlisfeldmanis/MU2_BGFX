@@ -31,6 +31,7 @@
 #include "content/ground.h"
 #include "content/texture.h"
 #include "game/fx/effect_mesh.h"
+#include "game/fx/quake.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
 
@@ -53,6 +54,8 @@ public:
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
     // MU's EarthQuake, in degrees of camera pitch, as fx/meteor.h's.
     float quakeDegrees() const { return quake_; }
+    // Where the hero stands, set each frame before update: what shakes him (fx/quake.h).
+    QuakeFor quakeFor;
     void clear();
 
 private:
@@ -102,7 +105,7 @@ void Hellfire::update(float seconds, Stone stone) {
         ring.sigil -= frames;
         ring.wall -= frames;
         if (ring.wall > 0.0f) {
-            shaking = true;
+            shaking = shaking || quakeFor.near(ring.at[0], ring.at[2]);
             // A stone on one frame in four, somewhere within 300 units of the middle.
             if (float(roll() % 10000u) / 10000.0f < frames / float(kStoneOdds)) {
                 const float reach = float(roll() % uint32_t(kStoneReach)) * kUnit;

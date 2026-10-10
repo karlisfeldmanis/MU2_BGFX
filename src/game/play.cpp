@@ -1897,6 +1897,14 @@ void Play::update(double seconds) {
     bones_.update(float(seconds));
     // The Lich's meteors: advance every live one, collect impacts.
     meteorImpacts_.clear();
+    {
+        QuakeFor here{realm_.hero().id};
+        if (const Drawn* me = drawnOf(here.hero); me != nullptr && me->placed) {
+            here.x = me->crown[0];
+            here.z = me->crown[2];
+        }
+        meteor_.quakeFor = fury_.quakeFor = hellfire_.quakeFor = here;
+    }
     meteor_.update(float(seconds), meteorImpacts_);
     // Cometfall's landings, each Ice's crystals and an impact as a rock's is: the
     // explosion's sound, the shock round it and the blow's cue (MoveHandlers.cpp:2550-2573).

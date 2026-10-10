@@ -142,7 +142,9 @@ void Fury::agePieces(float frames, float& craterLight) {
         // EarthQuake01 shakes the camera on every third frame while it is over fifteen.
         if (piece.kind == Kind::Crater) {
             for (int f = int(std::ceil(before)) - 1; float(f) > piece.left - 1.0f && f > 15; --f) {
-                if (f % 3 == 0) quake_ = float(int(roll() % 8u) - 4) * 0.1f;
+                if (f % 3 == 0 && quakeFor.near(piece.at[0], piece.at[2])) {
+                    quake_ = float(int(roll() % 8u) - 4) * 0.1f;
+                }
             }
             craterLight = std::max(craterLight, piece.left);
         }

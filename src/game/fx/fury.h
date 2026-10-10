@@ -55,6 +55,7 @@
 #include "content/showing.h"
 #include "content/texture.h"
 #include "game/fx/effect_mesh.h"
+#include "game/fx/quake.h"
 #include "game/fx/forge.h"
 #include "game/shine.h"
 #include "gfx/effects.h"
@@ -93,6 +94,8 @@ public:
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
     // MU's EarthQuake, in degrees of camera pitch, as fx/meteor.h's.
     float quakeDegrees() const { return quake_; }
+    // Where the hero stands, set each frame before update: what shakes him (fx/quake.h).
+    QuakeFor quakeFor;
     void clear();
 
 private:
