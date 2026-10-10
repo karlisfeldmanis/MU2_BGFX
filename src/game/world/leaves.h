@@ -114,8 +114,12 @@ public:
     // for its leaves, and a drop dies at the unseen plane with no ring, as MU kills it there
     // (ZzzEffectFireLeave.cpp:376-377). docs/icarus-port.md.
     void setSky(bool sky) { sky_ = sky; }
+    // Devil Square's rain: open air though the map is "underground" for its wind, and a drop
+    // rings where it lands, as MU's MoveDevilSquareRain does one in four (ZzzEffectFireLeave.cpp:
+    // 322-345). docs/devil-square-port.md.
+    void setRoofless(bool on) { roofless_ = on; }
     // Whether its air is open though the map is "underground": Atlans's motes, Tarkan's sand.
-    bool openAir() const { return motes_ || sand_ || sky_; }
+    bool openAir() const { return motes_ || sand_ || sky_ || roofless_; }
     // The wind the snow is flying on now, for the grass to bow to (gfx::GrassField::storm):
     // how hard, 0 calm to 1 a full storm's gust at its strongest, and which way on the level
     // (world x and z). Nought and still outside a blizzard.
@@ -206,6 +210,7 @@ private:
     bool snow_ = false;
     bool sand_ = false;  // setSand
     bool sky_ = false;   // setSky
+    bool roofless_ = false;  // setRoofless
     bool motes_ = false;
     float storm_ = 0.0f;  // setStorm: how far Devias's blizzard is in, 0 to 1
     // The blizzard's wind, which wanders: its heading off the leaves' -x in radians and its

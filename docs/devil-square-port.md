@@ -1346,6 +1346,12 @@ Each step is small and lands on its own. Run from `MU2_BGFX/`. `checks` = `cmake
 - Done when (`testSquare`, ticks only): Waiting until the window closes; at 0 s wave 1's bodies
   rise; at the wave's end its dead stay down; the bosses rise once at their second; at the end,
   `sentOut` and every player is owed Noria; a death inside sends him to Noria.
+- **The rain stops when the square ends** (the user, 2026-10-10: 'we need that rain never stops at
+  devil square only at the end when DS is ended'). Until then it never stops (Weather::open, a
+  forced wet spell at kSquarePeak). When the run's phase turns to its end, the client's weather
+  is let dry: wet_ false on the forced spell, so it eases out over the rain's own four-second turn
+  while the result window shows, before everyone is sent to Noria. Done when: a headless run with
+  a short `--square-period` logs the rain easing out at the end, not before.
 
 **Step 6. Score, rank, rewards, the window.**
 - `Player::squareScore/squareRank`; the score in `kill` once; the rank and pay at the end; the

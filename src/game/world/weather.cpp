@@ -14,6 +14,10 @@ constexpr float kSandShare = 0.2f;
 // ZzzEffectFireLeave.cpp:431-434), every leaf slot a drop; ours a faint steady share of the
 // pool, under Lorencia's drizzle (the user's 'rain faint'). docs/icarus-port.md.
 constexpr float kSkyShare = 0.25f;
+// Devil Square's rain, never stopping: a quarter of Lorencia's drizzle of the pool, so the
+// streaks and their rings are fewer (the user, 2026-10-10: 'make rain less vissible' at 0.33, then 'stil to much' at 0.18).
+// MU's is all 200 of its slots. Ours.
+constexpr float kSquarePeak = 0.08f;
 
 
 // How long each of Noria's spells lasts, in seconds, drawn afresh each time between these.
@@ -166,8 +170,9 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // user, 2026-10-05: 'dust effect which has devias, this is a desert style map').
     snows_ = world == "devias" || world == "tarkan";
     sky_ = world == "icarus";
-    rains_ = world == "noria" || world == "lorencia" || snows_ || sky_;
-    peak_ = world == "lorencia" ? 0.33f : snows_ ? 0.0f : 1.0f;
+    const bool square = world == "devilsquare";
+    rains_ = world == "noria" || world == "lorencia" || snows_ || sky_ || square;
+    peak_ = world == "lorencia" ? 0.33f : square ? kSquarePeak : snows_ ? 0.0f : 1.0f;
     jungle_ = world == "noria";
     // Tarkan's never stops, and never builds to Devias's full blizzard: the wind always up at
     // kSandShare, no calm and no spell (the user, 2026-10-05: 'tarkan storm has to happpen all the
@@ -185,6 +190,19 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
         wet_ = true;
         steady_ = kSkyShare;
         share_ = kSkyShare;
+    }
+    // Devil Square's never stops: MU's rain has no dry spell there (CreateDevilSquareRain, no
+    // RainTarget ramp, ZzzEffectFireLeave.cpp:121-170, 431-457) and aRain.wav loops the whole
+    // time (ZzzObject.cpp:3687). Ours: fainter than Lorencia's drizzle (kSquarePeak), and the rain system's own thunder and flash in place of MU's silent blue flicker (the
+    // user, 2026-10-10: 'lets use already rain system which we has'). Held as a forced spell
+    // at its full share, so the loop and the claps run; --weather still wins. It stops only
+    // when the square's run ends (the user, 2026-10-10: 'only at the end when DS is ended');
+    // the event is not built yet, docs/devil-square-port.md step 5.
+    if (square && force.empty()) {
+        forced_ = true;
+        wet_ = true;
+        share_ = 1.0f;
+        strikeLater();
     }
     if (force == "rain" || force == "dry" || force == "storm") {
         forced_ = true;
@@ -217,6 +235,7 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     if (rains_ || jungle_) {
         core::logf("weather %s: %s%s", world.c_str(),
                    steady_ > 0.0f ? (sky_ ? "a steady faint rain" : "a steady sandstorm")
+                   : square && force.empty() ? "a rain that never stops"
                    : forced_ ? (storm_ ? "a storm, held by --weather"
                            : wet_ ? (snows_ ? "a blizzard, held by --weather"
                                             : "raining, held by --weather")

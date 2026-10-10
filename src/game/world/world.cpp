@@ -245,6 +245,11 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
         leaves_.open(assetDir, *textures_, play_.showing().table(), true);
         leaves_.setSand(true);
     }
+    // And Devil Square's, which never stops (game/world/weather.cpp), with its rings.
+    else if (name == "devilsquare") {
+        leaves_.open(assetDir, *textures_, play_.showing().table());
+        leaves_.setRoofless(true);
+    }
     // And Icarus's rain, every slot of it (game/world/weather.cpp), with no ring.
     else if (name == "icarus") {
         leaves_.open(assetDir, *textures_, play_.showing().table());

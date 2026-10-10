@@ -228,6 +228,7 @@ void Leaves::shutdown() {
     snow_ = false;
     sand_ = false;
     sky_ = false;
+    roofless_ = false;
     motes_ = false;
     blowing_ = falling_ = 0;
 }
@@ -273,8 +274,8 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
         indoors = false;
         rain = 0.0f;
     }
-    // Nor has Icarus a roof; its rain falls.
-    if (sky_) indoors = false;
+    // Nor has Icarus a roof, nor Devil Square; their rain falls.
+    if (sky_ || roofless_) indoors = false;
     const float factor = seconds * kReference;
     uint32_t live = 0;
 
