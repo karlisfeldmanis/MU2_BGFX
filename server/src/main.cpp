@@ -440,6 +440,8 @@ void sendParty(const Party& party, std::vector<std::unique_ptr<Session>>& sessio
                     out.mana = uint8_t(std::clamp(him->maxMana > 0 ? 100 * him->mana / him->maxMana : 0, 0, 100));
                     out.shield = him->maxSd > 0 ? uint8_t(std::clamp(100 * him->sd / him->maxSd, 0, 100))
                                                 : net::PartyState::kNoShield;
+                    out.life = him->health;
+                    out.lifeMost = him->maxHealth;
                 }
             }
             state.members.push_back(std::move(out));

@@ -345,6 +345,10 @@ void put(std::vector<uint8_t>& out, const PartyState& one) {
             o.u8(m.bot ? 1 : 0);
         }
         for (const PartyState::Member& m : one.members) o.u8(m.shield);
+        for (const PartyState::Member& m : one.members) {
+            o.i32(m.life);
+            o.i32(m.lifeMost);
+        }
     });
 }
 
@@ -575,6 +579,13 @@ bool parse(const std::vector<uint8_t>& body, PartyState& out) {
     // The shields, after the members: none from a server older than them.
     if (in.ok && in.at < body.size()) {
         for (PartyState::Member& m : out.members) m.shield = in.u8();
+    }
+    // And their health in points, after the shields.
+    if (in.ok && in.at < body.size()) {
+        for (PartyState::Member& m : out.members) {
+            m.life = in.i32();
+            m.lifeMost = in.i32();
+        }
     }
     return in.done();
 }

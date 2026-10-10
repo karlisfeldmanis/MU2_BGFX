@@ -184,6 +184,10 @@ struct PartyState {
         // SD, percent; kNoShield when he has none, or from a server older than the field. Sent
         // after the members, so a client reads an older server's PartyState as before.
         uint8_t shield = 255;
+        // His health in points, and its most: -1 from a server older than them. After the
+        // shields, the same way.
+        int32_t life = -1;
+        int32_t lifeMost = -1;
     };
     static constexpr uint8_t kNoShield = 255;
     std::vector<Member> members;

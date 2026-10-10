@@ -556,7 +556,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
                      (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play);
         if (toggleChat) click();
-        partyBar_.update(play);
+        partyBar_.update(seconds, play);
     }
     // Read by the journal's L on the next frame, which runs ahead of the HUD.
     if (toggleQuest) questButton_ = true;

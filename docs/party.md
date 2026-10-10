@@ -246,5 +246,12 @@ container for each player", then "we need to see who is party/raid leader":
   the end of PartyState (Member::shield, kNoShield when none), so this client reads an older
   server's message, but an older client cannot read the new server's: the server, netbot and
   clients go to Hetzner together.
+- Then the plate itself, from claude.ai/artifact/SZeaqasTC3p9e39CBF5Af6 and its exploration
+  claude.ai/artifact/AnKTqqjjmk75iDMPcqpojj: "Capsule with numbers is correct direction, which we
+  can use for party and also raid". Each member is one rounded capsule, SD along its top, health
+  the body, mana the foot; the name on a dark band over the health's left with the level after
+  it; at the right his health in points (party; Member::life and lifeMost, after the shields on
+  the wire) or its percent (raid). A pale trail drains after a blow; under 30% the fill turns
+  hot and pulses; on another map greyed with the map's name; dead struck through, "Dead".
 - `--invite A,B` asks them into his party until they are in: a review run's party from local
   netbots (`--parties` takes a player's invite).

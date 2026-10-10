@@ -5,6 +5,7 @@
 
 #include "game/play.h"
 #include "game/ui/controls.h"
+#include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "sim/realm_tuning.h"
@@ -21,23 +22,36 @@ uint32_t faded(uint32_t abgr, float alpha) {
 // Measures in tip::unit(), a pixel at 1080 lines. The column's top sits this far above the
 // screen's middle, clear of the exp lane's ten rows in the corner above it.
 constexpr float kLeft = 16.0f, kAboveMiddle = 188.0f, kWide = 240.0f;
-// A member's plate: padded round a name and three bars -- SD, health, mana (the user,
-// 2026-10-10: "we need to show also shield value because that one of the main stats").
-constexpr float kPlate = 50.0f, kPlateGap = 6.0f, kPad = 10.0f, kRadius = 6.0f;
-constexpr float kName = 16.0f, kShield = 3.0f, kHealth = 6.0f, kMana = 3.0f, kBarGap = 1.5f;
-// A raider's line: a name and three hairlines stacked, SD over health over mana (the user:
-// "we need to show mana also in raids").
-constexpr float kLine = 24.0f, kLineGap = 3.0f, kLineRadius = 4.0f, kLineName = 13.0f;
-constexpr float kLineShield = 2.0f, kLineHealth = 4.0f, kLineMana = 2.0f, kLineBarGap = 1.0f;
-constexpr float kLineBarLeft = 108.0f;  // where the bar starts, past the longest names
-constexpr size_t kRaidMost = 15;          // then "+N more"
-constexpr uint32_t kGold = gfx::rgba(0.878f, 0.714f, 0.361f);      // the leader: the tracker's gold
-constexpr uint32_t kWell = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);       // under a bar
-constexpr uint32_t kPlateInk = gfx::rgba(0.020f, 0.012f, 0.012f, 0.62f);  // style::kVoid, see-through
-constexpr uint32_t kLow = gfx::rgba(0.878f, 0.341f, 0.239f);         // a raider under 30%
-constexpr uint32_t kSd = gfx::rgba(0.906f, 0.592f, 0.231f);          // SD: the HUD's amber bar
-constexpr float kAway = 0.5f;  // a member on another map, this much of himself
-constexpr float kDead = 0.45f;
+constexpr size_t kRaidMost = 15;  // raid lines, then "+N more"
+
+// A capsule's make: its three bands top to foot, its corner, the gap under it, and its words.
+struct Make {
+    float shield, life, mana, radius, gap;
+    float name, tag, number;  // the name's size, the level tag's, the number's
+    float band;               // the dark band behind the name, a share of the width
+};
+constexpr Make kPlate{3.0f, 18.0f, 4.0f, 5.0f, 7.0f, 15.0f, 9.0f, 13.0f, 0.6f};  // a party member
+constexpr Make kLine{2.0f, 14.0f, 3.0f, 4.0f, 4.0f, 12.5f, 0.0f, 11.0f, 0.55f};  // a raider
+
+constexpr uint32_t kGold = gfx::rgba(0.878f, 0.714f, 0.361f);  // the leader: the tracker's gold
+constexpr uint32_t kWell = gfx::rgba(0.024f, 0.016f, 0.016f, 0.78f);
+constexpr uint32_t kBand = gfx::rgba(0.024f, 0.016f, 0.016f, 0.78f);  // behind the name, fading out
+constexpr uint32_t kSeam = gfx::rgba(0.0f, 0.0f, 0.0f, 0.6f);         // between the bands
+// The fills, each a top and a foot.
+constexpr uint32_t kShieldTop = gfx::rgba(0.949f, 0.698f, 0.353f), kShieldFoot = gfx::rgba(0.906f, 0.592f, 0.231f);
+constexpr uint32_t kLifeTop = gfx::rgba(0.761f, 0.176f, 0.141f), kLifeFoot = gfx::rgba(0.478f, 0.090f, 0.071f);
+constexpr uint32_t kLowTop = gfx::rgba(0.878f, 0.341f, 0.239f), kLowFoot = gfx::rgba(0.631f, 0.169f, 0.102f);
+constexpr uint32_t kAwayTop = gfx::rgba(0.490f, 0.353f, 0.333f), kAwayFoot = gfx::rgba(0.302f, 0.224f, 0.212f);
+constexpr uint32_t kManaTop = gfx::rgba(0.239f, 0.471f, 0.878f), kManaFoot = gfx::rgba(0.137f, 0.310f, 0.659f);
+constexpr uint32_t kTrail = gfx::rgba(0.941f, 0.702f, 0.604f, 0.85f);  // health just lost
+constexpr uint32_t kPulse = gfx::rgba(1.0f, 0.416f, 0.290f);           // under 30%, breathing
+constexpr uint32_t kDead = gfx::rgba(0.816f, 0.341f, 0.298f);          // the word
+constexpr uint32_t kNumber = gfx::rgba(0.965f, 0.918f, 0.847f);
+constexpr uint32_t kGhost = gfx::rgba(0.553f, 0.518f, 0.471f);         // a dead one's name
+constexpr float kLow = 30.0f;     // percent: the fill turns hot and pulses
+constexpr float kAway = 0.6f;     // a member on another map, this much of himself
+constexpr float kTrailRate = 4.0f;  // the trail closes by e^-rate a second
+constexpr float kPulseRate = 5.7f;  // radians a second: a breath about every 1.1 s
 
 bool same(const net::PartyState& a, const net::PartyState& b) {
     if (a.members.size() != b.members.size()) return false;
@@ -45,7 +59,8 @@ bool same(const net::PartyState& a, const net::PartyState& b) {
         const auto& x = a.members[i];
         const auto& y = b.members[i];
         if (x.name != y.name || x.level != y.level || x.world != y.world || x.here != y.here ||
-            x.health != y.health || x.mana != y.mana || x.shield != y.shield) {
+            x.health != y.health || x.mana != y.mana || x.shield != y.shield || x.life != y.life ||
+            x.lifeMost != y.lifeMost) {
             return false;
         }
     }
@@ -122,11 +137,83 @@ float heading(gfx::Canvas& canvas, float x, float y, float u, const std::string&
     return y + 20.0f * u;
 }
 
+// What one capsule says.
+struct Capsule {
+    std::string name;
+    std::string tag;     // the level after the name, or empty
+    std::string number;  // at the right: his health, its percent, a map's name, or empty
+    float shield = -1.0f, life = 0.0f, mana = -1.0f, trail = 0.0f;  // shares, -1 for none
+    bool leader = false, away = false, dead = false;
+};
+
+// A band's fill from the left, rounded at the capsule's corners only where it reaches them.
+void fill(gfx::Canvas& canvas, const gfx::Box& band, float share, uint32_t top, uint32_t foot, float a,
+          float topRadius, float footRadius) {
+    if (share <= 0.0f) return;
+    const float w = band.w * std::min(share, 1.0f);
+    const bool full = share >= 0.999f;
+    const float r[4] = {topRadius, full ? topRadius : 0.0f, full ? footRadius : 0.0f, footRadius};
+    if (topRadius > 0.0f || footRadius > 0.0f) {
+        tip::rounded(canvas, {band.x, band.y, w, band.h}, r, faded(top, a), faded(foot, a));
+    } else {
+        canvas.shade({band.x, band.y, w, band.h}, faded(top, a), faded(top, a), faded(foot, a), faded(foot, a));
+    }
+}
+
+// One member: the capsule at `x`, `y`, `make`'s size. Returns its height with the gap under it.
+float capsule(gfx::Canvas& canvas, float x, float y, float u, const Make& make, const Capsule& c,
+              float pulse) {
+    const float a = c.away ? kAway : 1.0f;
+    const float wide = kWide * u, r = make.radius * u;
+    const float sh = make.shield * u, lh = make.life * u, mh = make.mana * u, tall = sh + lh + mh;
+    const float corners[4] = {r, r, r, r};
+    tip::rounded(canvas, {x, y, wide, tall}, corners, faded(kWell, a));
+    // SD along the top, health the body, mana the foot.
+    if (c.shield >= 0.0f) fill(canvas, {x, y, wide, sh}, c.shield, kShieldTop, kShieldFoot, a, r, 0.0f);
+    const gfx::Box body{x, y + sh, wide, lh};
+    const bool low = !c.dead && !c.away && c.life * 100.0f < kLow;
+    fill(canvas, body, c.life, c.away ? kAwayTop : low ? kLowTop : kLifeTop,
+         c.away ? kAwayFoot : low ? kLowFoot : kLifeFoot, a, 0.0f, 0.0f);
+    if (c.trail > c.life + 0.002f) {
+        canvas.rect({x + wide * c.life, body.y, wide * (std::min(c.trail, 1.0f) - c.life), lh}, faded(kTrail, a));
+    }
+    if (low && pulse > 0.0f) canvas.rect({x, body.y, wide * c.life, lh}, faded(kPulse, 0.45f * pulse));
+    if (c.mana >= 0.0f) fill(canvas, {x, y + sh + lh, wide, mh}, c.mana, kManaTop, kManaFoot, a, 0.0f, r);
+    canvas.rect({x, body.y, wide, 0.8f * u}, kSeam);
+    canvas.rect({x, body.y + lh - 0.8f * u, wide, 0.8f * u}, kSeam);
+    // The dark band behind the name, fading into the fill.
+    const float band = wide * make.band;
+    canvas.shade({x, body.y, band * 0.35f, lh}, faded(kBand, a), faded(kBand, a * 0.8f), faded(kBand, a * 0.8f),
+                 faded(kBand, a));
+    canvas.shade({x + band * 0.35f, body.y, band * 0.65f, lh}, faded(kBand, a * 0.8f), 0u, 0u, faded(kBand, a * 0.8f));
+
+    // The words, on the health's middle.
+    const float base = body.y + lh * 0.5f + make.name * u * 0.36f;
+    float at = x + 8.0f * u;
+    if (c.leader) {
+        crown(canvas, at, base, make.name / 15.0f * u, faded(kGold, a));
+        at += make.name / 15.0f * 17.0f * u;
+    }
+    const uint32_t ink = c.dead ? kGhost : c.leader ? kGold : style::kBoneHi;
+    const float named = controls::label(canvas, at, base, make.name * u, faded(ink, a), c.name);
+    if (c.dead) canvas.rect({at, base - make.name * u * 0.3f, named, 1.0f * u}, faded(kGhost, a));
+    if (!c.tag.empty() && make.tag > 0.0f) {
+        controls::caps(canvas, at + named + 5.0f * u, base, make.tag * u, faded(style::kAshInk, a), c.tag, 0.08f);
+    }
+    const float right = x + wide - 7.0f * u;
+    if (c.dead) {
+        controls::caps(canvas, right - controls::capsWidth(make.number * u, "Dead"), base, make.number * u, kDead, "Dead");
+    } else if (!c.number.empty()) {
+        controls::ranged(canvas, right, base, make.number * u, faded(c.away ? style::kBone2 : kNumber, a), c.number);
+    }
+    return tall + make.gap * u;
+}
+
 }  // namespace
 
 void PartyBar::open(const gfx::Interface& interface) { interface.adopt(canvas_); }
 
-void PartyBar::update(const Play& play) {
+void PartyBar::update(float seconds, const Play& play) {
     if (!play.isOpen()) {
         showing_ = false;
         return;
@@ -136,8 +223,29 @@ void PartyBar::update(const Play& play) {
     const net::PartyState& party = play.party();
     std::vector<Raider> raid = raidOf(play);
     const float u = tip::unit();
-    if (same(party, drawn_) && raid == raid_ && me == me_ && u == unit_) {
-        return;  // redrawn on a change only
+
+    // The trails: up at once to a heal, down by easing to a blow. Anyone low keeps it moving too.
+    bool moving = false;
+    const auto ease = [&](const std::string& name, float share, bool alive) {
+        auto [it, fresh] = trail_.try_emplace(name, share);
+        float& t = it->second;
+        if (fresh || share >= t || !alive) {
+            t = share;
+        } else {
+            t = share + (t - share) * std::exp(-kTrailRate * seconds);
+            if (t - share < 0.002f) t = share;
+            else moving = true;
+        }
+        if (alive && share * 100.0f < kLow) moving = true;
+    };
+    for (const auto& member : party.members) {
+        if (member.name != me) ease(member.name, float(member.health) / 100.0f, member.health > 0 && member.here != 0);
+    }
+    for (const Raider& one : raid) ease(one.name, float(one.health) / 100.0f, one.health > 0);
+    clock_ = moving ? clock_ + seconds : 0.0f;
+
+    if (same(party, drawn_) && raid == raid_ && me == me_ && u == unit_ && !moving) {
+        return;  // redrawn on a change only, or while something moves
     }
     drawn_ = party;
     raid_ = std::move(raid);
@@ -149,43 +257,40 @@ void PartyBar::update(const Play& play) {
         if (member.name != me) others.push_back(&member);
     }
     showing_ = !others.empty() || !raid_.empty();
-    if (!showing_) return;
+    if (!showing_) {
+        trail_.clear();
+        return;
+    }
+    const float pulse = 0.5f - 0.5f * std::cos(clock_ * kPulseRate);
+    const auto trailOf = [&](const std::string& name) {
+        const auto it = trail_.find(name);
+        return it != trail_.end() ? it->second : 0.0f;
+    };
 
-    const float x = kLeft * u, wide = kWide * u;
+    const float x = kLeft * u;
     float y = (540.0f - kAboveMiddle) * u;  // the unit is 1080 lines' pixel
     // Who leads: the server's first member (net::PartyState); in the --raid harness, the hero,
     // whose party it is (Play::raidParty's first).
     const std::string partyLeader = party.members.empty() ? std::string()
                                     : party.members.front().name == me ? "You"
                                                                        : party.members.front().name;
-    if (!others.empty()) y = heading(canvas_, x + 2.0f * u, y, u, "Party", partyLeader);
+    if (!others.empty()) y = heading(canvas_, x + 2.0f * u, y + 2.0f * u, u, "Party", partyLeader);
     for (const auto* member : others) {
-        const bool leader = member == &party.members.front();
-        const float a = member->here != 0 ? 1.0f : kAway;
-        const float r[4] = {kRadius * u, kRadius * u, kRadius * u, kRadius * u};
-        tip::rounded(canvas_, {x, y, wide, kPlate * u}, r, faded(kPlateInk, a));
-        const float left = x + kPad * u, inner = wide - 2.0f * kPad * u, base = y + (kPad + 13.0f) * u;
-        float nameX = left;
-        if (leader) {
-            crown(canvas_, left, base - 2.0f * u, u, faded(kGold, a));
-            nameX += 17.0f * u;
-        }
-        controls::label(canvas_, nameX, base, kName * u, faded(leader ? kGold : style::kBoneHi, a), member->name);
-        const std::string right =
-            member->here != 0 ? "Lv " + std::to_string(member->level) : mapName(member->world);
-        controls::ranged(canvas_, left + inner, base, 14.0f * u, faded(style::kAshInk, a), right);
-        // SD over health over mana; with no SD to show, its row stays empty so plates line up.
-        float barY = base + 6.0f * u;
-        const auto bar = [&](float tall, float share, uint32_t ink) {
-            canvas_.rect({left, barY, inner, tall * u}, kWell);
-            canvas_.rect({left, barY, inner * share, tall * u}, faded(ink, a));
-            barY += (tall + kBarGap) * u;
-        };
-        if (member->shield != net::PartyState::kNoShield) bar(kShield, float(member->shield) / 100.0f, kSd);
-        else barY += (kShield + kBarGap) * u;
-        bar(kHealth, float(member->health) / 100.0f, style::kLife);
-        bar(kMana, float(member->mana) / 100.0f, style::kMana);
-        y += (kPlate + kPlateGap) * u;
+        Capsule c;
+        c.name = member->name;
+        c.leader = member == &party.members.front();
+        c.away = member->here == 0;
+        c.dead = !c.away && member->health == 0;
+        c.tag = c.away ? std::string() : std::to_string(member->level);
+        // His health in points where the server says them; else its percent.
+        c.number = c.away ? mapName(member->world)
+                   : member->life >= 0 ? panel::grouped(member->life)
+                                       : std::to_string(member->health) + "%";
+        c.shield = member->shield != net::PartyState::kNoShield ? float(member->shield) / 100.0f : -1.0f;
+        c.life = float(member->health) / 100.0f;
+        c.mana = float(member->mana) / 100.0f;
+        c.trail = trailOf(member->name);
+        y += capsule(canvas_, x, y, u, kPlate, c, pulse);
     }
     if (raid_.empty()) return;
 
@@ -196,29 +301,22 @@ void PartyBar::update(const Play& play) {
     const std::string raidLeader = play.realm().raiderCount() > 0 ? "You" : partyLeader;
     y = heading(canvas_, x + 2.0f * u, y, u, "Raid " + std::to_string(raid_.size() + others.size() + 1),
                 raidLeader);
-    const float r[4] = {kLineRadius * u, kLineRadius * u, kLineRadius * u, kLineRadius * u};
+    y += 2.0f * u;
     const size_t shown = raid_.size() > kRaidMost ? kRaidMost - 1 : raid_.size();
     for (size_t i = 0; i < shown; ++i) {
         const Raider& one = raid_[i];
-        const float a = one.health > 0 ? 1.0f : kDead;
-        tip::rounded(canvas_, {x, y, wide, kLine * u}, r, faded(kPlateInk, a * 0.85f));
-        controls::label(canvas_, x + 8.0f * u, y + 15.5f * u, kLineName * u, faded(style::kBone2, a), one.name);
-        const float barX = x + kLineBarLeft * u, barW = wide - kLineBarLeft * u - 8.0f * u;
-        float barY = y + (kLine - kLineShield - kLineHealth - kLineMana - 2.0f * kLineBarGap) * 0.5f * u;
-        const auto bar = [&](float tall, int share, uint32_t ink) {
-            if (share >= 0) {
-                canvas_.rect({barX, barY, barW, tall * u}, kWell);
-                canvas_.rect({barX, barY, barW * float(share) / 100.0f, tall * u}, faded(ink, a));
-            }
-            barY += (tall + kLineBarGap) * u;
-        };
-        bar(kLineShield, one.shield, kSd);
-        bar(kLineHealth, one.health, one.health < 30 ? kLow : style::kLife);
-        bar(kLineMana, one.mana, style::kMana);
-        y += (kLine + kLineGap) * u;
+        Capsule c;
+        c.name = one.name;
+        c.dead = one.health == 0;
+        c.number = std::to_string(one.health) + "%";
+        c.shield = one.shield >= 0 ? float(one.shield) / 100.0f : -1.0f;
+        c.life = float(one.health) / 100.0f;
+        c.mana = one.mana >= 0 ? float(one.mana) / 100.0f : -1.0f;
+        c.trail = trailOf(one.name);
+        y += capsule(canvas_, x, y, u, kLine, c, pulse);
     }
     if (shown < raid_.size()) {
-        controls::caps(canvas_, x + 8.0f * u, y + 12.0f * u, 11.0f * u, style::kAshInk,
+        controls::caps(canvas_, x + 8.0f * u, y + 10.0f * u, 11.0f * u, style::kAshInk,
                        "+" + std::to_string(raid_.size() - shown) + " more", 0.2f);
     }
 }
