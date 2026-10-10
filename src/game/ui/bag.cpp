@@ -7,6 +7,7 @@
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
+#include "game/ui/style.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -121,6 +122,9 @@ constexpr float kWornFoot = 203.0f;
 // cut to the foot's strip as the vault's coin buttons are and set against the wells' right edge,
 // with the Zen figure ranged against it.
 constexpr Box kHammer{panel::kWellRight - 30.0f, panel::kFootTop + 1.0f, 30.0f, 24.0f};
+// The gear score's baseline, as a share of the head band: under the title's capitals, clear of
+// the rule.
+constexpr float kScoreLine = 0.86f;
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 
 // A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
@@ -399,10 +403,21 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     const float x = x_, y = y_, k = panel::scale();
     const gfx::Face& face = canvas_.face();
 
-    // **The gear score is the title** (sim::gearScore): the user, 2026-10-10, first "In the head,
-    // beside the title", then on seeing it: "dont show Inventory title, but show gear score
-    // instead". The frame's own centred Cinzel, which shrinks a long title to fit.
-    panel::frame(canvas_, arts, x, y, "Gear Score " + panel::commas(sim::gearScore(tables, bag)));
+    panel::frame(canvas_, arts, x, y, "Inventory");
+    // **The gear score, small under the title** (sim::gearScore): the user, 2026-10-10, "show
+    // inventory big how it was and small font the gear score under the inventory title". An ash
+    // GEAR SCORE and the figure in bone, centred together in the head under the title's capitals.
+    {
+        const float u = tip::unit();
+        const float size = 11.0f * u, small = 9.0f * u, gap = 4.0f * u;
+        const std::string figure = panel::commas(sim::gearScore(tables, bag));
+        const float words = controls::capsWidth(small, "GEAR SCORE");
+        const float wide = words + gap + controls::labelWidth(size, figure);
+        const float from = std::round(x + (panel::kWidth * k - wide) * 0.5f);
+        const float baseline = std::round(y + panel::kHeadBand * k * kScoreLine);
+        controls::caps(canvas_, from, baseline, small, style::kAshInk, "GEAR SCORE");
+        controls::label(canvas_, from + words + gap, baseline, size, style::kBoneHi, figure);
+    }
 
     // **The worn slots: a deep well, and MU's own silhouette in it.** The art is the game's
     // (`bag_slot_helm` and its ten fellows) and it stays -- the user, 2026-09-23: *"it could help
