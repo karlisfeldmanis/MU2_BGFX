@@ -15,6 +15,7 @@ uniform vec4 u_groundBlend;   // x: the flow's cycle  y: its band's row, or -1  
 uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are water, a bit each
 uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)  w: water_variety
 uniform vec4 u_groundWet;     // x: how wet the ground is (ground_wet)  y: how much lies as puddles
+                              // z: how far the land is kept from repeating (ground_variety)
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
 uniform vec4 u_caustic;       // x: MU's caustic frame, 0-31  y: how bright  z: which layers, a bit each
@@ -92,6 +93,17 @@ vec3 varied(vec3 texel, vec3 other, vec2 tile, float variety)
 	return mix(texel, other, pick * variety) * mix(1.0, gain, variety);
 }
 
+// The land kept from repeating (ground_variety; ours): Inigo Quilez's virtual pattern. A slow
+// noise over the land counts through a run of offsets into the sheet, so each patch of a few
+// tiles reads the sheet from another place; between two patches both offsets are read and
+// cross-faded, the fade bent by where their texels differ, so the join follows the stone's own
+// marks rather than a line. Through the land's own derivatives, which the offsets do not change,
+// so no mip seam shows where the count steps. MU stamps one sheet tile after tile, and Devil
+// Square, one sheet on every tile, showed its dark blotches as a grid (the user, 2026-10-10:
+// 'lets work on ground attern formula so it does not look so repeattive').
+#define STILL(s, uv, d) mix(texture2DGrad(s, (uv) + offA, gdx * (d), gdy * (d)), \
+                            texture2DGrad(s, (uv) + offB, gdx * (d), gdy * (d)), detile)
+
 // A layer's texel, or on running water the two dragged copies cross-faded: `run` is a
 // uniform's, so the branch keeps the mips' derivatives whole, and a still layer reads once.
 #define LAYER(s, a, b, run) ((run) ? mix(texture2D(s, a), texture2D(s, b), flowFade) : texture2D(s, a))
@@ -160,14 +172,38 @@ void main()
 	vec2 uv1b = flowB * u_groundRepeat.y;
 	vec2 uv2b = flowB * u_groundRepeat.z;
 
+	// ground_variety's two offsets into the sheet and the fade between them (STILL).
+	float variety = u_groundWet.z;
+	vec3 still = variety > 0.0 ? vec3_splat(1.0) - isWater : vec3_splat(0.0);
+	vec2 gdx = dFdx(v_texcoord0);
+	vec2 gdy = dFdy(v_texcoord0);
+	float count = landNoise(v_texcoord0 * 0.11) * 8.0;
+	vec2 offA = sin(vec2(3.0, 7.0) * floor(count));
+	vec2 offB = sin(vec2(3.0, 7.0) * (floor(count) + 1.0));
+	float detile = 0.0;
+
 	// Only the layers this part has. The branch is on a uniform, so every fragment of a draw
 	// takes the same side and the mips' derivatives stay whole. Most of the land is one
 	// material, and that part reads one set.
-	vec3 albedo0 = LAYER(s_albedo, uv0, uv0b, run0).rgb;
+	vec3 albedo0;
+	if (still.x > 0.5)
+	{
+		vec3 a = texture2DGrad(s_albedo, uv0 + offA, gdx * u_groundRepeat.x, gdy * u_groundRepeat.x).rgb;
+		vec3 b = texture2DGrad(s_albedo, uv0 + offB, gdx * u_groundRepeat.x, gdy * u_groundRepeat.x).rgb;
+		detile = smoothstep(0.2, 0.8, fract(count) - 0.1 * dot(a - b, vec3_splat(1.0)));
+		// And the whole drifting a little lighter and darker over a dozen tiles, the
+		// stone's own wear, so no stretch of it is the stretch beside.
+		float gain = 1.0 + (landNoise(v_texcoord0 * 0.06 + vec2(17.0, 5.0)) - 0.5) * 0.5 * variety;
+		albedo0 = mix(a, b, detile) * gain;
+	}
+	else
+		albedo0 = LAYER(s_albedo, uv0, uv0b, run0).rgb;
 	vec3 albedo1 = albedo0;
 	vec3 albedo2 = albedo0;
-	if (layers > 1.5) albedo1 = LAYER(s_albedo2, uv1, uv1b, run1).rgb;
-	if (layers > 2.5) albedo2 = LAYER(s_albedo3, uv2, uv2b, run2).rgb;
+	if (layers > 1.5) albedo1 = still.y > 0.5 ? STILL(s_albedo2, uv1, u_groundRepeat.y).rgb
+	                                          : LAYER(s_albedo2, uv1, uv1b, run1).rgb;
+	if (layers > 2.5) albedo2 = still.z > 0.5 ? STILL(s_albedo3, uv2, u_groundRepeat.z).rgb
+	                                          : LAYER(s_albedo3, uv2, uv2b, run2).rgb;
 	if (u_waterGlow.w > 0.0)
 	{
 		if (isWater.x > 0.5 && !run0)
@@ -275,14 +311,16 @@ void main()
 
 	vec3 albedo = albedo0 * w.x + albedo1 * w.y + albedo2 * w.z;
 	albedo *= 1.0 - 0.9 * cliffWater;
-	vec3 orm0 = LAYER(s_orm, uv0, uv0b, run0).rgb;
+	vec3 orm0 = still.x > 0.5 ? STILL(s_orm, uv0, u_groundRepeat.x).rgb : LAYER(s_orm, uv0, uv0b, run0).rgb;
 	vec3 orm = orm0 * w.x;
-	vec3 nm0 = unpackNormal(LAYER(s_normal, uv0, uv0b, run0).xy);
+	vec3 nm0 = unpackNormal(still.x > 0.5 ? STILL(s_normal, uv0, u_groundRepeat.x).xy
+	                                      : LAYER(s_normal, uv0, uv0b, run0).xy);
 	vec3 nm = nm0 * w.x;
 	if (layers > 1.5)
 	{
-		orm += LAYER(s_orm2, uv1, uv1b, run1).rgb * w.y;
-		nm += unpackNormal(LAYER(s_normal2, uv1, uv1b, run1).xy) * w.y;
+		orm += (still.y > 0.5 ? STILL(s_orm2, uv1, u_groundRepeat.y).rgb : LAYER(s_orm2, uv1, uv1b, run1).rgb) * w.y;
+		nm += unpackNormal(still.y > 0.5 ? STILL(s_normal2, uv1, u_groundRepeat.y).xy
+		                                 : LAYER(s_normal2, uv1, uv1b, run1).xy) * w.y;
 	}
 	else
 	{
@@ -291,8 +329,9 @@ void main()
 	}
 	if (layers > 2.5)
 	{
-		orm += LAYER(s_orm3, uv2, uv2b, run2).rgb * w.z;
-		nm += unpackNormal(LAYER(s_normal3, uv2, uv2b, run2).xy) * w.z;
+		orm += (still.z > 0.5 ? STILL(s_orm3, uv2, u_groundRepeat.z).rgb : LAYER(s_orm3, uv2, uv2b, run2).rgb) * w.z;
+		nm += unpackNormal(still.z > 0.5 ? STILL(s_normal3, uv2, u_groundRepeat.z).xy
+		                                 : LAYER(s_normal3, uv2, uv2b, run2).xy) * w.z;
 	}
 	else
 	{

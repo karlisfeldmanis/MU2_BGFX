@@ -1,0 +1,57 @@
+{
+  "note": "Devil Square's light, laid over lighting.json while a character stands in map 9 (game/world/maps.h). Started 2026-10-10 from Blood Castle's sheet as the user tuned it, the nearest look: MU draws Devil Square on its default black clear and fog with no sky and no music, under steady rain and silent lightning (docs/devil-square-port.md, Part B 2 and 7). Its painted TerrainLight is one flat dark teal, (63, 103, 115), on 98% of the tiles; only arena A has painted highlights. So Blood Castle's numbers with the mist a cool dark grey. Not yet judged by the user.",
+  "elevation": 52.0,
+  "sun_colour": [
+    0.82,
+    0.82,
+    0.86
+  ],
+  "sun_strength": 2.4,
+  "sky_colour": [
+    0.1,
+    0.1,
+    0.11
+  ],
+  "horizon_paleness": 0.2,
+  "ground_colour": [
+    0.03,
+    0.03,
+    0.03
+  ],
+  "ambient_strength": 1.8,
+  "exposure": 3.1,
+  "dust_colour": [
+    0.2,
+    0.22,
+    0.24
+  ],
+  "dust_density": 0.005,
+  "lamp_strength": 10.0,
+  "flame_strength": 8.0,
+  "glow_strength": 0.9,
+  "bloom_threshold": 0.9,
+  "bloom_strength": 0.45,
+  "contrast": 0.45,
+  "saturation": 0.82,
+  "split": 0.55,
+  "tint_low": [
+    0.97,
+    0.99,
+    1.03
+  ],
+  "tint_high": [
+    1.03,
+    1.0,
+    0.97
+  ],
+  "ssao_strength": 1.35,
+  "grass": 0.0,
+  "probe": 0.0,
+  "water_flow": 0.0,
+  "tonemap": 1,
+  "lamp_shadow": 0.85,
+  "water_sheen": 0.0,
+  "ground_wet": 0.4,
+  "ground_puddles": 0.3,
+  "ground_variety": 1.0
+}

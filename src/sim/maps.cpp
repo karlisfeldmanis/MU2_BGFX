@@ -46,6 +46,12 @@ constexpr MapRow kMaps[] = {
     // (SceneManager.cpp:402), so it takes the underground's air, though it has no roof.
     // Its town is Devias: a death, a Town Portal and the end of the run all land there.
     {"bloodcastle", 11, {13, 8}, true, 2, true},
+    // Devil Square, MU's map 9: four arenas on one terrain, one a square. Square 1's arrival
+    // gate 58, 133,91 to 141,99, in the middle of arena A (OpenMU Version095d Gates.cs:141;
+    // docs/devil-square-port.md). Not 0.75's: OpenMU first has it at 0.95d. MU draws it on its
+    // black clear and fog, so it takes the underground's air until its rain. Its town is Noria:
+    // a death, a Town Portal and the end of the event all land there (WebZen gate 27).
+    {"devilsquare", 9, {137, 95}, true, 3, true},
 };
 
 }  // namespace

@@ -200,6 +200,9 @@ GRASS_BY_MAP = {
     8: ["TileGrass01"],
     # Icarus ships no TileGrass .OZT, and no ground is drawn there at all (SKY_BY_MAP).
     10: [],
+    # Devil Square ships no TileGrass .OZT (ZzzLodTerrain.cpp:2081-2088), and its TileGrass01,
+    # on every tile, is the arenas' worn stone. docs/devil-square-port.md.
+    9: [],
     # The character screen. Its TileGround03 wears the grass recipe, but MU's sheet is
     # BITMAP_MAPGRASS + layer1 and there are only the three TileGrass sheets, so slot 4 grows
     # nothing in MU; asked for by recipe, it went looking for a TileGround03.png that never was.

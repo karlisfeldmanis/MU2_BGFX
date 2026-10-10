@@ -131,6 +131,12 @@ struct Lighting {
     // one sheet stamped tile after tile (the user: 'make that lava repeating pattern is not so
     // repeatative'). Ours. 0 everywhere else, so their water is as it was.
     float waterVariety = 0.0f;
+    // How far the land itself is kept from repeating, 0 to 1: each patch of a few tiles reads
+    // its sheet from another offset, cross-faded where two meet, and the whole drifting a little
+    // lighter and darker (fs_ground, STILL). Devil Square's one stone sheet on every tile showed
+    // as a grid (the user, 2026-10-10: 'so it does not look so repeattive'). Ours. Water keeps
+    // water_variety. 0 everywhere else, so their ground is as it was.
+    float groundVariety = 0.0f;
     // How bright MU's caustics are, where a world has them (content::Ground::setCaustic): the
     // 32 frames added over every tile whose overlay is TileWater01, times the TerrainLight, as
     // MU's RenderFaceBlend adds them (ZzzLodTerrain.cpp:1971-1975). Atlans's. 0 draws none.
