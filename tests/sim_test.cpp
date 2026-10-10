@@ -12191,6 +12191,86 @@ void testGoBack(const content::Tables& lorencia) {
     check(said && !town.wayBack().open(), "taken, the realm says where -- the tile it kept, not the ask's");
 }
 
+// Devil Square's end (sim/square.h, docs/devil-square-port.md 5.2): WebZen's rank rule, OpenMU's
+// pay, ranked by points, paid once -- on Claim, home at once, or as the rest runs out.
+void testSquareResult() {
+    std::printf("devil square's result\n");
+    checkEqual(sim::squarePayRow(1, 1), 0, "alone, the first row");
+    checkEqual(sim::squarePayRow(2, 3), 1, "six or fewer: the second, the second row");
+    checkEqual(sim::squarePayRow(3, 3), 3, "and the third the last, row 2 unused (0.97d)");
+    checkEqual(sim::squarePayRow(6, 6), 3, "and the sixth");
+    checkEqual(sim::squarePayRow(3, 10), 1, "seven or more: the top 30% the second row");
+    checkEqual(sim::squarePayRow(5, 10), 2, "the top 50% the third");
+    checkEqual(sim::squarePayRow(6, 10), 3, "and the rest the last");
+
+    content::Tables square;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/devilsquare/devilsquare.mur",
+                              square, error),
+          "Devil Square's tables load");
+    if (!error.empty()) return;
+    sim::Realm realm;
+    check(realm.raise(&square, 7, 137, 95, sim::Kin::DarkKnight, 200), "a square raised");
+    const uint32_t first = realm.hero().id;
+    const uint32_t second = realm.join(sim::Kin::DarkWizard, 150, 138, 95);
+    const uint32_t third = realm.join(sim::Kin::FairyElf, 100, 139, 95);
+    realm.jumpSquare(sim::kSquarePlay - 30);
+    for (int tick = 0; tick < 5; ++tick) realm.step();
+    const auto monster = [&]() -> uint32_t {
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.monster() && one.alive()) return one.id;
+        }
+        return 0;
+    };
+    // Two kills to the second, one to the third, none to the first.
+    realm.lookAs(second);
+    realm.smite(monster());
+    realm.smite(monster());
+    realm.lookAs(third);
+    realm.smite(monster());
+    realm.lookAs(first);
+    std::vector<sim::Realm::SquareResult> rows;
+    realm.squareResults(&rows);
+    check(rows.empty(), "no result before the end");
+    check(!realm.claimSquare(), "and nothing to claim");
+    for (int tick = 0; tick < 40 * 20 && realm.squareRun().phase != sim::SquarePhase::Ended; ++tick) realm.step();
+    check(realm.squareRun().phase == sim::SquarePhase::Ended, "the time ran out");
+    realm.squareResults(&rows);
+    checkEqual(int(rows.size()), 3, "a row for each of the three");
+    if (rows.size() != 3) return;
+    check(rows[0].id == second && rows[1].id == third && rows[2].id == first, "ranked by points");
+    check(rows[2].mine && !rows[0].mine, "his own row marked");
+    const auto pay = [](int row, int k) { return sim::kSquarePay[0][row][k]; };
+    checkEqual(rows[0].experience, (long long)(pay(0, 0) * sim::kExperienceRate), "the first's experience, at the rate");
+    checkEqual(rows[0].zen, pay(0, 1), "and Zen");
+    checkEqual(rows[1].zen, pay(1, 1), "the second, the second row");
+    checkEqual(rows[2].zen, pay(3, 1), "the third, the last");
+
+    // Claim: paid at the next tick's start and sent home; once.
+    const int64_t before = realm.money();
+    check(realm.claimSquare(), "the first claims");
+    realm.step();
+    checkEqual(realm.money() - before, pay(3, 1), "paid his row's Zen");
+    check(realm.squarePaid() && !realm.claimSquare(), "and only once");
+    bool home = false;
+    for (const sim::Happening& one : realm.happenings()) {
+        home = home || (one.what == sim::What::Warped && one.who == first && one.c == 1);
+    }
+    check(home, "and sent home to Noria");
+    // The rest out: the others paid on the way, once each.
+    realm.lookAs(second);
+    const int64_t secondBefore = realm.money();
+    realm.lookAs(first);
+    const int64_t firstAfter = realm.money();
+    for (int tick = 0; tick < (sim::kSquareRest + 2) * 20 && !realm.squareRun().sentOut; ++tick) realm.step();
+    check(realm.squareRun().sentOut, "the rest ran out");
+    checkEqual(realm.money(), firstAfter, "the claimer not paid twice");
+    realm.lookAs(second);
+    checkEqual(realm.money() - secondBefore, pay(0, 1), "the first place paid as he goes");
+    check(realm.squarePaid(), "and marked paid");
+    realm.lookAs(first);
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -12212,6 +12292,7 @@ int main() {
     testDeterminism(tables);
     testSpawn(tables);
     testTwoHeroes(tables);
+    testSquareResult();
     testDropsAreTheirs(tables);
     testChatWire();
     testPartyWire();

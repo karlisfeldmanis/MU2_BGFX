@@ -170,6 +170,8 @@ int runHeadless(const core::Args& args, const char* assetDir) {
         core::logError("the realm did not raise");
         return 1;
     }
+    // --square-at: Devil Square's fight on now, that far in, as the windowed run's.
+    if (args.squareAt >= 0) realm.jumpSquare(args.squareAt);
 
     // What he is to hold, resolved before his points are spent -- because a weapon asks for
     // strength and agility, and a hand that had already poured everything into strength could

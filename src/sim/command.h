@@ -78,6 +78,8 @@ struct Command {
         // door is: a the party's number, 0 for none; target the body. Parties are the server's,
         // since a party spans maps and a map is a realm (Realm::setParty).
         PartySet,
+        // Devil Square's Claim on the result (Realm::claimSquare).
+        ClaimSquare,
     };
     // Close's a.
     enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel };

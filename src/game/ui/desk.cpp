@@ -77,6 +77,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     tracker_.open(interface_);
     travel_.open(interface_, assetDir);
     goBack_.open(interface_);
+    squareResult_.open(interface_);
     herald_.open(interface_);
     minimap_.open(interface_);
     chat_.open(interface_);
@@ -109,6 +110,7 @@ void Desk::shutdown() {
     tracker_.close();
     travel_.close();
     goBack_.close();
+    squareResult_.close();
     herald_.close();
     minimap_.close();
     specimen_.close();
@@ -534,6 +536,43 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             click();
         }
     }
+    // Devil Square's result, from the end of its time until he is paid: the realm's ranks, the
+    // names as the server (or the bench) says them, his own his save's. Claim is asked of the
+    // realm, which pays and sends him to Noria; its cross shuts it for this run.
+    {
+        bool shown = false;
+        int square = 1, left = 0;
+        squareRows_.clear();
+        if (play.isOpen()) {
+            const sim::Realm& realm = play.realm();
+            const sim::SquareRun& run = realm.squareRun();
+            if (run.phase != sim::SquarePhase::Ended) {
+                squareResult_.reset();
+            } else if (!realm.squarePaid()) {
+                realm.squareResults(&squareResults_);
+                for (const sim::Realm::SquareResult& one : squareResults_) {
+                    SquareResult::Row row{one.rank, "", one.points, one.experience, one.zen, one.mine};
+                    if (!play.playerName(one.id, &row.name, nullptr)) {
+                        row.name = one.mine && !heroName_.empty() ? heroName_ : one.mine ? "You" : "Player";
+                    }
+                    squareRows_.push_back(std::move(row));
+                }
+                shown = true;
+                square = run.square;
+                left = realm.squareSecondsLeft();
+            }
+        }
+        const bool held = amount_.up() || menu_.up();
+        const bool wasUp = squareResult_.up();
+        if (squareResult_.update(seconds, shown, square, squareRows_, left, held ? Pointer{} : pointer,
+                                 float(window.width()), float(window.height()))) {
+            expect(play.claimSquare(), Then::Click);
+        }
+        if (squareResult_.up() != wasUp) {
+            if (squareResult_.up()) play.ui(Play::Ui::Opened);
+            else if (squareResult_.dismissed()) click();
+        }
+    }
     // The herald: the event coming for his level, at its three moments. Its cross clicks.
     if (herald_.update(seconds, play, amount_.up() || menu_.up() ? Pointer{} : pointer,
                        window.width(), window.height())) {
@@ -880,7 +919,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
                     travelPressed || travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
-                    herald_.covers(pointer.x, pointer.y) ||
+                    herald_.covers(pointer.x, pointer.y) || squareResult_.covers(pointer.x, pointer.y) ||
                     (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
                     liftedQuick_ >= 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
@@ -1893,6 +1932,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         interface_.add(questDialog_.body());
         interface_.add(questDialog_.tipCanvas());
     }
+    if (squareResult_.up() && !watching_) interface_.add(squareResult_.canvas());
     if (amount_.up()) interface_.add(amount_.canvas());
     // The menu over everything but the pointer: it dims the whole screen, windows and HUD too.
     if (menu_.up()) interface_.add(menu_.canvas());

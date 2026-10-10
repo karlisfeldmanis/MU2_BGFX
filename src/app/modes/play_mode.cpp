@@ -1408,6 +1408,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (!world_.played().remote()) world_.weather().settle();
         world_.weather().summon(world_.played().invasionStorm());
         world_.weather().sync(world_.played().serverRain());
+        // Devil Square's rain, held the whole fight, eases out as the time is up.
+        if (world_.played().realm().squareRun().phase == sim::SquarePhase::Ended) {
+            world_.weather().dry();
+        }
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         // Under the open sky where the map is "underground" only for its air (Tarkan's sand).
         world_.weather().update(float(deltaSeconds), inside && !world_.leaves().openAir());

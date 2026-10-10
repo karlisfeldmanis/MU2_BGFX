@@ -1036,6 +1036,21 @@ public:
     int squareWave() const;
     int64_t squarePoints() const { return me().squarePoints; }
     int squareRank(int* of = nullptr) const;
+    // **The result**, once the time is up (sim/square.h kSquarePay): a row for every player the
+    // square ranked, by rank -- his body's id, rank, points and what the rank pays -- `mine` for
+    // the asker's own. Empty before the end and for one who came in after it.
+    struct SquareResult {
+        uint32_t id = 0;
+        int rank = 0;
+        int64_t points = 0, experience = 0, zen = 0;
+        bool mine = false;
+    };
+    void squareResults(std::vector<SquareResult>* out) const;
+    // Whether his row is paid: claimed, or paid as the rest ran out.
+    bool squarePaid() const { return me().squarePaid; }
+    // Claim, on the result: his row paid and he is sent to Noria at the next tick's start, as
+    // Blood Castle's Complete sends him to Devias. False with no row or once paid.
+    bool claimSquare();
     // The Archangel's page (sim/event.h): his folk row while it is open, what it shows, and Give
     // -- checked now, the staff taken and the win paid at the next tick's start.
     int angeling() const { return me().angeling; }
@@ -2002,6 +2017,10 @@ private:
     // Devil Square's clock, once a tick, and a kill scored to whoever's it is (realm_square.cpp).
     void squareTick();
     void squareKill(const Body& dead, const Body& scorer);
+    // Every player's rank and row reckoned once, as the time is up; and one row paid, once.
+    void rankSquare();
+    void paySquare();
+    int squareRankOf(size_t at, int* of) const;
     // The win's pay (CastleRun::paid*), into the bag, once.
     void payCastle();
     // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
@@ -2114,6 +2133,12 @@ private:
         int castleOwed = 0;
         int castlePassed = 0;  // see castlePassed()
         int64_t squarePoints = 0;  // see squarePoints()
+        // His result (squareResults): the rank the end gave him, 0 for none, and its row's pay;
+        // paid once, on Claim (squareClaimOwed, at the next tick's start) or as he is sent home.
+        int squareRanked = 0;
+        int64_t squareExperience = 0, squareZen = 0;
+        bool squarePaid = false;
+        bool squareClaimOwed = false;
         int angeling = -1;     // see angeling()
         bool staffOwed = false;
         bool claimOwed = false;

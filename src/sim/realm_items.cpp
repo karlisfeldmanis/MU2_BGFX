@@ -750,9 +750,11 @@ void Realm::warpHome(Body& hero) {
     // to Lorencia's: OpenMU's SafezoneMapNumber falls back to Lorencia for a map with no
     // spawn gate (BaseMapInitializer.cs:91). He is not set down here; `c` says the map
     // change is owed, and it is the mode's, as a gate's is (Play::takeHome).
-    // And Blood Castle's: a scroll read in a castle leaves it, for Devias.
+    // And Blood Castle's: a scroll read in a castle leaves it, for Devias; and Devil Square's,
+    // for Noria, whose run sends everyone home this way as it ends (Realm::squareTick).
     const int32_t* box = tables_->safeGate;
-    const bool home = !(box[2] > box[0] && box[3] > box[1]) || tables_->map == kBloodCastleMap;
+    const bool home = !(box[2] > box[0] && box[3] > box[1]) || tables_->map == kBloodCastleMap ||
+                      tables_->map == kDevilSquareMap;
     say(What::Warped, hero, landing.first, landing.second, home ? 1 : 0);
 }
 

@@ -126,6 +126,12 @@ void Weather::summon(bool on) {
     }
 }
 
+void Weather::dry() {
+    if (!forced_ || !wet_ || steady_ > 0.0f) return;
+    wet_ = false;
+    core::logf("weather: the rain eases out");
+}
+
 void Weather::sync(int serverRain) {
     // The first word from the server: whatever is falling there is falling here already, at its
     // full share, the invasion's storm included (summon, asked before this), and its claps soon.
@@ -196,8 +202,8 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // time (ZzzObject.cpp:3687). Ours: fainter than Lorencia's drizzle (kSquarePeak), and the rain system's own thunder and flash in place of MU's silent blue flicker (the
     // user, 2026-10-10: 'lets use already rain system which we has'). Held as a forced spell
     // at its full share, so the loop and the claps run; --weather still wins. It stops only
-    // when the square's run ends (the user, 2026-10-10: 'only at the end when DS is ended');
-    // the event is not built yet, docs/devil-square-port.md step 5.
+    // when the square's run ends (the user, 2026-10-10: 'only at the end when DS is ended'):
+    // Weather::dry, asked by the mode as the time is up.
     if (square && force.empty()) {
         forced_ = true;
         wet_ = true;
@@ -217,9 +223,10 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
         cycle_ = rains_;
         wet_ = false;
         left_ = 20.0f;
-    } else if (steady_ <= 0.0f) {
+    } else if (steady_ <= 0.0f && !forced_) {
         // A world that rains starts dry, with its first spell short, so a walk in finds leaves
-        // and does not wait the whole of a long dry spell to see the rain.
+        // and does not wait the whole of a long dry spell to see the rain. Not Devil Square's held
+        // rain, which this dried four seconds after he arrived until 2026-10-10.
         wet_ = false;
         left_ = rains_ ? kDryLow * 0.5f : 0.0f;
     }

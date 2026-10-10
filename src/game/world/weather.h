@@ -65,6 +65,11 @@ public:
     void summon(bool on);
     bool summoned() const { return summoned_; }
 
+    // Devil Square's run over: its held rain let dry, easing out over the rain's own turn while
+    // the result shows, and held dry (the user, 2026-10-10: 'only at the end when DS is ended').
+    // Once; a world with no held rain is left as it is.
+    void dry();
+
     // Synchronize the client's weather cycle to the server's.
     // -1: local (do not force), 0: server is dry, 1: server is wet. The first it is told after
     // open() is the weather he walks into, there at once with no fade (the user, 2026-10-08:

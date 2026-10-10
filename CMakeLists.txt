@@ -348,6 +348,7 @@ add_library(mu_game STATIC
   src/game/ui/chest.cpp
   src/game/ui/mixer.cpp
   src/game/ui/amount.cpp
+  src/game/ui/square_result.cpp
   src/game/ui/menu.cpp
   src/game/ui/slab.cpp
   src/game/ui/lobby.cpp

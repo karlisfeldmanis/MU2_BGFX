@@ -85,6 +85,18 @@ and paid by rank: 1st, top 30%, top 50%, the rest, each row exp and zen (WZ `Dev
   button to claim, as Blood Castle's Archangel pays ("Complete", `Realm::claimCastle`). Unclaimed, it
   pays as he is sent home. The rain eases out (step 5), and after a minute's rest everyone goes
   to Noria.
+- **Built 2026-10-10:** the result and the pay. As the time is up `Realm::rankSquare` ranks every
+  player in the square (points, then the lower level, then the body id) and prices his row by
+  WebZen 0.97d's rule (`squarePayRow`: six or fewer 1st / 2nd / the rest; seven or more 1st, top
+  30%, top 50%, the rest) from OpenMU's table (`kSquarePay`), the experience at the game's rate
+  (x20: 120,000 and 30,000 Zen for square 1's first). `game/ui/square_result.cpp` shows it, centred:
+  "Devil Square N", MU's line 648, Rank / Name / Points / Experience / Zen for the top nine and his
+  own row (marked), "Home to Noria in m:ss" and Claim. Claim (`Command::ClaimSquare`) pays his row
+  and warps him home at once; its cross shuts it; unclaimed rows are paid as the rest runs out and
+  each player is sent home by `warpHome` (a `Warped` home, which the mode and the server already
+  carry). `Weather::dry` lets the held rain ease out as the time is up. The held rain had been dried
+  four seconds after arrival by the "a raining world starts dry" branch; fixed the same day.
+  `testSquareResult` in sim_test; `--square-at` works headless too.
 
 ## Decisions for the user
 

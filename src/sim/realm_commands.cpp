@@ -126,6 +126,7 @@ void Realm::applyCommands() {
             case Kind::EnterCastle: answer = enterCastle(one.a) ? 1 : -1; break;
             case Kind::HandInStaff: answer = handInStaff() ? 1 : -1; break;
             case Kind::ClaimCastle: answer = claimCastle() ? 1 : -1; break;
+            case Kind::ClaimSquare: answer = claimSquare() ? 1 : -1; break;
             case Kind::Join: {
                 const uint32_t id = join(Kin(std::clamp(one.a, 0, int(Kin::MagicGladiator))),
                                          std::clamp(one.b, 1, kMaximumLevel), one.c, one.d);

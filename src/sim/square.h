@@ -1,9 +1,8 @@
 #pragma once
 
-// Devil Square's run: its clock, its waves and each player's points (docs/devil-square-port.md,
-// "The goal and how it is shown"). Square 1 only for now; squares 2-4 are rooms of the same map 9
-// and differ in their breeds and their pay. The monsters themselves are not built yet (the doc's
-// step 3): until they are, the run keeps its clock and its waves, and scores nothing.
+// Devil Square's run: its clock, its waves, each player's points, and the ranks and pay at its end
+// (docs/devil-square-port.md, "The goal and how it is shown"). Square 1 only for now; squares 2-4
+// are rooms of the same map 9 and differ in their breeds and their pay.
 
 #include <cstdint>
 
@@ -51,6 +50,29 @@ constexpr int squareWaveOf(int square, int32_t number) {
         if (kSquareBreeds[s][w][0] == number || kSquareBreeds[s][w][1] == number) return w + 1;
     }
     return 0;
+}
+
+// **The pay**, a row by rank (docs/devil-square-port.md 5.2): OpenMU's 0.95d table
+// (Version095d/Events/DevilSquareInitializer.cs:47-83), very likely WebZen's own lost dat (the
+// repack's is exactly 100x it), each row {experience, Zen}. The experience goes at the game's rate,
+// as every kill's (rules.h kExperienceRate), as Blood Castle's win does.
+constexpr int kSquareRows = 4;
+constexpr int64_t kSquarePay[4][kSquareRows][2] = {
+    {{6000, 30000}, {4000, 25000}, {2000, 20000}, {1000, 15000}},
+    {{8000, 40000}, {6000, 35000}, {4000, 30000}, {2000, 25000}},
+    {{10000, 50000}, {8000, 45000}, {6000, 40000}, {4000, 35000}},
+    {{20000, 60000}, {10000, 55000}, {8000, 50000}, {6000, 45000}},
+};
+
+// Which row `rank` of `count` is paid, WebZen 0.97d's rule (DevilSquareGround.cpp:374-411): six
+// or fewer, the first row 0, the second row 1 and the rest row 3 (row 2 unused); seven or more,
+// the first row 0, then the top 30% row 1, the top 50% row 2, everyone else row 3. Everyone ranked
+// is paid: there is no rank without a row.
+constexpr int squarePayRow(int rank, int count) {
+    if (rank <= 1) return 0;
+    if (count <= 6) return rank == 2 ? 1 : 3;
+    const int share = rank * 100 / count;
+    return share <= 30 ? 1 : share <= 50 ? 2 : 3;
 }
 
 enum class SquarePhase : uint8_t { None, Waiting, Running, Ended };

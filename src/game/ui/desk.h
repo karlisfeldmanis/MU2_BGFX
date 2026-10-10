@@ -29,6 +29,7 @@
 #include "game/ui/menu.h"
 #include "game/ui/minimap.h"
 #include "game/ui/quest_dialog.h"
+#include "game/ui/square_result.h"
 #include "game/ui/tracker.h"
 #include "game/ui/travel.h"
 #include "game/ui/shelf.h"
@@ -240,6 +241,10 @@ private:
     Travel travel_;
     // Go Back!, over the HUD's middle while the way back to the field is open.
     GoBackPlate goBack_;
+    // Devil Square's result at its end, and the rows it is told each frame.
+    SquareResult squareResult_;
+    std::vector<sim::Realm::SquareResult> squareResults_;
+    std::vector<SquareResult::Row> squareRows_;
     bool goBackShown_ = false, goBackClosed_ = false, goBackAsked_ = false;
     int goBackLeft_ = 0;
     std::string goBackWhere_;

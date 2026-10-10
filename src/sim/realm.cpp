@@ -294,6 +294,9 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // nought.
     square_ = SquareRun{};
     me().squarePoints = 0;
+    me().squareRanked = 0;
+    me().squareExperience = me().squareZen = 0;
+    me().squarePaid = me().squareClaimOwed = false;
     if (tables_->map == kDevilSquareMap) {
         square_.phase = SquarePhase::Waiting;
         square_.startsAt = int64_t(kSquareWait) * kSquareTicksPerSecond;

@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <deque>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "content/ground.h"
@@ -497,6 +498,8 @@ public:
     // The Archangel's page's answers (QuestDialog::kArchangel).
     uint32_t handInStaff() { return send({.kind = sim::Command::Kind::HandInStaff}); }
     uint32_t claimCastle() { return send({.kind = sim::Command::Kind::ClaimCastle}); }
+    // Devil Square's Claim on the result: his row paid, home to Noria (Realm::claimSquare).
+    uint32_t claimSquare() { return send({.kind = sim::Command::Kind::ClaimSquare}); }
     void closeAngel() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Angel)}); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
@@ -530,6 +533,31 @@ public:
     // Another player under the pointer, by his body's id, or 0: named and ringed green, never
     // fought (Play::point).
     uint32_t pointedPlayer() const { return pointedPlayer_; }
+    // **His target** (game/ui/target_frame.h; the user, 2026-10-10: "user clicks to character to
+    // party label or in world, walks to him and opend then char label"): another player picked
+    // by a click on him, which still walks there, or on his party capsule. By name, which holds
+    // across maps, and the body it was last seen as here (0 when he is not here). Escape lets go.
+    void target(const std::string& name, uint32_t here) {
+        if (name != targetName_) targetFresh_ = true;
+        targetName_ = name;
+        targetId_ = here;
+    }
+    void untarget() {
+        targetName_.clear();
+        targetId_ = 0;
+    }
+    const std::string& targetName() const { return targetName_; }
+    uint32_t targetId() const { return targetId_; }
+    // Whether the target changed since last asked: the portrait forgets the old face.
+    bool targetChanged() { return std::exchange(targetFresh_, false); }
+    // His drawables this frame, gathered with the world's (gather), and where his head joint
+    // was, his facing and his scale: the portrait's to photograph. Empty when he is not drawn.
+    const std::vector<gfx::Drawable>& targetDrawables() const { return targetDrawables_; }
+    const float* targetHead() const { return targetHead_; }
+    float targetYaw() const { return targetYaw_; }
+    float targetScale() const { return targetScale_; }
+    // A right click on another player asked for his menu (Play::rightClick): his body, once.
+    uint32_t takeMenuAsk() { return std::exchange(menuAsk_, 0u); }
     // His name and whether he is a bot, as the server said them (net::Who); false off a server.
     bool playerName(uint32_t id, std::string* name, bool* bot) const {
         // The bench's own first (--bench-fight): local play's link has no names to give.
@@ -1792,6 +1820,13 @@ private:
     int pointedColumn_ = -1, pointedRow_ = -1;
     uint32_t pointedAt_ = 0;  // the body under the pointer, or 0
     uint32_t pointedPlayer_ = 0;  // another player under it, or 0 (pointedPlayer)
+    std::string targetName_;  // his target, by name (target)
+    uint32_t targetId_ = 0;
+    bool targetFresh_ = false;
+    std::vector<gfx::Drawable> targetDrawables_;
+    float targetHead_[3] = {};
+    float targetYaw_ = 0.0f, targetScale_ = 1.0f;
+    uint32_t menuAsk_ = 0;
     std::string lastLine_;
 
     // The red flash round a monster the frame it turns on him: its quarry becoming the hero,

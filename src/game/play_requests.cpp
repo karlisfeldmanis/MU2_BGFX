@@ -702,6 +702,9 @@ void Play::answered(const sim::Happening& said) {
         case Kind::ClaimCastle:
             core::logf("event: Complete on the Archangel's thanks -- %s", ok ? "to Devias" : "refused");
             break;
+        case Kind::ClaimSquare:
+            core::logf("event: Claim on Devil Square's result -- %s", ok ? "to Noria" : "refused");
+            break;
         // Sent with no ticket and never answered: the walk, the swing and the window are the answer.
         case Kind::Order:
         case Kind::Cast:
