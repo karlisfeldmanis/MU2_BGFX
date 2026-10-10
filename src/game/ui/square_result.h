@@ -4,8 +4,10 @@
 // PMSG_DEVILSQUARERESULT): "Your bravery is proven in Devil Square" (text 648), then a row for
 // each of the square's best -- rank, name, points, the experience and the Zen the rank pays --
 // with his own row marked; WebZen sends the top nine and his own (DevilSquareGround.cpp:364-418).
-// Drawn in Sanctuary's controls, centred a little above the middle as the Zen box is, with one
-// answer: Claim, his row paid and home to Noria now, as Blood Castle's Complete sends him to
+// Drawn in Sanctuary's controls, centred a little above the middle as the Zen box is, as the
+// user's pick of four (2026-10-10, claude.ai/artifact/4yeSN9PmTeqdS7PXpLN6P3, "C · Your result
+// first"): his rank the headline in Cinzel ("2nd of 6"), what he earned in a well under it --
+// points, experience, Zen -- then the square's ranks small, and one answer: Claim, his row paid and home to Noria now, as Blood Castle's Complete sends him to
 // Devias (docs/devil-square-port.md, "The goal and how it is shown"). Shut with its cross, or
 // never answered, it pays as the minute's rest runs out and everyone goes home; the clock to that
 // is in its foot.
@@ -55,6 +57,8 @@ private:
     bool dismissed_ = false;
     int square_ = 1;
     std::vector<Row> rows_;  // as drawn: the top nine, and his own after them when lower
+    Row mine_;               // his own row, the headline's
+    int count_ = 0;          // everyone ranked, the headline's "of"
     int secondsLeft_ = 0;
     float x_ = 0.0f, y_ = 0.0f;
     float tall_ = 0.0f;  // the window's height, in units, by its rows
@@ -62,7 +66,7 @@ private:
     float lift_[2] = {0.0f, 0.0f};
     bool built_ = false;
     struct Drawn {
-        int square = 0, secondsLeft = 0, over = -1, pressing = -1;
+        int square = 0, secondsLeft = 0, over = -1, pressing = -1, count = 0;
         std::vector<Row> rows;
         float x = 0, y = 0, scale = 0, lift0 = 0, lift1 = 0;
         bool operator==(const Drawn&) const = default;
