@@ -47,7 +47,9 @@ constexpr uint32_t kVoid = hex(0x050303), kDrop = hex(0x000000, 0.75f);
 constexpr float kLeft = 20.0f, kWide = 560.0f;
 constexpr float kTallDefault = 400.0f, kTallLeast = 230.0f, kTallMost = 760.0f;
 constexpr float kGrip = 26.0f, kTabRow = 44.0f, kInput = 44.0f, kFoot = 30.0f;
-constexpr float kRow = 24.0f, kText = 18.0f, kTag = 14.0f, kWord = 18.0f, kHint = 14.0f;
+// The log's text 16 and its row 21, from 18 and 24, its tags 13 from 14 (the user, 2026-10-10:
+// "scale down chat text little bit").
+constexpr float kRow = 21.0f, kText = 16.0f, kTag = 13.0f, kWord = 18.0f, kHint = 14.0f;
 // The cloud's peak, and closed, what is left of it under the fading lines.
 constexpr float kCloud = 0.97f, kCloudClosed = 0.55f;
 // Closed: how long each line stays, and the fewest it shows; as many more as the height he gave

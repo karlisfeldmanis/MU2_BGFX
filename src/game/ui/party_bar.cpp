@@ -264,6 +264,7 @@ float capsule(gfx::Canvas& canvas, float x, float y, float u, const Make& make, 
 void PartyBar::open(const gfx::Interface& interface) { interface.adopt(canvas_); }
 
 bool PartyBar::covers(float x, float y) const {
+    if (took_) return true;
     if (!showing_) return false;
     if (menuOpen_ && menu_.box.has(x, y)) return true;
     for (const Hit& hit : hits_) {
@@ -273,6 +274,7 @@ bool PartyBar::covers(float x, float y) const {
 }
 
 void PartyBar::update(float seconds, Play& play, const Pointer& pointer) {
+    took_ = false;
     if (!play.isOpen()) {
         showing_ = false;
         menuOpen_ = false;
@@ -298,6 +300,7 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer) {
         }
         menuChanged = menu_.hovered != before;
         if (pointer.pressed || pointer.rightPressed) {
+            took_ = true;  // a click while it is open is the menu's, in it or shutting it
             if (pointer.pressed && menu_.hovered >= 0) {
                 const std::string& row = menu_.rows[size_t(menu_.hovered)];
                 if (row == "Whisper") whisper_ = menu_.name;
@@ -331,6 +334,7 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer) {
             menu_.box = {hit.box.right() + 8.0f * u, std::max(4.0f * u, pointer.y - kMenuHead * u * 0.5f), w, h};
             menuOpen_ = true;
             menuChanged = true;
+            took_ = true;
             play.ui(Play::Ui::Opened);  // as a window opens
             break;
         }

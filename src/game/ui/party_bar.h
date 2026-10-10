@@ -85,6 +85,10 @@ private:
     bool menuOpen_ = false;
     int drawnHover_ = -2;  // the menu's hovered row as last drawn; -2 when it was shut
     std::string whisper_;
+    // A press the bar used this frame -- a row taken, the menu shut, a menu opened -- which the
+    // world must not also take: the menu is shut by then, so covers() alone would let the click
+    // through and walk him there (the user: "i click to whisper and character used click to move").
+    bool took_ = false;
 };
 
 }  // namespace mu::game
