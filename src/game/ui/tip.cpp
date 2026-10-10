@@ -664,8 +664,12 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
     bool marked = false;
     for (const Section& section : sheet.sections) {
         marked |= !item && section.mark != Mark::None;
+        // A framed block's marks stand inside its frame (`inner` below), not in the card's gutter.
+        if (section.framed) continue;
         for (const Row& row : section.rows) marked |= row.mark != Mark::None;
     }
+    const float inner = kMarkColumn * u * 0.75f + kMarkGap * u;
+    const float gapTall = std::round(rowSize * kRowTall * 0.45f);
     const float textX = marked ? pad + kMarkColumn * u + kMarkGap * u : pad;
     const float drop = std::max(1.0f, u);
     const float textWide = wide - textX - pad;
@@ -722,9 +726,12 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         prose[s].resize(section.rows.size());
         for (size_t r = 0; r < section.rows.size(); ++r) {
             const Row& row = section.rows[r];
+            if (row.gap) tall += gapTall;
             if (prosaic(row)) {
+                const bool within = section.framed && row.mark != Mark::None;
                 prose[s][r] = spansOf(face, rowSize, composed(row),
-                                      textWide - (section.framed ? pad : 0.0f));
+                                      textWide - (section.framed ? pad : 0.0f) -
+                                          (within ? inner : 0.0f));
                 tall += float(prose[s][r].size()) * rowTall;
             } else {
                 tall += std::max<size_t>(1, row.values.size()) * rowTall;
@@ -910,7 +917,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         const Section& section = sheet.sections[s];
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
         float rowPen = pen + railPad;
-        const float left = box.x + textX + (section.framed ? pad * 0.5f : 0.0f);
+        const float sectionLeft = box.x + textX + (section.framed ? pad * 0.5f : 0.0f);
+        const float left = sectionLeft;
         const float right = box.right() - pad - (section.framed ? pad * 0.5f : 0.0f);
         if (section.framed) {
             canvas.rect({box.x + textX - pad * 0.5f, pen + railPad * 0.5f,
@@ -933,9 +941,15 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         }
         for (size_t r = 0; r < section.rows.size(); ++r) {
             const Row& row = section.rows[r];
+            if (row.gap) rowPen += gapTall;
+            // Inside a frame a marked row's mark stands at the frame's own left, its words after it.
+            const bool within = section.framed && row.mark != Mark::None;
+            const float left = within ? sectionLeft + inner : sectionLeft;
             if (row.mark != Mark::None) {
                 const bool socket = row.mark == Mark::Ring || row.mark == Mark::RingSet;
-                const float mx = box.x + pad + kMarkColumn * u * 0.5f, my = rowPen + rowTall * 0.5f;
+                const float mx = within ? sectionLeft + kMarkColumn * u * 0.375f
+                                        : box.x + pad + kMarkColumn * u * 0.5f;
+                const float my = rowPen + rowTall * 0.5f;
                 glyphAt(canvas, row.mark, mx, my, (socket ? kSocketSize : kMarkSize) * u,
                         fade(colourOf(row.markTone)));
                 // The rune itself in a set ring, over the flat stone, once its picture is taken.
@@ -978,8 +992,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
             // The label once, at the top of its values: MU repeats it, and that is the stutter
             // this layout is here to fix.
             if (!row.label.empty()) {
-                say(type, canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize, fade(kLabel),
-                        row.label, drop);
+                say(type, canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize,
+                    fade(row.labelToned ? colourOf(row.labelTone) : kLabel), row.label, drop);
             }
             float chipPen = right;
             for (size_t v = row.values.size(); v-- > 0;) {

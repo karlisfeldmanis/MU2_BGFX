@@ -819,40 +819,55 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             std::string& list = has ? wearing : lacking;
             list += (list.empty() ? "" : ", ") + std::string(kPiece[slot - sim::kHelm]);
         }
-        // A framed block draws no kicker, so the name and the count are its first line.
+        // A framed block draws no kicker, so the name and the count are its first line: the name
+        // on the left, green once the set is whole, and how many he wears on the right.
         {
             Row head;
-            head.free = pieces.kicker;
-            head.tail = std::to_string(on) + "/5";
-            head.freeTone = on == 5 ? Tone::Green : Tone::White;
+            head.label = pieces.kicker;
+            head.labelToned = true;
+            head.labelTone = on == 5 ? Tone::Green : Tone::White;
+            head.values.push_back({std::to_string(on) + " / 5", on > 0 ? Tone::Green : Tone::Gray});
             pieces.rows.push_back(head);
         }
-        const auto listed = [&](const std::string& words, Tone tone) {
+        // Then the pieces, a filled square beside what he wears and a hollow one beside what he
+        // lacks: the same marks the steps below take, so "filled is yours" reads once for both.
+        const auto listed = [&](const std::string& words, bool worn) {
             if (words.empty()) return;
             Row line;
             line.free = words;
-            line.freeTone = tone;
+            line.freeTone = worn ? Tone::Green : Tone::Gray;
+            line.mark = worn ? tip::Mark::Diamond : tip::Mark::Socket;
+            line.markTone = worn ? Tone::Green : Tone::Gray;
             pieces.rows.push_back(line);
         };
-        listed(wearing, Tone::Green);
-        listed(lacking, Tone::Gray);
-        // The steps, lowest first, each lit green once it stands, so the block reads as a ladder:
-        // what three pieces give, what four add, what the whole set adds on top (sim::setPieces).
+        listed(wearing, true);
+        listed(lacking, false);
+        // The steps, lowest first, a row each: how many pieces and what it raises on the left,
+        // the figure on the right where it lines up with the others, the whole row lit green
+        // once it stands and gray until then -- a ladder he reads down to his next piece.
+        bool first = true;
         const auto step = [&](const std::string& when, const char* stat, double rate,
                               bool stands) {
             Row line;
-            line.free = when + ": " + stat;
-            line.tail = "+" + std::to_string(int(std::lround(rate * 100.0))) + "%";
-            line.freeTone = stands ? Tone::Green : Tone::Gray;
+            line.label = when + "  " + stat;
+            line.labelToned = true;
+            line.labelTone = stands ? Tone::Green : Tone::Gray;
+            line.values.push_back({"+" + std::to_string(int(std::lround(rate * 100.0))) + "%",
+                                   stands ? Tone::Green : Tone::Gray});
+            line.mark = stands ? tip::Mark::Diamond : tip::Mark::Socket;
+            line.markTone = stands ? Tone::Green : Tone::Gray;
+            line.gap = first;
+            first = false;
             pieces.rows.push_back(line);
         };
-        step("3 pieces", "Defense Rate", sim::kSetDefenseRate, on >= sim::kSetFewPieces);
-        step("4 pieces", "Max HP", sim::kSetHealth, on >= sim::kSetMostPieces);
-        step("Full set", "Defense", sim::kSetDefense, all && !excellent);
+        step("(3)", "Defense Rate", sim::kSetDefenseRate, on >= sim::kSetFewPieces);
+        step("(4)", "Max HP", sim::kSetHealth, on >= sim::kSetMostPieces);
+        step("(5)", "Defense", sim::kSetDefense, all);
         // The excellent step only on an excellent piece (the user, 2026-10-05: 'dont show all
-        // excelence def bonus, there is no point if user does not have the item').
+        // excelence def bonus, there is no point if user does not have the item'), as what it
+        // adds to the whole set's, so every row on the ladder is a rise on the one above it.
         if (what.excellent != 0) {
-            step("All excellent", "Defense", sim::kExcellentSetDefense, excellent);
+            step("(5 Exc)", "Defense", sim::kExcellentSetDefense - sim::kSetDefense, excellent);
         }
         sheet.sections.push_back(pieces);
     }

@@ -78,6 +78,12 @@ struct Row {
     std::string tail;
     Mark mark = Mark::None;
     Tone markTone = Tone::Gray;
+    // The label's ink when `labelToned`, where it is the card's own label ink otherwise: a set's
+    // steps light their words green when they stand and gray them when not.
+    bool labelToned = false;
+    Tone labelTone = Tone::White;
+    // A little air above the row: where a framed block turns from one list to the next.
+    bool gap = false;
 };
 
 // The item card's headline: the one number a thing is compared by, large, and the sum that made
