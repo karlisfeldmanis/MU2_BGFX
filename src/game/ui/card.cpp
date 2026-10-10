@@ -19,10 +19,9 @@ using gfx::Box;
 // **The window, 2026-10-10** (the user's proposal, https://claude.ai/artifact/E1SgVrhmhQNquWSv2EfcLR,
 // settled over a morning: 'always show stats, even there is no stat to spend like on original',
 // 'dont usee - and apply, keep existing logic to add points', 'remember that window has fixed
-// height'). The same 190x429 and the same frame, his name and guild small under its title; inside
-// it, from the top: his class with his unspent points; one block with his level as a badge, resets under
-// it, and the three numbers his class lives by beside it (the user's A4 of four, 2026-10-10); and
-// three
+// height'). The same 190x429 and the same frame, his name, guild, level and resets small under its
+// title; inside it, from the top: his class with his unspent points; the three numbers his class
+// lives by; and three
 // pages under underline tabs -- Attributes (MU's four wells, each with what it buys under it, the
 // plus beside it while there is a point to spend), Combat and Bonuses. Every page is laid out to
 // fit between the tabs and the foot; nothing in the window scrolls or grows it.
@@ -30,9 +29,6 @@ using gfx::Box;
 // The head's rows, in MU's panel units.
 constexpr float kIdTop = 45.0f;
 constexpr float kKeysTop = 61.0f, kKeysTall = 30.0f;
-// The level's badge at the block's left end, the class's three sharing the rest.
-constexpr float kBadgeW = 35.0f;
-constexpr float kBadgeSize = 13.0f;
 constexpr float kTabsTop = 99.0f, kTabsTall = 16.0f;
 constexpr int kTabCount = 3;
 const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses"};
@@ -220,7 +216,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.top = y_;
         now_.level = hero->level;
         now_.points = hero->pointsInHand;
-        // No resets and no guilds in the realm yet: the badge says 0 and the head shows no
+        // No resets and no guilds in the realm yet: the head says 0 and shows no
         // brackets until there are, and then these two read them.
         now_.resets = 0;
         now_.experience = hero->experience;
@@ -293,22 +289,42 @@ void Card::rebuild() {
     const float u = tip::unit();
 
     panel::frame(canvas_, arts, x, y, "Character");
-    // **His name, small under the title, his guild in brackets after it** -- the user,
-    // 2026-10-10: 'show chatacyer title how it was and small character name [guild] under the
-    // title, same as Inventory and gear score'. The bag's gear score line exactly (bag.cpp): the
-    // name in bone at its figure's size, the guild in ash capitals at its words', centred
-    // together on the same baseline under the title's capitals. No guild, no brackets.
-    if (!now_.name.empty()) {
+    // **His name, small under the title, his guild in brackets after it, then his level and
+    // resets** -- the user, 2026-10-10: 'show chatacyer title how it was and small character name
+    // [guild] under the title, same as Inventory and gear score', then 'move lvl,resets also where
+    // is character name [guild]'. The bag's gear score line (bag.cpp): figures and the name in
+    // bone at its figure's size, words in ash capitals at its words', all centred together on one
+    // baseline under the title's capitals. No guild, no brackets; no name (--fresh), no name.
+    {
         const float u = tip::unit();
-        const float size = 11.0f * u, small = 9.0f * u, gap = 4.0f * u;
-        const std::string guild = now_.guild.empty() ? std::string() : "[" + now_.guild + "]";
-        const float named = controls::labelWidth(size, now_.name);
-        const float wide = named + (guild.empty() ? 0.0f : gap + controls::capsWidth(small, guild));
-        const float from = std::round(x + (panel::kWidth * k - wide) * 0.5f);
+        const float size = 11.0f * u, small = 9.0f * u, gap = 4.0f * u, wide = 10.0f * u;
+        struct Bit {
+            std::string text;
+            bool caps;
+            float before;  // the air in front of it
+        };
+        std::vector<Bit> bits;
+        if (!now_.name.empty()) bits.push_back({now_.name, false, 0.0f});
+        if (!now_.guild.empty()) bits.push_back({"[" + now_.guild + "]", true, gap});
+        bits.push_back({"LEVEL", true, bits.empty() ? 0.0f : wide});
+        bits.push_back({std::to_string(now_.level), false, gap});
+        bits.push_back({"RESETS", true, wide});
+        bits.push_back({std::to_string(now_.resets), false, gap});
+        float total = 0.0f;
+        for (const Bit& bit : bits)
+            total += bit.before + (bit.caps ? controls::capsWidth(small, bit.text)
+                                             : controls::labelWidth(size, bit.text));
+        float at = std::round(x + (panel::kWidth * k - total) * 0.5f);
         const float baseline = std::round(y + panel::kHeadBand * k * 0.86f);
-        controls::label(canvas_, from, baseline, size, style::kBoneHi, now_.name);
-        if (!guild.empty())
-            controls::caps(canvas_, from + named + gap, baseline, small, style::kAshInk, guild);
+        for (const Bit& bit : bits) {
+            at += bit.before;
+            if (bit.caps) {
+                controls::caps(canvas_, at, baseline, small, style::kAshInk, bit.text);
+                at += controls::capsWidth(small, bit.text);
+            } else {
+                at += controls::label(canvas_, at, baseline, size, style::kBoneHi, bit.text);
+            }
+        }
     }
 
     // Type set from a top-left in units, its ascent below it; and the same ranged right.
@@ -344,37 +360,24 @@ void Card::rebuild() {
                        kSpendable, tag, 0.04f);
     }
 
-    // ---- the block: his level as a badge, resets under it, his class's three beside it ---------
+    // ---- the three his class lives by -----------------------------------------------------------
     const Box keys{kWellX, kKeysTop, kWellW, kKeysTall};
     panel::cell(canvas_, x, y, keys, sheet::Cell::Rest);
-    const float badgeMid = kWellX + kBadgeW * 0.5f;
-    {
-        const std::string level = std::to_string(now_.level);
-        const float size = kBadgeSize * k;
-        const float w = controls::labelWidth(size, level);
-        controls::label(canvas_, x + badgeMid * k - w * 0.5f, at(kKeysTop + 3.0f, kBadgeSize), size,
-                        kHeading, level);
-        const std::string resets = "Resets " + std::to_string(now_.resets);
-        const float rw = controls::capsWidth(kSmallCaps * k, resets, 0.04f);
-        controls::caps(canvas_, x + badgeMid * k - rw * 0.5f, at(kKeysTop + 19.0f, kSmallCaps),
-                       kSmallCaps * k, kQuiet, resets, 0.04f);
-    }
-    divide(kWellX + kBadgeW, kKeysTop, kKeysTall);
-    const float keyW = (kWellW - kBadgeW) / 3.0f;
+    const float keyW = kWellW / 3.0f;
     for (int i = 0; i < 3; ++i) {
-        const float cellX = kWellX + kBadgeW + keyW * float(i);
+        const float cellX = kWellX + keyW * float(i);
         if (i > 0) divide(cellX, kKeysTop, kKeysTall);
-        const float cx = cellX + 5.0f;
+        const float cx = cellX + 7.0f;
         // A long name ("Greater Damage") and a wide band (a wizard's late wizardry) each step
         // down until they fit their cell.
         float caps = kSmallCaps;
         while (caps > 5.0f &&
-               controls::capsWidth(caps * k, now_.keys[i].label, 0.04f) > (keyW - 7.0f) * k)
+               controls::capsWidth(caps * k, now_.keys[i].label, 0.04f) > (keyW - 9.0f) * k)
             caps -= 0.25f;
         controls::caps(canvas_, x + cx * k, at(kKeysTop + 5.0f, kSmallCaps), caps * k, kQuiet,
                        now_.keys[i].label, 0.04f);
         float size = kKeySize;
-        while (size > 6.5f && controls::labelWidth(size * k, now_.keys[i].value) > (keyW - 8.0f) * k)
+        while (size > 6.5f && controls::labelWidth(size * k, now_.keys[i].value) > (keyW - 10.0f) * k)
             size -= 0.5f;
         left(cx, kKeysTop + 15.0f, size, kHeading, now_.keys[i].value);
     }
