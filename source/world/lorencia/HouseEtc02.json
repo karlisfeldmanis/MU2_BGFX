@@ -32,6 +32,10 @@
   },
   "sheet_pad_from": "An atlas rather than a tile - separate surfaces drawn side by side in one square - so its border replicates instead of wrapping.",
   "sheet_scale_from": "How many times a sheet crosses the face it is on. MU's UVs put exactly one copy across, which was right for a 128-pixel painting of a whole wall and is wrong for a photograph of two metres of real stone: stretched over a whole wall it reads as a few enormous blotches rather than as masonry.",
+  "sheet_roughness": {
+    "horse_drawn_01": 0.95
+  },
+  "sheet_roughness_from": "The user's, 2026-10-11, at the warehouse, 148,144: 'i dont like it that its so glossy'. Timber's 0.82 still laid a sheen along the cart's planks in the moon and the lamps; 0.95, dry weathered wood, leaves MU's painted grain to carry it. On every object that wears this sheet, so the carts match.",
   "islands": [
     {
       "island": 0,

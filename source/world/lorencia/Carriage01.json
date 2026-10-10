@@ -40,6 +40,10 @@
   },
   "unstall": true,
   "unstall_from": "Bone 1, the hanging lamp, comes back to its own first rotation exactly, so the interval MU gives the action to wrap in is a frame in which that bone does not move - the lamp holds still at the same point of every swing. Bone 6 ends a quarter of a unit away and needs the interval, so the action keeps it and the lamp is stretched over the same span instead. A departure from MU, which stalls here too, and the only asset that asks for it: see write_animations. It is not a default because a second clock puts one bone a fraction of an interval behind the rest, which reads as a swing on a lamp and as a stagger on anything with limbs.",
+  "sheet_roughness": {
+    "horse_drawn_01": 0.95
+  },
+  "sheet_roughness_from": "The user's, 2026-10-11, at the warehouse, 148,144: 'i dont like it that its so glossy'. Timber's 0.82 still laid a sheen along the cart's planks in the moon and the lamps; 0.95, dry weathered wood, leaves MU's painted grain to carry it. On every object that wears this sheet, so the carts match.",
   "islands": [
     {
       "island": 0,
