@@ -281,7 +281,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | DarkSkull01 | figure | 2026-10-03 21:43 | awaiting |  |
 | RedSkeleton01 | figure | 2026-10-03 21:46 | awaiting |  |
 | Sword20 | arm | 2026-10-10 18:52 | passed | bench at dusk: polished blade under the metal pass |
-| Bow19 | arm | 2026-10-10 18:55 | passed | bench at dusk: white metal sheen on the body |
+| Bow19 | arm | 2026-10-10 19:42 | passed | in the elf's hands at noon, seated by its rig as the Bluewing |
 | Shield14 | arm | 2026-10-03 22:36 | awaiting |  |
 | Mace06 | arm | 2026-10-03 22:42 | awaiting |  |
 | CrossBow07 | arm | 2026-10-03 22:49 | awaiting |  |
@@ -327,3 +327,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword22 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Staff12 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Bow20 | arm | 2026-10-10 19:27 | passed | glows at MU's 0.002 breath |
+| Axe05 | arm | 2026-10-10 19:34 | awaiting |  |
