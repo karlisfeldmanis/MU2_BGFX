@@ -3,6 +3,7 @@
 #include "sim/skills.h"
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
 
 namespace mu::sim {
@@ -164,6 +165,23 @@ int affixCount(const content::ItemRow& row, const Held& what) {
     int count = 1;
     for (uint8_t a : what.affixes) count += a != 0 ? 1 : 0;
     return count;
+}
+
+int pieceScore(const content::ItemRow& row, const Held& what) {
+    int score = row.dropLevel + 5 * what.refinement + 20 * std::popcount(unsigned(what.excellent & 63));
+    for (int at = 0; at < what.sockets && at < 3; ++at) score += what.powers[at] != 0 ? 10 : 0;
+    return score;
+}
+
+int gearScore(const content::Tables& tables, const Satchel& bag) {
+    int score = 0;
+    for (int slot = 0; slot < kWorn; ++slot) {
+        if (slot == kPet || slot == kMount) continue;
+        const Held& what = bag[slot];
+        if (what.empty() || size_t(what.item) >= tables.items.size()) continue;
+        score += pieceScore(tables.items[size_t(what.item)], what);
+    }
+    return score;
 }
 
 int affixValue(Affix affix, int refinement) {

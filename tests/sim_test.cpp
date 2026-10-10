@@ -9557,6 +9557,30 @@ void testJewellery(const content::Tables& tables) {
           "the option prices a ring up");
 }
 
+// The gear score (sim::gearScore), the inventory head's figure: a worn piece's drop level, five
+// a plus, twenty an excellent option, ten a set rune; the bag and the pet do not count.
+void testGearScore(const content::Tables& tables) {
+    std::printf("gear score\n");
+    const int plate = tables.itemAt(8, 9), sword = tables.itemAt(0, 1);
+    check(plate >= 0 && sword >= 0, "the plate and the sword are in the table");
+    if (plate < 0 || sword < 0) return;
+    const int level = tables.items[size_t(plate)].dropLevel;
+    sim::Held piece{plate, 7, 30};
+    piece.excellent = 0b101;
+    piece.sockets = 2;
+    piece.powers[0] = 1;
+    checkEqual(sim::pieceScore(tables.items[size_t(plate)], piece), level + 35 + 40 + 10,
+               "drop level, five a plus, twenty an excellent, ten a set rune");
+
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+    checkEqual(sim::gearScore(tables, realm.satchel()), 0, "nothing worn is nought");
+    realm.give(plate, sim::kArmour, 7);
+    realm.give(sword, -1, 9);
+    checkEqual(sim::gearScore(tables, realm.satchel()), level + 35, "the worn plate counts");
+    checkEqual(sim::gearScore(tables, realm.satchel()) - level - 35, 0, "the carried sword does not");
+}
+
 // The powered rings and pendant (sim::Affix, docs/jewellery.md "Powers"): the curve, every worn
 // piece's sum, what each power does, the colour's count at the drop, and the refining.
 void testPoweredJewellery(const content::Tables& tables) {
@@ -12250,6 +12274,7 @@ int main() {
     testEvilSpirit(tables);
     testRunes(tables);
     testJewellery(tables);
+    testGearScore(tables);
     testPoweredJewellery(tables);
     testPets(tables);
     testMount(tables);

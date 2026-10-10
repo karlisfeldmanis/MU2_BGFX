@@ -294,6 +294,13 @@ Affix signatureOf(const content::ItemRow& row);
 inline bool powered(const content::ItemRow& row) { return signatureOf(row) != Affix::None; }
 // How many powers it carries, its signature with them: 0 on anything unpowered.
 int affixCount(const content::ItemRow& row, const Held& what);
+// **The gear score**, ours: MU has none. The user chose its place, the inventory's head, on
+// 2026-10-10 (https://claude.ai/artifact/PZPYx37jWXoDV1anqisLWx); the formula is that page's
+// draft. Each worn piece adds its drop level, five a plus, twenty an excellent option and ten a
+// rune set in a socket. The pet and the mount do not count.
+class Satchel;
+int pieceScore(const content::ItemRow& row, const Held& what);
+int gearScore(const content::Tables& tables, const Satchel& bag);
 // A power's value at a plus: lo + (hi - lo) x (plus / 9)^2, rounded. Percent for all but the
 // Leech, whose is life a blow.
 int affixValue(Affix affix, int refinement);
