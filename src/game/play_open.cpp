@@ -216,6 +216,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     if (!local_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
     if (castle > 0) local_.setCastle(castle);
     if (square > 0) local_.setSquare(square, squareWait);
+    // An arena (--arena) in Devil Square stands its breed up now, not on a wave's minute.
+    if (!arena_.breed.empty()) local_.freeSquare();
     if (benchPlayers_ > 0 && !remote()) raiseBench(column, row);
 
     // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to

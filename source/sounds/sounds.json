@@ -1809,6 +1809,48 @@
       ],
       "from": "Sounds[4], slot 4 -- 214 BULLDIE. SetMonsterSound(..., -1, -1, 162, 162, 4) in ZzzOpenData.cpp:3718-3723 (MONSTER_MODEL_ORC_ARCHER, Blood Castle's Chief Skeleton Archer), no walking cry; offsets from SOUND_MONSTER_BULL1 = 210."
     },
+    "orcarcher_attack": {
+      "files": [
+        "mOrcArcherAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both slots 162 -- 372 ORCARCHERATTACK1. SetMonsterSound(..., -1, -1, 162, 162, 4) in ZzzOpenData.cpp:3718-3723 (MONSTER_MODEL_ORC_ARCHER, Devil Square's Orc Archer, 64), no walking cry; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "orcarcher_shock": {
+      "files": [
+        "mOrcArcherAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the flinch on the attack pair. SetMonsterSound(..., -1, -1, 162, 162, 4) in ZzzOpenData.cpp:3718-3723 (MONSTER_MODEL_ORC_ARCHER, Devil Square's Orc Archer, 64), no walking cry; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "orcarcher_die": {
+      "files": [
+        "mBullDie.wav"
+      ],
+      "from": "Sounds[4], slot 4 -- 214 BULLDIE. SetMonsterSound(..., -1, -1, 162, 162, 4) in ZzzOpenData.cpp:3718-3723 (MONSTER_MODEL_ORC_ARCHER, Devil Square's Orc Archer, 64), no walking cry; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "eliteorc_move": {
+      "files": [
+        "mHunter2.wav"
+      ],
+      "from": "Sounds[rand()%2], both slots 86 -- 296 HUNTER2. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Devil Square's Elite Orc, 65); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "eliteorc_attack": {
+      "files": [
+        "mOrcCapAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], both slots 161 -- 371 ORCCAPATTACK1. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Devil Square's Elite Orc, 65); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "eliteorc_shock": {
+      "files": [
+        "mOrcCapAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the flinch on the attack pair. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Devil Square's Elite Orc, 65); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "eliteorc_die": {
+      "files": [
+        "mBullDie.wav"
+      ],
+      "from": "Sounds[4], slot 4 -- 214 BULLDIE. SetMonsterSound(..., 86, 86, 161, 161, 4) in ZzzOpenData.cpp:3724-3729 (MONSTER_MODEL_ORC, Devil Square's Elite Orc, 65); offsets from SOUND_MONSTER_BULL1 = 210."
+    },
     "darkskullsoldier_move": {
       "files": [
         "mHunter2.wav"
@@ -2052,6 +2094,33 @@
       ],
       "from": "Sounds[4]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp)."
     },
+    "metalbalrog_move": {
+      "files": [
+        "mBalrog1.wav",
+        "mBalrog2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp), which Devil Square's Metal Balrog (67) is drawn with (ZzzCharacter.cpp:13869-13876). As balrog_*."
+    },
+    "metalbalrog_attack": {
+      "files": [
+        "mWizardAttack2.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp), which Devil Square's Metal Balrog (67) is drawn with (ZzzCharacter.cpp:13869-13876). As balrog_*."
+    },
+    "metalbalrog_shock": {
+      "files": [
+        "mWizardAttack2.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again, the flinch on the attack pair. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp), which Devil Square's Metal Balrog (67) is drawn with (ZzzCharacter.cpp:13869-13876). As balrog_*."
+    },
+    "metalbalrog_die": {
+      "files": [
+        "mBalrogDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp), which Devil Square's Metal Balrog (67) is drawn with (ZzzCharacter.cpp:13869-13876). As balrog_*."
+    },
     "spell_evil": {
       "files": [
         "sEvil.wav"
@@ -2274,6 +2343,19 @@
         "mDrakanDie.wav"
       ],
       "from": "As drakan_die: the Drakan model's own, ZzzOpenData.cpp:3775-3781 (Icarus's Great Drakan)."
+    },
+    "cursedking_move": {
+      "files": [
+        "mCursedKing1.wav",
+        "mCursedKing2.wav"
+      ],
+      "from": "Sounds[rand()%2]: 160 -- Data\\Sound\\mCursedKing1.wav -- and 164 -- mCursedKing2.wav. SetMonsterSound(..., 160, 164, -1, -1, 163) in ZzzOpenData.cpp:3730-3735 (MONSTER_MODEL_CURSED_KING, Devil Square's Cursed King, 66); offsets from SOUND_MONSTER_BULL1 = 210, so 370 CURSEDKING1, 374 CURSEDKING2 and 373 CURSEDKINGDIE1 (DSPlaySound.h:312-316)."
+    },
+    "cursedking_die": {
+      "files": [
+        "mCursedKingDie1.wav"
+      ],
+      "from": "Sounds[4], 163 -- Data\\Sound\\mCursedKingDie1.wav. SetMonsterSound(..., 160, 164, -1, -1, 163) in ZzzOpenData.cpp:3730-3735 (MONSTER_MODEL_CURSED_KING, Devil Square's Cursed King, 66); offsets from SOUND_MONSTER_BULL1 = 210, so 370 CURSEDKING1, 374 CURSEDKING2 and 373 CURSEDKINGDIE1 (DSPlaySound.h:312-316). Slots 2 and 3 are -1, so no swing or flinch cry: MU's attack noise is SOUND_THUNDER01 (eThunder.wav) at CheckAttackTime(1) (ZzzCharacter.cpp:2223-2229), a breed event not wired here."
     },
     "darkphoenix_move": {
       "files": [

@@ -1,0 +1,376 @@
+{
+  "item": "EliteOrc01",
+  "mu_name": "Elite Orc",
+  "mu_name_from": "MuMain _enum.h MONSTER_ELITE_ORC (65), drawn as MODEL_ORC = MODEL_MONSTER01 + 47, so OpenMonsterModel loads Monster48.bmd, the body Blood Castle's Chief Skeleton Warrior (84, Orc01) wears. OpenMU Version095d Maps/DevilSquare3.cs:117 names breed 65 'Elite Orc'. docs/devil-square-port.md Part B 3.1.",
+  "world": "devilsquare",
+  "object_type": 65,
+  "monster": {
+    "model_index": 47,
+    "scale": 1.3
+  },
+  "monster_from": "ZzzCharacter.cpp:13668-13674, CreateMonster, case MONSTER_ELITE_ORC: OpenMonsterModel(MONSTER_MODEL_ORC); CreateCharacter(Key, MODEL_ORC, ...); Scale = 1.3f; o->HiddenMesh = 2. No weapon (link bones 27 and 38 hold nothing, :11974-11977), no BlendMesh, no effect; not ExtraMon (:8645-8651 lists only the Orc Soldier of Doom).",
+  "hidden_mesh": 2,
+  "hidden_mesh_from": "`o->HiddenMesh = 2` (ZzzCharacter.cpp:13673). Mesh 2 of Monster48.bmd is kni02, the helm (54 triangles, z 151-195); the .obj lists kni01, kni00, kni02, and `sheets` kni00, kni01, kni02, so index 2 is kni02 either way, which is how clean_lowpoly.kept_apart finds it. The Chief Skeleton Warrior keeps it; so this is the same export built a second time with the helm kept apart and dropped (see mesh_from).",
+  "mesh_from": "Its own build of Monster48, not a pointer at Orc01's: EliteOrc01.obj and .rig.json are the same export. Orc01's glb welds its three meshes into one part, so the cook has no `hidden` part on it to drop; a hidden_mesh row needs the weld to keep that mesh apart at build time (clean_lowpoly.kept_apart).",
+  "summoned_in": "devilsquare",
+  "summoned_in_from": "Devil Square raises its breeds by the wave (docs/devil-square-port.md 4.2), as Blood Castle raises its castles' breeds: cooked with Devil Square whether or not map 9 has spawn rows yet.",
+  "profile": "monster",
+  "rig_from": "Eight actions, exported with --actions=all. 40 bones. BoneHead = 20 (ZzzOpenData.cpp:3724-3729).",
+  "sheets": {
+    "kni00": "orc_kni00.png",
+    "kni01": "orc_kni01.png",
+    "kni02": "orc_kni02.png"
+  },
+  "sheet_from": "Three sheets, .OZJ with no alpha, Data/Monster/kni00 (128x256, the body, 512 triangles), kni01 (128x128, the blade and plates, 91) and kni02 (64x64, the helm, 54). Decoded under an orc_ prefix. The Orc Archer (Monster47) names the same three; the Kni000/011/022 files beside them are read by neither.",
+  "sheet_materials": {
+    "kni00": "plate_steel",
+    "kni01": "plate_steel",
+    "kni02": "plate_steel"
+  },
+  "sheet_materials_from": "Read off the sheets at 2x: gilt bronze plate -- pauldrons, a girdle of bands, greaves and knee cops -- over dark cloth; kni01 the same bronze with a grey blade; kni02 the helm. First built as brass, which lifted the base colour to a pale cream and blew out under Blood Castle's exposure 3.3 -- silver knights where MU paints dark bronze. painted_steel instead, as the Shadow's and the Dark Knight's plate: the bronze kept as albedo, the sheen in a low roughness. Then plate_steel, 2026-10-03 (the user: 'skeleton warion metal armors doont look realistical enoguht also they are pretty light'; of Orc01 first, 'its better'): a real metal, half its reflectance taken from the painting, so the plate goes dark steel in its shadows and catches the moon and the lamps on its edges instead of reading as painted plastic; the grain override kept on it.",
+  "sounds_from": "ZzzOpenData.cpp:3724-3729, the model's: mHunter2, mBullDie and mOrcCapAttack1, SetMonsterSound(..., 86, 86, 161, 161, 4). Wired as eliteorc_* in sounds.json.",
+  "islands_from": "15 islands for 657 triangles, all painted_steel (see sheet_materials_from). They arrived as skin, the monster profile's default (islands.py never reads sheet_materials, as Larva01 records).",
+  "material_overrides": {
+    "plate_steel": {
+      "grain": {
+        "depth": 0.01,
+        "roughness_range": 0.01
+      }
+    }
+  },
+  "material_overrides_why": "painted_steel's brushed grain (depth 0.08, streaks down V) striped the plate: the user, 2026-10-03, at the first look: 'kind fo striped?'. MU's plate is smooth paint, so the grain is all but taken out on this figure (depth 0.01, roughness range 0.01); the bronze stays the sheet's.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 162,
+      "area": 17438.1,
+      "along": [
+        -21.1,
+        33.3
+      ],
+      "mu_uv": [
+        0.07,
+        0.473,
+        0.919,
+        0.993
+      ],
+      "bake_uv": [
+        0.277,
+        0.095,
+        0.789,
+        0.864
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 68,
+      "area": 2392.4,
+      "along": [
+        3.2,
+        58.9
+      ],
+      "mu_uv": [
+        0.431,
+        0.02,
+        0.994,
+        0.774
+      ],
+      "bake_uv": [
+        0.431,
+        0.011,
+        0.875,
+        0.761
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 29,
+      "area": 3525.7,
+      "along": [
+        -8.7,
+        35.7
+      ],
+      "mu_uv": [
+        0.273,
+        0.287,
+        0.725,
+        0.478
+      ],
+      "bake_uv": [
+        0.01,
+        0.127,
+        0.923,
+        0.909
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 50,
+      "area": 4034.2,
+      "along": [
+        2.4,
+        46.8
+      ],
+      "mu_uv": [
+        0.287,
+        0.003,
+        0.955,
+        0.288
+      ],
+      "bake_uv": [
+        0.167,
+        0.248,
+        0.99,
+        0.982
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 28,
+      "area": 2817.0,
+      "along": [
+        -18.8,
+        18.7
+      ],
+      "mu_uv": [
+        0.373,
+        0.007,
+        0.9,
+        0.422
+      ],
+      "bake_uv": [
+        0.073,
+        0.011,
+        0.925,
+        0.927
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 29,
+      "area": 3401.6,
+      "along": [
+        -13.2,
+        20.5
+      ],
+      "mu_uv": [
+        0.273,
+        0.287,
+        0.725,
+        0.478
+      ],
+      "bake_uv": [
+        0.01,
+        0.69,
+        0.469,
+        0.942
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 50,
+      "area": 4044.0,
+      "along": [
+        -21.2,
+        31.2
+      ],
+      "mu_uv": [
+        0.287,
+        0.003,
+        0.955,
+        0.288
+      ],
+      "bake_uv": [
+        0.352,
+        0.012,
+        0.975,
+        0.964
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 28,
+      "area": 2817.0,
+      "along": [
+        -1.6,
+        34.6
+      ],
+      "mu_uv": [
+        0.373,
+        0.007,
+        0.9,
+        0.422
+      ],
+      "bake_uv": [
+        0.199,
+        0.011,
+        0.661,
+        0.934
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 68,
+      "area": 2390.2,
+      "along": [
+        -4.1,
+        52.3
+      ],
+      "mu_uv": [
+        0.431,
+        0.02,
+        0.994,
+        0.774
+      ],
+      "bake_uv": [
+        0.835,
+        0.012,
+        0.938,
+        0.798
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 7711.6,
+      "along": [
+        -7.7,
+        95.6
+      ],
+      "mu_uv": [
+        0.005,
+        0.001,
+        0.865,
+        0.999
+      ],
+      "bake_uv": [
+        0.011,
+        0.282,
+        0.654,
+        0.693
+      ]
+    },
+    {
+      "island": 10,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 335.5,
+      "along": [
+        46.3,
+        52.8
+      ],
+      "mu_uv": [
+        0.395,
+        0.273,
+        0.46,
+        0.414
+      ],
+      "bake_uv": [
+        0.142,
+        0.443,
+        0.329,
+        0.502
+      ]
+    },
+    {
+      "island": 11,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 2497.1,
+      "along": [
+        22.7,
+        54.0
+      ],
+      "mu_uv": [
+        0.346,
+        0.413,
+        0.687,
+        0.995
+      ],
+      "bake_uv": [
+        0.759,
+        0.018,
+        0.89,
+        0.473
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plate_steel",
+      "triangles": 33,
+      "area": 2192.3,
+      "along": [
+        -6.1,
+        28.0
+      ],
+      "mu_uv": [
+        0.493,
+        0.227,
+        0.977,
+        0.852
+      ],
+      "bake_uv": [
+        0.012,
+        0.724,
+        0.846,
+        0.982
+      ]
+    },
+    {
+      "island": 13,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 1143.4,
+      "along": [
+        5.8,
+        8.1
+      ],
+      "mu_uv": [
+        0.257,
+        0.007,
+        0.66,
+        0.251
+      ],
+      "bake_uv": [
+        0.3,
+        0.011,
+        0.62,
+        0.113
+      ]
+    },
+    {
+      "island": 14,
+      "material": "plate_steel",
+      "triangles": 54,
+      "area": 3116.7,
+      "along": [
+        -11.7,
+        29.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.738,
+        0.717
+      ],
+      "hidden": true,
+      "hidden_from": "kni02, MU's mesh 2, the helm (54 triangles, its span the mesh's own z -11.7 to 29.6), which HiddenMesh = 2 puts away (hidden_mesh_from)."
+    }
+  ]
+}

@@ -1,0 +1,295 @@
+{
+  "item": "CursedKing01",
+  "mu_name": "Cursed King",
+  "mu_name_from": "MuMain _enum.h MONSTER_CURSED_KING (66), drawn as MODEL_CURSED_KING = MODEL_MONSTER01 + 48 (MONSTER_MODEL_CURSED_KING = 48, _enum.h:4198, 4973), so OpenMonsterModel loads Monster49.bmd. OpenMU Version095d Maps/DevilSquare4.cs:85 names breed 66 'Cursed King'. docs/devil-square-port.md Part B 3.1.",
+  "world": "devilsquare",
+  "object_type": 66,
+  "monster": {
+    "model_index": 48,
+    "scale": 1.7
+  },
+  "monster_from": "ZzzCharacter.cpp:13682-13688, CreateMonster, case MONSTER_CURSED_KING: OpenMonsterModel(MONSTER_MODEL_CURSED_KING); CreateCharacter(Key, MODEL_CURSED_KING, ...); Scale = 1.7f. No weapon, no BlendMesh, no HiddenMesh; not ExtraMon (:8645-8651 lists the White Wizard, which shares the case), so RenderObject draws its plain RenderBody (ZzzObject.cpp:1312-1322). Its link bones, 32 and 43 (:11978-11981), are hand_bofdgne01 and knife_gdf: they hold nothing, and are where its blow's lasers start.",
+  "summoned_in": "devilsquare",
+  "summoned_in_from": "Devil Square raises its breeds by the wave (docs/devil-square-port.md 4.2), as Blood Castle raises its castles' breeds: cooked with Devil Square whether or not map 9 has spawn rows yet.",
+  "profile": "monster",
+  "rig_from": "Exported from Monster49.bmd with --actions=all: 7 actions, 50 bones; keys 20, 20, 7, 12, 12, 12, 12. OpenMonsterModel's default play speeds, no case for this model (ZzzOpenData.cpp:2598-2615). BoneHead = 20, Bip01 Head (ZzzOpenData.cpp:3730-3735).",
+  "sheets": {
+    "king09": "cursedking_king09.png",
+    "king08": "cursedking_king08.png"
+  },
+  "sheet_from": "Data/Monster's king09.OZJ (256 square, no alpha: the whole king, 668 triangles -- a crimson robe with gold-embroidered hems, a dead white face and long white hair, pale clawed hands) and king08.OZT (32x16, tested alpha cutting 20%: a small black-and-grey filigree band, 16 triangles at the brow, z 183-191), under a cursedking_ prefix. MuMain's ZzzOpenData names them king09.jpg and king08.tga.",
+  "sheet_materials": {
+    "king09": "cloth",
+    "king08": "wrought_iron"
+  },
+  "sheet_materials_from": "Read off the sheets: king09 is mostly the robe, cloth; its face and hands are skin and its hair hair, by island (islands_from). king08 is a dark worked band at the brow, a crown's filigree: wrought_iron.",
+  "effects_from": "Not built (they need src/ C++, and are left for the parent): his walk drops a BITMAP_BLOOD decal one frame in five at up to 10/70 of a tile round him (ZzzCharacter.cpp:5827-5834); his blow plays SOUND_THUNDER01 (eThunder.wav) at CheckAttackTime(1) and throws four BITMAP_JOINT_LASER + 1 beams from his link bones 32 and 43 (hand_bofdgne01, knife_gdf) to the target, each with a BITMAP_FIRE at the hand (:2223-2242); and his boss skill casts MODEL_SKILL_INFERNO sub 1 at CheckAttackTime(1) (:1848-1856). MU's AT_SKILL_ENERGYBALL arm breaks for him (:5088-5118), so no Energy Ball.",
+  "open_question": "Effects to build in game/play: the blood trail (BITMAP_BLOOD decals while walking), the four-laser blow with eThunder at its start, and the boss Inferno. kBosses / kResistances {66, 17, 17} for the realm too.",
+  "sounds_from": "ZzzOpenData.cpp:3730-3735: mCursedKing1, mCursedKing2, mCursedKingDie1, SetMonsterSound(..., 160, 164, -1, -1, 163): he moves to 1 or 2, has no swing or flinch cry, and dies to Die1. Wired as cursedking_move and cursedking_die in sounds.json.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 16,
+      "area": 522.0,
+      "along": [
+        4.8,
+        26.1
+      ],
+      "mu_uv": [
+        -0.002,
+        0.025,
+        0.992,
+        0.994
+      ],
+      "bake_uv": [
+        0.008,
+        0.007,
+        0.873,
+        0.856
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 404,
+      "area": 39463.7,
+      "along": [
+        -77.2,
+        50.9
+      ],
+      "mu_uv": [
+        -0.025,
+        0.001,
+        0.99,
+        0.998
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.993,
+        0.924
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 112,
+      "area": 1150.3,
+      "along": [
+        41.0,
+        78.5
+      ],
+      "mu_uv": [
+        0.023,
+        0.076,
+        0.983,
+        0.389
+      ],
+      "bake_uv": [
+        0.598,
+        0.564,
+        0.921,
+        0.663
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 112,
+      "area": 1149.6,
+      "along": [
+        37.7,
+        74.6
+      ],
+      "mu_uv": [
+        0.023,
+        0.076,
+        0.983,
+        0.389
+      ],
+      "bake_uv": [
+        0.598,
+        0.701,
+        0.806,
+        0.924
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 192.9,
+      "along": [
+        21.9,
+        27.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.748,
+        0.037,
+        0.993
+      ],
+      "bake_uv": [
+        0.909,
+        0.393,
+        0.921,
+        0.551
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 10.9,
+      "along": [
+        21.9,
+        27.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.717,
+        0.033,
+        0.749
+      ],
+      "bake_uv": [
+        0.912,
+        0.385,
+        0.92,
+        0.394
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 192.9,
+      "along": [
+        3.1,
+        8.6
+      ],
+      "mu_uv": [
+        0.003,
+        0.748,
+        0.037,
+        0.993
+      ],
+      "bake_uv": [
+        0.067,
+        0.302,
+        0.898,
+        0.939
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 10.9,
+      "along": [
+        3.1,
+        8.2
+      ],
+      "mu_uv": [
+        0.003,
+        0.717,
+        0.033,
+        0.749
+      ],
+      "bake_uv": [
+        0.889,
+        0.294,
+        0.897,
+        0.303
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 159.3,
+      "along": [
+        15.3,
+        16.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.748,
+        0.037,
+        0.993
+      ],
+      "bake_uv": [
+        0.09,
+        0.397,
+        0.898,
+        0.942
+      ]
+    },
+    {
+      "island": 9,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 8.1,
+      "along": [
+        15.3,
+        15.4
+      ],
+      "mu_uv": [
+        0.003,
+        0.717,
+        0.033,
+        0.749
+      ],
+      "bake_uv": [
+        0.889,
+        0.389,
+        0.897,
+        0.397
+      ]
+    },
+    {
+      "island": 10,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 159.3,
+      "along": [
+        15.4,
+        16.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.748,
+        0.037,
+        0.993
+      ],
+      "bake_uv": [
+        0.113,
+        0.299,
+        0.921,
+        0.939
+      ]
+    },
+    {
+      "island": 11,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 8.1,
+      "along": [
+        15.4,
+        15.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.717,
+        0.033,
+        0.749
+      ],
+      "bake_uv": [
+        0.912,
+        0.29,
+        0.92,
+        0.299
+      ]
+    }
+  ]
+}

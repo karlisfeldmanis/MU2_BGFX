@@ -27,7 +27,7 @@ constexpr bool squareEnterGateNumbered(int32_t gate) {
 // are asked, as WebZen asks them: too high is "You're underestimating yourself", too low "If you
 // wish to stay alive" (texts 686, 687).
 constexpr int kSquares = 4;
-constexpr int kSquaresBuilt = 2;
+constexpr int kSquaresBuilt = 4;
 // Each square's arena, where its nests lie (OpenMU 0.95d Maps/DevilSquare1-4.cs): x1, y1, x2, y2.
 // The realm raises every square's monsters on map 9 and a wave calls up only its own square's.
 constexpr int kSquareArena[4][4] = {

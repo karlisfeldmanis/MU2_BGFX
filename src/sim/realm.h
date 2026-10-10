@@ -1310,6 +1310,8 @@ public:
     // --square-at's: Devil Square's fight on now, `seconds` into it, its waves where they would be
     // then (a test of its tracker and banners).
     void jumpSquare(int seconds);
+    // --arena's in Devil Square: no run, and every monster held for a wave stood up now (a test).
+    void freeSquare();
     // Which castle this run is, 1 to 6, as the Messenger let him into it: the garrison raised
     // on castle 1's nests becomes that castle's own breeds (sim/event.h kCastleBreeds), and the
     // Statue of Saint one of the three at random, at that castle's health. Asked once, after

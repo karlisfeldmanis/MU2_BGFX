@@ -7171,7 +7171,8 @@ void testCharon() {
     checkEqual(ask(1, at(10, 57), 120), int(sim::SquareRefusal::TooHigh), "120 is over it");
     checkEqual(ask(1, at(10, 57), 70, 1, sim::Kin::MagicGladiator), int(sim::SquareRefusal::TooHigh),
                "a Magic Gladiator of 70 counts as 105");
-    checkEqual(ask(3, at(10, 57), 50, 3), int(sim::SquareRefusal::NotBuilt), "square 3 is not built");
+    checkEqual(ask(3, at(10, 57), 200, 3), -1, "square 3 lets a +3 in at 200");
+    checkEqual(ask(4, at(10, 57), 300, 4), -1, "and square 4 a +4 at 300");
     checkEqual(ask(2, at(10, 57), 150, 2), -1, "square 2 lets a +2 in at 150");
     checkEqual(ask(0, at(10, 57), 50), -1, "a +0 invitation fits square 1");
     checkEqual(ask(1, at(10, 57), 50), -1, "a +1 at 10:57, level 50, goes in");

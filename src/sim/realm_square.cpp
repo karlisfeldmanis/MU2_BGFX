@@ -228,6 +228,14 @@ void Realm::jumpSquare(int seconds) {
     square_.endsAt = tick_ + int64_t(kSquarePlay - at) * kSquareTicksPerSecond;
 }
 
+void Realm::freeSquare() {
+    if (square_.phase == SquarePhase::None) return;
+    square_ = SquareRun{};
+    for (Body& one : bodies_) {
+        if (one.monster() && !one.alive()) one.risesAt = tick_;
+    }
+}
+
 int Realm::squareSecondsLeft() const {
     const int64_t until = square_.phase == SquarePhase::Waiting   ? square_.startsAt
                           : square_.phase == SquarePhase::Running ? square_.endsAt
