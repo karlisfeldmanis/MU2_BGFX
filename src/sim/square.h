@@ -116,8 +116,12 @@ constexpr int squareWaveOf(int square, int32_t number) {
 
 // **The pay**, a row by rank (docs/devil-square-port.md 5.2): OpenMU's 0.95d table
 // (Version095d/Events/DevilSquareInitializer.cs:47-83), very likely WebZen's own lost dat (the
-// repack's is exactly 100x it), each row {experience, Zen}. The experience goes at the game's rate,
-// as every kill's (rules.h kExperienceRate), as Blood Castle's win does.
+// repack's is exactly 100x it), each row {experience, Zen}. The Zen is paid as it stands. **The
+// experience is ours** (the user, 2026-10-11: 'we need to increase exp rewards on finishing DS'):
+// at the game's rate OpenMU's table was 1.5 levels for square 1's first and 0.04 for square 4's, as
+// it hardly grows while the level curve climbs. So the first place pays one whole level at its
+// square's middle level (kSquareMidLevel), and the other rows OpenMU's share of its first -- never
+// under OpenMU's own at the game's rate, which square 1 would otherwise fall below.
 constexpr int kSquareRows = 4;
 constexpr int64_t kSquarePay[4][kSquareRows][2] = {
     {{6000, 30000}, {4000, 25000}, {2000, 20000}, {1000, 15000}},
@@ -125,6 +129,9 @@ constexpr int64_t kSquarePay[4][kSquareRows][2] = {
     {{10000, 50000}, {8000, 45000}, {6000, 40000}, {4000, 35000}},
     {{20000, 60000}, {10000, 55000}, {8000, 50000}, {6000, 45000}},
 };
+
+// The level a square's pay is reckoned at: the middle of its band, and 300 for square 4's 250 up.
+constexpr int kSquareMidLevel[4] = {54, 139, 214, 300};
 
 // Which row `rank` of `count` is paid, WebZen 0.97d's rule (DevilSquareGround.cpp:374-411): six
 // or fewer, the first row 0, the second row 1 and the rest row 3 (row 2 unused); seven or more,

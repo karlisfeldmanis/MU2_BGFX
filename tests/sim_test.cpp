@@ -12598,7 +12598,12 @@ void testSquareResult() {
     check(rows[0].id == second && rows[1].id == third && rows[2].id == first, "ranked by points");
     check(rows[2].mine && !rows[0].mine, "his own row marked");
     const auto pay = [](int row, int k) { return sim::kSquarePay[0][row][k]; };
-    checkEqual(rows[0].experience, (long long)(pay(0, 0) * sim::kExperienceRate), "the first's experience, at the rate");
+    const long long level54 = (long long)(sim::neededExperience(55) - sim::neededExperience(54));
+    checkEqual(rows[0].experience, std::max(level54, (long long)(pay(0, 0) * sim::kExperienceRate)),
+               "the first's experience: a level at square 1's middle, never under OpenMU's");
+    checkEqual(rows[1].experience,
+               std::max(level54 * pay(1, 0) / pay(0, 0), (long long)(pay(1, 0) * sim::kExperienceRate)),
+               "the second OpenMU's share of it, likewise");
     checkEqual(rows[0].zen, pay(0, 1), "and Zen");
     checkEqual(rows[1].zen, pay(1, 1), "the second, the second row");
     checkEqual(rows[2].zen, pay(3, 1), "the third, the last");

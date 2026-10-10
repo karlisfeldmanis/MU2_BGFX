@@ -101,7 +101,12 @@ void Realm::rankSquare() {
         int of = 0;
         one.squareRanked = squareRankOf(p, &of);
         const int row = squarePayRow(one.squareRanked, of);
-        one.squareExperience = int64_t(double(kSquarePay[s][row][0]) * kExperienceRate);
+        // One level at the square's middle for the first, the rest OpenMU's share of it.
+        const int mid = kSquareMidLevel[s];
+        const int64_t level = int64_t(neededExperience(mid + 1) - neededExperience(mid));
+        // And never under OpenMU's own at the game's rate, which square 1's middle level is.
+        one.squareExperience = std::max(level * kSquarePay[s][row][0] / kSquarePay[s][0][0],
+                                        int64_t(double(kSquarePay[s][row][0]) * kExperienceRate));
         one.squareZen = kSquarePay[s][row][1];
     }
 }
