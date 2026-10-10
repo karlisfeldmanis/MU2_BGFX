@@ -401,6 +401,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.castle = std::atoi(v);
         } else if (!std::strcmp(s, "--castle-bridge")) {
             if (const char* v = next(s)) a.castleBridge = std::atoi(v);
+        } else if (!std::strcmp(s, "--square-at")) {
+            if (const char* v = next(s)) a.squareAt = std::atoi(v);
         } else if (!std::strcmp(s, "--peaceful")) {
             a.peaceful = true;
         } else if (!std::strcmp(s, "--shield")) {

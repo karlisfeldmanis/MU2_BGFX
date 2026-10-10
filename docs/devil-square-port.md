@@ -47,6 +47,39 @@ whole event is **ours / post-0.75**, and the replica target is **WebZen 0.97d: f
 sources. OpenMU's tables are the best evidence: the repack's rewards are exactly 100x OpenMU's, and both share the
 same wave frame (0-7, 5-14, 12-20 min, bosses at 15). Treat the wave and reward tables as likely, not proven.
 
+## The goal and how it is shown (decided 2026-10-10)
+
+**The goal.** Survive the square's 20 minutes and score as many points as you can. A kill's points
+go to its last hitter: his share of the monster's HP x its level x the square's number (WZ
+`DevilSquare.cpp:2219-2236`; decision 9). At the end everyone still in the square is ranked by points
+and paid by rank: 1st, top 30%, top 50%, the rest, each row exp and zen (WZ `DevilSquareGround.cpp:
+350-689`; OM's reward table). A death sends him to Noria and out of the ranking.
+
+**How it is shown** (the user picked each, 2026-10-10, 'similiar like it was for BC'):
+- **The tracker, in the quest's place, as Blood Castle's run is** (`game/ui/tracker.cpp`,
+  `Tracker::rebuildEvent`). Ours: MU shows nothing during the fight (`CSDevilSquareMatch::
+  RenderMatchTimes` is empty, `CSEventMatch.cpp:212-215`).
+  - The kicker "Event", the title "Devil Square N", and the clock on its line: gold counting to the
+    start, bone through the fight, blood in its last minute, "Time is up" at the end.
+  - The waves as steps, MU's frame (0-7, 5-14, 12-20 min; the bosses at 15): "First wave",
+    "Second wave", "Third wave", then "The bosses rise" with its minute until then and a count of
+    the five after. The wave being fought is live, the ones past checked, the rest waiting.
+  - Under a rule: "Your points" and "Your rank" (n / players in the square), live.
+- **A banner at each wave**, in the quest banner's place (`Tracker::rebuildBanner`), under the kicker
+  "Devil Square N": "First Wave" as the fight starts, "Second Wave", "Third Wave", and "The Bosses"
+  with "5 minutes left" under it at minute 15. OpenMU's own lines ("Lets continue with some
+  stronger enemies ...", OM `Version095d/Events/DevilSquareInitializer.cs:175-207`) were tried
+  first and ran the banner across the screen; cut short they said nothing of where the fight
+  stood (the user, 2026-10-10: 'show whats make sense, like first wave,seocnd,etc').
+- **Built 2026-10-10:** `sim/square.h` and `realm_square.cpp` (the run's clock, waves and points,
+  `a.pod(square_)`, a kill scored once in `Realm::kill`), the tracker's panel and banners, and the
+  test flag `--square-at S` (the fight S seconds in). The result window is still to come.
+- **The result window at the end**, MU's rank table (`RenderMatchResult`, `CSEventMatch.cpp:222-320`)
+  in our style: rank, name, points, exp and zen for everyone in the square, his own row marked, one
+  button to claim, as Blood Castle's Archangel pays ("Complete", `Realm::claimCastle`). Unclaimed, it
+  pays as he is sent home. The rain eases out (step 5), and after a minute's rest everyone goes
+  to Noria.
+
 ## Decisions for the user
 
 Merged from all three parts. Each has a recommendation; nothing is built until these are answered.

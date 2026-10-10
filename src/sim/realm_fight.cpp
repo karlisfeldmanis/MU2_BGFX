@@ -1925,6 +1925,9 @@ void Realm::kill(Body& dead, Body& killer) {
     // nothing. Counted for that player: his own, her summon's owner, or the one who helped.
     if (dead.monster() && (killer.player || killer.summoner != 0 || (killer.warden >= 0 && helped))) {
         const Body* owner = killer.summoner != 0 ? body(killer.summoner) : nullptr;
+        // Devil Square's points, once, to whoever's kill it is: not per party member in view, as
+        // the quests' counts are (Blood Castle's quotas still are; docs/devil-square-port.md).
+        squareKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);
         // And for each of his party in view who still wants that breed (the user, 2026-10-09:
         // "everyone nearby"); countKill skips a step already done.
         countPartyKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);

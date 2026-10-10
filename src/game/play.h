@@ -462,6 +462,7 @@ public:
     void openCastleDoor() { if (here("--castle-open")) local_.openCastleDoor(); }
     void freeCastle() { if (here("--castle-free")) local_.freeCastle(); }
     void dropCastleBridge(int seconds) { if (here("--castle-bridge")) local_.dropCastleBridge(seconds); }
+    void jumpSquare(int seconds) { if (here("--square-at")) local_.jumpSquare(seconds); }
     void setCastle(int castle) { if (here("--castle")) local_.setCastle(castle); }
     // The Messenger's page's two answers (QuestDialog::kGate).
     uint32_t enterCastle(int castle) { return send({.kind = sim::Command::Kind::EnterCastle, .a = castle}); }

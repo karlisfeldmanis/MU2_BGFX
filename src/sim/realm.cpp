@@ -290,6 +290,14 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     me().claimOwed = false;
     // Raised on a castle, the run's wait starts and the entrance is shut until it ends
     // (WebZen BloodCastle.cpp:1128-1171: the court's 60 s, the barrier lifted at :887-917).
+    // Raised on Devil Square, the wait before the fight starts (sim/square.h), and his points
+    // nought.
+    square_ = SquareRun{};
+    me().squarePoints = 0;
+    if (tables_->map == kDevilSquareMap) {
+        square_.phase = SquarePhase::Waiting;
+        square_.startsAt = int64_t(kSquareWait) * kSquareTicksPerSecond;
+    }
     run_ = CastleRun{};
     if (tables_->map == kBloodCastleMap) {
         run_.phase = CastlePhase::Waiting;
@@ -1060,6 +1068,7 @@ void Realm::step() {
     // The windows' asks first, in the order they came: nothing is decided between ticks.
     applyCommands();
     castleTick();
+    squareTick();
     invasionTick();
     raidTick();
 

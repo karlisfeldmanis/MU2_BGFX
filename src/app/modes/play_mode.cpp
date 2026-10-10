@@ -619,6 +619,7 @@ void PlayMode::runScript(Context& ctx) {
     if (world_.played().isOpen() && args.castleBridge >= 0) {
         world_.played().dropCastleBridge(args.castleBridge);
     }
+    if (world_.played().isOpen() && args.squareAt >= 0) world_.played().jumpSquare(args.squareAt);
     if (world_.played().isOpen() && !args.give.empty()) {
         size_t from = 0;
         while (from <= args.give.size()) {

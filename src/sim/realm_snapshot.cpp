@@ -155,6 +155,7 @@ void Realm::serialize(Archive& a) {
     a.pod(raidNext_);
     a.pod(drinkAt_);
     a.pod(run_);
+    a.pod(square_);
     a.pod(byFloor_);
     a.vec(floors_);
     // The townspeople.

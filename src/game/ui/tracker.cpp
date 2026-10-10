@@ -292,7 +292,9 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
         eventPhase != o.eventPhase || eventCastle != o.eventCastle || eventSeconds != o.eventSeconds ||
         eventKills != o.eventKills || eventSorcerers != o.eventSorcerers ||
         eventKillsWanted != o.eventKillsWanted || eventSorcerersWanted != o.eventSorcerersWanted ||
-        eventStatue != o.eventStatue ||
+        eventStatue != o.eventStatue || eventSquare != o.eventSquare ||
+        squareWave != o.squareWave || squareBosses != o.squareBosses ||
+        squareRank != o.squareRank || squareOf != o.squareOf || squarePoints != o.squarePoints ||
         eventShown != o.eventShown) {
         return false;
     }
@@ -569,12 +571,59 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     // Blood Castle's run: up the whole time it lasts, in the quest's place (the user, 2026-10-03:
     // 'Lets use already UI which is for quests, but also sho timer there').
     const sim::CastleRun& run = realm.castleRun();
-    const bool inRun = run.phase != sim::CastlePhase::None;
+    // And Devil Square's, in the same place (docs/devil-square-port.md, "The goal and how it is
+    // shown"; the user, 2026-10-10: 'similiar like it was for BC').
+    const sim::SquareRun& square = realm.squareRun();
+    const bool inSquare = square.phase != sim::SquarePhase::None;
+    const bool inRun = run.phase != sim::CastlePhase::None || inSquare;
     eventShown_ = inRun && !hidden ? std::min(1.0f, eventShown_ + step)
                                    : std::max(0.0f, eventShown_ - step);
+    // Its waves, each named as it comes -- the first as the fight starts -- and the bosses at
+    // minute 15 with what is left under them. Ours, plain: OpenMU tells wave 2, wave 3 and the
+    // bosses in a line each (Version095d/Events/DevilSquareInitializer.cs:175-207, "Lets continue
+    // with some stronger enemies..."), which ran the banner across the screen ('banner to wide,
+    // text to long'), and cut to "Stronger Enemies" said nothing of where the fight stood (the
+    // user, 2026-10-10: 'show whats make sense, like first wave,seocnd,etc').
+    if (inSquare) {
+        const int wave = realm.squareWave();
+        const bool bosses = square.phase == sim::SquarePhase::Running &&
+                            sim::kSquarePlay - realm.squareSecondsLeft() >= sim::kSquareBossMinute * 60;
+        const char* said = nullptr;
+        const char* under = nullptr;
+        if (wave > squareWaveSeen_ && wave >= 1) {
+            said = wave == 1 ? "First Wave" : wave == 2 ? "Second Wave" : "Third Wave";
+        } else if (bosses && !squareBossSeen_) {
+            said = "The Bosses";
+            under = "5 minutes left";
+        }
+        if (said != nullptr && seen_) {
+            bannerKicker_ = "Devil Square " + std::to_string(square.square);
+            bannerTitle_ = said;
+            bannerLine_ = under != nullptr ? under : "";
+            bannerZen_.clear();
+            bannerNext_.clear();
+            bannerHold_ = 3.0f;
+            bannerAge_ = 0.0f;
+        }
+        squareWaveSeen_ = std::max(squareWaveSeen_, wave);
+        squareBossSeen_ = squareBossSeen_ || bosses;
+    } else {
+        squareWaveSeen_ = 0;
+        squareBossSeen_ = false;
+    }
 
     Drawn now;
-    if (eventShown_ > 0.0f) {
+    if (eventShown_ > 0.0f && inSquare) {
+        now.eventSquare = true;
+        now.eventPhase = int(square.phase);
+        now.eventCastle = square.square;
+        now.eventSeconds = realm.squareSecondsLeft();
+        now.squareWave = realm.squareWave();
+        now.squareBosses = square.bossesKilled;
+        now.squarePoints = realm.squarePoints();
+        now.squareRank = realm.squareRank(&now.squareOf);
+        now.eventShown = int(std::lround(eventShown_ * 64.0f));
+    } else if (eventShown_ > 0.0f) {
         now.eventPhase = int(run.phase);
         now.eventCastle = run.castle;
         now.eventSeconds = realm.castleSecondsLeft();
@@ -814,7 +863,7 @@ void Tracker::rebuildEvent(int width) {
                    faded(style::kAshInk, alpha), "Event");
     y += 24.0f * u;
     title(canvas_, left, y + kTitle * u, kTitle * u, kTitleTrack, style::kBoneHi, alpha,
-          "Blood Castle " + std::to_string(drawn_.eventCastle));
+          (drawn_.eventSquare ? "Devil Square " : "Blood Castle ") + std::to_string(drawn_.eventCastle));
     // The clock on the title's line, ranged right: gold counting down to the start, then the
     // run's time in bone, red in its last minute.
     {
@@ -844,7 +893,93 @@ void Tracker::rebuildEvent(int width) {
         std::string text;
         std::string figure;
         StepMark mark;
+        bool plain = false;  // no mark: a figure under the steps, not a step
     };
+    const auto clockOf = [](int seconds) {
+        char text[16];
+        std::snprintf(text, sizeof(text), "%d:%02d", seconds / 60, seconds % 60);
+        return std::string(text);
+    };
+    const auto drawRows = [&](const Row* rows, size_t count) {
+        for (size_t r = 0; r < count; ++r) {
+            const Row& row = rows[r];
+            const float rowTall = kStep * u;
+            const bool live = row.mark == StepMark::Live;
+            const bool done = row.mark == StepMark::Done;
+            const uint32_t ink = live ? style::kBoneHi : style::kAshInk;
+            if (!row.plain) quest_marks::mark(canvas_, row.mark, left + 7.0f * u, y + rowTall * 0.5f, u, alpha);
+            const float baseline = controls::middle(y, rowTall, kStep * u);
+            line(canvas_, left + kMarkRoom * u, baseline, kStep * u, ink, alpha, row.text);
+            if (!row.figure.empty()) {
+                const float fw = lineWidth(kStep * u, row.figure);
+                line(canvas_, right - fw, baseline, kStep * u,
+                     done ? style::kAshInk : live ? style::kBoneHi : style::kAshInk, alpha, row.figure);
+            }
+            y += rowTall + kRowGap * u;
+        }
+    };
+    // Devil Square: the waves as steps, MU's frame (sim/square.h) -- the one being fought live,
+    // those past checked, the next counting down -- then under a rule his points and his rank.
+    if (drawn_.eventSquare) {
+        if (waiting) {
+            const Row wait = {"Wait for the fight to begin", "", StepMark::Live};
+            drawRows(&wait, 1);
+            return;
+        }
+        const int elapsed = ended ? sim::kSquarePlay : sim::kSquarePlay - drawn_.eventSeconds;
+        const int wave = ended ? sim::kSquareWaves + 1 : drawn_.squareWave;
+        const char* names[sim::kSquareWaves] = {"First wave", "Second wave", "Third wave"};
+        std::vector<Row> rows;
+        bool counted = false;  // only the next to come counts down
+        for (int w = 0; w < sim::kSquareWaves; ++w) {
+            const int from = sim::kSquareWaveMinutes[w][0] * 60;
+            const StepMark mark = wave > w + 1 ? StepMark::Done : wave == w + 1 ? StepMark::Live
+                                                                                : StepMark::Waiting;
+            std::string figure;
+            if (mark == StepMark::Waiting && !counted) {
+                figure = "in " + clockOf(std::max(0, from - elapsed));
+                counted = true;
+            }
+            rows.push_back({names[w], figure, mark});
+        }
+        {
+            const int from = sim::kSquareBossMinute * 60;
+            const bool risen = elapsed >= from;
+            const bool beaten = drawn_.squareBosses >= sim::kSquareBosses;
+            rows.push_back({"The bosses rise",
+                            risen ? std::to_string(std::min(drawn_.squareBosses, sim::kSquareBosses)) +
+                                        " / " + std::to_string(sim::kSquareBosses)
+                                  : counted ? std::string() : "in " + clockOf(from - elapsed),
+                            beaten || ended ? StepMark::Done : risen ? StepMark::Live : StepMark::Waiting});
+        }
+        drawRows(rows.data(), rows.size());
+        y += (kRuleGap - kRowGap) * u;
+        {
+            const uint32_t iron = faded(style::kIron, alpha);
+            canvas_.rect({left, y, kWide * u, std::max(1.0f, u)}, iron);
+        }
+        y += kRuleGap * u;
+        const auto grouped = [](int64_t n) {
+            std::string digits = std::to_string(n), out;
+            for (size_t i = 0; i < digits.size(); ++i) {
+                if (i > 0 && (digits.size() - i) % 3 == 0) out += ' ';
+                out += digits[i];
+            }
+            return out;
+        };
+        const Row score[] = {
+            {"Your points", grouped(drawn_.squarePoints), StepMark::Live, true},
+            {"Your rank", std::to_string(drawn_.squareRank) + " / " + std::to_string(drawn_.squareOf),
+             StepMark::Live, true},
+        };
+        drawRows(score, 2);
+        // The fight over: the result, then home after the rest (sim kSquareRest).
+        if (ended) {
+            const Row home = {"Back to Noria", clockOf(drawn_.eventSeconds), StepMark::Live};
+            drawRows(&home, 1);
+        }
+        return;
+    }
     const bool bridge = won || drawn_.eventKills >= drawn_.eventKillsWanted;
     const bool door = won || drawn_.eventSorcerers >= drawn_.eventSorcerersWanted;
     const Row rows[] = {

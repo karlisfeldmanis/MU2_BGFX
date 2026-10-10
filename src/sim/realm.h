@@ -44,6 +44,7 @@
 #include "sim/command.h"
 #include "sim/config.h"
 #include "sim/event.h"
+#include "sim/square.h"
 #include "sim/invasion.h"
 #include "sim/raid.h"
 
@@ -813,6 +814,11 @@ public:
     const Satchel& satchel() const { return me().bag; }
     int64_t money() const { return me().money; }
     Wearer wearer() const;
+    // His attack speed as the character window prints it, MuMain's "Attack Speed": what agility
+    // and the weapons in his hands buy, with every speed riding on it now (the excellent option,
+    // the Ale, Frenzy) -- the figure reswing paces his swing by. A wizard's is his magic speed,
+    // which MuMain prints for him instead (CNewUICharacterInfoWindow.cpp:1040-1041).
+    int attackSpeed() const;
     // A thing put straight into a slot, with no gate but the slot being free: the cradle's
     // axe, and a purchase into the first place it fits. -1 for anywhere in the bag. The slot
     // it went to, or -1 when there was nowhere. A durability of -1 is whole at its plus.
@@ -1016,6 +1022,14 @@ public:
     int castleSecondsLeft() const;
     // The players alive in this world: what Blood Castle's quotas are reckoned by.
     int castleLiving() const;
+    // Devil Square's run, while he is in one (sim/square.h): its clock, the whole seconds left of
+    // its wait, its fight or its rest, the wave being fought (squareWaveAt), his points, and his
+    // rank among the players in the square, 1 the best, with how many there are.
+    const SquareRun& squareRun() const { return square_; }
+    int squareSecondsLeft() const;
+    int squareWave() const;
+    int64_t squarePoints() const { return me().squarePoints; }
+    int squareRank(int* of = nullptr) const;
     // The Archangel's page (sim/event.h): his folk row while it is open, what it shows, and Give
     // -- checked now, the staff taken and the win paid at the next tick's start.
     int angeling() const { return me().angeling; }
@@ -1168,6 +1182,9 @@ public:
     // --castle-bridge's: the run started now if it waits, its first quota met, and the
     // drawbridge falling `seconds` from now, to be watched (a test).
     void dropCastleBridge(int seconds);
+    // --square-at's: Devil Square's fight on now, `seconds` into it, its waves where they would be
+    // then (a test of its tracker and banners).
+    void jumpSquare(int seconds);
     // Which castle this run is, 1 to 6, as the Messenger let him into it: the garrison raised
     // on castle 1's nests becomes that castle's own breeds (sim/event.h kCastleBreeds), and the
     // Statue of Saint one of the three at random, at that castle's health. Asked once, after
@@ -1967,6 +1984,10 @@ private:
     // The Town Portal's warp, shared with Icarus's sending home (realm_items.cpp).
     void warpHome(Body& hero);
     CastleRun run_;  // see castleRun()
+    SquareRun square_;  // see squareRun()
+    // Devil Square's clock, once a tick, and a kill scored to whoever's it is (realm_square.cpp).
+    void squareTick();
+    void squareKill(const Body& dead, const Body& scorer);
     // The win's pay (CastleRun::paid*), into the bag, once.
     void payCastle();
     // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
@@ -2078,6 +2099,7 @@ private:
         // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
         int castleOwed = 0;
         int castlePassed = 0;  // see castlePassed()
+        int64_t squarePoints = 0;  // see squarePoints()
         int angeling = -1;     // see angeling()
         bool staffOwed = false;
         bool claimOwed = false;

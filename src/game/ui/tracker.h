@@ -123,6 +123,9 @@ private:
     // Blood Castle's run in the tracker's place: always up while it lasts, out of a window's way.
     float eventShown_ = 0.0f;
     void rebuildEvent(int width);
+    // Devil Square's waves already announced by a banner, and its bosses (OpenMU's lines).
+    int squareWaveSeen_ = 0;
+    bool squareBossSeen_ = false;
 
     // The edge pointer, when the giver is the next step and off the frame.
     bool pointing_ = false;
@@ -148,6 +151,12 @@ private:
         int eventKillsWanted = 0, eventSorcerersWanted = 0;  // the run's quotas (sim::CastleRun)
         int eventCastle = 1;  // which castle the run is, 1 to 6, for the title
         bool eventStatue = false;  // the statue broken (sim::CastleRun::statueBroken)
+        // Devil Square's run in the same place (sim/square.h): eventPhase, eventSeconds and
+        // eventCastle (the square) are its own then; the wave being fought, the bosses down, his
+        // points and his rank of how many.
+        bool eventSquare = false;
+        int squareWave = 0, squareBosses = 0, squareRank = 0, squareOf = 0;
+        int64_t squarePoints = 0;
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;

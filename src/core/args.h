@@ -232,6 +232,7 @@ struct Args {
     bool raidWatch = false;
     bool castleFree = false;    // `--castle-free`: Blood Castle with no run and every gate open (a test)
     int castleBridge = -1;      // `--castle-bridge S`: the run on, the drawbridge down in S seconds (a test)
+    int squareAt = -1;          // `--square-at S`: Devil Square's fight on, S seconds into it (a test)
     int castle = 0;             // `--castle N`: Blood Castle N's garrison and statue, as the Messenger sets (a test)
     bool peaceful = false;      // `--peaceful`: no nests on the map (Play::Arena::peaceful)
     // The character's file. Empty means the default (game/save.cpp) for a played run and no
