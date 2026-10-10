@@ -134,6 +134,11 @@ Merged from all three parts. Each has a recommendation; nothing is built until t
 | 20 | **Cursed Wizard's scale** (B) | 1.0 in Devil Square as MuMain, or our 0.9 everywhere | 0.9; not worth a per-world override |
 | 21 | **Blood Castle's party bug** (C side findings) | fix it now, separately, or with step 0 | fix it first, its own commit |
 
+**Solo: MU's numbers (decided 2026-10-10, decision 8, the user: 'Keep MU's numbers').** A wave
+raises its 70 whoever is in the square; Devil Square is a party event. Asked after a bot run: a
+knight of 77 and 1,000 health alone in square 1 died 79 seconds into the first wave. The bot goes
+in only when it would take every wave's breeds at its whole health a kill, its party counted.
+
 **No party on entry (decided 2026-10-10, the user: 'keep MUs way').** Entering a square or a castle
 never forms or joins a party: a player comes in alone or with the party he made before, and the
 event only reads it (WZ: no party code in either event; BC's `m_bBC_CAN_PARTY` guards in

@@ -72,6 +72,8 @@ constexpr WorldRow kWorlds[] = {
     {10, "icarus", {15, 13}},
     // Blood Castle: reached only by the Messenger's door (sim/event.h), never chosen to grind.
     {11, "bloodcastle", {13, 8}},
+    // Devil Square: reached only by Charon's door (sim/square.h), never chosen to grind.
+    {9, "devilsquare", {137, 95}},
 };
 const WorldRow* worldOf(int map) {
     for (const WorldRow& w : kWorlds) {
@@ -146,6 +148,8 @@ struct Outcome {
     // first wings"): kills of breeds from kLifeFromLevel, the Jewels of Life that fell, and when
     // his wings were made.
     int strongKills = 0, lives = 0, castles = 0, castleWins = 0;
+    int squares = 0, squareBestRank = 0;  // Devil Square runs, and his best rank in one
+    int64_t squarePoints = 0;             // over all of them
     int64_t wingsTick = -1, firstCastleTick = -1;
     int handedIn[sim::kQuests] = {};
     int64_t firstHandIn[sim::kQuests];
@@ -223,6 +227,8 @@ public:
     bool enterCastle(int castle) { return was(realm->enterCastle(castle), sim::Command::Kind::EnterCastle, castle); }
     bool handInStaff() { return was(realm->handInStaff(), sim::Command::Kind::HandInStaff); }
     bool claimCastle() { return was(realm->claimCastle(), sim::Command::Kind::ClaimCastle); }
+    bool enterSquare(int square) { return was(realm->enterSquare(square), sim::Command::Kind::EnterSquare, square); }
+    bool claimSquare() { return was(realm->claimSquare(), sim::Command::Kind::ClaimSquare); }
     void closeTrade() { realm->closeTrade(); close(sim::Command::Window::Trade); }
     void closeVault() { realm->closeVault(); close(sim::Command::Window::Vault); }
     void closeMachine() { realm->closeMachine(); close(sim::Command::Window::Machine); }
@@ -425,7 +431,7 @@ public:
         groundsAt_ = clock_;
         grounds_.clear();
         for (const WorldRow& w : kWorlds) {
-            if (w.map == int(sim::kBloodCastleMap)) continue;
+            if (w.map == int(sim::kBloodCastleMap) || w.map == int(sim::kDevilSquareMap)) continue;
             const content::Tables* t = world(w.map);
             if (!t || !reachable(w.map)) continue;
             std::set<int> seen;
@@ -451,11 +457,12 @@ public:
     bool inCastle() const { return map() == int(sim::kBloodCastleMap); }
     // What he is after, in a line: "hunts for The Broken Sword (devias)".
     std::string aimLine() const {
-        const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to"};
+        const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to", "goes to"};
         const char* modes[] = {"hunting", "resting", "in town"};
         const WorldRow* at = worldOf(aimMap_);
         std::string out = names[int(aim_)];
         if (aim_ == Aim::Castle) out += " Blood Castle";
+        else if (aim_ == Aim::Square) out += " Devil Square";
         else if (aimQuest_ >= 0) out += std::string(" ") + sim::questAt(aimQuest_).title;
         out += std::string(" in ") + (at ? at->name : "?") + ", " + modes[int(mode_)];
         return out;
@@ -596,6 +603,10 @@ public:
         else std::printf("no wings");
         std::printf("; Blood Castle %d runs, %d won", out_.castles, out_.castleWins);
         if (out_.firstCastleTick >= 0) std::printf(", the first at %s", clock(out_.firstCastleTick).c_str());
+        if (out_.squares > 0) {
+            std::printf("; Devil Square %d runs, best rank %d, %lld points", out_.squares, out_.squareBestRank,
+                        (long long)out_.squarePoints);
+        }
         const sim::Body& hero = realm_->hero();
         std::printf("\n  damage %d-%d, defence %d, health %d, points %d/%d/%d/%d, in %s\n",
                     hero.stats.minimumDamage, hero.stats.maximumDamage, hero.stats.defense,
@@ -607,7 +618,7 @@ private:
     enum class Mode { Hunt, Rest, Town };
     // What he is after, chosen every two seconds: a quest to hand in, one to hunt for, one to
     // take, or none -- the grind, on the map whose breeds suit him best.
-    enum class Aim { Grind, HandIn, Hunt, Accept, Castle };
+    enum class Aim { Grind, HandIn, Hunt, Accept, Castle, Square };
 
     // ---- worlds ---------------------------------------------------------------------------
     // A world's tables, loaded the first time it is asked for and kept: a realm holds a pointer.
@@ -637,6 +648,8 @@ private:
         if (!realm->raise(next, seed_ + uint64_t(++out_.maps) * 7919u, column, row, options_.kin, record.level)) return;
         // Into Blood Castle: which one his cloak opened, before anything else, as the server sets it.
         if (map == int(sim::kBloodCastleMap)) realm->setCastle(owedCastle_);
+        // Into Devil Square: which one, and its fight on the gate's hour, as the server sets it.
+        if (map == int(sim::kDevilSquareMap)) realm->setSquare(owedSquare_, owedSquareWait_);
         // And his vault and the Goblin's box, the account's as a server keeps them (sim::Kept):
         // the record alone lost every jewel he banked at the next gate.
         sim::Kept kept;
@@ -883,6 +896,10 @@ private:
                         const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
                         if (out) {
                             if (h.a == sim::kCastleEnterGate) owedCastle_ = realm_->castlePassed();
+                            if (sim::squareEnterGateNumbered(h.a)) {
+                                owedSquare_ = realm_->squarePassed();
+                                owedSquareWait_ = realm_->squarePassedWait();
+                            }
                             owedMap_ = int(out->map);
                             owedColumn_ = h.b;
                             owedRow_ = h.c;
@@ -925,6 +942,12 @@ private:
         }
         // Blood Castle's run over and its rest out, or his win claimed: to Devias.
         if (map() == int(sim::kBloodCastleMap) && realm_->castleRun().sentOut && owedMap_ < 0) homeOwed();
+        // Devil Square's: paid (Claim) or the rest out, to Noria -- the realm's warp home, which a
+        // bot carries out as the castle's.
+        if (map() == int(sim::kDevilSquareMap) && (realm_->squarePaid() || realm_->squareRun().sentOut) &&
+            owedMap_ < 0) {
+            homeOwed();
+        }
         const int level = realm_->hero().level;
         if (level > lastLevel_) {
             if (level / 10 > lastLevel_ / 10 || level <= 5) {
@@ -1036,6 +1059,10 @@ private:
         }
         if (map() == int(sim::kBloodCastleMap)) {
             castle();
+            return;
+        }
+        if (map() == int(sim::kDevilSquareMap)) {
+            square();
             return;
         }
         if (clock_ >= nextAim_) {
@@ -1240,7 +1267,8 @@ private:
         // In Blood Castle at 70%: no town to fall back on, and what follows him in is many. And a
         // spellcaster at --drink-at (65%): a pack of Elite Yetis or Ghosts outran his half and
         // killed a wizard of 400 health 43 times in three runs of a day.
-        const double at = map() == int(sim::kBloodCastleMap) ? 7.0 : wizardly() ? options_.drinkAt : 5.0;
+        const double at = map() == int(sim::kBloodCastleMap) || map() == int(sim::kDevilSquareMap) ? 7.0
+                          : wizardly() ? options_.drinkAt : 5.0;
         if (hero.health * 10.0 < hero.maxHealth * at) drinkOne(sim::heals);
         // A wizard under half, where spell() throws his dear spells (`flush`): at three tenths
         // his mana sat between the two on Fire Ball's five, never drank and never cast -- a day's
@@ -1659,10 +1687,11 @@ private:
         for (int slot = sim::kWorn; slot < sim::kSlots && !owed; ++slot) owed = unruneWorth(realm_->satchel()[slot]);
         if (owed) unrune();
         else if (cloakWorth() > 0) makeCloak();
+        else if (invitationWorth() >= 0) makeInvitation();
         else mixWings();
         hand_.closeMachine();
         sortBag();
-        machineOwed_ = cloakWorth() > 0 || wingsOwed();
+        machineOwed_ = cloakWorth() > 0 || invitationWorth() >= 0 || wingsOwed();
         for (int slot = sim::kWorn; slot < sim::kSlots && !machineOwed_; ++slot) {
             machineOwed_ = unruneWorth(realm_->satchel()[slot]);
         }
@@ -2383,6 +2412,10 @@ private:
                 if (!was.empty() && was.item == one.item && was.refinement == one.refinement) return false;
             }
         }
+        // Devil Square's Eye or Key he has no use for, or the vault holds two of: sold.
+        if ((sim::devilsEye(row) || sim::devilsKey(row)) && (!invitationHalfWanted(one) || vaultHolds(one) >= 2)) {
+            return false;
+        }
         // A castle's Scroll or Bone the vault already holds two of: sold. A wizard's vault filled
         // with 28 Bones and 23 Scrolls and he went to it 313 times.
         if ((sim::scrollOfArchangel(row) || sim::bloodBone(row)) && !cloakHalfWanted(one, false) &&
@@ -2408,7 +2441,7 @@ private:
         const content::ItemRow& row = rowOf(one);
         return sim::refiningJewel(row) || sim::creation(row) || sim::heals(row) ||
                sim::restores(row) || sim::ammunition(row) || (row.group == sim::kGroupPets && !sim::jewellery(row)) ||
-               castleTicket(row);
+               castleTicket(row) || squareTicket(row);
     }
 
     // ---- Blood Castle (sim/event.h, docs/blood-castle-port.md) -----------------------------
@@ -2707,6 +2740,216 @@ private:
     sim::CastlePhase lastPhase_ = sim::CastlePhase::None;
     uint32_t castleOn_ = 0;  // the statue or sorcerer he is on
 
+    // ---- Devil Square (sim/square.h, docs/devil-square-port.md) ----------------------------
+    // The handoff's step 4 (the user, 2026-10-10: 'All, in order'): a Devil's Eye and Key of one
+    // level, with a Chaos, make the Devil's Invitation at the Goblin; with one he may use, he is at
+    // Charon in Noria when the two-hourly gate opens, and inside he fights the waves to the end,
+    // then claims his row.
+    static constexpr int kNoria = 3;
+    static bool squareTicket(const content::ItemRow& row) {
+        return sim::devilsEye(row) || sim::devilsKey(row) || sim::devilsInvitation(row);
+    }
+    int squareBandLevel() const {
+        return sim::squareLevel(realm_->hero().level, realm_->hero().kin == sim::Kin::MagicGladiator);
+    }
+    bool inSquareBand(int s) const {
+        const int level = squareBandLevel();
+        const int* band = sim::kSquareBands[s - 1];
+        return level >= band[0] && (band[1] == 0 || level <= band[1]);
+    }
+    // The square he would go into: the one his band holds, built, whose waves he takes on as he
+    // would out in the world, with an invitation for it -- or 0.
+    int squareChoice() const {
+        const int s = sim::squareFor(squareBandLevel());
+        if (s > sim::kSquaresBuilt || !inSquareBand(s) || realm_->invitationSlot(s) < 0 || !squareTaken(s)) return 0;
+        return s;
+    }
+    // Every wave's breeds at his whole health a kill (his party's scaling in takes): the square
+    // keeps MU's numbers whoever is in it (the user, 2026-10-10: 'Keep MU's numbers', decision 8),
+    // and a knight of 77 and 1,000 health, let in alone on the first wave's alone, died 79 seconds
+    // into it. BOT_SQUARE_SHARE moves the line.
+    bool squareTaken(int s) const {
+        const content::Tables* t = const_cast<Bot*>(this)->world(int(sim::kDevilSquareMap));
+        if (!t) return false;
+        const double share = std::getenv("BOT_SQUARE_SHARE") ? std::atof(std::getenv("BOT_SQUARE_SHARE")) : 1.0;
+        for (int w = 0; w < sim::kSquareWaves; ++w) {
+            for (int k = 0; k < 2; ++k) {
+                for (const content::MonsterKind& kind : t->kinds) {
+                    if (kind.number == sim::kSquareBreeds[s - 1][w][k] && !takes(kind, share)) return false;
+                }
+            }
+        }
+        return true;
+    }
+    // Whether it is time to be at Charon: the gate open now, or opening within the walk.
+    bool squareDue() const {
+        if (std::getenv("BOT_SQUARE") && clock_ - squareTraced_ > 20 * 60 * 20) {
+            const_cast<Bot*>(this)->squareTraced_ = clock_;
+            const int s = sim::squareFor(squareBandLevel());
+            std::printf("SQUARE %s level %d band %d in %d slot %d taken %d:", clock(clock_).c_str(), realm_->hero().level, s,
+                        int(inSquareBand(s)), realm_->invitationSlot(s), int(squareTaken(s)));
+            const content::Tables* t = const_cast<Bot*>(this)->world(int(sim::kDevilSquareMap));
+            for (int w = 0; t && w < sim::kSquareWaves; ++w) {
+                for (int k = 0; k < 2; ++k) {
+                    for (const content::MonsterKind& kind : t->kinds) {
+                        if (kind.number == sim::kSquareBreeds[s - 1][w][k] && !takes(kind, 0.0)) {
+                            std::printf(" %s(L%d cost %.0f fear %d)", kind.label.c_str(), kind.level, costOf(kind),
+                                        int(fearUntil_.count(kind.number) && fearUntil_.at(kind.number) > clock_));
+                        }
+                    }
+                }
+            }
+            std::printf("\n");
+        }
+        if (squareChoice() <= 0 || realm_->wallClock() <= 0) return false;
+        const time_t at = time_t(realm_->wallClock());
+        struct tm local {};
+        localtime_r(&at, &local);
+        const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
+        const sim::GateClock& gate = realm_->config().square;
+        if (gate.entryLeft(day) > 0) return true;
+        return gate.period - gate.phase(day) <= 8 * 60;
+    }
+    // In Noria: by Charon until the gate opens, then through it.
+    void charon() {
+        const int s = squareChoice();
+        const int folk = folkNumbered(sim::kCharon);
+        if (s <= 0 || folk < 0) {
+            nextAim_ = clock_;
+            return;
+        }
+        if (realm_->squareRefusal(s) == sim::SquareRefusal::None) {
+            if (realm_->gating() == folk) {
+                if (hand_.enterSquare(s)) say("** gives Charon his invitation: into Devil Square %d", s);
+                return;
+            }
+            talkTo(folk);
+            return;
+        }
+        int column = 0, row = 0;
+        const sim::Body& hero = realm_->hero();
+        if (!hero.walking && realm_->folkTile(folk, &column, &row) &&
+            std::hypot(float(column) - hero.x, float(row) - hero.y) > 4.0f) {
+            sim::Request request;
+            request.kind = sim::Request::Kind::WalkTo;
+            request.column = column;
+            request.row = row + 2;
+            hand_.ask(request);
+        }
+    }
+    // Whether an Eye or Key is half of an invitation he would make: a square of its level is one
+    // he may enter (or will, at +4), and no such invitation already.
+    bool invitationHalfWanted(const sim::Held& one) const {
+        const int level = one.refinement;
+        if (level < 1 || level > sim::kInvitationMostLevel) return false;
+        if (realm_->invitationSlot(level) >= 0) return false;
+        return level <= sim::kSquaresBuilt && squareBandLevel() <= (sim::kSquareBands[level - 1][1] == 0
+                                                                       ? 100000
+                                                                       : sim::kSquareBands[level - 1][1]);
+    }
+    // The level of an Eye and Key pair he can make an invitation of now -- his square's, a Chaos
+    // to spend and the Zen over his potions, no invitation for it already -- or -1.
+    int invitationWorth() const {
+        if (realm_->hero().level < sim::kInvitationFromLevel || boxHeld()) return -1;
+        const int s = sim::squareFor(squareBandLevel());
+        if (s > sim::kSquaresBuilt || !inSquareBand(s) || realm_->invitationSlot(s) >= 0) return -1;
+        bool eye = false, key = false;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty() || one.refinement != s) continue;
+            const content::ItemRow& row = rowOf(one);
+            eye = eye || sim::devilsEye(row);
+            key = key || sim::devilsKey(row);
+        }
+        if (!eye || !key || chaosCount() <= runesWaiting()) return -1;
+        if (realm_->money() < sim::kInvitationZen[s] + potionReserve()) return -1;
+        return s;
+    }
+    // At the Goblin's box: the eye, the key and a Chaos in, the invitation mixed, everything out.
+    void makeInvitation() {
+        const int level = invitationWorth();
+        if (level < 0) return;
+        int eye = -1, key = -1, jewel = -1;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty()) continue;
+            const content::ItemRow& row = rowOf(one);
+            if (eye < 0 && sim::devilsEye(row) && one.refinement == level) eye = slot;
+            if (key < 0 && sim::devilsKey(row) && one.refinement == level) key = slot;
+            if (jewel < 0 && chaos(row)) jewel = slot;
+        }
+        if (eye < 0 || key < 0 || jewel < 0) return;
+        const bool in = hand_.putIn(eye) >= 0 && hand_.putIn(key) >= 0 && hand_.putIn(jewel) >= 0;
+        const bool mixed = in && hand_.mix(sim::Service::Invitation);
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm_->machine()[cell].empty()) hand_.takeOut(cell);
+        }
+        if (mixed) {
+            say("%s a Devil's Invitation +%d at the Chaos Goblin",
+                realm_->invitationSlot(level) >= 0 ? "** makes" : "fails to make", level);
+        }
+    }
+    // Inside: the waves, the bosses first once up, what is on him first when he is low; never
+    // after anything outside his square's arena. At the end, his rank said and his row claimed.
+    void square() {
+        const sim::SquareRun& run = realm_->squareRun();
+        const sim::Body& hero = realm_->hero();
+        mode_ = Mode::Hunt;
+        if (run.phase != lastSquarePhase_) {
+            const char* phases[] = {"", "waits for the fight", "the fight begins", "time is up"};
+            say("Devil Square %d: %s (%lld points)", run.square, phases[int(run.phase)],
+                (long long)realm_->squarePoints());
+            if (run.phase == sim::SquarePhase::Running) ++out_.squares;
+            lastSquarePhase_ = run.phase;
+        }
+        if (run.phase == sim::SquarePhase::Ended) {
+            if (realm_->squarePaid() || run.sentOut) return;
+            std::vector<sim::Realm::SquareResult> rows;
+            realm_->squareResults(&rows);
+            for (const auto& one : rows) {
+                if (!one.mine) continue;
+                if (hand_.claimSquare()) {
+                    say("** Devil Square %d: rank %d of %zu, %lld points, %lld experience and %lld Zen", run.square,
+                        one.rank, rows.size(), (long long)one.points, (long long)one.experience, (long long)one.zen);
+                    out_.squarePoints += one.points;
+                    if (out_.squareBestRank == 0 || one.rank < out_.squareBestRank) out_.squareBestRank = one.rank;
+                }
+            }
+            return;
+        }
+        if (run.phase != sim::SquarePhase::Running) return;
+        uint32_t target = 0;
+        int rank = 9;
+        float closest = 1e30f;
+        const bool low = hero.health * 10 < hero.maxHealth * 6;
+        for (const sim::Body& body : realm_->bodies()) {
+            if (!body.monster() || !body.alive() || barred(body.id) || body.kind < 0) continue;
+            if (!sim::inSquareArena(run.square, body.column(), body.row())) continue;
+            const int number = tables_->kinds[size_t(body.kind)].number;
+            const float d = (body.x - hero.x) * (body.x - hero.x) + (body.y - hero.y) * (body.y - hero.y);
+            int r = 4;
+            if (body.quarry == hero.id && d < 36.0f) r = low ? -2 : 2;
+            else if (sim::squareWaveOf(run.square, number) == sim::kSquareWaves + 1) r = 1;
+            const float near = body.id == squareOn_ ? -1.0f : d;
+            if (r < rank || (r == rank && near < closest)) {
+                rank = r;
+                closest = near;
+                target = body.id;
+            }
+        }
+        if (target == 0) return;
+        sim::Request request;
+        request.kind = sim::Request::Kind::Attack;
+        request.target = target;
+        squareOn_ = target;
+        ask(request);
+        if (guard()) return;
+        press(target);
+    }
+    sim::SquarePhase lastSquarePhase_ = sim::SquarePhase::None;
+    uint32_t squareOn_ = 0;
+    int64_t squareTraced_ = -1000000;
+
     // ---- what a fight costs ---------------------------------------------------------------
     // His band and guard against the breed's, 0.75's hit chance (1 - defence rate / attack
     // rate, floored at 3%): the health a kill of it costs him.
@@ -2835,7 +3078,7 @@ private:
         findableAt_ = clock_;
         int found = findable_;
         for (const WorldRow& w : kWorlds) {
-            if (w.map == int(sim::kBloodCastleMap)) continue;
+            if (w.map == int(sim::kBloodCastleMap) || w.map == int(sim::kDevilSquareMap)) continue;
             const content::Tables* t = world(w.map);
             if (!t || !reachable(w.map)) continue;
             found = std::max(found, bestOn(*t));
@@ -3126,8 +3369,11 @@ private:
         if (castleDue()) {
             aim_ = Aim::Castle;
             aimMap_ = kDevias;
+        } else if (squareDue()) {
+            aim_ = Aim::Square;
+            aimMap_ = kNoria;
         }
-        if (options_.quests && aim_ != Aim::Castle) {
+        if (options_.quests && aim_ != Aim::Castle && aim_ != Aim::Square) {
             // The quest he is hunting for keeps him while it still can, on a looser test: a
             // breed on the line between two would have him paying to cross the map both ways.
             if (was == Aim::Hunt && wasQuest >= 0 && allowed(wasQuest) &&
@@ -3227,6 +3473,7 @@ private:
         // ones did and ended 40 levels lower. And the party's quest offered him is taken on the
         // way (he would not take it alone, which is why the party is there).
         if (lead_.map >= 0 && options_.quests && aim_ != Aim::HandIn && aim_ != Aim::Accept && aim_ != Aim::Castle &&
+            aim_ != Aim::Square &&
             reachable(lead_.map)) {
             const int q = lead_.quest;
             if (q >= 0 && realm_->quest(q).state != sim::QuestState::Active && realm_->questOffered(q) &&
@@ -3251,9 +3498,11 @@ private:
             aimMap_ = ordered_;
         }
         if (aim_ != lastAim_ || aimQuest_ != lastQuest_ || aimMap_ != lastMap_) {
-            const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to"};
+            const char* names[] = {"grinds", "hands in", "hunts for", "takes", "goes to", "goes to"};
             if (aim_ == Aim::Castle) {
                 say("%s Blood Castle %d: its door opens in Devias", names[int(aim_)], castleChoice());
+            } else if (aim_ == Aim::Square) {
+                say("%s Devil Square %d: Charon's gate opens in Noria", names[int(aim_)], squareChoice());
             } else if (aimQuest_ >= 0) {
                 say("%s %s (%s)", names[int(aim_)], sim::questAt(aimQuest_).title, worldOf(aimMap_)->name);
             } else if (aim_ == Aim::Hunt) {
@@ -3648,6 +3897,7 @@ private:
         }
         if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
         if (goblinHere() >= 0 && cloakWorth() > 0) return "a cloak to make";
+        if (goblinHere() >= 0 && invitationWorth() >= 0) return "an invitation to make";
         if (boxHeld() && freeCells() >= 6 && clock_ - lastTrip_ > 10 * 60 * 20 &&
             (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
             return "the Goblin's box to empty";
@@ -3655,7 +3905,8 @@ private:
         if (runeOwed() && clock_ - lastTrip_ > 2 * 60 * 20 && (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
             return "a rune to save";
         }
-        if (clock_ - lastTrip_ > 10 * 60 * 20 && clock_ >= machineAwayUntil_ && (wingsOwed() || cloakWorth() > 0) &&
+        if (clock_ - lastTrip_ > 10 * 60 * 20 && clock_ >= machineAwayUntil_ &&
+            (wingsOwed() || cloakWorth() > 0 || invitationWorth() >= 0) &&
             (goblinHere() >= 0 || const_cast<Bot*>(this)->reachable(3))) {
             return "the Chaos Machine";
         }
@@ -3823,6 +4074,10 @@ private:
             }
             if (aim_ == Aim::Castle && aimMap_ == map()) {
                 messenger();
+                return;
+            }
+            if (aim_ == Aim::Square && aimMap_ == map()) {
+                charon();
                 return;
             }
             if (aimMap_ != map() && goTo(aimMap_)) return;
@@ -4210,7 +4465,7 @@ private:
             for (int slot = sim::kWorn; slot < sim::kSlots && !machineOwed_; ++slot) {
                 machineOwed_ = unruneWorth(realm_->satchel()[slot]);
             }
-            machineOwed_ = machineOwed_ || cloakWorth() > 0 || wingsOwed() || boxHeld();
+            machineOwed_ = machineOwed_ || cloakWorth() > 0 || invitationWorth() >= 0 || wingsOwed() || boxHeld();
         }
         machineSince_ = clock_;
         vaultSince_ = clock_;
@@ -4501,7 +4756,7 @@ private:
             }
             return same > 0 ? 5.0 : -1.0;
         }
-        if (questItem(one) || jewelKind(row) || castleTicket(row) || chaosWeaponRow(row) || anyHelper(row) ||
+        if (questItem(one) || jewelKind(row) || castleTicket(row) || squareTicket(row) || chaosWeaponRow(row) || anyHelper(row) ||
             sim::firstWing(row) || sim::secondWing(row) || chaos(row)) return -1.0;
         if (!keepsAt(slot)) return 0.1;
         if (sim::heals(row) || sim::restores(row)) return 1.0;
@@ -4830,6 +5085,7 @@ private:
     bool vaultOwed_ = false;   // this trip calls on the vault keeper first
     bool machineOwed_ = false;
     int owedCastle_ = 1;
+    int owedSquare_ = 1, owedSquareWait_ = 0;  // Charon's square and his gate's last seconds
     int64_t machineAwayUntil_ = 0;
     int64_t aimSince_ = 0;     // when choose() last chose afresh
     int seeking_ = -1;         // the quest whose treasure he grinds Atlans for, or -1
