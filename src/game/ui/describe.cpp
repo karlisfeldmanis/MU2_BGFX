@@ -1035,9 +1035,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             classes.clear();
             for (int i = 0; i < sim::kKinCount; ++i) {
                 if (!((row.classes >> i) & 1)) continue;
-                classes += (classes.empty() ? "" : " / ") + std::string(kSeconds[i]);
+                const bool second = (row.classes >> (8 + i)) & 1;
+                classes += (classes.empty() ? "" : " / ") +
+                           std::string(second ? kSeconds[i] : kNames[i]);
             }
-            mine = mine && who.second;
+            mine = mine && (!sim::secondClassFor(row, who.kin) || who.second);
         }
         sheet.who.push_back({classes, mine ? Tone::Green : Tone::Red, false});
     }

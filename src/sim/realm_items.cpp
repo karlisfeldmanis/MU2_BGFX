@@ -769,7 +769,7 @@ bool Realm::useItem(int slot) {
         // named is anybody. OpenMU asks this of an orb at the moment it is read, not worn.
         if (row.classes != 0 && (row.classes & (1 << int(hero.kin))) == 0) return false;
         // And its second's alone where it asks one: the Scroll of Nova is the Soul Master's.
-        if (secondClassOnly(row) && !hero.second) return false;
+        if (secondClassFor(row, hero.kin) && !hero.second) return false;
         if (hero.level < std::max(row.teachesLevel, asks(row, potion.refinement).level)) {
             return false;
         }

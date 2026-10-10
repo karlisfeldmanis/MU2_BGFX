@@ -1,0 +1,167 @@
+{
+  "item": "PantMale24",
+  "mu_name": "Hurricane Pants",
+  "mu_name_from": "MuMain loads the set at index 23 from Data/Player/PantMale24.bmd (ZzzOpenData.cpp:200-210: the sets at index 21-24 are files 22-25, `22 + i`; no helm, `i != 2`). MU's group 9 number 23.",
+  "why_this_one": "The Magic Gladiator's second set, after Storm Crow (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). No helm: MU's gladiator wears none.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:199.",
+    "call": "CreateArmor(23, 4, 2, 2, \"Hurricane Pants\", 122, 61, 90, 0, 162, 66, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "group": 9,
+    "number": 23,
+    "drop_level": 122,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 61,
+    "durability": 90,
+    "requires": {
+      "level": 0,
+      "strength": 162,
+      "agility": 66,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "classes_from": "magicGladiatorClassLevel 1 and every other class 0 in Season 6: his alone."
+  },
+  "sheets": {
+    "mg_under": "mg_under.png",
+    "hide": "hide.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: violet lacquered plate whose .OZT alpha cuts its engraving away (4-19% of each sheet). The cut texels' hidden RGB was MU's magenta; set to Storm Crow's near-black (12, 10, 18) here, the paint and the alpha untouched, so shineCrowAdded finds them.",
+  "material_note": "painted_steel with the cast grain, as Storm Crow's: lacquered plate, MU's paint the look.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain's only arm for MODEL_HURRICANE_* is the tinted chrome pass above; no ItemObjectAttribute glow.",
+  "sheet_materials": {
+    "mg_under": "painted_steel",
+    "hide": "painted_steel"
+  },
+  "sheet_note": "Not a cutout: MuMain draws the piece RENDER_TEXTURE | RENDER_CHROME on Chrome02 with the body light times (0.3, 0.8, 1) first, then its sheet over it (ZzzObject.cpp:7634-7642), so the cut texels show cyan chrome, not holes. Drawn opaque here; game/shine.h's kShineHurricane lays the tinted chrome on them (shaders/shine.sh shineCrowAdded, crow 2).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 22,
+      "area": 1279.4,
+      "along": [
+        -13.9,
+        12.9
+      ],
+      "mu_uv": [
+        0.023,
+        0.588,
+        0.692,
+        0.98
+      ],
+      "bake_uv": [
+        0.421,
+        0.428,
+        0.693,
+        0.762
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 22,
+      "area": 1013.1,
+      "along": [
+        -12.9,
+        12.5
+      ],
+      "mu_uv": [
+        0.045,
+        0.586,
+        0.698,
+        0.905
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.974,
+        0.933
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 22,
+      "area": 1279.4,
+      "along": [
+        -13.9,
+        12.9
+      ],
+      "mu_uv": [
+        0.023,
+        0.588,
+        0.692,
+        0.98
+      ],
+      "bake_uv": [
+        0.007,
+        0.717,
+        0.693,
+        0.936
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 22,
+      "area": 1013.1,
+      "along": [
+        -12.9,
+        12.5
+      ],
+      "mu_uv": [
+        0.045,
+        0.586,
+        0.698,
+        0.905
+      ],
+      "bake_uv": [
+        0.182,
+        0.064,
+        0.974,
+        0.993
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 118,
+      "area": 8183.0,
+      "along": [
+        -13.3,
+        11.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.989,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.763,
+        0.726
+      ]
+    }
+  ]
+}

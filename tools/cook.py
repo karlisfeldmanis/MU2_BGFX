@@ -2508,8 +2508,12 @@ def cook_tables(world, out_dir):
             classes |= kClass.get(name, 0)
         # A second class's alone (class_level 2): the same class's bit again, eight higher, so
         # the i32 keeps its meaning below and sim::secondClassOnly reads the rest.
+        # `second_classes` names the ones it asks a second of where it is shared with a class
+        # that has none: the Staff of Kundun, the Soul Master's and the Magic Gladiator's.
         if int(stats.get("class_level") or 1) >= 2:
-            classes |= classes << 8
+            seconds = stats.get("second_classes")
+            asked = classes if seconds is None else sum(kClass.get(n, 0) for n in seconds)
+            classes |= asked << 8
         flags = 0
         if stats.get("drops_from_monsters", True):
             flags |= kItemDrops

@@ -47,7 +47,7 @@ float shineSweep(float refine)
 	return sweeps - 4.0 * floor(sweeps / 4.0);
 }
 // The Wings of Darkness's flag, 256 above the sweep's four (game/shine.h kShineDarkness), and
-// the Storm Crow's, 512 above that (kShineCrow).
+// the Storm Crow's, 512 above that (kShineCrow): 1, or 2 with the Hurricane's 1024 beside it.
 float shineDarkness(float refine)
 {
 	float bits = floor(floor(refine + 0.5) / 256.0);
@@ -55,7 +55,8 @@ float shineDarkness(float refine)
 }
 float shineCrow(float refine)
 {
-	return floor(refine + 0.5) >= 512.0 ? 1.0 : 0.0;
+	float r = floor(refine + 0.5);
+	return r >= 1024.0 ? 2.0 : (r >= 512.0 ? 1.0 : 0.0);
 }
 
 // What an excellent thing adds over everything else: RenderPartObjectBodyColor2 with
@@ -155,7 +156,9 @@ vec3 shineDarknessAdded(float dark, vec3 n)
 // 12, 10, 18 against the paint's 63, 53, 79), so the chrome goes where the albedo is that dark.
 // Ours: the threshold, the strength and half the sheet's saturation taken out -- at half of MU's
 // pass, added in linear light, the engraving stood as flat cyan blocks (2026-10-07, muted shot),
-// as the Darkness's did at its full one.
+// as the Darkness's did at its full one. A crow of 2 is the Hurricane's: MuMain lights its chrome
+// pass with the body light times (0.3, 0.8, 1) (ZzzObject.cpp:7634-7642), so the engraving shows
+// cyan.
 vec3 shineCrowAdded(float crow, vec3 n, vec3 albedo)
 {
 	if (crow < 0.5 || u_refineStar.w <= 0.0) return vec3_splat(0.0);
@@ -165,7 +168,8 @@ vec3 shineCrowAdded(float crow, vec3 n, vec3 albedo)
 	vec2 uv = vec2(n.y * 0.5 + wave, -n.z * 0.5 + wave * 2.0);
 	vec3 chrome = texture2DLod(s_chrome2, uv, 0.0).rgb;
 	chrome = mix(chrome, vec3_splat(dot(chrome, vec3(0.2126, 0.7152, 0.0722))), 0.5);
-	return chrome * engraved * 0.22;
+	vec3 tint = crow > 1.5 ? vec3(0.3, 0.8, 1.0) : vec3_splat(1.0);
+	return chrome * tint * engraved * 0.22;
 }
 
 // How much of a glow card a refined item's added passes may cover: where the card itself glows,

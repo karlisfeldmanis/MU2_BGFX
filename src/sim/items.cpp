@@ -282,7 +282,7 @@ double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin) {
         set = of;
         excellent = excellent && worn.excellent != 0;
     }
-    if (gladiator && set != kGladiatorSet) return 0.0;
+    if (gladiator && set != kGladiatorSet && set != kHurricaneSet) return 0.0;
     return excellent ? kExcellentSetDefense : kSetDefense;
 }
 
@@ -902,7 +902,7 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     if (row->classes != 0 && (row->classes & (1 << int(who.kin))) == 0) return false;
     // A 2nd level wing and the second class's gear are its class's second's: OpenMU's class
     // level 2 (docs/second-class-gear.md).
-    if (secondClassOnly(*row) && !who.second) return false;
+    if (secondClassFor(*row, who.kin) && !who.second) return false;
     return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();
 }
 

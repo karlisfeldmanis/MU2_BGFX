@@ -113,7 +113,9 @@ ShineLook shineOf(const content::ItemRow& row, int plus, bool excellent) {
     look.colour[1] = c.g;
     look.colour[2] = c.b;
     look.sweep = sweepOf(row.group, row.number);
-    look.crow = row.group >= 8 && row.group <= 11 && row.number == 15;  // Storm Crow
+    const bool gladiators = row.group >= 8 && row.group <= 11;
+    look.hurricane = gladiators && row.number == 23;                     // Hurricane
+    look.crow = gladiators && (row.number == 15 || look.hurricane);      // Storm Crow
     return look;
 }
 

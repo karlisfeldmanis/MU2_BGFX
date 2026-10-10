@@ -441,6 +441,12 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
 // Whether it asks its class's second (OpenMU's class level 2, tools/cook.py's bits 8-10): the
 // 2nd wings and the second class's gear (docs/second-class-gear.md).
 inline bool secondClassOnly(const content::ItemRow& row) { return ((row.classes >> 8) & 7) != 0; }
+// Whether it asks `kin` in particular for his second class: the bit eight above his. The Staff of
+// Kundun is the Soul Master's and the Magic Gladiator's, who has no second (OpenMU S6
+// Weapons.cs:253: darkWizardClassLevel 2, magicGladiatorClassLevel 1).
+inline bool secondClassFor(const content::ItemRow& row, Kin kin) {
+    return ((row.classes >> (8 + int(kin))) & 1) != 0;
+}
 // **Where the second class's gear falls** (the user, 2026-10-04: 'there will be tarkan map where
 // 2nd class drop, also BC6 and strongest monsters from atlans also can drop some'). Ours: out of
 // every ordinary and excellent pool but two -- Tarkan (MU's map 8, not built yet) and Blood
@@ -623,8 +629,10 @@ int setOf(const content::ItemRow& row);
 // The Magic Gladiator's set is armour to boots, his head bare, and counts only when it is his own
 // -- Storm Crow, kGladiatorSet -- as MuMain's CheckFullSet has it (ZzzCharacter.cpp:5404-5466:
 // `end = EQUIPMENT_ARMOR` for CLASS_DARK, then no added defence unless the armour is
-// ITEM_STORM_CROW_ARMOR or a later set of his). A knight's set on him without its helm is none.
+// ITEM_STORM_CROW_ARMOR or a later set of his -- the Hurricane, kHurricaneSet). A knight's set on
+// him without its helm is none.
 constexpr int kGladiatorSet = 15;
+constexpr int kHurricaneSet = 23;
 double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin = Kin::DarkKnight);
 
 // ---- sockets and the Rune of Creation ----------------------------------------------------

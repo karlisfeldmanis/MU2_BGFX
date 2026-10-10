@@ -36,6 +36,9 @@ const char* HeldLights::mesh(Item item) {
         case Item::ThunderBlade: return "Sword19";
         case Item::LegendaryShield: return "Shield15";
         case Item::DarkBreaker: return "Sword18";
+        case Item::KnightBlade: return "Sword21";
+        case Item::StaffOfKundun: return "Staff12";
+        case Item::ArrowViperBow: return "Bow20";
     }
     return "";
 }
@@ -119,6 +122,34 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
                 out[i][2] = kEnds[i][1] * kUnit;
             }
             return 4;
+        }
+        case Item::KnightBlade:
+            // Bone04 and Bone05 of Sword21.bmd at rest, either side of the guard.
+            out[0][0] = 6.4f * kUnit;
+            out[0][1] = -4.4f * kUnit;
+            out[0][2] = 38.6f * kUnit;
+            out[1][0] = -7.0f * kUnit;
+            out[1][1] = -4.4f * kUnit;
+            out[1][2] = 38.6f * kUnit;
+            return 2;
+        case Item::StaffOfKundun: {
+            // Bone05, Bone06 and Bone08 of Staff12.bmd at rest: the head's two eyes and the foot.
+            static const float kBones[3][3] = {
+                {5.6f, -7.6f, 95.1f}, {-5.5f, -7.6f, 95.1f}, {0.0f, 1.0f, -68.8f}};
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 3;
+        }
+        case Item::ArrowViperBow: {
+            // Bone07 and Bone03 of Bow20.bmd at rest, the limb tips (MU's bones 6 and 2), and
+            // Bone19 (MU's 9) at the grip; MU's (10, 0, 0) off it is left out.
+            static const float kBones[3][3] = {
+                {0.0f, -1.1f, 59.8f}, {0.0f, -1.9f, -44.4f}, {0.0f, -12.0f, 6.9f}};
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 3;
         }
     }
     return 0;
@@ -279,6 +310,39 @@ void HeldLights::gather(gfx::Effects& effects) const {
                         sprite.blend = gfx::Blend::Additive;
                         effects.add(sprite);
                     }
+                }
+                break;
+            }
+            case Item::KnightBlade: {
+                const float l = std::sin(clock_ * 2.0f) * 0.35f + 0.65f;
+                const float grey = std::sin(clock_ * 2.0f) * 0.5f + 0.4f;
+                for (int i = 0; i < one.count; ++i) {
+                    put(light_, one.at[i], halfOf(l * 0.9f), 0.43f * l, 0.14f * l, 0.6f * l);
+                    if (grey > 0.0f) put(light_, one.at[i], halfOf(grey), 0.3f, 0.3f, 0.3f);
+                }
+                break;
+            }
+            case Item::StaffOfKundun: {
+                // MU turns its two sparks by rand() % 360 a frame; a sprite here has no turn,
+                // so the pair is drawn as it stands.
+                const float l = std::sin(clock_ * 2.0f) * 0.3f + 0.7f;
+                for (int i = 0; i < one.count; ++i) {
+                    const float big = i == 2 ? 2.0f : 1.0f;
+                    put(light_, one.at[i], halfOf(big), 0.0f, 0.5f * l, l);
+                    put(shiny_, one.at[i], halfOf(0.5f * big), 0.5f, 0.5f, 0.5f);
+                }
+                break;
+            }
+            case Item::ArrowViperBow: {
+                const float l = linkLuminosity_;
+                const float s = std::sin(clock_) + 1.0f;
+                for (int i = 0; i < std::min(one.count, 2); ++i) {
+                    put(light_, one.at[i], halfOf(s * 0.8f), 3.0f * l, l, l);
+                }
+                if (one.count > 2) {
+                    const float g = std::sin(clock_) * 0.3f + 0.3f;
+                    put(light_, one.at[2], halfOf(s * 0.8f), g, g, g);
+                    put(shiny_, one.at[2], halfOf(0.8f), 3.0f * g, g, g);
                 }
                 break;
             }

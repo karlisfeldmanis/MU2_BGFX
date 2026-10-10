@@ -742,10 +742,12 @@ void testItems(const content::Tables& tables) {
     // Spirit and Guardian sets, the Elven, Battle and Tiger Bows, the Golden Crossbow and the
     // Elven Shield, and the Rune of Creation (14, 22) on 2026-09-28. 273 since 2026-10-07: the
     // second-class sets and arms, Blood Castle 6's and Tarkan's drops, the raid's boxes, the
-    // new orbs and scrolls, and the Magic Gladiator's sword, armour and Storm Crow set. A count
+    // new orbs and scrolls, and the Magic Gladiator's sword, armour and Storm Crow set; and the
+    // second sets and the strongest arms of each line (Great Dragon, Dark Soul, Red Spirit,
+    // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 276, "276 item rows cooked");
+    checkEqual(long(tables.items.size()), 299, "299 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -5071,6 +5073,35 @@ void testSets(const content::Tables& tables) {
                   1e-9, "Storm Crow's four are the gladiator's set, no helm");
         checkNear(sim::setDefense(tables, five.satchel(), sim::Kin::MagicGladiator), 0.0, 1e-9,
                   "and a knight's set is none of his");
+        // And the Hurricane's four, his second set (ZzzCharacter.cpp:5457-5463).
+        sim::Realm hurricane;
+        hurricane.raise(&tables, 3, 140, 128, sim::Kin::MagicGladiator, 1);
+        for (const char* piece : {"ArmorMale24", "PantMale24", "GloveMale24", "BootMale24"}) {
+            const int32_t item = tables.itemNamed(piece);
+            const int slot = item >= 0 ? sim::placeOf(tables.items[size_t(item)]) : -1;
+            if (slot >= 0) hurricane.give(item, slot);
+        }
+        checkNear(sim::setDefense(tables, hurricane.satchel(), sim::Kin::MagicGladiator),
+                  sim::kSetDefense, 1e-9, "the Hurricane's four are his set too");
+        // The Staff of Kundun asks the wizard his second and not the gladiator, who has none
+        // (OpenMU S6 Weapons.cs:253: darkWizardClassLevel 2, magicGladiatorClassLevel 1).
+        const int32_t kundun = tables.itemNamed("Staff12");
+        check(kundun >= 0, "the Staff of Kundun is an item");
+        if (kundun >= 0) {
+            sim::Wearer who;
+            who.level = 400;
+            who.points.strength = who.points.agility = who.points.energy = 500;
+            who.kin = sim::Kin::DarkWizard;
+            check(!sim::fits(tables, who, sim::Held{kundun, 0, 1}), "not to a wizard unpromoted");
+            who.second = true;
+            check(sim::fits(tables, who, sim::Held{kundun, 0, 1}), "to a Soul Master");
+            who.kin = sim::Kin::MagicGladiator;
+            who.second = false;
+            check(sim::fits(tables, who, sim::Held{kundun, 0, 1}), "and to the gladiator as he is");
+            who.kin = sim::Kin::DarkKnight;
+            who.second = true;
+            check(!sim::fits(tables, who, sim::Held{kundun, 0, 1}), "never to a knight");
+        }
     }
     // On the final defence, after the halving, truncated.
     sim::Arms arms;

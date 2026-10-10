@@ -80,7 +80,7 @@ std::string kitInto(const content::Tables& tables, const RaiderKit& kit, Satchel
                           " (short: level %d, strength %d, agility %d, vitality %d, energy %d%s%s)",
                           short_.level, short_.strength, short_.agility, short_.vitality,
                           short_.energy, archangelWeapon(row) ? "; an Archangel weapon" : "",
-                          secondClassOnly(row) && !who.second ? "; a second's" : "");
+                          secondClassFor(row, who.kin) && !who.second ? "; a second's" : "");
             return kit.name + ": '" + piece.item + "' refused in slot " +
                    std::to_string(piece.slot) + why;
         }

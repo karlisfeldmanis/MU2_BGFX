@@ -32,6 +32,17 @@
 //         white, sin(WorldTime*0.004)*10 + 20 wide (ZzzEffectJoint.cpp:2103-2115), from
 //         (0, -20, -40) to (0, -160, -10) and from (0, -10, 28) to (0, -145, 18).
 //
+//   And the strongest of each line (2026-10-10), RenderLinkObject's:
+//     MODEL_KNIGHT_BLADE (:7663-7674): on bones 1 and 2, L = sin(WorldTime*0.002)*0.35 + 0.65,
+//         BITMAP_LIGHT at L*0.9, L*(0.43, 0.14, 0.6), and a grey one at sin(..)*0.5 + 0.4.
+//     MODEL_STAFF_OF_KUNDUN (:7446-7473): L = sin(WorldTime*0.002)*0.3 + 0.7; on bones 5 and 6
+//         BITMAP_LIGHT at 1, L*(0, 0.5, 1), and two white BITMAP_SHINY + 1 at 0.5 turning
+//         opposite ways; on bone 8 the same at 2 and 1.
+//     MODEL_ARROW_VIPER_BOW (:7676-7698): S = sin(WorldTime*0.001) + 1, on bones 6 and 2
+//         BITMAP_LIGHT at S*0.8, (3L, L, L) on the link roll; and off bone 9, outside a safe
+//         zone, a grey light at S*0.8 and two red BITMAP_SHINY + 1 at 0.8 turning opposite ways,
+//         grey G = sin(WorldTime*0.001)*0.3 + 0.3 and red (3G, G, G). The safe zone is not asked.
+//
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
 // head, and lights at the Great Reign's four limb tips and nose.
@@ -65,13 +76,17 @@ public:
         ThunderBlade,
         LegendaryShield,
         DarkBreaker,
+        KnightBlade,
+        StaffOfKundun,
+        ArrowViperBow,
     };
     static constexpr int kMostPoints = 8;
-    static constexpr Item kItems[9] = {Item::SaintCrossbow,   Item::GrandSoulShield,
-                                       Item::DragonSpear,     Item::DragonSoulStaff,
-                                       Item::ElementalMace,   Item::GreatReignCrossbow,
-                                       Item::ThunderBlade,    Item::LegendaryShield,
-                                       Item::DarkBreaker};
+    static constexpr Item kItems[12] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+                                        Item::DragonSpear,     Item::DragonSoulStaff,
+                                        Item::ElementalMace,   Item::GreatReignCrossbow,
+                                        Item::ThunderBlade,    Item::LegendaryShield,
+                                        Item::DarkBreaker,     Item::KnightBlade,
+                                        Item::StaffOfKundun,   Item::ArrowViperBow};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

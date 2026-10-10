@@ -2788,6 +2788,8 @@ def main() -> None:
                 # Soul Master, Muse Elf (OpenMU's class level 2; docs/second-class-gear.md).
                 if int(stats.get("class_level") or 1) >= 2:
                     entry["stats"]["class_level"] = int(stats["class_level"])
+                    if (seconds := stats.get("second_classes")):
+                        entry["stats"]["second_classes"] = list(seconds)
 
                 # The requirements ride along even though the fight does not read them.
                 # Whether a character can lift the thing is the first question anybody asks

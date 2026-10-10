@@ -1,0 +1,243 @@
+{
+  "item": "Sword22",
+  "mu_name": "Dark Reign Blade",
+  "mu_name_from": "MODEL_DARK_REIGN_BLADE, loaded from Item/Sword22.bmd (ZzzOpenData.cpp:626). Group 0 number 21 in OpenMU S6 Weapons.cs:158.",
+  "why_this_one": "The strongest drop of its class's line before Season 2 (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). docs/second-class-gear.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "OpenMU S6 Weapons.cs:158. 0.75 and 0.95d have no second-class arms.",
+    "call": "CreateWeapon(0, 21, 0, 56, 2, 4, true, \"Dark Reign Blade\", 140, 115, 142, 40, 100, 115, 0, 116, 53, 9, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: ..., energyRequirement, vitalityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 0,
+    "number": 21,
+    "drop_level": 140,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 115,
+    "maximum_damage": 142,
+    "attack_speed": 40,
+    "durability": 100,
+    "magic_power": 115,
+    "requires": {
+      "level": 0,
+      "strength": 116,
+      "agility": 53,
+      "energy": 9,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "skill": 56,
+    "classes_from": "magicGladiatorClassLevel 1 and every other class 0: his alone. Its magic power 115 is his sword that also casts (ZzzInfomation.cpp:2888)."
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "Width 2: MuMain's ItemAttribute TwoHand, PLAYER_STOP_TWO_HAND_SWORD; MuMain stands it so (ZzzCharacter.cpp:362).",
+  "two_handed": true,
+  "sheets": {
+    "nds01": "nds01.png",
+    "nds03": "nds03.png",
+    "nds02": "nds02.png"
+  },
+  "sheet_from": "Data/Item/nds01.OZJ (64x128, the pale blue-steel blade, 98 triangles), nds02 (64x64, a dark hilt with a gold orb, 202) and nds03 (8x32, a gold bar, 84), decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "nds01": "steel",
+    "nds02": "painted_steel",
+    "nds03": "brass"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every flat blade passed in the studio: steel's own 0.2 mirrors the grass black.",
+  "glow": {
+    "nds01": {
+      "over": true,
+      "scrolls_per_second": -0.5,
+      "axis": "u"
+    }
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_DARK_REIGN_BLADE arm (ZzzObject.cpp:7626-7633): the body, then mesh 0 (nds01, the blade) again added with its UVs sliding at WorldTime*0.0005 both ways -- here `over`: the blade stays in the bake and is drawn again, added, sliding along U at MU's rate (V not carried) -- and mesh 1 (nds03) streamed along V at the same rate, not carried: it stands solid. PartObjectColor2 gives it Color 5 (:6600-6603).",
+  "rig_note": "export-rig --actions=all: two bones, one action of one key; nothing moves. MuMain's held arm (ZzzCharacter.cpp:7700-7720) throws four BITMAP_JOINT_SPARK and sparks off its bone 1 only on PLAYER_RUN_TWO_HAND_SWORD_TWO, a run he does not have here; not built.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 49,
+      "area": 3284.6,
+      "along": [
+        38.6,
+        177.3
+      ],
+      "mu_uv": [
+        0.059,
+        0.001,
+        0.959,
+        0.999
+      ],
+      "bake_uv": [
+        0.018,
+        0.008,
+        0.222,
+        0.207
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 49,
+      "area": 2808.2,
+      "along": [
+        38.6,
+        159.0
+      ],
+      "mu_uv": [
+        0.059,
+        0.001,
+        0.959,
+        0.999
+      ],
+      "bake_uv": [
+        0.021,
+        0.192,
+        0.416,
+        0.45
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 60,
+      "area": 1131.6,
+      "along": [
+        20.8,
+        58.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.554,
+        0.547
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 60,
+      "area": 1076.9,
+      "along": [
+        25.6,
+        62.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.622,
+        0.709
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 36,
+      "area": 1976.4,
+      "along": [
+        -28.9,
+        40.6
+      ],
+      "mu_uv": [
+        0.019,
+        0.012,
+        0.178,
+        0.538
+      ],
+      "bake_uv": [
+        0.314,
+        0.008,
+        0.422,
+        0.174
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 742.8,
+      "along": [
+        11.4,
+        41.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.801,
+        0.999
+      ],
+      "bake_uv": [
+        0.017,
+        0.103,
+        0.965,
+        0.993
+      ]
+    },
+    {
+      "island": 6,
+      "material": "brass",
+      "triangles": 42,
+      "area": 2007.8,
+      "along": [
+        37.8,
+        138.1
+      ],
+      "mu_uv": [
+        0.016,
+        0.02,
+        0.964,
+        0.998
+      ],
+      "bake_uv": [
+        0.008,
+        0.007,
+        0.843,
+        0.847
+      ]
+    },
+    {
+      "island": 7,
+      "material": "brass",
+      "triangles": 42,
+      "area": 2289.0,
+      "along": [
+        37.8,
+        154.5
+      ],
+      "mu_uv": [
+        0.016,
+        0.02,
+        0.964,
+        0.998
+      ],
+      "bake_uv": [
+        0.5,
+        0.308,
+        0.913,
+        0.892
+      ]
+    }
+  ]
+}

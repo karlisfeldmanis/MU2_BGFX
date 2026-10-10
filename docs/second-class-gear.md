@@ -84,6 +84,47 @@ durability 74; strength 50, agility 110. Magenta-violet lacquer with gold trim o
 own HelmMale20.bmd are (0, 1.114222e+23)**; the bake layout shrank to nothing round them and
 the helm baked black until each took a neighbouring corner's coordinate in the .obj.
 
+### The later wave -- built 2026-10-10
+
+The user, 2026-10-10: "what is logic next sets and weapons for our heros after strongest they
+have right now", then "cook them", "cook them individual, check, make fixes if needed". The
+next set and the strongest pre-Season 2 drop of each class's line, from MuMain's .bmds through
+tools/MuExtract on OpenMU's Season 6 rows (Armors.cs, Weapons.cs), each cooked alone, judged on
+its studio sheet and passed in docs/cook-log.md.
+
+| class | set (files, MU index) | drops | arm (file, MU number) | drop |
+|---|---|---|---|---|
+| Blade Knight | **Great Dragon** (`*Male22`, 21) | 94-126 | **Knight Blade** (`Sword21`, 0/20) | 140 |
+| Soul Master | **Dark Soul** (`*Male23`, 22) | 87-122 | **Staff of Kundun** (`Staff12`, 5/11) | 140 |
+| Muse Elf | **Red Spirit** (`*Male25`, 24) | 84-109 | **Arrow Viper Bow** (`Bow20`, 4/20) | 135 |
+| Magic Gladiator | **Hurricane** (`*Male24`, 23, no helm) | 102-128 | **Dark Reign Blade** (`Sword22`, 0/21) | 140 |
+
+MuMain loads sets 21-24 from files 22-25 (`22 + i`, ZzzOpenData.cpp:200-210); the Hurricane
+has no helm (`i != 2`). What each carries:
+
+- **Great Dragon**: dark red lacquer traced in gold, painted_steel. No render arm.
+- **Dark Soul**: a navy robe traced in gold, cloth as Grand Soul's. MU's cloth tail on the pants
+  (ZzzObject.cpp:10782) is not built.
+- **Red Spirit**: red lacquer traced in silver; her head and gold hair under the helm, the
+  pleated skirt cloth, the undersuit leather. FShoots_R, the violet plume and band on the helm
+  and pants, breathes added at the slow rate (ZzzObject.cpp:5248-5250). OpenMU spells the
+  armour "Red Sprit Armor" (Armors.cs:141).
+- **Hurricane**: Storm Crow's two passes, the chrome under the cut paint tinted (0.3, 0.8, 1)
+  (ZzzObject.cpp:7634-7642): game/shine.h kShineHurricane, shine.sh's crow of 2. Its sheets'
+  hidden RGB under the cut was MU's magenta and is set to Storm Crow's near-black. His set to
+  sim::setDefense beside Storm Crow (kHurricaneSet, CheckFullSet's list).
+- **Knight Blade**: the nks04 card breathes added, the gem drawn again added (`over`); the
+  blade's violet chrome pass is not carried. Violet lights either side of the guard, held.
+- **Dark Reign Blade**: the blade drawn again added and sliding along U (`over`); nds03's V
+  stream and the sparks MU throws on one run of his are not carried.
+- **Staff of Kundun**: kundunStic2 breathes added (BlendMesh 2), kundunStic_R added from
+  nothing to full; blue lights and white sparks at the head's eyes and the foot, held. It is
+  the Soul Master's and the Magic Gladiator's: `second_classes: ["wizard"]` has the cook ask
+  the second of the wizard alone, and sim::secondClassFor asks it of the wearer's own class.
+- **Arrow Viper Bow**: the Chaos Nature Bow's rig and nocked arrow, released on key 4 of 7; its
+  two `_R` sheets breathe added; red lights at the limb tips and a red spark at the grip, held.
+  Fires the wooden arrow (MU's MODEL_LACEARROW is not built).
+
 ### Traps these sets found
 
 - **Sheets by group.** A sheet renamed on disk -- a jpg and a tga of one stem (`lower_14m_jpg`,
@@ -95,6 +136,11 @@ the helm baked black until each took a neighbouring corner's coordinate in the .
   plate_steel's depth 0.05 each caught a glint: white specks over Divine's flanks and
   pauldrons. Divine takes depth 0.02, range 0.03.
 - **Cutouts are declared, not detected**, and name the group.
+- **The islands come out plate_steel**, the pipeline's default, unless the recipe names
+  `sheet_materials` before the first build (Great Dragon was set by hand and rebuilt).
+- **A weapon that does not move keeps no rig**: a group the .obj adds (a glow's copy) has no
+  bones in it, and the build stops. MU's second added pass of an opaque mesh is a glow's
+  `over`, not a copy of its faces.
 
 ## Where it falls
 
