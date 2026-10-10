@@ -664,7 +664,10 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
                 # Mode bit 2: MU's water frames, the 32 caustic frames stepped at `rate` a
                 # second rather than slid (content::Material::waterFrames).
                 mode = ((1 if own.get("axis") == "u" else 0) | (2 if own.get("mask_held") else 0)
-                        | (4 if own.get("water_frames") else 0))
+                        | (4 if own.get("water_frames") else 0)
+                        # Both axes by the one offset, MU's BlendMeshTexCoordU and V at one rate:
+                        # the Dark Reign Blade's blade. Bit 6, as an opaque stream's "uv" is.
+                        | (64 if own.get("axis") == "uv" else 0))
         if flags & 2 and rate:
             flags |= 16
         # And an opaque sheet that slides: MU's StreamMesh, which MoveObject slides by
@@ -699,6 +702,14 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         name = material.get("name", "")
         if flags & 2 and (name in no_chrome or name.removeprefix("glow_") in no_chrome):
             mode |= 32
+            flags |= 128
+        # Mode bit 7: a chrome pass (export_gltf.chrome_material), and one more byte after the
+        # mode: how it finds its coordinates, 1 its own UVs, 2 RENDER_CHROME's, 3 RENDER_CHROME4's
+        # (content::Material::chromePass). A levelled item's own chrome stays off it (bit 5):
+        # it is a chrome already.
+        chrome_pass = int((material.get("extras") or {}).get("chrome") or 0) if flags & 2 else 0
+        if chrome_pass:
+            mode |= 128 | 32
             flags |= 128
         # Bit 5: an item's glow -- drawn at its own level, not the world's glow_strength --
         # and whether it pulses or jumps, as MU's ItemObjectAttribute makes it --
@@ -737,6 +748,8 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
             materials += struct.pack("<f", shadow)
         if flags & 128:
             materials += struct.pack("<B", mode)
+            if mode & 128:
+                materials += struct.pack("<B", chrome_pass)
     # The fallback a primitive with no material of its own draws with, as content/mesh.cpp
     # appends it. Rough and not metal, for the reason orm_factors gives.
     materials += struct.pack("<fB", -1.0, 0) + write_string("none")
@@ -3650,6 +3663,9 @@ def cook_wardrobe(out_dir, texcook, threads):
         # material's name, which export_gltf writes as glow_<sheet>, lower case.
         glows = {f"glow_{sheet.lower()}": one
                  for sheet, one in (rows[name][0].get("glow") or {}).items()}
+        # And a chrome pass's slide, by the name export_gltf.chrome_material gives it.
+        glows.update({f"chrome_{n}": one
+                      for n, one in enumerate(rows[name][0].get("chrome") or [])})
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
                                               scrolls=glows,
                                               soft=set(rows[name][0].get("soft_alpha", [])),

@@ -2939,6 +2939,10 @@ def main() -> None:
             # Everything else MU animates is frames in a .bmd and this builds from .obj.
             if (glow := document.get("glow")):
                 entry["glow"] = glow
+            # And a weapon's chrome passes (tools/chrome_sheets.py), whose slides the wardrobe
+            # cook reads by the pass's material name, as it reads a glow's.
+            if (chrome := document.get("chrome")):
+                entry["chrome"] = chrome
 
             # The lights it throws, which are not the same thing as the lights drawn on it.
             # MU keeps those apart — a glow submesh is rendered, a lamp is registered with

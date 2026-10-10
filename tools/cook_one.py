@@ -262,6 +262,9 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
                 bare |= set(one.get("no_chrome", []))
                 glows = {f"glow_{sheet.lower()}": glow
                          for sheet, glow in (one.get("glow") or {}).items()}
+                # And a chrome pass's slide, by its material's name (export_gltf.chrome_material).
+                glows.update({f"chrome_{n}": chrome
+                              for n, chrome in enumerate(one.get("chrome") or [])})
         tris, _verts, _size, bones = cook_mesh(mesh_name, path, out_path, manifest,
                                                hidden.get(mesh_name),
                                                scroll_per_second=scroll,

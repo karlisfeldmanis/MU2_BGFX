@@ -120,6 +120,13 @@ struct Material {
     // (ZzzBMD.cpp:1425), the Staff of Resurrection's swirl cards and the Light Saber's beam.
     // Every other item glow takes them in fs_glow. The cook's mode bit 5.
     bool noChrome = false;
+    // A weapon's chrome pass (tools/chrome_sheets.py): MU's RenderMesh of one mesh again,
+    // RENDER_BRIGHT, with a chrome image -- the Knight Blade's violet, the Bill of Balrog's
+    // blue veins. Its albedo is the tinted chrome image and its emissive the mask of where it
+    // shows, in the mesh's own UVs. 0 for every other material; 1 the chrome at its own UVs
+    // (sliding, RENDER_TEXTURE with BITMAP_CHROME bound), 2 at RENDER_CHROME's off the normal,
+    // 3 at RENDER_CHROME4's (ZzzBMD.cpp:1608-1660). fs_glow.
+    uint8_t chromePass = 0;
     float jitter = 0.0f;
     // An item's glow rather than a lamp's: drawn at MU's BlendMeshLight alone, without the
     // world sheet's glow_strength, which is tuned for fires and windows (2.0 in Lorencia).
@@ -129,7 +136,9 @@ struct Material {
     // beam, black at its tip and green at its hilt end, bled the hilt's green round onto the
     // tip, and its three crossed quads drew a star above the blade. A sliding or jumping
     // sheet keeps tiling: it is the wrap that moves it.
-    bool glowClamped() const { return itemGlow && scrollPerSecond == 0.0f && jitter == 0.0f; }
+    bool glowClamped() const {
+        return itemGlow && scrollPerSecond == 0.0f && jitter == 0.0f && chromePass == 0;
+    }
     // A glow that casts the sun's shadow all the same, though it is drawn only in the glow
     // pass, at this strength: 0 none, 1 full, between dithered by fs_shadow as a fading figure
     // is. Ours, on the Ice Monster alone: MU draws it no shadow (ZzzCharacter.cpp:8668), and

@@ -40,7 +40,25 @@ void main()
 	float held = mod(floor(mode * 0.5), 2.0);
 	float water = mod(floor(mode * 0.25), 2.0);
 	float bare = mod(floor(mode * 0.125), 2.0);
-	vec2 uv = v_texcoord0 + u_material.w * vec2(alongU, 1.0 - alongU);
+	// +16: both axes by the one offset (the Dark Reign Blade's blade); +32 times a weapon's
+	// chrome pass, 1 to 3 (content::Material::chromePass, shine.sh's chromePassUv).
+	float both = mod(floor(mode * 0.0625), 2.0);
+	float pass = floor(mode / 32.0);
+	vec2 along = both > 0.5 ? vec2_splat(1.0) : vec2(alongU, 1.0 - alongU);
+	vec2 uv = v_texcoord0 + u_material.w * along;
+	// A chrome pass: the tinted chrome image at its coordinates, added where its mask (the
+	// emissive, in the mesh's own UVs) says, at its brightness. Its w is the slide for its own
+	// UVs and MU's WorldTime * 0.001 for RENDER_CHROME4. No refinement over it: it is a chrome.
+	if (pass > 0.5)
+	{
+		float fade = v_light.w >= 2.0 ? figureFade(v_light.w) : v_light.w;
+		vec2 at = chromePassUv(pass, normalize(v_normal), v_texcoord0,
+		                       u_material.w * along, u_material.w);
+		vec3 chrome = texture2D(s_albedo, at).rgb;
+		float mask = texture2D(s_emissive, v_texcoord0).r;
+		gl_FragColor = vec4(chrome * (mask * fade * u_material.z), 1.0);
+		return;
+	}
 	vec4 sheet;
 	// +4: MU's water frames (content::Material::waterFrames). u_material.w is the frame,
 	// 0 to 31, of the 8 by 4 caustic atlas; the frame's cell is cut half a texel in, and the

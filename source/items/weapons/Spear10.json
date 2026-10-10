@@ -42,6 +42,36 @@
   },
   "sheet_from": "Data/Item/af.OZT (64x128), from MuMain at c0d74c4. The .bmd names af.tga on all 138 triangles; its alpha cuts 7% away.",
   "sheet_note": "af is the Balrog's bill: a silver-white blade veined in magenta, a dark red haft band and black spikes.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5,
+      "f0_desaturation": 1.0
+    }
+  },
+  "cutout": [
+    "af"
+  ],
+  "cutout_from": "Declared, not detected. af.tga's alpha cuts 7% away, and what it cuts is the veins drawn through the blade and a thin line down the haft - MU alpha-tests a .tga, so the Balrog's bill is cracked through.",
+  "material_note": "Six islands on af, sampled per triangle. Island 0 (50) is the bill's blade, silver-white washed red at (138, 99, 96): steel at 0.45. Island 1 (32) is the haft, dark red-brown (93, 35, 11), 2 and 3 (16 each) the black spikes (90, 21, 0), 4 and 5 (12 each) the butt: plate_steel at 0.5 as the Gorgon Staff's pole, with desaturation 1.0 so the red haft does not go grey. MU scrolls this model's BlendMeshTexCoordV (ZzzObject.cpp:5267) and sets no BlendMesh: the scroll moves the chrome pass under the body (chrome_from), and no glow.",
+  "chrome": [
+    {
+      "slot": "af",
+      "image": "chrome01",
+      "uv": "mesh",
+      "tint": [
+        0.5,
+        0.5,
+        1.5
+      ],
+      "where": "cut",
+      "scrolls_per_second": 0.5,
+      "axis": "v"
+    }
+  ],
+  "chrome_from": "RenderPartObjectEffect's MODEL_BILL_OF_BALROG (ZzzObject.cpp:9682-9688): before the body, the whole model again RENDER_TEXTURE with Chrome01 bound, BodyLight (0.5, 0.5, 1.5), mesh 0 its StreamMesh, so it is drawn unlit with its V sliding by ItemObjectAttribute's -(WorldTime % 2000)*0.0005 (:5267-5268), half a sheet a second. The body drawn after it covers it but where af's alpha is cut: the veins through the blade and the line down the haft run with streaming blue chrome. Here a pass added where the sheet is cut (scrolls_per_second 0.5, the renderer's offset being minus the rate), over what shows through the hole where MU draws it solid. tools/chrome_sheets.py.",
   "islands": [
     {
       "island": 0,
@@ -175,19 +205,5 @@
         0.773
       ]
     }
-  ],
-  "material_overrides": {
-    "steel": {
-      "roughness": 0.45
-    },
-    "plate_steel": {
-      "roughness": 0.5,
-      "f0_desaturation": 1.0
-    }
-  },
-  "cutout": [
-    "af"
-  ],
-  "cutout_from": "Declared, not detected. af.tga's alpha cuts 7% away, and what it cuts is the veins drawn through the blade and a thin line down the haft - MU alpha-tests a .tga, so the Balrog's bill is cracked through.",
-  "material_note": "Six islands on af, sampled per triangle. Island 0 (50) is the bill's blade, silver-white washed red at (138, 99, 96): steel at 0.45. Island 1 (32) is the haft, dark red-brown (93, 35, 11), 2 and 3 (16 each) the black spikes (90, 21, 0), 4 and 5 (12 each) the butt: plate_steel at 0.5 as the Gorgon Staff's pole, with desaturation 1.0 so the red haft does not go grey. MU scrolls this model's BlendMeshTexCoordV (ZzzObject.cpp:5267) but sets no BlendMesh, so nothing is drawn added and the scroll moves nothing; no glow."
+  ]
 }

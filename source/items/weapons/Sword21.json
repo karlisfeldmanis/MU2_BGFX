@@ -69,6 +69,20 @@
   },
   "glow_note": "RenderPartObjectBody's MODEL_KNIGHT_BLADE arm (ZzzObject.cpp:7613-7624), mesh by mesh: mesh 2 (nks04) drawn added at sin(WorldTime*0.0008)*0.7+0.5, here at the slow rate (0.001, the nearest the cook carries); mesh 1 (nks03, the gem) drawn added over the body, here `over`, the same; mesh 3 (nks01, the blade) again RENDER_BRIGHT | RENDER_CHROME in (0.43, 0.14, 0.6) with its UVs sliding, not carried. PartObjectColor2 gives it Color 10 (:6596-6599).",
   "rig_note": "export-rig --actions=all: three bones, one action of one key; nothing moves. Held, MuMain hangs a violet BITMAP_LIGHT, L*(0.43, 0.14, 0.6) at L*0.9 with L = sin(WorldTime*0.002)*0.35+0.65, and a grey one breathing sin*0.5+0.4 on each of its bones 1 and 2, either side of the guard (ZzzCharacter.cpp:7663-7674; fx/held_lights).",
+  "chrome": [
+    {
+      "slot": "nks01",
+      "image": "chrome01",
+      "uv": "chrome",
+      "tint": [
+        0.43,
+        0.14,
+        0.6
+      ],
+      "where": "over"
+    }
+  ],
+  "chrome_from": "RenderPartObjectBody's MODEL_KNIGHT_BLADE arm (ZzzObject.cpp:7613-7624): after the body and its two added meshes, mesh 3 (nks01, the blade) again RENDER_BRIGHT | RENDER_CHROME under glColor3f(0.43, 0.14, 0.6): Chrome01 at RENDER_CHROME's coordinates off the normal, sliding with MU's ten-second wave -- a violet sheen running down the blade. MU passes it a U and V slide as well, which RENDER_CHROME's own coordinates do not take (ZzzBMD.cpp:1971-1975); not carried, as there. tools/chrome_sheets.py writes its sheets.",
   "islands": [
     {
       "island": 0,

@@ -172,6 +172,24 @@ vec3 shineCrowAdded(float crow, vec3 n, vec3 albedo)
 	return chrome * tint * engraved * 0.22;
 }
 
+// A weapon's chrome pass's coordinates (content::Material::chromePass, ZzzBMD.cpp:1608-1660):
+//   1  its own UVs, slid by `slide` -- RENDER_TEXTURE with a chrome image bound, the Bill of
+//      Balrog's stream
+//   2  RENDER_CHROME's, as shineAdded's: u = n.z * 0.5 + wave, v = n.y * 0.5 + wave * 2
+//   3  RENDER_CHROME4's, off L = (cos(WorldTime * 0.001), sin(WorldTime * 0.002), 1):
+//      u = n.L + n.y * 0.5 + L.y * 3, v = 1 - n.L - n.z * 0.5 - wave * 3
+// in MU's axes, whose (x, y, z) is our (x, -z, y) for a normal. `seconds` is WorldTime * 0.001.
+vec2 chromePassUv(float pass, vec3 n, vec2 uv, vec2 slide, float seconds)
+{
+	float wave = u_refine.y;
+	if (pass < 1.5) return uv + slide;
+	vec3 m = vec3(n.x, -n.z, n.y);
+	if (pass < 2.5) return vec2(m.z * 0.5 + wave, m.y * 0.5 + wave * 2.0);
+	vec3 l = vec3(cos(seconds), sin(seconds * 2.0), 1.0);
+	float d = dot(m, l);
+	return vec2(d + m.y * 0.5 + l.y * 3.0, 1.0 - d - (m.z * 0.5 + wave * 3.0));
+}
+
 // How much of a glow card a refined item's added passes may cover: where the card itself glows,
 // its brightness times its alpha, full from a third up. Its alpha alone was not enough: a card
 // whose alpha is faint but not nought over its whole quad still showed as a pale diamond under

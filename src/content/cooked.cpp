@@ -102,6 +102,8 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         if (casts) reader.read(material.glowShadow);
         // Bit 7, how a scroll runs: along U, and with the sheet's alpha held (the Lost Tower).
         if (scrollMode) reader.read(material.scrollMode);
+        // And the mode's own bit 7, a chrome pass: one byte more, how it finds its coordinates.
+        if (scrollMode && (material.scrollMode & 128) != 0) reader.read(material.chromePass);
         if (reader.failed()) break;
     }
 

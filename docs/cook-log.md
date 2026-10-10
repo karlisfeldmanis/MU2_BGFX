@@ -242,7 +242,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword15 | arm | 2026-09-30 09:45 | passed | steel 0.45 blade with sword15_2's blue lightning added and breathing over it, ornate guard and grip whole; no blowout |
 | Hommerd01 | figure | 2026-09-30 09:47 | passed | blue painted plate with silver trim, crested helm, dark greaves; metallic 0 keeps it paint, not chrome; axe and shield judged in the arena |
 | Sword13 | arm | 2026-09-30 09:50 | passed | silver blade with cut-out serrated teeth along both edges, brass 0.6 winged guard and pommel; whole, teeth solid not rectangles |
-| Spear10 | arm | 2026-09-30 09:53 | passed | silver-red bill with its veins cut through as MU alpha-tests af.tga, red haft (plate, desaturation 1.0) and black spikes; whole, no floating parts |
+| Spear10 | arm | 2026-10-10 18:23 | passed | stage and arena: blue Chrome01 streams along V in af's cut veins only |
 | EliteYeti01 | figure | 2026-09-30 09:54 | passed | pale grey shaggy pelt with dark marks, steel-blue spikes on crown and shoulders; fur and chitin, no sheen |
 | Bow06 | arm | 2026-09-30 10:01 | passed | silver steel limbs with gold scroll paint, nocked arrow and string drawn, cut-out string cards solid; whole at noon/dusk/night |
 | IceMonster01 | figure | 2026-09-30 10:12 | passed | MU's additive ice body with its V scroll, unchanged; half-strength shadow (ours) outlines it on Devias's snow -- approved by the user in game |
@@ -299,7 +299,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Black Dragon | set | 2026-10-06 07:01 | awaiting |  |
 | Mace08 | arm | 2026-10-06 10:08 | awaiting |  |
 | Staff10 | arm | 2026-10-06 09:53 | awaiting |  |
-| CrossBow20 | arm | 2026-10-06 09:56 | awaiting |  |
+| CrossBow20 | arm | 2026-10-10 18:20 | passed | arena fight at dusk: bab2 chrome added in Eccross's cut grooves |
 | Mace03 | arm | 2026-10-06 10:27 | awaiting |  |
 | IronWheel01 | figure | 2026-10-06 11:42 | awaiting |  |
 | Tantalos01 | figure | 2026-10-06 11:44 | awaiting |  |
@@ -323,7 +323,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Dark Soul | set | 2026-10-10 13:57 | passed | studio, 8 angles at noon/dusk/night from 3.5 m: a dark navy robe traced in gold on cloth, the white hair under the hood on hair, the front panel reads; no cloth sim (MU's pants tail) |
 | Red Spirit | set | 2026-10-10 15:04 | passed | studio, 8 angles at noon/dusk/night from 3.5 m and 2 m, against a Blender render of MU's own model and sheets: red lacquer traced in silver, her gold hair down her back and the pale-blue thigh plates as MU's, the violet plume breathing added |
 | Hurricane | set | 2026-10-10 15:22 | passed | studio, 8 angles at noon/dusk/night from 2 m: violet lacquer on painted_steel, the engraving's chrome tinted (0.3, 0.8, 1) by kShineHurricane, faint as Storm Crow's; no holes, no blowout |
-| Sword21 | arm | 2026-10-10 15:34 | passed | studio, 8 angles at noon/dusk/night: violet-gold hilt, the nks04 card breathing violet along the blade, the gem lit red; the steel dark toward the grass as accepted |
-| Sword22 | arm | 2026-10-10 15:40 | passed | studio, 8 angles at noon/dusk/night: the pale blue blade drawn again added and sliding (over), the gold bar down its middle; reads at night as MU's added pass |
-| Staff12 | arm | 2026-10-10 15:45 | passed | studio, 8 angles at noon/dusk/night: dark ridged steel, the cyan line work at the head breathing from nothing to full, kundunStic2 added |
+| Sword21 | arm | 2026-10-10 18:11 | passed | arena fight at dusk: nks01 blade under MU's violet Chrome01 pass (RENDER_CHROME), flat faces one band each |
+| Sword22 | arm | 2026-10-10 18:21 | passed | arena fight at dusk: blade slides U and V together, orange core copy slides V over it |
+| Staff12 | arm | 2026-10-10 18:18 | passed | arena fight at dusk: shaft's faint 0.2 chrome, head's Chrome02 RENDER_CHROME4 sheen on its pulse; bright |
 | Bow20 | arm | 2026-10-10 15:50 | passed | studio, 8 angles at noon/dusk/night: red lacquered limbs, the pink and violet _R waves breathing added, the nocked arrow and string card in place |

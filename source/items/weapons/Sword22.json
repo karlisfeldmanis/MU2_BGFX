@@ -57,10 +57,15 @@
     "nds01": {
       "over": true,
       "scrolls_per_second": -0.5,
-      "axis": "u"
+      "axis": "uv"
+    },
+    "nds03": {
+      "over": true,
+      "scrolls_per_second": -0.5,
+      "axis": "v"
     }
   },
-  "glow_note": "RenderPartObjectBody's MODEL_DARK_REIGN_BLADE arm (ZzzObject.cpp:7626-7633): the body, then mesh 0 (nds01, the blade) again added with its UVs sliding at WorldTime*0.0005 both ways -- here `over`: the blade stays in the bake and is drawn again, added, sliding along U at MU's rate (V not carried) -- and mesh 1 (nds03) streamed along V at the same rate, not carried: it stands solid. PartObjectColor2 gives it Color 5 (:6600-6603).",
+  "glow_note": "RenderPartObjectBody's MODEL_DARK_REIGN_BLADE arm (ZzzObject.cpp:7626-7633): the body, then mesh 0 (nds01, the blade) again added with its UVs sliding at WorldTime*0.0005 both ways -- here `over`: the blade stays in the bake and is drawn again, added, sliding along U and V together (axis uv) at MU's rate, the renderer's offset being minus the rate -- and mesh 1 (nds03, the orange core) as its StreamMesh, solid and unlit with V sliding at the same rate. Here nds03 stays in the bake and a copy slides over it, added (`over`, axis v): MU's stream replaces the core with its sliding self, and over a baked core that would have to leave the bake. The joint sparks off its bone 1 are drawn only in PLAYER_RUN_TWO_HAND_SWORD_TWO (ZzzCharacter.cpp:7700-7720), a stance this engine does not use (the user's call). PartObjectColor2 gives it Color 5 (:6600-6603).",
   "rig_note": "export-rig --actions=all: two bones, one action of one key; nothing moves. MuMain's held arm (ZzzCharacter.cpp:7700-7720) throws four BITMAP_JOINT_SPARK and sparks off its bone 1 only on PLAYER_RUN_TWO_HAND_SWORD_TWO, which this game runs as its own Mixamo run; not built. Its skill, Power Slash (56), fans five MODEL_MAGIC2 waves on that same attack (ZzzCharacter.cpp:2820-2843), and is a Season skill not in this game (docs/mg-port.md).",
   "islands": [
     {
@@ -79,10 +84,10 @@
         0.999
       ],
       "bake_uv": [
-        0.018,
-        0.008,
-        0.222,
-        0.207
+        0.265,
+        0.478,
+        0.413,
+        0.545
       ]
     },
     {
@@ -101,10 +106,10 @@
         0.999
       ],
       "bake_uv": [
-        0.021,
-        0.192,
-        0.416,
-        0.45
+        0.048,
+        0.007,
+        0.58,
+        0.568
       ]
     },
     {
@@ -125,8 +130,8 @@
       "bake_uv": [
         0.008,
         0.008,
-        0.554,
-        0.547
+        0.715,
+        0.697
       ]
     },
     {
@@ -145,10 +150,10 @@
         0.999
       ],
       "bake_uv": [
-        0.008,
-        0.008,
-        0.622,
-        0.709
+        0.007,
+        0.007,
+        0.804,
+        0.904
       ]
     },
     {
@@ -167,10 +172,10 @@
         0.538
       ],
       "bake_uv": [
-        0.314,
+        0.399,
         0.008,
-        0.422,
-        0.174
+        0.534,
+        0.224
       ]
     },
     {
@@ -190,8 +195,8 @@
       ],
       "bake_uv": [
         0.017,
-        0.103,
-        0.965,
+        0.065,
+        0.992,
         0.993
       ]
     },
@@ -211,10 +216,10 @@
         0.998
       ],
       "bake_uv": [
-        0.008,
-        0.007,
-        0.843,
-        0.847
+        0.026,
+        0.223,
+        0.218,
+        0.353
       ]
     },
     {
@@ -233,10 +238,10 @@
         0.998
       ],
       "bake_uv": [
-        0.5,
-        0.308,
-        0.913,
-        0.892
+        0.242,
+        0.008,
+        0.54,
+        0.296
       ]
     }
   ]

@@ -264,6 +264,9 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // y carries two flags: 1 two-sided, 2 calibrated (the albedo's metal is already
             // reflectance, so the sheet's metal_gain stays off it). fs_shade unpacks them.
             float scrollOffset = -std::fmod(elapsed_ * material.scrollPerSecond, 1.0f);
+            // RENDER_CHROME4's clock instead: MU's WorldTime * 0.001, in seconds, wrapped where
+            // cos(t) and sin(2t) both come round (fs_glow, shine.sh's chromePassUv).
+            if (material.chromePass == 3) scrollOffset = std::fmod(elapsed_, 6.2831853f * 1000.0f);
             // MU's water frames: the frame, 0 to 31, rather than a slide (content::Material).
             if (material.waterFrames) {
                 scrollOffset = std::floor(std::fmod(elapsed_ * material.scrollPerSecond, 32.0f));
@@ -304,7 +307,9 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                              glowPass ? (material.scrollAlongU ? 1.0f : 0.0f) +
                                                             (material.maskHeld ? 2.0f : 0.0f) +
                                                             (material.waterFrames ? 4.0f : 0.0f) +
-                                                            (material.noChrome ? 8.0f : 0.0f)
+                                                            (material.noChrome ? 8.0f : 0.0f) +
+                                                            (material.scrollAlongUV ? 16.0f : 0.0f) +
+                                                            32.0f * float(material.chromePass)
                                              : (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f) +
                                                  // Not in the hover ring's mask, which
@@ -322,6 +327,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                                  : material.roughnessFactor,
                                              glowPass ? scrollOffset : material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
+            // A chrome pass reads where it shows from its emissive (fs_glow).
+            if (glowPass && material.chromePass != 0) {
+                bgfx::setTexture(3, sEmissive_, material.emissive);
+            }
             // The water's sway (common.sh's swayed), for the still plants marked to take it.
             // z and w: an opaque stream's slide (MU's StreamMesh) and its axis, 0 V, 1 U, 2 both,
             // which vs_static adds to the uv. Nought on everything else.

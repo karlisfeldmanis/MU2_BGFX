@@ -73,6 +73,26 @@
   },
   "glow_note": "ItemObjectAttribute: `case MODEL_STAFF_OF_KUNDUN: BlendMesh = 2`, BlendMeshLight sin(WorldTime*0.004)*0.3+0.7 (ZzzObject.cpp:5252-5255, :9949-9952) -- mesh 2, kundunStic2, added and breathing. RenderPartObjectBody's arm (:7989-7995) then lays RENDER_CHROME | RENDER_BRIGHT on mesh 1 at 0.2 (not carried) and draws mesh 0, kundunStic_R, bright at sin(WorldTime*0.005): added here, from nothing to full, at the item rate. PartObjectColor2 gives it Color 17 (:6608-6611).",
   "rig_note": "export-rig --actions=all: nine bones, one action of one key; nothing moves. Held, MuMain hangs a blue BITMAP_LIGHT, L*(0, 0.5, 1) with L = sin(WorldTime*0.002)*0.3+0.7, and two counter-turning white BITMAP_SHINY + 1 at 0.5 on its bones 5 and 6, the head's two eyes, and the same at twice the size on bone 8, the foot (ZzzCharacter.cpp:7446-7473; fx/held_lights).",
+  "chrome": [
+    {
+      "slot": "kundunStic",
+      "image": "chrome01",
+      "uv": "chrome",
+      "light": 0.2,
+      "where": "over"
+    },
+    {
+      "slot": "kundunStic_R",
+      "image": "chrome02",
+      "uv": "chrome4",
+      "pulse": [
+        0.3,
+        0.7
+      ],
+      "where": "over"
+    }
+  ],
+  "chrome_from": "RenderPartObjectBody's MODEL_STAFF_OF_KUNDUN arm (ZzzObject.cpp:7989-7996): mesh 1 (kundunStic, the shaft) again RENDER_CHROME | RENDER_BRIGHT at 0.2 -- a faint Chrome01 sheen -- and mesh 0 (kundunStic_R, the head) RENDER_CHROME4 | RENDER_BRIGHT, Chrome02 (BITMAP_CHROME2) at the RENDER_CHROME4 coordinates (ZzzBMD.cpp:1648-1654) on its BlendMeshLight, sin(WorldTime*0.004)*0.3 + 0.7 (:5252-5255): a sheen that swings round the head as its light vector turns. Its third pass, mesh 0 RENDER_TEXTURE | RENDER_BRIGHT at sin(WorldTime*0.005), is the head's own glow here (glow kundunStic_R). tools/chrome_sheets.py.",
   "islands": [
     {
       "island": 0,

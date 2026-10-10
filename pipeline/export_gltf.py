@@ -308,11 +308,14 @@ def mesh_attributes(obj, mesh, tiled: bool = False,
 
     # Each triangle once in its own part, and a second time in `echo`'s: a glow drawn OVER the
     # opaque mesh rather than instead of it (the recipe's `glow.<slot>.over`). See main.
+    # A face may be drawn again more than once -- a glow and a chrome pass over the same mesh,
+    # the Staff of Kundun's head (the recipe's `chrome`) -- so an echo is a name or a list.
     echo = echo or {}
     passes = [(t, (parts or {}).get(t.polygon_index, t.material_index))
               for t in mesh.loop_triangles]
-    passes += [(t, echo[t.polygon_index]) for t in mesh.loop_triangles
-               if t.polygon_index in echo]
+    passes += [(t, key) for t in mesh.loop_triangles if t.polygon_index in echo
+               for key in ([echo[t.polygon_index]] if isinstance(echo[t.polygon_index], str)
+                           else echo[t.polygon_index])]
 
     for triangle, key in passes:
         # A BMD is several meshes, one per sheet, and clean_lowpoly keeps them as material
@@ -1576,6 +1579,59 @@ def glow_material(document: dict, binary: "Binary", slot: str, said: dict,
     return len(document["materials"]) - 1
 
 
+# How a chrome pass finds its coordinates, as the cook writes it (content::Material::chromePass):
+# its own UVs (MU's RENDER_TEXTURE with a chrome image bound, sliding), RENDER_CHROME's off the
+# normal, or RENDER_CHROME4's.
+CHROME_UV = {"mesh": 1, "chrome": 2, "chrome4": 3}
+
+
+def chrome_material(document: dict, binary: "Binary", n: int, said: dict, sheet: Path,
+                    mask: Path) -> int:
+    """A chrome pass: MU's RenderMesh of one mesh again, RENDER_BRIGHT, with a chrome image.
+
+    The sheet is the pass's chrome image already tinted (tools/chrome_sheets.py), the emissive
+    its mask in the mesh's own UVs: where the pass shows. Both ride one glow material, drawn
+    added as an item's glow is, its brightness `light` (or `pulse`) times the tint's largest
+    channel, which the sheet could not hold. Its UVs are MU's own (the part is `swapped`), so
+    the mask lines up with the sheet it was cut from.
+    """
+    images = []
+    for path in (sheet, mask):
+        if not path.exists():
+            raise SystemExit(f"chrome pass {n}: {path} is missing -- run tools/chrome_sheets.py")
+        data = path.read_bytes()
+        document.setdefault("images", []).append({
+            "name": path.stem,
+            "bufferView": binary.view(data),
+            "mimeType": "image/png",
+        })
+        document.setdefault("samplers", [{"magFilter": LINEAR, "minFilter": LINEAR_MIPMAP_LINEAR,
+                                          "wrapS": REPEAT, "wrapT": REPEAT}])
+        document.setdefault("textures", []).append(
+            {"sampler": 0, "source": len(document["images"]) - 1})
+        images.append(len(document["textures"]) - 1)
+    top = max(said.get("tint", [1.0, 1.0, 1.0])) or 1.0
+    pulse = said.get("pulse") or [0.0, float(said.get("light", 1.0))]
+    material = {
+        "name": f"chrome_{n}",
+        "pbrMetallicRoughness": {
+            "baseColorTexture": {"index": images[0], "texCoord": 0},
+            "baseColorFactor": [0.0, 0.0, 0.0, 1.0],
+            "metallicFactor": 0.0,
+            "roughnessFactor": 1.0,
+        },
+        "emissiveTexture": {"index": images[1], "texCoord": 0},
+        "emissiveFactor": [1.0, 1.0, 1.0],
+        "alphaMode": "BLEND",
+        "doubleSided": True,
+        "extras": {"item": True, "pulse": [float(pulse[0]) * top, float(pulse[1]) * top],
+                   "chrome": CHROME_UV[said.get("uv", "chrome")],
+                   **({"pulse_rate": said["pulse_rate"]} if said.get("pulse_rate") else {})},
+    }
+    document["materials"].append(material)
+    return len(document["materials"]) - 1
+
+
 def write_glb(path: Path, document: dict, blob: bytearray) -> None:
     """The container: a header, the JSON chunk, then the bytes.
 
@@ -1878,14 +1934,38 @@ def main() -> None:
             if name in glowing and glowing[name].get("over"):
                 # Stays in the bake and is drawn again, added: MU's second RENDER_BRIGHT pass
                 # of an opaque mesh (the Messenger of Archangel's plate, ZzzObject.cpp:2644).
-                echo[face.index] = "glow:" + name
+                echo.setdefault(face.index, []).append("glow:" + name)
             elif name in glowing:
                 parts[face.index] = "glow:" + name
-        found = {v[5:] for v in list(parts.values()) + list(echo.values())
+        found = {v[5:] for v in list(parts.values()) +
+                 [one for names in echo.values() for one in names]
                  if v.startswith("glow:")}
         for missing in set(glowing) - found:
             print(f"error: glow '{missing}' names no slot of this mesh ({slot_names})",
                   file=sys.stderr)
+
+    # The chrome passes: a slot drawn again, added, with one of MU's chrome images -- at
+    # coordinates off its normal, or at its own UVs sliding -- and only where the pass's mask
+    # says (tools/chrome_sheets.py writes both sheets). Each is a part of its own, chrome:<n>,
+    # over the bake. See chrome_material.
+    chrome_passes: list = (recipe.get("chrome") or []) if not slots else []
+    if chrome_passes:
+        # Named parts, as a glow makes them: without, a model of one sheet and no glow -- the
+        # Great Reign Crossbow -- is shipped as one primitive and its pass's faces fold into it.
+        parts = dict(parts) if parts else {face.index: "mu2" for face in mesh.polygons}
+        slot_names = [m.name.lower().split(".")[0] if m else "" for m in obj.data.materials]
+        for n, one in enumerate(chrome_passes):
+            wanted = one["slot"].lower()
+            hit = False
+            for face in mesh.polygons:
+                name = (slot_names[face.material_index]
+                        if face.material_index < len(slot_names) else "")
+                if name == wanted:
+                    echo.setdefault(face.index, []).append(f"chrome:{n}")
+                    hit = True
+            if not hit:
+                print(f"error: chrome pass {n} names '{wanted}', no slot of this mesh "
+                      f"({slot_names})", file=sys.stderr)
 
     # The tiled path's echo: a slot the recipe names under `echo` draws another slot's faces
     # a second time, as itself. For MU's StreamMesh, which is opaque and unlit with its V
@@ -1905,7 +1985,8 @@ def main() -> None:
 
     attributes, groups, counts = mesh_attributes(
         obj, mesh, tiled=bool(slots), upright=upright, repeat=repeat, parts=parts,
-        swapped={"glow:" + k for k in glowing}, echo=echo)
+        swapped={"glow:" + k for k in glowing} |
+                {f"chrome:{n}" for n in range(len(chrome_passes))}, echo=echo)
 
     # The rig, read before any accessor is built — because the vertex bones are rewritten
     # here and an accessor packed from the old numbering cannot be taken back.
@@ -2048,6 +2129,17 @@ def main() -> None:
 
             if name is None:
                 one["material"] = base
+                continue
+
+            if name.startswith("chrome:"):
+                n = int(name[7:])
+                folder = islands_file.parent / "chrome"
+                one["material"] = chrome_material(document, binary, n, chrome_passes[n],
+                                                  folder / f"{islands_file.stem}_{n}.png",
+                                                  folder / f"{islands_file.stem}_{n}_mask.png")
+                print(f"  chrome     {n}: {chrome_passes[n]['slot']} "
+                      f"{chrome_passes[n]['image']} {chrome_passes[n].get('uv', 'chrome')} "
+                      f"{chrome_passes[n].get('where', 'over')}")
                 continue
 
             if name.startswith("glow:"):

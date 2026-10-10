@@ -24,6 +24,15 @@ vec3 toSrgb(vec3 c)
 
 void main()
 {
+	// A weapon's chrome pass, as fs_glow draws it, standing still (u_material.y's 32 times it).
+	float pass = floor(u_material.y / 32.0);
+	if (pass > 0.5)
+	{
+		vec2 at = chromePassUv(pass, normalize(v_normal), v_texcoord0, vec2_splat(0.0), 0.0);
+		vec3 chrome = texture2D(s_albedo, at).rgb * texture2D(s_emissive, v_texcoord0).r;
+		gl_FragColor = vec4(toSrgb(chrome * u_material.z), 0.0);
+		return;
+	}
 	vec4 sheet = texture2D(s_albedo, v_texcoord0);
 	float plus = shinePlus(v_refine.x);
 	vec3 colour = sheet.rgb * (sheet.a * u_material.z) * shineTint(plus);

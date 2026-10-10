@@ -57,6 +57,9 @@ struct CookedMaterial {
     // bit 7 and a byte after bit 6's float: bit 0 the scroll runs along U, bit 1 the sheet's
     // alpha holds still while its colour slides, bit 2 MU's water frames. See content::Material.
     uint8_t scrollMode = 0;
+    // The mode's bit 7 and a byte after it: a chrome pass, 1 at its own UVs, 2 RENDER_CHROME's,
+    // 3 RENDER_CHROME4's. See content::Material::chromePass.
+    uint8_t chromePass = 0;
     // An item glow's pulse and jump (bit 5): MU's ItemObjectAttribute. See content::Material.
     float pulse[2] = {0.0f, 1.0f};
     float jitter = 0.0f;
