@@ -5,6 +5,7 @@
 #include <string>
 
 #include "game/ui/bag.h"
+#include "game/ui/controls.h"
 #include "sim/items.h"
 
 namespace mu::game {
@@ -17,7 +18,10 @@ using gfx::Box;
 // belt.
 constexpr float kIconShare = 0.56f;  // of the disc's width: inside the rim, with air round it
 constexpr float kRimShare = 0.16f;   // of the radius, the durability ring
-constexpr int kRound = 40;           // segments a full circle
+constexpr int kRound = 40;
+constexpr float kAmmoGrowth = 2.4f;
+// Her count when she has plenty: the window's warm white, full, so it reads on bright ground.
+constexpr uint32_t kCountInk = gfx::rgba(0.97f, 0.94f, 0.86f, 1.0f);  // the ammunition cell, of a worn piece's           // segments a full circle
 
 // A filled disc, as a fan: the canvas has no circle of its own.
 void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t abgr) {
@@ -115,6 +119,19 @@ const char* slotName(int slot) {
     }
 }
 
+// The shots as the pill prints them (the user, 2026-10-10: "use 1k not 1,000", "and under 1k
+// use 500"): whole under a thousand, then in thousands with one decimal below ten -- 1.5k --
+// rounded down, so the figure never promises a shot she has not got.
+std::string shotsFigure(int shots) {
+    if (shots < 1000) return std::to_string(shots);
+    if (shots < 10000) {
+        const int tenths = shots / 100;
+        return std::to_string(tenths / 10) +
+               (tenths % 10 ? "." + std::to_string(tenths % 10) : std::string()) + "k";
+    }
+    return std::to_string(shots / 1000) + "k";
+}
+
 const char* stateName(sim::Worn band) {
     switch (band) {
         case sim::Worn::Broken: return "BROKEN";
@@ -127,7 +144,11 @@ const char* stateName(sim::Worn band) {
 
 bool Endurance::Drawn::operator==(const Drawn& o) const {
     if (count != o.count || hovered != o.hovered || width != o.width || height != o.height ||
-        self != o.self) {
+        self != o.self || archer != o.archer || shots != o.shots || stack != o.stack ||
+        overAmmo != o.overAmmo) {
+        return false;
+    }
+    if (archer != 0 && (ammo.x != o.ammo.x || ammo.y != o.ammo.y || ammo.w != o.ammo.w || ammo.h != o.ammo.h)) {
         return false;
     }
     for (int i = 0; i < count; ++i) {
@@ -163,13 +184,48 @@ void Endurance::update(float width, float height, const Hud& hud, const sim::Rea
             if (band == sim::Worn::Fine) continue;
             now_.icons[now_.count++] = Icon{slot, band, held.durability, maximum};
         }
+        // Her shots: what Realm::nock spends, the hand her bow leaves free and then the bag.
+        now_.archer = realm.hero().archer;
+        if (now_.archer != 0) {
+            const int wanted = now_.archer == 1 ? 15 : 7;  // Arrows, the Bolt
+            const auto add = [&](const sim::Held& h) {
+                if (h.empty() || h.durability <= 0) return;
+                const content::ItemRow& row = tables->items[size_t(h.item)];
+                if (row.group != sim::kGroupBows || row.number != wanted) return;
+                now_.shots += h.durability;
+                now_.stack = std::max(now_.stack, int(row.durability));
+            };
+            add(bag[sim::kWeaponLeft]);
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) add(bag[slot]);
+            if (now_.stack == 0) {
+                // None anywhere: the row itself, so the empty gauge still knows its whole.
+                for (const content::ItemRow& row : tables->items) {
+                    if (row.group == sim::kGroupBows && row.number == wanted) {
+                        now_.stack = int(row.durability);
+                        break;
+                    }
+                }
+            }
+        }
         std::stable_sort(now_.icons, now_.icons + now_.count, [](const Icon& a, const Icon& b) {
             if (severity(a.band) != severity(b.band)) return severity(a.band) > severity(b.band);
             return a.durability * b.maximum < b.durability * a.maximum;
         });
     }
+    // The ammunition stands at the row's right end, the worn pieces to its left.
+    // Larger than a worn piece's cell (the user, 2026-10-10: "hard to see icon"), on the same
+    // foot and the same right edge; the worn pieces step left of it by the row's own gap.
+    float shift = 0.0f;
+    if (now_.archer != 0) {
+        const Box cell = hud.wornCell(0);
+        const float across = std::round(cell.w * kAmmoGrowth);
+        now_.ammo = {cell.right() - across, cell.bottom() - across, across, across};
+        now_.overAmmo = now_.ammo.has(pointer.x, pointer.y);
+        shift = across + (cell.x - hud.wornCell(1).right());
+    }
     for (int i = 0; i < now_.count; ++i) {
         now_.cells[i] = hud.wornCell(i);
+        now_.cells[i].x -= shift;
         if (now_.cells[i].has(pointer.x, pointer.y)) now_.hovered = i;
     }
     if (now_ == drawn_ && rebuilds_ > 0) return;
@@ -181,7 +237,7 @@ void Endurance::rebuild(const sim::Realm& realm) {
     ++rebuilds_;
     canvas_.clear();
     tip_.clear();
-    if (!arts_ || !realm.tables() || now_.count == 0) return;
+    if (!arts_ || !realm.tables() || (now_.count == 0 && now_.archer == 0)) return;
     const content::Tables& tables = *realm.tables();
     const float s = now_.height / panel::kReferenceHeight;
     const float line = std::max(1.0f, std::round(0.6f * s));
@@ -218,6 +274,62 @@ void Endurance::rebuild(const sim::Realm& realm) {
             const float w = art.width * k, h = art.height * k;
             canvas_.image(art, {cx - w * 0.5f, cy - h * 0.5f, w, h}, kShapeInk);
         }
+    }
+
+    if (now_.archer != 0) {
+        // No container (the user, 2026-10-10: "lets not use circle just icon and under the
+        // number"): the quiver in its own colours with its halo baked in (ammo_icons.py) over
+        // the upper part of the cell, the count under it. Plenty is the window's warm ink; a
+        // short count takes MU's four bands off one shop stack, and none at all dims the
+        // quiver -- no red fill (the user, 2026-10-10: "dont use circle red fill").
+        const Box box = now_.ammo;
+        const sim::Worn band = sim::wornBand(std::min(now_.shots, now_.stack), now_.stack);
+        const bool fine = band == sim::Worn::Fine;
+        const bool empty = band == sim::Worn::Broken;
+        const std::string figure = shotsFigure(now_.shots);
+        const float size = std::round(box.w * 0.22f);
+        const float foot = box.bottom();
+        const float iconRoom = box.h - size * 0.95f;
+        // A soft shadow behind the two (the user, 2026-10-10: "add some shadow behind that
+        // feature"): discs stepping in and darkening, as near a blur as the canvas has.
+        for (int step = 0; step < 6; ++step) {
+            disc(canvas_, box.midX(), box.midY(), box.w * (0.56f - 0.06f * float(step)),
+                 gfx::rgba(0.0f, 0.0f, 0.0f, 0.17f));
+        }
+        const gfx::Art& art = arts_->get(now_.archer == 1 ? "hud_ammo_arrows" : "hud_ammo_bolts");
+        if (art.valid() && art.width > 0.0f && art.height > 0.0f) {
+            // Under the room it has (the user, 2026-10-10: "icon to large").
+            const float k = 0.58f * std::min(box.w / art.width, iconRoom / art.height);
+            const float w = art.width * k, h = art.height * k;
+            canvas_.image(art, {box.midX() - w * 0.5f, box.y + (iconRoom - h) * 0.5f, w, h},
+                          empty ? gfx::rgba(0.55f, 0.50f, 0.50f, 0.85f) : 0xFFFFFFFFu);
+        }
+        controls::label(canvas_, box.midX() - controls::labelWidth(size, figure) * 0.5f,
+                        foot - size * 0.12f, size, fine ? kCountInk : colourOf(band), figure);
+    }
+
+    if (now_.overAmmo) {
+        const bool bow = now_.archer == 1;
+        tip::Sheet sheet;
+        sheet.name = bow ? "Arrows" : "Bolts";
+        const sim::Worn band = sim::wornBand(std::min(now_.shots, now_.stack), now_.stack);
+        sheet.nameTone = band == sim::Worn::Fine ? tip::Tone::White : toneOf(band);
+        sheet.base = std::string(bow ? "FOR YOUR BOW" : "FOR YOUR CROSSBOW") + " \xC2\xB7 " +
+                     (now_.shots <= 0 ? "NONE LEFT" : band == sim::Worn::Fine ? "IN STOCK"
+                                                                             : "RUNNING LOW");
+        sheet.wide = 250.0f;
+        tip::Section what;
+        what.rows.push_back(tip::Row{"Shots", {tip::Value{panel::grouped(now_.shots),
+                                                          now_.shots > 0 ? tip::Tone::White
+                                                                         : tip::Tone::Red}},
+                                     "", tip::Tone::White});
+        what.rows.push_back(tip::Row{"", {},
+                                     "Counted in hand and in the bag. Buy more from Potion Girl "
+                                     "Amy in Lorencia, Eo the Craftsman in Noria or Zienna in "
+                                     "Devias",
+                                     tip::Tone::Gray});
+        sheet.sections.push_back(what);
+        tip::draw(tip_, sheet, now_.ammo, now_.width, now_.height);
     }
 
     if (now_.hovered >= 0) {

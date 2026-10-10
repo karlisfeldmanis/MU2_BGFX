@@ -22,6 +22,13 @@
 //   * the hover is the item card's own glass (tip.h) rather than MU's one line: the name in its
 //     band, what it has left, what the wear costs it now, and where it is mended.
 //
+// And an archer's ammunition at the row's right end, ours (the user, 2026-10-10: "use the same
+// space to show total arrows/bolts for elf so player can see when its time to buy more"): her
+// quiver's silhouette in the same round container, the shots she has of her own kind -- the
+// hand and the bag together, which is what Realm::nock reloads from -- on its foot, and the rim
+// a gauge of one shop stack. Always there while she holds a bow or crossbow; the worn pieces
+// stand to its left.
+//
 // It draws and takes nothing: a click on a tile goes to the ground as it does in MU.
 #pragma once
 
@@ -67,6 +74,11 @@ private:
         int hovered = -1;
         float width = 0.0f, height = 0.0f;
         bool self = false;  // he may mend it himself, which the card says
+        int archer = 0;     // 1 a bow, 2 a crossbow, 0 none: whether the ammunition cell stands
+        int shots = 0;      // of her own kind, in hand and bag
+        int stack = 0;      // a full one off the shelf, the gauge's whole: the row's own count
+        gfx::Box ammo = {};
+        bool overAmmo = false;
         bool operator==(const Drawn& o) const;
     };
     void rebuild(const sim::Realm& realm);

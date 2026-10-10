@@ -226,12 +226,12 @@ void Play::restore(const sim::HeroRecord& saved) {
 
 // --give's and --lay's `+3LO2E16`: a plus, luck, an option level, and excellent options by
 // OpenMU's numbers 1 to 6 (E16 is Zen and HP on armour, mana-after-kill and the excellent
-// damage rate on a weapon), and `W` to put it on him rather than in the bag -- the bench's, like
-// --weapon, and asked of no requirement. Anything else is ignored.
+// damage rate on a weapon), `D<n>` for its durability, and `W` to put it on him rather than in
+// the bag -- the bench's, like --weapon, and asked of no requirement. Anything else is ignored.
 static void readExtras(const std::string& extras, int* plus, bool* luck, int* option,
                        uint8_t* excellent, bool* worn = nullptr, int* sockets = nullptr,
                        uint8_t* powers = nullptr, bool* offhand = nullptr,
-                       uint8_t* affixes = nullptr) {
+                       uint8_t* affixes = nullptr, int* durability = nullptr) {
     int nextPower = 0, nextAffix = 0;
     for (size_t i = 0; i < extras.size(); ++i) {
         const char c = extras[i];
@@ -249,6 +249,8 @@ static void readExtras(const std::string& extras, int* plus, bool* luck, int* op
             powers[nextPower++] = uint8_t(std::atoi(extras.c_str() + i + 1));
         }
         if ((c == 'W' || c == 'w') && worn) *worn = true;
+        // D<n>: worn down to n, for a review run of the worn-gear row (game/ui/endurance.cpp).
+        if ((c == 'D' || c == 'd') && durability) *durability = std::atoi(extras.c_str() + i + 1);
         // H: worn in the off hand -- a knight's second weapon, for a review run of the pair.
         if ((c == 'H' || c == 'h') && worn && offhand) *worn = *offhand = true;
         if (c == '+') *plus = std::atoi(extras.c_str() + i + 1);
@@ -271,10 +273,13 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
     }
     const content::ItemRow& row = tables_.items[size_t(item)];
     const bool stacks = sim::stacks(row);
+    // Ammunition's count is its shots, one stack of that many: `Arrows02:150` for a review run
+    // of the HUD's low count (game/ui/endurance.cpp).
+    const bool shots = sim::ammunition(row) && count > 1;
     const int durability = stacks ? std::max(1, count) : sim::fullDurability(row, 0);
     // A potion's count is poured in whole, onto his stacks and twenty a cell; anything else is
     // that many pieces, a cell each -- three jewels are three jewels, as only potions stack.
-    const int pieces = stacks ? 1 : std::max(1, count);
+    const int pieces = stacks || shots ? 1 : std::max(1, count);
     int slot = -1;
     for (int i = 0; i < pieces; ++i) {
         int plus = 0, option = 0;
@@ -285,8 +290,9 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
         uint8_t powers[3] = {};
         uint8_t affixes[3] = {};
         bool offhand = false;
+        int down = -1;
         readExtras(extras, &plus, &luck, &option, &excellent, &worn, &sockets, powers, &offhand,
-                   affixes);
+                   affixes, &down);
         const int into = offhand ? int(sim::kWeaponLeft) : worn ? sim::placeOf(row) : -1;
         // Whatever he wears there already goes into the bag first -- the arena's own sword.
         if (into >= 0 && !realm_.satchel()[into].empty()) {
@@ -295,7 +301,11 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
             const int spare = realm_.satchel().free(tables_, onRow.width, onRow.height);
             if (spare >= 0) local_.moveItem(into, spare);
         }
-        slot = local_.give(item, into, plus, stacks ? durability : sim::fullDurability(row, plus),
+        slot = local_.give(item, into, plus,
+                           stacks ? durability
+                                  : shots ? std::min(count, sim::fullDurability(row, plus))
+                                  : down >= 0 ? std::min(down, sim::fullDurability(row, plus))
+                                              : sim::fullDurability(row, plus),
                            luck, option, excellent, uint8_t(sockets), powers, affixes);
         if (worn && slot >= 0) redress();
         core::logf("given %s%s into slot %d", row.label.c_str(),
