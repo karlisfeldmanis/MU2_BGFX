@@ -15,8 +15,6 @@ BUFFER_WO(s_castOut, vec4, 4);
 
 uniform vec4 u_cast;           // placements, models, draws, unused
 uniform vec4 u_castPlanes[6];  // the split's six, normalised, inside positive
-uniform vec4 u_castSkip;       // xz: a lamp  w: how near its foot, flat and squared, a placement
-                               // stands to be its holder and cast nothing; 0 skips none
 
 NUM_THREADS(64, 1, 1)
 void main()
@@ -32,11 +30,6 @@ void main()
 	vec4 c3 = s_castResident[slot * 7u + 3u];
 	float scale2 = max(dot(c0.xyz, c0.xyz), max(dot(c1.xyz, c1.xyz), dot(c2.xyz, c2.xyz)));
 	if (scale2 <= 0.0) return;
-
-	// A lamp's own holder -- the block a brazier burns on, a street lamp's post -- casts none
-	// of the lamp's shadow (Renderer, the lamp faces): its origin stands at the light's foot.
-	vec2 foot = c3.xz - u_castSkip.xz;
-	if (dot(foot, foot) < u_castSkip.w) return;
 
 	vec4 sphere = s_castModels[model * 2u + 0u];
 	// vs_depth's mtxFromCols(i_data0..3): the matrix's columns are the four vec4s.

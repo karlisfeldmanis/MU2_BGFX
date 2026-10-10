@@ -77,11 +77,6 @@ struct Lighting {
     // no shadow at all; MU draws a body's shadow in every map whatever lights it. Ours: the
     // Dungeon's sheet sets it with its sun overhead, so the shadow falls at the feet. 0 elsewhere.
     float lampShadow = 0.0f;
-    // How dark the shadow the nearest lamp casts of its own is, 0 to 1: the one lamp throwing
-    // the most light on the hero gets a shadow map (Renderer, ViewLampFace), so a body or a
-    // barrel in its pool throws a shadow away from it. 0 draws none and costs nothing. Ours
-    // (the user, 2026-10-10: "One shadowed lamp"); MU's lamps cast nothing.
-    float lampCast = 1.0f;
     float glowStrength = 1.0f;
 
     // Bloom, sprint 8b: what in the linear HDR frame spills light into the air round it.

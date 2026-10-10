@@ -563,8 +563,7 @@ private:
     bool skipCamera_ = false;
     // The GPU's scenery (gfx/scenery.h): the three compute steps on the sun's view, then its
     // two indirect draws. False when it drew nothing, and the batches must draw themselves.
-    bool drawGpuCasters(const GpuScenery& scenery, const float* lightViewProj, uint64_t state,
-                        bgfx::ViewId view = 0);
+    bool drawGpuCasters(const GpuScenery& scenery, const float* lightViewProj, uint64_t state);
     // The camera's: the cull on the prepass's view against `viewProj`, then a draw of each
     // group into `view` with `program` -- the prepass's or the shade's, which binds the frame's
     // lighting as well (`shade`).
@@ -583,9 +582,6 @@ private:
     bgfx::ProgramHandle castArgsProgram_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCast_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCastPlanes_ = BGFX_INVALID_HANDLE;
-    bgfx::UniformHandle uCastSkip_ = BGFX_INVALID_HANDLE;
-    // cs_cast_cull's u_castSkip: the casting lamp's foot while its faces cull, else none.
-    float castSkip_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     void submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                        bgfx::ProgramHandle skinnedProgram, const std::vector<Batch>& batches,
                        const bgfx::InstanceDataBuffer& idb, uint64_t state, bool bindMaterial,
@@ -699,28 +695,6 @@ private:
 
     // The shadow map is square; its size is init()'s and fixed for the run.
     uint16_t shadowSize_ = 4096;
-    // The map holds more than the sun: the sun's split in its top-left shadowSize_ square, a
-    // gutter, and a column of the nearest lamp's cube faces, kLampFaces of lampFace_ each. One
-    // map because the land's shader has no sampler stage left for a second, and it is the
-    // land a body's shadow falls on. shadowAtlas_ is the map's side, square.
-    uint16_t shadowAtlas_ = 4096;
-    uint16_t lampFace_ = 512;
-    uint16_t lampColumn_ = 4096;  // the faces' left edge, texels
-    // The lamp that casts this frame (chooseCastingLamp): its index in the lamp table plus
-    // one, 0 for none, in w; its position in xyz. u_lampCastParams: x how dark, y the normal
-    // bias per metre from it, z the map's texel in uv, w the bias towards it in metres.
-    float lampCastAt_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    float lampCastParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    float lampCastMtx_[kLampFaces * 16] = {};
-    bgfx::UniformHandle uLampCastAt_ = BGFX_INVALID_HANDLE;
-    bgfx::UniformHandle uLampCastParams_ = BGFX_INVALID_HANDLE;
-    bgfx::UniformHandle uLampCastMtx_ = BGFX_INVALID_HANDLE;
-    // Which static lamp throws the most light on `target`, and how far it outshines the next:
-    // its shadow fades out as a second lamp comes level with it, so walking from one pool to
-    // the next never moves a shadow from one side to the other at a stroke. -1 for none.
-    int chooseCastingLamp(const float target[3], float* amount) const;
-    // What stands within the casting lamp's reach, taken from the sun's casters each frame.
-    std::vector<Drawable> lampList_;
     // The split fitted to the camera's view: the hull from the eye to where the frustum meets
     // a plane `shadowFitBelow` under the target, seen from the sun. Its width is kept rather
     // than recomputed every frame, because a width that wobbles by a float is a texel that
@@ -935,7 +909,6 @@ private:
 
     std::vector<Batch> batches_;
     std::vector<Batch> casterBatches_;
-    std::vector<Batch> lampBatches_;
     const std::vector<ResidentBatch>* residentCasters_ = nullptr;  // this draw's, then cleared
     std::vector<Batch> fadeBatches_;
 
@@ -967,7 +940,6 @@ private:
     Groups groups_;
     Groups fadeGroups_;
     Groups casterGroups_;
-    Groups lampGroups_;
 
     // The probe. `probeRaw_` is what the faces draw into, one level; `probeFiltered_` is what
     // the shade pass reads, its mips written by fs_probe_filter.

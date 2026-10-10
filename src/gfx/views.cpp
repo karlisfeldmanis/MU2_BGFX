@@ -27,10 +27,6 @@ const char* const* probeViewNames() {
                 names[i] = "stage_bust";
             } else if (v == ViewStagePortrait) {
                 names[i] = "stage_portrait";
-            } else if (v == ViewLampClear) {
-                names[i] = "lamp_clear";
-            } else if (v >= ViewLampFace && v < ViewLampFace + kLampFaces) {
-                names[i] = "lamp_face" + std::to_string(v - ViewLampFace);
             } else {
                 const int f = v - ViewProbeFilter;
                 names[i] = "probe_filter" + std::to_string(f / 6) + "_" + std::to_string(f % 6);
@@ -109,7 +105,6 @@ Account viewAccount(View v) {
                 v == ViewStageTip || v == ViewStageBust || v == ViewStagePortrait) {
                 return AccountPresent;
             }
-            if (v >= ViewLampClear && v < ViewLampFace + kLampFaces) return AccountShadow;
             if (v >= ViewProbeFace && v < ViewCount) return AccountProbe;
             return AccountPresent;
     }

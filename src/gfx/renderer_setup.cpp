@@ -47,7 +47,6 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uMaterial_ = bgfx::createUniform("u_material", bgfx::UniformType::Vec4);
     uCast_ = bgfx::createUniform("u_cast", bgfx::UniformType::Vec4);
     uCastPlanes_ = bgfx::createUniform("u_castPlanes", bgfx::UniformType::Vec4, 6);
-    uCastSkip_ = bgfx::createUniform("u_castSkip", bgfx::UniformType::Vec4);
     uTranslucency_ = bgfx::createUniform("u_translucency", bgfx::UniformType::Vec4);
     uRefine_ = bgfx::createUniform("u_refine", bgfx::UniformType::Vec4);
     uRefineStar_ = bgfx::createUniform("u_refineStar", bgfx::UniformType::Vec4);
@@ -58,9 +57,6 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uShadowParams_ = bgfx::createUniform("u_shadowParams", bgfx::UniformType::Vec4);
     uShadowDebug_ = bgfx::createUniform("u_shadowDebug", bgfx::UniformType::Vec4);
     uShadowReach_ = bgfx::createUniform("u_shadowReach", bgfx::UniformType::Vec4);
-    uLampCastAt_ = bgfx::createUniform("u_lampCastAt", bgfx::UniformType::Vec4);
-    uLampCastParams_ = bgfx::createUniform("u_lampCastParams", bgfx::UniformType::Vec4);
-    uLampCastMtx_ = bgfx::createUniform("u_lampCastMtx", bgfx::UniformType::Mat4, kLampFaces);
     uCamRay_ = bgfx::createUniform("u_camRay", bgfx::UniformType::Vec4);
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
     uGroundRepeat_ = bgfx::createUniform("u_groundRepeat", bgfx::UniformType::Vec4);
@@ -310,14 +306,7 @@ bool Renderer::createTargets(int width, int height) {
 
     // The shadow map is read twice: through the compare sampler for the filtered result,
     // and as plain depth to find the blocker. docs/conventions.md.
-    //
-    // And the nearest lamp's faces beside the sun's split, in the same map (shadowAtlas_): an
-    // eighth of the sun's side each, after a gutter a thirty-second of it wide, so the sun's
-    // widest penumbra at the split's right edge reads the clear and never a lamp's face.
-    lampFace_ = uint16_t(shadowSize_ / 8);
-    lampColumn_ = uint16_t(shadowSize_ + shadowSize_ / 32);
-    shadowAtlas_ = uint16_t(lampColumn_ + lampFace_);
-    shadowMap_ = bgfx::createTexture2D(shadowAtlas_, shadowAtlas_, false, 1,
+    shadowMap_ = bgfx::createTexture2D(shadowSize_, shadowSize_, false, 1,
                                        bgfx::TextureFormat::D16, rt | clamp);
     shadowFb_ = bgfx::createFrameBuffer(1, &shadowMap_, true);
 
@@ -399,9 +388,8 @@ bool Renderer::createTargets(int width, int height) {
                        height, msaa_);
         ok = false;
     }
-    core::logf("targets %dx%d, %dx msaa, shadow %u (in a %u map, lamp faces %u), ssao %dx%d",
-               width, height, msaa_, unsigned(shadowSize_), unsigned(shadowAtlas_),
-               unsigned(lampFace_), hw, hh);
+    core::logf("targets %dx%d, %dx msaa, shadow %u, ssao %dx%d", width, height, msaa_,
+               unsigned(shadowSize_), hw, hh);
     return ok;
 }
 
@@ -479,7 +467,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uAbyss_, &sAbyss_, &uLava_, &uLavaMap_, &sLava_, &uGrassStorm_, &uCamPos_, &uParams_,
-          &uMaterial_, &uCast_, &uCastPlanes_, &uCastSkip_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uLampCastAt_, &uLampCastParams_, &uLampCastMtx_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uCast_, &uCastPlanes_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,

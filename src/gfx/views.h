@@ -56,15 +56,8 @@ enum View : uint16_t {
     ViewStageBust = 71,
     // The target frame's portrait: his head and helm, photographed live (game/portrait.h).
     ViewStagePortrait = 72,
-    // The nearest lamp's own shadow, sprint ours (the user, 2026-10-10: "One shadowed lamp").
-    // Numbered after everything and run out of number order (Renderer::setViewOrder): the
-    // clear of the whole shared map first, then the sun's split, then the lamp's five cube
-    // faces in their strip of the same map, then the prepass and the rest as numbered.
-    ViewLampClear = 73,
-    ViewLampFace = 74,      // 74..78, below the lamp then +x, -x, +z, -z
-    ViewCount = 79,
+    ViewCount = 73,
 };
-constexpr int kLampFaces = 5;
 constexpr int kOutlineRings = 4;  // the hover's, and three monsters turning at once
 constexpr int kBloomLevels = 5;
 constexpr int kProbeSize = 128;  // the raw cube's edge, texels
