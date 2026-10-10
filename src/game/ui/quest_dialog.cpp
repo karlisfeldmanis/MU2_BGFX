@@ -379,8 +379,7 @@ void QuestDialog::layout(const Play& play) {
             y += 16.0f + kPurse;
             const int across = int(kChoiceColumns);
             const float cellWide = (wide - kCellGap * (kChoiceColumns - 1.0f)) / kChoiceColumns;
-            // The jewels, then the runes the win drew (CastleRun::paidRunes), with their powers.
-            // A jewel paid more than once is one cell with its count on the picture.
+            // The jewels. A jewel paid more than once is one cell with its count on the picture.
             struct Paid {
                 int32_t item;
                 uint8_t power;
@@ -390,10 +389,6 @@ void QuestDialog::layout(const Play& play) {
             for (const auto& jewel : sim::kCastleRewardJewels[std::clamp(castle_, 1, sim::kCastles) - 1]) {
                 const int32_t item = jewel[0] < 0 ? -1 : tables.itemAt(jewel[0], jewel[1]);
                 if (item >= 0) paid.push_back({item, 0, jewel[2]});
-            }
-            for (uint8_t power : realm.castleRun().paidRunes) {
-                const int32_t rune = tables.itemAt(14, 22);
-                if (power && rune >= 0) paid.push_back({rune, power, 1});
             }
             int n = 0;
             for (const auto& [item, power, count] : paid) {

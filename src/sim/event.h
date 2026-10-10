@@ -112,16 +112,6 @@ inline bool castleSorcerer(int32_t number) {
     return false;
 }
 inline bool castleStatue(int32_t number) { return number >= 132 && number <= 134; }
-// And runes by the castle (the user, 2026-10-04: 'i thin we should give some runes also based of
-// BC level'): this many Runes of Creation, each with a power his class may set, drawn as a drop
-// of a monster of kCastleRuneLevel draws one (sim::drawRunePower) -- castle 1 reaches Rare only,
-// castles 2-3 Epic, castles 4-6 Legendary (kRuneRarityLevel). Into the bag with the jewels.
-// invention.
-// Since 2026-10-05 one more from castle 4 and three in castle 6 (the user: 'we need betetr
-// rewards on finishinig BC based on BC level').
-constexpr int kCastleMostRunes = 3;
-constexpr int kCastleRunes[6] = {1, 1, 1, 2, 2, 3};
-constexpr int kCastleRuneLevel[6] = {15, 40, 40, 60, 60, 60};
 struct CastleRun {
     CastlePhase phase = CastlePhase::None;
     int castle = 1;
@@ -147,7 +137,6 @@ struct CastleRun {
     // weapon is given, paid when he presses Complete (Realm::claimCastle) -- or, if he never does,
     // as the rest sends him out -- and `claimed` once it is.
     int64_t paidExperience = 0, paidZen = 0;
-    uint8_t paidRunes[kCastleMostRunes] = {};  // each rune's power, 0 past kCastleRunes
     bool claimed = false;
 };
 // The Archangel, NPC 232, who takes the Divine Staff of Archangel (5,10) back: the win (the
@@ -175,15 +164,17 @@ constexpr int64_t kCastleExpTimes = 2;
 constexpr int64_t kCastleZenTimes = 5;
 // Jewels of Chaos (12,15), Bless (14,13), Soul (14,14) and Life (14,16), each with how many; a
 // group of -1 ends a castle's list. WebZen's castles 2-5 also pay a Jewel of Creation (14,22),
-// here the Rune of Creation, which with no power sets into nothing: kCastleRunes pays it with
-// one instead.
+// here the Rune of Creation, which with no power sets into nothing, so it is not paid. The Life
+// stands where the castle's runes were, one for one (1, 1, 1, 2, 2, 3, on top of castles 5's and
+// 6's own): the user, 2026-10-10, 'lets not give runes but jewel of life'. Runes paid with powers
+// from 2026-10-04 to then.
 constexpr int kCastleRewardJewels[6][4][3] = {
-    {{12, 15, 1}, {14, 13, 1}, {-1, -1, 0}, {-1, -1, 0}},
-    {{12, 15, 2}, {14, 13, 1}, {14, 14, 1}, {-1, -1, 0}},
-    {{12, 15, 2}, {14, 13, 2}, {14, 14, 1}, {-1, -1, 0}},
-    {{12, 15, 3}, {14, 13, 2}, {14, 14, 2}, {-1, -1, 0}},
-    {{12, 15, 3}, {14, 13, 3}, {14, 14, 2}, {14, 16, 1}},
-    {{12, 15, 4}, {14, 13, 3}, {14, 14, 3}, {14, 16, 2}},
+    {{12, 15, 1}, {14, 13, 1}, {14, 16, 1}, {-1, -1, 0}},
+    {{12, 15, 2}, {14, 13, 1}, {14, 14, 1}, {14, 16, 1}},
+    {{12, 15, 2}, {14, 13, 2}, {14, 14, 1}, {14, 16, 1}},
+    {{12, 15, 3}, {14, 13, 2}, {14, 14, 2}, {14, 16, 2}},
+    {{12, 15, 3}, {14, 13, 3}, {14, 14, 2}, {14, 16, 3}},
+    {{12, 15, 4}, {14, 13, 3}, {14, 14, 3}, {14, 16, 5}},
 };
 // After the run, won or timed out, WebZen's PLAYEND rest: a minute, then everyone left in the
 // castle is moved to Devias, gate 22 (BloodCastle.cpp:1066-1077; docs/blood-castle-port.md).

@@ -11260,15 +11260,13 @@ void testCastleGrid(const content::Tables& lorencia) {
             }
             for (const auto& one : realm.lying()) lying |= one.what.item == castle.itemAt(12, 15);
             check(jewel && !lying, "a Jewel of Chaos in his bag, as a quest pays");
-            // And castle 1's rune: a Rare his class may set, in the bag (kCastleRunes).
-            const sim::PowerRow* rune = nullptr;
+            // And castle 1's Jewel of Life where its rune was (the user, 2026-10-10), and no rune.
+            bool life = false, rune = false;
             for (int i = 0; i < sim::kSlots; ++i) {
-                const sim::Held& held = realm.satchel()[i];
-                if (!held.empty() && held.item == castle.itemAt(14, 22)) rune = sim::powerOf(held.powers[0]);
+                life |= realm.satchel()[i].item == castle.itemAt(14, 16);
+                rune |= realm.satchel()[i].item == castle.itemAt(14, 22);
             }
-            check(rune && rune->rarity == sim::Rarity::Rare && rune->takenBy(realm.hero().kin, false) &&
-                      realm.castleRun().paidRunes[0] == uint8_t(rune->power),
-                  "a Rare rune his class may set, in his bag");
+            check(life && !rune, "a Jewel of Life in his bag, and no rune");
         }
     }
     // The whole run, start to end: 100 of the garrison, the bridge and the door, the eight Spirit

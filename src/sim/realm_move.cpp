@@ -777,11 +777,6 @@ void Realm::castleTick() {
                 run_.paidExperience = int64_t(double(experience * kCastleExpTimes) * kExperienceRate);
                 run_.paidZen = kCastleWinZens[c] * kCastleZenTimes;
                 run_.phase = CastlePhase::Won;
-                // The runes' powers drawn now, for his page to show; the pay waits for Complete.
-                for (int i = 0; i < std::min(kCastleRunes[c], kCastleMostRunes); ++i) {
-                    run_.paidRunes[i] =
-                        drawRunePower(dice_, hero.kin, hero.second, kCastleRuneLevel[c], false);
-                }
                 // And the castle is theirs again: every monster in it gone on the tick, out of the
                 // picture without a fall, and none rises for the rest of the run (the user,
                 // 2026-10-05: 'when quest is given all monsters have to desepear'). Ours.
@@ -868,16 +863,6 @@ void Realm::payCastle() {
         const int32_t item = tables_->itemAt(jewel[0], jewel[1]);
         for (int i = 0; item >= 0 && i < jewel[2]; ++i) {
             if (give(item) < 0) lay(item);
-        }
-    }
-    // And the castle's runes, each with the power drawn at the hand-in (kCastleRunes).
-    const int32_t rune = tables_->itemAt(14, 22);
-    for (int i = 0; rune >= 0 && i < kCastleRunes[c]; ++i) {
-        const uint8_t powers[kMostSockets] = {run_.paidRunes[i]};
-        if (give(rune, -1, 0, -1, false, 0, 0, 0, powers) >= 0) continue;
-        const uint32_t id = lay(rune);
-        for (Lying& one : lying_) {
-            if (one.id == id) one.what.powers[0] = powers[0];
         }
     }
 }
