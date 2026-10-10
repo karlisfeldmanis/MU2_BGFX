@@ -75,6 +75,38 @@ The first runs, 2026-10-09, Claude (dw) and Tavik (dk), fresh, on a local server
   elsewhere. Trips are now kept until answered, and the wait is wall time (fbc40c4b). With
   both fixes, 4 game hours: 64 trips charged, 64 answered, every bot sent elsewhere arrived.
 
+- *An elf's Frenzy made her flip maps until broke.* The brain timed fights on her swing as it
+  stood, Frenzy stacks included; they fall away on a trip, so a quest looked easy from the
+  Dungeon and too dear on landing. Fights are now timed on the steady swing (09fbec00). Four
+  seeds: levels 149/174/151/184 → 166/201/172/183, none broke (two had been).
+- *The wizard couldn't afford his spells.* He drank mana under 30% but cast his dear spells only
+  over 50%, so he threw Fire Ball all day (24,000 casts; Meteorite, Ice and Flame none). He drinks
+  under half now, and his points go to energy after his armour's strength (a7827d51). Four
+  seeds: levels 670 → 747, deaths 157 → 121.
+- *Elves and gladiators wouldn't farm where Life drops.* The fight-cost estimate counts a
+  monster hitting for the whole kill, no range, no summon. Halved for the agility elf and the
+  melee gladiator (6cbb3652): elves make wings in a day on all four seeds, gladiators +40 levels
+  on average with fewer deaths. Not the knight (more deaths, no gain) or the wizard. Not the
+  support elf either (mu2-bgfx-64, ce51dce1).
+- *The wizard didn't know his area spells.* Evil Spirit, Flame, Meteorite's shower and
+  Ice/Poison's splash were scored as single-target. Now counted as the realm resolves them, and
+  Flame's force raised 1.0 → 1.5 at the user's ask (5cbb75a4). Deaths 174 → 96, levels the same.
+
+**The wizard on strong ground: open, a balance question**
+
+Every bot-side lever was tried and none moved the wizard onto level-50+ ground (2-8% of his
+kills): five point builds, caution halved (2-3× the deaths), Evil Spirit 7-9 hours earlier from
+the Catacombs (fewer levels, kept at the Halls), Magic Shield (already up ~90%). At level 120+ he
+has 180-440 health and 70 defence against the knight's 1,075 and 130, and a level-52 Devias breed
+is reckoned at ~700 health a kill. Whether a wizard should hold that ground alone is the user's
+call: if yes, his survival (Magic Shield's share, health per level, how fast monsters reach a
+caster) needs a balance pass; if not, mu2-bgfx-64's wing-farming parties carry him there.
+
+Also seen: the new item content of 058adb75 (new sets and arms in the drop pool) costs the
+wizard 15-30 levels a day: same binary, old tables 188/179/188/192, new 169/179/161/165, the
+gear he finds falling from drop level 28-38 to 20-29. Passed to mu2-bgfx-64 for the content's
+owner.
+
 **Seen, left as they are**
 
 - *Flipping between two quests on two maps.* The White Silence (Devias) ↔ The Catacombs
@@ -100,6 +132,11 @@ The first runs, 2026-10-09, Claude (dw) and Tavik (dk), fresh, on a local server
   mean nothing. Check `uptime` first.
 - **Never copy a binary over one that is running.** macOS kills the new launch. Give each run
   its own directory of binaries.
+- **The cooked tables are shared and change under you.** Every build reads assets/cooked at run
+  time, so two runs a few hours apart may differ by content, not code. Compare builds side by
+  side, in the same hour.
+- **Find a class's ceiling with a knob first.** A temporary COST_SCALE on costOf, run at 1, 0.5
+  and 0.25, showed in one batch which classes were too timid and which were right.
 
 ## How to judge a run
 
