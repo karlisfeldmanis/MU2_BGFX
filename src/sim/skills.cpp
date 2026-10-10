@@ -948,6 +948,10 @@ float force(const SkillRow& row, const HeroPoints& points) {
            float(points.energy) * kForcePerEnergy;
 }
 
+int skillPercent(const HeroPoints& points) {
+    return int(std::lround((2.0f + float(points.energy) * kForcePerEnergy) * 100.0f));
+}
+
 int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const content::Arm* right,
                   const content::Arm* left, const SkillRow& row, int extra) {
     const content::PlayerAction* clip = tables.action(row.clip);

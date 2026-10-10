@@ -97,6 +97,19 @@ void Realm::reswing(Body& hero) {
     hero.swingLands = swingLanding(right, left);
 }
 
+int Realm::attackSpeed() const {
+    const Body& hero = mine();
+    const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
+                      hero.frenzySpeed(tick_);
+    const int agility = hero.totalPoints().agility;
+    if (hero.kin == Kin::DarkWizard) return int(magicSpeedStat(hero.kin, agility)) + extra;
+    const auto arm = [&](int32_t at) -> const content::Arm* {
+        return tables_ && at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)]
+                                                                       : nullptr;
+    };
+    return int(attackSpeedStat(hero.kin, agility, arm(hero.weapon), arm(hero.shield))) + extra;
+}
+
 bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
     refusal_.clear();
     if (!tables_) return false;

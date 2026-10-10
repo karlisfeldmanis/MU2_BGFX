@@ -1,5 +1,7 @@
 #include "game/ui/card.h"
 
+#include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "game/ui/controls.h"
@@ -7,90 +9,95 @@
 #include "game/ui/style.h"
 #include "sim/quests.h"
 #include "sim/rules.h"
+#include "sim/skills.h"
 
 namespace mu::game {
 namespace {
 
 using gfx::Box;
 
-// Card.cs's table, in MU's panel units. The rows are 120, 175, 240, 295 -- not evenly spaced,
-// because the gaps hold the lines under each stat (`HEIGHT_STRENGTH + 25`, `iY += 13`).
-struct Row {
-    int stat;
-    float y;
-    const char* label;
-};
-// **One rhythm.** MU's rows are at 120, 175, 240 and 295 -- gaps of 55, 65 and 55, because its
-// own window had a carved divider to hide under the wide one. Every group here is a well and its
-// lines, so they are spaced evenly: sixty between each, which leaves fifteen units of air under
-// the two that carry two lines and twenty-seven under the two that carry one -- and the block
-// then reaches down to the foot instead of stopping a third of the way up it.
-// Sixty-four apart since the foot moved to the panel's shared rule at 382: the block starts
-// eighteen under the summary and Energy's line ends twenty-seven over the rule.
-constexpr Row kRows[4] = {
-    {0, 128.0f, "Strength"}, {1, 192.0f, "Agility"}, {2, 256.0f, "Vitality"}, {3, 320.0f, "Energy"}};
+// **The window, 2026-10-10** (the user's proposal, https://claude.ai/artifact/E1SgVrhmhQNquWSv2EfcLR,
+// settled over a morning: 'always show stats, even there is no stat to spend like on original',
+// 'dont usee - and apply, keep existing logic to add points', 'remember that window has fixed
+// height'). The same 190x429 and the same frame; inside it, from the top: who he is and his
+// guild; level, resets and points in one strip; the three numbers his class lives by; and three
+// pages under underline tabs -- Attributes (MU's four wells, each with what it buys under it, the
+// plus beside it while there is a point to spend), Combat and Bonuses. Every page is laid out to
+// fit between the tabs and the foot; nothing in the window scrolls or grows it.
 
-// The plus beside a row, moved two down and five in from MU's (160, row + 2) so it sits in the
-// well MU2 draws round the row. Card.PlusFor.
-Box plusFor(float rowY) { return {158.0f, rowY + 2.0f, 16.0f, 15.0f}; }
+// The head's rows, in MU's panel units.
+constexpr float kIdTop = 42.0f, kIdTall = 12.0f;
+constexpr float kNumsTop = 58.0f, kNumsTall = 16.0f;
+constexpr float kKeysTop = 78.0f, kKeysTall = 27.0f;
+constexpr float kTabsTop = 110.0f, kTabsTall = 16.0f;
+constexpr int kTabCount = 3;
+const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses"};
+// The page between the tabs' floor and the foot's rule.
+constexpr float kBodyTop = 132.0f;
+
 // The wells run between the grid's two edges (`panel::kGridX` to `kWellRight`), as the bag's and
-// the shelf's do: MU's 11 to 181 was three units wider on the right than the wells in the window
-// beside it, and side by side the pair showed two right edges.
+// the shelf's do, and type sits seven in from them.
 constexpr float kWellX = panel::kGridX, kWellW = panel::kWellRight - panel::kGridX;
-Box rowField(float rowY) { return {kWellX, rowY, kWellW, 21.0f}; }
-constexpr Box kSummary{12.0f, 48.0f, 160.0f, 66.0f};
-constexpr Box kSummaryField{kWellX, 45.0f, kWellW, 65.0f};
+constexpr float kLeft = 18.0f;
+constexpr float kRight = panel::kValueRight;
 
-// **The foot.** MU's character window stops at Energy and leaves its bottom fifth empty, which
-// on leather was a texture and on this skin is a hole -- and the window beside it has a foot
-// (the Zen strip), so the pair read as one finished window and one unfinished one. The level's
-// own progress goes here: the figure is already in the summary, and what a player wants at a
-// glance is how far through the level he is, which is the one thing a figure cannot say.
+// An attribute: its well, the lines under it, and the air before the next one.
+constexpr float kAttrTall = 19.0f, kLineStep = 10.5f, kLineTop = 2.5f, kAttrGap = 6.5f;
+// The plus, inside the well's right end. Where a figure ends while it stands there.
+constexpr float kPlusSide = 13.0f;
+constexpr float kFigureRight = panel::kWellRight - kPlusSide - 7.0f;
+// A Combat or Bonuses group: its heading, its rows, the air after it.
+constexpr float kGroupHead = 9.0f, kRowTall = 12.5f, kGroupGap = 4.0f;
+
+// The foot: the level's progress, at the panel's shared rule.
 constexpr float kFootRule = panel::kFootRule;
 constexpr float kFootTop = panel::kFootTop;
 constexpr Box kBar{panel::kGridX, kFootTop + 12.0f, panel::kWellRight - panel::kGridX, 4.0f};
 
-// **The type, tuned 2026-09-23.** A figure is a size and a half above its own label, which is
-// what makes a stat window scannable: the eye runs down the numbers and reads a word only when
-// it stops. The detail lines under a well are a label and a value like everything else on the
-// card, right-ranged against the same edge the figure is, rather than MU's "Dmg: 22~33" run-on.
-constexpr float kTextSize = 9.0f, kFigureSize = 11.5f, kSummarySize = 8.5f,
-              kDetailSize = 8.0f;
-// The summary's own labels, set as the head sets its title: small, tracked capitals.
-constexpr float kSummaryLabel = 7.5f;
-// The content's own margins: the wells run 11 to 181, so type sits a further seven in, and every
-// value ranges against the same right edge -- the well's, less the same seven.
-// Ten units between LEVEL's value and the POINTS label after it: at six the two ran together
-// and "10 POINTS" read as a phrase.
-constexpr float kLeft = 18.0f, kMiddle = 100.0f, kGutter = 10.0f;
-constexpr float kRight = panel::kValueRight;  // where a value ends, the wells' own inset
-// Where a stat's figure ends: on the same edge as every other value on the card, except while
-// the diamonds are up, when it stands clear of them. With no points to spend the figures
-// stopped twenty-two units short of the lines under them, and the card had two right edges.
-constexpr float kFigureRight = 150.0f;
-constexpr float kDetailTop = 25.0f, kDetailStep = 12.0f;
+// Type, in units. A figure is a size above its label, so the eye runs down the numbers.
+constexpr float kClassSize = 9.0f, kNameSize = 8.5f, kFigureSize = 10.0f, kLineSize = 7.5f,
+                kSmallCaps = 6.5f, kNumSize = 8.5f, kKeySize = 9.5f, kTabSize = 7.5f,
+                kRowSize = 7.5f;
 
-// The two weights of type, both warm: a label steps down from the heading rather than being a
-// colour of its own. Godot's Darkened(a) is rgb * (1 - a).
 constexpr uint32_t kHeading = style::kBoneHi;
 constexpr uint32_t kPlain = style::kBone2;
-constexpr uint32_t kDetailInk = style::kAshInk;
+constexpr uint32_t kQuiet = style::kAshInk;
+constexpr uint32_t kDim = style::kAshInk2;
 // Points to spend are the one thing on the card that asks for a click: the accent.
 constexpr uint32_t kSpendable = style::kBloodHi;
+constexpr uint32_t kSpendWash = gfx::rgba(0.165f, 0.051f, 0.035f);
+// The open tab: golden, not blood (the user's, for a chosen row, 2026-09-30).
+constexpr uint32_t kChosen = gfx::rgba(0.941f, 0.843f, 0.604f);
+constexpr uint32_t kChosenBar = gfx::rgba(0.788f, 0.639f, 0.353f);
+constexpr uint32_t kDivider = style::kAsh3;
+
+Box tabBox(int i) {
+    const float w = kWellW / float(kTabCount);
+    return {kWellX + w * float(i), kTabsTop, w, kTabsTall};
+}
+
+// Where each attribute's well stands: one after another, each pushed down by the lines the one
+// before it carries.
+void attrTops(const size_t counts[4], float tops[4]) {
+    float y = kBodyTop;
+    for (int i = 0; i < 4; ++i) {
+        tops[i] = y;
+        y += kAttrTall + kLineTop + kLineStep * float(counts[i]) + kAttrGap;
+    }
+}
+Box plusFor(float top) {
+    return {panel::kWellRight - kPlusSide - 3.0f, top + (kAttrTall - kPlusSide) * 0.5f, kPlusSide,
+            kPlusSide};
+}
+
+std::string number(long long v) { return panel::commas(v); }
+std::string band(long long lo, long long hi) { return number(lo) + " ~ " + number(hi); }
+std::string pair(long long now, long long most) { return number(now) + " / " + number(most); }
+std::string percent(double share) { return std::to_string(int(std::lround(share * 100.0))) + "%"; }
+std::string plus(int v) { return "+" + std::to_string(v); }
+std::string plusPercent(int v) { return "+" + std::to_string(v) + "%"; }
 
 }  // namespace
-
-bool Card::Sheet::operator==(const Sheet& o) const {
-    return who == o.who && second == o.second && width == o.width && height == o.height && top == o.top &&
-           level == o.level &&
-           points == o.points && experience == o.experience && strength == o.strength &&
-           agility == o.agility && vitality == o.vitality && energy == o.energy && raised == o.raised &&
-           minimum == o.minimum && maximum == o.maximum && attackRate == o.attackRate &&
-           defense == o.defense && defenseRate == o.defenseRate && health == o.health &&
-           maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
-           pushed == o.pushed && over == o.over && closing == o.closing &&
-           overClose == o.overClose;
-}
 
 void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
@@ -102,49 +109,100 @@ bool Card::covers(float x, float y) const {
            Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y);
 }
 
-void Card::update(float width, float height, const sim::Body* hero, const Pointer& pointer,
-                  int* spend, bool* close) {
+void Card::update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
+                  const Pointer& pointer, int* spend, bool* close) {
     // The right-hand column, always.
     x_ = panel::columnX(width, 1);
     y_ = panel::panelY(height);
-    if (hero) {
-        const Box cross = panel::scaled(x_, y_, panel::frameClose());
-        overClose_ = cross.has(pointer.x, pointer.y);
-        // Which diamond the pointer is resting on, so it can light: the same walk the press
-        // makes, made every frame and for the drawing rather than for the request.
-        over_ = -1;
-        if (hero->pointsInHand > 0) {
-            for (const Row& row : kRows) {
-                if (panel::scaled(x_, y_, plusFor(row.y)).has(pointer.x, pointer.y)) {
-                    over_ = row.stat;
-                }
-            }
-        }
-        if (pointer.pressed) {
-            if (cross.has(pointer.x, pointer.y)) closing_ = true;
-            if (hero->pointsInHand > 0) {
-                for (const Row& row : kRows) {
-                    if (panel::scaled(x_, y_, plusFor(row.y)).has(pointer.x, pointer.y)) {
-                        pushed_ = row.stat;
-                    }
-                }
-            }
-        }
-        if (pointer.released) {
-            // Only if the pointer is still on it, which is how a press is taken back.
-            if (closing_ && cross.has(pointer.x, pointer.y) && close) *close = true;
-            if (pushed_ >= 0 &&
-                panel::scaled(x_, y_, plusFor(kRows[pushed_].y)).has(pointer.x, pointer.y) &&
-                spend) {
-                *spend = pushed_;
-            }
-            closing_ = false;
-            pushed_ = -1;
-        }
-    }
 
     now_ = Sheet{};
     if (hero) {
+        const sim::Kin kin = hero->kin;
+        const bool knight = kin == sim::Kin::DarkKnight, wizard = kin == sim::Kin::DarkWizard;
+        const bool elf = kin == sim::Kin::FairyElf, gladiator = kin == sim::Kin::MagicGladiator;
+        const sim::HeroPoints total = hero->totalPoints();
+        const sim::Fighter& f = hero->stats;
+        const auto& ex = hero->excel;
+
+        // Both hands' bands together while a knight holds two weapons: what one blow rolls.
+        const Line damage{"Damage", band(f.minimumDamage + f.offhandMinimumDamage,
+                                         f.maximumDamage + f.offhandMaximumDamage)};
+        const Line attackRate{"Attack rate", number((long long)f.attackRate)};
+        const Line speed{wizard ? "Magic speed" : "Attack speed",
+                         number(realm ? realm->attackSpeed() : 0)};
+        const Line defense{"Defense", number(f.defense)};
+        const Line defenseRate{"Defense rate", number((long long)f.defenseRate)};
+        const Line life{"Life", pair(hero->health, hero->maxHealth)};
+        const Line mana{"Mana", pair(hero->mana, hero->maxMana)};
+        const Line wizardry{"Wizardry", band((long long)f.wizardMinimum, (long long)f.wizardMaximum)};
+        const Line skill{"Skill damage", std::to_string(sim::skillPercent(total)) + "%"};
+        // The elf's three blessings, what her energy buys her and her party.
+        const Line might{"Greater Damage", plus(sim::mightOf(total))};
+        const Line ward{"Greater Defense", sim::absorbed(sim::wardShare(total))};
+        const Line heal{"Heal", plus(sim::healOf(total))};
+
+        // Under each attribute, what it buys -- MuMain's lines, in its order
+        // (CNewUICharacterInfoWindow::RenderTableTexts): damage and attack rate; defence, speed
+        // and defence rate; life; mana and the class's own. The elf's blessings are ours.
+        now_.lines[0] = {damage, attackRate};
+        now_.lines[1] = {defense, speed, defenseRate};
+        now_.lines[2] = {life};
+        if (wizard) now_.lines[3] = {wizardry, mana};
+        if (knight) now_.lines[3] = {skill, mana};
+        if (gladiator) now_.lines[3] = {wizardry, skill, mana};
+        if (elf) now_.lines[3] = {might, ward, heal, mana};
+
+        // The three his class lives by, at the top whatever page is open. Life and mana show
+        // their whole, the pool's top.
+        const Line lifeTop{"Life", number(hero->maxHealth)};
+        const Line manaTop{"Mana", number(hero->maxMana)};
+        if (knight) { now_.keys[0] = damage; now_.keys[1] = skill; now_.keys[2] = lifeTop; }
+        if (wizard) { now_.keys[0] = wizardry; now_.keys[1] = manaTop; now_.keys[2] = lifeTop; }
+        if (elf) { now_.keys[0] = damage; now_.keys[1] = might; now_.keys[2] = defenseRate; }
+        if (gladiator) { now_.keys[0] = damage; now_.keys[1] = wizardry; now_.keys[2] = lifeTop; }
+
+        if (tab_ == 1) {
+            // Combat: what he deals, what he turns aside, what he lasts by. A chance the gear
+            // gives is shown only once something gives it.
+            const auto chance = [](std::vector<Line>& to, const char* label, double share) {
+                if (share > 0.0) to.push_back({label, percent(share)});
+            };
+            Group attack{"Attack", {damage, attackRate, speed}};
+            if (wizard || gladiator) attack.lines.push_back(wizardry);
+            if (knight || gladiator) attack.lines.push_back(skill);
+            chance(attack.lines, "Critical chance", f.criticalChance);
+            chance(attack.lines, "Excellent chance", f.excellentChance);
+            chance(attack.lines, "Ignore defense", f.ignoreDefense);
+            Group guard{"Guard", {defense, defenseRate}};
+            chance(guard.lines, "Damage decrease", f.damageDecrease);
+            chance(guard.lines, "Block chance", f.blockChance);
+            Group endure{"Endurance", {life, mana}};
+            if (ex.lifeRegen > 0) endure.lines.push_back({"Life regeneration", plusPercent(ex.lifeRegen)});
+            now_.groups.push_back(std::move(attack));
+            if (elf) now_.groups.push_back({"Blessings", {might, ward, heal}});
+            now_.groups.push_back(std::move(guard));
+            now_.groups.push_back(std::move(endure));
+        } else if (tab_ == 2) {
+            // Bonuses: the jewellery's, every row shown, a nought dimmed, so a player learns
+            // what there is to find.
+            const auto row = [](const char* label, int v, bool percentSign) {
+                return Line{label, v <= 0 ? (percentSign ? "0%" : "0") : (percentSign ? plusPercent(v) : plus(v)), v <= 0};
+            };
+            now_.groups.push_back({"Resistances",
+                                   {row("Ice", ex.iceResistance, false),
+                                    row("Poison", ex.poisonResistance, false),
+                                    row("Lightning", ex.lightningResistance, false),
+                                    row("Fire", ex.fireResistance, false),
+                                    row("Wind", ex.windResistance, false)}});
+            now_.groups.push_back({"Fortune",
+                                   {row("Experience", ex.moreExperience, true),
+                                    row("Zen", ex.moreZen, true),
+                                    row("Item find", ex.itemFind, true)}});
+            now_.groups.push_back({"On hit",
+                                   {row("Life on hit", ex.lifeOnHit, false),
+                                    row("Critical damage", ex.criticalDamage, true)}});
+        }
+
         now_.who = hero;
         now_.second = hero->second;
         now_.width = width;
@@ -152,32 +210,64 @@ void Card::update(float width, float height, const sim::Body* hero, const Pointe
         now_.top = y_;
         now_.level = hero->level;
         now_.points = hero->pointsInHand;
+        // No resets and no guilds in the realm yet: the strip says 0 and the line "No guild"
+        // until there are, and then these two read them.
+        now_.resets = 0;
         now_.experience = hero->experience;
+        now_.stats[0] = total.strength;
+        now_.stats[1] = total.agility;
+        now_.stats[2] = total.vitality;
+        now_.stats[3] = total.energy;
         // With the stat runes in, as everything below them reads them; a raised one in blue.
-        const sim::HeroPoints total = hero->totalPoints();
-        now_.strength = total.strength;
-        now_.agility = total.agility;
-        now_.vitality = total.vitality;
-        now_.energy = total.energy;
         now_.raised = (total.strength != hero->points.strength ? 1 : 0) |
                       (total.agility != hero->points.agility ? 2 : 0) |
                       (total.vitality != hero->points.vitality ? 4 : 0) |
                       (total.energy != hero->points.energy ? 8 : 0);
-        // Both hands' bands together while a knight holds two weapons: what one blow rolls.
-        now_.minimum = hero->stats.minimumDamage + hero->stats.offhandMinimumDamage;
-        now_.maximum = hero->stats.maximumDamage + hero->stats.offhandMaximumDamage;
-        now_.attackRate = int(hero->stats.attackRate);
-        now_.defense = hero->stats.defense;
-        now_.defenseRate = int(hero->stats.defenseRate);
-        now_.health = hero->health;
-        now_.maxHealth = hero->maxHealth;
-        now_.mana = hero->mana;
-        now_.maxMana = hero->maxMana;
+
+        // The pointer, against this frame's layout.
+        const Box cross = panel::scaled(x_, y_, panel::frameClose());
+        overClose_ = cross.has(pointer.x, pointer.y);
+        const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
+                                  now_.lines[3].size()};
+        float tops[4];
+        attrTops(counts, tops);
+        const bool spending = tab_ == 0 && hero->pointsInHand > 0;
+        const auto plusUnder = [&]() {
+            if (!spending) return -1;
+            for (int i = 0; i < 4; ++i)
+                if (panel::scaled(x_, y_, plusFor(tops[i])).has(pointer.x, pointer.y)) return i;
+            return -1;
+        };
+        const auto tabUnder = [&]() {
+            for (int i = 0; i < kTabCount; ++i)
+                if (panel::scaled(x_, y_, tabBox(i)).has(pointer.x, pointer.y)) return i;
+            return -1;
+        };
+        over_ = plusUnder();
+        const int overTab = tabUnder();
+        if (pointer.pressed) {
+            if (overClose_) closing_ = true;
+            pushed_ = over_;
+            pressTab_ = overTab;
+        }
+        if (pointer.released) {
+            // Only if the pointer is still on it, which is how a press is taken back.
+            if (closing_ && overClose_ && close) *close = true;
+            if (pushed_ >= 0 && pushed_ == over_ && spend) *spend = pushed_;
+            if (pressTab_ >= 0 && pressTab_ == overTab && pressTab_ != tab_) tab_ = pressTab_;
+            closing_ = false;
+            pushed_ = -1;
+            pressTab_ = -1;
+        }
+        now_.tab = tab_;
+        now_.overTab = overTab;
+        now_.pressTab = pressTab_;
         now_.pushed = pushed_;
         now_.over = over_;
         now_.closing = closing_;
         now_.overClose = overClose_;
     }
+    // A tab changed this frame draws its page on the next, which has built it.
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild();
@@ -190,127 +280,161 @@ void Card::rebuild() {
     panel::Arts& arts = *arts_;
     const float x = x_, y = y_, k = panel::scale();
     const gfx::Face& face = canvas_.face();
-    const float size = kTextSize * k, brief = kSummarySize * k;
+    const float u = tip::unit();
 
     panel::frame(canvas_, arts, x, y, "Character");
-    // The wells the type sits in. MU draws none; this skin cuts one for every row and one for
-    // the summary, which is what "deeper wells" means on the page the user chose.
-    panel::cell(canvas_, x, y, kSummaryField, sheet::Cell::Rest);
-    for (const Row& row : kRows) panel::cell(canvas_, x, y, rowField(row.y), sheet::Cell::Rest);
 
-    // Card.Write: set from a top-left, the ascent below it. Right: the same, ranged right.
-    // The card's words in the Sanctuary label face, sized in the panel's units as before.
-    auto right = [&](float ux, float uy, float uw, const std::string& text, uint32_t colour,
-                     float at) {
-        controls::ranged(canvas_, x + (ux + uw) * k, y + uy * k + face.ascent(at), at, colour, text);
+    // Type set from a top-left in units, its ascent below it; and the same ranged right.
+    const auto at = [&](float uy, float size) { return y + uy * k + face.ascent(size * k); };
+    const auto left = [&](float ux, float uy, float size, uint32_t ink, const std::string& text) {
+        controls::label(canvas_, x + ux * k, at(uy, size), size * k, ink, text);
+    };
+    const auto right = [&](float ux, float uy, float size, uint32_t ink, const std::string& text) {
+        controls::ranged(canvas_, x + ux * k, at(uy, size), size * k, ink, text);
+    };
+    const auto smallCaps = [&](float ux, float baseline, uint32_t ink, const std::string& text) {
+        controls::caps(canvas_, x + ux * k, baseline, kSmallCaps * k, ink, text, 0.04f);
+    };
+    // A hairline down a strip, between two of its cells.
+    const auto divide = [&](float ux, float top, float tall) {
+        canvas_.rect(panel::scaled(x, y, {ux, top + 2.0f, 0.5f, tall - 4.0f}), kDivider);
     };
 
-    // The class, across the whole table, in the head's own tracked capitals a size down: it is
-    // a heading and not a value, and it was the only line on the card set like a value.
-    controls::caps(canvas_, x + kLeft * k, y + (kSummary.y + 6.0f) * k + face.ascent(9.0f * k),
-                   9.0f * k, kHeading, sim::className(int(now_.who->kin), now_.second), 0.08f);
-    // Level and points on one line, experience beneath: MU's stack at its own places.
-    const float pairY = kSummary.y + 24.0f;
-    controls::caps(canvas_, x + kLeft * k, y + pairY * k + face.ascent(kSummaryLabel * k),
-                   kSummaryLabel * k, kDetailInk, "Level");
-    right(kLeft, pairY, kMiddle - kGutter - kLeft, std::to_string(now_.level), kHeading, brief);
-    controls::caps(canvas_, x + kMiddle * k, y + pairY * k + face.ascent(kSummaryLabel * k),
-                   kSummaryLabel * k, kDetailInk, "Points");
-    right(kMiddle, pairY, kRight - kMiddle, std::to_string(now_.points),
-          now_.points > 0 ? kSpendable : kPlain, brief);
-    controls::caps(canvas_, x + kLeft * k,
-                   y + (kSummary.y + 44.0f) * k + face.ascent(kSummaryLabel * k),
-                   kSummaryLabel * k, kDetailInk, "Experience");
-    right(kLeft, kSummary.y + 44.0f, kRight - kLeft,
-          panel::commas((long long)now_.experience), kPlain, brief);
-
-    const int values[4] = {now_.strength, now_.agility, now_.vitality, now_.energy};
-    for (const Row& row : kRows) {
-        // The name against the window's left edge and the figure against the plus, both
-        // centred down the well.
-        const Box well = panel::scaled(x, y, rowField(row.y));
-        // The label centred on the FIGURE's line rather than on its own: two sizes on one row
-        // sit on one baseline, which is the difference between a row and two rows overlapping.
-        const float figureSize = kFigureSize * k;
-        const float baseline = panel::centredBaseline(face, well, figureSize);
-        controls::label(canvas_, x + kLeft * k, baseline, size * 1.1f, kPlain, row.label);
-        const float figureRight = now_.points > 0 ? kFigureRight : kRight;
-        controls::ranged(canvas_, x + figureRight * k, baseline, figureSize * 1.1f,
-                         (now_.raised >> row.stat) & 1 ? panel::kOptioned : kHeading,
-                         std::to_string(values[row.stat]));
-
-        // What the attribute buys, in the gap under its well: MU's own lines and strings. MU2
-        // adds "Attack speed" under agility; the sim has no attack speed stat -- MU paces a swing
-        // by its clip -- so that line is not printed here.
-        std::string labels[2], lines[2];
-        int count = 0;
-        switch (row.stat) {
-            case 0:
-                labels[count] = "Damage";
-                lines[count++] = std::to_string(now_.minimum) + " ~ " +
-                                 std::to_string(now_.maximum);
-                labels[count] = "Attack rate";
-                lines[count++] = std::to_string(now_.attackRate);
-                break;
-            case 1:
-                labels[count] = "Defense";
-                lines[count++] = std::to_string(now_.defense);
-                labels[count] = "Defense rate";
-                lines[count++] = std::to_string(now_.defenseRate);
-                break;
-            case 2:
-                labels[count] = "Life";
-                lines[count++] = std::to_string(now_.health) + " / " +
-                                 std::to_string(now_.maxHealth);
-                break;
-            default:
-                labels[count] = "Mana";
-                lines[count++] = std::to_string(now_.mana) + " / " +
-                                 std::to_string(now_.maxMana);
-                break;
-        }
-        const float detail = kDetailSize * k;
-        for (int i = 0; i < count; ++i) {
-            const float uy = row.y + kDetailTop + float(i) * kDetailStep;
-            controls::label(canvas_, x + kLeft * k, y + uy * k + face.ascent(detail), detail * 1.1f,
-                            kDetailInk, labels[i]);
-            controls::ranged(canvas_, x + kRight * k, y + uy * k + face.ascent(detail),
-                             detail * 1.1f, kPlain, lines[i]);
-        }
-
-        // The plus only where there is something to spend: MU hides it rather than greying it.
-        // `bag_plus`'s two-state button is gone with the rest of the art; the skin's own gold
-        // ring with a plus in it stands in its place, at MU's own rectangle.
-        if (now_.points <= 0) continue;
-        // A red square with a plus in it: the spend, in the accent, since it is the one thing
-        // on the card that asks to be pressed.
-        const Box plus = panel::scaled(x, y, plusFor(row.y));
-        const float side = std::round(std::min(plus.w, plus.h));
-        controls::State state;
-        state.lift = now_.over == row.stat ? 1.0f : 0.0f;
-        state.held = now_.pushed == row.stat;
-        controls::square(canvas_,
-                         {std::round(plus.midX() - side * 0.5f), std::round(plus.midY() - side * 0.5f), side, side},
-                         controls::Glyph::Plus, state, tip::unit(), true);
+    // ---- who he is ------------------------------------------------------------------------------
+    controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), kClassSize * k, kHeading,
+                   sim::className(int(now_.who->kin), now_.second), 0.04f);
+    if (now_.guild.empty()) {
+        right(kRight, kIdTop + 1.0f, kLineSize, kQuiet, "No guild");
+    } else {
+        right(kRight, kIdTop + 1.0f, kLineSize, kPlain, now_.guild);
     }
 
-    // The foot: a band of light out of the bottom edge, the rule, the kicker, the share of the
-    // level he has, and the percent -- the same foot the bag carries its Zen in.
+    // ---- level, resets, points ------------------------------------------------------------------
+    const Box nums{kWellX, kNumsTop, kWellW, kNumsTall};
+    panel::cell(canvas_, x, y, nums, sheet::Cell::Rest);
+    const float third = kWellW / 3.0f;
+    if (now_.points > 0) {
+        canvas_.rect(panel::scaled(x, y, {kWellX + third * 2.0f + 0.5f, kNumsTop + 0.5f, third - 1.0f,
+                                          kNumsTall - 1.0f}),
+                     kSpendWash);
+    }
+    divide(kWellX + third, kNumsTop, kNumsTall);
+    divide(kWellX + third * 2.0f, kNumsTop, kNumsTall);
+    const char* numLabels[3] = {"Level", "Resets", "Points"};
+    const int numValues[3] = {now_.level, now_.resets, now_.points};
+    const float numBase = panel::centredBaseline(face, panel::scaled(x, y, nums), kNumSize * k);
+    for (int i = 0; i < 3; ++i) {
+        const bool hot = i == 2 && now_.points > 0;
+        const uint32_t ink = i == 2 ? (hot ? kSpendable : kDim) : kHeading;
+        smallCaps(kWellX + third * float(i) + 6.0f, numBase, hot ? kSpendable : kQuiet, numLabels[i]);
+        controls::ranged(canvas_, x + (kWellX + third * float(i + 1) - 6.0f) * k, numBase,
+                         kNumSize * k, ink, std::to_string(numValues[i]));
+    }
+
+    // ---- the three his class lives by -----------------------------------------------------------
+    const Box keys{kWellX, kKeysTop, kWellW, kKeysTall};
+    panel::cell(canvas_, x, y, keys, sheet::Cell::Rest);
+    divide(kWellX + third, kKeysTop, kKeysTall);
+    divide(kWellX + third * 2.0f, kKeysTop, kKeysTall);
+    for (int i = 0; i < 3; ++i) {
+        const float cx = kWellX + third * float(i) + 6.0f;
+        smallCaps(cx, at(kKeysTop + 4.0f, kSmallCaps), kQuiet, now_.keys[i].label);
+        left(cx, kKeysTop + 13.0f, kKeySize, kHeading, now_.keys[i].value);
+    }
+
+    // ---- the tabs -------------------------------------------------------------------------------
+    // Underline tabs: the words on the sheet over one dark floor, the open one golden with a
+    // golden bar on the floor (the user's pick of three, 2026-10-10).
+    canvas_.rect(panel::scaled(x, y, {kWellX, kTabsTop + kTabsTall - 0.5f, kWellW, 0.5f}),
+                 style::kIronDk);
+    for (int i = 0; i < kTabCount; ++i) {
+        const Box box = tabBox(i);
+        const bool chosen = i == now_.tab;
+        const uint32_t ink = chosen ? kChosen : (i == now_.overTab ? style::kBone : kQuiet);
+        const float base = panel::centredBaseline(face, panel::scaled(x, y, box), kTabSize * k);
+        const float w = controls::capsWidth(kTabSize * k, kTabWords[i], 0.0f);
+        controls::caps(canvas_, x + box.midX() * k - w * 0.5f, base, kTabSize * k, ink,
+                       kTabWords[i], 0.0f);
+        if (chosen) {
+            canvas_.rect(panel::scaled(x, y, {box.x + 2.0f, box.y + box.h - 1.0f, box.w - 4.0f, 1.0f}),
+                         kChosenBar);
+        }
+    }
+
+    // ---- the page -------------------------------------------------------------------------------
+    if (now_.tab == 0) {
+        const char* names[4] = {"Strength", "Agility", "Vitality", "Energy"};
+        const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
+                                  now_.lines[3].size()};
+        float tops[4];
+        attrTops(counts, tops);
+        for (int i = 0; i < 4; ++i) {
+            const Box well{kWellX, tops[i], kWellW, kAttrTall};
+            panel::cell(canvas_, x, y, well, sheet::Cell::Rest);
+            const float figure = kFigureSize * k;
+            const float base = panel::centredBaseline(face, panel::scaled(x, y, well), figure);
+            controls::label(canvas_, x + kLeft * k, base, kNameSize * k, kPlain, names[i]);
+            const float figureRight = now_.points > 0 ? kFigureRight : kRight;
+            controls::ranged(canvas_, x + figureRight * k, base, figure,
+                             (now_.raised >> i) & 1 ? panel::kOptioned : kHeading,
+                             std::to_string(now_.stats[i]));
+            for (size_t l = 0; l < now_.lines[i].size(); ++l) {
+                const Line& line = now_.lines[i][l];
+                const float uy = tops[i] + kAttrTall + kLineTop + kLineStep * float(l);
+                left(kLeft, uy, kLineSize, kQuiet, line.label);
+                right(kRight, uy, kLineSize, kPlain, line.value);
+            }
+            // The plus only where there is something to spend: MU hides it rather than greying
+            // it. A red square, the one thing on the card that asks to be pressed.
+            if (now_.points <= 0) continue;
+            const Box plus = panel::scaled(x, y, plusFor(tops[i]));
+            const float side = std::round(std::min(plus.w, plus.h));
+            controls::State state;
+            state.lift = now_.over == i ? 1.0f : 0.0f;
+            state.held = now_.pushed == i;
+            controls::square(canvas_,
+                             {std::round(plus.midX() - side * 0.5f), std::round(plus.midY() - side * 0.5f),
+                              side, side},
+                             controls::Glyph::Plus, state, u, true);
+        }
+    } else {
+        float uy = kBodyTop;
+        for (const Group& group : now_.groups) {
+            smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
+            uy += kGroupHead;
+            const float tall = kRowTall * float(group.lines.size());
+            panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
+            for (size_t l = 0; l < group.lines.size(); ++l) {
+                const Line& line = group.lines[l];
+                const Box row{kWellX, uy + kRowTall * float(l), kWellW, kRowTall};
+                if (l > 0) canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, 0.5f}), kDivider);
+                const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
+                controls::label(canvas_, x + kLeft * k, base, kRowSize * k, line.dim ? kDim : kPlain,
+                                line.label);
+                controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : kHeading,
+                                 line.value);
+            }
+            uy += tall + kGroupGap;
+        }
+    }
+
+    // ---- the foot: how far through the level ----------------------------------------------------
     controls::foot(canvas_, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}),
-                   y + kFootRule * k, tip::unit());
-    const uint64_t at = sim::neededExperience(now_.level);
-    const uint64_t next = sim::neededExperience(now_.level + 1);
+                   y + kFootRule * k, u);
+    const uint64_t from = sim::neededExperience(now_.level);
+    const uint64_t to = sim::neededExperience(now_.level + 1);
     const float share =
-        next > at ? float(double(now_.experience > at ? now_.experience - at : 0) /
-                          double(next - at))
+        to > from ? float(double(now_.experience > from ? now_.experience - from : 0) /
+                          double(to - from))
                   : 1.0f;
-    const float kicker = kDetailSize * k;
-    controls::caps(canvas_, x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker,
-                   kDetailInk, "Experience");
-    controls::ranged(canvas_, x + kRight * k, y + kFootTop * k + face.ascent(kicker), kicker * 1.1f,
-                     kPlain, std::to_string(int(share * 100.0f + 0.5f)) + "%");
-    controls::meter(canvas_, panel::scaled(x, y, kBar), share, gfx::rgba(0.910f, 0.863f, 0.773f),
-                    style::kIron, tip::unit());
+    const float kicker = kLineSize * k;
+    controls::caps(canvas_, x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker, kQuiet,
+                   "Experience", 0.04f);
+    controls::ranged(canvas_, x + kRight * k, y + kFootTop * k + face.ascent(kicker), kicker, kPlain,
+                     number((long long)now_.experience) + " / " + number((long long)to) + "   " +
+                         std::to_string(int(share * 100.0f)) + "%");
+    controls::meter(canvas_, panel::scaled(x, y, kBar), std::clamp(share, 0.0f, 1.0f),
+                    gfx::rgba(0.910f, 0.863f, 0.773f), style::kIron, u);
 
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
 }

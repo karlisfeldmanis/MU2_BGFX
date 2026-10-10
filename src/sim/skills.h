@@ -530,6 +530,10 @@ constexpr float kAgilityPerDoubling = 300.0f;
 // The multiplier on a skill's blow. 0.75's `2 + energy/1000` with strength added at the row's
 // own rate, which is the whole of the user's rule: strength is force, as energy is for a wizard.
 float force(const SkillRow& row, const HeroPoints& points);
+// The same as the character window prints it, MuMain's "Skill Damage: %d%%": a force-two row's
+// blow in percent of his swing, 200 + energy / 10 (CNewUICharacterInfoWindow.cpp:1474). Read for
+// the knight and the gladiator, whose skills take energy here; a wizard's take it in the band.
+int skillPercent(const HeroPoints& points);
 
 // How long the clip itself takes, in ticks, at this character's attack speed -- `keys /
 // ((authored + attackSpeed * 0.004) * 25)`, the same chain `sim/swings.cpp` walks for a swing.

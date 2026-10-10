@@ -579,7 +579,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (characterOpen_) {
         int spend = -1;
         bool close = false;
-        card_.update(float(window.width()), float(window.height()), hero, pointer, &spend,
+        card_.update(float(window.width()), float(window.height()), hero, &play.realm(), pointer, &spend,
                      &close);
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
         // sends the request and plays SOUND_CLICK01 on the next line without waiting.
