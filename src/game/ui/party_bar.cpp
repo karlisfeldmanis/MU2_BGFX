@@ -21,7 +21,8 @@ uint32_t faded(uint32_t abgr, float alpha) {
 
 // Measures in tip::unit(), a pixel at 1080 lines. The column's top sits this far above the
 // screen's middle, clear of the exp lane's ten rows in the corner above it.
-constexpr float kLeft = 16.0f, kAboveMiddle = 188.0f, kWide = 240.0f;
+// 200 wide, from 240 (the user, 2026-10-10: "label is to wide").
+constexpr float kLeft = 16.0f, kAboveMiddle = 188.0f, kWide = 200.0f;
 constexpr size_t kRaidMost = 15;  // raid lines, then "+N more"
 
 // A capsule's make: its three bands top to foot, its corner, the gap under it, and its words.
@@ -31,10 +32,12 @@ struct Make {
     float shield, life, mana, radius, gap;
     float name, tag, number;  // the name's size, the level tag's, the number's
     float pad;                // the words in from the capsule's ends
+    float cell;               // the class's letters in their cell
     float band;               // the dark band behind the name, a share of the width
 };
-constexpr Make kPlate{3.0f, 21.0f, 4.0f, 6.0f, 11.0f, 14.5f, 9.0f, 12.5f, 10.0f, 0.62f};  // a party member
-constexpr Make kLine{2.0f, 16.0f, 3.0f, 5.0f, 7.0f, 12.0f, 0.0f, 10.5f, 8.0f, 0.55f};     // a raider
+constexpr Make kPlate{3.0f, 21.0f, 4.0f, 6.0f, 11.0f, 14.5f, 9.0f, 12.5f, 10.0f, 12.0f, 0.66f};  // a party member
+// A raid line a size under a plate: "raid label sizes i think can bi bigger" (the user, the same day).
+constexpr Make kLine{3.0f, 19.0f, 3.5f, 5.5f, 8.0f, 13.5f, 0.0f, 11.5f, 9.0f, 11.0f, 0.62f};    // a raider
 constexpr float kBetween = 16.0f;  // between the party and the rest of the raid, with no heading
 constexpr uint32_t kGold = gfx::rgba(0.878f, 0.714f, 0.361f);  // the leader: the tracker's gold
 constexpr uint32_t kWellTop = gfx::rgba(0.010f, 0.006f, 0.006f, 0.86f);  // the empty capsule,
@@ -56,6 +59,17 @@ constexpr uint32_t kPulse = gfx::rgba(1.0f, 0.478f, 0.333f);           // under 
 constexpr uint32_t kDead = gfx::rgba(0.878f, 0.400f, 0.349f);          // the word
 constexpr uint32_t kNumber = gfx::rgba(0.980f, 0.945f, 0.890f);
 constexpr uint32_t kTag = gfx::rgba(0.788f, 0.733f, 0.659f, 0.85f);    // the level after the name
+// The class's letters in its cell (the user, 2026-10-10: "we need to find place ehre to show
+// class"): MU's own short names, as the item card's requirement rows say them, each in a muted
+// tint of its own so the elf and the tank are found at a glance.
+constexpr const char* kKinShort[] = {"DW", "FE", "DK", "MG"};
+constexpr uint32_t kKinInk[] = {
+    gfx::rgba(0.627f, 0.757f, 1.0f),    // Dark Wizard, a cold blue
+    gfx::rgba(0.682f, 0.918f, 0.604f),  // Fairy Elf, a leaf green
+    gfx::rgba(1.0f, 0.651f, 0.529f),    // Dark Knight, rust
+    gfx::rgba(0.859f, 0.714f, 1.0f),    // Magic Gladiator, violet
+};
+constexpr uint32_t kCell = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);  // the class cell, darker than the band
 constexpr uint32_t kGhost = gfx::rgba(0.553f, 0.518f, 0.471f);         // a dead one's name
 constexpr float kLow = 30.0f;     // percent: the fill turns hot and pulses
 constexpr float kAway = 0.6f;     // a member on another map, this much of himself
@@ -91,6 +105,7 @@ int percent(int32_t shown, int32_t most) {
 PartyBar::Raider raiderRow(const Play& play, const sim::Body& body, const std::string& name) {
     PartyBar::Raider row;
     row.name = name;
+    row.kin = int(body.kin);
     row.health = body.alive() ? std::max(1, percent(play.shownHealth(body.id), body.maxHealth)) : 0;
     row.mana = body.maxMana > 0 ? percent(body.mana, body.maxMana) : -1;
     row.shield = body.maxSd > 0 ? percent(body.sd, body.maxSd) : -1;
@@ -136,6 +151,7 @@ void crown(gfx::Canvas& canvas, float x, float base, float s, uint32_t ink) {
 // What one capsule says.
 struct Capsule {
     std::string name;
+    int kin = -1;        // sim::Kin, -1 for none
     std::string tag;     // the level after the name, or empty
     std::string number;  // at the right: his health, its percent, a map's name, or empty
     float shield = -1.0f, life = 0.0f, mana = -1.0f, trail = 0.0f;  // shares, -1 for none
@@ -200,9 +216,19 @@ float capsule(gfx::Canvas& canvas, float x, float y, float u, const Make& make, 
                  faded(kBand, a));
     canvas.shade({x + band * 0.4f, body.y, band * 0.6f, lh}, faded(kBand, a * 0.85f), 0u, 0u, faded(kBand, a * 0.85f));
 
+    // The class's cell at the left end, a square of the health's height.
+    float at = x + make.pad * u;
+    if (c.kin >= 0 && c.kin < 4) {
+        canvas.rect({x, body.y, lh, lh}, faded(kCell, a));
+        const float size = make.cell * u;
+        const std::string& letters = kKinShort[c.kin];
+        const float wideLetters = controls::capsWidth(size, letters, 0.06f);
+        controls::caps(canvas, x + (lh - wideLetters) * 0.5f, controls::middle(body.y, lh, size), size,
+                       faded(c.dead ? kGhost : kKinInk[c.kin], a), letters, 0.06f);
+        at = x + lh + 6.0f * u;
+    }
     // The words, their capitals centred on the health.
     const float base = controls::middle(body.y, lh, make.name * u);
-    float at = x + make.pad * u;
     if (c.leader) {
         const float s = make.name / 14.5f * u;
         crown(canvas, at, base, s, faded(kGold, a));
@@ -288,6 +314,7 @@ void PartyBar::update(float seconds, const Play& play) {
     for (const auto* member : others) {
         Capsule c;
         c.name = member->name;
+        c.kin = member->kin;
         c.leader = member == &party.members.front();
         c.away = member->here == 0;
         c.dead = !c.away && member->health == 0;
@@ -312,6 +339,7 @@ void PartyBar::update(float seconds, const Play& play) {
         const Raider& one = raid_[i];
         Capsule c;
         c.name = one.name;
+        c.kin = one.kin;
         c.dead = one.health == 0;
         c.number = std::to_string(one.health) + "%";
         c.shield = one.shield >= 0 ? float(one.shield) / 100.0f : -1.0f;

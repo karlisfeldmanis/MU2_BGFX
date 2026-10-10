@@ -37,11 +37,12 @@ public:
     // One of the rest of the raid: not in his party, fighting the dragon with him.
     struct Raider {
         std::string name;
+        int kin = -1;    // sim::Kin
         int health = 0;  // percent
         int mana = -1;   // percent, -1 when he has none to show
         int shield = -1; // SD, percent, -1 when he has none
         bool operator==(const Raider& o) const {
-            return name == o.name && health == o.health && mana == o.mana && shield == o.shield;
+            return name == o.name && kin == o.kin && health == o.health && mana == o.mana && shield == o.shield;
         }
     };
 

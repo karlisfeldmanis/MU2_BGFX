@@ -253,5 +253,8 @@ container for each player", then "we need to see who is party/raid leader":
   it; at the right his health in points (party; Member::life and lifeMost, after the shields on
   the wire) or its percent (raid). A pale trail drains after a blow; under 30% the fill turns
   hot and pulses; on another map greyed with the map's name; dead struck through, "Dead".
+  Later the same day: no "Party" or "Raid" headings (the crown is in the leader's capsule),
+  200 wide from 240, the raid's lines a size under the plates, and the class in a dark cell at
+  the capsule's left as MU's short names (DW, FE, DK, MG) each in a muted tint of its own.
 - `--invite A,B` asks them into his party until they are in: a review run's party from local
   netbots (`--parties` takes a player's invite).
