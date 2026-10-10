@@ -100,6 +100,7 @@ private:
     bool aheadNever_ = false;  // this world is not led (an event map, or it would not raise)
     int lead_ = 0;
     int cushion_ = 0;
+    int slowPongs_ = 0;  // round trips in a row far over rttMs_, set aside (kSpikeMs)
     int copy_ = 1;
     void relead();  // lead_ from the round trip and the cushion
     // A tick from the stream or a datagram, taken if it is the next and kept if it is ahead of

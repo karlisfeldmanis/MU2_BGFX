@@ -119,6 +119,14 @@ constexpr float kTickMs = 50.0f;  // the realm's 20 Hz (server/src/main.cpp kTic
 // A Ping's answer read this long after the pump before it is not a round trip: it may have sat
 // unread for all of that. See RemoteLink::pump.
 constexpr auto kUnreadMost = std::chrono::milliseconds(250);
+// A Ping's answer further than this over the round trip so far is one late packet, not a slower
+// line: the answer rides the stream, and one segment lost on it holds everything behind it for a
+// resend, 200 ms and more on a 21 ms line. Taken, it led the hero five ticks on at once and slid
+// him back a tick at a time (the user, 2026-10-10: "when there is bot near char sometime there
+// is little lag hikaps"; mu2.log: "led 1 ... 60 ms" then "led 5 ... 262 ms", every 10-15 s).
+// kSpikesToTake in a row and it is the line, and taken. **ours**.
+constexpr float kSpikeMs = 100.0f;
+constexpr int kSpikesToTake = 3;
 // A line this long with nothing on it is taken for gone (RemoteLink::cut): the server sends
 // twenty ticks a second and answers a Ping each second, so five quiet seconds is no slow line.
 // Ours, the user's (2026-10-09: "if there is server disconect ... we need to freeze game and
@@ -353,9 +361,15 @@ void RemoteLink::pump() {
                                      std::chrono::steady_clock::now() - pingAt_).count();
                 // 0.7 / 0.3: about six samples to reflect a 63% change, so a spike shows in a
                 // few seconds and the number does not flicker.
-                rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.7f + ms * 0.3f;
                 pingOut_ = false;
-                relead();
+                if (rttMs_ >= 0.0f && ms > rttMs_ * 2.0f + kSpikeMs && ++slowPongs_ < kSpikesToTake) {
+                    core::logf("server: a Ping answered in %.0f ms against %.0f; one late packet, set aside",
+                               double(ms), double(rttMs_));
+                } else {
+                    slowPongs_ = 0;
+                    rttMs_ = rttMs_ < 0.0f ? ms : rttMs_ * 0.7f + ms * 0.3f;
+                    relead();
+                }
             }
         } else if (ok && kind == net::Kind::Who) {
             ok = net::parse(body, who_);
