@@ -202,3 +202,26 @@ are made one (`Board::merge`; a free bot stuck on a party's quest joins it).
   is using magic shield"): netbot's minute line now counts her casts on others -- Greater Damage
   1,463, Greater Defense 549, Heal 50 in one party's 35 game hours -- and the wizard's Magic
   Shield, 359 times.
+
+### The verdict (2026-10-10)
+
+Three rosters of five fresh bots (two knights, an elf, a wizard, a gladiator), each run as
+`--parties` and solo at the same time on frozen binaries of ce51dce1, `--speed 50`, ~28 game
+hours, every bot in step with its server (one solo elf's mirror diverged at 19:27 and is left
+out).
+
+| | parties | solo |
+|---|---|---|
+| levels, knights (6) | 1,039 | 1,081 (-4%) |
+| levels, wizards (3) | 451 | 470 (-4%) |
+| levels, gladiators (3) | 536 | 594 (-10%) |
+| levels, elves (2) | 332 | 356 (-7%) |
+| deaths | 466 | 531 |
+| The White Silence handed in | 15 of 15, mean level 99 | 12 of 15 (no wizard), mean 106 |
+| Blood Castle entries | 129 | 103 |
+| quests handed in | 222 | 274 |
+
+Parties now cost a little levelling (4-10%) and pay it back in safety and progress: fewer
+deaths, Devias's quest for every class and seven levels sooner, the wizards' only in a party,
+and a quarter more Blood Castles. Fewer quests all told -- the party's hunt still holds a
+member off his own repeatable ones.
