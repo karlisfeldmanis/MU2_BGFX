@@ -286,6 +286,25 @@ double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin) {
     return excellent ? kExcellentSetDefense : kSetDefense;
 }
 
+int setPieces(const content::Tables& tables, const Satchel& bag) {
+    int count[kGroupBoots - kGroupHelms + 1] = {}, number[kGroupBoots - kGroupHelms + 1] = {};
+    int most = 0;
+    for (int slot = kHelm; slot <= kBoots; ++slot) {
+        const Held& worn = bag[slot];
+        if (worn.empty() || size_t(worn.item) >= tables.items.size()) continue;
+        const int of = setOf(tables.items[size_t(worn.item)]);
+        if (of < 0) continue;
+        // Five slots, so five sets at most: find this one's tally or open one.
+        for (int at = 0; at <= kBoots - kHelm; ++at) {
+            if (count[at] == 0) number[at] = of;
+            if (number[at] != of) continue;
+            most = std::max(most, ++count[at]);
+            break;
+        }
+    }
+    return most;
+}
+
 std::string excellentLine(const content::ItemRow& row, int bit) {
     if (!excellentable(row) || bit < 0 || bit >= kExcellentOptions) return std::string();
     // ExcellentOptions.CreateDefenseOptions, number 1 to 6. The Zen line is written with

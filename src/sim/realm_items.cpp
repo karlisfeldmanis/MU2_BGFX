@@ -42,6 +42,9 @@ Arms Realm::armsOf(const Body& one) const {
         arms.armourDefense = one.wornDefense;
         arms.shieldDefenseRate = one.wornDefenseRate;
         arms.setDefense = setDefense(*tables_, me().bag, one.kin);
+        const int pieces = setPieces(*tables_, me().bag);
+        arms.setDefenseRate = pieces >= kSetFewPieces ? kSetDefenseRate : 0.0;
+        arms.setHealth = pieces >= kSetMostPieces ? kSetHealth : 0.0;
         arms.weaponMinimumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
         arms.weaponMaximumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
         // Wear, on the band and its plus together, truncated as MuMain's CalculateDamage takes

@@ -5061,6 +5061,12 @@ void testSets(const content::Tables& tables) {
         checkNear(sim::setDefense(tables, fine.satchel()), sim::kExcellentSetDefense, 1e-9,
                   "five excellent are 10%");
         checkNear(sim::setDefense(tables, odd.satchel()), 0.0, 1e-9, "a stranger's helm breaks it");
+        // The steps below the whole set count the most of one number (sim::setPieces).
+        sim::Realm three;
+        dressed(three, 3, 0, piece[0]);
+        checkEqual(sim::setPieces(tables, three.satchel()), 3, "three pieces count three");
+        checkEqual(sim::setPieces(tables, four.satchel()), 4, "four count four");
+        checkEqual(sim::setPieces(tables, odd.satchel()), 4, "a stranger's helm leaves four");
         // The Magic Gladiator's: Storm Crow's four, bare-headed, and nobody else's set.
         sim::Realm crow;
         crow.raise(&tables, 3, 140, 128, sim::Kin::MagicGladiator, 1);
@@ -5114,6 +5120,17 @@ void testSets(const content::Tables& tables) {
     sim::reckon(sim::Kin::DarkKnight, 1, points, arms, &whole, &health);
     checkEqual(whole.defense, bare.defense + int(double(bare.defense) * 0.05),
                "a set raises the final defence by 5%");
+    // Three pieces raise the defence rate, four the health, on top of what was there.
+    sim::Arms few;
+    few.armourDefense = 200;
+    few.setDefenseRate = sim::kSetDefenseRate;
+    few.setHealth = sim::kSetHealth;
+    sim::Fighter gathered;
+    int bareHealth = 0, gatheredHealth = 0;
+    sim::reckon(sim::Kin::DarkKnight, 1, points, arms, &bare, &bareHealth);
+    sim::reckon(sim::Kin::DarkKnight, 1, points, few, &gathered, &gatheredHealth);
+    checkNear(gathered.defenseRate, bare.defenseRate * 1.1, 1e-3, "three pieces: defence rate +10%");
+    checkEqual(gatheredHealth, int(double(bareHealth) * 1.05), "four pieces: health +5%");
 }
 
 void testWear(const content::Tables& tables) {

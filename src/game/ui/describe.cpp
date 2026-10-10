@@ -793,8 +793,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
 
     // ---- its set -------------------------------------------------------------------------------
     // Ours, the user's (2026-09-30), in MU's framed set block: the five pieces of its number,
-    // green where he wears them and gray where not, then the two steps of sim::setDefense, lit
-    // when they stand. The set's name is the row's label less its last word ("Leather Helm").
+    // green where he wears them and gray where not, then its steps -- three pieces, four, the
+    // whole set and all excellent -- lit when they stand. The set's name is the row's label less
+    // its last word ("Leather Helm").
     if (const int set = sim::setOf(row); set >= 0) {
         Section pieces;
         pieces.framed = true;
@@ -835,17 +836,24 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         };
         listed(wearing, Tone::Green);
         listed(lacking, Tone::Gray);
-        const auto step = [&](const std::string& when, double rate, bool stands) {
+        // The steps, lowest first, each lit green once it stands, so the block reads as a ladder:
+        // what three pieces give, what four add, what the whole set adds on top (sim::setPieces).
+        const auto step = [&](const std::string& when, const char* stat, double rate,
+                              bool stands) {
             Row line;
-            line.free = when + ": Defense";
+            line.free = when + ": " + stat;
             line.tail = "+" + std::to_string(int(std::lround(rate * 100.0))) + "%";
             line.freeTone = stands ? Tone::Green : Tone::Gray;
             pieces.rows.push_back(line);
         };
-        step("Full set", sim::kSetDefense, all && !excellent);
+        step("3 pieces", "Defense Rate", sim::kSetDefenseRate, on >= sim::kSetFewPieces);
+        step("4 pieces", "Max HP", sim::kSetHealth, on >= sim::kSetMostPieces);
+        step("Full set", "Defense", sim::kSetDefense, all && !excellent);
         // The excellent step only on an excellent piece (the user, 2026-10-05: 'dont show all
         // excelence def bonus, there is no point if user does not have the item').
-        if (what.excellent != 0) step("All excellent", sim::kExcellentSetDefense, excellent);
+        if (what.excellent != 0) {
+            step("All excellent", "Defense", sim::kExcellentSetDefense, excellent);
+        }
         sheet.sections.push_back(pieces);
     }
     // A Rune of Creation: the power it carries, what that does, and whose and where it goes.

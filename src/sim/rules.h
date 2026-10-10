@@ -339,6 +339,8 @@ struct Arms {
     int armourDefense = 0;  // a shield's, and later a suit's
     int shieldDefenseRate = 0;  // a worn shield's rate with its plus; never halved
     double setDefense = 0.0;    // a complete set's share of the final defence (sim::setDefense)
+    double setDefenseRate = 0.0;  // three pieces of one set (sim::kSetDefenseRate)
+    double setHealth = 0.0;       // four pieces of one set (sim::kSetHealth)
     double criticalChance = 0.0;  // luck, 0.05 a lucky thing worn
     Excellence excel;              // what his excellent pieces come to
     // A staff's rise, in percent: `magicPower / 2` and its plus (Version075/Items/Weapons.cs:315

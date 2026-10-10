@@ -314,6 +314,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->wizardMinimum = wizard ? double(points.energy) / 9.0 + arms.wingWizardry : 0.0;
     out->wizardMaximum = wizard ? double(points.energy) / 4.0 + arms.wingWizardry : 0.0;
     out->wizardryRate = 1.0 + arms.staffRise / 100.0;
+    // Three pieces of a set, then the excellent armour's.
+    out->defenseRate = float(double(out->defenseRate) * (1.0 + arms.setDefenseRate));
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;
     out->damageDecrease = excel.damageDecrease;
@@ -331,6 +333,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                      double(points.vitality) * double(row.healthPerVitality));
     // The Guardian Angel's +50, raw, so the armour's rate below takes it too.
     *maxHealth += arms.pet.health;
+    // Four pieces of a set.
+    if (arms.setHealth > 0.0) *maxHealth = int(double(*maxHealth) * (1.0 + arms.setHealth));
     // And the excellent armour's +8% a piece on top.
     if (excel.healthRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.healthRate);
     // And the Rune of the Undying's, on everything above.

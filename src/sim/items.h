@@ -634,6 +634,17 @@ int setOf(const content::ItemRow& row);
 constexpr int kGladiatorSet = 15;
 constexpr int kHurricaneSet = 23;
 double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin = Kin::DarkKnight);
+// **Three and four pieces** (the user's, 2026-10-10): steps below the whole set, so a set is
+// worth gathering before its last piece drops. They stack -- three pieces of one number raise
+// the defence rate, four raise the health as well, and five add the defence above. The pieces
+// are counted of the set he wears the most of, helm to boots, any class's set for any class.
+// INVENTION: MuMain's CheckFullSet knows the whole set only.
+constexpr int kSetFewPieces = 3;
+constexpr int kSetMostPieces = 4;
+constexpr double kSetDefenseRate = 0.10;  // three pieces: the defence rate +10%
+constexpr double kSetHealth = 0.05;       // four pieces: the maximum health +5%
+// The most pieces of one set worn together, 0 to 5.
+int setPieces(const content::Tables& tables, const Satchel& bag);
 
 // ---- sockets and the Rune of Creation ----------------------------------------------------
 //
