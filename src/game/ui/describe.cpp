@@ -829,45 +829,38 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             head.values.push_back({std::to_string(on) + " / 5", on > 0 ? Tone::Green : Tone::Gray});
             pieces.rows.push_back(head);
         }
-        // Then the pieces, a filled square beside what he wears and a hollow one beside what he
-        // lacks: the same marks the steps below take, so "filled is yours" reads once for both.
-        const auto listed = [&](const std::string& words, bool worn) {
-            if (words.empty()) return;
+        // Then what he lacks, in plain words; nothing when the set is whole.
+        if (!lacking.empty()) {
             Row line;
-            line.free = words;
-            line.freeTone = worn ? Tone::Green : Tone::Gray;
-            line.mark = worn ? tip::Mark::Diamond : tip::Mark::Socket;
-            line.markTone = worn ? Tone::Green : Tone::Gray;
+            line.free = "Missing: " + lacking;
+            line.freeTone = Tone::Gray;
             pieces.rows.push_back(line);
-        };
-        listed(wearing, true);
-        listed(lacking, false);
-        // The steps, lowest first, a row each: how many pieces and what it raises on the left,
-        // the figure on the right where it lines up with the others, the whole row lit green
-        // once it stands and gray until then -- a ladder he reads down to his next piece.
+        }
+        // The bonuses, a row each: how many pieces on the left, what they give on the right,
+        // green once he has it and gray until then (the user, 2026-10-10: 'simple but very easy
+        // to understand').
         bool first = true;
         const auto step = [&](const std::string& when, const char* stat, double rate,
                               bool stands) {
             Row line;
-            line.label = when + "  " + stat;
+            line.label = when;
             line.labelToned = true;
             line.labelTone = stands ? Tone::Green : Tone::Gray;
-            line.values.push_back({"+" + std::to_string(int(std::lround(rate * 100.0))) + "%",
+            line.values.push_back({"+" + std::to_string(int(std::lround(rate * 100.0))) + "% " +
+                                       stat,
                                    stands ? Tone::Green : Tone::Gray});
-            line.mark = stands ? tip::Mark::Diamond : tip::Mark::Socket;
-            line.markTone = stands ? Tone::Green : Tone::Gray;
             line.gap = first;
             first = false;
             pieces.rows.push_back(line);
         };
-        step("(3)", "Defense Rate", sim::kSetDefenseRate, on >= sim::kSetFewPieces);
-        step("(4)", "Max HP", sim::kSetHealth, on >= sim::kSetMostPieces);
-        step("(5)", "Defense", sim::kSetDefense, all);
+        step("3 pieces", "Defense Rate", sim::kSetDefenseRate, on >= sim::kSetFewPieces);
+        step("4 pieces", "Max HP", sim::kSetHealth, on >= sim::kSetMostPieces);
+        step("5 pieces", "Defense", sim::kSetDefense, all);
         // The excellent step only on an excellent piece (the user, 2026-10-05: 'dont show all
         // excelence def bonus, there is no point if user does not have the item'), as what it
-        // adds to the whole set's, so every row on the ladder is a rise on the one above it.
+        // adds to the whole set's, so every row is a rise on the one above it.
         if (what.excellent != 0) {
-            step("(5 Exc)", "Defense", sim::kExcellentSetDefense - sim::kSetDefense, excellent);
+            step("5 excellent", "Defense", sim::kExcellentSetDefense - sim::kSetDefense, excellent);
         }
         sheet.sections.push_back(pieces);
     }
