@@ -105,10 +105,9 @@ constexpr Box kBuffsAt{292.0f, 0.0f, 40.0f, 56.0f};
 constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
-// A debuff's cell: the buffs' own hairline edge in a muted red, and a red bar, WoW's sign for
-// something done to you (ours). Thin: a two-pixel bright red frame was too loud (the user).
+// A debuff's cell: the buffs' own hairline edge in a muted red, WoW's sign for something done to
+// you (ours). Thin: a two-pixel bright red frame was too loud (the user).
 constexpr uint32_t kDebuffEdge = gfx::rgba(0.72f, 0.22f, 0.18f, 0.75f);
-constexpr uint32_t kDebuffLeft = gfx::rgba(0.94f, 0.30f, 0.22f, 0.95f);
 
 // The gap between two cells of the row, in plate pixels: MuDream's own strip spaces its 80-wide
 // cells by a fifth of one, and this is that at the cell's 40.
@@ -336,6 +335,20 @@ void diamond(gfx::Canvas& canvas, const gfx::Art* sheet, const Box& hole, const 
 }
 
 }  // namespace
+
+const char* Hud::artOf(const Boon& one) {
+    return one.pet >= 0          ? petArt(one.pet)
+           : one.poison           ? "buff_poison"
+           : one.dragonfire       ? "buff_dragonfire"
+           : one.chill            ? "buff_ice"
+           : one.ale              ? "buff_ale"
+           : one.frenzy           ? "buff_frenzy"
+           : one.potion == 0      ? "buff_healing"
+           : one.potion == 1      ? "buff_mana"
+           : buffArt(one.skill)   ? buffArt(one.skill)
+                                  : "buff_defense";
+}
+
 
 bool Hud::Face::operator==(const Face& o) const {
     return width == o.width && height == o.height && health == o.health &&
@@ -1225,17 +1238,7 @@ void Hud::rebuild() {
         const Boon& one = boons_[i];
         if (one.empty()) continue;
         const Box box = plate(s, buffPx(i));
-        const char* art = one.pet >= 0          ? petArt(one.pet)
-                          : one.poison           ? "buff_poison"
-                          : one.dragonfire       ? "buff_dragonfire"
-                          : one.chill            ? "buff_ice"
-                          : one.ale              ? "buff_ale"
-                          : one.frenzy           ? "buff_frenzy"
-                          : one.potion == 0      ? "buff_healing"
-                          : one.potion == 1      ? "buff_mana"
-                          : buffArt(one.skill)   ? buffArt(one.skill)
-                                                 : "buff_defense";
-        const gfx::Art& icon = arts.get(art);
+        const gfx::Art& icon = arts.get(artOf(one));
         canvas_.rect(box, kBuffBack);
         // A mount it is not ridden here: cold and dark, the skill box's disabled state.
         if (icon.valid()) {
@@ -1258,27 +1261,28 @@ void Hud::rebuild() {
             canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
             continue;
         }
+        // Every timed cell, buff or debuff, wears the clock: what is gone of its time a dark
+        // wedge swept round from twelve (the user, 2026-10-10, off the target frame's proposal:
+        // "i want tht also for all buffs/auras"). It took the place of the buffs' wipe down
+        // from the top and the debuffs' bar under the cell.
+        controls::sweep(canvas_, box, 1.0f - left, gfx::rgba(0.0f, 0.0f, 0.0f, 0.58f));
         if (debuff) {
-            canvas_.rect({box.x, box.bottom() - std::max(1.0f, 2.0f * kUnit * s.scale),
-                          box.w * left, std::max(1.0f, 2.0f * kUnit * s.scale)},
-                         kDebuffLeft);
-            // Dragonfire's figure is its stacks, how deep it bites; the bar under it its time.
+            // Dragonfire's figure is its stacks, how deep it bites; any other debuff keeps its
+            // big seconds (the user: "just use big number at center with some opacity
+            // background for debuffs time"), now over the clock's own dark.
+            char figure[16] = {};
             if (one.dragonfire && one.stacks > 0) {
-                char figure[16];
                 std::snprintf(figure, sizeof figure, "%d", one.stacks);
-                canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.4f));
-                const float big = std::round(20.0f * kUnit * s.scale);
-                controls::label(canvas_, box.midX() - controls::labelWidth(big, figure) * 0.5f,
-                                box.midY() + big * 0.33f, big, kInk, figure);
             } else if (one.seconds >= 1.0f) {
                 const int whole = int(one.seconds + 0.5f);
-                char figure[16];
                 if (whole >= 60) {
                     std::snprintf(figure, sizeof figure, "%d:%02d", whole / 60, whole % 60);
                 } else {
                     std::snprintf(figure, sizeof figure, "%d", whole);
                 }
-                canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f));
+            }
+            if (figure[0] != 0) {
+                canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.25f));
                 // In the label face, not the default one (the user: "number to big, use other
                 // font").
                 const float big = std::round(20.0f * kUnit * s.scale);
@@ -1287,8 +1291,6 @@ void Hud::rebuild() {
             }
             continue;
         }
-        const float gone = std::round(box.h * (1.0f - left));
-        if (gone > 0.0f) canvas_.rect({box.x, box.y, box.w, gone}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.58f));
         if (one.frenzy && one.stacks > 0) {
             char count[8];
             std::snprintf(count, sizeof count, "%d", one.stacks);

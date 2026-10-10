@@ -113,6 +113,11 @@ void keycap(gfx::Canvas& canvas, const gfx::Box& box, const std::string& key, fl
 // A meter: a dark well and a lit fill.
 void meter(gfx::Canvas& canvas, const gfx::Box& box, float share, uint32_t top, uint32_t foot,
            float u);
+// A buff's clock over its icon: what is gone of its time, `gone` 0 to 1, as a dark wedge swept
+// clockwise from twelve o'clock and cut square at the cell's edges -- WoW's cooldown sweep (the
+// user, 2026-10-10: "i like that there is duration outline for buffs/auras i want tht also for
+// all buffs/auras").
+void sweep(gfx::Canvas& canvas, const gfx::Box& box, float gone, uint32_t ink);
 
 // ---- type --------------------------------------------------------------------------------------
 

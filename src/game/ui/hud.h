@@ -180,6 +180,8 @@ public:
     // The pet and the mount, a skill's boon, the elf's might, the Ale, a Frenzy, the two
     // potions pouring and the two debuffs.
     static constexpr int kBoons = 10;
+    // The art a cell wears (assets/interface/buffs), shared with the target frame's row.
+    static const char* artOf(const Boon& one);
     // The cells for this frame, packed from the left; what is not handed is empty.
     void setBoons(const Boon* boons, int count) {
         for (int i = 0; i < kBoons; ++i) boons_[i] = i < count ? boons[i] : Boon{};

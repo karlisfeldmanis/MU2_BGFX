@@ -537,21 +537,15 @@ public:
     // party label or in world, walks to him and opend then char label"): another player picked
     // by a click on him, which still walks there, or on his party capsule. By name, which holds
     // across maps, and the body it was last seen as here (0 when he is not here). Escape lets go.
-    void target(const std::string& name, uint32_t here) {
-        if (name != targetName_) targetFresh_ = true;
-        targetName_ = name;
-        targetId_ = here;
-    }
-    void untarget() {
-        targetName_.clear();
-        targetId_ = 0;
-    }
+    void target(const std::string& name, uint32_t here);
+    void untarget();
     const std::string& targetName() const { return targetName_; }
     uint32_t targetId() const { return targetId_; }
     // Whether the target changed since last asked: the portrait forgets the old face.
     bool targetChanged() { return std::exchange(targetFresh_, false); }
     // His drawables this frame, gathered with the world's (gather), and where his head joint
-    // was, his facing and his scale: the portrait's to photograph. Empty when he is not drawn.
+    // was, his facing and his size against a man's: the portrait's to photograph. Empty when
+    // he is not drawn.
     const std::vector<gfx::Drawable>& targetDrawables() const { return targetDrawables_; }
     const float* targetHead() const { return targetHead_; }
     float targetYaw() const { return targetYaw_; }

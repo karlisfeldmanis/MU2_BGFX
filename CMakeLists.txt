@@ -297,6 +297,10 @@ add_library(mu_game STATIC
   src/game/ui/arrival.cpp
   src/game/ui/chat.cpp
   src/game/ui/party_bar.cpp
+  src/game/ui/capsule.cpp
+  src/game/ui/player_menu.cpp
+  src/game/ui/target_frame.cpp
+  src/game/portrait.cpp
   src/game/fx/aura.cpp
   src/game/fx/set_shine.cpp
   src/game/fx/warp.cpp

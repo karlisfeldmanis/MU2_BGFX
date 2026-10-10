@@ -959,6 +959,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // --no-hand leaves the arena's hero to the player, for a hand-played try in a crowd.
         if (!args.arena.empty() && !args.noHand) arenaHand();
         const bool clickNow = scriptedPointer(ctx, at, view, proj, &pointerX, &pointerY);
+        // A --ui-click no window takes is the world's, as a hand's is: aimed where it presses.
+        bool uiPress = false, uiRight = false;
         // The windows first: a click that lands on one is the interface's, and the
         // world only hears the clicks that land on none. A scripted click is the
         // world's by construction -- it is aimed at a monster.
@@ -1010,6 +1012,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 const bool here = at.index == c.frame;
                 desk_.script((here ? c.x : c.x2) * w, (here ? c.y : c.y2) * h, here,
                              at.index == last, c.right);
+                if (here) {
+                    pointerX = c.x * w;
+                    pointerY = c.y * h;
+                    uiPress = true;
+                    uiRight = c.right;
+                }
             }
             for (const auto& [frame, text] : args.uiTyped) {
                 if (at.index == frame) desk_.scriptType(text);
@@ -1036,8 +1044,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (desk_.ready() && !windowed) {
             world_.played().pointAtLabel(desk_.labelUnder(pointerX, pointerY));
         }
-        if ((ctx.window.clicked(0) && !windowed) || clickNow) world_.played().leftClick();
-        if (ctx.window.clicked(1) && !windowed) {
+        if ((ctx.window.clicked(0) && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
+            world_.played().leftClick();
+        }
+        if ((ctx.window.clicked(1) || (uiPress && uiRight)) && !windowed) {
             world_.played().rightClick();
         } else if (ctx.window.held(1) && !windowed) {
             world_.played().rightHeld();
@@ -1484,6 +1494,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                casters ? &townCasters_ : nullptr, &hoverDrawables_,
                                &flashDrawables_, &flashes_);
         if (desk_.ready()) {
+            // His target's face, off the pose just gathered (game/portrait.h).
+            desk_.portrait(ctx.renderer, world_.played());
             desk_.overhead(float(deltaSeconds), world_.played(), viewProj, ctx.window.width(),
                            ctx.window.height());
         }

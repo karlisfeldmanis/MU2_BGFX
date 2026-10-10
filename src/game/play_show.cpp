@@ -1849,6 +1849,7 @@ bool Play::shownAt(uint32_t id, float* column, float* row) const {
 void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,
                   std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover,
                   std::vector<gfx::Drawable>* flashed, std::vector<Flash>* flashes) {
+    targetDrawables_.clear();
     // One eased fade for every reason a body is not simply "there": the hero's own
     // door-opening appearance, a corpse going out at the end of its held pose, and a
     // respawn easing back in. All three are the same smoothstep on a different clock, so
@@ -1919,6 +1920,30 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // this has to agree with since the ring is meant to show what a click would answer.
         if (hover && pointedFolk_ < 0 && one.id != 0 && (one.id == pointedAt_ || one.id == pointedPlayer_)) {
             one.figure.gather(palette, *hover);
+        }
+        // And his target's, for the portrait (game/portrait.h): the same drawables again, and
+        // his head joint where this pose holds it. Not while he lies dead: the frame keeps the
+        // face he had standing.
+        if (targetId_ != 0 && one.id == targetId_ && one.figure.body() && shownAlive(one.id)) {
+            one.figure.gather(palette, targetDrawables_);
+            const float* at = one.figure.position();
+            targetHead_[0] = at[0];
+            targetHead_[1] = at[1] + one.figure.body()->height * one.figure.scale() * 0.9f;
+            targetHead_[2] = at[2];
+            if (const content::Mesh* skeleton = one.figure.body()->skeletonMesh) {
+                const std::vector<content::Bone>& bones = skeleton->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name != "Bip01 Head") continue;
+                    float bind[16];
+                    bx::mtxInverse(bind, bones[b].inverseBind);
+                    const float joint[3] = {bind[12], bind[13], bind[14]};
+                    one.figure.pointOnBind(int(b), joint, targetHead_);
+                    break;
+                }
+            }
+            targetYaw_ = one.figure.yaw();
+            // His size against a man's 1.8 m, for the portrait's camera.
+            targetScale_ = one.figure.body()->height * one.figure.scale() / 1.8f;
         }
         // And its red flash, the same way, if it has just turned on him (Play::watchAggro).
         if (flashed && flashes && !aggro_.empty()) {

@@ -25,6 +25,8 @@ const char* const* probeViewNames() {
                 names[i] = "stage_tip";
             } else if (v == ViewStageBust) {
                 names[i] = "stage_bust";
+            } else if (v == ViewStagePortrait) {
+                names[i] = "stage_portrait";
             } else {
                 const int f = v - ViewProbeFilter;
                 names[i] = "probe_filter" + std::to_string(f / 6) + "_" + std::to_string(f % 6);
@@ -100,7 +102,7 @@ Account viewAccount(View v) {
         case ViewHud: return AccountPresent;
         default:
             if (v == ViewStageBag || v == ViewStageShelf || v == ViewStageQuick ||
-                v == ViewStageTip || v == ViewStageBust) {
+                v == ViewStageTip || v == ViewStageBust || v == ViewStagePortrait) {
                 return AccountPresent;
             }
             if (v >= ViewProbeFace && v < ViewCount) return AccountProbe;

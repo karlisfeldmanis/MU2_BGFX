@@ -54,7 +54,9 @@ enum View : uint16_t {
     ViewStageTip = 70,
     // The character screen's create window: the class's bust, photographed (game/bust.h).
     ViewStageBust = 71,
-    ViewCount = 72,
+    // The target frame's portrait: his head and helm, photographed live (game/portrait.h).
+    ViewStagePortrait = 72,
+    ViewCount = 73,
 };
 constexpr int kOutlineRings = 4;  // the hover's, and three monsters turning at once
 constexpr int kBloomLevels = 5;

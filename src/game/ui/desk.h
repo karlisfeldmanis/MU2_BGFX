@@ -40,6 +40,9 @@
 #include "game/ui/vitals.h"
 #include "game/ui/panel.h"
 #include "game/ui/party_bar.h"
+#include "game/ui/player_menu.h"
+#include "game/ui/target_frame.h"
+#include "game/portrait.h"
 #include "gfx/interface.h"
 #include "gfx/window.h"
 #include "game/play.h"
@@ -105,6 +108,9 @@ public:
     // the renderer's frame is submitted. Sprint 7 step 5: the bag and the shelf draw the real
     // models, as MU2's Panel.Stage does and MU's RenderObjectScreen did.
     void photograph(gfx::Renderer& renderer, double seconds);
+    // The target frame's portrait (game/portrait.h): his head as the world just gathered him.
+    // After Play::gather, before the scene's draw.
+    void portrait(gfx::Renderer& renderer, Play& play);
     // The store the pictures are read from. Not owned: the same one draws what lies on the
     // ground, so a sword in the bag and the same sword on the grass are one mesh, and the
     // drops do not go away with the windows.
@@ -264,6 +270,12 @@ private:
     Chat chat_;
     // The other members of his party, top left (game/ui/party_bar.h).
     PartyBar partyBar_;
+    // The player picked by a click, over the plate (game/ui/target_frame.h), his face, and the
+    // one right-click menu on a player wherever he is clicked (game/ui/player_menu.h).
+    TargetFrame targetFrame_;
+    Portrait portrait_;
+    PlayerMenu playerMenu_;
+    bool menuTook_ = false;  // the player menu took this frame's press
     // The map around him, top right over the tracker, always up in a played world (game/ui/minimap.h).
     Minimap minimap_;
     Menu menu_;

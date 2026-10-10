@@ -82,6 +82,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     minimap_.open(interface_);
     chat_.open(interface_);
     partyBar_.open(interface_);
+    targetFrame_.open(interface_);
+    playerMenu_.open(interface_);
     menu_.open(interface_);
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
@@ -410,6 +412,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 // 'if player press escape he cancels the repair icon and button state'.
                 mending_ = false;
                 core::logf("window: repair mode off");
+            } else if (playerMenu_.up()) {
+                playerMenu_.hide();
             } else if (windowsOpen) {
                 inventoryOpen_ = characterOpen_ = false;
                 if (trading_) play.closeTrade();
@@ -417,6 +421,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 if (mixing_) play.closeMachine();
                 travel_.hide();
                 fanLatched_ = false;
+            } else if (!play.targetName().empty()) {
+                // With nothing open, Escape lets his target go before it raises the menu, as
+                // WoW's clears the target first.
+                play.untarget();
             } else {
                 menu_.show();
                 core::logf("window: menu up");
@@ -595,9 +603,26 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
                      (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play);
         if (toggleChat) click();
-        partyBar_.update(seconds, play, pointer);
-        // The party bar's menu asked for a whisper: the chat opens on his tab.
-        if (const std::string whom = partyBar_.whisper(); !whom.empty()) chat_.whisperTo(whom);
+        // The player menu first: a press it takes (a row, or shutting it) is no one else's.
+        menuTook_ = playerMenu_.update(play, pointer);
+        Pointer under = pointer;
+        if (menuTook_ || playerMenu_.covers(pointer.x, pointer.y)) under.pressed = under.rightPressed = false;
+        partyBar_.update(seconds, play, under);
+        targetFrame_.update(seconds, play, under, arts_, float(window.width()), hud_.plateTop() - 26.0f * u,
+                            portrait_.picture(), portrait_.taken());
+        // A right click on a capsule, on the frame or on a player in the world: his menu.
+        {
+            std::string whom;
+            float x = 0.0f, y = 0.0f;
+            if (partyBar_.takeMenuAsk(&whom, &x, &y) || targetFrame_.takeMenuAsk(&whom, &x, &y)) {
+                playerMenu_.show(play, whom, x, y, float(window.width()), float(window.height()));
+            } else if (const uint32_t body = play.takeMenuAsk(); body != 0 && play.playerName(body, &whom, nullptr)) {
+                playerMenu_.show(play, whom, pointer.x + 4.0f * u, pointer.y - 12.0f * u, float(window.width()),
+                                 float(window.height()));
+            }
+        }
+        // The menu asked for a whisper: the chat opens on his tab.
+        if (const std::string whom = playerMenu_.whisper(); !whom.empty()) chat_.whisperTo(whom);
     }
     // Read by the journal's L on the next frame, which runs ahead of the HUD.
     if (toggleQuest) questButton_ = true;
@@ -916,6 +941,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
                     chat_.covers(pointer.x, pointer.y) || partyBar_.covers(pointer.x, pointer.y) ||
+                    menuTook_ || playerMenu_.covers(pointer.x, pointer.y) || targetFrame_.covers(pointer.x, pointer.y) ||
                     minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
                     travelPressed || travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
@@ -1862,6 +1888,14 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     tipStagePicture_.render(renderer, panel::unit(), seconds);
 }
 
+void Desk::portrait(gfx::Renderer& renderer, Play& play) {
+    if (play.targetChanged()) portrait_.forget();
+    if (!targetFrame_.showing() || play.targetDrawables().empty()) return;
+    // A still: taken once, and again only when what he wears changes.
+    if (portrait_.same(play.targetDrawables()) || !renderer.openStages(shaderDir_)) return;
+    portrait_.render(renderer, play.targetDrawables(), play.targetHead(), play.targetYaw(), play.targetScale());
+}
+
 void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.begin(width, height);
     interface_.add(ground_);
@@ -1894,6 +1928,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         return;
     }
     if (partyBar_.showing() && !watching_) interface_.add(partyBar_.canvas());
+    if (targetFrame_.showing()) interface_.add(targetFrame_.canvas());
     // The chat under the plate, whose left wing its cloud runs behind.
     if (chat_.showing()) {
         interface_.add(chat_.back());
@@ -1934,6 +1969,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     }
     if (squareResult_.up() && !watching_) interface_.add(squareResult_.canvas());
     if (amount_.up()) interface_.add(amount_.canvas());
+    // A player's right-click menu over the windows it may open beside.
+    if (playerMenu_.up()) interface_.add(playerMenu_.canvas());
     // The menu over everything but the pointer: it dims the whole screen, windows and HUD too.
     if (menu_.up()) interface_.add(menu_.canvas());
     if (specimenOpen_) interface_.add(specimen_.canvas());

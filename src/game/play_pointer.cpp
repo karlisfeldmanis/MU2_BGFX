@@ -249,8 +249,29 @@ void Play::pointAtLabel(uint32_t lying) {
     pointedPerch_ = -1;
 }
 
+void Play::target(const std::string& name, uint32_t here) {
+    if (name != targetName_) {
+        targetFresh_ = true;
+        core::logf("target: %s (#%u)", name.c_str(), here);
+    }
+    targetName_ = name;
+    targetId_ = here;
+}
+
+void Play::untarget() {
+    if (!targetName_.empty()) core::logf("target: let go of %s", targetName_.c_str());
+    targetName_.clear();
+    targetId_ = 0;
+}
+
 void Play::leftClick() {
     if (!isOpen()) return;
+    // Another player under the pointer becomes his target, and the click still walks there
+    // (the user, 2026-10-10: "clicks to character ... walks to him and opend then char label").
+    if (pointedPlayer_ != 0 && pointedFolk_ < 0) {
+        std::string name;
+        if (playerName(pointedPlayer_, &name, nullptr)) target(name, pointedPlayer_);
+    }
     sim::Request request;
     if (pointedFolk_ >= 0) {
         request.kind = sim::Request::Kind::Talk;
@@ -327,6 +348,17 @@ bool Play::perch(int index) {
 
 void Play::rightClick() {
     if (!isOpen()) return;
+    // A right click on another player is his menu, as on his party capsule: whisper, invite,
+    // and the rest (the user, 2026-10-10: "we will ne right click UI which we use for party").
+    // He is never fought (no PvP), so the quick slot has nothing to do with him.
+    if (pointedPlayer_ != 0 && pointedAt_ == 0 && pointedFolk_ < 0) {
+        std::string name;
+        if (playerName(pointedPlayer_, &name, nullptr)) {
+            target(name, pointedPlayer_);
+            menuAsk_ = pointedPlayer_;
+            return;
+        }
+    }
     sim::Request request;
     // **The quick slot.** A monster under the pointer is fought with the right button's skill --
     // Energy Ball for a new wizard -- and the realm swings the weapon whenever the skill cannot be

@@ -32,16 +32,20 @@ class PartyBar {
 public:
     void open(const gfx::Interface& interface);
     // A frame: redrawn on a change, and each frame while a trail drains or a member pulses.
-    // A right click on a capsule opens its menu (the user, 2026-10-10: "do we have right lickc
-    // logic to promote some other to party/raid leader kick,whisper?"): Whisper, and while he
-    // leads Make leader and Kick, on a member; Whisper and Invite on a raider of no party of
-    // his; Leave party on each. The asks go to the server (Play::askParty); a whisper is the
-    // chat's, taken by the desk from whisper().
+    // A left click on a capsule makes him the target (Play::target; the target frame, the
+    // user, 2026-10-10), from any map; a right click asks for his menu (game/ui/player_menu.h),
+    // which the desk opens.
     void update(float seconds, Play& play, const Pointer& pointer);
-    // Whether the pointer is on a capsule or the open menu: the world does not take the click.
+    // Whether the pointer is on a capsule: the world does not take the click.
     bool covers(float x, float y) const;
-    // A whisper the menu asked for this frame, by name, taken once; empty for none.
-    std::string whisper() { return std::exchange(whisper_, std::string()); }
+    // A right click on a capsule this frame: whose, and where the menu opens. Taken once.
+    bool takeMenuAsk(std::string* name, float* x, float* y) {
+        if (menuAsk_.empty()) return false;
+        *name = std::exchange(menuAsk_, std::string());
+        *x = menuX_;
+        *y = menuY_;
+        return true;
+    }
     bool showing() const { return showing_; }
     const gfx::Canvas& canvas() const { return canvas_; }
 
@@ -72,22 +76,14 @@ private:
         gfx::Box box;
         std::string name;
         bool member = false;  // of his party; else a raider of none of his
+        uint32_t here = 0;    // his body in this world, 0 when he is on another map
     };
     std::vector<Hit> hits_;
-    // The open menu: on whom, its rows, where, and the row under the pointer.
-    struct Menu {
-        std::string name;
-        std::vector<std::string> rows;
-        gfx::Box box;
-        int hovered = -1;
-    };
-    Menu menu_;
-    bool menuOpen_ = false;
-    int drawnHover_ = -2;  // the menu's hovered row as last drawn; -2 when it was shut
-    std::string whisper_;
-    // A press the bar used this frame -- a row taken, the menu shut, a menu opened -- which the
-    // world must not also take: the menu is shut by then, so covers() alone would let the click
-    // through and walk him there (the user: "i click to whisper and character used click to move").
+    std::string menuAsk_;  // takeMenuAsk
+    float menuX_ = 0.0f, menuY_ = 0.0f;
+    std::string targeted_;  // the target's name as last drawn: his capsule wears the gold edge
+    // A press the bar used this frame, which the world must not also take (the user: "i click to
+    // whisper and character used click to move").
     bool took_ = false;
 };
 

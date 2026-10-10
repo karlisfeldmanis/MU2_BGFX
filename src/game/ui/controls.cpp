@@ -912,4 +912,40 @@ void meter(gfx::Canvas& canvas, const Box& box, float share, uint32_t top, uint3
     if (filled > 0.0f) canvas.shade({b.x, b.y, filled, b.h}, top, top, foot, foot);
 }
 
+void sweep(gfx::Canvas& canvas, const Box& box, float gone, uint32_t ink) {
+    gone = std::clamp(gone, 0.0f, 1.0f);
+    if (gone <= 0.002f) return;
+    if (gone >= 0.998f) {
+        canvas.rect(box, ink);
+        return;
+    }
+    // A fan from the middle: twelve o'clock, each corner the hand has passed, and the hand. The
+    // square's point at a clock angle is the ray's out to whichever edge it meets first.
+    const float cx = box.midX(), cy = box.midY(), hw = box.w * 0.5f, hh = box.h * 0.5f;
+    const auto edge = [&](float turn, float* x, float* y) {
+        const float a = turn * 6.2831853f;
+        const float dx = std::sin(a), dy = -std::cos(a);
+        const float reach = std::min(std::fabs(dx) > 1e-6f ? hw / std::fabs(dx) : 1e9f,
+                                     std::fabs(dy) > 1e-6f ? hh / std::fabs(dy) : 1e9f);
+        *x = cx + dx * reach;
+        *y = cy + dy * reach;
+    };
+    float xy[2 * 8];
+    float uv[2 * 8] = {};
+    int n = 0;
+    xy[n * 2] = cx;
+    xy[n * 2 + 1] = cy;
+    ++n;
+    edge(0.0f, &xy[n * 2], &xy[n * 2 + 1]);
+    ++n;
+    for (const float corner : {0.125f, 0.375f, 0.625f, 0.875f}) {
+        if (corner >= gone) break;
+        edge(corner, &xy[n * 2], &xy[n * 2 + 1]);
+        ++n;
+    }
+    edge(gone, &xy[n * 2], &xy[n * 2 + 1]);
+    ++n;
+    canvas.polygon(nullptr, xy, uv, n, ink);
+}
+
 }  // namespace mu::game::controls
