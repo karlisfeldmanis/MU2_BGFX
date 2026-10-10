@@ -3,7 +3,8 @@
 // sparkles or ribbons flying when char had completed +11 set'.
 //
 // MuMain's (ZzzCharacter.cpp:11094-11115), for a player whose five pieces are one set and every
-// one at +9 or more (CheckFullSet, :5387), EquipmentLevelSet being the lowest plus among them:
+// one at +9 or more (CheckFullSet, :5387), EquipmentLevelSet being the lowest plus among them --
+// the Magic Gladiator's armour to boots, his head not asked (`end = EQUIPMENT_ARMOR`):
 //
 //     if (EquipmentLevelSet > 9 && rand_fps_check(20)) {           // one frame in twenty
 //         if (EquipmentLevelSet == 10)
@@ -27,6 +28,10 @@
 // grip, elbow and shoulder, flare01 at 1.3 in the boots' chrome colour at half. The knight's
 // boots' waterfalls are a later set's and not here. Presentation only: the set is read off his
 // worn pieces.
+//
+// For every player drawn, not the hero alone: MuMain asks CheckFullSet of each MODEL_PLAYER it
+// renders (ZzzCharacter.cpp:9156-9161) and draws the set's light round whoever wears one. Each
+// wearer has a slot of his own -- his feet, his clock, his ribbons -- and the flares are one pool.
 #pragma once
 
 #include <cstdint>
@@ -52,23 +57,26 @@ public:
     void shutdown();
 
     // The lowest plus of the five worn pieces when they are one set, or -1: CheckFullSet's
-    // EquipmentLevelSet, which is all this reads.
-    static int setPlus(const content::Tables& tables, const sim::Satchel& bag);
+    // EquipmentLevelSet, which is all this reads. The Magic Gladiator's is four, his helm slot
+    // not looked at.
+    static int setPlus(const content::Tables& tables, const sim::Satchel& bag, sim::Kin kin);
 
-    // One frame. `plus` is setPlus's, or -1 while he is not drawn; `feet` world metres, `yaw`
-    // his facing, which a ribbon's cross is laid in as MU lays it in o->Angle.
-    void update(float seconds, int plus, const float feet[3], float yaw, float metresPerTile);
-    // And this frame's six lights for a set of +9 and up, or none: MU's CreateSprite(BITMAP_LIGHT,
-    // ..., 1.3f, Light) at each of `points` (world metres), Light being the boots' chrome colour
-    // at half (PartObjectColor(..., 0.5f), ZzzCharacter.cpp:10988-10999), drawn this frame only.
-    void lights(const float (*points)[3], int count, const float colour[3], float metresPerTile);
+    // One wearer this frame, before update(): `id` the body's, `plus` setPlus's (nothing is
+    // drawn below +9), `feet` world metres, `yaw` his facing, which a ribbon's cross is laid in
+    // as MU lays it in o->Angle; `arms` his six lights' points, MU's CreateSprite(BITMAP_LIGHT,
+    // ..., 1.3f, Light) (ZzzCharacter.cpp:10988-10999), Light being the boots' chrome colour at
+    // half. A wearer not handed in on a frame lights nothing and throws nothing; what he threw
+    // stays in the air where he stood.
+    void wear(uint32_t id, int plus, const float feet[3], float yaw, const float (*arms)[3],
+              int lit, const float colour[3]);
+    // One frame: the flares and ribbons in the air age, and each wearer handed in throws anew.
+    void update(float seconds, float metresPerTile);
     void gather(gfx::Effects& effects, const content::Ground& ground, const float eye[3]) const;
 
 private:
     struct Flare {
         bool alive = false;
-        float start[3] = {};  // where he stood as it rose, world metres
-        float per = 0.01f;    // metres in one of MU's units
+        int wearer = 0;       // whose ring it turns on, where he was last drawn
         float phase = 0.0f;   // Velocity[0], -150 to 149
         float life = 0.0f;    // frames left, from kLife down
         float climb = 0.0f;   // units a frame
@@ -76,30 +84,41 @@ private:
         float scale = 0.0f;
         float spin = 0.0f;
     };
+    struct Wearer {
+        uint32_t id = 0;    // the body's; 0 a free slot
+        bool seen = false;  // handed in this frame
+        int plus = -1;
+        // Where he stands now, so the ring and the ribbons go with him (the user, 2026-10-08:
+        // "+11 aura ring has to stay with chaarcter body"). MU's stay where he was; ours follow.
+        float feet[3] = {};
+        float yaw = 0.0f;
+        float clock = 0.0f;  // reference frames owed
+        Aura ribbons;
+        float lightAt[6][3] = {};
+        int lights = 0;
+        float lightColour[3] = {};
+    };
 
     static constexpr float kReferenceFps = 25.0f;
     static constexpr float kLife = 60.0f;
     static constexpr float kOrbit = 40.0f;
     static constexpr float kTexels = 64.0f;  // Flare's own width, which MU sizes a sprite by
-    static constexpr int kFlares = 64;
+    static constexpr int kFlares = 96;
+    // Players in one sight with a set of +9 or more. One past it is drawn without; said once.
+    static constexpr int kWearers = 12;
 
     bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;  // flare01, MU's BITMAP_LIGHT
-    float lightAt_[6][3] = {};
-    int lights_ = 0;
-    float lightColour_[3] = {};
-    float lightPer_ = 0.01f;
-    Aura ribbons_;
+    float per_ = 0.01f;
+    Wearer wearers_[kWearers];
     Flare flares_[kFlares] = {};
-    float clock_ = 0.0f;  // reference frames owed
-    // Where he stands now, so the ring and the ribbons go with him (the user, 2026-10-08:
-    // "+11 aura ring has to stay with chaarcter body"). MU's stay where he was; ours follow.
-    float feet_[3] = {};
-    bool placed_ = false;
+    bool full_ = false;  // said that a wearer found no slot
+    int wearing_ = 0;    // wearers seen last frame, logged when it changes
     // Drawn only by the drawing and never seeded: the realm's log must not see it.
     uint32_t dice_ = 0x51A7E11Du;
     float unit();
-    void throwFlare(const float feet[3], float per);
+    void throwFlare(int wearer);
+    int slotFor(uint32_t id);
 };
 
 }  // namespace mu::game

@@ -2526,41 +2526,52 @@ void Play::update(double seconds) {
     watchAggro(float(seconds));
     showing_.update(float(seconds));
     aura_.update(float(seconds));
-    // A complete set's flares, round the hero where he is drawn.
-    {
-        const sim::Body& hero = realm_.hero();
-        const Drawn* drawn = drawnOf(hero.id);
-        int plus = -1;
-        float feet[3] = {0.0f, 0.0f, 0.0f};
-        if (ground_ && isOpen() && hero.alive() && drawn && drawn->placed && realm_.tables()) {
-            plus = SetShine::setPlus(*realm_.tables(), realm_.satchel());
-            feet[0] = drawn->crown[0];
-            feet[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
-            feet[2] = drawn->crown[2];
-        }
-        setShine_.update(float(seconds), plus, feet, drawn ? drawn->yaw : 0.0f,
-                         ground_ ? ground_->metresPerTile() : 1.0f);
-        // From +9 the arms glow, in the boots' chrome colour (MU's BodyPart[5]).
-        float arms[6][3];
-        int lit = 0;
-        const FigureBody* look = plus >= 9 && drawn ? drawn->figure.body() : nullptr;
-        if (look && look->partShine.size() > 0) {
-            const float origin[3] = {0.0f, 0.0f, 0.0f};
-            for (int k = 0; k < 6; ++k) {
-                if (look->armBones[k] >= 0 && drawn->figure.pointOn(look->armBones[k], origin, arms[lit])) {
-                    ++lit;
+    // A complete set's flares and arm lights, round every player drawn who wears one: MuMain
+    // asks CheckFullSet of each MODEL_PLAYER it renders (ZzzCharacter.cpp:9156-9161).
+    if (ground_ && isOpen() && realm_.tables()) {
+        const content::Tables& tables = *realm_.tables();
+        const std::vector<sim::Body>& bodies = realm_.bodies();
+        const uint32_t heroId = realm_.hero().id;
+        for (size_t i = 0; i < bodies.size() && i < drawn_.size(); ++i) {
+            const sim::Body& body = bodies[i];
+            const Drawn& drawn = drawn_[i];
+            // A raider is a player's figure in a player's gear (Play::raiderLook), so his too.
+            if ((!body.player && body.raider < 0) || !body.alive() || drawn.id != body.id ||
+                !drawn.placed || !drawn.visible) {
+                continue;
+            }
+            const sim::Satchel* bag = body.id == heroId ? &realm_.satchel()
+                                      : body.raider >= 0 ? realm_.raiderBag(body.raider)
+                                                         : realm_.satchelOf(body.id);
+            if (!bag) continue;
+            const int plus = SetShine::setPlus(tables, *bag, body.kin);
+            if (plus < 9) continue;
+            const float feet[3] = {drawn.crown[0],
+                                   ground_->heightAt(drawn.crown[0], drawn.crown[2]),
+                                   drawn.crown[2]};
+            // From +9 the arms glow, in the boots' chrome colour (MU's BodyPart[5]).
+            float arms[6][3];
+            int lit = 0;
+            const FigureBody* look = drawn.figure.body();
+            if (look && look->partShine.size() > 0) {
+                const float origin[3] = {0.0f, 0.0f, 0.0f};
+                for (int k = 0; k < 6; ++k) {
+                    if (look->armBones[k] >= 0 &&
+                        drawn.figure.pointOn(look->armBones[k], origin, arms[lit])) {
+                        ++lit;
+                    }
                 }
             }
+            const sim::Held& boots = (*bag)[sim::kBoots];
+            float colour[3] = {1.0f, 0.5f, 0.0f};
+            if (!boots.empty() && size_t(boots.item) < tables.items.size()) {
+                const ShineLook shine = shineOf(tables.items[size_t(boots.item)], boots.refinement);
+                std::copy(shine.colour, shine.colour + 3, colour);
+            }
+            setShine_.wear(body.id, plus, feet, drawn.yaw, arms, lit, colour);
         }
-        const sim::Held& boots = realm_.satchel()[sim::kBoots];
-        float colour[3] = {1.0f, 0.5f, 0.0f};
-        if (lit > 0 && !boots.empty() && realm_.tables() &&
-            size_t(boots.item) < realm_.tables()->items.size()) {
-            const ShineLook shine = shineOf(realm_.tables()->items[size_t(boots.item)], boots.refinement);
-            std::copy(shine.colour, shine.colour + 3, colour);
-        }
-        setShine_.lights(arms, lit, colour, ground_ ? ground_->metresPerTile() : 1.0f);
     }
+    setShine_.update(float(seconds), ground_ ? ground_->metresPerTile() : 1.0f);
     warp_.update(float(seconds));
     // And the guard walks with him, or goes when the realm says it has gone.
     if (isOpen()) guardStep();

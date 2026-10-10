@@ -32,13 +32,24 @@ struct Rgb {
     float r, g, b;
 };
 constexpr Rgb kColours[] = {
-    {1.0f, 0.5f, 0.0f},    // 0  everything not named
-    {1.0f, 0.2f, 0.0f},    // 1
-    {0.0f, 0.5f, 1.0f},    // 2
-    {0.0f, 0.5f, 1.0f},    // 3
-    {0.0f, 0.8f, 0.4f},    // 4
-    {1.0f, 1.0f, 1.0f},    // 5
-    {0.6f, 0.8f, 0.4f},    // 6
+    {1.0f, 0.5f, 0.0f},     // 0  everything not named
+    {1.0f, 0.2f, 0.0f},     // 1
+    {0.0f, 0.5f, 1.0f},     // 2
+    {0.0f, 0.5f, 1.0f},     // 3
+    {0.0f, 0.8f, 0.4f},     // 4
+    {1.0f, 1.0f, 1.0f},     // 5
+    {0.6f, 0.8f, 0.4f},     // 6
+    {0.9f, 0.8f, 1.0f},     // 7
+    {0.8f, 0.8f, 1.0f},     // 8
+    {0.5f, 0.5f, 0.8f},     // 9
+    {0.75f, 0.65f, 0.5f},   // 10
+    {0.35f, 0.35f, 0.6f},   // 11
+    {0.47f, 0.67f, 0.6f},   // 12
+    {0.0f, 0.3f, 0.6f},     // 13
+    {0.65f, 0.65f, 0.55f},  // 14
+    {0.2f, 0.3f, 0.6f},     // 15
+    {0.8f, 0.46f, 0.25f},   // 16
+    {0.65f, 0.45f, 0.3f},   // 17
 };
 
 // Which colour: the named models first, then the armour by its set, as PartObjectColor asks.
@@ -47,6 +58,16 @@ int colourOf(int group, int number) {
     if (group == 4 && (number == 5 || number == 13)) return 5;   // SILVER_BOW, BLUEWING_CROSSBOW
     if (group == 0 && number == 14) return 2;                    // MODEL_LIGHTING_SWORD
     if (group == 5 && number == 5) return 2;                     // MODEL_LEGENDARY_STAFF
+    // The second-class arms (2026-10-10: they came after this table was cut, and drew orange).
+    if (group == 4 && (number == 17 || number == 19)) return 9;  // CELESTIAL_BOW, GREAT_REIGN_CROSSBOW
+    if (group == 4 && number == 18) return 10;                   // DIVINE_CB_OF_ARCHANGEL
+    if (group == 4 && number == 20) return 16;                   // ARROW_VIPER_BOW
+    if (group == 5 && number == 9) return 5;                     // DRAGON_SOUL_STAFF
+    if (group == 5 && number == 11) return 17;                   // STAFF_OF_KUNDUN
+    if (group == 6 && number == 16) return 6;                    // ELEMENTAL_SHIELD
+    if (group == 3 && number == 10) return 9;                    // DRAGON_SPEAR
+    if (group == 0 && number == 20) return 10;                   // KNIGHT_BLADE
+    if (group == 0 && number == 21) return 5;                    // DARK_REIGN_BLADE
     if (group >= 7 && group <= 11) {
         switch (number) {
             case 1: return 1;    // Dragon
@@ -57,6 +78,16 @@ int colourOf(int group, int number) {
             case 12: return 2;   // Wind
             case 13: return 4;   // Spirit
             case 14: return 5;   // Guardian
+            case 15: return 7;   // Storm Crow
+            case 16: return 10;  // Black Dragon
+            case 17: return 9;   // Dark Phoenix
+            case 18: return 5;   // Grand Soul
+            case 19: return 9;   // Divine
+            case 20: return 9;   // Thunder Hawk
+            case 21: return 16;  // Great Dragon
+            case 22: return 17;  // Dark Soul
+            case 23: return 11;  // Hurricane
+            case 24: return 16;  // Red Spirit
             default: return 0;
         }
     }
