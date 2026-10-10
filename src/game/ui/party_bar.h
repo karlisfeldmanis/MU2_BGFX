@@ -33,7 +33,11 @@ public:
     struct Raider {
         std::string name;
         int health = 0;  // percent
-        bool operator==(const Raider& o) const { return name == o.name && health == o.health; }
+        int mana = -1;   // percent, -1 when he has none to show
+        int shield = -1; // SD, percent, -1 when he has none
+        bool operator==(const Raider& o) const {
+            return name == o.name && health == o.health && mana == o.mana && shield == o.shield;
+        }
     };
 
 private:

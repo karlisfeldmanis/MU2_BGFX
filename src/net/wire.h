@@ -181,7 +181,11 @@ struct PartyState {
         uint8_t health = 0;  // percent
         uint8_t mana = 0;    // percent
         bool bot = false;
+        // SD, percent; kNoShield when he has none, or from a server older than the field. Sent
+        // after the members, so a client reads an older server's PartyState as before.
+        uint8_t shield = 255;
     };
+    static constexpr uint8_t kNoShield = 255;
     std::vector<Member> members;
 };
 

@@ -241,5 +241,10 @@ container for each player", then "we need to see who is party/raid leader":
 - A heading over each, "Party" and "Raid N", with a small gold crown and who leads ("You lead",
   "Ragnar leads"); the leader's plate carries the crown before his gold name. A server has no
   raid of parties yet, so there the raid's leader is his party's.
+- Then "we need to show mana also in raids" and "we need to show also shield value": a plate is
+  SD (the HUD's amber), health and mana; a raid line the same three as hairlines. SD rides at
+  the end of PartyState (Member::shield, kNoShield when none), so this client reads an older
+  server's message, but an older client cannot read the new server's: the server, netbot and
+  clients go to Hetzner together.
 - `--invite A,B` asks them into his party until they are in: a review run's party from local
   netbots (`--parties` takes a player's invite).

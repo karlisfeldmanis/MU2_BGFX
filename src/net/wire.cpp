@@ -344,6 +344,7 @@ void put(std::vector<uint8_t>& out, const PartyState& one) {
             o.u8(m.mana);
             o.u8(m.bot ? 1 : 0);
         }
+        for (const PartyState::Member& m : one.members) o.u8(m.shield);
     });
 }
 
@@ -570,6 +571,10 @@ bool parse(const std::vector<uint8_t>& body, PartyState& out) {
         m.mana = in.u8();
         m.bot = in.u8() != 0;
         out.members.push_back(std::move(m));
+    }
+    // The shields, after the members: none from a server older than them.
+    if (in.ok && in.at < body.size()) {
+        for (PartyState::Member& m : out.members) m.shield = in.u8();
     }
     return in.done();
 }

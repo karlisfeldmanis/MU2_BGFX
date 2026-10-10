@@ -21,17 +21,21 @@ uint32_t faded(uint32_t abgr, float alpha) {
 // Measures in tip::unit(), a pixel at 1080 lines. The column's top sits this far above the
 // screen's middle, clear of the exp lane's ten rows in the corner above it.
 constexpr float kLeft = 16.0f, kAboveMiddle = 188.0f, kWide = 240.0f;
-// A member's plate: padded round a name and two bars.
-constexpr float kPlate = 46.0f, kPlateGap = 6.0f, kPad = 10.0f, kRadius = 6.0f;
-constexpr float kName = 16.0f, kHealth = 6.0f, kMana = 3.0f;
-// A raider's line: a name and one hairline of health.
-constexpr float kLine = 22.0f, kLineGap = 3.0f, kLineRadius = 4.0f, kLineName = 13.0f, kLineBar = 3.0f;
+// A member's plate: padded round a name and three bars -- SD, health, mana (the user,
+// 2026-10-10: "we need to show also shield value because that one of the main stats").
+constexpr float kPlate = 50.0f, kPlateGap = 6.0f, kPad = 10.0f, kRadius = 6.0f;
+constexpr float kName = 16.0f, kShield = 3.0f, kHealth = 6.0f, kMana = 3.0f, kBarGap = 1.5f;
+// A raider's line: a name and three hairlines stacked, SD over health over mana (the user:
+// "we need to show mana also in raids").
+constexpr float kLine = 24.0f, kLineGap = 3.0f, kLineRadius = 4.0f, kLineName = 13.0f;
+constexpr float kLineShield = 2.0f, kLineHealth = 4.0f, kLineMana = 2.0f, kLineBarGap = 1.0f;
 constexpr float kLineBarLeft = 108.0f;  // where the bar starts, past the longest names
 constexpr size_t kRaidMost = 15;          // then "+N more"
 constexpr uint32_t kGold = gfx::rgba(0.878f, 0.714f, 0.361f);      // the leader: the tracker's gold
 constexpr uint32_t kWell = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);       // under a bar
 constexpr uint32_t kPlateInk = gfx::rgba(0.020f, 0.012f, 0.012f, 0.62f);  // style::kVoid, see-through
 constexpr uint32_t kLow = gfx::rgba(0.878f, 0.341f, 0.239f);         // a raider under 30%
+constexpr uint32_t kSd = gfx::rgba(0.906f, 0.592f, 0.231f);          // SD: the HUD's amber bar
 constexpr float kAway = 0.5f;  // a member on another map, this much of himself
 constexpr float kDead = 0.45f;
 
@@ -41,7 +45,7 @@ bool same(const net::PartyState& a, const net::PartyState& b) {
         const auto& x = a.members[i];
         const auto& y = b.members[i];
         if (x.name != y.name || x.level != y.level || x.world != y.world || x.here != y.here ||
-            x.health != y.health || x.mana != y.mana) {
+            x.health != y.health || x.mana != y.mana || x.shield != y.shield) {
             return false;
         }
     }
@@ -59,6 +63,16 @@ int percent(int32_t shown, int32_t most) {
     return most > 0 ? std::clamp(int(std::lround(100.0 * double(shown) / double(most))), 0, 100) : 0;
 }
 
+// One raider's line: his health as drawn, his mana and his SD where his body carries them.
+PartyBar::Raider raiderRow(const Play& play, const sim::Body& body, const std::string& name) {
+    PartyBar::Raider row;
+    row.name = name;
+    row.health = body.alive() ? std::max(1, percent(play.shownHealth(body.id), body.maxHealth)) : 0;
+    row.mana = body.maxMana > 0 ? percent(body.mana, body.maxMana) : -1;
+    row.shield = body.maxSd > 0 ? percent(body.sd, body.maxSd) : -1;
+    return row;
+}
+
 // Within the dragon's field, as Play::raidFighting reckons him in it.
 constexpr float kField = 18.0f;
 
@@ -71,8 +85,7 @@ std::vector<PartyBar::Raider> raidOf(const Play& play) {
     for (int i = 0; i < realm.raiderCount(); ++i) {
         const sim::Body* raider = realm.raiderAt(i);
         if (!raider || size_t(i + 1) >= play.raidParty().size()) continue;
-        rows.push_back({play.raidParty()[size_t(i + 1)].name,
-                        raider->alive() ? std::max(1, percent(play.shownHealth(raider->id), raider->maxHealth)) : 0});
+        rows.push_back(raiderRow(play, *raider, play.raidParty()[size_t(i + 1)].name));
     }
     const sim::Body* dragon = realm.invader();
     const sim::Body& hero = realm.hero();
@@ -82,7 +95,7 @@ std::vector<PartyBar::Raider> raidOf(const Play& play) {
         if (hero.party != 0 && body.party == hero.party) continue;
         std::string name;
         if (!play.playerName(body.id, &name, nullptr)) continue;
-        rows.push_back({name, body.alive() ? std::max(1, percent(play.shownHealth(body.id), body.maxHealth)) : 0});
+        rows.push_back(raiderRow(play, body, name));
     }
     return rows;
 }
@@ -161,12 +174,17 @@ void PartyBar::update(const Play& play) {
         const std::string right =
             member->here != 0 ? "Lv " + std::to_string(member->level) : mapName(member->world);
         controls::ranged(canvas_, left + inner, base, 14.0f * u, faded(style::kAshInk, a), right);
-        const float barY = base + 6.0f * u;
-        canvas_.rect({left, barY, inner, kHealth * u}, kWell);
-        canvas_.rect({left, barY, inner * float(member->health) / 100.0f, kHealth * u}, faded(style::kLife, a));
-        canvas_.rect({left, barY + (kHealth + 2.0f) * u, inner, kMana * u}, kWell);
-        canvas_.rect({left, barY + (kHealth + 2.0f) * u, inner * float(member->mana) / 100.0f, kMana * u},
-                     faded(style::kMana, a));
+        // SD over health over mana; with no SD to show, its row stays empty so plates line up.
+        float barY = base + 6.0f * u;
+        const auto bar = [&](float tall, float share, uint32_t ink) {
+            canvas_.rect({left, barY, inner, tall * u}, kWell);
+            canvas_.rect({left, barY, inner * share, tall * u}, faded(ink, a));
+            barY += (tall + kBarGap) * u;
+        };
+        if (member->shield != net::PartyState::kNoShield) bar(kShield, float(member->shield) / 100.0f, kSd);
+        else barY += (kShield + kBarGap) * u;
+        bar(kHealth, float(member->health) / 100.0f, style::kLife);
+        bar(kMana, float(member->mana) / 100.0f, style::kMana);
         y += (kPlate + kPlateGap) * u;
     }
     if (raid_.empty()) return;
@@ -186,10 +204,17 @@ void PartyBar::update(const Play& play) {
         tip::rounded(canvas_, {x, y, wide, kLine * u}, r, faded(kPlateInk, a * 0.85f));
         controls::label(canvas_, x + 8.0f * u, y + 15.5f * u, kLineName * u, faded(style::kBone2, a), one.name);
         const float barX = x + kLineBarLeft * u, barW = wide - kLineBarLeft * u - 8.0f * u;
-        const float barY = y + (kLine - kLineBar) * 0.5f * u;
-        canvas_.rect({barX, barY, barW, kLineBar * u}, kWell);
-        canvas_.rect({barX, barY, barW * float(one.health) / 100.0f, kLineBar * u},
-                     one.health < 30 ? kLow : style::kLife);
+        float barY = y + (kLine - kLineShield - kLineHealth - kLineMana - 2.0f * kLineBarGap) * 0.5f * u;
+        const auto bar = [&](float tall, int share, uint32_t ink) {
+            if (share >= 0) {
+                canvas_.rect({barX, barY, barW, tall * u}, kWell);
+                canvas_.rect({barX, barY, barW * float(share) / 100.0f, tall * u}, faded(ink, a));
+            }
+            barY += (tall + kLineBarGap) * u;
+        };
+        bar(kLineShield, one.shield, kSd);
+        bar(kLineHealth, one.health, one.health < 30 ? kLow : style::kLife);
+        bar(kLineMana, one.mana, style::kMana);
         y += (kLine + kLineGap) * u;
     }
     if (shown < raid_.size()) {
