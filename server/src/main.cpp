@@ -107,6 +107,9 @@ constexpr auto kSilentFor = std::chrono::seconds(10);
 // orders many times over. More, and the rest of that tick's are dropped -- every one is sent to
 // everyone in his world, and one client could otherwise flood the rest off their lines.
 constexpr int kMostCommands = 64;
+// How long after Devil Square's fight starts one who passed Charon's gate before it shut is still
+// let into it (hello): the trip's load and a slow line.
+constexpr int kSquareLate = 20;
 
 // The characters, by token, on the server's disk.
 server::Store g_store;
@@ -1083,7 +1086,15 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         if (world->name != said.world || world->castle != castle || world->square != square) continue;
         // A square's run takes newcomers only while it waits for its fight: the next run is a
         // new world (WebZen lets no one in after the gate shuts).
-        if (square > 0 && world->realm->squareRun().phase != sim::SquarePhase::Waiting) continue;
+        if (square > 0 && world->realm->squareRun().phase != sim::SquarePhase::Waiting) {
+            // But one through Charon's gate while it was open, his line or his load slower than
+            // its last seconds, comes into the run just begun rather than a square of his own --
+            // raised for him alone, its gate's seconds long gone.
+            const sim::SquareRun& run = world->realm->squareRun();
+            const bool late = run.phase == sim::SquarePhase::Running &&
+                              world->realm->tick() - run.startsAt <= int64_t(kSquareLate) * sim::kSquareTicksPerSecond;
+            if (!late) continue;
+        }
         // And a castle's the same: its run is set when its world is raised (Realm::Realm), so one
         // begun or done takes nobody, and the next period's entrants raise a new one. Joined
         // after its first run, every castle sent its entrants straight back to Devias.

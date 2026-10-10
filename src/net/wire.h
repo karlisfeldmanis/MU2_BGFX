@@ -89,7 +89,9 @@ namespace mu::net {
 // 20: one realm's rules for players together: Blood Castle's quotas once a kill and its win its
 //     winner's (CastleRun::winner, snapshot shape 6), a trade called off as one side leaves,
 //     a leaver's threat forgotten.
-constexpr uint32_t kVersion = 20;
+// 21: a player's place taken again kPlaceRest after he left (Player::goneAt, snapshot shape 7),
+//     nothing picked up while a trade is open.
+constexpr uint32_t kVersion = 21;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store

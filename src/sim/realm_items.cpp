@@ -1524,6 +1524,11 @@ bool Realm::bare(int column, int row) const {
 bool Realm::take(size_t index) {
     const Lying one = lying_[index];
     if (!mayTake(one)) return false;
+    // Nothing picked up while a trade is open: his bag is what both sides' offers were judged
+    // against, and filled under an offer, a save (Realm::bagWithOffer) had no room to write the
+    // offer back and lost it. WebZen refuses an item get with a trade window open (CGItemGetRequest
+    // and m_IfState; from memory, unverified).
+    if (me().dealing != 0) return false;
     int slot = -1;
     if (one.what.empty()) {
         // An excellent armour's Zen, at the picking up (MoneyDistribution, MoneyAmountRate).

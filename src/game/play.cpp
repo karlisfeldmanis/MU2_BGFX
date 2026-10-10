@@ -265,7 +265,19 @@ void Play::update(double seconds) {
         }
         link_->step();
         // A body that joined in the tick -- another player come into a shared world, and his
-        // summon's slot -- is given its figure; bodies are only ever added at the end.
+        // summon's slot -- is given its figure: at the end, or in the place of a player gone
+        // (Realm::join takes a place empty kPlaceRest), where the id there is no longer the one
+        // its figure was made for.
+        for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
+            const sim::Body& body = realm_.bodies()[i];
+            if (drawn_[i].id == body.id) continue;
+            size_t bones = 0;
+            drawn_[i] = drawnFor(body, nullptr, &bones);
+            if (body.player) {
+                core::logf("play: player #%u came into the world in a place left, class %d level %d", body.id,
+                           int(body.kin), body.level);
+            }
+        }
         while (drawn_.size() < realm_.bodies().size()) {
             size_t bones = 0;
             const sim::Body& body = realm_.bodies()[drawn_.size()];

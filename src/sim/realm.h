@@ -1461,6 +1461,12 @@ public:
     // `bodies_` under any Body& held there. Bodies never leave yet, so an index stays the body's
     // own; despawn() waits for the client's figures to go by id (server-plan phase 1).
     uint32_t spawn(Body body);
+    // A body into the place `at` of one gone for good: the next id, and the old one found no
+    // more. Between ticks only, as spawn.
+    uint32_t spawnAt(Body body, uint32_t at);
+    // How long a player's place stands empty after he leaves before join() gives it to another:
+    // what was in flight for him has landed, and every mirror's picture of him has gone.
+    static constexpr int64_t kPlaceRest = 30 * 20;
     // **Another hero into the raised world** (docs/server-plan.md phase 2): raised as raise()
     // raises the first -- class, level, the nearest standable tile to (column, row) -- with a
     // Player of his own and his own dormant summon body, both through spawn(). His id, or 0 when
@@ -2236,6 +2242,9 @@ private:
         Satchel bag;
         // Where his summon body sits in `bodies_`, or -1 before `raise`.
         int summonSlot = -1;
+        // The tick he left the world (Realm::depart), or -1 while he is in it: his place, his
+        // body's and his summon's, go to a newcomer kPlaceRest after.
+        int64_t goneAt = -1;
         // Set once Icarus has sent him home for want of wings, so the warp is said once while
         // the mode carries out the map change.
         bool grounded = false;

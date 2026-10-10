@@ -25,6 +25,19 @@ const Body* Realm::find(uint32_t id) const {
     return &bodies_[at];
 }
 
+uint32_t Realm::spawnAt(Body body, uint32_t at) {
+    if (at >= bodies_.size()) return spawn(std::move(body));
+    indexOfId_[bodies_[at].id] = kNoBody;
+    players_.erase(std::remove(players_.begin(), players_.end(), at), players_.end());
+    body.id = nextId_++;
+    if (indexOfId_.size() <= body.id) indexOfId_.resize(size_t(body.id) + 1, kNoBody);
+    indexOfId_[body.id] = at;
+    if (body.player || body.raider >= 0) players_.push_back(at);
+    if (at < routes_.size()) routes_[at].clear();
+    bodies_[at] = std::move(body);
+    return bodies_[at].id;
+}
+
 uint32_t Realm::spawn(Body body) {
     body.id = nextId_++;
     const uint32_t at = uint32_t(bodies_.size());
@@ -79,15 +92,35 @@ bool Realm::dressNew(Body& hero, Kin kin, int level, int playerColumn, int playe
 
 uint32_t Realm::join(Kin kin, int level, int column, int row) {
     if (!tables_ || bodies_.empty()) return 0;
-    heroes_.emplace_back();
-    const size_t index = heroes_.size() - 1;
+    // **The place of a player gone kPlaceRest**, his body's and his summon's with it: every map
+    // change is a Join, and a world never let go grew by a player and two bodies with each one --
+    // 500 comings and goings took Lorencia's snapshot from 594 KB to 6.4 MB.
+    size_t index = heroes_.size();
+    for (size_t i = 0; i < heroes_.size(); ++i) {
+        const Player& p = heroes_[i];
+        if (p.goneAt >= 0 && tick_ - p.goneAt >= kPlaceRest && p.summonSlot >= 0) {
+            index = i;
+            break;
+        }
+    }
+    const bool reused = index < heroes_.size();
+    const Player was = reused ? heroes_[index] : Player{};
+    if (reused) {
+        heroes_[index] = Player{};
+    } else {
+        heroes_.emplace_back();
+    }
     For him(*this, index);
     Body hero;
     if (!dressNew(hero, kin, level, column, row)) {
-        heroes_.pop_back();
+        if (reused) {
+            heroes_[index] = was;
+        } else {
+            heroes_.pop_back();
+        }
         return 0;
     }
-    const uint32_t id = spawn(std::move(hero));
+    const uint32_t id = reused ? spawnAt(std::move(hero), was.body) : spawn(std::move(hero));
     me().body = indexOfId_[id];
     reswing(mine());
     settleFound(0);
@@ -96,7 +129,7 @@ uint32_t Realm::join(Kin kin, int level, int column, int row) {
     slot.summoner = id;
     slot.kind = 0;
     slot.health = 0;
-    const uint32_t slotId = spawn(std::move(slot));
+    const uint32_t slotId = reused ? spawnAt(std::move(slot), uint32_t(was.summonSlot)) : spawn(std::move(slot));
     me().summonSlot = int(indexOfId_[slotId]);
     say(What::Spawned, mine(), mine().level, mine().health);
     core::logf("realm: player #%u joined at (%d, %d), %d players", id, mine().column(),
@@ -151,6 +184,7 @@ bool Realm::depart(uint32_t id) {
     forgetThreat(id);
     const uint32_t index = indexOfId_[id];
     players_.erase(std::remove(players_.begin(), players_.end(), index), players_.end());
+    me().goneAt = tick_;
     say(What::Left, gone);
     core::logf("realm: player #%u left, %d still here", id, playersHere());
     return true;
