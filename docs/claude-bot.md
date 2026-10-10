@@ -163,6 +163,29 @@ loses most castle runs, the energy elf never reaches level-50 ground or a castle
 wizard's levels fell 20-40 from the morning's runs with no brain change: same seed, a day's
 content and sim changes between them (the Devil Square drops reshuffle the loot dice).
 
+**The gladiator's build, the elf's summon, and the castle's traps** (2026-10-10, the user:
+"Magic gladiator: still loses most castle runs. Energy elf ... Wizard: wins only castle 1")
+
+- *The magic gladiator 0/0/1/3,* as the wizard: all energy left him 230-440 health at level 230
+  and the garrison caught him at the castle door nine times a day. Four seeds of 24 h: levels
+  1,021 -> 1,088, deaths 134 -> 45, castles won 24/51 -> 45/59, wings on two seeds against one.
+- *An elf raises only her best summon:* the cheaper one, raised whenever the best was a few mana
+  short, came back the moment she sent it away (Goblin 178 casts, Stone Golem 36). The agility
+  elf 234/243 -> 244/259, castles 20/20 -> 23/24; the energy elf unchanged.
+- *Three castle traps, committed unmeasured* (the A/B was stopped at the user's ask): a monster
+  on the court's safe tile cannot be struck, and a wizard answered one for a whole run with 0
+  kills -- such targets are skipped; a caster turns on what is hitting him under 80% while the
+  statue stands (a wizard went from 63% to dead in five seconds cutting at it); a cloak is made
+  only for a castle he would go into (a wizard held a +2 cloak and went to no castle for eight
+  hours).
+- *Tried and dropped:* a caster answering every chaser in the castle never crosses the bridge,
+  as the court's garrison rises without end (1 castle of 14); the energy elf's fights at half
+  cost while her summon stands sent her to 85 levels and 122 deaths, as her early best is the
+  Goblin.
+
+The energy elf is still weak alone (71-106 damage at level 123, no level-50 ground, no castle):
+her build is a party's support, and whether she should hold ground alone is the user's call.
+
 Also seen: the new item content of 058adb75 (new sets and arms in the drop pool) costs the
 wizard 15-30 levels a day: same binary, old tables 188/179/188/192, new 169/179/161/165, the
 gear he finds falling from drop level 28-38 to 20-29. Passed to mu2-bgfx-64 for the content's

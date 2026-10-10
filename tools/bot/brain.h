@@ -1204,7 +1204,11 @@ private:
         // 210/199/197/191/149/225/197/167, deaths 5-15, wings on two. Blood Castle 1, which
         // pays a Jewel of Life, is where most of his Life comes from: 26 wins in 55 runs on 0/0/1/3.
         if (wizardly()) { w[0] = 0; w[1] = 0; w[2] = 1; w[3] = 3; }
-        if (gladiatorMage()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
+        // **The magic gladiator 0/0/1/3 too since 2026-10-10**, as the wizard: all energy left
+        // him 230-440 health at level 230, and a castle's garrison caught him at its door nine
+        // times a day. Four seeds of 24 h: levels 1,021 -> 1,088 summed, deaths 134 -> 45, castles
+        // won 24/51 -> 45/59, wings on two seeds against one.
+        if (gladiatorMage()) { w[0] = 0; w[1] = 0; w[2] = 1; w[3] = 3; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
         if (options_.kin == sim::Kin::FairyElf && options_.support) { w[0] = 1; w[1] = 2; w[2] = 2; w[3] = 5; }
         if (options_.build[0] + options_.build[1] + options_.build[2] + options_.build[3] > 0) {
@@ -2571,6 +2575,11 @@ private:
         for (int level = sim::kCloakMostLevel; level >= 1; --level) {
             if (!(scrolls & bones & (1 << level))) continue;
             if (level > sim::kCastlesBuilt || realm_->hero().level < sim::kCastleBands[level - 1][0]) continue;
+            // **Only for a castle he would go into** (2026-10-10): a wizard of seed 1 made a +2
+            // cloak at 9:48 for a castle whose garrison he did not reckon he could take, held it,
+            // and went to no castle until 18:08 -- castleChoice looks for the cloak of the castle
+            // it picks. The +2 parts wait; the +1 make the cloak he will use.
+            if (!castleTaken(level)) continue;
             if (realm_->cloakSlot(level) >= 0) continue;
             if (realm_->money() < sim::kCloakZen[level] + potionReserve()) continue;
             return level;
@@ -2703,8 +2712,19 @@ private:
         uint32_t target = 0;
         int rank = 9;
         float closest = 1e30f;
+        // Whether the statue stands: the run's last fight, far from the court the garrison rises in.
+        bool statueUp = false;
+        for (const sim::Body& body : realm_->bodies()) {
+            statueUp |= body.monster() && body.alive() && body.kind >= 0 &&
+                        sim::castleStatue(tables_->kinds[size_t(body.kind)].number);
+        }
         for (const sim::Body& body : realm_->bodies()) {
             if (!body.monster() || !body.alive() || barred(body.id) || body.kind < 0) continue;
+            // **Not one on safe ground** (2026-10-10): the realm refuses a blow at a body on a
+            // safe tile (Realm's `sheltered`), and the court he waits in is one. A Chief Skeleton
+            // Warrior stood on the wizard's own tile there, struck him, and was answered for the
+            // whole fifteen minutes with nothing landing: 0 kills, the run lost.
+            if (tables_->grid.safe(body.column(), body.row())) continue;
             const int number = tables_->kinds[size_t(body.kind)].number;
             const float d = (body.x - hero.x) * (body.x - hero.x) + (body.y - hero.y) * (body.y - hero.y);
             int r = 4;
@@ -2715,7 +2735,13 @@ private:
             } else if (body.quarry == hero.id && d < 36.0f) {
                 // Under 60% he answers it first even past the bridge: a knight whose back was to
                 // the Red Skeleton Knights while he cut at a sorcerer died in fifteen seconds.
-                r = run.bridgeDown && hero.health * 10 >= hero.maxHealth * 6 ? 2 : -2;
+                // **A caster at four fifths, while the statue stands** (2026-10-10): a wizard of 426
+                // health cut at it from nine tiles with the Red Skeleton Knights on him, went from
+                // 63% to dead in five seconds, and lost the run. Not before the statue: in the court
+                // the garrison rises without end, and a caster who answered it there stood until
+                // the run timed out.
+                const int hold = wizardly() && statueUp ? 8 : 6;
+                r = run.bridgeDown && hero.health * 10 >= hero.maxHealth * hold ? 2 : -2;
             }
             // Of one rank, the one he is on, then the nearest: a sorcerer has 3,700 health, and
             // turning to the nearest each think left every one of them half dead.
@@ -3623,19 +3649,20 @@ private:
                 hand_.invoke(row.number, hero.id);
                 return true;
             }
-            // The last summon in the table she knows: the later breeds are the stronger.
-            if (row.summons > 0) summon = i;
+            // The last summon in the table she knows: the later breeds are the stronger. **Only her
+            // best, once she knows it** (2026-10-10): the cheaper one, raised whenever the best was
+            // a few mana short, came back the moment she sent it away -- an energy elf of level 123
+            // cast her Goblin 178 times and her Stone Golem 36. She drinks and waits instead. Two
+            // seeds of 24 h: the agility elf 234/243 -> 244/259, castles 20/20 -> 23/24; the
+            // energy elf unchanged (123/130 -> 123/131).
+            if (row.summons > 0 && (bestSummon() < 0 || i == bestSummon())) summon = i;
         }
         // **Her best summon stands, not an old one** (the user, 2026-10-09: "also elfs has to use
         // their summons which is very strong also"): one standing that is not her best is sent
         // away -- a second cast dismisses it, for nothing (Realm::conjure) -- and the best raised
         // at the next think. A Goblin stood until it died after she had read the Assassin.
         // Only when the best is ready and paid for now, so it is raised at once.
-        int best = -1;
-        for (int i = 0; i < sim::skillCount(); ++i) {
-            const sim::SkillRow& row = sim::skillAt(i);
-            if (row.summons > 0 && realm_->knows(row.number) && row.suits(w.offHand)) best = i;
-        }
+        const int best = bestSummon();
         if (best >= 0 && best == summon && summoned && standing >= 0 && standing != sim::skillAt(best).summons &&
             realm_->cooling(sim::skillAt(best).number) == 0 && hero.mana >= sim::skillAt(best).mana) {
             hand_.invoke(sim::skillAt(best).number, hero.id);
@@ -3651,6 +3678,16 @@ private:
         return false;
     }
     std::map<int32_t, int64_t> guardTried_;
+    // The strongest summon she knows and her hand may cast, a skill index, or -1.
+    int bestSummon() const {
+        const sim::Wearer w = realm_->wearer();
+        int best = -1;
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            if (row.summons > 0 && realm_->knows(row.number) && row.suits(w.offHand)) best = i;
+        }
+        return best;
+    }
     int kindIndex(int number) const {
         for (size_t i = 0; i < tables_->kinds.size(); ++i) {
             if (tables_->kinds[i].number == number) return int(i);
