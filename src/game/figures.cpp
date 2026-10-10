@@ -85,9 +85,6 @@ const OnBack& onBack(const HeldItem& item, bool leftHand) {
 constexpr Stance kStances[] = {
     {"sword", 4, 17},  {"two_hand_sword", 5, 18}, {"spear", 6, 19}, {"scythe", 7, 20},
     {"bow", 8, 21},    {"crossbow", 9, 22},       {"wand", 10, 23},
-    // The Dark Reign Blade's: PLAYER_STOP and PLAYER_WALK_TWO_HAND_SWORD_TWO (ZzzCharacter.cpp:
-    // 362-365, 657-660), the blade held out in one hand.
-    {"two_hand_sword_two", 143, 144},
 };
 
 // The two action numbers a stance stands and walks in.

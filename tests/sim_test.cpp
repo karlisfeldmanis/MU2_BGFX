@@ -221,11 +221,12 @@ void testSwings(const content::Tables& tables) {
     checkEqual(actions[1], 40, "right 2");
     checkEqual(sim::attackActions(giant, nullptr, actions), 3, "a two-handed sword has three");
     checkEqual(actions[0], 43, "two hand sword 1");
-    // The Dark Reign Blade has its own swing, PLAYER_ATTACK_TWO_HAND_SWORD_TWO (ZzzCharacter.cpp:
-    // 1179-1182), and only the one.
+    // The Dark Reign Blade sweeps as every two-handed blade does (the user's call, over MU's own
+    // PLAYER_ATTACK_TWO_HAND_SWORD_TWO), and its blow lands at the half.
     if (const content::Arm* reign = arm("Sword22")) {
-        checkEqual(sim::attackActions(reign, nullptr, actions), 1, "the Dark Reign Blade has one");
-        checkEqual(actions[0], 146, "two hand sword two");
+        checkEqual(sim::attackActions(reign, nullptr, actions), 3, "the Dark Reign Blade sweeps");
+        checkEqual(actions[0], 43, "two hand sword 1");
+        check(sim::swingLanding(reign, nullptr) == 0.5f, "and lands at the half");
     } else {
         check(false, "the Dark Reign Blade is in the arms");
     }

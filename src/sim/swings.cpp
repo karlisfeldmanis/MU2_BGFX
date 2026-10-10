@@ -52,14 +52,10 @@ int attackActions(const content::Arm* right, const content::Arm* left, int32_t* 
     // Swords, axes and maces together.
     if (rightSwings) {
         if (right->twoHanded()) {
-            // The Dark Reign Blade (0, 21), the gladiator's, swings PLAYER_ATTACK_TWO_HAND_SWORD_TWO,
-            // 146, alone (ZzzCharacter.cpp:1179-1182). The other three blades that do -- Rune,
-            // Explosion, Sword Dancer -- are later than anything built here.
-            if (right->group == 0 && right->number == 21) {
-                out[0] = 146;
-                return 1;
-            }
-            // 43, 44, 45 by the client's own counter.
+            // 43, 44, 45 by the client's own counter -- the Dark Reign Blade too, though MuMain
+            // swings it PLAYER_ATTACK_TWO_HAND_SWORD_TWO, 146 (ZzzCharacter.cpp:1179-1182): that
+            // overhead cut was tried and the user chose the two-handed sweep (2026-10-10, 'we need
+            // nice two hand swing').
             out[0] = 43;
             out[1] = 44;
             out[2] = 45;

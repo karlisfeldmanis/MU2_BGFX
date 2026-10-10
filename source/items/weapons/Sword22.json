@@ -33,8 +33,8 @@
     "skill": 56,
     "classes_from": "magicGladiatorClassLevel 1 and every other class 0: his alone. Its magic power 115 is his sword that also casts (ZzzInfomation.cpp:2888)."
   },
-  "stance": "two_hand_sword_two",
-  "stance_from": "ZzzCharacter.cpp:362-365, 657-660, 716-719, 1179-1182: MuMain stands, walks, runs and swings the Dark Reign Blade on its own four actions, PLAYER_STOP, WALK, RUN and ATTACK_TWO_HAND_SWORD_TWO (143-146), not the two-handed sword's; the run is ours (the Mixamo run), and on a horse it takes the two-handed ride (55), as MU's ride ladder has no arm for it.",
+  "stance": "two_hand_sword",
+  "stance_from": "Width 2: PLAYER_STOP_TWO_HAND_SWORD and its three sweeps, 43-45, the user's call (2026-10-10: 'we need nice two hand swing'). MuMain gives it its own four actions, PLAYER_*_TWO_HAND_SWORD_TWO, 143-146 (ZzzCharacter.cpp:362-365, 657-660, 1179-1182) -- the blade held out in one hand and an overhead cut; tried, and not taken.",
   "two_handed": true,
   "sheets": {
     "nds01": "nds01.png",
