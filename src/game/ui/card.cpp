@@ -28,16 +28,18 @@ using gfx::Box;
 // fit between the tabs and the foot; nothing in the window scrolls or grows it.
 
 // The head's rows, in MU's panel units.
-constexpr float kIdTop = 42.0f, kGuildTop = 56.0f;
-constexpr float kKeysTop = 70.0f, kKeysTall = 29.0f;
+constexpr float kIdTop = 45.0f, kGuildTop = 58.0f;
+constexpr float kKeysTop = 73.0f, kKeysTall = 30.0f;
 // The level's badge at the block's left end, the class's three sharing the rest.
 constexpr float kBadgeW = 35.0f;
 constexpr float kBadgeSize = 13.0f;
-constexpr float kTabsTop = 106.0f, kTabsTall = 16.0f;
+constexpr float kTabsTop = 111.0f, kTabsTall = 16.0f;
 constexpr int kTabCount = 3;
 const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses"};
 // The page between the tabs' floor and the foot's rule.
-constexpr float kBodyTop = 128.0f;
+constexpr float kBodyTop = 134.0f;
+// And where it must end: four units over the foot's rule.
+constexpr float kBodyBottom = panel::kFootRule - 4.0f;
 
 // The wells run between the grid's two edges (`panel::kGridX` to `kWellRight`), as the bag's and
 // the shelf's do, and type sits seven in from them.
@@ -46,12 +48,12 @@ constexpr float kLeft = 18.0f;
 constexpr float kRight = panel::kValueRight;
 
 // An attribute: its well, the lines under it, and the air before the next one.
-constexpr float kAttrTall = 19.0f, kLineStep = 10.5f, kLineTop = 2.5f, kAttrGap = 6.5f;
+constexpr float kAttrTall = 19.0f, kLineStep = 10.5f, kLineTop = 3.0f, kAttrGap = 8.0f;
 // The plus, inside the well's right end. Where a figure ends while it stands there.
 constexpr float kPlusSide = 13.0f;
 constexpr float kFigureRight = panel::kWellRight - kPlusSide - 7.0f;
 // A Combat or Bonuses group: its heading, its rows, the air after it.
-constexpr float kGroupHead = 9.0f, kRowTall = 12.5f, kGroupGap = 4.0f;
+constexpr float kGroupHead = 10.0f, kRowTall = 13.0f, kGroupGap = 6.0f;
 
 // The foot: the level's progress, at the panel's shared rule.
 constexpr float kFootRule = panel::kFootRule;
@@ -138,6 +140,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         const Line defenseRate{"Defense rate", number((long long)f.defenseRate)};
         const Line life{"Life", pair(hero->health, hero->maxHealth)};
         const Line mana{"Mana", pair(hero->mana, hero->maxMana)};
+        // Every class's shield, the HUD's word for SD: all four points, defence and level make
+        // it (sim::maximumShield), so it stands with the pools rather than under one point.
+        const Line shield{"Shield", pair(hero->sd, hero->maxSd)};
         const Line wizardry{"Wizardry", band((long long)f.wizardMinimum, (long long)f.wizardMaximum)};
         const Line skill{"Skill damage", std::to_string(sim::skillPercent(total)) + "%"};
         // The elf's three blessings, what her energy buys her and her party.
@@ -150,7 +155,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         // and defence rate; life; mana and the class's own. The elf's blessings are ours.
         now_.lines[0] = {damage, attackRate};
         now_.lines[1] = {defense, speed, defenseRate};
-        now_.lines[2] = {life};
+        now_.lines[2] = {life, shield};
         if (wizard) now_.lines[3] = {wizardry, mana};
         if (knight) now_.lines[3] = {skill, mana};
         if (gladiator) now_.lines[3] = {wizardry, skill, mana};
@@ -180,7 +185,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             Group guard{"Guard", {defense, defenseRate}};
             chance(guard.lines, "Damage decrease", f.damageDecrease);
             chance(guard.lines, "Block chance", f.blockChance);
-            Group endure{"Endurance", {life, mana}};
+            Group endure{"Endurance", {life, shield, mana}};
             if (ex.lifeRegen > 0) endure.lines.push_back({"Life regeneration", plusPercent(ex.lifeRegen)});
             now_.groups.push_back(std::move(attack));
             if (elf) now_.groups.push_back({"Blessings", {might, ward, heal}});
@@ -420,15 +425,21 @@ void Card::rebuild() {
                              controls::Glyph::Plus, state, u, true);
         }
     } else {
+        // A page heavy with gear's chances closes its rows up before it would cross the foot.
+        size_t rows = 0;
+        for (const Group& group : now_.groups) rows += group.lines.size();
+        const float heads = (kGroupHead + kGroupGap) * float(now_.groups.size());
+        const float rowTall =
+            rows ? std::min(kRowTall, (kBodyBottom - kBodyTop - heads) / float(rows)) : kRowTall;
         float uy = kBodyTop;
         for (const Group& group : now_.groups) {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             uy += kGroupHead;
-            const float tall = kRowTall * float(group.lines.size());
+            const float tall = rowTall * float(group.lines.size());
             panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
             for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
-                const Box row{kWellX, uy + kRowTall * float(l), kWellW, kRowTall};
+                const Box row{kWellX, uy + rowTall * float(l), kWellW, rowTall};
                 if (l > 0) canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, 0.5f}), kDivider);
                 const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
                 controls::label(canvas_, x + kLeft * k, base, kRowSize * k, line.dim ? kDim : kPlain,
