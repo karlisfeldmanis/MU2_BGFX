@@ -631,6 +631,14 @@ struct Body {
     // guard", and the kill is that player's.
     uint32_t guardedBy = 0;
     uint32_t heroStruck = 0;
+    // On a monster: the players whose blows, runes, poison or fire took its health, how much
+    // each (a summon's under its owner), and the tick of each one's last -- WebZen's sHD list
+    // (gObjMonsterSetHitDamage, gObjMonster.cpp:432-475), which shares the kill's experience by
+    // damage and gives the drop to the most (Realm::noteHurt, shareKill). Cleared when it rises.
+    static constexpr int kHurtSlots = 8;
+    uint32_t hurtBy[kHurtSlots] = {};
+    int32_t hurt[kHurtSlots] = {};
+    int64_t hurtAt[kHurtSlots] = {};
 
     // ---- the elf's summon (Realm::tend, sprint 15) --------------------------------------------
     // Whose it is: the owner's id, 0 on everybody else. One body a realm, raised dormant at the
@@ -1796,6 +1804,19 @@ private:
     void retarget(Body& beast);
     // Every monster's threat from body `id` let go: he died or left the world.
     void forgetThreat(uint32_t id);
+    // A player's (or his summon's) damage on a monster, for the kill's shares (Body::hurt).
+    void noteHurt(Body& beast, const Body& by, int amount);
+    static constexpr int kHurtForgetSeconds = 20;  // `GetTickCount()-LastHitTime > 1000*20`
+    static constexpr int kHurtReach = 20;          // gObjCheckTileArea(..., 20)
+    // Whether entry `i` of a monster's hurt still counts: a player here and alive, his last
+    // within 20 seconds and within 20 tiles (gObjMonsterHitDamageUserDel).
+    bool hurtCounts(const Body& beast, int i) const;
+    // Who did it the most damage of those who count, or nullptr (gObjMonsterTopHitDamageUser).
+    Body* topHurter(const Body& beast);
+    // A kill's experience as WebZen pays it (gObjMonsterExpDivision, user.cpp:14521-14533): the
+    // last hitter's party the whole of it when he is in one, else every hitter who counts his
+    // share by the damage he did of its life.
+    void shareKill(const Body& dead, Body& earner);
     // A party member's blow on a monster: his threat, the tank's tripled and his first blow a
     // tenth of its health more.
     void partyBlow(Body& beast, const Body& attacker, int32_t damage);

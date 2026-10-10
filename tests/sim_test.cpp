@@ -11763,9 +11763,11 @@ uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRi
         }
         realm.step();
         for (const sim::Happening& one : realm.happenings()) {
+            // Said to the one it paid, any player of the hunt: since a kill is shared by damage
+            // (Realm::shareKill), the elf who comes in pays herself a share of what she struck.
             if (one.what == sim::What::Gained) {
-                (one.audience == one.who && (one.who == first || one.who == second) ? *gainedRight
-                                                                                    : *gainedWrong)++;
+                const sim::Body* paid = realm.find(one.who);
+                (one.audience == one.who && paid != nullptr && paid->player ? *gainedRight : *gainedWrong)++;
             }
             if (one.what == sim::What::Hit && one.whom == second) {
                 const sim::Body* by = realm.find(one.who);

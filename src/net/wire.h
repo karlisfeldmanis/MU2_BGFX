@@ -91,7 +91,9 @@ namespace mu::net {
 //     a leaver's threat forgotten.
 // 21: a player's place taken again kPlaceRest after he left (Player::goneAt, snapshot shape 7),
 //     nothing picked up while a trade is open.
-constexpr uint32_t kVersion = 21;
+// 22: a kill shared as WebZen's: the drop to the most damage, the experience by damage outside a
+//     party (Body::hurt, snapshot shape 8).
+constexpr uint32_t kVersion = 22;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store

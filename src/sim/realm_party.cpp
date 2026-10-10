@@ -111,6 +111,70 @@ void Realm::addThreat(Body& beast, const Body& by, int32_t amount) {
     beast.threat[slot] = int32_t(std::min<int64_t>(sum, std::numeric_limits<int32_t>::max()));
 }
 
+void Realm::noteHurt(Body& beast, const Body& by, int amount) {
+    if (!beast.monster() || amount <= 0) return;
+    const Body* who = by.player ? &by : by.summoner != 0 ? find(by.summoner) : nullptr;
+    if (who == nullptr || !who->player) return;
+    int slot = -1;
+    for (int i = 0; i < Body::kHurtSlots; ++i) {
+        if (beast.hurtBy[i] == who->id) {
+            slot = i;
+            break;
+        }
+        // A free place, or else the one whose last is oldest (WebZen frees the forgotten).
+        if (slot < 0 || (beast.hurtBy[slot] != 0 && (beast.hurtBy[i] == 0 || beast.hurtAt[i] < beast.hurtAt[slot]))) {
+            slot = i;
+        }
+    }
+    if (beast.hurtBy[slot] != who->id) {
+        beast.hurtBy[slot] = who->id;
+        beast.hurt[slot] = 0;
+    }
+    // No more than its whole life to anyone (`if( HitDamage > MaxLife ) HitDamage = MaxLife`).
+    beast.hurt[slot] = int32_t(std::min<int64_t>(int64_t(beast.hurt[slot]) + amount, std::max(1, beast.maxHealth)));
+    beast.hurtAt[slot] = tick_;
+}
+
+bool Realm::hurtCounts(const Body& beast, int i) const {
+    if (beast.hurtBy[i] == 0 || beast.hurt[i] <= 0) return false;
+    const Body* one = find(beast.hurtBy[i]);
+    if (one == nullptr || one->gone || !one->alive()) return false;
+    if (tick_ - beast.hurtAt[i] > int64_t(kHurtForgetSeconds) * 20) return false;
+    return std::max(std::abs(one->column() - beast.column()), std::abs(one->row() - beast.row())) <= kHurtReach;
+}
+
+Body* Realm::topHurter(const Body& beast) {
+    int best = -1;
+    for (int i = 0; i < Body::kHurtSlots; ++i) {
+        if (hurtCounts(beast, i) && (best < 0 || beast.hurt[i] > beast.hurt[best])) best = i;
+    }
+    return best >= 0 ? body(beast.hurtBy[best]) : nullptr;
+}
+
+void Realm::shareKill(const Body& dead, Body& earner) {
+    if (earner.party != 0) {
+        For his(*this, earner);
+        payKill(dead, earner);
+        return;
+    }
+    const double life = double(std::max(1, dead.maxHealth));
+    bool paidAny = false;
+    for (int i = 0; i < Body::kHurtSlots; ++i) {
+        if (!hurtCounts(dead, i)) continue;
+        Body* one = body(dead.hurtBy[i]);
+        For his(*this, *one);
+        const double whole = double(killExperience(dead.level, one->level)) * kExperienceRate *
+                             double(100 + one->excel.moreExperience) / 100.0;
+        gain(*one, int32_t(whole * double(dead.hurt[i]) / life));
+        paidAny = true;
+    }
+    // Nobody counted (a blow that left no mark): the last hitter's, as before.
+    if (!paidAny) {
+        For his(*this, earner);
+        payKill(dead, earner);
+    }
+}
+
 void Realm::forgetThreat(uint32_t id) {
     for (Body& one : bodies_) {
         for (int i = 0; i < Body::kThreatSlots; ++i) {

@@ -191,6 +191,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (target.warden >= 0) target.health = std::max(1, target.health);
     // The hero's hand on a monster, which is what a guard asks after when it dies.
     if (attacker.player && target.monster() && wound > 0) target.heroStruck = attacker.id;
+    if (target.monster() && wound > 0) noteHurt(target, attacker, wound);
     // And what it cost the gear, on the health it took and nothing else: a blow the shield
     // soaked whole wears nothing, as a miss wears nothing (OpenMU reads HitInfo.HealthDamage).
     if (wound > 0) {
@@ -423,6 +424,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice) *
                                           (faint ? kChillWound : 1.0f)));
         struck.health = std::max(0, struck.health - bite);
+        noteHurt(struck, hero, bite);
         say(What::Hit, hero, bite, bite, struck.health, struck.id);
         happenings_.back().critical = critical;
         happenings_.back().rune = true;
@@ -475,6 +477,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             // Frost, so Glacier raises it as it raises Frost Arrow's.
             const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice)));
             struck.health = std::max(0, struck.health - bite);
+            noteHurt(struck, hero, bite);
             say(What::Hit, hero, bite, bite, struck.health, struck.id);
             happenings_.back().critical = critical;
             happenings_.back().rune = true;
@@ -1413,6 +1416,7 @@ void Realm::poisonPulse(Body& beast) {
     const int said = due - wound + std::max(0, bite);
     if (said <= 0) return;
     if (bite > 0) beast.health -= bite;
+    if (bite > 0) noteHurt(beast, *by, bite);
     // The pulse whole, as a blow says its damage: the drawing reads the shield's share off it.
     say(What::Hit, *by, said, said, beast.health, beast.id);
     happenings_.back().thrown = true;
@@ -1457,6 +1461,7 @@ void Realm::burnPulse(Body& beast) {
     }
     const int bite = std::min(beast.burnDamage, beast.health);
     beast.health -= bite;
+    noteHurt(beast, *by, bite);
     say(What::Hit, *by, bite, bite, beast.health, beast.id);
     happenings_.back().thrown = true;
     happenings_.back().burned = true;
@@ -1880,14 +1885,21 @@ void Realm::kill(Body& dead, Body& killer) {
             pointOn(*guard, dead);
         }
     }
-    // **Her summon's kill is hers**: its drop and its experience, as if her own blow had been
-    // the last (ours; OpenMU pays the owner of a summon's kill the same way). Paid here and not
+    // Who did it the most damage, of the players who count (Body::hurt): its drop is his, as
+    // WebZen's (gObjMonsterTopHitDamageUser, gObjMonster.cpp:3386), whoever landed the last
+    // blow. A bot's one blow took a monster a player had nearly killed, its drop and its count.
+    Body* top = topHurter(dead);
+    // **Her summon's kill is hers**: as if her own blow had been the last (ours; OpenMU pays the
+    // owner of a summon's kill the same way), its damage hers in the shares. Paid here and not
     // below, which asks `killer.player`.
     if (killer.summoner != 0) {
         if (Body* owner = body(killer.summoner); owner != nullptr && owner->alive()) {
-            For hers(*this, *owner);
-            leave(dead, *owner);
-            payKill(dead, *owner);
+            Body& to = top != nullptr ? *top : *owner;
+            {
+                For theirs(*this, to);
+                leave(dead, to);
+            }
+            shareKill(dead, *owner);
         }
     }
     // **A raider's kill is his** (the raid's party fights for him): its drop and its experience,
@@ -1900,7 +1912,11 @@ void Realm::kill(Body& dead, Body& killer) {
     }
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
     // it was when the blow landed.
-    if (killer.player) leave(dead, killer);
+    if (killer.player) {
+        Body& to = top != nullptr ? *top : killer;
+        For theirs(*this, to);
+        leave(dead, to);
+    }
     // And a raid minion's own, whoever of the party struck it down.
     if (partisan(killer)) minionSpoils(dead);
     // Life for the kill: its level, two seconds on (gObjMonsterDieLifePlus, sent by
@@ -1930,8 +1946,9 @@ void Realm::kill(Body& dead, Body& killer) {
         // (PlayerExperience.cs:105), then the server's rate -- which this note used to say
         // there was none of, and the replica's answer is still the formula above: the rate is
         // one number at one place, stated, the way a live server states one. See kExperienceRate.
-        // Shared with his party in view (realm_party.cpp), his alone without one.
-        payKill(dead, killer);
+        // Shared with his party in view (realm_party.cpp) when he is in one; without one,
+        // between everyone who hurt it by the damage each did (shareKill, WebZen's division).
+        shareKill(dead, killer);
     }
     // And his quests count it, when the kill is his by the rules above: his own blow, her
     // summon's, or a guard's he had a hand in. A guard's own kill does not count, as it pays him
@@ -1944,8 +1961,10 @@ void Realm::kill(Body& dead, Body& killer) {
         squareKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);
         if (dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()) castleKill(dead);
         // And for each of his party in view who still wants that breed (the user, 2026-10-09:
-        // "everyone nearby"); countKill skips a step already done.
-        countPartyKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);
+        // "everyone nearby"); countKill skips a step already done. His who did the most damage,
+        // as the drop is, when a player's blow or her summon's took it.
+        const Body& earner = killer.player ? killer : owner != nullptr ? *owner : hero;
+        countPartyKill(dead, top != nullptr && killer.warden < 0 ? *top : earner);
     }
 }
 
@@ -2077,6 +2096,9 @@ void Realm::raiseBeast(Body& beast) {
     beast.provoked = false;
     beast.guardedBy = 0;
     beast.heroStruck = 0;
+    std::fill(std::begin(beast.hurtBy), std::end(beast.hurtBy), 0u);
+    std::fill(std::begin(beast.hurt), std::end(beast.hurt), 0);
+    std::fill(std::begin(beast.hurtAt), std::end(beast.hurtAt), int64_t(0));
     beast.chilledUntil = 0;
     beast.frozenUntil = 0;
     beast.poisonUntil = 0;
