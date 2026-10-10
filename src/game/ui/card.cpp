@@ -19,8 +19,8 @@ using gfx::Box;
 // **The window, 2026-10-10** (the user's proposal, https://claude.ai/artifact/E1SgVrhmhQNquWSv2EfcLR,
 // settled over a morning: 'always show stats, even there is no stat to spend like on original',
 // 'dont usee - and apply, keep existing logic to add points', 'remember that window has fixed
-// height'). The same 190x429 and the same frame, his name its title; inside it, from the top:
-// his class with his unspent points, his guild; one block with his level as a badge, resets under
+// height'). The same 190x429 and the same frame, his name and guild small under its title; inside
+// it, from the top: his class with his unspent points; one block with his level as a badge, resets under
 // it, and the three numbers his class lives by beside it (the user's A4 of four, 2026-10-10); and
 // three
 // pages under underline tabs -- Attributes (MU's four wells, each with what it buys under it, the
@@ -28,16 +28,16 @@ using gfx::Box;
 // fit between the tabs and the foot; nothing in the window scrolls or grows it.
 
 // The head's rows, in MU's panel units.
-constexpr float kIdTop = 45.0f, kGuildTop = 58.0f;
-constexpr float kKeysTop = 73.0f, kKeysTall = 30.0f;
+constexpr float kIdTop = 45.0f;
+constexpr float kKeysTop = 61.0f, kKeysTall = 30.0f;
 // The level's badge at the block's left end, the class's three sharing the rest.
 constexpr float kBadgeW = 35.0f;
 constexpr float kBadgeSize = 13.0f;
-constexpr float kTabsTop = 111.0f, kTabsTall = 16.0f;
+constexpr float kTabsTop = 99.0f, kTabsTall = 16.0f;
 constexpr int kTabCount = 3;
 const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses"};
 // The page between the tabs' floor and the foot's rule.
-constexpr float kBodyTop = 134.0f;
+constexpr float kBodyTop = 122.0f;
 // And where it must end: four units over the foot's rule.
 constexpr float kBodyBottom = panel::kFootRule - 4.0f;
 
@@ -220,8 +220,8 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.top = y_;
         now_.level = hero->level;
         now_.points = hero->pointsInHand;
-        // No resets and no guilds in the realm yet: the strip says 0 and the line "No guild"
-        // until there are, and then these two read them.
+        // No resets and no guilds in the realm yet: the badge says 0 and the head shows no
+        // brackets until there are, and then these two read them.
         now_.resets = 0;
         now_.experience = hero->experience;
         now_.stats[0] = total.strength;
@@ -292,9 +292,24 @@ void Card::rebuild() {
     const gfx::Face& face = canvas_.face();
     const float u = tip::unit();
 
-    // His name heads the window; a run with no character made (--fresh) has none, and the
-    // window's own word stands in.
-    panel::frame(canvas_, arts, x, y, now_.name.empty() ? std::string("Character") : now_.name);
+    panel::frame(canvas_, arts, x, y, "Character");
+    // **His name, small under the title, his guild in brackets after it** -- the user,
+    // 2026-10-10: 'show chatacyer title how it was and small character name [guild] under the
+    // title, same as Inventory and gear score'. The bag's gear score line exactly (bag.cpp): the
+    // name in bone at its figure's size, the guild in ash capitals at its words', centred
+    // together on the same baseline under the title's capitals. No guild, no brackets.
+    if (!now_.name.empty()) {
+        const float u = tip::unit();
+        const float size = 11.0f * u, small = 9.0f * u, gap = 4.0f * u;
+        const std::string guild = now_.guild.empty() ? std::string() : "[" + now_.guild + "]";
+        const float named = controls::labelWidth(size, now_.name);
+        const float wide = named + (guild.empty() ? 0.0f : gap + controls::capsWidth(small, guild));
+        const float from = std::round(x + (panel::kWidth * k - wide) * 0.5f);
+        const float baseline = std::round(y + panel::kHeadBand * k * 0.86f);
+        controls::label(canvas_, from, baseline, size, style::kBoneHi, now_.name);
+        if (!guild.empty())
+            controls::caps(canvas_, from + named + gap, baseline, small, style::kAshInk, guild);
+    }
 
     // Type set from a top-left in units, its ascent below it; and the same ranged right.
     const auto at = [&](float uy, float size) { return y + uy * k + face.ascent(size * k); };
@@ -327,11 +342,6 @@ void Card::rebuild() {
                      kSpendWash);
         controls::caps(canvas_, tagRight - w + pad * 0.0f, at(kIdTop + 1.5f, kLineSize), size,
                        kSpendable, tag, 0.04f);
-    }
-    if (now_.guild.empty()) {
-        left(kLeft, kGuildTop, kLineSize, kQuiet, "No guild");
-    } else {
-        left(kLeft, kGuildTop, kLineSize, kPlain, now_.guild);
     }
 
     // ---- the block: his level as a badge, resets under it, his class's three beside it ---------
