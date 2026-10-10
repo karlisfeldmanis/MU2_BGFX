@@ -74,6 +74,11 @@ public:
     // A line from outside: Play's own, as a party's or the server's would be. `name` empty is a
     // line of the channel itself.
     void hear(const net::Heard& line);
+    // The server's own line, as Play says it: a trade's news ("Elora declined to trade.").
+    void notice(const std::string& text) { system(net::Channel::Server, text); }
+    // A trade asked of him by `name` (body `who`): a line, and the invite's card in the middle
+    // with Accept and Decline, which answer the realm (Play::dealAnswer) and not the server.
+    void askedToTrade(const std::string& name, uint32_t who);
 
 private:
     struct Line {
@@ -85,6 +90,8 @@ private:
         // yet, 1 accepted, -1 declined). An open one wears Accept and Decline under it.
         std::string inviter;
         int answer = 0;
+        // A trade's ask instead (Chat::askedToTrade): the asker's body, 0 for a party's invite.
+        uint32_t trader = 0;
     };
     // One row of the log as it is set: a line wraps into several.
     struct Row {

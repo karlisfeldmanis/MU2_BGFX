@@ -120,6 +120,7 @@ void Realm::applyCommands() {
                     case Command::Window::Quest: closeQuest(); break;
                     case Command::Window::Gate: closeGate(); break;
                     case Command::Window::Angel: closeAngel(); break;
+                    case Command::Window::Deal: closeDeal(); break;
                 }
                 answer = 1;
                 break;
@@ -145,6 +146,12 @@ void Realm::applyCommands() {
             }
             case Kind::Leave: answer = depart(mine().id) ? 1 : -1; break;
             case Kind::PartySet: answer = setParty(one.target, uint32_t(std::max(0, one.a))) ? 1 : -1; break;
+            case Kind::DealAsk: answer = dealAsk(one.target) ? 1 : -1; break;
+            case Kind::DealAnswer: answer = dealAnswer(one.target, one.a == 1) ? 1 : -1; break;
+            case Kind::DealPut: answer = dealPut(one.a, one.b); break;
+            case Kind::DealTake: answer = dealTake(one.a, one.b); break;
+            case Kind::DealZen: answer = dealZen(one.zen) ? 1 : -1; break;
+            case Kind::DealAccept: answer = dealAccept(one.a == 1) ? 1 : -1; break;
         }
         if (one.ticket == 0) continue;
         say(What::Answered, *find(answerer), int32_t(said),

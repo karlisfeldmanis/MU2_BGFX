@@ -1222,6 +1222,12 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
             }
         }
     }
+    // A trade made: both characters written at once, as WebZen saves both after the swap
+    // (user.cpp:19540-19554), so a crash a minute later cannot hand the things back to both.
+    for (const sim::Happening& said : realm.happenings()) {
+        if (said.what != sim::What::Deal || said.a != int32_t(sim::DealEvent::Done)) continue;
+        if (Session* one = playing(world, sessions, said.who)) one->keepAt = Clock::time_point{};
+    }
     // Blood Castle's run over and its rest out: its player to the castle's town. The run is the
     // first player's (a known limit of sprint 19).
     if (!castleOut && realm.castleRun().sentOut && realm.playerCount() > 0) {

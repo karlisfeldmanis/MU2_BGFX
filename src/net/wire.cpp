@@ -91,11 +91,11 @@ void putCommand(Out& o, const sim::Command& c) {
 sim::Command takeCommand(In& in) {
     sim::Command c;
     const uint8_t kind = in.u8();
-    // An unknown kind is the realm's None and does nothing; it is never trusted further.
-    // PartySet is the last (docs/party.md): capped at Leave, a mirror read it as None and parted
-    // from the server at the first hash after a party formed.
-    c.kind = kind <= uint8_t(sim::Command::Kind::PartySet) ? sim::Command::Kind(kind)
-                                                               : sim::Command::Kind::None;
+    // An unknown kind is the realm's None and does nothing; it is never trusted further. Capped
+    // at the last there is (Command::kLastKind): capped at PartySet, Devil Square's ClaimSquare
+    // after it was read as None and a Claim on the server did nothing.
+    c.kind = kind <= uint8_t(sim::Command::kLastKind) ? sim::Command::Kind(kind)
+                                                       : sim::Command::Kind::None;
     c.player = in.u32();
     c.ticket = in.u32();
     c.a = in.i32();

@@ -392,6 +392,26 @@ public:
     uint32_t mix(sim::Service service, int socket);
     void closeMachine() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Machine)}); }
     void restoreMachine(const sim::Machine& saved) { if (here("the machine")) local_.restoreMachine(saved); }
+    // A trade with another player (sim/realm_deal.cpp), as the realm keeps it: ask him by his
+    // body, answer an ask, put a bag thing up or take it back, name the Zen, accept, and shut it.
+    // Out of reach (sim::kDealReach), he walks to him first and asks on arrival, as a Talk walks
+    // to a townsperson; 0 then, for a ticket not sent yet.
+    uint32_t dealAsk(uint32_t body);
+    // A frame of that walk: asked once near, given up after ten seconds or once a trade opens.
+    void approachDeal();
+    uint32_t dealApproach_ = 0;
+    int64_t dealApproachUntil_ = 0;
+    uint32_t dealAnswer(uint32_t asker, bool yes);
+    uint32_t dealPut(int bagSlot, int cell);
+    uint32_t dealTake(int cell, int bagSlot);
+    uint32_t dealZen(int64_t zen);
+    uint32_t dealAccept(bool yes);
+    void closeDeal() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Deal)}); }
+    // What the realm said of his trades since the desk last took it (What::Deal, his own).
+    std::vector<sim::Happening> takeDealNews() { return std::exchange(dealNews_, {}); }
+    // The player in this world called `name`, by body id, or 0.
+    uint32_t playerNamed(const std::string& name) const;
+    std::vector<sim::Happening> dealNews_;
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.
     int mixAnswer() const { return realm_.mixing() >= 0 ? mixAnswer_ : -1; }
@@ -1433,6 +1453,9 @@ private:
     bool benchName(uint32_t id, std::string* name, bool* bot) const;        // his kit put on in the sim before he was drawn: shown at the first update
     bool benchFight_ = false;
     float benchClock_ = 0.0f;
+    // The bench's trade (walkBench): the tick it last looked, and whether it has put its thing up.
+    int64_t benchDealTick_ = -1;
+    bool benchOffered_ = false;
     bool benchOut_ = false;
     void raiseBench(int column, int row);
     void walkBench(float seconds);

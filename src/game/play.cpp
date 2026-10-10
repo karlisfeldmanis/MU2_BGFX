@@ -325,6 +325,7 @@ void Play::update(double seconds) {
                 if (happening.what == sim::What::Refined) lastRefined_ = &happening;
             }
             if (happening.what == sim::What::Answered) answered(happening);
+            if (happening.what == sim::What::Deal && happening.who == heroId) dealNews_.push_back(happening);
             invasionSaid(happening);
             raidSaid(happening);
             // The marker, off the realm's own word for where the walk ends: `Walked` carries

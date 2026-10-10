@@ -1035,6 +1035,34 @@ void Play::walkBench(float seconds) {
             if (const sim::Body* one = local_.find(benchIds_[i])) row(*one, benchKits_[benchKit_[i]].name, true);
         }
     }
+    // A trade asked of a bench hero is taken as a player at the keys would (local play only): he
+    // says yes, puts the first thing in his bag up, and accepts once you have and the hold is out.
+    if (local_.tick() != benchDealTick_) {
+        benchDealTick_ = local_.tick();
+        const uint32_t you = local_.hero().id;
+        for (const uint32_t id : benchIds_) {
+            if (local_.dealAskedOf(id) == you) {
+                local_.command({.kind = sim::Command::Kind::DealAnswer, .player = id, .a = 1, .target = you});
+                benchOffered_ = false;
+            }
+        }
+        if (const uint32_t with = local_.dealing();
+            with != 0 && std::find(benchIds_.begin(), benchIds_.end(), with) != benchIds_.end()) {
+            if (!benchOffered_) {
+                benchOffered_ = true;
+                if (const sim::Satchel* bag = local_.satchelOf(with)) {
+                    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                        if ((*bag)[slot].empty()) continue;
+                        local_.command({.kind = sim::Command::Kind::DealPut, .player = with, .a = slot, .b = -1});
+                        break;
+                    }
+                }
+            }
+            if (local_.dealAccepted(false) && !local_.dealAccepted(true) && local_.dealHold() == 0) {
+                local_.command({.kind = sim::Command::Kind::DealAccept, .player = with, .a = 1});
+            }
+        }
+    }
     benchClock_ += seconds;
     if (benchFight_) {
         // A party by role (setBench), each told twice a second, as a player at the keys would:

@@ -11709,6 +11709,127 @@ void testParty(const content::Tables& tables) {
     checkEqual(int(realm.quest(quest).counts[0]), 1, "and the kill counts on the wizard's Marlon quest");
 }
 
+// **A trade between two players** (sim/realm_deal.cpp): asked and answered, both offers put up,
+// Accept held after a change and dropped by one, the swap made whole, and a trade shut, walked
+// away from or saved mid-way giving everything back.
+void testDeal(const content::Tables& tables) {
+    std::printf("deal\n");
+    using Kind = sim::Command::Kind;
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, 131, 128, sim::Kin::DarkKnight, 50), "a trading realm raises");
+    const uint32_t a = realm.hero().id;
+    const uint32_t b = realm.join(sim::Kin::FairyElf, 50, 132, 128);
+    check(b != 0, "a second player joins beside him");
+    const int32_t armour = tables.itemNamed("ArmorMale01"), jewel = tables.itemNamed("Jewel01");
+    check(armour >= 0 && jewel >= 0, "an armour and a jewel to trade");
+    const int armourAt = realm.give(armour, -1, 7);
+    realm.earn(500000);
+    const int64_t moneyA = realm.money();
+    realm.lookAs(b);
+    const int jewelAt = realm.give(jewel);
+    realm.earn(1000);
+    const int64_t moneyB = realm.money();
+    realm.lookAs(a);
+    std::vector<sim::Happening> heard;
+    const auto run = [&](sim::Command c) {
+        realm.command(c);
+        realm.step();
+        heard = realm.happenings();
+    };
+    const auto wait = [&](int ticks) {
+        for (int i = 0; i < ticks; ++i) realm.step();
+    };
+    const auto saw = [&](uint32_t to, sim::DealEvent event) {
+        for (const sim::Happening& one : heard) {
+            if (one.what == sim::What::Deal && one.who == to && one.audience == to && one.a == int32_t(event)) return true;
+        }
+        return false;
+    };
+
+    run({.kind = Kind::DealAsk, .player = a, .target = b});
+    check(saw(b, sim::DealEvent::Asked) && saw(a, sim::DealEvent::Asked), "an ask is said to both");
+    realm.lookAs(b);
+    checkEqual(realm.dealAskedBy(), a, "and the one asked holds it");
+    run({.kind = Kind::DealAnswer, .player = b, .a = 1, .target = a});
+    check(saw(a, sim::DealEvent::Opened) && saw(b, sim::DealEvent::Opened), "a yes opens it on both");
+    checkEqual(realm.dealing(), a, "he trades with the asker");
+
+    realm.lookAs(a);
+    run({.kind = Kind::DealPut, .player = a, .a = armourAt, .b = -1});
+    check(!realm.dealOffer(false)[0].empty() && realm.satchel()[armourAt].empty(),
+          "the armour leaves his bag for his box");
+    run({.kind = Kind::DealZen, .player = a, .zen = 200000});
+    checkEqual(realm.dealZenOf(false), 200000, "he puts up 200,000 Zen");
+    realm.lookAs(b);
+    check(realm.dealOffer(true)[0].item == armour && realm.dealZenOf(true) == 200000,
+          "and the other sees his armour and his Zen");
+    run({.kind = Kind::DealZen, .player = b, .zen = 5000});
+    checkEqual(realm.dealZenOf(false), 0, "Zen she does not carry is refused");
+    run({.kind = Kind::DealPut, .player = b, .a = jewelAt, .b = -1});
+    check(!realm.dealOffer(false)[0].empty(), "she puts up the jewel");
+
+    realm.lookAs(a);
+    run({.kind = Kind::DealAccept, .player = a, .a = 1});
+    check(!realm.dealAccepted(false), "Accept is refused while the change is held");
+    wait(int(sim::kDealHoldTicks));
+    run({.kind = Kind::DealAccept, .player = a, .a = 1});
+    check(realm.dealAccepted(false), "and taken once the hold is out");
+    run({.kind = Kind::DealTake, .player = b, .a = 0, .b = -1});
+    check(!realm.dealAccepted(false), "her jewel taken back drops his Accept");
+    realm.lookAs(b);
+    check(!realm.satchel()[jewelAt].empty(), "and it goes back to the slot it came from");
+    run({.kind = Kind::DealPut, .player = b, .a = jewelAt, .b = -1});
+    wait(int(sim::kDealHoldTicks));
+    checkEqual(realm.dealMisfit(true), -1, "the armour fits her bag");
+    realm.command({.kind = Kind::DealAccept, .player = a, .a = 1});
+    realm.command({.kind = Kind::DealAccept, .player = b, .a = 1});
+    realm.step();
+    heard = realm.happenings();
+    check(saw(a, sim::DealEvent::Done) && saw(b, sim::DealEvent::Done), "both accepted: the swap is made");
+    checkEqual(realm.dealing(), 0u, "and the trade is over");
+    checkEqual(realm.money(), moneyB + 200000, "she has his Zen");
+    bool hasArmour = false;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        if (realm.satchel()[slot].item == armour && realm.satchel()[slot].refinement == 7) hasArmour = true;
+    }
+    check(hasArmour, "and his armour +7");
+    realm.lookAs(a);
+    checkEqual(realm.money(), moneyA - 200000, "he paid it");
+    bool hasJewel = false;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) hasJewel = hasJewel || realm.satchel()[slot].item == jewel;
+    check(hasJewel, "and has her jewel");
+
+    // Shut: everything back. And a save taken mid-trade keeps what is in the box.
+    run({.kind = Kind::DealAsk, .player = b, .target = a});
+    run({.kind = Kind::DealAnswer, .player = a, .a = 1, .target = b});
+    realm.lookAs(b);
+    int armourNow = -1;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        if (realm.satchel()[slot].item == armour) armourNow = slot;
+    }
+    run({.kind = Kind::DealPut, .player = b, .a = armourNow, .b = -1});
+    check(realm.satchel()[armourNow].empty(), "the armour in her box");
+    checkEqual(realm.record().slots[armourNow].item, armour, "a save mid-trade writes it in her bag");
+    run({.kind = Kind::Close, .player = b, .a = int(sim::Command::Window::Deal)});
+    check(saw(a, sim::DealEvent::Cancelled) && saw(b, sim::DealEvent::Cancelled), "shut: cancelled for both");
+    checkEqual(realm.satchel()[armourNow].item, armour, "and the armour is back where it was");
+
+    // Walked away from: cancelled at the leash.
+    run({.kind = Kind::DealAsk, .player = b, .target = a});
+    run({.kind = Kind::DealAnswer, .player = a, .a = 1, .target = b});
+    run({.kind = Kind::DealPut, .player = b, .a = armourNow, .b = -1});
+    realm.lookAs(a);
+    realm.setHeroDown(131 + sim::kDealLeash + 4, 128, 1, 0);
+    realm.step();
+    heard = realm.happenings();
+    check(saw(b, sim::DealEvent::Cancelled), "past the leash it closes");
+    realm.lookAs(b);
+    checkEqual(realm.satchel()[armourNow].item, armour, "and her armour comes home");
+    // Asked from afar: refused.
+    run({.kind = Kind::DealAsk, .player = b, .target = a});
+    check(saw(b, sim::DealEvent::Refused), "an ask from beyond reach is refused");
+}
+
 // **Threat** (docs/party.md): a knight with his guard up holds a monster against a wizard of his
 // party dealing three times his damage, and loses it only past the margin.
 void testThreat(const content::Tables& tables) {
@@ -12377,6 +12498,7 @@ int main() {
     testFirecracker(tables);
     testSecondClassDrops();
     testParty(tables);
+    testDeal(tables);
     testThreat(tables);
     testQuestLadder(tables);
     testQuestFirecrackers(tables);

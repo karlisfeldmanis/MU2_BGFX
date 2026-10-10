@@ -518,7 +518,9 @@ HeroRecord Realm::record() const {
         out.mightTicksLeft = hero.mightUntil - tick_;
     }
     for (int i = 0; i < kSkills; ++i) out.coolsLeft[i] = std::max<int64_t>(0, hero.cools[i] - tick_);
-    for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = me().bag[slot];
+    // Mid-trade, with what he has put up back in it (Realm::bagWithOffer).
+    const Satchel bag = bagWithOffer();
+    for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag[slot];
     for (int i = 0; i < kQuests; ++i) out.quests[i] = me().quests[i];
     out.found = me().found;
     if (const Body* summon = summoned(); summon != nullptr && summon->alive()) {
@@ -1080,6 +1082,8 @@ void Realm::step() {
     me_ = 0;
     // The windows' asks first, in the order they came: nothing is decided between ticks.
     applyCommands();
+    // The trades' upkeep: an ask out of time, a trade walked away from or shut by a death.
+    dealTick();
     castleTick();
     squareTick();
     invasionTick();
@@ -1587,6 +1591,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::WentBack:
             std::snprintf(line, sizeof(line), "%6u %s goes back to map %d at %d,%d", happening.tick,
                           who, happening.a, happening.b, happening.c);
+            break;
+        case What::Deal:
+            std::snprintf(line, sizeof(line), "%6u %s trade with %s: event %d, %d, %d", happening.tick,
+                          who, name(happening.whom).c_str(), happening.a, happening.b, happening.c);
             break;
         case What::Answered:
             std::snprintf(line, sizeof(line), "%6u %s answered: command %d gave %d, ticket %u",

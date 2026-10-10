@@ -65,12 +65,14 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     bag_.useTipStage(&tipStagePicture_);
     shelf_.useTipStage(&tipStagePicture_);
     chest_.useTipStage(&tipStagePicture_);
+    deal_.useTipStage(&tipStagePicture_);
     mixer_.useTipStage(&tipStagePicture_);
     questDialog_.useTipStage(&tipStagePicture_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
     chest_.open(interface_, &arts_);
+    deal_.open(interface_, &arts_);
     mixer_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
     questDialog_.open(interface_);
@@ -243,6 +245,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (result.cancel) {
             amount_.hide();
             click();
+        } else if (result.offered) {
+            // His Zen in a trade, which replaces the last; the realm refuses more than he carries.
+            expect(play.dealZen(result.amount), Then::ZenBox);
         } else if (result.amount > 0) {
             // CZenReceiptMsgBoxLayout::ProcessOk: sent, clicked and shut -- or, short, said so.
             const bool deposit = amount_.purpose() == Amount::Purpose::Deposit;
@@ -386,7 +391,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
     const bool windowsOpen =
-        inventoryOpen_ || characterOpen_ || trading_ || banking_ || mixing_ || travel_.up();
+        inventoryOpen_ || characterOpen_ || trading_ || banking_ || mixing_ || dealing_ || travel_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -419,6 +424,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
                 if (mixing_) play.closeMachine();
+                if (dealing_) play.closeDeal();
                 travel_.hide();
                 fanLatched_ = false;
             } else if (!play.targetName().empty()) {
@@ -737,7 +743,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bagForVault_ = !inventoryOpen_;
         inventoryOpen_ = true;
     }
-    if (!banking) amount_.hide();
+    if (!banking && amount_.purpose() != Amount::Purpose::Offer) amount_.hide();
     if (!banking && banking_ && bagForVault_) {
         inventoryOpen_ = false;
         bagForVault_ = false;
@@ -837,6 +843,55 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
 
+    // A trade with another player, as the vault is: it opens the bag beside it and closes the
+    // character window; the realm shuts it when either walks off, and the windows follow.
+    if (play.isOpen()) {
+        play.approachDeal();
+        dealNews(play);
+    }
+    const bool dealing = play.isOpen() && play.realm().dealing() != 0;
+    if (dealing && !dealing_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+        characterOpen_ = false;
+        bagForDeal_ = !inventoryOpen_;
+        inventoryOpen_ = true;
+    }
+    if (!dealing && amount_.purpose() == Amount::Purpose::Offer) amount_.hide();
+    if (!dealing && dealing_ && bagForDeal_) {
+        inventoryOpen_ = false;
+        bagForDeal_ = false;
+    }
+    dealing_ = dealing;
+    if (dealing_) {
+        DealRequests asked;
+        const bool fromBag = inventoryOpen_ && bag_.dragging();
+        deal_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr);
+        std::string name;
+        play.playerName(play.realm().dealing(), &name, nullptr);
+        deal_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(), name, pointer,
+                     shelfStage_, &asked);
+        if (asked.take >= 0) expect(play.dealTake(asked.take, -1), Then::TookOrRefused);
+        // Let go outside: into the bag cell under the pointer, and nowhere else.
+        if (asked.outside >= 0) {
+            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
+            if (slot >= 0) expect(play.dealTake(asked.outside, slot), Then::TookOrRefused);
+            else refused();
+        }
+        if (asked.zen) {
+            amount_.show(Amount::Purpose::Offer, play.realm().dealZenOf(false));
+            click();
+        }
+        if (asked.accept >= 0) expect(play.dealAccept(asked.accept == 1), Then::Click);
+        if (asked.close) {
+            play.closeDeal();
+            click();
+        }
+    } else {
+        deal_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(), std::string(), pointer,
+                     nullptr, nullptr);
+    }
+
     // The bag, in the right-hand column or beside the character window when that is up.
     if (inventoryOpen_ && play.isOpen()) {
         BagRequests asked;
@@ -857,6 +912,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
         if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
             expect(play.putIn(asked.use, -1), Then::TookOrRefused);
+        } else if (asked.use >= 0 && dealing_ && sim::baggable(asked.use)) {
+            // In a trade a right-click puts it up, as at the machine.
+            expect(play.dealPut(asked.use, -1), Then::TookOrRefused);
         } else if (asked.use >= 0) {
             expect(play.useItem(asked.use), Then::Refused);
         }
@@ -884,6 +942,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // Into the vault cell under the pointer; over the foot or the head, the first cell
             // it fits in.
             expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY)),
+                   Then::TookOrRefused);
+        } else if (asked.outside >= 0 && dealing_ && deal_.covers(asked.outsideX, asked.outsideY)) {
+            // Into his own box, at the cell under the pointer or the first it fits.
+            expect(play.dealPut(asked.outside, deal_.cellUnder(asked.outsideX, asked.outsideY)),
                    Then::TookOrRefused);
         } else if (asked.outside >= 0 && mixing_ &&
                    mixer_.covers(asked.outsideX, asked.outsideY)) {
@@ -952,7 +1014,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
                     (banking_ && (chest_.covers(pointer.x, pointer.y) || chest_.dragging())) ||
-                    (mixing_ && (mixer_.covers(pointer.x, pointer.y) || mixer_.dragging()));
+                    (mixing_ && (mixer_.covers(pointer.x, pointer.y) || mixer_.dragging())) ||
+                    (dealing_ && (deal_.covers(pointer.x, pointer.y) || deal_.dragging()));
 
     // The pointer, drawn last of all: MU2's Pointer.Show and Step in one call. The flags are
     // last frame's raycast (Play::point runs after this, on the same frame it is drawn), which
@@ -1635,6 +1698,62 @@ static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one) {
     return tip::colourOf(qualityOf(tables.items[size_t(one.what.item)], one.what));
 }
 
+// The realm's word on his trades, as lines in the chat and an ask on its card: MU's trade
+// results said in the system log (CNewUITrade::ProcessToReceiveTradeResult).
+void Desk::dealNews(Play& play) {
+    for (const sim::Happening& said : play.takeDealNews()) {
+        std::string name;
+        if (!play.playerName(said.whom, &name, nullptr) || name.empty()) name = "They";
+        const auto why = [](int32_t b) -> std::string {
+            switch (sim::DealWhy(b)) {
+                case sim::DealWhy::Busy: return "busy";
+                case sim::DealWhy::Far: return "too far away";
+                case sim::DealWhy::Dead: return "dead";
+                case sim::DealWhy::Here: return "not allowed here";
+                case sim::DealWhy::Gone: return "gone";
+                case sim::DealWhy::Closed: return "closed";
+                case sim::DealWhy::Zen: return "short of the Zen offered";
+                default: return "not possible";
+            }
+        };
+        switch (sim::DealEvent(said.a)) {
+            case sim::DealEvent::Asked:
+                // Said to both: the one asked holds the ask.
+                if (play.realm().dealAskedBy() == said.whom) {
+                    chat_.askedToTrade(name, said.whom);
+                    play.ui(Play::Ui::Opened);
+                } else {
+                    chat_.notice("You asked " + name + " to trade.");
+                }
+                break;
+            case sim::DealEvent::Refused:
+                chat_.notice(sim::DealWhy(said.b) == sim::DealWhy::Here ? std::string("You cannot trade here.")
+                             : sim::DealWhy(said.b) == sim::DealWhy::Nobody ? std::string("There is no one to trade with.")
+                             : "Trade refused: " + why(said.b) + ".");
+                play.ui(Play::Ui::Refused);
+                break;
+            case sim::DealEvent::Declined:
+                chat_.notice(said.b == 1 ? name + " did not answer." : name + " declined to trade.");
+                break;
+            case sim::DealEvent::Opened: chat_.notice("Trading with " + name + "."); break;
+            case sim::DealEvent::Cancelled: chat_.notice("The trade with " + name + " was cancelled (" + why(said.b) + ")."); break;
+            case sim::DealEvent::NoRoom:
+                chat_.notice(said.b == 1 ? std::string("No room in your bag for the trade.")
+                                         : name + " has no room for the trade.");
+                play.ui(Play::Ui::Refused);
+                break;
+            case sim::DealEvent::Done: {
+                std::string got;
+                if (said.b > 0) got = std::to_string(said.b) + (said.b == 1 ? " item" : " items");
+                if (said.c > 0) got += (got.empty() ? "" : " and ") + panel::commas(said.c) + " Zen";
+                chat_.notice("Traded with " + name + (got.empty() ? std::string(".") : ": you got " + got + "."));
+                play.ui(Play::Ui::Took);
+                break;
+            }
+        }
+    }
+}
+
 void Desk::labelGround(const Play& play, int width, int height) {
     play.dropsOnScreen(viewProj_, width, height, onScreen_);
     const uint32_t lit = play.pointedLying();
@@ -1875,7 +1994,7 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
     const float pixelsPerUnit = panel::scale();
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
-    if (trading_ || banking_ || mixing_) {
+    if (trading_ || banking_ || mixing_ || dealing_) {
         shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     }
     // The quest giver's rewards on the same stage, which is free whenever he is (no counter).
@@ -1946,7 +2065,10 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (banking_ && !vaultOnTop) interface_.add(chest_.canvas());
     const bool machineOnTop = mixing_ && mixer_.dragging();
     if (mixing_ && !machineOnTop) interface_.add(mixer_.canvas());
+    const bool dealOnTop = dealing_ && deal_.dragging();
+    if (dealing_ && !dealOnTop) interface_.add(deal_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());
+    if (dealOnTop) interface_.add(deal_.canvas());
     if (vaultOnTop) interface_.add(chest_.canvas());
     if (machineOnTop) interface_.add(mixer_.canvas());
     // The worn-gear warning hangs left of the windows and so never lies under one; over them,
@@ -1957,6 +2079,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(hud_.tipCanvas());
     if (trading_) interface_.add(shelf_.tipCanvas());
     if (banking_) interface_.add(chest_.tipCanvas());
+    if (dealing_) interface_.add(deal_.tipCanvas());
     if (mixing_) interface_.add(mixer_.tipCanvas());
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());

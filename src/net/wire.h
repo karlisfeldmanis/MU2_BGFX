@@ -82,7 +82,9 @@ namespace mu::net {
 // 16: the party (docs/party.md): a PartyAsk up and a PartyState down, and the realm's
 //     Command::Kind::PartySet and Body::party (snapshot shape 2).
 // 17: a Kept carries the perch he sat or leant on (layout 6).
-constexpr uint32_t kVersion = 17;
+// 18: the trade between players (sim/realm_deal.cpp): Command::Kind::DealAsk and its fellows, and
+//     a Player's trade in the snapshot (shape 4).
+constexpr uint32_t kVersion = 18;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store

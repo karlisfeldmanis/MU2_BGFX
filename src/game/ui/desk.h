@@ -18,6 +18,7 @@
 #include "game/ui/card.h"
 #include "game/ui/chat.h"
 #include "game/ui/chest.h"
+#include "game/ui/deal.h"
 #include "game/ui/mixer.h"
 #include "game/ui/endurance.h"
 #include "game/ui/go_back.h"
@@ -234,6 +235,9 @@ private:
     Bag bag_;
     Shelf shelf_;
     Chest chest_;
+    // A trade with another player (game/ui/deal.h), which borrows the shelf's stage as the vault
+    // does: a counter, the vault and a trade are never open together (the realm cancels it).
+    Deal deal_;
     // The Chaos Goblin's machine (game/ui/mixer.h), which borrows the shelf's stage as the vault
     // does: the two are never open together.
     Mixer mixer_;
@@ -332,6 +336,10 @@ private:
     // together, since each is closed by any order and opened by one.
     bool banking_ = false;
     bool bagForVault_ = false;
+    bool dealing_ = false;
+    bool bagForDeal_ = false;
+    // The trade news said and not yet put in the chat (Play::takeDealNews).
+    void dealNews(Play& play);
     // The four potion keys' bindings, as MU's item row. The interface's; game/save.cpp writes
     // them (mu.db's character_hotkeys is where MU2 kept them).
     int32_t quick_[Hud::kQuickKeys] = {-1, -1, -1, -1, -1};

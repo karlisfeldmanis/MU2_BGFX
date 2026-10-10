@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdlib>
 
 #include "core/files.h"
 #include "core/log.h"
@@ -415,6 +416,72 @@ uint32_t Play::mix(sim::Service service, int socket) {
     return send({.kind = sim::Command::Kind::Mix, .a = socket, .service = service});
 }
 
+namespace {
+int apart(const sim::Body& a, const sim::Body& b) {
+    return std::max(std::abs(a.column() - b.column()), std::abs(a.row() - b.row()));
+}
+}  // namespace
+
+uint32_t Play::dealAsk(uint32_t body) {
+    const sim::Body* him = realm_.find(body);
+    if (him != nullptr && apart(*him, realm_.hero()) > sim::kDealReach) {
+        dealApproach_ = body;
+        dealApproachUntil_ = realm_.tick() + 10 * 20;
+        orderHero({.kind = sim::Request::Kind::WalkTo, .column = him->column(), .row = him->row()});
+        return 0;
+    }
+    dealApproach_ = 0;
+    return send({.kind = sim::Command::Kind::DealAsk, .target = body});
+}
+
+void Play::approachDeal() {
+    if (dealApproach_ == 0) return;
+    const sim::Body* him = realm_.find(dealApproach_);
+    if (him == nullptr || him->gone || realm_.tick() > dealApproachUntil_ || realm_.dealing() != 0) {
+        dealApproach_ = 0;
+        return;
+    }
+    if (apart(*him, realm_.hero()) > sim::kDealReach) return;
+    const uint32_t whom = dealApproach_;
+    dealApproach_ = 0;
+    orderHero({.kind = sim::Request::Kind::Stop});
+    send({.kind = sim::Command::Kind::DealAsk, .target = whom});
+}
+
+uint32_t Play::dealAnswer(uint32_t asker, bool yes) {
+    return send({.kind = sim::Command::Kind::DealAnswer, .a = yes ? 1 : 0, .target = asker});
+}
+
+uint32_t Play::dealPut(int bagSlot, int cell) {
+    return send({.kind = sim::Command::Kind::DealPut, .a = bagSlot, .b = cell});
+}
+
+uint32_t Play::dealTake(int cell, int bagSlot) {
+    return send({.kind = sim::Command::Kind::DealTake, .a = cell, .b = bagSlot});
+}
+
+uint32_t Play::dealZen(int64_t zen) {
+    return send({.kind = sim::Command::Kind::DealZen, .zen = zen});
+}
+
+uint32_t Play::dealAccept(bool yes) {
+    return send({.kind = sim::Command::Kind::DealAccept, .a = yes ? 1 : 0});
+}
+
+uint32_t Play::playerNamed(const std::string& name) const {
+    if (name.empty()) return 0;
+    for (const sim::Body& one : realm_.bodies()) {
+        if (!one.player || one.gone || one.id == realm_.hero().id) continue;
+        std::string his;
+        if (playerName(one.id, &his, nullptr) && his.size() == name.size() &&
+            std::equal(his.begin(), his.end(), name.begin(),
+                       [](char a, char b) { return std::tolower(uint8_t(a)) == std::tolower(uint8_t(b)); })) {
+            return one.id;
+        }
+    }
+    return 0;
+}
+
 uint32_t Play::depositZen(int64_t zen) {
     return send({.kind = sim::Command::Kind::DepositZen, .zen = zen});
 }
@@ -704,6 +771,15 @@ void Play::answered(const sim::Happening& said) {
             break;
         case Kind::ClaimSquare:
             core::logf("event: Claim on Devil Square's result -- %s", ok ? "to Noria" : "refused");
+            break;
+        case Kind::DealAsk:
+        case Kind::DealAnswer:
+        case Kind::DealPut:
+        case Kind::DealTake:
+        case Kind::DealZen:
+        case Kind::DealAccept:
+            core::logf("trade: command %d %s (%d)", int(asked.kind), ok ? "taken" : "refused", said.b);
+            if (ok && (asked.kind == Kind::DealPut || asked.kind == Kind::DealTake)) sound_.play(heard_.take);
             break;
         // Sent with no ticket and never answered: the walk, the swing and the window are the answer.
         case Kind::Order:

@@ -151,6 +151,7 @@ add_library(mu_sim STATIC
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_machine.cpp
+  src/sim/realm_deal.cpp
   src/sim/realm_quests.cpp
   src/sim/realm_commands.cpp
   src/sim/cradle.cpp
@@ -350,6 +351,7 @@ add_library(mu_game STATIC
   src/game/ui/bag.cpp
   src/game/ui/shelf.cpp
   src/game/ui/chest.cpp
+  src/game/ui/deal.cpp
   src/game/ui/mixer.cpp
   src/game/ui/amount.cpp
   src/game/ui/square_result.cpp

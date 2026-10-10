@@ -145,7 +145,45 @@ enum class What : uint8_t {
                // gone, so every id and index after it holds; nothing draws it again.
     WentBack,  // Go Back! to another map (Realm::goBack): a: its map number, b: the column, c: the
                // row. He is stopped where he is; changing the map is the game's, as a gate's.
+    Deal,      // a trade between two players (sim/realm_deal.cpp): a: a DealEvent, b and c as it
+               // says. `who` is the one it is said to, `whom` the other; for him alone.
 };
+
+// What a trade between two players did (What::Deal). MU's trade packets 0x36-0x3D in one.
+enum class DealEvent : int32_t {
+    Asked = 0,      // whom asked him to trade (said to the one asked, and to the asker)
+    Refused = 1,    // his ask refused: b a DealWhy. whom: the one he asked
+    Declined = 2,   // whom said no, or did not answer in time (b: 1)
+    Opened = 3,     // the window opens on both: whom is the other
+    Cancelled = 4,  // it closed with nothing swapped: b a DealWhy
+    Done = 5,       // swapped: b the things he got, c the Zen he got
+    NoRoom = 6,     // both accepted and one bag had no room: both accepts dropped. b: 1 his own bag
+};
+// Why a trade was refused or cancelled.
+enum class DealWhy : int32_t {
+    None = 0,
+    Busy = 1,      // one of them has another window open, or is in a trade or asked to one
+    Far = 2,       // farther apart than kDealReach (asking), kDealLeash (trading)
+    Dead = 3,
+    Here = 4,      // an event map: Blood Castle, Devil Square (WebZen's CGTradeRequestSend)
+    Gone = 5,      // the other left the world
+    Closed = 6,    // one of them shut the window
+    Zen = 7,       // one no longer carries the Zen he offered
+    Nobody = 8,    // not a player, or himself
+};
+// How near two players must stand to trade: WebZen's answer asks two tiles each way
+// (CGTradeResponseRecv); **ours** is three, so a click-to-walk that stops a tile short still counts.
+constexpr int kDealReach = 3;
+// And how far apart they may drift once it is open before it closes: **ours** (WebZen closes it
+// when one leaves the other's view).
+constexpr int kDealLeash = 6;
+// How long an ask stands unanswered: **ours**, as the party invite's card (MU's box waits).
+constexpr int64_t kDealAskTicks = 20 * 20;
+// After any change to either offer, how long before Accept is taken again: three seconds. MuMain
+// greys its OK for 150 frames (CNewUITrade, m_nMyTradeWait); the user's pick of 2026-10-10.
+constexpr int64_t kDealHoldTicks = 3 * 20;
+// The most Zen one side may put up: CGTradeMoneyRecv's 100,000,000.
+constexpr int64_t kDealMostZen = 100000000;
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
 
@@ -1002,6 +1040,44 @@ public:
     void closeVault() { me().banking = -1; }
     const Vault& vault() const { return me().vault; }
 
+    // ---- a trade between two players (sim/realm_deal.cpp) ---------------------------------
+    // MU's trade (CNewUITrade; WebZen's CGTradeRequestSend and gObjTradeOkButton), kept in the
+    // realm: both offers are realm state, so every mirror sees them and a bot trades as a player.
+    // Each ask is a Command and its answer a What::Deal. Asked within kDealReach, answered within
+    // it too; then each side puts things from his bag in an eight by four box and names a sum of
+    // Zen, and the swap is made the tick both have accepted -- every thing into the other's bag,
+    // or nothing. Any change to either offer drops both accepts, and Accept waits kDealHoldTicks.
+    // Walking past kDealLeash, dying, leaving, another window opening or Close cancels it, and
+    // each thing goes back to the bag slot it came from.
+    bool dealAsk(uint32_t whom);
+    bool dealAnswer(uint32_t asker, bool yes);
+    int dealPut(int bagSlot, int cell);
+    int dealTake(int cell, int bagSlot);
+    bool dealZen(int64_t zen);
+    bool dealAccept(bool yes);
+    void closeDeal();
+    // The other player's body id while a trade is open, else 0.
+    uint32_t dealing() const { return me().dealing; }
+    // Who asks him to trade now, else 0 -- the card's -- and the ticks left to answer.
+    uint32_t dealAskedBy() const { return me().askedUntil > tick_ ? me().askedBy : 0; }
+    int64_t dealAskTicks() const { return std::max<int64_t>(0, me().askedUntil - tick_); }
+    // Who asks player `id` to trade now, else 0: the bench's, which answers for its players.
+    uint32_t dealAskedOf(uint32_t id) const {
+        const int at = playerOfId(id);
+        return at < 0 || heroes_[size_t(at)].askedUntil <= tick_ ? 0 : heroes_[size_t(at)].askedBy;
+    }
+    // Either side's offer, his own or the other's (`theirs`); empty when no trade is open.
+    const Machine& dealOffer(bool theirs) const;
+    int64_t dealZenOf(bool theirs) const;
+    bool dealAccepted(bool theirs) const;
+    // The ticks before Accept is taken again, 0 when it is.
+    int64_t dealHold() const { return std::max<int64_t>(0, me().holdUntil - tick_); }
+    // Moved by any change to either offer or either Accept: the window redraws on it.
+    uint32_t dealVersion() const { return me().dealVersion; }
+    // The cell of the first thing in one side's offer the other side's bag has no room for, or
+    // -1 when all of it fits: `theirs` asks whether what he gets fits his own bag.
+    int dealMisfit(bool theirs) const;
+
     // ---- the Chaos Machine (sim/machine.h) -------------------------------------------------
     // The Chaos Goblin's box, opened by a Talk order arriving within `kCounter` of him and
     // closed by any other order, as the vault is. The townsperson's index, or -1.
@@ -1575,6 +1651,18 @@ private:
     bool armed(const Body& hero, const SkillRow& row) const;
     // A thing laid at his feet as `discard` lays it: the clearing, the linger, What::Dropped.
     uint32_t throwDown(const Body& hero, const Held& what);
+    // The trade's own (sim/realm_deal.cpp): its upkeep each tick, a change seen by both sides, the
+    // cancel, the swap, what the other is to it, and his offer put back where it came from.
+    void dealTick();
+    void dealChanged();
+    void dealCancel(size_t one, DealWhy why);
+    void dealSwap();
+    int dealPartner(size_t one) const;
+    DealWhy dealBusy(size_t one) const;
+    void sayDeal(size_t to, DealEvent event, uint32_t whom, int32_t b = 0, int32_t c = 0);
+    // His bag with his offer back in it, as a save writes him mid-trade: a connection lost then
+    // loses nothing.
+    Satchel bagWithOffer() const;
     void dropBlow(Body& hero) { hero.blowAt = 0; hero.blowTarget = 0; hero.blowGround = false; }
     // A skill thrown, with the refusals in OpenMU's own order. False and silent for each.
     bool throwSkill(Body& hero, const SkillRow& row, uint32_t at);
@@ -2140,6 +2228,19 @@ private:
         bool squarePaid = false;
         bool squareClaimOwed = false;
         int angeling = -1;     // see angeling()
+        // A trade with another player (sim/realm_deal.cpp): the other's body id while it is
+        // open, 0 for none; who asked him and until when; what he puts up -- the machine's eight
+        // by four, each thing with the bag slot it came from -- and his Zen; his Accept; the tick
+        // Accept is taken again after a change; and a count both sides share, moved by each change.
+        uint32_t dealing = 0;
+        uint32_t askedBy = 0;
+        int64_t askedUntil = 0;
+        Machine offer;
+        int8_t offerFrom[kMachineCells] = {};
+        int64_t offerZen = 0;
+        bool accepted = false;
+        int64_t holdUntil = 0;
+        uint32_t dealVersion = 0;
         bool staffOwed = false;
         bool claimOwed = false;
         Machine machine;

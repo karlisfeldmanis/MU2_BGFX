@@ -62,6 +62,8 @@ constexpr size_t kKept = 400;  // lines kept, oldest dropped
 // its fade in and out, and how far its foot stands over the chat's own foot -- above where a
 // fight's Zen is said (game/ui/tally.cpp, kZenAboveHud).
 constexpr float kInviteLife = 60.0f, kInviteIn = 0.15f, kInviteOut = 1.0f;
+// A trade's ask stands as long as the realm holds it (sim::kDealAskTicks).
+constexpr float kTradeLife = float(sim::kDealAskTicks) / 20.0f;
 constexpr float kInviteAbove = 44.0f, kInviteWide = 440.0f, kInviteTall = 118.0f;
 
 // A line in a face over its drop, the drop faded with the ink; its advance.
@@ -160,6 +162,16 @@ void Chat::system(net::Channel channel, const std::string& text) {
     line.channel = channel;
     line.text = text;
     hear(line);
+}
+
+void Chat::askedToTrade(const std::string& name, uint32_t who) {
+    Line line;
+    line.channel = net::Channel::Server;
+    line.inviter = name.empty() ? std::string("Someone") : name;
+    line.text = line.inviter + " wants to trade with you.";
+    line.trader = who;
+    log_.push_back(line);
+    if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
 }
 
 void Chat::hear(const net::Heard& heard) {
@@ -277,6 +289,20 @@ void Chat::send(Play& play) {
             }
             channel = net::Channel::Whisper;
             to = lastFrom_;
+        } else if (command == "trade") {
+            // A trade asked by name (sim/realm_deal.cpp): he must be on this map and near.
+            const std::string name = rest.substr(0, rest.find(' '));
+            if (name.empty()) {
+                system(net::Channel::Server, "/trade whom? Add a name.");
+                return;
+            }
+            const uint32_t whom = play.playerNamed(name);
+            if (whom == 0) {
+                system(net::Channel::Server, name + " is not here.");
+                return;
+            }
+            play.dealAsk(whom);
+            return;
         } else if (command == "invite" || command == "leave" || command == "kick" || command == "accept" ||
                    command == "decline" || command == "promote") {
             // The party's asks (docs/party.md): the server answers on the Party channel.
@@ -336,10 +362,15 @@ void Chat::answer(Play& play, long index, const std::string& name, bool accept) 
             }
         }
     }
+    if (index >= 0) log_[size_t(index)].answer = accept ? 1 : -1;
+    // A trade's ask is the realm's to answer, not the server's party.
+    if (index >= 0 && log_[size_t(index)].trader != 0) {
+        play.dealAnswer(log_[size_t(index)].trader, accept);
+        return;
+    }
     net::PartyAsk asked;
     asked.what = accept ? net::PartyWhat::Accept : net::PartyWhat::Decline;
     asked.name = index >= 0 ? log_[size_t(index)].inviter : name;
-    if (index >= 0) log_[size_t(index)].answer = accept ? 1 : -1;
     play.askParty(asked);
 }
 
@@ -806,7 +837,9 @@ void Chat::build(float u, const Pointer& pointer) {
 long Chat::pendingInvite() const {
     for (size_t i = log_.size(); i-- > 0;) {
         const Line& line = log_[i];
-        if (!line.inviter.empty() && line.answer == 0 && line.age < kInviteLife) return long(i);
+        if (!line.inviter.empty() && line.answer == 0 && line.age < (line.trader != 0 ? kTradeLife : kInviteLife)) {
+            return long(i);
+        }
     }
     return -1;
 }
@@ -817,8 +850,8 @@ void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointe
     const long index = pendingInvite();
     if (index < 0) return;
     const Line& line = log_[size_t(index)];
-    const float alpha = std::min(line.age / kInviteIn, 1.0f) *
-                        std::clamp((kInviteLife - line.age) / kInviteOut, 0.0f, 1.0f);
+    const float life = line.trader != 0 ? kTradeLife : kInviteLife;
+    const float alpha = std::min(line.age / kInviteIn, 1.0f) * std::clamp((life - line.age) / kInviteOut, 0.0f, 1.0f);
     const Box& card = inviteCard_;
     // The arrival's soft cloud, a Gaussian each way about the card: no edge anywhere.
     const float sx = card.w * 0.42f, sy = card.h * 0.55f;
@@ -836,11 +869,11 @@ void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointe
         }
     }
     // "Party", the question, and the two answers.
-    const std::string kicker = "Party";
+    const std::string kicker = line.trader != 0 ? "Trade" : "Party";
     word(inviteDrawn_, card.midX() - wordWidth(kTag * u, kicker) * 0.5f, card.y + 18.0f * u, kTag * u,
          faded(kPartyInk, alpha), kicker, u);
     // The asker's name in the players' green, the rest in bone, the whole centred.
-    const std::string asks = " invites you to a party.";
+    const std::string asks = line.trader != 0 ? " wants to trade with you." : " invites you to a party.";
     const float wide = bodyWidth(21.0f * u, line.inviter) + bodyWidth(21.0f * u, asks);
     const float qx = card.midX() - wide * 0.5f;
     const float named = body(inviteDrawn_, qx, card.y + 50.0f * u, 21.0f * u, faded(kInviterInk, alpha), line.inviter, u);

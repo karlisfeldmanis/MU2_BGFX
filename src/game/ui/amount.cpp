@@ -46,6 +46,7 @@ Box placed(float x, float y, const Box& b, float u) {
 }
 
 const char* askingFor(Amount::Purpose purpose) {
+    if (purpose == Amount::Purpose::Offer) return "Enter the Zen you offer. Nothing takes it back.";
     return purpose == Amount::Purpose::Deposit ? "Enter the amount of Zen you would like to deposit."
                                                : "Enter the amount of Zen you would like to withdraw.";
 }
@@ -57,10 +58,11 @@ void Amount::open(const gfx::Interface& interface, panel::Arts* arts) {
     arts_ = arts;
 }
 
-void Amount::show(Purpose purpose) {
+void Amount::show(Purpose purpose, int64_t start) {
     up_ = true;
     purpose_ = purpose;
     digits_.clear();
+    if (start > 0) digits_ = std::to_string(start);
     short_ = false;
     clock_ = 0.0f;
     over_ = pressing_ = -1;
@@ -117,6 +119,9 @@ void Amount::update(float seconds, float width, float height, const Pointer& poi
                 out->cancel = true;
             } else if (ok && !digits_.empty()) {
                 out->amount = std::atoll(digits_.c_str());
+                out->offered = purpose_ == Purpose::Offer;
+            } else if (ok && purpose_ == Purpose::Offer) {
+                out->offered = true;
             }
         }
     }
@@ -150,7 +155,7 @@ void Amount::rebuild() {
     // Dims what is behind it a little, as a box that has to be answered does.
     canvas_.rect({0.0f, 0.0f, 1e5f, 1e5f}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.25f));
     controls::frame(canvas_, placed(x, y, {0.0f, 0.0f, kWide, kTall}, u), u,
-                    purpose_ == Purpose::Deposit ? "Deposit" : "Withdraw");
+                    purpose_ == Purpose::Deposit ? "Deposit" : purpose_ == Purpose::Offer ? "Offer Zen" : "Withdraw");
 
     // Each control's hover, smoothstepped, so the lift eases in and settles.
     const auto state = [&](int which, bool off) {
@@ -181,7 +186,7 @@ void Amount::rebuild() {
     controls::button(canvas_, placed(x, y, buttonBox(1), u), kButtonWord[1],
                      controls::Kind::Secondary, state(1, false), u);
     controls::button(canvas_, placed(x, y, buttonBox(0), u), kButtonWord[0],
-                     controls::Kind::Primary, state(0, digits_.empty()), u);
+                     controls::Kind::Primary, state(0, digits_.empty() && purpose_ != Purpose::Offer), u);
 }
 
 }  // namespace mu::game

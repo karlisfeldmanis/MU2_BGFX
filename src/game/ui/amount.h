@@ -29,15 +29,18 @@ namespace mu::game {
 
 class Amount {
 public:
-    enum class Purpose : uint8_t { Deposit, Withdraw };
+    // Offer: his Zen in a trade (game/ui/deal.h), which replaces the last; it opens on the sum
+    // already offered, and an OK on nothing takes it back.
+    enum class Purpose : uint8_t { Deposit, Withdraw, Offer };
     struct Result {
         bool cancel = false;
         int64_t amount = 0;  // a sum confirmed, or 0 for nothing this frame
+        bool offered = false;  // an Offer's OK, whatever its sum: 0 is a sum there
     };
 
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
-    void show(Purpose purpose);
+    void show(Purpose purpose, int64_t start = 0);
     void hide() { up_ = false; }
     bool up() const { return up_; }
     Purpose purpose() const { return purpose_; }

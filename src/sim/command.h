@@ -80,9 +80,22 @@ struct Command {
         PartySet,
         // Devil Square's Claim on the result (Realm::claimSquare).
         ClaimSquare,
+        // **A trade between two players** (Realm::dealAsk and the rest, sim/realm_deal.cpp): MU's
+        // CNewUITrade, kept in the realm so every mirror sees both offers.
+        DealAsk,     // target: the player asked
+        DealAnswer,  // a: 1 yes, 0 no; target: who asked, 0 for whoever asked last
+        DealPut,     // a: the bag slot, b: the box cell or -1 for the first it fits
+        DealTake,    // a: the box cell, b: the bag slot or -1 for where it came from
+        DealZen,     // zen: the whole sum offered, which replaces the last
+        DealAccept,  // a: 1 accept, 0 take it back
     };
+    // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
+    // every kind added at the end.
+    static constexpr Kind kLastKind = Kind::DealAccept;
     // Close's a.
-    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel };
+    // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
+    // two players, which closing cancels for both.
+    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel, Deal };
     Kind kind = Kind::None;
     // Who asks: a player's body id. 0 is the one hero this realm has until phase 2.
     uint32_t player = 0;
