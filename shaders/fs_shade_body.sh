@@ -13,6 +13,10 @@
 #include "shine.sh"
 
 uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes through it, or 0
+uniform vec4 u_weather;       // x: the sheet's weathering, 0 off. See below
+// The weathering's noise, made by Renderer::init: r blotches a metre or two across and a
+// another of them, g half a metre, b a few centimetres; repeating every 8 m of world.
+SAMPLER2D(s_weather, 12);
 
 // The reflection probe, sprint 8c. x: 1 when a prefiltered cube is bound, 0 inside the probe's
 // own faces and wherever there is none, which take the closed-form sky  y: its last mip
@@ -35,7 +39,8 @@ void main()
 	// Times MU's own baked light at the tile this instance stands on. The land carries the
 	// same thing per vertex in its COLOR_0, so without this the town stands brighter than
 	// the ground it stands on, and MU's painted dusk stops at the foot of every wall.
-	vec3 albedo = albedoTex.rgb * v_light.rgb;
+	vec3 paint = albedoTex.rgb;
+	vec3 albedo = paint * v_light.rgb;
 
 	vec3 v = normalize(u_camPos.xyz - v_wpos);
 
@@ -45,8 +50,12 @@ void main()
 	vec3 ng = normalize(v_normal);
 	// y is two flags: 1 two-sided, 2 calibrated. See the renderer.
 	// y: 1 two-sided, 2 calibrated, 4 soft alpha (content::Material::softAlpha).
-	float soft = step(3.5, MATERIAL.y);
-	float flagsLow = MATERIAL.y - 4.0 * soft;
+	// And a fraction, a sixteenth a weathering kind (content::Material::weathering), which the
+	// whole-number flags are read without.
+	float flags = floor(MATERIAL.y + 0.01);
+	float weathered = floor((MATERIAL.y - flags) * 16.0 + 0.5);
+	float soft = step(3.5, flags);
+	float flagsLow = flags - 4.0 * soft;
 	float calibrated = step(1.5, flagsLow);
 	float twoSided = flagsLow - 2.0 * calibrated;
 	// Which side is facing the eye is decided by the TRIANGLE, not by the smoothed normal. 62 of
@@ -69,6 +78,57 @@ void main()
 		ng = normalize(mix(face, ng, smoothstep(0.1, 0.35, abs(along))));
 	}
 
+	// Weathering, wood and stone only (ours, 2026-10-11). At the game's 9.5 m a pixel is about
+	// 9 mm and MU's upscaled sheets are already finer than that, so what reads as a picture of
+	// timber rather than timber is not the grain but its sameness: one sheet repeating every
+	// metre or so, the top of a block wearing what its sides wear. So this works at that scale.
+	// Broad patches over the world, lighter and darker, rougher and smoother; wood's upward
+	// faces bleached towards silver grey, stone's carrying the world's dust (u_dust, the sheet's
+	// own colour); rain streaks down stone and plaster walls. Which slots weather, and how, is
+	// `weathered` above: 1 wood, 2 stone, 3 plaster, from the recipe through the cook; items
+	// and figures are 0 and untouched. World space, projected along the face's main axis.
+	float roughShift = 0.0;
+	float matte = 0.0;
+	if (weathered > 0.5 && u_weather.x > 0.0)
+	{
+		// Up to twice the sheet's 1, for looking; past that the blends below run out of range.
+		float w = min(u_weather.x, 2.0);
+		vec3 an = abs(ng);
+		vec2 across = an.x > an.z ? v_wpos.zy : v_wpos.xy;
+		vec2 plane = an.y > max(an.x, an.z) ? v_wpos.xz : across;
+		vec4 wear = texture2D(s_weather, plane * 0.125);
+		float blotch = wear.r * 0.65 + wear.g * 0.35;
+		float grey = dot(paint, vec3(0.299, 0.587, 0.114));
+		paint *= 1.0 + (blotch - 0.5) * 0.3 * w;
+		roughShift += (blotch - 0.5) * 0.12 * w;
+		float facingUp = smoothstep(0.55, 0.9, ng.y);
+		if (weathered < 1.5)
+		{
+			// Sun and rain take a board's colour off the top first, towards a silver grey a
+			// shade paler than the paint.
+			float bleach = min(facingUp * smoothstep(0.3, 0.75, wear.a) * 0.4 * w, 0.6);
+			paint = mix(paint, vec3(0.95, 0.97, 1.0) * (grey * 1.1), bleach);
+			roughShift += 0.1 * bleach;
+		}
+		else
+		{
+			// The world's dust in its hue at the paint's own brightness, a touch lifted: a pale
+			// target washed MU's painted steps out to chalk (2026-10-11, 147,114 at noon).
+			float dust = min(facingUp * smoothstep(0.35, 0.85, wear.a) * 0.3 * w, 0.4);
+			vec3 dustHue = u_dust.rgb / max(dot(u_dust.rgb, vec3(0.299, 0.587, 0.114)), 1e-3);
+			paint = mix(paint, dustHue * (grey * 1.08), dust);
+			roughShift += 0.12 * dust;
+			// Streaks: the half-metre noise stretched 12 times down the wall, so a streak is a
+			// hand wide and a metre or two long, on faces that stand.
+			float standing = 1.0 - smoothstep(0.3, 0.6, an.y);
+			float rain = texture2D(s_weather, vec2(across.x * 0.5, across.y * 0.04)).g;
+			float streak = smoothstep(0.5, 0.8, rain);
+			paint *= 1.0 - standing * streak * (weathered > 2.5 ? 0.22 : 0.14) * w;
+		}
+		matte = min(w, 1.0);
+	}
+	albedo = paint * v_light.rgb;
+
 	// Tangent frame, then the normal map. The bitangent's sign is glTF's w.
 	vec3 t = normalize(v_tangent.xyz - ng * dot(ng, v_tangent.xyz));
 	vec3 b = cross(ng, t) * v_tangent.w;
@@ -90,7 +150,7 @@ void main()
 	// Read the map alone and all 195 shade at roughness 1.
 	vec3 orm = materialSample(s_orm, v_texcoord0).rgb;
 	float ao = orm.r;
-	float roughness = clamp(orm.g * MATERIAL.z, 0.04, 1.0);
+	float roughness = clamp(orm.g * MATERIAL.z + roughShift, 0.04, 1.0);
 	float metal = orm.b * MATERIAL.w;
 
 	// Specular anti-aliasing (Tokuyoshi and Kaplanyan, "Improved Geometric Specular
@@ -190,6 +250,17 @@ void main()
 		float g = geometrySmith(ndotv, ndotl, roughness);
 		vec3 spec = f * d * g / max(4.0 * ndotv * ndotl, 1e-5) * energy;
 		vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
+		// A weathered surface takes Burley's diffuse ("Physically Based Shading at Disney",
+		// 2012) for Lambert's: a rough face is brighter with the sun behind the eye and
+		// darker at a graze, which is what reads as chalky stone and dry boards rather than
+		// as painted card.
+		if (matte > 0.0)
+		{
+			float fd90 = 0.5 + 2.0 * roughness * vdoth * vdoth;
+			float fl = pow(1.0 - ndotl, 5.0);
+			float fv = pow(1.0 - min(ndotv, 1.0), 5.0);
+			kd *= mix(1.0, (1.0 + (fd90 - 1.0) * fl) * (1.0 + (fd90 - 1.0) * fv), matte);
+		}
 		colour += (kd + spec) * u_sunColour.rgb * u_sunDir.w * ndotl * shadow * microShadow;
 	}
 
@@ -240,7 +311,7 @@ void main()
 	// On refined steel the lamps' share is coloured by the chrome first: shine.sh's shineLamps.
 	float plus = shinePlus(v_refine.x);
 	// The lamps take the energy as a scalar on their Fresnel: their specular argument.
-	vec3 lamps = lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv,
+	vec3 lamps = lampLight(v_wpos, n, v, paint * (1.0 - metal), f0, roughness, ndotv,
 	                       dot(energy, vec3_splat(1.0 / 3.0)))
 	           * mix(1.0, sunLit, u_lampParams.w);
 	colour += shineLamps(plus, v_refine.yzw, lamps);

@@ -10,7 +10,8 @@
     "Roughness 0.80. Stone worn by feet, not polished by them - a sett is walked on at one",
     "point and rained on everywhere else.",
     "Range 0.12, high: the crowns of the stones are burnished and the joints hold grit.",
-    "Cast, because a laid street has no direction the light cares about."
+    "Cast, because a laid street has no direction the light cares about.",
+    "Weathering stone: the shade pass varies it in broad patches over the world, lays the world's dust on its upward faces and runs faint rain streaks down its walls (tiled_maps writes the tag into the ORM's alpha). Ours, 2026-10-11."
   ],
   "metallic": 0.0,
   "roughness": 0.8,
@@ -19,5 +20,6 @@
     "scale": 180,
     "depth": 0.45,
     "roughness_range": 0.12
-  }
+  },
+  "weathering": "stone"
 }

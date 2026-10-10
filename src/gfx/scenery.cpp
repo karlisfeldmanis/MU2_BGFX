@@ -197,9 +197,11 @@ void GpuScenery::buildCamera(const std::vector<Renderer::ResidentBatch>& batches
             entry.draw[1] = float(range.firstIndex + part.firstIndex);
             entry.draw[2] = float(range.baseVertex);
             entry.draw[3] = float(modelOf[bi]);
-            // u_material.y's flags as submitBatches packs them: 1 two-sided, 2 calibrated.
+            // u_material.y's flags as submitBatches packs them: 1 two-sided, 2 calibrated, and
+            // a sixteenth a weathering kind.
             entry.material[0] = float(layer->second);
-            entry.material[1] = (m.twoSided ? 1.0f : 0.0f) + (m.calibrated ? 2.0f : 0.0f);
+            entry.material[1] = (m.twoSided ? 1.0f : 0.0f) + (m.calibrated ? 2.0f : 0.0f) +
+                                0.0625f * float(m.weathering);
             entry.material[2] = m.roughnessFactor;
             entry.material[3] = m.metalFactor;
             entry.records = batch.count;

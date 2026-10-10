@@ -13,7 +13,8 @@
     "and desk_big are photographs of carved panels, and the dark in them is a chisel cut rather",
     "than a stain. This is the opposite case to plaster, where the dark was dirt on a flat wall.",
     "Brushed along v. Planed board has its grain running the length of the piece and indoor wood",
-    "is the one place that grain is close enough to be seen."
+    "is the one place that grain is close enough to be seen.",
+    "Weathering wood: the shade pass bleaches its upward faces towards a silver grey and varies it in broad patches over the world (tiled_maps writes the tag into the ORM's alpha). Ours, 2026-10-11."
   ],
   "metallic": 0.0,
   "roughness": 0.58,
@@ -23,5 +24,6 @@
     "scale": 190,
     "depth": 0.3,
     "roughness_range": 0.06
-  }
+  },
+  "weathering": "wood"
 }

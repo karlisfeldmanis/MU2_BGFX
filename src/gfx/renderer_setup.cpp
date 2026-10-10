@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <vector>
 
 #include "core/log.h"
 #include "gfx/metalfx.h"
@@ -18,6 +19,80 @@
 #include "gfx/views.h"
 
 namespace mu::gfx {
+
+namespace {
+
+// The weathering's noise (fs_shade_body.sh): 256 square, repeating, four channels of value
+// noise each at its own scale -- r blotches 4 and 8 to the tile, g 16 and 32, b 64 and 128,
+// a a second r from another seed. The shade pass reads it in world metres, 8 to the tile, so r
+// is patches a metre or two across and b is a few centimetres. Made here rather than cooked:
+// it is twenty lines of arithmetic and no picture anybody would paint.
+bgfx::TextureHandle makeWeatherNoise() {
+    constexpr int kSize = 256;
+    auto hash = [](uint32_t x, uint32_t y, uint32_t seed) {
+        uint32_t h = x * 374761393u + y * 668265263u + seed * 2246822519u;
+        h = (h ^ (h >> 13)) * 1274126177u;
+        return float((h ^ (h >> 16)) & 0xffffu) / 65535.0f;
+    };
+    auto octave = [&](float u, float v, int cells, uint32_t seed) {
+        const float x = u * float(cells), y = v * float(cells);
+        const int x0 = int(std::floor(x)), y0 = int(std::floor(y));
+        float fx = x - float(x0), fy = y - float(y0);
+        fx = fx * fx * (3.0f - 2.0f * fx);
+        fy = fy * fy * (3.0f - 2.0f * fy);
+        auto at = [&](int i, int j) {
+            return hash(uint32_t(((i % cells) + cells) % cells), uint32_t(((j % cells) + cells) % cells),
+                        seed);
+        };
+        const float a = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * fx;
+        const float b = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * fx;
+        return a + (b - a) * fy;
+    };
+    const int scales[4][2] = {{4, 8}, {16, 32}, {64, 128}, {4, 8}};
+    std::vector<float> field(size_t(kSize) * kSize * 4);
+    for (int c = 0; c < 4; ++c) {
+        float lo = 1.0f, hi = 0.0f;
+        for (int y = 0; y < kSize; ++y) {
+            for (int x = 0; x < kSize; ++x) {
+                const float u = (float(x) + 0.5f) / kSize, v = (float(y) + 0.5f) / kSize;
+                const float f = 0.65f * octave(u, v, scales[c][0], 11u + uint32_t(c)) +
+                                0.35f * octave(u, v, scales[c][1], 23u + uint32_t(c));
+                field[(size_t(y) * kSize + x) * 4 + c] = f;
+                lo = std::min(lo, f);
+                hi = std::max(hi, f);
+            }
+        }
+        // Stretched to the whole range, so a threshold in the shader means the same on every channel.
+        for (size_t i = size_t(c); i < field.size(); i += 4) field[i] = (field[i] - lo) / (hi - lo);
+    }
+
+    // Its chain, by halves: the noise repeats, so a 2x2 box never needs an edge rule.
+    std::vector<uint8_t> bytes;
+    std::vector<float> level = field;
+    int size = kSize;
+    while (true) {
+        for (float f : level) bytes.push_back(uint8_t(std::clamp(f, 0.0f, 1.0f) * 255.0f + 0.5f));
+        if (size == 1) break;
+        const int half = size / 2;
+        std::vector<float> next(size_t(half) * half * 4);
+        for (int y = 0; y < half; ++y) {
+            for (int x = 0; x < half; ++x) {
+                for (int c = 0; c < 4; ++c) {
+                    auto px = [&](int i, int j) { return level[(size_t(j) * size + i) * 4 + c]; };
+                    next[(size_t(y) * half + x) * 4 + c] =
+                        0.25f * (px(2 * x, 2 * y) + px(2 * x + 1, 2 * y) + px(2 * x, 2 * y + 1) +
+                                 px(2 * x + 1, 2 * y + 1));
+                }
+            }
+        }
+        level.swap(next);
+        size = half;
+    }
+    return bgfx::createTexture2D(kSize, kSize, true, 1, bgfx::TextureFormat::RGBA8, 0,
+                                 bgfx::copy(bytes.data(), uint32_t(bytes.size())));
+}
+
+}  // namespace
 
 bool Renderer::init(int width, int height, const std::string& shaderDir, int msaa,
                     uint16_t shadowSize, float scale, bool metalfx) {
@@ -108,6 +183,9 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uTintHigh_ = bgfx::createUniform("u_tintHigh", bgfx::UniformType::Vec4);
     uBloomTexel_ = bgfx::createUniform("u_bloomTexel", bgfx::UniformType::Vec4);
     sBloom_ = bgfx::createUniform("s_bloom", bgfx::UniformType::Sampler);
+    uWeather_ = bgfx::createUniform("u_weather", bgfx::UniformType::Vec4);
+    sWeather_ = bgfx::createUniform("s_weather", bgfx::UniformType::Sampler);
+    weatherNoise_ = makeWeatherNoise();
     uLampGrid_ = bgfx::createUniform("u_lampGrid", bgfx::UniformType::Vec4);
     uLampParams_ = bgfx::createUniform("u_lampParams", bgfx::UniformType::Vec4);
     // An array uniform, and its length has to be the shader's: lights.sh declares [4] and
@@ -441,6 +519,8 @@ void Renderer::resize(int width, int height) {
 }
 
 void Renderer::shutdown() {
+    if (bgfx::isValid(weatherNoise_)) bgfx::destroy(weatherNoise_);
+    weatherNoise_ = BGFX_INVALID_HANDLE;
     destroyTargets();
     destroyProbe();
     destroyOutline();
@@ -471,7 +551,7 @@ void Renderer::shutdown() {
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
-          &sBloom_}) {
+          &sBloom_, &uWeather_, &sWeather_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
     }

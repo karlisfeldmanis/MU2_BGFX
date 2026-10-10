@@ -108,6 +108,7 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
             reader.read(extra);
             material.chromePass = uint8_t(extra & 7);
             material.halfPulse = (extra & 16) != 0;
+            material.weathering = uint8_t((extra >> 5) & 3);
             if ((extra & 8) != 0) reader.read(material.scrollVPerSecond);
         }
         if (reader.failed()) break;

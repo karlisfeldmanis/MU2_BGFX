@@ -17,7 +17,8 @@
     "pits as colour, and unlike a woodgrain those really do sit millimetres proud and deep,",
     "so the normal has something true to add rather than something to invent.",
     "Roughness range 0.10: a boulder's hollows hold dust and its high points get rained on,",
-    "so it varies, but not the way a worn metal edge does."
+    "so it varies, but not the way a worn metal edge does.",
+    "Weathering stone: the shade pass varies it in broad patches over the world, lays the world's dust on its upward faces and runs faint rain streaks down its walls (tiled_maps writes the tag into the ORM's alpha). Ours, 2026-10-11."
   ],
   "metallic": 0.0,
   "roughness": 0.86,
@@ -26,5 +27,6 @@
     "scale": 210,
     "depth": 0.3,
     "roughness_range": 0.1
-  }
+  },
+  "weathering": "stone"
 }

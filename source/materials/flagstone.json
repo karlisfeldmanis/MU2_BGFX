@@ -7,7 +7,8 @@
     "joint is a line rather than a channel. Depth 0.20 against cobble's 0.45.",
     "Roughness 0.72, the smoothest ground here. Cut stone that is walked on gets polished,",
     "and Lorencia's interior floor is worked and decorated rather than merely laid.",
-    "Range 0.08. A slab is more uniform than a street and less uniform than sand."
+    "Range 0.08. A slab is more uniform than a street and less uniform than sand.",
+    "Weathering stone: the shade pass varies it in broad patches over the world, lays the world's dust on its upward faces and runs faint rain streaks down its walls (tiled_maps writes the tag into the ORM's alpha). Ours, 2026-10-11."
   ],
   "metallic": 0.0,
   "roughness": 0.72,
@@ -16,5 +17,6 @@
     "scale": 150,
     "depth": 0.2,
     "roughness_range": 0.08
-  }
+  },
+  "weathering": "stone"
 }

@@ -75,6 +75,9 @@ void Renderer::bindShadeInputs() {
     bgfx::setTexture(5, sShadowDepth_, shadowMap_,
                      BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(7, sAo_, probePass_ || !aoOn_ ? whiteAo_ : blurTex_);
+    // Stage 12, the weathering's noise; repeating, since it is read in world metres.
+    bgfx::setUniform(uWeather_, weather_);
+    bgfx::setTexture(12, sWeather_, bgfx::isValid(weatherNoise_) ? weatherNoise_ : whiteAo_);
     // The probe: read by the camera's shade once one has been filtered, and never by a probe
     // face, which takes the closed-form sky instead of the cube it is being drawn into.
     if (bgfx::isValid(uProbe_)) {
@@ -327,6 +330,8 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                                                  ? 256.0f : 0.0f)
                                              : (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f) +
+                                                 // A sixteenth a weathering kind: fs_shade.
+                                                 0.0625f * float(material.weathering) +
                                                  // Not in the hover ring's mask, which
                                                  // draws with fs_shadow: there a soft part's
                                                  // dither left holes the ring traced as
@@ -700,6 +705,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     }
     metalGain_ = lighting.metalGain;
     probeTaken_[3] = lighting.probeDiffuse;
+    weather_[0] = bgfx::isValid(weatherNoise_) ? std::max(lighting.weathering, 0.0f) : 0.0f;
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;
     shineStageStrength_ = lighting.refineStageStrength;

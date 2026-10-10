@@ -66,6 +66,11 @@ struct Material {
     // first it lifted the armour twice -- the Plate set's metal reflected 0.6 to 0.9, with
     // up to half its texels at the cap. True leaves the gain off.
     bool calibrated = false;
+    // Which weathering fs_shade gives the surface: 1 wood, 2 stone, 3 plaster, 0 none. The cook
+    // reads it from the recipe's sheet_materials and the library's `weathering`
+    // (tools/cook.py weathering_of); it travels in u_material.y's fraction, a sixteenth a kind,
+    // so every whole-number flag and threshold there reads as it did.
+    uint8_t weathering = 0;
     // glTF's own scalars, and the shader multiplies the ORM by them: roughness = orm.g * this,
     // metal = orm.b * this. A surface whose relief came out of its art has a map and both
     // factors at 1.0; a surface whose material declares no grain -- MU's foliage, grass and

@@ -66,6 +66,9 @@ The .mum format, version 3 (static) and 4 (skinned), little-endian throughout:
                bytes, the four texture strings being paths under assets/ or empty for none,
                then f32 roughnessFactor, f32 metalFactor, and when bit 2 is set one more
                f32, the translucency. A file with no bit 2 reads as it always did.
+               (The extra byte the mode's bit 7 brings carries, in bits 5 and 6, which
+               weathering the shade pass gives the material: 1 wood, 2 stone, 3 plaster.
+               A non-glow material that weathers writes mode 128 and that byte alone.)
 
 Versions 1 and 2 were the same file without those last two floats, and are refused rather
 than defaulted: the factor is the whole answer on 195 of this content's material slots, so a
@@ -456,8 +459,38 @@ def shot_of(one):
     return out
 
 
+#: The library's `weathering` as the extra byte's bits 5 and 6 (content::Material::weathering).
+WEATHERING = {"wood": 1, "stone": 2, "plaster": 3}
+
+
+def weathering_of(world, model):
+    """Which of a world model's material slots weather, and how: {slot name: 1, 2 or 3}.
+
+    The shade pass weathers wood and stone (fs_shade_body.sh) and has to be told which slots
+    are which. The glb names its materials after the recipe's sheets and nothing else, so the
+    answer is read where it was decided: the recipe's `sheet_materials` names a library entry
+    for each sheet, and the entry's `weathering` says what it does. A slot cut out of a sheet
+    by `sheet_regions` (`well__timber`) is in `sheet_materials` under its own name.
+    """
+    recipe = os.path.join(ROOT, "source", "world", world, model + ".json")
+    if not os.path.exists(recipe):
+        return {}
+    with open(recipe) as handle:
+        sheets = json.load(handle).get("sheet_materials") or {}
+    out = {}
+    for slot, material in sheets.items():
+        definition = os.path.join(ROOT, "source", "materials", material + ".json")
+        if not os.path.exists(definition):
+            continue
+        with open(definition) as handle:
+            kind = WEATHERING.get(json.load(handle).get("weathering"), 0)
+        if kind:
+            out[slot] = kind
+    return out
+
+
 def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.0,
-              scrolls=None, soft=(), no_chrome=()):
+              scrolls=None, soft=(), no_chrome=(), weathering=None):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
 
     A skinned .glb writes version 4: a 56-byte vertex with four joint bytes and four weight
@@ -735,6 +768,13 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         if jitter and mode & 1:
             flags |= 128
         extra = chrome_pass | (8 if v_rate else 0) | (16 if half else 0)
+        # The extra byte's bits 5 and 6: the weathering a wood or stone slot takes in the shade
+        # pass, never a glow's (weathering_of). Mode 128 alone is what brings the byte.
+        weathers = 0 if flags & 2 else (weathering or {}).get(name, 0)
+        if weathers:
+            mode |= 128
+            flags |= 128
+            extra |= weathers << 5
         # Bit 6: a glow that casts the sun's shadow all the same, at a strength (1 full) --
         # one float after bit 5's. Ours: the Ice Monster, whose additive body is seen on
         # Devias's snow by the shadow under it.
@@ -895,7 +935,8 @@ def cook_meshes(world, out_dir):
                                               os.path.join(mesh_dir, model + ".mum"), textures,
                                               hidden=carried.get(model, {}).get("hidden_part"),
                                               scroll_per_second=scroll,
-                                              scrolls=carried.get(model, {}).get("glow"))
+                                              scrolls=carried.get(model, {}).get("glow"),
+                                              weathering=weathering_of(world, model))
         triangles += tris
         vertices += verts
         cooked += size

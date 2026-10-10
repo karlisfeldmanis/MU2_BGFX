@@ -328,6 +328,11 @@ struct Lighting {
     // pools round it, 0 is the hemisphere alone. Near the probe only; fs_shade fades it out
     // with distance. Ours.
     float probeDiffuse = 1.0f;
+    // How far the shade pass weathers wood and stone: broad patches over the world, bleached or
+    // dusty upward faces, rain streaks down walls, and a rough surface's flatter diffuse. 0 is
+    // the materials as they were. Only texels whose recipe says `weathering`, which tiled_maps
+    // writes into the ORM's alpha. Ours, judged by eye.
+    float weathering = 1.0f;
     // The refinement shine (docs/sprints/14-the-shine.md). `refineStrength` multiplies the
     // chrome and the star MuMain adds from +7 and +9; 1 is MuMain's own Bright, which it added
     // to an 8-bit frame that clipped, where this frame is HDR under exposure and bloom.

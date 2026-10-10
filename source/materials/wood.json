@@ -22,7 +22,8 @@
     "what a normal map has left to add here is very little.",
     "Coarser than steel's, still. Blade steel is 520 cells of mill grain that only shows at a",
     "graze; timber's is visible from across a room, so this is 180. That and the depth are",
-    "the whole difference between the two brushed materials."
+    "the whole difference between the two brushed materials.",
+    "Weathering wood: the shade pass bleaches its upward faces towards a silver grey and varies it in broad patches over the world (tiled_maps writes the tag into the ORM's alpha). Ours, 2026-10-11."
   ],
   "metallic": 0.0,
   "roughness": 0.72,
@@ -32,5 +33,6 @@
     "scale": 180,
     "depth": 0.08,
     "roughness_range": 0.05
-  }
+  },
+  "weathering": "wood"
 }

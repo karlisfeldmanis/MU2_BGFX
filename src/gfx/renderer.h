@@ -981,6 +981,12 @@ private:
     float probeAt_[3] = {0.0f, 0.0f, 0.0f};     // this face's eye
     // xyz: the eye when the copy was last filtered. w: the sheet's probe_diffuse.
     float probeTaken_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    // The shade pass's weathering of wood and stone (fs_shade_body.sh): a tiling noise of four
+    // octaves, made at init, sampled in world space; and x: the sheet's weathering.
+    bgfx::TextureHandle weatherNoise_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uWeather_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sWeather_ = BGFX_INVALID_HANDLE;
+    float weather_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     // Which winding the lit draws cull: CW for the camera, CCW inside a mirrored cube face.
     uint64_t cullBit_ = BGFX_STATE_CULL_CW;
 };

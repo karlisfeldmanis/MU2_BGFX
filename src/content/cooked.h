@@ -64,6 +64,9 @@ struct CookedMaterial {
     // a pulse at MU's WorldTime*0.002. See content::Material.
     float scrollVPerSecond = 0.0f;
     bool halfPulse = false;
+    // The same byte's bits 5 and 6: the weathering the shade pass gives a wood or stone slot,
+    // 1 wood, 2 stone, 3 plaster, 0 none. See content::Material::weathering.
+    uint8_t weathering = 0;
     // An item glow's pulse and jump (bit 5): MU's ItemObjectAttribute. See content::Material.
     float pulse[2] = {0.0f, 1.0f};
     float jitter = 0.0f;

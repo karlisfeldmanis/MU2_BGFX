@@ -395,6 +395,7 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.twoSided = from.twoSided;
         out.glow = from.glow;
         out.calibrated = from.calibrated;
+        out.weathering = from.weathering;
         out.roughnessFactor = from.roughnessFactor;
         out.metalFactor = from.metalFactor;
         out.translucency = from.translucency;

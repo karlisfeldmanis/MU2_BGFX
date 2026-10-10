@@ -14,7 +14,8 @@
     "Cast rather than brushed, which is the one surprise here. The boards do have a grain and it",
     "does run one way, but at a roof's distance the grain is invisible and the courses are not -",
     "and a brushed normal would run its scratches along the roof rather than across it, which is",
-    "the opposite of the direction that matters."
+    "the opposite of the direction that matters.",
+    "Weathering wood: the shade pass bleaches its upward faces towards a silver grey and varies it in broad patches over the world (tiled_maps writes the tag into the ORM's alpha). Ours, 2026-10-11."
   ],
   "metallic": 0.0,
   "roughness": 0.9,
@@ -23,5 +24,6 @@
     "scale": 170,
     "depth": 0.4,
     "roughness_range": 0.1
-  }
+  },
+  "weathering": "wood"
 }

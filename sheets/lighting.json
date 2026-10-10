@@ -35,6 +35,7 @@
 
   "metal_gain": 2.5,
   "probe_diffuse": 1.0,
+  "weathering": 1.0,
   "refine_strength": 0.25,
   "refine_star": 4.0,
   "excellent_strength": 0.15,
