@@ -126,6 +126,11 @@ Merged from all three parts. Each has a recommendation; nothing is built until t
 | 20 | **Cursed Wizard's scale** (B) | 1.0 in Devil Square as MuMain, or our 0.9 everywhere | 0.9; not worth a per-world override |
 | 21 | **Blood Castle's party bug** (C side findings) | fix it now, separately, or with step 0 | fix it first, its own commit |
 
+**No party on entry (decided 2026-10-10, the user: 'keep MUs way').** Entering a square or a castle
+never forms or joins a party: a player comes in alone or with the party he made before, and the
+event only reads it (WZ: no party code in either event; BC's `m_bBC_CAN_PARTY` guards in
+`protocol.cpp:11037-11046, 11461-11470` are commented out; OM: both `MiniGameMapCreationPolicy.Shared`).
+
 **Blood Castle's party bug, found by Part C and checked:** `countKill` calls `castleKill` with no guard
 (`src/sim/realm_quests.cpp:187`), and `countPartyKill` calls `countKill` once for each party member in view
 (`src/sim/realm_party.cpp:74-77`). The run's counters are the realm's. So with three members together, one kill counts
