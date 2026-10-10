@@ -1,0 +1,227 @@
+{
+  "item": "Devil02",
+  "mu_name": "Devil's Invitation",
+  "mu_name_from": "Loaded as MODEL_DEVILS_EYE + i (MODEL_POTION + 17 + i) from Data\\\\Item\\\\Devil0i.bmd for i < 3 (ZzzOpenData.cpp:915-916, _enum.h:2087-2089): Devil00 the Eye, Devil01 the Key, Devil02 the Invitation. Names as OpenMU's, Version095d/Items/EventTicketItems.cs:29-31 (WebZen's item.txt calls the third 'Ticket to Devil Square').",
+  "why_this_one": "Devil Square's ticket. The Devil's Eye and the Devil's Key of one level with a Jewel of Chaos make the Devil's Invitation of that level in the Chaos Machine; the Invitation lets him in through Charon in Noria. The level is the square's, carried in the refinement, +1 to +4 in 0.95d (OpenMU MaximumItemLevel 4). docs/devil-square-port.md.",
+  "profile": "weapon",
+  "profile_note": "As the Ale and the Firecracker: a small object in the bag and on the ground.",
+  "tells": "The remaining time is shown when you right click on your mouse.",
+  "tells_from": "MU's two lines joined, GT 'The remaining time is shown' and 'when you right click on your mouse.', Game.en.resx:2424-2429, white, on the Invitation alone (ZzzInventory.cpp:3940-3951): a right click on it in the bag says how long to the square's next opening (NewUIInventoryActionController.cpp:800). Its name yellow, as the Blood Castle tickets' (ZzzInventory.cpp:2186-2189, 5801-5804): our gold.",
+  "tells_note": "The right click itself is not built here; it waits on the square's clock.",
+  "stats": {
+    "note": "Group, number and size are WebZen's row and OpenMU's; durability is OpenMU's 1 (group 14 in item.txt carries no durability column: Value, Level). Not in the ordinary drop -- the eye and the key fall on their own roll, to be built separately (OpenMU makes a DropItemGroup per level at 1%: +1 from monster level 2, +2 from 36, +3 from 47, +4 from 60).",
+    "from": "OpenMU Version095d/Items/EventTicketItems.cs:29-31, CreateEventItem (Durability = 1, MaximumItemLevel = 4, DropsFromMonsters = false); WebZen 1.00.93 Data/lang/main/item.txt group 14 rows 17-19 (1x1, Drop 0).",
+    "group": 14,
+    "number": 19,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "maximum_item_level": 4,
+    "maximum_item_level_note": "OpenMU 0.95d's 4 (Season 6's table goes to 7). Not read by the index; for the sim's refinement cap.",
+    "item_txt_level": 0,
+    "value_by_level": [
+      120000,
+      60000,
+      84000,
+      120000,
+      180000,
+      240000,
+      300000,
+      180000
+    ],
+    "value_from": "ZzzInfomation.cpp:1693-1707, by level 0..7"
+  },
+  "sheets": {
+    "visitor": "visitor.png",
+    "visitor2": "visitor2.png"
+  },
+  "sheet_from": "Data/Item/visitor.OZJ (32x32): gold plate with a red band and a small round seal; visitor2.OZJ (16x16): a pale skull on dark red.",
+  "sheet_materials": {
+    "visitor": "brass",
+    "visitor2": "bone"
+  },
+  "cutout": false,
+  "cutout_from": "Both .OZJ, no alpha.",
+  "material_note": "The gold plate brass; the painted skull bone.",
+  "open_question": "Not built: MU's two red sparks (BITMAP_SPARK + 1, as the Key's) on bones 9 and 10 (ZzzObject.cpp:9912-9928); and the ground pose Angle (270, 0, 90) (ZzzObject.cpp:5768-5772).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 58,
+      "area": 2138.3,
+      "along": [
+        -7.4,
+        7.9
+      ],
+      "mu_uv": [
+        0.023,
+        0.001,
+        0.979,
+        1.002
+      ],
+      "bake_uv": [
+        0.006,
+        0.493,
+        0.765,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 6,
+      "area": 96.4,
+      "along": [
+        -8.1,
+        -4.0
+      ],
+      "mu_uv": [
+        0.639,
+        0.37,
+        0.856,
+        0.999
+      ],
+      "bake_uv": [
+        0.777,
+        0.729,
+        0.946,
+        0.974
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 6,
+      "area": 80.8,
+      "along": [
+        -7.2,
+        -3.7
+      ],
+      "mu_uv": [
+        0.628,
+        0.026,
+        0.826,
+        0.512
+      ],
+      "bake_uv": [
+        0.621,
+        0.006,
+        0.966,
+        0.977
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 8,
+      "area": 64.6,
+      "along": [
+        3.4,
+        6.8
+      ],
+      "mu_uv": [
+        0.868,
+        0.256,
+        0.994,
+        0.703
+      ],
+      "bake_uv": [
+        0.777,
+        0.493,
+        0.927,
+        0.953
+      ]
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 13,
+      "area": 112.0,
+      "along": [
+        3.2,
+        11.1
+      ],
+      "mu_uv": [
+        0.875,
+        0.01,
+        0.991,
+        0.7
+      ],
+      "bake_uv": [
+        0.334,
+        0.493,
+        0.539,
+        0.839
+      ]
+    },
+    {
+      "island": 5,
+      "material": "brass",
+      "triangles": 8,
+      "area": 64.6,
+      "along": [
+        3.4,
+        6.8
+      ],
+      "mu_uv": [
+        0.868,
+        0.256,
+        0.994,
+        0.703
+      ],
+      "bake_uv": [
+        0.852,
+        0.493,
+        0.98,
+        0.717
+      ]
+    },
+    {
+      "island": 6,
+      "material": "brass",
+      "triangles": 13,
+      "area": 112.0,
+      "along": [
+        3.2,
+        11.1
+      ],
+      "mu_uv": [
+        0.875,
+        0.01,
+        0.991,
+        0.7
+      ],
+      "bake_uv": [
+        0.404,
+        0.493,
+        0.609,
+        0.839
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 48,
+      "area": 1031.1,
+      "along": [
+        -7.9,
+        7.3
+      ],
+      "mu_uv": [
+        0.03,
+        0.007,
+        0.953,
+        0.954
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.944,
+        0.481
+      ]
+    }
+  ]
+}

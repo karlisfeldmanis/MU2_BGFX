@@ -132,6 +132,7 @@ std::string question(sim::Service service, const sim::Judged& j) {
         case sim::Service::Upgrade: return "Do you want to upgrade the item?";
         case sim::Service::Dinorant: return "Do you want to create the Dinorant?";
         case sim::Service::Cloak: return "Do you want to create the cloak?";
+        case sim::Service::Invitation: return "Do you want to create the invitation?";
     }
     return "";
 }
@@ -149,6 +150,7 @@ const char* madeHead(sim::Service service) {
         case sim::Service::Upgrade: return "Upgraded";
         case sim::Service::Dinorant: return "Dinorant created";
         case sim::Service::Cloak: return "Cloak created";
+        case sim::Service::Invitation: return "Invitation created";
     }
     return "";
 }

@@ -39,6 +39,9 @@ constexpr ExitGate kExits[] = {
     // Blood Castle 1's, Gates.cs:216 (WZD Gate.txt:115): its safe court beside the Archangel,
     // with no direction. Reached only through the Messenger (sim/event.h).
     {66, 11, {12, 5, 14, 10}, 0, 0},
+    // Devil Square 1's, OpenMU 0.95d Gates.cs:141: the arena's box, with no direction. Reached
+    // only through Charon (sim/square.h).
+    {58, 9, {133, 91, 141, 99}, 0, 0},
     // Atlans's and Noria's, Gates.cs:135 and 148-149 (docs/atlans-port.md A §2.1). 48 is
     // Direction.North (7), (-1,+1), into Noria and away from gate 45 beside it; 46 is
     // Direction.South (3), (+1,-1), into the basin and away from gate 47; 49 is the spawn gate,
@@ -125,6 +128,8 @@ constexpr EnterGate kEnters[] = {
     // Ours: the Messenger's door into Blood Castle 1 (sim/event.h kCastleEnterGate), a row with
     // a box off the map so no step ever stands in it. His talk sends him through.
     {1066, 2, {-1, -1, -1, -1}, 0, 66},
+    // And Charon's into Devil Square 1 (sim/square.h kSquareEnterGate), from Noria.
+    {1058, 3, {-1, -1, -1, -1}, 0, 58},
 };
 
 }  // namespace

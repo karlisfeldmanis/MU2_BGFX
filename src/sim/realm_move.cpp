@@ -657,7 +657,10 @@ CastleRefusal Realm::castleRefusal(int castle) const {
 // it, so its Gated is among that tick's happenings for the mode to read -- said out here, it was
 // cleared with the rest before anyone saw it, and he stood in Devias with the window shut.
 bool Realm::enterCastle(int castle) {
-    if (me().gating < 0 || !serving(me().gating)) return false;
+    if (me().gating < 0 || !serving(me().gating) ||
+        tables_->folk[size_t(me().gating)].number != kMessenger) {
+        return false;
+    }
     if (castleRefusal(castle) != CastleRefusal::None) return false;
     me().castleOwed = castle;
     me().gating = -1;

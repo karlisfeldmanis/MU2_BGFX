@@ -118,6 +118,9 @@ struct Context {
     // The Blood Castle the Messenger let him into, 1 to 6, carried across the map change to the
     // castle's own realm (Realm::setCastle); 0 when none is owed. Set where the gate is taken.
     int castleNext = 0;
+    // And the Devil Square Charon let him into, with the seconds left of his gate as he went:
+    // carried to the square's realm (Realm::setSquare); 0 when none is owed.
+    int squareNext = 0, squareNextWait = 0;
     // And a castle won and claimed, carried home to Devias: its number and what it paid, for the
     // "Event complete" banner and the quest's stinger as he lands there; 0 when none is owed.
     int castleDone = 0;

@@ -93,6 +93,7 @@ enum class Recipe : int8_t {
     PlusEleven = 4,
     Dinorant = 5,
     Cloak = 8,
+    Invitation = 2,  // Devil Square's ticket (MuMain's CHAOS_MIX_DEVIL_SQUARE)
     Wings = 11,
     SecondWings = 7,
 };
@@ -149,12 +150,13 @@ enum class Service : uint8_t {
     Dinorant = 7,
     Cloak = 8,
     SecondWings = 9,
+    Invitation = 10,  // Devil Square's ticket, a page beside the cloak's
 };
-constexpr int kServices = 10;
+constexpr int kServices = 11;
 // The window's service row, in its order: a page a mix, then the rune services.
 constexpr Service kRowServices[] = {
     Service::Upgrade,  Service::ChaosWeapon, Service::FirstWings, Service::SecondWings,
-    Service::Dinorant, Service::Cloak,       Service::RemoveRune, Service::AddSocket,
+    Service::Dinorant, Service::Cloak,       Service::Invitation, Service::RemoveRune, Service::AddSocket,
     Service::FuseRunes};
 constexpr int kRowCount = int(sizeof(kRowServices) / sizeof(kRowServices[0]));
 // Whether a service runs one of MU's recipes, and so reports by it.
@@ -162,7 +164,8 @@ constexpr bool byRecipe(Service service) {
     return service == Service::Combine || service == Service::FirstWings ||
            service == Service::SecondWings ||
            service == Service::ChaosWeapon || service == Service::Upgrade ||
-           service == Service::Dinorant || service == Service::Cloak;
+           service == Service::Dinorant || service == Service::Cloak ||
+           service == Service::Invitation;
 }
 const char* serviceName(Service service);  // the row: "Combine", "Remove Rune", ...
 const char* serviceVerb(Service service);  // the button: "Combine", "Remove", "Add Socket", "Fuse"
@@ -228,6 +231,16 @@ constexpr int kCloakMostLevel = 6;
 constexpr int64_t kCloakZen[kCloakMostLevel + 1] = {0, 50000, 80000, 150000, 250000, 400000,
                                                     600000};
 constexpr int kCloakFromLevel = 15;
+// **The Devil's Invitation**, Devil Square's ticket (WebZen MixSystem.cpp:742-1050; docs/
+// devil-square-port.md A 2.3; the user, 2026-10-10: 'we need to also implement chaos machine DS
+// ticket creation'): a Devil's Eye and a Devil's Key of one level, +0 to +4, and one Chaos,
+// nothing else. WebZen 0.97d's Zen and rates by the level (:933-957; Gamemain.cpp:3612-3617):
+// +0 40,000 at 60%, +1 40,000 at 80%, +2 80,000 at 75%, +3 160,000 at 70%, +4 300,000 at 60%.
+// A failure takes the box; he must be level 10 (text 649, :1108-1114).
+constexpr int kInvitationMostLevel = 4;
+constexpr int64_t kInvitationZen[kInvitationMostLevel + 1] = {40000, 40000, 80000, 160000, 300000};
+constexpr int kInvitationRate[kInvitationMostLevel + 1] = {60, 80, 75, 70, 60};
+constexpr int kInvitationFromLevel = 10;
 constexpr int kPlusLuck = 20;
 constexpr int kPlusCap = 75;
 

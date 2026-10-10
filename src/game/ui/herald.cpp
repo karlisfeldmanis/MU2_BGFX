@@ -63,15 +63,14 @@ struct Gate {
     int bandCount;
     int built;  // the highest numbered one there is
 };
-// Devil Square: WebZen 0.97d's four squares (DevilSquare.h), Charon in Noria; on the travel
-// list's timetable, every four hours from midnight for 25 minutes (game/ui/travel.cpp kEvents,
-// OpenMU's DevilSquareStartConfiguration). Not playable yet: the herald counts to it as the
-// travel card does.
-constexpr int kSquareBands[4][2] = {{15, 130}, {131, 180}, {181, 230}, {231, 0}};
+// Devil Square: WebZen 0.97d's four squares and their bands (sim/square.h), Charon in Noria, on
+// the realm's own square clock (a period of -1: RealmConfig::square, five minutes before every
+// odd hour).
 const Gate kGates[] = {
     {"Blood Castle", "Devias \xB7 Messenger", 0, 0, 0, sim::kCastleBands, sim::kCastles,
      sim::kCastlesBuilt},
-    {"Devil Square", "Noria \xB7 Charon", 14400, 0, 1500, kSquareBands, 4, 4},
+    {"Devil Square", "Noria \xB7 Charon", -1, 0, 0, sim::kSquareBands, sim::kSquares,
+     sim::kSquaresBuilt},
 };
 
 // Black under the line, across its width: clear at the ends, 78% in the middle (60% was tried
@@ -271,8 +270,9 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
         Call& call = calls_[g];
         int moment = 0;
         int toStart = 0;
-        const sim::GateClock clock = gate.period ? sim::GateClock{gate.period, gate.opensAt, gate.entry}
-                                                 : realm.config().castle;
+        const sim::GateClock clock = gate.period > 0 ? sim::GateClock{gate.period, gate.opensAt, gate.entry}
+                                     : gate.period < 0 ? realm.config().square
+                                                       : realm.config().castle;
         if (day >= 0 && play.isOpen() && hero.level >= gate.bands[0][0]) {
             const int phase = clock.phase(day);
             const bool open = phase < clock.entry;

@@ -511,6 +511,11 @@ public:
     void freeCastle() { if (here("--castle-free")) local_.freeCastle(); }
     void dropCastleBridge(int seconds) { if (here("--castle-bridge")) local_.dropCastleBridge(seconds); }
     void jumpSquare(int seconds) { if (here("--square-at")) local_.jumpSquare(seconds); }
+    void openSquareDoor() { if (here("--square-open")) local_.openSquareDoor(); }
+    // Charon's square, as the mode carries it into the square's realm (Realm::setSquare).
+    void setSquare(int square, int wait) { if (!remote()) local_.setSquare(square, wait); }
+    // Charon's page's Enter (QuestDialog::kSquare).
+    uint32_t enterSquare(int square) { return send({.kind = sim::Command::Kind::EnterSquare, .a = square}); }
     void setCastle(int castle) { if (here("--castle")) local_.setCastle(castle); }
     // The Messenger's page's two answers (QuestDialog::kGate).
     uint32_t enterCastle(int castle) { return send({.kind = sim::Command::Kind::EnterCastle, .a = castle}); }

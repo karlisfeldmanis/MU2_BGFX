@@ -1098,6 +1098,25 @@ public:
     // Enter: checked now, and at the next tick's start the cloak spent and the castle's gate
     // passed (Gated); false and nothing done when he would refuse.
     bool enterCastle(int castle);
+    // **Charon's door** (sim/square.h), on the same window as the Messenger's: `gating()` is
+    // Charon's folk row while his page is open. Why he would not let him into `square` (1 to
+    // kSquares) now, or None; the invitation he would take for it, one of its level or a +0, or
+    // -1 (with `square` 0 any); and Enter, checked now and passed at the next tick's start.
+    SquareRefusal squareRefusal(int square) const;
+    int invitationSlot(int square = 0) const;
+    bool enterSquare(int square);
+    // The seconds left of Charon's gate now, 0 shut: what his page counts down, and the wait his
+    // square starts with (setSquare). Held open by --square-open, -1.
+    int squareDoorLeft() const;
+    // Which square Charon last passed him into, or 0, and the gate's seconds left as he went:
+    // carried by the mode to the square's own realm (setSquare), as castlePassed is.
+    int squarePassed() const { return me().squarePassed; }
+    int squarePassedWait() const { return me().squarePassedWait; }
+    // Into square `square` with `wait` seconds to the fight (Charon's gate's last seconds), so
+    // everyone who came through it starts together on the odd hour; 0 keeps kSquareWait.
+    void setSquare(int square, int wait);
+    // --square-open's: Charon's gate open at any hour (a test).
+    void openSquareDoor() { squareOpen_ = true; }
     // Blood Castle's run, while he is in one (sim/event.h), and the whole seconds left of its
     // wait or of its time.
     const CastleRun& castleRun() const { return run_; }
@@ -1975,6 +1994,10 @@ private:
     // Blood Castle's scroll and bone, rolled on every kill outside a castle (Realm::leave), off
     // a stream of their own so the kill's own drops draw as they did.
     Random ticketDice_{0};
+    // The Devil's Eye and Key's own rolls (sim/square.h), apart so Blood Castle's do not move.
+    Random devilDice_{0};
+    bool squareOpen_ = false;  // see openSquareDoor
+    void passSquare(int square);
     // Sevina's treasures (Realm::treasure), drawn only while one is sought.
     Random treasureDice_{0};
     // The Orb of Summoning's own roll on every kill (sim/items.h), so the rest draw as they did.
@@ -2221,6 +2244,10 @@ private:
         int castleOwed = 0;
         int castlePassed = 0;  // see castlePassed()
         int64_t squarePoints = 0;  // see squarePoints()
+        // A square Enter asked for, passed at the next tick's start (Realm::enterSquare), or 0;
+        // and the square and the gate's seconds left as he went (squarePassed).
+        int squareOwed = 0;
+        int squarePassed = 0, squarePassedWait = 0;
         // His result (squareResults): the rank the end gave him, 0 for none, and its row's pay;
         // paid once, on Claim (squareClaimOwed, at the next tick's start) or as he is sent home.
         int squareRanked = 0;

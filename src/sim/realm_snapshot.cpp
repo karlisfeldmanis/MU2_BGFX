@@ -16,7 +16,7 @@ namespace mu::sim {
 namespace {
 
 constexpr uint32_t kMagic = 0x4E53554Du;  // "MUSN"
-constexpr uint32_t kShape = 4;            // bumped when serialize() changes (4: a Player's trade)
+constexpr uint32_t kShape = 5;            // bumped when serialize() changes (4: a Player's trade; 5: Devil Square's door and dice)
 
 struct Writer {
     static constexpr bool reading = false;
@@ -130,7 +130,7 @@ void Realm::serialize(Archive& a) {
     a.pod(nextId_);
     for (Random* dice : {&wearDice_, &wardenDice_, &summonDice_, &runeDice_, &trapDice_, &bossDice_,
                          &chillDice_, &crackerDice_, &featherDice_, &novaScrollDice_, &wingDice_,
-                         &gearDice_, &ticketDice_, &treasureDice_, &orbDice_, &showerDice_,
+                         &gearDice_, &ticketDice_, &devilDice_, &treasureDice_, &orbDice_, &showerDice_,
                          &invasionDice_, &raidDice_, &raiderDice_, &mixDice_, &lifeDice_}) {
         a.pod(*dice);
     }
@@ -204,6 +204,7 @@ void Realm::serialize(Archive& a) {
     }
     a.pod(wall_);
     a.pod(castleOpen_);
+    a.pod(squareOpen_);
     a.vec(lying_);
     a.vec(heroes_);
     a.pod(me_);

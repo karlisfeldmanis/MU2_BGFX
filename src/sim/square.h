@@ -11,10 +11,60 @@ namespace mu::sim {
 // MU's map number for squares 1-4 (WD_9DEVILSQUARE).
 constexpr uint32_t kDevilSquareMap = 9;
 
+// **Charon's door** (docs/devil-square-port.md A 2.1-2.2; WebZen NpcRusipher, NpcTalk.cpp:
+// 1005-1048, and GCReqmoveDevilSquare, protocol.cpp:18587-18923): spoken to with a Devil's
+// Invitation while the gate is open, he takes it and sends him to the square's gate -- 58 for
+// square 1, the arena's box (OpenMU 0.95d Gates.cs:141). MU has no enter gate for it;
+// kSquareEnterGate is ours, a row with no box, as Blood Castle's kCastleEnterGate is.
+constexpr int32_t kSquareGate = 58;
+constexpr int32_t kSquareEnterGate = 1058;
+// The squares at 0.97d and how many are built (square 1 alone: its nests are in mu.db), each with
+// WebZen 0.97d's band (protocol.cpp:18789-18832; the fourth "250+", 0 for no ceiling). Both ends
+// are asked, as WebZen asks them: too high is "You're underestimating yourself", too low "If you
+// wish to stay alive" (texts 686, 687).
+constexpr int kSquares = 4;
+constexpr int kSquaresBuilt = 1;
+constexpr int kSquareBands[kSquares][2] = {{10, 99}, {100, 179}, {180, 249}, {250, 0}};
+// The level a band is read against: his own, but the Magic Gladiator's ((L + 1) / 2) * 3
+// (protocol.cpp:18714-18723), since his levels count for more.
+constexpr int squareLevel(int level, bool gladiator) { return gladiator ? (level + 1) / 2 * 3 : level; }
+// The square his level's band holds, 1 to kSquares: the page Charon opens on.
+constexpr int squareFor(int level) {
+    for (int s = 0; s < kSquares; ++s) {
+        if (level <= kSquareBands[s][1] || kSquareBands[s][1] == 0) return s + 1;
+    }
+    return kSquares;
+}
+// Why Charon would not let him in.
+enum class SquareRefusal : int32_t {
+    None = 0,
+    NoInvitation = 1,  // ServerCmd 1,2, text 652: go to the Chaos Goblin with the eye and the key
+    NotYet = 2,        // ServerCmd 1,3, text 653: "You have come too soon"
+    TooLow = 3,        // result 4, text 687
+    TooHigh = 4,       // result 3, text 686
+    NotBuilt = 5,      // ours: a square past kSquaresBuilt
+};
+
+// **The Devil's Eye and Key** (14/17, 14/18) fall from monsters anywhere but in the square, each
+// its own roll off its own dice, one that lands the kill's whole drop -- as Blood Castle's scroll
+// and bone (sim/items.h). WebZen keeps them in every monster's drop list at one in two
+// (EyesOfDevilSquareDropRate, Gamemain.cpp:3635-3636); OpenMU makes them a flat 1% each
+// (EventTicketItems.cs:34-73). Ours: OpenMU's 1%, as Blood Castle's ingredients were raised
+// (docs/devil-square-port.md decision 13).
+constexpr int kDevilsEyeIn10000 = 100;
+constexpr int kDevilsKeyIn10000 = 100;
+// Their level by the monster's, WebZen 0.97d's table (user.cpp:8346-8366): none at 15 or under,
+// +1 to 40, +2 to 54, +3 to 66, +4 from 67. 0 for none: a level-0 one never falls (:8373).
+constexpr int devilTicketLevel(int monsterLevel) {
+    return monsterLevel <= 15 ? 0 : monsterLevel <= 40 ? 1 : monsterLevel <= 54 ? 2 : monsterLevel <= 66 ? 3 : 4;
+}
+
 // **The clock.** WebZen's minutes are in its lost DevilSquare.dat; OpenMU's are 20 of play and a
 // minute after (Version095d/Events/DevilSquareInitializer.cs:135-137), and both tables we have
-// share that frame. Ours, for now: a minute's wait from arrival, as Blood Castle's court, until
-// Charon's door and the shared start are built (the doc's decisions 4-6).
+// share that frame. One start for everyone, MU's: through Charon's door the wait is what is left
+// of the gate's five minutes (RealmConfig::square; Realm::setSquare), so all who came in fight
+// from the odd hour together. A realm raised there without the door (a test, or a save) waits
+// kSquareWait.
 constexpr int kSquareWait = 60;
 constexpr int kSquarePlay = 20 * 60;
 // After the end, the result shows for this long before everyone goes to Noria (WebZen moves them

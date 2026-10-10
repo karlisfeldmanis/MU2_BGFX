@@ -301,6 +301,9 @@ bool PlayMode::open(Context& ctx) {
             if (args.castlePeriod > 0) {
                 config.castle = {args.castlePeriod, args.castlePeriod / 2, args.castlePeriod / 2};
             }
+            if (args.squarePeriod > 0) {
+                config.square = {args.squarePeriod, args.squarePeriod / 2, args.squarePeriod / 2};
+            }
             config.questDemo = args.questDemo;
             world_.played().configure(config);
             if (args.benchPlayers > 0) {
@@ -610,6 +613,12 @@ void PlayMode::runScript(Context& ctx) {
     }
     if (world_.played().isOpen() && args.castle > 0) world_.played().setCastle(args.castle);
     if (world_.played().isOpen() && args.castleOpen) world_.played().openCastleDoor();
+    // Into a square by Charon: which one, and its fight on the gate's hour.
+    if (world_.played().isOpen() && ctx.squareNext > 0) {
+        world_.played().setSquare(ctx.squareNext, ctx.squareNextWait);
+        ctx.squareNext = ctx.squareNextWait = 0;
+    }
+    if (world_.played().isOpen() && args.squareOpen) world_.played().openSquareDoor();
     if (world_.played().isOpen() && args.invasion && !world_.played().invade()) {
         core::logError("--invasion: this map has no invasion");
     }
@@ -872,6 +881,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 ctx.castleNext = number == sim::kCastleEnterGate
                                      ? world_.played().realm().castlePassed()
                                      : 0;
+                if (number == sim::kSquareEnterGate) {
+                    ctx.squareNext = world_.played().realm().squarePassed();
+                    ctx.squareNextWait = world_.played().realm().squarePassedWait();
+                }
                 travel(ctx, map->world, gateColumn, gateRow,
                        std::atan2(float(out->dy), float(out->dx)));
             } else {

@@ -771,7 +771,7 @@ void testItems(const content::Tables& tables) {
     // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 299, "299 item rows cooked");
+    checkEqual(long(tables.items.size()), 302, "302 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -7086,7 +7086,7 @@ void testGates(const content::Tables& tables) {
           "and comes out on a tile of Lorencia's gate 26");
 }
 
-// Charon (2026-09-30): Devil Square is not written, so he answers that it is not ready.
+// Charon's door (sim/square.h): his window, his refusals in WebZen's order, and the way through.
 void testCharon() {
     std::printf("charon\n");
     content::Tables noria;
@@ -7105,15 +7105,89 @@ void testCharon() {
     talk.kind = sim::Request::Kind::Talk;
     talk.target = uint32_t(charon);
     square.ask(talk);
-    bool answered = false;
-    for (int tick = 0; tick < 400 && !answered; ++tick) {
-        square.step();
-        for (const sim::Happening& one : square.happenings()) {
-            answered |= one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Greet) &&
-                        one.c == charon;
+    for (int tick = 0; tick < 400 && square.gating() < 0; ++tick) square.step();
+    check(square.gating() == charon, "walked to Charon and his window opened");
+    check(!square.enterCastle(1), "and it is not the Messenger's door");
+
+    // The rules alone (sim/square.h).
+    checkEqual(sim::squareFor(50), 1, "level 50 is square 1's");
+    checkEqual(sim::squareFor(100), 2, "100 square 2's");
+    checkEqual(sim::squareFor(400), 4, "400 the fourth's");
+    checkEqual(sim::squareLevel(66, true), 99, "a Magic Gladiator of 66 counts as 99");
+    checkEqual(sim::devilTicketLevel(15), 0, "a monster of 15 drops no eye");
+    checkEqual(sim::devilTicketLevel(28), 1, "28 a +1");
+    checkEqual(sim::devilTicketLevel(67), 4, "67 a +4");
+
+    // His door: an invitation, the gate open, its square, his level in its band, or why not.
+    const int32_t invitation = noria.itemAt(14, 19);
+    check(invitation >= 0, "the Devil's Invitation is in Noria's tables");
+    if (invitation < 0) return;
+    const auto at = [](int hour, int minute) {
+        const time_t now = std::time(nullptr);
+        struct tm local {};
+        localtime_r(&now, &local);
+        local.tm_hour = hour;
+        local.tm_min = minute;
+        local.tm_sec = 0;
+        return int64_t(std::mktime(&local));
+    };
+    const auto ask = [&](int plus, int64_t wall, int level, int which = 1,
+                         sim::Kin kin = sim::Kin::DarkKnight) {
+        sim::Realm r;
+        r.raise(&noria, 7, 175, 107, kin, level);
+        if (plus >= 0) r.give(invitation, -1, plus);
+        r.setWallClock(wall);
+        talk.target = uint32_t(charon);
+        r.ask(talk);
+        for (int tick = 0; tick < 400 && r.gating() < 0; ++tick) r.step();
+        if (r.gating() != charon) return -3;
+        const sim::SquareRefusal why = r.squareRefusal(which);
+        if (why != sim::SquareRefusal::None) {
+            check(!r.enterSquare(which), "and Enter does nothing while he refuses");
+            return int(why);
         }
+        check(r.enterSquare(which), "Enter takes him through");
+        r.step();
+        for (const sim::Happening& one : r.happenings()) {
+            if (one.what != sim::What::Gated) continue;
+            const sim::EnterGate* in = sim::enterGateNumbered(one.a);
+            const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
+            check(out && out->map == sim::kDevilSquareMap && out->box.holds(one.b, one.c),
+                  "through Charon's door into Devil Square 1's arena");
+            bool kept = false;
+            for (int i = sim::kWorn; i < sim::kSlots; ++i) kept |= r.satchel()[i].item == invitation;
+            check(!kept, "and the invitation is spent");
+            checkEqual(r.squarePassed(), which, "the square carried");
+            return -1;
+        }
+        return -2;
+    };
+    checkEqual(ask(-1, at(10, 57), 50), int(sim::SquareRefusal::NoInvitation), "no invitation, no door");
+    checkEqual(ask(1, at(11, 30), 50), int(sim::SquareRefusal::NotYet), "11:30 is too soon");
+    checkEqual(ask(1, at(9, 57), 50), int(sim::SquareRefusal::NotYet), "and 9:57, before an even hour");
+    checkEqual(ask(1, 0, 50), int(sim::SquareRefusal::NotYet), "and with no clock at all");
+    checkEqual(ask(2, at(10, 57), 50), int(sim::SquareRefusal::NoInvitation), "a +2 is not square 1's");
+    checkEqual(ask(1, at(10, 57), 5), int(sim::SquareRefusal::TooLow), "level 5 is under the band");
+    checkEqual(ask(1, at(10, 57), 120), int(sim::SquareRefusal::TooHigh), "120 is over it");
+    checkEqual(ask(1, at(10, 57), 70, 1, sim::Kin::MagicGladiator), int(sim::SquareRefusal::TooHigh),
+               "a Magic Gladiator of 70 counts as 105");
+    checkEqual(ask(1, at(10, 57), 50, 2), int(sim::SquareRefusal::NotBuilt), "square 2 is not built");
+    checkEqual(ask(0, at(10, 57), 50), -1, "a +0 invitation fits square 1");
+    checkEqual(ask(1, at(10, 57), 50), -1, "a +1 at 10:57, level 50, goes in");
+    {
+        // The wait he takes in: what is left of the gate.
+        sim::Realm r;
+        r.raise(&noria, 7, 175, 107, sim::Kin::DarkKnight, 50);
+        r.give(invitation, -1, 1);
+        r.setWallClock(at(10, 57));
+        talk.target = uint32_t(charon);
+        r.ask(talk);
+        for (int tick = 0; tick < 400 && r.gating() < 0; ++tick) r.step();
+        r.enterSquare(1);
+        r.step();
+        check(r.squarePassedWait() > 170 && r.squarePassedWait() <= 180,
+              "three minutes of the gate left, the fight on the hour");
     }
-    check(answered, "walked to Charon and he said Devil Square is not ready");
 }
 
 // The Chaos Machine (sim/machine.h): the Goblin opens it, the judge names the box, +10 and +11
@@ -7285,6 +7359,62 @@ void testChaosMachine() {
         check(cloaked, "twenty tries make a cloak");
     }
 
+    // Devil Square's ticket: a Devil's Eye and Key of one level and a Chaos, WebZen 0.97d's Zen
+    // and rates by the level (MixSystem.cpp:742-1050).
+    {
+        const int32_t eye = noria.itemAt(14, 17), key = noria.itemAt(14, 18);
+        const int32_t invitation = noria.itemAt(14, 19);
+        check(eye >= 0 && key >= 0 && invitation >= 0, "the eye, the key and the invitation are in the tables");
+        if (eye >= 0 && key >= 0 && invitation >= 0) {
+            sim::Machine box;
+            box.put(0, sim::Held{eye, 1, 1});
+            box.put(1, sim::Held{key, 1, 1});
+            box.put(2, sim::Held{chaos, 0, 1});
+            sim::Judged d = sim::judge(noria, box);
+            check(d.recipe == sim::Recipe::Invitation, "an eye, a key and a Chaos are an invitation");
+            checkEqual(d.rate, 80, "at 80% for +1");
+            checkEqual(int(d.zen), 40000, "for 40,000");
+            box.put(1, sim::Held{key, 2, 1});
+            d = sim::judge(noria, box);
+            check(d.recipe == sim::Recipe::None && d.nearest == sim::Recipe::Invitation,
+                  "a +2 key with a +1 eye is not ready, and still looks like an invitation");
+            box.put(0, sim::Held{eye, 4, 1});
+            box.put(1, sim::Held{key, 4, 1});
+            d = sim::judge(noria, box);
+            check(d.rate == 60 && d.zen == 300000, "+4 at 60% for 300,000");
+            check(sim::judge(noria, box, sim::Service::Invitation).ready, "and its page runs it");
+            check(!sim::judge(noria, box, sim::Service::Cloak).ready, "the cloak's page does not");
+            box.put(4, sim::Held{bless, 0, 1});
+            check(sim::judge(noria, box).recipe == sim::Recipe::None, "a Bless spoils it");
+        }
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+        }
+        bool made = false;
+        for (int attempt = 0; attempt < 20 && !made && eye >= 0; ++attempt) {
+            check(realm.putIn(realm.give(eye, -1, 2)) >= 0 && realm.putIn(realm.give(key, -1, 2)) >= 0 &&
+                      realm.putIn(realm.give(chaos)) >= 0,
+                  "the eye, the key and a Chaos go in");
+            const int64_t before = realm.money();
+            check(realm.mix(), "the Goblin runs the invitation");
+            checkEqual(int(before - realm.money()), 80000, "and takes 80,000 for +2");
+            int left = 0, at = -1;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                if (!realm.machine()[cell].empty()) ++left, at = cell;
+            }
+            made = realm.mixed();
+            if (made) {
+                checkEqual(left, 1, "an invitation alone in the box");
+                check(realm.machine()[at].item == invitation, "and it is the Devil's Invitation");
+                checkEqual(int(realm.machine()[at].refinement), 2, "of the eye's level, +2");
+                realm.takeOut(at);
+            } else {
+                checkEqual(left, 0, "a failure takes the box");
+            }
+        }
+        check(made, "twenty tries make an invitation");
+    }
+
     // The Chaos Weapon runs now its three answers are cooked: one roll, either outcome checked.
     {
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
@@ -7404,7 +7534,7 @@ void testChaosMachine() {
             // Every mix a page of its own, and no plain Combine on the row (the user, 2026-10-05).
             bool combineShown = false;
             for (sim::Service one : sim::kRowServices) combineShown |= one == sim::Service::Combine;
-            check(!combineShown && sim::kRowCount == 9, "nine pages, Combine on none");
+            check(!combineShown && sim::kRowCount == 10, "ten pages, Combine on none");
             check(sim::judge(noria, weapon, sim::Service::ChaosWeapon).recipe ==
                       sim::Recipe::ChaosWeapon,
                   "the Chaos Weapon page makes the Chaos weapon");
@@ -10376,7 +10506,7 @@ void testDrops(const content::Tables& tables) {
     };
     for (const int level : {10, 14, 26, 40, 70}) {
         int b = 0, s = 0, c = 0, r = 0, others = 0, items = 0, unsettable = 0, orbs = 0, orbPlus = -1,
-            tickets = 0, lives = 0;
+            tickets = 0, devils = 0, lives = 0;
         for (int i = 0; i < kDeaths; ++i) {
             realm.dropFor(level);
             // The Orb of Summoning rolls beside the rest (sim::kSummonOrbOdds), so it is counted
@@ -10396,8 +10526,10 @@ void testDrops(const content::Tables& tables) {
             if (!own) continue;
             const sim::Held& what = *own;
             const content::ItemRow& row = tables.items[size_t(what.item)];
-            // A scroll or a bone of Blood Castle's ticket is the kill's whole drop (sim/items.h).
+            // A scroll or a bone of Blood Castle's ticket, or Devil Square's eye or key, is the
+            // kill's whole drop (sim/items.h, sim/square.h).
             if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) ++tickets;
+            else if (sim::devilsEye(row) || sim::devilsKey(row)) ++devils;
             else if (what.item == bless) ++b;
             else if (what.item == soul) ++s;
             else if (what.item == chaos) ++c;
@@ -10428,8 +10560,11 @@ void testDrops(const content::Tables& tables) {
         check(near(r, kDeaths * sim::kCreationChance, 0.25),
               said("the Rune of Creation at its chance"));
         checkEqual((long long)unsettable, 0LL, said("every dropped rune holds a power he may set"));
-        check(near(items, (kDeaths - tickets) * 0.1, 0.05), said("the item chance is untouched"));
+        check(near(items, (kDeaths - tickets - devils) * 0.1, 0.05), said("the item chance is untouched"));
         check(near(tickets, kDeaths * 0.02, 0.25), said("a scroll or a bone in fifty"));
+        // Devil Square's eye or key, one in fifty of what the castle's left (sim/square.h).
+        check(level > 15 ? near(devils, (kDeaths - tickets) * 0.02, 0.25) : devils == 0,
+              said("an eye or a key in fifty, none from a monster of 15 or under"));
         check(near(orbs, double(kDeaths) / sim::kSummonOrbOdds, 0.1),
               said("the Orb of Summoning at its own chance"));
         check(level >= sim::kLifeFromLevel ? near(lives, double(kDeaths) / sim::kLifeOdds, 0.2) : lives == 0,

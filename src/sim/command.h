@@ -88,10 +88,12 @@ struct Command {
         DealTake,    // a: the box cell, b: the bag slot or -1 for where it came from
         DealZen,     // zen: the whole sum offered, which replaces the last
         DealAccept,  // a: 1 accept, 0 take it back
+        // Charon's Enter (Realm::enterSquare; a: the square).
+        EnterSquare,
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.
-    static constexpr Kind kLastKind = Kind::DealAccept;
+    static constexpr Kind kLastKind = Kind::EnterSquare;
     // Close's a.
     // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
     // two players, which closing cancels for both.

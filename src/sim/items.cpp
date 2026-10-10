@@ -737,6 +737,12 @@ bool invisibilityCloak(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number == 18;
 }
 
+bool devilsEye(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 17; }
+bool devilsKey(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 18; }
+bool devilsInvitation(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 19;
+}
+
 bool refiningJewel(const content::ItemRow& row) {
     return (row.group == kGroupPotions &&
             (row.number == 13 || row.number == 14 || row.number == 16)) ||

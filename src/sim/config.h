@@ -32,6 +32,11 @@ struct RealmConfig {
     // (BloodCastle.cpp:778-802, entry closed at hh:30, :1128-1171). The two-minute test clock
     // the user asked for on 2026-10-04 is `--castle-period 120` now, not the default.
     GateClock castle{3600, 25 * 60, 5 * 60};
+    // **Devil Square's door**, WebZen 0.97d's (DevilSquare.cpp:843-883): the fight on every odd
+    // hour, every two hours, and Charon's gate open the five minutes before it (OPEN 5, the
+    // repack's DevilSquare.dat:4), so 00:55 to 01:00, 02:55 to 03:00 ... never with Blood
+    // Castle's hh:25. `--square-period S` tests it every S seconds for S/2.
+    GateClock square{2 * 3600, 55 * 60, 5 * 60};
     // `--quest-demo`: Peia gives sim::kDemoQuests too, so her window lists them.
     bool questDemo = false;
 };

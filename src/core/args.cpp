@@ -207,6 +207,8 @@ void printUsage() {
         "  --invite A,B              on a server, ask them into his party until they are in\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --castle-period S         Blood Castle opens every S seconds, for S/2, not hourly (a test)\n"
+        "  --square-open             Charon lets an invitation into Devil Square at any hour\n"
+        "  --square-period S         Charon's gate opens every S seconds, for S/2, not two-hourly (a test)\n"
         "  --invasion                the map's Golden Invasion begins at once (Lorencia)\n"
         "  --bench-players N         N other heroes in end-game gear round him, half walking (a busy screen)\n"
         "  --bench-fight             and they fight the nearest monsters, nobody falling (with --arena)\n"
@@ -404,6 +406,10 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.castleBridge = std::atoi(v);
         } else if (!std::strcmp(s, "--square-at")) {
             if (const char* v = next(s)) a.squareAt = std::atoi(v);
+        } else if (!std::strcmp(s, "--square-open")) {
+            a.squareOpen = true;
+        } else if (!std::strcmp(s, "--square-period")) {
+            if (const char* v = next(s)) a.squarePeriod = std::max(2, std::atoi(v));
         } else if (!std::strcmp(s, "--peaceful")) {
             a.peaceful = true;
         } else if (!std::strcmp(s, "--shield")) {

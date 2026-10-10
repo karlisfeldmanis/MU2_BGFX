@@ -58,6 +58,8 @@ struct Sorted {
     int horns = 0, wornHorns = 0;         // Horns of Uniria at full life, and short of it
     int scrolls = 0, bones = 0;           // the cloak's: Scrolls of Archangel and Blood Bones
     int scrollLevel = 0, boneLevel = 0;   // and the last one's level
+    int eyes = 0, keys = 0;               // the invitation's: Devil's Eyes and Keys
+    int eyeLevel = 0, keyLevel = 0;
     int runes = 0;                        // Runes of Creation carrying a power
     int runeCells[kMostSockets + 1] = {-1, -1, -1, -1};
     int things = 0;     // everything that is not one of the three jewels
@@ -90,6 +92,11 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 continue;
             }
             ++s.others;
+            if (devilsEye(*row) || devilsKey(*row)) {
+                ++(devilsEye(*row) ? s.eyes : s.keys);
+                (devilsEye(*row) ? s.eyeLevel : s.keyLevel) = what.refinement;
+                continue;
+            }
             if (scrollOfArchangel(*row) || bloodBone(*row)) {
                 ++(scrollOfArchangel(*row) ? s.scrolls : s.bones);
                 (scrollOfArchangel(*row) ? s.scrollLevel : s.boneLevel) = what.refinement;
@@ -165,6 +172,10 @@ bool exactly(Recipe recipe, const Sorted& s) {
             return s.scrolls == 1 && s.bones == 1 && s.things == 2 && s.chaos == 1 &&
                    s.bless == 0 && s.soul == 0 && s.scrollLevel == s.boneLevel &&
                    s.scrollLevel >= 1 && s.scrollLevel <= kCloakMostLevel;
+        case Recipe::Invitation:
+            return s.eyes == 1 && s.keys == 1 && s.things == 2 && s.chaos == 1 && s.bless == 0 &&
+                   s.soul == 0 && s.eyeLevel == s.keyLevel && s.eyeLevel >= 0 &&
+                   s.eyeLevel <= kInvitationMostLevel;
         case Recipe::None:
             break;
     }
@@ -218,6 +229,11 @@ int likeness(Recipe recipe, const Sorted& s) {
             if (s.scrolls > 0) points += 10;
             if (s.bones > 0) points += 5;
             break;
+        case Recipe::Invitation:
+            if (s.things != s.eyes + s.keys || s.bless > 0 || s.soul > 0) return 0;
+            if (s.eyes > 0) points += 10;
+            if (s.keys > 0) points += 5;
+            break;
         case Recipe::None:
             return 0;
     }
@@ -227,7 +243,7 @@ int likeness(Recipe recipe, const Sorted& s) {
 
 // The wings before the Chaos Weapon: a box that is both is WebZen's `MixResult2`, a wing.
 constexpr Recipe kOrder[] = {Recipe::PlusTen, Recipe::PlusEleven, Recipe::Dinorant,
-                             Recipe::Cloak, Recipe::SecondWings, Recipe::Wings,
+                             Recipe::Cloak, Recipe::Invitation, Recipe::SecondWings, Recipe::Wings,
                              Recipe::ChaosWeapon};
 
 void need(Judged& j, std::string name, int have, int want) {
@@ -255,6 +271,7 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             case Service::Upgrade: return one == Recipe::PlusTen || one == Recipe::PlusEleven;
             case Service::Dinorant: return one == Recipe::Dinorant;
             case Service::Cloak: return one == Recipe::Cloak;
+            case Service::Invitation: return one == Recipe::Invitation;
             default: return true;
         }
     };
@@ -287,6 +304,7 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
                     break;
                 case Service::Dinorant: j.nearest = Recipe::Dinorant; break;
                 case Service::Cloak: j.nearest = Recipe::Cloak; break;
+                case Service::Invitation: j.nearest = Recipe::Invitation; break;
                 default: break;
             }
         }
@@ -389,6 +407,26 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
                 j.success = "Invisibility Cloak +" + std::to_string(std::max(1, level));
             }
             j.failure = "The scroll, the bone and the Chaos are lost";
+            break;
+        }
+        case Recipe::Invitation: {
+            need(j, "Devil's Eye", s.eyes, 1);
+            need(j, "Devil's Key", s.keys, 1);
+            need(j, "Jewel of Chaos", s.chaos, 1);
+            // The eye's level sets the price and the rate; two of different levels are not
+            // ready (WebZen's result 7), a level past +4 is no level (result 8).
+            const int level = s.eyes > 0 ? s.eyeLevel : s.keyLevel;
+            const bool fits = level >= 0 && level <= kInvitationMostLevel;
+            j.rate = fits ? kInvitationRate[level] : 0;
+            j.zen = fits ? kInvitationZen[level] : 0;
+            if (s.eyes == 1 && s.keys == 1 && s.eyeLevel != s.keyLevel) {
+                j.success = "The eye and the key must be of one level";
+            } else if (!fits) {
+                j.success = "A +" + std::to_string(level) + " cannot be combined";
+            } else {
+                j.success = "Devil's Invitation +" + std::to_string(level);
+            }
+            j.failure = "The eye, the key and the Chaos are lost";
             break;
         }
         case Recipe::None:
@@ -593,7 +631,8 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
         case Service::ChaosWeapon:
         case Service::Upgrade:
         case Service::Dinorant:
-        case Service::Cloak: combine(tables, box, s, kin, j, service); break;
+        case Service::Cloak:
+        case Service::Invitation: combine(tables, box, s, kin, j, service); break;
     }
     return j;
 }
@@ -648,6 +687,7 @@ const char* recipeName(Recipe recipe) {
         case Recipe::PlusEleven: return "+11 Item";
         case Recipe::Dinorant: return "Dinorant";
         case Recipe::Cloak: return "Invisibility Cloak";
+        case Recipe::Invitation: return "Devil's Invitation";
         case Recipe::Wings: return "1st Level Wings";
         case Recipe::SecondWings: return "2nd Level Wings";
         case Recipe::None: break;
@@ -667,6 +707,7 @@ const char* serviceName(Service service) {
         case Service::Upgrade: return "Upgrade";
         case Service::Dinorant: return "Dinorant";
         case Service::Cloak: return "Invisibility Cloak";
+        case Service::Invitation: return "Devil's Invitation";
     }
     return "";
 }
@@ -683,6 +724,7 @@ const char* serviceVerb(Service service) {
         case Service::Upgrade: return "Upgrade";
         case Service::Dinorant: return "Create";
         case Service::Cloak: return "Create";
+        case Service::Invitation: return "Create";
     }
     return "";
 }

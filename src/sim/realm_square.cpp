@@ -6,6 +6,7 @@
 #include "core/log.h"
 
 #include <algorithm>
+#include <ctime>
 #include <limits>
 
 namespace mu::sim {
@@ -129,6 +130,75 @@ void Realm::squareResults(std::vector<SquareResult>* out) const {
     }
     std::sort(out->begin(), out->end(),
               [](const SquareResult& a, const SquareResult& b) { return a.rank < b.rank; });
+}
+
+// ---- Charon's door ------------------------------------------------------------------------
+
+// WebZen NpcRusipher (NpcTalk.cpp:1005-1048) and GCReqmoveDevilSquare (protocol.cpp:18587-18923),
+// in their order: an invitation, the gate open, the invitation's square, his level in its band.
+// MU's talk opens its square window (NewUIEnterDevilSquare) and its button asks the server again;
+// here the window is the quest window's page and Enter is enterSquare, as Blood Castle's.
+int Realm::invitationSlot(int square) const {
+    for (int i = kWorn; i < kSlots; ++i) {
+        if (me().bag[i].empty() || !devilsInvitation(tables_->items[size_t(me().bag[i].item)])) continue;
+        // A +0 invitation fits any square (protocol.cpp:18725-18749).
+        const int level = me().bag[i].refinement;
+        if (square == 0 || level == square || level == 0) return i;
+    }
+    return -1;
+}
+
+int Realm::squareDoorLeft() const {
+    if (squareOpen_) return -1;
+    if (wall_ <= 0) return 0;
+    const time_t at = time_t(wall_);
+    struct tm local {};
+    localtime_r(&at, &local);
+    return config_.square.entryLeft(local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec);
+}
+
+SquareRefusal Realm::squareRefusal(int square) const {
+    if (square < 1 || square > kSquares || square > kSquaresBuilt) return SquareRefusal::NotBuilt;
+    if (invitationSlot(square) < 0) return SquareRefusal::NoInvitation;
+    if (squareDoorLeft() == 0) return SquareRefusal::NotYet;
+    const Body& hero = mine();
+    const int level = squareLevel(hero.level, hero.kin == Kin::MagicGladiator);
+    if (level < kSquareBands[square - 1][0]) return SquareRefusal::TooLow;
+    if (kSquareBands[square - 1][1] != 0 && level > kSquareBands[square - 1][1]) return SquareRefusal::TooHigh;
+    return SquareRefusal::None;
+}
+
+// Asked from the window, between ticks, and passed at the next tick's start, as enterCastle.
+bool Realm::enterSquare(int square) {
+    if (me().gating < 0 || !serving(me().gating) ||
+        tables_->folk[size_t(me().gating)].number != kCharon) {
+        return false;
+    }
+    if (squareRefusal(square) != SquareRefusal::None) return false;
+    me().squareOwed = square;
+    me().gating = -1;
+    return true;
+}
+
+void Realm::passSquare(int square) {
+    Body& hero = mine();
+    if (!hero.alive() || squareRefusal(square) != SquareRefusal::None) return;
+    const EnterGate* gate = enterGateNumbered(kSquareEnterGate);
+    if (gate == nullptr) return;
+    // The invitation is spent as he goes (protocol.cpp:18894-18896), and the fight waits for
+    // what is left of the gate (sim/square.h), the whole of a held one's kSquareWait.
+    me().bag.lift(invitationSlot(square));
+    me().squarePassed = square;
+    me().squarePassedWait = std::max(0, squareDoorLeft());
+    core::logf("square: Charon lets him into Devil Square %d, the fight in %d s", square,
+               me().squarePassedWait > 0 ? me().squarePassedWait : kSquareWait);
+    passGate(hero, *gate);
+}
+
+void Realm::setSquare(int square, int wait) {
+    if (tables_ == nullptr || tables_->map != kDevilSquareMap || square_.phase != SquarePhase::Waiting) return;
+    square_.square = std::clamp(square, 1, kSquares);
+    if (wait > 0) square_.startsAt = tick_ + int64_t(wait) * kSquareTicksPerSecond;
 }
 
 void Realm::squareKill(const Body& dead, const Body& scorer) {

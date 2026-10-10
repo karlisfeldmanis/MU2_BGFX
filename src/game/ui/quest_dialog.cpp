@@ -117,6 +117,37 @@ std::string gateWords(sim::CastleRefusal why, int castle) {
            "You need more than just courage, warrior. You'll find the 'Scroll of Archangel' and "
            "'Blood Bone' by hunting monsters on the Continent of Mu.";
 }
+// Charon's, MU's own where it has them (Localization/Game.en.resx), ours where it has none.
+std::string squareWords(sim::SquareRefusal why, int square) {
+    switch (why) {
+        case sim::SquareRefusal::None:
+            return "Many adventurers and warriors are crowding into Devil Square to prove their "
+                   "courage. Warrior, are you on your way to Devil Square?";
+        case sim::SquareRefusal::NotYet:
+            return "You have come too soon. You may be able to enter the Devil Square if you wait "
+                   "for your time and revisit later.";  // 653
+        case sim::SquareRefusal::NotBuilt:
+            return "Devil Square " + std::to_string(square) + " is sealed. No warrior is called "
+                   "there yet.";  // ours
+        case sim::SquareRefusal::TooHigh:
+            return "You're underestimating yourself. Choose another square.";  // 686
+        case sim::SquareRefusal::TooLow:
+            return "If you wish to stay alive, choose another square.";  // 687
+        case sim::SquareRefusal::NoInvitation:
+            break;
+    }
+    // 652, and where the eye comes from.
+    return "The Devil Square is a place where warriors prove their courage. Qualified warriors "
+           "will be given the Devil invitation. Go to the Chaos Goblin in Noria with the Devil "
+           "eye, Devil key, Jewel of Chaos and enough Zen. Some say that the Devil eyes have been "
+           "found on some monsters on the MU continent.";
+}
+// WebZen's band, both ends (sim/square.h).
+std::string squareBandOf(int square) {
+    const int* band = sim::kSquareBands[square - 1];
+    return band[1] == 0 ? "Level " + std::to_string(band[0]) + " and over"
+                        : "Level " + std::to_string(band[0]) + " to " + std::to_string(band[1]);
+}
 // The Archangel's words, ours (the user, 2026-10-04: 'we need better text for archangel'): one
 // for each place the run can stand, naming the weapon this run's statue holds and the steps
 // the tracker lists. MU's two were ServerCmd 1,24 'You're a warrior in training...' while the
@@ -324,7 +355,7 @@ void QuestDialog::layout(const Play& play) {
         case Mode::List:
             break;  // the rows are the whole of it
         case Mode::Gate: {
-            const std::string said = gateWords(why_, castle_);
+            const std::string said = charon_ ? squareWords(squareWhy_, castle_) : gateWords(why_, castle_);
             words(said.c_str());
             // Read in silence: the Messenger has no voice, only the Archangel inside the castle
             // speaks (the user, 2026-10-05: 'completly delete this audio ... we keep only inside
@@ -360,7 +391,7 @@ void QuestDialog::layout(const Play& play) {
         // gate's hour and the band as lines.
         y += kSection * 0.5f + 24.0f;
         Cell cell;
-        cell.item = tables.itemAt(13, 18);
+        cell.item = charon_ ? tables.itemAt(14, 19) : tables.itemAt(13, 18);
         cell.plus = castle_;
         if (cell.item >= 0) {
             const sim::Held held = rewardHeld(tables, cell.item, castle_, 1, 0, 0);
@@ -627,23 +658,39 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         paidZen_ = realm.castleRun().paidZen;
     } else if (gate) {
         mode = Mode::Gate;
-        if (mode_ != Mode::Gate) castle_ = sim::castleFor(realm.hero().level);
-        why_ = realm.castleRefusal(castle_);
-        int slot = realm.cloakSlot(castle_);
-        if (slot < 0) slot = realm.cloakSlot();
+        // Charon's page or the Messenger's, by whose window it is.
+        const bool charon = realm.gating() >= 0 &&
+                            realm.tables()->folk[size_t(realm.gating())].number == sim::kCharon;
+        const bool gladiator = realm.hero().kin == sim::Kin::MagicGladiator;
+        if (mode_ != Mode::Gate || charon != charon_) {
+            castle_ = charon ? sim::squareFor(sim::squareLevel(realm.hero().level, gladiator))
+                             : sim::castleFor(realm.hero().level);
+        }
+        charon_ = charon;
+        int slot = -1;
+        if (charon_) {
+            squareWhy_ = realm.squareRefusal(castle_);
+            slot = realm.invitationSlot(castle_);
+            if (slot < 0) slot = realm.invitationSlot();
+        } else {
+            why_ = realm.castleRefusal(castle_);
+            slot = realm.cloakSlot(castle_);
+            if (slot < 0) slot = realm.cloakSlot();
+        }
         cloakPlus_ = slot >= 0 ? int(realm.satchel()[slot].refinement) : -1;
-        level_ = realm.hero().level;
+        // The band is read against the Magic Gladiator's counted level at Charon's.
+        level_ = charon_ ? sim::squareLevel(realm.hero().level, gladiator) : realm.hero().level;
         doorSeconds_ = -1;
         opensIn_ = 0;
-        if (realm.castleDoorHeld()) {
+        if (charon_ ? realm.squareDoorLeft() < 0 : realm.castleDoorHeld()) {
             doorSeconds_ = 0;
         } else if (const int64_t wall = realm.wallClock(); wall > 0) {
             const time_t at = time_t(wall);
             struct tm local {};
             localtime_r(&at, &local);
             const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
-            const sim::GateClock& castle = realm.config().castle;
-            testClock_ = castle.period != 3600;
+            const sim::GateClock& castle = charon_ ? realm.config().square : realm.config().castle;
+            testClock_ = castle.period != (charon_ ? 7200 : 3600);
             if (const int left = castle.entryLeft(day); left > 0) {
                 doorSeconds_ = left;
             } else {
@@ -692,7 +739,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     bool owed = false;
     for (const Cell& one : cells_) owed |= one.choice >= 0;
     const bool primaryOff = (mode_ == Mode::HandIn && owed && chosen_ < 0) ||
-                            (mode_ == Mode::Gate && why_ != sim::CastleRefusal::None) ||
+                            (mode_ == Mode::Gate && refused()) ||
                             // Complete on his thanks is live too: off only while the weapon is
                             // still to be found (the user, 2026-10-05: 'when i press complete
                             // nothing happened').
@@ -742,7 +789,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             else if (pressing_ == 4) turn = 1;
             // The Messenger's castles turn here, the new page fading in from the arrow's side.
             if (turn != 0 && mode_ == Mode::Gate) {
-                castle_ = (castle_ - 1 + turn + sim::kCastles) % sim::kCastles + 1;
+                castle_ = (castle_ - 1 + turn + pages()) % pages() + 1;
                 turnDir_ = turn;
                 turn_ = 0.0f;
             }
@@ -766,6 +813,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         }
         else if (primary && mode_ == Mode::Gate) {
             out->enter = true;
+            out->square = charon_;
             out->castle = castle_;
         }
         else if (primary && mode_ == Mode::Offer) out->accept = true;
@@ -813,7 +861,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
                          int(std::max<int64_t>(0, one.availableAt - realm.wallClock()) / 60) * 1024;
     }
     if (gate) {
-        now.gate[0] = int(why_);
+        now.gate[0] = charon_ ? 100 + int(squareWhy_) : int(why_);
         now.gate[1] = cloakPlus_;
         now.gate[2] = level_;
         now.gate[3] = doorSeconds_;
@@ -887,7 +935,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                      style::kAsh1);
         const float title = std::round(22.0f * u);
         const float small = std::round(13.5f * u);
-        const std::string name = gate    ? "Blood Castle " + std::to_string(castle_)
+        const std::string name = gate && charon_ ? "Devil Square " + std::to_string(castle_)
+                                 : gate  ? "Blood Castle " + std::to_string(castle_)
                                  : angel ? "Blood Castle " + std::to_string(castle_)
                                  : list  ? std::string(row.giverName)
                                          : row.title;
@@ -896,7 +945,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                         wy(top + 30.0f), title, style::kBoneHi, name);
         // The Messenger's page between its arrows: which castle of the six, and no more -- the
         // kicker under it names him (the user, 2026-10-03: 'to much text under title does not fit').
-        std::string where = gate    ? std::to_string(castle_) + " of " + std::to_string(sim::kCastles)
+        std::string where = gate    ? std::to_string(castle_) + " of " + std::to_string(pages())
                             : angel ? std::string("Archangel")
                             : list  ? std::string(row.place)
                                     : std::string(row.place) + "   \xC2\xB7   " + row.giverName;
@@ -936,7 +985,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::button(canvas_, placed(x, y, buttons_[1], u), "Not now", controls::Kind::Secondary,
                              state(1, false), u);
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Enter", controls::Kind::Primary,
-                             state(0, why_ != sim::CastleRefusal::None), u);
+                             state(0, refused()), u);
             break;
         case Mode::Angel:
             // Given back, one answer: Complete takes the win and sends him to Devias (the user,
@@ -1035,7 +1084,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     float cy = 12.0f;
     controls::caps(body_, sx(kInset), by(cy + 10.0f), style::kKickerSize * u, style::kAshInk,
                    list    ? std::string("What ") + row.giverName + " has for you"
-                   : gate  ? std::string("Messenger of Archangel of Devias")
+                   : gate  ? std::string(charon_ ? "Charon of Noria" : "Messenger of Archangel of Devias")
                    : angel ? std::string("Archangel of Blood Castle")
                    // Her hand-in, in Lirien's words: hers is the name over them.
                    : mode_ == Mode::HandIn && sim::questElsewhere(row)
@@ -1153,19 +1202,28 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             std::string figure;
             bool met;
         };
-        const std::string band = bandOf(castle_);
-        // The ticket: its picture in a cell, its name in its tone, and whether he holds it.
+        const std::string band = charon_ ? squareBandOf(castle_) : bandOf(castle_);
+        // The ticket: its picture in a cell, its name in its tone, and whether he holds it. A +0
+        // invitation fits any square.
+        const bool fits = cloakPlus_ == castle_ || (charon_ && cloakPlus_ == 0);
         for (const Cell& one : cells_) {
-            needRow(one, "Invisibility Cloak +" + std::to_string(castle_), cloakPlus_ == castle_,
+            needRow(one, (charon_ ? "Devil's Invitation +" : "Invisibility Cloak +") + std::to_string(castle_),
+                    fits,
                     cloakPlus_ < 0 ? bagWords(false)
-                    : cloakPlus_ == castle_ ? bagWords(true)
-                                            : "a +" + std::to_string(cloakPlus_) + " in your bag");
+                    : fits         ? bagWords(true)
+                                   : "a +" + std::to_string(cloakPlus_) + " in your bag");
             cy = one.box.y + kIcon + kCellGap;
         }
+        const int* squareBand = sim::kSquareBands[std::clamp(castle_, 1, sim::kSquares) - 1];
+        const bool inBand = charon_ ? level_ >= squareBand[0] && (squareBand[1] == 0 || level_ <= squareBand[1])
+                                    : level_ >= sim::kCastleBands[castle_ - 1][0];
+        const char* hours = charon_ ? (!testClock_ ? "The gate open, :55 before odd hours"
+                                                   : "The gate open, on the test clock")
+                                    : (!testClock_ ? "The gate open, hh:25 to hh:30"
+                                                   : "The gate open, on the test clock");
         const Need needs[kGateRows - 1] = {
-            {!testClock_ ? "The gate open, hh:25 to hh:30" : "The gate open, on the test clock",
-             door, doorSeconds_ >= 0},
-            {band.c_str(), std::to_string(level_), level_ >= sim::kCastleBands[castle_ - 1][0]},
+            {hours, door, doorSeconds_ >= 0},
+            {band.c_str(), std::to_string(level_), inBand},
         };
         for (int i = 0; i < kGateRows - 1; ++i) {
             const float rowY = cy + float(i) * kStepRow;

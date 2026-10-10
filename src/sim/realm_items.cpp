@@ -1162,6 +1162,26 @@ void Realm::leave(const Body& dead, const Body& killer) {
             }
         }
     }
+    // Devil Square's Eye, then its Key, anywhere but the square itself (sim/square.h), the same
+    // way: their own rolls, their level by the monster's, none from a monster of 15 or under.
+    if (tables_->map != kDevilSquareMap && devilTicketLevel(level) > 0) {
+        const bool eye = devilDice_.nextInt(0, 10000) < kDevilsEyeIn10000;
+        const bool key = !eye && devilDice_.nextInt(0, 10000) < kDevilsKeyIn10000;
+        if (eye || key) {
+            const int32_t item = tables_->itemAt(kGroupPotions, eye ? 17 : 18);
+            if (item >= 0) {
+                Lying ticket;
+                ticket.what = Held{item, int16_t(devilTicketLevel(level)), 1};
+                std::tie(ticket.column, ticket.row) = clearing(dead.column(), dead.row());
+                ticket.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+                ticket.owner = mine().id;
+                ticket.id = nextId_++;
+                lying_.push_back(ticket);
+                say(What::Dropped, dead, int32_t(ticket.id), item, ticket.what.refinement);
+                return;
+            }
+        }
+    }
     double roll = dice_.nextDouble();
     // A dungeon's Firecracker, first, so it takes the body's own tile and the kill's drop the
     // next clear one: its own roll off its own dice, and beside whatever else the kill leaves.

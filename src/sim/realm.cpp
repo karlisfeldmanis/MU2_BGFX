@@ -268,6 +268,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     wingDice_.seed(seed ^ 0x6e2b94d1c7a35f08ull);
     gearDice_.seed(seed ^ 0x2f6a9c1d7e4b5803ull);
     ticketDice_.seed(seed ^ 0x9fb21c651e98df25ull);
+    devilDice_.seed(seed ^ 0x2545f4914f6cdd1dull);
     treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
     lifeDice_.seed(seed ^ 0x9b05688c2b3e6c1full);
@@ -286,6 +287,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     happenings_.clear();
     happenings_.reserve(4096);
     me().castleOwed = 0;
+    me().squareOwed = 0;
     me().staffOwed = false;
     me().claimOwed = false;
     // Raised on a castle, the run's wait starts and the entrance is shut until it ends
@@ -948,12 +950,12 @@ void Realm::press() {
                 // His page of the Event window: the staff he asks for, and Give.
                 me().angeling = int(me().order.target);
                 say(What::Served, hero, me().angeling, one.number);
-            } else if (one.number == kMessenger) {
+            } else if (one.number == kMessenger || one.number == kCharon) {
                 // His page of the quest window: the ticket he asks for and the door
                 // (QuestDialog::kGate).
                 me().gating = int(me().order.target);
                 say(What::Served, hero, me().gating, one.number);
-            } else if (one.number == kGuildMaster || one.number == kCharon ||
+            } else if (one.number == kGuildMaster ||
                        one.number == kThompson ||
                        questOf(one.number) >= 0 || questReceives(one.number)) {
                 // Ours (the user, 2026-09-29): MU opens the guild window here, which a single
@@ -1196,6 +1198,11 @@ void Realm::heroBefore() {
         const int castle = me().castleOwed;
         me().castleOwed = 0;
         passCastle(castle);
+    }
+    if (me().squareOwed != 0) {
+        const int square = me().squareOwed;
+        me().squareOwed = 0;
+        passSquare(square);
     }
     Body& hero = mine();
     shelterSummon(hero);

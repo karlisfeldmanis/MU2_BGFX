@@ -1218,6 +1218,12 @@ bool canFly(const content::Tables& tables, const Satchel& bag);
 bool scrollOfArchangel(const content::ItemRow& row);
 bool bloodBone(const content::ItemRow& row);
 bool invisibilityCloak(const content::ItemRow& row);
+// **Devil Square's ticket** (docs/devil-square-port.md A 2.3): the Devil's Eye (14, 17) and the
+// Devil's Key (14, 18) of one level make the Devil's Invitation (14, 19) of that level in the
+// Chaos Machine; the level is the square's, +0 for any (protocol.cpp:18725-18749).
+bool devilsEye(const content::ItemRow& row);
+bool devilsKey(const content::ItemRow& row);
+bool devilsInvitation(const content::ItemRow& row);
 // The Divine Staff of Archangel (5,10) the Statue of Saint gives up: a quest item here, carried
 // back to the Archangel and worn by nobody (the user, 2026-10-03: 'we need that archange staff
 // is quest item and its not ussable for any char').

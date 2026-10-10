@@ -369,7 +369,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (result.claim) {
             expect(play.claimCastle(), Then::CloseAngel);
         } else if (result.enter) {
-            expect(play.enterCastle(result.castle), Then::Click);
+            expect(result.square ? play.enterSquare(result.castle) : play.enterCastle(result.castle),
+                   Then::Click);
         } else if (result.accept) {
             expect(play.acceptQuest(quest), Then::CloseQuest);
         } else if (result.complete) {

@@ -176,6 +176,14 @@ bool Realm::mix(Service service, int socket) {
         refusal_ = "Must be over level 15 to combine a Cloak of Invisibility.";
         return false;
     }
+    if (j.recipe == Recipe::Invitation && tables_->itemAt(kGroupPotions, 19) < 0) {
+        refusal_ = "no Devil's Invitation is in this world's tables";
+        return false;
+    }
+    if (j.recipe == Recipe::Invitation && hero.level < kInvitationFromLevel) {
+        refusal_ = "Must be over level 10 to combine the invitation to Devil Square.";  // 649
+        return false;
+    }
     if (j.recipe == Recipe::Dinorant && tables_->itemAt(kGroupPets, 3) < 0) {
         refusal_ = "no Horn of Dinorant is in this world's tables";
         return false;
@@ -209,6 +217,7 @@ bool Realm::mix(Service service, int socket) {
         case Service::Upgrade:
         case Service::Dinorant:
         case Service::Cloak:
+        case Service::Invitation:
             if (j.recipe == Recipe::PlusTen || j.recipe == Recipe::PlusEleven) {
                 // The thing is Reference 1: StaysAsIs and up one on success, Disappear on
                 // failure. The jewels Disappear either way.
@@ -268,6 +277,21 @@ bool Realm::mix(Service service, int socket) {
                     Held ticket{cloak, int16_t(level), 0};
                     ticket.durability = int16_t(maximumDurability(row, ticket));
                     me().machine.put(0, ticket);
+                }
+            } else if (j.recipe == Recipe::Invitation) {
+                // DevilSquareEventChaosMix: the Zen and the box go either way (:1015, :1026-
+                // 1030); a success is one invitation of the eye's level (:1004-1013).
+                int level = 0;
+                for (int cell = 0; cell < kMachineCells; ++cell) {
+                    const content::ItemRow* row = me().machine[cell].empty()
+                        ? nullptr
+                        : &tables_->items[size_t(me().machine[cell].item)];
+                    if (row && devilsEye(*row)) level = me().machine[cell].refinement;
+                }
+                me().machine.clear();
+                if (made) {
+                    const int32_t invitation = tables_->itemAt(kGroupPotions, 19);
+                    me().machine.put(0, Held{invitation, int16_t(level), 1});
                 }
             } else if (made) {
                 me().machine.clear();

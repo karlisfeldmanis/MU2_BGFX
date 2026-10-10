@@ -33,6 +33,7 @@
 #include "game/ui/hud.h"
 #include "game/ui/stage.h"
 #include "sim/event.h"
+#include "sim/square.h"
 #include "sim/quests.h"
 #include "gfx/interface.h"
 
@@ -52,6 +53,7 @@ public:
         bool picked = false;  // a reward cell was chosen or unchosen this frame
         int turn = 0;         // the journal's arrows this frame: -1 the quest before, +1 the next
         bool enter = false;   // kGate's Enter: into Blood Castle `castle`
+        bool square = false;  // and Charon's: into Devil Square `castle`
         int castle = 0;
         bool give = false;    // kArchangel's Give: the Divine Staff handed back
         bool claim = false;   // and Complete on his thanks: the win taken, out to Devias
@@ -166,6 +168,14 @@ private:
     // his level, the entry's seconds left (0 held open, -1 shut) and the minutes to the next.
     // `castle_` is the page, 1 to sim::kCastles, stepped by the arrows; it opens on his band's.
     sim::CastleRefusal why_ = sim::CastleRefusal::NoCloak;
+    // **And Charon's** (sim/square.h): the same page for Devil Square when the giver is he --
+    // `castle_` the square, `cloakPlus_` the invitation's plus, `squareWhy_` his refusal.
+    bool charon_ = false;
+    sim::SquareRefusal squareWhy_ = sim::SquareRefusal::NoInvitation;
+    bool refused() const {
+        return charon_ ? squareWhy_ != sim::SquareRefusal::None : why_ != sim::CastleRefusal::None;
+    }
+    int pages() const { return charon_ ? sim::kSquares : sim::kCastles; }
     int castle_ = 1;
     int cloakPlus_ = -1, level_ = 0, doorSeconds_ = -1, opensIn_ = 0;
     bool testClock_ = false;  // the realm's castle not on the hourly clock (--castle-period)

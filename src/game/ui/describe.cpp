@@ -54,6 +54,8 @@ std::string kindOf(const content::ItemRow& row) {
     if (sim::archangelWeapon(row) || sim::classTreasure(row)) return "Quest item";
     if (sim::invisibilityCloak(row)) return "Blood Castle ticket";
     if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) return "Ticket material";
+    if (sim::devilsInvitation(row)) return "Devil Square ticket";
+    if (sim::devilsEye(row) || sim::devilsKey(row)) return "Ticket material";
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
     if (row.shield()) return "Shield";
     // Before the pets: the rings and pendants share their group 13 (docs/jewellery.md).
@@ -322,7 +324,9 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     if (sim::archangelWeapon(row) || sim::classTreasure(row) || sim::lochsFeather(row)) {
         return Tone::Quest;
     }
-    if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row)) {
+    // MU draws Devil Square's three yellow too (ZzzInventory.cpp:2186-2189).
+    if (sim::scrollOfArchangel(row) || sim::bloodBone(row) || sim::invisibilityCloak(row) ||
+        sim::devilsEye(row) || sim::devilsKey(row) || sim::devilsInvitation(row)) {
         return Tone::Artifact;
     }
     // A socket no longer lifts the name to blue (the user, 2026-10-06: '+socket is not so special

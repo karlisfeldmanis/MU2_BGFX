@@ -769,6 +769,9 @@ void Play::answered(const sim::Happening& said) {
         case Kind::ClaimCastle:
             core::logf("event: Complete on the Archangel's thanks -- %s", ok ? "to Devias" : "refused");
             break;
+        case Kind::EnterSquare:
+            core::logf("event: Enter at Charon -- %s", ok ? "to Devil Square" : "refused");
+            break;
         case Kind::ClaimSquare:
             core::logf("event: Claim on Devil Square's result -- %s", ok ? "to Noria" : "refused");
             break;
