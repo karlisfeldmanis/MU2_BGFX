@@ -25,29 +25,37 @@ constexpr float kLeft = 16.0f, kAboveMiddle = 188.0f, kWide = 240.0f;
 constexpr size_t kRaidMost = 15;  // raid lines, then "+N more"
 
 // A capsule's make: its three bands top to foot, its corner, the gap under it, and its words.
-// The gaps 12 and 8, from 7 and 4: the user, 2026-10-10, "increae gaps between labels".
+// The gaps 12 and 8 from 7 and 4 (the user, 2026-10-10, "increae gaps between labels"), and the
+// rest from "work on paddings,lineheight,spacing,colors,gradients, shadows,outlines" the same day.
 struct Make {
     float shield, life, mana, radius, gap;
     float name, tag, number;  // the name's size, the level tag's, the number's
+    float pad;                // the words in from the capsule's ends
     float band;               // the dark band behind the name, a share of the width
 };
-constexpr Make kPlate{3.0f, 18.0f, 4.0f, 5.0f, 12.0f, 15.0f, 9.0f, 13.0f, 0.6f};  // a party member
-constexpr Make kLine{2.0f, 14.0f, 3.0f, 4.0f, 8.0f, 12.5f, 0.0f, 11.0f, 0.55f};  // a raider
-
+constexpr Make kPlate{3.0f, 21.0f, 4.0f, 6.0f, 11.0f, 14.5f, 9.0f, 12.5f, 10.0f, 0.62f};  // a party member
+constexpr Make kLine{2.0f, 16.0f, 3.0f, 5.0f, 7.0f, 12.0f, 0.0f, 10.5f, 8.0f, 0.55f};     // a raider
+constexpr float kBetween = 16.0f;  // between the party and the rest of the raid, with no heading
 constexpr uint32_t kGold = gfx::rgba(0.878f, 0.714f, 0.361f);  // the leader: the tracker's gold
-constexpr uint32_t kWell = gfx::rgba(0.024f, 0.016f, 0.016f, 0.78f);
-constexpr uint32_t kBand = gfx::rgba(0.024f, 0.016f, 0.016f, 0.78f);  // behind the name, fading out
-constexpr uint32_t kSeam = gfx::rgba(0.0f, 0.0f, 0.0f, 0.6f);         // between the bands
+constexpr uint32_t kWellTop = gfx::rgba(0.010f, 0.006f, 0.006f, 0.86f);  // the empty capsule,
+constexpr uint32_t kWellFoot = gfx::rgba(0.040f, 0.026f, 0.022f, 0.80f); // a touch lighter at its foot
+constexpr uint32_t kRim = gfx::rgba(0.0f, 0.0f, 0.0f, 0.72f);             // a hairline round it
+constexpr uint32_t kBand = gfx::rgba(0.071f, 0.016f, 0.016f, 0.86f);      // behind the name, fading out
+constexpr uint32_t kShadow = gfx::rgba(0.0f, 0.0f, 0.0f, 0.22f);          // under the capsule
+constexpr uint32_t kSeam = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);            // between the bands
+constexpr uint32_t kSheen = gfx::rgba(1.0f, 0.93f, 0.85f, 0.14f);         // the health's upper light
+constexpr uint32_t kGleam = gfx::rgba(1.0f, 0.95f, 0.88f, 0.10f);         // the capsule's top edge
 // The fills, each a top and a foot.
-constexpr uint32_t kShieldTop = gfx::rgba(0.949f, 0.698f, 0.353f), kShieldFoot = gfx::rgba(0.906f, 0.592f, 0.231f);
-constexpr uint32_t kLifeTop = gfx::rgba(0.761f, 0.176f, 0.141f), kLifeFoot = gfx::rgba(0.478f, 0.090f, 0.071f);
-constexpr uint32_t kLowTop = gfx::rgba(0.878f, 0.341f, 0.239f), kLowFoot = gfx::rgba(0.631f, 0.169f, 0.102f);
-constexpr uint32_t kAwayTop = gfx::rgba(0.490f, 0.353f, 0.333f), kAwayFoot = gfx::rgba(0.302f, 0.224f, 0.212f);
-constexpr uint32_t kManaTop = gfx::rgba(0.239f, 0.471f, 0.878f), kManaFoot = gfx::rgba(0.137f, 0.310f, 0.659f);
-constexpr uint32_t kTrail = gfx::rgba(0.941f, 0.702f, 0.604f, 0.85f);  // health just lost
-constexpr uint32_t kPulse = gfx::rgba(1.0f, 0.416f, 0.290f);           // under 30%, breathing
-constexpr uint32_t kDead = gfx::rgba(0.816f, 0.341f, 0.298f);          // the word
-constexpr uint32_t kNumber = gfx::rgba(0.965f, 0.918f, 0.847f);
+constexpr uint32_t kShieldTop = gfx::rgba(1.0f, 0.780f, 0.420f), kShieldFoot = gfx::rgba(0.851f, 0.525f, 0.180f);
+constexpr uint32_t kLifeTop = gfx::rgba(0.800f, 0.200f, 0.157f), kLifeFoot = gfx::rgba(0.420f, 0.071f, 0.055f);
+constexpr uint32_t kLowTop = gfx::rgba(0.937f, 0.388f, 0.259f), kLowFoot = gfx::rgba(0.588f, 0.145f, 0.086f);
+constexpr uint32_t kAwayTop = gfx::rgba(0.459f, 0.380f, 0.365f), kAwayFoot = gfx::rgba(0.255f, 0.204f, 0.196f);
+constexpr uint32_t kManaTop = gfx::rgba(0.302f, 0.553f, 0.957f), kManaFoot = gfx::rgba(0.118f, 0.267f, 0.612f);
+constexpr uint32_t kTrail = gfx::rgba(0.965f, 0.784f, 0.682f, 0.80f);  // health just lost
+constexpr uint32_t kPulse = gfx::rgba(1.0f, 0.478f, 0.333f);           // under 30%, breathing
+constexpr uint32_t kDead = gfx::rgba(0.878f, 0.400f, 0.349f);          // the word
+constexpr uint32_t kNumber = gfx::rgba(0.980f, 0.945f, 0.890f);
+constexpr uint32_t kTag = gfx::rgba(0.788f, 0.733f, 0.659f, 0.85f);    // the level after the name
 constexpr uint32_t kGhost = gfx::rgba(0.553f, 0.518f, 0.471f);         // a dead one's name
 constexpr float kLow = 30.0f;     // percent: the fill turns hot and pulses
 constexpr float kAway = 0.6f;     // a member on another map, this much of himself
@@ -125,19 +133,6 @@ void crown(gfx::Canvas& canvas, float x, float base, float s, uint32_t ink) {
     canvas.rect({x + 9.5f * s, base - 9.0f * s, 2.5f * s, 6.0f * s}, ink);
 }
 
-// A heading over a column: the word, and who leads it, his name in gold ("You" when it is he).
-float heading(gfx::Canvas& canvas, float x, float y, float u, const std::string& word, const std::string& leader) {
-    const float base = y + 11.0f * u, size = 11.0f * u;
-    controls::caps(canvas, x, base, size, style::kAshInk, word, 0.2f);
-    if (leader.empty()) return y + 18.0f * u;
-    float at = x + controls::capsWidth(size, word, 0.2f) + 8.0f * u;
-    crown(canvas, at, base, u, kGold);
-    at += 17.0f * u;
-    at += controls::label(canvas, at, base, 13.0f * u, kGold, leader);
-    controls::label(canvas, at + 4.0f * u, base, 13.0f * u, style::kAshInk, leader == "You" ? "lead" : "leads");
-    return y + 20.0f * u;
-}
-
 // What one capsule says.
 struct Capsule {
     std::string name;
@@ -167,8 +162,19 @@ float capsule(gfx::Canvas& canvas, float x, float y, float u, const Make& make, 
     const float a = c.away ? kAway : 1.0f;
     const float wide = kWide * u, r = make.radius * u;
     const float sh = make.shield * u, lh = make.life * u, mh = make.mana * u, tall = sh + lh + mh;
+    const gfx::Box whole{x, y, wide, tall};
+    // A soft shadow under it, a hairline rim, and the empty well inside.
+    // Two dark rounded layers under it, dropped and grown a little: tip::shadowUnder's falloffs
+    // are a card's, and under a see-through capsule they read as a grey box round it.
+    for (const float grow : {3.0f, 1.5f}) {
+        const float g = grow * u, rr[4] = {r + g, r + g, r + g, r + g};
+        tip::rounded(canvas, {x - g, y - g + 1.5f * u, wide + 2.0f * g, tall + 2.0f * g}, rr,
+                     faded(kShadow, a * (grow > 2.0f ? 0.5f : 1.0f)));
+    }
+    const float rim[4] = {r + u, r + u, r + u, r + u};
+    tip::rounded(canvas, {x - u, y - u, wide + 2.0f * u, tall + 2.0f * u}, rim, faded(kRim, a));
     const float corners[4] = {r, r, r, r};
-    tip::rounded(canvas, {x, y, wide, tall}, corners, faded(kWell, a));
+    tip::rounded(canvas, whole, corners, faded(kWellTop, a), faded(kWellFoot, a));
     // SD along the top, health the body, mana the foot.
     if (c.shield >= 0.0f) fill(canvas, {x, y, wide, sh}, c.shield, kShieldTop, kShieldFoot, a, r, 0.0f);
     const gfx::Box body{x, y + sh, wide, lh};
@@ -178,34 +184,43 @@ float capsule(gfx::Canvas& canvas, float x, float y, float u, const Make& make, 
     if (c.trail > c.life + 0.002f) {
         canvas.rect({x + wide * c.life, body.y, wide * (std::min(c.trail, 1.0f) - c.life), lh}, faded(kTrail, a));
     }
-    if (low && pulse > 0.0f) canvas.rect({x, body.y, wide * c.life, lh}, faded(kPulse, 0.45f * pulse));
+    if (low && pulse > 0.0f) canvas.rect({x, body.y, wide * c.life, lh}, faded(kPulse, 0.42f * pulse));
+    // The sheen over the health's upper half: light, fading down.
+    if (c.life > 0.0f) {
+        const float lit = wide * std::min(c.life, 1.0f);
+        canvas.shade({x, body.y, lit, lh * 0.45f}, faded(kSheen, a), faded(kSheen, a), 0u, 0u);
+    }
     if (c.mana >= 0.0f) fill(canvas, {x, y + sh + lh, wide, mh}, c.mana, kManaTop, kManaFoot, a, 0.0f, r);
-    canvas.rect({x, body.y, wide, 0.8f * u}, kSeam);
-    canvas.rect({x, body.y + lh - 0.8f * u, wide, 0.8f * u}, kSeam);
+    canvas.rect({x, body.y, wide, 0.75f * u}, kSeam);
+    canvas.rect({x, body.y + lh - 0.75f * u, wide, 0.75f * u}, kSeam);
+    canvas.rect({x + r, y, wide - 2.0f * r, 0.75f * u}, faded(kGleam, a));
     // The dark band behind the name, fading into the fill.
     const float band = wide * make.band;
-    canvas.shade({x, body.y, band * 0.35f, lh}, faded(kBand, a), faded(kBand, a * 0.8f), faded(kBand, a * 0.8f),
+    canvas.shade({x, body.y, band * 0.4f, lh}, faded(kBand, a), faded(kBand, a * 0.85f), faded(kBand, a * 0.85f),
                  faded(kBand, a));
-    canvas.shade({x + band * 0.35f, body.y, band * 0.65f, lh}, faded(kBand, a * 0.8f), 0u, 0u, faded(kBand, a * 0.8f));
+    canvas.shade({x + band * 0.4f, body.y, band * 0.6f, lh}, faded(kBand, a * 0.85f), 0u, 0u, faded(kBand, a * 0.85f));
 
-    // The words, on the health's middle.
-    const float base = body.y + lh * 0.5f + make.name * u * 0.36f;
-    float at = x + 8.0f * u;
+    // The words, their capitals centred on the health.
+    const float base = controls::middle(body.y, lh, make.name * u);
+    float at = x + make.pad * u;
     if (c.leader) {
-        crown(canvas, at, base, make.name / 15.0f * u, faded(kGold, a));
-        at += make.name / 15.0f * 17.0f * u;
+        const float s = make.name / 14.5f * u;
+        crown(canvas, at, base, s, faded(kGold, a));
+        at += 17.0f * s;
     }
     const uint32_t ink = c.dead ? kGhost : c.leader ? kGold : style::kBoneHi;
     const float named = controls::label(canvas, at, base, make.name * u, faded(ink, a), c.name);
     if (c.dead) canvas.rect({at, base - make.name * u * 0.3f, named, 1.0f * u}, faded(kGhost, a));
     if (!c.tag.empty() && make.tag > 0.0f) {
-        controls::caps(canvas, at + named + 5.0f * u, base, make.tag * u, faded(style::kAshInk, a), c.tag, 0.08f);
+        controls::caps(canvas, at + named + 6.0f * u, base, make.tag * u, faded(kTag, a), c.tag, 0.1f);
     }
-    const float right = x + wide - 7.0f * u;
+    const float right = x + wide - make.pad * u;
+    const float numberBase = controls::middle(body.y, lh, make.number * u);
     if (c.dead) {
-        controls::caps(canvas, right - controls::capsWidth(make.number * u, "Dead"), base, make.number * u, kDead, "Dead");
+        controls::caps(canvas, right - controls::capsWidth(make.number * u, "Dead"), numberBase, make.number * u,
+                       kDead, "Dead");
     } else if (!c.number.empty()) {
-        controls::ranged(canvas, right, base, make.number * u, faded(c.away ? style::kBone2 : kNumber, a), c.number);
+        controls::ranged(canvas, right, numberBase, make.number * u, faded(c.away ? style::kBone2 : kNumber, a), c.number);
     }
     return tall + make.gap * u;
 }
@@ -270,12 +285,6 @@ void PartyBar::update(float seconds, const Play& play) {
 
     const float x = kLeft * u;
     float y = (540.0f - kAboveMiddle) * u;  // the unit is 1080 lines' pixel
-    // Who leads: the server's first member (net::PartyState); in the --raid harness, the hero,
-    // whose party it is (Play::raidParty's first).
-    const std::string partyLeader = party.members.empty() ? std::string()
-                                    : party.members.front().name == me ? "You"
-                                                                       : party.members.front().name;
-    if (!others.empty()) y = heading(canvas_, x + 2.0f * u, y + 2.0f * u, u, "Party", partyLeader);
     for (const auto* member : others) {
         Capsule c;
         c.name = member->name;
@@ -295,14 +304,9 @@ void PartyBar::update(float seconds, const Play& play) {
     }
     if (raid_.empty()) return;
 
-    // The rest of the raid: a heading, then a line each.
-    if (!others.empty()) y += 8.0f * u;
-    // The raid's leader: the harness's raid is the hero's; on a server, his party's leader while
-    // the raid is one party and its strangers (no raid of parties on the server yet).
-    const std::string raidLeader = play.realm().raiderCount() > 0 ? "You" : partyLeader;
-    y = heading(canvas_, x + 2.0f * u, y, u, "Raid " + std::to_string(raid_.size() + others.size() + 1),
-                raidLeader);
-    y += 2.0f * u;
+    // The rest of the raid, a line each, a little apart from the party; no heading (the user,
+    // 2026-10-10: "get rid of party header": the leader's crown is in his capsule).
+    if (!others.empty()) y += (kBetween - kPlate.gap) * u;
     const size_t shown = raid_.size() > kRaidMost ? kRaidMost - 1 : raid_.size();
     for (size_t i = 0; i < shown; ++i) {
         const Raider& one = raid_[i];
