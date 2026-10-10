@@ -7,7 +7,6 @@
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
-#include "game/ui/style.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -400,21 +399,10 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     const float x = x_, y = y_, k = panel::scale();
     const gfx::Face& face = canvas_.face();
 
-    panel::frame(canvas_, arts, x, y, "Inventory");
-
-    // **The gear score, in the head** (sim::gearScore): the user's choice of 2026-10-10, "In the
-    // head, beside the title". The title is centred and the cross takes the right-hand end, so
-    // the score takes the left, on the cross's inset: an ash GEAR over the figure in bone, the
-    // Zen foot's own pair stacked. Side by side, a four-figure score touched the title.
-    {
-        const float u = tip::unit();
-        const float size = 15.0f * u, small = 10.0f * u;
-        const float head = panel::kHeadBand * k;  // panel::frame's head
-        const float from = x + panel::kHeadInset * k;
-        controls::caps(canvas_, from, std::round(y + head * 0.42f), small, style::kAshInk, "GEAR");
-        controls::label(canvas_, from, y + head * 0.80f, size, style::kBoneHi,
-                        panel::commas(sim::gearScore(tables, bag)));
-    }
+    // **The gear score is the title** (sim::gearScore): the user, 2026-10-10, first "In the head,
+    // beside the title", then on seeing it: "dont show Inventory title, but show gear score
+    // instead". The frame's own centred Cinzel, which shrinks a long title to fit.
+    panel::frame(canvas_, arts, x, y, "Gear Score " + panel::commas(sim::gearScore(tables, bag)));
 
     // **The worn slots: a deep well, and MU's own silhouette in it.** The art is the game's
     // (`bag_slot_helm` and its ten fellows) and it stays -- the user, 2026-09-23: *"it could help
