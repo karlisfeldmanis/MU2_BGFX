@@ -29,7 +29,7 @@
   "crossbow06_R": "steel",
   "crossbow06": "steel"
  },
- "material_note": "As the Divine Staff's: steel, the paint its albedo. Not built, MuMain's effects: mesh 0, the red crystal, RENDER_METAL with BITMAP_CHROME sliding over it (ZzzObject.cpp:7054-7059); its held sparkles are commented out in MuMain (ZzzCharacter.cpp:7523-7539); fired, it would loose MODEL_ARROW_BEST_CROSSBOW (ZzzEffectMagicSkill.cpp:231), which a quest item never is. A statue holds it at scale 0.9, AngleMatrix(10, 0, 0) and (0, 110, 80) (ZzzCharacter.cpp:6684-6699).",
+ "material_note": "As the Divine Staff's: steel, the paint its albedo. Built 2026-10-10: mesh 0's RENDER_METAL under its sliding Chrome01 is the chrome pass (chrome_from); its held sparkles are commented out in MuMain (ZzzCharacter.cpp:7523-7539); fired, it would loose MODEL_ARROW_BEST_CROSSBOW (ZzzEffectMagicSkill.cpp:231), which a quest item never is. A statue holds it at scale 0.9, AngleMatrix(10, 0, 0) and (0, 110, 80) (ZzzCharacter.cpp:6684-6699).",
  "rig_note": "No .rig.json: Bow19.bmd has one bone and one action of one key, nothing moves (export-rig --actions=all, 2026-10-03), and it is never drawn, so its string never draws back; a quest item needs only MU's geometry at action 0 key 0. No release, muzzle or bolt for the same reason.",
  "material_overrides": {
   "steel": {
@@ -39,6 +39,18 @@
  "material_overrides_note": "As the Divine Staff's: steel's own 0.2 mirrors the scene.",
  "tells": "Reward received when returned to the Archangel",
  "tells_from": "MU's own sentence for the Archangel's weapon, Game.en.resx:3049; the 'Quest item' line over it is ours (game/ui/describe.cpp).",
+ "chrome": [
+  {
+   "slot": "crossbow06_R",
+   "image": "shiny01",
+   "uv": "metal",
+   "mask": "chrome01",
+   "scrolls_per_second": 0.1,
+   "axis": "v",
+   "where": "over"
+  }
+ ],
+ "chrome_from": "RenderPartObjectBody (ZzzObject.cpp:7053-7058): mesh 0 (crossbow06_R) is drawn RENDER_TEXTURE | RENDER_METAL -- Shiny01 at RENDER_METAL's coordinates off the normal (ZzzBMD.cpp:1499-1502, 1683-1687), solid -- and then RENDER_LIGHTMAP with Chrome01 at its own UVs, V sliding at WorldTime*0.0001, a tenth of a sheet a second, which multiplies it: a polished sheen with chrome streaks running along it. Its own _R sheet is never drawn. Here the pass is Shiny01 times the sliding Chrome01 (its mask), added over the baked mesh rather than standing in for it (scrolls_per_second 0.1, the renderer's offset being minus the rate). tools/chrome_sheets.py.",
  "islands": [
   {
    "island": 0,

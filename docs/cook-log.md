@@ -242,7 +242,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword15 | arm | 2026-09-30 09:45 | passed | steel 0.45 blade with sword15_2's blue lightning added and breathing over it, ornate guard and grip whole; no blowout |
 | Hommerd01 | figure | 2026-09-30 09:47 | passed | blue painted plate with silver trim, crested helm, dark greaves; metallic 0 keeps it paint, not chrome; axe and shield judged in the arena |
 | Sword13 | arm | 2026-09-30 09:50 | passed | silver blade with cut-out serrated teeth along both edges, brass 0.6 winged guard and pommel; whole, teeth solid not rectangles |
-| Spear10 | arm | 2026-10-10 18:23 | passed | stage and arena: blue Chrome01 streams along V in af's cut veins only |
+| Spear10 | arm | 2026-10-10 18:35 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | EliteYeti01 | figure | 2026-09-30 09:54 | passed | pale grey shaggy pelt with dark marks, steel-blue spikes on crown and shoulders; fur and chitin, no sheen |
 | Bow06 | arm | 2026-09-30 10:01 | passed | silver steel limbs with gold scroll paint, nocked arrow and string drawn, cut-out string cards solid; whole at noon/dusk/night |
 | IceMonster01 | figure | 2026-09-30 10:12 | passed | MU's additive ice body with its V scroll, unchanged; half-strength shadow (ours) outlines it on Devias's snow -- approved by the user in game |
@@ -275,19 +275,19 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Crow01 | world | 2026-10-02 21:56 | awaiting |  |
 | Orc01 | figure | 2026-10-03 21:34 | awaiting |  |
 | Bali01 | figure | 2026-10-03 11:24 | passed | summoned in a muted Lorencia arena, borrowed from figures_noria.json (Bali spawns nowhere; summoned_in noria): teal muscled hide in skin, the loin plate, bracers and horn bases in brass without blowout, the cyan mane cut out; about twice the elf's height at MU's 0.12 |
-| Staff11 | arm | 2026-10-03 12:44 | awaiting |  |
+| Staff11 | arm | 2026-10-10 18:53 | passed | bench at dusk: head catches the metal pass |
 | SaintStatue01 | figure | 2026-10-03 13:18 | awaiting |  |
 | OrcArcher01 | figure | 2026-10-03 21:40 | awaiting |  |
 | DarkSkull01 | figure | 2026-10-03 21:43 | awaiting |  |
 | RedSkeleton01 | figure | 2026-10-03 21:46 | awaiting |  |
-| Sword20 | arm | 2026-10-03 22:15 | awaiting |  |
-| Bow19 | arm | 2026-10-03 22:19 | awaiting |  |
+| Sword20 | arm | 2026-10-10 18:52 | passed | bench at dusk: polished blade under the metal pass |
+| Bow19 | arm | 2026-10-10 18:55 | passed | bench at dusk: white metal sheen on the body |
 | Shield14 | arm | 2026-10-03 22:36 | awaiting |  |
 | Mace06 | arm | 2026-10-03 22:42 | awaiting |  |
 | CrossBow07 | arm | 2026-10-03 22:49 | awaiting |  |
 | Staff07 | arm | 2026-10-03 23:15 | awaiting |  |
 | Fish02 | world | 2026-10-04 00:24 | passed | the school reads at 184,24: small cichlids shoaling past the corals, tethered round the hero |
-| Bow18 | arm | 2026-10-05 10:28 | awaiting |  |
+| Bow18 | arm | 2026-10-10 18:50 | passed | bench at dusk: Ebow_R drawn added |
 | Wing02 | figure | 2026-10-05 19:42 | awaiting |  |
 | Wing03 | figure | 2026-10-05 19:42 | awaiting |  |
 | Sword17 | arm | 2026-10-06 00:13 | awaiting |  |
@@ -299,7 +299,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Black Dragon | set | 2026-10-06 07:01 | awaiting |  |
 | Mace08 | arm | 2026-10-06 10:08 | awaiting |  |
 | Staff10 | arm | 2026-10-06 09:53 | awaiting |  |
-| CrossBow20 | arm | 2026-10-10 18:20 | passed | arena fight at dusk: bab2 chrome added in Eccross's cut grooves |
+| CrossBow20 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Mace03 | arm | 2026-10-06 10:27 | awaiting |  |
 | IronWheel01 | figure | 2026-10-06 11:42 | awaiting |  |
 | Tantalos01 | figure | 2026-10-06 11:44 | awaiting |  |
@@ -323,7 +323,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Dark Soul | set | 2026-10-10 13:57 | passed | studio, 8 angles at noon/dusk/night from 3.5 m: a dark navy robe traced in gold on cloth, the white hair under the hood on hair, the front panel reads; no cloth sim (MU's pants tail) |
 | Red Spirit | set | 2026-10-10 15:04 | passed | studio, 8 angles at noon/dusk/night from 3.5 m and 2 m, against a Blender render of MU's own model and sheets: red lacquer traced in silver, her gold hair down her back and the pale-blue thigh plates as MU's, the violet plume breathing added |
 | Hurricane | set | 2026-10-10 15:22 | passed | studio, 8 angles at noon/dusk/night from 2 m: violet lacquer on painted_steel, the engraving's chrome tinted (0.3, 0.8, 1) by kShineHurricane, faint as Storm Crow's; no holes, no blowout |
-| Sword21 | arm | 2026-10-10 18:11 | passed | arena fight at dusk: nks01 blade under MU's violet Chrome01 pass (RENDER_CHROME), flat faces one band each |
-| Sword22 | arm | 2026-10-10 18:21 | passed | arena fight at dusk: blade slides U and V together, orange core copy slides V over it |
-| Staff12 | arm | 2026-10-10 18:18 | passed | arena fight at dusk: shaft's faint 0.2 chrome, head's Chrome02 RENDER_CHROME4 sheen on its pulse; bright |
+| Sword21 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
+| Sword22 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
+| Staff12 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Bow20 | arm | 2026-10-10 15:50 | passed | studio, 8 angles at noon/dusk/night: red lacquered limbs, the pink and violet _R waves breathing added, the nocked arrow and string card in place |

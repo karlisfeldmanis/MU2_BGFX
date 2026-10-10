@@ -75,17 +75,27 @@ constexpr float kHeliacalHeight = 1.0f;
 
 }  // namespace
 
+// And the Archangel's three: MU's (0.8, 0.5, 0.3) at its 0.8 over two tiles (ZzzCharacter.cpp:
+// 5664-5667), from the grip.
+constexpr float kArchangelLight[3] = {0.64f, 0.4f, 0.24f};
+constexpr float kArchangelReach = 2.0f;
+
 uint32_t HeldLights::lights(gfx::PointLight* out, uint32_t max) const {
     uint32_t count = 0;
     for (const Held& one : held_) {
-        if (one.item != Item::HeliacalSword || one.count < 2 || count >= max) continue;
+        const bool heliacal = one.item == Item::HeliacalSword;
+        const bool archangel = one.item == Item::DivineSword || one.item == Item::DivineStaff ||
+                               one.item == Item::DivineCrossbow;
+        if ((!heliacal && !archangel) || one.count < 1 || count >= max) continue;
+        // The grip is each one's last point.
+        const float* grip = one.at[one.count - 1];
         gfx::PointLight& light = out[count++];
         light = gfx::PointLight{};
         for (int k = 0; k < 3; ++k) {
-            light.position[k] = one.at[1][k];
-            light.colour[k] = kHeliacalLight[k];
+            light.position[k] = grip[k];
+            light.colour[k] = heliacal ? kHeliacalLight[k] : kArchangelLight[k];
         }
-        light.reach = kHeliacalReach;
+        light.reach = heliacal ? kHeliacalReach : kArchangelReach;
         light.height = kHeliacalHeight;
     }
     return count;
@@ -107,6 +117,9 @@ const char* HeldLights::mesh(Item item) {
         case Item::ArrowViperBow: return "Bow20";
         case Item::GorgonStaff: return "Staff05";
         case Item::HeliacalSword: return "Sword13";
+        case Item::DivineSword: return "Sword20";
+        case Item::DivineStaff: return "Staff11";
+        case Item::DivineCrossbow: return "Bow19";
     }
     return "";
 }
@@ -190,6 +203,32 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
             out[0][2] = 160.0f * kUnit;
             out[1][0] = out[1][1] = out[1][2] = 0.0f;
             return 2;
+        case Item::DivineSword: {
+            // Bone03, 04, 02, 05, 06, 07 and 08 of Sword20.bmd at rest -- MU's bones 2 to 8 in
+            // its order -- up the blade (muextract export-rig); and the hilt, for its ground light.
+            static const float kAlong[7] = {51.7f, 83.6f, 18.2f, -6.4f, 115.5f, 146.5f, 184.2f};
+            for (int i = 0; i < 7; ++i) {
+                out[i][0] = 0.0f;
+                out[i][1] = 4.3f * kUnit;
+                out[i][2] = kAlong[i] * kUnit;
+            }
+            out[7][0] = out[7][1] = out[7][2] = 0.0f;
+            return 8;
+        }
+        case Item::DivineStaff:
+            // (i*30 - 180, -40, 0) on Staff11.bmd's bone 0, Box01, at rest: ten 30 apart down the
+            // staff from -127.5 to 142.5 (muextract export-rig); and the grip, for its ground light.
+            for (int i = 0; i < 10; ++i) {
+                out[i][0] = 0.0f;
+                out[i][1] = 0.9f * kUnit;
+                out[i][2] = (float(i) * 30.0f - 127.5f) * kUnit;
+            }
+            out[10][0] = out[10][1] = out[10][2] = 0.0f;
+            return 11;
+        case Item::DivineCrossbow:
+            // Its grip, for its ground light alone: MuMain comments its sprites out.
+            out[0][0] = out[0][1] = out[0][2] = 0.0f;
+            return 1;
         case Item::LegendaryShield:
             // Ours: the hand's (20, 0, 0) as 20 out of the grip along the glb's x, on the face.
             out[0][0] = 20.0f * kUnit;
@@ -391,6 +430,24 @@ void HeldLights::gather(gfx::Effects& effects) const {
                 put(light_, one.at[0], halfOf(1.4f), l, l, l);
                 break;
             }
+            case Item::DivineSword:
+            case Item::DivineStaff: {
+                // Orange lights, and MU's one-in-three grey spark on each, rolled per reference
+                // frame and point (rand_fps_check(3)).
+                const float l = linkLuminosity_;
+                for (int i = 0; i < one.count - 1; ++i) {
+                    put(light_, one.at[i], halfOf(2.0f), l, 0.3f * l, 0.1f * l);
+                    uint32_t h = (crackleFrame_ * 2654435761u) ^ uint32_t(i * 40503) ^
+                                 uint32_t(std::lround(one.at[i][0] * 1000.0f));
+                    h ^= h >> 15;
+                    h *= 2246822519u;
+                    h ^= h >> 13;
+                    if (h % 3u == 0u) put(shiny_, one.at[i], halfOf(0.6f), 0.4f, 0.4f, 0.4f);
+                }
+                break;
+            }
+            case Item::DivineCrossbow:
+                break;
             case Item::LegendaryShield: {
                 const float l = handLuminosity_;
                 put(shiny_, one.at[0], halfOf(1.5f), 0.4f * l, 0.6f * l, 1.5f * l);

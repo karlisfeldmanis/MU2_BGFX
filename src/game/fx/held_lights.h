@@ -53,6 +53,14 @@
 //         three tiles round its wielder (:5659-5663) -- a warm pool, given to the renderer as a
 //         moving light from the hilt (lights()). The tip is the one of MU's ten sword tips
 //         (fx/gleam.h, turned down) the user asked for: 'Heliacal Sword ... its tip light'.
+//   And the Archangel's three (2026-10-10), RenderLinkObject's, L its link roll:
+//     MODEL_DIVINE_SWORD_OF_ARCHANGEL (:7491-7521): on bones 2-8, up the blade, BITMAP_LIGHT
+//         at 2 in L*(1, 0.3, 0.1), and one frame in three a grey (0.4) BITMAP_SHINY + 1 at 0.6.
+//     MODEL_DIVINE_STAFF_OF_ARCHANGEL (:7062-7077): the same at (i*30 - 180, -40, 0) on its
+//         bone 0 for i of 0-9, ten down the staff.
+//     MODEL_DIVINE_CB_OF_ARCHANGEL (:7523-7539): its sprites are commented out in MuMain.
+//   and all three, and the Divine Scepter, AddTerrainLight (0.64, 0.4, 0.24) over two tiles
+//   round their wielder (:5664-5667), as the Heliacal's (lights()).
 //
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
@@ -93,15 +101,20 @@ public:
         ArrowViperBow,
         GorgonStaff,
         HeliacalSword,
+        DivineSword,
+        DivineStaff,
+        DivineCrossbow,
     };
-    static constexpr int kMostPoints = 8;
-    static constexpr Item kItems[14] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr int kMostPoints = 11;
+    static constexpr Item kItems[17] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
                                         Item::DarkBreaker,     Item::KnightBlade,
                                         Item::StaffOfKundun,   Item::ArrowViperBow,
-                                        Item::GorgonStaff,     Item::HeliacalSword};
+                                        Item::GorgonStaff,     Item::HeliacalSword,
+                                        Item::DivineSword,     Item::DivineStaff,
+                                        Item::DivineCrossbow};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

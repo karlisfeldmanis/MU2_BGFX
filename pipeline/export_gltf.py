@@ -1581,8 +1581,8 @@ def glow_material(document: dict, binary: "Binary", slot: str, said: dict,
 
 # How a chrome pass finds its coordinates, as the cook writes it (content::Material::chromePass):
 # its own UVs (MU's RENDER_TEXTURE with a chrome image bound, sliding), RENDER_CHROME's off the
-# normal, or RENDER_CHROME4's.
-CHROME_UV = {"mesh": 1, "chrome": 2, "chrome4": 3}
+# normal, RENDER_CHROME4's, or RENDER_METAL's under a sliding Chrome01 lightmap (its mask).
+CHROME_UV = {"mesh": 1, "chrome": 2, "chrome4": 3, "metal": 4}
 
 
 def chrome_material(document: dict, binary: "Binary", n: int, said: dict, sheet: Path,

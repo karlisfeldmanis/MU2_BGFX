@@ -55,7 +55,8 @@ void main()
 		vec2 at = chromePassUv(pass, normalize(v_normal), v_texcoord0,
 		                       u_material.w * along, u_material.w);
 		vec3 chrome = texture2D(s_albedo, at).rgb;
-		float mask = texture2D(s_emissive, v_texcoord0).r;
+		float mask = texture2D(s_emissive, chromePassMaskUv(pass, v_texcoord0,
+		                                                    u_material.w * along)).r;
 		gl_FragColor = vec4(chrome * (mask * fade * u_material.z), 1.0);
 		return;
 	}

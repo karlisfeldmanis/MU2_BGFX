@@ -13,7 +13,8 @@ Great Reign Crossbow's grooves (RenderPartObjectBody, ZzzObject.cpp:7065-7075, 7
      "where": "over"}
 
 `image` is MU's chrome01 (BITMAP_CHROME), chrome02 (BITMAP_CHROME2) or bab2 (BITMAP_CHROME + 1),
-out of source/effects/refine. `where` is "over" for the whole mesh, or "cut" for where its own
+out of source/effects/refine, or shiny01 (BITMAP_SHINY, RENDER_METAL's). `mask`, when it names one
+of those, is that image as the mask -- MU's Chrome01 lightmap over a metal pass. `where` is "over" for the whole mesh, or "cut" for where its own
 sheet's alpha is cut away: MU draws those passes before the body, so they only show through the
 holes its alpha test leaves.
 
@@ -34,7 +35,8 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEAPONS = os.path.join(ROOT, "source", "items", "weapons")
 OUT = os.path.join(WEAPONS, "chrome")
-IMAGES = {"chrome01": "chrome01.png", "chrome02": "chrome02.png", "bab2": "bab2.png"}
+IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
+          "bab2": "refine/bab2.png", "shiny01": "drop/shiny01.png"}
 # Where an alpha-tested sheet counts as cut: MU's own test, alpha under a half
 # (EnableAlphaTest's GL_GREATER 0.25 on a .tga is sharper than any sheet here needs).
 CUT_BELOW = 128
@@ -44,7 +46,7 @@ def write(item, recipe):
     passes = recipe.get("chrome") or []
     sheets = {k.lower(): v for k, v in (recipe.get("sheets") or {}).items()}
     for n, one in enumerate(passes):
-        image = Image.open(os.path.join(ROOT, "source", "effects", "refine",
+        image = Image.open(os.path.join(ROOT, "source", "effects",
                                         IMAGES[one["image"]])).convert("RGB")
         tint = one.get("tint", [1.0, 1.0, 1.0])
         top = max(tint) or 1.0
@@ -52,7 +54,12 @@ def write(item, recipe):
                  for band, c in zip(image.split(), tint)]
         Image.merge("RGB", bands).save(os.path.join(OUT, f"{item}_{n}.png"))
 
-        if one.get("where", "over") == "cut":
+        if one.get("mask") in IMAGES:
+            # A chrome image as the mask: MU's lightmap over a RENDER_METAL pass, read at the
+            # mesh's own UVs and slid (the Archangel's three).
+            mask = Image.open(os.path.join(ROOT, "source", "effects",
+                                           IMAGES[one["mask"]])).convert("L")
+        elif one.get("where", "over") == "cut":
             sheet = sheets.get(one["slot"].lower())
             if sheet is None:
                 raise SystemExit(f"{item}: chrome pass {n} names '{one['slot']}', no sheet of it")
