@@ -93,6 +93,11 @@
         },
         {
           "model": "Grass01",
+          "near": [113.64, 135.36],
+          "why": "The ivy on the town wall (StoneMuWall03 at 112.5) beside the torch north of Hanzo: MuMain's EncTerrain1.obj stores it at 3.10 m, 1.45 m over the paving, pitched -65 degrees up the wall's face. The rule took it for standing on paving. The user, 2026-10-10: 'we dont have the on walls'. Kept as MuMain stores it."
+        },
+        {
+          "model": "Grass01",
           "near": [123.00, 108.50],
           "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy lying flat on the paving at the foot of the west wall, 0.09 m median over it."
         },
