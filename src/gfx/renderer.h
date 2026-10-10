@@ -979,7 +979,8 @@ private:
     uint32_t probeTick_ = 0;     // the probe works on even frames only, every 8th still; see drawProbe
     int probeFacesDrawn_ = 0;
     float probeAt_[3] = {0.0f, 0.0f, 0.0f};     // this face's eye
-    float probeTaken_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // the eye when the copy was last filtered
+    // xyz: the eye when the copy was last filtered. w: the sheet's probe_diffuse.
+    float probeTaken_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     // Which winding the lit draws cull: CW for the camera, CCW inside a mirrored cube face.
     uint64_t cullBit_ = BGFX_STATE_CULL_CW;
 };

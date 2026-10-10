@@ -699,6 +699,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         probeNextFace_ = 0;
     }
     metalGain_ = lighting.metalGain;
+    probeTaken_[3] = lighting.probeDiffuse;
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;
     shineStageStrength_ = lighting.refineStageStrength;

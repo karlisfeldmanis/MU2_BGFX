@@ -19,7 +19,7 @@ uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes th
 // z: above 0 draws the probe itself at mip z - 1, looked up towards each pixel from where
 // it was taken  w: the sheet's metal_gain, which lifts a metal's painted reflectance
 uniform vec4 u_probe;
-uniform vec4 u_probePos;  // xyz: where the cube was taken, world metres
+uniform vec4 u_probePos;  // xyz: where the cube was taken, world metres  w: probe_diffuse
 SAMPLERCUBE(s_probe, 15);
 
 void main()
@@ -196,6 +196,19 @@ void main()
 	// The hemisphere ambient: sky above, bounced turf below, occluded by the AO.
 	float up = n.y * 0.5 + 0.5;
 	vec3 ambient = mix(u_groundColour.rgb, u_skyColour.rgb, up) * u_sunColour.w;
+	// And near the player, the probe's roughest mip in its place: a GGX lobe of roughness one,
+	// cosine-weighted, which is near enough the light a matte face gathers from the half of
+	// the world in front of it. Its sky is the same two colours times the same strength, so
+	// what changes is what the hemisphere could not know: the sunlit street under a wall in
+	// shade, the lamp's pool by a door, the warm stone round a fire. The cube is taken at
+	// the player's chest, so a face far from him would gather his surroundings rather than
+	// its own: full within 12 m, the hemisphere alone by 30.
+	if (u_probe.x > 0.5)
+	{
+		vec3 gathered = textureCubeLod(s_probe, n, u_probe.y).rgb;
+		float near = 1.0 - smoothstep(12.0, 30.0, distance(v_wpos, u_probePos.xyz));
+		ambient = mix(ambient, gathered, u_probePos.w * near);
+	}
 	colour += ambient * diffuseColour * ao;
 
 	// What the surface mirrors, out of the same sky.
