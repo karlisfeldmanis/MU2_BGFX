@@ -1242,6 +1242,13 @@ bool archangelWeapon(const content::ItemRow& row);
 // in 50 while the class's quest stands -- the rate ours (the user, 2026-10-06: 1 in 150 was too
 // low, "at 2%").
 bool classTreasure(const content::ItemRow& row);
+// Whether it may change hands in a trade (sim/realm_deal.cpp): not bound to its earner
+// (Held::bound) and none of the quest items MuMain will not trade (IsTradeBan) -- Sevina's
+// treasures and the Archangel's weapons. Asked by the realm's refusal, the trade window's drop
+// colour and the card alike.
+inline bool tradeable(const content::ItemRow& row, const Held& what) {
+    return !what.bound && !archangelWeapon(row) && !classTreasure(row);
+}
 constexpr int kTreasureIn10000 = 200;
 constexpr uint32_t kLostTowerMap = 4, kAtlansMap = 7;
 // A treasure lies twice the time an ordinary drop does, so it is not lost to a fight. Ours.

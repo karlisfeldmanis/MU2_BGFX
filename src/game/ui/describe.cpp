@@ -1133,7 +1133,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     // What never changes hands: a quest's pay (sim::Held::bound) and the quest items MuMain will
     // not trade (IsTradeBan), WoW's "Soulbound" in the same place.
-    if (what.bound || sim::archangelWeapon(row) || sim::classTreasure(row)) {
+    if (!sim::tradeable(row, what)) {
         sheet.bound = sheet.bound.empty() ? std::string("Cannot be traded") : "Cannot be traded or dropped";
     }
 

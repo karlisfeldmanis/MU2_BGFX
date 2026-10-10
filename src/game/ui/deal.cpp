@@ -366,7 +366,9 @@ void Deal::rebuild(const sim::Realm& realm, Stage* stage) {
             const int w = std::min<int>(row.width, sim::kMachineColumns - column);
             const int h = std::min<int>(row.height, sim::kMachineRows - lineAt);
             panel::cell(canvas_, x, y, cellBox(kMyGrid, cell, w, h),
-                        mine.room(tables, cell, row.width, row.height) ? sheet::Cell::Fits : sheet::Cell::Blocked);
+                        sim::tradeable(row, incoming_) && mine.room(tables, cell, row.width, row.height)
+                            ? sheet::Cell::Fits
+                            : sheet::Cell::Blocked);
         }
     }
     zenStrip(kMyZen, realm.dealZenOf(false), kCoin.x - 6.0f);

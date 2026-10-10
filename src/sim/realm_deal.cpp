@@ -22,10 +22,6 @@
 namespace mu::sim {
 namespace {
 
-// A thing that never changes hands: Sevina's treasures and the Archangel's weapons, carried back
-// to whoever asked for them (describe.cpp's purple, Tone::Quest). **ours**.
-bool kept(const content::ItemRow& row) { return archangelWeapon(row) || classTreasure(row); }
-
 // One side's offer put back into a bag: each thing to the slot it came from when that is free,
 // else wherever it fits. What fits nowhere is returned in `left`.
 void putBack(const content::Tables& tables, Satchel& bag, Machine& box, const int8_t* from,
@@ -157,7 +153,7 @@ int Realm::dealPut(int bagSlot, int cell) {
     // Never traded: Sevina's and the Archangel's (MuMain's IsTradeBan), and whatever a quest paid
     // (Held::bound, the user's of 2026-10-10). Everything else trades, the tickets and what makes
     // them as in MU.
-    if (kept(row) || what.bound) return -1;
+    if (!tradeable(row, what)) return -1;
     Machine& box = me().offer;
     if (cell < 0) cell = box.free(*tables_, row.width, row.height);
     if (cell < 0 || cell >= kMachineCells || !box.room(*tables_, cell, row.width, row.height)) return -1;
