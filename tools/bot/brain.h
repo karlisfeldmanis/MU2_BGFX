@@ -190,6 +190,7 @@ public:
     }
     int buy(int shelf) { return was(realm->buy(shelf), sim::Command::Kind::Buy, shelf); }
     int64_t sellItem(int slot) { return was(realm->sellItem(slot), sim::Command::Kind::Sell, slot); }
+    uint32_t discard(int slot) { return was(realm->discard(slot), sim::Command::Kind::Discard, slot, 0); }
     int buyBack() { return was(realm->buyBack(), sim::Command::Kind::BuyBack); }
     bool repair(int slot) { return was(realm->repair(slot), sim::Command::Kind::Repair, slot); }
     int repairAll() { return was(realm->repairAll(), sim::Command::Kind::RepairAll); }
@@ -523,6 +524,14 @@ public:
         for (const auto& [n, name] : rows) std::printf(" %s %d,", name.c_str(), n);
         std::printf("\n  casts:");
         for (const auto& [name, n] : castsOf_) std::printf(" %s %d,", name.c_str(), n);
+        // What killed him, and where (the plan of 2026-10-10: "name what kills him").
+        {
+            std::vector<std::pair<int, std::string>> deaths;
+            for (const auto& [name, n] : deathsOf_) deaths.push_back({n, name});
+            std::sort(deaths.rbegin(), deaths.rend());
+            std::printf("\n  deaths:");
+            for (const auto& [n, name] : deaths) std::printf(" %s %d,", name.c_str(), n);
+        }
         std::printf("\n  quests:");
         for (int q = 0; q < sim::kQuests; ++q) {
             const sim::QuestProgress& p = realm_->quest(q);
@@ -943,12 +952,35 @@ private:
             return;
         }
         const content::MonsterKind& kind = tables_->kinds[size_t(breed)];
+        ++deathsOf_[kind.label + " (" + worldOf(map())->name + ")"];
         if (++deathsTo_[kind.number] >= 2) {
             fearUntil_[kind.number] = clock_ + kFear;
             deathsTo_[kind.number] = 0;
             say("killed by %s; leaves them for 15 min", kind.label.c_str());
         } else {
             say("killed by %s", kind.label.c_str());
+        }
+        // **And a map that kills him three times in fifteen minutes is left** (2026-10-10, the energy
+        // elf): the fear above is a breed's, and what killed her was never what she hunted --
+        // Noria's Song's Beetle Monsters cost her 94 of 145 health, the Stone Golems and Agons
+        // that roam the same fields 1,681 and 5,644, and she died to them 70 times in six game
+        // hours while the quest stayed huntable. Twenty minutes off the map: its grind shunned
+        // (learnCaution's shunned_), and the hunt's breeds there set aside (setAside's asideOn_),
+        // so she goes where the next quest or grind is and comes back stronger.
+        // Three, not two: at two the agility elf, who dies to a Golem twice a day and shoots on,
+        // left Noria for twenty minutes each time and ended a day 68 levels lower (seed 2). And
+        // hers alone (Options::support): at three the agility elf still ended 191 against 260 on
+        // that seed with three times the deaths, while the energy elf's deaths went 101/34 ->
+        // 33/16 -- the rule is for one who cannot shoot her way out, and she is the only one.
+        std::vector<int64_t>& deaths = deathsOn_[map()];
+        deaths.push_back(clock_);
+        while (!deaths.empty() && clock_ - deaths.front() >= kFear) deaths.erase(deaths.begin());
+        if (options_.support && deaths.size() >= 3) {
+            deaths.clear();
+            shunned_[map()] = clock_ + kLeavesMap;
+            if (aim_ == Aim::Hunt && aimQuest_ >= 0 && aimMap_ == map()) asideOn_[{aimQuest_, map()}] = clock_ + kLeavesMap;
+            nextAim_ = clock_;
+            say("killed three times in %s within 15 min: leaves it for 20 min", worldOf(map())->name);
         }
     }
 
@@ -1307,6 +1339,11 @@ private:
             if (held.empty()) continue;
             const content::ItemRow& row = rowOf(held);
             if (sim::placeOf(row) < 0 || sim::ammunition(row)) continue;
+            // **Not the Archangel's weapon while he is in the castle** (2026-10-10): the statue's
+            // Divine Sword outscored a knight's own, he wore it at 23:31 of a run, and the hand-in
+            // looks in the bag alone (Realm::staffSlot) -- the run timed out with the weapon on his
+            // hip. Out of the castle a won one is his to wear.
+            if (inCastle() && sim::archangelWeapon(row)) continue;
             // Rings and the pendant are wearJewellery's, on its own worth: scored here by their
             // sockets alone, a socketed Ring of Ice and a Ring of Fortune traded places every
             // sort, 1,600 times in six hours (knight, seed 2, 2026-10-03).
@@ -2410,9 +2447,12 @@ private:
     bool castleTaken(int c) const {
         const content::Tables* t = const_cast<Bot*>(this)->world(int(sim::kBloodCastleMap));
         if (!t) return false;
+        // BOT_CASTLE_SHARE: what share of his health a garrison kill may cost (1.0 = all of it),
+        // for the castle-2-and-up A/B of 2026-10-10; unset, his own riskShare.
+        const double share = std::getenv("BOT_CASTLE_SHARE") ? std::atof(std::getenv("BOT_CASTLE_SHARE")) : 0.0;
         for (int k = 0; k < 5; ++k) {  // the garrison, the sorcerer aside (kCastleBreeds)
             for (const content::MonsterKind& kind : t->kinds) {
-                if (kind.number == sim::kCastleBreeds[c - 1][k] && !takes(kind)) return false;
+                if (kind.number == sim::kCastleBreeds[c - 1][k] && !takes(kind, share)) return false;
             }
         }
         return true;
@@ -2563,6 +2603,20 @@ private:
             return;
         }
         if (run.phase != sim::CastlePhase::Running) return;
+        if (std::getenv("BOT_CASTLE") && clock_ % (30 * 20) < kThink) {
+            std::printf("CASTLE %s c%d kills %d/%d sorcerers %d bridge %d hp %d/%d at %.0f,%.0f on %u staff %d\n",
+                        clock(clock_).c_str(), run.castle, run.kills, run.killsWanted, run.sorcerers, int(run.bridgeDown),
+                        hero.health, hero.maxHealth, hero.x, hero.y, castleOn_, realm_->staffSlot());
+        }
+        // One worn before this rule: into the bag, where the hand-in finds it.
+        for (int slot : {int(sim::kWeaponRight), int(sim::kWeaponLeft)}) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty() || !sim::archangelWeapon(rowOf(one))) continue;
+            for (int to = sim::kWorn; to < sim::kSlots; ++to) {
+                if (realm_->satchel()[to].empty() && hand_.moveItem(slot, to)) break;
+            }
+            return;
+        }
         // The weapon in his bag: to the Archangel with it.
         if (realm_->staffSlot() >= 0 && angel >= 0) {
             if (realm_->angeling() == angel) {
@@ -2572,10 +2626,23 @@ private:
             }
             return;
         }
-        // The weapon on the ground: his, or anyone's.
+        // The weapon on the ground: his, or anyone's. **Room made for it first** (2026-10-10):
+        // the take is refused with no room at its footprint (Realm::take), the realm then drops
+        // the pick, and a knight of level 210 stood on the Divine Sword at 14,95 for seven
+        // minutes with a full bag while the run timed out -- six of his ten castle runs went so
+        // (the seed-2 trace), and every class's. No counter in the castle, so the cheapest block
+        // of the bag it would cover is thrown on the ground (clearFor's discard).
         for (const sim::Lying& one : realm_->lying()) {
             if (one.what.empty() || !sim::archangelWeapon(rowOf(one.what))) continue;
             if (one.owner != 0 && one.owner != hero.id) continue;
+            if (const content::ItemRow& row = rowOf(one.what); realm_->satchel().free(*tables_, row.width, row.height) < 0) {
+                if (clearFor(row, true) > 0) say("throws things out of the bag for the %s", row.label.c_str());
+            }
+            if (std::getenv("BOT_CASTLE") && clock_ % (15 * 20) < kThink) {
+                std::printf("CASTLE %s weapon lying at %d,%d id %u barred %d hero %.1f,%.1f walking %d order %d\n",
+                            clock(clock_).c_str(), one.column, one.row, one.id, int(barred(one.id)), hero.x, hero.y,
+                            int(hero.walking), int(realm_->order().kind));
+            }
             sim::Request request;
             request.kind = sim::Request::Kind::Pick;
             request.target = one.id;
@@ -3379,7 +3446,8 @@ private:
         return false;
     }
     std::map<std::pair<int32_t, uint32_t>, int64_t> aidTried_;
-    std::map<std::string, int> aidsOf_;  // her casts on the others of her party, by skill (status)
+    std::map<std::string, int> aidsOf_;
+    std::map<std::string, int> deathsOf_;  // what killed him and where (printKills)  // her casts on the others of her party, by skill (status)
     // **A damage dealer's target** (docs/party.md, the threat): what the tank has struck, so the
     // monster stays on him -- the one closest to dying, among those his own threat on is under
     // kEaseOff of the tank's. None struck yet: he waits for the tank's first blow. 0 for none.
@@ -3439,8 +3507,11 @@ private:
             // A storm or a ring cast at a body past its reach is cast at nothing (castsBare):
             // the mana goes on air. A magic gladiator who had just read Twister threw 1,300 of
             // them in an hour, killed nothing and walked to town for mana every three minutes.
-            if (row.castsBare() && (target == nullptr ||
-                                    std::hypot(target->x - hero.x, target->y - hero.y) > row.reach)) continue;
+            // Twisting Slash too, cast bare since 2026-10-10: held until the body is on a tile
+            // beside him, a diagonal one included, or the spin goes on air.
+            if (row.castsBare() &&
+                (target == nullptr || std::hypot(target->x - hero.x, target->y - hero.y) >
+                                          row.reach + (row.wizardry ? 0.0f : 0.5f))) continue;
             const double base = row.wizardry
                                     ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
                                     : blow();
@@ -4439,7 +4510,7 @@ private:
     }
     // The cheapest block of the bag a thing of this size would cover, sold (roomCost): what
     // was sold, 0 when no block holds only what he would give up.
-    int clearFor(const content::ItemRow& need) {
+    int clearFor(const content::ItemRow& need, bool throwAway = false) {
         double bestCost = 1e30;
         std::set<int> best;
         int cells[sim::kSlots];
@@ -4462,7 +4533,7 @@ private:
             }
         }
         int sold = 0;
-        for (const int h : best) sold += hand_.sellItem(h) >= 0;
+        for (const int h : best) sold += throwAway ? hand_.discard(h) != 0 : hand_.sellItem(h) >= 0;
         return sold;
     }
     // **Room made for a quest's pay at the counter** (the user, 2026-10-08: "make it reliable"):
@@ -4788,7 +4859,9 @@ private:
     int64_t woundedAt_ = 0, chaseFor_ = kGiveUp;
     int pressed_ = 0, lastLevel_ = 1, drunkAt_ = 0, healed_ = 0;
     double caution_ = 1.0;
-    std::map<int, int64_t> shunned_;  // a grinding ground left until this tick (learnCaution)
+    std::map<int, int64_t> shunned_;  // a grinding ground left until this tick (learnCaution, died)
+    std::map<int, std::vector<int64_t>> deathsOn_;  // his deaths on each map in the last kFear (died)
+    static constexpr int64_t kLeavesMap = 20 * 60 * 20;
     Lead lead_;                 // the party's hunt and his part in it (lead())
     std::vector<Ground> grounds_;  // grounds(), and when it was last reckoned
     int64_t groundsAt_ = -1;

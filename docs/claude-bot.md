@@ -128,6 +128,41 @@ wearing Sphinx and Bone of drop level 23-31. A wizard's health is two a point of
 The report now ends each run with its strong-ground line: kills of level 50+, Jewels of Life
 that fell, when the wings were made, and the castle runs and wins.
 
+**Blood Castle, and every class at once** (2026-10-10, the user: "lets work on DK and Elf, MG
+now")
+
+The report gained a deaths line (what killed him, and on which map). A 24-hour baseline of
+every build showed one loss common to all of them: castle runs lost with the garrison and both
+sorcerers dead. The castle trace (`BOT_CASTLE`) showed why. The statue falls, the Archangel's
+weapon drops at its feet, and a bot with a full bag stood on it until the run timed out: the
+take is refused with no room at its footprint, and there is no counter in the castle. Six of a
+knight's ten runs ended so. Now the cheapest block of the bag the weapon would cover is thrown
+on the ground first (`clearFor`'s discard). And the statue's weapon is never worn inside the
+castle, since the hand-in looks only in the bag: a knight wore the Divine Sword and lost the run
+with it on his hip.
+
+The energy elf died 101 times a day to Noria's Stone Golems and Agons while her quest's Beetle
+Monsters stayed huntable: the fear rule is a breed's, and what killed her was never what she
+hunted. Three deaths on one map inside fifteen minutes now take her off it for twenty (hers
+alone: at two deaths, or for the agility elf, it cost levels).
+
+Frozen binaries (a private worktree at 4da79f57 with the cooked tables copied, since other
+sessions changed the sim and the tables during the day), two seeds of 24 h each:
+
+| build | levels, before -> after | castles won | wings |
+|---|---|---|---|
+| knight | 226/219 -> 241/216 | 10/20 -> 18/19 | 1 -> 1 |
+| agility elf | 201/235 -> 234/243 | 14/20 -> 20/20 | 0 -> 2 |
+| energy elf | 115/122 -> 123/130, deaths 136 -> 49 | none | 0 -> 0 |
+| melee gladiator | 209/223 -> 224/254 | 5/21 -> 20/26 | 0 -> 1 |
+| magic gladiator | 235/245 -> 231/255, deaths 84 -> 64 | 7/27 -> 11/26 | 1 -> 0 |
+| wizard | 162/191 -> 170/191 | 3/11 -> 4/11 | 0 -> 0 |
+
+All told castles won 39/99 -> 73/102 and wings 2 -> 4 of 12. Still open: the magic gladiator
+loses most castle runs, the energy elf never reaches level-50 ground or a castle, and the
+wizard's levels fell 20-40 from the morning's runs with no brain change: same seed, a day's
+content and sim changes between them (the Devil Square drops reshuffle the loot dice).
+
 Also seen: the new item content of 058adb75 (new sets and arms in the drop pool) costs the
 wizard 15-30 levels a day: same binary, old tables 188/179/188/192, new 169/179/161/165, the
 gear he finds falling from drop level 28-38 to 20-29. Passed to mu2-bgfx-64 for the content's
