@@ -256,5 +256,15 @@ container for each player", then "we need to see who is party/raid leader":
   Later the same day: no "Party" or "Raid" headings (the crown is in the leader's capsule),
   200 wide from 240, the raid's lines a size under the plates, and the class in a dark cell at
   the capsule's left as MU's short names (DW, FE, DK, MG) each in a muted tint of its own.
+- Then "we need clear icon who is the party leader, also do we have right lickc logic to promote
+  some other to party/raid leader kick,whisper?" and "we need also some UI sounds for right click
+  menu". The leader wears a crown a size up on his capsule's top left corner, never dimmed;
+  when he leads, "You lead the party" with the crown stands over the column. A right click on a
+  capsule (on a server) opens a menu with the name at its head: Whisper (the chat opens on his
+  tab, Chat::whisperTo), and while he leads Make leader and Kick, on a member; Whisper and
+  Invite to party on a raider of none of his; Leave party on each. PartyWhat::Promote (ours;
+  WebZen's party has none) swaps the named member to the front, said on Party as "X is now the
+  party leader."; /promote name in the chat. The menu opens with window_open and a row taken
+  or the menu shut clicks (window_click).
 - `--invite A,B` asks them into his party until they are in: a review run's party from local
   netbots (`--parties` takes a player's invite).

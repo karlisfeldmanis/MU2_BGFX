@@ -553,7 +553,7 @@ bool parse(const std::vector<uint8_t>& body, PartyAsk& out) {
     In in{body};
     const uint8_t what = in.u8();
     out.name = in.str();
-    if (what > uint8_t(PartyWhat::Kick)) return false;
+    if (what > uint8_t(PartyWhat::Promote)) return false;
     out.what = PartyWhat(what);
     return in.done();
 }

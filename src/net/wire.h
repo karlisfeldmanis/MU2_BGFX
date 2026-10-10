@@ -163,7 +163,8 @@ struct Heard {
 // Up: what a player asks of the party. Invite and Kick name a player, Accept and Decline the one
 // who invited him (empty for the latest invite), Leave nobody. The server keeps the parties: they
 // span maps, and a map is a realm.
-enum class PartyWhat : uint8_t { Invite = 0, Accept = 1, Decline = 2, Leave = 3, Kick = 4 };
+// Promote: the leader hands the party to the member named (ours; WebZen's party has no such ask).
+enum class PartyWhat : uint8_t { Invite = 0, Accept = 1, Decline = 2, Leave = 3, Kick = 4, Promote = 5 };
 struct PartyAsk {
     PartyWhat what = PartyWhat::Invite;
     std::string name;

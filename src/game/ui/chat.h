@@ -67,6 +67,10 @@ public:
     const gfx::Canvas& tabs() const { return tabsDrawn_; }  // the tab row, clipped to it
     const gfx::Canvas& lines() const { return lines_; }   // the log, clipped to its well
 
+    // A whisper to `name` begun from outside (the party bar's menu): his tab opened and chosen,
+    // and the line open to type, as /w and a name alone does.
+    void whisperTo(const std::string& name);
+
     // A line from outside: Play's own, as a party's or the server's would be. `name` empty is a
     // line of the channel itself.
     void hear(const net::Heard& line);

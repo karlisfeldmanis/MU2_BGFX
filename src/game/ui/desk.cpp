@@ -556,7 +556,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
                      (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play);
         if (toggleChat) click();
-        partyBar_.update(seconds, play);
+        partyBar_.update(seconds, play, pointer);
+        // The party bar's menu asked for a whisper: the chat opens on his tab.
+        if (const std::string whom = partyBar_.whisper(); !whom.empty()) chat_.whisperTo(whom);
     }
     // Read by the journal's L on the next frame, which runs ahead of the HUD.
     if (toggleQuest) questButton_ = true;
@@ -874,7 +876,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
-                    chat_.covers(pointer.x, pointer.y) ||
+                    chat_.covers(pointer.x, pointer.y) || partyBar_.covers(pointer.x, pointer.y) ||
                     minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
                     travelPressed || travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||

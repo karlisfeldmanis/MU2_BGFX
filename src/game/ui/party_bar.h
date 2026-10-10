@@ -17,8 +17,10 @@
 
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
+#include "game/ui/hud.h"
 #include "gfx/interface.h"
 #include "net/wire.h"
 
@@ -30,7 +32,16 @@ class PartyBar {
 public:
     void open(const gfx::Interface& interface);
     // A frame: redrawn on a change, and each frame while a trail drains or a member pulses.
-    void update(float seconds, const Play& play);
+    // A right click on a capsule opens its menu (the user, 2026-10-10: "do we have right lickc
+    // logic to promote some other to party/raid leader kick,whisper?"): Whisper, and while he
+    // leads Make leader and Kick, on a member; Whisper and Invite on a raider of no party of
+    // his; Leave party on each. The asks go to the server (Play::askParty); a whisper is the
+    // chat's, taken by the desk from whisper().
+    void update(float seconds, Play& play, const Pointer& pointer);
+    // Whether the pointer is on a capsule or the open menu: the world does not take the click.
+    bool covers(float x, float y) const;
+    // A whisper the menu asked for this frame, by name, taken once; empty for none.
+    std::string whisper() { return std::exchange(whisper_, std::string()); }
     bool showing() const { return showing_; }
     const gfx::Canvas& canvas() const { return canvas_; }
 
@@ -56,6 +67,24 @@ private:
     float clock_ = 0.0f;  // the pulse's phase
     // Each one's trail, by name: the health he had, easing down to the health he has.
     std::unordered_map<std::string, float> trail_;
+    // Each capsule as last drawn, for the pointer.
+    struct Hit {
+        gfx::Box box;
+        std::string name;
+        bool member = false;  // of his party; else a raider of none of his
+    };
+    std::vector<Hit> hits_;
+    // The open menu: on whom, its rows, where, and the row under the pointer.
+    struct Menu {
+        std::string name;
+        std::vector<std::string> rows;
+        gfx::Box box;
+        int hovered = -1;
+    };
+    Menu menu_;
+    bool menuOpen_ = false;
+    int drawnHover_ = -2;  // the menu's hovered row as last drawn; -2 when it was shut
+    std::string whisper_;
 };
 
 }  // namespace mu::game

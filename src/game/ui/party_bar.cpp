@@ -70,6 +70,11 @@ constexpr uint32_t kKinInk[] = {
     gfx::rgba(0.859f, 0.714f, 1.0f),    // Magic Gladiator, violet
 };
 constexpr uint32_t kCell = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);  // the class cell, darker than the band
+constexpr uint32_t kCrownDrop = gfx::rgba(0.0f, 0.0f, 0.0f, 0.85f);  // under the leader's badge
+// The menu (PartyBar::Menu): a sheet of the windows' ash, a row lit under the pointer.
+constexpr float kMenuWide = 150.0f, kMenuRow = 26.0f, kMenuHead = 24.0f, kMenuPad = 12.0f;
+constexpr uint32_t kMenuSheet = gfx::rgba(0.051f, 0.039f, 0.031f, 0.97f);
+constexpr uint32_t kMenuLit = gfx::rgba(1.0f, 0.94f, 0.86f, 0.07f);
 constexpr uint32_t kGhost = gfx::rgba(0.553f, 0.518f, 0.471f);         // a dead one's name
 constexpr float kLow = 30.0f;     // percent: the fill turns hot and pulses
 constexpr float kAway = 0.6f;     // a member on another map, this much of himself
@@ -227,15 +232,18 @@ float capsule(gfx::Canvas& canvas, float x, float y, float u, const Make& make, 
                        faded(c.dead ? kGhost : kKinInk[c.kin], a), letters, 0.06f);
         at = x + lh + 6.0f * u;
     }
+    // The leader's badge (the user, 2026-10-10: "we need clear icon who is the party leader"):
+    // a crown a size up, standing on the capsule's top left corner over a dark drop.
+    if (c.leader) {
+        // Never dimmed: whoever leads is said in full, even from another map.
+        const float s = make.name / 14.5f * 1.5f * u, bx = x - 4.0f * u, foot = y + 4.0f * u;
+        crown(canvas, bx + 1.2f * u, foot + 1.5f * u, s, kCrownDrop);
+        crown(canvas, bx, foot, s, kGold);
+    }
     // The words, their capitals centred on the health.
     const float base = controls::middle(body.y, lh, make.name * u);
-    if (c.leader) {
-        const float s = make.name / 14.5f * u;
-        crown(canvas, at, base, s, faded(kGold, a));
-        at += 17.0f * s;
-    }
     const uint32_t ink = c.dead ? kGhost : c.leader ? kGold : style::kBoneHi;
-    const float named = controls::label(canvas, at, base, make.name * u, faded(ink, a), c.name);
+    const float named = controls::label(canvas, at, base, make.name * u, c.leader ? ink : faded(ink, a), c.name);
     if (c.dead) canvas.rect({at, base - make.name * u * 0.3f, named, 1.0f * u}, faded(kGhost, a));
     if (!c.tag.empty() && make.tag > 0.0f) {
         controls::caps(canvas, at + named + 6.0f * u, base, make.tag * u, faded(kTag, a), c.tag, 0.1f);
@@ -255,9 +263,19 @@ float capsule(gfx::Canvas& canvas, float x, float y, float u, const Make& make, 
 
 void PartyBar::open(const gfx::Interface& interface) { interface.adopt(canvas_); }
 
-void PartyBar::update(float seconds, const Play& play) {
+bool PartyBar::covers(float x, float y) const {
+    if (!showing_) return false;
+    if (menuOpen_ && menu_.box.has(x, y)) return true;
+    for (const Hit& hit : hits_) {
+        if (hit.box.has(x, y)) return true;
+    }
+    return false;
+}
+
+void PartyBar::update(float seconds, Play& play, const Pointer& pointer) {
     if (!play.isOpen()) {
         showing_ = false;
+        menuOpen_ = false;
         return;
     }
     std::string me;
@@ -265,6 +283,58 @@ void PartyBar::update(float seconds, const Play& play) {
     const net::PartyState& party = play.party();
     std::vector<Raider> raid = raidOf(play);
     const float u = tip::unit();
+    const bool inParty = party.members.size() > 1;
+    const bool leading = inParty && party.members.front().name == me;
+
+    // The menu: a row taken, or shut by a click anywhere else; a right click on a capsule opens
+    // its own. Only on a server: the --raid harness's raiders are no one to whisper or invite.
+    bool menuChanged = false;
+    if (menuOpen_) {
+        const int before = menu_.hovered;
+        menu_.hovered = -1;
+        const float top = menu_.box.y + kMenuHead * u;
+        if (menu_.box.has(pointer.x, pointer.y) && pointer.y >= top) {
+            menu_.hovered = std::min(int((pointer.y - top) / (kMenuRow * u)), int(menu_.rows.size()) - 1);
+        }
+        menuChanged = menu_.hovered != before;
+        if (pointer.pressed || pointer.rightPressed) {
+            if (pointer.pressed && menu_.hovered >= 0) {
+                const std::string& row = menu_.rows[size_t(menu_.hovered)];
+                if (row == "Whisper") whisper_ = menu_.name;
+                else if (row == "Make leader") play.askParty({net::PartyWhat::Promote, menu_.name});
+                else if (row == "Kick") play.askParty({net::PartyWhat::Kick, menu_.name});
+                else if (row == "Invite to party") play.askParty({net::PartyWhat::Invite, menu_.name});
+                else if (row == "Leave party") play.askParty({net::PartyWhat::Leave, std::string()});
+            }
+            if (!menu_.box.has(pointer.x, pointer.y) || pointer.pressed) {
+                menuOpen_ = false;
+                menuChanged = true;
+                // A row taken or the menu shut clicks, as every window's button does (the user,
+                // 2026-10-10: "we need also some UI sounds for right click menu").
+                play.ui(Play::Ui::Click);
+            }
+        }
+    }
+    if (!menuOpen_ && pointer.rightPressed && play.remote()) {
+        for (const Hit& hit : hits_) {
+            if (!hit.box.has(pointer.x, pointer.y)) continue;
+            menu_ = Menu{};
+            menu_.name = hit.name;
+            menu_.rows.push_back("Whisper");
+            if (hit.member && leading) {
+                menu_.rows.push_back("Make leader");
+                menu_.rows.push_back("Kick");
+            }
+            if (!hit.member && (!inParty || leading)) menu_.rows.push_back("Invite to party");
+            if (inParty) menu_.rows.push_back("Leave party");
+            const float w = kMenuWide * u, h = (kMenuHead + kMenuRow * float(menu_.rows.size()) + 6.0f) * u;
+            menu_.box = {hit.box.right() + 8.0f * u, std::max(4.0f * u, pointer.y - kMenuHead * u * 0.5f), w, h};
+            menuOpen_ = true;
+            menuChanged = true;
+            play.ui(Play::Ui::Opened);  // as a window opens
+            break;
+        }
+    }
 
     // The trails: up at once to a heal, down by easing to a blow. Anyone low keeps it moving too.
     bool moving = false;
@@ -286,7 +356,7 @@ void PartyBar::update(float seconds, const Play& play) {
     for (const Raider& one : raid) ease(one.name, float(one.health) / 100.0f, one.health > 0);
     clock_ = moving ? clock_ + seconds : 0.0f;
 
-    if (same(party, drawn_) && raid == raid_ && me == me_ && u == unit_ && !moving) {
+    if (same(party, drawn_) && raid == raid_ && me == me_ && u == unit_ && !moving && !menuChanged) {
         return;  // redrawn on a change only, or while something moves
     }
     drawn_ = party;
@@ -294,6 +364,7 @@ void PartyBar::update(float seconds, const Play& play) {
     me_ = me;
     unit_ = u;
     canvas_.clear();
+    hits_.clear();
     std::vector<const net::PartyState::Member*> others;
     for (const auto& member : party.members) {
         if (member.name != me) others.push_back(&member);
@@ -301,6 +372,7 @@ void PartyBar::update(float seconds, const Play& play) {
     showing_ = !others.empty() || !raid_.empty();
     if (!showing_) {
         trail_.clear();
+        menuOpen_ = false;
         return;
     }
     const float pulse = 0.5f - 0.5f * std::cos(clock_ * kPulseRate);
@@ -311,6 +383,14 @@ void PartyBar::update(float seconds, const Play& play) {
 
     const float x = kLeft * u;
     float y = (540.0f - kAboveMiddle) * u;  // the unit is 1080 lines' pixel
+    // He leads: his own capsule is not drawn, so the badge stands over the column with "You lead".
+    if (leading && !others.empty()) {
+        const float base = y - 8.0f * u, s = 1.1f * u;
+        crown(canvas_, x + 1.0f * u, base + 1.0f * u, s, kCrownDrop);
+        crown(canvas_, x, base, s, kGold);
+        const float named = controls::label(canvas_, x + 18.0f * u, base, 13.0f * u, kGold, "You");
+        controls::label(canvas_, x + 18.0f * u + named + 4.0f * u, base, 13.0f * u, style::kBone2, "lead the party");
+    }
     for (const auto* member : others) {
         Capsule c;
         c.name = member->name;
@@ -327,30 +407,61 @@ void PartyBar::update(float seconds, const Play& play) {
         c.life = float(member->health) / 100.0f;
         c.mana = float(member->mana) / 100.0f;
         c.trail = trailOf(member->name);
-        y += capsule(canvas_, x, y, u, kPlate, c, pulse);
+        const float tall = capsule(canvas_, x, y, u, kPlate, c, pulse);
+        hits_.push_back({{x, y, kWide * u, tall - kPlate.gap * u}, member->name, true});
+        y += tall;
     }
-    if (raid_.empty()) return;
 
     // The rest of the raid, a line each, a little apart from the party; no heading (the user,
     // 2026-10-10: "get rid of party header": the leader's crown is in his capsule).
-    if (!others.empty()) y += (kBetween - kPlate.gap) * u;
-    const size_t shown = raid_.size() > kRaidMost ? kRaidMost - 1 : raid_.size();
-    for (size_t i = 0; i < shown; ++i) {
-        const Raider& one = raid_[i];
-        Capsule c;
-        c.name = one.name;
-        c.kin = one.kin;
-        c.dead = one.health == 0;
-        c.number = std::to_string(one.health) + "%";
-        c.shield = one.shield >= 0 ? float(one.shield) / 100.0f : -1.0f;
-        c.life = float(one.health) / 100.0f;
-        c.mana = one.mana >= 0 ? float(one.mana) / 100.0f : -1.0f;
-        c.trail = trailOf(one.name);
-        y += capsule(canvas_, x, y, u, kLine, c, pulse);
+    if (!raid_.empty()) {
+        if (!others.empty()) y += (kBetween - kPlate.gap) * u;
+        const size_t shown = raid_.size() > kRaidMost ? kRaidMost - 1 : raid_.size();
+        for (size_t i = 0; i < shown; ++i) {
+            const Raider& one = raid_[i];
+            Capsule c;
+            c.name = one.name;
+            c.kin = one.kin;
+            c.dead = one.health == 0;
+            c.number = std::to_string(one.health) + "%";
+            c.shield = one.shield >= 0 ? float(one.shield) / 100.0f : -1.0f;
+            c.life = float(one.health) / 100.0f;
+            c.mana = one.mana >= 0 ? float(one.mana) / 100.0f : -1.0f;
+            c.trail = trailOf(one.name);
+            const float tall = capsule(canvas_, x, y, u, kLine, c, pulse);
+            hits_.push_back({{x, y, kWide * u, tall - kLine.gap * u}, one.name, false});
+            y += tall;
+        }
+        if (shown < raid_.size()) {
+            controls::caps(canvas_, x + 8.0f * u, y + 10.0f * u, 11.0f * u, style::kAshInk,
+                           "+" + std::to_string(raid_.size() - shown) + " more", 0.2f);
+        }
     }
-    if (shown < raid_.size()) {
-        controls::caps(canvas_, x + 8.0f * u, y + 10.0f * u, 11.0f * u, style::kAshInk,
-                       "+" + std::to_string(raid_.size() - shown) + " more", 0.2f);
+
+    // The menu over it all: the name as its head, then a row each, the danger's in its ink.
+    if (menuOpen_) {
+        bool still = false;
+        for (const Hit& hit : hits_) still = still || hit.name == menu_.name;
+        if (!still) {
+            menuOpen_ = false;  // he left, or the raid ended
+            return;
+        }
+        const gfx::Box& b = menu_.box;
+        const float r[4] = {6.0f * u, 6.0f * u, 6.0f * u, 6.0f * u};
+        for (const float grow : {4.0f, 2.0f}) {
+            const float g = grow * u, rr[4] = {r[0] + g, r[0] + g, r[0] + g, r[0] + g};
+            tip::rounded(canvas_, {b.x - g, b.y - g + 2.0f * u, b.w + 2.0f * g, b.h + 2.0f * g}, rr, kShadow);
+        }
+        tip::rounded(canvas_, b, r, kMenuSheet);
+        controls::caps(canvas_, b.x + kMenuPad * u, b.y + 16.0f * u, 10.5f * u, style::kAshInk, menu_.name, 0.14f);
+        for (size_t i = 0; i < menu_.rows.size(); ++i) {
+            const float top = b.y + (kMenuHead + kMenuRow * float(i)) * u;
+            if (int(i) == menu_.hovered) canvas_.rect({b.x + 3.0f * u, top, b.w - 6.0f * u, kMenuRow * u}, kMenuLit);
+            const std::string& row = menu_.rows[i];
+            const bool danger = row == "Kick" || row == "Leave party";
+            controls::label(canvas_, b.x + kMenuPad * u, controls::middle(top, kMenuRow * u, 13.5f * u), 13.5f * u,
+                            danger ? style::kDanger : style::kBoneHi, row);
+        }
     }
 }
 

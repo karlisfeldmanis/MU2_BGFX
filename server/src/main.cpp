@@ -569,6 +569,23 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
             }
             return tell(ask.name + " is not in your party.");
         }
+        case net::PartyWhat::Promote: {
+            if (party == nullptr) return tell("You are not in a party.");
+            if (party->members.front().token != one.token) return tell("Only the party leader can choose another.");
+            for (size_t i = 1; i < party->members.size(); ++i) {
+                std::string a = party->members[i].name, b = ask.name;
+                for (char& c : a) c = char(std::tolower(uint8_t(c)));
+                for (char& c : b) c = char(std::tolower(uint8_t(c)));
+                if (a != b) continue;
+                // The leader is the first; the old one steps to second.
+                std::swap(party->members[0], party->members[i]);
+                core::logf("party %u: %s hands it to %s", party->id, one.name.c_str(), party->members[0].name.c_str());
+                partyLine(*party, party->members.front().name + " is now the party leader.", sessions);
+                sendParty(*party, sessions);
+                return;
+            }
+            return tell(ask.name + " is not in your party.");
+        }
     }
 }
 

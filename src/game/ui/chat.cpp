@@ -223,6 +223,13 @@ void Chat::closeTab(const std::string& key) {
     if (tab_ == key) select("all");
 }
 
+void Chat::whisperTo(const std::string& name) {
+    if (name.empty()) return;
+    if (std::find(whispers_.begin(), whispers_.end(), name) == whispers_.end()) whispers_.push_back(name);
+    select("w:" + name);
+    open_ = true;
+}
+
 void Chat::send(Play& play) {
     // The tab's channel, unless the line's slash says another.
     net::Channel channel = channel_;
@@ -269,16 +276,18 @@ void Chat::send(Play& play) {
             channel = net::Channel::Whisper;
             to = lastFrom_;
         } else if (command == "invite" || command == "leave" || command == "kick" || command == "accept" ||
-                   command == "decline") {
+                   command == "decline" || command == "promote") {
             // The party's asks (docs/party.md): the server answers on the Party channel.
             net::PartyAsk asked;
             asked.what = command == "invite"   ? net::PartyWhat::Invite
                          : command == "leave"  ? net::PartyWhat::Leave
                          : command == "kick"   ? net::PartyWhat::Kick
+                         : command == "promote" ? net::PartyWhat::Promote
                          : command == "accept" ? net::PartyWhat::Accept
                                                : net::PartyWhat::Decline;
             asked.name = rest.substr(0, rest.find(' '));
-            if ((asked.what == net::PartyWhat::Invite || asked.what == net::PartyWhat::Kick) &&
+            if ((asked.what == net::PartyWhat::Invite || asked.what == net::PartyWhat::Kick ||
+                 asked.what == net::PartyWhat::Promote) &&
                 asked.name.empty()) {
                 system(net::Channel::Party, "/" + command + " whom? Add a name.");
                 return;
@@ -789,7 +798,7 @@ void Chat::build(float u, const Pointer& pointer) {
     }
     rule(back_, input_.x, input_.bottom() + 2.0f * u, input_.w, u);
     body(back_, panel_.x + 12.0f * u, panel_.bottom() - 9.0f * u, kHint * u, kHintInk,
-         "/p party  \xC2\xB7  /g guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /invite name  \xC2\xB7  /leave", u);
+         "/p party  \xC2\xB7  /g guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /invite name  \xC2\xB7  /promote name  \xC2\xB7  /leave", u);
 }
 
 long Chat::pendingInvite() const {
