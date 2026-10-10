@@ -156,7 +156,9 @@ void Realm::advance(Body& one) {
                       tables_->items[size_t(me().bag[kWings].item)].group == 12 &&
                       tables_->items[size_t(me().bag[kWings].item)].number == kDragonNumber;
         if (why != nullptr) {
-            if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
+            // Only on coming into a fight: held, the hold reaches this tick (kCombatTicks is one),
+            // and `<=` logged every fighter every tick, 300 lines a second on the server's box.
+            if (one.combatUntil < tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
             one.combatUntil = tick_ + (one.riding ? kRideCombatTicks : kCombatTicks);
         } else if (one.riding) {
             one.combatUntil = std::min(one.combatUntil, tick_ + kRideCombatTicks);
