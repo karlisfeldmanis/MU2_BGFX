@@ -164,6 +164,8 @@ public:
     }
     // The map's name, for the menu's foot: where he is standing.
     void setWorld(const std::string& world) { worldName_ = world; }
+    // His name off a server, from the save the lobby made him in; the server's own wins there.
+    void setHeroName(const std::string& name) { heroName_ = name; }
     // Go Back! (game/ui/go_back.h), told each frame by the mode, which keeps the spot and the
     // clock: `secondsLeft` above 0 is the plate, 0 with `closed` the closed line, `shown` false
     // neither. And whether it was clicked since this was last asked, once.
@@ -261,6 +263,7 @@ private:
     Minimap minimap_;
     Menu menu_;
     std::string worldName_;
+    std::string heroName_;
     bool quitAsked_ = false;
     bool switchAsked_ = false;
     bool holdEscape_ = false;

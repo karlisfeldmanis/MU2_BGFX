@@ -581,6 +581,7 @@ bool PlayMode::open(Context& ctx) {
     // with --frames keeps Escape as the quit it always was, so a review can be stopped.
     if (desk_.ready() && world_.played().isOpen()) {
         desk_.setWorld(args.world);
+        desk_.setHeroName(saved_.name);
         // Switch Character goes back to the screen this run came through, and only then.
         desk_.allowSwitch(args.lobby);
         fillSettings(ctx.window, args, &desk_.settings());

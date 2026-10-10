@@ -580,7 +580,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         int spend = -1;
         bool close = false;
         std::string name;
-        if (hero) play.playerName(hero->id, &name, nullptr);
+        if (!hero || !play.playerName(hero->id, &name, nullptr)) name = heroName_;
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
                      pointer, &spend, &close);
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow

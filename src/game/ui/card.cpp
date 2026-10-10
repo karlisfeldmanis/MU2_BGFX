@@ -287,7 +287,8 @@ void Card::rebuild() {
     const gfx::Face& face = canvas_.face();
     const float u = tip::unit();
 
-    // His name heads the window; off a server, where he has none, the window's own.
+    // His name heads the window; a run with no character made (--fresh) has none, and the
+    // window's own word stands in.
     panel::frame(canvas_, arts, x, y, now_.name.empty() ? std::string("Character") : now_.name);
 
     // Type set from a top-left in units, its ascent below it; and the same ranged right.
@@ -307,7 +308,8 @@ void Card::rebuild() {
     };
 
     // ---- who he is: the class, his unspent points beside it, the guild under -------------------
-    controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), kClassSize * k, kHeading,
+    // A step down from the name over it: the class is what he is, the name who.
+    controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), kClassSize * k, kPlain,
                    sim::className(int(now_.who->kin), now_.second), 0.04f);
     if (now_.points > 0) {
         // A red tag, the one thing in the head that asks for something, gone at none.
@@ -451,7 +453,7 @@ void Card::rebuild() {
     controls::caps(canvas_, x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker, kQuiet,
                    "Experience", 0.04f);
     controls::ranged(canvas_, x + kRight * k, y + kFootTop * k + face.ascent(kicker), kicker, kPlain,
-                     number((long long)now_.experience) + " / " + number((long long)to) + "   " +
+                     number((long long)now_.experience) + " / " + number((long long)to) + " · " +
                          std::to_string(int(share * 100.0f)) + "%");
     controls::meter(canvas_, panel::scaled(x, y, kBar), std::clamp(share, 0.0f, 1.0f),
                     gfx::rgba(0.910f, 0.863f, 0.773f), style::kIron, u);
