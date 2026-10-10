@@ -782,6 +782,7 @@ void Realm::castleTick() {
                 run_.paidExperience = int64_t(double(experience * kCastleExpTimes) * kExperienceRate);
                 run_.paidZen = kCastleWinZens[c] * kCastleZenTimes;
                 run_.phase = CastlePhase::Won;
+                run_.winner = hero.id;
                 // And the castle is theirs again: every monster in it gone on the tick, out of the
                 // picture without a fall, and none rises for the rest of the run (the user,
                 // 2026-10-05: 'when quest is given all monsters have to desepear'). Ours.
@@ -801,7 +802,7 @@ void Realm::castleTick() {
         // Complete on his thanks: the win paid, and out to Devias now rather than after the rest.
         if (me().claimOwed) {
             me().claimOwed = false;
-            if (run_.phase == CastlePhase::Won && !run_.claimed) {
+            if (run_.phase == CastlePhase::Won && !run_.claimed && mine().id == run_.winner) {
                 payCastle();
                 me().angeling = -1;
                 run_.leavesAt = tick_;
@@ -846,8 +847,12 @@ void Realm::castleTick() {
         run_.leavesAt = tick_ + int64_t(kCastleRest) * kCastleTicksPerSecond;
     }
     if (run_.leavesAt >= 0 && !run_.sentOut && tick_ >= run_.leavesAt) {
-        // Won and never claimed: paid on the way out, so the win is not lost.
-        if (run_.phase == CastlePhase::Won) payCastle();
+        // Won and never claimed: paid on the way out to whoever won it, so the win is not lost.
+        if (const int at = playerOfId(run_.winner);
+            run_.phase == CastlePhase::Won && at >= 0 && !bodies_[heroes_[size_t(at)].body].gone) {
+            For him(*this, size_t(at));
+            payCastle();
+        }
         run_.sentOut = true;
     }
 }
@@ -960,7 +965,8 @@ bool Realm::handInStaff() {
 }
 
 bool Realm::claimCastle() {
-    if (me().angeling < 0 || !serving(me().angeling) || run_.phase != CastlePhase::Won || run_.claimed) {
+    if (me().angeling < 0 || !serving(me().angeling) || run_.phase != CastlePhase::Won || run_.claimed ||
+        mine().id != run_.winner) {
         return false;
     }
     me().claimOwed = true;

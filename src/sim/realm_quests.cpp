@@ -184,7 +184,6 @@ bool Realm::acceptQuest(int index) {
 
 void Realm::countKill(const Body& dead) {
     if (!tables_ || dead.kind < 0 || size_t(dead.kind) >= tables_->kinds.size()) return;
-    castleKill(dead);
     const int32_t number = tables_->kinds[size_t(dead.kind)].number;
     for (int index = 0; index < kQuests; ++index) {
         QuestProgress& one = me().quests[index];

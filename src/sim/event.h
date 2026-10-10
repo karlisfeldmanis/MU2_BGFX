@@ -138,6 +138,9 @@ struct CastleRun {
     // as the rest sends him out -- and `claimed` once it is.
     int64_t paidExperience = 0, paidZen = 0;
     bool claimed = false;
+    // Whose win it is: the body that handed the weapon in. Only he may claim it, and an unclaimed
+    // win is paid to him on the way out -- never to whoever raised the castle first.
+    uint32_t winner = 0;
 };
 // The Archangel, NPC 232, who takes the Divine Staff of Archangel (5,10) back: the win (the
 // user, 2026-10-03). His page in the Event window (QuestDialog::kArchangel).

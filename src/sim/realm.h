@@ -1431,8 +1431,11 @@ public:
         // A bound thing (Held::bound) is its earner's, and nobody else's even once he has left.
         if (one.what.bound) return one.owner == mine().id;
         if (one.owner == 0 || one.owner == mine().id || playerOfId(one.owner) < 0) return true;
+        // Gone from the world, a player keeps his place in heroes_ (Realm::depart): his things
+        // are free as if he had never been, or the castle's weapon lay locked when its breaker left.
         const Body* owner = find(one.owner);
-        return owner != nullptr && mine().party != 0 && owner->party == mine().party;
+        if (owner == nullptr || owner->gone) return true;
+        return mine().party != 0 && owner->party == mine().party;
     }
     void step();
 
@@ -1785,6 +1788,8 @@ private:
     // His threat added, and the monster turned to whoever holds the most, past the margin.
     void addThreat(Body& beast, const Body& by, int32_t amount);
     void retarget(Body& beast);
+    // Every monster's threat from body `id` let go: he died or left the world.
+    void forgetThreat(uint32_t id);
     // A party member's blow on a monster: his threat, the tank's tripled and his first blow a
     // tenth of its health more.
     void partyBlow(Body& beast, const Body& attacker, int32_t damage);

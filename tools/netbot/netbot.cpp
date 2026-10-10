@@ -972,22 +972,44 @@ private:
         for (const auto& [name, one] : byName_) {
             one->openToAll(!grouped(name));
             if (grouped(name)) continue;
+            const net::PartyState& state = one->partyState();
+            int64_t& kept = followedAt_[name];
+            // **Between maps the party reads empty for a moment**, or its leader on no map: the
+            // last lead kept kFollowGrace, as the board's own groups keep theirs. Dropped there, a
+            // knight who had paid for Noria to follow chose a Lorencia quest a game minute on.
+            const bool between = state.members.empty() ||
+                                 (outsiders(*one) && state.members.front().world.empty());
+            if (between && kept != 0 && one->clockNow() - kept < kFollowGrace) continue;
             if (!outsiders(*one)) {
+                kept = 0;
                 one->lead(Bot::Lead{}, "", "");  // his own way again, the player gone
                 continue;
             }
-            const net::PartyState& state = one->partyState();
+            kept = one->clockNow();
             const net::PartyState::Member& head = state.members.front();
             Bot::Lead lead;
             for (const WorldRow& w : kWorlds) {
                 if (head.world == w.name) lead.map = w.map;
             }
+            // **Only where he can stand beside them** (Bot::grounds, as the board's parties ask
+            // helps()), and only the breeds he can: led anywhere, a level-35 bot followed a
+            // player of 200 to maps that killed him, paid to come back, and was led there again.
+            // With nothing there for him -- or the party his to lead, its player gone -- his own
+            // way, in the party still.
+            for (const Bot::Ground& g : one->grounds()) {
+                if (g.map == lead.map && lead.map >= 0) lead.breeds.push_back(g.breed);
+            }
+            if (head.name == name || lead.breeds.empty()) {
+                one->lead(Bot::Lead{}, "", "");
+                continue;
+            }
             lead.size = int(state.members.size());
             lead.role = Bot::roleOf(one->kin(), false);
             for (const net::PartyState::Member& m : state.members) lead.healer |= m.kin == uint8_t(sim::Kin::FairyElf);
-            one->lead(std::move(lead), head.name == name ? "" : head.name, "");
+            one->lead(std::move(lead), head.name, "");
         }
     }
+    static constexpr int64_t kFollowGrace = 30 * 20;  // game ticks
 
     void loose(std::chrono::steady_clock::time_point now) {
         for (const auto& [name, one] : byName_) {
@@ -1161,6 +1183,7 @@ private:
     std::map<std::string, std::vector<Bot::Need>> needs_;
     std::map<std::pair<int, int>, bool> stands_;  // this group: (map, breed) the party can stand
     std::map<std::string, int64_t> leftAt_, lfgAt_;  // each bot's clock
+    std::map<std::string, int64_t> followedAt_;      // when follow() last led him, his clock
     std::chrono::steady_clock::time_point next_{};
 };
 

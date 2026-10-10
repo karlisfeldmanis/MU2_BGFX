@@ -86,7 +86,10 @@ namespace mu::net {
 //     a Player's trade in the snapshot (shape 4).
 // 19: Devil Square on the server: the Welcome's square and its wait (Realm::setSquare), the
 //     config's square clock (RealmConfig::square), Command::Kind::EnterSquare.
-constexpr uint32_t kVersion = 19;
+// 20: one realm's rules for players together: Blood Castle's quotas once a kill and its win its
+//     winner's (CastleRun::winner, snapshot shape 6), a trade called off as one side leaves,
+//     a leaver's threat forgotten.
+constexpr uint32_t kVersion = 20;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store

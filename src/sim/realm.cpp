@@ -115,6 +115,9 @@ bool Realm::depart(uint32_t id) {
         dismiss(bodies_[size_t(me().summonSlot)]);
     }
     closeMachine();
+    // His trade called off now, each side's offer home: left to dealTick, a partner's accept in
+    // the same tick as his Leave swapped with a player no longer here.
+    if (me().dealing != 0) dealCancel(me_, DealWhy::Gone);
     me().trading = me().banking = me().mixing = me().gating = me().angeling = me().questing = -1;
     me().order = Request{};
     me().pending = Request{};
@@ -145,6 +148,7 @@ bool Realm::depart(uint32_t id) {
             one.provoked = false;
         }
     }
+    forgetThreat(id);
     const uint32_t index = indexOfId_[id];
     players_.erase(std::remove(players_.begin(), players_.end(), index), players_.end());
     say(What::Left, gone);

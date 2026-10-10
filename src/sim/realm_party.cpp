@@ -111,6 +111,16 @@ void Realm::addThreat(Body& beast, const Body& by, int32_t amount) {
     beast.threat[slot] = int32_t(std::min<int64_t>(sum, std::numeric_limits<int32_t>::max()));
 }
 
+void Realm::forgetThreat(uint32_t id) {
+    for (Body& one : bodies_) {
+        for (int i = 0; i < Body::kThreatSlots; ++i) {
+            if (one.threatBy[i] != id) continue;
+            one.threatBy[i] = 0;
+            one.threat[i] = 0;
+        }
+    }
+}
+
 void Realm::retarget(Body& beast) {
     const Body* current = find(beast.quarry);
     const bool holds = current != nullptr && current->alive() && !current->gone;

@@ -16,7 +16,7 @@ namespace mu::sim {
 namespace {
 
 constexpr uint32_t kMagic = 0x4E53554Du;  // "MUSN"
-constexpr uint32_t kShape = 5;            // bumped when serialize() changes (4: a Player's trade; 5: Devil Square's door and dice)
+constexpr uint32_t kShape = 6;            // bumped when serialize() changes (4: a Player's trade; 5: Devil Square's door and dice; 6: the castle's winner)
 
 struct Writer {
     static constexpr bool reading = false;

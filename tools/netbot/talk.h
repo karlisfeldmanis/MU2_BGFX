@@ -139,12 +139,18 @@ private:
     // An opening line: one that asks to be answered. No answer of answerTo is one.
     static bool opens(const std::string& text) {
         const std::string t = lower(text);
-        return has(t, {"level", "ding"}) || t.find("anyone") != std::string::npos;
+        return levelled(t) || t.find("anyone") != std::string::npos;
+    }
+    // A level gained, said: "ding", "level up", "lvl 50!" -- not any line with "level" in it.
+    // "anyone know what level for devias?" and every party ask ("..., level 80") drew a "gz".
+    static bool levelled(const std::string& t) {
+        if (t.find('?') != std::string::npos) return false;
+        return has(t, {"ding", "level up", "levelled", "leveled", "lvl up"});
     }
 
     std::string answerTo(const std::string& text) {
         const std::string t = lower(text);
-        if (has(t, {"level", "ding"})) return pick({"gz", "grats", "gz!"});
+        if (levelled(t)) return pick({"gz", "grats", "gz!"});
         if (t.find("hunting") != std::string::npos) return pick({"yes, me", "me, on the east side"});
         if (t.find("dragon") != std::string::npos) return pick({"not today", "no, sadly"});
         return {};

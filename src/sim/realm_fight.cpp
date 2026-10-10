@@ -1809,6 +1809,9 @@ void Realm::kill(Body& dead, Body& killer) {
             if (lands(one.owner)) one = SpiritBlow{};
         }
         dead.channelEcho = false;
+        // And what he did to them is forgotten: kept, his threat turned a monster from the
+        // wizard beside it to chase him as he stood up in town (Realm::retarget).
+        forgetThreat(dead.id);
         return;
     }
 
@@ -1935,9 +1938,11 @@ void Realm::kill(Body& dead, Body& killer) {
     // nothing. Counted for that player: his own, her summon's owner, or the one who helped.
     if (dead.monster() && (killer.player || killer.summoner != 0 || (killer.warden >= 0 && helped))) {
         const Body* owner = killer.summoner != 0 ? body(killer.summoner) : nullptr;
-        // Devil Square's points, once, to whoever's kill it is: not per party member in view, as
-        // the quests' counts are (Blood Castle's quotas still are; docs/devil-square-port.md).
+        // Devil Square's points and Blood Castle's quotas, once, to whoever's kill it is: not per
+        // party member in view, as the quests' counts are. Counted per member, three partied
+        // knights met castle 1's quota of 120 in 40 kills, and the statue laid three weapons.
         squareKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);
+        if (dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()) castleKill(dead);
         // And for each of his party in view who still wants that breed (the user, 2026-10-09:
         // "everyone nearby"); countKill skips a step already done.
         countPartyKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);

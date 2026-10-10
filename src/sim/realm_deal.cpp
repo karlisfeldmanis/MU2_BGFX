@@ -235,6 +235,15 @@ void Realm::dealSwap() {
     const size_t b = size_t(other);
     Player& pa = heroes_[a];
     Player& pb = heroes_[b];
+    // Never with someone gone or dead, whatever was accepted before.
+    if (bodies_[pa.body].gone || bodies_[pb.body].gone) {
+        dealCancel(a, DealWhy::Gone);
+        return;
+    }
+    if (!bodies_[pa.body].alive() || !bodies_[pb.body].alive()) {
+        dealCancel(a, DealWhy::Dead);
+        return;
+    }
     if (pa.offerZen > pa.money || pb.offerZen > pb.money) {
         dealCancel(a, DealWhy::Zen);
         return;

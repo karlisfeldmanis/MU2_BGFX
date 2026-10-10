@@ -2650,7 +2650,8 @@ private:
             lastPhase_ = run.phase;
         }
         if (run.phase == sim::CastlePhase::Won) {
-            if (run.claimed || angel < 0) return;
+            // Only the one who handed the weapon in may claim it (Realm::claimCastle).
+            if (run.claimed || angel < 0 || run.winner != hero.id) return;
             if (realm_->angeling() == angel) {
                 if (hand_.claimCastle()) say("claims the win: to Devias");
             } else {
@@ -2690,7 +2691,7 @@ private:
         // of the bag it would cover is thrown on the ground (clearFor's discard).
         for (const sim::Lying& one : realm_->lying()) {
             if (one.what.empty() || !sim::archangelWeapon(rowOf(one.what))) continue;
-            if (one.owner != 0 && one.owner != hero.id) continue;
+            if (!realm_->mayTake(one)) continue;
             if (const content::ItemRow& row = rowOf(one.what); realm_->satchel().free(*tables_, row.width, row.height) < 0) {
                 if (clearFor(row, true) > 0) say("throws things out of the bag for the %s", row.label.c_str());
             }
@@ -4040,10 +4041,24 @@ private:
         return n;
     }
 
+    // Whether a monster is another player's fight: on a living player, or on a player's summon,
+    // who is neither he nor of his party. The last blow takes the kill, its drop and its quest
+    // count (Realm::kill), and a bot's one blow took what a player nearly finished; the monster
+    // turned to him for it as well (Realm::hit). One that comes for him he answers all the same.
+    bool othersFight(const sim::Body& body) const {
+        const sim::Body& hero = realm_->hero();
+        if (body.quarry == 0 || body.quarry == hero.id) return false;
+        const sim::Body* on = realm_->find(body.quarry);
+        if (on != nullptr && on->summoner != 0) on = realm_->find(on->summoner);
+        if (on == nullptr || !on->player || on->gone || !on->alive() || on->id == hero.id) return false;
+        return hero.party == 0 || on->party != hero.party;
+    }
+
     // Whether a body is one he would go after now: a quest's breed while hunting for one, else
     // whatever he takes.
     bool quarry(const sim::Body& body, bool anyFloor = false) const {
         if (!body.monster() || !body.alive() || barred(body.id) || body.kind < 0) return false;
+        if (othersFight(body)) return false;
         // On a map of floors, only what stands on his.
         const int floor = realm_->travelFloor();
         if (!anyFloor && floor >= 0 && realm_->floorAt(body.column(), body.row()) != floor) return false;
@@ -4145,7 +4160,10 @@ private:
             closest = kLootReach * kLootReach;
             const int room = freeCells();
             for (const sim::Lying& one : realm_->lying()) {
-                if (one.what.empty() || barred(one.id)) continue;
+                // Not another's to take (Realm::mayTake): the realm refuses the pick, and with no
+                // body to give up on he stood asking for it four times a second for 30 s (kGiveUp)
+                // beside every kill a player made near him.
+                if (one.what.empty() || barred(one.id) || !realm_->mayTake(one)) continue;
                 const content::ItemRow& row = rowOf(one.what);
                 if (row.width * row.height > room) continue;
                 const float dx = float(one.column) - hero.x, dy = float(one.row) - hero.y;

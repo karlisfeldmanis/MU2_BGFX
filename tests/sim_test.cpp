@@ -2358,20 +2358,20 @@ void testCastLock(const content::Tables& tables) {
                   tables.items[size_t(scroll)].teachesEnergy == 104,
               "the Scroll of Meteorite teaches skill 2 at a hundred and four energy");
         check(tables.action(183) != nullptr, "the tables carry the arm-up clip's length");
-        // The level comes first since the ladder of 2026-10-02: fifty-nine is refused with all
-        // the energy, sixty reads it -- Twisting Slash's, since 2026-10-04.
+        // The level comes first since the ladder of 2026-10-02: thirty-nine is refused with all
+        // the energy, forty reads it -- sixty until 2026-10-10 (45260fa5: the user lowered it to 40).
         {
             sim::Realm early;
-            check(early.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 59),
-                  "a wizard of fifty-nine raises");
+            check(early.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 39),
+                  "a wizard of thirty-nine raises");
             sim::HeroRecord held = early.record();
             held.slots[sim::kWorn + 40].item = scroll;
             held.slots[sim::kWorn + 40].durability = 1;
             held.points.energy = 200;
             early.restore(held);
             check(!early.useItem(sim::kWorn + 40),
-                  "and is refused the Scroll of Meteorite, which asks for level sixty");
-            check(tables.items[size_t(scroll)].teachesLevel == 60, "as its row says");
+                  "and is refused the Scroll of Meteorite, which asks for level forty");
+            check(tables.items[size_t(scroll)].teachesLevel == 40, "as its row says");
         }
         sim::Realm reader;
         check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 60), "a wizard raises");

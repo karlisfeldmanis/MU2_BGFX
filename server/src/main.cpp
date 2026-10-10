@@ -101,6 +101,12 @@ constexpr int kKeepEvery = 60 * 20;
 // The most a healthy line owes is a Welcome, a few MB, and that keeps moving.
 constexpr double kStalledSeconds = 20.0;
 constexpr size_t kMostOwed = 64u << 20;
+// A line silent this long is dead (Session::heardAt): his next Hello takes his character over.
+constexpr auto kSilentFor = std::chrono::seconds(10);
+// The most commands one player puts in one tick: a hand's worth of clicks, keys and the bot's
+// orders many times over. More, and the rest of that tick's are dropped -- every one is sent to
+// everyone in his world, and one client could otherwise flood the rest off their lines.
+constexpr int kMostCommands = 64;
 
 // The characters, by token, on the server's disk.
 server::Store g_store;
@@ -215,6 +221,11 @@ struct Session {
     // The chat's allowance (sayAllowed): lines he may say at once, refilled with time.
     float sayAllowance = 0.0f;
     Clock::time_point saidAt{};
+    // When anything last came in on his line. Every client pings at least every 5 s
+    // (RemoteLink::pump), so one silent for kSilentFor is a dead line his next Hello may take.
+    Clock::time_point heardAt = Clock::now();
+    // Commands taken from him for the coming tick (kMostCommands), counted afresh each tick.
+    int asked = 0;
 };
 
 // Who is in a world, to everyone in it: what the hover plate over another player says. Sent
@@ -316,6 +327,23 @@ Session* playerNamed(const std::string& name, std::vector<std::unique_ptr<Sessio
         if (one->welcomed && one->socket.open() && lower(one->name) == wanted) return one.get();
     }
     return nullptr;
+}
+
+// Whether anyone on the server but `except`, in a world or on his way into one, goes by `name`,
+// in any case: a name is the whole of how chat, whispers and invites find a player.
+bool nameInUse(const std::string& name, const std::vector<std::unique_ptr<Session>>& sessions,
+               const Session* except) {
+    const auto lower = [](std::string s) {
+        for (char& c : s) c = char(std::tolower(uint8_t(c)));
+        return s;
+    };
+    const std::string wanted = lower(name);
+    for (const auto& one : sessions) {
+        if (one.get() != except && one->world != nullptr && one->socket.open() && lower(one->name) == wanted) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // Whether he may say another line now: the allowance refilled since his last, and one spent.
@@ -523,12 +551,22 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
                 return tell("You have no party invitation.");
             }
             const uint64_t from = invite->second.from;
+            Session* inviter = sessionOfToken(from, sessions);
+            // "/accept NAME" takes NAME's invitation and no other: a second ask that came in
+            // between put a bot waiting on his own party's leader into a stranger's.
+            if (!ask.name.empty() && inviter != nullptr && playerNamed(ask.name, sessions) != inviter) {
+                return tell("You have no party invitation from " + ask.name + ".");
+            }
             g_invites.erase(invite);
             if (party != nullptr) return tell("You are already in a party.");
-            Session* inviter = sessionOfToken(from, sessions);
             if (inviter == nullptr) return tell("Whoever invited you is no longer online.");
             const auto theirs = g_partyOf.find(from);
             Party* joined = theirs != g_partyOf.end() ? &g_parties[theirs->second] : nullptr;
+            // Asked by a leader who has since left his party or joined another's as a member:
+            // his invitation was his party's, and is no longer his to give.
+            if (joined != nullptr && joined->members.front().token != from) {
+                return tell(inviter->name + " no longer leads a party.");
+            }
             if (joined != nullptr && int(joined->members.size()) >= sim::kPartyMost) return tell("That party is full.");
             if (joined == nullptr) {
                 Party made;
@@ -720,7 +758,8 @@ bool account(Session& one, const net::Account& said) {
     return answer(one, net::Refused::None);
 }
 
-bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds) {
+bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds,
+            const std::vector<std::unique_ptr<Session>>& sessions) {
     const auto mine = g_store.list(one.account);
     const sim::Kin kin = sim::Kin(std::min<int>(asked.kin, int(sim::Kin::MagicGladiator)));
     bool gladiator = false;
@@ -730,7 +769,8 @@ bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds) {
     net::Refused refused = net::Refused::None;
     if (!sim::goodName(asked.name)) refused = net::Refused::BadName;
     else if (kin == sim::Kin::MagicGladiator && !gladiator) refused = net::Refused::BadName;
-    else if (g_store.named(asked.name)) refused = net::Refused::Taken;
+    // Taken by a character kept, or by one playing now: a bot's name is in no account's list.
+    else if (g_store.named(asked.name) || nameInUse(asked.name, sessions, nullptr)) refused = net::Refused::Taken;
     const int slot = freeSlot(one.account);
     if (refused == net::Refused::None && slot < 0) refused = net::Refused::NoRoom;
     if (refused == net::Refused::None) {
@@ -880,10 +920,18 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     if (asked.token != 0) {
         for (auto& other : sessions) {
             if (other.get() == &one || other->token != asked.token || other->world == nullptr) continue;
-            if (other->socket.open()) {
+            // Open, but nothing heard on it for kSilentFor: a line that died without a close (a
+            // dropped Wi-Fi), which the server would hold for as long as the kernel kept it.
+            // Let go, and he comes back on this one -- refused, he read "no such world".
+            if (other->socket.open() && Clock::now() - other->heardAt < kSilentFor) {
                 core::logError("%s: his character is already playing (%s)", one.who.c_str(),
                                other->who.c_str());
                 return false;
+            }
+            if (other->socket.open()) {
+                core::logf("%s: takes over %s, silent %.0f s", one.who.c_str(), other->who.c_str(),
+                           std::chrono::duration<double>(Clock::now() - other->heardAt).count());
+                other->socket.close();
             }
             part(*other);
             other->world = nullptr;
@@ -909,6 +957,12 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
                                                       : std::string();
     // A character of no account and no name (a bench's `--play --server`) is still someone on
     // the chat: whispered to, invited, never taken for the server's own line.
+    // One of no account takes no name a character keeps or someone plays under: two of one name
+    // and whispers, invites and kicks went to whichever was found first.
+    if (one.bot && !one.name.empty() && (g_store.named(one.name) || nameInUse(one.name, sessions, &one))) {
+        core::logError("%s: the name %s is taken", one.who.c_str(), one.name.c_str());
+        return false;
+    }
     if (one.name.empty()) {
         static int strangers = 0;
         one.name = "Stranger" + std::to_string(++strangers);
@@ -1007,6 +1061,10 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         // A square's run takes newcomers only while it waits for its fight: the next run is a
         // new world (WebZen lets no one in after the gate shuts).
         if (square > 0 && world->realm->squareRun().phase != sim::SquarePhase::Waiting) continue;
+        // And a castle's the same: its run is set when its world is raised (Realm::Realm), so one
+        // begun or done takes nobody, and the next period's entrants raise a new one. Joined
+        // after its first run, every castle sent its entrants straight back to Devias.
+        if (castle > 0 && world->realm->castleRun().phase != sim::CastlePhase::Waiting) continue;
         copies = std::max(copies, world->copy);
         const int here = peopleIn(*world, sessions);
         if ((castle > 0 || square > 0 || here < g_mapCap) && here > most) {
@@ -1056,7 +1114,9 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
 bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
           std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
           const sim::RealmConfig& config, std::mt19937_64& seeds) {
+    const size_t had = one.in.size();
     if (!one.socket.receive(one.in)) return false;
+    if (one.in.size() != had) one.heardAt = Clock::now();
     net::Kind kind{};
     std::vector<uint8_t> body;
     while (true) {
@@ -1071,7 +1131,7 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             if (!net::parse(body, said) || !account(one, said)) return false;
         } else if (kind == net::Kind::Create && one.world == nullptr && !one.account.empty()) {
             net::Create asked;
-            if (!net::parse(body, asked) || !create(one, asked, seeds)) return false;
+            if (!net::parse(body, asked) || !create(one, asked, seeds, sessions)) return false;
         } else if (kind == net::Kind::Delete && one.world == nullptr && !one.account.empty()) {
             net::Delete asked;
             if (!net::parse(body, asked) || !drop(one, asked, sessions)) return false;
@@ -1094,8 +1154,19 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             // times in 18 game hours (the Claude bot's runs, 2026-10-09). A player on a slow
             // line who clicks twice is the same.
             if (one.sentAway) continue;
+            // Nothing asked is nothing to send everyone; and no more than kMostCommands a tick.
+            if (command.kind == sim::Command::Kind::None || ++one.asked > kMostCommands) continue;
             // Whatever the client wrote there, it is his own hero who asks.
             command.player = one.player;
+            // One trip a tick: the landing is read from the Travel its answer's ticket names
+            // (landingOf), and a refused trip's ticket on a second, granted one landed him where
+            // the first asked -- Lost Tower 7 at Noria's price, no level, quest or wings asked.
+            if (command.kind == sim::Command::Kind::Travel &&
+                std::any_of(one.world->queued.begin(), one.world->queued.end(), [&](const sim::Command& c) {
+                    return c.kind == sim::Command::Kind::Travel && c.player == one.player;
+                })) {
+                continue;
+            }
             if (command.kind == sim::Command::Kind::Order) {
                 const sim::Body* him = one.world->realm->find(one.player);
                 if (him != nullptr && !him->walking) one.world->wantsEarly = true;
@@ -1116,8 +1187,10 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             std::vector<uint8_t> out;
             net::put(out, ping);
             if (!one.socket.send(out)) return false;
-        } else if (kind == net::Kind::Command && one.joining != 0) {
-            // Asked before his Welcome: he has no body yet to ask with.
+        } else if ((kind == net::Kind::Command || kind == net::Kind::Chat || kind == net::Kind::PartyAsk) &&
+                   one.joining != 0) {
+            // Asked or said before his Welcome: he has no body yet to ask with, and nobody hears
+            // him yet. Not a frame out of turn: a client quick on the keys after its Hello.
             continue;
         } else {
             core::logError("%s: a frame of kind %d out of turn", one.who.c_str(), int(kind));
@@ -1216,6 +1289,9 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     t.rain = world.weather.wet;
     t.invasionElsewhere = invadedElsewhere(world, worlds);
     t.commands.swap(world.queued);
+    for (auto& one : sessions) {
+        if (one->world == &world) one->asked = 0;
+    }
     t.arrivals.swap(world.arriving);
     sim::Realm& realm = *world.realm;
     realm.setWallClock(t.wallClock);
@@ -1343,7 +1419,21 @@ server::Store::Row placeOf(const Session& one) {
 // its next tick.
 void part(Session& one) {
     if (one.world == nullptr) return;
-    if (one.welcomed) {
+    // What he asked since the last tick goes with him: no mirror has seen it, and run after his
+    // character is written it was done twice -- a drop or a trade's accept a tick behind the
+    // save, the thing in another's hands and still in his own when he came back.
+    if (one.player != 0) {
+        auto& queued = one.world->queued;
+        queued.erase(std::remove_if(queued.begin(), queued.end(),
+                                    [&](const sim::Command& c) { return c.player == one.player; }),
+                     queued.end());
+    }
+    if (!one.welcomed && one.player != 0) {
+        // His Join answered but its Welcome never reached him (the line went with the tick that
+        // answered it): his body is in the world all the same, and leaves it. Without this it
+        // stood there for good, counted among the players.
+        one.world->queued.push_back({.kind = sim::Command::Kind::Leave, .player = one.player});
+    } else if (one.welcomed) {
         const server::Store::Row row = placeOf(one);
         if (g_store.keep(row)) {
             core::logf("%s: his character kept in %s at %d,%d, level %d with %lld Zen", one.who.c_str(),
@@ -1519,7 +1609,23 @@ int main(int argc, char** argv) {
             }
         }
         // Worlds are never let go: the server is always online, and a world once raised keeps
-        // its monsters, its weather and its state for as long as the server runs.
+        // its monsters, its weather and its state for as long as the server runs -- but for an
+        // event's (a Blood Castle's, a Devil Square's run), which is one run's and nobody joins
+        // again once it has begun: let go when nobody is in it, or every run left a world ticking.
+        for (size_t i = 0; i < worlds.size();) {
+            World& w = *worlds[i];
+            if ((w.castle > 0 || w.square > 0) && peopleIn(w, sessions) == 0) {
+                core::logf("%s: let go, nobody in it (castle %d, square %d)", w.name.c_str(), w.castle,
+                           w.square);
+                for (auto it = g_partyBody.begin(); it != g_partyBody.end();) {
+                    it = it->second.first == &w ? g_partyBody.erase(it) : std::next(it);
+                }
+                worlds.erase(worlds.begin() + long(i));
+            } else {
+                ++i;
+            }
+        }
+        //
         //
         // Then asleep until a line speaks or the next world's tick is due (sprint 24). It was a
         // 2 ms nap and a read of every line after it, 500 times a second whether anyone spoke:
