@@ -184,6 +184,12 @@ int gearScore(const content::Tables& tables, const Satchel& bag) {
     return score;
 }
 
+int gearRung(int score) {
+    int rung = 0;
+    for (int at : kGearRungs) rung += score >= at ? 1 : 0;
+    return rung;
+}
+
 int affixValue(Affix affix, int refinement) {
     // +0 and +9, the user's of 2026-10-03 ("+9 still to OP", then "its better").
     // The resistances 1 to 4 points, MU's own ring at +4 (2026-10-04).

@@ -125,6 +125,14 @@ constexpr Box kHammer{panel::kWellRight - 30.0f, panel::kFootTop + 1.0f, 30.0f, 
 // The gear score's baseline, as a share of the head band: under the title's capitals, clear of
 // the rule.
 constexpr float kScoreLine = 0.86f;
+// The figure's colour by its rung (sim::gearRung): white, green, blue, purple, legendary. The
+// card's own quality inks, so a green score is a green item's green -- except the last, which
+// is WoW's legendary orange (the runes'), since the card's legendary is the green.
+uint32_t scoreInk(int score) {
+    static const tip::Tone kRungs[5] = {tip::Tone::Uncommon, tip::Tone::Legendary, tip::Tone::Rare,
+                                        tip::Tone::Epic, tip::Tone::RuneLegendary};
+    return tip::colourOf(kRungs[sim::gearRung(score)]);
+}
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 
 // A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
@@ -406,17 +414,19 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     panel::frame(canvas_, arts, x, y, "Inventory");
     // **The gear score, small under the title** (sim::gearScore): the user, 2026-10-10, "show
     // inventory big how it was and small font the gear score under the inventory title". An ash
-    // GEAR SCORE and the figure in bone, centred together in the head under the title's capitals.
+    // GEAR SCORE and the figure in its rung's colour (scoreInk), centred together in the head
+    // under the title's capitals.
     {
         const float u = tip::unit();
         const float size = 11.0f * u, small = 9.0f * u, gap = 4.0f * u;
-        const std::string figure = panel::commas(sim::gearScore(tables, bag));
+        const int score = sim::gearScore(tables, bag);
+        const std::string figure = panel::commas(score);
         const float words = controls::capsWidth(small, "GEAR SCORE");
         const float wide = words + gap + controls::labelWidth(size, figure);
         const float from = std::round(x + (panel::kWidth * k - wide) * 0.5f);
         const float baseline = std::round(y + panel::kHeadBand * k * kScoreLine);
         controls::caps(canvas_, from, baseline, small, style::kAshInk, "GEAR SCORE");
-        controls::label(canvas_, from + words + gap, baseline, size, style::kBoneHi, figure);
+        controls::label(canvas_, from + words + gap, baseline, size, scoreInk(score), figure);
     }
 
     // **The worn slots: a deep well, and MU's own silhouette in it.** The art is the game's

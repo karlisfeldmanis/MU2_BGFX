@@ -301,6 +301,12 @@ int affixCount(const content::ItemRow& row, const Held& what);
 class Satchel;
 int pieceScore(const content::ItemRow& row, const Held& what);
 int gearScore(const content::Tables& tables, const Satchel& bag);
+// Its rung, the user's of 2026-10-10 ("white, green, blue, purple, legendary"): 0 white under
+// 300, 1 green, 2 blue from 600, 3 purple from 1,000, 4 legendary from 1,500. A full worn set of
+// the top armour is about 600 before its plus and options; an excellent +9 to +11 one, 1,300
+// to 2,000.
+inline constexpr int kGearRungs[4] = {300, 600, 1000, 1500};
+int gearRung(int score);
 // A power's value at a plus: lo + (hi - lo) x (plus / 9)^2, rounded. Percent for all but the
 // Leech, whose is life a blow.
 int affixValue(Affix affix, int refinement);

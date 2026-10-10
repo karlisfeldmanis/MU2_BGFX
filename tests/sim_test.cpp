@@ -9579,6 +9579,12 @@ void testGearScore(const content::Tables& tables) {
     realm.give(sword, -1, 9);
     checkEqual(sim::gearScore(tables, realm.satchel()), level + 35, "the worn plate counts");
     checkEqual(sim::gearScore(tables, realm.satchel()) - level - 35, 0, "the carried sword does not");
+    checkEqual(sim::gearRung(0), 0, "nought is white");
+    checkEqual(sim::gearRung(299), 0, "299 still white");
+    checkEqual(sim::gearRung(300), 1, "300 green");
+    checkEqual(sim::gearRung(600), 2, "600 blue");
+    checkEqual(sim::gearRung(1284), 3, "1,284 purple");
+    checkEqual(sim::gearRung(1500), 4, "1,500 legendary");
 }
 
 // The powered rings and pendant (sim::Affix, docs/jewellery.md "Powers"): the curve, every worn
