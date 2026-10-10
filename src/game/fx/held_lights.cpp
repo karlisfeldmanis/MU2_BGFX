@@ -120,6 +120,16 @@ const char* HeldLights::mesh(Item item) {
         case Item::DivineSword: return "Sword20";
         case Item::DivineStaff: return "Staff11";
         case Item::DivineCrossbow: return "Bow19";
+        case Item::CrystalSword: return "Mace06";
+        case Item::ChaosDragonAxe: return "Mace07";
+        case Item::LegendaryStaff: return "Staff06";
+        case Item::ChaosLightningStaff: return "Staff08";
+        case Item::BluewingCrossbow: return "CrossBow06";
+        case Item::AquagoldCrossbow: return "CrossBow07";
+        case Item::TigerBow: return "Bow05";
+        case Item::SilverBow: return "Bow06";
+        case Item::ChaosNatureBow: return "Bow07";
+        case Item::CelestialBow: return "Bow18";
     }
     return "";
 }
@@ -229,6 +239,88 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
             // Its grip, for its ground light alone: MuMain comments its sprites out.
             out[0][0] = out[0][1] = out[0][2] = 0.0f;
             return 1;
+        case Item::CrystalSword:
+            // The hand's (0, -j*20 - 30, 0) as j*20 + 30 up the blade (it reaches 194).
+            for (int j = 0; j < 8; ++j) {
+                out[j][0] = out[j][1] = 0.0f;
+                out[j][2] = (float(j) * 20.0f + 30.0f) * kUnit;
+            }
+            return 8;
+        case Item::ChaosDragonAxe: {
+            // (0, -84, 0) in the hand, then (0, -j*20 - 10, 0) for five, up the haft; and Box02
+            // and Box04, its bones 2 and 6, either side of the head.
+            out[0][0] = out[0][1] = 0.0f;
+            out[0][2] = 84.0f * kUnit;
+            for (int j = 0; j < 5; ++j) {
+                out[1 + j][0] = out[1 + j][1] = 0.0f;
+                out[1 + j][2] = (float(j) * 20.0f + 10.0f) * kUnit;
+            }
+            const float kBones[2][3] = {{0.0f, 28.2f, 77.0f}, {0.0f, -27.6f, 76.9f}};
+            for (int i = 0; i < 2; ++i) {
+                for (int k = 0; k < 3; ++k) out[6 + i][k] = kBones[i][k] * kUnit;
+            }
+            return 8;
+        }
+        case Item::LegendaryStaff:
+            // The hand's (0, -145, 0), the head (it reaches 156).
+            out[0][0] = out[0][1] = 0.0f;
+            out[0][2] = 145.0f * kUnit;
+            return 1;
+        case Item::ChaosLightningStaff: {
+            // `light` to `light10`, its bones 27 to 37 at rest: the head's star and ten round the
+            // two ends.
+            static const float kBones[11][3] = {
+                {2.9f, -4.0f, 96.3f},    {-23.3f, -4.0f, 130.3f}, {33.0f, -4.0f, 73.5f},
+                {-29.5f, -4.0f, 74.4f},  {27.8f, -4.0f, 130.5f},  {6.7f, -4.0f, 174.8f},
+                {-4.0f, -4.0f, 175.4f},  {-3.2f, -4.0f, -130.3f}, {6.8f, -4.0f, -130.6f},
+                {19.8f, -4.0f, -77.5f},  {-15.3f, -4.0f, -78.0f}};
+            for (int i = 0; i < 11; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 11;
+        }
+        case Item::BluewingCrossbow:
+        case Item::AquagoldCrossbow:
+            // Ours, as the Saint Crossbow's: MU's (0, -20, -j*20) laid down the stock, which runs
+            // the glb's -y, 20 over its spine.
+            for (int j = 0; j < 6; ++j) {
+                out[j][0] = 0.0f;
+                out[j][1] = -20.0f * float(j) * kUnit;
+                out[j][2] = 20.0f * kUnit;
+            }
+            return 6;
+        case Item::TigerBow:
+        case Item::SilverBow:
+            // Bone03 and Bone07, its bones 2 and 6: the two limb tips.
+            out[0][0] = 0.0f;
+            out[0][1] = -1.8f * kUnit;
+            out[0][2] = -44.4f * kUnit;
+            out[1][0] = 0.0f;
+            out[1][1] = -1.0f * kUnit;
+            out[1][2] = 59.8f * kUnit;
+            return 2;
+        case Item::ChaosNatureBow: {
+            // `light` to `light06`, its bones 13 to 18.
+            static const float kBones[6][3] = {{2.1f, 35.5f, 96.5f},  {2.1f, 6.9f, 140.9f},
+                                               {2.1f, 6.4f, -127.4f}, {2.1f, 36.6f, -83.5f},
+                                               {2.5f, -24.9f, 45.8f}, {2.5f, -25.2f, -32.3f}};
+            for (int i = 0; i < 6; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 6;
+        }
+        case Item::CelestialBow: {
+            // Its bones 13 to 18 and 5 to 8: Bone16 to 19, 10 and 11, then 12 to 15.
+            static const float kBones[10][3] = {
+                {-15.5f, 18.2f, 117.1f}, {15.3f, 18.2f, 117.1f}, {9.3f, 40.7f, 78.0f},
+                {-10.1f, 40.7f, 78.0f},  {0.0f, -46.6f, 6.2f},   {0.0f, 18.2f, 5.8f},
+                {10.3f, 39.6f, -60.1f},  {-10.0f, 39.6f, -60.1f}, {15.2f, 18.2f, -98.3f},
+                {-15.5f, 18.2f, -98.3f}};
+            for (int i = 0; i < 10; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 10;
+        }
         case Item::LegendaryShield:
             // Ours: the hand's (20, 0, 0) as 20 out of the grip along the glb's x, on the face.
             out[0][0] = 20.0f * kUnit;
@@ -292,6 +384,7 @@ bool HeldLights::open(const std::string& assetDir, content::Textures& textures,
     shiny_ = take("shiny_02");
     flare_ = take("pierce");
     thunder_ = take("joint_thunder");
+    lightning_ = take("lightning_2");
     open_ = bgfx::isValid(light_);
     return open_;
 }
@@ -448,6 +541,72 @@ void HeldLights::gather(gfx::Effects& effects) const {
             }
             case Item::DivineCrossbow:
                 break;
+            case Item::CrystalSword: {
+                const float l = handLuminosity_;
+                for (int j = 0; j < one.count; ++j) {
+                    // MU's rand() % 4 < 3, rolled per reference frame and light.
+                    uint32_t h = (crackleFrame_ * 2246822519u) ^ uint32_t(j * 2654435761u);
+                    h ^= h >> 13;
+                    h *= 2654435761u;
+                    h ^= h >> 16;
+                    if (h % 4u < 3u) put(light_, one.at[j], halfOf(1.0f), l, 0.6f * l, 0.4f * l);
+                }
+                break;
+            }
+            case Item::ChaosDragonAxe: {
+                const float s = std::sin(clock_ * 4.0f) * 0.3f + 0.7f;
+                put(shiny_, one.at[0], halfOf(s + 1.5f), s, 0.2f * s, 0.1f * s);
+                for (int j = 1; j < 6 && j < one.count; ++j) {
+                    put(shiny_, one.at[j], halfOf(1.0f), s, 0.2f * s, 0.1f * s);
+                }
+                for (int j = 6; j < one.count; ++j) {
+                    put(shiny_, one.at[j], halfOf(1.0f), 0.5f * s, 0.1f * s, 0.05f * s);
+                }
+                break;
+            }
+            case Item::LegendaryStaff: {
+                const float l = handLuminosity_;
+                put(shiny_, one.at[0], halfOf(1.5f), 0.4f * l, 0.6f * l, l);
+                put(lightning_, one.at[0], halfOf(0.3f), 0.4f * l, 0.6f * l, l);
+                break;
+            }
+            case Item::ChaosLightningStaff: {
+                const float l = handLuminosity_;
+                put(shiny_, one.at[0], halfOf(2.0f), 0.4f * l, 0.6f * l, l);
+                for (int j = 1; j < one.count; ++j) {
+                    put(light_, one.at[j], halfOf(1.5f), 0.4f * l, 0.6f * l, l);
+                }
+                break;
+            }
+            case Item::BluewingCrossbow:
+            case Item::AquagoldCrossbow: {
+                const float l = handLuminosity_;
+                const bool blue = one.item == Item::BluewingCrossbow;
+                for (int j = 0; j < one.count; ++j) {
+                    put(light_, one.at[j], halfOf(2.0f), (blue ? 0.2f : 0.6f) * l, 0.4f * l,
+                        (blue ? 0.6f : 0.2f) * l);
+                }
+                break;
+            }
+            case Item::TigerBow:
+            case Item::SilverBow:
+            case Item::ChaosNatureBow:
+            case Item::CelestialBow: {
+                const float l = linkLuminosity_;
+                const float r = one.item == Item::ChaosNatureBow ? 0.6f
+                                : one.item == Item::CelestialBow ? 0.5f
+                                                                 : 1.0f;
+                const float g = one.item == Item::ChaosNatureBow ? 1.0f
+                                : one.item == Item::CelestialBow ? 0.5f
+                                                                 : 0.6f;
+                const float b = one.item == Item::ChaosNatureBow ? 0.8f
+                                : one.item == Item::CelestialBow ? 0.8f
+                                                                 : 0.2f;
+                for (int j = 0; j < one.count; ++j) {
+                    put(shiny_, one.at[j], halfOf(1.0f), r * l, g * l, b * l);
+                }
+                break;
+            }
             case Item::LegendaryShield: {
                 const float l = handLuminosity_;
                 put(shiny_, one.at[0], halfOf(1.5f), 0.4f * l, 0.6f * l, 1.5f * l);

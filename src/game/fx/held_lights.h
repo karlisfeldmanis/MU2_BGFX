@@ -61,6 +61,23 @@
 //     MODEL_DIVINE_CB_OF_ARCHANGEL (:7523-7539): its sprites are commented out in MuMain.
 //   and all three, and the Divine Scepter, AddTerrainLight (0.64, 0.4, 0.24) over two tiles
 //   round their wielder (:5664-5667), as the Heliacal's (lights()).
+//   And the audit's last held sparkles (2026-10-10), on the items' own bones at rest (muextract
+//   export-rig; MuMain's RenderBrightEffect reads the item's bones the link just posed):
+//     RenderCharacter's held switch, L its hand roll:
+//     MODEL_CRYSTAL_SWORD (:10417-10429): eight BITMAP_LIGHT at 1, L*(1, 0.6, 0.4), at
+//         (0, -j*20 - 30, 0), each drawn three frames in four.
+//     MODEL_CHAOS_DRAGON_AXE (:10431-10447): S = sin(WorldTime*0.004)*0.3 + 0.7; at (0, -84, 0)
+//         BITMAP_SHINY + 1 at S + 1.5 in S*(1, 0.2, 0.1), five more at 1 down the haft, and on its
+//         bones 2 and 6 at 1 in S*(0.5, 0.1, 0.05).
+//     MODEL_LEGENDARY_STAFF (:10284-10291): at (0, -145, 0) BITMAP_SHINY + 1 at 1.5 and
+//         BITMAP_LIGHTNING + 1 at 0.3, L*(0.4, 0.6, 1).
+//     MODEL_CHAOS_LIGHTNING_STAFF (:10292-10300): L*(0.4, 0.6, 1), BITMAP_SHINY + 1 at 2 on its bone
+//         27 and BITMAP_LIGHT at 1.5 on bones 28-37.
+//     MODEL_BLUEWING_CROSSBOW, MODEL_AQUAGOLD_CROSSBOW (:10449-10469): six BITMAP_LIGHT at 2 at
+//         (0, -20, -j*20), L*(0.2, 0.4, 0.6) and L*(0.6, 0.4, 0.2).
+//     RenderLinkObject's, L its link roll (:7031-7058): BITMAP_SHINY + 1 at 1 on the Tiger and
+//         Silver Bows' bones 2 and 6 in L*(1, 0.6, 0.2), the Chaos Nature Bow's 13-18 in
+//         L*(0.6, 1, 0.8), and the Celestial Bow's 13-18 and 5-8 in L*(0.5, 0.5, 0.8).
 //
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
@@ -104,9 +121,19 @@ public:
         DivineSword,
         DivineStaff,
         DivineCrossbow,
+        CrystalSword,
+        ChaosDragonAxe,
+        LegendaryStaff,
+        ChaosLightningStaff,
+        BluewingCrossbow,
+        AquagoldCrossbow,
+        TigerBow,
+        SilverBow,
+        ChaosNatureBow,
+        CelestialBow,
     };
     static constexpr int kMostPoints = 11;
-    static constexpr Item kItems[17] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[27] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -114,7 +141,12 @@ public:
                                         Item::StaffOfKundun,   Item::ArrowViperBow,
                                         Item::GorgonStaff,     Item::HeliacalSword,
                                         Item::DivineSword,     Item::DivineStaff,
-                                        Item::DivineCrossbow};
+                                        Item::DivineCrossbow,  Item::CrystalSword,
+                                        Item::ChaosDragonAxe,  Item::LegendaryStaff,
+                                        Item::ChaosLightningStaff, Item::BluewingCrossbow,
+                                        Item::AquagoldCrossbow, Item::TigerBow,
+                                        Item::SilverBow,       Item::ChaosNatureBow,
+                                        Item::CelestialBow};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
@@ -144,6 +176,7 @@ private:
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;  // BITMAP_SHINY + 1
     bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;  // Flare02, BITMAP_FLARE + 1
     bgfx::TextureHandle thunder_ = BGFX_INVALID_HANDLE;  // BITMAP_JOINT_THUNDER
+    bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;  // BITMAP_LIGHTNING + 1, lightning2
     std::vector<Held> held_;
     // MU's per-frame rolls, held between its frames: RenderCharacter's and RenderLinkObject's.
     float handLuminosity_ = 0.85f;
