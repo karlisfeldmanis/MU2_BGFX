@@ -8954,6 +8954,34 @@ void testGroupRunes(const content::Tables& tables) {
                                    : "and a bare sword does not");
     }
 
+    // Twin Guard: the knight's and the Gladiator's weapon, nowhere else.
+    check(sets(Power::TwinGuard, sword, Kin::DarkKnight) &&
+              sets(Power::TwinGuard, sword, Kin::MagicGladiator),
+          "Twin Guard goes in a knight's or a gladiator's weapon");
+    check(!sets(Power::TwinGuard, sword, Kin::DarkWizard) &&
+              !sets(Power::TwinGuard, ring, Kin::DarkKnight) &&
+              !sets(Power::TwinGuard, plate, Kin::DarkKnight),
+          "and not a wizard's, a ring or armour");
+    // And Defense up with no shield only behind a matched pair, harder while it is up.
+    for (const char* left : {"", "Sword01", "Axe01"}) {
+        sim::Realm knight;
+        knight.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
+        knight.learn(sim::skill::kDefense);
+        const uint8_t powers[3] = {uint8_t(Power::TwinGuard), 0, 0};
+        knight.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        if (*left) knight.give(tables.itemNamed(left), sim::kWeaponLeft);
+        const bool matched = std::string(left) == "Sword01";
+        check(knight.hero().excel.twinGuard == matched,
+              matched ? "two swords wake a Twin Guard" : "a lone or mixed hand does not");
+        knight.invoke(sim::skill::kDefense, knight.hero().id);
+        for (int tick = 0; tick < 60 && knight.cooling(sim::skill::kDefense) == 0; ++tick) {
+            knight.step();
+        }
+        const bool raised = knight.hero().boonSkill == sim::skill::kDefense;
+        check(raised == matched, matched ? "and raise Defense with no shield"
+                                         : "and Defense stays down");
+    }
+
     // Kinship: the Imp's gift without its life, the Angel's guard without its cut.
     for (const int pet : {imp, angel}) {
         sim::Realm realm;

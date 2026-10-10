@@ -393,6 +393,14 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
                     hero.excel.bulwarkShare = std::max(hero.excel.bulwarkShare, guard);
                 }
             }
+            // A Twin Guard only in a matched pair's hand: two of one kind (Arms::dualRate).
+            if (power && power->power == Power::TwinGuard && hero.dual &&
+                power->takenBy(hero.kin, hero.second) && rowAt(kWeaponLeft) &&
+                rowAt(kWeaponRight)->group == rowAt(kWeaponLeft)->group) {
+                hero.excel.twinGuard = true;
+                hero.excel.bulwark = true;
+                hero.excel.bulwarkShare = 1.0f;
+            }
             if (power && power->power == Power::Kinship && jewellery(*row)) {
                 hero.excel.kinship = true;
             }

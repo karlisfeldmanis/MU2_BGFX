@@ -141,6 +141,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (row != nullptr) force *= elementForce(attacker, skillElement(row->number));
     // His Wraths on every blow of his, whatever threw it (sim::kWrathDamage).
     force *= wrathForce(attacker);
+    // A Twin Guard's, while his Defense is up (sim::kTwinGuardDamage).
+    if (attacker.player && attacker.excel.twinGuard && attacker.boonSkill == skill::kDefense &&
+        attacker.boonUntil > tick_) {
+        force *= float(kTwinGuardDamage);
+    }
     // His Fire resistance on a monster's fire blow: kResistanceCut a point off, to
     // kResistanceCutMost (sim::Affix, ours -- WebZen's fire turns nothing aside). No draw.
     // The Golden Dragon's: through his Dragonfire too, which the blow then deepens (sim/raid.h);

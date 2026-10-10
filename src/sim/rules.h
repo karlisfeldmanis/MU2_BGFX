@@ -101,6 +101,9 @@ struct Excellence {
     // And the share of a shield's guard it lets up: 1 for a Bulwark, less for a Buckler or a
     // Brace (sim::kBucklerGuard...), the largest worn.
     float bulwarkShare = 0.0f;
+    // A Twin Guard in a hand of a matched pair (sim::kTwinGuardDamage), which sets the bulwark
+    // above whole and strikes harder while Defense is up.
+    bool twinGuard = false;
     bool kinship = false;
     // How many Wraths his hands carry, each adding sim::kWrathDamage to every blow he deals.
     int wraths = 0;

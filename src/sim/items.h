@@ -731,7 +731,9 @@ enum class Power : uint8_t {
     FaintWellspring = 65,
     LesserWellspring = 66,
     Wellspring = 67,
-    GreaterWellspring = 68
+    GreaterWellspring = 68,
+    // The twin-blade guard (sim::kTwinGuardDamage).
+    TwinGuard = 69
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1144,6 +1146,14 @@ constexpr double kPlagueShare = 0.03;
 // a second weapon, a two-handed one or an empty hand -- off his own points alone (`guardShare`
 // or `barrierShare` with no shield's defence in it). The wizard's since 2026-10-07 (the user:
 // 'we need also for DW'). invention.
+// **Twin Guard** (the user, 2026-10-10: "if char is using dual vield with same weapons, he can
+// use defense skill without shield with increased damage", "only has to be attached to weapons",
+// "uniq rune, only once per item similiar like frenzy"), Legendary, the knight's and the Magic
+// Gladiator's weapon, one an item: with a matched pair in his hands (two of one kind, as Arms'
+// dualRate calls it -- two swords, two axes) his Defense goes up with no shield, whole as a
+// Bulwark's, and while it is up every blow of his is kTwinGuardDamage harder. A mixed pair, a
+// lone weapon or a shield on his arm wake none of it. Several worn do not add. invention.
+constexpr double kTwinGuardDamage = 1.30;
 // **Kinship** (the user: "remove guardian angel or imp debuffs"), every class's, in a ring or
 // the pendant: the worn pet's price is lifted -- the Guardian Angel's x0.8 on his blows (ours,
 // sim::petPower) and the life the Imp and the Horn of Dinorant take for each blow they raise.

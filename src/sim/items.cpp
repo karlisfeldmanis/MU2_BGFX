@@ -589,6 +589,10 @@ const PowerRow* powerOf(uint8_t power) {
          Rarity::Epic},
         {Power::GreaterWellspring, "Greater Wellspring", "+30% max mana", kEveryClass,
          kInJewellery, Rarity::Legendary},
+        // The knight's and the Gladiator's twin blades (sim::kTwinGuardDamage), one an item.
+        {Power::TwinGuard, "Twin Guard",
+         "Two matched weapons: Defense works without a shield, +30% damage while it is up",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Legendary, false, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
