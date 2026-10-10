@@ -3522,8 +3522,11 @@ private:
             const sim::SkillRow& row = sim::skillAt(i);
             if (!realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
             if (hero.mana < row.mana || row.onSelf() || !row.suits(w.hand) || !row.wizardry) continue;
-            if (row.castsBare() && (target == nullptr ||
-                                    std::hypot(target->x - hero.x, target->y - hero.y) > row.reach)) continue;
+            // Twisting Slash too, cast bare since 2026-10-10: held until the body is on a tile
+            // beside him, a diagonal one included, or the spin goes on air.
+            if (row.castsBare() &&
+                (target == nullptr || std::hypot(target->x - hero.x, target->y - hero.y) >
+                                          row.reach + (row.wizardry ? 0.0f : 0.5f))) continue;
             if (target && std::hypot(target->x - hero.x, target->y - hero.y) > row.reach + 0.5f) continue;
             const double hit = ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate *
                                sim::force(row, hero.points);

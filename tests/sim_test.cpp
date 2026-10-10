@@ -3924,6 +3924,28 @@ void testSkills(const content::Tables& tables) {
     }
     check(falls, "more agility is never a longer cooldown");
     check(floored, "and no cooldown falls under the clip that floors it");
+    // Twisting Slash spins with nothing round him, as Rageful Blow breaks bare ground (the user,
+    // 2026-10-10): a press with no target is a cast, mana spent.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 200);
+        check(realm.learn(sim::skill::kTwistingSlash), "a knight knows Twisting Slash");
+        check(realm.equip(tables.armNamed("Sword16"), -1, true), "with a sword in hand");
+        check(sim::skillNumbered(sim::skill::kTwistingSlash)->castsBare(),
+              "and it is cast bare");
+        const int mana = realm.hero().mana;
+        bool cast = false;
+        realm.invoke(sim::skill::kTwistingSlash, 0);
+        for (int tick = 0; tick < 40 && !cast; ++tick) {
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                cast |= h.what == sim::What::Cast && h.who == realm.hero().id &&
+                        h.a == sim::skill::kTwistingSlash;
+            }
+        }
+        check(cast, "pressed at nothing, he spins");
+        check(realm.hero().mana < mana, "and pays its mana");
+    }
     checkEqual(sim::cooldownTicks(cyclone, 300, 1), cyclone.coolTicks / 2,
                "300 agility halves a cooldown");
     check(sim::cooldownTicks(guard, 100000, sim::floorTicksFor(guard, 0)) > guard.boonTicks,
@@ -4330,6 +4352,9 @@ void testSkills(const content::Tables& tables) {
                     const int i = (pressed + n) % sim::skillCount();
                     const sim::SkillRow& row = sim::skillAt(i);
                     if (!realm.knows(row.number) || realm.cooling(row.number) > 0) continue;
+                    // A skill cast bare spins on air when pressed out of reach: held, as the bot
+                    // holds it, until something is in its ring.
+                    if (row.castsBare() && closest > row.reach + 0.5f) continue;
                     realm.invoke(row.number, nearest);
                     pressed = i;
                     break;
