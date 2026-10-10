@@ -19,21 +19,25 @@ using gfx::Box;
 // **The window, 2026-10-10** (the user's proposal, https://claude.ai/artifact/E1SgVrhmhQNquWSv2EfcLR,
 // settled over a morning: 'always show stats, even there is no stat to spend like on original',
 // 'dont usee - and apply, keep existing logic to add points', 'remember that window has fixed
-// height'). The same 190x429 and the same frame; inside it, from the top: who he is and his
-// guild; level, resets and points in one strip; the three numbers his class lives by; and three
+// height'). The same 190x429 and the same frame, his name its title; inside it, from the top:
+// his class with his unspent points, his guild; one block with his level as a badge, resets under
+// it, and the three numbers his class lives by beside it (the user's A4 of four, 2026-10-10); and
+// three
 // pages under underline tabs -- Attributes (MU's four wells, each with what it buys under it, the
 // plus beside it while there is a point to spend), Combat and Bonuses. Every page is laid out to
 // fit between the tabs and the foot; nothing in the window scrolls or grows it.
 
 // The head's rows, in MU's panel units.
-constexpr float kIdTop = 42.0f, kIdTall = 12.0f;
-constexpr float kNumsTop = 58.0f, kNumsTall = 16.0f;
-constexpr float kKeysTop = 78.0f, kKeysTall = 27.0f;
-constexpr float kTabsTop = 110.0f, kTabsTall = 16.0f;
+constexpr float kIdTop = 42.0f, kGuildTop = 56.0f;
+constexpr float kKeysTop = 70.0f, kKeysTall = 29.0f;
+// The level's badge at the block's left end, the class's three sharing the rest.
+constexpr float kBadgeW = 35.0f;
+constexpr float kBadgeSize = 13.0f;
+constexpr float kTabsTop = 106.0f, kTabsTall = 16.0f;
 constexpr int kTabCount = 3;
 const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses"};
 // The page between the tabs' floor and the foot's rule.
-constexpr float kBodyTop = 132.0f;
+constexpr float kBodyTop = 128.0f;
 
 // The wells run between the grid's two edges (`panel::kGridX` to `kWellRight`), as the bag's and
 // the shelf's do, and type sits seven in from them.
@@ -56,7 +60,7 @@ constexpr Box kBar{panel::kGridX, kFootTop + 12.0f, panel::kWellRight - panel::k
 
 // Type, in units. A figure is a size above its label, so the eye runs down the numbers.
 constexpr float kClassSize = 9.0f, kNameSize = 8.5f, kFigureSize = 10.0f, kLineSize = 7.5f,
-                kSmallCaps = 6.5f, kNumSize = 8.5f, kKeySize = 9.5f, kTabSize = 7.5f,
+                kSmallCaps = 6.5f, kKeySize = 9.5f, kTabSize = 7.5f,
                 kRowSize = 7.5f;
 
 constexpr uint32_t kHeading = style::kBoneHi;
@@ -110,7 +114,7 @@ bool Card::covers(float x, float y) const {
 }
 
 void Card::update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
-                  const Pointer& pointer, int* spend, bool* close) {
+                  const std::string& name, const Pointer& pointer, int* spend, bool* close) {
     // The right-hand column, always.
     x_ = panel::columnX(width, 1);
     y_ = panel::panelY(height);
@@ -204,6 +208,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         }
 
         now_.who = hero;
+        now_.name = name;
         now_.second = hero->second;
         now_.width = width;
         now_.height = height;
@@ -282,7 +287,8 @@ void Card::rebuild() {
     const gfx::Face& face = canvas_.face();
     const float u = tip::unit();
 
-    panel::frame(canvas_, arts, x, y, "Character");
+    // His name heads the window; off a server, where he has none, the window's own.
+    panel::frame(canvas_, arts, x, y, now_.name.empty() ? std::string("Character") : now_.name);
 
     // Type set from a top-left in units, its ascent below it; and the same ranged right.
     const auto at = [&](float uy, float size) { return y + uy * k + face.ascent(size * k); };
@@ -300,46 +306,60 @@ void Card::rebuild() {
         canvas_.rect(panel::scaled(x, y, {ux, top + 2.0f, 0.5f, tall - 4.0f}), kDivider);
     };
 
-    // ---- who he is ------------------------------------------------------------------------------
+    // ---- who he is: the class, his unspent points beside it, the guild under -------------------
     controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), kClassSize * k, kHeading,
                    sim::className(int(now_.who->kin), now_.second), 0.04f);
-    if (now_.guild.empty()) {
-        right(kRight, kIdTop + 1.0f, kLineSize, kQuiet, "No guild");
-    } else {
-        right(kRight, kIdTop + 1.0f, kLineSize, kPlain, now_.guild);
-    }
-
-    // ---- level, resets, points ------------------------------------------------------------------
-    const Box nums{kWellX, kNumsTop, kWellW, kNumsTall};
-    panel::cell(canvas_, x, y, nums, sheet::Cell::Rest);
-    const float third = kWellW / 3.0f;
     if (now_.points > 0) {
-        canvas_.rect(panel::scaled(x, y, {kWellX + third * 2.0f + 0.5f, kNumsTop + 0.5f, third - 1.0f,
-                                          kNumsTall - 1.0f}),
+        // A red tag, the one thing in the head that asks for something, gone at none.
+        const std::string tag = std::to_string(now_.points) + " points";
+        const float size = kLineSize * k;
+        const float w = controls::capsWidth(size, tag, 0.04f);
+        const float pad = 3.0f * k;
+        const float tagRight = x + kRight * k;
+        canvas_.rect({tagRight - w - pad, y + (kIdTop - 1.0f) * k, w + pad * 2.0f, 11.0f * k},
                      kSpendWash);
+        controls::caps(canvas_, tagRight - w + pad * 0.0f, at(kIdTop + 1.5f, kLineSize), size,
+                       kSpendable, tag, 0.04f);
     }
-    divide(kWellX + third, kNumsTop, kNumsTall);
-    divide(kWellX + third * 2.0f, kNumsTop, kNumsTall);
-    const char* numLabels[3] = {"Level", "Resets", "Points"};
-    const int numValues[3] = {now_.level, now_.resets, now_.points};
-    const float numBase = panel::centredBaseline(face, panel::scaled(x, y, nums), kNumSize * k);
-    for (int i = 0; i < 3; ++i) {
-        const bool hot = i == 2 && now_.points > 0;
-        const uint32_t ink = i == 2 ? (hot ? kSpendable : kDim) : kHeading;
-        smallCaps(kWellX + third * float(i) + 6.0f, numBase, hot ? kSpendable : kQuiet, numLabels[i]);
-        controls::ranged(canvas_, x + (kWellX + third * float(i + 1) - 6.0f) * k, numBase,
-                         kNumSize * k, ink, std::to_string(numValues[i]));
+    if (now_.guild.empty()) {
+        left(kLeft, kGuildTop, kLineSize, kQuiet, "No guild");
+    } else {
+        left(kLeft, kGuildTop, kLineSize, kPlain, now_.guild);
     }
 
-    // ---- the three his class lives by -----------------------------------------------------------
+    // ---- the block: his level as a badge, resets under it, his class's three beside it ---------
     const Box keys{kWellX, kKeysTop, kWellW, kKeysTall};
     panel::cell(canvas_, x, y, keys, sheet::Cell::Rest);
-    divide(kWellX + third, kKeysTop, kKeysTall);
-    divide(kWellX + third * 2.0f, kKeysTop, kKeysTall);
+    const float badgeMid = kWellX + kBadgeW * 0.5f;
+    {
+        const std::string level = std::to_string(now_.level);
+        const float size = kBadgeSize * k;
+        const float w = controls::labelWidth(size, level);
+        controls::label(canvas_, x + badgeMid * k - w * 0.5f, at(kKeysTop + 3.0f, kBadgeSize), size,
+                        kHeading, level);
+        const std::string resets = "Resets " + std::to_string(now_.resets);
+        const float rw = controls::capsWidth(kSmallCaps * k, resets, 0.04f);
+        controls::caps(canvas_, x + badgeMid * k - rw * 0.5f, at(kKeysTop + 19.0f, kSmallCaps),
+                       kSmallCaps * k, kQuiet, resets, 0.04f);
+    }
+    divide(kWellX + kBadgeW, kKeysTop, kKeysTall);
+    const float keyW = (kWellW - kBadgeW) / 3.0f;
     for (int i = 0; i < 3; ++i) {
-        const float cx = kWellX + third * float(i) + 6.0f;
-        smallCaps(cx, at(kKeysTop + 4.0f, kSmallCaps), kQuiet, now_.keys[i].label);
-        left(cx, kKeysTop + 13.0f, kKeySize, kHeading, now_.keys[i].value);
+        const float cellX = kWellX + kBadgeW + keyW * float(i);
+        if (i > 0) divide(cellX, kKeysTop, kKeysTall);
+        const float cx = cellX + 5.0f;
+        // A long name ("Greater Damage") and a wide band (a wizard's late wizardry) each step
+        // down until they fit their cell.
+        float caps = kSmallCaps;
+        while (caps > 5.0f &&
+               controls::capsWidth(caps * k, now_.keys[i].label, 0.04f) > (keyW - 7.0f) * k)
+            caps -= 0.25f;
+        controls::caps(canvas_, x + cx * k, at(kKeysTop + 5.0f, kSmallCaps), caps * k, kQuiet,
+                       now_.keys[i].label, 0.04f);
+        float size = kKeySize;
+        while (size > 6.5f && controls::labelWidth(size * k, now_.keys[i].value) > (keyW - 8.0f) * k)
+            size -= 0.5f;
+        left(cx, kKeysTop + 15.0f, size, kHeading, now_.keys[i].value);
     }
 
     // ---- the tabs -------------------------------------------------------------------------------

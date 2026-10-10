@@ -27,8 +27,9 @@ public:
     // A frame. `spend` comes back as the stat a plus was released on (0 strength to 3 energy),
     // or -1; `close` as whether the X was. Both are requests; the caller answers them. `realm`
     // is asked for what only it reckons (his attack speed); the window keeps nothing of it.
+    // `name` is his, as the server said it, and heads the window; empty off a server.
     void update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
-                const Pointer& pointer, int* spend, bool* close);
+                const std::string& name, const Pointer& pointer, int* spend, bool* close);
 
     bool covers(float x, float y) const;
     const gfx::Canvas& canvas() const { return canvas_; }
@@ -55,7 +56,7 @@ private:
         float top = 0;  // y_: the window comes down once the HUD's plate is laid out
         int level = 0, points = 0, resets = 0;
         unsigned long long experience = 0;
-        std::string guild;
+        std::string name, guild;
         int stats[4] = {};
         // Which of the four the stat runes raise, a bit each (Body::runeShare).
         int raised = 0;
