@@ -142,6 +142,11 @@ struct Outcome {
     int firstJewelKills = 0, firstJewelLevel = 0;
     std::string firstJewel;
     int jewels = 0, runes = 0, trips = 0, bought = 0, sold = 0, drunk = 0, maps = 0;
+    // Strong ground (the user, 2026-10-10: "improve DW brains so he can farm 50+ and get to his
+    // first wings"): kills of breeds from kLifeFromLevel, the Jewels of Life that fell, and when
+    // his wings were made.
+    int strongKills = 0, lives = 0, castles = 0, castleWins = 0;
+    int64_t wingsTick = -1, firstCastleTick = -1;
     int handedIn[sim::kQuests] = {};
     int64_t firstHandIn[sim::kQuests];
     Outcome() { std::fill(std::begin(firstHandIn), std::end(firstHandIn), int64_t(-1)); }
@@ -576,6 +581,12 @@ public:
                             double(pluses) / pieces, pieces);
             }
         }
+        std::printf("\n  strong ground: %d kills of level %d+ (%.0f%%), %d Jewels of Life, ", out_.strongKills,
+                    sim::kLifeFromLevel, 100.0 * out_.strongKills / std::max(1, out_.kills), out_.lives);
+        if (out_.wingsTick >= 0) std::printf("wings at %s", clock(out_.wingsTick).c_str());
+        else std::printf("no wings");
+        std::printf("; Blood Castle %d runs, %d won", out_.castles, out_.castleWins);
+        if (out_.firstCastleTick >= 0) std::printf(", the first at %s", clock(out_.firstCastleTick).c_str());
         const sim::Body& hero = realm_->hero();
         std::printf("\n  damage %d-%d, defence %d, health %d, points %d/%d/%d/%d, in %s\n",
                     hero.stats.minimumDamage, hero.stats.maximumDamage, hero.stats.defense,
@@ -846,7 +857,11 @@ private:
                     } else if (h.whom == me) {
                         ++out_.kills;
                         const sim::Body* dead = bodyOf(h.who);
-                        if (dead && dead->kind >= 0) ++killsOf_[tables_->kinds[size_t(dead->kind)].label];
+                        if (dead && dead->kind >= 0) {
+                            const content::MonsterKind& kind = tables_->kinds[size_t(dead->kind)];
+                            ++killsOf_[kind.label];
+                            if (kind.level >= sim::kLifeFromLevel) ++out_.strongKills;
+                        }
                     }
                     break;
                 case sim::What::Dropped:
@@ -940,6 +955,7 @@ private:
     void dropped(const content::ItemRow& row) {
         if (!sim::refiningJewel(row) && !sim::creation(row)) return;
         sim::creation(row) ? ++out_.runes : ++out_.jewels;
+        if (sim::jewelOf(row) == sim::Jewel::Life) ++out_.lives;
         if (out_.firstJewelTick < 0) {
             out_.firstJewelTick = clock_;
             out_.firstJewel = row.label;
@@ -1042,10 +1058,26 @@ private:
         // First the strength his class's best armour at his level asks (Needs: 3 x drop level x
         // raw / 100 + 20), as a player keeps up with his set: a wizard of level 114 with all of it
         // in energy had 21 and could not wear even the Pad Armor, which asks 29.
+        // **At the level that can fall for him, not his own** (the user, 2026-10-10: "improve DW
+        // brains so he can farm 50+ and get to his first wings"): a thing falls only from a breed
+        // of its drop level or over (Realm's drop roll), and every wizard of level 160-180 had
+        // 221 strength -- the Dark Soul set's ask, a set that falls from level-90 breeds he never
+        // fought -- and 218-260 health, wearing Sphinx and Bone of drop level 23-31. Two health
+        // a point in vitality, that strength was his health twice over. So the armour whose
+        // drop level a breed he takes, anywhere he can go, or a shelf he can walk to, can give him.
+        // Four seeds of 24 h, all else the same: the wizard 153/164/170/161 -> 188/222/245/207,
+        // his kills on level-50+ breeds 0% -> 2-29%, wings on one seed (none before); the knight
+        // over 12 h 140/133/124/99 -> 148/121/130/161. Not the elf: her levels the same
+        // (130/154/136/128 against 117/152/130/148) and her deaths 31 -> 69 -- her strength
+        // is her blow (ClassRow), and the old ask was a better build for her than her own weights.
+        // BOT_STRENGTH_OLD: the rule as it was, for an A/B.
         const sim::Body& hero = realm_->hero();
+        const int findable = std::getenv("BOT_STRENGTH_OLD") || options_.kin == sim::Kin::FairyElf
+                                 ? hero.level
+                                 : findableLevel();
         int asked = 0;
         for (const content::ItemRow& row : tables_->items) {
-            if (!row.armour() || row.dropLevel > hero.level) continue;
+            if (!row.armour() || row.dropLevel > findable) continue;
             if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) continue;
             // The magic Magic Gladiator stops at the knight's Scale set, the rest to energy (the
             // user, 2026-10-07: 'fully to energy and just spent enought for scale set').
@@ -1091,7 +1123,14 @@ private:
         // Ball; with his mana kept over half, four seeds of 24 h: 1/1/4/5 153/154/177/186,
         // 0/0/3/7 666 summed, 0/0/2/8 679, 0/0/1/9 187/179/188/181, 0/0/0/1 188/179/188/192
         // with 42 quests handed in against 39.
-        if (wizardly()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
+        // **0/0/1/3 since 2026-10-10** (the user: "improve DW brains so he can farm 50+ and get
+        // to his first wings"), once his strength stopped at what can fall for him (findableLevel)
+        // and so 200-odd points came back to the build. Eight seeds of 24 h: all energy
+        // 188/222/245/207/173/206/172/190, deaths 17-64, wings on two of eight; 0/0/1/3
+        // 216/209/197/216/188/216/185/180, deaths 17-27, wings on four of eight; 0/0/1/1
+        // 210/199/197/191/149/225/197/167, deaths 5-15, wings on two. Blood Castle 1, which
+        // pays a Jewel of Life, is where most of his Life comes from: 26 wins in 55 runs on 0/0/1/3.
+        if (wizardly()) { w[0] = 0; w[1] = 0; w[2] = 1; w[3] = 3; }
         if (gladiatorMage()) { w[0] = 0; w[1] = 0; w[2] = 0; w[3] = 1; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
         if (options_.kin == sim::Kin::FairyElf && options_.support) { w[0] = 1; w[1] = 2; w[2] = 2; w[3] = 5; }
@@ -1867,6 +1906,7 @@ private:
         if (!mixed) return;
         const bool wings = service == sim::Service::FirstWings;
         const bool made = wings ? hasWings() : chaosWeaponSlot() >= 0;
+        if (wings && made && out_.wingsTick < 0) out_.wingsTick = clock_;
         say("%s at the Chaos Goblin: %s (%d%%, %lld zen)", wings ? "the 1st wings' box" : "the Chaos Weapon's box",
             made ? "** made" : "failed", judged.rate, (long long)judged.zen);
         wearWings();
@@ -2399,7 +2439,11 @@ private:
         }
         if (realm_->castleRefusal(c) == sim::CastleRefusal::None) {
             if (realm_->gating() == folk) {
-                if (hand_.enterCastle(c)) say("** gives the Messenger his cloak: into Blood Castle %d", c);
+                if (hand_.enterCastle(c)) {
+                    say("** gives the Messenger his cloak: into Blood Castle %d", c);
+                    ++out_.castles;
+                    if (out_.firstCastleTick < 0) out_.firstCastleTick = clock_;
+                }
                 return;
             }
             sim::Request request;
@@ -2506,6 +2550,7 @@ private:
             const char* phases[] = {"", "waits in the court", "the run begins", "the run is over", "** Blood Castle won"};
             say("Blood Castle %d: %s (%d kills, %d sorcerers)", run.castle, phases[int(run.phase)], run.kills,
                 run.sorcerers);
+            if (run.phase == sim::CastlePhase::Won) ++out_.castleWins;
             lastPhase_ = run.phase;
         }
         if (run.phase == sim::CastlePhase::Won) {
@@ -2715,6 +2760,35 @@ private:
         }
         return best;
     }
+    // The highest drop level of a piece his class wears that can come to him: what falls from the
+    // strongest breed he takes on any world he can reach, or stands on a shelf there (spend's
+    // strength). Kept a game minute, and never lower than it was: his strength is spent for good.
+    int findableLevel() {
+        if (findableAt_ >= 0 && clock_ - findableAt_ < 60 * 20) return findable_;
+        findableAt_ = clock_;
+        int found = findable_;
+        for (const WorldRow& w : kWorlds) {
+            if (w.map == int(sim::kBloodCastleMap)) continue;
+            const content::Tables* t = world(w.map);
+            if (!t || !reachable(w.map)) continue;
+            found = std::max(found, bestOn(*t));
+            for (const content::Townsperson& f : t->folk) {
+                int count = 0;
+                const sim::Offer* shelf = sim::stockOf(f.number, &count);
+                for (int i = 0; i < count; ++i) {
+                    for (const content::ItemRow& row : t->items) {
+                        if (row.group != shelf[i].group || row.number != shelf[i].number || !row.armour()) continue;
+                        if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) continue;
+                        found = std::max(found, row.dropLevel + 3 * shelf[i].refinement);
+                    }
+                }
+            }
+        }
+        findable_ = found;
+        return findable_;
+    }
+    int findable_ = 0;
+    int64_t findableAt_ = -1;
 
     // ---- the aim --------------------------------------------------------------------------
     // The Clear steps of a quest still short of their goal, as breed numbers.
@@ -3719,6 +3793,18 @@ private:
                 return;
             }
         }
+        // **The one he is after, while he would still go after it** (2026-10-10): the nearest was
+        // picked again every think, and a wizard of level 15 stood a day between the last two
+        // Spiders of Lorencia, Once More, sixteen tiles to either side -- each think the other
+        // was nearer by a step, each pick began a new walk, and the give-up clock (ask) started
+        // over with it. He turned on the spot for 23 game hours. Ask's clock now runs out on
+        // one he cannot reach, which bars it and frees him for the next.
+        if (request.kind == sim::Request::Kind::None && chasing_ != 0) {
+            if (const sim::Body* on = bodyOf(chasing_); on && quarry(*on)) {
+                request.kind = sim::Request::Kind::Attack;
+                request.target = chasing_;
+            }
+        }
         // Then the nearest he would go after, in sight, and then anywhere on the map: the
         // strongest such breed while grinding.
         if (request.kind == sim::Request::Kind::None) {
@@ -3740,7 +3826,7 @@ private:
         }
         // Nothing he can reach here: on a map of floors, the next floor he may go to.
         if (std::getenv("BOT_TRACE") && clock_ > int64_t(std::atof(std::getenv("BOT_TRACE")) * 72000) && clock_ % (20 * 30) < kThink) {
-            std::printf("TRACE %s floor %d at %.1f,%.1f hp %d engaged %d kind %d target %u\n", clock(clock_).c_str(), realm_->travelFloor(), hero.x, hero.y, hero.health, engaged, int(request.kind), request.target);
+            { const sim::Body* tb = bodyOf(request.target); std::printf("TRACE %s floor %d at %.1f,%.1f hp %d engaged %d kind %d target %u at %.1f,%.1f walking %d\n", clock(clock_).c_str(), realm_->travelFloor(), hero.x, hero.y, hero.health, engaged, int(request.kind), request.target, tb ? tb->x : -1.f, tb ? tb->y : -1.f, int(hero.walking)); std::printf("   chasing %u since %lld wounded %lld banned %zu speed %.3f frozen %lld tick %lld mode %d\n", chasing_, (long long)chasedSince_, (long long)woundedAt_, banned_.size(), hero.speed, (long long)hero.frozenUntil, (long long)realm_->tick(), int(mode_)); if (const sim::Body* cb = bodyOf(chasing_)) std::printf("   chased body: kind %d monster %d alive %d at %.1f,%.1f\n", cb->kind, int(cb->monster()), int(cb->alive()), cb->x, cb->y); else { for (const sim::Lying& l : realm_->lying()) if (l.id == chasing_) std::printf("   chased lying: %s at %d,%d\n", rowOf(l.what).label.c_str(), l.column, l.row); } }
             for (const sim::Body& b : realm_->bodies()) {
                 if (!b.monster() || !b.alive()) continue;
                 const float dx = b.x - hero.x, dy = b.y - hero.y;

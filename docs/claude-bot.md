@@ -92,15 +92,41 @@ The first runs, 2026-10-09, Claude (dw) and Tavik (dk), fresh, on a local server
   Ice/Poison's splash were scored as single-target. Now counted as the realm resolves them, and
   Flame's force raised 1.0 → 1.5 at the user's ask (5cbb75a4). Deaths 174 → 96, levels the same.
 
-**The wizard on strong ground: open, a balance question**
+**The wizard on strong ground: his strength was his health, twice over** (2026-10-10, the
+user: "improve DW brains so he can farm 50+ and get to his first wings")
 
-Every bot-side lever was tried and none moved the wizard onto level-50+ ground (2-8% of his
-kills): five point builds, caution halved (2-3× the deaths), Evil Spirit 7-9 hours earlier from
-the Catacombs (fewer levels, kept at the Halls), Magic Shield (already up ~90%). At level 120+ he
-has 180-440 health and 70 defence against the knight's 1,075 and 130, and a level-52 Devias breed
-is reckoned at ~700 health a kill. Whether a wizard should hold that ground alone is the user's
-call: if yes, his survival (Magic Shield's share, health per level, how fast monsters reach a
-caster) needs a balance pass; if not, mu2-bgfx-64's wing-farming parties carry him there.
+Every bot-side lever had been tried and none moved the wizard onto level-50+ ground (2-8% of his
+kills): five point builds, caution halved, Evil Spirit earlier, Magic Shield. What the builds
+never touched was `spend`'s first rule: the strength his class's best armour *at his level* asks.
+At level 160-180 that was the Dark Soul set's 221 -- a set that falls from level-90 breeds he
+never fought -- and every wizard had exactly 221 strength, 15 vitality and 218-260 health,
+wearing Sphinx and Bone of drop level 23-31. A wizard's health is two a point of vitality
+(`sim::reckon`), so that strength was his health twice over.
+
+- *Strength for what can fall for him.* A thing falls only from a breed of its drop level or over
+  (the realm's drop roll), so the armour asked for is now the best whose drop level the strongest
+  breed he takes, on any world he can reach, or a shelf there, can give him (`findableLevel`).
+  Same binary, four seeds of 24 h: levels 153/164/170/161 -> 188/222/245/207, kills on level-50+
+  breeds 0% -> 2-29%, Jewels of Life 0 -> 3, wings on one seed. The knight gains too (12 h:
+  140/133/124/99 -> 148/121/130/161). Not the elf: her levels the same and her deaths 31 -> 69
+  over four seeds (her strength is her blow), so she keeps the old ask.
+- *A day between two Spiders.* Found on the way: `hunt` picked the nearest quarry again every
+  think, and a wizard of level 15 with the last two Spiders of Lorencia, Once More sixteen tiles
+  to either side turned on the spot for 23 game hours -- each think the other was nearer by a
+  step, each pick began a new walk, and `ask`'s give-up clock started over with it. He now keeps
+  the one he is after while he would still go after it; the clock then bars one he cannot reach.
+- *Vitality, now that the points are his.* Eight seeds of 24 h: all energy
+  188/222/245/207/173/206/172/190 (deaths 17-64, wings 2 of 8); 0/0/1/3 216/209/197/216/188/216/185/180 (deaths 17-27, wings 4
+  of 8, 11-22% of kills on strong ground); 0/0/1/1 210/199/197/191/149/225/197/167 (deaths
+  5-15, wings 2 of 8, 1-16%). 0/0/1/3 is the wizard's build.
+- *Where his Life comes from.* Blood Castle 1 pays a Jewel of Life a win (088048ae), and the
+  offline wizard goes every hour once he has a cloak and reckons he takes its garrison: on
+  0/0/1/3, 26 wins in 55 runs over eight days. The drops give one or two a day at most
+  (`kLifeOdds` 2500 a kill of level 50+). The ladder that made wings on seed 2: the castle's Life
+  on his Chaos Nature Bow at 15:32, four Bless to +4, the wings' box at 90% at 17:30.
+
+The report now ends each run with its strong-ground line: kills of level 50+, Jewels of Life
+that fell, when the wings were made, and the castle runs and wins.
 
 Also seen: the new item content of 058adb75 (new sets and arms in the drop pool) costs the
 wizard 15-30 levels a day: same binary, old tables 188/179/188/192, new 169/179/161/165, the
