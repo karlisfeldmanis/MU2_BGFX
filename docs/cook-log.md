@@ -64,7 +64,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | SteelWall01 | world | 2026-09-25 11:53 | passed | one dark iron: black posts and bars, only the spear tips catch the sun at noon and the fire at night; no chrome rail (the f0 0.12 note holds); rebuilt and synced, no texture changed |
 | SteelWall02 | world | 2026-09-25 11:53 | passed | the flower-bed run: black iron bars with pale tips, reads as one iron with SteelWall01 at noon, dusk and by the fire |
 | SteelWall03 | world | 2026-09-25 11:53 | passed | the closing section: same black iron and pale tips as 01 and 02, no faults |
-| SteelDoor01 | world | 2026-09-25 11:53 | passed | failed first: the scrollwork came out cream-white at noon and dusk though MU paints it dark brown (mean 28,21,13). steel_barred_door now takes the rails' f0 0.12 and a tenth of its paint; the gate reads as one black wrought-iron silhouette with the posts. Needed sync_one before the cook saw the rebuild |
+| SteelDoor01 | world | 2026-10-11 00:13 | awaiting |  |
 | HouseEtc03 | world | 2026-09-25 11:58 | passed | failed first: the cage's cut-out bars came out pale grey-tan and the gate arch cream beside the black SteelWall runs. Both sheets now take f0 0.12 and a tenth of their paint; black iron at noon and dusk, the fire-side tip lit at night |
 | Hound01 | figure | 2026-09-22 09:04 | passed | rebuilt after the flip fix: blue painted armour plates with MU's pale streaks, fur underside, pale claws and horn; brass head plate is the mesh MU hides, so it cannot blow out; reads at noon, dusk and by the fire at night |
 | BudgeDragon01 | figure | 2026-09-22 09:10 | passed | rebuilt after the flip fix: red scaled hide and dark wing membranes read at noon, dusk and by the fire; no metal, paint as MU drew it |
