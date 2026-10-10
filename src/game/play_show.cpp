@@ -1325,7 +1325,11 @@ void Play::follow(float seconds) {
         // not happen.
         const sim::Body& hero = realm_.hero();
         if (std::max(std::fabs(body->x - hero.x), std::fabs(body->y - hero.y)) > kDrawRange) {
+            // And not placed: its crown stops where it was last drawn, and a bot's Energy Ball
+            // from out there flew between two such frozen crowns by the hero with nobody at
+            // either end (the user, 2026-10-10: "i see invisible bit i guess attack something").
             one.visible = false;
+            one.placed = false;
             continue;
         }
 
