@@ -434,10 +434,37 @@ public:
     // --bench-players: `players` more heroes joined round him when the world opens, each in
     // one of `kits` in turn with its plus varied, half walking to and fro and half standing.
     // A crowd of other players drawn as a server's are, to measure the frame by. Not remote.
+    // With `fight` they are a party by role -- a tank, a healer, a wizard, an archer, then the
+    // rest -- and fight as one (Play::walkBench).
     void setBench(int players, std::vector<sim::RaiderKit> kits, bool fight = false) {
         benchPlayers_ = players;
         benchKits_ = std::move(kits);
         benchFight_ = fight;
+        if (fight) {
+            const auto order = [](sim::RaidRole role) {
+                switch (role) {
+                    case sim::RaidRole::Tank: return 0;
+                    case sim::RaidRole::Healer: return 1;
+                    case sim::RaidRole::Wizard: return 2;
+                    case sim::RaidRole::Archer: return 3;
+                    default: return 4;
+                }
+            };
+            // One of each role first, then round again.
+            std::vector<sim::RaiderKit> byRole;
+            std::vector<bool> taken(benchKits_.size(), false);
+            while (byRole.size() < benchKits_.size()) {
+                for (int want = 0; want <= 4; ++want) {
+                    for (size_t k = 0; k < benchKits_.size(); ++k) {
+                        if (taken[k] || order(benchKits_[k].role) != want) continue;
+                        taken[k] = true;
+                        byRole.push_back(benchKits_[k]);
+                        break;
+                    }
+                }
+            }
+            benchKits_ = std::move(byRole);
+        }
     }
     // --raid-stage: once it stands, its health laid at the top of that stage's band.
     void raidSkip(int stage) { raidSkipOwed_ = stage; }
@@ -505,6 +532,8 @@ public:
     uint32_t pointedPlayer() const { return pointedPlayer_; }
     // His name and whether he is a bot, as the server said them (net::Who); false off a server.
     bool playerName(uint32_t id, std::string* name, bool* bot) const {
+        // The bench's own first (--bench-fight): local play's link has no names to give.
+        if (benchName(id, name, bot)) return true;
         return link_ && link_->nameOf(id, name, bot);
     }
     // The chat (game/ui/chat.h) and the party, through the link: nothing off a server.
@@ -518,8 +547,10 @@ public:
         if (link_) link_->askParty(asked);
     }
     // His party as the server last said it; no members when he is in none.
+    // The bench's party when it fights as one (--bench-fight), else the server's, else none.
     const net::PartyState& party() const {
         static const net::PartyState none;
+        if (!benchParty_.members.empty()) return benchParty_;
         return link_ ? link_->party() : none;
     }
     // A line over a body's head, as a guard's is put up (said()): a player's Map line, as MU's
@@ -1370,7 +1401,14 @@ private:
     std::vector<sim::RaiderKit> benchKits_;
     std::vector<uint32_t> benchIds_;
     std::vector<int> benchHome_;  // column, row a hero
-    std::vector<int32_t> benchSkill_;  // each one's kit's first skill, thrown in a fight
+    std::vector<int32_t> benchSkill_;  // each one's kit's first skill
+    std::vector<size_t> benchKit_;     // which of benchKits_ each wears
+    std::vector<size_t> benchTurn_;    // where each is in his attack skills' rotation (--bench-fight)
+    bool benchRedress_ = false;
+    // --bench-fight's party, as a server would say it: him first, then the bench by its kits'
+    // names, refreshed each frame (Play::walkBench); and the names over their heads.
+    net::PartyState benchParty_;
+    bool benchName(uint32_t id, std::string* name, bool* bot) const;        // his kit put on in the sim before he was drawn: shown at the first update
     bool benchFight_ = false;
     float benchClock_ = 0.0f;
     bool benchOut_ = false;

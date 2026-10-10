@@ -766,7 +766,12 @@ public:
     // The crowd bench's fight (`--bench-fight`): a blow that would fell a monster or a player
     // fills its health instead, so a hundred players on a few Balrogs is a fight that goes on.
     // Never set in play.
-    void benchUndying(bool on) { benchUndying_ = on; }
+    // --bench-fight's: nobody falls -- the players, and the monsters too unless `monstersDie`, so a
+    // crowd measured stays a crowd; in Devil Square the party clears its waves.
+    void benchUndying(bool on, bool monstersDie = false) {
+        benchUndying_ = on;
+        benchMonstersDie_ = monstersDie;
+    }
     // Whether he may throw it at all: learned, or a mount's skill and that mount worn
     // (`SkillRow::mounted`). What the bar and the list ask, and `throwSkill` before it spends.
     bool knows(int32_t skill) const;
@@ -1332,6 +1337,8 @@ public:
     // A joined hero in a raid kit's gear and points, for a crowd to draw (--bench-players):
     // join() and then dressHero() on him. His id, or 0 as join() says.
     uint32_t benchHero(const RaiderKit& kit, int column, int row);
+    // And the hero himself in a kit's gear and points, beside his bench (--bench-fight).
+    void benchDressHero(const RaiderKit& kit);
     // **A player leaving**: his body marked gone and left where it stands, never erased -- the
     // mirror's figures and every index after his stay true. His summon is dismissed, his
     // windows shut (the machine's box back into his bag), his things in the air spent, and
@@ -1821,6 +1828,7 @@ private:
     Fire fires_[kFires] = {};
     bool wingDemo_ = false;  // `wingDemo`
     bool benchUndying_ = false;
+    bool benchMonstersDie_ = false;
     int64_t tick_ = 0;
     uint32_t nextId_ = 1;
 

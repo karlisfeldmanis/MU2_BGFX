@@ -1697,7 +1697,7 @@ void Realm::kill(Body& dead, Body& killer) {
         core::logf("undying: tick %lld, the hero is filled again", (long long)tick_);
         return;
     }
-    if (benchUndying_ && (dead.player || dead.monster())) {
+    if (benchUndying_ && (dead.player || (dead.monster() && !benchMonstersDie_))) {
         dead.health = dead.maxHealth;
         return;
     }

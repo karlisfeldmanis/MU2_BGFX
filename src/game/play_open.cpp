@@ -945,14 +945,60 @@ void Play::raiseBench(int column, int row) {
         const uint32_t id = local_.benchHero(kit, c, r);
         if (id == 0) continue;
         benchIds_.push_back(id);
+        benchKit_.push_back(size_t(i) % benchKits_.size());
+        benchTurn_.push_back(size_t(i));
         benchHome_.push_back(c);
         benchHome_.push_back(r);
         benchSkill_.push_back(kit.skills.empty() ? 0 : kit.skills.front());
     }
-    if (benchFight_) local_.benchUndying(true);
+    if (benchFight_) {
+        // The party never falls; the monsters do in an event's square (the user, 2026-10-10:
+        // 'monsters is not dying'), and nowhere else, where the bench measures a crowd.
+        local_.benchUndying(true, local_.squareRun().phase != sim::SquarePhase::None);
+        // One party, his and theirs (the user, 2026-10-10: 'put my on bot party'): the realm's,
+        // as the server sets it (Command::PartySet), so a kill is shared as a party's is.
+        local_.command({.kind = sim::Command::Kind::PartySet, .a = 1, .target = local_.hero().id});
+        for (const uint32_t id : benchIds_) {
+            local_.command({.kind = sim::Command::Kind::PartySet, .a = 1, .target = id});
+        }
+        // And he fights beside them in a kit of his own class -- a damage dealer's, else any of
+        // it -- not bare-handed (the user, 2026-10-10: 'also gear that naked char').
+        const sim::RaiderKit* own = nullptr;
+        for (const sim::RaiderKit& kit : benchKits_) {
+            if (kit.kin != local_.hero().kin) continue;
+            if (own == nullptr || (kit.role == sim::RaidRole::Melee && own->role != sim::RaidRole::Melee)) {
+                own = &kit;
+            }
+        }
+        if (own != nullptr) {
+            // With more energy than the kit's own (the user, 2026-10-10: 'add more energy to our
+            // char'): Bran's 40 left him 250 mana, a few skills and dry. 800 in his copy alone, about 1000 mana.
+            sim::RaiderKit mine = *own;
+            mine.points.energy = std::max(mine.points.energy, 800);
+            local_.benchDressHero(mine);
+            benchRedress_ = true;
+            core::logf("bench: the hero wears %s's kit", own->name.c_str());
+        }
+    }
     core::logf("bench: %zu heroes raised round %d,%d, %s", benchIds_.size(), column, row,
-               benchFight_ ? "every one fighting the nearest monster, nobody falling"
+               benchFight_ ? "a party by role, each with its class's skills, nobody falling"
                            : "every other one walking");
+}
+
+bool Play::benchName(uint32_t id, std::string* name, bool* bot) const {
+    if (!benchFight_ || benchIds_.empty()) return false;
+    if (id == realm_.hero().id) {
+        if (name) *name = "You";
+        if (bot) *bot = false;
+        return true;
+    }
+    for (size_t i = 0; i < benchIds_.size(); ++i) {
+        if (benchIds_[i] != id) continue;
+        if (name) *name = benchKits_[benchKit_[i]].name;
+        if (bot) *bot = true;
+        return true;
+    }
+    return false;
 }
 
 // Every four seconds the walkers -- every other bench hero -- are sent five tiles east of
@@ -961,14 +1007,84 @@ void Play::raiseBench(int column, int row) {
 // the pack as it moves.
 void Play::walkBench(float seconds) {
     if (benchIds_.empty()) return;
+    // His kit, put on before his figure stood: drawn as soon as it does, or he fought in the
+    // sim with the Dragon Spear and stood bare-handed on the screen (the user, 2026-10-10).
+    if (benchRedress_ && heroDrawn()) {
+        redress();
+        benchRedress_ = false;
+    }
+    // The party bar's rows, as the server's PartyState would carry them.
+    if (benchFight_) {
+        benchParty_.members.clear();
+        const auto row = [&](const sim::Body& body, const std::string& name, bool bot) {
+            net::PartyState::Member m;
+            m.name = name;
+            m.kin = uint8_t(body.kin);
+            m.level = body.level;
+            m.world = "devilsquare";
+            m.here = body.id;
+            m.health = uint8_t(body.maxHealth > 0 ? std::clamp(body.health * 100 / body.maxHealth, 0, 100) : 0);
+            m.mana = uint8_t(body.maxMana > 0 ? std::clamp(body.mana * 100 / body.maxMana, 0, 100) : 0);
+            m.bot = bot;
+            m.life = body.health;
+            m.lifeMost = body.maxHealth;
+            benchParty_.members.push_back(m);
+        };
+        row(local_.hero(), "You", false);
+        for (size_t i = 0; i < benchIds_.size(); ++i) {
+            if (const sim::Body* one = local_.find(benchIds_[i])) row(*one, benchKits_[benchKit_[i]].name, true);
+        }
+    }
     benchClock_ += seconds;
     if (benchFight_) {
-        if (benchClock_ < 2.0f && benchClock_ != seconds) return;
+        // A party by role (setBench), each told twice a second, as a player at the keys would:
+        // the raid's priorities (Realm::raid) through a player's own orders. Its guard first --
+        // Defense, Soul Barrier, an elf's Greater Defense and Greater Damage on herself -- then
+        // the healer keeps by him and heals him under seven tenths, and the rest go at the
+        // nearest monster with the next of their attack skills in turn, so a knight throws his
+        // Twisting Slash and Rageful Blow and a wizard his spells, not one skill for ever.
+        if (benchClock_ < 0.5f && benchClock_ != seconds) return;
         benchClock_ = 0.0f;
         const std::vector<sim::Body>& bodies = local_.bodies();
+        const int64_t now = local_.tick();
+        const sim::Body& me = local_.hero();
         for (size_t i = 0; i < benchIds_.size(); ++i) {
             const sim::Body* hero = local_.find(benchIds_[i]);
-            if (!hero) continue;
+            if (!hero || !hero->alive()) continue;
+            const sim::RaiderKit& kit = benchKits_[benchKit_[i]];
+            const auto cast = [&](int32_t skill, uint32_t at) {
+                local_.command({.kind = sim::Command::Kind::Cast, .player = benchIds_[i],
+                                .a = skill, .target = at});
+            };
+            bool told = false;
+            for (const int32_t number : kit.skills) {
+                const sim::SkillRow* row = sim::skillNumbered(number);
+                if (row == nullptr) continue;
+                if ((number == sim::skill::kDefense || number == sim::skill::kSoulBarrier ||
+                     number == sim::skill::kGreaterDefense) && hero->boonUntil <= now) {
+                    cast(number, 0);
+                    told = true;
+                    break;
+                }
+                if (number == sim::skill::kGreaterDamage && hero->mightUntil <= now) {
+                    cast(number, 0);
+                    told = true;
+                    break;
+                }
+            }
+            if (told) continue;
+            if (kit.role == sim::RaidRole::Healer) {
+                const float dx = me.x - hero->x, dy = me.y - hero->y;
+                const bool near = dx * dx + dy * dy <= 2.0f * 2.0f;
+                if (me.alive() && me.health * 10 < me.maxHealth * 7 && near) {
+                    cast(sim::skill::kHeal, me.id);
+                } else if (!near) {
+                    local_.command({.kind = sim::Command::Kind::Order, .player = benchIds_[i],
+                                    .a = int32_t(sim::Request::Kind::WalkTo),
+                                    .b = me.column() + 1, .c = me.row() + 1});
+                }
+                continue;
+            }
             const sim::Body* nearest = nullptr;
             float best = 0.0f;
             for (const sim::Body& one : bodies) {
@@ -981,10 +1097,16 @@ void Play::walkBench(float seconds) {
                 }
             }
             if (!nearest) continue;
+            std::vector<int32_t> attacks;
+            for (const int32_t number : kit.skills) {
+                const sim::SkillRow* row = sim::skillNumbered(number);
+                if (row != nullptr && !row->onSelf()) attacks.push_back(number);
+            }
+            const int32_t skill = attacks.empty() ? 0 : attacks[benchTurn_[i]++ % attacks.size()];
             local_.command({.kind = sim::Command::Kind::Order,
                             .player = benchIds_[i],
                             .a = int32_t(sim::Request::Kind::Attack),
-                            .d = benchSkill_[i],
+                            .d = skill,
                             .target = nearest->id});
         }
         return;

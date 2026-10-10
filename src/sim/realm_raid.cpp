@@ -257,6 +257,11 @@ uint32_t Realm::benchHero(const RaiderKit& kit, int column, int row) {
     return id;
 }
 
+void Realm::benchDressHero(const RaiderKit& kit) {
+    For him(*this, 0);
+    dressHero(kit);
+}
+
 void Realm::minionSpoils(const Body& dead) {
     if (raid_.stage == RaidStage::None || dead.kind < 0 || size_t(dead.kind) >= tables_->kinds.size() ||
         tables_->kinds[size_t(dead.kind)].number != kGoldenBudgeDragonNumber) {
