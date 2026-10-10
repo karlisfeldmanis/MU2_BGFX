@@ -1768,7 +1768,7 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& flame = *sim::skillNumbered(sim::skill::kFlame);
         check(flame.wizardry && flame.primary() && flame.damage == 25 && flame.mana == 50 &&
-                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.0f,
+                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.5f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
         // Each of the wizard's late rows by the next one's, so a row added on the end moves none.

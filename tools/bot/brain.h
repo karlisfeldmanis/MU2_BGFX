@@ -3361,9 +3361,30 @@ private:
     // a dear one must beat the best cheap one by a quarter to be thrown, and under half his mana
     // only the cheap ones are.
     static constexpr int kCheapMana = 5;
-    int struck(const sim::SkillRow& row, const sim::Body* target) const {
-        if (target == nullptr || row.spread == sim::Spread::One) return 1;
+    // **What a spell strikes, as the realm lets it go** (the user, 2026-10-10: "DW has to
+    // understand which spells are AOE"): Evil Spirit, Flame, Meteorite's shower and Ice and
+    // Poison's splash are `Spread::One` in their rows and were counted as one body each --
+    // Evil Spirit, which strikes two in three of everything within ten tiles of him, scored as
+    // a single Fire Ball's worth more. Now each as Realm::throwSkill resolves it.
+    double struck(const sim::SkillRow& row, const sim::Body* target) const {
+        if (target == nullptr) return 1.0;
         const sim::Body& hero = realm_->hero();
+        const auto near = [&](float x, float y, float tiles) {
+            int n = 0;
+            for (const sim::Body& b : realm_->bodies()) {
+                if (b.monster() && b.alive() && std::hypot(b.x - x, b.y - y) <= tiles) ++n;
+            }
+            return std::max(1, n);
+        };
+        // The spirits round him (Realm::letSpiritsGo): each body within kSpiritReach, two in three.
+        if (row.number == sim::skill::kEvilSpirit) {
+            return std::max(1.0, near(hero.x, hero.y, sim::kSpiritReach) * sim::kSpiritOdds);
+        }
+        // Flame's fire (Realm::light): everything within burnTiles of the body, at each burn.
+        if (row.burns > 0) return double(near(target->x, target->y, row.burnTiles) * row.burns);
+        // Meteorite's shower and Ice and Poison's splash: everything within `splash` of it.
+        if (row.splash > 0.0f) return double(near(target->x, target->y, row.splash));
+        if (row.spread == sim::Spread::One) return 1.0;
         int n = 0;
         const float dx = target->x - hero.x, dy = target->y - hero.y;
         const float len = std::max(0.5f, std::hypot(dx, dy));
@@ -3385,7 +3406,7 @@ private:
             if (in) ++n;
         }
         if (row.spread == sim::Spread::Ring) n = std::min(n, sim::kLightningBodies);
-        return std::max(1, n);
+        return double(std::max(1, n));
     }
     int spell(const sim::Body* target) const {
         const sim::Body& hero = realm_->hero();

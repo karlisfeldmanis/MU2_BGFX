@@ -559,7 +559,11 @@ constexpr SkillRow kRows[kSkills] = {
     // he throws at a body, where 0.75 gives six. Its clip is `SetPlayerMagic`'s two hands, 147
     // and 148 (ClassAttack.cpp:1383), and sFlame is the fire starting, not a blow landing.
     // The numbers past 0.75's are ours.
-    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.0f,
+    // **1.5 the band since 2026-10-10** (the user: "increase flame multiplier"): at 1.0 a fire
+    // struck ~157 a burn at 700 energy, two burns, where a Fire Ball of three mana struck ~245
+    // -- fifty mana for less than the cheapest spell, and no bot threw it. At 1.5 a burn is ~236,
+    // ~470 over the fire's two on everything in it.
+    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.5f,
      .spread = Spread::One,
      .tells = "Sets the ground under a body up to nine tiles off alight, and the fire strikes "
               "everything standing in it twice.",
