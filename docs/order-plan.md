@@ -506,8 +506,42 @@ adds Aida's own rows after it (its birds, crawlers and small fires, and a `crawl
 - **Left:** `cook_anchors.py` ANCHOR_KINDS_BY_WORLD (the Aida session is adding to it now);
   gates and NPCs (D3); MapRules (D4).
 
-**Next: D3, gates and NPCs:** mu.db `gates`, `pipeline/gate_boxes.py`, `sim/gates.cpp`
-kExits/kEnters and `cook.py` FOLK_VERSION075 into the manifest.
+### Slice D3: gates (D3a)
+
+On the user's "next". The user picked how the sim gets them: **a generated table**, not a cooked
+one read at runtime. The server, every mirror and netbot must hold the same gates bit for bit,
+and a table compiled into the binary cannot drift between them.
+
+- **Each world's manifest has `gates`:** `exits` (number, box, faces) and `enters` (number, box,
+  level, target, `fly`, `sealed`). The 65 rows and their comments were parsed out of
+  `sim/gates.cpp`, never retyped. Blood Castle's and Devil Square's off-map talk gates sit on
+  the Messenger's and Charon's maps.
+- **`pipeline/gates_table.py`** writes `src/sim/gates_table.inc`, and `gates.cpp` includes it
+  in place of its two arrays.
+  - `./mu make gates` runs it; a rebuild follows by hand.
+  - `./mu check` has a `gates` line that fails when the include is not what the manifests
+    say.
+- **Proved:**
+  - **Every lookup, old against new:** HEAD's `gates.cpp` compiled into a renamed namespace,
+    run against the generated one: `enterGateAt` on every tile of map numbers 0-127,
+    `enterGateNumbered` and `exitGate` for -5 to 2099, and `gateToward` between 17 maps from
+    every third tile. 10,844,451 checks, 0 differ. One level changed in Devias's manifest is
+    37,854 differences, and `--check` names it.
+  - **sim_test:** HEAD and HEAD plus this, built in private worktrees, give the same 16,951
+    lines (timestamps stripped): 7339 checks, 0 failed. server_test passes 27 of 27 on both.
+  - **Live:** `mu2_server` on port 44521, then four netbots (dk, elf, dw, mg), each "36 of the
+    server's hashes agreed with the mirror, none disagreed", and a client join, 12 of 12. The
+    server was stopped afterwards.
+- **Not the same list:** `pipeline/gate_boxes.py` (the boxes the index keeps open) is the
+  Aida session's and stays as it is. It has Aida's new Noria↔Aida doors, which the sim does
+  not, and lacks 26 of the sim's boxes: the Lost Tower's stairs, Lorencia's Dungeon stair,
+  Devias's tower door and the spawn boxes. Deriving it from `gates` would change the index's
+  output, so it is a decision for later.
+- **Aida's gates** (Noria 120 ↔ Aida 121) are not in: the Aida session recommends level 100 in
+  and free out, and the user has not confirmed that.
+
+**Next: D3b, NPCs:** `cook.py` FOLK_VERSION075 into each manifest's `npcs`. mu.db's
+`npc_spawns` (Lorencia only, read by nothing) goes when sprint E builds mu.db from the json.
 
 ## 10. Leave alone
 

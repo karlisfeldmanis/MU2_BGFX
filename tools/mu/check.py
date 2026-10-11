@@ -107,6 +107,14 @@ def tables():
     return True, f"all {len(items)} items in every world's tables", []
 
 
+def gates():
+    """The realm's compiled gate table against the world manifests (pipeline/gates_table.py)."""
+    done = subprocess.run(["python3", os.path.join(ROOT, "pipeline", "gates_table.py"), "--check"],
+                          capture_output=True, text=True, cwd=ROOT)
+    lines = (done.stdout + done.stderr).strip().splitlines()
+    return done.returncode == 0, lines[0] if lines else "", lines[1:]
+
+
 CHECKS = [
     ("layers", lambda: code_gate("layercheck.py")),
     ("sizes", lambda: code_gate("sizecheck.py")),
@@ -115,6 +123,7 @@ CHECKS = [
     ("sync", sync),
     ("white", white),
     ("tables", tables),
+    ("gates", gates),
 ]
 
 

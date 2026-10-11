@@ -22,6 +22,90 @@
       "note": "MODEL_BIRD01: the bird's defaults (game/world/boids.h Airs)."
     }
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 26,
+        "box": [
+          213,
+          244,
+          217,
+          245
+        ],
+        "faces": [
+          -1,
+          -1
+        ],
+        "note": "Gates.cs, CreateTargetGates. Lorencia's 26 is Direction.West (1), which points at (-1,-1), up the map and away from gate 23 below it; Noria's 24 is Direction.East (5), (+1,+1), down the map and away from gate 25 above it. Either way he comes out facing into the map. Lorencia, from Noria"
+      },
+      {
+        "number": 21,
+        "box": [
+          7,
+          38,
+          8,
+          41
+        ],
+        "faces": [
+          1,
+          -1
+        ],
+        "note": "Lorencia's west edge and Devias's east edge. 21 is Direction.South (3), (+1,-1), into Lorencia and away from gate 18 beside it; 19 is Direction.North (7), (-1,+1), into Devias and away from gate 20. Lorencia, from Devias"
+      },
+      {
+        "number": 4,
+        "box": [
+          121,
+          231,
+          123,
+          231
+        ],
+        "faces": [
+          -1,
+          -1
+        ],
+        "note": "The Dungeon's, Gates.cs:114 and 119-125. 1 West is (-1,-1) and 3 South (+1,-1), each facing away from the enter box beside it. Lorencia's 4 is in front of DoungeonGate01. Lorencia, out of the Dungeon"
+      }
+    ],
+    "enters": [
+      {
+        "number": 23,
+        "box": [
+          213,
+          246,
+          217,
+          247
+        ],
+        "level": 20,
+        "target": 24,
+        "note": "Gates.cs, CreateEnterGates: 23 on Lorencia's last rows, 25 on Noria's first, each two rows past its exit gate so a character who comes out is not sent straight back, and each asks level 10. Every level here is MU's doubled, ours (the user, 2026-10-04: 'also increase other gate requirments because we have fast paced exp gains', after Atlans's 60 went to 120): the experience rate is 100x (sim kExperienceRate). The free ways out stay free. Atlans's way in is 70 and its way back keeps 60, below. Lorencia to Noria"
+      },
+      {
+        "number": 18,
+        "box": [
+          5,
+          38,
+          6,
+          41
+        ],
+        "level": 30,
+        "target": 19,
+        "note": "Gates.cs:193-194. Lorencia's asks level 15; the way back asks nothing. Lorencia to Devias"
+      },
+      {
+        "number": 1,
+        "box": [
+          121,
+          232,
+          123,
+          233
+        ],
+        "level": 40,
+        "target": 2,
+        "note": "Gates.cs:185, Lorencia's stair down at DoungeonGate01, level 20, to the Dungeon's exit gate 2. And the Dungeon's own, :186-192: the way out asks nothing, every stair between its three floors asks level 20. Floors are regions of one map, so 5 to 15 lead to the map they stand on (Realm::throughGate). Lorencia to Dungeon 1"
+      }
+    ]
+  },
   "pipeline": {
     "hidden": {
       "value": [

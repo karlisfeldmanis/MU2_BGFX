@@ -31,6 +31,76 @@
       "note": "The Lost Tower beacon, RenderObjectVisual case 100 (ZzzObject.cpp:2821-2828; game/world/ornaments.h)."
     }
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 19,
+        "box": [
+          242,
+          34,
+          243,
+          37
+        ],
+        "faces": [
+          -1,
+          1
+        ],
+        "note": "Devias, from Lorencia"
+      },
+      {
+        "number": 44,
+        "box": [
+          2,
+          246,
+          3,
+          247
+        ],
+        "faces": [
+          0,
+          -1
+        ],
+        "note": "Devias, out of the Lost Tower, under the beacon"
+      }
+    ],
+    "enters": [
+      {
+        "number": 20,
+        "box": [
+          244,
+          34,
+          245,
+          37
+        ],
+        "level": 0,
+        "target": 21,
+        "note": "Devias to Lorencia"
+      },
+      {
+        "number": 28,
+        "box": [
+          2,
+          248,
+          3,
+          249
+        ],
+        "level": 80,
+        "target": 29,
+        "note": "Gates.cs:197, Devias's far corner under the Lost Tower's beacon, level 40, to exit gate 29. Devias to the Lost Tower"
+      },
+      {
+        "number": 1066,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 66,
+        "note": "Ours: the Messenger's door into Blood Castle 1 (sim/event.h kCastleEnterGate), a row with a box off the map so no step ever stands in it. His talk sends him through."
+      }
+    ]
+  },
   "pipeline": {
     "hidden": [
       91,

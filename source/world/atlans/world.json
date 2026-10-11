@@ -41,6 +41,78 @@
       "note": "game/world/bubbles.h."
     }
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 46,
+        "box": [
+          14,
+          12,
+          15,
+          13
+        ],
+        "faces": [
+          1,
+          -1
+        ],
+        "note": "Atlans, from Noria"
+      },
+      {
+        "number": 49,
+        "box": [
+          15,
+          11,
+          27,
+          23
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Atlans's basin: death, Town Portal"
+      },
+      {
+        "number": 56,
+        "box": [
+          16,
+          225,
+          17,
+          230
+        ],
+        "faces": [
+          1,
+          -1
+        ],
+        "note": "Atlans, from Tarkan"
+      }
+    ],
+    "enters": [
+      {
+        "number": 47,
+        "box": [
+          9,
+          9,
+          11,
+          12
+        ],
+        "level": 60,
+        "target": 48,
+        "note": "Atlans to Noria"
+      },
+      {
+        "number": 53,
+        "box": [
+          14,
+          225,
+          15,
+          230
+        ],
+        "level": 100,
+        "target": 54,
+        "note": "WebZen's gate.txt 53 and 55 (Season Six Gates.cs:524-525): Atlans's south-west lagoon by the Hydras to Tarkan, and Tarkan's north-east corner back, both level 130 in every source that has them (140 at Tarkan's launch). Ours: the way in asks 100, just over Tarkan's breeds' 72-93 as Atlans's 70 sits over its 43-74, and the way back 70, Atlans's own way in (docs/tarkan-port.md, decision 2). Gate 53's box is half rock (column 14); the walker tests its own tile, as in the Lost Tower's niches. Atlans to Tarkan"
+      }
+    ]
+  },
   "pipeline": {
     "hidden": {
       "value": [

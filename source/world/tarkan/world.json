@@ -65,6 +65,52 @@
       "note": "MU's (0.3, 0.3, 0.25) at 0.4 of it: the storm a trace rather than a veil (the user, 2026-10-05: 'redcue dust screen effect little bit')."
     }
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 54,
+        "box": [
+          248,
+          40,
+          251,
+          44
+        ],
+        "faces": [
+          -1,
+          1
+        ],
+        "note": "Tarkan's and Atlans's, WebZen's gate.txt 54, 56 and 57 (Season Six Gates.cs:200, 194, 198; docs/tarkan-port.md A \u00a72.1). 54 is Direction.North (7), (-1,+1), into Tarkan's safe corridor and away from gate 55 beside it; 56 is Direction.South (3), (+1,-1), into Atlans's south-west lagoon and away from gate 53; 57 is the spawn gate, the town, WebZen's box (Season Six's starts at row 63), with no direction: a death and the Town Portal land there. Tarkan, from Atlans"
+      },
+      {
+        "number": 57,
+        "box": [
+          187,
+          54,
+          203,
+          69
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Tarkan's town: death, Town Portal"
+      }
+    ],
+    "enters": [
+      {
+        "number": 55,
+        "box": [
+          246,
+          40,
+          247,
+          44
+        ],
+        "level": 70,
+        "target": 56,
+        "note": "Tarkan to Atlans"
+      }
+    ]
+  },
   "pipeline": {
     "hidden": {
       "value": [

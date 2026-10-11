@@ -41,6 +41,109 @@
       "note": "Noria's decorative warp (game/world/portal.h)."
     }
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 24,
+        "box": [
+          148,
+          5,
+          155,
+          6
+        ],
+        "faces": [
+          1,
+          1
+        ],
+        "note": "Noria, from Lorencia"
+      },
+      {
+        "number": 48,
+        "box": [
+          240,
+          240,
+          241,
+          243
+        ],
+        "faces": [
+          -1,
+          1
+        ],
+        "note": "Atlans's and Noria's, Gates.cs:135 and 148-149 (docs/atlans-port.md A \u00a72.1). 48 is Direction.North (7), (-1,+1), into Noria and away from gate 45 beside it; 46 is Direction.South (3), (+1,-1), into the basin and away from gate 47; 49 is the spawn gate, the safe basin, with no direction: a death and the Town Portal land there. Noria, from Atlans"
+      }
+    ],
+    "enters": [
+      {
+        "number": 25,
+        "box": [
+          148,
+          3,
+          155,
+          4
+        ],
+        "level": 20,
+        "target": 26,
+        "note": "Noria to Lorencia"
+      },
+      {
+        "number": 45,
+        "box": [
+          242,
+          240,
+          245,
+          243
+        ],
+        "level": 70,
+        "target": 46,
+        "note": "Gates.cs:205-206: Noria's far south-east corner to Atlans, and the basin's corner back, both level 60 in every source (OM 075, WebZen's official gate.txt; docs/atlans-port.md A \u00a72.2). The user, 2026-10-04: 'lets migrate noria -> atlans gates and add lvl requirments for gates'. Then 'increase lvl requirment to 120', and back down to 70 once the monsters' 43-74 showed 120 made the map trivial ('gate back toward 60-70'): the way in asks 70, ours, Season Six's Atlans warp level; the way out keeps MU's 60. Noria to Atlans"
+      },
+      {
+        "number": 1058,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 58,
+        "note": "And Charon's into Devil Square 1 (sim/square.h kSquareEnterGate), from Noria."
+      },
+      {
+        "number": 1059,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 59
+      },
+      {
+        "number": 1060,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 60
+      },
+      {
+        "number": 1061,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 61
+      }
+    ]
+  },
   "pipeline": {
     "hidden": [
       38

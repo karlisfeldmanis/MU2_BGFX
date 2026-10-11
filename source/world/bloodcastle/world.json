@@ -39,6 +39,24 @@
       "note": "Falls when the run says (game/world/drawbridge.h)."
     }
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 66,
+        "box": [
+          12,
+          5,
+          14,
+          10
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Blood Castle 1's, Gates.cs:216 (WZD Gate.txt:115): its safe court beside the Archangel, with no direction. Reached only through the Messenger (sim/event.h)."
+      }
+    ]
+  },
   "pipeline": {
     "hidden": {
       "value": [

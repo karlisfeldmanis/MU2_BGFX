@@ -61,6 +61,38 @@
       "note": "Ours, MU draws none there: wet cloud drifting past the eye, cool and barely there (the user, 2026-10-07: 'some screen dust effect but minimal, its cloud map')."
     }
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 63,
+        "box": [
+          14,
+          13,
+          16,
+          13
+        ],
+        "faces": [
+          1,
+          1
+        ],
+        "note": "Icarus's and the Lost Tower's, WebZen's gate.txt 63 and 65 (Season Six Gates.cs:213, 181; docs/icarus-port.md A \u00a72.1). 63 is Direction.East (5), (+1,+1), onto the road; 65 is Direction.West (1), (-1,-1), into floor 7 and away from gate 62 beside it. Icarus, from the Lost Tower"
+      }
+    ],
+    "enters": [
+      {
+        "number": 64,
+        "box": [
+          14,
+          12,
+          16,
+          12
+        ],
+        "level": 0,
+        "target": 65,
+        "note": "Icarus to Lost Tower 7"
+      }
+    ]
+  },
   "pipeline": {
     "hidden": {
       "value": [

@@ -99,6 +99,235 @@
     },
     "traps": "tower"
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 42,
+        "box": [
+          203,
+          70,
+          213,
+          81
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "The Lost Tower's, Gates.cs:138-145, and Devias's 44 (:130); docs/lost-tower-port.md \u00a72.1. 42 is the spawn gate, the safe hall, with no direction (0); 29-41 are each floor's arrival. 1 West (-1,-1), 3 South (+1,-1), 5 East (+1,+1), 2 SouthWest (0,-1). the Lost Tower's hall: warp, death, Town Portal"
+      },
+      {
+        "number": 29,
+        "box": [
+          162,
+          2,
+          166,
+          3
+        ],
+        "faces": [
+          1,
+          1
+        ],
+        "note": "Lost Tower 1, from Devias"
+      },
+      {
+        "number": 31,
+        "box": [
+          241,
+          237,
+          244,
+          238
+        ],
+        "faces": [
+          -1,
+          -1
+        ],
+        "note": "Lost Tower 2, down from 1"
+      },
+      {
+        "number": 33,
+        "box": [
+          86,
+          166,
+          87,
+          168
+        ],
+        "faces": [
+          1,
+          -1
+        ],
+        "note": "Lost Tower 3, down from 2"
+      },
+      {
+        "number": 35,
+        "box": [
+          87,
+          86,
+          88,
+          89
+        ],
+        "faces": [
+          1,
+          -1
+        ],
+        "note": "Lost Tower 4, down from 3"
+      },
+      {
+        "number": 37,
+        "box": [
+          128,
+          53,
+          131,
+          54
+        ],
+        "faces": [
+          -1,
+          -1
+        ],
+        "note": "Lost Tower 5, down from 4"
+      },
+      {
+        "number": 39,
+        "box": [
+          52,
+          53,
+          55,
+          54
+        ],
+        "faces": [
+          -1,
+          -1
+        ],
+        "note": "Lost Tower 6, down from 5"
+      },
+      {
+        "number": 41,
+        "box": [
+          8,
+          85,
+          9,
+          87
+        ],
+        "faces": [
+          -1,
+          -1
+        ],
+        "note": "Lost Tower 7, down from 6"
+      },
+      {
+        "number": 65,
+        "box": [
+          17,
+          249,
+          19,
+          249
+        ],
+        "faces": [
+          -1,
+          -1
+        ],
+        "note": "Lost Tower 7, from Icarus"
+      }
+    ],
+    "enters": [
+      {
+        "number": 43,
+        "box": [
+          162,
+          0,
+          166,
+          1
+        ],
+        "level": 30,
+        "target": 44,
+        "note": "The Lost Tower's, Gates.cs:198-204 (docs/lost-tower-port.md \u00a72.2): the door out asks 15, the first two stairs 40 and the last four 50 (OM's, not the repack's 80). Every stair goes down; no source has one back up. Each box sits in a wall niche with 2-3 open tiles, which throughGate's test of the walker's own tile handles. Floors are regions of one map, so 30-40 lead to the map they stand on, as the Dungeon's stairs do. Lost Tower 1 out to Devias"
+      },
+      {
+        "number": 30,
+        "box": [
+          190,
+          6,
+          191,
+          8
+        ],
+        "level": 80,
+        "target": 31,
+        "note": "Lost Tower 1 down to 2"
+      },
+      {
+        "number": 32,
+        "box": [
+          166,
+          163,
+          167,
+          166
+        ],
+        "level": 80,
+        "target": 33,
+        "note": "Lost Tower 2 down to 3"
+      },
+      {
+        "number": 34,
+        "box": [
+          132,
+          245,
+          135,
+          246
+        ],
+        "level": 100,
+        "target": 35,
+        "note": "Lost Tower 3 down to 4"
+      },
+      {
+        "number": 36,
+        "box": [
+          132,
+          135,
+          135,
+          136
+        ],
+        "level": 100,
+        "target": 37,
+        "note": "Lost Tower 4 down to 5"
+      },
+      {
+        "number": 38,
+        "box": [
+          131,
+          15,
+          132,
+          18
+        ],
+        "level": 100,
+        "target": 39,
+        "note": "Lost Tower 5 down to 6"
+      },
+      {
+        "number": 40,
+        "box": [
+          6,
+          5,
+          7,
+          8
+        ],
+        "level": 100,
+        "target": 41,
+        "note": "Lost Tower 6 down to 7"
+      },
+      {
+        "number": 62,
+        "box": [
+          17,
+          250,
+          19,
+          250
+        ],
+        "level": 160,
+        "target": 63,
+        "fly": true,
+        "note": "WebZen's gate.txt 62 and 64 (Season Six Gates.cs:526-527): floor 7's south end to Icarus, and Icarus's first row back. MU asks 160 in, with wings or a Dinorant (`fly`), and 50 (S6) or 80 (WebZen) out. Ours (docs/icarus-port.md, decision 2, the passes' recommendation): 160 in, which the Dinorant asks anyway (source/items/pets/Helper04.json), and the way out free. Lost Tower 7 to Icarus"
+      }
+    ]
+  },
   "pipeline": {
     "hidden": {
       "value": [

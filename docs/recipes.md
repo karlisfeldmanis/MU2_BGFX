@@ -86,8 +86,9 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
 2. `source/world/<w>/world.json`: its `name` and `show` block (copy the nearest world's;
    sprint D1). Code: `sim/maps.cpp` kMaps, `sheets/worlds/<w>.json`, maybe the
    `content/ground.cpp` heuristics. Rebuild.
-3. Gates: `sim/gates.cpp` kExits and kEnters, `sim_test`, then rebuild the server and run
-   `server/deploy.sh`.
+3. Gates: the manifest's `gates` (exits and enters), then `./mu make gates`, `sim_test`, and
+   rebuild the server and run `server/deploy.sh`. The index's `pipeline/gate_boxes.py` too, until
+   it is derived from them.
 4. Air and music: `sounds.json` and the wav, `--only showing`, then the manifest's `air` and
    `music`.
 5. Objects (above), then monsters (above). Also:
