@@ -57,6 +57,7 @@
 #include "sim/gates.h"
 #include "sim/maps.h"
 #include "sim/travel.h"
+#include "sim/rain.h"
 #include "sim/realm.h"
 #include "store.h"
 
@@ -223,27 +224,8 @@ struct World {
     Clock::time_point earlyAt{};  // when it last took a tick early
     bool wantsEarly = false;      // an order this poll that set a standing player off
 
-    // ---- server-side weather ------------------------------------------------------------------
-    struct ServerWeather {
-        bool wet = false;
-        float left = 600.0f;  // seconds left in the current spell, starting dry (kDryLow)
-        uint32_t seed = 0x9E3779B9u;
-
-        float random01() {
-            seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
-            return float(seed & 0xFFFFu) / 65535.0f;
-        }
-        // `held`: a Golden Invasion is in its sky or on its ground, and its storm does not pass
-        // until the dragon is killed or flies away (sim/invasion.h).
-        void tick(float dt, bool held = false) {
-            left -= dt;
-            if (held && wet) left = std::max(left, 1.0f);
-            if (left > 0.0f) return;
-            wet = !wet;
-            left = wet ? 180.0f + random01() * (300.0f - 180.0f)   // kWetLow to kWetHigh
-                       : 600.0f + random01() * (1080.0f - 600.0f); // kDryLow to kDryHigh
-        }
-    } weather;
+    // The rain's clock (sim/rain.h): `rain` goes out with every tick.
+    sim::RainClock weather;
 };
 
 struct Session {
@@ -889,22 +871,8 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     const int level = std::clamp(kept ? kept->hero.level : hello.level, 1, sim::kMaximumLevel);
     const sim::Kin kin =
         kept ? kept->hero.kin : sim::Kin(std::min<int>(hello.kin, int(sim::Kin::MagicGladiator)));
-    world->realm = std::make_unique<sim::Realm>();
-    world->realm->configure(config);
-    if (!world->realm->raise(&world->tables, seed, hello.column, hello.row, kin, level)) {
-        core::logError("%s: %s would not raise", who.c_str(), hello.world.c_str());
-        return nullptr;
-    }
-    // Which Blood Castle, before anything else is laid on it: its monsters and its statue's die,
-    // at the same moment as every mirror's (Play::open).
-    if (castle > 0) world->realm->setCastle(castle);
-    if (square > 0) world->realm->setSquare(square, squareWait);
-    // A new character's cradle, or all of one come from another world: never both.
-    if (kept) {
-        world->realm->restoreKept(*kept);
-    } else {
-        sim::outfit(*world->realm, hello.weapon, hello.shield);
-    }
+    // The Welcome first, and the realm raised from it: every mirror raises its own from the same
+    // frame by the same sim::raiseFrom, so the two cannot differ (docs/order-plan.md sprint C).
     net::Welcome& w = world->start;
     w.seed = seed;
     w.world = hello.world;
@@ -920,6 +888,11 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     w.square = square;
     w.squareWait = squareWait;
     if (kept) w.first = *kept;
+    world->realm = std::make_unique<sim::Realm>();
+    if (!sim::raiseFrom(*world->realm, &world->tables, net::raiseOrder(w))) {
+        core::logError("%s: %s would not raise", who.c_str(), hello.world.c_str());
+        return nullptr;
+    }
     core::logf("%s: raised %s, class %d level %d at %d,%d, seed %llu", who.c_str(),
                hello.world.c_str(), int(kin), level, hello.column, hello.row,
                (unsigned long long)seed);

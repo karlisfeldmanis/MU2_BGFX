@@ -5,6 +5,7 @@
 
 #include "core/log.h"
 #include "game/sound.h"
+#include "sim/rain.h"
 
 namespace mu::game {
 namespace {
@@ -25,8 +26,11 @@ constexpr float kSquarePeak = 0.08f;
 // session of hunting sees both. Lengthened 2026-09-29 (the user: "rain is happening longer and
 // daytime also is longer"), from 2-4 min dry and 1-2 min wet; the dry spell doubled again the
 // same day (the user: "we need bigger intervals between daytime and rain"), from 5-9 min.
-constexpr float kDryLow = 600.0f, kDryHigh = 1080.0f;
-constexpr float kWetLow = 180.0f, kWetHigh = 300.0f;
+// The spells' lengths are the server's too, and kept with its clock in sim/rain.h.
+using sim::kDryHigh;
+using sim::kDryLow;
+using sim::kWetHigh;
+using sim::kWetLow;
 
 // Dry to full rain: MU steps RainCurrent by one a frame at 25 frames a second, and a hundred
 // steps fills the pool (CreateHeavenRain's `RainCurrent * MAX_LEAVES / 100`).

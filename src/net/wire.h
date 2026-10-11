@@ -49,6 +49,7 @@
 
 #include "sim/command.h"
 #include "sim/config.h"
+#include "sim/cradle.h"
 #include "sim/realm.h"
 
 namespace mu::sim {
@@ -298,6 +299,25 @@ struct Welcome {
     uint64_t udpKey = 0;
     std::vector<uint8_t> snapshot;
 };
+
+// What raising the world takes, read off a Welcome (sim::raiseFrom): the server raises its own
+// realm from the Welcome it is about to send, and every mirror from the one it was sent.
+inline sim::RaiseOrder raiseOrder(const Welcome& w) {
+    sim::RaiseOrder order;
+    order.seed = w.seed;
+    order.column = w.column;
+    order.row = w.row;
+    order.kin = sim::Kin(w.kin);
+    order.level = w.level;
+    order.config = w.config;
+    order.castle = w.castle;
+    order.square = w.square;
+    order.squareWait = w.squareWait;
+    order.weapon = w.weapon;
+    order.shield = w.shield;
+    order.kept = w.kept ? &w.first : nullptr;
+    return order;
+}
 
 // A character carried into the world this tick, for the Join with its ticket (Realm::carry).
 struct Arrival {

@@ -362,7 +362,39 @@ Begun 2026-10-11 straight after A, on the user's "next".
   Each was then removed, and mu.db was restored byte for byte.
 - **Not yet:** a socket to a running game (sprint F).
 
-## 8. Leave alone
+## 8. Sprint C, as done
+
+Begun 2026-10-11 on the user's "continou".
+
+- **One raise.** `sim::raiseFrom(realm, tables, RaiseOrder, between)` (`sim/cradle`) is the
+  sequence: configure, raise, castle, square, `between`, outfit, the kept character.
+  `net::raiseOrder(Welcome)` reads one off the frame. The server now fills its Welcome first
+  and raises its own realm from it, the mirror raises from the same frame, and netbot does too.
+  - The three copies had drifted in shape. The server outfitted a new character *or* restored
+    a kept one; the mirrors did both. They were equal only because outfitting with no arms
+    spends nothing (`spendFor`).
+  - Play's local harness (an arena's breed, the bench's heroes, Noria's roads) is `between`,
+    run where it always ran.
+- **One rain rhythm.** `sim/rain.h` holds the four spell lengths and the server's `RainClock`.
+  The server's copy of the constants, with its comment owning up to the copy, is gone, and
+  `game/world/weather.cpp` reads them too.
+- **The bot's world table** takes names and arrival tiles from `sim::mapNumbered` and keeps
+  what is the bot's: which maps it grinds, and Lorencia's birth tile 138,124, which every
+  seeded run starts from (the 10-11 audit took it for drift). The other nine already agreed.
+- **Not a duplicate after all:** "prediction in two places" is only the three-call idiom
+  snapshot → restore → lookAs. RemoteLink uses it to predict the hero's steps; netbot uses it
+  to try a decision on a scratch copy. Left as it is.
+- **Proved:**
+  - `sim_test`'s whole output against HEAD's, built in a worktree: 17,070 lines, 0 differ;
+    7335 checks, 0 failed.
+  - Live, on a private port: three netbot runs (new characters, the same kept, then all four
+    classes) and two client joins. Every link: "N of the server's hashes agreed with the
+    mirror, none disagreed".
+  - Builds were private (`scratchpad/build-c`), never the shared `build/`.
+- **Next in C:** split `server/src/main.cpp` (world host, sessions, accounts, party, chat),
+  server tests, and layercheck over `tools/` once client networking leaves `game/`.
+
+## 9. Leave alone
 
 These are kept from structure-plan §5, and still right:
 

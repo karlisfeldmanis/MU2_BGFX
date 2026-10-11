@@ -52,31 +52,28 @@ constexpr int kElfEnergyFrom = 70;
 constexpr int kRuneWeaponLevel = 40;  // a weapon rune is set only in a weapon of this drop level up     // the level the elf starts keeping energy for her orbs   // the wall clock's start, unix seconds
 
 
-// The worlds a quest takes him to: MU's map number, the cooked world, where one arrives.
-struct WorldRow {
-    int map;
-    const char* name;
-    int arrive[2];
-};
-constexpr WorldRow kWorlds[] = {
-    {0, "lorencia", {138, 124}},  // the birth tile every seeded run starts from
-    {1, "dungeon", {108, 247}},
-    {2, "devias", {207, 42}},
-    {3, "noria", {174, 112}},
-    {4, "losttower", {208, 75}},
-    // The deeper maps (the user, 2026-10-08: "keep pushing DW" -- a wizard of level 150 still
-    // ground the Dungeon and Devias, the only grounds he knew): Atlans, Tarkan, and Icarus for
-    // one who can fly (canFly), each where sim/maps.cpp puts a newcomer.
-    {7, "atlans", {21, 17}},
-    {8, "tarkan", {195, 65}},
-    {10, "icarus", {15, 13}},
-    // Blood Castle: reached only by the Messenger's door (sim/event.h), never chosen to grind.
-    {11, "bloodcastle", {13, 8}},
-    // Devil Square: reached only by Charon's door (sim/square.h), never chosen to grind.
-    {9, "devilsquare", {137, 95}},
-};
+// The worlds a quest takes him to: MU's map number, the cooked world, where one arrives -- the
+// sim's (sim/maps.cpp), copied here until 2026-10-11, all but Lorencia's birth tile.
+struct WorldRow { int map; const char* name; int arrive[2]; };
+// Atlans, Tarkan and Icarus (canFly) for the deeper grind (the user, 2026-10-08: "keep pushing
+// DW"); Blood Castle (11) and Devil Square (9) only by their doors, never chosen to grind.
+constexpr int kWorldMaps[] = {0, 1, 2, 3, 4, 7, 8, 10, 11, 9};
+constexpr int kBirthTile[2] = {138, 124};  // where every seeded run starts, not the arrival gate
+inline const std::vector<WorldRow>& worldRows() {
+    static const std::vector<WorldRow> rows = [] {
+        std::vector<WorldRow> out;
+        for (const int map : kWorldMaps) {
+            const sim::MapRow* row = sim::mapNumbered(map);
+            if (!row) continue;
+            const int* at = map == 0 ? kBirthTile : row->arrive;
+            out.push_back(WorldRow{map, row->world, {at[0], at[1]}});
+        }
+        return out;
+    }();
+    return rows;
+}
 const WorldRow* worldOf(int map) {
-    for (const WorldRow& w : kWorlds) {
+    for (const WorldRow& w : worldRows()) {
         if (w.map == map) return &w;
     }
     return nullptr;
@@ -493,7 +490,7 @@ public:
         if (groundsAt_ >= 0 && clock_ - groundsAt_ < 10 * 60 * 20) return grounds_;
         groundsAt_ = clock_;
         grounds_.clear();
-        for (const WorldRow& w : kWorlds) {
+        for (const WorldRow& w : worldRows()) {
             if (w.map == int(sim::kBloodCastleMap) || w.map == int(sim::kDevilSquareMap)) continue;
             const content::Tables* t = world(w.map);
             if (!t || !reachable(w.map)) continue;
@@ -3196,7 +3193,7 @@ private:
         if (findableAt_ >= 0 && clock_ - findableAt_ < 60 * 20) return findable_;
         findableAt_ = clock_;
         int found = findable_;
-        for (const WorldRow& w : kWorlds) {
+        for (const WorldRow& w : worldRows()) {
             if (w.map == int(sim::kBloodCastleMap) || w.map == int(sim::kDevilSquareMap)) continue;
             const content::Tables* t = world(w.map);
             if (!t || !reachable(w.map)) continue;
@@ -3274,7 +3271,7 @@ private:
     int homeOf(int breed) {
         if (const auto known = homes_.find(breed); known != homes_.end()) return known->second;
         int home = -1;
-        for (const WorldRow& w : kWorlds) {
+        for (const WorldRow& w : worldRows()) {
             const content::Tables* t = world(w.map);
             if (!t || home >= 0) continue;
             for (const content::MonsterNest& nest : t->nests) {
@@ -3294,7 +3291,7 @@ private:
     }
     // Which map a townsperson of this number stands on, or -1.
     int folkMap(int number) {
-        for (const WorldRow& w : kWorlds) {
+        for (const WorldRow& w : worldRows()) {
             const content::Tables* t = world(w.map);
             if (!t) continue;
             for (const content::Townsperson& f : t->folk) {
@@ -3312,7 +3309,7 @@ private:
     bool errand(int q) const { return sim::questElsewhere(sim::questAt(q)) && wanted(q).empty(); }
     // Which map a giver stands on, or -1.
     int giverMap(int q) {
-        for (const WorldRow& w : kWorlds) {
+        for (const WorldRow& w : worldRows()) {
             const content::Tables* t = world(w.map);
             if (!t) continue;
             for (const content::Townsperson& f : t->folk) {
@@ -3570,7 +3567,7 @@ private:
                 aimMap_ = homeMap();
                 best = -1;
             }
-            for (const WorldRow& w : kWorlds) {
+            for (const WorldRow& w : worldRows()) {
                 const content::Tables* t = world(w.map);
                 if (!t || !reachable(w.map) || (!open && w.map != 0 && w.map != 3)) continue;
                 if (shunned_[w.map] > clock_) continue;

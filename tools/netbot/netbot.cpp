@@ -117,16 +117,11 @@ public:
             const content::Tables* tables = tablesOf(welcome.world);
             if (!tables) return false;
             for (sim::Realm* realm : {mirror.get(), scratch.get()}) {
-                realm->configure(welcome.config);
-                if (!realm->raise(tables, welcome.seed, welcome.column, welcome.row, sim::Kin(welcome.kin),
-                                  welcome.level)) {
+                // The server's own sequence, off the same frame (sim::raiseFrom).
+                if (!sim::raiseFrom(*realm, tables, net::raiseOrder(welcome))) {
                     line("%s would not raise", world_.c_str());
                     return false;
                 }
-                if (welcome.castle > 0) realm->setCastle(welcome.castle);
-                if (welcome.square > 0) realm->setSquare(welcome.square, welcome.squareWait);
-                sim::outfit(*realm, welcome.weapon, welcome.shield);
-                if (welcome.kept) realm->restoreKept(welcome.first);
             }
             world_ = welcome.world;
             token_ = welcome.token;
@@ -368,7 +363,7 @@ private:
                 answer = "the brain chooses again";
             } else if (verb == "go") {
                 int map = -1;
-                for (const WorldRow& w : kWorlds) {
+                for (const WorldRow& w : worldRows()) {
                     if (first == w.name) map = w.map;
                 }
                 answer = map < 0 ? "no world " + first
@@ -1110,7 +1105,7 @@ private:
         }
     }
     int leaderMap(NetBot& leader) const {
-        for (const WorldRow& w : kWorlds) {
+        for (const WorldRow& w : worldRows()) {
             if (leader.world() == w.name) return w.map;
         }
         return -1;
@@ -1220,7 +1215,7 @@ private:
             kept = one->clockNow();
             const net::PartyState::Member& head = state.members.front();
             Bot::Lead lead;
-            for (const WorldRow& w : kWorlds) {
+            for (const WorldRow& w : worldRows()) {
                 if (head.world == w.name) lead.map = w.map;
             }
             // **Only where he can stand beside them** (Bot::grounds, as the board's parties ask

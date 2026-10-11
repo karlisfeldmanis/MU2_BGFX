@@ -58,6 +58,22 @@ void spendFor(Realm& realm, int32_t held, int32_t worn) {
 
 }  // namespace
 
+bool raiseFrom(Realm& realm, const content::Tables* tables, const RaiseOrder& order,
+               const std::function<void()>& between) {
+    realm.configure(order.config);
+    if (!realm.raise(tables, order.seed, order.column, order.row, order.kin, order.level)) {
+        return false;
+    }
+    if (order.castle > 0) realm.setCastle(order.castle);
+    if (order.square > 0) realm.setSquare(order.square, order.squareWait);
+    if (between) between();
+    // Empty hands spend nothing (spendFor), so a kept character's outfit is no step at all and
+    // restoreKept lays all of him as the server laid him.
+    outfit(realm, order.weapon, order.shield);
+    if (order.kept) realm.restoreKept(*order.kept);
+    return true;
+}
+
 bool outfit(Realm& realm, const std::string& weapon, const std::string& shield) {
     const content::Tables& tables = *realm.tables();
     const int32_t held = weapon.empty() ? -1 : tables.armNamed(weapon);

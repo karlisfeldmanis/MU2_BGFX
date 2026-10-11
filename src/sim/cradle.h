@@ -6,13 +6,47 @@
 // tick (docs/sprints/18-the-wire.md); it was Play::open's until 2026-10-07.
 
 #include <cstdint>
+#include <functional>
 #include <string>
 
+#include "sim/config.h"
 #include "sim/rules.h"
+
+namespace mu::content {
+struct Tables;
+}
 
 namespace mu::sim {
 
 class Realm;
+struct Kept;
+
+// How a world's realm is raised: the server's, every client's mirror's and every netbot's, one
+// sequence (docs/order-plan.md sprint C). It was written three times -- server/src/main.cpp,
+// Play::open and netbot -- and lockstep needs the three to agree bit for bit; they had already
+// drifted in shape (the server outfitted a new character OR restored a kept one, the mirrors did
+// both, equal only because outfitting with no arms spends nothing). The server now raises its
+// own realm from the Welcome it sends (net::raiseOrder), so the two cannot differ.
+struct RaiseOrder {
+    uint64_t seed = 0;
+    int column = 0, row = 0;
+    Kin kin = Kin::DarkKnight;
+    int level = 1;
+    RealmConfig config;
+    // Blood Castle's and Devil Square's number when the world is one, set straight after the
+    // raise and before anything else is laid on it; 0 for none.
+    int castle = 0, square = 0, squareWait = 0;
+    // The new character's hands by arm name (outfit); both empty when he is kept.
+    std::string weapon, shield;
+    // All of the world's first player, come from another world (Realm::restoreKept), or null.
+    const Kept* kept = nullptr;
+};
+
+// configure, raise, the castle and the square, then `between` (the client's local harness:
+// an arena's breed, the bench's heroes, Noria's roads -- never run against a server), then the
+// outfit and the kept character. False when the realm will not raise.
+bool raiseFrom(Realm& realm, const content::Tables* tables, const RaiseOrder& order,
+               const std::function<void()>& between = nullptr);
 
 // What a new character is: level 1, his class's weapon in his hand, at the spawn gate of his
 // class's town. The rules' and the server's, never the client's to say (a Hello names only his
