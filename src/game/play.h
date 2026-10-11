@@ -264,6 +264,9 @@ public:
     // to refuse; see sim/items.h for the gates.
     uint32_t moveItem(int from, int to);
     uint32_t useItem(int slot);
+    // His auto-drink lines in percent, 0 for never (sim::AutoDrink): the realm drinks for him
+    // under them. What the settings window will send; `--auto-drink` until then.
+    uint32_t setAutoDrink(int health, int mana);
     // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
     // this is heard and re-dressed. See Realm::refine.
     uint32_t refine(int jewelSlot, int targetSlot);

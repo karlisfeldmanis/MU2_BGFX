@@ -1856,6 +1856,13 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Stepped) continue;
             lastLine_ = sim::describe(happening, realm_);
         }
+        // A Drank no answer took is the realm's auto-drink (sim::AutoDrink): the gulp and the
+        // lane's worth a key's Use is given in answered().
+        if (lastDrank_ != nullptr) {
+            sound_.play(heard_.drink);
+            (lastDrank_->b ? drankMana_ : drankHealth_) += lastDrank_->a;
+            lastDrank_ = nullptr;
+        }
         accumulator_ = std::max(0.0, accumulator_ - kTickSeconds);
         ++stepped;
     }

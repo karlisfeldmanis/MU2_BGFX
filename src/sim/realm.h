@@ -685,6 +685,19 @@ struct WayBack {
     bool open() const { return map >= 0 && ticksLeft > 0; }
 };
 
+// **Auto-drink** (the user, 2026-10-11: "automatic mana/hp potion usage for characters and
+// bots"): the percent of his health and of his mana he drinks under without a key, 0 for never.
+// MU Helper's Auto Potion, which asks only the health; ours asks the mana too. The realm's, so a
+// player drinks on the server's tick through a hitch on his line, and a bot is told the same way
+// a player is (Command::Kind::AutoDrink). Saved with him; a settings window comes later.
+constexpr int kAutoHealthDefault = 50;
+constexpr int kAutoManaDefault = 30;
+constexpr int kAutoDrinkMost = 90;  // never at full: a potion's whole worth would spill
+struct AutoDrink {
+    int8_t health = kAutoHealthDefault;
+    int8_t mana = kAutoManaDefault;
+};
+
 struct HeroRecord {
     Kin kin = Kin::DarkKnight;
     int32_t column = 0, row = 0;
@@ -729,6 +742,7 @@ struct HeroRecord {
     // Saved so a logout on a bench comes back on the bench (the user, 2026-10-09: "he has to be
     // at that pose when login back to world"); the realm asks it is still beside him.
     int32_t perch = -1;
+    AutoDrink autoDrink;
 };
 
 // A character between worlds (docs/sprints/20-the-world-host.md): all of him the server keeps
@@ -907,6 +921,9 @@ public:
         }
         return out;
     }
+    // His auto-drink (sim::AutoDrink): set as asked, each held to 0..kAutoDrinkMost, and read.
+    void setAutoDrink(int health, int mana);
+    AutoDrink autoDrink() const { return me().autoDrink; }
     // A jewel let go over a thing: the Bless or the Soul, from a bag slot, onto a thing carried
     // or worn. Refused, whole and silent, where `refinable` says no. Otherwise the jewel is
     // spent whatever the roll gives, and the thing comes back at its new plus: OpenMU's
@@ -1860,6 +1877,8 @@ private:
     bool bare(int column, int row) const;
     bool take(size_t index);
     void sip();
+    // A potion drunk for him under his auto-drink's lines (sim::AutoDrink), after sip().
+    void autoDrink(Body& hero);
     void recover(Body& hero);
     // `byRoad`: kept to the roads where it can be (setRoads), for a townsperson's rounds.
     bool send(Body& one, int column, int row, bool byRoad = false);
@@ -2335,6 +2354,7 @@ private:
         int64_t potionUntil = 0;
         Sip sips[8];
         int sipCount = 0;
+        AutoDrink autoDrink;
     };
     std::vector<Player> heroes_ = std::vector<Player>(1);
     // The player the realm is working for: each in turn inside step(), and between steps the one

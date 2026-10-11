@@ -155,6 +155,7 @@ void printUsage() {
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --ui-type F:TEXT          type TEXT into the open box on frame F (enter, escape)\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
+        "  --auto-drink H:M          drink a potion under H%% health / M%% mana, 0 for never\n"
         "  --ui-key F:K              press potion key K (1-4) on frame F\n"
         "  --ui-skill F:K            press skill key K (1-5: Q W E R T) on frame F\n"
         "  --ui-hover X:Y            park the pointer at screen fraction X,Y, pressing nothing\n"
@@ -722,6 +723,13 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--give")) {
             if (const char* v = next(s)) a.give = v;
+        } else if (!std::strcmp(s, "--auto-drink")) {
+            if (const char* v = next(s)) {
+                if (std::sscanf(v, "%d:%d", &a.autoHealth, &a.autoMana) != 2) {
+                    std::fprintf(stderr, "--auto-drink wants H:M, e.g. 50:30\n");
+                    a.autoHealth = a.autoMana = -1;
+                }
+            }
         } else if (!std::strcmp(s, "--lay")) {
             if (const char* v = next(s)) {
                 const char* colon = std::strchr(v, ':');

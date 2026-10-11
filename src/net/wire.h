@@ -94,13 +94,15 @@ namespace mu::net {
 // 22: a kill shared as WebZen's: the drop to the most damage, the experience by damage outside a
 //     party (Body::hurt, snapshot shape 8).
 // 23: Bye, why the server is closing his line, sent just before it does.
-constexpr uint32_t kVersion = 23;
+// 24: auto-drink (sim::AutoDrink): Command::Kind::AutoDrink, a Kept's lines (layout 7) and a
+//     Player's (snapshot shape 9).
+constexpr uint32_t kVersion = 24;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
 // keeps beside each row. 3 is protocol 3's; 4 adds the way back; 5 a 25th quest (Devin's errand to
-// Tersia, 2026-10-09), where 3 and 4 carry 24; 6 the perch he logged out on (2026-10-09).
-constexpr int kKeptLayout = 6;
+// Tersia, 2026-10-09), where 3 and 4 carry 24; 6 the perch he logged out on (2026-10-09); 7 his auto-drink lines (2026-10-11).
+constexpr int kKeptLayout = 7;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

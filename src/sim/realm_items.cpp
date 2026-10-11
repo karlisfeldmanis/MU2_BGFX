@@ -1104,6 +1104,40 @@ void Realm::sip() {
     me().sipCount = kept;
 }
 
+void Realm::setAutoDrink(int health, int mana) {
+    me().autoDrink.health = int8_t(std::clamp(health, 0, kAutoDrinkMost));
+    me().autoDrink.mana = int8_t(std::clamp(mana, 0, kAutoDrinkMost));
+}
+
+// Under a line and with the cooldown run, the strongest potion of that pool in his bag, through
+// useItem as a key would -- health before mana, since both share the half second. Not while a
+// potion of the same pool is still pouring in: its worth would lift him over the line, and a
+// second on its heels is a potion thrown away. Nor in a safe zone, where recover() fills him
+// for nothing.
+void Realm::autoDrink(Body& hero) {
+    if (!tables_ || !hero.alive() || tick_ < me().potionUntil) return;
+    if (tables_->grid.safe(hero.column(), hero.row())) return;
+    const AutoDrink lines = me().autoDrink;
+    const auto drinks = [&](bool mana) {
+        const int line = mana ? lines.mana : lines.health;
+        const int has = mana ? hero.mana : hero.health;
+        const int most = mana ? hero.maxMana : hero.maxHealth;
+        if (line <= 0 || most <= 0 || has * 100 >= most * line) return false;
+        if (pouring(mana).left > 0) return false;
+        int best = -1, bestWorth = -1;
+        for (int slot = kWorn; slot < kSlots; ++slot) {
+            const Held& one = me().bag[slot];
+            if (one.empty()) continue;
+            const content::ItemRow& row = tables_->items[size_t(one.item)];
+            if (!(mana ? restores(row) : heals(row))) continue;
+            const int worth = row.number * 16 + one.refinement;
+            if (worth > bestWorth) best = slot, bestWorth = worth;
+        }
+        return best >= 0 && useItem(best);
+    };
+    if (!drinks(false)) drinks(true);
+}
+
 // What a death leaves: one roll against three groups, rarest first, each taking its own chance
 // out of what is left -- DefaultDropGenerator.SelectRandomGroup, as MU2's Realm.Leave walks
 // it. Loot.cs's numbers: a jewel at 0.001, an item at 0.3 from what the monster's level can

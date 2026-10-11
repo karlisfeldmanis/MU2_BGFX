@@ -186,6 +186,11 @@ public:
         return ok;
     }
     bool useItem(int slot) { return was(realm->useItem(slot), sim::Command::Kind::Use, slot); }
+    // His auto-drink lines (sim::AutoDrink): the realm drinks for him under them, as for a player.
+    void autoDrink(int health, int mana) {
+        realm->setAutoDrink(health, mana);
+        note(sim::Command::Kind::AutoDrink, health, mana);
+    }
     bool moveItem(int from, int to) {
         if (std::getenv("BOT_MOVES") && (from == sim::kWeaponRight || to == sim::kWeaponRight)) {
             std::printf("MOVE %d -> %d (%s)\n", from, to, std::getenv("BOT_MOVES"));
@@ -886,6 +891,10 @@ private:
             if (h.what == sim::What::Cast && h.who == me) {
                 if (const sim::SkillRow* row = sim::skillNumbered(h.a)) ++castsOf_[row->name];
             }
+            if (h.what == sim::What::Drank && h.who == me) {
+                ++out_.drunk;
+                if (h.b == 0) ++healed_;
+            }
             switch (h.what) {
                 case sim::What::Died:
                     if (h.who == me) {
@@ -1235,18 +1244,6 @@ private:
         return n;
     }
 
-    bool drinkOne(bool (*kind)(const content::ItemRow&)) {
-        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-            const sim::Held& one = realm_->satchel()[slot];
-            if (!one.empty() && kind(rowOf(one)) && hand_.useItem(slot)) {
-                ++out_.drunk;  // counted here: the next step clears what useItem says
-                if (kind == sim::heals) ++healed_;
-                return true;
-            }
-        }
-        return false;
-    }
-
     // What his own potions say about the estimate: more than twenty drunk in five minutes and
     // every fight is reckoned half as dear again; under five and it eases back toward the band.
     void learnCaution() {
@@ -1280,20 +1277,23 @@ private:
         return false;
     }
 
+    // His lines told to the realm, which drinks for him (sim::AutoDrink) as it does for a
+    // player, and only when they change; heard() counts what it drank.
     void drink() {
-        const sim::Body& hero = realm_->hero();
         // In Blood Castle at 70%: no town to fall back on, and what follows him in is many. And a
         // spellcaster at --drink-at (65%): a pack of Elite Yetis or Ghosts outran his half and
         // killed a wizard of 400 health 43 times in three runs of a day.
         const double at = map() == int(sim::kBloodCastleMap) || map() == int(sim::kDevilSquareMap) ? 7.0
                           : wizardly() ? options_.drinkAt : 5.0;
-        if (hero.health * 10.0 < hero.maxHealth * at) drinkOne(sim::heals);
         // A wizard under half, where spell() throws his dear spells (`flush`): at three tenths
         // his mana sat between the two on Fire Ball's five, never drank and never cast -- a day's
         // wizard bought 3,360 healing potions and 39 mana, and threw Fire Ball 24,103 times
         // against Meteorite, Ice and Flame's none at level 153 (the Claude bot's runs, 2026-10-09).
         const int manaAt = wizardly() ? 5 : 3;
-        if (casts() && hero.mana * 10 < hero.maxMana * manaAt) drinkOne(sim::restores);
+        const int health = int(std::lround(at * 10.0));
+        const int mana = casts() ? manaAt * 10 : 0;
+        const sim::AutoDrink now = realm_->autoDrink();
+        if (now.health != health || now.mana != mana) hand_.autoDrink(health, mana);
     }
 
     // ---- the bag --------------------------------------------------------------------------

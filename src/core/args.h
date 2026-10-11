@@ -374,6 +374,9 @@ struct Args {
     bool mute = false;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.
     std::string give;
+    // --auto-drink H:M: his auto-drink lines in percent, 0 for never (sim::AutoDrink), until the
+    // settings window does it; -1 leaves what his save has.
+    int autoHealth = -1, autoMana = -1;
     // The bench's, not a rule: on frame `layFrame`, lay NAME,... on the ground beside him as a
     // kill's drop lies -- the fall, the landing sound and the label -- for looking at a drop
     // nothing in Lorencia leaves (the Bless and the Soul). FRAME:LIST.

@@ -574,6 +574,7 @@ HeroRecord Realm::record() const {
     }
     out.wayBack = me().wayBack;
     if (hero.pose != Pose::Standing) out.perch = hero.perch;
+    out.autoDrink = me().autoDrink;
     return out;
 }
 
@@ -664,6 +665,7 @@ void Realm::restore(const HeroRecord& saved) {
     way.closedTicks = std::clamp<int64_t>(way.closedTicks, 0, kGoBackClosedTicks);
     if (way.open() && !tables_->grid.safe(hero.column(), hero.row())) way = WayBack{};
     me().wayBack = way;
+    setAutoDrink(saved.autoDrink.health, saved.autoDrink.mana);
 }
 
 bool Realm::spend(int strength, int agility, int vitality, int energy) {
@@ -1264,6 +1266,7 @@ void Realm::heroBefore() {
         else if (++way.closedTicks >= kGoBackClosedTicks) way = WayBack{};
     }
     sip();
+    autoDrink(hero);
     chargeTick(hero);
     recover(hero);
     // Icarus holds no one who cannot fly: his Dinorant worn out with no wing on, or a save

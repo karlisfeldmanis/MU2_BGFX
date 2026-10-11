@@ -1252,6 +1252,91 @@ void testGladiatorSkills(const content::Tables& tables) {
     check(thrown, "and throws Defense");
 }
 
+void testAutoDrink(const content::Tables& tables) {
+    std::printf("auto-drink\n");
+    const int32_t small = tables.itemAt(14, 1), large = tables.itemAt(14, 3);
+    const int32_t blue = tables.itemAt(14, 4);
+    // How many health and mana potions the realm drank for him over `ticks`.
+    struct Drunk {
+        int health = 0, mana = 0;
+    };
+    const auto run = [](sim::Realm& realm, int ticks) {
+        Drunk out;
+        for (int i = 0; i < ticks; ++i) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.what != sim::What::Drank || one.who != realm.hero().id) continue;
+                (one.b ? out.mana : out.health)++;
+            }
+        }
+        return out;
+    };
+    const auto hurt = [](sim::Realm& realm, int healthPercent, int manaPercent) {
+        sim::HeroRecord record = realm.record();
+        record.health = std::max(1, realm.hero().maxHealth * healthPercent / 100);
+        record.mana = realm.hero().maxMana * manaPercent / 100;
+        realm.restore(record);
+    };
+
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 60), "a wizard's realm raises");
+    check(!tables.grid.safe(realm.hero().column(), realm.hero().row()), "out of town");
+    checkEqual(int(realm.autoDrink().health), sim::kAutoHealthDefault, "a new hero drinks under 50%");
+    checkEqual(int(realm.autoDrink().mana), sim::kAutoManaDefault, "and his mana under 30%");
+    const int smallAt = realm.give(small, -1, 0, 5);
+    const int largeAt = realm.give(large, -1, 0, 2);
+    const int blueAt = realm.give(blue, -1, 0, 5);
+    hurt(realm, 30, 10);
+    Drunk drunk = run(realm, 1);
+    checkEqual(drunk.health, 1, "under his line a potion is drunk on the next tick");
+    checkEqual(int(realm.satchel()[largeAt].durability), 1, "the strongest he carries");
+    checkEqual(int(realm.satchel()[smallAt].durability), 5, "and not the small ones");
+    drunk = run(realm, sim::Realm::kPourTicks);
+    checkEqual(drunk.health, 0, "none on its heels while it pours");
+    checkEqual(drunk.mana, 1, "the mana after the half second");
+    checkEqual(int(realm.satchel()[blueAt].durability), 4, "one mana potion gone");
+
+    realm.setAutoDrink(0, 0);
+    hurt(realm, 20, 5);
+    drunk = run(realm, 40);
+    check(drunk.health == 0 && drunk.mana == 0, "at 0 he never drinks");
+    realm.setAutoDrink(200, -4);
+    checkEqual(int(realm.autoDrink().health), sim::kAutoDrinkMost, "a line is held under full");
+    checkEqual(int(realm.autoDrink().mana), 0, "and over nothing");
+
+    // The line goes with him: the record, the store's bytes.
+    realm.setAutoDrink(70, 0);
+    sim::Kept kept;
+    kept.hero = realm.record();
+    std::vector<uint8_t> stored;
+    net::putKept(stored, kept);
+    sim::Kept read;
+    check(net::keptFrom(stored, read) && read.hero.autoDrink.health == 70 && read.hero.autoDrink.mana == 0,
+          "his lines are stored and read back");
+    sim::Realm again;
+    check(again.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 60), "a second realm raises");
+    again.restore(read.hero);
+    check(again.autoDrink().health == 70 && again.autoDrink().mana == 0, "and laid on him again");
+
+    // By command, as the client and a bot ask it.
+    sim::Command asked;
+    asked.kind = sim::Command::Kind::AutoDrink;
+    asked.a = 40;
+    asked.b = 20;
+    again.command(asked);
+    again.step();
+    check(again.autoDrink().health == 40 && again.autoDrink().mana == 20, "a command sets it");
+
+    // Not in town, where recovery fills him for nothing.
+    sim::Realm town;
+    check(town.raise(&tables, 7, 138, 124, sim::Kin::DarkWizard, 60), "a realm in town");
+    check(tables.grid.safe(town.hero().column(), town.hero().row()), "in the safe zone");
+    town.give(small, -1, 0, 5);
+    hurt(town, 20, 50);
+    drunk = run(town, 20);
+    checkEqual(drunk.health, 0, "and nothing is drunk there");
+}
+
 void testCastLock(const content::Tables& tables) {
     std::printf("a skill is walked out of\n");
     sim::Realm realm;
@@ -12691,6 +12776,7 @@ int main() {
     testStandsOverTheKill(tables);
     testSkills(tables);
     testCastLock(tables);
+    testAutoDrink(tables);
     testNoMoonwalk(tables);
     testEveryCastLetsGo(tables);
     testPerches(tables);

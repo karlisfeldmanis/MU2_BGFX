@@ -678,6 +678,9 @@ void PlayMode::runScript(Context& ctx) {
             from = comma + 1;
         }
     }
+    if (world_.played().isOpen() && args.autoHealth >= 0) {
+        world_.played().setAutoDrink(args.autoHealth, args.autoMana);
+    }
     if (world_.played().isOpen()) {
         if (args.zen > 0) world_.played().earn(args.zen);
         // --quest-ready: every clear already walked, so the giver's mark is a ? and his talk is

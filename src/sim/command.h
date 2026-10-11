@@ -90,10 +90,13 @@ struct Command {
         DealAccept,  // a: 1 accept, 0 take it back
         // Charon's Enter (Realm::enterSquare; a: the square).
         EnterSquare,
+        // His auto-drink (Realm::setAutoDrink; a: the health percent, b: the mana percent, 0 for
+        // never).
+        AutoDrink,
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.
-    static constexpr Kind kLastKind = Kind::EnterSquare;
+    static constexpr Kind kLastKind = Kind::AutoDrink;
     // Close's a.
     // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
     // two players, which closing cancels for both.

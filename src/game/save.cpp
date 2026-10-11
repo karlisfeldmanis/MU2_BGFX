@@ -215,6 +215,11 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.summonHealth = int32_t(summon["health"].numberOr(0.0));
     // The perch he sat or leant on, absent when he stood. The realm asks it is still beside him.
     hero.perch = int32_t(doc["perch"].numberOr(-1.0));
+    // His auto-drink lines, [health, mana] in percent; absent for the defaults (sim::AutoDrink).
+    if (const core::Json& lines = doc["auto_drink"]; lines.size() == 2) {
+        hero.autoDrink.health = int8_t(lines.at(0).numberOr(sim::kAutoHealthDefault));
+        hero.autoDrink.mana = int8_t(lines.at(1).numberOr(sim::kAutoManaDefault));
+    }
     // The cooldowns running, as [skill number, ticks left] pairs, absent when none was. By MU's
     // number and not the table's index, as the bar is, so a row appended later lands on its own.
     const core::Json& cooling = doc["cooling"];
@@ -421,6 +426,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
                      hero.summonHealth);
     }
     if (hero.perch >= 0) std::fprintf(f, "  \"perch\": %d,\n", hero.perch);
+    std::fprintf(f, "  \"auto_drink\": [%d, %d],\n", hero.autoDrink.health, hero.autoDrink.mana);
     std::fprintf(f, "  \"quests\": {");
     for (int i = 0; i < sim::kQuests; ++i) {
         const sim::QuestProgress& one = hero.quests[i];

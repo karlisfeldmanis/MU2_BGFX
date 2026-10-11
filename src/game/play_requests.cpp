@@ -74,6 +74,11 @@ uint32_t Play::useItem(int slot) {
     return send({.kind = sim::Command::Kind::Use, .a = slot}, asked);
 }
 
+uint32_t Play::setAutoDrink(int health, int mana) {
+    core::logf("auto-drink: under %d%% health, %d%% mana", health, mana);
+    return send({.kind = sim::Command::Kind::AutoDrink, .a = health, .b = mana});
+}
+
 // Two sounds, as MuMain makes them, both on the answer: ApplyJewels' SOUND_GET_ITEM01 and
 // ReceiveModifyItemExtended's SOUND_JEWEL01 (WSclient.cpp:6322) -- whether the plus went up or
 // down, because the client has no failure sound.
@@ -833,6 +838,8 @@ void Play::answered(const sim::Happening& said) {
         case Kind::LetGo:
         case Kind::Close:
         case Kind::GoBack:
+        // Set and nothing to show; the realm's drinks are heard off its Drank (Play::step).
+        case Kind::AutoDrink:
         // The server's, never a client's: the world's door.
         case Kind::Join:
         case Kind::Leave:
