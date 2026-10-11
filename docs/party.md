@@ -35,6 +35,11 @@ mockup, claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX); the party rides on its chann
   of one in view is paid as a solo kill. A member's share is capped at his own level's
   experience. Our kExperienceRate and the Rings of Wisdom apply to each share as to a solo
   kill.
+- **The level gap** (ours, 2026-10-11, `kPartyGap` 100): a member more than 100 levels below
+  the highest of those in view of a kill shares nothing of it, neither experience nor a quest
+  count, and is left out of the party's size and levels. This holds even when the kill is his,
+  so a high member can't boost a low one. WebZen only damped it (a member 200+ below the top
+  counted as level + 200) and never refused the invite; neither do we.
 - **Drops** stay the killer's (top hitter), as now.
 
 ## What is ours
