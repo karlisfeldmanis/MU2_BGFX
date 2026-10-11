@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <csignal>
 #include <ctime>
 #include <filesystem>
@@ -36,6 +37,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 #include "../bot/brain.h"
 #include "claude.h"
@@ -197,6 +199,37 @@ public:
         line("~ says: %s", text.c_str());
         link_->say({channel, {}, text});
     }
+    // ---- players, not bots: whom he may ask into a party (Board::ask) ----------------------
+    struct Person {
+        std::string name;
+        float away = 0.0f;  // tiles
+        int level = 0;
+    };
+    // Every player who is not a bot, alive on his map within `tiles` of him.
+    std::vector<Person> peopleNear(float tiles) const {
+        std::vector<Person> near;
+        const sim::Body& hero = mirror_->hero();
+        for (const sim::Body& b : mirror_->bodies()) {
+            if (!b.player || b.gone || b.id == you_ || !b.alive()) continue;
+            std::string name;
+            bool isBot = true;
+            if (!link_->nameOf(b.id, &name, &isBot) || isBot || name.empty()) continue;
+            const float away = std::hypot(b.x - hero.x, b.y - hero.y);
+            if (away <= tiles) near.push_back({name, away, b.level});
+        }
+        return near;
+    }
+    // He asks `who` into a party; once `who` joins, he hands him the lead, so he follows the
+    // player and not the player him (Board::follow).
+    void invitePerson(const std::string& who) {
+        invitedPerson_ = who;
+        line("invites %s", who.c_str());
+        askParty(net::PartyWhat::Invite, who);
+    }
+    // What the server answered his invites to players since the board last asked.
+    enum class Answer { Declined, Busy, Joined };
+    std::vector<std::pair<std::string, Answer>> takeAnswers() { return std::exchange(answers_, {}); }
+
     // The leader whose invite he takes, "" for none; and whether, with none, he takes anyone's.
     void expect(const std::string& leader) { expected_ = leader; }
     void openToAll(bool open) { openToAll_ = open; }
@@ -437,6 +470,23 @@ private:
             // The invite the board told him to wait for, taken; and, while the board has him in
             // no party of its own, anyone's -- a player's /invite is answered (Board::follow).
             constexpr const char* kInvites = " invites you to a party.";
+            if (one.name.empty() && one.channel == net::Channel::Party && !invitedPerson_.empty()) {
+                // The player he asked: refused, already in a party, or come in. A player who has
+                // come in leads from now on (server: Promote).
+                const std::string& who = invitedPerson_;
+                if (one.text == who + " declined your invitation.") {
+                    line("%s declined; let be a while", who.c_str());
+                    answers_.push_back({who, Answer::Declined});
+                    invitedPerson_.clear();
+                } else if (one.text == who + " is already in a party." || one.text == who + " is not online.") {
+                    answers_.push_back({who, Answer::Busy});
+                    invitedPerson_.clear();
+                } else if (one.text == who + " has joined the party.") {
+                    answers_.push_back({who, Answer::Joined});
+                    link_->askParty({net::PartyWhat::Promote, who});
+                    invitedPerson_.clear();
+                }
+            }
             if (one.name.empty() && one.channel == net::Channel::Party) {
                 const size_t at = one.text.find(kInvites);
                 const std::string from = at != std::string::npos ? one.text.substr(0, at) : "";
@@ -660,6 +710,8 @@ private:
     bool divergenceSaid_ = false;
     std::string expected_;  // the board's: whose invite he takes
     bool openToAll_ = false;  // ... and, with none, anyone's (Board::follow)
+    std::string invitedPerson_;  // the player he last asked, until the server answers (invitePerson)
+    std::vector<std::pair<std::string, Answer>> answers_;  // takeAnswers
     std::string partySaid_;
     std::unique_ptr<bot::Claude> claude_;  // --claude: the model drives him
     Swap swap_;                // the market's swap, while there is one
@@ -713,6 +765,7 @@ public:
         follow();
         loose(now);
         if (forms_) form(now);
+        ask(now);
     }
 
 private:
@@ -1170,6 +1223,39 @@ private:
         }
     }
 
+    // **Players asked in** (the user, 2026-10-11: "i want they can invite me, but i also want to
+    // refuse invite"): a bot in no party asks a player -- never a bot -- near him and near his
+    // level into one, and hands him the lead once he comes in (NetBot::invitePerson). One bot at
+    // a time asks a player, and he is let be after: a while after an invite he let lapse or one
+    // the server bounced (in a party already), long after he declined. The player answers with
+    // the invite's Accept and Decline (game/ui/chat.cpp).
+    static constexpr float kAskWithin = 8.0f;  // tiles
+    static constexpr auto kAskAgain = std::chrono::minutes(5);       // after no answer
+    static constexpr auto kAskBusy = std::chrono::minutes(10);       // he was in a party
+    static constexpr auto kAskDeclined = std::chrono::minutes(30);   // he said no
+    static constexpr auto kBotAsksEvery = std::chrono::minutes(2);   // one bot's own pace
+    void ask(std::chrono::steady_clock::time_point now) {
+        for (const auto& [name, one] : byName_) {
+            for (const auto& [who, answer] : one->takeAnswers()) {
+                askable_[who] = now + (answer == NetBot::Answer::Declined ? kAskDeclined : kAskBusy);
+            }
+        }
+        for (const auto& [name, one] : byName_) {
+            if (grouped(name) || !one->partyState().members.empty() || !one->alive()) continue;
+            if (const auto at = botAsked_.find(name); at != botAsked_.end() && now < at->second) continue;
+            const int level = one->level();
+            const int spread = std::max(10, level / 4);
+            for (const NetBot::Person& person : one->peopleNear(kAskWithin)) {
+                if (std::abs(person.level - level) > spread) continue;
+                if (const auto at = askable_.find(person.name); at != askable_.end() && now < at->second) continue;
+                one->invitePerson(person.name);
+                askable_[person.name] = now + kAskAgain;
+                botAsked_[name] = now + kBotAsksEvery;
+                break;
+            }
+        }
+    }
+
     // Parties formed from the stuck, a quest at a time, the most stuck first.
     void form(std::chrono::steady_clock::time_point now) {
         std::map<int, std::vector<std::string>> byQuest;
@@ -1333,6 +1419,8 @@ private:
     std::map<std::pair<int, int>, bool> stands_;  // this group: (map, breed) the party can stand
     std::map<std::string, int64_t> leftAt_, lfgAt_;  // each bot's clock
     std::map<std::string, int64_t> followedAt_;      // when follow() last led him, his clock
+    // Players by name: not asked into a party again before then (ask); and each bot's next ask.
+    std::map<std::string, std::chrono::steady_clock::time_point> askable_, botAsked_;
     std::chrono::steady_clock::time_point next_{};
 };
 
@@ -1619,9 +1707,11 @@ int main(int argc, char** argv) {
     while (!g_stop) {
         const auto now = std::chrono::steady_clock::now();
         if (hours > 0 && now - start > std::chrono::duration<double>(hours * 3600.0)) break;
-        if ((party || parties || trades) && now >= boardAt) {
+        // The board always: without --party or --parties it forms nothing, but a player's invite
+        // is still taken and players near are still asked in (Board::follow, Board::ask).
+        if (now >= boardAt) {
             all([&] {
-                if (party || parties) board.tick(bots);
+                board.tick(bots);
                 if (trades) market.tick(bots);
             });
             boardAt = now + std::chrono::seconds(1);
