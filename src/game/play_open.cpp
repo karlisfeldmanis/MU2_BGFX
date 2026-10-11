@@ -59,7 +59,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     int castle = 0;  // the server's Blood Castle, set on the raise as it set it
     int square = 0, squareWait = 0;  // and its Devil Square
     if (!serverHost_.empty()) {
-        auto remote = std::make_unique<RemoteLink>(realmHeld_);
+        auto remote = std::make_unique<client::RemoteLink>(realmHeld_);
         remote->setLag(lagMs_, jitterMs_);
         remote->setLoss(lossChance_);
         remote->setUdp(udp_);

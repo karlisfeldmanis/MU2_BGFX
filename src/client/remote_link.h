@@ -14,11 +14,11 @@
 #include <string>
 #include <vector>
 
-#include "game/link.h"
+#include "client/link.h"
 #include "net/socket.h"
 #include "net/wire.h"
 
-namespace mu::game {
+namespace mu::client {
 
 class RemoteLink final : public Link {
 public:
@@ -181,4 +181,4 @@ private:
     std::vector<uint8_t> in_;
 };
 
-}  // namespace mu::game
+}  // namespace mu::client

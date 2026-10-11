@@ -199,12 +199,32 @@ else()
 endif()
 add_executable(mu2_server
   server/src/main.cpp
+  server/src/world.cpp
+  server/src/chat.cpp
+  server/src/party.cpp
+  server/src/accounts.cpp
   server/src/store.cpp
 )
 target_include_directories(mu2_server PRIVATE src)
 target_link_libraries(mu2_server PRIVATE mu_net ${MU_SQLITE})
 target_compile_definitions(mu2_server PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(mu2_server PRIVATE ${MU_WARNINGS})
+
+# The server's own checks, with no socket: the store, the account's rules, the chat's allowance,
+# and a world raised by the server against a mirror raised from its Welcome (docs/order-plan.md
+# sprint C). Its jobs' files, without main.cpp's loop.
+add_executable(server_test EXCLUDE_FROM_ALL
+  tests/server_test.cpp
+  server/src/world.cpp
+  server/src/chat.cpp
+  server/src/party.cpp
+  server/src/accounts.cpp
+  server/src/store.cpp
+)
+target_include_directories(server_test PRIVATE src server/src)
+target_link_libraries(server_test PRIVATE mu_net ${MU_SQLITE})
+target_compile_definitions(server_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_options(server_test PRIVATE ${MU_WARNINGS})
 
 if(NOT MU2_SERVER_ONLY)
 # The half of content that uploads: textures, meshes and the ground, into bgfx.
@@ -245,6 +265,16 @@ target_compile_options(mu_gfx PRIVATE ${MU_WARNINGS})
 if(APPLE)
   target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
 endif()
+
+# The client's line to the realm (src/client, docs/order-plan.md sprint C): the Link, the
+# in-process LocalLink and the RemoteLink a mirror plays the server's ticks through. Below game,
+# so the net bot links it without the renderer.
+add_library(mu_client STATIC
+  src/client/remote_link.cpp
+)
+target_link_libraries(mu_client PUBLIC mu_net)
+target_include_directories(mu_client PUBLIC src)
+target_compile_options(mu_client PRIVATE ${MU_WARNINGS})
 
 add_library(mu_game STATIC
   src/game/bench.cpp
@@ -291,7 +321,6 @@ add_library(mu_game STATIC
   src/game/play_show.cpp
   src/game/play_pointer.cpp
   src/game/play_requests.cpp
-  src/game/remote_link.cpp
   src/game/fx/showing.cpp
   src/game/fx/marker.cpp
   src/game/fx/omen.cpp
@@ -383,7 +412,7 @@ add_library(mu_game STATIC
   src/game/fx/gleam.cpp
   src/game/ui/outline.cpp
 )
-target_link_libraries(mu_game PUBLIC mu_gfx mu_sim mu_net)
+target_link_libraries(mu_game PUBLIC mu_gfx mu_sim mu_net mu_client)
 target_compile_definitions(mu_game PRIVATE ${MU_DIRS})
 target_compile_options(mu_game PRIVATE ${MU_WARNINGS})
 # miniaudio is one vendored header of tens of thousands of lines; its warnings are not ours.
@@ -546,14 +575,13 @@ target_compile_options(bot PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # The net bot: Lorencia characters played on the server as a client plays them -- a mirror of
 # the server's world and nothing asked but commands -- for a world with people in it
-# (tools/netbot/netbot.cpp). RemoteLink is the client's own, compiled in without the renderer.
+# (tools/netbot/netbot.cpp). RemoteLink is the client's own (mu_client), linked without the renderer.
 # The Mac's alone: the bots run here, and the box is sent neither netbot.cpp nor remote_link.cpp.
 if(NOT MU2_SERVER_ONLY)
 add_executable(netbot EXCLUDE_FROM_ALL
   tools/netbot/netbot.cpp
-  src/game/remote_link.cpp
 )
-target_link_libraries(netbot PRIVATE mu_net)
+target_link_libraries(netbot PRIVATE mu_client)
 target_include_directories(netbot PRIVATE src)
 target_compile_definitions(netbot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(netbot PRIVATE -Wall -Wextra -Wno-unused-parameter)
@@ -574,10 +602,11 @@ target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # meshes (cooked_test reads those; a server has only the tables).
 if(MU2_SERVER_ONLY)
   add_custom_target(checks
-    DEPENDS placement_test sim_test save_test
+    DEPENDS placement_test sim_test save_test server_test
     COMMAND $<TARGET_FILE:placement_test>
     COMMAND $<TARGET_FILE:sim_test>
     COMMAND $<TARGET_FILE:save_test>
+    COMMAND $<TARGET_FILE:server_test>
     COMMENT "the server build's checks"
     USES_TERMINAL)
   return()
@@ -602,7 +631,7 @@ endif()
 # lists it, and a listed one may never grow past its size there. It is what stops the hubs
 # growing back (docs/order-plan.md, sprint A).
 add_custom_target(checks
-  DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test
+  DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test server_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py
   COMMAND ${CMAKE_SOURCE_DIR}/tools/sizecheck.py
   COMMAND $<TARGET_FILE:cooked_test>
@@ -611,6 +640,7 @@ add_custom_target(checks
   COMMAND $<TARGET_FILE:boids_test>
   COMMAND $<TARGET_FILE:sound_test>
   COMMAND $<TARGET_FILE:save_test>
+  COMMAND $<TARGET_FILE:server_test>
   COMMAND ${CMAKE_SOURCE_DIR}/tools/matcheck.py
   COMMENT "running every check that does not need a window"
   USES_TERMINAL

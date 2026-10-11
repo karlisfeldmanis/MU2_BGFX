@@ -44,14 +44,16 @@ a sentence is not a gate.
 | `content` | `core` | `sim`, `gfx`, `game`, `app` | cooked meshes, textures, ground, tables, the grid |
 | `sim` | `core`, `content` | `gfx`, `game`, `app` | realm, tick, rules, items, route, market, audit |
 | `net` | `core`, `content`, `sim` | `gfx`, `game`, `app` | the wire: frames, messages, sockets (protocol 24) |
+| `client` | `core`, `content`, `sim`, `net` | `gfx`, `game`, `app` | the client's line to the realm: `Link`, `LocalLink`, `RemoteLink`, `AccountLink` |
 | `gfx` | `core`, `content` | `sim`, `net`, `game`, `app` | window, views, renderer, effects, overlay, interface |
-| `game` | `core`, `content`, `sim`, `net`, `gfx` | `app` | play, world, town, figures, the windows, the effects, the links |
+| `game` | `core`, `content`, `sim`, `net`, `client`, `gfx` | `app` | play, world, town, figures, the windows, the effects |
 | `app` | everything under `src/` | — | application, modes, bootstrap |
 | `server` (`server/src/`) | `core`, `content`, `sim`, `net` | `gfx`, `game`, `app` | the world host, sessions, accounts, party, chat, the store |
+| `tools` (`tools/`) | `core`, `content`, `sim`, `net`, `client` | `gfx`, `game`, `app` | the bots, the raid stats, the cook's C++ |
 
-`tools/layercheck.py`'s `ALLOWED` is the truth when this table and it disagree. It does not
-read `tools/` yet, and `tools/netbot` includes `game/remote_link.h` — client networking that
-lives in `game/` today and moves to a `client` layer in `docs/order-plan.md` sprint C.
+`tools/layercheck.py`'s `ALLOWED` is the truth when this table and it disagree. Since sprint C
+(`docs/order-plan.md`) it reads `tools/` too: netbot plays the server through `client/`, which
+it links as `mu_client`, without a renderer.
 
 One more rule it keeps besides the arrows: **no writable `sim::Realm` in `game/` or `app/`**,
 except the links, Play's `realmHeld_` and `local_`, and `headless.cpp`. The client plays a
@@ -120,7 +122,7 @@ The largest layer, and the one this refactor split into rooms:
 
 | folder | what it holds | why it is one room |
 |---|---|---|
-| `game/` | play and its `play_*` files, figures, crowd, save, sound, bench, headless, item_models, frustum, and the client's networking: `link.h`, `remote_link`, `roster` | what the other three rooms are all built on |
+| `game/` | play and its `play_*` files, figures, crowd, save, sound, bench, headless, item_models, frustum, `roster` (the character screen's, which dresses figures) | what the other three rooms are all built on |
 | `game/ui/` | hud, panel, bag, shelf, card, desk, describe, vitals, cursor, outline, arrival, stage, items_stage, browser_list | everything drawn flat over the frame, and the pointer's own feedback |
 | `game/fx/` | showing, aura, breath, bones, meteor, marker, litter | what a blow, a death, a level and a drop look like |
 | `game/world/` | world, town, lamps, ornaments, sway | the town standing there: its chunks, its lights, its own animation |

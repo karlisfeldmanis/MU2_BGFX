@@ -43,7 +43,7 @@
 #include "../bot/brain.h"
 #include "claude.h"
 #include "talk.h"
-#include "game/remote_link.h"
+#include "client/remote_link.h"
 #include "net/wire.h"
 #include "sim/cradle.h"
 #include "sim/item_link.h"
@@ -97,7 +97,7 @@ public:
             // where it is, so the link made on `mirror` still holds it after the swap.
             auto mirror = std::make_unique<sim::Realm>();
             auto scratch = std::make_unique<sim::Realm>();
-            auto link = std::make_unique<game::RemoteLink>(*mirror);
+            auto link = std::make_unique<client::RemoteLink>(*mirror);
             net::Hello hello;
             hello.world = world;
             hello.kin = uint8_t(kin_);
@@ -724,7 +724,7 @@ private:
     std::unique_ptr<Bot> brain_;
     std::map<std::string, std::unique_ptr<content::Tables>> tables_;
     std::unique_ptr<sim::Realm> mirror_, scratch_;
-    std::unique_ptr<game::RemoteLink> link_;
+    std::unique_ptr<client::RemoteLink> link_;
     std::vector<uint8_t> bytes_;
     std::vector<sim::Command> asked_;
     std::vector<sim::Command> trips_;  // paid trips not yet answered (kTripWait)

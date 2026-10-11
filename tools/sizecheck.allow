@@ -5,7 +5,6 @@ pipeline/clean_lowpoly.py 1191
 pipeline/export_gltf.py 2284
 pipeline/index.py 3174
 pipeline/terrain.py 932
-server/src/main.cpp 1877
 src/app/modes/play_mode.cpp 1922
 src/content/ground.cpp 1910
 src/core/args.cpp 864

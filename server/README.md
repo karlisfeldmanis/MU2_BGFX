@@ -52,9 +52,17 @@ them, and a character comes back **in the world he left**.
 `sqlite3 /var/lib/private/mu2/characters.db .tables` shows the store. `server/deploy.sh` puts a
 new build there and restarts the service.
 
-What is in `server/src/` today: `main.cpp` (the world host, sessions, accounts, parties, chat,
-landing, the tick: one file of ~1900 lines, to be split by `docs/order-plan.md` sprint C) and
-`store.*` (the characters).
+What is in `server/src/` (split out of one 1900-line `main.cpp` in `docs/order-plan.md` sprint C):
+
+| file | what |
+|---|---|
+| `host.h` | the clock, the constants, the globals, `World`, `Session`, `Party`, and every job's functions |
+| `main.cpp` | the flags, the frame dispatch (`hear`) and the loop |
+| `world.cpp` | raising a world (from its own Welcome, `sim::raiseFrom`), Hello and Welcome, the tick, landing, keeping |
+| `chat.cpp`, `party.cpp`, `accounts.cpp` | the chat, the parties, the character screen |
+| `store.*` | the characters on disk |
+
+`tests/server_test.cpp` checks them without a socket, in `checks`.
 
 ## Building there
 

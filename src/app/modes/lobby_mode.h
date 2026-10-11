@@ -22,7 +22,7 @@
 #include "content/tables.h"
 #include "game/bust.h"
 #include "game/pedestals.h"
-#include "game/remote_link.h"
+#include "client/remote_link.h"
 #include "game/roster.h"
 #include "game/sound.h"
 #include "game/ui/cursor.h"
@@ -59,7 +59,7 @@ private:
     int port_ = 0;
     std::string server_;
     std::string key_;  // the account's (game::accountKey)
-    game::AccountLink link_;
+    client::AccountLink link_;
     bool offline_ = false;  // the server did not answer on the way in
     // What was last asked, for what the next Roster says of it: a name being made, or a deletion.
     std::string making_;

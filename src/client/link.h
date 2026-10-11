@@ -7,7 +7,7 @@
 //
 // LocalLink is the realm in this process, stepped by the frame clock: the harness the tests, the
 // benches and the headless runs drive, not a way to play (the game is client and server since
-// 2026-10-07, docs/sprints/19-many-heroes.md). RemoteLink (game/remote_link.h, docs/sprints/18-the-wire.md) is the same door
+// 2026-10-07, docs/sprints/19-many-heroes.md). RemoteLink (client/remote_link.h, docs/sprints/18-the-wire.md) is the same door
 // over a socket: `send` goes to the server, and `step` steps the mirror with the tick the server
 // sent. What only the server will do -- raise a map, keep the clock, load and save a character,
 // the GM's switches -- is done on Play's own `local_`, and refused while remote.
@@ -21,7 +21,7 @@
 #include "sim/command.h"
 #include "sim/realm.h"
 
-namespace mu::game {
+namespace mu::client {
 
 class Link {
 public:
@@ -101,4 +101,4 @@ private:
     sim::Realm& realm_;
 };
 
-}  // namespace mu::game
+}  // namespace mu::client

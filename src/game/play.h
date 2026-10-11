@@ -73,8 +73,8 @@
 #include "game/sound.h"
 #include "gfx/renderer.h"
 #include "sim/audit.h"
-#include "game/link.h"
-#include "game/remote_link.h"
+#include "client/link.h"
+#include "client/remote_link.h"
 #include "sim/realm.h"
 
 namespace mu::game {
@@ -1399,11 +1399,11 @@ private:
 
     content::Tables tables_;
     std::string zoneLevels_;
-    // The realm, and the Link that works on it (game/link.h). `realm_` is what the client may
+    // The realm, and the Link that works on it (client/link.h). `realm_` is what the client may
     // see, and is const: a change goes through link_->send, or -- what only the server will do --
     // through local_, which while remote (useServer) is the mirror's and refuses (`here`).
     sim::Realm realmHeld_;
-    std::unique_ptr<Link> link_ = std::make_unique<LocalLink>(realmHeld_);
+    std::unique_ptr<client::Link> link_ = std::make_unique<client::LocalLink>(realmHeld_);
     bool cutSaid_ = false;  // the cut logged once
     sim::Realm& local_ = realmHeld_;
     const sim::Realm& realm_ = realmHeld_;

@@ -1,4 +1,4 @@
-#include "game/remote_link.h"
+#include "client/remote_link.h"
 
 #include <algorithm>
 #include <chrono>
@@ -8,7 +8,7 @@
 #include "core/log.h"
 #include "sim/maps.h"
 
-namespace mu::game {
+namespace mu::client {
 
 bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello,
                       net::Welcome& welcome, net::Elsewhere* elsewhere, double seconds) {
@@ -678,4 +678,4 @@ bool AccountLink::poll(net::Roster& roster) {
     return took == 1;
 }
 
-}  // namespace mu::game
+}  // namespace mu::client

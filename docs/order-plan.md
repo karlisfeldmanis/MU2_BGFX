@@ -391,8 +391,29 @@ Begun 2026-10-11 on the user's "continou".
     classes) and two client joins. Every link: "N of the server's hashes agreed with the
     mirror, none disagreed".
   - Builds were private (`scratchpad/build-c`), never the shared `build/`.
-- **Next in C:** split `server/src/main.cpp` (world host, sessions, accounts, party, chat),
-  server tests, and layercheck over `tools/` once client networking leaves `game/`.
+- **The server, split.** `server/src/main.cpp` went from 1850 lines to 427, and a script
+  (verbatim moves, no retyping) made the rest:
+  - `host.h`: shared types, constants, the globals as `inline` variables, every prototype;
+  - `world.cpp` (646), `party.cpp` (270), `accounts.cpp` (144) and `chat.cpp` (123).
+
+  It compiled on the first try, with no warnings.
+- **`server_test`** (in both `checks`) runs with no socket and covers:
+  - the store's round trip;
+  - the account key and world names;
+  - chat's burst;
+  - a world from `raiseWorld` against a mirror from its Welcome, new and kept, 600 ticks each,
+    hash-equal at the server's cadence.
+
+  To prove it can fail: a mirror on another seed is told apart. 27 checks.
+- **`src/client`**: `Link`, `LocalLink`, `RemoteLink` and `AccountLink` left `game/` as the
+  `mu_client` library, under `game`. netbot links it instead of compiling a `game/` file, and
+  **layercheck now reads `tools/`**, refusing gfx, game and app there (proved with a probe
+  including the renderer and Play).
+- **Proved again after each step:** the private build of every target; `server_test` 27/0;
+  `sim_test`'s only failure is another session's uncommitted sim work. Live: four bots in one
+  party, then the client, every link agreeing with the server.
+
+Sprint C is done. **Next: D, the world manifest.**
 
 ## 9. Leave alone
 
