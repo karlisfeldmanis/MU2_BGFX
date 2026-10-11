@@ -23,12 +23,14 @@ constexpr float kLeft = 16.0f, kAboveMiddle = 188.0f, kWide = 200.0f;
 constexpr size_t kRaidMost = 15;  // raid lines, then "+N more"
 
 // A capsule's make: its three bands top to foot, its corner, the gap under it, and its words.
-// The gaps 12 and 8 from 7 and 4 (the user, 2026-10-10, "increae gaps between labels").
+// The gaps 12 and 8 from 7 and 4 (the user, 2026-10-10, "increae gaps between labels"), then 20
+// and 14 from 11 and 8 once the faces came (the user, 2026-10-11: "increase gaps between
+// palrty/raid char labels" -- the 36-unit faces all but touched).
 // The name clear of the face's tuck, and no class cell: the face says the class until his picture
 // is taken (capsule::face).
-constexpr capsule::Make kPlate{3.0f, 21.0f, 4.0f, 6.0f, 11.0f, 14.5f, 9.0f, 12.5f, 17.0f, 0.0f, 0.66f};  // a party member
+constexpr capsule::Make kPlate{3.0f, 21.0f, 4.0f, 6.0f, 20.0f, 14.5f, 9.0f, 12.5f, 17.0f, 0.0f, 0.66f};  // a party member
 // A raid line a size under a plate: "raid label sizes i think can bi bigger" (the user, the same day).
-constexpr capsule::Make kLine{3.0f, 19.0f, 3.5f, 5.5f, 8.0f, 13.5f, 0.0f, 11.5f, 9.0f, 11.0f, 0.62f};    // a raider
+constexpr capsule::Make kLine{3.0f, 19.0f, 3.5f, 5.5f, 14.0f, 13.5f, 0.0f, 11.5f, 9.0f, 11.0f, 0.62f};    // a raider
 // His face at the capsule's left end, as the target frame's (the user, 2026-10-11: "same idea
 // with circle thumb so we have same logic"): its width, its ring, how far the capsule runs in under it.
 constexpr float kFace = 36.0f, kRing = 2.0f, kTuck = 10.0f;
