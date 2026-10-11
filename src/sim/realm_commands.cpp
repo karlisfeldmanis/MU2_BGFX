@@ -27,6 +27,16 @@ Kept Realm::keptOf(uint32_t id) {
     return out;
 }
 
+const Satchel* Realm::satchelOf(uint32_t id) const {
+    const int at = playerOfId(id);
+    return at < 0 ? nullptr : &heroes_[size_t(at)].bag;
+}
+
+int64_t Realm::heldOf(uint32_t id) const {
+    const int at = playerOfId(id);
+    return at < 0 ? -1 : heroes_[size_t(at)].money + heroes_[size_t(at)].vault.zen();
+}
+
 void Realm::applyCommands() {
     if (commands_.empty()) {
         carried_.clear();

@@ -325,7 +325,7 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
                 j.lucky = true;
                 j.rate = std::min(kPlusCap, j.rate + j.luck);
             }
-            j.zen = 2000000LL * (k + 1);
+            j.zen = kPlusZen * (k + 1);
             if (s.atCell[k] >= 0) {
                 j.target = s.atCell[k];
                 const std::string name = labelAt(tables, box, j.target);
@@ -351,7 +351,7 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             int64_t worth = 0;
             for (int cell = 0; cell < kMachineCells; ++cell) worth += mixValue(tables, box[cell]);
             j.rate = int(std::min<int64_t>(100, worth / 20000));
-            j.zen = 10000LL * j.rate;
+            j.zen = kMixZenPerPoint * j.rate;
             if (j.nearest == Recipe::Wings) {
                 j.target = s.chaosWeaponCell;
                 j.success = firstWingName(kin);

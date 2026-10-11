@@ -99,8 +99,8 @@ struct Held {
     // everything else. Its own field, since `excellent` would make the wing read as excellent.
     uint8_t wing = 0;
     // Bound to whoever earned it: a quest's pay (the user, 2026-10-10: quest rewards are "bound to
-    // the earner"). Worn, sold, kept in the vault or thrown down, never traded, and on the ground
-    // his alone (Realm::mayTake). WoW's "binds when picked up"; MU had nothing of the kind.
+    // the earner"). Worn, sold or thrown down; never traded, listed or put in the account's vault
+    // (2026-10-11: "per character"); on the ground his alone (Realm::mayTake). WoW's soulbound.
     // Last, so the brace lists that fill the fields in order are untouched.
     bool bound = false;
     bool empty() const { return item < 0; }

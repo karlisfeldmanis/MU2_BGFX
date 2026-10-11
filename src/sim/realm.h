@@ -1549,12 +1549,10 @@ public:
     const Body& playerAt(int index) const { return bodies_[heroes_[size_t(index)].body]; }
     // False for an id that is no player's.
     bool lookAs(uint32_t id);
-    // What another player carries and wears, for drawing him; null for an id that is no
-    // player's. His own business otherwise, which the queries above keep for whom they answer.
-    const Satchel* satchelOf(uint32_t id) const {
-        const int at = playerOfId(id);
-        return at < 0 ? nullptr : &heroes_[size_t(at)].bag;
-    }
+    // What another player carries and wears, for drawing him, null for an id that is no player's;
+    // and the Zen he carries and his vault keeps, for the economy log, -1 for none.
+    const Satchel* satchelOf(uint32_t id) const;
+    int64_t heldOf(uint32_t id) const;
     const Body& hero() const { return mine(); }
     // **The whole realm as bytes** (sim/realm_snapshot.cpp, docs/sprints/21-the-snapshot.md):
     // every body, player, flight, die and clock, so a mirror can stand where this realm stands

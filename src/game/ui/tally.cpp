@@ -229,7 +229,10 @@ const uint32_t kZenInk = byteColour(231, 201, 130);
 const uint32_t kHealthInk = byteColour(134, 201, 143);
 // A party kill he shared nothing of, past the level gap (the user, 2026-10-11: "show in red where
 // usally exp is showed ... that char is not receivning exp or quest kills because of the gap").
-const uint32_t kGappedInk = byteColour(255, 40, 32);  // bright red (the user, 2026-10-11: "make it bright red")
+// A warning is white Open Sans on a flat red box (the user, 2026-10-11: "red background ... white text").
+const uint32_t kWarningBox = byteColour(196, 24, 20, 0.92f);
+const uint32_t kWarningInk = byteColour(255, 255, 255);
+constexpr float kWarningPadX = 4.0f, kWarningPadY = 1.6f;
 const uint32_t kManaInk = byteColour(138, 166, 224);
 const uint32_t kHalo = gfx::rgba(0.0f, 0.0f, 0.0f, kHaloAlpha);
 
@@ -362,6 +365,8 @@ void Tally::open(const gfx::Interface& interface) {
     const bool lane = bakeOne(quiet_, quietTexture_, gfx::quietFacePath(), kQuietBake, 1024,
                               0.0f, "tally lane");
     if (!lane) core::logError("tally: no lane face; nothing will be said over the HUD");
+    if (!bakeOne(plain_, plainTexture_, gfx::facePath(), kQuietBake, 1024, 0.0f, "tally warnings"))
+        core::logError("tally: no warning face; a warning will be said in the lane's");
     if (!figures) core::logError("tally: no face baked; a blow will show no number");
     if (!halo) core::logError("tally: no halo baked; the text will read thin over grass");
     if (!soft) core::logError("tally: no soft halo; the death will read flat");
@@ -370,7 +375,7 @@ void Tally::open(const gfx::Interface& interface) {
 void Tally::shutdown() {
     for (bgfx::TextureHandle* t :
          {&faceTexture_, &haloTexture_, &softTexture_, &quietTexture_, &deathTexture_,
-          &deathHaloTexture_}) {
+          &deathHaloTexture_, &plainTexture_}) {
         if (bgfx::isValid(*t)) bgfx::destroy(*t);
         *t = BGFX_INVALID_HANDLE;
     }
@@ -457,6 +462,16 @@ void Tally::collect(const Play& play, float seconds) {
         }
         ++i;
     }
+}
+
+void Tally::bound() {
+    // One row however often it is tried: the newest, if it is one, held up again.
+    if (!lane_.empty() && lane_.back().kind == Row::Kind::Bound) {
+        lane_.back().age = std::min(lane_.back().age, kRowLife * kRowIn);
+        return;
+    }
+    lane_.push_back({Row::Kind::Bound, 0, 0.0f});
+    scroll_ += 1.0f;
 }
 
 void Tally::update(float seconds, const Play& play, const float* viewProj, int width, int height,
@@ -630,13 +645,28 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::Zen: ink = kZenInk; word = "zen"; break;
             case Row::Kind::Health: ink = kHealthInk; word = "life"; break;
             case Row::Kind::Mana: ink = kManaInk; word = "mana"; break;
-            case Row::Kind::Gapped: ink = kGappedInk; word = "level gap"; break;
+            case Row::Kind::Gapped:  // a warning, drawn below
+            case Row::Kind::Bound:
             // Drawn above and passed over by the `continue`: it is not a gain.
             case Row::Kind::Experience:
             case Row::Kind::Died: break;
         }
-        const std::string figure = row.kind == Row::Kind::Gapped ? std::string("No experience or quest kills")
-                                                                  : "+" + panel::commas((long long)row.value);
+        if (row.kind == Row::Kind::Gapped || row.kind == Row::Kind::Bound) {
+            // A warning: white words on a flat red box, the lane's left edge its own.
+            const std::string said = row.kind == Row::Kind::Gapped ? "No experience or quest kills: level gap"
+                                                                   : "Bound items stay with their character";
+            const gfx::Face& face = bgfx::isValid(plainTexture_) ? plain_ : quiet_;
+            const bgfx::TextureHandle texture = bgfx::isValid(plainTexture_) ? plainTexture_ : quietTexture_;
+            const float left = kLaneLeft * unit, at = std::round(baseline);
+            const float padX = kWarningPadX * unit, padY = kWarningPadY * unit;
+            canvas_.rect({left, at - face.ascent(rowSize) - padY, face.measure(rowSize, said) + padX * 2.0f,
+                          face.height(rowSize) + padY * 2.0f}, withAlpha(kWarningBox, alpha));
+            canvas_.lettered(face, texture, left + padX, at, rowSize, 0.0f, withAlpha(kWarningInk, alpha), said);
+            baseline += rowStep;
+            place += 1.0f;
+            continue;
+        }
+        const std::string figure = "+" + panel::commas((long long)row.value);
         const std::string unitWord = word;
         const float figureWide = quiet_.measure(rowSize, figure);
         const float wordWide = quiet_.measure(unitSize, unitWord) +
@@ -650,7 +680,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         std::string shouted = unitWord;
         for (char& c : shouted) c = char(std::toupper(static_cast<unsigned char>(c)));
         writeQuiet(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at,
-                   unitSize, withAlpha(ink, alpha * (row.kind == Row::Kind::Gapped ? 1.0f : 0.6f)), shouted,
+                   unitSize, withAlpha(ink, alpha * 0.6f), shouted,
                    kLaneUnitTracking);
         baseline += rowStep;
         place += 1.0f;

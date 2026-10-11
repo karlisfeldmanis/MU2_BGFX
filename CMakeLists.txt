@@ -204,6 +204,7 @@ add_executable(mu2_server
   server/src/party.cpp
   server/src/accounts.cpp
   server/src/store.cpp
+  server/src/economy.cpp
 )
 target_include_directories(mu2_server PRIVATE src)
 target_link_libraries(mu2_server PRIVATE mu_net ${MU_SQLITE})
@@ -220,6 +221,7 @@ add_executable(server_test EXCLUDE_FROM_ALL
   server/src/party.cpp
   server/src/accounts.cpp
   server/src/store.cpp
+  server/src/economy.cpp
 )
 target_include_directories(server_test PRIVATE src server/src)
 target_link_libraries(server_test PRIVATE mu_net ${MU_SQLITE})

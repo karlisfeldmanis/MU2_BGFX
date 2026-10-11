@@ -171,6 +171,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const auto took = [&]() {
         if (play.isOpen()) play.ui(Play::Ui::Took);
     };
+    // Whether the bag slot holds a bound thing, so the vault's or a trade's no can say why.
+    const auto carriesBound = [&](int slot) { return play.isOpen() && slot >= 0 && play.realm().satchel()[slot].bound; };
     // The answers to what this window asked, heard now (Play::answers).
     for (const Play::Answer& one : play.answers()) {
         const auto at = std::find_if(waiting_.begin(), waiting_.end(),
@@ -181,6 +183,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         waiting_.erase(at);
         switch (then) {
             case Then::TookOrRefused: one.ok() ? took() : refused(); break;
+            case Then::Bound: if (one.ok()) took(); else { refused(); tally_.bound(); } break;
             case Then::Refused: if (!one.ok()) refused(); break;
             case Then::Spark: one.ok() ? mixer_.spark() : refused(); break;
             case Then::ZenBox:
@@ -940,7 +943,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             expect(play.putIn(asked.use, -1), Then::TookOrRefused);
         } else if (asked.use >= 0 && dealing_ && sim::baggable(asked.use)) {
             // In a trade a right-click puts it up, as at the machine.
-            expect(play.dealPut(asked.use, -1), Then::TookOrRefused);
+            expect(play.dealPut(asked.use, -1), carriesBound(asked.use) ? Then::Bound : Then::TookOrRefused);
         } else if (asked.use >= 0) {
             expect(play.useItem(asked.use), Then::Refused);
         }
@@ -968,11 +971,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // Into the vault cell under the pointer; over the foot or the head, the first cell
             // it fits in.
             expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY)),
-                   Then::TookOrRefused);
+                   carriesBound(asked.outside) ? Then::Bound : Then::TookOrRefused);
         } else if (asked.outside >= 0 && dealing_ && deal_.covers(asked.outsideX, asked.outsideY)) {
             // Into his own box, at the cell under the pointer or the first it fits.
             expect(play.dealPut(asked.outside, deal_.cellUnder(asked.outsideX, asked.outsideY)),
-                   Then::TookOrRefused);
+                   carriesBound(asked.outside) ? Then::Bound : Then::TookOrRefused);
         } else if (asked.outside >= 0 && mixing_ &&
                    mixer_.covers(asked.outsideX, asked.outsideY)) {
             expect(play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY)),

@@ -106,7 +106,8 @@ enum class Recipe : int8_t {
 // `3 + rand()%4` is any of four), luck one in five, the option at 4/10/20% for its third,
 // second and first level, one of three extras one in five and its option's kind one in two
 // (:2817-2880). Failure empties the box, the 1st wing with it (:2909-2915; the user kept it).
-constexpr int64_t kSecondWingsZen = 5000000;
+// 1,500,000 since 2026-10-11, the machine's fees at about a quarter (the user, 2026-10-11: "chaos machine has to be reasonable prive nothing super crazy").
+constexpr int64_t kSecondWingsZen = 1500000;
 int secondWingOf(Kin kin);
 const char* secondWingName(Kin kin);
 
@@ -170,12 +171,13 @@ constexpr bool byRecipe(Service service) {
 const char* serviceName(Service service);  // the row: "Combine", "Remove Rune", ...
 const char* serviceVerb(Service service);  // the button: "Combine", "Remove", "Add Socket", "Fuse"
 
-// Rare, Epic, Legendary, and a Common's (Rarity's order).
-constexpr int64_t kRemoveRuneZen[4] = {500000, 1000000, 1500000, 100000};
+// Rare, Epic, Legendary, and a Common's (Rarity's order). This and the two under it at about a
+// fifth since 2026-10-11 (kPlusZen).
+constexpr int64_t kRemoveRuneZen[4] = {100000, 200000, 300000, 20000};
 constexpr int kAddSocketRate[3] = {50, 35, 20};                     // for the 1st, 2nd, 3rd
-constexpr int64_t kAddSocketZen = 1000000;
+constexpr int64_t kAddSocketZen = 300000;
 constexpr int kAddSocketLife = 1, kAddSocketChaos = 1, kAddSocketSoul = 2, kAddSocketBless = 2;
-constexpr int64_t kFuseZen = 500000;
+constexpr int64_t kFuseZen = 100000;
 constexpr int kFuseCount = 3;
 
 // One line of what a service takes: how many are in the box and how many it wants. A `need` of
@@ -243,6 +245,11 @@ constexpr int kInvitationRate[kInvitationMostLevel + 1] = {60, 80, 75, 70, 60};
 constexpr int kInvitationFromLevel = 10;
 constexpr int kPlusLuck = 20;
 constexpr int kPlusCap = 75;
+// +10 and +11's Zen, a step: 500,000 and 1,000,000, a quarter of WebZen's two and four million, and
+// the Chaos Weapon's and 1st wings' kMixZenPerPoint a percent, half WebZen's 10,000. Ours, with
+// the jewels back at their old prices and the merchants buying only the plain thing (the user, 2026-10-11: "chaos machine has to be reasonable prive nothing super crazy").
+constexpr int64_t kPlusZen = 500000;
+constexpr int64_t kMixZenPerPoint = 5000;
 
 // "Chaos Weapon", "+10 Item", "+11 Item", "Dinorant", "Invisibility Cloak", "1st Level Wings":
 // MuMain's recipe names.

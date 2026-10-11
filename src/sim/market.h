@@ -43,6 +43,8 @@ inline bool sells(int npc) {
 int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
                     int shots = 1, int full = 1, bool luck = false, int option = 0,
                     int excellent = 0);
+// A merchant pays a third of the PLAIN thing's price: `luck`, `option` and `excellent` are taken
+// and not paid for (2026-10-11).
 int64_t sellingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
                      int shots = 1, int full = 1, bool luck = false, int option = 0,
                      int excellent = 0);

@@ -5089,15 +5089,15 @@ void testOptions(const content::Tables& tables) {
     checkNear(double(sim::buyingPrice(krisRow, 0, 1, false, 1, 1, false, 2)) / double(base), 2.4,
               0.03, "and at +8, 0.7 x 2 more");
 
-    // The jewels by name, as WebZen's CItem::Value (zzzitem.cpp:1787-1806), a third back.
+    // The jewels by name, at MU's old values since 2026-10-11 (sim::mixValue's), a third back.
     checkEqual((long long)sim::buyingPrice(tables.items[size_t(tables.itemAt(14, 13))], 0, 1, false),
-               9000000ll, "a Bless is 9M");
+               100000ll, "a Bless is 100k");
     checkEqual((long long)sim::buyingPrice(tables.items[size_t(tables.itemAt(14, 14))], 0, 1, false),
-               6000000ll, "a Soul is 6M");
+               70000ll, "a Soul is 70k");
     checkEqual((long long)sim::buyingPrice(tables.items[size_t(tables.itemAt(12, 15))], 0, 1, false),
-               810000ll, "a Chaos is 810k");
+               40000ll, "a Chaos is 40k");
     checkEqual((long long)sim::sellingPrice(tables.items[size_t(tables.itemAt(14, 13))], 0, 1, false),
-               3000000ll, "and a Bless sells for 3M");
+               33300ll, "and a Bless sells for 33k, not 3M");
 
     // The Soul on a lucky thing: three in four.
     int rose = 0, tries = 0;
@@ -6441,6 +6441,15 @@ void testVault(const content::Tables& tables) {
                   realm.satchel()[sim::kWeaponRight].item == wornWas.item && realm.vault()[40].empty(),
               "and from the vault back into his hand");
     }
+    // A bound thing stays with its character (the user, 2026-10-11): the vault is the account's.
+    {
+        const int boundAt = realm.give(sword, -1, 0, -1, false, 0, 0, 0, nullptr, nullptr, true);
+        check(boundAt >= sim::kWorn && realm.satchel()[boundAt].bound, "a bound sword in the bag");
+        check(realm.deposit(boundAt) < 0 && realm.deposit(boundAt, 40) < 0 &&
+                  !realm.satchel()[boundAt].empty(),
+              "a bound thing is refused by the vault, let go anywhere or not");
+        realm.discard(boundAt);
+    }
     const int cell = realm.deposit(slot, (sim::kVaultRows - tall + 1) * sim::kVaultColumns);
     check(cell < 0 && !realm.satchel()[slot].empty(), "a sword does not start where it runs off the foot");
     const int kept = realm.deposit(slot, 10);
@@ -7433,7 +7442,7 @@ void testChaosMachine() {
     sim::Judged j = realm.judged();
     check(j.recipe == sim::Recipe::PlusTen, "+9, a Chaos, a Bless and a Soul are +10");
     checkEqual(j.rate, 50, "at 50%");
-    checkEqual(int(j.zen), 2000000, "for two million");
+    checkEqual(int(j.zen), int(sim::kPlusZen), "for five hundred thousand");
     check(realm.putIn(realm.give(chaos)) >= 0, "a second Chaos goes in");
     check(realm.judged().recipe == sim::Recipe::None, "and the box is no recipe with it");
     check(!realm.mix(), "so the Goblin will not run it");
@@ -7451,7 +7460,7 @@ void testChaosMachine() {
         if (attempt > 0) load(9, 1, false);
         const int64_t before = realm.money();
         check(realm.mix(), "the Goblin runs a +10 box");
-        checkEqual(int(before - realm.money()), 2000000, "and takes his two million");
+        checkEqual(int(before - realm.money()), int(sim::kPlusZen), "and takes it");
         made = realm.mixed();
         int left = 0, at = -1;
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
@@ -7472,7 +7481,7 @@ void testChaosMachine() {
     j = realm.judged();
     check(j.recipe == sim::Recipe::PlusEleven, "+10 and two of each are +11");
     checkEqual(j.rate, 65, "at 45% and twenty more for luck, WebZen's");
-    checkEqual(int(j.zen), 4000000, "for four million");
+    checkEqual(int(j.zen), int(sim::kPlusZen * 2), "for a million");
 
     // The Dinorant: ten whole Horns of Uniria and a Chaos, 70%, half a million.
     {
@@ -7662,7 +7671,7 @@ void testChaosMachine() {
     check(j.recipe == sim::Recipe::ChaosWeapon, "a +4 with an option and a Chaos is a Chaos Weapon");
     const int64_t worth = sim::mixValue(noria, optioned) + 40000;
     checkEqual(j.rate, int(std::min<int64_t>(100, worth / 20000)), "its rate is the old price over 20,000");
-    checkEqual(int(j.zen), j.rate * 10000, "and ten thousand Zen a percent");
+    checkEqual(int(j.zen), j.rate * int(sim::kMixZenPerPoint), "and five thousand Zen a percent");
     box.put(9, sim::Held{bless, 0, 1});
     check(sim::judge(noria, box).rate > j.rate, "a Bless raises it");
     sim::Held plain{sword, 4, 20};
@@ -7693,7 +7702,7 @@ void testChaosMachine() {
             const int64_t wingWorth = sim::mixValue(noria, chaosAxe) + 40000;
             checkEqual(w.rate, int(std::min<int64_t>(100, wingWorth / 20000)),
                        "at the Chaos Weapon's rate, the old price over 20,000");
-            checkEqual(int(w.zen), w.rate * 10000, "and its price");
+            checkEqual(int(w.zen), w.rate * int(sim::kMixZenPerPoint), "and its price");
             wings.put(1, optioned);
             check(sim::judge(noria, wings).recipe == sim::Recipe::Wings,
                   "another +4 with an option only raises it");
@@ -7899,7 +7908,7 @@ void testChaosMachine() {
                 check(s2.recipe == sim::Recipe::SecondWings, "a wing, a feather and a Chaos");
                 check(s2.success == "Wings of Dragon", "make a knight the Wings of Dragon");
                 checkEqual(s2.rate, 13, "a +0 wing alone, 55.4 million over 4 million");
-                checkEqual(int(s2.zen), 5000000, "for five million");
+                checkEqual(int(s2.zen), int(sim::kSecondWingsZen), "for a million and a half");
                 check(sim::judge(noria, second, sim::Service::Combine, -1, sim::Kin::DarkWizard)
                               .success == "Wings of Soul",
                       "a wizard's are the Wings of Soul");
@@ -7934,7 +7943,7 @@ void testChaosMachine() {
                     check(forge.judged().recipe == sim::Recipe::SecondWings, "and are the 2nd wings' box");
                     const int64_t before = forge.money();
                     check(forge.mix(), "the Goblin runs it");
-                    checkEqual(int(before - forge.money()), 5000000, "for five million");
+                    checkEqual(int(before - forge.money()), int(sim::kSecondWingsZen), "for a million and a half");
                     int left = 0, at = -1;
                     for (int cell = 0; cell < sim::kMachineCells; ++cell) {
                         if (!forge.machine()[cell].empty()) ++left, at = cell;
@@ -9902,9 +9911,12 @@ void testJewellery(const content::Tables& tables) {
     // Ours since 2026-10-03: a ring refines, so it keeps luck as armour does.
     check(realm.satchel()[sim::kRingRight].luck, "luck asked for is kept");
     checkEqual(realm.hero().stats.criticalChance, sim::kLuckCritical, "and a lucky ring is a crit");
-    check(sim::sellingPrice(ring, 0, 1, false, 0, 0, false, 2, 0) >
-              sim::sellingPrice(ring, 0, 1, false, 0, 0, false, 0, 0),
+    check(sim::buyingPrice(ring, 0, 1, false, 0, 0, false, 2, 0) >
+              sim::buyingPrice(ring, 0, 1, false, 0, 0, false, 0, 0),
           "the option prices a ring up");
+    checkEqual((long long)sim::sellingPrice(ring, 0, 1, false, 0, 0, true, 2, 3),
+               (long long)sim::sellingPrice(ring, 0, 1, false, 0, 0, false, 0, 0),
+               "but a merchant pays for the plain ring only (2026-10-11)");
 }
 
 // The gear score (sim::gearScore), the inventory head's figure: a worn piece's drop level, five

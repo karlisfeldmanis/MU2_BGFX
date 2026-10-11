@@ -219,8 +219,10 @@ private:
     // Strike rings the quick box `key` on a yes (a potion key drunk).
     // CloseQuest shuts the giver's dialog on a yes; Travel shuts the list and clicks.
     // Click clicks on a yes and refuses on a no; CloseAngel shuts the Archangel's page on a yes.
+    // Bound is TookOrRefused for a bound thing, whose no the tally's lane explains (Tally::bound).
     enum class Then : uint8_t {
-        TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Click, CloseAngel, Quiet
+        TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Click, CloseAngel, Quiet,
+        Bound
     };
     struct Waiting {
         uint32_t ticket = 0;

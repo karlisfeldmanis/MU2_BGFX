@@ -27,6 +27,7 @@
 // A malformed frame drops that connection, never the server.
 
 #include "host.h"
+#include "economy.h"
 
 namespace mu::server {
 
@@ -186,6 +187,7 @@ int main(int argc, char** argv) {
         core::logError("%s", error.c_str());
         return 1;
     }
+    economyOpen(store);
     // The roster's item rows (g_items): a server without them stands the screen's characters bare.
     if (!content::loadTables(assets + "/cooked/lorencia/lorencia.mur", g_items, error)) {
         core::logError("lorencia's tables: %s; the character screen's figures go bare", error.c_str());
@@ -375,6 +377,8 @@ int main(int argc, char** argv) {
                        passMs, passCpu, heardMs, ticksMs, stepped, worldMostName.empty() ? "-" : worldMostName.c_str(),
                        worldMost, partyMs, savesMs, due.size(), sendMs, goneMs);
         }
+        // Each hour, where the Zen came from and went, in its own file (economy.h).
+        economyReport(sessions);
         // Each minute, how the loop kept time.
         if (Clock::now() - g_stats.since >= kStatsEvery) {
             const double seconds = std::chrono::duration<double>(Clock::now() - g_stats.since).count();
@@ -421,6 +425,7 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < sessions.size(); ++i) ready[i] = watch[i + 1].revents != 0;
     }
     keepEveryone(sessions);
+    economyReport(sessions, true);
     for (auto& one : sessions) bye(*one, net::Why::Stopping);
     core::logf("mu2_server: stopped, %zu connected", sessions.size());
     return 0;

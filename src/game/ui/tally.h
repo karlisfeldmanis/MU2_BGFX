@@ -51,6 +51,9 @@ public:
                 float hudTop);
     // Takes everything down now: leaving the world, not the fight.
     void dismiss();
+    // A bound thing refused by the vault or a trade (Held::bound), said in the lane in the level
+    // gap's red: "Bound items stay with their character" (the user, 2026-10-11).
+    void bound();
 
     bool showing() const { return !canvas_.empty(); }
     const gfx::Canvas& canvas() const { return canvas_; }
@@ -61,7 +64,7 @@ private:
     // carry a figure: it is said in the same three square inches because that is where the eye
     // already is when it happens.
     struct Row {
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped };
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, Bound };
         Kind kind = Kind::Experience;
         int64_t value = 0;
         float age = 0.0f;
@@ -96,6 +99,10 @@ private:
     // is one size and one weight, and that weight is not the fight's.
     gfx::Face quiet_;
     bgfx::TextureHandle quietTexture_ = BGFX_INVALID_HANDLE;
+    // The warnings' face, Open Sans SemiBold, white on a red box (the user, 2026-10-11: "use red
+    // background for error messages and white text ... wiht some readable font").
+    gfx::Face plain_;
+    bgfx::TextureHandle plainTexture_ = BGFX_INVALID_HANDLE;
 
     std::vector<Row> lane_;
     // How far, in rows, the lane is still drawn below where it stands: a new row adds one and it

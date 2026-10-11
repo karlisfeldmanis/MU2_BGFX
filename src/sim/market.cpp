@@ -230,18 +230,20 @@ int orb(int number) {
         default: return 0;
     }
 }
-// The jewels are priced by name, not by the curve: 9M the Bless, 6M the Soul, 810k the Chaos,
-// 45M the Life and 36M the Creation -- our Rune -- as WebZen's CItem::Value sets them
-// (zzzitem.cpp:1787-1806, 1.00.93; the 1000s above them are a Season 4 trial server's). OpenMU's
-// table left them on the curve, where a Bless at drop level 0 sold for ~1,700.
+// The jewels are priced by name, not by the curve, at MU's old values since 2026-10-11 (the user:
+// "i dont like idea that something simple as jewels cost millions"): 100k the Bless, 70k the Soul,
+// 40k the Chaos, OpenMU's SpecialItemOldValueDictionary and the machine's own (sim::mixValue);
+// 500k the Life and 400k the Creation -- our Rune -- ours, in proportion to the Bless. They were
+// WebZen's CItem::Value (zzzitem.cpp:1787-1806, 1.00.93): 9M, 6M, 810k, 45M and 36M, so every
+// jewel a merchant took paid a third of that and Zen flooded the realm.
 int64_t jewel(int group, int number) {
-    if (group == kOrbs) return number == 15 ? 810000 : 0;
+    if (group == kOrbs) return number == 15 ? 40000 : 0;
     if (group != kPotions) return 0;
     switch (number) {
-        case 13: return 9000000;
-        case 14: return 6000000;
-        case 16: return 45000000;
-        case 22: return 36000000;
+        case 13: return 100000;
+        case 14: return 70000;
+        case 16: return 500000;
+        case 22: return 400000;
         default: return 0;
     }
 }
@@ -332,9 +334,11 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
 }
 
 int64_t sellingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
-                     int shots, int full, bool luck, int option, int excellent) {
-    const int64_t price =
-        buyingPrice(row, refinement, pieces, skill, shots, full, luck, option, excellent) / 3;
+                     int shots, int full, bool, int, int) {
+    // The plain thing only: no luck, option or excellent options are paid for (the user,
+    // 2026-10-11: "Merchants pay only for the plain item: no extra for excellent options, luck or
+    // sockets"), so a merchant is no mint for a drop nobody wants. Ours; the plus still counts.
+    const int64_t price = buyingPrice(row, refinement, pieces, skill, shots, full) / 3;
     return row.group == kPotions && row.number <= 8 ? price / 10 * 10 : round(price);
 }
 

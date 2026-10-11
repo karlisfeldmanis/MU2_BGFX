@@ -2,6 +2,7 @@
 // next, and keeping characters. Split out of main.cpp (host.h).
 
 #include "host.h"
+#include "economy.h"
 
 namespace mu::server {
 
@@ -582,6 +583,8 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
             }
         }
     }
+    // Where this tick's Zen came from and went (economy.h).
+    economyTick(world, sessions);
 }
 
 // Where he is, to be written: this world at the tile he stands on, or the world the realm has
