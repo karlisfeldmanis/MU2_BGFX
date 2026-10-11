@@ -1,0 +1,181 @@
+{
+  "item": "Object14",
+  "mu_name": "Object14",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 13,
+  "placements": 22,
+  "profile": "world",
+  "sheets": {
+    "qwwa": "ai_qwwa.png",
+    "branch01_line": "ai_branch01_line.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "qwwa": "bark",
+    "branch01_line": "foliage"
+  },
+  "material_note": "qwwa: root-wrapped stump bark: bark; branch01_line: hanging vines, cut out: foliage.",
+  "cutout": [
+    "branch01_line"
+  ],
+  "cutout_from": "branch01_line .OZT carries a real alpha channel, as decode_texture reports it.",
+  "why_this_one": "a stump hung with vines. Batch 4, trees and wood (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 1620.7,
+      "along": [
+        -61.4,
+        -31.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "bake_uv": [
+        0.355,
+        0.355,
+        0.522,
+        0.69
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 1561.2,
+      "along": [
+        -54.8,
+        -28.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "bake_uv": [
+        0.536,
+        0.355,
+        0.703,
+        0.69
+      ]
+    },
+    {
+      "island": 2,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 4506.6,
+      "along": [
+        -44.0,
+        -14.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.342,
+        0.342
+      ]
+    },
+    {
+      "island": 3,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 5142.3,
+      "along": [
+        -55.7,
+        -18.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.007,
+        0.355,
+        0.342,
+        0.69
+      ]
+    },
+    {
+      "island": 4,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 1574.7,
+      "along": [
+        -57.4,
+        -30.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "bake_uv": [
+        0.703,
+        0.007,
+        0.871,
+        0.342
+      ]
+    },
+    {
+      "island": 5,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 4116.7,
+      "along": [
+        -68.8,
+        -24.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.355,
+        0.007,
+        0.69,
+        0.342
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bark",
+      "triangles": 438,
+      "area": 46167.3,
+      "along": [
+        -118.9,
+        -6.5
+      ],
+      "mu_uv": [
+        0.007,
+        0.01,
+        0.993,
+        0.995
+      ],
+      "bake_uv": [
+        0.007,
+        0.355,
+        0.948,
+        0.993
+      ]
+    }
+  ]
+}
