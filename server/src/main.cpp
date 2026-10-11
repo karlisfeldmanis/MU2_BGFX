@@ -35,6 +35,7 @@
 #include <cstring>
 #include <deque>
 #include <ctime>
+#include <future>
 #include <map>
 #include <memory>
 #include <optional>
@@ -43,6 +44,9 @@
 #include <vector>
 
 #include <poll.h>
+#ifdef __linux__
+#include <sys/resource.h>
+#endif
 
 #include "content/tables.h"
 #include "core/log.h"
@@ -148,6 +152,30 @@ net::Datagram g_udp;
 // How many recent ticks a datagram may carry: four, a fifth of a second of a line's losses.
 constexpr size_t kRecentTicks = 4;
 
+// ---- the server's own timing (docs/sprints/25-the-clear-thread.md) -----------------------------
+// One line a minute of how the loop kept time, and one for any pass over kSlowPass naming where
+// it went: so a player's "lag" can be laid at the server's door, or not. The client logs its own
+// side (RemoteLink's slow answers, Play's long frames).
+constexpr double kSlowPass = 10.0;  // ms
+constexpr auto kStatsEvery = std::chrono::seconds(60);
+double msSince(Clock::time_point at) { return std::chrono::duration<double, std::milli>(Clock::now() - at).count(); }
+struct Stats {
+    Clock::time_point since = Clock::now();
+    int ticks = 0;
+    double tickMs = 0.0, tickMost = 0.0;
+    std::string tickMostWorld;
+    double passMost = 0.0;
+    int slowPasses = 0;
+    // A tick stepped after its deadline: how late the latest, and how many a whole tick or more.
+    double lateMost = 0.0;
+    int behind = 0;
+    uint64_t streamBytes = 0, udpBytes = 0;
+    int saved = 0;
+    double saveMost = 0.0;
+    double snapshotMost = 0.0;
+    int packs = 0;
+} g_stats;
+
 struct World {
     std::string name;
     content::Tables tables;  // owned: the realm keeps a pointer to them
@@ -156,8 +184,16 @@ struct World {
     // The world as it last stood in a snapshot (Realm::snapshot), empty before the first, and
     // every tick since it: what a newcomer's mirror is laid with and then replays.
     std::vector<uint8_t> snapshot;
-    std::vector<uint8_t> packed;  // `snapshot` packed for the line (net::pack), made at the first welcome after it
+    std::vector<uint8_t> packed;  // `snapshot` packed for the line (net::pack)
     std::vector<net::Tick> log;
+    // The next snapshot, being packed on a worker (sprint 25): until it is done the last one,
+    // its pack and the past since it stand, and a newcomer is welcomed with those. Packing was
+    // 3-5 ms on the Mac at 100 players, in a newcomer's welcome, on the thread every world ticks on.
+    struct Packed {
+        std::vector<uint8_t> snapshot, packed;
+        uint32_t tick = 0;  // the tick it stands after
+    };
+    std::future<Packed> packing;
     int sinceSnapshot = 0;
     std::vector<sim::Command> queued;  // arrived since the last tick, in order
     std::vector<net::Arrival> arriving;  // characters carried in with this tick's Joins
@@ -906,6 +942,7 @@ bool welcome(Session& one, uint32_t player) {
     one.joining = 0;
     one.keepAt = Clock::now() + g_tick * kKeepEvery;
     one.welcomed = one.socket.send(out);
+    g_stats.streamBytes += out.size();
     core::logf("%s: welcomed into %s as #%u, a %zu KB snapshot (%zu KB packed) and %u ticks after it, %d here",
                one.who.c_str(), one.world->name.c_str(), player, one.world->snapshot.size() / 1024,
                w.snapshot.size() / 1024, w.backlog,
@@ -1325,6 +1362,22 @@ bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<Worl
     return false;
 }
 
+// A snapshot packed on its worker, put in hand: the past it stands after let go.
+void takePacked(World& world) {
+    if (!world.packing.valid() ||
+        world.packing.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        return;
+    }
+    World::Packed done = world.packing.get();
+    if (!done.snapshot.empty() && done.packed.empty()) return;  // zlib said no: the last one stands
+    world.snapshot = std::move(done.snapshot);
+    world.packed = std::move(done.packed);
+    world.log.erase(world.log.begin(), std::find_if(world.log.begin(), world.log.end(), [&](const net::Tick& t) {
+                        return t.tick > done.tick;
+                    }));
+    ++g_stats.packs;
+}
+
 void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
           const std::vector<std::unique_ptr<World>>& worlds, bool early = false) {
     net::Tick t;
@@ -1395,21 +1448,33 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
         for (const auto& frame : world.recent) frames.push_back(&frame);
         if (!net::putTicks(datagram, frames)) datagram.clear();  // too big a tick: the stream's alone
     }
-    // The world as it stands after this tick, and the past before it let go. A realm a snapshot
-    // cannot carry (a raid's) keeps its whole past, as before.
-    if (++world.sinceSnapshot >= kSnapshotEvery) {
-        world.sinceSnapshot = 0;
-        std::vector<uint8_t> now;
-        if (realm.snapshot(now)) {
-            world.snapshot.swap(now);
-            world.packed.clear();
-            world.log.clear();
-        }
-    }
     for (auto& one : sessions) {
         if (one->world != &world || !one->welcomed || !one->socket.open()) continue;
         if (!one->socket.send(out)) one->socket.close();
-        if (one->udpKnown && !datagram.empty()) g_udp.send(datagram.data(), datagram.size(), &one->udpAt);
+        g_stats.streamBytes += out.size();
+        if (one->udpKnown && !datagram.empty()) {
+            g_udp.send(datagram.data(), datagram.size(), &one->udpAt);
+            g_stats.udpBytes += datagram.size();
+        }
+    }
+    // The world as it stands after this tick, taken once the tick is on its way (sprint 25), and
+    // packed on a worker; the past before it is let go when the pack is in (takePacked). A realm
+    // a snapshot cannot carry (a raid's) keeps its whole past, as before.
+    if (++world.sinceSnapshot >= kSnapshotEvery && !world.packing.valid()) {
+        world.sinceSnapshot = 0;
+        std::vector<uint8_t> now;
+        const Clock::time_point at = Clock::now();
+        if (realm.snapshot(now)) {
+            g_stats.snapshotMost = std::max(g_stats.snapshotMost, msSince(at));
+            world.packing = std::async(std::launch::async, [bytes = std::move(now), stands = uint32_t(realm.tick())]() mutable {
+#ifdef __linux__
+                setpriority(PRIO_PROCESS, 0, 10);  // this thread alone: the ticks come first
+#endif
+                World::Packed done{std::move(bytes), {}, stands};
+                net::pack(done.snapshot, done.packed);
+                return done;
+            });
+        }
     }
     // The Joins this tick answered: each newcomer welcomed with the past up to this tick, or,
     // with his connection already gone, sent out again.
@@ -1588,6 +1653,8 @@ int main(int argc, char** argv) {
     std::vector<pollfd> watch;
     uint64_t arrivals = 0;
     while (!g_stop) {
+        // Where this pass's time goes (g_stats): the poll's wait is not counted.
+        const Clock::time_point passAt = Clock::now();
         // Who arrived, and what each that spoke said.
         for (net::Socket s = listener.accept(); s.open(); s = listener.accept()) {
             auto one = std::make_unique<Session>();
@@ -1618,40 +1685,86 @@ int main(int argc, char** argv) {
             if (i < ready.size() && !ready[i]) continue;
             if (one.socket.open() && !hear(one, worlds, sessions, assets, config, seeds)) bye(one, net::Why::Protocol);
         }
+        const double heardMs = msSince(passAt);
         // Step every world on its deadline, owing ticks rather than dropping them, and flush.
         const auto now = Clock::now();
+        const Clock::time_point ticksAt = now;
+        // The slowest world's ticks this pass, for the slow-pass line.
+        double worldMost = 0.0;
+        std::string worldMostName;
+        int stepped = 0;
+        const auto timedTick = [&](World& world, bool early) {
+            const double late = std::chrono::duration<double, std::milli>(now - world.next).count();
+            if (!early && late > 0.0) {
+                g_stats.lateMost = std::max(g_stats.lateMost, late);
+                if (late >= std::chrono::duration<double, std::milli>(g_tick).count()) ++g_stats.behind;
+            }
+            const Clock::time_point at = Clock::now();
+            tick(world, sessions, worlds, early);
+            const double ms = msSince(at);
+            ++g_stats.ticks;
+            ++stepped;
+            g_stats.tickMs += ms;
+            const std::string name = world.name + (world.copy > 1 ? "/" + std::to_string(world.copy) : "");
+            if (ms > g_stats.tickMost) {
+                g_stats.tickMost = ms;
+                g_stats.tickMostWorld = name;
+            }
+            if (ms > worldMost) {
+                worldMost = ms;
+                worldMostName = name;
+            }
+        };
         for (auto& world : worlds) {
+            takePacked(*world);
             const bool early = world->wantsEarly && world->next - now > kEarlyWithin &&
                                now - world->earlyAt >= std::chrono::duration<double>(kEarlyApart);
             world->wantsEarly = false;
             if (early) {
-                tick(*world, sessions, worlds, true);
+                timedTick(*world, true);
                 world->earlyAt = now;
                 world->next = now + g_tick;
-                continue;
             }
-            int owed = 0;
-            while (world->next <= now && owed < 20) {
-                tick(*world, sessions, worlds);
+        }
+        // What each world owes, a tick of each in turn (sprint 25): after a stall one world's
+        // twenty went back to back while every other world waited behind them.
+        for (int owed = 0; owed < 20; ++owed) {
+            bool any = false;
+            for (auto& world : worlds) {
+                if (world->next > now) continue;
+                timedTick(*world, false);
                 world->next += g_tick;
-                ++owed;
+                any = true;
             }
+            if (!any) break;
+        }
+        for (auto& world : worlds) {
             if (world->next < now) world->next = now;  // more than a second behind: start again
         }
+        const double ticksMs = msSince(ticksAt);
         // The parties' upkeep, each second (partyTick).
+        const Clock::time_point partyStarted = Clock::now();
         static Clock::time_point partyAt = now;
         if (now - partyAt >= std::chrono::seconds(1)) {
             partyTick(sessions);
             partyAt = now;
         }
+        const double partyMs = msSince(partyStarted);
         // Whoever's minute it is, written in one go.
+        const Clock::time_point savesAt = Clock::now();
         std::vector<server::Store::Row> due;
         for (auto& one : sessions) {
             if (one->world == nullptr || !one->welcomed || one->keepAt > now) continue;
             due.push_back(placeOf(*one));
             one->keepAt = now + g_tick * kKeepEvery;
         }
-        if (!due.empty()) g_store.keep(due);
+        if (!due.empty()) {
+            g_store.keep(due);
+            g_stats.saved += int(due.size());
+        }
+        const double savesMs = msSince(savesAt);
+        g_stats.saveMost = std::max(g_stats.saveMost, savesMs);
+        const Clock::time_point sendAt = Clock::now();
         for (auto& one : sessions) {
             if (!one->socket.open()) continue;
             if (!one->socket.flush()) {
@@ -1662,6 +1775,8 @@ int main(int argc, char** argv) {
                 bye(*one, net::Why::Behind);
             }
         }
+        const double sendMs = msSince(sendAt);
+        const Clock::time_point goneAt = Clock::now();
         for (size_t i = 0; i < sessions.size();) {
             if (!sessions[i]->socket.open()) {
                 core::logf("%s: gone", sessions[i]->who.c_str());
@@ -1688,8 +1803,37 @@ int main(int argc, char** argv) {
                 ++i;
             }
         }
-        //
-        //
+        const double goneMs = msSince(goneAt);
+        // The pass's time, and where it went when it was long.
+        const double passMs = msSince(passAt);
+        g_stats.passMost = std::max(g_stats.passMost, passMs);
+        if (passMs > kSlowPass) {
+            ++g_stats.slowPasses;
+            core::logf("slow pass %.1f ms: heard %.1f, ticks %.1f (%d, the longest %s %.1f), party %.1f, "
+                       "saves %.1f (%zu), sent %.1f, gone %.1f",
+                       passMs, heardMs, ticksMs, stepped, worldMostName.empty() ? "-" : worldMostName.c_str(),
+                       worldMost, partyMs, savesMs, due.size(), sendMs, goneMs);
+        }
+        // Each minute, how the loop kept time.
+        if (Clock::now() - g_stats.since >= kStatsEvery) {
+            const double seconds = std::chrono::duration<double>(Clock::now() - g_stats.since).count();
+            int players = 0, bots = 0;
+            for (const auto& one : sessions) {
+                if (!one->welcomed || !one->socket.open()) continue;
+                ++players;
+                bots += one->bot;
+            }
+            core::logf("timing: %d players (%d bots), %zu worlds | %d ticks, %.3f ms mean, %.2f most (%s) | "
+                       "pass most %.1f ms, %d slow | late most %.1f ms, %d a tick behind | out %.1f KB/s stream, "
+                       "%.1f KB/s udp | %d saved, %.2f ms most | snapshot %.2f ms most, %d packed",
+                       players, bots, worlds.size(), g_stats.ticks,
+                       g_stats.ticks > 0 ? g_stats.tickMs / g_stats.ticks : 0.0, g_stats.tickMost,
+                       g_stats.tickMostWorld.empty() ? "-" : g_stats.tickMostWorld.c_str(), g_stats.passMost,
+                       g_stats.slowPasses, g_stats.lateMost, g_stats.behind, g_stats.streamBytes / 1024.0 / seconds,
+                       g_stats.udpBytes / 1024.0 / seconds, g_stats.saved, g_stats.saveMost, g_stats.snapshotMost,
+                       g_stats.packs);
+            g_stats = Stats{};
+        }
         // Then asleep until a line speaks or the next world's tick is due (sprint 24). It was a
         // 2 ms nap and a read of every line after it, 500 times a second whether anyone spoke:
         // ~0.5 us a line a pass, 13% of the box at 500 players, and up to 2 ms on an order

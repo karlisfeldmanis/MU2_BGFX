@@ -1446,6 +1446,12 @@ public:
         return mine().party != 0 && owner->party == mine().party;
     }
     void step();
+    // A tick of the player the queries answer for (lookAs) and nobody else: his commands and his
+    // two halves, every monster, every other player and the world's own clocks held where they
+    // stand. The client's guess at its own hero a round trip ahead (RemoteLink::predict, sprint
+    // 25), which only ever reads his place and facing -- never a step any mirror or the server
+    // takes, so it is no rule and agrees with nothing.
+    void stepAlone();
 
     int64_t tick() const { return tick_; }
     const std::vector<Happening>& happenings() const { return happenings_; }

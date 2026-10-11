@@ -14,8 +14,11 @@
 // is made. A deleted one is kept, stamped with when, and never read again. A row of no account
 // is the bench's: the bots' and `--new`'s, played by its token alone.
 
+#include <condition_variable>
 #include <cstdint>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -89,7 +92,16 @@ public:
     int count();
 
 private:
+    // The journal folded back into the file, on a thread of its own with its own connection, at
+    // a lowered priority (checkpoints): what SQLite did inside whichever commit crossed 4 MB of
+    // journal, on the one thread every world ticks on (docs/sprints/25-the-clear-thread.md).
+    void checkpoints(std::string path);
+
     sqlite3* db_ = nullptr;
+    std::thread checkpointer_;
+    std::mutex mutex_;
+    std::condition_variable wake_;
+    bool stopping_ = false;
 };
 
 }  // namespace mu::server

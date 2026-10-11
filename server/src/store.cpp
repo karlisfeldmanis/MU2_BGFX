@@ -1,9 +1,13 @@
 #include "store.h"
 
 #include <algorithm>
+#include <chrono>
 #include <ctime>
 
 #include <sqlite3.h>
+#ifdef __linux__
+#include <sys/resource.h>
+#endif
 
 #include "core/log.h"
 #include "net/wire.h"
@@ -71,7 +75,46 @@ bool exec(sqlite3* db, const char* sql) {
 
 }  // namespace
 
-Store::~Store() { sqlite3_close(db_); }
+// How often the journal is folded back: each pass copies only what was written since the last.
+constexpr auto kCheckpointEvery = std::chrono::seconds(10);
+
+Store::~Store() {
+    {
+        std::lock_guard<std::mutex> hold(mutex_);
+        stopping_ = true;
+    }
+    wake_.notify_all();
+    if (checkpointer_.joinable()) checkpointer_.join();
+    sqlite3_close(db_);  // the last connection: SQLite folds the journal back as it closes
+}
+
+void Store::checkpoints(std::string path) {
+#ifdef __linux__
+    setpriority(PRIO_PROCESS, 0, 10);  // this thread alone, on Linux: the ticks come first
+#endif
+    sqlite3* db = nullptr;
+    if (sqlite3_open(path.c_str(), &db) != SQLITE_OK) {
+        core::logError("characters.db: the checkpoint thread cannot open it: %s", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return;
+    }
+    sqlite3_busy_timeout(db, 2000);
+    std::unique_lock<std::mutex> lock(mutex_);
+    while (!wake_.wait_for(lock, kCheckpointEvery, [&] { return stopping_; })) {
+        lock.unlock();
+        const auto at = std::chrono::steady_clock::now();
+        int pages = 0, copied = 0;
+        // PASSIVE: never waits on the server's own writes, and they never wait on it.
+        if (sqlite3_wal_checkpoint_v2(db, nullptr, SQLITE_CHECKPOINT_PASSIVE, &pages, &copied) != SQLITE_OK) {
+            core::logError("characters.db: checkpoint: %s", sqlite3_errmsg(db));
+        } else {
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - at).count();
+            if (ms > 50.0) core::logf("characters.db: a checkpoint of %d pages took %.0f ms", copied, ms);
+        }
+        lock.lock();
+    }
+    sqlite3_close(db);
+}
 
 bool Store::open(const std::string& path, std::string& error) {
     if (sqlite3_open(path.c_str(), &db_) != SQLITE_OK) {
@@ -83,8 +126,9 @@ bool Store::open(const std::string& path, std::string& error) {
     // The journal beside it, and a write that survives the server's crash though not the box's
     // power: a minute's play at most, which the minute's writing risks anyway.
     sqlite3_busy_timeout(db_, 2000);
+    // And never folded back inside one of the server's own commits (checkpoints).
     if (!exec(db_, "PRAGMA journal_mode=WAL") || !exec(db_, "PRAGMA synchronous=NORMAL") ||
-        !exec(db_, kSchema)) {
+        !exec(db_, "PRAGMA wal_autocheckpoint=0") || !exec(db_, kSchema)) {
         error = path + ": " + sqlite3_errmsg(db_);
         return false;
     }
@@ -102,6 +146,7 @@ bool Store::open(const std::string& path, std::string& error) {
             return false;
         }
     }
+    if (path != ":memory:") checkpointer_ = std::thread(&Store::checkpoints, this, path);
     return true;
 }
 

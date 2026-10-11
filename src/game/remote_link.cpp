@@ -533,9 +533,22 @@ void RemoteLink::predict() {
             return;
         }
     }
+    // Standing, with nothing asked that the server has not answered: ahead is where the mirror
+    // has him, and laying the whole map again to say so cost a copy of it a tick (sprint 25).
+    const sim::Body& me = mirror_.hero();
+    const sim::Request::Kind doing = mirror_.order().kind;
+    const bool settled = doing == sim::Request::Kind::None || doing == sim::Request::Kind::Stop ||
+                         (doing == sim::Request::Kind::WalkTo && me.column() == mirror_.order().column &&
+                          me.row() == mirror_.order().row);
+    if (own_.empty() && !me.walking && settled && me.pushTicks == 0 && me.pushAt == 0 && me.blinkAt == 0) {
+        return;
+    }
     if (!mirror_.snapshot(aheadBytes_) || !ahead_->restoreSnapshot(aheadBytes_) || !ahead_->lookAs(you_)) {
         return;
     }
+    // He alone is stepped (Realm::stepAlone): the rest of the map stands as the mirror has it.
+    // Stepping all of it `lead_` times was 1-6 ms a tick in a town of a hundred (sprint 25), for
+    // a guess that is laid again from the mirror next tick anyway.
     const int64_t now = mirror_.tick();
     for (int k = 0; k < lead_; ++k) {
         for (const Own& one : own_) {
@@ -545,7 +558,7 @@ void RemoteLink::predict() {
             asked.player = you_;
             ahead_->command(asked);
         }
-        ahead_->step();
+        ahead_->stepAlone();
     }
     aheadOk_ = true;
 }

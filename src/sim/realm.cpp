@@ -1228,6 +1228,18 @@ void Realm::step() {
     me_ = focus;
 }
 
+void Realm::stepAlone() {
+    ++tick_;
+    happenings_.clear();
+    const size_t focus = me_;
+    applyCommands();
+    me_ = focus;
+    if (!mine().gone) heroBefore();
+    me_ = focus;
+    if (!mine().gone) heroAfter();
+    me_ = focus;
+}
+
 // The first half of a player's tick: what he is owed at its start -- a castle's gate, a summon a
 // save carried or a safe zone hid -- his potions, his charge, his recovery, Icarus's wings, the
 // floor he stands on.
