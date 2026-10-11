@@ -1269,10 +1269,10 @@ void Realm::heroBefore() {
     autoDrink(hero);
     chargeTick(hero);
     recover(hero);
-    // Icarus holds no one who cannot fly: his Dinorant worn out with no wing on, or a save
-    // opened there without them, and he goes home -- WebZen's Devias, gate 22
-    // (user.cpp:10812-10842), the map row's home here (game/world/maps.cpp).
-    if (tables_->map == kIcarusMap && hero.alive() && !me().grounded && !canFly(*tables_, me().bag)) {
+    // Icarus (rules.flight) holds no one who cannot fly -- his Dinorant worn out, no wing on, or
+    // a save opened there without them: home he goes, the row's (WebZen user.cpp:10812-10842).
+    if (rulesOf(tables_->map).flight && hero.alive() && !me().grounded &&
+        !canFly(*tables_, me().bag)) {
         me().grounded = true;
         warpHome(hero);
     }

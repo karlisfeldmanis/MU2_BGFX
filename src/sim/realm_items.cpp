@@ -766,7 +766,7 @@ bool Realm::moveItem(int from, int to) {
     // the Horn of Uniria on. WebZen refuses taking off either without the other worn
     // (protocol.cpp:5356-5375, user.cpp:16879-16925), MuMain will not equip Uniria there
     // (NewUIMyInventory.cpp:351-354). Tried on a copy, so a refusal changes nothing.
-    if (tables_->map == kIcarusMap) {
+    if (rulesOf(tables_->map).flight) {
         Satchel trial = me().bag;
         if (!move(*tables_, wearer(), trial, from, to) || !canFly(*tables_, trial)) return false;
     }
@@ -1277,7 +1277,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         }
     }
     // The first wings in Icarus, the hero's class's, the same way (sim::kIcarusWingOdds).
-    if (tables_->map == kIcarusMap && (wingDice_.nextInt(0, kIcarusWingOdds) == 0 || wingDemo_)) {
+    if (rulesOf(tables_->map).firstWings &&
+        (wingDice_.nextInt(0, kIcarusWingOdds) == 0 || wingDemo_)) {
         const int32_t item = tables_->itemAt(12, firstWingOf(mine().kin));
         if (item >= 0) {
             const content::ItemRow& row = tables_->items[size_t(item)];
@@ -1294,7 +1295,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         }
     }
     // The second class's gear from Atlans's strongest, the same way (sim::kAtlansGearOdds).
-    if (tables_->map == kAtlansMap && level >= kAtlansGearFromLevel &&
+    if (rulesOf(tables_->map).secondGear && level >= kAtlansGearFromLevel &&
         gearDice_.nextInt(0, kAtlansGearOdds) == 0) {
         int count = 0;
         for (const content::ItemRow& r : tables_->items) {
@@ -1357,9 +1358,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
 
-    // The second class's gear only where it falls (sim::kTarkanMap): Tarkan, Icarus (ours, its
-    // port's decision 9: its south reached three drop rows or none) and Blood Castle 6.
-    const bool secondGearHere = tables_->map == kTarkanMap || tables_->map == kIcarusMap ||
+    // The second class's gear only where it falls (sim::kTarkanMap): rules.second_class, and BC 6.
+    const bool secondGearHere = rulesOf(tables_->map).secondClass ||
                                 (tables_->map == kBloodCastleMap && run_.castle >= kCastles);
     const auto reaches = [level, secondGearHere](const content::ItemRow& row) {
         return row.dropLevel <= level &&

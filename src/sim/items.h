@@ -213,7 +213,7 @@ inline bool novaScrollMap(uint32_t map) { return rulesOf(map).novaScroll; }
 // Tarkan and Icarus; Blood Castle (11) only in castle 6, which the caller asks itself.
 inline bool featherMap(uint32_t map) { return rulesOf(map).feather; }
 constexpr int kFeatherCastle = 6;
-// **The first wings** in Icarus: any kill there leaves the hero's class's wing (firstWingOf), one
+// **The first wings** (Icarus's drops): a kill leaves the hero's class's wing (firstWingOf), one
 // in kIcarusWingOdds, +0 and whole, its luck as any drop's, on its own roll beside the rest.
 // INVENTION (the user, 2026-10-07: 'lets them drop'): MU's are mixed only -- WebZen's item.txt
 // MondownFlag 0 on 12/0-2, OpenMU's DropsFromMonsters = false.
@@ -1214,7 +1214,7 @@ inline bool rideMap(uint32_t) { return true; }
 // who can fly. Any wing worn (WebZen asks its presence, not its life) or a Horn of Dinorant with
 // life left, and never with the Horn of Uniria worn (gObjMoveGate, user.cpp:27201-27220; OpenMU
 // 0.95d's CanFly, Icarus.cs:46-50; MuMain's inventory will not equip Uniria there,
-// NewUIMyInventory.cpp:351-354).
+// NewUIMyInventory.cpp:351-354). Its manifest's `rules.flight`.
 constexpr uint32_t kIcarusMap = 10;
 bool canFly(const content::Tables& tables, const Satchel& bag);
 // **Blood Castle's ticket** (docs/blood-castle-port.md, Part A 2.2): the Scroll of Archangel

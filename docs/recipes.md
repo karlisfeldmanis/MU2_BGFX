@@ -84,7 +84,7 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    the gates row.
 2. `source/world/<w>/world.json`: its `name` and `show` block (copy the nearest world's;
    sprint D1), and its `rules` (arrival, home, event, floors, move order, summons, drops,
-   invasion, treasure; D4), then `./mu make realm`. Code: `sheets/worlds/<w>.json`, maybe the
+   invasion, treasure, flight, second_class; D4), then `./mu make realm`. Code: `sheets/worlds/<w>.json`, maybe the
    `content/ground.cpp` heuristics. Rebuild.
 3. Gates: the manifest's `gates` (exits and enters), then `./mu make realm`, `sim_test`, and
    rebuild the server and run `server/deploy.sh`. The index keeps the same boxes open.
@@ -98,8 +98,8 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    - Birds and crawlers: the manifest's `show` `boids` or `crawls`, which the cook also builds
      (D2); `pipeline.airs_from` when the model is another world's.
 6. Travel and the rest: `sim/realm_travel.cpp` kRows, the bot's `tools/bot/brain.h` kWorlds
-   (a copy, already wrong for Lorencia), and a map's own logic (Icarus's flight, Atlans's and
-   Tarkan's second-class gear, the events) where it has some.
+   (a copy, already wrong for Lorencia), and a map's own logic (an event's run, a quest's
+   discovery) where it has some.
 
 **Re-counted after D1 (2026-10-11):** bare land is 1 code file (`sim/maps.cpp`, was 3: arrival
 and minimap went into the manifest). For a full port, the air, reverb and music arms and the
@@ -111,8 +111,7 @@ block: a new map writes no Python. Left: `cook_anchors.py` ANCHOR_KINDS_BY_WORLD
 the NPCs (D3b). **After D3-D4c:** the gates, townsfolk and map rules are the manifest's too
 (`./mu make realm` writes the sim's tables), so a map with no logic of its own writes no C++:
 its only code is `realm_travel.cpp`'s row and the bot's copy. Left: `cook_anchors.py`
-ANCHOR_KINDS_BY_WORLD, `ornaments.cpp`'s arms (sprint G), and the Icarus and Atlans rules in
-the Broker's files.
+ANCHOR_KINDS_BY_WORLD and `ornaments.cpp`'s arms (sprint G).
 
 ## An item or weapon
 

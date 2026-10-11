@@ -288,7 +288,7 @@ TravelRefusal Realm::travelRefusal(int index) const {
     if (!hero.alive()) return TravelRefusal::Dead;
     if (hero.level < moveLevel(to.level, hero.kin)) return TravelRefusal::Level;
     if (me().money < to.zen) return TravelRefusal::Zen;
-    if (to.map == int32_t(kIcarusMap) && !canFly(*tables_, me().bag)) return TravelRefusal::Wings;
+    if (rulesOf(uint32_t(to.map)).flight && !canFly(*tables_, me().bag)) return TravelRefusal::Wings;
     return TravelRefusal::None;
 }
 

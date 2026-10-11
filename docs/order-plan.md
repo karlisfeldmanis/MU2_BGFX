@@ -637,6 +637,25 @@ session.
 - **Left:** Icarus flight and Atlans's second-class gear (`realm.cpp`, `realm_items.cpp`, the
   Broker's); `cook_anchors.py` ANCHOR_KINDS_BY_WORLD (the Aida session's).
 
+### Slice D4d: flight and the second class's gear
+
+- **Four more rules:**
+  - `flight: true` (Icarus): `Realm::heroBefore` sends home one who cannot fly, `moveItem`
+    refuses taking off the last wing, and the travel list refuses the trip without one.
+  - `drops`: `first_wings` (Icarus, kIcarusWingOdds) and `second_gear` (Atlans's strongest,
+    kAtlansGearOdds).
+  - `second_class: true` (Tarkan, Icarus): the second class's gear is in the ordinary pools.
+- **Left in code, and why:** Blood Castle 6's second-class gear (the run's castle, the
+  Instance's); the quests' map numbers (`quests.cpp`, `realm_travel.cpp` discover): quest
+  content, not map rules.
+- **Edited in the Broker's working files** with its agreement: only these hunks committed,
+  built on HEAD's blobs, so its uncommitted work (which needs its untracked files) stays out.
+- **Proved:**
+  - HEAD's six map tests, lifted from its source text, against `rulesOf` for map numbers
+    0-299: 1800 checks, 0 differ; Tarkan's `second_class` turned off is caught.
+  - sim_test's 16,960 lines identical to HEAD's (both built in worktrees), server_test 27 of 27.
+  - Live: three netbots and a client, every link "none disagreed".
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

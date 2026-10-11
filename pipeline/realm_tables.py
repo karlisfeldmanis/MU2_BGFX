@@ -17,8 +17,9 @@ A gate row:
 The gates in MU's map order, each world's rows in its manifest's order.
 
 A world's rules: {"arrive": [column, row], "home": map, "event", "floors", "move_order",
-"summons"?: false, "drops"?: ["feather", "nova_scroll", "firecracker"], "invasion"?: true,
-"treasure"?: "map" | "last_floor", "note"}.
+"summons"?: false, "drops"?: ["feather", "nova_scroll", "firecracker", "first_wings",
+"second_gear"], "invasion"?: true, "treasure"?: "map" | "last_floor", "flight"?: true,
+"second_class"?: true, "note"}.
 The world table in `move_order`, which is the M key's walk (sim::mapAfter); a manifest with no
 `rules` (the character screen's) is not a world anyone stands in.
 """
@@ -69,7 +70,7 @@ def flag(value) -> str:
     return "true" if value else "false"
 
 
-DROPS = ("feather", "nova_scroll", "firecracker")
+DROPS = ("feather", "nova_scroll", "firecracker", "first_wings", "second_gear")
 TREASURE = {None: "None", "map": "Map", "last_floor": "LastFloor"}
 
 
@@ -91,7 +92,11 @@ def maps() -> str:
                   f'.feather = {flag("feather" in drops)}', f'.novaScroll = {flag("nova_scroll" in drops)}',
                   f'.invasion = {flag(rules.get("invasion", False))}',
                   f'.firecracker = {flag("firecracker" in drops)}',
-                  f'.treasure = Treasure::{TREASURE[rules.get("treasure")]}']
+                  f'.treasure = Treasure::{TREASURE[rules.get("treasure")]}',
+                  f'.flight = {flag(rules.get("flight", False))}',
+                  f'.firstWings = {flag("first_wings" in drops)}',
+                  f'.secondGear = {flag("second_gear" in drops)}',
+                  f'.secondClass = {flag(rules.get("second_class", False))}']
         rows.append("    {" + ", ".join(fields) + "},")
     return (HEAD.format(block="rules", owner="maps.cpp")
             + "\nconstexpr MapRow kMaps[] = {\n" + "\n".join(rows) + "\n};\n")

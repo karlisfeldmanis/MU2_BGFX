@@ -50,6 +50,13 @@ struct MapRow {
     // The firecracker (firecrackerMap, sim/items.h) and a class's treasure (treasureGround).
     bool firecracker = false;
     Treasure treasure = Treasure::None;
+    // Icarus: entered and stood in only by one who can fly (sim::canFly, sim/items.h kIcarusMap).
+    bool flight = false;
+    // The first wings (kIcarusWingOdds) and Atlans's second-class gear roll (kAtlansGearOdds), and
+    // whether the second class's gear is in the ordinary pools (Realm::leave).
+    bool firstWings = false;
+    bool secondGear = false;
+    bool secondClass = false;
 };
 
 // The rules of MU's map `number`: its row, or a row of the defaults for a map not in the table
