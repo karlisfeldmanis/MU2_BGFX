@@ -293,6 +293,7 @@ add_library(mu_game STATIC
   src/game/world/desert_vents.cpp
   src/game/world/waterfall_spray.cpp
   src/game/world/small_fires.cpp
+  src/game/world/skull_ghosts.cpp
   src/game/world/sky_clouds.cpp
   src/game/world/sand_haze.cpp
   src/game/world/bubbles.cpp

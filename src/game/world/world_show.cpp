@@ -118,6 +118,7 @@ void readShow(const core::Json& show, WorldShow& out) {
     out.desertVents = named(show, "desert_vents");
     out.waterfallSpray = named(show, "waterfall_spray");
     out.smallFires = named(show, "small_fires");
+    out.skullGhosts = named(show, "skull_ghosts");
     out.castleSparks = named(show, "castle_sparks");
     out.drawbridge = named(show, "drawbridge");
     out.beacon = named(show, "beacon");

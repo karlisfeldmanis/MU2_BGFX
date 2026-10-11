@@ -203,6 +203,21 @@ Committed before it was shot: another session's half-written desk.cpp kept the g
 checkpointed, carried by index.py's `gate_rows` into the world's `gates.safe` and Aida's tables. A
 death in Aida now rises in the hall. Step 2 (the doors 120/121) is still to come.
 
+**The skull ghosts, 2026-10-11** (the user picked 'Skull ghost'). Object71's five hidden skulls
+(type 70) are world anchors of kind 22 (`cook_anchors.py`, the box's Scale in `high`), drawn by
+`game/world/skull_ghosts.h` on MuMain's numbers: about one ghost a skull every seven seconds,
+wandering about 1.2 m a second on its wobbling yaw and roll, and cut 2 s after it is 5 m out, with
+a flare01 mote dropped every frame at (0.1, 0.1, 0.25). Manifest flag `show.skull_ghosts`.
+- **The head is ours.** MuMain loads no model for MODEL_GHOST in Aida, so S6 shows only the
+  trail. Object34's `skullghost.bmd` (Object71's own skull) was tried first and read as a hard
+  ball, even on a blurred sheet (the user: 'ghost sphere has to be much more blurry'). The head
+  is now Nova's soft puff, 1.1 m across at 1.5 times the body light, a blurred soul. The user
+  said 'now its much better'.
+- **The trap:** the skulls hang 3.5-6.6 m up. The shot camera sees only about 6 tiles round the
+  hero, so stand right under one: `--at 98,171 --crowd 0 --still` sees the graveyard pair
+  (91,174 and 101,175). Without `--crowd 0` a fight drags the hero and camera away. The run log's
+  `skull ghosts: N raised` line counts them: 11 in 40 s from that pair, as MU's rate predicts.
+
 ## The one thing to know first
 
 **Aida is a Season 1 world, from 2005.** It went on Korea's test server on 2005-07-28 and live with

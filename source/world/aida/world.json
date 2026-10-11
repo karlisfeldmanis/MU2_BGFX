@@ -60,6 +60,9 @@
     "small_fires": {
       "note": "Object68's small fires on rocks and ruins (type 67, GMAida.cpp:239-242; game/world/small_fires.h)."
     },
+    "skull_ghosts": {
+      "note": "Object71's skull ghosts, MODEL_GHOST out of the five hidden skulls (type 70, GMAida.cpp:243-252; game/world/skull_ghosts.h). MuMain loads no model for it in Aida, so only its trail shows; ours adds a soft blurred head."
+    },
     "weather": {
       "kind": "rain",
       "note": "Ours: MU has no weather in Aida. Noria's rain (the user, 2026-10-11: 'we will use also rain for aida how it was on noria'), its light sheets/worlds/aida_rain.json. No jungle bed: Aida's air is aida_ambi."

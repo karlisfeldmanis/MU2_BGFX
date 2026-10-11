@@ -17,6 +17,7 @@
 #include "game/world/bubbles.h"
 #include "game/world/castle_sparks.h"
 #include "game/world/desert_vents.h"
+#include "game/world/skull_ghosts.h"
 #include "game/world/small_fires.h"
 #include "game/world/waterfall_spray.h"
 #include "game/world/world_show.h"
@@ -126,6 +127,7 @@ private:
     DesertVents desertVents_;
     WaterfallSpray waterfallSpray_;
     SmallFires smallFires_;
+    SkullGhosts skullGhosts_;
     SkyClouds skyClouds_;
     SandHaze sandHaze_;
     Bubbles bubbles_;

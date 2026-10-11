@@ -75,6 +75,7 @@ struct WorldShow {
     bool desertVents = false;  // Tarkan's (desert_vents.h)
     bool waterfallSpray = false;  // Aida's (waterfall_spray.h)
     bool smallFires = false;      // Aida's (small_fires.h)
+    bool skullGhosts = false;     // Aida's (skull_ghosts.h)
     bool castleSparks = false; // Blood Castle's (castle_sparks.h)
     bool drawbridge = false;   // Blood Castle's (drawbridge.h)
     bool beacon = false;       // Devias's Lost Tower beacon, its type 100 (ornaments.h)
