@@ -241,6 +241,8 @@ private:
     // causeway's flanks, so a three-tile bridge keeps its light from side to side while the
     // floors round it melt. The world's `void.blend_keep`. Ours.
     std::vector<std::array<int, 4>> blendKeep_;
+    // The same, per tile: void.blend_keep_mask, non-zero where the fade is not laid.
+    std::vector<uint8_t> blendKeepMask_;
     // Tile boxes, inclusive, of void the ground builds anyway as `later` parts: drawn once
     // showLater says, as MU draws a tile whose NoGround the run clears (AddTerrainAttributeRange,
     // ZzzObject.cpp:163). The world's `void.later`. Blood Castle's drawbridge gap.

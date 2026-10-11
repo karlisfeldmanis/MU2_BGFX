@@ -71,6 +71,12 @@ machine at load 9 with another session's game and netbot running.
     over the fading strip as black spikes, so **`Grass` grows nothing within `ceil(blend)` tiles
     of NoGround** in any world with a blend. Only Aida, the Lost Tower and Blood Castle have one,
     and the latter two grow no grass.
+- **The fade stays off behind the walls.** It had taken the ground behind them dark as well: a
+  black strip between a wall's top and the pond (the user: 'this is not perfect').
+  `BLEND_KEEP_NEAR_BY_MAP` writes `blend_keep.png`, every tile whose middle is within 2.5 tiles
+  of a wall (4 655 tiles). The world json names it as `void.blend_keep_mask`, `index.py` copies
+  it, and `content::Ground` reads it beside the `blend_keep` boxes. A first cut at four tiles
+  square left hard black notches where a bare lip stood near a wall.
 - After both: 1 614 void edge tiles near walkable ground, 423 of them with nothing on them, and
   those fade softly. Shot at the basin, the west channel and two pit lips, 202-236 fps.
 

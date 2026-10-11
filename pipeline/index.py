@@ -1614,6 +1614,12 @@ def worlds(root: Path, build: Path) -> list[dict]:
         if light and (document.parent / light).exists():
             shutil.copyfile(document.parent / light, target / light)
 
+        # And where the void's fade is not laid (terrain.BLEND_KEEP_NEAR_BY_MAP), a grid the
+        # world json names inside its `void`, which the json's own copy does not reach.
+        keep = (declared.get("void") or {}).get("blend_keep_mask")
+        if keep and (document.parent / keep).exists():
+            shutil.copyfile(document.parent / keep, target / keep)
+
 
         found.append({
             "name": name,

@@ -350,6 +350,14 @@ VOID_FILL_BY_MAP = {11: [(13, 8), (14, 95), (26, 81)],
 #: painted light -- and is NoMove. docs/aida-port.md.
 BORDER_FILL_BY_MAP = {33: {"walls": {17, 18, 19}, "clear": 4, "keep": [(65, 0, 240, 165)]}}
 
+#: Where a world's void.blend leaves the ground lit, by map number: every tile whose middle is
+#: within `reach` tiles of a `walls` placement -- round, and close: four tiles square left hard
+#: black notches where a bare lip stood near a wall. Ours, marked. Aida's walls stand on the ravine's lips, and the fade
+#: took the ground behind them dark too, a black strip between a wall's top and the pond (the
+#: user, 2026-10-11: 'this is not perfect'). Written as blend_keep.png beside the world json,
+#: which content::Ground reads as a mask beside its blend_keep boxes.
+BLEND_KEEP_NEAR_BY_MAP = {33: {"walls": {17, 18, 19}, "reach": 2.5}}
+
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5
 
@@ -861,6 +869,19 @@ def main() -> None:
               f"{lit.reshape(-1, 3).mean(axis=0).round().astype(int).tolist()}  -> light.png")
 
     placed = objects(world, number)
+    chasm = dict(VOID_BY_MAP[number - 1]) if number - 1 in VOID_BY_MAP else None
+    if chasm is not None and (rule := BLEND_KEEP_NEAR_BY_MAP.get(number - 1)):
+        kept = np.zeros((SIZE, SIZE), dtype=np.uint8)
+        reach = rule["reach"]
+        rows, columns = np.mgrid[0:SIZE, 0:SIZE] + 0.5
+        for one in placed:
+            if one["type"] in rule["walls"]:
+                x, y = one["at"][0] / 100, one["at"][1] / 100
+                kept[(columns - x) ** 2 + (rows - y) ** 2 <= reach * reach] = 255
+        Image.fromarray(kept, "L").save(out / "blend_keep.png")
+        chasm["blend_keep_mask"] = "blend_keep.png"
+        print(f"  blend      kept lit on {int((kept > 0).sum())} tiles near the walls "
+              f"-> blend_keep.png (BLEND_KEEP_NEAR_BY_MAP)")
     kinds: dict[str, int] = {}
     for one in placed:
         kinds[one["model"] or f"type {one['type']}"] = kinds.get(
@@ -878,7 +899,7 @@ def main() -> None:
         "light": "light.png" if lit is not None else "",
         "tile_slots": {str(slot): tile for slot, tile in named},
         **({"grass_slots": GRASS_BY_MAP[number - 1]} if number - 1 in GRASS_BY_MAP else {}),
-        **({"void": VOID_BY_MAP[number - 1]} if number - 1 in VOID_BY_MAP else {}),
+        **({"void": chasm} if chasm is not None else {}),
         **({"light_depth": LIGHT_DEPTH_BY_MAP[number - 1]} if number - 1 in LIGHT_DEPTH_BY_MAP else {}),
         **({"light_chroma": LIGHT_CHROMA_BY_MAP[number - 1]} if number - 1 in LIGHT_CHROMA_BY_MAP else {}),
         **({"figure_light": FIGURE_LIGHT_BY_MAP[number - 1]} if number - 1 in FIGURE_LIGHT_BY_MAP else {}),

@@ -653,6 +653,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     figureLight_ = float(doc["figure_light"].numberOr(0.0));
     sky_ = doc["sky"].boolOr(false);
     blendKeep_.clear();
+    blendKeepMask_.clear();
     later_.clear();
     laterShown_ = false;
     for (const char* key : {"blend_keep", "later"}) {
@@ -662,6 +663,16 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
             if (box.size() != 4) continue;
             boxes.push_back({int(box.at(0).numberOr(0)), int(box.at(1).numberOr(0)),
                              int(box.at(2).numberOr(-1)), int(box.at(3).numberOr(-1))});
+        }
+    }
+
+    if (const std::string mask = chasm["blend_keep_mask"].stringOr(""); !mask.empty()) {
+        int w = 0, h = 0;
+        blendKeepMask_ = readGrid(core::join(worldDir, mask), &w, &h, 0);
+        if (w != size_ || h != size_) {
+            core::logError("%s is %dx%d, and the world says %d tiles a side -- no blend mask",
+                           mask.c_str(), w, h, size_);
+            blendKeepMask_.clear();
         }
     }
 
@@ -1197,6 +1208,9 @@ void Ground::buildAbyss() {
                         bool kept = false;
                         for (const auto& box : blendKeep_) {
                             kept = kept || (tc >= box[0] && tr >= box[1] && tc <= box[2] && tr <= box[3]);
+                        }
+                        if (!blendKeepMask_.empty() && tc >= 0 && tr >= 0 && tc < n && tr < n) {
+                            kept = kept || blendKeepMask_[size_t(tr) * size_t(n) + size_t(tc)] != 0;
                         }
                         touches = !kept && isVoid(tc, tr);
                     }
