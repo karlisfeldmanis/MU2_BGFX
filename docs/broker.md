@@ -69,8 +69,8 @@ Buy / Sell / My listings.
 ### Sounds
 
 `window_open` when it opens, `window_click` on tabs and rows, `window_refused` on a refusal,
-`item_get` when a buy lands, `jewel_get` for a jewel, `money_drop` with every buy, listing,
-cancel and collect (the user, 2026-10-11), and a new `broker_sold`, the coin sound, for "your thing sold".
+`money_drop` alone, no item sound, with every buy, listing, cancel and collect (the user,
+2026-10-11), and a new `broker_sold`, the coin sound, for "your thing sold".
 
 ## Phases
 

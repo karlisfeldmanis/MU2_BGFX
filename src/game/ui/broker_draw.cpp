@@ -406,12 +406,24 @@ void Broker::rebuild(Play& play, Stage* stage) {
             text(thing.x + 20.0f, thing.y + 120.0f, 13.0f, style::kAshInk, "Choose a thing from your bag or vault,");
             text(thing.x + 20.0f, thing.y + 135.0f, 13.0f, style::kAshInk, "or drag one here from your bag.");
         } else {
-            controls::well(canvas_, P({thing.x, thing.y, thing.w, 96.0f}), u);
+            // The thing in full beside its picture, as the bag's card has it (the user, 2026-10-11:
+            // no card over the list, the whole of it here): its lines under the picture, the well
+            // as tall as they need, the market's cells and the last sales below.
+            const tip::Sheet sheet = describe(tables, sellSeen_, realm.wearer(), realm.satchel());
+            std::vector<std::pair<std::string, uint32_t>> lines;
+            sheetLines(sheet, &lines);
+            const int most = 11;  // under it the cells and two sales still fit the pane
+            const int shownLines = std::min<int>(int(lines.size()), most);
+            const float head = 96.0f + (shownLines > 0 ? float(shownLines) * 12.5f + 4.0f : 0.0f);
+            controls::well(canvas_, P({thing.x, thing.y, thing.w, head}), u);
             picture({thing.x + 8.0f, thing.y + 8.0f, 80.0f, 80.0f}, sellSeen_);
             text(thing.x + 96.0f, thing.y + 34.0f, 15.0f, inkOf(tables, sellSeen_), nameOf(tables, sellSeen_));
-            const tip::Sheet sheet = describe(tables, sellSeen_, realm.wearer(), realm.satchel());
             text(thing.x + 96.0f, thing.y + 50.0f, 10.5f, style::kAshInk, sheet.base);
             text(thing.x + 96.0f, thing.y + 64.0f, 10.5f, style::kAshInk, fromVault_ ? "From your vault" : "From your bag");
+            for (int i = 0; i < shownLines; ++i) {
+                text(thing.x + 8.0f, thing.y + 106.0f + float(i) * 12.5f, 11.5f, lines[size_t(i)].second, lines[size_t(i)].first);
+            }
+            const float below = head - 96.0f;
             const bool quoted = quote_.item == sellSeen_.item;
             const int64_t typical = quoted && !quote_.sales.empty() ? quote_.sales.front().price : 0;
             const std::string cells[3][2] = {
@@ -419,14 +431,14 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 {"Last sold for", typical > 0 ? panel::commas(typical) : "Never sold"},
                 {"On sale now", quoted ? std::to_string(quote_.onSale) : "..."}};
             for (int c = 0; c < 3; ++c) {
-                const Box cell{thing.x + float(c) * (thing.w / 3.0f), thing.y + 104.0f, thing.w / 3.0f - 4.0f, 34.0f};
+                const Box cell{thing.x + float(c) * (thing.w / 3.0f), thing.y + 104.0f + below, thing.w / 3.0f - 4.0f, 34.0f};
                 controls::well(canvas_, P(cell), u);
                 text(cell.x + 6.0f, cell.y + 12.0f, 10.5f, style::kAshInk, cells[c][0]);
                 text(cell.x + 6.0f, cell.y + 27.0f, 14.0f, style::kBoneHi, cells[c][1]);
             }
-            controls::kicker(canvas_, x + (thing.x + 2.0f) * k, y + (thing.y + 156.0f) * k, "Last sales", u);
-            float ly = thing.y + 172.0f;
-            for (size_t i = 0; quoted && i < quote_.sales.size() && i < 8; ++i) {
+            controls::kicker(canvas_, x + (thing.x + 2.0f) * k, y + (thing.y + 156.0f + below) * k, "Last sales", u);
+            float ly = thing.y + 172.0f + below;
+            for (size_t i = 0; quoted && i < quote_.sales.size() && i < 8 && ly < thing.bottom() - 2.0f; ++i) {
                 const sim::Sale& sale = quote_.sales[i];
                 text(thing.x + 4.0f, ly, 12.0f, style::kBone2, ago(std::max<int64_t>(0, realm.wallClock() - sale.at)));
                 right(thing.right() - 4.0f, ly, 12.0f, style::kBoneHi, panel::commas(sale.price));
@@ -583,7 +595,6 @@ void Broker::rebuild(Play& play, Stage* stage) {
         const Spot& s = spots_[size_t(hovered_)];
         sim::Held what;
         if (s.hit == Hit::Row && size_t(s.index) < page_.rows.size()) what = page_.rows[size_t(s.index)].what;
-        if (s.hit == Hit::Thing && size_t(s.index) < things_.size()) what = things_[size_t(s.index)].what;
         if (!what.empty()) {
             tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
             if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
