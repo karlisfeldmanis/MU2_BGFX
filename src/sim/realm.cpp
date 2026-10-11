@@ -1656,6 +1656,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
             std::snprintf(line, sizeof(line), "%6u %s trade with %s: event %d, %d, %d", happening.tick,
                           who, name(happening.whom).c_str(), happening.a, happening.b, happening.c);
             break;
+        case What::Gapped:
+            std::snprintf(line, sizeof(line), "%6u %s shares nothing of %s: past the level gap below %d",
+                          happening.tick, who, name(happening.whom).c_str(), happening.a);
+            break;
         case What::Answered:
             std::snprintf(line, sizeof(line), "%6u %s answered: command %d gave %d, ticket %u",
                           happening.tick, who, happening.a, happening.b, uint32_t(happening.c));

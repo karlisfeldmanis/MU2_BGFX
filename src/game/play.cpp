@@ -418,6 +418,7 @@ void Play::update(double seconds) {
                 if (happening.what == sim::What::Gained) {
                     gains_.push_back({Gain::Kind::Experience, happening.a});
                 }
+                if (happening.what == sim::What::Gapped) gains_.push_back({Gain::Kind::Gapped, happening.a});
                 // His Zen is not here either: it is in the purse from the kill's tick, but
                 // shown with the fall, in Play::releaseDrops (below, at What::Picked).
                 // A potion is not here: it is drunk between ticks, and the next step clears

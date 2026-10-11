@@ -19,7 +19,8 @@ bool Realm::setParty(uint32_t id, uint32_t party) {
     return true;
 }
 
-void Realm::partyInView(const Body& dead, const Body& earner, std::vector<Body*>* out) {
+void Realm::partyInView(const Body& dead, const Body& earner, std::vector<Body*>* out,
+                        std::vector<Body*>* gapped) {
     out->clear();
     if (earner.party == 0) {
         out->push_back(&bodies_[size_t(&earner - bodies_.data())]);
@@ -41,12 +42,24 @@ void Realm::partyInView(const Body& dead, const Body& earner, std::vector<Body*>
     // else the high one weakens it and the low one lands the blow.
     int top = 0;
     for (const Body* one : *out) top = std::max(top, one->level);
-    std::erase_if(*out, [&](const Body* one) { return one->level < top - kPartyGap; });
+    std::erase_if(*out, [&](Body* one) {
+        if (one->level >= top - kPartyGap) return false;
+        if (gapped) gapped->push_back(one);
+        return true;
+    });
 }
 
 void Realm::payKill(const Body& dead, Body& earner) {
-    std::vector<Body*> view;
-    partyInView(dead, earner, &view);
+    std::vector<Body*> view, gapped;
+    partyInView(dead, earner, &view, &gapped);
+    // Each one left out hears why, where his experience would have been (game/ui/tally.cpp).
+    int top = 0;
+    for (const Body* one : view) top = std::max(top, one->level);
+    for (const Body* one : gapped) {
+        say(What::Gapped, *one, top);
+        happenings_.back().whom = dead.id;
+        happenings_.back().audience = one->id;
+    }
     // The Rings of Wisdom's on top, each his own, and the game's rate (as Realm::kill's paid()).
     const auto rated = [&](const Body& to, double experience) {
         return int32_t(experience * kExperienceRate * double(100 + to.excel.moreExperience) / 100.0);

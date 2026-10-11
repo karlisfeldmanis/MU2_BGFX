@@ -147,6 +147,9 @@ enum class What : uint8_t {
                // row. He is stopped where he is; changing the map is the game's, as a gate's.
     Deal,      // a trade between two players (sim/realm_deal.cpp): a: a DealEvent, b and c as it
                // says. `who` is the one it is said to, `whom` the other; for him alone.
+    Gapped,    // a party kill near him that he shared nothing of, more than kPartyGap levels
+               // below the highest member near it (realm_party.cpp): `whom` the kill, a: that
+               // level. For him alone.
 };
 
 // What a trade between two players did (What::Deal). MU's trade packets 0x36-0x3D in one.
@@ -1821,7 +1824,9 @@ private:
     // **A kill paid to a party** (realm_party.cpp, docs/party.md): `earner` is whom the kill is
     // paid to by Realm::kill's rules; with no party, or none of it in view, it is his alone, as
     // it was. In view: the members alive on this map within kPartyReach of the dead.
-    void partyInView(const Body& dead, const Body& earner, std::vector<Body*>* out);
+    // `gapped`, when given, takes the members near it left out past kPartyGap.
+    void partyInView(const Body& dead, const Body& earner, std::vector<Body*>* out,
+                     std::vector<Body*>* gapped = nullptr);
     void payKill(const Body& dead, Body& earner);
     // And its quest count, for each of them in view who has the step.
     void countPartyKill(const Body& dead, const Body& earner);

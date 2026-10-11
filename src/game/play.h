@@ -548,7 +548,8 @@ public:
     // is said, and a second channel from the realm to the same three square inches of screen
     // would be two things to keep in step for no gain.
     struct Gain {
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died };
+        // Gapped: a party kill he shared nothing of, past the level gap (sim::kPartyGap).
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped };
         Kind kind = Kind::Experience;
         int64_t value = 0;
     };

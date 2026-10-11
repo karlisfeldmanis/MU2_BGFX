@@ -227,6 +227,9 @@ const uint32_t kScrimInk = byteColour(86, 8, 6);
 const uint32_t kExperienceInk = byteColour(222, 213, 196);
 const uint32_t kZenInk = byteColour(231, 201, 130);
 const uint32_t kHealthInk = byteColour(134, 201, 143);
+// A party kill he shared nothing of, past the level gap (the user, 2026-10-11: "show in red where
+// usally exp is showed ... that char is not receivning exp or quest kills because of the gap").
+const uint32_t kGappedInk = byteColour(244, 98, 84);
 const uint32_t kManaInk = byteColour(138, 166, 224);
 const uint32_t kHalo = gfx::rgba(0.0f, 0.0f, 0.0f, kHaloAlpha);
 
@@ -401,6 +404,15 @@ void Tally::collect(const Play& play, float seconds) {
                 break;
             case Play::Gain::Kind::Mana:
                 lane_.push_back({Row::Kind::Mana, gain.value, 0.0f});
+                scroll_ += 1.0f;
+                break;
+            case Play::Gain::Kind::Gapped:
+                // One row while the kills keep coming: the newest, if it is one, held up again.
+                if (!lane_.empty() && lane_.back().kind == Row::Kind::Gapped) {
+                    lane_.back().age = std::min(lane_.back().age, kRowLife * kRowIn);
+                    break;
+                }
+                lane_.push_back({Row::Kind::Gapped, gain.value, 0.0f});
                 scroll_ += 1.0f;
                 break;
             case Play::Gain::Kind::Died:
@@ -618,11 +630,13 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::Zen: ink = kZenInk; word = "zen"; break;
             case Row::Kind::Health: ink = kHealthInk; word = "life"; break;
             case Row::Kind::Mana: ink = kManaInk; word = "mana"; break;
+            case Row::Kind::Gapped: ink = kGappedInk; word = "level gap"; break;
             // Drawn above and passed over by the `continue`: it is not a gain.
             case Row::Kind::Experience:
             case Row::Kind::Died: break;
         }
-        const std::string figure = "+" + panel::commas((long long)row.value);
+        const std::string figure = row.kind == Row::Kind::Gapped ? std::string("No experience or quest kills")
+                                                                  : "+" + panel::commas((long long)row.value);
         const std::string unitWord = word;
         const float figureWide = quiet_.measure(rowSize, figure);
         const float wordWide = quiet_.measure(unitSize, unitWord) +
@@ -636,7 +650,8 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         std::string shouted = unitWord;
         for (char& c : shouted) c = char(std::toupper(static_cast<unsigned char>(c)));
         writeQuiet(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at,
-                   unitSize, withAlpha(ink, alpha * 0.6f), shouted, kLaneUnitTracking);
+                   unitSize, withAlpha(ink, alpha * (row.kind == Row::Kind::Gapped ? 0.9f : 0.6f)), shouted,
+                   kLaneUnitTracking);
         baseline += rowStep;
         place += 1.0f;
     }

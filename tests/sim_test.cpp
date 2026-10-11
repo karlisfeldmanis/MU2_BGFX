@@ -11974,10 +11974,12 @@ void testParty(const content::Tables& tables) {
     for (uint32_t one : {low, high}) gap.command({.kind = sim::Command::Kind::PartySet, .a = 7, .target = one});
     gap.command({.kind = sim::Command::Kind::Order, .player = high, .a = int(sim::Request::Kind::Attack), .target = prey});
     std::map<uint32_t, int64_t> paid;
+    int toldLow = 0, toldHigh = 0;
     for (int tick = 0; tick < 400; ++tick) {
         gap.step();
         for (const sim::Happening& one : gap.happenings()) {
             if (one.what == sim::What::Gained && one.audience == one.who) paid[one.who] += one.a;
+            if (one.what == sim::What::Gapped && one.audience == one.who) (one.who == low ? toldLow : toldHigh)++;
         }
         const sim::Body* left = gap.find(prey);
         if (left == nullptr || !left->alive()) break;
@@ -11988,6 +11990,7 @@ void testParty(const content::Tables& tables) {
     checkEqual(paid[high], int64_t(int32_t(sim::killExperience(dead->level, 100 + sim::kPartyGap + 50) * sim::kExperienceRate)),
                "and the knight a kill of his own, alone");
     checkEqual(int(gap.quest(quest).counts[0]), 0, "nor does it count on the low one's quest");
+    check(toldLow == 1 && toldHigh == 0, "and he alone is told so (What::Gapped), once");
 }
 
 // **A trade between two players** (sim/realm_deal.cpp): asked and answered, both offers put up,
