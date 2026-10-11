@@ -202,11 +202,11 @@
       "name": "Orsin the Broker",
       "figure": "mirazu",
       "at": [
-        149,
-        110
+        140,
+        139
       ],
       "look": 4,
-      "note": "Ours: the Broker (sim::kBroker, docs/broker.md), the market Lorencia, Devias and Noria share, three tiles east of Baz so the vault and the market stand together (the user, 2026-10-11). Not a MU NPC; he wears MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick, the same figure in all three towns."
+      "note": "Ours: the Broker (sim::kBroker, docs/broker.md), the market Lorencia, Devias and Noria share, three tiles east of Baz so the vault and the market stand together (the user, 2026-10-11). Moved to 140,139, on the street by the fenced garden (the user, 2026-10-12: 'move broker here in lorencia'). Not a MU NPC; he wears MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick, the same figure in all three towns."
     }
   ],
   "gates": {
