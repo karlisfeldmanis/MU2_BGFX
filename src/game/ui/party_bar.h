@@ -85,6 +85,7 @@ private:
     std::vector<Hit> hits_;
     std::string menuAsk_;  // takeMenuAsk
     int onMore_ = -1;      // the capsule whose button is under the pointer, as last drawn
+    gfx::Box leave_;       // "Leave" on his own line, empty when there is none
     uint64_t facesTaken_ = 0;
     float menuX_ = 0.0f, menuY_ = 0.0f;
     std::string targeted_;  // the target's name as last drawn: his capsule wears the gold edge

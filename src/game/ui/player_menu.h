@@ -4,8 +4,9 @@
 // had it first.
 //
 // Headed by his name, then a row each: Whisper; while you lead, Make leader and Kick on a member;
-// Invite to party on anyone of no party of yours while you lead or are in none; Inspect and Trade;
-// Leave party while you are in one. Inspect and Trade are drawn and greyed until the game has
+// Invite to party on anyone of no party of yours while you lead or are in none; Inspect and Trade.
+// Leave party is never on another player's menu: it is "Leave" on your own line over the party
+// bar (the user, 2026-10-11). Inspect and Trade are drawn and greyed until the game has
 // them: player trade and inspection are not built yet. The asks go to the server
 // (Play::askParty); a whisper is the chat's, taken by the desk from whisper(). On a server only:
 // off one there is nobody to ask.
@@ -40,6 +41,7 @@ public:
     const gfx::Canvas& canvas() const { return canvas_; }
 
 private:
+    void place(Play& play, float x, float y, float width, float height);
     void draw();
 
     struct Row {

@@ -34,6 +34,7 @@ constexpr capsule::Make kLine{3.0f, 19.0f, 3.5f, 5.5f, 8.0f, 13.5f, 0.0f, 11.5f,
 constexpr float kFace = 36.0f, kRing = 2.0f, kTuck = 10.0f;
 // The menu's button at the capsule's right end, and its gap from it.
 constexpr float kMore = 16.0f, kMoreGap = 4.0f;
+constexpr int kSelf = -2;  // onMore_: "Leave" on his own line
 constexpr float kBetween = 16.0f;  // between the party and the rest of the raid, with no heading
 constexpr uint32_t kChosen = gfx::rgba(0.878f, 0.714f, 0.361f, 0.95f);  // the target's edge, the leader's gold
 constexpr float kTrailRate = 4.0f;  // the trail closes by e^-rate a second
@@ -112,6 +113,7 @@ bool PartyBar::covers(float x, float y) const {
     for (const Hit& hit : hits_) {
         if (hit.box.has(x, y) || (hit.more.w > 0.0f && hit.more.has(x, y))) return true;
     }
+    if (leave_.w > 0.0f && leave_.has(x, y)) return true;
     return false;
 }
 
@@ -134,8 +136,17 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
     // menu, which the desk opens (game/ui/player_menu.h). The button stands only while he is
     // reachable, on this map, and on a server: off one the --raid harness's raiders are no one
     // to whisper or invite.
+    // And "Leave" on his own line over the column: he leaves at once.
     int onMore = -1;
-    for (size_t i = 0; i < hits_.size(); ++i) {
+    if (leave_.w > 0.0f && leave_.has(pointer.x, pointer.y)) {
+        onMore = kSelf;
+        if (pointer.pressed) {
+            play.askParty({net::PartyWhat::Leave, std::string()});
+            play.ui(Play::Ui::Click);
+            took_ = true;
+        }
+    }
+    for (size_t i = 0; i < hits_.size() && onMore == -1; ++i) {
         const Hit& hit = hits_[i];
         if (hit.more.w > 0.0f && hit.more.has(pointer.x, pointer.y)) {
             onMore = int(i);
@@ -193,6 +204,7 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
     unit_ = u;
     canvas_.clear();
     hits_.clear();
+    leave_ = {};
     // The target's capsule wears a thin gold edge a little outside its rim.
     const auto chosen = [&](const gfx::Box& box) {
         const float g = 3.0f * u;
@@ -223,13 +235,28 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
         return more;
     };
     float y = (540.0f - kAboveMiddle) * u;  // the unit is 1080 lines' pixel
-    // He leads: his own capsule is not drawn, so the badge stands over the column with "You lead".
-    if (leading && !others.empty()) {
+    // His own line over the column, since his own capsule is not drawn: the badge and "You lead
+    // the party" when he leads, else "You are in the party"; and "Leave" at its right end (the
+    // user, 2026-10-11: Leave party off the other players' menus; a second three-dot button
+    // over theirs read as two of the same, "now there is two seperated buttons").
+    if (inParty && !others.empty()) {
         const float base = y - 8.0f * u, s = 1.1f * u;
-        capsule::crown(canvas_, x + 1.0f * u, base + 1.0f * u, s, capsule::kCrownDrop);
-        capsule::crown(canvas_, x, base, s, capsule::kGold);
-        const float named = controls::label(canvas_, x + 18.0f * u, base, 13.0f * u, capsule::kGold, "You");
-        controls::label(canvas_, x + 18.0f * u + named + 4.0f * u, base, 13.0f * u, style::kBone2, "lead the party");
+        float at = x;
+        if (leading) {
+            capsule::crown(canvas_, x + 1.0f * u, base + 1.0f * u, s, capsule::kCrownDrop);
+            capsule::crown(canvas_, x, base, s, capsule::kGold);
+            at = x + 18.0f * u;
+        }
+        const float named = controls::label(canvas_, at, base, 13.0f * u, leading ? capsule::kGold : style::kBoneHi, "You");
+        controls::label(canvas_, at + named + 4.0f * u, base, 13.0f * u, style::kBone2,
+                        leading ? "lead the party" : "are in the party");
+        if (menuable) {
+            const float size = 13.0f * u, w = controls::labelWidth(size, "Leave");
+            const float right = x + kWide * u;
+            leave_ = {right - w - 4.0f * u, base - 14.0f * u, w + 8.0f * u, 19.0f * u};
+            controls::label(canvas_, right - w, base, size,
+                            onMore_ == kSelf ? style::kDanger : capsule::faded(style::kDanger, 0.7f), "Leave");
+        }
     }
     for (const auto* member : others) {
         capsule::Look c;

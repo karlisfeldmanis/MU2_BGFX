@@ -40,8 +40,10 @@ void PlayerMenu::show(Play& play, const std::string& name, float x, float y, flo
     rows_.push_back({"Inspect", false});
     // Trade lives while he is on this map (sim/realm_deal.cpp); the realm refuses one too far.
     rows_.push_back({"Trade", play.playerNamed(name) != 0});
-    if (inParty) rows_.push_back({"Leave party", true, true});
+    place(play, x, y, width, height);
+}
 
+void PlayerMenu::place(Play& play, float x, float y, float width, float height) {
     const float u = tip::unit();
     const float w = kWide * u, h = (kHead + kRow * float(rows_.size()) + 6.0f) * u;
     box_ = {std::clamp(x, 4.0f * u, std::max(4.0f * u, width - w - 4.0f * u)),
@@ -82,7 +84,6 @@ bool PlayerMenu::update(Play& play, const Pointer& pointer) {
             else if (row == "Make leader") play.askParty({net::PartyWhat::Promote, name_});
             else if (row == "Kick") play.askParty({net::PartyWhat::Kick, name_});
             else if (row == "Invite to party") play.askParty({net::PartyWhat::Invite, name_});
-            else if (row == "Leave party") play.askParty({net::PartyWhat::Leave, std::string()});
             else if (row == "Trade") play.dealAsk(play.playerNamed(name_));
         }
         // A greyed row holds the menu open; anything else shuts it, with the window's click.
