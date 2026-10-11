@@ -534,11 +534,12 @@ and a table compiled into the binary cannot drift between them.
     server was stopped afterwards.
 - **Then the user approved the two questions it left** (2026-10-11):
   - **Aida's gates** (OpenMU Season Six Gates.cs:534-535, 170, 267):
-    - Noria's door 120 asks 100 (MU's 130) and lets out on Aida's 113;
+    - Noria's door 120 asks 300 (MU's 130; the user: 'lets ask LVL 300 its a late game
+      activity'; 200 for the Magic Gladiator) and lets out on Aida's 113;
     - Aida's 121 back is free (MU's 10) and lets out on Noria's 122.
 
-    `testAidaGates` in sim_test proves it: a level 100 knight walks through, a level 99 is
-    told 100, the way back is free, and the tracker points at the door. 12 checks; the rest of
+    `testAidaGates` in sim_test proves it: a level 300 knight walks through, a level 299 is
+    told 300, the way back is free, and the tracker points at the door. 12 checks; the rest of
     sim_test's output is unchanged. Live, bots and a client joining in Noria by the door all
     agree with the server.
   - **`pipeline/gate_boxes.py` is gone.** It was a second list of the boxes the index keeps

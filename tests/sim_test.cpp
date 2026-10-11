@@ -6947,15 +6947,16 @@ void testAidaGates() {
           "Noria's tables load");
     check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/aida/aida.mur", aida, error),
           "Aida's tables load");
-    // Noria's door to Aida, gate 120 (OpenMU Season Six Gates.cs:534): MU asks 130, ours 100
-    // (the user, 2026-10-11); it lets out on Aida's 113, by the entrance (Gates.cs:267).
-    Seen s = walk(noria, 223, 33, 223, 30, 100);
-    checkEqual(s.gated, 120, "a level 100 knight takes Noria's door to Aida, gate 120");
+    // Noria's door to Aida, gate 120 (OpenMU Season Six Gates.cs:534): MU asks 130, ours 300,
+    // a late-game place (the user, 2026-10-11); it lets out on Aida's 113, by the entrance
+    // (Gates.cs:267).
+    Seen s = walk(noria, 223, 33, 223, 30, 300);
+    checkEqual(s.gated, 120, "a level 300 knight takes Noria's door to Aida, gate 120");
     check(s.column >= 76 && s.column <= 78 && s.row >= 9 && s.row <= 16,
           "out on Aida's gate 113 by the entrance");
-    s = walk(noria, 223, 33, 223, 30, 99);
-    checkEqual(s.gated, 0, "a level 99 knight does not");
-    checkEqual(s.barred, 100, "and is told it asks level 100");
+    s = walk(noria, 223, 33, 223, 30, 299);
+    checkEqual(s.gated, 0, "a level 299 knight does not");
+    checkEqual(s.barred, 300, "and is told it asks level 300");
     // And back, gate 121 (Gates.cs:535): MU asks 10, ours free, as every way out.
     s = walk(aida, 77, 12, 74, 11, 1);
     checkEqual(s.gated, 121, "a level 1 knight takes Aida's way back, gate 121");

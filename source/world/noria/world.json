@@ -164,9 +164,9 @@
           226,
           30
         ],
-        "level": 100,
+        "level": 300,
         "target": 113,
-        "note": "Noria's door to Aida (OpenMU VersionSeasonSix Gates.cs:534; docs/aida-port.md). MU asks 130; ours 100, the Aida session's recommendation, approved by the user 2026-10-11."
+        "note": "Noria's door to Aida (OpenMU VersionSeasonSix Gates.cs:534; docs/aida-port.md). MU asks 130; ours 300, Aida a late-game place (the user, 2026-10-11: 'lets ask LVL 300 its a late game activity'), 200 for the Magic Gladiator, who pays two thirds."
       }
     ]
   },
