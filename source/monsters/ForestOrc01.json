@@ -1,0 +1,376 @@
+{
+  "item": "ForestOrc01",
+  "mu_name": "Forest Orc",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 307 'Forest Orc' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:408); MuMain's MONSTER_FOREST_ORC (MuMain/src/source/World/GameMaps/GMAida.cpp:380).",
+  "world": "aida",
+  "object_type": 307,
+  "monster": {
+    "model_index": 103,
+    "scale": 1.15
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GMAida.cpp:380:\n\ncase MONSTER_FOREST_ORC:\n    {\n        OpenMonsterModel(MONSTER_MODEL_FOREST_ORC);\n        pCharacter = CreateCharacter(Key, MODEL_FOREST_ORC, PosX, PosY);\n        pCharacter->Object.Scale = 1.15f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "mono3": "forestorc_mono3.png",
+    "mono3eye": "forestorc_mono3eye.png"
+  },
+  "sheet_materials": {
+    "mono3": "skin",
+    "mono3eye": "skin"
+  },
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 19,
+      "poison": 19
+    },
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs:427-429 writes 19/255 to poison, ice and fire, read as WebZen's raw 19 the way Tarkan's are (realm_tuning.h); fire is not carried. Drops: no MoneyRate or MaxItemLevel for Aida exists anywhere on disk, so Tarkan's 30 and 3, as docs/aida-port.md's decision 11 says; RegTime 10, OpenMU's RespawnDelay (Aida.cs:415)."
+  },
+  "combat": {
+    "level": 74,
+    "health": 11000,
+    "minimum_damage": 258,
+    "maximum_damage": 282,
+    "defense": 197,
+    "move_range": 4,
+    "attack_range": 1,
+    "view_range": 5,
+    "move_delay": 450,
+    "attack_delay": 1400,
+    "attack_rate": 390,
+    "defense_rate": 127,
+    "attack_skill": null,
+    "note": "OpenMU VersionSeasonSix (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:408)."
+  },
+  "spawns": [
+    {
+      "map": 33,
+      "x1": 168,
+      "x2": 168,
+      "y1": 82,
+      "y2": 82,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:138"
+    },
+    {
+      "map": 33,
+      "x1": 166,
+      "x2": 166,
+      "y1": 73,
+      "y2": 73,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:139"
+    },
+    {
+      "map": 33,
+      "x1": 234,
+      "x2": 234,
+      "y1": 36,
+      "y2": 36,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:140"
+    },
+    {
+      "map": 33,
+      "x1": 86,
+      "x2": 86,
+      "y1": 171,
+      "y2": 171,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:141"
+    },
+    {
+      "map": 33,
+      "x1": 126,
+      "x2": 126,
+      "y1": 20,
+      "y2": 20,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:142"
+    },
+    {
+      "map": 33,
+      "x1": 126,
+      "x2": 126,
+      "y1": 26,
+      "y2": 26,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:143"
+    },
+    {
+      "map": 33,
+      "x1": 148,
+      "x2": 148,
+      "y1": 10,
+      "y2": 10,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:144"
+    },
+    {
+      "map": 33,
+      "x1": 148,
+      "x2": 148,
+      "y1": 19,
+      "y2": 19,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:145"
+    },
+    {
+      "map": 33,
+      "x1": 149,
+      "x2": 149,
+      "y1": 35,
+      "y2": 35,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:146"
+    },
+    {
+      "map": 33,
+      "x1": 157,
+      "x2": 157,
+      "y1": 16,
+      "y2": 16,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:147"
+    },
+    {
+      "map": 33,
+      "x1": 158,
+      "x2": 158,
+      "y1": 46,
+      "y2": 46,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:148"
+    },
+    {
+      "map": 33,
+      "x1": 166,
+      "x2": 166,
+      "y1": 57,
+      "y2": 57,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:149"
+    },
+    {
+      "map": 33,
+      "x1": 172,
+      "x2": 172,
+      "y1": 11,
+      "y2": 11,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:150"
+    },
+    {
+      "map": 33,
+      "x1": 176,
+      "x2": 176,
+      "y1": 60,
+      "y2": 60,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:151"
+    },
+    {
+      "map": 33,
+      "x1": 183,
+      "x2": 183,
+      "y1": 96,
+      "y2": 96,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:152"
+    },
+    {
+      "map": 33,
+      "x1": 187,
+      "x2": 187,
+      "y1": 17,
+      "y2": 17,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:153"
+    },
+    {
+      "map": 33,
+      "x1": 189,
+      "x2": 189,
+      "y1": 55,
+      "y2": 55,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:154"
+    },
+    {
+      "map": 33,
+      "x1": 190,
+      "x2": 190,
+      "y1": 40,
+      "y2": 40,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:155"
+    },
+    {
+      "map": 33,
+      "x1": 190,
+      "x2": 190,
+      "y1": 79,
+      "y2": 79,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:156"
+    },
+    {
+      "map": 33,
+      "x1": 194,
+      "x2": 194,
+      "y1": 33,
+      "y2": 33,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:157"
+    },
+    {
+      "map": 33,
+      "x1": 196,
+      "x2": 196,
+      "y1": 45,
+      "y2": 45,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:158"
+    },
+    {
+      "map": 33,
+      "x1": 199,
+      "x2": 199,
+      "y1": 108,
+      "y2": 108,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:159"
+    },
+    {
+      "map": 33,
+      "x1": 210,
+      "x2": 210,
+      "y1": 122,
+      "y2": 122,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:160"
+    },
+    {
+      "map": 33,
+      "x1": 212,
+      "x2": 212,
+      "y1": 62,
+      "y2": 62,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:161"
+    },
+    {
+      "map": 33,
+      "x1": 213,
+      "x2": 213,
+      "y1": 82,
+      "y2": 82,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:162"
+    },
+    {
+      "map": 33,
+      "x1": 213,
+      "x2": 213,
+      "y1": 137,
+      "y2": 137,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:163"
+    },
+    {
+      "map": 33,
+      "x1": 214,
+      "x2": 214,
+      "y1": 10,
+      "y2": 10,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:164"
+    },
+    {
+      "map": 33,
+      "x1": 225,
+      "x2": 225,
+      "y1": 149,
+      "y2": 149,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:165"
+    },
+    {
+      "map": 33,
+      "x1": 226,
+      "x2": 226,
+      "y1": 67,
+      "y2": 67,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:166"
+    },
+    {
+      "map": 33,
+      "x1": 226,
+      "x2": 226,
+      "y1": 140,
+      "y2": 140,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:167"
+    },
+    {
+      "map": 33,
+      "x1": 233,
+      "x2": 233,
+      "y1": 125,
+      "y2": 125,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:168"
+    },
+    {
+      "map": 33,
+      "x1": 234,
+      "x2": 234,
+      "y1": 111,
+      "y2": 111,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:169"
+    },
+    {
+      "map": 33,
+      "x1": 234,
+      "x2": 234,
+      "y1": 155,
+      "y2": 155,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:170"
+    },
+    {
+      "map": 33,
+      "x1": 236,
+      "x2": 236,
+      "y1": 135,
+      "y2": 135,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:171"
+    },
+    {
+      "map": 33,
+      "x1": 232,
+      "x2": 232,
+      "y1": 38,
+      "y2": 38,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:172"
+    },
+    {
+      "map": 33,
+      "x1": 171,
+      "x2": 171,
+      "y1": 82,
+      "y2": 82,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:173"
+    }
+  ],
+  "why_this_one": "To write."
+}

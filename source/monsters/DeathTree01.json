@@ -1058,6 +1058,18 @@
       ]
     }
   ],
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 18,
+      "poison": 18
+    },
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs:458-460 writes 18/255 to poison, ice and fire, read as WebZen's raw 18 the way Tarkan's are (realm_tuning.h); fire is not carried. Drops: no MoneyRate or MaxItemLevel for Aida exists anywhere on disk, so Tarkan's 30 and 3, as docs/aida-port.md's decision 11 says; RegTime 10, OpenMU's RespawnDelay (Aida.cs:446)."
+  },
   "combat": {
     "level": 72,
     "health": 10000,

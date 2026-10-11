@@ -78,6 +78,8 @@ constexpr Resistance kResistances[] = {
     {74, 13, 13},  // Alpha Crust
     {75, 15, 15},  // Great Drakan
     {77, 30, 30},  // Dark Phoenix
+    {307, 19, 19},  // Forest Orc
+    {308, 18, 18},  // Death Tree
 };
 
 constexpr DropRate kDropRates[] = {
@@ -140,6 +142,8 @@ constexpr DropRate kDropRates[] = {
     {74, 14, 3, 10},  // Alpha Crust
     {75, 14, 3, 30},  // Great Drakan
     {77, 14, 4, 150},  // Dark Phoenix
+    {307, 30, 3, 10},  // Forest Orc
+    {308, 30, 3, 10},  // Death Tree
 };
 
 constexpr Bulk kBulks[] = {
