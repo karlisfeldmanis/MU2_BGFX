@@ -12,7 +12,12 @@
     "event": false,
     "floors": false,
     "move_order": 8,
-    "note": "Icarus, MU's map 10, entered from the Lost Tower's seventh floor: no spawn gate and no safe tile, so it opens on the arrival gate 63's middle, 14,13 to 16,13 (OpenMU VersionSeasonSix Gates.cs:213; docs/icarus-port.md). A death, the Town Portal and a fall from flight go home to the Lost Tower's hall, the way he came (ours; the user, 2026-10-06: 'if char dies in icarus i think he has to resawn in lost tower'); WebZen sends them to Devias (user.cpp:22077-22081). Not 0.75's: MU added it with the second classes in 2003. MU draws no ground there, only its navy clear (the world json's `sky`); for now it takes the underground's air, no leaves and no wind, until its rain and aHeaven."
+    "summons": false,
+    "drops": [
+      "feather",
+      "nova_scroll"
+    ],
+    "note": "Icarus, MU's map 10, entered from the Lost Tower's seventh floor: no spawn gate and no safe tile, so it opens on the arrival gate 63's middle, 14,13 to 16,13 (OpenMU VersionSeasonSix Gates.cs:213; docs/icarus-port.md). A death, the Town Portal and a fall from flight go home to the Lost Tower's hall, the way he came (ours; the user, 2026-10-06: 'if char dies in icarus i think he has to resawn in lost tower'); WebZen sends them to Devias (user.cpp:22077-22081). Not 0.75's: MU added it with the second classes in 2003. MU draws no ground there, only its navy clear (the world json's `sky`); for now it takes the underground's air, no leaves and no wind, until its rain and aHeaven. No summons: WebZen refuses the cast in Icarus (user.cpp:29567-29571), MuMain's client too (ClassAttack.cpp:120), and one carried through the door is not raised on the other side. Loch's Feather falls here (sim/items.h featherMap; Blood Castle 6 too, which the castle asks itself): the user, 2026-10-09, 'feather is late game item, tarkan, icarus, bc6'. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags."
   },
   "show": {
     "air": {

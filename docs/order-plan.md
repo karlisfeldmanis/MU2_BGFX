@@ -590,9 +590,31 @@ session.
     12 `.mur` byte-identical. The shared cooked tables were backed up first and put back, so
     the Broker's cooked Kesra stands as it did.
 
-**Next: D4b, MapRules:** the `kBloodCastleMap`-style checks in seven sim files become rules
-(no summons, auras, flight, feather drops). Those files are where the Broker session works
-now, so this waits for its commit.
+### Slice D4b: the map rules, first part
+
+- **Four rules are now fields of `rules`:**
+  - `summons: false` (Icarus);
+  - `drops`: `feather` (Tarkan, Icarus) and `nova_scroll` (the Lost Tower, Atlans, Tarkan,
+    Icarus);
+  - `invasion: true` (Lorencia, Devias, Noria).
+
+  Each is a `MapRow` field. `sim::rulesOf(map)` gives a map's row, or the defaults for a map
+  not in the table.
+- **`featherMap`, `novaScrollMap` and `invasionMap` read them**, so their callers in files the
+  Broker session has open did not change. So does `realm_summon.cpp`'s Icarus test. The
+  generated table now names its fields (designated initializers).
+- **Proved:**
+  - The old map tests, verbatim, against `rulesOf` for map numbers 0-299: 1200 checks, 0
+    differ.
+  - sim_test identical to HEAD's (both built in worktrees), server_test 27 of 27.
+  - Live: three netbots and a client, every link "none disagreed".
+- **Left, and why:**
+  - The firecracker's maps include the later castles 12-17, which have no manifest.
+  - The `kBloodCastleMap` and `kDevilSquareMap` checks are the events' own logic: the plan's
+    `Instance` (S1), not map rules.
+  - Atlans's class treasure shares its test with the Lost Tower's seventh floor.
+  - The Icarus flight rules (`realm.cpp`, `realm_items.cpp`) are in files the Broker session
+    has open.
 
 ## 10. Leave alone
 

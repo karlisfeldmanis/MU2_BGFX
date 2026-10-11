@@ -9,6 +9,12 @@ namespace {
 
 }  // namespace
 
+const MapRow& rulesOf(uint32_t number) {
+    static const MapRow kNone{"", -1, {0, 0}};
+    const MapRow* row = mapNumbered(int(number));
+    return row ? *row : kNone;
+}
+
 const MapRow* mapOf(const std::string& world) {
     for (const MapRow& row : kMaps) {
         if (world == row.world) return &row;

@@ -21,6 +21,7 @@
 #include <string>
 
 #include "content/tables.h"
+#include "sim/maps.h"
 #include "sim/rules.h"
 
 namespace mu::sim {
@@ -207,9 +208,10 @@ constexpr int kFeatherFromLevel = 60;
 bool scrollOfNova(const content::ItemRow& row);
 constexpr int kNovaScrollOdds = 1500;
 constexpr int kNovaScrollFromLevel = 60;
-inline bool novaScrollMap(uint32_t map) { return map == 4 || map == 7 || map == 8 || map == 10; }
+// The maps are their manifests' `rules.drops` (source/world/<w>/world.json, sim::MapRow).
+inline bool novaScrollMap(uint32_t map) { return rulesOf(map).novaScroll; }
 // Tarkan and Icarus; Blood Castle (11) only in castle 6, which the caller asks itself.
-inline bool featherMap(uint32_t map) { return map == 8 || map == 10; }
+inline bool featherMap(uint32_t map) { return rulesOf(map).feather; }
 constexpr int kFeatherCastle = 6;
 // **The first wings** in Icarus: any kill there leaves the hero's class's wing (firstWingOf), one
 // in kIcarusWingOdds, +0 and whole, its luck as any drop's, on its own roll beside the rest.

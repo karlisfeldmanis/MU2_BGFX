@@ -36,7 +36,8 @@ bool Realm::conjure(Body& hero, const SkillRow& row) {
     if (me().summonSlot < 0 || row.summons <= 0) return false;
     // None in Icarus: WebZen refuses the cast there (user.cpp:29567-29571), MuMain's client too
     // (ClassAttack.cpp:120), and one carried through the door is not raised on the other side.
-    if (tables_->map == kIcarusMap) return false;
+    // The manifest's `rules.summons`.
+    if (!rulesOf(tables_->map).summons) return false;
     int32_t kindAt = -1;
     for (size_t i = 0; i < tables_->kinds.size(); ++i) {
         if (tables_->kinds[i].number == row.summons) {
@@ -143,7 +144,7 @@ void Realm::shelterSummon(Body& hero) {
     }
     if (me().summonOwed == 0) return;
     // Not raised for one who lies dead, nor in Icarus (Realm::conjure refuses it there): gone.
-    if (!hero.alive() || tables_->map == kIcarusMap) {
+    if (!hero.alive() || !rulesOf(tables_->map).summons) {
         me().summonOwed = 0;
         me().summonOwedHealth = 0;
         return;

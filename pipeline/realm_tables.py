@@ -16,7 +16,8 @@ A gate row:
     enters: {"number", "box", "level", "target", "sealed"?: "place", "fly"?: true, "note"}
 The gates in MU's map order, each world's rows in its manifest's order.
 
-A world's rules: {"arrive": [column, row], "home": map, "event", "floors", "move_order", "note"}.
+A world's rules: {"arrive": [column, row], "home": map, "event", "floors", "move_order",
+"summons"?: false, "drops"?: ["feather", "nova_scroll"], "invasion"?: true, "note"}.
 The world table in `move_order`, which is the M key's walk (sim::mapAfter); a manifest with no
 `rules` (the character screen's) is not a world anyone stands in.
 """
@@ -63,6 +64,10 @@ def gates() -> str:
             + "\nconstexpr EnterGate kEnters[] = {\n" + "\n".join(enters) + "\n};\n")
 
 
+def flag(value) -> str:
+    return "true" if value else "false"
+
+
 def maps() -> str:
     worlds = [(world, doc) for world, doc in world_manifest.manifests().items() if "rules" in doc]
     worlds.sort(key=lambda item: item[1]["rules"]["move_order"])
@@ -70,8 +75,13 @@ def maps() -> str:
     for world, doc in worlds:
         rules = doc["rules"]
         column, row = rules["arrive"]
-        rows.append(f'    {{"{world}", {doc["map"]}, {{{column}, {row}}}, {rules["home"]}, '
-                    f'{"true" if rules["event"] else "false"}, {"true" if rules["floors"] else "false"}}},')
+        drops = rules.get("drops", [])
+        fields = [f'.world = "{world}"', f'.number = {doc["map"]}', f'.arrive = {{{column}, {row}}}',
+                  f'.home = {rules["home"]}', f'.event = {flag(rules["event"])}',
+                  f'.floors = {flag(rules["floors"])}', f'.summons = {flag(rules.get("summons", True))}',
+                  f'.feather = {flag("feather" in drops)}', f'.novaScroll = {flag("nova_scroll" in drops)}',
+                  f'.invasion = {flag(rules.get("invasion", False))}']
+        rows.append("    {" + ", ".join(fields) + "},")
     return (HEAD.format(block="rules", owner="maps.cpp")
             + "\nconstexpr MapRow kMaps[] = {\n" + "\n".join(rows) + "\n};\n")
 

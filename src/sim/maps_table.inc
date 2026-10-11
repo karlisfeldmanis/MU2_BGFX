@@ -3,15 +3,15 @@
 // Included by src/sim/maps.cpp alone.
 
 constexpr MapRow kMaps[] = {
-    {"lorencia", 0, {142, 126}, 0, false, false},
-    {"noria", 3, {174, 112}, 0, false, false},
-    {"devias", 2, {207, 42}, 0, false, false},
-    {"dungeon", 1, {108, 247}, 0, false, true},
-    {"losttower", 4, {208, 75}, 0, false, true},
-    {"atlans", 7, {21, 17}, 0, false, false},
-    {"tarkan", 8, {195, 65}, 0, false, false},
-    {"aida", 33, {84, 11}, 0, false, false},
-    {"icarus", 10, {15, 13}, 4, false, false},
-    {"bloodcastle", 11, {13, 8}, 2, true, false},
-    {"devilsquare", 9, {137, 95}, 3, true, false},
+    {.world = "lorencia", .number = 0, .arrive = {142, 126}, .home = 0, .event = false, .floors = false, .summons = true, .feather = false, .novaScroll = false, .invasion = true},
+    {.world = "noria", .number = 3, .arrive = {174, 112}, .home = 0, .event = false, .floors = false, .summons = true, .feather = false, .novaScroll = false, .invasion = true},
+    {.world = "devias", .number = 2, .arrive = {207, 42}, .home = 0, .event = false, .floors = false, .summons = true, .feather = false, .novaScroll = false, .invasion = true},
+    {.world = "dungeon", .number = 1, .arrive = {108, 247}, .home = 0, .event = false, .floors = true, .summons = true, .feather = false, .novaScroll = false, .invasion = false},
+    {.world = "losttower", .number = 4, .arrive = {208, 75}, .home = 0, .event = false, .floors = true, .summons = true, .feather = false, .novaScroll = true, .invasion = false},
+    {.world = "atlans", .number = 7, .arrive = {21, 17}, .home = 0, .event = false, .floors = false, .summons = true, .feather = false, .novaScroll = true, .invasion = false},
+    {.world = "tarkan", .number = 8, .arrive = {195, 65}, .home = 0, .event = false, .floors = false, .summons = true, .feather = true, .novaScroll = true, .invasion = false},
+    {.world = "aida", .number = 33, .arrive = {84, 11}, .home = 0, .event = false, .floors = false, .summons = true, .feather = false, .novaScroll = false, .invasion = false},
+    {.world = "icarus", .number = 10, .arrive = {15, 13}, .home = 4, .event = false, .floors = false, .summons = false, .feather = true, .novaScroll = true, .invasion = false},
+    {.world = "bloodcastle", .number = 11, .arrive = {13, 8}, .home = 2, .event = true, .floors = false, .summons = true, .feather = false, .novaScroll = false, .invasion = false},
+    {.world = "devilsquare", .number = 9, .arrive = {137, 95}, .home = 3, .event = true, .floors = false, .summons = true, .feather = false, .novaScroll = false, .invasion = false},
 };

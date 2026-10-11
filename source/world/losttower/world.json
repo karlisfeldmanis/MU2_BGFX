@@ -12,7 +12,10 @@
     "event": false,
     "floors": true,
     "move_order": 4,
-    "note": "The Lost Tower's spawn gate 42, 203,70 to 213,81: the safe hall on its first floor (Gates.cs:138, docs/lost-tower-port.md), where a death and the Town Portal land too."
+    "drops": [
+      "nova_scroll"
+    ],
+    "note": "The Lost Tower's spawn gate 42, 203,70 to 213,81: the safe hall on its first floor (Gates.cs:138, docs/lost-tower-port.md), where a death and the Town Portal land too. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags."
   },
   "show": {
     "places": [

@@ -11,7 +11,9 @@
     "home": 0,
     "event": false,
     "floors": false,
-    "move_order": 2
+    "move_order": 2,
+    "invasion": true,
+    "note": "The Golden Dragon invades here, on its own clock (sim/invasion.h; OpenMU VersionSeasonSix InvasionMobsInitialization.cs:74-101): Lorencia first, Devias and Noria since 2026-10-08 (the user: 'dragon can land on devias,lorencia,noria')."
   },
   "show": {
     "steps": "snow",

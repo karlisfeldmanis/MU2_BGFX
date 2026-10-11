@@ -11,6 +11,7 @@
 // and blows is its manifest's `show`, which the client reads (game/world/world_show.h).
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 namespace mu::sim {
@@ -33,7 +34,20 @@ struct MapRow {
     // town's map, Atlans or Tarkan among them, there is no way back (the user, 2026-10-07: 'go
     // back! only works for dungeons with floors').
     bool floors = false;
+    // The map's rules, the manifest's `rules` too. Whether a summon may be raised here: not in
+    // Icarus (WebZen user.cpp:29567-29571).
+    bool summons = true;
+    // What a kill here may leave besides its own drops: Loch's Feather (featherMap) and the
+    // Scroll of Nova (novaScrollMap), sim/items.h.
+    bool feather = false;
+    bool novaScroll = false;
+    // Whether the Golden Dragon invades it (sim/invasion.h).
+    bool invasion = false;
 };
+
+// The rules of MU's map `number`: its row, or a row of the defaults for a map not in the table
+// (summons allowed, nothing extra dropped, no invasion).
+const MapRow& rulesOf(uint32_t number);
 
 // The row for `world`, or nullptr for one not in the table.
 const MapRow* mapOf(const std::string& world);

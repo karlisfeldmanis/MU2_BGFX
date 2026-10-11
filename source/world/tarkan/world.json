@@ -12,7 +12,11 @@
     "event": false,
     "floors": false,
     "move_order": 6,
-    "note": "Tarkan, MU's map 8, entered from Atlans's south-west lagoon: its spawn gate 57, 187,54 to 203,69, the safe town in the north-east (WebZen's gate.txt 57; docs/tarkan-port.md), where a death and the Town Portal land too. 195,65 rather than the box's middle: 195,61 is a closed statue block. Not 0.75's: MU added it with patch 0.84. MU draws it on its black clear with no leaves and no wind (MainScene.cpp:78-100), so for now it takes the underground's air."
+    "drops": [
+      "feather",
+      "nova_scroll"
+    ],
+    "note": "Tarkan, MU's map 8, entered from Atlans's south-west lagoon: its spawn gate 57, 187,54 to 203,69, the safe town in the north-east (WebZen's gate.txt 57; docs/tarkan-port.md), where a death and the Town Portal land too. 195,65 rather than the box's middle: 195,61 is a closed statue block. Not 0.75's: MU added it with patch 0.84. MU draws it on its black clear with no leaves and no wind (MainScene.cpp:78-100), so for now it takes the underground's air. Loch's Feather falls here (sim/items.h featherMap; Blood Castle 6 too, which the castle asks itself): the user, 2026-10-09, 'feather is late game item, tarkan, icarus, bc6'. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags."
   },
   "show": {
     "air": {
