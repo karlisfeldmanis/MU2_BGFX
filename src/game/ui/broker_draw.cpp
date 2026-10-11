@@ -388,9 +388,9 @@ void Broker::rebuild(Play& play, Stage* stage) {
             const bool ok = t.no == sim::BrokerNo::Yes;
             if (t.slot == sellSlot_) chosenWash(s.box);
             else if (ok && state(Hit::Thing, s.index).lift > 0.0f) canvas_.rect(P(s.box), kHover);
-            picture({s.box.x + 4.0f, s.box.y + 2.0f, 18.0f, 18.0f}, t.what);
-            text(s.box.x + 28.0f, s.box.y + 9.5f, 12.0f, ok ? inkOf(tables, t.what) : style::kAshInk2, nameOf(tables, t.what));
-            text(s.box.x + 28.0f, s.box.y + 18.5f, 10.0f, ok ? style::kAshInk : style::kAshInk2, ok ? traits(t.what) : whyNot(t.no));
+            // No picture: the user wants the list words only, the picture large once a thing is chosen.
+            text(s.box.x + 8.0f, s.box.y + 9.5f, 12.0f, ok ? inkOf(tables, t.what) : style::kAshInk2, nameOf(tables, t.what));
+            text(s.box.x + 8.0f, s.box.y + 18.5f, 10.0f, ok ? style::kAshInk : style::kAshInk2, ok ? traits(t.what) : whyNot(t.no));
         }
         if (things_.empty()) {
             text(kThings.x + 10.0f, kThings.y + 50.0f, 12.0f, style::kAshInk, fromVault_ ? "Your vault is empty." : "Your bag is empty.");
@@ -403,12 +403,12 @@ void Broker::rebuild(Play& play, Stage* stage) {
             text(thing.x + 20.0f, thing.y + 120.0f, 13.0f, style::kAshInk, "Choose a thing from your bag or vault,");
             text(thing.x + 20.0f, thing.y + 135.0f, 13.0f, style::kAshInk, "or drag one here from your bag.");
         } else {
-            controls::well(canvas_, P({thing.x, thing.y, thing.w, 60.0f}), u);
-            picture({thing.x + 8.0f, thing.y + 8.0f, 44.0f, 44.0f}, sellSeen_);
-            text(thing.x + 60.0f, thing.y + 22.0f, 15.0f, inkOf(tables, sellSeen_), nameOf(tables, sellSeen_));
+            controls::well(canvas_, P({thing.x, thing.y, thing.w, 96.0f}), u);
+            picture({thing.x + 8.0f, thing.y + 8.0f, 80.0f, 80.0f}, sellSeen_);
+            text(thing.x + 96.0f, thing.y + 34.0f, 15.0f, inkOf(tables, sellSeen_), nameOf(tables, sellSeen_));
             const tip::Sheet sheet = describe(tables, sellSeen_, realm.wearer(), realm.satchel());
-            text(thing.x + 60.0f, thing.y + 36.0f, 10.5f, style::kAshInk, sheet.base);
-            text(thing.x + 60.0f, thing.y + 50.0f, 10.5f, style::kAshInk, fromVault_ ? "From your vault" : "From your bag");
+            text(thing.x + 96.0f, thing.y + 50.0f, 10.5f, style::kAshInk, sheet.base);
+            text(thing.x + 96.0f, thing.y + 64.0f, 10.5f, style::kAshInk, fromVault_ ? "From your vault" : "From your bag");
             const bool quoted = quote_.item == sellSeen_.item;
             const int64_t typical = quoted && !quote_.sales.empty() ? quote_.sales.front().price : 0;
             const std::string cells[3][2] = {
@@ -416,13 +416,13 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 {"Last sold for", typical > 0 ? panel::commas(typical) : "Never sold"},
                 {"On sale now", quoted ? std::to_string(quote_.onSale) : "..."}};
             for (int c = 0; c < 3; ++c) {
-                const Box cell{thing.x + float(c) * (thing.w / 3.0f), thing.y + 68.0f, thing.w / 3.0f - 4.0f, 34.0f};
+                const Box cell{thing.x + float(c) * (thing.w / 3.0f), thing.y + 104.0f, thing.w / 3.0f - 4.0f, 34.0f};
                 controls::well(canvas_, P(cell), u);
                 text(cell.x + 6.0f, cell.y + 12.0f, 10.5f, style::kAshInk, cells[c][0]);
                 text(cell.x + 6.0f, cell.y + 27.0f, 14.0f, style::kBoneHi, cells[c][1]);
             }
-            controls::kicker(canvas_, x + (thing.x + 2.0f) * k, y + (thing.y + 120.0f) * k, "Last sales", u);
-            float ly = thing.y + 136.0f;
+            controls::kicker(canvas_, x + (thing.x + 2.0f) * k, y + (thing.y + 156.0f) * k, "Last sales", u);
+            float ly = thing.y + 172.0f;
             for (size_t i = 0; quoted && i < quote_.sales.size() && i < 8; ++i) {
                 const sim::Sale& sale = quote_.sales[i];
                 text(thing.x + 4.0f, ly, 12.0f, style::kBone2, ago(std::max<int64_t>(0, realm.wallClock() - sale.at)));
