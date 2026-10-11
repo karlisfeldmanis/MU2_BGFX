@@ -90,9 +90,14 @@ public:
     bool connect() {
         std::string world = world_;
         for (int tries = 0; tries < 3; ++tries) {
-            mirror_ = std::make_unique<sim::Realm>();
-            scratch_ = std::make_unique<sim::Realm>();
-            link_ = std::make_unique<game::RemoteLink>(*mirror_);
+            // **Raised on the side and swapped in only once he is in**: replaced up front, a
+            // join that failed (the server restarting) left the brain looking at the mirror just
+            // freed, and the next report or market pass read it -- netbot fell over three times
+            // on 2026-10-11 (NetBot::report, Market::tick). A unique_ptr's move keeps the realm
+            // where it is, so the link made on `mirror` still holds it after the swap.
+            auto mirror = std::make_unique<sim::Realm>();
+            auto scratch = std::make_unique<sim::Realm>();
+            auto link = std::make_unique<game::RemoteLink>(*mirror);
             net::Hello hello;
             hello.world = world;
             hello.kin = uint8_t(kin_);
@@ -101,7 +106,7 @@ public:
             hello.name = name_;
             net::Welcome welcome;
             net::Elsewhere elsewhere;
-            if (!link_->join(host_, port_, hello, welcome, &elsewhere)) {
+            if (!link->join(host_, port_, hello, welcome, &elsewhere)) {
                 if (!elsewhere.world.empty()) {
                     world = elsewhere.world;
                     continue;
@@ -109,12 +114,9 @@ public:
                 line("could not join %s:%d", host_.c_str(), port_);
                 return false;
             }
-            world_ = welcome.world;
-            token_ = welcome.token;
-            saveToken();
-            const content::Tables* tables = tablesOf(world_);
+            const content::Tables* tables = tablesOf(welcome.world);
             if (!tables) return false;
-            for (sim::Realm* realm : {mirror_.get(), scratch_.get()}) {
+            for (sim::Realm* realm : {mirror.get(), scratch.get()}) {
                 realm->configure(welcome.config);
                 if (!realm->raise(tables, welcome.seed, welcome.column, welcome.row, sim::Kin(welcome.kin),
                                   welcome.level)) {
@@ -126,6 +128,12 @@ public:
                 sim::outfit(*realm, welcome.weapon, welcome.shield);
                 if (welcome.kept) realm->restoreKept(welcome.first);
             }
+            world_ = welcome.world;
+            token_ = welcome.token;
+            saveToken();
+            link_ = std::move(link);  // the old line first: it holds the old mirror
+            scratch_ = std::move(scratch);
+            mirror_ = std::move(mirror);
             link_->catchUp();
             you_ = mirror_->hero().id;
             pending_ = 0;
@@ -172,7 +180,7 @@ public:
     }
 
     void report() {
-        if (mirror_ && link_) brain_->status();
+        if (up()) brain_->status();
     }
 
     // ---- the party (docs/party.md): what the board (Board, below) reads and says ----------
