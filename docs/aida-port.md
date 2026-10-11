@@ -96,6 +96,27 @@ but MU's baked light falls from about 90 to 1-30 across the graveyard's south ed
 A 0.8-tile fade was tried, changed nothing there, and went back to 1.5. Lifting the light floor
 is a look decision for later.
 
+**Every plain object kind, 2026-10-11** (the user: 'lets just continou to add objects and lets
+see how map develops', then 'lets take smaller batches'). In batches of four or five, each shot
+before the next:
+- the trees (Object03/04/11/15);
+- the stumps, root shrine and dead sapling (12-14/17, and 65 at MU's 0.05);
+- the ground plants (05/06/24/53/54);
+- the flower beds and vines (27/28/30, 16);
+- the boulders, heap and stone tables (08/21-23/44);
+- the statues and temple blocks (32/45/33/50/51);
+- the coffins, sword and skeletons (52/55/56/62/69/70).
+
+That makes 3 263 placements of 54 models, at about 190-260 fps, unmeasured. The 20 kinds left
+all need effect work, plus the nine hidden emitter kinds:
+- Object01 (Treeange_R), 26/29 (waterfall_R, V slide 0.375/s), 31/72 (light-flowers: `_R` bulbs,
+  green and red flickering terrain lights, spark sprites), 42 (sunlight2_R, two half-alpha added
+  passes) and 76 (a ring statue with a flare at bone 4);
+- 66/67 and 78/79, the serpents: mesh 0 streamed a second time as an unlit pass.
+
+**The shot camera** looks along +y, its centre about 12 tiles ahead of the hero and a little to
+the right, with the hero at the bottom left. To see an object, stand about 4 tiles -y of it.
+
 **Not done: mu.db gate 119.** Writing `insert into gates values (119, 33, 82, 8, 87, 14, 1)` into
 `source/mu.db` was refused by the session's permission check, so until it goes in, a death in Aida
 rises in Lorencia. Step 2 (the gates) is next.
