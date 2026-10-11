@@ -33,7 +33,6 @@ struct MonsterKind {
     int32_t viewRange = 0;
     int32_t moveTicks = 0;    // per tile
     int32_t attackTicks = 0;  // between swings
-    int32_t respawnTicks = 0;
     int32_t attackRate = 0;
     int32_t defenseRate = 0;
     int32_t attackSkill = 0;  // a monster's animation and projectile choice, not a skill system

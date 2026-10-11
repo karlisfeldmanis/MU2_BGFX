@@ -731,9 +731,24 @@ output (decided earlier the same day).
     kinds are the same, and nothing needs a recook.
   - `./mu new monster 307` (the Forest Orc, in a scratch worktree, the export stubbed): a recipe
     with `combat` and `spawns`, 36 spawns in `mu.db`, and `combat_rows` finds it.
-- **Next, E2b:** `respawn_seconds` is read by nothing in the sim (the respawn is
-  `rules.drops.regen`): drop it from the recipes, the `.mur` format and `MonsterKind`, and
-  recook every world.
+
+### Slice E2b: the dead respawn out, as done
+
+- **`respawn_seconds` is gone** from every recipe's `combat` (and the Yeti's), from
+  `index.py`'s COMBAT_COLUMNS, from `./mu new monster`, from `MonsterKind` (`respawnTicks`),
+  and from the `.mur`, now version 10. The cook's RESPAWN_VERSION075 (the Bull Fighter's and
+  the Budge Dragon's 3 s, which nothing read either) went with it. A breed's respawn is
+  `rules.drops.regen` alone (sim/realm_tuning.h kDropRates, realm_fight.cpp's kill).
+- **Recooked:** every world's tables, from the shared tree.
+- **Proved:**
+  - HEAD's cook and this one, each cooking all twelve worlds' tables from HEAD's sources into
+    scratch: every kind row (1332) and every byte after the kinds the same but the version and
+    the respawn; one changed health is caught.
+  - sim_test's 16,966 lines identical to HEAD's, each build reading its own scratch-cooked
+    tables (7441 checks, 0 failed), server_test 27 of 27.
+  - Live on the version-10 tables: three netbots and a client, every link "none disagreed".
+  - The real recook against HEAD's version 9: the same, but Lorencia's world part, which
+    9435097e (the Broker's move) changed.
 
 ## 10. Leave alone
 

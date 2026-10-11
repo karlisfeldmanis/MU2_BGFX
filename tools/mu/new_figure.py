@@ -124,7 +124,7 @@ def write_recipe(path, doc, say):
 # A recipe's `combat` (sprint E2; mu.db's monster_kinds before it), as OpenMU gives it.
 COMBAT_KEYS = ["level", "health", "minimum_damage", "maximum_damage", "defense",
                "move_range", "attack_range", "view_range", "move_delay", "attack_delay",
-               "attack_rate", "defense_rate", "respawn_seconds", "attack_skill"]
+               "attack_rate", "defense_rate", "attack_skill"]
 
 
 def new_monster(number, world, write, say):

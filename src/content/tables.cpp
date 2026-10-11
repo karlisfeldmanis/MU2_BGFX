@@ -16,10 +16,11 @@ constexpr uint32_t kSimHz = 20;
 // Version 2 added the arms, version 3 the attack actions a swing rate is made of, and version
 // 4 the items and version 5 the townsfolk (sprint 7); version 6 gave an item its defence rate,
 // version 7 what a scroll or an orb teaches, and version 8 one line of what the item itself
-// does, and version 9 the perches -- what can be sat on or leant against. There is no version 1
+// does, and version 9 the perches -- what can be sat on or leant against; version 10 dropped a
+// breed's respawn, which nothing read (the realm's is rules.drops.regen). There is no version 1
 // anywhere but in a stale build directory, and the reader says so rather than reading a file
 // whose fields have moved under it.
-constexpr uint32_t kVersion = 9;
+constexpr uint32_t kVersion = 10;
 
 }  // namespace
 
@@ -62,7 +63,7 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         MonsterKind kind;
         reader.readString(kind.figure);
         reader.readString(kind.label);
-        int32_t fields[15] = {};
+        int32_t fields[14] = {};
         reader.take(fields, sizeof(fields));
         reader.read(kind.scale);
         if (reader.failed()) {
@@ -80,10 +81,9 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         kind.viewRange = fields[8];
         kind.moveTicks = fields[9];
         kind.attackTicks = fields[10];
-        kind.respawnTicks = fields[11];
-        kind.attackRate = fields[12];
-        kind.defenseRate = fields[13];
-        kind.attackSkill = fields[14];
+        kind.attackRate = fields[11];
+        kind.defenseRate = fields[12];
+        kind.attackSkill = fields[13];
         out.kinds.push_back(std::move(kind));
     }
 

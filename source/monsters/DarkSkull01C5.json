@@ -30,8 +30,7 @@
     "attack_delay": 2000,
     "attack_rate": 470,
     "defense_rate": 175,
-    "respawn_seconds": 10,
     "attack_skill": null,
-    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. The respawn is rules.drops.regen."
   }
 }

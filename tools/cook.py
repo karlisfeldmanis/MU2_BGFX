@@ -2066,15 +2066,6 @@ def figure_set(world):
 # Realm.cs:49, `public const int Hz = 20`.
 SIM_HZ = 20
 
-# mu.db stores respawn_seconds as 10 for all sixteen breeds, and Version075 does not.
-# Lorencia.cs:89 gives the Bull Fighter 3 s and Lorencia.cs:152 the Budge Dragon 3 s; the
-# other six of Lorencia's breeds and all eight of Noria's are 10. The map files across
-# Version075 hold six distinct delays (3, 8, 10, 15, 50, 150), so "10 everywhere" is a
-# flattening in whatever wrote mu.db rather than a 0.75 fact, and it makes the two commonest
-# low nests refill three times slower than MU's. Corrected here, by breed number, and every
-# correction is printed.
-RESPAWN_VERSION075 = {0: 3, 2: 3}
-
 
 def ticks_of(milliseconds, what, name, remainders):
     """A delay in milliseconds as whole ticks, converted once, here.
@@ -2116,7 +2107,7 @@ PERCHES = world_manifest.by_map("perches", world_manifest.as_perches)
 def cook_tables(world, out_dir):
     """mu.db's rows, through index.json, as one flat versioned file the game reads whole.
 
-    The .mur format ("MU2 rules"), version 9, little-endian:
+    The .mur format ("MU2 rules"), version 10, little-endian:
 
         'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 actions, u32 items,
                 u32 folk,
@@ -2125,7 +2116,7 @@ def cook_tables(world, out_dir):
                 u16 len + label ("Bull Fighter"),
                 i32 number, level, health, minimumDamage, maximumDamage, defense,
                 i32 moveRange, attackRange, viewRange,
-                i32 moveTicks, attackTicks, respawnTicks,
+                i32 moveTicks, attackTicks,
                 i32 attackRate, defenseRate, attackSkill, f32 scale
         spawns: u32 kind (an index into the kinds above), i32 x1, x2, y1, y2, u32 count
         arms:   u16 len + name ("Sword01"), u16 len + label ("Kris"),
@@ -2211,23 +2202,18 @@ def cook_tables(world, out_dir):
                  for one in index["monsters"]}
 
     remainders = []
-    corrections = []
     kinds, spawns = [], []
     for breed in sorted(index["breeds"], key=lambda b: b["number"]):
         combat = breed["combat"]
         kind = breed["number"]
         figure, scale = figure_of.get(kind, ("", 1.0))
-        respawn = RESPAWN_VERSION075.get(kind, combat["respawn_seconds"])
-        if respawn != combat["respawn_seconds"]:
-            corrections.append(f"{combat['name']} respawn {combat['respawn_seconds']}s -> "
-                               f"{respawn}s (Version075/Maps/Lorencia.cs)")
         kinds.append(write_string(figure) + write_string(combat["name"]) + struct.pack(
-            "<15if", kind, combat["level"], combat["health"], combat["minimum_damage"],
+            "<14if", kind, combat["level"], combat["health"], combat["minimum_damage"],
             combat["maximum_damage"], combat["defense"], combat["move_range"],
             combat["attack_range"], combat["view_range"],
             ticks_of(combat["move_delay"], "move_delay", combat["name"], remainders),
             ticks_of(combat["attack_delay"], "attack_delay", combat["name"], remainders),
-            respawn * SIM_HZ, combat["attack_rate"], combat["defense_rate"],
+            combat["attack_rate"], combat["defense_rate"],
             combat.get("attack_skill", 0), scale))
         for spawn in breed.get("spawns", []):
             if spawn["map"] != number:
@@ -2424,7 +2410,7 @@ def cook_tables(world, out_dir):
             for (npc, name, figure, x, y, look) in FOLK_VERSION075.get(number, [])]
 
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 9, SIM_HZ, len(kinds), len(spawns), len(arms),
+    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 10, SIM_HZ, len(kinds), len(spawns), len(arms),
                        len(actions), len(items), len(folk), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))
@@ -2436,8 +2422,6 @@ def cook_tables(world, out_dir):
     with open(path, "wb") as handle:
         handle.write(blob)
 
-    for line in corrections:
-        print(f"cook: corrected {line}")
     for line in remainders:
         print(f"cook: WARNING {line}")
     alive = sum(struct.unpack_from("<I", one, 20)[0] for one in spawns)

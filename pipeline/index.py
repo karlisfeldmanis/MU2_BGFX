@@ -1633,12 +1633,12 @@ def worlds(root: Path, build: Path) -> list[dict]:
 
 
 #: The columns of a recipe's `combat` a fight actually reads, in the order Breed declares them
-#: (mu.db's monster_kinds until sprint E2). respawn_seconds is read by nothing in the sim, whose
-#: respawn is the recipe's rules.drops.regen; it goes in E2b.
+#: (mu.db's monster_kinds until sprint E2). The respawn is not here: it is the recipe's
+#: rules.drops.regen (sim/realm_tuning.h kDropRates).
 COMBAT_COLUMNS = (
     "level", "health", "minimum_damage", "maximum_damage", "defense",
     "move_range", "attack_range", "view_range", "move_delay", "attack_delay",
-    "attack_rate", "defense_rate", "respawn_seconds",
+    "attack_rate", "defense_rate",
 
     # And the skill it attacks with, which is the one nullable column in the table.
     #
