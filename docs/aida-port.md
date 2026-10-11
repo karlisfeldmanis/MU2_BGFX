@@ -65,7 +65,10 @@ machine at load 9 with another session's game and netbot running.
     (65,0-240,165). Every tile it reaches copies its nearest ground tile (height, sheets, painted
     light) and is NoMove: 15 752 tiles, the outer frame and the west channel. The walled ravine
     and the two enclosed pits stay void. Walls on the map's own edge get floor behind them.
-    Walkable ground is unchanged at 35.2%.
+    Walkable ground is unchanged at 35.2%. Its painted light starts at the nearest ground
+    tile's and reaches the world's walkable mean 6 steps out (`soften`). Copied whole, MU's dark
+    lip ran across the fill in straight-edged bands: a black rectangle of grass by the
+    south-east heap.
   - **`blend: 1.5`** on Aida's void: the ground fades to black over a tile and a half at every
     lip. Only `fs_ground` reads it, so the walls and rocks keep their light. Blades stood lit
     over the fading strip as black spikes, so **`Grass` grows nothing within `ceil(blend)` tiles

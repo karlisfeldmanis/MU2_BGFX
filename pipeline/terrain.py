@@ -398,9 +398,10 @@ def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndar
     return spilled, source.reshape(-1)[spilled]
 
 
-def fill_border(rule: dict, void: np.ndarray, placed: list[dict]) -> tuple[np.ndarray, np.ndarray]:
-    """Which void tiles BORDER_FILL_BY_MAP spreads ground over, and the ground tile each copies,
-    as flat indices on the [y, x] grid.
+def fill_border(rule: dict, void: np.ndarray,
+                placed: list[dict]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Which void tiles BORDER_FILL_BY_MAP spreads ground over, the ground tile each copies, as
+    flat indices on the [y, x] grid, and how many steps each lies from that tile.
     """
     from collections import deque
 
@@ -430,6 +431,7 @@ def fill_border(rule: dict, void: np.ndarray, placed: list[dict]) -> tuple[np.nd
                 queue.append((ny, nx))
     # The nearest ground tile to each, walking out from the ground through what is filled.
     source = np.full(void.shape, -1, dtype=np.int64)
+    steps = np.zeros(void.shape, dtype=np.int64)
     queue = deque()
     for y, x in zip(*np.nonzero(~void)):
         source[y, x] = y * size_x + x
@@ -440,9 +442,10 @@ def fill_border(rule: dict, void: np.ndarray, placed: list[dict]) -> tuple[np.nd
             ny, nx = y + dy, x + dx
             if 0 <= ny < size_y and 0 <= nx < size_x and filled[ny, nx] and source[ny, nx] < 0:
                 source[ny, nx] = source[y, x]
+                steps[ny, nx] = steps[y, x] + 1
                 queue.append((ny, nx))
     spread = np.flatnonzero(filled & (source >= 0))
-    return spread, source.reshape(-1)[spread]
+    return spread, source.reshape(-1)[spread], steps.reshape(-1)[spread]
 
 
 #: How much of MU's baked light's variation the ground keeps, where a world differs from
@@ -817,7 +820,7 @@ def main() -> None:
     # The ground spread over the outer void, before anything is written (BORDER_FILL_BY_MAP).
     if (rule := BORDER_FILL_BY_MAP.get(number - 1)):
         flags = np.array(flags)
-        spread, copied = fill_border(rule, (flags & NO_GROUND) != 0, objects(world, number))
+        spread, copied, steps = fill_border(rule, (flags & NO_GROUND) != 0, objects(world, number))
         grid, layer1, layer2, alpha = (np.array(plane) for plane in (grid, layer1, layer2, alpha))
         lit = np.array(lit) if lit is not None else None
         for plane in (grid, layer1, layer2, alpha, flags):
@@ -825,8 +828,14 @@ def main() -> None:
             flat[spread] = flat[copied]
         flags.reshape(-1)[spread] = NO_MOVE
         if lit is not None:
+            # Copied whole, MU's dark-painted lip ran out across the fill in straight bands (the
+            # nearest tile's light, Voronoi-style; the south-east heap, 2026-10-11). So it starts
+            # at its nearest tile's light and reaches the world's walkable mean `soften` steps out.
             flat = lit.reshape(-1, lit.shape[-1])
-            flat[spread] = flat[copied]
+            walkable = (flags & (NO_MOVE | NO_GROUND)) == 0
+            mean = lit[walkable].reshape(-1, lit.shape[-1]).mean(axis=0)
+            t = np.clip(steps / rule.get("soften", 6), 0.0, 1.0)[:, None]
+            flat[spread] = (flat[copied] * (1.0 - t) + mean * t).round().astype(flat.dtype)
         Image.fromarray(grid, "L").save(out / "height.png")
         Image.fromarray(np.stack([layer1, layer2, alpha], axis=-1), "RGB").save(out / "tiles.png")
         print(f"  border     ground spread over {len(spread)} void tiles from the map's edge "
