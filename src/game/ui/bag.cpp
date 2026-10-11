@@ -124,23 +124,28 @@ constexpr float kWornFoot = 203.0f;
 constexpr Box kHammer{panel::kWellRight - 30.0f, panel::kFootTop + 1.0f, 30.0f, 24.0f};
 // **The auto-drink dock** (sim::AutoDrink; the user, 2026-10-11, proposal A of
 // claude.ai/artifact/SXun86gQvoDEZvtEMv2yRb). The bottle stands in the foot beside the hammer,
-// and the Zen figure ranges against it. The dock is the bag's own width against its outer side,
-// from 128 above the foot rule down to the bag's foot, so it ends on the bag's line and the bag
-// keeps its 429. Two lines in it, each an Off and nine steps of ten: sim::kAutoDrinkMost is 90.
+// and the Zen figure ranges against it. The dock was a framed window beside the bag; the user,
+// 2026-10-11: "opened above inventory not on side and uses some little different desing". It is
+// a card over the bag now, the wells' width, standing on the foot rule above the bottle and
+// covering the grid's lower rows: a glass body with no title band, a small-caps head, and each
+// line one segmented meter -- an Off chip and nine steps of ten (sim::kAutoDrinkMost is 90).
 constexpr Box kBottle{kHammer.x - 4.0f - 24.0f, panel::kFootTop + 1.0f, 24.0f, 24.0f};
-constexpr float kDockGap = 6.0f;
-constexpr float kDockTop = panel::kFootRule - 128.0f;
-constexpr Box kDock{-(panel::kWidth + kDockGap), kDockTop, panel::kWidth, panel::kHeight - kDockTop};
-constexpr float kDockHead = 24.0f;
-constexpr float kDockIn = 14.0f;  // the rows' margin inside the dock
-// Each line's label baseline; its track stands six under it and its potion line under that.
-constexpr float kLineRow[2] = {kDockTop + 40.0f, kDockTop + 88.0f};
-constexpr float kStepPitch = 15.2f, kStepWide = 13.4f, kStepTall = 14.0f, kOffWide = 22.0f;
+constexpr float kDockTall = 104.0f;
+constexpr Box kDock{panel::kEdge, panel::kFootRule - 4.0f - kDockTall, panel::kWellRight - panel::kEdge,
+                    kDockTall};
+constexpr float kDockIn = 9.0f;  // the rows' margin inside the card
+// The head's baseline and its hairline; each line's label baseline, its meter under it, and
+// its potion line under that.
+constexpr float kDockHeadLine = kDock.y + 13.0f, kDockHeadRule = kDock.y + 19.0f;
+constexpr float kLineRow[2] = {kDock.y + 33.0f, kDock.y + 71.0f};
+constexpr float kMeterDrop = 4.0f, kStepTall = 11.0f, kOffWide = 22.0f, kOffGap = 4.0f;
+constexpr float kStepGap = 1.0f;
 constexpr int kSteps = sim::kAutoDrinkMost / 10;
-Box dockOff(int pool) { return {kDock.x + kDockIn, kLineRow[pool] + 6.0f, kOffWide, kStepTall}; }
+constexpr float kStepPitch = (kDock.w - 2.0f * kDockIn - kOffWide - kOffGap + kStepGap) / float(kSteps);
+Box dockOff(int pool) { return {kDock.x + kDockIn, kLineRow[pool] + kMeterDrop, kOffWide, kStepTall}; }
 Box dockStep(int pool, int step) {
-    return {kDock.x + kDockIn + kOffWide + 3.0f + float(step - 1) * kStepPitch, kLineRow[pool] + 6.0f,
-            kStepWide, kStepTall};
+    return {kDock.x + kDockIn + kOffWide + kOffGap + float(step - 1) * kStepPitch,
+            kLineRow[pool] + kMeterDrop, kStepPitch - kStepGap, kStepTall};
 }
 // The gear score's baseline, as a share of the head band: under the title's capitals, clear of
 // the rule.
@@ -239,6 +244,8 @@ bool Bag::Contents::operator==(const Contents& o) const {
            autoMana == o.autoMana && nextHealth == o.nextHealth && nextMana == o.nextMana;
 }
 
+bool Bag::underDock(float ux, float uy) const { return dockShown() && kDock.has(ux, uy); }
+
 int Bag::dockAt(float ux, float uy) {
     for (int pool = 0; pool < 2; ++pool) {
         if (dockOff(pool).has(ux, uy)) return pool * 10;
@@ -284,11 +291,7 @@ void Bag::open(const gfx::Interface& interface, panel::Arts* arts) {
 
 bool Bag::covers(float x, float y) const {
     if (!up_) return false;
-    if (Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y)) {
-        return true;
-    }
-    // The dock is the bag's too: a click on it walks nobody, and a drag let go there is no drop.
-    return dockShown() && panel::scaled(x_, y_, kDock).has(x, y);
+    return Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y);
 }
 
 void Bag::update(float width, float height, int column, const sim::Realm& realm,
@@ -310,7 +313,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
 
     // Resolved to the item's own slot rather than the cell under the pointer, so a two-cell
     // potion hovered by its lower half is still the potion.
-    const int cell = inside ? cellAt(ux, uy) : -1;
+    const int cell = inside && !underDock(ux, uy) ? cellAt(ux, uy) : -1;
     hovered_ = cell >= 0 ? bag.holder(tables, cell) : -1;
     // A vault piece riding over the bag hovers nothing: no lit cell, no card under it.
     if (!incoming_.empty()) hovered_ = -1;
@@ -320,6 +323,11 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     overHammer_ = inside && kHammer.has(ux, uy);
     overBottle_ = inside && kBottle.has(ux, uy);
     overDock_ = inside && dockShown() ? dockAt(ux, uy) : -1;
+    // A press anywhere off the dock but on the bottle puts it away, and goes on to do its own work.
+    if (pointer.pressed && docked_ && !overBottle_ && !underDock(ux, uy)) {
+        docked_ = false;
+        if (out) out->toggleDock = true;
+    }
     if (pointer.pressed && inside) {
         if (cross.has(ux, uy)) {
             closing_ = true;
@@ -563,7 +571,6 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         controls::square(canvas_, {std::round(to.right() - side), std::round(to.midY() - side * 0.5f), side, side},
                          controls::Glyph::Bottle, state, tip::unit(), false, docked_);
     }
-    if (dockShown()) drawDock(realm, x, y);
     {
         // The hammer: a Sanctuary icon square in the foot's strip. Held down with a red rim
         // while repair mode is on -- the user turned down the gilt ring it had -- and inactive
@@ -598,7 +605,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         panel::cell(canvas_, x, y, wellOf(over, sim::wearable(cells[0])),
                     ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
     };
-    if (dragging_ >= 0 && covers(now_.dragX, now_.dragY)) {
+    if (dragging_ >= 0 && covers(now_.dragX, now_.dragY) && !underDock(ux, uy)) {
         const int cell = cellAt(ux, uy);
         const sim::Held& moving = bag[dragging_];
         if (cell >= 0 && cell != dragging_ && !moving.empty()) {
@@ -634,7 +641,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // thing it works, carried or worn (Realm::refineAcross), red over a socketed piece a rune
     // cannot go in; onto a stack of its kind with room; a piece onto the worn slot it goes in
     // (Realm::wearFromVault); or into the satchel where its footprint is free.
-    if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
+    if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY) && !underDock(ux, uy)) {
         const int cell = cellAt(ux, uy);
         if (cell >= 0) {
             const content::ItemRow& row = tables.items[size_t(incoming_.item)];
@@ -739,6 +746,9 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                          gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),
                          std::to_string(held.durability), gfx::Align::Right, box.w - 2.0f * k);
     }
+
+    // The dock over all of that, under only what rides the pointer and the cards.
+    if (dockShown()) drawDock(realm, x, y);
 
     // What rides the pointer while it is dragged: its own picture, cut out of the stage at its
     // own footprint, so lifting a sword out of the bag does not resize it.
@@ -846,44 +856,61 @@ void Bag::drawDock(const sim::Realm& realm, float x, float y) {
     const content::Tables& tables = *realm.tables();
     const sim::Satchel& bag = realm.satchel();
     const sim::AutoDrink lines = realm.autoDrink();
-    controls::frame(canvas_, panel::scaled(x, y, kDock), u, "Auto-drink", nullptr, kDockHead * k);
-    const float line = 1.0f, r = 1.5f * u;
+    // The card's glass: the item card's shadow and ring, its body a shade heavier so the cells
+    // under it do not show through.
+    const Box card = panel::scaled(x, y, kDock);
+    tip::glass(canvas_, card, u, tip::ink::kRadius, style::kAsh2, style::kAsh0);
     const float left = x + (kDock.x + kDockIn) * k, right = x + (kDock.right() - kDockIn) * k;
+    controls::caps(canvas_, left, std::round(y + kDockHeadLine * k), 8.5f * u, style::kAshInk,
+                   "AUTO-DRINK");
+    canvas_.rect({left, std::round(y + kDockHeadRule * k), right - left, std::max(1.0f, std::round(0.5f * k))},
+                 style::kIronDk);
+
+    const float r = 1.5f * u;
     for (int pool = 0; pool < 2; ++pool) {
         const bool mana = pool == 1;
         const int at = mana ? lines.mana : lines.health;
         const float base = std::round(y + kLineRow[pool] * k);
-        controls::label(canvas_, left, base, 11.5f * u, style::kBone2, mana ? "Mana" : "Health");
-        controls::ranged(canvas_, right, base, 12.0f * u, style::kBoneHi,
-                         at > 0 ? std::to_string(at) + "%" : "Off");
-        // Off: lit while the line is off.
+        controls::label(canvas_, left, base, 10.5f * u, style::kBone2, mana ? "Mana" : "Health");
+        controls::ranged(canvas_, right, base, 11.0f * u, at > 0 ? style::kBoneHi : style::kAshInk,
+                         at > 0 ? "under " + std::to_string(at) + "%" : "Off");
+        // Off: a flat chip, raised while the line is off.
         {
             const Box b = panel::scaled(x, y, dockOff(pool));
             const bool over = overDock_ == pool * 10;
-            const uint32_t rim = over ? style::kIronHi : style::kIronDk;
-            tip::panel(canvas_, b, r, rim, rim);
-            const uint32_t body = at == 0 ? style::kAsh4 : style::kAsh2;
-            tip::panel(canvas_, b.grown(-line), r - line, body, body);
-            const float size = 9.0f * u;
+            const uint32_t body = at == 0 ? style::kAsh4 : over ? style::kAsh3 : style::kAsh1;
+            tip::panel(canvas_, b, r, body, body);
+            if (over || at == 0) canvas_.outline(b, 1.0f, over ? style::kIronHi : style::kIronLo);
+            const float size = 8.5f * u;
             const float wide = controls::labelWidth(size, "Off");
             controls::label(canvas_, std::round(b.midX() - wide * 0.5f),
                             std::round(controls::middle(b.y, b.h, size)), size,
                             at == 0 ? style::kBoneHi : style::kAshInk, "Off");
         }
-        // The nine steps, filled in the pool's colour up to the line, the line's own rimmed gold.
+        // The meter: nine steps a hair apart in one dark well, lit in the pool's colour up to the
+        // line, with a gold bar over the step the line stands on.
+        const Box well = panel::scaled(x, y, {dockStep(pool, 1).x - 1.0f, dockStep(pool, 1).y - 1.0f,
+                                              dockStep(pool, kSteps).right() - dockStep(pool, 1).x + 2.0f,
+                                              kStepTall + 2.0f});
+        tip::panel(canvas_, well, r, style::kVoid, style::kVoid);
         const uint32_t fillTop = mana ? style::kMana : style::kLife;
         const uint32_t fillFoot = gfx::rgba(mana ? 0.10f : 0.40f, mana ? 0.22f : 0.08f, mana ? 0.45f : 0.06f);
         for (int step = 1; step <= kSteps; ++step) {
             const Box b = panel::scaled(x, y, dockStep(pool, step));
             const bool lit = step * 10 <= at, chosen = step * 10 == at;
             const bool over = overDock_ == pool * 10 + step;
-            const uint32_t rim = chosen ? sheet::ink::kMark : over ? style::kIronHi : style::kIronDk;
-            tip::panel(canvas_, b, r, rim, rim);
-            tip::panel(canvas_, b.grown(-line), r - line, lit ? fillTop : style::kVoid,
-                       lit ? fillFoot : style::kVoid);
+            if (lit) {
+                tip::panel(canvas_, b, 0.0f, fillTop, fillFoot);
+            } else {
+                canvas_.rect(b, over ? style::kAsh4 : style::kAsh1);
+            }
+            if (over && lit) canvas_.rect(b, gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f));
+            if (chosen) {
+                canvas_.rect({b.x, b.y, b.w, std::max(1.0f, std::round(1.2f * k))}, sheet::ink::kMark);
+            }
         }
         // What it drinks next and how many of that pool he carries, or that he carries none.
-        const float under = std::round(y + (kLineRow[pool] + 31.0f) * k);
+        const float under = std::round(y + (kLineRow[pool] + kMeterDrop + kStepTall + 11.0f) * k);
         const int next = mana ? now_.nextMana : now_.nextHealth;
         if (next >= 0) {
             int carried = 0;
@@ -893,19 +920,15 @@ void Bag::drawDock(const sim::Realm& realm, float x, float y) {
                 const content::ItemRow& row = tables.items[size_t(one.item)];
                 if (mana ? sim::restores(row) : sim::heals(row)) carried += std::max<int>(1, one.durability);
             }
-            controls::label(canvas_, left, under, 10.0f * u, style::kBone,
+            controls::label(canvas_, left, under, 9.0f * u, style::kAshInk,
                             tables.items[size_t(bag[next].item)].label);
-            controls::ranged(canvas_, right, under, 10.0f * u, style::kBone2,
+            controls::ranged(canvas_, right, under, 9.0f * u, style::kBone2,
                              std::to_string(carried) + " left");
         } else {
-            controls::label(canvas_, left, under, 10.0f * u, style::kDanger,
-                            mana ? "No mana potions in the bag" : "No healing potions in the bag");
+            controls::label(canvas_, left, under, 9.0f * u, style::kDanger,
+                            mana ? "No mana potions" : "No healing potions");
         }
     }
-    controls::rule(canvas_, x + (kDock.x + 11.0f) * k, std::round(y + panel::kFootRule * k),
-                   (kDock.w - 22.0f) * k, u);
-    controls::label(canvas_, left, std::round(y + (panel::kFootTop + 15.0f) * k), 9.5f * u,
-                    style::kAshInk, "Not in safe zones. Health first.");
 }
 
 }  // namespace mu::game

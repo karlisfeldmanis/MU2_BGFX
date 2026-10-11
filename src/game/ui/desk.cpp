@@ -918,9 +918,6 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 bagPointer.pressed = false;
             }
         }
-        // The auto-drink dock stands in the column beside the bag, which a counter, the vault, a
-        // trade or the machine takes while it is up.
-        bag_.dockRoom(!trading_ && !banking_ && !dealing_ && !mixing_);
         bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
                     play.realm(), bagPointer, bagStage_, &asked);
         if (asked.toggleDock) click();

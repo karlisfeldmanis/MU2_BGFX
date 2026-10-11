@@ -61,9 +61,6 @@ public:
     // The repair mode a mending counter turns on (CNewUIMyInventory::SetRepairMode): a click
     // mends the thing under it instead of lifting it, and its card leads with the cost.
     void setMending(bool on) { mending_ = on; }
-    // Whether the column beside the bag is free for the auto-drink dock: not while a counter,
-    // the vault, a trade or the machine stands there. Set before update.
-    void dockRoom(bool free) { dockRoom_ = free; }
 
     // The stage the tooltip's own picture is taken on: one item, at rest, its own size.
     // Shared with the other windows -- only one tip is up at a time.
@@ -129,10 +126,11 @@ private:
         return bare_ && slot == sim::kHelm ? -1 : slot;
     }
     gfx::Box itemBox(const content::Tables& tables, int slot, const sim::Held& what) const;
-    // The auto-drink dock, beside the bag: shown, and what in it is under a point in the bag's
-    // own units (dockAt's codes: 0 to 9 the health line's Off and nine steps, 10 to 19 the
-    // mana's, -1 nothing).
-    bool dockShown() const { return docked_ && dockRoom_; }
+    // The auto-drink dock, over the bag's foot: shown, and what in it is under a point in the
+    // bag's own units (dockAt's codes: 0 to 9 the health line's Off and nine steps, 10 to 19 the
+    // mana's, -1 nothing). While it is up, the cells under it take no hover, click or drop.
+    bool dockShown() const { return docked_; }
+    bool underDock(float ux, float uy) const;
     static int dockAt(float ux, float uy);
     void drawDock(const sim::Realm& realm, float x, float y);
 
@@ -161,10 +159,10 @@ private:
     // The Fairy Elf's left hand holds her quiver, and its ghost is one (ghostArt).
     bool archer_ = false;
     // **The auto-drink dock** (the user, 2026-10-11, proposal A: "A bottle in the foot opens a
-    // dock"): the foot's bottle opens it against the bag's outer side, on the foot rule, so the
-    // bag itself keeps its 429. Closed at start; hidden, not closed, while its column is taken.
+    // dock"); moved over the bag on 2026-10-11 ("opened above inventory not on side"): the
+    // foot's bottle opens it as a card standing on the foot rule over the grid's lower rows.
+    // Closed at start, and by a press anywhere off it but the bottle.
     bool docked_ = false;
-    bool dockRoom_ = true;
     bool overBottle_ = false, pressingBottle_ = false;
     int overDock_ = -1, pressingDock_ = -1;
     std::vector<Standing> standing_;
