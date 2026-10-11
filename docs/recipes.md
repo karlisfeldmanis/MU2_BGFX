@@ -29,8 +29,9 @@ Traced from 84940c86 (Aida's trees) and c571b2cd (ruins and graves).
 6. `tools/sync.sh --world <w> --only-world`.
 7. `tools/cook.py --world <w> --only textures`, then `--only meshes`, then `--only placements`
    **(order: meshes before textures cook white)**.
-8. Maybe: `cook.py` dicts (FLAT_OVER_VOID, GROUNDED_TYPES, ANCHOR_*), `terrain.py`
-   HIDDEN_BY_MAP, `game/world/ornaments.cpp` for a glow.
+8. Maybe: the world manifest's `pipeline` block (`hidden`, `grounded_types`, `lifted`,
+   `chromed`, `flat_over_void`...; since D2), `tools/cook_anchors.py` ANCHOR_KINDS_BY_WORLD,
+   `game/world/ornaments.cpp` for a glow.
 9. Shots: `./run.sh --world <w> --at X,Y --frames 240 --shot 120 --shot-path <abs> --mute --save <abs>/demo.json`.
 
 **Since sprint B:** `./mu new object <w>/ObjectNN` does steps 1-3 but the materials, and
@@ -74,7 +75,8 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
 `docs/aida-port.md` §2 and §6 hold the full touch tables (R1-R25, P1-P11).
 
 1. Bare land:
-   - `pipeline/terrain.py <Data>/WorldN <w> source/world N`, after its per-map dicts are added;
+   - `pipeline/terrain.py <Data>/WorldN <w> source/world N`, after the manifest's `map` and its
+     `pipeline` knobs (hidden types, grass, void, light...) are written (since D2);
    - `index.py` GATE_BOXES_BY_MAP;
    - the tile sheets decoded, and `ground.json` by hand;
    - `tileset.py` and `ground.py`, the `gates` row in `mu.db` (checkpoint), index and sync;
@@ -92,8 +94,8 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    - `game/world/ornaments.cpp` glows (by world and model), `cook.py` ANCHOR_KINDS_BY_WORLD;
    - `index.py` EFFECTS. A system of its own is a `game/world/` file, a field in
      `world_show.h`, and the manifest naming it.
-   - Birds and crawlers: the manifest's `boids` or `crawls`, plus `cook.py`'s AIRS or CRAWLS
-     until D2.
+   - Birds and crawlers: the manifest's `show` `boids` or `crawls`, which the cook also builds
+     (D2); `pipeline.airs_from` when the model is another world's.
 6. Travel and the rest: `sim/realm_travel.cpp` kRows, `sim/items.h` map hooks, and the bot's
    `tools/bot/brain.h` kWorlds, which is a copy and already wrong for Lorencia.
 
@@ -101,7 +103,10 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
 and minimap went into the manifest). For a full port, the air, reverb and music arms and the
 name gates of 20 world systems are gone: 72 compares in 22 files, down to 5 in 2. A full port
 still touches the sim's tables, gates, travel, the bot, the pipeline dicts and any new
-system's own file. **Goes to:** `source/world/<w>/world.json` (sprint D: D2 the pipeline
+system's own file. **After D2:** `terrain.py`'s 17 per-map dicts, `index.py`'s copy of
+OPERABLE_BY_MAP and `cook.py`'s 11 per-world dicts and PERCHES are the manifest's `pipeline`
+block: a new map writes no Python. Left: `cook_anchors.py` ANCHOR_KINDS_BY_WORLD and
+`gate_boxes.py` (D3). **Goes to:** `source/world/<w>/world.json` (sprint D: D2 the pipeline
 dicts, D3 gates and NPCs, D4 MapRules).
 
 ## An item or weapon

@@ -1,6 +1,7 @@
 {
   "world": "lorencia",
   "name": "Lorencia",
+  "map": 0,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "steps": "grass",
@@ -19,6 +20,82 @@
     "boids": {
       "model": "Bird01",
       "note": "MODEL_BIRD01: the bird's defaults (game/world/boids.h Airs)."
+    }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        130,
+        131,
+        132,
+        133
+      ],
+      "note": "Placement types that exist in the map and are never drawn (terrain.py's old HIDDEN_TYPES): PoseBox01 at 133, invisible walls that give a sitting or leaning player something to sit down on -- 53 of them; Light01 to Light03 at 130 to 132 are anchors for fire: MoveObject calls CreateFire on each and hides the model in the same breath. Carried through with a flag rather than dropped: the 25 fire anchors are the map telling us where its braziers are."
+    },
+    "water_flow": {
+      "sources": [
+        [
+          110,
+          100
+        ],
+        [
+          236,
+          4
+        ],
+        [
+          2,
+          101
+        ]
+      ],
+      "sinks": [
+        [
+          236,
+          252
+        ],
+        [
+          2,
+          153
+        ]
+      ]
+    },
+    "perches": {
+      "value": {
+        "133": {
+          "pose": 3,
+          "turns": true,
+          "leans": true,
+          "tall": true,
+          "model": "PoseBox01, invisible"
+        },
+        "6": {
+          "pose": 2,
+          "turns": false,
+          "leans": false,
+          "tall": false,
+          "model": "Tree07, the fallen log"
+        },
+        "145": {
+          "pose": 2,
+          "turns": true,
+          "leans": false,
+          "tall": false,
+          "model": "Furniture06"
+        },
+        "146": {
+          "pose": 2,
+          "turns": false,
+          "leans": false,
+          "tall": false,
+          "model": "Furniture07"
+        }
+      },
+      "note": "Lorencia: 53 hidden pose boxes along the walls, the river's logs, the tavern benches Here for one reason only (terrain.py's old OPERABLE_TYPES): their tiles must never be stamped NoMove. The client gates the click on the placement's own tile and walks the character onto it; MU's grid leaves those tiles open on purpose, and the solid-stamping pass would close 24 of the 110 behind its back (index.py stamp_blocked)."
+    },
+    "grounded_types": {
+      "range": [
+        20,
+        28
+      ]
     }
   }
 }

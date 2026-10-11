@@ -1,6 +1,7 @@
 {
   "world": "icarus",
   "name": "Icarus",
+  "map": 10,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "air": {
@@ -59,5 +60,27 @@
       "lean": 0.0,
       "note": "Ours, MU draws none there: wet cloud drifting past the eye, cool and barely there (the user, 2026-10-07: 'some screen dust effect but minimal, its cloud map')."
     }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "note": "Icarus's six (RenderObjectVisual, ZzzObject.cpp:3090-3169): Object01-06, 335 of them, each throwing 10-20 cloud puffs and then hidden. The cloud road is these and nothing else drawn under the walkers. docs/icarus-port.md."
+    },
+    "grass": {
+      "value": [],
+      "note": "Icarus ships no TileGrass .OZT, and no ground is drawn there at all (SKY_BY_MAP)."
+    },
+    "sky": {
+      "value": true,
+      "note": "MuMain skips RenderTerrain on map 10 (MainScene.cpp:463); the hero walks an unseen plane over the clear's navy. docs/icarus-port.md."
+    },
+    "flat_over_void": true
   }
 }

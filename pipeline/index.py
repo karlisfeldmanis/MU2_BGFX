@@ -28,27 +28,21 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+import world_manifest
+
 #: The two bits of MU's attribute grid that stop a walker. See terrain.py, which writes it.
 NO_MOVE = 0x0004
 NO_GROUND = 0x0008
 
 #: The types a character walks onto and poses against, whose tiles this pass must leave open.
 #:
-#: Named here rather than imported, because terrain.py is a script run on its own and index.py
-#: does not otherwise depend on it. The list is the same one, and terrain.OPERABLE_BY_MAP
-#: carries the argument for it in full.
+#: The types of each world's manifest's `pipeline.perches` (world_manifest.py), as terrain.py
+#: reads them too; terrain.OPERABLE_BY_MAP carries the argument for it in full.
 #:
 #: Keyed by the server's map number, because a type number means a different object in every
 #: world: 8 is Noria's sitting stump and Lorencia's ninth tree, and stamping either map's
 #: seats open on the other's grid would open tiles MU closed.
-OPERABLE_BY_MAP = {
-    0: {6, 133, 145, 146},
-    1: {59, 60},
-    2: {22, 25, 40, 45, 55, 73, 91},
-    3: {8, 38},
-    7: {39},
-    8: {78},
-}
+OPERABLE_BY_MAP = world_manifest.by_map("perches", world_manifest.as_operable)
 
 #: The gates' boxes, kept open by the solid-stamping pass: pipeline/gate_boxes.py.
 from gate_boxes import GATE_BOXES_BY_MAP  # noqa: E402

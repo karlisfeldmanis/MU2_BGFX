@@ -1,6 +1,7 @@
 {
   "world": "aida",
   "name": "Aida",
+  "map": 33,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "air": {
@@ -14,5 +15,69 @@
     "waterfall_spray": {
       "note": "Its falls' drops, spray and mist (game/world/waterfall_spray.h)."
     }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        56,
+        57,
+        58,
+        59,
+        60,
+        62,
+        63,
+        67,
+        70
+      ],
+      "note": "Aida's nine (MoveAidaObject, GMAida.cpp:77-86; 60 in RenderAidaObjectVisual :195-204): 56, 57 and 58 the waterfall spray boxes, 84 of them; 59, 62 and 63 the mist boxes, 91, which never emit in MU (their emitter is gated on the HiddenMesh the move sets first, :184-226); 60 the butterflies, 20; 67 the small fires, 11; 70 the skull ghost, 5. All emitters, drawn by no mesh. docs/aida-port.md."
+    },
+    "grass": {
+      "value": [
+        "TileGrass01"
+      ],
+      "note": "Aida ships TileGrass01.OZT, dark olive blades, which MU grows on slot 0 (ZzzLodTerrain.cpp:2077-2120), 14 473 drawn tiles; TileGrass02.OZT is fully transparent, so slot 1 grows nothing. docs/aida-port.md."
+    },
+    "void": {
+      "value": {
+        "start": 0.5,
+        "depth": 4.5,
+        "blend": 1.5
+      },
+      "note": "Aida: Devias's way, as Tarkan. A NoGround ravine from the entrance to the north-east, walled by Object18-20's 13 m rock faces sunk about 4.7 m, with 40 waterfalls falling into it. Deeper than Tarkan's because the walls and falls reach 4.7-6 m down. And `blend`: where no wall or rock stands on a lip, MU leaves the tile edge as a jagged cut against the black (the user, 2026-10-11: 'there still was some black holes', then 'Soft fade on bare inner edges'), so the ground goes dark into the void over a tile and a half. Only the ground's own shader reads it (abyssEdge, fs_ground), so the walls and rocks on the lips keep their light. No `rim`, which slopes the lips and would hide the walls. docs/aida-port.md, Part B 5."
+    },
+    "void_fill": {
+      "value": [
+        [
+          83,
+          10
+        ]
+      ],
+      "note": "Aida, from the safe hall: 177 open tiles in seven crumbs on rows 253-255 that no walk reaches, beyond the walls. docs/aida-port.md."
+    },
+    "border_fill": {
+      "walls": [
+        17,
+        18,
+        19
+      ],
+      "clear": 4,
+      "keep": [
+        [
+          65,
+          0,
+          240,
+          165
+        ]
+      ]
+    },
+    "blend_keep_near": {
+      "walls": [
+        17,
+        18,
+        19
+      ],
+      "reach": 2.5
+    },
+    "flat_over_void": true
   }
 }

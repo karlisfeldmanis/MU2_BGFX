@@ -1,0 +1,14 @@
+{
+  "world": "charscene",
+  "name": "Character scene",
+  "map": 74,
+  "note": "The world's manifest (docs/order-plan.md, sprint D). The character screen's land: the pipeline's knobs alone, as no one plays here.",
+  "pipeline": {
+    "grass": {
+      "value": [
+        "TileGrass01"
+      ],
+      "note": "The character screen. Its TileGround03 wears the grass recipe, but MU's sheet is BITMAP_MAPGRASS + layer1 and there are only the three TileGrass sheets, so slot 4 grows nothing in MU; asked for by recipe, it went looking for a TileGround03.png that never was. TileGrass02 here is a brown diamond floor (ground.json's material_note)."
+    }
+  }
+}

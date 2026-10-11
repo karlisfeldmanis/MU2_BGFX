@@ -1,6 +1,7 @@
 {
   "world": "losttower",
   "name": "Lost Tower",
+  "map": 4,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "places": [
@@ -97,5 +98,39 @@
       "note": "The skulls and chips he kicks (game/world/skulls.h)."
     },
     "traps": "tower"
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        24,
+        25
+      ],
+      "note": "The Lost Tower's two (ZzzObject.cpp:4020-4028): 24 the Flame vent, 95 of them, and 25 the Meteorite Trap's plate, 148, which the server's trap monster draws. docs/lost-tower-port.md."
+    },
+    "blend_mesh": {
+      "value": {
+        "18": 1,
+        "19": 4,
+        "20": 4,
+        "23": 1
+      },
+      "note": "The Lost Tower's (MoveObject, ZzzObject.cpp:4006-4017): the light shaft's light01, the floor machines' cyan orb and the lamp posts' blue dots."
+    },
+    "grass": {
+      "value": [],
+      "note": "The Lost Tower ships no TileGrass .OZT either, and its TileGrass01 is the stone floor."
+    },
+    "void": {
+      "start": 0.1,
+      "depth": 1.6,
+      "rim": true,
+      "blend": 2.0
+    },
+    "lava_spill": 256,
+    "light_depth": 0.6,
+    "airs_from": "dungeon",
+    "light_reach": 5,
+    "object_light_depth": 0.6,
+    "flat_over_void": true
   }
 }

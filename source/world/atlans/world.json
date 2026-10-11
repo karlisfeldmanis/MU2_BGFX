@@ -1,6 +1,7 @@
 {
   "world": "atlans",
   "name": "Atlans",
+  "map": 7,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "air": {
@@ -38,6 +39,70 @@
     },
     "bubbles": {
       "note": "game/world/bubbles.h."
+    }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        22,
+        39
+      ],
+      "note": "Atlans's two (ZzzObject.cpp:4059, 4772): 22, the bubble vents, 845 of them, and 39 the lean box. docs/atlans-port.md."
+    },
+    "blend_mesh": {
+      "value": {
+        "23": 0,
+        "32": 1,
+        "34": 1,
+        "38": 0,
+        "40": 0
+      },
+      "note": "Atlans's (MoveObject, ZzzObject.cpp:4067-4083): the light shafts, the glyph stones and arches, the magic circles and the caustic sheets. docs/atlans-port.md."
+    },
+    "grass": {
+      "value": [],
+      "note": "Atlans ships no TileGrass .OZT and MU turns grass off by map (ZzzLodTerrain.cpp:3619); its TileGrass01 is the sea floor's sand. docs/atlans-port.md."
+    },
+    "open": {
+      "value": [
+        [
+          12,
+          17,
+          14,
+          18,
+          4
+        ],
+        [
+          13,
+          21,
+          14,
+          22,
+          4
+        ],
+        [
+          15,
+          23,
+          15,
+          23,
+          4
+        ]
+      ],
+      "note": "Atlans: the eleven basin tiles MuMain's EncTerrain8.att closes and WebZen's official 2005 Terrain8.att (and OpenMU's) leave open -- a later door's footing, docs/atlans-port.md A \u00a73 -- among them 15,23, a lean box MU at 0.75 lets him lean on (the user, 2026-10-03, clicking it: nothing)."
+    },
+    "perches": {
+      "value": {
+        "39": {
+          "pose": 3,
+          "turns": true,
+          "leans": false,
+          "tall": false,
+          "model": "Object40, the lean box, invisible"
+        }
+      },
+      "note": "Atlans: MOVEMENT_OPERATE's WD_7ATLANSE arm, `Pose = true` and turned to the box (ZzzInterface.cpp:1736-1742); CreateOperate and hidden (ZzzObject.cpp:4769-4776). Not on RenderCursor's lean list (:4051-4055) and given no tall box. The four lean boxes at the safe basin. The user, 2026-10-03: 'do: two hidden ones ... and Object22'."
+    },
+    "lifted": {
+      "Object24": 0.06
     }
   }
 }

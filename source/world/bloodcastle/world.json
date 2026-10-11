@@ -1,6 +1,7 @@
 {
   "world": "bloodcastle",
   "name": "Blood Castle",
+  "map": 11,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "air": {
@@ -37,5 +38,88 @@
     "drawbridge": {
       "note": "Falls when the run says (game/world/drawbridge.h)."
     }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        9,
+        10,
+        37
+      ],
+      "note": "Blood Castle's, before the run (ZzzObject.cpp:86-165, 4185-4199): 9 and 10, the lowered deck and its chains, which MU keeps hidden until the drawbridge (36, Object37, standing at its stored 45 degrees over the void gap) has fallen; and 37, Object38, which has no .bmd and is only the mist emitters. The user, 2026-10-02: 'i remember that gates was closed'. docs/blood-castle-port.md."
+    },
+    "grass": {
+      "value": [],
+      "note": "Blood Castle ships a TileGrass01.OZT, but MU sows no grass in any castle (ZzzLodTerrain.cpp:2082), and its TileGrass01 is the castle's brick. docs/blood-castle-port.md."
+    },
+    "void": {
+      "value": {
+        "rim": true,
+        "blend": 1.5,
+        "blend_keep": [
+          [
+            0,
+            16,
+            12,
+            75
+          ],
+          [
+            16,
+            16,
+            35,
+            75
+          ],
+          [
+            13,
+            70,
+            15,
+            75
+          ]
+        ],
+        "later": [
+          [
+            13,
+            70,
+            15,
+            75
+          ]
+        ]
+      },
+      "note": "Blood Castle: the rim (the user, 2026-10-03: 'also some ground edge blending not implemented', of the statue hall's edge standing as a lit grey slope into the black), and then the floors' own edges taken to the black over 1.5 tiles ('lets work on void blending on ground little bit more', of the safe court's stepped edge lit up to the void). The blend that took the bridge dark (below) is back with `blend_keep`: the void beside the bridge, and the drawbridge's gap with the pillars standing in it, fade nothing, so the three-tile bridge and the pillar tops keep their light. Ours. And `later`: the drawbridge's gap, built as ground and held back until the bridge is down, when MU's terrain draws its TileRock02 planks (the user, 2026-10-03: 'when gates droped it was transparent without ground'; game/world/drawbridge.h)."
+    },
+    "open": [
+      [
+        13,
+        15,
+        15,
+        23,
+        4
+      ]
+    ],
+    "floor": [
+      [
+        9,
+        84,
+        10,
+        85
+      ]
+    ],
+    "void_fill": [
+      [
+        13,
+        8
+      ],
+      [
+        14,
+        95
+      ],
+      [
+        26,
+        81
+      ]
+    ],
+    "light_depth": 1.0,
+    "light_chroma": 0.75,
+    "figure_light": 0.5
   }
 }

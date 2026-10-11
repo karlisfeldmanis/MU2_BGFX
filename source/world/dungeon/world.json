@@ -1,6 +1,7 @@
 {
   "world": "dungeon",
   "name": "Dungeon",
+  "map": 1,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "places": [
@@ -66,5 +67,259 @@
       ],
       "note": "In its cellar's warm grey rather than the castle's cold one (the user, 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids')."
     }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        39,
+        40,
+        51,
+        52,
+        60
+      ],
+      "note": "The Dungeon's five (ZzzObject.cpp:3872-3897, 4660-4664): 39, 40 and 51 are the lance, iron-stick and fire traps, hidden as scenery because the server's trap monster draws the same model; 52 is the falling-stone emitter and 60 the lean box, which has no .bmd."
+    },
+    "grass": {
+      "value": [],
+      "note": "The Dungeon ships no TileGrass .OZT, and its TileGrass01 is the stone floor under 76% of the map: none, said outright, so a slot's name never sows a lawn underground."
+    },
+    "void": {
+      "start": 0.0,
+      "depth": 1.5,
+      "lift": 1.0
+    },
+    "water_flow": {
+      "value": {
+        "sources": [
+          [
+            71,
+            250
+          ],
+          [
+            251,
+            228
+          ],
+          [
+            127,
+            33
+          ],
+          [
+            57,
+            228
+          ],
+          [
+            32,
+            105
+          ],
+          [
+            61,
+            246
+          ],
+          [
+            107,
+            159
+          ],
+          [
+            232,
+            222
+          ],
+          [
+            65,
+            200
+          ],
+          [
+            68,
+            0
+          ],
+          [
+            66,
+            160
+          ],
+          [
+            118,
+            27
+          ],
+          [
+            197,
+            166
+          ],
+          [
+            103,
+            145
+          ],
+          [
+            104,
+            152
+          ],
+          [
+            124,
+            141
+          ],
+          [
+            191,
+            176
+          ],
+          [
+            57,
+            150
+          ],
+          [
+            126,
+            38
+          ],
+          [
+            223,
+            182
+          ],
+          [
+            161,
+            170
+          ],
+          [
+            151,
+            38
+          ],
+          [
+            150,
+            29
+          ],
+          [
+            170,
+            183
+          ],
+          [
+            120,
+            170
+          ]
+        ],
+        "sinks": [
+          [
+            56,
+            197
+          ],
+          [
+            230,
+            182
+          ],
+          [
+            87,
+            0
+          ],
+          [
+            57,
+            202
+          ],
+          [
+            31,
+            82
+          ],
+          [
+            65,
+            230
+          ],
+          [
+            109,
+            145
+          ],
+          [
+            237,
+            193
+          ],
+          [
+            65,
+            182
+          ],
+          [
+            40,
+            0
+          ],
+          [
+            87,
+            154
+          ],
+          [
+            103,
+            16
+          ],
+          [
+            176,
+            166
+          ],
+          [
+            81,
+            146
+          ],
+          [
+            90,
+            146
+          ],
+          [
+            105,
+            140
+          ],
+          [
+            208,
+            170
+          ],
+          [
+            76,
+            147
+          ],
+          [
+            118,
+            33
+          ],
+          [
+            216,
+            174
+          ],
+          [
+            171,
+            159
+          ],
+          [
+            134,
+            39
+          ],
+          [
+            134,
+            32
+          ],
+          [
+            172,
+            173
+          ],
+          [
+            107,
+            168
+          ]
+        ]
+      },
+      "note": "The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at one end and drained at the other -- the two ends furthest apart along it, found by walking the water. MU's ground is flat here and says nothing of which way they run; the way is ours. The small pools are left out, and stand still."
+    },
+    "perches": {
+      "value": {
+        "60": {
+          "pose": 3,
+          "turns": true,
+          "leans": true,
+          "tall": true,
+          "model": "Object61, the lean box, invisible and with no .bmd"
+        },
+        "59": {
+          "pose": 2,
+          "turns": false,
+          "leans": false,
+          "tall": false,
+          "model": "Object60, the stone seat"
+        }
+      },
+      "note": "the Dungeon: MOVEMENT_OPERATE's WD_1DUNGEON arm (ZzzInterface.cpp:1705-1712), 60 on RenderCursor's lean list (:4053) and given the 160-unit box (ZzzObject.cpp:4661-4663)"
+    },
+    "trap_models": [
+      "Saw01",
+      "DungeonStone01"
+    ],
+    "flat_over_void": true
   }
 }

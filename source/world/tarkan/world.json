@@ -1,6 +1,7 @@
 {
   "world": "tarkan",
   "name": "Tarkan",
+  "map": 8,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "air": {
@@ -63,5 +64,84 @@
       "lean": 0.25,
       "note": "MU's (0.3, 0.3, 0.25) at 0.4 of it: the storm a trace rather than a veil (the user, 2026-10-05: 'redcue dust screen effect little bit')."
     }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        60,
+        63,
+        64,
+        70,
+        76,
+        83
+      ],
+      "note": "Tarkan's six (RenderObjectVisual, ZzzObject.cpp:2994-3065): 60 the dust burst, 82 of them, hidden after its first puff; 63 the cyan glow sprite, 18, and 64 its red twin, which nothing places; 70, 76 and 83 the smoke vents and sand geysers, 3, 19 and 10. All emitters, drawn by no mesh. docs/tarkan-port.md."
+    },
+    "blend_mesh": {
+      "value": {
+        "2": 0,
+        "4": 0,
+        "7": 0,
+        "61": 1,
+        "65": 1,
+        "66": 1,
+        "72": 0,
+        "82": 0
+      },
+      "note": "Tarkan's (MoveObject, ZzzObject.cpp:4087-4179): the cyan ring, the white pulse, the 98 lava glows, the sun-gear and forge gears, the red lava flow and the light shafts. docs/tarkan-port.md."
+    },
+    "grass": {
+      "value": [
+        "TileGrass01"
+      ],
+      "note": "Tarkan ships TileGrass01.OZT, a strip of dry straw blades, and MU grows it on slot 0 (ZzzLodTerrain.cpp:2077-2120): the north-east town, as the rest of slot 0 is NoGround. TileGrass03.OZT is empty and no tile wears slot 2. docs/tarkan-port.md."
+    },
+    "void": {
+      "value": {
+        "start": 0.3,
+        "depth": 3.0
+      },
+      "note": "Tarkan: Devias's way (the user, 2026-10-05: 'we need similiar tehniq which we used on devias to blend deep clifs with void'), MU's cut with the cliff walls hanging into the dark, but its walls are Object41's 3.7 m faces sunk about 3.5 m, not Devias's 7.8 m ice: at the default 1.5 m to 6.5 m they ended lit. From 0.3 m under the rim, black by 3.3 m."
+    },
+    "perches": {
+      "value": {
+        "78": {
+          "pose": 2,
+          "turns": false,
+          "leans": false,
+          "tall": false,
+          "model": "Object79, the stump seat"
+        }
+      },
+      "note": "Tarkan: MOVEMENT_OPERATE's WD_8TARKAN arm, `case 78: Sit = true` with no turn (ZzzInterface.cpp:1743-1748); CreateOperate (ZzzObject.cpp:4778-4786). The 13 stumps, at 39-44,53-56 and in the town. docs/tarkan-port.md."
+    },
+    "grounded_types": {
+      "value": [
+        6,
+        7,
+        8,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        24,
+        25,
+        26,
+        30,
+        53
+      ],
+      "note": "Tarkan's plants: the dry tufts (6), creepers (15, 16), thorn and fern bushes (17-19), cacti (20, 21, 24, 25), grass clump (22), ferns (26, 30) and star plants (53). MU perches 71 of them on rocks, trees and cliff tops, up to 3 m over the ground, and here they read as hanging in the air (the user, 2026-10-05: 'there is some flaoting grass objects'). Ours: laid on the terrain, where one beside a rock tucks into its foot. And the rags (8, Object09), which MU hangs 2-3 m up in the open with nothing to hang from (the user's shot at 90,71): laid down, they flap on the sand as blown cloth."
+    },
+    "lifted": {
+      "Object08": 0.1
+    },
+    "chromed": [
+      "Object82"
+    ],
+    "flat_over_void": true
   }
 }

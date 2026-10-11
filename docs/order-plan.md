@@ -469,9 +469,45 @@ D3 gates and NPCs, D4 MapRules.
   pipeline's AIRS and CRAWLS in `cook.py` must still agree with the manifests' `boids` and
   `crawls` models; D2 makes the cook read them.
 
-**Next: D2, the pipeline dicts** (`cook.py`, `terrain.py`, `index.py`'s per-world dicts into
-the manifest's `pipeline` block). Check first that the Aida session is not mid-edit in those
-files.
+### Slice D2: the pipeline block
+
+On the user's "next". The Aida session agreed to keep out of these files until D2 landed, and
+adds Aida's own rows after it (its birds, crawlers and small fires, and a `crawls_from`).
+
+- **The manifest gains `map`**, MU's map number, and a `pipeline` block. Each knob is a value
+  or `{"value", "note"}`. The note is the comment that sat inside the old dict's row, lifted
+  by a script and not retyped. `source/world/charscene/world.json` is new: the character
+  screen's land (map 74) has pipeline knobs and no show.
+- **`pipeline/world_manifest.py`** reads the manifests and rebuilds each dict in its old shape,
+  through one converter per knob: sets, tuples, integer keys, `range`.
+  - **`terrain.py`'s 17 per-map dicts**, from HIDDEN_BY_MAP to WATER_FLOW_BY_MAP, are one call
+    each. HIDDEN_TYPES and OPERABLE_TYPES are gone: they were Lorencia's rows under another
+    name. STEEP_MAPS stays, because it is the login scene's data folder, not a world.
+  - **OPERABLE_BY_MAP was written three times:** in `terrain.py`, in `index.py`, and as
+    `cook.py` PERCHES's types. Now it is one `perches` table a world, one object a type
+    (pose, turns, leans, tall and the model's comment), and OPERABLE is its keys.
+  - **`cook.py`'s AIRS and CRAWLS** read the models from D1's `show.boids` and
+    `show.crawls`, so the client and the cook cannot name different birds.
+  - **The rest of `cook.py`:** TRAP_MODELS, AIRS_FROM, FLAT_OVER_VOID, LIGHT_REACH,
+    OBJECT_LIGHT_DEPTH, GROUNDED_TYPES, LIFTED and CHROMED are knobs.
+  - The hubs shrank: `terrain.py` 932 → 791 lines, `cook.py` 3813 → 3706, `index.py`
+    3174 → 3138.
+- **Proved:**
+  - **The values:** every one of the 29 dicts, pickled from HEAD's modules and from these,
+    is equal in value and in shape, and the two removed aliases equal Lorencia's rows. It
+    fails as it should: one `turns` flipped in Tarkan's perches is caught.
+  - **`terrain.py`:** HEAD's (`git archive`) and this one, run on MU's Data for all twelve
+    worlds into scratch folders: all 73 files byte-identical; the printouts differ only in
+    the output folder's name.
+  - **The cook:** `./mu make tables` re-cooked 11 worlds' `.mur`, every one byte-identical.
+    `--only placements` for Tarkan and Atlans is byte-identical. The Lost Tower's `.mut` came
+    out different, but HEAD's own cook gives the same bytes as this one (c652c2bf): the file
+    on disk was stale from an earlier change.
+- **Left:** `cook_anchors.py` ANCHOR_KINDS_BY_WORLD (the Aida session is adding to it now);
+  gates and NPCs (D3); MapRules (D4).
+
+**Next: D3, gates and NPCs:** mu.db `gates`, `pipeline/gate_boxes.py`, `sim/gates.cpp`
+kExits/kEnters and `cook.py` FOLK_VERSION075 into the manifest.
 
 ## 10. Leave alone
 

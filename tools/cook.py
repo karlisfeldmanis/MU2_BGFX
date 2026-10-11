@@ -107,6 +107,11 @@ import time
 import wave
 import zlib
 
+# Each world's manifest, source/world/<w>/world.json (docs/order-plan.md sprint D), read by
+# pipeline/world_manifest.py. Appended, so nothing in pipeline/ shadows a module of ours.
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline"))
+import world_manifest  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "assets")
 
@@ -202,24 +207,19 @@ def safe(name):
 # It is a world's fact and not a boid's, which is why it is a table and not a constant: the
 # velocity, whether the terrain's light falls on it and whether it calls are the same kind of
 # fact and live beside it in the engine (game/world/boids.h), as MU2's `Airs.cs` gathered them.
-AIRS = {"lorencia": "Bird01", "noria": "Butterfly01", "dungeon": "Bat01", "losttower": "Bat01",
-        "bloodcastle": "Crow01",
-        # Atlans's school fish, MODEL_FISH01 + 1 (CreateAtlanseFish, GOBoid.cpp:886-918).
-        "atlans": "Fish02",
-        # Icarus's dragons, MODEL_DRAGON_ out of Monster/Monster32 (CreateDragon, GOBoid.cpp:824-851).
-        "icarus": "Dragon01"}
+AIRS = world_manifest.shown_models("boids")
 # And what runs along the floor: MU's fish slot (MoveFishs), which the Dungeon fills with
 # MODEL_RAT01 (GOBoid.cpp:1720-1722). Unplaced for the same reason, so named here too; the
 # engine's pool is game/world/scurry.h.
 # And Tarkan's, MODEL_BUG01 + 1 out of Object9 (GOBoid.cpp:1726-1733).
-CRAWLS = {"dungeon": "Rat01", "tarkan": "Bug02"}
+CRAWLS = world_manifest.shown_models("crawls")
 # And what a trap throws: the Lance Trap's saw (MODEL_SAW), and the ceiling's falling pebble
 # (MODEL_DUNGEON_STONE01), drawn by game/world/trap_show.h and placed by nothing.
-TRAP_MODELS = {"dungeon": ("Saw01", "DungeonStone01")}
+TRAP_MODELS = world_manifest.by_world("trap_models", tuple)
 # Where a world's boid is built, when it is not the world's own: MuMain loads Noria's
 # MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:89).
 # And the Lost Tower's MODEL_BAT01, the Dungeon's (MapManager.cpp:51-58 loads it for both).
-AIRS_FROM = {"noria": "lorencia", "losttower": "dungeon"}
+AIRS_FROM = world_manifest.by_world("airs_from")
 
 
 def boid_glb(world, model):
@@ -1341,26 +1341,17 @@ def read_png(path):
 # plane (docs/icarus-port.md B §1.2), so every placement reads as buried.
 # Aida's: a ravine and two pits of NoGround, walled by Object18-20 sunk 4.7 m, with 40 waterfalls
 # and 164 of Object25's foliage cards hanging into it (docs/aida-port.md B 4).
-FLAT_OVER_VOID = {"dungeon", "losttower", "tarkan", "icarus", "aida"}
+FLAT_OVER_VOID = world_manifest.worlds_with("flat_over_void")
 
-LIGHT_REACH_BY_WORLD = {"losttower": 5}
+LIGHT_REACH_BY_WORLD = world_manifest.by_world("light_reach")
 
 #: How much of MU's baked light's variation a world's objects keep, about the mean of its ground's
 #: light, as ground.py's LIGHT_DEPTH does for the ground. Ours. The Lost Tower took MU's painted
 #: light whole and its shade was nearly all baked; the user: 'we ened more actual shadows and
 #: little bit less baked in'. 1 (all of it) everywhere else.
-OBJECT_LIGHT_DEPTH_BY_WORLD = {"losttower": 0.6}
+OBJECT_LIGHT_DEPTH_BY_WORLD = world_manifest.by_world("object_light_depth")
 
-GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28),
-                  # Tarkan's plants: the dry tufts (6), creepers (15, 16), thorn and fern bushes
-                  # (17-19), cacti (20, 21, 24, 25), grass clump (22), ferns (26, 30) and star
-                  # plants (53). MU perches 71 of them on rocks, trees and cliff tops, up to 3 m
-                  # over the ground, and here they read as hanging in the air (the user,
-                  # 2026-10-05: 'there is some flaoting grass objects'). Ours: laid on the
-                  # terrain, where one beside a rock tucks into its foot. And the rags (8,
-                  # Object09), which MU hangs 2-3 m up in the open with nothing to hang from (the
-                  # user's shot at 90,71): laid down, they flap on the sand as blown cloth.
-                  "tarkan": {6, 7, 8, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 30, 53}}
+GROUNDED_TYPES = world_manifest.by_world("grounded_types", world_manifest.as_types)
 
 # OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
 # data. The heightmap is MuMain's TerrainHeight.OZB byte for byte, heights are bytes x 1.5 in
@@ -1378,11 +1369,11 @@ GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28),
 # about that much under them: at MU's height they showed as orange streaks where they cut it, and
 # 0.3 m over MU's height they floated (the user, 2026-10-05: 'floating lava decals'). Now laid on
 # the terrain (GROUNDED_TYPES, type 7) and 0.1 m over it.
-LIFTED_BY_WORLD = {"atlans": {"Object24": 0.06}, "tarkan": {"Object08": 0.1}}
+LIFTED_BY_WORLD = world_manifest.by_world("lifted")
 # Placements MU draws a second time in RENDER_CHROME | RENDER_BRIGHT: Tarkan's golden orbs,
 # Object82 (RenderObject, ZzzObject.cpp:1067-1073). Cooked with instance bit 5; the town draws
 # them at the +7 chrome in white, as the Silver Valkyrie's second pass is carried.
-CHROMED_BY_WORLD = {"tarkan": {"Object82"}}
+CHROMED_BY_WORLD = world_manifest.by_world("chromed", world_manifest.as_set)
 LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
            ("Stone03", 2708.711, 13432.253): 1.55,
            ("Stone01", 2430.678, 13666.117): 0.82,
@@ -2222,44 +2213,7 @@ FOLK_VERSION075 = {
 # `Hero->Object.Angle[2] = TargetAngle`; `leans` is RenderCursor's own list for the lean pointer,
 # which disagrees with the pose on Noria's 38; `tall` is the three with the 160-unit pick box.
 # Poses.cs keeps the other worlds' rows as comments; they join this table when their map opens.
-PERCHES = {
-    0: {  # Lorencia: 53 hidden pose boxes along the walls, the river's logs, the tavern benches
-        133: (3, True, True, True),     # PoseBox01, invisible
-        6: (2, False, False, False),    # Tree07, the fallen log
-        145: (2, True, False, False),   # Furniture06
-        146: (2, False, False, False),  # Furniture07
-    },
-    1: {  # the Dungeon: MOVEMENT_OPERATE's WD_1DUNGEON arm (ZzzInterface.cpp:1705-1712), 60 on
-          # RenderCursor's lean list (:4053) and given the 160-unit box (ZzzObject.cpp:4661-4663)
-        60: (3, True, True, True),      # Object61, the lean box, invisible and with no .bmd
-        59: (2, False, False, False),   # Object60, the stone seat
-    },
-    2: {  # Devias: MOVEMENT_OPERATE's WD_2DEVIAS arm (ZzzInterface.cpp:1715-1726), and 91 on
-          # RenderCursor's lean list (:4054). 44 lean boxes, 85 seats in the church and the inns.
-        91: (3, True, True, True),      # Object92, the lean box, invisible
-        22: (2, True, False, False),    # Object23
-        25: (2, True, False, False),    # Object26
-        40: (2, True, False, False),    # Object41
-        55: (2, True, False, False),    # Object56
-        45: (2, False, False, False),   # Object46
-        73: (2, False, False, False),   # Object74
-    },
-    3: {  # Noria
-        38: (4, True, True, False),     # the hanging tree, invisible
-        8: (2, False, False, False),    # the stump
-    },
-    7: {  # Atlans: MOVEMENT_OPERATE's WD_7ATLANSE arm, `Pose = true` and turned to the box
-          # (ZzzInterface.cpp:1736-1742); CreateOperate and hidden (ZzzObject.cpp:4769-4776). Not
-          # on RenderCursor's lean list (:4051-4055) and given no tall box. The four lean boxes at
-          # the safe basin. The user, 2026-10-03: 'do: two hidden ones ... and Object22'.
-        39: (3, True, False, False),    # Object40, the lean box, invisible
-    },
-    8: {  # Tarkan: MOVEMENT_OPERATE's WD_8TARKAN arm, `case 78: Sit = true` with no turn
-          # (ZzzInterface.cpp:1743-1748); CreateOperate (ZzzObject.cpp:4778-4786). The 13 stumps,
-          # at 39-44,53-56 and in the town. docs/tarkan-port.md.
-        78: (2, False, False, False),   # Object79, the stump seat
-    },
-}
+PERCHES = world_manifest.by_map("perches", world_manifest.as_perches)
 
 
 def cook_tables(world, out_dir):

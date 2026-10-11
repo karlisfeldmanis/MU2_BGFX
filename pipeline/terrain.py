@@ -34,6 +34,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+import world_manifest
+
 #: The grid is this on a side, in tiles, on every map MU ships.
 SIZE = 256
 
@@ -93,7 +95,7 @@ LORENCIA_RANGES = [
     (140, 7, "Furniture"), (150, 1, "Candle"), (151, 3, "Beer"),
 ]
 
-#: Types the client places and then never draws, for Lorencia.
+#: Types the client places and then never draws, as Lorencia shows it.
 #:
 #: All are marked HiddenMesh = -2, which its render path checks before drawing anything, so
 #: in game they do not appear. Two kinds. The pose box at 133 is a click target that lets a
@@ -105,9 +107,9 @@ LORENCIA_RANGES = [
 #: and are deliberately invisible" is a fact about the map worth keeping — and because the 25
 #: fire anchors are the map telling us where its braziers are, which is wanted later even
 #: though the model is not.
-HIDDEN_TYPES = {130, 131, 132, 133}
 
-#: The same, per world, by the server's map number. Lorencia's is HIDDEN_TYPES above.
+#: Per world, by the server's map number: each world's manifest's `pipeline.hidden`
+#: (source/world/<w>/world.json, read by world_manifest.py), with each row's citation.
 #:
 #: Read off each world's arm of CreateObject in ZzzObject.cpp, which is where every
 #: `HiddenMesh = -2` in the client is written. Noria has exactly one: type 38, which
@@ -115,42 +117,7 @@ HIDDEN_TYPES = {130, 131, 132, 133}
 #: shape of thing as Lorencia's 133. Building it would put fifty-three of something into the
 #: town that the game does not have, and it would look exactly like the next job on the
 #: worklist, which is how Lorencia's PoseBox01 nearly got built.
-HIDDEN_BY_MAP = {
-    0: HIDDEN_TYPES,
-    # The Dungeon's five (ZzzObject.cpp:3872-3897, 4660-4664): 39, 40 and 51 are the lance,
-    # iron-stick and fire traps, hidden as scenery because the server's trap monster draws the
-    # same model; 52 is the falling-stone emitter and 60 the lean box, which has no .bmd.
-    1: {39, 40, 51, 52, 60},
-    2: {91, 100},
-    3: {38},
-    # The Lost Tower's two (ZzzObject.cpp:4020-4028): 24 the Flame vent, 95 of them, and 25 the
-    # Meteorite Trap's plate, 148, which the server's trap monster draws. docs/lost-tower-port.md.
-    4: {24, 25},
-    # Blood Castle's, before the run (ZzzObject.cpp:86-165, 4185-4199): 9 and 10, the lowered
-    # deck and its chains, which MU keeps hidden until the drawbridge (36, Object37, standing at
-    # its stored 45 degrees over the void gap) has fallen; and 37, Object38, which has no .bmd
-    # and is only the mist emitters. The user, 2026-10-02: 'i remember that gates was closed'.
-    # docs/blood-castle-port.md.
-    11: {9, 10, 37},
-    # Atlans's two (ZzzObject.cpp:4059, 4772): 22, the bubble vents, 845 of them, and 39 the
-    # lean box. docs/atlans-port.md.
-    7: {22, 39},
-    # Tarkan's six (RenderObjectVisual, ZzzObject.cpp:2994-3065): 60 the dust burst, 82 of
-    # them, hidden after its first puff; 63 the cyan glow sprite, 18, and 64 its red twin, which
-    # nothing places; 70, 76 and 83 the smoke vents and sand geysers, 3, 19 and 10. All emitters,
-    # drawn by no mesh. docs/tarkan-port.md.
-    8: {60, 63, 64, 70, 76, 83},
-    # Icarus's six (RenderObjectVisual, ZzzObject.cpp:3090-3169): Object01-06, 335 of them, each
-    # throwing 10-20 cloud puffs and then hidden. The cloud road is these and nothing else drawn
-    # under the walkers. docs/icarus-port.md.
-    10: {0, 1, 2, 3, 4, 5},
-    # Aida's nine (MoveAidaObject, GMAida.cpp:77-86; 60 in RenderAidaObjectVisual :195-204):
-    # 56, 57 and 58 the waterfall spray boxes, 84 of them; 59, 62 and 63 the mist boxes, 91,
-    # which never emit in MU (their emitter is gated on the HiddenMesh the move sets first,
-    # :184-226); 60 the butterflies, 20; 67 the small fires, 11; 70 the skull ghost, 5. All
-    # emitters, drawn by no mesh. docs/aida-port.md.
-    33: {56, 57, 58, 59, 60, 62, 63, 67, 70},
-}
+HIDDEN_BY_MAP = world_manifest.by_map("hidden", world_manifest.as_set)
 
 #: What each world draws additively, by map number and placement type.
 #:
@@ -163,20 +130,7 @@ HIDDEN_BY_MAP = {
 #: Noria's six are the elf town's lights and its water. Carried onto the placement so that the
 #: asset for a model can say which of its sheets is additive; see index.py and the `additive`
 #: key in an object's own json.
-BLEND_MESH_BY_MAP = {
-    2: {19: 0, 54: 1, 56: 1, 78: 3, 92: 0, 93: 0},
-    3: {1: 1, 9: 3, 17: 0, 18: 2, 19: 0, 37: 0},
-    # The Lost Tower's (MoveObject, ZzzObject.cpp:4006-4017): the light shaft's light01, the
-    # floor machines' cyan orb and the lamp posts' blue dots.
-    4: {18: 1, 19: 4, 20: 4, 23: 1},
-    # Atlans's (MoveObject, ZzzObject.cpp:4067-4083): the light shafts, the glyph stones and
-    # arches, the magic circles and the caustic sheets. docs/atlans-port.md.
-    7: {23: 0, 32: 1, 34: 1, 38: 0, 40: 0},
-    # Tarkan's (MoveObject, ZzzObject.cpp:4087-4179): the cyan ring, the white pulse, the 98
-    # lava glows, the sun-gear and forge gears, the red lava flow and the light shafts.
-    # docs/tarkan-port.md.
-    8: {2: 0, 4: 0, 7: 0, 61: 1, 65: 1, 66: 1, 72: 0, 82: 0},
-}
+BLEND_MESH_BY_MAP = world_manifest.by_map("blend_mesh", world_manifest.as_int_keys)
 
 #: Where a world's grass grows, by map number, where its slots' recipes would say otherwise.
 #:
@@ -186,39 +140,7 @@ BLEND_MESH_BY_MAP = {
 #: wears the snow recipe, not grass. Noria's is what grew there before the engine matched its
 #: prefixed slots to their recipes; its TileGround01 takes grass by recipe and has MU's
 #: TileGrass03 behind it, which is a look decision rather than an extraction.
-GRASS_BY_MAP = {
-    # The Dungeon ships no TileGrass .OZT, and its TileGrass01 is the stone floor under 76% of
-    # the map: none, said outright, so a slot's name never sows a lawn underground.
-    1: [],
-    2: ["TileGrass02"],
-    3: ["TileGrass01", "TileGrass02"],
-    # The Lost Tower ships no TileGrass .OZT either, and its TileGrass01 is the stone floor.
-    4: [],
-    # Blood Castle ships a TileGrass01.OZT, but MU sows no grass in any castle
-    # (ZzzLodTerrain.cpp:2082), and its TileGrass01 is the castle's brick. docs/blood-castle-port.md.
-    11: [],
-    # Atlans ships no TileGrass .OZT and MU turns grass off by map (ZzzLodTerrain.cpp:3619);
-    # its TileGrass01 is the sea floor's sand. docs/atlans-port.md.
-    7: [],
-    # Tarkan ships TileGrass01.OZT, a strip of dry straw blades, and MU grows it on slot 0
-    # (ZzzLodTerrain.cpp:2077-2120): the north-east town, as the rest of slot 0 is NoGround.
-    # TileGrass03.OZT is empty and no tile wears slot 2. docs/tarkan-port.md.
-    8: ["TileGrass01"],
-    # Icarus ships no TileGrass .OZT, and no ground is drawn there at all (SKY_BY_MAP).
-    10: [],
-    # Devil Square ships no TileGrass .OZT (ZzzLodTerrain.cpp:2081-2088), and its TileGrass01,
-    # on every tile, is the arenas' worn stone. docs/devil-square-port.md.
-    9: [],
-    # The character screen. Its TileGround03 wears the grass recipe, but MU's sheet is
-    # BITMAP_MAPGRASS + layer1 and there are only the three TileGrass sheets, so slot 4 grows
-    # nothing in MU; asked for by recipe, it went looking for a TileGround03.png that never was.
-    # TileGrass02 here is a brown diamond floor (ground.json's material_note).
-    74: ["TileGrass01"],
-    # Aida ships TileGrass01.OZT, dark olive blades, which MU grows on slot 0
-    # (ZzzLodTerrain.cpp:2077-2120), 14 473 drawn tiles; TileGrass02.OZT is fully transparent,
-    # so slot 1 grows nothing. docs/aida-port.md.
-    33: ["TileGrass01"],
-}
+GRASS_BY_MAP = world_manifest.by_map("grass")
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the
 #: engine's flow (content::buildFlow). Ours: MU slides every water tile the same way. Lorencia:
@@ -237,38 +159,7 @@ GRASS_BY_MAP = {
 #: Then 'under the ground there is much less light which means that tenticles should be very
 #: dark': `lift` puts the void's own points a metre above the rim, so a crown level with the
 #: floor is already three quarters dark, and black half a metre down.
-VOID_BY_MAP = {
-    1: {"start": 0.0, "depth": 1.5, "lift": 1.0},
-    4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
-    # Blood Castle: the rim (the user, 2026-10-03: 'also some ground edge blending not
-    # implemented', of the statue hall's edge standing as a lit grey slope into the black), and
-    # then the floors' own edges taken to the black over 1.5 tiles ('lets work on void blending
-    # on ground little bit more', of the safe court's stepped edge lit up to the void). The
-    # blend that took the bridge dark (below) is back with `blend_keep`: the void beside the
-    # bridge, and the drawbridge's gap with the pillars standing in it, fade nothing, so the
-    # three-tile bridge and the pillar tops keep their light. Ours. And `later`: the drawbridge's
-    # gap, built as ground and held back until the bridge is down, when MU's terrain draws its
-    # TileRock02 planks (the user, 2026-10-03: 'when gates droped it was transparent without
-    # ground'; game/world/drawbridge.h).
-    11: {"rim": True, "blend": 1.5,
-         "blend_keep": [[0, 16, 12, 75], [16, 16, 35, 75], [13, 70, 15, 75]],
-         "later": [[13, 70, 15, 75]]},
-    # Tarkan: Devias's way (the user, 2026-10-05: 'we need similiar tehniq which we used on
-    # devias to blend deep clifs with void'), MU's cut with the cliff walls hanging into the
-    # dark, but its walls are Object41's 3.7 m faces sunk about 3.5 m, not Devias's 7.8 m ice:
-    # at the default 1.5 m to 6.5 m they ended lit. From 0.3 m under the rim, black by 3.3 m.
-    8: {"start": 0.3, "depth": 3.0},
-    # Aida: Devias's way, as Tarkan. A NoGround ravine from the entrance to the north-east,
-    # walled by Object18-20's 13 m rock faces sunk about 4.7 m, with 40 waterfalls falling
-    # into it. Deeper than Tarkan's because the walls and falls reach 4.7-6 m down. And
-    # `blend`: where no wall or rock stands on a lip, MU leaves the tile edge as a jagged cut
-    # against the black (the user, 2026-10-11: 'there still was some black holes', then 'Soft
-    # fade on bare inner edges'), so the ground goes dark into the void over a tile and a half.
-    # Only the ground's own shader reads it (abyssEdge, fs_ground), so the walls and rocks on
-    # the lips keep their light. No `rim`, which slopes the lips and would hide the walls.
-    # docs/aida-port.md, Part B 5.
-    33: {"start": 0.5, "depth": 4.5, "blend": 1.5},
-}
+VOID_BY_MAP = world_manifest.by_map("void")
 #: Tarkan was Devias's way (the user, 2026-10-05: 'in tarkan there is same tehniq
 #: which was in devias which make the deep canions/voids'). Pale plateaus over a NoGround void
 #: that is half the map, MU's cut at the edge, and Object41's 427 cliff faces hanging from the
@@ -292,14 +183,14 @@ VOID_BY_MAP = {
 #: lava is ended'). So the whole map: every void tile the lava reaches through the void, 15166
 #: of them. What stays void is what no lava touches -- floor 7's causeways and the chasm round
 #: them, whose blending into the black the user tuned.
-LAVA_SPILL_BY_MAP = {4: 256}
+LAVA_SPILL_BY_MAP = world_manifest.by_map("lava_spill")
 
 #: The worlds with no ground drawn (the world json's `sky`; content::Ground::draws). Icarus:
 #: MuMain skips RenderTerrain on map 10 (MainScene.cpp:463), and the hero walks an unseen plane
 #: at 2.85 m over the clear's navy, the cloud emitters' puffs round him. Every tile keeps its
 #: height and flags -- NoGround would close the road, as the walker counts 0x08 -- so the
 #: switch is the world's, not the tiles'. docs/icarus-port.md.
-SKY_BY_MAP = {10}
+SKY_BY_MAP = world_manifest.maps_with("sky")
 
 #: Boxes of a map's grid opened at import, as (x1, y1, x2, y2, bits cleared), inclusive tiles.
 #: Ours, marked, and only until the run is built: Blood Castle's entrance, its drawbridge's gap
@@ -312,19 +203,14 @@ SKY_BY_MAP = {10}
 #: The gap and the door were opened too until the user asked for MU's closed gates back
 #: (2026-10-02: 'i remember that gates was closed'): only the entrance stays open, so the bridge
 #: can be walked to the raised drawbridge.
-OPEN_BY_MAP = {11: [(13, 15, 15, 23, 0x04)],
-               # Atlans: the eleven basin tiles MuMain's EncTerrain8.att closes and WebZen's
-               # official 2005 Terrain8.att (and OpenMU's) leave open -- a later door's footing,
-               # docs/atlans-port.md A §3 -- among them 15,23, a lean box MU at 0.75 lets him lean
-               # on (the user, 2026-10-03, clicking it: nothing).
-               7: [(12, 17, 14, 18, 0x04), (13, 21, 14, 22, 0x04), (15, 23, 15, 23, 0x04)]}
+OPEN_BY_MAP = world_manifest.by_map("open", world_manifest.as_tuples)
 
 #: Boxes of a map's grid made floor that is not walked, as (x1, y1, x2, y2), inclusive tiles:
 #: NoGround cleared and NoMove set, so the ground draws them and VOID_FILL does not take them
 #: back. Blood Castle's courtyard hole (the user, 2026-10-03: 'some holes'): three tiles MU's
 #: grid marks NoGround inside the courtyard, 9,84 10,84 10,85, which MU draws as floor -- its
 #: void is a painted black, not the grid -- and this ground cut out as a pit. Ours, marked.
-FLOOR_BY_MAP = {11: [(9, 84, 10, 85)]}
+FLOOR_BY_MAP = world_manifest.by_map("floor", world_manifest.as_tuples)
 
 #: Where a map's own walk starts, for VOID_FILL: every tile MU leaves walkable that no walk from
 #: here reaches becomes NoGround, drawn as the void. Ours, marked. Blood Castle's grid is a strip
@@ -333,10 +219,7 @@ FLOOR_BY_MAP = {11: [(9, 84, 10, 85)]}
 #: castle as a brick field where the user's MuMain shots have black (docs/blood-castle-port.md,
 #: Part B decision 1). From the safe court, the statue court and the courtyard's east pocket, which the
 #: run opens and the closed grid does not, so the castle itself stays ground.
-VOID_FILL_BY_MAP = {11: [(13, 8), (14, 95), (26, 81)],
-                    # Aida, from the safe hall: 177 open tiles in seven crumbs on rows
-                    # 253-255 that no walk reaches, beyond the walls. docs/aida-port.md.
-                    33: [(83, 10)]}
+VOID_FILL_BY_MAP = world_manifest.by_map("void_fill", world_manifest.as_tuples)
 
 #: Which void a world's ground is spread over at the map's edge, by map number. Ours, marked:
 #: MU framed its maps for a 4:3 screen, and Aida's outer void -- the frame round the map and
@@ -348,7 +231,7 @@ VOID_FILL_BY_MAP = {11: [(13, 8), (14, 95), (26, 81)],
 #: void, and the walls along the map's own edge get ground behind them. The enclosed pits are
 #: never reached. Every tile it reaches copies its nearest ground tile -- height, sheets,
 #: painted light -- and is NoMove. docs/aida-port.md.
-BORDER_FILL_BY_MAP = {33: {"walls": {17, 18, 19}, "clear": 4, "keep": [(65, 0, 240, 165)]}}
+BORDER_FILL_BY_MAP = world_manifest.by_map("border_fill", world_manifest.as_walls)
 
 #: Where a world's void.blend leaves the ground lit, by map number: every tile whose middle is
 #: within `reach` tiles of a `walls` placement -- round, and close: four tiles square left hard
@@ -356,7 +239,7 @@ BORDER_FILL_BY_MAP = {33: {"walls": {17, 18, 19}, "clear": 4, "keep": [(65, 0, 2
 #: took the ground behind them dark too, a black strip between a wall's top and the pond (the
 #: user, 2026-10-11: 'this is not perfect'). Written as blend_keep.png beside the world json,
 #: which content::Ground reads as a mask beside its blend_keep boxes.
-BLEND_KEEP_NEAR_BY_MAP = {33: {"walls": {17, 18, 19}, "reach": 2.5}}
+BLEND_KEEP_NEAR_BY_MAP = world_manifest.by_map("blend_keep_near", world_manifest.as_walls)
 
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5
@@ -458,7 +341,7 @@ def fill_border(rule: dict, void: np.ndarray,
 #: Blood Castle keeps all of it: its court is painted bright (about 144-175 against the map's
 #: mean of 87) and, halved, sank into the dark earth sheet under it, darker than the grey gravel
 #: of the user's MuMain shots (2026-10-02).
-LIGHT_DEPTH_BY_MAP = {4: 0.6, 11: 1.0}
+LIGHT_DEPTH_BY_MAP = world_manifest.by_map("light_depth")
 
 #: How much of MU's painted light's tint the ground and the objects keep (ground.py
 #: light_chroma), where a world differs from all of it. Blood Castle's is cold: the court about
@@ -466,7 +349,7 @@ LIGHT_DEPTH_BY_MAP = {4: 0.6, 11: 1.0}
 #: floor under it came out a saturated blue, where the Dungeon's warm lamps carry its own cool
 #: paint (the user, 2026-10-03: 'we need that nice efefct which dungeon,lorencia,lost tower
 #: has'). Ours.
-LIGHT_CHROMA_BY_MAP = {11: 0.75}
+LIGHT_CHROMA_BY_MAP = world_manifest.by_map("light_chroma")
 
 #: Where a world's figures take MU's painted light where they stand (content::Ground::
 #: figureLightAt): the ground's curve raised to this, so a dim tile dims them less than the floor.
@@ -474,26 +357,9 @@ LIGHT_CHROMA_BY_MAP = {11: 0.75}
 #: monster stood twice as bright as the stone (the user, 2026-10-03: 'something wrong probably
 #: with lightiing or materials, its not well balanced'). MuMain lights a character by its tile's
 #: terrain light (BodyLight). Ours, the softening.
-FIGURE_LIGHT_BY_MAP = {11: 0.5}
+FIGURE_LIGHT_BY_MAP = world_manifest.by_map("figure_light")
 
-WATER_FLOW_BY_MAP = {
-    # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at
-    # one end and drained at the other -- the two ends furthest apart along it, found by walking
-    # the water. MU's ground is flat here and says nothing of which way they run; the way is ours.
-    # The small pools are left out, and stand still.
-    1: {"sources": [[71, 250], [251, 228], [127, 33], [57, 228], [32, 105], [61, 246],
-              [107, 159], [232, 222], [65, 200], [68, 0], [66, 160], [118, 27],
-              [197, 166], [103, 145], [104, 152], [124, 141], [191, 176], [57, 150],
-              [126, 38], [223, 182], [161, 170], [151, 38], [150, 29], [170, 183],
-              [120, 170]],
-        "sinks": [[56, 197], [230, 182], [87, 0], [57, 202], [31, 82], [65, 230],
-              [109, 145], [237, 193], [65, 182], [40, 0], [87, 154], [103, 16],
-              [176, 166], [81, 146], [90, 146], [105, 140], [208, 170], [76, 147],
-              [118, 33], [216, 174], [171, 159], [134, 39], [134, 32], [172, 173],
-              [107, 168]]},
-    0: {"sources": [[110, 100], [236, 4], [2, 101]],
-        "sinks": [[236, 252], [2, 153]]},
-}
+WATER_FLOW_BY_MAP = world_manifest.by_map("water_flow")
 
 #: Which types a character can pose against, per world, for the same reason OPERABLE_TYPES
 #: exists: their tiles must never be stamped solid behind the client's back.
@@ -501,16 +367,10 @@ WATER_FLOW_BY_MAP = {
 #: Noria's two are MOVEMENT_OPERATE's own — 8 sits, 38 hangs — and 38 is also the hidden one.
 #: Devias's seven (ZzzObject.cpp:4682-4690): 91 is a lean box and hidden too; 22, 25, 40 and 55
 #: sit and turn to the seat, 45 and 73 sit.
-OPERABLE_BY_MAP = {
-    0: {6, 133, 145, 146},
-    1: {59, 60},  # the Dungeon's seat and lean box, ZzzInterface.cpp:1707-1712
-    2: {22, 25, 40, 45, 55, 73, 91},
-    3: {8, 38},
-    7: {39},  # Atlans's lean box, ZzzInterface.cpp:1736-1742
-    8: {78},  # Tarkan's stump seats, Sit, ZzzInterface.cpp:1743-1748
-}
+OPERABLE_BY_MAP = world_manifest.by_map("perches", world_manifest.as_operable)
 
-#: Types a character walks onto and poses against, for Lorencia.
+#: Why OPERABLE_BY_MAP exists, as Lorencia shows it: the types a character walks onto and poses
+#: against.
 #:
 #: The pose box at 133, the fallen log at 6, and the tavern's two benches at 145 and 146 —
 #: MOVEMENT_OPERATE's own switch, transcribed in full in client/core/Poses.cs. Here for one
@@ -526,7 +386,6 @@ OPERABLE_BY_MAP = {
 #:
 #: The stamping exists to fix places MU *under*-marked, so it must not overrule MU where MU
 #: deliberately left a tile open. See index.py's stamp_blocked.
-OPERABLE_TYPES = {6, 133, 145, 146}
 
 #: The tile textures, by the slot the map file stores. Slots 14-29 are the extension set.
 TILE_SLOTS = [
