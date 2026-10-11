@@ -1,0 +1,219 @@
+{
+  "item": "Object33",
+  "mu_name": "Object33",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 32,
+  "placements": 13,
+  "profile": "world",
+  "sheets": {
+    "boss01": "ai_boss01.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "boss01": "bark"
+  },
+  "material_note": "boss01: rough bark: bark.",
+  "why_this_one": "a fallen dead-wood statue. Batch 6, small rocks, statues, coffins and bones (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bark",
+      "triangles": 79,
+      "area": 60476.4,
+      "along": [
+        -27.7,
+        409.2
+      ],
+      "mu_uv": [
+        -1.611,
+        0.595,
+        2.613,
+        2.026
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.865,
+        0.835
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bark",
+      "triangles": 24,
+      "area": 3861.0,
+      "along": [
+        241.0,
+        291.1
+      ],
+      "mu_uv": [
+        -0.597,
+        0.596,
+        1.061,
+        2.026
+      ],
+      "bake_uv": [
+        0.363,
+        0.545,
+        0.818,
+        0.882
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bark",
+      "triangles": 12,
+      "area": 1487.0,
+      "along": [
+        281.5,
+        352.4
+      ],
+      "mu_uv": [
+        -1.189,
+        0.596,
+        0.019,
+        2.026
+      ],
+      "bake_uv": [
+        0.721,
+        0.118,
+        0.971,
+        0.957
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bark",
+      "triangles": 30,
+      "area": 7143.6,
+      "along": [
+        267.1,
+        350.2
+      ],
+      "mu_uv": [
+        -1.634,
+        0.596,
+        2.383,
+        2.026
+      ],
+      "bake_uv": [
+        0.008,
+        0.366,
+        0.984,
+        0.954
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bark",
+      "triangles": 38,
+      "area": 6256.1,
+      "along": [
+        170.1,
+        304.6
+      ],
+      "mu_uv": [
+        -0.593,
+        0.604,
+        1.592,
+        1.429
+      ],
+      "bake_uv": [
+        0.72,
+        0.008,
+        0.97,
+        0.281
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bark",
+      "triangles": 29,
+      "area": 1914.2,
+      "along": [
+        214.9,
+        241.9
+      ],
+      "mu_uv": [
+        -0.593,
+        0.604,
+        1.066,
+        1.429
+      ],
+      "bake_uv": [
+        0.008,
+        0.898,
+        0.402,
+        0.992
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bark",
+      "triangles": 40,
+      "area": 13503.1,
+      "along": [
+        144.1,
+        193.0
+      ],
+      "mu_uv": [
+        -0.593,
+        0.635,
+        1.592,
+        2.025
+      ],
+      "bake_uv": [
+        0.363,
+        0.366,
+        0.732,
+        0.703
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bark",
+      "triangles": 30,
+      "area": 5729.5,
+      "along": [
+        39.9,
+        132.6
+      ],
+      "mu_uv": [
+        -1.185,
+        0.635,
+        0.56,
+        2.025
+      ],
+      "bake_uv": [
+        0.506,
+        0.008,
+        0.705,
+        0.346
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bark",
+      "triangles": 30,
+      "area": 2673.2,
+      "along": [
+        121.3,
+        181.4
+      ],
+      "mu_uv": [
+        -0.593,
+        0.635,
+        1.066,
+        2.025
+      ],
+      "bake_uv": [
+        0.008,
+        0.723,
+        0.818,
+        0.882
+      ]
+    }
+  ]
+}
