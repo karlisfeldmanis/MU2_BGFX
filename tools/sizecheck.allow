@@ -4,7 +4,7 @@ pipeline/build_maps.py 1303
 pipeline/clean_lowpoly.py 1191
 pipeline/export_gltf.py 2284
 pipeline/index.py 3174
-pipeline/terrain.py 923
+pipeline/terrain.py 932
 server/src/main.cpp 1877
 src/app/modes/play_mode.cpp 1922
 src/content/ground.cpp 1910
@@ -41,7 +41,7 @@ src/sim/realm.h 2411
 src/sim/realm_fight.cpp 2120
 src/sim/realm_items.cpp 2454
 src/sim/realm_move.cpp 993
-src/sim/realm_raid.cpp 1408
+src/sim/realm_raid.cpp 1412
 src/sim/realm_skills.cpp 1021
 src/sim/skills.cpp 1161
 tools/asset.sh 961

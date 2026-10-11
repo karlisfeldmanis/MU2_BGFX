@@ -256,7 +256,49 @@ Begun 2026-10-11, the user's pick of where to start.
 - **Not in A, moved to C:** layercheck over `tools/`. It would fail today on netbot's
   `game/remote_link.h`, which sprint C moves into `src/client`.
 
-## 7. Leave alone
+## 7. Sprint B, as done
+
+Begun 2026-10-11 straight after A, on the user's "next".
+
+- **`./mu`** (`tools/mu/`, five small modules) with `make`, `check`, `where`, `shot`,
+  `compare` and `cores`. Each takes `--json` and then ends with one object.
+- **`mu make`** plans each step with the reason it runs or skips, and `--plan` runs nothing.
+  It handles one recipe, `world <w>`, `sounds` and `tables`.
+
+  The traps it closes:
+  - a sheet newer than the build forces `--rebuild`;
+  - the WAL is checkpointed;
+  - the index runs after any build;
+  - sync copies index.json whole;
+  - textures cook before meshes, and every `.mum` is checked for texture links;
+  - an item cooks the wardrobe and every world's tables;
+  - a monster's tables cook before its figure;
+  - a `jobs.txt` over 60 images is called out.
+
+  Cooks hold a lock per world (`workshop/.mu/`), and every step runs under `nice`.
+- **Two staleness rules are narrower than asset.sh's.**
+  - Only the pipeline scripts a build runs count, read out of asset.sh itself; an edit to
+    `terrain.py` had made every model stale.
+  - A clean tracked script counts from its last commit, not its file date.
+    `tiled_maps.py`'s date said 10-11 when its content was 09-30's.
+- **Cores** (the user: *"we need probably also some setting how many cores to use"*):
+  - `./mu cores N` keeps the count per machine in `workshop/.mu/settings.json`. `MU_CORES`
+    and `--cores` override it for one run, and the default is 60% of the machine (6 of 10).
+  - The count reaches the cook's `--threads`, Blender (a `--threads` wrapper given to asset.sh
+    as `$BLENDER`) and torch and numpy (the OMP/MKL/VECLIB variables).
+- **Proved on `lorencia/Beer01`:**
+  - Blender (21 s), index (41 s), sync, then textures (0 new images), meshes (linked),
+    placements and tables, all in 71 s.
+  - Run again, everything skipped in 1 s.
+  - Touched and rebuilt through the Blender wrapper.
+  - `mu make X | head` no longer kills the make when the pipe closes. The first cut did,
+    mid-chain.
+- **What `mu check` found on its first day:** another session's `realm_raid.cpp` 4 lines past
+  its recorded size. `mu where Balrog` names 35 files, the baseline for sprint E.
+- **Not yet:** `mu new`, a new world's ground and terrain steps, `--only showing`'s missing skip
+  rule (still about 9 min), and a socket to a running game. That last is sprint F.
+
+## 8. Leave alone
 
 These are kept from structure-plan §5, and still right:
 

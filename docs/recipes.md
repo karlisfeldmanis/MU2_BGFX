@@ -8,7 +8,11 @@ the lists are counted again, and a list that does not shrink means the sprint mi
 **Rule for whoever uses this page:** if a recipe here sent you to a place it did not name, or
 named one you did not need, fix the list in the same commit.
 
-The order traps are marked **(order)**: a step done out of turn fails silently.
+The order traps are marked **(order)**: a step done out of turn fails silently. **Since sprint
+B, `./mu make <Name>` runs the build-to-cook steps of a world object, an item and a monster in
+that order and checks the traps after** (`./mu make <Name> --plan` shows what it would do), so
+in the lists below the numbered build, index, sync and cook steps are one command. The
+hand-written parts -- recipes, mu.db rows, C++ tables -- are still the list.
 
 ## A world object (a batch of a map's ObjectNN)
 

@@ -72,6 +72,15 @@ Paths on the command line must be absolute.
 
 ## Content
 
+    ./mu make Sword01                            one recipe from source/ to cooked, only what is stale
+    ./mu make aida/Object11 --plan               what would run and why, running nothing
+    ./mu check                                   the quick gates: layers, sizes, WAL, index, white meshes, tables
+    ./mu cores 4                                 how many cores every tool mu runs may use, kept per machine
+
+`mu` (`tools/mu/`, docs/order-plan.md sprint B) runs the scripts below in the one order that
+works and says why each step runs. Reach for the scripts themselves when mu has no word for
+the job yet: a new world's ground, `content.sh`'s everything.
+
     ./tools/content.sh                           source/ -> workshop/, whatever is stale
     ./tools/asset.sh Sword01                     one recipe, the same way
 
