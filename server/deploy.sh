@@ -8,10 +8,29 @@
 # the save, the tests and tools that link only those, and every map's cooked tables (*.mur, ~2 MB
 # of the 3.9 GB in assets/cooked). No textures, meshes, shaders or sound. server/README.md has
 # the box itself.
+#
+# **What goes is the commit, never the working tree** (the user, 2026-10-11: "we need ... actual
+# master not private stuff so we can do normal deploy"): the code is HEAD's, exported with
+# `git archive`, so another session's edit in progress never reaches the box and never splits
+# the server's rules from a client built from HEAD. The cooked tables are not in git; they come
+# from the working tree as the cook last wrote them.
 set -e
 cd "$(dirname "$0")/.."
 host=hetzner          # ~/.ssh/config: root@37.27.158.226
 dest=/opt/mu2
+
+commit=$(git rev-parse --short HEAD)
+here=$(git rev-parse --show-prefix)
+stage=$(mktemp -d)
+trap 'rm -rf "$stage"' EXIT
+git -C "$(git rev-parse --show-toplevel)" archive "HEAD:${here%/}" | tar -x -C "$stage"
+rsync -a --prune-empty-dirs --include='/assets/' --include='/assets/cooked/' --include='/assets/cooked/*/' \
+  --include='/assets/cooked/*/*.mur' --exclude='*' ./ "$stage/"
+echo "$commit" > "$stage/server/DEPLOYED"
+# Said, not refused: what the working tree holds beyond the commit stays here.
+if ! git diff --quiet HEAD -- src server tests tools/bot tools/raid source/raid CMakeLists.txt; then
+  echo "note: the working tree differs from HEAD in what deploys; HEAD $commit goes, not those edits"
+fi
 
 ssh $host "mkdir -p $dest"
 rsync -az --delete --prune-empty-dirs \
@@ -24,8 +43,8 @@ rsync -az --delete --prune-empty-dirs \
   --include='/assets/' --include='/assets/cooked/' --include='/assets/cooked/*/' \
   --include='/assets/cooked/*/*.mur' \
   --include='/server/***' \
-  --exclude='*' ./ $host:$dest/
-echo "copied to $host:$dest"
+  --exclude='*' "$stage/" $host:$dest/
+echo "copied $commit to $host:$dest"
 [ "$1" = "--copy" ] && exit 0
 
 # The character store's SQLite headers (server/src/store.h), and sqlite3 to read characters.db
