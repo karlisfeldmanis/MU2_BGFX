@@ -39,6 +39,17 @@ is raised with the player at 84,11. Shot muted at noon at the hall (84,11), the 
 (188,175), the south basin (116,145) and the ravine (150,60), at 220-315 fps. The only error is the
 missing `aida.mut`, because no objects are cooked yet.
 
+**The world walls, 2026-10-11** (the user, of the black cuts: 'what about those black spots?',
+then 'Build the walls first'). Object18-20, 350 placements, built as recipes in
+`source/world/aida` with the `ai_aidaworldwallc` face and the near-black
+`ai_aidaworldwallcunder` foot, both `rock`, and cooked (textures, meshes, placements). `aida` is in
+the cook's `FLAT_OVER_VOID`. Shot at the same four spots, with no errors. The ravine now has rock
+lips whose faces fall into the black. **The two pits have no walls in MU:** their lips are hidden by
+Object25's foliage cards (26 within 14 tiles of the basin shot), and Aida 2's edge by the rocks
+Object10/21 and foliage. So the next batch is Object25 and Object07 (the foliage) and the rocks
+Object09/10/21-23. Cost unmeasured: the ravine read 107-114 fps, GPU-bound at about 16 ms, on a
+machine at load 9 with another session's game and netbot running.
+
 **Not done: mu.db gate 119.** Writing `insert into gates values (119, 33, 82, 8, 87, 14, 1)` into
 `source/mu.db` was refused by the session's permission check, so until it goes in, a death in Aida
 rises in Lorencia. Step 2 (the gates) is next.

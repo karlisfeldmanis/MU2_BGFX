@@ -1339,7 +1339,9 @@ def read_png(path):
 # and rock falls (Object58) MU churns up 3-5 m out of it read as buried here while MU plays them.
 # Icarus's: no ground is drawn at all, and MU stands every object about 3 m under the walking
 # plane (docs/icarus-port.md B §1.2), so every placement reads as buried.
-FLAT_OVER_VOID = {"dungeon", "losttower", "tarkan", "icarus"}
+# Aida's: a ravine and two pits of NoGround, walled by Object18-20 sunk 4.7 m, with 40 waterfalls
+# and 164 of Object25's foliage cards hanging into it (docs/aida-port.md B 4).
+FLAT_OVER_VOID = {"dungeon", "losttower", "tarkan", "icarus", "aida"}
 
 LIGHT_REACH_BY_WORLD = {"losttower": 5}
 
