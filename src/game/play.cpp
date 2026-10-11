@@ -122,7 +122,7 @@ float Play::flashOf(uint32_t id) const {
     return 0.0f;
 }
 
-void Play::bubble(uint32_t who, const std::string& line, bool party) {
+void Play::bubble(uint32_t who, const std::string& line, int circle) {
     // His last chat line stays, under this one's; any older goes, and any line of the game's own
     // over him (a gate's refusal) gives way.
     int kept = 0;
@@ -136,7 +136,7 @@ void Play::bubble(uint32_t who, const std::string& line, bool party) {
     one.who = who;
     one.line = line;
     one.chat = true;
-    one.party = party;
+    one.circle = circle;
     int words = 0;
     bool in = false;
     for (const char c : sim::linkedText(line)) {

@@ -164,6 +164,26 @@ constexpr float kGlassBody = 0.82f;
 constexpr uint32_t kGlass = gfx::rgba(0.051f, 0.039f, 0.031f);
 constexpr uint32_t kBone = gfx::rgba(0.925f, 0.886f, 0.812f);
 constexpr uint32_t kPartyBlue = gfx::rgba(0.498f, 0.714f, 0.949f);
+constexpr uint32_t kGuildGreen = gfx::rgba(0.576f, 0.839f, 0.494f);
+
+// **Lines not for everyone** (the user, 2026-10-11: "use some color styling for party/raid
+// bubles, guild bubles, because they are not public"): the glass tinted toward the chat's own
+// channel colour, the words a pale shade of it, its tag before them, and its colour for the outer
+// shadow, a faint glow. A raid talks on its party's line. The map's line is the plain glass.
+struct Tint {
+    uint32_t glass, words, glow;
+    const char* tag;
+    float body;
+};
+Tint tintOf(int circle) {
+    switch (circle) {
+        case Play::kSaidParty:
+            return {gfx::rgba(0.039f, 0.090f, 0.188f), gfx::rgba(0.855f, 0.910f, 0.973f), kPartyBlue, "Party ", 0.88f};
+        case Play::kSaidGuild:
+            return {gfx::rgba(0.047f, 0.133f, 0.051f), gfx::rgba(0.875f, 0.945f, 0.839f), kGuildGreen, "Guild ", 0.88f};
+        default: return {kGlass, kBone, 0u, "", kGlassBody};
+    }
+}
 
 uint32_t alphaOf(uint32_t abgr, float a) {
     const float was = float(abgr >> 24) / 255.0f;
@@ -181,11 +201,12 @@ Inked inked(const Play::Said& said, const content::Tables* tables) {
         out.text += part;
         out.ink.insert(out.ink.end(), part.size(), ink);
     };
-    if (said.party) add("Party ", kPartyBlue);
+    const Tint tint = tintOf(said.circle);
+    if (*tint.tag) add(tint.tag, tint.glow);
     size_t at = 0;
     for (const sim::ItemLink& link : sim::findLinks(said.line)) {
-        add(said.line.substr(at, link.from - at), kBone);
-        uint32_t ink = kBone;
+        add(said.line.substr(at, link.from - at), tint.words);
+        uint32_t ink = tint.words;
         const int32_t row = tables ? sim::linkRow(*tables, link.group, link.number) : -1;
         if (row >= 0) {
             sim::Held held = link.held;
@@ -195,7 +216,7 @@ Inked inked(const Play::Said& said, const content::Tables* tables) {
         add("[" + link.label + "]", ink);
         at = link.to;
     }
-    add(said.line.substr(at), kBone);
+    add(said.line.substr(at), tint.words);
     return out;
 }
 
@@ -268,9 +289,11 @@ float glassLine(gfx::Canvas& canvas, const Play::Said& said, const content::Tabl
     Bubble shadow = glass;
     shadow.box.y += 2.0f * u;
     shadow.tip += 2.0f * u;
-    shadow.draw(canvas, 3.0f * u, gfx::rgba(0.0f, 0.0f, 0.0f, 0.16f * a));
+    const Tint tint = tintOf(said.circle);
+    if (tint.glow != 0u) glass.draw(canvas, 3.5f * u, alphaOf(tint.glow, 0.30f * a));
+    else shadow.draw(canvas, 3.0f * u, gfx::rgba(0.0f, 0.0f, 0.0f, 0.16f * a));
     shadow.draw(canvas, 1.5f * u, gfx::rgba(0.0f, 0.0f, 0.0f, 0.22f * a));
-    glass.draw(canvas, 0.0f, alphaOf(kGlass, kGlassBody * a));
+    glass.draw(canvas, 0.0f, alphaOf(tint.glass, tint.body * a));
 
     const gfx::Face* face = controls::labelFace();
     const float ascent = face ? face->ascent(size) : size * 0.8f;
@@ -281,7 +304,7 @@ float glassLine(gfx::Canvas& canvas, const Play::Said& said, const content::Tabl
         // Each byte's ink, the "..." of a cut row in bone; then runs of one ink, each over its drop.
         std::vector<uint32_t> inks(line.ink.begin() + long(parts[r].first),
                                    line.ink.begin() + long(parts[r].first + parts[r].second));
-        inks.resize(words.size(), kBone);
+        inks.resize(words.size(), tint.words);
         size_t at = 0;
         while (at < words.size()) {
             size_t end = at + 1;

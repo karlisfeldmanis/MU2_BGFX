@@ -619,7 +619,8 @@ public:
     // as MU's chat went up over the speaker (CreateChat). Drawn in the chat's dark glass and not
     // the guards' paper (the user picked "A · Dark glass", 2026-10-11): his last stays above it,
     // dimmed, and any before that goes. `line` keeps its item links (sim/item_link.h).
-    void bubble(uint32_t who, const std::string& line, bool party = false);
+    // A Party or Guild line is shown only to them, and wears their colour (Said::circle).
+    void bubble(uint32_t who, const std::string& line, int circle = 0);
     // The townsperson under the pointer, as an index into the tables' folk, or -1.
     int pointedFolk() const { return pointedFolk_; }
     // The thing on the ground under the pointer, by its id, or 0.
@@ -663,12 +664,14 @@ public:
         float age = 0.0f;
         int folk = -1;  // said by a townsperson who stands as no body (Lumen at her bar)
         // A player's chat line (bubble): glass, its links coloured, up for `life` seconds -- 3
-        // and a little a word, 8 at most -- and on his party's line, tagged so.
+        // and a little a word, 8 at most. `circle`: 0 the map's, open to all; kSaidParty his
+        // party's (a raid talks on it too); kSaidGuild his guild's -- tinted and tagged.
         bool chat = false;
-        bool party = false;
+        int circle = 0;
         float life = kSaidSeconds;
     };
     static constexpr float kSaidSeconds = 4.0f;
+    static constexpr int kSaidParty = 1, kSaidGuild = 2;
     const std::vector<Said>& said() const { return said_; }
     // A body's health as the DRAWING has shown it: the realm's, with every blow still waiting
     // for its landing cue added back, and nought once it is dead. See Showing::owed.
