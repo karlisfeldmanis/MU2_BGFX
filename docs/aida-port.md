@@ -50,6 +50,30 @@ Object10/21 and foliage. So the next batch is Object25 and Object07 (the foliage
 Object09/10/21-23. Cost unmeasured: the ravine read 107-114 fps, GPU-bound at about 16 ms, on a
 machine at load 9 with another session's game and netbot running.
 
+**Rocks and foliage, then the holes MU leaves, 2026-10-11** (the user: 'still was some holes',
+'Build rocks+foliage first', then 'there still was some black holes').
+- **Batch 2**: Object25/07 (the shrub cards, 915, swaying, kept 3-4 m up where MU stores them),
+  Object09/10 (qw rocks, 403) and Object43 (carved outcrops, 198). These are the kinds standing on
+  the most void edge the walls leave bare. The basin's pit lip is outcrops now, and Aida 2's edge
+  is boulders under foliage.
+- **What MU leaves bare.** Of the 2 685 void edge tiles within 10 of walkable ground, 1 151 had
+  nothing within 2.5 m once every built kind was counted. The unbuilt kinds would cover only about
+  100 more: the rest is MU's own jagged cut, mostly the map's outer frame (MU's 4:3 camera never
+  showed it) and a few inner pit lips. The user chose two fixes of ours:
+  - **`BORDER_FILL_BY_MAP`** (`pipeline/terrain.py`, `fill_border`): a walk from the map's edge
+    through the void, four ways, never within 4 tiles of a wall standing in the ravine's box
+    (65,0-240,165). Every tile it reaches copies its nearest ground tile (height, sheets, painted
+    light) and is NoMove: 15 752 tiles, the outer frame and the west channel. The walled ravine
+    and the two enclosed pits stay void. Walls on the map's own edge get floor behind them.
+    Walkable ground is unchanged at 35.2%.
+  - **`blend: 1.5`** on Aida's void: the ground fades to black over a tile and a half at every
+    lip. Only `fs_ground` reads it, so the walls and rocks keep their light. Blades stood lit
+    over the fading strip as black spikes, so **`Grass` grows nothing within `ceil(blend)` tiles
+    of NoGround** in any world with a blend. Only Aida, the Lost Tower and Blood Castle have one,
+    and the latter two grow no grass.
+- After both: 1 614 void edge tiles near walkable ground, 423 of them with nothing on them, and
+  those fade softly. Shot at the basin, the west channel and two pit lips, 202-236 fps.
+
 **Not done: mu.db gate 119.** Writing `insert into gates values (119, 33, 82, 8, 87, 14, 1)` into
 `source/mu.db` was refused by the session's permission check, so until it goes in, a death in Aida
 rises in Lorencia. Step 2 (the gates) is next.

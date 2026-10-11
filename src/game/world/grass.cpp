@@ -327,6 +327,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
         slotOfBucket[i] = -1;
     }
 
+    const int fadeReach = int(std::ceil(ground.voidBlend()));
     for (int row = firstRow; row <= lastRow; ++row) {
         for (int column = firstColumn; column <= lastColumn; ++column) {
             ++counts_.considered;
@@ -338,6 +339,18 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             // No ground is drawn on a NoGround tile (Ground::splat), so nothing grows on it:
             // Devias's chasms are floored with its grass slots and would sprout over the dark.
             if (ground.attributesAt(column, row) & content::kNoGround) continue;
+            // Nor where the ground fades into the void (void.blend): the blades stood lit over
+            // the darkening strip, black spikes along every bare lip (the user, of Aida,
+            // 2026-10-11: 'there still was some black holes').
+            if (fadeReach > 0) {
+                bool nearVoid = false;
+                for (int r = row - fadeReach; r <= row + fadeReach && !nearVoid; ++r) {
+                    for (int c = column - fadeReach; c <= column + fadeReach && !nearVoid; ++c) {
+                        nearVoid = (ground.attributesAt(c, r) & content::kNoGround) != 0;
+                    }
+                }
+                if (nearVoid) continue;
+            }
             ++counts_.grassy;
 
             // The tile's own square, in metres. x spans [column, column+1] and z spans

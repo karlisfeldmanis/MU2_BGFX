@@ -139,6 +139,8 @@ public:
     // a character by the terrain light where it stands (BodyLight). White where it is off.
     void figureLightAt(float column, float row, float* rgb) const;
     float figureLight() const { return figureLight_; }
+    // How far the ground fades into the void, in tiles (the world json's void.blend), 0 without.
+    float voidBlend() const { return abyssBlend_; }
 
     uint32_t triangleCount() const { return indexCount_ / 3; }
 

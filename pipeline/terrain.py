@@ -260,9 +260,14 @@ VOID_BY_MAP = {
     8: {"start": 0.3, "depth": 3.0},
     # Aida: Devias's way, as Tarkan. A NoGround ravine from the entrance to the north-east,
     # walled by Object18-20's 13 m rock faces sunk about 4.7 m, with 40 waterfalls falling
-    # into it. Deeper than Tarkan's because the walls and falls reach 4.7-6 m down.
+    # into it. Deeper than Tarkan's because the walls and falls reach 4.7-6 m down. And
+    # `blend`: where no wall or rock stands on a lip, MU leaves the tile edge as a jagged cut
+    # against the black (the user, 2026-10-11: 'there still was some black holes', then 'Soft
+    # fade on bare inner edges'), so the ground goes dark into the void over a tile and a half.
+    # Only the ground's own shader reads it (abyssEdge, fs_ground), so the walls and rocks on
+    # the lips keep their light. No `rim`, which slopes the lips and would hide the walls.
     # docs/aida-port.md, Part B 5.
-    33: {"start": 0.5, "depth": 4.5},
+    33: {"start": 0.5, "depth": 4.5, "blend": 1.5},
 }
 #: Tarkan was Devias's way (the user, 2026-10-05: 'in tarkan there is same tehniq
 #: which was in devias which make the deep canions/voids'). Pale plateaus over a NoGround void
@@ -333,6 +338,18 @@ VOID_FILL_BY_MAP = {11: [(13, 8), (14, 95), (26, 81)],
                     # 253-255 that no walk reaches, beyond the walls. docs/aida-port.md.
                     33: [(83, 10)]}
 
+#: Which void a world's ground is spread over at the map's edge, by map number. Ours, marked:
+#: MU framed its maps for a 4:3 screen, and Aida's outer void -- the frame round the map and
+#: the channel between the west ruins and the middle, a third of its NoGround -- is bare black
+#: with nothing standing at its lips, which at 16:9 and pulled back reads as holes (the user,
+#: 2026-10-11: 'there still was some black holes', then 'Fill outer border'). A walk from the
+#: map's edge through the void, four ways, that never comes within `clear` tiles of a `walls`
+#: placement standing in a `keep` box: so the walled ravine, which MU means as a chasm, stays
+#: void, and the walls along the map's own edge get ground behind them. The enclosed pits are
+#: never reached. Every tile it reaches copies its nearest ground tile -- height, sheets,
+#: painted light -- and is NoMove. docs/aida-port.md.
+BORDER_FILL_BY_MAP = {33: {"walls": {17, 18, 19}, "clear": 4, "keep": [(65, 0, 240, 165)]}}
+
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5
 
@@ -371,6 +388,53 @@ def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndar
                     queue.append((ny, nx))
     spilled = np.flatnonzero(void & (source >= 0))
     return spilled, source.reshape(-1)[spilled]
+
+
+def fill_border(rule: dict, void: np.ndarray, placed: list[dict]) -> tuple[np.ndarray, np.ndarray]:
+    """Which void tiles BORDER_FILL_BY_MAP spreads ground over, and the ground tile each copies,
+    as flat indices on the [y, x] grid.
+    """
+    from collections import deque
+
+    size_y, size_x = void.shape
+    held = np.zeros(void.shape, dtype=bool)
+    clear = rule["clear"]
+    for one in placed:
+        if one["type"] not in rule["walls"]:
+            continue
+        x, y = int(one["at"][0] / 100), int(one["at"][1] / 100)
+        if any(x1 <= x <= x2 and y1 <= y <= y2 for x1, y1, x2, y2 in rule["keep"]):
+            held[max(0, y - clear):y + clear + 1, max(0, x - clear):x + clear + 1] = True
+    open_ = void & ~held
+    filled = np.zeros(void.shape, dtype=bool)
+    queue = deque()
+    for y in range(size_y):
+        for x in range(size_x):
+            if (y in (0, size_y - 1) or x in (0, size_x - 1)) and open_[y, x]:
+                filled[y, x] = True
+                queue.append((y, x))
+    while queue:
+        y, x = queue.popleft()
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            ny, nx = y + dy, x + dx
+            if 0 <= ny < size_y and 0 <= nx < size_x and open_[ny, nx] and not filled[ny, nx]:
+                filled[ny, nx] = True
+                queue.append((ny, nx))
+    # The nearest ground tile to each, walking out from the ground through what is filled.
+    source = np.full(void.shape, -1, dtype=np.int64)
+    queue = deque()
+    for y, x in zip(*np.nonzero(~void)):
+        source[y, x] = y * size_x + x
+        queue.append((y, x))
+    while queue:
+        y, x = queue.popleft()
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            ny, nx = y + dy, x + dx
+            if 0 <= ny < size_y and 0 <= nx < size_x and filled[ny, nx] and source[ny, nx] < 0:
+                source[ny, nx] = source[y, x]
+                queue.append((ny, nx))
+    spread = np.flatnonzero(filled & (source >= 0))
+    return spread, source.reshape(-1)[spread]
 
 
 #: How much of MU's baked light's variation the ground keeps, where a world differs from
@@ -741,6 +805,24 @@ def main() -> None:
               f"(VOID_FILL_BY_MAP)")
 
     lit = baked_light(world)
+
+    # The ground spread over the outer void, before anything is written (BORDER_FILL_BY_MAP).
+    if (rule := BORDER_FILL_BY_MAP.get(number - 1)):
+        flags = np.array(flags)
+        spread, copied = fill_border(rule, (flags & NO_GROUND) != 0, objects(world, number))
+        grid, layer1, layer2, alpha = (np.array(plane) for plane in (grid, layer1, layer2, alpha))
+        lit = np.array(lit) if lit is not None else None
+        for plane in (grid, layer1, layer2, alpha, flags):
+            flat = plane.reshape(-1)
+            flat[spread] = flat[copied]
+        flags.reshape(-1)[spread] = NO_MOVE
+        if lit is not None:
+            flat = lit.reshape(-1, lit.shape[-1])
+            flat[spread] = flat[copied]
+        Image.fromarray(grid, "L").save(out / "height.png")
+        Image.fromarray(np.stack([layer1, layer2, alpha], axis=-1), "RGB").save(out / "tiles.png")
+        print(f"  border     ground spread over {len(spread)} void tiles from the map's edge "
+              f"(BORDER_FILL_BY_MAP)")
 
     # The lava's spill into the void, before anything is written (see LAVA_SPILL_BY_MAP).
     if (reach := LAVA_SPILL_BY_MAP.get(number - 1)):
