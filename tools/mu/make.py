@@ -459,17 +459,18 @@ def plan_tables(threads):
     return tables(threads)
 
 
-def plan_gates():
-    """The realm's gate tables, src/sim/gates_table.inc, out of every world's manifest's `gates`
-    (pipeline/gates_table.py). A rebuild of the game, the server and netbot follows by hand."""
-    out = os.path.join(ROOT, "src", "sim", "gates_table.inc")
-    script = os.path.join(PIPELINE, "gates_table.py")
+def plan_realm():
+    """The realm's compiled tables, src/sim/gates_table.inc and maps_table.inc, out of every
+    world's manifest's `gates` and `rules` (pipeline/realm_tables.py). A rebuild of the game, the
+    server and netbot follows by hand."""
+    outs = [os.path.join(ROOT, "src", "sim", name) for name in ("gates_table.inc", "maps_table.inc")]
+    script = os.path.join(PIPELINE, "realm_tables.py")
     manifests = [os.path.join(SOURCE, "world", w, "world.json") for w in sorted(os.listdir(os.path.join(SOURCE, "world")))]
-    stale = newest([script] + [m for m in manifests if os.path.exists(m)]) > mtime(out)
-    return [Step("gates", ["python3", script],
-                 lambda c: (stale, "a manifest or the script is newer than gates_table.inc" if stale
-                            else "gates_table.inc is newer than every manifest"),
-                 "gates")]
+    stale = newest([script] + [m for m in manifests if os.path.exists(m)]) > min(mtime(out) for out in outs)
+    return [Step("realm", ["python3", script],
+                 lambda c: (stale, "a manifest or the script is newer than the realm's tables" if stale
+                            else "the realm's tables are newer than every manifest"),
+                 "realm")]
 
 
 # ----------------------------------------------------------------------------- running

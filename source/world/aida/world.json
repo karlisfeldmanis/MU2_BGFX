@@ -3,6 +3,17 @@
   "name": "Aida",
   "map": 33,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      84,
+      11
+    ],
+    "home": 0,
+    "event": false,
+    "floors": false,
+    "move_order": 7,
+    "note": "Aida, MU's map 33, entered from Noria's north-east door: its spawn gate 119, 82,8 to 87,14, the small safe hall in the north-west (OpenMU VersionSeasonSix Gates.cs:265; docs/aida-port.md), where a death and the Town Portal land too. Not 0.75's: MU added it in 2005 (Season 1). MU draws it on its black clear with no leaves, birds or weather (GMAida.cpp, SceneManager.cpp:371-402), so for now it takes the underground's air."
+  },
   "show": {
     "air": {
       "loop": "world_aida",

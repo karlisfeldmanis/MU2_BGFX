@@ -3,6 +3,17 @@
   "name": "Lost Tower",
   "map": 4,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      208,
+      75
+    ],
+    "home": 0,
+    "event": false,
+    "floors": true,
+    "move_order": 4,
+    "note": "The Lost Tower's spawn gate 42, 203,70 to 213,81: the safe hall on its first floor (Gates.cs:138, docs/lost-tower-port.md), where a death and the Town Portal land too."
+  },
   "show": {
     "places": [
       {

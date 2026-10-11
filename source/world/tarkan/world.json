@@ -3,6 +3,17 @@
   "name": "Tarkan",
   "map": 8,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      195,
+      65
+    ],
+    "home": 0,
+    "event": false,
+    "floors": false,
+    "move_order": 6,
+    "note": "Tarkan, MU's map 8, entered from Atlans's south-west lagoon: its spawn gate 57, 187,54 to 203,69, the safe town in the north-east (WebZen's gate.txt 57; docs/tarkan-port.md), where a death and the Town Portal land too. 195,65 rather than the box's middle: 195,61 is a closed statue block. Not 0.75's: MU added it with patch 0.84. MU draws it on its black clear with no leaves and no wind (MainScene.cpp:78-100), so for now it takes the underground's air."
+  },
   "show": {
     "air": {
       "loop": "world_desert",

@@ -8,7 +8,7 @@
     ./mu new item "<name>" [--db]            a weapon, shield or armour piece from OpenMU's call
     ./mu make sounds                         sounds.json and the wavs into showing.mus
     ./mu make tables                         every world's tables (after a new item or monster)
-    ./mu make gates                          the realm's gate table from the world manifests
+    ./mu make realm                          the realm's gate and world tables from the manifests
     ./mu make ... --plan                     what would run and why, running nothing
     ./mu check                               the quick gates: code and content
     ./mu where <name> [--docs]               every file that names it
@@ -127,14 +127,14 @@ def dispatch(args, say):
             steps = make.plan_sounds(args.threads)
         elif target == ["tables"]:
             steps = make.plan_tables(args.threads)
-        elif target == ["gates"]:
-            steps = make.plan_gates()
+        elif target in (["realm"], ["gates"]):
+            steps = make.plan_realm()
         elif len(target) == 1:
             thing = find(target[0])
             say(f"{thing.kind} {thing.build_name}, world {thing.world}: {thing.rel}")
             steps = make.plan_thing(thing, args.threads)
         else:
-            raise NotFound(f"make takes one name, 'world <w>', 'ground <w>', 'sounds', 'tables' or 'gates', "
+            raise NotFound(f"make takes one name, 'world <w>', 'ground <w>', 'sounds', 'tables' or 'realm', "
                            f"not {' '.join(target)}")
         ok, results = make.run(steps, args.plan, say, os.path.join(WORKSHOP, "logs", "mu"),
                                settings.environment(cores))

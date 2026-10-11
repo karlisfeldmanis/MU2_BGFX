@@ -11,7 +11,7 @@
 // Every walk this game has maps for: Lorencia, Noria, Devias, the Dungeon, the Lost Tower, Atlans,
 // Tarkan and Icarus.
 // The rows are each world's manifest's `gates` (source/world/<w>/world.json), compiled in through
-// pipeline/gates_table.py's sim/gates_table.inc: `./mu make gates`. mu.db's `gates` table holds
+// pipeline/realm_tables.py's sim/gates_table.inc: `./mu make realm`. mu.db's `gates` table holds
 // the spawn rows alone, which the cook reads for each world's safe box.
 #pragma once
 

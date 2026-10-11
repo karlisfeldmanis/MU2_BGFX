@@ -550,6 +550,30 @@ and a table compiled into the binary cannot drift between them.
 - sim_test's one failure ("twelve townsfolk stand in Devias -- got 13") fails on HEAD too. The
   shared cooked Devias tables already hold the Broker session's uncommitted Kesra.
 
+### Slice D4a: the world table
+
+On the user's "keep working on world manifests", while the NPC table waited on the Broker
+session.
+
+- **Each world's manifest has `rules`:** `arrive` (the tile a character comes in on), `home`
+  (the town a death goes to), `event`, `floors` and `move_order`. They were `sim/maps.cpp`'s
+  kMaps rows, parsed out with their comments.
+- **`pipeline/realm_tables.py`** (it replaces `gates_table.py`) writes `src/sim/maps_table.inc`
+  as well as the gates, and `maps.cpp` includes it. `./mu make realm` writes both (`gates` still
+  works), and `./mu check`'s `realm` line covers both.
+- **`MapRow::underground` is gone.** Since D1 nothing read it; it had stood in for "no weather
+  air" for Atlans, Tarkan and Aida, which is now the show's `air`, `leaves` and `indoors`.
+- The table's order is the M key's walk (`mapAfter`), so it is a field, `move_order`, and not
+  the order the manifests are read in.
+- **Proved:**
+  - **Old against new:** HEAD's `maps.cpp` in a renamed namespace against the generated one:
+    `mapOf` and `mapAfter` for every world and five that are not, `mapNumbered` -5 to 199.
+    235 checks, 0 differ.
+  - **sim_test:** identical to HEAD's (HEAD plus this, in a worktree). server_test passes 27
+    of 27.
+  - **Live** on port 44521: three netbots and a client joining in Devias, every link "none
+    disagreed"; the server was stopped.
+
 **Next: D3b, NPCs:** `cook.py` FOLK_VERSION075 into each manifest's `npcs`. mu.db's
 `npc_spawns` (Lorencia only, read by nothing) goes when sprint E builds mu.db from the json.
 

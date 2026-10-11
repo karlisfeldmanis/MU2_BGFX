@@ -3,6 +3,17 @@
   "name": "Lorencia",
   "map": 0,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      142,
+      126
+    ],
+    "home": 0,
+    "event": false,
+    "floors": false,
+    "move_order": 0,
+    "note": "mu.db's gates table, the spawn rows: 17  map 0  133,118 to 151,135   Lorencia 27  map 3  171,108 to 177,117   Noria 22  map 2  197,35 to 218,50     Devias Lorencia's 142,126 is the tile the world has always opened on, and it is inside gate 17; kept so a character made before this table comes in where he always did. Devias is last so the M key still goes Lorencia to Noria first."
+  },
   "show": {
     "steps": "grass",
     "music": {

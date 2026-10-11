@@ -3,7 +3,7 @@
 namespace mu::sim {
 namespace {
 
-// The tables, generated from each world's manifest's `gates` by pipeline/gates_table.py, where
+// The tables, generated from each world's manifest's `gates` by pipeline/realm_tables.py, where
 // every row's citation is (OpenMU's Gates.cs, WebZen's gate.txt, and the user's level choices).
 #include "sim/gates_table.inc"
 

@@ -3,6 +3,17 @@
   "name": "Blood Castle",
   "map": 11,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      13,
+      8
+    ],
+    "home": 2,
+    "event": true,
+    "floors": false,
+    "move_order": 9,
+    "note": "Blood Castle 1, MU's map 11: its exit gate 66, 12,5 to 14,10, in the safe court beside the Archangel (OpenMU VersionSeasonSix Gates.cs:216; docs/blood-castle-port.md). Not 0.75's: its first castle is Season Six's. MU draws it on its black clear with no weather (SceneManager.cpp:402), so it takes the underground's air, though it has no roof. Its town is Devias: a death, a Town Portal and the end of the run all land there."
+  },
   "show": {
     "air": {
       "loop": "",

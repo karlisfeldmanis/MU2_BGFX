@@ -3,6 +3,17 @@
   "name": "Dungeon",
   "map": 1,
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      108,
+      247
+    ],
+    "home": 0,
+    "event": false,
+    "floors": true,
+    "move_order": 3,
+    "note": "The Dungeon has no spawn gate (Gates.cs:119-125, none marked), so it opens where Lorencia's stair lets out: the middle of exit gate 2, 107,247 to 110,247, on the first floor."
+  },
   "show": {
     "places": [
       {

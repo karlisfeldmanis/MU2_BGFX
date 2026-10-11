@@ -70,7 +70,7 @@ def shown_models(block: str) -> dict:
 def gate_boxes() -> dict:
     """{map: [(x1, y1, x2, y2)]}: every gate box on each map, enter and exit, from the
     manifests' `gates` (the ones off the map, the talk gates' -1s, left out). The index keeps
-    them open; the realm walks the same rows (pipeline/gates_table.py)."""
+    them open; the realm walks the same rows (pipeline/realm_tables.py)."""
     boxes = {}
     for doc in manifests().values():
         gates = doc.get("gates", {})

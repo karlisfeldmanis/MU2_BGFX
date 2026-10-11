@@ -5,7 +5,10 @@
 // A row is only what no cooked file says. The land, the town and the rules are each world's
 // own cook (assets/world/<name>, cooked/<name>/<name>.mut and .mur) and are found by the name;
 // the lighting laid over the base sheet is sheets/worlds/<name>.json when there is one. What is
-// left is where a character comes in, which is MU's spawn gate for the map.
+// left is where a character comes in, which is MU's spawn gate for the map. The rows are each
+// world's manifest's `rules` (source/world/<w>/world.json), compiled in through
+// pipeline/realm_tables.py's sim/maps_table.inc: `./mu make realm`. How a world looks, sounds
+// and blows is its manifest's `show`, which the client reads (game/world/world_show.h).
 #pragma once
 
 #include <string>
@@ -18,9 +21,6 @@ struct MapRow {
     // The tile a character comes in on: the middle of mu.db's spawn gate for the map (gates
     // 17 and 27, both spawn = 1). The realm moves him to the nearest tile he may stand on.
     int arrive[2];
-    // Under a roof on every tile: no sky's leaves, no wind, the room's air. The Dungeon and the
-    // Lost Tower, which MU draws on its black clear with no weather (SceneManager.cpp:402).
-    bool underground = false;
     // MU's map number of the town a death or a Town Portal sends him to from a map with no
     // safe zone of its own: Lorencia (OpenMU's SafezoneMap fallback, BaseMapInitializer.cs:91),
     // or Devias from Blood Castle (WebZen user.cpp:22084-22089, gate 22).
