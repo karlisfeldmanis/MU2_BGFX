@@ -1,0 +1,53 @@
+{
+  "item": "Object26",
+  "mu_name": "Object26",
+  "mu_name_from": "aida's object slot: type N is Object{N+1}.bmd, from Data/Object34.",
+  "world": "aida",
+  "object_type": 25,
+  "placements": 40,
+  "profile": "world",
+  "sheets": {
+    "waterfall_R": "ai_waterfall_r.png"
+  },
+  "sheet_from": "Data/Object34/, decoded under the ai_ prefix by `mu new`.",
+  "sheet_materials": {
+    "waterfall_R": "lamplight"
+  },
+  "material_note": "waterfall_R: cyan-white streaked water on black, added.",
+  "why_this_one": "A waterfall, 40 of them, hanging from the pit lips into the dark; its 15-key clip sways the fall. Glow batch (the user, 2026-10-11: 'Glow sheets batch'). docs/aida-port.md.",
+  "additive": [
+    "waterfall_R"
+  ],
+  "additive_from": "An _R sheet: MU's TextureScript marks a name with _R after its underscore bright (TextureScript.cpp:16-58) and RenderBody makes that mesh the blend mesh (ZzzBMD.cpp:2236-2242), so it is drawn added, as Tarkan's chogatea02_R.",
+  "glow": {
+    "waterfall_R": {
+      "scrolls_per_second": 0.375
+    }
+  },
+  "glow_from": "MoveAidaObject, types 25 and 28: BlendMeshTexCoordV -= 0.015 a frame (GMAida.cpp:48-57). At MU's 25 reference frames a second that is 0.375 sheet a second, V falling, MU's usual direction, so positive here: the water runs down.",
+  "effects_note": "The spray beside it is Object57-59's (hidden emitters, still to come).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 80,
+      "area": 8113.6,
+      "along": [
+        -29.2,
+        5.1
+      ],
+      "mu_uv": [
+        0.001,
+        -0.012,
+        1.008,
+        2.036
+      ],
+      "bake_uv": [
+        0.001,
+        -0.012,
+        1.008,
+        2.036
+      ]
+    }
+  ]
+}

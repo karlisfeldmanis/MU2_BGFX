@@ -107,19 +107,30 @@ before the next:
 - the statues and temple blocks (32/45/33/50/51);
 - the coffins, sword and skeletons (52/55/56/62/69/70).
 
-That makes 3 263 placements of 54 models, at about 190-260 fps, unmeasured. The 20 kinds left
+That made 3 263 placements of 54 models, at about 190-260 fps, unmeasured. The 20 kinds left (16 after the glow batch below)
 all need effect work, plus the nine hidden emitter kinds:
-- Object01 (Treeange_R), 26/29 (waterfall_R, V slide 0.375/s), 31/72 (light-flowers: `_R` bulbs,
-  green and red flickering terrain lights, spark sprites), 42 (sunlight2_R, two half-alpha added
-  passes) and 76 (a ring statue with a flare at bone 4);
+- 31/72 (light-flowers: `_R` bulbs, green and red flickering terrain lights, spark sprites) and 76
+  (a ring statue with a flare at bone 4);
 - 66/67 and 78/79, the serpents: mesh 0 streamed a second time as an unlit pass.
 
 **The shot camera** looks along +y, its centre about 12 tiles ahead of the hero and a little to
 the right, with the hero at the bottom left. To see an object, stand about 4 tiles -y of it.
 
-**Not done: mu.db gate 119.** Writing `insert into gates values (119, 33, 82, 8, 87, 14, 1)` into
-`source/mu.db` was refused by the session's permission check, so until it goes in, a death in Aida
-rises in Lorencia. Step 2 (the gates) is next.
+**The glow sheets, 2026-10-11** (the user picked 'Glow sheets batch' first). Four kinds whose whole
+body is one `_R` sheet, written by `mu new object` and marked `additive` + `lamplight`:
+- Object01 (Treeange_R, 2): a faint grey haze in the north-east canopy, its 20-key bob kept;
+- Object26 (waterfall_R, 40, its 15-key sway kept) and Object29 (the same sheet, 4, one key): the
+  falls, `glow.scrolls_per_second` 0.375 (MU's V -0.015 a frame at 25 Hz, the water running down);
+- Object42 (sunlight2_R, 21): the sunbeams, steady at glow 1.0. MU's two passes (Alpha 0.5, then
+  mesh 0 again RENDER_BRIGHT at 0.52) are folded into one full added pass.
+
+Shot muted at noon at the north-east pit (186,108), the south falls (117,207) and the graveyard's
+beams (100,164), 0 errors, about 210-236 fps (unmeasured). The falls read bright cyan with a
+white core under the world's glow_strength 1.3, a candidate to dim if the user finds them hot.
+
+**Gate 119 is in `source/mu.db`** (the user approved it 2026-10-11): `(119, 33, 82, 8, 87, 14, 1)`,
+checkpointed, carried by index.py's `gate_rows` into the world's `gates.safe` and Aida's tables. A
+death in Aida now rises in the hall. Step 2 (the doors 120/121) is still to come.
 
 ## The one thing to know first
 
