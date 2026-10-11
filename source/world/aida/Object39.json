@@ -1,0 +1,67 @@
+{
+  "item": "Object39",
+  "mu_name": "Object39",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 38,
+  "placements": 9,
+  "profile": "world",
+  "sheets": {
+    "ida_09": "ai_ida_09.png",
+    "ida_01": "ai_ida_01.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "ida_09": "rock",
+    "ida_01": "rock"
+  },
+  "material_note": "ida_09: a rock face beside a carved stone column: rock; ida_01: a carved stone frieze, dark: rock.",
+  "why_this_one": "a broken pillar placed at scale 12-16. Batch 3, the ruins and graves (the user, 2026-10-11, of a black slit by the basin: 'something still there, but bayme that will be fixed later and there will be some objects there?', then 'I'd suggest the next batch be the ruins and graves'): the old temple ground of the west and south. docs/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 30,
+      "area": 88.8,
+      "along": [
+        -3.8,
+        3.7
+      ],
+      "mu_uv": [
+        0.04,
+        -0.983,
+        6.377,
+        0.312
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.982,
+        0.993
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 40,
+      "area": 188.8,
+      "along": [
+        -2.1,
+        2.6
+      ],
+      "mu_uv": [
+        -0.641,
+        0.034,
+        1.767,
+        1.344
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.925,
+        0.939
+      ]
+    }
+  ]
+}

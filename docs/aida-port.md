@@ -80,6 +80,19 @@ machine at load 9 with another session's game and netbot running.
 - After both: 1 614 void edge tiles near walkable ground, 423 of them with nothing on them, and
   those fade softly. Shot at the basin, the west channel and two pit lips, 202-236 fps.
 
+**The ruins and graves, 2026-10-11** (the user, of a black slit by the basin: 'there will be
+some objects there?', then 'I'd suggest the next batch be the ruins and graves'). Object34-41,
+the temple pieces of the west and south (MU builds 35-41 tiny and places them at scale 6-16),
+and the gravestones and Celtic crosses Object46-49: twelve kinds, 19 new `ai_` sheets plus
+`branch01_line`'s hanging-vine cutout. Read off the art: rock (friezes, masonry, gravestones),
+plaster (ida_11), bark (ida_12, qwwood, boss01), wood (qwwoodna). 2 107 placements of 20 models.
+The basin's slit between two Object43 outcrops is still there: it is MU's own gap.
+**A trap:** a gravestone at 90,174 looks as if it stands in the void. It stands on drawn ground,
+but MU's baked light falls from about 90 to 1-30 across the graveyard's south edge toward the pit
+(MU paints the forest's edges dark into the light), so the ground is black in MU's own client too.
+A 0.8-tile fade was tried, changed nothing there, and went back to 1.5. Lifting the light floor
+is a look decision for later.
+
 **Not done: mu.db gate 119.** Writing `insert into gates values (119, 33, 82, 8, 87, 14, 1)` into
 `source/mu.db` was refused by the session's permission check, so until it goes in, a death in Aida
 rises in Lorencia. Step 2 (the gates) is next.
