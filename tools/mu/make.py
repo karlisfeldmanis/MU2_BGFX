@@ -283,6 +283,12 @@ def cook_one_name(thing):
 
 
 def plan_thing(thing, threads):
+    left = [k for k, v in (thing.doc.get("sheet_materials") or {}).items() if v == "CHOOSE"]
+    if left:
+        from things import NotFound
+        library = sorted(f[:-5] for f in os.listdir(os.path.join(SOURCE, "materials")) if f.endswith(".json"))
+        raise NotFound(f"{thing.rel}: choose a material for {', '.join(left)} "
+                       f"(sheet_materials) from {', '.join(library)}")
     steps = head([thing], threads)
     t = ["--threads", str(threads)]
     glb = lambda: os.path.join(ASSETS, thing.glb_rel() or "")
@@ -318,6 +324,120 @@ def plan_thing(thing, threads):
 def plan_world(world, threads):
     things = world_recipes(world)
     return head(things, threads) + world_cook(world, things, threads)
+
+
+# ----------------------------------------------------------------------------- the land
+
+GRIDS = ("height.png", "tiles.png", "attributes.png", "light.png", "blend_keep.png")
+
+
+def plan_ground(world, folder, threads, reimport=False):
+    """A world's bare land: terrain import, the tile sheets, the ground, then index, sync, cook.
+
+    docs/aida-port.md step 1 and the cook-trap memories, in order:
+      - terrain.py writes the grids and <w>.json into source/ from MU's Data/World<N>. It runs on
+        a world never imported (--folder N), or when asked (--import). Never by itself: those
+        files are tracked, and terrain.py's per-map tables change for one world at a time -- an
+        Aida edit made every world look stale, and re-importing Lorencia for it would rewrite
+        Lorencia's source. The plan says when terrain.py is newer; --import acts on it. The
+        folder is <w>.json's own map_number after the first import;
+      - tileset.py, then ground.py, never content.sh --world, which rebuilds every recipe;
+      - the index after the grids: it is what copies them into workshop/ (the Lost Tower's lava
+        stood on the old grids when it was skipped);
+      - `--only ground` on a world with no objects yet, `--only textures` (the ground included)
+        on one that has them: `--only ground` writes a manifest of the ground alone, and a mesh
+        cooked against it is white;
+      - every world's tables, since a gate joins two.
+    """
+    from new import data_root, world_doc
+    src = os.path.join(SOURCE, "world", world)
+    work = os.path.join(WORKSHOP, "world", world)
+    ground_json = os.path.join(src, "ground.json")
+    if not os.path.exists(ground_json):
+        raise NotFound_(f"no {os.path.relpath(ground_json, ROOT)}: the tile sheets are named there, by hand")
+    grids = [os.path.join(src, g) for g in GRIDS]
+    placed = os.path.join(src, f"{world}.json")
+    if folder is None and os.path.exists(placed):
+        folder = world_doc(world).get("map_number")
+    steps = []
+    if folder is not None:
+        def terrain_test(changed):
+            if not os.path.exists(placed):
+                return True, "never imported"
+            if reimport:
+                return True, f"--import: World{folder} read again"
+            if changed_at(os.path.join(PIPELINE, "terrain.py")) > mtime(placed):
+                return False, "terrain.py changed since the import; --import re-reads it (rewrites source/world/" + world + ")"
+            return False, f"imported from World{folder}, terrain.py unchanged since"
+        steps.append(Step("terrain", ["python3", os.path.join(PIPELINE, "terrain.py"),
+                                      os.path.join(data_root(), f"World{folder}"), world,
+                                      os.path.join(SOURCE, "world"), str(folder)],
+                          terrain_test, "grids"))
+    slots = os.path.join(work, "tiles_slots.json")
+    glb = os.path.join(work, f"{world}_ground.glb")
+
+    def tileset_test(changed):
+        if "grids" in changed:
+            return True, "the terrain was imported"
+        if not os.path.exists(slots):
+            return True, "never built"
+        tool = changed_at(os.path.join(PIPELINE, "tileset.py"))
+        if max(mtime(ground_json), tool) > mtime(slots):
+            which = "pipeline/tileset.py" if tool > mtime(ground_json) else "ground.json"
+            return True, f"{which} is newer than the tile sheets"
+        return False, "the tile sheets are newer than ground.json"
+
+    def ground_test(changed):
+        if changed & {"grids", "tiles"}:
+            return True, "upstream changed"
+        if not os.path.exists(glb):
+            return True, "never built"
+        ins = {p: mtime(p) for p in grids + [ground_json, slots]}
+        ins[os.path.join(PIPELINE, "ground.py")] = changed_at(os.path.join(PIPELINE, "ground.py"))
+        late = max(ins, key=ins.get)
+        if ins[late] > mtime(glb):
+            return True, f"{os.path.relpath(late, ROOT)} is newer than the ground"
+        return False, f"{world}_ground.glb is newer than its grids"
+
+    def index_ground(changed):
+        if changed & {"grids", "tiles", "land"}:
+            return True, "the land changed; the index copies the grids into workshop/"
+        if newest(grids + [glb]) > mtime(os.path.join(WORKSHOP, "index.json")):
+            return True, "a grid or the ground is newer than the index"
+        return False, "the index is newer than the land"
+
+    def sync_ground(changed):
+        if changed & {"index", "land"}:
+            return True, "the workshop changed"
+        if mtime(glb) > mtime(os.path.join(ASSETS, "world", world, f"{world}_ground.glb")):
+            return True, "assets/ holds an older ground"
+        return False, "assets/ holds this ground"
+
+    has_objects = os.path.isdir(os.path.join(COOKED, world, "meshes"))
+    only = "textures" if has_objects else "ground"
+    steps += [
+        Step("tileset", ["python3", os.path.join(PIPELINE, "tileset.py"), ground_json, work], tileset_test, "tiles"),
+        Step("ground", ["python3", os.path.join(PIPELINE, "ground.py"), src, work, os.path.join(SOURCE, "textures")],
+             ground_test, "land"),
+        Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP], index_ground, "index"),
+        Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
+                      "--world", world, "--only-world"], sync_ground, "assets"),
+        Step(f"{only} {world}", COOK + ["--world", world, "--only", only, "--threads", str(threads)],
+             cook_test([os.path.join(COOKED, world, "textures.json")],
+                       [lambda: os.path.join(ASSETS, "world", world, f"{world}_ground.glb")], "textures.json"),
+             "cooked", lock=world, after=jobs(os.path.join(COOKED, world, "jobs.txt"), 60)),
+    ]
+    if has_objects:
+        steps.append(Step(f"placements {world}", COOK + ["--world", world, "--only", "placements"],
+                          cook_test([os.path.join(COOKED, world, world + ".mut")],
+                                    [os.path.join(ASSETS, "index.json")], f"{world}.mut"),
+                          "cooked", lock=world))
+    return steps + tables(threads)
+
+
+def NotFound_(message):
+    from things import NotFound
+    return NotFound(message)
 
 
 def plan_sounds(threads):

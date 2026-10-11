@@ -2,6 +2,8 @@
 
     ./mu make <Name|world/Name|path.json>   one recipe, from source to cooked, what is stale only
     ./mu make world <w>                      every object recipe of a world, then its cook
+    ./mu make ground <w> [--folder N|--import] the bare land: terrain import, tile sheets, ground, cook
+    ./mu new object <w>/<ObjectNN>           a recipe from MU's model: mesh, sheets, placements
     ./mu make sounds                         sounds.json and the wavs into showing.mus
     ./mu make tables                         every world's tables (after a new item or monster)
     ./mu make ... --plan                     what would run and why, running nothing
@@ -42,8 +44,17 @@ def main():
     m = sub.add_parser("make", parents=[common])
     m.add_argument("target", nargs="+")
     m.add_argument("--plan", action="store_true", help="say what would run and why; run nothing")
+    m.add_argument("--folder", type=int, default=None,
+                   help="with `ground`: MU's Data/World<N> to import from (after the first, <w>.json knows)")
+    m.add_argument("--import", dest="reimport", action="store_true",
+                   help="with `ground`: read the terrain again from MU's Data")
     m.add_argument("--cores", "--threads", dest="cores", type=int, default=None,
                    help="for this run; `mu cores N` keeps one")
+
+    n = sub.add_parser("new", parents=[common])
+    n.add_argument("kind", choices=("object",))
+    n.add_argument("target", help="<world>/<ObjectNN>")
+    n.add_argument("--prefix", help="the sheet prefix; read off the world's recipes by default")
 
     sub.add_parser("check", parents=[common])
 
@@ -103,7 +114,9 @@ def dispatch(args, say):
         args.threads = cores
         say(f"cores: {cores} of {settings.machine()} ({source})")
         target = args.target
-        if target[0] == "world" and len(target) == 2:
+        if target[0] == "ground" and len(target) == 2:
+            steps = make.plan_ground(target[1], args.folder, args.threads, args.reimport)
+        elif target[0] == "world" and len(target) == 2:
             steps = make.plan_world(target[1], args.threads)
         elif target == ["sounds"]:
             steps = make.plan_sounds(args.threads)
@@ -114,10 +127,14 @@ def dispatch(args, say):
             say(f"{thing.kind} {thing.build_name}, world {thing.world}: {thing.rel}")
             steps = make.plan_thing(thing, args.threads)
         else:
-            raise NotFound(f"make takes one name, 'world <w>', 'sounds' or 'tables', not {' '.join(target)}")
+            raise NotFound(f"make takes one name, 'world <w>', 'ground <w>', 'sounds' or 'tables', "
+                           f"not {' '.join(target)}")
         ok, results = make.run(steps, args.plan, say, os.path.join(WORKSHOP, "logs", "mu"),
                                settings.environment(cores))
         return ok, {"plan": args.plan, "cores": cores, "steps": results}
+    if args.command == "new":
+        import new
+        return new.new_object(args.target, args.prefix, say)
     if args.command == "check":
         return check.run(say)
     if args.command == "where":

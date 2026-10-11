@@ -295,8 +295,37 @@ Begun 2026-10-11 straight after A, on the user's "next".
     mid-chain.
 - **What `mu check` found on its first day:** another session's `realm_raid.cpp` 4 lines past
   its recorded size. `mu where Balrog` names 35 files, the baseline for sprint E.
-- **Not yet:** `mu new`, a new world's ground and terrain steps, `--only showing`'s missing skip
-  rule (still about 9 min), and a socket to a running game. That last is sprint F.
+- **Then the three it lacked** (the user quoted them back: "still missing from mu"):
+  - **`mu new object <w>/<ObjectNN>`** writes a recipe from MU's model. It exports the mesh with
+    MuExtract and reads its sheets from the `.obj`'s `# texture:` lines; `model_sheets.py`
+    cannot read Aida's version-12 models. It decodes each sheet under the world's prefix (read
+    off its recipes), takes the cutout from decode_texture's alpha verdict, and reads the
+    placements and type from the terrain import. Each material is left `"CHOOSE"`, and
+    `mu make` refuses the recipe until one is chosen, naming the library. Tried on
+    `tarkan/Object61` (82 placements, type 60), then removed.
+  - **`mu make ground <w>`** runs tileset, ground, index (it copies the grids), sync, the cook
+    and every world's tables.
+    - The terrain import runs only on a world never imported (`--folder N`) or on `--import`.
+      The Aida session's `terrain.py` edit had made every world look stale, and an automatic
+      re-import would have rewritten Lorencia's tracked source.
+    - The cook is `--only ground` on a bare world and `--only textures` on one with objects:
+      `--only ground`'s manifest holds the ground alone, and meshes cooked against it are
+      white.
+    - Run on Dungeon (`ground.py` changed 10-03, its ground was 09-30's): 72 s, then shot at
+      238,149 by `mu shot`, which now keeps its own `run.log` (another session's run had
+      replaced `mu2.log` mid-read).
+  - **The showing cook is 45 s → 0.44 s, not 9 min.** The 9 min was stale: the sheets had a
+    skip since 09-28. What remained:
+    - the 35 missile sheets were re-compressed every time; they now skip on the sha1 in their
+      name;
+    - all 278 sounds were rewritten every time; they now skip by a content digest per source,
+      plus the cook code's own (`sounds/digests.json`). That is content and not a date,
+      because a replaced wav can carry an older date. Proved: one byte changed with its date
+      set back a day re-cooks that one; restored, the output is byte-identical.
+    - The sound helpers moved to `tools/cook_sound.py` to pay the ratchet. `cook.py` is
+      3878 → 3813, and all 278 cooked sounds and `showing.mus` are byte-identical across the
+      move.
+- **Not yet:** `mu new` for monsters and items, and a socket to a running game (sprint F).
 
 ## 8. Leave alone
 

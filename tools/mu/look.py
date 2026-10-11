@@ -51,7 +51,10 @@ def shot(world, at, when, frames, out, say):
     at_frame = max(1, frames // 2)
     cmd = [os.path.join(ROOT, "build", "mu2"), "--world", world, "--at", at, "--time", when,
            "--frames", str(frames), "--shot", str(at_frame), "--shot-path", out, "--mute",
-           "--save", os.path.join(scratch, "demo.json")]
+           "--save", os.path.join(scratch, "demo.json"),
+           # Its own log, beside its shots: mu2.log is shared, and another session's run
+           # replaced this one's mid-read the first day mu shot ran (2026-10-11).
+           "--log", os.path.join(out, "run.log")]
     say(" ".join(cmd))
     started = time.time()
     done = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
@@ -59,7 +62,16 @@ def shot(world, at, when, frames, out, say):
     path = os.path.join(out, pngs[-1]) if pngs else None
     ok = done.returncode == 0 and path is not None
     say(f"{'shot' if ok else 'FAILED'} {path or '(none)'} in {time.time() - started:.0f} s")
-    return ok, {"png": path, "code": done.returncode, "cmd": " ".join(cmd)}
+    errors = []
+    try:
+        with open(os.path.join(out, "run.log")) as handle:
+            errors = [l.strip() for l in handle if "ERROR" in l][:10]
+    except OSError:
+        pass
+    for line in errors:
+        say(f"  {line}")
+    return ok, {"png": path, "log": os.path.join(out, "run.log"), "errors": errors,
+                "code": done.returncode, "cmd": " ".join(cmd)}
 
 
 def compare(a, b, out, say):

@@ -33,6 +33,9 @@ Traced from 84940c86 (Aida's trees) and c571b2cd (ruins and graves).
    HIDDEN_BY_MAP, `game/world/ornaments.cpp` for a glow.
 9. Shots: `./run.sh --world <w> --at X,Y --frames 240 --shot 120 --shot-path <abs> --mute --save <abs>/demo.json`.
 
+**Since sprint B:** `./mu new object <w>/ObjectNN` does steps 1-3 but the materials, and
+`./mu make <w>/ObjectNN` steps 4-7.
+
 **Today:** 1 hand-written json per kind, about 7 tools, 0-3 code files. **Goes to:** `mu make`
 (sprint B) and the world panel (G).
 
@@ -73,6 +76,8 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    - the tile sheets decoded, and `ground.json` by hand;
    - `tileset.py` and `ground.py`, the `gates` row in `mu.db` (checkpoint), index and sync;
    - `cook.py --only ground`, and `--only tables` here and in the neighbours.
+   Since sprint B, `./mu make ground <w> --folder N` runs all but the dicts, ground.json and
+   the gates row.
 2. Code: `sim/maps.cpp` kMaps, `game/ui/arrival.cpp` kPlaces, `game/ui/minimap.cpp` mapName,
    `sheets/worlds/<w>.json`, maybe the `content/ground.cpp` heuristics. Rebuild.
 3. Gates: `sim/gates.cpp` kExits and kEnters, `sim_test`, then rebuild the server and run
@@ -149,8 +154,8 @@ Traced from dc8ad39f (the target frame, 23 files).
 
 ## A sound
 
-`source/sounds/sounds.json` and the wav, then `pipeline/index.py`, then
-`cook.py --only showing` (minutes). Then a load in `game/play_open.cpp` (57 of them, by hand)
+`source/sounds/sounds.json` and the wav, then `./mu make sounds` (the index, the sync and the
+showing cook, under a second when little changed). Then a load in `game/play_open.cpp` (57 of them, by hand)
 and the call where it plays.
 
 ## Lighting and a material
