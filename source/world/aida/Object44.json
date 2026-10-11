@@ -1,0 +1,131 @@
+{
+  "item": "Object44",
+  "mu_name": "Object44",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 43,
+  "placements": 27,
+  "profile": "world",
+  "sheets": {
+    "ida_st01": "ai_ida_st01.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "ida_st01": "rock"
+  },
+  "material_note": "ida_st01: weathered carved stone: rock.",
+  "why_this_one": "a stone table. Batch 6, small rocks, statues, coffins and bones (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 97,
+      "area": 128274.2,
+      "along": [
+        -56.3,
+        137.7
+      ],
+      "mu_uv": [
+        -0.617,
+        0.016,
+        2.42,
+        0.995
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.995,
+        0.93
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 49702.1,
+      "along": [
+        -138.9,
+        40.7
+      ],
+      "mu_uv": [
+        -0.26,
+        0.194,
+        1.26,
+        0.697
+      ],
+      "bake_uv": [
+        0.006,
+        0.438,
+        0.661,
+        0.655
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 15,
+      "area": 7209.7,
+      "along": [
+        -65.9,
+        -18.0
+      ],
+      "mu_uv": [
+        0.491,
+        1.015,
+        1.291,
+        1.715
+      ],
+      "bake_uv": [
+        0.52,
+        0.005,
+        0.865,
+        0.307
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 16,
+      "area": 13682.7,
+      "along": [
+        17.8,
+        88.4
+      ],
+      "mu_uv": [
+        0.15,
+        0.026,
+        0.95,
+        0.725
+      ],
+      "bake_uv": [
+        0.005,
+        0.667,
+        0.35,
+        0.969
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 14,
+      "area": 9157.6,
+      "along": [
+        -32.4,
+        15.5
+      ],
+      "mu_uv": [
+        0.735,
+        0.156,
+        1.535,
+        0.659
+      ],
+      "bake_uv": [
+        0.363,
+        0.75,
+        0.708,
+        0.966
+      ]
+    }
+  ]
+}
