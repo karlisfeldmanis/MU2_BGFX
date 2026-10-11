@@ -87,6 +87,16 @@ private:
     int onMore_ = -1;      // the capsule whose button is under the pointer, as last drawn
     gfx::Box leave_;       // "Leave" on his own line, empty when there is none
     uint64_t facesTaken_ = 0;
+    // His own numbers as last drawn, which redraw the bar as they change.
+    struct Self {
+        int32_t health = 0, maxHealth = 0, mana = 0, maxMana = 0, sd = 0, maxSd = 0, level = 0;
+        bool alive = true;
+        bool operator==(const Self& o) const {
+            return health == o.health && maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
+                   sd == o.sd && maxSd == o.maxSd && level == o.level && alive == o.alive;
+        }
+    };
+    Self self_;
     float menuX_ = 0.0f, menuY_ = 0.0f;
     std::string targeted_;  // the target's name as last drawn: his capsule wears the gold edge
     // A press the bar used this frame, which the world must not also take (the user: "i click to

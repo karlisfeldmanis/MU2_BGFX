@@ -61,8 +61,11 @@ void more(gfx::Canvas& canvas, const gfx::Box& box, float u, bool lit);
 void disc(gfx::Canvas& canvas, float cx, float cy, float r, const gfx::Art* art, uint32_t ink);
 // His face in its round frame, as the target frame and the party's capsules wear it: a dark ring
 // `ring` wide, the well, and his head (game/portrait.h) when `picture` is his -- greyed when he
-// lies dead, dimmed when he is away -- else his class's letters in the well.
+// lies dead, dimmed when he is away -- else his class's letters in the well. The party's
+// `leader` wears it in gold: the ring, and the crown on a small round badge sitting on the ring
+// at the top left (the user, 2026-10-11: "party leader icoon has to be very nicely intergrated on
+// thumb").
 void face(gfx::Canvas& canvas, float cx, float cy, float r, float ring, const gfx::Art* picture, int kin,
-          bool dead, bool away);
+          bool dead, bool away, bool leader = false);
 
 }  // namespace mu::game::capsule

@@ -184,9 +184,12 @@ void disc(gfx::Canvas& canvas, float cx, float cy, float r, const gfx::Art* art,
 }
 
 void face(gfx::Canvas& canvas, float cx, float cy, float r, float ring, const gfx::Art* picture, int kin,
-          bool dead, bool away) {
+          bool dead, bool away, bool leader) {
     const float a = away ? kAway : 1.0f;
-    disc(canvas, cx, cy, r + ring, nullptr, kFaceRing);
+    // The leader's gold, never dimmed (whoever leads is said in full, as the capsule says him).
+    const uint32_t gold = dead ? faded(kGold, 0.5f) : kGold;
+    if (leader) disc(canvas, cx, cy, r + ring + 1.0f, nullptr, kFaceRing);
+    disc(canvas, cx, cy, r + ring, nullptr, leader ? faded(gold, 0.9f) : kFaceRing);
     disc(canvas, cx, cy, r, nullptr, kFaceWell);
     if (picture && picture->valid()) {
         disc(canvas, cx, cy, r, picture, dead ? gfx::rgba(0.42f, 0.42f, 0.42f) : faded(0xFFFFFFFFu, a));
@@ -197,6 +200,16 @@ void face(gfx::Canvas& canvas, float cx, float cy, float r, float ring, const gf
         controls::caps(canvas, cx - controls::capsWidth(size, letters, 0.06f) * 0.5f, cy + size * 0.36f, size,
                        faded(kKinInk[kin], dead ? 0.4f : a), letters, 0.06f);
     }
+    if (!leader) return;
+    // The badge on the ring at the top left: a dark disc rimmed in gold, the crown in it.
+    const float br = std::max(6.0f, r * 0.36f);
+    const float bx = cx - (r + ring * 0.5f) * 0.7071f, by = cy - (r + ring * 0.5f) * 0.7071f;
+    disc(canvas, bx, by, br + 1.0f, nullptr, kFaceRing);
+    disc(canvas, bx, by, br, nullptr, gold);
+    disc(canvas, bx, by, br - std::max(1.0f, br * 0.16f), nullptr, kFaceWell);
+    // The crown is 12 of its units across and 10 high, its foot at `base`.
+    const float s = br * 1.15f / 12.0f;
+    crown(canvas, bx - 6.0f * s, by + 4.6f * s, s, gold);
 }
 
 }  // namespace mu::game::capsule

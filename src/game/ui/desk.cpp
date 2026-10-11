@@ -617,13 +617,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         menuTook_ = playerMenu_.update(play, pointer);
         Pointer under = pointer;
         if (menuTook_ || playerMenu_.covers(pointer.x, pointer.y)) under.pressed = under.rightPressed = false;
-        // The party's faces the next gather takes: whoever of them is on this map.
+        // The party's faces the next gather takes: whoever of them is on this map, him too.
         {
-            std::string me;
-            play.playerName(play.realm().hero().id, &me, nullptr);
             faceIds_.clear();
             for (const auto& member : play.party().members) {
-                if (member.here != 0 && member.name != me) faceIds_.push_back(member.here);
+                if (member.here != 0) faceIds_.push_back(member.here);
             }
             play.wantFaces(faceIds_);
         }

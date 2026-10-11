@@ -132,7 +132,6 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
     std::vector<Raider> raid = raidOf(play);
     const float u = tip::unit();
     const bool inParty = party.members.size() > 1;
-    const bool leading = inParty && party.members.front().name == me;
 
     // A click on a capsule makes him the target, from any map; one on its button asks for his
     // menu, which the desk opens (game/ui/player_menu.h). The button stands only while he is
@@ -163,7 +162,7 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
         }
         if (!hit.box.has(pointer.x, pointer.y)) continue;
         if (pointer.pressed) {
-            play.target(hit.name, hit.here);
+            if (hit.name != me) play.target(hit.name, hit.here);
             play.ui(Play::Ui::Click);
             took_ = true;
         }
@@ -173,6 +172,12 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
     onMore_ = onMore;
     const bool facesMoved = facesTaken != facesTaken_;
     facesTaken_ = facesTaken;
+    // His own capsule reads his body, which moves between the party's once-a-second states.
+    const sim::Body& hero = play.realm().hero();
+    const Self self{hero.health, hero.maxHealth, hero.mana, hero.maxMana, hero.sd, hero.maxSd, hero.level,
+                    play.shownAlive(hero.id)};
+    const bool selfMoved = !(self == self_);
+    self_ = self;
     const bool targetMoved = play.targetName() != targeted_;
     targeted_ = play.targetName();
 
@@ -193,11 +198,15 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
     for (const auto& member : party.members) {
         if (member.name != me) ease(member.name, float(member.health) / 100.0f, member.health > 0 && member.here != 0);
     }
+    if (inParty) {
+        ease(me, hero.maxHealth > 0 ? float(std::max(0, play.shownHealth(hero.id))) / float(hero.maxHealth) : 0.0f,
+             self.alive);
+    }
     for (const Raider& one : raid) ease(one.name, float(one.health) / 100.0f, one.health > 0);
     clock_ = moving ? clock_ + seconds : 0.0f;
 
     if (same(party, drawn_) && raid == raid_ && me == me_ && u == unit_ && !moving && !targetMoved && !moreMoved &&
-        !facesMoved) {
+        !facesMoved && !selfMoved) {
         return;  // redrawn on a change only, or while something moves
     }
     drawn_ = party;
@@ -237,21 +246,11 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
         return more;
     };
     float y = (540.0f - kAboveMiddle) * u;  // the unit is 1080 lines' pixel
-    // His own line over the column, since his own capsule is not drawn: the badge and "You lead
-    // the party" when he leads, else "You are in the party"; and "Leave" at its right end (the
-    // user, 2026-10-11: Leave party off the other players' menus; a second three-dot button
-    // over theirs read as two of the same, "now there is two seperated buttons").
+    // Over the column, "Leave" at its right end: what he can do to himself (the user, 2026-10-11:
+    // Leave party off the other players' menus). No "You lead the party" words: his own capsule,
+    // first under it, says it with the crown on his face ("dublicated party leader icons").
     if (inParty && !others.empty()) {
-        const float base = y - 8.0f * u, s = 1.1f * u;
-        float at = x;
-        if (leading) {
-            capsule::crown(canvas_, x + 1.0f * u, base + 1.0f * u, s, capsule::kCrownDrop);
-            capsule::crown(canvas_, x, base, s, capsule::kGold);
-            at = x + 18.0f * u;
-        }
-        const float named = controls::label(canvas_, at, base, 13.0f * u, leading ? capsule::kGold : style::kBoneHi, "You");
-        controls::label(canvas_, at + named + 4.0f * u, base, 13.0f * u, style::kBone2,
-                        leading ? "lead the party" : "are in the party");
+        const float base = y - 8.0f * u;
         if (menuable) {
             const float size = 13.0f * u, w = controls::labelWidth(size, "Leave");
             const float right = x + kWide * u;
@@ -260,7 +259,15 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
                             onMore_ == kSelf ? style::kDanger : capsule::faded(style::kDanger, 0.7f), "Leave");
         }
     }
-    for (const auto* member : others) {
+    // **His own capsule first** (the user, 2026-10-11: "i need to see also my self party label on
+    // party"), then the others in the party's order.
+    std::vector<const net::PartyState::Member*> rows;
+    for (const auto& member : party.members) {
+        if (member.name == me && !others.empty()) rows.push_back(&member);
+    }
+    rows.insert(rows.end(), others.begin(), others.end());
+    for (const auto* member : rows) {
+        const bool mine = member->name == me;
         capsule::Look c;
         c.name = member->name;
         c.kin = member->kin;
@@ -277,22 +284,30 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
         c.life = float(member->health) / 100.0f;
         c.mana = float(member->mana) / 100.0f;
         c.trail = trailOf(member->name);
+        if (mine) {
+            // His own, off his body: the party's state is a second behind it.
+            const int32_t health = std::max(0, play.shownHealth(hero.id));
+            c.away = false;
+            c.dead = !self.alive;
+            c.tag = std::to_string(hero.level);
+            c.number = panel::grouped(health);
+            c.life = hero.maxHealth > 0 ? std::clamp(float(health) / float(hero.maxHealth), 0.0f, 1.0f) : 0.0f;
+            c.mana = hero.maxMana > 0 ? std::clamp(float(hero.mana) / float(hero.maxMana), 0.0f, 1.0f) : -1.0f;
+            c.shield = hero.maxSd > 0 ? std::clamp(float(hero.sd) / float(hero.maxSd), 0.0f, 1.0f) : -1.0f;
+            if (c.dead) c.life = c.mana = c.shield = 0.0f;
+        }
         const float high = (kPlate.shield + kPlate.life + kPlate.mana) * u;
         const gfx::Box box{x, y, kWide * u, high};
         if (member->name == targeted_) chosen(box);
         const float tall = capsule::draw(canvas_, x, y, u, kWide * u, kPlate, c, pulse);
-        // His face over the capsule's left end, the leader's crown over it.
+        // His face over the capsule's left end, the leader's in gold with the crown on it.
         const float r = kFace * 0.5f * u, cx = x - (kFace - kTuck) * u + r, cy = y + high * 0.5f;
         const auto face = faces.find(member->name);
         const bool taken = face != faces.end() && face->second.taken();
         capsule::face(canvas_, cx, cy, r, kRing * u, taken ? &face->second.picture() : nullptr, member->kin, c.dead,
-                      c.away);
-        if (c.leader) {
-            const float s = 1.1f * u, cw = 12.0f * s, base = cy - r - 1.0f * u;
-            capsule::crown(canvas_, cx - cw * 0.5f + 1.0f * u, base + 1.0f * u, s, capsule::kCrownDrop);
-            capsule::crown(canvas_, cx - cw * 0.5f, base, s, capsule::kGold);
-        }
-        const gfx::Box more = member->here != 0 ? button(y, high) : gfx::Box{};
+                      c.away, c.leader);
+        // No button on his own: what he can do to himself, Leave, is on the line over the column.
+        const gfx::Box more = member->here != 0 && !mine ? button(y, high) : gfx::Box{};
         const gfx::Box whole{cx - r - kRing * u, std::min(y, cy - r - kRing * u), box.right() - (cx - r - kRing * u),
                              std::max(high, 2.0f * (r + kRing * u))};
         hits_.push_back({whole, member->name, true, member->here, more});

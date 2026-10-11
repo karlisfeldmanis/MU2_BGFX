@@ -231,7 +231,7 @@ void TargetFrame::update(float seconds, Play& play, const Pointer& pointer, pane
 
     // The face over the capsule's end: a dark ring, the well, and him -- greyed when he lies
     // dead, his class's letters in the well before his first picture.
-    capsule::face(canvas_, cx, cy, r, kRing * u, faceTaken ? &face : nullptr, kin, dead, false);
+    capsule::face(canvas_, cx, cy, r, kRing * u, faceTaken ? &face : nullptr, kin, dead, false, leader);
     const float tagFade = dead ? 0.55f : 1.0f;
     // His class on the face's shoulder, in the party bar's tints.
     if (kin >= 0 && kin < 4) {
@@ -255,12 +255,6 @@ void TargetFrame::update(float seconds, Play& play, const Pointer& pointer, pane
         controls::label(canvas_, tag.midX() - controls::labelWidth(size, figure) * 0.5f,
                         controls::middle(tag.y, tag.h, size), size,
                         capsule::faded(dead ? style::kAshInk : style::kBoneHi, tagFade), figure);
-    }
-    // The leader's crown over the face.
-    if (leader) {
-        const float s = 1.5f * u, cw = 12.0f * s, base = cy - r - 1.0f * u;
-        capsule::crown(canvas_, cx - cw * 0.5f + 1.2f * u, base + 1.5f * u, s, capsule::kCrownDrop);
-        capsule::crown(canvas_, cx - cw * 0.5f, base, s, dead ? capsule::faded(capsule::kGold, 0.5f) : capsule::kGold);
     }
 
     // One row of what stands on him, debuffs first, each cell's time its clock.
