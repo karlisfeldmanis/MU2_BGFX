@@ -16,6 +16,10 @@
 
 namespace mu::sim {
 
+// Where a kill may leave a class's treasure (Realm::treasureGround): nowhere, the whole map, or
+// the last floor of a dungeon of floors.
+enum class Treasure : uint8_t { None, Map, LastFloor };
+
 struct MapRow {
     const char* world;  // the folder name, which is also --world's
     int number;         // MU's map number: 0 Lorencia, 3 Noria (mu.db gates.map)
@@ -43,6 +47,9 @@ struct MapRow {
     bool novaScroll = false;
     // Whether the Golden Dragon invades it (sim/invasion.h).
     bool invasion = false;
+    // The firecracker (firecrackerMap, sim/items.h) and a class's treasure (treasureGround).
+    bool firecracker = false;
+    Treasure treasure = Treasure::None;
 };
 
 // The rules of MU's map `number`: its row, or a row of the defaults for a map not in the table

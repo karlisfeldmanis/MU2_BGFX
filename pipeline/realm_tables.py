@@ -17,7 +17,8 @@ A gate row:
 The gates in MU's map order, each world's rows in its manifest's order.
 
 A world's rules: {"arrive": [column, row], "home": map, "event", "floors", "move_order",
-"summons"?: false, "drops"?: ["feather", "nova_scroll"], "invasion"?: true, "note"}.
+"summons"?: false, "drops"?: ["feather", "nova_scroll", "firecracker"], "invasion"?: true,
+"treasure"?: "map" | "last_floor", "note"}.
 The world table in `move_order`, which is the M key's walk (sim::mapAfter); a manifest with no
 `rules` (the character screen's) is not a world anyone stands in.
 """
@@ -68,6 +69,10 @@ def flag(value) -> str:
     return "true" if value else "false"
 
 
+DROPS = ("feather", "nova_scroll", "firecracker")
+TREASURE = {None: "None", "map": "Map", "last_floor": "LastFloor"}
+
+
 def maps() -> str:
     worlds = [(world, doc) for world, doc in world_manifest.manifests().items() if "rules" in doc]
     worlds.sort(key=lambda item: item[1]["rules"]["move_order"])
@@ -76,11 +81,17 @@ def maps() -> str:
         rules = doc["rules"]
         column, row = rules["arrive"]
         drops = rules.get("drops", [])
+        unknown = [drop for drop in drops if drop not in DROPS] + \
+            ([rules["treasure"]] if rules.get("treasure") not in TREASURE else [])
+        if unknown:
+            sys.exit(f"realm: {world}'s rules name {unknown}, which the table does not know")
         fields = [f'.world = "{world}"', f'.number = {doc["map"]}', f'.arrive = {{{column}, {row}}}',
                   f'.home = {rules["home"]}', f'.event = {flag(rules["event"])}',
                   f'.floors = {flag(rules["floors"])}', f'.summons = {flag(rules.get("summons", True))}',
                   f'.feather = {flag("feather" in drops)}', f'.novaScroll = {flag("nova_scroll" in drops)}',
-                  f'.invasion = {flag(rules.get("invasion", False))}']
+                  f'.invasion = {flag(rules.get("invasion", False))}',
+                  f'.firecracker = {flag("firecracker" in drops)}',
+                  f'.treasure = Treasure::{TREASURE[rules.get("treasure")]}']
         rows.append("    {" + ", ".join(fields) + "},")
     return (HEAD.format(block="rules", owner="maps.cpp")
             + "\nconstexpr MapRow kMaps[] = {\n" + "\n".join(rows) + "\n};\n")

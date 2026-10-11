@@ -83,10 +83,12 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    Since sprint B, `./mu make ground <w> --folder N` runs all but the dicts, ground.json and
    the gates row.
 2. `source/world/<w>/world.json`: its `name` and `show` block (copy the nearest world's;
-   sprint D1). Code: `sim/maps.cpp` kMaps, `sheets/worlds/<w>.json`, maybe the
+   sprint D1), and its `rules` (arrival, home, event, floors, move order, summons, drops,
+   invasion, treasure; D4), then `./mu make realm`. Code: `sheets/worlds/<w>.json`, maybe the
    `content/ground.cpp` heuristics. Rebuild.
-3. Gates: the manifest's `gates` (exits and enters), then `./mu make gates`, `sim_test`, and
+3. Gates: the manifest's `gates` (exits and enters), then `./mu make realm`, `sim_test`, and
    rebuild the server and run `server/deploy.sh`. The index keeps the same boxes open.
+   Townsfolk: the manifest's `npcs` (D3b), then the cook's `--only tables`.
 4. Air and music: `sounds.json` and the wav, `--only showing`, then the manifest's `air` and
    `music`.
 5. Objects (above), then monsters (above). Also:
@@ -95,8 +97,9 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
      `world_show.h`, and the manifest naming it.
    - Birds and crawlers: the manifest's `show` `boids` or `crawls`, which the cook also builds
      (D2); `pipeline.airs_from` when the model is another world's.
-6. Travel and the rest: `sim/realm_travel.cpp` kRows, `sim/items.h` map hooks, and the bot's
-   `tools/bot/brain.h` kWorlds, which is a copy and already wrong for Lorencia.
+6. Travel and the rest: `sim/realm_travel.cpp` kRows, the bot's `tools/bot/brain.h` kWorlds
+   (a copy, already wrong for Lorencia), and a map's own logic (Icarus's flight, Atlans's and
+   Tarkan's second-class gear, the events) where it has some.
 
 **Re-counted after D1 (2026-10-11):** bare land is 1 code file (`sim/maps.cpp`, was 3: arrival
 and minimap went into the manifest). For a full port, the air, reverb and music arms and the
@@ -105,8 +108,11 @@ still touches the sim's tables, gates, travel, the bot, the pipeline dicts and a
 system's own file. **After D2:** `terrain.py`'s 17 per-map dicts, `index.py`'s copy of
 OPERABLE_BY_MAP and `cook.py`'s 11 per-world dicts and PERCHES are the manifest's `pipeline`
 block: a new map writes no Python. Left: `cook_anchors.py` ANCHOR_KINDS_BY_WORLD and
-the NPCs (D3b). **Goes to:** `source/world/<w>/world.json` (sprint D: D2 the pipeline
-dicts, D3 gates and NPCs, D4 MapRules).
+the NPCs (D3b). **After D3-D4c:** the gates, townsfolk and map rules are the manifest's too
+(`./mu make realm` writes the sim's tables), so a map with no logic of its own writes no C++:
+its only code is `realm_travel.cpp`'s row and the bot's copy. Left: `cook_anchors.py`
+ANCHOR_KINDS_BY_WORLD, `ornaments.cpp`'s arms (sprint G), and the Icarus and Atlans rules in
+the Broker's files.
 
 ## An item or weapon
 

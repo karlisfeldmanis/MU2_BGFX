@@ -257,15 +257,17 @@ int Realm::carried(int32_t item) const {
 }
 
 // Whether a kill here may leave a class's treasure: the Lost Tower's last floor, or Atlans (the
-// user, 2026-10-04: "quest item drop which can drop in lt7 or atlans"). The seventh floor is the
-// travel list's last Lost Tower row, the floor a tile is on (Realm::floorAt).
+// user, 2026-10-04: "quest item drop which can drop in lt7 or atlans"), each its manifest's
+// `rules.treasure`. The last floor is the travel list's last row on the map, the floor a tile is
+// on (Realm::floorAt).
 bool Realm::treasureGround(int column, int row) const {
     if (!tables_) return false;
-    if (tables_->map == kAtlansMap) return true;
-    if (tables_->map != kLostTowerMap) return false;
+    const Treasure ground = rulesOf(tables_->map).treasure;
+    if (ground == Treasure::Map) return true;
+    if (ground != Treasure::LastFloor) return false;
     int last = -1;
     for (int i = 0; i < kTravels; ++i) {
-        if (travelAt(i).map == kLostTowerMap) last = i;
+        if (travelAt(i).map == tables_->map) last = i;
     }
     return last >= 0 && floorAt(column, row) == last;
 }

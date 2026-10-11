@@ -12,7 +12,10 @@
     "event": false,
     "floors": true,
     "move_order": 3,
-    "note": "The Dungeon has no spawn gate (Gates.cs:119-125, none marked), so it opens where Lorencia's stair lets out: the middle of exit gate 2, 107,247 to 110,247, on the first floor."
+    "drops": [
+      "firecracker"
+    ],
+    "note": "The Dungeon has no spawn gate (Gates.cs:119-125, none marked), so it opens where Lorencia's stair lets out: the middle of exit gate 2, 107,247 to 110,247, on the first floor. The firecracker falls here (sim/items.h firecrackerMap): a kill of level 17 or over, one in 300 (the user, 2026-10-02: 'only from dungeons like dungeon, lost-tower, bc, and devil square', then 'lets do 1 of 300 to all dungeons'). Ours: MU's was any map under Atlans while its event ran."
   },
   "show": {
     "places": [

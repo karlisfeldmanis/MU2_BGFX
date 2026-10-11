@@ -616,6 +616,27 @@ session.
   - The Icarus flight rules (`realm.cpp`, `realm_items.cpp`) are in files the Broker session
     has open.
 
+### Slice D4c: the firecracker and the class treasure
+
+- **Two more rules:**
+  - `drops`: `firecracker` (the Dungeon, the Lost Tower, Devil Square, Blood Castle);
+  - `treasure`: `"map"` (Atlans) or `"last_floor"` (the Lost Tower, its travel list's last row).
+
+  `MapRow` gains `firecracker` and `treasure` (`sim::Treasure`). `firecrackerMap` and
+  `Realm::treasureGround` read them, so `realm_items.cpp` (the Broker's) did not change.
+  `realm_tables.py` refuses a drop or treasure name it does not know.
+- **Castles 2-7 are not maps 12-17** (the user, 2026-10-11: 'Drop 12-17'). Every castle runs on
+  map 11 (`Realm::setCastle` swaps castle 1's nests' bodies), so the old range's 12-17 was never
+  asked. `bloodCastleMap` (11-17) is the Instance's, left as it is.
+- **Proved:**
+  - The old `firecrackerMap` and `treasureGround`'s map tests, verbatim from HEAD, against
+    `rulesOf` for map numbers 0-299: 600 checks, only the six castles 12-17 differ; a changed
+    treasure and a misspelt drop are each caught.
+  - sim_test's 16,960 lines identical to HEAD's (both built in worktrees), server_test 27 of 27.
+  - Live: three netbots and a client, every link "none disagreed".
+- **Left:** Icarus flight and Atlans's second-class gear (`realm.cpp`, `realm_items.cpp`, the
+  Broker's); `cook_anchors.py` ANCHOR_KINDS_BY_WORLD (the Aida session's).
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

@@ -13,9 +13,11 @@
     "floors": true,
     "move_order": 4,
     "drops": [
-      "nova_scroll"
+      "nova_scroll",
+      "firecracker"
     ],
-    "note": "The Lost Tower's spawn gate 42, 203,70 to 213,81: the safe hall on its first floor (Gates.cs:138, docs/lost-tower-port.md), where a death and the Town Portal land too. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags."
+    "treasure": "last_floor",
+    "note": "The Lost Tower's spawn gate 42, 203,70 to 213,81: the safe hall on its first floor (Gates.cs:138, docs/lost-tower-port.md), where a death and the Town Portal land too. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags. The firecracker falls here (sim/items.h firecrackerMap): a kill of level 17 or over, one in 300 (the user, 2026-10-02: 'only from dungeons like dungeon, lost-tower, bc, and devil square', then 'lets do 1 of 300 to all dungeons'). Ours: MU's was any map under Atlans while its event ran. Its last floor is a class's treasure ground (Realm::treasureGround): the travel list's last Lost Tower row (the user, 2026-10-04: 'quest item drop which can drop in lt7 or atlans')."
   },
   "show": {
     "places": [

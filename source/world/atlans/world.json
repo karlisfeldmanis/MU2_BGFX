@@ -15,7 +15,8 @@
     "drops": [
       "nova_scroll"
     ],
-    "note": "Atlans, MU's map 7: its spawn gate 49, 15,11 to 27,23, the safe basin in the north-west corner (OpenMU Version075 Gates.cs:148; docs/atlans-port.md), where a death and the Town Portal land too. The sea floor, open water over it; MU draws it on its black clear with no weather, so for now it takes the underground's air: no wind, no leaves. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags."
+    "treasure": "map",
+    "note": "Atlans, MU's map 7: its spawn gate 49, 15,11 to 27,23, the safe basin in the north-west corner (OpenMU Version075 Gates.cs:148; docs/atlans-port.md), where a death and the Town Portal land too. The sea floor, open water over it; MU draws it on its black clear with no weather, so for now it takes the underground's air: no wind, no leaves. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags. All of it is a class's treasure ground (Realm::treasureGround; the user, 2026-10-04: 'quest item drop which can drop in lt7 or atlans')."
   },
   "show": {
     "air": {

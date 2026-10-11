@@ -1199,15 +1199,13 @@ constexpr int kFirecrackerPlus = 5;
 constexpr int kFirecrackerPluses = 5;
 // Where it falls (the user, 2026-10-02: "only from dungeons like dungeon, lost-tower, bc, and
 // devil square", then "lets do 1 of 300 to all dungeons"): a kill on a dungeon's map -- the
-// Dungeon (1), the Lost Tower (4), Devil Square (9) and Blood Castle (11 to 17) -- of a monster
-// of kFirecrackerFromLevel or over, one in kFirecrackerOdds, beside whatever else it leaves.
+// Dungeon (1), the Lost Tower (4), Devil Square (9) and Blood Castle (11, every castle) -- of a
+// monster of kFirecrackerFromLevel or over, one in kFirecrackerOdds, beside all else it leaves.
 // MU's own was any map under Atlans at 10 in 10,000 while its event ran, from Giant-level (17)
 // monsters (gObjMonster.cpp ~5040); the maps and the rate are ours.
 constexpr int kFirecrackerOdds = 300;
 constexpr int kFirecrackerFromLevel = 17;
-inline bool firecrackerMap(uint32_t map) {
-    return map == 1 || map == 4 || map == 9 || (map >= 11 && map <= 17);
-}
+inline bool firecrackerMap(uint32_t map) { return rulesOf(map).firecracker; }  // rules.drops
 // **Where a mount is ridden**: every map, the dungeons and Blood Castle with the open ones, off a
 // safe tile, as MU rides (the user, 2026-10-05: 'allow to use mount in dungeons and BC', undoing
 // 2026-10-04's open maps alone).

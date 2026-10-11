@@ -12,7 +12,10 @@
     "event": true,
     "floors": false,
     "move_order": 10,
-    "note": "Devil Square, MU's map 9: four arenas on one terrain, one a square. Square 1's arrival gate 58, 133,91 to 141,99, in the middle of arena A (OpenMU Version095d Gates.cs:141; docs/devil-square-port.md). Not 0.75's: OpenMU first has it at 0.95d. MU draws it on its black clear and fog, so it takes the underground's air until its rain. Its town is Noria: a death, a Town Portal and the end of the event all land there (WebZen gate 27)."
+    "drops": [
+      "firecracker"
+    ],
+    "note": "Devil Square, MU's map 9: four arenas on one terrain, one a square. Square 1's arrival gate 58, 133,91 to 141,99, in the middle of arena A (OpenMU Version095d Gates.cs:141; docs/devil-square-port.md). Not 0.75's: OpenMU first has it at 0.95d. MU draws it on its black clear and fog, so it takes the underground's air until its rain. Its town is Noria: a death, a Town Portal and the end of the event all land there (WebZen gate 27). The firecracker falls here (sim/items.h firecrackerMap): a kill of level 17 or over, one in 300 (the user, 2026-10-02: 'only from dungeons like dungeon, lost-tower, bc, and devil square', then 'lets do 1 of 300 to all dungeons'). Ours: MU's was any map under Atlans while its event ran."
   },
   "show": {
     "air": {
