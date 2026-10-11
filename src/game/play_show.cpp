@@ -1424,7 +1424,11 @@ void Play::follow(float seconds) {
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;
         if (body->player && body->riding) {
-            const sim::Held& worn = realm_.satchel()[sim::kMount];
+            // His own mount's, not the hero's: a rider on Uniria beside a hero on the Dinorant
+            // sat 30 over the ground.
+            const sim::Satchel* bag = body->id == realm_.hero().id ? &realm_.satchel() : realm_.satchelOf(body->id);
+            static const sim::Held none{};
+            const sim::Held& worn = bag ? (*bag)[sim::kMount] : none;
             if (!worn.empty() && size_t(worn.item) < tables_.items.size() &&
                 tables_.items[size_t(worn.item)].number == 3) {
                 lift = flying_ ? kDinorantFlyLift : kDinorantLift;
@@ -2066,6 +2070,11 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->visible) {
         pets_.gather(renderer, hero->figure, scratch_, out, casters);
         wing_.gather(renderer, hero->figure, scratch_, out, casters);
+    }
+    // The other players' pets and mounts, after their bodies are posed (Play::otherPets).
+    for (size_t i = 0; i < otherPets_.size() && i < drawn_.size(); ++i) {
+        if (otherPetsOf_[i] == 0 || otherPetsOf_[i] != drawn_[i].id || !drawn_[i].visible) continue;
+        otherPets_[i].gather(renderer, drawn_[i].figure, scratch_, out, casters);
     }
     // The raid's raiders' wings, after their bodies are posed (play_raid.cpp).
     gatherRaiders(renderer, out, casters);

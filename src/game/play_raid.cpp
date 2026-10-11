@@ -430,6 +430,57 @@ void Play::otherWings(float seconds) {
     }
 }
 
+int Play::petNumber(const sim::Held& worn) const {
+    if (worn.empty() || worn.durability <= 0 || size_t(worn.item) >= tables_.items.size()) return -1;
+    const content::ItemRow& row = tables_.items[size_t(worn.item)];
+    return row.group == sim::kGroupPets ? row.number : -1;
+}
+
+int Play::horseAction(const Drawn& rider, int mount) const {
+    // A weapon's ride swing is 3, the run ride 2, anything else 0 -- a spell's PLAYER_RIDE_SKILL
+    // included. And the dragon's own 6 under PLAYER_SKILL_RIDER, a knight's skill on it -- Fire
+    // Breath's above all (GOBoid.cpp:559-565). Uniria's horse has no 6 and keeps its 3.
+    const FigureBody* look = rider.figure.body();
+    const int clip = rider.figure.clip();
+    const bool galloping = look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip);
+    const sim::SkillRow* swung = rider.swingSkill != 0 ? sim::skillNumbered(rider.swingSkill) : nullptr;
+    const bool riderSkill = mount == 3 && rider.swinging > 0.0f && swung != nullptr && !swung->wizardry &&
+                            !swung->onSelf() && swung->arrows == 0;
+    return riderSkill                                       ? 6
+           : rider.swinging > 0.0f && rider.castSkill == 0 ? 3
+           : galloping                                     ? 2
+                                                           : 0;
+}
+
+// The other players' pets and mounts, as the hero's in Play::update and their wings above: each
+// off his own bag, the horse under him while he rides. Not the hero (pets_) and not a raider.
+void Play::otherPets(float seconds) {
+    if (!figures_) return;
+    const std::vector<sim::Body>& bodies = realm_.bodies();
+    if (otherPets_.size() < drawn_.size()) {
+        otherPets_.resize(drawn_.size());
+        otherPetsOf_.resize(drawn_.size(), 0);
+    }
+    const uint32_t hero = realm_.hero().id;
+    for (size_t i = 0; i < drawn_.size() && i < bodies.size(); ++i) {
+        const sim::Body& body = bodies[i];
+        const sim::Satchel* bag = body.player && body.id != hero && body.raider < 0 && !body.gone
+                                      ? realm_.satchelOf(body.id) : nullptr;
+        const int pet = bag ? petNumber((*bag)[sim::kPet]) : -1;
+        const int mount = bag ? petNumber((*bag)[sim::kMount]) : -1;
+        if (otherPetsOf_[i] != body.id) {
+            if (otherPetsOf_[i] == 0 && pet < 0 && mount < 0) continue;  // nothing to start
+            otherPets_[i] = Pets{};
+            otherPets_[i].open(*figures_);
+            otherPets_[i].setFlying(flying_);
+            otherPetsOf_[i] = body.id;
+        }
+        Drawn& rider = drawn_[i];
+        otherPets_[i].update(seconds, rider.figure, pet, body.alive());
+        otherPets_[i].ride(seconds, rider.figure, mount, body.riding && body.alive(), horseAction(rider, mount));
+    }
+}
+
 void Play::gatherOtherWings(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
                             std::vector<gfx::Drawable>* casters) {
     // Posed on all the cores, as the bodies are (Play::gather), and drawn in order as they come.

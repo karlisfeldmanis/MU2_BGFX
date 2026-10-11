@@ -1963,6 +1963,7 @@ void Play::update(double seconds) {
     invasion(float(seconds));
     raid(float(seconds));
     otherWings(float(seconds));
+    otherPets(float(seconds));
     breath_.update(float(seconds));
     // The bones a skeleton left, on the drawing's clock like everything else here.
     bones_.update(float(seconds));
@@ -2663,12 +2664,7 @@ void Play::update(double seconds) {
     // and his mount, off its own slot.
     if (isOpen()) {
         if (Drawn* hero = drawnOf(realm_.hero().id)) {
-            int pet = -1;
-            const sim::Held& worn = realm_.satchel()[sim::kPet];
-            if (!worn.empty() && size_t(worn.item) < tables_.items.size()) {
-                const content::ItemRow& row = tables_.items[size_t(worn.item)];
-                if (row.group == sim::kGroupPets && worn.durability > 0) pet = row.number;
-            }
+            const int pet = petNumber(realm_.satchel()[sim::kPet]);
             pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
             // His wing, while it has life left; beating fast while he flies (game/wings.h).
             const sim::Held& wing = realm_.satchel()[sim::kWings];
@@ -2689,28 +2685,9 @@ void Play::update(double seconds) {
             // And on a safe tile the Wings of Darkness take their second action (game/wings.h).
             wing_.update(float(seconds), beating,
                          tables_.grid.safe(realm_.hero().column(), realm_.hero().row()));
-            int mount = -1;
-            const sim::Held& ridden = realm_.satchel()[sim::kMount];
-            if (!ridden.empty() && size_t(ridden.item) < tables_.items.size()) {
-                const content::ItemRow& row = tables_.items[size_t(ridden.item)];
-                if (row.group == sim::kGroupPets && ridden.durability > 0) mount = row.number;
-            }
-            // GOBoid's clip for the horse off the rider's: a weapon's ride swing is 3, the run
-            // ride 2, anything else 0 -- a spell's PLAYER_RIDE_SKILL included (GOBoid.cpp:525-595).
-            const FigureBody* look = hero->figure.body();
-            const int clip = hero->figure.clip();
-            const bool galloping =
-                look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip);
-            // And the dragon's own 6 under PLAYER_SKILL_RIDER, a knight's skill on it -- Fire
-            // Breath's above all (GOBoid.cpp:559-565). Uniria's horse has no 6 and keeps its 3.
-            const sim::SkillRow* swung =
-                hero->swingSkill != 0 ? sim::skillNumbered(hero->swingSkill) : nullptr;
-            const bool riderSkill = mount == 3 && hero->swinging > 0.0f && swung != nullptr &&
-                                    !swung->wizardry && !swung->onSelf() && swung->arrows == 0;
-            const int action = riderSkill                                    ? 6
-                               : hero->swinging > 0.0f && hero->castSkill == 0 ? 3
-                               : galloping                                   ? 2
-                                                                             : 0;
+            const int mount = petNumber(realm_.satchel()[sim::kMount]);
+            const int action = horseAction(*hero, mount);
+            const bool galloping = action == 2;
             pets_.ride(float(seconds), hero->figure, mount,
                        realm_.hero().riding && realm_.hero().alive(), action);
             // And its dust while it runs, rand_fps_check(2) at the horse +-32 on the ground

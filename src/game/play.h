@@ -1516,6 +1516,18 @@ private:
     // server stood wingless whatever he wore. play_raid.cpp, beside the raiders'.
     std::vector<WingLook> otherWings_;
     void otherWings(float seconds);
+    // And every other player's pet and mount, the same way: until 2026-10-11 only the hero's were
+    // drawn, and a bot on Uniria rode nothing (the user: "two bots was runing on uniria on dungeon
+    // but i did not see the mounts"). `otherPetsOf_` is whose each slot is, so a slot taken over
+    // by another body starts over.
+    std::vector<Pets> otherPets_;
+    std::vector<uint32_t> otherPetsOf_;
+    void otherPets(float seconds);
+    // The row number in group 13 a pet or mount slot holds while it has life, else -1.
+    int petNumber(const sim::Held& worn) const;
+    // The horse's clip off its rider's, as GOBoid picks it: 6 the dragon under a knight's skill,
+    // 3 a swing, 2 riding on, else 0 (GOBoid.cpp:525-595).
+    int horseAction(const Drawn& rider, int mount) const;
     void gatherOtherWings(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
                           std::vector<gfx::Drawable>* casters);
     // What the realm said of the raid this tick: tells, strikes, the stages, aloft.
