@@ -43,3 +43,6 @@ crashes/
 /CMakeFiles/
 /mu.db
 /downloads/
+
+# Scratch kept out of git: one-off probes and what a tidy moved aside (docs/order-plan.md, sprint A).
+/scratch/

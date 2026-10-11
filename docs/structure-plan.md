@@ -1,5 +1,12 @@
 # Structure plan: foundations before the server
 
+> **Superseded 2026-10-11 by `docs/order-plan.md`**, which carries this page's items by their
+> numbers. Where they stood at 84940c86: **done** M1, M2, S6; **half** M3 (spawn, no despawn);
+> **partly** M5 (`sim::MapRow`, no MapShow), S2 (`Realm::Player`), S5 (`audience`); **landed in
+> order-plan sprint A** M7 (`tools/sizecheck.py`) and S11 (`docs/recipes.md`); **not started**
+> M4, M6, S1, S3, S4, S7, S8, S9, S10 and the "Later" list. The counts below are 10-06's; the
+> hubs have grown since (order-plan §1).
+
 Written 2026-10-06, at f88800ec. The user asked for an audit of the client and the realm, and
 for the updates the structure must have as the game grows. We are not building the server yet,
 but it is coming soon. **The test for every item here: when the server work starts, does this

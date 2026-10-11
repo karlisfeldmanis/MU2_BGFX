@@ -597,9 +597,14 @@ endif()
 # "gfx never includes game or sim, and sim never includes gfx; nothing enforces that but
 # review" -- was a rule with nobody keeping it. It reads every include in src/ against the
 # arrows in docs/architecture.md and fails on one that is not allowed. It costs milliseconds.
+#
+# sizecheck is the third: a file over 800 lines (a header 1000) fails unless tools/sizecheck.allow
+# lists it, and a listed one may never grow past its size there. It is what stops the hubs
+# growing back (docs/order-plan.md, sprint A).
 add_custom_target(checks
   DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/sizecheck.py
   COMMAND $<TARGET_FILE:cooked_test>
   COMMAND $<TARGET_FILE:placement_test>
   COMMAND $<TARGET_FILE:sim_test>

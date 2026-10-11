@@ -1,6 +1,8 @@
 # Architecture
 
-Where code goes, and what may reach what. `docs/conventions.md` is the other half of this
+Where code goes, and what may reach what. Brought up to date 2026-10-11 for the client and
+server split (sprints 17-25); where the shape is going next — a `client` layer, rooms inside
+`game/` and `sim/`, a `studio` — is `docs/order-plan.md` §3. `docs/conventions.md` is the other half of this
 pair and answers a different question: it holds the rules that have one right answer and a
 silent wrong one — the axis swap, the matrix layout, the colour space. **This page holds the
 shape.** Read this one to find out where a new file belongs; read that one before writing a
@@ -18,10 +20,14 @@ a sentence is not a gate.
                          |           nothing depends on app: it is the top
                          v
                        game          the play loop, the world, the figures,
-                         |           the windows, the effects
+                         |           the windows, the effects, the links
             +------------+------------+
             v            v            v
-          sim           gfx       content        sim: the realm and the rules
+           net          gfx       content        net: the wire (TCP, UDP, the protocol)
+            |            |            |
+            v            |            |          server/src (beside app, never under it):
+          sim            |            |          core, content, sim and net, no screen
+            |            |            |          sim: the realm and the rules
             |            |            |          gfx: bgfx, the passes, the overlay
             +------------+------------+          content: what the cook wrote
                          v
@@ -37,9 +43,19 @@ a sentence is not a gate.
 | `core` | — | everything else | log, args, json, files, maths |
 | `content` | `core` | `sim`, `gfx`, `game`, `app` | cooked meshes, textures, ground, tables, the grid |
 | `sim` | `core`, `content` | `gfx`, `game`, `app` | realm, tick, rules, items, route, market, audit |
-| `gfx` | `core`, `content` | `sim`, `game`, `app` | window, views, renderer, effects, overlay, interface |
-| `game` | `core`, `content`, `sim`, `gfx` | `app` | play, world, town, figures, the windows, the effects |
-| `app` | everything | — | application, modes, bootstrap |
+| `net` | `core`, `content`, `sim` | `gfx`, `game`, `app` | the wire: frames, messages, sockets (protocol 24) |
+| `gfx` | `core`, `content` | `sim`, `net`, `game`, `app` | window, views, renderer, effects, overlay, interface |
+| `game` | `core`, `content`, `sim`, `net`, `gfx` | `app` | play, world, town, figures, the windows, the effects, the links |
+| `app` | everything under `src/` | — | application, modes, bootstrap |
+| `server` (`server/src/`) | `core`, `content`, `sim`, `net` | `gfx`, `game`, `app` | the world host, sessions, accounts, party, chat, the store |
+
+`tools/layercheck.py`'s `ALLOWED` is the truth when this table and it disagree. It does not
+read `tools/` yet, and `tools/netbot` includes `game/remote_link.h` — client networking that
+lives in `game/` today and moves to a `client` layer in `docs/order-plan.md` sprint C.
+
+One more rule it keeps besides the arrows: **no writable `sim::Realm` in `game/` or `app/`**,
+except the links, Play's `realmHeld_` and `local_`, and `headless.cpp`. The client plays a
+mirror; it never changes the realm except by a command the server also runs.
 
 Three of those arrows are load-bearing and each one was bought:
 
@@ -104,7 +120,7 @@ The largest layer, and the one this refactor split into rooms:
 
 | folder | what it holds | why it is one room |
 |---|---|---|
-| `game/` | play, figures, crowd, save, sound, bench, headless, item_models, frustum | what the other three rooms are all built on |
+| `game/` | play and its `play_*` files, figures, crowd, save, sound, bench, headless, item_models, frustum, and the client's networking: `link.h`, `remote_link`, `roster` | what the other three rooms are all built on |
 | `game/ui/` | hud, panel, bag, shelf, card, desk, describe, vitals, cursor, outline, arrival, stage, items_stage, browser_list | everything drawn flat over the frame, and the pointer's own feedback |
 | `game/fx/` | showing, aura, breath, bones, meteor, marker, litter | what a blow, a death, a level and a drop look like |
 | `game/world/` | world, town, lamps, ornaments, sway | the town standing there: its chunks, its lights, its own animation |
@@ -194,7 +210,7 @@ Two gates, split by one question: does it need a window?
 
 | | runs | covers |
 |---|---|---|
-| `cmake --build build --target checks` | milliseconds to seconds, no window | `layercheck.py` (the arrows above), `cooked_test` (the reader against the cook), `placement_test` (MU's own AngleMatrix), `sim_test` (a seeded hunt against a fingerprint), `matcheck.py` (the material library) |
+| `cmake --build build --target checks` | milliseconds to seconds, no window | `layercheck.py` (the arrows above), `sizecheck.py` (no file over 800 lines, a header 1000, unless `tools/sizecheck.allow` lists it, and a listed one never grows), `cooked_test` (the reader against the cook), `placement_test` (MU's own AngleMatrix), `sim_test` (a seeded hunt against a fingerprint), `matcheck.py` (the material library) |
 | `cmake --build build --target shotcheck` | ~20 s, needs a display | three pinned scenes drawn and compared **exactly** to `tests/reference/` |
 
 `shotcheck` is the frame's answer to what `sim_test` has done for the rules since sprint 5.

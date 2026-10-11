@@ -1,11 +1,14 @@
 # MU2 on bgfx
 
-MU2 rebuilt as a **single player** game in C++ on bgfx, Metal on this Mac, for a frame at
-1920x1080 with cast and received shadows, PBR, reflections and SSAO. Begun 2026-09-20.
+MU2 rebuilt in C++ on bgfx, Metal on this Mac, for a frame at 1920x1080 with cast and received
+shadows, PBR, reflections and SSAO. Begun 2026-09-20 as a single player game; **since 2026-10-07
+an MMORPG**: an authoritative server (`server/`, on the Hetzner box) steps every world, and the
+client plays a mirror of it in lockstep. `LocalLink`, the realm in the client's own process, is
+kept as the harness the tests, the benches and the headless runs drive, not as a way to play.
 
-`PLAN.md` is the map: what was decided, what the foundations are, and the sprints.
-`docs/roadmap.md` is where that map stands — what is done, what is not in the tree yet, and
-what the remaining sprints are.
+**Start here.** `docs/order-plan.md` is where the tree stands and the plan for making it make
+sense: one place for each thing, and the `mu` tool and the studio that build on it. `PLAN.md`
+is the original map and its working rules; `docs/sprints/` what each sprint proved and measured.
 
 Two pages answer the two questions a newcomer has, and they are deliberately separate:
 
@@ -15,12 +18,20 @@ Two pages answer the two questions a newcomer has, and they are deliberately sep
 * **`docs/conventions.md` — what has one right answer and a silent wrong one?** The axis swap,
   the matrix layout, the colour space, what Metal refuses. Read it before writing a loader.
 
-`docs/budget.md` holds the frame's accounts, and `docs/sprints/` what each sprint proved and
-measured.
+`docs/recipes.md` lists what each kind of new thing — a monster, a map, an effect, a quest, a
+window — has to touch today. `docs/budget.md` holds the frame's accounts.
 
-No server: the simulation lives in the process. The rules are written fresh and smaller
-than MU2's, and still traced to 0.75 or marked `invention`. MU2's `pipeline/`, `build/` and
-`mu.db` stay the content source; nothing is read from MU2 at run time.
+The rules are written fresh and smaller than MU2's, and still traced to 0.75 or marked
+`invention`. `source/`, `pipeline/` and `source/mu.db` are the content source behind a cook
+step; nothing is read from MU2 at run time.
+
+## The server
+
+    server/deploy.sh                     build and test on the box, restart the service
+    build/mu2 --play --server 37.27.158.226
+
+`server/README.md` has the box, the service and the character store; `docs/server-plan.md` and
+sprints 17-25 how the game became client and server.
 
 ## Build and run
 
@@ -99,7 +110,9 @@ positioned audio could not have used.
 
     cmake --build build --target checks          everything that can say no without a window
 
-Runs the three tests, and `tools/matcheck.py` — the material audit. That one asks whether every
+Runs the tests, `tools/layercheck.py` (the layer arrows), `tools/sizecheck.py` (no file grows
+past its recorded size: the hubs may only shrink, see `docs/order-plan.md`), and
+`tools/matcheck.py` — the material audit. That one asks whether every
 surface wears the material it ought to: a name that resolves to `index.json`'s library, a baked
 ORM that agrees with it, a relief the normal map actually carries, a cutout with holes to cut,
 a cooked texture in its role's format. It is a gate, not a report: the faults known on the day

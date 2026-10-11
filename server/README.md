@@ -1,7 +1,8 @@
 # The server
 
 MU2_BGFX's server runs on a Hetzner box; players run only the client (PLAN.md, the decision of
-2026-10-07). The plan is `docs/server-plan.md`; the sprint in hand is `docs/sprints/17-the-seam.md`.
+2026-10-07). The plan is `docs/server-plan.md`; the sprints that built it are `docs/sprints/17` to `25`, and what comes next is
+`docs/order-plan.md`.
 
 Everything that is the server's alone is in this folder (the user, 2026-10-07: *"we need that
 server source is also in /server folder"*):
@@ -32,26 +33,28 @@ keeps a rule from meaning one thing on the server and another in the client.
 
 ## Playing on it
 
-    build/mu2 --play --server 37.27.158.226
+    ./main.sh                                  the character screen, asking the box for your characters
+    build/mu2 --play --server 37.27.158.226    straight in
 
 The client joins on port 44406, raises its mirror from the server's answer and plays every tick
-the server steps (docs/sprints/18-the-wire.md). **Connections to the same world share it**
-(docs/sprints/19-many-heroes.md, protocol 2):
-- the first raises it;
-- each later one comes in by a Join at the next tick and is sent the world's past to replay;
-- one that goes leaves by a Leave;
-- an empty world is let go.
+the server steps (docs/sprints/18-the-wire.md). Protocol 24 (`src/net/wire.h`, `kVersion`).
+**Connections to the same world share it** (docs/sprints/19-many-heroes.md):
+- every world is raised once and **lives for ever** (55681604), empty or not;
+- a newcomer comes in by a Join at the next tick and is sent a **snapshot** of the realm, not
+  its past (docs/sprints/21-the-snapshot.md);
+- one that goes leaves by a Leave.
 
-Two players in Lorencia see each other. A map change keeps the character: the server holds it
-under the client's token as he leaves one world and brings it back whole in the next
-(docs/sprints/20-the-world-host.md, protocol 4). **Characters live on the box's disk**, in
-`/var/lib/mu2/characters.db` (SQLite, `server/src/store.h`), written as a player leaves a world,
-every minute and when the service stops, so a restart or a redeploy keeps them. The client keeps
-its token beside the character's save (`saves/characters/Name.server`) and comes back with it
-next run, **in the world he left**: a run that opens another is told where he is and opens
-that one. `sqlite3 /var/lib/private/mu2/characters.db "select printf('%016x',token), kin, level,
-money, world, datetime(saved,'unixepoch') from characters"` lists them. `server/deploy.sh` puts a new
-build there and restarts the service.
+**Characters belong to an account** (docs/sprints/23-the-account.md): for now a machine key the
+client makes once (`saves/account.key`), with a name and password to be laid over it later. They
+live on the box's disk in `/var/lib/mu2/characters.db` (SQLite, `server/src/store.h`), written as
+a player leaves a world, every minute and when the service stops, so a restart or a redeploy keeps
+them, and a character comes back **in the world he left**.
+`sqlite3 /var/lib/private/mu2/characters.db .tables` shows the store. `server/deploy.sh` puts a
+new build there and restarts the service.
+
+What is in `server/src/` today: `main.cpp` (the world host, sessions, accounts, parties, chat,
+landing, the tick: one file of ~1900 lines, to be split by `docs/order-plan.md` sprint C) and
+`store.*` (the characters).
 
 ## Building there
 
