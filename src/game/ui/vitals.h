@@ -82,11 +82,10 @@ private:
         float x = 0, y = 0;
         float alpha = 0, lit = 0;  // the range's fade, and the pointer's lift toward white
         std::string name;
-        std::string detail;  // "Level 82 · Dark Knight", under the pointer only
         bool bot = false, dead = false;
         bool operator==(const Tag& o) const {
             return id == o.id && x == o.x && y == o.y && alpha == o.alpha && lit == o.lit &&
-                   name == o.name && detail == o.detail && bot == o.bot && dead == o.dead;
+                   name == o.name && bot == o.bot && dead == o.dead;
         }
     };
     // Everything the canvas draws, compared whole to decide a rebuild.

@@ -55,9 +55,6 @@ constexpr float kGap = 4.0f;      // clears the shadow before it starts being a 
 // The other players' names (WoW's), in tip::unit() pixels: the name and the guild line under it.
 constexpr float kTagName = 15.0f;
 constexpr float kTagGuild = 11.0f;
-// The pointer's detail line under them, and its warm off-white.
-constexpr float kTagDetail_ = 10.0f;
-constexpr uint32_t kTagDetail = gfx::rgba(232 / 255.0f, 220 / 255.0f, 196 / 255.0f);
 // WoW's friendly green (UnitSelectionColor's 0, 1, 0), a touch of red and blue in it so it is not
 // a screen's raw green on MU's dark ground, and a corpse's grey (the user, 2026-10-08: "make it
 // green").
@@ -382,10 +379,6 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
                 if (self) continue;
                 tag.name = "Stranger";
             }
-            if (tag.lit > 0.0f) {
-                tag.detail = "Level " + std::to_string(one.level) + " \xC2\xB7 " +
-                             sim::className(int(one.kin), one.second);
-            }
             near.push_back({d, std::move(tag)});
         }
         std::sort(near.begin(), near.end(), [](const Far& a, const Far& b) { return a.d > b.d; });
@@ -445,7 +438,6 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         }
         const gfx::Face* words = controls::wordFace();
         const float nameSize = std::round(kTagName * u), guildSize = std::round(kTagGuild * u);
-        const float detailSize = std::round(kTagDetail_ * u);
         const float rim = std::max(1.0f, std::round(u));
         const auto outlined = [&](const gfx::Face* face, bgfx::TextureHandle texture, float x,
                                   float baseline, float size, uint32_t ink, float alpha,
@@ -468,14 +460,9 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             const float l = t.lit * 0.55f;
             const uint32_t ink = gfx::rgba(c[0] + (1.0f - c[0]) * l, c[1] + (1.0f - c[1]) * l,
                                            c[2] + (1.0f - c[2]) * l, 1.0f);
-            // From the crown up: the pointer's detail line, the guild line, the name.
-            float under = t.y - std::round(kGap * u);
-            if (!t.detail.empty() && words) {
-                outlined(words, controls::wordTexture(), t.x - words->measure(detailSize, t.detail) * 0.5f,
-                         under, detailSize, kTagDetail, t.alpha * t.lit, t.detail);
-                under -= std::round((kTagDetail_ + 2.0f) * u);
-            }
-            const float guildBaseline = under;
+            // From the crown up: the guild line, the name. No level or class under the pointer
+            // (the user, 2026-10-11: "remove that on hover we show char lvl info").
+            const float guildBaseline = t.y - std::round(kGap * u);
             const float nameBaseline =
                 t.bot ? guildBaseline - std::round((kTagGuild + 3.0f) * u) : guildBaseline;
             if (name) {
