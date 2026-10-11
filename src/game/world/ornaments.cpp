@@ -8,6 +8,7 @@
 #include "core/log.h"
 #include "game/world/sway.h"
 #include "game/world/town.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 
@@ -147,26 +148,37 @@ constexpr int kRingStatueBone = 4;
 constexpr float kRingStatueScale = 3.0f;
 // And the light-flowers, types 30 and 71 (Object31, Object72; GMAida.cpp:106-150, 253-297): at
 // each of six bones a BITMAP_SPARK+1 (Effect/Spark03, 32 texels) in the flower's colour and a
-// second at Scale 3 for its core, steady. MU offsets each a few units in the bone's own frame
-// (at most 8, bone 17's); they hang at the bone's origin here, which is within 8 cm of it.
+// second at Scale 3 for its core, grey (0.15) or dim red (0.15, 0, 0), steady. MU offsets each
+// a few units in the bone's own frame (at most 8, bone 17's); they hang at the bone's origin
+// here, which is within 8 cm of it.
 struct AidaGlow {
     const char* model;
     float scales[6];
     float colours[6][3];
-    float core[3];
 };
 constexpr int kFlowerBones[6] = {6, 7, 8, 12, 13, 17};
 constexpr float kFlowerCoreScale = 3.0f;
+// Ours (the user, 2026-10-11: 'flowers could look better', then 'do it'). Spark03 is a hard
+// white disc in a dim halo; MU's glow and grey core both added on it, over the bulb mesh, and
+// under Aida's exposure each bulb came out a white chip. So the coloured glow is drawn on the
+// lamps' soft flare01 (BITMAP_LIGHT), a little wider and kFlowerHaloLift brighter, since flare01
+// falls off far sooner than Spark03's halo and MU's dim colour vanished on it; the core keeps
+// Spark03 in the flower's own hue at kFlowerCoreShare of the glow's colour instead of grey.
+// With the bulb mesh at 0.35, or 0.2 for the pale red (the recipes), a bulb is a coloured bead
+// in a soft orb. And every bulb breathes on its own slow beat, 0.75 to 1 of its light over about
+// six seconds.
+constexpr float kFlowerHaloWiden = 1.3f;
+constexpr float kFlowerHaloLift = 2.0f;
+constexpr float kFlowerCoreShare = 0.6f;
+constexpr float kFlowerBreathBase = 0.875f, kFlowerBreathAmp = 0.125f;
 constexpr float kSparkTexels = 32.0f;
 constexpr AidaGlow kAidaGlows[] = {
     {"Object31", {5.5f, 4.5f, 4.0f, 4.5f, 4.0f, 4.0f},
      {{0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f},
-      {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}},
-     {0.15f, 0.15f, 0.15f}},
+      {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}}},
     {"Object72", {6.0f, 5.5f, 5.0f, 5.5f, 5.0f, 5.0f},
      {{0.5f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f},
-      {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}},
-     {0.15f, 0.0f, 0.0f}},
+      {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}}},
 };
 
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
@@ -390,11 +402,15 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                         Lantern spark;
                         spark.anchor = anchor(i, mesh, kFlowerBones[b], kOrigin, kNoAcross);
                         for (int a = 0; a < 3; ++a) spark.anchor.point[a] = 0.0f;
-                        spark.scale = part == 0 ? glow.scales[b] : kFlowerCoreScale;
+                        spark.scale = part == 0 ? glow.scales[b] * kFlowerHaloWiden : kFlowerCoreScale;
                         for (int a = 0; a < 3; ++a)
-                            spark.colour[a] = part == 0 ? glow.colours[b][a] : glow.core[a];
-                        spark.steady = true;
-                        spark.sheet = 4;
+                            spark.colour[a] = glow.colours[b][a] * (part == 0 ? kFlowerHaloLift : kFlowerCoreShare);
+                        // Glow and core breathe together: one phase a bulb.
+                        spark.breathes = true;
+                        spark.breathBase = kFlowerBreathBase;
+                        spark.breathAmp = kFlowerBreathAmp;
+                        spark.breathPhase = float(i % 97) * 2.39996f + float(b) * 1.7f;
+                        spark.sheet = part == 0 ? 0 : 4;  // flare01's halo, Spark03's core
                         spark.texels = kSparkTexels;
                         if (spark.anchor.bone >= 0) lanterns_.push_back(spark);
                     }
@@ -443,7 +459,7 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
             }
         }
     }
-    beacon_ = world == "devias";
+    beacon_ = worldShow(world).beacon;
     puffs_.reserve(kMostPuffs);
     glints_.reserve(kMostGlints);
 

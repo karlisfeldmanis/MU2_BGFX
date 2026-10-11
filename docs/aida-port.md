@@ -166,6 +166,13 @@ at bones 6, 7, 8, 12, 13 and 17 a Spark03 glow (blue (0.1, 0.1, 0.3) at Scale 4-
 0.25-0.5 at 5-6) and a dim core at 3, steady, 12 sprites a flower, drawn only where Sway poses
 the flower. MU's few-unit offsets in each bone's frame are left out (at most 8 cm). Shot at the
 red pair by the shrine (116,38) and the graveyard's blue ones (76,72), 0 errors.
+Then (the user: 'flowers could look better', 'do it'), ours: each bulb was a white chip, MU's
+glow and grey core added on Spark03's hard white disc over the bulb mesh under Aida's exposure.
+Now the coloured glow is drawn on flare01, the lamps' soft sheet, 1.3 times wider and twice as
+bright; the core keeps Spark03 in the flower's own hue at 0.6 of the glow; the bulb mesh glows
+at 0.35 (0.2 for the pale salmon red); each bulb breathes 0.75-1 on its own beat over about six
+seconds; and the green lamp is 1.4-1.5, as at MU's level the pool was lost on the dark moss. The
+blue read as blue beads in soft orbs; the red bulbs are still pale chips in a red glow.
 
 **Gate 119 is in `source/mu.db`** (the user approved it 2026-10-11): `(119, 33, 82, 8, 87, 14, 1)`,
 checkpointed, carried by index.py's `gate_rows` into the world's `gates.safe` and Aida's tables. A
