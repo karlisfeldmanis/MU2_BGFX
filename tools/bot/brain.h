@@ -22,6 +22,7 @@
 
 #include "content/tables.h"
 #include "core/log.h"
+#include "sim/broker.h"
 #include "sim/gates.h"
 #include "sim/items.h"
 #include "sim/market.h"
@@ -103,6 +104,9 @@ struct Options {
     bool support = false;
     // Said before every line: the netbot's name for him, so two bots' lines tell apart.
     std::string tag;
+    // netbot's Broker errands: this many spares (the dearest) are kept from the counter for the
+    // market. 0 offline, where there is no Broker: everything a sale would take is sold.
+    int brokerHold = 0;
 };
 
 std::string clock(int64_t tick) {
@@ -325,14 +329,14 @@ public:
     }
     int ordered() const { return ordered_; }
 
-    // ---- trading with the run's other bots (tools/netbot's Market) ------------------------
+    // ---- the Broker (tools/netbot's Errands, docs/broker.md) ------------------------------
     // The user, 2026-10-11: "we now have trading in our game, that means we need to teach bots do
-    // some trading so they can collabrate and become better". The market finds a thing one bot
-    // would sell that another would wear, or a jewel past one's keep that another is short of, and
-    // has them meet and swap it through the trade window (sim/realm_deal.cpp).
+    // some trading so they can collabrate and become better", and 2026-10-12: "we need to teach
+    // our bots use marketplace, and get rid of chat trades". He lists what one bot would sell and
+    // another would wear, or a jewel past his keep, at the Broker; another buys it there.
     //
-    // What he would give away: what a sale would take (keepsAt), and jewels past what he keeps,
-    // that may change hands at all.
+    // What he would list: what a sale would take (keepsAt), and jewels past what he keeps, that
+    // may change hands at all.
     std::vector<int> spares() const {
         std::vector<int> out;
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
@@ -345,6 +349,18 @@ public:
                               !anyHelper(row) && !sim::firstWing(row) && !sim::secondWing(row);
             if (gear || jewelKind(row)) out.push_back(slot);
         }
+        return out;
+    }
+    // The spares kept from the counter for the Broker (Options::brokerHold): the dearest by what
+    // a merchant pays, as those fetch the most there. The rest are sold as before.
+    void holdForBroker(int count) { options_.brokerHold = std::max(0, count); }
+    std::set<int> brokerHeld() const {
+        if (options_.brokerHold <= 0) return {};
+        std::vector<std::pair<int64_t, int>> priced;
+        for (const int slot : spares()) priced.emplace_back(sim::npcValue(*tables_, realm_->satchel()[slot]), slot);
+        std::sort(priced.begin(), priced.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
+        std::set<int> out;
+        for (size_t i = 0; i < priced.size() && int(i) < options_.brokerHold; ++i) out.insert(priced[i].second);
         return out;
     }
     // What `one` is worth to him: tried on `scratch` (his mirror's copy, laid by the caller), put
@@ -376,7 +392,7 @@ public:
         return gain;
     }
     // **A meeting**: he walks to (column, row) on this map and waits there, his windows shut,
-    // until it is called off -- the market's, for a trade. He still drinks and spends his points.
+    // until it is called off -- netbot's, at the Broker. He still drinks and spends his points.
     void meet(int column, int row) { meet_[0] = column, meet_[1] = row; }
     void unmeet() { meet_[0] = meet_[1] = -1; }
     bool meeting() const { return meet_[0] >= 0; }
@@ -1156,7 +1172,7 @@ private:
         }
     }
 
-    // The meeting kept: a window open would refuse the trade (Realm::dealBusy).
+    // The meeting kept: his windows shut while he waits.
     void waitAtMeeting() {
         if (realm_->trading() >= 0) hand_.closeTrade();
         if (realm_->banking() >= 0) hand_.closeVault();
@@ -4958,13 +4974,14 @@ private:
     void serve(int folk) {
         const int npc = tables_->folk[size_t(folk)].number;
         const std::string& name = tables_->folk[size_t(folk)].name;
-        // Sell what is not kept and not worn better.
+        // Sell what is not kept and not worn better, but for what he takes to the Broker.
         wearBest();
         int sold = 0;
         int64_t got = 0;
+        const std::set<int> held = brokerHeld();
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
             const sim::Held& one = realm_->satchel()[slot];
-            if (one.empty() || keepsAt(slot)) continue;
+            if (one.empty() || keepsAt(slot) || held.count(slot)) continue;
             const int64_t paid = hand_.sellItem(slot);
             if (paid >= 0) {
                 ++sold;
@@ -5215,7 +5232,7 @@ private:
     Mode mode_ = Mode::Hunt;
     Aim aim_ = Aim::Grind, lastAim_ = Aim::Grind;
     int ordered_ = -1;  // order(): the map he was told to grind, or -1
-    int meet_[2] = {-1, -1};  // meet(): where he waits for a trade, or -1
+    int meet_[2] = {-1, -1};  // meet(): where he waits for the Broker, or -1
     mutable int64_t spent_ = 0;  // a trip's price, off the purse riskShare reads (choose)
     int aimQuest_ = -1, aimMap_ = 0, lastQuest_ = -2, lastMap_ = -1;
     std::vector<int> quarry_;

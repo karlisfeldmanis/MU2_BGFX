@@ -4,8 +4,10 @@
 // counter (Bot::spares, at most kListed up at once) and buys the best upgrade on sale that he
 // can pay for (Bot::worth), through the same BrokerAsk a player's window sends.
 //
-// Included inside netbot.cpp's namespace after NetBot, beside the Market (market.h); not a header
-// to include anywhere else.
+// The bots' only trading (the user, 2026-10-12: "we need to teach our bots use marketplace, and get
+// rid of chat trades"): the face-to-face swaps of b8547af5, named on the map's chat, are gone.
+//
+// Included inside netbot.cpp's namespace after NetBot; not a header to include anywhere else.
 #pragma once
 
 class Errands {
@@ -54,13 +56,14 @@ private:
     };
     static constexpr int64_t kEvery = 20 * 60 * 20;  // ticks: twenty game minutes between visits
     static constexpr auto kGiveUp = std::chrono::seconds(30);  // to get there and be done
-    static constexpr int kListed = 3;                // a bot's listings up at once
+    static constexpr int kListed = 6;                // a bot's listings up at once (a player's 20)
+    static constexpr int kHold = 4;                  // spares kept from the blacksmith for them
     static constexpr int kPages = 2;                 // of upgrades looked through
     static constexpr int64_t kLeast = 100000;        // Zen worth a trip to buy with
 
     // Off on an errand if it is time, there is a Broker on his map and something to do there.
     void start(NetBot& bot) {
-        if (bot.driven() || bot.swapping() || !bot.alive() || bot.inCastle() || bot.inSquare() || !bot.tables()) return;
+        if (bot.driven() || !bot.alive() || bot.inCastle() || bot.inSquare() || !bot.tables()) return;
         if (const auto n = next_.find(bot.name()); n != next_.end() && bot.clockNow() < n->second) return;
         next_[bot.name()] = bot.clockNow() + kEvery;
         // Nothing to sell and too little to buy with: no errand.
@@ -146,12 +149,14 @@ private:
                     return;
                 }
                 listed_[bot.name()] = int(view.mine.size());
+                hold(bot);
                 nextSpare(bot, e, int(view.mine.size()));
                 return;
             case Step::Collect:
                 if (view.no == uint8_t(sim::BrokerNo::Yes)) e.did = true;
                 std::printf("  [broker] %s collects: %s\n", bot.name().c_str(), view.said.c_str());
                 listed_[bot.name()] = int(view.mine.size());
+                hold(bot);
                 nextSpare(bot, e, int(view.mine.size()));
                 return;
             case Step::Quote: {
@@ -177,6 +182,7 @@ private:
                     std::printf("  [broker] %s could not list %s: %s\n", bot.name().c_str(), label.c_str(), view.said.c_str());
                 }
                 ++e.spare;
+                hold(bot);
                 nextSpare(bot, e, listed_[bot.name()]);
                 return;
             }
@@ -222,6 +228,11 @@ private:
             default: return;
         }
     }
+
+    // **Spares held for the Broker**: the brain sells everything a sale would take to the
+    // blacksmith, so without this little ever reached the market. He keeps back as many as his
+    // listings have room for, at most kHold; with his listings full, the blacksmith takes them.
+    void hold(NetBot& bot) { bot.holdForBroker(std::min(kHold, kListed - listed_[bot.name()])); }
 
     // How far under the cheapest he goes, 0-5%: his own, so two bots do not undercut each other
     // by the same step every visit.

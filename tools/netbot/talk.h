@@ -136,7 +136,7 @@ private:
         } else if (has(t, {"party", "pt", "inv", "group"})) {
             answer = pick({"maybe later, finishing a quest", "not now, sorry"});
         } else if (has(t, {"sell", "buy", "trade", "zen"})) {
-            answer = "not trading, sorry";
+            answer = pick({"I sell at the Broker, check the market", "all my trading is at the Broker"});
         } else if (has(t, {"bot"})) {
             answer = pick({"beep", "who, me?"});
         } else {

@@ -111,15 +111,19 @@ Files, by layer:
   `BrokerRow::Watched`, and `kinds` carries one more count after the categories: how many he
   watches. The card's Watch pill sits under the name.
 
-- the bots (phase 4): `tools/netbot/errands.h`, beside the Market (moved out of netbot.cpp
-  to `market.h` to pay for the lines). Every twenty game minutes a bot on a map with a Broker,
+- the bots (phase 4): `tools/netbot/errands.h`, their only trading since 2026-10-12 (the user:
+  "we need to teach our bots use marketplace, and get rid of chat trades"): netbot's Market,
+  the face-to-face trade-window gifts it named on the map's chat, is gone, and a bot asked to
+  trade by whisper points to the Broker. The brain keeps its dearest spares from the
+  blacksmith (`Options::brokerHold`; 0 offline) so they reach the market: four, or the room
+  his listings have left, as the last Broker visit said. Every twenty game minutes a bot on a map with a Broker,
   with spares or at least 100,000 Zen, walks to a tile beside him (`NetBot::errand`, the
-  brain's meeting), Looks, takes in his Collect, lists `Bot::spares` up to 3 listings for 24
+  brain's meeting), Looks, takes in his Collect, lists `Bot::spares` up to 6 listings for 24
   hours at up to 5% under the cheapest (a step of 0-5% his own, by his name; else the last sale,
   else four times the NPC's; never under it), then looks through two pages usable by his class
   and buys the one with the most `Bot::worth` that costs at most two thirds of his Zen. Its
   deadline is the wall's (30 s): at `--speed 100` a game minute passes in 0.6 s. `--no-trades`
-  turns it off with the Market.
+  turns it off, and the brain then sells every spare at the counter again.
 - the server's `--kit` takes `Zen+N` (a test character's purse).
 
 Checked (2026-10-11, second session): sim_test 7441 checks, 0 failed (the watches among them);
