@@ -137,6 +137,7 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     flare_ = load("flare");
     shinyAdded_ = load("shiny_02");
     flares_.reserve(8);
+    roots_.open(assetDir, textures, table);
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
@@ -145,10 +146,12 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
 
 void ShadowStars::shutdown() {
     stars_.clear();
+    roots_.shutdown();
     open_ = false;
 }
 
 void ShadowStars::update(float seconds) {
+    roots_.update(seconds);
     stars_.clear();
     starlights_.clear();
     ribbons_.clear();
@@ -370,6 +373,7 @@ void ShadowStars::star(const float at[3], bool poison, float fade) {
 
 void ShadowStars::gather(gfx::Effects& effects) const {
     if (!open_) return;
+    roots_.gather(effects);
     if (bgfx::isValid(light_)) {
         for (const Starlight& one : starlights_) {
             gfx::Sprite sprite;

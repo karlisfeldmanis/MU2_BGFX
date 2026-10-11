@@ -581,6 +581,13 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 // (Play::thunderCasts_, with MU's SOUND_METEORITE01, :1760-1771). Its Flame of
 // Evil (sim kBosses) shows nothing more than its blow: MU's boss show is the Gorgon's and the
 // Balrog's alone (:1959-1990).
+// MONSTER_DEATH_TREE's six horns, Monster104_Horn0-5 on bones 37-40, 44 and 45 (GMAida.cpp:396-401):
+// every frame a BITMAP_LIGHT + 1 at 0.4 in (0.4, 0.8-0.89, 0.5) and a BITMAP_SPARK + 1 sub 6
+// on each (:978-987), drawn as star bones in its green. Ours: the sprite is the starlight's
+// (0.6, a little wider), its colour doubled against kStarlightDim, and the sparks left out.
+inline constexpr const char* kDeathTreeFigure = "DeathTree01";
+inline constexpr const char* kDeathTreeHorns[] = {"e04", "e1", "e05", "e02", "e06", "e03"};
+constexpr float kDeathTreeGreen[3] = {0.8f, 1.7f, 1.0f};
 inline constexpr const char* kDrakanFigure = "Drakan01";
 inline constexpr const char* kDrakanStars[] = {
     "stars04", "stars03", "stars02", "stars01", "stars00", "stars13", "stars05",

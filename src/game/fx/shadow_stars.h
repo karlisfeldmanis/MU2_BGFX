@@ -34,6 +34,7 @@
 
 #include "content/showing.h"
 #include "content/texture.h"
+#include "game/fx/tree_roots.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
 
@@ -41,6 +42,8 @@ namespace mu::game {
 
 class ShadowStars {
 public:
+    // A Death Tree's roots and smoke ride along: opened, aged and drawn with these.
+    TreeRoots& roots() { return roots_; }
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
@@ -170,6 +173,7 @@ private:
         float tint[3];
     };
     std::vector<Starlight> starlights_;
+    TreeRoots roots_;
     static constexpr int kRibbonTails = 15;
     struct Ribbon {
         float points[kRibbonTails][3];

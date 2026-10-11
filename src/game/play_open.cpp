@@ -793,6 +793,13 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.starTint = nullptr;
             one.blizzard = look->name == kQueenRainerFigure;
             const bool drakan = look->name == kDrakanFigure;
+            if (look->name == kDeathTreeFigure && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (const char* name : kDeathTreeHorns)
+                    for (size_t b = 0; b < bones.size(); ++b)
+                        if (bones[b].name == name) one.starBones.push_back(int(b));
+                one.starTint = kDeathTreeGreen;
+            }
             if ((one.blizzard || drakan) && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 const auto find = [&](const char* name) {

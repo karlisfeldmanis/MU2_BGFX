@@ -330,6 +330,7 @@ add_library(mu_game STATIC
   src/game/play_open.cpp
   src/game/play_sound.cpp
   src/game/play_show.cpp
+  src/game/play_ribbons.cpp
   src/game/play_pointer.cpp
   src/game/play_requests.cpp
   src/game/fx/showing.cpp
@@ -357,6 +358,7 @@ add_library(mu_game STATIC
   src/game/fx/held_lights.cpp
   src/game/fx/wing_motes.cpp
   src/game/fx/shadow_stars.cpp
+  src/game/fx/tree_roots.cpp
   src/game/fx/forge.cpp
   src/game/fx/meteor.cpp
   src/game/fx/effect_mesh.cpp

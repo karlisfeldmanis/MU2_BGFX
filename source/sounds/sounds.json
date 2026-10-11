@@ -874,6 +874,26 @@
       ],
       "from": "Sounds[4] of MONSTER_MODEL_BEETLE_MONSTER, slot 84 - 294, SOUND_MONSTER_BEETLEDIE, Data\\\\Sound\\\\mBeetleDie.wav."
     },
+    "deathtree_move": {
+      "files": [
+        "dt_idle1.wav",
+        "dt_idle2.wav"
+      ],
+      "from": "SOUND_AIDA_DEATHTREE_MOVE1 + rand() % 2, one frame in 15 while it walks or runs (GMAida.cpp:949-956); Data/Sound/w34/dt_idle1-2.wav (MapManager.cpp's WD_33AIDA loads)."
+    },
+    "deathtree_attack": {
+      "files": [
+        "dt_attack1.wav",
+        "dt_attack2.wav"
+      ],
+      "from": "SOUND_AIDA_DEATHTREE_ATTACK1 on ATTACK1 and ATTACK2 on ATTACK2, once a blow (GMAida.cpp:957-970); w34/dt_attack1-2.wav. Ours picks either for any blow."
+    },
+    "deathtree_die": {
+      "files": [
+        "dt_death.wav"
+      ],
+      "from": "SOUND_AIDA_DEATHTREE_DIE on MONSTER01_DIE, once (GMAida.cpp:971-977); w34/dt_death.wav."
+    },
     "chainscorpion_move": {
       "files": [
         "mScorpion1.wav",

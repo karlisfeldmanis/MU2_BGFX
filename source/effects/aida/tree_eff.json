@@ -1,0 +1,19 @@
+{
+  "item": "tree_eff",
+  "mu_name": "The roots a Death Tree throws up on its second blow",
+  "mu_name_from": "MapManager.cpp:331-332, WD_33AIDA: AccessModel(MODEL_TREE_ATTACK, Data/Object34/, tree_eff) - Data/Object34/tree_eff.bmd.",
+  "kind": "tree_roots",
+  "why_this_one": "MODEL_TREE_ATTACK, which AttackEffectAidaMonster creates at a MONSTER_DEATH_TREE's feet on its ATTACK2, CheckAttackTime(10) (GMAida.cpp:1475-1484). game/fx/tree_roots.h draws it.",
+  "mesh": "tree_eff.obj",
+  "mesh_from": "muextract export-obj on Data/Object34/tree_eff.bmd, from MuMain's clean Data: one mesh, 808 vertices, 624 triangles on tree_effa01.jpg, one bone and one key; about 2.9 m across, 2.3 m deep and 2.5 m high from the ground up -- a burst of roots.",
+  "parts": [
+    {
+      "group": "tree_effa01",
+      "sheet": "tree_effa01.png",
+      "blend": "alpha",
+      "note": "Data/Object34/tree_effa01.OZJ, 32 x 64: grey-brown bark grain with teal tips. No _R, so not added: RenderObject draws it as a solid model with LightEnable false, unlit at full colour, at its Alpha (ZzzEffect.cpp:590-595, 8751-8753)."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "Scale 0.05 at its birth, 20 units over the ground, up 0.1 a frame to 1; then Alpha down 0.07 a frame; LifeTime 20 (ZzzEffect.cpp:590-595, MoveHandlers.cpp:509-524)."
+}

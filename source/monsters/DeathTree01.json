@@ -1,0 +1,1080 @@
+{
+  "item": "DeathTree01",
+  "mu_name": "Death Tree",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 308 'Death Tree' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:439); MuMain's MONSTER_DEATH_TREE (MuMain/src/source/World/GameMaps/GMAida.cpp:389).",
+  "world": "aida",
+  "object_type": 308,
+  "monster": {
+    "model_index": 104,
+    "scale": 1.2
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GMAida.cpp:389:\n\ncase MONSTER_DEATH_TREE:\n    {\n        OpenMonsterModel(MONSTER_MODEL_DEATH_TREE);\n        pCharacter = CreateCharacter(Key, MODEL_DEATH_TREE, PosX, PosY);\n        pCharacter->Object.Scale = 1.2f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n\n        BoneManager::RegisterBone(pCharacter, L\"Monster104_Horn0\", 37);\n        BoneManager::RegisterBone(pCharacter, L\"Monster104_Horn1\", 38);\n        BoneManager::RegisterBone(pCharacter, L\"Monster104_Horn2\", 39);\n        BoneManager::RegisterBone(pCharacter, L\"Monster104_Horn3\", 40);\n        BoneManager::RegisterBone(pCharacter, L\"Monster104_Horn4\", 44);\n        BoneManager::RegisterBone(pCharacter, L\"Monster104_Horn5\", 45);\n        BoneManager::RegisterBone(pCharacter, L\"Monster104_Footsteps\", 1);\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "treemonster01": "deathtree_treemonster01.png",
+    "treemonster02": "deathtree_treemonster02.png"
+  },
+  "sheet_materials": {
+    "treemonster01": "foliage",
+    "treemonster02": "bark"
+  },
+  "stats": {
+    "number": 308,
+    "name": "Death Tree",
+    "level": 72,
+    "health": 10000,
+    "minimum_damage": 248,
+    "maximum_damage": 272,
+    "defense": 187,
+    "move_range": 4,
+    "attack_range": 1,
+    "view_range": 5,
+    "move_delay": 450,
+    "attack_delay": 1400,
+    "attack_rate": 362,
+    "defense_rate": 120,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:439"
+  },
+  "spawns": [
+    {
+      "map": 33,
+      "x1": 213,
+      "x2": 213,
+      "y1": 38,
+      "y2": 38,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:175"
+    },
+    {
+      "map": 33,
+      "x1": 216,
+      "x2": 216,
+      "y1": 38,
+      "y2": 38,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:176"
+    },
+    {
+      "map": 33,
+      "x1": 103,
+      "x2": 103,
+      "y1": 16,
+      "y2": 16,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:177"
+    },
+    {
+      "map": 33,
+      "x1": 113,
+      "x2": 113,
+      "y1": 8,
+      "y2": 8,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:178"
+    },
+    {
+      "map": 33,
+      "x1": 118,
+      "x2": 118,
+      "y1": 16,
+      "y2": 16,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:179"
+    },
+    {
+      "map": 33,
+      "x1": 136,
+      "x2": 136,
+      "y1": 23,
+      "y2": 23,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:180"
+    },
+    {
+      "map": 33,
+      "x1": 137,
+      "x2": 137,
+      "y1": 13,
+      "y2": 13,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:181"
+    },
+    {
+      "map": 33,
+      "x1": 150,
+      "x2": 150,
+      "y1": 46,
+      "y2": 46,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:182"
+    },
+    {
+      "map": 33,
+      "x1": 157,
+      "x2": 157,
+      "y1": 23,
+      "y2": 23,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:183"
+    },
+    {
+      "map": 33,
+      "x1": 158,
+      "x2": 158,
+      "y1": 10,
+      "y2": 10,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:184"
+    },
+    {
+      "map": 33,
+      "x1": 162,
+      "x2": 162,
+      "y1": 70,
+      "y2": 70,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:185"
+    },
+    {
+      "map": 33,
+      "x1": 164,
+      "x2": 164,
+      "y1": 18,
+      "y2": 18,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:186"
+    },
+    {
+      "map": 33,
+      "x1": 166,
+      "x2": 166,
+      "y1": 48,
+      "y2": 48,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:187"
+    },
+    {
+      "map": 33,
+      "x1": 174,
+      "x2": 174,
+      "y1": 23,
+      "y2": 23,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:188"
+    },
+    {
+      "map": 33,
+      "x1": 177,
+      "x2": 177,
+      "y1": 16,
+      "y2": 16,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:189"
+    },
+    {
+      "map": 33,
+      "x1": 189,
+      "x2": 189,
+      "y1": 38,
+      "y2": 38,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:190"
+    },
+    {
+      "map": 33,
+      "x1": 189,
+      "x2": 189,
+      "y1": 95,
+      "y2": 95,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:191"
+    },
+    {
+      "map": 33,
+      "x1": 195,
+      "x2": 195,
+      "y1": 26,
+      "y2": 26,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:192"
+    },
+    {
+      "map": 33,
+      "x1": 196,
+      "x2": 196,
+      "y1": 99,
+      "y2": 99,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:193"
+    },
+    {
+      "map": 33,
+      "x1": 200,
+      "x2": 200,
+      "y1": 71,
+      "y2": 71,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:194"
+    },
+    {
+      "map": 33,
+      "x1": 204,
+      "x2": 204,
+      "y1": 12,
+      "y2": 12,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:195"
+    },
+    {
+      "map": 33,
+      "x1": 205,
+      "x2": 205,
+      "y1": 31,
+      "y2": 31,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:196"
+    },
+    {
+      "map": 33,
+      "x1": 206,
+      "x2": 206,
+      "y1": 91,
+      "y2": 91,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:197"
+    },
+    {
+      "map": 33,
+      "x1": 214,
+      "x2": 214,
+      "y1": 114,
+      "y2": 114,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:198"
+    },
+    {
+      "map": 33,
+      "x1": 219,
+      "x2": 219,
+      "y1": 91,
+      "y2": 91,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:199"
+    },
+    {
+      "map": 33,
+      "x1": 222,
+      "x2": 222,
+      "y1": 75,
+      "y2": 75,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:200"
+    },
+    {
+      "map": 33,
+      "x1": 223,
+      "x2": 223,
+      "y1": 130,
+      "y2": 130,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:201"
+    },
+    {
+      "map": 33,
+      "x1": 228,
+      "x2": 228,
+      "y1": 111,
+      "y2": 111,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:202"
+    },
+    {
+      "map": 33,
+      "x1": 226,
+      "x2": 226,
+      "y1": 11,
+      "y2": 11,
+      "count": 1,
+      "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:203"
+    }
+  ],
+  "cutout": [
+    "treemonster01"
+  ],
+  "why_this_one": "To write.",
+  "material_note": "treemonster01: leafy crown and moss, cut out: foliage. treemonster02: the trunk body, bark with dark iron bands: bark.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 630.8,
+      "along": [
+        14.9,
+        29.1
+      ],
+      "mu_uv": [
+        0.571,
+        0.027,
+        0.95,
+        0.604
+      ],
+      "bake_uv": [
+        0.016,
+        0.127,
+        0.416,
+        0.39
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 924.8,
+      "along": [
+        -50.2,
+        -10.5
+      ],
+      "mu_uv": [
+        0.01,
+        0.189,
+        0.356,
+        0.989
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.102,
+        0.219
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bark",
+      "triangles": 830,
+      "area": 39068.6,
+      "along": [
+        -49.6,
+        42.6
+      ],
+      "mu_uv": [
+        0.003,
+        -0.003,
+        0.98,
+        0.993
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.976,
+        0.987
+      ]
+    },
+    {
+      "island": 3,
+      "material": "foliage",
+      "triangles": 1,
+      "area": 57.4,
+      "along": [
+        -10.0,
+        11.1
+      ],
+      "mu_uv": [
+        0.348,
+        0.364,
+        0.555,
+        0.558
+      ],
+      "bake_uv": [
+        0.014,
+        0.881,
+        0.068,
+        0.931
+      ]
+    },
+    {
+      "island": 4,
+      "material": "foliage",
+      "triangles": 1,
+      "area": 49.9,
+      "along": [
+        9.9,
+        14.9
+      ],
+      "mu_uv": [
+        0.348,
+        0.364,
+        0.555,
+        0.558
+      ],
+      "bake_uv": [
+        0.243,
+        0.153,
+        0.296,
+        0.203
+      ]
+    },
+    {
+      "island": 5,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 1060.7,
+      "along": [
+        -17.8,
+        11.1
+      ],
+      "mu_uv": [
+        0.206,
+        0.141,
+        0.562,
+        0.558
+      ],
+      "bake_uv": [
+        0.014,
+        0.306,
+        0.555,
+        0.612
+      ]
+    },
+    {
+      "island": 6,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 1386.8,
+      "along": [
+        -3.4,
+        5.5
+      ],
+      "mu_uv": [
+        0.026,
+        0.016,
+        0.742,
+        0.144
+      ],
+      "bake_uv": [
+        0.346,
+        0.646,
+        0.671,
+        0.734
+      ]
+    },
+    {
+      "island": 7,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 1030.8,
+      "along": [
+        -31.3,
+        -20.7
+      ],
+      "mu_uv": [
+        0.026,
+        0.016,
+        0.742,
+        0.144
+      ],
+      "bake_uv": [
+        0.149,
+        0.678,
+        0.736,
+        0.739
+      ]
+    },
+    {
+      "island": 8,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 642.9,
+      "along": [
+        3.1,
+        23.9
+      ],
+      "mu_uv": [
+        0.577,
+        0.687,
+        0.996,
+        0.992
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.685,
+        0.709
+      ]
+    },
+    {
+      "island": 9,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 75.3,
+      "along": [
+        13.0,
+        23.9
+      ],
+      "mu_uv": [
+        0.774,
+        0.419,
+        0.991,
+        0.505
+      ],
+      "bake_uv": [
+        0.096,
+        0.935,
+        0.501,
+        0.961
+      ]
+    },
+    {
+      "island": 10,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 599.1,
+      "along": [
+        -19.5,
+        1.0
+      ],
+      "mu_uv": [
+        0.229,
+        0.575,
+        0.516,
+        0.877
+      ],
+      "bake_uv": [
+        0.515,
+        0.513,
+        0.863,
+        0.841
+      ]
+    },
+    {
+      "island": 11,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 334.2,
+      "along": [
+        -14.0,
+        1.0
+      ],
+      "mu_uv": [
+        0.227,
+        0.596,
+        0.458,
+        0.876
+      ],
+      "bake_uv": [
+        0.603,
+        0.399,
+        0.886,
+        0.893
+      ]
+    },
+    {
+      "island": 12,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 203.8,
+      "along": [
+        7.2,
+        27.2
+      ],
+      "mu_uv": [
+        0.598,
+        0.693,
+        0.985,
+        0.975
+      ],
+      "bake_uv": [
+        0.623,
+        0.451,
+        0.722,
+        0.523
+      ]
+    },
+    {
+      "island": 13,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 334.2,
+      "along": [
+        6.4,
+        18.8
+      ],
+      "mu_uv": [
+        0.598,
+        0.693,
+        0.837,
+        0.927
+      ],
+      "bake_uv": [
+        0.535,
+        0.124,
+        0.934,
+        0.938
+      ]
+    },
+    {
+      "island": 14,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 978.8,
+      "along": [
+        -16.4,
+        14.9
+      ],
+      "mu_uv": [
+        0.251,
+        0.507,
+        0.512,
+        0.963
+      ],
+      "bake_uv": [
+        0.184,
+        0.377,
+        0.507,
+        0.535
+      ]
+    },
+    {
+      "island": 15,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 375.6,
+      "along": [
+        -10.0,
+        11.1
+      ],
+      "mu_uv": [
+        0.389,
+        0.622,
+        0.592,
+        0.848
+      ],
+      "bake_uv": [
+        0.261,
+        0.74,
+        0.758,
+        0.817
+      ]
+    },
+    {
+      "island": 16,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 433.1,
+      "along": [
+        -16.9,
+        9.9
+      ],
+      "mu_uv": [
+        0.266,
+        0.717,
+        0.481,
+        0.896
+      ],
+      "bake_uv": [
+        0.23,
+        0.765,
+        0.729,
+        0.829
+      ]
+    },
+    {
+      "island": 17,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 924.8,
+      "along": [
+        -32.3,
+        -5.7
+      ],
+      "mu_uv": [
+        0.01,
+        0.189,
+        0.356,
+        0.989
+      ],
+      "bake_uv": [
+        0.13,
+        0.013,
+        0.219,
+        0.219
+      ]
+    },
+    {
+      "island": 18,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 1947.5,
+      "along": [
+        -1.4,
+        41.4
+      ],
+      "mu_uv": [
+        0.201,
+        0.137,
+        0.622,
+        0.478
+      ],
+      "bake_uv": [
+        0.569,
+        0.23,
+        0.689,
+        0.432
+      ]
+    },
+    {
+      "island": 19,
+      "material": "foliage",
+      "triangles": 1,
+      "area": 74.6,
+      "along": [
+        5.5,
+        26.9
+      ],
+      "mu_uv": [
+        0.348,
+        0.364,
+        0.555,
+        0.558
+      ],
+      "bake_uv": [
+        0.562,
+        0.15,
+        0.616,
+        0.2
+      ]
+    },
+    {
+      "island": 20,
+      "material": "foliage",
+      "triangles": 1,
+      "area": 64.8,
+      "along": [
+        26.5,
+        31.7
+      ],
+      "mu_uv": [
+        0.348,
+        0.364,
+        0.555,
+        0.558
+      ],
+      "bake_uv": [
+        0.149,
+        0.892,
+        0.203,
+        0.942
+      ]
+    },
+    {
+      "island": 21,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 1312.9,
+      "along": [
+        2.6,
+        30.9
+      ],
+      "mu_uv": [
+        0.206,
+        0.141,
+        0.562,
+        0.558
+      ],
+      "bake_uv": [
+        0.286,
+        0.093,
+        0.617,
+        0.563
+      ]
+    },
+    {
+      "island": 22,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 203.8,
+      "along": [
+        7.4,
+        27.2
+      ],
+      "mu_uv": [
+        0.598,
+        0.693,
+        0.985,
+        0.975
+      ],
+      "bake_uv": [
+        0.644,
+        0.132,
+        0.743,
+        0.205
+      ]
+    },
+    {
+      "island": 23,
+      "material": "foliage",
+      "triangles": 6,
+      "area": 1051.1,
+      "along": [
+        4.5,
+        26.9
+      ],
+      "mu_uv": [
+        0.266,
+        0.622,
+        0.592,
+        0.896
+      ],
+      "bake_uv": [
+        0.316,
+        0.759,
+        0.493,
+        0.833
+      ]
+    },
+    {
+      "island": 24,
+      "material": "bark",
+      "triangles": 18,
+      "area": 769.6,
+      "along": [
+        -73.4,
+        -17.2
+      ],
+      "mu_uv": [
+        0.301,
+        0.43,
+        0.354,
+        0.84
+      ],
+      "bake_uv": [
+        0.898,
+        0.328,
+        0.919,
+        0.794
+      ]
+    },
+    {
+      "island": 25,
+      "material": "bark",
+      "triangles": 32,
+      "area": 1513.4,
+      "along": [
+        -45.2,
+        -1.1
+      ],
+      "mu_uv": [
+        0.325,
+        0.315,
+        0.484,
+        0.853
+      ],
+      "bake_uv": [
+        0.766,
+        0.014,
+        0.82,
+        0.822
+      ]
+    },
+    {
+      "island": 26,
+      "material": "bark",
+      "triangles": 20,
+      "area": 879.8,
+      "along": [
+        -81.5,
+        -10.1
+      ],
+      "mu_uv": [
+        0.301,
+        0.43,
+        0.354,
+        0.84
+      ],
+      "bake_uv": [
+        0.287,
+        0.825,
+        0.916,
+        0.934
+      ]
+    },
+    {
+      "island": 27,
+      "material": "bark",
+      "triangles": 26,
+      "area": 4807.6,
+      "along": [
+        64.7,
+        99.8
+      ],
+      "mu_uv": [
+        0.451,
+        0.79,
+        0.653,
+        0.99
+      ],
+      "bake_uv": [
+        0.014,
+        0.155,
+        0.739,
+        0.976
+      ]
+    },
+    {
+      "island": 28,
+      "material": "bark",
+      "triangles": 26,
+      "area": 2485.9,
+      "along": [
+        3.3,
+        78.7
+      ],
+      "mu_uv": [
+        0.435,
+        0.268,
+        0.63,
+        0.561
+      ],
+      "bake_uv": [
+        0.331,
+        0.848,
+        0.739,
+        0.923
+      ]
+    },
+    {
+      "island": 29,
+      "material": "bark",
+      "triangles": 24,
+      "area": 2767.5,
+      "along": [
+        -36.1,
+        -3.3
+      ],
+      "mu_uv": [
+        0.773,
+        0.553,
+        0.994,
+        0.985
+      ],
+      "bake_uv": [
+        0.45,
+        0.023,
+        0.964,
+        0.392
+      ]
+    },
+    {
+      "island": 30,
+      "material": "bark",
+      "triangles": 18,
+      "area": 769.7,
+      "along": [
+        -48.0,
+        -10.7
+      ],
+      "mu_uv": [
+        0.301,
+        0.43,
+        0.354,
+        0.84
+      ],
+      "bake_uv": [
+        0.939,
+        0.572,
+        0.953,
+        0.946
+      ]
+    },
+    {
+      "island": 31,
+      "material": "bark",
+      "triangles": 32,
+      "area": 1513.4,
+      "along": [
+        -27.1,
+        2.8
+      ],
+      "mu_uv": [
+        0.325,
+        0.315,
+        0.484,
+        0.853
+      ],
+      "bake_uv": [
+        0.766,
+        0.138,
+        0.822,
+        0.516
+      ]
+    },
+    {
+      "island": 32,
+      "material": "bark",
+      "triangles": 20,
+      "area": 879.8,
+      "along": [
+        -59.3,
+        -4.2
+      ],
+      "mu_uv": [
+        0.301,
+        0.43,
+        0.354,
+        0.84
+      ],
+      "bake_uv": [
+        0.41,
+        0.343,
+        0.957,
+        0.968
+      ]
+    },
+    {
+      "island": 33,
+      "material": "bark",
+      "triangles": 3,
+      "area": 26.7,
+      "along": [
+        31.9,
+        38.0
+      ],
+      "mu_uv": [
+        0.8,
+        0.009,
+        0.861,
+        0.093
+      ],
+      "bake_uv": [
+        0.02,
+        0.245,
+        0.036,
+        0.266
+      ]
+    },
+    {
+      "island": 34,
+      "material": "bark",
+      "triangles": 24,
+      "area": 120.1,
+      "along": [
+        25.5,
+        48.0
+      ],
+      "mu_uv": [
+        0.666,
+        0.021,
+        0.779,
+        0.24
+      ],
+      "bake_uv": [
+        0.342,
+        0.013,
+        0.372,
+        0.069
+      ]
+    }
+  ]
+}

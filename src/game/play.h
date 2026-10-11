@@ -1332,6 +1332,7 @@ private:
         int tails = 0;
     };
     std::vector<StarRibbon> starRibbons_;
+    void ribbonStars(float seconds);  // their flight a frame (play_ribbons.cpp)
     uint32_t ribbonDice_ = 0x5EED51u;
     // A Balrog's meteor storm round where it stood: one more meteor every kBalrogStormEvery
     // while `left` lasts (seconds).

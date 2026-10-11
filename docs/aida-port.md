@@ -239,6 +239,19 @@ a flare01 mote dropped every frame at (0.1, 0.1, 0.25). Manifest flag `show.skul
   list but no Create* takes it and M33Aida::CreateMist returns false, so MU's Aida has no leaves,
   mist or weather; World34's leaf01/rain01 sheets go unused. The monsters are the one thing left.
 
+**Monsters, one at a time (2026-10-11, the user: 'lets cook monsters, individualy, check them, and
+fix the if needed, check for special effects').** Each is `./mu new monster N --world aida --db`
+(the tool lists no map 33 yet, hence --world), its sheets' materials chosen, `./mu make <Name>01`
+(build, index, every world's tables, figure), its w34 sounds as `<breed>_move/_attack/_die`, then
+shot in `--arena <Figure> --arena-undying --level 80`, which is how a level-72 breed is seen up
+close without the hero dying in a second.
+- **Death Tree (308)**: DeathTree01, foliage + bark, 29 spawns. Its six horns (`e04 e1 e05 e02 e06
+  e03`) glow green as star bones (kDeathTreeHorns; MU's sparks left out); its Attack 2 throws
+  Object34's tree_eff roots at its feet, in its facing, and green smoke (fx/tree_roots.h, owned by
+  ShadowStars). Not done: the claw's blur on Attack 1 (light 0.3, bones 26-27). The smoke at MU's
+  (0.5, 0.7, 0.5) barely shows at noon. A trap: a constexpr array in a header is one copy per
+  file, so compare figures by name, not by tint pointer.
+
 ## The one thing to know first
 
 **Aida is a Season 1 world, from 2005.** It went on Korea's test server on 2005-07-28 and live with
