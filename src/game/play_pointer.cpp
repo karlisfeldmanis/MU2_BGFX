@@ -266,11 +266,12 @@ void Play::untarget() {
 
 void Play::leftClick() {
     if (!isOpen()) return;
-    // Another player under the pointer becomes his target, and the click still walks there
-    // (the user, 2026-10-10: "clicks to character ... walks to him and opend then char label").
+    // Another player under the pointer becomes his target, and that is all: no walk to him (the
+    // user, 2026-10-11: "dont walk to chaarcter if we press on him"; the 2026-10-10 click walked).
     if (pointedPlayer_ != 0 && pointedFolk_ < 0) {
         std::string name;
         if (playerName(pointedPlayer_, &name, nullptr)) target(name, pointedPlayer_);
+        return;
     }
     sim::Request request;
     if (pointedFolk_ >= 0) {
