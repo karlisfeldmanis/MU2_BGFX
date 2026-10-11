@@ -6,6 +6,7 @@
 #include "content/showing.h"
 #include "core/log.h"
 #include "game/sound.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -44,7 +45,7 @@ float Bubbles::unit() {
 void Bubbles::open(const std::string& assetDir, const std::string& world,
                    const content::CookedTown& town, content::Textures& textures) {
     shutdown();
-    if (world != "atlans") return;
+    if (!worldShow(world).bubbles) return;
     content::Showing table;
     std::string error;
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {

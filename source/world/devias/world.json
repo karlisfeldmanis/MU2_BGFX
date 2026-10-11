@@ -1,0 +1,33 @@
+{
+  "world": "devias",
+  "name": "Devias",
+  "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "show": {
+    "steps": "snow",
+    "music": {
+      "track": "/music/Devias.mp3",
+      "where": "indoors",
+      "loops": true,
+      "note": "Under its roofs, silence in the snow (the user, 2026-09-30 and 2026-10-07)."
+    },
+    "weather": {
+      "kind": "snow",
+      "note": "Its wet spell is the blizzard: no drops, no thunder."
+    },
+    "leaves": "snow",
+    "indoors": {
+      "floors": [
+        3
+      ],
+      "floors_from": 10,
+      "open_bridges": true,
+      "note": "HeroTile != 3 && HeroTile < 10 for WD_2DEVIAS (MainScene.cpp:81); the bridges' planks are open sky (the user, 2026-10-07)."
+    },
+    "doors": {
+      "note": "Its doors swing and slide as he comes near (game/world/doors.h)."
+    },
+    "beacon": {
+      "note": "The Lost Tower beacon, RenderObjectVisual case 100 (ZzzObject.cpp:2821-2828; game/world/ornaments.h)."
+    }
+  }
+}

@@ -5,6 +5,7 @@
 
 #include "content/showing.h"
 #include "core/log.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -49,7 +50,7 @@ float WaterfallSpray::unit() {
 void WaterfallSpray::open(const std::string& assetDir, const std::string& world,
                           const content::CookedTown& town, content::Textures& textures) {
     shutdown();
-    if (world != "aida") return;
+    if (!worldShow(world).waterfallSpray) return;
     content::Showing table;
     std::string error;
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {

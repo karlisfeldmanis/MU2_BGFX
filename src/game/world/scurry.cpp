@@ -7,6 +7,7 @@
 #include "core/files.h"
 #include "core/log.h"
 #include "game/sound.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -29,31 +30,6 @@ float wrapPi(float a) {
 
 }  // namespace
 
-std::string crawlOf(const std::string& world) {
-    // MoveFishs' WD_1DUNGEON arm (GOBoid.cpp:1720-1722). Must agree with tools/cook.py's CRAWLS.
-    if (world == "dungeon") return "Rat01";
-    // And its WD_8TARKAN arm, MODEL_BUG01 + 1 out of Object9 (:1726-1733; MapManager.cpp:143-148).
-    if (world == "tarkan") return "Bug02";
-    return std::string();
-}
-
-CrawlRow crawlRowOf(const std::string& world) {
-    CrawlRow row;
-    if (world == "dungeon") row.squeaks = true;
-    // Tarkan's scarabs: all ten slots, Scale 0.8-1.1, Velocity 2.5 / Scale, Gravity 9,
-    // LifeTime 100 (GOBoid.cpp:1726-1733). Their BITMAP_JOINT_ENERGY trail is not drawn yet.
-    if (world == "tarkan") {
-        row.most = 10;
-        row.scaleLeast = 8;
-        row.speed = 2.5f;
-        row.turn = 9.0f;
-        row.life = 100;
-        row.trail = true;
-        row.drawn = 0.55f;
-    }
-    return row;
-}
-
 float Scurry::random01() {
     seed_ ^= seed_ << 13;
     seed_ ^= seed_ >> 17;
@@ -65,7 +41,7 @@ bool Scurry::open(const std::string& assetDir, const std::string& world, const s
                   content::Textures& textures, Sound* sound) {
     shutdown();
     sound_ = sound;
-    row_ = crawlRowOf(world);
+    row_ = worldShow(world).crawls;
     for (Rat& rat : rats_) rat = Rat{};
     if (model.empty()) return true;
 

@@ -5,6 +5,7 @@
 
 #include "core/log.h"
 #include "game/world/town.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -41,7 +42,7 @@ void Doors::open(const std::string& world, const Town& town, float metresPerTile
     doors_.clear();
     creaks_.clear();
     metresPerTile_ = metresPerTile;
-    if (world != "devias") return;
+    if (!worldShow(world).doors) return;
     const auto& models = town.cooked().models;
     const auto& instances = town.cooked().instances;
     int swings = 0, slides = 0, odd = 0;

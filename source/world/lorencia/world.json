@@ -1,0 +1,24 @@
+{
+  "world": "lorencia",
+  "name": "Lorencia",
+  "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "show": {
+    "steps": "grass",
+    "music": {
+      "track": "/music/Pub.mp3",
+      "where": "safe_indoors",
+      "loops": true,
+      "note": "The tavern's, looped while he is inside the town (the user, 2026-10-08)."
+    },
+    "weather": {
+      "kind": "rain",
+      "peak": 0.33,
+      "note": "Noria's spells, a third of the pool at its heaviest (the user, 2026-09-29)."
+    },
+    "leaves": "leaf",
+    "boids": {
+      "model": "Bird01",
+      "note": "MODEL_BIRD01: the bird's defaults (game/world/boids.h Airs)."
+    }
+  }
+}

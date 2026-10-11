@@ -280,6 +280,7 @@ add_library(mu_game STATIC
   src/game/bench.cpp
   src/game/world/world.cpp
   src/game/world/maps.cpp
+  src/game/world/world_show.cpp
   src/game/world/weather.cpp
   src/game/world/portal.cpp
   src/game/world/town.cpp

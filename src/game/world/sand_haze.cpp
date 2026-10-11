@@ -4,30 +4,15 @@
 
 #include "content/showing.h"
 #include "core/log.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
-
-// A world's haze: each layer's colour (already at its share of MU's light), how fast it slides
-// in sheets a second, and how far its streaks lean.
-struct HazeLook {
-    float cloud[3], cloudSlide;
-    float specks[3], specksSlide;
-    float lean;
-};
 
 namespace {
 
 constexpr float kOut = 0.5f;          // metres in front of the eye
 constexpr float kAspect = 2.6f;       // wider than any screen this runs on
 
-// Tarkan's is MU's (0.3, 0.3, 0.25) at 0.4 of it: the storm a trace rather than a veil. 0.6,
-// then 0.4 (the user, 2026-10-05: 'redcue dust screen effect little bit').
-constexpr HazeLook kTarkan = {{0.12f, 0.12f, 0.10f}, 0.2f, {0.12f, 0.12f, 0.10f}, 1.0f, 0.25f};
-// Icarus's, ours: MU draws none there. The same two sheets as wet cloud drifting past the eye
-// rather than sand blown by it -- the veil cool and barely there, sliding a sheet in twenty
-// seconds, upright, and the specks as a few faint droplets at a fifth of the sand's pace (the
-// user, 2026-10-07: 'some screen dust effect but minimal, its cloud map').
-constexpr HazeLook kIcarus = {{0.045f, 0.055f, 0.07f}, 0.05f, {0.035f, 0.04f, 0.05f}, 0.2f, 0.0f};
 
 void normalise(float v[3]) {
     const float l = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -39,9 +24,16 @@ void normalise(float v[3]) {
 void SandHaze::open(const std::string& assetDir, const std::string& world,
                     content::Textures& textures) {
     shutdown();
-    if (world == "tarkan") look_ = &kTarkan;
-    else if (world == "icarus") look_ = &kIcarus;
-    else return;
+    const WorldShow& show = worldShow(world);
+    if (!show.haze) return;
+    for (int k = 0; k < 3; ++k) {
+        look_.cloud[k] = show.hazeCloud[k];
+        look_.specks[k] = show.hazeSpecks[k];
+    }
+    look_.cloudSlide = show.hazeCloudSlide;
+    look_.specksSlide = show.hazeSpecksSlide;
+    look_.lean = show.hazeLean;
+    hazy_ = true;
     content::Showing table;
     std::string error;
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
@@ -56,7 +48,7 @@ void SandHaze::open(const std::string& assetDir, const std::string& world,
 
 void SandHaze::shutdown() {
     clock_ = 0.0f;
-    look_ = nullptr;
+    hazy_ = false;
     cloud_ = specks_ = BGFX_INVALID_HANDLE;
 }
 
@@ -80,7 +72,7 @@ void SandHaze::gather(gfx::Effects& effects, const gfx::Camera& camera) const {
     // MU's two layers: the UV rectangle across the screen and its slide. (WorldTime % 100000)
     // wraps every 100 s, which the fmod keeps.
     const float t = std::fmod(clock_, 100.0f);
-    const HazeLook& look = *look_;
+    const HazeLook& look = look_;
     struct Layer {
         bgfx::TextureHandle sheet;
         float across, down, slide;

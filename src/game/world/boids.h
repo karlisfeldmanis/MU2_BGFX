@@ -90,9 +90,9 @@ struct Airs {
     // 0.75 s; the user saw it flap too slowly in Noria (2026-09-29). The bird keeps 1: its keys
     // are 0.16 s apart, also slower than MU's 0.04, and nobody has asked for it.
     float flap = 1.0f;
-    // The two calls' sound events, rolled independently; a null one is never rolled for. The
+    // The two calls' sound events, rolled independently; an empty one is never rolled for. The
     // bird's two, or the Dungeon bat's one (SOUND_BAT01).
-    const char* call[2] = {"bird_1", "bird_2"};
+    std::string call[2] = {"bird_1", "bird_2"};
     // Blood Castle's crow: one roll a frame in 128, heard only while the tile under it is a
     // safe zone, the castle's court (GOBoid.cpp:1495-1501). 0 / false keep the bird's.
     float callEvery = 0.0f;
@@ -100,12 +100,10 @@ struct Airs {
     bool callsOverSafe = false;
 };
 
-// What a world flies, by the model name the cook knows it by, and how it flies. MU's own
-// `switch (gMapManager.WorldActive)`. The name must agree with tools/cook.py's AIRS, which is
-// the only reason the model is in the cooked directory at all; a world named in neither flies
-// nothing, which is most of them.
-std::string boidOf(const std::string& world);
-Airs airsOf(const std::string& world);
+// What a world flies, by the model name the cook knows it by, and how it flies, is its
+// manifest's `boids` (game/world/world_show.h): MU's own `switch (gMapManager.WorldActive)`.
+// The name must agree with tools/cook.py's AIRS, which is the only reason the model is in the
+// cooked directory at all; a world named in neither flies nothing, which is most of them.
 
 class Boids {
 public:

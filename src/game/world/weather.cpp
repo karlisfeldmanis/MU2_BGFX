@@ -6,6 +6,7 @@
 #include "core/log.h"
 #include "game/sound.h"
 #include "sim/rain.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -178,16 +179,18 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // Tarkan's sandstorm is Devias's blizzard's shape too, its sand blown by the same pool
     // (Leaves::setSand) and its light sheets/worlds/tarkan_rain.json. Ours, as Devias's is (the
     // user, 2026-10-05: 'dust effect which has devias, this is a desert style map').
-    snows_ = world == "devias" || world == "tarkan";
-    sky_ = world == "icarus";
-    const bool square = world == "devilsquare";
-    rains_ = world == "noria" || world == "lorencia" || snows_ || sky_ || square;
-    peak_ = world == "lorencia" ? 0.33f : square ? kSquarePeak : snows_ ? 0.0f : 1.0f;
-    jungle_ = world == "noria";
+    // Which of these a world has is its manifest's `weather` (game/world/world_show.h).
+    const WorldShow& show = worldShow(world);
+    snows_ = show.weather == "snow" || show.weather == "sand";
+    sky_ = show.weather == "sky";
+    const bool square = show.weather == "square";
+    rains_ = show.weather == "rain" || snows_ || sky_ || square;
+    peak_ = show.weatherPeak >= 0.0f ? show.weatherPeak : square ? kSquarePeak : snows_ ? 0.0f : 1.0f;
+    jungle_ = show.jungle;
     // Tarkan's never stops, and never builds to Devias's full blizzard: the wind always up at
     // kSandShare, no calm and no spell (the user, 2026-10-05: 'tarkan storm has to happpen all the
     // time but not so strong like its in devias'). Held as a forced spell; --weather still wins.
-    if (world == "tarkan" && force.empty()) {
+    if (show.weather == "sand" && force.empty()) {
         forced_ = true;
         wet_ = true;
         steady_ = kSandShare;

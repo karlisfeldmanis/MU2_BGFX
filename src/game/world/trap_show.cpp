@@ -7,6 +7,7 @@
 #include "core/files.h"
 #include "core/log.h"
 #include "sim/traps.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -79,7 +80,8 @@ constexpr float kPlateFade = 0.3f;
 bool TrapShow::open(const std::string& assetDir, const std::string& world,
                     content::Textures& textures, const content::Showing& table) {
     shutdown();
-    if (world != "dungeon" && world != "losttower") return true;
+    const std::string& traps = worldShow(world).traps;
+    if (traps.empty()) return true;
     const std::string dir = core::join(assetDir, "cooked/" + world);
     const auto load = [&](const char* model) -> const content::Mesh* {
         std::vector<uint8_t> bytes = core::readFile(core::join(dir, std::string("meshes/") + model + ".mum"));
@@ -95,7 +97,7 @@ bool TrapShow::open(const std::string& assetDir, const std::string& world,
         meshes_.push_back(std::move(mesh));
         return meshes_.back().get();
     };
-    if (world == "losttower") {
+    if (traps == "tower") {
         plate_ = load("Object26");
         return true;
     }

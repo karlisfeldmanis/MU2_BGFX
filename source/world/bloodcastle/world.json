@@ -1,0 +1,41 @@
+{
+  "world": "bloodcastle",
+  "name": "Blood Castle",
+  "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "show": {
+    "air": {
+      "loop": "",
+      "bed": "world_bloodcastle",
+      "note": "No wind; its match bed loops while the run is on (NewBloodCastleSystem.cpp:42-43, 63-64)."
+    },
+    "indoors": {
+      "everywhere": true,
+      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+    },
+    "boids": {
+      "model": "Crow01",
+      "call": [
+        "boid_crow",
+        ""
+      ],
+      "call_every": 128.0,
+      "call_rolls": 1,
+      "calls_over_safe": true,
+      "note": "MODEL_CROW (GOBoid.cpp:1342-1345): the bird's 1.0 and light, SOUND_CROW a frame in 128 over the court only (GOBoid.cpp:1495-1501)."
+    },
+    "void_clouds": {
+      "colour": [
+        0.3,
+        0.32,
+        0.38
+      ],
+      "note": "The castle's cold grey (game/world/void_clouds.h)."
+    },
+    "castle_sparks": {
+      "note": "game/world/castle_sparks.h."
+    },
+    "drawbridge": {
+      "note": "Falls when the run says (game/world/drawbridge.h)."
+    }
+  }
+}

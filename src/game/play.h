@@ -1423,22 +1423,13 @@ private:
     // And his wing on his back (game/wings.h), slot 7.
     WingLook wing_;
     std::string bare_;  // the naked class body redress() dresses back over; see open()
-    // Whether the world's air is MU's wind loop. Not Noria's since 2026-09-29: its jungle bed
-    // (game/world/weather.h) is the whole of its air, the user's word -- "dont use lorencia
-    // wind in noria, we have our new ambient sound which is perfect".
-    bool windy_ = true;
-    // The Dungeon's and the Lost Tower's: their air is aDungeon or aTower, which rides the
-    // wind's slot (Play::openSound).
-    bool dungeonAir_ = false;
-    bool towerAir_ = false;
-    bool castleAir_ = false;  // Blood Castle: its run bed (heard_.castleBed)
-    // Atlans's: aWater, on the wind's slot too, the whole map and in the open.
-    bool waterAir_ = false;
-    // Tarkan's: desert.wav, on the wind's slot too, the whole map and in the open, though the
-    // map is "underground" for its leaves (game/world/maps.h).
-    bool desertAir_ = false;
-    bool heavenAir_ = false;  // Icarus's aHeaven
-    // Over Tarkan the Dinorant flies, 90 over the ground (game/pets.h dinorantFlies).
+    // The world's air, its manifest's `air` (game/world/world_show.h): the loop on the wind's
+    // slot (MU's wind, or the map's own -- aDungeon, aTower, aWater, desert.wav, aHeaven -- or
+    // none, Noria's jungle bed being the whole of its air), whether it plays under a roof too,
+    // its room ("stone", "water", "open"; empty is by the roof), and an event's bed.
+    std::string airLoop_, airRoom_, airBed_;
+    bool airEverywhere_ = false;
+    // Over Tarkan the Dinorant flies, 90 over the ground (game/pets.h, `mounts_fly`).
     bool flying_ = false;
     // Under the sea: off its safe zone a player swims (FigureBody::swimWalkClip), MU's Fly
     // stance for Atlans (ZzzCharacter.cpp:298-301).

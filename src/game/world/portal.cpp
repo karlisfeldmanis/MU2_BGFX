@@ -8,6 +8,7 @@
 #include "content/showing.h"
 #include "core/files.h"
 #include "core/log.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -37,7 +38,7 @@ uint32_t Portal::next() {
 bool Portal::open(const std::string& assetDir, const std::string& world,
                   const content::Ground& ground, content::Textures& textures) {
     shutdown();
-    if (world != "noria") return true;
+    if (!worldShow(world).portal) return true;
 
     content::Missiles missiles;
     if (!missiles.read(core::join(assetDir, "cooked/showing/missiles.mup"))) return false;

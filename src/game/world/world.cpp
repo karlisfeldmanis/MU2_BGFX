@@ -44,10 +44,6 @@ constexpr float kFocusHeight = 1.5f;   // 150 units up the body
 // frame's height. Invention, the ARPG habit rather than MU's: MU centres him.
 constexpr float kLiftFrame = 0.12f;
 
-// The tile texture Lorencia floors its interiors with and uses nowhere outdoors: MuMain's
-// HeroTile == 4, and MU2's World.IndoorTile.
-constexpr int kIndoorFloor = 4;
-
 // The played camera's follow, all three inventions -- MU's camera is nailed to the character.
 // Nailed, it passes on every hitch in the drawn position, and it rises and falls with every
 // bump in the ground under his feet, which on Lorencia's cobbles is a bob at walking pace. So
@@ -93,21 +89,19 @@ bool World::open(const std::string& assetDir, const std::string& name,
                  content::Textures& textures, int crowd, bool figures) {
     const std::string dir = core::join(assetDir, "world/" + name);
     textures_ = &textures;
-    deviasFloors_ = name == "devias";
-    const MapRow* row = mapOf(name);
-    underground_ = row && row->underground;
+    show_ = worldShow(name);
     // Its share of the load, by what each took on a cold start (core/loading.h).
     core::Loading::stage("the land", 0.0f, 0.05f);
     if (!ground_.load(dir, name, textures)) return false;
     // Atlans's caustics: MU draws its TileWater01 overlay as 32 frames of light, not a sheet
-    // (content::Ground::setCaustic). The showing's `caustic`, read here because the play's
-    // showing opens after the land.
-    if (name == "atlans") {
+    // (content::Ground::setCaustic). The showing's effect the manifest names, read here because
+    // the play's showing opens after the land.
+    if (!show_.caustic.empty()) {
         content::Showing table;
         std::string error;
         const content::EffectSheet* sheet = nullptr;
         if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error))
-            sheet = table.effect("caustic");
+            sheet = table.effect(show_.caustic.c_str());
         ground_.setCaustic(sheet ? textures.load(assetDir + "/" + sheet->path,
                                                  content::TextureRole::Albedo)
                                  : bgfx::TextureHandle{bgfx::kInvalidHandle});
@@ -127,7 +121,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // 'Bridges is not in-building place its a devias open map place'). Every plank tile joined
     // to one under a bridge model is open ground. Ours: MU's own test has the same fault.
     bridgeDecks_.clear();
-    if (deviasFloors_ && town_.isOpen()) markBridgeDecks();
+    if (show_.openBridges && town_.isOpen()) markBridgeDecks();
     // Devias's doors, which swing and slide as he comes near. See game/world/doors.h.
     if (town_.isOpen()) doors_.open(name, town_, ground_.metresPerTile());
     // Blood Castle's drawbridge, which falls when the run says. See game/world/drawbridge.h.
@@ -232,27 +226,30 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
     // plainly was one. Neither failure was fatal and neither was a lie -- at the moment they
     // asked, the table was empty and the device was shut.
     if (name.empty() || textures_ == nullptr || !play_.isOpen()) return;
-    boids_.open(assetDir, name, boidOf(name), *textures_, airsOf(name), &play_.sound());
+    boids_.open(assetDir, name, show_.boid, *textures_, show_.airs, &play_.sound());
     if (const content::EffectSheet* light = play_.showing().table().effect("light")) {
         boids_.setGlowSheet(
             textures_->load(assetDir + "/" + light->path, content::TextureRole::Albedo));
     }
-    // No leaves blow underground: World2 ships no leaf sheet, and MU's weather has no arm for it.
-    if (!underground_) leaves_.open(assetDir, *textures_, play_.showing().table(), name == "devias");
-    // Atlans is "underground" for its air, but its motes drift everywhere (leaves.h).
-    else if (name == "atlans") leaves_.open(assetDir, *textures_, play_.showing().table(), false, true);
+    // What blows round him is the manifest's `leaves`. None underground: World2 ships no leaf
+    // sheet, and MU's weather has no arm for it. Devias's are snow.
+    const std::string& leaves = show_.leaves;
+    if (leaves == "leaf" || leaves == "snow")
+        leaves_.open(assetDir, *textures_, play_.showing().table(), leaves == "snow");
+    // Atlans's motes drift everywhere (leaves.h).
+    else if (leaves == "motes") leaves_.open(assetDir, *textures_, play_.showing().table(), false, true);
     // And Tarkan's sand rides the snow's pool, blown by its storm (Leaves::setSand, ours).
-    else if (name == "tarkan") {
+    else if (leaves == "sand") {
         leaves_.open(assetDir, *textures_, play_.showing().table(), true);
         leaves_.setSand(true);
     }
     // And Devil Square's, which never stops (game/world/weather.cpp), with its rings.
-    else if (name == "devilsquare") {
+    else if (leaves == "square") {
         leaves_.open(assetDir, *textures_, play_.showing().table());
         leaves_.setRoofless(true);
     }
     // And Icarus's rain, every slot of it (game/world/weather.cpp), with no ring.
-    else if (name == "icarus") {
+    else if (leaves == "sky") {
         leaves_.open(assetDir, *textures_, play_.showing().table());
         leaves_.setSky(true);
     }
@@ -463,18 +460,17 @@ bool World::indoors(float x, float z) const {
     const int column = int(std::floor(x / metresPerTile));
     const int row = int(std::floor(-z / metresPerTile));
     const int floor = ground_.floorAt(column, row);
-    // Devias's planks and its four patterned floors, the church's marble and carpets:
-    // MuMain's HeroTile != 3 && HeroTile < 10 for WD_2DEVIAS (MainScene.cpp:81).
-    if (deviasFloors_) {
-        const size_t size = size_t(ground_.size());
-        if (floor == 3 && !bridgeDecks_.empty() && bridgeDecks_[size_t(row) * size + size_t(column)])
-            return false;
-        return floor == 3 || floor >= 10;
-    }
     // The Dungeon has no open sky to stand under, and its slot 4 is a cobble, not a floor
     // indoors. MuMain stops the wind by map there too: it never loads it (SceneManager.cpp:859).
-    if (underground_) return true;
-    return floor == kIndoorFloor;
+    if (show_.indoorsEverywhere) return true;
+    // Devias's planks under its bridges are open sky (markBridgeDecks).
+    if (floor == 3 && !bridgeDecks_.empty() &&
+        bridgeDecks_[size_t(row) * size_t(ground_.size()) + size_t(column)])
+        return false;
+    // The slots the manifest floors its interiors with: Lorencia's one, or Devias's planks and
+    // its four patterned floors, the church's marble and carpets -- MuMain's HeroTile != 3 &&
+    // HeroTile < 10 for WD_2DEVIAS (MainScene.cpp:81).
+    return show_.indoorFloor(floor);
 }
 
 void World::shutdown() {

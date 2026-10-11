@@ -18,5 +18,11 @@ mkdir -p assets
 python3 tools/sync.py --src "$SRC" --dst assets "$@"
 # The quest givers' voices, finished WAVs out of tools/voice.py: copied as they are.
 [ -d source/voice ] && rsync -a --exclude ref source/voice/ assets/voice/
+# Each world's manifest (source/world/<w>/world.json, docs/order-plan.md sprint D): copied as it is,
+# beside the world's ground, for the client's game/world/world_show.cpp.
+for manifest in $(ls source/world/*/world.json 2>/dev/null); do
+    world=$(basename "$(dirname "$manifest")")
+    mkdir -p "assets/world/$world" && cp "$manifest" "assets/world/$world/world.json"
+done
 # The stingers, the user's own music (Sound::stinger): copied as they are, beside MU's tracks.
 [ -d source/music ] && rsync -a source/music/ assets/music/

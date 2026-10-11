@@ -32,7 +32,8 @@ std::string zoneLevels(const content::Tables& tables);
 // The name to show for a tile of `world`: "Dungeon 1", "Dungeon 2" or "Dungeon 3" by the floor
 // the tile is on -- three disconnected regions of one map, the Move list's Dungeon, Dungeon2 and
 // Dungeon3 (OpenMU Version075 Gates.cs:48-50; docs/dungeon-port.md §1.2) -- and `world` itself
-// on every other map. The user's, 2026-09-30.
+// on every other map. The user's, 2026-09-30. The regions are the manifest's `places`
+// (game/world/world_show.h).
 std::string placeName(const std::string& world, int column, int row);
 
 // The lighting overlay for a world, laid over sheets/lighting.json by TimeOfDay::setScene:

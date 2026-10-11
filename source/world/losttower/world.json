@@ -1,0 +1,101 @@
+{
+  "world": "losttower",
+  "name": "Lost Tower",
+  "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "show": {
+    "places": [
+      {
+        "name": "Lost Tower 1",
+        "box": [
+          160,
+          0,
+          255,
+          149
+        ]
+      },
+      {
+        "name": "Lost Tower 2",
+        "box": [
+          160,
+          150,
+          255,
+          255
+        ]
+      },
+      {
+        "name": "Lost Tower 3",
+        "box": [
+          70,
+          150,
+          159,
+          255
+        ]
+      },
+      {
+        "name": "Lost Tower 4",
+        "box": [
+          70,
+          70,
+          159,
+          149
+        ]
+      },
+      {
+        "name": "Lost Tower 5",
+        "box": [
+          70,
+          0,
+          159,
+          69
+        ]
+      },
+      {
+        "name": "Lost Tower 6",
+        "box": [
+          0,
+          0,
+          69,
+          69
+        ]
+      },
+      {
+        "name": "Lost Tower 7",
+        "box": [
+          0,
+          70,
+          69,
+          255
+        ]
+      }
+    ],
+    "places_note": "Seven floors, each a region of the one grid (docs/lost-tower-port.md).",
+    "air": {
+      "loop": "world_tower",
+      "everywhere": true,
+      "room": "stone",
+      "note": "aTower (SceneManager.cpp:873-875)."
+    },
+    "music": {
+      "track": "/music/lost_tower_a.mp3",
+      "where": "safe",
+      "note": "MUSIC_LOSTTOWER_A in its hall (SceneManager.cpp:1047-1073; the user, 2026-10-05)."
+    },
+    "indoors": {
+      "everywhere": true,
+      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+    },
+    "boids": {
+      "model": "Bat01",
+      "flap": 6.25,
+      "call": [
+        "boid_bat",
+        ""
+      ],
+      "note": "MODEL_BAT01 (GOBoid.cpp:1327-1328): the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1320), SOUND_BAT01 alone. The cook spaces its four keys 0.25 s apart, so 6.25 for MU's key a frame at 0.04 s."
+    },
+    "skulls": {
+      "note": "The skulls and chips he kicks (game/world/skulls.h)."
+    },
+    "traps": "tower"
+  }
+}

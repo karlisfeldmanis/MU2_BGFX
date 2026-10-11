@@ -5,6 +5,7 @@
 
 #include "core/log.h"
 #include "game/world/town.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -33,7 +34,7 @@ void Skulls::open(const std::string& world, const Town& town, float metresPerTil
     clock_ = 0.0f;
     kicks_ = 0;
     metresPerUnit_ = metresPerTile / 100.0f;
-    if (world != "losttower") return;
+    if (!worldShow(world).skulls) return;
     const auto& models = town.cooked().models;
     const auto& instances = town.cooked().instances;
     int skulls = 0, chips = 0;

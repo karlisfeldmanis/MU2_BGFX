@@ -415,7 +415,65 @@ Begun 2026-10-11 on the user's "continou".
 
 Sprint C is done. **Next: D, the world manifest.**
 
-## 9. Leave alone
+## 9. Sprint D, as done (slice D1: MapShow)
+
+Begun 2026-10-11. The user picked the folder (*"keeping source/world/<w>/world.json"*): the
+existing one, not §3's `source/worlds/`, so no recipe moved. Then *"do D1"*. D is cut into
+slices so each one can be shown before the next: D1 MapShow (client), D2 the pipeline dicts,
+D3 gates and NPCs, D4 MapRules.
+
+- **One manifest per world**, `source/world/<w>/world.json`, for all eleven. It has a `name`
+  and a `show` block, and `tools/sync.sh` copies it to `assets/world/<w>/`. The citations from
+  the code comments it replaces moved with the values, as `note` fields.
+- **`game/world/world_show.{h,cpp}`** reads a world's manifest the first time it is asked for,
+  keeps it, and fills one `WorldShow`. The application points it at the assets at start.
+  A system opens only where its field is set. A world without a manifest gets MU's wind and
+  nothing of its own, and the log says so.
+- **What moved out of the C++:**
+  - **Names:** the display name (`arrival.cpp`'s kPlaces and `minimap.cpp`'s switch) and the
+    `places`, the Dungeon's 3 floor boxes and the Lost Tower's 7 (`placeName`).
+  - **Sound:** the air loop, whether it plays under a roof, the room and Blood Castle's bed
+    (the seven air bools in `play.h`); the steps; swimming; the Dinorant flying (`pets.h`);
+    and the music, where it plays and whether it loops (`play_mode.cpp`'s chain, 50 lines
+    down to 14).
+  - **Weather and land:** the weather kind, peak and jungle bed; the leaves; which floors are
+    indoors and the open bridges (`world.cpp`'s `deviasFloors_` and `underground_`); the
+    caustic; Noria's road sheets.
+  - **Creatures and looks:** the birds' model and Airs (`boidOf`/`airsOf` are gone) and the
+    crawlers' (`crawlOf`/`crawlRowOf`); the haze looks and the void-cloud colours.
+  - **Systems switched on by data:** bubbles, doors, portal, skulls, sky clouds, desert vents,
+    waterfall spray, castle sparks, drawbridge, beacon and traps.
+- **Name compares in the client:** 72 in 22 files, down to 5 in 2:
+  - `ornaments.cpp`'s four per-object arms (Aida's Object76, the Lost Tower's and Noria's
+    lanterns, Blood Castle's Object12/14), which belong in the object recipes (sprint G);
+  - `headless.cpp`'s Lorencia birth tile 138,124, the seeded tests' rule (D4).
+- **Proved, with nothing the player sees moving:**
+  - **Field by field:** `check_show` (scratch) wrote out every choice the C++ made by name at
+    8f9b2e1f and read the manifests against it: 721,685 checks, 0 differ. That includes the
+    place name of every tile of every map. It fails as it should: a butterfly's flap changed
+    is one difference, and a Dungeon 3 box one column wider is 85 tiles.
+  - **Shots and logs:** HEAD and HEAD plus this change, each built in its own worktree (other
+    sessions' uncommitted work left out of both), shot muted with `--play`, a fixed seed and
+    step, at every world's arrival tile.
+    - **The logs** match line for line in all eleven worlds, 870 to 1780 lines each: birds,
+      weather, leaves, caustics, roads, traps, bridges, town and figures. The only lines that
+      differ are two frame timings.
+    - **The pictures** differ only where the OS mouse pointer stood: the run reads the real
+      pointer (`pointer: tile 144,126` against `173,118`), and the marker under it lands
+      elsewhere. Atlans's 0.14 mean is the same as HEAD against itself.
+    - Blood Castle's run exits 1 on HEAD too: an existing nest error, "1 monsters had no
+      standable tile".
+    - No new warnings in the files touched.
+- **Not in D1:** `sim/maps.cpp`'s `underground` still means "no weather air" for Atlans,
+  Tarkan and Aida. The client no longer reads it, so D4 can rename it or drop it. The
+  pipeline's AIRS and CRAWLS in `cook.py` must still agree with the manifests' `boids` and
+  `crawls` models; D2 makes the cook read them.
+
+**Next: D2, the pipeline dicts** (`cook.py`, `terrain.py`, `index.py`'s per-world dicts into
+the manifest's `pipeline` block). Check first that the Aida session is not mid-edit in those
+files.
+
+## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:
 

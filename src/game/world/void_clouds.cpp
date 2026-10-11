@@ -7,6 +7,7 @@
 #include "content/grid.h"
 #include "core/files.h"
 #include "core/log.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -80,13 +81,6 @@ constexpr float kSpin = 0.012f;             // radians a second at most
 // 0.3 for the cloud sheets: a few big clouds overlap far less than the puffs did, and the
 // sheet's own alpha is thick only in a cloud's middle.
 constexpr float kAlpha = 0.1f;
-constexpr float kColour[3] = {0.30f, 0.32f, 0.38f};
-// The Dungeon's, in its cellar's warm grey rather than the castle's cold one (the user,
-// 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids').
-constexpr float kDungeonColour[3] = {0.33f, 0.31f, 0.29f};
-// And Tarkan's, a warm sand-dust grey under its plateaus (the user, 2026-10-05: 'also use BC
-// clouds in voids'), 2.4 times the castle's light for an exposure of 1.36 against its 3.3.
-constexpr float kTarkanColour[3] = {0.96f, 0.82f, 0.65f};
 
 // Value noise on a lattice, smoothly interpolated, 0-1: the banks' pattern.
 float lattice(int x, int z, uint32_t salt) {
@@ -106,10 +100,6 @@ float valueNoise(float x, float z, uint32_t salt) {
     return (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * tz;
 }
 
-bool wanted(const std::string& world) {
-    return world == "bloodcastle" || world == "dungeon" || world == "tarkan";
-}
-
 }  // namespace
 
 float VoidClouds::unit() {
@@ -120,7 +110,8 @@ float VoidClouds::unit() {
 void VoidClouds::open(const std::string& assetDir, const std::string& world,
                       const content::Ground& ground, content::Textures& textures) {
     shutdown();
-    if (!wanted(world)) return;
+    const WorldShow& show = worldShow(world);
+    if (!show.voidClouds) return;
     size_ = ground.size();
     metresPerTile_ = ground.metresPerTile();
     std::vector<float> heights;
@@ -139,14 +130,14 @@ void VoidClouds::open(const std::string& assetDir, const std::string& world,
     std::nth_element(heights.begin(), heights.begin() + heights.size() / 2, heights.end());
     floor_ = heights[heights.size() / 2];
     ground_ = &ground;
-    for (int k = 0; k < 3; ++k)
-        colour_[k] = world == "dungeon" ? kDungeonColour[k] : world == "tarkan" ? kTarkanColour[k] : kColour[k];
+    // The castle's cold grey unless the manifest gives the void its own (world_show.h).
+    for (int k = 0; k < 3; ++k) colour_[k] = show.voidColour[k];
     // Tarkan's void is drawn barely under its plateaus (the abyss's sunk edge tiles sit about
     // half a metre down), so a cloud at the castle's depths lay under it unseen. There its top
     // layer alone, just under the rim, and only over void the whole cloud's width: the wide
     // voids and not the gaps between lands (the user, 2026-10-06: 'lets use cloud in tarkan
     // only when void is taking a lot of screen not between lands').
-    shallow_ = world == "tarkan";
+    shallow_ = show.voidShallow;
     const std::string path = assetDir + "/effects/clouds/void_clouds.png";
     if (core::fileExists(path)) sheet_ = textures.load(path, content::TextureRole::Albedo);
     wisps_.clear();

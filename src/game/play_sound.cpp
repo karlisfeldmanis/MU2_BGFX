@@ -415,7 +415,7 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // Atlans's aWater the same: the map is "underground" for its air (game/world/maps.h).
     // Tarkan's desert.wav likewise, over its whole map.
     // Icarus's aHeaven too.
-    sound_.loop(heard_.wind, !indoors || dungeonAir_ || waterAir_ || desertAir_ || heavenAir_);
+    sound_.loop(heard_.wind, !indoors || airEverywhere_);
     // Blood Castle's bed, from the gate opening to the run's end, won or out of time
     // (NewBloodCastleSystem.cpp:42-43, 63-64).
     sound_.loop(heard_.castleBed, realm_.castleRun().phase == sim::CastlePhase::Running);
@@ -424,14 +424,12 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // The Dungeon and the Lost Tower are stone buildings throughout: a hall's reverb, on every
     // step, voice and blow the world's bus carries.
     // Atlans is open water, though "underground" for its air: its own room, the world muffled.
-    sound_.room(dungeonAir_ ? Sound::Room::Stone
-                : waterAir_ ? Sound::Room::Water
-                // Tarkan is open desert under the sky, though "underground" for its air.
-                : desertAir_ ? Sound::Room::Open
-                // And Icarus is open sky.
-                : heavenAir_ ? Sound::Room::Open
-                : indoors   ? Sound::Room::Roofed
-                            : Sound::Room::Open);
+    // Tarkan is open desert under the sky, and Icarus open sky (the manifests' `room`).
+    sound_.room(airRoom_ == "stone"  ? Sound::Room::Stone
+                : airRoom_ == "water" ? Sound::Room::Water
+                : airRoom_ == "open"  ? Sound::Room::Open
+                : indoors             ? Sound::Room::Roofed
+                                      : Sound::Room::Open);
     // The walls are the rules' own line of sight on the tile grid (F). The far end is pulled a
     // tile back toward the ears first: a smith at his anvil or a thing lying against a house
     // stands on or beside a closed tile, and is not behind it. Within two tiles nothing is.

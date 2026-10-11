@@ -19,6 +19,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/world/maps.h"
+#include "game/world/world_show.h"
 #include "game/play_tuning.h"
 
 namespace mu::game {
@@ -30,20 +31,15 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     ground_ = ground;
     figures_ = figures;
     bare_ = bareName;
-    // Noria's and the Dungeon's air is not wind: MU plays its jungle and aDungeon instead.
-    const MapRow* map = mapOf(world);
-    windy_ = world != "noria" && !(map && map->underground);
-    dungeonAir_ = world == "dungeon" || world == "losttower";
-    towerAir_ = world == "losttower";
-    castleAir_ = world == "bloodcastle";
-    // Atlans's is aWater, the same way: the whole map, under no roof (SceneManager.cpp:879-881).
-    waterAir_ = world == "atlans";
-    desertAir_ = world == "tarkan";
-    // Icarus's is aHeaven, over the whole map and under no roof (SceneManager.cpp:885-895).
-    heavenAir_ = world == "icarus";
-    underwater_ = world == "atlans";
-    grassy_ = world == "lorencia" || world == "noria";
-    snowy_ = world == "devias";
+    // How the world sounds underfoot and in the air is its manifest's (game/world/world_show.h).
+    const WorldShow& show = worldShow(world);
+    airLoop_ = show.air;
+    airRoom_ = show.room;
+    airBed_ = show.bed;
+    airEverywhere_ = show.airEverywhere;
+    underwater_ = show.swims;
+    grassy_ = show.steps == "grass";
+    snowy_ = show.steps == "snow";
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
     std::string error;
     if (!content::loadTables(path, tables_, error)) {
@@ -98,7 +94,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // hand: Marlon's plate at +7 and Berdysh at +8.
     if (figures_) figures_->shine(tables_.items);
     if (figures_) pets_.open(*figures_);
-    flying_ = dinorantFlies(world);
+    flying_ = show.mountsFly;
     pets_.setFlying(flying_);
 
     // The two copies of the attribute grid, compared -- the one the cook wrote into the tables
@@ -226,9 +222,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         // else the base -- is one of the world's road sheets. Off the ground's own grid, which the
         // sim does not have. Noria's alone: its roads are TileRock01's cobble and nothing else is
         // laid as one -- its TileGround01 is turf in specks, not a path -- and Lorencia's Marlon
-        // walks as he did. A world added here names its own sheets.
-        static const char* const kNoriaRoads[] = {"TileRock01", "TileRock02", "TileWood01"};
-        if (!remote() && world == "noria" && ground_ != nullptr && tables_.grid.size() > 0 &&
+        // walks as he did. A world names its own sheets in its manifest's `roads`.
+        const std::vector<std::string>& roadSheets = show.roads;
+        if (!remote() && !roadSheets.empty() && ground_ != nullptr && tables_.grid.size() > 0 &&
             ground_->floorAt(0, 0) >= 0) {
             const int size = tables_.grid.size();
             std::vector<uint8_t> roads(size_t(size) * size_t(size), 0);
@@ -241,7 +237,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                     if (slot < 0) continue;
                     const std::string& name = ground_->floorName(slot);
                     bool road = false;
-                    for (const char* one : kNoriaRoads) road = road || name == one;
+                    for (const std::string& one : roadSheets) road = road || name == one;
                     if (!road) continue;
                     roads[size_t(r) * size_t(size) + size_t(c)] = 1;
                     ++paved;
@@ -474,16 +470,11 @@ void Play::openSound(const std::string& assetDir, bool muted) {
         sound_.vary(step, kStepSemitones, kStepDropDb, kStepDarken);
     }
     sound_.vary(heard_.swim, kSwimSemitones, kSwimDropDb, kSwimDarken);
-    if (windy_) heard_.wind = sound_.load("world_wind", false);
-    // The Dungeon's air is aDungeon, played as the wind is: looping and unplaced, the whole map
-    // (SceneManager.cpp:859-861). It rides the wind's slot, which the Dungeon has no use for.
-    // The tower's is aTower (SceneManager.cpp:873-875), the same way.
-    else if (dungeonAir_) heard_.wind = sound_.load(towerAir_ ? "world_tower" : "world_dungeon", false);
-    else if (waterAir_) heard_.wind = sound_.load("world_water", false);
-    else if (desertAir_) heard_.wind = sound_.load("world_desert", false);
-    else if (heavenAir_) heard_.wind = sound_.load("world_heaven", false);
+    // The world's air: MU's wind, or the map's own played as the wind is -- looping and
+    // unplaced, the whole map, as aDungeon is (SceneManager.cpp:859-861) -- on the wind's slot.
+    if (!airLoop_.empty()) heard_.wind = sound_.load(airLoop_.c_str(), false);
     // Blood Castle's match bed, looped while its run is on (Play::hear).
-    heard_.castleBed = castleAir_ ? sound_.load("world_bloodcastle", false) : -1;
+    heard_.castleBed = airBed_.empty() ? -1 : sound_.load(airBed_.c_str(), false);
     heard_.fire = sound_.load("world_bonfire", false);
     heard_.fountain = sound_.load("world_fountain", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);

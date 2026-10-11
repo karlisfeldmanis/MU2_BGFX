@@ -18,6 +18,7 @@
 #include "game/world/castle_sparks.h"
 #include "game/world/desert_vents.h"
 #include "game/world/waterfall_spray.h"
+#include "game/world/world_show.h"
 #include "game/world/sky_clouds.h"
 #include "game/world/sand_haze.h"
 #include "game/world/leaves.h"
@@ -154,10 +155,9 @@ private:
     float focusColumn_ = 0.0f;
     float focusRow_ = 0.0f;
     bool focusSet_ = false;
-    // Devias floors its interiors with five slots rather than Lorencia's one. See indoors().
-    bool deviasFloors_ = false;
-    // The Dungeon is under a roof on every tile: no wind, a closed room, no leaves. See indoors().
-    bool underground_ = false;
+    // The world's manifest's show (game/world/world_show.h): which floors are under a roof,
+    // what blows round him and what flies over him. See indoors() and raiseAirs().
+    WorldShow show_;
     // Devias's plank tiles under its bridges (Object13/14), which are open ground for all that
     // they are laid in the planks the houses are floored with. One byte a tile. See indoors().
     std::vector<uint8_t> bridgeDecks_;

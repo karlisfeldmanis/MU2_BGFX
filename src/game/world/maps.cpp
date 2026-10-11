@@ -5,6 +5,7 @@
 
 #include "content/tables.h"
 #include "core/files.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 
@@ -24,20 +25,8 @@ std::string zoneLevels(const content::Tables& tables) {
 }
 
 std::string placeName(const std::string& world, int column, int row) {
-    if (world == "losttower") {
-        // Seven floors, each a region of the one grid whose box overlaps no other's
-        // (docs/lost-tower-port.md): 1 and 2 in the east, 3 to 5 down the middle, 6 and 7 west.
-        if (column >= 160) return row < 150 ? "Lost Tower 1" : "Lost Tower 2";
-        if (column >= 70) return row >= 150 ? "Lost Tower 3" : row >= 70 ? "Lost Tower 4" : "Lost Tower 5";
-        return row < 70 ? "Lost Tower 6" : "Lost Tower 7";
-    }
-    if (world != "dungeon") return world;
-    // Flood-filled off the attribute grid, every walkable tile: Dungeon 1 is rows 141-250,
-    // Dungeon 2 rows 2-129, and Dungeon 3 the pocket at columns 1-46, rows 50-132, which holds
-    // no tile of Dungeon 2's.
-    if (row >= 135) return "Dungeon 1";
-    if (column <= 46 && row >= 50) return "Dungeon 3";
-    return "Dungeon 2";
+    const WorldShow& show = worldShow(world);
+    return show.places.empty() ? world : show.placeAt(column, row);
 }
 
 std::string mapSheet(const std::string& sheetsDir, const std::string& world) {

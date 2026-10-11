@@ -21,6 +21,7 @@
 #include "game/shine.h"
 #include "game/wings.h"
 #include "game/world/maps.h"
+#include "game/world/world_show.h"
 #include "gfx/views.h"
 #include "sim/gates.h"
 #include "sim/items.h"
@@ -1199,60 +1200,21 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         game::Sound& sound = world_.played().sound();
         if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.8f, true);
     } else if (world_.played().isOpen()) {
-        bool pub = false;
-        bool loops = false;  // played round and round, not once and rested
-        const char* roofTrack = nullptr;
-        if (args.world == "lorencia") {
-            const sim::Body& hero = world_.played().realm().hero();
-            const content::Tables* tables = world_.played().realm().tables();
-            float feetX = 0.0f, feetZ = 0.0f;
-            world_.characterAt(&feetX, &feetZ);
-            pub = tables && tables->grid.safe(hero.column(), hero.row()) &&
-                  world_.indoors(feetX, feetZ);
-            // Looped while he is inside, never rested, as Devias's roofs are (the user,
-            // 2026-10-08: "lorencia tavern always has to play music when inside, same as devias
-            // in-doors rules").
-            loops = true;
-            roofTrack = "/music/Pub.mp3";
-        } else if (args.world == "devias") {
-            // Devias's theme under its roofs -- the planks and patterned floors World::indoors
-            // reads -- and silence in the snow. MU plays MUSIC_DEVIAS on the whole map
-            // (SceneManager.cpp); ours, the user's (2026-09-30: "when we go inside devias
-            // buildings play devias theme music"). Looped under the roof, never rested (the user,
-            // 2026-10-07: 'if character goes inside devias buildings we always play music').
-            float feetX = 0.0f, feetZ = 0.0f;
-            world_.characterAt(&feetX, &feetZ);
-            pub = world_.indoors(feetX, feetZ);
-            loops = true;
-            roofTrack = "/music/Devias.mp3";
-        } else if (args.world == "noria") {
-            // MUSIC_NORIA in its safe zone, as MU plays it (SceneManager.cpp:1028-1036: `if
-            // (Hero->SafeZone)`) -- the user, 2026-10-05: 'play noria music on safezone', where
-            // it had been left off since 2026-09-30.
-            const sim::Body& hero = world_.played().realm().hero();
-            const content::Tables* tables = world_.played().realm().tables();
-            pub = tables && tables->grid.safe(hero.column(), hero.row());
-            roofTrack = "/music/Noria.mp3";
-        } else if (args.world == "atlans" || args.world == "losttower" || args.world == "tarkan") {
-            // Their themes in their safe zones -- Atlans's basin, the Lost Tower's hall -- and
-            // silence out on the hunt. MU plays MUSIC_ATLANS and MUSIC_LOSTTOWER_A on the whole
-            // map (SceneManager.cpp:1047-1073); ours, the user's (2026-10-05: 'lost tower music
-            // and atlans music has to play in safe zones'). Atlans's water bed stays everywhere.
-            const sim::Body& hero = world_.played().realm().hero();
-            const content::Tables* tables = world_.played().realm().tables();
-            pub = tables && tables->grid.safe(hero.column(), hero.row());
-            // And Tarkan's MUSIC_TARKAN in its town (SceneManager.cpp:1061-1066), the same way.
-            roofTrack = args.world == "atlans"   ? "/music/atlans.mp3"
-                        : args.world == "tarkan" ? "/music/tarkan.mp3"
-                                                 : "/music/lost_tower_a.mp3";
-        } else if (args.world == "icarus") {
-            // Ours: a horror ambient on loop over the whole map (the user, 2026-10-06: 'lets play
-            // freesound_community-horror-ambient-14590.mp3 in icarus on loop'), under which the
-            // air, aHeaven, goes on. MU plays MUSIC_ICARUS there; Icarus has no safe zone.
-            pub = true;
-            loops = true;
-            roofTrack = "/music/icarus_ambient.mp3";
-        }
+        // The world's track and where it plays are its manifest's `music`
+        // (game/world/world_show.h): in the safe zone, under a roof, both, or everywhere.
+        const game::WorldShow& show = game::worldShow(args.world);
+        const std::string& where = show.musicWhere;
+        const sim::Body& hero = world_.played().realm().hero();
+        const content::Tables* tables = world_.played().realm().tables();
+        const bool safe = tables && tables->grid.safe(hero.column(), hero.row());
+        float feetX = 0.0f, feetZ = 0.0f;
+        world_.characterAt(&feetX, &feetZ);
+        const bool roofed = world_.indoors(feetX, feetZ);
+        bool pub = !show.music.empty() &&
+                   (where == "everywhere" || (where == "safe" && safe) ||
+                    (where == "indoors" && roofed) || (where == "safe_indoors" && safe && roofed));
+        const bool loops = show.musicLoops;  // played round and round, not once and rested
+        const char* roofTrack = show.music.c_str();
         // No music out on the hunt, and none for fights (the user, 2026-09-30: "we dont need
         // fight music anymore").
         const std::string path = ctx.paths.assets + (pub ? roofTrack : "");

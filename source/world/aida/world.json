@@ -1,0 +1,18 @@
+{
+  "world": "aida",
+  "name": "Aida",
+  "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "show": {
+    "air": {
+      "loop": "",
+      "note": "No weather and no wind for now (GMAida.cpp, SceneManager.cpp:371-402)."
+    },
+    "indoors": {
+      "everywhere": true,
+      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+    },
+    "waterfall_spray": {
+      "note": "Its falls' drops, spray and mist (game/world/waterfall_spray.h)."
+    }
+  }
+}

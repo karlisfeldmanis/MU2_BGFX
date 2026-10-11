@@ -1,0 +1,70 @@
+{
+  "world": "dungeon",
+  "name": "Dungeon",
+  "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "show": {
+    "places": [
+      {
+        "name": "Dungeon 1",
+        "box": [
+          0,
+          135,
+          255,
+          255
+        ]
+      },
+      {
+        "name": "Dungeon 3",
+        "box": [
+          0,
+          50,
+          46,
+          134
+        ]
+      },
+      {
+        "name": "Dungeon 2",
+        "box": [
+          0,
+          0,
+          255,
+          255
+        ]
+      }
+    ],
+    "places_note": "Its three floors, flood-filled off the attribute grid (OpenMU Version075 Gates.cs:48-50; docs/dungeon-port.md 1.2). The first box holding a tile names it.",
+    "air": {
+      "loop": "world_dungeon",
+      "everywhere": true,
+      "room": "stone",
+      "note": "aDungeon, looped for the whole map (SceneManager.cpp:859-861); a hall's reverb."
+    },
+    "indoors": {
+      "everywhere": true,
+      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+    },
+    "boids": {
+      "model": "Bat01",
+      "flap": 6.25,
+      "call": [
+        "boid_bat",
+        ""
+      ],
+      "note": "MODEL_BAT01 (GOBoid.cpp:1327-1328): the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1320), SOUND_BAT01 alone. The cook spaces its four keys 0.25 s apart, so 6.25 for MU's key a frame at 0.04 s."
+    },
+    "crawls": {
+      "model": "Rat01",
+      "squeaks": true,
+      "note": "MoveFishs' WD_1DUNGEON arm (GOBoid.cpp:1720-1722). Agrees with tools/cook.py's CRAWLS."
+    },
+    "traps": "dungeon",
+    "void_clouds": {
+      "colour": [
+        0.33,
+        0.31,
+        0.29
+      ],
+      "note": "In its cellar's warm grey rather than the castle's cold one (the user, 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids')."
+    }
+  }
+}

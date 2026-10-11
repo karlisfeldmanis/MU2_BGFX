@@ -5,6 +5,8 @@
 #include <cmath>
 
 #include "core/log.h"
+#include "game/world/maps.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -45,28 +47,6 @@ constexpr float kCaptionBake = 12.0f;
 constexpr uint32_t silver(float a) { return gfx::rgba(236.0f / 255.0f, 232.0f / 255.0f, 221.0f / 255.0f, a); }
 constexpr uint32_t gilt(float a) { return gfx::rgba(194.0f / 255.0f, 180.0f / 255.0f, 143.0f / 255.0f, a); }
 constexpr uint32_t black(float a) { return gfx::rgba(0.0f, 0.0f, 0.0f, a); }
-
-struct Place {
-    const char* world;
-    const char* name;
-    const char* caption;
-};
-// MU 0.75's towns. "\xB7" is the middle dot the faces bake past ASCII.
-constexpr Place kPlaces[] = {
-    // No caption of their own: the line under the name is the map's monster levels
-    // (game/world/maps.h, zoneLevels), handed in by whoever announces.
-    {"lorencia", "Lorencia", ""},
-    {"noria", "Noria", ""},
-    {"devias", "Devias", ""},
-    {"dungeon", "Dungeon", ""},
-    {"losttower", "Lost Tower", ""},
-    {"atlans", "Atlans", ""},
-    {"tarkan", "Tarkan", ""},
-    {"aida", "Aida", ""},
-    {"icarus", "Icarus", ""},
-    {"bloodcastle", "Blood Castle", ""},
-    {"devilsquare", "Devil Square", ""},
-};
 
 std::string upper(std::string s) {
     for (char& c : s) c = char(std::toupper(static_cast<unsigned char>(c)));
@@ -136,16 +116,11 @@ void Arrival::shutdown() {
 void Arrival::announce(const std::string& world, float delay, const std::string& caption) {
     name_.clear();
     caption_.clear();
-    for (const Place& p : kPlaces) {
-        if (world == p.world) {
-            name_ = p.name;
-            caption_ = p.caption;
-        }
-    }
-    if (name_.empty() && !world.empty()) {
-        name_ = world;
-        name_[0] = char(std::toupper(static_cast<unsigned char>(name_[0])));
-    }
+    // A world's name is its manifest's ("Lost Tower", game/world/world_show.h); a place within
+    // one ("Dungeon 2") is said as it comes. No caption of their own: the line under the name is
+    // the map's monster levels (game/world/maps.h, zoneLevels), handed in by whoever announces.
+    name_ = mapOf(world) ? worldShow(world).name : world;
+    if (!name_.empty()) name_[0] = char(std::toupper(static_cast<unsigned char>(name_[0])));
     if (!caption.empty()) caption_ = caption;
     name_ = upper(name_);
     caption_ = upper(caption_);

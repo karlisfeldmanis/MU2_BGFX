@@ -8,6 +8,7 @@
 #include "core/files.h"
 #include "core/log.h"
 #include "game/sound.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -58,77 +59,6 @@ bool inFrame(void* context, const float at[3]) {
 
 }  // namespace
 
-std::string boidOf(const std::string& world) {
-    // Lorencia's MODEL_BIRD01, and nothing else is cooked yet. Noria's butterfly is the next row
-    // and is deliberately not guessed: its model is Butterfly01, its velocity 0.3 and it neither
-    // takes the terrain's light nor calls, and none of that is worth writing down until there is
-    // a cooked Butterfly01 to try it on. See tools/cook.py's AIRS.
-    if (world == "lorencia") return "Bird01";
-    // Noria's: MODEL_BUTTERFLY01, which MuMain loads from Data/Object1 -- Lorencia's folder
-    // -- for Noria (MapManager.cpp:89). tools/cook.py's AIRS cooks it into Noria from there.
-    if (world == "noria") return "Butterfly01";
-    // The Dungeon's: MODEL_BAT01, as the Lost Tower's (GOBoid.cpp:1327-1328).
-    if (world == "dungeon" || world == "losttower") return "Bat01";
-    // Every Blood Castle's: MODEL_CROW (GOBoid.cpp:1342-1345), cooked from Object12.
-    if (world == "bloodcastle") return "Crow01";
-    // Atlans's: MODEL_FISH01 + 1 (CreateAtlanseFish, GOBoid.cpp:886-918). MU rolls + 1 or + 2;
-    // Fish02 alone here until Fish03 is cooked.
-    if (world == "atlans") return "Fish02";
-    // Icarus's: MODEL_DRAGON_, Monster32, the Red Dragon's body (CreateDragon, GOBoid.cpp:824).
-    if (world == "icarus") return "Dragon01";
-    return std::string();
-}
-
-Airs airsOf(const std::string& world) {
-    Airs airs;  // the defaults are the bird's: 1.0, lit, calling
-    if (world == "noria") {
-        // GOBoid.cpp:1335: `Velocity = 0.3f; LightEnable = false; Light = (1, 1, 1)`, and not
-        // in the chain of boids that call.
-        airs.speed = 0.3f;
-        airs.lit = false;
-        airs.tint[0] = airs.tint[1] = airs.tint[2] = 1.0f;
-        airs.calls = false;
-        // MU's key a frame over the cook's 0.25 s: 0.25 / 0.04, a beat of 0.12 s, eight a
-        // second, as a real butterfly's.
-        airs.flap = 6.25f;
-    }
-    if (world == "dungeon" || world == "losttower") {
-        // The bat keeps the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1320), and calls
-        // SOUND_BAT01 alone. MU plays a boid a key a frame; the cook spaces Bat01's four keys
-        // 0.25 s apart, so 6.25 for the client's 0.04.
-        airs.flap = 6.25f;
-        airs.call[0] = "boid_bat";
-        airs.call[1] = nullptr;
-    }
-    if (world == "atlans") {
-        // CreateAtlanseFish: `LightEnable = false`, `Light = (1, 1, 1)`, and no fish calls.
-        airs.lit = false;
-        airs.tint[0] = airs.tint[1] = airs.tint[2] = 1.0f;
-        airs.calls = false;
-        airs.call[0] = airs.call[1] = nullptr;
-    }
-    if (world == "icarus") {
-        // The dragon: lit, but RenderObject sets its BodyLight to (0.02, 0.05, 0.15) in Icarus
-        // (ZzzObject.cpp:487-493), a dark blue shape far below; it never calls.
-        airs.lit = false;
-        airs.tint[0] = 0.02f;
-        airs.tint[1] = 0.05f;
-        airs.tint[2] = 0.15f;
-        airs.calls = false;
-        airs.call[0] = airs.call[1] = nullptr;
-    }
-    if (world == "bloodcastle") {
-        // The crow keeps the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1324) and caws
-        // SOUND_CROW alone, a frame in 128, over the court only.
-        airs.call[0] = "boid_crow";
-        airs.call[1] = nullptr;
-        airs.callEvery = 128.0f;
-        airs.callRolls = 1;
-        airs.callsOverSafe = true;
-    }
-    return airs;
-}
-
 bool Boids::open(const std::string& assetDir, const std::string& world, const std::string& model,
                  content::Textures& textures, const Airs& airs, Sound* sound) {
     shutdown();
@@ -142,7 +72,7 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     flight_.setBat(model == "Bat01");
     flight_.setFish(model == "Fish02");
     flight_.setDragon(model == "Dragon01");
-    scurry_.open(assetDir, world, crawlOf(world), textures, sound);
+    scurry_.open(assetDir, world, worldShow(world).crawl, textures, sound);
     if (model.empty()) return true;
 
     const std::string dir = core::join(assetDir, "cooked/" + world);
@@ -203,8 +133,8 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     scratch_.assign(size_t(gfx::Renderer::kMaxBones) * 12, 0.0f);
 
     if (sound_ != nullptr && airs_.calls) {
-        if (airs_.call[0]) call1_ = sound_->load(airs_.call[0], true, true);
-        if (airs_.call[1]) call2_ = sound_->load(airs_.call[1], true, true);
+        if (!airs_.call[0].empty()) call1_ = sound_->load(airs_.call[0].c_str(), true, true);
+        if (!airs_.call[1].empty()) call2_ = sound_->load(airs_.call[1].c_str(), true, true);
     }
     core::logf("boids: %s flies over %s, %d birds at %.2f of a bird's pace, %s", model.c_str(),
                world.c_str(), Flight::kMaxBirds, double(airs_.speed),

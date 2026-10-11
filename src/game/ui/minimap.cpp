@@ -12,6 +12,8 @@
 #include "game/ui/controls.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
+#include "game/world/maps.h"
+#include "game/world/world_show.h"
 #include "sim/gates.h"
 #include "sim/market.h"
 #include "sim/quests.h"
@@ -301,21 +303,10 @@ const char* floorName(int32_t exitGate) {
     }
 }
 
-const char* mapName(uint32_t map) {
-    switch (map) {
-        case 0: return "Lorencia";
-        case 1: return "Dungeon";
-        case 2: return "Devias";
-        case 3: return "Noria";
-        case 4: return "Lost Tower";
-        case 7: return "Atlans";
-        case 8: return "Tarkan";
-        case 9: return "Devil Square";
-        case 10: return "Icarus";
-        case 11: return "Blood Castle";
-        case 33: return "Aida";
-        default: return "another map";
-    }
+// The map's name as its manifest says it (game/world/world_show.h), by MU's map number.
+std::string mapName(uint32_t map) {
+    const MapRow* row = mapNumbered(int(map));
+    return row ? worldShow(row->world).name : std::string("another map");
 }
 
 }  // namespace

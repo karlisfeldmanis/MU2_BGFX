@@ -38,12 +38,12 @@ namespace mu::game {
 
 class Sound;
 
-// What a world runs along its floor, by the model name tools/cook.py's CRAWLS cooks it under:
-// the Dungeon's rats and Tarkan's scarabs. MoveFishs' other arms are Lorencia's fish (not built,
-// see boids.h) and maps this game does not have.
-std::string crawlOf(const std::string& world);
+// What a world runs along its floor is its manifest's `crawls` (game/world/world_show.h), by the
+// model name tools/cook.py's CRAWLS cooks it under: the Dungeon's rats and Tarkan's scarabs.
+// MoveFishs' other arms are Lorencia's fish (not built, see boids.h) and maps this game does not
+// have.
 
-// MoveFishs' numbers for one world's crawler (GOBoid.cpp:1700-1735).
+// MoveFishs' numbers for one world's crawler (GOBoid.cpp:1700-1735), the manifest's `crawls`.
 struct CrawlRow {
     int most = 3;            // slots filled: 3, or all ten on Atlans and Tarkan (:1668-1675)
     int scaleLeast = 4;      // Scale (rand() % 4 + least) * 0.1
@@ -58,7 +58,6 @@ struct CrawlRow {
     // 20 cm for MU's 35 (the user, 2026-10-05: 'make thos bugs smaller').
     float drawn = 1.0f;
 };
-CrawlRow crawlRowOf(const std::string& world);
 
 class Scurry {
 public:

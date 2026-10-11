@@ -81,24 +81,28 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    - `cook.py --only ground`, and `--only tables` here and in the neighbours.
    Since sprint B, `./mu make ground <w> --folder N` runs all but the dicts, ground.json and
    the gates row.
-2. Code: `sim/maps.cpp` kMaps, `game/ui/arrival.cpp` kPlaces, `game/ui/minimap.cpp` mapName,
-   `sheets/worlds/<w>.json`, maybe the `content/ground.cpp` heuristics. Rebuild.
+2. `source/world/<w>/world.json`: its `name` and `show` block (copy the nearest world's;
+   sprint D1). Code: `sim/maps.cpp` kMaps, `sheets/worlds/<w>.json`, maybe the
+   `content/ground.cpp` heuristics. Rebuild.
 3. Gates: `sim/gates.cpp` kExits and kEnters, `sim_test`, then rebuild the server and run
    `server/deploy.sh`.
-4. Air and music:
-   - `sounds.json` and the wav, `--only showing`;
-   - the air flag in `game/play_open.cpp` (by name);
-   - the reverb arm in `play_sound.cpp`;
-   - the music arm in `play_mode.cpp`.
+4. Air and music: `sounds.json` and the wav, `--only showing`, then the manifest's `air` and
+   `music`.
 5. Objects (above), then monsters (above). Also:
-   - `game/world/ornaments.cpp` glows, `cook.py` ANCHOR_KINDS_BY_WORLD;
-   - `index.py` EFFECTS and a new `game/world/` system if it has one;
-   - every system that gates itself by `world == "..."`: 70 such compares in 25 files today.
+   - `game/world/ornaments.cpp` glows (by world and model), `cook.py` ANCHOR_KINDS_BY_WORLD;
+   - `index.py` EFFECTS. A system of its own is a `game/world/` file, a field in
+     `world_show.h`, and the manifest naming it.
+   - Birds and crawlers: the manifest's `boids` or `crawls`, plus `cook.py`'s AIRS or CRAWLS
+     until D2.
 6. Travel and the rest: `sim/realm_travel.cpp` kRows, `sim/items.h` map hooks, and the bot's
    `tools/bot/brain.h` kWorlds, which is a copy and already wrong for Lorencia.
 
-**Today:** 3 code files for bare land, about 40 for a full port. **Goes to:**
-`source/worlds/<w>/world.json` (sprint D).
+**Re-counted after D1 (2026-10-11):** bare land is 1 code file (`sim/maps.cpp`, was 3: arrival
+and minimap went into the manifest). For a full port, the air, reverb and music arms and the
+name gates of 20 world systems are gone: 72 compares in 22 files, down to 5 in 2. A full port
+still touches the sim's tables, gates, travel, the bot, the pipeline dicts and any new
+system's own file. **Goes to:** `source/world/<w>/world.json` (sprint D: D2 the pipeline
+dicts, D3 gates and NPCs, D4 MapRules).
 
 ## An item or weapon
 

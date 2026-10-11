@@ -22,21 +22,29 @@
 
 namespace mu::game {
 
-struct HazeLook;
+// A world's haze, its manifest's `haze` (game/world/world_show.h): each layer's colour (already
+// at its share of MU's light), how fast it slides in sheets a second, and how far its streaks lean.
+struct HazeLook {
+    float cloud[3] = {0.0f, 0.0f, 0.0f}, cloudSlide = 0.0f;
+    float specks[3] = {0.0f, 0.0f, 0.0f}, specksSlide = 0.0f;
+    float lean = 0.0f;
+};
 
 class SandHaze {
 public:
-    // Opens in Tarkan and Icarus: the showing's `sand` and `sand_fine`.
+    // Opens where the world's manifest has a `haze` (Tarkan, Icarus): the showing's `sand` and
+    // `sand_fine`.
     void open(const std::string& assetDir, const std::string& world, content::Textures& textures);
     void shutdown();
-    bool isOpen() const { return look_ && (bgfx::isValid(cloud_) || bgfx::isValid(specks_)); }
+    bool isOpen() const { return hazy_ && (bgfx::isValid(cloud_) || bgfx::isValid(specks_)); }
 
     void update(float seconds) { clock_ += seconds; }
     void gather(gfx::Effects& effects, const gfx::Camera& camera) const;
 
 private:
     float clock_ = 0.0f;
-    const HazeLook* look_ = nullptr;  // the world's look (sand_haze.cpp), set when open
+    HazeLook look_;      // the world's look, set when open
+    bool hazy_ = false;
     bgfx::TextureHandle cloud_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle specks_ = BGFX_INVALID_HANDLE;
 };

@@ -21,6 +21,7 @@
 #include "core/log.h"
 #include "core/watch.h"
 #include "game/headless.h"
+#include "game/world/world_show.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
 
@@ -130,6 +131,8 @@ int Application::run(int argc, char** argv) {
     args_ = core::parseArgs(argc, argv);
 
     paths_.assets = MU2_ASSET_DIR;
+    // Every world's manifest is read from there on first asking (game/world/world_show.h).
+    game::openWorldShows(paths_.assets);
     paths_.shaders = MU2_SHADER_DIR;
     // A copy of another build's shaders, for an A/B of two binaries in one afternoon: the
     // directory is compiled in, so a baseline binary would otherwise read the new shaders.

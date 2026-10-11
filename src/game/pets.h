@@ -40,10 +40,8 @@ constexpr float kDinorantLift = 0.30f;
 // the dragon only 10 under him (GOBoid.cpp:517-520), so it is in the air at 80.
 constexpr float kDinorantFlyLift = 0.90f;
 constexpr float kDinorantFlyUnder = 0.10f;
-// Whether a world is one MU flies the Dinorant over: Tarkan and Icarus.
-inline bool dinorantFlies(const std::string& world) {
-    return world == "tarkan" || world == "icarus";
-}
+// Whether a world is one MU flies the Dinorant over -- Tarkan and Icarus -- is its manifest's
+// `mounts_fly` (game/world/world_show.h).
 
 // And how far to lift him again, metres, at `through` (0..1) of his run ride: the dragon's back
 // less his pelvis, key by key. MU plays one run ride, 36/37, on both mounts, and Uniria's leap
@@ -66,7 +64,7 @@ namespace mu::game {
 class Pets {
 public:
     void open(const Figures& figures);
-    // Over a world where the Dinorant flies (dinorantFlies), the dragon is drawn 10 under him,
+    // Over a world where the Dinorant flies (`mounts_fly`), the dragon is drawn 10 under him,
     // not 30.
     void setFlying(bool flying) { flying_ = flying; }
     // `pet` is the row's number in group 13 -- 0 the Angel, 1 the Imp -- or -1 for none worn.

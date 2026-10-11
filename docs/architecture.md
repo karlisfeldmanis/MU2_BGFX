@@ -125,7 +125,7 @@ The largest layer, and the one this refactor split into rooms:
 | `game/` | play and its `play_*` files, figures, crowd, save, sound, bench, headless, item_models, frustum, `roster` (the character screen's, which dresses figures) | what the other three rooms are all built on |
 | `game/ui/` | hud, panel, bag, shelf, card, desk, describe, vitals, cursor, outline, arrival, stage, items_stage, browser_list | everything drawn flat over the frame, and the pointer's own feedback |
 | `game/fx/` | showing, aura, breath, bones, meteor, marker, litter | what a blow, a death, a level and a drop look like |
-| `game/world/` | world, town, lamps, ornaments, sway | the town standing there: its chunks, its lights, its own animation |
+| `game/world/` | world, town, lamps, ornaments, sway, world_show | the town standing there: its chunks, its lights, its own animation; and its manifest's `show` (`source/world/<w>/world.json`), which each world system opens from |
 
 Two of those placements are worth their reasons:
 

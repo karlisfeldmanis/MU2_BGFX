@@ -1,0 +1,63 @@
+{
+  "world": "icarus",
+  "name": "Icarus",
+  "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "show": {
+    "air": {
+      "loop": "world_heaven",
+      "everywhere": true,
+      "room": "open",
+      "note": "aHeaven over the whole map, under no roof (SceneManager.cpp:885-895)."
+    },
+    "mounts_fly": true,
+    "music": {
+      "track": "/music/icarus_ambient.mp3",
+      "where": "everywhere",
+      "loops": true,
+      "note": "Ours: a horror ambient over the whole map (the user, 2026-10-06)."
+    },
+    "weather": {
+      "kind": "sky",
+      "note": "Never stops and is silent (SceneManager.cpp:885-895)."
+    },
+    "leaves": "sky",
+    "indoors": {
+      "everywhere": true,
+      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+    },
+    "boids": {
+      "model": "Dragon01",
+      "lit": false,
+      "tint": [
+        0.02,
+        0.05,
+        0.15
+      ],
+      "calls": false,
+      "call": [
+        "",
+        ""
+      ],
+      "note": "MODEL_DRAGON_ (CreateDragon, GOBoid.cpp:824), BodyLight (0.02, 0.05, 0.15) in Icarus (ZzzObject.cpp:487-493); it never calls."
+    },
+    "sky_clouds": {
+      "note": "The cloud road and its lightning (game/world/sky_clouds.h)."
+    },
+    "haze": {
+      "cloud": [
+        0.045,
+        0.055,
+        0.07
+      ],
+      "cloud_slide": 0.05,
+      "specks": [
+        0.035,
+        0.04,
+        0.05
+      ],
+      "specks_slide": 0.2,
+      "lean": 0.0,
+      "note": "Ours, MU draws none there: wet cloud drifting past the eye, cool and barely there (the user, 2026-10-07: 'some screen dust effect but minimal, its cloud map')."
+    }
+  }
+}

@@ -2,6 +2,7 @@
 
 #include "core/log.h"
 #include "game/world/town.h"
+#include "game/world/world_show.h"
 
 namespace mu::game {
 namespace {
@@ -17,7 +18,7 @@ constexpr float kLandSeconds = 1.18f;
 void Drawbridge::open(const std::string& world, const Town& town, float metresPerTile) {
     shutdown();
     metresPerTile_ = metresPerTile;
-    if (world != "bloodcastle") return;
+    if (!worldShow(world).drawbridge) return;
     const auto& models = town.cooked().models;
     const auto& instances = town.cooked().instances;
     for (uint32_t i = 0; i < instances.size(); ++i) {
