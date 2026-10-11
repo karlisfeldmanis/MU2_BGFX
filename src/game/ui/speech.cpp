@@ -7,7 +7,9 @@
 
 #include "game/play.h"
 #include "game/ui/controls.h"
+#include "game/ui/describe.h"
 #include "game/ui/tip.h"
+#include "sim/item_link.h"
 
 namespace mu::game {
 
@@ -41,13 +43,13 @@ constexpr uint32_t kWords = gfx::rgba(0.110f, 0.086f, 0.071f);
 
 // How big it is at `age`: up past whole and settling as it arrives (an ease-out-back), down to
 // nothing as it goes.
-float popped(float age) {
+float popped(float age, float life) {
     if (age < kPopIn) {
         const float t = age / kPopIn - 1.0f;
         constexpr float kBack = 1.70158f;
         return 1.0f + t * t * ((kBack + 1.0f) * t + kBack);
     }
-    const float left = Play::kSaidSeconds - age;
+    const float left = life - age;
     return left < kPopOut ? std::max(0.0f, left / kPopOut) : 1.0f;
 }
 
@@ -144,6 +146,163 @@ std::vector<std::string> wrapped(const std::string& text, float size, float wide
     return lines;
 }
 
+// ---- a player's line: the chat's dark glass (the user picked "A · Dark glass", 2026-10-11) -----
+// claude.ai/artifact/9PMRqvHrnXfT9DMv5BEKpg. No outline and no comic tail: a soft shadow, a short
+// tail straight down, the chat's bone words, item links in their quality's colour, a Party line
+// tagged in the chat's blue. Three lines at most; his last line stands over it, dimmed. It fades
+// and rises in rather than popping: glass at part alpha shows nothing it should not.
+constexpr float kGlassWide = 212.0f;   // the words' most, so the glass is 236 across at most
+constexpr float kGlassSize = 15.0f, kGlassLeading = 19.0f;
+constexpr float kGlassPadX = 12.0f, kGlassPadTop = 7.0f, kGlassPadFoot = 8.0f;
+constexpr float kGlassRound = 7.0f;
+constexpr float kGlassTail = 11.0f, kGlassTailHalf = 7.0f;
+constexpr float kGlassLift = 4.0f;     // over the paper's kLift: clear of his name
+constexpr float kGlassGap = 4.0f;      // between his last line and this one
+constexpr int kGlassLines = 3;
+constexpr float kGlassIn = 0.15f, kGlassOut = 0.3f, kGlassRise = 6.0f;
+constexpr float kGlassBody = 0.82f;
+constexpr uint32_t kGlass = gfx::rgba(0.051f, 0.039f, 0.031f);
+constexpr uint32_t kBone = gfx::rgba(0.925f, 0.886f, 0.812f);
+constexpr uint32_t kPartyBlue = gfx::rgba(0.498f, 0.714f, 0.949f);
+
+uint32_t alphaOf(uint32_t abgr, float a) {
+    const float was = float(abgr >> 24) / 255.0f;
+    return (abgr & 0x00FFFFFFu) | (gfx::rgbaByte(std::clamp(was * a, 0.0f, 1.0f)) << 24);
+}
+
+// The line as it reads -- links "[Name]", a Party tag before it -- and each byte's ink.
+struct Inked {
+    std::string text;
+    std::vector<uint32_t> ink;
+};
+Inked inked(const Play::Said& said, const content::Tables* tables) {
+    Inked out;
+    const auto add = [&](const std::string& part, uint32_t ink) {
+        out.text += part;
+        out.ink.insert(out.ink.end(), part.size(), ink);
+    };
+    if (said.party) add("Party ", kPartyBlue);
+    size_t at = 0;
+    for (const sim::ItemLink& link : sim::findLinks(said.line)) {
+        add(said.line.substr(at, link.from - at), kBone);
+        uint32_t ink = kBone;
+        const int32_t row = tables ? sim::linkRow(*tables, link.group, link.number) : -1;
+        if (row >= 0) {
+            sim::Held held = link.held;
+            held.item = row;
+            ink = tip::colourOf(qualityOf(tables->items[size_t(row)], held));
+        }
+        add("[" + link.label + "]", ink);
+        at = link.to;
+    }
+    add(said.line.substr(at), kBone);
+    return out;
+}
+
+// The rows it breaks into at `wide`, as (first byte, length), by words; a word wider than a row
+// is a row of its own. Past kGlassLines the last is cut and ends in "...".
+std::vector<std::pair<size_t, size_t>> rows(const std::string& text, float size, float wide, bool* cut) {
+    std::vector<std::pair<size_t, size_t>> out;
+    size_t start = 0;
+    *cut = false;
+    while (start < text.size()) {
+        while (start < text.size() && text[start] == ' ') ++start;
+        if (start >= text.size()) break;
+        size_t end = start, fit = start;
+        while (end < text.size()) {
+            size_t next = text.find(' ', end + 1);
+            if (next == std::string::npos) next = text.size();
+            if (controls::labelWidth(size, text.substr(start, next - start)) > wide && fit > start) break;
+            fit = next;
+            end = next;
+        }
+        out.push_back({start, fit - start});
+        start = fit;
+        if (int(out.size()) == kGlassLines && start < text.size()) {
+            *cut = text.find_first_not_of(' ', start) != std::string::npos;
+            break;
+        }
+    }
+    return out;
+}
+
+// One glass line drawn with its foot at `foot` (the tail's point, or the box's foot without one),
+// faded by `dim`. The top of its box, for the line over it.
+float glassLine(gfx::Canvas& canvas, const Play::Said& said, const content::Tables* tables, float x, float foot,
+                bool tail, float dim, float u) {
+    const float fadeIn = std::min(1.0f, said.age / kGlassIn);
+    const float fadeOut = std::clamp((said.life - said.age) / kGlassOut, 0.0f, 1.0f);
+    const float a = fadeIn * fadeOut * dim;
+    if (a <= 0.01f) return foot;
+    foot = std::round(foot + (1.0f - fadeIn) * kGlassRise * u);
+    const float size = std::round(kGlassSize * u);
+    const Inked line = inked(said, tables);
+    bool cut = false;
+    std::vector<std::pair<size_t, size_t>> parts = rows(line.text, size, kGlassWide * u, &cut);
+    if (parts.empty()) return foot;
+    std::vector<std::string> shown;
+    for (const auto& [from, length] : parts) shown.push_back(line.text.substr(from, length));
+    if (cut) {
+        std::string& last = shown.back();
+        while (!last.empty() && controls::labelWidth(size, last + "...") > kGlassWide * u) last.pop_back();
+        while (!last.empty() && (uint8_t(last.back()) & 0xC0) == 0x80) last.pop_back();
+        if (!last.empty()) last.pop_back();
+        // On a whole word where the row has one to end on.
+        if (const size_t space = last.rfind(' '); space != std::string::npos && space > 0) last.resize(space);
+        parts.back().second = last.size();
+        last += "...";
+    }
+    float wide = 0.0f;
+    for (const std::string& one : shown) wide = std::max(wide, controls::labelWidth(size, one));
+    const float boxW = std::round(wide + kGlassPadX * u * 2.0f);
+    const float boxH = std::round(kGlassLeading * u * float(shown.size() - 1) + size + (kGlassPadTop + kGlassPadFoot) * u);
+    const float tailTall = tail ? std::round(kGlassTail * u) : 0.0f;
+    Bubble glass;
+    glass.box = {std::round(x - boxW * 0.5f), foot - tailTall - boxH, boxW, boxH};
+    glass.radius = std::min(kGlassRound * u, boxH * 0.5f);
+    glass.rootL = tail ? x - kGlassTailHalf * u : x;
+    glass.rootR = tail ? x + kGlassTailHalf * u : x;
+    glass.point = x;
+    glass.tip = tail ? foot : glass.box.bottom();
+    // The shadow, a little down and soft: two wider passes under the glass.
+    Bubble shadow = glass;
+    shadow.box.y += 2.0f * u;
+    shadow.tip += 2.0f * u;
+    shadow.draw(canvas, 3.0f * u, gfx::rgba(0.0f, 0.0f, 0.0f, 0.16f * a));
+    shadow.draw(canvas, 1.5f * u, gfx::rgba(0.0f, 0.0f, 0.0f, 0.22f * a));
+    glass.draw(canvas, 0.0f, alphaOf(kGlass, kGlassBody * a));
+
+    const gfx::Face* face = controls::labelFace();
+    const float ascent = face ? face->ascent(size) : size * 0.8f;
+    float baseline = std::round(glass.box.y + kGlassPadTop * u + ascent);
+    for (size_t r = 0; r < shown.size(); ++r) {
+        const std::string& words = shown[r];
+        float pen = std::round(x - controls::labelWidth(size, words) * 0.5f);
+        // Each byte's ink, the "..." of a cut row in bone; then runs of one ink, each over its drop.
+        std::vector<uint32_t> inks(line.ink.begin() + long(parts[r].first),
+                                   line.ink.begin() + long(parts[r].first + parts[r].second));
+        inks.resize(words.size(), kBone);
+        size_t at = 0;
+        while (at < words.size()) {
+            size_t end = at + 1;
+            while (end < words.size() && inks[end] == inks[at]) ++end;
+            const std::string run = words.substr(at, end - at);
+            if (face) {
+                canvas.lettered(*face, controls::labelTexture(), pen, baseline + std::max(1.0f, u), size, 0.0f,
+                                gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f * a), run);
+                pen += canvas.lettered(*face, controls::labelTexture(), pen, baseline, size, 0.0f,
+                                       alphaOf(inks[at], a), run);
+            } else {
+                canvas.text(pen, baseline, size, alphaOf(inks[at], a), run);
+                pen += controls::labelWidth(size, run);
+            }
+            at = end;
+        }
+        baseline += std::round(kGlassLeading * u);
+    }
+    return glass.box.y;
+}
+
 }  // namespace
 
 void Speech::update(const Play& play, const float* viewProj, int width, int height) {
@@ -155,7 +314,29 @@ void Speech::update(const Play& play, const float* viewProj, int width, int heig
     showing_ = true;
     const float u = tip::unit();
     const float size = std::round(kSize * u);
-    for (const Play::Said& said : play.said()) {
+    const content::Tables* tables = play.isOpen() ? play.realm().tables() : nullptr;
+    const std::vector<Play::Said>& all = play.said();
+    for (size_t i = 0; i < all.size(); ++i) {
+        const Play::Said& said = all[i];
+        if (!said.chat) continue;
+        // Each speaker once, from his newest line, with the one before it over it.
+        bool newest = true;
+        const Play::Said* before = nullptr;
+        for (size_t j = 0; j < all.size(); ++j) {
+            if (j == i || !all[j].chat || all[j].who != said.who) continue;
+            if (j > i) newest = false;
+            else before = &all[j];
+        }
+        if (!newest) continue;
+        float x = 0.0f, y = 0.0f;
+        if (!play.crownOf(said.who, viewProj, width, height, &x, &y)) continue;
+        if (x < 0.0f || x > float(width) || y < 0.0f || y > float(height)) continue;
+        x = std::round(x);
+        const float top = glassLine(canvas_, said, tables, x, std::round(y - (kLift + kGlassLift) * u), true, 1.0f, u);
+        if (before) glassLine(canvas_, *before, tables, x, top - kGlassGap * u, false, 0.5f, u);
+    }
+    for (const Play::Said& said : all) {
+        if (said.chat) continue;
         float x = 0.0f, y = 0.0f;
         const bool placed = said.folk >= 0
                                 ? play.folkCrownOf(said.folk, viewProj, width, height, &x, &y)
@@ -169,7 +350,7 @@ void Speech::update(const Play& play, const float* viewProj, int width, int heig
         // 2026-10-06: 'speech buble text is moving when buble is active').
         x = std::round(x);
         y = std::round(y);
-        const float scale = popped(said.age);
+        const float scale = popped(said.age, said.life);
         if (scale <= 0.02f) continue;
         // Scaled about the tail's point, which stays on the speaker: the bubble grows out of him.
         const float k = u * scale;

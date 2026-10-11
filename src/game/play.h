@@ -615,9 +615,11 @@ public:
         if (!benchParty_.members.empty()) return benchParty_;
         return link_ ? link_->party() : none;
     }
-    // A line over a body's head, as a guard's is put up (said()): a player's Map line, as MU's
-    // chat went up over the speaker (CreateChat). It replaces his last.
-    void bubble(uint32_t who, const std::string& line);
+    // A line over a body's head, as a guard's is put up (said()): a player's Map or Party line,
+    // as MU's chat went up over the speaker (CreateChat). Drawn in the chat's dark glass and not
+    // the guards' paper (the user picked "A · Dark glass", 2026-10-11): his last stays above it,
+    // dimmed, and any before that goes. `line` keeps its item links (sim/item_link.h).
+    void bubble(uint32_t who, const std::string& line, bool party = false);
     // The townsperson under the pointer, as an index into the tables' folk, or -1.
     int pointedFolk() const { return pointedFolk_; }
     // The thing on the ground under the pointer, by its id, or 0.
@@ -660,6 +662,11 @@ public:
         std::string line;
         float age = 0.0f;
         int folk = -1;  // said by a townsperson who stands as no body (Lumen at her bar)
+        // A player's chat line (bubble): glass, its links coloured, up for `life` seconds -- 3
+        // and a little a word, 8 at most -- and on his party's line, tagged so.
+        bool chat = false;
+        bool party = false;
+        float life = kSaidSeconds;
     };
     static constexpr float kSaidSeconds = 4.0f;
     const std::vector<Said>& said() const { return said_; }

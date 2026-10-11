@@ -706,9 +706,10 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
             core::logf("chat: %s%s%s: %s", line.name.empty() ? "(server) " : "", line.name.c_str(),
                        line.to.empty() ? "" : (" to " + line.to).c_str(), line.text.c_str());
             hear(line);
-            if (line.channel == net::Channel::Map && line.from != 0) {
-                const std::string said = sim::linkedText(line.text);
-                play.bubble(line.from, said.size() > 64 ? said.substr(0, 61) + "..." : said);
+            // A Map or Party line said by someone in view: over his head too, links and all;
+            // the bubble cuts it to its own three lines (game/ui/speech.cpp).
+            if ((line.channel == net::Channel::Map || line.channel == net::Channel::Party) && line.from != 0) {
+                play.bubble(line.from, line.text, line.channel == net::Channel::Party);
             }
         }
     }

@@ -14,6 +14,7 @@
 #include "game/play_tuning.h"
 #include "sim/event.h"
 #include "sim/gates.h"
+#include "sim/item_link.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::game {
@@ -121,11 +122,29 @@ float Play::flashOf(uint32_t id) const {
     return 0.0f;
 }
 
-void Play::bubble(uint32_t who, const std::string& line) {
-    said_.erase(std::remove_if(said_.begin(), said_.end(),
-                               [&](const Said& one) { return one.who == who && one.folk < 0; }),
-                said_.end());
-    said_.push_back({who, line, 0.0f});
+void Play::bubble(uint32_t who, const std::string& line, bool party) {
+    // His last chat line stays, under this one's; any older goes, and any line of the game's own
+    // over him (a gate's refusal) gives way.
+    int kept = 0;
+    for (size_t i = said_.size(); i-- > 0;) {
+        Said& one = said_[i];
+        if (one.who != who || one.folk >= 0) continue;
+        if (one.chat && kept++ == 0) continue;
+        said_.erase(said_.begin() + long(i));
+    }
+    Said one;
+    one.who = who;
+    one.line = line;
+    one.chat = true;
+    one.party = party;
+    int words = 0;
+    bool in = false;
+    for (const char c : sim::linkedText(line)) {
+        if (c != ' ' && !in) ++words;
+        in = c != ' ';
+    }
+    one.life = std::min(8.0f, 3.0f + 0.35f * float(words));
+    said_.push_back(one);
 }
 
 bool Play::settle(double seconds) {
@@ -2637,7 +2656,7 @@ void Play::update(double seconds) {
     // What the town's guards said, aged and taken down.
     for (Said& one : said_) one.age += float(seconds);
     said_.erase(std::remove_if(said_.begin(), said_.end(),
-                               [](const Said& one) { return one.age >= kSaidSeconds; }),
+                               [](const Said& one) { return one.age >= one.life; }),
                 said_.end());
     // And his pet, off slot 8 while it has life: the Angel flies, the Imp rides (game/pets.h);
     // and his mount, off its own slot.
