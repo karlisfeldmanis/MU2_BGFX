@@ -28,6 +28,7 @@
 // The run's bots trade among themselves (the Market, below) unless --no-trades.
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <csignal>
@@ -202,22 +203,21 @@ public:
     // ---- players, not bots: whom he may ask into a party (Board::ask) ----------------------
     struct Person {
         std::string name;
-        float away = 0.0f;  // tiles
         int level = 0;
     };
-    // Every player who is not a bot, alive on his map within `tiles` of him.
-    std::vector<Person> peopleNear(float tiles) const {
-        std::vector<Person> near;
-        const sim::Body& hero = mirror_->hero();
+    // Every player who is not a bot, alive on his map, however far: an invite has no reach, as
+    // WoW's has none (the user, 2026-10-11: "we dont need minimal tile distance to invite to
+    // parties/raids/guild same like its on WoW"). His mirror holds his own map only.
+    std::vector<Person> people() const {
+        std::vector<Person> here;
         for (const sim::Body& b : mirror_->bodies()) {
             if (!b.player || b.gone || b.id == you_ || !b.alive()) continue;
             std::string name;
             bool isBot = true;
             if (!link_->nameOf(b.id, &name, &isBot) || isBot || name.empty()) continue;
-            const float away = std::hypot(b.x - hero.x, b.y - hero.y);
-            if (away <= tiles) near.push_back({name, away, b.level});
+            here.push_back({name, b.level});
         }
-        return near;
+        return here;
     }
     // He asks `who` into a party; once `who` joins, he hands him the lead, so he follows the
     // player and not the player him (Board::follow).
@@ -304,6 +304,27 @@ private:
             if (b.player && link_->nameOf(b.id, &name, &isBot) && name == who) return b.id;
         }
         return 0;
+    }
+
+    // **The plan, on the party's chat**, once the player he asked has come in (the user,
+    // 2026-10-11: "when bot invites me to party and i accept he need to write oon party chat
+    // what is the plan"): the quest he is on, what is left of it and where, and that the player
+    // leads and he follows.
+    void sayPlan(const std::string& who) {
+        std::string plan = "no quest on me right now, I'm just levelling.";
+        for (const Bot::Need& n : brain_->needs()) {
+            if (!n.taken || n.left <= 0 || n.quest < 0) continue;
+            const sim::QuestRow& quest = sim::questAt(n.quest);
+            const WorldRow* at = worldOf(n.map);
+            std::string where = at ? at->name : "";
+            if (!where.empty()) where[0] = char(std::toupper(uint8_t(where[0])));
+            plan = std::string("I'm on ") + quest.giverName + "'s quest " + quest.title + " -- " + std::to_string(n.left) +
+                   " " + n.label + " still to kill" + (where.empty() ? "" : " in " + where) +
+                   (!n.alone && n.together ? ", too tough for me alone." : ".");
+            break;
+        }
+        sayOn(net::Channel::Party, "Thanks for joining, " + who + "! Plan: " + plan);
+        sayOn(net::Channel::Party, "You lead; I'll follow you and fight beside you, wherever you hunt.");
     }
 
     // **The Claude bot**, each second: the model's orders carried out, and the state it reads.
@@ -484,6 +505,7 @@ private:
                 } else if (one.text == who + " has joined the party.") {
                     answers_.push_back({who, Answer::Joined});
                     link_->askParty({net::PartyWhat::Promote, who});
+                    sayPlan(who);
                     invitedPerson_.clear();
                 }
             }
@@ -1224,12 +1246,10 @@ private:
     }
 
     // **Players asked in** (the user, 2026-10-11: "i want they can invite me, but i also want to
-    // refuse invite"): a bot in no party asks a player -- never a bot -- near him and near his
-    // level into one, and hands him the lead once he comes in (NetBot::invitePerson). One bot at
+    // refuse invite"): a bot in no party asks a player -- never a bot -- near his level into one, and hands him the lead once he comes in (NetBot::invitePerson). One bot at
     // a time asks a player, and he is let be after: a while after an invite he let lapse or one
     // the server bounced (in a party already), long after he declined. The player answers with
     // the invite's Accept and Decline (game/ui/chat.cpp).
-    static constexpr float kAskWithin = 8.0f;  // tiles
     static constexpr auto kAskAgain = std::chrono::minutes(5);       // after no answer
     static constexpr auto kAskBusy = std::chrono::minutes(10);       // he was in a party
     static constexpr auto kAskDeclined = std::chrono::minutes(30);   // he said no
@@ -1240,19 +1260,27 @@ private:
                 askable_[who] = now + (answer == NetBot::Answer::Declined ? kAskDeclined : kAskBusy);
             }
         }
+        // **Server-wide** (the user, 2026-10-11: "party invite has to works globally without map
+        // restrictions server wide"): every player any bot sees, on any map, pooled; an invite
+        // goes by name and the bot then goes to him (follow). A bot on his map asks first.
+        std::map<std::string, std::pair<int, int>> pool;  // name: his level, his map
         for (const auto& [name, one] : byName_) {
-            if (grouped(name) || !one->partyState().members.empty() || !one->alive()) continue;
-            if (const auto at = botAsked_.find(name); at != botAsked_.end() && now < at->second) continue;
-            const int level = one->level();
-            const int spread = std::max(10, level / 4);
-            for (const NetBot::Person& person : one->peopleNear(kAskWithin)) {
-                if (std::abs(person.level - level) > spread) continue;
-                if (const auto at = askable_.find(person.name); at != askable_.end() && now < at->second) continue;
-                one->invitePerson(person.name);
-                askable_[person.name] = now + kAskAgain;
-                botAsked_[name] = now + kBotAsksEvery;
-                break;
+            for (const NetBot::Person& person : one->people()) pool[person.name] = {person.level, one->mapNow()};
+        }
+        for (const auto& [who, seen] : pool) {
+            if (const auto at = askable_.find(who); at != askable_.end() && now < at->second) continue;
+            const auto [level, map] = seen;
+            NetBot* asker = nullptr;
+            for (const auto& [name, one] : byName_) {
+                if (grouped(name) || !one->partyState().members.empty() || !one->alive()) continue;
+                if (const auto at = botAsked_.find(name); at != botAsked_.end() && now < at->second) continue;
+                if (std::abs(one->level() - level) > std::max(10, one->level() / 4)) continue;
+                if (asker == nullptr || (one->mapNow() == map && asker->mapNow() != map)) asker = one;
             }
+            if (asker == nullptr) continue;
+            asker->invitePerson(who);
+            askable_[who] = now + kAskAgain;
+            botAsked_[asker->name()] = now + kBotAsksEvery;
         }
     }
 
