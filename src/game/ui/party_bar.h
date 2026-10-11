@@ -27,18 +27,21 @@
 namespace mu::game {
 
 class Play;
+class Portrait;
 
 class PartyBar {
 public:
     void open(const gfx::Interface& interface);
     // A frame: redrawn on a change, and each frame while a trail drains or a member pulses.
     // A left click on a capsule makes him the target (Play::target; the target frame, the
-    // user, 2026-10-10), from any map; a right click asks for his menu (game/ui/player_menu.h),
-    // which the desk opens.
-    void update(float seconds, Play& play, const Pointer& pointer);
+    // user, 2026-10-10), from any map; a click on its button asks for his menu
+    // (game/ui/player_menu.h), which the desk opens. `faces` are the members' pictures by name
+    // (game/portrait.h), and `facesTaken` how many have been taken, which redraws the bar.
+    void update(float seconds, Play& play, const Pointer& pointer,
+                const std::unordered_map<std::string, Portrait>& faces, uint64_t facesTaken);
     // Whether the pointer is on a capsule: the world does not take the click.
     bool covers(float x, float y) const;
-    // A right click on a capsule this frame: whose, and where the menu opens. Taken once.
+    // A click on a capsule's menu button this frame: whose, and where the menu opens. Taken once.
     bool takeMenuAsk(std::string* name, float* x, float* y) {
         if (menuAsk_.empty()) return false;
         *name = std::exchange(menuAsk_, std::string());
@@ -77,9 +80,12 @@ private:
         std::string name;
         bool member = false;  // of his party; else a raider of none of his
         uint32_t here = 0;    // his body in this world, 0 when he is on another map
+        gfx::Box more;        // his menu's button, empty when there is none
     };
     std::vector<Hit> hits_;
     std::string menuAsk_;  // takeMenuAsk
+    int onMore_ = -1;      // the capsule whose button is under the pointer, as last drawn
+    uint64_t facesTaken_ = 0;
     float menuX_ = 0.0f, menuY_ = 0.0f;
     std::string targeted_;  // the target's name as last drawn: his capsule wears the gold edge
     // A press the bar used this frame, which the world must not also take (the user: "i click to

@@ -47,7 +47,7 @@ public:
     bool showing() const { return showing_; }
     // The frame takes the pointer: a click on it walks no one.
     bool covers(float x, float y) const { return showing_ && (took_ || box_.has(x, y)); }
-    // A right click on it this frame asked for his menu, at the pointer. Taken once.
+    // A press on its menu button this frame asked for his menu, beside the button. Taken once.
     bool takeMenuAsk(std::string* name, float* x, float* y) {
         if (!menuAsk_) return false;
         menuAsk_ = false;

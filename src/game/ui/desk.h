@@ -8,6 +8,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "content/texture.h"
@@ -104,8 +105,6 @@ public:
     bool takesPointer() const { return takesPointer_; }
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
     uint32_t labelUnder(float x, float y) const;
-    // Another player's name tag under the pixel, by his body's id, or 0 (Vitals::tagUnder).
-    uint32_t tagUnder(float x, float y) const;
 
     // The item pictures, taken after update() has said what stands on each stage and before
     // the renderer's frame is submitted. Sprint 7 step 5: the bag and the shelf draw the real
@@ -280,6 +279,11 @@ private:
     // one right-click menu on a player wherever he is clicked (game/ui/player_menu.h).
     TargetFrame targetFrame_;
     Portrait portrait_;
+    // His party's faces on their capsules, by name, taken one a frame as the target's is; and how
+    // many have been taken, which the bar redraws on.
+    std::unordered_map<std::string, Portrait> partyFaces_;
+    uint64_t partyFacesTaken_ = 0;
+    std::vector<uint32_t> faceIds_;  // whose faces Play gathers (Play::wantFaces)
     PlayerMenu playerMenu_;
     bool menuTook_ = false;  // the player menu took this frame's press
     // The map around him, top right over the tracker, always up in a played world (game/ui/minimap.h).

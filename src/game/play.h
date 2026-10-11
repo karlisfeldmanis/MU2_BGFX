@@ -582,8 +582,16 @@ public:
     const float* targetHead() const { return targetHead_; }
     float targetYaw() const { return targetYaw_; }
     float targetScale() const { return targetScale_; }
-    // A right click on another player asked for his menu (Play::rightClick): his body, once.
-    uint32_t takeMenuAsk() { return std::exchange(menuAsk_, 0u); }
+    // His party's faces, as the target's (game/portrait.h): the bodies the desk wants this frame,
+    // and what the last gather took of each -- no drawables for one not drawn.
+    struct FaceShot {
+        uint32_t id = 0;
+        std::vector<gfx::Drawable> drawables;
+        float head[3] = {};
+        float yaw = 0.0f, scale = 1.0f;
+    };
+    void wantFaces(const std::vector<uint32_t>& ids) { faceIds_ = ids; }
+    const std::vector<FaceShot>& faces() const { return faces_; }
     // His name and whether he is a bot, as the server said them (net::Who); false off a server.
     bool playerName(uint32_t id, std::string* name, bool* bot) const {
         // The bench's own first (--bench-fight): local play's link has no names to give.
@@ -618,9 +626,6 @@ public:
     // drawn over the world, so what the eye is on is the name and not the monster behind it
     // (the user, 2026-09-28). Called after `point`, with the desk's `labelUnder`; 0 does nothing.
     void pointAtLabel(uint32_t lying);
-    // The pointer is on another player's NAME tag (the desk's `tagUnder`), which outranks the ray
-    // as a drop's plate does; only there does a right click open his menu. 0 does nothing.
-    void pointAtTag(uint32_t player);
     // Something to sit on or lean against under the pointer, as an index into the tables'
     // perches, or -1. Tested last, after bodies, drops and townsfolk.
     int pointedPerch() const { return pointedPerch_; }
@@ -1867,14 +1872,14 @@ private:
     int pointedColumn_ = -1, pointedRow_ = -1;
     uint32_t pointedAt_ = 0;  // the body under the pointer, or 0
     uint32_t pointedPlayer_ = 0;  // another player under it, or 0 (pointedPlayer)
-    uint32_t pointedTag_ = 0;     // another player's name tag under it, or 0 (pointAtTag)
     std::string targetName_;  // his target, by name (target)
     uint32_t targetId_ = 0;
     bool targetFresh_ = false;
     std::vector<gfx::Drawable> targetDrawables_;
     float targetHead_[3] = {};
     float targetYaw_ = 0.0f, targetScale_ = 1.0f;
-    uint32_t menuAsk_ = 0;
+    std::vector<uint32_t> faceIds_;  // wantFaces
+    std::vector<FaceShot> faces_;
     std::string lastLine_;
 
     // The red flash round a monster the frame it turns on him: its quarry becoming the hero,

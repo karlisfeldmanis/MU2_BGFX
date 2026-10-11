@@ -52,4 +52,17 @@ void crown(gfx::Canvas& canvas, float x, float base, float s, uint32_t ink);
 
 uint32_t faded(uint32_t abgr, float alpha);
 
+// The button that opens a player's menu (game/ui/player_menu.h), beside his capsule: a dark
+// rounded tab with three dots, lighter under the pointer (the user, 2026-10-11: "add some simple
+// button which triggers that right click menu, that button also has to be on party label").
+void more(gfx::Canvas& canvas, const gfx::Box& box, float u, bool lit);
+
+// A disc of `art` (or of ink alone) at `cx`, `cy`.
+void disc(gfx::Canvas& canvas, float cx, float cy, float r, const gfx::Art* art, uint32_t ink);
+// His face in its round frame, as the target frame and the party's capsules wear it: a dark ring
+// `ring` wide, the well, and his head (game/portrait.h) when `picture` is his -- greyed when he
+// lies dead, dimmed when he is away -- else his class's letters in the well.
+void face(gfx::Canvas& canvas, float cx, float cy, float r, float ring, const gfx::Art* picture, int kin,
+          bool dead, bool away);
+
 }  // namespace mu::game::capsule

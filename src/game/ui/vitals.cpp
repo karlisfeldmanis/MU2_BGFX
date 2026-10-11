@@ -211,7 +211,6 @@ uint32_t faded(uint32_t abgr, float alpha) {
 }  // namespace
 
 void Vitals::dismiss() {
-    tagBoxes_.clear();
     if (on_ == 0) return;
     on_ = 0;
     shown_ = 0.0f;
@@ -398,17 +397,8 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
     rebuild(play, now);
 }
 
-uint32_t Vitals::tagUnder(float x, float y) const {
-    // The nearest is drawn last, so it is the one the eye is on where two overlap.
-    for (auto one = tagBoxes_.rbegin(); one != tagBoxes_.rend(); ++one) {
-        if (one->second.has(x, y)) return one->first;
-    }
-    return 0;
-}
-
 void Vitals::rebuild(const Play& play, const Readout& r) {
     canvas_.clear();
-    tagBoxes_.clear();
     if (r.folk >= 0 && r.folkShown > 0.0f) {
         const std::string& name = play.realm().tables()->folk[size_t(r.folk)].name;
         const gfx::Face& face = canvas_.face();
@@ -491,13 +481,6 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             if (name) {
                 outlined(name, nameTexture, t.x - name->measure(nameSize, t.name) * 0.5f,
                          nameBaseline, nameSize, ink, t.alpha, t.name);
-                // Where a right click on another player lands (tagUnder): the name and what is
-                // under it down to his crown, never his own.
-                if (t.id != play.realm().hero().id) {
-                    const float wide = name->measure(nameSize, t.name) + 4.0f * rim;
-                    const float top = nameBaseline - name->ascent(nameSize) - rim;
-                    tagBoxes_.push_back({t.id, {t.x - wide * 0.5f, top, wide, t.y - top}});
-                }
             }
             // The guild's line; a bot's guild is `<Bot>` until guilds exist.
             if (t.bot && words) {

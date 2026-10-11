@@ -25,7 +25,6 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     pointedColumn_ = pointedRow_ = -1;
     pointedAt_ = 0;
     pointedPlayer_ = 0;
-    pointedTag_ = 0;
     pointedFolk_ = -1;
     pointedLying_ = 0;
     pointedPerch_ = -1;
@@ -250,16 +249,6 @@ void Play::pointAtLabel(uint32_t lying) {
     pointedPerch_ = -1;
 }
 
-void Play::pointAtTag(uint32_t player) {
-    if (player == 0 || !isOpen()) return;
-    pointedTag_ = player;
-    pointedPlayer_ = player;
-    pointedAt_ = 0;
-    pointedFolk_ = -1;
-    pointedLying_ = 0;
-    pointedPerch_ = -1;
-}
-
 void Play::target(const std::string& name, uint32_t here) {
     if (name != targetName_) {
         targetFresh_ = true;
@@ -359,18 +348,10 @@ bool Play::perch(int index) {
 
 void Play::rightClick() {
     if (!isOpen()) return;
-    // A right click on another player is his menu, as on his party capsule: whisper, invite,
-    // and the rest (the user, 2026-10-10: "we will ne right click UI which we use for party").
-    // On his name tag only, never his body (the user, 2026-10-11: "only possible on player
-    // label not on screen"): a right click on the figure is the quick slot's, as on ground.
-    if (pointedTag_ != 0) {
-        std::string name;
-        if (playerName(pointedTag_, &name, nullptr)) {
-            target(name, pointedTag_);
-            menuAsk_ = pointedTag_;
-            return;
-        }
-    }
+    // Another player's menu is never asked from the world, his figure or his name: only from his
+    // target frame or his party capsule (the user, 2026-10-11: "right click menu has to be
+    // triggered from the big character label contrainer above the hud or from party/raid").
+    // A right click on him is the quick slot's, as on bare ground.
     sim::Request request;
     // **The quick slot.** A monster under the pointer is fought with the right button's skill --
     // Energy Ball for a new wizard -- and the realm swings the weapon whenever the skill cannot be

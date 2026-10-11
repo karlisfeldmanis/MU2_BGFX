@@ -1854,6 +1854,11 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                   std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover,
                   std::vector<gfx::Drawable>* flashed, std::vector<Flash>* flashes) {
     targetDrawables_.clear();
+    faces_.resize(faceIds_.size());
+    for (size_t f = 0; f < faces_.size(); ++f) {
+        faces_[f].id = faceIds_[f];
+        faces_[f].drawables.clear();
+    }
     // One eased fade for every reason a body is not simply "there": the hero's own
     // door-opening appearance, a corpse going out at the end of its held pose, and a
     // respawn easing back in. All three are the same smoothstep on a different clock, so
@@ -1906,6 +1911,29 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     const auto poseOne = [&](size_t k) {
         poseBones_[k] = drawn_[posing_[k]].figure.pose(&poseRows_[k * kRowsEach]);
     };
+    // A portrait's makings (game/portrait.h): his drawables again, his head joint where this
+    // pose holds it, his facing and his size against a man's 1.8 m.
+    const auto shoot = [&](const Drawn& one, int palette, std::vector<gfx::Drawable>& drawables, float* head,
+                           float* yaw, float* scale) {
+        one.figure.gather(palette, drawables);
+        const float* at = one.figure.position();
+        head[0] = at[0];
+        head[1] = at[1] + one.figure.body()->height * one.figure.scale() * 0.9f;
+        head[2] = at[2];
+        if (const content::Mesh* skeleton = one.figure.body()->skeletonMesh) {
+            const std::vector<content::Bone>& bones = skeleton->bones();
+            for (size_t b = 0; b < bones.size(); ++b) {
+                if (bones[b].name != "Bip01 Head") continue;
+                float bind[16];
+                bx::mtxInverse(bind, bones[b].inverseBind);
+                const float joint[3] = {bind[12], bind[13], bind[14]};
+                one.figure.pointOnBind(int(b), joint, head);
+                break;
+            }
+        }
+        *yaw = one.figure.yaw();
+        *scale = one.figure.body()->height * one.figure.scale() / 1.8f;
+    };
     const auto takeOne = [&](size_t k) {
         Drawn& one = drawn_[posing_[k]];
         const float fade = fadeOf(one) * one.seeThrough;
@@ -1929,25 +1957,12 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // his head joint where this pose holds it. Not while he lies dead: the frame keeps the
         // face he had standing.
         if (targetId_ != 0 && one.id == targetId_ && one.figure.body() && shownAlive(one.id)) {
-            one.figure.gather(palette, targetDrawables_);
-            const float* at = one.figure.position();
-            targetHead_[0] = at[0];
-            targetHead_[1] = at[1] + one.figure.body()->height * one.figure.scale() * 0.9f;
-            targetHead_[2] = at[2];
-            if (const content::Mesh* skeleton = one.figure.body()->skeletonMesh) {
-                const std::vector<content::Bone>& bones = skeleton->bones();
-                for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name != "Bip01 Head") continue;
-                    float bind[16];
-                    bx::mtxInverse(bind, bones[b].inverseBind);
-                    const float joint[3] = {bind[12], bind[13], bind[14]};
-                    one.figure.pointOnBind(int(b), joint, targetHead_);
-                    break;
-                }
-            }
-            targetYaw_ = one.figure.yaw();
-            // His size against a man's 1.8 m, for the portrait's camera.
-            targetScale_ = one.figure.body()->height * one.figure.scale() / 1.8f;
+            shoot(one, palette, targetDrawables_, targetHead_, &targetYaw_, &targetScale_);
+        }
+        // And his party's, for their capsules' faces, the same way (Play::wantFaces).
+        for (size_t f = 0; f < faces_.size(); ++f) {
+            if (faces_[f].id != one.id || one.id == 0 || !one.figure.body() || !shownAlive(one.id)) continue;
+            shoot(one, palette, faces_[f].drawables, faces_[f].head, &faces_[f].yaw, &faces_[f].scale);
         }
         // And its red flash, the same way, if it has just turned on him (Play::watchAggro).
         if (flashed && flashes && !aggro_.empty()) {

@@ -617,18 +617,25 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         menuTook_ = playerMenu_.update(play, pointer);
         Pointer under = pointer;
         if (menuTook_ || playerMenu_.covers(pointer.x, pointer.y)) under.pressed = under.rightPressed = false;
-        partyBar_.update(seconds, play, under);
+        // The party's faces the next gather takes: whoever of them is on this map.
+        {
+            std::string me;
+            play.playerName(play.realm().hero().id, &me, nullptr);
+            faceIds_.clear();
+            for (const auto& member : play.party().members) {
+                if (member.here != 0 && member.name != me) faceIds_.push_back(member.here);
+            }
+            play.wantFaces(faceIds_);
+        }
+        partyBar_.update(seconds, play, under, partyFaces_, partyFacesTaken_);
         targetFrame_.update(seconds, play, under, arts_, float(window.width()), hud_.plateTop() - 26.0f * u,
                             portrait_.picture(), portrait_.taken());
-        // A right click on a capsule, on the frame or on a player in the world: his menu.
+        // A right click on a capsule or on the target frame: his menu. Never from the world.
         {
             std::string whom;
             float x = 0.0f, y = 0.0f;
             if (partyBar_.takeMenuAsk(&whom, &x, &y) || targetFrame_.takeMenuAsk(&whom, &x, &y)) {
                 playerMenu_.show(play, whom, x, y, float(window.width()), float(window.height()));
-            } else if (const uint32_t body = play.takeMenuAsk(); body != 0 && play.playerName(body, &whom, nullptr)) {
-                playerMenu_.show(play, whom, pointer.x + 4.0f * u, pointer.y - 12.0f * u, float(window.width()),
-                                 float(window.height()));
             }
         }
         // The menu asked for a whisper: the chat opens on his tab.
@@ -1977,8 +1984,6 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
         vitals_.dismiss();
         tally_.dismiss();
         speech_.dismiss();
-uint32_t Desk::tagUnder(float x, float y) const { return vitals_.tagUnder(x, y); }
-
         beacon_.dismiss();
         return;
     }
@@ -2035,10 +2040,40 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
 
 void Desk::portrait(gfx::Renderer& renderer, Play& play) {
     if (play.targetChanged()) portrait_.forget();
-    if (!targetFrame_.showing() || play.targetDrawables().empty()) return;
-    // A still: taken once, and again only when what he wears changes.
-    if (portrait_.same(play.targetDrawables()) || !renderer.openStages(shaderDir_)) return;
-    portrait_.render(renderer, play.targetDrawables(), play.targetHead(), play.targetYaw(), play.targetScale());
+    // A still: taken once, and again only when what he wears changes. One a frame, the target's
+    // first: every face is drawn on the one portrait stage.
+    if (targetFrame_.showing() && !play.targetDrawables().empty() && !portrait_.same(play.targetDrawables())) {
+        if (!renderer.openStages(shaderDir_)) return;
+        portrait_.render(renderer, play.targetDrawables(), play.targetHead(), play.targetYaw(), play.targetScale());
+        return;
+    }
+    // His party's, the same way (the user, 2026-10-11: "same idea with circle thumb so we have
+    // same logic"); a member gone from the party lets his go.
+    const net::PartyState& party = play.party();
+    for (auto it = partyFaces_.begin(); it != partyFaces_.end();) {
+        bool kept = false;
+        for (const auto& member : party.members) kept = kept || member.name == it->first;
+        if (kept) {
+            ++it;
+        } else {
+            it->second.shutdown();
+            it = partyFaces_.erase(it);
+        }
+    }
+    for (const Play::FaceShot& face : play.faces()) {
+        if (face.drawables.empty()) continue;
+        const net::PartyState::Member* member = nullptr;
+        for (const auto& one : party.members) {
+            if (one.here == face.id) member = &one;
+        }
+        if (!member) continue;
+        Portrait& picture = partyFaces_[member->name];
+        if (picture.same(face.drawables)) continue;
+        if (!renderer.openStages(shaderDir_)) return;
+        picture.render(renderer, face.drawables, face.head, face.yaw, face.scale);
+        ++partyFacesTaken_;
+        return;
+    }
 }
 
 void Desk::submit(bgfx::ViewId view, int width, int height) {

@@ -29,12 +29,11 @@ constexpr float kCellsOver = 6.0f;  // between the row and the capsule
 constexpr float kSubDown = 17.0f;   // the line under it, its baseline under the capsule's foot
 constexpr float kSub = 13.0f;       // its words
 constexpr int kMostCells = 10;
+constexpr float kMore = 20.0f, kMoreGap = 6.0f;  // the menu's button, and its gap from the capsule
 // The capsule, a size over a party plate's: SD and mana the same thin line (the user, 2026-10-10:
 // "SD has to be just line same as mana"), the name clear of the face's tuck.
 constexpr capsule::Make kMake{5.0f, 26.0f, 5.0f, 6.0f, 0.0f, 15.5f, 0.0f, 13.0f, kTuck + 8.0f, 0.0f, 0.62f};
 
-constexpr uint32_t kRingInk = gfx::rgba(0.043f, 0.039f, 0.035f, 0.96f);
-constexpr uint32_t kFaceWell = gfx::rgba(0.078f, 0.067f, 0.055f, 0.94f);
 constexpr uint32_t kTagBack = gfx::rgba(0.043f, 0.039f, 0.035f, 0.94f);
 constexpr uint32_t kCellBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kCellEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);  // the HUD strip's
@@ -107,24 +106,6 @@ const sim::Body* hitterOf(const sim::Realm& realm, const sim::Body& body) {
         }
     }
     return best;
-}
-
-// A disc of `art` (or of ink alone), a fan of `sides`.
-void disc(gfx::Canvas& canvas, float cx, float cy, float r, const gfx::Art* art, uint32_t ink) {
-    constexpr int kSides = 40;
-    float xy[2 * (kSides + 2)];
-    float uv[2 * (kSides + 2)];
-    xy[0] = cx;
-    xy[1] = cy;
-    uv[0] = uv[1] = 0.5f;
-    for (int i = 0; i <= kSides; ++i) {
-        const float a = float(i) / float(kSides) * 6.2831853f;
-        xy[2 * (i + 1)] = cx + std::cos(a) * r;
-        xy[2 * (i + 1) + 1] = cy + std::sin(a) * r;
-        uv[2 * (i + 1)] = 0.5f + std::cos(a) * 0.5f;
-        uv[2 * (i + 1) + 1] = 0.5f + std::sin(a) * 0.5f;
-    }
-    canvas.polygon(art, xy, uv, kSides + 2, ink);
 }
 
 }  // namespace
@@ -202,18 +183,24 @@ void TargetFrame::update(float seconds, Play& play, const Pointer& pointer, pane
     const float cellsTop = capTop - (kCellsOver + kCell) * u;
     const float r = kFace * 0.5f * u;
     const float cx = left + r, cy = capTop + tall * 0.5f;
-    box_ = {left - kRing * u, std::min(cellsTop, cy - r - kRing * u), total + kRing * u, bottom - std::min(cellsTop, cy - r - kRing * u)};
+    // The button for his menu at the capsule's right end, on a server only: off one there is
+    // no one to whisper or invite (the user, 2026-10-11: "lets not use right click but add some
+    // simple button which triggers that right click menu").
+    const bool menuable = play.remote();
+    const gfx::Box more{capX + (kWide + kMoreGap) * u, capTop, kMore * u, tall};
+    const float boxRight = menuable ? more.right() : left + total;
+    box_ = {left - kRing * u, std::min(cellsTop, cy - r - kRing * u), boxRight - left + kRing * u,
+            bottom - std::min(cellsTop, cy - r - kRing * u)};
 
-    // The pointer: a right click asks for his menu, any press on it is the frame's.
-    if (box_.has(pointer.x, pointer.y)) {
-        if (pointer.rightPressed && play.remote()) {
-            menuAsk_ = true;
-            menuX_ = pointer.x + 4.0f * u;
-            menuY_ = pointer.y - 12.0f * u;
-            took_ = true;
-        } else if (pointer.pressed) {
-            took_ = true;
-        }
+    // The pointer: a press on the button asks for his menu beside it, any press on it is the frame's.
+    const bool onMore = menuable && more.has(pointer.x, pointer.y);
+    if (onMore && pointer.pressed) {
+        menuAsk_ = true;
+        menuX_ = more.right() + 6.0f * u;
+        menuY_ = more.y;
+        took_ = true;
+    } else if (box_.has(pointer.x, pointer.y) && pointer.pressed) {
+        took_ = true;
     }
     showing_ = true;
 
@@ -240,20 +227,11 @@ void TargetFrame::update(float seconds, Play& play, const Pointer& pointer, pane
     }
 
     capsule::draw(canvas_, capX, capTop, u, kWide * u, kMake, look, pulse);
+    if (menuable) capsule::more(canvas_, more, u, onMore);
 
     // The face over the capsule's end: a dark ring, the well, and him -- greyed when he lies
     // dead, his class's letters in the well before his first picture.
-    disc(canvas_, cx, cy, r + kRing * u, nullptr, kRingInk);
-    disc(canvas_, cx, cy, r, nullptr, kFaceWell);
-    if (faceTaken && face.valid()) {
-        disc(canvas_, cx, cy, r, &face, dead ? gfx::rgba(0.42f, 0.42f, 0.42f) : 0xFFFFFFFFu);
-        if (dead) disc(canvas_, cx, cy, r, nullptr, gfx::rgba(0.08f, 0.08f, 0.09f, 0.45f));
-    } else if (kin >= 0 && kin < 4) {
-        const float size = 22.0f * u;
-        const std::string letters = capsule::kKinShort[kin];
-        controls::caps(canvas_, cx - controls::capsWidth(size, letters, 0.06f) * 0.5f, cy + size * 0.36f, size,
-                       capsule::faded(capsule::kKinInk[kin], dead ? 0.4f : 1.0f), letters, 0.06f);
-    }
+    capsule::face(canvas_, cx, cy, r, kRing * u, faceTaken ? &face : nullptr, kin, dead, false);
     const float tagFade = dead ? 0.55f : 1.0f;
     // His class on the face's shoulder, in the party bar's tints.
     if (kin >= 0 && kin < 4) {

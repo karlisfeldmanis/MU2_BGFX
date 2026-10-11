@@ -1088,7 +1088,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // A name plate over the drop outranks what the ray found behind it, a monster included.
         if (desk_.ready() && !windowed) {
             world_.played().pointAtLabel(desk_.labelUnder(pointerX, pointerY));
-            world_.played().pointAtTag(desk_.tagUnder(pointerX, pointerY));
         }
         if ((ctx.window.clicked(0) && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
             world_.played().leftClick();

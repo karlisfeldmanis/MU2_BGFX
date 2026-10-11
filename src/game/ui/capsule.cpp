@@ -1,6 +1,7 @@
 #include "game/ui/capsule.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "game/ui/controls.h"
 #include "game/ui/style.h"
@@ -57,6 +58,9 @@ void fill(gfx::Canvas& canvas, const gfx::Box& band, float share, uint32_t top, 
         canvas.shade({band.x, band.y, w, band.h}, faded(top, a), faded(top, a), faded(foot, a), faded(foot, a));
     }
 }
+
+constexpr uint32_t kFaceRing = gfx::rgba(0.043f, 0.039f, 0.035f, 0.96f);
+constexpr uint32_t kFaceWell = gfx::rgba(0.078f, 0.067f, 0.055f, 0.94f);
 
 }  // namespace
 
@@ -150,6 +154,49 @@ float draw(gfx::Canvas& canvas, float x, float y, float u, float wide, const Mak
         controls::ranged(canvas, right, numberBase, make.number * u, faded(c.away ? style::kBone2 : kNumber, a), c.number);
     }
     return tall + make.gap * u;
+}
+
+void more(gfx::Canvas& canvas, const gfx::Box& box, float u, bool lit) {
+    const float r = std::min(box.w, box.h) * 0.3f;
+    const float rr[4] = {r, r, r, r};
+    tip::rounded(canvas, box, rr, lit ? gfx::rgba(0.16f, 0.14f, 0.12f, 0.96f) : gfx::rgba(0.06f, 0.05f, 0.045f, 0.9f));
+    const float dot = std::max(2.0f, std::round(2.5f * u)), step = dot + std::max(2.0f, std::round(2.5f * u));
+    const float x = std::round(box.midX() - dot * 0.5f), y0 = std::round(box.midY() - step - dot * 0.5f);
+    const uint32_t ink = lit ? style::kBoneHi : style::kBone2;
+    for (int i = 0; i < 3; ++i) canvas.rect({x, y0 + float(i) * step, dot, dot}, ink);
+}
+
+void disc(gfx::Canvas& canvas, float cx, float cy, float r, const gfx::Art* art, uint32_t ink) {
+    constexpr int kSides = 40;
+    float xy[2 * (kSides + 2)];
+    float uv[2 * (kSides + 2)];
+    xy[0] = cx;
+    xy[1] = cy;
+    uv[0] = uv[1] = 0.5f;
+    for (int i = 0; i <= kSides; ++i) {
+        const float a = float(i) / float(kSides) * 6.2831853f;
+        xy[2 * (i + 1)] = cx + std::cos(a) * r;
+        xy[2 * (i + 1) + 1] = cy + std::sin(a) * r;
+        uv[2 * (i + 1)] = 0.5f + std::cos(a) * 0.5f;
+        uv[2 * (i + 1) + 1] = 0.5f + std::sin(a) * 0.5f;
+    }
+    canvas.polygon(art, xy, uv, kSides + 2, ink);
+}
+
+void face(gfx::Canvas& canvas, float cx, float cy, float r, float ring, const gfx::Art* picture, int kin,
+          bool dead, bool away) {
+    const float a = away ? kAway : 1.0f;
+    disc(canvas, cx, cy, r + ring, nullptr, kFaceRing);
+    disc(canvas, cx, cy, r, nullptr, kFaceWell);
+    if (picture && picture->valid()) {
+        disc(canvas, cx, cy, r, picture, dead ? gfx::rgba(0.42f, 0.42f, 0.42f) : faded(0xFFFFFFFFu, a));
+        if (dead) disc(canvas, cx, cy, r, nullptr, gfx::rgba(0.08f, 0.08f, 0.09f, 0.45f));
+    } else if (kin >= 0 && kin < 4) {
+        const float size = r * 0.6f;
+        const std::string letters = kKinShort[kin];
+        controls::caps(canvas, cx - controls::capsWidth(size, letters, 0.06f) * 0.5f, cy + size * 0.36f, size,
+                       faded(kKinInk[kin], dead ? 0.4f : a), letters, 0.06f);
+    }
 }
 
 }  // namespace mu::game::capsule
