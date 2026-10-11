@@ -1833,40 +1833,25 @@ def spawn_rows(project: Path) -> dict:
     two, and picking one of them here would be the pipeline deciding which half of a spawn
     table matters.
 
-    Read here for the reason combat_rows gives: the viewer is handed build/ and nothing else,
-    and mu.db stays the one place these numbers are written down.
+    Read here for the reason combat_rows gives: the viewer is handed build/ and nothing else.
+    Each world's source/world/<w>/nests.json (sprint E3; mu.db's monster_spawns before it).
     """
-    store = project / "mu.db"
-
-    if not store.exists():
-        return {}
-
-    with sqlite3.connect(f"file:{store}?mode=ro", uri=True) as db:
-        db.row_factory = sqlite3.Row
-
-        try:
-            rows = db.execute(
-                "SELECT id, number, map, x1, x2, y1, y2, count FROM monster_spawns ORDER BY id"
-            ).fetchall()
-        except sqlite3.DatabaseError as bad:
-            print(f"  index      could not read monster_spawns ({bad}); no spawn boxes")
-            return {}
-
     found: dict = {}
 
     # The map goes with the box, because a box is a place and a place is on a map. A Spider
     # that has rows on two maps is one breed with two boxes, and whoever raises a map takes
     # the boxes whose number is that map's - see Content.Read and Viewer.Journey.
-    for row in rows:
-        found.setdefault(row["number"], []).append({
-            # The row's own id, so a box keeps its name when a monster is renamed or another
+    for row in world_manifest.nests():
+        x1, y1, x2, y2 = row["box"]
+        found.setdefault(row["breed"], []).append({
+            # The nest's own id, so a box keeps its name when a monster is renamed or another
             # is built, and so the realm raises the boxes in the table's order whoever reads
             # them - which is what makes a seeded run on the server and on the client the
             # same run.
             "id": row["id"],
             "map": row["map"],
-            "x1": row["x1"], "x2": row["x2"],
-            "y1": row["y1"], "y2": row["y2"],
+            "x1": x1, "x2": x2,
+            "y1": y1, "y2": y2,
             "count": row["count"],
         })
 

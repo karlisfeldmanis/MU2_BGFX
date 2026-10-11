@@ -50,11 +50,11 @@ Traced from ebe25845 (Queen Rainer).
    first.
 3. `tools/asset.sh <Name>`.
 4. The recipe's `combat` (level, health, damage, ranges, delays, rates, attack skill; since
-   E2: `./mu new monster` writes it from OpenMU). `sqlite3 source/mu.db`: rows in
-   `monster_spawns`, then
-   `pragma wal_checkpoint(TRUNCATE)` **(order: a write sits in the WAL)**.
-5. `pipeline/index.py source workshop`, then merge that map's spawns into `assets/index.json`
-   by hand **(order: figures before the merge leave it invisible)**, then `tools/sync_one.py`.
+   E2) and its nests in each world's `source/world/<w>/nests.json` (since E3): `./mu new
+   monster <number> --db` writes both from OpenMU.
+5. `pipeline/index.py source workshop` (it reads the nests), then merge that map's spawns into
+   `assets/index.json` by hand **(order: figures before the merge leave it invisible)**, then
+   `tools/sync_one.py`.
 6. `tools/cook.py --world <w> --only tables` for **every world**.
 7. `tools/cook.py --world <w> --only figures --monsters <Name> --threads 4`.
 8. C++, 7 files:
@@ -69,7 +69,8 @@ Traced from ebe25845 (Queen Rainer).
 **Since sprint B:** `./mu new monster <number> --db` does steps 1-4 but the materials and the
 hands, and `./mu make <Name>` steps 5-7.
 
-**Today:** 6 code files, 2 data stores (`realm_tuning.h` left the list in E1). **Goes to:** `source/monsters/<breed>/` (sprint E) and
+**Today:** 6 code files and 1 data store, the recipe and its world's `nests.json`
+(`realm_tuning.h` left the list in E1; `mu.db` holds no monster since E3). **Goes to:** `source/monsters/<breed>/` (sprint E) and
 the monster panel (I). Code only for a bespoke behaviour.
 
 ## A map

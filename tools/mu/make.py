@@ -152,6 +152,12 @@ def index_test(things):
         at = mtime(index)
         if mtime(DB) > at:
             return True, "source/mu.db is newer than the index"
+        # A world's monster nests (sprint E3) are read by the index too.
+        worlds = os.path.join(SOURCE, "world")
+        for world in sorted(os.listdir(worlds)):
+            nests = os.path.join(worlds, world, "nests.json")
+            if os.path.exists(nests) and mtime(nests) > at:
+                return True, f"{world}'s nests.json is newer than the index"
         for thing in things:
             if newest([thing.recipe, thing.glb()]) > at:
                 return True, f"{thing.name} is newer than the index"

@@ -31,11 +31,16 @@ import os
 import re
 import sqlite3
 import subprocess
+import sys
 import tempfile
 
 import sources
 from new import MUEXTRACT, UNCHOSEN, data_root, materials
 from things import ROOT, SOURCE, NotFound
+
+# pipeline/world_manifest.py: the worlds and their nests. Appended, so nothing there shadows ours.
+sys.path.append(os.path.join(ROOT, "pipeline"))
+import world_manifest  # noqa: E402
 
 DB = os.path.join(SOURCE, "mu.db")
 WEAPONS, ARMOUR = range(0, 7), range(7, 12)
@@ -90,11 +95,8 @@ def sheets_for(obj, folder, prefix_unless, say):
 
 
 def world_of(map_number):
-    text = open(os.path.join(ROOT, "src", "sim", "maps.cpp")).read()
-    for name, number in re.findall(r'\{"(\w+)", (\d+),', text):
-        if int(number) == map_number:
-            return name
-    return None
+    """The world whose manifest is MU's map `map_number` (source/world/<w>/world.json)."""
+    return world_manifest.world_of_map(map_number)
 
 
 def db_row(table, key, value):
@@ -177,7 +179,6 @@ def new_monster(number, world, write, say):
         "sheets": sheets,
         "sheet_materials": {k: UNCHOSEN for k in sheets},
         "combat": stats,
-        "spawns": spawn_rows,
     }
     if cutout:
         doc["cutout"] = cutout
@@ -187,21 +188,26 @@ def new_monster(number, world, write, say):
     doc["why_this_one"] = "To write."
     write_recipe(recipe, doc, say)
 
-    # The breed's combat is its recipe's (above); mu.db keeps only the spawns (until E3).
-    existing = db_row("monster_spawns", "number", number)
+    # The breed's combat is its recipe's (above); its nests are its worlds' nests.json (E3).
+    existing = [n for n in world_manifest.nests() if n["breed"] == number]
     if existing:
-        say(f"mu.db   has spawns for {number}, kept")
+        say(f"nests   {len(existing)} of {number} already stand in nests.json, kept")
     elif write:
-        with sqlite3.connect(f"file:{DB}?mode=ro", uri=True) as db:
-            next_id = (db.execute("select max(id) from monster_spawns").fetchone()[0] or 0) + 1
-        statements = []
+        next_id = max((n["id"] for n in world_manifest.nests()), default=0) + 1
+        by_world = {}
         for i, s in enumerate(spawn_rows):
-            statements.append(("insert into monster_spawns (id, number, x1, x2, y1, y2, count, map) values (?,?,?,?,?,?,?,?)",
-                               [next_id + i, number, s["x1"], s["x2"], s["y1"], s["y2"], s["count"], s["map"]]))
-        write_db(statements)
-        say(f"mu.db   {len(spawn_rows)} spawns of {number} written, checkpointed")
+            home = world_of(s["map"])
+            if home is None:
+                raise NotFound(f"map {s['map']} has no world manifest for {number}'s nest")
+            by_world.setdefault(home, []).append({"id": next_id + i, "breed": number,
+                                                  "box": [s["x1"], s["y1"], s["x2"], s["y2"]],
+                                                  "count": s["count"]})
+        for home, rows in by_world.items():
+            path = world_manifest.nests_path(home)
+            path.write_text(world_manifest.format_nests(world_manifest.world_nests(home) + rows))
+            say(f"nests   {len(rows)} of {number} written to {os.path.relpath(path, ROOT)}")
     else:
-        say(f"mu.db   has no spawns of {number}: --db writes its {len(spawn_rows)}")
+        say(f"nests   none of {number} yet: --db writes its {len(spawn_rows)} into nests.json")
     say(f"CHOOSE  a material per sheet ({', '.join(sheets)}) from: {', '.join(materials())}")
     say(f"then    ./mu make {name}")
     return True, {"recipe": os.path.relpath(recipe, ROOT), "world": world, "stats": stats,

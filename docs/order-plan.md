@@ -750,6 +750,35 @@ output (decided earlier the same day).
   - The real recook against HEAD's version 9: the same, but Lorencia's world part, which
     9435097e (the Broker's move) changed.
 
+### Slice E3: the nests out of mu.db, as done
+
+- **Each world has `source/world/<w>/nests.json`** (the user, 2026-10-12: 'Sibling nests.json'
+  over a block in world.json, which is edited by hand and would have doubled in the Lost
+  Tower): `{"id", "breed", "box": [x1, y1, x2, y2], "count"}` one nest a line, in id order.
+  1538 nests in eleven worlds, row for row from `mu.db`'s `monster_spawns`; the ids are kept,
+  because they order the nests the realm raises. Not `spawns`: placements.json already uses
+  that word for townspeople.
+- **`world_manifest.py` reads and writes them** (`nests()`, `world_nests`, `format_nests`,
+  `world_of_map`); `index.py`'s `spawn_rows` reads `nests()`. `./mu new monster --db` writes
+  the new breed's nests into its world's nests.json, and no longer copies its spawns into the
+  recipe (the Death Tree's and the Forest Orc's copies are gone). `./mu make` reindexes when a
+  nests.json is newer than the index.
+- **`monster_spawns` and `npc_spawns` are dropped from `mu.db`** (the second was never read;
+  the manifests' `npcs` replaced it in D3b). `mu.db` now holds no monster: accounts,
+  characters and their keys, items, messages and gates.
+- **A bug fixed on the way:** `new_figure.world_of` still parsed sim/maps.cpp's kMaps literal,
+  which D4a moved into the generated maps_table.inc, so `./mu new monster` without `--world`
+  found no world. It asks the manifests now.
+- **Proved:**
+  - HEAD's `spawn_rows` and `combat_rows` (on HEAD's `mu.db`) against the new ones (on the
+    nests and recipes), each in its own process: 76 breeds, 1538 nests and 112 combat rows,
+    identical in order, value and type; one changed count is caught. These are the only
+    inputs of `index.json`'s `breeds` that changed, so nothing is recooked.
+  - `mu.db`'s other nine tables unchanged, dump for dump.
+  - `./mu new monster 306` (the Death Rider) in a scratch worktree, the export stubbed and no
+    `--world`: Aida found by its spawns, a recipe with `combat` only, 39 nests appended to
+    Aida's nests.json with fresh ids, and the index sees them.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

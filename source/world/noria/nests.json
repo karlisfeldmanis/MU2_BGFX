@@ -1,0 +1,13 @@
+{
+  "about": "Where this world's monsters stand (sprint E3; mu.db's monster_spawns before it): each nest a box of tiles [x1, y1, x2, y2] holding `count` of `breed` (MU's monster number), raised in `id` order across every world. `./mu new monster --db` appends here.",
+  "nests": [
+    {"id": 10, "breed": 26, "box": [128, 0, 251, 128], "count": 155},
+    {"id": 11, "breed": 27, "box": [128, 0, 251, 128], "count": 125},
+    {"id": 12, "breed": 33, "box": [0, 128, 128, 245], "count": 125},
+    {"id": 13, "breed": 28, "box": [0, 0, 128, 128], "count": 125},
+    {"id": 14, "breed": 29, "box": [0, 0, 128, 128], "count": 125},
+    {"id": 15, "breed": 30, "box": [0, 128, 251, 245], "count": 125},
+    {"id": 16, "breed": 31, "box": [0, 128, 251, 245], "count": 125},
+    {"id": 17, "breed": 32, "box": [128, 128, 251, 245], "count": 100}
+  ]
+}

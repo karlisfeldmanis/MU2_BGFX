@@ -2086,7 +2086,7 @@ def ticks_of(milliseconds, what, name, remainders):
 # stands for them. Transcribed from MU2's shared/Folk.cs `Townsfolk.Spawns`, which is OpenMU's
 # Version075/Maps/Lorencia.cs and Noria.cs NPC spawns. Each world's manifest's `npcs`
 # (source/world/<w>/world.json, docs/order-plan.md sprint D), every row with its source;
-# mu.db's npc_spawns (Lorencia alone) is not read.
+# mu.db's npc_spawns (Lorencia alone, never read) was dropped in sprint E3.
 #
 # A figure of "" is a townsperson the world's own placements already stand -- Hanzo is
 # Smith01 at 116,141 in lorencia.json, Pasi Wizard01, Baz Storage01 -- so the sim knows them

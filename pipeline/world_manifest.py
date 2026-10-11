@@ -125,3 +125,51 @@ def as_perches(value) -> dict:
 def as_operable(value) -> set:
     """The types a character poses against: the perches' own types."""
     return {int(kind) for kind in value}
+
+
+# ---- the monsters' nests (sprint E3) -------------------------------------------------------------
+# A world's nests are source/world/<w>/nests.json (mu.db's monster_spawns before it): each a box
+# of tiles holding `count` of one breed. Their ids order them across every world, which is the
+# order the realm raises them in.
+
+NESTS_ABOUT = ("Where this world's monsters stand (sprint E3; mu.db's monster_spawns before it): each "
+               "nest a box of tiles [x1, y1, x2, y2] holding `count` of `breed` (MU's monster number), "
+               "raised in `id` order across every world. `./mu new monster --db` appends here.")
+
+
+def nests_path(world: str) -> Path:
+    return WORLDS / world / "nests.json"
+
+
+def format_nests(rows: list) -> str:
+    """One nest a line, in id order: the only shape nests.json is written in."""
+    lines = [json.dumps({"id": r["id"], "breed": r["breed"], "box": list(r["box"]), "count": r["count"]})
+             for r in sorted(rows, key=lambda r: r["id"])]
+    body = ",\n    ".join(lines)
+    return ("{\n  \"about\": " + json.dumps(NESTS_ABOUT) + ",\n  \"nests\": [\n    " + body + "\n  ]\n}\n"
+            if lines else "{\n  \"about\": " + json.dumps(NESTS_ABOUT) + ",\n  \"nests\": []\n}\n")
+
+
+def world_nests(world: str) -> list:
+    path = nests_path(world)
+    return json.loads(path.read_text())["nests"] if path.exists() else []
+
+
+def nests() -> list:
+    """Every world's nests with its map number, in id order."""
+    found = []
+    for world, doc in manifests().items():
+        for row in world_nests(world):
+            found.append({**row, "map": doc["map"]})
+    ids = [row["id"] for row in found]
+    if len(ids) != len(set(ids)):
+        raise ValueError("a nest id is used twice across the worlds' nests.json")
+    return sorted(found, key=lambda row: row["id"])
+
+
+def world_of_map(number: int):
+    """The world folder whose manifest is MU's map `number`, or None."""
+    for world, doc in manifests().items():
+        if doc.get("map") == number:
+            return world
+    return None

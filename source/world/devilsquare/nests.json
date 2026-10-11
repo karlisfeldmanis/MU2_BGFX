@@ -1,0 +1,33 @@
+{
+  "about": "Where this world's monsters stand (sprint E3; mu.db's monster_spawns before it): each nest a box of tiles [x1, y1, x2, y2] holding `count` of `breed` (MU's monster number), raised in `id` order across every world. `./mu new monster --db` appends here.",
+  "nests": [
+    {"id": 1547, "breed": 17, "box": [119, 80, 150, 115], "count": 35},
+    {"id": 1548, "breed": 15, "box": [119, 80, 150, 115], "count": 35},
+    {"id": 1549, "breed": 5, "box": [119, 80, 150, 115], "count": 35},
+    {"id": 1550, "breed": 13, "box": [119, 80, 150, 115], "count": 35},
+    {"id": 1551, "breed": 8, "box": [119, 80, 150, 115], "count": 35},
+    {"id": 1552, "breed": 36, "box": [119, 80, 150, 115], "count": 35},
+    {"id": 1553, "breed": 18, "box": [119, 80, 150, 115], "count": 5},
+    {"id": 1554, "breed": 10, "box": [121, 152, 151, 184], "count": 35},
+    {"id": 1555, "breed": 39, "box": [121, 152, 151, 184], "count": 35},
+    {"id": 1556, "breed": 34, "box": [121, 152, 151, 184], "count": 35},
+    {"id": 1557, "breed": 41, "box": [121, 152, 151, 184], "count": 35},
+    {"id": 1558, "breed": 40, "box": [121, 152, 151, 184], "count": 35},
+    {"id": 1559, "breed": 35, "box": [121, 152, 151, 184], "count": 35},
+    {"id": 1560, "breed": 49, "box": [121, 152, 151, 184], "count": 5},
+    {"id": 1561, "breed": 41, "box": [49, 138, 79, 173], "count": 35},
+    {"id": 1562, "breed": 37, "box": [49, 138, 79, 173], "count": 35},
+    {"id": 1563, "breed": 35, "box": [49, 138, 79, 173], "count": 35},
+    {"id": 1564, "breed": 34, "box": [49, 138, 79, 173], "count": 35},
+    {"id": 1565, "breed": 64, "box": [49, 138, 79, 173], "count": 35},
+    {"id": 1566, "breed": 65, "box": [49, 138, 79, 173], "count": 35},
+    {"id": 1567, "breed": 67, "box": [49, 138, 79, 173], "count": 5},
+    {"id": 1568, "breed": 64, "box": [53, 74, 83, 109], "count": 35},
+    {"id": 1569, "breed": 65, "box": [53, 74, 83, 109], "count": 35},
+    {"id": 1570, "breed": 60, "box": [53, 74, 83, 109], "count": 35},
+    {"id": 1571, "breed": 69, "box": [53, 74, 83, 109], "count": 35},
+    {"id": 1572, "breed": 57, "box": [53, 74, 83, 109], "count": 35},
+    {"id": 1573, "breed": 70, "box": [53, 74, 83, 109], "count": 35},
+    {"id": 1574, "breed": 66, "box": [53, 74, 83, 109], "count": 5}
+  ]
+}
