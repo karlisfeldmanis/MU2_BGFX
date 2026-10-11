@@ -253,11 +253,12 @@ void Broker::rebuild(Play& play, Stage* stage) {
             canvas_.rect(P({b.x + 6.0f, b.bottom(), b.w - 12.0f, 0.6f}), kHair);
             if (row.id == chosen_) chosenWash(b);
             else if (state(Hit::Row, r).lift > 0.0f) canvas_.rect(P(b), kHover);
-            picture({b.x + 6.0f, b.y + 2.0f, 20.0f, 20.0f}, row.what);
+            // Words only, no picture and no card on hover: the card beside shows the chosen one
+            // (the user, 2026-10-11).
             const bool alike = (row.flags & net::BrokerRow::Alike) != 0;
-            const float named = text(b.x + 32.0f, b.y + 10.5f, 13.5f, inkOf(tables, row.what), nameOf(tables, row.what));
-            if (row.flags & net::BrokerRow::Watched) star(canvas_, x + (b.x + 38.0f) * k + named, y + (b.y + 6.5f) * k, 4.5f * u, kGold);
-            text(b.x + 32.0f, b.y + 20.5f, 11.0f, style::kAshInk,
+            const float named = text(b.x + 8.0f, b.y + 10.5f, 13.5f, inkOf(tables, row.what), nameOf(tables, row.what));
+            if (row.flags & net::BrokerRow::Watched) star(canvas_, x + (b.x + 14.0f) * k + named, y + (b.y + 6.5f) * k, 4.5f * u, kGold);
+            text(b.x + 8.0f, b.y + 20.5f, 11.0f, style::kAshInk,
                  alike ? std::to_string(row.count) + " on sale" : traits(row.what));
             const bool own = (row.flags & net::BrokerRow::Own) != 0;
             if (!alike) {
@@ -588,18 +589,6 @@ void Broker::rebuild(Play& play, Stage* stage) {
         stage->stand(standing, kWide, kTall);
         const gfx::Art art = stage->picture();
         if (art.valid()) canvas_.image(art, P({0.0f, 0.0f, kWide, kTall}));
-    }
-
-    // The item card over the row under the pointer: the bag's own card.
-    if (hovered_ >= 0 && size_t(hovered_) < spots_.size() && pressed_ < 0) {
-        const Spot& s = spots_[size_t(hovered_)];
-        sim::Held what;
-        if (s.hit == Hit::Row && size_t(s.index) < page_.rows.size()) what = page_.rows[size_t(s.index)].what;
-        if (!what.empty()) {
-            tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
-            if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
-            tip::draw(tip_, sheet, P(s.box), screenW_, screenH_);
-        }
     }
 }
 
