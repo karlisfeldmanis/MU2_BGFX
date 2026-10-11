@@ -1127,5 +1127,22 @@
       "poison": 9
     },
     "note": "Resistance: Tarkan's seven (WZO Monster.txt:55-74, = OpenMU Version095d Maps/Tarkan.cs read the same way; docs/tarkan-port.md A 4.2). The two bosses' fire 15 and 17 is not carried. Drops: Tarkan's: MoneyRate 30 for all seven, twice the others', and MaxItemLevel 3; RegTime 10 for the three weakest, 20 for the Tantalos and the Beam Knight, 150 for the two bosses (WZO Monster.txt:55-74; docs/tarkan-port.md A 4.2)."
+  },
+  "combat": {
+    "level": 80,
+    "health": 17000,
+    "minimum_damage": 280,
+    "maximum_damage": 330,
+    "defense": 215,
+    "move_range": 3,
+    "attack_range": 4,
+    "view_range": 7,
+    "move_delay": 400,
+    "attack_delay": 1400,
+    "attack_rate": 446,
+    "defense_rate": 150,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
   }
 }

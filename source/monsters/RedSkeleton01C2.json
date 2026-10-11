@@ -18,5 +18,22 @@
  "plus": {
   "right_hand": 8
  },
- "plus_from": "MuMain gives the Chaos Dragon Axe +8 while !int((7 + (WorldActive - WD_11BLOODCASTLE_END)) / 3) (ZzzCharacter.cpp, the MONSTER_RED_SKELETON_KNIGHT case): castles 1 and 2; +0 from castle 3."
+ "plus_from": "MuMain gives the Chaos Dragon Axe +8 while !int((7 + (WorldActive - WD_11BLOODCASTLE_END)) / 3) (ZzzCharacter.cpp, the MONSTER_RED_SKELETON_KNIGHT case): castles 1 and 2; +0 from castle 3.",
+  "combat": {
+    "level": 64,
+    "health": 7000,
+    "minimum_damage": 155,
+    "maximum_damage": 160,
+    "defense": 120,
+    "move_range": 3,
+    "attack_range": 1,
+    "view_range": 3,
+    "move_delay": 400,
+    "attack_delay": 2000,
+    "attack_rate": 360,
+    "defense_rate": 110,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+  }
 }

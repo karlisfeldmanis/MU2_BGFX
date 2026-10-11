@@ -16,5 +16,22 @@
  "right_hand": "Axe09",
  "right_hand_bone": "attack02",
  "left_hand": "Axe09",
- "left_hand_bone": "attack01"
+ "left_hand_bone": "attack01",
+  "combat": {
+    "level": 86,
+    "health": 25000,
+    "minimum_damage": 390,
+    "maximum_damage": 420,
+    "defense": 280,
+    "move_range": 3,
+    "attack_range": 1,
+    "view_range": 3,
+    "move_delay": 400,
+    "attack_delay": 2000,
+    "attack_rate": 580,
+    "defense_rate": 195,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+  }
 }

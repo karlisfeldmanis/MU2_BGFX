@@ -21,5 +21,22 @@
   "hands_from": "MODEL_ELVEN_BOW is Item/Bow03.bmd, cooked. MU sets it in Weapon[1], the bow hand, as it does for every bow; here it is right_hand, as the Elf Archer guards declare theirs, because the cook reads the stance off that field and the player rig's bow clips put a bow where a bow is held.",
   "shoots_from": "AttackRange 5 and no skill: its blow is an arrow. Play::shoots looses a Wood arrow for a monster standing in the bow stance, as for a guard.",
   "death_from": "He does not fall over. CharacterDie in ZzzCharacter.cpp tests the sub-type before it reaches SetAction:\n\n    if (o->SubType >= MODEL_SKELETON1 && o->SubType <= MODEL_SKELETON3)\n    {\n        o->Live = false;\n        CreateEffect(MODEL_BONE1, o->Position, o->Angle, o->Light);\n        for (int j = 0; j < 10; j++)\n            CreateEffect(MODEL_BONE2, o->Position, o->Angle, o->Light);\n        PlayBuffer(SOUND_BONE2, o);\n    }\n    else\n        SetAction(&c->Object, PLAYER_DIE1);\n\nThe model is switched off outright and eleven loose bones are thrown where it stood - one large Bone01 and ten small Bone02, out of Data/Skill, with the clatter. He has PLAYER_DIE1 in his rig like every player-rigged thing and never plays it, which is why Crowd hands this figure no die clip at all: a death clip he cannot reach is a clip somebody would one day watch and call wrong. See assets/effects/bones and client/core/Bones.cs for the burst.",
-  "sounds_from": "MODEL_PLAYER with a skeleton SubType, as the Warrior: mBone1 on the walk and the flinch, the player's bow on the swing, mBone2 at the burst. Wired as skeletonarcher_*, the Warrior's files."
+  "sounds_from": "MODEL_PLAYER with a skeleton SubType, as the Warrior: mBone1 on the walk and the flinch, the player's bow on the swing, mBone2 at the burst. Wired as skeletonarcher_*, the Warrior's files.",
+  "combat": {
+    "level": 34,
+    "health": 1100,
+    "minimum_damage": 115,
+    "maximum_damage": 120,
+    "defense": 45,
+    "move_range": 2,
+    "attack_range": 5,
+    "view_range": 7,
+    "move_delay": 400,
+    "attack_delay": 2000,
+    "attack_rate": 170,
+    "defense_rate": 41,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+  }
 }

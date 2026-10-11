@@ -20,5 +20,22 @@
   "left_hand_bone": "bone_right",
   "hands_from": "MODEL_FALCHION is Item/Sword08.bmd and MODEL_PLATE_SHIELD Item/Shield10.bmd, both cooked. The bones are the model's: `case MODEL_HOUND: c->Weapon[0].LinkBone = 19; c->Weapon[1].LinkBone = 14` (ZzzCharacter.cpp:12056-12058) -- 19 is Bone_left and 14 bone_right, the artist's names the wrong way round again, as the plain Hound's note says.",
   "profile": "monster",
-  "sounds_from": "The Hound's model and so the Hound's five: SetMonsterSound is per model, not per breed. Wired as hellhound_*, the same files as hound_*."
+  "sounds_from": "The Hound's model and so the Hound's five: SetMonsterSound is per model, not per breed. Wired as hellhound_*, the same files as hound_*.",
+  "combat": {
+    "level": 38,
+    "health": 1400,
+    "minimum_damage": 125,
+    "maximum_damage": 130,
+    "defense": 55,
+    "move_range": 3,
+    "attack_range": 1,
+    "view_range": 4,
+    "move_delay": 400,
+    "attack_delay": 1200,
+    "attack_rate": 190,
+    "defense_rate": 45,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+  }
 }

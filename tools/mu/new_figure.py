@@ -121,9 +121,10 @@ def write_recipe(path, doc, say):
 
 # ----------------------------------------------------------------------------- monsters
 
-KIND_COLUMNS = ["number", "name", "level", "health", "minimum_damage", "maximum_damage", "defense",
-                "move_range", "attack_range", "view_range", "move_delay", "attack_delay",
-                "attack_rate", "defense_rate", "respawn_seconds", "attack_skill"]
+# A recipe's `combat` (sprint E2; mu.db's monster_kinds before it), as OpenMU gives it.
+COMBAT_KEYS = ["level", "health", "minimum_damage", "maximum_damage", "defense",
+               "move_range", "attack_range", "view_range", "move_delay", "attack_delay",
+               "attack_rate", "defense_rate", "respawn_seconds", "attack_skill"]
 
 
 def new_monster(number, world, write, say):
@@ -161,8 +162,8 @@ def new_monster(number, world, write, say):
     say(f"mesh    {os.path.relpath(obj, ROOT)} and its rig, every action")
     sheets, cutout = sheets_for(obj, folder, re.sub(r"\d+$", "", name).lower(), say)
 
-    stats = {k: row[k] for k in KIND_COLUMNS if k in row}
-    stats["from"] = row["from"]
+    stats = {k: row[k] for k in COMBAT_KEYS if k in row}
+    stats["note"] = f"OpenMU {row['version']} ({row['from']})."
     doc = {
         "item": name,
         "mu_name": row["name"],
@@ -175,7 +176,7 @@ def new_monster(number, world, write, say):
         "profile": "monster",
         "sheets": sheets,
         "sheet_materials": {k: UNCHOSEN for k in sheets},
-        "stats": stats,
+        "combat": stats,
         "spawns": spawn_rows,
     }
     if cutout:
@@ -186,22 +187,21 @@ def new_monster(number, world, write, say):
     doc["why_this_one"] = "To write."
     write_recipe(recipe, doc, say)
 
-    existing = db_row("monster_kinds", "number", number)
+    # The breed's combat is its recipe's (above); mu.db keeps only the spawns (until E3).
+    existing = db_row("monster_spawns", "number", number)
     if existing:
-        differ = {k: (existing[k], stats.get(k)) for k in KIND_COLUMNS if existing.get(k) != stats.get(k)}
-        say(f"mu.db   has row {number}" + (f"; differs from OpenMU (kept): {differ}" if differ else ", same as OpenMU"))
+        say(f"mu.db   has spawns for {number}, kept")
     elif write:
         with sqlite3.connect(f"file:{DB}?mode=ro", uri=True) as db:
             next_id = (db.execute("select max(id) from monster_spawns").fetchone()[0] or 0) + 1
-        statements = [(f"insert into monster_kinds ({', '.join(KIND_COLUMNS)}) values ({', '.join('?' * len(KIND_COLUMNS))})",
-                       [stats.get(k) for k in KIND_COLUMNS])]
+        statements = []
         for i, s in enumerate(spawn_rows):
             statements.append(("insert into monster_spawns (id, number, x1, x2, y1, y2, count, map) values (?,?,?,?,?,?,?,?)",
                                [next_id + i, number, s["x1"], s["x2"], s["y1"], s["y2"], s["count"], s["map"]]))
         write_db(statements)
-        say(f"mu.db   row {number} and {len(spawn_rows)} spawns written, checkpointed")
+        say(f"mu.db   {len(spawn_rows)} spawns of {number} written, checkpointed")
     else:
-        say(f"mu.db   has no row {number}: --db writes it and its {len(spawn_rows)} spawns")
+        say(f"mu.db   has no spawns of {number}: --db writes its {len(spawn_rows)}")
     say(f"CHOOSE  a material per sheet ({', '.join(sheets)}) from: {', '.join(materials())}")
     say(f"then    ./mu make {name}")
     return True, {"recipe": os.path.relpath(recipe, ROOT), "world": world, "stats": stats,

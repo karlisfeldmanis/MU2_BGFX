@@ -18,25 +18,6 @@
     "treemonster01": "foliage",
     "treemonster02": "bark"
   },
-  "stats": {
-    "number": 308,
-    "name": "Death Tree",
-    "level": 72,
-    "health": 10000,
-    "minimum_damage": 248,
-    "maximum_damage": 272,
-    "defense": 187,
-    "move_range": 4,
-    "attack_range": 1,
-    "view_range": 5,
-    "move_delay": 450,
-    "attack_delay": 1400,
-    "attack_rate": 362,
-    "defense_rate": 120,
-    "respawn_seconds": 10,
-    "attack_skill": null,
-    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:439"
-  },
   "spawns": [
     {
       "map": 33,
@@ -1076,5 +1057,22 @@
         0.069
       ]
     }
-  ]
+  ],
+  "combat": {
+    "level": 72,
+    "health": 10000,
+    "minimum_damage": 248,
+    "maximum_damage": 272,
+    "defense": 187,
+    "move_range": 4,
+    "attack_range": 1,
+    "view_range": 5,
+    "move_delay": 450,
+    "attack_delay": 1400,
+    "attack_rate": 362,
+    "defense_rate": 120,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+  }
 }

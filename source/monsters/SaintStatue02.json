@@ -500,5 +500,22 @@
   ],
   "islands_from": "21 islands: 0-9 (448 triangles) the statue, rock, as SaintStatue01's; 10-20 the baked weapon, painted_steel. They arrived as skin, the monster profile's default.",
   "summoned_in": "bloodcastle",
-  "summoned_in_from": "It spawns on no map of ours: a run raises it on the statue's one nest in place of SaintStatue01's, one of the three at random (Realm::setCastle)."
+  "summoned_in_from": "It spawns on no map of ours: a run raises it on the statue's one nest in place of SaintStatue01's, one of the three at random (Realm::setCastle).",
+  "combat": {
+    "level": 0,
+    "health": 65000,
+    "minimum_damage": 0,
+    "maximum_damage": 0,
+    "defense": 0,
+    "move_range": 0,
+    "attack_range": 0,
+    "view_range": 0,
+    "move_delay": 400,
+    "attack_delay": 2000,
+    "attack_rate": 0,
+    "defense_rate": 0,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+  }
 }

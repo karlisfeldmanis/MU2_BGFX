@@ -690,5 +690,22 @@
       "ice": 4,
       "poison": 5
     }
+  },
+  "combat": {
+    "level": 52,
+    "health": 4000,
+    "minimum_damage": 155,
+    "maximum_damage": 165,
+    "defense": 90,
+    "move_range": 3,
+    "attack_range": 4,
+    "view_range": 7,
+    "move_delay": 400,
+    "attack_delay": 1400,
+    "attack_rate": 260,
+    "defense_rate": 76,
+    "respawn_seconds": 50,
+    "attack_skill": 11,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
   }
 }

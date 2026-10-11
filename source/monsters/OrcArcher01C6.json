@@ -17,5 +17,22 @@
  "right_hand_bone": "hand_bofdgne01",
  "plus": {
   "right_hand": 1
- }
+ },
+  "combat": {
+    "level": 81,
+    "health": 20000,
+    "minimum_damage": 320,
+    "maximum_damage": 350,
+    "defense": 270,
+    "move_range": 3,
+    "attack_range": 5,
+    "view_range": 7,
+    "move_delay": 400,
+    "attack_delay": 1600,
+    "attack_rate": 520,
+    "defense_rate": 160,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
+  }
 }

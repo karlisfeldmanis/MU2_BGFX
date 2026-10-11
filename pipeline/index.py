@@ -1632,7 +1632,9 @@ def worlds(root: Path, build: Path) -> list[dict]:
     return found
 
 
-#: The columns of monster_kinds a fight actually reads, in the order Breed declares them.
+#: The columns of a recipe's `combat` a fight actually reads, in the order Breed declares them
+#: (mu.db's monster_kinds until sprint E2). respawn_seconds is read by nothing in the sim, whose
+#: respawn is the recipe's rules.drops.regen; it goes in E2b.
 COMBAT_COLUMNS = (
     "level", "health", "minimum_damage", "maximum_damage", "defense",
     "move_range", "attack_range", "view_range", "move_delay", "attack_delay",
@@ -1782,45 +1784,40 @@ def strides(rig: Path) -> dict:
 
 
 def combat_rows(project: Path) -> dict:
-    """Every monster's combat row from the server's store, by monster number.
+    """Every monster's combat row, by monster number: its recipe's `combat`
+    (source/monsters/<Name>.json, sprint E2; mu.db's monster_kinds before it), or
+    source/monsters/unbuilt.json's for a breed with no recipe yet. The label is the recipe's
+    `mu_name`.
 
-    Read here rather than by the viewer because the viewer is given build/ and nothing else,
-    and because putting a SQLite driver inside a Godot project to read thirteen integers
-    would be a native dependency in an exported application for no reason. mu.db stays the
-    one place these numbers are written down; this copies them to where the client can see
-    them, which is what a game does with its monster table anyway.
-
-    A missing database is not an error. Most of what this pipeline builds has nothing to do
-    with combat, and refusing to write an index because the server's store is not there
-    would make the whole viewer depend on it.
+    Read here rather than by the viewer because the viewer is given build/ and nothing else.
+    A breed with no `combat` has no row, and the server raises no breed it has no row for.
     """
-    store = project / "mu.db"
+    folder = project / "monsters"
+    rows = {}
 
-    if not store.exists():
-        return {}
+    def take(number, name, combat):
+        # `or 0` rather than the value, for attack_skill's sake: it may be null, and a null in
+        # the index reaches the reader as a JSON null where every other number is a number.
+        # See COMBAT_COLUMNS.
+        rows[number] = {"name": name, **{c: (combat.get(c) or 0) for c in COMBAT_COLUMNS}}
 
-    with sqlite3.connect(f"file:{store}?mode=ro", uri=True) as db:
-        db.row_factory = sqlite3.Row
-
+    if not folder.is_dir():
+        return rows
+    for path in sorted(folder.glob("*.json")):
+        if path.name.endswith(".rig.json") or path.name == "unbuilt.json":
+            continue
         try:
-            rows = db.execute(
-                f"SELECT number, name, {', '.join(COMBAT_COLUMNS)} FROM monster_kinds"
-            ).fetchall()
-        except sqlite3.DatabaseError as bad:
-            print(f"  index      could not read monster_kinds ({bad}); no combat rows")
-            return {}
-
-    return {
-        row["number"]: {
-            "name": row["name"],
-
-            # `or 0` rather than the value, for attack_skill's sake: it is the one column
-            # that may be NULL, and a null in the index reaches the reader as a JSON null
-            # where every other number is a number. See COMBAT_COLUMNS.
-            **{c: (row[c] or 0) for c in COMBAT_COLUMNS},
-        }
-        for row in rows
-    }
+            document = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if "combat" in document and "object_type" in document:
+            take(document["object_type"], document.get("mu_name", ""), document["combat"])
+    unbuilt = folder / "unbuilt.json"
+    if unbuilt.exists():
+        for one in json.loads(unbuilt.read_text())["breeds"]:
+            if "combat" in one:
+                take(one["number"], one["name"], one["combat"])
+    return rows
 
 
 def spawn_rows(project: Path) -> dict:
@@ -2341,7 +2338,7 @@ def main() -> None:
     root, build = Path(sys.argv[1]), Path(sys.argv[2])
     characters, objects, monsters = [], [], []
 
-    # mu.db sits inside source/ itself, beside the recipes it is read with.
+    # The monsters' combat is their recipes'; mu.db (spawns) sits in source/ beside them.
     combat = combat_rows(root.resolve())
     spawns = spawn_rows(root.resolve())
 

@@ -49,7 +49,9 @@ Traced from ebe25845 (Queen Rainer).
 2. `source/monsters/<Name>.json` by hand. Read MuMain's code for its effects, sounds and lights
    first.
 3. `tools/asset.sh <Name>`.
-4. `sqlite3 source/mu.db`: rows in `monster_kinds` and `monster_spawns`, then
+4. The recipe's `combat` (level, health, damage, ranges, delays, rates, attack skill; since
+   E2: `./mu new monster` writes it from OpenMU). `sqlite3 source/mu.db`: rows in
+   `monster_spawns`, then
    `pragma wal_checkpoint(TRUNCATE)` **(order: a write sits in the WAL)**.
 5. `pipeline/index.py source workshop`, then merge that map's spawns into `assets/index.json`
    by hand **(order: figures before the merge leave it invisible)**, then `tools/sync_one.py`.

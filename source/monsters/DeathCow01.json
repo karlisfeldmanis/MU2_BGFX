@@ -544,5 +544,22 @@
       "poison": 5
     },
     "note": "Resistance: The Lost Tower's eight (Version075/Maps/LostTower.cs, every breed's own rows, OpenMU's poison and ice read the other way about as above; WZD Monster.txt agrees). Drops: The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md, Decision 3: the user kept WebZen's, 2026-10-01)."
+  },
+  "combat": {
+    "level": 57,
+    "health": 4500,
+    "minimum_damage": 170,
+    "maximum_damage": 180,
+    "defense": 110,
+    "move_range": 3,
+    "attack_range": 1,
+    "view_range": 7,
+    "move_delay": 400,
+    "attack_delay": 1600,
+    "attack_rate": 285,
+    "defense_rate": 85,
+    "respawn_seconds": 10,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
   }
 }

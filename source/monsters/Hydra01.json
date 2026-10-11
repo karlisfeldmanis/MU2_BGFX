@@ -3976,5 +3976,22 @@
     },
     "bulk": 1,
     "note": "Resistance: Atlans's seven (Version075/Maps/Atlans.cs, read the same way; WZO Monster.txt agrees). Drops: Atlans's: MoneyRate 14 and MaxItemLevel 3 for all seven, RegTime 8 for the first three, 15 for the elite and 150 for the Hydra (WZO Monster.txt:39-72; docs/atlans-port.md 4.2)."
+  },
+  "combat": {
+    "level": 74,
+    "health": 19000,
+    "minimum_damage": 250,
+    "maximum_damage": 310,
+    "defense": 200,
+    "move_range": 3,
+    "attack_range": 4,
+    "view_range": 7,
+    "move_delay": 400,
+    "attack_delay": 1400,
+    "attack_rate": 430,
+    "defense_rate": 125,
+    "respawn_seconds": 150,
+    "attack_skill": 50,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. respawn_seconds is read by nothing in the sim, whose respawn is rules.drops.regen; it goes in E2b."
   }
 }

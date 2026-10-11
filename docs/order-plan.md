@@ -713,6 +713,28 @@ output (decided earlier the same day).
     failed), server_test 27 of 27.
   - Live: three netbots and a client, every link "none disagreed".
 
+### Slice E2a: combat out of mu.db, as done
+
+- **Each recipe has `combat`:** level, health, minimum and maximum damage, defense, move,
+  attack and view range, move and attack delay, attack and defense rate, attack skill, and
+  (for now) `respawn_seconds`, moved row for row from `mu.db`'s `monster_kinds`; 110 recipes,
+  the Yeti's in `unbuilt.json`. The Death Tree's `stats` (from `./mu new monster`) became its
+  `combat`. Labels stayed the recipes' `mu_name`, which equalled every row's `name`.
+- **`index.py` `combat_rows` reads the recipes** (and unbuilt.json), not `mu.db`.
+  `./mu new monster` writes `combat` and, with `--db`, only the spawns.
+- **`monster_kinds` is dropped from `mu.db`** (the user, 2026-10-11: 'Drop the table'); the
+  other eleven tables are unchanged, dump for dump.
+- **Proved:**
+  - HEAD's `combat_rows` on HEAD's `mu.db` against the new one on the new recipes: 111 rows,
+    1665 fields, 0 differ in value or type; one changed number is caught. That is the only
+    function of `index.py` that changed, so `index.json`'s `breeds` and the cooked `.mur`
+    kinds are the same, and nothing needs a recook.
+  - `./mu new monster 307` (the Forest Orc, in a scratch worktree, the export stubbed): a recipe
+    with `combat` and `spawns`, 36 spawns in `mu.db`, and `combat_rows` finds it.
+- **Next, E2b:** `respawn_seconds` is read by nothing in the sim (the respawn is
+  `rules.drops.regen`): drop it from the recipes, the `.mur` format and `MonsterKind`, and
+  recook every world.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:
