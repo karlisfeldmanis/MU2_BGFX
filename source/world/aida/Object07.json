@@ -1,0 +1,48 @@
+{
+  "item": "Object07",
+  "mu_name": "Object07",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 6,
+  "placements": 427,
+  "profile": "world",
+  "sheets": {
+    "Pool003": "ai_pool003.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "Pool003": "foliage"
+  },
+  "material_note": "Pool003: a leafy shrub cut out of an alpha sheet, a lighter green: foliage.",
+  "cutout": [
+    "Pool003"
+  ],
+  "cutout_from": "Pool003.OZT carries a real alpha channel, as decode_texture reports it (41% cut away).",
+  "play_speed_from": "No arm in MoveAidaObject sets its Velocity (GMAida.cpp:38-95 speeds type 64 alone), so its clip plays at the 0.16 every object starts with.",
+  "why_this_one": "a shrub-mass card: one flat 2.6 m leafy square on a 7-bone, 9-key sway, placed a median 3.3 m up and tilted, draped over the big rocks and statues; the forest's hedges. Kept where MU stores it, not laid on the ground (B 4.2). Batch 2, rocks and foliage (the user, 2026-10-11: 'still was some holes', then 'Build rocks+foliage first'): the kinds that stand on the most void edge the walls leave bare, Object25 470 tiles, Object43 267, Object09 98, Object10 83 (scratchpad edges2.py). docs/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type: its clip is its whole effect.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 16,
+      "area": 65365.3,
+      "along": [
+        -128.0,
+        128.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}
