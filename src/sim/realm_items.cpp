@@ -1124,18 +1124,24 @@ void Realm::autoDrink(Body& hero) {
         const int most = mana ? hero.maxMana : hero.maxHealth;
         if (line <= 0 || most <= 0 || has * 100 >= most * line) return false;
         if (pouring(mana).left > 0) return false;
-        int best = -1, bestWorth = -1;
-        for (int slot = kWorn; slot < kSlots; ++slot) {
-            const Held& one = me().bag[slot];
-            if (one.empty()) continue;
-            const content::ItemRow& row = tables_->items[size_t(one.item)];
-            if (!(mana ? restores(row) : heals(row))) continue;
-            const int worth = row.number * 16 + one.refinement;
-            if (worth > bestWorth) best = slot, bestWorth = worth;
-        }
+        const int best = autoDrinkSlot(mana);
         return best >= 0 && useItem(best);
     };
     if (!drinks(false)) drinks(true);
+}
+
+int Realm::autoDrinkSlot(bool mana) const {
+    if (!tables_) return -1;
+    int best = -1, bestWorth = -1;
+    for (int slot = kWorn; slot < kSlots; ++slot) {
+        const Held& one = me().bag[slot];
+        if (one.empty()) continue;
+        const content::ItemRow& row = tables_->items[size_t(one.item)];
+        if (!(mana ? restores(row) : heals(row))) continue;
+        const int worth = row.number * 16 + one.refinement;
+        if (worth > bestWorth) best = slot, bestWorth = worth;
+    }
+    return best;
 }
 
 // What a death leaves: one roll against three groups, rarest first, each taking its own chance

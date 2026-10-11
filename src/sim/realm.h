@@ -924,6 +924,9 @@ public:
     // His auto-drink (sim::AutoDrink): set as asked, each held to 0..kAutoDrinkMost, and read.
     void setAutoDrink(int health, int mana);
     AutoDrink autoDrink() const { return me().autoDrink; }
+    // The bag slot auto-drink would drink from for a pool -- its strongest potion of that pool --
+    // or -1 when he carries none. The bag's dock names it, so the two cannot disagree.
+    int autoDrinkSlot(bool mana) const;
     // A jewel let go over a thing: the Bless or the Soul, from a bag slot, onto a thing carried
     // or worn. Refused, whole and silent, where `refinable` says no. Otherwise the jewel is
     // spent whatever the roll gives, and the thing comes back at its new plus: OpenMU's

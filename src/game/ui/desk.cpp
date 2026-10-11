@@ -900,8 +900,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bag_.carrying(banking_ && chest_.dragging()   ? &play.realm().vault()[chest_.dragged()]
                       : mixing_ && mixer_.dragging() ? &play.realm().machine()[mixer_.dragged()]
                                                      : nullptr);
+        // The auto-drink dock stands in the column beside the bag, which a counter, the vault, a
+        // trade or the machine takes while it is up.
+        bag_.dockRoom(!trading_ && !banking_ && !dealing_ && !mixing_);
         bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
                     play.realm(), pointer, bagStage_, &asked);
+        if (asked.toggleDock) click();
+        // A line set on the dock is a request; the dock redraws when the realm takes it.
+        if (asked.autoHealth >= 0) {
+            play.setAutoDrink(asked.autoHealth, asked.autoMana);
+            click();
+        }
         // A move is ReceiveEquipmentItem, which ends its success branch on SOUND_GET_ITEM01 --
         // MU's equip sound is the pickup's -- and a use refused is iButtonError. A use that goes
         // through is heard as the potion going down, off the realm's Drank.

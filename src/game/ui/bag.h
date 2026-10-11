@@ -41,6 +41,10 @@ struct BagRequests {
     int use = -1;                   // a right-click on a carried thing
     int repair = -1;                 // a click on one while the counter's repair is on
     bool toggleMending = false;      // the foot's hammer: repair mode on or off
+    // A line set on the auto-drink dock: both lines as they are asked to be, in percent, 0 for
+    // never (sim::AutoDrink). -1 when nothing was clicked.
+    int autoHealth = -1, autoMana = -1;
+    bool toggleDock = false;         // the foot's bottle: the dock opened or closed
     int outside = -1;                // a drag let go outside the window: the desk decides where
     float outsideX = 0.0f, outsideY = 0.0f;
     bool close = false;
@@ -57,6 +61,9 @@ public:
     // The repair mode a mending counter turns on (CNewUIMyInventory::SetRepairMode): a click
     // mends the thing under it instead of lifting it, and its card leads with the cost.
     void setMending(bool on) { mending_ = on; }
+    // Whether the column beside the bag is free for the auto-drink dock: not while a counter,
+    // the vault, a trade or the machine stands there. Set before update.
+    void dockRoom(bool free) { dockRoom_ = free; }
 
     // The stage the tooltip's own picture is taken on: one item, at rest, its own size.
     // Shared with the other windows -- only one tip is up at a time.
@@ -108,6 +115,11 @@ private:
         bool overHammer = false, pressingHammer = false;
         bool bare = false;
         bool archer = false;
+        bool docked = false;
+        int overDock = -1, pressingDock = -1;
+        bool overBottle = false, pressingBottle = false;
+        int autoHealth = 0, autoMana = 0;
+        int32_t nextHealth = -1, nextMana = -1;
         bool operator==(const Contents& o) const;
     };
     void rebuild(const sim::Realm& realm, Stage* stage);
@@ -117,6 +129,12 @@ private:
         return bare_ && slot == sim::kHelm ? -1 : slot;
     }
     gfx::Box itemBox(const content::Tables& tables, int slot, const sim::Held& what) const;
+    // The auto-drink dock, beside the bag: shown, and what in it is under a point in the bag's
+    // own units (dockAt's codes: 0 to 9 the health line's Off and nine steps, 10 to 19 the
+    // mana's, -1 nothing).
+    bool dockShown() const { return docked_ && dockRoom_; }
+    static int dockAt(float ux, float uy);
+    void drawDock(const sim::Realm& realm, float x, float y);
 
     gfx::Canvas canvas_;
     gfx::Canvas tip_;
@@ -142,6 +160,13 @@ private:
     bool bare_ = false;
     // The Fairy Elf's left hand holds her quiver, and its ghost is one (ghostArt).
     bool archer_ = false;
+    // **The auto-drink dock** (the user, 2026-10-11, proposal A: "A bottle in the foot opens a
+    // dock"): the foot's bottle opens it against the bag's outer side, on the foot rule, so the
+    // bag itself keeps its 429. Closed at start; hidden, not closed, while its column is taken.
+    bool docked_ = false;
+    bool dockRoom_ = true;
+    bool overBottle_ = false, pressingBottle_ = false;
+    int overDock_ = -1, pressingDock_ = -1;
     std::vector<Standing> standing_;
     uint64_t rebuilds_ = 0;
 };

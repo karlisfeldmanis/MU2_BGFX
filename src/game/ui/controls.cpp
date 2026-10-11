@@ -417,6 +417,20 @@ void glyph(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float
             }
             break;
         }
+        case Glyph::Bottle: {
+            // The bag's auto-drink: a round flask on a short neck under a lip, filled.
+            const float r = s * 0.17f, by = cy + s * 0.07f;
+            float xy[32];
+            for (int i = 0; i < 16; ++i) {
+                const float a = float(i) * 6.2831853f / 16.0f;
+                xy[i * 2] = cx + std::cos(a) * r;
+                xy[i * 2 + 1] = by + std::sin(a) * r;
+            }
+            canvas.polygon(nullptr, xy, nullptr, 16, ink);
+            canvas.rect({cx - s * 0.05f, by - r - s * 0.12f, s * 0.1f, s * 0.14f}, ink);
+            canvas.rect({cx - s * 0.08f, by - r - s * 0.15f, s * 0.16f, std::max(1.0f, t)}, ink);
+            break;
+        }
         case Glyph::Undo: {
             // An arrow turning back on itself: most of a ring open at the left, and a solid head
             // at its upper end pointing down into the gap. Feathered, both of it, because the

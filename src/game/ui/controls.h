@@ -78,7 +78,7 @@ void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, K
 void tab(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, bool chosen,
          const State& state, float u);
 
-enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo };
+enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo, Bottle };
 // A small square button (close, spend) or an icon square (the coins, the hammers). `red` is the
 // spend's look; `on` is a toggle held down, the repair mode.
 void square(gfx::Canvas& canvas, const gfx::Box& box, Glyph glyph, const State& state, float u,
