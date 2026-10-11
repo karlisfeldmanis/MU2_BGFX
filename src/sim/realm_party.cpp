@@ -37,6 +37,11 @@ void Realm::partyInView(const Body& dead, const Body& earner, std::vector<Body*>
     if (std::find(out->begin(), out->end(), &earner) == out->end()) {
         out->push_back(&bodies_[size_t(&earner - bodies_.data())]);
     }
+    // Past the gap below the highest of them: nothing (kPartyGap), the kill's own earner too --
+    // else the high one weakens it and the low one lands the blow.
+    int top = 0;
+    for (const Body* one : *out) top = std::max(top, one->level);
+    std::erase_if(*out, [&](const Body* one) { return one->level < top - kPartyGap; });
 }
 
 void Realm::payKill(const Body& dead, Body& earner) {
@@ -47,7 +52,10 @@ void Realm::payKill(const Body& dead, Body& earner) {
         return int32_t(experience * kExperienceRate * double(100 + to.excel.moreExperience) / 100.0);
     };
     if (view.size() <= 1) {
-        gain(earner, rated(earner, killExperience(dead.level, earner.level)));
+        // Alone in view, or the only one left of it past the gap: his own kill's worth.
+        Body& only = view.empty() ? earner : *view.front();
+        For his(*this, only);
+        gain(only, rated(only, killExperience(dead.level, only.level)));
         return;
     }
     int totalLevel = 0;

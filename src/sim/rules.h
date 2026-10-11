@@ -413,6 +413,13 @@ double killExperience(int killedLevel, int killerLevel);
 constexpr int kPartyMost = 5;
 constexpr float kPartyReach = 10.0f;
 constexpr double kFullPartyBonus = 1.1;
+// **The level gap** (the user, 2026-10-11: "do we have party lvl gap rules? that char which is
+// much higher lvl cant boost low lvl?", then "A hard gap"): a member more than this many levels
+// below the highest of the party near a kill shares nothing of it -- no experience, no quest
+// count -- and is not counted in its size or levels, so he dilutes no one. Ours. WebZen only
+// damped it (UPDATE_LOWLEVEL_SUPPORT_1_20051215: one 200 or more below the top counted as his
+// level + 200) and never refused the invite; neither do we.
+constexpr int kPartyGap = 100;
 // **Threat** (docs/party.md, the user's of 2026-10-09: "how tank will be able to hold threat if
 // DW does more damage?", "what about MG, he also can be tank"), ours: a tank's blow -- a knight
 // or a Magic Gladiator with his Defense guard up -- counts three times; his first on a monster

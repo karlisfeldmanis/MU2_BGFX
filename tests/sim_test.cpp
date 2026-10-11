@@ -11956,6 +11956,38 @@ void testParty(const content::Tables& tables) {
                "the wizard's share, by level, at the game's rate");
     // The Spider is counted on the wizard's quest, though the knight's blow killed it.
     checkEqual(int(realm.quest(quest).counts[0]), 1, "and the kill counts on the wizard's Marlon quest");
+
+    // **The level gap** (sim::kPartyGap): the same kill by a knight of 250 beside a wizard of his
+    // party at 100 -- past the gap -- pays the wizard nothing and counts nothing on his quest, and
+    // the knight a kill of his own.
+    sim::Realm gap;
+    check(gap.raise(&tables, 11, 131, 128, sim::Kin::DarkWizard, 100), "a gap realm raises");
+    const sim::Body* prey2 = gap.find(prey);
+    check(prey2 != nullptr && prey2->alive(), "the same Spider stands there");
+    if (prey2 == nullptr) return;
+    gap.setHeroDown(col, row, 1, 0);
+    const uint32_t low = gap.hero().id;
+    const uint32_t high = gap.join(sim::Kin::DarkKnight, 100 + sim::kPartyGap + 50, col, row);
+    sim::HeroRecord lowRecord = gap.record();
+    lowRecord.quests[quest].state = sim::QuestState::Active;
+    gap.restore(lowRecord);
+    for (uint32_t one : {low, high}) gap.command({.kind = sim::Command::Kind::PartySet, .a = 7, .target = one});
+    gap.command({.kind = sim::Command::Kind::Order, .player = high, .a = int(sim::Request::Kind::Attack), .target = prey});
+    std::map<uint32_t, int64_t> paid;
+    for (int tick = 0; tick < 400; ++tick) {
+        gap.step();
+        for (const sim::Happening& one : gap.happenings()) {
+            if (one.what == sim::What::Gained && one.audience == one.who) paid[one.who] += one.a;
+        }
+        const sim::Body* left = gap.find(prey);
+        if (left == nullptr || !left->alive()) break;
+    }
+    const sim::Body* dead = gap.find(prey);
+    check(dead != nullptr && !dead->alive(), "the knight past the gap kills it");
+    checkEqual(paid[low], int64_t(0), "a member past the gap below gets nothing of it");
+    checkEqual(paid[high], int64_t(int32_t(sim::killExperience(dead->level, 100 + sim::kPartyGap + 50) * sim::kExperienceRate)),
+               "and the knight a kill of his own, alone");
+    checkEqual(int(gap.quest(quest).counts[0]), 0, "nor does it count on the low one's quest");
 }
 
 // **A trade between two players** (sim/realm_deal.cpp): asked and answered, both offers put up,
