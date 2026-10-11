@@ -1,0 +1,377 @@
+{
+  "item": "Object30",
+  "mu_name": "Object30",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 29,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "aidaflower": "ai_aidaflower.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "aidaflower": "foliage"
+  },
+  "material_note": "aidaflower: nine flower heads, cut out: foliage.",
+  "cutout": [
+    "aidaflower"
+  ],
+  "cutout_from": "aidaflower .OZT carries a real alpha channel, as decode_texture reports it.",
+  "why_this_one": "a flat flower-bed card. Batch 5, plants (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        18.3,
+        38.3
+      ],
+      "mu_uv": [
+        0.325,
+        0.007,
+        0.64,
+        0.319
+      ],
+      "bake_uv": [
+        0.721,
+        0.752,
+        0.945,
+        0.975
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        41.6,
+        69.2
+      ],
+      "mu_uv": [
+        0.325,
+        0.007,
+        0.641,
+        0.321
+      ],
+      "bake_uv": [
+        0.705,
+        0.007,
+        0.93,
+        0.231
+      ]
+    },
+    {
+      "island": 2,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -64.3,
+        -36.4
+      ],
+      "mu_uv": [
+        0.707,
+        -0.645,
+        1.011,
+        -0.31
+      ],
+      "bake_uv": [
+        0.241,
+        0.007,
+        0.458,
+        0.247
+      ]
+    },
+    {
+      "island": 3,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -2.9,
+        25.0
+      ],
+      "mu_uv": [
+        0.325,
+        0.007,
+        0.641,
+        0.321
+      ],
+      "bake_uv": [
+        0.241,
+        0.515,
+        0.466,
+        0.739
+      ]
+    },
+    {
+      "island": 4,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        92.1,
+        120.0
+      ],
+      "mu_uv": [
+        0.707,
+        -0.645,
+        1.011,
+        -0.31
+      ],
+      "bake_uv": [
+        0.241,
+        0.261,
+        0.458,
+        0.501
+      ]
+    },
+    {
+      "island": 5,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -138.7,
+        -110.8
+      ],
+      "mu_uv": [
+        0.707,
+        -0.642,
+        1.009,
+        -0.322
+      ],
+      "bake_uv": [
+        0.007,
+        0.52,
+        0.223,
+        0.748
+      ]
+    },
+    {
+      "island": 6,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -56.1,
+        -36.1
+      ],
+      "mu_uv": [
+        0.325,
+        0.007,
+        0.641,
+        0.321
+      ],
+      "bake_uv": [
+        0.705,
+        0.261,
+        0.93,
+        0.485
+      ]
+    },
+    {
+      "island": 7,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -109.0,
+        -89.0
+      ],
+      "mu_uv": [
+        0.327,
+        0.007,
+        0.641,
+        0.319
+      ],
+      "bake_uv": [
+        0.721,
+        0.515,
+        0.945,
+        0.738
+      ]
+    },
+    {
+      "island": 8,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -57.0,
+        -37.0
+      ],
+      "mu_uv": [
+        0.707,
+        -0.645,
+        1.011,
+        -0.31
+      ],
+      "bake_uv": [
+        0.007,
+        0.266,
+        0.225,
+        0.505
+      ]
+    },
+    {
+      "island": 9,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        19.4,
+        47.0
+      ],
+      "mu_uv": [
+        0.704,
+        -0.654,
+        1.011,
+        -0.313
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.226,
+        0.251
+      ]
+    },
+    {
+      "island": 10,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -9.6,
+        18.3
+      ],
+      "mu_uv": [
+        0.707,
+        -0.645,
+        1.011,
+        -0.31
+      ],
+      "bake_uv": [
+        0.473,
+        0.007,
+        0.69,
+        0.247
+      ]
+    },
+    {
+      "island": 11,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -91.8,
+        -71.8
+      ],
+      "mu_uv": [
+        0.707,
+        -0.645,
+        1.011,
+        -0.31
+      ],
+      "bake_uv": [
+        0.473,
+        0.261,
+        0.69,
+        0.501
+      ]
+    },
+    {
+      "island": 12,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -109.6,
+        -82.0
+      ],
+      "mu_uv": [
+        0.325,
+        0.007,
+        0.641,
+        0.321
+      ],
+      "bake_uv": [
+        0.481,
+        0.515,
+        0.706,
+        0.739
+      ]
+    },
+    {
+      "island": 13,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        -31.4,
+        -11.4
+      ],
+      "mu_uv": [
+        0.328,
+        0.01,
+        0.639,
+        0.321
+      ],
+      "bake_uv": [
+        0.241,
+        0.754,
+        0.463,
+        0.976
+      ]
+    },
+    {
+      "island": 14,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        47.3,
+        67.3
+      ],
+      "mu_uv": [
+        0.713,
+        -0.643,
+        1.003,
+        -0.321
+      ],
+      "bake_uv": [
+        0.007,
+        0.763,
+        0.214,
+        0.993
+      ]
+    },
+    {
+      "island": 15,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 400.0,
+      "along": [
+        78.8,
+        98.8
+      ],
+      "mu_uv": [
+        0.328,
+        0.012,
+        0.64,
+        0.319
+      ],
+      "bake_uv": [
+        0.477,
+        0.754,
+        0.7,
+        0.973
+      ]
+    }
+  ]
+}
