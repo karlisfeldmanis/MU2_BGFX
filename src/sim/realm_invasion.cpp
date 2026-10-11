@@ -149,6 +149,7 @@ void Realm::invasionTick() {
         dragon.facing = dragon.aim =
             fm::atan2(hero.y - dragon.y, hero.x - dragon.x);
         invasion_.phase = InvasionPhase::Entering;
+        invasion_.struck = false;
         invasion_.landsAt = tick_ + (invasionNow_ ? 1 : kInvasionLandTicks);
         invasionNow_ = false;
         // Risen by the beasts' own loop on that tick (Realm::step, raiseBeast), its five idle
@@ -162,6 +163,13 @@ void Realm::invasionTick() {
     if (invasion_.phase == InvasionPhase::Entering && tick_ >= invasion_.landsAt) {
         invasion_.phase = InvasionPhase::Standing;
         invasion_.endsAt = invasion_.landsAt + kInvasionStandTicks;
+    }
+    // Struck: a player's blow, rune, poison or fire has taken its health (hurtBy, and a summon's
+    // under its owner). Its turning on a bot is not a fight begun (the user, 2026-10-11); only
+    // a wound is. Read by the raid's clock (Realm::raidTick, kInvasionUnstruckTicks).
+    if (invasion_.phase == InvasionPhase::Standing && dragon.alive() && !invasion_.struck) {
+        for (uint32_t who : dragon.hurtBy) invasion_.struck |= who != 0;
+        invasion_.struck |= dragon.health < dragon.maxHealth;
     }
     if (invasion_.phase == InvasionPhase::Standing && tick_ >= invasion_.endsAt) {
         // Its time up: gone where it stands, without a fall (CleanUpMonstersAsync), as a summon

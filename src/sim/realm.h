@@ -2093,6 +2093,7 @@ private:
         int64_t landsAt = 0;
         int64_t endsAt = 0;
         bool raining = false;  // the weather the game last said, to see a spell begin
+        bool struck = false;   // a player has taken its health since it landed
     } invasion_;
     bool invasionOwed_ = false;  // invade()'s, begun inside the next tick
     bool invasionNow_ = false;   // invade(true)'s: landing on the tick after it begins

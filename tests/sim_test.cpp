@@ -548,9 +548,19 @@ void testInvasion(const content::Tables& tables) {
                        sim::kInvasionFieldReach;
     }
     check(onField, "on one of Lorencia's three fields");
-    for (int64_t i = 0; i < sim::kInvasionStandTicks + 2; ++i) realm.step();
-    check(!realm.invader()->alive() && realm.invasionPhase() == sim::InvasionPhase::Quiet,
-          "gone when its thirty minutes are up");
+    // Nobody strikes it: three minutes after the landing it goes up, and away (the user,
+    // 2026-10-11), as it does when the raid is not won in time.
+    for (int64_t i = 0; i < sim::kInvasionUnstruckTicks - 3; ++i) realm.step();
+    check(realm.invader()->alive(), "unstruck, it stands for three minutes");
+    bool flown = false;
+    for (int64_t i = 0; i < sim::kDepartTicks + 10 && !flown; ++i) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            flown |= h.what == sim::What::Dismissed && h.who == realm.invader()->id;
+        }
+    }
+    check(flown && !realm.invader()->alive() && realm.invasionPhase() == sim::InvasionPhase::Quiet,
+          "and then flies away, without a fall");
     // Its storm still held: no new rain began, so nothing more comes.
     for (int i = 0; i < 400; ++i) realm.step();
     check(!realm.invader()->alive() && realm.invasionPhase() == sim::InvasionPhase::Quiet,
@@ -730,6 +740,16 @@ void testRaid(const content::Tables& tables) {
         }
         check(left && idle.invasionPhase() == sim::InvasionPhase::Quiet,
               "not killed in its time, it flies away and the invasion ends");
+    }
+
+    // Struck, it stays past its first three minutes: the party's blows are a fight begun.
+    {
+        sim::Realm fought;
+        raised(fought, 9);
+        const int64_t landed = fought.tick();
+        while (fought.tick() - landed < sim::kInvasionUnstruckTicks + 200) fought.step();
+        check(fought.raidStage() != sim::RaidStage::None && fought.invader()->alive(),
+              "struck, it fights on past three minutes");
     }
 
     // One seed, one fight.

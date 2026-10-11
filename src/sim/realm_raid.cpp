@@ -455,7 +455,11 @@ void Realm::raidTick() {
         minion.homeColumn = dragon.column();
         minion.homeRow = dragon.row();
     }
-    if (tick_ - raid_.landedAt >= kHardEnrage) {
+    // And not struck in its first three minutes, it leaves the same way: nobody came
+    // (sim::kInvasionUnstruckTicks; the user, 2026-10-11).
+    const bool unstruck = !invasion_.struck && tick_ - raid_.landedAt >= kInvasionUnstruckTicks;
+    if (tick_ - raid_.landedAt >= kHardEnrage || unstruck) {
+        if (unstruck) core::logf("raid: nobody struck the dragon in three minutes; it leaves");
         raid_.departing = true;
         raid_.departsAt = tick_ + kDepartTicks;
         raid_.aloft = true;
