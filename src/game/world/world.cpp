@@ -204,7 +204,7 @@ bool World::play(const std::string& assetDir, const std::string& name, uint64_t 
     // whatever the sim is about to be told he holds. mu.db's own class enumeration, which is
     // what `--kin` speaks: 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight, 3 Magic Gladiator; the
     // names are game::bareBody's.
-    const char* bare = bareBody(sim::kinValid(kin) ? sim::Kin(kin) : sim::Kin::DarkKnight, false);
+    const char* bare = bareBody(sim::kinValid(kin) ? sim::Kin(kin) : sim::Kin::DarkKnight, false, &figures_);
     const FigureBody* look = figures_.dress("Hero", bare, weapon, shield);
     // The character is put down where the camera was told to look, which is the town by
     // default and `--at` otherwise. The realm moves him to the nearest tile he may stand on.

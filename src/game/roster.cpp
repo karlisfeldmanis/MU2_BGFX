@@ -125,6 +125,11 @@ const char* bareBody(sim::Kin kin, bool second, const Figures* figures) {
                         : kin == sim::Kin::FairyElf       ? "FairyElf"
                         : kin == sim::Kin::MagicGladiator ? "MagicGladiatorBare"
                                                           : "DarkKnightBare";
+    // A world whose figure table was cooked before this class's body was is no reason to draw
+    // him as nobody: the knight's bare body, the same rig. Dungeon, Atlans, Lost Tower, Tarkan
+    // and Blood Castle were, and every Magic Gladiator in them stood invisible ('nothing cooked
+    // called MagicGladiatorBare'; recooked 2026-10-11, tools/cook.py --only figures).
+    if (figures && !figures->body(first)) first = "DarkKnightBare";
     // The Magic Gladiator has no second class, and so no second body.
     if (!second || kin == sim::Kin::MagicGladiator) return first;
     const char* promoted = kin == sim::Kin::DarkWizard ? "SoulMaster"
