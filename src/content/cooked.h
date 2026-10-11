@@ -197,7 +197,9 @@ enum class EmitterKind : uint8_t {
     // Tarkan's hidden emitters, game/world/desert_vents.h.
     SandFall = 7, SteamVent = 8, Geyser = 9, GlowSprite = 10, DustCloud = 11,
     // Icarus's cloud banks, game/world/sky_clouds.h: Cloud0 + the box's type, 0 to 5.
-    Cloud0 = 12
+    Cloud0 = 12,
+    // Aida's waterfall spray, game/world/waterfall_spray.h; `high` carries the box's Scale.
+    SprayDrops = 18, SprayBurst = 19, SprayMist = 20
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

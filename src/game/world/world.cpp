@@ -139,6 +139,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     voidClouds_.open(assetDir, name, ground_, textures);
     castleSparks_.open(assetDir, name, town_.cooked(), textures);
     desertVents_.open(assetDir, name, town_.cooked(), textures);
+    waterfallSpray_.open(assetDir, name, town_.cooked(), textures);
     skyClouds_.open(assetDir, name, town_.cooked(), textures);
     sandHaze_.open(assetDir, name, textures);
     bubbles_.open(assetDir, name, town_.cooked(), textures);
@@ -492,6 +493,7 @@ void World::shutdown() {
     voidClouds_.shutdown();
     castleSparks_.shutdown();
     desertVents_.shutdown();
+    waterfallSpray_.shutdown();
     skyClouds_.shutdown();
     sandHaze_.shutdown();
     bubbles_.shutdown();
@@ -503,6 +505,15 @@ void World::shutdown() {
     grass_.shutdown();
     town_.shutdown();
     ground_.shutdown();
+}
+
+void World::throwAround(float seconds, const float near[3], gfx::Effects& effects) {
+    voidClouds_.update(seconds, near);
+    voidClouds_.gather(effects);
+    castleSparks_.update(seconds, near);
+    castleSparks_.gather(effects);
+    waterfallSpray_.update(seconds, near);
+    waterfallSpray_.gather(effects);
 }
 
 }  // namespace mu::game

@@ -1,0 +1,51 @@
+{
+  "item": "Object66",
+  "mu_name": "Object66",
+  "mu_name_from": "aida's object slot: type N is Object{N+1}.bmd, from Data/Object34.",
+  "world": "aida",
+  "object_type": 65,
+  "placements": 3,
+  "profile": "world",
+  "sheets": {
+    "snake": "ai_snake.png"
+  },
+  "sheet_from": "Data/Object34/, decoded under the ai_ prefix by `mu new`.",
+  "sheet_materials": {
+    "snake": "chitin"
+  },
+  "material_note": "snake: green diamond scales over a grey belly: chitin, a glossy hard scale.",
+  "why_this_one": "A green stone serpent coiled in the east, 3 of them, its scales crawling. Serpents batch (the user, 2026-10-11: 'next batch'). docs/aida-port.md.",
+  "glow": {
+    "snake": {
+      "scrolls_per_second": 0.05,
+      "stream": true,
+      "axis": "u"
+    }
+  },
+  "glow_from": "RenderAidaObjectVisual, types 65 and 66 (GMAida.cpp:227-238): mesh 0 drawn again as StreamMesh, RENDER_TEXTURE, its U at -(WorldTime % 100000) * 0.00005, a sheet in 20 s, MU's usual direction, so +0.05 here. MU's second pass is unlit over the lit body; here the body's own sheet slides, lit, as Tarkan's sf2 (ours).",
+  "effects_note": "Its scale-crawl is the whole effect.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 200,
+      "area": 193313.8,
+      "along": [
+        -126.3,
+        126.3
+      ],
+      "mu_uv": [
+        -0.002,
+        0.521,
+        1.201,
+        1.521
+      ],
+      "bake_uv": [
+        -0.002,
+        0.521,
+        1.201,
+        1.521
+      ]
+    }
+  ]
+}

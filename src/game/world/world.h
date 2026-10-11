@@ -17,6 +17,7 @@
 #include "game/world/bubbles.h"
 #include "game/world/castle_sparks.h"
 #include "game/world/desert_vents.h"
+#include "game/world/waterfall_spray.h"
 #include "game/world/sky_clouds.h"
 #include "game/world/sand_haze.h"
 #include "game/world/leaves.h"
@@ -79,6 +80,9 @@ public:
     VoidClouds& voidClouds() { return voidClouds_; }
     CastleSparks& castleSparks() { return castleSparks_; }
     DesertVents& desertVents() { return desertVents_; }
+    // The void's clouds, the castle's sparks and Aida's waterfall spray: each steps and throws
+    // only round `near`, the camera's point, and adds its sprites to `effects`.
+    void throwAround(float seconds, const float near[3], gfx::Effects& effects);
     SkyClouds& skyClouds() { return skyClouds_; }
     SandHaze& sandHaze() { return sandHaze_; }
     Bubbles& bubbles() { return bubbles_; }
@@ -118,6 +122,7 @@ private:
     VoidClouds voidClouds_;
     CastleSparks castleSparks_;
     DesertVents desertVents_;
+    WaterfallSpray waterfallSpray_;
     SkyClouds skyClouds_;
     SandHaze sandHaze_;
     Bubbles bubbles_;

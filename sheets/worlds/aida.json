@@ -1,5 +1,5 @@
 {
-  "note": "Aida's light, laid over lighting.json while a character stands in Aida (game/world/maps.h). MU draws it on its default black clear and fog (SceneManager.cpp:371-402), a third of the map NoGround and undrawn (ZzzLodTerrain.cpp:2178), the ground lit by a neutral TerrainLight (walkable mean 138, 137, 139) over the darkest forest sheets ported (walkable sheet x light luminance 29 against Noria's 49, Lorencia's hue at two-thirds the saturation), with 183 flickering green and red flower lights (GMAida.cpp:58-71), sunbeams and waterfalls. So: an old mossy forest by day, the house 52-degree sun softer than Noria's so the flower lamps read, a green-grey canopy fill and a mossy bounce so the shade stays green-brown, exposure up to carry the dark paint, a faint cool forest mist (MU placed mist boxes in the ravine and never let them emit, GMAida.cpp:184-226), the grade warm in the light and a touch green in the shade, the grass lush and olive. Ponds held still (Noria's rule). Invention on MU's look; first cut 2026-10-11 from docs/aida-port.md B 6, unshot.",
+  "note": "Aida's light, laid over lighting.json while a character stands in Aida (game/world/maps.h). MU draws it on its default black clear and fog (SceneManager.cpp:371-402), a third of the map NoGround and undrawn (ZzzLodTerrain.cpp:2178), the ground lit by a neutral TerrainLight (walkable mean 138, 137, 139) over the darkest forest sheets ported (walkable sheet x light luminance 29 against Noria's 49, Lorencia's hue at two-thirds the saturation), with 183 flickering green and red flower lights (GMAida.cpp:58-71), sunbeams and waterfalls. So: an old mossy forest by day, the house 52-degree sun softer than Noria's so the flower lamps read, a green-grey canopy fill and a mossy bounce so the shade stays green-brown, exposure up to carry the dark paint, a faint cool forest mist (MU placed mist boxes in the ravine and never let them emit, GMAida.cpp:184-226), the grade warm in the light and a touch green in the shade, the grass lush and olive. Ponds held still (Noria's rule). Invention on MU's look; first cut 2026-10-11 from docs/aida-port.md B 6, unshot. Then the ponds (the user, 2026-10-11: 'also work on water if there is any'): held still, MU's green-grey rippled sheet read as wet rock, so they move again, but not as one river: water_flow 0.5 (a sheet in 40 s, half MU's pace) and water_variety 1.0, the Lost Tower's second copy turned 37 degrees, which slides along its own turned axis, so the two cross and the pond shimmers rather than drifts, and MU's tile grid is broken up.",
   "elevation": 52.0,
   "sun_colour": [1.0, 0.92, 0.74],
   "sun_strength": 3.6,
@@ -27,6 +27,7 @@
   "grass_meadow": 0.0,
   "grass_height": 0.45,
   "grass_density": 0.7,
-  "water_flow": 0.0,
-  "water_sheen": 0.5
+  "water_flow": 0.5,
+  "water_sheen": 0.5,
+  "water_variety": 1.0
 }

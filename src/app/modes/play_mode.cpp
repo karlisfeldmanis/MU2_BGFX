@@ -1405,10 +1405,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
     world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
-    world_.voidClouds().update(float(deltaSeconds), eye.target);
-    world_.voidClouds().gather(ctx.renderer.effects());
-    world_.castleSparks().update(float(deltaSeconds), eye.target);
-    world_.castleSparks().gather(ctx.renderer.effects());
+    world_.throwAround(float(deltaSeconds), eye.target, ctx.renderer.effects());
     // Tarkan's steam vents, sand geysers (their stones the meteor's), falling sand and glow
     // sprites (game/world/desert_vents.h).
     world_.desertVents().update(float(deltaSeconds), eye.target, [&](const float* at) {

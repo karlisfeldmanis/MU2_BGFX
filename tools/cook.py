@@ -1400,76 +1400,9 @@ LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
            ("Object49", 23456.195, 2655.718): 0.276,
            ("Object50", 23462.506, 2375.241): 0.281}
 
-# MU's hidden anchors in Lorencia: MoveObject's WD_0LORENCIA calls CreateFire(0|1|2, o, 0,0,0)
-# on MODEL_LIGHT01..03 and hides the holder (ZzzObject.cpp). Kind 1 is a fire, 4 a smoke.
-ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
-# And world 74's, the character screen's, which are placements with no mesh rather than hidden
-# ones: GMEmpireGuardian4 hides types 79 and 132 (HiddenMesh = -2) and hangs a fire off 79 --
-# a light sprite and flame particles, RenderObjectVisual case 79 -- and smoke off 132 (case 132).
-# Type 129's blue cloud is not carried: the user keeps that sky black.
-# The Lost Tower's 95 Flame vents (Object25, hidden): MoveObject's WD_4LOSTTOWER arm lights
-# the wizard's Flame on one a frame in 64 (ZzzObject.cpp:4020-4024). Kind 5, a vent: Lamps
-# rolls it and Play burns it (game/world/lamps.h).
-# Blood Castle's nine Object38 (type 37, no .bmd): MU's emitters, which roll BITMAP_ADV_SMOKE
-# and BITMAP_CLOUD up from the court, the bridge, the gap and the castle every other frame on a
-# four-tick cadence (ZzzObject.cpp:3227-3242). Kind 4, the chimney's rising smoke.
-ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
-                         "losttower": {"Object25": 5},
-                         "bloodcastle": {"Object38": 4},
-                         # Atlans's 845 bubble vents, Object23 (type 22, hidden): MoveObject's
-                         # WD_7ATLANSE arm throws a BITMAP_BUBBLE a frame for half of every
-                         # four seconds (ZzzObject.cpp:4055-4063). Kind 6, a bubble vent: no
-                         # light; game/world/bubbles.h rolls them.
-                         "atlans": {"Object23": 6},
-                         # Tarkan's hidden emitters (RenderObjectVisual's WD_8TARKAN arm,
-                         # ZzzObject.cpp:2994-3065), drawn by game/world/desert_vents.h: 7 the
-                         # falling sand of Object71, 8 the steam vents of Object77, 9 the sand
-                         # geysers of Object84, 10 the cyan glow sprites of Object64. None lights.
-                         # 11 Object61's standing dust clouds (SubType 6, which never dies).
-                         # And Object05, whose .bmd the client does not ship, but whose MoveObject
-                         # arm still adds its white pulsing terrain light (ZzzObject.cpp:4095-4106):
-                         # a lamp, 0.
-                         "tarkan": {"Object71": 7, "Object77": 8, "Object84": 9, "Object64": 10,
-                                    "Object61": 11, "Object05": 0},
-                         # Icarus's cloud banks, Object01-06 (types 0-5, hidden): each throws
-                         # 20 or 10 standing BITMAP_CLOUD puffs (ZzzObject.cpp:3090-3169), drawn
-                         # by game/world/sky_clouds.h. Kind 12 + the type. None lights.
-                         "icarus": {"Object01": 12, "Object02": 13, "Object03": 14,
-                                    "Object04": 15, "Object05": 16, "Object06": 17}}
-BRAZIER_BOWLS = {"charscene": ("Object15",)}
-# World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
-# 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
-# Object130, whose green `angeflo_r` glow slabs stood on the wall tops until this was read.
-#: Hidden placements a world shows later, cooked with flag 8 so the town holds them back until
-#: the game clears it: Blood Castle's lowered drawbridge, Object10's deck and Object11's chains,
-#: which MuMain shows as Object37 lands (ActionObject, ZzzObject.cpp:107-123; game/world/
-#: drawbridge.h).
-SHOWN_LATER = {"bloodcastle": {"Object10", "Object11"}}
-
-HIDDEN_BY_WORLD = {"charscene": {"Object80", "Object81", "Object83", "Object84", "Object85",
-                                 "Object86", "Object87", "Object130", "Object131", "Object132",
-                                 "Object133"}}
-# What each throws: CreateFire(0)'s own (ZzzEffectFireLeave.cpp:61) -- L = rand[0.6, 1.1),
-# colour (L, 0.6L, 0.4L), range 4 -- with index.json's flicker for every other fire. Smoke
-# throws no light. Colour, low, high, reach, hz, smoothing.
-ANCHOR_LIGHT = {# A lamp: Tarkan's Object05, white, sin(WorldTime*0.002)*0.35+0.65 over three tiles,
-                # carried as a slow wander between 0.3 and 1, as Object08's.
-                0: ((1.0, 1.0, 1.0), 0.3, 1.0, 3.0, 0.32, 1.0),
-                1: ((1.0, 0.6, 0.4), 0.6, 1.1, 4.0, 3.0, 0.12),
-                4: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                # A vent's light is the Flame's, (1, 0.4, 0) over three tiles (MoveHandlers.cpp:
-                # 1815-1816), and dark until it burns: Lamps drives its level.
-                5: ((1.0, 0.4, 0.0), 0.0, 0.0, 3.0, 0.0, 0.0),
-                # A bubble vent throws no light.
-                6: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                # Nor do Tarkan's sand, steam, geysers and glow sprites.
-                7: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                8: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                9: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                10: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                11: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                # Nor Icarus's cloud banks.
-                **{k: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0) for k in range(12, 18)}}
+# The world anchors' tables are tools/cook_anchors.py's.
+from cook_anchors import (ANCHOR_KINDS, ANCHOR_KINDS_BY_WORLD, ANCHOR_LIGHT,  # noqa: E402
+                          BRAZIER_BOWLS, HIDDEN_BY_WORLD, SHOWN_LATER, SPRAY_KINDS)
 
 
 # Where the town's own stone stands in the lawn, for the grass to stay out of. The .walls
@@ -1740,6 +1673,7 @@ def cook_placements(world, out_dir, chunk_tiles):
     dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = buried = 0
 
     anchors = []
+    anchor_scales = {}  # an anchor's index -> its box's Scale, for SPRAY_KINDS
     world_anchors = ANCHOR_KINDS_BY_WORLD.get(world, {})
     # The braziers' bowls (Object15 on world 74), for a smoke anchor standing in one.
     bowls = [one["at"] for one in map_data["objects"]
@@ -1749,6 +1683,8 @@ def cook_placements(world, out_dir, chunk_tiles):
             sx, sy, sz = one["at"]
             kind = world_anchors[one["model"]]
             anchors.append((kind, (sx / per_tile, sz / per_tile, -sy / per_tile)))
+            if kind in SPRAY_KINDS:
+                anchor_scales[len(anchors) - 1] = float(one.get("scale", 1.0))
             # A smoke in a brazier's bowl burns as well -- ours: MU only smokes the brazier at
             # the row's left end while its three fellows burn, and the user asked for it lit.
             if kind == 4 and any(math.hypot(bx - sx, by - sy) < 0.5 * per_tile
@@ -1913,8 +1849,11 @@ def cook_placements(world, out_dir, chunk_tiles):
                                      float(one.get("smooth_seconds", 0)))
                 glow_count += 1
                 break
-    for kind, at in anchors:
-        emitters += emitter(0xFFFF, kind, at, *ANCHOR_LIGHT[kind])
+    for index, (kind, at) in enumerate(anchors):
+        light = list(ANCHOR_LIGHT[kind])
+        if index in anchor_scales:
+            light[2] = anchor_scales[index]  # `high`, the box's Scale; reach stays 0
+        emitters += emitter(0xFFFF, kind, at, *light)
         emitter_count += 1
     body += struct.pack("<I", emitter_count) + bytes(emitters)
     body += struct.pack("<I", glow_count) + bytes(glows)

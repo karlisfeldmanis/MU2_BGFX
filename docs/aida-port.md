@@ -107,11 +107,11 @@ before the next:
 - the statues and temple blocks (32/45/33/50/51);
 - the coffins, sword and skeletons (52/55/56/62/69/70).
 
-That made 3 263 placements of 54 models, at about 190-260 fps, unmeasured. The 20 kinds left (16 after the glow batch below)
-all need effect work, plus the nine hidden emitter kinds:
-- 31/72 (light-flowers: `_R` bulbs, green and red flickering terrain lights, spark sprites) and 76
-  (a ring statue with a flare at bone 4);
-- 66/67 and 78/79, the serpents: mesh 0 streamed a second time as an unlit pass.
+That made 3 263 placements of 54 models, at about 190-260 fps, unmeasured. The 20 kinds left
+all need effect work, plus the nine hidden emitter kinds. Left after the two batches below:
+- 31/72 (light-flowers: `_R` bulbs, green and red flickering terrain lights, spark sprites);
+- the hidden emitters 60 (butterflies), 67 (small fires) and 70 (the skull ghost); the mist boxes
+  59/62/63 never emit in MU (no decision yet).
 
 **The shot camera** looks along +y, its centre about 12 tiles ahead of the hero and a little to
 the right, with the hero at the bottom left. To see an object, stand about 4 tiles -y of it.
@@ -127,6 +127,36 @@ body is one `_R` sheet, written by `mu new object` and marked `additive` + `lamp
 Shot muted at noon at the north-east pit (186,108), the south falls (117,207) and the graveyard's
 beams (100,164), 0 errors, about 210-236 fps (unmeasured). The falls read bright cyan with a
 white core under the world's glow_strength 1.3, a candidate to dim if the user finds them hot.
+
+**The serpents, the ring statue and the water, 2026-10-11** (the user: 'next batch also work on
+water if there is any').
+- **Serpents**: Object66/67 (snake, green scales, 3 + 8, in the east) and Object78/79 (snake02,
+  dark blue-grey scales, 10 + 6, their 20-key writhe, in the west and south-west), chitin. MU draws
+  mesh 0 a second time as StreamMesh with its U slid (GMAida.cpp:227-238, 308-318); here the
+  body's own sheet slides, lit (`glow` `stream`, `axis` u): +0.05 for 66/67 (a sheet in 20 s), -0.2
+  for 78/79 (a sheet in 5 s the other way).
+- **Object76**, the ring statue south of the hall (82,20): two rock sheets, its 10-key clip, and
+  MU's BITMAP_FLARE at bone 4, Scale 3, turning 100 degrees a second, as an Ornaments arm
+  (`src/game/world/ornaments.cpp`). MU's light is white, but Flare's sheet is gold with a
+  white core, so it burns gold in the ring.
+- **Waterfall spray**: the 84 hidden boxes are world anchors 18-20 (`tools/cook_anchors.py`),
+  each carrying its box's Scale in the emitter's `high`, drawn by `game/world/waterfall_spray.h`
+  on MU's numbers: Object57's cyan drops falling off the lip, Object58's white specks bursting up
+  and dropping about 4 m, Object59's grey mist, from `Effect/waterFall1-3` (decoded to
+  `source/effects/aida/`, showing names `waterfall_drops`, `waterfall_spray`, `waterfall_mist`).
+  Only boxes within 28 m of the camera's point throw; at most 1 200 sprites.
+- **The ponds** (2 301 TileWater01 tiles): held still, MU's rippled green-grey sheet read as
+  wet rock. `sheets/worlds/aida.json` now slides them at half MU's pace (`water_flow` 0.5) with
+  the Lost Tower's `water_variety` 1.0, whose turned copy crosses the first, so a pond shimmers
+  rather than drifting like a river (the user's Noria rule), and MU's tile grid breaks up.
+  Judged only in stills so far.
+- Shot muted at the hall (79,9), the dark serpents (25,197), the green serpents (228,80), the
+  south falls (117,207) and the north-east pit (186,108), 0 errors, about 200-230 fps
+  (unmeasured).
+- To pay the size ratchet: cook.py's world-anchor tables moved to `tools/cook_anchors.py`,
+  index.py's `GATE_BOXES_BY_MAP` to `pipeline/gate_boxes.py`, and play_mode's void clouds,
+  castle sparks and spray calls into `World::throwAround`. aida.mut, tarkan.mut, lorencia.mut
+  and workshop/index.json were byte-identical across the moves.
 
 **Gate 119 is in `source/mu.db`** (the user approved it 2026-10-11): `(119, 33, 82, 8, 87, 14, 1)`,
 checkpointed, carried by index.py's `gate_rows` into the world's `gates.safe` and Aida's tables. A

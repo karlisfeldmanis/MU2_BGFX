@@ -18,6 +18,8 @@
 //    times the frame's Luminosity, and the machine's star: two BITMAP_LIGHTNING+1 sprites at
 //    bone 57 spinning opposite ways at `(int)(WorldTime * 0.1) % 360`, a hundred degrees a
 //    second. The table is kNoriaGlows in ornaments.cpp; docs/noria-effects.md, items 2 and 6.
+// 5. **Aida's ring statue.** RenderAidaObjectVisual type 75: a white BITMAP_FLARE at Object76's
+//    bone 4, Scale 3, turning a hundred degrees a second (GMAida.cpp:298-307).
 //
 // The first two ride the pose Sway just computed, so each is thrown only where Sway posed the
 // object this frame -- in sight, as MU only runs RenderObjectVisual for objects it draws. The

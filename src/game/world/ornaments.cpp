@@ -138,6 +138,14 @@ constexpr float kCandleColour[3] = {1.0f, 0.5f, 0.0f};
 constexpr int kMonkBone = 3;
 constexpr float kDegreesPerRadian = 57.2957795f;
 
+// ---- Aida's ring statue: RenderAidaObjectVisual, type 75 (GMAida.cpp:298-307) ---------------
+//
+// Object76: a BITMAP_FLARE at bone 4's own origin, Scale 3, in white -- the sine computed above
+// it is overwritten before CreateSprite -- turned `WorldTime / 10` degrees, the stars' 100 a
+// second. docs/aida-port.md, Part B section 2, item 21.
+constexpr int kRingStatueBone = 4;
+constexpr float kRingStatueScale = 3.0f;
+
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
@@ -338,6 +346,17 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                 lantern.fixed = true;
                 lanterns_.push_back(lantern);
             }
+        } else if (world == "aida" && name == "Object76") {
+            static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
+            static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+            Lantern flare;
+            flare.anchor = anchor(i, mesh, kRingStatueBone, kOrigin, kNoAcross);
+            for (int a = 0; a < 3; ++a) flare.anchor.point[a] = 0.0f;
+            flare.scale = kRingStatueScale;
+            flare.steady = true;
+            flare.sheet = 3;
+            flare.spin = kStarDegreesPerSecond;
+            if (flare.anchor.bone >= 0) lanterns_.push_back(flare);
         } else if (world == "noria") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
