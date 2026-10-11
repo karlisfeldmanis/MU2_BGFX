@@ -5,16 +5,55 @@
   "note": "The world's manifest (docs/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
   "show": {
     "air": {
-      "loop": "",
-      "note": "No weather and no wind for now (GMAida.cpp, SceneManager.cpp:371-402)."
+      "loop": "world_aida",
+      "everywhere": true,
+      "room": "open",
+      "note": "SOUND_AIDA_AMBIENT, aida_ambi.wav, which MoveAidaObject keeps playing from every object every frame (GMAida.cpp:92): always on, the whole map, under open forest sky (MU draws it on its black clear)."
     },
     "indoors": {
-      "everywhere": true,
-      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+      "everywhere": false,
+      "note": "Open forest: the first cut held every tile indoors ('underground air'), which kept the butterflies on the ground (flight is held indoors for anything but a bat). MU draws Aida on its black clear with no sky, and its air (world_aida) plays everywhere anyway."
     },
     "waterfall_spray": {
       "note": "Its falls' drops, spray and mist (game/world/waterfall_spray.h)."
-    }
+    },
+    "music": {
+      "track": "/music/Aida.mp3",
+      "where": "safe",
+      "note": "MUSIC_BC_ADIA, which MU plays the whole time in Aida (SceneManager.cpp:1089-1094); here in the safe hall only, the house rule (the user, 2026-10-11: 'we play music on safezones only')."
+    },
+    "boids": {
+      "model": "Butterfly01",
+      "speed": 0.3,
+      "lit": false,
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "calls": false,
+      "flap": 6.25,
+      "note": "Ours: MU throws MODEL_BUTTERFLY01 off 20 hidden Object61 boxes, one in 25 frames each (type 60, GMAida.cpp:195-204); here Noria's butterfly pool on Noria's numbers flies round the hero instead. MODEL_BUTTERFLY01 (MapManager.cpp:89; GOBoid.cpp:1335: Velocity 0.3, LightEnable false, Light 1). 6.25: the cook's 0.25 s keys over MU's 0.04 s."
+    },
+    "crawls": {
+      "model": "Bug02",
+      "most": 3,
+      "scale_least": 8,
+      "speed": 2.5,
+      "turn": 9.0,
+      "life": 100,
+      "trail": true,
+      "drawn": 0.55,
+      "note": "MoveFishs' scarabs, MODEL_BUG01 + 1, Tarkan's numbers (GOBoid.cpp:1726-1733); Aida is not exempt from the 3-slot cap (:1668-1675), so 3; drawn at Tarkan's 0.55."
+    },
+    "small_fires": {
+      "note": "Object68's small fires on rocks and ruins (type 67, GMAida.cpp:239-242; game/world/small_fires.h)."
+    },
+    "weather": {
+      "kind": "rain",
+      "note": "Ours: MU has no weather in Aida. Noria's rain (the user, 2026-10-11: 'we will use also rain for aida how it was on noria'), its light sheets/worlds/aida_rain.json. No jungle bed: Aida's air is aida_ambi."
+    },
+    "leaves": "leaf"
   },
   "pipeline": {
     "hidden": {
@@ -78,6 +117,14 @@
       ],
       "reach": 2.5
     },
-    "flat_over_void": true
+    "flat_over_void": true,
+    "airs_from": {
+      "value": "lorencia",
+      "note": "MuMain loads MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:89), as for Noria."
+    },
+    "crawls_from": {
+      "value": "tarkan",
+      "note": "The scarab, MODEL_BUG01 + 1, is built in Tarkan (Object9's Bug02)."
+    }
   }
 }

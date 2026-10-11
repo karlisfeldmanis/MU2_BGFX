@@ -220,20 +220,26 @@ TRAP_MODELS = world_manifest.by_world("trap_models", tuple)
 # MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:89).
 # And the Lost Tower's MODEL_BAT01, the Dungeon's (MapManager.cpp:51-58 loads it for both).
 AIRS_FROM = world_manifest.by_world("airs_from")
+# And where a crawler is built when it is not the world's own: Aida's scarab is Tarkan's Bug02.
+CRAWLS_FROM = world_manifest.by_world("crawls_from")
 
 
 def boid_glb(world, model):
     """The .glb a model of this world is cooked from: its own folder, else the boid's home."""
     own = os.path.join(ASSETS, "world", world, model, f"{model}.glb")
-    if os.path.exists(own) or model != AIRS.get(world) or world not in AIRS_FROM:
+    if os.path.exists(own):
         return own
-    return os.path.join(ASSETS, "world", AIRS_FROM[world], model, f"{model}.glb")
+    if model == AIRS.get(world) and world in AIRS_FROM:
+        return os.path.join(ASSETS, "world", AIRS_FROM[world], model, f"{model}.glb")
+    if model == CRAWLS.get(world) and world in CRAWLS_FROM:
+        return os.path.join(ASSETS, "world", CRAWLS_FROM[world], model, f"{model}.glb")
+    return own
 
 
 def crawling(world):
     """The floor boid this world runs, if its glb is there, else nothing."""
     name = CRAWLS.get(world)
-    if name is None or not os.path.exists(os.path.join(ASSETS, "world", world, name, f"{name}.glb")):
+    if name is None or not os.path.exists(boid_glb(world, name)):
         return None
     return name
 

@@ -199,7 +199,9 @@ enum class EmitterKind : uint8_t {
     // Icarus's cloud banks, game/world/sky_clouds.h: Cloud0 + the box's type, 0 to 5.
     Cloud0 = 12,
     // Aida's waterfall spray, game/world/waterfall_spray.h; `high` carries the box's Scale.
-    SprayDrops = 18, SprayBurst = 19, SprayMist = 20
+    SprayDrops = 18, SprayBurst = 19, SprayMist = 20,
+    // Aida's small fires, game/world/small_fires.h; `high` carries the box's Scale too.
+    SmallFire = 21
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

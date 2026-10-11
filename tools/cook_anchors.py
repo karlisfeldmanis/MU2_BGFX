@@ -47,10 +47,13 @@ ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
                          # falling drops of Object57, 19 the specks bursting off Object58, 20
                          # the mist of Object59. None lights; each carries the box's Scale,
                          # which MU adds to every particle's (SPRAY_KINDS).
-                         "aida": {"Object57": 18, "Object58": 19, "Object59": 20}}
+                         "aida": {"Object57": 18, "Object58": 19, "Object59": 20,
+                                  # and Object68's small fires on rocks and ruins (type 67,
+                                  # GMAida.cpp:239-242), game/world/small_fires.h.
+                                  "Object68": 21}}
 # The anchor kinds whose particles grow with the box: the box's Scale rides in the emitter's
 # `high`, its reach left 0 so Lamps lights nothing.
-SPRAY_KINDS = (18, 19, 20)
+SPRAY_KINDS = (18, 19, 20, 21)
 BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
@@ -83,5 +86,6 @@ ANCHOR_LIGHT = {# A lamp: Tarkan's Object05, white, sin(WorldTime*0.002)*0.35+0.
                 9: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
                 10: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
                 11: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
-                # Nor Icarus's cloud banks, nor Aida's spray.
-                **{k: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0) for k in range(12, 21)}}
+                # Nor Icarus's cloud banks, nor Aida's spray and small fires (MU's type 67
+                # lights nothing: no AddTerrainLight in its arm).
+                **{k: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0) for k in range(12, 22)}}

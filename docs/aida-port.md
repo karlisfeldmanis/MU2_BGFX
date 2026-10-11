@@ -176,6 +176,29 @@ blue read as blue beads in soft orbs. The red bulbs stayed pale chips inside the
 sheet is one flat salmon, (251, 188, 157)), so Object72 wears `ai_flowerlight2_r_deep.png`, ours: the
 same flat sheet in a deep red (232, 64, 48), as saturated as the blue, at the blue's 0.35.
 
+**Butterflies, scarabs, small fires, air, music, rain and leaves, 2026-10-11** (the user: 'next',
+then 'check what ambient and music is using aida, also we have rule that we play music on
+safezones only', then 'also check if there is leaves in aida, if not use noria leaves. we will
+use also rain for aida how it was on noria'). In `source/world/aida/world.json` (the manifest):
+- `boids`: Noria's butterfly row (MU throws them off 20 hidden Object61 boxes; ours is Noria's
+  pool round the hero), built from Lorencia's Butterfly01 (`airs_from`).
+- `crawls`: Tarkan's scarab, Bug02, at MU's 3 (GOBoid.cpp:1668-1675), built from Tarkan's
+  (`crawls_from`, a new knob: `tools/cook.py` CRAWLS_FROM, `boid_glb` redirects a crawler too).
+- `small_fires`: Object68's 11 boxes as world anchors of kind 21 (`tools/cook_anchors.py`), drawn
+  by `game/world/small_fires.h` on MU's BITMAP_FLAME SubType 7 numbers: a tongue a reference
+  frame, Flame01 added at 0.3, rising (1.8-2.8) x Scale units a frame, shrinking by that / 95.
+- `indoors.everywhere` false: the first cut's 'underground air' held the butterflies on the ground.
+- `air`: `world_aida`, MU's `aida_ambi.wav` (always on in MU, GMAida.cpp:92), everywhere, at
+  -20 dB (its RMS -24.0 dBFS, the -44 dB bed of the other airs).
+- `music`: `Aida.mp3`, which MU plays map-wide, in the safe hall only (the house rule).
+- `leaves`: Noria's `leaf`; MU has none here (CreateMist returns false). `weather`: Noria's rain,
+  ours, its light `sheets/worlds/aida_rain.json`: Aida's dry numbers times Noria's wet-over-dry
+  ratios, unjudged.
+- The safe hall exists where one arrives: gate 121 from Noria, its landing and spawn gate 119 all
+  stand in one clearing of 165 walkable safe tiles (about 15 x 12, ringed by void, one way out
+  east). Room for a few NPCs; whether to widen it is the user's call.
+Committed before it was shot: another session's half-written desk.cpp kept the game from linking.
+
 **Gate 119 is in `source/mu.db`** (the user approved it 2026-10-11): `(119, 33, 82, 8, 87, 14, 1)`,
 checkpointed, carried by index.py's `gate_rows` into the world's `gates.safe` and Aida's tables. A
 death in Aida now rises in the hall. Step 2 (the doors 120/121) is still to come.

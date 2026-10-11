@@ -1509,6 +1509,15 @@
       "gain_db": -20.4,
       "note": "desert.wav's RMS is -23.6 dBFS, so -20.4 puts it on the same -44 dB bed as world_water and world_dungeon (2026-10-05)."
     },
+    "world_aida": {
+      "files": [
+        "aida_ambi.wav"
+      ],
+      "from": "SOUND_AIDA_AMBIENT, Data\\Sound\\w34\\aida_ambi.wav, loaded looping (MapManager.cpp:338). MoveAidaObject calls PlayBuffer on it from every object every frame (GMAida.cpp:92), so it is simply always on in Aida. Aida's air: a 10 s forest loop.",
+      "loop": true,
+      "gain_db": -20.0,
+      "note": "aida_ambi's RMS is -24.0 dBFS, so -20 puts it on the same -44 dB bed as world_desert, world_water and world_dungeon (2026-10-11)."
+    },
     "world_heaven": {
       "files": [
         "aheaven.wav"

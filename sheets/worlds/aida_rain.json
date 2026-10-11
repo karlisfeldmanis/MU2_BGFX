@@ -1,0 +1,44 @@
+{
+  "note": "Aida in the rain, laid over sheets/worlds/aida.json and blended in by the weather's share (app/context.cpp), as noria_rain.json is over Noria (the user, 2026-10-11: 'we will use also rain for aida how it was on noria'). MU has no weather in Aida; ours. Derived, not tuned: every number Noria's rain changes is Aida's dry number times Noria's wet-over-dry ratio (colours channel by channel), so Aida darkens and greys toward a wet evening by Noria's proportions from its own darker start: the sun to 0.3 of its strength, exposure to 0.76, a thicker greener mist, the lamps and glows up so the light-flowers carry the wood. Unjudged.",
+  "sun_colour": [
+    0.96,
+    0.9618,
+    0.962
+  ],
+  "sun_strength": 1.08,
+  "sky_colour": [
+    0.2493,
+    0.3443,
+    0.252
+  ],
+  "horizon_paleness": 0.56,
+  "ground_colour": [
+    0.0514,
+    0.13,
+    0.0533
+  ],
+  "ambient_strength": 0.6364,
+  "exposure": 1.1364,
+  "dust_colour": [
+    0.4547,
+    0.6,
+    0.5486
+  ],
+  "dust_density": 0.0066,
+  "saturation": 1.2,
+  "split": 0.4571,
+  "tint_low": [
+    0.8143,
+    1.0833,
+    1.0208
+  ],
+  "tint_high": [
+    1.0509,
+    1.0202,
+    0.882
+  ],
+  "contrast": 0.4,
+  "bloom_strength": 0.3,
+  "lamp_strength": 3.5,
+  "glow_strength": 1.82
+}
