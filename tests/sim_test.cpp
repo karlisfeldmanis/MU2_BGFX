@@ -3285,7 +3285,8 @@ void testElfSkills(const content::Tables& tables) {
     check(spent > 0 && flown > 0, "and its arrows strike and are paid for");
     std::printf("  %d fans, %d arrows spent, %d landed\n", fans, spent, flown);
 
-    // Her orbs: each teaches its row, Lala sells the Orb of Skillshot, and her guard's orb costs
+    // Her orbs: each teaches its row, Peia pays the Orb of Skillshot and no shelf sells it (the
+    // user, 2026-10-11: "multi-shot is very poverfull"), and her guard's orb costs
     // what the knight's does (the user, 2026-09-28: "same stats as others").
     const int ward = tables.itemAt(12, 9), might = tables.itemAt(12, 10),
               shot = tables.itemAt(12, 21), guard = tables.itemAt(12, 3);
@@ -3304,7 +3305,17 @@ void testElfSkills(const content::Tables& tables) {
     const sim::Offer* lala = sim::stockOf(242, &stocked);
     bool sold = false;
     for (int i = 0; i < stocked; ++i) sold |= lala[i].group == 12 && lala[i].number == 21;
-    check(sold, "Elf Lala sells the Orb of Skillshot");
+    check(!sold, "Elf Lala no longer sells the Orb of Skillshot");
+    {
+        const sim::QuestRow& peia = sim::questAt(sim::questIndexOf("peia"));
+        bool paid = false;
+        for (int i = 0; i < peia.paidCount; ++i) {
+            paid |= peia.paid[i].item && std::string(peia.paid[i].item) == "OrbSkillshot" &&
+                    peia.paid[i].firstOnly;
+        }
+        check(paid, "Peia's first clear pays it");
+        check(tables.items[size_t(shot)].needLevel == 25, "and it asks level 25");
+    }
     // WebZen's shelves (sim/market.cpp): nothing refined but the arrows and bolts, Harold and
     // Martin apart, the Barmaid's Ale first, and Hanzo's Bronze set.
     {

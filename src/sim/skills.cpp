@@ -450,7 +450,7 @@ constexpr SkillRow kRows[kSkills] = {
     // the wizard's, paced by the bow's own clip (50; the drawing plays 51 with a crossbow). Each
     // arrow is an archery blow at no multiplier -- ClassFairyElf.cs sets no SkillMultiplier --
     // and the fan is its worth: three bodies struck is three blows. Its orb, OrbSkillshot.json,
-    // asks nothing.
+    // asks level 25 and is Peia's first clear's since 2026-10-11 ("multi-shot is very poverfull").
     //
     // **Nine tiles and not six** (the user, 2026-09-28: "lets increase range in our game for
     // multishot"), ours, as the wizard's Energy Ball and Fire Ball were raised to nine. Her plain

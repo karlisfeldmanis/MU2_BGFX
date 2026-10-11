@@ -96,31 +96,34 @@ constexpr Offer kBlacksmith[] = {
 // guard, priced as the knight's Orb of Defense. **And the Scroll of Meteorite in the column by
 // the Pad Armor, ours too** (the user, 2026-10-01: "let Pasi sell Meteorite"): the first spell a
 // wizard can buy with a multiplier on it (its force is 2), since the bot's runs showed him
-// trailing the knight at a flat one. The other scrolls drop, or Izabel sells them.
+// trailing the knight at a flat one. The other scrolls drop, or Izabel sells them. **Meteorite
+// off it again** (the user, 2026-10-11: "lets give meteor for DW when finish lorencia questline",
+// "remove twisting slash,multi-shot,meteor from vendors"): Marlon's first clear pays it.
 constexpr Offer kMage[] = {
     scroll(0, 3), scroll(1, 10), scroll(2, 15), gear(3, kHelms, 2, 0), gear(5, kArmours, 2, 0),
-    scroll(7, 1),
     gear(16, kPants, 2, 0), gear(18, kGloves, 2, 0), gear(20, kBoots, 2, 0),
     gear(22, kGloves, 4, 0), gear(32, kBoots, 4, 0), gear(34, kStaves, 0, 0),
     gear(35, kStaves, 1, 0),
 };
 
-// Caren the Barmaid (shop6): the Ale. **And the two pets, which are ours** (the user,
-// 2026-09-29): WebZen sells neither anywhere, so the tavern is where they are bought for now.
+// Caren the Barmaid (shop6): the Ale. The two pets she sold from 2026-09-29 are off every shelf
+// (the user, 2026-10-11: "remove also mounts,satan,guardian angle and other very good items from
+// vendors so there is actual value for thoses items"): they drop, as WebZen's do, and trade.
 constexpr Offer kBarmaid[] = {
-    sip(0, 9, 1), gear(1, kPets, 0, 0), gear(2, kPets, 1, 0),
+    sip(0, 9, 1),
 };
 
 // **And Lumen's own, which is ours** (the user, 2026-09-30): the same bar, the Horns of Uniria
 // and Dinorant beside the pets (docs/mount.md, ours: 0.75 sells neither, and the Dinorant is
 // made in a Chaos Machine this game does not have -- the user's pick), with Amy's potions on
 // the two rows below it, laid out as Amy lays them, a single over its three. Lorencia only --
-// Caren keeps the plain bar, since Izabel sells the potions in Devias. **And the arrows and
+// Caren keeps the plain bar, since Izabel sells the potions in Devias. **The pets and the mounts
+// off it since 2026-10-11**, as off Caren's: the Angel, the Imp and Uniria drop, and the Dinorant
+// is made in the Chaos Machine. **And the arrows and
 // bolts +0 to +3 under the potions, ours too** (the user, 2026-10-02: "sell arows bolts also in
 // lorencia tavern", "+0,+1,+2,+3"): Amy and Eo stop at +2; the +3 is priced off quiver().
 constexpr Offer kLumen[] = {
-    sip(0, 9, 1),   gear(2, kPets, 0, 0), gear(3, kPets, 1, 0),
-    gear(4, kPets, 2, 0), gear(5, kPets, 3, 0),
+    sip(0, 9, 1),
     sip(16, 0, 1),  sip(24, 0, 3),  sip(17, 1, 1),  sip(25, 1, 3),  sip(18, 2, 1),  sip(26, 2, 3),
     sip(19, 3, 1),  sip(27, 3, 3),  sip(20, 4, 1),  sip(28, 4, 3),  sip(21, 5, 1),  sip(29, 5, 3),
     sip(22, 6, 1),  sip(30, 6, 3),  sip(23, 8, 1),  sip(31, 8, 3),
@@ -129,8 +132,8 @@ constexpr Offer kLumen[] = {
 };
 
 // Elf Lala (shop10): the potions, the Vine and Silk sets, the Wind helm, armour and pants, the
-// Orb of Healing. **And the Orb of Skillshot after it, which is ours**
-// (sprint 15). **And Greater Defense, Greater Damage and Summoning after those** (the user,
+// Orb of Healing. The Orb of Skillshot she sold after it (sprint 15) is Peia's first clear's
+// since 2026-10-11 (the user: "multi-shot is very poverfull"). **And Greater Defense, Greater Damage and Summoning after those** (the user,
 // 2026-10-02: "a lot of orbs for DK but not enough for Elf"): all three early, and all three
 // on 0.75's own Lala (OpenMU Version075/MerchantStores.cs:231-243), which WebZen's shop10 lacks.
 // **And the Orb of Summoning at +1 to +4 under them** (the user, 2026-10-03: "add some more
@@ -145,7 +148,7 @@ constexpr Offer kElfLala[] = {
     gear(32, kPants, 10, 0), gear(34, kPants, 12, 0), gear(36, kGloves, 10, 0),
     gear(38, kBoots, 10, 0), gear(48, kHelms, 11, 0), gear(50, kArmours, 11, 0),
     gear(52, kPants, 11, 0), gear(54, kGloves, 11, 0), gear(64, kBoots, 11, 0),
-    gear(67, kOrbs, 8, 0), gear(68, kOrbs, 21, 0), gear(69, kOrbs, 9, 0), gear(70, kOrbs, 10, 0),
+    gear(67, kOrbs, 8, 0), gear(69, kOrbs, 9, 0), gear(70, kOrbs, 10, 0),
     gear(71, kOrbs, 11, 0), gear(76, kOrbs, 11, 1), gear(77, kOrbs, 11, 2), gear(78, kOrbs, 11, 3),
 };
 
@@ -160,12 +163,13 @@ constexpr Offer kCraftsman[] = {
     gear(81, kBows, 15, 2),
 };
 
-// Izabel the Wizard (shop7): the potions, Meteorite, Lightning and Teleport, the
-// Sphinx pieces with a Bone Armor, and the Serpent Staff.
+// Izabel the Wizard (shop7): the potions, Lightning and Teleport, the Sphinx pieces with a Bone
+// Armor, and the Serpent Staff. WebZen's shop7 sells Meteorite too, off it since 2026-10-11 as off
+// Pasi's (the user: "remove twisting slash,multi-shot,meteor from vendors").
 constexpr Offer kIzabel[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
     sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
-    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), scroll(16, 1), scroll(17, 2),
+    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), scroll(17, 2),
     scroll(18, 5), gear(20, kHelms, 7, 0), gear(22, kArmours, 4, 0),
     gear(32, kPants, 7, 0), gear(34, kGloves, 7, 0), gear(36, kBoots, 7, 0),
     gear(38, kStaves, 2, 0),
@@ -175,13 +179,14 @@ constexpr Offer kIzabel[] = {
 // and her weapons -- without the +S copies of the two she also sells plain (the user,
 // 2026-10-01). **And two knight's orbs in the free cells by the shields, ours** (the user,
 // 2026-10-07: 'sell some DK orbs on zienna vendor at devias like impale and twisting slash'):
-// Impale and Twisting Slash, past Hanzo's four early ones, which still drop as well.
+// Impale and Twisting Slash, past Hanzo's four early ones, which still drop as well. **Twisting
+// Slash off it again** (the user, 2026-10-11): the Golden Archer's first clear pays it, and it drops.
 constexpr Offer kZienna[] = {
     gear(0, kBows, 7, 0), gear(1, kBows, 7, 1), gear(2, kBows, 7, 2), gear(3, kBows, 15, 0),
     gear(4, kBows, 15, 1), gear(5, kBows, 15, 2), gear(6, kHelms, 8, 0), gear(16, kPants, 8, 0),
     gear(18, kGloves, 12, 0), gear(20, kBoots, 12, 0), gear(22, kShields, 10, 0),
     gear(32, kShields, 3, 0), gear(34, kShields, 9, 0), gear(36, kBows, 3, 0),
-    gear(38, kOrbs, 18, 0), gear(39, kOrbs, 7, 0),
+    gear(38, kOrbs, 18, 0),
     gear(48, kAxes, 4, 0), gear(49, kSpears, 3, 0),
     gear(59, kAxes, 5, 0), gear(61, kSwords, 8, 0), gear(62, kBows, 11, 0, true),
     gear(80, kSwords, 9, 0), gear(84, kSwords, 5, 0, true),

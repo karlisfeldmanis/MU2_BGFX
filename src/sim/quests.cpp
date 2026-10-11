@@ -151,11 +151,10 @@ QuestRow marlon() {
     // The first powered ring, a green one (sim::Affix; the user, 2026-10-03: "also add some
     // rings and pendants to some quest lines"). Each line deeper pays one more power.
     row.paid[n++] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth
-    // **And a skill each, the first clear only** (the user, 2026-10-07: 'give orbs and scroll
-    // to classes when they do quests'): the knight's Lunge, Hanzo's dearest, asking level 40
-    // just past the ladder's end here; the wizard's Ice, which no shop sells.
+    // A skill each, the first clear only (2026-10-07): Lunge, level 40; Ice; Meteorite (2026-10-11).
     row.paid[n++] = {.item = "OrbLunge", .kin = knight, .firstOnly = true};  // Orb of Lunge
     row.paid[n++] = {.item = "Book07", .kin = wizard, .firstOnly = true};    // Scroll of Ice
+    row.paid[n++] = {.item = "Book02", .kin = wizard, .firstOnly = true};    // Scroll of Meteorite
     row.paid[n++] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[n++] = {.item = "Potion04", .count = 20};  // Large Healing Potions
     row.paid[n++] = {.item = "MagicBox01"};             // a Box of Luck, every clear
@@ -233,8 +232,9 @@ QuestRow peia() {
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Chill),
                      .firstOnly = true};
     row.paid[n++] = {.item = "RingWealth", .plus = 1, .firstOnly = true};  // Ring of Wealth, as Marlon's
-    // And her skill, as Marlon pays his two theirs (2026-10-07): Greater Damage, level 36.
+    // Her skills, as Marlon's (2026-10-07): Greater Damage, level 36; Skillshot, 25, off Lala's (2026-10-11).
     row.paid[n++] = {.item = "Gem04", .kin = elf, .firstOnly = true};  // Orb of Greater Damage
+    row.paid[n++] = {.item = "OrbSkillshot", .kin = elf, .firstOnly = true};
     row.paid[n++] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
     row.paid[n++] = {.item = "Potion04", .count = 20};  // Large Healing Potions
     row.paid[n++] = {.item = "MagicBox01"};             // a Box of Luck, as Marlon's
