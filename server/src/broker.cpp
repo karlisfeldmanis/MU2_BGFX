@@ -45,7 +45,8 @@ struct Batch {
     uint64_t token = 0;
     uint32_t ask = 0;
     net::BrokerWhat what = net::BrokerWhat::Look;
-    int left = 0, done = 0, failed = 0, full = 0;
+    int left = 0, done = 0, failed = 0, full = 0, bagged = 0;
+    bool vault = false;  // a player's buy, into his vault
     int64_t zen = 0;
     std::string thing;
 };
@@ -223,7 +224,7 @@ uint32_t queue(Session& one, sim::Command command, Pending pending) {
 
 uint32_t batchOf(const Session& one, uint32_t ask, net::BrokerWhat what, int commands, std::string thing) {
     const uint32_t id = g_nextBatch++;
-    g_batches[id] = {one.token, ask, what, commands, 0, 0, 0, 0, std::move(thing)};
+    g_batches[id] = {one.token, ask, what, commands, 0, 0, 0, 0, !one.bot, 0, std::move(thing)};
     return id;
 }
 
@@ -308,6 +309,8 @@ void buy(Session& one, const net::BrokerAsk& asked) {
         sim::Command pay{.kind = sim::Command::Kind::BrokerBuy};
         sim::packHeld(p.listing.what, pay);
         pay.zen = p.listing.price;
+        // A player's into his vault, a bot's into his bag (sim::Realm::brokerBuy).
+        if (!one.bot) pay.target |= 0x80000000u;
         queue(one, pay, std::move(p));
     }
 }
@@ -377,7 +380,11 @@ void finish(uint32_t id, std::vector<std::unique_ptr<Session>>& sessions) {
                             (b.failed > 0 ? ": you could pay for " + std::to_string(b.done) + " of " +
                                                 std::to_string(b.done + b.failed)
                                           : "") +
-                            (b.full > 0 ? ". Your bag is full: it waits in Collect." : ".");
+                            (b.full > 0      ? (b.vault ? ". Your vault and bag are full: it waits in Collect."
+                                                        : ". Your bag is full: it waits in Collect.")
+                             : b.bagged > 0  ? ". Your vault is full: it went to your bag."
+                             : b.vault       ? ", into your vault."
+                                             : ".");
             }
             break;
         case net::BrokerWhat::Collect:
@@ -401,12 +408,13 @@ void complete(const Pending& p, int answer, std::vector<std::unique_ptr<Session>
             if (ok) g_book.list(p.listing, p.hours, now);
             break;
         case Pending::Op::Buy:
-            ok = answer == 1 || answer == 2;
+            ok = answer == 1 || answer == 2 || answer == 3;
             if (!ok) {
                 g_book.restore(p.listing);
                 break;
             }
             g_book.sold(p.listing, now);
+            if (answer == 3 && batch) ++batch->bagged;
             if (answer == 2) {
                 g_book.deliver(p.token, sim::Parcel{p.listing.what, 0, now, sim::Parcel::Why::Bought});
                 if (batch) ++batch->full;

@@ -126,6 +126,13 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
     } else if (no != sim::BrokerNo::Yes && view.answered != 0) {
         play.ui(Play::Ui::Refused);
     } else if (mine) {
+        // Zen changes hands on a buy, a listing, a cancel and a collect: the coin's sound with
+        // each, the user's (2026-10-11), over the thing's own.
+        const net::BrokerWhat did = waitingWhat_;
+        if (did == net::BrokerWhat::Buy || did == net::BrokerWhat::List || did == net::BrokerWhat::Cancel ||
+            did == net::BrokerWhat::Collect) {
+            play.sound().play(play.sound().load("money_drop", false));
+        }
         if (tab_ == Tab::Buy) {
             const net::BrokerRow* row = chosenRow();
             const bool jewel = row && play.realm().tables() &&
@@ -143,11 +150,10 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
             priceText_.clear();
             browseOwed_ = true;
         } else {
-            // Zen out of Collect rings; a thing out of it lands as a buy does.
+            // A thing out of Collect lands as a buy does, beside the coin's sound.
             const bool money = view.said.find("Zen") != std::string::npos;
-            if (money) play.sound().play(play.sound().load("money_drop", false));
-            else if (waitingWhat_ == net::BrokerWhat::Collect) play.sound().play(play.sound().load("item_get", false));
-            else play.ui(Play::Ui::Click);
+            if (did == net::BrokerWhat::Collect && !money) play.sound().play(play.sound().load("item_get", false));
+            else if (did != net::BrokerWhat::Collect && did != net::BrokerWhat::Cancel) play.ui(Play::Ui::Click);
         }
     }
 }

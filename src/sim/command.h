@@ -100,7 +100,9 @@ struct Command {
         BrokerTake,  // out of the bag (zen: the slot) or the vault (zen: the cell + 0x10000),
                      // only if it still holds that very thing; answered 1
         BrokerBuy,   // zen paid, his carried first and then his vault's, and the Held into his
-                     // bag: answered 1, or 2 paid but the bag full (it goes to his Collect)
+                     // bag: answered 1, or 2 paid but the bag full (it goes to his Collect).
+                     // target's top bit: into his vault instead -- 1 there, 3 in his bag
+                     // because the vault was full, 2 neither
         BrokerGive,  // the Held out of his Collect into his bag: 1, or -1 when it does not fit
         BrokerZen,   // zen out of his Collect: answered with what he could carry
     };

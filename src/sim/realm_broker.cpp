@@ -64,13 +64,19 @@ int Realm::brokerTake(int slot, bool fromVault, const Held& expect) {
     return 1;
 }
 
-int Realm::brokerBuy(const Held& what, int64_t price) {
+int Realm::brokerBuy(const Held& what, int64_t price, bool intoVault) {
     if (!tables_ || what.empty() || price < 0) return -1;
     // His carried Zen first, then his vault's (the user, 2026-10-11).
     if (me().money + me().vault.zen() < price) return -1;
     const int64_t carried = std::min(me().money, price);
     me().money -= carried;
     if (price > carried) me().vault.setZen(me().vault.zen() - (price - carried));
+    // A player's buy goes to his vault (the user, 2026-10-11), and to his bag only when the vault
+    // is full; a bot's to his bag, where he wears an upgrade from.
+    if (intoVault) {
+        if (pour(*tables_, me().vault, 0, kVaultCells, what) >= 0) return 1;
+        return pour(*tables_, me().bag, kWorn, kSlots, what) >= 0 ? 3 : 2;
+    }
     return pour(*tables_, me().bag, kWorn, kSlots, what) >= 0 ? 1 : 2;
 }
 

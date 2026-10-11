@@ -360,9 +360,12 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 }
             }
             const content::ItemRow& shape = tables.items[size_t(row->what.item)];
-            const bool fits = realm.satchel().free(tables, shape.width, shape.height) >= 0;
+            // Into the vault, the bag if the vault is full (sim::Realm::brokerBuy).
+            const bool vault = realm.vault().free(tables, shape.width, shape.height) >= 0;
+            const bool fits = vault || realm.satchel().free(tables, shape.width, shape.height) >= 0;
             text(card.x + 8.0f, card.bottom() - 50.0f, 11.0f, fits ? style::kLive : style::kDanger,
-                 fits ? "Goes straight to your bag" : "Bag full: it waits in Collect");
+                 vault ? "Goes straight to your vault" : fits ? "Vault full: it goes to your bag"
+                                                          : "Vault and bag full: it waits in Collect");
             text(card.x + 8.0f, card.bottom() - 38.0f, 11.0f, style::kAshInk, alike ? "Total" : "Buyout");
             right(card.right() - 8.0f, card.bottom() - 37.0f, 17.0f, kGold, panel::commas(cost));
             if (const Spot* s = spotOf(Hit::Buy, 0)) {

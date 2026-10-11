@@ -21,7 +21,7 @@ buy what others list. Designed on the canvas https://claude.ai/artifact/1f7nUNsQ
 | pay with | carried Zen first, then the vault's |
 | sold | the money waits in the seller's **Collect**; a chat line tells him if he is on |
 | Collect | per character, 30 days and then gone; unsold and cancelled things come back there |
-| a buy | into the bag if it fits, else into the buyer's Collect |
+| a buy | a player's into his vault, his bag if the vault is full, else his Collect (the user, 2026-10-11); a bot's into his bag, else his Collect |
 | seller | named on every listing, with whether he is on; whisper him from the card |
 | level | none |
 
@@ -39,9 +39,10 @@ Three layers, each the one the rest of the game already uses for the same kind o
    - `BrokerTake` -- out of his bag or vault, only if the slot still holds exactly that thing
      (`a` its slot, `b` 1 for the vault, `c` how many of a stack; the Held to match). Answers
      how many came out.
-   - `BrokerBuy` -- pays `zen` (carried first, then his vault's) and puts the Held in his bag.
-     Answers 1 in the bag, 2 paid but the bag is full (the server puts it in his Collect),
-     -1 he cannot pay.
+   - `BrokerBuy` -- pays `zen` (carried first, then his vault's) and puts the Held in his bag,
+     or, with `target`'s top bit (every player's buy, not a bot's), in his vault. Answers 1 in
+     the bag (or the vault), 3 in the bag because the vault was full, 2 paid but no room (the
+     server puts it in his Collect), -1 he cannot pay.
    - `BrokerGive` -- a thing out of Collect into his bag: 1, or -1 when it does not fit.
    - `BrokerZen` -- Zen out of Collect: answers what he could carry.
 3. **`server/src/broker.cpp` -- the service.** Like the party: it spans maps, so it is the
@@ -68,8 +69,8 @@ Buy / Sell / My listings.
 ### Sounds
 
 `window_open` when it opens, `window_click` on tabs and rows, `window_refused` on a refusal,
-`item_get` when a buy lands in the bag, `jewel_get` for a jewel, `money_drop` when Zen is
-collected, and a new `broker_sold`, the coin sound, for "your thing sold".
+`item_get` when a buy lands, `jewel_get` for a jewel, `money_drop` with every buy, listing,
+cancel and collect (the user, 2026-10-11), and a new `broker_sold`, the coin sound, for "your thing sold".
 
 ## Phases
 
