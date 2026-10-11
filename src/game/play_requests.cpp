@@ -183,12 +183,52 @@ const FigureBody* Play::dressOf(const sim::Body& hero, const sim::Satchel& bag,
                            quiver);
 }
 
+void Play::redressOther(Drawn& drawn, const sim::Body& body) {
+    const FigureBody* look = otherLook(body);
+    drawn.gear = gearOf(body);
+    drawn.waitsForGear = figures_ && figures_->lastMissed() > 0;
+    if (!look) return;
+    drawn.figure.reskin(look);
+    drawn.attackClip = -1;
+    if (look->library) {
+        drawn.attackClip = look->library->find(attackSlotFor(look->stance));
+        if (drawn.attackClip < 0) drawn.attackClip = look->library->find(38);
+    }
+    playerSwings(drawn, look, body);
+}
+
+uint64_t Play::gearOf(const sim::Body& body) const {
+    uint64_t h = 0xcbf29ce484222325ull;
+    const auto mix = [&](uint64_t v) {
+        h ^= v;
+        h *= 0x100000001b3ull;
+    };
+    mix(uint64_t(uint32_t(body.weapon)));
+    mix(uint64_t(uint32_t(body.shield)));
+    mix(uint64_t(body.second) | uint64_t(body.dual) << 1);
+    if (const sim::Satchel* bag = realm_.satchelOf(body.id)) {
+        for (int slot = sim::kHelm; slot <= sim::kBoots; ++slot) {
+            const sim::Held& held = (*bag)[slot];
+            mix(uint64_t(uint32_t(held.item)) << 16 | uint64_t(uint16_t(held.refinement)) << 8 | held.excellent);
+        }
+        for (int slot : {sim::kWeaponRight, sim::kWeaponLeft}) {
+            const sim::Held& held = (*bag)[slot];
+            mix(uint64_t(uint32_t(held.item)) << 16 | uint64_t(uint16_t(held.refinement)) << 8 | held.excellent);
+        }
+        mix(std::hash<std::string>{}(quiverOf(*bag)));
+    }
+    return h;
+}
+
 const FigureBody* Play::otherLook(const sim::Body& body) {
     if (!figures_) return nullptr;
     const sim::Satchel* bag = realm_.satchelOf(body.id);
     if (bag == nullptr) return figures_->body(kHeroFigure);
+    // Off the frame once the world is up: what is loaded now, the rest asked of the worker.
+    figures_->setStreaming(streamGear_);
     const FigureBody* look = dressOf(body, *bag, "Player" + std::to_string(body.id),
                                      bareBody(body.kin, body.second, figures_), quiverOf(*bag));
+    figures_->setStreaming(false);
     return look != nullptr ? look : figures_->body(kHeroFigure);
 }
 

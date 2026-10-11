@@ -177,6 +177,19 @@ void Play::update(double seconds) {
     // a stall past kSnapOwed is stepped at once, kMostTicks a frame: a second and more behind,
     // catching up on the world matters more than how the catching looks.
     walkBench(float(seconds));
+    // Another player's gear, a piece a frame from the wardrobe's worker, and whoever went
+    // without it dressed again (Figures::stream).
+    if (figures_) {
+        streamGear_ = !syncGear_;
+        if (figures_->stream() > 0) {
+            for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
+                const sim::Body& body = realm_.bodies()[i];
+                if (drawn_[i].waitsForGear && drawn_[i].id == body.id && body.player && !body.gone) {
+                    redressOther(drawn_[i], body);
+                }
+            }
+        }
+    }
     link_->pump();
     // The line gone, the game stands still where the server last had it: nothing stepped and no
     // figure moved on, under the desk's Disconnected window (Menu::Page::Lost). Nothing reopens
@@ -277,6 +290,13 @@ void Play::update(double seconds) {
                 core::logf("play: player #%u came into the world in a place left, class %d level %d", body.id,
                            int(body.kin), body.level);
             }
+        }
+        // Another player who changed what he wears is dressed again: dressed once as he came,
+        // a bot who put on a new suit in front of him kept the old one.
+        for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
+            const sim::Body& body = realm_.bodies()[i];
+            if (!body.player || body.gone || body.id == realm_.hero().id || drawn_[i].id != body.id) continue;
+            if (gearOf(body) != drawn_[i].gear) redressOther(drawn_[i], body);
         }
         while (drawn_.size() < realm_.bodies().size()) {
             size_t bones = 0;

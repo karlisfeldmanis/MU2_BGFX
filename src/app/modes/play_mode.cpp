@@ -334,6 +334,7 @@ bool PlayMode::open(Context& ctx) {
             }
             config.questDemo = args.questDemo;
             world_.played().configure(config);
+            world_.played().setSyncGear(args.syncGear);
             if (args.benchPlayers > 0) {
                 std::vector<sim::RaiderKit> kits;
                 const std::string party = ctx.paths.assets + "/../source/raid/party.json";

@@ -11,9 +11,14 @@
 #pragma once
 
 #include "core/json.h"
+#include <condition_variable>
+#include <deque>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "content/cooked.h"
@@ -299,6 +304,10 @@ ItemRow itemRowOf(const core::Json& entry);
 
 class Figures {
 public:
+    Figures() = default;
+    ~Figures();
+    Figures(const Figures&) = delete;
+    Figures& operator=(const Figures&) = delete;
     bool open(const std::string& assetDir, const std::string& world,
               content::Textures& textures);
     // A monster figure this world's table does not carry, borrowed from whichever world's table
@@ -339,6 +348,20 @@ public:
     // by the viewer only, and after open(), whose bare class bodies it dresses.
     bool openWardrobe(const std::string& assetDir, content::Textures& textures);
 
+    // **Gear off the frame** (the user, 2026-10-11, after the bots' hitches were traced to it):
+    // while streaming, dress() never reads the wardrobe itself. A piece nobody has loaded is
+    // asked of a worker, which reads its mesh and every texture it names and parses the mesh;
+    // stream(), once a frame on this thread, makes one finished piece from those bytes -- no
+    // disk -- and the figure goes on without it till then. A full suit was 55 files and 43 MB
+    // read, parsed and uploaded on the frame a bot in it came into view. Off (the default), as
+    // under the loading screen, dress() loads what it needs then and there.
+    void setStreaming(bool on);
+    bool streaming() const { return streaming_; }
+    // At most one piece the worker has read made here, on the calling thread; how many.
+    int stream();
+    // How many pieces the last dress() went without, waiting on the worker.
+    int lastMissed() const { return lastMissed_; }
+
     bool isOpen() const { return !bodies_.empty(); }
     const FigureBody* body(const std::string& name) const;
     // Every body of one kind, sorted by the label a reader sees. The bodies themselves live
@@ -370,6 +393,32 @@ private:
     const content::CookedClips* heldClip(const std::string& name);
     // Reads the wardrobe manifest's mesh paths and which helms keep the head, once.
     void readWardrobe();
+    // A piece read into a mesh and put in the store under its name, as wearable() does.
+    const content::Mesh* keep(const std::string& name, const content::CookedMesh& cooked);
+    // The worker (setStreaming): what it is asked, what it has read, and its thread.
+    struct Streamed {
+        std::string name;
+        content::CookedMesh cooked;
+        struct Texture {
+            std::string path;
+            content::TextureRole role;
+            std::vector<uint8_t> bytes;
+        };
+        std::vector<Texture> textures;
+        bool ok = false;
+    };
+    void want(const std::string& name);
+    void work();
+    void stopWorker();
+    bool streaming_ = false;
+    int lastMissed_ = 0;
+    std::thread worker_;
+    std::mutex lock_;
+    std::condition_variable wake_;
+    std::deque<std::string> asked_;
+    std::deque<Streamed> read_;
+    std::unordered_set<std::string> pending_;  // asked and not yet made, this thread's
+    bool stop_ = false;
     std::string assetDir_;
     content::Textures* textures_ = nullptr;
     bool wardrobeRead_ = false;

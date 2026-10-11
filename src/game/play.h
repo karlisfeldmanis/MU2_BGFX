@@ -458,6 +458,8 @@ public:
     // A crowd of other players drawn as a server's are, to measure the frame by. Not remote.
     // With `fight` they are a party by role -- a tank, a healer, a wizard, an archer, then the
     // rest -- and fight as one (Play::walkBench).
+    // --sync-gear: another player's gear loaded on the frame (the baseline), not streamed.
+    void setSyncGear(bool on) { syncGear_ = on; }
     void setBench(int players, std::vector<sim::RaiderKit> kits, bool fight = false) {
         benchPlayers_ = players;
         benchKits_ = std::move(kits);
@@ -935,6 +937,11 @@ private:
     struct Drawn {
         Figure figure;
         uint32_t id = 0;
+        // Another player's: what he wore when last dressed (Play::gearOf), and whether that
+        // dress went without pieces still on their way from the wardrobe's worker
+        // (Figures::setStreaming). Either way he is dressed again (redressOther).
+        uint64_t gear = 0;
+        bool waitsForGear = false;
         float wasX = 0.0f, wasY = 0.0f;
         float nowX = 0.0f, nowY = 0.0f;
         // And which way it was pointing at those same two ticks. The facing is interpolated for
@@ -1195,6 +1202,16 @@ private:
     // A figure for a body: what Play::open makes for each, and what a body that joins after it
     // is given (a player come into a shared world, and his summon's slot).
     Drawn drawnFor(const sim::Body& body, const FigureBody* heroLook, size_t* bones);
+    // Another player's figure dressed again in what he wears now, his walk and his clip kept:
+    // his gear changed, or a piece he went without has been made (Figures::stream).
+    void redressOther(Drawn& drawn, const sim::Body& body);
+    // What a player wears, as one number: his five pieces, his hands and their plus, his class's
+    // second body and his quiver -- whatever dressOf draws him by.
+    uint64_t gearOf(const sim::Body& body) const;
+    // Another player's gear streamed (Figures::setStreaming): set at the first frame, so the
+    // world's load under the loading screen dresses everyone already in it whole.
+    bool streamGear_ = false;
+    bool syncGear_ = false;
     // A player's cycle of swings into `drawn.swingClips`, by what is in his hands.
     void playerSwings(Drawn& drawn, const FigureBody* look, const sim::Body& body) const;
     // Where a spell leaves a caster thrown at `to`: the middle of his chest, a little toward it.

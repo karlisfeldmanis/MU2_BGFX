@@ -59,6 +59,9 @@ struct Args {
     // camera's prepass and shade (gfx/scenery.h). --cpu-scenery has it drawn as one batch a
     // model part, as before 2026-10-09: the baseline the GPU's cull is measured against.
     bool gpuScenery = true;
+    // Another player's gear is read on a worker and put on him as it comes (Figures::
+    // setStreaming). --sync-gear loads it on the frame, as before 2026-10-11: the baseline.
+    bool syncGear = false;
     // Frames a second to hold the picture to, 0 for as fast as it will go. A pace, not a
     // limit on the work: it waits after the present and the wait is kept out of the
     // statistics. Every measurement is taken at 0. See the remark in application.cpp.

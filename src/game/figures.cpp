@@ -1,5 +1,7 @@
 #include "game/figures.h"
 
+#include <chrono>
+
 #include <filesystem>
 
 #include <bx/timer.h>
@@ -645,11 +647,22 @@ const content::Mesh* Figures::wearable(const std::string& name) {
     if (const content::Mesh* found = mesh(name)) return found;
     if (!textures_) return nullptr;
     readWardrobe();
+    if (streaming_) {
+        // Asked of the worker, and gone without until stream() makes it.
+        if (wardrobePaths_.count(name)) {
+            want(name);
+            ++lastMissed_;
+        } else {
+            core::logError("%s is not in the wardrobe, so he is drawn without it", name.c_str());
+        }
+        return nullptr;
+    }
     const auto path = wardrobePaths_.find(name);
     if (path == wardrobePaths_.end()) {
         core::logError("%s is not in the wardrobe, so he is drawn without it", name.c_str());
         return nullptr;
     }
+    const auto began = std::chrono::steady_clock::now();
     std::vector<uint8_t> bytes = core::readFile(core::join(assetDir_, path->second));
     content::CookedMesh cooked;
     std::string error;
@@ -657,6 +670,13 @@ const content::Mesh* Figures::wearable(const std::string& name) {
         core::logError("%s: %s", path->second.c_str(), bytes.empty() ? "is not there" : error.c_str());
         return nullptr;
     }
+    const content::Mesh* made = keep(name, cooked);
+    core::logf("figures: %s read and made on this thread in %.1f ms", name.c_str(),
+               std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began).count());
+    return made;
+}
+
+const content::Mesh* Figures::keep(const std::string& name, const content::CookedMesh& cooked) {
     auto made = std::make_unique<content::Mesh>();
     if (!made->buildFromCooked(cooked, name, assetDir_, *textures_)) return nullptr;
     // Worn on the player rig, animated out of the library the figures already cooked -- the
@@ -665,6 +685,104 @@ const content::Mesh* Figures::wearable(const std::string& name) {
     meshIndex_[name] = meshes_.size();
     meshes_.push_back(std::move(made));
     return meshes_.back().get();
+}
+
+Figures::~Figures() { stopWorker(); }
+
+void Figures::setStreaming(bool on) {
+    if (on && !streaming_) readWardrobe();  // the worker reads wardrobePaths_, so it is whole first
+    streaming_ = on;
+}
+
+void Figures::want(const std::string& name) {
+    if (!pending_.insert(name).second) return;
+    {
+        std::lock_guard<std::mutex> hold(lock_);
+        asked_.push_back(name);
+    }
+    if (!worker_.joinable()) worker_ = std::thread([this] { work(); });
+    wake_.notify_one();
+}
+
+// The worker: files and parsing only -- no bgfx, nothing of this object's but what it is handed
+// and wardrobePaths_, which readWardrobe filled before the first want().
+void Figures::work() {
+    while (true) {
+        std::string name;
+        {
+            std::unique_lock<std::mutex> hold(lock_);
+            wake_.wait(hold, [this] { return stop_ || !asked_.empty(); });
+            if (stop_) return;
+            name = std::move(asked_.front());
+            asked_.pop_front();
+        }
+        Streamed one;
+        one.name = name;
+        const auto path = wardrobePaths_.find(name);
+        std::string error;
+        if (path != wardrobePaths_.end()) {
+            const std::vector<uint8_t> bytes = core::readFile(core::join(assetDir_, path->second));
+            one.ok = !bytes.empty() && content::parseCookedMesh(bytes, one.cooked, error);
+            if (!one.ok) {
+                core::logError("%s: %s", path->second.c_str(), bytes.empty() ? "is not there" : error.c_str());
+            }
+        }
+        if (one.ok) {
+            // Each texture its materials name, read now so that making it reads nothing.
+            std::unordered_set<std::string> seen;
+            const auto read = [&](const std::string& file, content::TextureRole role) {
+                if (file.empty()) return;
+                const std::string full = core::join(assetDir_, file);
+                if (!seen.insert(full).second) return;
+                one.textures.push_back({full, role, core::readFile(full)});
+            };
+            for (const content::CookedMaterial& m : one.cooked.materials) {
+                read(m.albedo, content::TextureRole::Albedo);
+                read(m.normal, content::TextureRole::Normal);
+                read(m.orm, content::TextureRole::Data);
+                read(m.emissive, content::TextureRole::Emissive);
+            }
+        }
+        std::lock_guard<std::mutex> hold(lock_);
+        read_.push_back(std::move(one));
+    }
+}
+
+int Figures::stream() {
+    Streamed one;
+    {
+        std::lock_guard<std::mutex> hold(lock_);
+        if (read_.empty()) return 0;
+        one = std::move(read_.front());
+        read_.pop_front();
+    }
+    pending_.erase(one.name);
+    if (!one.ok || !textures_ || mesh(one.name) != nullptr) return 0;
+    const auto began = std::chrono::steady_clock::now();
+    // Its textures from the bytes in hand, under the paths buildFromCooked asks for, so it
+    // finds them made; one the worker could not read is left for it to say so.
+    for (const Streamed::Texture& t : one.textures) {
+        if (!t.bytes.empty()) textures_->loadFromMemory(t.path, t.bytes.data(), uint32_t(t.bytes.size()), t.role);
+    }
+    if (keep(one.name, one.cooked) == nullptr) return 0;
+    core::logf("figures: %s made from the worker's read in %.1f ms, %zu textures", one.name.c_str(),
+               std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began).count(),
+               one.textures.size());
+    return 1;
+}
+
+void Figures::stopWorker() {
+    {
+        std::lock_guard<std::mutex> hold(lock_);
+        stop_ = true;
+    }
+    wake_.notify_all();
+    if (worker_.joinable()) worker_.join();
+    std::lock_guard<std::mutex> hold(lock_);
+    asked_.clear();
+    read_.clear();
+    pending_.clear();
+    stop_ = false;
 }
 
 const content::CookedClips* Figures::heldClip(const std::string& name) {
@@ -690,6 +808,7 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
                                  const std::vector<ShineLook>& wornShine,
                                  const ShineLook& weaponShine, const ShineLook& shieldShine,
                                  const std::string& quiver) {
+    lastMissed_ = 0;
     const FigureBody* wearing = body(base);
     if (!wearing) {
         core::logError("nothing cooked called %s to dress %s in", base.c_str(), name.c_str());
@@ -741,8 +860,10 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
         if (!found) {
             // Said rather than shrugged off: a starter weapon nobody cooked is a character who
             // silently punches, and the reason is in the cook and not in the game.
-            core::logError("%s has no cooked mesh, so %s holds nothing in that hand "
-                           "(tools/cook.py --only wardrobe)", wanted.c_str(), name.c_str());
+            if (!pending_.count(wanted)) {
+                core::logError("%s has no cooked mesh, so %s holds nothing in that hand "
+                               "(tools/cook.py --only wardrobe)", wanted.c_str(), name.c_str());
+            }
             continue;
         }
         HeldItem item;
@@ -780,7 +901,7 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
             item.boneName = kBackBone;
             item.alwaysSlung = true;
             made->held.push_back(item);
-        } else {
+        } else if (!pending_.count(quiver)) {
             core::logError("%s has no cooked mesh, so %s wears no quiver", quiver.c_str(),
                            name.c_str());
         }
@@ -1220,6 +1341,8 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
 }
 
 void Figures::shutdown() {
+    stopWorker();
+    streaming_ = false;
     for (auto& one : meshes_) one->shutdown();
     meshes_.clear();
     meshIndex_.clear();

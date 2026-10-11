@@ -106,6 +106,7 @@ void printUsage() {
         "  --render-thread           bgfx encodes the frame on its own thread, beside the next (a frame of latency)\n"
         "  --cpu-scenery             the town's scenery as a draw a model part, not the "
         "GPU's cull\n"
+        "  --sync-gear               another player's gear loaded on the frame, not on a worker\n"
         "  --graphics P              the Options page's preset: low, medium or high\n"
         "  --no-ssao, --no-bloom, --no-reflections   the Graphics page's switches, off\n"
         "  --frames N                quit after N frames\n"
@@ -297,6 +298,8 @@ Args parseArgs(int argc, char** argv) {
             a.reflections = false;
         } else if (!std::strcmp(s, "--cpu-scenery")) {
             a.gpuScenery = false;
+        } else if (!std::strcmp(s, "--sync-gear")) {
+            a.syncGear = true;
         } else if (!std::strcmp(s, "--no-metalfx")) {
             a.metalfx = false;
         } else if (!std::strcmp(s, "--metalfx")) {

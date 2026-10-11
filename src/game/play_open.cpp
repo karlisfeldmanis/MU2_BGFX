@@ -907,9 +907,16 @@ Play::Drawn Play::drawnFor(const sim::Body& body, const FigureBody* heroLook, si
     if (body.player && body.id == realm_.hero().id) {
         look = heroLook;
         if (!look && figures_) look = figures_->body(kHeroFigure);
+    } else if (body.player && body.gone) {
+        // One who has left keeps his place in the realm till a newcomer takes it (Realm::join),
+        // and is drawn as nobody: dressed, every bot who had come and gone had his suit read
+        // under the loading screen -- 40 pieces, 108 ms, in a Dungeon of eleven.
     } else if (body.player) {
-        // Another player in a shared world, in his own class and gear.
+        // Another player in a shared world, in his own class and gear -- what of it is loaded,
+        // the rest on its way (Figures::setStreaming) and put on him as it comes.
         look = otherLook(body);
+        one.gear = gearOf(body);
+        one.waitsForGear = figures_ && figures_->lastMissed() > 0;
     } else if (body.warden >= 0) {
         // A guard wears his townsperson's figure, and is drawn here rather than among the
         // folk below because he walks and fights.
