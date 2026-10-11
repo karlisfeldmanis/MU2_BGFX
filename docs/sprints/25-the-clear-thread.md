@@ -57,15 +57,16 @@ A local server, 15 bots made at level 40 (`--kit 40`), and a client on a 150 ms 
 jitter clicking every 25 frames: 152 orders, every hash agreed, no long frame logged. The server's
 minutes: 0.7-1.3 ms a tick on average, no tick a whole interval late.
 
-## Found by the timing, not yet fixed: a long walk's route
+## The slow passes were the Mac, not the server
 
-The slow-pass lines (10-25 ms ticks, a few a minute with 15 bots) were all one thing, found with
-throwaway timers in a private worktree: **a player's route across a town**. Router::plan expanded
-7,000-11,000 tiles for a walk like Lorencia 115,138 to 6,145 and took 5-22 ms on the Mac -- every
-one of them found, none failed. The estimate is octile scaled by three quarters (Route.cs's), so
-A* explores far more than an exact estimate would, at 2-3 us a tile. On the box that is 20-80 ms,
-more than a tick, and every client in the map runs the same plan in its mirror.
+The first runs' slow-pass lines (10-25 ms ticks, a few a minute with 15 bots) looked like a
+player's route across a town: throwaway timers round Router::plan read 5-22 ms for walks like
+Lorencia 115,138 to 6,145. **That was wrong.** The same walk timed alone takes 0.47 ms for its
+7,434 tiles (0.2-0.7 ms for the long Lorencia walks), and the timers were wall time on a Mac whose
+load stood at 7-14 with the server niced.
 
-Ways, for the user to choose: make each expansion cheaper with the same routes (no rule changes),
-an exact octile estimate (other routes of the same cost now and then), or a cap on a plan's
-expansions with a long walk taken in legs (MU's own clients walk a click in pieces).
+So the slow-pass line says how much of the pass the thread was on the CPU, and the minute's line
+how many slow passes were held up (under half on the CPU): `slow pass 26.6 ms, 3.5 on the cpu`.
+In a 3-minute rerun all 54 slow passes were held up -- 10-26 ms on the wall, 0.1-5.8 ms on the
+CPU. Nothing in the server's own work needed fixing. On the box a held-up pass is the host's
+steal or another process, and that is worth knowing too.

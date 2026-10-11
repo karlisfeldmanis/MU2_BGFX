@@ -159,6 +159,13 @@ constexpr size_t kRecentTicks = 4;
 constexpr double kSlowPass = 10.0;  // ms
 constexpr auto kStatsEvery = std::chrono::seconds(60);
 double msSince(Clock::time_point at) { return std::chrono::duration<double, std::milli>(Clock::now() - at).count(); }
+// This thread's own CPU time, in ms: a long pass that used little of it was waiting for the
+// machine -- another process, the host's steal on a shared box -- not working.
+double cpuMs() {
+    timespec now{};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &now);
+    return double(now.tv_sec) * 1000.0 + double(now.tv_nsec) / 1e6;
+}
 struct Stats {
     Clock::time_point since = Clock::now();
     int ticks = 0;
@@ -166,6 +173,7 @@ struct Stats {
     std::string tickMostWorld;
     double passMost = 0.0;
     int slowPasses = 0;
+    int slowWaited = 0;  // of those, the ones the machine held up: under half the pass on the CPU
     // A tick stepped after its deadline: how late the latest, and how many a whole tick or more.
     double lateMost = 0.0;
     int behind = 0;
@@ -1655,6 +1663,7 @@ int main(int argc, char** argv) {
     while (!g_stop) {
         // Where this pass's time goes (g_stats): the poll's wait is not counted.
         const Clock::time_point passAt = Clock::now();
+        const double passCpuAt = cpuMs();
         // Who arrived, and what each that spoke said.
         for (net::Socket s = listener.accept(); s.open(); s = listener.accept()) {
             auto one = std::make_unique<Session>();
@@ -1808,10 +1817,12 @@ int main(int argc, char** argv) {
         const double passMs = msSince(passAt);
         g_stats.passMost = std::max(g_stats.passMost, passMs);
         if (passMs > kSlowPass) {
+            const double passCpu = cpuMs() - passCpuAt;
             ++g_stats.slowPasses;
-            core::logf("slow pass %.1f ms: heard %.1f, ticks %.1f (%d, the longest %s %.1f), party %.1f, "
+            if (passCpu < passMs / 2) ++g_stats.slowWaited;
+            core::logf("slow pass %.1f ms, %.1f on the cpu: heard %.1f, ticks %.1f (%d, the longest %s %.1f), party %.1f, "
                        "saves %.1f (%zu), sent %.1f, gone %.1f",
-                       passMs, heardMs, ticksMs, stepped, worldMostName.empty() ? "-" : worldMostName.c_str(),
+                       passMs, passCpu, heardMs, ticksMs, stepped, worldMostName.empty() ? "-" : worldMostName.c_str(),
                        worldMost, partyMs, savesMs, due.size(), sendMs, goneMs);
         }
         // Each minute, how the loop kept time.
@@ -1824,12 +1835,12 @@ int main(int argc, char** argv) {
                 bots += one->bot;
             }
             core::logf("timing: %d players (%d bots), %zu worlds | %d ticks, %.3f ms mean, %.2f most (%s) | "
-                       "pass most %.1f ms, %d slow | late most %.1f ms, %d a tick behind | out %.1f KB/s stream, "
+                       "pass most %.1f ms, %d slow (%d held up) | late most %.1f ms, %d a tick behind | out %.1f KB/s stream, "
                        "%.1f KB/s udp | %d saved, %.2f ms most | snapshot %.2f ms most, %d packed",
                        players, bots, worlds.size(), g_stats.ticks,
                        g_stats.ticks > 0 ? g_stats.tickMs / g_stats.ticks : 0.0, g_stats.tickMost,
                        g_stats.tickMostWorld.empty() ? "-" : g_stats.tickMostWorld.c_str(), g_stats.passMost,
-                       g_stats.slowPasses, g_stats.lateMost, g_stats.behind, g_stats.streamBytes / 1024.0 / seconds,
+                       g_stats.slowPasses, g_stats.slowWaited, g_stats.lateMost, g_stats.behind, g_stats.streamBytes / 1024.0 / seconds,
                        g_stats.udpBytes / 1024.0 / seconds, g_stats.saved, g_stats.saveMost, g_stats.snapshotMost,
                        g_stats.packs);
             g_stats = Stats{};
