@@ -172,7 +172,9 @@ Now the coloured glow is drawn on flare01, the lamps' soft sheet, 1.3 times wide
 bright; the core keeps Spark03 in the flower's own hue at 0.6 of the glow; the bulb mesh glows
 at 0.35 (0.2 for the pale salmon red); each bulb breathes 0.75-1 on its own beat over about six
 seconds; and the green lamp is 1.4-1.5, as at MU's level the pool was lost on the dark moss. The
-blue read as blue beads in soft orbs; the red bulbs are still pale chips in a red glow.
+blue read as blue beads in soft orbs. The red bulbs stayed pale chips inside their glow (MU's
+sheet is one flat salmon, (251, 188, 157)), so Object72 wears `ai_flowerlight2_r_deep.png`, ours: the
+same flat sheet in a deep red (232, 64, 48), as saturated as the blue, at the blue's 0.35.
 
 **Gate 119 is in `source/mu.db`** (the user approved it 2026-10-11): `(119, 33, 82, 8, 87, 14, 1)`,
 checkpointed, carried by index.py's `gate_rows` into the world's `gates.safe` and Aida's tables. A

@@ -164,9 +164,9 @@ constexpr float kFlowerCoreScale = 3.0f;
 // lamps' soft flare01 (BITMAP_LIGHT), a little wider and kFlowerHaloLift brighter, since flare01
 // falls off far sooner than Spark03's halo and MU's dim colour vanished on it; the core keeps
 // Spark03 in the flower's own hue at kFlowerCoreShare of the glow's colour instead of grey.
-// With the bulb mesh at 0.35, or 0.2 for the pale red (the recipes), a bulb is a coloured bead
-// in a soft orb. And every bulb breathes on its own slow beat, 0.75 to 1 of its light over about
-// six seconds.
+// With the bulb mesh at 0.35 (the red on a deep red copy of its pale sheet), a bulb is a
+// coloured bead in a soft orb. And every bulb breathes on its own slow beat, 0.75 to 1 of its
+// light over about six seconds.
 constexpr float kFlowerHaloWiden = 1.3f;
 constexpr float kFlowerHaloLift = 2.0f;
 constexpr float kFlowerCoreShare = 0.6f;
