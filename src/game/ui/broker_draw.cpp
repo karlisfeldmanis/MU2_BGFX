@@ -184,7 +184,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
         const std::string word = zen > 0 ? "Collect " + panel::commas(zen) : "Collect " + std::to_string(mine_.box.size());
         controls::button(canvas_, P(pill->box), word, controls::Kind::Quiet, state(Hit::Collect, 1), u, S(12.0f));
     }
-    right(kWide - kPad, 51.0f, 15.0f, moneyColour(realm.money()), panel::commas(realm.money()) + " Zen");
+    right(kWide - kPad, 51.0f, 15.0f, kGold, panel::commas(realm.money()) + " Zen");
     right(kWide - kPad, 60.0f, 10.5f, style::kAshInk, "+ " + panel::commas(realm.vault().zen()) + " in vault");
     if (saidFor_ > 0.0f && !said_.empty()) {
         text(kPad, kTall - 13.0f, 12.5f, saidBad_ ? style::kDanger : style::kLiveHi, said_);
@@ -268,7 +268,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
             } else {
                 text(b.x + 192.0f, b.y + 15.5f, 12.0f, style::kAshInk, std::to_string(row.tiers.size()) + " sellers");
             }
-            right(b.right() - 6.0f, b.y + (alike ? 11.0f : 15.5f), 13.5f, moneyColour(row.price), panel::commas(row.price));
+            right(b.right() - 6.0f, b.y + (alike ? 11.0f : 15.5f), 13.5f, kGold, panel::commas(row.price));
             if (alike) right(b.right() - 6.0f, b.y + 21.0f, 10.0f, style::kAshInk, "each, cheapest");
         }
         if (page_.rows.empty()) {
@@ -364,7 +364,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
             text(card.x + 8.0f, card.bottom() - 50.0f, 11.0f, fits ? style::kLive : style::kDanger,
                  fits ? "Goes straight to your bag" : "Bag full: it waits in Collect");
             text(card.x + 8.0f, card.bottom() - 38.0f, 11.0f, style::kAshInk, alike ? "Total" : "Buyout");
-            right(card.right() - 8.0f, card.bottom() - 37.0f, 17.0f, moneyColour(cost), panel::commas(cost));
+            right(card.right() - 8.0f, card.bottom() - 37.0f, 17.0f, kGold, panel::commas(cost));
             if (const Spot* s = spotOf(Hit::Buy, 0)) {
                 controls::State st = state(Hit::Buy, 0);
                 st.off = waiting_ != 0 || cost > funds;
@@ -478,7 +478,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
             }
             text(price.x + 10.0f, price.bottom() - 82.0f, 11.0f, style::kAshInk, "Listing is free. You collect");
             text(price.x + 10.0f, price.bottom() - 70.0f, 11.0f, style::kAshInk, "the whole price if it sells:");
-            right(price.right() - 10.0f, price.bottom() - 52.0f, 18.0f, moneyColour(asked), panel::commas(std::max<int64_t>(0, asked)));
+            right(price.right() - 10.0f, price.bottom() - 52.0f, 18.0f, kGold, panel::commas(std::max<int64_t>(0, asked)));
             text(price.x + 10.0f, price.bottom() - 40.0f, 10.5f, style::kAshInk,
                  std::to_string(mine_.accountCount) + " of 20 listings on your account");
             if (const Spot* s = spotOf(Hit::List, 0)) {
@@ -497,7 +497,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
         controls::kicker(canvas_, x + (box.x + 10.0f) * k, y + (box.y + 16.0f) * k, "Waiting to collect", u);
         int64_t zen = 0;
         for (const net::BrokerParcel& p : mine_.box) zen += p.zen;
-        text(box.x + 10.0f, box.y + 40.0f, 20.0f, moneyColour(zen), panel::commas(zen) + " Zen");
+        text(box.x + 10.0f, box.y + 40.0f, 20.0f, kGold, panel::commas(zen) + " Zen");
         text(box.x + 10.0f, box.y + 54.0f, 10.5f, style::kAshInk, "Kept 30 days, then gone.");
         float ly = box.y + 72.0f;
         int shown = 0;
@@ -556,7 +556,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 if (const Spot* s = spotOf(Hit::Save, r)) controls::button(canvas_, P(s->box), "Save", controls::Kind::Primary, state(Hit::Save, r), u, S(11.5f));
                 if (const Spot* s = spotOf(Hit::Back, r)) controls::button(canvas_, P(s->box), "Back", controls::Kind::Quiet, state(Hit::Back, r), u, S(11.5f));
             } else {
-                right(list.right() - 112.0f, ry + 15.5f, 13.5f, moneyColour(row.price), panel::commas(row.price));
+                right(list.right() - 112.0f, ry + 15.5f, 13.5f, kGold, panel::commas(row.price));
                 if (const Spot* s = spotOf(Hit::Lower, r)) controls::button(canvas_, P(s->box), "Lower", controls::Kind::Quiet, state(Hit::Lower, r), u, S(11.5f));
                 if (const Spot* s = spotOf(Hit::Cancel, r)) controls::button(canvas_, P(s->box), "Cancel", controls::Kind::Quiet, state(Hit::Cancel, r), u, S(11.5f));
             }
