@@ -7027,5 +7027,19 @@
         0.44
       ]
     }
-  ]
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 20
+    },
+    "resist": {
+      "ice": 12,
+      "poison": 12
+    },
+    "bolt": "some",
+    "boss": true,
+    "note": "Resistance: Icarus's (WZO Monster.txt:56-66, = OpenMU Version095d Maps/Icarus.cs read the same way; docs/icarus-port.md A 4.2), each breed as it is built. Drops: Icarus's: MoneyRate 14 and MaxItemLevel 3, RegTime 10 for the Alquamos, Mega Crust and Queen Rainer and Alpha Crust, 20 for the Drakan, 30 for the Phantom Knight and Great Drakan (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built."
+  }
 }

@@ -81,5 +81,12 @@
     ]
   },
   "tint_from": "Not read off MuMain, and marked as such rather than presented as a client fact. CreateMonster's MONSTER_ELITE_BULL_FIGHTER branch was checked three times against the 0.75 source for a body-colour write - the golden monsters get one, at Models[o->Type].BodyLight, a few hundred lines up the same function - and the Elite Bull Fighter gets none: only Weapon[0].Type, Object.Scale and Level. The Elite's fur is the plain bull's own albedo, unchanged, and the only Level-gated render call for this model is RenderEye.\n\nAdded anyway, on request, for a darker read than the source supports: a flat multiply on the 'fur' material's AlbedoColor, done at runtime rather than in the bake - see Model.Tint - because this asset shares BullFighter01's model entirely and has no bake of its own to carry a material_overrides entry into. 0.64/0.60/0.66 is an eyeballed number with a faint cool cast rather than a straight grey multiply, chosen against the built model in the viewer and not measured against anything; it wants revisiting the way any bench-invented figure does. This is the one place this project's own rule - every visual trait traces to OpenMU or MuMain - is set aside, and this note is what says so.",
-  "open_question": "Whether a dead Elite keeps its eyes. It does in MU - the eye call sits in RenderCharacter with no test on c->Dead, so a corpse glows until it fades - and the puffs beside it stop, because Crowd.Puffing turns every emitter off for a figure that is dead. Both behaviours are faithful to their own call sites and they disagree with each other on the same animal. Left as MU has it and written down here, because it is the sort of difference that reads as a bug in whichever direction it is found."
+  "open_question": "Whether a dead Elite keeps its eyes. It does in MU - the eye call sits in RenderCharacter with no test on c->Dead, so a corpse glows until it fades - and the puffs beside it stop, because Crowd.Puffing turns every emitter off for a figure that is dead. Both behaviours are faithful to their own call sites and they disagree with each other on the same animal. Left as MU has it and written down here, because it is the sort of difference that reads as a bug in whichever direction it is found.",
+  "rules": {
+    "drops": {
+      "money_rate": 12,
+      "max_plus": 6,
+      "regen": 5
+    }
+  }
 }

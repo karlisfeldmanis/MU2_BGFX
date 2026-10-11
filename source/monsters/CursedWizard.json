@@ -30,5 +30,17 @@
   "monster_from": "SetCharacterScale outside the character scene: Skin 0 and class 0, the wizard's, so Scale 0.9 (ZzzCharacter.cpp:12141-12145). model_index -1: the player's own play-speed table.",
   "stance_from": "Staff06 declares the sword stance -- a one-handed staff is in the sword group for SetPlayerStop -- and a monster row has no weapon row to read it off, so it is repeated here.",
   "not_built_note": "`c->PK = PVP_MURDERER2` (ZzzCharacter.cpp:13926) is drawn: RenderCharacter lights a murderer (1, 0.1, 0.1) (:9990-9993), every part he wears blood red (play_tuning.h kMurdererLight). Not drawn: the name in a murderer's colour, which this game's monster names do not carry. His attack's thunder (:2315-2329) sits under `c->Skill == AT_SKILL_LIGHTNING` and his skill is Meteorite, so MU draws the meteor for him, as for the Lich (game/play.cpp, attackSkill 2), cast with the spell's hand clip as SetPlayerMagic gives a MODEL_PLAYER (play_open.cpp).",
-  "sounds_from": "MODEL_PLAYER, whose Sounds[] are empty: no monster voice. His blows sound as any player's do."
+  "sounds_from": "MODEL_PLAYER, whose Sounds[] are empty: no monster voice. His blows sound as any player's do.",
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 5
+    },
+    "resist": {
+      "ice": 5,
+      "poison": 5
+    },
+    "note": "Resistance: The Lost Tower's eight (Version075/Maps/LostTower.cs, every breed's own rows, OpenMU's poison and ice read the other way about as above; WZD Monster.txt agrees). Drops: The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md, Decision 3: the user kept WebZen's, 2026-10-01)."
+  }
 }

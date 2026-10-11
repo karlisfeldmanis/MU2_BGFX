@@ -679,5 +679,16 @@
         0.787
       ]
     }
-  ]
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 4,
+      "poison": 5
+    }
+  }
 }

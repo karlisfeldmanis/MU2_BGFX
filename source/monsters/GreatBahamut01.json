@@ -12,5 +12,17 @@
   },
   "monster_from": "Scale 1.0 against the Bahamut's 0.6. Level 1 adds, while it lives, a BITMAP_SMOKE + 1 within 32 units of it one reference frame in four (ZzzCharacter.cpp:6169-6176), the Budge Dragon's own dust; Play's breathing figures draw it (kGreatBahamutFigure).",
   "profile": "monster",
-  "sounds_from": "The Bahamut's model's: SetMonsterSound(..., 130, 130, 131, 131, 130) in ZzzOpenData.cpp:3639-3643. Wired as greatbahamut_* in sounds.json, as bahamut_*."
+  "sounds_from": "The Bahamut's model's: SetMonsterSound(..., 130, 130, 131, 131, 130) in ZzzOpenData.cpp:3639-3643. Wired as greatbahamut_* in sounds.json, as bahamut_*.",
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 15
+    },
+    "resist": {
+      "ice": 6,
+      "poison": 6
+    },
+    "note": "Resistance: Atlans's seven (Version075/Maps/Atlans.cs, read the same way; WZO Monster.txt agrees). Drops: Atlans's: MoneyRate 14 and MaxItemLevel 3 for all seven, RegTime 8 for the first three, 15 for the elite and 150 for the Hydra (WZO Monster.txt:39-72; docs/atlans-port.md 4.2)."
+  }
 }

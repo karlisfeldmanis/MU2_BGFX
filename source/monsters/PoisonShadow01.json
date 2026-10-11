@@ -13,5 +13,18 @@
   "monster_from": "The MONSTER_POISON_SHADOW branch: `c->Object.Scale = 1.2f; c->Level = 1;`. Level 1 is what RenderCharacter's MODEL_SHADOW case reads: green Magic_Ground2 rings where the Shadow has dark stars (Shadow01's effects_from).",
   "profile": "monster",
   "effects_from": "Shadow01's, at Level 1: CreateSprite(BITMAP_MAGIC + 1, Position, 0.8f, Light (0.2, 0.7, 0.1), o, 0.f) on the same 39 bones, additive (subtype 0), and the same ENERGY sparks in that green while it swings. ZzzCharacter.cpp:2344-2360's thunder off its link bone sits under `c->Skill == AT_SKILL_LIGHTNING`, and its skill is Poison, so MU never draws it for this breed. Its poison is the realm's (realm_tuning.h kPoisoners), as the Larva's: no missile.",
-  "sounds_from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed. Wired as poisonshadow_*, the same files as shadow_*."
+  "sounds_from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed. Wired as poisonshadow_*, the same files as shadow_*.",
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 5
+    },
+    "resist": {
+      "ice": 6,
+      "poison": 4
+    },
+    "poisons": true,
+    "note": "Resistance: The Lost Tower's eight (Version075/Maps/LostTower.cs, every breed's own rows, OpenMU's poison and ice read the other way about as above; WZD Monster.txt agrees). Drops: The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md, Decision 3: the user kept WebZen's, 2026-10-01)."
+  }
 }

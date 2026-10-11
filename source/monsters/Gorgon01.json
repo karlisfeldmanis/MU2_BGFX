@@ -434,5 +434,12 @@
         0.075
       ]
     }
-  ]
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 5
+    }
+  }
 }

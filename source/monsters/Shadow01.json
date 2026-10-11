@@ -575,5 +575,17 @@
         0.963
       ]
     }
-  ]
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 5
+    },
+    "resist": {
+      "ice": 3,
+      "poison": 3
+    },
+    "note": "Resistance: The Lost Tower's eight (Version075/Maps/LostTower.cs, every breed's own rows, OpenMU's poison and ice read the other way about as above; WZD Monster.txt agrees). Drops: The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md, Decision 3: the user kept WebZen's, 2026-10-01)."
+  }
 }

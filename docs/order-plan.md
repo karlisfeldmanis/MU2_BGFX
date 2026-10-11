@@ -691,6 +691,28 @@ output (decided earlier the same day).
   `behaviour` name in `show`/`rules`; the events (square.h, event.h, invasion, raid: S1's
   Instance); quests' kill targets; the traps (`traps.cpp`, a parallel table to look at later).
 
+### Slice E1: the sim's breed rules, as done
+
+- **Each recipe has `rules`:** `drops` (money_rate, max_plus, regen), `resist` (ice, poison),
+  `poisons`, `chill_odds`, `bolt` ("some", "every"), `boss`, `split` (parts, melee_first,
+  after, every) and `bulk`, with a `note` lifted from the rows' own comments and their world's
+  citation. 60 recipes; the Yeti (19), which has no recipe, is in `source/monsters/unbuilt.json`
+  (the user, 2026-10-11: 'Keep in a tiny side file') until it is built.
+- **`realm_tables.py` writes `src/sim/breeds_table.inc`:** the same nine arrays under their old
+  names (kPoisoners, kBoltBlowers, kEveryBoltBlowers, kChillers, kBosses, kSplitBlows,
+  kResistances, kDropRates, and kBulks, which replaced `bulkOf`'s ternary), in breed order.
+  `realm_tuning.h` keeps every block comment and includes the table once; the lookups sit below
+  it, so no caller changed. `./mu make realm` watches the recipes; `./mu check`'s `realm` line
+  checks the third table. The generator refuses an unknown key, a bolt it does not know, and a
+  breed with rules in two files.
+- **Proved:**
+  - HEAD's `realm_tuning.h` (in a renamed namespace) against the new one, eleven lookups for
+    every breed number -50 to 999: 1050 probed, 0 differ; the Hydra's bulk changed in its
+    recipe is caught.
+  - sim_test's 16,966 lines identical to HEAD's (both built in worktrees, 7441 checks, 0
+    failed), server_test 27 of 27.
+  - Live: three netbots and a client, every link "none disagreed".
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

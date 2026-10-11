@@ -27,5 +27,18 @@
   },
   "glow_from": "The Gorgon's: BlendMesh 1, its eyes added and their light rolled each frame (Gorgon01's glow_from).",
   "effects_from": "Level 2 is what MoveCharacterVisual's MODEL_GORGON case reads (ZzzCharacter.cpp:6061-6076): every frame ten BITMAP_FIRE on random bones, and AddTerrainLight of (1, 0.2, 0) times the rolled Luminosity, two tiles. Drawn in game/fx/shadow_stars.h, ours and subtle as the Shadows' (the user's asks of 2026-10-01): a few faint embers off random joints rather than ten a frame, and a faint orange light on the nearest two.",
-  "sounds_from": "The Gorgon's model and so the Gorgon's five (ZzzOpenData.cpp:3473-3482). Wired as deathgorgon_*, gorgon_*'s files."
+  "sounds_from": "The Gorgon's model and so the Gorgon's five (ZzzOpenData.cpp:3473-3482). Wired as deathgorgon_*, gorgon_*'s files.",
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 5
+    },
+    "resist": {
+      "ice": 6,
+      "poison": 6
+    },
+    "boss": true,
+    "note": "Resistance: The Lost Tower's eight (Version075/Maps/LostTower.cs, every breed's own rows, OpenMU's poison and ice read the other way about as above; WZD Monster.txt agrees). Drops: The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md, Decision 3: the user kept WebZen's, 2026-10-01)."
+  }
 }

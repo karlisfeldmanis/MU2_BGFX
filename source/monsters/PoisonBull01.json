@@ -17,5 +17,8 @@
   "right_hand_bone": "left_bone",
   "right_hand_from": "MODEL_GREAT_SCYTHE is Item/Spear09.bmd, cooked. Bone 42, left_bone under Bip01 R Hand, the model's own (see BullFighter01).",
   "profile": "monster",
-  "sounds_from": "Monster01's five, as the Elite's: wired as poisonbull_*, the same files as bullfighter_*. It snorts as both bulls do (MODEL_BULL_FIGHTER's case, kSnortingFigure's list)."
+  "sounds_from": "Monster01's five, as the Elite's: wired as poisonbull_*, the same files as bullfighter_*. It snorts as both bulls do (MODEL_BULL_FIGHTER's case, kSnortingFigure's list).",
+  "rules": {
+    "poisons": true
+  }
 }

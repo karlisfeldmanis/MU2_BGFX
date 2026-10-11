@@ -461,11 +461,16 @@ def plan_tables(threads):
 
 def plan_realm():
     """The realm's compiled tables, src/sim/gates_table.inc and maps_table.inc, out of every
-    world's manifest's `gates` and `rules` (pipeline/realm_tables.py). A rebuild of the game, the
-    server and netbot follows by hand."""
-    outs = [os.path.join(ROOT, "src", "sim", name) for name in ("gates_table.inc", "maps_table.inc")]
+    world's manifest's `gates` and `rules`, and breeds_table.inc out of every monster recipe's
+    `rules` (pipeline/realm_tables.py). A rebuild of the game, the server and netbot follows by
+    hand."""
+    outs = [os.path.join(ROOT, "src", "sim", name)
+            for name in ("gates_table.inc", "maps_table.inc", "breeds_table.inc")]
     script = os.path.join(PIPELINE, "realm_tables.py")
     manifests = [os.path.join(SOURCE, "world", w, "world.json") for w in sorted(os.listdir(os.path.join(SOURCE, "world")))]
+    monsters = os.path.join(SOURCE, "monsters")
+    manifests += [os.path.join(monsters, f) for f in sorted(os.listdir(monsters))
+                  if f.endswith(".json") and not f.endswith(".rig.json")]
     stale = newest([script] + [m for m in manifests if os.path.exists(m)]) > min(mtime(out) for out in outs)
     return [Step("realm", ["python3", script],
                  lambda c: (stale, "a manifest or the script is newer than the realm's tables" if stale

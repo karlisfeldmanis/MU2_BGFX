@@ -130,16 +130,6 @@ constexpr int kHeroAttackRange = 1;
 // And six with any bow type drawn: MuMain's `Action()`, `Range = 6.f` whenever
 // GetEquipedBowType is not BOWTYPE_NONE (ZzzInterface.cpp:1245-1261).
 constexpr int kArcherReach = 6;
-// How many tiles a breed's body stands past its own tile, which his reach takes as well, so he
-// strikes it from its edge and does not walk into it. Ours (the user, 2026-10-04: 'attack
-// distance is incorrect for char because monster is big'): MU reaches the tile alone and
-// lets him stand inside a Hydra, whose body runs 2.8 m out from its tile, front and back. At 2
-// he stood clear of it; 1 keeps him close against it ('little but closer').
-// And the Golden Dragon (79): two tiles, its body and wings a long way out from its tile (the
-// user, 2026-10-06: 'we need some minimal attack distance for melee attack for dragon').
-constexpr int bulkOf(int32_t number) {
-    return number == 49 ? 1 : number == 79 ? 2 : 0;  // Hydra: a tile in, close against its body
-}
 // An arrow's flight: MU's `Direction[1] = -70` units a reference frame at 25, 1750 units -- 17.5
 // tiles -- a second, stopping a tile short of the body as a spell does (MU2 Realm.cs:79).
 constexpr float kArrowTilesPerSecond = 17.5f;
@@ -302,7 +292,6 @@ constexpr int kChatTicks = 70;
 // Shadow (39), each `AttackSkill = Poison` (Version075/Maps/Dungeon.cs:666, :791; LostTower.cs:834).
 // Nothing in Lorencia poisons -- not its Spider (3), which was ours for a day and taken out (the
 // user, 2026-09-28).
-constexpr int32_t kPoisoners[] = {8, 12, 39};
 // A poison on him: 0.75's twenty seconds, a pulse every three at `PoisonDamageMultiplier` 0.03 of
 // the health left (Dungeon.cs:677), never the last point. One at a time: a bite while one is on
 // neither adds to it nor starts the twenty seconds again (ObjBaseAttack.cpp:770-777).
@@ -322,23 +311,6 @@ constexpr int32_t kBeastPushDelay = 12;
 // And the Dark Phoenix (77), whose every plain blow MU draws as a bolt -- its Energy Ball's
 // BITMAP_JOINT_THUNDER from the bird's head (ZzzCharacter.cpp:2108-2121), and while its shield is
 // up WebZen's Lightning (ObjAttack.cpp:237-243) -- so every blow but its Flame is its bolt.
-constexpr int32_t kBoltBlowers[] = {73, 75};  // the Drakan and the Great Drakan
-constexpr int32_t kEveryBoltBlowers[] = {77};  // the Dark Phoenix
-constexpr bool boltBlower(int32_t number) {
-    for (const int32_t one : kBoltBlowers) {
-        if (one == number) return true;
-    }
-    for (const int32_t one : kEveryBoltBlowers) {
-        if (one == number) return true;
-    }
-    return false;
-}
-constexpr bool everyBlowBolt(int32_t number) {
-    for (const int32_t one : kEveryBoltBlowers) {
-        if (one == number) return true;
-    }
-    return false;
-}
 constexpr int32_t kBoltPushDelay = 10;
 constexpr float kHeroPoisonShare = 0.03f;
 
@@ -357,13 +329,6 @@ struct Chiller {
     int32_t number;
     int odds;
 };
-constexpr Chiller kChillers[] = {{22, 1}, {52, 4}};
-constexpr int chillOdds(int32_t number) {
-    for (const Chiller& one : kChillers) {
-        if (one.number == number) return one.odds;
-    }
-    return 0;
-}
 
 // ---- the bosses' Flame of Evil -----------------------------------------------------------------
 // The Lost Tower's Death Gorgon (35) and Balrog (38), A.Type 150 in WebZen's Monster.txt: one blow
@@ -378,7 +343,6 @@ constexpr int chillOdds(int32_t number) {
 // And Icarus's Drakan (73), Phantom Knight (72) and Great Drakan (75), A.Type 150 (WZO
 // Monster.txt:56-66; docs/icarus-port.md A 4.2).
 // And the Dark Phoenix (77), WZO's boss (Monster.txt:76).
-constexpr int32_t kBosses[] = {35, 38, 49, 58, 59, 63, 79, 73, 72, 75, 77};
 
 // ---- blows split into parts --------------------------------------------------------------------
 // **Ours.** MU and WebZen strike once a swing; these breeds' one blow is split into `parts`, each
@@ -398,16 +362,6 @@ struct SplitBlow {
     bool meleeFirst;
     int64_t after, every;
 };
-constexpr SplitBlow kSplitBlows[] = {
-    {49, 4, false, 18, 4},  // Hydra
-    {48, 2, true, 18, 4},   // Lizard King
-};
-constexpr const SplitBlow* splitOf(int32_t number) {
-    for (const SplitBlow& one : kSplitBlows) {
-        if (one.number == number) return &one;
-    }
-    return nullptr;
-}
 
 // ---- a spot of many -----------------------------------------------------------------------------
 // How far a one-tile nest with a count scatters its members (Realm's raise): **ours**, a
@@ -431,51 +385,6 @@ struct Resistance {
     int32_t number;
     int32_t ice, poison;
 };
-constexpr Resistance kResistances[] = {
-    {19, 0, 3},  // Yeti
-    {20, 1, 4},  // Elite Yeti
-    {22, 0, 3},  // Ice Monster
-    {23, 0, 3},  // Hommerd
-    {24, 0, 2},  // Worm
-    {25, 4, 5},  // Ice Queen
-    // The Lost Tower's eight (Version075/Maps/LostTower.cs, every breed's own rows, OpenMU's
-    // poison and ice read the other way about as above; WZD Monster.txt agrees).
-    {34, 5, 5},    // Cursed Wizard
-    {35, 6, 6},    // Death Gorgon
-    {36, 3, 3},    // Shadow
-    {37, 5, 5},    // Devil
-    {38, 10, 10},  // Balrog
-    {39, 6, 4},    // Poison Shadow
-    {40, 6, 6},    // Death Knight
-    {41, 5, 5},    // Death Cow
-    // Atlans's seven (Version075/Maps/Atlans.cs, read the same way; WZO Monster.txt agrees).
-    {45, 1, 1},    // Bahamut
-    {46, 2, 2},    // Vepar
-    {47, 6, 2},    // Valkyrie
-    {48, 7, 7},    // Lizard King
-    {49, 12, 12},  // Hydra
-    {51, 6, 6},    // Great Bahamut
-    {52, 7, 7},    // Silver Valkyrie
-    // Tarkan's seven (WZO Monster.txt:55-74, = OpenMU Version095d Maps/Tarkan.cs read the same
-    // way; docs/tarkan-port.md A 4.2). The two bosses' fire 15 and 17 is not carried.
-    {57, 9, 9},    // Iron Wheel
-    {58, 9, 9},    // Tantalos
-    {59, 13, 13},  // Zaikan
-    {60, 8, 8},    // Bloody Wolf
-    {61, 10, 10},  // Beam Knight
-    {62, 8, 8},    // Mutant
-    {63, 13, 13},  // Death Beam Knight
-    // Icarus's (WZO Monster.txt:56-66, = OpenMU Version095d Maps/Icarus.cs read the same way;
-    // docs/icarus-port.md A 4.2), each breed as it is built.
-    {69, 9, 9},    // Alquamos
-    {71, 9, 9},    // Mega Crust
-    {70, 11, 9},   // Queen Rainer
-    {73, 12, 12},  // Drakan
-    {74, 13, 13},  // Alpha Crust
-    {72, 14, 14},  // Phantom Knight
-    {75, 15, 15},  // Great Drakan
-    {77, 30, 30},  // Dark Phoenix
-};
 
 // ---- what each breed leaves -------------------------------------------------------------------
 // Monster.txt's MoneyRate and MaxItemLevel (WebZen 1.00.93, revision 2008-08-22), which OpenMU
@@ -491,37 +400,62 @@ struct DropRate {
     int32_t moneyRate, maxPlus;
     int32_t regen = 5;
 };
-constexpr DropRate kDropRates[] = {
-    {0, 10, 6},  {1, 10, 6},  {2, 10, 6},  {3, 10, 6},  {4, 12, 6},  {6, 12, 6},
-    {7, 12, 6},  {10, 14, 3}, {11, 14, 4}, {12, 14, 4}, {13, 14, 4}, {14, 12, 6},
-    {17, 14, 4}, {18, 14, 3}, {19, 14, 6}, {20, 14, 6}, {21, 14, 6}, {22, 14, 6},
-    {23, 14, 6}, {24, 14, 6}, {25, 14, 3, 10}, {26, 10, 6}, {27, 10, 6}, {28, 10, 6},
-    {29, 12, 6}, {30, 12, 6}, {31, 12, 6}, {32, 12, 6}, {33, 10, 6},
-    // The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The
-    // Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md,
-    // Decision 3: the user kept WebZen's, 2026-10-01).
-    {34, 14, 3}, {35, 14, 3}, {36, 14, 3}, {37, 14, 3}, {38, 14, 3, 10}, {39, 14, 3},
-    {40, 14, 3}, {41, 14, 3},
-    // Atlans's: MoneyRate 14 and MaxItemLevel 3 for all seven, RegTime 8 for the first three,
-    // 15 for the elite and 150 for the Hydra (WZO Monster.txt:39-72; docs/atlans-port.md 4.2).
-    {45, 14, 3, 8}, {46, 14, 3, 8}, {47, 14, 3, 8}, {48, 14, 3, 15}, {49, 14, 3, 150},
-    {51, 14, 3, 15}, {52, 14, 3, 15},
-    // Tarkan's: MoneyRate 30 for all seven, twice the others', and MaxItemLevel 3; RegTime 10
-    // for the three weakest, 20 for the Tantalos and the Beam Knight, 150 for the two bosses
-    // (WZO Monster.txt:55-74; docs/tarkan-port.md A 4.2).
-    {57, 30, 3, 10}, {58, 30, 3, 20}, {59, 30, 3, 150}, {60, 30, 3, 10}, {61, 30, 3, 20},
-    {62, 30, 3, 10}, {63, 30, 3, 150},
-    // Icarus's: MoneyRate 14 and MaxItemLevel 3, RegTime 10 for the Alquamos, Mega Crust and Queen
-    // Rainer and Alpha Crust, 20 for the Drakan, 30 for the Phantom Knight and Great Drakan (WZO Monster.txt:56-66; docs/icarus-port.md A 4.2), each breed as it is built.
-    {69, 14, 3, 10}, {71, 14, 3, 10}, {70, 14, 3, 10}, {73, 14, 3, 20},
-    {74, 14, 3, 10}, {72, 14, 3, 30}, {75, 14, 3, 30},
-    {77, 14, 4, 150},  // the Dark Phoenix: MaxItemLevel 4, RegTime 150 (WZO Monster.txt:76)
+// A breed's bulk (bulkOf, below).
+struct Bulk {
+    int32_t number;
+    int tiles;
 };
+
+// ---- the breeds' rows ------------------------------------------------------------------------
+// Each monster recipe's `rules` (source/monsters/<Name>.json, sprint E1): the lists the blocks
+// above describe, by breed number. `./mu make realm` writes them.
+#include "sim/breeds_table.inc"
+
+constexpr bool boltBlower(int32_t number) {
+    for (const int32_t one : kBoltBlowers) {
+        if (one == number) return true;
+    }
+    for (const int32_t one : kEveryBoltBlowers) {
+        if (one == number) return true;
+    }
+    return false;
+}
+constexpr bool everyBlowBolt(int32_t number) {
+    for (const int32_t one : kEveryBoltBlowers) {
+        if (one == number) return true;
+    }
+    return false;
+}
+constexpr int chillOdds(int32_t number) {
+    for (const Chiller& one : kChillers) {
+        if (one.number == number) return one.odds;
+    }
+    return 0;
+}
+constexpr const SplitBlow* splitOf(int32_t number) {
+    for (const SplitBlow& one : kSplitBlows) {
+        if (one.number == number) return &one;
+    }
+    return nullptr;
+}
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {
         if (one.number == number) return one;
     }
     return DropRate{number, 10, 6, 5};
+}
+// How many tiles a breed's body stands past its own tile, which his reach takes as well, so he
+// strikes it from its edge and does not walk into it. Ours (the user, 2026-10-04: 'attack
+// distance is incorrect for char because monster is big'): MU reaches the tile alone and
+// lets him stand inside a Hydra, whose body runs 2.8 m out from its tile, front and back. At 2
+// he stood clear of it; 1 keeps him close against it ('little but closer').
+// And the Golden Dragon (79): two tiles, its body and wings a long way out from its tile (the
+// user, 2026-10-06: 'we need some minimal attack distance for melee attack for dragon').
+constexpr int bulkOf(int32_t number) {
+    for (const Bulk& one : kBulks) {
+        if (one.number == number) return one.tiles;
+    }
+    return 0;
 }
 // A risen beast's five idle seconds (gObjMonster.cpp:185), in ticks.
 constexpr int64_t kRiseIdleTicks = 100;

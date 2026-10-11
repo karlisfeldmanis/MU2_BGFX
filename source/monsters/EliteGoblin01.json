@@ -20,5 +20,12 @@
   "rig_from": "Goblin01's, and there is no second file: 45 bones, seven actions, BoneHead 6, and the Goblin's walk at 0.6 - OpenMonsterModel sets play speeds against MONSTER_MODEL_GOBLIN, so both goblins share them.",
   "eyes_from": "Deliberately absent. c->Level = 1 is set, and on the Bull Fighter that is what lights the eyes - but only because RenderCharacter's model switch tests it under `case MODEL_BULL_FIGHTER`. There is no `case MODEL_GOBLIN` in that switch at all (the model appears only in the bounding-box and link-bone switches), so the Level is written and nothing on screen reads it. The captain is told apart by its size, its mace and its shield.",
   "effects_from": "None. MoveCharacterVisual has no case for MODEL_GOBLIN, as Goblin01 found; the Elite shares the type and so shares the nothing.",
-  "sounds_from": "The Goblin's five, SetMonsterSound(72..76) against MONSTER_MODEL_GOBLIN; see elitegoblin_attack in sounds.json."
+  "sounds_from": "The Goblin's five, SetMonsterSound(72..76) against MONSTER_MODEL_GOBLIN; see elitegoblin_attack in sounds.json.",
+  "rules": {
+    "drops": {
+      "money_rate": 10,
+      "max_plus": 6,
+      "regen": 5
+    }
+  }
 }

@@ -56,7 +56,8 @@ Traced from ebe25845 (Queen Rainer).
 6. `tools/cook.py --world <w> --only tables` for **every world**.
 7. `tools/cook.py --world <w> --only figures --monsters <Name> --threads 4`.
 8. C++, 7 files:
-   - `sim/realm_tuning.h`: kResistances, kDropRates, kBosses, kPoisoners, kChillers;
+   - the recipe's `rules` (drops, resist, poisons, chill_odds, bolt, boss, split, bulk; since
+     E1), then `./mu make realm`, which writes `sim/breeds_table.inc`;
    - `game/play_tuning.h`: a figure constant, aura lights, eye trails;
    - `game/play.cpp`, `play.h`, `play_open.cpp` (sounds), `play_show.cpp` (its show);
    - a `game/fx/` pair for its own effect, plus `source/sounds/sounds.json` and
@@ -66,7 +67,7 @@ Traced from ebe25845 (Queen Rainer).
 **Since sprint B:** `./mu new monster <number> --db` does steps 1-4 but the materials and the
 hands, and `./mu make <Name>` steps 5-7.
 
-**Today:** 7 code files, 2 data stores. **Goes to:** `source/monsters/<breed>/` (sprint E) and
+**Today:** 6 code files, 2 data stores (`realm_tuning.h` left the list in E1). **Goes to:** `source/monsters/<breed>/` (sprint E) and
 the monster panel (I). Code only for a bespoke behaviour.
 
 ## A map

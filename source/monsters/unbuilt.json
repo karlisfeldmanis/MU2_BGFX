@@ -1,0 +1,21 @@
+{
+  "about": "The realm's rules (sim/realm_tuning.h, pipeline/realm_tables.py) of breeds with no recipe yet: each moves into its <Name>01.json's `rules` the day it is built. Not a recipe: it names no item.",
+  "breeds": [
+    {
+      "number": 19,
+      "name": "Yeti",
+      "why": "In mu.db's monster_kinds and WebZen's Monster.txt, spawned nowhere in 0.75's maps; its rows were kept 'for the day it is' (realm_tuning.h, the user 2026-10-11: 'Keep in a tiny side file').",
+      "rules": {
+        "drops": {
+          "money_rate": 14,
+          "max_plus": 6,
+          "regen": 5
+        },
+        "resist": {
+          "ice": 0,
+          "poison": 3
+        }
+      }
+    }
+  ]
+}

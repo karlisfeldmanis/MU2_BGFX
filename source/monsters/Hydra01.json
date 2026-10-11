@@ -3956,5 +3956,25 @@
       ]
     }
   ],
-  "islands_from": "177 islands for 2994 triangles, read by sheet out of the low blend: the necks and heads (uo00, 1088), the hide's own (bbbb00, 272), the red glow (bbbb03, 32) and the overlay's copy of the hide (bbbb, 909) are skin; 19 triangles of membrane alone (bbb01) are leather and blended; one island of 646 joins the hide to 9 membrane triangles and takes the hide's skin, so those 9 are cut rather than blended; the claws with the cyan swirl (bbb02 and bbbb02, 28) are bone. They arrived as skin."
+  "islands_from": "177 islands for 2994 triangles, read by sheet out of the low blend: the necks and heads (uo00, 1088), the hide's own (bbbb00, 272), the red glow (bbbb03, 32) and the overlay's copy of the hide (bbbb, 909) are skin; 19 triangles of membrane alone (bbb01) are leather and blended; one island of 646 joins the hide to 9 membrane triangles and takes the hide's skin, so those 9 are cut rather than blended; the claws with the cyan swirl (bbb02 and bbbb02, 28) are bone. They arrived as skin.",
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 150
+    },
+    "resist": {
+      "ice": 12,
+      "poison": 12
+    },
+    "boss": true,
+    "split": {
+      "parts": 4,
+      "melee_first": false,
+      "after": 18,
+      "every": 4
+    },
+    "bulk": 1,
+    "note": "Resistance: Atlans's seven (Version075/Maps/Atlans.cs, read the same way; WZO Monster.txt agrees). Drops: Atlans's: MoneyRate 14 and MaxItemLevel 3 for all seven, RegTime 8 for the first three, 15 for the elite and 150 for the Hydra (WZO Monster.txt:39-72; docs/atlans-port.md 4.2)."
+  }
 }

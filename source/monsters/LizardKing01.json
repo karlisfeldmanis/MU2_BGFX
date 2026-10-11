@@ -179,5 +179,23 @@
         0.422
       ]
     }
-  ]
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 14,
+      "max_plus": 3,
+      "regen": 15
+    },
+    "resist": {
+      "ice": 7,
+      "poison": 7
+    },
+    "split": {
+      "parts": 2,
+      "melee_first": true,
+      "after": 18,
+      "every": 4
+    },
+    "note": "Resistance: Atlans's seven (Version075/Maps/Atlans.cs, read the same way; WZO Monster.txt agrees). Drops: Atlans's: MoneyRate 14 and MaxItemLevel 3 for all seven, RegTime 8 for the first three, 15 for the elite and 150 for the Hydra (WZO Monster.txt:39-72; docs/atlans-port.md 4.2)."
+  }
 }
