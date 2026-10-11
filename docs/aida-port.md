@@ -109,7 +109,6 @@ before the next:
 
 That made 3 263 placements of 54 models, at about 190-260 fps, unmeasured. The 20 kinds left
 all need effect work, plus the nine hidden emitter kinds. Left after the two batches below:
-- 31/72 (light-flowers: `_R` bulbs, green and red flickering terrain lights, spark sprites);
 - the hidden emitters 60 (butterflies), 67 (small fires) and 70 (the skull ghost); the mist boxes
   59/62/63 never emit in MU (no decision yet).
 
@@ -157,6 +156,16 @@ water if there is any').
   index.py's `GATE_BOXES_BY_MAP` to `pipeline/gate_boxes.py`, and play_mode's void clouds,
   castle sparks and spray calls into `World::throwAround`. aida.mut, tarkan.mut, lorencia.mut
   and workshop/index.json were byte-identical across the moves.
+
+**The light-flowers, 2026-10-11** (the user: 'continou'). Object31 (155, blue bulbs) and Object72
+(28, salmon-red), their 13-key sway: aidalightflower stems as opaque foliage (MU ships it only as
+a JPEG), the `flowerlight_R`/`flowerlight2_R` bulbs added lamplight. Each carries a recipe lamp,
+MoveAidaObject's AddTerrainLight: green (0.4, 0.6, 0.4) at 1.0-1.1 or red (0.9, 0.2, 0.2) at
+1.0-1.04, 2 tiles, a new level 12.5 times a second; 183 lights. And Ornaments' `kAidaGlows`:
+at bones 6, 7, 8, 12, 13 and 17 a Spark03 glow (blue (0.1, 0.1, 0.3) at Scale 4-5.5, or red
+0.25-0.5 at 5-6) and a dim core at 3, steady, 12 sprites a flower, drawn only where Sway poses
+the flower. MU's few-unit offsets in each bone's frame are left out (at most 8 cm). Shot at the
+red pair by the shrine (116,38) and the graveyard's blue ones (76,72), 0 errors.
 
 **Gate 119 is in `source/mu.db`** (the user approved it 2026-10-11): `(119, 33, 82, 8, 87, 14, 1)`,
 checkpointed, carried by index.py's `gate_rows` into the world's `gates.safe` and Aida's tables. A

@@ -145,6 +145,29 @@ constexpr float kDegreesPerRadian = 57.2957795f;
 // second. docs/aida-port.md, Part B section 2, item 21.
 constexpr int kRingStatueBone = 4;
 constexpr float kRingStatueScale = 3.0f;
+// And the light-flowers, types 30 and 71 (Object31, Object72; GMAida.cpp:106-150, 253-297): at
+// each of six bones a BITMAP_SPARK+1 (Effect/Spark03, 32 texels) in the flower's colour and a
+// second at Scale 3 for its core, steady. MU offsets each a few units in the bone's own frame
+// (at most 8, bone 17's); they hang at the bone's origin here, which is within 8 cm of it.
+struct AidaGlow {
+    const char* model;
+    float scales[6];
+    float colours[6][3];
+    float core[3];
+};
+constexpr int kFlowerBones[6] = {6, 7, 8, 12, 13, 17};
+constexpr float kFlowerCoreScale = 3.0f;
+constexpr float kSparkTexels = 32.0f;
+constexpr AidaGlow kAidaGlows[] = {
+    {"Object31", {5.5f, 4.5f, 4.0f, 4.5f, 4.0f, 4.0f},
+     {{0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f},
+      {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}, {0.1f, 0.1f, 0.3f}},
+     {0.15f, 0.15f, 0.15f}},
+    {"Object72", {6.0f, 5.5f, 5.0f, 5.5f, 5.0f, 5.0f},
+     {{0.5f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f},
+      {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}, {0.25f, 0.0f, 0.0f}},
+     {0.15f, 0.0f, 0.0f}},
+};
 
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
@@ -357,6 +380,26 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
             flare.sheet = 3;
             flare.spin = kStarDegreesPerSecond;
             if (flare.anchor.bone >= 0) lanterns_.push_back(flare);
+        } else if (world == "aida") {
+            static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
+            static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+            for (const AidaGlow& glow : kAidaGlows) {
+                if (name != glow.model) continue;
+                for (int b = 0; b < 6; ++b) {
+                    for (int part = 0; part < 2; ++part) {
+                        Lantern spark;
+                        spark.anchor = anchor(i, mesh, kFlowerBones[b], kOrigin, kNoAcross);
+                        for (int a = 0; a < 3; ++a) spark.anchor.point[a] = 0.0f;
+                        spark.scale = part == 0 ? glow.scales[b] : kFlowerCoreScale;
+                        for (int a = 0; a < 3; ++a)
+                            spark.colour[a] = part == 0 ? glow.colours[b][a] : glow.core[a];
+                        spark.steady = true;
+                        spark.sheet = 4;
+                        spark.texels = kSparkTexels;
+                        if (spark.anchor.bone >= 0) lanterns_.push_back(spark);
+                    }
+                }
+            }
         } else if (world == "noria") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
@@ -417,6 +460,7 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
         lightning_ = take("lightning_2");  // Effect/lightning2, MU's BITMAP_LIGHTNING+1
         magic_ = take("magic_ground");     // Effect/Magic_Ground2, MU's BITMAP_MAGIC+1
         flare_ = take("flare");    // Effect/Flare, MU's BITMAP_FLARE
+        spark_ = take("spark_flash");  // Effect/Spark03, MU's BITMAP_SPARK+1
         shiny_ = take("shiny");    // Effect/Shiny01, MU's BITMAP_SHINY
     }
     if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
@@ -451,7 +495,7 @@ void Ornaments::shutdown() {
     glints_.clear();
     throwers_.clear();
     strikeCount_ = 0;
-    smoke_ = light_ = lightning_ = shiny_ = magic_ = flare_ = BGFX_INVALID_HANDLE;
+    smoke_ = light_ = lightning_ = shiny_ = magic_ = flare_ = spark_ = BGFX_INVALID_HANDLE;
 }
 
 void Ornaments::update(float seconds, const Sway& sway) {
@@ -669,7 +713,8 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
     }
     if (bgfx::isValid(light_)) {
         for (const Lantern& lantern : lanterns_) {
-            const bgfx::TextureHandle sheet = lantern.sheet == 3   ? flare_
+            const bgfx::TextureHandle sheet = lantern.sheet == 4   ? spark_
+                                              : lantern.sheet == 3 ? flare_
                                               : lantern.sheet == 2 ? magic_
                                               : lantern.sheet == 1 ? lightning_
                                                                    : light_;
