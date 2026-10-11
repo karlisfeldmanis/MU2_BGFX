@@ -60,6 +60,10 @@ public:
     int backspaces() const { return backspaces_; }
     bool entered() const { return entered_; }
     bool escaped() const { return escaped_; }
+    // Tab pressed, and Up and Down as a sum (-1 a press of Up, with repeat): the chat's
+    // suggestions read them while it types.
+    bool tabbed() const { return tabbed_; }
+    int arrows() const { return arrows_; }
     void setTyping(bool typing) { typing_ = typing; }
     bool typing() const { return typing_; }
 
@@ -171,6 +175,8 @@ private:
     std::string typed_;
     int backspaces_ = 0;
     bool entered_ = false, escaped_ = false;
+    bool tabbed_ = false;
+    int arrows_ = 0;
     bool typing_ = false;
     bool escapeSwallowed_ = false;
     bool escapeHeld_ = false;

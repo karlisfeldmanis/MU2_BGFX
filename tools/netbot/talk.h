@@ -5,7 +5,8 @@
 //
 // A bot says little, and only what a player would:
 //
-//   * his own moments, on his map: a level of ten, a quest handed in, now and then a death;
+//   * his own moments, on his map: a level of ten, a quest handed in, now and then a death, and a
+//     find worth showing, named as a link the chat hovers into its card (sim/item_link.h);
 //   * an answer to a whisper from a player, a second or three later, once in a while per sender;
 //   * and, to another's line, a short answer: "gz" to a level, "yes, me" to an "anyone here?".
 //
@@ -25,6 +26,7 @@
 #include <vector>
 
 #include "net/wire.h"
+#include "sim/item_link.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
 
@@ -61,6 +63,13 @@ public:
                 mine(now, std::string("done with ") + sim::questAt(h.a).title);
             } else if (h.what == sim::What::Died && chance(0.2)) {
                 mine(now, pick({"died again", "that hurt", "ugh, back to town"}));
+            } else if (h.what == sim::What::Picked && h.b >= sim::kWorn && h.b < sim::kSlots && mirror.tables()) {
+                const sim::Held& got = mirror.satchel()[h.b];
+                if (got.empty() || size_t(got.item) >= mirror.tables()->items.size()) continue;
+                const content::ItemRow& row = mirror.tables()->items[size_t(got.item)];
+                if (!worthShowing(row, got)) continue;
+                const std::string link = sim::itemLink(row, got);
+                mine(now, pick({"found " + link + "!", link + " dropped", "nice, " + link, "look: " + link}));
             }
         }
     }
@@ -134,6 +143,13 @@ private:
             answer = pick({"busy hunting, sorry", "can't talk, mid fight", "sorry, afk soon"});
         }
         say(net::Channel::Whisper, answer, now, (1 + roll(3)) * kSecond, line.name);
+    }
+
+    // A find a player would show: a jewel or a rune, wings, an excellent or socketed piece, or a
+    // +5 or better.
+    static bool worthShowing(const content::ItemRow& row, const sim::Held& got) {
+        return sim::refiningJewel(row) || sim::creation(row) || sim::firstWing(row) || sim::secondWing(row) ||
+               got.excellent != 0 || got.sockets != 0 || got.refinement >= 5;
     }
 
     // An opening line: one that asks to be answered. No answer of answerTo is one.

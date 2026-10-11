@@ -18,13 +18,14 @@
 // back as the same character, at the level it left.
 //
 //   build/netbot [--server HOST] [--port N] [--dir DIR] [--hours H] [--no-quests] [--chatty] [--party]
-//                [--parties] [--threads N] [--claude DIR] NAME:CLASS ...
+//                [--parties] [--no-trades] [--threads N] [--claude DIR] NAME:CLASS ...
 //
 // CLASS is dk, dw, elf, eelf (the energy elf, her points to energy for heals and buffs) or mg (a
 // new elf is born in Noria). --party makes the run's bots one party
 // (docs/party.md), the first named its leader; --parties lets them form their own, for the quests
 // they cannot take alone (Board). --claude DIR makes the first named the Claude
 // bot (claude.h): his chat and his choice of ground are the model's, through files in DIR.
+// The run's bots trade among themselves (the Market, below) unless --no-trades.
 
 #include <algorithm>
 #include <chrono>
@@ -42,6 +43,7 @@
 #include "game/remote_link.h"
 #include "net/wire.h"
 #include "sim/cradle.h"
+#include "sim/item_link.h"
 #include "sim/maps.h"
 
 namespace {
@@ -143,13 +145,17 @@ public:
         while (link_->due()) {
             link_->step();
             brain_->heardOn(*mirror_);
+            dealHeard();
             if (!claude_) talk_.happened(*mirror_, you_, brain_->clockNow());
             if (claude_ && brain_->clockNow() % 20 == 0) drive();
             if (leaving()) {
                 link_.reset();  // closes the line; the next connect asks where he is
                 return false;
             }
-            if (brain_->clockNow() % kThinkNet == 0) think();
+            if (brain_->clockNow() % kThinkNet == 0) {
+                think();
+                dealStep();
+            }
         }
         if (link_->divergedAt() != 0 && !divergenceSaid_) {
             divergenceSaid_ = true;
@@ -203,6 +209,56 @@ public:
 
     // --claude DIR: he is the Claude bot (claude.h).
     void driveFrom(const std::string& dir) { claude_ = std::make_unique<bot::Claude>(dir); }
+
+    // ---- trading (the Market, below): what it reads, and the swap he plays -----------------
+    uint32_t id() const { return you_; }
+    uint32_t bodyOf(const std::string& who) const { return idOf(who); }
+    int mapNow() const { return brain_->mapNow(); }
+    bool alive() const { return mirror_->hero().alive(); }
+    int column() const { return mirror_->hero().column(); }
+    int row() const { return mirror_->hero().row(); }
+    const content::Tables* tables() const { return mirror_->tables(); }
+    std::vector<int> spares() { return brain_->spares(); }
+    sim::Held held(int slot) const { return mirror_->satchel()[slot]; }
+    // What a trial of a thing on him depends on: his level and what he wears.
+    std::string wornKey() const {
+        std::string key = std::to_string(mirror_->hero().level);
+        for (int slot = 0; slot < sim::kWorn; ++slot) {
+            const sim::Held& h = mirror_->satchel()[slot];
+            key += "." + std::to_string(h.item) + "+" + std::to_string(h.refinement);
+        }
+        return key;
+    }
+    // What `one` is worth to him, tried on his scratch (Bot::worth).
+    double worth(const sim::Held& one) {
+        if (!mirror_->snapshot(bytes_) || !scratch_->restoreSnapshot(bytes_) || !scratch_->lookAs(you_)) return 0.0;
+        const double gain = brain_->worth(*scratch_, one);
+        brain_->look(*mirror_);
+        return gain;
+    }
+    // A swap the market set him: with whom, whether he gives `what` or takes it, until when (his
+    // clock). He waits at (column, row) for it, and plays it from the mirror (dealStep).
+    struct Swap {
+        uint32_t partner = 0;
+        bool giving = false;
+        sim::Held what;
+        int64_t until = 0;
+        int state = 0;  // 0 under way, 1 swapped, -1 failed
+    };
+    void swap(const Swap& s, int column, int row) {
+        swap_ = s;
+        nextDealSend_ = 0;
+        brain_->meet(column, row);
+    }
+    bool swapping() const { return swap_.partner != 0; }
+    int swapState() const { return swap_.state; }
+    void endSwap() {
+        if (link_ && mirror_ && mirror_->dealing() != 0) {
+            sendDeal(sim::Command::Kind::Close, int(sim::Command::Window::Deal));
+        }
+        swap_ = {};
+        brain_->unmeet();
+    }
 
 private:
     // A player's body on his mirror by the name the server gave it, or 0.
@@ -477,6 +533,93 @@ private:
         return false;
     }
 
+    // A trade command as a click sends it: no ticket, so no decision waits for it.
+    void sendDeal(sim::Command::Kind kind, int a = -1, int b = -1, uint32_t target = 0) {
+        sim::Command one;
+        one.kind = kind;
+        one.player = you_;
+        one.a = a;
+        one.b = b;
+        one.target = target;
+        link_->send(one);
+        nextDealSend_ = brain_->clockNow() + 20;  // a second for the mirror to hear it
+    }
+    static bool sameThing(const sim::Held& a, const sim::Held& b) {
+        return a.item == b.item && a.refinement == b.refinement && a.luck == b.luck && a.option == b.option &&
+               a.excellent == b.excellent && a.sockets == b.sockets && a.powers[0] == b.powers[0] &&
+               a.powers[1] == b.powers[1] && a.powers[2] == b.powers[2];
+    }
+    // What the trade said to him: the swap done, or refused for good.
+    void dealHeard() {
+        if (swap_.partner == 0 || swap_.state != 0) return;
+        for (const sim::Happening& h : mirror_->happenings()) {
+            if (h.what != sim::What::Deal || h.who != you_ || h.whom != swap_.partner) continue;
+            switch (sim::DealEvent(h.a)) {
+                case sim::DealEvent::Done: swap_.state = 1; break;
+                case sim::DealEvent::Declined: swap_.state = -1; break;
+                default: break;
+            }
+        }
+    }
+    // **The swap, played from the mirror**: the giver asks once within reach, the taker says yes,
+    // the giver puts the thing in, and each accepts once the window's hold is over -- the moves a
+    // player's clicks make, a second apart so each is heard before the next.
+    void dealStep() {
+        if (swap_.partner == 0 || swap_.state != 0) return;
+        const int64_t now = brain_->clockNow();
+        if (now > swap_.until) {
+            line("trade with #%u ran out of time", swap_.partner);
+            if (mirror_->dealing() != 0) sendDeal(sim::Command::Kind::Close, int(sim::Command::Window::Deal));
+            swap_.state = -1;
+            return;
+        }
+        if (now < nextDealSend_) return;
+        const sim::Body* them = mirror_->find(swap_.partner);
+        if (them == nullptr || them->gone) return;
+        const sim::Body& me = mirror_->hero();
+        const int apart = std::max(std::abs(me.column() - them->column()), std::abs(me.row() - them->row()));
+        const uint32_t open = mirror_->dealing();
+        if (open == 0) {
+            if (swap_.giving) {
+                if (apart <= sim::kDealReach && mirror_->dealAskedOf(swap_.partner) == 0) {
+                    sendDeal(sim::Command::Kind::DealAsk, -1, -1, swap_.partner);
+                }
+            } else if (mirror_->dealAskedBy() == swap_.partner) {
+                sendDeal(sim::Command::Kind::DealAnswer, 1, -1, swap_.partner);
+            }
+            return;
+        }
+        if (open != swap_.partner) {
+            sendDeal(sim::Command::Kind::Close, int(sim::Command::Window::Deal));
+            return;
+        }
+        const auto filled = [](const sim::Machine& box) {
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                if (!box[cell].empty()) return true;
+            }
+            return false;
+        };
+        if (swap_.giving && !filled(mirror_->dealOffer(false))) {
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                if (sameThing(mirror_->satchel()[slot], swap_.what)) {
+                    sendDeal(sim::Command::Kind::DealPut, slot, -1);
+                    return;
+                }
+            }
+            line("trade: the thing to give is gone from the bag");
+            swap_.state = -1;
+            return;
+        }
+        // The taker accepts only what he was promised.
+        if (!swap_.giving) {
+            const sim::Machine& theirs = mirror_->dealOffer(true);
+            bool promised = false;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) promised |= sameThing(theirs[cell], swap_.what);
+            if (!promised) return;
+        }
+        if (!mirror_->dealAccepted(false) && mirror_->dealHold() == 0) sendDeal(sim::Command::Kind::DealAccept, 1);
+    }
+
     std::string tokenPath() const { return dir_ + "/" + name_ + ".token"; }
     void loadToken() {
         std::ifstream in(tokenPath());
@@ -519,6 +662,8 @@ private:
     bool openToAll_ = false;  // ... and, with none, anyone's (Board::follow)
     std::string partySaid_;
     std::unique_ptr<bot::Claude> claude_;  // --claude: the model drives him
+    Swap swap_;                // the market's swap, while there is one
+    int64_t nextDealSend_ = 0;  // his clock: the next trade command not before
 };
 
 // **The board** (docs/party.md): the run's bots' parties, formed and led. The user, 2026-10-09:
@@ -1191,6 +1336,173 @@ private:
     std::chrono::steady_clock::time_point next_{};
 };
 
+
+// **The market** (the user, 2026-10-11: "we now have trading in our game, that means we need to
+// teach bots do some trading so they can collabrate and become better"): the run's bots hand each
+// other what one would sell and another would wear, and the jewels one holds past his keep that
+// another is short of, through the trade window as players do (sim/realm_deal.cpp). A gift: the
+// run's bots are one crew, and what the blacksmith pays for a piece is less than a friend's
+// upgrade is worth.
+//
+// Every two seconds it reads each free bot's spares (Bot::spares) and tries each on every other
+// free bot of his map (Bot::worth: put in his bag on a scratch copy of his mirror and the best of
+// it worn), and the most gained is arranged: the two meet -- at the giver's feet when they are
+// near, else at the town's arrival point -- wait there with their windows shut, and swap
+// (NetBot::dealStep). The giver names the thing on the map's chat as a link (sim/item_link.h).
+// A swap is given two game minutes; one that fails is not tried again for ten.
+//
+// The market sees only this process's bots, as the board does.
+class Market {
+public:
+    void tick(std::vector<std::unique_ptr<NetBot>>& bots) {
+        const auto now = std::chrono::steady_clock::now();
+        if (now < next_) return;
+        next_ = now + std::chrono::seconds(2);
+        std::map<std::string, NetBot*> byName;
+        for (auto& bot : bots) byName[bot->name()] = bot.get();
+        const auto named = [&](const std::string& n) -> NetBot* {
+            const auto it = byName.find(n);
+            return it == byName.end() || !it->second->up() ? nullptr : it->second;
+        };
+        // The swaps under way: done, failed or out of time.
+        for (Open& o : open_) {
+            NetBot* g = named(o.giver);
+            NetBot* t = named(o.taker);
+            const int gs = g ? g->swapState() : -1, ts = t ? t->swapState() : -1;
+            if (gs == 0 && ts == 0 && g && g->clockNow() < o.until) continue;
+            const bool done = gs == 1 || ts == 1;
+            if (g) g->endSwap();
+            if (t) t->endSwap();
+            o.gone = true;
+            if (done) {
+                ++swapped_;
+                std::printf("  [market] %s gave %s to %s (+%.0f), %d swapped this run\n", o.giver.c_str(),
+                            o.label.c_str(), o.taker.c_str(), o.gain, swapped_);
+                if (t) {
+                    t->sayOn(net::Channel::Map, "thanks " + o.giver + "!");
+                    received_[o.taker + "|" + o.key] = t->clockNow() + 10 * 60 * 20;
+                }
+            } else {
+                std::printf("  [market] %s's %s to %s fell through\n", o.giver.c_str(), o.label.c_str(), o.taker.c_str());
+                if (g) failed_[o.taker + "|" + o.key] = g->clockNow() + 10 * 60 * 20;
+            }
+        }
+        std::erase_if(open_, [](const Open& o) { return o.gone; });
+
+        std::set<std::string> busy;
+        for (const Open& o : open_) busy.insert(o.giver), busy.insert(o.taker);
+        const auto free = [&](NetBot& b) {
+            return b.up() && !b.driven() && !busy.count(b.name()) && !b.swapping() && b.alive() && !b.inCastle() &&
+                   !b.inSquare() && b.tables() != nullptr;
+        };
+        struct Best {
+            NetBot* giver = nullptr;
+            NetBot* taker = nullptr;
+            sim::Held what;
+            std::string key;
+            double gain = 0.0;
+        } best;
+        for (auto& gp : bots) {
+            NetBot& giver = *gp;
+            if (!free(giver)) continue;
+            for (const int slot : giver.spares()) {
+                const sim::Held what = giver.held(slot);
+                const std::string key = keyOf(what);
+                // Not what he was just given: a trial and his own choice may part, and a pair of
+                // Leather Pants went between two knights four times.
+                if (const auto r = received_.find(giver.name() + "|" + key);
+                    r != received_.end() && giver.clockNow() < r->second) {
+                    continue;
+                }
+                for (auto& tp : bots) {
+                    NetBot& taker = *tp;
+                    if (&taker == &giver || !free(taker) || taker.world() != giver.world() ||
+                        taker.mapNow() != giver.mapNow() || giver.bodyOf(taker.name()) == 0) {
+                        continue;
+                    }
+                    const std::string mark = taker.name() + "|" + key;
+                    if (const auto f = failed_.find(mark); f != failed_.end() && taker.clockNow() < f->second) continue;
+                    // A trial is a scratch laid from his mirror: kept while his level and his gear
+                    // stand. Kept a wall minute instead, at mu2_server --speed 100 a gain outlived
+                    // the gloves he put on, and he was handed the same Leather Gloves +3 three times.
+                    double gain;
+                    const std::string worn = taker.wornKey();
+                    const auto c = tried_.find(mark);
+                    if (c != tried_.end() && c->second.first == worn) {
+                        gain = c->second.second;
+                    } else {
+                        gain = taker.worth(what);
+                        tried_[mark] = {worn, gain};
+                    }
+                    if (gain > best.gain) best = {&giver, &taker, what, key, gain};
+                }
+            }
+        }
+        if (!best.giver) return;
+        NetBot& g = *best.giver;
+        NetBot& t = *best.taker;
+        const int apart = std::max(std::abs(g.column() - t.column()), std::abs(g.row() - t.row()));
+        int column = g.column(), row = g.row();
+        if (apart > kNear) {
+            const WorldRow* w = worldOf(g.mapNow());
+            if (!w || w->map == int(sim::kBloodCastleMap) || w->map == int(sim::kDevilSquareMap)) {
+                failed_[t.name() + "|" + best.key] = t.clockNow() + 10 * 60 * 20;
+                return;
+            }
+            column = w->arrive[0];
+            row = w->arrive[1];
+        }
+        const content::ItemRow& itemRow = g.tables()->items[size_t(best.what.item)];
+        Open o;
+        o.giver = g.name();
+        o.taker = t.name();
+        o.key = best.key;
+        o.label = sim::linkLabel(itemRow, best.what);
+        o.gain = best.gain;
+        o.until = g.clockNow() + kSwapTicks + 20 * 20;
+        NetBot::Swap gs;
+        gs.partner = g.bodyOf(t.name());
+        gs.giving = true;
+        gs.what = best.what;
+        gs.until = g.clockNow() + kSwapTicks;
+        NetBot::Swap ts;
+        ts.partner = t.bodyOf(g.name());
+        ts.giving = false;
+        ts.what = best.what;
+        ts.until = t.clockNow() + kSwapTicks;
+        if (gs.partner == 0 || ts.partner == 0) return;
+        g.swap(gs, column, row);
+        // The taker stands a step off the giver, not on him.
+        t.swap(ts, column + (apart > kNear ? 1 : 0), row);
+        open_.push_back(o);
+        std::printf("  [market] %s gives %s to %s (+%.0f), meeting at %d,%d\n", o.giver.c_str(), o.label.c_str(),
+                    o.taker.c_str(), o.gain, column, row);
+        g.sayOn(net::Channel::Map, t.name() + ", I have " + sim::itemLink(itemRow, best.what) + " for you");
+    }
+
+private:
+    struct Open {
+        std::string giver, taker, key, label;
+        double gain = 0.0;
+        int64_t until = 0;  // the giver's clock
+        bool gone = false;
+    };
+    static std::string keyOf(const sim::Held& h) {
+        char out[96];
+        std::snprintf(out, sizeof out, "%d.%d.%d.%d.%d.%d.%d.%d.%d", h.item, h.refinement, h.luck, h.option,
+                      h.excellent, h.sockets, h.powers[0], h.powers[1], h.powers[2]);
+        return out;
+    }
+    static constexpr int kNear = 12;                     // tiles: met where the giver stands
+    static constexpr int64_t kSwapTicks = 2 * 60 * 20;  // two game minutes
+    std::vector<Open> open_;
+    std::map<std::string, int64_t> failed_;  // taker|thing: not before this (taker's clock)
+    std::map<std::string, int64_t> received_;  // taker|thing: not his to give before this (his clock)
+    std::map<std::string, std::pair<std::string, double>> tried_;  // taker|thing: (his wornKey, gain)
+    std::chrono::steady_clock::time_point next_{};
+    int swapped_ = 0;
+};
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -1201,6 +1513,7 @@ int main(int argc, char** argv) {
     bool quests = true;
     bool chatty = false;
     bool party = false, parties = false;
+    bool trades = true;
     int threads = 0;  // --threads N: 0, up to four
     std::string claude;
     std::vector<std::pair<std::string, sim::Kin>> wanted;
@@ -1215,6 +1528,7 @@ int main(int argc, char** argv) {
         else if (a == "--chatty") chatty = true;
         else if (a == "--party") party = true;
         else if (a == "--parties") parties = true;
+        else if (a == "--no-trades") trades = false;
         else if (a == "--threads" && i + 1 < argc) threads = std::atoi(argv[++i]);
         else if (a == "--claude" && i + 1 < argc) claude = argv[++i];
         else if (a.find(':') != std::string::npos) {
@@ -1233,7 +1547,7 @@ int main(int argc, char** argv) {
             }
         } else {
             std::fprintf(stderr, "usage: netbot [--server HOST] [--port N] [--dir DIR] [--hours H] "
-                                 "[--no-quests] [--chatty] [--party | --parties] [--threads N] [--claude DIR] NAME:dk|dw|elf|eelf|mg ...\n");
+                                 "[--no-quests] [--chatty] [--party | --parties] [--no-trades] [--threads N] [--claude DIR] NAME:dk|dw|elf|eelf|mg ...\n");
             return 2;
         }
     }
@@ -1255,6 +1569,7 @@ int main(int argc, char** argv) {
     }
     if (!claude.empty()) bots.front()->driveFrom(claude);
     Board board(parties);
+    Market market;
     if (party) {
         std::vector<std::string> names;
         for (const auto& one : wanted) names.push_back(one.first);
@@ -1304,8 +1619,11 @@ int main(int argc, char** argv) {
     while (!g_stop) {
         const auto now = std::chrono::steady_clock::now();
         if (hours > 0 && now - start > std::chrono::duration<double>(hours * 3600.0)) break;
-        if ((party || parties) && now >= boardAt) {
-            all([&] { board.tick(bots); });
+        if ((party || parties || trades) && now >= boardAt) {
+            all([&] {
+                if (party || parties) board.tick(bots);
+                if (trades) market.tick(bots);
+            });
             boardAt = now + std::chrono::seconds(1);
         }
         if (now >= reportAt) {

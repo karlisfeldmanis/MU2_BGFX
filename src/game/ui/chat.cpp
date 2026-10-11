@@ -7,6 +7,8 @@
 #include "core/log.h"
 #include "game/play.h"
 #include "game/ui/controls.h"
+#include "game/ui/describe.h"
+#include "game/ui/stage.h"
 #include "game/ui/tip.h"
 
 namespace mu::game {
@@ -65,6 +67,9 @@ constexpr float kInviteLife = 60.0f, kInviteIn = 0.15f, kInviteOut = 1.0f;
 // A trade's ask stands as long as the realm holds it (sim::kDealAskTicks).
 constexpr float kTradeLife = float(sim::kDealAskTicks) / 20.0f;
 constexpr float kInviteAbove = 44.0f, kInviteWide = 440.0f, kInviteTall = 118.0f;
+// The suggestions for a "[" being typed: how many, and a row's height.
+constexpr size_t kSuggestMost = 8;
+constexpr float kSuggestRow = 26.0f;
 
 // A line in a face over its drop, the drop faded with the ink; its advance.
 float set(gfx::Canvas& canvas, const gfx::Face* face, bgfx::TextureHandle texture, float x,
@@ -129,10 +134,12 @@ void Chat::open(const gfx::Interface& interface) {
     interface.adopt(inviteDrawn_);
     interface.adopt(tabsDrawn_);
     interface.adopt(lines_);
+    interface.adopt(tip_);
 }
 
 bool Chat::covers(float x, float y) const {
-    return (open_ && (panel_.has(x, y) || grip_.has(x, y))) || (inviting_ && inviteCard_.has(x, y));
+    return (open_ && (panel_.has(x, y) || grip_.has(x, y) || (!suggestions_.empty() && suggestBox_.has(x, y)))) ||
+           (inviting_ && inviteCard_.has(x, y));
 }
 
 uint32_t Chat::channelInk(net::Channel channel) const {
@@ -169,6 +176,7 @@ void Chat::askedToTrade(const std::string& name, uint32_t who) {
     line.channel = net::Channel::Server;
     line.inviter = name.empty() ? std::string("Someone") : name;
     line.text = line.inviter + " wants to trade with you.";
+    line.shown = line.text;
     line.trader = who;
     log_.push_back(line);
     if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
@@ -189,6 +197,7 @@ void Chat::hear(const net::Heard& heard) {
         line.inviter = line.text.substr(0, at);
         line.text = line.inviter + kInvites;
     }
+    read(line);
     log_.push_back(line);
     if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
     if (line.name.empty()) return;
@@ -207,6 +216,175 @@ void Chat::hear(const net::Heard& heard) {
         key = "guild";
     }
     if (!key.empty() && !mine && tab_ != key) ++unread_[key];
+}
+
+void Chat::read(Line& line) {
+    line.links = sim::findLinks(line.text);
+    line.shown.clear();
+    line.resolved = nullptr;
+    size_t at = 0;
+    for (sim::ItemLink& link : line.links) {
+        line.shown += line.text.substr(at, link.from - at);
+        at = link.to;
+        link.from = line.shown.size();
+        line.shown += "[" + link.label + "]";
+        link.to = line.shown.size();
+    }
+    line.shown += line.text.substr(at);
+}
+
+void Chat::resolve(Line& line) const {
+    if (line.resolved == tables_ || line.links.empty()) return;
+    line.resolved = tables_;
+    for (sim::ItemLink& link : line.links) {
+        link.held.item = tables_ ? sim::linkRow(*tables_, link.group, link.number) : -1;
+    }
+}
+
+uint32_t Chat::linkInk(const sim::ItemLink& link) const {
+    if (!tables_ || link.held.item < 0 || size_t(link.held.item) >= tables_->items.size()) return kQuiet;
+    return tip::colourOf(qualityOf(tables_->items[size_t(link.held.item)], link.held));
+}
+
+float Chat::spans(gfx::Canvas& canvas, float x, float base, float size, uint32_t ink, const std::string& text,
+                  size_t start, const std::vector<sim::ItemLink>& links, float alpha, float u, long line) {
+    float advance = 0.0f;
+    size_t at = 0;
+    const size_t end = text.size();
+    for (size_t k = 0; k < links.size(); ++k) {
+        const sim::ItemLink& link = links[k];
+        if (link.to <= start + at || link.from >= start + end) continue;
+        const size_t a = link.from > start + at ? link.from - start : at;
+        const size_t b = std::min(link.to - start, end);
+        if (a > at) advance += body(canvas, x + advance, base, size, ink, text.substr(at, a - at), u);
+        const float wide = body(canvas, x + advance, base, size, faded(linkInk(link), alpha), text.substr(a, b - a), u);
+        if (line >= 0) linkBoxes_.push_back({{x + advance, base - size * 0.95f, wide, size * 1.3f}, size_t(line), k});
+        advance += wide;
+        at = b;
+    }
+    if (at < end) advance += body(canvas, x + advance, base, size, ink, text.substr(at), u);
+    return advance;
+}
+
+void Chat::link(const content::ItemRow& row, const sim::Held& held) {
+    const std::string token = sim::itemLink(row, held);
+    std::string next = draft_;
+    if (!next.empty() && next.back() != ' ') next += ' ';
+    next += token + " ";
+    open_ = true;
+    if (next.size() > net::kMostSaid) {
+        system(net::Channel::Server, "No room for another item in this line.");
+        return;
+    }
+    draft_ = next;
+}
+
+void Chat::suggest(const sim::Realm& realm) {
+    const size_t b = draft_.rfind('[');
+    if (!open_ || !tables_ || b == std::string::npos || draft_.find(']', b) != std::string::npos ||
+        draft_.find('}', b) != std::string::npos) {
+        suggestions_.clear();
+        query_.clear();
+        return;
+    }
+    const std::string q = lower(draft_.substr(b + 1));
+    if (q == query_ && b == bracket_) return;
+    query_ = q;
+    bracket_ = b;
+    pick_ = 0;
+    suggestions_.clear();
+    if (q.empty()) return;
+    // A name's start, or a word's in it, first; anywhere in it after.
+    const auto rank = [&](const std::string& label) {
+        const std::string l = lower(label);
+        const size_t at = l.find(q);
+        if (at == std::string::npos) return -1;
+        return at == 0 ? 0 : l[at - 1] == ' ' ? 1 : 2;
+    };
+    struct Found {
+        int rank;
+        Suggestion one;
+    };
+    std::vector<Found> carried, known;
+    std::vector<std::string> seen;
+    const auto carry = [&](const sim::Held& held, const char* where) {
+        if (held.empty() || size_t(held.item) >= tables_->items.size()) return;
+        const content::ItemRow& row = tables_->items[size_t(held.item)];
+        const std::string label = sim::linkLabel(row, held);
+        const int r = rank(label);
+        if (r < 0) return;
+        carried.push_back({r, {label, held, where}});
+        seen.push_back(lower(row.label));
+    };
+    for (int slot = 0; slot < sim::kSlots; ++slot) carry(realm.satchel()[slot], slot < sim::kWorn ? "worn" : "bag");
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) carry(realm.vault()[cell], "vault");
+    for (size_t i = 0; i < tables_->items.size(); ++i) {
+        const content::ItemRow& row = tables_->items[i];
+        if (row.label.empty()) continue;
+        const int r = rank(row.label);
+        if (r < 0) continue;
+        const std::string l = lower(row.label);
+        if (std::find(seen.begin(), seen.end(), l) != seen.end()) continue;
+        seen.push_back(l);
+        sim::Held held;
+        held.item = int32_t(i);
+        held.durability = int16_t(std::max(1, row.durability));
+        known.push_back({r, {row.label, held, ""}});
+    }
+    const auto byRank = [](const Found& a, const Found& b) { return a.rank < b.rank; };
+    std::stable_sort(carried.begin(), carried.end(), byRank);
+    std::stable_sort(known.begin(), known.end(), byRank);
+    for (const auto* list : {&carried, &known}) {
+        for (const Found& f : *list) {
+            if (suggestions_.size() < kSuggestMost) suggestions_.push_back(f.one);
+        }
+    }
+}
+
+void Chat::take(size_t index) {
+    if (index >= suggestions_.size() || !tables_) return;
+    const Suggestion& one = suggestions_[index];
+    const std::string next =
+        draft_.substr(0, bracket_) + sim::itemLink(tables_->items[size_t(one.held.item)], one.held) + " ";
+    suggestions_.clear();
+    query_.clear();
+    if (next.size() > net::kMostSaid) {
+        system(net::Channel::Server, "No room for another item in this line.");
+        return;
+    }
+    draft_ = next;
+}
+
+std::string Chat::named(const std::string& text, const sim::Realm& realm) const {
+    if (!tables_) return text;
+    std::string out;
+    size_t at = 0;
+    while (true) {
+        const size_t open = text.find('[', at);
+        const size_t close = open == std::string::npos ? open : text.find(']', open);
+        if (close == std::string::npos) break;
+        const std::string want = lower(text.substr(open + 1, close - open - 1));
+        std::string token;
+        for (int slot = 0; slot < sim::kSlots && token.empty(); ++slot) {
+            const sim::Held& held = realm.satchel()[slot];
+            if (held.empty() || size_t(held.item) >= tables_->items.size()) continue;
+            const content::ItemRow& row = tables_->items[size_t(held.item)];
+            if (lower(sim::linkLabel(row, held)) == want || lower(row.label) == want) token = sim::itemLink(row, held);
+        }
+        for (size_t i = 0; i < tables_->items.size() && token.empty(); ++i) {
+            const content::ItemRow& row = tables_->items[i];
+            if (row.label.empty() || lower(row.label) != want) continue;
+            sim::Held held;
+            held.item = int32_t(i);
+            held.durability = int16_t(std::max(1, row.durability));
+            token = sim::itemLink(row, held);
+        }
+        out += text.substr(at, open - at);
+        out += token.empty() ? text.substr(open, close - open + 1) : token;
+        at = close + 1;
+    }
+    out += text.substr(at);
+    return out.size() > net::kMostSaid ? text : out;
 }
 
 bool Chat::shows(const Line& line, const std::string& tab) const {
@@ -345,6 +523,7 @@ void Chat::send(Play& play) {
         system(net::Channel::Server, "No one hears you here: this world is not on a server.");
         return;
     }
+    text = named(text, play.realm());
     net::Say said;
     said.channel = channel;
     said.to = channel == net::Channel::Whisper ? to : std::string();
@@ -457,10 +636,12 @@ void Chat::layRows(float u, float wide, const std::string& tab, size_t from) {
         Row row;
         row.line = i;
         float room = wide - prefix;
-        std::string rest = line.text;
+        std::string rest = line.shown;
+        size_t offset = 0;
         while (true) {
             if (bodyWidth(size, rest) <= room || rest.empty()) {
                 row.text = rest;
+                row.start = offset;
                 rows_.push_back(row);
                 break;
             }
@@ -478,8 +659,11 @@ void Chat::layRows(float u, float wide, const std::string& tab, size_t from) {
                 while (cut < rest.size() && (uint8_t(rest[cut]) & 0xC0) == 0x80) ++cut;
             }
             row.text = rest.substr(0, cut);
+            row.start = offset;
             rows_.push_back(row);
-            rest = rest.substr(std::min(rest.size(), cut + (cut < rest.size() && rest[cut] == ' ' ? 1 : 0)));
+            const size_t step = std::min(rest.size(), cut + (cut < rest.size() && rest[cut] == ' ' ? 1 : 0));
+            offset += step;
+            rest = rest.substr(step);
             row.first = false;
             room = wide - indent;
         }
@@ -508,11 +692,11 @@ void Chat::cloud(gfx::Canvas& canvas, float middle, float tall, float strength, 
 
 void Chat::update(float seconds, float width, float height, float bottom, float right,
                   const Pointer& pointer, float wheel, const std::string& typed, int backspaces,
-                  bool enter, bool escape, bool toggle, Play& play) {
-    (void)height;
+                  bool enter, bool escape, bool toggle, Play& play, bool tab, int arrows) {
     clock_ += seconds;
     for (Line& line : log_) line.age += seconds;
     const float u = tip::unit();
+    tables_ = play.isOpen() ? play.realm().tables() : nullptr;
     if (play.isOpen()) {
         std::string name;
         if (play.playerName(play.realm().hero().id, &name, nullptr)) me_ = name;
@@ -523,20 +707,30 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                        line.to.empty() ? "" : (" to " + line.to).c_str(), line.text.c_str());
             hear(line);
             if (line.channel == net::Channel::Map && line.from != 0) {
-                play.bubble(line.from, line.text.size() > 64 ? line.text.substr(0, 61) + "..." : line.text);
+                const std::string said = sim::linkedText(line.text);
+                play.bubble(line.from, said.size() > 64 ? said.substr(0, 61) + "..." : said);
             }
         }
     }
+    for (Line& line : log_) resolve(line);
 
     // Open and shut: Enter, the HUD's button, Escape.
     if (toggle) open_ = !open_;
     if (open_) {
         if (escape) {
             open_ = false;
+        } else if (enter && !suggestions_.empty()) {
+            take(size_t(pick_));  // Enter takes the suggestion; the next one says the line
         } else if (enter) {
             send(play);
         } else {
-            for (int i = 0; i < backspaces && !draft_.empty(); ++i) draft_.resize(draft_.size() - lastLetter(draft_));
+            for (int i = 0; i < backspaces && !draft_.empty(); ++i) {
+                // A link goes whole.
+                const std::vector<sim::ItemLink> links = draft_.back() == '}' ? sim::findLinks(draft_)
+                                                                               : std::vector<sim::ItemLink>{};
+                if (!links.empty() && links.back().to == draft_.size()) draft_.resize(links.back().from);
+                else draft_.resize(draft_.size() - lastLetter(draft_));
+            }
             for (const char c : typed) {
                 if (uint8_t(c) < 0x20 || uint8_t(c) == 0x7F) continue;
                 if (draft_.size() < net::kMostSaid) draft_.push_back(c);
@@ -544,6 +738,12 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         }
     } else if (enter) {
         open_ = true;
+    }
+    if (play.isOpen()) suggest(play.realm());
+    if (!suggestions_.empty()) {
+        const int n = int(suggestions_.size());
+        pick_ = ((pick_ + arrows) % n + n) % n;
+        if (tab) take(size_t(pick_));
     }
 
     // A party or guild he is no longer in takes its tab with it.
@@ -584,7 +784,18 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     // The pointer, open only.
     const bool over = open_ && covers(pointer.x, pointer.y);
     bool chosen = false;
-    if (pointer.pressed) {
+    for (size_t k = 0; k < suggestBoxes_.size() && k < suggestions_.size(); ++k) {
+        if (!suggestBoxes_[k].has(pointer.x, pointer.y)) continue;
+        if (pointer.x != pointerX_ || pointer.y != pointerY_) pick_ = int(k);
+        if (pointer.pressed) {
+            take(k);
+            chosen = true;
+        }
+        break;
+    }
+    pointerX_ = pointer.x;
+    pointerY_ = pointer.y;
+    if (pointer.pressed && !chosen) {
         for (const Choice& choice : choices_) {
             if (!choice.box.has(pointer.x, pointer.y) || choice.line >= log_.size() ||
                 log_[choice.line].inviter.empty()) {
@@ -675,20 +886,73 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                                           (uint64_t(std::max(0.0f, log_[size_t(pending)].age -
                                                                        (kInviteLife - kInviteOut)) * 30.0f) << 8)
                                     : 0);
-    if (key == built_) return;
-    built_ = key;
-    back_.clear();
+    if (key != built_) {
+        built_ = key;
+        back_.clear();
     tabsDrawn_.clear();
-    lines_.clear();
-    inviteDrawn_.clear();
-    choices_.clear();
-    if (open_) {
-        build(u, pointer);
-        showing_ = true;
-    } else {
-        buildClosed(u);
+        lines_.clear();
+        inviteDrawn_.clear();
+        choices_.clear();
+        linkBoxes_.clear();
+        if (open_) {
+            build(u, pointer);
+            showing_ = true;
+        } else {
+            buildClosed(u);
+        }
+        if (inviting_) buildInvite(u, width, bottom, pointer);
     }
-    if (inviting_) buildInvite(u, width, bottom, pointer);
+    if (play.isOpen()) buildTip(u, width, height, pointer, play.realm());
+}
+
+void Chat::buildTip(float u, float width, float height, const Pointer& pointer, const sim::Realm& realm) {
+    tip_.clear();
+    suggestBoxes_.clear();
+    tipping_ = false;
+    if (!open_ || !tables_) return;
+    const auto card = [&](const sim::Held& held, const Box& over) {
+        if (held.item < 0 || size_t(held.item) >= tables_->items.size()) return;
+        tip::Sheet sheet = describe(*tables_, held, realm.wearer(), realm.satchel());
+        if (tipStage_) tip::stand(*tipStage_, held.item, held.refinement, sheet);
+        tip::draw(tip_, sheet, over, width, height);
+    };
+    if (!suggestions_.empty()) {
+        // Over the input from the typing's start: each a name in its quality's ink, where it is
+        // carried quiet at the right, the chosen one lit.
+        const float size = kText * u, row = kSuggestRow * u;
+        float wide = 260.0f * u;
+        for (const Suggestion& one : suggestions_) {
+            wide = std::max(wide, bodyWidth(size, one.label) + wordWidth(kTag * u, one.where) + 44.0f * u);
+        }
+        const float tall = row * float(suggestions_.size()) + 8.0f * u;
+        const float x = std::min(chip_.right(), input_.right() - wide);
+        suggestBox_ = {x, input_.y - 4.0f * u - tall, wide, tall};
+        tip::glass(tip_, suggestBox_, u);
+        for (size_t k = 0; k < suggestions_.size(); ++k) {
+            const Suggestion& one = suggestions_[k];
+            const Box at{suggestBox_.x + 4.0f * u, suggestBox_.y + 4.0f * u + row * float(k), wide - 8.0f * u, row};
+            suggestBoxes_.push_back(at);
+            if (int(k) == pick_) tip_.rect(at, faded(kGoldGlow, 0.22f));
+            const float base = controls::middle(at.y, at.h, size);
+            const uint32_t ink = tip::colourOf(qualityOf(tables_->items[size_t(one.held.item)], one.held));
+            body(tip_, at.x + 8.0f * u, base, size, ink, one.label, u);
+            if (*one.where) {
+                word(tip_, at.right() - 8.0f * u - wordWidth(kTag * u, one.where), base, kTag * u, kQuiet, one.where, u);
+            }
+        }
+        // Names only, no card (the user, 2026-10-11: "very simple, without pictures").
+        tipping_ = true;
+        return;
+    }
+    if (!logBox_.has(pointer.x, pointer.y)) return;
+    for (const LinkBox& one : linkBoxes_) {
+        if (!one.box.has(pointer.x, pointer.y) || one.line >= log_.size() || one.link >= log_[one.line].links.size()) {
+            continue;
+        }
+        card(log_[one.line].links[one.link].held, one.box);
+        tipping_ = true;
+        return;
+    }
 }
 
 void Chat::build(float u, const Pointer& pointer) {
@@ -780,7 +1044,7 @@ void Chat::build(float u, const Pointer& pointer) {
                 x += body(lines_, x, base, size, kInviterInk, line.inviter, u);
                 body(lines_, x, base, size, kSystemInk, row.text.substr(line.inviter.size()), u);
             } else {
-                body(lines_, x, base, size, kSystemInk, row.text, u);
+                spans(lines_, x, base, size, kSystemInk, row.text, row.start, line.links, 1.0f, u, long(row.line));
             }
             continue;
         }
@@ -795,7 +1059,8 @@ void Chat::build(float u, const Pointer& pointer) {
             x += body(lines_, x, base, size, kNameInk, out ? line.to : line.name, u);
             x += body(lines_, x, base, size, kQuiet, ": ", u);
         }
-        body(lines_, x, base, size, line.channel == net::Channel::Whisper ? kWhisperBody : kBody, row.text, u);
+        spans(lines_, x, base, size, line.channel == net::Channel::Whisper ? kWhisperBody : kBody, row.text, row.start,
+              line.links, 1.0f, u, long(row.line));
     }
     // Its slider, when there is more than the well holds.
     if (logTall_ > logBox_.h) {
@@ -823,9 +1088,18 @@ void Chat::build(float u, const Pointer& pointer) {
         body(back_, textX, inputBase, size, kPlaceholder, hint, u);
     }
     // The tail of a draft wider than the field: its end, where he is typing.
-    std::string shown = draft_;
-    while (!shown.empty() && bodyWidth(size, shown) > room) shown.erase(0, 1);
-    const float drawn = shown.empty() ? 0.0f : body(back_, textX, inputBase, size, kDraft, shown, u);
+    Line typed;
+    typed.text = draft_;
+    read(typed);
+    resolve(typed);
+    std::string shown = typed.shown;
+    size_t dropped = 0;
+    while (!shown.empty() && bodyWidth(size, shown) > room) {
+        shown.erase(0, 1);
+        ++dropped;
+    }
+    const float drawn =
+        shown.empty() ? 0.0f : spans(back_, textX, inputBase, size, kDraft, shown, dropped, typed.links, 1.0f, u, -1);
     if (std::fmod(clock_, 1.0f) < 0.6f) {
         back_.rect({textX + drawn + 1.0f * u, input_.midY() - 10.0f * u, 1.5f * u, 20.0f * u}, kDraft);
     }
@@ -938,7 +1212,7 @@ void Chat::buildClosed(float u) {
         const float base = y + kRow * u * 0.74f;
         y += kRow * u;
         float x = panel_.x + 12.0f * u;
-        std::string text = line.text;
+        std::string text = line.shown;
         if (line.name.empty()) {
             while (!text.empty() && bodyWidth(size, text) > wide) text.pop_back();
             if (!line.inviter.empty() && text.rfind(line.inviter, 0) == 0) {
@@ -965,7 +1239,8 @@ void Chat::buildClosed(float u) {
             cut = true;
         }
         if (cut) text += "...";
-        body(lines_, x, base, size, faded(line.channel == net::Channel::Whisper ? kWhisperBody : kBody, a), text, u);
+        spans(lines_, x, base, size, faded(line.channel == net::Channel::Whisper ? kWhisperBody : kBody, a), text, 0,
+              line.links, a, u, -1);
     }
     // Enter to chat, and the whispers waiting.
     const float keyMid = foot + 16.0f * u;

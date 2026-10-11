@@ -328,6 +328,62 @@ public:
     }
     int ordered() const { return ordered_; }
 
+    // ---- trading with the run's other bots (tools/netbot's Market) ------------------------
+    // The user, 2026-10-11: "we now have trading in our game, that means we need to teach bots do
+    // some trading so they can collabrate and become better". The market finds a thing one bot
+    // would sell that another would wear, or a jewel past one's keep that another is short of, and
+    // has them meet and swap it through the trade window (sim/realm_deal.cpp).
+    //
+    // What he would give away: what a sale would take (keepsAt), and jewels past what he keeps,
+    // that may change hands at all.
+    std::vector<int> spares() const {
+        std::vector<int> out;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty() || questItem(one) || keepsAt(slot)) continue;
+            const content::ItemRow& row = rowOf(one);
+            if (!sim::tradeable(row, one)) continue;
+            // Gear he might wear, and jewels; the rest is the counter's.
+            const bool gear = sim::placeOf(row) >= 0 && !sim::ammunition(row) && !sim::jewellery(row) &&
+                              !anyHelper(row) && !sim::firstWing(row) && !sim::secondWing(row);
+            if (gear || jewelKind(row)) out.push_back(slot);
+        }
+        return out;
+    }
+    // What `one` is worth to him: tried on `scratch` (his mirror's copy, laid by the caller), put
+    // in his bag and the best of it worn -- how much his score rises, 0 when he would not wear it.
+    // A jewel is worth 1 while he holds fewer than he keeps. The caller looks back at the mirror.
+    double worth(sim::Realm& scratch, const sim::Held& one) {
+        realm_ = &scratch;
+        hand_.realm = &scratch;
+        hand_.record = nullptr;
+        const bool quiet = options_.quiet;
+        options_.quiet = true;
+        double gain = 0.0;
+        const content::ItemRow& row = rowOf(one);
+        if (jewelKind(row)) {
+            gain = jewelsHeld(one) < jewelCap(row) ? 1.0 : 0.0;
+        } else {
+            const int slot = scratch.give(one.item, -1, one.refinement, one.durability, one.luck, one.option,
+                                          one.excellent, one.sockets, one.powers, one.affixes, false);
+            if (slot >= 0) {
+                const double before = score();
+                wearBest();
+                // Worn, the thing itself: not something else the trial happened to put on.
+                const sim::Held& left = scratch.satchel()[slot];
+                if (left.empty() || left.item != one.item) gain = score() - before;
+                if (gain < std::max(0.5, before * 0.02)) gain = 0.0;
+            }
+        }
+        options_.quiet = quiet;
+        return gain;
+    }
+    // **A meeting**: he walks to (column, row) on this map and waits there, his windows shut,
+    // until it is called off -- the market's, for a trade. He still drinks and spends his points.
+    void meet(int column, int row) { meet_[0] = column, meet_[1] = row; }
+    void unmeet() { meet_[0] = meet_[1] = -1; }
+    bool meeting() const { return meet_[0] >= 0; }
+
     // ---- the party (docs/party.md; tools/netbot's board) ------------------------------------
     // The user, 2026-10-09: "lets implement party system, so bots can form 5-man party when they
     // can kill some quest monsters, elfs can heal, dk can tank, and 2 dps", and "we need to be
@@ -1076,6 +1132,10 @@ private:
         drink();
         mend();
         learnCaution();
+        if (meeting()) {
+            waitAtMeeting();
+            return;
+        }
         if (clock_ >= nextSort_) {
             sortBag();
             nextSort_ = clock_ + 100;
@@ -1096,6 +1156,18 @@ private:
             case Mode::Hunt: hunt(); break;
             case Mode::Rest: rest(); break;
             case Mode::Town: town(); break;
+        }
+    }
+
+    // The meeting kept: a window open would refuse the trade (Realm::dealBusy).
+    void waitAtMeeting() {
+        if (realm_->trading() >= 0) hand_.closeTrade();
+        if (realm_->banking() >= 0) hand_.closeVault();
+        if (realm_->mixing() >= 0) hand_.closeMachine();
+        if (realm_->questing() >= 0) hand_.closeQuest();
+        const sim::Body& me = realm_->hero();
+        if (std::max(std::abs(me.column() - meet_[0]), std::abs(me.row() - meet_[1])) > 1) {
+            hand_.ask({.kind = sim::Request::Kind::WalkTo, .column = meet_[0], .row = meet_[1]});
         }
     }
 
@@ -5146,6 +5218,7 @@ private:
     Mode mode_ = Mode::Hunt;
     Aim aim_ = Aim::Grind, lastAim_ = Aim::Grind;
     int ordered_ = -1;  // order(): the map he was told to grind, or -1
+    int meet_[2] = {-1, -1};  // meet(): where he waits for a trade, or -1
     mutable int64_t spent_ = 0;  // a trip's price, off the purse riskShare reads (choose)
     int aimQuest_ = -1, aimMap_ = 0, lastQuest_ = -2, lastMap_ = -1;
     std::vector<int> quarry_;

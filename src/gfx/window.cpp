@@ -23,6 +23,9 @@ void onScroll(GLFWwindow*, double, double y) { s_scroll += y; }
 std::string s_typed;
 int s_backspaces = 0;
 bool s_entered = false, s_escaped = false;
+// And the chat's suggestions (game/ui/chat.cpp): Tab takes one, Up and Down walk them.
+bool s_tabbed = false;
+int s_arrows = 0;
 
 void onChar(GLFWwindow*, unsigned int code) {
     // As UTF-8, so a box that takes a word later has nothing to change here.
@@ -41,9 +44,12 @@ void onChar(GLFWwindow*, unsigned int code) {
 void onKey(GLFWwindow*, int key, int, int action, int) {
     if (action == GLFW_RELEASE) return;
     if (key == GLFW_KEY_BACKSPACE) ++s_backspaces;  // press and repeat
+    if (key == GLFW_KEY_UP) --s_arrows;
+    if (key == GLFW_KEY_DOWN) ++s_arrows;
     if (action != GLFW_PRESS) return;
     if (key == GLFW_KEY_ENTER || key == GLFW_KEY_KP_ENTER) s_entered = true;
     if (key == GLFW_KEY_ESCAPE) s_escaped = true;
+    if (key == GLFW_KEY_TAB) s_tabbed = true;
 }
 
 Callback g_callback;
@@ -276,6 +282,10 @@ bool Window::pump() {
     entered_ = s_entered;
     escaped_ = s_escaped;
     s_entered = s_escaped = false;
+    tabbed_ = s_tabbed;
+    arrows_ = s_arrows;
+    s_tabbed = false;
+    s_arrows = 0;
     // An Escape that lands while a box is open belongs to the box, until the key is let go.
     const bool escapeDown = glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
     if (typing_ && (escaped_ || escapeDown)) escapeSwallowed_ = true;

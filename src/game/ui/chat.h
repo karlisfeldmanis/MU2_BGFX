@@ -29,6 +29,14 @@
 // A slash is a command for one line, the default left as it was: /p /g /m TEXT, /w NAME TEXT, /r
 // TEXT; one with nothing after it goes to that tab instead.
 // A Map line said by someone in view goes up over his head too, as MU's did (Play::bubble).
+//
+// **Items named** (the user, 2026-10-11: "allow bots to write on chat [item name] with working
+// tooltips", then "autocompletion ... when they write [item name]"): a line may carry item links
+// (sim/item_link.h), drawn "[Name]" in the thing's quality colour; the pointer on one, the chat
+// open, shows its card. Typing "[" and a few letters lists what he carries that is so named, then
+// every thing the world knows by it; Tab, Enter or a click puts the link in, Up and Down choose.
+// Shift and a click on a thing in the bag links it. A "[Name]" typed out whole and sent becomes
+// the link of the first thing so named, his own before the catalogue's.
 #pragma once
 
 #include <map>
@@ -38,10 +46,12 @@
 #include "game/ui/hud.h"
 #include "gfx/interface.h"
 #include "net/wire.h"
+#include "sim/item_link.h"
 
 namespace mu::game {
 
 class Play;
+class Stage;
 
 class Chat {
 public:
@@ -52,7 +62,7 @@ public:
     // other box has it; `wheel` the scroll wheel's.
     void update(float seconds, float width, float height, float bottom, float right,
                 const Pointer& pointer, float wheel, const std::string& typed, int backspaces,
-                bool enter, bool escape, bool toggle, Play& play);
+                bool enter, bool escape, bool toggle, Play& play, bool tab = false, int arrows = 0);
 
     // Whether it has the keyboard: typing, so no other key is the game's.
     bool typing() const { return open_; }
@@ -60,6 +70,13 @@ public:
     bool covers(float x, float y) const;
 
     bool showing() const { return showing_; }
+    // The suggestions over the input and a hovered link's card: their own canvas, drawn last.
+    bool tipping() const { return tipping_; }
+    const gfx::Canvas& tipCanvas() const { return tip_; }
+    void useTipStage(Stage* stage) { tipStage_ = stage; }
+    // A thing's link put into the line being typed (Shift and a click in the bag), the chat
+    // opened for it.
+    void link(const content::ItemRow& row, const sim::Held& held);
     // The open invite in the middle (its own canvas, over the plate), while there is one.
     bool inviting() const { return inviting_; }
     const gfx::Canvas& invite() const { return inviteDrawn_; }
@@ -84,6 +101,10 @@ private:
     struct Line {
         net::Channel channel = net::Channel::Map;
         std::string name, to, text;
+        // `text` as it reads, its links "[Name]", and where each stands in it.
+        std::string shown;
+        std::vector<sim::ItemLink> links;
+        const content::Tables* resolved = nullptr;  // the tables `links` were read against
         bool bot = false;
         float age = 0.0f;  // seconds since heard
         // A party invite, the server's line on Party: who asks, and how it was answered (0 not
@@ -97,7 +118,8 @@ private:
     struct Row {
         size_t line = 0;
         bool first = true;
-        std::string text;  // this row's part of the line's text
+        std::string text;  // this row's part of the line's shown text
+        size_t start = 0;  // ... from this byte of it
     };
     struct Tab {
         std::string key;    // "all", "map", "party", "guild", or "w:" and the name
@@ -107,6 +129,20 @@ private:
     };
 
     void send(Play& play);
+    // A line's links read and its shown text set (hear), and found in these tables (update).
+    static void read(Line& line);
+    void resolve(Line& line) const;
+    // `text` from `start`, its links' parts in their colours and the rest in `ink`; each link
+    // part's box kept in linkBoxes_ for `line` when `hits`. Its advance.
+    float spans(gfx::Canvas& canvas, float x, float base, float size, uint32_t ink, const std::string& text,
+                size_t start, const std::vector<sim::ItemLink>& links, float alpha, float u, long line);
+    uint32_t linkInk(const sim::ItemLink& link) const;
+    // The suggestions for the "[" being typed, and one taken.
+    void suggest(const sim::Realm& realm);
+    void take(size_t index);
+    // A "[Name]" typed whole made the first thing's link so named.
+    std::string named(const std::string& text, const sim::Realm& realm) const;
+    void buildTip(float u, float width, float height, const Pointer& pointer, const sim::Realm& realm);
     // An invite answered, by its line, or the latest open one for `index` -1 and `name` empty.
     void answer(Play& play, long index, const std::string& name, bool accept);
     uint64_t signature(float u, const Pointer& pointer) const;
@@ -125,7 +161,29 @@ private:
     std::string channelWord() const;
     uint32_t channelInk(net::Channel channel) const;
 
-    gfx::Canvas back_, tabsDrawn_, lines_, inviteDrawn_;
+    gfx::Canvas back_, tabsDrawn_, lines_, inviteDrawn_, tip_;
+    Stage* tipStage_ = nullptr;
+    bool tipping_ = false;
+    const content::Tables* tables_ = nullptr;  // his world's, this frame
+    // The links as last drawn, for the pointer: the box, the line, which of its links.
+    struct LinkBox {
+        gfx::Box box;
+        size_t line = 0, link = 0;
+    };
+    std::vector<LinkBox> linkBoxes_;
+    // The "[" being typed: what it would be, the one chosen, and where each was drawn.
+    struct Suggestion {
+        std::string label;
+        sim::Held held;
+        const char* where = "";  // "worn", "bag", "vault", or nothing for the catalogue's
+    };
+    std::vector<Suggestion> suggestions_;
+    std::string query_ = "\x01";  // what they were found for
+    size_t bracket_ = 0;          // the "[" in the draft
+    int pick_ = 0;
+    std::vector<gfx::Box> suggestBoxes_;
+    gfx::Box suggestBox_;
+    float pointerX_ = 0.0f, pointerY_ = 0.0f;  // last frame's: a still pointer leaves the arrows' pick
     bool open_ = false;
     bool showing_ = false;
     std::string me_;  // his own name, as the server says it

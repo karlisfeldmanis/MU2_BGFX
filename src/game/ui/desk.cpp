@@ -68,6 +68,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     deal_.useTipStage(&tipStagePicture_);
     mixer_.useTipStage(&tipStagePicture_);
     questDialog_.useTipStage(&tipStagePicture_);
+    chat_.useTipStage(&tipStagePicture_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
@@ -609,7 +610,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                      hud_.buffsLeft() - 16.0f * u, pointer,
                      chat_.covers(pointer.x, pointer.y) ? window.scroll() : 0.0f,
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
-                     (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play);
+                     (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play,
+                     chatTyping && window.tabbed(), chatTyping ? window.arrows() : 0);
         if (toggleChat) click();
         // The player menu first: a press it takes (a row, or shutting it) is no one else's.
         menuTook_ = playerMenu_.update(play, pointer);
@@ -900,11 +902,22 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bag_.carrying(banking_ && chest_.dragging()   ? &play.realm().vault()[chest_.dragged()]
                       : mixing_ && mixer_.dragging() ? &play.realm().machine()[mixer_.dragged()]
                                                      : nullptr);
+        // Shift and a click on a thing while the chat types: its link into the line, and the bag
+        // not told of the press (WoW's gesture; the user, 2026-10-11).
+        Pointer bagPointer = pointer;
+        if (chat_.typing() && window.shift() && pointer.pressed) {
+            const int hovered = bag_.hovered();
+            const sim::Satchel& carried = play.realm().satchel();
+            if (hovered >= 0 && !carried[hovered].empty()) {
+                chat_.link(play.realm().tables()->items[size_t(carried[hovered].item)], carried[hovered]);
+                bagPointer.pressed = false;
+            }
+        }
         // The auto-drink dock stands in the column beside the bag, which a counter, the vault, a
         // trade or the machine takes while it is up.
         bag_.dockRoom(!trading_ && !banking_ && !dealing_ && !mixing_);
         bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
-                    play.realm(), pointer, bagStage_, &asked);
+                    play.realm(), bagPointer, bagStage_, &asked);
         if (asked.toggleDock) click();
         // A line set on the dock is a request; the dock redraws when the realm takes it.
         if (asked.autoHealth >= 0) {
@@ -2096,6 +2109,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (mixing_) interface_.add(mixer_.tipCanvas());
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
+    if (chat_.tipping()) interface_.add(chat_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.
     if (questDialog_.up()) {
