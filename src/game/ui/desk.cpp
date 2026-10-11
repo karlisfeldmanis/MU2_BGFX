@@ -407,8 +407,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             amount_.hide();
             mending_ = false;
             fanLatched_ = false;
-            menu_.show(Menu::Page::Lost);
-            core::logf("window: disconnected");
+            const std::string why = play.cutWhy();
+            menu_.lose(why);
+            core::logf("window: disconnected -- %s", why.empty() ? "no reason kept" : why.c_str());
         }
         const bool wasUp = menu_.up();
         if (!wasUp && escape) {

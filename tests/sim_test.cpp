@@ -12291,6 +12291,20 @@ void testPartyWire() {
           "a tick's PartySet reaches the mirror as itself");
 }
 
+void testByeWire() {
+    std::printf("bye wire\n");
+    std::vector<uint8_t> bytes;
+    net::put(bytes, net::Bye{net::Why::Elsewhere});
+    net::put(bytes, net::Bye{net::Why::Stopping});
+    net::Kind kind{};
+    std::vector<uint8_t> body;
+    net::Bye one, two;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Bye && net::parse(body, one) &&
+              one.why == net::Why::Elsewhere && net::take(bytes, kind, body) == 1 &&
+              kind == net::Kind::Bye && net::parse(body, two) && two.why == net::Why::Stopping,
+          "a Bye carries why the server closed the line");
+}
+
 void testChatWire() {
     std::printf("chat wire\n");
     std::vector<uint8_t> bytes;
@@ -12660,6 +12674,7 @@ int main() {
     testDropsAreTheirs(tables);
     testChatWire();
     testPartyWire();
+    testByeWire();
     testSquareWire();
     testKept(tables);
     testSnapshot(tables);

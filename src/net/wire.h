@@ -93,7 +93,8 @@ namespace mu::net {
 //     nothing picked up while a trade is open.
 // 22: a kill shared as WebZen's: the drop to the most damage, the experience by damage outside a
 //     party (Body::hurt, snapshot shape 8).
-constexpr uint32_t kVersion = 22;
+// 23: Bye, why the server is closing his line, sent just before it does.
+constexpr uint32_t kVersion = 23;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -110,9 +111,9 @@ constexpr uint32_t kMostAsked = 64u << 10;
 
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
                           Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12,
-                          Chat = 13, PartyAsk = 14, PartyState = 15 };
+                          Chat = 13, PartyAsk = 14, PartyState = 15, Bye = 16 };
 // The last kind there is: a frame of a higher one is not our protocol (take).
-constexpr Kind kLastKind = Kind::PartyState;
+constexpr Kind kLastKind = Kind::Bye;
 
 struct Hello {
     uint32_t version = kVersion;
@@ -322,6 +323,21 @@ struct Ping {
     uint32_t nonce = 0;
 };
 
+// Down, the last frame on a line the server closes itself: why, for the client's Disconnected
+// window (the user, 2026-10-11: "when there is disconnects on server for client we need to show
+// reason"). A line that dies without one -- the box gone, the way to it -- the client names
+// for itself (RemoteLink::cutWhy).
+enum class Why : uint8_t {
+    Unknown = 0,
+    Stopping = 1,    // the server is shutting down: a restart or an update
+    Elsewhere = 2,   // his character was logged in from another connection
+    Protocol = 3,    // a frame the server could not read, or out of turn
+    Behind = 4,      // he took nothing for too long and fell too far behind
+};
+struct Bye {
+    Why why = Why::Unknown;
+};
+
 struct Hash {
     uint32_t tick = 0;
     uint64_t hash = 0;
@@ -344,6 +360,7 @@ void put(std::vector<uint8_t>& out, const Say& one);
 void put(std::vector<uint8_t>& out, const Heard& one);
 void put(std::vector<uint8_t>& out, const PartyAsk& one);
 void put(std::vector<uint8_t>& out, const PartyState& one);
+void put(std::vector<uint8_t>& out, const Bye& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -363,6 +380,7 @@ bool parse(const std::vector<uint8_t>& body, Roster& out);
 bool parse(const std::vector<uint8_t>& body, Create& out);
 bool parse(const std::vector<uint8_t>& body, Delete& out);
 bool parse(const std::vector<uint8_t>& body, Who& out);
+bool parse(const std::vector<uint8_t>& body, Bye& out);
 // A Chat frame is a Say on the server and a Heard on a client.
 bool parse(const std::vector<uint8_t>& body, Say& out);
 bool parse(const std::vector<uint8_t>& body, Heard& out);

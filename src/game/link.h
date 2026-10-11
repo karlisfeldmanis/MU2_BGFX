@@ -47,6 +47,9 @@ public:
     // Whether the line to the server is gone: closed, or silent past RemoteLink's kSilentMost.
     // It stays gone -- nothing reopens it -- and Play freezes on it. Never for a local realm.
     virtual bool cut() const { return false; }
+    // Why it went, in a line for the Disconnected window: the server's word when it closed the
+    // line itself (net::Bye), else what the client saw. Empty while it is not cut.
+    virtual std::string cutWhy() const { return {}; }
     // The round-trip time to the server in milliseconds, smoothed; -1 when there is no server
     // or no measurement yet. The line's alone: a Ping the server echoes the moment it reads it,
     // with no wait for a tick in it.

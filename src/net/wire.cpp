@@ -484,6 +484,10 @@ void put(std::vector<uint8_t>& out, const Ping& one) {
     frame(out, Kind::Ping, [&](Out& o) { o.u32(one.nonce); });
 }
 
+void put(std::vector<uint8_t>& out, const Bye& one) {
+    frame(out, Kind::Bye, [&](Out& o) { o.u8(uint8_t(one.why)); });
+}
+
 void put(std::vector<uint8_t>& out, const Hash& one) {
     frame(out, Kind::Hash, [&](Out& o) {
         o.u32(one.tick);
@@ -739,6 +743,12 @@ bool parse(const std::vector<uint8_t>& body, Tick& out) {
 bool parse(const std::vector<uint8_t>& body, Ping& out) {
     In in{body};
     out.nonce = in.u32();
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Bye& out) {
+    In in{body};
+    out.why = Why(in.u8());
     return in.done();
 }
 

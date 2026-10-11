@@ -236,6 +236,18 @@ struct Session {
     int asked = 0;
 };
 
+// Why his line is closing, to a player in a world, before it closes (net::Bye): the client's
+// Disconnected window says it. One still joining is not told: RemoteLink::join reads a refusal
+// as it always has. Sent behind whatever was owed him, so a line too far behind may never see it.
+void bye(Session& one, net::Why why) {
+    if (one.welcomed && one.socket.open()) {
+        std::vector<uint8_t> out;
+        net::put(out, net::Bye{why});
+        if (one.socket.send(out)) one.socket.flush();
+    }
+    one.socket.close();
+}
+
 // Who is in a world, to everyone in it: what the hover plate over another player says. Sent
 // after every welcome, so a newcomer learns the rest and the rest learn him.
 void announce(const World& world, const std::vector<std::unique_ptr<Session>>& sessions) {
@@ -939,7 +951,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
             if (other->socket.open()) {
                 core::logf("%s: takes over %s, silent %.0f s", one.who.c_str(), other->who.c_str(),
                            std::chrono::duration<double>(Clock::now() - other->heardAt).count());
-                other->socket.close();
+                bye(*other, net::Why::Elsewhere);
             }
             part(*other);
             other->world = nullptr;
@@ -1604,7 +1616,7 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < sessions.size(); ++i) {
             Session& one = *sessions[i];
             if (i < ready.size() && !ready[i]) continue;
-            if (one.socket.open() && !hear(one, worlds, sessions, assets, config, seeds)) one.socket.close();
+            if (one.socket.open() && !hear(one, worlds, sessions, assets, config, seeds)) bye(one, net::Why::Protocol);
         }
         // Step every world on its deadline, owing ticks rather than dropping them, and flush.
         const auto now = Clock::now();
@@ -1647,7 +1659,7 @@ int main(int argc, char** argv) {
             } else if (one->socket.stalledSeconds() > kStalledSeconds || one->socket.waiting() > kMostOwed) {
                 core::logError("%s: has taken nothing for %.0f s, %zu KB owed: let go", one->who.c_str(),
                                one->socket.stalledSeconds(), one->socket.waiting() / 1024);
-                one->socket.close();
+                bye(*one, net::Why::Behind);
             }
         }
         for (size_t i = 0; i < sessions.size();) {
@@ -1704,6 +1716,7 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < sessions.size(); ++i) ready[i] = watch[i + 1].revents != 0;
     }
     keepEveryone(sessions);
+    for (auto& one : sessions) bye(*one, net::Why::Stopping);
     core::logf("mu2_server: stopped, %zu connected", sessions.size());
     return 0;
 }

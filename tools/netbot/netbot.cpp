@@ -155,7 +155,11 @@ public:
             divergenceSaid_ = true;
             line("!! the mirror diverged from the server at tick %u", link_->divergedAt());
         }
-        return link_->connected();
+        if (!link_->connected()) {
+            line("the line is gone: %s", link_->cutWhy().c_str());
+            return false;
+        }
+        return true;
     }
 
     void report() {

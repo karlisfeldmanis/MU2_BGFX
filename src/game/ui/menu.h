@@ -83,6 +83,11 @@ public:
 
     // Up on `page`: Main from Escape and the HUD's button, any page from a review's --windows.
     void show(Page page = Page::Main);
+    // Up on the Lost page, its first line `why` (Link::cutWhy); empty says the line was lost.
+    void lose(std::string why) {
+        lostWhy_ = std::move(why);
+        show(Page::Lost);
+    }
     // Whether Switch Character answers. Only a run that came through the character screen
     // (--lobby) has one to go back to; everywhere else the button stands there inactive.
     void allowSwitch(bool on) { switchable_ = on; }
@@ -111,6 +116,7 @@ private:
     Page page_ = Page::Main;
     Settings settings_;
     std::string place_;
+    std::string lostWhy_;
     float width_ = 0.0f, height_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;  // the sheet's corner, in pixels
     int over_ = -1, pressing_ = -1;

@@ -248,6 +248,7 @@ public:
     bool remote() const { return link_->remote(); }
     // The server's line is gone (Link::cut): the game holds, and the desk says so.
     bool cut() const { return link_ && link_->cut(); }
+    std::string cutWhy() const { return link_ ? link_->cutWhy() : std::string(); }
     int serverRain() const { return link_ ? link_->serverRain() : -1; }
     float rttMs() const { return link_->rttMs(); }
     // The line under the map's name, "Level 2-40": its whole spawn table, taken before the

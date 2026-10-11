@@ -73,6 +73,7 @@ public:
 
     bool connected() const { return socket_.open(); }
     bool cut() const override { return !socket_.open(); }
+    std::string cutWhy() const override { return socket_.open() ? std::string() : why_; }
     // Ticks whose hash the server sent and the mirror matched, and the first one it did not.
     uint32_t agreed() const { return agreed_; }
     uint32_t divergedAt() const { return divergedAt_; }
@@ -80,6 +81,10 @@ public:
 private:
     void check();
     void ping();
+    // Closes the line, keeping `why` for cutWhy unless a reason is already kept. The server's
+    // Bye clears it first: it was the last thing the server said, and is read after the close
+    // the client saw.
+    void close(const char* why);
     void put(const std::vector<uint8_t>& bytes);  // out over the line, or held by setLag
     void predict();
 
@@ -112,6 +117,7 @@ private:
     net::Datagram udp_;
     uint64_t udpKey_ = 0;
     bool udpWanted_ = true;
+    std::string why_;  // cutWhy's
     std::string host_;
     int port_ = 0;
     Clock::time_point bindAt_{};

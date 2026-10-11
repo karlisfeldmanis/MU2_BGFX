@@ -136,7 +136,24 @@ constexpr auto kSilentMost = std::chrono::seconds(5);
 // Chat lines held for a taker (Link::takeHeard); a client that never takes them keeps the last few.
 constexpr size_t kHeardMost = 256;
 
+// The Disconnected window's line for each of the server's reasons (net::Why).
+const char* whyOf(net::Why why) {
+    switch (why) {
+        case net::Why::Stopping: return "The server is restarting.";
+        case net::Why::Elsewhere: return "Your character was logged in elsewhere.";
+        case net::Why::Protocol: return "The server could not read this client.";
+        case net::Why::Behind: return "The connection fell too far behind.";
+        case net::Why::Unknown: break;
+    }
+    return "The server closed the connection.";
+}
+
 }  // namespace
+
+void RemoteLink::close(const char* why) {
+    if (why_.empty()) why_ = why;
+    socket_.close();
+}
 
 bool RemoteLink::earlyDue() const {
     if (ticks_.empty() || !ticks_.front().early) return false;
@@ -165,7 +182,7 @@ void RemoteLink::put(const std::vector<uint8_t>& bytes) {
     }
     if (!socket_.send(bytes)) {
         core::logError("server: the connection is gone");
-        socket_.close();
+        close("The connection to the server was lost.");
     }
 }
 
@@ -276,7 +293,7 @@ void RemoteLink::pump() {
     while (!outHeld_.empty() && outHeld_.front().due <= now && socket_.open()) {
         if (!socket_.send(outHeld_.front().bytes)) {
             core::logError("server: the connection is gone");
-            socket_.close();
+            close("The connection to the server was lost.");
         }
         outHeld_.pop_front();
     }
@@ -285,7 +302,7 @@ void RemoteLink::pump() {
     const size_t had = in_.size();
     if (!socket_.receive(lagged ? fresh : in_) || !socket_.flush()) {
         core::logError("server: the connection is gone (%zu ticks unstepped)", ticks_.size());
-        socket_.close();
+        close("The server closed the connection.");
     }
     if (in_.size() > had || !fresh.empty()) heardAt_ = now;
     if (lagged) {
@@ -380,6 +397,15 @@ void RemoteLink::pump() {
             if (heard_.size() > kHeardMost) heard_.pop_front();
         } else if (ok && kind == net::Kind::PartyState) {
             ok = net::parse(body, party_);
+        } else if (ok && kind == net::Kind::Bye) {
+            net::Bye bye;
+            ok = net::parse(body, bye);
+            if (ok) {
+                core::logError("server: it closed the line (why %d)", int(bye.why));
+                why_.clear();
+                close(whyOf(bye.why));
+                break;
+            }
         } else if (ok && kind == net::Kind::Hash) {
             net::Hash hash;
             ok = net::parse(body, hash);
@@ -389,7 +415,7 @@ void RemoteLink::pump() {
         }
         if (!ok) {
             core::logError("server: a frame this client cannot read; closing");
-            socket_.close();
+            close("The server sent what this client cannot read.");
             break;
         }
     }
@@ -401,7 +427,7 @@ void RemoteLink::pump() {
     if (socket_.open() && heardAt_ != Clock::time_point{} && now - heardAt_ > kSilentMost) {
         core::logError("server: nothing heard in %.0f s; the line is taken for gone (%zu ticks unstepped)",
                        double(std::chrono::duration<float>(now - heardAt_).count()), ticks_.size());
-        socket_.close();
+        close("The server stopped answering.");
     }
 }
 

@@ -468,7 +468,8 @@ void Menu::rebuild() {
             controls::label(canvas_, std::round(sheet.x + (sheet.w - wide) * 0.5f),
                             std::round(y_ + top * u), px, ink, words);
         };
-        line(kLostWords, "The connection to the server was lost.", style::kBoneHi);
+        line(kLostWords, lostWhy_.empty() ? "The connection to the server was lost." : lostWhy_.c_str(),
+             style::kBoneHi);
         line(kLostWords + 24.0f, "Your character is kept on the server.", style::kAshInk);
         controls::button(canvas_, at(x_, y_, boxOf(page_, kReconnect)), "Reconnect",
                          Kind::Secondary, state(kReconnect), u);
