@@ -65,6 +65,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     bag_.useTipStage(&tipStagePicture_);
     shelf_.useTipStage(&tipStagePicture_);
     chest_.useTipStage(&tipStagePicture_);
+    broker_.useTipStage(&tipStagePicture_);
     deal_.useTipStage(&tipStagePicture_);
     mixer_.useTipStage(&tipStagePicture_);
     questDialog_.useTipStage(&tipStagePicture_);
@@ -73,6 +74,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
     chest_.open(interface_, &arts_);
+    broker_.open(interface_);
     deal_.open(interface_, &arts_);
     mixer_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
@@ -223,7 +225,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // windows under it do not hear a click on its OK and a 1 typed into it is not the first
     // potion drunk. `typing` is taken before the box answers, so the frame Return closes it on
     // does not hand the same keys on either. The cursor is still drawn where the pointer is.
-    const bool typing = amount_.up();
+    const bool typing = amount_.up() || broker_.typing();
     // The chat's keyboard, taken before the box spends the script's: it types only while it is
     // open and no box is up, and its Enter and Escape are then its own.
     const bool chatTyping = chat_.typing() && !typing;
@@ -396,7 +398,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
     const bool windowsOpen =
-        inventoryOpen_ || characterOpen_ || trading_ || banking_ || mixing_ || dealing_ || travel_.up();
+        inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ || dealing_ || travel_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -429,6 +431,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 inventoryOpen_ = characterOpen_ = false;
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
+                if (brokering_) play.closeBroker();
                 if (mixing_) play.closeMachine();
                 if (dealing_) play.closeDeal();
                 travel_.hide();
@@ -795,6 +798,28 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
 
+    // The Broker's market (game/ui/broker.h), as the vault is: the bag beside it, the character
+    // window shut. It asks the server and plays its own sounds; the desk hands it the keyboard
+    // while a box of it types, and opens the chat on a seller it whispers. Updated shut too, so
+    // an answer late to a closed window is spent.
+    const bool brokering = play.isOpen() && play.realm().brokering() >= 0;
+    if (brokering && !brokering_) {
+        characterOpen_ = false;
+        bagForBroker_ = !inventoryOpen_;
+        inventoryOpen_ = true;
+    }
+    if (!brokering && brokering_ && bagForBroker_) inventoryOpen_ = bagForBroker_ = false;
+    brokering_ = brokering;
+    if (play.isOpen()) {
+        Broker::Keys keys;
+        if (broker_.typing()) keys = {typedNow, window.backspaces(), enterNow, escapeNow};
+        // Its own box typing, it keeps the pointer: a price typed and then List pressed.
+        broker_.update(seconds, float(window.width()), float(window.height()), play,
+                       broker_.typing() && !amount_.up() ? real : pointer, keys, shelfStage_);
+        std::string whom;
+        if (broker_.takeWhisper(&whom)) chat_.whisperTo(whom);
+    }
+
     // The Chaos Machine, as the vault is: it opens the bag beside it and closes the character
     // window, and walking away closes it in the realm -- which puts the box back in the bag.
     const bool mixing = play.isOpen() && play.realm().mixing() >= 0;
@@ -941,6 +966,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
         if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
             expect(play.putIn(asked.use, -1), Then::TookOrRefused);
+        } else if (asked.use >= 0 && brokering_ && sim::baggable(asked.use)) {
+            broker_.offer(asked.use);  // at the Broker a right-click puts it on the Sell tab
+            click();
         } else if (asked.use >= 0 && dealing_ && sim::baggable(asked.use)) {
             // In a trade a right-click puts it up, as at the machine.
             expect(play.dealPut(asked.use, -1), carriesBound(asked.use) ? Then::Bound : Then::TookOrRefused);
@@ -972,6 +1000,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // it fits in.
             expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY)),
                    carriesBound(asked.outside) ? Then::Bound : Then::TookOrRefused);
+        } else if (asked.outside >= 0 && brokering_ && broker_.covers(asked.outsideX, asked.outsideY)) {
+            broker_.offer(asked.outside);  // dropped on the market: chosen to sell
+            click();
         } else if (asked.outside >= 0 && dealing_ && deal_.covers(asked.outsideX, asked.outsideY)) {
             // Into his own box, at the cell under the pointer or the first it fits.
             expect(play.dealPut(asked.outside, deal_.cellUnder(asked.outsideX, asked.outsideY)),
@@ -1043,6 +1074,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
                     (banking_ && (chest_.covers(pointer.x, pointer.y) || chest_.dragging())) ||
+                    (brokering_ && broker_.covers(pointer.x, pointer.y)) ||
                     (mixing_ && (mixer_.covers(pointer.x, pointer.y) || mixer_.dragging())) ||
                     (dealing_ && (deal_.covers(pointer.x, pointer.y) || deal_.dragging()));
 
@@ -1727,62 +1759,6 @@ static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one) {
     return tip::colourOf(qualityOf(tables.items[size_t(one.what.item)], one.what));
 }
 
-// The realm's word on his trades, as lines in the chat and an ask on its card: MU's trade
-// results said in the system log (CNewUITrade::ProcessToReceiveTradeResult).
-void Desk::dealNews(Play& play) {
-    for (const sim::Happening& said : play.takeDealNews()) {
-        std::string name;
-        if (!play.playerName(said.whom, &name, nullptr) || name.empty()) name = "They";
-        const auto why = [](int32_t b) -> std::string {
-            switch (sim::DealWhy(b)) {
-                case sim::DealWhy::Busy: return "busy";
-                case sim::DealWhy::Far: return "too far away";
-                case sim::DealWhy::Dead: return "dead";
-                case sim::DealWhy::Here: return "not allowed here";
-                case sim::DealWhy::Gone: return "gone";
-                case sim::DealWhy::Closed: return "closed";
-                case sim::DealWhy::Zen: return "short of the Zen offered";
-                default: return "not possible";
-            }
-        };
-        switch (sim::DealEvent(said.a)) {
-            case sim::DealEvent::Asked:
-                // Said to both: the one asked holds the ask.
-                if (play.realm().dealAskedBy() == said.whom) {
-                    chat_.askedToTrade(name, said.whom);
-                    play.ui(Play::Ui::Opened);
-                } else {
-                    chat_.notice("You asked " + name + " to trade.");
-                }
-                break;
-            case sim::DealEvent::Refused:
-                chat_.notice(sim::DealWhy(said.b) == sim::DealWhy::Here ? std::string("You cannot trade here.")
-                             : sim::DealWhy(said.b) == sim::DealWhy::Nobody ? std::string("There is no one to trade with.")
-                             : "Trade refused: " + why(said.b) + ".");
-                play.ui(Play::Ui::Refused);
-                break;
-            case sim::DealEvent::Declined:
-                chat_.notice(said.b == 1 ? name + " did not answer." : name + " declined to trade.");
-                break;
-            case sim::DealEvent::Opened: chat_.notice("Trading with " + name + "."); break;
-            case sim::DealEvent::Cancelled: chat_.notice("The trade with " + name + " was cancelled (" + why(said.b) + ")."); break;
-            case sim::DealEvent::NoRoom:
-                chat_.notice(said.b == 1 ? std::string("No room in your bag for the trade.")
-                                         : name + " has no room for the trade.");
-                play.ui(Play::Ui::Refused);
-                break;
-            case sim::DealEvent::Done: {
-                std::string got;
-                if (said.b > 0) got = std::to_string(said.b) + (said.b == 1 ? " item" : " items");
-                if (said.c > 0) got += (got.empty() ? "" : " and ") + panel::commas(said.c) + " Zen";
-                chat_.notice("Traded with " + name + (got.empty() ? std::string(".") : ": you got " + got + "."));
-                play.ui(Play::Ui::Took);
-                break;
-            }
-        }
-    }
-}
-
 void Desk::labelGround(const Play& play, int width, int height) {
     play.dropsOnScreen(viewProj_, width, height, onScreen_);
     const uint32_t lit = play.pointedLying();
@@ -2023,7 +1999,7 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
     const float pixelsPerUnit = panel::scale();
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
-    if (trading_ || banking_ || mixing_ || dealing_) {
+    if (trading_ || banking_ || brokering_ || mixing_ || dealing_) {
         shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     }
     // The quest giver's rewards on the same stage, which is free whenever he is (no counter).
@@ -2122,6 +2098,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // never under a window it is carried across -- a vault piece over the bag hid behind it.
     const bool vaultOnTop = banking_ && chest_.dragging();
     if (banking_ && !vaultOnTop) interface_.add(chest_.canvas());
+    if (brokering_) interface_.add(broker_.canvas());
     const bool machineOnTop = mixing_ && mixer_.dragging();
     if (mixing_ && !machineOnTop) interface_.add(mixer_.canvas());
     const bool dealOnTop = dealing_ && deal_.dragging();
@@ -2138,6 +2115,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(hud_.tipCanvas());
     if (trading_) interface_.add(shelf_.tipCanvas());
     if (banking_) interface_.add(chest_.tipCanvas());
+    if (brokering_) interface_.add(broker_.tipCanvas());
     if (dealing_) interface_.add(deal_.tipCanvas());
     if (mixing_) interface_.add(mixer_.tipCanvas());
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());

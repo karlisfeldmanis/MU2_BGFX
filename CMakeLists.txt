@@ -152,6 +152,8 @@ add_library(mu_sim STATIC
   src/sim/realm_items.cpp
   src/sim/realm_machine.cpp
   src/sim/realm_deal.cpp
+  src/sim/broker.cpp
+  src/sim/realm_broker.cpp
   src/sim/realm_quests.cpp
   src/sim/realm_commands.cpp
   src/sim/cradle.cpp
@@ -180,6 +182,7 @@ target_compile_options(mu_sim PRIVATE ${MU_WARNINGS})
 add_library(mu_net STATIC
   src/net/socket.cpp
   src/net/wire.cpp
+  src/net/broker_wire.cpp
 )
 # zlib packs the Welcome's snapshot (net::pack): the system's on the Mac, zlib1g-dev on the box.
 find_package(ZLIB REQUIRED)
@@ -205,6 +208,7 @@ add_executable(mu2_server
   server/src/accounts.cpp
   server/src/store.cpp
   server/src/economy.cpp
+  server/src/broker.cpp
 )
 target_include_directories(mu2_server PRIVATE src)
 target_link_libraries(mu2_server PRIVATE mu_net ${MU_SQLITE})
@@ -222,6 +226,7 @@ add_executable(server_test EXCLUDE_FROM_ALL
   server/src/accounts.cpp
   server/src/store.cpp
   server/src/economy.cpp
+  server/src/broker.cpp
 )
 target_include_directories(server_test PRIVATE src server/src)
 target_link_libraries(server_test PRIVATE mu_net ${MU_SQLITE})
@@ -387,6 +392,9 @@ add_library(mu_game STATIC
   src/game/ui/shelf.cpp
   src/game/ui/chest.cpp
   src/game/ui/deal.cpp
+  src/game/ui/desk_deal.cpp
+  src/game/ui/broker.cpp
+  src/game/ui/broker_draw.cpp
   src/game/ui/mixer.cpp
   src/game/ui/amount.cpp
   src/game/ui/square_result.cpp
@@ -550,6 +558,7 @@ target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-paramete
 # a window" -- is what this target exists to keep true.
 add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test.cpp
+  tests/sim_test_broker.cpp
 )
 target_link_libraries(sim_test PRIVATE mu_net mu_sim)
 target_include_directories(sim_test PRIVATE src)

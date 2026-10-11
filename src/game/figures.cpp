@@ -1277,6 +1277,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         made->name = entry["name"].string;
         made->label = made->name;
         made->kind = BodyKind::Townsfolk;
+        made->scale = float(entry["scale"].numberOr(1.0));
         const content::Mesh* body = mesh(entry["mesh"].string);
         if (!body) continue;
         made->parts.push_back(body);
@@ -1351,7 +1352,6 @@ void Figures::shutdown() {
     placements_.clear();
     breeds_.clear();
 }
-
 
 void Figures::addMonster(const core::Json& entry) {
     auto describe = [&](HeldItem& item) {

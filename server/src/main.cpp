@@ -27,6 +27,7 @@
 // A malformed frame drops that connection, never the server.
 
 #include "host.h"
+#include "broker.h"
 #include "economy.h"
 
 namespace mu::server {
@@ -102,6 +103,10 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             net::Say said;
             if (!net::parse(body, said)) return false;
             say(one, said, sessions);
+        } else if (kind == net::Kind::BrokerAsk && one.welcomed) {
+            net::BrokerAsk asked;
+            if (!net::parse(body, asked)) return false;
+            brokerAsk(one, asked, sessions);
         } else if (kind == net::Kind::Ping) {
             // Back the moment it is read, ahead of any tick: the line's round trip alone.
             net::Ping ping;
@@ -109,7 +114,8 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             std::vector<uint8_t> out;
             net::put(out, ping);
             if (!one.socket.send(out)) return false;
-        } else if ((kind == net::Kind::Command || kind == net::Kind::Chat || kind == net::Kind::PartyAsk) &&
+        } else if ((kind == net::Kind::Command || kind == net::Kind::Chat || kind == net::Kind::PartyAsk ||
+                    kind == net::Kind::BrokerAsk) &&
                    one.joining != 0) {
             // Asked or said before his Welcome: he has no body yet to ask with, and nobody hears
             // him yet. Not a frame out of turn: a client quick on the keys after its Hello.
@@ -131,6 +137,7 @@ int main(int argc, char** argv) {
     int port = net::kDefaultPort;
     std::string assets = MU2_ASSET_DIR;
     std::string store = "characters.db";
+    int marketSample = 0;  // --market-sample N (broker.h)
     sim::RealmConfig config;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
@@ -142,13 +149,14 @@ int main(int argc, char** argv) {
             g_tick /= g_speed;
         }
         else if (a == "--storm") g_storm = true;
+        else if (a == "--market-sample" && i + 1 < argc) marketSample = std::max(0, std::atoi(argv[++i]));
         else if (a == "--invasion") g_invasion = true;
         else if (a == "--map-cap" && i + 1 < argc) g_mapCap = std::max(1, std::atoi(argv[++i]));
         else if (a == "--castle-period" && i + 1 < argc) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.castle = {s, s / 2, s / 2};
         } else if (a == "--kit" && i + 1 < argc) {
-            // LEVEL:STEM[+N],STEM... -- every new character made so (a test).
+            // LEVEL:STEM[+N],STEM... -- every new character made so (a test); Zen+N his Zen.
             const std::string kit = argv[++i];
             const size_t colon = kit.find(':');
             g_kitLevel = std::clamp(std::atoi(kit.c_str()), 1, sim::kMaximumLevel);
@@ -188,10 +196,12 @@ int main(int argc, char** argv) {
         return 1;
     }
     economyOpen(store);
+    brokerOpen();
     // The roster's item rows (g_items): a server without them stands the screen's characters bare.
     if (!content::loadTables(assets + "/cooked/lorencia/lorencia.mur", g_items, error)) {
         core::logError("lorencia's tables: %s; the character screen's figures go bare", error.c_str());
     }
+    if (marketSample > 0) brokerSample(marketSample);
     net::Socket listener;
     if (!listener.listen(port, error)) {
         core::logError("%s", error.c_str());
@@ -308,6 +318,7 @@ int main(int argc, char** argv) {
         static Clock::time_point partyAt = now;
         if (now - partyAt >= std::chrono::seconds(1)) {
             partyTick(sessions);
+            brokerTick(sessions);  // the market's listings run out (broker.h)
             partyAt = now;
         }
         const double partyMs = msSince(partyStarted);
@@ -323,6 +334,8 @@ int main(int argc, char** argv) {
             g_store.keep(due);
             g_stats.saved += int(due.size());
         }
+        // And the market's book, in the same pass as the characters it moved things for.
+        brokerKeep();
         const double savesMs = msSince(savesAt);
         g_stats.saveMost = std::max(g_stats.saveMost, savesMs);
         const Clock::time_point sendAt = Clock::now();
@@ -425,6 +438,7 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < sessions.size(); ++i) ready[i] = watch[i + 1].revents != 0;
     }
     keepEveryone(sessions);
+    brokerKeep();
     economyReport(sessions, true);
     for (auto& one : sessions) bye(*one, net::Why::Stopping);
     core::logf("mu2_server: stopped, %zu connected", sessions.size());

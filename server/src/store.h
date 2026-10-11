@@ -91,6 +91,12 @@ public:
 
     int count();
 
+    // **The Broker's book** (sim::Book, docs/broker.md): the market's listings and every Collect,
+    // one row of its own bytes beside the characters. Written whenever it changed, in the pass
+    // that writes the characters it moved things for. False when the disk said no, or none yet.
+    bool keepBook(const std::vector<uint8_t>& bytes);
+    bool findBook(std::vector<uint8_t>& bytes);
+
 private:
     // The journal folded back into the file, on a thread of its own with its own connection, at
     // a lowered priority (checkpoints): what SQLite did inside whichever commit crossed 4 MB of

@@ -35,10 +35,10 @@ src/net/wire.cpp 885
 src/sim/items.cpp 1103
 src/sim/items.h 1377
 src/sim/quests.cpp 1787
-src/sim/realm.cpp 1686
+src/sim/realm.cpp 1639
 src/sim/realm.h 2411
 src/sim/realm_fight.cpp 2120
-src/sim/realm_items.cpp 2454
+src/sim/realm_items.cpp 2439
 src/sim/realm_move.cpp 993
 src/sim/realm_raid.cpp 1412
 src/sim/realm_skills.cpp 1021

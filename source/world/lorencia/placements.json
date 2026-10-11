@@ -399,6 +399,13 @@
       ],
       "facing": 5,
       "ours": "the Dungeon's quest giver, at the arch where the user put him (2026-09-30); MU (0.95d) stands him at 175,120, and forces his facing to angle 90"
+    },
+    {
+      "model": "mirazu",
+      "who": "Orsin the Broker",
+      "tile": [149, 110],
+      "facing": 4,
+      "ours": "the Broker (docs/broker.md, sim::kBroker), the market's keeper three tiles east of Baz: MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick of 2026-10-11, one figure in all three towns"
     }
   ],
   "spawns_from": [

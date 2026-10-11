@@ -1399,7 +1399,8 @@ LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
 
 # The world anchors' tables are tools/cook_anchors.py's.
 from cook_anchors import (ANCHOR_KINDS, ANCHOR_KINDS_BY_WORLD, ANCHOR_LIGHT,  # noqa: E402
-                          BRAZIER_BOWLS, HIDDEN_BY_WORLD, SHOWN_LATER, SPRAY_KINDS)
+                          BRAZIER_BOWLS, HIDDEN_BY_WORLD, LIGHT_TWINS, SHOWN_LATER,
+                          SPRAY_KINDS)
 
 
 # Where the town's own stone stands in the lawn, for the grass to stay out of. The .walls
@@ -1682,6 +1683,8 @@ def cook_placements(world, out_dir, chunk_tiles):
             anchors.append((kind, (sx / per_tile, sz / per_tile, -sy / per_tile)))
             if kind in SPRAY_KINDS:
                 anchor_scales[len(anchors) - 1] = float(one.get("scale", 1.0))
+            if kind in LIGHT_TWINS:  # a light of its own beside it, cook_anchors.py
+                anchors.append((LIGHT_TWINS[kind], (sx / per_tile, sz / per_tile, -sy / per_tile)))
             # A smoke in a brazier's bowl burns as well -- ours: MU only smokes the brazier at
             # the row's left end while its three fellows burn, and the user asked for it lit.
             if kind == 4 and any(math.hypot(bx - sx, by - sy) < 0.5 * per_tile
@@ -2018,13 +2021,17 @@ def figure_set(world):
     # models with their own clips inside them, not a set of parts on a shared rig.
     standalone = []
     named = {one["name"] for one in characters} | {one["name"] for one in monsters}
+    # MU's own scale for the one that has one, the Broker's Mirage (index.py's npc `scale`).
+    scaled = {one["name"]: one["scale"] for one in index.get("objects", []) if "scale" in one
+              and one.get("kind") == "npc"}
     for model in sorted(placed):
         if model in named or os.path.exists(os.path.join(world_dir, model, f"{model}.glb")):
             continue
         for where in ("assets/npc", "assets/monsters", "assets/lobby"):
             mesh = reach(f"{where}/{model}/{model}.glb")
             if mesh:
-                standalone.append({"name": model, "mesh": mesh})
+                standalone.append({"name": model, "mesh": mesh,
+                                   **({"scale": scaled[model]} if model in scaled else {})})
                 break
 
     # The placements the town cook dropped for having no mesh: these fourteen.

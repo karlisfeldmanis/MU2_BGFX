@@ -2489,6 +2489,11 @@ def main() -> None:
             if entry["kind"] == "scenery":
                 entry["world"] = one.parts[1]
 
+            # The scale MU's CreateCharacter stands a whole-model townsperson at: the
+            # Broker's Mirage at 0.95 (w_CursedTemple.cpp:212). The cook's standalone row.
+            if entry["kind"] == "npc" and (scale := document.get("scale")):
+                entry["scale"] = float(scale)
+
             # The glb materials MU blends as well as tests (cook.py's soft alpha), on a worn
             # model as on a monster: the Wings of Heaven's feathers and Satan's membrane.
             if soft := document.get("soft_alpha"):

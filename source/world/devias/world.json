@@ -135,6 +135,17 @@
       "look": 3
     },
     {
+      "npc": 900,
+      "name": "Kesra the Broker",
+      "figure": "mirazu",
+      "at": [
+        221,
+        63
+      ],
+      "look": 3,
+      "note": "Ours: the Broker (docs/broker.md), beside Baz, in MuMain's Mirage (Npc/mirazu.bmd), the Broker's one figure in all three towns."
+    },
+    {
       "npc": 406,
       "name": "Apostle Devin",
       "figure": "",

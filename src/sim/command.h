@@ -93,14 +93,24 @@ struct Command {
         // His auto-drink (Realm::setAutoDrink; a: the health percent, b: the mana percent, 0 for
         // never).
         AutoDrink,
+        // **The Broker's** (sim/broker.h, docs/broker.md), sent by the server and never by a
+        // client, as PartySet is: the market spans maps, so it is the server's, and these move
+        // his things inside the lockstep. Each carries a whole Held in a, b, c, d and target
+        // (sim::packHeld).
+        BrokerTake,  // out of the bag (zen: the slot) or the vault (zen: the cell + 0x10000),
+                     // only if it still holds that very thing; answered 1
+        BrokerBuy,   // zen paid, his carried first and then his vault's, and the Held into his
+                     // bag: answered 1, or 2 paid but the bag full (it goes to his Collect)
+        BrokerGive,  // the Held out of his Collect into his bag: 1, or -1 when it does not fit
+        BrokerZen,   // zen out of his Collect: answered with what he could carry
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.
-    static constexpr Kind kLastKind = Kind::AutoDrink;
+    static constexpr Kind kLastKind = Kind::BrokerZen;
     // Close's a.
     // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
     // two players, which closing cancels for both.
-    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel, Deal };
+    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel, Deal, Broker };
     Kind kind = Kind::None;
     // Who asks: a player's body id. 0 is the one hero this realm has until phase 2.
     uint32_t player = 0;

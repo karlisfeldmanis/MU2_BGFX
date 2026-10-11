@@ -52,6 +52,8 @@ public:
     void takeHeard(std::vector<net::Heard>& into) override;
     void askParty(const net::PartyAsk& asked) override;
     const net::PartyState& party() const override { return party_; }
+    void askBroker(const net::BrokerAsk& asked) override;
+    bool takeBrokerView(net::BrokerView& out) override;
     const sim::Body* ahead() override;
     int mapCopy() const override { return copy_; }
     void setCushion(int ticks) override;
@@ -156,6 +158,7 @@ private:
     // Chat lines heard and not yet taken; the oldest dropped past kHeardMost, if nobody takes them.
     std::deque<net::Heard> heard_;
     net::PartyState party_;  // his party, the latest the server sent
+    std::deque<net::BrokerView> brokerViews_;  // the market's answers, not yet taken
 };
 
 // The character screen's line to the server (server-plan phase 6, docs/sprints/23-the-account.md):

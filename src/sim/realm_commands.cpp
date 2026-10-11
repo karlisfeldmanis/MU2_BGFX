@@ -2,6 +2,7 @@
 // method for it -- the rules are where they were -- and its answer is said as What::Answered, in
 // the order the asks came. docs/server-plan.md phase 1.
 #include "sim/realm.h"
+#include "sim/broker.h"
 
 #include "sim/cradle.h"
 
@@ -25,11 +26,6 @@ Kept Realm::keptOf(uint32_t id) {
     out.vault = me().vault;
     out.machine = me().machine;
     return out;
-}
-
-const Satchel* Realm::satchelOf(uint32_t id) const {
-    const int at = playerOfId(id);
-    return at < 0 ? nullptr : &heroes_[size_t(at)].bag;
 }
 
 int64_t Realm::heldOf(uint32_t id) const {
@@ -131,6 +127,7 @@ void Realm::applyCommands() {
                     case Command::Window::Gate: closeGate(); break;
                     case Command::Window::Angel: closeAngel(); break;
                     case Command::Window::Deal: closeDeal(); break;
+                    case Command::Window::Broker: closeBroker(); break;
                 }
                 answer = 1;
                 break;
@@ -164,6 +161,12 @@ void Realm::applyCommands() {
             case Kind::DealTake: answer = dealTake(one.a, one.b); break;
             case Kind::DealZen: answer = dealZen(one.zen) ? 1 : -1; break;
             case Kind::DealAccept: answer = dealAccept(one.a == 1) ? 1 : -1; break;
+            case Kind::BrokerTake:
+                answer = brokerTake(int(one.zen & 0xffff), (one.zen & 0x10000) != 0, unpackHeld(one));
+                break;
+            case Kind::BrokerBuy: answer = brokerBuy(unpackHeld(one), one.zen); break;
+            case Kind::BrokerGive: answer = brokerGive(unpackHeld(one)); break;
+            case Kind::BrokerZen: answer = brokerZen(one.zen); break;
         }
         if (one.ticket == 0) continue;
         say(What::Answered, *find(answerer), int32_t(said),

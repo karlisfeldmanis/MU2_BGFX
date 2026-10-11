@@ -128,7 +128,9 @@ bool Store::open(const std::string& path, std::string& error) {
     sqlite3_busy_timeout(db_, 2000);
     // And never folded back inside one of the server's own commits (checkpoints).
     if (!exec(db_, "PRAGMA journal_mode=WAL") || !exec(db_, "PRAGMA synchronous=NORMAL") ||
-        !exec(db_, "PRAGMA wal_autocheckpoint=0") || !exec(db_, kSchema)) {
+        !exec(db_, "PRAGMA wal_autocheckpoint=0") || !exec(db_, kSchema) ||
+        !exec(db_, "CREATE TABLE IF NOT EXISTS broker (id INTEGER PRIMARY KEY, book BLOB NOT NULL,"
+                   " saved INTEGER NOT NULL)")) {
         error = path + ": " + sqlite3_errmsg(db_);
         return false;
     }
@@ -310,6 +312,28 @@ int Store::count() {
     if (db_ == nullptr) return 0;
     Statement q(db_, "SELECT count(*) FROM characters");
     return q && sqlite3_step(q.s) == SQLITE_ROW ? sqlite3_column_int(q.s, 0) : 0;
+}
+
+bool Store::keepBook(const std::vector<uint8_t>& bytes) {
+    if (db_ == nullptr) return false;
+    Statement q(db_, "INSERT OR REPLACE INTO broker (id, book, saved) VALUES (1, ?, ?)");
+    if (!q) return false;
+    sqlite3_bind_blob(q.s, 1, bytes.data(), int(bytes.size()), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(q.s, 2, sqlite3_int64(std::time(nullptr)));
+    if (sqlite3_step(q.s) != SQLITE_DONE) {
+        core::logError("characters.db: the Broker's book: %s", sqlite3_errmsg(db_));
+        return false;
+    }
+    return true;
+}
+
+bool Store::findBook(std::vector<uint8_t>& bytes) {
+    if (db_ == nullptr) return false;
+    Statement q(db_, "SELECT book FROM broker WHERE id = 1");
+    if (!q || sqlite3_step(q.s) != SQLITE_ROW) return false;
+    const auto* at = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 0));
+    bytes.assign(at, at + sqlite3_column_bytes(q.s, 0));
+    return true;
 }
 
 }  // namespace mu::server

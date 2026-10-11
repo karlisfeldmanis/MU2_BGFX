@@ -277,4 +277,21 @@ int Realm::squareRankOf(size_t at, int* of) const {
     return rank;
 }
 
+// Any player's, by his body's id, 0 for an id that is no player's: which square and castle the
+// server raises for him. Out of realm.h to pay for the Broker's lines there.
+int Realm::squarePassedOf(uint32_t id) const {
+    const int at = playerOfId(id);
+    return at >= 0 ? heroes_[size_t(at)].squarePassed : 0;
+}
+
+int Realm::squarePassedWaitOf(uint32_t id) const {
+    const int at = playerOfId(id);
+    return at >= 0 ? heroes_[size_t(at)].squarePassedWait : 0;
+}
+
+int Realm::castlePassedOf(uint32_t id) const {
+    const int at = playerOfId(id);
+    return at >= 0 ? heroes_[size_t(at)].castlePassed : 0;
+}
+
 }  // namespace mu::sim

@@ -397,6 +397,11 @@ void RemoteLink::pump() {
             if (heard_.size() > kHeardMost) heard_.pop_front();
         } else if (ok && kind == net::Kind::PartyState) {
             ok = net::parse(body, party_);
+        } else if (ok && kind == net::Kind::BrokerView) {
+            net::BrokerView view;
+            ok = net::parse(body, view);
+            if (ok) brokerViews_.push_back(std::move(view));
+            if (brokerViews_.size() > 32) brokerViews_.pop_front();
         } else if (ok && kind == net::Kind::Bye) {
             net::Bye bye;
             ok = net::parse(body, bye);
@@ -441,6 +446,19 @@ void RemoteLink::askParty(const net::PartyAsk& asked) {
     std::vector<uint8_t> out;
     net::put(out, asked);
     put(out);
+}
+
+void RemoteLink::askBroker(const net::BrokerAsk& asked) {
+    std::vector<uint8_t> out;
+    net::put(out, asked);
+    put(out);
+}
+
+bool RemoteLink::takeBrokerView(net::BrokerView& out) {
+    if (brokerViews_.empty()) return false;
+    out = std::move(brokerViews_.front());
+    brokerViews_.pop_front();
+    return true;
 }
 
 void RemoteLink::takeHeard(std::vector<net::Heard>& into) {

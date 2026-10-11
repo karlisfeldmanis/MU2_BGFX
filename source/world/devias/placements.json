@@ -131,6 +131,13 @@
       ],
       "facing": 4,
       "ours": "Blood Castle's gatekeeper, NPC 233, at the first of the two tiles OpenMU's Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45; the second is 217,20); Version075 has no Blood Castle. Word 5 there, safe and no-move, as Sevina's tile"
+    },
+    {
+      "model": "mirazu",
+      "who": "Kesra the Broker",
+      "tile": [221, 63],
+      "facing": 3,
+      "ours": "the Broker (docs/broker.md, sim::kBroker), the market's keeper three tiles east of Baz: MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick of 2026-10-11, one figure in all three towns"
     }
   ],
   "spawns_from": [

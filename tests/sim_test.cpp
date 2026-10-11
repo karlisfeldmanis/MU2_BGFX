@@ -6240,7 +6240,8 @@ void testDeviasFolk() {
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur";
     check(content::loadTables(path, devias, error), "Devias's tables load");
-    checkEqual(long(devias.folk.size()), 12L, "twelve townsfolk stand in Devias (Thompson off since 2026-10-02)");
+    checkEqual(long(devias.folk.size()), 13L,
+               "thirteen townsfolk stand in Devias (Thompson off since 2026-10-02, Kesra the Broker on 2026-10-11)");
     int master = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kGuildMaster) master = int(i);
@@ -12889,6 +12890,9 @@ void testSquareResult() {
     realm.lookAs(first);
 }
 
+void testBroker(const content::Tables& tables, void (*check)(bool, const char*),
+                void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_broker.cpp
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -13000,6 +13004,7 @@ int main() {
     testSecondClassDrops();
     testParty(tables);
     testDeal(tables);
+    testBroker(tables, check, checkEqual);  // tests/sim_test_broker.cpp
     testThreat(tables);
     testQuestLadder(tables);
     testQuestFirecrackers(tables);

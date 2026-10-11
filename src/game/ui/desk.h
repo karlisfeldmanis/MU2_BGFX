@@ -18,6 +18,7 @@
 #include "game/ui/beacon.h"
 #include "game/ui/card.h"
 #include "game/ui/chat.h"
+#include "game/ui/broker.h"
 #include "game/ui/chest.h"
 #include "game/ui/deal.h"
 #include "game/ui/mixer.h"
@@ -80,7 +81,7 @@ public:
     }
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
     // rather than quitting the game.
-    bool typing() const { return amount_.up() || chat_.typing(); }
+    bool typing() const { return amount_.up() || chat_.typing() || broker_.typing(); }
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
     // A skill key pressed by a script: 0 is Q. `--press q` in a headless run, so the cast path is
@@ -238,6 +239,7 @@ private:
     Bag bag_;
     Shelf shelf_;
     Chest chest_;
+    Broker broker_;  // the market (game/ui/broker.h), at the vault's place, three columns wide
     // A trade with another player (game/ui/deal.h), which borrows the shelf's stage as the vault
     // does: a counter, the vault and a trade are never open together (the realm cancels it).
     Deal deal_;
@@ -344,6 +346,7 @@ private:
     // together, since each is closed by any order and opened by one.
     bool banking_ = false;
     bool bagForVault_ = false;
+    bool brokering_ = false, bagForBroker_ = false;
     bool dealing_ = false;
     bool bagForDeal_ = false;
     // The trade news said and not yet put in the chat (Play::takeDealNews).

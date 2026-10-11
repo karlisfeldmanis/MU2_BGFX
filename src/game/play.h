@@ -387,6 +387,10 @@ public:
     uint32_t depositZen(int64_t zen);
     uint32_t withdrawZen(int64_t zen);
     void closeVault() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Vault)}); }
+    // The Broker (docs/broker.md): his market asks, its answers, and walking away from it.
+    void askBroker(const net::BrokerAsk& asked) { if (link_) link_->askBroker(asked); }
+    bool takeBrokerView(net::BrokerView& out) { return link_ && link_->takeBrokerView(out); }
+    void closeBroker() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Broker)}); }
     void restoreVault(const sim::Vault& saved) { if (here("the vault")) local_.restoreVault(saved); }
     // The Chaos Machine (sim/machine.h), as the realm keeps it: the vault's three moves, and the
     // mix, heard as MU hears its answer -- eMix with eGem for a success, with eBreak for a

@@ -97,7 +97,9 @@ namespace mu::net {
 // 23: Bye, why the server is closing his line, sent just before it does.
 // 24: auto-drink (sim::AutoDrink): Command::Kind::AutoDrink, a Kept's lines (layout 7) and a
 //     Player's (snapshot shape 9).
-constexpr uint32_t kVersion = 24;
+// 25: the Broker (docs/broker.md): a BrokerAsk up and a BrokerView down (net/broker_wire.h),
+//     Command::Kind::BrokerTake and its fellows, and a Player's Broker (snapshot shape 10).
+constexpr uint32_t kVersion = 25;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -114,9 +116,10 @@ constexpr uint32_t kMostAsked = 64u << 10;
 
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
                           Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12,
-                          Chat = 13, PartyAsk = 14, PartyState = 15, Bye = 16 };
+                          Chat = 13, PartyAsk = 14, PartyState = 15, Bye = 16,
+                          BrokerAsk = 17, BrokerView = 18 };
 // The last kind there is: a frame of a higher one is not our protocol (take).
-constexpr Kind kLastKind = Kind::Bye;
+constexpr Kind kLastKind = Kind::BrokerView;
 
 struct Hello {
     uint32_t version = kVersion;

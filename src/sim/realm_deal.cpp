@@ -389,4 +389,9 @@ bool Realm::dealAccepted(bool theirs) const {
     return other >= 0 && heroes_[size_t(other)].accepted;
 }
 
+uint32_t Realm::dealAskedOf(uint32_t id) const {
+    const int at = playerOfId(id);
+    return at < 0 || heroes_[size_t(at)].askedUntil <= tick_ ? 0 : heroes_[size_t(at)].askedBy;
+}
+
 }  // namespace mu::sim

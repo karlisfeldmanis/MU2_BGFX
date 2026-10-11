@@ -2,6 +2,7 @@
 // next, and keeping characters. Split out of main.cpp (host.h).
 
 #include "host.h"
+#include "broker.h"
 #include "economy.h"
 
 namespace mu::server {
@@ -284,6 +285,10 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
             if (scratch.raise(&g_items, seeds(), said.column, said.row, kin, g_kitLevel)) {
                 sim::outfit(scratch, said.weapon, said.shield);
                 for (const auto& [stem, plus] : g_kitItems) {
+                    if (stem == "Zen") {  // Zen+N: his purse
+                        scratch.earn(plus);
+                        continue;
+                    }
                     const int32_t item = g_items.itemNamed(stem);
                     if (item < 0 || scratch.give(item, -1, plus) < 0) {
                         core::logError("--kit: %s not given", stem.c_str());
@@ -505,6 +510,8 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
         if (said.what != sim::What::Deal || said.a != int32_t(sim::DealEvent::Done)) continue;
         if (Session* one = playing(world, sessions, said.who)) one->keepAt = Clock::time_point{};
     }
+    // The market's commands answered: a listing up, a purchase paid (broker.h).
+    brokerHeard(world, t.commands, realm.happenings(), sessions);
     // Blood Castle's run over and its rest out: its player to the castle's town. The run is the
     // first player's (a known limit of sprint 19).
     if (!castleOut && realm.castleRun().sentOut && realm.playerCount() > 0) {

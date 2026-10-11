@@ -17,6 +17,7 @@
 
 #include <vector>
 
+#include "net/broker_wire.h"
 #include "net/wire.h"
 #include "sim/command.h"
 #include "sim/realm.h"
@@ -76,6 +77,19 @@ public:
         static const net::PartyState none;
         return none;
     }
+    // **The Broker** (docs/broker.md, net/broker_wire.h): an ask of the market, and its answers
+    // as they come, oldest first. A realm of this process has no market -- it is the server's,
+    // shared by every map -- so its ask is answered Closed.
+    virtual void askBroker(const net::BrokerAsk& asked) { closedAsk_ = asked.ask; }
+    virtual bool takeBrokerView(net::BrokerView& out) {
+        if (closedAsk_ == 0) return false;
+        out = net::BrokerView{};
+        out.answered = closedAsk_;
+        out.no = uint8_t(sim::BrokerNo::Closed);
+        out.said = "The market is kept on the server: play online to trade here.";
+        closedAsk_ = 0;
+        return true;
+    }
     // **The hero ahead** (docs/sprints/24-the-quiet-line.md): his own body as the mirror will
     // have it a round trip from now, with the orders he has sent and the server has not yet
     // answered already in it -- where he is drawn, so a click moves him at once rather than a
@@ -87,6 +101,9 @@ public:
     virtual void setCushion(int ticks) {}
     // Which copy of the map the server put him in, from 1 (net::Welcome::copy).
     virtual int mapCopy() const { return 1; }
+
+private:
+    uint32_t closedAsk_ = 0;  // a Broker ask with no market to answer it (askBroker)
 };
 
 class LocalLink final : public Link {

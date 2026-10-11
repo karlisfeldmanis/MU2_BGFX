@@ -17,6 +17,8 @@
 #include <cstdlib>
 
 #include "core/log.h"
+#include "sim/broker.h"
+#include "sim/event.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::sim {
@@ -282,6 +284,61 @@ void Realm::stroll(Body& walker) {
     }
     if (tick_ < s.leaves) return;
     next();
+}
+
+// A Talk order's end: served the tick he is within reach, whether he walked there or was already
+// there. A townsperson who sells nothing and keeps nothing -- a guard -- is walked to and then
+// nothing happens, which is MU's own answer to talking to a guard. Out of realm.cpp's press
+// (2026-10-11) to make room for the Broker there.
+void Realm::talk(Body& hero) {
+    if (!serving(int(me().order.target))) return;
+    const content::Townsperson& one = tables_->folk[me().order.target];
+    halt(hero);
+    // A quest giver spoken to opens his town on the travel list (sim/travel.h), whatever he has
+    // to say, even that he is not ready for him yet.
+    if (questOf(one.number) >= 0) discover(int32_t(tables_->map));
+    // Found: a quest that asked for her is ready to hand in to her.
+    if (questReceives(one.number)) questMet(one.number);
+    if (sells(one.number)) {
+        me().trading = int(me().order.target);
+        say(What::Served, hero, me().trading, one.number);
+    } else if (one.number == kVaultKeeper) {
+        me().banking = int(me().order.target);
+        say(What::Served, hero, me().banking, one.number);
+    } else if (one.number == kBroker) {
+        // The market (sim/broker.h): its window opens on this, and the server serves him only
+        // while he stands within kCounter of a Broker (Realm::atBroker).
+        me().brokering = int(me().order.target);
+        say(What::Served, hero, me().brokering, one.number);
+    } else if (one.number == kChaosGoblin) {
+        me().mixing = int(me().order.target);
+        say(What::Served, hero, me().mixing, one.number);
+    } else if (const int quest = questHere(one.number);
+               quest >= 0 && (!questLocked(quest) || questListed(one.number))) {
+        // A quest giver: his dialog opens, whatever it has to say -- the offer, the quest under
+        // way, the hand-in, or that it is not his to give again yet; or his list, even of one
+        // quest waiting on the hero's level (questListed).
+        me().questing = int(me().order.target);
+        say(What::Offered, hero, quest, me().questing, int(me().quests[quest].state));
+    } else if (one.number == kArchangel) {
+        // His page of the Event window: the staff he asks for, and Give.
+        me().angeling = int(me().order.target);
+        say(What::Served, hero, me().angeling, one.number);
+    } else if (one.number == kMessenger || one.number == kCharon) {
+        // His page of the quest window: the ticket he asks for and the door
+        // (QuestDialog::kGate).
+        me().gating = int(me().order.target);
+        say(What::Served, hero, me().gating, one.number);
+    } else if (one.number == kGuildMaster || one.number == kThompson ||
+               questOf(one.number) >= 0 || questReceives(one.number)) {
+        // Ours (the user, 2026-09-29): MU opens the guild window here, which a single player
+        // game has no use for, so he answers with a line instead of nothing. Charon likewise,
+        // whose Devil Square window has nothing behind it yet. And a giver whose quest waits on
+        // another (Devin, until Lorencia or Noria is cleared) or on a level (Sevina, until 200):
+        // not ready. And Thompson, who has only his memory of the Lost Tower to tell.
+        say(What::Shouted, hero, int32_t(Shout::Greet), 0, int(me().order.target));
+    }
+    me().order = Request{};
 }
 
 }  // namespace mu::sim

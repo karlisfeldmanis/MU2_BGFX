@@ -1071,6 +1071,16 @@ public:
     void closeVault() { me().banking = -1; }
     const Vault& vault() const { return me().vault; }
 
+    // ---- the Broker (sim/broker.h, docs/broker.md; sim/realm_broker.cpp) --------------------
+    // Opened by a Talk with a Broker, as the vault is; the server's four commands move his things.
+    int brokering() const { return me().brokering; }
+    void closeBroker() { me().brokering = -1; }
+    bool atBroker(uint32_t id) const;  // player `id` within kCounter of a Broker
+    int brokerTake(int slot, bool fromVault, const Held& expect);
+    int brokerBuy(const Held& what, int64_t price);
+    int brokerGive(const Held& what);
+    int64_t brokerZen(int64_t zen);
+
     // ---- a trade between two players (sim/realm_deal.cpp) ---------------------------------
     // MU's trade (CNewUITrade; WebZen's CGTradeRequestSend and gObjTradeOkButton), kept in the
     // realm: both offers are realm state, so every mirror sees them and a bot trades as a player.
@@ -1093,10 +1103,7 @@ public:
     uint32_t dealAskedBy() const { return me().askedUntil > tick_ ? me().askedBy : 0; }
     int64_t dealAskTicks() const { return std::max<int64_t>(0, me().askedUntil - tick_); }
     // Who asks player `id` to trade now, else 0: the bench's, which answers for its players.
-    uint32_t dealAskedOf(uint32_t id) const {
-        const int at = playerOfId(id);
-        return at < 0 || heroes_[size_t(at)].askedUntil <= tick_ ? 0 : heroes_[size_t(at)].askedBy;
-    }
+    uint32_t dealAskedOf(uint32_t id) const;
     // Either side's offer, his own or the other's (`theirs`); empty when no trade is open.
     const Machine& dealOffer(bool theirs) const;
     int64_t dealZenOf(bool theirs) const;
@@ -1144,14 +1151,8 @@ public:
     int squarePassed() const { return me().squarePassed; }
     int squarePassedWait() const { return me().squarePassedWait; }
     // And any player's, by his body's id: which square the server raises for him.
-    int squarePassedOf(uint32_t id) const {
-        const int at = playerOfId(id);
-        return at >= 0 ? heroes_[size_t(at)].squarePassed : 0;
-    }
-    int squarePassedWaitOf(uint32_t id) const {
-        const int at = playerOfId(id);
-        return at >= 0 ? heroes_[size_t(at)].squarePassedWait : 0;
-    }
+    int squarePassedOf(uint32_t id) const;
+    int squarePassedWaitOf(uint32_t id) const;
     // Into square `square` with `wait` seconds to the fight (Charon's gate's last seconds), so
     // everyone who came through it starts together on the odd hour; 0 keeps kSquareWait.
     void setSquare(int square, int wait);
@@ -1352,10 +1353,7 @@ public:
     // castle's own realm (Realm::setCastle).
     int castlePassed() const { return me().castlePassed; }
     // And any player's, by his body's id, 0 for none: which castle the server raises for him.
-    int castlePassedOf(uint32_t id) const {
-        const int at = playerOfId(id);
-        return at >= 0 ? heroes_[size_t(at)].castlePassed : 0;
-    }
+    int castlePassedOf(uint32_t id) const;
     // The Archangel weapon this run's Statue of Saint holds -- the staff, the sword or the
     // crossbow -- as an item index, or -1: what his page asks for and pictures.
     int32_t castleWeaponItem() const;
@@ -1549,10 +1547,12 @@ public:
     const Body& playerAt(int index) const { return bodies_[heroes_[size_t(index)].body]; }
     // False for an id that is no player's.
     bool lookAs(uint32_t id);
-    // What another player carries and wears, for drawing him, null for an id that is no player's;
-    // and the Zen he carries and his vault keeps, for the economy log, -1 for none.
-    const Satchel* satchelOf(uint32_t id) const;
+    // What another player carries and wears, for drawing him; null for an id that is no
+    // player's. His own business otherwise, which the queries above keep for whom they answer.
+    // What a player carries and his vault keeps, read without looking at him (the economy log).
     int64_t heldOf(uint32_t id) const;
+    const Satchel* satchelOf(uint32_t id) const;
+    const Vault* vaultOf(uint32_t id) const;  // and his vault: the Broker's (realm_broker.cpp)
     const Body& hero() const { return mine(); }
     // **The whole realm as bytes** (sim/realm_snapshot.cpp, docs/sprints/21-the-snapshot.md):
     // every body, player, flight, die and clock, so a mirror can stand where this realm stands
@@ -1609,6 +1609,7 @@ private:
     void think(Body& beast);
     void accept();  // the pending order becomes the order, before the hero moves
     void press();   // and what the order does once he has
+    void talk(Body& hero);  // a Talk's end: his window opened (sim/realm_folk.cpp)
     void wander(Body& beast);
     void retreat(Body& beast);
     void engage(Body& one, const Body& target);
@@ -2318,6 +2319,7 @@ private:
         int trading = -1;
         Sales sold;
         int banking = -1;
+        int brokering = -1;  // see brokering()
         Vault vault;
         bool jeweled = false;
         int mixing = -1;

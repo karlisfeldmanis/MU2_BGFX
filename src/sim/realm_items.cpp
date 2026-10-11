@@ -14,6 +14,7 @@
 #include <cstdio>
 
 #include "core/log.h"
+#include "sim/broker.h"
 #include "sim/realm_tuning.h"
 #include "sim/wear.h"
 
@@ -1626,28 +1627,12 @@ int Realm::buy(int shelfSlot) {
     return slot;
 }
 
+// The counter's price, which the Broker's floor is too (sim::npcValue, sim/broker.cpp). A quest
+// item is not a merchant's: the class treasure. The Archangel's weapons are sold as any since
+// they drop (2026-10-10).
 int64_t Realm::sellValue(int slot) const {
     if (!baggable(slot) || me().bag[slot].empty()) return -1;
-    const Held& thing = me().bag[slot];
-    const content::ItemRow& row = tables_->items[size_t(thing.item)];
-    // A quest item is not a merchant's: the class treasure. The Archangel's weapons are sold as any
-    // since they drop (2026-10-10).
-    if (classTreasure(row)) return -1;
-    const bool stacks = row.group == kGroupPotions;
-    int64_t paid = sellingPrice(row, thing.refinement,
-                                stacks ? std::max<int>(1, thing.durability) : 1, thing.skill,
-                                thing.durability, row.durability, thing.luck, thing.option,
-                                excellentCount(thing.excellent));
-    // Worn gear fetches less: 0.6 of the share gone comes off (CalculateSellingPrice).
-    if (wears(row)) {
-        paid = wornSellingPrice(paid, thing.durability, maximumDurability(row, thing));
-    }
-    // A Common rune is a sliver of the Jewel of Creation's price (sim/items.h kCommonRuneSale).
-    if (const PowerRow* power = powerOf(thing.powers[0]);
-        creation(row) && power != nullptr && power->rarity == Rarity::Common) {
-        paid = int64_t(double(paid) * kCommonRuneSale);
-    }
-    return paid > 0 ? paid : -1;
+    return npcValue(*tables_, me().bag[slot]);
 }
 
 int64_t Realm::sellItem(int slot) {
