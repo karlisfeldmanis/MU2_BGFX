@@ -532,13 +532,22 @@ and a table compiled into the binary cannot drift between them.
   - **Live:** `mu2_server` on port 44521, then four netbots (dk, elf, dw, mg), each "36 of the
     server's hashes agreed with the mirror, none disagreed", and a client join, 12 of 12. The
     server was stopped afterwards.
-- **Not the same list:** `pipeline/gate_boxes.py` (the boxes the index keeps open) is the
-  Aida session's and stays as it is. It has Aida's new Noria↔Aida doors, which the sim does
-  not, and lacks 26 of the sim's boxes: the Lost Tower's stairs, Lorencia's Dungeon stair,
-  Devias's tower door and the spawn boxes. Deriving it from `gates` would change the index's
-  output, so it is a decision for later.
-- **Aida's gates** (Noria 120 ↔ Aida 121) are not in: the Aida session recommends level 100 in
-  and free out, and the user has not confirmed that.
+- **Then the user approved the two questions it left** (2026-10-11):
+  - **Aida's gates** (OpenMU Season Six Gates.cs:534-535, 170, 267):
+    - Noria's door 120 asks 100 (MU's 130) and lets out on Aida's 113;
+    - Aida's 121 back is free (MU's 10) and lets out on Noria's 122.
+
+    `testAidaGates` in sim_test proves it: a level 100 knight walks through, a level 99 is
+    told 100, the way back is free, and the tracker points at the door. 12 checks; the rest of
+    sim_test's output is unchanged. Live, bots and a client joining in Noria by the door all
+    agree with the server.
+  - **`pipeline/gate_boxes.py` is gone.** It was a second list of the boxes the index keeps
+    open, and it lacked 26 of the sim's. The index now takes every gate box in the manifests
+    (`world_manifest.gate_boxes`). Proved first: in all twelve worlds, the tiles the stamping
+    pass closes are the same with either list. The extra boxes were never stamped, and Aida's
+    two are gates now.
+- sim_test's one failure ("twelve townsfolk stand in Devias -- got 13") fails on HEAD too. The
+  shared cooked Devias tables already hold the Broker session's uncommitted Kesra.
 
 **Next: D3b, NPCs:** `cook.py` FOLK_VERSION075 into each manifest's `npcs`. mu.db's
 `npc_spawns` (Lorencia only, read by nothing) goes when sprint E builds mu.db from the json.

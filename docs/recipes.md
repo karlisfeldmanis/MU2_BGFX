@@ -77,7 +77,6 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
 1. Bare land:
    - `pipeline/terrain.py <Data>/WorldN <w> source/world N`, after the manifest's `map` and its
      `pipeline` knobs (hidden types, grass, void, light...) are written (since D2);
-   - `index.py` GATE_BOXES_BY_MAP;
    - the tile sheets decoded, and `ground.json` by hand;
    - `tileset.py` and `ground.py`, the `gates` row in `mu.db` (checkpoint), index and sync;
    - `cook.py --only ground`, and `--only tables` here and in the neighbours.
@@ -87,8 +86,7 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    sprint D1). Code: `sim/maps.cpp` kMaps, `sheets/worlds/<w>.json`, maybe the
    `content/ground.cpp` heuristics. Rebuild.
 3. Gates: the manifest's `gates` (exits and enters), then `./mu make gates`, `sim_test`, and
-   rebuild the server and run `server/deploy.sh`. The index's `pipeline/gate_boxes.py` too, until
-   it is derived from them.
+   rebuild the server and run `server/deploy.sh`. The index keeps the same boxes open.
 4. Air and music: `sounds.json` and the wav, `--only showing`, then the manifest's `air` and
    `music`.
 5. Objects (above), then monsters (above). Also:
@@ -107,7 +105,7 @@ still touches the sim's tables, gates, travel, the bot, the pipeline dicts and a
 system's own file. **After D2:** `terrain.py`'s 17 per-map dicts, `index.py`'s copy of
 OPERABLE_BY_MAP and `cook.py`'s 11 per-world dicts and PERCHES are the manifest's `pipeline`
 block: a new map writes no Python. Left: `cook_anchors.py` ANCHOR_KINDS_BY_WORLD and
-`gate_boxes.py` (D3). **Goes to:** `source/world/<w>/world.json` (sprint D: D2 the pipeline
+the NPCs (D3b). **Goes to:** `source/world/<w>/world.json` (sprint D: D2 the pipeline
 dicts, D3 gates and NPCs, D4 MapRules).
 
 ## An item or weapon

@@ -6912,6 +6912,59 @@ void testAtlansGates() {
           "Atlans's safe box is the basin, 15,11 to 27,23, so a death rises there");
 }
 
+void testAidaGates() {
+    std::printf("aida gates\n");
+    struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
+    const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
+                         int level) {
+        Seen seen;
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
+              "a realm raises by the gate");
+        sim::Request go;
+        go.kind = sim::Request::Kind::WalkTo;
+        go.column = toC;
+        go.row = toR;
+        realm.ask(go);
+        for (int tick = 0; tick < 400 && seen.gated == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Barred && seen.barred == 0) seen.barred = one.b;
+                if (one.what == sim::What::Gated) {
+                    seen.gated = one.a;
+                    seen.column = one.b;
+                    seen.row = one.c;
+                }
+            }
+        }
+        return seen;
+    };
+    content::Tables noria, aida;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/noria/noria.mur", noria,
+                              error),
+          "Noria's tables load");
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/aida/aida.mur", aida, error),
+          "Aida's tables load");
+    // Noria's door to Aida, gate 120 (OpenMU Season Six Gates.cs:534): MU asks 130, ours 100
+    // (the user, 2026-10-11); it lets out on Aida's 113, by the entrance (Gates.cs:267).
+    Seen s = walk(noria, 223, 33, 223, 30, 100);
+    checkEqual(s.gated, 120, "a level 100 knight takes Noria's door to Aida, gate 120");
+    check(s.column >= 76 && s.column <= 78 && s.row >= 9 && s.row <= 16,
+          "out on Aida's gate 113 by the entrance");
+    s = walk(noria, 223, 33, 223, 30, 99);
+    checkEqual(s.gated, 0, "a level 99 knight does not");
+    checkEqual(s.barred, 100, "and is told it asks level 100");
+    // And back, gate 121 (Gates.cs:535): MU asks 10, ours free, as every way out.
+    s = walk(aida, 77, 12, 74, 11, 1);
+    checkEqual(s.gated, 121, "a level 1 knight takes Aida's way back, gate 121");
+    check(s.column >= 220 && s.column <= 226 && s.row >= 31 && s.row <= 34,
+          "out on Noria's gate 122 by the door");
+    checkEqual(sim::gateToward(3, 33, 170, 110) ? sim::gateToward(3, 33, 170, 110)->number : -1,
+               120, "the tracker points Noria's hero at the door to Aida");
+}
+
 void testTarkanGates() {
     std::printf("tarkan gates\n");
     struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
@@ -12905,6 +12958,7 @@ int main() {
     testDungeonGates(tables);
     testAtlansGates();
     testTarkanGates();
+    testAidaGates();
     testIcarusGates();
     testTraps();
     testQuests(tables);

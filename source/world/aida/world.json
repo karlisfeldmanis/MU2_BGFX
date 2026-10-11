@@ -55,6 +55,38 @@
     },
     "leaves": "leaf"
   },
+  "gates": {
+    "exits": [
+      {
+        "number": 113,
+        "box": [
+          76,
+          9,
+          78,
+          16
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Aida, from Noria, with no direction (OpenMU VersionSeasonSix Gates.cs:267)."
+      }
+    ],
+    "enters": [
+      {
+        "number": 121,
+        "box": [
+          74,
+          9,
+          74,
+          13
+        ],
+        "level": 0,
+        "target": 122,
+        "note": "Aida's way back to Noria (OpenMU VersionSeasonSix Gates.cs:535). MU asks 10; ours free, the way out as every other map's (the user, 2026-10-11)."
+      }
+    ]
+  },
   "pipeline": {
     "hidden": {
       "value": [

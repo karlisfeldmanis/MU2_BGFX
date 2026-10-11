@@ -70,6 +70,20 @@
           1
         ],
         "note": "Atlans's and Noria's, Gates.cs:135 and 148-149 (docs/atlans-port.md A \u00a72.1). 48 is Direction.North (7), (-1,+1), into Noria and away from gate 45 beside it; 46 is Direction.South (3), (+1,-1), into the basin and away from gate 47; 49 is the spawn gate, the safe basin, with no direction: a death and the Town Portal land there. Noria, from Atlans"
+      },
+      {
+        "number": 122,
+        "box": [
+          220,
+          31,
+          226,
+          34
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Noria, back from Aida, with no direction (OpenMU VersionSeasonSix Gates.cs:170)."
       }
     ],
     "enters": [
@@ -141,6 +155,18 @@
         ],
         "level": 0,
         "target": 61
+      },
+      {
+        "number": 120,
+        "box": [
+          220,
+          30,
+          226,
+          30
+        ],
+        "level": 100,
+        "target": 113,
+        "note": "Noria's door to Aida (OpenMU VersionSeasonSix Gates.cs:534; docs/aida-port.md). MU asks 130; ours 100, the Aida session's recommendation, approved by the user 2026-10-11."
       }
     ]
   },

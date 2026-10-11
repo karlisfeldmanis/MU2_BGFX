@@ -44,8 +44,12 @@ NO_GROUND = 0x0008
 #: seats open on the other's grid would open tiles MU closed.
 OPERABLE_BY_MAP = world_manifest.by_map("perches", world_manifest.as_operable)
 
-#: The gates' boxes, kept open by the solid-stamping pass: pipeline/gate_boxes.py.
-from gate_boxes import GATE_BOXES_BY_MAP  # noqa: E402
+#: The gates' boxes, kept open by the solid-stamping pass: every gate box in the world manifests,
+#: the same rows the realm walks by (world_manifest.gate_boxes). A gate is a tile MU left open to
+#: be walked onto, so the stamping must not close one -- Lorencia's west gate to Devias, (5, 38)
+#: to (6, 41), sits between boulders and a stone wall whose declared footprints covered all of
+#: it, and a hero walking west stopped a tile short of Devias.
+GATE_BOXES_BY_MAP = world_manifest.gate_boxes()
 
 #: What the walker actually compares, which is a threshold and not a bit test: a tile is open
 #: when its word, read as a number, is below CHARACTER. Three flags describe a tile rather

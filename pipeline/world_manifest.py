@@ -67,6 +67,19 @@ def shown_models(block: str) -> dict:
             if (model := doc.get("show", {}).get(block, {}).get("model"))}
 
 
+def gate_boxes() -> dict:
+    """{map: [(x1, y1, x2, y2)]}: every gate box on each map, enter and exit, from the
+    manifests' `gates` (the ones off the map, the talk gates' -1s, left out). The index keeps
+    them open; the realm walks the same rows (pipeline/gates_table.py)."""
+    boxes = {}
+    for doc in manifests().values():
+        gates = doc.get("gates", {})
+        for row in gates.get("exits", []) + gates.get("enters", []):
+            if row["box"][0] >= 0:
+                boxes.setdefault(doc["map"], []).append(tuple(row["box"]))
+    return boxes
+
+
 # ---- The converters: each knob back into its script's shape ----
 
 def as_set(value) -> set:
