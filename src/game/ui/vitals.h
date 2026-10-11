@@ -74,6 +74,8 @@ public:
     int namedFolk() const { return folk_; }
     const gfx::Canvas& canvas() const { return canvas_; }
     uint64_t rebuilds() const { return rebuilds_; }
+    // The other player whose name tag is under this pixel, or 0. As last drawn.
+    uint32_t tagUnder(float x, float y) const;
 
 private:
     // One player's name over his head.
@@ -131,6 +133,7 @@ private:
     uint32_t player_ = 0;  // the other player named, by his body's id
     float playerLeft_ = 0.0f, playerShown_ = 0.0f;
     Readout drawn_;
+    std::vector<std::pair<uint32_t, gfx::Box>> tagBoxes_;  // other players' names, as drawn
     uint64_t rebuilds_ = 0;
 };
 

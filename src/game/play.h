@@ -618,6 +618,9 @@ public:
     // drawn over the world, so what the eye is on is the name and not the monster behind it
     // (the user, 2026-09-28). Called after `point`, with the desk's `labelUnder`; 0 does nothing.
     void pointAtLabel(uint32_t lying);
+    // The pointer is on another player's NAME tag (the desk's `tagUnder`), which outranks the ray
+    // as a drop's plate does; only there does a right click open his menu. 0 does nothing.
+    void pointAtTag(uint32_t player);
     // Something to sit on or lean against under the pointer, as an index into the tables'
     // perches, or -1. Tested last, after bodies, drops and townsfolk.
     int pointedPerch() const { return pointedPerch_; }
@@ -1864,6 +1867,7 @@ private:
     int pointedColumn_ = -1, pointedRow_ = -1;
     uint32_t pointedAt_ = 0;  // the body under the pointer, or 0
     uint32_t pointedPlayer_ = 0;  // another player under it, or 0 (pointedPlayer)
+    uint32_t pointedTag_ = 0;     // another player's name tag under it, or 0 (pointAtTag)
     std::string targetName_;  // his target, by name (target)
     uint32_t targetId_ = 0;
     bool targetFresh_ = false;

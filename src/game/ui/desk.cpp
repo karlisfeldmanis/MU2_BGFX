@@ -1955,6 +1955,8 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
         vitals_.dismiss();
         tally_.dismiss();
         speech_.dismiss();
+uint32_t Desk::tagUnder(float x, float y) const { return vitals_.tagUnder(x, y); }
+
         beacon_.dismiss();
         return;
     }

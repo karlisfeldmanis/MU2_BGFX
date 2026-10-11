@@ -25,6 +25,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     pointedColumn_ = pointedRow_ = -1;
     pointedAt_ = 0;
     pointedPlayer_ = 0;
+    pointedTag_ = 0;
     pointedFolk_ = -1;
     pointedLying_ = 0;
     pointedPerch_ = -1;
@@ -249,6 +250,16 @@ void Play::pointAtLabel(uint32_t lying) {
     pointedPerch_ = -1;
 }
 
+void Play::pointAtTag(uint32_t player) {
+    if (player == 0 || !isOpen()) return;
+    pointedTag_ = player;
+    pointedPlayer_ = player;
+    pointedAt_ = 0;
+    pointedFolk_ = -1;
+    pointedLying_ = 0;
+    pointedPerch_ = -1;
+}
+
 void Play::target(const std::string& name, uint32_t here) {
     if (name != targetName_) {
         targetFresh_ = true;
@@ -350,12 +361,13 @@ void Play::rightClick() {
     if (!isOpen()) return;
     // A right click on another player is his menu, as on his party capsule: whisper, invite,
     // and the rest (the user, 2026-10-10: "we will ne right click UI which we use for party").
-    // He is never fought (no PvP), so the quick slot has nothing to do with him.
-    if (pointedPlayer_ != 0 && pointedAt_ == 0 && pointedFolk_ < 0) {
+    // On his name tag only, never his body (the user, 2026-10-11: "only possible on player
+    // label not on screen"): a right click on the figure is the quick slot's, as on ground.
+    if (pointedTag_ != 0) {
         std::string name;
-        if (playerName(pointedPlayer_, &name, nullptr)) {
-            target(name, pointedPlayer_);
-            menuAsk_ = pointedPlayer_;
+        if (playerName(pointedTag_, &name, nullptr)) {
+            target(name, pointedTag_);
+            menuAsk_ = pointedTag_;
             return;
         }
     }

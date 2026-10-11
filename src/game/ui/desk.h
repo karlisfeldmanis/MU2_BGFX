@@ -104,6 +104,8 @@ public:
     bool takesPointer() const { return takesPointer_; }
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
     uint32_t labelUnder(float x, float y) const;
+    // Another player's name tag under the pixel, by his body's id, or 0 (Vitals::tagUnder).
+    uint32_t tagUnder(float x, float y) const;
 
     // The item pictures, taken after update() has said what stands on each stage and before
     // the renderer's frame is submitted. Sprint 7 step 5: the bag and the shelf draw the real
