@@ -1590,7 +1590,7 @@ void Play::update(double seconds) {
                             size_t(body->kind) < tables_.kinds.size() &&
                             tables_.kinds[size_t(body->kind)].attackSkill ==
                                 sim::skill::kLightning) {
-                            // The Devil draws its own (kDevilFigure): its beams from both
+                            // The Devil draws its own (the "devil" tag): its beams from both
                             // hands and sEvil as the swing begins, the blow with the swing.
                             const Drawn* devil = drawnOf(happening.who);
                             const bool own = devil && devil->handBones[0] >= 0;
@@ -1617,7 +1617,7 @@ void Play::update(double seconds) {
                             }
                         }
                         // The Vepar's Energy Ball (attackSkill == 17), which MU never throws: its
-                        // swing draws its blurred joints off both hands instead (kVeparFigure),
+                        // swing draws its blurred joints off both hands instead (the "vepar" tag),
                         // and its attack sound is sEvil already (vepar_attack).
                         if (body && !body->player && body->kind >= 0 &&
                             size_t(body->kind) < tables_.kinds.size() &&
@@ -1629,7 +1629,7 @@ void Play::update(double seconds) {
                                                        kDevilBeamSeconds});
                             }
                         }
-                        // An Alquamos's blow (kAlquamosFigure): MU's four BITMAP_FLARE sub 7
+                        // An Alquamos's blow (the "star_ribbons" tag): MU's four BITMAP_FLARE sub 7
                         // ribbons round whom it swung at, on the attack's first frame
                         // (ZzzCharacter.cpp:2140-2150), and SOUND_METEORITE01 with them.
                         // And its Energy Ball (ballCasts_), thrown at the release and the blow
@@ -1667,7 +1667,7 @@ void Play::update(double seconds) {
                                 emit(heard_.meteorite, struck->crown[0], struck->crown[2]);
                             }
                         }
-                        // A Queen Rainer's blow (kQueenRainerFigure): MU's twenty BITMAP_BLIZZARD
+                        // A Queen Rainer's blow (the "queen_rainer" tag): MU's twenty BITMAP_BLIZZARD
                         // on whom she struck at CheckAttackTime(5), SOUND_METEORITE01 with
                         // them (ours: once for the twenty).
                         if (const Drawn* queen = drawnOf(happening.who);
@@ -1682,7 +1682,7 @@ void Play::update(double seconds) {
                                 if (heard_.meteorite >= 0) emit(heard_.meteorite, at[0], at[2]);
                             }
                         }
-                        // A Drakan's Attack 2 (kDrakanFigure): its bolt at the target at
+                        // A Drakan's Attack 2 (the "drakan" tag): its bolt at the target at
                         // CheckAttackTime(13), as a monster's Lightning, on the blows the realm
                         // made lightning (Happening::bolt), whose push lands with it.
                         if (happening.bolt && happening.whom != 0) {
@@ -1773,7 +1773,7 @@ void Play::update(double seconds) {
                             } else if (bossNumber == 58 || bossNumber == kDrakanNumber ||
                                        bossNumber == kGreatDrakanNumber) {
                                 // The Tantallos: its blow's Inferno and nothing more; the Drakan,
-                                // its blow alone (kDrakanFigure).
+                                // its blow alone (the "drakan" tag).
                             } else if (bossNumber == 59 || bossNumber == 63) {
                                 staffsDue_.push_back(
                                     {{floor[0], floor[1], floor[2]}, swinger->yaw, kStaffRingWait});
@@ -2098,7 +2098,7 @@ void Play::update(double seconds) {
         // waves, and every other caster -- the Hell Spider -- throws the middle one alone
         // (ZzzCharacter.cpp:5045-5055).
         const FigureBody* casterLook = caster->figure.body();
-        const bool fans = casterLook != nullptr && casterLook->name == kFanningFigure;
+        const bool fans = casterLook != nullptr && casterLook->has("fans");
         for (float degrees : {0.0f, 10.0f, -10.0f}) {
             if (degrees != 0.0f && !fans) continue;
             const float turn = degrees * 3.14159265f / 180.0f;
@@ -2133,7 +2133,7 @@ void Play::update(double seconds) {
         // (ZzzCharacter.cpp:1760-1771).
         const FigureBody* thrower = caster->figure.body();
         if (thrower != nullptr && heard_.meteorite >= 0 &&
-            (thrower->name == kDrakanFigure || thrower->name == kGreatDrakanFigure)) {
+            (thrower->has("drakan") || thrower->has("great_drakan"))) {
             emit(heard_.meteorite, from[0], from[2]);
             continue;
         }
@@ -3075,7 +3075,7 @@ void Play::flinch(Drawn& struck, bool isHero) {
     flinchDice_ ^= flinchDice_ << 5;
     if ((flinchDice_ & 1u) == 0) return;
     shock(struck, clip);
-    const bool silent = look && look->name == kSilentFlinchFigure;
+    const bool silent = look && look->has("silent_flinch");
     const int cry = !isHero ? (silent ? -1 : struck.cryAttack)
                             : (look && look->female ? heard_.shockFemale : heard_.shock);
     if (cry >= 0) emit(cry, struck.crown[0], struck.crown[2], struck.id);

@@ -327,7 +327,7 @@ void Play::exhale(float seconds) {
                                    one.crown[2]};
             // The Great Bahamut's trail broader and fainter than the dragon's dust (the user,
             // 2026-10-04: 'that smoke is to small and to vissible'); ours.
-            const bool great = look->name == kGreatBahamutFigure;
+            const bool great = look->has("great_bahamut");
             breath_.puff(feet, along, scale, great ? kGreatBahamutPuffGrow : 1.0f,
                          great ? kGreatBahamutPuffAlpha : 1.0f);
         }
@@ -607,7 +607,7 @@ void Play::shade(float seconds) {
             float at[3];
             if (one.figure.pointOn(one.auraBone, origin, at)) {
                 shadowStars_.glow(at, fade, one.auraColour);
-                // The Hydra's gem, its aura bone (kHydraFigure): MU's two pulsing sprites on it.
+                // The Hydra's gem, its aura bone (the "hydra" tag): MU's two pulsing sprites on it.
                 if (one.beams == Drawn::Beams::Horn) {
                     shadowStars_.flare(at, fade, std::sin(folkClock_ * 2.0f) * 0.3f + 0.7f);
                 }
@@ -625,7 +625,7 @@ void Play::shade(float seconds) {
             }
         }
         // A Death Tree's second blow, its roots and stamped smoke (fx/tree_roots.h).
-        if (one.figure.body() && one.figure.body()->name == kDeathTreeFigure) {
+        if (one.figure.body() && one.figure.body()->has("death_tree")) {
             shadowStars_.roots().watch(one.id, one.figure.clip() == one.attackClip2, one.figure,
                                        one.yaw, fade, seconds);
         }
@@ -1976,12 +1976,12 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // +0.2 (Selection.cpp:101-107): the Great Bahamut, a near-black fish beside the red-brown
         // Bahamut (the user, 2026-10-04: 'i think Great Bahamut has some darker tint').
         const FigureBody* lookNow = one.figure.body();
-        const bool darkLevel = lookNow != nullptr && lookNow->name == kGreatBahamutFigure;
+        const bool darkLevel = lookNow != nullptr && lookNow->has("great_bahamut");
         if (darkLevel) {
             for (float& k : place) k *= kLevelOneLight;
         }
         // And a Death Gorgon in its own red light (kDeathGorgonLight).
-        const bool aflame = lookNow != nullptr && lookNow->name == kDeathGorgonFigure;
+        const bool aflame = lookNow != nullptr && lookNow->has("death_gorgon");
         if (aflame) {
             for (int k = 0; k < 3; ++k) place[k] *= kDeathGorgonLight[k];
         }

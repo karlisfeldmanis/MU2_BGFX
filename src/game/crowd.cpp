@@ -704,7 +704,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         if (i < body_->partShine.size()) wear(body_->partShine[i], drawable);
         // MU's Level 3 (Selection.cpp:106, body light +1.5): the Ice Queen is drawn at her
         // sheet's own colour in any light. Its w is the flag vs_skinned reads.
-        if (body_->name == "IceQueen01") drawable.light[3] = 2.0f;
+        if (body_->has("self_lit")) drawable.light[3] = 2.0f;
         out.push_back(drawable);
     }
 
@@ -955,7 +955,7 @@ void Crowd::gather(gfx::Renderer& renderer, const float* viewProj,
         // casts into the frame, and culling the shadow pass with the camera's frustum is the
         // bug foundation 7 names.
         // Save the Ice Queen, whom MU leaves out of its shadow block (ZzzCharacter.cpp:8666).
-        const bool shadowless = figure.body() && figure.body()->name == "IceQueen01";
+        const bool shadowless = figure.body() && figure.body()->has("shadowless");
         if (casters && !shadowless) figure.gather(row, *casters);
 
         if (viewProj) {

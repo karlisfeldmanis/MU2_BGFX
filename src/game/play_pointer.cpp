@@ -539,7 +539,7 @@ bool Play::shoots(uint32_t id, Arrows::Model* model) {
     const Drawn* one = drawnOf(id);
     const FigureBody* look = one ? one->figure.body() : nullptr;
     if (!look) return false;
-    if (look->name == kHunterFigure) {
+    if (look->has("hunter")) {
         *model = Arrows::Saw;
         return true;
     }
@@ -654,9 +654,9 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     // on past what they strike (the user, 2026-10-04: 'silver vylket has to shoot penetration').
     // Ours; MU's Silver Valkyrie shoots the Valkyrie's plain arrow.
     const FigureBody* shooterLook = from->figure.body();
-    const bool pierce = shooterLook != nullptr && shooterLook->name == kPenetratingFigure;
+    const bool pierce = shooterLook != nullptr && shooterLook->has("pierces");
     arrows_.loose(muzzle, at, target, model, shooter, nullptr, 0.0f, pierce);
-    if (shooterLook != nullptr && shooterLook->name == kSpreadFigure) {
+    if (shooterLook != nullptr && shooterLook->has("spreads")) {
         const float dx = at[0] - muzzle[0], dz = at[2] - muzzle[2];
         for (const float side : {1.0f, -1.0f}) {
             const float turn = side * kSpreadDegrees * 3.14159265f / 180.0f;

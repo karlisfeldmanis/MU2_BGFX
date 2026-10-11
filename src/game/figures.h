@@ -11,11 +11,13 @@
 #pragma once
 
 #include "core/json.h"
+#include <algorithm>
 #include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -147,6 +149,12 @@ enum class BodyKind { Character, Monster, Townsfolk, Armour, Weapon, Wing };
 struct FigureBody {
     std::string name;
     std::string label;
+    // What the client shows for it beyond its mesh and clips, by tag: its recipe's show.tags,
+    // cooked into cooked/figures/shows.json (sprint E4a). Play asks `has("hydra")`, never a name.
+    std::vector<std::string> tags;
+    bool has(std::string_view tag) const {
+        return std::find(tags.begin(), tags.end(), tag) != tags.end();
+    }
     BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
     // How each part's plus shows, beside `parts`; empty, or shorter, is +0. A body
@@ -428,6 +436,10 @@ private:
     // One monster row of a figure table made into a body: open() for every breed the world
     // carries, and borrow() for one it does not.
     void addMonster(const core::Json& entry);
+    // Every figure's show tags, cooked/figures/shows.json, read the first time a monster is added.
+    void readShows();
+    bool showsRead_ = false;
+    std::unordered_map<std::string, std::vector<std::string>> shows_;
     // Which clips a finished body stands and walks in: the stance's own row, or the idle
     // index.json names for this figure when it names one. Called by open() and by dress(), so
     // that a hero and a guard pick their idle by one rule.

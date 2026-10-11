@@ -1041,9 +1041,9 @@ private:
         float emberEvery = 0.0f;   // reference frames between embers
         // The Devil's two hands, its beams' ends; -1 on everything else.
         int handBones[2] = {-1, -1};
-        // What its beams are: the Devil's laser, the Vepar's soft blur (kVeparFigure, two a
-        // hand straight to the target) or the Lizard King's lightning (kLizardKingFigure, three
-        // a hand wandering round it). The last two throw no embers. Or the Hydra (kHydraFigure),
+        // What its beams are: the Devil's laser, the Vepar's soft blur (the "vepar" tag, two a
+        // hand straight to the target) or the Lizard King's lightning (the "lizard_king" tag, three
+        // a hand wandering round it). The last two throw no embers. Or the Hydra (the "hydra" tag),
         // which throws none and wears MU's flare on its gem.
         enum class Beams : uint8_t { Laser, Blur, Thunder, Horn };
         // The Hydra's BlendMesh, its four breath beams (kHydraBeamMaterial): never drawn, its
@@ -1121,7 +1121,7 @@ private:
         // else (kEyeTrailRows, fx/eye_trails.h).
         int trailBones[2] = {-1, -1};
         // MonsterMoveSandSmoke: a puff about it every reference frame it walks
-        // (kWalkSandFigures, Play::exhale). `walkSandOwed` is what of one is left to throw.
+        // (the "walk_sands" tag, Play::exhale). `walkSandOwed` is what of one is left to throw.
         bool walkSands = false;
         float walkSandOwed = 0.0f;
         // The plain Beam Knight's two hand flames (kHandFlameBones, fx/body_flames.h): each

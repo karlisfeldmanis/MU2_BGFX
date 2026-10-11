@@ -779,6 +779,37 @@ output (decided earlier the same day).
     `--world`: Aida found by its spawns, a recipe with `combat` only, 39 nests appended to
     Aida's nests.json with fresh ids, and the index sees them.
 
+### Sprint E4, the plan: the client's show
+
+Surveyed 2026-10-12 at ddec22c0. The client keyed a breed's look on its figure name: 45 names in
+`play_tuning.h` (`kHydraFigure` and the rest), 40 compares in `play_open.cpp`'s `Play::fit` and
+about 20 in `play.cpp`, `play_show.cpp`, `play_pointer.cpp` and `crowd.cpp`; ~20 tables keyed by
+name (aura lights, eye trails, bone lists, the Hydra's heads, the arcs, the infernos); and
+`play.cpp`'s boss blows by breed number. The slices (the user, 2026-10-12: 'yes'):
+- **E4a, tags:** every name compare becomes `has("tag")`, the tags in each recipe's `show`.
+- **E4b, named bones:** the bone lists and single bones into `show`, one resolver.
+- **E4c, structured shows:** the arcs, burn segments, Hydra heads, claws.
+- **E4d, the boss blows:** `play.cpp`'s number checks and kInfernoBlows into a `blow` tag.
+- **Stays code:** each show's own drawing; only which breed takes it becomes data.
+
+### Slice E4a: the figure names became tags, as done
+
+- **Each of the 45 figures' recipes has `show.tags`**, one per constant it matched (IronWheel01:
+  sands, walk_sands, spreads; the Ice Queen: fans, self_lit, shadowless -- crowd.cpp's two
+  literal "IceQueen01"s). `tools/cook.py --only shows` writes them, straight from the recipes,
+  into `cooked/figures/shows.json`; `./mu make realm` runs it beside the sim's tables.
+- **`FigureBody` has `tags` and `has(tag)`;** `Figures::addMonster`, which every one of the 45
+  passes through (each is in the cooked tables' `monsters` alone), gives a body its tags from
+  shows.json, read once. Every `x->name == kXFigure` is `x->has("tag")`; the constants' lines
+  in play_tuning.h are comments naming the tag, every comment above them kept.
+- **Proved:**
+  - shows.json against HEAD's constants: the same tags for all 45 figures and none on any
+    other; a wrong tag is caught. With every check passing through `addMonster`, `has(tag)` is
+    `name == kXFigure` for every body, so the drawing is the same.
+  - The C++ diff is the swap alone (and comments); both builds compile; sim_test identical to
+    HEAD's (7441 checks, 0 failed), server_test 27 of 27.
+  - Live: three netbots and a client, every link "none disagreed", no missing shows.json.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

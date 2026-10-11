@@ -1445,7 +1445,25 @@ void Figures::addMonster(const core::Json& entry) {
         made->walkSafeClip = made->walkClip;
         made->plantSpeedSafe = made->plantSpeed;
     }
+    readShows();
+    if (auto shown = shows_.find(made->name); shown != shows_.end()) made->tags = shown->second;
     bodies_[made->name] = std::move(made);
+}
+
+void Figures::readShows() {
+    if (showsRead_) return;
+    showsRead_ = true;
+    const std::string path = core::join(assetDir_, "cooked/figures/shows.json");
+    core::Json shows = core::parseJsonFile(path);
+    if (shows.isNull()) {
+        core::logf("no %s: every monster draws without its own shows. tools/cook.py --only shows",
+                   path.c_str());
+        return;
+    }
+    for (const auto& [name, show] : shows["shows"].members) {
+        std::vector<std::string>& tags = shows_[name];
+        for (const core::Json& tag : show["tags"].items) tags.push_back(tag.string);
+    }
 }
 
 bool Figures::borrow(const std::string& name) {

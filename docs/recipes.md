@@ -60,7 +60,9 @@ Traced from ebe25845 (Queen Rainer).
 8. C++, 7 files:
    - the recipe's `rules` (drops, resist, poisons, chill_odds, bolt, boss, split, bulk; since
      E1), then `./mu make realm`, which writes `sim/breeds_table.inc`;
-   - `game/play_tuning.h`: a figure constant, aura lights, eye trails;
+   - the recipe's `show.tags` (since E4a: what Play asks `has("tag")` for -- a figure-name
+     constant before), written by `./mu make realm` into cooked/figures/shows.json;
+   - `game/play_tuning.h`: aura lights, eye trails, bone lists (until E4b);
    - `game/play.cpp`, `play.h`, `play_open.cpp` (sounds), `play_show.cpp` (its show);
    - a `game/fx/` pair for its own effect, plus `source/sounds/sounds.json` and
      `cook.py --only showing` (about 9 min).

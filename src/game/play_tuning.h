@@ -216,7 +216,7 @@ constexpr float kPoisonIcedLight[3] = {0.3f, 1.0f, 0.8f};
 // (ZzzCharacter.cpp:9990-9993), every part he wears lit blood red. CreateMonster sets the
 // Lost Tower's Cursed Wizard PVP_MURDERER2 (:13926); nobody else here is one.
 constexpr float kMurdererLight[3] = {1.0f, 0.1f, 0.1f};
-inline constexpr const char* kMurdererFigure = "CursedWizard";
+// show tag "murderer": CursedWizard (its recipe's show.tags).
 
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the
@@ -309,9 +309,9 @@ inline constexpr const char* kSmithFigure = "Smith01";
 
 // The one breed in Lorencia that breathes fire and raises dust. MU2's BudgeDragon01.json
 // `effects` block, which the cook does not carry; stated here once.
-inline constexpr const char* kBreathingFigure = "BudgeDragon01";
+// show tag "budge_breath": BudgeDragon01 (its recipe's show.tags).
 // The Great Bahamut, whose Level 1 trails that same dust round it (play_open.cpp).
-inline constexpr const char* kGreatBahamutFigure = "GreatBahamut01";
+// show tag "great_bahamut": GreatBahamut01 (its recipe's show.tags).
 // And its light: MU's Level 1 body light is -0.4 where Level 0's is +0.2 (Selection.cpp:101-107).
 // MU takes the 0.4 off the tile's own light, so the dimmer the land the darker it goes: on
 // Atlans's sea floor it is all but black (the user's reference, a near-black fish). As a share
@@ -331,21 +331,21 @@ constexpr float kGreatBahamutPuffAlpha = 0.3f;
 // identical eleven-bone branch, and the Stone Golem the same shape with big stones -- would
 // need its own row here. Neither stands in Lorencia, and the day one does this becomes a
 // field in the cook rather than a name in a list.
-inline constexpr const char* kBurstingFigure = "SkeletonWarrior";
+// show tag "bursts_apart": SkeletonWarrior (its recipe's show.tags).
 // And the Dungeon's two other skeletons, SubType MODEL_SKELETON2 and 3: CharacterDie's test is
 // `SubType >= MODEL_SKELETON1 && <= MODEL_SKELETON3`, so all three come apart the same way.
-inline constexpr const char* kBurstingArcher = "SkeletonArcher";
-inline constexpr const char* kBurstingElite = "EliteSkeleton";
+// show tag "bursts_apart": SkeletonArcher (its recipe's show.tags).
+// show tag "bursts_apart": EliteSkeleton (its recipe's show.tags).
 // MODEL_STONE_GOLEM, which comes apart into stones the same way (Bones::rubble).
-inline constexpr const char* kCrumblingFigure = "StoneGolem01";
+// show tag "crumbles": StoneGolem01 (its recipe's show.tags).
 // MODEL_DEATH_COW, the Lost Tower's: `o->Live = false`, MODEL_BONE1 and ten MODEL_BONE2
 // (ZzzCharacter.cpp:1480-1486), the skeletons' burst on its own model. And RenderEye(o, 22, 23)
 // always (:11209-11211), the Elite Bull Fighter's eyes, on the same bone names.
-inline constexpr const char* kDeathCowFigure = "DeathCow01";
+// show tag "death_cow": DeathCow01 (its recipe's show.tags).
 // MODEL_CRUST, Icarus's Mega Crust: RenderEye(o, 26, 27, 2.0f) always (ZzzCharacter.cpp:
 // 11213-11215), on eye00 and eye01, at twice the sprite's size.
-inline constexpr const char* kCrustFigure = "MegaCrust01";
-inline constexpr const char* kAlphaCrustFigure = "AlphaCrust01";  // the same model, MONSTER_ALPHA_CRUST
+// show tag "crust": MegaCrust01 (its recipe's show.tags).
+// show tag "crust": AlphaCrust01 (its recipe's show.tags).
 // How much of the way to its tile a Crust's drawn body closes a reference frame (Play's glide).
 constexpr float kGlideShare = 0.07f;
 constexpr float kGlideLag = 0.35f;  // tiles it may trail the realm by, ours
@@ -353,11 +353,11 @@ constexpr float kCrustEyeSize = 2.0f;
 // MODEL_ICE_MONSTER, which has no corpse either, but only once its death clip has played: the
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
 // it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).
-inline constexpr const char* kShatteringFigure = "IceMonster01";
+// show tag "shatters": IceMonster01 (its recipe's show.tags).
 // MONSTER_GHOST, drawn seen-through: CreateMonster sets `c->Object.AlphaTarget = 0.4f`
 // (ZzzCharacter.cpp:14103), so the whole body is at 40%. It rides the body's own fade (its own
 // depth first, then blended, and its shadow dithered by the same number), times its death's.
-inline constexpr const char* kSeeThroughFigure = "Ghost01";
+// show tag "see_through": Ghost01 (its recipe's show.tags).
 inline constexpr float kSeeThroughAlpha = 0.4f;
 // MODEL_GIANT's own case in the same effect switch, and the whole of it is one call:
 //
@@ -381,8 +381,8 @@ inline constexpr float kSeeThroughAlpha = 0.4f;
 // MU's other callers are Tarkan's: the Tantallos (SubType 0 only, so not the Zaikan on its
 // body), the Golden Wheel's model (the Iron Wheel) and the plain Beam Knight (ZzzCharacter.cpp:
 // 5960-5984, :5945-5946). The Bloody Wolf's and the Mutant's calls are commented out in MuMain.
-inline constexpr const char* kSandingFigures[] = {"Giant01", "IronWheel01", "Tantalos01",
-                                                  "BeamKnight01"};
+// show tag "sands" (their recipes' show.tags):
+// Giant01, IronWheel01, Tantalos01, BeamKnight01.
 constexpr float kSandFrom = 8.0f, kSandTo = 9.0f;
 // ONCE, on the frame the death clip crosses key 8, and not a rate. MU's window is one key wide
 // and MU advances a key a reference frame, so its twenty attempts at `rand_fps_check(1)` come
@@ -399,26 +399,26 @@ constexpr float kSandReach = 0.62f;
 // MODEL_BULL_FIGHTER's case in the same switch, which both of Lorencia's bull rows open: the
 // plain bull and the Elite share the model, so both snort. Keyed on the cooked row's name, as
 // the dragon's is, so each variant needs its own line here.
-inline constexpr const char* kSnortingFigure = "BullFighter01";
+// show tag "snorts": BullFighter01 (its recipe's show.tags).
 // The Dungeon's Poison Bull, the third row out of the same model: it snorts as the other two,
 // and CreateMonster registers eDeBuff_Poison on it for good (ZzzCharacter.cpp:14096), which
 // RenderObject draws as the poisoned body's green (0.3, 1.0, 0.5) (ZzzObject.cpp:1122) -- a
 // standing tint, kPoisonedLight whether or not anything has poisoned it.
-inline constexpr const char* kVenomousFigure = "PoisonBull01";
+// show tag "venomous": PoisonBull01 (its recipe's show.tags).
 // The one Power Wave caster MU fans three ways (ZzzCharacter.cpp:5046); the rest throw one.
-inline constexpr const char* kFanningFigure = "IceQueen01";
+// show tag "fans": IceQueen01 (its recipe's show.tags).
 // And the one of them MU gives Level 1 to, which is what lights RenderEye (fx/eyes.h).
-inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
+// show tag "elite_bull": EliteBullFighter01 (its recipe's show.tags).
 // The Lost Tower's Shadow and Poison Shadow, one model at Level 0 and 1 (fx/shadow_stars.h). MU
 // puts a sprite on every joint but the arms' claws, thirty-nine; **ours**, these twelve, the body's
 // own, so the aura holds still rather than flickering over every plate and finger (the user,
 // 2026-10-01: "still to active it has to be more elegant and subtle").
-inline constexpr const char* kShadowFigure = "Shadow01";
+// show tag "shadow": Shadow01 (its recipe's show.tags).
 // The Death Gorgon, the Gorgon at Level 2: embers off random bones and an orange light
 // (fx/shadow_stars.h), one ember every this many reference frames: MU throws ten a frame
 // (ZzzCharacter.cpp:6064-6071). The user, 2026-10-09: "death gorgon has this red tint and
 // overall flame effect around them", and at MU's ten, "flames are too crazy": a quarter of it.
-inline constexpr const char* kDeathGorgonFigure = "DeathGorgon01";
+// show tag "death_gorgon": DeathGorgon01 (its recipe's show.tags).
 constexpr float kEmberEveryFrames = 0.25f;
 // And its red: MU lights a body by the terrain light where it stands, and the Gorgon's own
 // AddTerrainLight (1, 0.2, 0) at about 0.65 over the tower's grey floor is about 2.6 : 1.3 : 1
@@ -426,24 +426,24 @@ constexpr float kEmberEveryFrames = 0.25f;
 constexpr float kDeathGorgonLight[3] = {2.2f, 0.85f, 0.6f};
 // The Death Knight: MU's BITMAP_FIRE at bone 2, Bip01 Pelvis, one reference frame in two
 // (ZzzCharacter.cpp:6007-6011); ours, the same embers, one in four.
-inline constexpr const char* kDeathKnightFigure = "DeathKnight01";
+// show tag "death_knight": DeathKnight01 (its recipe's show.tags).
 constexpr float kKnightEmberEveryFrames = 4.0f;
 // The Devil, whose Lightning blow MU draws as its own: four BITMAP_JOINT_LASER + 1 from its two
 // link bones to the hero and fire off them while it swings, with SOUND_EVIL
 // (ZzzCharacter.cpp:2295-2313); ours, a beam a hand for this long.
-inline constexpr const char* kDevilFigure = "Devil01";
+// show tag "devil": Devil01 (its recipe's show.tags).
 // The Vepar, whose Energy Ball MU never throws (its AT_SKILL_ENERGYBALL arm breaks for it,
 // ZzzCharacter.cpp:5092): its attack is SOUND_EVIL and, while it swings, two BITMAP_BLUR + 1
 // joints off each of its link bones (30 and 39, named as the Devil's) to the target, at Scale
 // 50 and 10 (:2183-2201). Ours, those two a hand as soft streaks this many metres either side
 // of their line, for the Devil's beam time.
-inline constexpr const char* kVeparFigure = "Vepar01";
+// show tag "vepar": Vepar01 (its recipe's show.tags).
 constexpr float kVeparBeamHalf[2] = {0.25f, 0.06f};
 // The Lizard King, whose Lightning MU draws as six BITMAP_JOINT_THUNDER a frame off its two link
 // bones (52 and 65, named as the Devil's) to the target, three a hand at Scale 50 and 10, and no
 // bolt from the sky (ZzzCharacter.cpp:2330-2342). Ours, three a hand as joint_thunder streaks
 // this many metres either side of their line, for the Devil's beam time.
-inline constexpr const char* kLizardKingFigure = "LizardKing01";
+// show tag "lizard_king": LizardKing01 (its recipe's show.tags).
 // The staff it holds, whose head the bolts leave from (fx/staff_fire's head point).
 inline constexpr const char* kLizardStaff = "Staff07";
 constexpr float kLizardBoltHalf[2] = {0.22f, 0.07f};
@@ -466,9 +466,9 @@ constexpr float kLizardShaftWander = 0.06f;
 // fifth attack frame and a ring of nine for its Flame of Evil (ZzzCharacter.cpp:1905-1929); both
 // left out (the user, 2026-10-04: 'lets keep only lasers from head'), so its swing shows by the
 // beams its heads carry (below) and the flare on its gem.
-inline constexpr const char* kHydraFigure = "Hydra01";
+// show tag "hydra": Hydra01 (its recipe's show.tags).
 // The Silver Valkyrie, whose bolts are Penetration's arrow (Play::volleyShot). Ours.
-inline constexpr const char* kPenetratingFigure = "SilverValkyrie01";
+// show tag "pierces": SilverValkyrie01 (its recipe's show.tags).
 constexpr int32_t kHydraNumber = 49;
 // Its four heads, whose beams strike (sim kSplitBlows): MU's BlendMesh 5 is never drawn (the
 // user, 2026-10-04: 'from heads we shoot red lightiing not lasers?'), and each beam is the
@@ -540,13 +540,13 @@ inline constexpr AuraLight kAuraLights[] = {
     // 11216-11219): a pale blue.
     {"Hydra01", {0.5f, 0.6f, 1.0f}, "Cone01"},
 };
-inline constexpr const char* kPoisonShadowFigure = "PoisonShadow01";
+// show tag "poison_shadow": PoisonShadow01 (its recipe's show.tags).
 // MONSTER_ALQUAMOS's stars: g_chStar's first nine bones (ZzzCharacter.cpp:165-168, 8797-8801),
 // 10, 18, 37, 38, 51, 52, 58, 59, 66 in Monster51, by name. Its sparks off random bones, three a
 // frame (:8805-8812), are left out, ours, by the subtle-aura rule. Its blow throws four
 // BITMAP_FLARE sub 7 ribbons round the target (:2140-2150): kStarRibbons a blow, each living
 // 30-39 reference frames, SOUND_METEORITE01 once a blow (MU's four plays at LifeTime 30).
-inline constexpr const char* kAlquamosFigure = "Alquamos01";
+// show tag "star_ribbons": Alquamos01 (its recipe's show.tags).
 inline constexpr const char* kStarlightBones[] = {"stt07", "stt06", "stt05", "stt04", "stt",
                                                   "stt01", "stt09", "stt02", "stt03"};
 inline constexpr int kStarRibbons = 4;
@@ -558,7 +558,7 @@ inline constexpr int kStarRibbons = 4;
 // reference frame, picked at random, as ShadowStars::thunderBeam streaks at kQueenArcDim; all
 // fourteen each frame was a lit wire figure. Her blow's twenty BITMAP_BLIZZARD on the target at
 // CheckAttackTime(5) (:1681-1695), 4/25 s into it (ShadowStars::blizzard).
-inline constexpr const char* kQueenRainerFigure = "QueenRainer01";
+// show tag "queen_rainer": QueenRainer01 (its recipe's show.tags).
 inline constexpr const char* kQueenLightBone = "Bip01 Head";
 inline constexpr const char* kQueenArcs[][2] = {
     {"Bip01 Pelvis", "Bip01 L Thigh"},       {"Bip01 L Thigh", "Bip01 L Calf"},
@@ -585,21 +585,21 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 // every frame a BITMAP_LIGHT + 1 at 0.4 in (0.4, 0.8-0.89, 0.5) and a BITMAP_SPARK + 1 sub 6
 // on each (:978-987), drawn as star bones in its green. Ours: the sprite is the starlight's
 // (0.6, a little wider), its colour doubled against kStarlightDim, and the sparks left out.
-inline constexpr const char* kDeathTreeFigure = "DeathTree01";
+// show tag "death_tree": DeathTree01 (its recipe's show.tags).
 inline constexpr const char* kDeathTreeHorns[] = {"e04", "e1", "e05", "e02", "e06", "e03"};
 constexpr float kDeathTreeGreen[3] = {0.8f, 1.7f, 1.0f};
 // MONSTER_FOREST_ORC's blow (GMAida.cpp:564-596): on Attack 1 and Attack 2, three CreateBlur
 // type 3 (BITMAP_BLUR2), Short, in (0.5, 0.5, 0), sub 23-25, one per claw of its right hand, from
 // 20 units along each finger's first bone to 60 along its last: bones 35-37, 39-41 and 43-45. Laid
 // on fx/streak.h's ribbons, the spear's sheet, from the first key: MU's case has no wind-up guard.
-inline constexpr const char* kForestOrcFigure = "ForestOrc01";
+// show tag "forest_orc": ForestOrc01 (its recipe's show.tags).
 inline constexpr const char* kForestOrcClaws[][2] = {{"Bip01 R Finger0", "Bip01 R Finger02"},
                                                      {"Bip01 R Finger1", "Bip01 R Finger12"},
                                                      {"Bip01 R Finger2", "Bip01 R Finger22"}};
 constexpr float kForestOrcClawFrom = 0.20f;  // metres along the first bone (MU's 20 units)
 constexpr float kForestOrcClawTo = 0.60f;    // and along the last (60)
 constexpr float kForestOrcClawLight[3] = {0.5f, 0.5f, 0.0f};
-inline constexpr const char* kDrakanFigure = "Drakan01";
+// show tag "drakan": Drakan01 (its recipe's show.tags).
 inline constexpr const char* kDrakanStars[] = {
     "stars04", "stars03", "stars02", "stars01", "stars00", "stars13", "stars05",
     "stars10", "stars09", "stars12", "stars11", "stars08", "stars07", "stars06",
@@ -613,7 +613,7 @@ constexpr int32_t kDrakanNumber = 73;
 // MONSTER_GREAT_DRAKAN, the Drakan's body in black and red: no stars and no arcs, but a
 // BITMAP_FIRE at Scale 0.3 on bone 18, stars13, each frame (ZzzCharacter.cpp:8867-8879) -- ours
 // as the Death Knight's embers, one every kGreatDrakanEmberEvery reference frames.
-inline constexpr const char* kGreatDrakanFigure = "GreatDrakan01";
+// show tag "great_drakan": GreatDrakan01 (its recipe's show.tags).
 inline constexpr const char* kGreatDrakanFireBone = "stars13";
 constexpr float kGreatDrakanEmberEvery = 2.0f;
 constexpr int32_t kGreatDrakanNumber = 75;
@@ -627,7 +627,7 @@ constexpr float kPhantomSpiritWait = 13.0f / 25.0f;  // (14 - 1) / 25 s
 // (ZzzCharacter.cpp:2108-2121), ours from its middle as a monster's Lightning; its boss blow's
 // forty BITMAP_JOINT_SPIRIT at CheckAttackTime(2) and (6) (:1785-1800), ours one Evil Spirit
 // release at the first.
-inline constexpr const char* kDarkPhoenixFigure = "DarkPhoenix01";
+// show tag "phoenix": DarkPhoenix01 (its recipe's show.tags).
 constexpr int32_t kDarkPhoenixNumber = 77;
 constexpr float kPhoenixBoltWait = 13.0f / 25.0f;    // (14 - 1) / 25 s
 // Its bolt's colour and the light where it bites: the bird's fire, orange-red (the user,
@@ -643,23 +643,23 @@ inline constexpr const char* kShadowJoints[] = {
     "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",
     "Bip01 L Thigh",    "Bip01 L Calf",     "Bip01 R Thigh",    "Bip01 R Calf"};
 // MODEL_CHAIN_SCORPION, which carries an orange light on its `light_point` bone.
-inline constexpr const char* kScorpionFigure = "ChainScorpion01";
+// show tag "scorpion_light": ChainScorpion01 (its recipe's show.tags).
 // MONSTER_GORGON's Gorgon Staff, whose star RenderCharacter's linked-weapon switch lights for
 // anyone holding it (ZzzCharacter.cpp:10270-10276): BITMAP_SHINY + 1 at Scale 2, 90 units down
 // the link bone (knife_gdf, the Gorgon's 30), in (0.4, 0.8, 0.6) * Luminosity.
-inline constexpr const char* kStarStaffFigure = "Gorgon01";
+// show tag "star_staff": Gorgon01 (its recipe's show.tags).
 inline constexpr const char* kStarStaffBone = "knife_gdf";
 // MODEL_ELITE_YETI's breath (ZzzCharacter.cpp:6181-6189): `rand_fps_check(4)` puts one
 // BITMAP_SMOKE at bone 22, Box03 under the head, offset zero, with no action gate -- it
 // breathes standing, walking, fighting and falling. The Bull Fighter's snort particle.
-inline constexpr const char* kYetiFigure = "EliteYeti01";
+// show tag "yeti_breath": EliteYeti01 (its recipe's show.tags).
 inline constexpr const char* kYetiBreathBone = "Box03";
 constexpr float kYetiBreathAt[3] = {0.0f, 0.0f, 0.0f};
 // MODEL_HUNTER, whose blow is a bolt out of its arquebus. See Play::hunterShot.
-inline constexpr const char* kHunterFigure = "Hunter01";
+// show tag "hunter": Hunter01 (its recipe's show.tags).
 // MODEL_ASSASSIN, the one breed struck in silence: the flinch's cry is skipped by type,
 // `o->Type != MODEL_ASSASSIN && Models[o->Type].Sounds[2] != -1` (ZzzCharacter.cpp:1411).
-inline constexpr const char* kSilentFlinchFigure = "Assassin01";
+// show tag "silent_flinch": Assassin01 (its recipe's show.tags).
 // Where on the muzzle: `Vector(0.f, -4.f, 0.f, p)` in bone 24's frame, metres here.
 constexpr float kSnortAt[3] = {0.0f, -0.04f, 0.0f};
 // The four windows, in the clip's own keys: STOP1 15-20, STOP2 20-25, WALK 2-3 and 5-6.
@@ -691,8 +691,8 @@ inline constexpr EyeTrailRow kEyeTrailRows[] = {
 // MonsterMoveSandSmoke: one BITMAP_SMOKE + 1 within 100 units of the body each reference frame
 // it walks (ZzzCharacter.cpp:5571-5582). Its callers: the Mutant, the Bloody Wolf, the Tantallos
 // (not the Zaikan), the Golden Wheel and the plain Beam Knight (:5836-5984).
-inline constexpr const char* kWalkSandFigures[] = {"Mutant01", "BloodyWolf01", "IronWheel01",
-                                                   "Tantalos01", "BeamKnight01"};
+// show tag "walk_sands" (their recipes' show.tags):
+// Mutant01, BloodyWolf01, IronWheel01, Tantalos01, BeamKnight01.
 constexpr float kWalkSandReach = 100.0f;  // MU's units, either way
 // Ours: under MU's full light, as the Great Bahamut's trail was turned down (the user,
 // 2026-10-04: 'that smoke is to small and to vissible') -- a puff every walking frame of a
@@ -703,18 +703,18 @@ constexpr float kWalkSandAlpha = 0.35f;
 // the plain Beam Knight's CreateInferno is commented out in MuMain.
 // The plain Beam Knight's hand flames (fx/body_flames.h): MoveHumming from bone 55 to 62 and from
 // 70 to 77, a BITMAP_FLAME subtype 1 at Scale 0.2 on each claw (ZzzCharacter.cpp:5925-5946).
-inline constexpr const char* kHandFlameFigure = "BeamKnight01";
+// show tag "hand_flame": BeamKnight01 (its recipe's show.tags).
 inline constexpr const char* kHandFlameBones[4] = {"Box03", "Bone02", "Box27", "Bone01"};
 constexpr float kHandFlameScale = 0.2f;
 // The Zaikan's foot fires (Breath::footFire): SubType 1's BITMAP_FIRE at bones 6 and 13 each
 // reference frame (ZzzCharacter.cpp:5960-5975). Its -1.3 terrain light under it is not carried:
 // this renderer only adds light.
-inline constexpr const char* kFootFireFigure = "Zaikan01";
+// show tag "foot_fire": Zaikan01 (its recipe's show.tags).
 inline constexpr const char* kFootFireBones[2] = {"Bip01 L Foot", "Bip01 R Foot"};
 // The Death Beam Knight's burning body (fx/body_flames.h): MU's vec_list of 35 bones, by name,
 // and its segments as pairs of indices into it (ZzzCharacter.cpp:138-162, :5843-5925). Its
 // -1.3 terrain light is not carried either.
-inline constexpr const char* kBurningFigure = "DeathBeamKnight01";
+// show tag "burning": DeathBeamKnight01 (its recipe's show.tags).
 inline constexpr const char* kBurningBones[35] = {
     "Bip01 Neck", "Bip01 Head", "Bip01 R UpperArm", "Box12", "Bip01 R Hand",
     "Bip01 R Finger31", "Bip01 R Finger32", "Bip01 R Finger21", "Bip01 R Finger22",
@@ -775,7 +775,7 @@ constexpr float kStaffBlast = 0.4f;
 // The Iron Wheel's three MODEL_ARROW_BOMBs: one at its target and one 20 degrees either side
 // (ZzzCharacter.cpp:1859-1878). Ours: drawn as its crossbow's bolt, the sides flying the aimed
 // one's distance and striking nothing -- the realm's blow is the one.
-inline constexpr const char* kSpreadFigure = "IronWheel01";
+// show tag "spreads": IronWheel01 (its recipe's show.tags).
 constexpr float kSpreadDegrees = 20.0f;
 // `wait` is when in the blow it is thrown, seconds. MU's CheckAttackTime(n) counts AttackTime,
 // which starts at 1 with the blow and gains one a reference frame whatever the clip

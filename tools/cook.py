@@ -3461,6 +3461,29 @@ def cook_wardrobe(out_dir, texcook, threads):
     return 0
 
 
+def cook_shows(out_dir):
+    """Every monster recipe's `show` (sprint E4a) as one table every world shares:
+    cooked/figures/shows.json, {"version": 1, "shows": {figure: {"tags": [...]}}}. Read straight
+    from the recipes, as pipeline/realm_tables.py reads their `rules`; game/figures.cpp gives
+    each figure its tags."""
+    shows = {}
+    folder = os.path.join(ROOT, "source", "monsters")
+    for name in sorted(os.listdir(folder)):
+        if not name.endswith(".json") or name.endswith(".rig.json"):
+            continue
+        with open(os.path.join(folder, name)) as handle:
+            doc = json.load(handle)
+        if "show" in doc and "item" in doc:
+            shows[doc["item"]] = {"tags": list(doc["show"].get("tags", []))}
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "shows.json")
+    with open(path, "w") as handle:
+        json.dump({"version": 1, "shows": shows}, handle, indent=1, sort_keys=True)
+        handle.write("\n")
+    print(f"cook: {len(shows)} figures' shows -> {path}")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--world", default="lorencia")
@@ -3469,7 +3492,7 @@ def main():
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
     parser.add_argument("--only", choices=("textures", "ground", "meshes", "placements",
                                            "figures", "tables", "showing", "missiles",
-                                           "wardrobe", "all"),
+                                           "wardrobe", "shows", "all"),
                         default="all")
     parser.add_argument("--monsters", default=None,
                         help="with --only figures: just these breeds, comma-separated")
@@ -3514,6 +3537,9 @@ def main():
         # loads, cooked so the viewer can show them. Run it by hand when the wardrobe
         # changes, which is when index.json gains an item.
         return cook_wardrobe(os.path.join(args.out, "wardrobe"), args.texcook, args.threads)
+
+    if args.only == "shows":
+        return cook_shows(os.path.join(args.out, "figures"))
 
     if args.only == "figures":
         if not os.path.exists(args.texcook):
