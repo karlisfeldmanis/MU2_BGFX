@@ -229,7 +229,7 @@ const uint32_t kZenInk = byteColour(231, 201, 130);
 const uint32_t kHealthInk = byteColour(134, 201, 143);
 // A party kill he shared nothing of, past the level gap (the user, 2026-10-11: "show in red where
 // usally exp is showed ... that char is not receivning exp or quest kills because of the gap").
-const uint32_t kGappedInk = byteColour(244, 98, 84);
+const uint32_t kGappedInk = byteColour(255, 40, 32);  // bright red (the user, 2026-10-11: "make it bright red")
 const uint32_t kManaInk = byteColour(138, 166, 224);
 const uint32_t kHalo = gfx::rgba(0.0f, 0.0f, 0.0f, kHaloAlpha);
 
@@ -650,7 +650,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         std::string shouted = unitWord;
         for (char& c : shouted) c = char(std::toupper(static_cast<unsigned char>(c)));
         writeQuiet(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at,
-                   unitSize, withAlpha(ink, alpha * (row.kind == Row::Kind::Gapped ? 0.9f : 0.6f)), shouted,
+                   unitSize, withAlpha(ink, alpha * (row.kind == Row::Kind::Gapped ? 1.0f : 0.6f)), shouted,
                    kLaneUnitTracking);
         baseline += rowStep;
         place += 1.0f;
