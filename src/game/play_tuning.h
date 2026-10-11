@@ -588,6 +588,17 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 inline constexpr const char* kDeathTreeFigure = "DeathTree01";
 inline constexpr const char* kDeathTreeHorns[] = {"e04", "e1", "e05", "e02", "e06", "e03"};
 constexpr float kDeathTreeGreen[3] = {0.8f, 1.7f, 1.0f};
+// MONSTER_FOREST_ORC's blow (GMAida.cpp:564-596): on Attack 1 and Attack 2, three CreateBlur
+// type 3 (BITMAP_BLUR2), Short, in (0.5, 0.5, 0), sub 23-25, one per claw of its right hand, from
+// 20 units along each finger's first bone to 60 along its last: bones 35-37, 39-41 and 43-45. Laid
+// on fx/streak.h's ribbons, the spear's sheet, from the first key: MU's case has no wind-up guard.
+inline constexpr const char* kForestOrcFigure = "ForestOrc01";
+inline constexpr const char* kForestOrcClaws[][2] = {{"Bip01 R Finger0", "Bip01 R Finger02"},
+                                                     {"Bip01 R Finger1", "Bip01 R Finger12"},
+                                                     {"Bip01 R Finger2", "Bip01 R Finger22"}};
+constexpr float kForestOrcClawFrom = 0.20f;  // metres along the first bone (MU's 20 units)
+constexpr float kForestOrcClawTo = 0.60f;    // and along the last (60)
+constexpr float kForestOrcClawLight[3] = {0.5f, 0.5f, 0.0f};
 inline constexpr const char* kDrakanFigure = "Drakan01";
 inline constexpr const char* kDrakanStars[] = {
     "stars04", "stars03", "stars02", "stars01", "stars00", "stars13", "stars05",

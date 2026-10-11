@@ -1015,6 +1015,8 @@ private:
         // An Alquamos: its star bones (kStarlightBones) and whether its blow throws ribbons.
         std::vector<int> starBones;
         bool starRibbons = false;
+        // A Forest Orc's claws (kForestOrcClaws): first and last bone of each, flattened.
+        std::vector<int> clawBones;
         // A Crust's glide (kGlideFigures): where it is drawn, eased toward where the realm has it
         // rather than walked there; -1 until first placed.
         bool glides = false;

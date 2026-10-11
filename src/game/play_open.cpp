@@ -793,6 +793,19 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.starTint = nullptr;
             one.blizzard = look->name == kQueenRainerFigure;
             const bool drakan = look->name == kDrakanFigure;
+            one.clawBones.clear();
+            if (look->name == kForestOrcFigure && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (const auto& claw : kForestOrcClaws) {
+                    int ends[2] = {-1, -1};
+                    for (int e = 0; e < 2; ++e)
+                        for (size_t b = 0; b < bones.size(); ++b)
+                            if (bones[b].name == claw[e]) ends[e] = int(b);
+                    if (ends[0] < 0 || ends[1] < 0) continue;
+                    one.clawBones.push_back(ends[0]);
+                    one.clawBones.push_back(ends[1]);
+                }
+            }
             if (look->name == kDeathTreeFigure && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (const char* name : kDeathTreeHorns)

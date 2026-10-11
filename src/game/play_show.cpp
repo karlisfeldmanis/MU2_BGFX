@@ -193,6 +193,23 @@ void Play::exhale(float seconds) {
         }
     }
 
+    // A Forest Orc's three claws on either swing (kForestOrcClaws), a ribbon each, keyed apart
+    // from the body's own as MU keys them by sub type.
+    for (Drawn& one : drawn_) {
+        if (one.clawBones.empty() || !one.visible || !one.placed || one.deadFor >= 0.0f) continue;
+        const int clip = one.figure.clip();
+        if (clip < 0 || (clip != one.attackClip && clip != one.attackClip2)) continue;
+        const float grip[3] = {kForestOrcClawFrom, 0.0f, 0.0f};
+        const float tip[3] = {kForestOrcClawTo, 0.0f, 0.0f};
+        for (size_t c = 0; c + 1 < one.clawBones.size(); c += 2) {
+            float from[3], to[3];
+            if (!one.figure.pointOn(one.clawBones[c], grip, from)) continue;
+            if (!one.figure.pointOn(one.clawBones[c + 1], tip, to)) continue;
+            const uint32_t key = one.id ^ (uint32_t(c / 2 + 1) << 28);
+            streak_.feed(key, from, to, Streak::Sheet::Spear, kForestOrcClawLight);
+        }
+    }
+
     // The hero's refined gear as a light source: fx/gleam.h.
     gleam_.update(seconds);
     if (heroDrawn() && drawn_[heroAt()].visible && drawn_[heroAt()].placed &&

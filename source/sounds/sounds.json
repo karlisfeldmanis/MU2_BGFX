@@ -894,6 +894,26 @@
       ],
       "from": "SOUND_AIDA_DEATHTREE_DIE on MONSTER01_DIE, once (GMAida.cpp:971-977); w34/dt_death.wav."
     },
+    "forestorc_move": {
+      "files": [
+        "fo_idle1.wav",
+        "fo_idle2.wav"
+      ],
+      "from": "SOUND_AIDA_FORESTORC_MOVE1 + rand() % 2, one frame in 15 while it walks or runs (GMAida.cpp:916-922); Data/Sound/w34/fo_idle1-2.wav (MapManager.cpp:354-355)."
+    },
+    "forestorc_attack": {
+      "files": [
+        "fo_attack1.wav",
+        "fo_attack2.wav"
+      ],
+      "from": "SOUND_AIDA_FORESTORC_ATTACK1 on ATTACK1 and ATTACK2 on ATTACK2, once a blow (GMAida.cpp:923-936); w34/fo_attack1-2.wav. Ours picks either for any blow."
+    },
+    "forestorc_die": {
+      "files": [
+        "fo_death.wav"
+      ],
+      "from": "SOUND_AIDA_FORESTORC_DIE on MONSTER01_DIE, once (GMAida.cpp:937-943); w34/fo_death.wav."
+    },
     "chainscorpion_move": {
       "files": [
         "mScorpion1.wav",

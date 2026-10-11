@@ -251,6 +251,15 @@ close without the hero dying in a second.
   ShadowStars). Not done: the claw's blur on Attack 1 (light 0.3, bones 26-27). The smoke at MU's
   (0.5, 0.7, 0.5) barely shows at noon. A trap: a constexpr array in a header is one copy per
   file, so compare figures by name, not by tint pointer.
+- **Forest Orc (307)**: ForestOrc01, one sheet as skin for now (green hide, bronze-trimmed leather,
+  a wooden haft on one island, so not split), 36 spawns. On Attack 1 and 2 its three right-hand
+  claws (Bip01 R Finger0-02, 1-12, 2-22) each lay a ribbon on fx/streak.h, MU's CreateBlur type 3
+  (blur02) in (0.5, 0.5, 0), 20 units along the first bone to 60 along the last (kForestOrcClaws);
+  the streak's ribbons went from 8 to 16. Its w34 sounds as forestorc_move/_attack/_die. A trap:
+  Monster104's obj carries 16 vertices no face uses, which Blender's import drops and the build
+  refuses (rig 1444, mesh 1428); they came out of the obj and the rig's binding together.
+- **Both breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
+  resistance read raw (Death Tree 18, Forest Orc 19, about 95% turned aside; Tarkan's are 8-13).
 
 ## The one thing to know first
 

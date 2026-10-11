@@ -76,9 +76,9 @@ public:
 private:
     // MU's `MAX_BLUR_TAILS - 1`.
     static constexpr int kPairs = 29;
-    // One per body swinging a skill. A fight has one knight in it; eight is a ceiling that costs
-    // nothing and never has to be thought about again.
-    static constexpr int kRibbons = 8;
+    // One per body swinging, and one per claw of a Forest Orc (three each). Sixteen is a ceiling
+    // that costs nothing: a ribbon that is not fed draws nothing.
+    static constexpr int kRibbons = 16;
 
     struct Pair {
         float a[3] = {0, 0, 0};
