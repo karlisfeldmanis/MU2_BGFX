@@ -236,8 +236,12 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
     // What blows round him is the manifest's `leaves`. None underground: World2 ships no leaf
     // sheet, and MU's weather has no arm for it. Devias's are snow.
     const std::string& leaves = show_.leaves;
-    if (leaves == "leaf" || leaves == "snow")
+    if (leaves == "leaf" || leaves == "snow") {
         leaves_.open(assetDir, *textures_, play_.showing().table(), leaves == "snow");
+        // Set on every world, so one that asks for none puts back the game's 80 and its speck.
+        leaves_.setSize(show_.leafSize);
+        leaves_.setField(1.0f, show_.leafCount > 0 ? show_.leafCount : Leaves::kGameCount);
+    }
     // Atlans's motes drift everywhere (leaves.h).
     else if (leaves == "motes") leaves_.open(assetDir, *textures_, play_.showing().table(), false, true);
     // And Tarkan's sand rides the snow's pool, blown by its storm (Leaves::setSand, ours).

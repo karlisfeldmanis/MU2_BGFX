@@ -718,6 +718,16 @@
       "gain_note": "Taken down again, -14 to -17 dB, when the user asked for the wind a little quieter (2026-09-29), with the rain under it made one level in both worlds. Before that, taken from -8 to -14 dB, about half as loud, when the user found it too loud in Lorencia (2026-09-28). Cut, where every other correction here is a lift, and for the opposite half of the same argument. The file is not loud - stereo 22 kHz peaking at 0.187, an RMS of -27 dB, well under pDropItem's -19.5 - but it is the only sound in the game that is unplaced and never stops, so it is the one thing a placed sound has to be heard over from across the square. What that sounded like was a wind that sat on top of the footsteps. Measured against the bed rather than against the peak, which is the number that matters for something you hear for an hour.",
       "note": "The one ambient Lorencia has. Its own switch is the tile texture under the hero, which is the same blunt test the leaves already use and the roofs already fade on - see World.Indoors - so the wind stops exactly when the roof comes off and the two can never disagree. Rain is the other half of the original's branch and there is no rain here yet."
     },
+    "world_crickets": {
+      "files": [
+        "aida_crickets.wav"
+      ],
+      "from": "Not MU's file. tanweraman 'crickets and bugs sound at night' (Pixabay 237996, downloads/), given by the user 2026-10-11 for Aida in place of Noria's jungle: 200 s of 48 kHz stereo MP3 made 22 kHz mono 16-bit, its last two seconds folded over its first two at equal power so the loop has no seam, and brought to a 0.95 peak. 198 s, an RMS of -22.5 dB.",
+      "loop": true,
+      "gain_db": -21.5,
+      "gain_note": "World_jungle's -20 dB less the 1.5 dB this file is hotter (-22.5 against -24.1 RMS), so the two beds sit at one level.",
+      "note": "**An invention, marked.** Aida's dry-spell bed (the user, 2026-10-11: 'lets use downloads/tanweraman-crickets-and-bugs-sound-at-night-237996.mp3 not noria jungle'): the manifest's weather.bed names it, and it plays as Noria's jungle does, looped and unplaced, off under a roof, faded out as the rain comes in."
+    },
     "world_jungle": {
       "files": [
         "ajungle.wav"

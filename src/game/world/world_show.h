@@ -48,9 +48,14 @@ struct WorldShow {
     std::string weather;  // "rain", "snow", "sand", "sky", "square"; empty for none
     float weatherPeak = -1.0f;  // the pool's share at the spell's height; < 0 is the kind's own
     bool jungle = false;        // Noria's jungle bed under its weather
+    std::string jungleBed = "world_jungle";  // the bed's sound: Aida's is world_crickets
 
     // ---- On the land (game/world/world.cpp) ----
     std::string leaves;      // "leaf", "snow", "motes", "sand", "square", "sky"; empty none
+    // How many leaves at once (the pool holds 180; 0 the game's 80) and each at this many
+    // times the game's speck (Leaves::setSize, setField): Aida's, on its darker moss.
+    int leafCount = 0;
+    float leafSize = 1.0f;
     bool indoorsEverywhere = false;          // no open sky on any tile
     // The tile slots under a roof: by default Lorencia's 4, which it floors its interiors with
     // and uses nowhere outdoors (MuMain's HeroTile == 4, MU2's World.IndoorTile).

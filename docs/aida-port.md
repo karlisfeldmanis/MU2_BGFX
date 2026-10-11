@@ -218,6 +218,27 @@ a flare01 mote dropped every frame at (0.1, 0.1, 0.25). Manifest flag `show.skul
   (91,174 and 101,175). Without `--crowd 0` a fight drags the hero and camera away. The run log's
   `skull ghosts: N raised` line counts them: 11 in 40 s from that pair, as MU's rate predicts.
 
+**The look, leaves, flowers, fires and crickets, 2026-10-11** (the user, played in the window):
+- **Light** (`sheets/worlds/aida.json`, its note has every step): darker and more serious than
+  Noria but green. The fill sinks into a green-teal canopy, the shade splits cool green, contrast
+  0.6, a dim sunlit dust 0.0034. Brightness is taken in the sun (3.5, 56 degrees), not the
+  exposure (1.44): the user, 'expoise is not the best idea, daytime and sun sterng ht is better'.
+- **Leaves**: they did fall in every dry spell, but the game's 80 specks vanished on the moss.
+  `show.leaf_field` {count 120, size 1.3}; 2x was 'to large', 180 'little bit to much'.
+- **Flower beds** Object27/28/30 (49): MU stores them 0.85-2 m up and in our grass they floated.
+  `pipeline.grounded_types` [26, 27, 29] and `lifted` 0.3 m put the heads among the grass tips.
+- **Small fires**: MU's tongues drawn through the fire's heat ramp, 0.7 as wide, eased in and out
+  (our particle fire, kind 1, was tried and the user went back). Each throws light too: a twin
+  anchor of kind 23 beside it (`cook_anchors.py` LIGHT_TWINS), Lamps' warm flicker over 3 tiles.
+- **Crickets**: `world_crickets` (source/sounds/aida_crickets.wav, the user's Pixabay file) plays
+  in the dry spells as Noria's jungle does; `show.weather.bed` names it, every other world keeps
+  world_jungle. Noria's jungle itself was tried first.
+- **Audit against MuMain** (the user: 'go over all objects and effects'): all 74 placed kinds are
+  built, hidden or anchored; every RenderAidaObjectVisual and MoveAidaObject arm is carried
+  except the mist boxes 59/62/63, which never emit in MU. MU's Aida is on RequireLeavesEffect's
+  list but no Create* takes it and M33Aida::CreateMist returns false, so MU's Aida has no leaves,
+  mist or weather; World34's leaf01/rain01 sheets go unused. The monsters are the one thing left.
+
 ## The one thing to know first
 
 **Aida is a Season 1 world, from 2005.** It went on Korea's test server on 2005-07-28 and live with

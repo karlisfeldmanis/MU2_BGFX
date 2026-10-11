@@ -139,13 +139,15 @@ public:
         leafCount_ = count < 1 ? 1 : (count > kStormFlakes ? kStormFlakes : count);
     }
 
+    // The client's `iMaxLeaves` for an ordinary map, the count setField puts back.
+    static constexpr int kGameCount = 80;
+
     bool isOpen() const { return bgfx::isValid(sheet_); }
     uint32_t blowing() const { return blowing_; }
     uint32_t falling() const { return falling_; }
 
 private:
-    // The client's `iMaxLeaves` for an ordinary map.
-    static constexpr int kCount = 80;
+    static constexpr int kCount = kGameCount;
     float size_ = 1.0f;
     float field_ = 1.0f;
     int leafCount_ = kCount;

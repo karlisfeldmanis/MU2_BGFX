@@ -65,9 +65,16 @@
     },
     "weather": {
       "kind": "rain",
-      "note": "Ours: MU has no weather in Aida. Noria's rain (the user, 2026-10-11: 'we will use also rain for aida how it was on noria'), its light sheets/worlds/aida_rain.json. No jungle bed: Aida's air is aida_ambi."
+      "jungle": true,
+      "bed": "world_crickets",
+      "note": "Ours: MU has no weather in Aida. Noria's rain (the user, 2026-10-11: 'we will use also rain for aida how it was on noria'), its light sheets/worlds/aida_rain.json. And a bed in the dry spells, as Noria's jungle plays, under Aida's own air, aida_ambi: first Noria's jungle ('lets use noria forest sound also'), then crickets and bugs at night ('not noria jungle')."
     },
-    "leaves": "leaf"
+    "leaves": "leaf",
+    "leaf_field": {
+      "count": 120,
+      "size": 1.3,
+      "note": "Ours (the user, 2026-10-11: 'we need leaves when its not raining'): they did fall in every dry spell, but the game's 80 specks were lost on Aida's dark moss; 120, a little over the speck (twice it was 'to large'; the pool's whole 180 'little bit to much')."
+    }
   },
   "gates": {
     "exits": [
@@ -171,6 +178,14 @@
     "crawls_from": {
       "value": "tarkan",
       "note": "The scarab, MODEL_BUG01 + 1, is built in Tarkan (Object9's Bug02)."
+    },
+    "grounded_types": {
+      "value": [26, 27, 29],
+      "note": "Ours: the flower beds Object27, 28 and 30, flat cards of flower heads with no stems, which MU stores 0.85-2 m over the ground (median 1.1 m). Over MU's bare ground that passed; in our grass they hung in the air (the user, 2026-10-11: 'those flowers is flaoting in air without any base'). Laid on the terrain and lifted (below)."
+    },
+    "lifted": {
+      "value": {"Object27": 0.3, "Object28": 0.3, "Object30": 0.3},
+      "note": "Ours: the flower beds' heads 0.3 m over the terrain, among the tips of Aida's 0.45 m grass, so they read as flowers on stems the grass hides."
     }
   }
 }

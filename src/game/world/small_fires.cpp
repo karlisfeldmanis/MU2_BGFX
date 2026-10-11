@@ -16,7 +16,15 @@ constexpr float kSheetMetres = 0.64f;  // Flame01 is 64 texels: Scale 1 is 0.64 
 constexpr float kReach = 28.0f;        // metres from the camera's point a box throws
 constexpr size_t kMostTongues = 600;   // 11 boxes x 33 frames is 363
 constexpr float kLife = 33.0f;         // reference frames
-constexpr float kLight = 0.3f;
+// Ours (the user, 2026-10-11, of MU's flat orange blobs: 'lets use previus one but made some
+// adjustments'): each tongue drawn through the fire's heat ramp rather than added at MU's flat
+// (0.3, 0.3, 0.3), so it has a hot core and a cool tip; this much narrower than MU's; eased in
+// over its first frames and out over the last share of its life, so none pops.
+constexpr float kHeat = 0.85f;    // a new tongue's heat, 0..1
+constexpr float kGain = 0.05f;    // the flame sheet's red as its shape, 1x (fs_effect.sc: / 20)
+constexpr float kNarrow = 0.7f;
+constexpr float kEaseIn = 3.0f;   // reference frames
+constexpr float kEaseOut = 0.35f; // of its life
 constexpr float kDegree = 3.14159265f / 180.0f;
 
 }  // namespace
@@ -106,19 +114,22 @@ void SmallFires::update(float seconds, const float near[3]) {
 void SmallFires::gather(gfx::Effects& effects) const {
     if (!open_ || !bgfx::isValid(sheet_)) return;
     for (const Tongue& one : tongues_) {
-        const float level = kLight * std::pow(1.0f / 1.007f, one.age);
+        // MU's light falls by 1.007 a frame; here it is the heat, which the fire's ramp turns
+        // from a yellow-white core through orange to a red tip (fs_effect.sc's flame).
+        const float life = one.age / kLife;
+        const float heat = kHeat * std::pow(1.0f / 1.007f, one.age) * (1.0f - 0.6f * life);
+        const float fade = std::min(1.0f, one.age / kEaseIn) * std::min(1.0f, (1.0f - life) / kEaseOut);
         gfx::Sprite sprite;
-        for (int i = 0; i < 3; ++i) {
-            sprite.position[i] = one.at[i];
-            sprite.colour[i] = level;
-        }
-        sprite.colour[3] = 1.0f;
-        sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * one.scale;
+        for (int i = 0; i < 3; ++i) sprite.position[i] = one.at[i];
+        sprite.colour[0] = kGain;
+        sprite.colour[1] = heat;
+        sprite.colour[2] = 0.0f;
+        sprite.colour[3] = fade;
+        sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * kNarrow * one.scale;
         sprite.spin = one.spin;
         sprite.sheet = sheet_;
-        sprite.blend = gfx::Blend::Additive;
+        sprite.blend = gfx::Blend::Flame;
         effects.add(sprite);
     }
 }
-
 }  // namespace mu::game

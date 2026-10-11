@@ -240,7 +240,7 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     if (sound_) {
         if (snows_) blizzardSound_ = sound_->load("world_blizzard", false);
         if (rains_ && !snows_ && !sky_) rainSound_ = sound_->load("world_rain", false);
-        if (jungle_) jungleSound_ = sound_->load("world_jungle", false);
+        if (jungle_) jungleSound_ = sound_->load(show.jungleBed, false);
         if (rains_ && !snows_ && !sky_) thunderSound_ = sound_->load("world_thunder", false);
         for (int f = 0; f < sound_->files(thunderSound_); ++f) {
             flashes_.push_back(flashOf(sound_->loudness(thunderSound_, f)));

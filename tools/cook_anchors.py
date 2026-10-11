@@ -56,6 +56,10 @@ ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
 # The anchor kinds whose particles grow with the box: the box's Scale rides in the emitter's
 # `high`, its reach left 0 so Lamps lights nothing.
 SPRAY_KINDS = (18, 19, 20, 21, 22)
+# A spray kind's `high` carries its box's Scale, so it cannot carry a light's level too. One that
+# should light is given a second anchor beside it of a light-only kind: Aida's small fires, MU's
+# type 67, which lights nothing in MU -- ours (the user, 2026-10-11: 'fire has to make emiter').
+LIGHT_TWINS = {21: 23}
 BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
@@ -90,4 +94,7 @@ ANCHOR_LIGHT = {# A lamp: Tarkan's Object05, white, sin(WorldTime*0.002)*0.35+0.
                 11: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
                 # Nor Icarus's cloud banks, nor Aida's spray, small fires and skull ghosts
                 # (MU's types 67 and 70 light nothing: no AddTerrainLight in their arms).
-                **{k: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0) for k in range(12, 23)}}
+                **{k: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0) for k in range(12, 23)},
+                # The small fires' own light (LIGHT_TWINS): CreateFire(0)'s, kind 1's colour and
+                # flicker, over three tiles, a torch rather than a bonfire.
+                23: ((1.0, 0.6, 0.4), 0.6, 1.1, 3.0, 3.0, 0.12)}

@@ -202,7 +202,9 @@ enum class EmitterKind : uint8_t {
     SprayDrops = 18, SprayBurst = 19, SprayMist = 20,
     // Aida's small fires, game/world/small_fires.h, and skull ghosts, skull_ghosts.h; `high`
     // carries the box's Scale too.
-    SmallFire = 21, SkullGhost = 22
+    SmallFire = 21, SkullGhost = 22,
+    // A small fire's light, beside it (tools/cook_anchors.py LIGHT_TWINS): Lamps lights it.
+    SmallFireLight = 23
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

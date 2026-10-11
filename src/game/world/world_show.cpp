@@ -73,8 +73,12 @@ void readShow(const core::Json& show, WorldShow& out) {
     readString(weather, "kind", &out.weather);
     readFloat(weather, "peak", &out.weatherPeak);
     weather.readInto("jungle", &out.jungle);
+    readString(weather, "bed", &out.jungleBed);
 
     readString(show, "leaves", &out.leaves);
+    const core::Json& field = show["leaf_field"];
+    field.readInto("count", &out.leafCount);
+    readFloat(field, "size", &out.leafSize);
     const core::Json& indoors = show["indoors"];
     indoors.readInto("everywhere", &out.indoorsEverywhere);
     readInts(indoors, "floors", &out.indoorFloors);

@@ -13,6 +13,10 @@
 //            Gravity / 95, dead at 0; light down by 1.007.
 //
 // So a flame about 0.6-1.7 m wide at its foot, licking up some 0.8 m and narrowing as it goes.
+// Ours, marked in small_fires.cpp: each tongue drawn through the fire's heat ramp (gfx::Blend::
+// Flame) rather than added flat at MU's light, 0.7 of MU's width, and eased in and out, since
+// MU's flat orange tongues read as blobs (the user, 2026-10-11). Our particle fire, anchor kind
+// 1, was tried in their place and the user went back to these.
 // MU's rates are per reference frame, 25 a second. Only boxes within kReach of the camera's
 // point throw. Nothing here reaches the sim.
 #pragma once
