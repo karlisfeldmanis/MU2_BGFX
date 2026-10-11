@@ -80,10 +80,13 @@ public:
 
     size_t blocked() const;
     const std::vector<uint16_t>& words() const { return words_; }
+    // Counts every set, clear and change: what the router's regions are kept against.
+    uint64_t revision() const { return revision_; }
 
 private:
     int size_ = 0;
     std::vector<uint16_t> words_;
+    uint64_t revision_ = 0;
 };
 
 }  // namespace mu::content

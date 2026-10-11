@@ -45,8 +45,67 @@ void Router::open(const content::Grid* grid) {
     heap_.clear();
     heap_.reserve(tiles / 4);
     generation_ = 0;
-    searches_ = failures_ = expansions_ = 0;
+    for (Regions& one : regions_) one.made = false;
+    regionsNext_ = 0;
+    flood_.reserve(tiles);
+    searches_ = failures_ = expansions_ = cutShort_ = 0;
     worstExpansions_ = 0;
+}
+
+const std::vector<uint32_t>& Router::regions(uint16_t wall) {
+    Regions* found = nullptr;
+    for (Regions& one : regions_) {
+        if (one.made && one.wall == wall) found = &one;
+    }
+    if (found != nullptr && found->revision == grid_->revision()) return found->label;
+    if (found == nullptr) {
+        found = &regions_[regionsNext_];
+        regionsNext_ = (regionsNext_ + 1) % regions_.size();
+    }
+    found->wall = wall;
+    found->revision = grid_->revision();
+    found->made = true;
+    std::vector<uint32_t>& label = found->label;
+    label.assign(size_t(size_) * size_t(size_), 0);  // allocates once a wall; the grid's size stands
+    uint32_t next = 0;
+    for (int seed = 0; seed < size_ * size_; ++seed) {
+        if (label[size_t(seed)] != 0 || !grid_->open(seed % size_, seed / size_, wall)) continue;
+        label[size_t(seed)] = ++next;
+        flood_.clear();
+        flood_.push_back(seed);
+        // The search's own steps, so a region is exactly what a search from inside it opens.
+        for (size_t at = 0; at < flood_.size(); ++at) {
+            const int column = flood_[at] % size_;
+            const int row = flood_[at] / size_;
+            for (const int8_t* step : kAround) {
+                const int dx = step[0], dy = step[1];
+                const int nextColumn = column + dx, nextRow = row + dy;
+                if (!grid_->open(nextColumn, nextRow, wall)) continue;
+                if (dx != 0 && dy != 0 && !corner(column, row, dx, dy, wall)) continue;
+                const int tile = index(nextColumn, nextRow);
+                if (label[size_t(tile)] != 0) continue;
+                label[size_t(tile)] = next;
+                flood_.push_back(tile);
+            }
+        }
+    }
+    return label;
+}
+
+bool Router::reaches(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall) {
+    const std::vector<uint32_t>& label = regions(wall);
+    const uint32_t goal = label[size_t(index(toColumn, toRow))];
+    if (goal == 0) return false;
+    const uint32_t start = label[size_t(index(fromColumn, fromRow))];
+    if (start != 0) return start == goal;
+    for (const int8_t* step : kAround) {
+        const int dx = step[0], dy = step[1];
+        const int column = fromColumn + dx, row = fromRow + dy;
+        if (!grid_->open(column, row, wall)) continue;
+        if (dx != 0 && dy != 0 && !corner(fromColumn, fromRow, dx, dy, wall)) continue;
+        if (label[size_t(index(column, row))] == goal) return true;
+    }
+    return false;
 }
 
 // A diagonal may not slip between two walls. A deliberate departure from the client, which
@@ -173,6 +232,11 @@ bool Router::plan(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t
     }
 
     ++searches_;
+    if (!reaches(fromColumn, fromRow, toColumn, toRow, wall)) {
+        ++failures_;
+        ++cutShort_;
+        return false;
+    }
     // Adding one IS clearing. The arrays are wiped for real only when the number wraps, which
     // is once in a few years of ticks.
     if (++generation_ == 0) {

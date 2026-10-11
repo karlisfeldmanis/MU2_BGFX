@@ -411,6 +411,29 @@ void testRouter(const content::Tables& tables) {
           "off the map is refused");
     check(!router.plan(173, 100, 173, 100, content::kWallCharacter, route),
           "a walk to where you stand is refused");
+
+    // An open tile walled off from the walker is refused by region, without a search: (191, 12)
+    // is a pocket of 23 tiles, and the search used to open all 46 648 of the town's first.
+    check(tables.grid.open(191, 12, content::kWallCharacter), "the pocket's tile is open");
+    const uint64_t opened = router.expansions();
+    check(!router.plan(173, 100, 191, 12, content::kWallCharacter, route),
+          "a walk into a walled-off pocket is refused");
+    checkEqual((long long)(router.expansions() - opened), 0, "and opens no tile to say so");
+    check(router.cutShort() > 0, "refused by region");
+
+    // The regions follow the grid: a wall across a little map refuses, and the same plan
+    // routes once a door in it is opened (Grid::change, as a castle's door).
+    content::Grid little;
+    std::vector<uint16_t> words(16 * 16, 0);
+    for (int row = 0; row < 16; ++row) words[size_t(row) * 16 + 8] = content::kNoMove;
+    little.set(16, std::move(words));
+    sim::Router door;
+    door.open(&little);
+    check(!door.plan(2, 2, 13, 13, content::kWallCharacter, route), "a wall across the map refuses");
+    little.change(8, 7, 8, 7, content::kNoMove, false);
+    check(door.plan(2, 2, 13, 13, content::kWallCharacter, route), "and the door opened routes");
+    little.change(8, 7, 8, 7, content::kNoMove, true);
+    check(!door.plan(2, 2, 13, 13, content::kWallCharacter, route), "and shut refuses again");
 }
 
 // ---- the realm -----------------------------------------------------------------------------

@@ -22,8 +22,17 @@
 // state counts only if it was written under that number, and beginning a search is adding one.
 // The scratch is allocated once and never again -- foundation 8's "no allocation in a step"
 // includes the router.
+//
+// And a goal that cannot be reached is answered before the search. Without that the search
+// opens every tile it can reach and then fails: all 46,648 of Lorencia's, 4.4 ms on the
+// server's one core, and a monster chasing someone across a wall asks again every kRepath
+// ticks -- Lorencia ticks of 10-16 ms in bursts of minutes on 2026-10-11, bots alone on. So
+// the tiles are labelled by region, one labelling a wall, under the search's own steps (open
+// tiles, the corner rule), and a goal in another region from the start is refused at once.
+// The answer is the search's, only sooner, so a mirror and the server still agree.
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <vector>
 
@@ -84,6 +93,8 @@ public:
     // and an unmeasured claim is a guess.
     uint64_t searches() const { return searches_; }
     uint64_t failures() const { return failures_; }
+    // Of the failures, the ones refused by region without a search.
+    uint64_t cutShort() const { return cutShort_; }
     uint64_t expansions() const { return expansions_; }
     uint32_t worstExpansions() const { return worstExpansions_; }
 
@@ -94,6 +105,13 @@ private:
     bool offRoad(int column, int row) const {
         return roads_ != nullptr && !roads_->empty() && (*roads_)[size_t(index(column, row))] == 0;
     }
+    // Whether a search from one tile could reach another under `wall`, by region. The start
+    // may itself be closed (a body stands where the grid now refuses): then it is any region
+    // its first step could enter.
+    bool reaches(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall);
+    // The tiles' regions under `wall`, labelled the first time a wall is asked and again
+    // whenever the grid has changed since (a castle's door). 0 for a closed tile.
+    const std::vector<uint32_t>& regions(uint16_t wall);
 
     const content::Grid* grid_ = nullptr;
     const std::vector<uint8_t>* roads_ = nullptr;
@@ -109,8 +127,21 @@ private:
     std::vector<uint64_t> heap_;
     uint32_t generation_ = 0;
 
+    // A labelling a wall. Four, as a body plans under two (character and monster) and a test
+    // under a third; past four the oldest is labelled over.
+    struct Regions {
+        uint16_t wall = 0;
+        uint64_t revision = 0;
+        bool made = false;
+        std::vector<uint32_t> label;
+    };
+    std::array<Regions, 4> regions_;
+    size_t regionsNext_ = 0;
+    std::vector<int32_t> flood_;  // the labelling's queue
+
     uint64_t searches_ = 0;
     uint64_t failures_ = 0;
+    uint64_t cutShort_ = 0;
     uint64_t expansions_ = 0;
     uint32_t worstExpansions_ = 0;
 };

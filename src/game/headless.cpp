@@ -407,9 +407,10 @@ int runHeadless(const core::Args& args, const char* assetDir) {
                (unsigned long long)args.seed, counts.monsters, counts.alive, counts.roused);
     core::logf("  step: %.4f ms median, %.4f ms 99th, %.3f ms worst, %.1f ms in all", median,
                ninetyNine, sorted.empty() ? 0.0 : sorted.back(), total);
-    core::logf("  routes: %llu searched (%llu found nothing), %llu tiles expanded, worst %u",
+    core::logf("  routes: %llu searched (%llu found nothing, %llu of them by region), %llu tiles expanded, worst %u",
                (unsigned long long)realm.router().searches(),
                (unsigned long long)realm.router().failures(),
+               (unsigned long long)realm.router().cutShort(),
                (unsigned long long)realm.router().expansions(),
                realm.router().worstExpansions());
     core::logf("  fight: %llu blows landed, %llu missed, %llu deaths; hero level %d with "

@@ -3,6 +3,7 @@
 namespace mu::content {
 
 void Grid::set(int size, std::vector<uint16_t> words) {
+    ++revision_;
     if (size <= 0 || words.size() != size_t(size) * size_t(size)) {
         clear();
         return;
@@ -12,11 +13,13 @@ void Grid::set(int size, std::vector<uint16_t> words) {
 }
 
 void Grid::clear() {
+    ++revision_;
     size_ = 0;
     words_.clear();
 }
 
 void Grid::change(int x1, int y1, int x2, int y2, uint16_t bits, bool set) {
+    ++revision_;
     for (int row = y1; row <= y2; ++row) {
         for (int column = x1; column <= x2; ++column) {
             if (!inside(column, row)) continue;
