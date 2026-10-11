@@ -209,7 +209,7 @@ unchanged unless it says otherwise. One sprint per session, as `PLAN.md` asks.
 | B | **`mu` and its graph** | `tools/mu`: `make` over today's scripts with the order traps as edges, `check`, `where`, `shot`/`compare`, JSON output. The old scripts stay and are called by it. | M | no more order traps; my loop gets shorter at once |
 | C | **One seam for the wire** | `sim::raiseFrom(Welcome)` once, and `src/client/` with prediction shared with netbot. Split `server/main.cpp` into world_host, session, accounts, party and chat. The rain clock and the bot's world table read from `sim`. Server tests for hello, party and store. | M | lockstep facts defined once; the server legible |
 | D | **The world manifest** (M5) | `source/worlds/<w>/world.json` takes the cook, terrain and index dicts plus gates and NPCs. MapShow drives the client's systems through a bitset, and the 70 name compares go. `kBloodCastleMap`-style checks become MapRules. | M-L | a new map is data plus art |
-| E | **The breed row** (M4 + S4) | Per-breed rules and show move into `source/monsters/<breed>/breed.json`, cooked into the `.mur` and `showing`. Bespoke bosses keep code behind a `behaviour` hook. `mu.db` is built from the json, if the user agrees. | M-L | a plain monster is data plus art |
+| E | **The breed row** (M4 + S4) | Per-breed rules, combat and show move into the breed's recipe, `source/monsters/<Name>.json` (the user, 2026-10-11), cooked into the `.mur` and `showing`; spawns into each world's manifest. Bespoke bosses keep code behind a `behaviour` hook. `mu.db` is built from the json, if the user agrees. | M-L | a plain monster is data plus art |
 | F | **The live studio** | `--studio` mode, the control socket, hot reload of recipes, placements and breeds, and write-back with the journal. | M | edit to see in seconds |
 | G | **World panel** | Place, move and paint, gates and NPC spots, the world sheet. | M | the user builds Aida in the studio |
 | H | **The client hubs** (M6, S3, S9) | `fx_common.h` and the Effect registry. `Play::update` becomes a table of handlers, one file per happening family. `PlayMode::frame` is split. The desk keeps a window list. | L | an effect or window is one file plus one line |
@@ -655,6 +655,41 @@ session.
     0-299: 1800 checks, 0 differ; Tarkan's `second_class` turned off is caught.
   - sim_test's 16,960 lines identical to HEAD's (both built in worktrees), server_test 27 of 27.
   - Live: three netbots and a client, every link "none disagreed".
+
+## 9b. Sprint E, the plan: the breed row
+
+Surveyed 2026-10-11 at 27765619. **Decided (the user, 2026-10-11):** a breed's facts go in its
+existing recipe, `source/monsters/<Name>.json` (no new folder; 109 recipes, joined to the
+realm by `object_type`), and the spawns go in each world's manifest. `mu.db` becomes a cook
+output (decided earlier the same day).
+
+**Where one breed's facts live today:**
+- the recipe: model, scale, hands, look (read by `pipeline/index.py` monster_entry);
+- `mu.db`: `monster_kinds` (110 rows, 13 combat columns, `respawn_seconds`, `attack_skill`) and
+  `monster_spawns` (1473 rows), read only by `index.py`; `npc_spawns` (14) read by nothing;
+- the sim: `realm_tuning.h`'s kDropRates (59), kResistances (36), kBosses (11), kPoisoners,
+  kBoltBlowers, kEveryBoltBlowers, kChillers, kSplitBlows and `bulkOf`; cook.py's
+  RESPAWN_VERSION075;
+- the client: `play_tuning.h`'s 42 figure constants, kAuraLights, kEyeTrailRows, bone lists and
+  five breed numbers copied from the sim; `play_open.cpp`'s 49 figure-name branches setting
+  `Drawn` flags; `crowd.cpp`'s IceQueen01;
+- `sounds.json`'s 221 monster events, by label.
+
+**The slices (each proved as D's were: old against new, sim_test diff, a live run):**
+- **E1, the sim's rules.** The eight `realm_tuning.h` lists and `bulkOf` become the recipe's
+  `rules` (drop rate, resistances, boss, poison, bolts, chill, split blow, bulk), and
+  `realm_tables.py` writes `src/sim/breeds_table.inc`. A pure data move.
+- **E2, combat.** `monster_kinds`' columns become the recipe's `combat`, each with its citation;
+  `mu.db`'s table is written from the json. Ask the user about `respawn_seconds`: read by
+  nothing, and it disagrees with the code (Balrog 150 in the db, 10 in C++).
+- **E3, spawns.** `monster_spawns` become each world.json's `spawns` (breed, box, count); the
+  index reads them; `npc_spawns` goes (the manifests' `npcs` replaced it in D3b).
+- **E4, the show.** Figure constants, aura lights, eye trails, bone lists, the `Drawn` flags
+  and the copied breed numbers become the recipe's `show`, cooked into the figures; the client
+  reads a row, not a name. Proved by shots and run.logs from both builds.
+- **Stays code:** the bosses' own behaviour (Hydra, Queen Rainer, the dragons) behind a
+  `behaviour` name in `show`/`rules`; the events (square.h, event.h, invasion, raid: S1's
+  Instance); quests' kill targets; the traps (`traps.cpp`, a parallel table to look at later).
 
 ## 10. Leave alone
 
