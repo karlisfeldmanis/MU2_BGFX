@@ -4,6 +4,8 @@
     ./mu make world <w>                      every object recipe of a world, then its cook
     ./mu make ground <w> [--folder N|--import] the bare land: terrain import, tile sheets, ground, cook
     ./mu new object <w>/<ObjectNN>           a recipe from MU's model: mesh, sheets, placements
+    ./mu new monster <number> [--db]         from OpenMU's row and spawns and MuMain's model
+    ./mu new item "<name>" [--db]            a weapon, shield or armour piece from OpenMU's call
     ./mu make sounds                         sounds.json and the wavs into showing.mus
     ./mu make tables                         every world's tables (after a new item or monster)
     ./mu make ... --plan                     what would run and why, running nothing
@@ -52,8 +54,10 @@ def main():
                    help="for this run; `mu cores N` keeps one")
 
     n = sub.add_parser("new", parents=[common])
-    n.add_argument("kind", choices=("object",))
-    n.add_argument("target", help="<world>/<ObjectNN>")
+    n.add_argument("kind", choices=("object", "monster", "item"))
+    n.add_argument("target", help="<world>/<ObjectNN>, a monster's server number, or an item's name")
+    n.add_argument("--world", help="monster: its world, when OpenMU spawns it nowhere this game has")
+    n.add_argument("--db", action="store_true", help="monster, item: write the mu.db row when it is absent")
     n.add_argument("--prefix", help="the sheet prefix; read off the world's recipes by default")
 
     sub.add_parser("check", parents=[common])
@@ -133,8 +137,15 @@ def dispatch(args, say):
                                settings.environment(cores))
         return ok, {"plan": args.plan, "cores": cores, "steps": results}
     if args.command == "new":
-        import new
-        return new.new_object(args.target, args.prefix, say)
+        if args.kind == "object":
+            import new
+            return new.new_object(args.target, args.prefix, say)
+        import new_figure
+        if args.kind == "monster":
+            if not args.target.isdigit():
+                raise NotFound("a monster is named by its server number: mu new monster 31")
+            return new_figure.new_monster(int(args.target), args.world, args.db, say)
+        return new_figure.new_item(args.target, args.db, say)
     if args.command == "check":
         return check.run(say)
     if args.command == "where":

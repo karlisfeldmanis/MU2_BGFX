@@ -62,6 +62,9 @@ Traced from ebe25845 (Queen Rainer).
      `cook.py --only showing` (about 9 min).
 9. Show it in its world beside its spawn (memory: show new monsters in their world).
 
+**Since sprint B:** `./mu new monster <number> --db` does steps 1-4 but the materials and the
+hands, and `./mu make <Name>` steps 5-7.
+
 **Today:** 7 code files, 2 data stores. **Goes to:** `source/monsters/<breed>/` (sprint E) and
 the monster panel (I). Code only for a bespoke behaviour.
 
@@ -105,6 +108,9 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    world**.
 4. Chrome: `tools/chrome_sheets.py`. Judge it: `tools/studio.py <Name> [--plus 9]`.
 5. If it is sold: `sim/market.cpp`. If it does something: `sim/items.cpp`, `game/ui/describe.cpp`.
+
+**Since sprint B:** `./mu new item "<name>" --db` writes the recipe, stats and mu.db row of a
+weapon, shield or armour piece; `./mu make <Stem>` does 2-3.
 
 **Today:** 0 code files for a plain item, which is the model the others should copy.
 

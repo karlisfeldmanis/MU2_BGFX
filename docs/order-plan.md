@@ -325,7 +325,42 @@ Begun 2026-10-11 straight after A, on the user's "next".
     - The sound helpers moved to `tools/cook_sound.py` to pay the ratchet. `cook.py` is
       3878 → 3813, and all 278 cooked sounds and `showing.mus` are byte-identical across the
       move.
-- **Not yet:** `mu new` for monsters and items, and a socket to a running game (sprint F).
+- **`mu new monster <number> [--db]` and `mu new item "<name>" [--db]`** (the user, again:
+  "still not built: mu new for monsters and items"). The facts are copied from the two sources
+  every recipe cites, each with its `file:line` (`tools/mu/sources.py`):
+  - **A monster's row and spawns** come from OpenMU: Version075 first, then 0.95d, 0.97d and
+    Season 6. A block counts only if it names a monster and gives it a level, read from that
+    monster's own `CreateNew`. A brace back had reached the previous monster's attack skill.
+  - **Its model, scale and weapons** come from MuMain's case for it: `CreateMonster`, or the
+    later maps' own files (`GM_Kanturu_1st.cpp`).
+  - **An item's stats** come from its OpenMU call, read against the helper's declared
+    parameters (the overload by argument count).
+  - **An item's model** comes from MuMain's own load map in `ZzzOpenData.cpp`: loops with
+    offsets (`MODEL_HELM + i + 10` is HelmElf), named models (`MODEL_KNIGHT_BLADE =
+    MODEL_SWORD + 20` is Sword21) and bare file names (`HDK_Sword`). This agrees with all
+    156 of mu.db's weapon and armour rows. MU's "number + 1" agreed with only some.
+- **Checked against what exists:**
+  - 197 of the 212 hand-made weapon, shield and armour recipes come out the same. The 15
+    others are `skill: 0` written out versus left out, or hand choices: arrows at durability
+    1000, the Elven Shield kept elf-only, three gloves without an attack speed.
+  - 50 of mu.db's 110 monster rows equal OpenMU. The rest are recorded choices: WebZen's
+    attack rates and respawns, and Flame of Evil's 50 where OpenMU has its generic 150 (the
+    sim reads 50 as fire).
+  - So `mu new` lists an existing row's differences and never overwrites one.
+- **The recipe carries the row and the spawns** (`stats`, `spawns`), as json that mu.db will be
+  cooked from (sprint E). Until then, `--db` writes the row when it is absent: spawn ids follow
+  the highest, and the WAL is checkpointed.
+- **Left to judgement:** monster materials (`CHOOSE`) and the hands (`hands_todo` quotes
+  MuMain's weapon lines). Rings, jewels, scrolls and wings stay hand-made: their helpers mean
+  other things by their numbers.
+- **Tried:**
+  - the Berserker (350, Kanturu: Season 6's row, 28 spawns, model 106 at 0.95, the full rig,
+    two sheets under `berserker_`), `--db` included;
+  - Bone Blade (`HDK_Sword.bmd`) and Crimson Glory (`Shield_18.bmd`, its flare sheet named as
+    outside Data/Item).
+
+  Each was then removed, and mu.db was restored byte for byte.
+- **Not yet:** a socket to a running game (sprint F).
 
 ## 8. Leave alone
 
