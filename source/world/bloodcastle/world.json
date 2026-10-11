@@ -50,6 +50,19 @@
       "note": "Falls when the run says (game/world/drawbridge.h)."
     }
   },
+  "npcs": [
+    {
+      "npc": 232,
+      "name": "Archangel",
+      "figure": "BloodCastle01",
+      "at": [
+        10,
+        9
+      ],
+      "look": 2,
+      "note": "The Archangel (232), to whom the Divine Staff of Archangel is carried back from the statue -- the run's hand-in (the user, 2026-10-03; docs/blood-castle-port.md \u00a75)."
+    }
+  ],
   "gates": {
     "exits": [
       {

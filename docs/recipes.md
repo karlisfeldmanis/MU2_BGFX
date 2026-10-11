@@ -145,8 +145,9 @@ Traced from 630833af (Tarkan's quests, 23 files).
 1. `sim/quests.cpp` (the rows **and the dialogue text**), `sim/quests.h` (kQuests, which is the
    save layout), `sim/realm_travel.cpp` unlocks.
 2. `game/ui/quest_dialog.cpp`, `ui/speech.cpp`, `ui/tracker.cpp`, `game/play.cpp`.
-3. The NPC: a FOLK_VERSION075 tuple in `tools/cook.py`; `mu.db npc_spawns` is not read. Plus an
-   npc recipe, `asset.sh` and a figures cook.
+3. The NPC: a row in its world's manifest's `npcs` (`source/world/<w>/world.json`: npc, name,
+   figure, at, look, note; since D3b), then `./mu make tables`. `mu.db npc_spawns` is not read.
+   Plus an npc recipe, `asset.sh` and a figures cook.
 4. Voice: `tools/voice.py <giver>`, which reads the text out of `quests.cpp`, then `sync.sh`.
 5. `sim_test`, and `--talk NAME --quest-ready` shots.
 

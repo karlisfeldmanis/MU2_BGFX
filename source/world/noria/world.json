@@ -51,6 +51,151 @@
       "note": "Noria's decorative warp (game/world/portal.h)."
     }
   },
+  "npcs": [
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        169,
+        109
+      ],
+      "look": 4
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        193,
+        110
+      ],
+      "look": 3
+    },
+    {
+      "npc": 242,
+      "name": "Elf Lala",
+      "figure": "",
+      "at": [
+        173,
+        125
+      ],
+      "look": 2
+    },
+    {
+      "npc": 243,
+      "name": "Eo the Craftsman",
+      "figure": "",
+      "at": [
+        195,
+        124
+      ],
+      "look": 3
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "",
+      "at": [
+        172,
+        96
+      ],
+      "look": 4
+    },
+    {
+      "npc": 238,
+      "name": "Chaos Goblin",
+      "figure": "",
+      "at": [
+        180,
+        103
+      ],
+      "look": 2
+    },
+    {
+      "npc": 257,
+      "name": "Peia",
+      "figure": "Peia",
+      "at": [
+        171,
+        118
+      ],
+      "look": 3,
+      "note": "Ours, not Version075's: the elf's quest giver. MuMain's MONSTER_ELF_SOLDIER, whom its Korean client names Peia, in the flower bed under the town's great tree where the user put her (2026-09-29) -- OpenMU Season Six stands her four tiles west, at 167,118."
+    },
+    {
+      "npc": 237,
+      "name": "Charon",
+      "figure": "",
+      "at": [
+        171,
+        105
+      ],
+      "look": 4,
+      "note": "Ours: Charon (237), Devil Square's gatekeeper, where 0.95d stands him (Version095d/Maps/Noria.cs:32). 0.75 has no Devil Square; until it is written he says the hero is not ready (the user, 2026-09-30)."
+    },
+    {
+      "npc": 247,
+      "name": "Elf Archer",
+      "figure": "ElfArcher",
+      "at": [
+        166,
+        80
+      ],
+      "look": 3,
+      "note": "Ours: Noria's watch (the user, 2026-09-29), which neither Version075 nor MuMain has. An archer and a crossbow at each of the town's three roads, a tile outside the safe bit. Every one fights on the Crossbow Guard's row, 247 -- five tiles is a bow's reach as much as a crossbow's -- and the figure says which weapon she draws."
+    },
+    {
+      "npc": 247,
+      "name": "Elf Crossbow Guard",
+      "figure": "ElfCrossbowGuard",
+      "at": [
+        163,
+        83
+      ],
+      "look": 2
+    },
+    {
+      "npc": 247,
+      "name": "Elf Archer",
+      "figure": "ElfArcher",
+      "at": [
+        157,
+        112
+      ],
+      "look": 1
+    },
+    {
+      "npc": 247,
+      "name": "Elf Crossbow Guard",
+      "figure": "ElfCrossbowGuard",
+      "at": [
+        157,
+        116
+      ],
+      "look": 1
+    },
+    {
+      "npc": 247,
+      "name": "Elf Archer",
+      "figure": "ElfArcher",
+      "at": [
+        208,
+        128
+      ],
+      "look": 6
+    },
+    {
+      "npc": 247,
+      "name": "Elf Crossbow Guard",
+      "figure": "ElfCrossbowGuard",
+      "at": [
+        204,
+        131
+      ],
+      "look": 6
+    }
+  ],
   "gates": {
     "exits": [
       {

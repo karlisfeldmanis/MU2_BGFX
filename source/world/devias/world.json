@@ -41,6 +41,131 @@
       "note": "The Lost Tower beacon, RenderObjectVisual case 100 (ZzzObject.cpp:2821-2828; game/world/ornaments.h)."
     }
   },
+  "npcs": [
+    {
+      "npc": 244,
+      "name": "Caren the Barmaid",
+      "figure": "",
+      "at": [
+        226,
+        25
+      ],
+      "look": 4
+    },
+    {
+      "npc": 245,
+      "name": "Izabel The Wizard",
+      "figure": "",
+      "at": [
+        225,
+        41
+      ],
+      "look": 4
+    },
+    {
+      "npc": 246,
+      "name": "Zienna The Weapons Merchant",
+      "figure": "",
+      "at": [
+        186,
+        47
+      ],
+      "look": 4
+    },
+    {
+      "npc": 247,
+      "name": "Crossbow Guard",
+      "figure": "CrossbowGuard",
+      "at": [
+        224,
+        79
+      ],
+      "look": 6
+    },
+    {
+      "npc": 247,
+      "name": "Crossbow Guard",
+      "figure": "CrossbowGuard",
+      "at": [
+        219,
+        79
+      ],
+      "look": 6
+    },
+    {
+      "npc": 247,
+      "name": "Crossbow Guard",
+      "figure": "CrossbowGuard",
+      "at": [
+        169,
+        45
+      ],
+      "look": 8
+    },
+    {
+      "npc": 247,
+      "name": "Crossbow Guard",
+      "figure": "CrossbowGuard",
+      "at": [
+        169,
+        39
+      ],
+      "look": 8
+    },
+    {
+      "npc": 241,
+      "name": "Guild Master",
+      "figure": "",
+      "at": [
+        215,
+        45
+      ],
+      "look": 2
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "",
+      "at": [
+        218,
+        63
+      ],
+      "look": 3
+    },
+    {
+      "npc": 406,
+      "name": "Apostle Devin",
+      "figure": "",
+      "at": [
+        181,
+        35
+      ],
+      "look": 4,
+      "note": "Ours, not Version075's: Devias's quest giver, MuMain's MONSTER_PRIEST_DEVIN (406), where OpenMU's Season Six stands him (VersionSeasonSix/Maps/Devias.cs:36); the user took that spot, 2026-09-29."
+    },
+    {
+      "npc": 235,
+      "name": "Sevina the Priestess",
+      "figure": "",
+      "at": [
+        183,
+        32
+      ],
+      "look": 4,
+      "note": "Ours: Sevina the Priestess (235), the class change's giver, where 0.95d stands her (Version095d/Maps/Devias.cs:35). 0.75 has no class change."
+    },
+    {
+      "npc": 233,
+      "name": "Messenger of Archangel",
+      "figure": "",
+      "at": [
+        217,
+        29
+      ],
+      "look": 4,
+      "note": "Ours: the Messenger of Archangel (233), Blood Castle's gatekeeper, at the first of the two tiles Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45). 0.75 has no Blood Castle; until it is written he says the hero is not ready (the user, 2026-09-30)."
+    }
+  ],
   "gates": {
     "exits": [
       {

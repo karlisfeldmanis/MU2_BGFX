@@ -574,8 +574,25 @@ session.
   - **Live** on port 44521: three netbots and a client joining in Devias, every link "none
     disagreed"; the server was stopped.
 
-**Next: D3b, NPCs:** `cook.py` FOLK_VERSION075 into each manifest's `npcs`. mu.db's
-`npc_spawns` (Lorencia only, read by nothing) goes when sprint E builds mu.db from the json.
+### Slice D3b: the townsfolk
+
+- **Each world's manifest has `npcs`:** one object a townsperson (`npc`, `name`, `figure`, `at`,
+  `look`, and the comment that stood over the row as its note). `cook.py`'s FOLK_VERSION075 is
+  `world_manifest.npcs()`. mu.db's `npc_spawns` (Lorencia only, read by nothing) goes when
+  sprint E builds mu.db from the json.
+- **The Broker session** had three uncommitted rows in the old literal (its Brokers, npc 900).
+  It agreed to the move. The rows were carried into its working copies of Lorencia's, Noria's
+  and Devias's manifests, uncommitted, for it to commit as its own.
+- **Proved:**
+  - The table read from the manifests equals HEAD's: 52 rows on seven maps, every row the same
+    tuple.
+  - HEAD's cook and this one, each run on every world's tables from a scratch copy, write all
+    12 `.mur` byte-identical. The shared cooked tables were backed up first and put back, so
+    the Broker's cooked Kesra stands as it did.
+
+**Next: D4b, MapRules:** the `kBloodCastleMap`-style checks in seven sim files become rules
+(no summons, auras, flight, feather drops). Those files are where the Broker session works
+now, so this waits for its commit.
 
 ## 10. Leave alone
 

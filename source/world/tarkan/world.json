@@ -76,6 +76,40 @@
       "note": "MU's (0.3, 0.3, 0.25) at 0.4 of it: the storm a trace rather than a veil (the user, 2026-10-05: 'redcue dust screen effect little bit')."
     }
   },
+  "npcs": [
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "Storage01",
+      "at": [
+        197,
+        58
+      ],
+      "look": 3,
+      "note": "The repack's Baz and Amy (WZD MonsterSetBase.txt:37-38), as Atlans has them, at its tiles in the safe hall, facing the camera (the user, 2026-10-06: 'add missing npc in tarkan'). Its Thompson (231 at 191,74) is left out, as he was taken off Devias."
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        205,
+        62
+      ],
+      "look": 3
+    },
+    {
+      "npc": 701,
+      "name": "Keeper Aurel",
+      "figure": "NpcSenatus",
+      "at": [
+        197,
+        68
+      ],
+      "look": 3,
+      "note": "Ours: the Keeper of Kantur (source/npc/NpcSenatus.json, MU's Senior), whom Lirien's 'The Road of Kantur' sends the hero to meet (docs/tarkan-quest.md; the user, 2026-10-06: 'lets use sonatus as keeper in Tarkan'). Past the arrival tile, facing the camera as Lirien does; source/world/tarkan/placements.json says why. 701 is ours, no MU NPC's."
+    }
+  ],
   "gates": {
     "exits": [
       {

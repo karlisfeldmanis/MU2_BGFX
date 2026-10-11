@@ -2086,130 +2086,14 @@ def ticks_of(milliseconds, what, name, remainders):
 # The town's people, by map: MU's own NPC number, the name, the tile, the facing (MU2's Look:
 # 1 West ... 3 South ... 5 East ... 7 North, clockwise from West), and the cooked figure that
 # stands for them. Transcribed from MU2's shared/Folk.cs `Townsfolk.Spawns`, which is OpenMU's
-# Version075/Maps/Lorencia.cs and Noria.cs NPC spawns. Not in index.json or mu.db's
-# npc_spawns in a form the cook can read today, so it is here, with its source, as the
-# respawn corrections above are.
+# Version075/Maps/Lorencia.cs and Noria.cs NPC spawns. Each world's manifest's `npcs`
+# (source/world/<w>/world.json, docs/order-plan.md sprint D), every row with its source;
+# mu.db's npc_spawns (Lorencia alone) is not read.
 #
 # A figure of "" is a townsperson the world's own placements already stand -- Hanzo is
 # Smith01 at 116,141 in lorencia.json, Pasi Wizard01, Baz Storage01 -- so the sim knows them
 # and nothing draws them twice. The wandering merchants' travelling is not carried.
-FOLK_VERSION075 = {
-    0: [  # Lorencia
-        (248, "Wandering Merchant Martin", "WanderingMerchant", 6, 145, 4),
-        (240, "Baz The Vault Keeper", "", 146, 110, 4),
-        (240, "Baz The Vault Keeper", "", 147, 145, 2),
-        (249, "Berdysh Guard", "BerdyshGuard", 131, 88, 2),
-        (249, "Berdysh Guard", "BerdyshGuard", 173, 125, 4),
-        (249, "Berdysh Guard", "BerdyshGuard", 94, 125, 8),
-        (249, "Berdysh Guard", "BerdyshGuard", 94, 130, 8),
-        (249, "Berdysh Guard", "BerdyshGuard", 131, 148, 2),
-        (247, "Crossbow Guard", "CrossbowGuard", 114, 125, 4),
-        (250, "Wandering Merchant Harold", "WanderingMerchant", 183, 137, 3),
-        (251, "Hanzo The Blacksmith", "", 116, 141, 4),
-        (253, "Potion Girl Amy", "PotionGirlAmy", 127, 86, 3),
-        (254, "Pasi The Mage", "", 118, 113, 4),
-        (255, "Lumen the Barmaid", "LumentheBarmaid", 123, 135, 2),
-        # Ours, not Version075's: the quest giver, MuMain's MONSTER_MARLON, on the town square
-        # where the user placed him (2026-09-28), square to the wall at his back -- OpenMU Season Six has him wandering from
-        # 136,88 by the north bridge. Lorencia is the scope, so here he stays.
-        (229, "Marlon", "Marlon", 130, 127, 5),
-        # Ours, not Version075's: the Dungeon's quest giver (docs/golden-archer.md), MU's
-        # MONSTER_GOLDEN_ARCHER, at the arch where the user put him (2026-09-30), facing 5 as
-        # MuMain forces an NPC skeleton in Lorencia to angle 90. 0.95d stands him at 175,120.
-        (236, "Golden Archer", "GoldenArcher", 120, 229, 5),
-    ],
-    3: [  # Noria
-        (253, "Potion Girl Amy", "PotionGirlAmy", 169, 109, 4),
-        (253, "Potion Girl Amy", "PotionGirlAmy", 193, 110, 3),
-        (242, "Elf Lala", "", 173, 125, 2),
-        (243, "Eo the Craftsman", "", 195, 124, 3),
-        (240, "Baz The Vault Keeper", "", 172, 96, 4),
-        (238, "Chaos Goblin", "", 180, 103, 2),
-        # Ours, not Version075's: the elf's quest giver. MuMain's MONSTER_ELF_SOLDIER, whom its
-        # Korean client names Peia, in the flower bed under the town's great tree where the user
-        # put her (2026-09-29) -- OpenMU Season Six stands her four tiles west, at 167,118.
-        (257, "Peia", "Peia", 171, 118, 3),
-        # Ours: Charon (237), Devil Square's gatekeeper, where 0.95d stands him
-        # (Version095d/Maps/Noria.cs:32). 0.75 has no Devil Square; until it is written he says
-        # the hero is not ready (the user, 2026-09-30).
-        (237, "Charon", "", 171, 105, 4),
-        # Ours: Noria's watch (the user, 2026-09-29), which neither Version075 nor MuMain has.
-        # An archer and a crossbow at each of the town's three roads, a tile outside the safe
-        # bit. Every one fights on the Crossbow Guard's row, 247 -- five tiles is a bow's reach
-        # as much as a crossbow's -- and the figure says which weapon she draws.
-        (247, "Elf Archer", "ElfArcher", 166, 80, 3),
-        (247, "Elf Crossbow Guard", "ElfCrossbowGuard", 163, 83, 2),
-        (247, "Elf Archer", "ElfArcher", 157, 112, 1),
-        (247, "Elf Crossbow Guard", "ElfCrossbowGuard", 157, 116, 1),
-        (247, "Elf Archer", "ElfArcher", 208, 128, 6),
-        (247, "Elf Crossbow Guard", "ElfCrossbowGuard", 204, 131, 6),
-    ],
-    2: [  # Devias: Version075/Maps/Devias.cs:46-54
-        (244, "Caren the Barmaid", "", 226, 25, 4),
-        (245, "Izabel The Wizard", "", 225, 41, 4),
-        (246, "Zienna The Weapons Merchant", "", 186, 47, 4),
-        (247, "Crossbow Guard", "CrossbowGuard", 224, 79, 6),
-        (247, "Crossbow Guard", "CrossbowGuard", 219, 79, 6),
-        (247, "Crossbow Guard", "CrossbowGuard", 169, 45, 8),
-        (247, "Crossbow Guard", "CrossbowGuard", 169, 39, 8),
-        (241, "Guild Master", "", 215, 45, 2),
-        (240, "Baz The Vault Keeper", "", 218, 63, 3),
-        # Ours, not Version075's: Devias's quest giver, MuMain's MONSTER_PRIEST_DEVIN (406),
-        # where OpenMU's Season Six stands him (VersionSeasonSix/Maps/Devias.cs:36); the user
-        # took that spot, 2026-09-29.
-        (406, "Apostle Devin", "", 181, 35, 4),
-        # Ours: Sevina the Priestess (235), the class change's giver, where 0.95d stands her
-        # (Version095d/Maps/Devias.cs:35). 0.75 has no class change.
-        (235, "Sevina the Priestess", "", 183, 32, 4),
-        # Ours: the Messenger of Archangel (233), Blood Castle's gatekeeper, at the first of the
-        # two tiles Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45). 0.75 has no
-        # Blood Castle; until it is written he says the hero is not ready (the user, 2026-09-30).
-        (233, "Messenger of Archangel", "", 217, 29, 4),
-        # Thompson the Merchant (231) stood on the west square from 2026-10-01 until the user
-        # took him off the map, 2026-10-02.
-    ],
-    4: [  # Lost Tower: Version075/Maps/LostTower.cs:47-48, both in the safe hall. Baz is
-        # named Storage01 here because the tower's own placements have no vault for him to
-        # take, as Lorencia's and Noria's do.
-        (253, "Potion Girl Amy", "PotionGirlAmy", 207, 76, 2),
-        (240, "Baz The Vault Keeper", "Storage01", 201, 76, 4),
-        # Ours: Tersia (566, Npc/tersia.bmd; OpenMU's Mercenary Guild Felicia, MuMain's Korean
-        # "Guild Manager Tersia"), the shrine's last guard and the tower's quest giver
-        # (docs/lost-tower-quest.md, the user's of 2026-10-01); where the user stood and said "put
-        # her here": just inside the hall's south arches, between the two dragon-head statues,
-        # where the carpet runs out, facing it.
-        (566, "Tersia", "tersia", 206, 81, 3),
-    ],
-    7: [  # Atlans: Version075/Maps/Atlans.cs:53, Baz in the safe basin facing SouthWest, named
-        # Storage01 as in the Lost Tower, since the basin has no vault placement for him to take.
-        # WebZen's official 0.99.60T data stands nobody here (docs/atlans-port.md §1).
-        (240, "Baz The Vault Keeper", "Storage01", 23, 17, 2),
-        # Ours: Potion Girl Amy, the repack's (WZD MonsterSetBase.txt:48, 16,24), a tile east
-        # of hers because 16,24 is a lean box; without her the nearest potions are in Noria.
-        (253, "Potion Girl Amy", "PotionGirlAmy", 17, 24, 4),
-        # Ours: Lirien, the elf envoy who stayed when Atlans sank (source/npc/ElfEnvoy.json),
-        # whom Peia's 'The Drowned Song' sends the hero to meet; by the arch at the basin's edge
-        # where the user stood and said 'put her here' (2026-10-05). 700 is ours, no MU NPC's.
-        (700, "Lirien", "ElfEnvoy", 25, 24, 3),
-    ],
-    8: [  # Tarkan: MU's client stands nobody here (docs/tarkan-port.md §1.2).
-        # The repack's Baz and Amy (WZD MonsterSetBase.txt:37-38), as Atlans has them, at its
-        # tiles in the safe hall, facing the camera (the user, 2026-10-06: 'add missing npc in
-        # tarkan'). Its Thompson (231 at 191,74) is left out, as he was taken off Devias.
-        (240, "Baz The Vault Keeper", "Storage01", 197, 58, 3),
-        (253, "Potion Girl Amy", "PotionGirlAmy", 205, 62, 3),
-        # Ours: the Keeper of Kantur (source/npc/NpcSenatus.json, MU's Senior), whom Lirien's
-        # 'The Road of Kantur' sends the hero to meet (docs/tarkan-quest.md; the user, 2026-10-06:
-        # 'lets use sonatus as keeper in Tarkan'). Past the arrival tile, facing the camera as
-        # Lirien does; source/world/tarkan/placements.json says why. 701 is ours, no MU NPC's.
-        (701, "Keeper Aurel", "NpcSenatus", 197, 68, 3),
-    ],
-    11: [  # Blood Castle 1: OpenMU VersionSeasonSix BloodCastleBase.cs:51, the safe court.
-        # The Archangel (232), to whom the Divine Staff of Archangel is carried back from the
-        # statue -- the run's hand-in (the user, 2026-10-03; docs/blood-castle-port.md §5).
-        (232, "Archangel", "BloodCastle01", 10, 9, 2),
-    ],
-}
+FOLK_VERSION075 = world_manifest.npcs()
 
 
 # What a click on a placement does, by map and MU object type: (pose, turns, leans, tall).

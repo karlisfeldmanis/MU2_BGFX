@@ -33,6 +33,170 @@
       "note": "MODEL_BIRD01: the bird's defaults (game/world/boids.h Airs)."
     }
   },
+  "npcs": [
+    {
+      "npc": 248,
+      "name": "Wandering Merchant Martin",
+      "figure": "WanderingMerchant",
+      "at": [
+        6,
+        145
+      ],
+      "look": 4
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "",
+      "at": [
+        146,
+        110
+      ],
+      "look": 4
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "",
+      "at": [
+        147,
+        145
+      ],
+      "look": 2
+    },
+    {
+      "npc": 249,
+      "name": "Berdysh Guard",
+      "figure": "BerdyshGuard",
+      "at": [
+        131,
+        88
+      ],
+      "look": 2
+    },
+    {
+      "npc": 249,
+      "name": "Berdysh Guard",
+      "figure": "BerdyshGuard",
+      "at": [
+        173,
+        125
+      ],
+      "look": 4
+    },
+    {
+      "npc": 249,
+      "name": "Berdysh Guard",
+      "figure": "BerdyshGuard",
+      "at": [
+        94,
+        125
+      ],
+      "look": 8
+    },
+    {
+      "npc": 249,
+      "name": "Berdysh Guard",
+      "figure": "BerdyshGuard",
+      "at": [
+        94,
+        130
+      ],
+      "look": 8
+    },
+    {
+      "npc": 249,
+      "name": "Berdysh Guard",
+      "figure": "BerdyshGuard",
+      "at": [
+        131,
+        148
+      ],
+      "look": 2
+    },
+    {
+      "npc": 247,
+      "name": "Crossbow Guard",
+      "figure": "CrossbowGuard",
+      "at": [
+        114,
+        125
+      ],
+      "look": 4
+    },
+    {
+      "npc": 250,
+      "name": "Wandering Merchant Harold",
+      "figure": "WanderingMerchant",
+      "at": [
+        183,
+        137
+      ],
+      "look": 3
+    },
+    {
+      "npc": 251,
+      "name": "Hanzo The Blacksmith",
+      "figure": "",
+      "at": [
+        116,
+        141
+      ],
+      "look": 4
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        127,
+        86
+      ],
+      "look": 3
+    },
+    {
+      "npc": 254,
+      "name": "Pasi The Mage",
+      "figure": "",
+      "at": [
+        118,
+        113
+      ],
+      "look": 4
+    },
+    {
+      "npc": 255,
+      "name": "Lumen the Barmaid",
+      "figure": "LumentheBarmaid",
+      "at": [
+        123,
+        135
+      ],
+      "look": 2
+    },
+    {
+      "npc": 229,
+      "name": "Marlon",
+      "figure": "Marlon",
+      "at": [
+        130,
+        127
+      ],
+      "look": 5,
+      "note": "Ours, not Version075's: the quest giver, MuMain's MONSTER_MARLON, on the town square where the user placed him (2026-09-28), square to the wall at his back -- OpenMU Season Six has him wandering from 136,88 by the north bridge. Lorencia is the scope, so here he stays."
+    },
+    {
+      "npc": 236,
+      "name": "Golden Archer",
+      "figure": "GoldenArcher",
+      "at": [
+        120,
+        229
+      ],
+      "look": 5,
+      "note": "Ours, not Version075's: the Dungeon's quest giver (docs/golden-archer.md), MU's MONSTER_GOLDEN_ARCHER, at the arch where the user put him (2026-09-30), facing 5 as MuMain forces an NPC skeleton in Lorencia to angle 90. 0.95d stands him at 175,120."
+    }
+  ],
   "gates": {
     "exits": [
       {

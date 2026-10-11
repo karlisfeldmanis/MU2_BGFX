@@ -52,6 +52,41 @@
       "note": "game/world/bubbles.h."
     }
   },
+  "npcs": [
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "Storage01",
+      "at": [
+        23,
+        17
+      ],
+      "look": 2,
+      "note": "Storage01 as in the Lost Tower, since the basin has no vault placement for him to take. WebZen's official 0.99.60T data stands nobody here (docs/atlans-port.md \u00a71)."
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        17,
+        24
+      ],
+      "look": 4,
+      "note": "Ours: Potion Girl Amy, the repack's (WZD MonsterSetBase.txt:48, 16,24), a tile east of hers because 16,24 is a lean box; without her the nearest potions are in Noria."
+    },
+    {
+      "npc": 700,
+      "name": "Lirien",
+      "figure": "ElfEnvoy",
+      "at": [
+        25,
+        24
+      ],
+      "look": 3,
+      "note": "Ours: Lirien, the elf envoy who stayed when Atlans sank (source/npc/ElfEnvoy.json), whom Peia's 'The Drowned Song' sends the hero to meet; by the arch at the basin's edge where the user stood and said 'put her here' (2026-10-05). 700 is ours, no MU NPC's."
+    }
+  ],
   "gates": {
     "exits": [
       {

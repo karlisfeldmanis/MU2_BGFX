@@ -110,6 +110,40 @@
     },
     "traps": "tower"
   },
+  "npcs": [
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        207,
+        76
+      ],
+      "look": 2,
+      "note": "named Storage01 here because the tower's own placements have no vault for him to take, as Lorencia's and Noria's do."
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "Storage01",
+      "at": [
+        201,
+        76
+      ],
+      "look": 4
+    },
+    {
+      "npc": 566,
+      "name": "Tersia",
+      "figure": "tersia",
+      "at": [
+        206,
+        81
+      ],
+      "look": 3,
+      "note": "Ours: Tersia (566, Npc/tersia.bmd; OpenMU's Mercenary Guild Felicia, MuMain's Korean \"Guild Manager Tersia\"), the shrine's last guard and the tower's quest giver (docs/lost-tower-quest.md, the user's of 2026-10-01); where the user stood and said \"put her here\": just inside the hall's south arches, between the two dragon-head statues, where the carpet runs out, facing it."
+    }
+  ],
   "gates": {
     "exits": [
       {

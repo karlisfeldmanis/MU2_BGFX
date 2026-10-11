@@ -80,6 +80,14 @@ def gate_boxes() -> dict:
     return boxes
 
 
+def npcs() -> dict:
+    """{map: [(npc, name, figure, column, row, look)]}: the townsfolk each world's manifest
+    stands (`npcs`), for the cook's tables (tools/cook.py)."""
+    return {doc["map"]: [(row["npc"], row["name"], row["figure"], row["at"][0], row["at"][1], row["look"])
+                         for row in doc["npcs"]]
+            for doc in manifests().values() if "npcs" in doc}
+
+
 # ---- The converters: each knob back into its script's shape ----
 
 def as_set(value) -> set:
