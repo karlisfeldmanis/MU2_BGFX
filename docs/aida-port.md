@@ -20,8 +20,28 @@ anyway.
 
 ## Where it stands
 
-Research only. Nothing is built. Step 1 (bare land) can start at once. Its rows are written out in
-B §3 and C §6, and none of its choices wait on a decision below.
+**Step 1, the bare land, is built (2026-10-11, the user: 'lets start with ground').** It added:
+- `source/world/aida`: World34 through `terrain.py` (0-3.27 m, 11 slots, 35.2% walkable after the
+  fill, 0.8% safe, 3 752 placements of 74 kinds, none missing);
+- `terrain.py` rows for map 33: `HIDDEN_BY_MAP` (the nine emitter kinds), `GRASS_BY_MAP
+  ["TileGrass01"]`, `VOID_BY_MAP {"start": 0.5, "depth": 4.5}`, and `VOID_FILL_BY_MAP [(83, 10)]`,
+  which voids the 177 stray tiles. `index.py`'s `GATE_BOXES_BY_MAP` gains Aida's four boxes and
+  Noria's door and landing;
+- eleven `ai_` sheets and a `ground.json`. TileRock05, the red edge carpet, wears
+  `ai_tilerock05.png`, a copy of the hay sheet. It is a copy and not the same file because the
+  ground's loader names each surface by its pair of images: with two slots on one file the world
+  refused to open;
+- the `kMaps` row `{"aida", 33, {84, 11}, true}` (underground air for now), the banner and minimap
+  names, and `sheets/worlds/aida.json`, B §6's starting sheet, unjudged.
+
+Cooked: `--only ground` and `--only tables` for Aida, and `--only tables` for Noria. Headless, map 33
+is raised with the player at 84,11. Shot muted at noon at the hall (84,11), the Aida 2 clearing
+(188,175), the south basin (116,145) and the ravine (150,60), at 220-315 fps. The only error is the
+missing `aida.mut`, because no objects are cooked yet.
+
+**Not done: mu.db gate 119.** Writing `insert into gates values (119, 33, 82, 8, 87, 14, 1)` into
+`source/mu.db` was refused by the session's permission check, so until it goes in, a death in Aida
+rises in Lorencia. Step 2 (the gates) is next.
 
 ## The one thing to know first
 

@@ -313,6 +313,7 @@ const char* mapName(uint32_t map) {
         case 9: return "Devil Square";
         case 10: return "Icarus";
         case 11: return "Blood Castle";
+        case 33: return "Aida";
         default: return "another map";
     }
 }

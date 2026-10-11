@@ -66,7 +66,10 @@ GATE_BOXES_BY_MAP = {
     2: [(244, 34, 245, 37), (242, 34, 243, 37)],
     3: [(148, 3, 155, 4), (148, 5, 155, 6),
         # The way to Atlans and its landing, Gates.cs:135 and 205. docs/atlans-port.md.
-        (242, 240, 245, 243), (240, 240, 241, 243)],
+        (242, 240, 245, 243), (240, 240, 241, 243),
+        # The door to Aida and its landing back, Season Six Gates.cs:534 and 170.
+        # docs/aida-port.md.
+        (220, 30, 226, 30), (220, 31, 226, 34)],
     # Atlans's way back to Noria and its landing, Gates.cs:149 and 206. docs/atlans-port.md.
     7: [(9, 9, 11, 12), (14, 12, 15, 13),
         # The door to Tarkan and its landing back, Season Six Gates.cs:524 and 194 (WebZen's
@@ -81,6 +84,9 @@ GATE_BOXES_BY_MAP = {
     4: [(17, 250, 19, 250), (17, 249, 19, 249)],
     # Icarus's way back and its arrival (gate.txt 64 and 63; Gates.cs:527, 213).
     10: [(14, 12, 16, 12), (14, 13, 16, 13)],
+    # Aida's way back to Noria, its landing from it, its spawn gate 119 (the safe hall) and
+    # the Aida 2 landing 140 (Season Six Gates.cs:535, 267, 265, 266). docs/aida-port.md.
+    33: [(74, 9, 74, 13), (76, 9, 78, 16), (82, 8, 87, 14), (186, 173, 190, 177)],
 }
 
 #: What the walker actually compares, which is a threshold and not a bit test: a tile is open

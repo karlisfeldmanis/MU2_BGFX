@@ -144,6 +144,12 @@ HIDDEN_BY_MAP = {
     # throwing 10-20 cloud puffs and then hidden. The cloud road is these and nothing else drawn
     # under the walkers. docs/icarus-port.md.
     10: {0, 1, 2, 3, 4, 5},
+    # Aida's nine (MoveAidaObject, GMAida.cpp:77-86; 60 in RenderAidaObjectVisual :195-204):
+    # 56, 57 and 58 the waterfall spray boxes, 84 of them; 59, 62 and 63 the mist boxes, 91,
+    # which never emit in MU (their emitter is gated on the HiddenMesh the move sets first,
+    # :184-226); 60 the butterflies, 20; 67 the small fires, 11; 70 the skull ghost, 5. All
+    # emitters, drawn by no mesh. docs/aida-port.md.
+    33: {56, 57, 58, 59, 60, 62, 63, 67, 70},
 }
 
 #: What each world draws additively, by map number and placement type.
@@ -208,6 +214,10 @@ GRASS_BY_MAP = {
     # nothing in MU; asked for by recipe, it went looking for a TileGround03.png that never was.
     # TileGrass02 here is a brown diamond floor (ground.json's material_note).
     74: ["TileGrass01"],
+    # Aida ships TileGrass01.OZT, dark olive blades, which MU grows on slot 0
+    # (ZzzLodTerrain.cpp:2077-2120), 14 473 drawn tiles; TileGrass02.OZT is fully transparent,
+    # so slot 1 grows nothing. docs/aida-port.md.
+    33: ["TileGrass01"],
 }
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the
@@ -248,6 +258,11 @@ VOID_BY_MAP = {
     # dark, but its walls are Object41's 3.7 m faces sunk about 3.5 m, not Devias's 7.8 m ice:
     # at the default 1.5 m to 6.5 m they ended lit. From 0.3 m under the rim, black by 3.3 m.
     8: {"start": 0.3, "depth": 3.0},
+    # Aida: Devias's way, as Tarkan. A NoGround ravine from the entrance to the north-east,
+    # walled by Object18-20's 13 m rock faces sunk about 4.7 m, with 40 waterfalls falling
+    # into it. Deeper than Tarkan's because the walls and falls reach 4.7-6 m down.
+    # docs/aida-port.md, Part B 5.
+    33: {"start": 0.5, "depth": 4.5},
 }
 #: Tarkan was Devias's way (the user, 2026-10-05: 'in tarkan there is same tehniq
 #: which was in devias which make the deep canions/voids'). Pale plateaus over a NoGround void
@@ -313,7 +328,10 @@ FLOOR_BY_MAP = {11: [(9, 84, 10, 85)]}
 #: castle as a brick field where the user's MuMain shots have black (docs/blood-castle-port.md,
 #: Part B decision 1). From the safe court, the statue court and the courtyard's east pocket, which the
 #: run opens and the closed grid does not, so the castle itself stays ground.
-VOID_FILL_BY_MAP = {11: [(13, 8), (14, 95), (26, 81)]}
+VOID_FILL_BY_MAP = {11: [(13, 8), (14, 95), (26, 81)],
+                    # Aida, from the safe hall: 177 open tiles in seven crumbs on rows
+                    # 253-255 that no walk reaches, beyond the walls. docs/aida-port.md.
+                    33: [(83, 10)]}
 
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5

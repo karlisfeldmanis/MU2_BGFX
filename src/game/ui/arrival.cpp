@@ -62,6 +62,7 @@ constexpr Place kPlaces[] = {
     {"losttower", "Lost Tower", ""},
     {"atlans", "Atlans", ""},
     {"tarkan", "Tarkan", ""},
+    {"aida", "Aida", ""},
     {"icarus", "Icarus", ""},
     {"bloodcastle", "Blood Castle", ""},
     {"devilsquare", "Devil Square", ""},

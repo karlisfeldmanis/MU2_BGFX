@@ -31,6 +31,12 @@ constexpr MapRow kMaps[] = {
     // closed statue block. Not 0.75's: MU added it with patch 0.84. MU draws it on its black clear
     // with no leaves and no wind (MainScene.cpp:78-100), so for now it takes the underground's air.
     {"tarkan", 8, {195, 65}, true},
+    // Aida, MU's map 33, entered from Noria's north-east door: its spawn gate 119, 82,8 to 87,14,
+    // the small safe hall in the north-west (OpenMU VersionSeasonSix Gates.cs:265;
+    // docs/aida-port.md), where a death and the Town Portal land too. Not 0.75's: MU added it
+    // in 2005 (Season 1). MU draws it on its black clear with no leaves, birds or weather
+    // (GMAida.cpp, SceneManager.cpp:371-402), so for now it takes the underground's air.
+    {"aida", 33, {84, 11}, true},
     // Icarus, MU's map 10, entered from the Lost Tower's seventh floor: no spawn gate and no safe
     // tile, so it opens on the arrival gate 63's middle, 14,13 to 16,13 (OpenMU VersionSeasonSix
     // Gates.cs:213; docs/icarus-port.md). A death, the Town Portal and a fall from flight go home
