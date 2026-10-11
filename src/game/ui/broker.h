@@ -62,7 +62,7 @@ public:
     enum class Hit : uint8_t {
         None, Close, Tab, Kind, Flag, Clear, Head, Row, Prev, Next, Search, Qty, MostQty, Buy,
         Watch, Whisper, Seller, Source, Thing, ThingPrev, ThingNext, Price, Quick, Hours, List,
-        Collect, Lower, Cancel, LowerField, Save, Back,
+        Collect, Lower, Cancel, LowerField, Save, Back, Listing,
     };
     struct Spot {
         gfx::Box box;

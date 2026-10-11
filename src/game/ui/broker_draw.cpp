@@ -551,7 +551,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
 
         const Box list = kMine;
         controls::well(canvas_, P(list), u);
-        text(list.x + 30.0f, list.y + 11.5f, 11.0f, style::kAshInk, "On sale");
+        text(list.x + 8.0f, list.y + 11.5f, 11.0f, style::kAshInk, "On sale");
         right(list.right() - 244.0f, list.y + 11.5f, 11.0f, style::kAshInk, "Left");
         right(list.right() - 112.0f, list.y + 11.5f, 11.0f, style::kAshInk, "Price");
         right(list.right() - 8.0f, list.y + 11.5f, 11.0f, style::kAshInk, std::to_string(mine_.accountCount) + " / 20");
@@ -559,9 +559,10 @@ void Broker::rebuild(Play& play, Stage* stage) {
             const net::BrokerRow& row = mine_.mine[size_t(r)];
             const float ry = list.y + 18.0f + float(r) * 24.0f;
             canvas_.rect(P({list.x + 6.0f, ry + 23.0f, list.w - 12.0f, 0.6f}), kHair);
-            picture({list.x + 6.0f, ry + 2.0f, 20.0f, 20.0f}, row.what);
-            text(list.x + 32.0f, ry + 10.5f, 13.0f, inkOf(tables, row.what), nameOf(tables, row.what));
-            text(list.x + 32.0f, ry + 20.5f, 10.5f, style::kAshInk, traits(row.what));
+            // No picture: its card on hover instead (the user, 2026-10-11).
+            if (state(Hit::Listing, r).lift > 0.0f) canvas_.rect(P({list.x + 6.0f, ry, list.w - 256.0f, 23.0f}), kHover);
+            text(list.x + 8.0f, ry + 10.5f, 13.0f, inkOf(tables, row.what), nameOf(tables, row.what));
+            text(list.x + 8.0f, ry + 20.5f, 10.5f, style::kAshInk, traits(row.what));
             right(list.right() - 244.0f, ry + 15.5f, 12.0f, row.secondsLeft < 7200 ? style::kDanger : style::kAshInk,
                   hoursLeft(row.secondsLeft));
             if (row.id == editing_) {
@@ -578,7 +579,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
             }
         }
         if (mine_.mine.empty()) {
-            text(list.x + 30.0f, list.y + 60.0f, 13.0f, style::kAshInk, "Nothing on sale. List something from the Sell tab.");
+            text(list.x + 8.0f, list.y + 60.0f, 13.0f, style::kAshInk, "Nothing on sale. List something from the Sell tab.");
         }
         text(list.x + 8.0f, list.bottom() - 6.0f, 10.5f, style::kAshInk,
              "A price may be lowered for nothing; to raise it, cancel and list it again.");
@@ -589,6 +590,18 @@ void Broker::rebuild(Play& play, Stage* stage) {
         stage->stand(standing, kWide, kTall);
         const gfx::Art art = stage->picture();
         if (art.valid()) canvas_.image(art, P({0.0f, 0.0f, kWide, kTall}));
+    }
+
+    // The item card over his own listing under the pointer, the bag's own card: My listings has
+    // no card beside it, so this is where its details show (the user, 2026-10-11).
+    if (hovered_ >= 0 && size_t(hovered_) < spots_.size() && pressed_ < 0) {
+        const Spot& s = spots_[size_t(hovered_)];
+        if (s.hit == Hit::Listing && size_t(s.index) < mine_.mine.size()) {
+            const sim::Held& what = mine_.mine[size_t(s.index)].what;
+            tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
+            if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
+            tip::draw(tip_, sheet, P(s.box), screenW_, screenH_);
+        }
     }
 }
 

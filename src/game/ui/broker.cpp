@@ -251,6 +251,8 @@ void Broker::layout(Play& play) {
         if (!mine_.box.empty()) spot({kBox.x + 8.0f, kBox.y + 122.0f, kBox.w - 16.0f, 22.0f}, Hit::Collect);
         for (int r = 0; r < int(mine_.mine.size()) && r < kRows; ++r) {
             const float y = kMine.y + 18.0f + float(r) * kRowH;
+            // The listing's name, for its card on hover; clicks nothing.
+            spot({kMine.x, y, kMine.w - 250.0f, kRowH}, Hit::Listing, r);
             if (mine_.mine[size_t(r)].id == editing_) {
                 spot({kMine.right() - 186.0f, y + 3.0f, 80.0f, kRowH - 7.0f}, Hit::LowerField, r);
                 spot({kMine.right() - 102.0f, y + 3.0f, 46.0f, kRowH - 7.0f}, Hit::Save, r);
